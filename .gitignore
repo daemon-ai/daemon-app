@@ -1,0 +1,25 @@
+# Build output
+/build/
+/build-*/
+**/CMakeCache.txt
+**/CMakeFiles/
+
+# Nix
+/result
+/result-*
+
+# Qt / QML tooling
+.qmlls.ini
+*.qmlc
+*.jsc
+
+# Editor / IDE
+.cache/
+compile_commands.json
+.vscode/
+.idea/
+*.user
+
+# OS
+.DS_Store
+Thumbs.db

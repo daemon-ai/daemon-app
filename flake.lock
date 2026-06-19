@@ -1,0 +1,178 @@
+{
+  "nodes": {
+    "earcut": {
+      "flake": false,
+      "locked": {
+        "allRefs": true,
+        "lastModified": 1781773091,
+        "narHash": "sha256-Z7Q+OTNWFEB9XDMwHl9A54EmoEmhmKQlJ7LOO562olg=",
+        "ref": "refs/heads/master",
+        "rev": "64530eabb07cfbdf48b2577a763ca26f1afc0b76",
+        "revCount": 138,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/mapbox/earcut.hpp"
+      },
+      "original": {
+        "allRefs": true,
+        "rev": "64530eabb07cfbdf48b2577a763ca26f1afc0b76",
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/mapbox/earcut.hpp"
+      }
+    },
+    "flake-utils": {
+      "inputs": {
+        "systems": "systems"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "md4qt": {
+      "flake": false,
+      "locked": {
+        "host": "invent.kde.org",
+        "lastModified": 1781616991,
+        "narHash": "sha256-XjmzronSyRHgqAPr5k3oDBFLQXS/S1/3N96Ap/wPmMo=",
+        "owner": "libraries",
+        "repo": "md4qt",
+        "rev": "345bba20c225c105dc9050dbb150bcc0d4c0c84f",
+        "type": "gitlab"
+      },
+      "original": {
+        "host": "invent.kde.org",
+        "owner": "libraries",
+        "repo": "md4qt",
+        "rev": "345bba20c225c105dc9050dbb150bcc0d4c0c84f",
+        "type": "gitlab"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1781867477,
+        "narHash": "sha256-y4shnVDvuFasGOGrNArF7rbQoB1bEuZvQo+nzIgsMvU=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e96d4751b30be9c0420fa4cdafe77ae0445d059f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "qautostart": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1537027143,
+        "narHash": "sha256-MSbvPax0z6TaKworetoQMFq6+Y9bC81tJ92Npr9nuOA=",
+        "owner": "Skycoder42",
+        "repo": "QAutoStart",
+        "rev": "a27a028f0ac9e49a0c90732d7ea090e2bd31c2c3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Skycoder42",
+        "repo": "QAutoStart",
+        "rev": "a27a028f0ac9e49a0c90732d7ea090e2bd31c2c3",
+        "type": "github"
+      }
+    },
+    "qsimpleupdater": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1777023188,
+        "narHash": "sha256-rDFJWVCbtO/6HLvNbQVcIeQg36saHZnwVOQZKvkIinw=",
+        "owner": "alex-spataru",
+        "repo": "QSimpleUpdater",
+        "rev": "6c78600eab46e307eb0706a52b847516eb72a146",
+        "type": "github"
+      },
+      "original": {
+        "owner": "alex-spataru",
+        "repo": "QSimpleUpdater",
+        "rev": "6c78600eab46e307eb0706a52b847516eb72a146",
+        "type": "github"
+      }
+    },
+    "qwindowkit": {
+      "flake": false,
+      "locked": {
+        "allRefs": true,
+        "lastModified": 1780119094,
+        "narHash": "sha256-r3fszoJvSiyWXowBDdaYbXUumhrFb8unpuxhVyUH0uw=",
+        "ref": "refs/heads/main",
+        "rev": "c783b89d119a672b0aa4262b520c0783d0612689",
+        "revCount": 415,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/stdware/qwindowkit"
+      },
+      "original": {
+        "allRefs": true,
+        "rev": "c783b89d119a672b0aa4262b520c0783d0612689",
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/stdware/qwindowkit"
+      }
+    },
+    "qxtglobalshortcut": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1670841977,
+        "narHash": "sha256-DC0B3zXEMw+o5wmjxRgDmPP+JNbAvJyTg2yBpsBk8BI=",
+        "owner": "hluk",
+        "repo": "qxtglobalshortcut",
+        "rev": "0e47e8c6bddfe42ecb1f3706ead805d3abc56a7e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hluk",
+        "repo": "qxtglobalshortcut",
+        "rev": "0e47e8c6bddfe42ecb1f3706ead805d3abc56a7e",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "earcut": "earcut",
+        "flake-utils": "flake-utils",
+        "md4qt": "md4qt",
+        "nixpkgs": "nixpkgs",
+        "qautostart": "qautostart",
+        "qsimpleupdater": "qsimpleupdater",
+        "qwindowkit": "qwindowkit",
+        "qxtglobalshortcut": "qxtglobalshortcut"
+      }
+    },
+    "systems": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

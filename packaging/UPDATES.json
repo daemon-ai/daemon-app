@@ -1,0 +1,12 @@
+{
+  "updates": {
+    "daemon-app": {
+      "open-source": {
+        "latest-version": "0.1.0",
+        "release-notes": "Initial scaffold.",
+        "download-url": "",
+        "changelog-url": ""
+      }
+    }
+  }
+}
