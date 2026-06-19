@@ -33,8 +33,11 @@ QtObject {
     readonly property color background: isMidnight ? "#0d162d" : isDark ? "#191919" : isSepia ? "#fbf0d9" : "#ffffff"
     // Middle column (conversations list) shares the main background.
     readonly property color surface: background
-    // Left sidebar (frameLeft): Light AND Sepia are rgb(237,237,237); Dark 51.
-    readonly property color sidebar: isMidnight ? "#09286f" : isDark ? "#333333" : "#ededed"
+    // Left sidebar (frameLeft): a chrome panel in the same hue family as the
+    // background, offset in lightness. Light neutral grey; Dark lifted; Midnight
+    // brighter navy; Sepia a warm parchment tan (between background and border)
+    // so the column stays in the warm palette instead of clashing grey.
+    readonly property color sidebar: isMidnight ? "#09286f" : isDark ? "#333333" : isSepia ? "#ece0c2" : "#ededed"
 
     // --- Lines / borders ----------------------------------------------------
     // Subtle separators between list rows (editor tokens #ededec / #3a3a3a).
@@ -55,26 +58,31 @@ QtObject {
     readonly property color pressed: isMidnight ? "#1b2a55" : isDark ? "#2c2c2c" : isSepia ? "#f1e7d2" : "#dfdfde"
 
     // --- Accent (selected text, cursor, focus) ------------------------------
-    // Midnight uses the legible blue; the other themes share blue.
-    readonly property color accent: isMidnight ? "#4f8cff" : "#2383e2"
+    // Per-theme so every highlight tracks the palette:
+    // blue, Sepia uses a warm sienna that matches the parchment palette, Midnight
+    // uses its legible brighter blue. Drives toggles, selection fills, icons, the
+    // "+" buttons, the Send icon, font-style label, focus rings, etc.
+    readonly property color accent: isMidnight ? "#9fb3e6" : isSepia ? "#b06a2c" : isDark ? "#757575" : "#2383e2"
 
     // --- Sidebar (NodeTreeView delegates) -----------------------------------
     // Folder/All/Tag title color (foldertreedelegateeditor m_titleColor).
-    readonly property color sidebarText: isMidnight ? "#dbe4ff" : isDark ? "#d4d4d4" : "#1a1a1a"
-    // Selected row fill (m_activeColor rgb 68,138,201) - same in all themes.
-    readonly property color sidebarSelection: "#448ac9"
+    readonly property color sidebarText: isMidnight ? "#dbe4ff" : isDark ? "#d4d4d4" : isSepia ? "#321e03" : "#1a1a1a"
+    // Selected row fill - the accent so Midnight's blue / Sepia's sienna apply
+    // (white selection text stays legible on all four).
+    readonly property color sidebarSelection: accent
     // Selected row text/icon/count.
     readonly property color sidebarSelectedText: "#ffffff"
-    // Row hover (NodeTreeDelegate m_hoverColor: rgb 180,208,233 / rgb 35,52,69).
-    readonly property color sidebarHover: isMidnight ? "#16285c" : isDark ? "#233445" : "#b4d0e9"
-    // Folder/tag icon color when unselected (m_folderIconColor rgb 68,138,201).
-    readonly property color sidebarIcon: "#448ac9"
+    // Row hover (NodeTreeDelegate m_hoverColor): warm tan in Sepia so it doesn't
+    // clash with the parchment sidebar; cool blue in Light, navy in Dark/Midnight.
+    readonly property color sidebarHover: isMidnight ? "#16285c" : isDark ? "#454545" : isSepia ? "#e4c79e" : "#b4d0e9"
+    // Folder/tag icon color when unselected - tracks the accent.
+    readonly property color sidebarIcon: accent
     // Folders/Tags separator label (m_separatorTextColor rgb 143,143,143).
     readonly property color separatorText: "#8f8f8f"
-    // Separator "+" add button (blue / hover / pressed).
-    readonly property color addButton: "#448ac9"
-    readonly property color addButtonHover: "#336ea2"
-    readonly property color addButtonPressed: "#27557d"
+    // Separator "+" add button (accent + darker hover/pressed shades).
+    readonly property color addButton: accent
+    readonly property color addButtonHover: Qt.darker(accent, 1.25)
+    readonly property color addButtonPressed: Qt.darker(accent, 1.4)
 
     // --- Conversations list (NoteListView delegate) -------------------------
     // Folder/title label in the notes bar (listviewLabel1).
@@ -84,8 +92,9 @@ QtObject {
     // Note snippet (m_contentColor rgb 142,146,150).
     readonly property color listSnippet: "#8e9296"
     // Selected note row (m_activeColor focused / m_notActiveColor unfocused).
-    readonly property color listSelection: isMidnight ? "#16285c" : isDark ? "#233445" : "#dae9ef"
-    readonly property color listSelectionInactive: isMidnight ? "#142850" : isDark ? "#233445" : "#afd4e4"
+    // Sepia uses warm pale gold instead of the cool blue band.
+    readonly property color listSelection: isMidnight ? "#16285c" : isDark ? "#454545" : isSepia ? "#f0dcb0" : "#dae9ef"
+    readonly property color listSelectionInactive: isMidnight ? "#142850" : isDark ? "#3a3a3a" : isSepia ? "#e8ce98" : "#afd4e4"
     // Row separator (m_separatorColor rgb 191,191,191 / white@50%).
     readonly property color listSeparator: isMidnight ? "#2a3f70" : isDark ? "#7fffffff" : "#bfbfbf"
 
