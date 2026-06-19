@@ -8,10 +8,10 @@ import DaemonApp.Theme
 QQC.TextField {
     id: root
 
-    color: Theme.text
+    color: Theme.searchText
     placeholderTextColor: Theme.textMuted
     selectionColor: Theme.searchSelection
-    selectedTextColor: Theme.text
+    selectedTextColor: Theme.searchText
     font.family: FontIcons.display
     font.pixelSize: 14
     leftPadding: Theme.spacing

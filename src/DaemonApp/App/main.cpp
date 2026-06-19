@@ -9,12 +9,21 @@ using AppBase = QGuiApplication;
 using AppBase = QApplication;
 #endif
 
+#include <QByteArray>
+#include <QDir>
+#include <QEventLoop>
 #include <QFont>
 #include <QFontDatabase>
+#include <QImage>
 #include <QList>
 #include <QQmlApplicationEngine>
 #include <QQmlError>
 #include <QQuickStyle>
+#include <QQuickWindow>
+#include <QString>
+#include <QStringList>
+#include <QTimer>
+#include <QVariant>
 #include <QtQml/qqmlextensionplugin.h>
 
 namespace {
@@ -36,6 +45,63 @@ void loadBundledFonts()
     QFont base(QStringLiteral("Inter"));
     base.setStyleStrategy(QFont::PreferAntialias);
     QGuiApplication::setFont(base);
+}
+
+// Visual proof of theming. When DAEMON_APP_RENDER_SHOTS is set to a directory,
+// render the live window once per theme (Light/Dark/Sepia) and save a PNG each,
+// then exit. This is a guarded, opt-in render mode (no effect on a normal run),
+// kept here because the DaemonApp.App/Main module is baked into this executable.
+// Run it offscreen (QT_QPA_PLATFORM=offscreen, QT_QUICK_BACKEND=software).
+// Returns true if shots were requested (and the app should exit).
+bool maybeRenderThemeShots(QQmlApplicationEngine& engine)
+{
+    const QByteArray outDir = qgetenv("DAEMON_APP_RENDER_SHOTS");
+    if (outDir.isEmpty()) {
+        return false;
+    }
+
+    QDir().mkpath(QString::fromLocal8Bit(outDir));
+
+    auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().constFirst());
+    if (window == nullptr) {
+        qWarning("render-shots: root object is not a window");
+        return true;
+    }
+
+    QObject* theme = engine.singletonInstance<QObject*>(QStringLiteral("DaemonApp.Theme"),
+                                                        QStringLiteral("Theme"));
+    if (theme == nullptr) {
+        qWarning("render-shots: could not resolve the Theme singleton");
+        return true;
+    }
+
+    window->show();
+
+    const QList<QPair<QString, QString>> themes = {
+        { QStringLiteral("Light"), QStringLiteral("theme-light.png") },
+        { QStringLiteral("Dark"), QStringLiteral("theme-dark.png") },
+        { QStringLiteral("Sepia"), QStringLiteral("theme-sepia.png") },
+    };
+
+    for (const auto& [name, file] : themes) {
+        QMetaObject::invokeMethod(theme, "setTheme", Q_ARG(QVariant, QVariant(name)));
+
+        // Let the binding updates settle and a frame compose before grabbing.
+        QEventLoop loop;
+        QTimer::singleShot(150, &loop, &QEventLoop::quit);
+        loop.exec();
+
+        const QImage shot = window->grabWindow();
+        const QString path = QDir(QString::fromLocal8Bit(outDir)).filePath(file);
+        if (shot.isNull() || !shot.save(path)) {
+            qWarning("render-shots: failed to save %s", qPrintable(path));
+        } else {
+            qInfo("render-shots: wrote %s (%dx%d)", qPrintable(path), shot.width(),
+                  shot.height());
+        }
+    }
+
+    return true;
 }
 
 } // namespace
@@ -87,6 +153,10 @@ int main(int argc, char* argv[])
     }
 
     application.completeWiring(engine);
+
+    if (maybeRenderThemeShots(engine)) {
+        return 0;
+    }
 
     return app.exec();
 }

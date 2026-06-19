@@ -11,6 +11,11 @@ Rectangle {
 
     color: Theme.background
 
+    // No task model yet, so the header pie stays hidden (it only shows when a
+    // conversation has checklist tasks, per CircularProgressBarPie).
+    property int totalTasks: 0
+    property int doneTasks: 0
+
     function open(conversationId) {
         controller.open(conversationId);
     }
@@ -49,13 +54,35 @@ Rectangle {
                 onClicked: root.createNew()
             }
 
-            Item { Layout.fillWidth: true } // spacer
             Item { implicitWidth: 15 }
 
-            Kit.TextButton {
+            // Upgrade: bordered pill, radius 7, 1px toolButtonColor, 13px text.
+            QQC.Button {
+                id: upgradeButton
+                implicitHeight: 26
+                leftPadding: 12
+                rightPadding: 12
+                topPadding: 4
+                bottomPadding: 4
                 text: qsTr("Upgrade")
-                implicitHeight: 28
                 onClicked: {} // placeholder (subscription deferred)
+
+                contentItem: QQC.Label {
+                    text: upgradeButton.text
+                    color: Theme.iconMuted
+                    font.family: FontIcons.display
+                    font.pixelSize: 13
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                background: Rectangle {
+                    radius: 7
+                    color: upgradeButton.down ? Theme.pressed
+                         : upgradeButton.hovered ? Theme.hover : "transparent"
+                    border.width: 1
+                    border.color: Theme.iconMuted
+                }
             }
 
             Item { implicitWidth: 15 }
@@ -170,20 +197,31 @@ Rectangle {
                 }
             }
 
-            // Task-completion pie (static placeholder).
+            // Push the pie + settings to the right edge (topBar spacer + 15px),
+            // leaving the formatting cluster left-aligned after Upgrade.
+            Item { Layout.fillWidth: true }
+            Item { implicitWidth: 15 }
+
+            // Task-completion pie (CircularProgressBarPie): gray, lineWidth 2,
+            // size 20, and ONLY visible when the conversation has tasks. With no
+            // task model it stays hidden.
             Item {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.leftMargin: 2
                 Layout.rightMargin: 2
-                implicitWidth: 18
+                implicitWidth: 20
                 implicitHeight: 28
+                visible: root.totalTasks > 0
 
                 Canvas {
+                    id: pie
                     anchors.centerIn: parent
-                    width: 16
-                    height: 16
+                    width: 20
+                    height: 20
                     property color trackColor: Theme.border
-                    property color fillColor: Theme.accent
+                    property color fillColor: Theme.iconMuted
+                    property real progress: root.totalTasks > 0 ? root.doneTasks / root.totalTasks : 0
+                    onProgressChanged: requestPaint()
                     onPaint: {
                         const ctx = getContext("2d");
                         const cx = width / 2;
@@ -195,10 +233,9 @@ Rectangle {
                         ctx.lineWidth = 2;
                         ctx.strokeStyle = trackColor;
                         ctx.stroke();
-                        // ~40% filled wedge.
                         ctx.beginPath();
                         ctx.moveTo(cx, cy);
-                        ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * 0.4);
+                        ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
                         ctx.closePath();
                         ctx.fillStyle = fillColor;
                         ctx.fill();

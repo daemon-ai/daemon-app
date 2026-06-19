@@ -4,6 +4,10 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
+// Left column: the NodeTreeView port. tree delegates -
+// gear right-aligned above the tree, full-rect blue selection with white text,
+// folder/tag rows with blue icons + counts, and Folders/Tags separators with a
+// blue "+" add button.
 Rectangle {
     id: root
 
@@ -36,16 +40,17 @@ Rectangle {
         anchors.fill: parent
         spacing: 0
 
-        // --- Header: gear only (no title) ------------------------
+        // --- Header: gear, right-aligned (mainwindow.ui spacer -> gear) ------
         Item {
             Layout.fillWidth: true
-            Layout.topMargin: Theme.spacingSmall
-            Layout.leftMargin: Theme.spacingSmall
-            implicitHeight: 32
+            implicitHeight: 31
 
             Kit.IconButton {
-                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.rightMargin: 3
                 anchors.verticalCenter: parent.verticalCenter
+                implicitWidth: 33
+                implicitHeight: 25
                 icon: FontIcons.fa_gear
                 iconColor: Theme.iconMuted
                 tooltipText: qsTr("Settings")
@@ -57,7 +62,6 @@ Rectangle {
         QQC.ScrollView {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.topMargin: Theme.spacingSmall
             clip: true
             QQC.ScrollBar.vertical: Kit.ScrollBar {}
 
@@ -78,104 +82,112 @@ Rectangle {
                     required property string color
 
                     width: ListView.view.width
-                    height: isSeparator ? 32 : 34
+                    // FOLDER_LABEL_HEIGHT 35 / FOLDER_ITEM_HEIGHT 30.
+                    height: isSeparator ? 35 : 30
 
                     readonly property bool isSelected: !isSeparator && index === root.currentRow
                     readonly property bool isTag: nodeType === 5
 
-                    // Rounded selection / hover highlight, inset from edges.
+                    // Full-row fill: blue when selected, hover tint otherwise.
+                    // No radius, no inset (foldertreedelegateeditor fillRect).
                     Rectangle {
                         anchors.fill: parent
-                        anchors.leftMargin: Theme.spacingSmall
-                        anchors.rightMargin: Theme.spacingSmall
-                        anchors.topMargin: 1
-                        anchors.bottomMargin: 1
-                        radius: Theme.radius
                         visible: !del.isSeparator && (del.isSelected || rowMouse.containsMouse)
-                        color: del.isSelected ? Theme.selection : Theme.hover
+                        color: del.isSelected ? Theme.sidebarSelection : Theme.sidebarHover
                     }
 
-                    // --- Separator row: uppercase label + "+" add button ----
-                    RowLayout {
-                        visible: del.isSeparator
+                    // --- Separator row: label (x+5) + blue "+" add button ----
+                    Item {
                         anchors.fill: parent
-                        anchors.leftMargin: Theme.spacing
-                        anchors.rightMargin: Theme.spacingSmall
-                        anchors.bottomMargin: 2
-                        spacing: 0
+                        visible: del.isSeparator
 
                         QQC.Label {
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignBottom
+                            anchors.left: parent.left
+                            anchors.leftMargin: 5
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 6
                             text: del.label
-                            color: Theme.textMuted
+                            color: Theme.separatorText
                             font.family: FontIcons.display
-                            font.pixelSize: 11
-                            font.bold: true
+                            font.pixelSize: 12
                             font.capitalization: Font.AllUppercase
-                            elide: Text.ElideRight
                         }
 
                         Kit.IconButton {
-                            implicitWidth: 22
-                            implicitHeight: 22
+                            anchors.right: parent.right
+                            anchors.rightMargin: 4
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 2
+                            implicitWidth: 30
+                            implicitHeight: 24
                             icon: FontIcons.fa_plus
-                            iconPointSize: 11
-                            iconColor: Theme.textMuted
+                            iconPointSize: 12
+                            iconColor: Theme.addButton
                             tooltipText: del.nodeType === 2 ? qsTr("New folder") : qsTr("New tag")
                             onClicked: del.nodeType === 2 ? root.addFolderRequested()
                                                           : root.addTagRequested()
                         }
                     }
 
-                    // --- Selectable row: icon/dot + label + count -----------
-                    RowLayout {
-                        visible: !del.isSeparator
+                    // --- Selectable row: icon/dot (x+22) + label + count -----
+                    Item {
                         anchors.fill: parent
-                        anchors.leftMargin: Theme.spacing
-                        anchors.rightMargin: Theme.spacing
-                        spacing: Theme.spacingSmall
+                        visible: !del.isSeparator
 
-                        // Tag rows show a colored dot; others show a glyph.
+                        // Icon box: 18 wide, left edge at x+22.
                         Item {
-                            Layout.preferredWidth: 16
-                            Layout.preferredHeight: 16
-                            Layout.alignment: Qt.AlignVCenter
+                            id: iconBox
+                            anchors.left: parent.left
+                            anchors.leftMargin: 22
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 18
+                            height: 18
 
                             Kit.Glyph {
                                 anchors.centerIn: parent
                                 visible: !del.isTag
                                 glyph: root.iconFor(del.nodeType)
                                 font.pointSize: 12 + Theme.pointSizeOffset
-                                color: del.isSelected ? Theme.accent : Theme.iconMuted
+                                color: del.isSelected ? Theme.sidebarSelectedText : Theme.sidebarIcon
                             }
 
-                            Rectangle {
+                            // Tag dot (fa_circle, in the tag color).
+                            Kit.Glyph {
                                 anchors.centerIn: parent
                                 visible: del.isTag
-                                width: 10
-                                height: 10
-                                radius: 5
-                                color: del.color !== "" ? del.color : Theme.iconMuted
+                                glyph: FontIcons.fa_circle
+                                font.pointSize: 12 + Theme.pointSizeOffset
+                                color: del.isSelected ? Theme.sidebarSelectedText
+                                     : del.color !== "" ? del.color : Theme.sidebarIcon
                             }
                         }
 
                         QQC.Label {
-                            Layout.fillWidth: true
+                            anchors.left: iconBox.right
+                            anchors.leftMargin: del.isTag ? 11 : 5
+                            anchors.right: countLabel.left
+                            anchors.rightMargin: 5
+                            anchors.verticalCenter: parent.verticalCenter
                             text: del.label
                             elide: Text.ElideRight
                             font.family: FontIcons.display
-                            font.pixelSize: 14
-                            font.bold: del.isSelected
-                            color: del.isSelected ? Theme.accent : Theme.text
+                            font.pixelSize: 13
+                            font.bold: true
+                            color: del.isSelected ? Theme.sidebarSelectedText : Theme.sidebarText
                         }
 
                         QQC.Label {
+                            id: countLabel
+                            anchors.right: parent.right
+                            anchors.rightMargin: 14
+                            anchors.verticalCenter: parent.verticalCenter
                             visible: del.count >= 0
                             text: del.count
                             font.family: FontIcons.display
                             font.pixelSize: 12
-                            color: del.isSelected ? Theme.accent : Theme.countText
+                            font.bold: true
+                            color: del.isSelected ? Theme.sidebarSelectedText : Theme.sidebarText
+                            opacity: del.isSelected ? 1.0 : 0.5
                         }
                     }
 
@@ -198,8 +210,8 @@ Rectangle {
     // --- Theme switcher popup (opened by the cog) ---------------------------
     QQC.Popup {
         id: settingsMenu
-        x: Theme.spacingSmall
-        y: Theme.spacingSmall + 34
+        x: parent.width - width - 3
+        y: 31
         padding: Theme.spacingSmall
         modal: false
         focus: true

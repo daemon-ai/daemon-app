@@ -4,6 +4,9 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
+// Middle column: the notes bar (collapse + title/count + trash + search button,
+// with button-revealed search) and the NoteListView port - rows stacked as
+// title / snippet / date / folder+tag chips note delegate.
 Rectangle {
     id: root
 
@@ -13,7 +16,6 @@ Rectangle {
     signal toggleSidebarRequested()
 
     property int currentRow: -1
-    // Reveals the search field via a button; it is hidden by default.
     property bool searchActive: false
 
     function setScope(nodeType, nodeId) {
@@ -63,7 +65,7 @@ Rectangle {
                     QQC.Label {
                         Layout.fillWidth: true
                         text: convModel.scopeTitle
-                        color: Theme.text
+                        color: Theme.listTitle
                         font.family: FontIcons.display
                         font.bold: true
                         font.pixelSize: 15
@@ -104,8 +106,8 @@ Rectangle {
                     id: searchField
                     anchors.fill: parent
                     placeholderText: qsTr("Search conversations")
-                    leftPadding: 32
-                    rightPadding: 32
+                    leftPadding: 21
+                    rightPadding: 30
                     text: convModel.search
                     onTextEdited: convModel.search = text
                     Keys.onEscapePressed: root.closeSearch()
@@ -117,9 +119,9 @@ Rectangle {
 
                 Kit.Glyph {
                     anchors.verticalCenter: parent.verticalCenter
-                    x: 11
+                    x: 7
                     glyph: FontIcons.fa_magnifying_glass
-                    font.pointSize: 12 + Theme.pointSizeOffset
+                    font.pointSize: 11 + Theme.pointSizeOffset
                     color: Theme.textMuted
                 }
 
@@ -159,119 +161,121 @@ Rectangle {
                     required property var tagNames
                     required property var tagColors
 
+                    // LEFT_OFFSET_X = 20, TOP_OFFSET_Y = 10, LAST_EL_SEP_SPACE = 12.
+                    readonly property int leftOffset: 20
+
                     width: ListView.view.width
-                    height: content.implicitHeight + 2 * Theme.spacingSmall + 1
+                    height: content.implicitHeight + 10 + 12
 
                     readonly property bool isSelected: index === root.currentRow
 
                     Rectangle {
                         anchors.fill: parent
-                        color: del.isSelected ? Theme.selection
+                        color: del.isSelected ? Theme.listSelection
                              : rowMouse.containsMouse ? Theme.hover
                              : "transparent"
+                    }
 
-                        Rectangle {
-                            anchors.bottom: parent.bottom
-                            width: parent.width
-                            height: 1
-                            color: Theme.border
-                        }
+                    // Bottom separator, inset by LEFT_OFFSET_X on both sides.
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        x: del.leftOffset
+                        width: parent.width - 2 * del.leftOffset
+                        height: 1
+                        color: Theme.listSeparator
                     }
 
                     ColumnLayout {
                         id: content
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.leftMargin: Theme.spacing
-                        anchors.rightMargin: Theme.spacing
-                        spacing: 3
+                        anchors.top: parent.top
+                        anchors.topMargin: 10
+                        anchors.leftMargin: del.leftOffset
+                        anchors.rightMargin: del.leftOffset
+                        spacing: 0
 
-                        // Line 1: title + time.
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: Theme.spacingSmall
-
-                            QQC.Label {
-                                Layout.fillWidth: true
-                                text: del.title
-                                color: Theme.text
-                                font.family: FontIcons.display
-                                font.pixelSize: 14
-                                font.bold: true
-                                elide: Text.ElideRight
-                            }
-
-                            QQC.Label {
-                                text: del.modified ? Qt.formatDateTime(del.modified, "MMM d") : ""
-                                color: Theme.countText
-                                font.family: FontIcons.display
-                                font.pixelSize: 11
-                            }
-                        }
-
-                        // Line 2: snippet.
+                        // Title.
                         QQC.Label {
                             Layout.fillWidth: true
-                            visible: del.snippet !== ""
-                            text: del.snippet
-                            color: Theme.textMuted
+                            text: del.title
+                            color: Theme.listText
                             font.family: FontIcons.display
-                            font.pixelSize: 12
+                            font.pixelSize: 14
+                            font.bold: true
                             elide: Text.ElideRight
-                            maximumLineCount: 2
-                            wrapMode: Text.Wrap
                         }
 
-                        // Line 3: folder chip + tag chips.
+                        // Snippet (snippet above date).
+                        QQC.Label {
+                            Layout.fillWidth: true
+                            Layout.topMargin: 2
+                            visible: del.snippet !== ""
+                            text: del.snippet
+                            color: Theme.listSnippet
+                            font.family: FontIcons.display
+                            font.pixelSize: 12
+                            font.bold: true
+                            elide: Text.ElideRight
+                        }
+
+                        // Date - on its own line, left-aligned (not top-right).
+                        QQC.Label {
+                            Layout.fillWidth: true
+                            Layout.topMargin: 5
+                            text: del.modified ? Qt.formatDateTime(del.modified, "MMM d, h:mm AP") : ""
+                            color: Theme.listText
+                            font.family: FontIcons.display
+                            font.pixelSize: 12
+                        }
+
+                        // Folder chip + tag chips.
                         Flow {
                             Layout.fillWidth: true
-                            Layout.topMargin: 1
-                            spacing: Theme.spacingSmall
+                            Layout.topMargin: 14
+                            spacing: Theme.spacing
                             visible: del.folderName !== "" || (del.tagNames && del.tagNames.length > 0)
 
-                            // Folder chip.
                             Row {
                                 visible: del.folderName !== ""
-                                spacing: 4
+                                spacing: 5
                                 Kit.Glyph {
                                     glyph: FontIcons.fa_folder
-                                    font.pointSize: 9 + Theme.pointSizeOffset
-                                    color: Theme.countText
+                                    font.pointSize: 10 + Theme.pointSizeOffset
+                                    color: Theme.listSnippet
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 QQC.Label {
                                     text: del.folderName
-                                    color: Theme.countText
+                                    color: Theme.listSnippet
                                     font.family: FontIcons.display
-                                    font.pixelSize: 11
+                                    font.pixelSize: 12
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
 
-                            // Tag chips (colored dot + name).
                             Repeater {
                                 model: del.tagNames
                                 delegate: Row {
                                     required property int index
                                     required property string modelData
-                                    spacing: 4
+                                    spacing: 5
                                     Rectangle {
-                                        width: 8
-                                        height: 8
-                                        radius: 4
+                                        width: 9
+                                        height: 9
+                                        radius: 4.5
                                         anchors.verticalCenter: parent.verticalCenter
                                         color: {
                                             const c = del.tagColors;
                                             return (c && index < c.length && c[index] !== "")
-                                                ? c[index] : Theme.iconMuted;
+                                                ? c[index] : Theme.sidebarIcon;
                                         }
                                     }
                                     QQC.Label {
                                         text: modelData
-                                        color: Theme.countText
+                                        color: Theme.listSnippet
                                         font.family: FontIcons.display
-                                        font.pixelSize: 11
+                                        font.pixelSize: 12
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                 }
