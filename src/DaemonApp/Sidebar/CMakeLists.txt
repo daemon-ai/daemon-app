@@ -16,5 +16,6 @@ target_link_libraries(da_sidebar
         daemon-app::domain
         daemon-app::persistence
         daemon-app::theme
+        daemon-app::controls
         daemon-app::warnings
 )

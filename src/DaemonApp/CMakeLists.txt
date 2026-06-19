@@ -3,6 +3,7 @@
 # are added as they are implemented.
 
 add_subdirectory(Theme)
+add_subdirectory(Controls)
 add_subdirectory(Transcript)
 add_subdirectory(Composer)
 add_subdirectory(Sidebar)
@@ -10,5 +11,4 @@ add_subdirectory(ConversationsList)
 add_subdirectory(Conversation)
 add_subdirectory(App)
 
-# add_subdirectory(Controls)
 # add_subdirectory(Settings)

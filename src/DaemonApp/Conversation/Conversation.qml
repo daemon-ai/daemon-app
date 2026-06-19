@@ -40,11 +40,25 @@ Rectangle {
         }
     }
 
-    Label {
+    Column {
         anchors.centerIn: parent
         visible: !controller.hasConversation
-        text: qsTr("Select a conversation")
-        color: Theme.textMuted
-        font.pixelSize: 16
+        spacing: Theme.spacing
+
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: FontIcons.fa_comments
+            font.family: FontIcons.faSolid
+            font.pixelSize: 40
+            color: Theme.border
+        }
+
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: qsTr("Select a conversation")
+            color: Theme.textMuted
+            font.family: FontIcons.display
+            font.pixelSize: 16
+        }
     }
 }

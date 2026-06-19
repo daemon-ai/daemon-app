@@ -7,4 +7,4 @@ qt_add_qml_module(da_composer
 )
 add_library(daemon-app::composer ALIAS da_composer)
 
-target_link_libraries(da_composer PRIVATE Qt6::Quick daemon-app::theme daemon-app::warnings)
+target_link_libraries(da_composer PRIVATE Qt6::Quick daemon-app::theme daemon-app::controls daemon-app::warnings)

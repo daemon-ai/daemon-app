@@ -18,6 +18,11 @@ ApplicationWindow {
         anchors.fill: parent
         orientation: Qt.Horizontal
 
+        handle: Rectangle {
+            implicitWidth: 1
+            color: SplitHandle.pressed || SplitHandle.hovered ? Theme.accent : Theme.splitter
+        }
+
         Sidebar {
             id: sidebar
             SplitView.preferredWidth: Theme.sidebarWidth
