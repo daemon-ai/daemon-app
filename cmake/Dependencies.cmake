@@ -41,8 +41,14 @@ endif()
 
 # ---------------------------------------------------------------------------
 # Desktop-only dependencies
+#
+# Opt-in: nothing links these yet (tray/updater/autostart land with the platform
+# layer), and some are legacy qmake-era trees that need their CMake integration
+# finished. Off by default so the renderer build (md4qt + earcut above) does not
+# pull them in. Flip DAEMON_APP_DESKTOP_DEPS=ON when wiring src/platform.
 # ---------------------------------------------------------------------------
-if(NOT DAEMON_APP_MOBILE)
+option(DAEMON_APP_DESKTOP_DEPS "Build the desktop-only third-party deps (QWindowKit, updater, autostart, shortcut)" OFF)
+if(NOT DAEMON_APP_MOBILE AND DAEMON_APP_DESKTOP_DEPS)
     # QWindowKit - frameless window / native chrome (Quick module only)
     _daemon_app_resolve_dir(_qwk_dir QWINDOWKIT_SOURCE_DIR)
     if(NOT EXISTS "${_qwk_dir}/CMakeLists.txt")

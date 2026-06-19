@@ -24,21 +24,27 @@ TestCase {
                 background: "#ffffff", sidebar: "#ededed", text: "#37352e",
                 sidebarSelection: "#448ac9", sidebarHover: "#b4d0e9",
                 searchBackground: "#ffffff", searchFocusBorder: "#a6c6e4",
-                listSelection: "#dae9ef"
+                listSelection: "#dae9ef",
+                codeBackground: "#f1f1ef", activeBlockBackground: "#f8fbff",
+                activeBlockBorder: "#d7e9fb"
             },
             {
                 tag: "Dark", theme: "Dark", isDark: true, isSepia: false,
                 background: "#191919", sidebar: "#333333", text: "#d6d6d6",
                 sidebarSelection: "#448ac9", sidebarHover: "#233445",
                 searchBackground: "#2a2a2a", searchFocusBorder: "#2c536f",
-                listSelection: "#233445"
+                listSelection: "#233445",
+                codeBackground: "#2a2a2a", activeBlockBackground: "#1f2733",
+                activeBlockBorder: "#2c4a63"
             },
             {
                 tag: "Sepia", theme: "Sepia", isDark: false, isSepia: true,
                 background: "#fbf0d9", sidebar: "#ededed", text: "#321e03",
                 sidebarSelection: "#448ac9", sidebarHover: "#b4d0e9",
                 searchBackground: "#fbf0d9", searchFocusBorder: "#a6c6e4",
-                listSelection: "#dae9ef"
+                listSelection: "#dae9ef",
+                codeBackground: "#efe6d2", activeBlockBackground: "#f3ead2",
+                activeBlockBorder: "#d8c79a"
             }
         ];
     }
@@ -58,6 +64,11 @@ TestCase {
         compare(hex(Theme.searchBackground), data.searchBackground, "searchBackground");
         compare(hex(Theme.searchFocusBorder), data.searchFocusBorder, "searchFocusBorder");
         compare(hex(Theme.listSelection), data.listSelection, "listSelection");
+
+        // Block-editor (Transcript renderer) tokens recolor per theme too.
+        compare(hex(Theme.codeBackground), data.codeBackground, "codeBackground");
+        compare(hex(Theme.activeBlockBackground), data.activeBlockBackground, "activeBlockBackground");
+        compare(hex(Theme.activeBlockBorder), data.activeBlockBorder, "activeBlockBorder");
     }
 
     // Switching must actually change tokens (not a constant palette): capture the

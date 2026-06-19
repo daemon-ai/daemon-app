@@ -27,6 +27,7 @@ target_link_libraries(daemon-app
         # references them via Q_IMPORT_QML_PLUGIN so they aren't dead-stripped.
         daemon-app::theme
         daemon-app::controls
+        daemon-app::blockeditor
         daemon-app::sidebar
         daemon-app::conversationslist
         daemon-app::conversation
@@ -34,6 +35,7 @@ target_link_libraries(daemon-app
         daemon-app::composer
         da_themeplugin
         da_controlsplugin
+        da_blockeditorplugin
         da_sidebarplugin
         da_conversationslistplugin
         da_conversationplugin

@@ -8,7 +8,7 @@
 #include <QtQml/qqmlregistration.h>
 
 namespace persistence {
-class IChatStore;
+class IConversationStore;
 }
 
 // Flat sidebar list with separator rows: All Conversations / Archived /
@@ -59,6 +59,6 @@ private:
 
     void rebuild();
 
-    persistence::IChatStore* m_store = nullptr;
+    persistence::IConversationStore* m_store = nullptr;
     QList<Row> m_rows;
 };

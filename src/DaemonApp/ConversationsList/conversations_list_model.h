@@ -12,7 +12,7 @@
 #include <QtQml/qqmlregistration.h>
 
 namespace persistence {
-class IChatStore;
+class IConversationStore;
 }
 
 // The conversations for the current sidebar scope, filtered by `search`.
@@ -65,7 +65,7 @@ private:
     void rebuildLookups();
     [[nodiscard]] QString computeScopeTitle() const;
 
-    persistence::IChatStore* m_store = nullptr;
+    persistence::IConversationStore* m_store = nullptr;
     domain::ListScope m_scope;
     QString m_search;
     QString m_scopeTitle;

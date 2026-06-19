@@ -1,16 +1,16 @@
 #pragma once
 
-#include "persistence/ichat_store.h"
+#include "persistence/iconversation_store.h"
 
 namespace persistence {
 
-// In-memory IChatStore seeded with sample data, so the UI is fully alive
+// In-memory IConversationStore seeded with sample data, so the UI is fully alive
 // without a database. Not persisted across runs.
-class InMemoryChatStore : public IChatStore {
+class InMemoryConversationStore : public IConversationStore {
     Q_OBJECT
 
 public:
-    explicit InMemoryChatStore(QObject* parent = nullptr);
+    explicit InMemoryConversationStore(QObject* parent = nullptr);
 
     [[nodiscard]] QList<domain::Folder> folders() const override;
     [[nodiscard]] QList<domain::Tag> tags() const override;

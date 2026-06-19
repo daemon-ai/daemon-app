@@ -16,9 +16,12 @@ QtObject {
     property FontLoader _faSolidLoader: FontLoader { source: "fonts/fa-solid-900.ttf" }
     property FontLoader _faBrandsLoader: FontLoader { source: "fonts/fa-brands-400.ttf" }
     property FontLoader _mtLoader: FontLoader { source: "fonts/material-symbols-outlined.ttf" }
+    property FontLoader _monoLoader: FontLoader { source: "fonts/iAWriterMonoS-Regular.ttf" }
 
     // Display font for all app text.
     readonly property string display: _interLoader.name
+    // Monospace font for code spans / fences in the markdown renderer.
+    readonly property string mono: _monoLoader.name
     // Icon font families.
     readonly property string faSolid: _faSolidLoader.name
     readonly property string faBrands: _faBrandsLoader.name
@@ -58,7 +61,7 @@ QtObject {
     readonly property string fa_font: "\uf031"
     readonly property string fa_image: "\uf03e"
     readonly property string fa_indent: "\uf03c"
-    // Chat-domain glyphs (full FontAwesome).
+    // Conversation-domain glyphs (full FontAwesome).
     readonly property string fa_folder: "\uf07b"
     readonly property string fa_tag: "\uf02b"
     readonly property string fa_comments: "\uf086"

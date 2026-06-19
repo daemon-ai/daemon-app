@@ -33,7 +33,7 @@ Rectangle {
 
     SidebarModel {
         id: sidebarModel
-        store: ChatStore
+        store: ConversationStore
     }
 
     ColumnLayout {

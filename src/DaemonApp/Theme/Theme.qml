@@ -88,6 +88,27 @@ QtObject {
     readonly property color searchText: isDark ? "#cfcfcf" : isSepia ? "#321e03" : "#1a1a1a"
     readonly property color searchSelection: "#d2e4fa"
 
+    // --- Markdown / block editor (Transcript renderer) ----------------------
+    // These tokens carry the ported BlockEditor's vocabulary so the upstream QML
+    // components work by only adding `import DaemonApp.Theme`; the mapping to the
+    // theme-aware palette lives here (one place) instead of scattered edits.
+    // Inline-code and code-fence background (fed to the C++ projector palette).
+    readonly property color codeBackground: isDark ? "#2a2a2a" : isSepia ? "#efe6d2" : "#f1f1ef"
+    readonly property color codeText: text
+    // Markdown links reuse the accent.
+    readonly property color link: accent
+    // Subtle raised surface (code/table-header/diagram backgrounds).
+    readonly property color surfaceRaised: isDark ? "#202020" : isSepia ? "#f3ebd6" : "#f7f7f5"
+    // Muted body text (alias of textMuted in the block-editor vocabulary).
+    readonly property color mutedText: textMuted
+    // Text selection in the renderer.
+    readonly property color selection: searchSelection
+    readonly property color selectionText: text
+    readonly property color transparent: "transparent"
+    // Active (focused) block highlight.
+    readonly property color activeBlockBackground: isDark ? "#1f2733" : isSepia ? "#f3ead2" : "#f8fbff"
+    readonly property color activeBlockBorder: isDark ? "#2c4a63" : isSepia ? "#d8c79a" : "#d7e9fb"
+
     // --- Icons --------------------------------------------------------------
     // IconButton default glyph color (Dark uses a blue accent).
     readonly property color iconColor: isDark ? "#5b94f5" : "#000000"
@@ -109,6 +130,16 @@ QtObject {
     readonly property int spacing: 12
     readonly property int spacingLarge: 20
     readonly property int radius: 5
+
+    // Block-editor renderer metrics (theme-independent constants, upstream names).
+    readonly property int pageMargin: 24
+    readonly property int blockPadding: 10
+    readonly property int contentSpacing: 18
+    readonly property int smallSpacing: 6
+    readonly property int hairline: 1
+    readonly property int radiusSmall: 8
+    readonly property int bodyFontSize: 15
+    readonly property int captionFontSize: 13
 
     readonly property int sidebarWidth: 240
     readonly property int listWidth: 300

@@ -1,6 +1,8 @@
 #include "application.h"
 
-#include "persistence/in_memory_chat_store.h"
+#include "app/cached_image_provider.h"
+#include "app/image_cache.h"
+#include "persistence/in_memory_conversation_store.h"
 #include "platform/iplatform_services.h"
 #include "platform/platform_services_factory.h"
 
@@ -11,7 +13,7 @@
 
 Application::Application(QObject* parent)
     : QObject(parent)
-    , m_store(new persistence::InMemoryChatStore(this))
+    , m_store(new persistence::InMemoryConversationStore(this))
     , m_platform(platform::createPlatformServices(this))
 {
 }
@@ -19,7 +21,12 @@ Application::Application(QObject* parent)
 void Application::registerContext(QQmlApplicationEngine& engine)
 {
     // Shared store; QML view models bind their `store` property to this.
-    engine.rootContext()->setContextProperty(QStringLiteral("ChatStore"), m_store);
+    engine.rootContext()->setContextProperty(QStringLiteral("ConversationStore"), m_store);
+
+    // The BlockEditor renderer resolves image://imgcache/<url> through the shared
+    // ImageCache; instantiate it on the GUI thread and register the provider.
+    be::app::ImageCache::instance();
+    engine.addImageProvider(QStringLiteral("imgcache"), new be::app::CachedImageProvider);
 }
 
 void Application::completeWiring(QQmlApplicationEngine& engine)

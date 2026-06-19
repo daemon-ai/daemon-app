@@ -41,6 +41,7 @@ void loadBundledFonts()
     QFontDatabase::addApplicationFont(prefix + QStringLiteral("fa-solid-900.ttf"));
     QFontDatabase::addApplicationFont(prefix + QStringLiteral("fa-brands-400.ttf"));
     QFontDatabase::addApplicationFont(prefix + QStringLiteral("material-symbols-outlined.ttf"));
+    QFontDatabase::addApplicationFont(prefix + QStringLiteral("iAWriterMonoS-Regular.ttf"));
 
     QFont base(QStringLiteral("Inter"));
     base.setStyleStrategy(QFont::PreferAntialias);
@@ -77,6 +78,23 @@ bool maybeRenderThemeShots(QQmlApplicationEngine& engine)
 
     window->show();
 
+    // Open a conversation so the Transcript renders real markdown (headings,
+    // lists, inline code, a table) instead of the empty-state placeholder. The
+    // ConversationController lives in the QML object tree; reach it by class name.
+    const QList<QObject*> children = window->findChildren<QObject*>();
+    for (QObject* obj : children) {
+        if (qstrcmp(obj->metaObject()->className(), "ConversationController") == 0) {
+            QMetaObject::invokeMethod(obj, "open", Q_ARG(int, 1));
+            break;
+        }
+    }
+    // Let the open + block projection settle before the first grab.
+    {
+        QEventLoop loop;
+        QTimer::singleShot(200, &loop, &QEventLoop::quit);
+        loop.exec();
+    }
+
     const QList<QPair<QString, QString>> themes = {
         { QStringLiteral("Light"), QStringLiteral("theme-light.png") },
         { QStringLiteral("Dark"), QStringLiteral("theme-dark.png") },
@@ -111,6 +129,7 @@ bool maybeRenderThemeShots(QQmlApplicationEngine& engine)
 // does not apply). Class names are the module URI with dots->underscores + Plugin.
 Q_IMPORT_QML_PLUGIN(DaemonApp_ThemePlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ControlsPlugin)
+Q_IMPORT_QML_PLUGIN(DaemonApp_BlockEditorPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_SidebarPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ConversationsListPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ConversationPlugin)

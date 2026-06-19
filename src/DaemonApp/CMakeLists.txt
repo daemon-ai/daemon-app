@@ -4,6 +4,7 @@
 
 add_subdirectory(Theme)
 add_subdirectory(Controls)
+add_subdirectory(BlockEditor)
 add_subdirectory(Transcript)
 add_subdirectory(Composer)
 add_subdirectory(Sidebar)

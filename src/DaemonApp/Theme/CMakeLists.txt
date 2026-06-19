@@ -10,6 +10,7 @@ set(theme_fonts
     ${CMAKE_SOURCE_DIR}/assets/fonts/fa-solid-900.ttf
     ${CMAKE_SOURCE_DIR}/assets/fonts/fa-brands-400.ttf
     ${CMAKE_SOURCE_DIR}/assets/fonts/material-symbols-outlined.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterMonoS-Regular.ttf
 )
 foreach(_font ${theme_fonts})
     get_filename_component(_font_name ${_font} NAME)

@@ -7,14 +7,14 @@ class QQmlApplicationEngine;
 QT_END_NAMESPACE
 
 namespace persistence {
-class IChatStore;
-class InMemoryChatStore;
+class IConversationStore;
+class InMemoryConversationStore;
 }
 namespace platform {
 class IPlatformServices;
 }
 
-// Owns the application-wide services (chat store, platform integrations) and
+// Owns the application-wide services (conversation store, platform integrations) and
 // wires them to the QML scene. Kept UI-toolkit agnostic: the only desktop bit
 // (tray) lives behind IPlatformServices.
 class Application : public QObject {
@@ -30,6 +30,6 @@ public:
     void completeWiring(QQmlApplicationEngine& engine);
 
 private:
-    persistence::InMemoryChatStore* m_store = nullptr;
+    persistence::InMemoryConversationStore* m_store = nullptr;
     platform::IPlatformServices* m_platform = nullptr;
 };

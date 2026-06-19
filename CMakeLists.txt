@@ -24,7 +24,7 @@ endif()
 
 # Qt Quick + Controls for the UI; QtWidgets on desktop for the tray.
 # QuickControls2 is needed for QQuickStyle (pinning the app style in main).
-find_package(Qt6 6.11 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2)
+find_package(Qt6 6.11 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Network Sql)
 if(NOT DAEMON_APP_MOBILE)
     find_package(Qt6 6.11 REQUIRED COMPONENTS Widgets)
 endif()
@@ -33,11 +33,9 @@ qt_standard_project_setup(REQUIRES 6.11)
 
 include(CompilerWarnings)
 
-# Third-party dependencies are vendored by the flake and consumed here. Not yet
-# included: the empty window needs no third-party libs, so the project also
-# configures outside the dev shell. Uncomment when the first dependent module
-# (renderer / platform) lands.
-# include(Dependencies)
+# Third-party dependencies are vendored by the flake and consumed here
+# (md4qt + earcut for the BlockEditor renderer; QWindowKit etc. on desktop).
+include(Dependencies)
 
 add_subdirectory(src)
 

@@ -26,7 +26,7 @@ Rectangle {
 
     ConversationController {
         id: controller
-        store: ChatStore
+        store: ConversationStore
     }
 
     ColumnLayout {
@@ -312,9 +312,23 @@ Rectangle {
                 visible: controller.hasConversation
 
                 Transcript {
+                    id: transcript
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    content: controller.content
+                    onEdited: function(markdown) { controller.updateContent(markdown); }
+
+                    // Load on first realize; conversation switches and external
+                    // content changes (e.g. appended messages) reload below.
+                    Component.onCompleted: load(controller.content)
+
+                    Connections {
+                        target: controller
+                        // A new conversation became current.
+                        function onConversationChanged() { transcript.load(controller.content); }
+                        // External content change (append); the user's own edits go
+                        // through updateContent() and do not emit contentChanged.
+                        function onContentChanged() { transcript.load(controller.content); }
+                    }
                 }
 
                 Composer {

@@ -30,7 +30,7 @@ Rectangle {
 
     ConversationsListModel {
         id: convModel
-        store: ChatStore
+        store: ConversationStore
     }
 
     ColumnLayout {

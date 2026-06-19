@@ -1,7 +1,7 @@
 add_library(da_persistence STATIC
-    ichat_store.h
-    in_memory_chat_store.h
-    in_memory_chat_store.cpp
+    iconversation_store.h
+    in_memory_conversation_store.h
+    in_memory_conversation_store.cpp
 )
 add_library(daemon-app::persistence ALIAS da_persistence)
 

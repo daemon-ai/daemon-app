@@ -5,7 +5,7 @@
 #include <QtQml/qqmlregistration.h>
 
 namespace persistence {
-class IChatStore;
+class IConversationStore;
 }
 
 // Drives the open conversation: loads its markdown content and appends user
@@ -31,16 +31,25 @@ public:
     Q_INVOKABLE void open(int conversationId);
     Q_INVOKABLE void appendUserText(const QString& text);
     Q_INVOKABLE int createConversation(int folderId = -1);
+    // Persist an in-place edit of the open conversation from the Transcript.
+    // Adopts the markdown locally first so the store's changed() -> refresh()
+    // does not echo back as a contentChanged() (which would reload the editor and
+    // drop the user's cursor). List snippets still refresh via the store signal.
+    Q_INVOKABLE void updateContent(const QString& markdown);
 
 signals:
     void storeChanged();
     void currentChanged();
     void contentChanged();
+    // Emitted when a different conversation becomes current (open/create), so the
+    // Transcript reloads. Distinct from contentChanged so the user's own edits do
+    // not trigger a reload.
+    void conversationChanged();
 
 private:
     void refresh();
 
-    persistence::IChatStore* m_store = nullptr;
+    persistence::IConversationStore* m_store = nullptr;
     int m_currentId = -1;
     QString m_content;
 };

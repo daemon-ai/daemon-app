@@ -1,6 +1,6 @@
 #include "conversation_controller.h"
 
-#include "persistence/ichat_store.h"
+#include "persistence/iconversation_store.h"
 
 ConversationController::ConversationController(QObject* parent)
     : QObject(parent)
@@ -14,16 +14,16 @@ QObject* ConversationController::store() const
 
 void ConversationController::setStore(QObject* store)
 {
-    auto* chatStore = qobject_cast<persistence::IChatStore*>(store);
-    if (m_store == chatStore) {
+    auto* conversationStore = qobject_cast<persistence::IConversationStore*>(store);
+    if (m_store == conversationStore) {
         return;
     }
     if (m_store) {
         m_store->disconnect(this);
     }
-    m_store = chatStore;
+    m_store = conversationStore;
     if (m_store) {
-        connect(m_store, &persistence::IChatStore::changed, this,
+        connect(m_store, &persistence::IConversationStore::changed, this,
                 &ConversationController::refresh);
     }
     emit storeChanged();
@@ -38,6 +38,7 @@ void ConversationController::open(int conversationId)
     m_currentId = conversationId;
     emit currentChanged();
     refresh();
+    emit conversationChanged();
 }
 
 void ConversationController::appendUserText(const QString& text)
@@ -52,6 +53,17 @@ void ConversationController::appendUserText(const QString& text)
     }
     next += trimmed;
     m_store->setContent(m_currentId, next); // emits changed() -> refresh()
+}
+
+void ConversationController::updateContent(const QString& markdown)
+{
+    if (!m_store || m_currentId < 0 || markdown == m_content) {
+        return;
+    }
+    // Adopt locally first so the store's changed() -> refresh() is a no-op for
+    // this controller (no contentChanged), while list models still refresh.
+    m_content = markdown;
+    m_store->setContent(m_currentId, markdown);
 }
 
 int ConversationController::createConversation(int folderId)

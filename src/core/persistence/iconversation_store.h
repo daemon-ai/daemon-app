@@ -14,12 +14,12 @@ namespace persistence {
 // The data seam. View models depend on this interface, never on a concrete
 // store. The in-memory implementation is used now; a SQLite-backed DbManager
 // implementation can be dropped in later without touching the UI.
-class IChatStore : public QObject {
+class IConversationStore : public QObject {
     Q_OBJECT
 
 public:
     using QObject::QObject;
-    ~IChatStore() override = default;
+    ~IConversationStore() override = default;
 
     [[nodiscard]] virtual QList<domain::Folder> folders() const = 0;
     [[nodiscard]] virtual QList<domain::Tag> tags() const = 0;

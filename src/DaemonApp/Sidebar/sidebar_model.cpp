@@ -1,6 +1,6 @@
 #include "sidebar_model.h"
 
-#include "persistence/ichat_store.h"
+#include "persistence/iconversation_store.h"
 
 using domain::ListScope;
 using domain::NodeType;
@@ -17,16 +17,16 @@ QObject* SidebarModel::store() const
 
 void SidebarModel::setStore(QObject* store)
 {
-    auto* chatStore = qobject_cast<persistence::IChatStore*>(store);
-    if (m_store == chatStore) {
+    auto* conversationStore = qobject_cast<persistence::IConversationStore*>(store);
+    if (m_store == conversationStore) {
         return;
     }
     if (m_store) {
         m_store->disconnect(this);
     }
-    m_store = chatStore;
+    m_store = conversationStore;
     if (m_store) {
-        connect(m_store, &persistence::IChatStore::changed, this, &SidebarModel::rebuild);
+        connect(m_store, &persistence::IConversationStore::changed, this, &SidebarModel::rebuild);
     }
     emit storeChanged();
     rebuild();

@@ -1,4 +1,4 @@
-#include "persistence/in_memory_chat_store.h"
+#include "persistence/in_memory_conversation_store.h"
 
 #include <QDateTime>
 
@@ -10,13 +10,13 @@ using domain::ListScope;
 using domain::NodeType;
 using domain::Tag;
 
-InMemoryChatStore::InMemoryChatStore(QObject* parent)
-    : IChatStore(parent)
+InMemoryConversationStore::InMemoryConversationStore(QObject* parent)
+    : IConversationStore(parent)
 {
     seedSampleData();
 }
 
-void InMemoryChatStore::seedSampleData()
+void InMemoryConversationStore::seedSampleData()
 {
     m_folders = {
         { 1, -1, QStringLiteral("Work") },
@@ -54,7 +54,7 @@ void InMemoryChatStore::seedSampleData()
          QStringLiteral("Archived notes from an earlier session.\n"));
 }
 
-bool InMemoryChatStore::matchesScope(const Conversation& c, const ListScope& scope) const
+bool InMemoryConversationStore::matchesScope(const Conversation& c, const ListScope& scope) const
 {
     switch (scope.type) {
     case NodeType::AllConversations:
@@ -72,17 +72,17 @@ bool InMemoryChatStore::matchesScope(const Conversation& c, const ListScope& sco
     return false;
 }
 
-QList<Folder> InMemoryChatStore::folders() const
+QList<Folder> InMemoryConversationStore::folders() const
 {
     return m_folders;
 }
 
-QList<Tag> InMemoryChatStore::tags() const
+QList<Tag> InMemoryConversationStore::tags() const
 {
     return m_tags;
 }
 
-QList<Conversation> InMemoryChatStore::conversations(const ListScope& scope) const
+QList<Conversation> InMemoryConversationStore::conversations(const ListScope& scope) const
 {
     QList<Conversation> out;
     for (const Conversation& c : m_conversations) {
@@ -93,7 +93,7 @@ QList<Conversation> InMemoryChatStore::conversations(const ListScope& scope) con
     return out;
 }
 
-int InMemoryChatStore::conversationCount(const ListScope& scope) const
+int InMemoryConversationStore::conversationCount(const ListScope& scope) const
 {
     int count = 0;
     for (const Conversation& c : m_conversations) {
@@ -104,7 +104,7 @@ int InMemoryChatStore::conversationCount(const ListScope& scope) const
     return count;
 }
 
-QString InMemoryChatStore::content(int conversationId) const
+QString InMemoryConversationStore::content(int conversationId) const
 {
     for (const Conversation& c : m_conversations) {
         if (c.id == conversationId) {
@@ -114,7 +114,7 @@ QString InMemoryChatStore::content(int conversationId) const
     return {};
 }
 
-int InMemoryChatStore::createConversation(int folderId)
+int InMemoryConversationStore::createConversation(int folderId)
 {
     Conversation c;
     c.id = m_nextId++;
@@ -127,7 +127,7 @@ int InMemoryChatStore::createConversation(int folderId)
     return c.id;
 }
 
-void InMemoryChatStore::setContent(int conversationId, const QString& markdown)
+void InMemoryConversationStore::setContent(int conversationId, const QString& markdown)
 {
     for (Conversation& c : m_conversations) {
         if (c.id == conversationId) {
@@ -139,7 +139,7 @@ void InMemoryChatStore::setContent(int conversationId, const QString& markdown)
     }
 }
 
-void InMemoryChatStore::setArchived(int conversationId, bool archived)
+void InMemoryConversationStore::setArchived(int conversationId, bool archived)
 {
     for (Conversation& c : m_conversations) {
         if (c.id == conversationId) {

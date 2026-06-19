@@ -1,6 +1,6 @@
 #include "conversations_list_model.h"
 
-#include "persistence/ichat_store.h"
+#include "persistence/iconversation_store.h"
 
 using domain::Conversation;
 using domain::ListScope;
@@ -35,16 +35,16 @@ QObject* ConversationsListModel::store() const
 
 void ConversationsListModel::setStore(QObject* store)
 {
-    auto* chatStore = qobject_cast<persistence::IChatStore*>(store);
-    if (m_store == chatStore) {
+    auto* conversationStore = qobject_cast<persistence::IConversationStore*>(store);
+    if (m_store == conversationStore) {
         return;
     }
     if (m_store) {
         m_store->disconnect(this);
     }
-    m_store = chatStore;
+    m_store = conversationStore;
     if (m_store) {
-        connect(m_store, &persistence::IChatStore::changed, this,
+        connect(m_store, &persistence::IConversationStore::changed, this,
                 &ConversationsListModel::reload);
     }
     emit storeChanged();
