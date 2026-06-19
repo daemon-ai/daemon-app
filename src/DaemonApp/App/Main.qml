@@ -11,7 +11,7 @@ ApplicationWindow {
     width: 1100
     height: 720
     visible: true
-    title: qsTr("daemon-app")
+    title: qsTr("Daemon")
     color: Theme.background
 
     SplitView {
