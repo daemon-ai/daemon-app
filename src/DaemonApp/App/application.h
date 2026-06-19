@@ -1,0 +1,35 @@
+#pragma once
+
+#include <QObject>
+
+QT_BEGIN_NAMESPACE
+class QQmlApplicationEngine;
+QT_END_NAMESPACE
+
+namespace persistence {
+class IChatStore;
+class InMemoryChatStore;
+}
+namespace platform {
+class IPlatformServices;
+}
+
+// Owns the application-wide services (chat store, platform integrations) and
+// wires them to the QML scene. Kept UI-toolkit agnostic: the only desktop bit
+// (tray) lives behind IPlatformServices.
+class Application : public QObject {
+    Q_OBJECT
+
+public:
+    explicit Application(QObject* parent = nullptr);
+
+    // Expose C++ services to QML before the scene loads.
+    void registerContext(QQmlApplicationEngine& engine);
+
+    // Connect platform services to the loaded root window and install the tray.
+    void completeWiring(QQmlApplicationEngine& engine);
+
+private:
+    persistence::InMemoryChatStore* m_store = nullptr;
+    platform::IPlatformServices* m_platform = nullptr;
+};

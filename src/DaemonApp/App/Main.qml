@@ -1,13 +1,52 @@
 import QtQuick
+import QtQuick.Controls
+import DaemonApp.Theme
+import DaemonApp.Sidebar
+import DaemonApp.ConversationsList
+import DaemonApp.Conversation
 
-// Empty top-level window (QQuickWindow). The app shell - sidebar, conversations
-// list, and the conversation (transcript + composer) - is composed here as the
-// feature modules come online.
-Window {
+ApplicationWindow {
     id: root
 
-    width: 1024
+    width: 1100
     height: 720
     visible: true
     title: qsTr("daemon-app")
+    color: Theme.background
+
+    SplitView {
+        anchors.fill: parent
+        orientation: Qt.Horizontal
+
+        Sidebar {
+            id: sidebar
+            SplitView.preferredWidth: Theme.sidebarWidth
+            SplitView.minimumWidth: 160
+            visible: !collapsed
+
+            property bool collapsed: false
+
+            onScopeSelected: function(nodeType, nodeId) {
+                conversationsList.setScope(nodeType, nodeId);
+            }
+        }
+
+        ConversationsList {
+            id: conversationsList
+            SplitView.preferredWidth: Theme.listWidth
+            SplitView.minimumWidth: 220
+
+            onToggleSidebarRequested: sidebar.collapsed = !sidebar.collapsed
+            onConversationActivated: function(conversationId) {
+                conversation.open(conversationId);
+            }
+            onNewConversationRequested: conversation.createNew()
+        }
+
+        Conversation {
+            id: conversation
+            SplitView.fillWidth: true
+            SplitView.minimumWidth: 320
+        }
+    }
 }

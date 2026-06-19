@@ -22,9 +22,12 @@ else()
     set(DAEMON_APP_MOBILE OFF)
 endif()
 
-# The minimal foundation only needs Qt Quick. Sql/Widgets/Network/Svg are added
-# back as the core libs and feature modules that use them come online.
-find_package(Qt6 6.11 REQUIRED COMPONENTS Core Gui Qml Quick)
+# Qt Quick + Controls for the UI; QtWidgets on desktop for the tray.
+# QuickControls2 is needed for QQuickStyle (pinning the app style in main).
+find_package(Qt6 6.11 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2)
+if(NOT DAEMON_APP_MOBILE)
+    find_package(Qt6 6.11 REQUIRED COMPONENTS Widgets)
+endif()
 
 qt_standard_project_setup(REQUIRES 6.11)
 
