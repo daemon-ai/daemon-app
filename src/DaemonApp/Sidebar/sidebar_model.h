@@ -27,6 +27,7 @@ public:
         NodeIdRole,
         IsSeparatorRole,
         SelectableRole,
+        ColorRole, // tag color for the dot; empty otherwise
     };
 
     explicit SidebarModel(QObject* parent = nullptr);
@@ -53,6 +54,7 @@ private:
         int nodeId = -1;
         bool separator = false;
         bool selectable = true;
+        QString color; // tag dot color; empty for non-tag rows
     };
 
     void rebuild();

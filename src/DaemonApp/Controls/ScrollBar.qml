@@ -3,7 +3,7 @@ import QtQuick.Controls as QQC
 import DaemonApp.Theme
 
 // Slim, themed ScrollBar that fades the handle to the muted token and thickens
-// on hover - a Quick equivalent of Daino's CustomVerticalScrollBar look.
+// on hover - Needs a full CustomVerticalScrollBar.
 QQC.ScrollBar {
     id: root
 

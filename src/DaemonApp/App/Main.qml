@@ -45,7 +45,6 @@ ApplicationWindow {
             onConversationActivated: function(conversationId) {
                 conversation.open(conversationId);
             }
-            onNewConversationRequested: conversation.createNew()
         }
 
         Conversation {

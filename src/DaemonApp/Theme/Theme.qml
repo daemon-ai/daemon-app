@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 
-// Single source of truth for the palette, ported from Daino Notes' dual theming
+// Single source of truth for the palette, dual theming
 // (the QSS widget stylesheets + the QML `themeData` tokens). One `theme` switch
 // drives every color token so the whole app recolors live. Values mirror
 // architecture-map.md section 4 and styles/styles/*.css.
@@ -21,7 +21,7 @@ QtObject {
     // --- Surfaces -----------------------------------------------------------
     // Main / right-pane background (white / rgb(25,25,25) / rgb(251,240,217)).
     readonly property color background: isDark ? "#191919" : isSepia ? "#fbf0d9" : "#ffffff"
-    // Middle column (conversations list) shares the main background in Daino.
+    // Middle column (conversations list) shares the main background.
     readonly property color surface: background
     // Left sidebar (rgb(237,237,237) / rgb(51,51,51) / rgb(251,240,217)).
     readonly property color sidebar: isDark ? "#333333" : isSepia ? "#fbf0d9" : "#ededed"
@@ -53,7 +53,7 @@ QtObject {
     readonly property color searchSelection: "#d2e4fa"
 
     // --- Icons --------------------------------------------------------------
-    // IconButton default glyph color (Dark uses a blue accent like Daino).
+    // IconButton default glyph color (Dark uses a blue accent).
     readonly property color iconColor: isDark ? "#5b94f5" : "#000000"
     // Muted toolbar glyphs (rgb(162,163,164) dark / rgb(100,100,100) light/sepia).
     readonly property color iconMuted: isDark ? "#a2a3a4" : "#646464"
@@ -64,7 +64,7 @@ QtObject {
     readonly property color chipSepia: "#f7cc6f"
 
     // --- Typography ---------------------------------------------------------
-    // Daino sizes by point with a per-platform offset; we are desktop-first.
+    // Sizes by point with a per-platform offset; we are desktop-first.
     readonly property string platform: "Other"
     readonly property int pointSizeOffset: platform === "Apple" ? 0 : -3
 

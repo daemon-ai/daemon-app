@@ -4,8 +4,11 @@
 #include "domain/sidebar_node.h"
 
 #include <QAbstractListModel>
+#include <QHash>
 #include <QList>
+#include <QPair>
 #include <QString>
+#include <QStringList>
 #include <QtQml/qqmlregistration.h>
 
 namespace persistence {
@@ -27,6 +30,9 @@ public:
         TitleRole,
         SnippetRole,
         ModifiedRole,
+        FolderNameRole,  // resolved folder name ("" if none)
+        TagNamesRole,    // QStringList of tag names
+        TagColorsRole,   // QStringList of tag colors, parallel to TagNamesRole
     };
 
     explicit ConversationsListModel(QObject* parent = nullptr);
@@ -56,6 +62,7 @@ signals:
 private:
     void reload();
     void applyFilter();
+    void rebuildLookups();
     [[nodiscard]] QString computeScopeTitle() const;
 
     persistence::IChatStore* m_store = nullptr;
@@ -64,4 +71,6 @@ private:
     QString m_scopeTitle;
     QList<domain::Conversation> m_all;
     QList<domain::Conversation> m_filtered;
+    QHash<int, QString> m_folderNames;
+    QHash<int, QPair<QString, QString>> m_tagInfo; // id -> (name, color)
 };

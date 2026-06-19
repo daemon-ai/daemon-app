@@ -9,11 +9,36 @@ using AppBase = QGuiApplication;
 using AppBase = QApplication;
 #endif
 
+#include <QFont>
+#include <QFontDatabase>
 #include <QList>
 #include <QQmlApplicationEngine>
 #include <QQmlError>
 #include <QQuickStyle>
 #include <QtQml/qqmlextensionplugin.h>
+
+namespace {
+
+// Loads the bundled fonts into the application database and sets Inter as the
+// default UI font, so all text is Inter even without a per-item family and the
+// FontAwesome/Material families resolve for the icon glyphs.
+//
+// The bundled .ttf files are validated by tests/unit (tst_fonts) so we don't
+// need a runtime probe here.
+void loadBundledFonts()
+{
+    const QString prefix = QStringLiteral(":/qt/qml/DaemonApp/Theme/fonts/");
+    QFontDatabase::addApplicationFont(prefix + QStringLiteral("InterVariable.ttf"));
+    QFontDatabase::addApplicationFont(prefix + QStringLiteral("fa-solid-900.ttf"));
+    QFontDatabase::addApplicationFont(prefix + QStringLiteral("fa-brands-400.ttf"));
+    QFontDatabase::addApplicationFont(prefix + QStringLiteral("material-symbols-outlined.ttf"));
+
+    QFont base(QStringLiteral("Inter"));
+    base.setStyleStrategy(QFont::PreferAntialias);
+    QGuiApplication::setFont(base);
+}
+
+} // namespace
 
 // The feature modules are STATIC, so their QML plugins must be referenced
 // explicitly or the linker discards them (shared Qt build => qt_import_qml_plugins
@@ -37,6 +62,8 @@ int main(int argc, char* argv[])
     // (no Material elevation/shadows). setStyle() has the highest precedence,
     // making us immune to a host exporting QT_QUICK_CONTROLS_STYLE.
     QQuickStyle::setStyle(QStringLiteral("Basic"));
+
+    loadBundledFonts();
 
     Application application;
 

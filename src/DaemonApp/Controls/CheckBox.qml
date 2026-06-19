@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls as QQC
 import DaemonApp.Theme
 
-// CheckBox subclass, ported from Daino's CustomCheckBox.qml: a rounded indicator
+// CheckBox subclass, a rounded indicator
 // that fills with the accent on check and shows a FontAwesome check glyph, with a
 // spring press animation. Keeps Controls' checked-state behavior.
 QQC.CheckBox {

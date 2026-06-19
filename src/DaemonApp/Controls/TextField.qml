@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls as QQC
 import DaemonApp.Theme
 
-// TextField subclass, ported from Daino's CustomTextField.qml: keeps Controls'
+// TextField subclass, keeps Controls'
 // input behavior, restyles the background/colors via theme tokens and gives the
 // accent-colored blinking caret. Used for search and single-line inputs.
 QQC.TextField {

@@ -6,10 +6,10 @@ set_source_files_properties(FontIcons.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 # so we alias them to "fonts/<name>" relative to the module's resource root,
 # letting FontIcons.qml load them with a relative URL.
 set(theme_fonts
-    ${CMAKE_SOURCE_DIR}/assets/fonts/Inter.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/InterVariable.ttf
     ${CMAKE_SOURCE_DIR}/assets/fonts/fa-solid-900.ttf
-    ${CMAKE_SOURCE_DIR}/assets/fonts/fa-regular-400.ttf
     ${CMAKE_SOURCE_DIR}/assets/fonts/fa-brands-400.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/material-symbols-outlined.ttf
 )
 foreach(_font ${theme_fonts})
     get_filename_component(_font_name ${_font} NAME)

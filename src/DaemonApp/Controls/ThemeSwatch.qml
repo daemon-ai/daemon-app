@@ -1,7 +1,7 @@
 import QtQuick
 import DaemonApp.Theme
 
-// Theme picker chip, ported from Daino's ThemeChooserButton.qml: a circular color
+// Theme picker chip, a circular color
 // swatch above a label; hover/press swap the background; the selected one shows
 // the accent-colored label.
 MouseArea {

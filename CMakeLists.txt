@@ -41,6 +41,9 @@ include(CompilerWarnings)
 
 add_subdirectory(src)
 
-# Tests are scaffolded but wired later, alongside the code they cover.
-# enable_testing()
-# add_subdirectory(tests)
+# Tests. Building/running them is opt-in (BUILD_TESTING, default ON) so it can
+# be turned off for lean release builds.
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()

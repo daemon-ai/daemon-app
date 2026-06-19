@@ -39,21 +39,21 @@ void SidebarModel::rebuild()
     if (m_store) {
         m_rows.push_back({ tr("All Conversations"),
                            m_store->conversationCount({ NodeType::AllConversations, -1 }),
-                           NodeType::AllConversations, -1, false, true });
+                           NodeType::AllConversations, -1, false, true, {} });
         m_rows.push_back({ tr("Archived"),
                            m_store->conversationCount({ NodeType::Archived, -1 }),
-                           NodeType::Archived, -1, false, true });
+                           NodeType::Archived, -1, false, true, {} });
 
-        m_rows.push_back({ tr("Folders"), -1, NodeType::FolderSeparator, -1, true, false });
+        m_rows.push_back({ tr("Folders"), -1, NodeType::FolderSeparator, -1, true, false, {} });
         for (const domain::Folder& f : m_store->folders()) {
             m_rows.push_back({ f.name, m_store->conversationCount({ NodeType::Folder, f.id }),
-                               NodeType::Folder, f.id, false, true });
+                               NodeType::Folder, f.id, false, true, {} });
         }
 
-        m_rows.push_back({ tr("Tags"), -1, NodeType::TagSeparator, -1, true, false });
+        m_rows.push_back({ tr("Tags"), -1, NodeType::TagSeparator, -1, true, false, {} });
         for (const domain::Tag& t : m_store->tags()) {
             m_rows.push_back({ t.name, m_store->conversationCount({ NodeType::Tag, t.id }),
-                               NodeType::Tag, t.id, false, true });
+                               NodeType::Tag, t.id, false, true, t.color });
         }
     }
     endResetModel();
@@ -83,6 +83,8 @@ QVariant SidebarModel::data(const QModelIndex& index, int role) const
         return r.separator;
     case SelectableRole:
         return r.selectable;
+    case ColorRole:
+        return r.color;
     default:
         return {};
     }
@@ -97,6 +99,7 @@ QHash<int, QByteArray> SidebarModel::roleNames() const
         { NodeIdRole, "nodeId" },
         { IsSeparatorRole, "isSeparator" },
         { SelectableRole, "selectable" },
+        { ColorRole, "color" },
     };
 }
 

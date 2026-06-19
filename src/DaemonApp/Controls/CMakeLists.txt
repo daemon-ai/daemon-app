@@ -3,6 +3,7 @@ qt_add_qml_module(da_controls
     URI DaemonApp.Controls
     VERSION 1.0
     QML_FILES
+        Glyph.qml
         IconButton.qml
         TextField.qml
         CheckBox.qml

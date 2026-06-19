@@ -70,10 +70,26 @@ void ConversationsListModel::setScope(int nodeType, int nodeId)
 
 void ConversationsListModel::reload()
 {
+    rebuildLookups();
     m_all = m_store ? m_store->conversations(m_scope) : QList<Conversation>{};
     m_scopeTitle = computeScopeTitle();
     emit scopeChanged();
     applyFilter();
+}
+
+void ConversationsListModel::rebuildLookups()
+{
+    m_folderNames.clear();
+    m_tagInfo.clear();
+    if (!m_store) {
+        return;
+    }
+    for (const domain::Folder& f : m_store->folders()) {
+        m_folderNames.insert(f.id, f.name);
+    }
+    for (const domain::Tag& t : m_store->tags()) {
+        m_tagInfo.insert(t.id, { t.name, t.color });
+    }
 }
 
 void ConversationsListModel::applyFilter()
@@ -143,6 +159,22 @@ QVariant ConversationsListModel::data(const QModelIndex& index, int role) const
         return snippetOf(c);
     case ModifiedRole:
         return c.modified;
+    case FolderNameRole:
+        return m_folderNames.value(c.folderId);
+    case TagNamesRole: {
+        QStringList names;
+        for (int tagId : c.tagIds) {
+            names.append(m_tagInfo.value(tagId).first);
+        }
+        return names;
+    }
+    case TagColorsRole: {
+        QStringList colors;
+        for (int tagId : c.tagIds) {
+            colors.append(m_tagInfo.value(tagId).second);
+        }
+        return colors;
+    }
     default:
         return {};
     }
@@ -155,6 +187,9 @@ QHash<int, QByteArray> ConversationsListModel::roleNames() const
         { TitleRole, "title" },
         { SnippetRole, "snippet" },
         { ModifiedRole, "modified" },
+        { FolderNameRole, "folderName" },
+        { TagNamesRole, "tagNames" },
+        { TagColorsRole, "tagColors" },
     };
 }
 

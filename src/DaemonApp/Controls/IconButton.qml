@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import DaemonApp.Theme
 
-// A bespoke font-glyph button, ported from Daino's IconButton.qml: a MouseArea
+// A bespoke font-glyph button, a MouseArea
 // over a rounded Rectangle that swaps to hover/pressed token colors, with a
 // centered FontAwesome glyph. Token-driven (reads Theme/FontIcons directly).
 Item {
@@ -42,6 +42,7 @@ Item {
             text: root.icon
             font.family: root.iconFontFamily
             font.pointSize: root.iconPointSize + Theme.pointSizeOffset
+            renderType: Text.NativeRendering
             color: root.iconColor
             opacity: root.enabled ? 1.0 : 0.35
         }

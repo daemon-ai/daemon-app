@@ -7,6 +7,7 @@ qt_add_qml_module(da_conversation
         conversation_controller.cpp
     QML_FILES
         Conversation.qml
+        ToolGroup.qml
 )
 add_library(daemon-app::conversation ALIAS da_conversation)
 
@@ -16,6 +17,7 @@ target_link_libraries(da_conversation
         daemon-app::domain
         daemon-app::persistence
         daemon-app::theme
+        daemon-app::controls
         daemon-app::transcript
         daemon-app::composer
         daemon-app::warnings
