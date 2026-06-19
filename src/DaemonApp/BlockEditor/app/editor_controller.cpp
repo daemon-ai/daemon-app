@@ -148,6 +148,28 @@ void EditorController::setMonoFamily(const QString &family)
     applyPalette();
 }
 
+void EditorController::setBodyFontFamily(const QString &family)
+{
+    if (m_bodyFontFamily == family) {
+        return;
+    }
+    m_bodyFontFamily = family;
+    // Family is applied by the block TextEdit's font, not the projected HTML;
+    // just notify so QML rebinds.
+    emit bodyFontChanged();
+}
+
+void EditorController::setBodyFontSize(int pixelSize)
+{
+    if (pixelSize <= 0 || m_palette.bodyPixelSize == pixelSize) {
+        return;
+    }
+    m_palette.bodyPixelSize = pixelSize;
+    // Reproject so headings re-scale to the new base size.
+    applyPalette();
+    emit bodyFontChanged();
+}
+
 void EditorController::loadMarkdown(const QString &markdown, bool activateFirstBlock)
 {
     m_store.loadMarkdown(markdown);

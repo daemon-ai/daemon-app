@@ -18,6 +18,7 @@ target_link_libraries(da_conversation
         daemon-app::persistence
         daemon-app::theme
         daemon-app::controls
+        daemon-app::settings
         daemon-app::transcript
         daemon-app::composer
         daemon-app::warnings

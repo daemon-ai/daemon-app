@@ -66,6 +66,22 @@ void ConversationController::updateContent(const QString& markdown)
     m_store->setContent(m_currentId, markdown);
 }
 
+void ConversationController::moveCurrentToTrash()
+{
+    if (!m_store || m_currentId < 0) {
+        return;
+    }
+    const int archivedId = m_currentId;
+    // Clear the current selection first so the editor falls back to the empty
+    // state; the store's changed() refreshes the lists (the conversation moves
+    // into the Trash scope).
+    m_currentId = -1;
+    m_content.clear();
+    emit currentChanged();
+    emit conversationChanged();
+    m_store->setArchived(archivedId, true); // emits changed() -> refresh()
+}
+
 int ConversationController::createConversation(int folderId)
 {
     if (!m_store) {

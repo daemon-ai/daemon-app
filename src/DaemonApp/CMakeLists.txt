@@ -10,6 +10,5 @@ add_subdirectory(Composer)
 add_subdirectory(Sidebar)
 add_subdirectory(ConversationsList)
 add_subdirectory(Conversation)
+add_subdirectory(Settings)
 add_subdirectory(App)
-
-# add_subdirectory(Settings)

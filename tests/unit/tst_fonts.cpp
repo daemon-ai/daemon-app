@@ -121,6 +121,37 @@ private slots:
         QVERIFY2(mt.supportsCharacter(static_cast<char32_t>(0xeb7f)),
                  "material symbols missing view_kanban (U+EB7F)");
     }
+
+    // The editor text-style families (UiSettings exposes these exact family
+    // strings to QML; the bundled .ttf must register under the same name or
+    // font.family matching silently falls back to Inter).
+    void editorTextStyleFamiliesResolve_data()
+    {
+        QTest::addColumn<QString>("file");
+        QTest::addColumn<QString>("family");
+
+        QTest::newRow("trykker")
+            << QStringLiteral("Trykker-Regular.ttf") << QStringLiteral("Trykker");
+        QTest::newRow("ibarra")
+            << QStringLiteral("IbarraRealNova.ttf") << QStringLiteral("Ibarra Real Nova");
+        QTest::newRow("ia-mono")
+            << QStringLiteral("iAWriterMonoS-Regular.ttf") << QStringLiteral("iA Writer Mono S");
+        QTest::newRow("ia-duo")
+            << QStringLiteral("iAWriterDuoS-Regular.ttf") << QStringLiteral("iA Writer Duo S");
+        QTest::newRow("ia-quattro")
+            << QStringLiteral("iAWriterQuattroS-Regular.ttf")
+            << QStringLiteral("iA Writer Quattro S");
+    }
+
+    void editorTextStyleFamiliesResolve()
+    {
+        QFETCH(QString, file);
+        QFETCH(QString, family);
+
+        const QRawFont raw = loadRaw(file);
+        QVERIFY2(raw.isValid(), qPrintable(QStringLiteral("failed to parse ") + file));
+        QCOMPARE(raw.familyName(), family);
+    }
 };
 
 QTEST_MAIN(TestFonts)

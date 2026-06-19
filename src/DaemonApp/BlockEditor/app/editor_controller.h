@@ -36,6 +36,11 @@ class EditorController : public QObject
     Q_PROPERTY(QColor linkColor READ linkColor WRITE setLinkColor NOTIFY paletteChanged)
     Q_PROPERTY(QColor bodyTextColor READ bodyTextColor WRITE setBodyTextColor NOTIFY paletteChanged)
     Q_PROPERTY(QString monoFamily READ monoFamily WRITE setMonoFamily NOTIFY paletteChanged)
+    // Editor body font (driven by the Style / Font size settings). The family
+    // does not enter the HTML (the block TextEdit's font carries it, so code
+    // spans keep monoFamily); the size feeds heading scaling in the projector.
+    Q_PROPERTY(QString bodyFontFamily READ bodyFontFamily WRITE setBodyFontFamily NOTIFY bodyFontChanged)
+    Q_PROPERTY(int bodyFontSize READ bodyFontSize WRITE setBodyFontSize NOTIFY bodyFontChanged)
 
 public:
     enum FocusPlacement {
@@ -61,10 +66,14 @@ public:
     QColor linkColor() const { return m_palette.link; }
     QColor bodyTextColor() const { return m_palette.text; }
     QString monoFamily() const { return m_palette.monoFamily; }
+    QString bodyFontFamily() const { return m_bodyFontFamily; }
+    int bodyFontSize() const { return m_palette.bodyPixelSize; }
     void setCodeBackgroundColor(const QColor &color);
     void setLinkColor(const QColor &color);
     void setBodyTextColor(const QColor &color);
     void setMonoFamily(const QString &family);
+    void setBodyFontFamily(const QString &family);
+    void setBodyFontSize(int pixelSize);
 
     Q_INVOKABLE void loadMarkdown(const QString &markdown, bool activateFirstBlock = true);
     Q_INVOKABLE void beginStream();
@@ -129,6 +138,7 @@ signals:
     void streamingChanged();
     void streamContentAppended();
     void paletteChanged();
+    void bodyFontChanged();
     // Emitted after any change to the document content (load/edit/stream) so a
     // host (Transcript) can debounce and persist the exported markdown.
     void documentChanged();
@@ -173,6 +183,7 @@ private:
     be::ChangedBlockStore m_persistence;
     be::InlineProjector m_projector;
     be::Palette m_palette;
+    QString m_bodyFontFamily;
     QTimer m_flushTimer;
     be::BlockId m_activeBlockId = 0;
     int m_activeCursorOffset = 0;

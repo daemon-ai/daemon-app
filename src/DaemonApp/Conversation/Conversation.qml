@@ -3,6 +3,7 @@ import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.Settings
 import DaemonApp.Transcript
 import DaemonApp.Composer
 
@@ -43,6 +44,8 @@ Rectangle {
             Layout.rightMargin: 12
             implicitHeight: 28 + 24
             spacing: 0
+            // Distraction-free hides the formatting/settings chrome (Esc exits).
+            visible: !UiSettings.distractionFree
 
             Kit.IconButton {
                 icon: FontIcons.fa_plus
@@ -252,51 +255,13 @@ Rectangle {
                 tooltipText: qsTr("Settings")
                 onClicked: settingsMenu.open()
 
-                QQC.Popup {
+                SettingsMenu {
                     id: settingsMenu
+                    objectName: "settingsMenu"
                     x: parent.width - width
                     y: parent.height + 4
-                    padding: Theme.spacingSmall
-                    modal: false
-                    focus: true
-
-                    background: Rectangle {
-                        color: Theme.background
-                        border.color: Theme.border
-                        radius: Theme.radius
-                    }
-
-                    contentItem: ColumnLayout {
-                        spacing: Theme.spacingSmall
-
-                        QQC.Label {
-                            text: qsTr("Theme")
-                            color: Theme.textMuted
-                            font.family: FontIcons.display
-                            font.pixelSize: 11
-                            font.capitalization: Font.AllUppercase
-                            Layout.leftMargin: Theme.spacingSmall
-                        }
-
-                        RowLayout {
-                            spacing: 0
-                            Kit.ThemeSwatch {
-                                themeName: qsTr("Light"); chipColor: Theme.chipLight
-                                selected: Theme.theme === "Light"
-                                onPicked: Theme.setTheme("Light")
-                            }
-                            Kit.ThemeSwatch {
-                                themeName: qsTr("Dark"); chipColor: Theme.chipDark
-                                selected: Theme.theme === "Dark"
-                                onPicked: Theme.setTheme("Dark")
-                            }
-                            Kit.ThemeSwatch {
-                                themeName: qsTr("Sepia"); chipColor: Theme.chipSepia
-                                selected: Theme.theme === "Sepia"
-                                onPicked: Theme.setTheme("Sepia")
-                            }
-                        }
-                    }
+                    controller: controller
+                    maxHeight: Math.round(root.height * 0.85)
                 }
             }
         }
@@ -333,6 +298,7 @@ Rectangle {
 
                 Composer {
                     Layout.fillWidth: true
+                    visible: !UiSettings.distractionFree
                     onSubmitted: function(text) { controller.appendUserText(text); }
                 }
             }
@@ -356,6 +322,21 @@ Rectangle {
                     font.family: FontIcons.display
                     font.pixelSize: 16
                 }
+            }
+
+            // Distraction-free hides the header (and its settings menu), so keep
+            // an always-visible escape hatch overlaid on the editor.
+            Kit.IconButton {
+                visible: UiSettings.distractionFree
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: 10
+                z: 10
+                icon: FontIcons.fa_xmark
+                iconColor: Theme.iconMuted
+                backgroundRadius: width / 2
+                tooltipText: qsTr("Exit distraction-free (Esc)")
+                onClicked: UiSettings.distractionFree = false
             }
         }
     }

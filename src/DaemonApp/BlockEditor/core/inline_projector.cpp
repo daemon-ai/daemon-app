@@ -325,7 +325,12 @@ QString InlineProjector::makeDisplayMarkup(const BlockRecord &block, const Block
     escaped.replace(QLatin1Char('\n'), QStringLiteral("<br/>"));
 
     if (block.type == BlockType::Heading) {
-        const int size = qMax(18, 30 - int(block.headingLevel) * 2);
+        // Scale relative to the body size so the whole type scale tracks the
+        // "Font size" preference. Multipliers for H1..H6.
+        static const double kHeadingScale[6] = { 2.0, 1.6, 1.35, 1.2, 1.1, 1.0 };
+        const int base = m_palette.bodyPixelSize > 0 ? m_palette.bodyPixelSize : 15;
+        const int level = qBound(1, int(block.headingLevel), 6);
+        const int size = qRound(base * kHeadingScale[level - 1]);
         QString headingStyle = QStringLiteral("font-size:%1px; font-weight:700;").arg(size);
         if (m_palette.text.isValid()) {
             headingStyle += QStringLiteral(" color:%1;").arg(m_palette.text.name());

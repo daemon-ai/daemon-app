@@ -52,6 +52,9 @@ struct Palette {
     QColor codeText; // invalid == inherit the surrounding text color
     QColor link = QColor(QStringLiteral("#63b3ed"));
     QColor text; // invalid == inherit (used for headings)
+    // Base body font size in px; headings are scaled relative to it so the
+    // user's "Font size" preference moves the whole type scale together.
+    int bodyPixelSize = 15;
 };
 
 class InlineProjector

@@ -10,7 +10,24 @@ set(theme_fonts
     ${CMAKE_SOURCE_DIR}/assets/fonts/fa-solid-900.ttf
     ${CMAKE_SOURCE_DIR}/assets/fonts/fa-brands-400.ttf
     ${CMAKE_SOURCE_DIR}/assets/fonts/material-symbols-outlined.ttf
+    # Editor text styles: Serif (Trykker, Ibarra Real Nova) and
+    # Mono (iA Writer Mono/Duo/Quattro), with bold/italic faces so emphasised
+    # markdown renders in the chosen family instead of falling back to Inter.
+    ${CMAKE_SOURCE_DIR}/assets/fonts/Trykker-Regular.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/IbarraRealNova.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/IbarraRealNova-Italic.ttf
     ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterMonoS-Regular.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterMonoS-Bold.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterMonoS-Italic.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterMonoS-BoldItalic.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterDuoS-Regular.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterDuoS-Bold.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterDuoS-Italic.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterDuoS-BoldItalic.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterQuattroS-Regular.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterQuattroS-Bold.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterQuattroS-Italic.ttf
+    ${CMAKE_SOURCE_DIR}/assets/fonts/iAWriterQuattroS-BoldItalic.ttf
 )
 foreach(_font ${theme_fonts})
     get_filename_component(_font_name ${_font} NAME)

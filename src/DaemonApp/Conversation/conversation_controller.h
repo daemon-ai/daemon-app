@@ -36,6 +36,9 @@ public:
     // does not echo back as a contentChanged() (which would reload the editor and
     // drop the user's cursor). List snippets still refresh via the store signal.
     Q_INVOKABLE void updateContent(const QString& markdown);
+    // Archive (move to trash) the open conversation and clear the current
+    // selection, "Move to Trash" action.
+    Q_INVOKABLE void moveCurrentToTrash();
 
 signals:
     void storeChanged();

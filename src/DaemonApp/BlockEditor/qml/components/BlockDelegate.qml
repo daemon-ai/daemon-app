@@ -223,7 +223,9 @@ Item {
                 textFormat: TextEdit.RichText
                 wrapMode: TextEdit.Wrap
                 color: Theme.text
-                font.pixelSize: Theme.bodyFontSize
+                font.family: editorController.bodyFontFamily !== "" ? editorController.bodyFontFamily
+                                                                    : FontIcons.display
+                font.pixelSize: editorController.bodyFontSize
                 renderType: Text.QtRendering
             }
 
@@ -474,7 +476,9 @@ Item {
                 color: Theme.text
                 selectedTextColor: Theme.selectionText
                 selectionColor: Theme.selection
-                font.pixelSize: Theme.bodyFontSize
+                font.family: editorController.bodyFontFamily !== "" ? editorController.bodyFontFamily
+                                                                    : FontIcons.display
+                font.pixelSize: editorController.bodyFontSize
                 // Mouse selection is owned by the unified activeSelect MouseArea so a
                 // drag can start here and extend into passive blocks; native keyboard
                 // selection (Shift+Arrow) is preserved.

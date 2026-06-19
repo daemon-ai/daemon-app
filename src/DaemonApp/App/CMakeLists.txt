@@ -33,6 +33,7 @@ target_link_libraries(daemon-app
         daemon-app::conversation
         daemon-app::transcript
         daemon-app::composer
+        daemon-app::settings
         da_themeplugin
         da_controlsplugin
         da_blockeditorplugin
@@ -41,6 +42,7 @@ target_link_libraries(daemon-app
         da_conversationplugin
         da_transcriptplugin
         da_composerplugin
+        da_settingsplugin
 )
 
 # On desktop the QApplication base lives in QtWidgets (for the tray).

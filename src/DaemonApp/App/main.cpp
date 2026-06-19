@@ -37,11 +37,31 @@ namespace {
 void loadBundledFonts()
 {
     const QString prefix = QStringLiteral(":/qt/qml/DaemonApp/Theme/fonts/");
-    QFontDatabase::addApplicationFont(prefix + QStringLiteral("InterVariable.ttf"));
-    QFontDatabase::addApplicationFont(prefix + QStringLiteral("fa-solid-900.ttf"));
-    QFontDatabase::addApplicationFont(prefix + QStringLiteral("fa-brands-400.ttf"));
-    QFontDatabase::addApplicationFont(prefix + QStringLiteral("material-symbols-outlined.ttf"));
-    QFontDatabase::addApplicationFont(prefix + QStringLiteral("iAWriterMonoS-Regular.ttf"));
+    const QStringList bundled = {
+        QStringLiteral("InterVariable.ttf"),
+        QStringLiteral("fa-solid-900.ttf"),
+        QStringLiteral("fa-brands-400.ttf"),
+        QStringLiteral("material-symbols-outlined.ttf"),
+        // Editor text-style families.
+        QStringLiteral("Trykker-Regular.ttf"),
+        QStringLiteral("IbarraRealNova.ttf"),
+        QStringLiteral("IbarraRealNova-Italic.ttf"),
+        QStringLiteral("iAWriterMonoS-Regular.ttf"),
+        QStringLiteral("iAWriterMonoS-Bold.ttf"),
+        QStringLiteral("iAWriterMonoS-Italic.ttf"),
+        QStringLiteral("iAWriterMonoS-BoldItalic.ttf"),
+        QStringLiteral("iAWriterDuoS-Regular.ttf"),
+        QStringLiteral("iAWriterDuoS-Bold.ttf"),
+        QStringLiteral("iAWriterDuoS-Italic.ttf"),
+        QStringLiteral("iAWriterDuoS-BoldItalic.ttf"),
+        QStringLiteral("iAWriterQuattroS-Regular.ttf"),
+        QStringLiteral("iAWriterQuattroS-Bold.ttf"),
+        QStringLiteral("iAWriterQuattroS-Italic.ttf"),
+        QStringLiteral("iAWriterQuattroS-BoldItalic.ttf"),
+    };
+    for (const QString& file : bundled) {
+        QFontDatabase::addApplicationFont(prefix + file);
+    }
 
     QFont base(QStringLiteral("Inter"));
     base.setStyleStrategy(QFont::PreferAntialias);
@@ -95,14 +115,27 @@ bool maybeRenderThemeShots(QQmlApplicationEngine& engine)
         loop.exec();
     }
 
-    const QList<QPair<QString, QString>> themes = {
-        { QStringLiteral("Light"), QStringLiteral("theme-light.png") },
-        { QStringLiteral("Dark"), QStringLiteral("theme-dark.png") },
-        { QStringLiteral("Sepia"), QStringLiteral("theme-sepia.png") },
-    };
+    // Optionally open the settings menu so its 1:1 fidelity can be verified per
+    // theme (guarded; the normal theme shots stay menu-free).
+    const bool withMenu = !qgetenv("DAEMON_APP_RENDER_MENU").isEmpty();
+    QObject* settingsMenu = nullptr;
+    if (withMenu) {
+        settingsMenu = window->findChild<QObject*>(QStringLiteral("settingsMenu"));
+        if (settingsMenu == nullptr) {
+            qWarning("render-shots: could not find the settingsMenu popup");
+        }
+    }
+    const QString prefix = withMenu ? QStringLiteral("menu-") : QStringLiteral("theme-");
 
-    for (const auto& [name, file] : themes) {
+    const QStringList themeNames
+        = { QStringLiteral("Light"), QStringLiteral("Dark"), QStringLiteral("Sepia") };
+
+    for (const QString& name : themeNames) {
+        const QString file = prefix + name.toLower() + QStringLiteral(".png");
         QMetaObject::invokeMethod(theme, "setTheme", Q_ARG(QVariant, QVariant(name)));
+        if (settingsMenu != nullptr) {
+            QMetaObject::invokeMethod(settingsMenu, "open");
+        }
 
         // Let the binding updates settle and a frame compose before grabbing.
         QEventLoop loop;
@@ -135,6 +168,7 @@ Q_IMPORT_QML_PLUGIN(DaemonApp_ConversationsListPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ConversationPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_TranscriptPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ComposerPlugin)
+Q_IMPORT_QML_PLUGIN(DaemonApp_SettingsPlugin)
 
 int main(int argc, char* argv[])
 {

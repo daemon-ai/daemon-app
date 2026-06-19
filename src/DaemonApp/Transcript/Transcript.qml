@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import DaemonApp.Theme
+import DaemonApp.Settings
 import DaemonApp.BlockEditor
 
 // Renders (and edits) the conversation's markdown as a virtualized column of
@@ -32,6 +33,8 @@ Rectangle {
             return
         _loadedMarkdown = md
         editor.loadMarkdown(md, false)
+        if (UiSettings.showPlainText)
+            plainText.text = md
     }
 
     EditorController {
@@ -42,6 +45,10 @@ Rectangle {
         linkColor: Theme.link
         bodyTextColor: Theme.text
         monoFamily: FontIcons.mono
+
+        // Editor text style + size from the settings menu.
+        bodyFontFamily: UiSettings.editorFontFamily
+        bodyFontSize: UiSettings.editorFontSize
 
         onDocumentChanged: persistTimer.restart()
     }
@@ -66,8 +73,16 @@ Rectangle {
             onActivated: editor.selectAll()
         }
         Shortcut {
+            // Escape exits distraction-free first (its chrome, incl. the settings
+            // menu, is hidden); otherwise it clears the selection as usual. Owning
+            // it here avoids an ambiguous Escape overload with a window shortcut.
             sequences: [StandardKey.Cancel]
-            onActivated: editor.clearSelection()
+            onActivated: {
+                if (UiSettings.distractionFree)
+                    UiSettings.distractionFree = false
+                else
+                    editor.clearSelection()
+            }
         }
         Shortcut {
             sequences: [StandardKey.Undo]
@@ -80,7 +95,13 @@ Rectangle {
 
         ListView {
             id: editorView
-            anchors.fill: parent
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            // "Center text": clamp to a readable column centered in the surface;
+            // otherwise fill the available width.
+            width: UiSettings.centerText ? Math.min(parent.width, 720) : parent.width
+            visible: !UiSettings.showPlainText
             clip: true
             model: editor.blockModel
             reuseItems: true
@@ -163,6 +184,56 @@ Rectangle {
                     const distanceFromBottom = editorView.contentHeight - (editorView.contentY + editorView.height)
                     if (editorView.atYEnd || distanceFromBottom < editorView.height * 0.5)
                         Qt.callLater(editorView.positionViewAtEnd)
+                }
+            }
+        }
+
+        // "Show plain text": a raw-markdown editor that replaces the block view.
+        // Content syncs with the block editor whenever the option is toggled.
+        ScrollView {
+            id: plainScroll
+            anchors.fill: parent
+            visible: UiSettings.showPlainText
+            clip: true
+
+            TextArea {
+                id: plainText
+                wrapMode: TextArea.Wrap
+                background: null
+                color: Theme.text
+                selectionColor: Theme.selection
+                selectedTextColor: Theme.selectionText
+                font.family: UiSettings.editorFontFamily !== "" ? UiSettings.editorFontFamily
+                                                                : FontIcons.mono
+                font.pixelSize: UiSettings.editorFontSize
+
+                onTextChanged: {
+                    if (UiSettings.showPlainText && activeFocus)
+                        plainPersist.restart()
+                }
+            }
+        }
+
+        // Persist edits made in the plain-text editor (its text is the source of
+        // truth while plain-text mode is on, not the block model).
+        Timer {
+            id: plainPersist
+            interval: 400
+            onTriggered: root.edited(plainText.text)
+        }
+
+        // Keep the two editors in sync across the toggle: capture the block
+        // markdown when entering plain text; push edits back on exit.
+        Connections {
+            target: UiSettings
+            function onShowPlainTextChanged() {
+                if (UiSettings.showPlainText) {
+                    plainText.text = editor.exportMarkdown()
+                } else {
+                    const md = plainText.text
+                    root._loadedMarkdown = md
+                    editor.loadMarkdown(md, false)
+                    root.edited(md)
                 }
             }
         }
