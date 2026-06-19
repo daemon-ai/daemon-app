@@ -234,7 +234,8 @@ Rectangle {
                 Layout.leftMargin: Theme.spacingSmall
             }
 
-            RowLayout {
+            Grid {
+                columns: 2
                 spacing: 0
                 Kit.ThemeSwatch {
                     themeName: qsTr("Light"); chipColor: Theme.chipLight
@@ -250,6 +251,11 @@ Rectangle {
                     themeName: qsTr("Sepia"); chipColor: Theme.chipSepia
                     selected: Theme.theme === "Sepia"
                     onPicked: Theme.setTheme("Sepia")
+                }
+                Kit.ThemeSwatch {
+                    themeName: qsTr("Midnight"); chipColor: Theme.chipMidnight
+                    selected: Theme.theme === "Midnight"
+                    onPicked: Theme.setTheme("Midnight")
                 }
             }
         }

@@ -103,7 +103,12 @@ QQC.Popup {
                 Layout.rightMargin: root.hMargin
                 label: qsTr("Distraction-free")
                 checked: UiSettings.distractionFree
-                onToggled: function(on) { UiSettings.distractionFree = on; }
+                onToggled: function(on) {
+                    UiSettings.distractionFree = on;
+                    // Get the chrome out of the way the moment it's enabled.
+                    if (on)
+                        root.close();
+                }
             }
 
             RowLayout {
@@ -146,9 +151,11 @@ QQC.Popup {
             // ----- Theme -------------------------------------------------
             SectionHeader { text: qsTr("Theme") }
 
-            Row {
+            // 2x2 grid: four 71px swatches no longer fit one row in the 240px popup.
+            Grid {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 4
+                columns: 2
                 spacing: 0
 
                 Kit.ThemeSwatch {
@@ -165,6 +172,11 @@ QQC.Popup {
                     themeName: qsTr("Sepia"); chipColor: Theme.chipSepia
                     selected: Theme.theme === "Sepia"
                     onPicked: Theme.setTheme("Sepia")
+                }
+                Kit.ThemeSwatch {
+                    themeName: qsTr("Midnight"); chipColor: Theme.chipMidnight
+                    selected: Theme.theme === "Midnight"
+                    onPicked: Theme.setTheme("Midnight")
                 }
             }
 

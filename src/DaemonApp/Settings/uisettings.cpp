@@ -69,7 +69,7 @@ bool isKnownCategory(const QString& category)
 bool isKnownTheme(const QString& theme)
 {
     return theme == QStringLiteral("Light") || theme == QStringLiteral("Dark")
-        || theme == QStringLiteral("Sepia");
+        || theme == QStringLiteral("Sepia") || theme == QStringLiteral("Midnight");
 }
 
 } // namespace

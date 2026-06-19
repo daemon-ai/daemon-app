@@ -38,7 +38,7 @@ MouseArea {
                 height: 30
                 radius: width / 2
                 color: root.chipColor
-                border.width: root.themeName === "Dark" ? 0 : 1
+                border.width: (root.themeName === "Dark" || root.themeName === "Midnight") ? 0 : 1
                 border.color: "gray"
             }
 

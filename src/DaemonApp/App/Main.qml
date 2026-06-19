@@ -23,6 +23,18 @@ ApplicationWindow {
         function onThemeChanged() { UiSettings.theme = Theme.theme; }
     }
 
+    // Entering distraction-free maximizes the window for the most canvas; exiting
+    // restores the previous (normal) size.
+    Connections {
+        target: UiSettings
+        function onDistractionFreeChanged() {
+            if (UiSettings.distractionFree)
+                root.showMaximized();
+            else
+                root.showNormal();
+        }
+    }
+
     SplitView {
         anchors.fill: parent
         orientation: Qt.Horizontal

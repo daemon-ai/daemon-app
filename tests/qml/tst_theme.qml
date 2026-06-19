@@ -3,8 +3,8 @@ import QtTest
 import DaemonApp.Theme
 
 // Proves the theme switch is live and the per-theme palette is correct for all
-// three themes (Light / Dark / Sepia). Guards the Fault 0 regression where an
-// id/property collision made `setTheme` a no-op and left only Light rendering.
+// four themes (Light / Dark / Sepia / Midnight). Guards the Fault 0 regression
+// where an id/property collision made `setTheme` a no-op and left only Light.
 TestCase {
     name: "Theme"
 
@@ -21,6 +21,7 @@ TestCase {
         return [
             {
                 tag: "Light", theme: "Light", isDark: false, isSepia: false,
+                isMidnight: false,
                 background: "#ffffff", sidebar: "#ededed", text: "#37352e",
                 sidebarSelection: "#448ac9", sidebarHover: "#b4d0e9",
                 searchBackground: "#ffffff", searchFocusBorder: "#a6c6e4",
@@ -30,6 +31,7 @@ TestCase {
             },
             {
                 tag: "Dark", theme: "Dark", isDark: true, isSepia: false,
+                isMidnight: false,
                 background: "#191919", sidebar: "#333333", text: "#d6d6d6",
                 sidebarSelection: "#448ac9", sidebarHover: "#233445",
                 searchBackground: "#2a2a2a", searchFocusBorder: "#2c536f",
@@ -39,12 +41,23 @@ TestCase {
             },
             {
                 tag: "Sepia", theme: "Sepia", isDark: false, isSepia: true,
+                isMidnight: false,
                 background: "#fbf0d9", sidebar: "#ededed", text: "#321e03",
                 sidebarSelection: "#448ac9", sidebarHover: "#b4d0e9",
                 searchBackground: "#fbf0d9", searchFocusBorder: "#a6c6e4",
                 listSelection: "#dae9ef",
                 codeBackground: "#efe6d2", activeBlockBackground: "#f3ead2",
                 activeBlockBorder: "#d8c79a"
+            },
+            {
+                tag: "Midnight", theme: "Midnight", isDark: false, isSepia: false,
+                isMidnight: true,
+                background: "#0d162d", sidebar: "#09286f", text: "#ffe6cb",
+                sidebarSelection: "#448ac9", sidebarHover: "#16285c",
+                searchBackground: "#0b2150", searchFocusBorder: "#3a63bd",
+                listSelection: "#16285c",
+                codeBackground: "#1a2c5c", activeBlockBackground: "#14224a",
+                activeBlockBorder: "#2c4a8f"
             }
         ];
     }
@@ -55,6 +68,8 @@ TestCase {
         compare(Theme.theme, data.theme, "active theme");
         compare(Theme.isDark, data.isDark, "isDark flag");
         compare(Theme.isSepia, data.isSepia, "isSepia flag");
+        compare(Theme.isMidnight, data.isMidnight, "isMidnight flag");
+        compare(Theme.isDarkMode, data.isDark || data.isMidnight, "isDarkMode flag");
 
         compare(hex(Theme.background), data.background, "background");
         compare(hex(Theme.sidebar), data.sidebar, "sidebar");
@@ -80,10 +95,15 @@ TestCase {
         var dark = hex(Theme.background);
         Theme.setTheme("Sepia");
         var sepia = hex(Theme.background);
+        Theme.setTheme("Midnight");
+        var midnight = hex(Theme.background);
 
         verify(light !== dark, "Light vs Dark background must differ");
         verify(dark !== sepia, "Dark vs Sepia background must differ");
         verify(light !== sepia, "Light vs Sepia background must differ");
+        verify(midnight !== dark, "Midnight vs Dark background must differ");
+        verify(midnight !== sepia, "Midnight vs Sepia background must differ");
+        verify(midnight !== light, "Midnight vs Light background must differ");
     }
 
     // Invalid names are ignored (setTheme guards the value).

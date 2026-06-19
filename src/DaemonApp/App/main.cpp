@@ -127,8 +127,8 @@ bool maybeRenderThemeShots(QQmlApplicationEngine& engine)
     }
     const QString prefix = withMenu ? QStringLiteral("menu-") : QStringLiteral("theme-");
 
-    const QStringList themeNames
-        = { QStringLiteral("Light"), QStringLiteral("Dark"), QStringLiteral("Sepia") };
+    const QStringList themeNames = { QStringLiteral("Light"), QStringLiteral("Dark"),
+                                     QStringLiteral("Sepia"), QStringLiteral("Midnight") };
 
     for (const QString& name : themeNames) {
         const QString file = prefix + name.toLower() + QStringLiteral(".png");

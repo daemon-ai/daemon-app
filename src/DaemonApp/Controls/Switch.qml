@@ -19,7 +19,7 @@ QQC.Switch {
         radius: height / 2
         color: !root.enabled ? Theme.hover
              : root.checked ? Theme.accent
-             : Theme.isDark ? "#4a4a4a" : "#d4d4d4"
+             : Theme.isDarkMode ? "#4a4a4a" : "#d4d4d4"
         opacity: root.enabled ? 1.0 : 0.4
 
         Behavior on color { ColorAnimation { duration: 120 } }

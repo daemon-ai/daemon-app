@@ -33,7 +33,7 @@ QQC.CheckBox {
             text: FontIcons.check
             font.family: FontIcons.faSolid
             font.pixelSize: root.boxSize - 7
-            color: Theme.isDark ? "#1a212a" : "white"
+            color: Theme.isDarkMode ? "#1a212a" : "white"
         }
     }
 
