@@ -68,6 +68,16 @@ QtObject {
     readonly property string fa_box_archive: "\uf187"
     readonly property string fa_paper_plane: "\uf1d8"
 
+    // --- Status bar glyphs --------------------------------------------------
+    readonly property string fa_terminal: "\uf120"
+    readonly property string fa_signal: "\uf012"
+    readonly property string fa_circle_exclamation: "\uf06a"
+    readonly property string fa_wand_magic_sparkles: "\uf72b"
+    readonly property string fa_spinner: "\uf110"
+    readonly property string fa_clock: "\uf017"
+    readonly property string fa_bolt: "\uf0e7"
+    readonly property string fa_hashtag: "\uf292"
+
     // --- Material Symbols ---------------------------------------------------
     readonly property string mt_view_kanban: "\ueb7f"
     readonly property string mt_article: "\uef42"

@@ -130,6 +130,20 @@ QtObject {
     // Recognizable royal blue for the Midnight swatch.
     readonly property color chipMidnight: "#0d2f86"
 
+    // --- Status bar (Hermes footer port) ------------------------------------
+    // A thin chrome strip below the columns. Hermes uses the sidebar surface for
+    // its footer background; we follow that so it reads as one chrome band and
+    // picks up the Midnight navy. The strip is slightly distinct from `sidebar`
+    // to separate it from the left column where they meet.
+    readonly property color statusBarBackground: isMidnight ? "#0a1f57" : isDark ? "#272727" : isSepia ? "#efe4c8" : "#f2f2f2"
+    // Default (tertiary) label color in the bar.
+    readonly property color statusBarText: isMidnight ? "#8fa6d8" : isDark ? "#8a8a8a" : "#6b6a66"
+    // Item hover fill.
+    readonly property color statusBarHover: isMidnight ? "#142b66" : isDark ? "#343434" : isSepia ? "#e4d8b8" : "#e4e4e4"
+    // Tone colors for degraded / offline / failure states (amber / red).
+    readonly property color warning: isDarkMode ? "#e0a93b" : "#b97e16"
+    readonly property color danger: isDarkMode ? "#f06a6a" : "#c0392b"
+
     // --- Typography ---------------------------------------------------------
     // Sizes by point with a per-platform offset; we are desktop-first.
     readonly property string platform: "Other"
@@ -153,4 +167,7 @@ QtObject {
 
     readonly property int sidebarWidth: 240
     readonly property int listWidth: 300
+
+    // Hermes footer is 20px; 22 reads better at desktop DPI with our 11px labels.
+    readonly property int statusBarHeight: 22
 }

@@ -5,6 +5,7 @@ import DaemonApp.Settings
 import DaemonApp.Sidebar
 import DaemonApp.ConversationsList
 import DaemonApp.Conversation
+import DaemonApp.StatusBar
 
 ApplicationWindow {
     id: root
@@ -33,6 +34,13 @@ ApplicationWindow {
             else
                 root.showNormal();
         }
+    }
+
+    // Full-width chrome strip below the columns; hidden with the rest of the
+    // chrome in distraction-free mode. The SplitView (anchors.fill) auto-shrinks
+    // above it.
+    footer: StatusBar {
+        visible: !UiSettings.distractionFree
     }
 
     SplitView {
