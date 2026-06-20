@@ -148,10 +148,11 @@ A generated image (image_generate):
 {"callId":"c6","name":"image_generate","status":"ok","durationMs":5200,"aspectRatio":"1:1","imageUrl":"https://doc.qt.io/qt-6/images/qt-logo.png"}
 ```
 
-The agent needs a decision (clarify - click a choice or type a reply):
+The agent needs a decision (clarify - a multi-question form: single-select,
+multi-select, and a freeform reply, submitted together):
 
 ```tool
-{"callId":"c7","name":"clarify","requestId":"q1","question":"Which database should I target for the migration?","choices":["PostgreSQL","SQLite","MySQL"]}
+{"callId":"c7","name":"clarify","requestId":"q1","questions":[{"id":"db","prompt":"Which database should I target for the migration?","choices":["PostgreSQL","SQLite","MySQL"]},{"id":"scope","prompt":"Which parts should I migrate? (select all that apply)","choices":["Schema","Data","Indexes","Triggers"],"multiSelect":true},{"id":"notes","prompt":"Any extra constraints I should know about?","allowFreeform":true}]}
 ```
 
 A dangerous command awaiting approval:

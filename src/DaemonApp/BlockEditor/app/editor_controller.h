@@ -99,7 +99,10 @@ public:
     // signal the agent runtime subscribes to. requestImagePreview is fire-and-
     // forget: it just asks the host to open a lightbox for the given image.
     Q_INVOKABLE void requestImagePreview(const QString &url, const QString &alt = {});
-    Q_INVOKABLE void answerClarify(qulonglong blockId, const QString &requestId, const QString &answer);
+    // `answers` maps each question id to the chosen value (a string for single-
+    // select/freeform, or a string list for a multi-select question). A legacy
+    // single-question clarify uses the single id "q".
+    Q_INVOKABLE void answerClarify(qulonglong blockId, const QString &requestId, const QVariantMap &answers);
     Q_INVOKABLE void answerToolApproval(qulonglong blockId, const QString &callId, const QString &decision, bool permanent = false);
     // Sub-renderer parsers, surfaced for the tool/content blocks: ANSI SGR text
     // -> styled spans, and a unified diff -> typed lines (see core/agent_block).
@@ -180,7 +183,7 @@ signals:
     // decided a tool approval in the transcript, or asked to preview an image.
     // A host (Conversation / agent gateway) connects these to the runtime.
     void imagePreviewRequested(const QString &url, const QString &alt);
-    void clarifyAnswered(qulonglong blockId, const QString &requestId, const QString &answer);
+    void clarifyAnswered(qulonglong blockId, const QString &requestId, const QVariantMap &answers);
     void toolApprovalAnswered(qulonglong blockId, const QString &callId, const QString &decision, bool permanent);
     void paletteChanged();
     void bodyFontChanged();

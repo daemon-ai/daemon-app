@@ -70,9 +70,16 @@ Rectangle {
     Connections {
         target: editor
 
-        function onClarifyAnswered(blockId, requestId, answer) {
+        function onClarifyAnswered(blockId, requestId, answers) {
+            // `answers` maps each question id to a string (single-select/freeform)
+            // or a string list (multi-select); flatten it to a readable summary.
+            var parts = []
+            for (var key in answers) {
+                var value = answers[key]
+                parts.push(Array.isArray(value) ? value.join(", ") : value)
+            }
             editor.ingestEvents([
-                { type: "text", text: "\n\nThanks — proceeding with: " + answer + "\n" },
+                { type: "text", text: "\n\nThanks — proceeding with: " + parts.join("; ") + "\n" },
                 { type: "flush" }
             ])
         }

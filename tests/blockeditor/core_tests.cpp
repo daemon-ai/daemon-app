@@ -95,6 +95,7 @@ private slots:
     void toolViewDerivesImageGenerate();
     void toolViewFlagsAwaitingApproval();
     void clarifyAnswerRoundTrips();
+    void clarifyMultiQuestionAnswerRoundTrips();
     void approvalAnswerRoundTrips();
     void ansiSpansParseSgr();
     void unifiedDiffTypesLines();
@@ -1744,6 +1745,54 @@ void CoreTests::clarifyAnswerRoundTrips()
     // The answer persists in the canonical fenced markdown and re-parses stably.
     const QString md = store.toMarkdown();
     QVERIFY(md.contains(QStringLiteral("\"answer\":\"PostgreSQL\"")));
+    be::DocumentStore reloaded;
+    reloaded.loadMarkdown(md);
+    QCOMPARE(reloaded.toMarkdown(), md);
+}
+
+void CoreTests::clarifyMultiQuestionAnswerRoundTrips()
+{
+    be::DocumentStore store;
+    // A clarify block carrying several questions, one of them multi-select.
+    QVariantMap qDb;
+    qDb.insert(QStringLiteral("id"), QStringLiteral("db"));
+    qDb.insert(QStringLiteral("prompt"), QStringLiteral("Which DB?"));
+    qDb.insert(QStringLiteral("choices"), QVariantList{ QStringLiteral("PostgreSQL"), QStringLiteral("SQLite") });
+    QVariantMap qScope;
+    qScope.insert(QStringLiteral("id"), QStringLiteral("scope"));
+    qScope.insert(QStringLiteral("prompt"), QStringLiteral("What to migrate?"));
+    qScope.insert(QStringLiteral("choices"), QVariantList{ QStringLiteral("Schema"), QStringLiteral("Data"), QStringLiteral("Indexes") });
+    qScope.insert(QStringLiteral("multiSelect"), true);
+
+    QVariantMap meta;
+    meta.insert(QStringLiteral("callId"), QStringLiteral("q1"));
+    meta.insert(QStringLiteral("name"), QStringLiteral("clarify"));
+    meta.insert(QStringLiteral("questions"), QVariantList{ qDb, qScope });
+    const be::BlockId id = store.appendTypedBlock(be::BlockType::ToolCall, meta, nullptr);
+
+    // The structured answers the controller would apply: a scalar for the
+    // single-select question and a list for the multi-select one.
+    QVariantMap answers;
+    answers.insert(QStringLiteral("db"), QStringLiteral("PostgreSQL"));
+    answers.insert(QStringLiteral("scope"), QVariantList{ QStringLiteral("Schema"), QStringLiteral("Indexes") });
+    QVariantMap patch;
+    patch.insert(QStringLiteral("answered"), true);
+    patch.insert(QStringLiteral("answers"), answers);
+    patch.insert(QStringLiteral("answer"), QStringLiteral("PostgreSQL; Schema, Indexes"));
+    store.updateBlockMetadata(id, patch);
+
+    const qsizetype row = store.rowForBlock(id);
+    const QVariantMap stored = store.blockAt(row)->metadata;
+    QVERIFY(stored.value(QStringLiteral("answered")).toBool());
+    const QVariantMap storedAnswers = stored.value(QStringLiteral("answers")).toMap();
+    QCOMPARE(storedAnswers.value(QStringLiteral("db")).toString(), QStringLiteral("PostgreSQL"));
+    QCOMPARE(storedAnswers.value(QStringLiteral("scope")).toStringList(),
+             QStringList({ QStringLiteral("Schema"), QStringLiteral("Indexes") }));
+
+    // The nested questions + structured answers survive a markdown round-trip.
+    const QString md = store.toMarkdown();
+    QVERIFY(md.contains(QStringLiteral("\"answers\":")));
+    QVERIFY(md.contains(QStringLiteral("\"questions\":")));
     be::DocumentStore reloaded;
     reloaded.loadMarkdown(md);
     QCOMPARE(reloaded.toMarkdown(), md);
