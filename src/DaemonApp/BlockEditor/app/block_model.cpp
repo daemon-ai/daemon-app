@@ -307,6 +307,24 @@ QVariant BlockModel::data(const QModelIndex &index, int role) const
         return buildReasoningData(*block, m_projector);
     case ContentDataRole:
         return buildContentData(*block);
+    case MessageRoleRole:
+        return be::messageRoleToString(block->role);
+    case MessageIdRole:
+        return block->messageId;
+    case MessageFirstRole: {
+        if (block->role == be::MessageRole::None) {
+            return false;
+        }
+        const be::BlockRecord *prev = m_store->blockAt(index.row() - 1);
+        return !prev || prev->role != block->role || prev->messageId != block->messageId;
+    }
+    case MessageLastRole: {
+        if (block->role == be::MessageRole::None) {
+            return false;
+        }
+        const be::BlockRecord *next = m_store->blockAt(index.row() + 1);
+        return !next || next->role != block->role || next->messageId != block->messageId;
+    }
     default:
         return {};
     }
@@ -332,6 +350,10 @@ QHash<int, QByteArray> BlockModel::roleNames() const
         {ToolDataRole, "toolData"},
         {ReasoningDataRole, "reasoningData"},
         {ContentDataRole, "contentData"},
+        {MessageRoleRole, "messageRole"},
+        {MessageIdRole, "messageId"},
+        {MessageFirstRole, "messageFirst"},
+        {MessageLastRole, "messageLast"},
     };
 }
 
@@ -414,6 +436,17 @@ void BlockModel::applyChangeSet(const be::BlockChangeSet &changeSet)
         const QModelIndex top = index(static_cast<int>(changeSet.changedFirst));
         const QModelIndex bottom = index(static_cast<int>(changeSet.changedLast));
         emit dataChanged(top, bottom);
+    }
+
+    // A structural change can flip the run-edge flags of the rows bracketing the
+    // splice (the block above an insert is no longer "last", etc.). Run-edges are
+    // cheap to recompute, so refresh them across the whole list to stay correct
+    // without a full reset (preserving scroll/active state).
+    if (changeSet.insertedCount > 0 || changeSet.removedCount > 0) {
+        const int rows = rowCount();
+        if (rows > 0) {
+            emit dataChanged(index(0), index(rows - 1), {MessageFirstRole, MessageLastRole});
+        }
     }
 }
 

@@ -92,6 +92,20 @@ public:
     BlockChangeSet updateBlockMetadata(BlockId id, const QVariantMap &patch);
     BlockId blockIdForMetadata(const QString &key, const QVariant &value) const;
 
+    // Message/role layer (Strategy C). beginMessage opens a new message: it
+    // allocates a fresh stable message id, latches it as the "current message",
+    // and returns the id. Subsequent typed/stream appends tag their blocks with
+    // the current role/messageId, so a turn's blocks group together and a
+    // boundary marker is re-emitted on serialize. appendUserBlocks parses
+    // `markdown` and appends the resulting blocks under a fresh user message
+    // (the runtime path for a typed-in prompt); it returns the new message id.
+    QString beginMessage(MessageRole role);
+    QString appendMessageBlocks(MessageRole role, const QString &markdown);
+    MessageRole currentMessageRole() const;
+    QString currentMessageId() const;
+    // First row whose block belongs to `messageId`, or -1 if none.
+    qsizetype rowForMessage(const QString &messageId) const;
+
     // Splice a contiguous run of blocks (used by scoped stream undo/redo).
     void spliceBlocks(qsizetype firstRow, qsizetype removeCount, const QVector<BlockRecord> &insert);
 
@@ -122,6 +136,12 @@ private:
     QVector<BlockRecord> m_blocks;
     QHash<BlockId, qsizetype> m_rowsById;
     BlockId m_nextBlockId = 1;
+
+    // Current-message latch (the role layer's runtime tagging seam). Set by
+    // beginMessage; applied to blocks created on the typed/stream path.
+    MessageRole m_currentRole = MessageRole::None;
+    QString m_currentMessageId;
+    quint64 m_nextMessageSeq = 1;
 
     // Streaming session state (valid only between beginStreamAtEnd/endStream).
     bool m_streaming = false;

@@ -75,7 +75,7 @@ private slots:
             char32_t code;
         };
         // Every standalone icon the UI binds, by FontAwesome 6 Free codepoint.
-        static const std::array<Glyph, 33> glyphs = { {
+        static const std::array<Glyph, 40> glyphs = { {
             { "gear", 0xf013 },
             { "magnifying_glass", 0xf002 },
             { "trash", 0xf1f8 },
@@ -112,6 +112,15 @@ private slots:
             { "circle_question", 0xf059 },
             { "download", 0xf019 },
             { "wand_magic_sparkles", 0xf72b },
+            // Message/role layer icons (user bubble edit, assistant footer, and
+            // system / process notices).
+            { "pen_to_square", 0xf044 },
+            { "check", 0xf00c },
+            { "rotate", 0xf2f1 },
+            { "chevron_left", 0xf053 },
+            { "terminal", 0xf120 },
+            { "circle_info", 0xf05a },
+            { "indent", 0xf03c },
         } };
         for (const Glyph& g : glyphs) {
             QTest::newRow(g.name) << QString::fromUtf8(g.name) << static_cast<uint>(g.code);

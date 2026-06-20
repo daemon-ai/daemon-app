@@ -102,6 +102,11 @@ qt_add_qml_module(da_blockeditor
         qml/components/ClarifyBlock.qml
         qml/components/ToolApprovalBar.qml
         qml/components/Lightbox.qml
+        qml/components/UserMessageBubble.qml
+        qml/components/DirectiveChips.qml
+        qml/components/AssistantFooter.qml
+        qml/components/SystemMessage.qml
+        qml/components/ProcessNotice.qml
         qml/components/AnsiText.qml
         qml/components/DiffBlock.qml
         qml/components/SearchResultsList.qml

@@ -104,6 +104,22 @@ public:
     // single-question clarify uses the single id "q".
     Q_INVOKABLE void answerClarify(qulonglong blockId, const QString &requestId, const QVariantMap &answers);
     Q_INVOKABLE void answerToolApproval(qulonglong blockId, const QString &callId, const QString &decision, bool permanent = false);
+
+    // Message/role layer host API. appendUserMessage parses `text` and appends it
+    // as a fresh user message (the runtime alternative to the markdown-reload
+    // path); appendSystemMessage adds a centered system notice. editUserMessage
+    // truncates the document at the given message and replaces it with `text`
+    // (a fresh user message), then emits userMessageEdited so the host can re-run
+    // the assistant turn; requestRegenerate drops the assistant reply that
+    // follows `messageId` and emits regenerateRequested for the host to re-run.
+    Q_INVOKABLE void appendUserMessage(const QString &text);
+    Q_INVOKABLE void appendSystemMessage(const QString &text, const QString &variant = {});
+    Q_INVOKABLE void editUserMessage(const QString &messageId, const QString &text);
+    Q_INVOKABLE void requestRegenerate(const QString &messageId);
+    // The combined markdown of every block in `messageId` (for a footer copy /
+    // an edit composer's initial text), and a clipboard helper for it.
+    Q_INVOKABLE QString messageText(const QString &messageId) const;
+    Q_INVOKABLE void copyMessageToClipboard(const QString &messageId) const;
     // Sub-renderer parsers, surfaced for the tool/content blocks: ANSI SGR text
     // -> styled spans, and a unified diff -> typed lines (see core/agent_block).
     Q_INVOKABLE QVariantList ansiSpans(const QString &text) const;
@@ -185,6 +201,11 @@ signals:
     void imagePreviewRequested(const QString &url, const QString &alt);
     void clarifyAnswered(qulonglong blockId, const QString &requestId, const QVariantMap &answers);
     void toolApprovalAnswered(qulonglong blockId, const QString &callId, const QString &decision, bool permanent);
+    // The user edited a prior message (the document was truncated to it and the
+    // new text re-added), or asked to regenerate the assistant reply for a
+    // message. The host (Conversation) re-runs the assistant turn in response.
+    void userMessageEdited(const QString &messageId, const QString &text);
+    void regenerateRequested(const QString &messageId);
     void paletteChanged();
     void bodyFontChanged();
     // Emitted after any change to the document content (load/edit/stream) so a

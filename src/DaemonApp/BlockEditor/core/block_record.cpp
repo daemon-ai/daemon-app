@@ -7,6 +7,36 @@ QString BlockRecord::markdown() const
     return QString::fromUtf8(markdownUtf8);
 }
 
+QString messageRoleToString(MessageRole role)
+{
+    switch (role) {
+    case MessageRole::User:
+        return QStringLiteral("user");
+    case MessageRole::Assistant:
+        return QStringLiteral("assistant");
+    case MessageRole::System:
+        return QStringLiteral("system");
+    case MessageRole::None:
+        break;
+    }
+    return QStringLiteral("none");
+}
+
+MessageRole messageRoleFromString(const QString &name)
+{
+    const QString key = name.trimmed().toLower();
+    if (key == QStringLiteral("user")) {
+        return MessageRole::User;
+    }
+    if (key == QStringLiteral("assistant")) {
+        return MessageRole::Assistant;
+    }
+    if (key == QStringLiteral("system")) {
+        return MessageRole::System;
+    }
+    return MessageRole::None;
+}
+
 QString blockTypeName(BlockType type)
 {
     switch (type) {

@@ -90,6 +90,44 @@ QString agentFenceInfo(BlockType type)
     }
 }
 
+QString messageMarkerFenceInfo()
+{
+    return QStringLiteral("msg");
+}
+
+bool isMessageMarkerFence(const QString &info)
+{
+    return info.trimmed().toLower() == messageMarkerFenceInfo();
+}
+
+QByteArray serializeMessageMarker(MessageRole role, const QString &messageId)
+{
+    QVariantMap payload;
+    payload.insert(QStringLiteral("id"), messageId);
+    payload.insert(QStringLiteral("role"), messageRoleToString(role));
+    // QJsonObject sorts keys, so this is a stable round-trip form.
+    const QJsonObject obj = QJsonObject::fromVariantMap(payload);
+    const QByteArray json = QJsonDocument(obj).toJson(QJsonDocument::Compact);
+
+    QByteArray out = "```";
+    out += messageMarkerFenceInfo().toUtf8();
+    out += '\n';
+    out += json;
+    out += "\n```";
+    return out;
+}
+
+void parseMessageMarker(const QString &body, MessageRole *role, QString *messageId)
+{
+    const QVariantMap meta = parseAgentBlockMetadata(body);
+    if (role) {
+        *role = messageRoleFromString(meta.value(QStringLiteral("role")).toString());
+    }
+    if (messageId) {
+        *messageId = meta.value(QStringLiteral("id")).toString();
+    }
+}
+
 BlockType agentBlockTypeForFence(const QString &info)
 {
     const QString key = info.trimmed().toLower();

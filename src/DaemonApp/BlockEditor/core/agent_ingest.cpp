@@ -46,6 +46,10 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap &event)
         return finish();
     }
 
+    // Any content-producing event opens the assistant message if one is not
+    // already open, so the blocks below group under a single assistant turn.
+    ensureTurn();
+
     if (type == QStringLiteral("text")) {
         const QString text = stringField(event, QStringLiteral("text"));
         if (text.isEmpty()) {
@@ -152,12 +156,22 @@ QVector<BlockChangeSet> TranscriptIngest::ingestAll(const QVariantList &events)
     return out;
 }
 
+void TranscriptIngest::ensureTurn()
+{
+    if (!m_store || m_turnOpen) {
+        return;
+    }
+    m_store->beginMessage(MessageRole::Assistant);
+    m_turnOpen = true;
+}
+
 QVector<BlockChangeSet> TranscriptIngest::finish()
 {
     QVector<BlockChangeSet> out;
     if (!m_store) {
         return out;
     }
+    m_turnOpen = false;
     if (m_textStreaming) {
         m_store->endStream();
         m_textStreaming = false;

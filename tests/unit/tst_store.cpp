@@ -59,11 +59,12 @@ private slots:
         InMemoryConversationStore store;
         // Whole platform subtree (acme/build/coder/worker own non-archived convs;
         // n-coder also carries the seeded "Agent blocks demo" transcript).
-        QCOMPARE(store.conversationCount(nodeScope("n-acme")), 6);
-        QCOMPARE(store.conversationCount(nodeScope("n-build")), 5);
+        QCOMPARE(store.conversationCount(nodeScope("n-acme")), 7);
+        QCOMPARE(store.conversationCount(nodeScope("n-build")), 6);
         QCOMPARE(store.conversationCount(nodeScope("n-deep")), 1);
-        // Leaves fold to their own.
-        QCOMPARE(store.conversationCount(nodeScope("n-coder")), 3);
+        // Leaves fold to their own (n-coder owns the agent-blocks and the
+        // message-roles demo transcripts on top of its two working notes).
+        QCOMPARE(store.conversationCount(nodeScope("n-coder")), 4);
         QCOMPARE(store.conversationCount(nodeScope("n-scratch")), 1);
         // The actual conversations come back for the fold too.
         QCOMPARE(store.conversations(nodeScope("n-deep")).size(), 1);
@@ -72,7 +73,7 @@ private slots:
     void allAndArchivedScopes()
     {
         InMemoryConversationStore store;
-        QCOMPARE(store.conversationCount({ NodeType::AllConversations, -1, {} }), 7);
+        QCOMPARE(store.conversationCount({ NodeType::AllConversations, -1, {} }), 8);
         QCOMPARE(store.conversationCount({ NodeType::Archived, -1, {} }), 1);
     }
 
@@ -80,8 +81,9 @@ private slots:
     {
         InMemoryConversationStore store;
         // "ideas" (1) is on the scratch conversation, the seeded agent-blocks demo,
-        // and an archived review note; the archived one is excluded.
-        QCOMPARE(store.conversationCount({ NodeType::Tag, 1, {} }), 2);
+        // the message-roles demo, and an archived review note; the archived one is
+        // excluded.
+        QCOMPARE(store.conversationCount({ NodeType::Tag, 1, {} }), 3);
         // "todo" (2) is on the build dispatch log and the coder endpoint.
         QCOMPARE(store.conversationCount({ NodeType::Tag, 2, {} }), 2);
     }
@@ -100,7 +102,7 @@ private slots:
         QCOMPARE(store.conversationCount(nodeScope("n-worker")), 2);
         QCOMPARE(store.conversationCount(nodeScope("n-deep")), 2);
         QCOMPARE(store.conversationCount(nodeScope("n-acme")), before + 1);
-        QCOMPARE(store.conversationCount({ NodeType::AllConversations, -1, {} }), 8);
+        QCOMPARE(store.conversationCount({ NodeType::AllConversations, -1, {} }), 9);
     }
 
     void unknownNodeYieldsNothing()

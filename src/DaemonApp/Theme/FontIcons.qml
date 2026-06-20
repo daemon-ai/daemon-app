@@ -85,6 +85,10 @@ QtObject {
     // clarify prompt + image-result download affordances.
     readonly property string fa_circle_question: "\uf059"
     readonly property string fa_download: "\uf019"
+    // Message footer actions (copy reuses fa_copy above): regenerate/reload and
+    // the branch picker prev/next carets.
+    readonly property string fa_rotate: "\uf2f1"
+    readonly property string fa_circle_info: "\uf05a"
 
     // --- Status bar glyphs --------------------------------------------------
     readonly property string fa_terminal: "\uf120"

@@ -39,8 +39,14 @@ public:
     QVector<BlockChangeSet> finish();
 
 private:
+    // Open an assistant message on the first content event of a turn so every
+    // streamed/typed block it produces is tagged with that message id. Reset by
+    // finish() (the turn-end marker), so the next turn opens a fresh message.
+    void ensureTurn();
+
     DocumentStore *m_store = nullptr;
     bool m_textStreaming = false;
+    bool m_turnOpen = false;
     BlockId m_reasoningBlock = 0;
     QString m_reasoningBody;
 };

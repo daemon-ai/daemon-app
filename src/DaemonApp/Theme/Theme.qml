@@ -184,6 +184,25 @@ QtObject {
         "#6fa0ff", "#cf8ee0", "#3bc9db", "#f0f0f0"
     ]
 
+    // --- Message / role layer (user bubbles, system + process notices) ------
+    // User messages sit in a glass bubble: a faint accent-tinted surface with a
+    // hairline border, distinct from the full-width assistant stream. System and
+    // process notices are quiet centered chrome on the raised surface.
+    readonly property color bubbleUser: isMidnight ? "#13234d" : isDark ? "#222a36" : isSepia ? "#f0e6cf" : "#eef4fb"
+    readonly property color bubbleUserBorder: isMidnight ? "#28467f" : isDark ? "#33414f" : isSepia ? "#dccca3" : "#d7e6f6"
+    readonly property color bubbleUserText: text
+    // Footer action row (copy / regenerate / branch) under an assistant message.
+    readonly property color messageFooterText: textMuted
+    readonly property color messageFooterHover: hover
+    // System notice (steer / slash / generic) - centered, muted, faint surface.
+    readonly property color systemNoticeSurface: surfaceRaised
+    readonly property color systemNoticeBorder: border
+    readonly property color systemNoticeText: textMuted
+    // Process notification - a terminal-icon notice with a collapsible body.
+    readonly property color processNoticeSurface: surfaceRaised
+    readonly property color processNoticeBorder: border
+    readonly property color processNoticeIcon: accent
+
     // --- Icons --------------------------------------------------------------
     // IconButton default glyph color (dark themes use a blue accent).
     readonly property color iconColor: isMidnight ? "#6fa0ff" : isDark ? "#5b94f5" : "#000000"

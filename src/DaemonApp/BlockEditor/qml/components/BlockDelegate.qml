@@ -23,6 +23,10 @@ Item {
     required property var toolData
     required property var reasoningData
     required property var contentData
+    required property string messageRole
+    required property string messageId
+    required property bool messageFirst
+    required property bool messageLast
     required property var editorController
 
     // BlockType enum values for list items (BulletListItem=2, OrderedListItem=3,
@@ -77,6 +81,17 @@ Item {
     readonly property bool hasTool: blockType === 14
     readonly property bool hasContent: blockType === 15
 
+    // Message/role layer (Strategy C). A user block renders in a glass bubble; a
+    // system block renders as a centered notice (a "process:"-prefixed system
+    // message becomes a collapsible process notification); assistant/un-roled
+    // blocks render as before, with a footer after the last block of the run.
+    readonly property bool isUser: messageRole === "user"
+    readonly property bool isSystem: messageRole === "system"
+    readonly property bool isAssistant: messageRole === "assistant"
+    readonly property bool isProcessNotice: isSystem && markdown.trim().startsWith("process:")
+    // First block of a turn gets extra top spacing so turns read as grouped.
+    readonly property int turnGap: messageFirst ? Theme.contentSpacing : 0
+
     property bool isPooled: false
     property bool isActive: editorController.activeBlockId === Number(blockId)
     property var selectionSpan: editorController.selectionSpanForBlock(Number(blockId), index, passiveText.length)
@@ -121,7 +136,7 @@ Item {
     }
 
     width: ListView.view ? ListView.view.width : implicitWidth
-    implicitHeight: Math.max(contentColumn.implicitHeight + verticalPadding * 2, 1)
+    implicitHeight: Math.max(contentColumn.implicitHeight + verticalPadding * 2 + turnGap, 1)
     height: implicitHeight
 
     ListView.onPooled: {
@@ -201,7 +216,7 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.topMargin: root.verticalPadding
+        anchors.topMargin: root.verticalPadding + root.turnGap
         anchors.leftMargin: Theme.blockPadding
         anchors.rightMargin: Theme.blockPadding
         spacing: Theme.smallSpacing
@@ -217,7 +232,7 @@ Item {
         Item {
             id: passiveContainer
             visible: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasCode && !root.hasMath
-                     && !root.hasReasoning && !root.hasTool && !root.hasContent
+                     && !root.hasReasoning && !root.hasTool && !root.hasContent && !root.isUser && !root.isSystem
             width: parent.width
             implicitHeight: passiveText.implicitHeight
             height: implicitHeight
@@ -268,7 +283,7 @@ Item {
                 id: passiveSelect
                 anchors.fill: parent
                 enabled: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasMath
-                         && !root.hasReasoning && !root.hasTool && !root.hasContent
+                         && !root.hasReasoning && !root.hasTool && !root.hasContent && !root.isUser && !root.isSystem
                 acceptedButtons: Qt.LeftButton
                 preventStealing: true
                 hoverEnabled: true
@@ -605,6 +620,51 @@ Item {
             }
         }
 
+        // --- Message/role layer render paths --------------------------------
+        // User message: a glass bubble with the simplified text, directive chips,
+        // and an inline edit composer (the passive selection path is disabled for
+        // user/system rows above, so these own their own interaction).
+        Loader {
+            id: userLoader
+            width: parent.width
+            active: root.isUser && !root.isActive
+            visible: active
+            sourceComponent: Component {
+                UserMessageBubble {
+                    markdown: root.markdown
+                    displayMarkup: root.displayMarkup
+                    editorController: root.editorController
+                    messageId: root.messageId
+                }
+            }
+        }
+
+        Loader {
+            id: systemLoader
+            width: parent.width
+            active: root.isSystem && !root.isProcessNotice && !root.isActive
+            visible: active
+            sourceComponent: Component {
+                SystemMessage {
+                    markdown: root.markdown
+                    editorController: root.editorController
+                }
+            }
+        }
+
+        Loader {
+            id: processLoader
+            width: parent.width
+            active: root.isProcessNotice && !root.isActive
+            visible: active
+            sourceComponent: Component {
+                ProcessNotice {
+                    markdown: root.markdown
+                    editorController: root.editorController
+                }
+            }
+        }
+
         Item {
             id: activeContainer
             visible: root.isActive
@@ -840,6 +900,21 @@ Item {
                     clickStreak = activeClickTimer.running ? clickStreak + 1 : 1
                     activeClickTimer.restart()
                     root.resolveSelectionClick(true, pressOffset, mouse, Qt.point(mapToItem(root, mouse.x, mouse.y).x, mapToItem(root, mouse.x, mouse.y).y), clickStreak)
+                }
+            }
+        }
+
+        // Assistant message footer (copy / regenerate / branch) shown once, on
+        // the last block of an assistant message and only when not editing.
+        Loader {
+            id: footerLoader
+            width: parent.width
+            active: root.isAssistant && root.messageLast && !root.isActive
+            visible: active
+            sourceComponent: Component {
+                AssistantFooter {
+                    editorController: root.editorController
+                    messageId: root.messageId
                 }
             }
         }

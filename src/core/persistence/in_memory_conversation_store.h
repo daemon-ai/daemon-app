@@ -39,6 +39,7 @@ private:
     // Canonical demo transcript markdown exercising every Phase 1 agent block,
     // seeded as a conversation for visual inspection of the renderers.
     [[nodiscard]] static QString agentBlocksSampleMarkdown();
+    [[nodiscard]] static QString roleLayerSampleMarkdown();
 
     QList<domain::AgentNode> m_nodes;
     QList<domain::Tag> m_tags;

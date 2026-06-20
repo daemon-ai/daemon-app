@@ -20,6 +20,25 @@ namespace be {
 // Fence info-string for an agent block type, or "" for a non-agent type.
 QString agentFenceInfo(BlockType type);
 
+// --- Message boundary markers (role layer, Strategy C) ----------------------
+// A turn boundary is persisted as a tiny fenced block whose info string is "msg"
+// and whose body is compact JSON: {"id":"m3","role":"user"}. On load the parser
+// consumes the marker (it is NOT kept as a row), sets the current role/messageId,
+// and tags following content blocks; on serialize a marker is re-emitted only
+// where role/messageId changes. This mirrors the agent-block hybrid form.
+
+// Fence info string that marks a message boundary.
+QString messageMarkerFenceInfo();
+
+// True when a fence info string denotes a message boundary marker.
+bool isMessageMarkerFence(const QString &info);
+
+// Serialize a message boundary marker to its canonical fenced markdown.
+QByteArray serializeMessageMarker(MessageRole role, const QString &messageId);
+
+// Parse a marker fence body (JSON, fences already stripped) into role + id.
+void parseMessageMarker(const QString &body, MessageRole *role, QString *messageId);
+
 // Map a fence info-string ("tool"/"reasoning"/"content") to its BlockType, or
 // BlockType::Unknown when the info string is not an agent block kind.
 BlockType agentBlockTypeForFence(const QString &info);

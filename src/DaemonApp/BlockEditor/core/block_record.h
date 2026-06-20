@@ -35,6 +35,20 @@ enum class BlockType : quint16 {
     Unknown,
 };
 
+// Conversation message role a block belongs to. Derived at parse time from
+// persisted boundary markers (see agent_block message-marker helpers) and used
+// by the QML grouping layer to draw user bubbles / assistant containers /
+// system notices. None == an un-roled (legacy / plain-markdown) block.
+enum class MessageRole : quint8 {
+    None,
+    User,
+    Assistant,
+    System,
+};
+
+QString messageRoleToString(MessageRole role);
+MessageRole messageRoleFromString(const QString &name);
+
 struct TextRangeUtf8 {
     qsizetype byteOffset = 0;
     qsizetype byteLength = 0;
@@ -45,6 +59,11 @@ struct BlockRecord {
     BlockType type = BlockType::Unknown;
     quint16 indent = 0;
     quint16 headingLevel = 0;
+    // Message grouping (Strategy C): the role + stable message id this block
+    // belongs to. Assigned from boundary markers on load and from the
+    // current-message latch on the runtime (typed/stream) path.
+    MessageRole role = MessageRole::None;
+    QString messageId;
     TextRangeUtf8 source;
     QByteArray markdownUtf8;
     QVariantMap metadata;

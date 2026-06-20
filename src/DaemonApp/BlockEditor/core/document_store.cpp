@@ -383,6 +383,28 @@ void DocumentStore::loadFromParse(const QString &markdown)
         m_blocks.push_back(record);
     }
 
+    // Re-arm the current-message latch from the loaded tail so a runtime append
+    // that omits beginMessage continues the last message rather than starting an
+    // un-roled run. A fresh turn always calls beginMessage first and overrides.
+    // Also advance the message sequence past any loaded "m<n>" ids so a fresh
+    // beginMessage never collides with an id already present in the document.
+    static const QRegularExpression messageSeqRe(QStringLiteral("^m(\\d+)$"));
+    quint64 maxSeq = 0;
+    for (const BlockRecord &block : m_blocks) {
+        const QRegularExpressionMatch match = messageSeqRe.match(block.messageId);
+        if (match.hasMatch()) {
+            maxSeq = qMax(maxSeq, match.captured(1).toULongLong());
+        }
+    }
+    m_nextMessageSeq = maxSeq + 1;
+    if (!m_blocks.isEmpty()) {
+        m_currentRole = m_blocks.last().role;
+        m_currentMessageId = m_blocks.last().messageId;
+    } else {
+        m_currentRole = MessageRole::None;
+        m_currentMessageId.clear();
+    }
+
     reserialize();
 }
 
@@ -403,6 +425,11 @@ QVector<BlockRecord> DocumentStore::recordsFromParse(const QString &markdown) co
         // own follow-on block; that line is already part of the fence's span, so
         // skip any parsed block that starts inside it to avoid a duplicate fence.
         qsizetype fenceConsumedThrough = -1;
+        // Message boundary derivation: a ```msg marker sets the role/messageId
+        // applied to every following content block until the next marker. The
+        // marker itself is dropped (never becomes a row).
+        MessageRole currentRole = MessageRole::None;
+        QString currentMessageId;
         for (const ParsedBlock &pb : parsed.blocks) {
             const qsizetype pbStart = input.lineColumnToUtf16(pb.startLine, pb.startColumn);
             if (pbStart < fenceConsumedThrough) {
@@ -418,7 +445,14 @@ QVector<BlockRecord> DocumentStore::recordsFromParse(const QString &markdown) co
                 }
             }
 
+            if (pb.type == BlockType::CodeFence && isMessageMarkerFence(pb.info)) {
+                parseMessageMarker(fencedBodyOf(content), &currentRole, &currentMessageId);
+                continue;
+            }
+
             BlockRecord record;
+            record.role = currentRole;
+            record.messageId = currentMessageId;
             record.type = pb.type;
             record.headingLevel = pb.headingLevel;
             record.indent = pb.indent;
@@ -581,8 +615,13 @@ bool DocumentStore::insertBlockAfter(BlockId id, const QString &markdown)
         return false;
     }
 
+    const BlockRecord *anchor = blockAt(row);
     BlockRecord record;
     record.id = allocateId();
+    if (anchor) {
+        record.role = anchor->role;
+        record.messageId = anchor->messageId;
+    }
     setBlockContent(record, markdown);
     m_blocks.insert(row + 1, record);
     reserialize();
@@ -600,6 +639,9 @@ bool DocumentStore::splitBlock(BlockId id, qsizetype utf16Offset, BlockId *resul
     const QString content = block->markdown();
     const qsizetype offset = qBound<qsizetype>(0, utf16Offset, content.size());
     const BlockType type = block->type;
+    // New blocks born from a split stay in the same message as their source.
+    const MessageRole splitRole = block->role;
+    const QString splitMessageId = block->messageId;
 
     // Code fence: Enter inserts a literal newline so multi-line code editing is
     // unaffected. The exception is "Enter Enter" at the end of a closed fence: the
@@ -617,6 +659,8 @@ bool DocumentStore::splitBlock(BlockId id, qsizetype utf16Offset, BlockId *resul
 
                 BlockRecord paragraph;
                 paragraph.id = allocateId();
+                paragraph.role = splitRole;
+                paragraph.messageId = splitMessageId;
                 setBlockContent(paragraph, QString());
                 m_blocks.insert(row + 1, paragraph);
                 reserialize();
@@ -693,6 +737,8 @@ bool DocumentStore::splitBlock(BlockId id, qsizetype utf16Offset, BlockId *resul
 
     BlockRecord inserted;
     inserted.id = allocateId();
+    inserted.role = splitRole;
+    inserted.messageId = splitMessageId;
     setBlockContent(inserted, afterContent);
     m_blocks.insert(row + 1, inserted);
     reserialize();
@@ -781,9 +827,14 @@ bool DocumentStore::pasteMarkdown(BlockId id, qsizetype rawStart, qsizetype rawE
     }
 
     // Reuse the edited block's identity for the first resulting block so the
-    // active block reference stays valid across the splice.
+    // active block reference stays valid across the splice; all spliced blocks
+    // inherit the edited block's message so a paste stays in the same turn.
     const quint32 baseRevision = block->revision;
+    const MessageRole pasteRole = block->role;
+    const QString pasteMessageId = block->messageId;
     for (qsizetype i = 0; i < result.size(); ++i) {
+        result[i].role = pasteRole;
+        result[i].messageId = pasteMessageId;
         if (i == 0) {
             result[i].id = id;
             result[i].revision = baseRevision + 1;
@@ -1027,6 +1078,8 @@ BlockChangeSet DocumentStore::reparseWindow()
             const NewBlock &nb = news[i];
             BlockRecord record;
             record.id = allocateId();
+            record.role = m_currentRole;
+            record.messageId = m_currentMessageId;
             record.type = nb.type;
             record.headingLevel = nb.headingLevel;
             record.indent = nb.indent;
@@ -1093,6 +1146,50 @@ bool DocumentStore::isStreaming() const
     return m_streaming;
 }
 
+QString DocumentStore::beginMessage(MessageRole role)
+{
+    m_currentRole = role;
+    m_currentMessageId = QStringLiteral("m%1").arg(m_nextMessageSeq++);
+    return m_currentMessageId;
+}
+
+QString DocumentStore::appendMessageBlocks(MessageRole role, const QString &markdown)
+{
+    const QString id = beginMessage(role);
+    QVector<BlockRecord> records = recordsFromParse(markdown);
+    for (BlockRecord &record : records) {
+        record.id = allocateId();
+        record.role = role;
+        record.messageId = id;
+        m_blocks.push_back(record);
+    }
+    reserialize();
+    return id;
+}
+
+qsizetype DocumentStore::rowForMessage(const QString &messageId) const
+{
+    if (messageId.isEmpty()) {
+        return -1;
+    }
+    for (qsizetype row = 0; row < m_blocks.size(); ++row) {
+        if (m_blocks[row].messageId == messageId) {
+            return row;
+        }
+    }
+    return -1;
+}
+
+MessageRole DocumentStore::currentMessageRole() const
+{
+    return m_currentRole;
+}
+
+QString DocumentStore::currentMessageId() const
+{
+    return m_currentMessageId;
+}
+
 BlockId DocumentStore::appendTypedBlock(BlockType type, const QVariantMap &metadata, BlockChangeSet *changeSet)
 {
     // An open text-stream window is committed first: a typed block is a hard
@@ -1106,6 +1203,8 @@ BlockId DocumentStore::appendTypedBlock(BlockType type, const QVariantMap &metad
     BlockRecord record;
     record.id = allocateId();
     record.type = type;
+    record.role = m_currentRole;
+    record.messageId = m_currentMessageId;
     record.metadata = metadata;
     // Keep the canonical fenced markdown in sync so save/export round-trips even
     // though the live render reads metadata. Non-agent types keep their raw form.
@@ -1229,13 +1328,27 @@ void DocumentStore::reserialize()
     }
 
     QByteArray joined;
+    MessageRole prevRole = MessageRole::None;
+    QString prevMessageId;
     for (qsizetype row = 0; row < m_blocks.size(); ++row) {
-        if (row > 0) {
-            joined += separatorBetween(m_blocks[row - 1], m_blocks[row]);
-        }
         BlockRecord &block = m_blocks[row];
+        // A message boundary: the first roled block, or any block whose role or
+        // message id differs from the block above it. Emit a ```msg marker (a
+        // blank line on each side so it always parses as its own fenced block,
+        // even between list items whose normal separator is a single newline).
+        const bool boundary = block.role != MessageRole::None
+            && (row == 0 || block.role != prevRole || block.messageId != prevMessageId);
+        if (row > 0) {
+            joined += boundary ? QByteArrayLiteral("\n\n") : separatorBetween(m_blocks[row - 1], block);
+        }
+        if (boundary) {
+            joined += serializeMessageMarker(block.role, block.messageId);
+            joined += "\n\n";
+        }
         block.source = {joined.size(), block.markdownUtf8.size()};
         joined += block.markdownUtf8;
+        prevRole = block.role;
+        prevMessageId = block.messageId;
     }
     if (!m_blocks.isEmpty()) {
         joined += '\n';

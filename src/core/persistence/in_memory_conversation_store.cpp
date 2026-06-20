@@ -93,6 +93,13 @@ void InMemoryConversationStore::seedSampleData()
     // runtime inject path serializes and the parser round-trips).
     make(QStringLiteral("n-coder"), { 1 }, false, QStringLiteral("Agent blocks demo"),
          agentBlocksSampleMarkdown());
+
+    // A demo transcript exercising the message/role layer: user bubbles (with
+    // directive chips), assistant turns (reasoning + tool + text, with a footer),
+    // a system steer/slash notice, and a process notification. Roles are carried
+    // by ```msg boundary markers the parser consumes into per-block role/messageId.
+    make(QStringLiteral("n-coder"), { 1 }, false, QStringLiteral("Message roles demo"),
+         roleLayerSampleMarkdown());
 }
 
 QString InMemoryConversationStore::agentBlocksSampleMarkdown()
@@ -163,6 +170,68 @@ A dangerous command awaiting approval:
 
 That wraps the demo turn.
 )SAMPLE");
+}
+
+QString InMemoryConversationStore::roleLayerSampleMarkdown()
+{
+    return QStringLiteral(R"ROLES(```msg
+{"id":"u1","role":"user"}
+```
+
+Can you migrate the database layer? See @file:src/db/schema.sql and @url:https://example.com/migrations for context.
+
+```msg
+{"id":"m1","role":"assistant"}
+```
+
+```reasoning
+{"status":"complete","durationMs":3100,"body":"The user wants a DB migration. I'll inspect the schema, then propose a plan and apply it."}
+```
+
+```tool
+{"callId":"r1","name":"read_file","tone":"edit","status":"ok","durationMs":120,"argsSummary":"src/db/schema.sql","detailKind":"diff","diff":"--- a/src/db/schema.sql\n+++ b/src/db/schema.sql\n@@\n-CREATE TABLE t(id INT);\n+CREATE TABLE t(id BIGINT);\n"}
+```
+
+Here's the migration plan: add a versioned `schema_migrations` table and widen every `id` column to `BIGINT` across the schema.
+
+```msg
+{"id":"s1","role":"system"}
+```
+
+steer:Prefer PostgreSQL syntax for all migrations.
+
+```msg
+{"id":"u2","role":"user"}
+```
+
+Sounds good — go ahead and run it.
+
+```msg
+{"id":"m2","role":"assistant"}
+```
+
+Applying the migration now.
+
+```tool
+{"callId":"r2","name":"terminal","tone":"terminal","status":"ok","durationMs":2400,"argsSummary":"psql -f migrate.sql","detailKind":"ansi-stream","stdout":"\u001b[32mOK\u001b[0m  3 tables migrated\n"}
+```
+
+Migration complete. All `id` columns are now `BIGINT` and a `schema_migrations` table tracks versions.
+
+```msg
+{"id":"s2","role":"system"}
+```
+
+slash:/model gpt-5
+Switched model to gpt-5 for this thread.
+
+```msg
+{"id":"s3","role":"system"}
+```
+
+process:Background indexing finished
+Reindexed 3 tables in 4.2s with no errors.
+)ROLES");
 }
 
 bool InMemoryConversationStore::isInSubtree(const QString& nodeId, const QString& rootId) const

@@ -121,6 +121,18 @@ Rectangle {
                 })
             }
         }
+
+        // Footer "regenerate": the controller has already dropped the assistant
+        // reply; stream a fresh one. A real host would re-send the prior prompt.
+        function onRegenerateRequested(messageId) {
+            root.runAssistantTurn("")
+        }
+
+        // Inline edit: the controller truncated the doc to the edited user message
+        // and re-added the new text; stream the assistant reply for it.
+        function onUserMessageEdited(messageId, text) {
+            root.runAssistantTurn(text)
+        }
     }
 
     // Coalesce a burst of edits into a single persist of the exported markdown.
@@ -317,6 +329,41 @@ Rectangle {
                     if (editorView.stickToBottom)
                         editorView.pinToBottom()
                 }
+            }
+        }
+
+        // Empty-thread intro (inventory #21): a centered welcome shown when the
+        // conversation has no blocks, replacing the bare empty column.
+        Column {
+            id: emptyIntro
+            anchors.centerIn: parent
+            width: Math.min(parent.width - Theme.spacingLarge * 2, 420)
+            spacing: Theme.smallSpacing
+            visible: !UiSettings.showPlainText && editorView.count === 0 && !turnSim.active
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: FontIcons.fa_comments
+                font.family: FontIcons.faSolid
+                font.pixelSize: 32
+                color: Theme.mutedText
+            }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Start the conversation")
+                color: Theme.text
+                font.family: FontIcons.display
+                font.pixelSize: Theme.bodyFontSize + 3
+                font.bold: true
+            }
+            Text {
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                text: qsTr("Send a message below to begin. The agent's reasoning, tool calls, and replies will stream in here.")
+                color: Theme.mutedText
+                font.family: FontIcons.display
+                font.pixelSize: Theme.captionFontSize
+                wrapMode: Text.Wrap
             }
         }
 

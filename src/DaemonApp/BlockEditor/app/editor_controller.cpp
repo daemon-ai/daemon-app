@@ -370,6 +370,98 @@ void EditorController::answerToolApproval(qulonglong blockId, const QString &cal
     emit toolApprovalAnswered(blockId, callId, decision, permanent);
 }
 
+void EditorController::appendUserMessage(const QString &text)
+{
+    const QString trimmed = text.trimmed();
+    if (trimmed.isEmpty()) {
+        return;
+    }
+    m_store.appendMessageBlocks(be::MessageRole::User, trimmed);
+    resetModel();
+    rebuildHeightIndex();
+    scheduleFlush();
+    emit documentChanged();
+}
+
+void EditorController::appendSystemMessage(const QString &text, const QString &variant)
+{
+    Q_UNUSED(variant);
+    const QString trimmed = text.trimmed();
+    if (trimmed.isEmpty()) {
+        return;
+    }
+    m_store.appendMessageBlocks(be::MessageRole::System, trimmed);
+    resetModel();
+    rebuildHeightIndex();
+    scheduleFlush();
+    emit documentChanged();
+}
+
+void EditorController::editUserMessage(const QString &messageId, const QString &text)
+{
+    const qsizetype row = m_store.rowForMessage(messageId);
+    const QString trimmed = text.trimmed();
+    if (row < 0 || trimmed.isEmpty()) {
+        return;
+    }
+    // Truncate the document at the edited message (it and the assistant reply it
+    // produced are dropped), then re-add the new text as a fresh user message.
+    m_store.deleteBlocks(row, m_store.blockCount() - row);
+    const QString newId = m_store.appendMessageBlocks(be::MessageRole::User, trimmed);
+    clearActiveSelection();
+    m_activeBlockId = 0;
+    resetModel();
+    rebuildHeightIndex();
+    emit activeBlockIdChanged();
+    scheduleFlush();
+    emit documentChanged();
+    emit userMessageEdited(newId, trimmed);
+}
+
+void EditorController::requestRegenerate(const QString &messageId)
+{
+    const qsizetype row = m_store.rowForMessage(messageId);
+    if (row >= 0) {
+        // Drop the assistant message (and anything after it) so the host can
+        // stream a fresh reply in its place.
+        m_store.deleteBlocks(row, m_store.blockCount() - row);
+        clearActiveSelection();
+        m_activeBlockId = 0;
+        resetModel();
+        rebuildHeightIndex();
+        emit activeBlockIdChanged();
+        scheduleFlush();
+        emit documentChanged();
+    }
+    emit regenerateRequested(messageId);
+}
+
+QString EditorController::messageText(const QString &messageId) const
+{
+    if (messageId.isEmpty()) {
+        return {};
+    }
+    QStringList parts;
+    for (qsizetype row = 0; row < m_store.blockCount(); ++row) {
+        const be::BlockRecord *block = m_store.blockAt(row);
+        if (block && block->messageId == messageId) {
+            parts << block->markdown();
+        }
+    }
+    return parts.join(QStringLiteral("\n\n"));
+}
+
+void EditorController::copyMessageToClipboard(const QString &messageId) const
+{
+    const QString text = messageText(messageId);
+    if (text.isEmpty()) {
+        return;
+    }
+    if (QClipboard *clipboard = QGuiApplication::clipboard()) {
+        clipboard->setText(text);
+    }
+}
+
 QVariantList EditorController::ansiSpans(const QString &text) const
 {
     return be::ansiToSpans(text);

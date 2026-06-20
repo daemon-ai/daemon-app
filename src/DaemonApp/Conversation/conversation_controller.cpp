@@ -2,6 +2,8 @@
 
 #include "persistence/iconversation_store.h"
 
+#include <QDateTime>
+
 ConversationController::ConversationController(QObject* parent)
     : QObject(parent)
 {
@@ -47,11 +49,19 @@ void ConversationController::appendUserText(const QString& text)
     if (!m_store || m_currentId < 0 || trimmed.isEmpty()) {
         return;
     }
+    // Prefix a message boundary marker (role layer, Strategy C) so the persisted
+    // markdown carries the user turn; the BlockEditor parser consumes the marker
+    // and tags the text as a user message. A "u<epochMs>" id stays distinct from
+    // the runtime's "m<n>" assistant ids, so the two never collide.
+    const QString id = QStringLiteral("u%1").arg(QDateTime::currentMSecsSinceEpoch());
+    const QString marker =
+        QStringLiteral("```msg\n{\"id\":\"%1\",\"role\":\"user\"}\n```").arg(id);
+
     QString next = m_content;
     if (!next.isEmpty()) {
         next += QStringLiteral("\n\n");
     }
-    next += trimmed;
+    next += marker + QStringLiteral("\n\n") + trimmed;
     m_store->setContent(m_currentId, next); // emits changed() -> refresh()
 }
 

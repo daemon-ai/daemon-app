@@ -102,6 +102,11 @@ private slots:
     void ingestShimReplayBuildsBlocks();
     void ingestFlushClosesTextStream();
     void agentBlocksSceneParses();
+    void messageMarkerDerivesRolesAndDropsRows();
+    void messageMarkerRoundTripIsStable();
+    void beginMessageTagsTypedAndStreamBlocks();
+    void ingestOpensAssistantMessage();
+    void editUserMessageTruncatesAndRetags();
 };
 
 namespace {
@@ -2003,6 +2008,155 @@ void CoreTests::agentBlocksSceneParses()
 
     // The whole document round-trips back to the same markdown.
     QCOMPARE(store.toMarkdown(), scene);
+}
+
+void CoreTests::messageMarkerDerivesRolesAndDropsRows()
+{
+    // A document with msg boundary markers: each marker tags the blocks that
+    // follow it and is itself consumed (never becomes a row).
+    const QString md = QStringLiteral(
+        "```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
+        "Migrate the database, please.\n\n"
+        "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
+        "Working on it.\n\nDone — all tables migrated.\n\n"
+        "```msg\n{\"id\":\"s1\",\"role\":\"system\"}\n```\n\n"
+        "steer:Use PostgreSQL syntax.\n");
+
+    be::DocumentStore store;
+    store.loadMarkdown(md);
+
+    // Four content blocks, zero marker rows.
+    QCOMPARE(store.blockCount(), qsizetype(4));
+
+    QCOMPARE(store.blockAt(0)->role, be::MessageRole::User);
+    QCOMPARE(store.blockAt(0)->messageId, QStringLiteral("u1"));
+
+    QCOMPARE(store.blockAt(1)->role, be::MessageRole::Assistant);
+    QCOMPARE(store.blockAt(1)->messageId, QStringLiteral("m1"));
+    QCOMPARE(store.blockAt(2)->role, be::MessageRole::Assistant);
+    QCOMPARE(store.blockAt(2)->messageId, QStringLiteral("m1"));
+
+    QCOMPARE(store.blockAt(3)->role, be::MessageRole::System);
+    QCOMPARE(store.blockAt(3)->messageId, QStringLiteral("s1"));
+}
+
+void CoreTests::messageMarkerRoundTripIsStable()
+{
+    const QString md = QStringLiteral(
+        "```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
+        "Hello there.\n\n"
+        "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
+        "Hi! How can I help?\n");
+
+    be::DocumentStore store;
+    store.loadMarkdown(md);
+
+    // serialize -> parse -> serialize is a fixed point: the re-emitted markers
+    // land exactly at the role/messageId boundaries.
+    const QString once = store.toMarkdown();
+    be::DocumentStore reloaded;
+    reloaded.loadMarkdown(once);
+    QCOMPARE(reloaded.toMarkdown(), once);
+
+    // The serialized form carries a marker for each message boundary.
+    QVERIFY(once.contains(QStringLiteral("\"role\":\"user\"")));
+    QVERIFY(once.contains(QStringLiteral("\"role\":\"assistant\"")));
+}
+
+void CoreTests::beginMessageTagsTypedAndStreamBlocks()
+{
+    be::DocumentStore store;
+
+    // A user message via the runtime append path, then an assistant message that
+    // mixes a streamed paragraph and a typed tool block.
+    const QString userId = store.appendMessageBlocks(be::MessageRole::User, QStringLiteral("Run the build."));
+    QCOMPARE(store.blockAt(0)->role, be::MessageRole::User);
+    QCOMPARE(store.blockAt(0)->messageId, userId);
+
+    const QString assistantId = store.beginMessage(be::MessageRole::Assistant);
+    QVERIFY(assistantId != userId);
+
+    store.beginStreamAtEnd();
+    store.streamAppend(QStringLiteral("Building now.\n"));
+    store.endStream();
+
+    QVariantMap toolMeta;
+    toolMeta.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    toolMeta.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    store.appendTypedBlock(be::BlockType::ToolCall, toolMeta);
+
+    // Every assistant-turn block carries the assistant message id.
+    for (qsizetype row = 1; row < store.blockCount(); ++row) {
+        QCOMPARE(store.blockAt(row)->role, be::MessageRole::Assistant);
+        QCOMPARE(store.blockAt(row)->messageId, assistantId);
+    }
+
+    // The serialized document round-trips with the derived roles intact.
+    const QString md = store.toMarkdown();
+    be::DocumentStore reloaded;
+    reloaded.loadMarkdown(md);
+    QCOMPARE(reloaded.toMarkdown(), md);
+    QCOMPARE(reloaded.blockAt(0)->role, be::MessageRole::User);
+    QCOMPARE(reloaded.blockAt(reloaded.blockCount() - 1)->role, be::MessageRole::Assistant);
+}
+
+void CoreTests::ingestOpensAssistantMessage()
+{
+    be::DocumentStore store;
+    be::TranscriptIngest ingest(&store);
+
+    // The first content event of a turn opens an assistant message, so streamed
+    // text and typed blocks are tagged without an explicit beginMessage.
+    QVariantMap textEvent;
+    textEvent.insert(QStringLiteral("type"), QStringLiteral("text"));
+    textEvent.insert(QStringLiteral("text"), QStringLiteral("Thinking out loud.\n"));
+    ingest.ingest(textEvent);
+
+    QVariantMap started;
+    started.insert(QStringLiteral("type"), QStringLiteral("toolStarted"));
+    started.insert(QStringLiteral("callId"), QStringLiteral("t1"));
+    started.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    ingest.ingest(started);
+    ingest.finish();
+
+    QVERIFY(store.blockCount() >= 2);
+    const QString firstId = store.blockAt(0)->messageId;
+    QVERIFY(!firstId.isEmpty());
+    for (qsizetype row = 0; row < store.blockCount(); ++row) {
+        QCOMPARE(store.blockAt(row)->role, be::MessageRole::Assistant);
+        QCOMPARE(store.blockAt(row)->messageId, firstId);
+    }
+
+    // A subsequent turn opens a fresh assistant message id.
+    ingest.ingest(textEvent);
+    ingest.finish();
+    QVERIFY(store.blockAt(store.blockCount() - 1)->messageId != firstId);
+}
+
+void CoreTests::editUserMessageTruncatesAndRetags()
+{
+    const QString md = QStringLiteral(
+        "```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
+        "First question.\n\n"
+        "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
+        "First answer.\n");
+
+    be::DocumentStore store;
+    store.loadMarkdown(md);
+    QCOMPARE(store.blockCount(), qsizetype(2));
+
+    // Truncate at the user message and re-add new text as a fresh user message.
+    const qsizetype row = store.rowForMessage(QStringLiteral("u1"));
+    QCOMPARE(row, qsizetype(0));
+    store.deleteBlocks(row, store.blockCount() - row);
+    QCOMPARE(store.blockCount(), qsizetype(0));
+
+    const QString newId = store.appendMessageBlocks(be::MessageRole::User, QStringLiteral("Edited question."));
+    QCOMPARE(store.blockCount(), qsizetype(1));
+    QCOMPARE(store.blockAt(0)->role, be::MessageRole::User);
+    QCOMPARE(store.blockAt(0)->messageId, newId);
+    QCOMPARE(store.blockAt(0)->markdown(), QStringLiteral("Edited question."));
+    QVERIFY(newId != QStringLiteral("u1"));
 }
 
 QTEST_MAIN(CoreTests)
