@@ -4,6 +4,8 @@ qt_add_qml_module(da_transcript
     VERSION 1.0
     QML_FILES
         Transcript.qml
+        TurnSimulator.qml
+        ConversationChrome.qml
 )
 add_library(daemon-app::transcript ALIAS da_transcript)
 

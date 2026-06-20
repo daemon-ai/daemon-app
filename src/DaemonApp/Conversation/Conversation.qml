@@ -299,7 +299,12 @@ Rectangle {
                 Composer {
                     Layout.fillWidth: true
                     visible: !UiSettings.distractionFree
-                    onSubmitted: function(text) { controller.appendUserText(text); }
+                    // Persist the user's text (full reload follows synchronously),
+                    // then stream a simulated assistant reply into the transcript.
+                    onSubmitted: function(text) {
+                        controller.appendUserText(text);
+                        transcript.runAssistantTurn(text);
+                    }
                 }
             }
 

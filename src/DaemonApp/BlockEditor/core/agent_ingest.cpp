@@ -39,6 +39,13 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap &event)
 
     const QString type = stringField(event, QStringLiteral("type"));
 
+    // Turn-end marker: close any open text stream and settle a running reasoning
+    // block. Reachable from QML via ingestEvents([{type:"flush"}]); mirrors the
+    // daemon emitting an end-of-turn event.
+    if (type == QStringLiteral("flush") || type == QStringLiteral("finish")) {
+        return finish();
+    }
+
     if (type == QStringLiteral("text")) {
         const QString text = stringField(event, QStringLiteral("text"));
         if (text.isEmpty()) {

@@ -100,6 +100,7 @@ private slots:
     void ansiSpansParseSgr();
     void unifiedDiffTypesLines();
     void ingestShimReplayBuildsBlocks();
+    void ingestFlushClosesTextStream();
     void agentBlocksSceneParses();
 };
 
@@ -1911,6 +1912,36 @@ void CoreTests::ingestShimReplayBuildsBlocks()
     QCOMPARE(store.blockAt(1)->metadata.value(QStringLiteral("status")).toString(), QStringLiteral("ok"));
     QCOMPARE(store.blockAt(1)->metadata.value(QStringLiteral("durationMs")).toInt(), 1200);
     QCOMPARE(store.blockAt(1)->metadata.value(QStringLiteral("stdout")).toString(), QStringLiteral("done\n"));
+}
+
+void CoreTests::ingestFlushClosesTextStream()
+{
+    be::DocumentStore store;
+    be::TranscriptIngest ingest(&store);
+
+    // A text event opens a streaming tail; without an explicit close the stream
+    // stays open (volatile). A flush event must settle it through finish().
+    QVariantMap textEvent;
+    textEvent.insert(QStringLiteral("type"), QStringLiteral("text"));
+    textEvent.insert(QStringLiteral("text"), QStringLiteral("Hello from the agent.\n"));
+    ingest.ingest(textEvent);
+
+    QVariantMap flush;
+    flush.insert(QStringLiteral("type"), QStringLiteral("flush"));
+    ingest.ingest(flush);
+
+    // The streamed paragraph is committed, and the document is stable across a
+    // reload (no dangling volatile tail to reconcile).
+    QVERIFY(store.blockCount() >= 1);
+    const QString md = store.toMarkdown();
+    QVERIFY(md.contains(QStringLiteral("Hello from the agent.")));
+    be::DocumentStore reloaded;
+    reloaded.loadMarkdown(md);
+    QCOMPARE(reloaded.toMarkdown(), md);
+
+    // A second flush with nothing open is a harmless no-op.
+    ingest.ingest(flush);
+    QCOMPARE(store.toMarkdown(), md);
 }
 
 void CoreTests::agentBlocksSceneParses()

@@ -33,10 +33,20 @@ Rectangle {
     function load(md) {
         if (md === _loadedMarkdown)
             return
+        // Abort any in-flight simulated turn so its scheduled events can't land
+        // in the freshly-loaded conversation.
+        turnSim.cancel()
         _loadedMarkdown = md
         editor.loadMarkdown(md, false)
         if (UiSettings.showPlainText)
             plainText.text = md
+    }
+
+    // Stream a simulated assistant reply for `prompt` into the current document.
+    // The host (Conversation) calls this right after persisting the user's text;
+    // a real gateway would drive editor.ingestEvents() the same way.
+    function runAssistantTurn(prompt) {
+        turnSim.start(prompt)
     }
 
     EditorController {
@@ -62,6 +72,14 @@ Rectangle {
     // Shared modal image lightbox for image blocks and tool image results.
     Lightbox {
         id: lightbox
+    }
+
+    // Swappable agent-turn driver: on send it streams a simulated assistant turn
+    // (reasoning / tool / text) through the editor's ingest path. The chrome
+    // overlay below reads its turnState/elapsedMs/errorText.
+    TurnSimulator {
+        id: turnSim
+        editor: editor
     }
 
     // Mock agent host: stands in for the daemon runtime so the interactive
@@ -218,11 +236,14 @@ Rectangle {
             }
 
             // Follow the growing tail while streaming, but only when the user is
-            // already parked near the bottom.
+            // already parked near the bottom. A simulated turn drives the store's
+            // stream directly (not editor.streaming), so treat turnSim.active as a
+            // streaming signal too.
             Connections {
                 target: editor
                 function onStreamContentAppended() {
-                    if (!editor.streaming && !editorView.atYEnd)
+                    const streaming = editor.streaming || turnSim.active
+                    if (!streaming && !editorView.atYEnd)
                         return
                     const distanceFromBottom = editorView.contentHeight - (editorView.contentY + editorView.height)
                     if (editorView.atYEnd || distanceFromBottom < editorView.height * 0.5)
@@ -293,5 +314,16 @@ Rectangle {
                 }
             }
         }
+    }
+
+    // Streaming chrome (loading + elapsed, stall, error), overlaid on the block
+    // view and driven by the turn simulator. Pure overlay: no input handlers.
+    ConversationChrome {
+        anchors.fill: parent
+        visible: !UiSettings.showPlainText
+        active: turnSim.active
+        turnState: turnSim.turnState
+        elapsedMs: turnSim.elapsedMs
+        errorText: turnSim.errorText
     }
 }
