@@ -53,6 +53,40 @@ Rectangle {
         bodyFontSize: UiSettings.editorFontSize
 
         onDocumentChanged: persistTimer.restart()
+
+        // Open the shared lightbox when a block (image / generated image) asks
+        // to preview an image.
+        onImagePreviewRequested: (url, alt) => lightbox.show(url, alt)
+    }
+
+    // Shared modal image lightbox for image blocks and tool image results.
+    Lightbox {
+        id: lightbox
+    }
+
+    // Mock agent host: stands in for the daemon runtime so the interactive
+    // blocks (clarify / approval) round-trip end-to-end in the demo. A real host
+    // would forward these answers to the gateway and stream the follow-up turn.
+    Connections {
+        target: editor
+
+        function onClarifyAnswered(blockId, requestId, answer) {
+            editor.ingestEvents([
+                { type: "text", text: "\n\nThanks — proceeding with: " + answer + "\n" },
+                { type: "flush" }
+            ])
+        }
+
+        function onToolApprovalAnswered(blockId, callId, decision, permanent) {
+            if (decision === "approved") {
+                editor.updateTypedBlock(blockId, {
+                    status: "ok",
+                    durationMs: 1400,
+                    detailKind: "ansi-stream",
+                    stdout: "\u001b[32m\u2713\u001b[0m approved — command finished\n"
+                })
+            }
+        }
     }
 
     // Coalesce a burst of edits into a single persist of the exported markdown.

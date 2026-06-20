@@ -313,6 +313,40 @@ void EditorController::ingestEvents(const QVariantList &events)
     }
 }
 
+void EditorController::requestImagePreview(const QString &url, const QString &alt)
+{
+    if (url.isEmpty()) {
+        return;
+    }
+    emit imagePreviewRequested(url, alt);
+}
+
+void EditorController::answerClarify(qulonglong blockId, const QString &requestId, const QString &answer)
+{
+    // Local echo: mark the clarify tool answered so it collapses to a compact
+    // resolved row, persisted via the canonical fenced markdown.
+    QVariantMap patch;
+    patch.insert(QStringLiteral("answered"), true);
+    patch.insert(QStringLiteral("answer"), answer);
+    updateTypedBlock(blockId, patch);
+    emit clarifyAnswered(blockId, requestId, answer);
+}
+
+void EditorController::answerToolApproval(qulonglong blockId, const QString &callId, const QString &decision, bool permanent)
+{
+    // Local echo: record the decision so the approval bar clears. A denial also
+    // flips the tool to an error state; an approval leaves it running for the
+    // host to drive to completion.
+    QVariantMap patch;
+    patch.insert(QStringLiteral("approval"), decision);
+    patch.insert(QStringLiteral("needsApproval"), false);
+    if (decision == QStringLiteral("denied")) {
+        patch.insert(QStringLiteral("status"), QStringLiteral("error"));
+    }
+    updateTypedBlock(blockId, patch);
+    emit toolApprovalAnswered(blockId, callId, decision, permanent);
+}
+
 QVariantList EditorController::ansiSpans(const QString &text) const
 {
     return be::ansiToSpans(text);

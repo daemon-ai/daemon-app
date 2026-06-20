@@ -82,6 +82,9 @@ QtObject {
     readonly property string fa_copy: "\uf0c5"
     readonly property string fa_globe: "\uf0ac"
     readonly property string fa_code: "\uf121"
+    // clarify prompt + image-result download affordances.
+    readonly property string fa_circle_question: "\uf059"
+    readonly property string fa_download: "\uf019"
 
     // --- Status bar glyphs --------------------------------------------------
     readonly property string fa_terminal: "\uf120"

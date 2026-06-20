@@ -75,7 +75,7 @@ private slots:
             char32_t code;
         };
         // Every standalone icon the UI binds, by FontAwesome 6 Free codepoint.
-        static const std::array<Glyph, 30> glyphs = { {
+        static const std::array<Glyph, 33> glyphs = { {
             { "gear", 0xf013 },
             { "magnifying_glass", 0xf002 },
             { "trash", 0xf1f8 },
@@ -108,6 +108,10 @@ private slots:
             { "copy", 0xf0c5 },
             { "globe", 0xf0ac },
             { "code", 0xf121 },
+            // Tier-1 interactive/specialized tool block icons.
+            { "circle_question", 0xf059 },
+            { "download", 0xf019 },
+            { "wand_magic_sparkles", 0xf72b },
         } };
         for (const Glyph& g : glyphs) {
             QTest::newRow(g.name) << QString::fromUtf8(g.name) << static_cast<uint>(g.code);

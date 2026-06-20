@@ -8,11 +8,36 @@ namespace be {
 
 namespace {
 
-QString toneToKey(const QString &tone)
+// Specialized tool variant for the QML dispatch (mirrors Hermes'
+// ChainToolFallback tool-name routing): clarify -> interactive Q&A,
+// image_generate -> generated-image frame, everything else generic.
+QString variantForName(const QString &name)
 {
-    // Pass tones through; the QML layer maps them to glyphs/colors. An empty
-    // tone falls back to a generic tool look.
-    return tone.isEmpty() ? QStringLiteral("tool") : tone;
+    const QString key = name.trimmed().toLower();
+    if (key == QStringLiteral("clarify")) {
+        return QStringLiteral("clarify");
+    }
+    if (key == QStringLiteral("image_generate")) {
+        return QStringLiteral("image-generate");
+    }
+    return QStringLiteral("generic");
+}
+
+// A tone may be omitted on the wire; derive a sensible default from the tool
+// name so the header glyph matches the specialized variant.
+QString toneToKey(const QString &tone, const QString &name)
+{
+    if (!tone.isEmpty()) {
+        return tone;
+    }
+    const QString key = name.trimmed().toLower();
+    if (key == QStringLiteral("clarify")) {
+        return QStringLiteral("agent");
+    }
+    if (key == QStringLiteral("image_generate")) {
+        return QStringLiteral("image");
+    }
+    return QStringLiteral("tool");
 }
 
 QString humanDuration(qint64 ms)
@@ -147,13 +172,35 @@ QVariantMap buildToolView(const QVariantMap &metadata)
 
     const QString name = metadata.value(QStringLiteral("name")).toString();
     const QString status = normalizeStatus(metadata.value(QStringLiteral("status")).toString());
-    const QString tone = toneToKey(metadata.value(QStringLiteral("tone")).toString());
+    const QString variant = variantForName(name);
+    const QString tone = toneToKey(metadata.value(QStringLiteral("tone")).toString(), name);
     const QString argsSummary = metadata.value(QStringLiteral("argsSummary")).toString();
+
+    // detailKind defaults from the variant: a finished image_generate with a
+    // resolved image renders the generated-image frame; clarify routes to its
+    // interactive panel. An explicit detailKind always wins.
+    QString detailKind = metadata.value(QStringLiteral("detailKind")).toString();
+    if (detailKind.isEmpty()) {
+        if (variant == QStringLiteral("image-generate")
+            && !metadata.value(QStringLiteral("imageUrl")).toString().isEmpty()) {
+            detailKind = QStringLiteral("generated-image");
+        }
+    }
+
+    // A dangerous tool (terminal/execute_code) pauses for approval: the bar is
+    // live only while running and not yet decided. `approval` (approved/denied)
+    // is set once the user answers, which clears the gate.
+    const bool needsApproval = metadata.value(QStringLiteral("needsApproval")).toBool();
+    const QString approval = metadata.value(QStringLiteral("approval")).toString();
+    const bool awaitingApproval = needsApproval && status == QStringLiteral("running") && approval.isEmpty();
 
     // Title flips with status: a present-progressive verb while running, the
     // tool name once settled (mirrors Hermes ToolView's running/done title).
     QString title;
-    if (status == QStringLiteral("running")) {
+    if (variant == QStringLiteral("clarify")) {
+        title = metadata.value(QStringLiteral("answered")).toBool() ? QStringLiteral("Answered")
+                                                                     : QStringLiteral("Needs your input");
+    } else if (status == QStringLiteral("running")) {
         title = name.isEmpty() ? QStringLiteral("Working") : QStringLiteral("Running %1").arg(name);
     } else if (status == QStringLiteral("error")) {
         title = name.isEmpty() ? QStringLiteral("Tool failed") : name;
@@ -162,13 +209,15 @@ QVariantMap buildToolView(const QVariantMap &metadata)
     }
 
     view.insert(QStringLiteral("name"), name);
+    view.insert(QStringLiteral("variant"), variant);
     view.insert(QStringLiteral("title"), title);
     view.insert(QStringLiteral("subtitle"), argsSummary);
     view.insert(QStringLiteral("status"), status);
     view.insert(QStringLiteral("tone"), tone);
     view.insert(QStringLiteral("durationLabel"),
                 humanDuration(metadata.value(QStringLiteral("durationMs")).toLongLong()));
-    view.insert(QStringLiteral("detailKind"), metadata.value(QStringLiteral("detailKind")).toString());
+    view.insert(QStringLiteral("detailKind"), detailKind);
+    view.insert(QStringLiteral("awaitingApproval"), awaitingApproval);
     return view;
 }
 

@@ -93,6 +93,14 @@ public:
     Q_INVOKABLE qulonglong blockIdForCallId(const QString &callId) const;
     Q_INVOKABLE void ingestEvent(const QVariantMap &event);
     Q_INVOKABLE void ingestEvents(const QVariantList &events);
+    // Interactive-block callback channel (the seam Hermes' $approvalRequest /
+    // $clarifyRequest stores fill). Each invokable patches the block's metadata
+    // in place (local echo + markdown round-trip) and then emits a host-bound
+    // signal the agent runtime subscribes to. requestImagePreview is fire-and-
+    // forget: it just asks the host to open a lightbox for the given image.
+    Q_INVOKABLE void requestImagePreview(const QString &url, const QString &alt = {});
+    Q_INVOKABLE void answerClarify(qulonglong blockId, const QString &requestId, const QString &answer);
+    Q_INVOKABLE void answerToolApproval(qulonglong blockId, const QString &callId, const QString &decision, bool permanent = false);
     // Sub-renderer parsers, surfaced for the tool/content blocks: ANSI SGR text
     // -> styled spans, and a unified diff -> typed lines (see core/agent_block).
     Q_INVOKABLE QVariantList ansiSpans(const QString &text) const;
@@ -168,6 +176,12 @@ signals:
     void selectionRevisionChanged();
     void streamingChanged();
     void streamContentAppended();
+    // Interactive-block host signals: the user answered a clarify prompt or
+    // decided a tool approval in the transcript, or asked to preview an image.
+    // A host (Conversation / agent gateway) connects these to the runtime.
+    void imagePreviewRequested(const QString &url, const QString &alt);
+    void clarifyAnswered(qulonglong blockId, const QString &requestId, const QString &answer);
+    void toolApprovalAnswered(qulonglong blockId, const QString &callId, const QString &decision, bool permanent);
     void paletteChanged();
     void bodyFontChanged();
     // Emitted after any change to the document content (load/edit/stream) so a

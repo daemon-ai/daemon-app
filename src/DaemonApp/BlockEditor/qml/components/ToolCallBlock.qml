@@ -21,6 +21,8 @@ Item {
     readonly property string tone: (toolData && toolData.tone) ? toolData.tone : "tool"
     readonly property string durationLabel: (toolData && toolData.durationLabel) ? toolData.durationLabel : ""
     readonly property string detailKind: (toolData && toolData.detailKind) ? toolData.detailKind : ""
+    readonly property string variant: (toolData && toolData.variant) ? toolData.variant : "generic"
+    readonly property bool awaitingApproval: !!(toolData && toolData.awaitingApproval)
     readonly property bool running: status === "running"
 
     property bool expanded: true
@@ -39,6 +41,8 @@ Item {
         case "web": return FontIcons.fa_globe
         case "edit": return FontIcons.fa_pen_to_square
         case "code": return FontIcons.fa_code
+        case "image": return FontIcons.fa_image
+        case "agent": return FontIcons.fa_circle_question
         default: return FontIcons.fa_wrench
         }
     }
@@ -57,12 +61,15 @@ Item {
             return err
         return toolData.body ? String(toolData.body) : ""
     }
-    readonly property bool hasDetail: detailKind.length > 0
-        && (ansiText.length > 0
-            || (toolData && toolData.diff)
-            || (toolData && toolData.hits)
-            || (toolData && toolData.imageUrl)
-            || (toolData && toolData.body))
+    // The clarify variant always shows its interactive panel; otherwise a detail
+    // body appears only when a sub-renderer has a payload to draw.
+    readonly property bool hasDetail: variant === "clarify"
+        || (detailKind.length > 0
+            && (ansiText.length > 0
+                || (toolData && toolData.diff)
+                || (toolData && toolData.hits)
+                || (toolData && toolData.imageUrl)
+                || (toolData && toolData.body)))
 
     implicitHeight: card.implicitHeight
 
@@ -188,15 +195,28 @@ Item {
                 }
             }
 
+            // Pending-approval bar for dangerous tools, above the body. Shown
+            // whenever the tool is awaiting a decision, independent of expansion.
+            Loader {
+                id: approvalLoader
+                width: parent.width
+                active: root.awaitingApproval
+                visible: active
+                sourceComponent: approvalComponent
+            }
+
             Loader {
                 id: detailLoader
                 width: parent.width
                 active: root.expanded && root.hasDetail
                 visible: active
                 sourceComponent: {
+                    if (root.variant === "clarify")
+                        return clarifyComponent
                     switch (root.detailKind) {
                     case "diff": return diffComponent
                     case "search-results": return searchComponent
+                    case "generated-image": return generatedImageComponent
                     case "image": return imageComponent
                     case "ansi-stream":
                     case "pty": return ansiComponent
@@ -263,6 +283,36 @@ Item {
             font.family: FontIcons.mono
             font.pixelSize: Theme.bodyFontSize - 1
             wrapMode: Text.Wrap
+        }
+    }
+
+    Component {
+        id: generatedImageComponent
+        GeneratedImageBlock {
+            width: detailLoader.width
+            toolData: root.toolData
+            editorController: root.editorController
+            blockId: root.blockId
+        }
+    }
+
+    Component {
+        id: clarifyComponent
+        ClarifyBlock {
+            width: detailLoader.width
+            toolData: root.toolData
+            editorController: root.editorController
+            blockId: root.blockId
+        }
+    }
+
+    Component {
+        id: approvalComponent
+        ToolApprovalBar {
+            width: approvalLoader.width
+            toolData: root.toolData
+            editorController: root.editorController
+            blockId: root.blockId
         }
     }
 }

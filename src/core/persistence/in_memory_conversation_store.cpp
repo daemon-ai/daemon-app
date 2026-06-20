@@ -142,10 +142,22 @@ A standalone content stream:
 {"kind":"ansi-stream","body":"\u001b[36mi\u001b[0m tailing logs\n\u001b[2mwaiting for events...\u001b[0m\n"}
 ```
 
-An image result:
+A generated image (image_generate):
 
 ```tool
-{"callId":"c6","name":"image_generate","tone":"tool","status":"ok","durationMs":5200,"detailKind":"image","imageUrl":"https://doc.qt.io/qt-6/images/qt-logo.png"}
+{"callId":"c6","name":"image_generate","status":"ok","durationMs":5200,"aspectRatio":"1:1","imageUrl":"https://doc.qt.io/qt-6/images/qt-logo.png"}
+```
+
+The agent needs a decision (clarify - click a choice or type a reply):
+
+```tool
+{"callId":"c7","name":"clarify","requestId":"q1","question":"Which database should I target for the migration?","choices":["PostgreSQL","SQLite","MySQL"]}
+```
+
+A dangerous command awaiting approval:
+
+```tool
+{"callId":"c8","name":"terminal","tone":"terminal","status":"running","needsApproval":true,"allowPermanent":true,"approvalCommand":"rm -rf build-test && cmake --preset test","argsSummary":"rm -rf build-test"}
 ```
 
 That wraps the demo turn.

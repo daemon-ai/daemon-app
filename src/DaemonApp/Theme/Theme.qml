@@ -163,6 +163,8 @@ QtObject {
     readonly property color statusRunning: accent
     readonly property color statusOk: isDarkMode ? "#5fbf73" : "#2f9e44"
     readonly property color statusError: danger
+    // Pending state (e.g. a tool awaiting approval) borrows the amber warning tone.
+    readonly property color statusWarning: warning
     // Reasoning reads as quiet aside text on a faint surface.
     readonly property color reasoningText: textMuted
     readonly property color reasoningSurface: surfaceRaised

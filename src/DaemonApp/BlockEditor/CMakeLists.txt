@@ -98,6 +98,10 @@ qt_add_qml_module(da_blockeditor
         qml/components/ReasoningBlock.qml
         qml/components/ToolCallBlock.qml
         qml/components/ContentBlock.qml
+        qml/components/GeneratedImageBlock.qml
+        qml/components/ClarifyBlock.qml
+        qml/components/ToolApprovalBar.qml
+        qml/components/Lightbox.qml
         qml/components/AnsiText.qml
         qml/components/DiffBlock.qml
         qml/components/SearchResultsList.qml

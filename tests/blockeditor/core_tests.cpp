@@ -91,6 +91,11 @@ private slots:
     void injectTypedBlockAppendsRow();
     void updateBlockMetadataByCallIdFlipsStatus();
     void buildToolViewFlipsTitleAndDuration();
+    void toolViewDerivesClarifyVariant();
+    void toolViewDerivesImageGenerate();
+    void toolViewFlagsAwaitingApproval();
+    void clarifyAnswerRoundTrips();
+    void approvalAnswerRoundTrips();
     void ansiSpansParseSgr();
     void unifiedDiffTypesLines();
     void ingestShimReplayBuildsBlocks();
@@ -1662,6 +1667,111 @@ void CoreTests::buildToolViewFlipsTitleAndDuration()
     QCOMPARE(dv.value(QStringLiteral("status")).toString(), QStringLiteral("ok"));
     QCOMPARE(dv.value(QStringLiteral("title")).toString(), QStringLiteral("terminal"));
     QCOMPARE(dv.value(QStringLiteral("durationLabel")).toString(), QStringLiteral("1.5s"));
+}
+
+void CoreTests::toolViewDerivesClarifyVariant()
+{
+    QVariantMap clarify;
+    clarify.insert(QStringLiteral("name"), QStringLiteral("clarify"));
+    clarify.insert(QStringLiteral("question"), QStringLiteral("Which DB?"));
+    const QVariantMap v = be::buildToolView(clarify);
+    QCOMPARE(v.value(QStringLiteral("variant")).toString(), QStringLiteral("clarify"));
+    // An omitted tone defaults from the name.
+    QCOMPARE(v.value(QStringLiteral("tone")).toString(), QStringLiteral("agent"));
+    QCOMPARE(v.value(QStringLiteral("title")).toString(), QStringLiteral("Needs your input"));
+
+    clarify.insert(QStringLiteral("answered"), true);
+    const QVariantMap answered = be::buildToolView(clarify);
+    QCOMPARE(answered.value(QStringLiteral("title")).toString(), QStringLiteral("Answered"));
+}
+
+void CoreTests::toolViewDerivesImageGenerate()
+{
+    QVariantMap gen;
+    gen.insert(QStringLiteral("name"), QStringLiteral("image_generate"));
+    gen.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    gen.insert(QStringLiteral("imageUrl"), QStringLiteral("https://example/x.png"));
+    const QVariantMap v = be::buildToolView(gen);
+    QCOMPARE(v.value(QStringLiteral("variant")).toString(), QStringLiteral("image-generate"));
+    QCOMPARE(v.value(QStringLiteral("tone")).toString(), QStringLiteral("image"));
+    // With a resolved image and no explicit detailKind, route to the frame.
+    QCOMPARE(v.value(QStringLiteral("detailKind")).toString(), QStringLiteral("generated-image"));
+
+    // While pending (no image yet) there is no detail kind to render.
+    QVariantMap pending;
+    pending.insert(QStringLiteral("name"), QStringLiteral("image_generate"));
+    pending.insert(QStringLiteral("status"), QStringLiteral("running"));
+    QCOMPARE(be::buildToolView(pending).value(QStringLiteral("detailKind")).toString(), QString());
+}
+
+void CoreTests::toolViewFlagsAwaitingApproval()
+{
+    QVariantMap meta;
+    meta.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    meta.insert(QStringLiteral("status"), QStringLiteral("running"));
+    meta.insert(QStringLiteral("needsApproval"), true);
+    QVERIFY(be::buildToolView(meta).value(QStringLiteral("awaitingApproval")).toBool());
+
+    // Once decided, the gate clears even while the tool keeps running.
+    meta.insert(QStringLiteral("approval"), QStringLiteral("approved"));
+    QVERIFY(!be::buildToolView(meta).value(QStringLiteral("awaitingApproval")).toBool());
+
+    // A non-approval tool never raises the bar.
+    QVariantMap plain;
+    plain.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    plain.insert(QStringLiteral("status"), QStringLiteral("running"));
+    QVERIFY(!be::buildToolView(plain).value(QStringLiteral("awaitingApproval")).toBool());
+}
+
+void CoreTests::clarifyAnswerRoundTrips()
+{
+    be::DocumentStore store;
+    QVariantMap meta;
+    meta.insert(QStringLiteral("callId"), QStringLiteral("q1"));
+    meta.insert(QStringLiteral("name"), QStringLiteral("clarify"));
+    meta.insert(QStringLiteral("question"), QStringLiteral("Which DB?"));
+    const be::BlockId id = store.appendTypedBlock(be::BlockType::ToolCall, meta, nullptr);
+
+    // The answer the controller would apply as a local echo.
+    QVariantMap patch;
+    patch.insert(QStringLiteral("answered"), true);
+    patch.insert(QStringLiteral("answer"), QStringLiteral("PostgreSQL"));
+    store.updateBlockMetadata(id, patch);
+
+    const qsizetype row = store.rowForBlock(id);
+    QVERIFY(store.blockAt(row)->metadata.value(QStringLiteral("answered")).toBool());
+    QCOMPARE(store.blockAt(row)->metadata.value(QStringLiteral("answer")).toString(), QStringLiteral("PostgreSQL"));
+    // The answer persists in the canonical fenced markdown and re-parses stably.
+    const QString md = store.toMarkdown();
+    QVERIFY(md.contains(QStringLiteral("\"answer\":\"PostgreSQL\"")));
+    be::DocumentStore reloaded;
+    reloaded.loadMarkdown(md);
+    QCOMPARE(reloaded.toMarkdown(), md);
+}
+
+void CoreTests::approvalAnswerRoundTrips()
+{
+    be::DocumentStore store;
+    QVariantMap meta;
+    meta.insert(QStringLiteral("callId"), QStringLiteral("c8"));
+    meta.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    meta.insert(QStringLiteral("status"), QStringLiteral("running"));
+    meta.insert(QStringLiteral("needsApproval"), true);
+    const be::BlockId id = store.appendTypedBlock(be::BlockType::ToolCall, meta, nullptr);
+    QVERIFY(be::buildToolView(store.blockAt(store.rowForBlock(id))->metadata)
+                .value(QStringLiteral("awaitingApproval")).toBool());
+
+    // A denial (what answerToolApproval applies) clears the gate and errors out.
+    QVariantMap patch;
+    patch.insert(QStringLiteral("approval"), QStringLiteral("denied"));
+    patch.insert(QStringLiteral("needsApproval"), false);
+    patch.insert(QStringLiteral("status"), QStringLiteral("error"));
+    store.updateBlockMetadata(id, patch);
+
+    const QVariantMap view = be::buildToolView(store.blockAt(store.rowForBlock(id))->metadata);
+    QVERIFY(!view.value(QStringLiteral("awaitingApproval")).toBool());
+    QCOMPARE(view.value(QStringLiteral("status")).toString(), QStringLiteral("error"));
+    QVERIFY(store.toMarkdown().contains(QStringLiteral("\"approval\":\"denied\"")));
 }
 
 void CoreTests::ansiSpansParseSgr()

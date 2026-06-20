@@ -132,18 +132,26 @@ Item {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton
-        cursorShape: root.linkUrl !== "" ? Qt.PointingHandCursor : Qt.IBeamCursor
+        cursorShape: Qt.PointingHandCursor
 
-        // A linked image opens its target on a single click; a plain image (or a
-        // double-click on a linked one) opens the block for raw editing.
+        // A linked image opens its target on a single click; a plain image opens
+        // in the lightbox on a single click. A double-click always drops into the
+        // block's raw markdown for editing.
         onClicked: {
             if (root.linkUrl !== "") {
                 Qt.openUrlExternally(root.linkUrl)
                 return
             }
-            root.activateForEditing()
+            root.openPreview()
         }
         onDoubleClicked: root.activateForEditing()
+    }
+
+    function openPreview() {
+        if (root.source === "")
+            return
+        if (root.editorController)
+            root.editorController.requestImagePreview(root.source, root.altText)
     }
 
     function activateForEditing() {
