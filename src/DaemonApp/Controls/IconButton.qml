@@ -19,8 +19,9 @@ Item {
     property alias containsMouse: mouseArea.containsMouse
     property alias pressedState: mouseArea.pressed
 
-    implicitWidth: 30
-    implicitHeight: 28
+    // Finger-sized on touch (Theme.touch), dense 30x28 chrome on desktop.
+    implicitWidth: Theme.iconButtonWidth
+    implicitHeight: Theme.iconButtonHeight
 
     signal clicked()
     signal pressedSignal()

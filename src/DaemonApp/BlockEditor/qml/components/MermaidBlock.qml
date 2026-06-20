@@ -47,6 +47,19 @@ Item {
             }
         }
 
+        // Touch pinch-to-zoom about the gesture centroid; feeds the same
+        // incremental zoomAt() the wheel uses.
+        PinchHandler {
+            target: null
+            property real prevScale: 1.0
+            onActiveChanged: if (active) prevScale = 1.0
+            onActiveScaleChanged: {
+                const factor = activeScale / prevScale
+                prevScale = activeScale
+                diagram.zoomAt(factor, centroid.position)
+            }
+        }
+
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton

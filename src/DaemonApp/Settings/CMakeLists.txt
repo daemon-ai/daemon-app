@@ -1,3 +1,6 @@
+# Singleton properties must be set before the module is declared.
+set_source_files_properties(LayoutState.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+
 qt_add_qml_module(da_settings
     STATIC
     URI DaemonApp.Settings
@@ -9,6 +12,7 @@ qt_add_qml_module(da_settings
         SettingsMenu.qml
         FontStyleButton.qml
         OptionRow.qml
+        LayoutState.qml
 )
 add_library(daemon-app::settings ALIAS da_settings)
 

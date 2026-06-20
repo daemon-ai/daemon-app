@@ -11,7 +11,6 @@ import DaemonApp.Theme
 Item {
     id: root
 
-    property bool enabled: true
     // Canned model list (no gateway model backend exists yet).
     property var models: [
         "claude-opus-4.8",

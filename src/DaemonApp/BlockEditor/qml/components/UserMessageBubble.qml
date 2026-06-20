@@ -125,12 +125,13 @@ Item {
     }
 
     // Hover affordance: edit pencil (read view) / save + cancel (edit view).
+    // Touch devices have no hover, so the actions stay visible there.
     Row {
         anchors.right: bubble.right
         anchors.top: bubble.top
         anchors.margins: 4
         spacing: 2
-        visible: root.editing || hover.hovered
+        visible: root.editing || hover.hovered || Theme.touch
 
         ActionButton {
             visible: !root.editing

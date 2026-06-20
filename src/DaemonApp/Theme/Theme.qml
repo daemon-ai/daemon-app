@@ -231,9 +231,25 @@ QtObject {
     readonly property color danger: isDarkMode ? "#f06a6a" : "#c0392b"
 
     // --- Typography ---------------------------------------------------------
-    // Sizes by point with a per-platform offset; we are desktop-first.
-    readonly property string platform: "Other"
+    // Sizes by point with a per-platform offset. Set from Qt.platform.os at
+    // startup (Main.qml); defaults to the desktop-first "Other" profile.
+    property string platform: "Other"
     readonly property int pointSizeOffset: platform === "Apple" ? 0 : -3
+
+    // --- Touch / density ----------------------------------------------------
+    // Set true on Android/iOS at startup (Main.qml). Bumps interactive chrome
+    // to finger-sized targets; desktop keeps its dense defaults (touch === false)
+    // so there is no desktop regression.
+    property bool touch: false
+
+    // Minimum finger target (Material/HIG ~44-48dp); desktop falls back to the
+    // dense 28px chrome height.
+    readonly property int tapTargetMin: touch ? 48 : 28
+    // Icon button footprint (desktop default 30x28).
+    readonly property int iconButtonWidth: touch ? 48 : 30
+    readonly property int iconButtonHeight: touch ? 44 : 28
+    // Selectable list / tree rows (desktop default 28px).
+    readonly property int rowHeight: touch ? 48 : 28
 
     // --- Metrics ------------------------------------------------------------
     readonly property int spacingSmall: 6

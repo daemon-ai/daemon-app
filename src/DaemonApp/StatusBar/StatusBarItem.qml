@@ -36,7 +36,7 @@ Item {
     signal clicked(var modifiers)
 
     implicitHeight: parent ? parent.height : Theme.statusBarHeight
-    implicitWidth: iconOnly ? 28 : row.implicitWidth + 12
+    implicitWidth: iconOnly ? (Theme.touch ? Theme.tapTargetMin : 28) : row.implicitWidth + 12
 
     function toneColor(base) {
         switch (root.tone) {

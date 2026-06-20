@@ -17,6 +17,10 @@ Rectangle {
     property int totalTasks: 0
     property int doneTasks: 0
 
+    // Emitted by the compact (phone) back button so the shell's StackView can pop
+    // back to the conversation list.
+    signal backRequested()
+
     function open(conversationId) {
         controller.open(conversationId);
     }
@@ -46,6 +50,19 @@ Rectangle {
             spacing: 0
             // Distraction-free hides the formatting/settings chrome (Esc exits).
             visible: !UiSettings.distractionFree
+
+            // Compact (phone) only: pop back to the conversation list. The shell
+            // pushes the conversation onto a StackView, so this is the up affordance.
+            Kit.IconButton {
+                icon: FontIcons.fa_chevron_left
+                iconColor: Theme.iconMuted
+                implicitWidth: 34
+                implicitHeight: 28
+                iconPointSize: 16
+                visible: LayoutState.isCompact
+                tooltipText: qsTr("Back")
+                onClicked: root.backRequested()
+            }
 
             Kit.IconButton {
                 icon: FontIcons.fa_plus

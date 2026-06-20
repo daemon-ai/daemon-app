@@ -1,6 +1,8 @@
 import QtQuick
+import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
+import DaemonApp.Settings
 
 // Footer status bar: a thin full-width chrome
 // strip with a left cluster (Command Center / Gateway / Agents / Cron) and a
@@ -37,7 +39,9 @@ Rectangle {
     // Ticks once per second so the elapsed-time labels stay live.
     property double nowMs: Date.now()
 
-    implicitHeight: Theme.statusBarHeight
+    // Slightly taller, finger-friendly strip on a touch phone (compact only
+    // occurs on touch); the dense desktop height everywhere else.
+    implicitHeight: LayoutState.isCompact ? Theme.tapTargetMin : Theme.statusBarHeight
     color: Theme.statusBarBackground
 
     Component.onCompleted: sessionStartedAt = Date.now()
@@ -108,6 +112,7 @@ Rectangle {
     // --- Left cluster -------------------------------------------------------
     RowLayout {
         id: leftCluster
+        visible: !LayoutState.isCompact
         anchors.left: parent.left
         anchors.leftMargin: 4
         anchors.top: parent.top
@@ -156,6 +161,7 @@ Rectangle {
     // --- Right cluster ------------------------------------------------------
     RowLayout {
         id: rightCluster
+        visible: !LayoutState.isCompact
         anchors.right: parent.right
         anchors.rightMargin: 4
         anchors.top: parent.top
@@ -200,6 +206,147 @@ Rectangle {
             glyph: FontIcons.fa_hashtag
             label: root.appVersion
             tooltipText: qsTr("Check for updates")
+        }
+    }
+
+    // --- Compact strip ------------------------------------------------------
+    // On a phone the dense two-cluster bar does not fit, so we show only the
+    // gateway state (plus the running timer when a turn is active) and fold the
+    // rest behind a tap-to-expand sheet.
+    RowLayout {
+        id: compactCluster
+        visible: LayoutState.isCompact
+        anchors.left: parent.left
+        anchors.leftMargin: 4
+        anchors.right: parent.right
+        anchors.rightMargin: 4
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        spacing: 2
+
+        StatusBarItem {
+            glyph: root.gatewayOffline || root.gatewayDegraded
+                ? FontIcons.fa_circle_exclamation : FontIcons.fa_signal
+            label: qsTr("Gateway")
+            detail: root.gatewayState
+            tone: root.gatewayOffline ? "danger" : root.gatewayDegraded ? "warning" : "default"
+            active: gatewayMenuCompact.opened
+            onClicked: gatewayMenuCompact.opened ? gatewayMenuCompact.close() : gatewayMenuCompact.open()
+
+            GatewayMenu {
+                id: gatewayMenuCompact
+                gatewayState: root.gatewayState
+                y: -height - 6
+                x: 0
+            }
+        }
+
+        StatusBarItem {
+            visible: root.busy && root.turnStartedAt > 0
+            variant: "text"
+            glyph: FontIcons.fa_spinner
+            spinning: true
+            label: root.formatElapsed(root.turnStartedAt)
+        }
+
+        Item { Layout.fillWidth: true }
+
+        StatusBarItem {
+            glyph: FontIcons.fa_ellipsis_h
+            tooltipText: qsTr("More")
+            active: overflowSheet.opened
+            onClicked: overflowSheet.opened ? overflowSheet.close() : overflowSheet.open()
+
+            // Tap-to-expand sheet listing the full status set, opening upward
+            // from the strip.
+            QQC.Popup {
+                id: overflowSheet
+                y: -implicitHeight - 6
+                // Right-align to the overflow button.
+                x: parent.width - width
+                padding: 4
+                modal: false
+
+                readonly property int rowHeight: Theme.touch ? Theme.tapTargetMin : 30
+
+                background: Rectangle {
+                    color: Theme.statusBarBackground
+                    border.width: 1
+                    border.color: Theme.border
+                    radius: Theme.radius
+                }
+
+                contentItem: ColumnLayout {
+                    spacing: 0
+
+                    StatusBarItem {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: overflowSheet.rowHeight
+                        glyph: FontIcons.fa_terminal
+                        label: qsTr("Command Center")
+                        active: root.commandCenterOpen
+                        onClicked: { root.commandCenterOpen = !root.commandCenterOpen; overflowSheet.close(); }
+                    }
+                    StatusBarItem {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: overflowSheet.rowHeight
+                        glyph: FontIcons.fa_wand_magic_sparkles
+                        label: qsTr("Agents")
+                        detail: root.agentsDetail()
+                        tone: root.agentsFailed > 0 ? "danger" : "default"
+                        active: root.agentsOpen
+                        onClicked: { root.agentsOpen = !root.agentsOpen; overflowSheet.close(); }
+                    }
+                    StatusBarItem {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: overflowSheet.rowHeight
+                        glyph: FontIcons.fa_clock
+                        label: qsTr("Cron")
+                        active: root.cronOpen
+                        onClicked: { root.cronOpen = !root.cronOpen; overflowSheet.close(); }
+                    }
+                    StatusBarItem {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: overflowSheet.rowHeight
+                        visible: root.contextMax > 0 || root.contextUsed > 0
+                        variant: "text"
+                        label: root.contextMax > 0
+                            ? root.abbrev(root.contextUsed) + "/" + root.abbrev(root.contextMax)
+                            : root.abbrev(root.contextUsed) + qsTr(" tok")
+                        detail: root.contextMax > 0 ? root.contextBar() : ""
+                    }
+                    StatusBarItem {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: overflowSheet.rowHeight
+                        variant: "text"
+                        label: qsTr("Session")
+                        detail: root.formatElapsed(root.sessionStartedAt)
+                    }
+                    StatusBarItem {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: overflowSheet.rowHeight
+                        glyph: FontIcons.fa_bolt
+                        label: qsTr("YOLO")
+                        active: root.yoloActive
+                        onClicked: function(modifiers) { root.yoloActive = !root.yoloActive; overflowSheet.close(); }
+                    }
+                    StatusBarItem {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: overflowSheet.rowHeight
+                        visible: root.chatOpen
+                        glyph: FontIcons.fa_terminal
+                        label: qsTr("Terminal")
+                        active: root.terminalActive
+                        onClicked: { root.terminalActive = !root.terminalActive; overflowSheet.close(); }
+                    }
+                    StatusBarItem {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: overflowSheet.rowHeight
+                        glyph: FontIcons.fa_hashtag
+                        label: root.appVersion
+                    }
+                }
+            }
         }
     }
 }

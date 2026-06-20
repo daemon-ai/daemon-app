@@ -75,6 +75,15 @@ Popup {
                     previewImage.scale = Math.max(0.2, Math.min(8.0, previewImage.scale * step))
                 }
             }
+            // Touch pinch-to-zoom, mirroring the wheel zoom range.
+            PinchHandler {
+                target: null
+                property real baseScale: 1.0
+                onActiveChanged: if (active) baseScale = previewImage.scale
+                onActiveScaleChanged: {
+                    previewImage.scale = Math.max(0.2, Math.min(8.0, baseScale * activeScale))
+                }
+            }
         }
 
         // Close affordance.

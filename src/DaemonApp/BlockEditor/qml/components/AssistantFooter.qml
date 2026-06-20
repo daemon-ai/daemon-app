@@ -28,7 +28,8 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: 2
         spacing: Theme.smallSpacing
-        opacity: hover.hovered ? 1.0 : 0.55
+        // Touch devices have no hover, so the footer stays fully visible there.
+        opacity: (hover.hovered || Theme.touch) ? 1.0 : 0.55
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
 
         // --- Branch picker (N34) --------------------------------------------

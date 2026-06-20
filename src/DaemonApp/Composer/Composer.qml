@@ -72,7 +72,9 @@ Rectangle {
 
     property bool _draining: false
 
-    readonly property bool stacked: root.width < 380 || inputArea.lineCount > 1
+    // Stack on touch so the finger-sized menu/controls never crowd the input on
+    // narrow phone widths; also stack when very narrow or multiline.
+    readonly property bool stacked: Theme.touch || root.width < 380 || inputArea.lineCount > 1
     readonly property bool _hasPayload: inputArea.text.trim().length > 0 || attachmentsModel.count > 0
     readonly property bool _canSteer: root.busy && inputArea.text.trim().length > 0 && attachmentsModel.count === 0
 

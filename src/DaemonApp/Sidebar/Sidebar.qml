@@ -124,8 +124,9 @@ Rectangle {
                     required property bool current
 
                     width: ListView.view.width
-                    // Dense column: compact section header / 28px nav row.
-                    height: isSeparator ? 30 : 28
+                    // Dense column: compact section header / 28px nav row
+                    // (finger-sized nav rows on touch via Theme.rowHeight).
+                    height: isSeparator ? 30 : Theme.rowHeight
 
                     // Highlight by identity (the model's `current` role), so it
                     // survives expand/collapse rebuilds without index tracking.
