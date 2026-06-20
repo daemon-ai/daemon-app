@@ -75,6 +75,14 @@ QtObject {
     readonly property string fa_server: "\uf233"  // host
     readonly property string fa_sitemap: "\uf0e8" // orchestrator / fleet
 
+    // --- Agent transcript block glyphs --------------------------------------
+    // Reasoning disclosure + tool-call header/tone icons.
+    readonly property string fa_brain: "\uf5dc"
+    readonly property string fa_wrench: "\uf0ad"
+    readonly property string fa_copy: "\uf0c5"
+    readonly property string fa_globe: "\uf0ac"
+    readonly property string fa_code: "\uf121"
+
     // --- Status bar glyphs --------------------------------------------------
     readonly property string fa_terminal: "\uf120"
     readonly property string fa_signal: "\uf012"

@@ -25,6 +25,13 @@ enum class BlockType : quint16 {
     Math,
     RawHtml,
     Custom,
+    // Agent transcript blocks (hybrid: structured metadata at runtime, a fenced
+    // markdown form for persistence/export). Appended AFTER the markdown types so
+    // the existing numeric BlockDelegate gates (list 2-4, CodeFence 6, Table 7,
+    // Image 9) keep their values; only Unknown shifts.
+    Reasoning, // ```reasoning - a model chain-of-thought disclosure
+    ToolCall,  // ```tool - a tool invocation + its result/detail
+    Content,   // ```content - a typed content stream (ansi/pty/...) outside a tool
     Unknown,
 };
 

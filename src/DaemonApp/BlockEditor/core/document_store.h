@@ -78,6 +78,20 @@ public:
     void endStream();
     bool isStreaming() const;
 
+    // Typed-block injection (agent transcript runtime). The daemon orchestrator
+    // emits structured events, not markdown; these are the seam those events drive.
+    // appendTypedBlock appends a structured block (metadata is the live render
+    // source; its canonical fenced markdown is kept in sync for persistence) and
+    // returns the new id, reporting the inserted row via `changeSet`. An open
+    // stream window is committed first so the typed block lands after the streamed
+    // text. updateBlockMetadata merges `patch` into an existing block's metadata,
+    // re-serializes its markdown, and returns the dataChanged row. blockIdForMetadata
+    // finds the first block whose metadata[key] == value (resolves a tool block by
+    // callId for an in-place ToolFinished update); returns 0 when none match.
+    BlockId appendTypedBlock(BlockType type, const QVariantMap &metadata, BlockChangeSet *changeSet = nullptr);
+    BlockChangeSet updateBlockMetadata(BlockId id, const QVariantMap &patch);
+    BlockId blockIdForMetadata(const QString &key, const QVariant &value) const;
+
     // Splice a contiguous run of blocks (used by scoped stream undo/redo).
     void spliceBlocks(qsizetype firstRow, qsizetype removeCount, const QVector<BlockRecord> &insert);
 

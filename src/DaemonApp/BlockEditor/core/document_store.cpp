@@ -1,5 +1,6 @@
 #include "core/document_store.h"
 
+#include "core/agent_block.h"
 #include "core/markdown_table.h"
 
 #include <QRegularExpression>
@@ -7,6 +8,24 @@
 namespace be {
 
 namespace {
+
+// Retype a freshly built code-fence record whose info string names an agent
+// block kind ("tool"/"reasoning"/"content") into the matching typed block and
+// hydrate its metadata from the fenced JSON body. This is the markdown -> typed
+// step of the round-trip; the inverse (typed -> markdown) lives in
+// serializeAgentBlock, kept in sync by appendTypedBlock/updateBlockMetadata.
+void applyAgentBlockFromFence(BlockRecord &record, const QString &info)
+{
+    const BlockType type = agentBlockTypeForFence(info);
+    if (type == BlockType::Unknown) {
+        return;
+    }
+    record.type = type;
+    const QVariantMap meta = parseAgentBlockMetadata(fencedBodyOf(record.markdown()));
+    for (auto it = meta.constBegin(); it != meta.constEnd(); ++it) {
+        record.metadata.insert(it.key(), it.value());
+    }
+}
 
 bool isListType(BlockType type)
 {
@@ -406,6 +425,7 @@ QVector<BlockRecord> DocumentStore::recordsFromParse(const QString &markdown) co
             record.markdownUtf8 = content.toUtf8();
             if (pb.type == BlockType::CodeFence && !pb.info.isEmpty()) {
                 record.metadata.insert(QStringLiteral("fenceLanguage"), pb.info);
+                applyAgentBlockFromFence(record, pb.info);
             }
             if (pb.type == BlockType::Image) {
                 record.metadata.insert(QStringLiteral("imageUrl"), pb.imageUrl);
@@ -442,7 +462,13 @@ BlockRecord DocumentStore::makeClassifiedRecord(const QString &content) const
     record.headingLevel = level;
     record.indent = indent;
     record.markdownUtf8 = content.toUtf8();
-    if (record.type == BlockType::Image) {
+    if (record.type == BlockType::CodeFence) {
+        const QString lang = fenceLanguageOf(content);
+        if (!lang.isEmpty()) {
+            record.metadata.insert(QStringLiteral("fenceLanguage"), lang);
+            applyAgentBlockFromFence(record, lang);
+        }
+    } else if (record.type == BlockType::Image) {
         applyImageMetadata(record.metadata, content);
     }
     record.revision = 1;
@@ -940,6 +966,7 @@ BlockChangeSet DocumentStore::reparseWindow()
         quint16 headingLevel = 0;
         quint16 indent = 0;
         QByteArray content;
+        QString info; // fence info string, so an agent fence retypes mid-stream
     };
 
     QVector<NewBlock> news;
@@ -947,7 +974,7 @@ BlockChangeSet DocumentStore::reparseWindow()
         news.reserve(parsed.blocks.size());
         for (const ParsedBlock &pb : parsed.blocks) {
             const QString content = sliceBlockContent(windowMap, text, pb);
-            news.push_back({pb.type, pb.headingLevel, pb.indent, content.toUtf8()});
+            news.push_back({pb.type, pb.headingLevel, pb.indent, content.toUtf8(), pb.info});
         }
     } else if (!m_windowBuffer.trimmed().isEmpty()) {
         QString content = m_windowBuffer;
@@ -957,7 +984,8 @@ BlockChangeSet DocumentStore::reparseWindow()
         quint16 level = 0;
         quint16 indent = 0;
         const BlockType type = classifyContent(content, &level, &indent);
-        news.push_back({type, level, indent, content.toUtf8()});
+        const QString info = type == BlockType::CodeFence ? fenceLanguageOf(content) : QString();
+        news.push_back({type, level, indent, content.toUtf8(), info});
     }
 
     const qsizetype base = m_streamFirstRow;
@@ -976,6 +1004,10 @@ BlockChangeSet DocumentStore::reparseWindow()
             block.type = nb.type;
             block.headingLevel = nb.headingLevel;
             block.indent = nb.indent;
+            if (nb.type == BlockType::CodeFence && !nb.info.isEmpty()) {
+                block.metadata.insert(QStringLiteral("fenceLanguage"), nb.info);
+                applyAgentBlockFromFence(block, nb.info);
+            }
             block.revision += 1;
             block.renderRevision += 1;
             block.dirtyText = true;
@@ -999,6 +1031,10 @@ BlockChangeSet DocumentStore::reparseWindow()
             record.headingLevel = nb.headingLevel;
             record.indent = nb.indent;
             record.markdownUtf8 = nb.content;
+            if (nb.type == BlockType::CodeFence && !nb.info.isEmpty()) {
+                record.metadata.insert(QStringLiteral("fenceLanguage"), nb.info);
+                applyAgentBlockFromFence(record, nb.info);
+            }
             record.revision = 1;
             record.parseRevision = 1;
             record.renderRevision = 1;
@@ -1055,6 +1091,86 @@ void DocumentStore::endStream()
 bool DocumentStore::isStreaming() const
 {
     return m_streaming;
+}
+
+BlockId DocumentStore::appendTypedBlock(BlockType type, const QVariantMap &metadata, BlockChangeSet *changeSet)
+{
+    // An open text-stream window is committed first: a typed block is a hard
+    // boundary, so the streamed paragraph above it settles and the volatile tail
+    // restarts after the injected block.
+    if (m_streaming) {
+        m_streamFirstRow = m_blocks.size();
+        m_windowBuffer.clear();
+    }
+
+    BlockRecord record;
+    record.id = allocateId();
+    record.type = type;
+    record.metadata = metadata;
+    // Keep the canonical fenced markdown in sync so save/export round-trips even
+    // though the live render reads metadata. Non-agent types keep their raw form.
+    const QByteArray serialized = serializeAgentBlock(type, metadata);
+    if (!serialized.isEmpty()) {
+        record.markdownUtf8 = serialized;
+    }
+    record.revision = 1;
+    record.parseRevision = 1;
+    record.renderRevision = 1;
+    record.heightHint = 28.0f;
+    record.dirtyPersistence = true;
+
+    const qsizetype row = m_blocks.size();
+    m_blocks.push_back(record);
+    if (m_streaming) {
+        m_streamFirstRow = m_blocks.size();
+    }
+    m_serializeDirty = true;
+    rebuildRowIndex();
+
+    if (changeSet) {
+        changeSet->structuralRow = row;
+        changeSet->insertedCount = 1;
+    }
+    return record.id;
+}
+
+BlockChangeSet DocumentStore::updateBlockMetadata(BlockId id, const QVariantMap &patch)
+{
+    BlockChangeSet cs;
+    const qsizetype row = rowForBlock(id);
+    if (row < 0) {
+        return cs;
+    }
+
+    BlockRecord &block = m_blocks[row];
+    for (auto it = patch.constBegin(); it != patch.constEnd(); ++it) {
+        block.metadata.insert(it.key(), it.value());
+    }
+    if (isAgentBlockType(block.type)) {
+        const QByteArray serialized = serializeAgentBlock(block.type, block.metadata);
+        if (!serialized.isEmpty()) {
+            block.markdownUtf8 = serialized;
+        }
+    }
+    block.revision += 1;
+    block.renderRevision += 1;
+    block.dirtyRender = true;
+    block.dirtyPersistence = true;
+    m_serializeDirty = true;
+
+    cs.changedFirst = row;
+    cs.changedLast = row;
+    return cs;
+}
+
+BlockId DocumentStore::blockIdForMetadata(const QString &key, const QVariant &value) const
+{
+    for (const BlockRecord &block : m_blocks) {
+        if (block.metadata.value(key) == value) {
+            return block.id;
+        }
+    }
+    return 0;
 }
 
 void DocumentStore::spliceBlocks(qsizetype firstRow, qsizetype removeCount, const QVector<BlockRecord> &insert)
@@ -1163,6 +1279,7 @@ void DocumentStore::setBlockContent(BlockRecord &block, const QString &content) 
         const QString lang = fenceLanguageOf(content);
         if (!lang.isEmpty()) {
             block.metadata.insert(QStringLiteral("fenceLanguage"), lang);
+            applyAgentBlockFromFence(block, lang);
         }
     } else if (block.type == BlockType::Image) {
         applyImageMetadata(block.metadata, content);

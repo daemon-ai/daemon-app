@@ -152,6 +152,36 @@ QtObject {
     readonly property color activeBlockBackground: isMidnight ? "#14224a" : isDark ? "#1f2733" : isSepia ? "#f3ead2" : "#f8fbff"
     readonly property color activeBlockBorder: isMidnight ? "#2c4a8f" : isDark ? "#2c4a63" : isSepia ? "#d8c79a" : "#d7e9fb"
 
+    // --- Agent transcript blocks (reasoning / tool calls + sub-renderers) ---
+    // A tool/reasoning card is a subtle raised surface with a hairline border,
+    // matching the code-card vocabulary. Status colors track the lifecycle:
+    // running borrows the accent, ok is a calm green, error is the danger red.
+    readonly property color toolSurface: surfaceRaised
+    readonly property color toolBorder: border
+    // Header strip behind the tool title row (a touch deeper than the body).
+    readonly property color toolHeader: isMidnight ? "#0e1d40" : isDark ? "#242424" : isSepia ? "#efe4c8" : "#eef0f2"
+    readonly property color statusRunning: accent
+    readonly property color statusOk: isDarkMode ? "#5fbf73" : "#2f9e44"
+    readonly property color statusError: danger
+    // Reasoning reads as quiet aside text on a faint surface.
+    readonly property color reasoningText: textMuted
+    readonly property color reasoningSurface: surfaceRaised
+    // Unified-diff line washes (GitHub-like, theme-aware).
+    readonly property color diffAddBackground: isDarkMode ? "#10301c" : "#e6ffec"
+    readonly property color diffDelBackground: isDarkMode ? "#3a1d1d" : "#ffebe9"
+    readonly property color diffAddText: isDarkMode ? "#7ee787" : "#1a7f37"
+    readonly property color diffDelText: isDarkMode ? "#ff7b72" : "#cf222e"
+    readonly property color diffHunkText: accent
+    // ANSI 16-color SGR palette (indices 0-7 normal, 8-15 bright). A single
+    // palette legible on both light and dark surfaces; AnsiText maps fg/bg index
+    // to these, falling back to `text` for the default (-1).
+    readonly property var ansiPalette: [
+        "#3b3b3b", "#c0392b", "#2f9e44", "#b8860b",
+        "#2383e2", "#a347ba", "#1098ad", "#a8a8a8",
+        "#6b6b6b", "#f06a6a", "#5fbf73", "#e0a93b",
+        "#6fa0ff", "#cf8ee0", "#3bc9db", "#f0f0f0"
+    ]
+
     // --- Icons --------------------------------------------------------------
     // IconButton default glyph color (dark themes use a blue accent).
     readonly property color iconColor: isMidnight ? "#6fa0ff" : isDark ? "#5b94f5" : "#000000"

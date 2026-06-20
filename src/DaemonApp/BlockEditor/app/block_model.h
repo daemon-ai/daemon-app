@@ -33,6 +33,9 @@ public:
         CodeDataRole,
         ImageDataRole,
         MathDataRole,
+        ToolDataRole,
+        ReasoningDataRole,
+        ContentDataRole,
     };
     Q_ENUM(Role)
 

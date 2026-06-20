@@ -36,6 +36,9 @@ private:
     // Walks the parent chain - a single recursive rule for every depth.
     [[nodiscard]] bool isInSubtree(const QString& nodeId, const QString& rootId) const;
     void seedSampleData();
+    // Canonical demo transcript markdown exercising every Phase 1 agent block,
+    // seeded as a conversation for visual inspection of the renderers.
+    [[nodiscard]] static QString agentBlocksSampleMarkdown();
 
     QList<domain::AgentNode> m_nodes;
     QList<domain::Tag> m_tags;

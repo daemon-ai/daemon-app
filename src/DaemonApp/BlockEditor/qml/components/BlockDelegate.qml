@@ -20,6 +20,9 @@ Item {
     required property var codeData
     required property var imageData
     required property var mathData
+    required property var toolData
+    required property var reasoningData
+    required property var contentData
     required property var editorController
 
     // BlockType enum values for list items (BulletListItem=2, OrderedListItem=3,
@@ -66,6 +69,13 @@ Item {
         && !!(codeData
         && codeData.code
         && codeData.code.length > 0)
+
+    // Agent transcript blocks. BlockType enum indices: Reasoning=13, ToolCall=14,
+    // Content=15 (appended after the markdown types). Each renders as a passive
+    // structured card; activating the block reveals its raw fenced markdown.
+    readonly property bool hasReasoning: blockType === 13
+    readonly property bool hasTool: blockType === 14
+    readonly property bool hasContent: blockType === 15
 
     property bool isPooled: false
     property bool isActive: editorController.activeBlockId === Number(blockId)
@@ -207,6 +217,7 @@ Item {
         Item {
             id: passiveContainer
             visible: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasCode && !root.hasMath
+                     && !root.hasReasoning && !root.hasTool && !root.hasContent
             width: parent.width
             implicitHeight: passiveText.implicitHeight
             height: implicitHeight
@@ -257,6 +268,7 @@ Item {
                 id: passiveSelect
                 anchors.fill: parent
                 enabled: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasMath
+                         && !root.hasReasoning && !root.hasTool && !root.hasContent
                 acceptedButtons: Qt.LeftButton
                 preventStealing: true
                 hoverEnabled: true
@@ -510,6 +522,84 @@ Item {
             CodeBlock {
                 width: codeLoader.width
                 codeData: root.codeData
+                editorController: root.editorController
+                blockId: root.blockId
+            }
+        }
+
+        Item {
+            id: reasoningContainer
+            visible: !root.isActive && root.hasReasoning
+            width: parent.width
+            implicitHeight: reasoningLoader.implicitHeight
+            height: implicitHeight
+
+            Loader {
+                id: reasoningLoader
+                anchors.left: parent.left
+                anchors.right: parent.right
+                active: reasoningContainer.visible
+                sourceComponent: reasoningComponent
+            }
+        }
+
+        Component {
+            id: reasoningComponent
+            ReasoningBlock {
+                width: reasoningLoader.width
+                reasoningData: root.reasoningData
+                editorController: root.editorController
+                blockId: root.blockId
+            }
+        }
+
+        Item {
+            id: toolContainer
+            visible: !root.isActive && root.hasTool
+            width: parent.width
+            implicitHeight: toolLoader.implicitHeight
+            height: implicitHeight
+
+            Loader {
+                id: toolLoader
+                anchors.left: parent.left
+                anchors.right: parent.right
+                active: toolContainer.visible
+                sourceComponent: toolComponent
+            }
+        }
+
+        Component {
+            id: toolComponent
+            ToolCallBlock {
+                width: toolLoader.width
+                toolData: root.toolData
+                editorController: root.editorController
+                blockId: root.blockId
+            }
+        }
+
+        Item {
+            id: contentContainer
+            visible: !root.isActive && root.hasContent
+            width: parent.width
+            implicitHeight: contentLoader.implicitHeight
+            height: implicitHeight
+
+            Loader {
+                id: contentLoader
+                anchors.left: parent.left
+                anchors.right: parent.right
+                active: contentContainer.visible
+                sourceComponent: contentComponent
+            }
+        }
+
+        Component {
+            id: contentComponent
+            ContentBlock {
+                width: contentLoader.width
+                contentData: root.contentData
                 editorController: root.editorController
                 blockId: root.blockId
             }

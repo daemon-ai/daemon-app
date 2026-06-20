@@ -1,3 +1,5 @@
+#include "core/agent_block.h"
+#include "core/agent_ingest.h"
 #include "core/coordinate_map.h"
 #include "core/block_height_index.h"
 #include "core/command_stack.h"
@@ -81,6 +83,18 @@ private slots:
     void pasteHeadingDocIntoHeadingNoLeadingNewline();
     void pasteSplitsMidParagraph();
     void pasteSingleLineMergesInline();
+
+    // Agent transcript blocks (hybrid: typed inject/update + markdown round-trip).
+    void agentBlockSerializeIsStable();
+    void agentFenceParsesToTypedBlock();
+    void agentBlockMarkdownRoundTrips();
+    void injectTypedBlockAppendsRow();
+    void updateBlockMetadataByCallIdFlipsStatus();
+    void buildToolViewFlipsTitleAndDuration();
+    void ansiSpansParseSgr();
+    void unifiedDiffTypesLines();
+    void ingestShimReplayBuildsBlocks();
+    void agentBlocksSceneParses();
 };
 
 namespace {
@@ -1519,6 +1533,286 @@ void CoreTests::pasteSingleLineMergesInline()
     QCOMPARE(store.blockAt(0)->markdown(), QStringLiteral("hello there world"));
     QCOMPARE(caretBlock, id);
     QCOMPARE(caretOffset, qsizetype(11)); // after "hello there"
+}
+
+void CoreTests::agentBlockSerializeIsStable()
+{
+    QVariantMap meta;
+    meta.insert(QStringLiteral("callId"), QStringLiteral("c1"));
+    meta.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    meta.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    meta.insert(QStringLiteral("durationMs"), 1200);
+
+    const QByteArray md = be::serializeAgentBlock(be::BlockType::ToolCall, meta);
+    QVERIFY(md.startsWith("```tool\n"));
+    QVERIFY(md.endsWith("\n```"));
+
+    // Parsing the body back, then re-serializing, must be byte-stable (the JSON
+    // object is key-sorted), so this form is a safe document save/export format.
+    const QVariantMap parsed = be::parseAgentBlockMetadata(be::fencedBodyOf(QString::fromUtf8(md)));
+    const QByteArray md2 = be::serializeAgentBlock(be::BlockType::ToolCall, parsed);
+    QCOMPARE(md2, md);
+
+    // The transient fenceLanguage key the parser stamps on a fence never leaks.
+    QVariantMap withFence = meta;
+    withFence.insert(QStringLiteral("fenceLanguage"), QStringLiteral("tool"));
+    QCOMPARE(be::serializeAgentBlock(be::BlockType::ToolCall, withFence), md);
+}
+
+void CoreTests::agentFenceParsesToTypedBlock()
+{
+    const QString markdown = QStringLiteral(
+        "```reasoning\n{\"body\":\"Think first.\",\"status\":\"complete\"}\n```\n");
+    be::DocumentStore store;
+    store.loadMarkdown(markdown);
+
+    const be::BlockRecord *block = store.blockAt(0);
+    QVERIFY(block != nullptr);
+    QCOMPARE(block->type, be::BlockType::Reasoning);
+    QCOMPARE(block->metadata.value(QStringLiteral("status")).toString(), QStringLiteral("complete"));
+    QCOMPARE(block->metadata.value(QStringLiteral("body")).toString(), QStringLiteral("Think first."));
+}
+
+void CoreTests::agentBlockMarkdownRoundTrips()
+{
+    QVariantMap meta;
+    meta.insert(QStringLiteral("callId"), QStringLiteral("c7"));
+    meta.insert(QStringLiteral("name"), QStringLiteral("search"));
+    meta.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    meta.insert(QStringLiteral("detailKind"), QStringLiteral("ansi-stream"));
+    const QString md = QString::fromUtf8(be::serializeAgentBlock(be::BlockType::ToolCall, meta));
+
+    be::DocumentStore store;
+    store.loadMarkdown(md + QLatin1Char('\n'));
+
+    const be::BlockRecord *block = store.blockAt(0);
+    QVERIFY(block != nullptr);
+    QCOMPARE(block->type, be::BlockType::ToolCall);
+    // The block's stored markdown round-trips back to the canonical fenced form.
+    QCOMPARE(block->markdown(), md);
+    QCOMPARE(store.toMarkdown(), md + QLatin1Char('\n'));
+    // And the document survives a structural reload via toMarkdown.
+    be::DocumentStore reloaded;
+    reloaded.loadMarkdown(store.toMarkdown());
+    QCOMPARE(reloaded.blockAt(0)->type, be::BlockType::ToolCall);
+    QCOMPARE(reloaded.blockAt(0)->metadata.value(QStringLiteral("callId")).toString(), QStringLiteral("c7"));
+}
+
+void CoreTests::injectTypedBlockAppendsRow()
+{
+    be::DocumentStore store;
+    store.loadMarkdown(QStringLiteral("Intro\n"));
+    const qsizetype before = store.blockCount();
+
+    QVariantMap meta;
+    meta.insert(QStringLiteral("callId"), QStringLiteral("c1"));
+    meta.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    meta.insert(QStringLiteral("status"), QStringLiteral("running"));
+    be::BlockChangeSet cs;
+    const be::BlockId id = store.appendTypedBlock(be::BlockType::ToolCall, meta, &cs);
+
+    QVERIFY(id != 0);
+    QCOMPARE(store.blockCount(), before + 1);
+    QCOMPARE(cs.insertedCount, qsizetype(1));
+    QCOMPARE(cs.structuralRow, before);
+    QCOMPARE(store.blockAt(before)->type, be::BlockType::ToolCall);
+    QCOMPARE(store.blockIdForMetadata(QStringLiteral("callId"), QStringLiteral("c1")), id);
+}
+
+void CoreTests::updateBlockMetadataByCallIdFlipsStatus()
+{
+    be::DocumentStore store;
+    QVariantMap meta;
+    meta.insert(QStringLiteral("callId"), QStringLiteral("abc"));
+    meta.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    meta.insert(QStringLiteral("status"), QStringLiteral("running"));
+    const be::BlockId id = store.appendTypedBlock(be::BlockType::ToolCall, meta, nullptr);
+
+    const be::BlockId found = store.blockIdForMetadata(QStringLiteral("callId"), QStringLiteral("abc"));
+    QCOMPARE(found, id);
+
+    QVariantMap patch;
+    patch.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    patch.insert(QStringLiteral("durationMs"), 850);
+    const be::BlockChangeSet cs = store.updateBlockMetadata(found, patch);
+
+    const qsizetype row = store.rowForBlock(id);
+    QCOMPARE(cs.changedFirst, row);
+    QCOMPARE(cs.changedLast, row);
+    QCOMPARE(store.blockAt(row)->metadata.value(QStringLiteral("status")).toString(), QStringLiteral("ok"));
+    QCOMPARE(store.blockAt(row)->metadata.value(QStringLiteral("durationMs")).toInt(), 850);
+    // The patch also re-serialized the canonical markdown so a later save persists it.
+    QVERIFY(store.blockAt(row)->markdown().contains(QStringLiteral("\"status\":\"ok\"")));
+}
+
+void CoreTests::buildToolViewFlipsTitleAndDuration()
+{
+    QVariantMap running;
+    running.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    running.insert(QStringLiteral("status"), QStringLiteral("running"));
+    const QVariantMap rv = be::buildToolView(running);
+    QCOMPARE(rv.value(QStringLiteral("status")).toString(), QStringLiteral("running"));
+    QCOMPARE(rv.value(QStringLiteral("title")).toString(), QStringLiteral("Running terminal"));
+
+    QVariantMap done;
+    done.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    done.insert(QStringLiteral("status"), QStringLiteral("finished")); // normalizes to ok
+    done.insert(QStringLiteral("durationMs"), 1500);
+    const QVariantMap dv = be::buildToolView(done);
+    QCOMPARE(dv.value(QStringLiteral("status")).toString(), QStringLiteral("ok"));
+    QCOMPARE(dv.value(QStringLiteral("title")).toString(), QStringLiteral("terminal"));
+    QCOMPARE(dv.value(QStringLiteral("durationLabel")).toString(), QStringLiteral("1.5s"));
+}
+
+void CoreTests::ansiSpansParseSgr()
+{
+    // "plain \x1b[31mred\x1b[1m bold\x1b[0m done"
+    const QString text = QStringLiteral("plain ")
+        + QChar(0x1B) + QStringLiteral("[31mred")
+        + QChar(0x1B) + QStringLiteral("[1m bold")
+        + QChar(0x1B) + QStringLiteral("[0m done");
+    const QVariantList spans = be::ansiToSpans(text);
+    QCOMPARE(spans.size(), 4);
+
+    QCOMPARE(spans.at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("plain "));
+    QCOMPARE(spans.at(0).toMap().value(QStringLiteral("fg")).toInt(), -1);
+
+    QCOMPARE(spans.at(1).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("red"));
+    QCOMPARE(spans.at(1).toMap().value(QStringLiteral("fg")).toInt(), 1); // red
+
+    const QVariantMap bold = spans.at(2).toMap();
+    QCOMPARE(bold.value(QStringLiteral("text")).toString(), QStringLiteral(" bold"));
+    QCOMPARE(bold.value(QStringLiteral("fg")).toInt(), 1);
+    QVERIFY(bold.value(QStringLiteral("bold")).toBool());
+
+    const QVariantMap reset = spans.at(3).toMap();
+    QCOMPARE(reset.value(QStringLiteral("text")).toString(), QStringLiteral(" done"));
+    QCOMPARE(reset.value(QStringLiteral("fg")).toInt(), -1);
+    QVERIFY(!reset.value(QStringLiteral("bold")).toBool());
+}
+
+void CoreTests::unifiedDiffTypesLines()
+{
+    const QString diff = QStringLiteral(
+        "--- a/file\n+++ b/file\n@@ -1,2 +1,2 @@\n context\n-old line\n+new line\n");
+    const QVariantList lines = be::parseUnifiedDiff(diff);
+    QVERIFY(lines.size() >= 6);
+    QCOMPARE(lines.at(0).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("meta"));
+    QCOMPARE(lines.at(1).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("meta"));
+    QCOMPARE(lines.at(2).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("hunk"));
+    QCOMPARE(lines.at(3).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("context"));
+    QCOMPARE(lines.at(4).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("del"));
+    QCOMPARE(lines.at(5).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("add"));
+}
+
+void CoreTests::ingestShimReplayBuildsBlocks()
+{
+    be::DocumentStore store;
+    be::TranscriptIngest ingest(&store);
+
+    QVariantList feed;
+    auto event = [](const char *type) {
+        QVariantMap e;
+        e.insert(QStringLiteral("type"), QString::fromLatin1(type));
+        return e;
+    };
+
+    // A recorded turn: think, run a tool, then finish it by callId.
+    QVariantMap r1 = event("reasoningDelta");
+    r1.insert(QStringLiteral("text"), QStringLiteral("Let me check."));
+    feed.push_back(r1);
+
+    QVariantMap rDone = event("reasoningDone");
+    rDone.insert(QStringLiteral("durationMs"), 300);
+    feed.push_back(rDone);
+
+    QVariantMap started = event("toolStarted");
+    started.insert(QStringLiteral("callId"), QStringLiteral("t1"));
+    started.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    started.insert(QStringLiteral("tone"), QStringLiteral("terminal"));
+    started.insert(QStringLiteral("detailKind"), QStringLiteral("ansi-stream"));
+    feed.push_back(started);
+
+    QVariantMap finished = event("toolFinished");
+    finished.insert(QStringLiteral("callId"), QStringLiteral("t1"));
+    finished.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    finished.insert(QStringLiteral("durationMs"), 1200);
+    finished.insert(QStringLiteral("stdout"), QStringLiteral("done\n"));
+    feed.push_back(finished);
+
+    ingest.ingestAll(feed);
+    ingest.finish();
+
+    QCOMPARE(store.blockCount(), qsizetype(2));
+    QCOMPARE(store.blockAt(0)->type, be::BlockType::Reasoning);
+    QCOMPARE(store.blockAt(0)->metadata.value(QStringLiteral("status")).toString(), QStringLiteral("complete"));
+    QCOMPARE(store.blockAt(0)->metadata.value(QStringLiteral("body")).toString(), QStringLiteral("Let me check."));
+
+    QCOMPARE(store.blockAt(1)->type, be::BlockType::ToolCall);
+    QCOMPARE(store.blockAt(1)->metadata.value(QStringLiteral("status")).toString(), QStringLiteral("ok"));
+    QCOMPARE(store.blockAt(1)->metadata.value(QStringLiteral("durationMs")).toInt(), 1200);
+    QCOMPARE(store.blockAt(1)->metadata.value(QStringLiteral("stdout")).toString(), QStringLiteral("done\n"));
+}
+
+void CoreTests::agentBlocksSceneParses()
+{
+    // A miniature of the seeded "Agent blocks demo" transcript: a heading, each
+    // typed block in its canonical fenced form, interleaved with prose. Asserts
+    // the document parses into the right BlockTypes with hydrated metadata, and
+    // that the detail payloads feed the sub-renderer parsers - the parse-level
+    // proof behind the visual demo conversation.
+    const QString scene = QStringLiteral(
+        "# Agent transcript blocks\n\n"
+        "Intro paragraph.\n\n"
+        "```reasoning\n{\"status\":\"complete\",\"body\":\"Think then act.\"}\n```\n\n"
+        "```tool\n{\"callId\":\"c1\",\"name\":\"terminal\",\"status\":\"ok\",\"detailKind\":\"ansi-stream\","
+        "\"stdout\":\"\\u001b[32mPASS\\u001b[0m\\n\"}\n```\n\n"
+        "```tool\n{\"callId\":\"c3\",\"name\":\"apply_patch\",\"status\":\"ok\",\"detailKind\":\"diff\","
+        "\"diff\":\"--- a\\n+++ b\\n@@ -1 +1 @@\\n-x\\n+y\\n\"}\n```\n\n"
+        "```content\n{\"kind\":\"ansi-stream\",\"body\":\"tailing\\n\"}\n```\n\n"
+        "Outro paragraph.\n");
+
+    be::DocumentStore store;
+    store.loadMarkdown(scene);
+
+    // Collect the typed blocks by walking the document.
+    const be::BlockRecord *reasoning = nullptr;
+    const be::BlockRecord *ansiTool = nullptr;
+    const be::BlockRecord *diffTool = nullptr;
+    const be::BlockRecord *content = nullptr;
+    for (qsizetype row = 0; row < store.blockCount(); ++row) {
+        const be::BlockRecord *b = store.blockAt(row);
+        if (b->type == be::BlockType::Reasoning) {
+            reasoning = b;
+        } else if (b->type == be::BlockType::ToolCall) {
+            if (b->metadata.value(QStringLiteral("detailKind")).toString() == QStringLiteral("diff")) {
+                diffTool = b;
+            } else {
+                ansiTool = b;
+            }
+        } else if (b->type == be::BlockType::Content) {
+            content = b;
+        }
+    }
+
+    QVERIFY(reasoning != nullptr);
+    QVERIFY(ansiTool != nullptr);
+    QVERIFY(diffTool != nullptr);
+    QVERIFY(content != nullptr);
+
+    QCOMPARE(reasoning->metadata.value(QStringLiteral("status")).toString(), QStringLiteral("complete"));
+
+    // The ansi stdout decodes into colored spans (the AnsiText input).
+    const QVariantList spans = be::ansiToSpans(ansiTool->metadata.value(QStringLiteral("stdout")).toString());
+    QVERIFY(spans.size() >= 2);
+    QCOMPARE(spans.at(0).toMap().value(QStringLiteral("fg")).toInt(), 2); // green PASS
+
+    // The diff decodes into typed lines (the DiffBlock input).
+    const QVariantList diffLines = be::parseUnifiedDiff(diffTool->metadata.value(QStringLiteral("diff")).toString());
+    QVERIFY(diffLines.size() >= 5);
+
+    // The whole document round-trips back to the same markdown.
+    QCOMPARE(store.toMarkdown(), scene);
 }
 
 QTEST_MAIN(CoreTests)

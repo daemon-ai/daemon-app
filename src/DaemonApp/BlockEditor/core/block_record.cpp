@@ -36,6 +36,12 @@ QString blockTypeName(BlockType type)
         return QStringLiteral("rawHtml");
     case BlockType::Custom:
         return QStringLiteral("custom");
+    case BlockType::Reasoning:
+        return QStringLiteral("reasoning");
+    case BlockType::ToolCall:
+        return QStringLiteral("toolCall");
+    case BlockType::Content:
+        return QStringLiteral("content");
     case BlockType::Unknown:
         return QStringLiteral("unknown");
     }

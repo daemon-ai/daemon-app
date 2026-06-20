@@ -32,6 +32,10 @@ target_link_libraries(be_diagram PUBLIC Qt6::Core Qt6::Gui earcut::earcut)
 
 # --- be_core: markdown parse / project / document store ---------------------
 add_library(be_core STATIC
+    core/agent_block.cpp
+    core/agent_block.h
+    core/agent_ingest.cpp
+    core/agent_ingest.h
     core/block_record.cpp
     core/block_record.h
     core/block_height_index.cpp
@@ -91,6 +95,12 @@ qt_add_qml_module(da_blockeditor
         qml/components/ImageBlock.qml
         qml/components/MathBlock.qml
         qml/components/CodeBlock.qml
+        qml/components/ReasoningBlock.qml
+        qml/components/ToolCallBlock.qml
+        qml/components/ContentBlock.qml
+        qml/components/AnsiText.qml
+        qml/components/DiffBlock.qml
+        qml/components/SearchResultsList.qml
         qml/components/EditorSurface.qml
 )
 add_library(daemon-app::blockeditor ALIAS da_blockeditor)

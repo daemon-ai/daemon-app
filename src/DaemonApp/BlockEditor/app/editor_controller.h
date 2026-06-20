@@ -2,6 +2,7 @@
 
 #include "app/active_block_text_controller.h"
 #include "app/block_model.h"
+#include "core/agent_ingest.h"
 #include "core/block_height_index.h"
 #include "core/command_stack.h"
 #include "core/inline_projector.h"
@@ -80,6 +81,22 @@ public:
     Q_INVOKABLE void beginStream();
     Q_INVOKABLE void streamAppend(const QString &text);
     Q_INVOKABLE void endStream();
+
+    // Typed-block injection for agent transcripts (the runtime, structured path).
+    // appendTypedBlock(kind, metadata) appends a Reasoning/ToolCall/Content block
+    // (kind = "reasoning"/"tool"/"content") and returns its id; updateTypedBlock
+    // merges a metadata patch into an existing block (e.g. flipping a tool from
+    // running to ok by callId); blockIdForCallId resolves a tool block by its
+    // callId. ingestEvent/ingestEvents drive these from daemon-shaped event maps.
+    Q_INVOKABLE qulonglong appendTypedBlock(const QString &kind, const QVariantMap &metadata);
+    Q_INVOKABLE void updateTypedBlock(qulonglong blockId, const QVariantMap &patch);
+    Q_INVOKABLE qulonglong blockIdForCallId(const QString &callId) const;
+    Q_INVOKABLE void ingestEvent(const QVariantMap &event);
+    Q_INVOKABLE void ingestEvents(const QVariantList &events);
+    // Sub-renderer parsers, surfaced for the tool/content blocks: ANSI SGR text
+    // -> styled spans, and a unified diff -> typed lines (see core/agent_block).
+    Q_INVOKABLE QVariantList ansiSpans(const QString &text) const;
+    Q_INVOKABLE QVariantList parseDiff(const QString &diff) const;
     Q_INVOKABLE void activateBlock(qulonglong blockId);
     Q_INVOKABLE void activateBlockAt(int row, int cursorOffset = 0);
     Q_INVOKABLE void requestFocusForActiveBlock(int placement, int cursorOffset, qreal visualX);
@@ -189,6 +206,7 @@ private:
     void flushStreamBuffer();
 
     be::DocumentStore m_store;
+    be::TranscriptIngest m_ingest;
     be::BlockHeightIndex m_heightIndex;
     BlockModel m_model;
     ActiveBlockTextController m_activeTextController;

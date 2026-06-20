@@ -1,6 +1,7 @@
 #include "app/editor_controller.h"
 
 #include "app/math_image_provider.h"
+#include "core/agent_block.h"
 #include "core/markdown_table.h"
 #include "core/math_url.h"
 
@@ -8,6 +9,7 @@
 #include <QGuiApplication>
 #include <QMimeData>
 #include <QRegularExpression>
+#include <QVariantList>
 #include <QVariantMap>
 
 namespace be::app {
@@ -44,6 +46,7 @@ QString sampleDocument()
 
 EditorController::EditorController(QObject *parent)
     : QObject(parent)
+    , m_ingest(&m_store)
     , m_model(this)
 {
     m_model.setStore(&m_store);
@@ -257,6 +260,67 @@ void EditorController::endStream()
     emit streamingChanged();
     emit streamContentAppended();
     scheduleFlush();
+}
+
+qulonglong EditorController::appendTypedBlock(const QString &kind, const QVariantMap &metadata)
+{
+    const be::BlockType type = be::agentBlockTypeForFence(kind);
+    if (type == be::BlockType::Unknown) {
+        return 0;
+    }
+    be::BlockChangeSet changeSet;
+    const be::BlockId id = m_store.appendTypedBlock(type, metadata, &changeSet);
+    m_model.applyChangeSet(changeSet);
+    rebuildHeightIndex();
+    emit streamContentAppended();
+    scheduleFlush();
+    emit documentChanged();
+    return id;
+}
+
+void EditorController::updateTypedBlock(qulonglong blockId, const QVariantMap &patch)
+{
+    const be::BlockChangeSet changeSet = m_store.updateBlockMetadata(blockId, patch);
+    if (changeSet.changedFirst < 0) {
+        return;
+    }
+    m_model.applyChangeSet(changeSet);
+    scheduleFlush();
+    emit documentChanged();
+}
+
+qulonglong EditorController::blockIdForCallId(const QString &callId) const
+{
+    return m_store.blockIdForMetadata(QStringLiteral("callId"), callId);
+}
+
+void EditorController::ingestEvent(const QVariantMap &event)
+{
+    const QVector<be::BlockChangeSet> sets = m_ingest.ingest(event);
+    for (const be::BlockChangeSet &cs : sets) {
+        m_model.applyChangeSet(cs);
+    }
+    rebuildHeightIndex();
+    emit streamContentAppended();
+    scheduleFlush();
+    emit documentChanged();
+}
+
+void EditorController::ingestEvents(const QVariantList &events)
+{
+    for (const QVariant &event : events) {
+        ingestEvent(event.toMap());
+    }
+}
+
+QVariantList EditorController::ansiSpans(const QString &text) const
+{
+    return be::ansiToSpans(text);
+}
+
+QVariantList EditorController::parseDiff(const QString &diff) const
+{
+    return be::parseUnifiedDiff(diff);
 }
 
 void EditorController::activateBlock(qulonglong blockId)

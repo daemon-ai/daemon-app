@@ -1,6 +1,7 @@
 #include "app/block_model.h"
 
 #include "app/math_image_provider.h"
+#include "core/agent_block.h"
 #include "core/image_url.h"
 #include "core/markdown_parser.h"
 #include "core/markdown_table.h"
@@ -201,6 +202,44 @@ QVariantMap buildImageData(const be::BlockRecord &block)
     return data;
 }
 
+// Tool-call view model for a ToolCall block: the structured metadata shaped into
+// display fields (title flip, status, duration, detail kind) by the shared core
+// transform, ready for ToolCallBlock.qml + its sub-renderers.
+QVariantMap buildToolData(const be::BlockRecord &block)
+{
+    if (block.type != be::BlockType::ToolCall) {
+        return {};
+    }
+    return be::buildToolView(block.metadata);
+}
+
+// Reasoning view model: the scalar fields (status/duration) plus the chain-of-
+// thought body rendered to display markup via the projector, so ReasoningBlock
+// shows real markdown (mirrors buildTableData projecting its cells).
+QVariantMap buildReasoningData(const be::BlockRecord &block, const be::InlineProjector &projector)
+{
+    if (block.type != be::BlockType::Reasoning) {
+        return {};
+    }
+    QVariantMap view = be::buildReasoningView(block.metadata);
+    const QString body = view.value(QStringLiteral("body")).toString();
+    if (!body.isEmpty()) {
+        be::BlockRecord para;
+        para.type = be::BlockType::Paragraph;
+        para.markdownUtf8 = body.toUtf8();
+        view.insert(QStringLiteral("displayMarkup"), projector.project(para).displayMarkup);
+    }
+    return view;
+}
+
+QVariantMap buildContentData(const be::BlockRecord &block)
+{
+    if (block.type != be::BlockType::Content) {
+        return {};
+    }
+    return be::buildContentView(block.metadata);
+}
+
 } // namespace
 
 BlockModel::BlockModel(QObject *parent)
@@ -262,6 +301,12 @@ QVariant BlockModel::data(const QModelIndex &index, int role) const
         return block->type == be::BlockType::Image ? buildImageData(*block) : QVariantMap();
     case MathDataRole:
         return buildMathData(*block);
+    case ToolDataRole:
+        return buildToolData(*block);
+    case ReasoningDataRole:
+        return buildReasoningData(*block, m_projector);
+    case ContentDataRole:
+        return buildContentData(*block);
     default:
         return {};
     }
@@ -284,6 +329,9 @@ QHash<int, QByteArray> BlockModel::roleNames() const
         {CodeDataRole, "codeData"},
         {ImageDataRole, "imageData"},
         {MathDataRole, "mathData"},
+        {ToolDataRole, "toolData"},
+        {ReasoningDataRole, "reasoningData"},
+        {ContentDataRole, "contentData"},
     };
 }
 

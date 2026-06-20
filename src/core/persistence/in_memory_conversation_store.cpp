@@ -85,6 +85,71 @@ void InMemoryConversationStore::seedSampleData()
          QStringLiteral("Archived notes from an earlier review session.\n"));
     make(QStringLiteral("n-worker"), {}, false, QStringLiteral("Verification run"),
          QStringLiteral("Read-only checker over the worktree.\n"));
+
+    // A demo transcript exercising every Phase 1 agent block (reasoning, tool
+    // calls with each detail kind, a standalone content stream) for visual
+    // inspection. Each block is its canonical fenced form: a ```tool/```reasoning/
+    // ```content fence whose body is the compact-JSON metadata (the same form the
+    // runtime inject path serializes and the parser round-trips).
+    make(QStringLiteral("n-coder"), { 1 }, false, QStringLiteral("Agent blocks demo"),
+         agentBlocksSampleMarkdown());
+}
+
+QString InMemoryConversationStore::agentBlocksSampleMarkdown()
+{
+    return QStringLiteral(R"SAMPLE(# Agent transcript blocks
+
+A demo turn exercising every Phase 1 block. Activate (click) any card to reveal
+its raw fenced markdown.
+
+```reasoning
+{"status":"complete","durationMs":4200,"body":"First I'll inspect the repo, then run the build and the tests, and finally summarize any failures. The `/tree` endpoint is the likely culprit."}
+```
+
+Running a shell command:
+
+```tool
+{"callId":"c1","name":"terminal","tone":"terminal","status":"ok","durationMs":1200,"argsSummary":"ninja -C build-test be_core_tests","detailKind":"ansi-stream","stdout":"\u001b[32mPASS\u001b[0m  80 tests\n\u001b[33mWARN\u001b[0m  1 deprecation\n\u001b[1mBuild OK\u001b[0m\n"}
+```
+
+Searching the web:
+
+```tool
+{"callId":"c2","name":"web_search","tone":"web","status":"ok","durationMs":820,"argsSummary":"qml block editor","detailKind":"search-results","hits":[{"title":"Qt QML Applications","url":"https://doc.qt.io/qt-6/qmlapplications.html","snippet":"Build native, fluid UIs with QML backed by C++."},{"title":"md4qt - C++ Markdown parser","url":"https://github.com/igormironchik/md4qt","snippet":"A header-only C++17/20 CommonMark parser."}]}
+```
+
+Applying a patch:
+
+```tool
+{"callId":"c3","name":"apply_patch","tone":"edit","status":"ok","durationMs":260,"argsSummary":"src/main.cpp","detailKind":"diff","diff":"--- a/src/main.cpp\n+++ b/src/main.cpp\n@@ -1,4 +1,4 @@\n int main(int argc, char** argv) {\n-    return 0;\n+    return App(argc, argv).run();\n }\n"}
+```
+
+A tool still in flight:
+
+```tool
+{"callId":"c4","name":"compile","tone":"tool","status":"running","argsSummary":"cmake --build build-test"}
+```
+
+A failing tool:
+
+```tool
+{"callId":"c5","name":"terminal","tone":"terminal","status":"error","durationMs":90,"detailKind":"ansi-stream","stderr":"\u001b[31merror:\u001b[0m expected ';' before '}' token\n"}
+```
+
+A standalone content stream:
+
+```content
+{"kind":"ansi-stream","body":"\u001b[36mi\u001b[0m tailing logs\n\u001b[2mwaiting for events...\u001b[0m\n"}
+```
+
+An image result:
+
+```tool
+{"callId":"c6","name":"image_generate","tone":"tool","status":"ok","durationMs":5200,"detailKind":"image","imageUrl":"https://doc.qt.io/qt-6/images/qt-logo.png"}
+```
+
+That wraps the demo turn.
+)SAMPLE");
 }
 
 bool InMemoryConversationStore::isInSubtree(const QString& nodeId, const QString& rootId) const
