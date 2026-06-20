@@ -188,6 +188,18 @@ int main(int argc, char* argv[])
     Application application;
 
     QQmlApplicationEngine engine;
+
+    // KSyntaxHighlighting ships its QML module (org.kde.syntaxhighlighting) as a
+    // separate shared plugin, so unlike our STATIC feature modules it must be
+    // found on the engine import path. Add both layouts: the installed tree
+    // (<bindir>/../lib/qml next to the wrapped binary) and the build tree
+    // (QT_QML_OUTPUT_DIRECTORY, passed in as DAEMON_APP_BUILD_QML_DIR) for
+    // `nix develop` runs straight out of the build directory.
+    engine.addImportPath(QCoreApplication::applicationDirPath() + QStringLiteral("/../lib/qml"));
+#ifdef DAEMON_APP_BUILD_QML_DIR
+    engine.addImportPath(QStringLiteral(DAEMON_APP_BUILD_QML_DIR));
+#endif
+
     application.registerContext(engine);
 
     QObject::connect(&engine, &QQmlApplicationEngine::warnings,

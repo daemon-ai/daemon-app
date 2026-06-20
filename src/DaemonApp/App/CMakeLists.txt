@@ -45,6 +45,18 @@ target_link_libraries(daemon-app
         da_composerplugin
         da_settingsplugin
         da_statusbarplugin
+        # KSyntaxHighlighting C++ engine. Linking it here builds the framework as a
+        # dependency, records its shared lib on the executable rpath, and ensures
+        # the QML plugin (kquicksyntaxhighlightingplugin) is built alongside.
+        KF6SyntaxHighlighting
+)
+
+# Build dependency on the KSyntaxHighlighting QML plugin so its module is emitted
+# under QT_QML_OUTPUT_DIRECTORY before we run; main.cpp adds that dir to the
+# engine import path via DAEMON_APP_BUILD_QML_DIR.
+add_dependencies(daemon-app kquicksyntaxhighlightingplugin)
+target_compile_definitions(daemon-app
+    PRIVATE DAEMON_APP_BUILD_QML_DIR="${CMAKE_BINARY_DIR}/qml"
 )
 
 # On desktop the QApplication base lives in QtWidgets (for the tray).

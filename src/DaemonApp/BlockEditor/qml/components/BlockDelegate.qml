@@ -17,6 +17,7 @@ Item {
     required property int indent
     required property var tableData
     required property var mermaidData
+    required property var codeData
     required property var imageData
     required property var editorController
 
@@ -47,6 +48,15 @@ Item {
         && imageData
         && imageData.url
         && imageData.url.length > 0
+
+    // BlockType::CodeFence enum index (6). A non-mermaid code fence renders as a
+    // syntax-highlighted code card when passive (mermaid fences are gated above
+    // and route to MermaidBlock); activating the block reveals the raw source.
+    readonly property bool hasCode: blockType === 6
+        && !hasMermaid
+        && codeData
+        && codeData.code
+        && codeData.code.length > 0
 
     property bool isPooled: false
     property bool isActive: editorController.activeBlockId === Number(blockId)
@@ -187,7 +197,7 @@ Item {
 
         Item {
             id: passiveContainer
-            visible: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage
+            visible: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasCode
             width: parent.width
             implicitHeight: passiveText.implicitHeight
             height: implicitHeight
@@ -439,6 +449,32 @@ Item {
             ImageBlock {
                 width: imageLoader.width
                 imageData: root.imageData
+                editorController: root.editorController
+                blockId: root.blockId
+            }
+        }
+
+        Item {
+            id: codeContainer
+            visible: !root.isActive && root.hasCode
+            width: parent.width
+            implicitHeight: codeLoader.implicitHeight
+            height: implicitHeight
+
+            Loader {
+                id: codeLoader
+                anchors.left: parent.left
+                anchors.right: parent.right
+                active: codeContainer.visible
+                sourceComponent: codeComponent
+            }
+        }
+
+        Component {
+            id: codeComponent
+            CodeBlock {
+                width: codeLoader.width
+                codeData: root.codeData
                 editorController: root.editorController
                 blockId: root.blockId
             }

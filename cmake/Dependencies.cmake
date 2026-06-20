@@ -5,6 +5,27 @@
 
 include_guard(GLOBAL)
 
+# We vendor two KDE/ECM projects via add_subdirectory (md4qt and, below,
+# KSyntaxHighlighting). With ECM on the build env, each one runs
+# include(ECMGenerateQDoc), which unconditionally creates a fixed set of *global*
+# documentation aggregate targets (prepare_docs, generate_docs, install_html_docs,
+# generate_qch, install_qch_docs) at include time. The second include then aborts
+# configure with "target ... already exists". KDECMakeSettings can likewise emit a
+# shared "uninstall" target from two subprojects.
+#
+# Make duplicate-named custom targets a no-op so a second vendored ECM subproject
+# reuses the first one's aggregate targets instead of colliding. Our own
+# (first-party) build never creates two same-named custom targets, so this only
+# ever absorbs the harmless cross-subproject duplicates. The original builtin is
+# reachable via the underscore-prefixed name.
+function(add_custom_target _name)
+    if(TARGET ${_name})
+        message(STATUS "Dependencies: reusing existing custom target '${_name}' (vendored ECM subproject duplicate).")
+        return()
+    endif()
+    _add_custom_target(${ARGV})
+endfunction()
+
 # Resolve a <DEP>_SOURCE_DIR from cache var or environment; FATAL if required & missing.
 function(_daemon_app_resolve_dir out_var name)
     set(value "${${name}}")
@@ -38,6 +59,46 @@ if(NOT TARGET earcut::earcut)
     add_library(earcut::earcut ALIAS earcut)
     target_include_directories(earcut INTERFACE "${_earcut_dir}/include")
 endif()
+
+# ---------------------------------------------------------------------------
+# KSyntaxHighlighting - KDE syntax highlighting engine + its QML module
+# (org.kde.syntaxhighlighting). Built from the pinned source tree; produces the
+# C++ target KF6SyntaxHighlighting and the QML plugin kquicksyntaxhighlightingplugin.
+# ---------------------------------------------------------------------------
+_daemon_app_resolve_dir(_ksyntax_dir KSYNTAXHIGHLIGHTING_SOURCE_DIR)
+if(NOT EXISTS "${_ksyntax_dir}/CMakeLists.txt")
+    message(FATAL_ERROR "KSYNTAXHIGHLIGHTING_SOURCE_DIR must point to a KSyntaxHighlighting source tree (got '${_ksyntax_dir}')")
+endif()
+
+# GUI components carry the formats/themes the highlighter applies. Bundle the
+# syntax + theme definitions into the library as Qt resources (QRC_SYNTAX) and
+# skip QStandardPaths lookups (NO_STANDARD_PATHS) so the build needs no external
+# data dirs and stays reproducible. Quick is already found by the root project,
+# so the framework's src/quick (the QML module) builds.
+set(KSYNTAXHIGHLIGHTING_USE_GUI ON CACHE BOOL "" FORCE)
+set(QRC_SYNTAX ON CACHE BOOL "" FORCE)
+set(NO_STANDARD_PATHS ON CACHE BOOL "" FORCE)
+
+# Land the generated QML plugin in one predictable build-tree dir so it can be
+# placed on the QML import path (devShell run + qmllint). Our own QML modules are
+# STATIC (linked into the executable), so relocating their metadata here is benign.
+set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "" FORCE)
+
+# KSyntaxHighlighting pulls in KDECMakeSettings, which defaults BUILD_TESTING ON
+# and would build the framework's own autotests with our tree. Force it off for
+# its configure, then unset so our later include(CTest) still defaults ON.
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+
+# The root project enables QT_QML_GENERATE_QMLLS_INI, but that makes the
+# framework's QML module (kquicksyntaxhighlightingplugin) try to write a
+# .qmlls.ini back into its own source dir - which is a read-only /nix/store path,
+# so the build fails. The .ini only aids the language server for first-party QML,
+# so turn it off for this vendored subtree and restore it afterwards.
+set(_da_prev_qmlls_ini "${QT_QML_GENERATE_QMLLS_INI}")
+set(QT_QML_GENERATE_QMLLS_INI OFF)
+add_subdirectory("${_ksyntax_dir}" "${CMAKE_BINARY_DIR}/_deps/ksyntaxhighlighting")
+set(QT_QML_GENERATE_QMLLS_INI "${_da_prev_qmlls_ini}")
+unset(BUILD_TESTING CACHE)
 
 # ---------------------------------------------------------------------------
 # Desktop-only dependencies

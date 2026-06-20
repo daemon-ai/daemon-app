@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import org.kde.syntaxhighlighting
+
 import DaemonApp.Theme
 import DaemonApp.Settings
 import DaemonApp.BlockEditor
@@ -210,6 +212,19 @@ Rectangle {
                 onTextChanged: {
                     if (UiSettings.showPlainText && activeFocus)
                         plainPersist.restart()
+                }
+
+                // Highlight the raw document as Markdown (the definition also
+                // colors fenced code blocks inside it), so "Show plain text"
+                // matches the highlighting of the block view. The app theme picks
+                // a light/dark highlighting theme so it recolors on theme switch.
+                SyntaxHighlighter {
+                    textEdit: plainText
+                    repository: Repository
+                    definition: Repository.definitionForName("Markdown")
+                    theme: Theme.isDarkMode
+                        ? Repository.defaultTheme(Repository.DarkTheme)
+                        : Repository.defaultTheme(Repository.LightTheme)
                 }
             }
         }

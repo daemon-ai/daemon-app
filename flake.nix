@@ -15,6 +15,10 @@
       url = "git+https://github.com/mapbox/earcut.hpp?allRefs=1&rev=64530eabb07cfbdf48b2577a763ca26f1afc0b76&submodules=1";
       flake = false;
     };
+    ksyntaxhighlighting = {
+      url = "gitlab:frameworks/syntax-highlighting/ccb31f722406d5b980ba57cf71a3ffab70a82847?host=invent.kde.org";
+      flake = false;
+    };
 
     # --- Desktop-only dependencies ---
     qwindowkit = {
@@ -36,7 +40,7 @@
   };
 
   outputs =
-    { nixpkgs, flake-utils, md4qt, earcut, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, ... }:
+    { nixpkgs, flake-utils, md4qt, earcut, ksyntaxhighlighting, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, ... }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -73,6 +77,7 @@
         depFlags = [
           "-DMD4QT_SOURCE_DIR=${md4qt}"
           "-DEARCUT_SOURCE_DIR=${earcut}"
+          "-DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${ksyntaxhighlighting}"
           "-DQWINDOWKIT_SOURCE_DIR=${qwindowkit}"
           "-DQSIMPLEUPDATER_SOURCE_DIR=${qsimpleupdater}"
           "-DQAUTOSTART_SOURCE_DIR=${qautostart}"
@@ -88,6 +93,13 @@
             cmake
             ninja
             pkg-config
+            # KSyntaxHighlighting builds from source via add_subdirectory: it needs
+            # ECM (find_package(ECM REQUIRED)) and perl (find_package(Perl REQUIRED),
+            # used to auto-generate the PHP syntax definition at build time). The
+            # top-level extra-cmake-modules alias was removed with KDE5; the Qt6 ECM
+            # lives under kdePackages.
+            kdePackages.extra-cmake-modules
+            perl
             qt6.wrapQtAppsHook
           ];
 
@@ -113,6 +125,8 @@
             clang-tools
             gcc
             gdb
+            kdePackages.extra-cmake-modules
+            perl
           ] ++ qtPackages;
 
           shellHook = ''
@@ -122,6 +136,7 @@
             export CMAKE_PREFIX_PATH="${pkgs.lib.makeSearchPath "lib/cmake" qtPackages}:$CMAKE_PREFIX_PATH"
             export MD4QT_SOURCE_DIR="${md4qt}"
             export EARCUT_SOURCE_DIR="${earcut}"
+            export KSYNTAXHIGHLIGHTING_SOURCE_DIR="${ksyntaxhighlighting}"
             export QWINDOWKIT_SOURCE_DIR="${qwindowkit}"
             export QSIMPLEUPDATER_SOURCE_DIR="${qsimpleupdater}"
             export QAUTOSTART_SOURCE_DIR="${qautostart}"

@@ -108,6 +108,25 @@ QVariantMap buildMermaidData(const be::BlockRecord &block)
     return data;
 }
 
+// Syntax-highlight payload for a code fence: the info-string language (for the
+// KSyntaxHighlighting definition lookup) and the fenced body with the fence
+// lines stripped. Mermaid fences are excluded - they render as diagrams via
+// buildMermaidData, not as highlighted source.
+QVariantMap buildCodeData(const be::BlockRecord &block)
+{
+    if (block.type != be::BlockType::CodeFence) {
+        return {};
+    }
+    const QString lang = mermaidLanguageOf(block);
+    if (lang.compare(QStringLiteral("mermaid"), Qt::CaseInsensitive) == 0) {
+        return {};
+    }
+    QVariantMap data;
+    data.insert(QStringLiteral("language"), lang);
+    data.insert(QStringLiteral("code"), mermaidSourceOf(block));
+    return data;
+}
+
 // Image attributes for an Image block: prefer the captured metadata, fall back to
 // re-parsing the block's markdown (covers streamed/typed blocks that never went
 // through the full parse path). `source` is the QML-ready, scheme-resolved URL.
@@ -199,6 +218,8 @@ QVariant BlockModel::data(const QModelIndex &index, int role) const
         return block->type == be::BlockType::Table ? buildTableData(*block, m_projector) : QVariantMap();
     case MermaidDataRole:
         return buildMermaidData(*block);
+    case CodeDataRole:
+        return buildCodeData(*block);
     case ImageDataRole:
         return block->type == be::BlockType::Image ? buildImageData(*block) : QVariantMap();
     default:
@@ -220,6 +241,7 @@ QHash<int, QByteArray> BlockModel::roleNames() const
         {IndentRole, "indent"},
         {TableDataRole, "tableData"},
         {MermaidDataRole, "mermaidData"},
+        {CodeDataRole, "codeData"},
         {ImageDataRole, "imageData"},
     };
 }

@@ -86,6 +86,7 @@ qt_add_qml_module(da_blockeditor
         qml/components/TableBlock.qml
         qml/components/MermaidBlock.qml
         qml/components/ImageBlock.qml
+        qml/components/CodeBlock.qml
         qml/components/EditorSurface.qml
 )
 add_library(daemon-app::blockeditor ALIAS da_blockeditor)
@@ -95,6 +96,10 @@ add_library(daemon-app::blockeditor ALIAS da_blockeditor)
 # the QML_ELEMENT headers (EditorController, BlockModel, ...) by basename.
 target_include_directories(da_blockeditor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(da_blockeditor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+
+# CodeBlock.qml imports the external org.kde.syntaxhighlighting module; point
+# qmllint at the build-tree dir where KSyntaxHighlighting emits its QML plugin.
+set_property(TARGET da_blockeditor APPEND PROPERTY QT_QML_IMPORT_PATH "${CMAKE_BINARY_DIR}/qml")
 target_link_libraries(da_blockeditor
     PRIVATE
         Qt6::Quick

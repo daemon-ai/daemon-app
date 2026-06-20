@@ -39,6 +39,25 @@
         "type": "github"
       }
     },
+    "ksyntaxhighlighting": {
+      "flake": false,
+      "locked": {
+        "host": "invent.kde.org",
+        "lastModified": 1781812194,
+        "narHash": "sha256-NDz3WTxfslJZi63Qjg8FhW5Bs49VZEfU1RTkA3gkW7k=",
+        "owner": "frameworks",
+        "repo": "syntax-highlighting",
+        "rev": "ccb31f722406d5b980ba57cf71a3ffab70a82847",
+        "type": "gitlab"
+      },
+      "original": {
+        "host": "invent.kde.org",
+        "owner": "frameworks",
+        "repo": "syntax-highlighting",
+        "rev": "ccb31f722406d5b980ba57cf71a3ffab70a82847",
+        "type": "gitlab"
+      }
+    },
     "md4qt": {
       "flake": false,
       "locked": {
@@ -149,6 +168,7 @@
       "inputs": {
         "earcut": "earcut",
         "flake-utils": "flake-utils",
+        "ksyntaxhighlighting": "ksyntaxhighlighting",
         "md4qt": "md4qt",
         "nixpkgs": "nixpkgs",
         "qautostart": "qautostart",
