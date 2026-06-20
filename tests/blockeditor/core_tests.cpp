@@ -23,6 +23,8 @@ private slots:
     void coordinateMapRoundTrip();
     void pieceTableReplace();
     void documentStoreRoundTrip();
+    void codeFenceRoundTrips_data();
+    void codeFenceRoundTrips();
     void projectionMapsMarkdown();
     void projectionOffsetEndpointsRoundTrip();
     void projectionRendersLinks();
@@ -46,6 +48,8 @@ private slots:
     void emptyListItemSplitExitsList();
     void orderedListRenumbersOnSplit();
     void headingSplitTailBecomesParagraph();
+    void codeFenceEnterExitsToNewParagraph();
+    void codeFenceEnterInBodyStaysInFence();
     void streamMatchesOneShotLoad();
     void streamCommitsBlockIdentity();
     void streamSetextReclassifies();
@@ -146,6 +150,48 @@ void CoreTests::documentStoreRoundTrip()
     QCOMPARE(store.toMarkdown(), markdown);
     QVERIFY(store.blockCount() >= 3);
     QCOMPARE(store.blockAt(0)->type, be::BlockType::Heading);
+}
+
+void CoreTests::codeFenceRoundTrips_data()
+{
+    QTest::addColumn<QString>("markdown");
+
+    QTest::newRow("code") << QStringLiteral("```javascript\ncode\n```\n");
+    QTest::newRow("empty body") << QStringLiteral("```javascript\n\n```\n");
+    QTest::newRow("blank line in body") << QStringLiteral("```\ncode\n\n```\n");
+    QTest::newRow("mermaid") << QStringLiteral("```mermaid\ngraph TD;\nA-->B;\n```\n");
+    QTest::newRow("tilde") << QStringLiteral("~~~python\nprint(1)\n~~~\n");
+    QTest::newRow("around paragraphs")
+        << QStringLiteral("Intro\n\n```javascript\ncode\n```\n\nOutro\n");
+}
+
+void CoreTests::codeFenceRoundTrips()
+{
+    QFETCH(QString, markdown);
+
+    be::DocumentStore store;
+    store.loadMarkdown(markdown);
+
+    // The fenced block must survive a load -> serialize round-trip intact: this
+    // is the path the plaintext view exercises when toggling render modes.
+    QCOMPARE(store.toMarkdown(), markdown);
+
+    // Find the code fence block and confirm its stored markdown keeps both the
+    // opening and closing delimiters (md4qt drops them from its span).
+    const be::BlockRecord *fence = nullptr;
+    for (qsizetype row = 0; row < store.blockCount(); ++row) {
+        if (store.blockAt(row)->type == be::BlockType::CodeFence) {
+            fence = store.blockAt(row);
+            break;
+        }
+    }
+    QVERIFY(fence != nullptr);
+    const QString fenceMarkdown = fence->markdown();
+    const bool opensBacktick = fenceMarkdown.startsWith(QStringLiteral("```"));
+    const bool opensTilde = fenceMarkdown.startsWith(QStringLiteral("~~~"));
+    QVERIFY(opensBacktick || opensTilde);
+    QVERIFY(fenceMarkdown.trimmed().endsWith(opensTilde ? QStringLiteral("~~~")
+                                                        : QStringLiteral("```")));
 }
 
 void CoreTests::projectionMapsMarkdown()
@@ -776,6 +822,52 @@ void CoreTests::headingSplitTailBecomesParagraph()
     QVERIFY(store.blockAt(1)->markdown().isEmpty());
 }
 
+void CoreTests::codeFenceEnterExitsToNewParagraph()
+{
+    be::DocumentStore store;
+    store.loadMarkdown(QStringLiteral("```js\ncode\n```\n"));
+    const be::BlockId id = store.blockAt(0)->id;
+    QCOMPARE(store.blockAt(0)->type, be::BlockType::CodeFence);
+
+    // First Enter at end of the closed fence opens a trailing blank line; the
+    // block does not split yet.
+    QVERIFY(store.splitBlock(id, store.blockAt(0)->markdown().size()));
+    QCOMPARE(store.blockCount(), qsizetype(1));
+    QCOMPARE(store.blockAt(0)->type, be::BlockType::CodeFence);
+
+    // Second Enter on that blank line (last line is a valid closing fence) exits
+    // the fence into a new empty paragraph below it.
+    QVERIFY(store.splitBlock(id, store.blockAt(0)->markdown().size()));
+    QCOMPARE(store.blockCount(), qsizetype(2));
+    QCOMPARE(store.blockAt(0)->type, be::BlockType::CodeFence);
+    QCOMPARE(store.blockAt(1)->type, be::BlockType::Paragraph);
+    QVERIFY(store.blockAt(1)->markdown().isEmpty());
+    // The fence delimiters survive the exit intact.
+    QVERIFY(store.toMarkdown().startsWith(QStringLiteral("```js\ncode\n```")));
+}
+
+void CoreTests::codeFenceEnterInBodyStaysInFence()
+{
+    be::DocumentStore store;
+    store.loadMarkdown(QStringLiteral("```js\ncode\n```\n"));
+    const be::BlockId id = store.blockAt(0)->id;
+
+    // Enter in the middle of the body inserts a literal newline and keeps a
+    // single CodeFence block (no split, no exit).
+    QVERIFY(store.splitBlock(id, 9)); // inside "code"
+    QCOMPARE(store.blockCount(), qsizetype(1));
+    QCOMPARE(store.blockAt(0)->type, be::BlockType::CodeFence);
+
+    // A first Enter at end (no trailing blank yet) also stays in the fence; it
+    // only opens the trailing blank line that a subsequent Enter would exit on.
+    be::DocumentStore store2;
+    store2.loadMarkdown(QStringLiteral("```js\ncode\n```\n"));
+    const be::BlockId id2 = store2.blockAt(0)->id;
+    QVERIFY(store2.splitBlock(id2, store2.blockAt(0)->markdown().size()));
+    QCOMPARE(store2.blockCount(), qsizetype(1));
+    QCOMPARE(store2.blockAt(0)->type, be::BlockType::CodeFence);
+}
+
 void CoreTests::streamMatchesOneShotLoad()
 {
     const QString markdown = QStringLiteral(
@@ -784,12 +876,16 @@ void CoreTests::streamMatchesOneShotLoad()
     be::DocumentStore oneShot;
     oneShot.loadMarkdown(markdown);
 
+    // The fenced block (and its ``` delimiters) must survive the parse intact.
+    QCOMPARE(oneShot.toMarkdown(), markdown);
+
     // Stream the same content one character at a time; a blank line inside the
     // fence must not split it, and the result must match the one-shot parse.
     for (int chunkSize : {1, 3, 7}) {
         be::DocumentStore streamed;
         streamInChunks(streamed, markdown, chunkSize);
 
+        QCOMPARE(streamed.toMarkdown(), markdown);
         QCOMPARE(streamed.toMarkdown(), oneShot.toMarkdown());
         QCOMPARE(streamed.blockCount(), oneShot.blockCount());
         for (qsizetype row = 0; row < oneShot.blockCount(); ++row) {

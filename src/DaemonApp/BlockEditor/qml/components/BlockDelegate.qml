@@ -37,26 +37,26 @@ Item {
 
     // A code fence whose language is mermaid renders as a native diagram when
     // passive; activating the block reveals the raw fenced source for editing.
-    readonly property bool hasMermaid: mermaidData
+    readonly property bool hasMermaid: !!(mermaidData
         && mermaidData.language === "mermaid"
         && mermaidData.source
-        && mermaidData.source.length > 0
+        && mermaidData.source.length > 0)
 
     // BlockType::Image enum index (9). hasImage gates the native Image renderer;
     // a mid-edit block with no resolvable url falls back to raw text.
     readonly property bool hasImage: blockType === 9
-        && imageData
+        && !!(imageData
         && imageData.url
-        && imageData.url.length > 0
+        && imageData.url.length > 0)
 
     // BlockType::CodeFence enum index (6). A non-mermaid code fence renders as a
     // syntax-highlighted code card when passive (mermaid fences are gated above
     // and route to MermaidBlock); activating the block reveals the raw source.
     readonly property bool hasCode: blockType === 6
         && !hasMermaid
-        && codeData
+        && !!(codeData
         && codeData.code
-        && codeData.code.length > 0
+        && codeData.code.length > 0)
 
     property bool isPooled: false
     property bool isActive: editorController.activeBlockId === Number(blockId)

@@ -192,14 +192,103 @@ QString withOrderedNumber(const QString &content, int number)
     return result;
 }
 
+// True when `line` (after trimming) opens or closes a fenced code block.
+bool isFenceMarkerLine(QStringView line)
+{
+    const QStringView trimmed = line.trimmed();
+    return trimmed.startsWith(QLatin1String("```")) || trimmed.startsWith(QLatin1String("~~~"));
+}
+
+// Raw text of `line` in `text` (without its trailing newline), or an empty view
+// when out of range.
+QStringView lineViewAt(const CoordinateMap &map, const QString &text, qsizetype line)
+{
+    if (line < 0 || line >= map.lineCount()) {
+        return {};
+    }
+    const qsizetype start = map.lineColumnToUtf16(line, 0);
+    qsizetype end = text.indexOf(QLatin1Char('\n'), start);
+    if (end < 0) {
+        end = text.size();
+    }
+    return QStringView(text).mid(start, end - start);
+}
+
+// UTF-16 offset just past the last (non-newline) character of `line`.
+qsizetype lineEndUtf16(const CoordinateMap &map, const QString &text, qsizetype line)
+{
+    const qsizetype start = map.lineColumnToUtf16(line, 0);
+    const qsizetype nl = text.indexOf(QLatin1Char('\n'), start);
+    return nl < 0 ? text.size() : nl;
+}
+
+// md4qt reports a fenced code block's span as the body *between* the delimiters
+// (the opening fence line and its info string are consumed into Code::syntax()),
+// so a plain slice drops the ``` / ~~~ markers and the block can no longer
+// round-trip. Recover the full fenced span by a raw line scan: anchor on the
+// opening fence at/before the reported body start, then take the first marker
+// after it as the close. When the body anchor itself lands on the closing fence
+// (empty-body fences give degenerate positions), fall back to the marker before
+// it. An unterminated fence (open with no close, e.g. mid-stream) extends to the
+// end of `text`. Returns false when no fence marker is found at all.
+bool fenceSpanUtf16(const CoordinateMap &map, const QString &text, const ParsedBlock &pb,
+                    qsizetype &startUtf16, qsizetype &endUtf16)
+{
+    const qsizetype lineCount = map.lineCount();
+    if (lineCount <= 0) {
+        return false;
+    }
+
+    qsizetype openLine = -1;
+    for (qsizetype l = qMin(pb.startLine, lineCount - 1); l >= 0; --l) {
+        if (isFenceMarkerLine(lineViewAt(map, text, l))) {
+            openLine = l;
+            break;
+        }
+    }
+    if (openLine < 0) {
+        return false;
+    }
+
+    qsizetype closeLine = -1;
+    for (qsizetype l = openLine + 1; l < lineCount; ++l) {
+        if (isFenceMarkerLine(lineViewAt(map, text, l))) {
+            closeLine = l;
+            break;
+        }
+    }
+
+    if (closeLine < 0) {
+        // No marker after `openLine`: the anchor was the closing fence of an
+        // empty-body block. Re-find the real opening fence before it.
+        for (qsizetype l = openLine - 1; l >= 0; --l) {
+            if (isFenceMarkerLine(lineViewAt(map, text, l))) {
+                closeLine = openLine;
+                openLine = l;
+                break;
+            }
+        }
+    }
+
+    startUtf16 = map.lineColumnToUtf16(openLine, 0);
+    // A terminated fence ends at its closing marker; an unterminated one runs to
+    // the end of the buffer so the open ``` is preserved.
+    endUtf16 = closeLine >= 0 ? lineEndUtf16(map, text, closeLine) : text.size();
+    return true;
+}
+
 // Slice a parsed block's raw text out of `text` via `map`, trimming trailing
 // newlines. For list items the leading indentation is normalized to `pb.indent`
 // spaces so the stored markdown's leading whitespace always matches the block's
-// indent depth (and reclassifies consistently when edited).
+// indent depth (and reclassifies consistently when edited). Code fences are
+// expanded to include their ``` / ~~~ delimiters (see fenceSpanUtf16).
 QString sliceBlockContent(const CoordinateMap &map, const QString &text, const ParsedBlock &pb)
 {
-    const qsizetype startUtf16 = map.lineColumnToUtf16(pb.startLine, pb.startColumn);
-    const qsizetype endUtf16 = map.lineColumnToUtf16(pb.endLine, pb.endColumn) + 1;
+    qsizetype startUtf16 = map.lineColumnToUtf16(pb.startLine, pb.startColumn);
+    qsizetype endUtf16 = map.lineColumnToUtf16(pb.endLine, pb.endColumn) + 1;
+    if (pb.type == BlockType::CodeFence) {
+        fenceSpanUtf16(map, text, pb, startUtf16, endUtf16);
+    }
     QString content = text.mid(startUtf16, qMax<qsizetype>(0, endUtf16 - startUtf16));
     while (content.endsWith(QLatin1Char('\n'))) {
         content.chop(1);
@@ -268,8 +357,25 @@ QVector<BlockRecord> DocumentStore::recordsFromParse(const QString &markdown) co
 
     if (!parsed.blocks.isEmpty()) {
         records.reserve(parsed.blocks.size());
+        // Last UTF-16 offset consumed by a code fence's recovered span. When a
+        // fence has an empty body md4qt can emit the orphaned closing ``` as its
+        // own follow-on block; that line is already part of the fence's span, so
+        // skip any parsed block that starts inside it to avoid a duplicate fence.
+        qsizetype fenceConsumedThrough = -1;
         for (const ParsedBlock &pb : parsed.blocks) {
+            const qsizetype pbStart = input.lineColumnToUtf16(pb.startLine, pb.startColumn);
+            if (pbStart < fenceConsumedThrough) {
+                continue;
+            }
+
             const QString content = sliceBlockContent(input, text, pb);
+            if (pb.type == BlockType::CodeFence) {
+                qsizetype fenceStart = 0;
+                qsizetype fenceEnd = 0;
+                if (fenceSpanUtf16(input, text, pb, fenceStart, fenceEnd)) {
+                    fenceConsumedThrough = fenceEnd;
+                }
+            }
 
             BlockRecord record;
             record.type = pb.type;
@@ -414,8 +520,35 @@ bool DocumentStore::splitBlock(BlockId id, qsizetype utf16Offset, BlockId *resul
     const qsizetype offset = qBound<qsizetype>(0, utf16Offset, content.size());
     const BlockType type = block->type;
 
-    // Code fence: Enter inserts a literal newline; the block is not split.
+    // Code fence: Enter inserts a literal newline so multi-line code editing is
+    // unaffected. The exception is "Enter Enter" at the end of a closed fence: the
+    // first Enter opens a trailing blank line, and a second Enter on that blank
+    // line (when the last content line is a valid closing fence) exits the block by
+    // splitting off a new empty paragraph below it.
     if (type == BlockType::CodeFence) {
+        const bool atEnd = offset == content.size();
+        if (atEnd && content.endsWith(QLatin1Char('\n'))) {
+            QString fenceBody = content;
+            fenceBody.chop(1);
+            const QString lastLine = fenceBody.mid(fenceBody.lastIndexOf(QLatin1Char('\n')) + 1);
+            if (isFenceMarkerLine(lastLine)) {
+                setBlockContent(*block, fenceBody);
+
+                BlockRecord paragraph;
+                paragraph.id = allocateId();
+                setBlockContent(paragraph, QString());
+                m_blocks.insert(row + 1, paragraph);
+                reserialize();
+                if (resultBlock) {
+                    *resultBlock = paragraph.id;
+                }
+                if (resultCursor) {
+                    *resultCursor = 0;
+                }
+                return true;
+            }
+        }
+
         QString updated = content;
         updated.insert(offset, QLatin1Char('\n'));
         setBlockContent(*block, updated);
