@@ -299,6 +299,9 @@ Rectangle {
                 Composer {
                     id: composer
                     Layout.fillWidth: true
+                    // Match the transcript's centered column when center text is on
+                    // (contentMaxWidth defaults to 720, the transcript column width).
+                    centerContent: UiSettings.centerText
                     // Stays visible in distraction-free: hiding the composer would
                     // remove the only way to talk to the agent. Only the header
                     // chrome and surrounding app panes hide in distraction-free.

@@ -24,6 +24,13 @@ Rectangle {
     property int conversationId: -1
     property bool composerEnabled: true
 
+    // When true, the composer's inner content (status stack + input surface) is
+    // clamped to contentMaxWidth and centered, so it lines up with the
+    // transcript's centered column. The docked bar background still spans the
+    // full width. Defaults keep the content full-width (host opts in).
+    property bool centerContent: false
+    property real contentMaxWidth: 720
+
     // Emitted to send a turn. `attachmentRefs` is a space-joined @file:/@image:
     // string (empty when none).
     signal submitted(string text, string attachmentRefs)
@@ -417,8 +424,17 @@ Rectangle {
     // --- Layout: status stack + input surface ------------------------------
     ColumnLayout {
         id: mainColumn
-        anchors.fill: parent
-        anchors.margins: Theme.spacing
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.topMargin: Theme.spacing
+        anchors.bottomMargin: Theme.spacing
+        anchors.horizontalCenter: parent.horizontalCenter
+        // Full-width (minus margins) by default; clamp + center the content to
+        // contentMaxWidth when the host enables centering. The bar background and
+        // top hairline still span the full width.
+        width: root.centerContent
+            ? Math.min(parent.width - 2 * Theme.spacing, root.contentMaxWidth)
+            : parent.width - 2 * Theme.spacing
         spacing: Theme.spacingSmall
 
         StatusStack {
