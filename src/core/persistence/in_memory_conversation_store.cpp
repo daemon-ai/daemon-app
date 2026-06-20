@@ -4,8 +4,10 @@
 
 namespace persistence {
 
+using domain::AgentNode;
+using domain::AgentNodeKind;
+using domain::AgentState;
 using domain::Conversation;
-using domain::Folder;
 using domain::ListScope;
 using domain::NodeType;
 using domain::Tag;
@@ -18,21 +20,45 @@ InMemoryConversationStore::InMemoryConversationStore(QObject* parent)
 
 void InMemoryConversationStore::seedSampleData()
 {
-    m_folders = {
-        { 1, -1, QStringLiteral("Work") },
-        { 2, -1, QStringLiteral("Personal") },
+    // A fleet-of-fleets that deliberately exercises the recursion:
+    //  - "scratchpad" is a LONE root agent (a tree of one, no children).
+    //  - "Acme Platform" is a deep root: Orchestrator -> Orchestrator ("Build
+    //    Fleet") -> Orchestrator ("Deep Fleet") -> Engine, i.e. orchestrators
+    //    nested inside orchestrators (no fixed "fleet/agent/subagent" shape).
+    //  - conversations hang off nodes at multiple depths, including off
+    //    intermediate orchestrator nodes (their own reasoning transcript).
+    m_nodes = {
+        { QStringLiteral("n-scratch"), {}, QStringLiteral("scratchpad"),
+          AgentNodeKind::Engine, AgentState::Running, {} },
+
+        { QStringLiteral("n-acme"), {}, QStringLiteral("Acme Platform"),
+          AgentNodeKind::Orchestrator, AgentState::Running,
+          QStringLiteral("Coordinating release") },
+        { QStringLiteral("n-build"), QStringLiteral("n-acme"), QStringLiteral("Build Fleet"),
+          AgentNodeKind::Orchestrator, AgentState::Running, QStringLiteral("Dispatching work") },
+        { QStringLiteral("n-coder"), QStringLiteral("n-build"), QStringLiteral("Coder"),
+          AgentNodeKind::Engine, AgentState::Running, QStringLiteral("Implementing API") },
+        { QStringLiteral("n-review"), QStringLiteral("n-build"), QStringLiteral("Reviewer"),
+          AgentNodeKind::Engine, AgentState::Finished, {} },
+        { QStringLiteral("n-deep"), QStringLiteral("n-build"), QStringLiteral("Deep Fleet"),
+          AgentNodeKind::Orchestrator, AgentState::Running, QStringLiteral("Verifying outputs") },
+        { QStringLiteral("n-worker"), QStringLiteral("n-deep"), QStringLiteral("Worker A"),
+          AgentNodeKind::Engine, AgentState::Running, QStringLiteral("Running checks") },
+        { QStringLiteral("n-ops"), QStringLiteral("n-acme"), QStringLiteral("Ops Host"),
+          AgentNodeKind::Host, AgentState::Running, {} },
     };
+
     m_tags = {
         { 1, QStringLiteral("ideas"), QStringLiteral("#2383e2") },
         { 2, QStringLiteral("todo"), QStringLiteral("#e2a423") },
     };
 
     const QDateTime now = QDateTime::currentDateTime();
-    auto make = [&](int folderId, const QList<int>& tagIds, bool archived,
+    auto make = [&](const QString& agentId, const QList<int>& tagIds, bool archived,
                     const QString& title, const QString& content) {
         Conversation c;
         c.id = m_nextId++;
-        c.folderId = folderId;
+        c.agentId = agentId;
         c.tagIds = tagIds;
         c.isArchived = archived;
         c.title = title;
@@ -42,16 +68,35 @@ void InMemoryConversationStore::seedSampleData()
         m_conversations.push_back(c);
     };
 
-    make(1, { 1 }, false, QStringLiteral("Project kickoff"),
-         QStringLiteral("# Project kickoff\n\nLet's outline the **goals** for the quarter:\n\n"
-                        "- Ship the foundation\n- Wire the seams\n- Keep it _fast_\n"));
-    make(1, { 2 }, false, QStringLiteral("Release checklist"),
-         QStringLiteral("## Release checklist\n\n1. Tag the build\n2. Update `UPDATES.json`\n"
-                        "3. Announce\n"));
-    make(2, {}, false, QStringLiteral("Weekend plans"),
-         QStringLiteral("Thinking about a hike.\n\n> Bring water and snacks.\n"));
-    make(2, { 1 }, true, QStringLiteral("Old brainstorm"),
-         QStringLiteral("Archived notes from an earlier session.\n"));
+    make(QStringLiteral("n-scratch"), { 1 }, false, QStringLiteral("Scratch ideas"),
+         QStringLiteral("# Scratchpad\n\nA lone agent with **no fleet** behind it:\n\n"
+                        "- One root, one conversation\n- Still the same surface\n"));
+    // An orchestrator's own reasoning transcript (a parent node owns a conversation too).
+    make(QStringLiteral("n-acme"), {}, false, QStringLiteral("Release planning"),
+         QStringLiteral("## Release planning\n\nClassify, gate, and route the incoming work.\n"));
+    make(QStringLiteral("n-build"), { 2 }, false, QStringLiteral("Dispatch log"),
+         QStringLiteral("Spawned Coder and Reviewer; admitted within budget.\n"));
+    make(QStringLiteral("n-coder"), { 2 }, false, QStringLiteral("Implement endpoint"),
+         QStringLiteral("Working the `/tree` endpoint.\n\n> Stream UnitNode children.\n"));
+    make(QStringLiteral("n-coder"), {}, false, QStringLiteral("Refactor pass"),
+         QStringLiteral("Tidy the projection before review.\n"));
+    make(QStringLiteral("n-review"), { 1 }, true, QStringLiteral("Old review notes"),
+         QStringLiteral("Archived notes from an earlier review session.\n"));
+    make(QStringLiteral("n-worker"), {}, false, QStringLiteral("Verification run"),
+         QStringLiteral("Read-only checker over the worktree.\n"));
+}
+
+bool InMemoryConversationStore::isInSubtree(const QString& nodeId, const QString& rootId) const
+{
+    QString cur = nodeId;
+    // Walk up the parent chain; guard against cycles with a bounded loop.
+    for (int guard = 0; guard < m_nodes.size() + 1 && !cur.isEmpty(); ++guard) {
+        if (cur == rootId) {
+            return true;
+        }
+        cur = agentNode(cur).parentId;
+    }
+    return false;
 }
 
 bool InMemoryConversationStore::matchesScope(const Conversation& c, const ListScope& scope) const
@@ -61,20 +106,36 @@ bool InMemoryConversationStore::matchesScope(const Conversation& c, const ListSc
         return !c.isArchived;
     case NodeType::Archived:
         return c.isArchived;
-    case NodeType::Folder:
-        return !c.isArchived && c.folderId == scope.id;
+    case NodeType::Node:
+        return !c.isArchived && isInSubtree(c.agentId, scope.nodeId);
     case NodeType::Tag:
         return !c.isArchived && c.tagIds.contains(scope.id);
-    case NodeType::FolderSeparator:
+    case NodeType::FleetSeparator:
     case NodeType::TagSeparator:
         return false;
     }
     return false;
 }
 
-QList<Folder> InMemoryConversationStore::folders() const
+QList<AgentNode> InMemoryConversationStore::agentChildren(const QString& parentId) const
 {
-    return m_folders;
+    QList<AgentNode> out;
+    for (const AgentNode& n : m_nodes) {
+        if (n.parentId == parentId) {
+            out.push_back(n);
+        }
+    }
+    return out;
+}
+
+AgentNode InMemoryConversationStore::agentNode(const QString& id) const
+{
+    for (const AgentNode& n : m_nodes) {
+        if (n.id == id) {
+            return n;
+        }
+    }
+    return {};
 }
 
 QList<Tag> InMemoryConversationStore::tags() const
@@ -114,11 +175,11 @@ QString InMemoryConversationStore::content(int conversationId) const
     return {};
 }
 
-int InMemoryConversationStore::createConversation(int folderId)
+int InMemoryConversationStore::createConversation(const QString& agentId)
 {
     Conversation c;
     c.id = m_nextId++;
-    c.folderId = folderId;
+    c.agentId = agentId;
     c.title = QStringLiteral("New conversation");
     c.created = QDateTime::currentDateTime();
     c.modified = c.created;

@@ -20,9 +20,18 @@ Rectangle {
     property int currentRow: -1
     property bool searchActive: false
 
-    function setScope(nodeType, nodeId) {
+    function setScope(nodeType, id, nodeId) {
         root.currentRow = -1;
-        convModel.setScope(nodeType, nodeId);
+        convModel.setScope(nodeType, id, nodeId);
+    }
+
+    // AgentNodeKind: 0 Engine, 1 Host, 2 Orchestrator. Cosmetic icon only.
+    function kindIcon(kind) {
+        switch (kind) {
+        case 2: return FontIcons.fa_sitemap;
+        case 1: return FontIcons.fa_server;
+        default: return FontIcons.fa_robot;
+        }
     }
 
     function closeSearch() {
@@ -88,7 +97,7 @@ Rectangle {
                 Kit.IconButton {
                     icon: FontIcons.fa_trash
                     tooltipText: qsTr("Trash")
-                    onClicked: convModel.setScope(1, -1)
+                    onClicked: convModel.setScope(1, -1, "")
                 }
 
                 Kit.IconButton {
@@ -162,7 +171,8 @@ Rectangle {
                     required property string title
                     required property string snippet
                     required property var modified
-                    required property string folderName
+                    required property string agentName
+                    required property int agentKind
                     required property var tagNames
                     required property var tagColors
 
@@ -238,24 +248,24 @@ Rectangle {
                             font.pixelSize: 11
                         }
 
-                        // Folder chip + tag chips.
+                        // Owning-agent chip + tag chips.
                         Flow {
                             Layout.fillWidth: true
                             Layout.topMargin: 14
                             spacing: Theme.spacing
-                            visible: del.folderName !== "" || (del.tagNames && del.tagNames.length > 0)
+                            visible: del.agentName !== "" || (del.tagNames && del.tagNames.length > 0)
 
                             Row {
-                                visible: del.folderName !== ""
+                                visible: del.agentName !== ""
                                 spacing: 5
                                 Kit.Glyph {
-                                    glyph: FontIcons.fa_folder
+                                    glyph: root.kindIcon(del.agentKind)
                                     font.pointSize: 10 + Theme.pointSizeOffset
                                     color: Theme.listSnippet
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 QQC.Label {
-                                    text: del.folderName
+                                    text: del.agentName
                                     color: Theme.listSnippet
                                     font.family: FontIcons.display
                                     font.pixelSize: 11

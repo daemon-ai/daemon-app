@@ -30,7 +30,8 @@ public:
 
     Q_INVOKABLE void open(int conversationId);
     Q_INVOKABLE void appendUserText(const QString& text);
-    Q_INVOKABLE int createConversation(int folderId = -1);
+    // Create a conversation owned by the given agent node (empty = unassigned).
+    Q_INVOKABLE int createConversation(const QString& agentId = QString());
     // Persist an in-place edit of the open conversation from the Transcript.
     // Adopts the markdown locally first so the store's changed() -> refresh()
     // does not echo back as a contentChanged() (which would reload the editor and

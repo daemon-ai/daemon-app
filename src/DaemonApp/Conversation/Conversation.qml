@@ -22,7 +22,7 @@ Rectangle {
     }
 
     function createNew() {
-        controller.createConversation(-1);
+        controller.createConversation("");
     }
 
     ConversationController {

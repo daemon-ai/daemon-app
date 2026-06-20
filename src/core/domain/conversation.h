@@ -12,7 +12,11 @@ namespace domain {
 // seam without changing this type's role.
 struct Conversation {
     int id = -1;
-    int folderId = -1;
+    // The agent/unit this conversation belongs to (an AgentNode id; empty if
+    // unassigned). Maps later to a unit's transcript drained via
+    // `unit_outbound(unitId)`: a leaf engine owns exactly one conversation,
+    // while a parent node folds its whole subtree's conversations.
+    QString agentId;
     QList<int> tagIds;
     QString title;
     QString content; // markdown

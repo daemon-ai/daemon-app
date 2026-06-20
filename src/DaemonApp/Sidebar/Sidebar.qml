@@ -4,30 +4,50 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
-// Left column: the NodeTreeView port. tree delegates -
-// gear right-aligned above the tree, full-rect blue selection with white text,
-// folder/tag rows with blue icons + counts, and Folders/Tags separators with a
-// blue "+" add button.
+// Left column: the agent supervision tree. A flattened, uniformly recursive
+// tree (VSCode-explorer style) - any node can contain any node to any depth.
+// Rows: All / Archived, a "Fleet" header with the indented node tree (twistie +
+// kind icon + state dot + folded subtree count), and a "Tags" header with tag
+// rows. Selecting a node lists its whole subtree's conversations in the middle.
 Rectangle {
     id: root
 
     color: Theme.sidebar
 
-    signal scopeSelected(int nodeType, int nodeId)
+    // nodeType is a domain::NodeType; `id` is the tag id (Tag scope), `nodeId`
+    // is the agent node id (Node scope). Unused fields are -1 / "".
+    signal scopeSelected(int nodeType, int id, string nodeId)
     signal settingsRequested()
-    signal addFolderRequested()
+    signal addRootRequested()
     signal addTagRequested()
 
     property int currentRow: 0
 
-    // Node enum: 0 AllConversations, 1 Archived, 2 FolderSep, 3 TagSep,
-    // 4 Folder, 5 Tag.
+    // NodeType enum: 0 AllConversations, 1 Archived, 2 FleetSep, 3 TagSep,
+    // 4 Node, 5 Tag.
     function iconFor(nodeType) {
         switch (nodeType) {
         case 0: return FontIcons.fa_comments;
         case 1: return FontIcons.fa_box_archive;
-        case 4: return FontIcons.fa_folder;
         default: return "";
+        }
+    }
+
+    // AgentNodeKind: 0 Engine, 1 Host, 2 Orchestrator. Cosmetic only.
+    function kindIcon(kind) {
+        switch (kind) {
+        case 2: return FontIcons.fa_sitemap; // orchestrator / fleet
+        case 1: return FontIcons.fa_server;  // host
+        default: return FontIcons.fa_robot;  // engine / agent leaf
+        }
+    }
+
+    // AgentState: 0 Running, 1 Finished, 2 Unknown.
+    function stateColor(state) {
+        switch (state) {
+        case 0: return Theme.stateRunning;
+        case 1: return Theme.stateFinished;
+        default: return Theme.transparent;
         }
     }
 
@@ -40,7 +60,7 @@ Rectangle {
         anchors.fill: parent
         spacing: 0
 
-        // --- Header: gear, right-aligned (mainwindow.ui spacer -> gear) ------
+        // --- Header: gear, right-aligned ------------------------------------
         Item {
             Layout.fillWidth: true
             implicitHeight: 28
@@ -78,9 +98,15 @@ Rectangle {
                     required property int count
                     required property int nodeType
                     required property int nodeId
+                    required property string agentId
                     required property bool isSeparator
                     required property bool selectable
                     required property string color
+                    required property int depth
+                    required property bool hasChildren
+                    required property bool expanded
+                    required property int kind
+                    required property int state
 
                     width: ListView.view.width
                     // Dense column: compact section header / 28px nav row.
@@ -88,10 +114,12 @@ Rectangle {
 
                     readonly property bool isSelected: !isSeparator && index === root.currentRow
                     readonly property bool isTag: nodeType === 5
+                    readonly property bool isNode: nodeType === 4
+                    // Left edge of this row's content (twistie gutter), indented
+                    // by depth. Works for any depth, no level caps.
+                    readonly property int indentBase: 14 + depth * Theme.treeIndent
 
-                    // Inset rounded selection pill: the
-                    // highlight is inset from the column edges and rounded, with a
-                    // faint hairline on the selected row.
+                    // Inset rounded selection pill, inset from the column edges.
                     Rectangle {
                         anchors.fill: parent
                         anchors.leftMargin: Theme.rowInset
@@ -100,7 +128,6 @@ Rectangle {
                         anchors.bottomMargin: Theme.rowVInset
                         radius: Theme.rowRadius
                         visible: !del.isSeparator
-                        // Stable wash color + opacity fade (no transparent-black flash).
                         color: del.isSelected ? Theme.sidebarSelection : Theme.sidebarHover
                         opacity: del.isSelected || rowMouse.containsMouse ? 1 : 0
                         border.width: del.isSelected ? 1 : 0
@@ -111,7 +138,7 @@ Rectangle {
                         }
                     }
 
-                    // --- Separator row: label (x+5) + blue "+" add button ----
+                    // --- Separator row: label + blue "+" add button ----------
                     Item {
                         anchors.fill: parent
                         visible: del.isSeparator
@@ -140,35 +167,55 @@ Rectangle {
                             icon: FontIcons.fa_plus
                             iconPointSize: 12
                             iconColor: Theme.addButton
-                            tooltipText: del.nodeType === 2 ? qsTr("New folder") : qsTr("New tag")
-                            onClicked: del.nodeType === 2 ? root.addFolderRequested()
+                            tooltipText: del.nodeType === 2 ? qsTr("New root node") : qsTr("New tag")
+                            onClicked: del.nodeType === 2 ? root.addRootRequested()
                                                           : root.addTagRequested()
                         }
                     }
 
-                    // --- Selectable row: icon/dot (x+22) + label + count -----
+                    // --- Selectable row: twistie + icon/dot + label + count --
                     Item {
                         anchors.fill: parent
                         visible: !del.isSeparator
 
-                        // Icon box: 18 wide, flush-left at x+14 (shares the left
-                        // edge with the FOLDERS/TAGS section labels).
+                        // Twistie (chevron) in the indent gutter; only nodes with
+                        // children show it. Its own hit-area toggles expand
+                        // WITHOUT changing the selection (VSCode behavior).
                         Item {
-                            id: iconBox
+                            id: twistie
                             anchors.left: parent.left
-                            anchors.leftMargin: 14
+                            anchors.leftMargin: del.indentBase
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 18
-                            height: 18
+                            width: Theme.twistieSize
+                            height: Theme.twistieSize
+                            visible: del.isNode && del.hasChildren
 
                             Kit.Glyph {
                                 anchors.centerIn: parent
-                                visible: !del.isTag
-                                glyph: root.iconFor(del.nodeType)
-                                font.pointSize: 12 + Theme.pointSizeOffset
+                                glyph: del.expanded ? FontIcons.fa_chevron_down
+                                                    : FontIcons.fa_chevron_right
+                                font.pointSize: 9 + Theme.pointSizeOffset
                                 color: del.isSelected || rowMouse.containsMouse
                                      ? Theme.sidebarSelectedText : Theme.sidebarIcon
                             }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                // Enlarge the hit target a touch for easy clicking.
+                                anchors.margins: -3
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: sidebarModel.toggleExpand(del.index)
+                            }
+                        }
+
+                        // Icon box, after the twistie gutter so siblings align.
+                        Item {
+                            id: iconBox
+                            anchors.left: parent.left
+                            anchors.leftMargin: del.indentBase + Theme.twistieSize
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 18
+                            height: 18
 
                             // Tag dot (fa_circle, in the tag color).
                             Kit.Glyph {
@@ -179,12 +226,23 @@ Rectangle {
                                 color: del.isSelected ? Theme.sidebarSelectedText
                                      : del.color !== "" ? del.color : Theme.sidebarIcon
                             }
+
+                            // Node kind icon (cosmetic) or All/Archived icon.
+                            Kit.Glyph {
+                                anchors.centerIn: parent
+                                visible: !del.isTag
+                                glyph: del.isNode ? root.kindIcon(del.kind)
+                                                  : root.iconFor(del.nodeType)
+                                font.pointSize: 12 + Theme.pointSizeOffset
+                                color: del.isSelected || rowMouse.containsMouse
+                                     ? Theme.sidebarSelectedText : Theme.sidebarIcon
+                            }
                         }
 
                         QQC.Label {
                             anchors.left: iconBox.right
                             anchors.leftMargin: del.isTag ? 11 : 5
-                            anchors.right: countLabel.left
+                            anchors.right: stateDot.left
                             anchors.rightMargin: 5
                             anchors.verticalCenter: parent.verticalCenter
                             text: del.label
@@ -194,6 +252,19 @@ Rectangle {
                             font.weight: Font.Medium
                             color: del.isSelected || rowMouse.containsMouse
                                  ? Theme.sidebarSelectedText : Theme.sidebarText
+                        }
+
+                        // State dot: a small lifecycle indicator for node rows.
+                        Rectangle {
+                            id: stateDot
+                            anchors.right: countLabel.left
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 7
+                            height: 7
+                            radius: 3.5
+                            visible: del.isNode && del.state !== 2
+                            color: root.stateColor(del.state)
                         }
 
                         QQC.Label {
@@ -285,8 +356,8 @@ Rectangle {
 
     Connections {
         target: sidebarModel
-        function onScopeSelected(nodeType, nodeId) {
-            root.scopeSelected(nodeType, nodeId);
+        function onScopeSelected(nodeType, id, nodeId) {
+            root.scopeSelected(nodeType, id, nodeId);
         }
     }
 

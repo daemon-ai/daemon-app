@@ -26,6 +26,22 @@ function(add_custom_target _name)
     _add_custom_target(${ARGV})
 endfunction()
 
+# When clang-format is on the build env, ECM's KDEClangFormat (pulled in by the
+# vendored frameworks' KDEFrameworkCompilerSettings) writes a generated
+# .clang-format back into the *subproject's* source dir at include time. Those
+# sources are read-only /nix/store paths, so the write aborts (re)configure
+# (CMake regenerates on any CMakeLists change). Force that one lookup to
+# NOTFOUND so the write is skipped - first-party formatting is handled outside
+# CMake. Same class of read-only-source issue the .qmlls.ini toggle below guards.
+function(find_program _var)
+    if(_var STREQUAL "KDE_CLANG_FORMAT_EXECUTABLE")
+        set(${_var} "${_var}-NOTFOUND"
+            CACHE FILEPATH "Disabled for read-only vendored ECM subprojects" FORCE)
+        return()
+    endif()
+    _find_program(${ARGV})
+endfunction()
+
 # Resolve a <DEP>_SOURCE_DIR from cache var or environment; FATAL if required & missing.
 function(_daemon_app_resolve_dir out_var name)
     set(value "${${name}}")

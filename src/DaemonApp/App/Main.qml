@@ -62,8 +62,8 @@ ApplicationWindow {
 
             property bool collapsed: false
 
-            onScopeSelected: function(nodeType, nodeId) {
-                conversationsList.setScope(nodeType, nodeId);
+            onScopeSelected: function(nodeType, id, nodeId) {
+                conversationsList.setScope(nodeType, id, nodeId);
             }
         }
 

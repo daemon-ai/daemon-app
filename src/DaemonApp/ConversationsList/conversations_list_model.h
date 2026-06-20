@@ -30,7 +30,8 @@ public:
         TitleRole,
         SnippetRole,
         ModifiedRole,
-        FolderNameRole,  // resolved folder name ("" if none)
+        AgentNameRole,   // resolved owning agent-node name ("" if none)
+        AgentKindRole,   // domain::AgentNodeKind of the owning node (cosmetic)
         TagNamesRole,    // QStringList of tag names
         TagColorsRole,   // QStringList of tag colors, parallel to TagNamesRole
     };
@@ -50,7 +51,8 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    Q_INVOKABLE void setScope(int nodeType, int nodeId);
+    // `id` is the tag id (Tag scope); `nodeId` is the agent node id (Node scope).
+    Q_INVOKABLE void setScope(int nodeType, int id, const QString& nodeId);
     Q_INVOKABLE int idAt(int row) const;
 
 signals:
@@ -71,6 +73,6 @@ private:
     QString m_scopeTitle;
     QList<domain::Conversation> m_all;
     QList<domain::Conversation> m_filtered;
-    QHash<int, QString> m_folderNames;
-    QHash<int, QPair<QString, QString>> m_tagInfo; // id -> (name, color)
+    QHash<QString, QPair<QString, int>> m_nodeInfo; // agent id -> (name, kind)
+    QHash<int, QPair<QString, QString>> m_tagInfo;   // tag id -> (name, color)
 };

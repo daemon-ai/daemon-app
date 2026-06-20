@@ -1,7 +1,9 @@
 #include "sidebar_model.h"
 
+#include "domain/agent_node.h"
 #include "persistence/iconversation_store.h"
 
+using domain::AgentNode;
 using domain::ListScope;
 using domain::NodeType;
 
@@ -32,28 +34,64 @@ void SidebarModel::setStore(QObject* store)
     rebuild();
 }
 
+bool SidebarModel::isExpanded(const QString& id) const
+{
+    return !m_collapsed.contains(id);
+}
+
+void SidebarModel::appendNodeRows(const AgentNode& node, int depth)
+{
+    const QList<AgentNode> children = m_store->agentChildren(node.id);
+    const bool expanded = isExpanded(node.id);
+
+    Row r;
+    r.label = node.name;
+    r.count = m_store->conversationCount({ NodeType::Node, -1, node.id });
+    r.type = NodeType::Node;
+    r.agentId = node.id;
+    r.selectable = true;
+    r.depth = depth;
+    r.hasChildren = !children.isEmpty();
+    r.expanded = expanded;
+    r.kind = static_cast<int>(node.kind);
+    r.state = static_cast<int>(node.state);
+    m_rows.push_back(r);
+
+    // Uniformly recursive: descend into any expanded node, to any depth. No
+    // branching on kind, no level cap.
+    if (r.hasChildren && expanded) {
+        for (const AgentNode& child : children) {
+            appendNodeRows(child, depth + 1);
+        }
+    }
+}
+
 void SidebarModel::rebuild()
 {
     beginResetModel();
     m_rows.clear();
     if (m_store) {
         m_rows.push_back({ tr("All Conversations"),
-                           m_store->conversationCount({ NodeType::AllConversations, -1 }),
-                           NodeType::AllConversations, -1, false, true, {} });
+                           m_store->conversationCount({ NodeType::AllConversations, -1, {} }),
+                           NodeType::AllConversations, -1, {}, false, true, {}, 0, false, false, 0, 0 });
         m_rows.push_back({ tr("Archived"),
-                           m_store->conversationCount({ NodeType::Archived, -1 }),
-                           NodeType::Archived, -1, false, true, {} });
+                           m_store->conversationCount({ NodeType::Archived, -1, {} }),
+                           NodeType::Archived, -1, {}, false, true, {}, 0, false, false, 0, 0 });
 
-        m_rows.push_back({ tr("Folders"), -1, NodeType::FolderSeparator, -1, true, false, {} });
-        for (const domain::Folder& f : m_store->folders()) {
-            m_rows.push_back({ f.name, m_store->conversationCount({ NodeType::Folder, f.id }),
-                               NodeType::Folder, f.id, false, true, {} });
+        m_rows.push_back({ tr("Fleet"), -1, NodeType::FleetSeparator, -1, {}, true, false, {},
+                           0, false, false, 0, 0 });
+        // Top-level roots have an empty parent; each may be a lone agent or the
+        // head of an arbitrarily deep fleet.
+        for (const AgentNode& root : m_store->agentChildren(QString())) {
+            appendNodeRows(root, 0);
         }
 
-        m_rows.push_back({ tr("Tags"), -1, NodeType::TagSeparator, -1, true, false, {} });
+        m_rows.push_back({ tr("Tags"), -1, NodeType::TagSeparator, -1, {}, true, false, {},
+                           0, false, false, 0, 0 });
         for (const domain::Tag& t : m_store->tags()) {
-            m_rows.push_back({ t.name, m_store->conversationCount({ NodeType::Tag, t.id }),
-                               NodeType::Tag, t.id, false, true, t.color });
+            m_rows.push_back({ t.name, m_store->conversationCount({ NodeType::Tag, t.id, {} }),
+                               NodeType::Tag, t.id, {}, false, true, t.color,
+                               0, false, false, 0, 0 });
         }
     }
     endResetModel();
@@ -79,12 +117,24 @@ QVariant SidebarModel::data(const QModelIndex& index, int role) const
         return static_cast<int>(r.type);
     case NodeIdRole:
         return r.nodeId;
+    case AgentIdRole:
+        return r.agentId;
     case IsSeparatorRole:
         return r.separator;
     case SelectableRole:
         return r.selectable;
     case ColorRole:
         return r.color;
+    case DepthRole:
+        return r.depth;
+    case HasChildrenRole:
+        return r.hasChildren;
+    case ExpandedRole:
+        return r.expanded;
+    case KindRole:
+        return r.kind;
+    case StateRole:
+        return r.state;
     default:
         return {};
     }
@@ -97,9 +147,15 @@ QHash<int, QByteArray> SidebarModel::roleNames() const
         { CountRole, "count" },
         { NodeTypeRole, "nodeType" },
         { NodeIdRole, "nodeId" },
+        { AgentIdRole, "agentId" },
         { IsSeparatorRole, "isSeparator" },
         { SelectableRole, "selectable" },
         { ColorRole, "color" },
+        { DepthRole, "depth" },
+        { HasChildrenRole, "hasChildren" },
+        { ExpandedRole, "expanded" },
+        { KindRole, "kind" },
+        { StateRole, "state" },
     };
 }
 
@@ -110,6 +166,23 @@ void SidebarModel::activate(int row)
     }
     const Row& r = m_rows.at(row);
     if (r.selectable) {
-        emit scopeSelected(static_cast<int>(r.type), r.nodeId);
+        emit scopeSelected(static_cast<int>(r.type), r.nodeId, r.agentId);
     }
+}
+
+void SidebarModel::toggleExpand(int row)
+{
+    if (row < 0 || row >= m_rows.size()) {
+        return;
+    }
+    const Row& r = m_rows.at(row);
+    if (r.type != NodeType::Node || !r.hasChildren) {
+        return;
+    }
+    if (m_collapsed.contains(r.agentId)) {
+        m_collapsed.remove(r.agentId);
+    } else {
+        m_collapsed.insert(r.agentId);
+    }
+    rebuild();
 }

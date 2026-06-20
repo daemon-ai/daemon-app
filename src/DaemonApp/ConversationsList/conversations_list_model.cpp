@@ -1,7 +1,9 @@
 #include "conversations_list_model.h"
 
+#include "domain/agent_node.h"
 #include "persistence/iconversation_store.h"
 
+using domain::AgentNode;
 using domain::Conversation;
 using domain::ListScope;
 using domain::NodeType;
@@ -61,9 +63,9 @@ void ConversationsListModel::setSearch(const QString& search)
     applyFilter();
 }
 
-void ConversationsListModel::setScope(int nodeType, int nodeId)
+void ConversationsListModel::setScope(int nodeType, int id, const QString& nodeId)
 {
-    m_scope = { static_cast<NodeType>(nodeType), nodeId };
+    m_scope = { static_cast<NodeType>(nodeType), id, nodeId };
     reload();
     emit scopeChanged();
 }
@@ -79,14 +81,22 @@ void ConversationsListModel::reload()
 
 void ConversationsListModel::rebuildLookups()
 {
-    m_folderNames.clear();
+    m_nodeInfo.clear();
     m_tagInfo.clear();
     if (!m_store) {
         return;
     }
-    for (const domain::Folder& f : m_store->folders()) {
-        m_folderNames.insert(f.id, f.name);
-    }
+    // Walk the whole agent tree via the single recursive primitive so each
+    // conversation's owning-node name/kind can be resolved (any depth).
+    persistence::IConversationStore* store = m_store;
+    auto collect = [store, this](const QString& parentId, auto&& self) -> void {
+        for (const AgentNode& n : store->agentChildren(parentId)) {
+            m_nodeInfo.insert(n.id, { n.name, static_cast<int>(n.kind) });
+            self(n.id, self);
+        }
+    };
+    collect(QString(), collect);
+
     for (const domain::Tag& t : m_store->tags()) {
         m_tagInfo.insert(t.id, { t.name, t.color });
     }
@@ -114,15 +124,14 @@ QString ConversationsListModel::computeScopeTitle() const
         return tr("All Conversations");
     case NodeType::Archived:
         return tr("Archived");
-    case NodeType::Folder:
+    case NodeType::Node:
         if (m_store) {
-            for (const domain::Folder& f : m_store->folders()) {
-                if (f.id == m_scope.id) {
-                    return f.name;
-                }
+            const AgentNode n = m_store->agentNode(m_scope.nodeId);
+            if (n.isValid()) {
+                return n.name;
             }
         }
-        return tr("Folder");
+        return tr("Agent");
     case NodeType::Tag:
         if (m_store) {
             for (const domain::Tag& t : m_store->tags()) {
@@ -132,7 +141,7 @@ QString ConversationsListModel::computeScopeTitle() const
             }
         }
         return tr("Tag");
-    case NodeType::FolderSeparator:
+    case NodeType::FleetSeparator:
     case NodeType::TagSeparator:
         break;
     }
@@ -159,8 +168,10 @@ QVariant ConversationsListModel::data(const QModelIndex& index, int role) const
         return snippetOf(c);
     case ModifiedRole:
         return c.modified;
-    case FolderNameRole:
-        return m_folderNames.value(c.folderId);
+    case AgentNameRole:
+        return m_nodeInfo.value(c.agentId).first;
+    case AgentKindRole:
+        return m_nodeInfo.value(c.agentId).second;
     case TagNamesRole: {
         QStringList names;
         for (int tagId : c.tagIds) {
@@ -187,7 +198,8 @@ QHash<int, QByteArray> ConversationsListModel::roleNames() const
         { TitleRole, "title" },
         { SnippetRole, "snippet" },
         { ModifiedRole, "modified" },
-        { FolderNameRole, "folderName" },
+        { AgentNameRole, "agentName" },
+        { AgentKindRole, "agentKind" },
         { TagNamesRole, "tagNames" },
         { TagColorsRole, "tagColors" },
     };

@@ -75,7 +75,7 @@ private slots:
             char32_t code;
         };
         // Every standalone icon the UI binds, by FontAwesome 6 Free codepoint.
-        static const std::array<Glyph, 19> glyphs = { {
+        static const std::array<Glyph, 23> glyphs = { {
             { "gear", 0xf013 },
             { "magnifying_glass", 0xf002 },
             { "trash", 0xf1f8 },
@@ -90,11 +90,16 @@ private slots:
             { "heading", 0xf1dc },
             { "square_check", 0xf14a },
             { "chevron_down", 0xf078 },
+            { "chevron_right", 0xf054 },
             { "list_ul", 0xf0ca },
             { "link", 0xf0c1 },
             { "image", 0xf03e },
             { "circle", 0xf111 },
             { "angles_left", 0xf100 },
+            // Agent-tree node-kind icons (one per AgentNodeKind).
+            { "robot", 0xf544 },
+            { "server", 0xf233 },
+            { "sitemap", 0xf0e8 },
         } };
         for (const Glyph& g : glyphs) {
             QTest::newRow(g.name) << QString::fromUtf8(g.name) << static_cast<uint>(g.code);

@@ -68,6 +68,11 @@ QtObject {
     readonly property string fa_box_archive: "\uf187"
     readonly property string fa_paper_plane: "\uf1d8"
 
+    // Agent-tree node-kind glyphs (cosmetic; one per AgentNodeKind).
+    readonly property string fa_robot: "\uf544"   // engine / agent leaf
+    readonly property string fa_server: "\uf233"  // host
+    readonly property string fa_sitemap: "\uf0e8" // orchestrator / fleet
+
     // --- Status bar glyphs --------------------------------------------------
     readonly property string fa_terminal: "\uf120"
     readonly property string fa_signal: "\uf012"

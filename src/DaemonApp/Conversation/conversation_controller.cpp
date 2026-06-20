@@ -82,12 +82,12 @@ void ConversationController::moveCurrentToTrash()
     m_store->setArchived(archivedId, true); // emits changed() -> refresh()
 }
 
-int ConversationController::createConversation(int folderId)
+int ConversationController::createConversation(const QString& agentId)
 {
     if (!m_store) {
         return -1;
     }
-    const int id = m_store->createConversation(folderId);
+    const int id = m_store->createConversation(agentId);
     open(id);
     return id;
 }

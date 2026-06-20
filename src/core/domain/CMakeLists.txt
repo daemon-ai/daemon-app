@@ -1,6 +1,6 @@
 add_library(da_domain STATIC
     conversation.h
-    folder.h
+    agent_node.h
     tag.h
     sidebar_node.h
     domain.cpp

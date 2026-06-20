@@ -101,6 +101,16 @@ QtObject {
     readonly property color addButtonHover: Qt.darker(textMuted, 1.25)
     readonly property color addButtonPressed: Qt.darker(textMuted, 1.4)
 
+    // --- Agent tree (supervision-tree node rows) ----------------------------
+    // Per-depth indent step and the chevron/twistie gutter width. The tree is
+    // arbitrary-depth, so indentation is just depth * treeIndent (no caps).
+    readonly property int treeIndent: 14
+    readonly property int twistieSize: 14
+    // Node lifecycle state dot. Running tracks the accent; finished is muted;
+    // unknown shows no dot (see Sidebar.stateColor).
+    readonly property color stateRunning: accent
+    readonly property color stateFinished: countText
+
     // --- Conversations list (NoteListView delegate) -------------------------
     // Notes-bar scope title - styled as an accent section header in the component.
     readonly property color listTitle: accent
