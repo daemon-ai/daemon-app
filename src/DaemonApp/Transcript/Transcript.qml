@@ -40,12 +40,21 @@ Rectangle {
         editor.loadMarkdown(md, false)
         if (UiSettings.showPlainText)
             plainText.text = md
+        // Open at the bottom (latest message), like a chat transcript. A reset
+        // lands the view at the top and block heights settle asynchronously, so
+        // re-pin across a few frames until the layout stops growing.
+        editorView.stickToBottom = true
+        settleTimer.restart()
     }
 
     // Stream a simulated assistant reply for `prompt` into the current document.
     // The host (Conversation) calls this right after persisting the user's text;
-    // a real gateway would drive editor.ingestEvents() the same way.
+    // a real gateway would drive editor.ingestEvents() the same way. Turn start
+    // (Hermes' runStart) force-locks the view to the bottom regardless of where
+    // the post-send reload left it.
     function runAssistantTurn(prompt) {
+        editorView.stickToBottom = true
+        editorView.pinToBottom()
         turnSim.start(prompt)
     }
 
@@ -121,6 +130,31 @@ Rectangle {
         onTriggered: root.edited(editor.exportMarkdown())
     }
 
+    // Settle pass after a conversation load: a fresh model lands at the top and
+    // block heights resolve over several frames, so re-pin to the bottom until
+    // the content height stops growing (or a frame cap), then stop.
+    Timer {
+        id: settleTimer
+        property int _ticks: 0
+        property real _lastHeight: -1
+        interval: 16
+        repeat: true
+        onRunningChanged: if (running) { _ticks = 0; _lastHeight = -1 }
+        onTriggered: {
+            if (!editorView.stickToBottom) {
+                stop()
+                return
+            }
+            editorView.pinToBottom()
+            const h = editorView.contentHeight
+            _ticks += 1
+            // Stop once the layout is stable for a tick, or after ~30 frames.
+            if ((h === _lastHeight && _ticks > 1) || _ticks > 30)
+                stop()
+            _lastHeight = h
+        }
+    }
+
     EditorSurface {
         id: editorSurface
         anchors.fill: parent
@@ -174,10 +208,45 @@ Rectangle {
             flickableDirection: Flickable.VerticalFlick
             spacing: 0
 
+            // --- Stick-to-bottom (mirrors Hermes' use-stick-to-bottom) ---------
+            // While locked, content growth pins the view to the bottom; scrolling
+            // up past the threshold escapes, scrolling back within it re-locks.
+            property bool stickToBottom: true
+            readonly property int bottomThresholdPx: 72
+            // Set while we move the view ourselves, so onContentYChanged can tell a
+            // programmatic scroll from a user gesture (only the latter toggles lock).
+            property bool _pinning: false
+
+            function distanceFromBottom() {
+                return contentHeight - (contentY + height)
+            }
+            function pinToBottom() {
+                _pinning = true
+                positionViewAtEnd()
+                // Release the guard after this turn of the event loop so the
+                // contentY settle from positioning isn't read as a user scroll.
+                Qt.callLater(function() { editorView._pinning = false })
+            }
+            function _syncLockFromPosition() {
+                if (_pinning)
+                    return
+                stickToBottom = distanceFromBottom() <= bottomThresholdPx
+            }
+
+            onContentYChanged: _syncLockFromPosition()
+            onMovementEnded: _syncLockFromPosition()
+
             // Mirror the delegate's content column width so percent-sized inline
             // images resolve against the same basis the block images use.
             readonly property real blockContentWidth: Math.max(0, width - 2 * Theme.blockPadding)
             onBlockContentWidthChanged: editor.blockModel.contentWidth = blockContentWidth
+
+            // Track async block sizing during a turn: while locked, keep the
+            // bottom pinned as delegate heights resolve and the stream grows.
+            onContentHeightChanged: {
+                if (stickToBottom && !_pinning)
+                    pinToBottom()
+            }
 
             // The always-present view owns scroll-to-active: driving currentIndex
             // here closes the virtualization race (row realized before delegate).
@@ -189,8 +258,13 @@ Rectangle {
                         return
                     editorView.currentIndex = row
                     Qt.callLater(function() {
-                        if (editor.activeBlockRow === row)
+                        if (editor.activeBlockRow === row) {
+                            // A cursor-driven scroll is programmatic; guard it so
+                            // it isn't misread as the user escaping the bottom lock.
+                            editorView._pinning = true
                             editorView.positionViewAtIndex(row, ListView.Contain)
+                            Qt.callLater(function() { editorView._pinning = false })
+                        }
                     })
                 }
             }
@@ -235,19 +309,13 @@ Rectangle {
                 editorController: editor
             }
 
-            // Follow the growing tail while streaming, but only when the user is
-            // already parked near the bottom. A simulated turn drives the store's
-            // stream directly (not editor.streaming), so treat turnSim.active as a
-            // streaming signal too.
+            // Follow the growing tail while locked: each streamed chunk re-pins
+            // the bottom. Escaping (scroll-up) clears stickToBottom and stops it.
             Connections {
                 target: editor
                 function onStreamContentAppended() {
-                    const streaming = editor.streaming || turnSim.active
-                    if (!streaming && !editorView.atYEnd)
-                        return
-                    const distanceFromBottom = editorView.contentHeight - (editorView.contentY + editorView.height)
-                    if (editorView.atYEnd || distanceFromBottom < editorView.height * 0.5)
-                        Qt.callLater(editorView.positionViewAtEnd)
+                    if (editorView.stickToBottom)
+                        editorView.pinToBottom()
                 }
             }
         }
@@ -325,5 +393,41 @@ Rectangle {
         turnState: turnSim.turnState
         elapsedMs: turnSim.elapsedMs
         errorText: turnSim.errorText
+    }
+
+    // Floating jump-to-bottom affordance: shown only while the user has scrolled
+    // away from the bottom (lock escaped). Clicking re-locks and snaps down. Its
+    // presence is the explicit "not following" signal.
+    Rectangle {
+        id: jumpButton
+        visible: !UiSettings.showPlainText && !editorView.stickToBottom
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: Theme.spacing + 12
+        anchors.bottomMargin: Theme.spacing
+        width: 32
+        height: 32
+        radius: width / 2
+        color: jumpHover.hovered ? Theme.pressed : Theme.toolSurface
+        border.width: Theme.hairline
+        border.color: Theme.toolBorder
+        opacity: visible ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
+
+        Text {
+            anchors.centerIn: parent
+            text: FontIcons.fa_angles_down
+            font.family: FontIcons.faSolid
+            font.pixelSize: Theme.captionFontSize
+            color: Theme.accent
+        }
+
+        HoverHandler { id: jumpHover }
+        TapHandler {
+            onTapped: {
+                editorView.stickToBottom = true
+                editorView.pinToBottom()
+            }
+        }
     }
 }

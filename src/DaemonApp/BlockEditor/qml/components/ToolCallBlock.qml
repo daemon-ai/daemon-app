@@ -64,7 +64,7 @@ Item {
     // The clarify variant always shows its interactive panel; otherwise a detail
     // body appears only when a sub-renderer has a payload to draw.
     readonly property bool hasDetail: variant === "clarify"
-        || (detailKind.length > 0
+        || !!(detailKind.length > 0
             && (ansiText.length > 0
                 || (toolData && toolData.diff)
                 || (toolData && toolData.hits)
