@@ -143,6 +143,14 @@ Rectangle {
         function onUserMessageEdited(messageId, text) {
             root.runAssistantTurn(text)
         }
+
+        // An inline message editor opened: escape stick-to-bottom (and stop the
+        // settle pass) so the growing edit composer isn't yanked to the bottom.
+        // Committing re-runs the turn (which re-locks); cancelling stays escaped.
+        function onInlineEditOpened() {
+            settleTimer.stop()
+            editorView.stickToBottom = false
+        }
     }
 
     // Coalesce a burst of edits into a single persist of the exported markdown.
@@ -249,14 +257,27 @@ Rectangle {
                 // contentY settle from positioning isn't read as a user scroll.
                 Qt.callLater(function() { editorView._pinning = false })
             }
+            // Only a genuine user gesture may clear the lock. Programmatic pins
+            // (positionViewAtEnd) and late-resolving block heights also shift
+            // contentY, but must never unlock following; otherwise async layout
+            // settle reads as the user escaping the bottom. This mirrors
+            // use-stick-to-bottom owning scrollTop as the single writer and only
+            // escaping on a real scroll-up.
             function _syncLockFromPosition() {
                 if (_pinning)
+                    return
+                if (!draggingVertically && !flickingVertically && !vScroll.pressed)
                     return
                 stickToBottom = distanceFromBottom() <= bottomThresholdPx
             }
 
             onContentYChanged: _syncLockFromPosition()
-            onMovementEnded: _syncLockFromPosition()
+            // At rest after a gesture, re-evaluate unconditionally so returning to
+            // the bottom re-locks (and scrolling away stays escaped).
+            onMovementEnded: {
+                if (!_pinning)
+                    stickToBottom = distanceFromBottom() <= bottomThresholdPx
+            }
 
             // Mirror the delegate's content column width so percent-sized inline
             // images resolve against the same basis the block images use.
@@ -329,6 +350,7 @@ Rectangle {
             delegate: BlockDelegate {
                 width: ListView.view.width
                 editorController: editor
+                turnRunning: root.busy
             }
 
             // Follow the growing tail while locked: each streamed chunk re-pins

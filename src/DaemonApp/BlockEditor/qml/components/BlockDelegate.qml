@@ -28,6 +28,10 @@ Item {
     required property bool messageFirst
     required property bool messageLast
     required property var editorController
+    // True while an assistant turn is streaming. The footer is suppressed during
+    // a turn so it doesn't hop between blocks as the tail grows (each inserted
+    // block would otherwise relocate ~40px of footer right at the pinned bottom).
+    property bool turnRunning: false
 
     // BlockType enum values for list items (BulletListItem=2, OrderedListItem=3,
     // TaskListItem=4); list policy lives in the store/controller, the delegate
@@ -909,7 +913,7 @@ Item {
         Loader {
             id: footerLoader
             width: parent.width
-            active: root.isAssistant && root.messageLast && !root.isActive
+            active: root.isAssistant && root.messageLast && !root.isActive && !root.turnRunning
             visible: active
             sourceComponent: Component {
                 AssistantFooter {

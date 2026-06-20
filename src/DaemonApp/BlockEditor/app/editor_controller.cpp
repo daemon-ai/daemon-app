@@ -462,6 +462,11 @@ void EditorController::copyMessageToClipboard(const QString &messageId) const
     }
 }
 
+void EditorController::notifyInlineEditOpen()
+{
+    emit inlineEditOpened();
+}
+
 QVariantList EditorController::ansiSpans(const QString &text) const
 {
     return be::ansiToSpans(text);

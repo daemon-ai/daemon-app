@@ -120,6 +120,10 @@ public:
     // an edit composer's initial text), and a clipboard helper for it.
     Q_INVOKABLE QString messageText(const QString &messageId) const;
     Q_INVOKABLE void copyMessageToClipboard(const QString &messageId) const;
+    // Notify the host that an inline message editor opened. The transcript view
+    // escapes stick-to-bottom in response so the growing edit composer is not
+    // yanked to the bottom (mirrors Hermes' beginEditHold -> stopScroll).
+    Q_INVOKABLE void notifyInlineEditOpen();
     // Sub-renderer parsers, surfaced for the tool/content blocks: ANSI SGR text
     // -> styled spans, and a unified diff -> typed lines (see core/agent_block).
     Q_INVOKABLE QVariantList ansiSpans(const QString &text) const;
@@ -206,6 +210,8 @@ signals:
     // message. The host (Conversation) re-runs the assistant turn in response.
     void userMessageEdited(const QString &messageId, const QString &text);
     void regenerateRequested(const QString &messageId);
+    // An inline message editor opened; the transcript escapes stick-to-bottom.
+    void inlineEditOpened();
     void paletteChanged();
     void bodyFontChanged();
     // Emitted after any change to the document content (load/edit/stream) so a

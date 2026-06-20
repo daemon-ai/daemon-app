@@ -29,6 +29,9 @@ Item {
     function beginEdit() {
         if (!editorController)
             return
+        // Escape stick-to-bottom before the composer grows, so the view doesn't
+        // yank the editor to the bottom (mirrors Hermes' beginEditHold).
+        editorController.notifyInlineEditOpen()
         editArea.text = editorController.messageText(messageId)
         editing = true
         editArea.forceActiveFocus()

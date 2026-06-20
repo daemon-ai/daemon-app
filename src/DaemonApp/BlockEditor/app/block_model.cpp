@@ -439,13 +439,19 @@ void BlockModel::applyChangeSet(const be::BlockChangeSet &changeSet)
     }
 
     // A structural change can flip the run-edge flags of the rows bracketing the
-    // splice (the block above an insert is no longer "last", etc.). Run-edges are
-    // cheap to recompute, so refresh them across the whole list to stay correct
-    // without a full reset (preserving scroll/active state).
+    // splice (the block above an insert is no longer "last", etc.). Only those
+    // neighbouring rows can change, so refresh just that bracket rather than the
+    // whole list: a per-token whole-model emit during streaming forces an O(n)
+    // relayout that jitters the pinned bottom. The range covers the row above the
+    // splice through the last inserted row.
     if (changeSet.insertedCount > 0 || changeSet.removedCount > 0) {
         const int rows = rowCount();
         if (rows > 0) {
-            emit dataChanged(index(0), index(rows - 1), {MessageFirstRole, MessageLastRole});
+            const int structuralRow = static_cast<int>(changeSet.structuralRow);
+            const int first = std::clamp(structuralRow - 1, 0, rows - 1);
+            const int last = std::clamp(
+                structuralRow + static_cast<int>(changeSet.insertedCount), 0, rows - 1);
+            emit dataChanged(index(first), index(last), {MessageFirstRole, MessageLastRole});
         }
     }
 }
