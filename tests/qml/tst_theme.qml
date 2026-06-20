@@ -24,9 +24,10 @@ TestCase {
                 isMidnight: false,
                 background: "#ffffff", sidebar: "#ededed", text: "#37352e",
                 accent: "#2383e2",
-                sidebarSelection: "#2383e2", sidebarHover: "#b4d0e9",
+                rowHover: "#e6e6e6", rowActive: "#dcdcdc",
+                sidebarSelection: "#dcdcdc", sidebarHover: "#e6e6e6",
                 searchBackground: "#ffffff", searchFocusBorder: "#a6c6e4",
-                listSelection: "#dae9ef",
+                listSelection: "#dcdcdc",
                 codeBackground: "#f1f1ef", activeBlockBackground: "#f8fbff",
                 activeBlockBorder: "#d7e9fb"
             },
@@ -35,9 +36,10 @@ TestCase {
                 isMidnight: false,
                 background: "#191919", sidebar: "#333333", text: "#d6d6d6",
                 accent: "#757575",
-                sidebarSelection: "#757575", sidebarHover: "#454545",
+                rowHover: "#3d3d3d", rowActive: "#474747",
+                sidebarSelection: "#474747", sidebarHover: "#3d3d3d",
                 searchBackground: "#2a2a2a", searchFocusBorder: "#2c536f",
-                listSelection: "#454545",
+                listSelection: "#474747",
                 codeBackground: "#2a2a2a", activeBlockBackground: "#1f2733",
                 activeBlockBorder: "#2c4a63"
             },
@@ -46,9 +48,10 @@ TestCase {
                 isMidnight: false,
                 background: "#fbf0d9", sidebar: "#ece0c2", text: "#321e03",
                 accent: "#b06a2c",
-                sidebarSelection: "#b06a2c", sidebarHover: "#e4c79e",
+                rowHover: "#e3d4ad", rowActive: "#d8c79a",
+                sidebarSelection: "#d8c79a", sidebarHover: "#e3d4ad",
                 searchBackground: "#fbf0d9", searchFocusBorder: "#a6c6e4",
-                listSelection: "#f0dcb0",
+                listSelection: "#d8c79a",
                 codeBackground: "#efe6d2", activeBlockBackground: "#f3ead2",
                 activeBlockBorder: "#d8c79a"
             },
@@ -57,9 +60,10 @@ TestCase {
                 isMidnight: true,
                 background: "#0d162d", sidebar: "#09286f", text: "#ffe6cb",
                 accent: "#9fb3e6",
-                sidebarSelection: "#9fb3e6", sidebarHover: "#16285c",
+                rowHover: "#123882", rowActive: "#1a4499",
+                sidebarSelection: "#1a4499", sidebarHover: "#123882",
                 searchBackground: "#0b2150", searchFocusBorder: "#3a63bd",
-                listSelection: "#16285c",
+                listSelection: "#1a4499",
                 codeBackground: "#1a2c5c", activeBlockBackground: "#14224a",
                 activeBlockBorder: "#2c4a8f"
             }
@@ -79,10 +83,16 @@ TestCase {
         compare(hex(Theme.sidebar), data.sidebar, "sidebar");
         compare(hex(Theme.text), data.text, "text");
         compare(hex(Theme.accent), data.accent, "accent");
-        // sidebarSelection and sidebarIcon both track the accent now.
-        compare(hex(Theme.sidebarSelection), data.accent, "sidebarSelection tracks accent");
-        compare(hex(Theme.sidebarIcon), data.accent, "sidebarIcon tracks accent");
-        compare(hex(Theme.addButton), data.accent, "addButton tracks accent");
+        // selection is a NEUTRAL wash (rowActive), not the accent;
+        // icons/+ are monochrome (textMuted); section headers carry the accent.
+        compare(hex(Theme.sidebarSelection), data.rowActive, "sidebarSelection tracks rowActive");
+        compare(hex(Theme.listSelection), data.rowActive, "listSelection tracks rowActive");
+        compare(hex(Theme.sidebarHover), data.rowHover, "sidebarHover tracks rowHover");
+        compare(hex(Theme.sidebarIcon), hex(Theme.textMuted), "sidebarIcon is monochrome");
+        compare(hex(Theme.addButton), hex(Theme.textMuted), "addButton is monochrome");
+        compare(hex(Theme.separatorText), data.accent, "separatorText tracks accent");
+        compare(hex(Theme.rowHover), data.rowHover, "rowHover");
+        compare(hex(Theme.rowActive), data.rowActive, "rowActive");
         compare(hex(Theme.sidebarSelection), data.sidebarSelection, "sidebarSelection");
         compare(hex(Theme.sidebarHover), data.sidebarHover, "sidebarHover");
         compare(hex(Theme.searchBackground), data.searchBackground, "searchBackground");

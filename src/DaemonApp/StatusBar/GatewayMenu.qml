@@ -5,7 +5,7 @@ import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
 // Upward dropdown opened from the Gateway status-bar item - the native port of
-// Hermes' GatewayMenuPanel (w-72, side="top"). Header with a status dot, the
+// GatewayMenuPanel (w-72, side="top"). Header with a status dot, the
 // connection line, the last few gateway log lines, a "view all logs" affordance,
 // and the messaging-platform rows. Content is placeholder until wired to the
 // daemon backend.

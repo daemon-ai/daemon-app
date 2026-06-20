@@ -36,6 +36,10 @@ Item {
              : mouseArea.containsMouse ? Theme.hover
              : "transparent"
 
+        Behavior on color {
+            ColorAnimation { duration: Theme.motionFast }
+        }
+
         Text {
             id: glyph
             anchors.centerIn: parent

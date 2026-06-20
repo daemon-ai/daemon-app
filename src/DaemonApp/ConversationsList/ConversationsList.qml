@@ -10,7 +10,9 @@ import DaemonApp.Controls as Kit
 Rectangle {
     id: root
 
-    color: Theme.surface
+    // Joins the sidebar chrome in dark/sepia/midnight; in Light it goes
+    // off-white so it reads with the editor instead of as grey sidebar chrome.
+    color: Theme.listBackground
 
     signal conversationActivated(int conversationId)
     signal toggleSidebarRequested()
@@ -67,8 +69,10 @@ Rectangle {
                         text: convModel.scopeTitle
                         color: Theme.listTitle
                         font.family: FontIcons.display
-                        font.bold: true
-                        font.pixelSize: 15
+                        font.weight: Font.DemiBold
+                        font.pixelSize: Theme.labelSize
+                        font.letterSpacing: Theme.labelTracking
+                        font.capitalization: Font.AllUppercase
                         elide: Text.ElideRight
                     }
 
@@ -105,6 +109,7 @@ Rectangle {
                 Kit.TextField {
                     id: searchField
                     anchors.fill: parent
+                    underline: true
                     placeholderText: qsTr("Search conversations")
                     leftPadding: 21
                     rightPadding: 30
@@ -169,20 +174,23 @@ Rectangle {
 
                     readonly property bool isSelected: index === root.currentRow
 
+                    // Inset rounded selection: fill-only, no
+                    // hairline - a deliberate step below the sidebar nav rows.
                     Rectangle {
                         anchors.fill: parent
-                        color: del.isSelected ? Theme.listSelection
-                             : rowMouse.containsMouse ? Theme.hover
-                             : "transparent"
-                    }
+                        anchors.leftMargin: Theme.rowInset
+                        anchors.rightMargin: Theme.rowInset
+                        anchors.topMargin: Theme.rowVInset
+                        anchors.bottomMargin: Theme.rowVInset
+                        radius: Theme.rowRadius
+                        // Stable wash color + opacity fade (never interpolate out of
+                        // transparent-black, which flashed dark on the way in).
+                        color: del.isSelected ? Theme.listSelection : Theme.rowHover
+                        opacity: del.isSelected || rowMouse.containsMouse ? 1 : 0
 
-                    // Bottom separator, inset by LEFT_OFFSET_X on both sides.
-                    Rectangle {
-                        anchors.bottom: parent.bottom
-                        x: del.leftOffset
-                        width: parent.width - 2 * del.leftOffset
-                        height: 1
-                        color: Theme.listSeparator
+                        Behavior on opacity {
+                            NumberAnimation { duration: Theme.motionFast }
+                        }
                     }
 
                     ColumnLayout {
@@ -195,14 +203,16 @@ Rectangle {
                         anchors.rightMargin: del.leftOffset
                         spacing: 0
 
-                        // Title.
+                        // Title - text-forward: secondary by default, brightens to
+                        // primary on hover/selection.
                         QQC.Label {
                             Layout.fillWidth: true
                             text: del.title
-                            color: Theme.listText
+                            color: del.isSelected || rowMouse.containsMouse
+                                 ? Theme.text : Theme.listText
                             font.family: FontIcons.display
-                            font.pixelSize: 14
-                            font.bold: true
+                            font.pixelSize: 13
+                            font.weight: Font.Medium
                             elide: Text.ElideRight
                         }
 
@@ -215,7 +225,6 @@ Rectangle {
                             color: Theme.listSnippet
                             font.family: FontIcons.display
                             font.pixelSize: 12
-                            font.bold: true
                             elide: Text.ElideRight
                         }
 
@@ -224,9 +233,9 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.topMargin: 5
                             text: del.modified ? Qt.formatDateTime(del.modified, "MMM d, h:mm AP") : ""
-                            color: Theme.listText
+                            color: Theme.countText
                             font.family: FontIcons.display
-                            font.pixelSize: 12
+                            font.pixelSize: 11
                         }
 
                         // Folder chip + tag chips.
@@ -249,7 +258,7 @@ Rectangle {
                                     text: del.folderName
                                     color: Theme.listSnippet
                                     font.family: FontIcons.display
-                                    font.pixelSize: 12
+                                    font.pixelSize: 11
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
@@ -275,7 +284,7 @@ Rectangle {
                                         text: modelData
                                         color: Theme.listSnippet
                                         font.family: FontIcons.display
-                                        font.pixelSize: 12
+                                        font.pixelSize: 11
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                 }

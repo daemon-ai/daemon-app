@@ -80,7 +80,7 @@ Rectangle {
                 }
 
                 background: Rectangle {
-                    radius: 7
+                    radius: Theme.radius
                     color: upgradeButton.down ? Theme.pressed
                          : upgradeButton.hovered ? Theme.hover : "transparent"
                     border.width: 1

@@ -279,7 +279,10 @@ QQC.Popup {
         Layout.topMargin: 10
         Layout.bottomMargin: 2
         font.family: FontIcons.display
-        font.pixelSize: 12
+        font.pixelSize: Theme.labelSize
+        font.weight: Font.DemiBold
+        font.letterSpacing: Theme.labelTracking
+        font.capitalization: Font.AllUppercase
         color: Theme.textMuted
     }
 

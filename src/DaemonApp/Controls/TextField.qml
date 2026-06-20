@@ -8,6 +8,11 @@ import DaemonApp.Theme
 QQC.TextField {
     id: root
 
+    // Borderless underline-on-focus variant: transparent fill,
+    // no box, just a 1px bottom edge that picks up the accent on focus. Default
+    // is the boxed search field.
+    property bool underline: false
+
     color: Theme.searchText
     placeholderTextColor: Theme.textMuted
     selectionColor: Theme.searchSelection
@@ -19,10 +24,20 @@ QQC.TextField {
     selectByMouse: true
 
     background: Rectangle {
-        radius: Theme.radius
-        color: Theme.searchBackground
-        border.width: root.activeFocus ? 2 : 1
+        radius: root.underline ? 0 : Theme.radius
+        color: root.underline ? "transparent" : Theme.searchBackground
+        border.width: root.underline ? 0 : 1
         border.color: root.activeFocus ? Theme.searchFocusBorder : Theme.searchBorder
+
+        // Underline mode: a single bottom hairline, accent on focus.
+        Rectangle {
+            visible: root.underline
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: root.activeFocus ? Theme.accent : Theme.searchBorder
+        }
     }
 
     cursorDelegate: Rectangle {

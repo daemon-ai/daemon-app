@@ -38,6 +38,10 @@ QtObject {
     // brighter navy; Sepia a warm parchment tan (between background and border)
     // so the column stays in the warm palette instead of clashing grey.
     readonly property color sidebar: isMidnight ? "#09286f" : isDark ? "#333333" : isSepia ? "#ece0c2" : "#ededed"
+    // Conversations list surface: joins the sidebar chrome in the dark/sepia/
+    // midnight themes, but an off-white in Light so the middle column reads with
+    // the editor instead of as the grey sidebar chrome.
+    readonly property color listBackground: isDark || isMidnight || isSepia ? sidebar : "#f7f7f7"
 
     // --- Lines / borders ----------------------------------------------------
     // Subtle separators between list rows (editor tokens #ededec / #3a3a3a).
@@ -57,6 +61,17 @@ QtObject {
     readonly property color hover: isMidnight ? "#16224a" : isDark ? "#313131" : isSepia ? "#f1e7d2" : "#efefef"
     readonly property color pressed: isMidnight ? "#1b2a55" : isDark ? "#2c2c2c" : isSepia ? "#f1e7d2" : "#dfdfde"
 
+    // --- Row washes (nav/session selection) --------------------------
+    // Translucent NEUTRAL washes for sidebar/list rows - a few percent off the
+    // chrome `sidebar` surface, never the accent. Selection reads as the row
+    // "pressed into" the panel, not a
+    // bright pill. Dark/Midnight lighten over their dark surface; Sepia stays a
+    // warm neutral tan (no sienna); Light is a plain grey.
+    readonly property color rowHover: isMidnight ? "#123882" : isDark ? "#3d3d3d" : isSepia ? "#e3d4ad" : "#e6e6e6"
+    readonly property color rowActive: isMidnight ? "#1a4499" : isDark ? "#474747" : isSepia ? "#d8c79a" : "#dcdcdc"
+    // Selected row when the list is unfocused (a touch weaker than rowActive).
+    readonly property color rowActiveInactive: isMidnight ? "#163a8c" : isDark ? "#424242" : isSepia ? "#dfd0a4" : "#e1e1e1"
+
     // --- Accent (selected text, cursor, focus) ------------------------------
     // Per-theme so every highlight tracks the palette:
     // blue, Sepia uses a warm sienna that matches the parchment palette, Midnight
@@ -65,37 +80,38 @@ QtObject {
     readonly property color accent: isMidnight ? "#9fb3e6" : isSepia ? "#b06a2c" : isDark ? "#757575" : "#2383e2"
 
     // --- Sidebar (NodeTreeView delegates) -----------------------------------
-    // Folder/All/Tag title color (foldertreedelegateeditor m_titleColor).
-    readonly property color sidebarText: isMidnight ? "#dbe4ff" : isDark ? "#d4d4d4" : isSepia ? "#321e03" : "#1a1a1a"
-    // Selected row fill - the accent so Midnight's blue / Sepia's sienna apply
-    // (white selection text stays legible on all four).
-    readonly property color sidebarSelection: accent
-    // Selected row text/icon/count.
-    readonly property color sidebarSelectedText: "#ffffff"
-    // Row hover (NodeTreeDelegate m_hoverColor): warm tan in Sepia so it doesn't
-    // clash with the parchment sidebar; cool blue in Light, navy in Dark/Midnight.
-    readonly property color sidebarHover: isMidnight ? "#16285c" : isDark ? "#454545" : isSepia ? "#e4c79e" : "#b4d0e9"
-    // Folder/tag icon color when unselected - tracks the accent.
-    readonly property color sidebarIcon: accent
-    // Folders/Tags separator label (m_separatorTextColor rgb 143,143,143).
-    readonly property color separatorText: "#8f8f8f"
-    // Separator "+" add button (accent + darker hover/pressed shades).
-    readonly property color addButton: accent
-    readonly property color addButtonHover: Qt.darker(accent, 1.25)
-    readonly property color addButtonPressed: Qt.darker(accent, 1.4)
+    // text-forward: unselected rows sit at a SECONDARY (muted) tone and
+    // brighten to primary `text` when selected/hovered. This is the default
+    // (unselected) folder/All/Tag label color.
+    readonly property color sidebarText: isMidnight ? "#aebfe6" : isDark ? "#9a9a9a" : isSepia ? "#6b5836" : "#5f5f5c"
+    // Selected row fill - a neutral wash (NOT the accent), so the row reads as
+    // pressed into the panel. Nav rows additionally draw a `border` hairline.
+    readonly property color sidebarSelection: rowActive
+    // Selected row text/icon/count - just brightens to primary foreground.
+    readonly property color sidebarSelectedText: text
+    // Row hover - the lighter neutral wash.
+    readonly property color sidebarHover: rowHover
+    // Folder/tag icon color when unselected - monochrome muted (not accent).
+    readonly property color sidebarIcon: textMuted
+    // Folders/Tags separator label - accent-colored:
+    // section headers are the one place accent appears prominently.
+    readonly property color separatorText: accent
+    // Separator "+" add button - monochrome muted (with darker hover/pressed).
+    readonly property color addButton: textMuted
+    readonly property color addButtonHover: Qt.darker(textMuted, 1.25)
+    readonly property color addButtonPressed: Qt.darker(textMuted, 1.4)
 
     // --- Conversations list (NoteListView delegate) -------------------------
-    // Folder/title label in the notes bar (listviewLabel1).
-    readonly property color listTitle: isMidnight ? "#cdd9f5" : isDark ? "#dfe0e0" : "#444444"
-    // Note row title / date (m_titleColor / m_dateColor).
-    readonly property color listText: isMidnight ? "#dbe4ff" : isDark ? "#d4d4d4" : "#1a1a1a"
-    // Note snippet (m_contentColor rgb 142,146,150).
+    // Notes-bar scope title - styled as an accent section header in the component.
+    readonly property color listTitle: accent
+    // Note row title default - SECONDARY tone; brightens to `text` on hover/select.
+    readonly property color listText: isMidnight ? "#cdd9f5" : isDark ? "#b0b0b0" : isSepia ? "#5a4a2e" : "#4a4a48"
+    // Note snippet (tertiary).
     readonly property color listSnippet: "#8e9296"
-    // Selected note row (m_activeColor focused / m_notActiveColor unfocused).
-    // Sepia uses warm pale gold instead of the cool blue band.
-    readonly property color listSelection: isMidnight ? "#16285c" : isDark ? "#454545" : isSepia ? "#f0dcb0" : "#dae9ef"
-    readonly property color listSelectionInactive: isMidnight ? "#142850" : isDark ? "#3a3a3a" : isSepia ? "#e8ce98" : "#afd4e4"
-    // Row separator (m_separatorColor rgb 191,191,191 / white@50%).
+    // Selected note row - neutral wash (fill-only, no border); weaker when unfocused.
+    readonly property color listSelection: rowActive
+    readonly property color listSelectionInactive: rowActiveInactive
+    // Row separator (kept for reference; rows use spacing + fills, no divider).
     readonly property color listSeparator: isMidnight ? "#2a3f70" : isDark ? "#7fffffff" : "#bfbfbf"
 
     // --- Search field (per searchEdit in main-window.css) -------------------
@@ -139,8 +155,8 @@ QtObject {
     // Recognizable royal blue for the Midnight swatch.
     readonly property color chipMidnight: "#0d2f86"
 
-    // --- Status bar (Hermes footer port) ------------------------------------
-    // A thin chrome strip below the columns. Hermes uses the sidebar surface for
+    // --- Status bar ------------------------------------
+    // A thin chrome strip below the columns. uses the sidebar surface for
     // its footer background; we follow that so it reads as one chrome band and
     // picks up the Midnight navy. The strip is slightly distinct from `sidebar`
     // to separate it from the left column where they meet.
@@ -162,7 +178,23 @@ QtObject {
     readonly property int spacingSmall: 6
     readonly property int spacing: 12
     readonly property int spacingLarge: 20
-    readonly property int radius: 5
+    // Chrome control radius (icon buttons, fields, menus, swatches). Squared
+    // toward the status bar's flat 4px icon-button radius.
+    readonly property int radius: 4
+
+    // Inset rounded selection rows: the highlight
+    // pill is inset from the column edges and rounded, instead of full-bleed.
+    readonly property int rowRadius: 6
+    readonly property int rowInset: 6
+    readonly property int rowVInset: 1
+
+    // Control hover/selection transition (~100ms).
+    readonly property int motionFast: 100
+
+    // Tracked uppercase section labels (FOLDERS/TAGS, settings headers): the
+    // refined chrome-label signature (~0.12em at 11px, 0.16em).
+    readonly property int labelSize: 11
+    readonly property real labelTracking: 1.2
 
     // Block-editor renderer metrics (theme-independent constants, upstream names).
     readonly property int pageMargin: 24
@@ -174,9 +206,9 @@ QtObject {
     readonly property int bodyFontSize: 15
     readonly property int captionFontSize: 13
 
-    readonly property int sidebarWidth: 240
-    readonly property int listWidth: 300
+    readonly property int sidebarWidth: 232
+    readonly property int listWidth: 288
 
-    // Hermes footer is 20px; 22 reads better at desktop DPI with our 11px labels.
+    // footer is 20px; 22 reads better at desktop DPI with our 11px labels.
     readonly property int statusBarHeight: 22
 }

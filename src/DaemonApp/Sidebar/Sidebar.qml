@@ -43,7 +43,7 @@ Rectangle {
         // --- Header: gear, right-aligned (mainwindow.ui spacer -> gear) ------
         Item {
             Layout.fillWidth: true
-            implicitHeight: 31
+            implicitHeight: 28
 
             Kit.IconButton {
                 anchors.right: parent.right
@@ -68,6 +68,7 @@ Rectangle {
             ListView {
                 id: list
                 model: sidebarModel
+                spacing: 1
                 boundsBehavior: Flickable.StopAtBounds
 
                 delegate: Item {
@@ -82,18 +83,32 @@ Rectangle {
                     required property string color
 
                     width: ListView.view.width
-                    // FOLDER_LABEL_HEIGHT 35 / FOLDER_ITEM_HEIGHT 30.
-                    height: isSeparator ? 35 : 30
+                    // Dense column: compact section header / 28px nav row.
+                    height: isSeparator ? 30 : 28
 
                     readonly property bool isSelected: !isSeparator && index === root.currentRow
                     readonly property bool isTag: nodeType === 5
 
-                    // Full-row fill: blue when selected, hover tint otherwise.
-                    // No radius, no inset (foldertreedelegateeditor fillRect).
+                    // Inset rounded selection pill: the
+                    // highlight is inset from the column edges and rounded, with a
+                    // faint hairline on the selected row.
                     Rectangle {
                         anchors.fill: parent
-                        visible: !del.isSeparator && (del.isSelected || rowMouse.containsMouse)
+                        anchors.leftMargin: Theme.rowInset
+                        anchors.rightMargin: Theme.rowInset
+                        anchors.topMargin: Theme.rowVInset
+                        anchors.bottomMargin: Theme.rowVInset
+                        radius: Theme.rowRadius
+                        visible: !del.isSeparator
+                        // Stable wash color + opacity fade (no transparent-black flash).
                         color: del.isSelected ? Theme.sidebarSelection : Theme.sidebarHover
+                        opacity: del.isSelected || rowMouse.containsMouse ? 1 : 0
+                        border.width: del.isSelected ? 1 : 0
+                        border.color: Theme.border
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: Theme.motionFast }
+                        }
                     }
 
                     // --- Separator row: label (x+5) + blue "+" add button ----
@@ -103,13 +118,15 @@ Rectangle {
 
                         QQC.Label {
                             anchors.left: parent.left
-                            anchors.leftMargin: 5
+                            anchors.leftMargin: 14
                             anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 6
+                            anchors.bottomMargin: 5
                             text: del.label
                             color: Theme.separatorText
                             font.family: FontIcons.display
-                            font.pixelSize: 12
+                            font.pixelSize: Theme.labelSize
+                            font.weight: Font.DemiBold
+                            font.letterSpacing: Theme.labelTracking
                             font.capitalization: Font.AllUppercase
                         }
 
@@ -134,11 +151,12 @@ Rectangle {
                         anchors.fill: parent
                         visible: !del.isSeparator
 
-                        // Icon box: 18 wide, left edge at x+22.
+                        // Icon box: 18 wide, flush-left at x+14 (shares the left
+                        // edge with the FOLDERS/TAGS section labels).
                         Item {
                             id: iconBox
                             anchors.left: parent.left
-                            anchors.leftMargin: 22
+                            anchors.leftMargin: 14
                             anchors.verticalCenter: parent.verticalCenter
                             width: 18
                             height: 18
@@ -148,7 +166,8 @@ Rectangle {
                                 visible: !del.isTag
                                 glyph: root.iconFor(del.nodeType)
                                 font.pointSize: 12 + Theme.pointSizeOffset
-                                color: del.isSelected ? Theme.sidebarSelectedText : Theme.sidebarIcon
+                                color: del.isSelected || rowMouse.containsMouse
+                                     ? Theme.sidebarSelectedText : Theme.sidebarIcon
                             }
 
                             // Tag dot (fa_circle, in the tag color).
@@ -172,8 +191,9 @@ Rectangle {
                             elide: Text.ElideRight
                             font.family: FontIcons.display
                             font.pixelSize: 13
-                            font.bold: true
-                            color: del.isSelected ? Theme.sidebarSelectedText : Theme.sidebarText
+                            font.weight: Font.Medium
+                            color: del.isSelected || rowMouse.containsMouse
+                                 ? Theme.sidebarSelectedText : Theme.sidebarText
                         }
 
                         QQC.Label {
@@ -184,10 +204,10 @@ Rectangle {
                             visible: del.count >= 0
                             text: del.count
                             font.family: FontIcons.display
-                            font.pixelSize: 12
-                            font.bold: true
-                            color: del.isSelected ? Theme.sidebarSelectedText : Theme.sidebarText
-                            opacity: del.isSelected ? 1.0 : 0.5
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            color: del.isSelected || rowMouse.containsMouse
+                                 ? Theme.sidebarSelectedText : Theme.countText
                         }
                     }
 
@@ -229,7 +249,9 @@ Rectangle {
                 text: qsTr("Theme")
                 color: Theme.textMuted
                 font.family: FontIcons.display
-                font.pixelSize: 11
+                font.pixelSize: Theme.labelSize
+                font.weight: Font.DemiBold
+                font.letterSpacing: Theme.labelTracking
                 font.capitalization: Font.AllUppercase
                 Layout.leftMargin: Theme.spacingSmall
             }

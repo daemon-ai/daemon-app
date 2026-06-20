@@ -40,7 +40,7 @@ Rectangle {
             Layout.preferredHeight: Math.min(Math.max(input.implicitHeight + 2 * Theme.spacingSmall, 38), 140)
             radius: Theme.radius
             color: Theme.searchBackground
-            border.width: input.activeFocus ? 2 : 1
+            border.width: 1
             border.color: input.activeFocus ? Theme.searchFocusBorder : Theme.searchBorder
 
             QQC.ScrollView {

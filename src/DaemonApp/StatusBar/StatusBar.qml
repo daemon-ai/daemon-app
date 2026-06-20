@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import DaemonApp.Theme
 
-// Native port of the Hermes Desktop footer status bar: a thin full-width chrome
+// Footer status bar: a thin full-width chrome
 // strip with a left cluster (Command Center / Gateway / Agents / Cron) and a
 // right cluster (running timer / context usage / session timer / YOLO / terminal
 // / version). Items are data-driven via plain QML state with placeholder/live

@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
-// One entry in the footer status bar - the native port of Hermes'
+// One entry in the footer status bar
 // STATUSBAR_ACTION_CLASS / text item. Renders [icon] [label] [muted detail] at
 // 11px, full bar height. `action` items get hover/active fills and a pointing
 // cursor; `text` items are inert read-outs (timers, context usage).
@@ -32,7 +32,7 @@ Item {
     readonly property bool iconOnly: label === ""
     readonly property bool interactive: variant === "action" && enabled
 
-    // Captures keyboard modifiers (Shift => global YOLO toggle in Hermes).
+    // Captures keyboard modifiers (Shift => global YOLO toggle).
     signal clicked(var modifiers)
 
     implicitHeight: parent ? parent.height : Theme.statusBarHeight
