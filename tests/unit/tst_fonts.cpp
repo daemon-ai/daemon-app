@@ -75,7 +75,7 @@ private slots:
             char32_t code;
         };
         // Every standalone icon the UI binds, by FontAwesome 6 Free codepoint.
-        static const std::array<Glyph, 23> glyphs = { {
+        static const std::array<Glyph, 25> glyphs = { {
             { "gear", 0xf013 },
             { "magnifying_glass", 0xf002 },
             { "trash", 0xf1f8 },
@@ -91,6 +91,8 @@ private slots:
             { "square_check", 0xf14a },
             { "chevron_down", 0xf078 },
             { "chevron_right", 0xf054 },
+            { "angles_up", 0xf102 },
+            { "angles_down", 0xf103 },
             { "list_ul", 0xf0ca },
             { "link", 0xf0c1 },
             { "image", 0xf03e },

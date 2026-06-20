@@ -4,6 +4,7 @@
 #include "persistence/iconversation_store.h"
 
 using domain::AgentNode;
+using domain::AgentNodeKind;
 using domain::ListScope;
 using domain::NodeType;
 
@@ -95,11 +96,27 @@ void SidebarModel::rebuild()
         }
     }
     endResetModel();
+    emit treeChanged();
 }
 
 int SidebarModel::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : static_cast<int>(m_rows.size());
+}
+
+bool SidebarModel::rowIsCurrent(const Row& r) const
+{
+    if (r.separator || !r.selectable) {
+        return false;
+    }
+    switch (r.type) {
+    case NodeType::Node:
+        return m_selType == NodeType::Node && r.agentId == m_selAgent;
+    case NodeType::Tag:
+        return m_selType == NodeType::Tag && r.nodeId == m_selTag;
+    default:
+        return m_selType == r.type;
+    }
 }
 
 QVariant SidebarModel::data(const QModelIndex& index, int role) const
@@ -135,6 +152,8 @@ QVariant SidebarModel::data(const QModelIndex& index, int role) const
         return r.kind;
     case StateRole:
         return r.state;
+    case CurrentRole:
+        return rowIsCurrent(r);
     default:
         return {};
     }
@@ -156,18 +175,98 @@ QHash<int, QByteArray> SidebarModel::roleNames() const
         { ExpandedRole, "expanded" },
         { KindRole, "kind" },
         { StateRole, "state" },
+        { CurrentRole, "current" },
     };
 }
 
-void SidebarModel::activate(int row)
+void SidebarModel::emitCurrentChanged()
+{
+    if (!m_rows.isEmpty()) {
+        emit dataChanged(index(0), index(static_cast<int>(m_rows.size()) - 1), { CurrentRole });
+    }
+}
+
+void SidebarModel::setSelectionFromRow(int row)
 {
     if (row < 0 || row >= m_rows.size()) {
         return;
     }
     const Row& r = m_rows.at(row);
-    if (r.selectable) {
-        emit scopeSelected(static_cast<int>(r.type), r.nodeId, r.agentId);
+    if (!r.selectable) {
+        return;
     }
+    m_selType = r.type;
+    m_selTag = r.nodeId;
+    m_selAgent = r.agentId;
+    emit scopeSelected(static_cast<int>(r.type), r.nodeId, r.agentId);
+    emitCurrentChanged();
+}
+
+void SidebarModel::activate(int row)
+{
+    setSelectionFromRow(row);
+}
+
+int SidebarModel::currentRow() const
+{
+    for (int i = 0; i < m_rows.size(); ++i) {
+        if (rowIsCurrent(m_rows.at(i))) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int SidebarModel::adjacentSelectableRow(int from, int delta) const
+{
+    for (int i = from + delta; i >= 0 && i < m_rows.size(); i += delta) {
+        const Row& r = m_rows.at(i);
+        if (r.selectable && !r.separator) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int SidebarModel::parentRow(int row) const
+{
+    if (row < 0 || row >= m_rows.size() || !m_store) {
+        return -1;
+    }
+    const Row& r = m_rows.at(row);
+    if (r.type != NodeType::Node) {
+        return -1;
+    }
+    const QString parentId = m_store->agentNode(r.agentId).parentId;
+    if (parentId.isEmpty()) {
+        return -1;
+    }
+    for (int i = 0; i < m_rows.size(); ++i) {
+        const Row& cand = m_rows.at(i);
+        if (cand.type == NodeType::Node && cand.agentId == parentId) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+bool SidebarModel::selectionInSubtree(const QString& rootId) const
+{
+    if (m_selType != NodeType::Node || !m_store) {
+        return false;
+    }
+    QString cur = m_selAgent;
+    for (int guard = 0; !cur.isEmpty(); ++guard) {
+        if (cur == rootId) {
+            return true;
+        }
+        // Bounded walk; the store's tree is finite and acyclic.
+        if (guard > 4096) {
+            break;
+        }
+        cur = m_store->agentNode(cur).parentId;
+    }
+    return false;
 }
 
 void SidebarModel::toggleExpand(int row)
@@ -179,10 +278,174 @@ void SidebarModel::toggleExpand(int row)
     if (r.type != NodeType::Node || !r.hasChildren) {
         return;
     }
-    if (m_collapsed.contains(r.agentId)) {
-        m_collapsed.remove(r.agentId);
+    const QString id = r.agentId;
+    const bool collapsing = isExpanded(id);
+
+    // If we are about to hide the current selection, move it up to this node so
+    // a highlighted row stays visible (and the middle pane follows).
+    bool moved = false;
+    if (collapsing && selectionInSubtree(id)) {
+        m_selType = NodeType::Node;
+        m_selTag = -1;
+        m_selAgent = id;
+        moved = true;
+    }
+
+    if (collapsing) {
+        m_collapsed.insert(id);
     } else {
-        m_collapsed.insert(r.agentId);
+        m_collapsed.remove(id);
     }
     rebuild();
+    if (moved) {
+        emit scopeSelected(static_cast<int>(NodeType::Node), -1, id);
+    }
+}
+
+void SidebarModel::selectNext()
+{
+    const int cur = currentRow();
+    const int next = adjacentSelectableRow(cur < 0 ? -1 : cur, 1);
+    if (next >= 0) {
+        setSelectionFromRow(next);
+    }
+}
+
+void SidebarModel::selectPrevious()
+{
+    const int cur = currentRow();
+    const int prev = adjacentSelectableRow(cur < 0 ? static_cast<int>(m_rows.size()) : cur, -1);
+    if (prev >= 0) {
+        setSelectionFromRow(prev);
+    }
+}
+
+void SidebarModel::collapseCurrent()
+{
+    const int cur = currentRow();
+    if (cur < 0) {
+        return;
+    }
+    const Row& r = m_rows.at(cur);
+    if (r.type == NodeType::Node && r.hasChildren && r.expanded) {
+        toggleExpand(cur); // collapse; selection stays on this node
+        return;
+    }
+    const int pr = parentRow(cur);
+    if (pr >= 0) {
+        setSelectionFromRow(pr);
+    }
+}
+
+void SidebarModel::expandCurrent()
+{
+    const int cur = currentRow();
+    if (cur < 0) {
+        return;
+    }
+    const Row& r = m_rows.at(cur);
+    if (r.type != NodeType::Node || !r.hasChildren) {
+        return;
+    }
+    if (!r.expanded) {
+        toggleExpand(cur); // expand in place
+        return;
+    }
+    // Already expanded: descend to the first child (the next row, which is one
+    // level deeper).
+    const int childRow = cur + 1;
+    if (childRow < m_rows.size() && m_rows.at(childRow).depth > r.depth) {
+        setSelectionFromRow(childRow);
+    }
+}
+
+void SidebarModel::activateCurrent()
+{
+    const int cur = currentRow();
+    if (cur >= 0) {
+        setSelectionFromRow(cur);
+    }
+}
+
+void SidebarModel::collectExpandableIds(const QString& parentId, QSet<QString>& out) const
+{
+    if (!m_store) {
+        return;
+    }
+    for (const AgentNode& n : m_store->agentChildren(parentId)) {
+        const QList<AgentNode> kids = m_store->agentChildren(n.id);
+        if (!kids.isEmpty()) {
+            out.insert(n.id);
+        }
+        collectExpandableIds(n.id, out);
+    }
+}
+
+bool SidebarModel::anyExpanded() const
+{
+    QSet<QString> expandable;
+    collectExpandableIds(QString(), expandable);
+    for (const QString& id : expandable) {
+        if (isExpanded(id)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void SidebarModel::expandAll()
+{
+    m_collapsed.clear();
+    rebuild();
+}
+
+void SidebarModel::collapseAll()
+{
+    QSet<QString> expandable;
+    collectExpandableIds(QString(), expandable);
+    m_collapsed = expandable;
+
+    // If the selection is now hidden (a collapsed node's descendant), lift it to
+    // its top-level root ancestor so a row stays highlighted.
+    if (m_selType == NodeType::Node && m_store) {
+        QString cur = m_selAgent;
+        QString root = cur;
+        for (int guard = 0; !cur.isEmpty() && guard <= 4096; ++guard) {
+            root = cur;
+            cur = m_store->agentNode(cur).parentId;
+        }
+        if (root != m_selAgent) {
+            m_selAgent = root;
+            emit scopeSelected(static_cast<int>(NodeType::Node), -1, root);
+        }
+    }
+    rebuild();
+}
+
+void SidebarModel::createRootNode()
+{
+    if (!m_store) {
+        return;
+    }
+    // A new top-level node. Kind is cosmetic; default to Orchestrator so it
+    // reads as a fresh fleet/workspace. changed() -> rebuild() runs first.
+    const QString id = m_store->createNode(QString(), AgentNodeKind::Orchestrator);
+    m_selType = NodeType::Node;
+    m_selTag = -1;
+    m_selAgent = id;
+    emit scopeSelected(static_cast<int>(NodeType::Node), -1, id);
+    emitCurrentChanged();
+}
+
+void SidebarModel::createTag()
+{
+    if (!m_store) {
+        return;
+    }
+    const int id = m_store->createTag(tr("New tag"), QStringLiteral("#8e9296"));
+    m_selType = NodeType::Tag;
+    m_selTag = id;
+    m_selAgent.clear();
+    emit scopeSelected(static_cast<int>(NodeType::Tag), id, {});
+    emitCurrentChanged();
 }

@@ -128,6 +128,169 @@ private slots:
         model.activate(fleet);
         QCOMPARE(spy.count(), 0);
     }
+
+    // The highlight is identity-based: it follows the node across a model reset
+    // rather than sticking to a row index. Collapsing a node that does NOT
+    // contain the selection rebuilds the list but must leave Coder highlighted.
+    void currentRoleTracksIdentityAcrossRebuild()
+    {
+        InMemoryConversationStore store;
+        SidebarModel model;
+        model.setStore(&store);
+
+        const int coder = findRow(model, QStringLiteral("Coder"));
+        model.activate(coder);
+        QVERIFY(roleAt<bool>(model, coder, SidebarModel::CurrentRole));
+
+        // Deep Fleet is a sibling branch under Build, not an ancestor of Coder,
+        // so collapsing it triggers a full rebuild without hiding Coder.
+        model.toggleExpand(findRow(model, QStringLiteral("Deep Fleet")));
+        QVERIFY(findRow(model, QStringLiteral("Worker A")) < 0); // the rebuild happened
+        const int coderAfter = findRow(model, QStringLiteral("Coder"));
+        QVERIFY(coderAfter >= 0);
+        QVERIFY(roleAt<bool>(model, coderAfter, SidebarModel::CurrentRole));
+        QCOMPARE(model.currentRow(), coderAfter);
+    }
+
+    // Collapsing an ancestor of the selection lifts the selection up to the
+    // collapsed node (VSCode behavior) and re-emits its scope.
+    void collapsingAncestorMovesSelectionUp()
+    {
+        InMemoryConversationStore store;
+        SidebarModel model;
+        model.setStore(&store);
+
+        const int worker = findRow(model, QStringLiteral("Worker A"));
+        model.activate(worker);
+
+        QSignalSpy spy(&model, &SidebarModel::scopeSelected);
+        const int build = findRow(model, QStringLiteral("Build Fleet"));
+        model.toggleExpand(build); // hides Worker A's branch
+
+        QVERIFY(findRow(model, QStringLiteral("Worker A")) < 0);
+        const int buildAfter = findRow(model, QStringLiteral("Build Fleet"));
+        QVERIFY(roleAt<bool>(model, buildAfter, SidebarModel::CurrentRole));
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.takeFirst().at(2).toString(), QStringLiteral("n-build"));
+    }
+
+    // Up/Down move the selection between adjacent selectable rows, skipping
+    // separators; Enter re-emits the current scope.
+    void keyboardNavigationMovesSelection()
+    {
+        InMemoryConversationStore store;
+        SidebarModel model;
+        model.setStore(&store);
+
+        model.activate(findRow(model, QStringLiteral("All Conversations")));
+        QSignalSpy spy(&model, &SidebarModel::scopeSelected);
+
+        model.selectNext(); // -> Archived
+        QCOMPARE(model.currentRow(), findRow(model, QStringLiteral("Archived")));
+        QCOMPARE(spy.takeFirst().at(0).toInt(), 1); // NodeType::Archived
+
+        model.selectPrevious(); // -> All Conversations
+        QCOMPARE(model.currentRow(), findRow(model, QStringLiteral("All Conversations")));
+
+        spy.clear();
+        model.activateCurrent(); // Enter re-emits without moving
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.takeFirst().at(0).toInt(), 0); // NodeType::AllConversations
+    }
+
+    // Right expands a collapsed node then descends; Left collapses then climbs.
+    void arrowKeysExpandCollapseAndTraverse()
+    {
+        InMemoryConversationStore store;
+        SidebarModel model;
+        model.setStore(&store);
+
+        const int build = findRow(model, QStringLiteral("Build Fleet"));
+        model.activate(build);
+
+        model.collapseCurrent(); // collapse Build (selection stays)
+        QVERIFY(!roleAt<bool>(model, findRow(model, QStringLiteral("Build Fleet")),
+                              SidebarModel::ExpandedRole));
+        QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
+
+        model.expandCurrent(); // re-expand Build
+        QVERIFY(roleAt<bool>(model, findRow(model, QStringLiteral("Build Fleet")),
+                             SidebarModel::ExpandedRole));
+
+        model.expandCurrent(); // already expanded -> step to first child
+        QCOMPARE(model.currentRow(), findRow(model, QStringLiteral("Coder")));
+
+        model.collapseCurrent(); // leaf -> climb to parent (Build)
+        QCOMPARE(model.currentRow(), findRow(model, QStringLiteral("Build Fleet")));
+    }
+
+    // Collapse-all hides every subtree (roots remain); expand-all restores them.
+    void expandAllAndCollapseAllToggleWholeTree()
+    {
+        InMemoryConversationStore store;
+        SidebarModel model;
+        model.setStore(&store);
+
+        QVERIFY(model.anyExpanded());
+
+        model.collapseAll();
+        QVERIFY(!model.anyExpanded());
+        QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
+        QVERIFY(findRow(model, QStringLiteral("Build Fleet")) < 0);
+        QVERIFY(findRow(model, QStringLiteral("Acme Platform")) >= 0); // root stays
+
+        model.expandAll();
+        QVERIFY(model.anyExpanded());
+        QVERIFY(findRow(model, QStringLiteral("Worker A")) >= 0);
+    }
+
+    // collapseAll while a deep node is selected lifts the highlight to its root.
+    void collapseAllLiftsSelectionToRoot()
+    {
+        InMemoryConversationStore store;
+        SidebarModel model;
+        model.setStore(&store);
+
+        model.activate(findRow(model, QStringLiteral("Worker A")));
+        model.collapseAll();
+
+        const int acme = findRow(model, QStringLiteral("Acme Platform"));
+        QVERIFY(roleAt<bool>(model, acme, SidebarModel::CurrentRole));
+    }
+
+    // Creating a root node adds a top-level row and selects it.
+    void createRootNodeAddsAndSelects()
+    {
+        InMemoryConversationStore store;
+        SidebarModel model;
+        model.setStore(&store);
+
+        QSignalSpy spy(&model, &SidebarModel::scopeSelected);
+        model.createRootNode();
+
+        const int created = findRow(model, QStringLiteral("New fleet"));
+        QVERIFY(created >= 0);
+        QCOMPARE(roleAt<int>(model, created, SidebarModel::DepthRole), 0);
+        QVERIFY(roleAt<bool>(model, created, SidebarModel::CurrentRole));
+        QCOMPARE(spy.takeLast().at(0).toInt(), 4); // NodeType::Node
+    }
+
+    // Creating a tag adds a tag row and selects it.
+    void createTagAddsAndSelects()
+    {
+        InMemoryConversationStore store;
+        SidebarModel model;
+        model.setStore(&store);
+
+        QSignalSpy spy(&model, &SidebarModel::scopeSelected);
+        model.createTag();
+
+        const int created = findRow(model, QStringLiteral("New tag"));
+        QVERIFY(created >= 0);
+        QCOMPARE(roleAt<int>(model, created, SidebarModel::NodeTypeRole), 5); // Tag
+        QVERIFY(roleAt<bool>(model, created, SidebarModel::CurrentRole));
+        QCOMPARE(spy.takeLast().at(0).toInt(), 5);
+    }
 };
 
 QTEST_MAIN(TestSidebarModel)

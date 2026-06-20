@@ -24,6 +24,8 @@ public:
     [[nodiscard]] QString content(int conversationId) const override;
 
     int createConversation(const QString& agentId) override;
+    QString createNode(const QString& parentId, domain::AgentNodeKind kind) override;
+    int createTag(const QString& name, const QString& color) override;
     void setContent(int conversationId, const QString& markdown) override;
     void setArchived(int conversationId, bool archived) override;
 
@@ -38,7 +40,9 @@ private:
     QList<domain::AgentNode> m_nodes;
     QList<domain::Tag> m_tags;
     QList<domain::Conversation> m_conversations;
-    int m_nextId = 1;
+    int m_nextId = 1;        // conversation ids
+    int m_nextNodeSeq = 1;   // suffix for generated node ids
+    int m_nextTagId = 1;     // tag ids
 };
 
 } // namespace persistence

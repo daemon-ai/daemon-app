@@ -108,6 +108,44 @@ private slots:
         QVERIFY(!store.agentNode("nope").isValid());
         QCOMPARE(store.conversationCount(nodeScope("nope")), 0);
     }
+
+    // createNode with an empty parent adds a new root; with a parent it becomes
+    // a child reachable via the same agentChildren primitive.
+    void createNodeAsRootAndChild()
+    {
+        InMemoryConversationStore store;
+        QSignalSpy spy(&store, &persistence::IConversationStore::changed);
+
+        const int rootsBefore = store.agentChildren(QString()).size();
+        const QString root = store.createNode(QString(), domain::AgentNodeKind::Orchestrator);
+        QVERIFY(!root.isEmpty());
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(store.agentChildren(QString()).size(), rootsBefore + 1);
+        QVERIFY(store.agentNode(root).isValid());
+        QCOMPARE(store.agentNode(root).parentId, QString());
+
+        const QString child = store.createNode(root, domain::AgentNodeKind::Engine);
+        QCOMPARE(store.agentNode(child).parentId, root);
+        QCOMPARE(store.agentChildren(root).size(), 1);
+        // Distinct ids each time.
+        QVERIFY(child != root);
+    }
+
+    // createTag adds a selectable tag with a fresh, unique id.
+    void createTagAppendsWithUniqueId()
+    {
+        InMemoryConversationStore store;
+        QSignalSpy spy(&store, &persistence::IConversationStore::changed);
+
+        const int before = store.tags().size();
+        const int a = store.createTag(QStringLiteral("alpha"), QStringLiteral("#111111"));
+        const int b = store.createTag(QStringLiteral("beta"), QStringLiteral("#222222"));
+        QCOMPARE(spy.count(), 2);
+        QCOMPARE(store.tags().size(), before + 2);
+        QVERIFY(a != b);
+        // Existing seeded ids (1,2) are not reused.
+        QVERIFY(a > 2 && b > 2);
+    }
 };
 
 QTEST_MAIN(TestStore)

@@ -45,6 +45,12 @@ public:
 
     // Mutations. Each emits changed() so models can refresh.
     virtual int createConversation(const QString& agentId) = 0;
+    // Create a tree node under `parentId` (empty = a new top-level root) and
+    // return its new id. `kind` is cosmetic. Mirrors a future control-plane
+    // "spawn unit" call.
+    virtual QString createNode(const QString& parentId, domain::AgentNodeKind kind) = 0;
+    // Create a cross-cutting tag and return its new id.
+    virtual int createTag(const QString& name, const QString& color) = 0;
     virtual void setContent(int conversationId, const QString& markdown) = 0;
     virtual void setArchived(int conversationId, bool archived) = 0;
 

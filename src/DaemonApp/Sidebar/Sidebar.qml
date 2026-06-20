@@ -18,10 +18,6 @@ Rectangle {
     // is the agent node id (Node scope). Unused fields are -1 / "".
     signal scopeSelected(int nodeType, int id, string nodeId)
     signal settingsRequested()
-    signal addRootRequested()
-    signal addTagRequested()
-
-    property int currentRow: 0
 
     // NodeType enum: 0 AllConversations, 1 Archived, 2 FleetSep, 3 TagSep,
     // 4 Node, 5 Tag.
@@ -90,6 +86,24 @@ Rectangle {
                 model: sidebarModel
                 spacing: 1
                 boundsBehavior: Flickable.StopAtBounds
+                focus: true
+                // Selection lives in the model (by identity), so disable the
+                // built-in currentIndex navigation and drive it ourselves.
+                keyNavigationEnabled: false
+
+                // Keep the model's selected row visible after keyboard moves.
+                function syncView() {
+                    var r = sidebarModel.currentRow();
+                    if (r >= 0)
+                        list.positionViewAtIndex(r, ListView.Contain);
+                }
+
+                Keys.onUpPressed: { sidebarModel.selectPrevious(); syncView(); }
+                Keys.onDownPressed: { sidebarModel.selectNext(); syncView(); }
+                Keys.onLeftPressed: { sidebarModel.collapseCurrent(); syncView(); }
+                Keys.onRightPressed: { sidebarModel.expandCurrent(); syncView(); }
+                Keys.onReturnPressed: sidebarModel.activateCurrent()
+                Keys.onEnterPressed: sidebarModel.activateCurrent()
 
                 delegate: Item {
                     id: del
@@ -107,14 +121,20 @@ Rectangle {
                     required property bool expanded
                     required property int kind
                     required property int state
+                    required property bool current
 
                     width: ListView.view.width
                     // Dense column: compact section header / 28px nav row.
                     height: isSeparator ? 30 : 28
 
-                    readonly property bool isSelected: !isSeparator && index === root.currentRow
+                    // Highlight by identity (the model's `current` role), so it
+                    // survives expand/collapse rebuilds without index tracking.
+                    readonly property bool isSelected: !isSeparator && current
                     readonly property bool isTag: nodeType === 5
                     readonly property bool isNode: nodeType === 4
+                    // Row hover stays stable even when the cursor is over the
+                    // twistie (which has its own hover-enabled hit area).
+                    readonly property bool hovered: rowMouse.containsMouse || twMouse.containsMouse
                     // Left edge of this row's content (twistie gutter), indented
                     // by depth. Works for any depth, no level caps.
                     readonly property int indentBase: 14 + depth * Theme.treeIndent
@@ -129,7 +149,7 @@ Rectangle {
                         radius: Theme.rowRadius
                         visible: !del.isSeparator
                         color: del.isSelected ? Theme.sidebarSelection : Theme.sidebarHover
-                        opacity: del.isSelected || rowMouse.containsMouse ? 1 : 0
+                        opacity: del.isSelected || del.hovered ? 1 : 0
                         border.width: del.isSelected ? 1 : 0
                         border.color: Theme.border
 
@@ -168,8 +188,27 @@ Rectangle {
                             iconPointSize: 12
                             iconColor: Theme.addButton
                             tooltipText: del.nodeType === 2 ? qsTr("New root node") : qsTr("New tag")
-                            onClicked: del.nodeType === 2 ? root.addRootRequested()
-                                                          : root.addTagRequested()
+                            onClicked: del.nodeType === 2 ? sidebarModel.createRootNode()
+                                                          : sidebarModel.createTag()
+                        }
+
+                        // Fleet header only: one-shot expand-all / collapse-all.
+                        Kit.IconButton {
+                            visible: del.nodeType === 2
+                            anchors.right: parent.right
+                            anchors.rightMargin: 34
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 2
+                            implicitWidth: 30
+                            implicitHeight: 24
+                            icon: sidebarModel.anyExpanded ? FontIcons.fa_angles_up
+                                                           : FontIcons.fa_angles_down
+                            iconPointSize: 11
+                            iconColor: Theme.iconMuted
+                            tooltipText: sidebarModel.anyExpanded ? qsTr("Collapse all")
+                                                                  : qsTr("Expand all")
+                            onClicked: sidebarModel.anyExpanded ? sidebarModel.collapseAll()
+                                                                : sidebarModel.expandAll()
                         }
                     }
 
@@ -189,20 +228,34 @@ Rectangle {
                             width: Theme.twistieSize
                             height: Theme.twistieSize
                             visible: del.isNode && del.hasChildren
+                            // Sit above the full-row MouseArea so twistie clicks
+                            // toggle expand instead of selecting the row.
+                            z: 2
 
                             Kit.Glyph {
+                                id: chevron
                                 anchors.centerIn: parent
-                                glyph: del.expanded ? FontIcons.fa_chevron_down
-                                                    : FontIcons.fa_chevron_right
+                                // A single chevron rotated 90deg when expanded,
+                                // so the twistie animates smoothly on toggle.
+                                glyph: FontIcons.fa_chevron_right
                                 font.pointSize: 9 + Theme.pointSizeOffset
-                                color: del.isSelected || rowMouse.containsMouse
+                                rotation: del.expanded ? 90 : 0
+                                color: twMouse.containsMouse || del.isSelected || del.hovered
                                      ? Theme.sidebarSelectedText : Theme.sidebarIcon
+                                Behavior on rotation {
+                                    NumberAnimation { duration: Theme.motionFast }
+                                }
+                                Behavior on color {
+                                    ColorAnimation { duration: Theme.motionFast }
+                                }
                             }
 
                             MouseArea {
+                                id: twMouse
                                 anchors.fill: parent
                                 // Enlarge the hit target a touch for easy clicking.
                                 anchors.margins: -3
+                                hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: sidebarModel.toggleExpand(del.index)
                             }
@@ -234,7 +287,7 @@ Rectangle {
                                 glyph: del.isNode ? root.kindIcon(del.kind)
                                                   : root.iconFor(del.nodeType)
                                 font.pointSize: 12 + Theme.pointSizeOffset
-                                color: del.isSelected || rowMouse.containsMouse
+                                color: del.isSelected || del.hovered
                                      ? Theme.sidebarSelectedText : Theme.sidebarIcon
                             }
                         }
@@ -250,7 +303,7 @@ Rectangle {
                             font.family: FontIcons.display
                             font.pixelSize: 13
                             font.weight: Font.Medium
-                            color: del.isSelected || rowMouse.containsMouse
+                            color: del.isSelected || del.hovered
                                  ? Theme.sidebarSelectedText : Theme.sidebarText
                         }
 
@@ -277,7 +330,7 @@ Rectangle {
                             font.family: FontIcons.display
                             font.pixelSize: 11
                             font.weight: Font.Medium
-                            color: del.isSelected || rowMouse.containsMouse
+                            color: del.isSelected || del.hovered
                                  ? Theme.sidebarSelectedText : Theme.countText
                         }
                     }
@@ -289,8 +342,15 @@ Rectangle {
                         enabled: del.selectable && !del.isSeparator
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                         onClicked: {
-                            root.currentRow = del.index;
+                            list.forceActiveFocus();
                             sidebarModel.activate(del.index);
+                        }
+                        // Double-clicking anywhere on a node row toggles it,
+                        // matching the twistie.
+                        onDoubleClicked: {
+                            list.forceActiveFocus();
+                            if (del.isNode && del.hasChildren)
+                                sidebarModel.toggleExpand(del.index);
                         }
                     }
                 }

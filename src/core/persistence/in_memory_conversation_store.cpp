@@ -52,6 +52,7 @@ void InMemoryConversationStore::seedSampleData()
         { 1, QStringLiteral("ideas"), QStringLiteral("#2383e2") },
         { 2, QStringLiteral("todo"), QStringLiteral("#e2a423") },
     };
+    m_nextTagId = 3; // next id after the seeded tags
 
     const QDateTime now = QDateTime::currentDateTime();
     auto make = [&](const QString& agentId, const QList<int>& tagIds, bool archived,
@@ -186,6 +187,30 @@ int InMemoryConversationStore::createConversation(const QString& agentId)
     m_conversations.push_back(c);
     emit changed();
     return c.id;
+}
+
+QString InMemoryConversationStore::createNode(const QString& parentId, AgentNodeKind kind)
+{
+    AgentNode n;
+    n.id = QStringLiteral("n-new-%1").arg(m_nextNodeSeq++);
+    n.parentId = parentId;
+    n.name = parentId.isEmpty() ? QStringLiteral("New fleet") : QStringLiteral("New node");
+    n.kind = kind;
+    n.state = AgentState::Unknown;
+    m_nodes.push_back(n);
+    emit changed();
+    return n.id;
+}
+
+int InMemoryConversationStore::createTag(const QString& name, const QString& color)
+{
+    Tag t;
+    t.id = m_nextTagId++;
+    t.name = name;
+    t.color = color;
+    m_tags.push_back(t);
+    emit changed();
+    return t.id;
 }
 
 void InMemoryConversationStore::setContent(int conversationId, const QString& markdown)

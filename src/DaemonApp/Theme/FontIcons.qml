@@ -40,6 +40,8 @@ QtObject {
     // for the same "collapse to edge" affordance.
     readonly property string fa_angles_left: "\uf100"
     readonly property string fa_angles_right: "\uf101"
+    readonly property string fa_angles_up: "\uf102"
+    readonly property string fa_angles_down: "\uf103"
     readonly property string fa_caret_right: "\uf0da"
     readonly property string fa_caret_down: "\uf0d7"
     readonly property string fa_caret_left: "\uf0d9"
