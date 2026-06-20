@@ -19,6 +19,16 @@ Rectangle {
     // Kept for compatibility; the renderer is driven by load(), not this binding.
     property string content: ""
 
+    // True while a simulated assistant turn is running. The composer binds this
+    // to drive queue-while-busy and the Stop affordance; a real gateway would
+    // feed the same signal from its streaming state.
+    readonly property bool busy: turnSim.active
+
+    // Interrupt the running turn (composer Stop button / Esc).
+    function stopTurn() {
+        turnSim.cancel();
+    }
+
     // The markdown currently loaded, so redundant reloads (e.g. open() fires both
     // contentChanged and conversationChanged) don't reset the model twice.
     property string _loadedMarkdown
