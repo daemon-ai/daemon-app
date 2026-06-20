@@ -139,7 +139,14 @@ set(BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
 # EXCLUDE_FROM_ALL keeps the bundled LaTeXQtSample demo target out of the default
 # build: nothing links it, so it is configured but never compiled. Only the
 # `LaTeX` library is linked by the BlockEditor module.
+# MicroTeX's `add_library(LaTeX "")` follows BUILD_SHARED_LIBS, which is ON in
+# this configure and produced a libLaTeX.so the packaged app cannot find at
+# runtime. Force a static LaTeX lib (like be_core/be_diagram/ksyntax) so it links
+# into the executable; shadow the variable only for this subtree, then restore.
+set(_da_prev_shared "${BUILD_SHARED_LIBS}")
+set(BUILD_SHARED_LIBS OFF)
 add_subdirectory("${_microtex_dir}" "${CMAKE_BINARY_DIR}/_deps/microtex" EXCLUDE_FROM_ALL)
+set(BUILD_SHARED_LIBS "${_da_prev_shared}")
 
 # Treat MicroTeX's public headers as system includes so its (vendored, upstream)
 # header warnings do not surface in our translation units that include latex.h.

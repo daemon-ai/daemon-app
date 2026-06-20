@@ -21,25 +21,43 @@ Item {
         return editorController.mathImageUrl(latex, true)
     }
 
+    // Logical (device-independent) size from the same MicroTeX measurer inline
+    // math uses, so a block renders at the identical scale and crisply, instead
+    // of inheriting the supersampled texture's implicit (oversized) pixel size.
+    // Touches the same palette signals as `source` so it re-evaluates on a
+    // theme/font-size change.
+    readonly property size logical: {
+        if (!editorController || latex.length === 0)
+            return Qt.size(0, 0)
+        void editorController.bodyTextColor
+        void editorController.bodyFontSize
+        return editorController.mathLogicalSize(latex, true)
+    }
+
     implicitHeight: {
         if (image.status === Image.Error)
             return errorBox.implicitHeight
-        if (image.status === Image.Ready && image.implicitHeight > 0)
-            return Math.max(Math.min(root.width, image.implicitWidth) * (image.implicitHeight / image.implicitWidth), 1)
+        if (root.logical.width > 0)
+            return Math.max(Math.min(root.width, root.logical.width) * (root.logical.height / root.logical.width), 1)
         return 28
     }
 
     Image {
         id: image
-        anchors.horizontalCenter: parent.horizontalCenter
+        // Whole-pixel x; sub-pixel centering softens the rasterized glyphs.
+        x: Math.round((parent.width - width) / 2)
         source: root.source
         asynchronous: true
         cache: true
         fillMode: Image.PreserveAspectFit
         visible: status === Image.Ready
-        // Clamp the formula to the column while preserving its aspect ratio.
-        width: Math.min(root.width, implicitWidth)
-        height: implicitWidth > 0 ? width * (implicitHeight / implicitWidth) : implicitHeight
+        // Clamp the formula to the column while preserving its aspect ratio. Size
+        // from the logical measurer (matches inline math); fall back to the
+        // texture's implicit size only until the measurer resolves.
+        width: root.logical.width > 0 ? Math.min(root.width, root.logical.width) : Math.min(root.width, implicitWidth)
+        height: root.logical.width > 0
+                ? width * (root.logical.height / root.logical.width)
+                : (implicitWidth > 0 ? width * (implicitHeight / implicitWidth) : implicitHeight)
     }
 
     Rectangle {

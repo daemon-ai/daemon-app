@@ -425,12 +425,26 @@ QString InlineProjector::makeDisplayMarkup(const BlockRecord &block, const Block
             break;
         }
         case SpanKind::Math: {
-            // The math provider rasterizes the formula; RichText loads it at its
-            // intrinsic size and the baseline is nudged onto the text line.
+            // The math provider rasterizes the formula and the baseline is nudged
+            // onto the text line. The image is supersampled at the device pixel
+            // ratio, so without an explicit size RichText would lay out the raw
+            // (oversized) pixels. When a measurer is wired we emit the logical
+            // width/height MicroTeX laid the formula out at — the device-
+            // independent size — mirroring how SpanKind::Image sizes itself.
             const QString src = be::mathImageUrl(span.mathLatex, span.mathDisplay,
                                                  m_palette.bodyPixelSize, m_palette.text);
-            escaped += QStringLiteral("<img src=\"%1\" style=\"vertical-align:middle;\">")
-                           .arg(src.toHtmlEscaped());
+            QString img = QStringLiteral("<img src=\"%1\"").arg(src.toHtmlEscaped());
+            if (m_mathMeasurer) {
+                const QSizeF logical =
+                    m_mathMeasurer(span.mathLatex, span.mathDisplay, m_palette.bodyPixelSize);
+                if (logical.isValid() && logical.width() > 0 && logical.height() > 0) {
+                    img += QStringLiteral(" width=\"%1\" height=\"%2\"")
+                               .arg(qRound(logical.width()))
+                               .arg(qRound(logical.height()));
+                }
+            }
+            img += QStringLiteral(" style=\"vertical-align:middle;\">");
+            escaped += img;
             break;
         }
         case SpanKind::Plain:

@@ -10,6 +10,7 @@
 
 #include <QColor>
 #include <QObject>
+#include <QSizeF>
 #include <QString>
 #include <QTimer>
 #include <QVector>
@@ -136,6 +137,11 @@ public:
     // so a block (MathBlock.qml) renders the same way inline math does and a
     // theme/font-size change re-renders it.
     Q_INVOKABLE QString mathImageUrl(const QString &latex, bool displayMode) const;
+    // Logical (device-independent) size MicroTeX lays the formula out at, so a
+    // block (MathBlock.qml) sizes its Image exactly like inline math does
+    // (same measurer), rather than from the supersampled texture's implicit
+    // size. Returns an invalid QSizeF when parsing fails.
+    Q_INVOKABLE QSizeF mathLogicalSize(const QString &latex, bool displayMode) const;
 
 signals:
     void activeBlockIdChanged();

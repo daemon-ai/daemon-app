@@ -3,8 +3,11 @@
 #include "core/block_record.h"
 
 #include <QColor>
+#include <QSizeF>
 #include <QString>
 #include <QVector>
+
+#include <functional>
 
 namespace be {
 
@@ -80,6 +83,13 @@ public:
     void setPalette(const Palette &palette) { m_palette = palette; }
     [[nodiscard]] const Palette &palette() const { return m_palette; }
 
+    // Optional hook returning the logical (device-independent) size of a math
+    // formula so inline math can emit an explicit width/height. Kept as a
+    // callback so core stays free of any MicroTeX dependency; the host wires it
+    // to be::app::measureMathLogicalSize. Args: (latex, display, fontPx).
+    using MathMeasurer = std::function<QSizeF(const QString &, bool, int)>;
+    void setMathMeasurer(MathMeasurer measurer) { m_mathMeasurer = std::move(measurer); }
+
 private:
     QString makeDisplayMarkup(const BlockRecord &block, const BlockProjection &projection) const;
     QString stripInlineMarkup(const QString &raw, qsizetype start, qsizetype end) const;
@@ -97,6 +107,7 @@ private:
     void appendPresentation(BlockProjection &projection, const QString &text, qsizetype rawAffinity) const;
 
     Palette m_palette;
+    MathMeasurer m_mathMeasurer;
 };
 
 } // namespace be

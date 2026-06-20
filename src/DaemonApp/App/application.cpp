@@ -12,6 +12,7 @@
 #include <QQmlContext>
 #include <QQuickWindow>
 
+#include <core/formula.h>
 #include <latex.h>
 
 Application::Application(QObject* parent)
@@ -23,6 +24,13 @@ Application::Application(QObject* parent)
     // time (MICROTEX_RES_DIR). Done here so the "math" image provider can parse
     // formulas as soon as the scene requests them.
     tex::LaTeX::init(std::string(MICROTEX_RES_DIR));
+
+    // Pin the base font size MicroTeX draws with (its QFonts are cached on first
+    // use, so this must happen before the first parse and never change). The
+    // library defaults to a 1pt font scaled entirely by the painter transform,
+    // which overflows Qt's FreeType raster on HiDPI and drops every glyph; see
+    // be::app::kMathBaseFontPt for the full rationale and the matching render.
+    tex::Formula::setDPITarget(72.f * be::app::kMathBaseFontPt);
 }
 
 Application::~Application()

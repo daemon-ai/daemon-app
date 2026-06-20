@@ -1,5 +1,6 @@
 #include "app/block_model.h"
 
+#include "app/math_image_provider.h"
 #include "core/image_url.h"
 #include "core/markdown_parser.h"
 #include "core/markdown_table.h"
@@ -205,6 +206,12 @@ QVariantMap buildImageData(const be::BlockRecord &block)
 BlockModel::BlockModel(QObject *parent)
     : QAbstractListModel(parent)
 {
+    // Inline math needs an explicit logical size on its <img> (RichText won't
+    // ask the provider for one). Delegate to MicroTeX's measurer here so core
+    // stays free of any rendering dependency.
+    m_projector.setMathMeasurer([](const QString &latex, bool display, int fontPx) {
+        return be::app::measureMathLogicalSize(latex, display, fontPx);
+    });
 }
 
 int BlockModel::rowCount(const QModelIndex &parent) const

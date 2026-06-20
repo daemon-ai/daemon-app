@@ -1,5 +1,6 @@
 #include "app/editor_controller.h"
 
+#include "app/math_image_provider.h"
 #include "core/markdown_table.h"
 #include "core/math_url.h"
 
@@ -1083,6 +1084,11 @@ QString EditorController::normalizeClipboardText(const QString &plainText, const
 QString EditorController::mathImageUrl(const QString &latex, bool displayMode) const
 {
     return be::mathImageUrl(latex, displayMode, m_palette.bodyPixelSize, m_palette.text);
+}
+
+QSizeF EditorController::mathLogicalSize(const QString &latex, bool displayMode) const
+{
+    return be::app::measureMathLogicalSize(latex, displayMode, m_palette.bodyPixelSize);
 }
 
 void EditorController::clearActiveSelection()
