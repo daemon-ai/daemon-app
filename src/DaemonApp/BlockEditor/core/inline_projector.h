@@ -18,8 +18,16 @@ enum class SpanKind : quint16 {
     HiddenDelimiter,
 };
 
+// Inline emphasis carried alongside a span's kind, so a Link can also render
+// bold/italic (e.g. **[text](url)**) without a second overlapping span.
+enum SpanStyle : quint8 {
+    StyleBold = 0x1,
+    StyleItalic = 0x2,
+};
+
 struct InlineSpan {
     SpanKind kind = SpanKind::Plain;
+    quint8 styleMask = 0; // OR of SpanStyle bits; currently used for Link spans
     qsizetype rawStart = 0; // for Link/Image: start of '[' / '!'
     qsizetype rawEnd = 0;   // for Link/Image: one past ')'
     qsizetype visualStart = 0; // label start in visual text
@@ -79,7 +87,7 @@ private:
     void appendLink(BlockProjection &projection,
                     qsizetype linkRawStart, qsizetype linkRawEnd,
                     const QString &label, const QString &url,
-                    const QString &imageUrl = QString()) const;
+                    const QString &imageUrl = QString(), quint8 styleMask = 0) const;
     void appendPresentation(BlockProjection &projection, const QString &text, qsizetype rawAffinity) const;
 
     Palette m_palette;

@@ -1023,6 +1023,11 @@ int EditorController::rowAtContentY(qreal y) const
     return static_cast<int>(m_heightIndex.rowAtContentY(y));
 }
 
+int EditorController::rowForAnchor(const QString &fragment) const
+{
+    return static_cast<int>(m_store.rowForHeadingAnchor(fragment));
+}
+
 qreal EditorController::prefixHeight(int row) const
 {
     return m_heightIndex.prefixHeight(row);

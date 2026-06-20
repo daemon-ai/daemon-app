@@ -122,6 +122,10 @@ public:
     Q_INVOKABLE QVariantList search(const QString &needle) const;
     Q_INVOKABLE void reportBlockHeight(qulonglong blockId, qreal height);
     Q_INVOKABLE int rowAtContentY(qreal y) const;
+    // Resolve an in-document anchor fragment (e.g. "#table-of-contents") to the
+    // row of the matching heading, or -1 if none. Used by the QML link handler to
+    // scroll to a heading instead of opening the fragment externally.
+    Q_INVOKABLE int rowForAnchor(const QString &fragment) const;
     Q_INVOKABLE qreal prefixHeight(int row) const;
     Q_INVOKABLE bool openPersistence(const QString &path);
     Q_INVOKABLE bool flushChangedBlocks();

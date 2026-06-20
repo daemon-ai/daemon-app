@@ -36,6 +36,11 @@ public:
     BlockRecord *mutableBlockAt(qsizetype row);
     qsizetype rowForBlock(BlockId id) const;
 
+    // Resolve an in-document anchor fragment (e.g. "#table-of-contents", with or
+    // without the leading '#') to the row of the first heading whose GitHub-style
+    // slug matches. Returns -1 when no heading matches.
+    qsizetype rowForHeadingAnchor(const QString &fragment) const;
+
     QByteArray toUtf8() const;
     QString toMarkdown() const;
     QString blockMarkdown(BlockId id) const;

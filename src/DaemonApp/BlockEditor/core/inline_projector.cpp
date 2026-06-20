@@ -47,6 +47,44 @@ static QString firstImageUrlIn(const QString &raw, qsizetype start, qsizetype en
     return QString();
 }
 
+// True when [innerStart, innerEnd) (after trimming surrounding spaces) is exactly
+// one link "[label](url)" with a whitespace-free url. This lets the Strong/Emphasis
+// matchers turn **[text](url)** / *[text](url)* into a clickable (and styled) link
+// rather than literal text. Outputs the label content range and the url.
+static bool isLoneLink(const QString &raw, qsizetype innerStart, qsizetype innerEnd,
+                       qsizetype &labelStart, qsizetype &labelEnd, QString &url)
+{
+    while (innerStart < innerEnd && raw.at(innerStart).isSpace()) {
+        ++innerStart;
+    }
+    while (innerEnd > innerStart && raw.at(innerEnd - 1).isSpace()) {
+        --innerEnd;
+    }
+    if (innerStart >= innerEnd || raw.at(innerStart) != QLatin1Char('[')) {
+        return false;
+    }
+    const qsizetype lblClose = matchClosingBracket(raw, innerStart, innerEnd);
+    if (lblClose <= innerStart + 1 || lblClose + 1 >= innerEnd || raw.at(lblClose + 1) != QLatin1Char('(')) {
+        return false;
+    }
+    const qsizetype urlClose = raw.indexOf(QLatin1Char(')'), lblClose + 2);
+    // The url's ')' must be the final (trimmed) char, so the whole inner span is
+    // the link and nothing else.
+    if (urlClose != innerEnd - 1 || urlClose <= lblClose + 2) {
+        return false;
+    }
+    const QString candidate = raw.mid(lblClose + 2, urlClose - (lblClose + 2));
+    for (const QChar c : candidate) {
+        if (c.isSpace()) {
+            return false;
+        }
+    }
+    labelStart = innerStart + 1;
+    labelEnd = lblClose;
+    url = candidate;
+    return true;
+}
+
 qsizetype BlockProjection::visualToRaw(qsizetype visualOffset) const
 {
     if (visualToRawUtf16.isEmpty()) {
@@ -210,7 +248,19 @@ BlockProjection InlineProjector::project(const BlockRecord &block, bool revealMa
         if (!revealAll && raw.mid(i, 2) == QStringLiteral("**")) {
             const qsizetype close = raw.indexOf(QStringLiteral("**"), i + 2);
             if (close > i + 2 && close < contentEnd) {
-                appendVisual(projection, raw, i + 2, close - i - 2, SpanKind::Strong);
+                qsizetype lblStart = 0;
+                qsizetype lblEnd = 0;
+                QString linkUrl;
+                if (isLoneLink(raw, i + 2, close, lblStart, lblEnd, linkUrl)) {
+                    QString label = stripInlineMarkup(raw, lblStart, lblEnd);
+                    const QString favicon = firstImageUrlIn(raw, lblStart, lblEnd);
+                    if (label.isEmpty()) {
+                        label = linkUrl;
+                    }
+                    appendLink(projection, i, close + 2, label, linkUrl, favicon, StyleBold);
+                } else {
+                    appendVisual(projection, raw, i + 2, close - i - 2, SpanKind::Strong);
+                }
                 i = close + 2;
                 continue;
             }
@@ -219,7 +269,19 @@ BlockProjection InlineProjector::project(const BlockRecord &block, bool revealMa
         if (!revealAll && raw.at(i) == QLatin1Char('*')) {
             const qsizetype close = raw.indexOf(QLatin1Char('*'), i + 1);
             if (close > i + 1 && close < contentEnd) {
-                appendVisual(projection, raw, i + 1, close - i - 1, SpanKind::Emphasis);
+                qsizetype lblStart = 0;
+                qsizetype lblEnd = 0;
+                QString linkUrl;
+                if (isLoneLink(raw, i + 1, close, lblStart, lblEnd, linkUrl)) {
+                    QString label = stripInlineMarkup(raw, lblStart, lblEnd);
+                    const QString favicon = firstImageUrlIn(raw, lblStart, lblEnd);
+                    if (label.isEmpty()) {
+                        label = linkUrl;
+                    }
+                    appendLink(projection, i, close + 1, label, linkUrl, favicon, StyleItalic);
+                } else {
+                    appendVisual(projection, raw, i + 1, close - i - 1, SpanKind::Emphasis);
+                }
                 i = close + 1;
                 continue;
             }
@@ -289,6 +351,15 @@ QString InlineProjector::makeDisplayMarkup(const BlockRecord &block, const Block
             break;
         }
         case SpanKind::Link: {
+            // A link wrapped in **/* (e.g. **[Back to Top](#x)**) carries the
+            // emphasis on the span itself, so render it bold/italic while keeping
+            // the <a href> intact for click/selection.
+            if (span.styleMask & StyleBold) {
+                text = QStringLiteral("<b>%1</b>").arg(text);
+            }
+            if (span.styleMask & StyleItalic) {
+                text = QStringLiteral("<i>%1</i>").arg(text);
+            }
             QString inner;
             if (!span.imageUrl.isEmpty()) {
                 inner += QStringLiteral("<img src=\"%1\" height=\"16\" style=\"vertical-align:middle;\"> ")
@@ -461,7 +532,7 @@ void InlineProjector::appendImage(BlockProjection &projection,
 void InlineProjector::appendLink(BlockProjection &projection,
                                  qsizetype linkRawStart, qsizetype linkRawEnd,
                                  const QString &label, const QString &url,
-                                 const QString &imageUrl) const
+                                 const QString &imageUrl, quint8 styleMask) const
 {
     const qsizetype visualStart = projection.visualText.size();
     projection.visualText += label;
@@ -469,6 +540,7 @@ void InlineProjector::appendLink(BlockProjection &projection,
 
     InlineSpan span;
     span.kind = SpanKind::Link;
+    span.styleMask = styleMask;
     span.rawStart = linkRawStart;
     span.rawEnd = linkRawEnd;
     span.visualStart = visualStart;

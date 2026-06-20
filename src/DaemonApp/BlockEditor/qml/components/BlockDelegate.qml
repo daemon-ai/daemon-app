@@ -300,7 +300,7 @@ Item {
                     // land on the same anchor, so a selection gesture that starts on
                     // a link never opens it.
                     if (pressLink !== "" && linkAtMouse(mouse) === pressLink) {
-                        Qt.openUrlExternally(pressLink)
+                        root.activateLink(pressLink)
                         return
                     }
                     clickStreak = passiveClickTimer.running ? clickStreak + 1 : 1
@@ -382,7 +382,7 @@ Item {
                         return
                     // Same-link stationary click opens the URL instead of activating.
                     if (pressLink !== "" && linkAtMouse(mouse) === pressLink) {
-                        Qt.openUrlExternally(pressLink)
+                        root.activateLink(pressLink)
                         return
                     }
                     root.editorController.clearSelection()
@@ -848,6 +848,22 @@ Item {
 
     // Owner of the drag grab routes each move to whichever delegate is under the
     // cursor (it may be active or passive, above or below the origin).
+    // A clicked link: an in-document anchor (#slug) scrolls the list to the
+    // matching heading; anything else opens externally. Falls back to external
+    // open when the fragment does not resolve to a heading.
+    function activateLink(href) {
+        if (href.startsWith("#")) {
+            const targetRow = root.editorController.rowForAnchor(href)
+            if (targetRow >= 0) {
+                const view = root.ListView.view
+                if (view)
+                    view.positionViewAtIndex(targetRow, ListView.Beginning)
+                return
+            }
+        }
+        Qt.openUrlExternally(href)
+    }
+
     function extendSelectionToScenePoint(scenePos) {
         const view = root.ListView.view
         if (!view)

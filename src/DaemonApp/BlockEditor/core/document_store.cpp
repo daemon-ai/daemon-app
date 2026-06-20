@@ -45,6 +45,28 @@ QString firstLineOf(const QString &content)
     return newline < 0 ? content : content.left(newline);
 }
 
+// GitHub-style heading slug: lowercase, drop characters other than letters,
+// digits, space and hyphen, then turn runs of spaces into single hyphens.
+// "## Foo Bar!" -> "foo-bar", matching the "#foo-bar" fragment a TOC links to.
+QString headingSlug(const QString &headingText)
+{
+    QString slug;
+    slug.reserve(headingText.size());
+    for (const QChar c : headingText) {
+        if (c.isLetterOrNumber()) {
+            slug += c.toLower();
+        } else if (c == QLatin1Char('-') || c == QLatin1Char('_')) {
+            slug += c;
+        } else if (c.isSpace()) {
+            slug += QLatin1Char(' ');
+        }
+        // All other punctuation is dropped.
+    }
+    slug = slug.simplified(); // collapse internal whitespace, trim ends
+    slug.replace(QLatin1Char(' '), QLatin1Char('-'));
+    return slug;
+}
+
 // Language token after a leading ``` / ~~~ fence on the first line, or empty.
 QString fenceLanguageOf(const QString &content)
 {
@@ -460,6 +482,39 @@ BlockRecord *DocumentStore::mutableBlockAt(qsizetype row)
 qsizetype DocumentStore::rowForBlock(BlockId id) const
 {
     return m_rowsById.value(id, -1);
+}
+
+qsizetype DocumentStore::rowForHeadingAnchor(const QString &fragment) const
+{
+    QString target = fragment;
+    if (target.startsWith(QLatin1Char('#'))) {
+        target = target.mid(1);
+    }
+    target = target.toLower();
+    if (target.isEmpty()) {
+        return -1;
+    }
+
+    // Reduce link/image syntax to the visible label/alt before slugifying, so a
+    // heading like "## See [Qt](https://qt.io)" slugs from "See Qt", not the url.
+    static const QRegularExpression linkRe(QStringLiteral("!?\\[([^\\]]*)\\]\\([^)]*\\)"));
+
+    for (qsizetype row = 0; row < m_blocks.size(); ++row) {
+        const BlockRecord &block = m_blocks[row];
+        if (block.type != BlockType::Heading) {
+            continue;
+        }
+        QString text = block.markdown();
+        const QRegularExpressionMatch marker = headingRe().match(text);
+        if (marker.hasMatch()) {
+            text = text.mid(marker.capturedEnd(0));
+        }
+        text.replace(linkRe, QStringLiteral("\\1"));
+        if (headingSlug(text) == target) {
+            return row;
+        }
+    }
+    return -1;
 }
 
 QByteArray DocumentStore::toUtf8() const

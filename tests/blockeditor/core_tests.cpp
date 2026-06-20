@@ -30,6 +30,8 @@ private slots:
     void projectionRendersLinks();
     void linkSelectionCopiesFullSyntax();
     void linkNegativeCasesNotLinks();
+    void linkInsideEmphasisIsClickable();
+    void headingAnchorResolvesToRow();
     void imageBlocksClassify();
     void inlineImagesProject();
     void resolveImageSourceCases();
@@ -323,6 +325,63 @@ void CoreTests::projectionRendersLinks()
         QCOMPARE(p.visualText, QStringLiteral("https://x"));
         QVERIFY(p.displayMarkup.contains(QStringLiteral("<a href=\"https://x\"")));
     }
+}
+
+void CoreTests::linkInsideEmphasisIsClickable()
+{
+    be::InlineProjector projector;
+
+    // **[text](url)**: the link is wrapped in bold, but must still render as a
+    // single clickable <a> (bold), not literal "[text](url)".
+    {
+        be::BlockRecord block;
+        block.id = 1;
+        block.type = be::BlockType::Paragraph;
+        block.markdownUtf8 = QByteArrayLiteral("**[text](https://x)**");
+        const be::BlockProjection p = projector.project(block);
+        QCOMPARE(p.visualText, QStringLiteral("text"));
+        QCOMPARE(p.displayMarkup.count(QStringLiteral("<a href=\"https://x\"")), qsizetype(1));
+        QVERIFY(p.displayMarkup.contains(QStringLiteral("<b>")));
+        QVERIFY(!p.displayMarkup.contains(QStringLiteral("[text]")));
+    }
+
+    // *[t](u)*: italic variant stays clickable.
+    {
+        be::BlockRecord block;
+        block.id = 2;
+        block.type = be::BlockType::Paragraph;
+        block.markdownUtf8 = QByteArrayLiteral("*[t](https://y)*");
+        const be::BlockProjection p = projector.project(block);
+        QCOMPARE(p.visualText, QStringLiteral("t"));
+        QCOMPARE(p.displayMarkup.count(QStringLiteral("<a href=\"https://y\"")), qsizetype(1));
+        QVERIFY(p.displayMarkup.contains(QStringLiteral("<i>")));
+    }
+
+    // The real-world "Back to Top" TOC pattern: the bold anchor preserves the
+    // #fragment href so anchor navigation can resolve it.
+    {
+        be::BlockRecord block;
+        block.id = 3;
+        block.type = be::BlockType::Paragraph;
+        block.markdownUtf8 = QByteArrayLiteral("**[\xE2\xAC\x86 Back to Top](#table-of-contents)**");
+        const be::BlockProjection p = projector.project(block);
+        QCOMPARE(p.displayMarkup.count(QStringLiteral("<a href=\"#table-of-contents\"")), qsizetype(1));
+        QVERIFY(p.displayMarkup.contains(QStringLiteral("<b>")));
+    }
+}
+
+void CoreTests::headingAnchorResolvesToRow()
+{
+    be::DocumentStore store;
+    store.loadMarkdown(QStringLiteral("### Table of Contents\n\nbody\n\n## Foo Bar!\n"));
+
+    // GitHub-style slug match, with the leading '#' optional.
+    QCOMPARE(store.rowForHeadingAnchor(QStringLiteral("#table-of-contents")), qsizetype(0));
+    QCOMPARE(store.rowForHeadingAnchor(QStringLiteral("table-of-contents")), qsizetype(0));
+    // Trailing punctuation ('!') is dropped from the slug.
+    QCOMPARE(store.rowForHeadingAnchor(QStringLiteral("#foo-bar")), qsizetype(2));
+    // No matching heading.
+    QCOMPARE(store.rowForHeadingAnchor(QStringLiteral("#nope")), qsizetype(-1));
 }
 
 void CoreTests::linkSelectionCopiesFullSyntax()
