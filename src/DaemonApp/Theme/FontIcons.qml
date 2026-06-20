@@ -100,6 +100,16 @@ QtObject {
     readonly property string fa_bolt: "\uf0e7"
     readonly property string fa_hashtag: "\uf292"
 
+    // --- Composer glyphs ----------------------------------------------------
+    // Send (primary), stop (filled square), queue (layer group), mention (@),
+    // attach (paperclip), and dictation (reserved; voice is not wired yet).
+    readonly property string fa_arrow_up: "\uf062"
+    readonly property string fa_square: "\uf0c8"
+    readonly property string fa_layer_group: "\uf5fd"
+    readonly property string fa_at: "\uf1fa"
+    readonly property string fa_paperclip: "\uf0c6"
+    readonly property string fa_microphone: "\uf130"
+
     // --- Material Symbols ---------------------------------------------------
     readonly property string mt_view_kanban: "\ueb7f"
     readonly property string mt_article: "\uef42"

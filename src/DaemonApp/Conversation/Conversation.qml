@@ -297,13 +297,55 @@ Rectangle {
                 }
 
                 Composer {
+                    id: composer
                     Layout.fillWidth: true
                     visible: !UiSettings.distractionFree
+                    busy: transcript.busy
+                    conversationId: controller.currentId
+
                     // Persist the user's text (full reload follows synchronously),
                     // then stream a simulated assistant reply into the transcript.
-                    onSubmitted: function(text) {
-                        controller.appendUserText(text);
+                    // Attachment refs (if any) ride on the front of the message.
+                    onSubmitted: function(text, attachmentRefs) {
+                        var full = attachmentRefs.length > 0 ? (attachmentRefs + "\n" + text) : text;
+                        controller.appendUserText(full);
                         transcript.runAssistantTurn(text);
+                        // Demo: populate the status-stack todos for the turn (no
+                        // real todo backend exists yet).
+                        composer.setTodos([
+                            { text: qsTr("Inspect the project"), done: true },
+                            { text: qsTr("Run the checks"), done: false },
+                            { text: qsTr("Summarize the result"), done: false }
+                        ]);
+                    }
+                    // Steer: nudge the running turn (no interrupt). Logged as a
+                    // user note until a real gateway carries steer messages.
+                    onSteer: function(text) {
+                        controller.appendUserText(qsTr("(steer) ") + text);
+                    }
+                    onCancelRequested: transcript.stopTurn()
+                    // Client-side slash commands routed to real app actions.
+                    onCommandInvoked: function(command) {
+                        if (command === "new")
+                            root.createNew();
+                        else if (command === "theme")
+                            settingsMenu.open();
+                        else if (command === "distraction")
+                            UiSettings.distractionFree = true;
+                    }
+
+                    // Clear the demo todos once the turn settles.
+                    Connections {
+                        target: transcript
+                        function onBusyChanged() {
+                            if (!transcript.busy)
+                                todoClearTimer.restart();
+                        }
+                    }
+                    Timer {
+                        id: todoClearTimer
+                        interval: 1500
+                        onTriggered: composer.clearTodos()
                     }
                 }
             }
