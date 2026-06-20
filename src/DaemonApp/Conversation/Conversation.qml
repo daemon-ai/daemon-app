@@ -299,7 +299,9 @@ Rectangle {
                 Composer {
                     id: composer
                     Layout.fillWidth: true
-                    visible: !UiSettings.distractionFree
+                    // Stays visible in distraction-free: hiding the composer would
+                    // remove the only way to talk to the agent. Only the header
+                    // chrome and surrounding app panes hide in distraction-free.
                     busy: transcript.busy
                     conversationId: controller.currentId
 
