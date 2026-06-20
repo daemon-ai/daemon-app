@@ -117,6 +117,42 @@ set(QT_QML_GENERATE_QMLLS_INI "${_da_prev_qmlls_ini}")
 unset(BUILD_TESTING CACHE)
 
 # ---------------------------------------------------------------------------
+# MicroTeX - LaTeX math renderer with a Qt/QPainter backend. Built from the
+# pinned source tree as the plain-CMake target `LaTeX` (project name LaTeX);
+# the -DQT=ON path compiles src/platform/qt/graphic_qt.cpp, giving the
+# `tex::Graphics2D_qt` class the MathImageProvider paints through.
+# ---------------------------------------------------------------------------
+_daemon_app_resolve_dir(_microtex_dir MICROTEX_SOURCE_DIR)
+if(NOT EXISTS "${_microtex_dir}/CMakeLists.txt")
+    message(FATAL_ERROR "MICROTEX_SOURCE_DIR must point to a MicroTeX source tree (got '${_microtex_dir}')")
+endif()
+
+# Build the Qt backend (graphic_qt.cpp -> tex::Graphics2D_qt). These options are
+# read with if() BEFORE option() runs in MicroTeX's CMakeLists, so a FORCEd cache
+# value is what its configure sees. Silence the library's logging and disable the
+# debug box overlays so rendered formulas are clean.
+set(QT ON CACHE BOOL "" FORCE)
+set(HAVE_LOG OFF CACHE BOOL "" FORCE)
+set(GRAPHICS_DEBUG OFF CACHE BOOL "" FORCE)
+set(BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
+
+# EXCLUDE_FROM_ALL keeps the bundled LaTeXQtSample demo target out of the default
+# build: nothing links it, so it is configured but never compiled. Only the
+# `LaTeX` library is linked by the BlockEditor module.
+add_subdirectory("${_microtex_dir}" "${CMAKE_BINARY_DIR}/_deps/microtex" EXCLUDE_FROM_ALL)
+
+# Treat MicroTeX's public headers as system includes so its (vendored, upstream)
+# header warnings do not surface in our translation units that include latex.h.
+if(TARGET LaTeX)
+    set_target_properties(LaTeX PROPERTIES
+        INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_microtex_dir}/src")
+endif()
+
+# Resources (fonts + XML) MicroTeX's tex::LaTeX::init() reads at runtime. The
+# read-only Nix store path is fine; init only reads from it.
+set(MICROTEX_RES_DIR "${_microtex_dir}/res" CACHE INTERNAL "MicroTeX runtime resource dir")
+
+# ---------------------------------------------------------------------------
 # Desktop-only dependencies
 #
 # Opt-in: nothing links these yet (tray/updater/autostart land with the platform

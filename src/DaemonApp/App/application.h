@@ -22,6 +22,7 @@ class Application : public QObject {
 
 public:
     explicit Application(QObject* parent = nullptr);
+    ~Application() override;
 
     // Expose C++ services to QML before the scene loads.
     void registerContext(QQmlApplicationEngine& engine);

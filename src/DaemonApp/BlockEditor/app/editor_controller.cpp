@@ -1,6 +1,7 @@
 #include "app/editor_controller.h"
 
 #include "core/markdown_table.h"
+#include "core/math_url.h"
 
 #include <QClipboard>
 #include <QGuiApplication>
@@ -1077,6 +1078,11 @@ QString EditorController::normalizeClipboardText(const QString &plainText, const
         return text.toHtmlEscaped().replace(QStringLiteral("&lt;"), QStringLiteral("<")).replace(QStringLiteral("&gt;"), QStringLiteral(">")).replace(QStringLiteral("&amp;"), QStringLiteral("&"));
     }
     return plainText;
+}
+
+QString EditorController::mathImageUrl(const QString &latex, bool displayMode) const
+{
+    return be::mathImageUrl(latex, displayMode, m_palette.bodyPixelSize, m_palette.text);
 }
 
 void EditorController::clearActiveSelection()

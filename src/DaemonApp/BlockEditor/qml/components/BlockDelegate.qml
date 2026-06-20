@@ -19,6 +19,7 @@ Item {
     required property var mermaidData
     required property var codeData
     required property var imageData
+    required property var mathData
     required property var editorController
 
     // BlockType enum values for list items (BulletListItem=2, OrderedListItem=3,
@@ -49,11 +50,19 @@ Item {
         && imageData.url
         && imageData.url.length > 0)
 
+    // Math renders as a centered formula image when passive: a ```math fence or
+    // a whole-block $$...$$. Activating the block reveals the raw markdown for
+    // editing, exactly like mermaid. buildMathData yields the source for both.
+    readonly property bool hasMath: !!(mathData
+        && mathData.source
+        && mathData.source.length > 0)
+
     // BlockType::CodeFence enum index (6). A non-mermaid code fence renders as a
     // syntax-highlighted code card when passive (mermaid fences are gated above
     // and route to MermaidBlock); activating the block reveals the raw source.
     readonly property bool hasCode: blockType === 6
         && !hasMermaid
+        && !hasMath
         && !!(codeData
         && codeData.code
         && codeData.code.length > 0)
@@ -197,7 +206,7 @@ Item {
 
         Item {
             id: passiveContainer
-            visible: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasCode
+            visible: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasCode && !root.hasMath
             width: parent.width
             implicitHeight: passiveText.implicitHeight
             height: implicitHeight
@@ -247,7 +256,7 @@ Item {
             MouseArea {
                 id: passiveSelect
                 anchors.fill: parent
-                enabled: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage
+                enabled: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasMath
                 acceptedButtons: Qt.LeftButton
                 preventStealing: true
                 hoverEnabled: true
@@ -423,6 +432,32 @@ Item {
             MermaidBlock {
                 width: mermaidLoader.width
                 mermaidData: root.mermaidData
+                editorController: root.editorController
+                blockId: root.blockId
+            }
+        }
+
+        Item {
+            id: mathContainer
+            visible: !root.isActive && root.hasMath
+            width: parent.width
+            implicitHeight: mathLoader.implicitHeight
+            height: implicitHeight
+
+            Loader {
+                id: mathLoader
+                anchors.left: parent.left
+                anchors.right: parent.right
+                active: mathContainer.visible
+                sourceComponent: mathComponent
+            }
+        }
+
+        Component {
+            id: mathComponent
+            MathBlock {
+                width: mathLoader.width
+                mathData: root.mathData
                 editorController: root.editorController
                 blockId: root.blockId
             }

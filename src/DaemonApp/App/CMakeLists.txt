@@ -49,6 +49,13 @@ target_link_libraries(daemon-app
         # dependency, records its shared lib on the executable rpath, and ensures
         # the QML plugin (kquicksyntaxhighlightingplugin) is built alongside.
         KF6SyntaxHighlighting
+        # MicroTeX: application.cpp calls tex::LaTeX::init()/release() at startup.
+        LaTeX
+)
+
+# The runtime resource dir (fonts + XML) MicroTeX's tex::LaTeX::init() reads.
+target_compile_definitions(daemon-app
+    PRIVATE MICROTEX_RES_DIR="${MICROTEX_RES_DIR}"
 )
 
 # Build dependency on the KSyntaxHighlighting QML plugin so its module is emitted

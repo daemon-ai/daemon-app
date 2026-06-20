@@ -6,6 +6,7 @@
 #include "core/inline_projector.h"
 #include "core/markdown_parser.h"
 #include "core/markdown_table.h"
+#include "core/math_url.h"
 #include "core/persistence.h"
 #include "core/piece_table.h"
 #include "core/selection.h"
@@ -34,6 +35,9 @@ private slots:
     void headingAnchorResolvesToRow();
     void imageBlocksClassify();
     void inlineImagesProject();
+    void inlineMathProjectsAsImage();
+    void displayMathInlineProjects();
+    void blockMathDataDetected();
     void resolveImageSourceCases();
     void imageSizingParses();
     void selectionCopiesMarkdown();
@@ -553,6 +557,89 @@ void CoreTests::inlineImagesProject()
         }
         QCOMPARE(imageSpans, 1);
     }
+}
+
+void CoreTests::inlineMathProjectsAsImage()
+{
+    be::InlineProjector projector;
+
+    be::DocumentStore store;
+    store.loadMarkdown(QStringLiteral("a $x^2$ b\n"));
+    QVERIFY(store.blockCount() >= 1);
+    const be::BlockRecord *block = store.blockAt(0);
+    QCOMPARE(block->type, be::BlockType::Paragraph);
+
+    const be::BlockProjection p = projector.project(*block);
+
+    // The formula collapses to a single object-replacement placeholder, keeping
+    // the visual<->raw offset maps aligned (visual text is "a \uFFFC b").
+    int placeholders = 0;
+    for (const QChar c : p.visualText) {
+        if (c == QChar(0xFFFC)) {
+            ++placeholders;
+        }
+    }
+    QCOMPARE(placeholders, 1);
+
+    // Exactly one math <img> and exactly one Math span.
+    QCOMPARE(p.displayMarkup.count(QStringLiteral("<img src=\"image://math/")), 1);
+    QVERIFY(!p.displayMarkup.contains(QStringLiteral("<img src=\"image://imgcache")));
+    int mathSpans = 0;
+    for (const be::InlineSpan &span : p.spans) {
+        if (span.kind == be::SpanKind::Math) {
+            ++mathSpans;
+            QCOMPARE(span.mathLatex, QStringLiteral("x^2"));
+            QVERIFY(!span.mathDisplay);
+        }
+    }
+    QCOMPARE(mathSpans, 1);
+
+    // The placeholder's raw range covers the whole $...$, so selecting the block
+    // copies back the full Markdown (offset-map round-trip).
+    be::SelectionControllerCore selection;
+    selection.setAnchor({block->id, 0, p.visualToRaw(0), 0});
+    selection.setHead({block->id, 0, p.visualToRaw(p.visualText.size()), p.visualText.size()});
+    QCOMPARE(selection.copyMarkdown(store.blocks()), QStringLiteral("a $x^2$ b"));
+}
+
+void CoreTests::displayMathInlineProjects()
+{
+    be::InlineProjector projector;
+
+    be::BlockRecord block;
+    block.id = 1;
+    block.type = be::BlockType::Paragraph;
+    block.markdownUtf8 = QByteArrayLiteral("see $$\\int$$ here");
+    const be::BlockProjection p = projector.project(block);
+
+    QVERIFY(p.displayMarkup.contains(QStringLiteral("<img src=\"image://math/")));
+    int mathSpans = 0;
+    for (const be::InlineSpan &span : p.spans) {
+        if (span.kind == be::SpanKind::Math) {
+            ++mathSpans;
+            QCOMPARE(span.mathLatex, QStringLiteral("\\int"));
+            QVERIFY(span.mathDisplay);
+        }
+    }
+    QCOMPARE(mathSpans, 1);
+}
+
+void CoreTests::blockMathDataDetected()
+{
+    // A whole-block $$...$$ span yields the stripped LaTeX (single- and
+    // multi-line forms).
+    QCOMPARE(be::blockMathSource(QStringLiteral("$$x^2 + y^2$$")),
+             QStringLiteral("x^2 + y^2"));
+    QCOMPARE(be::blockMathSource(QStringLiteral("$$\n\\frac{a}{b}\n$$")),
+             QStringLiteral("\\frac{a}{b}"));
+
+    // A ```math fence yields its body with the fence lines stripped.
+    QCOMPARE(be::blockMathSource(QStringLiteral("```math\n\\frac{a}{b}\n```")),
+             QStringLiteral("\\frac{a}{b}"));
+
+    // A normal paragraph and inline-only math are not block math.
+    QVERIFY(be::blockMathSource(QStringLiteral("just a paragraph")).isEmpty());
+    QVERIFY(be::blockMathSource(QStringLiteral("inline $x$ math")).isEmpty());
 }
 
 void CoreTests::resolveImageSourceCases()

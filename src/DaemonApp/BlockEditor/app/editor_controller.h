@@ -132,6 +132,10 @@ public:
     Q_INVOKABLE QString exportMarkdown() const;
     Q_INVOKABLE void importMarkdown(const QString &markdown);
     Q_INVOKABLE QString normalizeClipboardText(const QString &plainText, const QString &markdownText = {}, const QString &htmlText = {}) const;
+    // Build an image://math URL for the given LaTeX with the live theme palette,
+    // so a block (MathBlock.qml) renders the same way inline math does and a
+    // theme/font-size change re-renders it.
+    Q_INVOKABLE QString mathImageUrl(const QString &latex, bool displayMode) const;
 
 signals:
     void activeBlockIdChanged();

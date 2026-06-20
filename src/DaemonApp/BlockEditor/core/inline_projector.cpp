@@ -2,6 +2,7 @@
 
 #include "core/image_url.h"
 #include "core/markdown_parser.h"
+#include "core/math_url.h"
 
 #include <QRegularExpression>
 
@@ -245,6 +246,46 @@ BlockProjection InlineProjector::project(const BlockRecord &block, bool revealMa
             }
         }
 
+        // Inline math: $...$ (inline) and $$...$$ (display). Both collapse to a
+        // single placeholder char (like an image) and render as an <img> served
+        // by the math provider. A leading backslash escapes the '$'; the content
+        // must be non-empty and not space-adjacent (consistent with md4qt), and a
+        // missing closing delimiter falls through to literal text. Matched before
+        // emphasis/code so a '*' or '`' inside a formula is never consumed first.
+        if (!revealAll && raw.at(i) == QLatin1Char('$')
+            && !(i > 0 && raw.at(i - 1) == QLatin1Char('\\'))) {
+            const bool display = (i + 1 < contentEnd && raw.at(i + 1) == QLatin1Char('$'));
+            const qsizetype delimLen = display ? 2 : 1;
+            const qsizetype bodyStart = i + delimLen;
+            qsizetype close = -1;
+            for (qsizetype k = bodyStart; k + delimLen <= contentEnd; ++k) {
+                if (raw.at(k) != QLatin1Char('$')) {
+                    continue;
+                }
+                if (raw.at(k - 1) == QLatin1Char('\\')) {
+                    continue;
+                }
+                if (display) {
+                    if (k + 1 < contentEnd && raw.at(k + 1) == QLatin1Char('$')) {
+                        close = k;
+                        break;
+                    }
+                } else {
+                    close = k;
+                    break;
+                }
+            }
+            if (close > bodyStart) {
+                const QString latex = raw.mid(bodyStart, close - bodyStart);
+                if (!latex.front().isSpace() && !latex.back().isSpace()) {
+                    const qsizetype spanEnd = close + delimLen;
+                    appendMath(projection, i, spanEnd, latex, display);
+                    i = spanEnd;
+                    continue;
+                }
+            }
+        }
+
         if (!revealAll && raw.mid(i, 2) == QStringLiteral("**")) {
             const qsizetype close = raw.indexOf(QStringLiteral("**"), i + 2);
             if (close > i + 2 && close < contentEnd) {
@@ -381,6 +422,15 @@ QString InlineProjector::makeDisplayMarkup(const BlockRecord &block, const Block
             }
             img += QStringLiteral(">");
             escaped += img;
+            break;
+        }
+        case SpanKind::Math: {
+            // The math provider rasterizes the formula; RichText loads it at its
+            // intrinsic size and the baseline is nudged onto the text line.
+            const QString src = be::mathImageUrl(span.mathLatex, span.mathDisplay,
+                                                 m_palette.bodyPixelSize, m_palette.text);
+            escaped += QStringLiteral("<img src=\"%1\" style=\"vertical-align:middle;\">")
+                           .arg(src.toHtmlEscaped());
             break;
         }
         case SpanKind::Plain:
@@ -524,6 +574,31 @@ void InlineProjector::appendImage(BlockProjection &projection,
     projection.spans.push_back(span);
 
     // The whole raw image range maps onto the single placeholder position.
+    for (qsizetype rawOffset = rawStart; rawOffset <= rawEnd && rawOffset < projection.rawToVisualUtf16.size(); ++rawOffset) {
+        projection.rawToVisualUtf16[rawOffset] = visualStart;
+    }
+}
+
+void InlineProjector::appendMath(BlockProjection &projection,
+                                 qsizetype rawStart, qsizetype rawEnd, const QString &latex,
+                                 bool displayMode) const
+{
+    const qsizetype visualStart = projection.visualText.size();
+    projection.visualText += kImagePlaceholder;
+    const qsizetype visualEnd = projection.visualText.size();
+
+    InlineSpan span;
+    span.kind = SpanKind::Math;
+    span.rawStart = rawStart;
+    span.rawEnd = rawEnd;
+    span.visualStart = visualStart;
+    span.visualEnd = visualEnd;
+    span.mathLatex = latex;
+    span.mathDisplay = displayMode;
+    projection.spans.push_back(span);
+
+    // The whole raw $...$ range maps onto the single placeholder position, so
+    // selecting/copying the rendered formula recovers the full Markdown source.
     for (qsizetype rawOffset = rawStart; rawOffset <= rawEnd && rawOffset < projection.rawToVisualUtf16.size(); ++rawOffset) {
         projection.rawToVisualUtf16[rawOffset] = visualStart;
     }

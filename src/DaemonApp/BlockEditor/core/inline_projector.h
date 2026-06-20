@@ -15,6 +15,7 @@ enum class SpanKind : quint16 {
     Code,
     Link,
     Image,
+    Math,
     HiddenDelimiter,
 };
 
@@ -36,6 +37,8 @@ struct InlineSpan {
     QString imageUrl; // SpanKind::Image: the image url; Link: a leading favicon
     qreal imageWidth = 0;  // SpanKind::Image: explicit width in px (0 == unset)
     qreal imageHeight = 0; // SpanKind::Image: explicit height in px (0 == unset)
+    QString mathLatex; // SpanKind::Math: the LaTeX source between the $ delimiters
+    bool mathDisplay = false; // SpanKind::Math: true for $$display$$, false for $inline$
 };
 
 struct BlockProjection {
@@ -84,6 +87,9 @@ private:
     void appendImage(BlockProjection &projection,
                      qsizetype rawStart, qsizetype rawEnd, const QString &url,
                      qreal width = 0, qreal height = 0) const;
+    void appendMath(BlockProjection &projection,
+                    qsizetype rawStart, qsizetype rawEnd, const QString &latex,
+                    bool displayMode) const;
     void appendLink(BlockProjection &projection,
                     qsizetype linkRawStart, qsizetype linkRawEnd,
                     const QString &label, const QString &url,

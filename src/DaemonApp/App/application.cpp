@@ -2,6 +2,7 @@
 
 #include "app/cached_image_provider.h"
 #include "app/image_cache.h"
+#include "app/math_image_provider.h"
 #include "persistence/in_memory_conversation_store.h"
 #include "platform/iplatform_services.h"
 #include "platform/platform_services_factory.h"
@@ -11,11 +12,22 @@
 #include <QQmlContext>
 #include <QQuickWindow>
 
+#include <latex.h>
+
 Application::Application(QObject* parent)
     : QObject(parent)
     , m_store(new persistence::InMemoryConversationStore(this))
     , m_platform(platform::createPlatformServices(this))
 {
+    // MicroTeX loads its fonts/XML resources once; the path is baked in at build
+    // time (MICROTEX_RES_DIR). Done here so the "math" image provider can parse
+    // formulas as soon as the scene requests them.
+    tex::LaTeX::init(std::string(MICROTEX_RES_DIR));
+}
+
+Application::~Application()
+{
+    tex::LaTeX::release();
 }
 
 void Application::registerContext(QQmlApplicationEngine& engine)
@@ -27,6 +39,9 @@ void Application::registerContext(QQmlApplicationEngine& engine)
     // ImageCache; instantiate it on the GUI thread and register the provider.
     be::app::ImageCache::instance();
     engine.addImageProvider(QStringLiteral("imgcache"), new be::app::CachedImageProvider);
+
+    // LaTeX math: image://math/<payload> requests are rasterized by MicroTeX.
+    engine.addImageProvider(QStringLiteral("math"), new be::app::MathImageProvider);
 }
 
 void Application::completeWiring(QQmlApplicationEngine& engine)

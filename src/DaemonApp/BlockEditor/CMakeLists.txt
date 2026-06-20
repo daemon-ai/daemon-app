@@ -49,6 +49,7 @@ add_library(be_core STATIC
     core/markdown_parser.h
     core/markdown_table.cpp
     core/markdown_table.h
+    core/math_url.h
     core/persistence.cpp
     core/persistence.h
     core/piece_table.cpp
@@ -81,11 +82,14 @@ qt_add_qml_module(da_blockeditor
         app/editor_controller.h
         app/image_cache.cpp
         app/image_cache.h
+        app/math_image_provider.cpp
+        app/math_image_provider.h
     QML_FILES
         qml/components/BlockDelegate.qml
         qml/components/TableBlock.qml
         qml/components/MermaidBlock.qml
         qml/components/ImageBlock.qml
+        qml/components/MathBlock.qml
         qml/components/CodeBlock.qml
         qml/components/EditorSurface.qml
 )
@@ -104,7 +108,11 @@ target_link_libraries(da_blockeditor
     PRIVATE
         Qt6::Quick
         Qt6::Network
+        Qt6::Gui
         be_core
         be_diagram
         daemon-app::theme
+        # MicroTeX LaTeX math renderer (tex::LaTeX / tex::Graphics2D_qt), used by
+        # the MathImageProvider to rasterize formulas into QImages.
+        LaTeX
 )

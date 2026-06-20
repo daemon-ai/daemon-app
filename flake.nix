@@ -19,6 +19,10 @@
       url = "gitlab:frameworks/syntax-highlighting/ccb31f722406d5b980ba57cf71a3ffab70a82847?host=invent.kde.org";
       flake = false;
     };
+    microtex = {
+      url = "github:NanoMichael/MicroTeX/0e3707f6dafebb121d98b53c64364d16fefe481d";
+      flake = false;
+    };
 
     # --- Desktop-only dependencies ---
     qwindowkit = {
@@ -40,7 +44,7 @@
   };
 
   outputs =
-    { nixpkgs, flake-utils, md4qt, earcut, ksyntaxhighlighting, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, ... }:
+    { nixpkgs, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, ... }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -78,6 +82,7 @@
           "-DMD4QT_SOURCE_DIR=${md4qt}"
           "-DEARCUT_SOURCE_DIR=${earcut}"
           "-DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${ksyntaxhighlighting}"
+          "-DMICROTEX_SOURCE_DIR=${microtex}"
           "-DQWINDOWKIT_SOURCE_DIR=${qwindowkit}"
           "-DQSIMPLEUPDATER_SOURCE_DIR=${qsimpleupdater}"
           "-DQAUTOSTART_SOURCE_DIR=${qautostart}"
@@ -103,7 +108,8 @@
             qt6.wrapQtAppsHook
           ];
 
-          buildInputs = qtPackages;
+          # MicroTeX (LaTeX math renderer) links tinyxml2 via pkg-config.
+          buildInputs = qtPackages ++ [ pkgs.tinyxml-2 ];
 
           cmakeFlags = depFlags;
         };
@@ -127,6 +133,7 @@
             gdb
             kdePackages.extra-cmake-modules
             perl
+            tinyxml-2
           ] ++ qtPackages;
 
           shellHook = ''
@@ -137,6 +144,7 @@
             export MD4QT_SOURCE_DIR="${md4qt}"
             export EARCUT_SOURCE_DIR="${earcut}"
             export KSYNTAXHIGHLIGHTING_SOURCE_DIR="${ksyntaxhighlighting}"
+            export MICROTEX_SOURCE_DIR="${microtex}"
             export QWINDOWKIT_SOURCE_DIR="${qwindowkit}"
             export QSIMPLEUPDATER_SOURCE_DIR="${qsimpleupdater}"
             export QAUTOSTART_SOURCE_DIR="${qautostart}"

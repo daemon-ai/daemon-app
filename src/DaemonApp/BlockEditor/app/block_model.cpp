@@ -3,6 +3,7 @@
 #include "core/image_url.h"
 #include "core/markdown_parser.h"
 #include "core/markdown_table.h"
+#include "core/math_url.h"
 
 #include <QVariantList>
 #include <QVariantMap>
@@ -108,6 +109,34 @@ QVariantMap buildMermaidData(const be::BlockRecord &block)
     return data;
 }
 
+// Block-level math payload: the LaTeX source rendered as a centered display
+// formula. Detected from EITHER a ```math fence (reusing the fence helpers) OR a
+// block whose entire content is a single $$...$$ span. `source` is the bare
+// LaTeX; the QML layer turns it into an image://math URL with the live palette.
+QVariantMap buildMathData(const be::BlockRecord &block)
+{
+    QString source;
+
+    // An already-parsed math fence keeps its language in metadata and stores the
+    // body alone, so trust the metadata directly. Otherwise (freshly typed fence
+    // or a bare $$...$$ block) detect from the raw markdown.
+    const QString lang = mermaidLanguageOf(block);
+    if (lang.compare(QStringLiteral("math"), Qt::CaseInsensitive) == 0) {
+        source = mermaidSourceOf(block).trimmed();
+    } else {
+        source = be::blockMathSource(block.markdown());
+    }
+
+    if (source.isEmpty()) {
+        return {};
+    }
+
+    QVariantMap data;
+    data.insert(QStringLiteral("source"), source);
+    data.insert(QStringLiteral("displayMode"), true);
+    return data;
+}
+
 // Syntax-highlight payload for a code fence: the info-string language (for the
 // KSyntaxHighlighting definition lookup) and the fenced body with the fence
 // lines stripped. Mermaid fences are excluded - they render as diagrams via
@@ -118,7 +147,9 @@ QVariantMap buildCodeData(const be::BlockRecord &block)
         return {};
     }
     const QString lang = mermaidLanguageOf(block);
-    if (lang.compare(QStringLiteral("mermaid"), Qt::CaseInsensitive) == 0) {
+    // Mermaid and math fences render as their own block types, not code cards.
+    if (lang.compare(QStringLiteral("mermaid"), Qt::CaseInsensitive) == 0
+        || lang.compare(QStringLiteral("math"), Qt::CaseInsensitive) == 0) {
         return {};
     }
     QVariantMap data;
@@ -222,6 +253,8 @@ QVariant BlockModel::data(const QModelIndex &index, int role) const
         return buildCodeData(*block);
     case ImageDataRole:
         return block->type == be::BlockType::Image ? buildImageData(*block) : QVariantMap();
+    case MathDataRole:
+        return buildMathData(*block);
     default:
         return {};
     }
@@ -243,6 +276,7 @@ QHash<int, QByteArray> BlockModel::roleNames() const
         {MermaidDataRole, "mermaidData"},
         {CodeDataRole, "codeData"},
         {ImageDataRole, "imageData"},
+        {MathDataRole, "mathData"},
     };
 }
 

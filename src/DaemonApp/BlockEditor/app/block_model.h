@@ -32,6 +32,7 @@ public:
         MermaidDataRole,
         CodeDataRole,
         ImageDataRole,
+        MathDataRole,
     };
     Q_ENUM(Role)
 
