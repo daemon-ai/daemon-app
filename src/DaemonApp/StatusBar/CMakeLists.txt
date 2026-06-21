@@ -13,5 +13,6 @@ target_link_libraries(da_statusbar
     PRIVATE
         Qt6::Quick
         daemon-app::theme
+        daemon-app::status_model
         daemon-app::warnings
 )

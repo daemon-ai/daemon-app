@@ -11,7 +11,10 @@
 #include <Tui/ZTextEdit.h>
 #include <Tui/ZWindow.h>
 
+#include <QHash>
 #include <QString>
+#include <QStringList>
+#include <QVariantList>
 
 namespace persistence {
 class InMemoryConversationStore;
@@ -21,6 +24,8 @@ class SidebarModel;
 class ConversationsListModel;
 class ConversationController;
 class ComposerSessionController;
+class TurnController;
+class StatusBarModel;
 class DisplayRoleAdapter;
 
 // ZInputBox has no "submit" signal, only textChanged. Subclass it to emit on
@@ -96,6 +101,14 @@ private:
     void refreshTranscript();
     void promptQuit(); // open the quit-confirmation modal (idempotent)
 
+    // Live assistant-turn streaming: fold the TurnController's daemon-shaped
+    // events into a compact, text-first block shown beneath the conversation
+    // content (display-only; persistence deferred).
+    void clearTurnStream();
+    void onTurnEvents(const QVariantList& events);
+    QString assistantStreamText() const;
+    void updateFooter();
+
     // Reused, unchanged from the GUI build.
     persistence::InMemoryConversationStore* m_store = nullptr;
     SidebarModel* m_sidebar = nullptr;
@@ -103,6 +116,10 @@ private:
     ConversationController* m_controller = nullptr;
     // Shared composer FSM (draft/queue/history/submit), identical to the GUI.
     ComposerSessionController* m_composerSession = nullptr;
+    // Shared turn-lifecycle FSM and status-bar model (DaemonApp.Turn /
+    // DaemonApp.StatusModel) - the same C++ classes the GUI binds.
+    TurnController* m_turn = nullptr;
+    StatusBarModel* m_status = nullptr;
 
     // TUI-only glue + widgets.
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;
@@ -113,9 +130,18 @@ private:
     Tui::ZTextEdit* m_transcript = nullptr;
     SubmitInputBox* m_composer = nullptr;
     Tui::ZLabel* m_header = nullptr;
+    Tui::ZLabel* m_footer = nullptr;
 
     // Exit handling: the quit confirmation modal (nullptr when closed).
     QuitDialog* m_quitDialog = nullptr;
+
+    // Accumulated assistant turn stream (cleared per turn / on conversation open):
+    // reasoning prose, one line per tool call (updated in place on finish, indexed
+    // by callId), and the streamed answer text.
+    QString m_turnReasoning;
+    QStringList m_toolLines;
+    QHash<QString, int> m_toolIndex;
+    QString m_turnText;
 
     bool m_built = false;
 };

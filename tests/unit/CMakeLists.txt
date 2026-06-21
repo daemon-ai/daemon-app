@@ -44,3 +44,27 @@ target_link_libraries(tst_sidebar_model
 
 add_test(NAME tst_sidebar_model COMMAND tst_sidebar_model)
 set_tests_properties(tst_sidebar_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_turn_controller: exercises the shared turn-lifecycle FSM (the C++ port of
+# TurnSimulator.qml) - a started turn runs its scripted events to completion and
+# settles idle, the "fail" prompt drives the error branch, and cancel resets.
+qt_add_executable(tst_turn_controller tst_turn_controller.cpp)
+target_link_libraries(tst_turn_controller
+    PRIVATE
+        Qt6::Test
+        daemon-app::turn
+)
+add_test(NAME tst_turn_controller COMMAND tst_turn_controller)
+set_tests_properties(tst_turn_controller PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_status_model: guards byte-for-byte parity of the shared StatusBarModel's
+# formatting (elapsed/abbrev/context bar+label+percent, gateway tone, agents
+# detail) with the JS funcs StatusBar.qml previously used.
+qt_add_executable(tst_status_model tst_status_model.cpp)
+target_link_libraries(tst_status_model
+    PRIVATE
+        Qt6::Test
+        daemon-app::status_model
+)
+add_test(NAME tst_status_model COMMAND tst_status_model)
+set_tests_properties(tst_status_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

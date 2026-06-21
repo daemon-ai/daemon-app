@@ -75,6 +75,8 @@ target_link_libraries(daemon-tui
         daemon-app::tui_viewmodels
         daemon-app::presentation
         daemon-app::composer_session
+        daemon-app::turn
+        daemon-app::status_model
         daemon-app::domain
         daemon-app::persistence
         daemon-app::warnings

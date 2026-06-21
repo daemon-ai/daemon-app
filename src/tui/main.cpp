@@ -82,7 +82,11 @@ bool maybeRenderOffscreen()
         }
         // Let any deferred show/layout/paint (e.g. the quit-confirmation dialog,
         // which ZDialog shows on a queued timer) settle before grabbing the frame.
-        QTimer::singleShot(50, [] { QCoreApplication::quit(); });
+        // DAEMON_TUI_TURN_MS extends this window so a submitted prompt's scripted
+        // assistant turn can stream into the transcript and the footer's Running
+        // timer can tick before the frame is grabbed.
+        const int settleMs = qMax(50, qgetenv("DAEMON_TUI_TURN_MS").toInt());
+        QTimer::singleShot(settleMs, [] { QCoreApplication::quit(); });
     });
     QCoreApplication::exec();
 

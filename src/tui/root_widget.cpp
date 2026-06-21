@@ -8,6 +8,8 @@
 #include "sidebar_model.h"
 
 #include "composer_session_controller.h"
+#include "status_bar_model.h"
+#include "turn_controller.h"
 
 #include "persistence/in_memory_conversation_store.h"
 
@@ -25,8 +27,10 @@
 #include <Tui/ZWindow.h>
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QItemSelectionModel>
 #include <QRect>
+#include <QVariantMap>
 
 void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
 {
@@ -137,6 +141,14 @@ RootWidget::RootWidget()
     // and the submit/queue/drain logic without re-implementing any of it.
     m_composerSession = new ComposerSessionController(this);
 
+    // The shared turn-lifecycle FSM and status-bar model - the same C++ classes
+    // the GUI's Transcript.qml / StatusBar.qml bind. The TUI consumes the turn's
+    // daemon-shaped events directly and renders the status model into a footer.
+    m_turn = new TurnController(this);
+    m_status = new StatusBarModel(this);
+    // StatusBarModel seeds sessionStartedAt at construction (= launch), mirroring
+    // StatusBar.qml's Component.onCompleted.
+
     // Sidebar scope selection drives the conversation list - the model-to-model
     // contract is untouched by the choice of toolkit.
     connect(m_sidebar, &SidebarModel::scopeSelected, m_list, &ConversationsListModel::setScope);
@@ -193,8 +205,12 @@ void RootWidget::buildUi()
     m_window->setFocusMode(Tui::FocusContainerMode::Cycle); // Tab cycles the panes
     m_window->setGeometry(QRect(QPoint(0, 0), geometry().size()));
 
+    // The window stacks the three-column row above a one-line status footer.
+    auto* outer = new Tui::ZVBoxLayout();
+    m_window->setLayout(outer);
+
     auto* columns = new Tui::ZHBoxLayout();
-    m_window->setLayout(columns);
+    outer->add(columns);
 
     // --- Column 1: sidebar (fixed width) ---
     // min == max width pins the column; Preferred (not Fixed, which would shrink
@@ -238,6 +254,11 @@ void RootWidget::buildUi()
     rightCol->addWidget(m_composer);
 
     columns->addWidget(right);
+
+    // --- Footer: StatusBarModel-driven status strip ---
+    m_footer = new Tui::ZLabel(m_window);
+    m_footer->setMaximumSize(Tui::tuiMaxSize, 1);
+    outer->addWidget(m_footer);
 
     m_sidebarView->setFocus();
 }
@@ -288,6 +309,10 @@ void RootWidget::wireViews()
         m_list->activate(row); // identity-based selection in the shared model
         const int id = m_list->idAt(row);
         if (id >= 0) {
+            // Switching conversations abandons any in-flight simulated turn and
+            // clears the display-only assistant stream.
+            m_turn->cancel();
+            clearTurnStream();
             m_controller->open(id);
             m_composerSession->setConversationId(id);
         }
@@ -325,6 +350,10 @@ void RootWidget::wireViews()
                 const QString full
                     = refs.isEmpty() ? text : (refs + QStringLiteral("\n") + text);
                 m_controller->appendUserText(full);
+                // Kick off the shared scripted assistant turn; its events stream
+                // into the transcript and drive the footer's busy/Running timer.
+                clearTurnStream();
+                m_turn->start(text);
             });
     connect(m_composer, &SubmitInputBox::historyPrevious, m_composerSession,
             [this] { m_composerSession->browseUp(); });
@@ -339,6 +368,25 @@ void RootWidget::wireViews()
         }
     });
 
+    // Turn lifecycle -> transcript stream + status busy/turn timer. The footer
+    // (and transcript stream) refresh as events arrive and as the status model
+    // ticks once per second.
+    connect(m_turn, &TurnController::eventsEmitted, this, &RootWidget::onTurnEvents);
+    connect(m_turn, &TurnController::turnStarted, this, [this] {
+        m_status->setBusy(true);
+        m_status->setTurnStartedAt(static_cast<double>(QDateTime::currentMSecsSinceEpoch()));
+        updateFooter();
+    });
+    connect(m_turn, &TurnController::turnFinished, this, [this] {
+        m_status->setBusy(false);
+        updateFooter();
+    });
+    // The status model re-emits the elapsed NOTIFYs on its 1s tick; mirror that
+    // into the footer label so the Running/Session timers stay live.
+    connect(m_status, &StatusBarModel::turnElapsedChanged, this, &RootWidget::updateFooter);
+    connect(m_status, &StatusBarModel::sessionElapsedChanged, this, &RootWidget::updateFooter);
+    connect(m_status, &StatusBarModel::busyChanged, this, &RootWidget::updateFooter);
+
     // Initial selection: first sidebar row populates the list, then open its
     // first conversation so the transcript is non-empty on launch.
     if (m_sidebarAdapter->rowCount() > 0) {
@@ -349,6 +397,7 @@ void RootWidget::wireViews()
         openRow(0); // ensure the transcript is populated on launch
     }
     refreshTranscript();
+    updateFooter();
 }
 
 void RootWidget::dumpGeometry() const
@@ -397,7 +446,14 @@ void RootWidget::refreshTranscript()
         return;
     }
     if (m_controller->hasConversation()) {
-        m_transcript->setText(m_controller->content());
+        QString body = m_controller->content();
+        const QString stream = assistantStreamText();
+        if (!stream.isEmpty()) {
+            // The live assistant turn is shown beneath the persisted content as a
+            // text-first block (display-only; not yet persisted to the store).
+            body += QStringLiteral("\n\n\u2500\u2500 assistant \u2500\u2500\n") + stream;
+        }
+        m_transcript->setText(body);
         if (m_header != nullptr) {
             m_header->setText(QStringLiteral("Conversation #%1").arg(m_controller->currentId()));
         }
@@ -407,4 +463,91 @@ void RootWidget::refreshTranscript()
             m_header->setText(QStringLiteral("daemon-app TUI"));
         }
     }
+}
+
+void RootWidget::clearTurnStream()
+{
+    m_turnReasoning.clear();
+    m_toolLines.clear();
+    m_toolIndex.clear();
+    m_turnText.clear();
+    refreshTranscript();
+}
+
+QString RootWidget::assistantStreamText() const
+{
+    QStringList parts;
+    if (!m_turnReasoning.isEmpty()) {
+        parts << (QStringLiteral("\u00b7 ") + m_turnReasoning.trimmed());
+    }
+    for (const QString& line : m_toolLines) {
+        parts << line;
+    }
+    if (!m_turnText.isEmpty()) {
+        parts << m_turnText.trimmed();
+    }
+    if (!m_turn->errorText().isEmpty()) {
+        parts << (QStringLiteral("\u26a0 ") + m_turn->errorText());
+    }
+    return parts.join(QStringLiteral("\n"));
+}
+
+void RootWidget::onTurnEvents(const QVariantList& events)
+{
+    for (const QVariant& v : events) {
+        const QVariantMap e = v.toMap();
+        const QString type = e.value(QStringLiteral("type")).toString();
+        if (type == QStringLiteral("text")) {
+            m_turnText += e.value(QStringLiteral("text")).toString();
+        } else if (type == QStringLiteral("reasoningDelta")) {
+            m_turnReasoning += e.value(QStringLiteral("text")).toString();
+        } else if (type == QStringLiteral("toolStarted")) {
+            const QString callId = e.value(QStringLiteral("callId")).toString();
+            const QString name = e.value(QStringLiteral("name")).toString();
+            const QString args = e.value(QStringLiteral("argsSummary")).toString();
+            QString line = QStringLiteral("\u2699 ") + name;
+            if (!args.isEmpty()) {
+                line += QStringLiteral(": ") + args;
+            }
+            line += QStringLiteral("  \u2026");
+            m_toolIndex.insert(callId, m_toolLines.size());
+            m_toolLines.append(line);
+        } else if (type == QStringLiteral("toolFinished")) {
+            const QString callId = e.value(QStringLiteral("callId")).toString();
+            const QString status = e.value(QStringLiteral("status")).toString();
+            const int durationMs = e.value(QStringLiteral("durationMs")).toInt();
+            const bool ok = status != QStringLiteral("error");
+            if (m_toolIndex.contains(callId)) {
+                QString& line = m_toolLines[m_toolIndex.value(callId)];
+                // Drop the trailing "  …" placeholder, then append the outcome.
+                if (line.endsWith(QStringLiteral("  \u2026"))) {
+                    line.chop(3);
+                }
+                line += (ok ? QStringLiteral("  \u2713 ") : QStringLiteral("  \u2717 "))
+                    + QStringLiteral("%1ms").arg(durationMs);
+            }
+        }
+        // "flush"/"reasoningDone" carry no extra display payload here.
+    }
+    refreshTranscript();
+}
+
+void RootWidget::updateFooter()
+{
+    if (m_footer == nullptr) {
+        return;
+    }
+    const QString sep = QStringLiteral("  \u00b7  ");
+    QStringList parts;
+    parts << (QStringLiteral("Gateway: ") + m_status->gatewayState());
+    const QString agents = m_status->agentsDetail();
+    parts << (agents.isEmpty() ? QStringLiteral("Agents: idle")
+                               : (QStringLiteral("Agents: ") + agents));
+    parts << (QStringLiteral("ctx ") + QString::number(m_status->contextPercent())
+              + QStringLiteral("%"));
+    parts << (QStringLiteral("Session ") + m_status->sessionElapsed());
+    if (m_status->busy()) {
+        parts << (QStringLiteral("Running ") + m_status->turnElapsed());
+    }
+    m_footer->setText(parts.join(sep));
 }

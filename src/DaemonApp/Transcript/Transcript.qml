@@ -7,6 +7,7 @@ import org.kde.syntaxhighlighting
 import DaemonApp.Theme
 import DaemonApp.Settings
 import DaemonApp.BlockEditor
+import DaemonApp.Turn
 
 // Renders (and edits) the conversation's markdown as a virtualized column of
 // blocks via the ported BlockEditor engine. The host calls load() on conversation
@@ -95,10 +96,12 @@ Rectangle {
 
     // Swappable agent-turn driver: on send it streams a simulated assistant turn
     // (reasoning / tool / text) through the editor's ingest path. The chrome
-    // overlay below reads its turnState/elapsedMs/errorText.
-    TurnSimulator {
+    // overlay below reads its turnState/elapsedMs/errorText. The FSM now lives in
+    // the shared C++ TurnController (DaemonApp.Turn), which emits daemon-shaped
+    // event maps fed straight into the editor's ingest path.
+    TurnController {
         id: turnSim
-        editor: editor
+        onEventsEmitted: function(events) { editor.ingestEvents(events); }
     }
 
     // Mock agent host: stands in for the daemon runtime so the interactive

@@ -162,6 +162,8 @@ bool maybeRenderThemeShots(QQmlApplicationEngine& engine)
 // does not apply). Class names are the module URI with dots->underscores + Plugin.
 Q_IMPORT_QML_PLUGIN(DaemonApp_PresentationPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ComposerSessionPlugin)
+Q_IMPORT_QML_PLUGIN(DaemonApp_TurnPlugin)
+Q_IMPORT_QML_PLUGIN(DaemonApp_StatusModelPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ThemePlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ControlsPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_BlockEditorPlugin)
