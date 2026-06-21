@@ -26,6 +26,7 @@ target_link_libraries(daemon-app
         # The plugins must be linked explicitly (shared Qt build); main.cpp also
         # references them via Q_IMPORT_QML_PLUGIN so they aren't dead-stripped.
         daemon-app::presentation
+        daemon-app::theme_core
         daemon-app::composer_session
         daemon-app::turn
         daemon-app::status_model
@@ -40,6 +41,7 @@ target_link_libraries(daemon-app
         daemon-app::settings
         daemon-app::statusbar
         da_presentationplugin
+        da_theme_coreplugin
         da_composer_sessionplugin
         da_turnplugin
         da_status_modelplugin

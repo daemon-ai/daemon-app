@@ -1,9 +1,14 @@
 pragma Singleton
 import QtQuick
+import DaemonApp.ThemeCore
 
 // Single source of truth for the palette across all four themes (Light / Dark /
 // Sepia / Midnight). One `theme` switch drives every color token so the whole
-// app recolors live.
+// app recolors live. The base color hexes now live once in the shared C++
+// ThemePalette (DaemonApp.ThemeCore); each base token below binds
+// ThemeTokens.colorFor(theme, "<name>") so it stays reactive (the binding
+// depends on `theme`) while the GUI and the TUI read the exact same values.
+// Derived aliases and the layout metrics stay QML-only - the TUI needs neither.
 //
 // Midnight: deep navy surfaces,
 // Psyche-cream text, periwinkle muted text, and blue accents.
@@ -30,36 +35,36 @@ QtObject {
 
     // --- Surfaces -----------------------------------------------------------
     // Main / right-pane background (white / rgb(25,25,25) / rgb(251,240,217)).
-    readonly property color background: isMidnight ? "#0d162d" : isDark ? "#191919" : isSepia ? "#fbf0d9" : "#ffffff"
+    readonly property color background: ThemeTokens.colorFor(theme, "background")
     // Middle column (conversations list) shares the main background.
     readonly property color surface: background
     // Left sidebar (frameLeft): a chrome panel in the same hue family as the
     // background, offset in lightness. Light neutral grey; Dark lifted; Midnight
     // brighter navy; Sepia a warm parchment tan (between background and border)
     // so the column stays in the warm palette instead of clashing grey.
-    readonly property color sidebar: isMidnight ? "#09286f" : isDark ? "#333333" : isSepia ? "#ece0c2" : "#ededed"
+    readonly property color sidebar: ThemeTokens.colorFor(theme, "sidebar")
     // Conversations list surface: joins the sidebar chrome in the dark/sepia/
     // midnight themes, but an off-white in Light so the middle column reads with
     // the editor instead of as the grey sidebar chrome.
-    readonly property color listBackground: isDark || isMidnight || isSepia ? sidebar : "#f7f7f7"
+    readonly property color listBackground: ThemeTokens.colorFor(theme, "listBackground")
 
     // --- Lines / borders ----------------------------------------------------
     // Subtle separators between list rows (editor tokens #ededec / #3a3a3a).
-    readonly property color border: isMidnight ? "#233a6b" : isDark ? "#3a3a3a" : isSepia ? "#e6dcc4" : "#ededec"
+    readonly property color border: ThemeTokens.colorFor(theme, "border")
     // The vertical splitter between columns (rgb(217,217,217) / rgb(54,55,57)).
-    readonly property color splitter: isMidnight ? "#1b2d57" : isDark ? "#363739" : isSepia ? "#bfbfbf" : "#d9d9d9"
+    readonly property color splitter: ThemeTokens.colorFor(theme, "splitter")
 
     // --- Text ---------------------------------------------------------------
     // Editor / general body text (themeData text token). Midnight = Psyche cream.
-    readonly property color text: isMidnight ? "#ffe6cb" : isDark ? "#d6d6d6" : isSepia ? "#321e03" : "#37352e"
-    readonly property color textMuted: isMidnight ? "#b5c7f3" : isDark ? "#868686" : "#7d7c78"
+    readonly property color text: ThemeTokens.colorFor(theme, "text")
+    readonly property color textMuted: ThemeTokens.colorFor(theme, "textMuted")
     // Notes-count label (same gray in Light/Dark/Sepia; periwinkle in Midnight).
-    readonly property color countText: isMidnight ? "#8fa6d8" : "#848484"
+    readonly property color countText: ThemeTokens.colorFor(theme, "countText")
 
     // --- Interaction states (hover / pressed / selection) -------------------
     // Editor top-bar tokens: highlight / pressed.
-    readonly property color hover: isMidnight ? "#16224a" : isDark ? "#313131" : isSepia ? "#f1e7d2" : "#efefef"
-    readonly property color pressed: isMidnight ? "#1b2a55" : isDark ? "#2c2c2c" : isSepia ? "#f1e7d2" : "#dfdfde"
+    readonly property color hover: ThemeTokens.colorFor(theme, "hover")
+    readonly property color pressed: ThemeTokens.colorFor(theme, "pressed")
 
     // --- Row washes (nav/session selection) --------------------------
     // Translucent NEUTRAL washes for sidebar/list rows - a few percent off the
@@ -67,23 +72,23 @@ QtObject {
     // "pressed into" the panel, not a
     // bright pill. Dark/Midnight lighten over their dark surface; Sepia stays a
     // warm neutral tan (no sienna); Light is a plain grey.
-    readonly property color rowHover: isMidnight ? "#123882" : isDark ? "#3d3d3d" : isSepia ? "#e3d4ad" : "#e6e6e6"
-    readonly property color rowActive: isMidnight ? "#1a4499" : isDark ? "#474747" : isSepia ? "#d8c79a" : "#dcdcdc"
+    readonly property color rowHover: ThemeTokens.colorFor(theme, "rowHover")
+    readonly property color rowActive: ThemeTokens.colorFor(theme, "rowActive")
     // Selected row when the list is unfocused (a touch weaker than rowActive).
-    readonly property color rowActiveInactive: isMidnight ? "#163a8c" : isDark ? "#424242" : isSepia ? "#dfd0a4" : "#e1e1e1"
+    readonly property color rowActiveInactive: ThemeTokens.colorFor(theme, "rowActiveInactive")
 
     // --- Accent (selected text, cursor, focus) ------------------------------
     // Per-theme so every highlight tracks the palette:
     // blue, Sepia uses a warm sienna that matches the parchment palette, Midnight
     // uses its legible brighter blue. Drives toggles, selection fills, icons, the
     // "+" buttons, the Send icon, font-style label, focus rings, etc.
-    readonly property color accent: isMidnight ? "#9fb3e6" : isSepia ? "#b06a2c" : isDark ? "#757575" : "#2383e2"
+    readonly property color accent: ThemeTokens.colorFor(theme, "accent")
 
     // --- Sidebar (NodeTreeView delegates) -----------------------------------
     // text-forward: unselected rows sit at a SECONDARY (muted) tone and
     // brighten to primary `text` when selected/hovered. This is the default
     // (unselected) folder/All/Tag label color.
-    readonly property color sidebarText: isMidnight ? "#aebfe6" : isDark ? "#9a9a9a" : isSepia ? "#6b5836" : "#5f5f5c"
+    readonly property color sidebarText: ThemeTokens.colorFor(theme, "sidebarText")
     // Selected row fill - a neutral wash (NOT the accent), so the row reads as
     // pressed into the panel. Nav rows additionally draw a `border` hairline.
     readonly property color sidebarSelection: rowActive
@@ -115,33 +120,33 @@ QtObject {
     // Notes-bar scope title - styled as an accent section header in the component.
     readonly property color listTitle: accent
     // Note row title default - SECONDARY tone; brightens to `text` on hover/select.
-    readonly property color listText: isMidnight ? "#cdd9f5" : isDark ? "#b0b0b0" : isSepia ? "#5a4a2e" : "#4a4a48"
+    readonly property color listText: ThemeTokens.colorFor(theme, "listText")
     // Note snippet (tertiary).
-    readonly property color listSnippet: "#8e9296"
+    readonly property color listSnippet: ThemeTokens.colorFor(theme, "listSnippet")
     // Selected note row - neutral wash (fill-only, no border); weaker when unfocused.
     readonly property color listSelection: rowActive
     readonly property color listSelectionInactive: rowActiveInactive
     // Row separator (kept for reference; rows use spacing + fills, no divider).
-    readonly property color listSeparator: isMidnight ? "#2a3f70" : isDark ? "#7fffffff" : "#bfbfbf"
+    readonly property color listSeparator: ThemeTokens.colorFor(theme, "listSeparator")
 
     // --- Search field (per searchEdit in main-window.css) -------------------
-    readonly property color searchBackground: isMidnight ? "#0b2150" : isDark ? "#2a2a2a" : isSepia ? "#fbf0d9" : "#ffffff"
-    readonly property color searchBorder: isMidnight ? "#233a6b" : isDark ? "#2a2a2a" : "#cdcdcd"
-    readonly property color searchFocusBorder: isMidnight ? "#3a63bd" : isDark ? "#2c536f" : "#a6c6e4"
-    readonly property color searchText: isMidnight ? "#e6ecff" : isDark ? "#cfcfcf" : isSepia ? "#321e03" : "#1a1a1a"
-    readonly property color searchSelection: isMidnight ? "#2f4f99" : "#d2e4fa"
+    readonly property color searchBackground: ThemeTokens.colorFor(theme, "searchBackground")
+    readonly property color searchBorder: ThemeTokens.colorFor(theme, "searchBorder")
+    readonly property color searchFocusBorder: ThemeTokens.colorFor(theme, "searchFocusBorder")
+    readonly property color searchText: ThemeTokens.colorFor(theme, "searchText")
+    readonly property color searchSelection: ThemeTokens.colorFor(theme, "searchSelection")
 
     // --- Markdown / block editor (Transcript renderer) ----------------------
     // These tokens carry the ported BlockEditor's vocabulary so the upstream QML
     // components work by only adding `import DaemonApp.Theme`; the mapping to the
     // theme-aware palette lives here (one place) instead of scattered edits.
     // Inline-code and code-fence background (fed to the C++ projector palette).
-    readonly property color codeBackground: isMidnight ? "#1a2c5c" : isDark ? "#2a2a2a" : isSepia ? "#efe6d2" : "#f1f1ef"
+    readonly property color codeBackground: ThemeTokens.colorFor(theme, "codeBackground")
     readonly property color codeText: text
     // Markdown links reuse the accent.
     readonly property color link: accent
     // Subtle raised surface (code/table-header/diagram backgrounds).
-    readonly property color surfaceRaised: isMidnight ? "#122247" : isDark ? "#202020" : isSepia ? "#f3ebd6" : "#f7f7f5"
+    readonly property color surfaceRaised: ThemeTokens.colorFor(theme, "surfaceRaised")
     // Muted body text (alias of textMuted in the block-editor vocabulary).
     readonly property color mutedText: textMuted
     // Text selection in the renderer.
@@ -149,8 +154,8 @@ QtObject {
     readonly property color selectionText: text
     readonly property color transparent: "transparent"
     // Active (focused) block highlight.
-    readonly property color activeBlockBackground: isMidnight ? "#14224a" : isDark ? "#1f2733" : isSepia ? "#f3ead2" : "#f8fbff"
-    readonly property color activeBlockBorder: isMidnight ? "#2c4a8f" : isDark ? "#2c4a63" : isSepia ? "#d8c79a" : "#d7e9fb"
+    readonly property color activeBlockBackground: ThemeTokens.colorFor(theme, "activeBlockBackground")
+    readonly property color activeBlockBorder: ThemeTokens.colorFor(theme, "activeBlockBorder")
 
     // --- Agent transcript blocks (reasoning / tool calls + sub-renderers) ---
     // A tool/reasoning card is a subtle raised surface with a hairline border,
@@ -159,9 +164,9 @@ QtObject {
     readonly property color toolSurface: surfaceRaised
     readonly property color toolBorder: border
     // Header strip behind the tool title row (a touch deeper than the body).
-    readonly property color toolHeader: isMidnight ? "#0e1d40" : isDark ? "#242424" : isSepia ? "#efe4c8" : "#eef0f2"
+    readonly property color toolHeader: ThemeTokens.colorFor(theme, "toolHeader")
     readonly property color statusRunning: accent
-    readonly property color statusOk: isDarkMode ? "#5fbf73" : "#2f9e44"
+    readonly property color statusOk: ThemeTokens.colorFor(theme, "statusOk")
     readonly property color statusError: danger
     // Pending state (e.g. a tool awaiting approval) borrows the amber warning tone.
     readonly property color statusWarning: warning
@@ -169,10 +174,10 @@ QtObject {
     readonly property color reasoningText: textMuted
     readonly property color reasoningSurface: surfaceRaised
     // Unified-diff line washes (GitHub-like, theme-aware).
-    readonly property color diffAddBackground: isDarkMode ? "#10301c" : "#e6ffec"
-    readonly property color diffDelBackground: isDarkMode ? "#3a1d1d" : "#ffebe9"
-    readonly property color diffAddText: isDarkMode ? "#7ee787" : "#1a7f37"
-    readonly property color diffDelText: isDarkMode ? "#ff7b72" : "#cf222e"
+    readonly property color diffAddBackground: ThemeTokens.colorFor(theme, "diffAddBackground")
+    readonly property color diffDelBackground: ThemeTokens.colorFor(theme, "diffDelBackground")
+    readonly property color diffAddText: ThemeTokens.colorFor(theme, "diffAddText")
+    readonly property color diffDelText: ThemeTokens.colorFor(theme, "diffDelText")
     readonly property color diffHunkText: accent
     // ANSI 16-color SGR palette (indices 0-7 normal, 8-15 bright). A single
     // palette legible on both light and dark surfaces; AnsiText maps fg/bg index
@@ -188,14 +193,14 @@ QtObject {
     // User messages sit in a glass bubble: a faint accent-tinted surface with a
     // hairline border, distinct from the full-width assistant stream. System and
     // process notices are quiet centered chrome on the raised surface.
-    readonly property color bubbleUser: isMidnight ? "#13234d" : isDark ? "#222a36" : isSepia ? "#f0e6cf" : "#eef4fb"
-    readonly property color bubbleUserBorder: isMidnight ? "#28467f" : isDark ? "#33414f" : isSepia ? "#dccca3" : "#d7e6f6"
+    readonly property color bubbleUser: ThemeTokens.colorFor(theme, "bubbleUser")
+    readonly property color bubbleUserBorder: ThemeTokens.colorFor(theme, "bubbleUserBorder")
     readonly property color bubbleUserText: text
     // Per-turn role header: a small avatar chip + the role name ("You"/"Daemon").
     // The avatars are quiet tinted chips; the name reads in the muted chrome ink.
     readonly property color roleAvatarUser: accent
-    readonly property color roleAvatarAssistant: isMidnight ? "#2a3a63" : isDark ? "#3a3a3a" : isSepia ? "#d8c7a0" : "#e2e2e2"
-    readonly property color roleAvatarUserIcon: "#ffffff"
+    readonly property color roleAvatarAssistant: ThemeTokens.colorFor(theme, "roleAvatarAssistant")
+    readonly property color roleAvatarUserIcon: ThemeTokens.colorFor(theme, "roleAvatarUserIcon")
     readonly property color roleAvatarAssistantIcon: textMuted
     readonly property color roleName: textMuted
     // Optional left accent rail down a user turn (A1). A muted accent hairline.
@@ -214,30 +219,30 @@ QtObject {
 
     // --- Icons --------------------------------------------------------------
     // IconButton default glyph color (dark themes use a blue accent).
-    readonly property color iconColor: isMidnight ? "#6fa0ff" : isDark ? "#5b94f5" : "#000000"
+    readonly property color iconColor: ThemeTokens.colorFor(theme, "iconColor")
     // Muted toolbar glyphs = toolButtonColor (rgb 162,163,164 dark / 100,100,100).
-    readonly property color iconMuted: isMidnight ? "#9fb3e6" : isDark ? "#a2a3a4" : "#646464"
+    readonly property color iconMuted: ThemeTokens.colorFor(theme, "iconMuted")
 
     // --- Theme swatch chips (ThemeChooserButton) ----------------------------
-    readonly property color chipLight: "#f7f7f7"
-    readonly property color chipDark: "#191919"
-    readonly property color chipSepia: "#f7cc6f"
+    readonly property color chipLight: ThemeTokens.colorFor(theme, "chipLight")
+    readonly property color chipDark: ThemeTokens.colorFor(theme, "chipDark")
+    readonly property color chipSepia: ThemeTokens.colorFor(theme, "chipSepia")
     // Recognizable royal blue for the Midnight swatch.
-    readonly property color chipMidnight: "#0d2f86"
+    readonly property color chipMidnight: ThemeTokens.colorFor(theme, "chipMidnight")
 
     // --- Status bar ------------------------------------
     // A thin chrome strip below the columns. uses the sidebar surface for
     // its footer background; we follow that so it reads as one chrome band and
     // picks up the Midnight navy. The strip is slightly distinct from `sidebar`
     // to separate it from the left column where they meet.
-    readonly property color statusBarBackground: isMidnight ? "#0a1f57" : isDark ? "#272727" : isSepia ? "#efe4c8" : "#f2f2f2"
+    readonly property color statusBarBackground: ThemeTokens.colorFor(theme, "statusBarBackground")
     // Default (tertiary) label color in the bar.
-    readonly property color statusBarText: isMidnight ? "#8fa6d8" : isDark ? "#8a8a8a" : "#6b6a66"
+    readonly property color statusBarText: ThemeTokens.colorFor(theme, "statusBarText")
     // Item hover fill.
-    readonly property color statusBarHover: isMidnight ? "#142b66" : isDark ? "#343434" : isSepia ? "#e4d8b8" : "#e4e4e4"
+    readonly property color statusBarHover: ThemeTokens.colorFor(theme, "statusBarHover")
     // Tone colors for degraded / offline / failure states (amber / red).
-    readonly property color warning: isDarkMode ? "#e0a93b" : "#b97e16"
-    readonly property color danger: isDarkMode ? "#f06a6a" : "#c0392b"
+    readonly property color warning: ThemeTokens.colorFor(theme, "warning")
+    readonly property color danger: ThemeTokens.colorFor(theme, "danger")
 
     // --- Typography ---------------------------------------------------------
     // Sizes by point with a per-platform offset. Set from Qt.platform.os at

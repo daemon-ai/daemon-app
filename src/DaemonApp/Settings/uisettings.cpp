@@ -1,5 +1,7 @@
 #include "uisettings.h"
 
+#include "theme/theme_palette.h"
+
 #include <QVariant>
 
 #include <algorithm>
@@ -68,8 +70,9 @@ bool isKnownCategory(const QString& category)
 
 bool isKnownTheme(const QString& theme)
 {
-    return theme == QStringLiteral("Light") || theme == QStringLiteral("Dark")
-        || theme == QStringLiteral("Sepia") || theme == QStringLiteral("Midnight");
+    // Single-sourced with the GUI palette + the TUI: the set of valid theme names
+    // lives in the shared theme lib.
+    return theme::ThemePalette::isKnown(theme);
 }
 
 } // namespace

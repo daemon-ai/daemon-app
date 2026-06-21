@@ -139,6 +139,10 @@ private:
     void wireViews();
     void refreshTranscript();
     void promptQuit(); // open the quit-confirmation modal (idempotent)
+    // Advance Light -> Dark -> Sepia -> Midnight, recolor the whole shell live
+    // (stock palette + every custom-painted view), and persist the choice so the
+    // GUI and TUI stay in sync.
+    void cycleTheme();
 
     // Live assistant-turn streaming: route the TurnController's daemon-shaped
     // events through be::TranscriptIngest so the document grows real typed blocks

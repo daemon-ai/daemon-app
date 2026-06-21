@@ -1,10 +1,14 @@
 #include "root_widget.h"
+#include "tui_palette.h"
+
+#include "theme/theme_palette.h"
 
 #include <Tui/ZImage.h>
 #include <Tui/ZTerminal.h>
 #include <Tui/ZTest.h>
 
 #include <QCoreApplication>
+#include <QSettings>
 #include <QString>
 #include <QTextStream>
 #include <QTimer>
@@ -12,6 +16,25 @@
 #include <cstdio>
 #include <functional>
 #include <memory>
+
+namespace {
+
+// Apply the persisted (GUI-shared) theme before any widget is built so the
+// startup palette is correct. DAEMON_TUI_THEME overrides it for offscreen tests.
+// The TUI defaults to Dark (its historical look) when nothing is persisted.
+void applyStartupTheme()
+{
+    QString name = QString::fromUtf8(qgetenv("DAEMON_TUI_THEME"));
+    if (name.isEmpty()) {
+        const QSettings settings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"));
+        name = settings.value(QStringLiteral("ui/theme"), QStringLiteral("Dark")).toString();
+    }
+    if (theme::ThemePalette::isKnown(name)) {
+        tpal::setActiveTheme(theme::ThemePalette::fromString(name));
+    }
+}
+
+} // namespace
 
 namespace {
 
@@ -75,6 +98,8 @@ bool maybeRenderOffscreen()
                     Tui::ZTest::sendKey(&terminal, Qt::Key_Delete, Qt::NoModifier);
                 } else if (name == "space") {
                     Tui::ZTest::sendKey(&terminal, Qt::Key_Space, Qt::NoModifier);
+                } else if (name == "cycle-theme") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_F8, Qt::NoModifier);
                 } else if (name == "focus-composer") {
                     root.focusComposer();
                 } else if (name == "focus-transcript") {
@@ -155,6 +180,11 @@ int main(int argc, char* argv[])
     QCoreApplication app(argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("daemon-tui"));
     QCoreApplication::setOrganizationName(QStringLiteral("daemon-app"));
+
+    // Honor the theme the GUI persisted (shared QSettings file) before any widget
+    // builds its palette. The TUI's app name differs (daemon-tui), so the lookup
+    // inside applyStartupTheme() names the GUI's daemon-app file explicitly.
+    applyStartupTheme();
 
     if (maybeRenderOffscreen()) {
         return 0;

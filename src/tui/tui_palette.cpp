@@ -2,38 +2,62 @@
 
 #include <Tui/ZColor.h>
 
-Tui::ZPalette daemonDarkPalette()
-{
-    using Tui::ZColor;
+#include <QColor>
 
-    // Tokens lifted from the GUI Dark/Midnight theme (Theme.qml), expressed as
-    // RGB. Terminals that support truecolor render these directly; others snap to
-    // the nearest palette entry.
-    const ZColor bg(30, 30, 46);       // base surface (#1e1e2e)
-    const ZColor bgAlt(24, 24, 37);    // recessed surface (#181825)
-    const ZColor fg(205, 214, 244);    // primary text (#cdd6f4)
-    const ZColor dim(127, 132, 156);   // muted text / borders (#7f849c)
-    const ZColor sel(69, 71, 90);      // selection wash (#45475a)
-    const ZColor accent(137, 180, 250); // accent (#89b4fa)
-    const ZColor accentFg(17, 17, 27);  // text on accent (#11111b)
+namespace {
+
+// The active theme for the tpal::* accessors. Defaults to Dark so the TUI keeps
+// its historical look until main.cpp applies the persisted ui/theme.
+theme::ThemeName g_active = theme::ThemeName::Dark;
+
+Tui::ZColor toZ(const QColor &c) { return Tui::ZColor(c.red(), c.green(), c.blue()); }
+
+// Resolve a shared theme token to a ZColor for a specific theme / the active one.
+Tui::ZColor tokColor(theme::ThemeName t, theme::Token token)
+{
+    return toZ(theme::ThemePalette::color(t, token));
+}
+Tui::ZColor tok(theme::Token token) { return tokColor(g_active, token); }
+
+} // namespace
+
+Tui::ZPalette daemonPalette(theme::ThemeName name)
+{
+    using theme::Token;
+
+    // Stock-widget chrome roles, sourced from the shared theme tokens for `name`
+    // so the quit dialog, lists, and inputs recolor with the custom-painted views.
+    const Tui::ZColor bg = tokColor(name, Token::Background);
+    const Tui::ZColor bgAlt = tokColor(name, Token::SurfaceRaised); // recessed surface
+    const Tui::ZColor fg = tokColor(name, Token::Text);
+    const Tui::ZColor dim = tokColor(name, Token::TextMuted);
+    const Tui::ZColor border = tokColor(name, Token::Border);
+    const Tui::ZColor sel = tokColor(name, Token::RowActive); // neutral selection wash
+    const Tui::ZColor accent = tokColor(name, Token::Accent);
+    const Tui::ZColor accentFg = tokColor(name, Token::Background); // text on accent
 
     Tui::ZPalette p = Tui::ZPalette::classic();
     p.setColors({
         {"root.bg", bgAlt},
 
+        // Window + dialog frame/body (the quit dialog is a ZDialog == window).
         {"window.default.bg", bg},
         {"window.default.frame.focused.fg", accent},
-        {"window.default.frame.unfocused.fg", dim},
+        {"window.default.frame.focused.bg", bg},
+        {"window.default.frame.unfocused.fg", border},
+        {"window.default.frame.unfocused.bg", bg},
 
         {"window.default.text.fg", fg},
         {"window.default.text.bg", bg},
         {"window.default.text.selected.fg", accentFg},
         {"window.default.text.selected.bg", accent},
 
+        // Buttons (quit dialog Quit/Cancel).
         {"window.default.control.bg", bg},
         {"window.default.control.fg", fg},
         {"window.default.control.focused.bg", bg},
         {"window.default.control.focused.fg", accent},
+        {"window.default.control.shortcut.fg", accent},
 
         // List views (sidebar + conversation list).
         {"window.default.dataview.bg", bg},
@@ -66,21 +90,24 @@ namespace tpal {
 
 using Tui::ZColor;
 
-ZColor fg() { return ZColor(205, 214, 244); }
-ZColor muted() { return ZColor(127, 132, 156); }
-ZColor faint() { return ZColor(147, 153, 178); }
-ZColor bg() { return ZColor(30, 30, 46); }
-ZColor codeBg() { return ZColor(43, 43, 58); }
-ZColor accent() { return ZColor(137, 180, 250); }
+void setActiveTheme(theme::ThemeName name) { g_active = name; }
+theme::ThemeName activeTheme() { return g_active; }
 
-ZColor statusOk() { return ZColor(166, 227, 161); }
-ZColor statusError() { return ZColor(243, 139, 168); }
-ZColor statusRunning() { return ZColor(249, 226, 175); }
-ZColor warn() { return ZColor(250, 179, 135); }
+ZColor fg() { return tok(theme::Token::Text); }
+ZColor muted() { return tok(theme::Token::TextMuted); }
+ZColor faint() { return tok(theme::Token::TextMuted); }
+ZColor bg() { return tok(theme::Token::Background); }
+ZColor codeBg() { return tok(theme::Token::CodeBackground); }
+ZColor accent() { return tok(theme::Token::Accent); }
 
-ZColor diffAdd() { return ZColor(166, 227, 161); }
-ZColor diffDel() { return ZColor(243, 139, 168); }
-ZColor diffHunk() { return ZColor(137, 180, 250); }
+ZColor statusOk() { return tok(theme::Token::StatusOk); }
+ZColor statusError() { return tok(theme::Token::Danger); }
+ZColor statusRunning() { return tok(theme::Token::Accent); }
+ZColor warn() { return tok(theme::Token::Warning); }
+
+ZColor diffAdd() { return tok(theme::Token::DiffAddText); }
+ZColor diffDel() { return tok(theme::Token::DiffDelText); }
+ZColor diffHunk() { return tok(theme::Token::Accent); }
 
 ZColor toneColor(const QString &tone)
 {
@@ -103,7 +130,7 @@ ZColor toneColor(const QString &tone)
     if (t == QStringLiteral("agent")) {
         return ZColor(180, 190, 254); // lavender
     }
-    return ZColor(137, 180, 250); // default accent (blue)
+    return accent(); // default tone tracks the theme accent
 }
 
 ZColor ansi(int index)
@@ -179,8 +206,8 @@ QString reasoningGlyph() { return QStringLiteral("\u2732"); } // ✲
 
 // --- Chrome -------------------------------------------------------------------
 
-ZColor selectionBg() { return ZColor(69, 71, 90); }  // #45475a
-ZColor surfaceAlt() { return ZColor(24, 24, 37); }   // #181825
+ZColor selectionBg() { return tok(theme::Token::RowActive); } // neutral row wash
+ZColor surfaceAlt() { return tok(theme::Token::SurfaceRaised); } // recessed surface
 
 ZColor gatewayToneColor(const QString &tone)
 {

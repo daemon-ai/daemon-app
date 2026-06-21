@@ -6,12 +6,14 @@
 
 #include <QString>
 
-// A dark Tui palette approximating the GUI's Dark theme tokens (Theme.qml). This
-// demonstrates the Theme.qml -> ZPalette mapping the feasibility study calls out:
-// the GUI's hex color tokens become named terminal palette entries. Only the
-// handful of roles the spike actually surfaces are overridden; everything else
-// falls back to the built-in classic theme.
-Tui::ZPalette daemonDarkPalette();
+#include "theme/theme_palette.h"
+
+// A Tui palette built from the GUI's theme tokens (the shared theme::ThemePalette
+// that also backs Theme.qml): each GUI hex token becomes a named terminal palette
+// entry for the given theme, so stock widgets (lists, inputs, the quit dialog)
+// recolor with the rest of the app. Only the roles the shell surfaces are
+// overridden; the rest fall back to the built-in classic theme.
+Tui::ZPalette daemonPalette(theme::ThemeName name);
 
 // Semantic transcript palette + glyph helpers. The TUI's custom transcript view
 // paints styled spans directly (it cannot use ZPalette roles per-span), so the
@@ -19,6 +21,13 @@ Tui::ZPalette daemonDarkPalette();
 // the FontAwesome-equivalent unicode glyphs as plain strings. Centralizing them
 // keeps the block "delegates" (transcript_render.cpp) declarative.
 namespace tpal {
+
+// Active theme for the semantic accessors below. The TUI sets this once at
+// startup (from the persisted ui/theme) and again whenever the user cycles
+// themes; every accessor then resolves its color from the shared theme table for
+// the active theme. Glyphs and the ANSI table are theme-independent.
+void setActiveTheme(theme::ThemeName name);
+theme::ThemeName activeTheme();
 
 // Surface + text.
 Tui::ZColor fg();      // primary text (#cdd6f4)

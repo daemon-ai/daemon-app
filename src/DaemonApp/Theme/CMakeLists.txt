@@ -46,4 +46,7 @@ qt_add_qml_module(da_theme
 )
 add_library(daemon-app::theme ALIAS da_theme)
 
-target_link_libraries(da_theme PRIVATE Qt6::Quick daemon-app::warnings)
+# da_theme_core (DaemonApp.ThemeCore) holds the shared base color table that
+# Theme.qml binds via the ThemeTokens singleton; linking it makes the QML import
+# resolve and pulls the static module registration into anything using Theme.
+target_link_libraries(da_theme PRIVATE Qt6::Quick daemon-app::theme_core daemon-app::warnings)

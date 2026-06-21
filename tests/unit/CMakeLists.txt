@@ -13,6 +13,18 @@ add_test(NAME tst_fonts COMMAND tst_fonts)
 # QRawFont needs a platform integration; run headless in CI.
 set_tests_properties(tst_fonts PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_theme_palette: locks the shared theme token table (da_theme_core) - the
+# single source of truth backing both Theme.qml and the TUI's tui_palette. The
+# canonical per-theme hexes mirror tests/qml/theme/tst_theme.qml.
+qt_add_executable(tst_theme_palette tst_theme_palette.cpp)
+target_link_libraries(tst_theme_palette
+    PRIVATE
+        Qt6::Test
+        daemon-app::theme_core
+)
+add_test(NAME tst_theme_palette COMMAND tst_theme_palette)
+set_tests_properties(tst_theme_palette PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_store: exercises the in-memory store's uniformly-recursive agent tree -
 # roots, arbitrary depth, subtree-folded counts/scopes, and creation.
 qt_add_executable(tst_store tst_store.cpp)

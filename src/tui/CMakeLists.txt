@@ -98,6 +98,7 @@ target_link_libraries(daemon-tui
         Qt6::Core5Compat
         daemon-app::tui_viewmodels
         daemon-app::presentation
+        daemon-app::theme_core
         daemon-app::composer_session
         daemon-app::turn
         daemon-app::status_model

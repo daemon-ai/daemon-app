@@ -5,6 +5,7 @@
 
 #include "domain/sidebar_node.h"
 #include "presentation/display_presenter.h"
+#include "tui_palette.h"
 
 #include <Tui/ZColor.h>
 #include <Tui/ZCommon.h>
@@ -89,13 +90,16 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
             // Reuse the shared C++ categorization (same source the GUI sidebar
             // uses), then resolve the semantic tone to a Tui color here.
             const int state = srcData(SidebarModel::StateRole).toInt();
+            // Resolve the semantic tone to a theme-aware palette color (instead of
+            // raw Tui::Colors) so the pips track the active theme like the rest of
+            // the chrome.
             switch (DisplayPresenter::agentStateToneFor(state)) {
             case DisplayPresenter::StateTone::Running:
-                return QVariant::fromValue(Tui::ZColor(Tui::Colors::brightGreen));
+                return QVariant::fromValue(tpal::statusOk());
             case DisplayPresenter::StateTone::Finished:
-                return QVariant::fromValue(Tui::ZColor(Tui::Colors::darkGray));
+                return QVariant::fromValue(tpal::muted());
             case DisplayPresenter::StateTone::Neutral:
-                return QVariant::fromValue(Tui::ZColor(Tui::Colors::brightYellow));
+                return QVariant::fromValue(tpal::warn());
             }
         }
         return {};

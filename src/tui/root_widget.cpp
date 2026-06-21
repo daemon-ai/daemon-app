@@ -31,6 +31,7 @@
 #include <QDateTime>
 #include <QItemSelectionModel>
 #include <QRect>
+#include <QSettings>
 #include <QVariantMap>
 
 void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
@@ -200,7 +201,9 @@ QuitDialog::QuitDialog(Tui::ZWidget* parent) : Tui::ZDialog(parent)
 
 RootWidget::RootWidget()
 {
-    setPalette(daemonDarkPalette());
+    // Build the stock-widget palette (incl. the quit dialog frame/body) from the
+    // active theme - set from the persisted ui/theme in main() before we run.
+    setPalette(daemonPalette(tpal::activeTheme()));
 
     // The reused layer: store + view models, wired exactly as in the GUI. None
     // of this depends on Tui Widgets - the same objects back the QML frontend.
@@ -288,6 +291,13 @@ void RootWidget::buildUi()
     auto* forceQuitShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forShortcut(QStringLiteral("c")),
                                                  this, Qt::ApplicationShortcut);
     connect(forceQuitShortcut, &Tui::ZShortcut::activated, this, [] { QCoreApplication::quit(); });
+
+    // F8 cycles the theme live (Light -> Dark -> Sepia -> Midnight), the TUI analog
+    // of the GUI's theme picker. The choice persists to the same QSettings key the
+    // GUI uses, so the two front ends stay in sync.
+    auto* themeShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F8), this,
+                                             Qt::ApplicationShortcut);
+    connect(themeShortcut, &Tui::ZShortcut::activated, this, &RootWidget::cycleTheme);
 
     m_window = new Tui::ZWindow(QStringLiteral("Daemon"), this);
     m_window->setOptions({});
@@ -665,6 +675,46 @@ void RootWidget::promptQuit()
             m_sidebarView->setFocus(); // restore keyboard focus to the panes
         }
     });
+}
+
+void RootWidget::cycleTheme()
+{
+    using theme::ThemeName;
+    // Advance through the four themes in a fixed order.
+    ThemeName next = ThemeName::Light;
+    switch (tpal::activeTheme()) {
+    case ThemeName::Light:
+        next = ThemeName::Dark;
+        break;
+    case ThemeName::Dark:
+        next = ThemeName::Sepia;
+        break;
+    case ThemeName::Sepia:
+        next = ThemeName::Midnight;
+        break;
+    case ThemeName::Midnight:
+        next = ThemeName::Light;
+        break;
+    }
+
+    tpal::setActiveTheme(next);
+    // Recolor stock widgets (window/dialog/lists/inputs) via the palette...
+    setPalette(daemonPalette(next));
+    // ...and repaint every custom-painted view, which samples tpal::* at paint.
+    Tui::ZWidget* views[] = { m_window,        m_sidebarView,     m_listView,
+                              m_transcript,    m_composerChrome,  m_queue,
+                              m_attachments,   m_footer,          m_completionPopup,
+                              m_search,        m_composer,        m_header,
+                              m_todos };
+    for (Tui::ZWidget* w : views) {
+        if (w != nullptr) {
+            w->update();
+        }
+    }
+
+    // Persist to the GUI-shared key so both front ends honor the same choice.
+    QSettings settings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"));
+    settings.setValue(QStringLiteral("ui/theme"), theme::ThemePalette::toString(next));
 }
 
 void RootWidget::refreshTranscript()

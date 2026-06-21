@@ -20,6 +20,7 @@ target_link_libraries(da_settings
     PRIVATE
         Qt6::Quick
         daemon-app::theme
+        daemon-app::theme_core
         daemon-app::controls
         daemon-app::warnings
 )
