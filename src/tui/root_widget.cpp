@@ -7,6 +7,8 @@
 #include "conversations_list_model.h"
 #include "sidebar_model.h"
 
+#include "composer_session_controller.h"
+
 #include "persistence/in_memory_conversation_store.h"
 
 #include <Tui/ZButton.h>
@@ -34,6 +36,32 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
         emit submitted(text());
         event->accept();
         return;
+    }
+    // Context-sensitive Esc, level 1+2: a non-empty draft is cleared; an empty
+    // composer hands focus back to the panes. Only when Esc reaches a pane
+    // (unhandled) does it bubble up to RootWidget's quit prompt.
+    if (event->key() == Qt::Key_Escape && event->modifiers() == Qt::NoModifier) {
+        if (!text().isEmpty()) {
+            setText(QString());
+        } else {
+            emit leaveRequested();
+        }
+        event->accept();
+        return;
+    }
+    // The box is single-line, so Up/Down are free to walk the sent-message
+    // history (the shared controller decides whether there is anything to recall).
+    if (event->modifiers() == Qt::NoModifier) {
+        if (event->key() == Qt::Key_Up) {
+            emit historyPrevious();
+            event->accept();
+            return;
+        }
+        if (event->key() == Qt::Key_Down) {
+            emit historyNext();
+            event->accept();
+            return;
+        }
     }
     Tui::ZInputBox::keyEvent(event);
 }
@@ -104,6 +132,11 @@ RootWidget::RootWidget()
     m_controller = new ConversationController(this);
     m_controller->setStore(m_store);
 
+    // The shared composer FSM - the same C++ class the QML composer drives. The
+    // TUI binds its single-line input to it, gaining draft persistence, history,
+    // and the submit/queue/drain logic without re-implementing any of it.
+    m_composerSession = new ComposerSessionController(this);
+
     // Sidebar scope selection drives the conversation list - the model-to-model
     // contract is untouched by the choice of toolkit.
     connect(m_sidebar, &SidebarModel::scopeSelected, m_list, &ConversationsListModel::setScope);
@@ -127,11 +160,26 @@ void RootWidget::resizeEvent(Tui::ZResizeEvent* event)
     }
 }
 
+void RootWidget::keyEvent(Tui::ZKeyEvent* event)
+{
+    // Final fallback for the context-sensitive Esc chain: when a pane leaves Esc
+    // unhandled it bubbles up the parent chain to here (the ZRoot), where it
+    // opens the quit confirmation. The composer consumes Esc itself; the quit
+    // dialog consumes it while open, so this only fires from the panes.
+    if (event->key() == Qt::Key_Escape && event->modifiers() == Qt::NoModifier) {
+        promptQuit();
+        event->accept();
+        return;
+    }
+    Tui::ZRoot::keyEvent(event);
+}
+
 void RootWidget::buildUi()
 {
-    // Exit affordances. Ctrl+Q and Esc open a confirmation modal; Ctrl+C is the
-    // terminal-convention hard exit (no prompt). The Esc shortcut is disabled
-    // while the modal is open so the dialog's own Esc cancels it.
+    // Exit affordances. Ctrl+Q opens a confirmation modal; Ctrl+C is the
+    // terminal-convention hard exit (no prompt). Esc is NOT a global shortcut:
+    // it is handled contextually by the focused widget and only bubbles up to
+    // RootWidget::keyEvent (-> promptQuit) when a pane leaves it unhandled.
     auto* quitShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forShortcut(QStringLiteral("q")),
                                             this, Qt::ApplicationShortcut);
     connect(quitShortcut, &Tui::ZShortcut::activated, this, &RootWidget::promptQuit);
@@ -139,10 +187,6 @@ void RootWidget::buildUi()
     auto* forceQuitShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forShortcut(QStringLiteral("c")),
                                                  this, Qt::ApplicationShortcut);
     connect(forceQuitShortcut, &Tui::ZShortcut::activated, this, [] { QCoreApplication::quit(); });
-
-    m_escShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_Escape), this,
-                                       Qt::ApplicationShortcut);
-    connect(m_escShortcut, &Tui::ZShortcut::activated, this, &RootWidget::promptQuit);
 
     m_window = new Tui::ZWindow(QStringLiteral("daemon-app \u00b7 TUI spike  (Ctrl+Q quit)"), this);
     m_window->setOptions({});
@@ -236,11 +280,16 @@ void RootWidget::wireViews()
         syncSidebarCurrent();
     });
 
-    // Conversation highlight / Enter -> open it in the transcript.
+    // Conversation highlight / Enter -> record selection in the model (so the
+    // model owns `current`, consistent with the sidebar) and open it. Opening a
+    // conversation also points the composer session at it, so the draft/queue/
+    // history swap to that conversation (mirrors the GUI's conversationId bind).
     const auto openRow = [this](int row) {
+        m_list->activate(row); // identity-based selection in the shared model
         const int id = m_list->idAt(row);
         if (id >= 0) {
             m_controller->open(id);
+            m_composerSession->setConversationId(id);
         }
     };
     connect(m_listView->selectionModel(), &QItemSelectionModel::currentChanged, this,
@@ -256,10 +305,37 @@ void RootWidget::wireViews()
     connect(m_controller, &ConversationController::contentChanged, this,
             &RootWidget::refreshTranscript);
 
-    connect(m_composer, &SubmitInputBox::submitted, this, [this](const QString& text) {
-        if (!text.trimmed().isEmpty()) {
-            m_controller->appendUserText(text);
-            m_composer->setText(QString());
+    // Composer <-> session controller. The controller is the source of truth for
+    // the draft; the input box is its view. Typed edits flow in via textChanged;
+    // programmatic changes (history recall, conversation swap, clear-on-send) flow
+    // back out via draftReset. Enter routes to submit(); the controller emits the
+    // submitted turn, which the conversation controller appends.
+    connect(m_composer, &Tui::ZInputBox::textChanged, m_composerSession,
+            &ComposerSessionController::setDraft);
+    connect(m_composerSession, &ComposerSessionController::draftReset, m_composer,
+            [this](const QString& text) {
+                if (m_composer->text() != text) {
+                    m_composer->setText(text);
+                }
+            });
+    connect(m_composer, &SubmitInputBox::submitted, m_composerSession,
+            [this](const QString&) { m_composerSession->submit(); });
+    connect(m_composerSession, &ComposerSessionController::submitted, this,
+            [this](const QString& text, const QString& refs) {
+                const QString full
+                    = refs.isEmpty() ? text : (refs + QStringLiteral("\n") + text);
+                m_controller->appendUserText(full);
+            });
+    connect(m_composer, &SubmitInputBox::historyPrevious, m_composerSession,
+            [this] { m_composerSession->browseUp(); });
+    connect(m_composer, &SubmitInputBox::historyNext, m_composerSession,
+            [this] { m_composerSession->browseDown(); });
+
+    // Esc on an empty composer hands focus back to the conversation list, where a
+    // further Esc bubbles up to the quit prompt (context-sensitive Esc, level 2).
+    connect(m_composer, &SubmitInputBox::leaveRequested, this, [this] {
+        if (m_listView != nullptr) {
+            m_listView->setFocus();
         }
     });
 
@@ -302,13 +378,13 @@ void RootWidget::promptQuit()
     if (m_quitDialog != nullptr) {
         return; // already asking
     }
+    // While the modal is up it holds focus, so its own keyEvent maps Esc ->
+    // reject(); the RootWidget Esc fallback never fires (no juggling needed).
     m_quitDialog = new QuitDialog(this);
-    m_escShortcut->setEnabled(false); // let the dialog's Esc cancel instead
 
     connect(m_quitDialog, &QuitDialog::quitConfirmed, this, [] { QCoreApplication::quit(); });
     connect(m_quitDialog, &Tui::ZDialog::rejected, this, [this] {
         m_quitDialog = nullptr; // DeleteOnClose frees it
-        m_escShortcut->setEnabled(true);
         if (m_sidebarView != nullptr) {
             m_sidebarView->setFocus(); // restore keyboard focus to the panes
         }

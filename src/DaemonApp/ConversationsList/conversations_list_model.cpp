@@ -66,6 +66,12 @@ void ConversationsListModel::setSearch(const QString& search)
 void ConversationsListModel::setScope(int nodeType, int id, const QString& nodeId)
 {
     m_scope = { static_cast<NodeType>(nodeType), id, nodeId };
+    // A new scope is a fresh list of conversations; drop the old selection so a
+    // stale id doesn't linger as a phantom highlight.
+    if (m_currentId != -1) {
+        m_currentId = -1;
+        emit selectionChanged(-1);
+    }
     reload();
     emit scopeChanged();
 }
@@ -186,6 +192,8 @@ QVariant ConversationsListModel::data(const QModelIndex& index, int role) const
         }
         return colors;
     }
+    case CurrentRole:
+        return c.id == m_currentId;
     default:
         return {};
     }
@@ -202,6 +210,7 @@ QHash<int, QByteArray> ConversationsListModel::roleNames() const
         { AgentKindRole, "agentKind" },
         { TagNamesRole, "tagNames" },
         { TagColorsRole, "tagColors" },
+        { CurrentRole, "current" },
     };
 }
 
@@ -211,4 +220,59 @@ int ConversationsListModel::idAt(int row) const
         return -1;
     }
     return m_filtered.at(row).id;
+}
+
+void ConversationsListModel::emitCurrentChanged()
+{
+    if (!m_filtered.isEmpty()) {
+        emit dataChanged(index(0), index(static_cast<int>(m_filtered.size()) - 1), { CurrentRole });
+    }
+}
+
+void ConversationsListModel::setCurrentId(int id)
+{
+    if (m_currentId == id) {
+        return;
+    }
+    m_currentId = id;
+    emit selectionChanged(id);
+    emitCurrentChanged();
+}
+
+void ConversationsListModel::activate(int row)
+{
+    const int id = idAt(row);
+    if (id >= 0) {
+        setCurrentId(id);
+    }
+}
+
+void ConversationsListModel::selectNext()
+{
+    const int cur = currentRow();
+    const int next = cur < 0 ? 0 : cur + 1;
+    if (next < m_filtered.size()) {
+        setCurrentId(m_filtered.at(next).id);
+    }
+}
+
+void ConversationsListModel::selectPrevious()
+{
+    const int cur = currentRow();
+    if (cur > 0) {
+        setCurrentId(m_filtered.at(cur - 1).id);
+    }
+}
+
+int ConversationsListModel::currentRow() const
+{
+    if (m_currentId < 0) {
+        return -1;
+    }
+    for (int i = 0; i < m_filtered.size(); ++i) {
+        if (m_filtered.at(i).id == m_currentId) {
+            return i;
+        }
+    }
+    return -1;
 }

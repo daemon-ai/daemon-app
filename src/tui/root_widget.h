@@ -20,6 +20,7 @@ class InMemoryConversationStore;
 class SidebarModel;
 class ConversationsListModel;
 class ConversationController;
+class ComposerSessionController;
 class DisplayRoleAdapter;
 
 // ZInputBox has no "submit" signal, only textChanged. Subclass it to emit on
@@ -32,6 +33,11 @@ public:
 
 signals:
     void submitted(const QString& text);
+    // Esc on an empty composer: ask the shell to move focus back to the panes.
+    void leaveRequested();
+    // Up/Down with the caret idle: walk the shared sent-message history.
+    void historyPrevious();
+    void historyNext();
 
 protected:
     void keyEvent(Tui::ZKeyEvent* event) override;
@@ -82,6 +88,7 @@ public:
 protected:
     void terminalChanged() override;
     void resizeEvent(Tui::ZResizeEvent* event) override;
+    void keyEvent(Tui::ZKeyEvent* event) override; // Esc fallback -> promptQuit
 
 private:
     void buildUi();
@@ -94,6 +101,8 @@ private:
     SidebarModel* m_sidebar = nullptr;
     ConversationsListModel* m_list = nullptr;
     ConversationController* m_controller = nullptr;
+    // Shared composer FSM (draft/queue/history/submit), identical to the GUI.
+    ComposerSessionController* m_composerSession = nullptr;
 
     // TUI-only glue + widgets.
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;
@@ -105,9 +114,7 @@ private:
     SubmitInputBox* m_composer = nullptr;
     Tui::ZLabel* m_header = nullptr;
 
-    // Exit handling: Esc opens the confirmation modal, so it is disabled while the
-    // modal is up (letting the dialog's own Esc cancel instead).
-    Tui::ZShortcut* m_escShortcut = nullptr;
+    // Exit handling: the quit confirmation modal (nullptr when closed).
     QuitDialog* m_quitDialog = nullptr;
 
     bool m_built = false;

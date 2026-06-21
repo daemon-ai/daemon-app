@@ -64,6 +64,14 @@ bool maybeRenderOffscreen()
                     Tui::ZTest::sendText(&terminal, QStringLiteral("q"), Qt::ControlModifier);
                 } else if (name == "ctrl-c") {
                     Tui::ZTest::sendText(&terminal, QStringLiteral("c"), Qt::ControlModifier);
+                } else if (name == "focus-composer") {
+                    root.focusComposer();
+                } else if (name.startsWith("t:")) {
+                    // Type a literal into whatever holds focus (e.g. the composer),
+                    // without the auto-Enter that DAEMON_TUI_TYPE appends. Used to
+                    // exercise the context-sensitive Esc levels.
+                    Tui::ZTest::sendText(&terminal, QString::fromUtf8(k.trimmed().mid(2)),
+                                         Qt::NoModifier);
                 }
             }
         }

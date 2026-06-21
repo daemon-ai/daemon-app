@@ -3,6 +3,7 @@ import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.ComposerSession
 
 // The message composer - the QML port of Hermes' ChatBar
 // (apps/desktop/src/app/chat/composer/index.tsx). A docked, full-width bar that
@@ -44,50 +45,45 @@ Rectangle {
     // The live draft text (also a test/host seam for setting the input).
     property alias draftText: inputArea.text
     // Number of queued prompts for the active conversation.
-    readonly property int queueCount: queueModel.count
+    readonly property int queueCount: controller.queueCount
 
     function focusInput() { inputArea.forceActiveFocus(); }
 
     color: Theme.surface
     implicitHeight: mainColumn.implicitHeight + 2 * Theme.spacing
 
-    // --- Private state ------------------------------------------------------
-    // conversationId (as string key) -> draft text.
-    property var _drafts: ({})
-    // conversationId -> [ { text, refs } ] queued prompts.
-    property var _queues: ({})
-    // conversationId -> [ sent text ] history ring.
-    property var _histories: ({})
-    property int _prevConvKey: -1
-
-    // History browse cursor (-1 = not browsing) and the live draft stashed when
-    // browsing started.
-    property int _browseIndex: -1
-    property string _historyDraft: ""
-
-    // Queue edit: index of the entry being edited (-1 = none) and the draft to
-    // restore on cancel.
-    property int _editingIndex: -1
-    property string _preEditDraft: ""
-
-    property bool _draining: false
+    // --- Session controller (shared C++ FSM) --------------------------------
+    // Owns draft/queue/history/attachments + the submit/queue/steer/cancel/drain
+    // state machine; this QML keeps only the visual concerns (field + caret,
+    // completion popover, chips, layout, key routing). It is bound from the public
+    // API above, and its outbound signals are relayed to this composer's own
+    // signals so the host (and tests) keep their existing connections.
+    ComposerSessionController {
+        id: controller
+        busy: root.busy
+        enabled: root.composerEnabled
+        conversationId: root.conversationId
+        onSubmitted: function(text, refs) { root.submitted(text, refs); }
+        onSteer: function(text) { root.steer(text); }
+        onCancelRequested: root.cancelRequested()
+        onCommandInvoked: function(command) { root.commandInvoked(command); }
+        // Programmatic draft changes (history recall, conversation swap, clear,
+        // queue edit) replace the field text with the caret at the end.
+        onDraftReset: function(text) { root.setText(text); }
+    }
 
     // Stack on touch so the finger-sized menu/controls never crowd the input on
     // narrow phone widths; also stack when very narrow or multiline.
     readonly property bool stacked: Theme.touch || root.width < 380 || inputArea.lineCount > 1
-    readonly property bool _hasPayload: inputArea.text.trim().length > 0 || attachmentsModel.count > 0
-    readonly property bool _canSteer: root.busy && inputArea.text.trim().length > 0 && attachmentsModel.count === 0
 
     // --- Models -------------------------------------------------------------
-    ListModel { id: queueModel }
+    // Todos remain a QML-side demo seam (no domain backing yet); the queue and
+    // attachment models are owned by the controller.
     ListModel { id: todoModel }
-    ListModel { id: attachmentsModel }
 
     CompletionProvider { id: completionProvider }
 
-    // --- Helpers ------------------------------------------------------------
-    function _key(id) { return id }
-
+    // --- Helpers (view-side) ------------------------------------------------
     function setText(t) {
         inputArea.text = t;
         inputArea.cursorPosition = t.length;
@@ -101,194 +97,17 @@ Rectangle {
         inputArea.forceActiveFocus();
     }
 
-    function clearComposer() {
-        inputArea.clear();
-        attachmentsModel.clear();
-    }
-
-    function buildRefs() {
-        var refs = [];
-        for (var i = 0; i < attachmentsModel.count; ++i) {
-            var a = attachmentsModel.get(i);
-            var prefix = a.kind === "image" ? "@image:"
-                       : a.kind === "folder" ? "@folder:"
-                       : a.kind === "url" ? "@url:" : "@file:";
-            refs.push(prefix + a.name);
-        }
-        return refs.join(" ");
-    }
-
-    function _resetBrowse() {
-        _browseIndex = -1;
-        _historyDraft = "";
-    }
-
-    function _pushHistory(text) {
-        var key = _key(conversationId);
-        var arr = _histories[key] || [];
-        if (arr.length === 0 || arr[arr.length - 1] !== text)
-            arr.push(text);
-        if (arr.length > 100)
-            arr = arr.slice(arr.length - 100);
-        _histories[key] = arr;
-    }
-
-    function browseUp() {
-        var arr = _histories[_key(conversationId)] || [];
-        if (arr.length === 0)
-            return false;
-        if (_browseIndex === -1) {
-            _historyDraft = inputArea.text;
-            _browseIndex = arr.length - 1;
-        } else if (_browseIndex > 0) {
-            _browseIndex -= 1;
-        } else {
-            return true; // at the oldest entry; swallow so the caret doesn't move
-        }
-        setText(arr[_browseIndex]);
-        return true;
-    }
-
-    function browseDown() {
-        if (_browseIndex === -1)
-            return false;
-        var arr = _histories[_key(conversationId)] || [];
-        if (_browseIndex < arr.length - 1) {
-            _browseIndex += 1;
-            setText(arr[_browseIndex]);
-        } else {
-            _browseIndex = -1;
-            setText(_historyDraft);
-        }
-        return true;
-    }
-
-    // --- Submit / queue / steer --------------------------------------------
-    function submitDraft() {
-        if (!composerEnabled)
-            return;
-
-        var text = inputArea.text.trim();
-
-        // Saving an in-place queue edit (not a send).
-        if (_editingIndex >= 0) {
-            if (text.length > 0)
-                queueModel.set(_editingIndex, { text: text, refs: buildRefs() });
-            exitEdit(false);
-            return;
-        }
-
-        if (!_hasPayload) {
-            // Empty Enter with a non-empty queue drains the next entry.
-            if (!busy && queueModel.count > 0)
-                _drainNext();
-            return;
-        }
-
-        var refs = buildRefs();
-
-        if (busy) {
-            // Mid-turn: queue the draft instead of sending.
-            _enqueue(text, refs);
-            clearComposer();
-            _resetBrowse();
-            return;
-        }
-
-        _pushHistory(text);
-        clearComposer();
-        _resetBrowse();
-        root.submitted(text, refs);
-    }
-
-    function queueDraft() {
-        if (!_hasPayload)
-            return;
-        _enqueue(inputArea.text.trim(), buildRefs());
-        clearComposer();
-        _resetBrowse();
-    }
-
-    function steerDraft() {
-        if (!_canSteer)
-            return;
-        var text = inputArea.text.trim();
-        clearComposer();
-        _resetBrowse();
-        root.steer(text);
-    }
-
-    function _enqueue(text, refs) {
-        queueModel.append({ text: text, refs: refs });
-    }
-
-    function _drainNext() {
-        if (_draining || busy || queueModel.count === 0)
-            return;
-        _draining = true;
-        var entry = queueModel.get(0);
-        var text = entry.text;
-        var refs = entry.refs;
-        queueModel.remove(0);
-        if (_editingIndex >= 0)
-            _editingIndex -= 1;
-        _pushHistory(text);
-        root.submitted(text, refs);
-        _draining = false;
-    }
-
-    // --- Queue row actions --------------------------------------------------
-    function sendNowEntry(index) {
-        if (index < 0 || index >= queueModel.count)
-            return;
-        if (busy) {
-            // Promote to the head and interrupt; the busy->idle drain sends it.
-            if (index !== 0) {
-                var e = queueModel.get(index);
-                var moved = { text: e.text, refs: e.refs };
-                queueModel.remove(index);
-                queueModel.insert(0, moved);
-            }
-            root.cancelRequested();
-            return;
-        }
-        var entry = queueModel.get(index);
-        var text = entry.text;
-        var refs = entry.refs;
-        queueModel.remove(index);
-        _pushHistory(text);
-        root.submitted(text, refs);
-    }
-
-    function deleteEntry(index) {
-        if (index < 0 || index >= queueModel.count)
-            return;
-        if (index === _editingIndex)
-            exitEdit(true);
-        else if (index < _editingIndex)
-            _editingIndex -= 1;
-        queueModel.remove(index);
-    }
-
-    function beginEdit(index) {
-        if (index < 0 || index >= queueModel.count || _editingIndex >= 0)
-            return;
-        _preEditDraft = inputArea.text;
-        _editingIndex = index;
-        setText(queueModel.get(index).text);
-        inputArea.forceActiveFocus();
-    }
-
-    function exitEdit(restore) {
-        if (_editingIndex < 0)
-            return;
-        _editingIndex = -1;
-        if (restore)
-            setText(_preEditDraft);
-        else
-            inputArea.clear();
-        _preEditDraft = "";
-    }
+    // --- Intents (delegated to the shared controller) -----------------------
+    function submitDraft() { controller.submit(); }
+    function queueDraft() { controller.enqueueDraft(); }
+    function steerDraft() { controller.steerDraft(); }
+    function sendNowEntry(index) { controller.sendNowEntry(index); }
+    function deleteEntry(index) { controller.deleteEntry(index); }
+    function beginEdit(index) { controller.beginEdit(index); inputArea.forceActiveFocus(); }
+    function exitEdit(restore) { controller.exitEdit(restore); }
+    // History recall (returns true to swallow the key).
+    function browseUp() { return controller.browseUp(); }
+    function browseDown() { return controller.browseDown(); }
 
     // --- Completion ---------------------------------------------------------
     property string _triggerKind: ""
@@ -340,9 +159,9 @@ Rectangle {
             }
             closeTrigger();
             if (item.action === "clear")
-                clearComposer();
+                controller.clear();
             else
-                root.commandInvoked(item.action);
+                controller.invokeCommand(item.action);
             return;
         }
         // Insert: replace the trigger token with the item value.
@@ -357,7 +176,7 @@ Rectangle {
 
     // --- Attachments --------------------------------------------------------
     function addAttachment(name, kind) {
-        attachmentsModel.append({ name: name, kind: kind });
+        controller.addAttachment(name, kind);
     }
 
     function _basename(path) {
@@ -377,43 +196,10 @@ Rectangle {
 
     function clearTodos() { todoModel.clear(); }
 
-    // --- Per-conversation state swap ---------------------------------------
-    function _stash(key) {
-        _drafts[key] = inputArea.text;
-        var q = [];
-        for (var i = 0; i < queueModel.count; ++i) {
-            var e = queueModel.get(i);
-            q.push({ text: e.text, refs: e.refs });
-        }
-        _queues[key] = q;
-    }
-
-    function _restore(key) {
-        setText(_drafts[key] !== undefined ? _drafts[key] : "");
-        queueModel.clear();
-        var q = _queues[key] || [];
-        for (var i = 0; i < q.length; ++i)
-            queueModel.append({ text: q[i].text, refs: q[i].refs });
-    }
-
-    onConversationIdChanged: {
-        // Editing/browsing state never crosses a conversation boundary.
-        _editingIndex = -1;
-        _preEditDraft = "";
-        _resetBrowse();
-        closeTrigger();
-        _stash(_key(_prevConvKey));
-        _restore(_key(conversationId));
-        _prevConvKey = conversationId;
-    }
-
-    onBusyChanged: {
-        // Flow queued turns whenever the session goes idle.
-        if (!busy && queueModel.count > 0)
-            Qt.callLater(_drainNext);
-    }
-
-    Component.onCompleted: _prevConvKey = conversationId
+    // Per-conversation draft/queue swap, history, and the idle drain all live in
+    // the controller now. The QML only dismisses the completion popover when the
+    // conversation changes (a view concern).
+    onConversationIdChanged: closeTrigger()
 
     // --- Top separator hairline --------------------------------------------
     Rectangle {
@@ -442,10 +228,10 @@ Rectangle {
         StatusStack {
             id: statusStack
             Layout.fillWidth: true
-            queueModel: queueModel
+            queueModel: controller.queue
             todoModel: todoModel
             busy: root.busy
-            editingIndex: root._editingIndex
+            editingIndex: controller.editingIndex
             onSendNow: function(index) { root.sendNowEntry(index); }
             onEditEntry: function(index) { root.beginEdit(index); }
             onDeleteEntry: function(index) { root.deleteEntry(index); }
@@ -492,7 +278,7 @@ Rectangle {
                 // Queue-edit banner.
                 Rectangle {
                     Layout.fillWidth: true
-                    visible: root._editingIndex >= 0
+                    visible: controller.editingIndex >= 0
                     implicitHeight: 30
                     radius: Theme.radius
                     color: Theme.activeBlockBackground
@@ -529,11 +315,11 @@ Rectangle {
                 // Attachment chips.
                 Flow {
                     Layout.fillWidth: true
-                    visible: attachmentsModel.count > 0
+                    visible: controller.attachments.count > 0
                     spacing: 6
 
                     Repeater {
-                        model: attachmentsModel
+                        model: controller.attachments
                         delegate: Item {
                             id: chipCell
                             required property int index
@@ -545,7 +331,7 @@ Rectangle {
                                 id: chip
                                 name: chipCell.name
                                 kind: chipCell.kind
-                                onRemoveRequested: attachmentsModel.remove(chipCell.index)
+                                onRemoveRequested: controller.attachments.removeAt(chipCell.index)
                             }
                         }
                     }
@@ -595,7 +381,14 @@ Rectangle {
                             background: null
                             enabled: root.composerEnabled
 
-                            onTextChanged: root.refreshTrigger()
+                            // Push live edits into the controller (it guards
+                            // against echoing the value back), then refresh the
+                            // completion trigger. The controller is the source of
+                            // truth for the draft; this field is its view.
+                            onTextChanged: {
+                                controller.draft = inputArea.text;
+                                root.refreshTrigger();
+                            }
                             onCursorPositionChanged: root.refreshTrigger()
 
                             Keys.priority: Keys.BeforeItem
@@ -642,7 +435,7 @@ Rectangle {
                                 }
 
                                 if (event.key === Qt.Key_Up) {
-                                    if (inputArea.text.trim().length === 0 || root._browseIndex !== -1) {
+                                    if (inputArea.text.trim().length === 0 || controller.browsing()) {
                                         if (root.browseUp()) {
                                             event.accepted = true;
                                             return;
@@ -651,7 +444,7 @@ Rectangle {
                                 }
 
                                 if (event.key === Qt.Key_Down) {
-                                    if (root._browseIndex !== -1) {
+                                    if (controller.browsing()) {
                                         root.browseDown();
                                         event.accepted = true;
                                         return;
@@ -659,13 +452,13 @@ Rectangle {
                                 }
 
                                 if (event.key === Qt.Key_Escape) {
-                                    if (root._editingIndex >= 0) {
+                                    if (controller.editingIndex >= 0) {
                                         root.exitEdit(true);
                                         event.accepted = true;
                                         return;
                                     }
                                     if (root.busy) {
-                                        root.cancelRequested();
+                                        controller.cancel();
                                         event.accepted = true;
                                         return;
                                     }
@@ -689,12 +482,12 @@ Rectangle {
                         Layout.column: 2
                         Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                         busy: root.busy
-                        hasPayload: root._hasPayload
-                        canSteer: root._canSteer
+                        hasPayload: controller.hasPayload
+                        canSteer: controller.canSteer
                         composerEnabled: root.composerEnabled
                         onSend: root.submitDraft()
                         onQueue: root.queueDraft()
-                        onStop: root.cancelRequested()
+                        onStop: controller.cancel()
                         onSteer: root.steerDraft()
                     }
                 }

@@ -34,6 +34,7 @@ public:
         AgentKindRole,   // domain::AgentNodeKind of the owning node (cosmetic)
         TagNamesRole,    // QStringList of tag names
         TagColorsRole,   // QStringList of tag colors, parallel to TagNamesRole
+        CurrentRole,     // true for the currently-selected row (identity match)
     };
 
     explicit ConversationsListModel(QObject* parent = nullptr);
@@ -55,17 +56,33 @@ public:
     Q_INVOKABLE void setScope(int nodeType, int id, const QString& nodeId);
     Q_INVOKABLE int idAt(int row) const;
 
+    // Identity-based selection (mirrors SidebarModel): the selection is stored by
+    // conversation id so it survives search/scope rebuilds; the highlight is
+    // driven by CurrentRole rather than a view-local row index.
+    // Select a row: records the selection by id, emits selectionChanged, and
+    // repaints the highlight.
+    Q_INVOKABLE void activate(int row);
+    Q_INVOKABLE void selectNext();      // next row (clamped)
+    Q_INVOKABLE void selectPrevious();  // previous row (clamped)
+    // Row index of the current selection (-1 if none / filtered out).
+    [[nodiscard]] Q_INVOKABLE int currentRow() const;
+
 signals:
     void storeChanged();
     void searchChanged();
     void scopeChanged();
     void countChanged();
+    // Emitted whenever the current selection changes (id is the conversation id,
+    // -1 when cleared).
+    void selectionChanged(int conversationId);
 
 private:
     void reload();
     void applyFilter();
     void rebuildLookups();
     [[nodiscard]] QString computeScopeTitle() const;
+    void setCurrentId(int id);             // records id + emits + repaints
+    void emitCurrentChanged();             // dataChanged(CurrentRole) for all rows
 
     persistence::IConversationStore* m_store = nullptr;
     domain::ListScope m_scope;
@@ -75,4 +92,5 @@ private:
     QList<domain::Conversation> m_filtered;
     QHash<QString, QPair<QString, int>> m_nodeInfo; // agent id -> (name, kind)
     QHash<int, QPair<QString, QString>> m_tagInfo;   // tag id -> (name, color)
+    int m_currentId = -1; // selected conversation id (identity-stable), -1 = none
 };

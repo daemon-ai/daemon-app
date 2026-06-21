@@ -18,11 +18,10 @@ Rectangle {
     signal conversationActivated(int conversationId)
     signal toggleSidebarRequested()
 
-    property int currentRow: -1
     property bool searchActive: false
 
     function setScope(nodeType, id, nodeId) {
-        root.currentRow = -1;
+        // The model owns selection now and clears it on scope change.
         convModel.setScope(nodeType, id, nodeId);
     }
 
@@ -177,6 +176,7 @@ Rectangle {
                     required property int agentKind
                     required property var tagNames
                     required property var tagColors
+                    required property bool current
 
                     // LEFT_OFFSET_X = 20, TOP_OFFSET_Y = 10, LAST_EL_SEP_SPACE = 12.
                     readonly property int leftOffset: 20
@@ -184,7 +184,7 @@ Rectangle {
                     width: ListView.view.width
                     height: content.implicitHeight + 10 + 12
 
-                    readonly property bool isSelected: index === root.currentRow
+                    readonly property bool isSelected: del.current
 
                     // Inset rounded selection: fill-only, no
                     // hairline - a deliberate step below the sidebar nav rows.
@@ -310,7 +310,7 @@ Rectangle {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            root.currentRow = del.index;
+                            convModel.activate(del.index);
                             root.conversationActivated(convModel.idAt(del.index));
                         }
                     }

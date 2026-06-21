@@ -38,6 +38,8 @@ target_link_libraries(tst_composer
         da_themeplugin
         da_controls
         da_controlsplugin
+        da_composer_session
+        da_composer_sessionplugin
         da_composer
         da_composerplugin
 )

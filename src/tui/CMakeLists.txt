@@ -74,6 +74,7 @@ target_link_libraries(daemon-tui
         Qt6::Core5Compat
         daemon-app::tui_viewmodels
         daemon-app::presentation
+        daemon-app::composer_session
         daemon-app::domain
         daemon-app::persistence
         daemon-app::warnings
