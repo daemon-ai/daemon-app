@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 
 import DaemonApp.Theme
+import DaemonApp.Settings
 
 Item {
     id: root
@@ -32,6 +33,14 @@ Item {
     // a turn so it doesn't hop between blocks as the tail grows (each inserted
     // block would otherwise relocate ~40px of footer right at the pinned bottom).
     property bool turnRunning: false
+
+    // Turn-level inline edit. The Transcript owns the single "open" message id; a
+    // user turn whose id matches swaps its body for an inline editor (on the
+    // first block) and collapses its remaining blocks.
+    property string editingMessageId: ""
+    readonly property bool messageEditing: editingMessageId !== "" && editingMessageId === messageId
+    signal editRequested(string messageId)
+    signal editFinished()
 
     // BlockType enum values for list items (BulletListItem=2, OrderedListItem=3,
     // TaskListItem=4); list policy lives in the store/controller, the delegate
@@ -96,6 +105,13 @@ Item {
     // First block of a turn gets extra top spacing so turns read as grouped.
     readonly property int turnGap: messageFirst ? Theme.contentSpacing : 0
 
+    // Non-first blocks of a user turn being edited collapse to nothing so the turn
+    // shows a single editor (on the first block).
+    readonly property bool collapsedForEdit: messageEditing && !messageFirst
+    // Optional left accent rail down a user turn (A1, toggleable in Settings).
+    readonly property bool railShown: isUser && UiSettings.showUserRail && !isActive && !collapsedForEdit
+    readonly property int railInset: railShown ? Theme.blockPadding : 0
+
     property bool isPooled: false
     property bool isActive: editorController.activeBlockId === Number(blockId)
     property var selectionSpan: editorController.selectionSpanForBlock(Number(blockId), index, passiveText.length)
@@ -140,7 +156,9 @@ Item {
     }
 
     width: ListView.view ? ListView.view.width : implicitWidth
-    implicitHeight: Math.max(contentColumn.implicitHeight + verticalPadding * 2 + turnGap, 1)
+    implicitHeight: collapsedForEdit
+        ? 1
+        : Math.max(contentColumn.implicitHeight + verticalPadding * 2 + turnGap, 1)
     height: implicitHeight
 
     ListView.onPooled: {
@@ -215,13 +233,27 @@ Item {
         border.color: Theme.activeBlockBorder
     }
 
+    // Optional left accent rail for user turns. Each row paints its own segment;
+    // contiguous rows form one continuous rail down the turn.
+    Rectangle {
+        visible: root.railShown
+        anchors.left: parent.left
+        anchors.leftMargin: Theme.blockPadding
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: 2
+        radius: 1
+        color: Theme.userRail
+    }
+
     Column {
         id: contentColumn
+        visible: !root.collapsedForEdit
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.topMargin: root.verticalPadding + root.turnGap
-        anchors.leftMargin: Theme.blockPadding
+        anchors.leftMargin: Theme.blockPadding + root.railInset
         anchors.rightMargin: Theme.blockPadding
         spacing: Theme.smallSpacing
 
@@ -233,10 +265,126 @@ Item {
             font.pixelSize: Theme.captionFontSize
         }
 
+        // Per-turn role header (avatar + name), once on the first block of a user
+        // or assistant turn. Replaces the old per-block user bubble as the role cue.
+        Loader {
+            id: headerLoader
+            width: parent.width
+            active: root.messageFirst && (root.isUser || root.isAssistant)
+                    && !root.isActive && !root.messageEditing
+            visible: active
+            sourceComponent: Component {
+                MessageHeader {
+                    role: root.isUser ? "user" : "assistant"
+                    onEditRequested: root.editRequested(root.messageId)
+                }
+            }
+        }
+
+        // Turn-level inline edit composer, on the first block of the edited user
+        // turn (the remaining blocks collapse). Seeded with the full message text.
+        Loader {
+            id: editLoader
+            width: parent.width
+            active: root.isUser && root.messageEditing && root.messageFirst && !root.isActive
+            visible: active
+            sourceComponent: Component {
+                Rectangle {
+                    id: editRoot
+                    readonly property string bodyFamily: (root.editorController && root.editorController.bodyFontFamily !== "")
+                        ? root.editorController.bodyFontFamily : FontIcons.display
+                    implicitHeight: editColumn.implicitHeight + Theme.smallSpacing * 2
+                    radius: Theme.radius
+                    color: Theme.background
+                    border.width: Theme.hairline
+                    border.color: Theme.searchFocusBorder
+
+                    Column {
+                        id: editColumn
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: Theme.smallSpacing
+                        spacing: Theme.smallSpacing
+
+                        TextArea {
+                            id: editArea
+                            width: parent.width
+                            wrapMode: TextArea.Wrap
+                            background: null
+                            padding: 0
+                            color: Theme.text
+                            selectionColor: Theme.selection
+                            selectedTextColor: Theme.selectionText
+                            font.family: editRoot.bodyFamily
+                            font.pixelSize: Theme.bodyFontSize
+
+                            Component.onCompleted: {
+                                if (root.editorController)
+                                    text = root.editorController.messageText(root.messageId)
+                                forceActiveFocus()
+                            }
+
+                            Keys.onPressed: event => {
+                                const cmd = (event.modifiers & Qt.ControlModifier) || (event.modifiers & Qt.MetaModifier)
+                                if (event.key === Qt.Key_Escape) {
+                                    root.editFinished()
+                                    event.accepted = true
+                                } else if (cmd && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) {
+                                    if (root.editorController)
+                                        root.editorController.editUserMessage(root.messageId, editArea.text)
+                                    root.editFinished()
+                                    event.accepted = true
+                                }
+                            }
+                        }
+
+                        Row {
+                            anchors.right: parent.right
+                            spacing: Theme.smallSpacing
+
+                            EditAction {
+                                glyph: FontIcons.fa_xmark
+                                onActivated: root.editFinished()
+                            }
+                            EditAction {
+                                glyph: FontIcons.check
+                                onActivated: {
+                                    if (root.editorController)
+                                        root.editorController.editUserMessage(root.messageId, editArea.text)
+                                    root.editFinished()
+                                }
+                            }
+                        }
+                    }
+
+                    component EditAction: Rectangle {
+                        id: ea
+                        property string glyph: ""
+                        signal activated()
+                        width: 26
+                        height: 26
+                        radius: Theme.radius
+                        color: eaHover.hovered ? Theme.messageFooterHover : Theme.transparent
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: ea.glyph
+                            font.family: FontIcons.faSolid
+                            font.pixelSize: Theme.captionFontSize
+                            color: Theme.messageFooterText
+                        }
+                        HoverHandler { id: eaHover }
+                        TapHandler { onTapped: ea.activated() }
+                    }
+                }
+            }
+        }
+
         Item {
             id: passiveContainer
-            visible: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasCode && !root.hasMath
-                     && !root.hasReasoning && !root.hasTool && !root.hasContent && !root.isUser && !root.isSystem
+            visible: !root.isActive && !root.messageEditing && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasCode && !root.hasMath
+                     && !root.hasReasoning && !root.hasTool && !root.hasContent && !root.isSystem
             width: parent.width
             implicitHeight: passiveText.implicitHeight
             height: implicitHeight
@@ -286,8 +434,8 @@ Item {
             MouseArea {
                 id: passiveSelect
                 anchors.fill: parent
-                enabled: !root.isActive && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasMath
-                         && !root.hasReasoning && !root.hasTool && !root.hasContent && !root.isUser && !root.isSystem
+                enabled: !root.isActive && !root.messageEditing && !root.hasTable && !root.hasMermaid && !root.hasImage && !root.hasMath
+                         && !root.hasReasoning && !root.hasTool && !root.hasContent && !root.isSystem
                 acceptedButtons: Qt.LeftButton
                 preventStealing: true
                 hoverEnabled: true
@@ -352,7 +500,7 @@ Item {
 
         Item {
             id: tableContainer
-            visible: !root.isActive && root.hasTable
+            visible: !root.isActive && !root.messageEditing && root.hasTable
             width: parent.width
             implicitHeight: tableLoader.implicitHeight
             height: implicitHeight
@@ -371,7 +519,7 @@ Item {
             MouseArea {
                 id: tableSelect
                 anchors.fill: parent
-                enabled: !root.isActive && root.hasTable
+                enabled: !root.isActive && !root.messageEditing && root.hasTable
                 acceptedButtons: Qt.LeftButton
                 preventStealing: true
                 hoverEnabled: true
@@ -444,7 +592,7 @@ Item {
 
         Item {
             id: mermaidContainer
-            visible: !root.isActive && root.hasMermaid
+            visible: !root.isActive && !root.messageEditing && root.hasMermaid
             width: parent.width
             implicitHeight: mermaidLoader.implicitHeight
             height: implicitHeight
@@ -470,7 +618,7 @@ Item {
 
         Item {
             id: mathContainer
-            visible: !root.isActive && root.hasMath
+            visible: !root.isActive && !root.messageEditing && root.hasMath
             width: parent.width
             implicitHeight: mathLoader.implicitHeight
             height: implicitHeight
@@ -496,7 +644,7 @@ Item {
 
         Item {
             id: imageContainer
-            visible: !root.isActive && root.hasImage
+            visible: !root.isActive && !root.messageEditing && root.hasImage
             width: parent.width
             implicitHeight: imageLoader.implicitHeight
             height: implicitHeight
@@ -522,7 +670,7 @@ Item {
 
         Item {
             id: codeContainer
-            visible: !root.isActive && root.hasCode
+            visible: !root.isActive && !root.messageEditing && root.hasCode
             width: parent.width
             implicitHeight: codeLoader.implicitHeight
             height: implicitHeight
@@ -625,20 +773,17 @@ Item {
         }
 
         // --- Message/role layer render paths --------------------------------
-        // User message: a glass bubble with the simplified text, directive chips,
-        // and an inline edit composer (the passive selection path is disabled for
-        // user/system rows above, so these own their own interaction).
+        // User attachment/directive chips, once per turn under the last user block
+        // (the message body now renders as clean markdown through the paths above).
         Loader {
-            id: userLoader
+            id: userChipsLoader
             width: parent.width
-            active: root.isUser && !root.isActive
+            active: root.isUser && root.messageLast && !root.isActive && !root.messageEditing
             visible: active
             sourceComponent: Component {
-                UserMessageBubble {
-                    markdown: root.markdown
-                    displayMarkup: root.displayMarkup
-                    editorController: root.editorController
-                    messageId: root.messageId
+                DirectiveChips {
+                    width: userChipsLoader.width
+                    markdown: root.editorController ? root.editorController.messageText(root.messageId) : ""
                 }
             }
         }

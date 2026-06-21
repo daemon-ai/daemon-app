@@ -191,6 +191,15 @@ QtObject {
     readonly property color bubbleUser: isMidnight ? "#13234d" : isDark ? "#222a36" : isSepia ? "#f0e6cf" : "#eef4fb"
     readonly property color bubbleUserBorder: isMidnight ? "#28467f" : isDark ? "#33414f" : isSepia ? "#dccca3" : "#d7e6f6"
     readonly property color bubbleUserText: text
+    // Per-turn role header: a small avatar chip + the role name ("You"/"Daemon").
+    // The avatars are quiet tinted chips; the name reads in the muted chrome ink.
+    readonly property color roleAvatarUser: accent
+    readonly property color roleAvatarAssistant: isMidnight ? "#2a3a63" : isDark ? "#3a3a3a" : isSepia ? "#d8c7a0" : "#e2e2e2"
+    readonly property color roleAvatarUserIcon: "#ffffff"
+    readonly property color roleAvatarAssistantIcon: textMuted
+    readonly property color roleName: textMuted
+    // Optional left accent rail down a user turn (A1). A muted accent hairline.
+    readonly property color userRail: bubbleUserBorder
     // Footer action row (copy / regenerate / branch) under an assistant message.
     readonly property color messageFooterText: textMuted
     readonly property color messageFooterHover: hover

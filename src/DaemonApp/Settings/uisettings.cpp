@@ -105,6 +105,8 @@ void UiSettings::load()
         = m_settings.value(QStringLiteral("showFoldersTree"), m_showFoldersTree).toBool();
     m_showPlainText
         = m_settings.value(QStringLiteral("showPlainText"), m_showPlainText).toBool();
+    m_showUserRail
+        = m_settings.value(QStringLiteral("showUserRail"), m_showUserRail).toBool();
     m_settings.endGroup();
 
     // Clamp persisted values defensively (font tables / limits can change between
@@ -288,6 +290,16 @@ void UiSettings::setShowPlainText(bool on)
     emit showPlainTextChanged();
 }
 
+void UiSettings::setShowUserRail(bool on)
+{
+    if (on == m_showUserRail) {
+        return;
+    }
+    m_showUserRail = on;
+    store(QStringLiteral("showUserRail"), m_showUserRail);
+    emit showUserRailChanged();
+}
+
 void UiSettings::resetAll()
 {
     setTheme(QStringLiteral("Light"));
@@ -302,4 +314,5 @@ void UiSettings::resetAll()
     setShowNotesList(true);
     setShowFoldersTree(true);
     setShowPlainText(false);
+    setShowUserRail(true);
 }

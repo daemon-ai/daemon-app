@@ -209,6 +209,14 @@ QQC.Popup {
                 checked: UiSettings.showPlainText
                 onToggled: function(on) { UiSettings.showPlainText = on; }
             }
+            OptionRow {
+                Layout.fillWidth: true
+                Layout.leftMargin: root.hMargin
+                Layout.rightMargin: root.hMargin
+                label: qsTr("User message rail")
+                checked: UiSettings.showUserRail
+                onToggled: function(on) { UiSettings.showUserRail = on; }
+            }
 
             Divider {}
 

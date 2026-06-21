@@ -49,6 +49,8 @@ class UiSettings : public QObject {
                    showFoldersTreeChanged)
     Q_PROPERTY(
         bool showPlainText READ showPlainText WRITE setShowPlainText NOTIFY showPlainTextChanged)
+    Q_PROPERTY(
+        bool showUserRail READ showUserRail WRITE setShowUserRail NOTIFY showUserRailChanged)
 
 public:
     explicit UiSettings(QObject* parent = nullptr);
@@ -85,6 +87,8 @@ public:
     void setShowFoldersTree(bool on);
     [[nodiscard]] bool showPlainText() const { return m_showPlainText; }
     void setShowPlainText(bool on);
+    [[nodiscard]] bool showUserRail() const { return m_showUserRail; }
+    void setShowUserRail(bool on);
 
     // Resolved family name for a category's font index (label != family for the
     // iA Writer faces). Used by the Style cards to render each "Ag" preview.
@@ -112,6 +116,7 @@ signals:
     void showNotesListChanged();
     void showFoldersTreeChanged();
     void showPlainTextChanged();
+    void showUserRailChanged();
 
 private:
     static constexpr int kMinFontSize = 9;
@@ -135,4 +140,5 @@ private:
     bool m_showNotesList = true;
     bool m_showFoldersTree = true;
     bool m_showPlainText = false;
+    bool m_showUserRail = true;
 };

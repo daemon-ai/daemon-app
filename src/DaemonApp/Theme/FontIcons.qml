@@ -69,6 +69,7 @@ QtObject {
     readonly property string fa_comments: "\uf086"
     readonly property string fa_box_archive: "\uf187"
     readonly property string fa_paper_plane: "\uf1d8"
+    readonly property string fa_user: "\uf007"
 
     // Agent-tree node-kind glyphs (cosmetic; one per AgentNodeKind).
     readonly property string fa_robot: "\uf544"   // engine / agent leaf

@@ -242,6 +242,9 @@ Rectangle {
             // While locked, content growth pins the view to the bottom; scrolling
             // up past the threshold escapes, scrolling back within it re-locks.
             property bool stickToBottom: true
+            // The user message currently open for inline edit (turn-level), or ""
+            // when none. Drives the BlockDelegate edit/collapse render per turn.
+            property string editingMessageId: ""
             readonly property int bottomThresholdPx: 72
             // Set while we move the view ourselves, so onContentYChanged can tell a
             // programmatic scroll from a user gesture (only the latter toggles lock).
@@ -351,6 +354,12 @@ Rectangle {
                 width: ListView.view.width
                 editorController: editor
                 turnRunning: root.busy
+                editingMessageId: editorView.editingMessageId
+                onEditRequested: function(id) {
+                    editor.notifyInlineEditOpen()
+                    editorView.editingMessageId = id
+                }
+                onEditFinished: editorView.editingMessageId = ""
             }
 
             // Follow the growing tail while locked: each streamed chunk re-pins
