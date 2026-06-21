@@ -70,8 +70,10 @@ QString reasoningGlyph(); // reasoning header marker
 // visual parity with the GUI (ConversationListView, StatusBarView, ComposerChrome,
 // CompletionView). They mirror the same Theme.qml tokens the GUI chrome uses.
 
-Tui::ZColor selectionBg(); // active-row wash (list cards / completion) (#45475a)
-Tui::ZColor surfaceAlt();  // recessed popup/footer surface (#181825)
+Tui::ZColor selectionBg();         // active-row wash when the list is focused
+Tui::ZColor selectionInactiveBg(); // weaker wash when the list is not focused
+Tui::ZColor surfaceAlt();          // recessed popup/footer surface (#181825)
+Tui::ZColor activeFieldBg();       // focused text-field surface (accent-tinted)
 
 // gatewayTone ("danger"/"warning"/"default") -> red/peach/green (ready = green).
 Tui::ZColor gatewayToneColor(const QString &tone);

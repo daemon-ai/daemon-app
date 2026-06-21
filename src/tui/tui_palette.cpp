@@ -35,6 +35,9 @@ Tui::ZPalette daemonPalette(theme::ThemeName name)
     const Tui::ZColor sel = tokColor(name, Token::RowActive); // neutral selection wash
     const Tui::ZColor accent = tokColor(name, Token::Accent);
     const Tui::ZColor accentFg = tokColor(name, Token::Background); // text on accent
+    // A focused text field lifts to the faint accent-tinted "active block" surface
+    // so focus is visible even when the field is empty.
+    const Tui::ZColor activeField = tokColor(name, Token::ActiveBlockBackground);
 
     Tui::ZPalette p = Tui::ZPalette::classic();
     p.setColors({
@@ -77,11 +80,13 @@ Tui::ZPalette daemonPalette(theme::ThemeName name)
         {"window.default.textedit.linenumber.bg", bgAlt},
         {"window.default.textedit.linenumber.fg", dim},
 
-        // Composer (ZInputBox).
+        // Text inputs (composer). Unfocused sits on the recessed surface; focused
+        // lifts to the accent-tinted active surface while keeping text readable, so
+        // the focused field is obvious at a glance.
         {"window.default.lineedit.bg", bgAlt},
         {"window.default.lineedit.fg", fg},
-        {"window.default.lineedit.focused.bg", bgAlt},
-        {"window.default.lineedit.focused.fg", accent},
+        {"window.default.lineedit.focused.bg", activeField},
+        {"window.default.lineedit.focused.fg", fg},
     });
     return p;
 }
@@ -206,8 +211,10 @@ QString reasoningGlyph() { return QStringLiteral("\u2732"); } // ✲
 
 // --- Chrome -------------------------------------------------------------------
 
-ZColor selectionBg() { return tok(theme::Token::RowActive); } // neutral row wash
+ZColor selectionBg() { return tok(theme::Token::RowActive); } // focused row wash
+ZColor selectionInactiveBg() { return tok(theme::Token::RowActiveInactive); } // unfocused
 ZColor surfaceAlt() { return tok(theme::Token::SurfaceRaised); } // recessed surface
+ZColor activeFieldBg() { return tok(theme::Token::ActiveBlockBackground); } // focused field
 
 ZColor gatewayToneColor(const QString &tone)
 {

@@ -23,14 +23,30 @@ public:
 
     void setModel(ConversationsListModel* model);
 
+    // Re-bake the cached card spans from the current theme tokens (the spans
+    // capture tpal::* colors at build time, so a theme change needs a rebuild, not
+    // just a repaint). Selection + scroll position are preserved.
+    void relayout();
+
 signals:
     // Up/Down/Enter on a row: open that conversation (row index in the model).
     void rowActivated(int row);
+
+    // Type-ahead: the list is the only focus stop in the column, so printable keys
+    // build the search query (RootWidget routes these to the passive search box,
+    // whose textChanged drives the live filter).
+    void searchAppend(const QString& text); // a printable character was typed
+    void searchBackspace();                 // delete the last query character
+    void searchClear();                     // Esc with a non-empty query
+    // Focus gained/lost, so the search box can show/hide its typing caret.
+    void focusChanged(bool focused);
 
 protected:
     void paintEvent(Tui::ZPaintEvent* event) override;
     void keyEvent(Tui::ZKeyEvent* event) override;
     void resizeEvent(Tui::ZResizeEvent* event) override;
+    void focusInEvent(Tui::ZFocusEvent* event) override;
+    void focusOutEvent(Tui::ZFocusEvent* event) override;
 
 private:
     void rebuild();

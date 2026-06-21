@@ -64,26 +64,33 @@ signals:
 
 protected:
     void keyEvent(Tui::ZKeyEvent* event) override;
+    // Draw a dim placeholder when the draft is empty (over the base paint, so the
+    // focused tint + bar caret still show).
+    void paintEvent(Tui::ZPaintEvent* event) override;
 
 private:
     ComposerSessionController* m_session = nullptr;
 };
 
-// A one-line search field above the conversation list, bound to
-// ConversationsListModel::setSearch. Esc clears a non-empty query, then (when
-// already empty) hands focus to the list; Enter/Down jump straight into the list.
+// A one-line search field above the conversation list. It is NOT a focus stop:
+// the conversation list owns focus and forwards typed characters here (type-ahead),
+// so this box is a passive display of the live query bound to
+// ConversationsListModel::setSearch. When the list is focused it shows a caret
+// after the query to mark where keystrokes land; when empty it shows a placeholder.
 class SearchInputBox : public Tui::ZInputBox {
     Q_OBJECT
 
 public:
     using Tui::ZInputBox::ZInputBox;
 
-signals:
-    // Move keyboard focus down into the conversation list.
-    void leaveRequested();
+    // Toggle the typing caret (driven by the conversation list's focus state).
+    void setTypingActive(bool active);
 
 protected:
-    void keyEvent(Tui::ZKeyEvent* event) override;
+    void paintEvent(Tui::ZPaintEvent* event) override;
+
+private:
+    bool m_typingActive = false;
 };
 
 // ZListView handles Up/Down/Home/End but ignores Left/Right. The sidebar is a

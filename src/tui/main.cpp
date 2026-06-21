@@ -3,6 +3,7 @@
 
 #include "theme/theme_palette.h"
 
+#include <Tui/ZCommon.h>
 #include <Tui/ZImage.h>
 #include <Tui/ZTerminal.h>
 #include <Tui/ZTest.h>
@@ -193,6 +194,13 @@ int main(int argc, char* argv[])
     Tui::ZTerminal terminal;
     RootWidget root;
     terminal.setMainWidget(&root);
+
+    // A thin bar caret tinted to the theme accent marks the focused text input
+    // (the composer); blink follows the host terminal. RootWidget::cycleTheme keeps
+    // the color in sync when the theme changes.
+    terminal.setCursorStyle(Tui::CursorStyle::Bar);
+    const Tui::ZColor caret = tpal::accent();
+    terminal.setCursorColor(caret.red(), caret.green(), caret.blue());
 
     return app.exec();
 }

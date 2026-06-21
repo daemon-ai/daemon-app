@@ -63,6 +63,11 @@ void ConversationListView::setModel(ConversationsListModel* model)
     rebuild();
 }
 
+void ConversationListView::relayout()
+{
+    rebuild();
+}
+
 int ConversationListView::visibleRows() const
 {
     return qMax(0, geometry().height());
@@ -229,7 +234,10 @@ void ConversationListView::paintEvent(Tui::ZPaintEvent* event)
         }
         const int srcRow = m_rowOfLine.at(idx);
         const bool washed = srcRow >= 0 && srcRow == selectedRow;
-        const Tui::ZColor rowBg = washed ? tpal::selectionBg() : pageBg;
+        // The selected row uses a brighter wash when the column is focused and a
+        // weaker one when it is not, so "this column is focused" reads at a glance.
+        const Tui::ZColor washBg = focus() ? tpal::selectionBg() : tpal::selectionInactiveBg();
+        const Tui::ZColor rowBg = washed ? washBg : pageBg;
         if (washed) {
             p->clearRect(0, rowY, contentW, 1, pageFg, rowBg);
         }
@@ -273,33 +281,94 @@ void ConversationListView::paintEvent(Tui::ZPaintEvent* event)
 
 void ConversationListView::keyEvent(Tui::ZKeyEvent* event)
 {
-    if (m_model != nullptr && event->modifiers() == Qt::NoModifier) {
+    if (m_model != nullptr
+        && (event->modifiers() == Qt::NoModifier || event->modifiers() == Qt::ShiftModifier)) {
         const int key = event->key();
-        bool handled = true;
-        switch (key) {
-        case Qt::Key_Up:
-            m_model->selectPrevious();
-            emit rowActivated(m_model->currentRow());
-            break;
-        case Qt::Key_Down:
-            m_model->selectNext();
-            emit rowActivated(m_model->currentRow());
-            break;
-        case Qt::Key_Enter:
-        case Qt::Key_Return:
-            if (m_model->currentRow() >= 0) {
+        const Qt::KeyboardModifiers mods = event->modifiers();
+
+        // Card navigation (arrows / Home / End) and open (Enter). Only on the plain
+        // (no Shift) variants so Shift+printables still type into the query.
+        if (mods == Qt::NoModifier) {
+            bool navHandled = true;
+            switch (key) {
+            case Qt::Key_Up:
+                m_model->selectPrevious();
                 emit rowActivated(m_model->currentRow());
+                break;
+            case Qt::Key_Down:
+                m_model->selectNext();
+                emit rowActivated(m_model->currentRow());
+                break;
+            case Qt::Key_Home:
+                if (m_model->rowCount() > 0) {
+                    m_model->activate(0);
+                    emit rowActivated(0);
+                }
+                break;
+            case Qt::Key_End:
+                if (m_model->rowCount() > 0) {
+                    m_model->activate(m_model->rowCount() - 1);
+                    emit rowActivated(m_model->rowCount() - 1);
+                }
+                break;
+            case Qt::Key_Enter:
+            case Qt::Key_Return:
+                if (m_model->currentRow() >= 0) {
+                    emit rowActivated(m_model->currentRow());
+                }
+                break;
+            default:
+                navHandled = false;
+                break;
             }
-            break;
-        default:
-            handled = false;
-            break;
+            if (navHandled) {
+                event->accept();
+                return;
+            }
+
+            // Esc clears an active query first; only an empty query bubbles up (to
+            // the shell's context-sensitive quit chain).
+            if (key == Qt::Key_Escape) {
+                if (!m_model->search().isEmpty()) {
+                    emit searchClear();
+                    event->accept();
+                    return;
+                }
+            } else if (key == Qt::Key_Backspace) {
+                emit searchBackspace();
+                event->accept();
+                return;
+            }
         }
-        if (handled) {
+
+        // Type-ahead: any printable character builds the search query (the model
+        // filters live; selection re-anchors to the first match in RootWidget).
+        const QString text = event->text();
+        if (!text.isEmpty() && text.at(0).isPrint()) {
+            emit searchAppend(text);
             event->accept();
             return;
         }
     }
-    // Everything else (notably Esc) bubbles up unhandled.
+    // Everything else (notably an empty-query Esc) bubbles up unhandled.
     Tui::ZWidget::keyEvent(event);
+}
+
+void ConversationListView::focusInEvent(Tui::ZFocusEvent* event)
+{
+    Tui::ZWidget::focusInEvent(event);
+    // Entering the list with nothing selected: anchor on the first card so a single
+    // Up/Down isn't "spent" just selecting row 0, and Enter works immediately.
+    if (m_model != nullptr && m_model->currentRow() < 0 && m_model->rowCount() > 0) {
+        m_model->activate(0);
+    }
+    emit focusChanged(true);
+    update(); // repaint the selection wash in its focused (brighter) tone
+}
+
+void ConversationListView::focusOutEvent(Tui::ZFocusEvent* event)
+{
+    Tui::ZWidget::focusOutEvent(event);
+    emit focusChanged(false);
+    update(); // dim the selection wash now the column is unfocused
 }

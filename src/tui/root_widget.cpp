@@ -17,9 +17,11 @@
 
 #include <Tui/ZButton.h>
 #include <Tui/ZDialog.h>
+#include <Tui/ZEvent.h>
 #include <Tui/ZHBoxLayout.h>
 #include <Tui/ZLabel.h>
 #include <Tui/ZListView.h>
+#include <Tui/ZPainter.h>
 #include <Tui/ZRoot.h>
 #include <Tui/ZShortcut.h>
 #include <Tui/ZTerminal.h>
@@ -127,27 +129,68 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
     }
 }
 
-void SearchInputBox::keyEvent(Tui::ZKeyEvent* event)
+void SubmitInputBox::paintEvent(Tui::ZPaintEvent* event)
 {
-    if (event->modifiers() == Qt::NoModifier) {
-        if (event->key() == Qt::Key_Escape) {
-            if (!text().isEmpty()) {
-                setText(QString()); // textChanged -> clears the filter
-            } else {
-                emit leaveRequested();
-            }
-            event->accept();
-            return;
-        }
-        // Enter / Down step into the list (the query is applied live as you type).
-        if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return
-            || event->key() == Qt::Key_Down) {
-            emit leaveRequested();
-            event->accept();
-            return;
-        }
+    // Base paints the field bg + (when focused) positions the terminal caret.
+    Tui::ZInputBox::paintEvent(event);
+    if (!text().isEmpty()) {
+        return; // real draft text takes over
     }
-    Tui::ZInputBox::keyEvent(event);
+    // Overlay a dim placeholder over the (focus-aware) field background.
+    Tui::ZPainter* p = event->painter();
+    const int w = geometry().width();
+    if (w <= 0) {
+        return;
+    }
+    const Tui::ZColor fieldBg = focus() ? tpal::activeFieldBg() : tpal::surfaceAlt();
+    const QString hint = QStringLiteral("Message daemon\u2026  (Enter to send)");
+    p->writeWithColors(0, 0, hint.left(w), tpal::muted(), fieldBg);
+}
+
+void SearchInputBox::setTypingActive(bool active)
+{
+    if (m_typingActive == active) {
+        return;
+    }
+    m_typingActive = active;
+    update();
+}
+
+void SearchInputBox::paintEvent(Tui::ZPaintEvent* event)
+{
+    // Fully custom paint: this box never edits text itself (the conversation list
+    // forwards keystrokes), so we draw a search affordance instead of the stock
+    // line-edit chrome.
+    Tui::ZPainter* p = event->painter();
+    const Tui::ZColor bg = tpal::surfaceAlt();
+    p->clear(tpal::fg(), bg);
+    const int w = geometry().width();
+    if (w <= 0) {
+        return;
+    }
+    // Always-visible magnifier marks the row as a search field.
+    int x = 0;
+    p->writeWithColors(x, 0, QStringLiteral("\u2315 "), tpal::muted(), bg);
+    x += 2;
+
+    const QString q = text();
+    if (q.isEmpty()) {
+        if (x < w) {
+            p->writeWithColors(x, 0, QStringLiteral("Search conversations").left(w - x),
+                               tpal::muted(), bg);
+        }
+        return;
+    }
+    // Show the query (its tail if it overflows) and, while the list is focused, an
+    // accent bar caret after it to mark where typing lands.
+    const int caretReserve = m_typingActive ? 1 : 0;
+    const int budget = qMax(0, w - x - caretReserve);
+    const QString shown = q.size() > budget ? q.right(budget) : q;
+    p->writeWithColors(x, 0, shown, tpal::fg(), bg);
+    x += static_cast<int>(shown.size());
+    if (m_typingActive && x < w) {
+        p->writeWithColors(x, 0, QStringLiteral("\u258f"), tpal::accent(), bg);
+    }
 }
 
 void TreeListView::keyEvent(Tui::ZKeyEvent* event)
@@ -334,6 +377,10 @@ void RootWidget::buildUi()
     m_search = new SearchInputBox(listCol);
     m_search->setText(QString());
     m_search->setMaximumSize(Tui::tuiMaxSize, 1);
+    // Not a focus stop: the conversation list owns focus and forwards typed
+    // characters here (type-ahead), so the box is a passive query display and is
+    // skipped by the Tab cycle.
+    m_search->setFocusPolicy(Tui::NoFocus);
     listColLayout->addWidget(m_search);
 
     m_listView = new ConversationListView(listCol);
@@ -411,12 +458,31 @@ void RootWidget::wireViews()
     // directly and renders multi-line cards.
     m_listView->setModel(m_list);
 
-    // Search field filters the conversation list live (shared setSearch); Esc/Enter
-    // hand focus down to the cards.
+    // Type-ahead search. The conversation list is the only focus stop in the
+    // column; printable keys it receives build the query in the passive search box,
+    // whose textChanged drives the shared live filter. Backspace edits, Esc clears.
     connect(m_search, &Tui::ZInputBox::textChanged, m_list, &ConversationsListModel::setSearch);
-    connect(m_search, &SearchInputBox::leaveRequested, this, [this] {
-        if (m_listView != nullptr) {
-            m_listView->setFocus();
+    connect(m_listView, &ConversationListView::searchAppend, this, [this](const QString& text) {
+        m_search->setText(m_search->text() + text);
+    });
+    connect(m_listView, &ConversationListView::searchBackspace, this, [this] {
+        QString q = m_search->text();
+        if (!q.isEmpty()) {
+            q.chop(1);
+            m_search->setText(q);
+        }
+    });
+    connect(m_listView, &ConversationListView::searchClear, this,
+            [this] { m_search->setText(QString()); });
+    // The search box shows its typing caret only while the list is focused.
+    connect(m_listView, &ConversationListView::focusChanged, m_search,
+            &SearchInputBox::setTypingActive);
+    // After the query changes, re-anchor the selection onto the first match so the
+    // highlight (and Enter) follow the filtered list instead of stranding off-list.
+    // (The view already rebuilds from the model's reset/selection signals.)
+    connect(m_list, &ConversationsListModel::searchChanged, this, [this] {
+        if (m_list->currentRow() < 0 && m_list->rowCount() > 0) {
+            m_list->activate(0);
         }
     });
 
@@ -700,12 +766,26 @@ void RootWidget::cycleTheme()
     tpal::setActiveTheme(next);
     // Recolor stock widgets (window/dialog/lists/inputs) via the palette...
     setPalette(daemonPalette(next));
-    // ...and repaint every custom-painted view, which samples tpal::* at paint.
-    Tui::ZWidget* views[] = { m_window,        m_sidebarView,     m_listView,
-                              m_transcript,    m_composerChrome,  m_queue,
-                              m_attachments,   m_footer,          m_completionPopup,
-                              m_search,        m_composer,        m_header,
-                              m_todos };
+    // Keep the accent-tinted text caret in sync with the new theme.
+    if (terminal() != nullptr) {
+        const Tui::ZColor accent = tpal::accent();
+        terminal()->setCursorColor(accent.red(), accent.green(), accent.blue());
+    }
+    // The conversation list and transcript bake tpal::* colors into cached span
+    // lists at build time, so a bare update() would repaint stale colors: rebuild
+    // them. (Selection + scroll survive the rebuild.)
+    if (m_listView != nullptr) {
+        m_listView->relayout();
+    }
+    if (m_transcript != nullptr) {
+        m_transcript->reload();
+    }
+    // The remaining custom-painted views sample tpal::* live at paint, so a plain
+    // repaint suffices.
+    Tui::ZWidget* views[] = { m_window,       m_sidebarView,    m_composerChrome,
+                              m_queue,        m_attachments,    m_footer,
+                              m_completionPopup, m_search,       m_composer,
+                              m_header,       m_todos };
     for (Tui::ZWidget* w : views) {
         if (w != nullptr) {
             w->update();
