@@ -23,6 +23,16 @@ struct ParsedBlock {
     qsizetype endColumn = 0;
     QString info; // fenced code language ("mermaid", "cpp", ...)
 
+    // Fenced code only. md4qt reports a Code block's start/end as the body
+    // *between* the ``` / ~~~ delimiters, so the delimiter lines are recovered
+    // separately from md4qt's authoritative startDelim()/endDelim() positions.
+    // `fenced` is false for indented code blocks (which have no delimiter lines).
+    // A -1 fence*Line means md4qt gave no position (e.g. an unterminated fence,
+    // whose recovered span then runs to end-of-text).
+    bool fenced = false;
+    qsizetype fenceStartLine = -1;
+    qsizetype fenceEndLine = -1;
+
     // Populated for BlockType::Image (a paragraph that is solely an image, or a
     // link whose label is solely an image). imageLink is the click-through URL
     // for the linked-standalone case, empty otherwise. imageWidth/imageHeight are

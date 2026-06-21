@@ -113,7 +113,23 @@ ParsedBlock makeParsedBlock(const MD::Item *item)
     if (item->type() == MD::ItemType::Heading) {
         block.headingLevel = static_cast<quint16>(static_cast<const MD::Heading *>(item)->level());
     } else if (item->type() == MD::ItemType::Code) {
-        block.info = static_cast<const MD::Code *>(item)->syntax();
+        const auto *code = static_cast<const MD::Code *>(item);
+        block.info = code->syntax();
+        // md4qt's start/end span only covers the body between the delimiters; the
+        // ``` / ~~~ lines live in startDelim()/endDelim(). Capture those so the
+        // store can recover the full delimiter-inclusive span without guessing.
+        // Indented code blocks are not fenced and have no delimiter positions.
+        block.fenced = code->isFensedCode();
+        if (block.fenced) {
+            const MD::WithPosition &startDelim = code->startDelim();
+            const MD::WithPosition &endDelim = code->endDelim();
+            if (!startDelim.isNullPositions()) {
+                block.fenceStartLine = startDelim.startLine();
+            }
+            if (!endDelim.isNullPositions()) {
+                block.fenceEndLine = endDelim.endLine();
+            }
+        }
     } else if (item->type() == MD::ItemType::Paragraph) {
         detectStandaloneImage(static_cast<const MD::Paragraph *>(item), block);
     }

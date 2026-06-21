@@ -28,6 +28,8 @@ private slots:
     void documentStoreRoundTrip();
     void codeFenceRoundTrips_data();
     void codeFenceRoundTrips();
+    void fenceDoesNotAbsorbFollowingBlocks_data();
+    void fenceDoesNotAbsorbFollowingBlocks();
     void projectionMapsMarkdown();
     void projectionOffsetEndpointsRoundTrip();
     void projectionRendersLinks();
@@ -224,6 +226,74 @@ void CoreTests::codeFenceRoundTrips()
     QVERIFY(opensBacktick || opensTilde);
     QVERIFY(fenceMarkdown.trimmed().endsWith(opensTilde ? QStringLiteral("~~~")
                                                         : QStringLiteral("```")));
+}
+
+void CoreTests::fenceDoesNotAbsorbFollowingBlocks_data()
+{
+    QTest::addColumn<QString>("markdown");
+    QTest::addColumn<int>("expectedFences");
+    QTest::addColumn<int>("expectedListItems");
+    QTest::addColumn<bool>("checkRoundTrip");
+
+    // Regression: a fence's recovered span must stop at its own closing
+    // delimiter and never swallow the following blocks (which previously rendered
+    // the list inside the code card and dropped the real list rows).
+    QTest::newRow("list after fence")
+        << QStringLiteral("```js\ncode\n```\n\n- a\n- b\n") << 1 << 2 << true;
+    QTest::newRow("list between fences")
+        << QStringLiteral("```\nx\n```\n\n- a\n- b\n\n```\ny\n```\n") << 2 << 2 << true;
+    // A longer (````) fence whose body contains a lone ``` line: the naive
+    // nearest-marker scan would close early on the inner ```; md4qt's delimiters
+    // pair the real ```` open/close, keeping the body intact and the list separate.
+    QTest::newRow("longer fence with inner backticks")
+        << QStringLiteral("````\ninner\n```\nstill code\n````\n\n- a\n- b\n") << 1 << 2 << true;
+    // Indented (4-space) code is not fenced and must not trigger marker scanning;
+    // the following list stays its own blocks. (Indented-code indentation handling
+    // is pre-existing and out of scope, so the round-trip is not asserted here.)
+    QTest::newRow("indented code then list")
+        << QStringLiteral("    code line\n\n- a\n- b\n") << 1 << 2 << false;
+    // An unterminated fence keeps its opening delimiter and runs to end-of-text.
+    QTest::newRow("unterminated fence")
+        << QStringLiteral("```js\ncode\nmore\n") << 1 << 0 << true;
+}
+
+void CoreTests::fenceDoesNotAbsorbFollowingBlocks()
+{
+    QFETCH(QString, markdown);
+    QFETCH(int, expectedFences);
+    QFETCH(int, expectedListItems);
+    QFETCH(bool, checkRoundTrip);
+
+    be::DocumentStore store;
+    store.loadMarkdown(markdown);
+
+    if (checkRoundTrip) {
+        QCOMPARE(store.toMarkdown(), markdown);
+    }
+
+    int fences = 0;
+    int listItems = 0;
+    for (qsizetype row = 0; row < store.blockCount(); ++row) {
+        const be::BlockType type = store.blockAt(row)->type;
+        if (type == be::BlockType::CodeFence) {
+            ++fences;
+        } else if (type == be::BlockType::BulletListItem
+                   || type == be::BlockType::OrderedListItem
+                   || type == be::BlockType::TaskListItem) {
+            ++listItems;
+        }
+    }
+    QCOMPARE(fences, expectedFences);
+    QCOMPARE(listItems, expectedListItems);
+
+    // The list rows must keep their own bullet markdown rather than being folded
+    // into a code block's stored text.
+    for (qsizetype row = 0; row < store.blockCount(); ++row) {
+        const be::BlockRecord *block = store.blockAt(row);
+        if (block->type == be::BlockType::CodeFence) {
+            QVERIFY(!block->markdown().contains(QStringLiteral("\n- a")));
+        }
+    }
 }
 
 void CoreTests::projectionMapsMarkdown()

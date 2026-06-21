@@ -266,12 +266,18 @@ qsizetype lineEndUtf16(const CoordinateMap &map, const QString &text, qsizetype 
 // md4qt reports a fenced code block's span as the body *between* the delimiters
 // (the opening fence line and its info string are consumed into Code::syntax()),
 // so a plain slice drops the ``` / ~~~ markers and the block can no longer
-// round-trip. Recover the full fenced span by a raw line scan: anchor on the
-// opening fence at/before the reported body start, then take the first marker
-// after it as the close. When the body anchor itself lands on the closing fence
-// (empty-body fences give degenerate positions), fall back to the marker before
-// it. An unterminated fence (open with no close, e.g. mid-stream) extends to the
-// end of `text`. Returns false when no fence marker is found at all.
+// round-trip. Recover the full fenced span from md4qt's authoritative delimiter
+// positions (ParsedBlock::fenceStartLine/fenceEndLine, lifted from
+// Code::startDelim()/endDelim()): the open is that whole line (column 0, so any
+// leading indentation is kept) and the close is the end of the closing fence
+// line. An unterminated fence (open with no close, e.g. mid-stream) has no end
+// delimiter and runs to the end of `text` so the open ``` is preserved.
+//
+// Only when md4qt gives no usable open position (degenerate/streamed parse) do we
+// fall back to a raw line scan: anchor on the nearest fence marker at/before the
+// reported body start, take the first marker after it as the close, and when the
+// anchor itself is the closing fence (empty-body) re-find the open before it.
+// Returns false when no fence span can be recovered at all.
 bool fenceSpanUtf16(const CoordinateMap &map, const QString &text, const ParsedBlock &pb,
                     qsizetype &startUtf16, qsizetype &endUtf16)
 {
@@ -280,6 +286,16 @@ bool fenceSpanUtf16(const CoordinateMap &map, const QString &text, const ParsedB
         return false;
     }
 
+    // Preferred path: md4qt's exact delimiter line positions.
+    if (pb.fenceStartLine >= 0 && pb.fenceStartLine < lineCount) {
+        startUtf16 = map.lineColumnToUtf16(pb.fenceStartLine, 0);
+        endUtf16 = (pb.fenceEndLine >= 0 && pb.fenceEndLine < lineCount)
+            ? lineEndUtf16(map, text, pb.fenceEndLine)
+            : text.size();
+        return true;
+    }
+
+    // Fallback: raw line scan when delimiter positions are unavailable.
     qsizetype openLine = -1;
     for (qsizetype l = qMin(pb.startLine, lineCount - 1); l >= 0; --l) {
         if (isFenceMarkerLine(lineViewAt(map, text, l))) {
@@ -327,7 +343,9 @@ QString sliceBlockContent(const CoordinateMap &map, const QString &text, const P
 {
     qsizetype startUtf16 = map.lineColumnToUtf16(pb.startLine, pb.startColumn);
     qsizetype endUtf16 = map.lineColumnToUtf16(pb.endLine, pb.endColumn) + 1;
-    if (pb.type == BlockType::CodeFence) {
+    // Only fenced code needs delimiter recovery; indented code blocks have no
+    // ``` / ~~~ lines and slice straight from md4qt's body span.
+    if (pb.fenced) {
         fenceSpanUtf16(map, text, pb, startUtf16, endUtf16);
     }
     QString content = text.mid(startUtf16, qMax<qsizetype>(0, endUtf16 - startUtf16));
@@ -437,7 +455,7 @@ QVector<BlockRecord> DocumentStore::recordsFromParse(const QString &markdown) co
             }
 
             const QString content = sliceBlockContent(input, text, pb);
-            if (pb.type == BlockType::CodeFence) {
+            if (pb.fenced) {
                 qsizetype fenceStart = 0;
                 qsizetype fenceEnd = 0;
                 if (fenceSpanUtf16(input, text, pb, fenceStart, fenceEnd)) {
