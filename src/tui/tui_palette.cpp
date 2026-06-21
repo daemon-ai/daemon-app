@@ -55,7 +55,9 @@ Tui::ZPalette daemonPalette(theme::ThemeName name)
         {"window.default.text.selected.fg", accentFg},
         {"window.default.text.selected.bg", accent},
 
-        // Buttons (quit dialog Quit/Cancel).
+        // Generic control roles (window class). The quit dialog does NOT read
+        // these - a ZDialog carries the {window,dialog} palette class, which the
+        // library remaps to the window.gray.* roles themed in the block below.
         {"window.default.control.bg", bg},
         {"window.default.control.fg", fg},
         {"window.default.control.focused.bg", bg},
@@ -87,6 +89,65 @@ Tui::ZPalette daemonPalette(theme::ThemeName name)
         {"window.default.lineedit.fg", fg},
         {"window.default.lineedit.focused.bg", activeField},
         {"window.default.lineedit.focused.fg", fg},
+
+        // --- Dialog class (window.gray.*) ------------------------------------
+        // A ZDialog (the quit modal) carries the {window,dialog} palette class,
+        // which the Tui Widgets rule table republishes from window.gray.* rather
+        // than window.default.*. Theme those roles too so the modal conforms: a
+        // raised SurfaceRaised body with an accent focused frame + default button.
+        {"window.gray.bg", bgAlt},
+        {"window.gray.frame.focused.fg", accent},
+        {"window.gray.frame.focused.control.fg", accent},
+        {"window.gray.frame.unfocused.fg", border},
+
+        {"window.gray.text.fg", fg},
+        {"window.gray.text.bg", bgAlt},
+        {"window.gray.text.selected.fg", accentFg},
+        {"window.gray.text.selected.bg", accent},
+
+        {"window.gray.control.bg", bgAlt},
+        {"window.gray.control.fg", fg},
+        {"window.gray.control.focused.bg", bgAlt},
+        {"window.gray.control.focused.fg", accent},
+        {"window.gray.control.disabled.bg", bgAlt},
+        {"window.gray.control.disabled.fg", dim},
+        {"window.gray.control.shortcut.bg", bgAlt},
+        {"window.gray.control.shortcut.fg", accent},
+
+        // Buttons (quit dialog Quit/Cancel). Quit is default + focused -> accent.
+        {"window.gray.button.bg", bgAlt},
+        {"window.gray.button.fg", fg},
+        {"window.gray.button.default.bg", accent},
+        {"window.gray.button.default.fg", accentFg},
+        {"window.gray.button.focused.bg", accent},
+        {"window.gray.button.focused.fg", accentFg},
+        {"window.gray.button.disabled.bg", bgAlt},
+        {"window.gray.button.disabled.fg", dim},
+        {"window.gray.button.shortcut.bg", bgAlt},
+        {"window.gray.button.shortcut.fg", accent},
+
+        // Defensive: the quit modal uses none of these, but theming them keeps any
+        // future ZDialog that embeds a list / input / text view on-theme.
+        {"window.gray.dataview.bg", bg},
+        {"window.gray.dataview.fg", fg},
+        {"window.gray.dataview.selected.bg", sel},
+        {"window.gray.dataview.selected.fg", fg},
+        {"window.gray.dataview.selected.focused.bg", accent},
+        {"window.gray.dataview.selected.focused.fg", accentFg},
+
+        {"window.gray.lineedit.bg", bgAlt},
+        {"window.gray.lineedit.fg", fg},
+        {"window.gray.lineedit.focused.bg", activeField},
+        {"window.gray.lineedit.focused.fg", fg},
+
+        {"window.gray.textedit.bg", bg},
+        {"window.gray.textedit.fg", fg},
+        {"window.gray.textedit.focused.bg", bg},
+        {"window.gray.textedit.focused.fg", fg},
+        {"window.gray.textedit.selected.bg", accent},
+        {"window.gray.textedit.selected.fg", accentFg},
+        {"window.gray.textedit.linenumber.bg", bgAlt},
+        {"window.gray.textedit.linenumber.fg", dim},
     });
     return p;
 }
