@@ -10,9 +10,12 @@
 #include <Tui/ZShortcut.h>
 #include <Tui/ZWindow.h>
 
+#include "attachment_bar_view.h"
 #include "completion_view.h"
 #include "composer_chrome.h"
 #include "conversation_list_view.h"
+#include "interactive_turn_host.h"
+#include "queue_strip_view.h"
 #include "status_bar_view.h"
 #include "transcript_view.h"
 
@@ -56,12 +59,31 @@ signals:
     // Up/Down with the caret idle: walk the shared sent-message history.
     void historyPrevious();
     void historyNext();
+    // Ctrl+O: add a (mock) attachment, mirroring the GUI's attachment menu.
+    void attachRequested();
 
 protected:
     void keyEvent(Tui::ZKeyEvent* event) override;
 
 private:
     ComposerSessionController* m_session = nullptr;
+};
+
+// A one-line search field above the conversation list, bound to
+// ConversationsListModel::setSearch. Esc clears a non-empty query, then (when
+// already empty) hands focus to the list; Enter/Down jump straight into the list.
+class SearchInputBox : public Tui::ZInputBox {
+    Q_OBJECT
+
+public:
+    using Tui::ZInputBox::ZInputBox;
+
+signals:
+    // Move keyboard focus down into the conversation list.
+    void leaveRequested();
+
+protected:
+    void keyEvent(Tui::ZKeyEvent* event) override;
 };
 
 // ZListView handles Up/Down/Home/End but ignores Left/Right. The sidebar is a
@@ -103,8 +125,9 @@ class RootWidget : public Tui::ZRoot {
 public:
     RootWidget();
 
-    void dumpGeometry() const;  // debug helper for the offscreen self-check
-    void focusComposer() const; // offscreen-test helper: focus the input box
+    void dumpGeometry() const;    // debug helper for the offscreen self-check
+    void focusComposer() const;   // offscreen-test helper: focus the input box
+    void focusTranscript() const; // offscreen-test helper: focus the transcript
 
 protected:
     void terminalChanged() override;
@@ -146,11 +169,17 @@ private:
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;
     Tui::ZWindow* m_window = nullptr;
     TreeListView* m_sidebarView = nullptr;
+    // One-line search field above the conversation list (filters via setSearch).
+    SearchInputBox* m_search = nullptr;
     ConversationListView* m_listView = nullptr;
     TranscriptView* m_transcript = nullptr;
     // One-line streaming/affordance indicator above the composer (Thinking.../error
     // + send/stop/steer hint), driven by the TurnController.
     ComposerChrome* m_composerChrome = nullptr;
+    // Queued-prompt strip (custom-painted) above the composer; 0 height when empty.
+    QueueStripView* m_queue = nullptr;
+    // Attachment-chip row just above the composer; 0 height when empty.
+    AttachmentBarView* m_attachments = nullptr;
     SubmitInputBox* m_composer = nullptr;
     Tui::ZLabel* m_header = nullptr;
     // Custom-painted colored status footer (gateway/agents/context/session/version).
@@ -168,6 +197,9 @@ private:
     // live turn events stream into it via m_ingest, then TranscriptView paints it.
     be::DocumentStore m_doc;
     be::TranscriptIngest m_ingest { &m_doc };
+    // Mock agent host driving the inline clarify/approval answers back into m_doc
+    // (replicates Transcript.qml's mock host).
+    InteractiveTurnHost* m_host = nullptr;
 
     bool m_built = false;
 };

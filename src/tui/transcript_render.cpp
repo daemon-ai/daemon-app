@@ -6,6 +6,8 @@
 #include "core/block_record.h"
 #include "core/document_store.h"
 
+#include <QMetaType>
+#include <QPair>
 #include <QRegularExpression>
 #include <QStringList>
 #include <QVariantList>
@@ -445,7 +447,51 @@ void emitToolBody(QVector<RenderLine> &body, const QVariantMap &view, int inner)
     }
 }
 
-void emitToolCall(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
+// Normalize a clarify tool's metadata into the list of question maps the form
+// renders (mirrors ClarifyBlock.qml's `questions` normalization, including the
+// legacy single-question fallback).
+QVariantList clarifyQuestions(const QVariantMap &metadata)
+{
+    const QVariantList qs = metadata.value(QStringLiteral("questions")).toList();
+    if (!qs.isEmpty()) {
+        return qs;
+    }
+    QVariantMap one;
+    one.insert(QStringLiteral("id"), QStringLiteral("q"));
+    one.insert(QStringLiteral("prompt"),
+               metadata.value(QStringLiteral("question"),
+                              QStringLiteral("The agent needs your input."))
+                   .toString());
+    one.insert(QStringLiteral("choices"), metadata.value(QStringLiteral("choices")).toList());
+    one.insert(QStringLiteral("multiSelect"), false);
+    one.insert(QStringLiteral("allowFreeform"), true);
+    return QVariantList { one };
+}
+
+QString clarifyQuestionId(const QVariantMap &q, int index)
+{
+    const QVariant id = q.value(QStringLiteral("id"));
+    return id.isValid() ? id.toString() : (QStringLiteral("q") + QString::number(index));
+}
+
+// A choice/button style: an active control gets an accent wash; otherwise a
+// muted surface chip in `toneFg`.
+Style controlStyle(bool active, const ZColor &toneFg)
+{
+    Style s;
+    if (active) {
+        s.fg = tpal::bg();
+        s.bg = tpal::accent();
+        s.attr |= ZTextAttribute::Bold;
+    } else {
+        s.fg = toneFg;
+        s.bg = tpal::surfaceAlt();
+    }
+    return s;
+}
+
+void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be::BlockRecord &b,
+                  int width, const AnswerDraft &draft, int activeControl, int &controlSeq)
 {
     const QVariantMap view = be::buildToolView(b.metadata);
     const int inner = qMax(1, width - 2);
@@ -455,6 +501,10 @@ void emitToolCall(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
     const QString subtitle = view.value(QStringLiteral("subtitle")).toString();
     const QString duration = view.value(QStringLiteral("durationLabel")).toString();
     const bool awaitingApproval = view.value(QStringLiteral("awaitingApproval")).toBool();
+    const QString variant = view.value(QStringLiteral("variant")).toString();
+    const QString callId = view.value(QStringLiteral("callId")).toString();
+    const QString requestId = view.value(QStringLiteral("requestId")).toString();
+    const bool answered = view.value(QStringLiteral("answered")).toBool();
 
     ZColor barColor = tpal::toneColor(tone);
     ZColor statusColor = tpal::statusOk();
@@ -495,6 +545,16 @@ void emitToolCall(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
 
     emitToolBody(body, view, inner);
 
+    // Pending interactive controls, recorded as (body-row, partially-filled
+    // Control). After emitCard maps body rows to absolute dst rows we patch each
+    // control's `line` and append it to the output controls list.
+    QVector<QPair<int, Control>> pending;
+    const auto addControl = [&](int bodyRow, Control c) {
+        c.callId = callId;
+        c.requestId = requestId;
+        pending.push_back({ bodyRow, c });
+    };
+
     if (awaitingApproval) {
         Style warn;
         warn.fg = tpal::warn();
@@ -504,9 +564,147 @@ void emitToolCall(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
             cmd = subtitle;
         }
         emitMono(body, QStringLiteral("\u26a0 Approve: ") + cmd, inner, warn);
+
+        const bool allowPermanent = b.metadata.value(QStringLiteral("allowPermanent")).toBool();
+        Style sp;
+        RenderLine row;
+        const int rowIdx = static_cast<int>(body.size());
+        const auto button = [&](const QString &label, Control::Kind kind, const ZColor &toneFg) {
+            const int gi = controlSeq++;
+            row.push_back(mkSpan(QStringLiteral(" "), sp));
+            row.push_back(mkSpan(QStringLiteral(" ") + label + QStringLiteral(" "),
+                                 controlStyle(gi == activeControl, toneFg)));
+            Control c;
+            c.kind = kind;
+            addControl(rowIdx, c);
+        };
+        button(QStringLiteral("Approve"), Control::Kind::Approve, tpal::statusOk());
+        button(QStringLiteral("Deny"), Control::Kind::Deny, tpal::statusError());
+        if (allowPermanent) {
+            button(QStringLiteral("Allow permanently"), Control::Kind::Permanent, tpal::warn());
+        }
+        body.push_back(row);
+    } else if (variant == QStringLiteral("clarify") && !answered) {
+        const QVariantList questions = clarifyQuestions(b.metadata);
+        for (int qi = 0; qi < questions.size(); ++qi) {
+            const QVariantMap q = questions.at(qi).toMap();
+            const QString qid = clarifyQuestionId(q, qi);
+            const QStringList choices = q.value(QStringLiteral("choices")).toStringList();
+            const bool multi = q.value(QStringLiteral("multiSelect")).toBool();
+            const QVariant af = q.value(QStringLiteral("allowFreeform"));
+            const bool allowFreeform = af.isValid() ? af.toBool() : choices.isEmpty();
+
+            Style prompt;
+            prompt.fg = tpal::fg();
+            prompt.attr |= ZTextAttribute::Bold;
+            emitProse(body, q.value(QStringLiteral("prompt")).toString(), inner, prompt);
+            if (multi) {
+                Style hint;
+                hint.fg = tpal::muted();
+                hint.attr |= ZTextAttribute::Italic;
+                body.push_back(RenderLine { mkSpan(QStringLiteral("  (select all that apply)"), hint) });
+            }
+
+            const QStringList sel = draft.selected.value(qid);
+            for (int ci = 0; ci < choices.size(); ++ci) {
+                const QString label = choices.at(ci);
+                const bool on = sel.contains(label);
+                const QString box = multi ? (on ? QStringLiteral("[x] ") : QStringLiteral("[ ] "))
+                                          : (on ? QStringLiteral("(o) ") : QStringLiteral("( ) "));
+                const int gi = controlSeq++;
+                const Style s = controlStyle(gi == activeControl, on ? tpal::accent() : tpal::fg());
+                const int rowIdx = static_cast<int>(body.size());
+                body.push_back(RenderLine { mkSpan(QStringLiteral("  ") + box + label, s) });
+                Control c;
+                c.kind = Control::Kind::Choice;
+                c.questionId = qid;
+                c.choiceIndex = ci;
+                c.multi = multi;
+                c.choiceLabel = label;
+                addControl(rowIdx, c);
+            }
+
+            if (allowFreeform) {
+                const QString typed = draft.freeform.value(qid);
+                const int gi = controlSeq++;
+                const bool active = gi == activeControl;
+                Style s = controlStyle(active, tpal::fg());
+                QString text;
+                if (typed.isEmpty() && !active) {
+                    Style ph;
+                    ph.fg = tpal::muted();
+                    ph.attr |= ZTextAttribute::Italic;
+                    const QString placeholder = choices.isEmpty() ? QStringLiteral("Type a reply\u2026")
+                                                                  : QStringLiteral("Or type a reply\u2026");
+                    const int rowIdx = static_cast<int>(body.size());
+                    body.push_back(RenderLine { mkSpan(QStringLiteral("  \u203a "), s),
+                                                mkSpan(placeholder, ph) });
+                    Control c;
+                    c.kind = Control::Kind::Freeform;
+                    c.questionId = qid;
+                    addControl(rowIdx, c);
+                } else {
+                    text = typed + (active ? QStringLiteral("\u2588") : QString());
+                    const int rowIdx = static_cast<int>(body.size());
+                    body.push_back(RenderLine { mkSpan(QStringLiteral("  \u203a ") + text, s) });
+                    Control c;
+                    c.kind = Control::Kind::Freeform;
+                    c.questionId = qid;
+                    addControl(rowIdx, c);
+                }
+            }
+        }
+
+        // Submit button.
+        const int gi = controlSeq++;
+        Style sp;
+        const int rowIdx = static_cast<int>(body.size());
+        RenderLine row { mkSpan(QStringLiteral("  "), sp),
+                         mkSpan(QStringLiteral(" Submit "),
+                                controlStyle(gi == activeControl, tpal::statusOk())) };
+        body.push_back(row);
+        Control c;
+        c.kind = Control::Kind::Submit;
+        addControl(rowIdx, c);
+    } else if (variant == QStringLiteral("clarify") && answered) {
+        // Resolved summary: one ✓ row per answered question.
+        const QVariantList questions = clarifyQuestions(b.metadata);
+        const QVariantMap answers = b.metadata.value(QStringLiteral("answers")).toMap();
+        for (int qi = 0; qi < questions.size(); ++qi) {
+            const QVariantMap q = questions.at(qi).toMap();
+            const QString qid = clarifyQuestionId(q, qi);
+            const QVariant val = answers.value(qid);
+            if (!val.isValid()) {
+                continue;
+            }
+            const QString shown = val.typeId() == QMetaType::QVariantList
+                ? val.toStringList().join(QStringLiteral(", "))
+                : val.toString();
+            if (shown.isEmpty()) {
+                continue;
+            }
+            Style ok;
+            ok.fg = tpal::statusOk();
+            Style promptStyle;
+            promptStyle.fg = tpal::muted();
+            Style val2;
+            val2.fg = tpal::fg();
+            val2.attr |= ZTextAttribute::Bold;
+            body.push_back(RenderLine {
+                mkSpan(QStringLiteral("\u2713 "), ok),
+                mkSpan(q.value(QStringLiteral("prompt")).toString() + QStringLiteral(": "), promptStyle),
+                mkSpan(shown, val2),
+            });
+        }
     }
 
+    const int dstStart = static_cast<int>(dst.size());
     emitCard(dst, barColor, body);
+    for (const auto &pc : pending) {
+        Control c = pc.second;
+        c.line = dstStart + pc.first;
+        controls.push_back(c);
+    }
     addBlank(dst);
 }
 
@@ -644,9 +842,49 @@ void emitParagraph(QVector<RenderLine> &dst, const be::BlockRecord &b, int width
 
 } // namespace
 
-QVector<RenderLine> TranscriptLayout::build(const be::DocumentStore &doc, int width)
+QVariantMap collectClarifyAnswers(const QVariantMap &toolMetadata, const AnswerDraft &draft)
 {
-    QVector<RenderLine> out;
+    const QVariantList questions = clarifyQuestions(toolMetadata);
+    QVariantMap out;
+    for (int qi = 0; qi < questions.size(); ++qi) {
+        const QVariantMap q = questions.at(qi).toMap();
+        const QString qid = clarifyQuestionId(q, qi);
+        const QStringList choices = q.value(QStringLiteral("choices")).toStringList();
+        const bool multi = q.value(QStringLiteral("multiSelect")).toBool();
+        const QVariant af = q.value(QStringLiteral("allowFreeform"));
+        const bool allowFreeform = af.isValid() ? af.toBool() : choices.isEmpty();
+
+        const QStringList sel = draft.selected.value(qid);
+        const QString typed = draft.freeform.value(qid).trimmed();
+
+        if (multi) {
+            QStringList list = sel;
+            if (allowFreeform && !typed.isEmpty()) {
+                list.push_back(typed);
+            }
+            if (!list.isEmpty()) {
+                out.insert(qid, list);
+            }
+        } else {
+            QString value = sel.isEmpty() ? QString() : sel.first();
+            if (allowFreeform && !typed.isEmpty() && value.isEmpty()) {
+                value = typed;
+            }
+            if (!value.isEmpty()) {
+                out.insert(qid, value);
+            }
+        }
+    }
+    return out;
+}
+
+LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
+                                     const AnswerDraft &draft, int activeControl)
+{
+    LayoutResult result;
+    QVector<RenderLine> &out = result.lines;
+    QVector<Control> &controls = result.controls;
+    int controlSeq = 0;
     const int W = qMax(20, width);
 
     QString prevMessageId;
@@ -673,7 +911,7 @@ QVector<RenderLine> TranscriptLayout::build(const be::DocumentStore &doc, int wi
             emitReasoning(out, b, W);
             break;
         case be::BlockType::ToolCall:
-            emitToolCall(out, b, W);
+            emitToolCall(out, controls, b, W, draft, activeControl, controlSeq);
             break;
         case be::BlockType::Content:
             emitContent(out, b, W);
@@ -732,5 +970,5 @@ QVector<RenderLine> TranscriptLayout::build(const be::DocumentStore &doc, int wi
         }
     }
 
-    return out;
+    return result;
 }

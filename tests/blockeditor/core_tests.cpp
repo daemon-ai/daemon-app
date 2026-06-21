@@ -99,6 +99,8 @@ private slots:
     void clarifyAnswerRoundTrips();
     void clarifyMultiQuestionAnswerRoundTrips();
     void approvalAnswerRoundTrips();
+    void clarifyAnswerPatchContract();
+    void toolApprovalPatchContract();
     void ansiSpansParseSgr();
     void unifiedDiffTypesLines();
     void ingestShimReplayBuildsBlocks();
@@ -1897,6 +1899,40 @@ void CoreTests::approvalAnswerRoundTrips()
     QVERIFY(!view.value(QStringLiteral("awaitingApproval")).toBool());
     QCOMPARE(view.value(QStringLiteral("status")).toString(), QStringLiteral("error"));
     QVERIFY(store.toMarkdown().contains(QStringLiteral("\"approval\":\"denied\"")));
+}
+
+void CoreTests::clarifyAnswerPatchContract()
+{
+    // The shared be::clarifyAnswerPatch must produce exactly what
+    // EditorController::answerClarify used to build inline, so the GUI and the TUI
+    // answer identically. A scalar answer and a list answer, with the flat human
+    // `answer` summary joining each (lists comma-joined) with "; ".
+    QVariantMap answers;
+    answers.insert(QStringLiteral("db"), QStringLiteral("PostgreSQL"));
+    answers.insert(QStringLiteral("scope"),
+                   QVariantList { QStringLiteral("Schema"), QStringLiteral("Indexes") });
+
+    const QVariantMap patch = be::clarifyAnswerPatch(answers);
+    QCOMPARE(patch.value(QStringLiteral("answered")).toBool(), true);
+    QCOMPARE(patch.value(QStringLiteral("answers")).toMap(), answers);
+    // QVariantMap iterates keys sorted, so "db" precedes "scope".
+    QCOMPARE(patch.value(QStringLiteral("answer")).toString(),
+             QStringLiteral("PostgreSQL; Schema, Indexes"));
+}
+
+void CoreTests::toolApprovalPatchContract()
+{
+    // Approval clears the gate and leaves the tool running for the host to finish.
+    const QVariantMap approved = be::toolApprovalPatch(QStringLiteral("approved"));
+    QCOMPARE(approved.value(QStringLiteral("approval")).toString(), QStringLiteral("approved"));
+    QCOMPARE(approved.value(QStringLiteral("needsApproval")).toBool(), false);
+    QVERIFY(!approved.contains(QStringLiteral("status")));
+
+    // Denial additionally flips the tool to an error.
+    const QVariantMap denied = be::toolApprovalPatch(QStringLiteral("denied"));
+    QCOMPARE(denied.value(QStringLiteral("approval")).toString(), QStringLiteral("denied"));
+    QCOMPARE(denied.value(QStringLiteral("needsApproval")).toBool(), false);
+    QCOMPARE(denied.value(QStringLiteral("status")).toString(), QStringLiteral("error"));
 }
 
 void CoreTests::ansiSpansParseSgr()

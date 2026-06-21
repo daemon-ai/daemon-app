@@ -112,6 +112,18 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap &event)
         if (event.contains(QStringLiteral("detailKind"))) {
             meta.insert(QStringLiteral("detailKind"), event.value(QStringLiteral("detailKind")));
         }
+        // Interactive tool fields (approval gate / clarify form): passed through
+        // verbatim when present so a live turn can stream an awaiting-approval or
+        // clarify tool that the inline controls answer. Absent for ordinary tools,
+        // so non-interactive turns are unchanged.
+        for (const QString &key :
+             { QStringLiteral("needsApproval"), QStringLiteral("allowPermanent"),
+               QStringLiteral("approvalCommand"), QStringLiteral("questions"),
+               QStringLiteral("requestId") }) {
+            if (event.contains(key)) {
+                meta.insert(key, event.value(key));
+            }
+        }
         BlockChangeSet cs;
         m_store->appendTypedBlock(BlockType::ToolCall, meta, &cs);
         out.push_back(cs);

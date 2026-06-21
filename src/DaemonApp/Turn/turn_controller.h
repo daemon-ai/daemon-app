@@ -38,6 +38,10 @@ public:
 
     Q_INVOKABLE void start(const QString& prompt);
     Q_INVOKABLE void cancel();
+    // Resume a turn paused at an approval gate (a gated step pauses scheduling
+    // until the inline approval answer drives this). No-op unless paused.
+    Q_INVOKABLE void resume();
+    [[nodiscard]] bool paused() const { return m_paused; }
 
 signals:
     void activeChanged();
@@ -57,6 +61,9 @@ private:
         QVariantMap event;
         bool error = false;
         QString errorText;
+        // Pause the turn after emitting this step (an awaiting-approval tool);
+        // resume() continues scheduling once the inline answer is given.
+        bool gate = false;
     };
 
     void setActive(bool active);
@@ -77,6 +84,7 @@ private:
     static constexpr int kStallMs = 2000;
 
     bool m_active = false;
+    bool m_paused = false; // waiting at an approval gate
     QString m_turnState = QStringLiteral("idle");
     int m_elapsedMs = 0;
     QString m_errorText;

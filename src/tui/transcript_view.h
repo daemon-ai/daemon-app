@@ -4,6 +4,8 @@
 
 #include <Tui/ZWidget.h>
 
+#include <QString>
+#include <QVariantMap>
 #include <QVector>
 
 namespace be {
@@ -31,6 +33,17 @@ public:
     // every reload unless the user has scrolled up).
     void reload();
 
+signals:
+    // The focused approval bar was decided (Enter on [Approve]/[Deny]/[Allow
+    // permanently]). `decision` is "approved" / "denied"; `permanent` is the
+    // "allow permanently" variant.
+    void approvalDecided(const QString &callId, const QString &decision, bool permanent);
+    // The focused clarify form was submitted (Enter on [Submit] / a freeform
+    // field). `answers` is the canonical collected map (be::clarifyAnswerPatch
+    // input).
+    void clarifySubmitted(const QString &callId, const QString &requestId,
+                          const QVariantMap &answers);
+
 protected:
     void paintEvent(Tui::ZPaintEvent *event) override;
     void keyEvent(Tui::ZKeyEvent *event) override;
@@ -44,8 +57,21 @@ private:
     bool atBottom() const;
     void rebuild();
 
+    // Interactive helpers (active only when m_controls is non-empty).
+    bool interactive() const { return !m_controls.isEmpty(); }
+    void moveControl(int delta);
+    void ensureControlVisible();
+    void activateControl(); // Enter on the focused control
+    void toggleChoice();    // Space on a focused choice
+    QVariantMap toolMetadataForCallId(const QString &callId) const;
+
     const be::DocumentStore *m_doc = nullptr;
     QVector<RenderLine> m_lines;
+    QVector<Control> m_controls;
+    // The in-progress clarify answer (radios/checkboxes/freeform), keyed by
+    // question id, and the focused control index (-1 = none / scroll mode).
+    AnswerDraft m_draft;
+    int m_activeControl = -1;
     int m_scrollTop = 0;
     // Keep the newest content visible during streaming; a manual scroll up
     // unpins, End / new content at the bottom re-pins (mirrors the GUI).

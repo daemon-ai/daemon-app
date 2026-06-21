@@ -76,6 +76,7 @@ void TurnController::start(const QString& prompt)
     cancel();
     m_steps = buildScript(prompt);
     m_index = 0;
+    m_paused = false;
     m_startedAt = QDateTime::currentMSecsSinceEpoch();
     setElapsedMs(0);
     setErrorText(QString());
@@ -93,6 +94,7 @@ void TurnController::cancel()
     m_stallTimer.stop();
     m_elapsedTimer.stop();
     setActive(false);
+    m_paused = false;
     if (m_turnState != QStringLiteral("error")) {
         setTurnState(QStringLiteral("idle"));
     }
@@ -146,6 +148,25 @@ void TurnController::runStep()
         m_resumeState = m_turnState;
         armStall();
     }
+
+    // An approval gate pauses the turn here: stop the stall timer and wait for
+    // resume() (driven by the inline approval answer) before scheduling the rest.
+    if (step.gate) {
+        m_paused = true;
+        m_stallTimer.stop();
+        return;
+    }
+
+    scheduleNext();
+}
+
+void TurnController::resume()
+{
+    if (!m_active || !m_paused) {
+        return;
+    }
+    m_paused = false;
+    armStall();
     scheduleNext();
 }
 
@@ -170,6 +191,7 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt)
     // Build a scripted turn. Content is canned but echoes the prompt so it reads
     // as a response; a prompt containing "fail" drives the error branch.
     const bool wantsError = prompt.toLower().indexOf(QStringLiteral("fail")) >= 0;
+    const bool wantsApproval = prompt.toLower().indexOf(QStringLiteral("approve")) >= 0;
     const QString shortPrompt
         = prompt.length() > 60 ? (prompt.left(57) + QStringLiteral("\u2026")) : prompt;
     QList<Step> steps;
@@ -194,6 +216,34 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt)
                       QVariantMap{ { QStringLiteral("type"), QStringLiteral("reasoningDone") },
                                    { QStringLiteral("durationMs"), 1200 } },
                       false, QString() });
+
+    if (wantsApproval) {
+        // A dangerous tool pauses the live turn for inline approval: emit an
+        // awaiting-approval toolStarted, gate (pause) until resume() fires after
+        // the user answers, then the host drives the tool to ok and we close out.
+        steps.push_back(
+            { 300,
+              QVariantMap{ { QStringLiteral("type"), QStringLiteral("toolStarted") },
+                           { QStringLiteral("callId"), QStringLiteral("sim-approve") },
+                           { QStringLiteral("name"), QStringLiteral("terminal") },
+                           { QStringLiteral("tone"), QStringLiteral("terminal") },
+                           { QStringLiteral("argsSummary"), QStringLiteral("rm -rf build-test") },
+                           { QStringLiteral("needsApproval"), true },
+                           { QStringLiteral("allowPermanent"), true },
+                           { QStringLiteral("approvalCommand"),
+                             QStringLiteral("rm -rf build-test && cmake --preset test") } },
+              false, QString(), /*gate=*/true });
+        steps.push_back(
+            { 250,
+              QVariantMap{ { QStringLiteral("type"), QStringLiteral("text") },
+                           { QStringLiteral("text"),
+                             QStringLiteral("\n\nThe command finished after your approval.\n") } },
+              false, QString() });
+        steps.push_back({ 200,
+                          QVariantMap{ { QStringLiteral("type"), QStringLiteral("flush") } },
+                          false, QString() });
+        return steps;
+    }
 
     steps.push_back({ 300,
                       QVariantMap{ { QStringLiteral("type"), QStringLiteral("toolStarted") },

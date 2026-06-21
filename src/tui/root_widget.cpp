@@ -66,16 +66,34 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
 
     const bool isEnter = event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return
                          || event->text() == QStringLiteral("\r");
+    // Ctrl+Enter mid-turn steers the running turn (when the controller allows it).
+    if (isEnter && event->modifiers() == Qt::ControlModifier) {
+        if (m_session != nullptr && m_session->canSteer()) {
+            m_session->steerDraft();
+            event->accept();
+            return;
+        }
+    }
     if (isEnter && event->modifiers() == Qt::NoModifier) {
         emit submitted(text());
         event->accept();
         return;
     }
-    // Context-sensitive Esc, level 1+2: a non-empty draft is cleared; an empty
-    // composer hands focus back to the panes. Only when Esc reaches a pane
-    // (unhandled) does it bubble up to RootWidget's quit prompt.
+    // Ctrl+O: add a (mock) attachment, mirroring the GUI's "+" attachment menu.
+    if (event->key() == Qt::Key_O && event->modifiers() == Qt::ControlModifier) {
+        emit attachRequested();
+        event->accept();
+        return;
+    }
+    // Context-sensitive Esc. Precedence: cancel an in-progress queue edit, then
+    // stop a running turn, then clear a non-empty draft, then hand focus back to
+    // the panes (where a further Esc bubbles to RootWidget's quit prompt).
     if (event->key() == Qt::Key_Escape && event->modifiers() == Qt::NoModifier) {
-        if (!text().isEmpty()) {
+        if (m_session != nullptr && m_session->editingIndex() >= 0) {
+            m_session->exitEdit(true); // restore the pre-edit draft
+        } else if (m_session != nullptr && m_session->busy()) {
+            m_session->cancel(); // -> cancelRequested -> orchestrator.cancel()
+        } else if (!text().isEmpty()) {
             setText(QString());
             if (m_session != nullptr) {
                 m_session->refreshTrigger(text(), cursorPosition());
@@ -86,15 +104,16 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
         event->accept();
         return;
     }
-    // The box is single-line, so Up/Down are free to walk the sent-message
-    // history (the shared controller decides whether there is anything to recall).
-    if (event->modifiers() == Qt::NoModifier) {
-        if (event->key() == Qt::Key_Up) {
+    // Single-line box: Up/Down walk the sent-message history, gated like the GUI -
+    // Up only with an empty draft or while already browsing, Down only while
+    // browsing (so an in-progress draft is never clobbered by a stray Up).
+    if (event->modifiers() == Qt::NoModifier && m_session != nullptr) {
+        if (event->key() == Qt::Key_Up && (text().isEmpty() || m_session->browsing())) {
             emit historyPrevious();
             event->accept();
             return;
         }
-        if (event->key() == Qt::Key_Down) {
+        if (event->key() == Qt::Key_Down && m_session->browsing()) {
             emit historyNext();
             event->accept();
             return;
@@ -105,6 +124,29 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
     if (m_session != nullptr) {
         m_session->refreshTrigger(text(), cursorPosition());
     }
+}
+
+void SearchInputBox::keyEvent(Tui::ZKeyEvent* event)
+{
+    if (event->modifiers() == Qt::NoModifier) {
+        if (event->key() == Qt::Key_Escape) {
+            if (!text().isEmpty()) {
+                setText(QString()); // textChanged -> clears the filter
+            } else {
+                emit leaveRequested();
+            }
+            event->accept();
+            return;
+        }
+        // Enter / Down step into the list (the query is applied live as you type).
+        if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return
+            || event->key() == Qt::Key_Down) {
+            emit leaveRequested();
+            event->accept();
+            return;
+        }
+    }
+    Tui::ZInputBox::keyEvent(event);
 }
 
 void TreeListView::keyEvent(Tui::ZKeyEvent* event)
@@ -192,6 +234,10 @@ RootWidget::RootWidget()
     // StatusBarModel seeds sessionStartedAt at construction (= launch), mirroring
     // StatusBar.qml's Component.onCompleted.
 
+    // Mock agent host: stands in for the daemon runtime so the inline clarify /
+    // approval blocks round-trip end-to-end (patches m_doc + ingests a follow-up).
+    m_host = new InteractiveTurnHost(&m_doc, &m_ingest, this);
+
     // Sidebar scope selection drives the conversation list - the model-to-model
     // contract is untouched by the choice of toolkit.
     connect(m_sidebar, &SidebarModel::scopeSelected, m_list, &ConversationsListModel::setScope);
@@ -267,12 +313,25 @@ void RootWidget::buildUi()
     m_sidebarView->setSizePolicyV(Tui::SizePolicy::Expanding);
     columns->addWidget(m_sidebarView);
 
-    // --- Column 2: conversation list (custom-painted multi-line cards) ---
-    m_listView = new ConversationListView(m_window);
+    // --- Column 2: search field + conversation list (custom-painted cards) ---
+    auto* listCol = new Tui::ZWidget(m_window);
+    listCol->setMinimumSize(34, 3);
+    listCol->setSizePolicyH(Tui::SizePolicy::Preferred);
+    listCol->setSizePolicyV(Tui::SizePolicy::Expanding);
+    auto* listColLayout = new Tui::ZVBoxLayout();
+    listCol->setLayout(listColLayout);
+
+    m_search = new SearchInputBox(listCol);
+    m_search->setText(QString());
+    m_search->setMaximumSize(Tui::tuiMaxSize, 1);
+    listColLayout->addWidget(m_search);
+
+    m_listView = new ConversationListView(listCol);
     m_listView->setMinimumSize(34, 3);
-    m_listView->setSizePolicyH(Tui::SizePolicy::Preferred);
     m_listView->setSizePolicyV(Tui::SizePolicy::Expanding);
-    columns->addWidget(m_listView);
+    listColLayout->addWidget(m_listView);
+
+    columns->addWidget(listCol);
 
     // --- Column 3: conversation pane (transcript + composer), expanding ---
     auto* right = new Tui::ZWidget(m_window);
@@ -297,10 +356,18 @@ void RootWidget::buildUi()
     m_composerChrome->setMaximumSize(Tui::tuiMaxSize, 1);
     rightCol->addWidget(m_composerChrome);
 
+    // Queued-prompt strip (auto-sized; 0 height when the queue is empty).
+    m_queue = new QueueStripView(right);
+    rightCol->addWidget(m_queue);
+
     // Compact status-stack todo strip (above the composer); blank at rest.
     m_todos = new Tui::ZLabel(right);
     m_todos->setMaximumSize(Tui::tuiMaxSize, 1);
     rightCol->addWidget(m_todos);
+
+    // Attachment chips (auto-sized; 0 height when there are none).
+    m_attachments = new AttachmentBarView(right);
+    rightCol->addWidget(m_attachments);
 
     m_composer = new SubmitInputBox(right);
     m_composer->setMinimumSize(8, 1);
@@ -333,6 +400,15 @@ void RootWidget::wireViews()
     // model (no display-role adapter): it reads title/snippet/timestamp/agent/tags
     // directly and renders multi-line cards.
     m_listView->setModel(m_list);
+
+    // Search field filters the conversation list live (shared setSearch); Esc/Enter
+    // hand focus down to the cards.
+    connect(m_search, &Tui::ZInputBox::textChanged, m_list, &ConversationsListModel::setSearch);
+    connect(m_search, &SearchInputBox::leaveRequested, this, [this] {
+        if (m_listView != nullptr) {
+            m_listView->setFocus();
+        }
+    });
 
     // Sidebar highlight -> activate the scope (re-emits scopeSelected -> list).
     connect(m_sidebarView->selectionModel(), &QItemSelectionModel::currentChanged, this,
@@ -387,6 +463,30 @@ void RootWidget::wireViews()
     connect(m_controller, &ConversationController::contentChanged, this,
             &RootWidget::refreshTranscript);
 
+    // Inline interactive answers: the transcript's controls emit decisions which
+    // the mock host applies to m_doc; the host then asks us to persist the patched
+    // markdown (-> contentChanged -> refreshTranscript reloads + repaints).
+    connect(m_transcript, &TranscriptView::approvalDecided, m_host,
+            &InteractiveTurnHost::onApprovalDecided);
+    connect(m_transcript, &TranscriptView::clarifySubmitted, m_host,
+            &InteractiveTurnHost::onClarifySubmitted);
+    // A live turn that paused at an approval gate resumes once answered (no-op for
+    // a seeded block when no turn is running).
+    connect(m_transcript, &TranscriptView::approvalDecided, this,
+            [this](const QString&, const QString&, bool) {
+                if (m_turn != nullptr) {
+                    m_turn->resume();
+                }
+            });
+    connect(m_host, &InteractiveTurnHost::documentChanged, this, [this] {
+        if (m_controller->hasConversation()) {
+            m_controller->updateContent(m_doc.toMarkdown());
+        }
+        if (m_transcript != nullptr) {
+            m_transcript->reload();
+        }
+    });
+
     // Composer <-> session controller. The controller is the source of truth for
     // the draft; the input box is its view. Typed edits flow in via textChanged;
     // programmatic changes (history recall, conversation swap, clear-on-send) flow
@@ -437,6 +537,31 @@ void RootWidget::wireViews()
     connect(m_orchestrator->todos(), &TodoListModel::countChanged, this, &RootWidget::updateTodos);
     connect(m_orchestrator->todos(), &QAbstractItemModel::modelReset, this,
             &RootWidget::updateTodos);
+
+    // Mid-turn nudge + stop: the composer's Ctrl+Enter/Esc call steerDraft()/
+    // cancel() on the session, which surface as these host-facing signals.
+    connect(m_composerSession, &ComposerSessionController::steer, m_orchestrator,
+            &ConversationOrchestrator::steer);
+    connect(m_composerSession, &ComposerSessionController::cancelRequested, m_orchestrator,
+            &ConversationOrchestrator::cancel);
+
+    // Queued-prompt strip: bound to the same session; editing a queued entry loads
+    // it into the draft, so move focus to the composer to edit + save on Enter.
+    m_queue->setController(m_composerSession);
+    connect(m_queue, &QueueStripView::editRequested, this, [this](int) {
+        if (m_composer != nullptr) {
+            m_composer->setFocus();
+        }
+    });
+
+    // Attachment chips bind to the same session; Ctrl+O on the composer adds a
+    // canned attachment (mock-parity with the GUI's "+" menu / drag-drop).
+    m_attachments->setController(m_composerSession);
+    connect(m_composer, &SubmitInputBox::attachRequested, m_composerSession, [this] {
+        const int n = m_composerSession->attachments()->count();
+        m_composerSession->addAttachment(
+            QStringLiteral("attachment-%1.txt").arg(n + 1), QStringLiteral("file"));
+    });
 
     // Mirror the turn's busy state into the composer session so mid-turn submits
     // queue and drain (the GUI binds composer.busy to the turn the same way).
@@ -514,6 +639,13 @@ void RootWidget::focusComposer() const
 {
     if (m_composer != nullptr) {
         m_composer->setFocus();
+    }
+}
+
+void RootWidget::focusTranscript() const
+{
+    if (m_transcript != nullptr) {
+        m_transcript->setFocus();
     }
 }
 

@@ -75,12 +75,18 @@ qt_add_executable(daemon-tui
     transcript_view.cpp
     conversation_list_view.h
     conversation_list_view.cpp
+    queue_strip_view.h
+    queue_strip_view.cpp
+    attachment_bar_view.h
+    attachment_bar_view.cpp
     status_bar_view.h
     status_bar_view.cpp
     composer_chrome.h
     composer_chrome.cpp
     completion_view.h
     completion_view.cpp
+    interactive_turn_host.h
+    interactive_turn_host.cpp
 )
 
 set_target_properties(daemon-tui PROPERTIES AUTOMOC ON)

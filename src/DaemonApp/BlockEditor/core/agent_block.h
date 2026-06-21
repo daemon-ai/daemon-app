@@ -80,6 +80,22 @@ QVariantMap buildReasoningView(const QVariantMap &metadata);
 // Content view model: the content kind and its body.
 QVariantMap buildContentView(const QVariantMap &metadata);
 
+// --- Inline answer-patch helpers (single-sourced answer contract) -----------
+// Both front ends answer interactive blocks by patching the block's metadata
+// map. These build the exact patch that EditorController::answerClarify /
+// answerToolApproval produce, so the GUI and the TUI share one definition.
+
+// Patch that marks a clarify tool answered. `answers` is the canonical
+// per-question payload (question id -> string or string list); the result is
+// { answered:true, answers, answer:"flat; human; summary" } where the flat
+// summary joins each answer (lists comma-joined) with "; ".
+QVariantMap clarifyAnswerPatch(const QVariantMap &answers);
+
+// Patch that records a tool-approval decision ("approved"/"denied"/...). The
+// result clears the approval gate ({ approval:decision, needsApproval:false });
+// a "denied" decision also flips the tool to { status:"error" }.
+QVariantMap toolApprovalPatch(const QString &decision);
+
 // --- Sub-renderer parsers ---------------------------------------------------
 
 // Split terminal text carrying ANSI SGR escapes into styled spans. Each span is

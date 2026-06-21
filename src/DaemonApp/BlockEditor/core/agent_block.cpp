@@ -279,6 +279,51 @@ QVariantMap buildContentView(const QVariantMap &metadata)
     return view;
 }
 
+QVariantMap clarifyAnswerPatch(const QVariantMap &answers)
+{
+    // Derive a flat human summary for the compact resolved row and for older
+    // single-question consumers reading `answer` (lists are comma-joined; the
+    // per-answer summaries are then joined with "; ").
+    QStringList parts;
+    for (auto it = answers.cbegin(); it != answers.cend(); ++it) {
+        if (it.value().typeId() == QMetaType::QVariantList) {
+            QStringList items;
+            const QVariantList list = it.value().toList();
+            for (const QVariant &item : list) {
+                items << item.toString();
+            }
+            if (!items.isEmpty()) {
+                parts << items.join(QStringLiteral(", "));
+            }
+        } else {
+            const QString value = it.value().toString();
+            if (!value.isEmpty()) {
+                parts << value;
+            }
+        }
+    }
+
+    QVariantMap patch;
+    patch.insert(QStringLiteral("answered"), true);
+    patch.insert(QStringLiteral("answers"), answers);
+    patch.insert(QStringLiteral("answer"), parts.join(QStringLiteral("; ")));
+    return patch;
+}
+
+QVariantMap toolApprovalPatch(const QString &decision)
+{
+    // Record the decision so the approval bar clears. A denial also flips the
+    // tool to an error state; an approval leaves it running for the host to drive
+    // to completion.
+    QVariantMap patch;
+    patch.insert(QStringLiteral("approval"), decision);
+    patch.insert(QStringLiteral("needsApproval"), false);
+    if (decision == QStringLiteral("denied")) {
+        patch.insert(QStringLiteral("status"), QStringLiteral("error"));
+    }
+    return patch;
+}
+
 QVariantList ansiToSpans(const QString &text)
 {
     QVariantList spans;

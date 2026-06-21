@@ -10,6 +10,8 @@
 #include <QTimer>
 
 #include <cstdio>
+#include <functional>
+#include <memory>
 
 namespace {
 
@@ -39,11 +41,12 @@ bool maybeRenderOffscreen()
     // composer.
     const QByteArray keys = qgetenv("DAEMON_TUI_KEYS");
     const QByteArray typed = qgetenv("DAEMON_TUI_TYPE");
-    QTimer::singleShot(0, [&] {
-        if (!keys.isEmpty()) {
-            const QList<QByteArray> seq = keys.split(',');
-            for (const QByteArray& k : seq) {
-                const QByteArray name = k.trimmed().toLower();
+    const int settleMs = qMax(50, qgetenv("DAEMON_TUI_TURN_MS").toInt());
+
+    // Dispatch one named key to the focused widget.
+    const auto sendOne = [&terminal, &root](const QByteArray& k) {
+        const QByteArray name = k.trimmed().toLower();
+        {
                 if (name == "down") {
                     Tui::ZTest::sendKey(&terminal, Qt::Key_Down, Qt::NoModifier);
                 } else if (name == "up") {
@@ -64,8 +67,18 @@ bool maybeRenderOffscreen()
                     Tui::ZTest::sendText(&terminal, QStringLiteral("q"), Qt::ControlModifier);
                 } else if (name == "ctrl-c") {
                     Tui::ZTest::sendText(&terminal, QStringLiteral("c"), Qt::ControlModifier);
+                } else if (name == "ctrl-enter") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::ControlModifier);
+                } else if (name == "ctrl-o") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_O, Qt::ControlModifier);
+                } else if (name == "del") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Delete, Qt::NoModifier);
+                } else if (name == "space") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Space, Qt::NoModifier);
                 } else if (name == "focus-composer") {
                     root.focusComposer();
+                } else if (name == "focus-transcript") {
+                    root.focusTranscript();
                 } else if (name.startsWith("t:")) {
                     // Type a literal into whatever holds focus (e.g. the composer),
                     // without the auto-Enter that DAEMON_TUI_TYPE appends. Used to
@@ -73,21 +86,37 @@ bool maybeRenderOffscreen()
                     Tui::ZTest::sendText(&terminal, QString::fromUtf8(k.trimmed().mid(2)),
                                          Qt::NoModifier);
                 }
+        }
+    };
+
+    const QList<QByteArray> seq = keys.isEmpty() ? QList<QByteArray>{} : keys.split(',');
+    // Process the key sequence with cumulative timing: a `sleep:N` pseudo-key
+    // defers the rest of the sequence by N ms so a frame can be driven *after* a
+    // timed event (e.g. a live turn reaching its approval gate). When the sequence
+    // is exhausted, run DAEMON_TUI_TYPE then settle + grab.
+    auto step = std::make_shared<std::function<void(int)>>();
+    *step = [&terminal, &root, &typed, settleMs, seq, sendOne, step](int i) {
+        if (i >= seq.size()) {
+            if (!typed.isEmpty()) {
+                root.focusComposer();
+                Tui::ZTest::sendText(&terminal, QString::fromUtf8(typed), Qt::NoModifier);
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
             }
+            // Let any deferred show/layout/paint settle before grabbing the frame;
+            // DAEMON_TUI_TURN_MS extends this for a streaming turn.
+            QTimer::singleShot(settleMs, [] { QCoreApplication::quit(); });
+            return;
         }
-        if (!typed.isEmpty()) {
-            root.focusComposer();
-            Tui::ZTest::sendText(&terminal, QString::fromUtf8(typed), Qt::NoModifier);
-            Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
+        const QByteArray name = seq.at(i).trimmed().toLower();
+        if (name.startsWith("sleep:")) {
+            const int ms = qMax(0, name.mid(6).toInt());
+            QTimer::singleShot(ms, [step, i] { (*step)(i + 1); });
+            return;
         }
-        // Let any deferred show/layout/paint (e.g. the quit-confirmation dialog,
-        // which ZDialog shows on a queued timer) settle before grabbing the frame.
-        // DAEMON_TUI_TURN_MS extends this window so a submitted prompt's scripted
-        // assistant turn can stream into the transcript and the footer's Running
-        // timer can tick before the frame is grabbed.
-        const int settleMs = qMax(50, qgetenv("DAEMON_TUI_TURN_MS").toInt());
-        QTimer::singleShot(settleMs, [] { QCoreApplication::quit(); });
-    });
+        sendOne(seq.at(i));
+        (*step)(i + 1);
+    };
+    QTimer::singleShot(0, [step] { (*step)(0); });
     QCoreApplication::exec();
 
     if (!qgetenv("DAEMON_TUI_DEBUG").isEmpty()) {

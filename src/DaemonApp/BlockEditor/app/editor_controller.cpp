@@ -324,49 +324,19 @@ void EditorController::requestImagePreview(const QString &url, const QString &al
 void EditorController::answerClarify(qulonglong blockId, const QString &requestId, const QVariantMap &answers)
 {
     // Local echo: mark the clarify tool answered so it collapses to a compact
-    // resolved row, persisted via the canonical fenced markdown. `answers` is the
-    // canonical structured payload (per-question id -> string or string list); we
-    // also derive a flat human summary for the compact resolved row and for older
-    // single-question consumers reading `answer`.
-    QStringList parts;
-    for (auto it = answers.cbegin(); it != answers.cend(); ++it) {
-        if (it.value().typeId() == QMetaType::QVariantList) {
-            QStringList items;
-            const QVariantList list = it.value().toList();
-            for (const QVariant &item : list) {
-                items << item.toString();
-            }
-            if (!items.isEmpty()) {
-                parts << items.join(QStringLiteral(", "));
-            }
-        } else {
-            const QString value = it.value().toString();
-            if (!value.isEmpty()) {
-                parts << value;
-            }
-        }
-    }
-
-    QVariantMap patch;
-    patch.insert(QStringLiteral("answered"), true);
-    patch.insert(QStringLiteral("answers"), answers);
-    patch.insert(QStringLiteral("answer"), parts.join(QStringLiteral("; ")));
-    updateTypedBlock(blockId, patch);
+    // resolved row, persisted via the canonical fenced markdown. The patch
+    // contract (structured `answers` + flat `answer` summary) is single-sourced
+    // in be::clarifyAnswerPatch so the TUI answers identically.
+    updateTypedBlock(blockId, be::clarifyAnswerPatch(answers));
     emit clarifyAnswered(blockId, requestId, answers);
 }
 
 void EditorController::answerToolApproval(qulonglong blockId, const QString &callId, const QString &decision, bool permanent)
 {
-    // Local echo: record the decision so the approval bar clears. A denial also
-    // flips the tool to an error state; an approval leaves it running for the
-    // host to drive to completion.
-    QVariantMap patch;
-    patch.insert(QStringLiteral("approval"), decision);
-    patch.insert(QStringLiteral("needsApproval"), false);
-    if (decision == QStringLiteral("denied")) {
-        patch.insert(QStringLiteral("status"), QStringLiteral("error"));
-    }
-    updateTypedBlock(blockId, patch);
+    // Local echo: record the decision so the approval bar clears (shared patch
+    // contract with the TUI). A denial flips the tool to an error state; an
+    // approval leaves it running for the host to drive to completion.
+    updateTypedBlock(blockId, be::toolApprovalPatch(decision));
     emit toolApprovalAnswered(blockId, callId, decision, permanent);
 }
 

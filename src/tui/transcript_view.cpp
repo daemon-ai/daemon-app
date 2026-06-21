@@ -2,6 +2,7 @@
 
 #include "tui_palette.h"
 
+#include "core/block_record.h"
 #include "core/document_store.h"
 
 #include <Tui/ZColor.h>
@@ -60,16 +61,129 @@ void TranscriptView::rebuild()
 {
     const int width = qMax(1, geometry().width());
     if (m_doc != nullptr) {
-        m_lines = TranscriptLayout::build(*m_doc, width);
+        const LayoutResult res = TranscriptLayout::build(*m_doc, width, m_draft, m_activeControl);
+        m_lines = res.lines;
+        m_controls = res.controls;
     } else {
         m_lines.clear();
+        m_controls.clear();
     }
-    if (m_stickToBottom) {
-        scrollToBottom();
+
+    if (interactive()) {
+        // An awaiting block exists: focus its first control so the form is
+        // immediately answerable, and keep the focused control on screen.
+        if (m_activeControl < 0 || m_activeControl >= m_controls.size()) {
+            m_activeControl = 0;
+        }
+        // Re-build once more so the freshly-focused control paints its wash.
+        const LayoutResult res = TranscriptLayout::build(*m_doc, width, m_draft, m_activeControl);
+        m_lines = res.lines;
+        m_controls = res.controls;
+        ensureControlVisible();
     } else {
-        clampScrollTop();
+        m_activeControl = -1;
+        if (m_stickToBottom) {
+            scrollToBottom();
+        } else {
+            clampScrollTop();
+        }
     }
     update();
+}
+
+void TranscriptView::moveControl(int delta)
+{
+    if (!interactive()) {
+        return;
+    }
+    const int n = static_cast<int>(m_controls.size());
+    m_activeControl = ((m_activeControl + delta) % n + n) % n;
+    rebuild();
+}
+
+void TranscriptView::ensureControlVisible()
+{
+    if (m_activeControl < 0 || m_activeControl >= m_controls.size()) {
+        return;
+    }
+    const int line = m_controls.at(m_activeControl).line;
+    const int rows = visibleRows();
+    if (line < m_scrollTop) {
+        m_scrollTop = line;
+    } else if (rows > 0 && line >= m_scrollTop + rows) {
+        m_scrollTop = line - rows + 1;
+    }
+    clampScrollTop();
+}
+
+QVariantMap TranscriptView::toolMetadataForCallId(const QString &callId) const
+{
+    if (m_doc == nullptr) {
+        return {};
+    }
+    const QVector<be::BlockRecord> &blocks = m_doc->blocks();
+    for (const be::BlockRecord &b : blocks) {
+        if (b.type == be::BlockType::ToolCall
+            && b.metadata.value(QStringLiteral("callId")).toString() == callId) {
+            return b.metadata;
+        }
+    }
+    return {};
+}
+
+void TranscriptView::toggleChoice()
+{
+    if (m_activeControl < 0 || m_activeControl >= m_controls.size()) {
+        return;
+    }
+    const Control &c = m_controls.at(m_activeControl);
+    if (c.kind != Control::Kind::Choice) {
+        return;
+    }
+    QStringList sel = m_draft.selected.value(c.questionId);
+    if (c.multi) {
+        if (sel.contains(c.choiceLabel)) {
+            sel.removeAll(c.choiceLabel);
+        } else {
+            sel.push_back(c.choiceLabel);
+        }
+    } else {
+        // Radio: re-selecting the active choice clears it.
+        sel = sel.contains(c.choiceLabel) ? QStringList {} : QStringList { c.choiceLabel };
+    }
+    m_draft.selected.insert(c.questionId, sel);
+    rebuild();
+}
+
+void TranscriptView::activateControl()
+{
+    if (m_activeControl < 0 || m_activeControl >= m_controls.size()) {
+        return;
+    }
+    const Control c = m_controls.at(m_activeControl);
+    switch (c.kind) {
+    case Control::Kind::Approve:
+        emit approvalDecided(c.callId, QStringLiteral("approved"), false);
+        break;
+    case Control::Kind::Deny:
+        emit approvalDecided(c.callId, QStringLiteral("denied"), false);
+        break;
+    case Control::Kind::Permanent:
+        emit approvalDecided(c.callId, QStringLiteral("approved"), true);
+        break;
+    case Control::Kind::Choice:
+        toggleChoice();
+        break;
+    case Control::Kind::Freeform:
+    case Control::Kind::Submit: {
+        const QVariantMap meta = toolMetadataForCallId(c.callId);
+        const QVariantMap answers = collectClarifyAnswers(meta, m_draft);
+        if (!answers.isEmpty()) {
+            emit clarifySubmitted(c.callId, c.requestId, answers);
+        }
+        break;
+    }
+    }
 }
 
 void TranscriptView::resizeEvent(Tui::ZResizeEvent *event)
@@ -136,6 +250,65 @@ void TranscriptView::paintEvent(Tui::ZPaintEvent *event)
 
 void TranscriptView::keyEvent(Tui::ZKeyEvent *event)
 {
+    // Interactive mode: while an awaiting-approval / unanswered-clarify block is
+    // present its controls own the cursor. Up/Down/Tab walk the controls, Space
+    // toggles a choice, Enter activates a button / submits, and a freeform field
+    // takes typed text + Backspace. PageUp/Down/Home/End still scroll; Esc still
+    // bubbles (the context-sensitive quit chain).
+    if (interactive()) {
+        const int key = event->key();
+        const Qt::KeyboardModifiers mods = event->modifiers();
+        const Control &active = m_controls.at(qBound(0, m_activeControl, m_controls.size() - 1));
+        const bool onFreeform = active.kind == Control::Kind::Freeform;
+
+        if (mods == Qt::NoModifier || mods == Qt::ShiftModifier) {
+            if (key == Qt::Key_Up || (key == Qt::Key_Tab && mods == Qt::ShiftModifier)
+                || key == Qt::Key_Backtab) {
+                moveControl(-1);
+                event->accept();
+                return;
+            }
+            if (key == Qt::Key_Down || (key == Qt::Key_Tab && mods == Qt::NoModifier)) {
+                moveControl(1);
+                event->accept();
+                return;
+            }
+            if (key == Qt::Key_Enter || key == Qt::Key_Return) {
+                activateControl();
+                event->accept();
+                return;
+            }
+            if (key == Qt::Key_Space && !onFreeform) {
+                toggleChoice();
+                event->accept();
+                return;
+            }
+        }
+        if (onFreeform && mods == Qt::NoModifier) {
+            if (key == Qt::Key_Backspace) {
+                QString text = m_draft.freeform.value(active.questionId);
+                text.chop(1);
+                m_draft.freeform.insert(active.questionId, text);
+                rebuild();
+                event->accept();
+                return;
+            }
+        }
+        if (onFreeform && !event->text().isEmpty()
+            && (mods == Qt::NoModifier || mods == Qt::ShiftModifier)) {
+            const QString t = event->text();
+            // Ignore control chars (Enter handled above).
+            if (t.at(0).isPrint()) {
+                m_draft.freeform.insert(active.questionId,
+                                        m_draft.freeform.value(active.questionId) + t);
+                rebuild();
+                event->accept();
+                return;
+            }
+        }
+        // Fall through to the scroll keys below (PageUp/Down/Home/End) and Esc.
+    }
+
     if (event->modifiers() == Qt::NoModifier) {
         const int key = event->key();
         const int page = qMax(1, visibleRows() - 1);
