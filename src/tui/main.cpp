@@ -33,15 +33,48 @@ bool maybeRenderOffscreen()
     terminal.setMainWidget(&root);
 
     // Let the event loop run the deferred layout/paint, then optionally drive the
-    // composer to exercise the input path before grabbing the frame.
+    // focused widget before grabbing the frame: DAEMON_TUI_KEYS sends a sequence
+    // of named keys to the default-focused sidebar (e.g. "down,down,left" to
+    // exercise tree navigation + collapse), and DAEMON_TUI_TYPE types into the
+    // composer.
+    const QByteArray keys = qgetenv("DAEMON_TUI_KEYS");
     const QByteArray typed = qgetenv("DAEMON_TUI_TYPE");
     QTimer::singleShot(0, [&] {
+        if (!keys.isEmpty()) {
+            const QList<QByteArray> seq = keys.split(',');
+            for (const QByteArray& k : seq) {
+                const QByteArray name = k.trimmed().toLower();
+                if (name == "down") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Down, Qt::NoModifier);
+                } else if (name == "up") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Up, Qt::NoModifier);
+                } else if (name == "left") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Left, Qt::NoModifier);
+                } else if (name == "right") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Right, Qt::NoModifier);
+                } else if (name == "tab") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Tab, Qt::NoModifier);
+                } else if (name == "enter") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
+                } else if (name == "esc") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Escape, Qt::NoModifier);
+                } else if (name == "ctrl-q") {
+                    // forShortcut() matches char events, so emulate via sendText
+                    // (sendKey with a letter+Control does not trigger it).
+                    Tui::ZTest::sendText(&terminal, QStringLiteral("q"), Qt::ControlModifier);
+                } else if (name == "ctrl-c") {
+                    Tui::ZTest::sendText(&terminal, QStringLiteral("c"), Qt::ControlModifier);
+                }
+            }
+        }
         if (!typed.isEmpty()) {
             root.focusComposer();
             Tui::ZTest::sendText(&terminal, QString::fromUtf8(typed), Qt::NoModifier);
             Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
         }
-        QCoreApplication::quit();
+        // Let any deferred show/layout/paint (e.g. the quit-confirmation dialog,
+        // which ZDialog shows on a queued timer) settle before grabbing the frame.
+        QTimer::singleShot(50, [] { QCoreApplication::quit(); });
     });
     QCoreApplication::exec();
 

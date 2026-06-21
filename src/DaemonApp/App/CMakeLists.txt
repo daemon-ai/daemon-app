@@ -25,6 +25,7 @@ target_link_libraries(daemon-app
         # Feature QML modules: backing libs (C++ types) + their STATIC plugins.
         # The plugins must be linked explicitly (shared Qt build); main.cpp also
         # references them via Q_IMPORT_QML_PLUGIN so they aren't dead-stripped.
+        daemon-app::presentation
         daemon-app::theme
         daemon-app::controls
         daemon-app::blockeditor
@@ -35,6 +36,7 @@ target_link_libraries(daemon-app
         daemon-app::composer
         daemon-app::settings
         daemon-app::statusbar
+        da_presentationplugin
         da_themeplugin
         da_controlsplugin
         da_blockeditorplugin

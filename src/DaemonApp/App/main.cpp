@@ -160,6 +160,7 @@ bool maybeRenderThemeShots(QQmlApplicationEngine& engine)
 // The feature modules are STATIC, so their QML plugins must be referenced
 // explicitly or the linker discards them (shared Qt build => qt_import_qml_plugins
 // does not apply). Class names are the module URI with dots->underscores + Plugin.
+Q_IMPORT_QML_PLUGIN(DaemonApp_PresentationPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ThemePlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ControlsPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_BlockEditorPlugin)

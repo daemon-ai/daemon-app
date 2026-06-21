@@ -3,8 +3,8 @@
 #include "conversations_list_model.h"
 #include "sidebar_model.h"
 
-#include "domain/agent_node.h"
 #include "domain/sidebar_node.h"
+#include "presentation/display_presenter.h"
 
 #include <Tui/ZColor.h>
 #include <Tui/ZCommon.h>
@@ -86,16 +86,17 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
             return QVariant::fromValue(rgbFromHex(srcData(SidebarModel::ColorRole).toString()));
         }
         if (nodeType == static_cast<int>(domain::NodeType::Node)) {
+            // Reuse the shared C++ categorization (same source the GUI sidebar
+            // uses), then resolve the semantic tone to a Tui color here.
             const int state = srcData(SidebarModel::StateRole).toInt();
-            const auto running = static_cast<int>(domain::AgentState::Running);
-            const auto finished = static_cast<int>(domain::AgentState::Finished);
-            if (state == running) {
+            switch (DisplayPresenter::agentStateToneFor(state)) {
+            case DisplayPresenter::StateTone::Running:
                 return QVariant::fromValue(Tui::ZColor(Tui::Colors::brightGreen));
-            }
-            if (state == finished) {
+            case DisplayPresenter::StateTone::Finished:
                 return QVariant::fromValue(Tui::ZColor(Tui::Colors::darkGray));
+            case DisplayPresenter::StateTone::Neutral:
+                return QVariant::fromValue(Tui::ZColor(Tui::Colors::brightYellow));
             }
-            return QVariant::fromValue(Tui::ZColor(Tui::Colors::brightYellow));
         }
         return {};
     }

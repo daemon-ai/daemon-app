@@ -3,6 +3,7 @@ import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.Presentation
 
 // Middle column: the notes bar (collapse + title/count + trash + search button,
 // with button-revealed search) and the NoteListView port - rows stacked as
@@ -25,11 +26,12 @@ Rectangle {
         convModel.setScope(nodeType, id, nodeId);
     }
 
-    // AgentNodeKind: 0 Engine, 1 Host, 2 Orchestrator. Cosmetic icon only.
+    // Cosmetic icon only. The kind->icon category is decided once in the shared
+    // C++ DisplayPresenter; QML maps the key to the concrete FontIcons glyph.
     function kindIcon(kind) {
-        switch (kind) {
-        case 2: return FontIcons.fa_sitemap;
-        case 1: return FontIcons.fa_server;
+        switch (DisplayPresenter.agentKindIconKey(kind)) {
+        case "sitemap": return FontIcons.fa_sitemap;
+        case "server": return FontIcons.fa_server;
         default: return FontIcons.fa_robot;
         }
     }

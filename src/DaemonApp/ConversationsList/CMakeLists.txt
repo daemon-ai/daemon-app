@@ -17,5 +17,6 @@ target_link_libraries(da_conversationslist
         daemon-app::persistence
         daemon-app::theme
         daemon-app::controls
+        daemon-app::presentation
         daemon-app::warnings
 )

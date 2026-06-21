@@ -3,6 +3,7 @@ import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.Presentation
 
 // Left column: the agent supervision tree. A flattened, uniformly recursive
 // tree (VSCode-explorer style) - any node can contain any node to any depth.
@@ -19,30 +20,30 @@ Rectangle {
     signal scopeSelected(int nodeType, int id, string nodeId)
     signal settingsRequested()
 
-    // NodeType enum: 0 AllConversations, 1 Archived, 2 FleetSep, 3 TagSep,
-    // 4 Node, 5 Tag.
+    // The category decision (which NodeType/Kind/State maps to which icon/tone)
+    // lives once in the shared C++ DisplayPresenter; QML only resolves the
+    // returned key/tone to the concrete FontIcons glyph / Theme color. Visuals
+    // are unchanged - only the source of the decision moved out of QML.
     function iconFor(nodeType) {
-        switch (nodeType) {
-        case 0: return FontIcons.fa_comments;
-        case 1: return FontIcons.fa_box_archive;
+        switch (DisplayPresenter.scopeIconKey(nodeType)) {
+        case "comments": return FontIcons.fa_comments;
+        case "archive": return FontIcons.fa_box_archive;
         default: return "";
         }
     }
 
-    // AgentNodeKind: 0 Engine, 1 Host, 2 Orchestrator. Cosmetic only.
     function kindIcon(kind) {
-        switch (kind) {
-        case 2: return FontIcons.fa_sitemap; // orchestrator / fleet
-        case 1: return FontIcons.fa_server;  // host
-        default: return FontIcons.fa_robot;  // engine / agent leaf
+        switch (DisplayPresenter.agentKindIconKey(kind)) {
+        case "sitemap": return FontIcons.fa_sitemap; // orchestrator / fleet
+        case "server": return FontIcons.fa_server;   // host
+        default: return FontIcons.fa_robot;          // engine / agent leaf
         }
     }
 
-    // AgentState: 0 Running, 1 Finished, 2 Unknown.
     function stateColor(state) {
-        switch (state) {
-        case 0: return Theme.stateRunning;
-        case 1: return Theme.stateFinished;
+        switch (DisplayPresenter.agentStateTone(state)) {
+        case DisplayPresenter.StateTone.Running: return Theme.stateRunning;
+        case DisplayPresenter.StateTone.Finished: return Theme.stateFinished;
         default: return Theme.transparent;
         }
     }

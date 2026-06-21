@@ -9,6 +9,8 @@
 
 #include "persistence/in_memory_conversation_store.h"
 
+#include <Tui/ZButton.h>
+#include <Tui/ZDialog.h>
 #include <Tui/ZHBoxLayout.h>
 #include <Tui/ZLabel.h>
 #include <Tui/ZListView.h>
@@ -34,6 +36,55 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
         return;
     }
     Tui::ZInputBox::keyEvent(event);
+}
+
+void TreeListView::keyEvent(Tui::ZKeyEvent* event)
+{
+    if (event->modifiers() == Qt::NoModifier) {
+        if (event->key() == Qt::Key_Left) {
+            emit collapseRequested();
+            event->accept();
+            return;
+        }
+        if (event->key() == Qt::Key_Right) {
+            emit expandRequested();
+            event->accept();
+            return;
+        }
+    }
+    Tui::ZListView::keyEvent(event);
+}
+
+QuitDialog::QuitDialog(Tui::ZWidget* parent) : Tui::ZDialog(parent)
+{
+    setOptions(Tui::ZWindow::DeleteOnClose);
+    setWindowTitle(QStringLiteral("Quit"));
+    setContentsMargins({ 2, 1, 2, 1 });
+
+    auto* layout = new Tui::ZVBoxLayout();
+    setLayout(layout);
+
+    auto* message = new Tui::ZLabel(QStringLiteral("Quit daemon-app?"), this);
+    layout->addWidget(message);
+    layout->addSpacing(1);
+
+    auto* buttons = new Tui::ZHBoxLayout();
+    layout->add(buttons);
+    buttons->addStretch();
+
+    auto* quitButton = new Tui::ZButton(QStringLiteral("Quit"), this);
+    quitButton->setDefault(true); // Enter confirms
+    buttons->addWidget(quitButton);
+
+    auto* cancelButton = new Tui::ZButton(QStringLiteral("Cancel"), this);
+    buttons->addWidget(cancelButton);
+
+    connect(quitButton, &Tui::ZButton::clicked, this, &QuitDialog::quitConfirmed);
+    connect(cancelButton, &Tui::ZButton::clicked, this, &Tui::ZDialog::reject);
+
+    // The user explicitly asked to quit, so focus Quit: Enter confirms, while Esc
+    // (ZDialog::reject) and Tab->Cancel back out.
+    quitButton->setFocus();
 }
 
 RootWidget::RootWidget()
@@ -78,11 +129,22 @@ void RootWidget::resizeEvent(Tui::ZResizeEvent* event)
 
 void RootWidget::buildUi()
 {
-    auto* quit = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_Escape), this,
-                                    Qt::ApplicationShortcut);
-    connect(quit, &Tui::ZShortcut::activated, this, [] { QCoreApplication::quit(); });
+    // Exit affordances. Ctrl+Q and Esc open a confirmation modal; Ctrl+C is the
+    // terminal-convention hard exit (no prompt). The Esc shortcut is disabled
+    // while the modal is open so the dialog's own Esc cancels it.
+    auto* quitShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forShortcut(QStringLiteral("q")),
+                                            this, Qt::ApplicationShortcut);
+    connect(quitShortcut, &Tui::ZShortcut::activated, this, &RootWidget::promptQuit);
 
-    m_window = new Tui::ZWindow(QStringLiteral("daemon-app \u00b7 TUI spike"), this);
+    auto* forceQuitShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forShortcut(QStringLiteral("c")),
+                                                 this, Qt::ApplicationShortcut);
+    connect(forceQuitShortcut, &Tui::ZShortcut::activated, this, [] { QCoreApplication::quit(); });
+
+    m_escShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_Escape), this,
+                                       Qt::ApplicationShortcut);
+    connect(m_escShortcut, &Tui::ZShortcut::activated, this, &RootWidget::promptQuit);
+
+    m_window = new Tui::ZWindow(QStringLiteral("daemon-app \u00b7 TUI spike  (Ctrl+Q quit)"), this);
     m_window->setOptions({});
     m_window->setFocusMode(Tui::FocusContainerMode::Cycle); // Tab cycles the panes
     m_window->setGeometry(QRect(QPoint(0, 0), geometry().size()));
@@ -96,7 +158,7 @@ void RootWidget::buildUi()
     // Preferred sizes each list column to its content (clamped to a sensible
     // minimum); the conversation pane is the sole Expanding child, so it absorbs
     // the remaining width.
-    m_sidebarView = new Tui::ZListView(m_window);
+    m_sidebarView = new TreeListView(m_window);
     m_sidebarView->setMinimumSize(26, 3);
     m_sidebarView->setSizePolicyH(Tui::SizePolicy::Preferred);
     m_sidebarView->setSizePolicyV(Tui::SizePolicy::Expanding);
@@ -154,6 +216,25 @@ void RootWidget::wireViews()
                     m_sidebar->activate(current.row());
                 }
             });
+
+    // Left/Right collapse/expand the tree. The model owns the structural logic
+    // and may move its selection (to parent/child); a full rebuild (model reset)
+    // clears the view's current index, so re-sync it from the model afterwards
+    // to keep the highlight on the selected row.
+    const auto syncSidebarCurrent = [this] {
+        const int row = m_sidebar->currentRow();
+        if (row >= 0 && row < m_sidebarAdapter->rowCount()) {
+            m_sidebarView->setCurrentIndex(m_sidebarAdapter->index(row, 0));
+        }
+    };
+    connect(m_sidebarView, &TreeListView::collapseRequested, this, [this, syncSidebarCurrent] {
+        m_sidebar->collapseCurrent();
+        syncSidebarCurrent();
+    });
+    connect(m_sidebarView, &TreeListView::expandRequested, this, [this, syncSidebarCurrent] {
+        m_sidebar->expandCurrent();
+        syncSidebarCurrent();
+    });
 
     // Conversation highlight / Enter -> open it in the transcript.
     const auto openRow = [this](int row) {
@@ -214,6 +295,24 @@ void RootWidget::focusComposer() const
     if (m_composer != nullptr) {
         m_composer->setFocus();
     }
+}
+
+void RootWidget::promptQuit()
+{
+    if (m_quitDialog != nullptr) {
+        return; // already asking
+    }
+    m_quitDialog = new QuitDialog(this);
+    m_escShortcut->setEnabled(false); // let the dialog's Esc cancel instead
+
+    connect(m_quitDialog, &QuitDialog::quitConfirmed, this, [] { QCoreApplication::quit(); });
+    connect(m_quitDialog, &Tui::ZDialog::rejected, this, [this] {
+        m_quitDialog = nullptr; // DeleteOnClose frees it
+        m_escShortcut->setEnabled(true);
+        if (m_sidebarView != nullptr) {
+            m_sidebarView->setFocus(); // restore keyboard focus to the panes
+        }
+    });
 }
 
 void RootWidget::refreshTranscript()
