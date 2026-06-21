@@ -56,4 +56,33 @@ QString toneGlyph(const QString &tone);
 QString barGlyph();       // card left rule (left half block)
 QString reasoningGlyph(); // reasoning header marker
 
+// --- Chrome (conversation list / status bar / completion popup) ---------------
+// Colors reused by the custom-painted chrome widgets that bring the TUI shell to
+// visual parity with the GUI (ConversationListView, StatusBarView, ComposerChrome,
+// CompletionView). They mirror the same Theme.qml tokens the GUI chrome uses.
+
+Tui::ZColor selectionBg(); // active-row wash (list cards / completion) (#45475a)
+Tui::ZColor surfaceAlt();  // recessed popup/footer surface (#181825)
+
+// gatewayTone ("danger"/"warning"/"default") -> red/peach/green (ready = green).
+Tui::ZColor gatewayToneColor(const QString &tone);
+
+Tui::ZColor gaugeFill();  // context-gauge filled cells
+Tui::ZColor gaugeTrack(); // context-gauge empty track
+
+// Chrome glyphs (all width-1, geometric - safe across terminal fonts).
+QString gatewayGlyph(bool alert); // signal (\u25c9) vs alert (\u26a0)
+QString agentsGlyph();            // agents cluster marker
+QString contextGlyph();           // context-window marker
+QString sessionGlyph();           // session-timer marker
+QString versionGlyph();           // app-version marker ('#')
+QString sendGlyph();              // send affordance (\u25b2)
+QString stopGlyph();              // stop affordance (\u25a0)
+QString steerGlyph();             // steer affordance (\u2726)
+QString warnGlyph();              // error/alert (\u26a0)
+// domain agent-kind icon key ("sitemap"/"server"/"robot") -> distinct glyph.
+QString agentKindGlyph(const QString &kindKey);
+QString tagDot();              // tag chip bullet (\u25cf)
+QString spinnerFrame(int tick); // ◐◓◑◒ braille-style turn spinner
+
 } // namespace tpal

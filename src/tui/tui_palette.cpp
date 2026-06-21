@@ -177,4 +177,63 @@ QString toneGlyph(const QString &tone)
 QString barGlyph() { return QStringLiteral("\u258c"); }      // ▌
 QString reasoningGlyph() { return QStringLiteral("\u2732"); } // ✲
 
+// --- Chrome -------------------------------------------------------------------
+
+ZColor selectionBg() { return ZColor(69, 71, 90); }  // #45475a
+ZColor surfaceAlt() { return ZColor(24, 24, 37); }   // #181825
+
+ZColor gatewayToneColor(const QString &tone)
+{
+    const QString t = tone.trimmed().toLower();
+    if (t == QStringLiteral("danger")) {
+        return statusError();
+    }
+    if (t == QStringLiteral("warning")) {
+        return warn();
+    }
+    return statusOk(); // "default" == ready
+}
+
+ZColor gaugeFill() { return accent(); }
+ZColor gaugeTrack() { return muted(); }
+
+QString gatewayGlyph(bool alert)
+{
+    return alert ? QStringLiteral("\u26a0")   // ⚠
+                 : QStringLiteral("\u25c9");   // ◉ (signal/connected)
+}
+
+QString agentsGlyph() { return QStringLiteral("\u2726"); }   // ✦
+QString contextGlyph() { return QStringLiteral("\u25a4"); }  // ▤
+QString sessionGlyph() { return QStringLiteral("\u25f7"); }  // ◷ clock-ish
+QString versionGlyph() { return QStringLiteral("#"); }
+QString sendGlyph() { return QStringLiteral("\u25b2"); }     // ▲
+QString stopGlyph() { return QStringLiteral("\u25a0"); }     // ■
+QString steerGlyph() { return QStringLiteral("\u2726"); }    // ✦
+QString warnGlyph() { return QStringLiteral("\u26a0"); }     // ⚠
+
+QString agentKindGlyph(const QString &kindKey)
+{
+    const QString k = kindKey.trimmed().toLower();
+    if (k == QStringLiteral("sitemap")) {
+        return QStringLiteral("\u2261"); // ≡ (orchestrator / hierarchy)
+    }
+    if (k == QStringLiteral("server")) {
+        return QStringLiteral("\u25a6"); // ▦ (server)
+    }
+    if (k == QStringLiteral("robot")) {
+        return QStringLiteral("\u25c9"); // ◉ (agent)
+    }
+    return QStringLiteral("\u2022"); // • fallback
+}
+
+QString tagDot() { return QStringLiteral("\u25cf"); } // ●
+
+QString spinnerFrame(int tick)
+{
+    static const char16_t frames[] = {0x25d0, 0x25d3, 0x25d1, 0x25d2}; // ◐◓◑◒
+    const int i = ((tick % 4) + 4) % 4;
+    return QString(QChar(frames[i]));
+}
+
 } // namespace tpal

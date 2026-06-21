@@ -10,6 +10,10 @@
 #include <Tui/ZShortcut.h>
 #include <Tui/ZWindow.h>
 
+#include "completion_view.h"
+#include "composer_chrome.h"
+#include "conversation_list_view.h"
+#include "status_bar_view.h"
 #include "transcript_view.h"
 
 #include "core/agent_ingest.h"
@@ -117,7 +121,6 @@ private:
     // events through be::TranscriptIngest so the document grows real typed blocks
     // (reasoning/tool/content), rendered identically to the persisted ones.
     void onTurnEvents(const QVariantList& events);
-    void updateFooter();
     // Render the orchestrator's status-stack todos as a compact strip above the
     // composer (cleared when the model empties after the turn settles).
     void updateTodos();
@@ -141,19 +144,22 @@ private:
 
     // TUI-only glue + widgets.
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;
-    DisplayRoleAdapter* m_listAdapter = nullptr;
     Tui::ZWindow* m_window = nullptr;
     TreeListView* m_sidebarView = nullptr;
-    Tui::ZListView* m_listView = nullptr;
+    ConversationListView* m_listView = nullptr;
     TranscriptView* m_transcript = nullptr;
+    // One-line streaming/affordance indicator above the composer (Thinking.../error
+    // + send/stop/steer hint), driven by the TurnController.
+    ComposerChrome* m_composerChrome = nullptr;
     SubmitInputBox* m_composer = nullptr;
     Tui::ZLabel* m_header = nullptr;
-    Tui::ZLabel* m_footer = nullptr;
+    // Custom-painted colored status footer (gateway/agents/context/session/version).
+    StatusBarView* m_footer = nullptr;
     // Compact status-stack todo strip (above the composer).
     Tui::ZLabel* m_todos = nullptr;
     // Borderless completion overlay floated above the composer; driven entirely by
     // the shared controller's completion state (the input box keeps focus).
-    Tui::ZListView* m_completionPopup = nullptr;
+    CompletionView* m_completionPopup = nullptr;
 
     // Exit handling: the quit confirmation modal (nullptr when closed).
     QuitDialog* m_quitDialog = nullptr;

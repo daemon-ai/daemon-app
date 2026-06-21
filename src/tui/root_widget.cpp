@@ -243,7 +243,7 @@ void RootWidget::buildUi()
                                                  this, Qt::ApplicationShortcut);
     connect(forceQuitShortcut, &Tui::ZShortcut::activated, this, [] { QCoreApplication::quit(); });
 
-    m_window = new Tui::ZWindow(QStringLiteral("daemon-app \u00b7 TUI spike  (Ctrl+Q quit)"), this);
+    m_window = new Tui::ZWindow(QStringLiteral("Daemon"), this);
     m_window->setOptions({});
     m_window->setFocusMode(Tui::FocusContainerMode::Cycle); // Tab cycles the panes
     m_window->setGeometry(QRect(QPoint(0, 0), geometry().size()));
@@ -267,8 +267,8 @@ void RootWidget::buildUi()
     m_sidebarView->setSizePolicyV(Tui::SizePolicy::Expanding);
     columns->addWidget(m_sidebarView);
 
-    // --- Column 2: conversation list ---
-    m_listView = new Tui::ZListView(m_window);
+    // --- Column 2: conversation list (custom-painted multi-line cards) ---
+    m_listView = new ConversationListView(m_window);
     m_listView->setMinimumSize(34, 3);
     m_listView->setSizePolicyH(Tui::SizePolicy::Preferred);
     m_listView->setSizePolicyV(Tui::SizePolicy::Expanding);
@@ -292,6 +292,11 @@ void RootWidget::buildUi()
     m_transcript->setSizePolicyV(Tui::SizePolicy::Expanding);
     rightCol->addWidget(m_transcript);
 
+    // One-line streaming/affordance chrome (Thinking.../error + send/stop/steer).
+    m_composerChrome = new ComposerChrome(right);
+    m_composerChrome->setMaximumSize(Tui::tuiMaxSize, 1);
+    rightCol->addWidget(m_composerChrome);
+
     // Compact status-stack todo strip (above the composer); blank at rest.
     m_todos = new Tui::ZLabel(right);
     m_todos->setMaximumSize(Tui::tuiMaxSize, 1);
@@ -302,18 +307,16 @@ void RootWidget::buildUi()
     m_composer->setMaximumSize(Tui::tuiMaxSize, 1);
     rightCol->addWidget(m_composer);
 
-    // Completion overlay: a borderless list floated above the composer. It is not
-    // in the layout - updateCompletion() positions it manually over the transcript
-    // just above the input and raises it; the input box keeps focus and routes
-    // navigation keys to the shared controller.
-    m_completionPopup = new Tui::ZListView(right);
-    m_completionPopup->setVisible(false);
+    // Completion overlay: a borderless custom-painted popup floated above the
+    // composer. It is not in the layout - updateCompletion() positions it manually
+    // over the transcript just above the input and raises it; the input box keeps
+    // focus and routes navigation keys to the shared controller.
+    m_completionPopup = new CompletionView(right);
 
     columns->addWidget(right);
 
-    // --- Footer: StatusBarModel-driven status strip ---
-    m_footer = new Tui::ZLabel(m_window);
-    m_footer->setMaximumSize(Tui::tuiMaxSize, 1);
+    // --- Footer: StatusBarModel-driven colored status strip ---
+    m_footer = new StatusBarView(m_window);
     outer->addWidget(m_footer);
 
     m_sidebarView->setFocus();
@@ -326,9 +329,10 @@ void RootWidget::wireViews()
     m_sidebarAdapter->setSourceModel(m_sidebar);
     m_sidebarView->setModel(m_sidebarAdapter);
 
-    m_listAdapter = new DisplayRoleAdapter(DisplayRoleAdapter::Kind::ConversationList, this);
-    m_listAdapter->setSourceModel(m_list);
-    m_listView->setModel(m_listAdapter);
+    // The conversation list is a custom-painted view bound straight to the shared
+    // model (no display-role adapter): it reads title/snippet/timestamp/agent/tags
+    // directly and renders multi-line cards.
+    m_listView->setModel(m_list);
 
     // Sidebar highlight -> activate the scope (re-emits scopeSelected -> list).
     connect(m_sidebarView->selectionModel(), &QItemSelectionModel::currentChanged, this,
@@ -362,6 +366,9 @@ void RootWidget::wireViews()
     // conversation also points the composer session at it, so the draft/queue/
     // history swap to that conversation (mirrors the GUI's conversationId bind).
     const auto openRow = [this](int row) {
+        if (row < 0) {
+            return;
+        }
         m_list->activate(row); // identity-based selection in the shared model
         const int id = m_list->idAt(row);
         if (id >= 0) {
@@ -373,13 +380,7 @@ void RootWidget::wireViews()
             m_composerSession->setConversationId(id);
         }
     };
-    connect(m_listView->selectionModel(), &QItemSelectionModel::currentChanged, this,
-            [openRow](const QModelIndex& current, const QModelIndex&) {
-                if (current.isValid()) {
-                    openRow(current.row());
-                }
-            });
-    connect(m_listView, &Tui::ZListView::enterPressed, this, openRow);
+    connect(m_listView, &ConversationListView::rowActivated, this, openRow);
 
     connect(m_controller, &ConversationController::conversationChanged, this,
             &RootWidget::refreshTranscript);
@@ -460,7 +461,6 @@ void RootWidget::wireViews()
         if (m_transcript != nullptr) {
             m_transcript->reload(); // re-pin to the bottom for the new turn
         }
-        updateFooter();
     });
     connect(m_turn, &TurnController::turnFinished, this, [this] {
         m_status->setBusy(false);
@@ -474,25 +474,23 @@ void RootWidget::wireViews()
         if (m_transcript != nullptr) {
             m_transcript->reload();
         }
-        updateFooter();
     });
-    // The status model re-emits the elapsed NOTIFYs on its 1s tick; mirror that
-    // into the footer label so the Running/Session timers stay live.
-    connect(m_status, &StatusBarModel::turnElapsedChanged, this, &RootWidget::updateFooter);
-    connect(m_status, &StatusBarModel::sessionElapsedChanged, this, &RootWidget::updateFooter);
-    connect(m_status, &StatusBarModel::busyChanged, this, &RootWidget::updateFooter);
+
+    // The colored status footer + the streaming composer chrome bind directly to
+    // the shared models/controllers and repaint off their own NOTIFYs (including
+    // the StatusBarModel's 1s elapsed tick).
+    m_footer->setModel(m_status);
+    m_composerChrome->setTurn(m_turn);
 
     // Initial selection: first sidebar row populates the list, then open its
     // first conversation so the transcript is non-empty on launch.
     if (m_sidebarAdapter->rowCount() > 0) {
         m_sidebarView->setCurrentIndex(m_sidebarAdapter->index(0, 0));
     }
-    if (m_listAdapter->rowCount() > 0) {
-        m_listView->setCurrentIndex(m_listAdapter->index(0, 0));
-        openRow(0); // ensure the transcript is populated on launch
+    if (m_list->rowCount() > 0) {
+        openRow(0); // select + open the first conversation so the transcript is non-empty
     }
     refreshTranscript();
-    updateFooter();
     updateTodos();
     updateCompletion();
 }
@@ -568,26 +566,6 @@ void RootWidget::onTurnEvents(const QVariantList& events)
     }
 }
 
-void RootWidget::updateFooter()
-{
-    if (m_footer == nullptr) {
-        return;
-    }
-    const QString sep = QStringLiteral("  \u00b7  ");
-    QStringList parts;
-    parts << (QStringLiteral("Gateway: ") + m_status->gatewayState());
-    const QString agents = m_status->agentsDetail();
-    parts << (agents.isEmpty() ? QStringLiteral("Agents: idle")
-                               : (QStringLiteral("Agents: ") + agents));
-    parts << (QStringLiteral("ctx ") + QString::number(m_status->contextPercent())
-              + QStringLiteral("%"));
-    parts << (QStringLiteral("Session ") + m_status->sessionElapsed());
-    if (m_status->busy()) {
-        parts << (QStringLiteral("Running ") + m_status->turnElapsed());
-    }
-    m_footer->setText(parts.join(sep));
-}
-
 void RootWidget::updateTodos()
 {
     if (m_todos == nullptr) {
@@ -626,24 +604,16 @@ void RootWidget::updateCompletion()
         return;
     }
 
-    // Each row: "<label>  -  <hint>" (the hint trails when present).
-    QStringList rows;
-    rows.reserve(n);
-    for (int i = 0; i < n; ++i) {
-        const QModelIndex idx = items->index(i, 0);
-        const QString label = items->data(idx, CompletionModel::LabelRole).toString();
-        const QString hint = items->data(idx, CompletionModel::HintRole).toString();
-        rows << (hint.isEmpty() ? label : (label + QStringLiteral("  -  ") + hint));
-    }
-    m_completionPopup->setItems(rows);
-
-    const int active = qBound(0, m_composerSession->completionActiveIndex(), n - 1);
-    m_completionPopup->setCurrentIndex(m_completionPopup->model()->index(active, 0));
+    // Hand the model + active row + trigger kind to the custom-painted popup; it
+    // renders kind badges, bold labels, muted hints, group headers and the active
+    // wash itself.
+    m_completionPopup->setData(items, m_composerSession->completionActiveIndex(),
+                               m_composerSession->completionKind());
 
     // Float the overlay just above the composer, spanning its width, sized to the
-    // row count (capped). Geometry is in `right`'s coordinates (shared parent).
+    // rendered-line count (capped). Geometry is in `right`'s coordinates.
     const QRect composerGeo = m_composer->geometry();
-    const int height = qBound(1, n, 6);
+    const int height = qBound(1, m_completionPopup->desiredHeight(), 8);
     int y = composerGeo.y() - height;
     if (y < 0) {
         y = 0;
