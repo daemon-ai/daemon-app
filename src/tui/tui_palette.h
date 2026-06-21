@@ -1,6 +1,10 @@
 #pragma once
 
+#include <Tui/ZColor.h>
+#include <Tui/ZCommon.h>
 #include <Tui/ZPalette.h>
+
+#include <QString>
 
 // A dark Tui palette approximating the GUI's Dark theme tokens (Theme.qml). This
 // demonstrates the Theme.qml -> ZPalette mapping the feasibility study calls out:
@@ -8,3 +12,48 @@
 // handful of roles the spike actually surfaces are overridden; everything else
 // falls back to the built-in classic theme.
 Tui::ZPalette daemonDarkPalette();
+
+// Semantic transcript palette + glyph helpers. The TUI's custom transcript view
+// paints styled spans directly (it cannot use ZPalette roles per-span), so the
+// colors the GUI's Theme.qml exposes as tokens are mirrored here as ZColors and
+// the FontAwesome-equivalent unicode glyphs as plain strings. Centralizing them
+// keeps the block "delegates" (transcript_render.cpp) declarative.
+namespace tpal {
+
+// Surface + text.
+Tui::ZColor fg();      // primary text (#cdd6f4)
+Tui::ZColor muted();   // dim text / borders (#7f849c)
+Tui::ZColor faint();   // very dim (reasoning prose) (#9399b2)
+Tui::ZColor bg();      // base surface (#1e1e2e)
+Tui::ZColor codeBg();  // recessed code/card surface
+Tui::ZColor accent();  // header accent / focus (#89b4fa)
+
+// Status (tool / reasoning lifecycle).
+Tui::ZColor statusOk();      // settled ok (green)
+Tui::ZColor statusError();   // failed (red)
+Tui::ZColor statusRunning(); // in flight (peach/yellow)
+Tui::ZColor warn();          // approval gate (peach)
+
+// Unified-diff line tones.
+Tui::ZColor diffAdd();
+Tui::ZColor diffDel();
+Tui::ZColor diffHunk();
+
+// Tool tone -> accent color (terminal/web/edit/code/image/agent/tool...).
+Tui::ZColor toneColor(const QString &tone);
+
+// 16-color ANSI palette entry (0-15); -1 (or out of range) yields the default
+// foreground. Used to resolve be::ansiToSpans fg/bg indices to real colors.
+Tui::ZColor ansi(int index);
+Tui::ZColor ansiBg(int index); // like ansi(), but -1 maps to the card background
+
+// Lifecycle status ("running"/"ok"/"error") -> glyph.
+QString statusGlyph(const QString &status);
+// Tool tone -> glyph (mirrors the GUI's per-tone FontAwesome icon).
+QString toneGlyph(const QString &tone);
+
+// Shared structural glyphs.
+QString barGlyph();       // card left rule (left half block)
+QString reasoningGlyph(); // reasoning header marker
+
+} // namespace tpal

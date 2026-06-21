@@ -8,10 +8,13 @@
 #include <Tui/ZListView.h>
 #include <Tui/ZRoot.h>
 #include <Tui/ZShortcut.h>
-#include <Tui/ZTextEdit.h>
 #include <Tui/ZWindow.h>
 
-#include <QHash>
+#include "transcript_view.h"
+
+#include "core/agent_ingest.h"
+#include "core/document_store.h"
+
 #include <QString>
 #include <QStringList>
 #include <QVariantList>
@@ -110,12 +113,10 @@ private:
     void refreshTranscript();
     void promptQuit(); // open the quit-confirmation modal (idempotent)
 
-    // Live assistant-turn streaming: fold the TurnController's daemon-shaped
-    // events into a compact, text-first block shown beneath the conversation
-    // content (display-only; persistence deferred).
-    void clearTurnStream();
+    // Live assistant-turn streaming: route the TurnController's daemon-shaped
+    // events through be::TranscriptIngest so the document grows real typed blocks
+    // (reasoning/tool/content), rendered identically to the persisted ones.
     void onTurnEvents(const QVariantList& events);
-    QString assistantStreamText() const;
     void updateFooter();
     // Render the orchestrator's status-stack todos as a compact strip above the
     // composer (cleared when the model empties after the turn settles).
@@ -144,7 +145,7 @@ private:
     Tui::ZWindow* m_window = nullptr;
     TreeListView* m_sidebarView = nullptr;
     Tui::ZListView* m_listView = nullptr;
-    Tui::ZTextEdit* m_transcript = nullptr;
+    TranscriptView* m_transcript = nullptr;
     SubmitInputBox* m_composer = nullptr;
     Tui::ZLabel* m_header = nullptr;
     Tui::ZLabel* m_footer = nullptr;
@@ -157,13 +158,10 @@ private:
     // Exit handling: the quit confirmation modal (nullptr when closed).
     QuitDialog* m_quitDialog = nullptr;
 
-    // Accumulated assistant turn stream (cleared per turn / on conversation open):
-    // reasoning prose, one line per tool call (updated in place on finish, indexed
-    // by callId), and the streamed answer text.
-    QString m_turnReasoning;
-    QStringList m_toolLines;
-    QHash<QString, int> m_toolIndex;
-    QString m_turnText;
+    // The shared parse/ingest engine: persisted markdown loads into m_doc and
+    // live turn events stream into it via m_ingest, then TranscriptView paints it.
+    be::DocumentStore m_doc;
+    be::TranscriptIngest m_ingest { &m_doc };
 
     bool m_built = false;
 };

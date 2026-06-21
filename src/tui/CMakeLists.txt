@@ -69,6 +69,10 @@ qt_add_executable(daemon-tui
     display_role_adapter.cpp
     tui_palette.h
     tui_palette.cpp
+    transcript_render.h
+    transcript_render.cpp
+    transcript_view.h
+    transcript_view.cpp
 )
 
 set_target_properties(daemon-tui PROPERTIES AUTOMOC ON)
@@ -85,6 +89,10 @@ target_link_libraries(daemon-tui
         daemon-app::status_model
         daemon-app::domain
         daemon-app::persistence
+        # The GUI's parse/ingest/view-model engine. It links Qt Gui/Sql + md4qt at
+        # link time but needs no QGuiApplication (QColor works under QCoreApplication),
+        # so the TUI shares the exact same transcript blocks as the QML front end.
+        be_core
         daemon-app::warnings
 )
 

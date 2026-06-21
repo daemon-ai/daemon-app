@@ -23,7 +23,6 @@
 #include <Tui/ZRoot.h>
 #include <Tui/ZShortcut.h>
 #include <Tui/ZTerminal.h>
-#include <Tui/ZTextEdit.h>
 #include <Tui/ZVBoxLayout.h>
 #include <Tui/ZWidget.h>
 #include <Tui/ZWindow.h>
@@ -285,10 +284,11 @@ void RootWidget::buildUi()
     m_header->setText(QStringLiteral("daemon-app TUI"));
     rightCol->addWidget(m_header);
 
-    m_transcript = new Tui::ZTextEdit(terminal()->textMetrics(), right);
-    m_transcript->setReadOnly(true);
-    m_transcript->setShowLineNumbers(false);
-    m_transcript->setWordWrapMode(Tui::ZTextOption::WordWrap);
+    // Custom-painted transcript: renders the shared be::DocumentStore (the GUI's
+    // parse/ingest engine) as colored tool/reasoning cards, ANSI output, diffs,
+    // and YOU/DAEMON headers instead of a raw-markdown text dump.
+    m_transcript = new TranscriptView(right);
+    m_transcript->setDocument(&m_doc);
     m_transcript->setSizePolicyV(Tui::SizePolicy::Expanding);
     rightCol->addWidget(m_transcript);
 
@@ -365,10 +365,10 @@ void RootWidget::wireViews()
         m_list->activate(row); // identity-based selection in the shared model
         const int id = m_list->idAt(row);
         if (id >= 0) {
-            // Switching conversations abandons any in-flight simulated turn and
-            // clears the display-only assistant stream.
+            // Switching conversations abandons any in-flight simulated turn; the
+            // open() below refreshes the content and reloads the document.
             m_orchestrator->cancel();
-            clearTurnStream();
+            m_ingest = be::TranscriptIngest(&m_doc); // drop any open turn state
             m_controller->open(id);
             m_composerSession->setConversationId(id);
         }
@@ -403,10 +403,10 @@ void RootWidget::wireViews()
             [this](const QString&) { m_composerSession->submit(); });
     connect(m_composerSession, &ComposerSessionController::submitted, this,
             [this](const QString& text, const QString& refs) {
-                // The orchestrator owns the whole submit pipeline (persist the
-                // user's text, start the scripted assistant turn, populate the
-                // status-stack todos); the TUI only clears its display-only stream.
-                clearTurnStream();
+                // The orchestrator owns the whole submit pipeline: it persists the
+                // user's text (-> contentChanged -> refreshTranscript reloads the
+                // doc with the user message) then starts the scripted assistant
+                // turn, whose events stream into the same doc via onTurnEvents.
                 m_orchestrator->submit(text, refs);
             });
     // Slash commands (e.g. /new) routed through the shared orchestrator: it
@@ -457,10 +457,23 @@ void RootWidget::wireViews()
     connect(m_turn, &TurnController::turnStarted, this, [this] {
         m_status->setBusy(true);
         m_status->setTurnStartedAt(static_cast<double>(QDateTime::currentMSecsSinceEpoch()));
+        if (m_transcript != nullptr) {
+            m_transcript->reload(); // re-pin to the bottom for the new turn
+        }
         updateFooter();
     });
     connect(m_turn, &TurnController::turnFinished, this, [this] {
         m_status->setBusy(false);
+        // Settle any open stream/reasoning, then persist the grown document back
+        // to the store (mirrors the GUI round-trip). updateContent adopts the
+        // markdown locally, so it does not trigger a reparse/reload here.
+        m_ingest.finish();
+        if (m_controller->hasConversation()) {
+            m_controller->updateContent(m_doc.toMarkdown());
+        }
+        if (m_transcript != nullptr) {
+            m_transcript->reload();
+        }
         updateFooter();
     });
     // The status model re-emits the elapsed NOTIFYs on its 1s tick; mirror that
@@ -529,91 +542,30 @@ void RootWidget::refreshTranscript()
     if (m_transcript == nullptr) {
         return;
     }
-    if (m_controller->hasConversation()) {
-        QString body = m_controller->content();
-        const QString stream = assistantStreamText();
-        if (!stream.isEmpty()) {
-            // The live assistant turn is shown beneath the persisted content as a
-            // text-first block (display-only; not yet persisted to the store).
-            body += QStringLiteral("\n\n\u2500\u2500 assistant \u2500\u2500\n") + stream;
-        }
-        m_transcript->setText(body);
-        if (m_header != nullptr) {
-            m_header->setText(QStringLiteral("Conversation #%1").arg(m_controller->currentId()));
-        }
-    } else {
-        m_transcript->setText(QStringLiteral("Select a conversation on the left."));
-        if (m_header != nullptr) {
-            m_header->setText(QStringLiteral("daemon-app TUI"));
-        }
+    if (m_header != nullptr) {
+        m_header->setText(m_controller->hasConversation()
+                              ? QStringLiteral("Conversation #%1").arg(m_controller->currentId())
+                              : QStringLiteral("daemon-app TUI"));
     }
-}
-
-void RootWidget::clearTurnStream()
-{
-    m_turnReasoning.clear();
-    m_toolLines.clear();
-    m_toolIndex.clear();
-    m_turnText.clear();
-    refreshTranscript();
-}
-
-QString RootWidget::assistantStreamText() const
-{
-    QStringList parts;
-    if (!m_turnReasoning.isEmpty()) {
-        parts << (QStringLiteral("\u00b7 ") + m_turnReasoning.trimmed());
+    // Mid-turn the live ingest owns the document tail; reloading from the store
+    // would clobber the streamed blocks. Only reparse the persisted markdown when
+    // idle (open/switch, the post-submit user-message append, or a finished turn).
+    if (m_turn != nullptr && m_turn->active()) {
+        return;
     }
-    for (const QString& line : m_toolLines) {
-        parts << line;
-    }
-    if (!m_turnText.isEmpty()) {
-        parts << m_turnText.trimmed();
-    }
-    if (!m_turn->errorText().isEmpty()) {
-        parts << (QStringLiteral("\u26a0 ") + m_turn->errorText());
-    }
-    return parts.join(QStringLiteral("\n"));
+    m_doc.loadMarkdown(m_controller->hasConversation() ? m_controller->content() : QString());
+    m_transcript->reload();
 }
 
 void RootWidget::onTurnEvents(const QVariantList& events)
 {
-    for (const QVariant& v : events) {
-        const QVariantMap e = v.toMap();
-        const QString type = e.value(QStringLiteral("type")).toString();
-        if (type == QStringLiteral("text")) {
-            m_turnText += e.value(QStringLiteral("text")).toString();
-        } else if (type == QStringLiteral("reasoningDelta")) {
-            m_turnReasoning += e.value(QStringLiteral("text")).toString();
-        } else if (type == QStringLiteral("toolStarted")) {
-            const QString callId = e.value(QStringLiteral("callId")).toString();
-            const QString name = e.value(QStringLiteral("name")).toString();
-            const QString args = e.value(QStringLiteral("argsSummary")).toString();
-            QString line = QStringLiteral("\u2699 ") + name;
-            if (!args.isEmpty()) {
-                line += QStringLiteral(": ") + args;
-            }
-            line += QStringLiteral("  \u2026");
-            m_toolIndex.insert(callId, m_toolLines.size());
-            m_toolLines.append(line);
-        } else if (type == QStringLiteral("toolFinished")) {
-            const QString callId = e.value(QStringLiteral("callId")).toString();
-            const QString status = e.value(QStringLiteral("status")).toString();
-            const int durationMs = e.value(QStringLiteral("durationMs")).toInt();
-            const bool ok = status != QStringLiteral("error");
-            if (m_toolIndex.contains(callId)) {
-                QString& line = m_toolLines[m_toolIndex.value(callId)];
-                // Drop the trailing "  …" placeholder, then append the outcome.
-                if (line.endsWith(QStringLiteral("  \u2026"))) {
-                    line.chop(3);
-                }
-                line += (ok ? QStringLiteral("  \u2713 ") : QStringLiteral("  \u2717 "))
-                    + QStringLiteral("%1ms").arg(durationMs);
-            }
-        }
-        // "flush"/"reasoningDone" carry no extra display payload here.
+    // Route the daemon-shaped events straight into the shared ingest: it appends/
+    // patches typed reasoning/tool/content blocks on m_doc keyed by callId, exactly
+    // as the GUI's EditorController does. Then repaint (pinned to the bottom).
+    m_ingest.ingestAll(events);
+    if (m_transcript != nullptr) {
+        m_transcript->reload();
     }
-    refreshTranscript();
 }
 
 void RootWidget::updateFooter()
