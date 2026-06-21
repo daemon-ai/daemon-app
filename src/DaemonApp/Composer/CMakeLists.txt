@@ -8,7 +8,6 @@ qt_add_qml_module(da_composer
         ComposerMenu.qml
         ModelPill.qml
         CompletionPopover.qml
-        CompletionProvider.qml
         AttachmentChip.qml
         StatusStack.qml
         QueuePanel.qml

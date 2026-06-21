@@ -1,5 +1,6 @@
 #pragma once
 
+#include "completion_model.h"
 #include "composer_attachment_model.h"
 #include "composer_queue_model.h"
 
@@ -35,6 +36,13 @@ class ComposerSessionController : public QObject {
     Q_PROPERTY(int editingIndex READ editingIndex NOTIFY editingIndexChanged)
     Q_PROPERTY(ComposerQueueModel* queue READ queue CONSTANT)
     Q_PROPERTY(ComposerAttachmentModel* attachments READ attachments CONSTANT)
+    // Completion (slash / @ trigger) state - the view renders these; the FSM lives
+    // here so both front ends behave identically.
+    Q_PROPERTY(CompletionModel* completionItems READ completionItems CONSTANT)
+    Q_PROPERTY(bool completionActive READ completionActive NOTIFY completionActiveChanged)
+    Q_PROPERTY(QString completionKind READ completionKind NOTIFY completionKindChanged)
+    Q_PROPERTY(
+        int completionActiveIndex READ completionActiveIndex NOTIFY completionActiveIndexChanged)
 
 public:
     explicit ComposerSessionController(QObject* parent = nullptr);
@@ -59,6 +67,11 @@ public:
     [[nodiscard]] ComposerQueueModel* queue() const { return m_queue; }
     [[nodiscard]] ComposerAttachmentModel* attachments() const { return m_attachments; }
 
+    [[nodiscard]] CompletionModel* completionItems() const { return m_completion; }
+    [[nodiscard]] bool completionActive() const { return m_completionActive; }
+    [[nodiscard]] QString completionKind() const { return m_completionKind; }
+    [[nodiscard]] int completionActiveIndex() const { return m_completionActiveIndex; }
+
     // Intents (mirror the QML composer's functions).
     Q_INVOKABLE void submit();        // Enter: send / save-edit / drain
     Q_INVOKABLE void enqueueDraft();  // explicit "queue" control
@@ -75,6 +88,17 @@ public:
     Q_INVOKABLE void invokeCommand(const QString& command);
     Q_INVOKABLE void clear(); // clear draft + attachments
 
+    // Completion FSM (mirror of the QML composer's trigger functions). The view
+    // pushes the live text + caret on every change; the controller detects the
+    // slash/@ token, filters the pool, and drives active/kind/index. accept()
+    // computes the resulting draft + caret (-> draftReset + cursorRequested).
+    Q_INVOKABLE void refreshTrigger(const QString& text, int cursorPos);
+    Q_INVOKABLE void closeTrigger();
+    Q_INVOKABLE void moveActive(int delta);
+    Q_INVOKABLE void setActiveIndex(int index);
+    Q_INVOKABLE void acceptActive();
+    Q_INVOKABLE void accept(int index);
+
 signals:
     // Outbound (host-facing) - identical to the QML composer's signals.
     void submitted(const QString& text, const QString& attachmentRefs);
@@ -85,6 +109,13 @@ signals:
     // The controller replaced the draft programmatically; the view should set its
     // text to `text` and move the caret to the end.
     void draftReset(const QString& text);
+    // After a completion accept the caret must land at a specific offset (emitted
+    // right after draftReset so the view's caret-to-end is overridden).
+    void cursorRequested(int position);
+
+    void completionActiveChanged();
+    void completionKindChanged();
+    void completionActiveIndexChanged();
 
     void conversationIdChanged();
     void busyChanged();
@@ -96,6 +127,8 @@ signals:
 
 private:
     void applyDraft(const QString& text); // programmatic draft change (-> draftReset)
+    // Like applyDraft but places the caret at `cursor` (-> draftReset + cursorRequested).
+    void applyDraftWithCursor(const QString& text, int cursor);
     void resetBrowse();
     void pushHistory(const QString& text);
     void enqueue(const QString& text, const QString& refs);
@@ -106,6 +139,7 @@ private:
 
     ComposerQueueModel* m_queue = nullptr;
     ComposerAttachmentModel* m_attachments = nullptr;
+    CompletionModel* m_completion = nullptr;
 
     int m_conversationId = -1;
     bool m_busy = false;
@@ -124,4 +158,12 @@ private:
     QString m_preEditDraft;
 
     bool m_draining = false;
+
+    // Completion FSM state. m_triggerStart/m_triggerEnd bracket the typed token
+    // ([trigger char .. caret)) in the draft, captured on the last refresh.
+    bool m_completionActive = false;
+    QString m_completionKind = QStringLiteral("slash");
+    int m_completionActiveIndex = 0;
+    int m_triggerStart = -1;
+    int m_triggerEnd = -1;
 };

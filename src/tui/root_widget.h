@@ -23,6 +23,7 @@ class InMemoryConversationStore;
 class SidebarModel;
 class ConversationsListModel;
 class ConversationController;
+class ConversationOrchestrator;
 class ComposerSessionController;
 class TurnController;
 class StatusBarModel;
@@ -36,6 +37,11 @@ class SubmitInputBox : public Tui::ZInputBox {
 public:
     using Tui::ZInputBox::ZInputBox;
 
+    // The shared composer session. When set, the input box routes completion
+    // navigation (Up/Down/Enter/Tab/Esc while completionActive) to it and refreshes
+    // the slash/@ trigger after every key (text/caret change).
+    void setSession(ComposerSessionController* session) { m_session = session; }
+
 signals:
     void submitted(const QString& text);
     // Esc on an empty composer: ask the shell to move focus back to the panes.
@@ -46,6 +52,9 @@ signals:
 
 protected:
     void keyEvent(Tui::ZKeyEvent* event) override;
+
+private:
+    ComposerSessionController* m_session = nullptr;
 };
 
 // ZListView handles Up/Down/Home/End but ignores Left/Right. The sidebar is a
@@ -108,16 +117,24 @@ private:
     void onTurnEvents(const QVariantList& events);
     QString assistantStreamText() const;
     void updateFooter();
+    // Render the orchestrator's status-stack todos as a compact strip above the
+    // composer (cleared when the model empties after the turn settles).
+    void updateTodos();
+    // Sync the completion overlay (items / active row / visibility / geometry)
+    // from the shared controller's completion state.
+    void updateCompletion();
 
     // Reused, unchanged from the GUI build.
     persistence::InMemoryConversationStore* m_store = nullptr;
     SidebarModel* m_sidebar = nullptr;
     ConversationsListModel* m_list = nullptr;
     ConversationController* m_controller = nullptr;
+    // Shared submit pipeline (owns the turn + todos), identical to the GUI.
+    ConversationOrchestrator* m_orchestrator = nullptr;
     // Shared composer FSM (draft/queue/history/submit), identical to the GUI.
     ComposerSessionController* m_composerSession = nullptr;
-    // Shared turn-lifecycle FSM and status-bar model (DaemonApp.Turn /
-    // DaemonApp.StatusModel) - the same C++ classes the GUI binds.
+    // The orchestrator's TurnController (cached), and the shared status-bar model
+    // (DaemonApp.StatusModel) - the same C++ classes the GUI binds.
     TurnController* m_turn = nullptr;
     StatusBarModel* m_status = nullptr;
 
@@ -131,6 +148,11 @@ private:
     SubmitInputBox* m_composer = nullptr;
     Tui::ZLabel* m_header = nullptr;
     Tui::ZLabel* m_footer = nullptr;
+    // Compact status-stack todo strip (above the composer).
+    Tui::ZLabel* m_todos = nullptr;
+    // Borderless completion overlay floated above the composer; driven entirely by
+    // the shared controller's completion state (the input box keeps focus).
+    Tui::ZListView* m_completionPopup = nullptr;
 
     // Exit handling: the quit confirmation modal (nullptr when closed).
     QuitDialog* m_quitDialog = nullptr;

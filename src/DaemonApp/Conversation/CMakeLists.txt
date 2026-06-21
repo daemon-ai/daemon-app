@@ -5,6 +5,10 @@ qt_add_qml_module(da_conversation
     SOURCES
         conversation_controller.h
         conversation_controller.cpp
+        conversation_orchestrator.h
+        conversation_orchestrator.cpp
+        todo_list_model.h
+        todo_list_model.cpp
     QML_FILES
         Conversation.qml
         ToolGroup.qml
@@ -21,5 +25,6 @@ target_link_libraries(da_conversation
         daemon-app::settings
         daemon-app::transcript
         daemon-app::composer
+        daemon-app::turn
         daemon-app::warnings
 )

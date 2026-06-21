@@ -68,3 +68,48 @@ target_link_libraries(tst_status_model
 )
 add_test(NAME tst_status_model COMMAND tst_status_model)
 set_tests_properties(tst_status_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_todos: the shared TodoListModel (composer status-stack todos) - role
+# exposure, setTodos replacement + signalling, and clear.
+qt_add_executable(tst_todos tst_todos.cpp)
+target_include_directories(tst_todos
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Conversation"
+)
+target_link_libraries(tst_todos
+    PRIVATE
+        Qt6::Test
+        Qt6::Quick
+        daemon-app::conversation
+)
+add_test(NAME tst_todos COMMAND tst_todos)
+set_tests_properties(tst_todos PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_completion: the shared completion FSM (CompletionModel data/search + the
+# trigger detection/navigation/accept transforms on ComposerSessionController).
+qt_add_executable(tst_completion tst_completion.cpp)
+target_link_libraries(tst_completion
+    PRIVATE
+        Qt6::Test
+        daemon-app::composer_session
+)
+add_test(NAME tst_completion COMMAND tst_completion)
+set_tests_properties(tst_completion PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_conversation_orchestrator: the shared submit pipeline - submit starts the
+# turn + populates todos (and clears them after the turn settles), cancel resets,
+# and slash "/new" is handled while other commands surface via commandRequested.
+qt_add_executable(tst_conversation_orchestrator tst_conversation_orchestrator.cpp)
+target_include_directories(tst_conversation_orchestrator
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Conversation"
+)
+target_link_libraries(tst_conversation_orchestrator
+    PRIVATE
+        Qt6::Test
+        Qt6::Quick
+        daemon-app::conversation
+        daemon-app::turn
+        daemon-app::persistence
+        daemon-app::domain
+)
+add_test(NAME tst_conversation_orchestrator COMMAND tst_conversation_orchestrator)
+set_tests_properties(tst_conversation_orchestrator PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

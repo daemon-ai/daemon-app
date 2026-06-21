@@ -1,9 +1,12 @@
 #include "composer_session_controller.h"
 
+#include <QRegularExpression>
+
 ComposerSessionController::ComposerSessionController(QObject* parent)
     : QObject(parent)
     , m_queue(new ComposerQueueModel(this))
     , m_attachments(new ComposerAttachmentModel(this))
+    , m_completion(new CompletionModel(this))
 {
     // The queue count feeds the queueCount property; attachments feed the derived
     // hasPayload/canSteer flags.
@@ -25,6 +28,7 @@ void ComposerSessionController::setConversationId(int id)
     }
     m_preEditDraft.clear();
     resetBrowse();
+    closeTrigger(); // a completion popover never crosses a conversation boundary
 
     stash(m_conversationId);
     m_conversationId = id;
@@ -69,6 +73,15 @@ void ComposerSessionController::applyDraft(const QString& text)
 {
     m_draft = text;
     emit draftReset(text); // view replaces its text + moves caret to end
+    emit draftChanged();
+    emit derivedChanged();
+}
+
+void ComposerSessionController::applyDraftWithCursor(const QString& text, int cursor)
+{
+    m_draft = text;
+    emit draftReset(text); // view replaces its text (caret-to-end)...
+    emit cursorRequested(cursor); // ...then we override the caret to `cursor`
     emit draftChanged();
     emit derivedChanged();
 }
@@ -293,6 +306,111 @@ void ComposerSessionController::clear()
 {
     applyDraft(QString());
     m_attachments->clear();
+    closeTrigger();
+}
+
+void ComposerSessionController::refreshTrigger(const QString& text, int cursorPos)
+{
+    const int caret = qBound(0, cursorPos, text.length());
+    const QString before = text.left(caret);
+
+    // Match a trigger token at the caret: start-of-line or whitespace, then a
+    // single / or @, then the (whitespace-free) query. Mirrors the QML regex.
+    static const QRegularExpression re(QStringLiteral("(^|\\s)([/@])(\\S*)$"));
+    const QRegularExpressionMatch m = re.match(before);
+    if (!m.hasMatch()) {
+        closeTrigger();
+        return;
+    }
+
+    const QString kind =
+        m.captured(2) == QStringLiteral("@") ? QStringLiteral("mention") : QStringLiteral("slash");
+    const QString query = m.captured(3);
+    const QList<CompletionModel::Item> items = CompletionModel::search(kind, query);
+    if (items.isEmpty()) {
+        closeTrigger();
+        return;
+    }
+
+    m_triggerStart = caret - (query.length() + 1); // include the trigger char
+    m_triggerEnd = caret;
+    m_completion->setItems(items);
+    setActiveIndex(0);
+    if (m_completionKind != kind) {
+        m_completionKind = kind;
+        emit completionKindChanged();
+    }
+    if (!m_completionActive) {
+        m_completionActive = true;
+        emit completionActiveChanged();
+    }
+}
+
+void ComposerSessionController::closeTrigger()
+{
+    m_triggerStart = -1;
+    m_triggerEnd = -1;
+    if (m_completionActive) {
+        m_completionActive = false;
+        emit completionActiveChanged();
+    }
+}
+
+void ComposerSessionController::moveActive(int delta)
+{
+    const int n = m_completion->count();
+    if (!m_completionActive || n == 0) {
+        return;
+    }
+    setActiveIndex(((m_completionActiveIndex + delta) % n + n) % n);
+}
+
+void ComposerSessionController::setActiveIndex(int index)
+{
+    if (m_completionActiveIndex == index) {
+        return;
+    }
+    m_completionActiveIndex = index;
+    emit completionActiveIndexChanged();
+}
+
+void ComposerSessionController::acceptActive()
+{
+    accept(m_completionActiveIndex);
+}
+
+void ComposerSessionController::accept(int index)
+{
+    const int n = m_completion->count();
+    if (index < 0 || index >= n) {
+        closeTrigger();
+        return;
+    }
+    const CompletionModel::Item item = m_completion->at(index);
+
+    const int start = m_triggerStart >= 0 ? m_triggerStart : m_draft.length();
+    const int end = m_triggerEnd >= 0 ? m_triggerEnd : start;
+    const int s = qBound(0, start, m_draft.length());
+    const int e = qBound(s, end, m_draft.length());
+
+    if (item.action != QStringLiteral("insert")) {
+        // Strip the typed trigger token, then run the command.
+        const QString next = m_draft.left(s) + m_draft.mid(e);
+        closeTrigger();
+        applyDraftWithCursor(next, s);
+        if (item.action == QStringLiteral("clear")) {
+            clear();
+        } else {
+            invokeCommand(item.action);
+        }
+        return;
+    }
+
+    // Insert: replace the trigger token with the item value.
+    const QString next = m_draft.left(s) + item.value + m_draft.mid(e);
+    const int caret = s + item.value.length();
+    closeTrigger();
+    applyDraftWithCursor(next, caret);
 }
 
 void ComposerSessionController::stash(int key)

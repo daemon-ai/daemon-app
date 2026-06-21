@@ -11,6 +11,8 @@ qt_add_qml_module(da_composer_session
         composer_queue_model.cpp
         composer_attachment_model.h
         composer_attachment_model.cpp
+        completion_model.h
+        completion_model.cpp
         composer_session_controller.h
         composer_session_controller.cpp
 )

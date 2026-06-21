@@ -20,14 +20,20 @@ Rectangle {
     // Kept for compatibility; the renderer is driven by load(), not this binding.
     property string content: ""
 
+    // The shared turn-lifecycle FSM, injected by the host (owned by the
+    // ConversationOrchestrator). The transcript is a pure consumer: it reads
+    // active/turnState/elapsedMs/errorText and feeds eventsEmitted into the editor.
+    property TurnController turn: null
+
     // True while a simulated assistant turn is running. The composer binds this
     // to drive queue-while-busy and the Stop affordance; a real gateway would
     // feed the same signal from its streaming state.
-    readonly property bool busy: turnSim.active
+    readonly property bool busy: !!turn && turn.active
 
     // Interrupt the running turn (composer Stop button / Esc).
     function stopTurn() {
-        turnSim.cancel();
+        if (turn)
+            turn.cancel();
     }
 
     // The markdown currently loaded, so redundant reloads (e.g. open() fires both
@@ -46,7 +52,8 @@ Rectangle {
             return
         // Abort any in-flight simulated turn so its scheduled events can't land
         // in the freshly-loaded conversation.
-        turnSim.cancel()
+        if (turn)
+            turn.cancel()
         _loadedMarkdown = md
         editor.loadMarkdown(md, false)
         if (UiSettings.showPlainText)
@@ -58,15 +65,12 @@ Rectangle {
         settleTimer.restart()
     }
 
-    // Stream a simulated assistant reply for `prompt` into the current document.
-    // The host (Conversation) calls this right after persisting the user's text;
-    // a real gateway would drive editor.ingestEvents() the same way. Turn start
-    // (Hermes' runStart) force-locks the view to the bottom regardless of where
-    // the post-send reload left it.
-    function runAssistantTurn(prompt) {
+    // Turn start (Hermes' runStart) force-locks the view to the bottom regardless
+    // of where the post-send reload left it. The orchestrator starts the turn; we
+    // only react to it here. Wired to `turn.turnStarted` below.
+    function _onTurnStarted() {
         editorView.stickToBottom = true
         editorView.pinToBottom()
-        turnSim.start(prompt)
     }
 
     EditorController {
@@ -94,14 +98,15 @@ Rectangle {
         id: lightbox
     }
 
-    // Swappable agent-turn driver: on send it streams a simulated assistant turn
-    // (reasoning / tool / text) through the editor's ingest path. The chrome
-    // overlay below reads its turnState/elapsedMs/errorText. The FSM now lives in
-    // the shared C++ TurnController (DaemonApp.Turn), which emits daemon-shaped
-    // event maps fed straight into the editor's ingest path.
-    TurnController {
-        id: turnSim
-        onEventsEmitted: function(events) { editor.ingestEvents(events); }
+    // The injected turn (owned by the ConversationOrchestrator) streams a simulated
+    // assistant turn (reasoning / tool / text) through the editor's ingest path;
+    // the chrome overlay below reads its turnState/elapsedMs/errorText. The FSM
+    // lives in the shared C++ TurnController (DaemonApp.Turn), which emits daemon-
+    // shaped event maps fed straight into the editor's ingest path.
+    Connections {
+        target: root.turn
+        function onEventsEmitted(events) { editor.ingestEvents(events); }
+        function onTurnStarted() { root._onTurnStarted(); }
     }
 
     // Mock agent host: stands in for the daemon runtime so the interactive
@@ -383,7 +388,7 @@ Rectangle {
             anchors.centerIn: parent
             width: Math.min(parent.width - Theme.spacingLarge * 2, 420)
             spacing: Theme.smallSpacing
-            visible: !UiSettings.showPlainText && editorView.count === 0 && !turnSim.active
+            visible: !UiSettings.showPlainText && editorView.count === 0 && !root.busy
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -480,10 +485,10 @@ Rectangle {
     ConversationChrome {
         anchors.fill: parent
         visible: !UiSettings.showPlainText
-        active: turnSim.active
-        turnState: turnSim.turnState
-        elapsedMs: turnSim.elapsedMs
-        errorText: turnSim.errorText
+        active: root.busy
+        turnState: root.turn ? root.turn.turnState : ""
+        elapsedMs: root.turn ? root.turn.elapsedMs : 0
+        errorText: root.turn ? root.turn.errorText : ""
     }
 
     // Floating jump-to-bottom affordance: shown only while the user has scrolled

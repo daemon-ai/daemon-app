@@ -28,6 +28,10 @@ add_library(da_tui_viewmodels STATIC
     ../DaemonApp/ConversationsList/conversations_list_model.cpp
     ../DaemonApp/Conversation/conversation_controller.h
     ../DaemonApp/Conversation/conversation_controller.cpp
+    ../DaemonApp/Conversation/conversation_orchestrator.h
+    ../DaemonApp/Conversation/conversation_orchestrator.cpp
+    ../DaemonApp/Conversation/todo_list_model.h
+    ../DaemonApp/Conversation/todo_list_model.cpp
 )
 add_library(daemon-app::tui_viewmodels ALIAS da_tui_viewmodels)
 
@@ -48,6 +52,8 @@ target_link_libraries(da_tui_viewmodels
         Qt6::Qml
         daemon-app::domain
         daemon-app::persistence
+        # ConversationOrchestrator owns a TurnController (turn_controller.h).
+        daemon-app::turn
     PRIVATE
         daemon-app::warnings
 )

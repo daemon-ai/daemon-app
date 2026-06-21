@@ -4,20 +4,23 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 
 // The slash / @ completion popover - the QML port of Hermes'
-// ComposerTriggerPopover. It is a presentation surface: the composer owns the
-// trigger detection + keyboard navigation (keys arrive through the text input)
-// and drives `items` / `activeIndex`; this popover renders the list and emits
-// `picked` on a mouse selection.
+// ComposerTriggerPopover. It is a presentation surface: the shared
+// ComposerSessionController owns the trigger detection + keyboard navigation
+// (keys arrive through the text input) and drives `items` / `activeIndex`; this
+// popover renders the list and reports mouse interactions by row index.
 QQC.Popup {
     id: root
 
-    // Array of { label, hint, group, value, action }.
-    property var items: []
+    // A CompletionModel (QAbstractListModel with label/hint/group/value/action
+    // roles) owned by the controller.
+    property var items: null
     property int activeIndex: 0
     // "slash" | "mention" - drives the leading badge.
     property string kind: "slash"
 
-    signal picked(var item)
+    // Row index interactions (the controller maps them onto its item list).
+    signal picked(int index)
+    signal hovered(int index)
 
     width: 320
     padding: 1
@@ -40,7 +43,9 @@ QQC.Popup {
             delegate: Item {
                 id: itemRoot
                 required property int index
-                required property var modelData
+                required property string label
+                required property string hint
+                required property string group
                 Layout.fillWidth: true
                 implicitHeight: 36
 
@@ -79,7 +84,7 @@ QQC.Popup {
 
                         QQC.Label {
                             Layout.fillWidth: true
-                            text: itemRoot.modelData.label !== undefined ? itemRoot.modelData.label : ""
+                            text: itemRoot.label
                             font.family: FontIcons.display
                             font.pixelSize: 13
                             color: Theme.text
@@ -87,8 +92,8 @@ QQC.Popup {
                         }
                         QQC.Label {
                             Layout.fillWidth: true
-                            visible: itemRoot.modelData.hint !== undefined && itemRoot.modelData.hint !== ""
-                            text: itemRoot.modelData.hint !== undefined ? itemRoot.modelData.hint : ""
+                            visible: itemRoot.hint !== ""
+                            text: itemRoot.hint
                             font.family: FontIcons.display
                             font.pixelSize: 11
                             color: Theme.textMuted
@@ -97,8 +102,8 @@ QQC.Popup {
                     }
 
                     QQC.Label {
-                        visible: itemRoot.modelData.group !== undefined && itemRoot.modelData.group !== ""
-                        text: itemRoot.modelData.group !== undefined ? itemRoot.modelData.group : ""
+                        visible: itemRoot.group !== ""
+                        text: itemRoot.group
                         font.family: FontIcons.display
                         font.pixelSize: 10
                         font.capitalization: Font.AllUppercase
@@ -111,8 +116,8 @@ QQC.Popup {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onEntered: root.activeIndex = itemRoot.index
-                    onClicked: root.picked(itemRoot.modelData)
+                    onEntered: root.hovered(itemRoot.index)
+                    onClicked: root.picked(itemRoot.index)
                 }
             }
         }

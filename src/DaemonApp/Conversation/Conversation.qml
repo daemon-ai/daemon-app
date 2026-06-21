@@ -34,6 +34,21 @@ Rectangle {
         store: ConversationStore
     }
 
+    // The shared submit pipeline: owns the turn (injected into the transcript) and
+    // the status-stack todos (rendered by the composer). The QML only routes the
+    // composer's intents into it and handles the front-end-only slash commands it
+    // surfaces via commandRequested.
+    ConversationOrchestrator {
+        id: orchestrator
+        conversation: controller
+        onCommandRequested: function(command) {
+            if (command === "theme")
+                settingsMenu.open();
+            else if (command === "distraction")
+                UiSettings.distractionFree = true;
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -297,6 +312,8 @@ Rectangle {
                     id: transcript
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    // The orchestrator owns the turn; the transcript is a consumer.
+                    turn: orchestrator.turn
                     onEdited: function(markdown) { controller.updateContent(markdown); }
 
                     // Load on first realize; conversation switches and external
@@ -324,51 +341,17 @@ Rectangle {
                     // chrome and surrounding app panes hide in distraction-free.
                     busy: transcript.busy
                     conversationId: controller.currentId
+                    // The status-stack todos are owned/lifecycled by the orchestrator.
+                    todosModel: orchestrator.todos
 
-                    // Persist the user's text (full reload follows synchronously),
-                    // then stream a simulated assistant reply into the transcript.
-                    // Attachment refs (if any) ride on the front of the message.
+                    // All submit orchestration (persist + start turn + todos) lives
+                    // in the shared orchestrator; the QML only routes intents.
                     onSubmitted: function(text, attachmentRefs) {
-                        var full = attachmentRefs.length > 0 ? (attachmentRefs + "\n" + text) : text;
-                        controller.appendUserText(full);
-                        transcript.runAssistantTurn(text);
-                        // Demo: populate the status-stack todos for the turn (no
-                        // real todo backend exists yet).
-                        composer.setTodos([
-                            { text: qsTr("Inspect the project"), done: true },
-                            { text: qsTr("Run the checks"), done: false },
-                            { text: qsTr("Summarize the result"), done: false }
-                        ]);
+                        orchestrator.submit(text, attachmentRefs);
                     }
-                    // Steer: nudge the running turn (no interrupt). Logged as a
-                    // user note until a real gateway carries steer messages.
-                    onSteer: function(text) {
-                        controller.appendUserText(qsTr("(steer) ") + text);
-                    }
-                    onCancelRequested: transcript.stopTurn()
-                    // Client-side slash commands routed to real app actions.
-                    onCommandInvoked: function(command) {
-                        if (command === "new")
-                            root.createNew();
-                        else if (command === "theme")
-                            settingsMenu.open();
-                        else if (command === "distraction")
-                            UiSettings.distractionFree = true;
-                    }
-
-                    // Clear the demo todos once the turn settles.
-                    Connections {
-                        target: transcript
-                        function onBusyChanged() {
-                            if (!transcript.busy)
-                                todoClearTimer.restart();
-                        }
-                    }
-                    Timer {
-                        id: todoClearTimer
-                        interval: 1500
-                        onTriggered: composer.clearTodos()
-                    }
+                    onSteer: function(text) { orchestrator.steer(text); }
+                    onCancelRequested: orchestrator.cancel()
+                    onCommandInvoked: function(command) { orchestrator.invokeCommand(command); }
                 }
             }
 

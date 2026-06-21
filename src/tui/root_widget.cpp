@@ -4,8 +4,10 @@
 #include "tui_palette.h"
 
 #include "conversation_controller.h"
+#include "conversation_orchestrator.h"
 #include "conversations_list_model.h"
 #include "sidebar_model.h"
+#include "todo_list_model.h"
 
 #include "composer_session_controller.h"
 #include "status_bar_model.h"
@@ -34,6 +36,35 @@
 
 void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
 {
+    // Completion navigation takes priority while the popup is open: Up/Down move
+    // the active row, Enter/Tab accept it, Esc dismisses. Driven by the shared
+    // controller so the TUI matches the GUI behavior exactly.
+    if (m_session != nullptr && m_session->completionActive()
+        && event->modifiers() == Qt::NoModifier) {
+        const int key = event->key();
+        if (key == Qt::Key_Down) {
+            m_session->moveActive(1);
+            event->accept();
+            return;
+        }
+        if (key == Qt::Key_Up) {
+            m_session->moveActive(-1);
+            event->accept();
+            return;
+        }
+        if (key == Qt::Key_Enter || key == Qt::Key_Return || key == Qt::Key_Tab
+            || event->text() == QStringLiteral("\r")) {
+            m_session->acceptActive();
+            event->accept();
+            return;
+        }
+        if (key == Qt::Key_Escape) {
+            m_session->closeTrigger();
+            event->accept();
+            return;
+        }
+    }
+
     const bool isEnter = event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return
                          || event->text() == QStringLiteral("\r");
     if (isEnter && event->modifiers() == Qt::NoModifier) {
@@ -47,6 +78,9 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
     if (event->key() == Qt::Key_Escape && event->modifiers() == Qt::NoModifier) {
         if (!text().isEmpty()) {
             setText(QString());
+            if (m_session != nullptr) {
+                m_session->refreshTrigger(text(), cursorPosition());
+            }
         } else {
             emit leaveRequested();
         }
@@ -68,6 +102,10 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
         }
     }
     Tui::ZInputBox::keyEvent(event);
+    // A typed character or caret move may have changed the slash/@ trigger token.
+    if (m_session != nullptr) {
+        m_session->refreshTrigger(text(), cursorPosition());
+    }
 }
 
 void TreeListView::keyEvent(Tui::ZKeyEvent* event)
@@ -141,10 +179,16 @@ RootWidget::RootWidget()
     // and the submit/queue/drain logic without re-implementing any of it.
     m_composerSession = new ComposerSessionController(this);
 
-    // The shared turn-lifecycle FSM and status-bar model - the same C++ classes
-    // the GUI's Transcript.qml / StatusBar.qml bind. The TUI consumes the turn's
-    // daemon-shaped events directly and renders the status model into a footer.
-    m_turn = new TurnController(this);
+    // The shared submit pipeline - the same C++ class Conversation.qml drives. It
+    // owns the turn (the assistant-turn FSM) and the status-stack todos; the TUI
+    // routes the composer's intents into it and renders turn/todos identically.
+    m_orchestrator = new ConversationOrchestrator(this);
+    m_orchestrator->setConversation(m_controller);
+    m_turn = m_orchestrator->turn();
+
+    // The shared status-bar model - the same C++ class StatusBar.qml binds. The
+    // TUI consumes the turn's daemon-shaped events directly and renders the status
+    // model into a footer.
     m_status = new StatusBarModel(this);
     // StatusBarModel seeds sessionStartedAt at construction (= launch), mirroring
     // StatusBar.qml's Component.onCompleted.
@@ -248,10 +292,22 @@ void RootWidget::buildUi()
     m_transcript->setSizePolicyV(Tui::SizePolicy::Expanding);
     rightCol->addWidget(m_transcript);
 
+    // Compact status-stack todo strip (above the composer); blank at rest.
+    m_todos = new Tui::ZLabel(right);
+    m_todos->setMaximumSize(Tui::tuiMaxSize, 1);
+    rightCol->addWidget(m_todos);
+
     m_composer = new SubmitInputBox(right);
     m_composer->setMinimumSize(8, 1);
     m_composer->setMaximumSize(Tui::tuiMaxSize, 1);
     rightCol->addWidget(m_composer);
+
+    // Completion overlay: a borderless list floated above the composer. It is not
+    // in the layout - updateCompletion() positions it manually over the transcript
+    // just above the input and raises it; the input box keeps focus and routes
+    // navigation keys to the shared controller.
+    m_completionPopup = new Tui::ZListView(right);
+    m_completionPopup->setVisible(false);
 
     columns->addWidget(right);
 
@@ -311,7 +367,7 @@ void RootWidget::wireViews()
         if (id >= 0) {
             // Switching conversations abandons any in-flight simulated turn and
             // clears the display-only assistant stream.
-            m_turn->cancel();
+            m_orchestrator->cancel();
             clearTurnStream();
             m_controller->open(id);
             m_composerSession->setConversationId(id);
@@ -347,18 +403,44 @@ void RootWidget::wireViews()
             [this](const QString&) { m_composerSession->submit(); });
     connect(m_composerSession, &ComposerSessionController::submitted, this,
             [this](const QString& text, const QString& refs) {
-                const QString full
-                    = refs.isEmpty() ? text : (refs + QStringLiteral("\n") + text);
-                m_controller->appendUserText(full);
-                // Kick off the shared scripted assistant turn; its events stream
-                // into the transcript and drive the footer's busy/Running timer.
+                // The orchestrator owns the whole submit pipeline (persist the
+                // user's text, start the scripted assistant turn, populate the
+                // status-stack todos); the TUI only clears its display-only stream.
                 clearTurnStream();
-                m_turn->start(text);
+                m_orchestrator->submit(text, refs);
             });
+    // Slash commands (e.g. /new) routed through the shared orchestrator: it
+    // handles "new" (create a conversation); front-end-only commands surface via
+    // commandRequested (no-ops in the TUI for now).
+    connect(m_composerSession, &ComposerSessionController::commandInvoked, m_orchestrator,
+            &ConversationOrchestrator::invokeCommand);
     connect(m_composer, &SubmitInputBox::historyPrevious, m_composerSession,
             [this] { m_composerSession->browseUp(); });
     connect(m_composer, &SubmitInputBox::historyNext, m_composerSession,
             [this] { m_composerSession->browseDown(); });
+
+    // Completion: the input box routes trigger/navigation to the shared controller;
+    // a caret request after an accept repositions the input cursor; the overlay
+    // mirrors the controller's completion state.
+    m_composer->setSession(m_composerSession);
+    connect(m_composerSession, &ComposerSessionController::cursorRequested, m_composer,
+            [this](int pos) { m_composer->setCursorPosition(pos); });
+    connect(m_composerSession, &ComposerSessionController::completionActiveChanged, this,
+            &RootWidget::updateCompletion);
+    connect(m_composerSession, &ComposerSessionController::completionActiveIndexChanged, this,
+            &RootWidget::updateCompletion);
+    connect(m_composerSession->completionItems(), &QAbstractItemModel::modelReset, this,
+            &RootWidget::updateCompletion);
+
+    // The orchestrator's todo model drives the compact strip above the composer.
+    connect(m_orchestrator->todos(), &TodoListModel::countChanged, this, &RootWidget::updateTodos);
+    connect(m_orchestrator->todos(), &QAbstractItemModel::modelReset, this,
+            &RootWidget::updateTodos);
+
+    // Mirror the turn's busy state into the composer session so mid-turn submits
+    // queue and drain (the GUI binds composer.busy to the turn the same way).
+    connect(m_turn, &TurnController::activeChanged, this,
+            [this] { m_composerSession->setBusy(m_turn->active()); });
 
     // Esc on an empty composer hands focus back to the conversation list, where a
     // further Esc bubbles up to the quit prompt (context-sensitive Esc, level 2).
@@ -398,6 +480,8 @@ void RootWidget::wireViews()
     }
     refreshTranscript();
     updateFooter();
+    updateTodos();
+    updateCompletion();
 }
 
 void RootWidget::dumpGeometry() const
@@ -550,4 +634,69 @@ void RootWidget::updateFooter()
         parts << (QStringLiteral("Running ") + m_status->turnElapsed());
     }
     m_footer->setText(parts.join(sep));
+}
+
+void RootWidget::updateTodos()
+{
+    if (m_todos == nullptr) {
+        return;
+    }
+    TodoListModel* todos = m_orchestrator->todos();
+    const int n = todos->count();
+    if (n == 0) {
+        m_todos->setText(QString());
+        return;
+    }
+    // Compact one-line strip: "Tasks:  \u2713 done  \u25cb pending  \u2026".
+    QStringList parts;
+    for (int i = 0; i < n; ++i) {
+        const QString glyph =
+            todos->doneAt(i) ? QStringLiteral("\u2713") : QStringLiteral("\u25cb");
+        parts << (glyph + QStringLiteral(" ") + todos->textAt(i));
+    }
+    m_todos->setText(QStringLiteral("Tasks:  ") + parts.join(QStringLiteral("   ")));
+}
+
+void RootWidget::updateCompletion()
+{
+    if (m_completionPopup == nullptr) {
+        return;
+    }
+    if (!m_composerSession->completionActive()) {
+        m_completionPopup->setVisible(false);
+        return;
+    }
+
+    CompletionModel* items = m_composerSession->completionItems();
+    const int n = items->count();
+    if (n == 0) {
+        m_completionPopup->setVisible(false);
+        return;
+    }
+
+    // Each row: "<label>  -  <hint>" (the hint trails when present).
+    QStringList rows;
+    rows.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        const QModelIndex idx = items->index(i, 0);
+        const QString label = items->data(idx, CompletionModel::LabelRole).toString();
+        const QString hint = items->data(idx, CompletionModel::HintRole).toString();
+        rows << (hint.isEmpty() ? label : (label + QStringLiteral("  -  ") + hint));
+    }
+    m_completionPopup->setItems(rows);
+
+    const int active = qBound(0, m_composerSession->completionActiveIndex(), n - 1);
+    m_completionPopup->setCurrentIndex(m_completionPopup->model()->index(active, 0));
+
+    // Float the overlay just above the composer, spanning its width, sized to the
+    // row count (capped). Geometry is in `right`'s coordinates (shared parent).
+    const QRect composerGeo = m_composer->geometry();
+    const int height = qBound(1, n, 6);
+    int y = composerGeo.y() - height;
+    if (y < 0) {
+        y = 0;
+    }
+    m_completionPopup->setGeometry(QRect(composerGeo.x(), y, composerGeo.width(), height));
+    m_completionPopup->setVisible(true);
+    m_completionPopup->raise();
 }

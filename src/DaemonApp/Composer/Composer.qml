@@ -46,6 +46,8 @@ Rectangle {
     property alias draftText: inputArea.text
     // Number of queued prompts for the active conversation.
     readonly property int queueCount: controller.queueCount
+    // The status-stack todo list (a TodoListModel owned by the host/orchestrator).
+    property var todosModel: null
 
     function focusInput() { inputArea.forceActiveFocus(); }
 
@@ -70,18 +72,14 @@ Rectangle {
         // Programmatic draft changes (history recall, conversation swap, clear,
         // queue edit) replace the field text with the caret at the end.
         onDraftReset: function(text) { root.setText(text); }
+        // A completion accept lands the caret at a specific offset (emitted right
+        // after draftReset so this overrides the caret-to-end above).
+        onCursorRequested: function(pos) { inputArea.cursorPosition = pos; }
     }
 
     // Stack on touch so the finger-sized menu/controls never crowd the input on
     // narrow phone widths; also stack when very narrow or multiline.
     readonly property bool stacked: Theme.touch || root.width < 380 || inputArea.lineCount > 1
-
-    // --- Models -------------------------------------------------------------
-    // Todos remain a QML-side demo seam (no domain backing yet); the queue and
-    // attachment models are owned by the controller.
-    ListModel { id: todoModel }
-
-    CompletionProvider { id: completionProvider }
 
     // --- Helpers (view-side) ------------------------------------------------
     function setText(t) {
@@ -110,68 +108,11 @@ Rectangle {
     function browseDown() { return controller.browseDown(); }
 
     // --- Completion ---------------------------------------------------------
-    property string _triggerKind: ""
-    property int _triggerStart: -1
-
+    // The trigger detection, list filtering, navigation, and accept transforms all
+    // live in the shared controller now. The view only pushes text/caret in
+    // (refreshTrigger), routes keys to the controller, and renders the popover.
     function refreshTrigger() {
-        var pos = inputArea.cursorPosition;
-        var before = inputArea.text.slice(0, pos);
-        var m = before.match(/(^|\s)([\/@])(\S*)$/);
-        if (!m) {
-            closeTrigger();
-            return;
-        }
-        var kind = m[2] === "@" ? "mention" : "slash";
-        var query = m[3];
-        var items = completionProvider.search(kind, query);
-        if (items.length === 0) {
-            closeTrigger();
-            return;
-        }
-        _triggerKind = kind;
-        _triggerStart = pos - (query.length + 1); // include the trigger char
-        completion.kind = kind;
-        completion.items = items;
-        completion.activeIndex = 0;
-        if (!completion.visible)
-            completion.open();
-    }
-
-    function closeTrigger() {
-        _triggerKind = "";
-        _triggerStart = -1;
-        if (completion.visible)
-            completion.close();
-    }
-
-    function acceptCompletion(item) {
-        if (!item) {
-            closeTrigger();
-            return;
-        }
-        if (item.action !== undefined && item.action !== "insert") {
-            // Strip the typed trigger token, then run the command.
-            if (_triggerStart >= 0) {
-                var pos = inputArea.cursorPosition;
-                var s = inputArea.text;
-                inputArea.text = s.slice(0, _triggerStart) + s.slice(pos);
-                inputArea.cursorPosition = _triggerStart;
-            }
-            closeTrigger();
-            if (item.action === "clear")
-                controller.clear();
-            else
-                controller.invokeCommand(item.action);
-            return;
-        }
-        // Insert: replace the trigger token with the item value.
-        var p = inputArea.cursorPosition;
-        var text = inputArea.text;
-        var start = _triggerStart >= 0 ? _triggerStart : p;
-        inputArea.text = text.slice(0, start) + item.value + text.slice(p);
-        inputArea.cursorPosition = start + item.value.length;
-        closeTrigger();
-        inputArea.forceActiveFocus();
+        controller.refreshTrigger(inputArea.text, inputArea.cursorPosition);
     }
 
     // --- Attachments --------------------------------------------------------
@@ -185,21 +126,8 @@ Rectangle {
         return slash >= 0 ? s.slice(slash + 1) : s;
     }
 
-    // --- Todos (demo seam) --------------------------------------------------
-    function setTodos(items) {
-        todoModel.clear();
-        if (!items)
-            return;
-        for (var i = 0; i < items.length; ++i)
-            todoModel.append({ text: items[i].text, done: items[i].done === true });
-    }
-
-    function clearTodos() { todoModel.clear(); }
-
-    // Per-conversation draft/queue swap, history, and the idle drain all live in
-    // the controller now. The QML only dismisses the completion popover when the
-    // conversation changes (a view concern).
-    onConversationIdChanged: closeTrigger()
+    // Per-conversation draft/queue swap, history, the idle drain, and dismissing
+    // the completion popover on conversation change all live in the controller now.
 
     // --- Top separator hairline --------------------------------------------
     Rectangle {
@@ -229,7 +157,7 @@ Rectangle {
             id: statusStack
             Layout.fillWidth: true
             queueModel: controller.queue
-            todoModel: todoModel
+            todoModel: root.todosModel
             busy: root.busy
             editingIndex: controller.editingIndex
             onSendNow: function(index) { root.sendNowEntry(index); }
@@ -394,26 +322,25 @@ Rectangle {
                             Keys.priority: Keys.BeforeItem
                             Keys.onPressed: function(event) {
                                 // Completion popover navigation takes priority.
-                                if (completion.visible && completion.items.length > 0) {
-                                    var n = completion.items.length;
+                                if (controller.completionActive) {
                                     if (event.key === Qt.Key_Down) {
-                                        completion.activeIndex = (completion.activeIndex + 1) % n;
+                                        controller.moveActive(1);
                                         event.accepted = true;
                                         return;
                                     }
                                     if (event.key === Qt.Key_Up) {
-                                        completion.activeIndex = (completion.activeIndex - 1 + n) % n;
+                                        controller.moveActive(-1);
                                         event.accepted = true;
                                         return;
                                     }
                                     if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
                                             || event.key === Qt.Key_Tab) {
-                                        root.acceptCompletion(completion.items[completion.activeIndex]);
+                                        controller.acceptActive();
                                         event.accepted = true;
                                         return;
                                     }
                                     if (event.key === Qt.Key_Escape) {
-                                        root.closeTrigger();
+                                        controller.closeTrigger();
                                         event.accepted = true;
                                         return;
                                     }
@@ -493,13 +420,19 @@ Rectangle {
                 }
             }
 
-            // Completion popover, docked above the surface.
+            // Completion popover, docked above the surface. Driven entirely by the
+            // shared controller's completion state.
             CompletionPopover {
                 id: completion
                 y: -height - 6
                 x: 0
                 width: Math.min(360, surface.width)
-                onPicked: function(item) { root.acceptCompletion(item); }
+                visible: controller.completionActive
+                items: controller.completionItems
+                activeIndex: controller.completionActiveIndex
+                kind: controller.completionKind
+                onPicked: function(index) { controller.accept(index); }
+                onHovered: function(index) { controller.setActiveIndex(index); }
             }
         }
     }
