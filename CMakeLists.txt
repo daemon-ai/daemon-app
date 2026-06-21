@@ -31,6 +31,15 @@ endif()
 
 qt_standard_project_setup(REQUIRES 6.11)
 
+# Experimental Tui Widgets terminal frontend (daemon-tui). Off by default so the
+# GUI build and CI are unaffected; the Nix flake's `tui` package flips it on and
+# provides the Meson-built Tui Widgets stack via pkg-config. Core5Compat is a
+# transitive requirement of the Qt6 build of Tui Widgets.
+option(DAEMON_APP_TUI "Build the experimental Tui Widgets TUI frontend (daemon-tui)" OFF)
+if(DAEMON_APP_TUI)
+    find_package(Qt6 6.11 REQUIRED COMPONENTS Core5Compat)
+endif()
+
 include(CompilerWarnings)
 
 # Third-party dependencies are vendored by the flake and consumed here

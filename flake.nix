@@ -24,6 +24,18 @@
       flake = false;
     };
 
+    # --- TUI frontend dependencies (Tui Widgets, Meson-built, consumed by the
+    #     CMake build via pkg-config; see src/tui/CMakeLists.txt). termpaint
+    #     itself is taken from nixpkgs; these two are not packaged there. ---
+    posixsignalmanager = {
+      url = "github:textshell/posixsignalmanager/6fa40e48380d1179fcd6f5175b8bc9fb1e2a455d";
+      flake = false;
+    };
+    tuiwidgets = {
+      url = "github:tuiwidgets/tuiwidgets/31ccc7af4ff47ec209e8e7b3508988fec5d2e2e9";
+      flake = false;
+    };
+
     # --- Desktop-only dependencies ---
     qwindowkit = {
       url = "git+https://github.com/stdware/qwindowkit?allRefs=1&rev=c783b89d119a672b0aa4262b520c0783d0612689&submodules=1";
@@ -44,7 +56,7 @@
   };
 
   outputs =
-    { nixpkgs, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, ... }:
+    { nixpkgs, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, ... }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -75,7 +87,42 @@
           qttools
           qtshadertools
           qtsvg
+          qt5compat       # Core5Compat - required by the Qt6 build of Tui Widgets
         ];
+
+        # --- Tui Widgets stack (Meson) -----------------------------------------
+        # Built as plain Nix derivations that emit pkg-config files; the daemon-app
+        # CMake build then consumes only TuiWidgetsQt6 via pkg_check_modules. This
+        # is the clean Meson<->CMake bridge: no driving Meson from CMake.
+        #
+        # Dependency chain: termpaint (nixpkgs) + posixsignalmanager (here) feed
+        # tuiwidgets. All are Boost-licensed and link Qt6 Core (+ Core5Compat).
+        posixsignalmanager-qt6 = pkgs.stdenv.mkDerivation {
+          pname = "posixsignalmanager-qt6";
+          version = "0.3.1";
+          src = posixsignalmanager;
+          nativeBuildInputs = with pkgs; [ meson ninja pkg-config qt6.qtbase qt6.wrapQtAppsHook ];
+          buildInputs = [ pkgs.qt6.qtbase ];
+          mesonFlags = [ "-Dqt=qt6" "-Dtests=false" ];
+        };
+
+        tuiwidgets-qt6 = pkgs.stdenv.mkDerivation {
+          pname = "tuiwidgets-qt6";
+          version = "0.2.3";
+          src = tuiwidgets;
+          nativeBuildInputs = with pkgs; [ meson ninja pkg-config python3 qt6.qtbase qt6.wrapQtAppsHook ];
+          buildInputs = [ pkgs.termpaint pkgs.qt6.qtbase pkgs.qt6.qt5compat posixsignalmanager-qt6 ];
+          mesonFlags = [ "-Dqt=qt6" "-Dtests=false" "-Dsystem-posixsignalmanager=enabled" ];
+          # The Qt6 symbol-version generator (src/symver_qt6.py) is run at build
+          # time via its `/usr/bin/env python3` shebang, which the sandbox lacks.
+          postPatch = ''
+            patchShebangs .
+          '';
+        };
+
+        # The deps the TUI frontend links, surfaced to both the package and the
+        # devShell so pkg-config resolves TuiWidgetsQt6.
+        tuiDeps = [ pkgs.termpaint posixsignalmanager-qt6 tuiwidgets-qt6 ];
 
         # Source dirs exported to CMake as <DEP>_SOURCE_DIR.
         depFlags = [
@@ -113,9 +160,22 @@
 
           cmakeFlags = depFlags;
         };
+
+        # The experimental Tui Widgets TUI frontend (daemon-tui executable),
+        # gated behind -DDAEMON_APP_TUI=ON. Reuses the GUI build, adding the TUI
+        # dependency stack.
+        daemon-tui = daemon-app.overrideAttrs (old: {
+          pname = "daemon-tui";
+          buildInputs = old.buildInputs ++ tuiDeps;
+          cmakeFlags = depFlags ++ [ "-DDAEMON_APP_TUI=ON" ];
+        });
       in
       {
         packages.default = daemon-app;
+        packages.tui = daemon-tui;
+        # Exposed for debugging the Meson dependency stack in isolation.
+        packages.tuiwidgets = tuiwidgets-qt6;
+        packages.posixsignalmanager = posixsignalmanager-qt6;
 
         apps.default = {
           type = "app";
@@ -134,7 +194,7 @@
             kdePackages.extra-cmake-modules
             perl
             tinyxml-2
-          ] ++ qtPackages;
+          ] ++ qtPackages ++ tuiDeps;
 
           shellHook = ''
             export QT_PLUGIN_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtPluginPrefix qtPackages}:$QT_PLUGIN_PATH"
