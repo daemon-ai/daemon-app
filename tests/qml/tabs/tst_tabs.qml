@@ -49,6 +49,36 @@ TestCase {
         }
     }
 
+    // Mirrors the real Conversation.qml tab body: a plain Item with a Repeater of
+    // Loaders that anchors.fill the body and toggle visible on the active index.
+    // This guards the layout fix - the regression was pages with zero size, so we
+    // assert each loaded page fills the body and only the active one is visible.
+    Item {
+        id: body
+        x: 0
+        y: 200
+        width: 600
+        height: 120
+
+        Repeater {
+            id: bodyRepeater
+            model: tabModel
+            delegate: Loader {
+                id: pageLoader
+                required property int index
+                required property int conversationId
+                property bool pageVisible: index === tabModel.currentIndex
+                anchors.fill: parent
+                visible: pageVisible
+                sourceComponent: Rectangle {
+                    objectName: "bodyPage"
+                    property int boundConversationId: pageLoader.conversationId
+                }
+                onLoaded: item.boundConversationId = Qt.binding(() => pageLoader.conversationId)
+            }
+        }
+    }
+
     SignalSpy {
         id: newSpy
         target: tabBar
@@ -146,5 +176,94 @@ TestCase {
 
         compare(tabModel.currentIndex, 0, "clicked chip became active");
         compare(stack.currentIndex, 0, "stack switched to the clicked page");
+    }
+
+    // A preview open reuses the single preview chip in place (VSCode-style).
+    function test_preview_reuses_single_chip() {
+        tabModel.previewTranscript(1, "Alpha");
+        verify(tabModel.isPreviewAt(0), "first preview is a preview tab");
+
+        tabModel.previewTranscript(2, "Beta");
+        compare(tabListView().count, 1, "preview reused, not appended");
+        compare(tabModel.conversationIdAt(0), 2, "preview reassigned to Beta");
+        verify(tabModel.isPreviewAt(0), "still a preview tab");
+    }
+
+    // Double-clicking a preview chip pins it (makes it permanent), so the next
+    // preview opens a fresh chip instead of replacing it.
+    function test_double_click_pins_chip() {
+        tabModel.previewTranscript(1, "Alpha");
+        const chip = tabListView().itemAtIndex(0);
+        verify(chip !== null, "preview chip realized");
+        findChild(chip, "tabChipArea").doubleClicked(null);
+        verify(!tabModel.isPreviewAt(0), "double-click pinned the chip");
+
+        tabModel.previewTranscript(2, "Beta");
+        compare(tabListView().count, 2, "next preview opened a fresh chip");
+    }
+
+    // A deliberate open (openTranscript) of the previewed conversation pins it.
+    function test_open_pins_preview() {
+        tabModel.previewTranscript(1, "Alpha");
+        verify(tabModel.isPreviewAt(0), "preview before open");
+        tabModel.openTranscript(1, "Alpha");
+        verify(!tabModel.isPreviewAt(0), "open pinned the preview");
+        compare(tabListView().count, 1, "no duplicate chip");
+    }
+
+    function bodyPages() {
+        // Collect the loaded page Items via the Repeater (findChildren is not
+        // available in QtTest's TestCase).
+        const pages = [];
+        for (let i = 0; i < bodyRepeater.count; ++i) {
+            const loader = bodyRepeater.itemAt(i);
+            if (loader && loader.item)
+                pages.push(loader.item);
+        }
+        return pages;
+    }
+
+    // The layout fix: each loaded page fills the body (non-zero, parent-sized) and
+    // only the active tab's page is visible. This is exactly what regressed before
+    // (StackLayout + Loader with no fill -> zero-size, invisible transcript).
+    function test_body_pages_fill_and_toggle_visibility() {
+        tabModel.openTranscript(1, "Alpha");
+        tabModel.openTranscript(2, "Beta"); // active = index 1
+        wait(0); // let the Loaders instantiate
+
+        const pages = bodyPages();
+        compare(pages.length, 2, "one page per tab");
+        for (let i = 0; i < pages.length; ++i) {
+            compare(pages[i].width, body.width, "page fills body width");
+            compare(pages[i].height, body.height, "page fills body height");
+            verify(pages[i].width > 0 && pages[i].height > 0, "page has non-zero size");
+        }
+
+        // Visibility follows the active index (the Loader toggles `visible`).
+        compare(tabModel.currentIndex, 1, "Beta active");
+        compare(bodyRepeater.itemAt(0).index, 0, "loader 0 has index 0");
+        compare(bodyRepeater.itemAt(1).index, 1, "loader 1 has index 1");
+        compare(bodyRepeater.itemAt(1).pageVisible, true, "active page visible");
+        compare(bodyRepeater.itemAt(0).pageVisible, false, "background page hidden");
+
+        tabModel.activate(0);
+        compare(bodyRepeater.itemAt(0).pageVisible, true, "newly active page visible");
+        compare(bodyRepeater.itemAt(1).pageVisible, false, "previously active page hidden");
+    }
+
+    // A reassigned preview tab reloads in place: the page's bound conversationId
+    // updates (this is what makes TranscriptPage.onConversationIdChanged reload).
+    function test_preview_reassign_rebinds_page() {
+        tabModel.previewTranscript(7, "Alpha");
+        wait(0);
+        let pages = bodyPages();
+        compare(pages.length, 1, "single preview page");
+        compare(pages[0].boundConversationId, 7, "page bound to conversation 7");
+
+        tabModel.previewTranscript(8, "Beta"); // reuse the same slot
+        wait(0);
+        pages = bodyPages();
+        compare(pages.length, 1, "still one page (reused)");
+        compare(pages[0].boundConversationId, 8, "page rebound to conversation 8");
     }
 }

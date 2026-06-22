@@ -293,24 +293,25 @@ void TranscriptView::paintEvent(Tui::ZPaintEvent *event)
 void TranscriptView::keyEvent(Tui::ZKeyEvent *event)
 {
     // Interactive mode: while an awaiting-approval / unanswered-clarify block is
-    // present its controls own the cursor. Up/Down/Tab walk the controls, Space
-    // toggles a choice, Enter activates a button / submits, and a freeform field
-    // takes typed text + Backspace. PageUp/Down/Home/End still scroll; Esc still
-    // bubbles (the context-sensitive quit chain).
+    // present its controls own the cursor. Arrow keys walk the controls (Up/Left
+    // back, Down/Right forward), Space toggles a choice, Enter activates a button /
+    // submits, and a freeform field takes typed text + Backspace. PageUp/Down/Home/
+    // End still scroll. Tab/Shift+Tab are deliberately NOT consumed here: they bubble
+    // to the focus container so the block never traps focus (the app-wide rule -
+    // Tab moves between panes, arrows move within). Esc still bubbles too.
     if (interactive()) {
         const int key = event->key();
         const Qt::KeyboardModifiers mods = event->modifiers();
         const Control &active = m_controls.at(qBound(0, m_activeControl, m_controls.size() - 1));
         const bool onFreeform = active.kind == Control::Kind::Freeform;
 
-        if (mods == Qt::NoModifier || mods == Qt::ShiftModifier) {
-            if (key == Qt::Key_Up || (key == Qt::Key_Tab && mods == Qt::ShiftModifier)
-                || key == Qt::Key_Backtab) {
+        if (mods == Qt::NoModifier) {
+            if (key == Qt::Key_Up || key == Qt::Key_Left) {
                 moveControl(-1);
                 event->accept();
                 return;
             }
-            if (key == Qt::Key_Down || (key == Qt::Key_Tab && mods == Qt::NoModifier)) {
+            if (key == Qt::Key_Down || key == Qt::Key_Right) {
                 moveControl(1);
                 event->accept();
                 return;

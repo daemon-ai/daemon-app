@@ -112,6 +112,22 @@ private slots:
         QCOMPARE(store.conversationCount(nodeScope("nope")), 0);
     }
 
+    // title(id) returns the stored canonical title (the string the list shows),
+    // independent of the conversation's content; an unknown id yields empty.
+    void titleReturnsStoredTitle()
+    {
+        InMemoryConversationStore store;
+        const int id = store.createConversation(QStringLiteral("n-worker"));
+        QCOMPARE(store.title(id), QStringLiteral("New conversation"));
+
+        store.setContent(id, QStringLiteral("Some unrelated first content line.\nmore"));
+        // Content changes must not bleed into the title.
+        QCOMPARE(store.title(id), QStringLiteral("New conversation"));
+        QVERIFY(store.title(id) != store.content(id));
+
+        QVERIFY(store.title(-1).isEmpty());
+    }
+
     // createNode with an empty parent adds a new root; with a parent it becomes
     // a child reachable via the same agentChildren primitive.
     void createNodeAsRootAndChild()

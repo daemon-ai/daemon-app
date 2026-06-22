@@ -10,6 +10,7 @@
 
 #include <Tui/ZImage.h>
 #include <Tui/ZTerminal.h>
+#include <Tui/ZTest.h>
 #include <Tui/ZWidget.h>
 
 #include <QEventLoop>
@@ -128,6 +129,94 @@ private slots:
         strip->clickAt({ 7, 0 });
         QCOMPARE(model.count(), 1);
         QCOMPARE(model.conversationIdAt(0), 2);
+    }
+
+    // A preview open reuses the single preview chip in place: the strip repaints
+    // the reassigned title rather than growing a second chip.
+    void previewReusesSingleChip()
+    {
+        Tui::ZTerminal terminal { Tui::ZTerminal::OffScreen { 80, 1 } };
+        Tui::ZWidget root;
+        terminal.setMainWidget(&root);
+
+        TabModel model;
+        auto* strip = new TabStripView(&root);
+        strip->setGeometry({ 0, 0, 80, 1 });
+        strip->setModel(&model);
+
+        model.previewTranscript(1, QStringLiteral("Alpha"));
+        settle();
+        QString frame = frameText(terminal);
+        QVERIFY2(frame.contains(QStringLiteral("Alpha")), qPrintable(frame));
+
+        model.previewTranscript(2, QStringLiteral("Beta"));
+        settle();
+        QCOMPARE(model.count(), 1); // reused, not appended
+        frame = frameText(terminal);
+        QVERIFY2(frame.contains(QStringLiteral("Beta")), qPrintable(frame));
+        QVERIFY2(!frame.contains(QStringLiteral("Alpha")), qPrintable(frame));
+    }
+
+    // The focused strip moves the active tab with Left/Right, clamped at the
+    // ends (global Ctrl+Tab wrapping is handled elsewhere). Plain arrows only act
+    // while the strip holds focus.
+    void leftRightMovesActiveTabWhenFocused()
+    {
+        Tui::ZTerminal terminal { Tui::ZTerminal::OffScreen { 80, 1 } };
+        Tui::ZWidget root;
+        root.setFocusPolicy(Tui::StrongFocus);
+        terminal.setMainWidget(&root);
+
+        TabModel model;
+        auto* strip = new TabStripView(&root);
+        strip->setGeometry({ 0, 0, 80, 1 });
+        strip->setModel(&model);
+
+        model.openTranscript(1, QStringLiteral("Alpha"));
+        model.openTranscript(2, QStringLiteral("Beta"));
+        model.openTranscript(3, QStringLiteral("Gamma"));
+        QCOMPARE(model.currentIndex(), 2);
+
+        strip->setFocus();
+        QVERIFY(strip->focus());
+
+        Tui::ZTest::sendKey(&terminal, Qt::Key_Left, Qt::NoModifier);
+        QCOMPARE(model.currentIndex(), 1);
+        Tui::ZTest::sendKey(&terminal, Qt::Key_Left, Qt::NoModifier);
+        QCOMPARE(model.currentIndex(), 0);
+        Tui::ZTest::sendKey(&terminal, Qt::Key_Left, Qt::NoModifier);
+        QCOMPARE(model.currentIndex(), 0); // clamped at the start
+
+        Tui::ZTest::sendKey(&terminal, Qt::Key_Right, Qt::NoModifier);
+        QCOMPARE(model.currentIndex(), 1);
+    }
+
+    // Enter pins the current preview tab (mirroring the GUI double-click), and
+    // Delete closes a closable current tab.
+    void enterPinsPreviewAndDeleteCloses()
+    {
+        Tui::ZTerminal terminal { Tui::ZTerminal::OffScreen { 80, 1 } };
+        Tui::ZWidget root;
+        root.setFocusPolicy(Tui::StrongFocus);
+        terminal.setMainWidget(&root);
+
+        TabModel model;
+        auto* strip = new TabStripView(&root);
+        strip->setGeometry({ 0, 0, 80, 1 });
+        strip->setModel(&model);
+
+        model.previewTranscript(1, QStringLiteral("Alpha"));
+        QVERIFY(model.isPreviewAt(0));
+        strip->setFocus();
+
+        Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
+        QVERIFY(!model.isPreviewAt(0)); // graduated to a pinned tab
+
+        model.openTranscript(2, QStringLiteral("Beta"));
+        QCOMPARE(model.count(), 2);
+        QCOMPARE(model.currentIndex(), 1);
+        Tui::ZTest::sendKey(&terminal, Qt::Key_Delete, Qt::NoModifier);
+        QCOMPARE(model.count(), 1);
     }
 };
 

@@ -41,7 +41,7 @@ TabStripView::TabStripView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
     setSizePolicyH(Tui::SizePolicy::Expanding);
     setSizePolicyV(Tui::SizePolicy::Fixed);
     setMaximumSize(Tui::tuiMaxSize, 1);
-    setFocusPolicy(Tui::NoFocus); // driven by the shell's keys + mouse
+    setFocusPolicy(Tui::StrongFocus); // a Tab-cycle stop; Left/Right move tabs
 }
 
 void TabStripView::setModel(TabModel* model)
@@ -169,6 +169,48 @@ void TabStripView::clickAt(QPoint local)
     }
 }
 
+void TabStripView::keyEvent(Tui::ZKeyEvent* event)
+{
+    if (m_model != nullptr && event->modifiers() == Qt::NoModifier) {
+        const int n = m_model->count();
+        const int cur = m_model->currentIndex();
+        const int key = event->key();
+        bool handled = true;
+        if (key == Qt::Key_Left) {
+            // Arrows move and stop at the ends; global Ctrl+Tab keeps wrapping.
+            m_model->activate(qMax(0, cur - 1));
+        } else if (key == Qt::Key_Right) {
+            m_model->activate(qMin(n - 1, cur + 1));
+        } else if (key == Qt::Key_Enter || key == Qt::Key_Return) {
+            m_model->pinCurrent(); // graduate a preview tab, like the GUI double-click
+        } else if (key == Qt::Key_Delete || key == Qt::Key_Backspace) {
+            if (cur >= 0
+                && m_model->data(m_model->index(cur, 0), TabModel::ClosableRole).toBool()) {
+                m_model->closeTab(cur);
+            }
+        } else {
+            handled = false; // leave plain Tab et al. for the focus container
+        }
+        if (handled) {
+            event->accept();
+            return;
+        }
+    }
+    Tui::ZWidget::keyEvent(event);
+}
+
+void TabStripView::focusInEvent(Tui::ZFocusEvent* event)
+{
+    Tui::ZWidget::focusInEvent(event);
+    update();
+}
+
+void TabStripView::focusOutEvent(Tui::ZFocusEvent* event)
+{
+    Tui::ZWidget::focusOutEvent(event);
+    update();
+}
+
 void TabStripView::paintEvent(Tui::ZPaintEvent* event)
 {
     Tui::ZPainter* p = event->painter();
@@ -180,6 +222,7 @@ void TabStripView::paintEvent(Tui::ZPaintEvent* event)
 
     const int w = geometry().width();
     const int active = m_model->currentIndex();
+    const bool focused = focus();
 
     for (const Segment& s : m_segments) {
         if (s.x0 >= w) {
@@ -190,7 +233,11 @@ void TabStripView::paintEvent(Tui::ZPaintEvent* event)
             continue;
         }
         const bool isActive = s.index == active;
-        const Tui::ZColor bg = isActive ? tpal::selectionBg() : tpal::surfaceAlt();
+        const bool isPreview = m_model->isPreviewAt(s.index);
+        // Brighter wash for the active chip when the strip holds focus, weaker
+        // when another pane is focused (mirrors the conversation list).
+        const Tui::ZColor activeBg = focused ? tpal::selectionBg() : tpal::selectionInactiveBg();
+        const Tui::ZColor bg = isActive ? activeBg : tpal::surfaceAlt();
         const Tui::ZColor fg = isActive ? tpal::fg() : tpal::muted();
         const bool closable = s.closeX >= 0;
         const QString title = elide(m_model->titleAt(s.index), kMaxTitle);
@@ -202,8 +249,17 @@ void TabStripView::paintEvent(Tui::ZPaintEvent* event)
         int tx = s.x0 + 1;
         if (tx < w) {
             const QString shown = title.left(qMax(0, w - tx));
+            // A preview (transient) tab is shown italic; the active tab is bold.
+            // Both apply when the active tab is itself a preview.
+            Tui::ZTextAttributes attrs;
             if (isActive) {
-                p->writeWithAttributes(tx, 0, shown, fg, bg, Tui::ZTextAttribute::Bold);
+                attrs |= Tui::ZTextAttribute::Bold;
+            }
+            if (isPreview) {
+                attrs |= Tui::ZTextAttribute::Italic;
+            }
+            if (attrs != Tui::ZTextAttributes()) {
+                p->writeWithAttributes(tx, 0, shown, fg, bg, attrs);
             } else {
                 p->writeWithColors(tx, 0, shown, fg, bg);
             }

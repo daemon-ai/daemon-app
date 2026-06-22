@@ -10,7 +10,6 @@ qt_add_qml_module(da_settings
         uisettings.cpp
     QML_FILES
         SettingsMenu.qml
-        SettingsPage.qml
         FontStyleButton.qml
         OptionRow.qml
         LayoutState.qml

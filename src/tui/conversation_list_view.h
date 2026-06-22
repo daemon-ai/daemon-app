@@ -36,8 +36,10 @@ public:
     void scrollByLines(int delta);
 
 signals:
-    // Up/Down/Enter on a row: open that conversation (row index in the model).
-    void rowActivated(int row);
+    // A row was activated. `pinned` is true for a deliberate open (Enter) that
+    // should create a permanent tab, false for a transient open (arrow navigation
+    // or a single mouse click) that loads into the VSCode-style preview tab.
+    void rowActivated(int row, bool pinned);
 
     // Type-ahead: the list is the only focus stop in the column, so printable keys
     // build the search query (RootWidget routes these to the passive search box,

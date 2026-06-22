@@ -81,8 +81,8 @@ void ConversationListView::activateAtLocalY(int localY)
 {
     const int row = rowAt(localY);
     if (row >= 0) {
-        // Same path as Enter: the shell selects + opens the conversation.
-        emit rowActivated(row);
+        // A single click previews (transient); double-click/Enter pins.
+        emit rowActivated(row, false);
     }
 }
 
@@ -318,28 +318,28 @@ void ConversationListView::keyEvent(Tui::ZKeyEvent* event)
             switch (key) {
             case Qt::Key_Up:
                 m_model->selectPrevious();
-                emit rowActivated(m_model->currentRow());
+                emit rowActivated(m_model->currentRow(), false); // preview
                 break;
             case Qt::Key_Down:
                 m_model->selectNext();
-                emit rowActivated(m_model->currentRow());
+                emit rowActivated(m_model->currentRow(), false); // preview
                 break;
             case Qt::Key_Home:
                 if (m_model->rowCount() > 0) {
                     m_model->activate(0);
-                    emit rowActivated(0);
+                    emit rowActivated(0, false); // preview
                 }
                 break;
             case Qt::Key_End:
                 if (m_model->rowCount() > 0) {
                     m_model->activate(m_model->rowCount() - 1);
-                    emit rowActivated(m_model->rowCount() - 1);
+                    emit rowActivated(m_model->rowCount() - 1, false); // preview
                 }
                 break;
             case Qt::Key_Enter:
             case Qt::Key_Return:
                 if (m_model->currentRow() >= 0) {
-                    emit rowActivated(m_model->currentRow());
+                    emit rowActivated(m_model->currentRow(), true); // pinned open
                 }
                 break;
             default:

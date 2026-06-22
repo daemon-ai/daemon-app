@@ -22,6 +22,7 @@ public:
     conversations(const domain::ListScope& scope) const override;
     [[nodiscard]] int conversationCount(const domain::ListScope& scope) const override;
     [[nodiscard]] QString content(int conversationId) const override;
+    [[nodiscard]] QString title(int conversationId) const override;
 
     int createConversation(const QString& agentId) override;
     QString createNode(const QString& parentId, domain::AgentNodeKind kind) override;

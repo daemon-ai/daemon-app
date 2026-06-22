@@ -98,7 +98,13 @@ QString pageMarkdown(int kind)
             "- Press **F8** to cycle the theme (Light / Dark / Sepia / Midnight)\n"
             "- **Ctrl+T** opens a new transcript tab\n"
             "- **Ctrl+W** closes the current tab\n"
-            "- **Ctrl+Tab** / **Ctrl+Shift+Tab** switch tabs\n");
+            "- **Ctrl+Tab** / **Ctrl+Shift+Tab** switch tabs (wrapping)\n"
+            "- **Alt+1..9** jumps directly to tab N\n"
+            "- **Tab** cycles panes, including the tab strip; when it is focused, "
+            "**Left**/**Right** switch tabs, **Enter** pins a preview, **Delete** closes\n"
+            "- In an interactive block (approval / clarify): **Up**/**Down**/**Left**/"
+            "**Right** move between controls, **Space** toggles, **Enter** submits, "
+            "**Tab** leaves to the next pane\n");
     }
     return QString();
 }
@@ -665,6 +671,10 @@ RootWidget::RootWidget()
         }
     });
     connect(m_tabModel, &TabModel::tabClosed, this, &RootWidget::destroySession);
+    // A preview tab was reassigned to another conversation: rebind its session
+    // in place rather than spawning a new one.
+    connect(m_tabModel, &TabModel::tabConversationChanged, this,
+            [this](int tabId, int conversationId) { rebindSession(tabId, conversationId); });
 
     // Sidebar scope selection drives the conversation list - the model-to-model
     // contract is untouched by the choice of toolkit.
@@ -715,6 +725,19 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
         m_tabModel->cycle(backward ? -1 : 1);
         event->accept();
         return;
+    }
+    // Alt+1..9 jumps directly to tab N (1-based). Unlike Ctrl+Tab this is reliably
+    // delivered by terminals (as ESC + digit), so it is the primary keyboard nav.
+    if ((mods & Qt::AltModifier) && m_tabModel != nullptr && event->text().size() == 1) {
+        const QChar ch = event->text().at(0);
+        if (ch >= QLatin1Char('1') && ch <= QLatin1Char('9')) {
+            const int target = ch.digitValue() - 1;
+            if (target < m_tabModel->count()) {
+                m_tabModel->activate(target);
+            }
+            event->accept();
+            return;
+        }
     }
 
     // Final fallback for the context-sensitive Esc chain: when a pane leaves Esc
@@ -789,6 +812,14 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
             m_composerSession->setActiveIndex(row);
             m_composerSession->acceptActive();
         }
+        return;
+    }
+
+    // The tab strip is topmost in the conversation column: a click activates /
+    // closes a tab or hits the "+" affordance (handled inside TabStripView).
+    if (hit(m_tabStrip)) {
+        m_tabStrip->setFocus(); // clicking the strip focuses it, like any pane
+        m_tabStrip->clickAt(local);
         return;
     }
 
@@ -1015,18 +1046,23 @@ void RootWidget::wireViews()
         syncSidebarCurrent();
     });
 
-    // Conversation highlight / Enter -> record selection in the model (so the
-    // model owns `current`, consistent with the sidebar) and open it as a tab.
-    // Opening find-or-creates a transcript tab for the conversation; activating
-    // that tab points the shared composer/transcript at its session.
-    const auto openRow = [this](int row) {
+    // Conversation highlight / open -> record selection in the model (so the model
+    // owns `current`, consistent with the sidebar) and surface it in a tab. A
+    // transient activation (arrow nav / single click) loads into the VSCode-style
+    // preview tab; a deliberate Enter opens a permanent (pinned) tab.
+    const auto openRow = [this](int row, bool pinned) {
         if (row < 0) {
             return;
         }
         m_list->activate(row); // identity-based selection in the shared model
         const int id = m_list->idAt(row);
-        if (id >= 0) {
-            openConversationTab(id);
+        if (id < 0) {
+            return;
+        }
+        if (pinned) {
+            openConversationPinnedTab(id);
+        } else {
+            previewConversationTab(id);
         }
     };
     connect(m_listView, &ConversationListView::rowActivated, this, openRow);
@@ -1075,6 +1111,9 @@ void RootWidget::wireViews()
     connect(m_composerSession, &ComposerSessionController::submitted, this,
             [this](const QString& text, const QString& refs) {
                 if (m_active != nullptr) {
+                    // Submitting commits to this conversation: a preview tab becomes
+                    // permanent (VSCode-style) so the next preview opens elsewhere.
+                    m_tabModel->pinCurrent();
                     m_active->orchestrator->submit(text, refs);
                 }
             });
@@ -1157,20 +1196,35 @@ void RootWidget::wireViews()
         m_sidebarView->setCurrentIndex(m_sidebarAdapter->index(0, 0));
     }
     if (m_list->rowCount() > 0) {
-        openRow(0);
+        openRow(0, true); // launch with a permanent (pinned) first tab
     }
     updateCompletion();
 }
 
 // --- Tabs --------------------------------------------------------------------
 
-void RootWidget::openConversationTab(int conversationId)
+void RootWidget::previewConversationTab(int conversationId)
 {
     if (m_tabModel == nullptr) {
         return;
     }
-    const QString title = titleForContent(m_store->content(conversationId));
-    m_tabModel->openTranscript(conversationId, title);
+    QString title = m_store->title(conversationId);
+    if (title.isEmpty()) {
+        title = titleForContent(m_store->content(conversationId));
+    }
+    m_tabModel->previewTranscript(conversationId, title);
+}
+
+void RootWidget::openConversationPinnedTab(int conversationId)
+{
+    if (m_tabModel == nullptr) {
+        return;
+    }
+    QString title = m_store->title(conversationId);
+    if (title.isEmpty()) {
+        title = titleForContent(m_store->content(conversationId));
+    }
+    m_tabModel->openTranscriptPinned(conversationId, title);
 }
 
 void RootWidget::newTranscriptTab()
@@ -1179,10 +1233,29 @@ void RootWidget::newTranscriptTab()
         return;
     }
     const int id = m_store->createConversation(QString());
-    m_tabModel->openTranscript(id, QStringLiteral("New conversation"));
+    m_tabModel->openTranscriptPinned(id, QStringLiteral("New conversation"));
     // A new tab is a natural place to start typing.
     if (m_composer != nullptr) {
         m_composer->setFocus();
+    }
+}
+
+void RootWidget::rebindSession(int tabId, int conversationId)
+{
+    auto it = m_sessions.find(tabId);
+    if (it == m_sessions.end()) {
+        return; // no session yet; ensureSession will open the right conversation
+    }
+    TabSession* s = it.value();
+    if (s->conversationId == conversationId) {
+        return;
+    }
+    s->conversationId = conversationId;
+    s->controller->open(conversationId);
+    if (s == m_active) {
+        m_composerSession->setConversationId(conversationId);
+        refreshTranscript();
+        updateTodos();
     }
 }
 

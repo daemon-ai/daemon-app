@@ -236,12 +236,18 @@ private:
     void updateCompletion();
 
     // --- Tabs -----------------------------------------------------------------
-    // Open (or re-activate) a transcript tab for `conversationId`.
-    void openConversationTab(int conversationId);
-    // Create a brand-new conversation in the store and open it in a tab (Ctrl+T).
+    // Transient open (arrow nav / single click): load the conversation into the
+    // VSCode-style preview tab (reused on the next preview).
+    void previewConversationTab(int conversationId);
+    // Deliberate open (Enter / double-activate): a permanent, pinned tab.
+    void openConversationPinnedTab(int conversationId);
+    // Create a brand-new conversation in the store and open it in a pinned tab (Ctrl+T).
     void newTranscriptTab();
     // Close the active tab (Ctrl+W / tab "x").
     void closeCurrentTab();
+    // A preview tab was reassigned to a different conversation: rebind its existing
+    // session to `conversationId` (re-open + reload) instead of spawning a new one.
+    void rebindSession(int tabId, int conversationId);
     // Lazily create the per-tab session for a transcript tab id (no-op if present
     // or if the tab is a non-transcript page).
     TabSession* ensureSession(int tabId);

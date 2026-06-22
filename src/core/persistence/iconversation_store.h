@@ -43,6 +43,11 @@ public:
 
     [[nodiscard]] virtual QString content(int conversationId) const = 0;
 
+    // The canonical conversation title (the same string the list shows), or an
+    // empty string when unknown. Q_INVOKABLE so QML tab hosts can label chips
+    // with the real title instead of guessing from content.
+    [[nodiscard]] Q_INVOKABLE virtual QString title(int conversationId) const = 0;
+
     // Mutations. Each emits changed() so models can refresh.
     virtual int createConversation(const QString& agentId) = 0;
     // Create a tree node under `parentId` (empty = a new top-level root) and

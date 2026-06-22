@@ -46,6 +46,7 @@ RowLayout {
             required property string title
             required property bool current
             required property bool closable
+            required property bool preview
 
             height: tabList.height - 6
             y: 3
@@ -67,6 +68,8 @@ RowLayout {
                 elide: Text.ElideRight
                 font.family: FontIcons.display
                 font.pixelSize: 13
+                // A preview (transient) tab is shown italic, VSCode-style.
+                font.italic: chip.preview
                 color: chip.current ? Theme.text : Theme.textMuted
             }
 
@@ -94,6 +97,8 @@ RowLayout {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.tabModel.activate(chip.index)
+                // Double-click pins a preview tab (makes it permanent).
+                onDoubleClicked: root.tabModel.pinTab(chip.index)
             }
         }
     }
@@ -111,15 +116,15 @@ RowLayout {
         onClicked: root.newTabRequested()
     }
 
-    // --- Settings ------------------------------------------------------------
+    // --- Settings ("..." menu) -----------------------------------------------
     Kit.IconButton {
         objectName: "settingsButton"
         Layout.alignment: Qt.AlignVCenter
         implicitWidth: 30
         implicitHeight: 28
-        icon: FontIcons.fa_gear
+        icon: FontIcons.fa_ellipsis_h
         iconColor: Theme.iconMuted
-        iconPointSize: 14
+        iconPointSize: 16
         tooltipText: qsTr("Settings")
         onClicked: root.settingsRequested()
     }

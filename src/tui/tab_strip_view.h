@@ -33,6 +33,12 @@ signals:
 protected:
     void paintEvent(Tui::ZPaintEvent* event) override;
     void resizeEvent(Tui::ZResizeEvent* event) override;
+    // The strip joins the Tab focus cycle: Left/Right move between tabs, Enter
+    // pins a preview tab, Delete/Backspace closes the current tab. Plain Tab is
+    // left unhandled so it bubbles to the focus container for pane cycling.
+    void keyEvent(Tui::ZKeyEvent* event) override;
+    void focusInEvent(Tui::ZFocusEvent* event) override;
+    void focusOutEvent(Tui::ZFocusEvent* event) override;
 
 private:
     struct Segment {

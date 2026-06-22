@@ -323,6 +323,16 @@ QString InMemoryConversationStore::content(int conversationId) const
     return {};
 }
 
+QString InMemoryConversationStore::title(int conversationId) const
+{
+    for (const Conversation& c : m_conversations) {
+        if (c.id == conversationId) {
+            return c.title;
+        }
+    }
+    return {};
+}
+
 int InMemoryConversationStore::createConversation(const QString& agentId)
 {
     Conversation c;

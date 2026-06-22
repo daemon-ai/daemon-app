@@ -113,6 +113,11 @@ bool maybeRenderOffscreen()
                     // Switch to the previous tab (wraps).
                     Tui::ZTest::sendKey(&terminal, Qt::Key_Tab,
                                         Qt::ControlModifier | Qt::ShiftModifier);
+                } else if (name.size() == 5 && name.startsWith("alt-") && name.at(4) >= '1'
+                           && name.at(4) <= '9') {
+                    // Alt+<digit>: jump directly to tab N (1-based).
+                    Tui::ZTest::sendText(&terminal, QString::fromLatin1(name.mid(4)),
+                                         Qt::AltModifier);
                 } else if (name == "ctrl-r") {
                     // Reverse incremental history search (delivered as a char event).
                     Tui::ZTest::sendText(&terminal, QStringLiteral("r"), Qt::ControlModifier);

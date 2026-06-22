@@ -32,15 +32,20 @@ Rectangle {
     // The host binds this to TabModel.setTitle so the chip reflects the thread.
     signal titleResolved(string title)
 
-    function _resolveTitle(md) {
-        const t = (md || "").trim();
-        if (t.length === 0) {
-            root.titleResolved(qsTr("New conversation"));
+    // The user committed to this conversation (submitted a turn or edited the
+    // transcript); the host pins the tab so a preview tab becomes permanent.
+    signal committed()
+
+    // Exposed so the pane's settings popup can act on this tab's conversation.
+    readonly property alias conversationController: controller
+
+    // The chip label is the conversation's canonical title (the same string the
+    // list shows), not the first line of the markdown content.
+    function _resolveTitle() {
+        if (conversationId < 0)
             return;
-        }
-        const firstLine = t.split("\n")[0].replace(/^#+\s*/, "").trim();
-        root.titleResolved(firstLine.length > 0 ? firstLine.substring(0, 40)
-                                                : qsTr("Conversation"));
+        const t = ConversationStore.title(conversationId);
+        root.titleResolved((t && t.length > 0) ? t : qsTr("Conversation"));
     }
 
     ConversationController {
@@ -62,18 +67,22 @@ Rectangle {
     }
 
     // Open the bound conversation on realize and whenever it changes.
-    onConversationIdChanged: if (conversationId >= 0) controller.open(conversationId)
+    onConversationIdChanged: {
+        if (conversationId >= 0)
+            controller.open(conversationId);
+        root._resolveTitle();
+    }
     Component.onCompleted: {
         if (conversationId >= 0)
             controller.open(conversationId);
-        root._resolveTitle(controller.content);
+        root._resolveTitle();
     }
 
-    // Keep the tab title in sync with the conversation content.
+    // Keep the tab title in sync with the conversation (e.g. a future rename).
     Connections {
         target: controller
-        function onConversationChanged() { root._resolveTitle(controller.content); }
-        function onContentChanged() { root._resolveTitle(controller.content); }
+        function onConversationChanged() { root._resolveTitle(); }
+        function onContentChanged() { root._resolveTitle(); }
     }
 
     ColumnLayout {
@@ -87,7 +96,10 @@ Rectangle {
             Layout.fillHeight: true
             // The orchestrator owns the turn; the transcript is a consumer.
             turn: orchestrator.turn
-            onEdited: function(markdown) { controller.updateContent(markdown); }
+            onEdited: function(markdown) {
+                controller.updateContent(markdown);
+                root.committed();
+            }
 
             Component.onCompleted: load(controller.content)
 
@@ -108,6 +120,7 @@ Rectangle {
 
             onSubmitted: function(text, attachmentRefs) {
                 orchestrator.submit(text, attachmentRefs);
+                root.committed();
             }
             onSteer: function(text) { orchestrator.steer(text); }
             onCancelRequested: orchestrator.cancel()

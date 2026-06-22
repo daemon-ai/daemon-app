@@ -38,6 +38,8 @@ QVariant TabModel::data(const QModelIndex& index, int role) const
         return tab.closable;
     case CurrentRole:
         return index.row() == m_currentIndex;
+    case PreviewRole:
+        return tab.preview;
     default:
         return {};
     }
@@ -52,6 +54,7 @@ QHash<int, QByteArray> TabModel::roleNames() const
         { ConversationIdRole, "conversationId" },
         { ClosableRole, "closable" },
         { CurrentRole, "current" },
+        { PreviewRole, "preview" },
     };
 }
 
@@ -59,11 +62,20 @@ int TabModel::openTranscript(int conversationId, const QString& title)
 {
     const int existing = findTranscriptRow(conversationId);
     if (existing >= 0) {
-        // Reuse the open tab; refresh its title if the caller supplies a new one.
+        // Reuse the open tab; refresh its title if the caller supplies a new one,
+        // and pin it (a deliberate open promotes a preview tab to permanent).
+        QVector<int> roles;
         if (!title.isEmpty() && m_tabs.at(existing).title != title) {
             m_tabs[existing].title = title;
+            roles << TitleRole << Qt::DisplayRole;
+        }
+        if (m_tabs.at(existing).preview) {
+            m_tabs[existing].preview = false;
+            roles << PreviewRole;
+        }
+        if (!roles.isEmpty()) {
             const QModelIndex idx = index(existing, 0);
-            emit dataChanged(idx, idx, { TitleRole, Qt::DisplayRole });
+            emit dataChanged(idx, idx, roles);
         }
         activate(existing);
         return m_tabs.at(existing).id;
@@ -77,12 +89,81 @@ int TabModel::openTranscript(int conversationId, const QString& title)
     tab.title = title.isEmpty() ? QStringLiteral("Conversation") : title;
     tab.conversationId = conversationId;
     tab.closable = true;
+    tab.preview = false;
     m_tabs.append(tab);
     endInsertRows();
     emit countChanged();
 
     setCurrentInternal(row);
     return tab.id;
+}
+
+int TabModel::openTranscriptPinned(int conversationId, const QString& title)
+{
+    return openTranscript(conversationId, title);
+}
+
+int TabModel::previewTranscript(int conversationId, const QString& title)
+{
+    // Already open anywhere: just activate it (do not change its pinned state).
+    const int existing = findTranscriptRow(conversationId);
+    if (existing >= 0) {
+        activate(existing);
+        return m_tabs.at(existing).id;
+    }
+
+    // Reuse the single preview slot, reassigning its conversation in place.
+    const int previewRow = findPreviewRow();
+    if (previewRow >= 0) {
+        Tab& tab = m_tabs[previewRow];
+        tab.conversationId = conversationId;
+        tab.title = title.isEmpty() ? QStringLiteral("Conversation") : title;
+        const QModelIndex idx = index(previewRow, 0);
+        emit dataChanged(idx, idx, { TitleRole, Qt::DisplayRole, ConversationIdRole });
+        emit tabConversationChanged(tab.id, conversationId);
+        // Make sure it is the active tab (it may not have been).
+        if (m_currentIndex != previewRow) {
+            setCurrentInternal(previewRow);
+        }
+        return tab.id;
+    }
+
+    // No preview slot yet: append a fresh transient tab.
+    const int row = static_cast<int>(m_tabs.size());
+    beginInsertRows({}, row, row);
+    Tab tab;
+    tab.id = m_nextId++;
+    tab.kind = Transcript;
+    tab.title = title.isEmpty() ? QStringLiteral("Conversation") : title;
+    tab.conversationId = conversationId;
+    tab.closable = true;
+    tab.preview = true;
+    m_tabs.append(tab);
+    endInsertRows();
+    emit countChanged();
+
+    setCurrentInternal(row);
+    return tab.id;
+}
+
+void TabModel::pinTab(int index)
+{
+    if (index < 0 || index >= m_tabs.size() || !m_tabs.at(index).preview) {
+        return;
+    }
+    m_tabs[index].preview = false;
+    const QModelIndex idx = this->index(index, 0);
+    emit dataChanged(idx, idx, { PreviewRole });
+}
+
+void TabModel::pinTabById(int tabId)
+{
+    pinTab(indexOfTabId(tabId));
+}
+
+void TabModel::pinCurrent()
+{
+    pinTab(m_currentIndex);
 }
 
 int TabModel::openPage(int kind, const QString& title)
@@ -243,6 +324,14 @@ QString TabModel::titleAt(int index) const
     return m_tabs.at(index).title;
 }
 
+bool TabModel::isPreviewAt(int index) const
+{
+    if (index < 0 || index >= m_tabs.size()) {
+        return false;
+    }
+    return m_tabs.at(index).preview;
+}
+
 int TabModel::indexOfTabId(int tabId) const
 {
     for (int i = 0; i < m_tabs.size(); ++i) {
@@ -287,6 +376,16 @@ int TabModel::findPageRow(int kind) const
 {
     for (int i = 0; i < m_tabs.size(); ++i) {
         if (m_tabs.at(i).kind == kind) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int TabModel::findPreviewRow() const
+{
+    for (int i = 0; i < m_tabs.size(); ++i) {
+        if (m_tabs.at(i).preview) {
             return i;
         }
     }

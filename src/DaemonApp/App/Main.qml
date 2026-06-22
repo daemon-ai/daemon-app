@@ -120,7 +120,11 @@ ApplicationWindow {
                 onToggleSidebarRequested: sidebarExpanded.collapsed = !sidebarExpanded.collapsed
                 onConversationActivated: function(conversationId) {
                     root.activeConversationId = conversationId;
-                    conversationExpanded.open(conversationId);
+                    conversationExpanded.open(conversationId); // preview
+                }
+                onConversationOpened: function(conversationId) {
+                    root.activeConversationId = conversationId;
+                    conversationExpanded.openConversationPinned(conversationId);
                 }
                 Component.onCompleted: {
                     if (root.hasScope)

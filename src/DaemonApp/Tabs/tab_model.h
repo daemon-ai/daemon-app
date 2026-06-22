@@ -39,6 +39,7 @@ public:
         ConversationIdRole,           // transcript tabs only; -1 for pages
         ClosableRole,                 // false pins the tab open
         CurrentRole,                  // true for the active row
+        PreviewRole,                  // true for the transient "preview" tab
     };
 
     explicit TabModel(QObject* parent = nullptr);
@@ -51,9 +52,28 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    // Find-or-create a transcript tab for `conversationId`, activate it, and
-    // return its stable tab id. An existing tab is reused (title refreshed).
+    // Find-or-create a PINNED (permanent) transcript tab for `conversationId`,
+    // activate it, and return its stable tab id. An existing tab is reused (title
+    // refreshed) and pinned. This is the deliberate "open" path (list double-click
+    // / new conversation).
     Q_INVOKABLE int openTranscript(int conversationId, const QString& title);
+    // Alias kept for clarity at call sites; identical to openTranscript.
+    Q_INVOKABLE int openTranscriptPinned(int conversationId, const QString& title);
+
+    // VSCode-style transient open: if `conversationId` is already open in any tab,
+    // activate it; otherwise reuse the single preview tab (reassigning its
+    // conversation in place and emitting tabConversationChanged) or, if none
+    // exists, append a new preview tab. Returns the active tab's id. The preview
+    // tab is replaced by the next preview and becomes permanent via pinTab*.
+    Q_INVOKABLE int previewTranscript(int conversationId, const QString& title);
+
+    // Pin (make permanent) the tab at `index` / with `tabId` / the active tab:
+    // clears its preview flag so the next preview opens a fresh slot instead of
+    // replacing it. No-op when already pinned or out of range.
+    Q_INVOKABLE void pinTab(int index);
+    Q_INVOKABLE void pinTabById(int tabId);
+    Q_INVOKABLE void pinCurrent();
+
     // Find-or-create the singleton page of `kind` (e.g. Settings), activate it,
     // and return its tab id.
     Q_INVOKABLE int openPage(int kind, const QString& title);
@@ -75,6 +95,7 @@ public:
     [[nodiscard]] Q_INVOKABLE int kindAt(int index) const;
     [[nodiscard]] Q_INVOKABLE int conversationIdAt(int index) const;
     [[nodiscard]] Q_INVOKABLE QString titleAt(int index) const;
+    [[nodiscard]] Q_INVOKABLE bool isPreviewAt(int index) const;
     [[nodiscard]] Q_INVOKABLE int indexOfTabId(int tabId) const;
 
 signals:
@@ -85,6 +106,9 @@ signals:
     // A tab was removed; carries its (now-defunct) tab id so the frontend can
     // dispose of the matching per-tab session.
     void tabClosed(int tabId);
+    // A preview tab was reassigned to a different conversation in place (its tab id
+    // is stable). The frontend rebinds the matching per-tab page/session.
+    void tabConversationChanged(int tabId, int conversationId);
 
 private:
     struct Tab {
@@ -93,6 +117,7 @@ private:
         QString title;
         int conversationId = -1;
         bool closable = true;
+        bool preview = false; // transient (VSCode-style) tab; at most one exists
     };
 
     // Move the active row to `index` (already validated/clamped by the caller),
@@ -101,6 +126,7 @@ private:
     void emitCurrentChanged(); // dataChanged(CurrentRole) across all rows
     [[nodiscard]] int findTranscriptRow(int conversationId) const;
     [[nodiscard]] int findPageRow(int kind) const;
+    [[nodiscard]] int findPreviewRow() const;
 
     QList<Tab> m_tabs;
     int m_currentIndex = -1;

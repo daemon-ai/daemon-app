@@ -15,7 +15,10 @@ Rectangle {
     // off-white so it reads with the editor instead of as grey sidebar chrome.
     color: Theme.listBackground
 
+    // Single-click / Enter: activate (opens in the transient preview tab).
     signal conversationActivated(int conversationId)
+    // Double-click: open as a permanent (pinned) tab.
+    signal conversationOpened(int conversationId)
     signal toggleSidebarRequested()
 
     property bool searchActive: false
@@ -313,6 +316,9 @@ Rectangle {
                             convModel.activate(del.index);
                             root.conversationActivated(convModel.idAt(del.index));
                         }
+                        // Double-click promotes the preview into a pinned tab. The
+                        // preceding single `clicked` already previewed it.
+                        onDoubleClicked: root.conversationOpened(convModel.idAt(del.index))
                     }
                 }
             }

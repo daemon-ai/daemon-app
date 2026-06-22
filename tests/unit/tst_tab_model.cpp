@@ -189,6 +189,89 @@ private slots:
         model.setCurrentIndex(99); // out of range -> ignored
         QCOMPARE(model.currentIndex(), 0);
     }
+
+    // previewTranscript opens a transient tab; previewing a different conversation
+    // reuses that single slot (reassigns it in place) rather than appending.
+    void previewReusesSingleSlot()
+    {
+        TabModel model;
+        QSignalSpy reassignSpy(&model, &TabModel::tabConversationChanged);
+
+        const int id0 = model.previewTranscript(10, QStringLiteral("Alpha"));
+        QCOMPARE(model.count(), 1);
+        QVERIFY(roleAt<bool>(model, 0, TabModel::PreviewRole));
+
+        const int id1 = model.previewTranscript(20, QStringLiteral("Beta"));
+        QCOMPARE(id1, id0);                 // same (stable) tab id
+        QCOMPARE(model.count(), 1);         // reused, not appended
+        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), 20);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::TitleRole), QStringLiteral("Beta"));
+        QVERIFY(roleAt<bool>(model, 0, TabModel::PreviewRole)); // still preview
+
+        QCOMPARE(reassignSpy.count(), 1);
+        QCOMPARE(reassignSpy.takeFirst().at(0).toInt(), id0);
+    }
+
+    // At most one preview tab ever exists, regardless of how many previews open.
+    void previewSingleInvariant()
+    {
+        TabModel model;
+        model.previewTranscript(10, QStringLiteral("Alpha"));
+        model.previewTranscript(20, QStringLiteral("Beta"));
+        model.previewTranscript(30, QStringLiteral("Gamma"));
+        QCOMPARE(model.count(), 1);
+        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), 30);
+    }
+
+    // Previewing a conversation that is already open in some tab activates that
+    // tab instead of reassigning the preview slot.
+    void previewActivatesExistingTab()
+    {
+        TabModel model;
+        const int idA = model.openTranscript(10, QStringLiteral("Alpha")); // pinned, row 0
+        const int idP = model.previewTranscript(20, QStringLiteral("Beta")); // preview, row 1
+        QCOMPARE(model.count(), 2);
+        QCOMPARE(model.currentIndex(), 1);
+
+        const int again = model.previewTranscript(10, QStringLiteral("Alpha"));
+        QCOMPARE(again, idA);
+        QCOMPARE(model.count(), 2);        // nothing reassigned/appended
+        QCOMPARE(model.currentIndex(), 0); // activated the existing pinned tab
+        // The preview slot is untouched (still Beta).
+        QCOMPARE(model.tabIdAt(1), idP);
+        QCOMPARE(roleAt<int>(model, 1, TabModel::ConversationIdRole), 20);
+    }
+
+    // Pinning the preview tab makes it permanent: the next preview opens a fresh
+    // slot rather than replacing it.
+    void pinPromotesPreviewSoNextPreviewAppends()
+    {
+        TabModel model;
+        model.previewTranscript(10, QStringLiteral("Alpha"));
+        QVERIFY(roleAt<bool>(model, 0, TabModel::PreviewRole));
+
+        model.pinTab(0);
+        QVERIFY(!roleAt<bool>(model, 0, TabModel::PreviewRole));
+
+        model.previewTranscript(20, QStringLiteral("Beta"));
+        QCOMPARE(model.count(), 2); // appended, the pinned tab was not reused
+        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), 10);
+        QCOMPARE(roleAt<int>(model, 1, TabModel::ConversationIdRole), 20);
+        QVERIFY(roleAt<bool>(model, 1, TabModel::PreviewRole));
+    }
+
+    // A deliberate open (openTranscript) of the previewed conversation pins it.
+    void openTranscriptPinsThePreview()
+    {
+        TabModel model;
+        const int idP = model.previewTranscript(10, QStringLiteral("Alpha"));
+        QVERIFY(roleAt<bool>(model, 0, TabModel::PreviewRole));
+
+        const int opened = model.openTranscript(10, QStringLiteral("Alpha"));
+        QCOMPARE(opened, idP);
+        QCOMPARE(model.count(), 1);
+        QVERIFY(!roleAt<bool>(model, 0, TabModel::PreviewRole));
+    }
 };
 
 QTEST_MAIN(TestTabModel)
