@@ -36,6 +36,7 @@ target_link_libraries(daemon-app
         daemon-app::sidebar
         daemon-app::conversationslist
         daemon-app::conversation
+        daemon-app::tabs
         daemon-app::transcript
         daemon-app::composer
         daemon-app::settings
@@ -51,6 +52,7 @@ target_link_libraries(daemon-app
         da_sidebarplugin
         da_conversationslistplugin
         da_conversationplugin
+        da_tabsplugin
         da_transcriptplugin
         da_composerplugin
         da_settingsplugin

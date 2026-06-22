@@ -11,6 +11,7 @@
 
 #include "composer_session_controller.h"
 #include "status_bar_model.h"
+#include "tab_model.h"
 #include "turn_controller.h"
 
 #include "persistence/in_memory_conversation_store.h"
@@ -40,6 +41,66 @@
 #include <QRect>
 #include <QSettings>
 #include <QVariantMap>
+
+// Per-transcript-tab backend state (see the forward declaration in root_widget.h).
+// Owns its QObjects unparented and deletes them on close; the document + ingest are
+// value members (the ingest holds a stable &doc back-pointer because sessions live
+// behind pointers in the map and are never moved).
+struct TabSession {
+    int tabId = -1;
+    int conversationId = -1;
+    ConversationController* controller = nullptr;
+    ConversationOrchestrator* orchestrator = nullptr; // owns `turn`
+    TurnController* turn = nullptr;
+    InteractiveTurnHost* host = nullptr;
+    be::DocumentStore doc;
+    be::TranscriptIngest ingest { &doc };
+
+    ~TabSession()
+    {
+        delete host;
+        delete orchestrator; // deletes its child TurnController
+        delete controller;
+    }
+};
+
+namespace {
+
+// A short tab title for a conversation: the first non-empty content line (heading
+// markers stripped, capped), falling back to a generic label.
+QString titleForContent(const QString& markdown)
+{
+    const QString trimmed = markdown.trimmed();
+    if (trimmed.isEmpty()) {
+        return QStringLiteral("New conversation");
+    }
+    QString first = trimmed.section(QLatin1Char('\n'), 0, 0);
+    while (first.startsWith(QLatin1Char('#'))) {
+        first.remove(0, 1);
+    }
+    first = first.trimmed();
+    if (first.isEmpty()) {
+        return QStringLiteral("Conversation");
+    }
+    return first.left(24);
+}
+
+// The static markdown shown for a (non-transcript) page tab.
+QString pageMarkdown(int kind)
+{
+    if (kind == TabModel::Settings) {
+        return QStringLiteral(
+            "# Settings\n\n"
+            "A generic, non-transcript page hosted by the same tab strip.\n\n"
+            "- Press **F8** to cycle the theme (Light / Dark / Sepia / Midnight)\n"
+            "- **Ctrl+T** opens a new transcript tab\n"
+            "- **Ctrl+W** closes the current tab\n"
+            "- **Ctrl+Tab** / **Ctrl+Shift+Tab** switch tabs\n");
+    }
+    return QString();
+}
+
+} // namespace
 
 void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
 {
@@ -360,31 +421,29 @@ RootWidget::RootWidget()
     m_list = new ConversationsListModel(this);
     m_list->setStore(m_store);
 
-    m_controller = new ConversationController(this);
-    m_controller->setStore(m_store);
-
     // The shared composer FSM - the same C++ class the QML composer drives. The
     // TUI binds its single-line input to it, gaining draft persistence, history,
-    // and the submit/queue/drain logic without re-implementing any of it.
+    // and the submit/queue/drain logic without re-implementing any of it. One
+    // composer is shared across tabs; its conversationId follows the active tab and
+    // its intents are dispatched to the active tab's orchestrator.
     m_composerSession = new ComposerSessionController(this);
 
-    // The shared submit pipeline - the same C++ class Conversation.qml drives. It
-    // owns the turn (the assistant-turn FSM) and the status-stack todos; the TUI
-    // routes the composer's intents into it and renders turn/todos identically.
-    m_orchestrator = new ConversationOrchestrator(this);
-    m_orchestrator->setConversation(m_controller);
-    m_turn = m_orchestrator->turn();
-
-    // The shared status-bar model - the same C++ class StatusBar.qml binds. The
-    // TUI consumes the turn's daemon-shaped events directly and renders the status
-    // model into a footer.
+    // The shared status-bar model - the same C++ class StatusBar.qml binds. One
+    // footer for the whole app; the active tab's turn drives its busy/timer.
     m_status = new StatusBarModel(this);
     // StatusBarModel seeds sessionStartedAt at construction (= launch), mirroring
     // StatusBar.qml's Component.onCompleted.
 
-    // Mock agent host: stands in for the daemon runtime so the inline clarify /
-    // approval blocks round-trip end-to-end (patches m_doc + ingests a follow-up).
-    m_host = new InteractiveTurnHost(&m_doc, &m_ingest, this);
+    // The shared pane-tab model (the same C++ class the QML TabBar binds). It is
+    // the single source of truth for the open tabs and the active one; the TUI
+    // creates a per-tab TabSession on demand and binds the views to the active one.
+    m_tabModel = new TabModel(this);
+    connect(m_tabModel, &TabModel::currentTabChanged, this, [this](int tabId) {
+        if (tabId >= 0) {
+            activateTab(tabId);
+        }
+    });
+    connect(m_tabModel, &TabModel::tabClosed, this, &RootWidget::destroySession);
 
     // Sidebar scope selection drives the conversation list - the model-to-model
     // contract is untouched by the choice of toolkit.
@@ -411,6 +470,32 @@ void RootWidget::resizeEvent(Tui::ZResizeEvent* event)
 
 void RootWidget::keyEvent(Tui::ZKeyEvent* event)
 {
+    // Tab management keys are handled here at the ZRoot, i.e. only AFTER the
+    // focused pane leaves them unhandled. This keeps them contextual: the composer
+    // consumes Ctrl+W (word-rubout) and Ctrl+T (transpose) for its readline editing
+    // while it has focus, so tab open/close fire only from the panes/transcript.
+    // Ctrl+Tab switching has no composer conflict and works everywhere.
+    const Qt::KeyboardModifiers mods = event->modifiers();
+    if (mods == Qt::ControlModifier
+        && event->text().compare(QStringLiteral("t"), Qt::CaseInsensitive) == 0) {
+        newTranscriptTab();
+        event->accept();
+        return;
+    }
+    if (mods == Qt::ControlModifier
+        && event->text().compare(QStringLiteral("w"), Qt::CaseInsensitive) == 0) {
+        closeCurrentTab();
+        event->accept();
+        return;
+    }
+    if ((mods & Qt::ControlModifier) && m_tabModel != nullptr
+        && (event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backtab)) {
+        const bool backward = event->key() == Qt::Key_Backtab || (mods & Qt::ShiftModifier);
+        m_tabModel->cycle(backward ? -1 : 1);
+        event->accept();
+        return;
+    }
+
     // Final fallback for the context-sensitive Esc chain: when a pane leaves Esc
     // unhandled it bubbles up the parent chain to here (the ZRoot), where it
     // opens the quit confirmation. The composer consumes Esc itself; the quit
@@ -586,15 +671,20 @@ void RootWidget::buildUi()
     auto* rightCol = new Tui::ZVBoxLayout();
     right->setLayout(rightCol);
 
-    m_header = new Tui::ZLabel(right);
-    m_header->setText(QStringLiteral("daemon-app TUI"));
-    rightCol->addWidget(m_header);
+    // Pane-level tab strip (replaces the old single header label): a one-line row
+    // of tab chips bound to the shared TabModel, with a trailing "+" affordance.
+    m_tabStrip = new TabStripView(right);
+    m_tabStrip->setModel(m_tabModel);
+    rightCol->addWidget(m_tabStrip);
+    connect(m_tabStrip, &TabStripView::newTabRequested, this, &RootWidget::newTranscriptTab);
 
     // Custom-painted transcript: renders the shared be::DocumentStore (the GUI's
     // parse/ingest engine) as colored tool/reasoning cards, ANSI output, diffs,
-    // and YOU/DAEMON headers instead of a raw-markdown text dump.
+    // and YOU/DAEMON headers instead of a raw-markdown text dump. The active tab's
+    // session swaps its document in; before any tab opens it shows the (empty)
+    // page document.
     m_transcript = new TranscriptView(right);
-    m_transcript->setDocument(&m_doc);
+    m_transcript->setDocument(&m_pageDoc);
     m_transcript->setSizePolicyV(Tui::SizePolicy::Expanding);
     rightCol->addWidget(m_transcript);
 
@@ -704,9 +794,9 @@ void RootWidget::wireViews()
     });
 
     // Conversation highlight / Enter -> record selection in the model (so the
-    // model owns `current`, consistent with the sidebar) and open it. Opening a
-    // conversation also points the composer session at it, so the draft/queue/
-    // history swap to that conversation (mirrors the GUI's conversationId bind).
+    // model owns `current`, consistent with the sidebar) and open it as a tab.
+    // Opening find-or-creates a transcript tab for the conversation; activating
+    // that tab points the shared composer/transcript at its session.
     const auto openRow = [this](int row) {
         if (row < 0) {
             return;
@@ -714,50 +804,35 @@ void RootWidget::wireViews()
         m_list->activate(row); // identity-based selection in the shared model
         const int id = m_list->idAt(row);
         if (id >= 0) {
-            // Switching conversations abandons any in-flight simulated turn; the
-            // open() below refreshes the content and reloads the document.
-            m_orchestrator->cancel();
-            m_ingest = be::TranscriptIngest(&m_doc); // drop any open turn state
-            m_controller->open(id);
-            m_composerSession->setConversationId(id);
+            openConversationTab(id);
         }
     };
     connect(m_listView, &ConversationListView::rowActivated, this, openRow);
 
-    connect(m_controller, &ConversationController::conversationChanged, this,
-            &RootWidget::refreshTranscript);
-    connect(m_controller, &ConversationController::contentChanged, this,
-            &RootWidget::refreshTranscript);
-
-    // Inline interactive answers: the transcript's controls emit decisions which
-    // the mock host applies to m_doc; the host then asks us to persist the patched
-    // markdown (-> contentChanged -> refreshTranscript reloads + repaints).
-    connect(m_transcript, &TranscriptView::approvalDecided, m_host,
-            &InteractiveTurnHost::onApprovalDecided);
-    connect(m_transcript, &TranscriptView::clarifySubmitted, m_host,
-            &InteractiveTurnHost::onClarifySubmitted);
-    // A live turn that paused at an approval gate resumes once answered (no-op for
-    // a seeded block when no turn is running).
+    // Inline interactive answers: the transcript's controls emit decisions routed
+    // to the ACTIVE session's mock host, which patches its document and asks us to
+    // persist + reload. A live turn paused at an approval gate resumes once answered.
     connect(m_transcript, &TranscriptView::approvalDecided, this,
-            [this](const QString&, const QString&, bool) {
-                if (m_turn != nullptr) {
-                    m_turn->resume();
+            [this](const QString& callId, const QString& decision, bool permanent) {
+                if (m_active == nullptr) {
+                    return;
+                }
+                m_active->host->onApprovalDecided(callId, decision, permanent);
+                if (m_active->turn != nullptr) {
+                    m_active->turn->resume();
                 }
             });
-    connect(m_host, &InteractiveTurnHost::documentChanged, this, [this] {
-        if (m_controller->hasConversation()) {
-            m_controller->updateContent(m_doc.toMarkdown());
-        }
-        if (m_transcript != nullptr) {
-            m_transcript->reload();
-        }
-    });
+    connect(m_transcript, &TranscriptView::clarifySubmitted, this,
+            [this](const QString& callId, const QString& requestId, const QVariantMap& answers) {
+                if (m_active != nullptr) {
+                    m_active->host->onClarifySubmitted(callId, requestId, answers);
+                }
+            });
 
     // Composer <-> session controller. The controller is the source of truth for
     // the draft; the input box is its view. Typed edits flow in via textChanged;
     // programmatic changes (history recall, conversation swap, clear-on-send) flow
-    // back out via draftReset. Enter routes to submit(); the controller emits the
-    // submitted turn, which the conversation controller appends.
+    // back out via draftReset.
     connect(m_composer, &Tui::ZInputBox::textChanged, m_composerSession,
             &ComposerSessionController::setDraft);
     connect(m_composerSession, &ComposerSessionController::draftReset, m_composer,
@@ -768,19 +843,26 @@ void RootWidget::wireViews()
             });
     connect(m_composer, &SubmitInputBox::submitted, m_composerSession,
             [this](const QString&) { m_composerSession->submit(); });
+    // Submit is dispatched to the ACTIVE tab's orchestrator, which owns its submit
+    // pipeline (persist user text -> start the scripted turn -> stream into its own
+    // document). Background tabs keep their own orchestrators running independently.
     connect(m_composerSession, &ComposerSessionController::submitted, this,
             [this](const QString& text, const QString& refs) {
-                // The orchestrator owns the whole submit pipeline: it persists the
-                // user's text (-> contentChanged -> refreshTranscript reloads the
-                // doc with the user message) then starts the scripted assistant
-                // turn, whose events stream into the same doc via onTurnEvents.
-                m_orchestrator->submit(text, refs);
+                if (m_active != nullptr) {
+                    m_active->orchestrator->submit(text, refs);
+                }
             });
-    // Slash commands (e.g. /new) routed through the shared orchestrator: it
-    // handles "new" (create a conversation); front-end-only commands surface via
-    // commandRequested (no-ops in the TUI for now).
-    connect(m_composerSession, &ComposerSessionController::commandInvoked, m_orchestrator,
-            &ConversationOrchestrator::invokeCommand);
+    // Slash commands: "/new" opens a new transcript tab; other commands route to
+    // the active orchestrator (front-end-only ones surface via commandRequested,
+    // no-ops in the TUI for now).
+    connect(m_composerSession, &ComposerSessionController::commandInvoked, this,
+            [this](const QString& command) {
+                if (command == QStringLiteral("new")) {
+                    newTranscriptTab();
+                } else if (m_active != nullptr) {
+                    m_active->orchestrator->invokeCommand(command);
+                }
+            });
     connect(m_composer, &SubmitInputBox::historyPrevious, m_composerSession,
             [this] { m_composerSession->browseUp(); });
     connect(m_composer, &SubmitInputBox::historyNext, m_composerSession,
@@ -799,20 +881,21 @@ void RootWidget::wireViews()
     connect(m_composerSession->completionItems(), &QAbstractItemModel::modelReset, this,
             &RootWidget::updateCompletion);
 
-    // The orchestrator's todo model drives the compact strip above the composer.
-    connect(m_orchestrator->todos(), &TodoListModel::countChanged, this, &RootWidget::updateTodos);
-    connect(m_orchestrator->todos(), &QAbstractItemModel::modelReset, this,
-            &RootWidget::updateTodos);
+    // Mid-turn nudge + stop dispatched to the active tab's orchestrator.
+    connect(m_composerSession, &ComposerSessionController::steer, this,
+            [this](const QString& text) {
+                if (m_active != nullptr) {
+                    m_active->orchestrator->steer(text);
+                }
+            });
+    connect(m_composerSession, &ComposerSessionController::cancelRequested, this, [this] {
+        if (m_active != nullptr) {
+            m_active->orchestrator->cancel();
+        }
+    });
 
-    // Mid-turn nudge + stop: the composer's Ctrl+Enter/Esc call steerDraft()/
-    // cancel() on the session, which surface as these host-facing signals.
-    connect(m_composerSession, &ComposerSessionController::steer, m_orchestrator,
-            &ConversationOrchestrator::steer);
-    connect(m_composerSession, &ComposerSessionController::cancelRequested, m_orchestrator,
-            &ConversationOrchestrator::cancel);
-
-    // Queued-prompt strip: bound to the same session; editing a queued entry loads
-    // it into the draft, so move focus to the composer to edit + save on Enter.
+    // Queued-prompt strip: bound to the shared session; editing a queued entry
+    // loads it into the draft, so move focus to the composer to edit + save.
     m_queue->setController(m_composerSession);
     connect(m_queue, &QueueStripView::editRequested, this, [this](int) {
         if (m_composer != nullptr) {
@@ -820,7 +903,7 @@ void RootWidget::wireViews()
         }
     });
 
-    // Attachment chips bind to the same session; Ctrl+O on the composer adds a
+    // Attachment chips bind to the shared session; Ctrl+O on the composer adds a
     // canned attachment (mock-parity with the GUI's "+" menu / drag-drop).
     m_attachments->setController(m_composerSession);
     connect(m_composer, &SubmitInputBox::attachRequested, m_composerSession, [this] {
@@ -828,11 +911,6 @@ void RootWidget::wireViews()
         m_composerSession->addAttachment(
             QStringLiteral("attachment-%1.txt").arg(n + 1), QStringLiteral("file"));
     });
-
-    // Mirror the turn's busy state into the composer session so mid-turn submits
-    // queue and drain (the GUI binds composer.busy to the turn the same way).
-    connect(m_turn, &TurnController::activeChanged, this,
-            [this] { m_composerSession->setBusy(m_turn->active()); });
 
     // Esc on an empty composer hands focus back to the conversation list, where a
     // further Esc bubbles up to the quit prompt (context-sensitive Esc, level 2).
@@ -842,49 +920,198 @@ void RootWidget::wireViews()
         }
     });
 
-    // Turn lifecycle -> transcript stream + status busy/turn timer. The footer
-    // (and transcript stream) refresh as events arrive and as the status model
-    // ticks once per second.
-    connect(m_turn, &TurnController::eventsEmitted, this, &RootWidget::onTurnEvents);
-    connect(m_turn, &TurnController::turnStarted, this, [this] {
-        m_status->setBusy(true);
-        m_status->setTurnStartedAt(static_cast<double>(QDateTime::currentMSecsSinceEpoch()));
-        if (m_transcript != nullptr) {
-            m_transcript->reload(); // re-pin to the bottom for the new turn
-        }
-    });
-    connect(m_turn, &TurnController::turnFinished, this, [this] {
-        m_status->setBusy(false);
-        // Settle any open stream/reasoning, then persist the grown document back
-        // to the store (mirrors the GUI round-trip). updateContent adopts the
-        // markdown locally, so it does not trigger a reparse/reload here.
-        m_ingest.finish();
-        if (m_controller->hasConversation()) {
-            m_controller->updateContent(m_doc.toMarkdown());
-        }
-        if (m_transcript != nullptr) {
-            m_transcript->reload();
-        }
-    });
-
-    // The colored status footer + the streaming composer chrome bind directly to
-    // the shared models/controllers and repaint off their own NOTIFYs (including
-    // the StatusBarModel's 1s elapsed tick).
+    // The colored status footer + the streaming composer chrome bind to the shared
+    // models; the chrome's turn is (re)bound to the active tab in activateTab().
     m_footer->setModel(m_status);
-    m_composerChrome->setTurn(m_turn);
     m_composerChrome->setSession(m_composerSession);
 
-    // Initial selection: first sidebar row populates the list, then open its
-    // first conversation so the transcript is non-empty on launch.
+    // Initial selection: first sidebar row populates the list, then open its first
+    // conversation in a tab so the transcript is non-empty on launch.
     if (m_sidebarAdapter->rowCount() > 0) {
         m_sidebarView->setCurrentIndex(m_sidebarAdapter->index(0, 0));
     }
     if (m_list->rowCount() > 0) {
-        openRow(0); // select + open the first conversation so the transcript is non-empty
+        openRow(0);
     }
-    refreshTranscript();
-    updateTodos();
     updateCompletion();
+}
+
+// --- Tabs --------------------------------------------------------------------
+
+void RootWidget::openConversationTab(int conversationId)
+{
+    if (m_tabModel == nullptr) {
+        return;
+    }
+    const QString title = titleForContent(m_store->content(conversationId));
+    m_tabModel->openTranscript(conversationId, title);
+}
+
+void RootWidget::newTranscriptTab()
+{
+    if (m_store == nullptr || m_tabModel == nullptr) {
+        return;
+    }
+    const int id = m_store->createConversation(QString());
+    m_tabModel->openTranscript(id, QStringLiteral("New conversation"));
+    // A new tab is a natural place to start typing.
+    if (m_composer != nullptr) {
+        m_composer->setFocus();
+    }
+}
+
+void RootWidget::closeCurrentTab()
+{
+    if (m_tabModel != nullptr && m_tabModel->currentIndex() >= 0) {
+        m_tabModel->closeTab(m_tabModel->currentIndex());
+    }
+}
+
+TabSession* RootWidget::ensureSession(int tabId)
+{
+    if (auto it = m_sessions.find(tabId); it != m_sessions.end()) {
+        return it.value();
+    }
+    const int row = m_tabModel->indexOfTabId(tabId);
+    if (row < 0 || m_tabModel->kindAt(row) != TabModel::Transcript) {
+        return nullptr; // page tabs have no backend session
+    }
+
+    auto* s = new TabSession();
+    s->tabId = tabId;
+    s->conversationId = m_tabModel->conversationIdAt(row);
+    s->controller = new ConversationController();
+    s->controller->setStore(m_store);
+    s->orchestrator = new ConversationOrchestrator();
+    s->orchestrator->setConversation(s->controller);
+    s->turn = s->orchestrator->turn();
+    s->host = new InteractiveTurnHost(&s->doc, &s->ingest);
+    m_sessions.insert(tabId, s);
+    wireSession(s);
+    s->controller->open(s->conversationId);
+    return s;
+}
+
+void RootWidget::wireSession(TabSession* s)
+{
+    // Stream this session's turn events into ITS OWN document (so a background tab
+    // keeps growing while another is on screen); repaint only when it is active.
+    connect(s->turn, &TurnController::eventsEmitted, this,
+            [this, s](const QVariantList& events) { onTurnEvents(s, events); });
+    connect(s->turn, &TurnController::turnStarted, this, [this, s] {
+        if (s == m_active) {
+            m_status->setBusy(true);
+            m_status->setTurnStartedAt(
+                static_cast<double>(QDateTime::currentMSecsSinceEpoch()));
+            if (m_transcript != nullptr) {
+                m_transcript->reload();
+            }
+        }
+    });
+    connect(s->turn, &TurnController::turnFinished, this, [this, s] {
+        // Settle the open stream and persist the grown document regardless of which
+        // tab is active, so a background turn's result is saved.
+        s->ingest.finish();
+        if (s->controller->hasConversation()) {
+            s->controller->updateContent(s->doc.toMarkdown());
+        }
+        if (s == m_active) {
+            m_status->setBusy(false);
+            if (m_transcript != nullptr) {
+                m_transcript->reload();
+            }
+        }
+    });
+    connect(s->turn, &TurnController::activeChanged, this, [this, s] {
+        if (s == m_active) {
+            m_composerSession->setBusy(s->turn->active());
+        }
+    });
+    connect(s->controller, &ConversationController::conversationChanged, this, [this, s] {
+        if (s == m_active) {
+            refreshTranscript();
+        }
+    });
+    connect(s->controller, &ConversationController::contentChanged, this, [this, s] {
+        if (s == m_active) {
+            refreshTranscript();
+        }
+    });
+    connect(s->host, &InteractiveTurnHost::documentChanged, this, [this, s] {
+        if (s->controller->hasConversation()) {
+            s->controller->updateContent(s->doc.toMarkdown());
+        }
+        if (s == m_active && m_transcript != nullptr) {
+            m_transcript->reload();
+        }
+    });
+    connect(s->orchestrator->todos(), &TodoListModel::countChanged, this, [this, s] {
+        if (s == m_active) {
+            updateTodos();
+        }
+    });
+    connect(s->orchestrator->todos(), &QAbstractItemModel::modelReset, this, [this, s] {
+        if (s == m_active) {
+            updateTodos();
+        }
+    });
+}
+
+void RootWidget::activateTab(int tabId)
+{
+    const int row = m_tabModel->indexOfTabId(tabId);
+    if (row < 0) {
+        return;
+    }
+
+    if (m_tabModel->kindAt(row) == TabModel::Transcript) {
+        TabSession* s = ensureSession(tabId);
+        if (s == nullptr) {
+            return;
+        }
+        m_active = s;
+        if (m_transcript != nullptr) {
+            m_transcript->setDocument(&s->doc);
+        }
+        if (m_composerChrome != nullptr) {
+            m_composerChrome->setTurn(s->turn);
+        }
+        m_composerSession->setConversationId(s->conversationId);
+        m_composerSession->setBusy(s->turn->active());
+        m_status->setBusy(s->turn->active());
+        refreshTranscript();
+        updateTodos();
+    } else {
+        // A non-transcript page tab (Settings): no backend session; show the static
+        // page document and clear the per-tab strips.
+        m_active = nullptr;
+        m_pageDoc.loadMarkdown(pageMarkdown(m_tabModel->kindAt(row)));
+        if (m_transcript != nullptr) {
+            m_transcript->setDocument(&m_pageDoc);
+            m_transcript->reload();
+        }
+        m_status->setBusy(false);
+        updateTodos();
+    }
+}
+
+void RootWidget::destroySession(int tabId)
+{
+    auto it = m_sessions.find(tabId);
+    if (it == m_sessions.end()) {
+        return;
+    }
+    TabSession* s = it.value();
+    if (m_active == s) {
+        m_active = nullptr;
+        // Detach the transcript from the doc we are about to delete; the follow-up
+        // currentTabChanged -> activateTab repoints it at the new active tab.
+        if (m_transcript != nullptr) {
+            m_transcript->setDocument(&m_pageDoc);
+        }
+    }
+    m_sessions.erase(it);
+    delete s;
 }
 
 void RootWidget::dumpGeometry() const
@@ -976,7 +1203,7 @@ void RootWidget::cycleTheme()
     Tui::ZWidget* views[] = { m_window,       m_sidebarView,    m_composerChrome,
                               m_queue,        m_attachments,    m_footer,
                               m_completionPopup, m_search,       m_composer,
-                              m_header,       m_todos };
+                              m_tabStrip,     m_todos };
     for (Tui::ZWidget* w : views) {
         if (w != nullptr) {
             w->update();
@@ -990,31 +1217,27 @@ void RootWidget::cycleTheme()
 
 void RootWidget::refreshTranscript()
 {
-    if (m_transcript == nullptr) {
+    if (m_transcript == nullptr || m_active == nullptr) {
         return;
-    }
-    if (m_header != nullptr) {
-        m_header->setText(m_controller->hasConversation()
-                              ? QStringLiteral("Conversation #%1").arg(m_controller->currentId())
-                              : QStringLiteral("daemon-app TUI"));
     }
     // Mid-turn the live ingest owns the document tail; reloading from the store
     // would clobber the streamed blocks. Only reparse the persisted markdown when
     // idle (open/switch, the post-submit user-message append, or a finished turn).
-    if (m_turn != nullptr && m_turn->active()) {
+    if (m_active->turn != nullptr && m_active->turn->active()) {
         return;
     }
-    m_doc.loadMarkdown(m_controller->hasConversation() ? m_controller->content() : QString());
+    m_active->doc.loadMarkdown(
+        m_active->controller->hasConversation() ? m_active->controller->content() : QString());
     m_transcript->reload();
 }
 
-void RootWidget::onTurnEvents(const QVariantList& events)
+void RootWidget::onTurnEvents(TabSession* session, const QVariantList& events)
 {
-    // Route the daemon-shaped events straight into the shared ingest: it appends/
-    // patches typed reasoning/tool/content blocks on m_doc keyed by callId, exactly
-    // as the GUI's EditorController does. Then repaint (pinned to the bottom).
-    m_ingest.ingestAll(events);
-    if (m_transcript != nullptr) {
+    // Route the daemon-shaped events into THIS session's ingest: it appends/patches
+    // typed reasoning/tool/content blocks on the session's document keyed by callId,
+    // exactly as the GUI's EditorController does. Repaint only when it is on screen.
+    session->ingest.ingestAll(events);
+    if (session == m_active && m_transcript != nullptr) {
         m_transcript->reload();
     }
 }
@@ -1024,7 +1247,11 @@ void RootWidget::updateTodos()
     if (m_todos == nullptr) {
         return;
     }
-    TodoListModel* todos = m_orchestrator->todos();
+    if (m_active == nullptr) {
+        m_todos->setText(QString());
+        return;
+    }
+    TodoListModel* todos = m_active->orchestrator->todos();
     const int n = todos->count();
     if (n == 0) {
         m_todos->setText(QString());

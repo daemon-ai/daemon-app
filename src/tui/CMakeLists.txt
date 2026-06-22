@@ -36,6 +36,8 @@ add_library(da_tui_viewmodels STATIC
     ../DaemonApp/Conversation/conversation_orchestrator.cpp
     ../DaemonApp/Conversation/todo_list_model.h
     ../DaemonApp/Conversation/todo_list_model.cpp
+    ../DaemonApp/Tabs/tab_model.h
+    ../DaemonApp/Tabs/tab_model.cpp
 )
 add_library(daemon-app::tui_viewmodels ALIAS da_tui_viewmodels)
 
@@ -47,6 +49,7 @@ target_include_directories(da_tui_viewmodels PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Sidebar"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/ConversationsList"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Conversation"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Tabs"
 )
 
 target_link_libraries(da_tui_viewmodels
@@ -87,6 +90,8 @@ qt_add_executable(daemon-tui
     attachment_bar_view.cpp
     status_bar_view.h
     status_bar_view.cpp
+    tab_strip_view.h
+    tab_strip_view.cpp
     composer_chrome.h
     composer_chrome.cpp
     completion_view.h

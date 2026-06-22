@@ -19,14 +19,17 @@
 #include "mouse_terminal.h"
 #include "queue_strip_view.h"
 #include "status_bar_view.h"
+#include "tab_strip_view.h"
 #include "transcript_view.h"
 
 #include "core/agent_ingest.h"
 #include "core/document_store.h"
 
+#include <QHash>
 #include <QString>
 #include <QStringList>
 #include <QVariantList>
+#include <QVariantMap>
 
 namespace persistence {
 class InMemoryConversationStore;
@@ -40,6 +43,14 @@ class ComposerSessionController;
 class TurnController;
 class StatusBarModel;
 class DisplayRoleAdapter;
+class TabModel;
+
+// Per-transcript-tab backend state. Each transcript tab owns an independent
+// controller / orchestrator (turn) / document / ingest / mock host, so a tab that
+// is streaming keeps growing its own document in the background; the single set of
+// views always binds to the active session. Stored by pointer (never moved) so the
+// ingest's &doc back-pointer stays valid. Defined in root_widget.cpp.
+struct TabSession;
 
 // ZInputBox has no "submit" signal, only textChanged. Subclass it to emit on
 // Enter so the composer can hand the line to the ConversationController.
@@ -177,30 +188,55 @@ private:
     // GUI and TUI stay in sync.
     void cycleTheme();
 
-    // Live assistant-turn streaming: route the TurnController's daemon-shaped
-    // events through be::TranscriptIngest so the document grows real typed blocks
-    // (reasoning/tool/content), rendered identically to the persisted ones.
-    void onTurnEvents(const QVariantList& events);
-    // Render the orchestrator's status-stack todos as a compact strip above the
+    // Live assistant-turn streaming for a given session: route its TurnController's
+    // daemon-shaped events through that session's ingest so its document grows real
+    // typed blocks; repaint only when the session is the active one.
+    void onTurnEvents(TabSession* session, const QVariantList& events);
+    // Render the active session's status-stack todos as a compact strip above the
     // composer (cleared when the model empties after the turn settles).
     void updateTodos();
     // Sync the completion overlay (items / active row / visibility / geometry)
     // from the shared controller's completion state.
     void updateCompletion();
 
+    // --- Tabs -----------------------------------------------------------------
+    // Open (or re-activate) a transcript tab for `conversationId`.
+    void openConversationTab(int conversationId);
+    // Create a brand-new conversation in the store and open it in a tab (Ctrl+T).
+    void newTranscriptTab();
+    // Close the active tab (Ctrl+W / tab "x").
+    void closeCurrentTab();
+    // Lazily create the per-tab session for a transcript tab id (no-op if present
+    // or if the tab is a non-transcript page).
+    TabSession* ensureSession(int tabId);
+    // Make the tab with `tabId` the active one: bind the views to its session (or
+    // to the static page document for page tabs) and refresh.
+    void activateTab(int tabId);
+    // Tear down and delete the session for a closed tab id.
+    void destroySession(int tabId);
+    // Wire a freshly created session's per-session connections (streaming into its
+    // own document, persistence, todos, busy), guarded so background sessions never
+    // touch the shared views/status unless they are active.
+    void wireSession(TabSession* session);
+
     // Reused, unchanged from the GUI build.
     persistence::InMemoryConversationStore* m_store = nullptr;
     SidebarModel* m_sidebar = nullptr;
     ConversationsListModel* m_list = nullptr;
-    ConversationController* m_controller = nullptr;
-    // Shared submit pipeline (owns the turn + todos), identical to the GUI.
-    ConversationOrchestrator* m_orchestrator = nullptr;
-    // Shared composer FSM (draft/queue/history/submit), identical to the GUI.
+    // Shared composer FSM (draft/queue/history/submit), identical to the GUI. Its
+    // conversationId is switched to the active tab; its intents are dispatched to
+    // the active session's orchestrator.
     ComposerSessionController* m_composerSession = nullptr;
-    // The orchestrator's TurnController (cached), and the shared status-bar model
-    // (DaemonApp.StatusModel) - the same C++ classes the GUI binds.
-    TurnController* m_turn = nullptr;
+    // The shared status-bar model (DaemonApp.StatusModel) - one footer for the app.
     StatusBarModel* m_status = nullptr;
+
+    // The shared tab model both the GUI and TUI bind; the single source of truth
+    // for the open tabs and the active one.
+    TabModel* m_tabModel = nullptr;
+    // Per-transcript-tab backend state, keyed by tab id. Page tabs have no session.
+    QHash<int, TabSession*> m_sessions;
+    // The active transcript session (nullptr while a page tab is active).
+    TabSession* m_active = nullptr;
 
     // TUI-only glue + widgets.
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;
@@ -211,14 +247,15 @@ private:
     ConversationListView* m_listView = nullptr;
     TranscriptView* m_transcript = nullptr;
     // One-line streaming/affordance indicator above the composer (Thinking.../error
-    // + send/stop/steer hint), driven by the TurnController.
+    // + send/stop/steer hint), driven by the active session's TurnController.
     ComposerChrome* m_composerChrome = nullptr;
     // Queued-prompt strip (custom-painted) above the composer; 0 height when empty.
     QueueStripView* m_queue = nullptr;
     // Attachment-chip row just above the composer; 0 height when empty.
     AttachmentBarView* m_attachments = nullptr;
     SubmitInputBox* m_composer = nullptr;
-    Tui::ZLabel* m_header = nullptr;
+    // The pane tab strip (replaces the old single header label).
+    TabStripView* m_tabStrip = nullptr;
     // Custom-painted colored status footer (gateway/agents/context/session/version).
     StatusBarView* m_footer = nullptr;
     // Compact status-stack todo strip (above the composer).
@@ -230,13 +267,9 @@ private:
     // Exit handling: the quit confirmation modal (nullptr when closed).
     QuitDialog* m_quitDialog = nullptr;
 
-    // The shared parse/ingest engine: persisted markdown loads into m_doc and
-    // live turn events stream into it via m_ingest, then TranscriptView paints it.
-    be::DocumentStore m_doc;
-    be::TranscriptIngest m_ingest { &m_doc };
-    // Mock agent host driving the inline clarify/approval answers back into m_doc
-    // (replicates Transcript.qml's mock host).
-    InteractiveTurnHost* m_host = nullptr;
+    // Static document backing non-transcript page tabs (e.g. Settings): the
+    // transcript view points here while a page tab is active.
+    be::DocumentStore m_pageDoc;
 
     bool m_built = false;
 };

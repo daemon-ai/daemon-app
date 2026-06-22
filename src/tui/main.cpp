@@ -96,6 +96,20 @@ bool maybeRenderOffscreen()
                     Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::ControlModifier);
                 } else if (name == "ctrl-o") {
                     Tui::ZTest::sendKey(&terminal, Qt::Key_O, Qt::ControlModifier);
+                } else if (name == "ctrl-t") {
+                    // New transcript tab (text-matched in RootWidget::keyEvent, so
+                    // emulate the char event like ctrl-q rather than sendKey).
+                    Tui::ZTest::sendText(&terminal, QStringLiteral("t"), Qt::ControlModifier);
+                } else if (name == "ctrl-w") {
+                    // Close the current tab.
+                    Tui::ZTest::sendText(&terminal, QStringLiteral("w"), Qt::ControlModifier);
+                } else if (name == "ctrl-tab") {
+                    // Switch to the next tab (wraps).
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Tab, Qt::ControlModifier);
+                } else if (name == "ctrl-shift-tab") {
+                    // Switch to the previous tab (wraps).
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Tab,
+                                        Qt::ControlModifier | Qt::ShiftModifier);
                 } else if (name == "del") {
                     Tui::ZTest::sendKey(&terminal, Qt::Key_Delete, Qt::NoModifier);
                 } else if (name == "space") {

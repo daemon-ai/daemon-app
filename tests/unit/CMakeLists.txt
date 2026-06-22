@@ -137,6 +137,27 @@ target_link_libraries(tst_line_editor
 add_test(NAME tst_line_editor COMMAND tst_line_editor)
 set_tests_properties(tst_line_editor PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_tab_model: the shared pane-tab model both frontends bind - find-or-create
+# open semantics, active-tab tracking (currentIndex/CurrentRole), close-neighbour
+# selection, the Settings singleton page, cycling, and reorder. Compiles the
+# source directly (it only needs QtCore/QtQml, no QML engine) so the logic test
+# stays in the fast unit suite.
+qt_add_executable(tst_tab_model
+    tst_tab_model.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs/tab_model.cpp
+)
+set_target_properties(tst_tab_model PROPERTIES AUTOMOC ON)
+target_include_directories(tst_tab_model
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs"
+)
+target_link_libraries(tst_tab_model
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+)
+add_test(NAME tst_tab_model COMMAND tst_tab_model)
+set_tests_properties(tst_tab_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_conversation_orchestrator: the shared submit pipeline - submit starts the
 # turn + populates todos (and clears them after the turn settles), cancel resets,
 # and slash "/new" is handled while other commands surface via commandRequested.
@@ -155,3 +176,16 @@ target_link_libraries(tst_conversation_orchestrator
 )
 add_test(NAME tst_conversation_orchestrator COMMAND tst_conversation_orchestrator)
 set_tests_properties(tst_conversation_orchestrator PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_transcript_search: the in-transcript search feasibility spike - the shared
+# be::TranscriptSearchController collecting ordered matches over a be::DocumentStore
+# (correct block/offset geometry, case sensitivity, typed-block visible text) and
+# driving next/prev cursor navigation + the navigateTo anchor signal.
+qt_add_executable(tst_transcript_search tst_transcript_search.cpp)
+target_link_libraries(tst_transcript_search
+    PRIVATE
+        Qt6::Test
+        be_core
+)
+add_test(NAME tst_transcript_search COMMAND tst_transcript_search)
+set_tests_properties(tst_transcript_search PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

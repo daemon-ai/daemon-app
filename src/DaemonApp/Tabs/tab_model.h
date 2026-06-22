@@ -1,0 +1,108 @@
+#pragma once
+
+#include <QAbstractListModel>
+#include <QHash>
+#include <QList>
+#include <QString>
+#include <QtQml/qqmlregistration.h>
+
+// A pane-level tab strip model shared by the QML GUI and the Tui Widgets TUI.
+// It is the single source of truth for the ordered list of open tabs and which
+// one is active; the heavy per-tab objects (conversation controllers, turn
+// orchestrators, documents) are owned by each frontend and keyed by the stable
+// `tabId` this model hands out.
+//
+// Tabs are either Transcript tabs (one per open conversation, identified by
+// `conversationId`) or singleton page tabs (Settings now, extensible). The model
+// enforces find-or-create semantics: opening a conversation/page that is already
+// open re-activates its existing tab instead of duplicating it. This maps cleanly
+// onto the daemon's SessionId session tree (a transcript tab == an open session).
+class TabModel : public QAbstractListModel {
+    Q_OBJECT
+    QML_ELEMENT
+    Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentIndexChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
+
+public:
+    // Tab kinds. Transcript tabs carry a conversationId; page kinds are
+    // singletons (at most one open at a time).
+    enum Kind {
+        Transcript = 0,
+        Settings = 1,
+    };
+    Q_ENUM(Kind)
+
+    enum Role {
+        TabIdRole = Qt::UserRole + 1, // stable, monotonically-assigned id
+        KindRole,                     // Kind
+        TitleRole,                    // display label
+        ConversationIdRole,           // transcript tabs only; -1 for pages
+        ClosableRole,                 // false pins the tab open
+        CurrentRole,                  // true for the active row
+    };
+
+    explicit TabModel(QObject* parent = nullptr);
+
+    [[nodiscard]] int currentIndex() const { return m_currentIndex; }
+    void setCurrentIndex(int index);
+    [[nodiscard]] int count() const { return static_cast<int>(m_tabs.size()); }
+
+    int rowCount(const QModelIndex& parent = {}) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    QHash<int, QByteArray> roleNames() const override;
+
+    // Find-or-create a transcript tab for `conversationId`, activate it, and
+    // return its stable tab id. An existing tab is reused (title refreshed).
+    Q_INVOKABLE int openTranscript(int conversationId, const QString& title);
+    // Find-or-create the singleton page of `kind` (e.g. Settings), activate it,
+    // and return its tab id.
+    Q_INVOKABLE int openPage(int kind, const QString& title);
+    // Close the tab at `index` (no-op when out of range or not closable). The
+    // active tab moves to a neighbour; emits tabClosed(id) for frontend teardown.
+    Q_INVOKABLE void closeTab(int index);
+    Q_INVOKABLE void closeTabById(int tabId);
+    // Activate the tab at `index` (clamped no-op when out of range).
+    Q_INVOKABLE void activate(int index);
+    // Cycle the active tab by `delta`, wrapping around. No-op when empty.
+    Q_INVOKABLE void cycle(int delta);
+    // Reorder: move the tab at `from` to `to` (no-op for out-of-range/equal).
+    Q_INVOKABLE void moveTab(int from, int to);
+    // Rename the tab at `index`.
+    Q_INVOKABLE void setTitle(int index, const QString& title);
+
+    // Frontend accessors keyed by row or id.
+    [[nodiscard]] Q_INVOKABLE int tabIdAt(int index) const;
+    [[nodiscard]] Q_INVOKABLE int kindAt(int index) const;
+    [[nodiscard]] Q_INVOKABLE int conversationIdAt(int index) const;
+    [[nodiscard]] Q_INVOKABLE QString titleAt(int index) const;
+    [[nodiscard]] Q_INVOKABLE int indexOfTabId(int tabId) const;
+
+signals:
+    void currentIndexChanged();
+    void countChanged();
+    // The active tab actually changed; carries the new tab id (-1 when empty).
+    void currentTabChanged(int tabId);
+    // A tab was removed; carries its (now-defunct) tab id so the frontend can
+    // dispose of the matching per-tab session.
+    void tabClosed(int tabId);
+
+private:
+    struct Tab {
+        int id = 0;
+        int kind = Transcript;
+        QString title;
+        int conversationId = -1;
+        bool closable = true;
+    };
+
+    // Move the active row to `index` (already validated/clamped by the caller),
+    // emitting currentIndexChanged + currentTabChanged + the CurrentRole repaint.
+    void setCurrentInternal(int index);
+    void emitCurrentChanged(); // dataChanged(CurrentRole) across all rows
+    [[nodiscard]] int findTranscriptRow(int conversationId) const;
+    [[nodiscard]] int findPageRow(int kind) const;
+
+    QList<Tab> m_tabs;
+    int m_currentIndex = -1;
+    int m_nextId = 1;
+};

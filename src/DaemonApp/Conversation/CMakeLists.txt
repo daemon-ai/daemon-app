@@ -11,6 +11,7 @@ qt_add_qml_module(da_conversation
         todo_list_model.cpp
     QML_FILES
         Conversation.qml
+        TranscriptPage.qml
         ToolGroup.qml
 )
 add_library(daemon-app::conversation ALIAS da_conversation)
@@ -23,6 +24,7 @@ target_link_libraries(da_conversation
         daemon-app::theme
         daemon-app::controls
         daemon-app::settings
+        daemon-app::tabs
         daemon-app::transcript
         daemon-app::composer
         daemon-app::turn

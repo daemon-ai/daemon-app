@@ -1,0 +1,195 @@
+#include "tab_model.h"
+
+#include <QSignalSpy>
+#include <QtTest>
+
+// Exercises the shared pane-tab model: find-or-create open semantics, active-tab
+// tracking via currentIndex/CurrentRole, close-neighbour selection, the Settings
+// singleton page, cycling, and reorder. The model is the single source of truth
+// both the QML GUI and the Tui Widgets TUI bind, so this guards the contract.
+class TestTabModel : public QObject {
+    Q_OBJECT
+
+private:
+    template <typename T>
+    static T roleAt(const TabModel& m, int row, TabModel::Role role)
+    {
+        return m.data(m.index(row, 0), role).value<T>();
+    }
+
+private slots:
+    // Opening a fresh conversation appends a transcript tab, activates it, and
+    // assigns a stable monotonic id.
+    void openTranscriptAppendsAndActivates()
+    {
+        TabModel model;
+        QSignalSpy currentSpy(&model, &TabModel::currentTabChanged);
+
+        const int id0 = model.openTranscript(10, QStringLiteral("Alpha"));
+        QCOMPARE(model.count(), 1);
+        QCOMPARE(model.currentIndex(), 0);
+        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), 10);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::TitleRole), QStringLiteral("Alpha"));
+        QVERIFY(roleAt<bool>(model, 0, TabModel::CurrentRole));
+
+        const int id1 = model.openTranscript(20, QStringLiteral("Beta"));
+        QCOMPARE(model.count(), 2);
+        QCOMPARE(model.currentIndex(), 1);
+        QVERIFY(id1 != id0);
+        QVERIFY(roleAt<bool>(model, 1, TabModel::CurrentRole));
+        QVERIFY(!roleAt<bool>(model, 0, TabModel::CurrentRole));
+
+        QCOMPARE(currentSpy.count(), 2);
+        QCOMPARE(currentSpy.takeFirst().at(0).toInt(), id0);
+        QCOMPARE(currentSpy.takeFirst().at(0).toInt(), id1);
+    }
+
+    // Re-opening an already-open conversation re-activates its existing tab
+    // instead of creating a duplicate (and refreshes its title).
+    void openTranscriptReusesExistingTab()
+    {
+        TabModel model;
+        const int id0 = model.openTranscript(10, QStringLiteral("Alpha"));
+        model.openTranscript(20, QStringLiteral("Beta")); // active -> row 1
+
+        QSignalSpy insertSpy(&model, &TabModel::rowsInserted);
+        const int again = model.openTranscript(10, QStringLiteral("Alpha (edited)"));
+
+        QCOMPARE(again, id0);
+        QCOMPARE(insertSpy.count(), 0);   // no new row
+        QCOMPARE(model.count(), 2);
+        QCOMPARE(model.currentIndex(), 0); // re-activated the existing tab
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::TitleRole),
+                 QStringLiteral("Alpha (edited)"));
+    }
+
+    // The Settings page is a singleton: opening it twice activates the same tab.
+    void openPageIsSingletonPerKind()
+    {
+        TabModel model;
+        model.openTranscript(10, QStringLiteral("Alpha"));
+        const int settings = model.openPage(TabModel::Settings, QStringLiteral("Settings"));
+        QCOMPARE(model.count(), 2);
+        QCOMPARE(roleAt<int>(model, 1, TabModel::KindRole), int(TabModel::Settings));
+        QCOMPARE(roleAt<int>(model, 1, TabModel::ConversationIdRole), -1);
+
+        const int again = model.openPage(TabModel::Settings, QStringLiteral("Settings"));
+        QCOMPARE(again, settings);
+        QCOMPARE(model.count(), 2);
+        QCOMPARE(model.currentIndex(), 1);
+    }
+
+    // Closing a tab before the active one shifts the active index left but keeps
+    // the same active tab id.
+    void closingTabBeforeActiveShiftsIndex()
+    {
+        TabModel model;
+        model.openTranscript(10, QStringLiteral("Alpha"));
+        const int idB = model.openTranscript(20, QStringLiteral("Beta"));
+        model.openTranscript(30, QStringLiteral("Gamma")); // active = row 2 (Gamma)
+        model.activate(1);                                  // active = Beta (row 1)
+        QCOMPARE(model.currentIndex(), 1);
+
+        model.closeTab(0); // remove Alpha
+        QCOMPARE(model.count(), 2);
+        QCOMPARE(model.currentIndex(), 0);          // Beta slid into row 0
+        QCOMPARE(model.tabIdAt(0), idB);
+        QVERIFY(roleAt<bool>(model, 0, TabModel::CurrentRole));
+    }
+
+    // Closing the active tab selects the right-hand neighbour (the slot is
+    // reused); emits tabClosed with the removed id.
+    void closingActiveTabSelectsNeighbour()
+    {
+        TabModel model;
+        model.openTranscript(10, QStringLiteral("Alpha"));
+        const int idB = model.openTranscript(20, QStringLiteral("Beta"));
+        const int idG = model.openTranscript(30, QStringLiteral("Gamma"));
+        model.activate(1); // active = Beta
+
+        QSignalSpy closedSpy(&model, &TabModel::tabClosed);
+        model.closeTab(1); // remove Beta
+
+        QCOMPARE(closedSpy.count(), 1);
+        QCOMPARE(closedSpy.takeFirst().at(0).toInt(), idB);
+        QCOMPARE(model.count(), 2);
+        QCOMPARE(model.currentIndex(), 1);  // Gamma slid into the vacated slot
+        QCOMPARE(model.tabIdAt(1), idG);
+    }
+
+    // Closing the last (active, right-most) tab falls back to the new last row.
+    void closingLastActiveTabFallsBackLeft()
+    {
+        TabModel model;
+        const int idA = model.openTranscript(10, QStringLiteral("Alpha"));
+        model.openTranscript(20, QStringLiteral("Beta")); // active = row 1 (Beta)
+
+        model.closeTab(1); // remove the active right-most tab
+        QCOMPARE(model.count(), 1);
+        QCOMPARE(model.currentIndex(), 0);
+        QCOMPARE(model.tabIdAt(0), idA);
+    }
+
+    // Closing the only tab empties the model and clears the active index.
+    void closingOnlyTabEmptiesModel()
+    {
+        TabModel model;
+        model.openTranscript(10, QStringLiteral("Alpha"));
+
+        QSignalSpy currentSpy(&model, &TabModel::currentTabChanged);
+        model.closeTab(0);
+
+        QCOMPARE(model.count(), 0);
+        QCOMPARE(model.currentIndex(), -1);
+        QCOMPARE(currentSpy.count(), 1);
+        QCOMPARE(currentSpy.takeFirst().at(0).toInt(), -1);
+    }
+
+    // cycle() wraps around the active index in both directions.
+    void cycleWrapsAround()
+    {
+        TabModel model;
+        model.openTranscript(10, QStringLiteral("Alpha"));
+        model.openTranscript(20, QStringLiteral("Beta"));
+        model.openTranscript(30, QStringLiteral("Gamma")); // active = 2
+
+        model.cycle(1); // wraps 2 -> 0
+        QCOMPARE(model.currentIndex(), 0);
+        model.cycle(-1); // wraps 0 -> 2
+        QCOMPARE(model.currentIndex(), 2);
+        model.cycle(-1); // 2 -> 1
+        QCOMPARE(model.currentIndex(), 1);
+    }
+
+    // Reordering keeps the active tab pointing at the same tab identity.
+    void moveTabKeepsActiveIdentity()
+    {
+        TabModel model;
+        const int idA = model.openTranscript(10, QStringLiteral("Alpha"));
+        model.openTranscript(20, QStringLiteral("Beta"));
+        model.openTranscript(30, QStringLiteral("Gamma"));
+        model.activate(0); // active = Alpha (row 0)
+
+        model.moveTab(0, 2); // Alpha goes to the end
+        QCOMPARE(model.tabIdAt(2), idA);
+        QCOMPARE(model.currentIndex(), 2);          // followed Alpha
+        QVERIFY(roleAt<bool>(model, 2, TabModel::CurrentRole));
+    }
+
+    // setCurrentIndex (the QML-writable property) activates by row and is a no-op
+    // out of range.
+    void setCurrentIndexActivates()
+    {
+        TabModel model;
+        model.openTranscript(10, QStringLiteral("Alpha"));
+        model.openTranscript(20, QStringLiteral("Beta"));
+
+        model.setCurrentIndex(0);
+        QCOMPARE(model.currentIndex(), 0);
+        model.setCurrentIndex(99); // out of range -> ignored
+        QCOMPARE(model.currentIndex(), 0);
+    }
+};
+
+QTEST_MAIN(TestTabModel)
+#include "tst_tab_model.moc"

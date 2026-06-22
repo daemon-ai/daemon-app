@@ -60,6 +60,8 @@ add_library(be_core STATIC
     core/piece_table.h
     core/selection.cpp
     core/selection.h
+    core/transcript_search.cpp
+    core/transcript_search.h
 )
 target_include_directories(be_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(be_core PUBLIC Qt6::Core Qt6::Gui Qt6::Sql md4qt::md4qt)

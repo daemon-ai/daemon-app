@@ -43,3 +43,28 @@ target_link_libraries(tui_palette_tests
 )
 add_test(NAME tui_palette_tests COMMAND tui_palette_tests)
 set_tests_properties(tui_palette_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_tab_strip: drives the TabStripView (bound to the shared TabModel) in an
+# off-screen Tui terminal - asserts the painted chips/"+" and the click hit-test
+# (activate / close / new-tab). Needs Qt6::Qml for the TabModel's QML_ELEMENT macro.
+qt_add_executable(tui_tab_strip_tests
+    tst_tab_strip.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/tab_strip_view.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/tui_palette.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs/tab_model.cpp
+)
+set_target_properties(tui_tab_strip_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_tab_strip_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/tui
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs
+)
+target_link_libraries(tui_tab_strip_tests
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        PkgConfig::TUIWIDGETS
+        be_core
+        daemon-app::theme_core
+)
+add_test(NAME tui_tab_strip_tests COMMAND tui_tab_strip_tests)
+set_tests_properties(tui_tab_strip_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
