@@ -42,10 +42,13 @@ DesktopPlatformServices::~DesktopPlatformServices()
     delete m_menu; // QMenu is not parented (context menu doesn't take ownership)
 }
 
-void DesktopPlatformServices::installTray(const QString& appName)
+bool DesktopPlatformServices::installTray(const QString& appName)
 {
-    if (m_tray || !QSystemTrayIcon::isSystemTrayAvailable()) {
-        return;
+    if (m_tray) {
+        return true;
+    }
+    if (!QSystemTrayIcon::isSystemTrayAvailable()) {
+        return false;
     }
 
     m_menu = new QMenu;
@@ -67,6 +70,7 @@ void DesktopPlatformServices::installTray(const QString& appName)
                          }
                      });
     m_tray->show();
+    return true;
 }
 
 } // namespace platform

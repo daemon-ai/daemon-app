@@ -18,7 +18,9 @@ public:
     ~IPlatformServices() override = default;
 
     // Install a system-tray icon with Show/Hide + Quit. No-op where unsupported.
-    virtual void installTray(const QString& appName) = 0;
+    // Returns true only if a tray icon was actually shown (lets the app gate
+    // close-to-tray on the tray really being there).
+    virtual bool installTray(const QString& appName) = 0;
 
     // Deferred capabilities (no-op defaults until implemented).
     virtual void setAutostartEnabled(bool /*enabled*/) {}

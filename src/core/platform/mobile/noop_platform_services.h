@@ -11,7 +11,7 @@ class NoopPlatformServices : public IPlatformServices {
 public:
     using IPlatformServices::IPlatformServices;
 
-    void installTray(const QString& /*appName*/) override {}
+    bool installTray(const QString& /*appName*/) override { return false; }
 };
 
 } // namespace platform

@@ -8,6 +8,8 @@
 #include "platform/platform_services_factory.h"
 
 #include <QCoreApplication>
+#include <QEvent>
+#include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
@@ -83,5 +85,25 @@ void Application::completeWiring(QQmlApplicationEngine& engine)
     connect(m_platform, &platform::IPlatformServices::quitRequested, this,
             [] { QCoreApplication::quit(); });
 
-    m_platform->installTray(QCoreApplication::applicationName());
+    const bool trayInstalled = m_platform->installTray(QCoreApplication::applicationName());
+
+    // Close-to-tray: only when a tray is actually present, so a desktop without a
+    // system tray (or mobile) keeps the default quit-on-close and the user is
+    // never stranded with a hidden window and no way back. The tray's Quit action
+    // (quitRequested) remains the explicit exit.
+    if (window && trayInstalled) {
+        m_window = window;
+        QGuiApplication::setQuitOnLastWindowClosed(false);
+        window->installEventFilter(this);
+    }
+}
+
+bool Application::eventFilter(QObject* watched, QEvent* event)
+{
+    if (watched == m_window && event->type() == QEvent::Close) {
+        event->ignore();
+        m_window->hide(); // hide to tray; the app keeps running
+        return true;      // swallow the close so the window is not destroyed
+    }
+    return QObject::eventFilter(watched, event);
 }

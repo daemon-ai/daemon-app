@@ -18,7 +18,7 @@ public:
     explicit DesktopPlatformServices(QObject* parent = nullptr);
     ~DesktopPlatformServices() override;
 
-    void installTray(const QString& appName) override;
+    bool installTray(const QString& appName) override;
 
 private:
     QSystemTrayIcon* m_tray = nullptr;
