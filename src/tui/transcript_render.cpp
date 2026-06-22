@@ -884,8 +884,21 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
     LayoutResult result;
     QVector<RenderLine> &out = result.lines;
     QVector<Control> &controls = result.controls;
+    QVector<Anchor> &anchors = result.anchors;
     int controlSeq = 0;
     const int W = qMax(20, width);
+
+    // The concatenated text of every (non-tombstoned) block tagged with messageId,
+    // used to seed an anchor for restore / edit-composer prefill.
+    const auto messageText = [&](const QString &id) {
+        QStringList parts;
+        for (const be::BlockRecord &mb : doc.blocks()) {
+            if (!mb.tombstoned && mb.messageId == id) {
+                parts << mb.markdown();
+            }
+        }
+        return parts.join(QStringLiteral("\n\n"));
+    };
 
     QString prevMessageId;
     be::MessageRole prevRole = be::MessageRole::None;
@@ -902,6 +915,12 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
         const bool msgChanged = (b.messageId != prevMessageId) || (b.role != prevRole);
         if (b.role != be::MessageRole::None && msgChanged && !b.messageId.isEmpty()) {
             emitMessageHeader(out, b.role, first, W);
+            // A user message header is a rewind anchor: record its banner row,
+            // routing id, and own text for restore / edit prefill.
+            if (b.role == be::MessageRole::User) {
+                anchors.push_back(Anchor { static_cast<int>(out.size()) - 1, b.messageId,
+                                           messageText(b.messageId) });
+            }
         } else if (!msgChanged && b.type == be::BlockType::Paragraph
                    && prevType == be::BlockType::Paragraph) {
             // Consecutive paragraphs in one message render with a blank row between

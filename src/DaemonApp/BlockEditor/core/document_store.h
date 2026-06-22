@@ -106,6 +106,17 @@ public:
     // First row whose block belongs to `messageId`, or -1 if none.
     qsizetype rowForMessage(const QString &messageId) const;
 
+    // Rewind/edit primitives (shared by both front ends). rewindToMessage hard-
+    // truncates from the message's first block to the end (the message itself and
+    // everything after it are dropped) and returns the message's concatenated text
+    // (so the caller can resubmit it or prefill an edit composer); it no-ops and
+    // returns "" when the id is unknown. regenerateFromMessage performs the same
+    // truncation but is named for the regenerate path - the caller passes the
+    // assistant reply's id so the prior user turn is kept - and returns whether it
+    // truncated anything. Both leave re-running the turn to the caller.
+    QString rewindToMessage(const QString &messageId);
+    bool regenerateFromMessage(const QString &messageId);
+
     // Splice a contiguous run of blocks (used by scoped stream undo/redo).
     void spliceBlocks(qsizetype firstRow, qsizetype removeCount, const QVector<BlockRecord> &insert);
 

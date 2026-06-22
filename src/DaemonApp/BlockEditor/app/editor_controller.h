@@ -116,6 +116,18 @@ public:
     Q_INVOKABLE void appendSystemMessage(const QString &text, const QString &variant = {});
     Q_INVOKABLE void editUserMessage(const QString &messageId, const QString &text);
     Q_INVOKABLE void requestRegenerate(const QString &messageId);
+    // Rewind affordances built on the shared DocumentStore primitives.
+    // restoreToMessage re-runs the turn from `messageId` with its existing text
+    // (the "restore checkpoint" action: truncate inclusive, re-add the same text,
+    // emit userMessageEdited so the host re-runs). editFromMessage truncates from
+    // `messageId` inclusive and returns its text so a slash-command (/edit) can
+    // seed the composer; undoToMessage truncates inclusive and discards the text
+    // (/undo). lastUserMessageId is the id of the most recent user message, "" if
+    // none - the anchor /retry, /edit and /undo act on.
+    Q_INVOKABLE void restoreToMessage(const QString &messageId);
+    Q_INVOKABLE QString editFromMessage(const QString &messageId);
+    Q_INVOKABLE void undoToMessage(const QString &messageId);
+    Q_INVOKABLE QString lastUserMessageId() const;
     // The combined markdown of every block in `messageId` (for a footer copy /
     // an edit composer's initial text), and a clipboard helper for it.
     Q_INVOKABLE QString messageText(const QString &messageId) const;
@@ -242,6 +254,9 @@ private:
 
     void resetModel();
     void rebuildHeightIndex();
+    // Shared tail of every rewind/truncate op: drop the active block + selection,
+    // rebuild the model/height index, and emit the change signals.
+    void afterStructuralRewind();
     void performSplit(qulonglong blockId, int rawOffset, bool trimBoundary);
     void applyListIndent(qulonglong blockId, int deltaUnits);
     void scheduleFlush();

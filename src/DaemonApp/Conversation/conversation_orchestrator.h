@@ -41,12 +41,20 @@ public:
     // Persist the user's text (attachment refs ride on the front), start the
     // simulated assistant turn, and populate the demo todos for the turn.
     Q_INVOKABLE void submit(const QString& text, const QString& refs = QString());
+    // Re-run the assistant turn for `text` WITHOUT appending a new user message:
+    // the regenerate path (no new prompt) and the GUI edit path (the edited user
+    // block already exists in the document). Interrupts a live turn first. This is
+    // the single turn-execution seam every rewind path funnels through; swapping
+    // the scripted TurnController for a daemon NodeApi adapter happens here alone.
+    Q_INVOKABLE void rerun(const QString& text);
     // Mid-turn steer: logged as a user note until a real gateway carries steers.
     Q_INVOKABLE void steer(const QString& text);
     // Interrupt the running turn (Stop / Esc).
     Q_INVOKABLE void cancel();
-    // Client-side slash command: "new" creates a conversation here; others are
-    // emitted via commandRequested for the front end to route.
+    // Client-side slash command: "new" creates a conversation here; the rewind
+    // commands ("retry"/"edit"/"undo") surface as the rewind*Requested signals for
+    // the front end to apply against its document owner (EditorController / the TUI
+    // DocumentStore); all others are emitted via commandRequested.
     Q_INVOKABLE void invokeCommand(const QString& command);
 
 signals:
@@ -55,6 +63,14 @@ signals:
     // A non-shared slash command the front end must perform (e.g. open settings,
     // toggle distraction-free).
     void commandRequested(const QString& command);
+    // Rewind slash commands. The front end owns the document, so it resolves the
+    // last user message and truncates via the shared DocumentStore primitives,
+    // then re-runs through rerun()/submit(): retry re-runs the last user message
+    // with its own text; edit truncates it and seeds the composer with its text
+    // (the "/edit prompt into composer" path); undo drops the last exchange.
+    void retryRequested();
+    void editRequested();
+    void undoRequested();
 
 private:
     void populateDemoTodos();

@@ -14,6 +14,9 @@ Item {
     readonly property bool isUser: role === "user"
 
     signal editRequested()
+    // "Restore checkpoint": rewind the conversation to this user message and re-run
+    // it with its own text (drops everything after).
+    signal restoreRequested()
 
     implicitHeight: rowItem.implicitHeight
 
@@ -76,5 +79,29 @@ Item {
 
         HoverHandler { id: editHover }
         TapHandler { onTapped: root.editRequested() }
+    }
+
+    // User-only "restore checkpoint" affordance, sitting to the left of edit.
+    Rectangle {
+        id: restoreButton
+        visible: root.isUser && (hover.hovered || Theme.touch)
+        anchors.right: editButton.left
+        anchors.rightMargin: Theme.smallSpacing
+        anchors.verticalCenter: rowItem.verticalCenter
+        width: 22
+        height: 22
+        radius: Theme.radius
+        color: restoreHover.hovered ? Theme.messageFooterHover : Theme.transparent
+
+        Text {
+            anchors.centerIn: parent
+            text: FontIcons.fa_undo_alt
+            font.family: FontIcons.faSolid
+            font.pixelSize: Theme.captionFontSize - 2
+            color: Theme.messageFooterText
+        }
+
+        HoverHandler { id: restoreHover }
+        TapHandler { onTapped: root.restoreRequested() }
     }
 }

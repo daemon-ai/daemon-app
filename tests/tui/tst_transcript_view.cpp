@@ -39,6 +39,36 @@ QString interactiveMarkdown()
 )md");
 }
 
+// A plain, non-interactive transcript with two complete user/assistant turns, so
+// the rewind picker has two anchors (the user messages u1 and u2).
+QString rewindMarkdown()
+{
+    return QStringLiteral(R"md(```msg
+{"id":"u1","role":"user"}
+```
+
+First question.
+
+```msg
+{"id":"m1","role":"assistant"}
+```
+
+First answer.
+
+```msg
+{"id":"u2","role":"user"}
+```
+
+Second question.
+
+```msg
+{"id":"m2","role":"assistant"}
+```
+
+Second answer.
+)md");
+}
+
 } // namespace
 
 class TranscriptViewTests : public QObject {
@@ -71,6 +101,20 @@ private:
         doc.loadMarkdown(interactiveMarkdown());
         transcript->setDocument(&doc);
         transcript->reload();
+    }
+
+    // A standalone transcript (no focus-cycle sibling needed) loaded with the
+    // plain two-turn document, for the rewind-picker tests.
+    static void buildRewindScene(Tui::ZTerminal &terminal, Tui::ZRoot &root,
+                                 be::DocumentStore &doc, TranscriptView *&transcript)
+    {
+        terminal.setMainWidget(&root);
+        transcript = new TranscriptView(&root);
+        transcript->setGeometry({ 0, 0, 80, 24 });
+        doc.loadMarkdown(rewindMarkdown());
+        transcript->setDocument(&doc);
+        transcript->reload();
+        transcript->setFocus();
     }
 
 private slots:
@@ -128,6 +172,71 @@ private slots:
             QVERIFY2(transcript->focus(), "arrow key must not move focus out of the block");
             QVERIFY(!sibling->focus());
         }
+    }
+
+    // 'r' opens the rewind picker on the most recent user message; Enter restores
+    // it (re-run with its own text), emitting rewindRestoreRequested for that id.
+    void rewindPickerRestoresSelectedAnchor()
+    {
+        Tui::ZTerminal terminal { Tui::ZTerminal::OffScreen { 80, 24 } };
+        Tui::ZRoot root;
+        be::DocumentStore doc;
+        TranscriptView *transcript = nullptr;
+        buildRewindScene(terminal, root, doc, transcript);
+
+        QSignalSpy restoreSpy(transcript, &TranscriptView::rewindRestoreRequested);
+
+        // Enter the picker (defaults to the last user message) and restore it.
+        Tui::ZTest::sendText(&terminal, QStringLiteral("r"), Qt::NoModifier);
+        Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
+        QCOMPARE(restoreSpy.count(), 1);
+        QCOMPARE(restoreSpy.at(0).at(0).toString(), QStringLiteral("u2"));
+
+        // Re-enter, move up to the first user message, and restore that one.
+        Tui::ZTest::sendText(&terminal, QStringLiteral("r"), Qt::NoModifier);
+        Tui::ZTest::sendKey(&terminal, Qt::Key_Up, Qt::NoModifier);
+        Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
+        QCOMPARE(restoreSpy.count(), 2);
+        QCOMPARE(restoreSpy.at(1).at(0).toString(), QStringLiteral("u1"));
+    }
+
+    // 'e' in the picker emits rewindEditRequested with the message id and its own
+    // text (so the host can seed the composer).
+    void rewindPickerEditEmitsText()
+    {
+        Tui::ZTerminal terminal { Tui::ZTerminal::OffScreen { 80, 24 } };
+        Tui::ZRoot root;
+        be::DocumentStore doc;
+        TranscriptView *transcript = nullptr;
+        buildRewindScene(terminal, root, doc, transcript);
+
+        QSignalSpy editSpy(transcript, &TranscriptView::rewindEditRequested);
+
+        Tui::ZTest::sendText(&terminal, QStringLiteral("r"), Qt::NoModifier);
+        Tui::ZTest::sendText(&terminal, QStringLiteral("e"), Qt::NoModifier);
+        QCOMPARE(editSpy.count(), 1);
+        QCOMPARE(editSpy.at(0).at(0).toString(), QStringLiteral("u2"));
+        QCOMPARE(editSpy.at(0).at(1).toString(), QStringLiteral("Second question."));
+    }
+
+    // Esc cancels the picker without emitting any rewind action.
+    void rewindPickerEscCancels()
+    {
+        Tui::ZTerminal terminal { Tui::ZTerminal::OffScreen { 80, 24 } };
+        Tui::ZRoot root;
+        be::DocumentStore doc;
+        TranscriptView *transcript = nullptr;
+        buildRewindScene(terminal, root, doc, transcript);
+
+        QSignalSpy restoreSpy(transcript, &TranscriptView::rewindRestoreRequested);
+        QSignalSpy editSpy(transcript, &TranscriptView::rewindEditRequested);
+
+        Tui::ZTest::sendText(&terminal, QStringLiteral("r"), Qt::NoModifier);
+        Tui::ZTest::sendKey(&terminal, Qt::Key_Escape, Qt::NoModifier);
+        // After cancelling, Enter is a no-op for rewind (not a stale restore).
+        Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
+        QCOMPARE(restoreSpy.count(), 0);
+        QCOMPARE(editSpy.count(), 0);
     }
 };
 

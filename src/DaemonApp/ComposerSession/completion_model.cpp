@@ -16,6 +16,12 @@ const QList<CompletionModel::Item>& slashCommands()
           QStringLiteral("distraction") },
         { QStringLiteral("/clear"), QObject::tr("Clear the composer"),
           QStringLiteral("Command"), QStringLiteral("/clear"), QStringLiteral("clear") },
+        { QStringLiteral("/retry"), QObject::tr("Rewind & re-run the last message"),
+          QStringLiteral("Command"), QStringLiteral("/retry"), QStringLiteral("retry") },
+        { QStringLiteral("/edit"), QObject::tr("Rewind & edit the last message"),
+          QStringLiteral("Command"), QStringLiteral("/edit"), QStringLiteral("edit") },
+        { QStringLiteral("/undo"), QObject::tr("Undo the last exchange"),
+          QStringLiteral("Command"), QStringLiteral("/undo"), QStringLiteral("undo") },
         { QStringLiteral("/help"), QObject::tr("Insert a help request"),
           QStringLiteral("Command"), QStringLiteral("/help "), QStringLiteral("insert") },
     };

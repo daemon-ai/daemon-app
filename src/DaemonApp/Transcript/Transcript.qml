@@ -43,6 +43,32 @@ Rectangle {
     // Emitted (debounced) when the user edits a block, carrying the full markdown.
     signal edited(string markdown)
 
+    // Re-run the assistant turn after a rewind (edit / regenerate / restore). The
+    // host routes this to ConversationOrchestrator.rerun: the document was already
+    // truncated (and, for edit/restore, the user message re-added) by the editor,
+    // so this only re-runs the turn without re-appending a user message.
+    signal rerunRequested(string text)
+
+    // Slash-command rewind helpers, acting on the live editor's last user message.
+    // retryLast restores it (re-run with its own text); editLast truncates it and
+    // returns its text so the host can seed the composer; undoLast drops the last
+    // exchange. They funnel through the same DocumentStore primitives the inline
+    // affordances use, so there is one truncation path.
+    function retryLast() {
+        const id = editor.lastUserMessageId()
+        if (id !== "")
+            editor.restoreToMessage(id)
+    }
+    function editLast() {
+        const id = editor.lastUserMessageId()
+        return id !== "" ? editor.editFromMessage(id) : ""
+    }
+    function undoLast() {
+        const id = editor.lastUserMessageId()
+        if (id !== "")
+            editor.undoToMessage(id)
+    }
+
     // Replace the document with `md` without triggering edited() (loads do not
     // funnel through the edit chokepoint, so no echo back to the store). Loads
     // read-first (no auto-focus) so a conversation switch never drops a cursor
@@ -143,13 +169,13 @@ Rectangle {
         // Footer "regenerate": the controller has already dropped the assistant
         // reply; stream a fresh one. A real host would re-send the prior prompt.
         function onRegenerateRequested(messageId) {
-            root.runAssistantTurn("")
+            root.rerunRequested("")
         }
 
-        // Inline edit: the controller truncated the doc to the edited user message
-        // and re-added the new text; stream the assistant reply for it.
+        // Inline edit / restore: the controller truncated the doc to the user
+        // message and re-added its text; stream the assistant reply for it.
         function onUserMessageEdited(messageId, text) {
-            root.runAssistantTurn(text)
+            root.rerunRequested(text)
         }
 
         // An inline message editor opened: escape stick-to-bottom (and stop the

@@ -73,9 +73,20 @@ void TranscriptView::rebuild()
         const LayoutResult res = TranscriptLayout::build(*m_doc, width, m_draft, m_activeControl);
         m_lines = res.lines;
         m_controls = res.controls;
+        m_anchors = res.anchors;
     } else {
         m_lines.clear();
         m_controls.clear();
+        m_anchors.clear();
+    }
+
+    // An awaiting interactive block or an emptied transcript cancels a stale
+    // rewind selection; clamp the index to the rebuilt anchor list otherwise.
+    if (m_anchors.isEmpty() || interactive()) {
+        m_rewindMode = false;
+        m_rewindIndex = -1;
+    } else if (m_rewindMode) {
+        m_rewindIndex = qBound(0, m_rewindIndex, static_cast<int>(m_anchors.size()) - 1);
     }
 
     if (interactive()) {
@@ -102,6 +113,22 @@ void TranscriptView::rebuild()
 
 void TranscriptView::clickAt(QPoint local)
 {
+    // In the rewind picker, a click on (or nearest above) an anchor row selects it.
+    if (rewindActive()) {
+        const int absLine = m_scrollTop + local.y();
+        int best = -1;
+        for (int i = 0; i < m_anchors.size(); ++i) {
+            if (m_anchors.at(i).line <= absLine) {
+                best = i;
+            }
+        }
+        if (best >= 0) {
+            m_rewindIndex = best;
+            ensureAnchorVisible();
+            update();
+        }
+        return;
+    }
     if (!interactive()) {
         return; // a plain transcript click only focuses (handled by the shell)
     }
@@ -149,6 +176,55 @@ void TranscriptView::ensureControlVisible()
         return;
     }
     const int line = m_controls.at(m_activeControl).line;
+    const int rows = visibleRows();
+    if (line < m_scrollTop) {
+        m_scrollTop = line;
+    } else if (rows > 0 && line >= m_scrollTop + rows) {
+        m_scrollTop = line - rows + 1;
+    }
+    clampScrollTop();
+}
+
+void TranscriptView::enterRewind()
+{
+    if (m_anchors.isEmpty() || interactive()) {
+        return;
+    }
+    m_rewindMode = true;
+    // Start on the most recent user message (the common "redo my last turn" case).
+    m_rewindIndex = static_cast<int>(m_anchors.size()) - 1;
+    m_stickToBottom = false;
+    ensureAnchorVisible();
+    update();
+}
+
+void TranscriptView::exitRewind()
+{
+    if (!m_rewindMode) {
+        return;
+    }
+    m_rewindMode = false;
+    m_rewindIndex = -1;
+    update();
+}
+
+void TranscriptView::moveRewind(int delta)
+{
+    if (!rewindActive()) {
+        return;
+    }
+    const int n = static_cast<int>(m_anchors.size());
+    m_rewindIndex = qBound(0, m_rewindIndex + delta, n - 1);
+    ensureAnchorVisible();
+    update();
+}
+
+void TranscriptView::ensureAnchorVisible()
+{
+    if (m_rewindIndex < 0 || m_rewindIndex >= m_anchors.size()) {
+        return;
+    }
+    const int line = m_anchors.at(m_rewindIndex).line;
     const int rows = visibleRows();
     if (line < m_scrollTop) {
         m_scrollTop = line;
@@ -275,6 +351,20 @@ void TranscriptView::paintEvent(Tui::ZPaintEvent *event)
         }
     }
 
+    // Rewind picker: mark the selected anchor row with an accent caret and a
+    // right-aligned key hint so the mode and its actions are discoverable.
+    if (rewindActive() && m_rewindIndex >= 0 && m_rewindIndex < m_anchors.size()) {
+        const int screenRow = m_anchors.at(m_rewindIndex).line - m_scrollTop;
+        if (screenRow >= 0 && screenRow < h) {
+            p->writeWithColors(0, screenRow, QStringLiteral("\u25b6"), tpal::accent(), pageBg);
+            const QString hint = QStringLiteral("Enter restore  e edit  Esc cancel");
+            const int hx = contentW - static_cast<int>(hint.size()) - 1;
+            if (hx > 0) {
+                p->writeWithColors(hx, screenRow, hint, tpal::accent(), pageBg);
+            }
+        }
+    }
+
     if (scrollable && h > 0) {
         const int total = lineCount;
         int thumbLen = qMax(1, (h * h) / total);
@@ -292,6 +382,54 @@ void TranscriptView::paintEvent(Tui::ZPaintEvent *event)
 
 void TranscriptView::keyEvent(Tui::ZKeyEvent *event)
 {
+    // Rewind picker: a selection mode over the prior user-message anchors, entered
+    // with 'r' (when no interactive block owns the keys). Up/Down (or k/j) walk the
+    // anchors, Enter restores (re-run with the same text), 'e' edits (seed the
+    // composer), Esc leaves. Kept distinct from the interactive-control focus so
+    // arrows still drive a block's controls while it awaits an answer.
+    if (rewindActive()) {
+        const int key = event->key();
+        const Qt::KeyboardModifiers mods = event->modifiers();
+        if (mods == Qt::NoModifier) {
+            if (key == Qt::Key_Up || (event->text() == QStringLiteral("k"))) {
+                moveRewind(-1);
+                event->accept();
+                return;
+            }
+            if (key == Qt::Key_Down || (event->text() == QStringLiteral("j"))) {
+                moveRewind(1);
+                event->accept();
+                return;
+            }
+            if (key == Qt::Key_Enter || key == Qt::Key_Return) {
+                const Anchor a = m_anchors.at(m_rewindIndex);
+                exitRewind();
+                emit rewindRestoreRequested(a.messageId);
+                event->accept();
+                return;
+            }
+            if (event->text() == QStringLiteral("e")) {
+                const Anchor a = m_anchors.at(m_rewindIndex);
+                exitRewind();
+                emit rewindEditRequested(a.messageId, a.text);
+                event->accept();
+                return;
+            }
+            if (key == Qt::Key_Escape) {
+                exitRewind();
+                event->accept();
+                return;
+            }
+        }
+        // Any other key leaves the picker and falls through to normal handling.
+        exitRewind();
+    } else if (event->modifiers() == Qt::NoModifier && event->text() == QStringLiteral("r")
+               && !interactive() && !m_anchors.isEmpty()) {
+        enterRewind();
+        event->accept();
+        return;
+    }
+
     // Interactive mode: while an awaiting-approval / unanswered-clarify block is
     // present its controls own the cursor. Arrow keys walk the controls (Up/Left
     // back, Down/Right forward), Space toggles a choice, Enter activates a button /

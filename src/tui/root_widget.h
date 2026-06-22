@@ -218,6 +218,13 @@ private:
     void buildUi();
     void wireViews();
     void refreshTranscript();
+    // Rewind the active tab to a prior user message: interrupt a live turn, hard-
+    // truncate the document at `messageId`, persist, and then either re-run with
+    // the message's own text (editMode = false) or seed the composer with it for
+    // the user to edit and submit (editMode = true). The single TUI rewind seam:
+    // both the picker signals and the /retry,/edit,/undo slash commands funnel
+    // through it.
+    void rewindActiveTab(const QString& messageId, bool editMode);
     void promptQuit(); // open the quit-confirmation modal (idempotent)
     // Advance Light -> Dark -> Sepia -> Midnight, recolor the whole shell live
     // (stock palette + every custom-painted view), and persist the choice so the

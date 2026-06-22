@@ -369,41 +369,70 @@ void EditorController::appendSystemMessage(const QString &text, const QString &v
 
 void EditorController::editUserMessage(const QString &messageId, const QString &text)
 {
-    const qsizetype row = m_store.rowForMessage(messageId);
     const QString trimmed = text.trimmed();
-    if (row < 0 || trimmed.isEmpty()) {
+    if (m_store.rowForMessage(messageId) < 0 || trimmed.isEmpty()) {
         return;
     }
     // Truncate the document at the edited message (it and the assistant reply it
     // produced are dropped), then re-add the new text as a fresh user message.
-    m_store.deleteBlocks(row, m_store.blockCount() - row);
+    m_store.rewindToMessage(messageId);
     const QString newId = m_store.appendMessageBlocks(be::MessageRole::User, trimmed);
-    clearActiveSelection();
-    m_activeBlockId = 0;
-    resetModel();
-    rebuildHeightIndex();
-    emit activeBlockIdChanged();
-    scheduleFlush();
-    emit documentChanged();
+    afterStructuralRewind();
     emit userMessageEdited(newId, trimmed);
 }
 
 void EditorController::requestRegenerate(const QString &messageId)
 {
-    const qsizetype row = m_store.rowForMessage(messageId);
-    if (row >= 0) {
-        // Drop the assistant message (and anything after it) so the host can
-        // stream a fresh reply in its place.
-        m_store.deleteBlocks(row, m_store.blockCount() - row);
-        clearActiveSelection();
-        m_activeBlockId = 0;
-        resetModel();
-        rebuildHeightIndex();
-        emit activeBlockIdChanged();
-        scheduleFlush();
-        emit documentChanged();
+    // Drop the assistant message (and anything after it) so the host can stream a
+    // fresh reply in its place; the prior user turn is kept.
+    if (m_store.regenerateFromMessage(messageId)) {
+        afterStructuralRewind();
     }
     emit regenerateRequested(messageId);
+}
+
+void EditorController::restoreToMessage(const QString &messageId)
+{
+    // "Restore checkpoint": rewind to this user message and re-run with its own
+    // text. Reuses the edit path (same text), so userMessageEdited fires and the
+    // host re-runs the turn.
+    const QString text = messageText(messageId).trimmed();
+    if (text.isEmpty()) {
+        return;
+    }
+    editUserMessage(messageId, text);
+}
+
+QString EditorController::editFromMessage(const QString &messageId)
+{
+    if (m_store.rowForMessage(messageId) < 0) {
+        return {};
+    }
+    const QString text = m_store.rewindToMessage(messageId);
+    afterStructuralRewind();
+    return text.trimmed();
+}
+
+void EditorController::undoToMessage(const QString &messageId)
+{
+    if (m_store.rowForMessage(messageId) < 0) {
+        return;
+    }
+    m_store.rewindToMessage(messageId);
+    afterStructuralRewind();
+}
+
+QString EditorController::lastUserMessageId() const
+{
+    QString id;
+    for (qsizetype row = 0; row < m_store.blockCount(); ++row) {
+        const be::BlockRecord *block = m_store.blockAt(row);
+        if (block != nullptr && block->role == be::MessageRole::User
+            && !block->messageId.isEmpty()) {
+            id = block->messageId;
+        }
+    }
+    return id;
 }
 
 QString EditorController::messageText(const QString &messageId) const
@@ -1298,6 +1327,17 @@ void EditorController::syncActiveBlockAfterUndo()
     }
     m_selection.clear();
     emit selectionRevisionChanged();
+}
+
+void EditorController::afterStructuralRewind()
+{
+    clearActiveSelection();
+    m_activeBlockId = 0;
+    resetModel();
+    rebuildHeightIndex();
+    emit activeBlockIdChanged();
+    scheduleFlush();
+    emit documentChanged();
 }
 
 void EditorController::resetModel()

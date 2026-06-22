@@ -277,6 +277,11 @@ Item {
                 MessageHeader {
                     role: root.isUser ? "user" : "assistant"
                     onEditRequested: root.editRequested(root.messageId)
+                    // Rewind to this user message and re-run it with its own text.
+                    onRestoreRequested: {
+                        if (root.editorController)
+                            root.editorController.restoreToMessage(root.messageId)
+                    }
                 }
             }
         }

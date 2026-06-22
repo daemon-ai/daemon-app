@@ -111,6 +111,8 @@ private slots:
     void beginMessageTagsTypedAndStreamBlocks();
     void ingestOpensAssistantMessage();
     void editUserMessageTruncatesAndRetags();
+    void rewindToMessageReturnsTextAndTruncates();
+    void regenerateFromMessageKeepsUserTurn();
 };
 
 namespace {
@@ -2263,6 +2265,57 @@ void CoreTests::editUserMessageTruncatesAndRetags()
     QCOMPARE(store.blockAt(0)->messageId, newId);
     QCOMPARE(store.blockAt(0)->markdown(), QStringLiteral("Edited question."));
     QVERIFY(newId != QStringLiteral("u1"));
+}
+
+void CoreTests::rewindToMessageReturnsTextAndTruncates()
+{
+    const QString md = QStringLiteral(
+        "```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
+        "First question.\n\n"
+        "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
+        "First answer.\n\n"
+        "```msg\n{\"id\":\"u2\",\"role\":\"user\"}\n```\n\n"
+        "Second question.\n");
+
+    be::DocumentStore store;
+    store.loadMarkdown(md);
+    QCOMPARE(store.blockCount(), qsizetype(3));
+
+    // Rewinding to the SECOND user message drops it (everything from it onward)
+    // and returns its text; the first exchange is untouched.
+    const QString text = store.rewindToMessage(QStringLiteral("u2"));
+    QCOMPARE(text, QStringLiteral("Second question."));
+    QCOMPARE(store.blockCount(), qsizetype(2));
+    QCOMPARE(store.blockAt(0)->messageId, QStringLiteral("u1"));
+    QCOMPARE(store.blockAt(1)->messageId, QStringLiteral("m1"));
+
+    // An unknown id is a no-op returning "".
+    QCOMPARE(store.rewindToMessage(QStringLiteral("nope")), QString());
+    QCOMPARE(store.blockCount(), qsizetype(2));
+}
+
+void CoreTests::regenerateFromMessageKeepsUserTurn()
+{
+    const QString md = QStringLiteral(
+        "```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
+        "Question.\n\n"
+        "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
+        "Answer.\n");
+
+    be::DocumentStore store;
+    store.loadMarkdown(md);
+    QCOMPARE(store.blockCount(), qsizetype(2));
+
+    // Regenerating from the assistant reply drops it (and anything after) but
+    // keeps the user turn that produced it.
+    QVERIFY(store.regenerateFromMessage(QStringLiteral("m1")));
+    QCOMPARE(store.blockCount(), qsizetype(1));
+    QCOMPARE(store.blockAt(0)->role, be::MessageRole::User);
+    QCOMPARE(store.blockAt(0)->messageId, QStringLiteral("u1"));
+
+    // An unknown id leaves the document untouched and reports no truncation.
+    QVERIFY(!store.regenerateFromMessage(QStringLiteral("nope")));
+    QCOMPARE(store.blockCount(), qsizetype(1));
 }
 
 QTEST_MAIN(CoreTests)

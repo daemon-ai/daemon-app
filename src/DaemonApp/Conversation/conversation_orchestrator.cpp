@@ -45,6 +45,20 @@ void ConversationOrchestrator::submit(const QString& text, const QString& refs)
     populateDemoTodos();
 }
 
+void ConversationOrchestrator::rerun(const QString& text)
+{
+    // Interrupt-first: a rewind that lands while a turn is live must pre-empt it so
+    // the replayed turn is the only one streaming. No appendUserText here - the
+    // user block is already in the document (edit) or intentionally unchanged
+    // (regenerate).
+    if (m_turn->active()) {
+        m_turn->cancel();
+    }
+    m_todoClearTimer.stop();
+    m_turn->start(text);
+    populateDemoTodos();
+}
+
 void ConversationOrchestrator::steer(const QString& text)
 {
     if (m_conversation != nullptr) {
@@ -63,6 +77,18 @@ void ConversationOrchestrator::invokeCommand(const QString& command)
         if (m_conversation != nullptr) {
             m_conversation->createConversation(QString());
         }
+        return;
+    }
+    if (command == QStringLiteral("retry")) {
+        emit retryRequested();
+        return;
+    }
+    if (command == QStringLiteral("edit")) {
+        emit editRequested();
+        return;
+    }
+    if (command == QStringLiteral("undo")) {
+        emit undoRequested();
         return;
     }
     emit commandRequested(command);

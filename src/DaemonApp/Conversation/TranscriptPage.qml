@@ -64,6 +64,17 @@ Rectangle {
             else if (command === "distraction")
                 UiSettings.distractionFree = true;
         }
+        // Rewind slash commands act on the live editor (the GUI's source of truth),
+        // then re-run via the same rerun seam the inline affordances use.
+        onRetryRequested: transcript.retryLast()
+        onEditRequested: {
+            const text = transcript.editLast();
+            if (text !== "") {
+                composer.setText(text);
+                composer.forceActiveFocus();
+            }
+        }
+        onUndoRequested: transcript.undoLast()
     }
 
     // Open the bound conversation on realize and whenever it changes.
@@ -98,6 +109,11 @@ Rectangle {
             turn: orchestrator.turn
             onEdited: function(markdown) {
                 controller.updateContent(markdown);
+                root.committed();
+            }
+            // Edit / regenerate / restore truncated the document; re-run the turn.
+            onRerunRequested: function(text) {
+                orchestrator.rerun(text);
                 root.committed();
             }
 

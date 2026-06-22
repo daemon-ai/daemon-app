@@ -54,6 +54,11 @@ signals:
     // input).
     void clarifySubmitted(const QString &callId, const QString &requestId,
                           const QVariantMap &answers);
+    // Rewind picker actions on the selected prior user-message anchor. Restore
+    // re-runs it with its own text; edit asks the host to seed the composer with
+    // `text` (after truncating). The host interrupts a live turn and truncates.
+    void rewindRestoreRequested(const QString &messageId);
+    void rewindEditRequested(const QString &messageId, const QString &text);
 
 protected:
     void paintEvent(Tui::ZPaintEvent *event) override;
@@ -76,9 +81,23 @@ private:
     void toggleChoice();    // Space on a focused choice
     QVariantMap toolMetadataForCallId(const QString &callId) const;
 
+    // Rewind picker helpers (a selection mode over the user-message anchors,
+    // distinct from the interactive-control focus). enterRewind selects the last
+    // anchor; moveRewind walks between anchors; exitRewind leaves the mode. Active
+    // only when m_rewindMode is on and the document has at least one anchor.
+    bool rewindActive() const { return m_rewindMode && !m_anchors.isEmpty(); }
+    void enterRewind();
+    void exitRewind();
+    void moveRewind(int delta);
+    void ensureAnchorVisible();
+
     const be::DocumentStore *m_doc = nullptr;
     QVector<RenderLine> m_lines;
     QVector<Control> m_controls;
+    // Rewind anchors (prior user messages) and the picker's current selection.
+    QVector<Anchor> m_anchors;
+    bool m_rewindMode = false;
+    int m_rewindIndex = -1;
     // The in-progress clarify answer (radios/checkboxes/freeform), keyed by
     // question id, and the focused control index (-1 = none / scroll mode).
     AnswerDraft m_draft;

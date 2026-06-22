@@ -1198,6 +1198,33 @@ qsizetype DocumentStore::rowForMessage(const QString &messageId) const
     return -1;
 }
 
+QString DocumentStore::rewindToMessage(const QString &messageId)
+{
+    const qsizetype row = rowForMessage(messageId);
+    if (row < 0) {
+        return {};
+    }
+    // Gather the message's own text before truncating, so the caller can resubmit
+    // it (restore) or seed an edit composer with it (edit).
+    QStringList parts;
+    for (qsizetype r = row; r < m_blocks.size(); ++r) {
+        if (m_blocks[r].messageId == messageId) {
+            parts << m_blocks[r].markdown();
+        }
+    }
+    deleteBlocks(row, m_blocks.size() - row);
+    return parts.join(QStringLiteral("\n\n"));
+}
+
+bool DocumentStore::regenerateFromMessage(const QString &messageId)
+{
+    const qsizetype row = rowForMessage(messageId);
+    if (row < 0) {
+        return false;
+    }
+    return deleteBlocks(row, m_blocks.size() - row);
+}
+
 MessageRole DocumentStore::currentMessageRole() const
 {
     return m_currentRole;

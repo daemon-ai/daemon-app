@@ -52,12 +52,23 @@ struct AnswerDraft {
     QHash<QString, QString> freeform;
 };
 
+// A rewind anchor: a prior user message the transcript can be rewound to. `line`
+// is the row index of its header in the built `lines` (so the picker can scroll
+// to / highlight it); `messageId` routes the rewind; `text` is the message's
+// own text (for restore / edit-composer prefill).
+struct Anchor {
+    int line = -1;
+    QString messageId;
+    QString text;
+};
+
 // The result of a build: the wrapped rows plus the interactive controls found in
 // them (empty when the transcript has no awaiting-approval / unanswered-clarify
-// block).
+// block) and the user-message rewind anchors.
 struct LayoutResult {
     QVector<RenderLine> lines;
     QVector<Control> controls;
+    QVector<Anchor> anchors;
 };
 
 // The TUI analog of the GUI's QML block delegates: turns a parsed be::DocumentStore

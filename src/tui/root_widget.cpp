@@ -104,7 +104,12 @@ QString pageMarkdown(int kind)
             "**Left**/**Right** switch tabs, **Enter** pins a preview, **Delete** closes\n"
             "- In an interactive block (approval / clarify): **Up**/**Down**/**Left**/"
             "**Right** move between controls, **Space** toggles, **Enter** submits, "
-            "**Tab** leaves to the next pane\n");
+            "**Tab** leaves to the next pane\n"
+            "- In the transcript: **r** opens the rewind picker over your prior "
+            "messages (**Up**/**Down** to choose, **Enter** restores & re-runs, "
+            "**e** edits in the composer, **Esc** cancels)\n"
+            "- **/retry**, **/edit**, **/undo** rewind the last message from the "
+            "composer\n");
     }
     return QString();
 }
@@ -1086,6 +1091,12 @@ void RootWidget::wireViews()
                     m_active->host->onClarifySubmitted(callId, requestId, answers);
                 }
             });
+    // Rewind picker: restore re-runs the selected user message; edit seeds the
+    // composer with its text. Both funnel through the single rewindActiveTab seam.
+    connect(m_transcript, &TranscriptView::rewindRestoreRequested, this,
+            [this](const QString& messageId) { rewindActiveTab(messageId, false); });
+    connect(m_transcript, &TranscriptView::rewindEditRequested, this,
+            [this](const QString& messageId, const QString&) { rewindActiveTab(messageId, true); });
 
     // Composer <-> session controller. The controller is the source of truth for
     // the draft; the input box is its view. Typed edits flow in via textChanged;
@@ -1124,7 +1135,44 @@ void RootWidget::wireViews()
             [this](const QString& command) {
                 if (command == QStringLiteral("new")) {
                     newTranscriptTab();
-                } else if (m_active != nullptr) {
+                    return;
+                }
+                // Rewind commands act on the active tab's last user message. The
+                // TUI owns the document, so it resolves the anchor here rather than
+                // round-tripping through the orchestrator's rewind*Requested signals
+                // (which the GUI uses).
+                if (command == QStringLiteral("retry") || command == QStringLiteral("edit")
+                    || command == QStringLiteral("undo")) {
+                    if (m_active == nullptr) {
+                        return;
+                    }
+                    QString lastUserId;
+                    for (qsizetype row = 0; row < m_active->doc.blockCount(); ++row) {
+                        const be::BlockRecord* b = m_active->doc.blockAt(row);
+                        if (b != nullptr && b->role == be::MessageRole::User
+                            && !b->messageId.isEmpty()) {
+                            lastUserId = b->messageId;
+                        }
+                    }
+                    if (lastUserId.isEmpty()) {
+                        return;
+                    }
+                    if (command == QStringLiteral("undo")) {
+                        // Drop the last exchange: truncate inclusive, no re-run.
+                        if (m_active->turn != nullptr && m_active->turn->active()) {
+                            m_active->orchestrator->cancel();
+                        }
+                        m_active->doc.rewindToMessage(lastUserId);
+                        if (m_active->controller->hasConversation()) {
+                            m_active->controller->updateContent(m_active->doc.toMarkdown());
+                        }
+                        m_transcript->reload();
+                    } else {
+                        rewindActiveTab(lastUserId, command == QStringLiteral("edit"));
+                    }
+                    return;
+                }
+                if (m_active != nullptr) {
                     m_active->orchestrator->invokeCommand(command);
                 }
             });
@@ -1530,6 +1578,42 @@ void RootWidget::refreshTranscript()
     m_active->doc.loadMarkdown(
         m_active->controller->hasConversation() ? m_active->controller->content() : QString());
     m_transcript->reload();
+}
+
+void RootWidget::rewindActiveTab(const QString& messageId, bool editMode)
+{
+    if (m_active == nullptr || messageId.isEmpty()) {
+        return;
+    }
+    // Interrupt-first: pre-empt a live turn so the truncation and replay are the
+    // only stream.
+    if (m_active->turn != nullptr && m_active->turn->active()) {
+        m_active->orchestrator->cancel();
+    }
+    // Hard-truncate the active document at the message (it and everything after it
+    // are dropped) and adopt the result as the persisted content so the controller
+    // (the TUI's source of truth) and the document stay in sync.
+    const QString text = m_active->doc.rewindToMessage(messageId);
+    if (text.isEmpty()) {
+        return;
+    }
+    if (m_active->controller->hasConversation()) {
+        m_active->controller->updateContent(m_active->doc.toMarkdown());
+    }
+    m_transcript->reload();
+
+    if (editMode) {
+        // Seed the composer with the message text; the user edits and submits,
+        // which re-appends it (to the truncated content) and re-runs the turn.
+        if (m_composer != nullptr) {
+            m_composer->setText(text);
+            m_composer->moveCursorToEnd();
+            m_composer->setFocus();
+        }
+    } else {
+        // Restore: re-submit the same text as a fresh turn (append + run).
+        m_active->orchestrator->submit(text);
+    }
 }
 
 void RootWidget::onTurnEvents(TabSession* session, const QVariantList& events)
