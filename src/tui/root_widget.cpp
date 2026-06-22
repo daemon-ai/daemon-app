@@ -18,6 +18,8 @@
 #include <Tui/ZButton.h>
 #include <Tui/ZCommon.h>
 #include <Tui/ZDialog.h>
+#include <Tui/ZDocument.h>
+#include <Tui/ZDocumentCursor.h>
 #include <Tui/ZEvent.h>
 #include <Tui/ZHBoxLayout.h>
 #include <Tui/ZLabel.h>
@@ -26,6 +28,7 @@
 #include <Tui/ZRoot.h>
 #include <Tui/ZShortcut.h>
 #include <Tui/ZTerminal.h>
+#include <Tui/ZTextOption.h>
 #include <Tui/ZVBoxLayout.h>
 #include <Tui/ZWidget.h>
 #include <Tui/ZWindow.h>
@@ -41,9 +44,192 @@
 #include <QSettings>
 #include <QVariantMap>
 
+SubmitInputBox::SubmitInputBox(const Tui::ZTextMetrics& metrics, Tui::ZWidget* parent)
+    : Tui::ZTextEdit(metrics, parent)
+{
+    setShowLineNumbers(false);
+    setWordWrapMode(Tui::ZTextOption::WrapAnywhere);
+    setTabChangesFocus(true); // Tab moves focus (completion accept is intercepted)
+    setUndoRedoEnabled(true);
+    setSizePolicyV(Tui::SizePolicy::Fixed);    // height follows sizeHint() (m_rows)
+    setSizePolicyH(Tui::SizePolicy::Expanding); // fill the composer column width
+
+    // Keep the laid-out height and draft in sync when the document changes outside
+    // our keyEvent (notably paste). ZDocument::contentsChanged is delivered on the
+    // next event-loop turn, so keyEvent also syncs synchronously (below) - that is
+    // what keeps a fast Enter right after typing from seeing a stale draft.
+    QObject::connect(document(), &Tui::ZDocument::contentsChanged, this, [this] {
+        recomputeHeight();
+        syncToSession();
+    });
+}
+
+int SubmitInputBox::linearForPosition(Tui::ZTextEdit::Position pos) const
+{
+    int linear = 0;
+    for (int i = 0; i < pos.line; ++i) {
+        linear += document()->lineCodeUnits(i) + 1; // + the joining '\n'
+    }
+    return linear + pos.codeUnit;
+}
+
+Tui::ZTextEdit::Position SubmitInputBox::positionForLinear(int linear) const
+{
+    int remaining = qMax(0, linear);
+    const int lines = document()->lineCount();
+    for (int i = 0; i < lines; ++i) {
+        const int len = document()->lineCodeUnits(i);
+        if (remaining <= len) {
+            return { remaining, i };
+        }
+        remaining -= len + 1; // consume the line plus its '\n'
+    }
+    const int last = qMax(0, lines - 1);
+    return { document()->lineCodeUnits(last), last };
+}
+
+int SubmitInputBox::linearCursor() const
+{
+    return linearForPosition(cursorPosition());
+}
+
+void SubmitInputBox::setLinearCursor(int linear)
+{
+    setCursorPosition(positionForLinear(linear));
+}
+
+void SubmitInputBox::moveCursorToEnd()
+{
+    const int last = qMax(0, document()->lineCount() - 1);
+    setCursorPosition({ document()->lineCodeUnits(last), last });
+}
+
+void SubmitInputBox::syncToSession()
+{
+    if (m_session == nullptr) {
+        return;
+    }
+    // While reverse-searching the FSM owns the draft (it previews matches via
+    // draftReset); don't echo it back or fire the completion trigger.
+    if (m_session->reverseSearching()) {
+        return;
+    }
+    m_session->setDraft(text());
+    m_session->refreshTrigger(text(), linearCursor());
+}
+
+void SubmitInputBox::recomputeHeight()
+{
+    const int rows = qBound(1, document()->lineCount(), kMaxRows);
+    if (rows == m_rows) {
+        return;
+    }
+    m_rows = rows;
+    // Pin the layout height to the row count (the transcript above is the Expanding
+    // pane that gives/takes the space). Min == max forces an exact relayout.
+    setMinimumSize(8, rows);
+    setMaximumSize(Tui::tuiMaxSize, rows);
+    updateGeometry();
+}
+
+QSize SubmitInputBox::sizeHint() const
+{
+    QSize hint = Tui::ZTextEdit::sizeHint();
+    hint.setHeight(m_rows);
+    return hint;
+}
+
+bool SubmitInputBox::applyReadline(lineedit::EditCommand cmd)
+{
+    using EC = lineedit::EditCommand;
+    const Tui::ZTextEdit::Position pos = cursorPosition();
+    const QString lineText = document()->line(pos.line);
+    const int col = pos.codeUnit;
+
+    // Line-boundary deletes join lines: defer to the base editor so a multiline
+    // draft behaves like a normal text editor at the seams.
+    if (cmd == EC::DeleteChar && col >= lineText.size()) {
+        return false;
+    }
+    if (cmd == EC::BackwardDeleteChar && col == 0) {
+        return false;
+    }
+
+    // All other emacs commands are line-relative; run the tested pure transform on
+    // the current line, then write back the (possibly) changed line + caret column.
+    QString edited = lineText;
+    int caret = col;
+    if (!lineedit::LineEditor::applyCommand(cmd, edited, caret, m_killRing)) {
+        return false;
+    }
+    if (edited != lineText) {
+        Tui::ZDocumentCursor cur = textCursor();
+        cur.setPosition({ 0, pos.line });
+        cur.moveToEndOfLine(true); // select the whole current line
+        cur.removeSelectedText();
+        cur.insertText(edited);
+    }
+    setCursorPosition({ qBound(0, caret, document()->lineCodeUnits(pos.line)), pos.line });
+    return true;
+}
+
+bool SubmitInputBox::handleReverseSearch(Tui::ZKeyEvent* event)
+{
+    const int key = event->key();
+    const Qt::KeyboardModifiers mods = event->modifiers();
+    const QString t = event->text();
+
+    // Ctrl+R steps to the next older match; Ctrl+G aborts (readline's abort).
+    if (mods & Qt::ControlModifier) {
+        if (t.compare(QStringLiteral("r"), Qt::CaseInsensitive) == 0) {
+            m_session->reverseSearchNext();
+            event->accept();
+            return true;
+        }
+        if (t.compare(QStringLiteral("g"), Qt::CaseInsensitive) == 0) {
+            m_session->reverseSearchCancel();
+            event->accept();
+            return true;
+        }
+    }
+    if (key == Qt::Key_Escape) {
+        m_session->reverseSearchCancel();
+        event->accept();
+        return true;
+    }
+    if (key == Qt::Key_Backspace) {
+        m_session->reverseSearchBackspace();
+        event->accept();
+        return true;
+    }
+    if (key == Qt::Key_Enter || key == Qt::Key_Return || t == QStringLiteral("\r")) {
+        m_session->reverseSearchAccept(); // keep the match in the draft, no submit
+        event->accept();
+        return true;
+    }
+    // A printable character (no Ctrl/Alt) narrows the query.
+    if (!t.isEmpty() && !(mods & (Qt::ControlModifier | Qt::AltModifier)) && t.at(0).isPrint()) {
+        m_session->reverseSearchType(t);
+        event->accept();
+        return true;
+    }
+    // Any other key (arrows, etc.): accept the match, then let the caller process
+    // the key against the now-editable draft.
+    m_session->reverseSearchAccept();
+    return false;
+}
+
 void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
 {
-    // Completion navigation takes priority while the popup is open: Up/Down move
+    // (0) Reverse incremental search owns all keys while active.
+    if (m_session != nullptr && m_session->reverseSearching()) {
+        if (handleReverseSearch(event)) {
+            return;
+        }
+        // Fell through: the FSM accepted the match; continue normal handling.
+    }
+
+    // (1) Completion navigation takes priority while the popup is open: Up/Down move
     // the active row, Enter/Tab accept it, Esc dismisses. Driven by the shared
     // controller so the TUI matches the GUI behavior exactly.
     if (m_session != nullptr && m_session->completionActive()
@@ -74,30 +260,66 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
 
     const bool isEnter = event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return
                          || event->text() == QStringLiteral("\r");
-    // Ctrl+Enter mid-turn steers the running turn (when the controller allows it).
-    if (isEnter && event->modifiers() == Qt::ControlModifier) {
-        if (m_session != nullptr && m_session->canSteer()) {
-            m_session->steerDraft();
+    // (2) Enter rules: Shift+Enter inserts a newline, Ctrl+Enter steers, plain Enter
+    // submits (matching the GUI's multiline TextArea).
+    if (isEnter) {
+        if (event->modifiers() == Qt::ShiftModifier) {
+            // ZDocument tracks a missing trailing newline implicitly; inserting "\n"
+            // at the very end would just collapse that flag (no materialized line, so
+            // no visual break). Clear it to force a real split, then restore it so the
+            // serialized draft never grows a spurious trailing "\n" for the new empty
+            // tail line (the composer's steady-state invariant is flag == true).
+            document()->setNewlineAfterLastLineMissing(false);
+            insertText(QStringLiteral("\n"));
+            document()->setNewlineAfterLastLineMissing(true);
+            recomputeHeight();
+            // Mirror the base ZTextEdit Enter handler: keep the caret visible and
+            // request a repaint now (our custom branch bypasses the base, which is
+            // what would otherwise schedule the update).
+            adjustScrollPosition();
+            update();
+            syncToSession();
+            event->accept();
+            return;
+        }
+        if (event->modifiers() == Qt::ControlModifier) {
+            if (m_session != nullptr) {
+                m_session->setDraft(text()); // ensure the controller has the latest draft
+                if (m_session->canSteer()) {
+                    m_session->steerDraft();
+                }
+            }
+            event->accept(); // swallow either way so Ctrl+Enter never inserts a newline
+            return;
+        }
+        if (event->modifiers() == Qt::NoModifier) {
+            if (m_session != nullptr) {
+                m_session->setDraft(text()); // submit() reads the controller's draft
+            }
+            emit submitted(text());
             event->accept();
             return;
         }
     }
-    if (isEnter && event->modifiers() == Qt::NoModifier) {
-        emit submitted(text());
+    // (3) Ctrl+R enters reverse incremental search (delivered as a char event:
+    // key()==Key_unknown, text()=="r", Ctrl held).
+    if (m_session != nullptr && (event->modifiers() & Qt::ControlModifier)
+        && event->text().compare(QStringLiteral("r"), Qt::CaseInsensitive) == 0) {
+        m_session->reverseSearchStart();
         event->accept();
         return;
     }
-    // Ctrl+O: add a (mock) attachment, mirroring the GUI's "+" attachment menu.
+    // (4) Ctrl+O: add a (mock) attachment, mirroring the GUI's "+" attachment menu.
     // Tui Widgets delivers Ctrl+letter as a char event (key()==Key_unknown, letter
     // in text()), so match the letter rather than Qt::Key_O.
-    if (event->modifiers() == Qt::ControlModifier
+    if ((event->modifiers() & Qt::ControlModifier)
         && (event->key() == Qt::Key_O
             || event->text().compare(QStringLiteral("o"), Qt::CaseInsensitive) == 0)) {
         emit attachRequested();
         event->accept();
         return;
     }
-    // Context-sensitive Esc. Precedence: cancel an in-progress queue edit, then
+    // (5) Context-sensitive Esc. Precedence: cancel an in-progress queue edit, then
     // stop a running turn, then clear a non-empty draft, then hand focus back to
     // the panes (where a further Esc bubbles to RootWidget's quit prompt).
     if (event->key() == Qt::Key_Escape && event->modifiers() == Qt::NoModifier) {
@@ -106,9 +328,10 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
         } else if (m_session != nullptr && m_session->busy()) {
             m_session->cancel(); // -> cancelRequested -> orchestrator.cancel()
         } else if (!text().isEmpty()) {
-            setText(QString());
             if (m_session != nullptr) {
-                m_session->refreshTrigger(text(), cursorPosition());
+                m_session->clear(); // clears draft via draftReset (keeps both ends synced)
+            } else {
+                clear();
             }
         } else {
             emit leaveRequested();
@@ -116,63 +339,61 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
         event->accept();
         return;
     }
-    // Single-line box: Up/Down walk the sent-message history, gated like the GUI -
-    // Up only with an empty draft or while already browsing, Down only while
-    // browsing (so an in-progress draft is never clobbered by a stray Up).
+    // (6) History: Up/Down walk the sent-message ring, gated like the GUI - Up only
+    // with an empty draft or while already browsing, Down only while browsing - and
+    // only at the document's first/last line so interior line navigation still works.
     if (event->modifiers() == Qt::NoModifier && m_session != nullptr) {
-        if (event->key() == Qt::Key_Up && (text().isEmpty() || m_session->browsing())) {
+        const Tui::ZTextEdit::Position pos = cursorPosition();
+        const bool atFirstLine = pos.line == 0;
+        const bool atLastLine = pos.line == document()->lineCount() - 1;
+        if (event->key() == Qt::Key_Up && atFirstLine
+            && (text().isEmpty() || m_session->browsing())) {
             emit historyPrevious();
             event->accept();
             return;
         }
-        if (event->key() == Qt::Key_Down && m_session->browsing()) {
+        if (event->key() == Qt::Key_Down && atLastLine && m_session->browsing()) {
             emit historyNext();
             event->accept();
             return;
         }
     }
-    // Readline/emacs-style editing (Ctrl+A/E/B/F, Alt+B/F, Ctrl+K/U/W/D, Ctrl+Y,
+    // (7) Readline/emacs-style editing (Ctrl+A/E/B/F, Alt+B/F, Ctrl+K/U/W/D, Ctrl+Y,
     // Alt+Y, Ctrl+T ...), honoring ~/.inputrc remaps. Runs after the app-priority
     // keys above so it never shadows submit/steer/attach/history/completion.
     const lineedit::EditCommand cmd
         = lineedit::LineEditor::lookupEvent(event->key(), event->modifiers(), event->text());
-    if (cmd != lineedit::EditCommand::None) {
-        QString t = text();
-        int caret = cursorPosition();
-        if (lineedit::LineEditor::applyCommand(cmd, t, caret, m_killRing)) {
-            if (t != text()) {
-                setText(t);
-            }
-            setCursorPosition(caret);
-            if (m_session != nullptr) {
-                m_session->refreshTrigger(text(), cursorPosition());
-            }
-            event->accept();
-            return;
-        }
+    if (cmd != lineedit::EditCommand::None && applyReadline(cmd)) {
+        recomputeHeight();
+        adjustScrollPosition();
+        update();
+        syncToSession();
+        event->accept();
+        return;
     }
-    Tui::ZInputBox::keyEvent(event);
-    // A typed character or caret move may have changed the slash/@ trigger token.
-    if (m_session != nullptr) {
-        m_session->refreshTrigger(text(), cursorPosition());
-    }
+    Tui::ZTextEdit::keyEvent(event);
+    // Sync synchronously (a typed char or caret move may change the draft / the
+    // slash-@ trigger token); the deferred contentsChanged signal also fires later.
+    recomputeHeight();
+    syncToSession();
 }
 
 void SubmitInputBox::paintEvent(Tui::ZPaintEvent* event)
 {
-    // Base paints the field bg + (when focused) positions the terminal caret.
-    Tui::ZInputBox::paintEvent(event);
+    // Base paints the multiline field bg/text and positions the terminal caret.
+    Tui::ZTextEdit::paintEvent(event);
     if (!text().isEmpty()) {
         return; // real draft text takes over
     }
-    // Overlay a dim placeholder over the (focus-aware) field background.
+    // Overlay a dim placeholder over the editor's (focus-aware) background.
     Tui::ZPainter* p = event->painter();
     const int w = geometry().width();
     if (w <= 0) {
         return;
     }
-    const Tui::ZColor fieldBg = focus() ? tpal::activeFieldBg() : tpal::surfaceAlt();
-    const QString hint = QStringLiteral("Message daemon\u2026  (Enter to send)");
+    const Tui::ZColor fieldBg = focus() ? getColor(QStringLiteral("textedit.focused.bg"))
+                                        : getColor(QStringLiteral("textedit.bg"));
+    const QString hint = QStringLiteral("Message daemon\u2026  (Enter to send, Shift+Enter newline)");
     p->writeWithColors(0, 0, hint.left(w), tpal::muted(), fieldBg);
 }
 
@@ -616,9 +837,10 @@ void RootWidget::buildUi()
     m_attachments = new AttachmentBarView(right);
     rightCol->addWidget(m_attachments);
 
-    m_composer = new SubmitInputBox(right);
+    // Multiline composer (ZTextEdit). Height follows the document line count via
+    // sizeHint() (1..kMaxRows); the transcript above it is the Expanding pane.
+    m_composer = new SubmitInputBox(terminal()->textMetrics(), right);
     m_composer->setMinimumSize(8, 1);
-    m_composer->setMaximumSize(Tui::tuiMaxSize, 1);
     rightCol->addWidget(m_composer);
 
     // Completion overlay: a borderless custom-painted popup floated above the
@@ -758,13 +980,16 @@ void RootWidget::wireViews()
     // programmatic changes (history recall, conversation swap, clear-on-send) flow
     // back out via draftReset. Enter routes to submit(); the controller emits the
     // submitted turn, which the conversation controller appends.
-    connect(m_composer, &Tui::ZInputBox::textChanged, m_composerSession,
-            &ComposerSessionController::setDraft);
+    // The composer pushes live edits into the session itself (via its document /
+    // cursor signals), so there is no textChanged wire here. Programmatic draft
+    // changes flow back out via draftReset: replace the text and drop the caret at
+    // the end (a completion accept then overrides the caret via cursorRequested).
     connect(m_composerSession, &ComposerSessionController::draftReset, m_composer,
             [this](const QString& text) {
                 if (m_composer->text() != text) {
                     m_composer->setText(text);
                 }
+                m_composer->moveCursorToEnd();
             });
     connect(m_composer, &SubmitInputBox::submitted, m_composerSession,
             [this](const QString&) { m_composerSession->submit(); });
@@ -791,7 +1016,7 @@ void RootWidget::wireViews()
     // mirrors the controller's completion state.
     m_composer->setSession(m_composerSession);
     connect(m_composerSession, &ComposerSessionController::cursorRequested, m_composer,
-            [this](int pos) { m_composer->setCursorPosition(pos); });
+            [this](int pos) { m_composer->setLinearCursor(pos); });
     connect(m_composerSession, &ComposerSessionController::completionActiveChanged, this,
             &RootWidget::updateCompletion);
     connect(m_composerSession, &ComposerSessionController::completionActiveIndexChanged, this,
@@ -900,6 +1125,8 @@ void RootWidget::dumpGeometry() const
     g("sidebar", m_sidebarView);
     g("list", m_listView);
     g("transcript", m_transcript);
+    g("chrome", m_composerChrome);
+    g("composer", m_composer);
 }
 
 void RootWidget::focusComposer() const

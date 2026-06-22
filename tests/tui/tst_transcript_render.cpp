@@ -105,6 +105,7 @@ private slots:
     void approvalEmitsButtonControls();
     void clarifyEmitsChoiceAndFreeformControls();
     void clarifyDraftReflectsSelection();
+    void multiParagraphMessageKeepsBlankLines();
 };
 
 void TranscriptRenderTests::rendersStructureNotFences()
@@ -277,6 +278,38 @@ void TranscriptRenderTests::clarifyDraftReflectsSelection()
     QCOMPARE(answers.value(QStringLiteral("scope")).toStringList(),
              QStringList { QStringLiteral("Schema") });
     QCOMPARE(answers.value(QStringLiteral("notes")).toString(), QStringLiteral("be careful"));
+}
+
+void TranscriptRenderTests::multiParagraphMessageKeepsBlankLines()
+{
+    // A multiline composer message with an intentional blank line lands as two
+    // markdown paragraphs sharing one message id. They must render with a blank
+    // row between them (mirroring the GUI's paragraph margins) - a single newline
+    // (one paragraph, soft-wrapped) stays tight, while the blank line is kept.
+    be::DocumentStore doc;
+    doc.loadMarkdown(QStringLiteral(R"md(```msg
+{"id":"u1","role":"user"}
+```
+
+first paragraph
+
+second paragraph
+)md"));
+    const QStringList rows = flatten(TranscriptLayout::build(doc, 80).lines).split(QLatin1Char('\n'));
+
+    int firstIdx = -1, secondIdx = -1;
+    for (int i = 0; i < rows.size(); ++i) {
+        if (rows.at(i).contains(QStringLiteral("first paragraph"))) {
+            firstIdx = i;
+        } else if (rows.at(i).contains(QStringLiteral("second paragraph"))) {
+            secondIdx = i;
+        }
+    }
+    QVERIFY(firstIdx >= 0);
+    QVERIFY(secondIdx > firstIdx);
+    // Exactly one (blank) row separates the two paragraphs.
+    QCOMPARE(secondIdx - firstIdx, 2);
+    QVERIFY(rows.at(firstIdx + 1).trimmed().isEmpty());
 }
 
 QTEST_MAIN(TranscriptRenderTests)

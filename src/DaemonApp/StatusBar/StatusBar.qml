@@ -170,7 +170,7 @@ Rectangle {
 
             GatewayMenu {
                 id: gatewayMenuCompact
-                gatewayState: model.gatewayState
+                statusModel: model
                 y: -height - 6
                 x: 0
             }
