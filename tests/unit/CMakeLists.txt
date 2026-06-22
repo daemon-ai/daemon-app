@@ -107,6 +107,17 @@ target_link_libraries(tst_completion
 add_test(NAME tst_completion COMMAND tst_completion)
 set_tests_properties(tst_completion PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_composer_session: the composer-session logic extracted from QML - the
+# primary-action rule (send/queue/stop + enablement) and the model selector.
+qt_add_executable(tst_composer_session tst_composer_session.cpp)
+target_link_libraries(tst_composer_session
+    PRIVATE
+        Qt6::Test
+        daemon-app::composer_session
+)
+add_test(NAME tst_composer_session COMMAND tst_composer_session)
+set_tests_properties(tst_composer_session PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_conversation_orchestrator: the shared submit pipeline - submit starts the
 # turn + populates todos (and clears them after the turn settles), cancel resets,
 # and slash "/new" is handled while other commands surface via commandRequested.

@@ -104,6 +104,29 @@ private slots:
         model.setAgentsFailed(1);
         QCOMPARE(model.agentsDetail(), QStringLiteral("1 failed"));
     }
+
+    // Gateway dropdown content (extracted from GatewayMenu.qml) is seeded with the
+    // placeholder values and is settable, emitting gatewayInfoChanged.
+    void gatewayInfoSeededAndSettable()
+    {
+        StatusBarModel model;
+        QCOMPARE(model.gatewayConnectionText(), QStringLiteral("Connected to local gateway"));
+        QCOMPARE(model.gatewayLog().size(), 5);
+        QCOMPARE(model.gatewayLog().first(), QStringLiteral("gateway: ready (pid 4821)"));
+
+        const QVariantList platforms = model.gatewayPlatforms();
+        QCOMPARE(platforms.size(), 3);
+        const QVariantMap first = platforms.first().toMap();
+        QCOMPARE(first.value(QStringLiteral("name")).toString(), QStringLiteral("Telegram"));
+        QCOMPARE(first.value(QStringLiteral("online")).toBool(), true);
+
+        QSignalSpy spy(&model, &StatusBarModel::gatewayInfoChanged);
+        model.setGatewayConnectionText(QStringLiteral("Reconnecting\u2026"));
+        QCOMPARE(model.gatewayConnectionText(), QStringLiteral("Reconnecting\u2026"));
+        model.setGatewayLog({ QStringLiteral("gateway: down") });
+        QCOMPARE(model.gatewayLog().size(), 1);
+        QCOMPARE(spy.count(), 2);
+    }
 };
 
 QTEST_GUILESS_MAIN(TestStatusModel)

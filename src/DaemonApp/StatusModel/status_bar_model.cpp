@@ -1,11 +1,37 @@
 #include "status_bar_model.h"
 
 #include <QDateTime>
+#include <QVariantMap>
 #include <cmath>
+
+namespace {
+QVariantMap platform(const QString& name, bool online)
+{
+    QVariantMap m;
+    m.insert(QStringLiteral("name"), name);
+    m.insert(QStringLiteral("online"), online);
+    return m;
+}
+} // namespace
 
 StatusBarModel::StatusBarModel(QObject* parent)
     : QObject(parent)
 {
+    // Placeholder gateway dropdown content (verbatim from the old GatewayMenu.qml).
+    m_gatewayConnectionText = tr("Connected to local gateway");
+    m_gatewayLog = {
+        QStringLiteral("gateway: ready (pid 4821)"),
+        QStringLiteral("session: resumed conv-1"),
+        QStringLiteral("inference: model warm"),
+        QStringLiteral("messaging: telegram connected"),
+        QStringLiteral("cron: 0 jobs due"),
+    };
+    m_gatewayPlatforms = {
+        platform(QStringLiteral("Telegram"), true),
+        platform(QStringLiteral("Slack"), false),
+        platform(QStringLiteral("Email"), true),
+    };
+
     m_nowMs = static_cast<double>(QDateTime::currentMSecsSinceEpoch());
     // Session timer starts at launch (mirrors StatusBar.qml's
     // Component.onCompleted: sessionStartedAt = Date.now()).
@@ -177,6 +203,33 @@ void StatusBarModel::setAppVersion(const QString& version)
     }
     m_appVersion = version;
     emit appVersionChanged();
+}
+
+void StatusBarModel::setGatewayConnectionText(const QString& text)
+{
+    if (m_gatewayConnectionText == text) {
+        return;
+    }
+    m_gatewayConnectionText = text;
+    emit gatewayInfoChanged();
+}
+
+void StatusBarModel::setGatewayLog(const QStringList& log)
+{
+    if (m_gatewayLog == log) {
+        return;
+    }
+    m_gatewayLog = log;
+    emit gatewayInfoChanged();
+}
+
+void StatusBarModel::setGatewayPlatforms(const QVariantList& platforms)
+{
+    if (m_gatewayPlatforms == platforms) {
+        return;
+    }
+    m_gatewayPlatforms = platforms;
+    emit gatewayInfoChanged();
 }
 
 QString StatusBarModel::formatElapsed(double startMs) const

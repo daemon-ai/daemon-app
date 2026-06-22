@@ -57,6 +57,7 @@ void ComposerSessionController::setEnabled(bool enabled)
     }
     m_enabled = enabled;
     emit enabledChanged();
+    emit derivedChanged(); // primaryActionEnabled folds in `enabled`
 }
 
 void ComposerSessionController::setDraft(const QString& draft)
@@ -94,6 +95,41 @@ bool ComposerSessionController::hasPayload() const
 bool ComposerSessionController::canSteer() const
 {
     return m_busy && m_draft.trimmed().length() > 0 && m_attachments->count() == 0;
+}
+
+QString ComposerSessionController::primaryAction() const
+{
+    if (m_busy) {
+        return hasPayload() ? QStringLiteral("queue") : QStringLiteral("stop");
+    }
+    return QStringLiteral("send");
+}
+
+bool ComposerSessionController::primaryActionEnabled() const
+{
+    // Stop/queue are always actionable while enabled; send needs a payload.
+    return m_enabled && (primaryAction() != QStringLiteral("send") || hasPayload());
+}
+
+QString ComposerSessionController::currentModel() const
+{
+    return (m_currentModelIndex >= 0 && m_currentModelIndex < m_models.size())
+        ? m_models.at(m_currentModelIndex)
+        : QString();
+}
+
+void ComposerSessionController::setCurrentModelIndex(int index)
+{
+    if (index < 0 || index >= m_models.size() || index == m_currentModelIndex) {
+        return;
+    }
+    m_currentModelIndex = index;
+    emit currentModelChanged();
+}
+
+void ComposerSessionController::selectModel(int index)
+{
+    setCurrentModelIndex(index);
 }
 
 void ComposerSessionController::resetBrowse()

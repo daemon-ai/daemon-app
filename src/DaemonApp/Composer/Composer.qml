@@ -408,14 +408,17 @@ Rectangle {
                         Layout.row: root.stacked ? 1 : 0
                         Layout.column: 2
                         Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                        busy: root.busy
-                        hasPayload: controller.hasPayload
+                        primaryAction: controller.primaryAction
+                        primaryActionEnabled: controller.primaryActionEnabled
                         canSteer: controller.canSteer
                         composerEnabled: root.composerEnabled
+                        modelList: controller.models
+                        currentModelIndex: controller.currentModelIndex
                         onSend: root.submitDraft()
                         onQueue: root.queueDraft()
                         onStop: controller.cancel()
                         onSteer: root.steerDraft()
+                        onModelSelected: function(index) { controller.selectModel(index); }
                     }
                 }
             }

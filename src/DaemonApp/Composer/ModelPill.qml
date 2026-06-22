@@ -5,22 +5,18 @@ import DaemonApp.Theme
 
 // The composer model selector - the QML port of Hermes' ModelPill
 // (apps/desktop/src/app/chat/composer/model-pill.tsx). A quiet pill showing the
-// current model + a caret; clicking opens an upward menu of a canned model list.
-// There is no model backend yet, so the selection is held in-memory and is
-// purely cosmetic.
+// current model + a caret; clicking opens an upward menu of the model list. The
+// list + selection are owned by the shared ComposerSessionController (no gateway
+// model backend yet); this pill is a pure view that reports the chosen index up.
 Item {
     id: root
 
-    // Canned model list (no gateway model backend exists yet).
-    property var models: [
-        "claude-opus-4.8",
-        "claude-sonnet-4.6",
-        "gpt-5.5",
-        "gpt-5.3-codex",
-        "gemini-3-pro"
-    ]
+    // Inputs from the controller; selection is reported via `selected`.
+    property var models: []
     property int currentIndex: 0
     readonly property string currentModel: models[currentIndex] !== undefined ? models[currentIndex] : ""
+
+    signal selected(int index)
 
     implicitWidth: pill.implicitWidth
     implicitHeight: 28
@@ -140,7 +136,7 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            root.currentIndex = itemRoot.index;
+                            root.selected(itemRoot.index);
                             menu.close();
                         }
                     }

@@ -682,6 +682,7 @@ void RootWidget::wireViews()
     // the StatusBarModel's 1s elapsed tick).
     m_footer->setModel(m_status);
     m_composerChrome->setTurn(m_turn);
+    m_composerChrome->setSession(m_composerSession);
 
     // Initial selection: first sidebar row populates the list, then open its
     // first conversation so the transcript is non-empty on launch.

@@ -32,6 +32,11 @@ class ComposerSessionController : public QObject {
     Q_PROPERTY(QString draft READ draft WRITE setDraft NOTIFY draftChanged)
     Q_PROPERTY(bool hasPayload READ hasPayload NOTIFY derivedChanged)
     Q_PROPERTY(bool canSteer READ canSteer NOTIFY derivedChanged)
+    // The composer's primary action, derived from busy + payload, so the GUI
+    // control and the TUI chrome share one rule: "send" (idle), "queue" (busy with
+    // a draft), "stop" (busy, empty). `primaryActionEnabled` folds in `enabled`.
+    Q_PROPERTY(QString primaryAction READ primaryAction NOTIFY derivedChanged)
+    Q_PROPERTY(bool primaryActionEnabled READ primaryActionEnabled NOTIFY derivedChanged)
     Q_PROPERTY(int queueCount READ queueCount NOTIFY queueCountChanged)
     Q_PROPERTY(int editingIndex READ editingIndex NOTIFY editingIndexChanged)
     Q_PROPERTY(ComposerQueueModel* queue READ queue CONSTANT)
@@ -43,6 +48,14 @@ class ComposerSessionController : public QObject {
     Q_PROPERTY(QString completionKind READ completionKind NOTIFY completionKindChanged)
     Q_PROPERTY(
         int completionActiveIndex READ completionActiveIndex NOTIFY completionActiveIndexChanged)
+
+    // Model selector (placeholder: there is no gateway model backend yet, so the
+    // selection is in-memory). The list + current index live here so the GUI
+    // ModelPill and the TUI share one source.
+    Q_PROPERTY(QStringList models READ models CONSTANT)
+    Q_PROPERTY(int currentModelIndex READ currentModelIndex WRITE setCurrentModelIndex NOTIFY
+                   currentModelChanged)
+    Q_PROPERTY(QString currentModel READ currentModel NOTIFY currentModelChanged)
 
 public:
     explicit ComposerSessionController(QObject* parent = nullptr);
@@ -61,6 +74,8 @@ public:
 
     [[nodiscard]] bool hasPayload() const;
     [[nodiscard]] bool canSteer() const;
+    [[nodiscard]] QString primaryAction() const;
+    [[nodiscard]] bool primaryActionEnabled() const;
     [[nodiscard]] int queueCount() const { return m_queue->count(); }
     [[nodiscard]] int editingIndex() const { return m_editingIndex; }
 
@@ -71,6 +86,11 @@ public:
     [[nodiscard]] bool completionActive() const { return m_completionActive; }
     [[nodiscard]] QString completionKind() const { return m_completionKind; }
     [[nodiscard]] int completionActiveIndex() const { return m_completionActiveIndex; }
+
+    [[nodiscard]] QStringList models() const { return m_models; }
+    [[nodiscard]] int currentModelIndex() const { return m_currentModelIndex; }
+    [[nodiscard]] QString currentModel() const;
+    void setCurrentModelIndex(int index);
 
     // Intents (mirror the QML composer's functions).
     Q_INVOKABLE void submit();        // Enter: send / save-edit / drain
@@ -87,6 +107,7 @@ public:
     Q_INVOKABLE void addAttachment(const QString& name, const QString& kind);
     Q_INVOKABLE void invokeCommand(const QString& command);
     Q_INVOKABLE void clear(); // clear draft + attachments
+    Q_INVOKABLE void selectModel(int index); // pick the active model (clamped)
 
     // Completion FSM (mirror of the QML composer's trigger functions). The view
     // pushes the live text + caret on every change; the controller detects the
@@ -124,6 +145,7 @@ signals:
     void derivedChanged();
     void queueCountChanged();
     void editingIndexChanged();
+    void currentModelChanged();
 
 private:
     void applyDraft(const QString& text); // programmatic draft change (-> draftReset)
@@ -145,6 +167,12 @@ private:
     bool m_busy = false;
     bool m_enabled = true;
     QString m_draft;
+
+    // Canned model list (no gateway model backend yet); selection is in-memory.
+    QStringList m_models { QStringLiteral("claude-opus-4.8"), QStringLiteral("claude-sonnet-4.6"),
+                           QStringLiteral("gpt-5.5"), QStringLiteral("gpt-5.3-codex"),
+                           QStringLiteral("gemini-3-pro") };
+    int m_currentModelIndex = 0;
 
     // Per-conversation persisted state (keyed by conversation id).
     QHash<int, QString> m_drafts;

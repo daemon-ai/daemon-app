@@ -12,25 +12,13 @@ import DaemonApp.Controls as Kit
 QQC.Popup {
     id: root
 
-    // "ready" | "needs setup" | "checking" | "connecting" | "offline".
-    property string gatewayState: "ready"
-    property string connectionText: qsTr("Connected to local gateway")
-    property var logLines: [
-        "gateway: ready (pid 4821)",
-        "session: resumed conv-1",
-        "inference: model warm",
-        "messaging: telegram connected",
-        "cron: 0 jobs due"
-    ]
-    property var platforms: [
-        { name: "Telegram", online: true },
-        { name: "Slack", online: false },
-        { name: "Email", online: true }
-    ]
+    // The shared StatusBarModel owns the gateway state + dropdown content (state,
+    // connection line, log lines, messaging platforms, and the degraded/offline
+    // derivations), so both front ends read one source.
+    required property var statusModel
 
-    readonly property bool degraded: gatewayState === "needs setup" || gatewayState === "connecting"
-                                     || gatewayState === "checking"
-    readonly property bool offline: gatewayState === "offline"
+    readonly property bool degraded: root.statusModel ? root.statusModel.gatewayDegraded : false
+    readonly property bool offline: root.statusModel ? root.statusModel.gatewayOffline : false
 
     signal openSystemRequested()
     signal viewAllLogsRequested()
@@ -83,7 +71,7 @@ QQC.Popup {
             Layout.fillWidth: true
             Layout.margins: 12
             Layout.bottomMargin: 6
-            text: root.connectionText
+            text: root.statusModel ? root.statusModel.gatewayConnectionText : ""
             font.family: FontIcons.display
             font.pixelSize: 12
             color: Theme.textMuted
@@ -98,7 +86,7 @@ QQC.Popup {
             spacing: 2
 
             Repeater {
-                model: root.logLines
+                model: root.statusModel ? root.statusModel.gatewayLog : []
                 delegate: QQC.Label {
                     required property string modelData
                     Layout.fillWidth: true
@@ -127,7 +115,7 @@ QQC.Popup {
             spacing: 6
 
             Repeater {
-                model: root.platforms
+                model: root.statusModel ? root.statusModel.gatewayPlatforms : []
                 delegate: RowLayout {
                     required property var modelData
                     Layout.fillWidth: true

@@ -2,6 +2,7 @@
 
 #include "tui_palette.h"
 
+#include "composer_session_controller.h"
 #include "turn_controller.h"
 
 #include <Tui/ZColor.h>
@@ -46,6 +47,16 @@ void ComposerChrome::setTurn(TurnController* turn)
         });
     }
     syncSpinner();
+    update();
+}
+
+void ComposerChrome::setSession(ComposerSessionController* session)
+{
+    m_session = session;
+    if (m_session != nullptr) {
+        connect(m_session, &ComposerSessionController::currentModelChanged, this,
+                [this] { update(); });
+    }
     update();
 }
 
@@ -97,10 +108,14 @@ QVector<Span> ComposerChrome::buildSpans() const
         return spans;
     }
 
-    // Idle: a dim affordance hint.
+    // Idle: a dim affordance hint, plus the shared current-model name (model pill).
     spans << mkSpan(tpal::sendGlyph() + QStringLiteral(" Enter send"), tpal::muted());
     spans << mkSpan(QStringLiteral("  \u00b7  "), tpal::faint());
     spans << mkSpan(tpal::steerGlyph() + QStringLiteral(" Ctrl+Enter steer"), tpal::muted());
+    if (m_session != nullptr && !m_session->currentModel().isEmpty()) {
+        spans << mkSpan(QStringLiteral("  \u00b7  "), tpal::faint());
+        spans << mkSpan(m_session->currentModel(), tpal::muted());
+    }
     return spans;
 }
 

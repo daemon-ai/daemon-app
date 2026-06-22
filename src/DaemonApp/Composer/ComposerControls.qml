@@ -13,16 +13,22 @@ import DaemonApp.Controls as Kit
 RowLayout {
     id: root
 
-    property bool busy: false
-    property bool hasPayload: false
+    // The primary-action rule (send/queue/stop + enablement) now lives in the
+    // shared ComposerSessionController; this cluster just renders it.
+    property string primaryAction: "send"
+    property bool primaryActionEnabled: false
     // Steering is only meaningful mid-turn with a text-only draft.
     property bool canSteer: false
     property bool composerEnabled: true
+    // Model selector list + selection, owned by the controller.
+    property var modelList: []
+    property int currentModelIndex: 0
 
     signal send()
     signal queue()
     signal stop()
     signal steer()
+    signal modelSelected(int index)
 
     spacing: Theme.spacingSmall
 
@@ -30,6 +36,9 @@ RowLayout {
         id: modelPill
         Layout.alignment: Qt.AlignVCenter
         enabled: root.composerEnabled
+        models: root.modelList
+        currentIndex: root.currentModelIndex
+        onSelected: function(index) { root.modelSelected(index); }
     }
 
     // Mid-turn steer affordance: takes the slot a mic would otherwise occupy.
@@ -54,8 +63,8 @@ RowLayout {
         implicitWidth: 32
         implicitHeight: 32
 
-        readonly property string mode: root.busy ? (root.hasPayload ? "queue" : "stop") : "send"
-        readonly property bool actionEnabled: root.composerEnabled && (root.mode !== "send" || root.hasPayload)
+        readonly property string mode: root.primaryAction
+        readonly property bool actionEnabled: root.primaryActionEnabled
 
         Rectangle {
             anchors.fill: parent

@@ -2,7 +2,9 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QTimer>
+#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
 // Backing model for the footer StatusBar. Holds the daemon-bound status state
@@ -33,6 +35,16 @@ class StatusBarModel : public QObject {
     Q_PROPERTY(bool gatewayOffline READ gatewayOffline NOTIFY gatewayStateChanged)
     Q_PROPERTY(bool gatewayDegraded READ gatewayDegraded NOTIFY gatewayStateChanged)
     Q_PROPERTY(QString gatewayTone READ gatewayTone NOTIFY gatewayStateChanged)
+
+    // Gateway dropdown content (placeholder until wired to the daemon). Lives here
+    // so the GUI GatewayMenu and a future TUI gateway view share one source; the
+    // GatewayMenu no longer re-derives degraded/offline locally. `gatewayPlatforms`
+    // is a list of { name: QString, online: bool } maps.
+    Q_PROPERTY(QString gatewayConnectionText READ gatewayConnectionText WRITE
+                   setGatewayConnectionText NOTIFY gatewayInfoChanged)
+    Q_PROPERTY(QStringList gatewayLog READ gatewayLog WRITE setGatewayLog NOTIFY gatewayInfoChanged)
+    Q_PROPERTY(QVariantList gatewayPlatforms READ gatewayPlatforms WRITE setGatewayPlatforms NOTIFY
+                   gatewayInfoChanged)
     Q_PROPERTY(QString agentsDetail READ agentsDetail NOTIFY agentsDetailChanged)
     Q_PROPERTY(int contextPercent READ contextPercent NOTIFY contextChanged)
     Q_PROPERTY(QString contextBar READ contextBar NOTIFY contextChanged)
@@ -56,6 +68,9 @@ public:
     [[nodiscard]] bool gatewayOffline() const;
     [[nodiscard]] bool gatewayDegraded() const;
     [[nodiscard]] QString gatewayTone() const;
+    [[nodiscard]] QString gatewayConnectionText() const { return m_gatewayConnectionText; }
+    [[nodiscard]] QStringList gatewayLog() const { return m_gatewayLog; }
+    [[nodiscard]] QVariantList gatewayPlatforms() const { return m_gatewayPlatforms; }
     [[nodiscard]] QString agentsDetail() const;
     [[nodiscard]] int contextPercent() const;
     [[nodiscard]] QString contextBar() const;
@@ -72,12 +87,16 @@ public:
     void setContextUsed(int n);
     void setContextMax(int n);
     void setAppVersion(const QString& version);
+    void setGatewayConnectionText(const QString& text);
+    void setGatewayLog(const QStringList& log);
+    void setGatewayPlatforms(const QVariantList& platforms);
 
     Q_INVOKABLE QString formatElapsed(double startMs) const;
     Q_INVOKABLE QString abbrev(int n) const;
 
 signals:
     void gatewayStateChanged();
+    void gatewayInfoChanged();
     void agentsRunningChanged();
     void agentsFailedChanged();
     void busyChanged();
@@ -102,6 +121,12 @@ private:
     int m_contextUsed = 12500;
     int m_contextMax = 128000;
     QString m_appVersion = QStringLiteral("v0.1.0");
+
+    // Gateway dropdown content (placeholder, seeded in the constructor to match the
+    // values the QML GatewayMenu previously hardcoded).
+    QString m_gatewayConnectionText;
+    QStringList m_gatewayLog;
+    QVariantList m_gatewayPlatforms;
 
     // Re-read once per second so the elapsed-time labels stay live.
     double m_nowMs = 0;
