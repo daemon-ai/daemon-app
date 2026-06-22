@@ -49,6 +49,14 @@ class ComposerSessionController : public QObject {
     Q_PROPERTY(
         int completionActiveIndex READ completionActiveIndex NOTIFY completionActiveIndexChanged)
 
+    // Reverse incremental history search (Ctrl+R). The FSM lives here so both
+    // front ends share one behavior; the matched entry is previewed into the field
+    // via the existing draftReset plumbing, and the view renders the
+    // "(reverse-i-search)`query':" prompt from these properties.
+    Q_PROPERTY(bool reverseSearching READ reverseSearching NOTIFY reverseSearchChanged)
+    Q_PROPERTY(QString reverseSearchQuery READ reverseSearchQuery NOTIFY reverseSearchChanged)
+    Q_PROPERTY(bool reverseSearchFound READ reverseSearchFound NOTIFY reverseSearchChanged)
+
     // Model selector (placeholder: there is no gateway model backend yet, so the
     // selection is in-memory). The list + current index live here so the GUI
     // ModelPill and the TUI share one source.
@@ -87,6 +95,10 @@ public:
     [[nodiscard]] QString completionKind() const { return m_completionKind; }
     [[nodiscard]] int completionActiveIndex() const { return m_completionActiveIndex; }
 
+    [[nodiscard]] bool reverseSearching() const { return m_reverseSearching; }
+    [[nodiscard]] QString reverseSearchQuery() const { return m_reverseQuery; }
+    [[nodiscard]] bool reverseSearchFound() const { return m_reverseFound; }
+
     [[nodiscard]] QStringList models() const { return m_models; }
     [[nodiscard]] int currentModelIndex() const { return m_currentModelIndex; }
     [[nodiscard]] QString currentModel() const;
@@ -120,6 +132,18 @@ public:
     Q_INVOKABLE void acceptActive();
     Q_INVOKABLE void accept(int index);
 
+    // Reverse incremental history search (Ctrl+R). start() enters the mode (or
+    // steps to the next older match when already active); type()/backspace() narrow
+    // or widen the query; next() steps to the next older match; accept() keeps the
+    // previewed match in the editable draft (no submit); cancel() restores the
+    // pre-search draft. Matching is case-insensitive substring, newest-first.
+    Q_INVOKABLE void reverseSearchStart();
+    Q_INVOKABLE void reverseSearchNext();
+    Q_INVOKABLE void reverseSearchType(const QString& chars);
+    Q_INVOKABLE void reverseSearchBackspace();
+    Q_INVOKABLE void reverseSearchAccept();
+    Q_INVOKABLE void reverseSearchCancel();
+
 signals:
     // Outbound (host-facing) - identical to the QML composer's signals.
     void submitted(const QString& text, const QString& attachmentRefs);
@@ -137,6 +161,7 @@ signals:
     void completionActiveChanged();
     void completionKindChanged();
     void completionActiveIndexChanged();
+    void reverseSearchChanged();
 
     void conversationIdChanged();
     void busyChanged();
@@ -152,6 +177,14 @@ private:
     // Like applyDraft but places the caret at `cursor` (-> draftReset + cursorRequested).
     void applyDraftWithCursor(const QString& text, int cursor);
     void resetBrowse();
+    // Clears reverse-search state and notifies (without restoring the draft); used
+    // when the context changes out from under an active search (conversation swap,
+    // submit, clear, or an external draft edit).
+    void resetReverseSearch();
+    // Re-resolve the current query: scan history newest-first from `fromIndex`,
+    // preview a hit via applyDraft, and update found/index. Returns the hit index
+    // or -1. An empty query matches the newest entry.
+    int reverseSearchResolve(int fromIndex);
     void pushHistory(const QString& text);
     void enqueue(const QString& text, const QString& refs);
     void drainNext();
@@ -181,6 +214,14 @@ private:
 
     int m_browseIndex = -1;
     QString m_historyDraft;
+
+    // Reverse incremental search (Ctrl+R) state. m_reverseIndex is the history row
+    // currently previewed (-1 = none); m_reverseSavedDraft is restored on cancel.
+    bool m_reverseSearching = false;
+    bool m_reverseFound = true;
+    int m_reverseIndex = -1;
+    QString m_reverseQuery;
+    QString m_reverseSavedDraft;
 
     int m_editingIndex = -1;
     QString m_preEditDraft;

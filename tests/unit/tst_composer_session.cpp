@@ -72,6 +72,122 @@ private slots:
         QCOMPARE(c.currentModelIndex(), 2);
         QCOMPARE(spy.count(), 1);
     }
+
+    // --- Reverse incremental history search (Ctrl+R) -----------------------------
+    // Seeds a three-entry history (oldest -> newest) for the active conversation.
+    static void seedHistory(ComposerSessionController& c)
+    {
+        c.setConversationId(1);
+        const char* entries[] = { "alpha one", "beta two", "alpha three" };
+        for (const char* e : entries) {
+            c.setDraft(QString::fromLatin1(e));
+            c.submit(); // idle send: pushes history + clears the draft
+        }
+    }
+
+    // Typing narrows to the newest match; Ctrl+R steps to the next older match and
+    // flags failure (keeping the last preview) when none remains. The match is
+    // previewed into the draft via draftReset so both front ends show it.
+    void reverseSearchNarrowsAndSteps()
+    {
+        ComposerSessionController c;
+        seedHistory(c);
+
+        QSignalSpy reset(&c, &ComposerSessionController::draftReset);
+        c.reverseSearchStart();
+        QVERIFY(c.reverseSearching());
+        QVERIFY(c.reverseSearchQuery().isEmpty());
+
+        c.reverseSearchType(QStringLiteral("alpha"));
+        QCOMPARE(c.reverseSearchQuery(), QStringLiteral("alpha"));
+        QVERIFY(c.reverseSearchFound());
+        QCOMPARE(c.draft(), QStringLiteral("alpha three")); // newest match
+        QVERIFY(reset.count() >= 1);                        // preview emitted
+
+        c.reverseSearchNext();
+        QVERIFY(c.reverseSearchFound());
+        QCOMPARE(c.draft(), QStringLiteral("alpha one")); // next older match
+
+        c.reverseSearchNext();
+        QVERIFY(!c.reverseSearchFound());                 // no older match
+        QCOMPARE(c.draft(), QStringLiteral("alpha one")); // preview unchanged
+    }
+
+    // Backspacing widens the query; emptying it reverts the preview to the draft
+    // that was in the field when the search began.
+    void reverseSearchBackspaceWidensAndRestores()
+    {
+        ComposerSessionController c;
+        seedHistory(c);
+        c.setDraft(QStringLiteral("work in progress"));
+
+        c.reverseSearchStart();
+        c.reverseSearchType(QStringLiteral("beta"));
+        QCOMPARE(c.draft(), QStringLiteral("beta two"));
+
+        c.reverseSearchBackspace(); // "bet" still matches "beta two"
+        QCOMPARE(c.reverseSearchQuery(), QStringLiteral("bet"));
+        QCOMPARE(c.draft(), QStringLiteral("beta two"));
+
+        c.reverseSearchType(QStringLiteral("z")); // "betz": no match
+        QVERIFY(!c.reverseSearchFound());
+
+        // Backspace down to empty: preview reverts to the pre-search draft.
+        c.reverseSearchBackspace(); // "bet"
+        c.reverseSearchBackspace(); // "be"
+        c.reverseSearchBackspace(); // "b"
+        c.reverseSearchBackspace(); // ""
+        QVERIFY(c.reverseSearchQuery().isEmpty());
+        QCOMPARE(c.draft(), QStringLiteral("work in progress"));
+    }
+
+    // Accept keeps the previewed match as the editable draft and never submits.
+    void reverseSearchAcceptKeepsDraftWithoutSubmit()
+    {
+        ComposerSessionController c;
+        seedHistory(c);
+        QSignalSpy submitSpy(&c, &ComposerSessionController::submitted);
+
+        c.reverseSearchStart();
+        c.reverseSearchType(QStringLiteral("beta"));
+        QCOMPARE(c.draft(), QStringLiteral("beta two"));
+
+        c.reverseSearchAccept();
+        QVERIFY(!c.reverseSearching());
+        QCOMPARE(c.draft(), QStringLiteral("beta two"));
+        QCOMPARE(submitSpy.count(), 0);
+    }
+
+    // Cancel restores the pre-search draft and exits the mode.
+    void reverseSearchCancelRestoresDraft()
+    {
+        ComposerSessionController c;
+        seedHistory(c);
+        c.setDraft(QStringLiteral("keep me"));
+
+        c.reverseSearchStart();
+        c.reverseSearchType(QStringLiteral("alpha"));
+        QVERIFY(c.draft() != QStringLiteral("keep me"));
+
+        c.reverseSearchCancel();
+        QVERIFY(!c.reverseSearching());
+        QCOMPARE(c.draft(), QStringLiteral("keep me"));
+    }
+
+    // A conversation swap (or any external draft edit) drops out of an active search.
+    void reverseSearchResetsOnConversationSwap()
+    {
+        ComposerSessionController c;
+        seedHistory(c);
+
+        c.reverseSearchStart();
+        c.reverseSearchType(QStringLiteral("alpha"));
+        QVERIFY(c.reverseSearching());
+
+        c.setConversationId(2);
+        QVERIFY(!c.reverseSearching());
+        QVERIFY(c.reverseSearchQuery().isEmpty());
+    }
 };
 
 QTEST_GUILESS_MAIN(TestComposerSession)

@@ -889,6 +889,7 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
 
     QString prevMessageId;
     be::MessageRole prevRole = be::MessageRole::None;
+    be::BlockType prevType = be::BlockType::Unknown;
     bool first = true;
 
     const QVector<be::BlockRecord> &blocks = doc.blocks();
@@ -901,9 +902,17 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
         const bool msgChanged = (b.messageId != prevMessageId) || (b.role != prevRole);
         if (b.role != be::MessageRole::None && msgChanged && !b.messageId.isEmpty()) {
             emitMessageHeader(out, b.role, first, W);
+        } else if (!msgChanged && b.type == be::BlockType::Paragraph
+                   && prevType == be::BlockType::Paragraph) {
+            // Consecutive paragraphs in one message render with a blank row between
+            // them (mirrors the GUI's paragraph margins), so a multiline composer
+            // message keeps the blank lines the user typed (markdown collapses each
+            // run of blank lines into a single paragraph break).
+            addBlank(out);
         }
         prevMessageId = b.messageId;
         prevRole = b.role;
+        prevType = b.type;
         first = false;
 
         switch (b.type) {

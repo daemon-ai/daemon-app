@@ -94,6 +94,9 @@ bool maybeRenderOffscreen()
                     Tui::ZTest::sendText(&terminal, QStringLiteral("c"), Qt::ControlModifier);
                 } else if (name == "ctrl-enter") {
                     Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::ControlModifier);
+                } else if (name == "shift-enter") {
+                    // Multiline composer: Shift+Enter inserts a newline.
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::ShiftModifier);
                 } else if (name == "ctrl-o") {
                     Tui::ZTest::sendKey(&terminal, Qt::Key_O, Qt::ControlModifier);
                 } else if (name == "ctrl-t") {
@@ -110,6 +113,13 @@ bool maybeRenderOffscreen()
                     // Switch to the previous tab (wraps).
                     Tui::ZTest::sendKey(&terminal, Qt::Key_Tab,
                                         Qt::ControlModifier | Qt::ShiftModifier);
+                } else if (name == "ctrl-r") {
+                    // Reverse incremental history search (delivered as a char event).
+                    Tui::ZTest::sendText(&terminal, QStringLiteral("r"), Qt::ControlModifier);
+                } else if (name == "ctrl-a") {
+                    Tui::ZTest::sendText(&terminal, QStringLiteral("a"), Qt::ControlModifier);
+                } else if (name == "backspace") {
+                    Tui::ZTest::sendKey(&terminal, Qt::Key_Backspace, Qt::NoModifier);
                 } else if (name == "del") {
                     Tui::ZTest::sendKey(&terminal, Qt::Key_Delete, Qt::NoModifier);
                 } else if (name == "space") {

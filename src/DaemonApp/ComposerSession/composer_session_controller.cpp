@@ -28,6 +28,7 @@ void ComposerSessionController::setConversationId(int id)
     }
     m_preEditDraft.clear();
     resetBrowse();
+    resetReverseSearch(); // an in-flight Ctrl+R never crosses a conversation boundary
     closeTrigger(); // a completion popover never crosses a conversation boundary
 
     stash(m_conversationId);
@@ -65,6 +66,10 @@ void ComposerSessionController::setDraft(const QString& draft)
     if (m_draft == draft) {
         return;
     }
+    // A live edit that isn't the reverse-search preview echo (the preview sets
+    // m_draft before emitting draftReset, so its echo hits the early-return above)
+    // means the user is editing the field directly; drop out of reverse search.
+    resetReverseSearch();
     m_draft = draft;
     emit draftChanged();
     emit derivedChanged();
@@ -272,6 +277,121 @@ bool ComposerSessionController::browseDown()
     return true;
 }
 
+void ComposerSessionController::resetReverseSearch()
+{
+    if (!m_reverseSearching) {
+        return;
+    }
+    m_reverseSearching = false;
+    m_reverseFound = true;
+    m_reverseIndex = -1;
+    m_reverseQuery.clear();
+    emit reverseSearchChanged();
+}
+
+int ComposerSessionController::reverseSearchResolve(int fromIndex)
+{
+    const QStringList arr = m_histories.value(m_conversationId);
+    for (int i = qMin(fromIndex, static_cast<int>(arr.size()) - 1); i >= 0; --i) {
+        if (arr.at(i).contains(m_reverseQuery, Qt::CaseInsensitive)) {
+            m_reverseIndex = i;
+            m_reverseFound = true;
+            applyDraft(arr.at(i)); // preview the hit in both front ends' fields
+            return i;
+        }
+    }
+    // No match: keep the current preview in place, but flag the failure so the
+    // prompt can render "(failed reverse-i-search)".
+    m_reverseFound = false;
+    return -1;
+}
+
+void ComposerSessionController::reverseSearchStart()
+{
+    // A second Ctrl+R while already searching steps to the next older match.
+    if (m_reverseSearching) {
+        reverseSearchNext();
+        return;
+    }
+    m_reverseSavedDraft = m_draft;
+    m_reverseSearching = true;
+    m_reverseFound = true;
+    m_reverseIndex = -1;
+    m_reverseQuery.clear();
+    // Empty query: no preview yet (the saved draft stays in the field) - the user
+    // types to narrow, or presses Ctrl+R again to walk history.
+    emit reverseSearchChanged();
+}
+
+void ComposerSessionController::reverseSearchNext()
+{
+    if (!m_reverseSearching) {
+        return;
+    }
+    const QStringList arr = m_histories.value(m_conversationId);
+    const int from = (m_reverseIndex == -1) ? static_cast<int>(arr.size()) - 1 : m_reverseIndex - 1;
+    reverseSearchResolve(from);
+    emit reverseSearchChanged();
+}
+
+void ComposerSessionController::reverseSearchType(const QString& chars)
+{
+    if (!m_reverseSearching || chars.isEmpty()) {
+        return;
+    }
+    m_reverseQuery += chars;
+    // Narrowing always re-scans from the newest entry so the most recent match wins.
+    reverseSearchResolve(static_cast<int>(m_histories.value(m_conversationId).size()) - 1);
+    emit reverseSearchChanged();
+}
+
+void ComposerSessionController::reverseSearchBackspace()
+{
+    if (!m_reverseSearching) {
+        return;
+    }
+    if (m_reverseQuery.isEmpty()) {
+        return;
+    }
+    m_reverseQuery.chop(1);
+    if (m_reverseQuery.isEmpty()) {
+        // Back to an empty query: revert the preview to the pre-search draft.
+        m_reverseIndex = -1;
+        m_reverseFound = true;
+        applyDraft(m_reverseSavedDraft);
+    } else {
+        reverseSearchResolve(static_cast<int>(m_histories.value(m_conversationId).size()) - 1);
+    }
+    emit reverseSearchChanged();
+}
+
+void ComposerSessionController::reverseSearchAccept()
+{
+    if (!m_reverseSearching) {
+        return;
+    }
+    // Keep the previewed match as the editable draft; do NOT submit.
+    m_reverseSearching = false;
+    m_reverseFound = true;
+    m_reverseIndex = -1;
+    m_reverseQuery.clear();
+    emit reverseSearchChanged();
+}
+
+void ComposerSessionController::reverseSearchCancel()
+{
+    if (!m_reverseSearching) {
+        return;
+    }
+    const QString restoreTo = m_reverseSavedDraft;
+    m_reverseSearching = false;
+    m_reverseFound = true;
+    m_reverseIndex = -1;
+    m_reverseQuery.clear();
+    applyDraft(restoreTo);
+    emit reverseSearchChanged();
+}
+
 void ComposerSessionController::sendNowEntry(int index)
 {
     if (index < 0 || index >= m_queue->count()) {
@@ -340,6 +460,7 @@ void ComposerSessionController::invokeCommand(const QString& command)
 
 void ComposerSessionController::clear()
 {
+    resetReverseSearch();
     applyDraft(QString());
     m_attachments->clear();
     closeTrigger();

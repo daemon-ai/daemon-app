@@ -240,6 +240,43 @@ Rectangle {
                     }
                 }
 
+                // Reverse-search prompt: readline's "(reverse-i-search)`query':",
+                // shown while Ctrl+R search is active (red when the query fails).
+                Rectangle {
+                    Layout.fillWidth: true
+                    visible: controller.reverseSearching
+                    implicitHeight: 30
+                    radius: Theme.radius
+                    color: Theme.activeBlockBackground
+                    border.width: 1
+                    border.color: controller.reverseSearchFound ? Theme.activeBlockBorder
+                                                                 : Theme.danger
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
+                        spacing: 6
+
+                        QQC.Label {
+                            Layout.fillWidth: true
+                            text: (controller.reverseSearchFound
+                                       ? qsTr("(reverse-i-search)`")
+                                       : qsTr("(failed reverse-i-search)`"))
+                                  + controller.reverseSearchQuery + qsTr("':")
+                            font.family: FontIcons.display
+                            font.pixelSize: 12
+                            color: controller.reverseSearchFound ? Theme.accent : Theme.danger
+                            elide: Text.ElideRight
+                        }
+                        QQC.Label {
+                            text: qsTr("Enter accept \u00b7 Ctrl+R next \u00b7 Esc cancel")
+                            font.pixelSize: 11
+                            color: Theme.textMuted
+                        }
+                    }
+                }
+
                 // Attachment chips.
                 Flow {
                     Layout.fillWidth: true
@@ -321,6 +358,54 @@ Rectangle {
 
                             Keys.priority: Keys.BeforeItem
                             Keys.onPressed: function(event) {
+                                // Reverse incremental history search (Ctrl+R) owns
+                                // all keys while active; the matched entry previews
+                                // in this field via the controller's draftReset.
+                                if (controller.reverseSearching) {
+                                    if (event.key === Qt.Key_Backspace) {
+                                        controller.reverseSearchBackspace();
+                                        event.accepted = true;
+                                        return;
+                                    }
+                                    if ((event.modifiers & Qt.ControlModifier)
+                                            && event.key === Qt.Key_R) {
+                                        controller.reverseSearchNext();
+                                        event.accepted = true;
+                                        return;
+                                    }
+                                    if (((event.modifiers & Qt.ControlModifier)
+                                            && event.key === Qt.Key_G)
+                                            || event.key === Qt.Key_Escape) {
+                                        controller.reverseSearchCancel();
+                                        event.accepted = true;
+                                        return;
+                                    }
+                                    if (event.key === Qt.Key_Return
+                                            || event.key === Qt.Key_Enter) {
+                                        controller.reverseSearchAccept();
+                                        event.accepted = true;
+                                        return;
+                                    }
+                                    if (event.text.length === 1 && event.text >= " "
+                                            && !(event.modifiers
+                                                & (Qt.ControlModifier | Qt.AltModifier))) {
+                                        controller.reverseSearchType(event.text);
+                                        event.accepted = true;
+                                        return;
+                                    }
+                                    // Any other key accepts the match, then falls
+                                    // through to normal handling below.
+                                    controller.reverseSearchAccept();
+                                }
+
+                                // Ctrl+R enters reverse incremental search.
+                                if ((event.modifiers & Qt.ControlModifier)
+                                        && event.key === Qt.Key_R) {
+                                    controller.reverseSearchStart();
+                                    event.accepted = true;
+                                    return;
+                                }
+
                                 // Completion popover navigation takes priority.
                                 if (controller.completionActive) {
                                     if (event.key === Qt.Key_Down) {

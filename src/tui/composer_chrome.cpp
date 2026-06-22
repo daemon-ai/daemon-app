@@ -56,6 +56,8 @@ void ComposerChrome::setSession(ComposerSessionController* session)
     if (m_session != nullptr) {
         connect(m_session, &ComposerSessionController::currentModelChanged, this,
                 [this] { update(); });
+        connect(m_session, &ComposerSessionController::reverseSearchChanged, this,
+                [this] { update(); });
     }
     update();
 }
@@ -79,6 +81,22 @@ void ComposerChrome::syncSpinner()
 QVector<Span> ComposerChrome::buildSpans() const
 {
     QVector<Span> spans;
+
+    // Reverse incremental history search owns the chrome line while active, mirroring
+    // readline's "(reverse-i-search)`query':" prompt (red when the query has no match).
+    if (m_session != nullptr && m_session->reverseSearching()) {
+        const bool found = m_session->reverseSearchFound();
+        const Tui::ZColor label = found ? tpal::accent() : tpal::warn();
+        spans << mkSpan(found ? QStringLiteral("(reverse-i-search)`")
+                              : QStringLiteral("(failed reverse-i-search)`"),
+                        label);
+        spans << mkSpan(m_session->reverseSearchQuery(), tpal::fg());
+        spans << mkSpan(QStringLiteral("': "), label);
+        spans << mkSpan(QStringLiteral("Enter accept  \u00b7  Ctrl+R next  \u00b7  Esc cancel"),
+                        tpal::faint());
+        return spans;
+    }
+
     if (m_turn == nullptr) {
         return spans;
     }
