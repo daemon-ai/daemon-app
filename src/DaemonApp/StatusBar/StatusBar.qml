@@ -15,13 +15,11 @@ Rectangle {
     id: root
 
     // --- Backend-bound state + formatting -----------------------------------
-    // The daemon-bound status state and all derived/formatted strings now live in
-    // the shared C++ StatusBarModel (DaemonApp.StatusModel), so the GUI footer and
-    // the TUI footer share one formatting path and one 1s live tick. Placeholder
-    // defaults are unchanged, so pixels/behavior here are identical.
-    StatusBarModel {
-        id: model
-    }
+    // The daemon-bound status state and all derived/formatted strings live in the
+    // shared C++ StatusBarModel. It is owned by Application and exposed as the
+    // `Status` context property so the footer and the active conversation's turn
+    // (TranscriptPage.qml feeds busy/usage/context) drive ONE instance.
+    readonly property var model: Status
 
     // --- Local toggles (route + visual state; stay in QML) ------------------
     property bool yoloActive: false
@@ -118,6 +116,16 @@ Rectangle {
             variant: "text"
             label: model.contextLabel
             detail: model.contextMax > 0 ? model.contextBar : ""
+        }
+        StatusBarItem {
+            visible: model.usdCost > 0 || model.tokensOut > 0
+            variant: "text"
+            glyph: FontIcons.fa_coins
+            label: model.costLabel
+            detail: model.tokensIn + model.tokensOut > 0
+                ? (model.abbrev(model.tokensIn + model.tokensOut) + qsTr(" tok")) : ""
+            tooltipText: qsTr("Session usage \u00b7 %1 in / %2 out")
+                .arg(model.abbrev(model.tokensIn)).arg(model.abbrev(model.tokensOut))
         }
         StatusBarItem {
             variant: "text"
@@ -247,6 +255,16 @@ Rectangle {
                         variant: "text"
                         label: model.contextLabel
                         detail: model.contextMax > 0 ? model.contextBar : ""
+                    }
+                    StatusBarItem {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: overflowSheet.rowHeight
+                        visible: model.usdCost > 0 || model.tokensOut > 0
+                        variant: "text"
+                        glyph: FontIcons.fa_coins
+                        label: model.costLabel
+                        detail: model.tokensIn + model.tokensOut > 0
+                            ? (model.abbrev(model.tokensIn + model.tokensOut) + qsTr(" tok")) : ""
                     }
                     StatusBarItem {
                         Layout.fillWidth: true

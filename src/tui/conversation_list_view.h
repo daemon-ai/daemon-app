@@ -50,6 +50,14 @@ signals:
     // Focus gained/lost, so the search box can show/hide its typing caret.
     void focusChanged(bool focused);
 
+    // Session actions on the current row (the shell resolves the conversation id
+    // and runs the store mutation / dialog). Ctrl+R rename, Ctrl+E export, Ctrl+K
+    // pin-toggle, Delete delete.
+    void renameRequested(int row);
+    void exportRequested(int row);
+    void pinToggleRequested(int row);
+    void deleteRequested(int row);
+
 protected:
     void paintEvent(Tui::ZPaintEvent* event) override;
     void keyEvent(Tui::ZKeyEvent* event) override;

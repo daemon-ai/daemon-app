@@ -61,9 +61,22 @@ class ComposerSessionController : public QObject {
     // selection is in-memory). The list + current index live here so the GUI
     // ModelPill and the TUI share one source.
     Q_PROPERTY(QStringList models READ models CONSTANT)
+    // Structured catalog: one entry per model as {provider,id,label}, in the same
+    // flat order as `models` so an index selects the same model in both. The GUI
+    // picker overlay groups by provider; the daemon later replaces this verbatim.
+    Q_PROPERTY(QVariantList modelCatalog READ modelCatalog CONSTANT)
     Q_PROPERTY(int currentModelIndex READ currentModelIndex WRITE setCurrentModelIndex NOTIFY
                    currentModelChanged)
     Q_PROPERTY(QString currentModel READ currentModel NOTIFY currentModelChanged)
+    Q_PROPERTY(QString currentProvider READ currentProvider NOTIFY currentModelChanged)
+
+    // Turn modes (client state; no backend yet). reasoningEffort is one of
+    // off/low/medium/high; fastMode trades depth for latency; verbose surfaces
+    // extra detail. The daemon later reads these off the same controller.
+    Q_PROPERTY(QString reasoningEffort READ reasoningEffort WRITE setReasoningEffort NOTIFY
+                   modesChanged)
+    Q_PROPERTY(bool fastMode READ fastMode WRITE setFastMode NOTIFY modesChanged)
+    Q_PROPERTY(bool verbose READ verbose WRITE setVerbose NOTIFY modesChanged)
 
 public:
     explicit ComposerSessionController(QObject* parent = nullptr);
@@ -100,9 +113,18 @@ public:
     [[nodiscard]] bool reverseSearchFound() const { return m_reverseFound; }
 
     [[nodiscard]] QStringList models() const { return m_models; }
+    [[nodiscard]] QVariantList modelCatalog() const;
     [[nodiscard]] int currentModelIndex() const { return m_currentModelIndex; }
     [[nodiscard]] QString currentModel() const;
+    [[nodiscard]] QString currentProvider() const;
     void setCurrentModelIndex(int index);
+
+    [[nodiscard]] QString reasoningEffort() const { return m_reasoningEffort; }
+    void setReasoningEffort(const QString& effort);
+    [[nodiscard]] bool fastMode() const { return m_fastMode; }
+    void setFastMode(bool on);
+    [[nodiscard]] bool verbose() const { return m_verbose; }
+    void setVerbose(bool on);
 
     // Intents (mirror the QML composer's functions).
     Q_INVOKABLE void submit();        // Enter: send / save-edit / drain
@@ -120,6 +142,10 @@ public:
     Q_INVOKABLE void invokeCommand(const QString& command);
     Q_INVOKABLE void clear(); // clear draft + attachments
     Q_INVOKABLE void selectModel(int index); // pick the active model (clamped)
+    // Cycle reasoning effort off->low->medium->high->off (TUI chrome toggle).
+    Q_INVOKABLE void cycleReasoningEffort();
+    Q_INVOKABLE void toggleFastMode();
+    Q_INVOKABLE void toggleVerbose();
 
     // Completion FSM (mirror of the QML composer's trigger functions). The view
     // pushes the live text + caret on every change; the controller detects the
@@ -171,6 +197,7 @@ signals:
     void queueCountChanged();
     void editingIndexChanged();
     void currentModelChanged();
+    void modesChanged();
 
 private:
     void applyDraft(const QString& text); // programmatic draft change (-> draftReset)
@@ -201,11 +228,32 @@ private:
     bool m_enabled = true;
     QString m_draft;
 
-    // Canned model list (no gateway model backend yet); selection is in-memory.
-    QStringList m_models { QStringLiteral("claude-opus-4.8"), QStringLiteral("claude-sonnet-4.6"),
-                           QStringLiteral("gpt-5.5"), QStringLiteral("gpt-5.3-codex"),
-                           QStringLiteral("gemini-3-pro") };
+    // Canned model catalog (no gateway model backend yet); selection is in-memory.
+    // One entry per model; `m_models` is the flat label list derived from this so
+    // an index addresses the same model in both views.
+    struct ModelEntry {
+        QString provider;
+        QString id;
+        QString label;
+    };
+    QList<ModelEntry> m_catalog {
+        { QStringLiteral("Anthropic"), QStringLiteral("claude-opus-4.8"),
+          QStringLiteral("claude-opus-4.8") },
+        { QStringLiteral("Anthropic"), QStringLiteral("claude-sonnet-4.6"),
+          QStringLiteral("claude-sonnet-4.6") },
+        { QStringLiteral("OpenAI"), QStringLiteral("gpt-5.5"), QStringLiteral("gpt-5.5") },
+        { QStringLiteral("OpenAI"), QStringLiteral("gpt-5.3-codex"),
+          QStringLiteral("gpt-5.3-codex") },
+        { QStringLiteral("Google"), QStringLiteral("gemini-3-pro"),
+          QStringLiteral("gemini-3-pro") },
+    };
+    QStringList m_models;
     int m_currentModelIndex = 0;
+
+    // Turn modes (client state).
+    QString m_reasoningEffort = QStringLiteral("medium");
+    bool m_fastMode = false;
+    bool m_verbose = false;
 
     // Per-conversation persisted state (keyed by conversation id).
     QHash<int, QString> m_drafts;

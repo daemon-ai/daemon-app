@@ -7,15 +7,24 @@ ConversationOrchestrator::ConversationOrchestrator(QObject* parent)
     : QObject(parent)
     , m_turn(new TurnController(this))
     , m_todos(new TodoListModel(this))
+    , m_subagents(new SubagentModel(this))
 {
     // busy mirrors the turn's active state.
     connect(m_turn, &TurnController::activeChanged, this, &ConversationOrchestrator::busyChanged);
 
-    // Clear the demo todos a beat after the turn settles (the QML used a 1.5s
-    // single-shot timer restarted on busy->false).
+    // Live subagent rows ride the same event stream the transcript/status bar
+    // consume; the model upserts the subagent.* events and ignores the rest.
+    connect(m_turn, &TurnController::eventsEmitted, this,
+            [this](const QVariantList& events) { m_subagents->applyEvents(events); });
+
+    // Clear the demo todos (and the settled subagent rows) a beat after the turn
+    // ends (the QML used a 1.5s single-shot timer restarted on busy->false).
     m_todoClearTimer.setSingleShot(true);
     m_todoClearTimer.setInterval(1500);
-    connect(&m_todoClearTimer, &QTimer::timeout, this, [this] { m_todos->clear(); });
+    connect(&m_todoClearTimer, &QTimer::timeout, this, [this] {
+        m_todos->clear();
+        m_subagents->clear();
+    });
     connect(m_turn, &TurnController::turnFinished, this, [this] { m_todoClearTimer.start(); });
 }
 
@@ -96,6 +105,10 @@ void ConversationOrchestrator::invokeCommand(const QString& command)
 
 void ConversationOrchestrator::populateDemoTodos()
 {
+    // Drop any settled subagent rows from the previous turn so the status stack
+    // starts clean; this turn's subagent.* events repopulate it.
+    m_subagents->clear();
+
     // Demo content: no real todo backend exists yet, so a canned plan stands in
     // for the turn (mirrors the former Conversation.qml seam).
     m_todos->setTodos(QVariantList{

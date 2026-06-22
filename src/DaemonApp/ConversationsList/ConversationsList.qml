@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls as QQC
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
@@ -46,6 +47,119 @@ Rectangle {
     ConversationsListModel {
         id: convModel
         store: ConversationStore
+    }
+
+    // --- Row actions (right-click): rename / pin / export / delete ----------
+    QQC.Menu {
+        id: rowMenu
+        property int targetId: -1
+        property bool targetPinned: false
+
+        function openFor(conversationId, pinned) {
+            rowMenu.targetId = conversationId;
+            rowMenu.targetPinned = pinned;
+            popup();
+        }
+
+        QQC.MenuItem {
+            text: qsTr("Rename\u2026")
+            onTriggered: renameDialog.openFor(rowMenu.targetId)
+        }
+        QQC.MenuItem {
+            text: rowMenu.targetPinned ? qsTr("Unpin") : qsTr("Pin")
+            onTriggered: ConversationStore.setPinned(rowMenu.targetId, !rowMenu.targetPinned)
+        }
+        QQC.MenuItem {
+            text: qsTr("Move up")
+            onTriggered: ConversationStore.moveConversation(rowMenu.targetId, -1)
+        }
+        QQC.MenuItem {
+            text: qsTr("Move down")
+            onTriggered: ConversationStore.moveConversation(rowMenu.targetId, 1)
+        }
+        QQC.MenuItem {
+            text: qsTr("Export\u2026")
+            onTriggered: exportDialog.openFor(rowMenu.targetId)
+        }
+        QQC.MenuSeparator {}
+        QQC.MenuItem {
+            text: qsTr("Delete")
+            onTriggered: deleteDialog.openFor(rowMenu.targetId)
+        }
+    }
+
+    QQC.Dialog {
+        id: renameDialog
+        property int targetId: -1
+        title: qsTr("Rename conversation")
+        modal: true
+        anchors.centerIn: QQC.Overlay.overlay
+        width: 380
+        standardButtons: QQC.Dialog.Ok | QQC.Dialog.Cancel
+
+        function openFor(conversationId) {
+            renameDialog.targetId = conversationId;
+            renameField.text = ConversationStore.title(conversationId);
+            open();
+            renameField.forceActiveFocus();
+            renameField.selectAll();
+        }
+        onAccepted: {
+            if (renameDialog.targetId >= 0 && renameField.text.trim().length > 0)
+                ConversationStore.renameConversation(renameDialog.targetId, renameField.text.trim());
+        }
+        contentItem: Kit.TextField {
+            id: renameField
+            underline: true
+            placeholderText: qsTr("Conversation title")
+            onAccepted: renameDialog.accept()
+        }
+    }
+
+    QQC.Dialog {
+        id: deleteDialog
+        property int targetId: -1
+        title: qsTr("Delete conversation")
+        modal: true
+        anchors.centerIn: QQC.Overlay.overlay
+        width: 360
+        standardButtons: QQC.Dialog.Yes | QQC.Dialog.No
+
+        function openFor(conversationId) {
+            deleteDialog.targetId = conversationId;
+            open();
+        }
+        onAccepted: {
+            if (deleteDialog.targetId >= 0)
+                ConversationStore.deleteConversation(deleteDialog.targetId);
+        }
+        contentItem: QQC.Label {
+            text: qsTr("Permanently delete this conversation? This cannot be undone.")
+            wrapMode: Text.WordWrap
+            color: Theme.text
+            font.family: FontIcons.display
+            font.pixelSize: 13
+        }
+    }
+
+    FileDialog {
+        id: exportDialog
+        property int targetId: -1
+        title: qsTr("Export transcript")
+        fileMode: FileDialog.SaveFile
+        nameFilters: [qsTr("JSON files (*.json)"), qsTr("All files (*)")]
+        defaultSuffix: "json"
+
+        function openFor(conversationId) {
+            exportDialog.targetId = conversationId;
+            const t = ConversationStore.title(conversationId);
+            exportDialog.currentFile = "file:" + (t && t.length > 0 ? t : "conversation") + ".json";
+            open();
+        }
+        onAccepted: {
+            if (exportDialog.targetId >= 0)
+                Exporter.writeFile(selectedFile, Exporter.toJson(ConversationStore, exportDialog.targetId));
+        }
     }
 
     ColumnLayout {
@@ -180,6 +294,7 @@ Rectangle {
                     required property var tagNames
                     required property var tagColors
                     required property bool current
+                    required property bool pinned
 
                     // LEFT_OFFSET_X = 20, TOP_OFFSET_Y = 10, LAST_EL_SEP_SPACE = 12.
                     readonly property int leftOffset: 20
@@ -219,16 +334,29 @@ Rectangle {
                         spacing: 0
 
                         // Title - text-forward: secondary by default, brightens to
-                        // primary on hover/selection.
-                        QQC.Label {
+                        // primary on hover/selection. A leading pin glyph marks
+                        // pinned rows (they float to the top of the scope).
+                        RowLayout {
                             Layout.fillWidth: true
-                            text: del.title
-                            color: del.isSelected || rowMouse.containsMouse
-                                 ? Theme.text : Theme.listText
-                            font.family: FontIcons.display
-                            font.pixelSize: 13
-                            font.weight: Font.Medium
-                            elide: Text.ElideRight
+                            spacing: 5
+
+                            Kit.Glyph {
+                                visible: del.pinned
+                                glyph: FontIcons.fa_thumbtack
+                                font.pointSize: 9 + Theme.pointSizeOffset
+                                color: Theme.accent
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                            QQC.Label {
+                                Layout.fillWidth: true
+                                text: del.title
+                                color: del.isSelected || rowMouse.containsMouse
+                                     ? Theme.text : Theme.listText
+                                font.family: FontIcons.display
+                                font.pixelSize: 13
+                                font.weight: Font.Medium
+                                elide: Text.ElideRight
+                            }
                         }
 
                         // Snippet (snippet above date).
@@ -311,8 +439,13 @@ Rectangle {
                         id: rowMouse
                         anchors.fill: parent
                         hoverEnabled: true
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: {
+                        onClicked: function(mouse) {
+                            if (mouse.button === Qt.RightButton) {
+                                rowMenu.openFor(convModel.idAt(del.index), del.pinned);
+                                return;
+                            }
                             convModel.activate(del.index);
                             root.conversationActivated(convModel.idAt(del.index));
                         }

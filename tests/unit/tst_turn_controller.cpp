@@ -44,8 +44,9 @@ private slots:
         QList<QVariantMap> events;
         const int count = runToCompletion(turn, QStringLiteral("hello there"), events);
 
-        // 2 reasoningDelta + reasoningDone + (toolStarted/toolFinished) x2 + 3 text + flush.
-        QCOMPARE(count, 11);
+        // reasoning + 2 tools + 3 text + flush, interleaved with the live
+        // usage/context/rate-limit deltas; assert structure, not an exact total.
+        QVERIFY(count >= 11);
         QVERIFY(!turn.active());
         QCOMPARE(turn.turnState(), QStringLiteral("idle"));
         QVERIFY(turn.errorText().isEmpty());
@@ -53,14 +54,23 @@ private slots:
         // The last emitted event is the turn-end flush.
         QCOMPARE(events.last().value(QStringLiteral("type")).toString(),
                  QStringLiteral("flush"));
-        // At least one streamed text delta made it through.
+        // The scripted text deltas and live status events both make it through.
         int textCount = 0;
+        bool sawUsage = false;
+        bool sawContext = false;
         for (const QVariantMap& e : events) {
-            if (e.value(QStringLiteral("type")).toString() == QStringLiteral("text")) {
+            const QString type = e.value(QStringLiteral("type")).toString();
+            if (type == QStringLiteral("text")) {
                 ++textCount;
+            } else if (type == QStringLiteral("usage")) {
+                sawUsage = true;
+            } else if (type == QStringLiteral("context")) {
+                sawContext = true;
             }
         }
         QCOMPARE(textCount, 3);
+        QVERIFY(sawUsage);
+        QVERIFY(sawContext);
     }
 
     // A prompt containing "fail" drives the error branch: the terminal tool fails
@@ -71,8 +81,9 @@ private slots:
         QList<QVariantMap> events;
         const int count = runToCompletion(turn, QStringLiteral("make the build fail"), events);
 
-        // 2 reasoningDelta + reasoningDone + toolStarted + toolFinished(error) + text + flush.
-        QCOMPARE(count, 7);
+        // reasoning + toolStarted + toolFinished(error) + text + flush, plus the
+        // live status deltas; assert structure, not an exact total.
+        QVERIFY(count >= 7);
         QVERIFY(!turn.active());
         QCOMPARE(turn.turnState(), QStringLiteral("error"));
         QVERIFY(!turn.errorText().isEmpty());
@@ -86,6 +97,48 @@ private slots:
             }
         }
         QVERIFY(sawError);
+    }
+
+    // A prompt mentioning "sudo" pauses the turn at a host-input gate: the
+    // controller emits hostRequested + awaitingInput and parks (paused, no finish)
+    // until resume() drives it to completion.
+    void sudoPromptGatesForHostInput()
+    {
+        TurnController turn;
+        QSignalSpy hostSpy(&turn, &TurnController::hostRequested);
+        QSignalSpy awaitSpy(&turn, &TurnController::awaitingInput);
+        QSignalSpy finished(&turn, &TurnController::turnFinished);
+
+        turn.start(QStringLiteral("please sudo make install"));
+        // The gate lands within the first few hundred ms; wait for the request.
+        QVERIFY(hostSpy.wait(5000));
+        QCOMPARE(hostSpy.count(), 1);
+        QCOMPARE(hostSpy.at(0).at(0).toString(), QStringLiteral("password"));
+        QCOMPARE(awaitSpy.count(), 1);
+        QCOMPARE(awaitSpy.at(0).at(0).toString(), QStringLiteral("password"));
+
+        // Parked at the gate: still active, not finished, reports paused.
+        QVERIFY(turn.active());
+        QVERIFY(turn.paused());
+        QCOMPARE(finished.count(), 0);
+
+        // Answering the prompt resumes the turn to completion.
+        turn.resume();
+        QVERIFY(finished.wait(5000));
+        QVERIFY(!turn.active());
+        QCOMPARE(turn.turnState(), QStringLiteral("idle"));
+    }
+
+    // A prompt mentioning a "secret" / "api key" gates with the secret kind.
+    void secretPromptGatesWithSecretKind()
+    {
+        TurnController turn;
+        QSignalSpy hostSpy(&turn, &TurnController::hostRequested);
+        turn.start(QStringLiteral("rotate the api key"));
+        QVERIFY(hostSpy.wait(5000));
+        QCOMPARE(hostSpy.at(0).at(0).toString(), QStringLiteral("secret"));
+        turn.cancel(); // abandoning the gate resets cleanly
+        QVERIFY(!turn.active());
     }
 
     // cancel() stops an in-flight turn and resets to idle without emitting finish.

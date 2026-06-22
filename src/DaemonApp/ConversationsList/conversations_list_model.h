@@ -35,6 +35,7 @@ public:
         TagNamesRole,    // QStringList of tag names
         TagColorsRole,   // QStringList of tag colors, parallel to TagNamesRole
         CurrentRole,     // true for the currently-selected row (identity match)
+        PinnedRole,      // true when the conversation is pinned (floats to top)
     };
 
     explicit ConversationsListModel(QObject* parent = nullptr);

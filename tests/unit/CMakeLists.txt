@@ -96,6 +96,22 @@ target_link_libraries(tst_todos
 add_test(NAME tst_todos COMMAND tst_todos)
 set_tests_properties(tst_todos PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_subagent_model: the shared SubagentModel (live delegation rows) - role
+# exposure, id-keyed upsert vs append, ignoring non-subagent events, running
+# count, and clear. Both front ends render this model off the turn event stream.
+qt_add_executable(tst_subagent_model tst_subagent_model.cpp)
+target_include_directories(tst_subagent_model
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Conversation"
+)
+target_link_libraries(tst_subagent_model
+    PRIVATE
+        Qt6::Test
+        Qt6::Quick
+        daemon-app::conversation
+)
+add_test(NAME tst_subagent_model COMMAND tst_subagent_model)
+set_tests_properties(tst_subagent_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_completion: the shared completion FSM (CompletionModel data/search + the
 # trigger detection/navigation/accept transforms on ComposerSessionController).
 qt_add_executable(tst_completion tst_completion.cpp)

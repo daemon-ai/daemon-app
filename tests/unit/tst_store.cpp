@@ -150,6 +150,55 @@ private slots:
         QVERIFY(child != root);
     }
 
+    // Session actions: rename sets the canonical title and signals changed.
+    void renameSetsTitle()
+    {
+        InMemoryConversationStore store;
+        const int id = store.createConversation(QStringLiteral("n-worker"));
+        QSignalSpy spy(&store, &persistence::IConversationStore::changed);
+
+        store.renameConversation(id, QStringLiteral("Release plan"));
+        QCOMPARE(store.title(id), QStringLiteral("Release plan"));
+        QVERIFY(spy.count() >= 1);
+    }
+
+    // delete removes the conversation from every scope and the count.
+    void deleteRemovesConversation()
+    {
+        InMemoryConversationStore store;
+        const int id = store.createConversation(QStringLiteral("n-worker"));
+        QCOMPARE(store.conversationCount(nodeScope("n-worker")), 2);
+
+        QSignalSpy spy(&store, &persistence::IConversationStore::changed);
+        store.deleteConversation(id);
+        QVERIFY(spy.count() >= 1);
+        QCOMPARE(store.conversationCount(nodeScope("n-worker")), 1);
+        QVERIFY(store.title(id).isEmpty()); // gone
+    }
+
+    // pin toggles the flag and floats the conversation to the top of its scope.
+    void pinFloatsToTopOfScope()
+    {
+        InMemoryConversationStore store;
+        const int a = store.createConversation(QStringLiteral("n-worker"));
+        const int b = store.createConversation(QStringLiteral("n-worker"));
+        QVERIFY(!store.isPinned(b));
+
+        store.setPinned(b, true);
+        QVERIFY(store.isPinned(b));
+
+        // Pinned-first ordering: b comes before a in the worker's own list.
+        const auto convs = store.conversations(nodeScope("n-worker"));
+        QList<int> ids;
+        for (const auto& c : convs) {
+            ids << c.id;
+        }
+        QVERIFY(ids.indexOf(b) < ids.indexOf(a));
+
+        store.setPinned(b, false);
+        QVERIFY(!store.isPinned(b));
+    }
+
     // createTag adds a selectable tag with a fresh, unique id.
     void createTagAppendsWithUniqueId()
     {

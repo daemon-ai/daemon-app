@@ -20,6 +20,8 @@ RowLayout {
     // Steering is only meaningful mid-turn with a text-only draft.
     property bool canSteer: false
     property bool composerEnabled: true
+    // The shared ComposerSessionController (drives the model picker + modes).
+    property var session: null
     // Model selector list + selection, owned by the controller.
     property var modelList: []
     property int currentModelIndex: 0
@@ -30,12 +32,16 @@ RowLayout {
     signal steer()
     signal modelSelected(int index)
 
+    // Open the model picker overlay (forwarded from the composer for /model + palette).
+    function openModelPicker() { modelPill.openOverlay(); }
+
     spacing: Theme.spacingSmall
 
     ModelPill {
         id: modelPill
         Layout.alignment: Qt.AlignVCenter
         enabled: root.composerEnabled
+        session: root.session
         models: root.modelList
         currentIndex: root.currentModelIndex
         onSelected: function(index) { root.modelSelected(index); }

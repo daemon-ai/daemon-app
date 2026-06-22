@@ -108,6 +108,19 @@ QString StatusBarModel::contextLabel() const
     return abbrev(m_contextUsed) + tr(" tok");
 }
 
+QString StatusBarModel::costLabel() const
+{
+    return QStringLiteral("$") + QString::number(m_usdCost, 'f', m_usdCost >= 1.0 ? 2 : 3);
+}
+
+QString StatusBarModel::rateLabel() const
+{
+    if (m_rateLimit <= 0) {
+        return QString();
+    }
+    return QString::number(m_rateRemaining) + QStringLiteral("/") + QString::number(m_rateLimit);
+}
+
 QString StatusBarModel::turnElapsed() const
 {
     return formatElapsed(m_turnStartedAt);
@@ -194,6 +207,90 @@ void StatusBarModel::setContextMax(int n)
     m_contextMax = n;
     emit contextMaxChanged();
     emit contextChanged();
+}
+
+void StatusBarModel::setTokensIn(int n)
+{
+    if (m_tokensIn == n) {
+        return;
+    }
+    m_tokensIn = n;
+    emit usageChanged();
+}
+
+void StatusBarModel::setTokensOut(int n)
+{
+    if (m_tokensOut == n) {
+        return;
+    }
+    m_tokensOut = n;
+    emit usageChanged();
+}
+
+void StatusBarModel::setUsdCost(double cost)
+{
+    if (qFuzzyCompare(m_usdCost, cost)) {
+        return;
+    }
+    m_usdCost = cost;
+    emit usageChanged();
+}
+
+void StatusBarModel::setRateRemaining(int n)
+{
+    if (m_rateRemaining == n) {
+        return;
+    }
+    m_rateRemaining = n;
+    emit rateChanged();
+}
+
+void StatusBarModel::setRateLimit(int n)
+{
+    if (m_rateLimit == n) {
+        return;
+    }
+    m_rateLimit = n;
+    emit rateChanged();
+}
+
+void StatusBarModel::applyTurnEvents(const QVariantList& events)
+{
+    bool usage = false;
+    bool rate = false;
+    for (const QVariant& e : events) {
+        const QVariantMap event = e.toMap();
+        const QString type = event.value(QStringLiteral("type")).toString();
+        if (type == QStringLiteral("usage")) {
+            m_tokensIn += event.value(QStringLiteral("tokensIn")).toInt();
+            m_tokensOut += event.value(QStringLiteral("tokensOut")).toInt();
+            m_usdCost += event.value(QStringLiteral("costUsd")).toDouble();
+            usage = true;
+        } else if (type == QStringLiteral("context")) {
+            setContextUsed(event.value(QStringLiteral("used")).toInt());
+            if (event.contains(QStringLiteral("max"))) {
+                setContextMax(event.value(QStringLiteral("max")).toInt());
+            }
+        } else if (type == QStringLiteral("rateLimit")) {
+            m_rateRemaining = event.value(QStringLiteral("remaining")).toInt();
+            m_rateLimit = event.value(QStringLiteral("limit")).toInt();
+            rate = true;
+        }
+    }
+    if (usage) {
+        emit usageChanged();
+    }
+    if (rate) {
+        emit rateChanged();
+    }
+}
+
+void StatusBarModel::resetUsage()
+{
+    m_tokensIn = 0;
+    m_tokensOut = 0;
+    m_usdCost = 0.0;
+    emit usageChanged();
 }
 
 void StatusBarModel::setAppVersion(const QString& version)

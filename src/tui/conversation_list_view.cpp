@@ -306,6 +306,28 @@ void ConversationListView::paintEvent(Tui::ZPaintEvent* event)
 
 void ConversationListView::keyEvent(Tui::ZKeyEvent* event)
 {
+    // Ctrl-modified session actions on the current row (rename/export/pin-toggle).
+    // Tui delivers Ctrl+letter as a char event (text()==letter), so match text.
+    if (m_model != nullptr && (event->modifiers() & Qt::ControlModifier)) {
+        const int row = m_model->currentRow();
+        const QString t = event->text();
+        if (row >= 0 && t.compare(QStringLiteral("r"), Qt::CaseInsensitive) == 0) {
+            emit renameRequested(row);
+            event->accept();
+            return;
+        }
+        if (row >= 0 && t.compare(QStringLiteral("e"), Qt::CaseInsensitive) == 0) {
+            emit exportRequested(row);
+            event->accept();
+            return;
+        }
+        if (row >= 0 && t.compare(QStringLiteral("k"), Qt::CaseInsensitive) == 0) {
+            emit pinToggleRequested(row);
+            event->accept();
+            return;
+        }
+    }
+
     if (m_model != nullptr
         && (event->modifiers() == Qt::NoModifier || event->modifiers() == Qt::ShiftModifier)) {
         const int key = event->key();
@@ -340,6 +362,11 @@ void ConversationListView::keyEvent(Tui::ZKeyEvent* event)
             case Qt::Key_Return:
                 if (m_model->currentRow() >= 0) {
                     emit rowActivated(m_model->currentRow(), true); // pinned open
+                }
+                break;
+            case Qt::Key_Delete:
+                if (m_model->currentRow() >= 0) {
+                    emit deleteRequested(m_model->currentRow());
                 }
                 break;
             default:

@@ -73,4 +73,15 @@ bool DesktopPlatformServices::installTray(const QString& appName)
     return true;
 }
 
+bool DesktopPlatformServices::notify(const QString& title, const QString& body)
+{
+    // Notifications ride the tray icon (the portable Qt path). Without a tray
+    // there's nowhere to anchor the balloon, so report that nothing was shown.
+    if (m_tray == nullptr || !QSystemTrayIcon::supportsMessages()) {
+        return false;
+    }
+    m_tray->showMessage(title, body, placeholderTrayIcon(), 5000);
+    return true;
+}
+
 } // namespace platform

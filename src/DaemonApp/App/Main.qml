@@ -34,6 +34,64 @@ ApplicationWindow {
         root.scopeNodeId = nodeId;
     }
 
+    // The active Conversation pane (set by whichever shell is mounted), so the
+    // command palette can route conversation-scoped commands (slash actions, model
+    // picker, modes) to the foreground tab.
+    property var activeConversation: null
+
+    // Cycle the four built-in themes, mirroring the TUI's F8 (kept in one place so
+    // the palette "Cycle theme" entry and a future menu agree).
+    function cycleTheme() {
+        const order = ["light", "dark", "sepia", "midnight"];
+        const i = order.indexOf(Theme.theme);
+        Theme.setTheme(order[(i + 1) % order.length]);
+    }
+
+    // Route a command-palette id to an existing action. Window-level ids are
+    // handled here; conversation-scoped ids fall through to the active pane's
+    // orchestrator (which raises front-end overlays via commandRequested). The
+    // window-level set is handled directly (never delegated) so a pane that
+    // forwards one back up cannot loop.
+    function routeCommand(commandId) {
+        switch (commandId) {
+        case "theme": root.cycleTheme(); break;
+        case "distraction": UiSettings.distractionFree = true; break;
+        case "new": if (root.activeConversation) root.activeConversation.createNew(); break;
+        case "settings": if (root.activeConversation) root.activeConversation.openSettings(); break;
+        case "help": commandPalette.open(); break;
+        case "title": if (root.activeConversation) root.activeConversation.renameActive(); break;
+        case "save": if (root.activeConversation) root.activeConversation.exportActive(); break;
+        default:
+            if (root.activeConversation)
+                root.activeConversation.invokeActiveCommand(commandId);
+        }
+    }
+
+    // Mod+K opens the palette (Cmd on macOS, Ctrl elsewhere - StandardKey covers both).
+    Shortcut {
+        sequences: [StandardKey.QuickOpen, "Ctrl+K", "Meta+K"]
+        onActivated: commandPalette.open()
+    }
+
+    Connections {
+        target: Commands
+        function onCommandTriggered(commandId) {
+            commandPalette.close();
+            root.routeCommand(commandId);
+        }
+    }
+
+    // A conversation pane forwarded a window-level command (e.g. typed "/help").
+    Connections {
+        target: root.activeConversation
+        ignoreUnknownSignals: true
+        function onPaneCommandForwarded(command) { root.routeCommand(command); }
+    }
+
+    CommandPalette {
+        id: commandPalette
+    }
+
     // Drive the size-class layer from live window geometry; foldable fold/unfold
     // and rotation change the width and re-evaluate sizeClass for free.
     onWidthChanged: LayoutState.windowWidth = root.width
@@ -137,6 +195,7 @@ ApplicationWindow {
                 SplitView.fillWidth: true
                 SplitView.minimumWidth: 320
                 Component.onCompleted: {
+                    root.activeConversation = conversationExpanded;
                     if (root.activeConversationId >= 0)
                         open(root.activeConversationId);
                 }
@@ -178,6 +237,7 @@ ApplicationWindow {
 
                 Conversation {
                     Component.onCompleted: {
+                        root.activeConversation = this;
                         if (root.activeConversationId >= 0)
                             open(root.activeConversationId);
                     }

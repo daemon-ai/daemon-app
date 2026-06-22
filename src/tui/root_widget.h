@@ -19,6 +19,7 @@
 #include "interactive_turn_host.h"
 #include "line_editor.h"
 #include "mouse_terminal.h"
+#include "palette_dialog.h"
 #include "queue_strip_view.h"
 #include "status_bar_view.h"
 #include "tab_strip_view.h"
@@ -44,6 +45,8 @@ class ConversationOrchestrator;
 class ComposerSessionController;
 class TurnController;
 class StatusBarModel;
+class CommandRegistry;
+class TranscriptExporter;
 class DisplayRoleAdapter;
 class TabModel;
 
@@ -189,6 +192,37 @@ signals:
     void quitConfirmed();
 };
 
+// A small modal text-input dialog (ZInputBox + OK/Cancel), used for renaming a
+// conversation. Seeded with the current title; Enter / OK emits accepted(text).
+class TextPromptDialog : public Tui::ZDialog {
+    Q_OBJECT
+
+public:
+    // `masked` switches the input to password echo (sudo/secret prompts).
+    TextPromptDialog(const QString& title, const QString& initial, bool masked,
+                     Tui::ZWidget* parent);
+
+signals:
+    void submitted(const QString& text);
+    // Emitted when the user cancels (Esc / Cancel), so a host gate can abort.
+    void canceled();
+
+private:
+    Tui::ZInputBox* m_input = nullptr;
+};
+
+// A minimal modal Yes/No confirmation (destructive-confirm). Esc/No reject; the
+// default focus is the cancelling choice. Surfaces the affirmative via confirmed().
+class ConfirmDialog : public Tui::ZDialog {
+    Q_OBJECT
+
+public:
+    ConfirmDialog(const QString& title, const QString& message, Tui::ZWidget* parent);
+
+signals:
+    void confirmed();
+};
+
 // The TUI shell: a single full-screen window holding the three-column layout
 // (Sidebar | ConversationsList | Conversation), driven entirely by the app's
 // existing C++ view models against the in-memory store.
@@ -226,6 +260,14 @@ private:
     // through it.
     void rewindActiveTab(const QString& messageId, bool editMode);
     void promptQuit(); // open the quit-confirmation modal (idempotent)
+    // Open the model picker overlay (filterable provider->model list) bound to the
+    // shared composer session; selecting sets the active model. Opened by /model
+    // and the command palette.
+    void openModelPicker();
+    // Open the command palette (Ctrl+P): a filterable list of nav / theme / mode /
+    // slash actions, backed by the shared CommandRegistry, routed to existing
+    // handlers on activation.
+    void openCommandPalette();
     // Advance Light -> Dark -> Sepia -> Midnight, recolor the whole shell live
     // (stock palette + every custom-painted view), and persist the choice so the
     // GUI and TUI stay in sync.
@@ -238,6 +280,9 @@ private:
     // Render the active session's status-stack todos as a compact strip above the
     // composer (cleared when the model empties after the turn settles).
     void updateTodos();
+    // Render the active session's live subagent rows as a compact one-line strip
+    // above the composer (cleared when the model empties after the turn settles).
+    void updateSubagents();
     // Sync the completion overlay (items / active row / visibility / geometry)
     // from the shared controller's completion state.
     void updateCompletion();
@@ -309,12 +354,22 @@ private:
     StatusBarView* m_footer = nullptr;
     // Compact status-stack todo strip (above the composer).
     Tui::ZLabel* m_todos = nullptr;
+    // Compact status-stack subagent strip (above the composer); blank at rest.
+    Tui::ZLabel* m_subagents = nullptr;
     // Borderless completion overlay floated above the composer; driven entirely by
     // the shared controller's completion state (the input box keeps focus).
     CompletionView* m_completionPopup = nullptr;
 
     // Exit handling: the quit confirmation modal (nullptr when closed).
     QuitDialog* m_quitDialog = nullptr;
+
+    // Filterable overlays (created lazily, reused). The model picker lists the
+    // shared composer catalog; the command palette lists the shared CommandRegistry.
+    PaletteDialog* m_modelPicker = nullptr;
+    PaletteDialog* m_commandPalette = nullptr;
+    CommandRegistry* m_commands = nullptr;
+    // Transcript exporter for the /save + list "export" action (writes JSON).
+    TranscriptExporter* m_exporter = nullptr;
 
     // Static document backing non-transcript page tabs (e.g. Settings): the
     // transcript view points here while a page tab is active.

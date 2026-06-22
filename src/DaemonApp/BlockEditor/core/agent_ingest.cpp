@@ -46,6 +46,16 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap &event)
         return finish();
     }
 
+    // Status-only events (token usage, context-window fill, rate-limit windows,
+    // and subagent/delegation progress) carry no transcript content: the status
+    // bar and subagent model consume them off the same stream. Ignore them here
+    // so they neither open an assistant turn nor create blocks.
+    if (type == QStringLiteral("usage") || type == QStringLiteral("context")
+        || type == QStringLiteral("rateLimit")
+        || type.startsWith(QStringLiteral("subagent"))) {
+        return out;
+    }
+
     // Any content-producing event opens the assistant message if one is not
     // already open, so the blocks below group under a single assistant turn.
     ensureTurn();

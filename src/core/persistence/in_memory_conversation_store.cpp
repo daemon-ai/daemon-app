@@ -2,6 +2,8 @@
 
 #include <QDateTime>
 
+#include <algorithm>
+
 namespace persistence {
 
 using domain::AgentNode;
@@ -299,6 +301,10 @@ QList<Conversation> InMemoryConversationStore::conversations(const ListScope& sc
             out.push_back(c);
         }
     }
+    // Pinned conversations float to the top; store order is otherwise preserved
+    // (stable partition), so /title + moveConversation stay predictable.
+    std::stable_partition(out.begin(), out.end(),
+                          [](const Conversation& c) { return c.isPinned; });
     return out;
 }
 
@@ -379,6 +385,71 @@ void InMemoryConversationStore::setContent(int conversationId, const QString& ma
             emit changed();
             return;
         }
+    }
+}
+
+void InMemoryConversationStore::renameConversation(int conversationId, const QString& title)
+{
+    for (Conversation& c : m_conversations) {
+        if (c.id == conversationId) {
+            c.title = title;
+            c.modified = QDateTime::currentDateTime();
+            emit changed();
+            return;
+        }
+    }
+}
+
+void InMemoryConversationStore::deleteConversation(int conversationId)
+{
+    for (int i = 0; i < m_conversations.size(); ++i) {
+        if (m_conversations.at(i).id == conversationId) {
+            m_conversations.removeAt(i);
+            emit changed();
+            return;
+        }
+    }
+}
+
+void InMemoryConversationStore::setPinned(int conversationId, bool pinned)
+{
+    for (Conversation& c : m_conversations) {
+        if (c.id == conversationId) {
+            if (c.isPinned != pinned) {
+                c.isPinned = pinned;
+                emit changed();
+            }
+            return;
+        }
+    }
+}
+
+bool InMemoryConversationStore::isPinned(int conversationId) const
+{
+    for (const Conversation& c : m_conversations) {
+        if (c.id == conversationId) {
+            return c.isPinned;
+        }
+    }
+    return false;
+}
+
+void InMemoryConversationStore::moveConversation(int conversationId, int delta)
+{
+    if (delta == 0) {
+        return;
+    }
+    for (int i = 0; i < m_conversations.size(); ++i) {
+        if (m_conversations.at(i).id != conversationId) {
+            continue;
+        }
+        const int target = qBound(0, i + (delta < 0 ? -1 : 1),
+                                  static_cast<int>(m_conversations.size()) - 1);
+        if (target != i) {
+            m_conversations.move(i, target);
+            emit changed();
+        }
+        return;
     }
 }
 

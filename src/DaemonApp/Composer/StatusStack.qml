@@ -11,6 +11,7 @@ Item {
 
     property var queueModel: null
     property var todoModel: null
+    property var subagentModel: null
     property int editingIndex: -1
     property bool busy: false
 
@@ -20,7 +21,8 @@ Item {
 
     readonly property bool hasTodos: todoModel && todoModel.count > 0
     readonly property bool hasQueue: queueModel && queueModel.count > 0
-    readonly property bool hasContent: hasTodos || hasQueue
+    readonly property bool hasSubagents: subagentModel && subagentModel.count > 0
+    readonly property bool hasContent: hasTodos || hasQueue || hasSubagents
 
     visible: hasContent
     implicitHeight: visible ? card.implicitHeight : 0
@@ -41,6 +43,19 @@ Item {
             anchors.top: parent.top
             anchors.margins: Theme.spacingSmall
             spacing: Theme.spacingSmall
+
+            SubagentList {
+                Layout.fillWidth: true
+                visible: root.hasSubagents
+                model: root.subagentModel
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                visible: root.hasSubagents && (root.hasTodos || root.hasQueue)
+                implicitHeight: 1
+                color: Theme.border
+            }
 
             TodoList {
                 Layout.fillWidth: true

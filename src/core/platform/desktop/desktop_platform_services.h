@@ -19,6 +19,7 @@ public:
     ~DesktopPlatformServices() override;
 
     bool installTray(const QString& appName) override;
+    bool notify(const QString& title, const QString& body) override;
 
 private:
     QSystemTrayIcon* m_tray = nullptr;

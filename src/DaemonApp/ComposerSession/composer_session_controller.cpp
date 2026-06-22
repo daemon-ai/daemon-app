@@ -14,6 +14,13 @@ ComposerSessionController::ComposerSessionController(QObject* parent)
             &ComposerSessionController::queueCountChanged);
     connect(m_attachments, &ComposerAttachmentModel::countChanged, this,
             &ComposerSessionController::derivedChanged);
+
+    // Flat label list, in catalog order, so `currentModelIndex` addresses the same
+    // model whether a view reads the flat list or the structured catalog.
+    m_models.reserve(m_catalog.size());
+    for (const ModelEntry& e : m_catalog) {
+        m_models << e.label;
+    }
 }
 
 void ComposerSessionController::setConversationId(int id)
@@ -116,10 +123,31 @@ bool ComposerSessionController::primaryActionEnabled() const
     return m_enabled && (primaryAction() != QStringLiteral("send") || hasPayload());
 }
 
+QVariantList ComposerSessionController::modelCatalog() const
+{
+    QVariantList out;
+    out.reserve(m_catalog.size());
+    for (const ModelEntry& e : m_catalog) {
+        out.append(QVariantMap {
+            { QStringLiteral("provider"), e.provider },
+            { QStringLiteral("id"), e.id },
+            { QStringLiteral("label"), e.label },
+        });
+    }
+    return out;
+}
+
 QString ComposerSessionController::currentModel() const
 {
     return (m_currentModelIndex >= 0 && m_currentModelIndex < m_models.size())
         ? m_models.at(m_currentModelIndex)
+        : QString();
+}
+
+QString ComposerSessionController::currentProvider() const
+{
+    return (m_currentModelIndex >= 0 && m_currentModelIndex < m_catalog.size())
+        ? m_catalog.at(m_currentModelIndex).provider
         : QString();
 }
 
@@ -135,6 +163,55 @@ void ComposerSessionController::setCurrentModelIndex(int index)
 void ComposerSessionController::selectModel(int index)
 {
     setCurrentModelIndex(index);
+}
+
+void ComposerSessionController::setReasoningEffort(const QString& effort)
+{
+    // Accept only the known levels; ignore anything else so a bad write can't
+    // wedge the segmented control.
+    static const QStringList kLevels { QStringLiteral("off"), QStringLiteral("low"),
+                                       QStringLiteral("medium"), QStringLiteral("high") };
+    if (!kLevels.contains(effort) || m_reasoningEffort == effort) {
+        return;
+    }
+    m_reasoningEffort = effort;
+    emit modesChanged();
+}
+
+void ComposerSessionController::setFastMode(bool on)
+{
+    if (m_fastMode == on) {
+        return;
+    }
+    m_fastMode = on;
+    emit modesChanged();
+}
+
+void ComposerSessionController::setVerbose(bool on)
+{
+    if (m_verbose == on) {
+        return;
+    }
+    m_verbose = on;
+    emit modesChanged();
+}
+
+void ComposerSessionController::cycleReasoningEffort()
+{
+    static const QStringList kLevels { QStringLiteral("off"), QStringLiteral("low"),
+                                       QStringLiteral("medium"), QStringLiteral("high") };
+    const int i = kLevels.indexOf(m_reasoningEffort);
+    setReasoningEffort(kLevels.at((i + 1) % kLevels.size()));
+}
+
+void ComposerSessionController::toggleFastMode()
+{
+    setFastMode(!m_fastMode);
+}
+
+void ComposerSessionController::toggleVerbose()
+{
+    setVerbose(!m_verbose);
 }
 
 void ComposerSessionController::resetBrowse()

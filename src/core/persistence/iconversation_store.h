@@ -41,7 +41,7 @@ public:
 
     [[nodiscard]] virtual int conversationCount(const domain::ListScope& scope) const = 0;
 
-    [[nodiscard]] virtual QString content(int conversationId) const = 0;
+    [[nodiscard]] Q_INVOKABLE virtual QString content(int conversationId) const = 0;
 
     // The canonical conversation title (the same string the list shows), or an
     // empty string when unknown. Q_INVOKABLE so QML tab hosts can label chips
@@ -58,6 +58,15 @@ public:
     virtual int createTag(const QString& name, const QString& color) = 0;
     virtual void setContent(int conversationId, const QString& markdown) = 0;
     virtual void setArchived(int conversationId, bool archived) = 0;
+
+    // Session actions (client-side now; the daemon adapter forwards them later).
+    // Each emits changed() so every bound model refreshes.
+    Q_INVOKABLE virtual void renameConversation(int conversationId, const QString& title) = 0;
+    Q_INVOKABLE virtual void deleteConversation(int conversationId) = 0;
+    Q_INVOKABLE virtual void setPinned(int conversationId, bool pinned) = 0;
+    [[nodiscard]] Q_INVOKABLE virtual bool isPinned(int conversationId) const = 0;
+    // Reorder within the store (delta < 0 moves earlier / up, > 0 later / down).
+    Q_INVOKABLE virtual void moveConversation(int conversationId, int delta) = 0;
 
 signals:
     void changed();

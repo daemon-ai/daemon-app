@@ -12,6 +12,7 @@ qt_add_qml_module(daemon-app
     VERSION 1.0
     QML_FILES
         Main.qml
+        CommandPalette.qml
 )
 
 target_link_libraries(daemon-app
@@ -22,6 +23,8 @@ target_link_libraries(daemon-app
         # Core services
         daemon-app::persistence
         daemon-app::platform
+        daemon-app::command
+        daemon-app::export
         # Feature QML modules: backing libs (C++ types) + their STATIC plugins.
         # The plugins must be linked explicitly (shared Qt build); main.cpp also
         # references them via Q_IMPORT_QML_PLUGIN so they aren't dead-stripped.

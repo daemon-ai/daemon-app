@@ -56,6 +56,8 @@ void ComposerChrome::setSession(ComposerSessionController* session)
     if (m_session != nullptr) {
         connect(m_session, &ComposerSessionController::currentModelChanged, this,
                 [this] { update(); });
+        connect(m_session, &ComposerSessionController::modesChanged, this,
+                [this] { update(); });
         connect(m_session, &ComposerSessionController::reverseSearchChanged, this,
                 [this] { update(); });
     }
@@ -133,6 +135,23 @@ QVector<Span> ComposerChrome::buildSpans() const
     if (m_session != nullptr && !m_session->currentModel().isEmpty()) {
         spans << mkSpan(QStringLiteral("  \u00b7  "), tpal::faint());
         spans << mkSpan(m_session->currentModel(), tpal::muted());
+        // Compact mode badges: reasoning level (unless off) + Fast/Verbose flags.
+        QStringList badges;
+        const QString effort = m_session->reasoningEffort();
+        if (effort != QStringLiteral("off")) {
+            badges << (QStringLiteral("r:") + effort.left(1));
+        }
+        if (m_session->fastMode()) {
+            badges << QStringLiteral("fast");
+        }
+        if (m_session->verbose()) {
+            badges << QStringLiteral("verbose");
+        }
+        if (!badges.isEmpty()) {
+            spans << mkSpan(QStringLiteral("  ["), tpal::faint());
+            spans << mkSpan(badges.join(QStringLiteral(" ")), tpal::accent());
+            spans << mkSpan(QStringLiteral("]"), tpal::faint());
+        }
     }
     return spans;
 }

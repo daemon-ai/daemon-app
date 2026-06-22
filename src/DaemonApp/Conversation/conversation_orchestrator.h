@@ -1,6 +1,7 @@
 #pragma once
 
 #include "conversation_controller.h"
+#include "subagent_model.h"
 #include "todo_list_model.h"
 #include "turn_controller.h"
 
@@ -26,6 +27,7 @@ class ConversationOrchestrator : public QObject {
                    conversationChanged)
     Q_PROPERTY(TurnController* turn READ turn CONSTANT)
     Q_PROPERTY(TodoListModel* todos READ todos CONSTANT)
+    Q_PROPERTY(SubagentModel* subagents READ subagents CONSTANT)
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
 
 public:
@@ -36,6 +38,7 @@ public:
 
     [[nodiscard]] TurnController* turn() const { return m_turn; }
     [[nodiscard]] TodoListModel* todos() const { return m_todos; }
+    [[nodiscard]] SubagentModel* subagents() const { return m_subagents; }
     [[nodiscard]] bool busy() const;
 
     // Persist the user's text (attachment refs ride on the front), start the
@@ -78,6 +81,7 @@ private:
     ConversationController* m_conversation = nullptr;
     TurnController* m_turn = nullptr;
     TodoListModel* m_todos = nullptr;
+    SubagentModel* m_subagents = nullptr;
     // Clears the demo todos a short beat after the turn settles (replaces the QML
     // todoClearTimer).
     QTimer m_todoClearTimer;

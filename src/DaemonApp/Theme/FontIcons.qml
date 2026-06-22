@@ -100,6 +100,18 @@ QtObject {
     readonly property string fa_clock: "\uf017"
     readonly property string fa_bolt: "\uf0e7"
     readonly property string fa_hashtag: "\uf292"
+    readonly property string fa_coins: "\uf51e"
+    readonly property string fa_gauge_high: "\uf625"
+
+    // --- Picker / palette / session-action / HITL glyphs --------------------
+    readonly property string fa_microchip: "\uf2db"   // model picker
+    readonly property string fa_bars: "\uf0c9"         // command palette / menu
+    readonly property string fa_floppy_disk: "\uf0c7"  // save / export
+    readonly property string fa_thumbtack: "\uf08d"    // pin
+    readonly property string fa_lock: "\uf023"         // sudo
+    readonly property string fa_key: "\uf084"          // secret / api key
+    readonly property string fa_triangle_exclamation: "\uf071" // destructive confirm
+    readonly property string fa_circle_nodes: "\uf4c9" // subagents / delegation
 
     // --- Composer glyphs ----------------------------------------------------
     // Send (primary), stop (filled square), queue (layer group), mention (@),

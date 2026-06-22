@@ -7,11 +7,13 @@ qt_add_qml_module(da_composer
         ComposerControls.qml
         ComposerMenu.qml
         ModelPill.qml
+        ModelPickerOverlay.qml
         CompletionPopover.qml
         AttachmentChip.qml
         StatusStack.qml
         QueuePanel.qml
         TodoList.qml
+        SubagentList.qml
 )
 add_library(daemon-app::composer ALIAS da_composer)
 

@@ -21,12 +21,21 @@ Rectangle {
     // created; re-assigning re-opens (kept for completeness, tabs are 1:1).
     property int conversationId: -1
 
+    // True while this is the foreground tab (bound by the host). Only the active
+    // tab feeds the shared footer status model, so a background tab can keep
+    // streaming into its own document without hijacking the footer.
+    property bool isActive: false
+
     // No task model yet, so the header pie stays hidden.
     property int totalTasks: 0
     property int doneTasks: 0
 
     // A front-end-only slash command asked to open settings (e.g. "/theme").
     signal openSettingsRequested()
+
+    // A command this page can't satisfy locally (e.g. "help", "title", "save");
+    // the host (Main.qml) routes it to a window-level action.
+    signal commandForwarded(string command)
 
     // The tab title resolved from the conversation content (first heading/line).
     // The host binds this to TabModel.setTitle so the chip reflects the thread.
@@ -38,6 +47,19 @@ Rectangle {
 
     // Exposed so the pane's settings popup can act on this tab's conversation.
     readonly property alias conversationController: controller
+
+    // Route a palette/slash command into this tab's orchestrator (the same entry
+    // point the composer uses), so the command palette reaches the foreground tab.
+    function invokeCommand(command) {
+        orchestrator.invokeCommand(command);
+    }
+
+    // Simulated context compaction: drop the live context fill to a fraction (the
+    // daemon will replace this with a real summarize + reset). Visible immediately
+    // in the footer status bar.
+    function _compressContext() {
+        Status.setContextUsed(Math.max(1500, Math.round(Status.contextUsed * 0.2)));
+    }
 
     // The chip label is the conversation's canonical title (the same string the
     // list shows), not the first line of the markdown content.
@@ -58,11 +80,22 @@ Rectangle {
     ConversationOrchestrator {
         id: orchestrator
         conversation: controller
+        // Route the orchestrator's front-end commands. Conversation-scoped ones act
+        // on this tab's composer/session/status here; window-level ones (help,
+        // title, save) bubble up via commandForwarded.
         onCommandRequested: function(command) {
-            if (command === "theme")
-                root.openSettingsRequested();
-            else if (command === "distraction")
-                UiSettings.distractionFree = true;
+            switch (command) {
+            case "theme": root.openSettingsRequested(); break;
+            case "distraction": UiSettings.distractionFree = true; break;
+            case "model": composer.openModelPicker(); break;
+            case "reasoning": composer.session.cycleReasoningEffort(); break;
+            case "fast": composer.session.toggleFastMode(); break;
+            case "verbose": composer.session.toggleVerbose(); break;
+            case "usage": break; // usage is live in the footer status bar
+            case "compress": root._compressContext(); break;
+            case "clear": clearConfirmDialog.open(); break;
+            default: root.commandForwarded(command);
+            }
         }
         // Rewind slash commands act on the live editor (the GUI's source of truth),
         // then re-run via the same rerun seam the inline affordances use.
@@ -94,6 +127,53 @@ Rectangle {
         target: controller
         function onConversationChanged() { root._resolveTitle(); }
         function onContentChanged() { root._resolveTitle(); }
+    }
+
+    // Feed the shared footer status model from this tab's live turn while it is
+    // the active tab. usage/context/rateLimit events ride the same stream the
+    // transcript ingests; StatusBarModel filters them by type.
+    Connections {
+        target: orchestrator.turn
+        enabled: root.isActive
+        function onTurnStarted() {
+            Status.setBusy(true);
+            Status.setTurnStartedAt(Date.now());
+        }
+        function onTurnFinished() { Status.setBusy(false); }
+        function onEventsEmitted(events) { Status.applyTurnEvents(events); }
+    }
+
+    // The turn paused for a masked host input (sudo password / secret). Raise the
+    // masked prompt; the answer resumes the turn, cancel aborts it. Answered by the
+    // mock turn now; the daemon's HostRequestKind replaces this responder later.
+    Connections {
+        target: orchestrator.turn
+        function onHostRequested(kind, prompt) {
+            maskedPrompt.kind = kind;
+            maskedPrompt.promptText = prompt;
+            maskedField.text = "";
+            maskedPrompt.open();
+            maskedField.forceActiveFocus();
+        }
+        // A gate (approval/clarify/host) raises an OS notification when the window
+        // is hidden so the user knows the turn is waiting on them. App.notifyGate
+        // no-ops when the window is on-screen and active (the inline gate is shown).
+        function onAwaitingInput(kind) {
+            const what = kind === "approval" ? qsTr("needs your approval")
+                                             : qsTr("needs a credential");
+            App.notifyGate(ConversationStore.title(root.conversationId),
+                           qsTr("The turn %1.").arg(what));
+        }
+    }
+
+    // On (re)activation, resync the footer to THIS tab's live turn state so the
+    // running indicator/timer reflect the foreground conversation.
+    onIsActiveChanged: {
+        if (!isActive)
+            return;
+        Status.setBusy(orchestrator.turn.active);
+        if (orchestrator.turn.active)
+            Status.setTurnStartedAt(Date.now() - orchestrator.turn.elapsedMs);
     }
 
     ColumnLayout {
@@ -133,6 +213,7 @@ Rectangle {
             busy: transcript.busy
             conversationId: controller.currentId
             todosModel: orchestrator.todos
+            subagentsModel: orchestrator.subagents
 
             onSubmitted: function(text, attachmentRefs) {
                 orchestrator.submit(text, attachmentRefs);
@@ -163,6 +244,78 @@ Rectangle {
             color: Theme.textMuted
             font.family: FontIcons.display
             font.pixelSize: 16
+        }
+    }
+
+    // --- HITL surfaces ------------------------------------------------------
+    // Destructive-confirm before clearing the conversation (/clear).
+    QQC.Dialog {
+        id: clearConfirmDialog
+        title: qsTr("Clear conversation")
+        modal: true
+        anchors.centerIn: QQC.Overlay.overlay
+        width: 360
+        standardButtons: QQC.Dialog.Yes | QQC.Dialog.No
+        onAccepted: controller.updateContent("")
+        contentItem: QQC.Label {
+            text: qsTr("Remove all messages from this conversation? This cannot be undone.")
+            wrapMode: Text.WordWrap
+            color: Theme.text
+            font.family: FontIcons.display
+            font.pixelSize: 13
+        }
+    }
+
+    // Masked host-input prompt (sudo password / secret). A UI shell answered by
+    // the mock turn via resume(); the daemon's host channel replaces it later.
+    QQC.Dialog {
+        id: maskedPrompt
+        property string kind: "password"
+        property string promptText: ""
+        title: kind === "secret" ? qsTr("Secret required") : qsTr("Password required")
+        modal: true
+        closePolicy: QQC.Popup.NoAutoClose
+        anchors.centerIn: QQC.Overlay.overlay
+        width: 420
+        standardButtons: QQC.Dialog.Ok | QQC.Dialog.Cancel
+
+        onAccepted: orchestrator.turn.resume()
+        onRejected: orchestrator.cancel()
+
+        contentItem: ColumnLayout {
+            spacing: 8
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                Kit.Glyph {
+                    glyph: maskedPrompt.kind === "secret" ? FontIcons.fa_key : FontIcons.fa_lock
+                    font.pointSize: 13 + Theme.pointSizeOffset
+                    color: Theme.accent
+                }
+                QQC.Label {
+                    Layout.fillWidth: true
+                    text: maskedPrompt.promptText
+                    wrapMode: Text.WordWrap
+                    color: Theme.text
+                    font.family: FontIcons.display
+                    font.pixelSize: 13
+                }
+            }
+            Kit.TextField {
+                id: maskedField
+                Layout.fillWidth: true
+                underline: true
+                echoMode: TextInput.Password
+                placeholderText: maskedPrompt.kind === "secret" ? qsTr("Paste secret\u2026")
+                                                                : qsTr("Password\u2026")
+                onAccepted: maskedPrompt.accept()
+            }
+            QQC.Label {
+                text: qsTr("Never stored - forwarded to the host for this step only.")
+                color: Theme.textMuted
+                font.family: FontIcons.display
+                font.pixelSize: 10
+            }
         }
     }
 

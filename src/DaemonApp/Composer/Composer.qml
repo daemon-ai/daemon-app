@@ -48,8 +48,17 @@ Rectangle {
     readonly property int queueCount: controller.queueCount
     // The status-stack todo list (a TodoListModel owned by the host/orchestrator).
     property var todosModel: null
+    // The live subagent rows (a SubagentModel owned by the host/orchestrator).
+    property var subagentsModel: null
+
+    // The shared session controller, exposed so the host can drive model/mode
+    // commands (palette + slash) without re-plumbing each setter.
+    readonly property alias session: controller
 
     function focusInput() { inputArea.forceActiveFocus(); }
+    // Open the model picker overlay (the same overlay the model pill opens), so
+    // "/model" and the command palette can raise it.
+    function openModelPicker() { controls.openModelPicker(); }
 
     color: Theme.surface
     implicitHeight: mainColumn.implicitHeight + 2 * Theme.spacing
@@ -158,6 +167,7 @@ Rectangle {
             Layout.fillWidth: true
             queueModel: controller.queue
             todoModel: root.todosModel
+            subagentModel: root.subagentsModel
             busy: root.busy
             editingIndex: controller.editingIndex
             onSendNow: function(index) { root.sendNowEntry(index); }
@@ -497,6 +507,7 @@ Rectangle {
                         primaryActionEnabled: controller.primaryActionEnabled
                         canSteer: controller.canSteer
                         composerEnabled: root.composerEnabled
+                        session: controller
                         modelList: controller.models
                         currentModelIndex: controller.currentModelIndex
                         onSend: root.submitDraft()

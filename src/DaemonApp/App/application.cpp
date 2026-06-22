@@ -6,6 +6,9 @@
 #include "persistence/in_memory_conversation_store.h"
 #include "platform/iplatform_services.h"
 #include "platform/platform_services_factory.h"
+#include "command_registry.h"
+#include "status_bar_model.h"
+#include "transcript_exporter.h"
 
 #include <QCoreApplication>
 #include <QEvent>
@@ -21,6 +24,9 @@ Application::Application(QObject* parent)
     : QObject(parent)
     , m_store(new persistence::InMemoryConversationStore(this))
     , m_platform(platform::createPlatformServices(this))
+    , m_status(new StatusBarModel(this))
+    , m_commands(new CommandRegistry(this))
+    , m_exporter(new TranscriptExporter(this))
 {
     // MicroTeX loads its fonts/XML resources once; the path is baked in at build
     // time (MICROTEX_RES_DIR). Done here so the "math" image provider can parse
@@ -44,6 +50,22 @@ void Application::registerContext(QQmlApplicationEngine& engine)
 {
     // Shared store; QML view models bind their `store` property to this.
     engine.rootContext()->setContextProperty(QStringLiteral("ConversationStore"), m_store);
+
+    // Shared footer status model: the StatusBar footer renders it and the active
+    // conversation's turn feeds it (see TranscriptPage.qml), so both halves of the
+    // window agree on one busy/usage/context source.
+    engine.rootContext()->setContextProperty(QStringLiteral("Status"), m_status);
+
+    // Shared command-palette catalog: Main.qml's Mod+K overlay binds this model and
+    // routes commandTriggered(id) back to the existing actions.
+    engine.rootContext()->setContextProperty(QStringLiteral("Commands"), m_commands);
+
+    // Transcript exporter (the /save + session "Export" action).
+    engine.rootContext()->setContextProperty(QStringLiteral("Exporter"), m_exporter);
+
+    // Notifier seam: QML binds the active turn's awaitingInput signal to
+    // App.notifyGate(...) to raise an OS notification when the window is hidden.
+    engine.rootContext()->setContextProperty(QStringLiteral("App"), this);
 
     // The BlockEditor renderer resolves image://imgcache/<url> through the shared
     // ImageCache; instantiate it on the GUI thread and register the provider.
@@ -96,6 +118,20 @@ void Application::completeWiring(QQmlApplicationEngine& engine)
         QGuiApplication::setQuitOnLastWindowClosed(false);
         window->installEventFilter(this);
     }
+}
+
+bool Application::notifyGate(const QString& title, const QString& body)
+{
+    if (m_platform == nullptr) {
+        return false;
+    }
+    // An on-screen, active window already shows the inline gate, so only alert
+    // when the window is hidden, minimized, or not the active window.
+    if (m_window != nullptr && m_window->isVisible()
+        && m_window->visibility() != QWindow::Minimized && m_window->isActive()) {
+        return false;
+    }
+    return m_platform->notify(title, body);
 }
 
 bool Application::eventFilter(QObject* watched, QEvent* event)

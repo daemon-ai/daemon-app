@@ -22,6 +22,11 @@ public:
     // close-to-tray on the tray really being there).
     virtual bool installTray(const QString& appName) = 0;
 
+    // Raise a native, transient OS notification (e.g. when a turn hits an
+    // approval/clarify gate while the window is hidden). No-op where unsupported.
+    // Returns true only if a notification was actually shown.
+    virtual bool notify(const QString& /*title*/, const QString& /*body*/) { return false; }
+
     // Deferred capabilities (no-op defaults until implemented).
     virtual void setAutostartEnabled(bool /*enabled*/) {}
     virtual void checkForUpdates() {}

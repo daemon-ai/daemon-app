@@ -194,6 +194,8 @@ QVariant ConversationsListModel::data(const QModelIndex& index, int role) const
     }
     case CurrentRole:
         return c.id == m_currentId;
+    case PinnedRole:
+        return c.isPinned;
     default:
         return {};
     }
@@ -211,6 +213,7 @@ QHash<int, QByteArray> ConversationsListModel::roleNames() const
         { TagNamesRole, "tagNames" },
         { TagColorsRole, "tagColors" },
         { CurrentRole, "current" },
+        { PinnedRole, "pinned" },
     };
 }
 

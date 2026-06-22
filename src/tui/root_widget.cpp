@@ -10,7 +10,9 @@
 #include "todo_list_model.h"
 
 #include "composer_session_controller.h"
+#include "command_registry.h"
 #include "status_bar_model.h"
+#include "transcript_exporter.h"
 #include "tab_model.h"
 #include "turn_controller.h"
 
@@ -29,6 +31,8 @@
 #include <Tui/ZRoot.h>
 #include <Tui/ZShortcut.h>
 #include <Tui/ZTerminal.h>
+
+#include <cstdio>
 #include <Tui/ZTextOption.h>
 #include <Tui/ZVBoxLayout.h>
 #include <Tui/ZWidget.h>
@@ -39,6 +43,7 @@
 #include <Tui/ZListView_p.h>
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QDateTime>
 #include <QItemSelectionModel>
 #include <QRect>
@@ -637,6 +642,79 @@ QuitDialog::QuitDialog(Tui::ZWidget* parent) : Tui::ZDialog(parent)
     quitButton->setFocus();
 }
 
+TextPromptDialog::TextPromptDialog(const QString& title, const QString& initial, bool masked,
+                                   Tui::ZWidget* parent)
+    : Tui::ZDialog(parent)
+{
+    setOptions(Tui::ZWindow::DeleteOnClose);
+    setWindowTitle(title);
+    setContentsMargins({ 2, 1, 2, 1 });
+
+    auto* layout = new Tui::ZVBoxLayout();
+    setLayout(layout);
+
+    m_input = new Tui::ZInputBox(initial, this);
+    if (masked) {
+        m_input->setEchoMode(Tui::ZInputBox::Password);
+    }
+    layout->addWidget(m_input);
+    layout->addSpacing(1);
+
+    auto* buttons = new Tui::ZHBoxLayout();
+    layout->add(buttons);
+    buttons->addStretch();
+
+    auto* ok = new Tui::ZButton(QStringLiteral("OK"), this);
+    ok->setDefault(true);
+    buttons->addWidget(ok);
+    auto* cancel = new Tui::ZButton(QStringLiteral("Cancel"), this);
+    buttons->addWidget(cancel);
+
+    connect(ok, &Tui::ZButton::clicked, this, [this] {
+        emit submitted(m_input->text());
+        close();
+    });
+    connect(cancel, &Tui::ZButton::clicked, this, &Tui::ZDialog::reject);
+    connect(this, &Tui::ZDialog::rejected, this, &TextPromptDialog::canceled);
+
+    m_input->setFocus();
+    setGeometry(QRect(0, 0, qMax(40, static_cast<int>(initial.size()) + 16), 7));
+}
+
+ConfirmDialog::ConfirmDialog(const QString& title, const QString& message, Tui::ZWidget* parent)
+    : Tui::ZDialog(parent)
+{
+    setOptions(Tui::ZWindow::DeleteOnClose);
+    setWindowTitle(title);
+    setContentsMargins({ 2, 1, 2, 1 });
+
+    auto* layout = new Tui::ZVBoxLayout();
+    setLayout(layout);
+
+    auto* label = new Tui::ZLabel(message, this);
+    layout->addWidget(label);
+    layout->addSpacing(1);
+
+    auto* buttons = new Tui::ZHBoxLayout();
+    layout->add(buttons);
+    buttons->addStretch();
+
+    auto* yes = new Tui::ZButton(QStringLiteral("Yes"), this);
+    buttons->addWidget(yes);
+    auto* no = new Tui::ZButton(QStringLiteral("Cancel"), this);
+    no->setDefault(true); // safe default for a destructive action
+    buttons->addWidget(no);
+
+    connect(yes, &Tui::ZButton::clicked, this, [this] {
+        emit confirmed();
+        close();
+    });
+    connect(no, &Tui::ZButton::clicked, this, &Tui::ZDialog::reject);
+
+    no->setFocus();
+    setGeometry(QRect(0, 0, qMax(40, static_cast<int>(message.size()) + 8), 7));
+}
+
 RootWidget::RootWidget()
 {
     // Build the stock-widget palette (incl. the quit dialog frame/body) from the
@@ -665,6 +743,12 @@ RootWidget::RootWidget()
     m_status = new StatusBarModel(this);
     // StatusBarModel seeds sessionStartedAt at construction (= launch), mirroring
     // StatusBar.qml's Component.onCompleted.
+
+    // The shared command-palette catalog (same class the GUI binds as `Commands`).
+    m_commands = new CommandRegistry(this);
+
+    // Transcript exporter for the list "export" action + /save.
+    m_exporter = new TranscriptExporter(this);
 
     // The shared pane-tab model (the same C++ class the QML TabBar binds). It is
     // the single source of truth for the open tabs and the active one; the TUI
@@ -874,6 +958,12 @@ void RootWidget::buildUi()
                                              Qt::ApplicationShortcut);
     connect(themeShortcut, &Tui::ZShortcut::activated, this, &RootWidget::cycleTheme);
 
+    // Ctrl+P opens the command palette (the TUI analog of the GUI's Mod+K),
+    // filterable over the shared CommandRegistry.
+    auto* paletteShortcut = new Tui::ZShortcut(
+        Tui::ZKeySequence::forShortcut(QStringLiteral("p")), this, Qt::ApplicationShortcut);
+    connect(paletteShortcut, &Tui::ZShortcut::activated, this, &RootWidget::openCommandPalette);
+
     m_window = new Tui::ZWindow(QStringLiteral("Daemon"), this);
     m_window->setOptions({});
     m_window->setFocusMode(Tui::FocusContainerMode::Cycle); // Tab cycles the panes
@@ -953,6 +1043,11 @@ void RootWidget::buildUi()
     // Queued-prompt strip (auto-sized; 0 height when the queue is empty).
     m_queue = new QueueStripView(right);
     rightCol->addWidget(m_queue);
+
+    // Compact status-stack subagent strip (above the composer); blank at rest.
+    m_subagents = new Tui::ZLabel(right);
+    m_subagents->setMaximumSize(Tui::tuiMaxSize, 1);
+    rightCol->addWidget(m_subagents);
 
     // Compact status-stack todo strip (above the composer); blank at rest.
     m_todos = new Tui::ZLabel(right);
@@ -1072,6 +1167,51 @@ void RootWidget::wireViews()
     };
     connect(m_listView, &ConversationListView::rowActivated, this, openRow);
 
+    // Session actions on the focused list row (Ctrl+R rename, Ctrl+E export,
+    // Ctrl+K pin, Delete delete). All run against the shared store.
+    connect(m_listView, &ConversationListView::pinToggleRequested, this, [this](int row) {
+        const int id = m_list->idAt(row);
+        if (id >= 0) {
+            m_store->setPinned(id, !m_store->isPinned(id));
+        }
+    });
+    connect(m_listView, &ConversationListView::deleteRequested, this, [this](int row) {
+        const int id = m_list->idAt(row);
+        if (id < 0) {
+            return;
+        }
+        auto* confirm = new ConfirmDialog(
+            QStringLiteral("Delete conversation"),
+            QStringLiteral("Permanently delete this conversation?"), this);
+        connect(confirm, &ConfirmDialog::confirmed, this,
+                [this, id] { m_store->deleteConversation(id); });
+    });
+    connect(m_listView, &ConversationListView::exportRequested, this, [this](int row) {
+        const int id = m_list->idAt(row);
+        if (id < 0) {
+            return;
+        }
+        QString name = m_store->title(id);
+        if (name.isEmpty()) {
+            name = QStringLiteral("conversation");
+        }
+        const QString path = QDir(QDir::homePath()).filePath(name + QStringLiteral(".json"));
+        m_exporter->exportToPath(m_store, id, path);
+    });
+    connect(m_listView, &ConversationListView::renameRequested, this, [this](int row) {
+        const int id = m_list->idAt(row);
+        if (id < 0) {
+            return;
+        }
+        auto* dialog = new TextPromptDialog(QStringLiteral("Rename conversation"),
+                                            m_store->title(id), /*masked=*/false, this);
+        connect(dialog, &TextPromptDialog::submitted, this, [this, id](const QString& text) {
+            if (!text.trimmed().isEmpty()) {
+                m_store->renameConversation(id, text.trimmed());
+            }
+        });
+    });
+
     // Inline interactive answers: the transcript's controls emit decisions routed
     // to the ACTIVE session's mock host, which patches its document and asks us to
     // persist + reload. A live turn paused at an approval gate resumes once answered.
@@ -1135,6 +1275,60 @@ void RootWidget::wireViews()
             [this](const QString& command) {
                 if (command == QStringLiteral("new")) {
                     newTranscriptTab();
+                    return;
+                }
+                // Front-end overlays / client state the orchestrator cannot reach.
+                if (command == QStringLiteral("model")) {
+                    openModelPicker();
+                    return;
+                }
+                if (command == QStringLiteral("help")) {
+                    openCommandPalette();
+                    return;
+                }
+                if (command == QStringLiteral("theme")) {
+                    cycleTheme();
+                    return;
+                }
+                if (command == QStringLiteral("reasoning")) {
+                    m_composerSession->cycleReasoningEffort();
+                    return;
+                }
+                if (command == QStringLiteral("fast")) {
+                    m_composerSession->toggleFastMode();
+                    return;
+                }
+                if (command == QStringLiteral("verbose")) {
+                    m_composerSession->toggleVerbose();
+                    return;
+                }
+                if (command == QStringLiteral("usage")) {
+                    return; // usage is live in the footer status bar
+                }
+                if (command == QStringLiteral("compress")) {
+                    // Simulated compaction: free most of the live context window.
+                    if (m_status != nullptr) {
+                        m_status->setContextUsed(
+                            qMax(1500, static_cast<int>(m_status->contextUsed() * 0.2)));
+                    }
+                    return;
+                }
+                if (command == QStringLiteral("clear")) {
+                    if (m_active == nullptr) {
+                        return;
+                    }
+                    auto* confirm = new ConfirmDialog(
+                        QStringLiteral("Clear conversation"),
+                        QStringLiteral("Remove all messages from this conversation?"), this);
+                    connect(confirm, &ConfirmDialog::confirmed, this, [this] {
+                        if (m_active != nullptr && m_active->controller->hasConversation()) {
+                            m_active->doc.loadMarkdown(QString());
+                            m_active->controller->updateContent(QString());
+                            if (m_transcript != nullptr) {
+                                m_transcript->reload();
+                            }
+                        }
+                    });
                     return;
                 }
                 // Rewind commands act on the active tab's last user message. The
@@ -1304,6 +1498,7 @@ void RootWidget::rebindSession(int tabId, int conversationId)
         m_composerSession->setConversationId(conversationId);
         refreshTranscript();
         updateTodos();
+        updateSubagents();
     }
 }
 
@@ -1374,6 +1569,43 @@ void RootWidget::wireSession(TabSession* s)
             m_composerSession->setBusy(s->turn->active());
         }
     });
+    // A gate (approval/clarify/host) blocked the turn on the user: ring the bell
+    // and flag the terminal title so an unfocused terminal alerts (the TUI analog
+    // of the GUI's OS notification). Only the active session drives the chrome.
+    connect(s->turn, &TurnController::awaitingInput, this, [this, s](const QString& kind) {
+        if (s != m_active) {
+            return;
+        }
+        std::fputs("\a", stdout); // BEL: most terminals raise an urgency hint
+        std::fflush(stdout);
+        if (terminal() != nullptr) {
+            const QString what = kind == QStringLiteral("approval")
+                ? QStringLiteral("approval")
+                : QStringLiteral("credential");
+            terminal()->setTitle(QStringLiteral("\u25cf daemon \u2014 needs ") + what);
+        }
+    });
+    // Clear the title alert once the turn settles.
+    connect(s->turn, &TurnController::turnFinished, this, [this, s] {
+        if (s == m_active && terminal() != nullptr) {
+            terminal()->setTitle(QStringLiteral("daemon"));
+        }
+    });
+    // The turn paused for a masked host input (sudo password / secret). Raise a
+    // masked prompt; the answer resumes the turn (the daemon's host channel
+    // replaces this mock responder later), cancel aborts it.
+    connect(s->turn, &TurnController::hostRequested, this,
+            [this, s](const QString& kind, const QString& prompt) {
+                const QString title = prompt.isEmpty()
+                    ? (kind == QStringLiteral("secret") ? QStringLiteral("Secret required")
+                                                        : QStringLiteral("Password required"))
+                    : prompt;
+                auto* dialog = new TextPromptDialog(title, QString(), /*masked=*/true, this);
+                connect(dialog, &TextPromptDialog::submitted, this,
+                        [s](const QString&) { s->turn->resume(); });
+                connect(dialog, &TextPromptDialog::canceled, this,
+                        [s] { s->turn->cancel(); });
+            });
     connect(s->controller, &ConversationController::conversationChanged, this, [this, s] {
         if (s == m_active) {
             refreshTranscript();
@@ -1402,6 +1634,23 @@ void RootWidget::wireSession(TabSession* s)
             updateTodos();
         }
     });
+    // Live subagent rows mirror the todos plumbing: the model upserts the turn's
+    // subagent.* events; repaint the strip only for the active session.
+    connect(s->orchestrator->subagents(), &SubagentModel::countChanged, this, [this, s] {
+        if (s == m_active) {
+            updateSubagents();
+        }
+    });
+    connect(s->orchestrator->subagents(), &QAbstractItemModel::dataChanged, this, [this, s] {
+        if (s == m_active) {
+            updateSubagents();
+        }
+    });
+    connect(s->orchestrator->subagents(), &QAbstractItemModel::modelReset, this, [this, s] {
+        if (s == m_active) {
+            updateSubagents();
+        }
+    });
 }
 
 void RootWidget::activateTab(int tabId)
@@ -1428,6 +1677,7 @@ void RootWidget::activateTab(int tabId)
         m_status->setBusy(s->turn->active());
         refreshTranscript();
         updateTodos();
+        updateSubagents();
     } else {
         // A non-transcript page tab (Settings): no backend session; show the static
         // page document and clear the per-tab strips.
@@ -1439,6 +1689,7 @@ void RootWidget::activateTab(int tabId)
         }
         m_status->setBusy(false);
         updateTodos();
+        updateSubagents();
     }
 }
 
@@ -1510,6 +1761,92 @@ void RootWidget::promptQuit()
     });
 }
 
+void RootWidget::openModelPicker()
+{
+    if (m_composerSession == nullptr) {
+        return;
+    }
+    if (m_modelPicker == nullptr) {
+        m_modelPicker = new PaletteDialog(QStringLiteral("Model"), this);
+        connect(m_modelPicker, &PaletteDialog::activated, this, [this](const QString& id) {
+            // Entry ids are the catalog index (stringified).
+            bool ok = false;
+            const int index = id.toInt(&ok);
+            if (ok) {
+                m_composerSession->selectModel(index);
+            }
+            if (m_composer != nullptr) {
+                m_composer->setFocus();
+            }
+        });
+    }
+    const QVariantList catalog = m_composerSession->modelCatalog();
+    QVector<PaletteDialog::Item> items;
+    items.reserve(catalog.size());
+    for (int i = 0; i < catalog.size(); ++i) {
+        const QVariantMap m = catalog.at(i).toMap();
+        const bool current = i == m_composerSession->currentModelIndex();
+        items.push_back({ QString::number(i),
+                          (current ? QStringLiteral("\u2713 ") : QStringLiteral("  "))
+                              + m.value(QStringLiteral("label")).toString(),
+                          m.value(QStringLiteral("provider")).toString() });
+    }
+    m_modelPicker->setItems(items);
+    m_modelPicker->openCentered();
+}
+
+void RootWidget::openCommandPalette()
+{
+    if (m_commands == nullptr) {
+        return;
+    }
+    if (m_commandPalette == nullptr) {
+        m_commandPalette = new PaletteDialog(QStringLiteral("Commands"), this);
+        connect(m_commandPalette, &PaletteDialog::activated, this, [this](const QString& id) {
+            // Route palette ids to existing actions; conversation-scoped verbs go to
+            // the active orchestrator (which has no UI of its own here, so the slash
+            // handlers above cover the rest).
+            if (id == QStringLiteral("new")) {
+                newTranscriptTab();
+            } else if (id == QStringLiteral("theme")) {
+                cycleTheme();
+            } else if (id == QStringLiteral("model")) {
+                openModelPicker();
+            } else if (id == QStringLiteral("search")) {
+                if (m_search != nullptr) {
+                    m_listView->setFocus();
+                }
+            } else if (id == QStringLiteral("reasoning")) {
+                m_composerSession->cycleReasoningEffort();
+            } else if (id == QStringLiteral("fast")) {
+                m_composerSession->toggleFastMode();
+            } else if (id == QStringLiteral("verbose")) {
+                m_composerSession->toggleVerbose();
+            } else if (m_active != nullptr) {
+                // retry/edit/undo/clear/usage/compress/save/title/help/distraction.
+                m_composerSession->invokeCommand(id);
+            }
+            if (m_composer != nullptr) {
+                m_composer->setFocus();
+            }
+        });
+    }
+    // Reset the filter to show the full catalog, then build the items.
+    m_commands->search(QString());
+    const QVector<CommandRegistry::Command> cmds = m_commands->visibleCommands();
+    QVector<PaletteDialog::Item> items;
+    items.reserve(cmds.size());
+    for (const CommandRegistry::Command& c : cmds) {
+        QString hint = c.group;
+        if (!c.shortcut.isEmpty()) {
+            hint += QStringLiteral("  ") + c.shortcut;
+        }
+        items.push_back({ c.id, c.title, hint });
+    }
+    m_commandPalette->setItems(items);
+    m_commandPalette->openCentered();
+}
+
 void RootWidget::cycleTheme()
 {
     using theme::ThemeName;
@@ -1552,7 +1889,7 @@ void RootWidget::cycleTheme()
     Tui::ZWidget* views[] = { m_window,       m_sidebarView,    m_composerChrome,
                               m_queue,        m_attachments,    m_footer,
                               m_completionPopup, m_search,       m_composer,
-                              m_tabStrip,     m_todos };
+                              m_tabStrip,     m_todos,          m_subagents };
     for (Tui::ZWidget* w : views) {
         if (w != nullptr) {
             w->update();
@@ -1622,6 +1959,12 @@ void RootWidget::onTurnEvents(TabSession* session, const QVariantList& events)
     // typed reasoning/tool/content blocks on the session's document keyed by callId,
     // exactly as the GUI's EditorController does. Repaint only when it is on screen.
     session->ingest.ingestAll(events);
+    // The same stream carries status-only events (usage/context/rateLimit); the
+    // ingest skips them, the footer status model consumes them. Only the active
+    // tab drives the shared footer.
+    if (session == m_active && m_status != nullptr) {
+        m_status->applyTurnEvents(events);
+    }
     if (session == m_active && m_transcript != nullptr) {
         m_transcript->reload();
     }
@@ -1650,6 +1993,38 @@ void RootWidget::updateTodos()
         parts << (glyph + QStringLiteral(" ") + todos->textAt(i));
     }
     m_todos->setText(QStringLiteral("Tasks:  ") + parts.join(QStringLiteral("   ")));
+}
+
+void RootWidget::updateSubagents()
+{
+    if (m_subagents == nullptr) {
+        return;
+    }
+    if (m_active == nullptr) {
+        m_subagents->setText(QString());
+        return;
+    }
+    SubagentModel* subs = m_active->orchestrator->subagents();
+    const int n = subs->count();
+    if (n == 0) {
+        m_subagents->setText(QString());
+        return;
+    }
+    // Compact one-line strip: "Subagents:  \u25cf explore (42 files)  \u2713 run-tests ...".
+    QStringList parts;
+    for (int i = 0; i < n; ++i) {
+        const QString status = subs->statusAt(i);
+        const QString glyph = status == QStringLiteral("done") ? QStringLiteral("\u2713")
+            : status == QStringLiteral("error")                ? QStringLiteral("\u2717")
+                                                               : QStringLiteral("\u25cf");
+        QString row = glyph + QStringLiteral(" ") + subs->titleAt(i);
+        const QString detail = subs->detailAt(i);
+        if (!detail.isEmpty()) {
+            row += QStringLiteral(" (") + detail + QStringLiteral(")");
+        }
+        parts << row;
+    }
+    m_subagents->setText(QStringLiteral("Subagents:  ") + parts.join(QStringLiteral("   ")));
 }
 
 void RootWidget::updateCompletion()

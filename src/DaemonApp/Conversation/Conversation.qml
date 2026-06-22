@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls as QQC
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
@@ -25,6 +26,10 @@ Rectangle {
 
     // Compact (phone) only: pop back to the conversation list.
     signal backRequested()
+
+    // A page forwarded a window-level command (help / title / save); the shell
+    // (Main.qml) routes it.
+    signal paneCommandForwarded(string command)
 
     // A throwaway controller used solely to create new conversations in the
     // shared store; each TranscriptPage owns its own controller for display.
@@ -68,6 +73,23 @@ Rectangle {
     function createNew() {
         const id = creator.createConversation("");
         tabModel.openTranscriptPinned(id, _titleFor(id));
+    }
+    // Route a command (palette / slash) to the active tab's orchestrator, so the
+    // command palette can drive the foreground conversation. No-op without a tab.
+    function invokeActiveCommand(command) {
+        if (root.activePage && root.activePage.invokeCommand)
+            root.activePage.invokeCommand(command);
+    }
+
+    // Rename / export the active conversation (the /title + /save targets, and the
+    // command palette's session actions), acting through the shared store + exporter.
+    function renameActive() {
+        if (root.activePage)
+            renameDialog.openFor(root.activePage.conversationController.currentId);
+    }
+    function exportActive() {
+        if (root.activePage)
+            exportDialog.openFor(root.activePage.conversationController.currentId);
     }
     // Open the settings popup over the pane, bound to the active conversation.
     function openSettings() {
@@ -155,10 +177,13 @@ Rectangle {
                     // Bind reactively so a preview tab reassigned to another
                     // conversation reloads in place.
                     item.conversationId = Qt.binding(() => pageLoader.conversationId);
+                    // Only the foreground tab feeds the shared footer status model.
+                    item.isActive = Qt.binding(() => pageLoader.index === tabModel.currentIndex);
                     item.titleResolved.connect(function(t) {
                         tabModel.setTitle(tabModel.indexOfTabId(pageLoader.tabId), t);
                     });
                     item.openSettingsRequested.connect(root.openSettings);
+                    item.commandForwarded.connect(root.paneCommandForwarded);
                     // A submit/edit "commits" to the conversation -> pin the tab.
                     item.committed.connect(function() {
                         tabModel.pinTabById(pageLoader.tabId);
@@ -204,5 +229,60 @@ Rectangle {
     Component {
         id: transcriptComp
         TranscriptPage {}
+    }
+
+    // --- Session-action dialogs (rename + export) ---------------------------
+    // Rename the conversation via the store. openFor(id) seeds the field with the
+    // current title and remembers the target id.
+    QQC.Dialog {
+        id: renameDialog
+        property int targetId: -1
+        title: qsTr("Rename conversation")
+        modal: true
+        anchors.centerIn: QQC.Overlay.overlay
+        width: 380
+        standardButtons: QQC.Dialog.Ok | QQC.Dialog.Cancel
+
+        function openFor(conversationId) {
+            renameDialog.targetId = conversationId;
+            renameField.text = ConversationStore.title(conversationId);
+            open();
+            renameField.forceActiveFocus();
+            renameField.selectAll();
+        }
+
+        onAccepted: {
+            if (renameDialog.targetId >= 0 && renameField.text.trim().length > 0)
+                ConversationStore.renameConversation(renameDialog.targetId, renameField.text.trim());
+        }
+
+        contentItem: Kit.TextField {
+            id: renameField
+            underline: true
+            placeholderText: qsTr("Conversation title")
+            onAccepted: renameDialog.accept()
+        }
+    }
+
+    // Export the conversation transcript to a JSON file via the shared Exporter.
+    FileDialog {
+        id: exportDialog
+        property int targetId: -1
+        title: qsTr("Export transcript")
+        fileMode: FileDialog.SaveFile
+        nameFilters: [qsTr("JSON files (*.json)"), qsTr("All files (*)")]
+        defaultSuffix: "json"
+
+        function openFor(conversationId) {
+            exportDialog.targetId = conversationId;
+            const t = ConversationStore.title(conversationId);
+            exportDialog.currentFile = "file:" + (t && t.length > 0 ? t : "conversation") + ".json";
+            open();
+        }
+
+        onAccepted: {
+            if (exportDialog.targetId >= 0)
+                Exporter.writeFile(selectedFile, Exporter.toJson(ConversationStore, exportDialog.targetId));
+        }
     }
 }

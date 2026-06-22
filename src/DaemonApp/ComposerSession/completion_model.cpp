@@ -22,8 +22,18 @@ const QList<CompletionModel::Item>& slashCommands()
           QStringLiteral("Command"), QStringLiteral("/edit"), QStringLiteral("edit") },
         { QStringLiteral("/undo"), QObject::tr("Undo the last exchange"),
           QStringLiteral("Command"), QStringLiteral("/undo"), QStringLiteral("undo") },
-        { QStringLiteral("/help"), QObject::tr("Insert a help request"),
-          QStringLiteral("Command"), QStringLiteral("/help "), QStringLiteral("insert") },
+        { QStringLiteral("/model"), QObject::tr("Choose the active model"),
+          QStringLiteral("Command"), QStringLiteral("/model"), QStringLiteral("model") },
+        { QStringLiteral("/title"), QObject::tr("Rename this conversation"),
+          QStringLiteral("Command"), QStringLiteral("/title"), QStringLiteral("title") },
+        { QStringLiteral("/save"), QObject::tr("Export the transcript (JSON)"),
+          QStringLiteral("Command"), QStringLiteral("/save"), QStringLiteral("save") },
+        { QStringLiteral("/usage"), QObject::tr("Show token usage & cost"),
+          QStringLiteral("Command"), QStringLiteral("/usage"), QStringLiteral("usage") },
+        { QStringLiteral("/compress"), QObject::tr("Compress the context window"),
+          QStringLiteral("Command"), QStringLiteral("/compress"), QStringLiteral("compress") },
+        { QStringLiteral("/help"), QObject::tr("Open the command palette"),
+          QStringLiteral("Command"), QStringLiteral("/help"), QStringLiteral("help") },
     };
     return pool;
 }

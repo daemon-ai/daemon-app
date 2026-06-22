@@ -11,12 +11,22 @@ import DaemonApp.Theme
 Item {
     id: root
 
-    // Inputs from the controller; selection is reported via `selected`.
+    // The shared ComposerSessionController. When set, the pill shows its current
+    // model and opens the richer ModelPickerOverlay (provider groups + modes).
+    property var session: null
+
+    // Fallback inputs (used only when `session` is null, e.g. in isolation): a
+    // flat list + index; selection is reported via `selected`.
     property var models: []
     property int currentIndex: 0
-    readonly property string currentModel: models[currentIndex] !== undefined ? models[currentIndex] : ""
+    readonly property string currentModel: session
+        ? session.currentModel
+        : (models[currentIndex] !== undefined ? models[currentIndex] : "")
 
     signal selected(int index)
+
+    // Open the picker overlay programmatically (/model + command palette).
+    function openOverlay() { root.session ? overlay.open() : menu.open(); }
 
     implicitWidth: pill.implicitWidth
     implicitHeight: 28
@@ -65,8 +75,15 @@ Item {
             hoverEnabled: true
             enabled: root.enabled
             cursorShape: Qt.PointingHandCursor
-            onClicked: menu.open()
+            onClicked: root.session ? overlay.open() : menu.open()
         }
+    }
+
+    // The richer picker (provider groups + filter + modes), used when a session
+    // controller is bound. Reports selections straight to the controller.
+    ModelPickerOverlay {
+        id: overlay
+        session: root.session
     }
 
     QQC.Popup {

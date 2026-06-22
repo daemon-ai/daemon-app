@@ -9,6 +9,8 @@ qt_add_qml_module(da_conversation
         conversation_orchestrator.cpp
         todo_list_model.h
         todo_list_model.cpp
+        subagent_model.h
+        subagent_model.cpp
     QML_FILES
         Conversation.qml
         TranscriptPage.qml

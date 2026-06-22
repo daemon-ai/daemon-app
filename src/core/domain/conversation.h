@@ -21,6 +21,9 @@ struct Conversation {
     QString title;
     QString content; // markdown
     bool isArchived = false;
+    // Pinned conversations float to the top of any list scope (client-side
+    // session action; the daemon will later carry the same flag).
+    bool isPinned = false;
     QDateTime created;
     QDateTime modified;
 

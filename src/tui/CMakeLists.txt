@@ -36,8 +36,12 @@ add_library(da_tui_viewmodels STATIC
     ../DaemonApp/Conversation/conversation_orchestrator.cpp
     ../DaemonApp/Conversation/todo_list_model.h
     ../DaemonApp/Conversation/todo_list_model.cpp
+    ../DaemonApp/Conversation/subagent_model.h
+    ../DaemonApp/Conversation/subagent_model.cpp
     ../DaemonApp/Tabs/tab_model.h
     ../DaemonApp/Tabs/tab_model.cpp
+    ../DaemonApp/Command/command_registry.h
+    ../DaemonApp/Command/command_registry.cpp
 )
 add_library(daemon-app::tui_viewmodels ALIAS da_tui_viewmodels)
 
@@ -50,6 +54,7 @@ target_include_directories(da_tui_viewmodels PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/ConversationsList"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Conversation"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Tabs"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Command"
 )
 
 target_link_libraries(da_tui_viewmodels
@@ -96,6 +101,8 @@ qt_add_executable(daemon-tui
     composer_chrome.cpp
     completion_view.h
     completion_view.cpp
+    palette_dialog.h
+    palette_dialog.cpp
     interactive_turn_host.h
     interactive_turn_host.cpp
     line_editor.h
@@ -125,6 +132,7 @@ target_link_libraries(daemon-tui
         daemon-app::composer_session
         daemon-app::turn
         daemon-app::status_model
+        daemon-app::export
         daemon-app::domain
         daemon-app::persistence
         # The GUI's parse/ingest/view-model engine. It links Qt Gui/Sql + md4qt at

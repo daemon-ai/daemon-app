@@ -29,6 +29,11 @@ public:
     int createTag(const QString& name, const QString& color) override;
     void setContent(int conversationId, const QString& markdown) override;
     void setArchived(int conversationId, bool archived) override;
+    void renameConversation(int conversationId, const QString& title) override;
+    void deleteConversation(int conversationId) override;
+    void setPinned(int conversationId, bool pinned) override;
+    [[nodiscard]] bool isPinned(int conversationId) const override;
+    void moveConversation(int conversationId, int delta) override;
 
 private:
     [[nodiscard]] bool matchesScope(const domain::Conversation& c,

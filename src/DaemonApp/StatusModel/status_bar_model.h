@@ -29,6 +29,14 @@ class StatusBarModel : public QObject {
     Q_PROPERTY(double sessionStartedAt READ sessionStartedAt WRITE setSessionStartedAt NOTIFY sessionStartedAtChanged)
     Q_PROPERTY(int contextUsed READ contextUsed WRITE setContextUsed NOTIFY contextUsedChanged)
     Q_PROPERTY(int contextMax READ contextMax WRITE setContextMax NOTIFY contextMaxChanged)
+    // Cumulative token usage + spend for the session (fed by the turn's usage
+    // events). The daemon will later emit the same usage deltas.
+    Q_PROPERTY(int tokensIn READ tokensIn WRITE setTokensIn NOTIFY usageChanged)
+    Q_PROPERTY(int tokensOut READ tokensOut WRITE setTokensOut NOTIFY usageChanged)
+    Q_PROPERTY(double usdCost READ usdCost WRITE setUsdCost NOTIFY usageChanged)
+    // Provider rate-limit window (remaining/limit for the current window).
+    Q_PROPERTY(int rateRemaining READ rateRemaining WRITE setRateRemaining NOTIFY rateChanged)
+    Q_PROPERTY(int rateLimit READ rateLimit WRITE setRateLimit NOTIFY rateChanged)
     Q_PROPERTY(QString appVersion READ appVersion WRITE setAppVersion NOTIFY appVersionChanged)
 
     // Derived (read-only) gateway helpers.
@@ -49,6 +57,8 @@ class StatusBarModel : public QObject {
     Q_PROPERTY(int contextPercent READ contextPercent NOTIFY contextChanged)
     Q_PROPERTY(QString contextBar READ contextBar NOTIFY contextChanged)
     Q_PROPERTY(QString contextLabel READ contextLabel NOTIFY contextChanged)
+    Q_PROPERTY(QString costLabel READ costLabel NOTIFY usageChanged)
+    Q_PROPERTY(QString rateLabel READ rateLabel NOTIFY rateChanged)
     Q_PROPERTY(QString turnElapsed READ turnElapsed NOTIFY turnElapsedChanged)
     Q_PROPERTY(QString sessionElapsed READ sessionElapsed NOTIFY sessionElapsedChanged)
 
@@ -63,6 +73,11 @@ public:
     [[nodiscard]] double sessionStartedAt() const { return m_sessionStartedAt; }
     [[nodiscard]] int contextUsed() const { return m_contextUsed; }
     [[nodiscard]] int contextMax() const { return m_contextMax; }
+    [[nodiscard]] int tokensIn() const { return m_tokensIn; }
+    [[nodiscard]] int tokensOut() const { return m_tokensOut; }
+    [[nodiscard]] double usdCost() const { return m_usdCost; }
+    [[nodiscard]] int rateRemaining() const { return m_rateRemaining; }
+    [[nodiscard]] int rateLimit() const { return m_rateLimit; }
     [[nodiscard]] QString appVersion() const { return m_appVersion; }
 
     [[nodiscard]] bool gatewayOffline() const;
@@ -75,6 +90,8 @@ public:
     [[nodiscard]] int contextPercent() const;
     [[nodiscard]] QString contextBar() const;
     [[nodiscard]] QString contextLabel() const;
+    [[nodiscard]] QString costLabel() const;
+    [[nodiscard]] QString rateLabel() const;
     [[nodiscard]] QString turnElapsed() const;
     [[nodiscard]] QString sessionElapsed() const;
 
@@ -86,6 +103,11 @@ public:
     void setSessionStartedAt(double ms);
     void setContextUsed(int n);
     void setContextMax(int n);
+    void setTokensIn(int n);
+    void setTokensOut(int n);
+    void setUsdCost(double cost);
+    void setRateRemaining(int n);
+    void setRateLimit(int n);
     void setAppVersion(const QString& version);
     void setGatewayConnectionText(const QString& text);
     void setGatewayLog(const QStringList& log);
@@ -93,6 +115,11 @@ public:
 
     Q_INVOKABLE QString formatElapsed(double startMs) const;
     Q_INVOKABLE QString abbrev(int n) const;
+    // Apply a turn's status-only events (usage/context/rateLimit) - usage deltas
+    // accumulate, context + rate are absolute. The same shapes the daemon emits.
+    Q_INVOKABLE void applyTurnEvents(const QVariantList& events);
+    // Zero the per-session usage + cost counters (e.g. a /compress or new session).
+    Q_INVOKABLE void resetUsage();
 
 signals:
     void gatewayStateChanged();
@@ -104,6 +131,8 @@ signals:
     void sessionStartedAtChanged();
     void contextUsedChanged();
     void contextMaxChanged();
+    void usageChanged();
+    void rateChanged();
     void appVersionChanged();
 
     void agentsDetailChanged();
@@ -120,6 +149,11 @@ private:
     double m_sessionStartedAt = 0;
     int m_contextUsed = 12500;
     int m_contextMax = 128000;
+    int m_tokensIn = 0;
+    int m_tokensOut = 0;
+    double m_usdCost = 0.0;
+    int m_rateRemaining = 0;
+    int m_rateLimit = 0;
     QString m_appVersion = QStringLiteral("v0.1.0");
 
     // Gateway dropdown content (placeholder, seeded in the constructor to match the

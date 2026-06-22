@@ -14,6 +14,52 @@ QVariantMap hit(const QString& title, const QString& url, const QString& snippet
     };
 }
 
+// Status-only event maps, shaped like the daemon's usage/context/rate-limit
+// stream. They carry no transcript content (the ingest path skips them) and are
+// consumed by StatusBarModel; emitting them now pins the event contract.
+QVariantMap usageEvent(int tokensIn, int tokensOut, double costUsd)
+{
+    return QVariantMap{
+        { QStringLiteral("type"), QStringLiteral("usage") },
+        { QStringLiteral("tokensIn"), tokensIn },
+        { QStringLiteral("tokensOut"), tokensOut },
+        { QStringLiteral("costUsd"), costUsd },
+    };
+}
+
+QVariantMap contextEvent(int used, int max)
+{
+    return QVariantMap{
+        { QStringLiteral("type"), QStringLiteral("context") },
+        { QStringLiteral("used"), used },
+        { QStringLiteral("max"), max },
+    };
+}
+
+QVariantMap rateLimitEvent(int remaining, int limit)
+{
+    return QVariantMap{
+        { QStringLiteral("type"), QStringLiteral("rateLimit") },
+        { QStringLiteral("remaining"), remaining },
+        { QStringLiteral("limit"), limit },
+    };
+}
+
+// A delegation/subagent lifecycle event (the daemon's subagent.* family). One row
+// per `id`; `status` is "running" | "done" | "error". `detail` is a short live
+// status line. Consumed by SubagentModel; the transcript ingest skips it.
+QVariantMap subagentEvent(const QString& id, const QString& title, const QString& status,
+                          const QString& detail)
+{
+    return QVariantMap{
+        { QStringLiteral("type"), QStringLiteral("subagent") },
+        { QStringLiteral("id"), id },
+        { QStringLiteral("title"), title },
+        { QStringLiteral("status"), status },
+        { QStringLiteral("detail"), detail },
+    };
+}
+
 } // namespace
 
 TurnController::TurnController(QObject* parent)
@@ -154,6 +200,14 @@ void TurnController::runStep()
     if (step.gate) {
         m_paused = true;
         m_stallTimer.stop();
+        // Surface the gate out-of-band so a hidden GUI/inactive TUI can alert.
+        emit awaitingInput(step.hostRequestKind.isEmpty() ? QStringLiteral("approval")
+                                                          : step.hostRequestKind);
+        // A host-input gate additionally raises a masked-prompt request that the
+        // front end answers before resume().
+        if (!step.hostRequestKind.isEmpty()) {
+            emit hostRequested(step.hostRequestKind, step.hostRequestPrompt);
+        }
         return;
     }
 
@@ -190,8 +244,15 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt)
 {
     // Build a scripted turn. Content is canned but echoes the prompt so it reads
     // as a response; a prompt containing "fail" drives the error branch.
-    const bool wantsError = prompt.toLower().indexOf(QStringLiteral("fail")) >= 0;
-    const bool wantsApproval = prompt.toLower().indexOf(QStringLiteral("approve")) >= 0;
+    const QString lower = prompt.toLower();
+    const bool wantsError = lower.indexOf(QStringLiteral("fail")) >= 0;
+    const bool wantsApproval = lower.indexOf(QStringLiteral("approve")) >= 0;
+    // A prompt mentioning sudo / a secret pauses for a masked host input, so the
+    // sudo-password and secret/API-key prompt shells are demoable end-to-end.
+    const bool wantsSudo = lower.indexOf(QStringLiteral("sudo")) >= 0;
+    const bool wantsSecret = lower.indexOf(QStringLiteral("secret")) >= 0
+        || lower.indexOf(QStringLiteral("api key")) >= 0
+        || lower.indexOf(QStringLiteral("apikey")) >= 0;
     const QString shortPrompt
         = prompt.length() > 60 ? (prompt.left(57) + QStringLiteral("\u2026")) : prompt;
     QList<Step> steps;
@@ -216,6 +277,36 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt)
                       QVariantMap{ { QStringLiteral("type"), QStringLiteral("reasoningDone") },
                                    { QStringLiteral("durationMs"), 1200 } },
                       false, QString() });
+
+    // Prime the status contract: an initial context fill + the prompt's input
+    // token cost. Later steps bump these so the status bar animates over a turn.
+    steps.push_back({ 120, contextEvent(14200, 128000), false, QString() });
+    steps.push_back({ 80, usageEvent(1800, 0, 0.011), false, QString() });
+
+    if (wantsSudo || wantsSecret) {
+        // Pause for a masked host input (the daemon's HostRequestKind seam). The
+        // step carries no transcript event - it only raises the prompt and gates.
+        const QString kind = wantsSudo ? QStringLiteral("password") : QStringLiteral("secret");
+        const QString ask = wantsSudo
+            ? QStringLiteral("[sudo] password for deploy")
+            : QStringLiteral("Paste the API key for the deploy gateway");
+        Step gate;
+        gate.delayMs = 250;
+        gate.gate = true;
+        gate.hostRequestKind = kind;
+        gate.hostRequestPrompt = ask;
+        steps.push_back(gate);
+        steps.push_back(
+            { 250,
+              QVariantMap{ { QStringLiteral("type"), QStringLiteral("text") },
+                           { QStringLiteral("text"),
+                             QStringLiteral("\n\nCredential accepted - continuing.\n") } },
+              false, QString() });
+        steps.push_back({ 200,
+                          QVariantMap{ { QStringLiteral("type"), QStringLiteral("flush") } },
+                          false, QString() });
+        return steps;
+    }
 
     if (wantsApproval) {
         // A dangerous tool pauses the live turn for inline approval: emit an
@@ -293,6 +384,21 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt)
                              "\u001b[32mPASS\u001b[0m  88 tests\n\u001b[1mBuild OK\u001b[0m\n") } },
           false, QString() });
 
+    // Tool output grew the context and spent output tokens.
+    steps.push_back({ 80, usageEvent(0, 640, 0.018), false, QString() });
+    steps.push_back({ 80, contextEvent(31800, 128000), false, QString() });
+
+    // Delegate to two subagents (the daemon's delegation concept). They appear in
+    // the status stack as live rows, tick progress, then settle done.
+    steps.push_back({ 120,
+                      subagentEvent(QStringLiteral("sub-explore"), QStringLiteral("explore"),
+                                    QStringLiteral("running"), QStringLiteral("scanning sources")),
+                      false, QString() });
+    steps.push_back({ 120,
+                      subagentEvent(QStringLiteral("sub-tests"), QStringLiteral("run-tests"),
+                                    QStringLiteral("running"), QStringLiteral("starting suite")),
+                      false, QString() });
+
     steps.push_back(
         { 300,
           QVariantMap{ { QStringLiteral("type"), QStringLiteral("toolStarted") },
@@ -322,6 +428,21 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt)
                         QStringLiteral(
                             "A header-only CommonMark parser used for the transcript.")) } } },
           false, QString() });
+
+    // Search results pushed context further and consumed the provider window.
+    steps.push_back({ 80, usageEvent(0, 1200, 0.034), false, QString() });
+    steps.push_back({ 80, contextEvent(52600, 128000), false, QString() });
+    steps.push_back({ 80, rateLimitEvent(74, 80), false, QString() });
+
+    // The delegated subagents report progress, then settle.
+    steps.push_back({ 80,
+                      subagentEvent(QStringLiteral("sub-explore"), QStringLiteral("explore"),
+                                    QStringLiteral("done"), QStringLiteral("42 files")),
+                      false, QString() });
+    steps.push_back({ 80,
+                      subagentEvent(QStringLiteral("sub-tests"), QStringLiteral("run-tests"),
+                                    QStringLiteral("done"), QStringLiteral("88 passed")),
+                      false, QString() });
 
     steps.push_back(
         { 350,

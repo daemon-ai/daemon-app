@@ -54,6 +54,7 @@ void StatusBarView::setModel(StatusBarModel* model)
         connect(m_model, &StatusBarModel::gatewayStateChanged, this, repaint);
         connect(m_model, &StatusBarModel::agentsDetailChanged, this, repaint);
         connect(m_model, &StatusBarModel::contextChanged, this, repaint);
+        connect(m_model, &StatusBarModel::usageChanged, this, repaint);
         connect(m_model, &StatusBarModel::turnElapsedChanged, this, repaint);
         connect(m_model, &StatusBarModel::sessionElapsedChanged, this, repaint);
         connect(m_model, &StatusBarModel::appVersionChanged, this, repaint);
@@ -130,6 +131,17 @@ QVector<Span> StatusBarView::buildRight() const
             fg = tpal::gaugeTrack();
         }
         spans << mkSpan(QString(ch), fg);
+    }
+
+    // Session usage + spend (fed by the turn's usage events).
+    if (m_model->usdCost() > 0.0 || m_model->tokensOut() > 0) {
+        spans << mkSpan(separator(), tpal::muted());
+        QString usage = m_model->costLabel();
+        const int tok = m_model->tokensIn() + m_model->tokensOut();
+        if (tok > 0) {
+            usage += QStringLiteral(" ") + m_model->abbrev(tok) + QStringLiteral(" tok");
+        }
+        spans << mkSpan(usage, tpal::muted());
     }
 
     spans << mkSpan(separator(), tpal::muted());

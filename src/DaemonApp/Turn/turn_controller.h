@@ -55,6 +55,18 @@ signals:
     // EditorController::ingestEvents; the TUI inspects them for text deltas.
     void eventsEmitted(const QVariantList& events);
 
+    // The turn paused for a host-mediated input (a masked sudo password or a
+    // secret/API-key). The front end raises a masked prompt and calls resume()
+    // once answered (or cancel()s the turn). `kind` is "password" | "secret".
+    // This pre-shapes the daemon's HostRequestKind seam.
+    void hostRequested(const QString& kind, const QString& prompt);
+
+    // The turn reached a gate and is now blocked on the user (an approval/clarify
+    // tool, or a host-input prompt). Front ends surface this out-of-band: the GUI
+    // raises a native OS notification when its window is hidden, the TUI rings the
+    // bell / flags the title. `kind` is "approval" | "password" | "secret".
+    void awaitingInput(const QString& kind);
+
 private:
     struct Step {
         int delayMs = 0;
@@ -64,6 +76,11 @@ private:
         // Pause the turn after emitting this step (an awaiting-approval tool);
         // resume() continues scheduling once the inline answer is given.
         bool gate = false;
+        // When set ("password"/"secret"), emitting this step also raises a host
+        // input request (and implies a gate): the front end shows a masked prompt
+        // and resume()s when answered.
+        QString hostRequestKind;
+        QString hostRequestPrompt;
     };
 
     void setActive(bool active);
