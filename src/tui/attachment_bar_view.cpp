@@ -104,6 +104,38 @@ void AttachmentBarView::rebuild()
     update();
 }
 
+void AttachmentBarView::clickAt(QPoint local)
+{
+    const int n = count();
+    if (n <= 0 || local.y() != 0) {
+        return;
+    }
+    ComposerAttachmentModel* a = m_controller != nullptr ? m_controller->attachments() : nullptr;
+    if (a == nullptr) {
+        return;
+    }
+    // Walk the chips left-to-right, reproducing rebuild()'s span widths (the
+    // selected chip carries an extra "x " marker), and pick the one the x falls in.
+    int x = 0;
+    for (int i = 0; i < n; ++i) {
+        const QString name = a->data(a->index(i, 0), ComposerAttachmentModel::NameRole).toString();
+        const int wGlyph = 3;               // " <glyph> "
+        const int wName = static_cast<int>(name.size()) + 1; // name + trailing space
+        const int wClose = (i == m_sel) ? 2 : 0; // "x " on the selected chip
+        const int wTrail = 2;               // gap between chips
+        const int start = x;
+        const int end = start + wGlyph + wName + wClose;
+        if (local.x() >= start && local.x() < end) {
+            if (i != m_sel) {
+                m_sel = i;
+                rebuild();
+            }
+            return;
+        }
+        x = end + wTrail;
+    }
+}
+
 void AttachmentBarView::paintEvent(Tui::ZPaintEvent* event)
 {
     Tui::ZPainter* p = event->painter();

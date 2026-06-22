@@ -33,6 +33,17 @@ public:
     // every reload unless the user has scrolled up).
     void reload();
 
+    // Mouse wheel: scroll by `delta` lines (negative = up), re-pinning to the
+    // bottom only when the scroll lands there (mirrors the keyboard scroll).
+    void scrollByLines(int delta);
+
+    // Mouse click at widget-local point `local`. While an interactive block is
+    // present (approval bar / clarify form), a click on a control row focuses it
+    // and activates it (buttons decide, choices toggle); a freeform field is just
+    // focused for typing. A click elsewhere only focuses the pane (handled by the
+    // shell). No-op when there are no controls.
+    void clickAt(QPoint local);
+
 signals:
     // The focused approval bar was decided (Enter on [Approve]/[Deny]/[Allow
     // permanently]). `decision` is "approved" / "denied"; `permanent` is the

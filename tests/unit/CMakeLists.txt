@@ -118,6 +118,25 @@ target_link_libraries(tst_composer_session
 add_test(NAME tst_composer_session COMMAND tst_composer_session)
 set_tests_properties(tst_composer_session PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_line_editor: the TUI composer's hand-rolled readline/emacs editing layer -
+# the pure (text, cursor) command transforms + kill-ring, and the tiny ~/.inputrc
+# remap parser (keyseq -> function-name). Compiles the source directly; it only
+# depends on Qt6::Core (no Tui Widgets), so it runs in the normal unit suite.
+qt_add_executable(tst_line_editor
+    tst_line_editor.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/line_editor.cpp
+)
+target_include_directories(tst_line_editor
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/tui"
+)
+target_link_libraries(tst_line_editor
+    PRIVATE
+        Qt6::Test
+        Qt6::Core
+)
+add_test(NAME tst_line_editor COMMAND tst_line_editor)
+set_tests_properties(tst_line_editor PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_conversation_orchestrator: the shared submit pipeline - submit starts the
 # turn + populates todos (and clears them after the turn settles), cancel resets,
 # and slash "/new" is handled while other commands surface via commandRequested.

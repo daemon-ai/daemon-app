@@ -49,6 +49,19 @@ void CompletionView::setData(CompletionModel* model, int activeIndex, const QStr
     update();
 }
 
+int CompletionView::modelRowAt(int localY) const
+{
+    if (localY < 0 || localY >= geometry().height()) {
+        return -1;
+    }
+    const int idx = topForActive(geometry().height()) + localY;
+    if (idx < 0 || idx >= static_cast<int>(m_rows.size())) {
+        return -1;
+    }
+    const Row& r = m_rows.at(idx);
+    return r.header ? -1 : r.modelRow;
+}
+
 int CompletionView::topForActive(int h) const
 {
     // Find the rendered line of the active item and scroll so it stays visible.

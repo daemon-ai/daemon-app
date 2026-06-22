@@ -28,6 +28,13 @@ public:
     // just a repaint). Selection + scroll position are preserved.
     void relayout();
 
+    // Mouse helpers. rowAt() maps a widget-local y to the model row whose card
+    // covers it (-1 for the gap between cards or out of range). activateAtLocalY()
+    // opens that row (same as Enter). scrollByLines() nudges the scroll offset.
+    [[nodiscard]] int rowAt(int localY) const;
+    void activateAtLocalY(int localY);
+    void scrollByLines(int delta);
+
 signals:
     // Up/Down/Enter on a row: open that conversation (row index in the model).
     void rowActivated(int row);

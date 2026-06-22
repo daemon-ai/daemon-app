@@ -1,3 +1,4 @@
+#include "mouse_terminal.h"
 #include "root_widget.h"
 #include "tui_palette.h"
 
@@ -191,7 +192,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    Tui::ZTerminal terminal;
+    MouseTerminal terminal;
     RootWidget root;
     terminal.setMainWidget(&root);
 
@@ -201,6 +202,25 @@ int main(int argc, char* argv[])
     terminal.setCursorStyle(Tui::CursorStyle::Bar);
     const Tui::ZColor caret = tpal::accent();
     terminal.setCursorColor(caret.red(), caret.green(), caret.blue());
+
+    // Mouse: feed decoded events to the shell's hit-tester. Optional stderr trace
+    // (DAEMON_TUI_MOUSE_DEBUG) helps diagnose terminals whose reports differ; it
+    // corrupts the alt-screen while on, so it is opt-in only.
+    const bool mouseDebug = qEnvironmentVariableIsSet("DAEMON_TUI_MOUSE_DEBUG");
+    QObject::connect(&terminal, &MouseTerminal::mouseInput, &root,
+                     [&root, mouseDebug](QPoint pos, MouseTerminal::MouseAction action, int button,
+                                         Qt::KeyboardModifiers mods) {
+                         if (mouseDebug) {
+                             fprintf(stderr, "mouse: (%d,%d) action=%d button=%d mods=%d\n", pos.x(),
+                                     pos.y(), static_cast<int>(action), button,
+                                     static_cast<int>(mods));
+                         }
+                         root.handleMouse(pos, action, button, mods);
+                     });
+
+    // Enable mouse reporting once the event loop is running (so it lands after
+    // ZTerminal has initialized the terminal/alt-screen, not interleaved with it).
+    QTimer::singleShot(0, &terminal, [] { MouseTerminal::enableMouseReporting(); });
 
     return app.exec();
 }

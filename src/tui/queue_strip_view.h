@@ -25,6 +25,10 @@ public:
 
     [[nodiscard]] QSize sizeHint() const override;
 
+    // Mouse: select the queued entry on the clicked row (one entry per row). The
+    // row actions stay on the keyboard (Enter/s send, e edit, d/Del remove).
+    void clickAt(QPoint local);
+
 signals:
     // beginEdit was invoked for `index`; the shell should focus the composer so
     // the loaded draft can be edited and saved on Enter.

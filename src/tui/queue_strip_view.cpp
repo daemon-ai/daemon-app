@@ -119,6 +119,22 @@ void QueueStripView::rebuild()
     layoutLines();
 }
 
+void QueueStripView::clickAt(QPoint local)
+{
+    const int n = count();
+    if (n <= 0) {
+        return;
+    }
+    const int row = local.y();
+    if (row < 0 || row >= qMin(n, kMaxRows)) {
+        return; // below the last visible entry
+    }
+    if (row != m_sel) {
+        m_sel = row;
+        rebuild();
+    }
+}
+
 void QueueStripView::resizeEvent(Tui::ZResizeEvent* event)
 {
     Tui::ZWidget::resizeEvent(event);

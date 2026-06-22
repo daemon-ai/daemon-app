@@ -68,6 +68,31 @@ void ConversationListView::relayout()
     rebuild();
 }
 
+int ConversationListView::rowAt(int localY) const
+{
+    const int idx = m_scrollTop + localY;
+    if (idx < 0 || idx >= static_cast<int>(m_rowOfLine.size())) {
+        return -1;
+    }
+    return m_rowOfLine.at(idx); // -1 on the gap line between cards
+}
+
+void ConversationListView::activateAtLocalY(int localY)
+{
+    const int row = rowAt(localY);
+    if (row >= 0) {
+        // Same path as Enter: the shell selects + opens the conversation.
+        emit rowActivated(row);
+    }
+}
+
+void ConversationListView::scrollByLines(int delta)
+{
+    m_scrollTop += delta;
+    clampScrollTop();
+    update();
+}
+
 int ConversationListView::visibleRows() const
 {
     return qMax(0, geometry().height());

@@ -24,6 +24,10 @@ public:
 
     [[nodiscard]] QSize sizeHint() const override;
 
+    // Mouse: select the chip under the clicked x (chips are laid out left-to-right
+    // on one row). Removal stays on the keyboard (Del/Backspace/x).
+    void clickAt(QPoint local);
+
 protected:
     void paintEvent(Tui::ZPaintEvent* event) override;
     void keyEvent(Tui::ZKeyEvent* event) override;

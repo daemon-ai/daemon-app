@@ -8,6 +8,10 @@
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(TUIWIDGETS REQUIRED IMPORTED_TARGET TuiWidgetsQt6)
+# termpaint is the C layer beneath Tui Widgets. It is only a Requires.private of
+# TuiWidgetsQt6, so its headers are not on the public include path; pull it in
+# explicitly so the mouse layer can read termpaint_event.h (TERMPAINT_EV_MOUSE).
+pkg_check_modules(TERMPAINT REQUIRED IMPORTED_TARGET termpaint)
 
 # ---------------------------------------------------------------------------
 # da_tui_viewmodels - the existing view models/controllers, compiled WITHOUT the
@@ -63,6 +67,8 @@ target_link_libraries(da_tui_viewmodels
 # ---------------------------------------------------------------------------
 qt_add_executable(daemon-tui
     main.cpp
+    mouse_terminal.h
+    mouse_terminal.cpp
     root_widget.h
     root_widget.cpp
     display_role_adapter.h
@@ -87,13 +93,25 @@ qt_add_executable(daemon-tui
     completion_view.cpp
     interactive_turn_host.h
     interactive_turn_host.cpp
+    line_editor.h
+    line_editor.cpp
 )
 
 set_target_properties(daemon-tui PROPERTIES AUTOMOC ON)
 
+# Vendored Tui Widgets private headers (ZListView_p.h + its ZWidget_p.h/ListNode_p.h
+# deps), pinned to the same revision as the flake's tuiwidgets input. Searched
+# before the installed headers so `<Tui/ZListView_p.h>` resolves here; the public
+# `<Tui/*.h>` they include still come from the installed package. Used only by
+# root_widget.cpp to read ZListView's private scroll offset.
+target_include_directories(daemon-tui PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/vendor"
+)
+
 target_link_libraries(daemon-tui
     PRIVATE
         PkgConfig::TUIWIDGETS
+        PkgConfig::TERMPAINT
         Qt6::Core
         Qt6::Core5Compat
         daemon-app::tui_viewmodels

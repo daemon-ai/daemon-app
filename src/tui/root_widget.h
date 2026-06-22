@@ -15,6 +15,8 @@
 #include "composer_chrome.h"
 #include "conversation_list_view.h"
 #include "interactive_turn_host.h"
+#include "line_editor.h"
+#include "mouse_terminal.h"
 #include "queue_strip_view.h"
 #include "status_bar_view.h"
 #include "transcript_view.h"
@@ -70,6 +72,8 @@ protected:
 
 private:
     ComposerSessionController* m_session = nullptr;
+    // Kill buffer for the readline-style edit commands (Ctrl+K/U/W -> Ctrl+Y).
+    lineedit::KillRing m_killRing;
 };
 
 // A one-line search field above the conversation list. It is NOT a focus stop:
@@ -102,12 +106,27 @@ class TreeListView : public Tui::ZListView {
 public:
     using Tui::ZListView::ZListView;
 
+    // Mouse: act on a click at widget-local point `local`. Selects the row under
+    // the cursor (sets the current index); a click on a parent row's disclosure
+    // triangle expands/collapses it instead (via the signals below).
+    void clickAt(QPoint local);
+
+    // Mouse wheel: move the selection by `delta` rows (negative = up). ZListView
+    // scrolls to keep the current index visible, so moving the selection is the
+    // public-API way to scroll a flattened tree.
+    void scrollByLines(int delta);
+
 signals:
     void collapseRequested();
     void expandRequested();
 
 protected:
     void keyEvent(Tui::ZKeyEvent* event) override;
+
+private:
+    // The first visible model row (ZListView's private scroll offset, read via
+    // the vendored same-rev ZListViewPrivate). 0 when unavailable.
+    [[nodiscard]] int scrollOffset() const;
 };
 
 // A small modal "Quit daemon-app?" confirmation. ZDialog auto-centers, handles
@@ -135,6 +154,13 @@ public:
     void dumpGeometry() const;    // debug helper for the offscreen self-check
     void focusComposer() const;   // offscreen-test helper: focus the input box
     void focusTranscript() const; // offscreen-test helper: focus the transcript
+
+    // Mouse entry point (connected to MouseTerminal::mouseInput). Hit-tests the
+    // panes by terminal coordinate and routes a primary-button press to focus +
+    // select/open, or a wheel event to scroll the pane under the cursor. No-op for
+    // release/move/middle/right (this layer is click + wheel only).
+    void handleMouse(QPoint termPos, MouseTerminal::MouseAction action, int button,
+                     Qt::KeyboardModifiers modifiers);
 
 protected:
     void terminalChanged() override;

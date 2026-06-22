@@ -16,6 +16,7 @@
 #include "persistence/in_memory_conversation_store.h"
 
 #include <Tui/ZButton.h>
+#include <Tui/ZCommon.h>
 #include <Tui/ZDialog.h>
 #include <Tui/ZEvent.h>
 #include <Tui/ZHBoxLayout.h>
@@ -28,6 +29,10 @@
 #include <Tui/ZVBoxLayout.h>
 #include <Tui/ZWidget.h>
 #include <Tui/ZWindow.h>
+
+// Vendored same-rev private header: exposes ZListViewPrivate so we can read the
+// sidebar list's private scroll offset (no public accessor exists).
+#include <Tui/ZListView_p.h>
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -83,7 +88,11 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
         return;
     }
     // Ctrl+O: add a (mock) attachment, mirroring the GUI's "+" attachment menu.
-    if (event->key() == Qt::Key_O && event->modifiers() == Qt::ControlModifier) {
+    // Tui Widgets delivers Ctrl+letter as a char event (key()==Key_unknown, letter
+    // in text()), so match the letter rather than Qt::Key_O.
+    if (event->modifiers() == Qt::ControlModifier
+        && (event->key() == Qt::Key_O
+            || event->text().compare(QStringLiteral("o"), Qt::CaseInsensitive) == 0)) {
         emit attachRequested();
         event->accept();
         return;
@@ -118,6 +127,26 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
         }
         if (event->key() == Qt::Key_Down && m_session->browsing()) {
             emit historyNext();
+            event->accept();
+            return;
+        }
+    }
+    // Readline/emacs-style editing (Ctrl+A/E/B/F, Alt+B/F, Ctrl+K/U/W/D, Ctrl+Y,
+    // Alt+Y, Ctrl+T ...), honoring ~/.inputrc remaps. Runs after the app-priority
+    // keys above so it never shadows submit/steer/attach/history/completion.
+    const lineedit::EditCommand cmd
+        = lineedit::LineEditor::lookupEvent(event->key(), event->modifiers(), event->text());
+    if (cmd != lineedit::EditCommand::None) {
+        QString t = text();
+        int caret = cursorPosition();
+        if (lineedit::LineEditor::applyCommand(cmd, t, caret, m_killRing)) {
+            if (t != text()) {
+                setText(t);
+            }
+            setCursorPosition(caret);
+            if (m_session != nullptr) {
+                m_session->refreshTrigger(text(), cursorPosition());
+            }
             event->accept();
             return;
         }
@@ -208,6 +237,79 @@ void TreeListView::keyEvent(Tui::ZKeyEvent* event)
         }
     }
     Tui::ZListView::keyEvent(event);
+}
+
+int TreeListView::scrollOffset() const
+{
+    // ZListView paints model row (scrollPosition + i) at local y == i. The offset
+    // lives in the private object with no public accessor; read it through the
+    // vendored same-rev ZListViewPrivate (validated by the tui_magic in the base).
+    const auto* priv = static_cast<const Tui::ZListViewPrivate*>(
+        Tui::ZWidgetPrivate::get(this));
+    if (priv == nullptr || priv->tui_magic != tui_magic_v0) {
+        return 0;
+    }
+    return priv->scrollPosition;
+}
+
+void TreeListView::scrollByLines(int delta)
+{
+    QAbstractItemModel* m = model();
+    if (m == nullptr) {
+        return;
+    }
+    const int rows = m->rowCount();
+    if (rows <= 0) {
+        return;
+    }
+    const int cur = currentIndex().isValid() ? currentIndex().row() : 0;
+    const int next = qBound(0, cur + delta, rows - 1);
+    if (next != cur) {
+        setCurrentIndex(m->index(next, 0));
+    }
+}
+
+void TreeListView::clickAt(QPoint local)
+{
+    QAbstractItemModel* m = model();
+    if (m == nullptr) {
+        return;
+    }
+    const int rows = m->rowCount();
+    if (rows <= 0) {
+        return;
+    }
+    // ZListView paints model row (scrollPosition + i) at local y == i; add the
+    // (otherwise-private) scroll offset so clicks map to the right row even when
+    // the tree is taller than the viewport and scrolled.
+    const int row = local.y() + scrollOffset();
+    if (row < 0 || row >= rows) {
+        return;
+    }
+    const QModelIndex idx = m->index(row, 0);
+
+    // Disclosure toggle: a click on a parent row's expand triangle expands or
+    // collapses it (via the existing signals, which act on the model's current
+    // row - so set the current index first). ZListView lays each row out as
+    // "1 margin col + left-decoration + decoration-space + display string", and
+    // the display string (DisplayRoleAdapter) begins with depth*2 indent spaces
+    // then the triangle, so that is where the triangle sits.
+    if (m->data(idx, SidebarModel::HasChildrenRole).toBool()) {
+        const int depth = m->data(idx, SidebarModel::DepthRole).toInt();
+        const bool hasDecoration = !m->data(idx, Tui::LeftDecorationRole).toString().isEmpty();
+        const int decorationSpace = m->data(idx, Tui::LeftDecorationSpaceRole).toInt();
+        const int triangleX = 1 + (hasDecoration ? 1 : 0) + decorationSpace + depth * 2;
+        if (local.x() <= triangleX + 1) { // +1 tolerance: triangle + trailing space
+            setCurrentIndex(idx);
+            if (m->data(idx, SidebarModel::ExpandedRole).toBool()) {
+                emit collapseRequested();
+            } else {
+                emit expandRequested();
+            }
+            return;
+        }
+    }
+    setCurrentIndex(idx);
 }
 
 QuitDialog::QuitDialog(Tui::ZWidget* parent) : Tui::ZDialog(parent)
@@ -319,6 +421,94 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
         return;
     }
     Tui::ZRoot::keyEvent(event);
+}
+
+void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, int button,
+                             Qt::KeyboardModifiers /*modifiers*/)
+{
+    using MA = MouseTerminal::MouseAction;
+    // Click + wheel only: a primary-button press focuses + selects/opens, the wheel
+    // scrolls the pane under the cursor. Release/move and middle/right are ignored.
+    const bool isPress = action == MA::Press && button == 0;
+    const bool isWheel = action == MA::WheelUp || action == MA::WheelDown;
+    if (!isPress && !isWheel) {
+        return;
+    }
+
+    // Hit-test: is the terminal point inside `w`? If so, report the widget-local
+    // coordinate. mapFromTerminal walks the full ancestor chain, so this works for
+    // the deeply nested panes regardless of column/layout offsets.
+    QPoint local;
+    const auto hit = [&](Tui::ZWidget* w) -> bool {
+        if (w == nullptr) {
+            return false;
+        }
+        local = w->mapFromTerminal(termPos);
+        const QSize sz = w->geometry().size();
+        return local.x() >= 0 && local.y() >= 0 && local.x() < sz.width()
+            && local.y() < sz.height();
+    };
+
+    if (isWheel) {
+        const int delta = (action == MA::WheelUp) ? -3 : 3;
+        if (hit(m_transcript)) {
+            m_transcript->scrollByLines(delta);
+        } else if (hit(m_listView)) {
+            m_listView->scrollByLines(delta);
+        } else if (hit(m_sidebarView)) {
+            m_sidebarView->scrollByLines(delta);
+        }
+        return;
+    }
+
+    // The modal quit dialog is topmost: a press activates its button (or is
+    // swallowed) so clicks never leak to the panes behind it.
+    if (m_quitDialog != nullptr) {
+        const QList<Tui::ZButton*> buttons = m_quitDialog->findChildren<Tui::ZButton*>();
+        for (Tui::ZButton* b : buttons) {
+            if (hit(b)) {
+                b->click();
+                break;
+            }
+        }
+        return;
+    }
+
+    // The completion popup floats above the composer: a click on an item row
+    // selects it and accepts (group-header lines return -1 and are ignored).
+    if (m_completionPopup != nullptr && m_completionPopup->isLocallyVisible()
+        && hit(m_completionPopup)) {
+        const int row = m_completionPopup->modelRowAt(local.y());
+        if (row >= 0 && m_composerSession != nullptr) {
+            m_composerSession->setActiveIndex(row);
+            m_composerSession->acceptActive();
+        }
+        return;
+    }
+
+    // Primary-button press: focus the clicked pane, then run its select/open.
+    if (hit(m_sidebarView)) {
+        m_sidebarView->setFocus();
+        m_sidebarView->clickAt(local);
+    } else if (hit(m_listView)) {
+        m_listView->setFocus();
+        m_listView->activateAtLocalY(local.y());
+    } else if (hit(m_search)) {
+        // The search box is not a focus stop; clicking it focuses the list (typed
+        // characters are type-ahead routed through the list to the search box).
+        m_listView->setFocus();
+    } else if (hit(m_transcript)) {
+        m_transcript->setFocus();
+        m_transcript->clickAt(local); // activate an approval/clarify control, if any
+    } else if (hit(m_queue) && m_queue->geometry().height() > 0) {
+        m_queue->setFocus();
+        m_queue->clickAt(local);
+    } else if (hit(m_attachments) && m_attachments->geometry().height() > 0) {
+        m_attachments->setFocus();
+        m_attachments->clickAt(local);
+    } else if (hit(m_composer)) {
+        m_composer->setFocus();
+    }
 }
 
 void RootWidget::buildUi()

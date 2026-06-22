@@ -26,6 +26,10 @@ public:
     // the float.
     [[nodiscard]] int desiredHeight() const { return static_cast<int>(m_rows.size()); }
 
+    // Mouse: the completion model row rendered at widget-local y, or -1 when that
+    // line is a group header or empty. Accounts for the scroll the paint applies.
+    [[nodiscard]] int modelRowAt(int localY) const;
+
 protected:
     void paintEvent(Tui::ZPaintEvent* event) override;
 

@@ -32,6 +32,15 @@ void TranscriptView::reload()
     rebuild();
 }
 
+void TranscriptView::scrollByLines(int delta)
+{
+    m_scrollTop += delta;
+    clampScrollTop();
+    // Pin to the bottom only when the scroll lands all the way down.
+    m_stickToBottom = atBottom();
+    update();
+}
+
 int TranscriptView::visibleRows() const
 {
     return qMax(0, geometry().height());
@@ -89,6 +98,39 @@ void TranscriptView::rebuild()
         }
     }
     update();
+}
+
+void TranscriptView::clickAt(QPoint local)
+{
+    if (!interactive()) {
+        return; // a plain transcript click only focuses (handled by the shell)
+    }
+    const int absLine = m_scrollTop + local.y();
+    // Controls sitting on the clicked rendered line, in paint (left-to-right) order.
+    QVector<int> onLine;
+    for (int i = 0; i < m_controls.size(); ++i) {
+        if (m_controls.at(i).line == absLine) {
+            onLine.push_back(i);
+        }
+    }
+    if (onLine.isEmpty()) {
+        return;
+    }
+    // Approval bars paint several buttons on one row; Control carries no x range,
+    // so pick by an even left-to-right partition of the width (single-control rows
+    // collapse to that one control).
+    int pick = 0;
+    if (onLine.size() > 1) {
+        const int w = qMax(1, geometry().width());
+        pick = qBound(0, local.x() * static_cast<int>(onLine.size()) / w,
+                      static_cast<int>(onLine.size()) - 1);
+    }
+    m_activeControl = onLine.at(pick);
+    if (m_controls.at(m_activeControl).kind == Control::Kind::Freeform) {
+        rebuild(); // just focus the field; typing fills it
+        return;
+    }
+    activateControl(); // button decides / choice toggles / submit fires
 }
 
 void TranscriptView::moveControl(int delta)
