@@ -106,6 +106,7 @@ private slots:
     void clarifyEmitsChoiceAndFreeformControls();
     void clarifyDraftReflectsSelection();
     void multiParagraphMessageKeepsBlankLines();
+    void blockLineMapsAddressEveryRow();
 };
 
 void TranscriptRenderTests::rendersStructureNotFences()
@@ -310,6 +311,54 @@ second paragraph
     // Exactly one (blank) row separates the two paragraphs.
     QCOMPARE(secondIdx - firstIdx, 2);
     QVERIFY(rows.at(firstIdx + 1).trimmed().isEmpty());
+}
+
+void TranscriptRenderTests::blockLineMapsAddressEveryRow()
+{
+    be::DocumentStore doc;
+    doc.loadMarkdown(sampleMarkdown());
+    const LayoutResult res = TranscriptLayout::build(doc, 80);
+
+    // blockFirstLine is sized to the document's block count; lineBlock to the
+    // produced rows - the two maps that let a find match scroll to / emphasise
+    // its block.
+    QCOMPARE(res.blockFirstLine.size(), doc.blocks().size());
+    QCOMPARE(res.lineBlock.size(), res.lines.size());
+
+    // Every rendered row is attributed to a real (in-range) document block.
+    for (int li = 0; li < res.lineBlock.size(); ++li) {
+        const int b = res.lineBlock.at(li);
+        QVERIFY(b >= 0 && b < doc.blocks().size());
+    }
+
+    // Each non-tombstoned block has a first-line anchor that points at a row it
+    // actually owns, and that row index is in range.
+    for (int b = 0; b < doc.blocks().size(); ++b) {
+        if (doc.blocks().at(b).tombstoned) {
+            continue;
+        }
+        const int line = res.blockFirstLine.at(b);
+        QVERIFY(line >= 0 && line < res.lines.size());
+        QCOMPARE(res.lineBlock.at(line), b);
+    }
+
+    // The block holding the user's prose maps to a row that renders that text -
+    // the exact relationship scrollBlockIntoView relies on.
+    int proseBlock = -1;
+    for (int b = 0; b < doc.blocks().size(); ++b) {
+        if (doc.blocks().at(b).markdown().contains(QStringLiteral("Build it please."))) {
+            proseBlock = b;
+            break;
+        }
+    }
+    QVERIFY(proseBlock >= 0);
+    const int proseLine = res.blockFirstLine.at(proseBlock);
+    QVERIFY(proseLine >= 0);
+    QString rowText;
+    for (const Span &s : res.lines.at(proseLine)) {
+        rowText += s.text;
+    }
+    QVERIFY(rowText.contains(QStringLiteral("Build it please.")));
 }
 
 QTEST_MAIN(TranscriptRenderTests)

@@ -205,3 +205,21 @@ target_link_libraries(tst_transcript_search
 )
 add_test(NAME tst_transcript_search COMMAND tst_transcript_search)
 set_tests_properties(tst_transcript_search PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_editor_search: proves EditorController owns and exposes the shared find
+# engine bound to its DocumentStore, re-collecting matches on both the reload
+# (loadMarkdown) and documentChanged mutation paths. Links the block-editor QML
+# module for the controller (the engine geometry is covered by tst_transcript_search).
+qt_add_executable(tst_editor_search tst_editor_search.cpp)
+target_link_libraries(tst_editor_search
+    PRIVATE
+        Qt6::Test
+        Qt6::Quick
+        # editor_controller.h transitively includes core/persistence.h (QSqlDatabase);
+        # da_blockeditor links be_core privately, so the Sql include path is not
+        # propagated to header consumers and must be added explicitly here.
+        Qt6::Sql
+        daemon-app::blockeditor
+)
+add_test(NAME tst_editor_search COMMAND tst_editor_search)
+set_tests_properties(tst_editor_search PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

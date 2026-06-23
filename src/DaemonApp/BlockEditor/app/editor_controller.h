@@ -8,6 +8,7 @@
 #include "core/inline_projector.h"
 #include "core/persistence.h"
 #include "core/selection.h"
+#include "core/transcript_search.h"
 
 #include <QColor>
 #include <QObject>
@@ -26,6 +27,10 @@ class EditorController : public QObject
 
     Q_PROPERTY(be::app::BlockModel *blockModel READ blockModel CONSTANT)
     Q_PROPERTY(be::app::ActiveBlockTextController *activeTextController READ activeTextController CONSTANT)
+    // In-transcript find engine, kept bound to this controller's DocumentStore and
+    // re-collected as the document changes. QML binds query/matchCount/currentMatch
+    // and connects navigateTo to scroll the matched block into view.
+    Q_PROPERTY(be::TranscriptSearchController *search READ search CONSTANT)
     Q_PROPERTY(qulonglong activeBlockId READ activeBlockId NOTIFY activeBlockIdChanged)
     Q_PROPERTY(int activeBlockRow READ activeBlockRow NOTIFY activeBlockRowChanged)
     Q_PROPERTY(int activeCursorOffset READ activeCursorOffset NOTIFY activeCursorOffsetChanged)
@@ -58,6 +63,7 @@ public:
 
     BlockModel *blockModel();
     ActiveBlockTextController *activeTextController();
+    be::TranscriptSearchController *search() { return &m_search; }
     qulonglong activeBlockId() const;
     int activeBlockRow() const;
     int activeCursorOffset() const;
@@ -180,7 +186,6 @@ public:
     Q_INVOKABLE QVariantMap tableCellSelectionSpan(qulonglong blockId, int rowIndex, int col) const;
     Q_INVOKABLE QString copySelectionMarkdown() const;
     Q_INVOKABLE void copySelectionToClipboard() const;
-    Q_INVOKABLE QVariantList search(const QString &needle) const;
     Q_INVOKABLE void reportBlockHeight(qulonglong blockId, qreal height);
     Q_INVOKABLE int rowAtContentY(qreal y) const;
     // Resolve an in-document anchor fragment (e.g. "#table-of-contents") to the
@@ -265,6 +270,7 @@ private:
     void flushStreamBuffer();
 
     be::DocumentStore m_store;
+    be::TranscriptSearchController m_search;
     be::TranscriptIngest m_ingest;
     be::BlockHeightIndex m_heightIndex;
     BlockModel m_model;

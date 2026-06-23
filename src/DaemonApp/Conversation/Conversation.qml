@@ -223,6 +223,9 @@ Rectangle {
         x: root.width - width - 8
         y: tabBarBar.visible ? tabBarBar.height + 4 : 8
         maxHeight: Math.round(root.height * 0.85)
+        // "Search transcript" routes through the active tab's command path, which
+        // opens that transcript's find bar (same as Ctrl+F / /find).
+        onSearchRequested: root.invokeActiveCommand("find")
     }
 
     // Transcript page instantiated per tab by the Repeater above.

@@ -27,6 +27,8 @@ CommandRegistry::CommandRegistry(QObject* parent)
           tr("Summarize + free the window"), QString() },
         { QStringLiteral("save"), tr("Export transcript"), tr("Session"),
           tr("Write the conversation to JSON"), QString() },
+        { QStringLiteral("find"), tr("Find in transcript"), tr("Navigation"),
+          tr("Search this conversation"), QStringLiteral("Ctrl+F") },
         { QStringLiteral("title"), tr("Rename conversation"), tr("Session"), QString(),
           QString() },
         { QStringLiteral("retry"), tr("Retry last message"), tr("Rewind"), QString(), QString() },

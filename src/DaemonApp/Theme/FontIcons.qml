@@ -47,6 +47,7 @@ QtObject {
     readonly property string fa_caret_left: "\uf0d9"
     readonly property string fa_undo_alt: "\uf2ea"
     readonly property string fa_chevron_down: "\uf078"
+    readonly property string fa_chevron_up: "\uf077"
     readonly property string fa_chevron_right: "\uf054"
     readonly property string fa_chevron_left: "\uf053"
     readonly property string fa_circle: "\uf111"

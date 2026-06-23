@@ -69,6 +69,14 @@ struct LayoutResult {
     QVector<RenderLine> lines;
     QVector<Control> controls;
     QVector<Anchor> anchors;
+    // Document-block <-> render-line maps for in-transcript find (and any other
+    // block-addressed navigation). blockFirstLine is sized to doc.blockCount():
+    // entry i is the first `lines` row block i contributed, or -1 if it rendered
+    // nothing (tombstoned). lineBlock is sized to lines.size(): entry r is the
+    // document-block index that produced row r (so a search match's block can be
+    // emphasised line-by-line).
+    QVector<int> blockFirstLine;
+    QVector<int> lineBlock;
 };
 
 // The TUI analog of the GUI's QML block delegates: turns a parsed be::DocumentStore

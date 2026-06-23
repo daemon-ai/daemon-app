@@ -28,6 +28,8 @@ const QList<CompletionModel::Item>& slashCommands()
           QStringLiteral("Command"), QStringLiteral("/title"), QStringLiteral("title") },
         { QStringLiteral("/save"), QObject::tr("Export the transcript (JSON)"),
           QStringLiteral("Command"), QStringLiteral("/save"), QStringLiteral("save") },
+        { QStringLiteral("/find"), QObject::tr("Search this transcript"),
+          QStringLiteral("Command"), QStringLiteral("/find"), QStringLiteral("find") },
         { QStringLiteral("/usage"), QObject::tr("Show token usage & cost"),
           QStringLiteral("Command"), QStringLiteral("/usage"), QStringLiteral("usage") },
         { QStringLiteral("/compress"), QObject::tr("Compress the context window"),

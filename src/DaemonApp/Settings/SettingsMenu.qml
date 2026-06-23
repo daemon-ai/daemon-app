@@ -15,6 +15,9 @@ QQC.Popup {
     // ConversationController; Move to Trash archives the open conversation.
     property var controller: null
 
+    // The user asked to find within the open transcript (host opens the find bar).
+    signal searchRequested()
+
     // Cap on the scrollable height; the host binds this to the window height.
     property int maxHeight: 560
 
@@ -43,6 +46,25 @@ QQC.Popup {
             id: column
             width: root.width
             spacing: 0
+
+            // ----- Transcript --------------------------------------------
+            SectionHeader { text: qsTr("Transcript") }
+
+            ActionRow {
+                Layout.fillWidth: true
+                Layout.leftMargin: root.hMargin
+                Layout.rightMargin: root.hMargin
+                Layout.topMargin: 4
+                icon: FontIcons.fa_magnifying_glass
+                label: qsTr("Search transcript")
+                enabled: root.controller && root.controller.hasConversation
+                onTriggered: {
+                    root.searchRequested();
+                    root.close();
+                }
+            }
+
+            Divider {}
 
             // ----- Style -------------------------------------------------
             SectionHeader { text: qsTr("Style") }

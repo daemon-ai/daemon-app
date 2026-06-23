@@ -4,6 +4,7 @@
 
 #include "core/block_record.h"
 #include "core/document_store.h"
+#include "core/transcript_search.h"
 
 #include <Tui/ZColor.h>
 #include <Tui/ZEvent.h>
@@ -27,9 +28,34 @@ void TranscriptView::setDocument(const be::DocumentStore *doc)
     rebuild();
 }
 
+void TranscriptView::setSearch(const be::TranscriptSearchController *search)
+{
+    m_search = search;
+}
+
 void TranscriptView::reload()
 {
     rebuild();
+}
+
+void TranscriptView::scrollBlockIntoView(int blockIndex)
+{
+    if (blockIndex < 0 || blockIndex >= m_blockFirstLine.size()) {
+        return;
+    }
+    const int line = m_blockFirstLine.at(blockIndex);
+    if (line < 0) {
+        return; // a tombstoned / non-rendered block
+    }
+    const int rows = visibleRows();
+    if (line < m_scrollTop) {
+        m_scrollTop = line;
+    } else if (rows > 0 && line >= m_scrollTop + rows) {
+        m_scrollTop = line - rows + 1;
+    }
+    m_stickToBottom = false;
+    clampScrollTop();
+    update();
 }
 
 void TranscriptView::scrollByLines(int delta)
@@ -74,10 +100,14 @@ void TranscriptView::rebuild()
         m_lines = res.lines;
         m_controls = res.controls;
         m_anchors = res.anchors;
+        m_blockFirstLine = res.blockFirstLine;
+        m_lineBlock = res.lineBlock;
     } else {
         m_lines.clear();
         m_controls.clear();
         m_anchors.clear();
+        m_blockFirstLine.clear();
+        m_lineBlock.clear();
     }
 
     // An awaiting interactive block or an emptied transcript cancels a stale
@@ -108,7 +138,68 @@ void TranscriptView::rebuild()
             clampScrollTop();
         }
     }
+    if (!interactive()) {
+        applySearchHighlight();
+    }
     update();
+}
+
+void TranscriptView::applySearchHighlight()
+{
+    if (m_search == nullptr) {
+        return;
+    }
+    const QString query = m_search->query();
+    if (query.isEmpty() || m_search->matchCount() == 0) {
+        return;
+    }
+    const int activeBlock = m_search->currentBlockIndex();
+    const int qlen = static_cast<int>(query.size());
+    const Tui::ZColor matchBg = tpal::selectionBg();
+    const Tui::ZColor activeBg = tpal::accent();
+    const Tui::ZColor activeFg = tpal::bg();
+
+    for (int li = 0; li < m_lines.size(); ++li) {
+        const bool isActiveBlock =
+            li < m_lineBlock.size() && m_lineBlock.at(li) == activeBlock;
+        RenderLine rebuilt;
+        bool changed = false;
+        for (const Span &span : m_lines.at(li)) {
+            int from = 0;
+            int at = static_cast<int>(span.text.indexOf(query, from, Qt::CaseInsensitive));
+            if (at < 0) {
+                rebuilt.push_back(span);
+                continue;
+            }
+            changed = true;
+            while (at >= 0) {
+                if (at > from) {
+                    rebuilt.push_back(Span { span.text.mid(from, at - from), span.fg,
+                                             span.bg, span.attr });
+                }
+                Span hit;
+                hit.text = span.text.mid(at, qlen);
+                hit.attr = span.attr;
+                if (isActiveBlock) {
+                    hit.fg = activeFg;
+                    hit.bg = activeBg;
+                    hit.attr |= Tui::ZTextAttribute::Bold;
+                } else {
+                    hit.fg = span.fg;
+                    hit.bg = matchBg;
+                }
+                rebuilt.push_back(hit);
+                from = at + qlen;
+                at = static_cast<int>(span.text.indexOf(query, from, Qt::CaseInsensitive));
+            }
+            if (from < span.text.size()) {
+                rebuilt.push_back(Span { span.text.mid(from), span.fg, span.bg, span.attr });
+            }
+        }
+        if (changed) {
+            m_lines[li] = rebuilt;
+        }
+    }
 }
 
 void TranscriptView::clickAt(QPoint local)

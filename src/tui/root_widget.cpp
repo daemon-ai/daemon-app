@@ -63,6 +63,11 @@ struct TabSession {
     InteractiveTurnHost* host = nullptr;
     be::DocumentStore doc;
     be::TranscriptIngest ingest { &doc };
+    // Per-tab in-transcript find engine, bound to this tab's document. refresh()
+    // is called at the transcript-reload sites so matches track the live content.
+    be::TranscriptSearchController search;
+
+    TabSession() { search.setDocument(&doc); }
 
     ~TabSession()
     {
@@ -520,6 +525,38 @@ void SearchInputBox::paintEvent(Tui::ZPaintEvent* event)
     }
 }
 
+void TranscriptSearchBox::keyEvent(Tui::ZKeyEvent* event)
+{
+    const int key = event->key();
+    const bool shift = (event->modifiers() & Qt::ShiftModifier) != 0;
+    if (key == Qt::Key_Escape) {
+        emit closeRequested();
+        event->accept();
+        return;
+    }
+    if (key == Qt::Key_Enter || key == Qt::Key_Return
+        || event->text() == QStringLiteral("\r")) {
+        if (shift) {
+            emit previousRequested();
+        } else {
+            emit nextRequested();
+        }
+        event->accept();
+        return;
+    }
+    if (key == Qt::Key_Down) {
+        emit nextRequested();
+        event->accept();
+        return;
+    }
+    if (key == Qt::Key_Up) {
+        emit previousRequested();
+        event->accept();
+        return;
+    }
+    Tui::ZInputBox::keyEvent(event);
+}
+
 void TreeListView::keyEvent(Tui::ZKeyEvent* event)
 {
     if (event->modifiers() == Qt::NoModifier) {
@@ -808,6 +845,12 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
         event->accept();
         return;
     }
+    if (mods == Qt::ControlModifier
+        && event->text().compare(QStringLiteral("f"), Qt::CaseInsensitive) == 0) {
+        openTranscriptSearch();
+        event->accept();
+        return;
+    }
     if ((mods & Qt::ControlModifier) && m_tabModel != nullptr
         && (event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backtab)) {
         const bool backward = event->key() == Qt::Key_Backtab || (mods & Qt::ShiftModifier);
@@ -1024,6 +1067,41 @@ void RootWidget::buildUi()
     m_tabStrip->setModel(m_tabModel);
     rightCol->addWidget(m_tabStrip);
     connect(m_tabStrip, &TabStripView::newTabRequested, this, &RootWidget::newTranscriptTab);
+
+    // In-transcript find bar (Ctrl+F / /find): a one-line query field + match
+    // counter, hidden until opened. Placed at the top of the transcript column so
+    // it reads like a find bar; toggling its visibility collapses the layout row.
+    m_searchRow = new Tui::ZWidget(right);
+    m_searchRow->setMaximumSize(Tui::tuiMaxSize, 1);
+    auto* searchRowLayout = new Tui::ZHBoxLayout();
+    searchRowLayout->setSpacing(1);
+    m_searchRow->setLayout(searchRowLayout);
+    m_transcriptSearch = new TranscriptSearchBox(m_searchRow);
+    m_transcriptSearch->setSizePolicyH(Tui::SizePolicy::Expanding);
+    searchRowLayout->addWidget(m_transcriptSearch);
+    m_searchCounter = new Tui::ZLabel(m_searchRow);
+    m_searchCounter->setSizePolicyH(Tui::SizePolicy::Fixed);
+    searchRowLayout->addWidget(m_searchCounter);
+    m_searchRow->setVisible(false);
+    rightCol->addWidget(m_searchRow);
+    connect(m_transcriptSearch, &Tui::ZInputBox::textChanged, this, [this](const QString& q) {
+        if (m_active != nullptr) {
+            m_active->search.setQuery(q);
+        }
+        updateSearchCounter();
+    });
+    connect(m_transcriptSearch, &TranscriptSearchBox::nextRequested, this, [this] {
+        if (m_active != nullptr) {
+            m_active->search.next();
+        }
+    });
+    connect(m_transcriptSearch, &TranscriptSearchBox::previousRequested, this, [this] {
+        if (m_active != nullptr) {
+            m_active->search.previous();
+        }
+    });
+    connect(m_transcriptSearch, &TranscriptSearchBox::closeRequested, this,
+            &RootWidget::closeTranscriptSearch);
 
     // Custom-painted transcript: renders the shared be::DocumentStore (the GUI's
     // parse/ingest engine) as colored tool/reasoning cards, ANSI output, diffs,
@@ -1305,6 +1383,10 @@ void RootWidget::wireViews()
                 if (command == QStringLiteral("usage")) {
                     return; // usage is live in the footer status bar
                 }
+                if (command == QStringLiteral("find")) {
+                    openTranscriptSearch();
+                    return;
+                }
                 if (command == QStringLiteral("compress")) {
                     // Simulated compaction: free most of the live context window.
                     if (m_status != nullptr) {
@@ -1324,6 +1406,7 @@ void RootWidget::wireViews()
                         if (m_active != nullptr && m_active->controller->hasConversation()) {
                             m_active->doc.loadMarkdown(QString());
                             m_active->controller->updateContent(QString());
+                            m_active->search.refresh();
                             if (m_transcript != nullptr) {
                                 m_transcript->reload();
                             }
@@ -1509,6 +1592,60 @@ void RootWidget::closeCurrentTab()
     }
 }
 
+void RootWidget::openTranscriptSearch()
+{
+    // Find only applies to a live transcript tab (page tabs have no session).
+    if (m_active == nullptr || m_searchRow == nullptr || m_transcriptSearch == nullptr) {
+        return;
+    }
+    m_searchActive = true;
+    m_searchRow->setVisible(true);
+    m_transcriptSearch->setText(m_active->search.query());
+    m_transcriptSearch->setFocus();
+    updateSearchCounter();
+}
+
+void RootWidget::closeTranscriptSearch()
+{
+    if (!m_searchActive) {
+        return;
+    }
+    m_searchActive = false;
+    if (m_active != nullptr) {
+        m_active->search.clear();
+    }
+    if (m_transcriptSearch != nullptr) {
+        m_transcriptSearch->setText(QString());
+    }
+    if (m_searchRow != nullptr) {
+        m_searchRow->setVisible(false);
+    }
+    if (m_transcript != nullptr) {
+        m_transcript->setFocus();
+        m_transcript->reload(); // drop the highlight
+    }
+}
+
+void RootWidget::updateSearchCounter()
+{
+    if (m_searchCounter == nullptr) {
+        return;
+    }
+    if (m_active == nullptr) {
+        m_searchCounter->setText(QString());
+        return;
+    }
+    const be::TranscriptSearchController& s = m_active->search;
+    if (s.query().isEmpty()) {
+        m_searchCounter->setText(QString());
+    } else if (s.matchCount() == 0) {
+        m_searchCounter->setText(QStringLiteral(" 0/0 "));
+    } else {
+        m_searchCounter->setText(
+            QStringLiteral(" %1/%2 ").arg(s.currentMatch() + 1).arg(s.matchCount()));
+    }
+}
+
 TabSession* RootWidget::ensureSession(int tabId)
 {
     if (auto it = m_sessions.find(tabId); it != m_sessions.end()) {
@@ -1651,6 +1788,33 @@ void RootWidget::wireSession(TabSession* s)
             updateSubagents();
         }
     });
+
+    // In-transcript find: only the active session with the bar open drives the
+    // view. A match move scrolls its block into view; a (re)collect repaints the
+    // highlight and refreshes the counter. Guarded so a streaming refresh() on a
+    // background tab never touches the shared transcript/counter.
+    connect(&s->search, &be::TranscriptSearchController::navigateTo, this,
+            [this, s](int blockIndex, int /*charOffset*/) {
+                if (s == m_active && m_searchActive && m_transcript != nullptr) {
+                    m_transcript->scrollBlockIntoView(blockIndex);
+                }
+            });
+    connect(&s->search, &be::TranscriptSearchController::matchesChanged, this, [this, s] {
+        if (s == m_active && m_searchActive) {
+            if (m_transcript != nullptr) {
+                m_transcript->reload();
+            }
+            updateSearchCounter();
+        }
+    });
+    connect(&s->search, &be::TranscriptSearchController::currentMatchChanged, this, [this, s] {
+        if (s == m_active && m_searchActive) {
+            if (m_transcript != nullptr) {
+                m_transcript->reload();
+            }
+            updateSearchCounter();
+        }
+    });
 }
 
 void RootWidget::activateTab(int tabId)
@@ -1665,9 +1829,13 @@ void RootWidget::activateTab(int tabId)
         if (s == nullptr) {
             return;
         }
+        // Switching tabs closes any open find bar so it never shows stale matches
+        // from the previous tab's engine.
+        closeTranscriptSearch();
         m_active = s;
         if (m_transcript != nullptr) {
             m_transcript->setDocument(&s->doc);
+            m_transcript->setSearch(&s->search);
         }
         if (m_composerChrome != nullptr) {
             m_composerChrome->setTurn(s->turn);
@@ -1681,9 +1849,11 @@ void RootWidget::activateTab(int tabId)
     } else {
         // A non-transcript page tab (Settings): no backend session; show the static
         // page document and clear the per-tab strips.
+        closeTranscriptSearch();
         m_active = nullptr;
         m_pageDoc.loadMarkdown(pageMarkdown(m_tabModel->kindAt(row)));
         if (m_transcript != nullptr) {
+            m_transcript->setSearch(nullptr);
             m_transcript->setDocument(&m_pageDoc);
             m_transcript->reload();
         }
@@ -1914,6 +2084,7 @@ void RootWidget::refreshTranscript()
     }
     m_active->doc.loadMarkdown(
         m_active->controller->hasConversation() ? m_active->controller->content() : QString());
+    m_active->search.refresh();
     m_transcript->reload();
 }
 
@@ -1937,6 +2108,7 @@ void RootWidget::rewindActiveTab(const QString& messageId, bool editMode)
     if (m_active->controller->hasConversation()) {
         m_active->controller->updateContent(m_active->doc.toMarkdown());
     }
+    m_active->search.refresh();
     m_transcript->reload();
 
     if (editMode) {
@@ -1959,6 +2131,8 @@ void RootWidget::onTurnEvents(TabSession* session, const QVariantList& events)
     // typed reasoning/tool/content blocks on the session's document keyed by callId,
     // exactly as the GUI's EditorController does. Repaint only when it is on screen.
     session->ingest.ingestAll(events);
+    // Keep this session's find matches in step with the freshly ingested tail.
+    session->search.refresh();
     // The same stream carries status-only events (usage/context/rateLimit); the
     // ingest skips them, the footer status model consumes them. Only the active
     // tab drives the shared footer.

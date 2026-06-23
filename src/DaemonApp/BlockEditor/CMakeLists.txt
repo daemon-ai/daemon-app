@@ -90,6 +90,7 @@ qt_add_qml_module(da_blockeditor
         app/image_cache.h
         app/math_image_provider.cpp
         app/math_image_provider.h
+        app/transcript_search_foreign.h
     QML_FILES
         qml/components/BlockDelegate.qml
         qml/components/TableBlock.qml

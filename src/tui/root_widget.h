@@ -27,6 +27,7 @@
 
 #include "core/agent_ingest.h"
 #include "core/document_store.h"
+#include "core/transcript_search.h"
 
 #include <QHash>
 #include <QString>
@@ -145,6 +146,24 @@ protected:
 
 private:
     bool m_typingActive = false;
+};
+
+// The one-line in-transcript find field (Ctrl+F). Live text edits drive the
+// query; Enter / Down cycle to the next match, Up / Shift+Enter to the previous,
+// Esc closes. Everything else edits the query text (so 'n'/'N' type normally).
+class TranscriptSearchBox : public Tui::ZInputBox {
+    Q_OBJECT
+
+public:
+    using Tui::ZInputBox::ZInputBox;
+
+signals:
+    void nextRequested();
+    void previousRequested();
+    void closeRequested();
+
+protected:
+    void keyEvent(Tui::ZKeyEvent* event) override;
 };
 
 // ZListView handles Up/Down/Home/End but ignores Left/Right. The sidebar is a
@@ -313,6 +332,14 @@ private:
     // touch the shared views/status unless they are active.
     void wireSession(TabSession* session);
 
+    // --- In-transcript find (Ctrl+F / /find) ---------------------------------
+    // Reveal the find field over the active transcript and focus it; close hides
+    // it, clears the active session's query, and returns focus to the transcript.
+    // updateSearchCounter refreshes the "n/m" label from the active search engine.
+    void openTranscriptSearch();
+    void closeTranscriptSearch();
+    void updateSearchCounter();
+
     // Reused, unchanged from the GUI build.
     persistence::InMemoryConversationStore* m_store = nullptr;
     SidebarModel* m_sidebar = nullptr;
@@ -340,6 +367,13 @@ private:
     SearchInputBox* m_search = nullptr;
     ConversationListView* m_listView = nullptr;
     TranscriptView* m_transcript = nullptr;
+    // In-transcript find bar (one-line field + match counter), inserted between the
+    // tab strip and the transcript; hidden until Ctrl+F / /find. m_searchActive
+    // gates the live wiring so a background refresh() never drives the hidden bar.
+    Tui::ZWidget* m_searchRow = nullptr;
+    TranscriptSearchBox* m_transcriptSearch = nullptr;
+    Tui::ZLabel* m_searchCounter = nullptr;
+    bool m_searchActive = false;
     // One-line streaming/affordance indicator above the composer (Thinking.../error
     // + send/stop/steer hint), driven by the active session's TurnController.
     ComposerChrome* m_composerChrome = nullptr;

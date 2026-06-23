@@ -35,6 +35,10 @@ Item {
     // block would otherwise relocate ~40px of footer right at the pinned bottom).
     property bool turnRunning: false
 
+    // True when this block holds the active in-transcript find match; draws a
+    // subtle accent wash + outline so the navigated-to match stands out.
+    property bool searchMatch: false
+
     // Turn-level inline edit. The Transcript owns the single "open" message id; a
     // user turn whose id matches swaps its body for an inline editor (on the
     // first block) and collapses its remaining blocks.
@@ -232,6 +236,18 @@ Item {
         color: root.isActive ? Theme.activeBlockBackground : Theme.transparent
         border.width: root.isActive ? 1 : 0
         border.color: Theme.activeBlockBorder
+    }
+
+    // Find-match emphasis: a faint accent wash + crisp accent outline on the
+    // block holding the active in-transcript search match (drawn over the block
+    // background but under the content, so the text stays readable).
+    Rectangle {
+        anchors.fill: parent
+        visible: root.searchMatch
+        radius: Theme.radiusSmall
+        color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.12)
+        border.width: 1
+        border.color: Theme.accent
     }
 
     // Optional left accent rail for user turns. Each row paints its own segment;

@@ -120,6 +120,47 @@ Rectangle {
         onImagePreviewRequested: (url, alt) => lightbox.show(url, alt)
     }
 
+    // --- In-transcript find -------------------------------------------------
+    // Whether the find bar is showing, and the block row of the active match
+    // (emphasised by the delegate; -1 when there is no current match). Reading the
+    // notifying currentMatch/matchCount properties makes the binding re-evaluate
+    // as the user cycles matches or the document re-collects (currentBlockIndex()
+    // is a plain invokable with no change signal of its own).
+    property bool searchActive: false
+    property int searchMatchRow: {
+        editor.search.currentMatch;
+        editor.search.matchCount;
+        return editor.search.currentBlockIndex();
+    }
+
+    // Reveal the find bar (Ctrl+F / menu / /find) and focus the field.
+    function openSearch() {
+        searchActive = true
+        searchField.forceActiveFocus()
+        searchField.selectAll()
+    }
+    // Hide the bar, drop the query + matches, and return focus to the transcript.
+    function closeSearch() {
+        editor.search.clear()
+        searchActive = false
+        editorView.forceActiveFocus()
+    }
+
+    // Anchor-scroll the matched block into view (same primitive the heading-link
+    // navigation uses), escaping the bottom lock so the jump sticks.
+    Connections {
+        target: editor.search
+        function onNavigateTo(blockIndex, charOffset) {
+            if (blockIndex < 0)
+                return
+            editorView.stickToBottom = false
+            editorView.currentIndex = blockIndex
+            editorView._pinning = true
+            editorView.positionViewAtIndex(blockIndex, ListView.Contain)
+            Qt.callLater(function() { editorView._pinning = false })
+        }
+    }
+
     // Shared modal image lightbox for image blocks and tool image results.
     Lightbox {
         id: lightbox
@@ -390,6 +431,8 @@ Rectangle {
                 editorController: editor
                 turnRunning: root.busy
                 editingMessageId: editorView.editingMessageId
+                // Emphasise the block holding the active find match.
+                searchMatch: root.searchActive && index === root.searchMatchRow
                 onEditRequested: function(id) {
                     editor.notifyInlineEditOpen()
                     editorView.editingMessageId = id
@@ -561,6 +604,96 @@ Rectangle {
             onTapped: {
                 editorView.stickToBottom = true
                 editorView.pinToBottom()
+            }
+        }
+    }
+
+    // Floating find bar (Ctrl+F / Settings "Search transcript" / /find): a one-
+    // line query field with a live match counter and prev/next cycling, bound to
+    // the editor's TranscriptSearchController. Esc / x close and clear.
+    Rectangle {
+        id: searchBar
+        visible: root.searchActive
+        z: 100
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: Theme.smallSpacing
+        anchors.rightMargin: Theme.spacing + 12
+        width: 360
+        height: 40
+        radius: Theme.radius
+        color: Theme.surfaceRaised
+        border.color: Theme.border
+        border.width: 1
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 10
+            anchors.rightMargin: 4
+            spacing: 4
+
+            Kit.Glyph {
+                glyph: FontIcons.fa_magnifying_glass
+                font.pointSize: 11 + Theme.pointSizeOffset
+                color: Theme.textMuted
+            }
+
+            Kit.TextField {
+                id: searchField
+                Layout.fillWidth: true
+                placeholderText: qsTr("Find in transcript")
+                text: editor.search.query
+                onTextEdited: editor.search.query = text
+                Keys.onEscapePressed: root.closeSearch()
+                Keys.onReturnPressed: function(e) {
+                    if (e.modifiers & Qt.ShiftModifier)
+                        editor.search.previous()
+                    else
+                        editor.search.next()
+                }
+                Keys.onEnterPressed: function(e) {
+                    if (e.modifiers & Qt.ShiftModifier)
+                        editor.search.previous()
+                    else
+                        editor.search.next()
+                }
+            }
+
+            Text {
+                Layout.rightMargin: 2
+                text: editor.search.matchCount > 0
+                      ? (editor.search.currentMatch + 1) + "/" + editor.search.matchCount
+                      : (editor.search.query.length > 0 ? qsTr("0/0") : "")
+                color: Theme.textMuted
+                font.family: FontIcons.display
+                font.pixelSize: Theme.captionFontSize
+            }
+
+            Kit.IconButton {
+                implicitWidth: 26
+                implicitHeight: 26
+                icon: FontIcons.fa_chevron_up
+                iconPointSize: 11
+                enabled: editor.search.matchCount > 0
+                tooltipText: qsTr("Previous match (Shift+Enter)")
+                onClicked: editor.search.previous()
+            }
+            Kit.IconButton {
+                implicitWidth: 26
+                implicitHeight: 26
+                icon: FontIcons.fa_chevron_down
+                iconPointSize: 11
+                enabled: editor.search.matchCount > 0
+                tooltipText: qsTr("Next match (Enter)")
+                onClicked: editor.search.next()
+            }
+            Kit.IconButton {
+                implicitWidth: 26
+                implicitHeight: 26
+                icon: FontIcons.fa_xmark
+                iconPointSize: 12
+                tooltipText: qsTr("Close (Esc)")
+                onClicked: root.closeSearch()
             }
         }
     }

@@ -65,6 +65,14 @@ EditorController::EditorController(QObject *parent)
     // activeBlockRowChanged from their own sites.
     connect(this, &EditorController::activeBlockIdChanged, this, &EditorController::activeBlockRowChanged);
 
+    // Keep the in-transcript find engine bound to this controller's store and
+    // re-collected as the document mutates. loadMarkdown() refreshes directly (it
+    // does not emit documentChanged, to avoid a persist feedback loop); every
+    // other mutation path (typed-block ingest, message edits, rewinds) routes
+    // through documentChanged.
+    m_search.setDocument(&m_store);
+    connect(this, &EditorController::documentChanged, this, [this] { m_search.refresh(); });
+
     loadMarkdown(sampleDocument());
 }
 
@@ -185,6 +193,9 @@ void EditorController::loadMarkdown(const QString &markdown, bool activateFirstB
     m_activeBlockId = activateFirstBlock && m_store.blockCount() > 0 ? m_store.blockAt(0)->id : 0;
     m_activeCursorOffset = 0;
     resetModel();
+    // Re-anchor find matches to the freshly loaded document (loadMarkdown is the
+    // conversation-switch / reload path and does not emit documentChanged).
+    m_search.refresh();
     emit activeBlockIdChanged();
     emit activeCursorOffsetChanged();
     if (activateFirstBlock && m_activeBlockId != 0) {
@@ -1201,29 +1212,6 @@ void EditorController::copySelectionToClipboard() const
     if (QClipboard *clipboard = QGuiApplication::clipboard()) {
         clipboard->setText(markdown);
     }
-}
-
-QVariantList EditorController::search(const QString &needle) const
-{
-    QVariantList results;
-    if (needle.isEmpty()) {
-        return results;
-    }
-
-    for (qsizetype row = 0; row < m_store.blockCount(); ++row) {
-        const be::BlockRecord *block = m_store.blockAt(row);
-        const QString markdown = block->markdown();
-        qsizetype offset = markdown.indexOf(needle, 0, Qt::CaseInsensitive);
-        while (offset >= 0) {
-            QVariantMap result;
-            result.insert(QStringLiteral("row"), row);
-            result.insert(QStringLiteral("blockId"), QVariant::fromValue<qulonglong>(block->id));
-            result.insert(QStringLiteral("offset"), offset);
-            results.push_back(result);
-            offset = markdown.indexOf(needle, offset + needle.size(), Qt::CaseInsensitive);
-        }
-    }
-    return results;
 }
 
 void EditorController::reportBlockHeight(qulonglong blockId, qreal height)

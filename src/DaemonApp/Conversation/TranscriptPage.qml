@@ -93,6 +93,7 @@ Rectangle {
             case "verbose": composer.session.toggleVerbose(); break;
             case "usage": break; // usage is live in the footer status bar
             case "compress": root._compressContext(); break;
+            case "find": transcript.openSearch(); break;
             case "clear": clearConfirmDialog.open(); break;
             default: root.commandForwarded(command);
             }
@@ -174,6 +175,12 @@ Rectangle {
         Status.setBusy(orchestrator.turn.active);
         if (orchestrator.turn.active)
             Status.setTurnStartedAt(Date.now() - orchestrator.turn.elapsedMs);
+    }
+
+    // Ctrl+F / Cmd+F opens the transcript find bar for this tab.
+    Shortcut {
+        sequences: [StandardKey.Find]
+        onActivated: transcript.openSearch()
     }
 
     ColumnLayout {

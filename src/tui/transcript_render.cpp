@@ -906,7 +906,15 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
     bool first = true;
 
     const QVector<be::BlockRecord> &blocks = doc.blocks();
-    for (const be::BlockRecord &b : blocks) {
+    result.blockFirstLine.fill(-1, blocks.size());
+    // Tag every emitted row with its source block as we go (cheap parallel append).
+    const auto tagLines = [&](int blockIdx) {
+        while (result.lineBlock.size() < out.size()) {
+            result.lineBlock.push_back(blockIdx);
+        }
+    };
+    for (int bi = 0; bi < blocks.size(); ++bi) {
+        const be::BlockRecord &b = blocks.at(bi);
         if (b.tombstoned) {
             continue;
         }
@@ -933,6 +941,10 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
         prevRole = b.role;
         prevType = b.type;
         first = false;
+
+        // First render row attributable to this block's body (after any header /
+        // turn-gap emitted above) - the anchor a find match scrolls to.
+        result.blockFirstLine[bi] = static_cast<int>(out.size());
 
         switch (b.type) {
         case be::BlockType::Reasoning:
@@ -996,6 +1008,8 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
             break;
         }
         }
+
+        tagLines(bi);
     }
 
     return result;
