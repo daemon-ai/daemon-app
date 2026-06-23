@@ -8,6 +8,7 @@ import DaemonApp.Theme
 import DaemonApp.Settings
 import DaemonApp.BlockEditor
 import DaemonApp.Turn
+import DaemonApp.Controls as Kit
 
 // Renders (and edits) the conversation's markdown as a virtualized column of
 // blocks via the ported BlockEditor engine. The host calls load() on conversation
@@ -460,6 +461,17 @@ Rectangle {
                 font.family: UiSettings.editorFontFamily !== "" ? UiSettings.editorFontFamily
                                                                 : FontIcons.mono
                 font.pixelSize: UiSettings.editorFontSize
+
+                // Themed right-click context menu (suppress Qt's default one).
+                ContextMenu.menu: null
+                TapHandler {
+                    acceptedButtons: Qt.RightButton
+                    onTapped: plainEditMenu.popup()
+                }
+                Kit.EditMenu {
+                    id: plainEditMenu
+                    target: plainText
+                }
 
                 onTextChanged: {
                     if (UiSettings.showPlainText && activeFocus)

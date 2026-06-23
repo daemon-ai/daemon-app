@@ -66,7 +66,12 @@ Item {
         onPressAndHold: root.pressedAndHold()
     }
 
-    ToolTip.text: root.tooltipText
-    ToolTip.delay: 500
-    ToolTip.visible: root.tooltipText.length > 0 && mouseArea.containsMouse
+    // Themed tooltip (the attached ToolTip would fall back to the bland Basic
+    // style). Centered just below the button.
+    Tooltip {
+        text: root.tooltipText
+        visible: root.tooltipText.length > 0 && mouseArea.containsMouse
+        x: Math.round((root.width - implicitWidth) / 2)
+        y: root.height + 6
+    }
 }

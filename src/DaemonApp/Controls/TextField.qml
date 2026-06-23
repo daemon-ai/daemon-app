@@ -55,4 +55,19 @@ QQC.TextField {
             PauseAnimation { duration: 500 }
         }
     }
+
+    // Themed right-click context menu. Suppress Qt 6.9+'s default Basic-styled
+    // ContextMenu and open our kit menu instead, so every Kit.TextField gets the
+    // app's editing menu for free.
+    QQC.ContextMenu.menu: null
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: editMenu.popup()
+    }
+
+    EditMenu {
+        id: editMenu
+        target: root
+    }
 }

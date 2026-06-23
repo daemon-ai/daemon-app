@@ -120,11 +120,11 @@ public:
     void setCurrentModelIndex(int index);
 
     [[nodiscard]] QString reasoningEffort() const { return m_reasoningEffort; }
-    void setReasoningEffort(const QString& effort);
+    Q_INVOKABLE void setReasoningEffort(const QString& effort);
     [[nodiscard]] bool fastMode() const { return m_fastMode; }
-    void setFastMode(bool on);
+    Q_INVOKABLE void setFastMode(bool on);
     [[nodiscard]] bool verbose() const { return m_verbose; }
-    void setVerbose(bool on);
+    Q_INVOKABLE void setVerbose(bool on);
 
     // Intents (mirror the QML composer's functions).
     Q_INVOKABLE void submit();        // Enter: send / save-edit / drain

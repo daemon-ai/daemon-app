@@ -50,7 +50,7 @@ Rectangle {
     }
 
     // --- Row actions (right-click): rename / pin / export / delete ----------
-    QQC.Menu {
+    Kit.Menu {
         id: rowMenu
         property int targetId: -1
         property bool targetPinned: false
@@ -61,41 +61,39 @@ Rectangle {
             popup();
         }
 
-        QQC.MenuItem {
+        Kit.MenuItem {
             text: qsTr("Rename\u2026")
             onTriggered: renameDialog.openFor(rowMenu.targetId)
         }
-        QQC.MenuItem {
+        Kit.MenuItem {
             text: rowMenu.targetPinned ? qsTr("Unpin") : qsTr("Pin")
             onTriggered: ConversationStore.setPinned(rowMenu.targetId, !rowMenu.targetPinned)
         }
-        QQC.MenuItem {
+        Kit.MenuItem {
             text: qsTr("Move up")
             onTriggered: ConversationStore.moveConversation(rowMenu.targetId, -1)
         }
-        QQC.MenuItem {
+        Kit.MenuItem {
             text: qsTr("Move down")
             onTriggered: ConversationStore.moveConversation(rowMenu.targetId, 1)
         }
-        QQC.MenuItem {
+        Kit.MenuItem {
             text: qsTr("Export\u2026")
             onTriggered: exportDialog.openFor(rowMenu.targetId)
         }
-        QQC.MenuSeparator {}
-        QQC.MenuItem {
+        Kit.MenuSeparator {}
+        Kit.MenuItem {
             text: qsTr("Delete")
             onTriggered: deleteDialog.openFor(rowMenu.targetId)
         }
     }
 
-    QQC.Dialog {
+    Kit.Dialog {
         id: renameDialog
         property int targetId: -1
         title: qsTr("Rename conversation")
-        modal: true
-        anchors.centerIn: QQC.Overlay.overlay
         width: 380
-        standardButtons: QQC.Dialog.Ok | QQC.Dialog.Cancel
+        acceptText: qsTr("Rename")
 
         function openFor(conversationId) {
             renameDialog.targetId = conversationId;
@@ -116,14 +114,13 @@ Rectangle {
         }
     }
 
-    QQC.Dialog {
+    Kit.Dialog {
         id: deleteDialog
         property int targetId: -1
         title: qsTr("Delete conversation")
-        modal: true
-        anchors.centerIn: QQC.Overlay.overlay
         width: 360
-        standardButtons: QQC.Dialog.Yes | QQC.Dialog.No
+        acceptText: qsTr("Delete")
+        destructive: true
 
         function openFor(conversationId) {
             deleteDialog.targetId = conversationId;

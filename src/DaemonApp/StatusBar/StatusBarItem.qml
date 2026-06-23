@@ -117,7 +117,12 @@ Item {
         onClicked: function(mouse) { root.clicked(mouse.modifiers); }
     }
 
-    QQC.ToolTip.text: root.tooltipText
-    QQC.ToolTip.delay: 500
-    QQC.ToolTip.visible: root.tooltipText.length > 0 && root.hovered
+    // Themed tooltip (avoids the bland Basic-styled attached ToolTip). Shown
+    // above the item since the status bar sits at the bottom of the window.
+    Kit.Tooltip {
+        text: root.tooltipText
+        visible: root.tooltipText.length > 0 && root.hovered
+        x: Math.round((root.width - implicitWidth) / 2)
+        y: -implicitHeight - 6
+    }
 }

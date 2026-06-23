@@ -134,6 +134,7 @@ target_link_libraries(da_blockeditor
         be_diagram
         daemon-app::theme
         daemon-app::settings
+        daemon-app::controls
         # MicroTeX LaTeX math renderer (tex::LaTeX / tex::Graphics2D_qt), used by
         # the MathImageProvider to rasterize formulas into QImages.
         LaTeX

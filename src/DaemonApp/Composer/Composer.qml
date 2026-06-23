@@ -356,6 +356,18 @@ Rectangle {
                             background: null
                             enabled: root.composerEnabled
 
+                            // Themed right-click context menu (suppress Qt's
+                            // default Basic-styled one and open the kit menu).
+                            QQC.ContextMenu.menu: null
+                            TapHandler {
+                                acceptedButtons: Qt.RightButton
+                                onTapped: composerEditMenu.popup()
+                            }
+                            Kit.EditMenu {
+                                id: composerEditMenu
+                                target: inputArea
+                            }
+
                             // Push live edits into the controller (it guards
                             // against echoing the value back), then refresh the
                             // completion trigger. The controller is the source of

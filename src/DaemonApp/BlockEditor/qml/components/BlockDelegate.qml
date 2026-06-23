@@ -3,6 +3,7 @@ import QtQuick.Controls
 
 import DaemonApp.Theme
 import DaemonApp.Settings
+import DaemonApp.Controls as Kit
 
 Item {
     id: root
@@ -323,6 +324,17 @@ Item {
                             selectedTextColor: Theme.selectionText
                             font.family: editRoot.bodyFamily
                             font.pixelSize: Theme.bodyFontSize
+
+                            // Themed right-click context menu (suppress Qt's default).
+                            ContextMenu.menu: null
+                            TapHandler {
+                                acceptedButtons: Qt.RightButton
+                                onTapped: editAreaMenu.popup()
+                            }
+                            Kit.EditMenu {
+                                id: editAreaMenu
+                                target: editArea
+                            }
 
                             Component.onCompleted: {
                                 if (root.editorController)

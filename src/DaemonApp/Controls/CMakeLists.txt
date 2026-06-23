@@ -13,6 +13,11 @@ qt_add_qml_module(da_controls
         ThemeSwatch.qml
         Switch.qml
         Dropdown.qml
+        Menu.qml
+        MenuItem.qml
+        MenuSeparator.qml
+        EditMenu.qml
+        Dialog.qml
 )
 add_library(daemon-app::controls ALIAS da_controls)
 

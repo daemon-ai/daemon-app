@@ -51,6 +51,8 @@ QQC.Popup {
             font.pixelSize: 14
             color: Theme.text
             selectByMouse: true
+            // No themed edit menu on a transient filter; just suppress Qt's default.
+            QQC.ContextMenu.menu: null
             background: Rectangle {
                 color: Theme.surfaceRaised
                 border.color: filter.activeFocus ? Theme.accent : Theme.border

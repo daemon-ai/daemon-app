@@ -49,6 +49,8 @@ QQC.Popup {
             font.pixelSize: 12
             color: Theme.text
             selectByMouse: true
+            // No themed edit menu on a transient filter; just suppress Qt's default.
+            QQC.ContextMenu.menu: null
             background: Rectangle {
                 color: Theme.surfaceRaised
                 border.color: filterField.activeFocus ? Theme.accent : Theme.border
@@ -232,23 +234,50 @@ QQC.Popup {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
-                QQC.CheckBox {
-                    text: qsTr("Fast")
-                    checked: root.session ? root.session.fastMode : false
-                    font.family: FontIcons.display
-                    font.pixelSize: 11
-                    onToggled: if (root.session) root.session.setFastMode(checked)
+                spacing: 6
+                TogglePill {
+                    label: qsTr("Fast")
+                    active: root.session ? root.session.fastMode : false
+                    onToggled: if (root.session) root.session.setFastMode(!root.session.fastMode)
                 }
-                QQC.CheckBox {
-                    text: qsTr("Verbose")
-                    checked: root.session ? root.session.verbose : false
-                    font.family: FontIcons.display
-                    font.pixelSize: 11
-                    onToggled: if (root.session) root.session.setVerbose(checked)
+                TogglePill {
+                    label: qsTr("Verbose")
+                    active: root.session ? root.session.verbose : false
+                    onToggled: if (root.session) root.session.setVerbose(!root.session.verbose)
                 }
                 Item { Layout.fillWidth: true }
             }
+        }
+    }
+
+    // A boolean toggle styled like the reasoning-effort segments above it
+    // (accent fill when on), so the modes footer reads as one cohesive control.
+    component TogglePill: Rectangle {
+        id: pill
+        property string label: ""
+        property bool active: false
+        signal toggled()
+
+        implicitWidth: pillLabel.implicitWidth + 18
+        implicitHeight: 20
+        radius: 4
+        color: active ? Theme.accent : Theme.surfaceRaised
+        border.color: active ? Theme.accent : Theme.border
+        border.width: 1
+
+        QQC.Label {
+            id: pillLabel
+            anchors.centerIn: parent
+            text: pill.label
+            font.family: FontIcons.display
+            font.pixelSize: 10
+            color: pill.active ? Theme.background : Theme.text
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: pill.toggled()
         }
     }
 }

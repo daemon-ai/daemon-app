@@ -234,14 +234,12 @@ Rectangle {
     // --- Session-action dialogs (rename + export) ---------------------------
     // Rename the conversation via the store. openFor(id) seeds the field with the
     // current title and remembers the target id.
-    QQC.Dialog {
+    Kit.Dialog {
         id: renameDialog
         property int targetId: -1
         title: qsTr("Rename conversation")
-        modal: true
-        anchors.centerIn: QQC.Overlay.overlay
         width: 380
-        standardButtons: QQC.Dialog.Ok | QQC.Dialog.Cancel
+        acceptText: qsTr("Rename")
 
         function openFor(conversationId) {
             renameDialog.targetId = conversationId;

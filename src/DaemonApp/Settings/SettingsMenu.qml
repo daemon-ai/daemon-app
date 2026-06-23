@@ -249,15 +249,14 @@ QQC.Popup {
         }
     }
 
-    QQC.Dialog {
+    Kit.Dialog {
         id: resetDialog
-        anchors.centerIn: QQC.Overlay.overlay
         // Explicit width: a wrapping Text contentItem would otherwise feed its
         // implicitWidth back into the Dialog's implicitWidth (binding loop).
         width: 300
-        modal: true
         title: qsTr("Reset settings?")
-        standardButtons: QQC.Dialog.Yes | QQC.Dialog.Cancel
+        acceptText: qsTr("Reset")
+        destructive: true
 
         contentItem: Text {
             width: resetDialog.availableWidth
@@ -266,12 +265,6 @@ QQC.Popup {
             color: Theme.text
             font.family: FontIcons.display
             font.pixelSize: 13
-        }
-
-        background: Rectangle {
-            color: Theme.background
-            border.color: Theme.border
-            radius: Theme.radius
         }
 
         onAccepted: {

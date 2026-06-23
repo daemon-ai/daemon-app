@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
+import DaemonApp.Controls as Kit
 
 // A placeholder toolbar button for the conversation header: a rounded
 // hover/pressed background with centered content (one or more glyphs/labels),
@@ -44,7 +45,11 @@ Item {
         onClicked: root.clicked()
     }
 
-    QQC.ToolTip.text: root.tooltipText
-    QQC.ToolTip.delay: 500
-    QQC.ToolTip.visible: root.tooltipText.length > 0 && mouse.containsMouse
+    // Themed tooltip (avoids the bland Basic-styled attached ToolTip).
+    Kit.Tooltip {
+        text: root.tooltipText
+        visible: root.tooltipText.length > 0 && mouse.containsMouse
+        x: Math.round((root.width - implicitWidth) / 2)
+        y: root.height + 6
+    }
 }

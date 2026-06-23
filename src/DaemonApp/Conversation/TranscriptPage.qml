@@ -249,13 +249,12 @@ Rectangle {
 
     // --- HITL surfaces ------------------------------------------------------
     // Destructive-confirm before clearing the conversation (/clear).
-    QQC.Dialog {
+    Kit.Dialog {
         id: clearConfirmDialog
         title: qsTr("Clear conversation")
-        modal: true
-        anchors.centerIn: QQC.Overlay.overlay
         width: 360
-        standardButtons: QQC.Dialog.Yes | QQC.Dialog.No
+        acceptText: qsTr("Clear")
+        destructive: true
         onAccepted: controller.updateContent("")
         contentItem: QQC.Label {
             text: qsTr("Remove all messages from this conversation? This cannot be undone.")
@@ -268,16 +267,14 @@ Rectangle {
 
     // Masked host-input prompt (sudo password / secret). A UI shell answered by
     // the mock turn via resume(); the daemon's host channel replaces it later.
-    QQC.Dialog {
+    Kit.Dialog {
         id: maskedPrompt
         property string kind: "password"
         property string promptText: ""
         title: kind === "secret" ? qsTr("Secret required") : qsTr("Password required")
-        modal: true
         closePolicy: QQC.Popup.NoAutoClose
-        anchors.centerIn: QQC.Overlay.overlay
         width: 420
-        standardButtons: QQC.Dialog.Ok | QQC.Dialog.Cancel
+        acceptText: qsTr("Submit")
 
         onAccepted: orchestrator.turn.resume()
         onRejected: orchestrator.cancel()

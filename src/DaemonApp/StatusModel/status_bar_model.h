@@ -98,10 +98,10 @@ public:
     void setGatewayState(const QString& state);
     void setAgentsRunning(int n);
     void setAgentsFailed(int n);
-    void setBusy(bool busy);
-    void setTurnStartedAt(double ms);
-    void setSessionStartedAt(double ms);
-    void setContextUsed(int n);
+    Q_INVOKABLE void setBusy(bool busy);
+    Q_INVOKABLE void setTurnStartedAt(double ms);
+    Q_INVOKABLE void setSessionStartedAt(double ms);
+    Q_INVOKABLE void setContextUsed(int n);
     void setContextMax(int n);
     void setTokensIn(int n);
     void setTokensOut(int n);

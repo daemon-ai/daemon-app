@@ -8,6 +8,9 @@ QQC.Button {
     id: root
 
     property bool accentFilled: false
+    // Fill color used when accentFilled (defaults to the accent; set to a danger
+    // token for destructive primary actions).
+    property color fillColor: Theme.accent
 
     font.family: FontIcons.display
     font.pixelSize: 14
@@ -30,7 +33,7 @@ QQC.Button {
         radius: Theme.radius
         color: {
             if (root.accentFilled)
-                return root.enabled ? (root.down ? Qt.darker(Theme.accent, 1.15) : Theme.accent)
+                return root.enabled ? (root.down ? Qt.darker(root.fillColor, 1.15) : root.fillColor)
                                     : Theme.hover;
             return root.down ? Theme.pressed : root.hovered ? Theme.hover : "transparent";
         }
