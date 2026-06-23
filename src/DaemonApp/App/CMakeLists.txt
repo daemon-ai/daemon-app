@@ -25,6 +25,18 @@ target_link_libraries(daemon-app
         daemon-app::platform
         daemon-app::command
         daemon-app::export
+        daemon-app::settings_store
+        daemon-app::connection
+        daemon-app::nav
+        daemon-app::firstrun
+        daemon-app::config
+        daemon-app::uimodels
+        daemon-app::models
+        daemon-app::accounts
+        daemon-app::profiles
+        daemon-app::fleet
+        daemon-app::automation
+        daemon-app::session
         # Feature QML modules: backing libs (C++ types) + their STATIC plugins.
         # The plugins must be linked explicitly (shared Qt build); main.cpp also
         # references them via Q_IMPORT_QML_PLUGIN so they aren't dead-stripped.
@@ -43,6 +55,7 @@ target_link_libraries(daemon-app
         daemon-app::transcript
         daemon-app::composer
         daemon-app::settings
+        daemon-app::pages
         daemon-app::statusbar
         da_presentationplugin
         da_theme_coreplugin
@@ -59,6 +72,7 @@ target_link_libraries(daemon-app
         da_transcriptplugin
         da_composerplugin
         da_settingsplugin
+        da_pagesplugin
         da_statusbarplugin
         # KSyntaxHighlighting C++ engine. Linking it here builds the framework as a
         # dependency, records its shared lib on the executable rpath, and ensures

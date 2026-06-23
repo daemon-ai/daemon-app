@@ -175,6 +175,7 @@ Q_IMPORT_QML_PLUGIN(DaemonApp_TabsPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_TranscriptPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ComposerPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_SettingsPlugin)
+Q_IMPORT_QML_PLUGIN(DaemonApp_PagesPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_StatusBarPlugin)
 
 int main(int argc, char* argv[])
@@ -225,6 +226,19 @@ int main(int argc, char* argv[])
     }
 
     application.completeWiring(engine);
+
+    // Guarded: open an app-level page overlay before rendering shots, so a
+    // manager/settings surface can be screenshotted offscreen. No-op normally.
+    const QByteArray pageEnv = qgetenv("DAEMON_APP_RENDER_PAGE");
+    if (!pageEnv.isEmpty()) {
+        const QString spec = QString::fromLocal8Bit(pageEnv);
+        const qsizetype slash = spec.indexOf(QLatin1Char('/'));
+        if (slash >= 0) {
+            application.openPageForShots(spec.left(slash), spec.mid(slash + 1));
+        } else {
+            application.openPageForShots(spec);
+        }
+    }
 
     if (maybeRenderThemeShots(engine)) {
         return 0;

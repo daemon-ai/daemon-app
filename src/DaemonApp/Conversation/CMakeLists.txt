@@ -30,5 +30,6 @@ target_link_libraries(da_conversation
         daemon-app::transcript
         daemon-app::composer
         daemon-app::turn
+        daemon-app::pages
         daemon-app::warnings
 )

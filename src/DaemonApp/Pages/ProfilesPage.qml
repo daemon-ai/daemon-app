@@ -1,0 +1,110 @@
+import QtQuick
+import QtQuick.Controls as QQC
+import QtQuick.Layouts
+import DaemonApp.Theme
+import DaemonApp.Controls as Kit
+
+// Profiles/agents manager: a master list of profiles on the left (with New) and
+// the editor + Skills/tools curator on the right.
+Item {
+    id: root
+
+    property string selectedId: Profiles.defaultProfileId
+
+    PageHeader {
+        id: header
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        title: qsTr("Profiles")
+        icon: FontIcons.fa_users
+    }
+
+    RowLayout {
+        anchors.top: header.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        spacing: 0
+
+        // --- Master list ---------------------------------------------------
+        Rectangle {
+            Layout.preferredWidth: 240
+            Layout.fillHeight: true
+            color: Theme.surface
+            border.color: Theme.border
+            border.width: 1
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 8
+
+                Kit.TextButton {
+                    Layout.fillWidth: true
+                    text: qsTr("+ New profile")
+                    accentFilled: true
+                    onClicked: root.selectedId = Profiles.createProfile(qsTr("New profile"))
+                }
+
+                ListView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    model: Profiles.profiles
+                    spacing: 4
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    delegate: Rectangle {
+                        required property var entry
+                        width: ListView.view.width
+                        height: 46
+                        radius: 6
+                        color: entry.id === root.selectedId ? Theme.hover : "transparent"
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            spacing: 1
+                            RowLayout {
+                                spacing: 6
+                                Text {
+                                    text: entry.name
+                                    font.family: FontIcons.display; font.pixelSize: 13
+                                    color: Theme.text; elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+                                Text {
+                                    visible: entry.isDefault === true
+                                    text: FontIcons.fa_star
+                                    font.family: FontIcons.faSolid; font.pixelSize: 10
+                                    color: Theme.accent
+                                }
+                            }
+                            Text {
+                                text: entry.model
+                                font.family: FontIcons.mono; font.pixelSize: 10
+                                color: Theme.textMuted; elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.selectedId = entry.id
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Editor --------------------------------------------------------
+        ProfileEditor {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            profileId: root.selectedId
+            onDeleted: root.selectedId = Profiles.defaultProfileId
+        }
+    }
+}

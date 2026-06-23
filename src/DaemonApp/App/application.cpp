@@ -3,9 +3,25 @@
 #include "app/cached_image_provider.h"
 #include "app/image_cache.h"
 #include "app/math_image_provider.h"
-#include "persistence/in_memory_conversation_store.h"
+#include "persistence/sqlite_conversation_store.h"
 #include "platform/iplatform_services.h"
 #include "platform/platform_services_factory.h"
+#include "config/mock_daemon_config.h"
+#include "connection/mock_connection_service.h"
+#include "accounts/mock_accounts_service.h"
+#include "automation/mock_cron_store.h"
+#include "automation/mock_routing_store.h"
+#include "fleet/mock_approvals_inbox.h"
+#include "fleet/mock_dashboard.h"
+#include "fleet/mock_fleet_tree.h"
+#include "fleet/mock_session_roster.h"
+#include "models/mock_model_catalog.h"
+#include "profiles/mock_profile_store.h"
+#include "session/mock_checkpoint_timeline.h"
+#include "session/mock_session_settings.h"
+#include "firstrun/first_run_model.h"
+#include "nav/nav_controller.h"
+#include "settings/qt_settings_store.h"
 #include "command_registry.h"
 #include "status_bar_model.h"
 #include "transcript_exporter.h"
@@ -22,12 +38,33 @@
 
 Application::Application(QObject* parent)
     : QObject(parent)
-    , m_store(new persistence::InMemoryConversationStore(this))
+    , m_store(new persistence::SqliteConversationStore(QString(), this))
     , m_platform(platform::createPlatformServices(this))
     , m_status(new StatusBarModel(this))
     , m_commands(new CommandRegistry(this))
     , m_exporter(new TranscriptExporter(this))
+    , m_settings(new settings::QtSettingsStore(this))
+    , m_connection(new connection::MockConnectionService(this))
+    , m_nav(new nav::NavController(this))
+    , m_firstRun(new firstrun::FirstRunModel(m_settings, m_connection, this))
+    , m_daemonConfig(new config::MockDaemonConfig(this))
+    , m_modelCatalog(new models::MockModelCatalog(this))
+    , m_accounts(new accounts::MockAccountsService(this))
+    , m_profiles(new profiles::MockProfileStore(this))
+    , m_roster(new fleet::MockSessionRoster(this))
+    , m_fleetTree(new fleet::MockFleetTree(this))
+    , m_approvals(new fleet::MockApprovalsInbox(this))
+    , m_dashboard(new fleet::MockDashboard(m_roster, m_fleetTree, m_approvals, this))
+    , m_routing(new automation::MockRoutingStore(this))
+    , m_cron(new automation::MockCronStore(this))
+    , m_sessionSettings(new session::MockSessionSettings(this))
+    , m_checkpoints(new session::MockCheckpointTimeline(this))
 {
+    // The connection seam owns liveness; mirror its state into the footer's
+    // gateway indicator (the single surface for connection state).
+    connect(m_connection, &connection::IConnectionService::stateChanged, this,
+            [this] { m_status->setGatewayState(m_connection->state()); });
+
     // MicroTeX loads its fonts/XML resources once; the path is baked in at build
     // time (MICROTEX_RES_DIR). Done here so the "math" image provider can parse
     // formulas as soon as the scene requests them.
@@ -63,6 +100,48 @@ void Application::registerContext(QQmlApplicationEngine& engine)
     // Transcript exporter (the /save + session "Export" action).
     engine.rootContext()->setContextProperty(QStringLiteral("Exporter"), m_exporter);
 
+    // Shared client-local preference store (setupComplete, last connection, ...).
+    engine.rootContext()->setContextProperty(QStringLiteral("AppSettings"), m_settings);
+
+    // Connection seam: the first-run gate + Connection settings drive it; the
+    // footer reads its liveness via the StatusBarModel mirror wired above.
+    engine.rootContext()->setContextProperty(QStringLiteral("Connection"), m_connection);
+
+    // App-level page navigation: Main.qml mounts the active manager/settings page
+    // as an overlay bound to Nav.page.
+    engine.rootContext()->setContextProperty(QStringLiteral("Nav"), m_nav);
+
+    // First-run / onboarding gate: Main.qml mounts it over the shell until setup
+    // completes. Compute the initial phase from persisted setupComplete now.
+    engine.rootContext()->setContextProperty(QStringLiteral("FirstRun"), m_firstRun);
+    m_firstRun->begin();
+
+    // Daemon-authoritative config facade (mock) backing the settings sections.
+    engine.rootContext()->setContextProperty(QStringLiteral("DaemonConfig"), m_daemonConfig);
+
+    // Model catalog facade (mock) backing the Models hub.
+    engine.rootContext()->setContextProperty(QStringLiteral("ModelCatalog"), m_modelCatalog);
+
+    // Accounts/auth facade (mock) backing the Accounts manager + wizard.
+    engine.rootContext()->setContextProperty(QStringLiteral("Accounts"), m_accounts);
+
+    // Profiles/agents facade (mock) backing the profile editor + curator.
+    engine.rootContext()->setContextProperty(QStringLiteral("Profiles"), m_profiles);
+
+    // Fleet/ops facades (mock) backing the dashboard / fleet / sessions / approvals.
+    engine.rootContext()->setContextProperty(QStringLiteral("SessionRoster"), m_roster);
+    engine.rootContext()->setContextProperty(QStringLiteral("FleetTree"), m_fleetTree);
+    engine.rootContext()->setContextProperty(QStringLiteral("Approvals"), m_approvals);
+    engine.rootContext()->setContextProperty(QStringLiteral("Dashboard"), m_dashboard);
+
+    // Automation facades (mock) backing the routing matrix + cron manager.
+    engine.rootContext()->setContextProperty(QStringLiteral("Routing"), m_routing);
+    engine.rootContext()->setContextProperty(QStringLiteral("Cron"), m_cron);
+
+    // Per-session override + checkpoint facades (mock) backing the composer popovers.
+    engine.rootContext()->setContextProperty(QStringLiteral("SessionSettings"), m_sessionSettings);
+    engine.rootContext()->setContextProperty(QStringLiteral("Checkpoints"), m_checkpoints);
+
     // Notifier seam: QML binds the active turn's awaitingInput signal to
     // App.notifyGate(...) to raise an OS notification when the window is hidden.
     engine.rootContext()->setContextProperty(QStringLiteral("App"), this);
@@ -74,6 +153,11 @@ void Application::registerContext(QQmlApplicationEngine& engine)
 
     // LaTeX math: image://math/<payload> requests are rasterized by MicroTeX.
     engine.addImageProvider(QStringLiteral("math"), new be::app::MathImageProvider);
+}
+
+void Application::openPageForShots(const QString& page, const QString& section)
+{
+    m_nav->open(page, section);
 }
 
 void Application::completeWiring(QQmlApplicationEngine& engine)
@@ -117,6 +201,16 @@ void Application::completeWiring(QQmlApplicationEngine& engine)
         m_window = window;
         QGuiApplication::setQuitOnLastWindowClosed(false);
         window->installEventFilter(this);
+    }
+
+    // Returning users (setup already complete) auto-open the saved connection so
+    // the footer gateway indicator reflects liveness. On first launch the
+    // onboarding connection picker drives connectTo instead.
+    if (m_settings->setupComplete()) {
+        m_connection->connectTo(m_settings->lastConnectionMode(),
+                                m_settings->lastConnectionTarget().isEmpty()
+                                    ? QStringLiteral("/run/daemon.sock")
+                                    : m_settings->lastConnectionTarget());
     }
 }
 

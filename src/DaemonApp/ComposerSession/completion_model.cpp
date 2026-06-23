@@ -36,6 +36,28 @@ const QList<CompletionModel::Item>& slashCommands()
           QStringLiteral("Command"), QStringLiteral("/compress"), QStringLiteral("compress") },
         { QStringLiteral("/help"), QObject::tr("Open the command palette"),
           QStringLiteral("Command"), QStringLiteral("/help"), QStringLiteral("help") },
+        // Navigation: open an app-level manager page (mirrors the palette's
+        // "Navigation" group; the host routes the action to the Nav seam).
+        { QStringLiteral("/settings"), QObject::tr("Open settings"),
+          QStringLiteral("Go to"), QStringLiteral("/settings"), QStringLiteral("settings") },
+        { QStringLiteral("/dashboard"), QObject::tr("Open the dashboard"),
+          QStringLiteral("Go to"), QStringLiteral("/dashboard"), QStringLiteral("dashboard") },
+        { QStringLiteral("/models"), QObject::tr("Open the models hub"),
+          QStringLiteral("Go to"), QStringLiteral("/models"), QStringLiteral("models") },
+        { QStringLiteral("/accounts"), QObject::tr("Open accounts"),
+          QStringLiteral("Go to"), QStringLiteral("/accounts"), QStringLiteral("accounts") },
+        { QStringLiteral("/profiles"), QObject::tr("Open profiles"),
+          QStringLiteral("Go to"), QStringLiteral("/profiles"), QStringLiteral("profiles") },
+        { QStringLiteral("/fleet"), QObject::tr("Open the fleet view"),
+          QStringLiteral("Go to"), QStringLiteral("/fleet"), QStringLiteral("fleet") },
+        { QStringLiteral("/sessions"), QObject::tr("Open the sessions roster"),
+          QStringLiteral("Go to"), QStringLiteral("/sessions"), QStringLiteral("sessions") },
+        { QStringLiteral("/approvals"), QObject::tr("Open the approvals inbox"),
+          QStringLiteral("Go to"), QStringLiteral("/approvals"), QStringLiteral("approvals") },
+        { QStringLiteral("/routing"), QObject::tr("Open the routing matrix"),
+          QStringLiteral("Go to"), QStringLiteral("/routing"), QStringLiteral("routing") },
+        { QStringLiteral("/cron"), QObject::tr("Open scheduled jobs"),
+          QStringLiteral("Go to"), QStringLiteral("/cron"), QStringLiteral("cron") },
     };
     return pool;
 }

@@ -71,6 +71,7 @@ QtObject {
     readonly property string fa_box_archive: "\uf187"
     readonly property string fa_paper_plane: "\uf1d8"
     readonly property string fa_user: "\uf007"
+    readonly property string fa_users: "\uf0c0"
 
     // Agent-tree node-kind glyphs (cosmetic; one per AgentNodeKind).
     readonly property string fa_robot: "\uf544"   // engine / agent leaf
@@ -87,6 +88,9 @@ QtObject {
     // clarify prompt + image-result download affordances.
     readonly property string fa_circle_question: "\uf059"
     readonly property string fa_download: "\uf019"
+    // Download-job transport controls (Models hub Downloads tab).
+    readonly property string fa_play: "\uf04b"
+    readonly property string fa_pause: "\uf04c"
     // Message footer actions (copy reuses fa_copy above): regenerate/reload and
     // the branch picker prev/next carets.
     readonly property string fa_rotate: "\uf2f1"

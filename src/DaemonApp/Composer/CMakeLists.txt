@@ -14,6 +14,8 @@ qt_add_qml_module(da_composer
         QueuePanel.qml
         TodoList.qml
         SubagentList.qml
+        SessionSettingsPopover.qml
+        CheckpointsPopover.qml
 )
 add_library(daemon-app::composer ALIAS da_composer)
 

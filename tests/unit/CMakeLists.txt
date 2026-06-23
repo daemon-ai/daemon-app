@@ -13,6 +13,127 @@ add_test(NAME tst_fonts COMMAND tst_fonts)
 # QRawFont needs a platform integration; run headless in CI.
 set_tests_properties(tst_fonts PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_settings_store: the shared client-local preference store (Phase 0) - typed
+# get/set defaults, setupComplete + last-connection convenience accessors, change
+# signalling, and write de-duplication.
+qt_add_executable(tst_settings_store tst_settings_store.cpp)
+target_link_libraries(tst_settings_store
+    PRIVATE
+        Qt6::Test
+        daemon-app::settings_store
+)
+add_test(NAME tst_settings_store COMMAND tst_settings_store)
+set_tests_properties(tst_settings_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_connection_service: the mock connection seam's liveness state machine
+# (checking -> connecting -> ready / offline), the Test-connection probe, and
+# disconnect, all driven on QTimers.
+qt_add_executable(tst_connection_service tst_connection_service.cpp)
+target_link_libraries(tst_connection_service
+    PRIVATE
+        Qt6::Test
+        daemon-app::connection
+)
+add_test(NAME tst_connection_service COMMAND tst_connection_service)
+set_tests_properties(tst_connection_service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_first_run_model: the shared onboarding gate (Phase 1) - fresh install
+# starts at connect, a good connection advances to inference, completeInference
+# finishes + persists setupComplete, and a returning user boots straight to done.
+qt_add_executable(tst_first_run_model tst_first_run_model.cpp)
+target_link_libraries(tst_first_run_model
+    PRIVATE
+        Qt6::Test
+        daemon-app::firstrun
+        daemon-app::connection
+        daemon-app::settings_store
+)
+add_test(NAME tst_first_run_model COMMAND tst_first_run_model)
+set_tests_properties(tst_first_run_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_daemon_config: the Phase 2 daemon-config facade mock - seeded defaults,
+# enumerated options, typed round-trip, and change signalling/dedup.
+qt_add_executable(tst_daemon_config tst_daemon_config.cpp)
+target_link_libraries(tst_daemon_config
+    PRIVATE
+        Qt6::Test
+        daemon-app::config
+)
+add_test(NAME tst_daemon_config COMMAND tst_daemon_config)
+set_tests_properties(tst_daemon_config PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_model_catalog: the Phase 3 Models hub mock - search/size filter, a download
+# that ticks to completion into Installed, activate (current), and remove.
+qt_add_executable(tst_model_catalog tst_model_catalog.cpp)
+target_link_libraries(tst_model_catalog
+    PRIVATE
+        Qt6::Test
+        daemon-app::models
+        daemon-app::uimodels
+)
+add_test(NAME tst_model_catalog COMMAND tst_model_catalog)
+set_tests_properties(tst_model_catalog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_accounts_service: the Phase 4 accounts mock - seeded accounts, masked
+# API-key add, the simulated OAuth round-trip (pending -> connected), and removal.
+qt_add_executable(tst_accounts_service tst_accounts_service.cpp)
+target_link_libraries(tst_accounts_service
+    PRIVATE
+        Qt6::Test
+        daemon-app::accounts
+        daemon-app::uimodels
+)
+add_test(NAME tst_accounts_service COMMAND tst_accounts_service)
+set_tests_properties(tst_accounts_service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_profile_store: the Phase 5 profiles mock - seeded profiles + catalogs,
+# create, field/skill update, exclusive default, and remove default-reassignment.
+qt_add_executable(tst_profile_store tst_profile_store.cpp)
+target_link_libraries(tst_profile_store
+    PRIVATE
+        Qt6::Test
+        daemon-app::profiles
+        daemon-app::uimodels
+)
+add_test(NAME tst_profile_store COMMAND tst_profile_store)
+set_tests_properties(tst_profile_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_fleet_ops: the Phase 6 ops mocks - roster state transitions, fleet
+# pause/resume, approvals resolve, and the dashboard's derived live counters.
+qt_add_executable(tst_fleet_ops tst_fleet_ops.cpp)
+target_link_libraries(tst_fleet_ops
+    PRIVATE
+        Qt6::Test
+        daemon-app::fleet
+        daemon-app::uimodels
+)
+add_test(NAME tst_fleet_ops COMMAND tst_fleet_ops)
+set_tests_properties(tst_fleet_ops PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_automation: the Phase 7 routing + cron mocks - routing target/enable edits
+# and add/remove; cron create/update/runNow/enable/remove.
+qt_add_executable(tst_automation tst_automation.cpp)
+target_link_libraries(tst_automation
+    PRIVATE
+        Qt6::Test
+        daemon-app::automation
+        daemon-app::uimodels
+)
+add_test(NAME tst_automation COMMAND tst_automation)
+set_tests_properties(tst_automation PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_session: the Phase 8 composer seams - per-session overrides (dedup'd
+# change signal) and the checkpoint timeline (restore truncates + sets current).
+qt_add_executable(tst_session tst_session.cpp)
+target_link_libraries(tst_session
+    PRIVATE
+        Qt6::Test
+        daemon-app::session
+        daemon-app::uimodels
+)
+add_test(NAME tst_session COMMAND tst_session)
+set_tests_properties(tst_session PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_theme_palette: locks the shared theme token table (da_theme_core) - the
 # single source of truth backing both Theme.qml and the TUI's tui_palette. The
 # canonical per-theme hexes mirror tests/qml/theme/tst_theme.qml.
@@ -37,6 +158,19 @@ target_link_libraries(tst_store
 
 add_test(NAME tst_store COMMAND tst_store)
 set_tests_properties(tst_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_conversation_store_sqlite: the durable SQLite conversation store - a fresh
+# database seeds the demo data, and mutations (create/rename/content/pin/archive/
+# delete + the id counters) survive closing and reopening the same file.
+qt_add_executable(tst_conversation_store_sqlite tst_conversation_store_sqlite.cpp)
+target_link_libraries(tst_conversation_store_sqlite
+    PRIVATE
+        Qt6::Test
+        daemon-app::domain
+        daemon-app::persistence
+)
+add_test(NAME tst_conversation_store_sqlite COMMAND tst_conversation_store_sqlite)
+set_tests_properties(tst_conversation_store_sqlite PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_sidebar_model: exercises the flattened agent-tree sidebar model - recursive
 # depths, tree roles, expand/collapse, and node-scope selection.
@@ -130,6 +264,8 @@ target_link_libraries(tst_composer_session
     PRIVATE
         Qt6::Test
         daemon-app::composer_session
+        daemon-app::models
+        daemon-app::uimodels
 )
 add_test(NAME tst_composer_session COMMAND tst_composer_session)
 set_tests_properties(tst_composer_session PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

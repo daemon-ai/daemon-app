@@ -360,59 +360,55 @@ Rectangle {
         }
     }
 
-    // --- Theme switcher popup (opened by the cog) ---------------------------
-    QQC.Popup {
+    // --- Settings/manager page menu (opened by the cog) ---------------------
+    // Every app-level page is reachable here; each item asks the shared Nav bus to
+    // open that page as a tab (Theme now lives in Settings -> Appearance).
+    Kit.Menu {
         id: settingsMenu
         x: parent.width - width - 3
         y: 31
-        padding: Theme.spacingSmall
-        modal: false
-        focus: true
 
-        background: Rectangle {
-            color: Theme.background
-            border.color: Theme.border
-            radius: Theme.radius
+        Kit.MenuItem {
+            text: qsTr("Settings")
+            onTriggered: Nav.open("settings")
         }
-
-        contentItem: ColumnLayout {
-            spacing: Theme.spacingSmall
-
-            QQC.Label {
-                text: qsTr("Theme")
-                color: Theme.textMuted
-                font.family: FontIcons.display
-                font.pixelSize: Theme.labelSize
-                font.weight: Font.DemiBold
-                font.letterSpacing: Theme.labelTracking
-                font.capitalization: Font.AllUppercase
-                Layout.leftMargin: Theme.spacingSmall
-            }
-
-            Grid {
-                columns: 2
-                spacing: 0
-                Kit.ThemeSwatch {
-                    themeName: qsTr("Light"); chipColor: Theme.chipLight
-                    selected: Theme.theme === "Light"
-                    onPicked: Theme.setTheme("Light")
-                }
-                Kit.ThemeSwatch {
-                    themeName: qsTr("Dark"); chipColor: Theme.chipDark
-                    selected: Theme.theme === "Dark"
-                    onPicked: Theme.setTheme("Dark")
-                }
-                Kit.ThemeSwatch {
-                    themeName: qsTr("Sepia"); chipColor: Theme.chipSepia
-                    selected: Theme.theme === "Sepia"
-                    onPicked: Theme.setTheme("Sepia")
-                }
-                Kit.ThemeSwatch {
-                    themeName: qsTr("Midnight"); chipColor: Theme.chipMidnight
-                    selected: Theme.theme === "Midnight"
-                    onPicked: Theme.setTheme("Midnight")
-                }
-            }
+        Kit.MenuSeparator {}
+        Kit.MenuItem {
+            text: qsTr("Accounts")
+            onTriggered: Nav.open("accounts")
+        }
+        Kit.MenuItem {
+            text: qsTr("Profiles")
+            onTriggered: Nav.open("profiles")
+        }
+        Kit.MenuItem {
+            text: qsTr("Models")
+            onTriggered: Nav.open("models")
+        }
+        Kit.MenuSeparator {}
+        Kit.MenuItem {
+            text: qsTr("Dashboard")
+            onTriggered: Nav.open("dashboard")
+        }
+        Kit.MenuItem {
+            text: qsTr("Fleet")
+            onTriggered: Nav.open("fleet")
+        }
+        Kit.MenuItem {
+            text: qsTr("Sessions")
+            onTriggered: Nav.open("sessions")
+        }
+        Kit.MenuItem {
+            text: qsTr("Approvals")
+            onTriggered: Nav.open("approvals")
+        }
+        Kit.MenuItem {
+            text: qsTr("Routing")
+            onTriggered: Nav.open("routing")
+        }
+        Kit.MenuItem {
+            text: qsTr("Scheduled jobs")
+            onTriggered: Nav.open("cron")
         }
     }
 

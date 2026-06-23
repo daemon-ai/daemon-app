@@ -1,0 +1,67 @@
+#include "connection/mock_connection_service.h"
+
+namespace connection {
+
+MockConnectionService::MockConnectionService(QObject* parent)
+    : IConnectionService(parent)
+{
+    m_connectTimer.setSingleShot(true);
+    m_testTimer.setSingleShot(true);
+}
+
+bool MockConnectionService::plausible(const QString& mode, const QString& target)
+{
+    if (mode == QStringLiteral("embedded")) {
+        return false; // gated until full-node FFI lands
+    }
+    if (target.trimmed().isEmpty()) {
+        return false;
+    }
+    return !target.contains(QStringLiteral("bad"), Qt::CaseInsensitive);
+}
+
+void MockConnectionService::connectTo(const QString& mode, const QString& target,
+                                      const QString& token)
+{
+    m_config.mode = mode;
+    m_config.target = target;
+    m_config.token = token;
+    emit configChanged();
+
+    m_connectTimer.stop();
+    setState(QStringLiteral("checking"));
+
+    const bool ok = plausible(mode, target);
+
+    // checking -> connecting (250ms) -> ready/offline (+450ms).
+    QTimer::singleShot(250, this, [this] { setState(QStringLiteral("connecting")); });
+    m_connectTimer.disconnect();
+    connect(&m_connectTimer, &QTimer::timeout, this, [this, ok] {
+        setState(ok ? QStringLiteral("ready") : QStringLiteral("offline"));
+    });
+    m_connectTimer.start(700);
+}
+
+void MockConnectionService::disconnect()
+{
+    m_connectTimer.stop();
+    setState(QStringLiteral("offline"));
+}
+
+void MockConnectionService::testConnection(const QString& mode, const QString& target,
+                                           const QString& token)
+{
+    Q_UNUSED(token)
+    setTesting(true);
+    m_testTimer.stop();
+    m_testTimer.disconnect();
+    const bool ok = plausible(mode, target);
+    connect(&m_testTimer, &QTimer::timeout, this, [this, ok, target] {
+        setTesting(false);
+        emit testResult(ok, ok ? QStringLiteral("Connected to %1").arg(target)
+                                : QStringLiteral("Could not reach %1").arg(target));
+    });
+    m_testTimer.start(600);
+}
+
+} // namespace connection

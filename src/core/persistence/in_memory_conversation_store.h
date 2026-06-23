@@ -35,24 +35,35 @@ public:
     [[nodiscard]] bool isPinned(int conversationId) const override;
     void moveConversation(int conversationId, int delta) override;
 
-private:
-    [[nodiscard]] bool matchesScope(const domain::Conversation& c,
-                                    const domain::ListScope& scope) const;
-    // True when `nodeId` is `rootId` or any descendant of it (subtree fold).
-    // Walks the parent chain - a single recursive rule for every depth.
-    [[nodiscard]] bool isInSubtree(const QString& nodeId, const QString& rootId) const;
-    void seedSampleData();
-    // Canonical demo transcript markdown exercising every Phase 1 agent block,
-    // seeded as a conversation for visual inspection of the renderers.
-    [[nodiscard]] static QString agentBlocksSampleMarkdown();
-    [[nodiscard]] static QString roleLayerSampleMarkdown();
+protected:
+    // Subclass entry point: build the base without the sample seed (a durable
+    // store loads its rows from disk instead and seeds only when empty).
+    InMemoryConversationStore(QObject* parent, bool seed);
 
+    // Populate the in-memory tree/tags/conversations with the canonical demo
+    // data. Protected so a durable subclass can seed a fresh (empty) database.
+    void seedSampleData();
+
+    // In-memory state. Protected so a durable subclass (e.g. the SQLite store)
+    // can load these from disk and persist them write-through. The query and
+    // mutation logic above operates on exactly these members.
     QList<domain::AgentNode> m_nodes;
     QList<domain::Tag> m_tags;
     QList<domain::Conversation> m_conversations;
     int m_nextId = 1;        // conversation ids
     int m_nextNodeSeq = 1;   // suffix for generated node ids
     int m_nextTagId = 1;     // tag ids
+
+private:
+    [[nodiscard]] bool matchesScope(const domain::Conversation& c,
+                                    const domain::ListScope& scope) const;
+    // True when `nodeId` is `rootId` or any descendant of it (subtree fold).
+    // Walks the parent chain - a single recursive rule for every depth.
+    [[nodiscard]] bool isInSubtree(const QString& nodeId, const QString& rootId) const;
+    // Canonical demo transcript markdown exercising every Phase 1 agent block,
+    // seeded as a conversation for visual inspection of the renderers.
+    [[nodiscard]] static QString agentBlocksSampleMarkdown();
+    [[nodiscard]] static QString roleLayerSampleMarkdown();
 };
 
 } // namespace persistence

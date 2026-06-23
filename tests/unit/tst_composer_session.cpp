@@ -1,5 +1,10 @@
 #include "composer_session_controller.h"
 
+#include "models/mock_model_catalog.h"
+#include "uimodels/variant_list_model.h"
+
+#include "cache_test_support.h"
+
 #include <QSignalSpy>
 #include <QtTest>
 
@@ -12,6 +17,8 @@ class TestComposerSession : public QObject {
     Q_OBJECT
 
 private slots:
+    void init() { resetMockCache(); }
+
     // primaryAction mirrors ComposerControls.qml: idle -> "send", busy with a
     // payload -> "queue", busy with no payload -> "stop".
     void primaryActionTracksBusyAndPayload()
@@ -71,6 +78,47 @@ private slots:
         c.selectModel(c.models().size());
         QCOMPARE(c.currentModelIndex(), 2);
         QCOMPARE(spy.count(), 1);
+    }
+
+    // With an injected IModelCatalog the model list is the installed models and
+    // the current selection is the catalog's active model: selecting in the
+    // composer activates in the catalog (single source of truth), and a catalog
+    // activation flows back into the composer's current selection.
+    void modelSourceUnifiesWithCatalog()
+    {
+        models::MockModelCatalog catalog;
+        ComposerSessionController c;
+        c.setModelSource(&catalog);
+
+        // The composer list now mirrors the catalog's installed models.
+        auto* installed = qobject_cast<uimodels::VariantListModel*>(catalog.installed());
+        QVERIFY(installed != nullptr);
+        QCOMPARE(c.models().size(), installed->count());
+
+        // The current selection tracks the catalog's active id.
+        const QString activeId = catalog.currentModelId();
+        QVERIFY(!activeId.isEmpty());
+        const int idx = c.currentModelIndex();
+        QVERIFY(idx >= 0);
+        QCOMPARE(c.modelCatalog().at(idx).toMap().value(QStringLiteral("id")).toString(), activeId);
+
+        // Install a second model so there is something else to switch to.
+        const QString secondId = QStringLiteral("mistral-7b-instruct");
+        catalog.download(secondId);
+        QTRY_VERIFY(installed->indexOfId(secondId) >= 0);
+
+        // Selecting it in the composer activates it in the shared catalog.
+        int target = -1;
+        const QVariantList entries = c.modelCatalog();
+        for (int i = 0; i < entries.size(); ++i) {
+            if (entries.at(i).toMap().value(QStringLiteral("id")).toString() == secondId) {
+                target = i;
+            }
+        }
+        QVERIFY(target >= 0);
+        c.selectModel(target);
+        QCOMPARE(catalog.currentModelId(), secondId);
+        QCOMPARE(c.currentModelIndex(), target);
     }
 
     // --- Reverse incremental history search (Ctrl+R) -----------------------------

@@ -24,5 +24,7 @@ target_link_libraries(da_composer_session
     PUBLIC
         Qt6::Qml
     PRIVATE
+        daemon-app::models
+        daemon-app::uimodels
         daemon-app::warnings
 )

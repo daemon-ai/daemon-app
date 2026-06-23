@@ -1,5 +1,8 @@
 #include "composer_session_controller.h"
 
+#include "models/imodel_catalog.h"
+#include "uimodels/variant_list_model.h"
+
 #include <QRegularExpression>
 
 ComposerSessionController::ComposerSessionController(QObject* parent)
@@ -123,8 +126,30 @@ bool ComposerSessionController::primaryActionEnabled() const
     return m_enabled && (primaryAction() != QStringLiteral("send") || hasPayload());
 }
 
-QVariantList ComposerSessionController::modelCatalog() const
+QVariantList ComposerSessionController::catalogEntries() const
 {
+    // Injected source: project the installed models into the {provider,id,label}
+    // shape the GUI picker + TUI expect (label = the model's display name).
+    if (m_modelSource != nullptr) {
+        auto* installed = qobject_cast<uimodels::VariantListModel*>(m_modelSource->installed());
+        QVariantList out;
+        if (installed != nullptr) {
+            const QList<QVariantMap>& rows = installed->rows();
+            out.reserve(rows.size());
+            for (const QVariantMap& r : rows) {
+                const QString name = r.value(QStringLiteral("name")).toString();
+                const QString id = r.value(QStringLiteral("id")).toString();
+                out.append(QVariantMap {
+                    { QStringLiteral("provider"), r.value(QStringLiteral("provider")) },
+                    { QStringLiteral("id"), id },
+                    { QStringLiteral("label"), name.isEmpty() ? id : name },
+                });
+            }
+        }
+        return out;
+    }
+
+    // Fallback (no daemon/catalog wired): the built-in canned cloud catalog.
     QVariantList out;
     out.reserve(m_catalog.size());
     for (const ModelEntry& e : m_catalog) {
@@ -137,23 +162,69 @@ QVariantList ComposerSessionController::modelCatalog() const
     return out;
 }
 
+QVariantList ComposerSessionController::modelCatalog() const
+{
+    return catalogEntries();
+}
+
+QStringList ComposerSessionController::models() const
+{
+    QStringList out;
+    const QVariantList entries = catalogEntries();
+    out.reserve(entries.size());
+    for (const QVariant& v : entries) {
+        out << v.toMap().value(QStringLiteral("label")).toString();
+    }
+    return out;
+}
+
+int ComposerSessionController::currentModelIndex() const
+{
+    if (m_modelSource != nullptr) {
+        const QString cur = m_modelSource->currentModelId();
+        const QVariantList entries = catalogEntries();
+        for (int i = 0; i < entries.size(); ++i) {
+            if (entries.at(i).toMap().value(QStringLiteral("id")).toString() == cur) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    return m_currentModelIndex;
+}
+
 QString ComposerSessionController::currentModel() const
 {
-    return (m_currentModelIndex >= 0 && m_currentModelIndex < m_models.size())
-        ? m_models.at(m_currentModelIndex)
+    const QVariantList entries = catalogEntries();
+    const int idx = currentModelIndex();
+    return (idx >= 0 && idx < entries.size())
+        ? entries.at(idx).toMap().value(QStringLiteral("label")).toString()
         : QString();
 }
 
 QString ComposerSessionController::currentProvider() const
 {
-    return (m_currentModelIndex >= 0 && m_currentModelIndex < m_catalog.size())
-        ? m_catalog.at(m_currentModelIndex).provider
+    const QVariantList entries = catalogEntries();
+    const int idx = currentModelIndex();
+    return (idx >= 0 && idx < entries.size())
+        ? entries.at(idx).toMap().value(QStringLiteral("provider")).toString()
         : QString();
 }
 
 void ComposerSessionController::setCurrentModelIndex(int index)
 {
-    if (index < 0 || index >= m_models.size() || index == m_currentModelIndex) {
+    const QVariantList entries = catalogEntries();
+    if (index < 0 || index >= entries.size()) {
+        return;
+    }
+    if (m_modelSource != nullptr) {
+        // Selecting a model in the composer activates it in the shared catalog;
+        // currentChanged flows back here and re-emits currentModelChanged.
+        const QString id = entries.at(index).toMap().value(QStringLiteral("id")).toString();
+        m_modelSource->activate(id);
+        return;
+    }
+    if (index == m_currentModelIndex) {
         return;
     }
     m_currentModelIndex = index;
@@ -163,6 +234,46 @@ void ComposerSessionController::setCurrentModelIndex(int index)
 void ComposerSessionController::selectModel(int index)
 {
     setCurrentModelIndex(index);
+}
+
+QObject* ComposerSessionController::modelSource() const
+{
+    return m_modelSource.data();
+}
+
+void ComposerSessionController::setModelSource(QObject* source)
+{
+    auto* catalog = qobject_cast<models::IModelCatalog*>(source);
+    if (m_modelSource == catalog) {
+        return;
+    }
+    if (m_modelSource != nullptr) {
+        m_modelSource->disconnect(this);
+        if (auto* prev = qobject_cast<uimodels::VariantListModel*>(m_modelSource->installed())) {
+            prev->disconnect(this);
+        }
+    }
+    m_modelSource = catalog;
+    if (m_modelSource != nullptr) {
+        // The active model changing in the catalog is our current selection.
+        connect(m_modelSource, &models::IModelCatalog::currentChanged, this,
+                &ComposerSessionController::currentModelChanged);
+        // The installed list changing (install/remove) reshapes our model list and
+        // can shift the current index, so refresh both.
+        if (auto* installed
+            = qobject_cast<uimodels::VariantListModel*>(m_modelSource->installed())) {
+            const auto refresh = [this] {
+                emit modelCatalogChanged();
+                emit currentModelChanged();
+            };
+            connect(installed, &QAbstractItemModel::rowsInserted, this, refresh);
+            connect(installed, &QAbstractItemModel::rowsRemoved, this, refresh);
+            connect(installed, &QAbstractItemModel::modelReset, this, refresh);
+            connect(installed, &QAbstractItemModel::dataChanged, this, refresh);
+        }
+    }
+    emit modelCatalogChanged();
+    emit currentModelChanged();
 }
 
 void ComposerSessionController::setReasoningEffort(const QString& effort)

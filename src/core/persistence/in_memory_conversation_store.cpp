@@ -15,9 +15,16 @@ using domain::NodeType;
 using domain::Tag;
 
 InMemoryConversationStore::InMemoryConversationStore(QObject* parent)
+    : InMemoryConversationStore(parent, true)
+{
+}
+
+InMemoryConversationStore::InMemoryConversationStore(QObject* parent, bool seed)
     : IConversationStore(parent)
 {
-    seedSampleData();
+    if (seed) {
+        seedSampleData();
+    }
 }
 
 void InMemoryConversationStore::seedSampleData()

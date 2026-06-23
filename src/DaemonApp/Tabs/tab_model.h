@@ -29,6 +29,18 @@ public:
     enum Kind {
         Transcript = 0,
         Settings = 1,
+        // App-level manager pages (singletons). The GUI renders these as Nav
+        // overlay pages; the TUI hosts them as page tabs with a markdown
+        // projection of the same shared seams.
+        Models = 2,
+        Accounts = 3,
+        Profiles = 4,
+        Fleet = 5,
+        Sessions = 6,
+        Dashboard = 7,
+        Approvals = 8,
+        Routing = 9,
+        Cron = 10,
     };
     Q_ENUM(Kind)
 

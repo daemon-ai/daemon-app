@@ -19,6 +19,44 @@ class InMemoryConversationStore;
 namespace platform {
 class IPlatformServices;
 }
+namespace settings {
+class ISettingsStore;
+}
+namespace connection {
+class IConnectionService;
+}
+namespace nav {
+class NavController;
+}
+namespace firstrun {
+class FirstRunModel;
+}
+namespace config {
+class IDaemonConfig;
+}
+namespace models {
+class IModelCatalog;
+}
+namespace accounts {
+class IAccountsService;
+}
+namespace profiles {
+class IProfileStore;
+}
+namespace fleet {
+class ISessionRoster;
+class IFleetTree;
+class IApprovalsInbox;
+class IDashboard;
+}
+namespace automation {
+class IRoutingStore;
+class ICronStore;
+}
+namespace session {
+class ISessionSettings;
+class ICheckpointTimeline;
+}
 
 // Owns the application-wide services (conversation store, platform integrations) and
 // wires them to the QML scene. Kept UI-toolkit agnostic: the only desktop bit
@@ -42,6 +80,12 @@ public:
     // Bound in QML to the active turn's awaitingInput signal.
     Q_INVOKABLE bool notifyGate(const QString& title, const QString& body);
 
+    // Guarded test/debug hook: open an app-level page (and optional section) via
+    // the shared Nav seam. Used by the offscreen render-shots mode
+    // (DAEMON_APP_RENDER_PAGE) to screenshot a manager/settings overlay; no
+    // effect on a normal run.
+    void openPageForShots(const QString& page, const QString& section = QString());
+
 protected:
     // Close-to-tray: when a tray is installed, intercept the root window's close
     // (X) event and hide instead of quitting.
@@ -58,5 +102,35 @@ private:
     CommandRegistry* m_commands = nullptr;
     // Transcript exporter, exposed to QML as `Exporter`.
     TranscriptExporter* m_exporter = nullptr;
+    // Shared client-local preference store, exposed to QML as `AppSettings`.
+    settings::ISettingsStore* m_settings = nullptr;
+    // Connection seam (mock now), exposed to QML as `Connection`; its liveness
+    // state drives the StatusBarModel gateway state.
+    connection::IConnectionService* m_connection = nullptr;
+    // App-level page navigation seam, exposed to QML as `Nav`.
+    nav::NavController* m_nav = nullptr;
+    // First-run / onboarding gate, exposed to QML as `FirstRun`.
+    firstrun::FirstRunModel* m_firstRun = nullptr;
+    // Daemon-authoritative config facade (mock), exposed to QML as `DaemonConfig`.
+    config::IDaemonConfig* m_daemonConfig = nullptr;
+    // Model catalog facade (mock), exposed to QML as `ModelCatalog`.
+    models::IModelCatalog* m_modelCatalog = nullptr;
+    // Accounts/auth facade (mock), exposed to QML as `Accounts`.
+    accounts::IAccountsService* m_accounts = nullptr;
+    // Profiles/agents facade (mock), exposed to QML as `Profiles`.
+    profiles::IProfileStore* m_profiles = nullptr;
+    // Fleet/ops facades (mock), exposed to QML as `SessionRoster`, `FleetTree`,
+    // `Approvals`, `Dashboard`.
+    fleet::ISessionRoster* m_roster = nullptr;
+    fleet::IFleetTree* m_fleetTree = nullptr;
+    fleet::IApprovalsInbox* m_approvals = nullptr;
+    fleet::IDashboard* m_dashboard = nullptr;
+    // Automation facades (mock), exposed to QML as `Routing` and `Cron`.
+    automation::IRoutingStore* m_routing = nullptr;
+    automation::ICronStore* m_cron = nullptr;
+    // Per-session override + checkpoint facades (mock), exposed to QML as
+    // `SessionSettings` and `Checkpoints`.
+    session::ISessionSettings* m_sessionSettings = nullptr;
+    session::ICheckpointTimeline* m_checkpoints = nullptr;
     QQuickWindow* m_window = nullptr;
 };

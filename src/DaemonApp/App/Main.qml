@@ -6,6 +6,7 @@ import DaemonApp.Sidebar
 import DaemonApp.ConversationsList
 import DaemonApp.Conversation
 import DaemonApp.StatusBar
+import DaemonApp.Pages
 
 ApplicationWindow {
     id: root
@@ -57,7 +58,18 @@ ApplicationWindow {
         case "theme": root.cycleTheme(); break;
         case "distraction": UiSettings.distractionFree = true; break;
         case "new": if (root.activeConversation) root.activeConversation.createNew(); break;
-        case "settings": if (root.activeConversation) root.activeConversation.openSettings(); break;
+        // App-level pages open as full-window overlays via the shared Nav seam.
+        // (The transcript-scoped appearance popup stays on the tab-bar "..." only.)
+        case "settings": Nav.open("settings"); break;
+        case "models": Nav.open("models"); break;
+        case "accounts": Nav.open("accounts"); break;
+        case "profiles": Nav.open("profiles"); break;
+        case "fleet": Nav.open("fleet"); break;
+        case "sessions": Nav.open("sessions"); break;
+        case "dashboard": Nav.open("dashboard"); break;
+        case "approvals": Nav.open("approvals"); break;
+        case "routing": Nav.open("routing"); break;
+        case "cron": Nav.open("cron"); break;
         case "help": commandPalette.open(); break;
         case "title": if (root.activeConversation) root.activeConversation.renameActive(); break;
         case "save": if (root.activeConversation) root.activeConversation.exportActive(); break;
@@ -90,6 +102,35 @@ ApplicationWindow {
 
     CommandPalette {
         id: commandPalette
+    }
+
+    // App-level manager/settings pages open as singleton TABS in the active
+    // conversation pane's tab strip (not a modal overlay). The shared Nav
+    // controller is repurposed as the "open page" signal bus: every Nav.open()
+    // call site (command palette, slash commands, sidebar cog, in-page links)
+    // routes here and we forward it to the active pane's openManagerPage().
+    Connections {
+        target: Nav
+        function onOpenRequested(page, section) {
+            if (root.activeConversation)
+                root.activeConversation.openManagerPage(page, section);
+        }
+    }
+
+    // First-run / onboarding gate: full-screen over everything until setup
+    // completes (FirstRun.active). On subsequent launches setupComplete is true,
+    // so this never mounts and the shell shows immediately.
+    Loader {
+        id: firstRunGate
+        anchors.fill: parent
+        z: 200
+        active: FirstRun ? FirstRun.active : false
+        sourceComponent: active ? firstRunComp : null
+        onLoaded: if (item) item.forceActiveFocus()
+    }
+    Component {
+        id: firstRunComp
+        FirstRunGate {}
     }
 
     // Drive the size-class layer from live window geometry; foldable fold/unfold

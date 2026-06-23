@@ -57,7 +57,8 @@ public:
     // Create a cross-cutting tag and return its new id.
     virtual int createTag(const QString& name, const QString& color) = 0;
     virtual void setContent(int conversationId, const QString& markdown) = 0;
-    virtual void setArchived(int conversationId, bool archived) = 0;
+    // Q_INVOKABLE so the Settings -> Archived chats section can archive/unarchive.
+    Q_INVOKABLE virtual void setArchived(int conversationId, bool archived) = 0;
 
     // Session actions (client-side now; the daemon adapter forwards them later).
     // Each emits changed() so every bound model refreshes.

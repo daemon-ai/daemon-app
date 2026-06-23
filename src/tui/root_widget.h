@@ -2,6 +2,7 @@
 
 // Include the concrete Tui headers (their classes live in the inline namespace
 // Tui::v0, so forward-declaring them as Tui::Foo would mint a different type).
+#include <Tui/ZButton.h>
 #include <Tui/ZDialog.h>
 #include <Tui/ZInputBox.h>
 #include <Tui/ZLabel.h>
@@ -28,6 +29,23 @@
 #include "core/agent_ingest.h"
 #include "core/document_store.h"
 #include "core/transcript_search.h"
+
+#include "accounts/iaccounts_service.h"
+#include "config/idaemon_config.h"
+#include "connection/iconnection_service.h"
+#include "models/imodel_catalog.h"
+#include "automation/icron_store.h"
+#include "automation/irouting_store.h"
+#include "fleet/iapprovals_inbox.h"
+#include "fleet/idashboard.h"
+#include "fleet/ifleet_tree.h"
+#include "fleet/isession_roster.h"
+#include "profiles/iprofile_store.h"
+#include "session/icheckpoint_timeline.h"
+#include "session/isession_settings.h"
+#include "firstrun/first_run_model.h"
+#include "nav/nav_controller.h"
+#include "settings/isettings_store.h"
 
 #include <QHash>
 #include <QString>
@@ -242,6 +260,39 @@ signals:
     void confirmed();
 };
 
+// The TUI first-run gate: a lighter "Setup Required" modal mirroring the GUI's
+// FirstRunGate. A target field + Connect drives the shared connection seam; the
+// FirstRunModel advances connect -> connecting -> inference, and Finish completes
+// setup. Reuses the same shared FirstRunModel the GUI binds.
+class FirstRunDialog : public Tui::ZDialog {
+    Q_OBJECT
+
+public:
+    FirstRunDialog(firstrun::FirstRunModel* model, connection::IConnectionService* connection,
+                   settings::ISettingsStore* settings, const QString& defaultTarget,
+                   Tui::ZWidget* parent);
+
+private:
+    void syncToPhase();
+    // Apply the selected transport mode to the editable fields: swap the target
+    // placeholder/seed and show the token field only for "remote" (parity with the
+    // GUI ConnectionPicker's mode cards).
+    void applyMode(const QString& mode);
+
+    firstrun::FirstRunModel* m_model = nullptr;
+    connection::IConnectionService* m_connection = nullptr;
+    settings::ISettingsStore* m_settings = nullptr;
+    Tui::ZLabel* m_status = nullptr;
+    Tui::ZInputBox* m_target = nullptr;
+    Tui::ZInputBox* m_token = nullptr;
+    Tui::ZButton* m_localBtn = nullptr;
+    Tui::ZButton* m_remoteBtn = nullptr;
+    Tui::ZButton* m_testBtn = nullptr;
+    Tui::ZLabel* m_testResult = nullptr;
+    Tui::ZButton* m_primary = nullptr; // Connect / Finish
+    QString m_mode = QStringLiteral("local");
+};
+
 // The TUI shell: a single full-screen window holding the three-column layout
 // (Sidebar | ConversationsList | Conversation), driven entirely by the app's
 // existing C++ view models against the in-memory store.
@@ -279,6 +330,55 @@ private:
     // through it.
     void rewindActiveTab(const QString& messageId, bool editMode);
     void promptQuit(); // open the quit-confirmation modal (idempotent)
+    // Render the Settings page document from the shared seams (DaemonConfig +
+    // AppSettings + Connection) so the TUI settings page reflects live values
+    // (parity with the GUI Settings page; the GUI is the interactive editor).
+    [[nodiscard]] QString buildSettingsMarkdown() const;
+    // Markdown projection for the Models hub page (Installed + Discover + Providers).
+    // The interactive hubs take `sel`: the index of the highlighted actionable row
+    // (marked with a caret), so the markdown projection doubles as the selection
+    // cursor for the keyboard-driven page actions.
+    [[nodiscard]] QString buildModelsMarkdown(int sel = -1) const;
+    [[nodiscard]] QString buildAccountsMarkdown(int sel = -1) const;
+    [[nodiscard]] QString buildProfilesMarkdown(int sel = -1) const;
+    [[nodiscard]] QString buildDashboardMarkdown() const;
+    [[nodiscard]] QString buildFleetMarkdown(int sel = -1) const;
+    [[nodiscard]] QString buildSessionsMarkdown(int sel = -1) const;
+    [[nodiscard]] QString buildApprovalsMarkdown(int sel = -1) const;
+    [[nodiscard]] QString buildRoutingMarkdown(int sel = -1) const;
+    [[nodiscard]] QString buildCronMarkdown(int sel = -1) const;
+    // Route a page-tab kind to the right markdown projection.
+    [[nodiscard]] QString pageMarkdownForKind(int kind) const;
+
+    // --- Interactive manager-hub pages ---------------------------------------
+    // The kind of the active page tab if it is an interactive manager hub (Models /
+    // Accounts / ... ), or -1 (a transcript tab, the Settings/Dashboard read-only
+    // pages, or no tab). Drives whether page-action keys are live.
+    [[nodiscard]] int activePageKind() const;
+    // The actionable rows for an interactive hub kind (the primary list the keys
+    // operate on: installed models, accounts, sessions, ...). Empty for read-only.
+    [[nodiscard]] QList<QVariantMap> pageActionRows(int kind) const;
+    // Move the highlighted row for the active hub by `delta` (clamped) and repaint.
+    void movePageSelection(int delta);
+    // Re-render the active page document in place (after a seam mutation), keeping
+    // the selection clamped to the (possibly shrunk) row count.
+    void refreshActivePage();
+    // If the active page is `kind`, re-render it (so a seam's changed() / a list
+    // model's row churn updates the markdown live).
+    void refreshPageIfActive(int kind);
+    // Handle a no-modifier key while an interactive hub page is active: j/k move the
+    // selection, action keys (Enter/x/a/d/s/t/Space/...) drive the matching seam.
+    // Returns true if the key was consumed.
+    bool handlePageActionKey(Tui::ZKeyEvent* event);
+
+    // Composer overlays (parity with the GUI popovers), bound to the active tab's
+    // conversation: session settings (profile/effort/fast/verbose) and the
+    // checkpoint/rewind timeline.
+    void openSessionSettingsOverlay();
+    void openCheckpointsOverlay();
+    // Routes a command/palette/slash id ("settings", "models", ...) to its
+    // singleton page tab. Returns false if the id is not a manager page.
+    bool openManagerPage(const QString& id);
     // Open the model picker overlay (filterable provider->model list) bound to the
     // shared composer session; selecting sets the active model. Opened by /model
     // and the command palette.
@@ -404,6 +504,32 @@ private:
     CommandRegistry* m_commands = nullptr;
     // Transcript exporter for the /save + list "export" action (writes JSON).
     TranscriptExporter* m_exporter = nullptr;
+
+    // Phase 0 shared seams (same classes the GUI binds): client-local prefs, the
+    // connection liveness state machine (drives the footer gateway state), and the
+    // app-level page navigation controller.
+    settings::ISettingsStore* m_appSettings = nullptr;
+    connection::IConnectionService* m_connection = nullptr;
+    nav::NavController* m_nav = nullptr;
+    firstrun::FirstRunModel* m_firstRun = nullptr;
+    config::IDaemonConfig* m_daemonConfig = nullptr;
+    models::IModelCatalog* m_modelCatalog = nullptr;
+    accounts::IAccountsService* m_accounts = nullptr;
+    profiles::IProfileStore* m_profiles = nullptr;
+    fleet::ISessionRoster* m_roster = nullptr;
+    fleet::IFleetTree* m_fleetTree = nullptr;
+    fleet::IApprovalsInbox* m_approvals = nullptr;
+    fleet::IDashboard* m_dashboard = nullptr;
+    automation::IRoutingStore* m_routing = nullptr;
+    automation::ICronStore* m_cron = nullptr;
+    // Per-conversation composer overrides + rewind timeline (same mocks the GUI
+    // binds), driven by the composer's session-settings / checkpoints overlays.
+    session::ISessionSettings* m_sessionSettings = nullptr;
+    session::ICheckpointTimeline* m_checkpoints = nullptr;
+
+    // The highlighted actionable row for each interactive hub page, keyed by tab
+    // kind. Persists across tab switches so re-opening a hub keeps its cursor.
+    QHash<int, int> m_pageSel;
 
     // Static document backing non-transcript page tabs (e.g. Settings): the
     // transcript view points here while a page tab is active.

@@ -37,6 +37,46 @@ RowLayout {
 
     spacing: Theme.spacingSmall
 
+    // Checkpoints / rewind timeline for the active session.
+    Kit.IconButton {
+        id: checkpointsBtn
+        Layout.alignment: Qt.AlignVCenter
+        implicitWidth: 30
+        implicitHeight: 30
+        icon: FontIcons.fa_clock
+        iconColor: Theme.iconMuted
+        iconPointSize: 13
+        tooltipText: qsTr("Checkpoints / rewind")
+        onClicked: {
+            // Bind the timeline to the focused chat so rewind is per-conversation.
+            if (root.session)
+                Checkpoints.conversationId = root.session.conversationId;
+            checkpointsPopover.open();
+        }
+
+        CheckpointsPopover { id: checkpointsPopover }
+    }
+
+    // Per-session settings (profile / effort / modes override).
+    Kit.IconButton {
+        id: sessionSettingsBtn
+        Layout.alignment: Qt.AlignVCenter
+        implicitWidth: 30
+        implicitHeight: 30
+        icon: FontIcons.fa_sliders
+        iconColor: Theme.iconMuted
+        iconPointSize: 13
+        tooltipText: qsTr("Session settings")
+        onClicked: {
+            // Bind the overrides to the focused chat so they are per-conversation.
+            if (root.session)
+                SessionSettings.conversationId = root.session.conversationId;
+            sessionSettingsPopover.open();
+        }
+
+        SessionSettingsPopover { id: sessionSettingsPopover }
+    }
+
     ModelPill {
         id: modelPill
         Layout.alignment: Qt.AlignVCenter

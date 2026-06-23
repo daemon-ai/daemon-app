@@ -16,7 +16,24 @@
 #include "tab_model.h"
 #include "turn_controller.h"
 
-#include "persistence/in_memory_conversation_store.h"
+#include "persistence/sqlite_conversation_store.h"
+
+#include "accounts/mock_accounts_service.h"
+#include "config/mock_daemon_config.h"
+#include "connection/mock_connection_service.h"
+#include "automation/mock_cron_store.h"
+#include "automation/mock_routing_store.h"
+#include "fleet/mock_approvals_inbox.h"
+#include "fleet/mock_dashboard.h"
+#include "fleet/mock_fleet_tree.h"
+#include "fleet/mock_session_roster.h"
+#include "models/mock_model_catalog.h"
+#include "profiles/mock_profile_store.h"
+#include "session/mock_checkpoint_timeline.h"
+#include "session/mock_session_settings.h"
+#include "uimodels/variant_list_model.h"
+#include "nav/nav_controller.h"
+#include "settings/qt_settings_store.h"
 
 #include <Tui/ZButton.h>
 #include <Tui/ZCommon.h>
@@ -42,6 +59,7 @@
 // sidebar list's private scroll offset (no public accessor exists).
 #include <Tui/ZListView_p.h>
 
+#include <QAbstractItemModel>
 #include <QCoreApplication>
 #include <QDir>
 #include <QDateTime>
@@ -752,6 +770,163 @@ ConfirmDialog::ConfirmDialog(const QString& title, const QString& message, Tui::
     setGeometry(QRect(0, 0, qMax(40, static_cast<int>(message.size()) + 8), 7));
 }
 
+FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
+                               connection::IConnectionService* connection,
+                               settings::ISettingsStore* settings, const QString& defaultTarget,
+                               Tui::ZWidget* parent)
+    : Tui::ZDialog(parent)
+    , m_model(model)
+    , m_connection(connection)
+    , m_settings(settings)
+{
+    setOptions(Tui::ZWindow::DeleteOnClose);
+    setWindowTitle(QStringLiteral("Setup Required"));
+    setContentsMargins({ 2, 1, 2, 1 });
+
+    auto* layout = new Tui::ZVBoxLayout();
+    setLayout(layout);
+
+    auto* intro = new Tui::ZLabel(
+        QStringLiteral("Connect to a daemon node to get started. Choose a transport:"), this);
+    layout->addWidget(intro);
+
+    // Transport mode "cards": the TUI analog of ConnectionPicker's cards. Embedded
+    // is shown disabled (coming soon); Local (Unix socket) / Remote (network).
+    auto* modes = new Tui::ZHBoxLayout();
+    layout->add(modes);
+    auto* embeddedBtn = new Tui::ZButton(QStringLiteral("Embedded"), this);
+    embeddedBtn->setEnabled(false); // in-process node: coming soon
+    modes->addWidget(embeddedBtn);
+    m_localBtn = new Tui::ZButton(QStringLiteral("Local"), this);
+    modes->addWidget(m_localBtn);
+    m_remoteBtn = new Tui::ZButton(QStringLiteral("Remote"), this);
+    modes->addWidget(m_remoteBtn);
+    layout->addSpacing(1);
+
+    m_target = new Tui::ZInputBox(defaultTarget, this);
+    layout->addWidget(m_target);
+
+    // Auth token: only relevant for a remote node; hidden in local mode.
+    m_token = new Tui::ZInputBox(QString(), this);
+    m_token->setEchoMode(Tui::ZInputBox::Password);
+    layout->addWidget(m_token);
+    layout->addSpacing(1);
+
+    m_status = new Tui::ZLabel(QString(), this);
+    layout->addWidget(m_status);
+    m_testResult = new Tui::ZLabel(QString(), this);
+    layout->addWidget(m_testResult);
+    layout->addSpacing(1);
+
+    auto* buttons = new Tui::ZHBoxLayout();
+    layout->add(buttons);
+    m_testBtn = new Tui::ZButton(QStringLiteral("Test"), this);
+    buttons->addWidget(m_testBtn);
+    buttons->addStretch();
+
+    m_primary = new Tui::ZButton(QStringLiteral("Connect"), this);
+    m_primary->setDefault(true);
+    buttons->addWidget(m_primary);
+
+    auto* skip = new Tui::ZButton(QStringLiteral("Skip"), this);
+    buttons->addWidget(skip);
+
+    connect(m_localBtn, &Tui::ZButton::clicked, this,
+            [this] { applyMode(QStringLiteral("local")); });
+    connect(m_remoteBtn, &Tui::ZButton::clicked, this,
+            [this] { applyMode(QStringLiteral("remote")); });
+
+    connect(m_testBtn, &Tui::ZButton::clicked, this, [this] {
+        if (m_connection != nullptr && !m_target->text().isEmpty()) {
+            m_testResult->setText(QStringLiteral("Testing..."));
+            m_connection->testConnection(m_mode, m_target->text(), m_token->text());
+        }
+    });
+    if (m_connection != nullptr) {
+        connect(m_connection, &connection::IConnectionService::testResult, this,
+                [this](bool ok, const QString& message) {
+                    m_testResult->setText((ok ? QStringLiteral("OK — ")
+                                              : QStringLiteral("Failed — "))
+                                          + message);
+                });
+    }
+
+    connect(m_primary, &Tui::ZButton::clicked, this, [this] {
+        if (m_model->phase() == QStringLiteral("inference")) {
+            m_model->completeInference();
+        } else if (m_connection != nullptr) {
+            // Persist the choice so the next boot reuses it (parity with the GUI
+            // picker writing AppSettings.setLastConnection before connecting).
+            if (m_settings != nullptr) {
+                m_settings->setLastConnection(m_mode, m_target->text());
+            }
+            m_connection->connectTo(m_mode, m_target->text(), m_token->text());
+        }
+    });
+    connect(skip, &Tui::ZButton::clicked, this, [this] { m_model->skip(); });
+
+    // The model owns the flow; reflect each phase and close once done.
+    connect(m_model, &firstrun::FirstRunModel::phaseChanged, this, [this] {
+        if (m_model->phase() == QStringLiteral("done")) {
+            close();
+        } else {
+            syncToPhase();
+        }
+    });
+
+    applyMode(m_mode);
+    syncToPhase();
+    m_target->setFocus();
+    setGeometry(QRect(0, 0, 66, 16));
+}
+
+void FirstRunDialog::applyMode(const QString& mode)
+{
+    m_mode = mode;
+    const bool remote = mode == QStringLiteral("remote");
+    // Mark the active card by (de)emphasising via the default flag, and seed the
+    // target with a representative placeholder if the field is empty.
+    if (m_localBtn != nullptr) {
+        m_localBtn->setText(remote ? QStringLiteral("Local")
+                                   : QStringLiteral("[Local]"));
+    }
+    if (m_remoteBtn != nullptr) {
+        m_remoteBtn->setText(remote ? QStringLiteral("[Remote]")
+                                    : QStringLiteral("Remote"));
+    }
+    if (m_token != nullptr) {
+        m_token->setVisible(remote);
+    }
+    if (m_target != nullptr && m_target->text().isEmpty()) {
+        m_target->setText(remote ? QStringLiteral("https://node.example:8080")
+                                 : QStringLiteral("/run/daemon/daemon.sock"));
+    }
+    if (m_testResult != nullptr) {
+        m_testResult->setText(QString());
+    }
+}
+
+void FirstRunDialog::syncToPhase()
+{
+    const QString p = m_model->phase();
+    if (p == QStringLiteral("connecting")) {
+        m_status->setText(QStringLiteral("Connecting..."));
+        m_primary->setText(QStringLiteral("Connect"));
+        m_primary->setEnabled(false);
+        m_target->setEnabled(false);
+    } else if (p == QStringLiteral("inference")) {
+        m_status->setText(QStringLiteral("Connected. A default model will be used."));
+        m_primary->setText(QStringLiteral("Finish"));
+        m_primary->setEnabled(true);
+        m_target->setEnabled(false);
+    } else { // connect
+        m_status->setText(m_model->error().isEmpty() ? QString() : m_model->error());
+        m_primary->setText(QStringLiteral("Connect"));
+        m_primary->setEnabled(true);
+        m_target->setEnabled(true);
+    }
+}
+
 RootWidget::RootWidget()
 {
     // Build the stock-widget palette (incl. the quit dialog frame/body) from the
@@ -760,7 +935,7 @@ RootWidget::RootWidget()
 
     // The reused layer: store + view models, wired exactly as in the GUI. None
     // of this depends on Tui Widgets - the same objects back the QML frontend.
-    m_store = new persistence::InMemoryConversationStore(this);
+    m_store = new persistence::SqliteConversationStore(QString(), this);
 
     m_sidebar = new SidebarModel(this);
     m_sidebar->setStore(m_store);
@@ -805,6 +980,47 @@ RootWidget::RootWidget()
     // Sidebar scope selection drives the conversation list - the model-to-model
     // contract is untouched by the choice of toolkit.
     connect(m_sidebar, &SidebarModel::scopeSelected, m_list, &ConversationsListModel::setScope);
+
+    // Phase 0 shared seams (identical classes to the GUI). The connection seam
+    // owns liveness; mirror its state into the footer's gateway indicator, then
+    // open the saved (or default local) connection so the state machine runs.
+    m_appSettings = new settings::QtSettingsStore(this);
+    m_connection = new connection::MockConnectionService(this);
+    m_nav = new nav::NavController(this);
+    m_firstRun = new firstrun::FirstRunModel(m_appSettings, m_connection, this);
+    m_daemonConfig = new config::MockDaemonConfig(this);
+    m_modelCatalog = new models::MockModelCatalog(this);
+    // Single source of truth for the composer's model list/selection (shared with
+    // the Models hub), exactly as the GUI wires it via Composer.qml's modelSource.
+    m_composerSession->setModelSource(m_modelCatalog);
+    m_accounts = new accounts::MockAccountsService(this);
+    m_profiles = new profiles::MockProfileStore(this);
+    m_roster = new fleet::MockSessionRoster(this);
+    m_fleetTree = new fleet::MockFleetTree(this);
+    m_approvals = new fleet::MockApprovalsInbox(this);
+    m_dashboard = new fleet::MockDashboard(m_roster, m_fleetTree, m_approvals, this);
+    m_routing = new automation::MockRoutingStore(this);
+    m_cron = new automation::MockCronStore(this);
+    m_sessionSettings = new session::MockSessionSettings(this);
+    m_checkpoints = new session::MockCheckpointTimeline(this);
+
+    // Wire the app-level navigation seam (constructed-but-unused until now): an
+    // open() from anywhere (slash, palette, a future cog menu) raises the matching
+    // manager page tab, exactly like the GUI mounts the page overlay.
+    connect(m_nav, &nav::NavController::openRequested, this,
+            [this](const QString& page, const QString&) { openManagerPage(page); });
+
+    connect(m_connection, &connection::IConnectionService::stateChanged, this,
+            [this] { m_status->setGatewayState(m_connection->state()); });
+    m_firstRun->begin();
+    // Returning users auto-open the saved connection; on first launch the gate's
+    // connection picker drives connectTo instead.
+    if (m_appSettings->setupComplete()) {
+        m_connection->connectTo(m_appSettings->lastConnectionMode(),
+                                m_appSettings->lastConnectionTarget().isEmpty()
+                                    ? QStringLiteral("/run/daemon.sock")
+                                    : m_appSettings->lastConnectionTarget());
+    }
 }
 
 void RootWidget::terminalChanged()
@@ -815,6 +1031,17 @@ void RootWidget::terminalChanged()
     m_built = true;
     buildUi();
     wireViews();
+
+    // First-run gate (parity with the GUI): on first launch, raise the lighter
+    // "Setup Required" modal over the shell until setup completes.
+    if (m_firstRun != nullptr && m_firstRun->active()) {
+        auto* gate = new FirstRunDialog(m_firstRun, m_connection, m_appSettings,
+                                        m_appSettings->lastConnectionTarget().isEmpty()
+                                            ? QStringLiteral("/run/daemon/daemon.sock")
+                                            : m_appSettings->lastConnectionTarget(),
+                                        this);
+        gate->setFocus();
+    }
 }
 
 void RootWidget::resizeEvent(Tui::ZResizeEvent* event)
@@ -870,6 +1097,13 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
             event->accept();
             return;
         }
+    }
+
+    // Interactive manager-hub pages: while one is the active tab, no-modifier keys
+    // that bubble up to the root (the transcript shows the page doc but only
+    // consumes its scroll keys) drive the page's seam via j/k + action keys.
+    if (handlePageActionKey(event)) {
+        return;
     }
 
     // Final fallback for the context-sensitive Esc chain: when a pane leaves Esc
@@ -1006,6 +1240,24 @@ void RootWidget::buildUi()
     auto* paletteShortcut = new Tui::ZShortcut(
         Tui::ZKeySequence::forShortcut(QStringLiteral("p")), this, Qt::ApplicationShortcut);
     connect(paletteShortcut, &Tui::ZShortcut::activated, this, &RootWidget::openCommandPalette);
+
+    // F9 opens the Settings page (the TUI settings keybinding), routed through the
+    // shared NavController so it goes through the same open() path as the GUI.
+    auto* settingsShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F9), this,
+                                                Qt::ApplicationShortcut);
+    connect(settingsShortcut, &Tui::ZShortcut::activated, this,
+            [this] { m_nav->open(QStringLiteral("settings")); });
+
+    // F2 / F3 raise the composer overlays (session settings / checkpoints) for the
+    // active transcript tab, the TUI analog of the GUI composer popovers.
+    auto* sessionShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F2), this,
+                                               Qt::ApplicationShortcut);
+    connect(sessionShortcut, &Tui::ZShortcut::activated, this,
+            &RootWidget::openSessionSettingsOverlay);
+    auto* checkpointShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F3), this,
+                                                  Qt::ApplicationShortcut);
+    connect(checkpointShortcut, &Tui::ZShortcut::activated, this,
+            &RootWidget::openCheckpointsOverlay);
 
     m_window = new Tui::ZWindow(QStringLiteral("Daemon"), this);
     m_window->setOptions({});
@@ -1168,6 +1420,37 @@ void RootWidget::wireViews()
     // model (no display-role adapter): it reads title/snippet/timestamp/agent/tags
     // directly and renders multi-line cards.
     m_listView->setModel(m_list);
+
+    // Keep an open interactive hub page live: when a seam's row model churns (an
+    // activate flips a flag, an approval clears, an OAuth re-auth lands, a download
+    // finishes), re-render the active page's markdown so its list + selection track
+    // the change without the user re-opening the tab.
+    const auto liveRefresh = [this](QObject* modelObj, int kind) {
+        auto* m = qobject_cast<QAbstractItemModel*>(modelObj);
+        if (m == nullptr) {
+            return;
+        }
+        connect(m, &QAbstractItemModel::dataChanged, this,
+                [this, kind] { refreshPageIfActive(kind); });
+        connect(m, &QAbstractItemModel::rowsInserted, this,
+                [this, kind] { refreshPageIfActive(kind); });
+        connect(m, &QAbstractItemModel::rowsRemoved, this,
+                [this, kind] { refreshPageIfActive(kind); });
+        connect(m, &QAbstractItemModel::modelReset, this,
+                [this, kind] { refreshPageIfActive(kind); });
+    };
+    liveRefresh(m_modelCatalog->installed(), TabModel::Models);
+    liveRefresh(m_accounts->accounts(), TabModel::Accounts);
+    liveRefresh(m_profiles->profiles(), TabModel::Profiles);
+    liveRefresh(m_roster->sessions(), TabModel::Sessions);
+    liveRefresh(m_fleetTree->nodes(), TabModel::Fleet);
+    liveRefresh(m_approvals->pending(), TabModel::Approvals);
+    liveRefresh(m_routing->rules(), TabModel::Routing);
+    liveRefresh(m_cron->jobs(), TabModel::Cron);
+    // The Dashboard is a read-only projection of the roster / approvals, so refresh
+    // it when either of those churns too.
+    liveRefresh(m_roster->sessions(), TabModel::Dashboard);
+    liveRefresh(m_approvals->pending(), TabModel::Dashboard);
 
     // Type-ahead search. The conversation list is the only focus stop in the
     // column; printable keys it receives build the query in the passive search box,
@@ -1351,6 +1634,9 @@ void RootWidget::wireViews()
     // no-ops in the TUI for now).
     connect(m_composerSession, &ComposerSessionController::commandInvoked, this,
             [this](const QString& command) {
+                if (openManagerPage(command)) {
+                    return; // a "/settings" / "/models" / ... page route
+                }
                 if (command == QStringLiteral("new")) {
                     newTranscriptTab();
                     return;
@@ -1851,16 +2137,800 @@ void RootWidget::activateTab(int tabId)
         // page document and clear the per-tab strips.
         closeTranscriptSearch();
         m_active = nullptr;
-        m_pageDoc.loadMarkdown(pageMarkdown(m_tabModel->kindAt(row)));
+        const int kind = m_tabModel->kindAt(row);
+        m_pageDoc.loadMarkdown(pageMarkdownForKind(kind));
         if (m_transcript != nullptr) {
             m_transcript->setSearch(nullptr);
             m_transcript->setDocument(&m_pageDoc);
             m_transcript->reload();
+            // Focus the transcript so the interactive hubs' j/k + action keys (which
+            // bubble up past the read-only page view) reach the root handler.
+            if (activePageKind() >= 0) {
+                m_transcript->setFocus();
+            }
         }
         m_status->setBusy(false);
         updateTodos();
         updateSubagents();
     }
+}
+
+QString RootWidget::pageMarkdownForKind(int kind) const
+{
+    const int sel = m_pageSel.value(kind, 0);
+    switch (kind) {
+    case TabModel::Settings:
+        return buildSettingsMarkdown();
+    case TabModel::Models:
+        return buildModelsMarkdown(sel);
+    case TabModel::Accounts:
+        return buildAccountsMarkdown(sel);
+    case TabModel::Profiles:
+        return buildProfilesMarkdown(sel);
+    case TabModel::Dashboard:
+        return buildDashboardMarkdown();
+    case TabModel::Fleet:
+        return buildFleetMarkdown(sel);
+    case TabModel::Sessions:
+        return buildSessionsMarkdown(sel);
+    case TabModel::Approvals:
+        return buildApprovalsMarkdown(sel);
+    case TabModel::Routing:
+        return buildRoutingMarkdown(sel);
+    case TabModel::Cron:
+        return buildCronMarkdown(sel);
+    default:
+        return pageMarkdown(kind);
+    }
+}
+
+bool RootWidget::openManagerPage(const QString& id)
+{
+    // Maps a command/palette/slash id to its singleton page tab. Shared by the
+    // command palette and the composer's slash dispatcher so both routes open
+    // the same tabs from the same seam-backed markdown.
+    static const QHash<QString, QPair<int, QString>> kPageRoutes = {
+        { QStringLiteral("settings"), { TabModel::Settings, QStringLiteral("Settings") } },
+        { QStringLiteral("dashboard"), { TabModel::Dashboard, QStringLiteral("Dashboard") } },
+        { QStringLiteral("models"), { TabModel::Models, QStringLiteral("Models") } },
+        { QStringLiteral("accounts"), { TabModel::Accounts, QStringLiteral("Accounts") } },
+        { QStringLiteral("profiles"), { TabModel::Profiles, QStringLiteral("Profiles") } },
+        { QStringLiteral("fleet"), { TabModel::Fleet, QStringLiteral("Fleet") } },
+        { QStringLiteral("sessions"), { TabModel::Sessions, QStringLiteral("Sessions") } },
+        { QStringLiteral("approvals"), { TabModel::Approvals, QStringLiteral("Approvals") } },
+        { QStringLiteral("routing"), { TabModel::Routing, QStringLiteral("Routing") } },
+        { QStringLiteral("cron"), { TabModel::Cron, QStringLiteral("Scheduled jobs") } },
+    };
+    const auto route = kPageRoutes.constFind(id);
+    if (route == kPageRoutes.constEnd()) {
+        return false;
+    }
+    if (m_tabModel != nullptr) {
+        m_tabModel->openPage(route->first, route->second);
+    }
+    return true;
+}
+
+namespace {
+// The rows of a seam's VariantListModel (empty for a null / wrong-typed model).
+QList<QVariantMap> rowsOfModel(QObject* m)
+{
+    auto* vlm = qobject_cast<uimodels::VariantListModel*>(m);
+    return vlm ? vlm->rows() : QList<QVariantMap>{};
+}
+} // namespace
+
+int RootWidget::activePageKind() const
+{
+    if (m_active != nullptr || m_tabModel == nullptr) {
+        return -1; // a transcript tab is active (or none)
+    }
+    const int idx = m_tabModel->currentIndex();
+    if (idx < 0) {
+        return -1;
+    }
+    switch (m_tabModel->kindAt(idx)) {
+    case TabModel::Models:
+    case TabModel::Accounts:
+    case TabModel::Profiles:
+    case TabModel::Sessions:
+    case TabModel::Fleet:
+    case TabModel::Approvals:
+    case TabModel::Routing:
+    case TabModel::Cron:
+        return m_tabModel->kindAt(idx);
+    default:
+        return -1; // Settings / Dashboard are read-only projections
+    }
+}
+
+QList<QVariantMap> RootWidget::pageActionRows(int kind) const
+{
+    switch (kind) {
+    case TabModel::Models:
+        return rowsOfModel(m_modelCatalog->installed());
+    case TabModel::Accounts:
+        return rowsOfModel(m_accounts->accounts());
+    case TabModel::Profiles:
+        return rowsOfModel(m_profiles->profiles());
+    case TabModel::Sessions:
+        return rowsOfModel(m_roster->sessions());
+    case TabModel::Fleet:
+        return rowsOfModel(m_fleetTree->nodes());
+    case TabModel::Approvals:
+        return rowsOfModel(m_approvals->pending());
+    case TabModel::Routing:
+        return rowsOfModel(m_routing->rules());
+    case TabModel::Cron:
+        return rowsOfModel(m_cron->jobs());
+    default:
+        return {};
+    }
+}
+
+void RootWidget::refreshPageIfActive(int kind)
+{
+    // Re-render `kind`'s page doc in place if it is the active page tab. Works for
+    // both interactive hubs and the read-only Dashboard projection (so a live
+    // roster/approvals change repaints the counters).
+    if (m_active != nullptr || m_tabModel == nullptr) {
+        return;
+    }
+    const int idx = m_tabModel->currentIndex();
+    if (idx < 0 || m_tabModel->kindAt(idx) != kind) {
+        return;
+    }
+    // Clamp the interactive selection to the (possibly shrunk) row count.
+    const int rows = static_cast<int>(pageActionRows(kind).size());
+    if (rows > 0) {
+        int& sel = m_pageSel[kind];
+        sel = qBound(0, sel, rows - 1);
+    }
+    m_pageDoc.loadMarkdown(pageMarkdownForKind(kind));
+    if (m_transcript != nullptr) {
+        m_transcript->reload();
+    }
+}
+
+void RootWidget::refreshActivePage()
+{
+    refreshPageIfActive(activePageKind());
+}
+
+void RootWidget::movePageSelection(int delta)
+{
+    const int kind = activePageKind();
+    if (kind < 0) {
+        return;
+    }
+    const int rows = static_cast<int>(pageActionRows(kind).size());
+    if (rows == 0) {
+        return;
+    }
+    int& sel = m_pageSel[kind];
+    sel = qBound(0, sel + delta, rows - 1);
+    refreshActivePage();
+}
+
+bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event)
+{
+    if (event->modifiers() != Qt::NoModifier) {
+        return false;
+    }
+    const int kind = activePageKind();
+    if (kind < 0) {
+        return false;
+    }
+    const QList<QVariantMap> rows = pageActionRows(kind);
+    const QString text = event->text();
+    const int key = event->key();
+
+    // j/k (and Up/Down, in case the transcript is not the focus owner) move the row
+    // cursor. The transcript eats Up/Down for scrolling when it is focused, so j/k
+    // are the canonical hub-navigation keys.
+    if (key == Qt::Key_Up || text == QStringLiteral("k")) {
+        movePageSelection(-1);
+        event->accept();
+        return true;
+    }
+    if (key == Qt::Key_Down || text == QStringLiteral("j")) {
+        movePageSelection(1);
+        event->accept();
+        return true;
+    }
+
+    if (rows.isEmpty()) {
+        return false;
+    }
+    const int sel = qBound(0, m_pageSel.value(kind, 0), static_cast<int>(rows.size()) - 1);
+    const QVariantMap row = rows.at(sel);
+    const QString id = row.value(QStringLiteral("id")).toString();
+    const bool enter = key == Qt::Key_Enter || key == Qt::Key_Return;
+    bool acted = false;
+
+    switch (kind) {
+    case TabModel::Models:
+        if (enter) {
+            m_modelCatalog->activate(id);
+            acted = true;
+        } else if (text == QStringLiteral("x")) {
+            m_modelCatalog->remove(id);
+            acted = true;
+        }
+        break;
+    case TabModel::Accounts:
+        if (enter || text == QStringLiteral("R")) {
+            m_accounts->reauth(id);
+            acted = true;
+        } else if (text == QStringLiteral("x")) {
+            m_accounts->remove(id);
+            acted = true;
+        }
+        break;
+    case TabModel::Profiles:
+        if (enter) {
+            m_profiles->setDefault(id);
+            acted = true;
+        } else if (text == QStringLiteral("x")) {
+            m_profiles->remove(id);
+            acted = true;
+        }
+        break;
+    case TabModel::Sessions:
+        if (text == QStringLiteral("s")) {
+            m_roster->suspend(id);
+            acted = true;
+        } else if (text == QStringLiteral("R") || enter) {
+            m_roster->resume(id);
+            acted = true;
+        } else if (text == QStringLiteral("x")) {
+            m_roster->close(id);
+            acted = true;
+        }
+        break;
+    case TabModel::Fleet:
+        if (key == Qt::Key_Space || enter || text == QStringLiteral("p")) {
+            const bool paused = row.value(QStringLiteral("status")).toString()
+                == QLatin1String("paused");
+            if (paused) {
+                m_fleetTree->resume(id);
+            } else {
+                m_fleetTree->pause(id);
+            }
+            acted = true;
+        }
+        break;
+    case TabModel::Approvals:
+        if (text == QStringLiteral("a") || enter) {
+            m_approvals->approve(id);
+            acted = true;
+        } else if (text == QStringLiteral("d")) {
+            m_approvals->deny(id);
+            acted = true;
+        }
+        break;
+    case TabModel::Routing:
+        if (key == Qt::Key_Space || enter) {
+            m_routing->setEnabled(id, !row.value(QStringLiteral("enabled")).toBool());
+            acted = true;
+        } else if (text == QStringLiteral("x")) {
+            m_routing->remove(id);
+            acted = true;
+        }
+        break;
+    case TabModel::Cron:
+        if (key == Qt::Key_Space || enter) {
+            m_cron->setEnabled(id, !row.value(QStringLiteral("enabled")).toBool());
+            acted = true;
+        } else if (text == QStringLiteral("t")) {
+            m_cron->runNow(id);
+            acted = true;
+        } else if (text == QStringLiteral("x")) {
+            m_cron->remove(id);
+            acted = true;
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (acted) {
+        refreshActivePage();
+        event->accept();
+        return true;
+    }
+    return false;
+}
+
+void RootWidget::openSessionSettingsOverlay()
+{
+    // Only meaningful over a transcript tab; bind the per-conversation overrides to
+    // the focused chat first (parity with ComposerControls setting conversationId).
+    if (m_active == nullptr || m_sessionSettings == nullptr) {
+        return;
+    }
+    m_sessionSettings->setConversationId(m_active->conversationId);
+    session::ISessionSettings* ss = m_sessionSettings;
+
+    auto* dlg = new Tui::ZDialog(this);
+    dlg->setOptions(Tui::ZWindow::DeleteOnClose);
+    dlg->setWindowTitle(QStringLiteral("Session settings"));
+    dlg->setContentsMargins({ 2, 1, 2, 1 });
+    auto* layout = new Tui::ZVBoxLayout();
+    dlg->setLayout(layout);
+
+    auto* hint = new Tui::ZLabel(
+        QStringLiteral("Enter / Space on a row cycles or toggles it · Esc closes"), dlg);
+    layout->addWidget(hint);
+    layout->addSpacing(1);
+
+    auto* profileBtn = new Tui::ZButton(QString(), dlg);
+    auto* effortBtn = new Tui::ZButton(QString(), dlg);
+    auto* fastBtn = new Tui::ZButton(QString(), dlg);
+    auto* verboseBtn = new Tui::ZButton(QString(), dlg);
+    layout->addWidget(profileBtn);
+    layout->addWidget(effortBtn);
+    layout->addWidget(fastBtn);
+    layout->addWidget(verboseBtn);
+    layout->addSpacing(1);
+
+    auto* buttons = new Tui::ZHBoxLayout();
+    layout->add(buttons);
+    buttons->addStretch();
+    auto* closeBtn = new Tui::ZButton(QStringLiteral("Close"), dlg);
+    closeBtn->setDefault(true);
+    buttons->addWidget(closeBtn);
+
+    const auto sync = [ss, profileBtn, effortBtn, fastBtn, verboseBtn] {
+        profileBtn->setText(QStringLiteral("Profile: %1").arg(ss->profile()));
+        effortBtn->setText(QStringLiteral("Effort:  %1").arg(ss->effort()));
+        fastBtn->setText(QStringLiteral("Fast:    %1")
+                             .arg(ss->fast() ? QStringLiteral("on") : QStringLiteral("off")));
+        verboseBtn->setText(QStringLiteral("Verbose: %1")
+                                .arg(ss->verbose() ? QStringLiteral("on")
+                                                   : QStringLiteral("off")));
+    };
+    sync();
+
+    connect(effortBtn, &Tui::ZButton::clicked, dlg, [ss, sync] {
+        const QStringList opts = ss->effortOptions();
+        if (!opts.isEmpty()) {
+            const int idx = static_cast<int>(qMax<qsizetype>(0, opts.indexOf(ss->effort())));
+            ss->setEffort(opts.at((idx + 1) % static_cast<int>(opts.size())));
+        }
+        sync();
+    });
+    connect(profileBtn, &Tui::ZButton::clicked, dlg, [this, ss, sync] {
+        const QStringList names = m_profiles->profileNames();
+        if (!names.isEmpty()) {
+            const int idx = static_cast<int>(qMax<qsizetype>(0, names.indexOf(ss->profile())));
+            ss->setProfile(names.at((idx + 1) % static_cast<int>(names.size())));
+        }
+        sync();
+    });
+    connect(fastBtn, &Tui::ZButton::clicked, dlg, [ss, sync] {
+        ss->setFast(!ss->fast());
+        sync();
+    });
+    connect(verboseBtn, &Tui::ZButton::clicked, dlg, [ss, sync] {
+        ss->setVerbose(!ss->verbose());
+        sync();
+    });
+    connect(closeBtn, &Tui::ZButton::clicked, dlg, &Tui::ZDialog::close);
+
+    dlg->setGeometry(QRect(0, 0, 48, 13));
+    effortBtn->setFocus();
+}
+
+void RootWidget::openCheckpointsOverlay()
+{
+    if (m_active == nullptr || m_checkpoints == nullptr) {
+        return;
+    }
+    m_checkpoints->setConversationId(m_active->conversationId);
+    auto* model = qobject_cast<uimodels::VariantListModel*>(m_checkpoints->checkpoints());
+    const QList<QVariantMap> rows = model != nullptr ? model->rows() : QList<QVariantMap>{};
+
+    auto* dlg = new Tui::ZDialog(this);
+    dlg->setOptions(Tui::ZWindow::DeleteOnClose);
+    dlg->setWindowTitle(QStringLiteral("Checkpoints"));
+    dlg->setContentsMargins({ 2, 1, 2, 1 });
+    auto* layout = new Tui::ZVBoxLayout();
+    dlg->setLayout(layout);
+
+    auto* hint = new Tui::ZLabel(
+        QStringLiteral("Enter restores the selected checkpoint · Esc closes"), dlg);
+    layout->addWidget(hint);
+
+    auto* list = new Tui::ZListView(dlg);
+    QStringList display;
+    QStringList ids;
+    for (const QVariantMap& c : rows) {
+        ids << c.value(QStringLiteral("id")).toString();
+        display << QStringLiteral("%1  ·  %2  ·  %3 tok%4")
+                       .arg(c.value(QStringLiteral("label")).toString(),
+                            c.value(QStringLiteral("time")).toString(),
+                            c.value(QStringLiteral("tokens")).toString(),
+                            c.value(QStringLiteral("current")).toBool()
+                                ? QStringLiteral("  (current)")
+                                : QString());
+    }
+    if (display.isEmpty()) {
+        display << QStringLiteral("(no checkpoints)");
+    }
+    list->setItems(display);
+    if (list->model() != nullptr && !rows.isEmpty()) {
+        list->setCurrentIndex(list->model()->index(0, 0));
+    }
+    layout->addWidget(list);
+    layout->addSpacing(1);
+
+    auto* buttons = new Tui::ZHBoxLayout();
+    layout->add(buttons);
+    buttons->addStretch();
+    auto* restoreBtn = new Tui::ZButton(QStringLiteral("Restore"), dlg);
+    buttons->addWidget(restoreBtn);
+    auto* closeBtn = new Tui::ZButton(QStringLiteral("Close"), dlg);
+    closeBtn->setDefault(true);
+    buttons->addWidget(closeBtn);
+
+    const auto doRestore = [this, dlg, list, ids] {
+        const int row = list->currentIndex().row();
+        if (row >= 0 && row < ids.size()) {
+            m_checkpoints->restore(ids.at(row));
+        }
+        dlg->close();
+    };
+    connect(restoreBtn, &Tui::ZButton::clicked, dlg, doRestore);
+    connect(list, &Tui::ZListView::enterPressed, dlg, [doRestore](int) { doRestore(); });
+    connect(closeBtn, &Tui::ZButton::clicked, dlg, &Tui::ZDialog::close);
+
+    dlg->setGeometry(QRect(0, 0, 62, qBound(9, static_cast<int>(rows.size()) + 8, 20)));
+    list->setFocus();
+}
+
+QString RootWidget::buildModelsMarkdown(int sel) const
+{
+    const auto rowsOf = [](QObject* m) {
+        auto* vlm = qobject_cast<uimodels::VariantListModel*>(m);
+        return vlm ? vlm->rows() : QList<QVariantMap>{};
+    };
+    const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
+
+    QString md;
+    md += QStringLiteral("# Models\n\n");
+    md += QStringLiteral("Installed models, shared with the GUI. **j/k** move · **Enter** "
+                         "activates · **x** removes.\n\n");
+
+    md += QStringLiteral("## Installed\n\n");
+    const auto installed = rowsOf(m_modelCatalog->installed());
+    if (installed.isEmpty()) {
+        md += QStringLiteral("_None installed._\n\n");
+    } else {
+        for (int i = 0; i < installed.size(); ++i) {
+            const QVariantMap& m = installed.at(i);
+            md += QStringLiteral("- %1**%2** (%3, %4 GiB)%5\n")
+                      .arg(mark(i), m.value(QStringLiteral("name")).toString(),
+                           m.value(QStringLiteral("params")).toString(),
+                           m.value(QStringLiteral("sizeGiB")).toString(),
+                           m.value(QStringLiteral("active")).toBool()
+                               ? QStringLiteral(" — **active**")
+                               : QString());
+        }
+        md += QLatin1Char('\n');
+    }
+
+    md += QStringLiteral("## Discover\n\n");
+    for (const QVariantMap& m : rowsOf(m_modelCatalog->discover())) {
+        md += QStringLiteral("- %1 — %2 · %3 GiB · %4%5\n")
+                  .arg(m.value(QStringLiteral("name")).toString(),
+                       m.value(QStringLiteral("params")).toString(),
+                       m.value(QStringLiteral("sizeGiB")).toString(),
+                       m.value(QStringLiteral("provider")).toString(),
+                       m.value(QStringLiteral("installed")).toBool()
+                           ? QStringLiteral(" (installed)")
+                           : QString());
+    }
+
+    md += QStringLiteral("\n## Providers\n\n");
+    const QVariantList provs = m_modelCatalog->providers();
+    for (const QVariant& v : provs) {
+        const QVariantMap m = v.toMap();
+        md += QStringLiteral("- %1 (%2)%3\n")
+                  .arg(m.value(QStringLiteral("name")).toString(),
+                       m.value(QStringLiteral("kind")).toString(),
+                       m.value(QStringLiteral("configured")).toBool()
+                           ? QStringLiteral(" — configured")
+                           : QString());
+    }
+
+    return md;
+}
+
+QString RootWidget::buildRoutingMarkdown(int sel) const
+{
+    auto* model = qobject_cast<uimodels::VariantListModel*>(m_routing->rules());
+    const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
+
+    QString md;
+    md += QStringLiteral("# Routing\n\n");
+    md += QStringLiteral("Intent → model rules, shared with the GUI. **j/k** move · "
+                         "**Space/Enter** toggle · **x** delete.\n\n");
+    if (model != nullptr) {
+        const auto rows = model->rows();
+        for (int i = 0; i < rows.size(); ++i) {
+            const QVariantMap& r = rows.at(i);
+            md += QStringLiteral("- %1**%2** → `%3` (fallback `%4`)%5\n")
+                      .arg(mark(i), r.value(QStringLiteral("intent")).toString(),
+                           r.value(QStringLiteral("target")).toString(),
+                           r.value(QStringLiteral("fallback")).toString(),
+                           r.value(QStringLiteral("enabled")).toBool()
+                               ? QString()
+                               : QStringLiteral(" — _disabled_"));
+        }
+    }
+    return md;
+}
+
+QString RootWidget::buildCronMarkdown(int sel) const
+{
+    auto* model = qobject_cast<uimodels::VariantListModel*>(m_cron->jobs());
+    const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
+
+    QString md;
+    md += QStringLiteral("# Scheduled jobs\n\n");
+    md += QStringLiteral("**j/k** move · **Space/Enter** enable/disable · **t** run now · "
+                         "**x** delete.\n\n");
+    if (model != nullptr) {
+        const auto rows = model->rows();
+        for (int i = 0; i < rows.size(); ++i) {
+            const QVariantMap& j = rows.at(i);
+            md += QStringLiteral("## %1%2%3\n\n")
+                      .arg(mark(i), j.value(QStringLiteral("name")).toString(),
+                           j.value(QStringLiteral("enabled")).toBool()
+                               ? QString()
+                               : QStringLiteral(" (disabled)"));
+            md += QStringLiteral("- Schedule: `%1`\n")
+                      .arg(j.value(QStringLiteral("schedule")).toString());
+            md += QStringLiteral("- Profile: %1\n").arg(j.value(QStringLiteral("profile")).toString());
+            md += QStringLiteral("- Next: %1 · Last: %2\n\n")
+                      .arg(j.value(QStringLiteral("nextRun")).toString(),
+                           j.value(QStringLiteral("lastRun")).toString());
+        }
+    }
+    return md;
+}
+
+QString RootWidget::buildDashboardMarkdown() const
+{
+    auto* activity = qobject_cast<uimodels::VariantListModel*>(m_dashboard->activity());
+
+    QString md;
+    md += QStringLiteral("# Dashboard\n\n");
+    md += QStringLiteral("- Active sessions: **%1**\n").arg(m_dashboard->activeSessions());
+    md += QStringLiteral("- Running agents: **%1**\n").arg(m_dashboard->runningAgents());
+    md += QStringLiteral("- Pending approvals: **%1**\n").arg(m_dashboard->pendingApprovals());
+    md += QStringLiteral("- Tokens today: **%1**\n").arg(m_dashboard->tokensToday());
+    md += QStringLiteral("- Daemon health: **%1**\n\n")
+              .arg(m_dashboard->healthy() ? QStringLiteral("OK") : QStringLiteral("degraded"));
+
+    md += QStringLiteral("## Recent activity\n\n");
+    if (activity != nullptr) {
+        for (const QVariantMap& a : activity->rows()) {
+            md += QStringLiteral("- _%1_ — %2\n")
+                      .arg(a.value(QStringLiteral("time")).toString(),
+                           a.value(QStringLiteral("text")).toString());
+        }
+    }
+    return md;
+}
+
+QString RootWidget::buildFleetMarkdown(int sel) const
+{
+    auto* nodes = qobject_cast<uimodels::VariantListModel*>(m_fleetTree->nodes());
+    const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
+
+    QString md;
+    md += QStringLiteral("# Fleet\n\n");
+    md += QStringLiteral("Orchestrator/worker tree, shared with the GUI. **j/k** move · "
+                         "**Space/Enter** pause/resume.\n\n");
+    if (nodes != nullptr) {
+        const auto rows = nodes->rows();
+        for (int i = 0; i < rows.size(); ++i) {
+            const QVariantMap& n = rows.at(i);
+            const int depth = n.value(QStringLiteral("depth")).toInt();
+            md += QString(depth * 2, QLatin1Char(' '));
+            md += QStringLiteral("- %1%2 — %3 (`%4`)\n")
+                      .arg(mark(i), n.value(QStringLiteral("name")).toString(),
+                           n.value(QStringLiteral("status")).toString(),
+                           n.value(QStringLiteral("model")).toString());
+        }
+    }
+    return md;
+}
+
+QString RootWidget::buildSessionsMarkdown(int sel) const
+{
+    auto* model = qobject_cast<uimodels::VariantListModel*>(m_roster->sessions());
+    const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
+
+    QString md;
+    md += QStringLiteral("# Sessions\n\n");
+    md += QStringLiteral("**j/k** move · **s** suspend · **R**/**Enter** resume · "
+                         "**x** close.\n\n");
+    if (model != nullptr) {
+        const auto rows = model->rows();
+        for (int i = 0; i < rows.size(); ++i) {
+            const QVariantMap& s = rows.at(i);
+            md += QStringLiteral("- %1**%2** — %3 · %4 · %5 · %6 tok\n")
+                      .arg(mark(i), s.value(QStringLiteral("title")).toString(),
+                           s.value(QStringLiteral("state")).toString(),
+                           s.value(QStringLiteral("lifecycle")).toString(),
+                           s.value(QStringLiteral("profile")).toString(),
+                           s.value(QStringLiteral("tokens")).toString());
+        }
+    }
+    return md;
+}
+
+QString RootWidget::buildApprovalsMarkdown(int sel) const
+{
+    auto* model = qobject_cast<uimodels::VariantListModel*>(m_approvals->pending());
+    const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
+
+    QString md;
+    md += QStringLiteral("# Approvals\n\n");
+    if (model == nullptr || model->count() == 0) {
+        md += QStringLiteral("_Inbox zero — no pending approvals._\n");
+        return md;
+    }
+    md += QStringLiteral("**j/k** move · **a**/**Enter** approve · **d** deny.\n\n");
+    const auto rows = model->rows();
+    for (int i = 0; i < rows.size(); ++i) {
+        const QVariantMap& a = rows.at(i);
+        md += QStringLiteral("## %1%2 (%3 risk)\n\n")
+                  .arg(mark(i), a.value(QStringLiteral("tool")).toString(),
+                       a.value(QStringLiteral("risk")).toString());
+        md += QStringLiteral("- Session: %1\n").arg(a.value(QStringLiteral("session")).toString());
+        md += QStringLiteral("- Command: `%1`\n\n")
+                  .arg(a.value(QStringLiteral("command")).toString());
+    }
+    return md;
+}
+
+QString RootWidget::buildProfilesMarkdown(int sel) const
+{
+    auto* model = qobject_cast<uimodels::VariantListModel*>(m_profiles->profiles());
+    const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
+
+    QString md;
+    md += QStringLiteral("# Profiles\n\n");
+    md += QStringLiteral("Agent profiles, shared with the GUI. **j/k** move · **Enter** "
+                         "set default · **x** delete. Use the GUI editor for model / "
+                         "prompt / skills.\n\n");
+
+    if (model != nullptr) {
+        const auto rows = model->rows();
+        for (int i = 0; i < rows.size(); ++i) {
+            const QVariantMap& p = rows.at(i);
+            md += QStringLiteral("## %1%2%3\n\n")
+                      .arg(mark(i), p.value(QStringLiteral("name")).toString(),
+                           p.value(QStringLiteral("isDefault")).toBool()
+                               ? QStringLiteral(" (default)")
+                               : QString());
+            md += QStringLiteral("- Model: `%1`\n").arg(p.value(QStringLiteral("model")).toString());
+            const QString desc = p.value(QStringLiteral("description")).toString();
+            if (!desc.isEmpty()) {
+                md += QStringLiteral("- %1\n").arg(desc);
+            }
+            md += QStringLiteral("- Skills: %1\n")
+                      .arg(p.value(QStringLiteral("skills")).toStringList().join(
+                          QStringLiteral(", ")));
+            md += QStringLiteral("- Tools: %1\n\n")
+                      .arg(p.value(QStringLiteral("tools")).toStringList().join(
+                          QStringLiteral(", ")));
+        }
+    }
+
+    return md;
+}
+
+QString RootWidget::buildAccountsMarkdown(int sel) const
+{
+    auto* model = qobject_cast<uimodels::VariantListModel*>(m_accounts->accounts());
+    const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
+
+    QString md;
+    md += QStringLiteral("# Accounts\n\n");
+    md += QStringLiteral("Connected provider accounts, shared with the GUI. **j/k** move · "
+                         "**R**/**Enter** re-auth · **x** remove. Use the GUI wizard to add "
+                         "accounts.\n\n");
+
+    md += QStringLiteral("## Connected\n\n");
+    if (model == nullptr || model->count() == 0) {
+        md += QStringLiteral("_No accounts._\n\n");
+    } else {
+        const auto rows = model->rows();
+        for (int i = 0; i < rows.size(); ++i) {
+            const QVariantMap& a = rows.at(i);
+            md += QStringLiteral("- %1**%2** — %3 (%4) · %5\n")
+                      .arg(mark(i), a.value(QStringLiteral("label")).toString(),
+                           a.value(QStringLiteral("kind")).toString() == QLatin1String("oauth")
+                               ? QStringLiteral("OAuth")
+                               : QStringLiteral("API key"),
+                           a.value(QStringLiteral("status")).toString(),
+                           a.value(QStringLiteral("detail")).toString());
+        }
+        md += QLatin1Char('\n');
+    }
+
+    md += QStringLiteral("## Available providers\n\n");
+    for (const QVariant& v : m_accounts->availableProviders()) {
+        const QVariantMap p = v.toMap();
+        md += QStringLiteral("- %1 (%2)\n")
+                  .arg(p.value(QStringLiteral("name")).toString(),
+                       p.value(QStringLiteral("kinds")).toStringList().join(QStringLiteral(", ")));
+    }
+
+    return md;
+}
+
+QString RootWidget::buildSettingsMarkdown() const
+{
+    const auto cfg = [this](const char* key) {
+        return m_daemonConfig->value(QString::fromLatin1(key)).toString();
+    };
+    const auto onoff = [this](const char* key) {
+        return m_daemonConfig->value(QString::fromLatin1(key)).toBool() ? QStringLiteral("on")
+                                                                        : QStringLiteral("off");
+    };
+
+    QString md;
+    md += QStringLiteral("# Settings\n\n");
+    md += QStringLiteral("The settings page, shared with the GUI. Edit values in the GUI; "
+                         "the TUI reflects the same daemon-config + app prefs. **F8** cycles "
+                         "the theme.\n\n");
+
+    md += QStringLiteral("## Connection\n\n");
+    md += QStringLiteral("- State: **%1**\n").arg(m_connection->state());
+    md += QStringLiteral("- Mode: %1\n").arg(m_connection->mode());
+    md += QStringLiteral("- Target: `%1`\n\n").arg(m_connection->target());
+
+    md += QStringLiteral("## Model\n\n");
+    md += QStringLiteral("- Default: `%1`\n").arg(cfg("model/default"));
+    md += QStringLiteral("- Reasoning effort: %1\n").arg(cfg("model/effort"));
+    md += QStringLiteral("- Fast mode: %1\n\n").arg(onoff("model/fast"));
+
+    md += QStringLiteral("## Chat\n\n");
+    md += QStringLiteral("- Stream responses: %1\n").arg(onoff("chat/streaming"));
+    md += QStringLiteral("- Send on Enter: %1\n").arg(onoff("chat/sendOnEnter"));
+    md += QStringLiteral("- Show token counts: %1\n\n").arg(onoff("chat/showTokenCounts"));
+
+    md += QStringLiteral("## Safety\n\n");
+    md += QStringLiteral("- Approval policy: %1\n").arg(cfg("safety/approvalPolicy"));
+    md += QStringLiteral("- Filesystem access: %1\n").arg(cfg("safety/sandbox"));
+    md += QStringLiteral("- Allow network: %1\n\n").arg(onoff("safety/allowNetwork"));
+
+    md += QStringLiteral("## Memory & Context\n\n");
+    md += QStringLiteral("- Max context tokens: %1\n")
+              .arg(m_daemonConfig->value(QStringLiteral("memory/contextWindow")).toInt());
+    md += QStringLiteral("- Auto-compact: %1\n").arg(onoff("memory/autoCompact"));
+    md += QStringLiteral("- Persist memory: %1\n\n").arg(onoff("memory/persistMemory"));
+
+    md += QStringLiteral("## Workspace\n\n");
+    md += QStringLiteral("- Root: `%1`\n").arg(cfg("workspace/root"));
+    md += QStringLiteral("- Respect .gitignore: %1\n\n").arg(onoff("workspace/followGitignore"));
+
+    md += QStringLiteral("## Voice\n\n");
+    md += QStringLiteral("- Enabled: %1\n").arg(onoff("voice/enabled"));
+    md += QStringLiteral("- Transcription model: %1\n\n").arg(cfg("voice/model"));
+
+    md += QStringLiteral("## Advanced\n\n");
+    md += QStringLiteral("- Log level: %1\n").arg(cfg("advanced/logLevel"));
+    md += QStringLiteral("- Telemetry: %1\n").arg(onoff("advanced/telemetry"));
+    md += QStringLiteral("- Experimental tools: %1\n").arg(onoff("advanced/experimentalTools"));
+
+    return md;
 }
 
 void RootWidget::destroySession(int tabId)
@@ -1976,7 +3046,11 @@ void RootWidget::openCommandPalette()
             // Route palette ids to existing actions; conversation-scoped verbs go to
             // the active orchestrator (which has no UI of its own here, so the slash
             // handlers above cover the rest).
-            if (id == QStringLiteral("new")) {
+            // App-level manager pages open as singleton page tabs (the TUI's
+            // equivalent of the GUI's Nav overlay).
+            if (openManagerPage(id)) {
+                // routed to a page tab
+            } else if (id == QStringLiteral("new")) {
                 newTranscriptTab();
             } else if (id == QStringLiteral("theme")) {
                 cycleTheme();

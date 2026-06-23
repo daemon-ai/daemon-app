@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls as QQC
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
@@ -74,6 +75,10 @@ Rectangle {
         busy: root.busy
         enabled: root.composerEnabled
         conversationId: root.conversationId
+        // Single source of truth for the model list + active model: the shared
+        // Models-hub catalog (installed models + active id), so the composer
+        // picker, the Models hub, and Settings -> Model default all agree.
+        modelSource: ModelCatalog
         onSubmitted: function(text, refs) { root.submitted(text, refs); }
         onSteer: function(text) { root.steer(text); }
         onCancelRequested: root.cancelRequested()
@@ -84,6 +89,31 @@ Rectangle {
         // A completion accept lands the caret at a specific offset (emitted right
         // after draftReset so this overrides the caret-to-end above).
         onCursorRequested: function(pos) { inputArea.cursorPosition = pos; }
+    }
+
+    // --- Local attachment pickers -------------------------------------------
+    // FileDialog/FolderDialog-backed pickers (same dialect as the transcript
+    // export dialog). The picked path is added as an attachment chip and folded
+    // into the submitted @file:/@image:/@folder: refs.
+    FileDialog {
+        id: filePicker
+        title: qsTr("Attach file")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [qsTr("All files (*)")]
+        onAccepted: root.addAttachment(root._baseName(selectedFile), "file")
+    }
+    FileDialog {
+        id: imagePicker
+        title: qsTr("Attach image")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [qsTr("Images (*.png *.jpg *.jpeg *.gif *.webp *.bmp *.svg)"),
+                      qsTr("All files (*)")]
+        onAccepted: root.addAttachment(root._baseName(selectedFile), "image")
+    }
+    FolderDialog {
+        id: folderPicker
+        title: qsTr("Attach folder")
+        onAccepted: root.addAttachment(root._baseName(selectedFolder) + "/", "folder")
     }
 
     // Stack on touch so the finger-sized menu/controls never crowd the input on
@@ -125,6 +155,12 @@ Rectangle {
     }
 
     // --- Attachments --------------------------------------------------------
+    // The basename of a file: URL (the chip label + the @file:/@image: ref body).
+    function _baseName(u) {
+        const s = String(u);
+        const i = s.lastIndexOf("/");
+        return i >= 0 ? s.slice(i + 1) : s;
+    }
     function addAttachment(name, kind) {
         controller.addAttachment(name, kind);
     }
@@ -326,9 +362,12 @@ Rectangle {
                         Layout.column: 0
                         Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
                         composerEnabled: root.composerEnabled
-                        onRequestFiles: root.addAttachment(qsTr("document.txt"), "file")
-                        onRequestFolder: root.addAttachment(qsTr("project/"), "folder")
-                        onRequestImages: root.addAttachment(qsTr("screenshot.png"), "image")
+                        // Real local pickers: the chosen path becomes a @file:/
+                        // @image:/@folder: ref on submit (the actual upload/read
+                        // stays daemon-coupled). URL has no native picker.
+                        onRequestFiles: filePicker.open()
+                        onRequestFolder: folderPicker.open()
+                        onRequestImages: imagePicker.open()
                         onRequestUrl: root.addAttachment("example.com", "url")
                         onInsertText: function(text) { root.insertAtCursor(text); }
                     }

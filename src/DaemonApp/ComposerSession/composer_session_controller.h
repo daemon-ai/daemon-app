@@ -6,9 +6,15 @@
 
 #include <QHash>
 #include <QObject>
+#include <QPointer>
 #include <QString>
 #include <QStringList>
+#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
+
+namespace models {
+class IModelCatalog;
+}
 
 // The composer's domain/session state machine, extracted from Composer.qml so it
 // is shared verbatim between the QML GUI and the TUI. It owns: the live draft,
@@ -57,18 +63,24 @@ class ComposerSessionController : public QObject {
     Q_PROPERTY(QString reverseSearchQuery READ reverseSearchQuery NOTIFY reverseSearchChanged)
     Q_PROPERTY(bool reverseSearchFound READ reverseSearchFound NOTIFY reverseSearchChanged)
 
-    // Model selector (placeholder: there is no gateway model backend yet, so the
-    // selection is in-memory). The list + current index live here so the GUI
-    // ModelPill and the TUI share one source.
-    Q_PROPERTY(QStringList models READ models CONSTANT)
+    // Model selector. The list + current selection are the single source of truth
+    // for the GUI ModelPill/picker and the TUI. When a `modelSource` (IModelCatalog)
+    // is injected, the list is the installed models and the current selection is the
+    // catalog's active model (so the composer, the Models hub, and Settings ->
+    // Model default all agree); otherwise a built-in fallback catalog is used.
+    Q_PROPERTY(QStringList models READ models NOTIFY modelCatalogChanged)
     // Structured catalog: one entry per model as {provider,id,label}, in the same
     // flat order as `models` so an index selects the same model in both. The GUI
-    // picker overlay groups by provider; the daemon later replaces this verbatim.
-    Q_PROPERTY(QVariantList modelCatalog READ modelCatalog CONSTANT)
+    // picker overlay groups by provider.
+    Q_PROPERTY(QVariantList modelCatalog READ modelCatalog NOTIFY modelCatalogChanged)
     Q_PROPERTY(int currentModelIndex READ currentModelIndex WRITE setCurrentModelIndex NOTIFY
                    currentModelChanged)
     Q_PROPERTY(QString currentModel READ currentModel NOTIFY currentModelChanged)
     Q_PROPERTY(QString currentProvider READ currentProvider NOTIFY currentModelChanged)
+    // The live model-catalog seam (IModelCatalog) shared with the Models hub.
+    // Settable from QML (modelSource: ModelCatalog) and from the TUI; null = use
+    // the built-in fallback catalog.
+    Q_PROPERTY(QObject* modelSource READ modelSource WRITE setModelSource NOTIFY modelCatalogChanged)
 
     // Turn modes (client state; no backend yet). reasoningEffort is one of
     // off/low/medium/high; fastMode trades depth for latency; verbose surfaces
@@ -112,12 +124,15 @@ public:
     [[nodiscard]] QString reverseSearchQuery() const { return m_reverseQuery; }
     [[nodiscard]] bool reverseSearchFound() const { return m_reverseFound; }
 
-    [[nodiscard]] QStringList models() const { return m_models; }
+    [[nodiscard]] QStringList models() const;
     [[nodiscard]] QVariantList modelCatalog() const;
-    [[nodiscard]] int currentModelIndex() const { return m_currentModelIndex; }
+    [[nodiscard]] int currentModelIndex() const;
     [[nodiscard]] QString currentModel() const;
     [[nodiscard]] QString currentProvider() const;
     void setCurrentModelIndex(int index);
+
+    [[nodiscard]] QObject* modelSource() const;
+    void setModelSource(QObject* source);
 
     [[nodiscard]] QString reasoningEffort() const { return m_reasoningEffort; }
     Q_INVOKABLE void setReasoningEffort(const QString& effort);
@@ -197,9 +212,13 @@ signals:
     void queueCountChanged();
     void editingIndexChanged();
     void currentModelChanged();
+    void modelCatalogChanged();
     void modesChanged();
 
 private:
+    // The unified model list as {provider,id,label} maps - from the injected
+    // IModelCatalog's installed models when present, else the fallback catalog.
+    [[nodiscard]] QVariantList catalogEntries() const;
     void applyDraft(const QString& text); // programmatic draft change (-> draftReset)
     // Like applyDraft but places the caret at `cursor` (-> draftReset + cursorRequested).
     void applyDraftWithCursor(const QString& text, int cursor);
@@ -249,6 +268,10 @@ private:
     };
     QStringList m_models;
     int m_currentModelIndex = 0;
+
+    // Optional live catalog seam. When non-null, models()/modelCatalog()/current*
+    // are sourced from the installed models + active id here instead of m_catalog.
+    QPointer<models::IModelCatalog> m_modelSource;
 
     // Turn modes (client state).
     QString m_reasoningEffort = QStringLiteral("medium");

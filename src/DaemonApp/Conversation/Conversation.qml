@@ -6,6 +6,7 @@ import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 import DaemonApp.Settings
 import DaemonApp.Tabs
+import DaemonApp.Pages
 
 // The conversation pane host, built as two stacked containers with EXPLICIT
 // anchored geometry (no outer ColumnLayout): a fixed-height tab bar at the top
@@ -74,6 +75,33 @@ Rectangle {
         const id = creator.createConversation("");
         tabModel.openTranscriptPinned(id, _titleFor(id));
     }
+    // Open an app-level manager/settings page as a singleton tab (the GUI's
+    // replacement for the old Nav modal overlay). Mirrors the TUI's
+    // RootWidget::openManagerPage routing. `section` deep-links into pages that
+    // expose one (Settings / Models).
+    function openManagerPage(pageId, section) {
+        const map = {
+            "settings":  [TabModel.Settings,  qsTr("Settings")],
+            "models":    [TabModel.Models,    qsTr("Models")],
+            "accounts":  [TabModel.Accounts,  qsTr("Accounts")],
+            "profiles":  [TabModel.Profiles,  qsTr("Profiles")],
+            "fleet":     [TabModel.Fleet,     qsTr("Fleet")],
+            "sessions":  [TabModel.Sessions,  qsTr("Sessions")],
+            "dashboard": [TabModel.Dashboard, qsTr("Dashboard")],
+            "approvals": [TabModel.Approvals, qsTr("Approvals")],
+            "routing":   [TabModel.Routing,   qsTr("Routing")],
+            "cron":      [TabModel.Cron,      qsTr("Scheduled jobs")],
+        };
+        const entry = map[pageId];
+        if (!entry)
+            return;
+        tabModel.openPage(entry[0], entry[1]);
+        if (section && section.length > 0) {
+            const ld = tabRepeater.itemAt(tabModel.currentIndex);
+            if (ld && ld.item && "section" in ld.item)
+                ld.item.section = section;
+        }
+    }
     // Route a command (palette / slash) to the active tab's orchestrator, so the
     // command palette can drive the foreground conversation. No-op without a tab.
     function invokeActiveCommand(command) {
@@ -84,11 +112,11 @@ Rectangle {
     // Rename / export the active conversation (the /title + /save targets, and the
     // command palette's session actions), acting through the shared store + exporter.
     function renameActive() {
-        if (root.activePage)
+        if (root.activePage && root.activePage.conversationController)
             renameDialog.openFor(root.activePage.conversationController.currentId);
     }
     function exportActive() {
-        if (root.activePage)
+        if (root.activePage && root.activePage.conversationController)
             exportDialog.openFor(root.activePage.conversationController.currentId);
     }
     // Open the settings popup over the pane, bound to the active conversation.
@@ -165,15 +193,39 @@ Rectangle {
                 id: pageLoader
 
                 required property int index
+                required property int kind
                 required property int conversationId
                 required property int tabId
 
                 anchors.fill: parent
                 visible: index === tabModel.currentIndex
                 active: true
-                sourceComponent: transcriptComp
+                // Transcript tabs load TranscriptPage; app-level page kinds mount
+                // their manager/settings component directly as tab content (the GUI
+                // equivalent of the TUI's per-kind page projection).
+                sourceComponent: {
+                    switch (pageLoader.kind) {
+                    case TabModel.Transcript: return transcriptComp;
+                    case TabModel.Settings:   return settingsComp;
+                    case TabModel.Models:     return modelsComp;
+                    case TabModel.Accounts:   return accountsComp;
+                    case TabModel.Profiles:   return profilesComp;
+                    case TabModel.Fleet:      return fleetComp;
+                    case TabModel.Sessions:   return sessionsComp;
+                    case TabModel.Dashboard:  return dashboardComp;
+                    case TabModel.Approvals:  return approvalsComp;
+                    case TabModel.Routing:    return routingComp;
+                    case TabModel.Cron:       return cronComp;
+                    default:                  return transcriptComp;
+                    }
+                }
 
                 onLoaded: {
+                    // Manager/settings pages are self-contained (they bind global
+                    // context-property seams); only transcript tabs need the
+                    // conversation wiring below.
+                    if (pageLoader.kind !== TabModel.Transcript)
+                        return;
                     // Bind reactively so a preview tab reassigned to another
                     // conversation reloads in place.
                     item.conversationId = Qt.binding(() => pageLoader.conversationId);
@@ -233,6 +285,19 @@ Rectangle {
         id: transcriptComp
         TranscriptPage {}
     }
+
+    // App-level manager/settings pages, mounted as tab content by the Repeater's
+    // per-kind switch. Each is self-contained (binds global context-property seams).
+    Component { id: settingsComp;  SettingsPage {} }
+    Component { id: modelsComp;    ModelsPage {} }
+    Component { id: accountsComp;  AccountsPage {} }
+    Component { id: profilesComp;  ProfilesPage {} }
+    Component { id: fleetComp;     FleetPage {} }
+    Component { id: sessionsComp;  SessionsPage {} }
+    Component { id: dashboardComp; DashboardPage {} }
+    Component { id: approvalsComp; ApprovalsPage {} }
+    Component { id: routingComp;   RoutingPage {} }
+    Component { id: cronComp;      CronPage {} }
 
     // --- Session-action dialogs (rename + export) ---------------------------
     // Rename the conversation via the store. openFor(id) seeds the field with the

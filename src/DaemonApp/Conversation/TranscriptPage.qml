@@ -140,7 +140,14 @@ Rectangle {
             Status.setBusy(true);
             Status.setTurnStartedAt(Date.now());
         }
-        function onTurnFinished() { Status.setBusy(false); }
+        function onTurnFinished() {
+            Status.setBusy(false);
+            // Turn-done desktop notification (opt-in): App.notifyGate no-ops while
+            // the window is on-screen and active, so this only alerts when hidden.
+            if (AppSettings.value("notify/turnDone", false))
+                App.notifyGate(ConversationStore.title(root.conversationId),
+                               qsTr("The turn finished."));
+        }
         function onEventsEmitted(events) { Status.applyTurnEvents(events); }
     }
 
@@ -160,6 +167,9 @@ Rectangle {
         // is hidden so the user knows the turn is waiting on them. App.notifyGate
         // no-ops when the window is on-screen and active (the inline gate is shown).
         function onAwaitingInput(kind) {
+            // Honor the "notify when a turn needs my input" preference.
+            if (!AppSettings.value("notify/gates", true))
+                return;
             const what = kind === "approval" ? qsTr("needs your approval")
                                              : qsTr("needs a credential");
             App.notifyGate(ConversationStore.title(root.conversationId),
