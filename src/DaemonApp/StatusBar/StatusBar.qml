@@ -128,6 +128,13 @@ Rectangle {
                 .arg(model.abbrev(model.tokensIn)).arg(model.abbrev(model.tokensOut))
         }
         StatusBarItem {
+            visible: model.rateLimit > 0
+            variant: "text"
+            glyph: FontIcons.fa_gauge_high
+            label: model.rateLabel
+            tooltipText: qsTr("Provider rate limit (remaining / limit)")
+        }
+        StatusBarItem {
             variant: "text"
             label: qsTr("Session")
             detail: model.sessionElapsed
@@ -265,6 +272,14 @@ Rectangle {
                         label: model.costLabel
                         detail: model.tokensIn + model.tokensOut > 0
                             ? (model.abbrev(model.tokensIn + model.tokensOut) + qsTr(" tok")) : ""
+                    }
+                    StatusBarItem {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: overflowSheet.rowHeight
+                        visible: model.rateLimit > 0
+                        variant: "text"
+                        glyph: FontIcons.fa_gauge_high
+                        label: model.rateLabel
                     }
                     StatusBarItem {
                         Layout.fillWidth: true

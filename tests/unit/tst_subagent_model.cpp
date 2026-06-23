@@ -70,6 +70,29 @@ private slots:
         QCOMPARE(model.runningCount(), 1);
     }
 
+    // runningCount / failedCount classify rows by status (fed to the footer's
+    // agentsRunning/agentsFailed in both front ends).
+    void runningAndFailedCounts()
+    {
+        SubagentModel model;
+        model.applyEvents(QVariantList{
+            sub(QStringLiteral("a"), QStringLiteral("explore"), QStringLiteral("running"),
+                QString()),
+            sub(QStringLiteral("b"), QStringLiteral("tests"), QStringLiteral("running"), QString()),
+            sub(QStringLiteral("c"), QStringLiteral("build"), QStringLiteral("error"), QString()),
+            sub(QStringLiteral("d"), QStringLiteral("lint"), QStringLiteral("done"), QString()),
+        });
+        QCOMPARE(model.runningCount(), 2);
+        QCOMPARE(model.failedCount(), 1);
+
+        // A status transition reclassifies without changing the row count.
+        model.applyEvents(QVariantList{ sub(QStringLiteral("a"), QString(),
+                                            QStringLiteral("error"), QString()) });
+        QCOMPARE(model.count(), 4);
+        QCOMPARE(model.runningCount(), 1);
+        QCOMPARE(model.failedCount(), 2);
+    }
+
     void ignoresNonSubagentEvents()
     {
         SubagentModel model;

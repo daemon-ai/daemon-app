@@ -64,9 +64,30 @@
 #include <QDir>
 #include <QDateTime>
 #include <QItemSelectionModel>
+#include <QProcess>
 #include <QRect>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QVariantMap>
+
+namespace {
+
+// Best-effort desktop notification from the TUI: notify-send when present
+// (reliable on Linux desktops), plus an OSC 9 escape as a terminal-native
+// fallback. The BEL urgency hint is rung separately by the caller.
+void emitDesktopNotification(const QString& title, const QString& body)
+{
+    const QString notifySend = QStandardPaths::findExecutable(QStringLiteral("notify-send"));
+    if (!notifySend.isEmpty()) {
+        QProcess::startDetached(notifySend, QStringList{ title, body });
+    }
+    // OSC 9 (iTerm2-style growl): ESC ] 9 ; <text> BEL.
+    const QString msg = body.isEmpty() ? title : (title + QStringLiteral(" \u2014 ") + body);
+    std::fputs(QStringLiteral("\033]9;%1\a").arg(msg).toUtf8().constData(), stdout);
+    std::fflush(stdout);
+}
+
+} // namespace
 
 // Per-transcript-tab backend state (see the forward declaration in root_widget.h).
 // Owns its QObjects unparented and deletes them on close; the document + ingest are
@@ -1572,6 +1593,12 @@ void RootWidget::wireViews()
             }
         });
     });
+    connect(m_listView, &ConversationListView::moveRequested, this, [this](int row, int delta) {
+        const int id = m_list->idAt(row);
+        if (id >= 0) {
+            m_store->moveConversation(id, delta);
+        }
+    });
 
     // Inline interactive answers: the transcript's controls emit decisions routed
     // to the ACTIVE session's mock host, which patches its document and asks us to
@@ -1671,6 +1698,38 @@ void RootWidget::wireViews()
                 }
                 if (command == QStringLiteral("find")) {
                     openTranscriptSearch();
+                    return;
+                }
+                // Session actions on the ACTIVE conversation, so "/title" and
+                // "/save" (and the palette) match the GUI; the list shortcuts
+                // (Ctrl+R / Ctrl+E) act on the focused row instead.
+                if (command == QStringLiteral("title")) {
+                    if (m_active == nullptr || !m_active->controller->hasConversation()) {
+                        return;
+                    }
+                    const int id = m_active->conversationId;
+                    auto* dialog = new TextPromptDialog(QStringLiteral("Rename conversation"),
+                                                        m_store->title(id), /*masked=*/false, this);
+                    connect(dialog, &TextPromptDialog::submitted, this,
+                            [this, id](const QString& text) {
+                                if (!text.trimmed().isEmpty()) {
+                                    m_store->renameConversation(id, text.trimmed());
+                                }
+                            });
+                    return;
+                }
+                if (command == QStringLiteral("save")) {
+                    if (m_active == nullptr || !m_active->controller->hasConversation()) {
+                        return;
+                    }
+                    const int id = m_active->conversationId;
+                    QString name = m_store->title(id);
+                    if (name.isEmpty()) {
+                        name = QStringLiteral("conversation");
+                    }
+                    const QString path =
+                        QDir(QDir::homePath()).filePath(name + QStringLiteral(".json"));
+                    m_exporter->exportToPath(m_store, id, path);
                     return;
                 }
                 if (command == QStringLiteral("compress")) {
@@ -1985,6 +2044,16 @@ void RootWidget::wireSession(TabSession* s)
             if (m_transcript != nullptr) {
                 m_transcript->reload();
             }
+            // Turn-done desktop notification (opt-in via notify/turnDone, shared
+            // with the GUI). The TUI cannot detect terminal focus, so this fires
+            // whenever the pref is on rather than only when hidden.
+            if (m_appSettings != nullptr
+                && m_appSettings->value(QStringLiteral("notify/turnDone"), false).toBool()) {
+                const QString convTitle = s->controller->hasConversation()
+                    ? m_store->title(s->conversationId)
+                    : QStringLiteral("daemon");
+                emitDesktopNotification(convTitle, QStringLiteral("The turn finished."));
+            }
         }
     });
     connect(s->turn, &TurnController::activeChanged, this, [this, s] {
@@ -1999,14 +2068,24 @@ void RootWidget::wireSession(TabSession* s)
         if (s != m_active) {
             return;
         }
+        // Honor the "notify when a turn needs my input" preference (shared with the
+        // GUI's notify/gates), defaulting on.
+        if (m_appSettings != nullptr
+            && !m_appSettings->value(QStringLiteral("notify/gates"), true).toBool()) {
+            return;
+        }
         std::fputs("\a", stdout); // BEL: most terminals raise an urgency hint
         std::fflush(stdout);
+        const QString what = kind == QStringLiteral("approval") ? QStringLiteral("approval")
+                                                                : QStringLiteral("credential");
         if (terminal() != nullptr) {
-            const QString what = kind == QStringLiteral("approval")
-                ? QStringLiteral("approval")
-                : QStringLiteral("credential");
             terminal()->setTitle(QStringLiteral("\u25cf daemon \u2014 needs ") + what);
         }
+        const QString convTitle = (m_active != nullptr && m_active->controller->hasConversation())
+            ? m_store->title(m_active->conversationId)
+            : QStringLiteral("daemon");
+        emitDesktopNotification(convTitle, QStringLiteral("The turn needs your ") + what
+                                    + QStringLiteral("."));
     });
     // Clear the title alert once the turn settles.
     connect(s->turn, &TurnController::turnFinished, this, [this, s] {
@@ -2129,6 +2208,12 @@ void RootWidget::activateTab(int tabId)
         m_composerSession->setConversationId(s->conversationId);
         m_composerSession->setBusy(s->turn->active());
         m_status->setBusy(s->turn->active());
+        // Resync the elapsed timer to THIS tab's live turn (mirrors the GUI's
+        // onIsActiveChanged), so a switched-to busy tab shows the right elapsed.
+        if (s->turn->active()) {
+            m_status->setTurnStartedAt(static_cast<double>(QDateTime::currentMSecsSinceEpoch())
+                                       - static_cast<double>(s->turn->elapsedMs()));
+        }
         refreshTranscript();
         updateTodos();
         updateSubagents();
@@ -3250,9 +3335,17 @@ void RootWidget::updateSubagents()
     }
     if (m_active == nullptr) {
         m_subagents->setText(QString());
+        if (m_status != nullptr) {
+            m_status->setAgentsRunning(0);
+            m_status->setAgentsFailed(0);
+        }
         return;
     }
     SubagentModel* subs = m_active->orchestrator->subagents();
+    if (m_status != nullptr) {
+        m_status->setAgentsRunning(subs->runningCount());
+        m_status->setAgentsFailed(subs->failedCount());
+    }
     const int n = subs->count();
     if (n == 0) {
         m_subagents->setText(QString());

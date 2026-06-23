@@ -328,6 +328,22 @@ void ConversationListView::keyEvent(Tui::ZKeyEvent* event)
         }
     }
 
+    // Alt+Up / Alt+Down reorders the current row within the list (mirrors the GUI
+    // "Move up"/"Move down" context-menu actions).
+    if (m_model != nullptr && (event->modifiers() & Qt::AltModifier)) {
+        const int row = m_model->currentRow();
+        if (row >= 0 && event->key() == Qt::Key_Up) {
+            emit moveRequested(row, -1);
+            event->accept();
+            return;
+        }
+        if (row >= 0 && event->key() == Qt::Key_Down) {
+            emit moveRequested(row, 1);
+            event->accept();
+            return;
+        }
+    }
+
     if (m_model != nullptr
         && (event->modifiers() == Qt::NoModifier || event->modifiers() == Qt::ShiftModifier)) {
         const int key = event->key();

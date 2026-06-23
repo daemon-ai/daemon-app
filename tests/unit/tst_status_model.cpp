@@ -105,6 +105,26 @@ private slots:
         QCOMPARE(model.agentsDetail(), QStringLiteral("1 failed"));
     }
 
+    // rateLabel is empty until a rateLimit window is known, then "remaining/limit".
+    // applyTurnEvents ingests the same absolute rateLimit shape the daemon emits.
+    void rateLabelFromTurnEvents()
+    {
+        StatusBarModel model;
+        QVERIFY(model.rateLabel().isEmpty()); // no window yet
+
+        QSignalSpy spy(&model, &StatusBarModel::rateChanged);
+        const QVariantList events { QVariantMap {
+            { QStringLiteral("type"), QStringLiteral("rateLimit") },
+            { QStringLiteral("remaining"), 74 },
+            { QStringLiteral("limit"), 80 },
+        } };
+        model.applyTurnEvents(events);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(model.rateRemaining(), 74);
+        QCOMPARE(model.rateLimit(), 80);
+        QCOMPARE(model.rateLabel(), QStringLiteral("74/80"));
+    }
+
     // Gateway dropdown content (extracted from GatewayMenu.qml) is seeded with the
     // placeholder values and is settable, emitting gatewayInfoChanged.
     void gatewayInfoSeededAndSettable()

@@ -151,6 +151,17 @@ Rectangle {
         function onEventsEmitted(events) { Status.applyTurnEvents(events); }
     }
 
+    // Mirror this tab's live subagent counts into the footer Agents item while it
+    // is the active tab (the TUI feeds the same counts from updateSubagents()).
+    Connections {
+        target: orchestrator.subagents
+        enabled: root.isActive
+        function onCountChanged() {
+            Status.agentsRunning = orchestrator.subagents.runningCount;
+            Status.agentsFailed = orchestrator.subagents.failedCount;
+        }
+    }
+
     // The turn paused for a masked host input (sudo password / secret). Raise the
     // masked prompt; the answer resumes the turn, cancel aborts it. Answered by the
     // mock turn now; the daemon's HostRequestKind replaces this responder later.
@@ -185,6 +196,8 @@ Rectangle {
         Status.setBusy(orchestrator.turn.active);
         if (orchestrator.turn.active)
             Status.setTurnStartedAt(Date.now() - orchestrator.turn.elapsedMs);
+        Status.agentsRunning = orchestrator.subagents.runningCount;
+        Status.agentsFailed = orchestrator.subagents.failedCount;
     }
 
     // Ctrl+F / Cmd+F opens the transcript find bar for this tab.

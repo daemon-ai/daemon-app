@@ -55,6 +55,7 @@ void StatusBarView::setModel(StatusBarModel* model)
         connect(m_model, &StatusBarModel::agentsDetailChanged, this, repaint);
         connect(m_model, &StatusBarModel::contextChanged, this, repaint);
         connect(m_model, &StatusBarModel::usageChanged, this, repaint);
+        connect(m_model, &StatusBarModel::rateChanged, this, repaint);
         connect(m_model, &StatusBarModel::turnElapsedChanged, this, repaint);
         connect(m_model, &StatusBarModel::sessionElapsedChanged, this, repaint);
         connect(m_model, &StatusBarModel::appVersionChanged, this, repaint);
@@ -142,6 +143,13 @@ QVector<Span> StatusBarView::buildRight() const
             usage += QStringLiteral(" ") + m_model->abbrev(tok) + QStringLiteral(" tok");
         }
         spans << mkSpan(usage, tpal::muted());
+    }
+
+    // Provider rate-limit window (remaining/limit), shown only once fed.
+    const QString rate = m_model->rateLabel();
+    if (!rate.isEmpty()) {
+        spans << mkSpan(separator(), tpal::muted());
+        spans << mkSpan(QStringLiteral("\u29d7 ") + rate, tpal::muted());
     }
 
     spans << mkSpan(separator(), tpal::muted());

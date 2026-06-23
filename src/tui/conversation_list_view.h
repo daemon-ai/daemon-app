@@ -57,6 +57,9 @@ signals:
     void exportRequested(int row);
     void pinToggleRequested(int row);
     void deleteRequested(int row);
+    // Reorder the row within the list (Alt+Up = -1, Alt+Down = +1); the shell
+    // resolves the conversation id and calls IConversationStore::moveConversation.
+    void moveRequested(int row, int delta);
 
 protected:
     void paintEvent(Tui::ZPaintEvent* event) override;

@@ -18,6 +18,17 @@ int SubagentModel::runningCount() const
     return n;
 }
 
+int SubagentModel::failedCount() const
+{
+    int n = 0;
+    for (const Item& item : m_items) {
+        if (item.status == QStringLiteral("error")) {
+            ++n;
+        }
+    }
+    return n;
+}
+
 int SubagentModel::rowCount(const QModelIndex& parent) const
 {
     if (parent.isValid()) {

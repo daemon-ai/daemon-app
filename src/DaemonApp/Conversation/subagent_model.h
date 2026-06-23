@@ -16,6 +16,7 @@ class SubagentModel : public QAbstractListModel {
     Q_OBJECT
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(int runningCount READ runningCount NOTIFY countChanged)
+    Q_PROPERTY(int failedCount READ failedCount NOTIFY countChanged)
 
 public:
     struct Item {
@@ -36,6 +37,7 @@ public:
 
     [[nodiscard]] int count() const { return static_cast<int>(m_items.size()); }
     [[nodiscard]] int runningCount() const;
+    [[nodiscard]] int failedCount() const;
 
     int rowCount(const QModelIndex& parent = {}) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
