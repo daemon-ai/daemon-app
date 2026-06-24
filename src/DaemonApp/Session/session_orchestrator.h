@@ -42,7 +42,7 @@ public:
     [[nodiscard]] bool busy() const;
 
     // Persist the user's text (attachment refs ride on the front), start the
-    // simulated assistant turn, and populate the demo todos for the turn.
+    // simulator assistant turn, and populate simulator-only todos for the turn.
     Q_INVOKABLE void submit(const QString& text, const QString& refs = QString());
     // Re-run the assistant turn for `text` WITHOUT appending a new user message:
     // the regenerate path (no new prompt) and the GUI edit path (the edited user
@@ -76,13 +76,13 @@ signals:
     void undoRequested();
 
 private:
-    void populateDemoTodos();
+    void populateSimulatorTodos();
 
     SessionController* m_session = nullptr;
     TurnController* m_turn = nullptr;
     TodoListModel* m_todos = nullptr;
     SubagentModel* m_subagents = nullptr;
-    // Clears the demo todos a short beat after the turn settles (replaces the QML
+    // Clears simulator todos a short beat after the turn settles (replaces the QML
     // todoClearTimer).
     QTimer m_todoClearTimer;
 };

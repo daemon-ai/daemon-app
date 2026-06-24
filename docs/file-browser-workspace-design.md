@@ -1,9 +1,9 @@
 # File browser / workspace design spec
 
-Status: design / feasibility. No production code yet. This document specifies how daemon-app
-(Qt 6.11 QML/C++) gains a file/workspace browser and a file/text viewer/editor that is
-consistent with the daemon backend's architecture and with the app's existing QML-first,
-mobile-capable shell.
+Status: Phase 1-2 implemented in `daemon-app` against a local-disk development
+service; daemon FS adapter pending. This document remains the design reference
+for aligning the file/workspace browser and file/text editor with the daemon
+backend's architecture and the app's QML-first, mobile-capable shell.
 
 ## Scope and non-goals
 

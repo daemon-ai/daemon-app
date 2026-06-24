@@ -125,20 +125,14 @@ private slots:
         QCOMPARE(model.rateLabel(), QStringLiteral("74/80"));
     }
 
-    // Gateway dropdown content (extracted from GatewayMenu.qml) is seeded with the
-    // placeholder values and is settable, emitting gatewayInfoChanged.
-    void gatewayInfoSeededAndSettable()
+    // Gateway dropdown content starts empty/honest and is settable, emitting
+    // gatewayInfoChanged when a daemon or demo provider supplies details.
+    void gatewayInfoDefaultsAndSettable()
     {
         StatusBarModel model;
-        QCOMPARE(model.gatewayConnectionText(), QStringLiteral("Connected to local gateway"));
-        QCOMPARE(model.gatewayLog().size(), 5);
-        QCOMPARE(model.gatewayLog().first(), QStringLiteral("gateway: ready (pid 4821)"));
-
-        const QVariantList platforms = model.gatewayPlatforms();
-        QCOMPARE(platforms.size(), 3);
-        const QVariantMap first = platforms.first().toMap();
-        QCOMPARE(first.value(QStringLiteral("name")).toString(), QStringLiteral("Telegram"));
-        QCOMPARE(first.value(QStringLiteral("online")).toBool(), true);
+        QCOMPARE(model.gatewayConnectionText(), QStringLiteral("No daemon connection"));
+        QVERIFY(model.gatewayLog().isEmpty());
+        QVERIFY(model.gatewayPlatforms().isEmpty());
 
         QSignalSpy spy(&model, &StatusBarModel::gatewayInfoChanged);
         model.setGatewayConnectionText(QStringLiteral("Reconnecting\u2026"));

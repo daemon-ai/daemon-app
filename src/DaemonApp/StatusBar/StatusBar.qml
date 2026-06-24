@@ -21,14 +21,16 @@ Rectangle {
     // (TranscriptPage.qml feeds busy/usage/context) drive ONE instance.
     readonly property var model: Status
 
-    // --- Local toggles (route + visual state; stay in QML) ------------------
-    property bool yoloActive: false
-    property bool terminalActive: false
-    property bool commandCenterOpen: false
-    property bool agentsOpen: false
-    property bool cronOpen: false
-    // Terminal item only shows in the chat view (always true for now).
-    property bool chatOpen: true
+    // --- Local feature gates ------------------------------------------------
+    // These controls stay hidden until there is real approval-mode / terminal
+    // behavior behind them. Manager-page buttons route through Nav below.
+    readonly property bool yoloAvailable: false
+    readonly property bool terminalAvailable: false
+
+    function openPage(page) {
+        if (typeof Nav !== "undefined" && Nav)
+            Nav.open(page);
+    }
 
     // Slightly taller, finger-friendly strip on a touch phone (compact only
     // occurs on touch); the dense desktop height everywhere else.
@@ -57,8 +59,7 @@ Rectangle {
         StatusBarItem {
             glyph: FontIcons.fa_terminal
             tooltipText: qsTr("Command Center")
-            active: root.commandCenterOpen
-            onClicked: root.commandCenterOpen = !root.commandCenterOpen
+            onClicked: root.openPage("dashboard")
         }
         StatusBarItem {
             id: gatewayItem
@@ -75,6 +76,8 @@ Rectangle {
                 statusModel: model
                 y: -height - 6
                 x: 0
+                onOpenSystemRequested: root.openPage("dashboard")
+                onViewAllLogsRequested: root.openPage("dashboard")
             }
         }
         StatusBarItem {
@@ -82,14 +85,12 @@ Rectangle {
             label: qsTr("Agents")
             detail: model.agentsDetail
             tone: model.agentsFailed > 0 ? "danger" : "default"
-            active: root.agentsOpen
-            onClicked: root.agentsOpen = !root.agentsOpen
+            onClicked: root.openPage("fleet")
         }
         StatusBarItem {
             glyph: FontIcons.fa_clock
             label: qsTr("Cron")
-            active: root.cronOpen
-            onClicked: root.cronOpen = !root.cronOpen
+            onClicked: root.openPage("cron")
         }
         StatusBarItem {
             glyph: FontIcons.fa_folder
@@ -147,17 +148,14 @@ Rectangle {
             detail: model.sessionElapsed
         }
         StatusBarItem {
+            visible: root.yoloAvailable
             glyph: FontIcons.fa_bolt
-            tooltipText: qsTr("YOLO (Shift-click for global)")
-            active: root.yoloActive
-            onClicked: function(modifiers) { root.yoloActive = !root.yoloActive; }
+            tooltipText: qsTr("Approval mode")
         }
         StatusBarItem {
-            visible: root.chatOpen
+            visible: root.terminalAvailable
             glyph: FontIcons.fa_terminal
             tooltipText: qsTr("Terminal")
-            active: root.terminalActive
-            onClicked: root.terminalActive = !root.terminalActive
         }
         StatusBarItem {
             glyph: FontIcons.fa_hashtag
@@ -195,6 +193,8 @@ Rectangle {
                 statusModel: model
                 y: -height - 6
                 x: 0
+                onOpenSystemRequested: root.openPage("dashboard")
+                onViewAllLogsRequested: root.openPage("dashboard")
             }
         }
 
@@ -241,8 +241,7 @@ Rectangle {
                         Layout.preferredHeight: overflowSheet.rowHeight
                         glyph: FontIcons.fa_terminal
                         label: qsTr("Command Center")
-                        active: root.commandCenterOpen
-                        onClicked: { root.commandCenterOpen = !root.commandCenterOpen; overflowSheet.close(); }
+                        onClicked: { root.openPage("dashboard"); overflowSheet.close(); }
                     }
                     StatusBarItem {
                         Layout.fillWidth: true
@@ -251,16 +250,14 @@ Rectangle {
                         label: qsTr("Agents")
                         detail: model.agentsDetail
                         tone: model.agentsFailed > 0 ? "danger" : "default"
-                        active: root.agentsOpen
-                        onClicked: { root.agentsOpen = !root.agentsOpen; overflowSheet.close(); }
+                        onClicked: { root.openPage("fleet"); overflowSheet.close(); }
                     }
                     StatusBarItem {
                         Layout.fillWidth: true
                         Layout.preferredHeight: overflowSheet.rowHeight
                         glyph: FontIcons.fa_clock
                         label: qsTr("Cron")
-                        active: root.cronOpen
-                        onClicked: { root.cronOpen = !root.cronOpen; overflowSheet.close(); }
+                        onClicked: { root.openPage("cron"); overflowSheet.close(); }
                     }
                     StatusBarItem {
                         Layout.fillWidth: true
@@ -298,19 +295,16 @@ Rectangle {
                     StatusBarItem {
                         Layout.fillWidth: true
                         Layout.preferredHeight: overflowSheet.rowHeight
+                        visible: root.yoloAvailable
                         glyph: FontIcons.fa_bolt
                         label: qsTr("YOLO")
-                        active: root.yoloActive
-                        onClicked: function(modifiers) { root.yoloActive = !root.yoloActive; overflowSheet.close(); }
                     }
                     StatusBarItem {
                         Layout.fillWidth: true
                         Layout.preferredHeight: overflowSheet.rowHeight
-                        visible: root.chatOpen
+                        visible: root.terminalAvailable
                         glyph: FontIcons.fa_terminal
                         label: qsTr("Terminal")
-                        active: root.terminalActive
-                        onClicked: { root.terminalActive = !root.terminalActive; overflowSheet.close(); }
                     }
                     StatusBarItem {
                         Layout.fillWidth: true

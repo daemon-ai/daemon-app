@@ -22,7 +22,7 @@ QQC.Button {
     contentItem: Text {
         text: root.text
         font: root.font
-        color: root.accentFilled ? "white"
+        color: root.accentFilled ? Theme.background
              : root.enabled ? Theme.text : Theme.textMuted
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter

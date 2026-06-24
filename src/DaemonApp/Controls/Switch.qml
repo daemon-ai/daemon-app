@@ -19,7 +19,7 @@ QQC.Switch {
         radius: height / 2
         color: !root.enabled ? Theme.hover
              : root.checked ? Theme.accent
-             : Theme.isDarkMode ? "#4a4a4a" : "#d4d4d4"
+             : Theme.border
         opacity: root.enabled ? 1.0 : 0.4
 
         Behavior on color { ColorAnimation { duration: 120 } }
@@ -30,7 +30,7 @@ QQC.Switch {
             radius: height / 2
             y: (parent.height - height) / 2
             x: root.checked ? parent.width - width - 3 : 3
-            color: "white"
+            color: Theme.background
 
             Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         }

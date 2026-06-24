@@ -6,9 +6,9 @@
 
 namespace connection {
 
-// Scripted stand-in for the daemon connection. connectTo() plays a believable
-// checking -> connecting -> ready sequence on a timer (or -> offline for an
-// obviously bad target); testConnection() resolves after a short delay. A real
+// Scripted stand-in for the daemon connection. It exercises the liveness state
+// machine without pretending that arbitrary targets are live: local targets must
+// exist, and remote success is reserved for the explicit mock host. A real
 // gateway later replaces this class by driving the same state transitions.
 class MockConnectionService : public IConnectionService {
     Q_OBJECT
@@ -23,8 +23,8 @@ public:
                         const QString& token = QString()) override;
 
 private:
-    // A target is "good" unless it obviously isn't (empty, or contains "bad"),
-    // so the offline / test-failure paths are exercisable from the UI.
+    // Keep mock readiness honest in normal runs. Use local paths that exist or
+    // https://mock.local for tests/demos that need a ready remote connection.
     [[nodiscard]] static bool plausible(const QString& mode, const QString& target);
 
     QTimer m_connectTimer;

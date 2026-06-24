@@ -6,7 +6,7 @@ import DaemonApp.Controls as Kit
 
 // The composer "+" menu - the QML port of Hermes' ContextMenu
 // (apps/desktop/src/app/chat/composer/context-menu.tsx): attach files / folder /
-// images / URL, a prompt-snippets section, and a "type @ to mention" tip. There
+// images, a prompt-snippets section, and a "type @ to mention" tip. There
 // is no real upload pipeline yet, so attach actions surface as signals the host
 // (or the composer's own mock pipeline) fulfills.
 Item {
@@ -18,7 +18,6 @@ Item {
     signal requestFiles()
     signal requestFolder()
     signal requestImages()
-    signal requestUrl()
     // Insert prompt-snippet text into the draft.
     signal insertText(string text)
 
@@ -64,38 +63,36 @@ Item {
 
             SectionLabel { text: qsTr("Attach") }
 
-            MenuRow {
-                icon: FontIcons.fa_paperclip
-                label: qsTr("Files")
+            Kit.MenuItem {
+                Layout.fillWidth: true
+                iconText: FontIcons.fa_paperclip
+                text: qsTr("Files")
                 onTriggered: { root.requestFiles(); menu.close(); }
             }
-            MenuRow {
-                icon: FontIcons.fa_folder
-                label: qsTr("Folder")
+            Kit.MenuItem {
+                Layout.fillWidth: true
+                iconText: FontIcons.fa_folder
+                text: qsTr("Folder")
                 onTriggered: { root.requestFolder(); menu.close(); }
             }
-            MenuRow {
-                icon: FontIcons.fa_image
-                label: qsTr("Images")
+            Kit.MenuItem {
+                Layout.fillWidth: true
+                iconText: FontIcons.fa_image
+                text: qsTr("Images")
                 onTriggered: { root.requestImages(); menu.close(); }
             }
-            MenuRow {
-                icon: FontIcons.fa_link
-                label: qsTr("URL")
-                onTriggered: { root.requestUrl(); menu.close(); }
-            }
-
             Divider {}
 
             SectionLabel { text: qsTr("Prompt snippets") }
 
             Repeater {
                 model: root.snippets
-                delegate: MenuRow {
+                delegate: Kit.MenuItem {
                     required property var modelData
-                    icon: FontIcons.mt_article
+                    Layout.fillWidth: true
+                    iconText: FontIcons.mt_article
                     iconFamily: FontIcons.mtSymbols
-                    label: modelData.label
+                    text: modelData.label
                     onTriggered: { root.insertText(modelData.text); menu.close(); }
                 }
             }
@@ -158,53 +155,4 @@ Item {
         color: Theme.border
     }
 
-    component MenuRow: Item {
-        id: rowRoot
-        property string icon: ""
-        property string iconFamily: FontIcons.faSolid
-        property string label: ""
-        signal triggered()
-
-        Layout.fillWidth: true
-        implicitHeight: 34
-
-        Rectangle {
-            anchors.fill: parent
-            radius: 5
-            color: rowArea.containsMouse ? Theme.hover : "transparent"
-        }
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 8
-            anchors.rightMargin: 8
-            spacing: 10
-
-            Text {
-                Layout.preferredWidth: 16
-                horizontalAlignment: Text.AlignHCenter
-                text: rowRoot.icon
-                font.family: rowRoot.iconFamily
-                font.pixelSize: 14
-                color: Theme.iconMuted
-            }
-            QQC.Label {
-                Layout.fillWidth: true
-                text: rowRoot.label
-                font.family: FontIcons.display
-                font.pixelSize: 13
-                color: Theme.text
-                elide: Text.ElideRight
-                verticalAlignment: Text.AlignVCenter
-            }
-        }
-
-        MouseArea {
-            id: rowArea
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: rowRoot.triggered()
-        }
-    }
 }

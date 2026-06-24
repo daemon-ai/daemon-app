@@ -1,11 +1,11 @@
 # In-transcript search - architecture & wiring
 
-Status: **engine implemented + unit-tested (feasibility spike); front-end UI wiring designed, not yet built.**
+Status: **engine implemented + unit-tested; GUI and TUI find bars shipped; in-block highlight polish deferred.**
 
 This is the "Search in transcript (and navigate to, anchor-style)" feature. The
-spike delivered in this task is the shared match engine plus its unit test
-(`tests/unit/tst_transcript_search.cpp`); the in-block highlight UI in each front
-end is designed here and deferred (see *Deferred / risks*).
+shared match engine is covered by `tests/unit/tst_transcript_search.cpp`; both
+front ends use it for find bars and anchor-style navigation. In-block highlight
+UI remains deferred (see *Deferred / risks*).
 
 ## Shared engine - `be::TranscriptSearchController`
 

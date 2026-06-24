@@ -68,13 +68,13 @@ void loadBundledFonts()
     QGuiApplication::setFont(base);
 }
 
-// Visual proof of theming. When DAEMON_APP_RENDER_SHOTS is set to a directory,
-// render the live window once per theme (Light/Dark/Sepia) and save a PNG each,
-// then exit. This is a guarded, opt-in render mode (no effect on a normal run),
-// kept here because the DaemonApp.App/Main module is baked into this executable.
+// Offscreen render harness. When DAEMON_APP_RENDER_SHOTS is set to a directory,
+// render the live window once per theme and save a PNG each, then exit. This is
+// a guarded, opt-in test mode (no effect on a normal run), kept here because the
+// DaemonApp.App/Main module is baked into this executable.
 // Run it offscreen (QT_QPA_PLATFORM=offscreen, QT_QUICK_BACKEND=software).
 // Returns true if shots were requested (and the app should exit).
-bool maybeRenderThemeShots(QQmlApplicationEngine& engine)
+bool maybeRunOffscreenRenderHarness(QQmlApplicationEngine& engine)
 {
     const QByteArray outDir = qgetenv("DAEMON_APP_RENDER_SHOTS");
     if (outDir.isEmpty()) {
@@ -237,13 +237,13 @@ int main(int argc, char* argv[])
         const QString spec = QString::fromLocal8Bit(pageEnv);
         const qsizetype slash = spec.indexOf(QLatin1Char('/'));
         if (slash >= 0) {
-            application.openPageForShots(spec.left(slash), spec.mid(slash + 1));
+            application.openPageForRenderHarness(spec.left(slash), spec.mid(slash + 1));
         } else {
-            application.openPageForShots(spec);
+            application.openPageForRenderHarness(spec);
         }
     }
 
-    if (maybeRenderThemeShots(engine)) {
+    if (maybeRunOffscreenRenderHarness(engine)) {
         return 0;
     }
 

@@ -1,6 +1,6 @@
 # Each feature is its own QML module under a directory mirroring its URI
-# (DaemonApp.<Feature>). Only App is wired in the minimal foundation; the rest
-# are added as they are implemented.
+# (DaemonApp.<Feature>). App links the feature modules and exposes the shared
+# core service seams that currently use mock/local-dev implementations.
 
 add_subdirectory(Theme)
 add_subdirectory(Controls)

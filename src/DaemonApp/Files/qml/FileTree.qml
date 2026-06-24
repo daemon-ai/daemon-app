@@ -24,11 +24,6 @@ Item {
     // Double click on a directory while selectDirs is on: choose that folder.
     signal folderChosen(string rootId, string path)
 
-    // Follow-active-file: expand the ancestor chain to (rootId, path).
-    function reveal(rootId, path) {
-        // Follow-active-file will be implemented in the flat model once the
-        // daemon adapter exposes parent-chain resolution. No-op for now.
-    }
     function refresh() {
         if (service)
             service.listRoots();

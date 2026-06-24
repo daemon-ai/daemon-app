@@ -1,6 +1,7 @@
 #include "connection/mock_connection_service.h"
 
 #include <QSignalSpy>
+#include <QTemporaryFile>
 #include <QtTest/QtTest>
 
 using connection::MockConnectionService;
@@ -14,9 +15,11 @@ class TestConnectionService : public QObject {
 private slots:
     void reachesReadyForGoodTarget()
     {
+        QTemporaryFile socketStandIn;
+        QVERIFY(socketStandIn.open());
         MockConnectionService c;
         QSignalSpy spy(&c, &connection::IConnectionService::stateChanged);
-        c.connectTo(QStringLiteral("local"), QStringLiteral("/run/daemon.sock"));
+        c.connectTo(QStringLiteral("local"), socketStandIn.fileName());
         QVERIFY(QTest::qWaitFor([&] { return c.state() == QStringLiteral("ready"); }, 3000));
         QVERIFY(c.ready());
         // It passed through "connecting" on the way.
@@ -26,7 +29,7 @@ private slots:
     void goesOfflineForBadTarget()
     {
         MockConnectionService c;
-        c.connectTo(QStringLiteral("remote"), QStringLiteral("https://bad-host"));
+        c.connectTo(QStringLiteral("local"), QStringLiteral("/run/daemon.sock"));
         QVERIFY(QTest::qWaitFor([&] { return c.state() == QStringLiteral("offline"); }, 3000));
         QVERIFY(!c.ready());
     }
@@ -42,20 +45,22 @@ private slots:
     {
         MockConnectionService c;
         QSignalSpy ok(&c, &connection::IConnectionService::testResult);
-        c.testConnection(QStringLiteral("local"), QStringLiteral("/run/daemon.sock"));
+        c.testConnection(QStringLiteral("remote"), QStringLiteral("https://mock.local"));
         QVERIFY(ok.wait(2000));
         QCOMPARE(ok.takeFirst().at(0).toBool(), true);
 
         QSignalSpy bad(&c, &connection::IConnectionService::testResult);
-        c.testConnection(QStringLiteral("remote"), QStringLiteral("https://bad"));
+        c.testConnection(QStringLiteral("remote"), QStringLiteral("https://example.invalid"));
         QVERIFY(bad.wait(2000));
         QCOMPARE(bad.takeFirst().at(0).toBool(), false);
     }
 
     void disconnectGoesOffline()
     {
+        QTemporaryFile socketStandIn;
+        QVERIFY(socketStandIn.open());
         MockConnectionService c;
-        c.connectTo(QStringLiteral("local"), QStringLiteral("/run/daemon.sock"));
+        c.connectTo(QStringLiteral("local"), socketStandIn.fileName());
         QVERIFY(QTest::qWaitFor([&] { return c.ready(); }, 3000));
         c.disconnect();
         QCOMPARE(c.state(), QStringLiteral("offline"));

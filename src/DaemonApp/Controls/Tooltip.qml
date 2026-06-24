@@ -14,11 +14,11 @@ QQC.ToolTip {
     contentItem: Text {
         text: root.text
         font: root.font
-        color: Theme.isDarkMode ? "#1f1f1f" : "white"
+        color: Theme.background
     }
 
     background: Rectangle {
         radius: Theme.radius
-        color: Theme.isDarkMode ? "#e6e6e6" : "#2f2f2f"
+        color: Theme.text
     }
 }

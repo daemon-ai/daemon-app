@@ -1,4 +1,5 @@
 # DaemonApp.Composer
 
-The bottom-middle message input: text entry, send action, and (later) attachments
-and model selection. Emits composed messages for the session to handle.
+The bottom composer chrome: text entry, send/cancel, attachments, model/session
+settings popovers, completion menu, prompt queue, todo/subagent strips, and the
+plus menu. Session-specific state lives in `DaemonApp.ComposerSession`.

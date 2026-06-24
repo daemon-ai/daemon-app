@@ -1,6 +1,24 @@
 #include "connection/mock_connection_service.h"
 
+#include <QDir>
+#include <QFileInfo>
+#include <QUrl>
+
 namespace connection {
+
+namespace {
+QString expandHome(QString path)
+{
+    path = path.trimmed();
+    if (path == QStringLiteral("~")) {
+        return QDir::homePath();
+    }
+    if (path.startsWith(QStringLiteral("~/"))) {
+        return QDir::homePath() + path.mid(1);
+    }
+    return path;
+}
+} // namespace
 
 MockConnectionService::MockConnectionService(QObject* parent)
     : IConnectionService(parent)
@@ -11,13 +29,23 @@ MockConnectionService::MockConnectionService(QObject* parent)
 
 bool MockConnectionService::plausible(const QString& mode, const QString& target)
 {
+    const QString trimmed = target.trimmed();
     if (mode == QStringLiteral("embedded")) {
         return false; // gated until full-node FFI lands
     }
-    if (target.trimmed().isEmpty()) {
+    if (trimmed.isEmpty()) {
         return false;
     }
-    return !target.contains(QStringLiteral("bad"), Qt::CaseInsensitive);
+    if (mode == QStringLiteral("local")) {
+        return QFileInfo::exists(expandHome(trimmed));
+    }
+    if (mode == QStringLiteral("remote")) {
+        const QUrl url(trimmed);
+        return url.isValid() && (url.scheme() == QStringLiteral("http")
+                                 || url.scheme() == QStringLiteral("https"))
+            && url.host() == QStringLiteral("mock.local");
+    }
+    return mode == QStringLiteral("mock") && trimmed == QStringLiteral("ready");
 }
 
 void MockConnectionService::connectTo(const QString& mode, const QString& target,

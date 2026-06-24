@@ -17,7 +17,7 @@ SessionOrchestrator::SessionOrchestrator(QObject* parent)
     connect(m_turn, &TurnController::eventsEmitted, this,
             [this](const QVariantList& events) { m_subagents->applyEvents(events); });
 
-    // Clear the demo todos (and the settled subagent rows) a beat after the turn
+    // Clear simulator todos (and the settled subagent rows) a beat after the turn
     // ends (the QML used a 1.5s single-shot timer restarted on busy->false).
     m_todoClearTimer.setSingleShot(true);
     m_todoClearTimer.setInterval(1500);
@@ -51,7 +51,7 @@ void SessionOrchestrator::submit(const QString& text, const QString& refs)
     // A fresh turn pre-empts a pending clear of the previous turn's todos.
     m_todoClearTimer.stop();
     m_turn->start(text);
-    populateDemoTodos();
+    populateSimulatorTodos();
 }
 
 void SessionOrchestrator::rerun(const QString& text)
@@ -65,7 +65,7 @@ void SessionOrchestrator::rerun(const QString& text)
     }
     m_todoClearTimer.stop();
     m_turn->start(text);
-    populateDemoTodos();
+    populateSimulatorTodos();
 }
 
 void SessionOrchestrator::steer(const QString& text)
@@ -103,14 +103,14 @@ void SessionOrchestrator::invokeCommand(const QString& command)
     emit commandRequested(command);
 }
 
-void SessionOrchestrator::populateDemoTodos()
+void SessionOrchestrator::populateSimulatorTodos()
 {
     // Drop any settled subagent rows from the previous turn so the status stack
     // starts clean; this turn's subagent.* events repopulate it.
     m_subagents->clear();
 
-    // Demo content: no real todo backend exists yet, so a canned plan stands in
-    // for the turn (mirrors the former Session.qml seam).
+    // Simulator content: no real todo backend exists yet, so a canned plan stands
+    // in for the turn and is cleared shortly after completion.
     m_todos->setTodos(QVariantList{
         QVariantMap{ { QStringLiteral("text"), tr("Inspect the project") },
                      { QStringLiteral("done"), true } },

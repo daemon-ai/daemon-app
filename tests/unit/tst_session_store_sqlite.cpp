@@ -3,6 +3,7 @@
 #include "domain/sidebar_node.h"
 #include "persistence/sqlite_session_store.h"
 
+#include <QFile>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -24,9 +25,9 @@ ListScope archivedScope()
 UnitId U(const char* s) { return UnitId(QString::fromLatin1(s)); }
 } // namespace
 
-// Exercises the durable SQLite session store: a fresh database seeds the
-// demo data, and every mutation survives closing and reopening the same file
-// (the offline cache the audit calls for).
+// Exercises the durable SQLite session store: a fresh production database starts
+// empty, demo data is opt-in, and every mutation survives closing and reopening
+// the same file (the offline cache the audit calls for).
 class TestSqliteStore : public QObject {
     Q_OBJECT
 
@@ -36,10 +37,23 @@ private:
     QString dbPath() const { return m_dir.path() + QStringLiteral("/sessions.db"); }
 
 private slots:
-    void freshDatabaseSeeds()
+    void init()
+    {
+        QFile::remove(dbPath());
+        QFile::remove(dbPath() + QStringLiteral("-shm"));
+        QFile::remove(dbPath() + QStringLiteral("-wal"));
+    }
+
+    void freshDatabaseStartsEmpty()
     {
         SqliteSessionStore store(dbPath());
-        // The demo seed includes several non-archived sessions and a root tree.
+        QCOMPARE(store.sessionCount(allScope()), 0);
+        QVERIFY(store.unitChildren(UnitId()).isEmpty());
+    }
+
+    void demoSeedIsOptIn()
+    {
+        SqliteSessionStore store(dbPath(), nullptr, true);
         QVERIFY(store.sessionCount(allScope()) > 0);
         QVERIFY(!store.unitChildren(UnitId()).isEmpty());
     }

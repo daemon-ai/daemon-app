@@ -32,7 +32,7 @@ Item {
     readonly property bool iconOnly: label === ""
     readonly property bool interactive: variant === "action" && enabled
 
-    // Captures keyboard modifiers (Shift => global YOLO toggle).
+    // Captures keyboard modifiers for callers that need alternate click behavior.
     signal clicked(var modifiers)
 
     implicitHeight: parent ? parent.height : Theme.statusBarHeight

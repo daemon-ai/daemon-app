@@ -14,7 +14,6 @@ class TranscriptExporter;
 
 namespace persistence {
 class ISessionStore;
-class InMemorySessionStore;
 }
 namespace platform {
 class IPlatformServices;
@@ -86,11 +85,10 @@ public:
     // Bound in QML to the active turn's awaitingInput signal.
     Q_INVOKABLE bool notifyGate(const QString& title, const QString& body);
 
-    // Guarded test/debug hook: open an app-level page (and optional section) via
-    // the shared Nav seam. Used by the offscreen render-shots mode
-    // (DAEMON_APP_RENDER_PAGE) to screenshot a manager/settings overlay; no
-    // effect on a normal run.
-    void openPageForShots(const QString& page, const QString& section = QString());
+    // Guarded render-harness hook: open an app-level page (and optional section)
+    // via the shared Nav seam. Used only by DAEMON_APP_RENDER_PAGE before the
+    // offscreen screenshot pass; no effect on a normal run.
+    void openPageForRenderHarness(const QString& page, const QString& section = QString());
 
 protected:
     // Close-to-tray: when a tray is installed, intercept the root window's close
@@ -98,7 +96,7 @@ protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
-    persistence::InMemorySessionStore* m_store = nullptr;
+    persistence::ISessionStore* m_store = nullptr;
     platform::IPlatformServices* m_platform = nullptr;
     // The shared footer status model, exposed to QML as the `Status` context
     // property so the footer StatusBar and the active session's turn feed a

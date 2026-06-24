@@ -50,13 +50,13 @@ QQC.Popup {
             // ----- Transcript --------------------------------------------
             SectionHeader { text: qsTr("Transcript") }
 
-            ActionRow {
+            Kit.MenuItem {
                 Layout.fillWidth: true
                 Layout.leftMargin: root.hMargin
                 Layout.rightMargin: root.hMargin
                 Layout.topMargin: 4
-                icon: FontIcons.fa_magnifying_glass
-                label: qsTr("Search transcript")
+                iconText: FontIcons.fa_magnifying_glass
+                text: qsTr("Search transcript")
                 enabled: root.controller && root.controller.hasSession
                 onTriggered: {
                     root.searchRequested();
@@ -243,12 +243,12 @@ QQC.Popup {
             Divider {}
 
             // ----- Actions -----------------------------------------------
-            ActionRow {
+            Kit.MenuItem {
                 Layout.fillWidth: true
                 Layout.leftMargin: root.hMargin
                 Layout.rightMargin: root.hMargin
-                icon: FontIcons.fa_trash
-                label: qsTr("Move to Trash")
+                iconText: FontIcons.fa_trash
+                text: qsTr("Move to Trash")
                 enabled: root.controller && root.controller.hasSession
                 onTriggered: {
                     if (root.controller)
@@ -259,13 +259,13 @@ QQC.Popup {
 
             Divider {}
 
-            ActionRow {
+            Kit.MenuItem {
                 Layout.fillWidth: true
                 Layout.leftMargin: root.hMargin
                 Layout.rightMargin: root.hMargin
                 Layout.bottomMargin: 6
-                icon: FontIcons.fa_undo_alt
-                label: qsTr("Reset all settings")
+                iconText: FontIcons.fa_undo_alt
+                text: qsTr("Reset all settings")
                 onTriggered: resetDialog.open()
             }
         }
@@ -316,56 +316,5 @@ QQC.Popup {
         Layout.topMargin: 8
         implicitHeight: 1
         color: Theme.border
-    }
-
-    component ActionRow: Item {
-        id: actionRoot
-        property string icon: ""
-        property string label: ""
-        signal triggered()
-
-        implicitHeight: 38
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.leftMargin: root.hMargin - 4
-            anchors.rightMargin: root.hMargin - 4
-            radius: 5
-            color: actionArea.containsMouse && actionRoot.enabled ? Theme.hover : "transparent"
-        }
-
-        Row {
-            anchors.left: parent.left
-            anchors.leftMargin: root.hMargin
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 12
-            opacity: actionRoot.enabled ? 1.0 : 0.4
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 16
-                horizontalAlignment: Text.AlignHCenter
-                text: actionRoot.icon
-                font.family: FontIcons.faSolid
-                font.pixelSize: 15
-                color: Theme.text
-            }
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: actionRoot.label
-                font.family: FontIcons.display
-                font.pixelSize: 14
-                color: Theme.text
-            }
-        }
-
-        MouseArea {
-            id: actionArea
-            anchors.fill: parent
-            hoverEnabled: true
-            enabled: actionRoot.enabled
-            cursorShape: Qt.PointingHandCursor
-            onClicked: actionRoot.triggered()
-        }
     }
 }

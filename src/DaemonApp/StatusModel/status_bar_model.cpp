@@ -4,33 +4,14 @@
 #include <QVariantMap>
 #include <cmath>
 
-namespace {
-QVariantMap platform(const QString& name, bool online)
-{
-    QVariantMap m;
-    m.insert(QStringLiteral("name"), name);
-    m.insert(QStringLiteral("online"), online);
-    return m;
-}
-} // namespace
-
 StatusBarModel::StatusBarModel(QObject* parent)
     : QObject(parent)
 {
-    // Placeholder gateway dropdown content (verbatim from the old GatewayMenu.qml).
-    m_gatewayConnectionText = tr("Connected to local gateway");
-    m_gatewayLog = {
-        QStringLiteral("gateway: ready (pid 4821)"),
-        QStringLiteral("session: resumed conv-1"),
-        QStringLiteral("inference: model warm"),
-        QStringLiteral("messaging: telegram connected"),
-        QStringLiteral("cron: 0 jobs due"),
-    };
-    m_gatewayPlatforms = {
-        platform(QStringLiteral("Telegram"), true),
-        platform(QStringLiteral("Slack"), false),
-        platform(QStringLiteral("Email"), true),
-    };
+    // Empty by default: the connection/daemon adapter owns live gateway facts.
+    // Mock/demo providers may still set these through the public setters.
+    m_gatewayConnectionText = tr("No daemon connection");
+    m_gatewayLog = {};
+    m_gatewayPlatforms = {};
 
     m_nowMs = static_cast<double>(QDateTime::currentMSecsSinceEpoch());
     // Session timer starts at launch (mirrors StatusBar.qml's

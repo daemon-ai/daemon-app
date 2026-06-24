@@ -16,9 +16,10 @@ namespace persistence {
 //
 // Strategy: the base class holds the authoritative copy in RAM and emits
 // changed() on every mutation. We load the RAM copy from disk at construction
-// (seeding the demo data only when the database is empty), and persist a full
-// snapshot whenever changed() fires. The dataset is small and local, so a
-// whole-snapshot write is simpler and safe than per-row dirty tracking.
+// and persist a full snapshot whenever changed() fires. Demo data is opt-in for
+// development/test fixtures; a normal first run starts with an empty durable DB.
+// The dataset is small and local, so a whole-snapshot write is simpler and safe
+// than per-row dirty tracking.
 //
 // On-disk table/column names keep their historical `sessions`/`agent_id`
 // spelling to avoid a data migration; only the C++ vocabulary is daemon-aligned.
@@ -29,7 +30,8 @@ public:
     // `dbPath` is the SQLite file to open. When empty, a per-user location under
     // QStandardPaths::AppDataLocation is used. Tests pass a temp path.
     explicit SqliteSessionStore(const QString& dbPath = QString(),
-                                QObject* parent = nullptr);
+                                QObject* parent = nullptr,
+                                bool seedDemoData = false);
     ~SqliteSessionStore() override;
 
     // The resolved on-disk path of the database (for diagnostics / tests).

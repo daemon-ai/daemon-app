@@ -1,11 +1,12 @@
 # Feature coverage audit: daemon-app vs hermes-agent (pre-backend)
 
-Status: pre-integration snapshot (before wiring the `../daemon` NodeApi backend).
+Status: historical pre-integration snapshot. Several Category A items have since
+landed in `daemon-app`; treat this as backlog/context, not exact current state.
 
 This audit compares the daemon-app GUI (Qt/QML) and TUI (Tui Widgets) against the
 reference product, hermes-agent's desktop (Electron + React) and TUI (Ink), to decide
 what front-end functionality is worth **stubbing client-side now** - behind the existing
-seams (`TurnController`, `IConversationStore`, `ConversationOrchestrator`,
+seams (`TurnController`, `ISessionStore`, `SessionOrchestrator`,
 `StatusBarModel`, `CompletionModel`, `IPlatformServices`) - so that backend integration
 becomes a data-source swap rather than new UI work.
 
@@ -13,7 +14,7 @@ becomes a data-source swap rather than new UI work.
 
 Four surfaces were inventoried:
 
-- daemon-app GUI: `src/DaemonApp/**` (App, Sidebar, ConversationsList, Conversation,
+- daemon-app GUI: `src/DaemonApp/**` (App, Sidebar, SessionsList, Session,
   Transcript, BlockEditor, Composer, ComposerSession, Tabs, StatusBar, StatusModel,
   Settings, Theme, Turn) + `src/core/**` (persistence, platform, presentation).
 - daemon-app TUI: `src/tui/**` (reuses the GUI's C++ view-models without Qt Quick).

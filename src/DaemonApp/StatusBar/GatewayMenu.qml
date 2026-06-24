@@ -48,7 +48,7 @@ QQC.Popup {
             Rectangle {
                 width: 8; height: 8; radius: 4
                 Layout.alignment: Qt.AlignVCenter
-                color: root.offline ? Theme.danger : root.degraded ? Theme.warning : "#3fbf63"
+                color: root.offline ? Theme.danger : root.degraded ? Theme.warning : Theme.statusOk
             }
             QQC.Label {
                 text: qsTr("Gateway")
@@ -124,7 +124,7 @@ QQC.Popup {
                     Rectangle {
                         width: 7; height: 7; radius: 3.5
                         Layout.alignment: Qt.AlignVCenter
-                        color: modelData.online ? "#3fbf63" : Theme.danger
+                        color: modelData.online ? Theme.statusOk : Theme.danger
                     }
                     QQC.Label {
                         text: modelData.name

@@ -161,17 +161,11 @@ Rectangle {
     // The basename of a file: URL (the chip label + the @file:/@image: ref body).
     function _baseName(u) {
         const s = String(u);
-        const i = s.lastIndexOf("/");
+        const i = Math.max(s.lastIndexOf("/"), s.lastIndexOf("\\"));
         return i >= 0 ? s.slice(i + 1) : s;
     }
     function addAttachment(name, kind) {
         controller.addAttachment(name, kind);
-    }
-
-    function _basename(path) {
-        var s = String(path);
-        var slash = Math.max(s.lastIndexOf("/"), s.lastIndexOf("\\"));
-        return slash >= 0 ? s.slice(slash + 1) : s;
     }
 
     // Per-session draft/queue swap, history, the idle drain, and dismissing
@@ -234,7 +228,7 @@ Rectangle {
                     if (!drop.hasUrls)
                         return;
                     for (var i = 0; i < drop.urls.length; ++i) {
-                        var name = root._basename(drop.urls[i]);
+                        var name = root._baseName(drop.urls[i]);
                         var lower = name.toLowerCase();
                         var isImage = /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(lower);
                         root.addAttachment(name, isImage ? "image" : "file");
@@ -371,7 +365,6 @@ Rectangle {
                         onRequestFiles: workspaceFilePicker.open()
                         onRequestFolder: workspaceFolderPicker.open()
                         onRequestImages: imagePicker.open()
-                        onRequestUrl: root.addAttachment("example.com", "url")
                         onInsertText: function(text) { root.insertAtCursor(text); }
                     }
 

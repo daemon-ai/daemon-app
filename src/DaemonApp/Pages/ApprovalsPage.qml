@@ -71,7 +71,7 @@ Item {
                                 id: rk; anchors.centerIn: parent
                                 text: entry.risk
                                 font.family: FontIcons.display; font.pixelSize: 9
-                                color: entry.risk === "high" ? "white" : Theme.textMuted
+                                color: entry.risk === "high" ? Theme.background : Theme.textMuted
                             }
                         }
                         Item { Layout.fillWidth: true }

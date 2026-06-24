@@ -4,6 +4,7 @@
 
 #include <QSignalSpy>
 #include <QStandardPaths>
+#include <QTemporaryFile>
 #include <QtTest/QtTest>
 
 using connection::MockConnectionService;
@@ -37,12 +38,14 @@ private slots:
 
     void goodConnectionAdvancesToInferenceThenDone()
     {
+        QTemporaryFile socketStandIn;
+        QVERIFY(socketStandIn.open());
         QtSettingsStore settings;
         MockConnectionService conn;
         FirstRunModel m(&settings, &conn);
         m.begin();
 
-        conn.connectTo(QStringLiteral("local"), QStringLiteral("/run/daemon.sock"));
+        conn.connectTo(QStringLiteral("local"), socketStandIn.fileName());
         QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
 
         QSignalSpy finished(&m, &FirstRunModel::finished);
@@ -60,7 +63,7 @@ private slots:
         FirstRunModel m(&settings, &conn);
         m.begin();
 
-        conn.connectTo(QStringLiteral("remote"), QStringLiteral("https://bad"));
+        conn.connectTo(QStringLiteral("remote"), QStringLiteral("https://example.invalid"));
         QVERIFY(QTest::qWaitFor(
             [&] { return m.phase() == QStringLiteral("connect") && !m.error().isEmpty(); }, 3000));
     }

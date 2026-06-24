@@ -22,8 +22,6 @@ Rectangle {
     signal folderChosen(string rootId, string path)
     signal collapseRequested()
 
-    // Reveal (and expand to) a path in the tree - used to follow the active file.
-    function reveal(rootId, path) { tree.reveal(rootId, path); }
     function openFinder() { finder.visible = true; finder.focusInput(); }
 
     color: Theme.sidebar

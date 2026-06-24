@@ -247,24 +247,25 @@ private:
     bool m_enabled = true;
     QString m_draft;
 
-    // Canned model catalog (no gateway model backend yet); selection is in-memory.
-    // One entry per model; `m_models` is the flat label list derived from this so
-    // an index addresses the same model in both views.
+    // Fallback catalog used only when no Models hub source is injected (main app
+    // injects MockModelCatalog). Keep ids aligned with the mock catalog so tests
+    // and stripped-down hosts do not drift into a second model universe.
     struct ModelEntry {
         QString provider;
         QString id;
         QString label;
     };
     QList<ModelEntry> m_catalog {
-        { QStringLiteral("Anthropic"), QStringLiteral("claude-opus-4.8"),
-          QStringLiteral("claude-opus-4.8") },
-        { QStringLiteral("Anthropic"), QStringLiteral("claude-sonnet-4.6"),
-          QStringLiteral("claude-sonnet-4.6") },
-        { QStringLiteral("OpenAI"), QStringLiteral("gpt-5.5"), QStringLiteral("gpt-5.5") },
-        { QStringLiteral("OpenAI"), QStringLiteral("gpt-5.3-codex"),
-          QStringLiteral("gpt-5.3-codex") },
-        { QStringLiteral("Google"), QStringLiteral("gemini-3-pro"),
-          QStringLiteral("gemini-3-pro") },
+        { QStringLiteral("Meta"), QStringLiteral("llama-3.1-8b-instruct"),
+          QStringLiteral("Llama 3.1 8B Instruct") },
+        { QStringLiteral("Meta"), QStringLiteral("llama-3.1-70b-instruct"),
+          QStringLiteral("Llama 3.1 70B Instruct") },
+        { QStringLiteral("Mistral"), QStringLiteral("mistral-7b-instruct"),
+          QStringLiteral("Mistral 7B Instruct") },
+        { QStringLiteral("Mistral"), QStringLiteral("mixtral-8x7b"),
+          QStringLiteral("Mixtral 8x7B") },
+        { QStringLiteral("Google"), QStringLiteral("gemma-2-9b-it"),
+          QStringLiteral("Gemma 2 9B IT") },
     };
     QStringList m_models;
     int m_currentModelIndex = 0;

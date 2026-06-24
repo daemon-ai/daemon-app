@@ -41,7 +41,7 @@ Item {
                 text: FontIcons.check
                 font.family: FontIcons.faSolid
                 font.pixelSize: 11
-                color: Theme.isDarkMode ? "#1a212a" : "white"
+                color: Theme.background
             }
         }
 

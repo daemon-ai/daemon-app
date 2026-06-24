@@ -1,12 +1,14 @@
 # daemon-app
 
 An AI agent chat application built with Qt 6.11 (QML/C++). Pure Qt Quick
-(`QQuickWindow`) UI so the same codebase targets desktop and mobile.
+(`QQuickWindow`) UI keeps the GUI portable, while shared C++ view models also
+back the experimental terminal frontend.
 
-This repository is currently a **scaffold / quality foundation** - the directory
-structure, build system, tooling, and dependency flake are in place, plus a
-minimal app that opens an empty window. Feature modules are populated in later
-steps.
+The app is a pre-backend product scaffold: the main shell, transcript renderer,
+composer, file/editor tabs, settings, memory views, first-run flow, command
+palette, and TUI are present. Many data sources are still mock or local-dev
+implementations behind interfaces so daemon adapters can replace them without
+rewriting the UI.
 
 ## Structure
 
@@ -16,20 +18,10 @@ small plain-C++ `src/core/`.
 
 ```
 src/
-  core/                # plain C++ libs (no QML)
-    domain/            # entities (Conversation; Message/Folder/Tag later)  -> da_domain
-    persistence/       # DbManager + repositories + migrations              -> da_persistence
-    platform/          # OS services behind interfaces (desktop/ + mobile/) -> da_platform
-  DaemonApp/           # QML feature modules (URI == folder path)
-    App/               # DaemonApp.App         shell window + main()
-    Theme/             # DaemonApp.Theme        palette / theming
-    Controls/          # DaemonApp.Controls     reusable UI kit
-    Sidebar/           # DaemonApp.Sidebar      All Conversations / Archived / Folders / Tags
-    ConversationsList/ # DaemonApp.ConversationsList  list of chat threads
-    Conversation/      # DaemonApp.Conversation center container (Transcript + Composer)
-    Transcript/        # DaemonApp.Transcript   scrollable message bubbles
-    Composer/          # DaemonApp.Composer     bottom-middle message input
-    Settings/          # DaemonApp.Settings     settings menu
+  core/          # plain C++ services, stores, mock adapters, and shared models
+  DaemonApp/     # QML feature modules (URI == folder path)
+  tui/           # experimental Tui Widgets frontend over shared C++ models
+  tests/         # unit, QML, block editor, and TUI tests
 ```
 
 ## Conventions
@@ -42,8 +34,8 @@ src/
 - Modules wire together with `DEPENDENCIES TARGET` + `target_link_libraries`; no
   `OUTPUT_DIRECTORY`, no `RESOURCE_PREFIX` (default `/qt/qml`), no manual
   `qmldir`/`qrc`.
-- Dependency direction: `core/domain <- core/persistence`; feature modules depend
-  on `core/*`; nothing depends on `App`.
+- Dependency direction: feature modules depend on `core/*`; nothing depends on
+  `App`. Backend-facing surfaces should sit behind interfaces in `src/core/`.
 
 ## Building
 
@@ -55,4 +47,5 @@ cmake --preset desktop-debug
 cmake --build --preset desktop-debug
 ```
 
-This builds `daemon-app`, which currently opens an empty window.
+This builds the `daemon-app` GUI. The Nix flake also exposes the experimental
+`daemon-tui` package with `-DDAEMON_APP_TUI=ON`.

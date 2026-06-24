@@ -242,8 +242,9 @@ void TurnController::armStall()
 
 QList<TurnController::Step> TurnController::buildScript(const QString& prompt)
 {
-    // Build a scripted turn. Content is canned but echoes the prompt so it reads
-    // as a response; a prompt containing "fail" drives the error branch.
+    // Build a simulator turn. Content is canned but echoes the prompt so the
+    // demo UI exercises realistic block shapes; keyword triggers drive specific
+    // approval/error/secret branches until a daemon event stream replaces this.
     const QString lower = prompt.toLower();
     const bool wantsError = lower.indexOf(QStringLiteral("fail")) >= 0;
     const bool wantsApproval = lower.indexOf(QStringLiteral("approve")) >= 0;

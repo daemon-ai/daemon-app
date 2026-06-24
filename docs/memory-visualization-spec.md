@@ -1,9 +1,8 @@
 # Mnemosyne memory visualization spec
 
-Status: design / spec. No production code yet. This document specifies how
-`daemon-app` (Qt 6.11 QML/C++ GUI + Tui Widgets TUI) gains a **Mnemosyne memory
-visualization** feature, and the `daemon` backend (`NodeApi` + `daemon-mnemosyne`)
-extensions required to feed it. It is the single consolidated reference for the
+Status: daemon-app memory surfaces are implemented against mock/read-only
+services; daemon `NodeApi` + `daemon-mnemosyne` adapters remain pending. This
+document is the consolidated reference for the **Mnemosyne memory visualization**
 feature and spans two repositories:
 
 - `daemon-app` - the thin client (GUI + TUI) that renders the views.
@@ -34,7 +33,8 @@ In scope:
 
 Out of scope (deferred, called out where relevant):
 
-- Implementing the backend or frontend code. This document delivers the spec only.
+- Implementing the daemon backend adapter. The current frontend code is
+  mock-backed and remains useful as the target shape for the real service.
 - Memory **mutation** from the GUI (the dashboard's admin actions: invalidate,
   supersede, set trust/importance/expiry). Initial scope is **read-only**
   inspection; mutation is a later phase (section 8).

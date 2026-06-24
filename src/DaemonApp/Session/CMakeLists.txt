@@ -14,7 +14,6 @@ qt_add_qml_module(da_session_view
     QML_FILES
         Session.qml
         TranscriptPage.qml
-        ToolGroup.qml
 )
 add_library(daemon-app::session_view ALIAS da_session_view)
 

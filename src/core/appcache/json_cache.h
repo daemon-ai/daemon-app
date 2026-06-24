@@ -5,7 +5,8 @@
 // snapshot on construct and writes it back on every mutation, so the GUI/TUI
 // keep their seeded state across restarts while there is no daemon to be the
 // source of truth. JSON under the app data dir keeps the files human-inspectable
-// and matches the location SqliteSessionStore already uses.
+// under a `mock/` subdirectory so it is visibly separate from durable product
+// data such as the session database.
 //
 // Header-only (inline, no .cpp) so the five independent mock libraries can each
 // include it without a shared link dependency. When the daemon becomes
@@ -26,14 +27,15 @@
 
 namespace appcache {
 
-// The writable app-data directory (created if missing), or the temp dir as a
-// last resort. Same root the durable session store writes into.
+// The writable mock-cache directory (created if missing), or the temp dir as a
+// last resort. Kept separate from durable product data.
 inline QString dir()
 {
     QString d = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (d.isEmpty()) {
         d = QDir::tempPath();
     }
+    d += QStringLiteral("/mock");
     QDir().mkpath(d);
     return d;
 }

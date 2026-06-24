@@ -50,7 +50,7 @@ QList<int> splitTagIds(const QString& csv)
 
 } // namespace
 
-SqliteSessionStore::SqliteSessionStore(const QString& dbPath, QObject* parent)
+SqliteSessionStore::SqliteSessionStore(const QString& dbPath, QObject* parent, bool seedDemoData)
     : InMemorySessionStore(parent, /*seed=*/false)
     , m_dbPath(dbPath.isEmpty() ? defaultDatabasePath() : dbPath)
 {
@@ -62,9 +62,9 @@ SqliteSessionStore::SqliteSessionStore(const QString& dbPath, QObject* parent)
     openDatabase();
     createSchema();
 
-    // Hydrate the in-memory model from disk; seed the demo data only when the
-    // database is brand new (empty), then persist that initial snapshot.
-    if (!loadAll()) {
+    // Hydrate the in-memory model from disk. Demo data is opt-in so a normal
+    // first run does not persist fake conversations into the user's real cache.
+    if (!loadAll() && seedDemoData) {
         seedSampleData();
         saveAll();
     }
@@ -201,7 +201,7 @@ bool SqliteSessionStore::loadAll()
     }
     m_nextId = metaInt(QStringLiteral("next_conv_id"), maxConv + 1);
     m_nextTagId = metaInt(QStringLiteral("next_tag_id"), maxTag + 1);
-    m_nextUnitSeq = metaInt(QStringLiteral("next_node_seq"), m_units.size() + 1);
+    m_nextUnitSeq = metaInt(QStringLiteral("next_node_seq"), static_cast<int>(m_units.size()) + 1);
 
     return !m_sessions.isEmpty() || !m_units.isEmpty();
 }

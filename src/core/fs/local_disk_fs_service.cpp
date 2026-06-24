@@ -68,6 +68,18 @@ bool looksBinary(const QByteArray& head)
     return false;
 }
 
+QString expandHome(QString path)
+{
+    path = path.trimmed();
+    if (path == QStringLiteral("~")) {
+        return QDir::homePath();
+    }
+    if (path.startsWith(QStringLiteral("~/"))) {
+        return QDir::homePath() + path.mid(1);
+    }
+    return path;
+}
+
 } // namespace
 
 LocalDiskFsService::LocalDiskFsService(const QString& rootPath, const QString& label,
@@ -77,7 +89,7 @@ LocalDiskFsService::LocalDiskFsService(const QString& rootPath, const QString& l
 {
     registerFsMetatypes();
 
-    QString base = rootPath.trimmed();
+    QString base = expandHome(rootPath);
     if (base.isEmpty() || !QFileInfo(base).isDir())
         base = QDir::homePath();
     base = QFileInfo(base).canonicalFilePath();

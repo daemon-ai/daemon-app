@@ -171,7 +171,7 @@ void Application::registerContext(QQmlApplicationEngine& engine)
     engine.addImageProvider(QStringLiteral("math"), new be::app::MathImageProvider);
 }
 
-void Application::openPageForShots(const QString& page, const QString& section)
+void Application::openPageForRenderHarness(const QString& page, const QString& section)
 {
     m_nav->open(page, section);
 }

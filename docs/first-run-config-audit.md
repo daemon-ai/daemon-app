@@ -1,15 +1,19 @@
 # First-run / connection / settings audit map: daemon-app vs `../daemon` NodeApi
 
-Status: pre-integration snapshot (before wiring the `../daemon` NodeApi backend).
+Status: historical pre-integration snapshot. First-run, connection, settings,
+and several manager surfaces now exist in `daemon-app` behind mock/local-dev
+services; use this document as integration context rather than exact current
+state.
 
 Companion to [feature-coverage-audit.md](feature-coverage-audit.md). Where that audit covers the
 **core chat loop**, this one covers the **shell around it**: how a front end connects to a
 `daemon` node, what the user sees on **first run**, and how **settings/config** (providers,
 models, agents/profiles, ACP, app preferences) should be organised as shared GUI + TUI logic.
 
-This is an audit + integration-simulation map. It is **not** an implementation task: no UI is
-built here. The goal is to decide the seams now so that wiring the real `daemon` becomes a
-data-source swap, and to surface where `../daemon` is missing functionality the client needs.
+This is an audit + integration-simulation map. Some UI described here has since
+been built; the remaining goal is to keep the seams clear so wiring the real
+`daemon` becomes a data-source swap, and to surface where `../daemon` is missing
+functionality the client needs.
 
 ## Method
 

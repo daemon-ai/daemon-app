@@ -8,8 +8,8 @@
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
-// Swappable, scripted stand-in for the daemon runtime - the C++ port of
-// TurnSimulator.qml. Given a user prompt it plays a believable assistant turn
+// Demo/simulator runtime for pre-backend UI coverage - the C++ port of
+// TurnSimulator.qml. Given a user prompt it plays a canned assistant turn
 // (reasoning -> tool running/done -> streamed text -> flush) by emitting daemon-
 // shaped event maps on a re-armed timer. A real gateway later replaces this class
 // by emitting the same event shapes; consumers only read turnState/elapsedMs/
