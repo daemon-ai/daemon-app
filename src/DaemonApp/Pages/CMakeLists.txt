@@ -1,5 +1,5 @@
 # App-level manager/settings pages, mounted as singleton tab content by
-# Conversation.qml (the GUI's tab strip). One QML module holds the page shell,
+# Session.qml (the GUI's tab strip). One QML module holds the page shell,
 # reusable chrome (PageHeader / NavRail / SettingRow / SectionLabel), and each
 # page/section; new pages are added here as they are implemented.
 qt_add_qml_module(da_pages

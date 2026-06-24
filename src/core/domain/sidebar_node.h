@@ -10,7 +10,7 @@ namespace domain {
 // The kinds of rows the sidebar shows. The numeric order is load-bearing: QML
 // branches on these integer values, so keep positions stable when extending.
 enum class NodeType {
-    AllConversations = 0, // 0: every non-archived session
+    AllSessions = 0, // 0: every non-archived session
     Archived,             // 1: archived sessions
     FleetSeparator,       // 2: the "Fleet" section header (with + add-root)
     TagSeparator,         // 3: the "Tags" section header (with + add-tag)
@@ -23,7 +23,7 @@ enum class NodeType {
 // and the scope folds over that unit's WHOLE subtree (the unit and all
 // descendants), which is the same logic for every unit regardless of kind/depth.
 struct ListScope {
-    NodeType type = NodeType::AllConversations;
+    NodeType type = NodeType::AllSessions;
     int tagId = -1;     // tag id for Tag scope; ignored otherwise
     UnitId unitId;      // unit id for Unit scope; empty otherwise
 

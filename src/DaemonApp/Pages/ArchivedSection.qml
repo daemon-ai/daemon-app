@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
-import DaemonApp.ConversationsList
+import DaemonApp.SessionsList
 
 // Archived chats over the shared ISessionStore: a live list (scope =
 // Archived) with unarchive / delete actions, mirroring the GUI's other
@@ -11,7 +11,7 @@ ColumnLayout {
     id: root
     spacing: 12
 
-    ConversationsListModel {
+    SessionsListModel {
         id: archived
         store: SessionStore
         // NodeType::Archived == 1 (see domain/sidebar_node.h).

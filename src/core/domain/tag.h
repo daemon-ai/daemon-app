@@ -5,7 +5,7 @@
 
 namespace domain {
 
-// A label that can be attached to conversations.
+// A label that can be attached to sessions.
 struct Tag {
     int id = -1;
     QString name;

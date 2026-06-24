@@ -7,16 +7,16 @@
 namespace session {
 
 // Per-session override seam backing the composer's session-settings popover. It
-// represents the active conversation's effective model/effort/profile overrides;
+// represents the active session's effective model/effort/profile overrides;
 // the mock holds them in memory. A real implementation binds these to the live
 // ComposerSessionController for the focused tab.
 class ISessionSettings : public QObject {
     Q_OBJECT
-    // The conversation these overrides apply to. Setting it switches the active
-    // per-conversation state (so the composer popover reflects the focused chat,
+    // The session these overrides apply to. Setting it switches the active
+    // per-session state (so the composer popover reflects the focused chat,
     // not a single global), emitting changed() so bound views refresh.
-    Q_PROPERTY(int sessionId READ sessionId WRITE setConversationId NOTIFY
-                   conversationIdChanged)
+    Q_PROPERTY(int sessionId READ sessionId WRITE setSessionId NOTIFY
+                   sessionIdChanged)
     Q_PROPERTY(QString profile READ profile WRITE setProfile NOTIFY changed)
     Q_PROPERTY(QString effort READ effort WRITE setEffort NOTIFY changed)
     Q_PROPERTY(bool fast READ fast WRITE setFast NOTIFY changed)
@@ -27,7 +27,7 @@ public:
     ~ISessionSettings() override = default;
 
     [[nodiscard]] virtual int sessionId() const = 0;
-    virtual void setConversationId(int id) = 0;
+    virtual void setSessionId(int id) = 0;
 
     [[nodiscard]] virtual QString profile() const = 0;
     virtual void setProfile(const QString& profile) = 0;
@@ -42,7 +42,7 @@ public:
 
 signals:
     void changed();
-    void conversationIdChanged();
+    void sessionIdChanged();
 };
 
 } // namespace session

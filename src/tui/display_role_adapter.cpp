@@ -1,6 +1,6 @@
 #include "display_role_adapter.h"
 
-#include "conversations_list_model.h"
+#include "sessions_list_model.h"
 #include "sidebar_model.h"
 
 #include "domain/sidebar_node.h"
@@ -116,8 +116,8 @@ QVariant DisplayRoleAdapter::listData(const QModelIndex& src, int role) const
     const auto srcData = [&](int r) { return sourceModel()->data(src, r); };
 
     if (role == Qt::DisplayRole) {
-        QString text = srcData(ConversationsListModel::TitleRole).toString();
-        const QString agent = srcData(ConversationsListModel::UnitNameRole).toString();
+        QString text = srcData(SessionsListModel::TitleRole).toString();
+        const QString agent = srcData(SessionsListModel::UnitNameRole).toString();
         if (!agent.isEmpty()) {
             text += QStringLiteral("  \u2014 %1").arg(agent);
         }

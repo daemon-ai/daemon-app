@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
-// A placeholder toolbar button for the conversation header: a rounded
+// A placeholder toolbar button for the session header: a rounded
 // hover/pressed background with centered content (one or more glyphs/labels),
 // editor top-bar buttons. Assign `content` an item or array
 // of items. Non-functional unless `onClicked` is handled.

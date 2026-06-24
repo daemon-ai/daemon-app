@@ -8,7 +8,7 @@ import DaemonApp.Controls as Kit
 // pill, an optional steer button (mid-turn), and a high-contrast primary action
 // that reads as send / queue / stop depending on busy + payload state.
 //
-// Voice dictation and the voice-conversation pill are intentionally omitted -
+// Voice dictation and the voice-session pill are intentionally omitted -
 // there is no audio backend wired yet.
 RowLayout {
     id: root
@@ -48,7 +48,7 @@ RowLayout {
         iconPointSize: 13
         tooltipText: qsTr("Checkpoints / rewind")
         onClicked: {
-            // Bind the timeline to the focused chat so rewind is per-conversation.
+            // Bind the timeline to the focused chat so rewind is per-session.
             if (root.session)
                 Checkpoints.sessionId = root.session.sessionId;
             checkpointsPopover.open();
@@ -68,7 +68,7 @@ RowLayout {
         iconPointSize: 13
         tooltipText: qsTr("Session settings")
         onClicked: {
-            // Bind the overrides to the focused chat so they are per-conversation.
+            // Bind the overrides to the focused chat so they are per-session.
             if (root.session)
                 SessionSettings.sessionId = root.session.sessionId;
             sessionSettingsPopover.open();

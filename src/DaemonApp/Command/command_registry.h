@@ -11,7 +11,7 @@
 // substring over title/hint/id/group), so both palettes filter identically.
 //
 // Activation is intent-only: trigger() emits commandTriggered(id); each front end
-// routes the id to its existing actions (theme cycle, new conversation, open
+// routes the id to its existing actions (theme cycle, new session, open
 // settings, model picker, mode toggles, or orchestrator slash commands). The
 // daemon adapter can later add/route entries without either UI changing.
 //

@@ -36,14 +36,14 @@ QtObject {
     // --- Surfaces -----------------------------------------------------------
     // Main / right-pane background (white / rgb(25,25,25) / rgb(251,240,217)).
     readonly property color background: ThemeTokens.colorFor(theme, "background")
-    // Middle column (conversations list) shares the main background.
+    // Middle column (sessions list) shares the main background.
     readonly property color surface: background
     // Left sidebar (frameLeft): a chrome panel in the same hue family as the
     // background, offset in lightness. Light neutral grey; Dark lifted; Midnight
     // brighter navy; Sepia a warm parchment tan (between background and border)
     // so the column stays in the warm palette instead of clashing grey.
     readonly property color sidebar: ThemeTokens.colorFor(theme, "sidebar")
-    // Conversations list surface: joins the sidebar chrome in the dark/sepia/
+    // Sessions list surface: joins the sidebar chrome in the dark/sepia/
     // midnight themes, but an off-white in Light so the middle column reads with
     // the editor instead of as the grey sidebar chrome.
     readonly property color listBackground: ThemeTokens.colorFor(theme, "listBackground")
@@ -116,7 +116,7 @@ QtObject {
     readonly property color stateRunning: accent
     readonly property color stateFinished: countText
 
-    // --- Conversations list (NoteListView delegate) -------------------------
+    // --- Sessions list (NoteListView delegate) -------------------------
     // Notes-bar scope title - styled as an accent section header in the component.
     readonly property color listTitle: accent
     // Note row title default - SECONDARY tone; brightens to `text` on hover/select.

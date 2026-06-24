@@ -1,8 +1,8 @@
-#include "conversation_list_view.h"
+#include "session_list_view.h"
 
 #include "tui_palette.h"
 
-#include "conversations_list_model.h"
+#include "sessions_list_model.h"
 
 #include "presentation/display_presenter.h"
 
@@ -39,13 +39,13 @@ QString elide(const QString& text, int width)
 
 } // namespace
 
-ConversationListView::ConversationListView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
+SessionListView::SessionListView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
 {
     setFocusPolicy(Tui::StrongFocus);
     setSizePolicyV(Tui::SizePolicy::Expanding);
 }
 
-void ConversationListView::setModel(ConversationsListModel* model)
+void SessionListView::setModel(SessionsListModel* model)
 {
     m_model = model;
     if (m_model != nullptr) {
@@ -54,7 +54,7 @@ void ConversationListView::setModel(ConversationsListModel* model)
         connect(m_model, &QAbstractItemModel::dataChanged, this, repaint);
         connect(m_model, &QAbstractItemModel::rowsInserted, this, repaint);
         connect(m_model, &QAbstractItemModel::rowsRemoved, this, repaint);
-        connect(m_model, &ConversationsListModel::selectionChanged, this, [this](int) {
+        connect(m_model, &SessionsListModel::selectionChanged, this, [this](int) {
             rebuild();
             ensureVisible(m_model->currentRow());
             update();
@@ -63,12 +63,12 @@ void ConversationListView::setModel(ConversationsListModel* model)
     rebuild();
 }
 
-void ConversationListView::relayout()
+void SessionListView::relayout()
 {
     rebuild();
 }
 
-int ConversationListView::rowAt(int localY) const
+int SessionListView::rowAt(int localY) const
 {
     const int idx = m_scrollTop + localY;
     if (idx < 0 || idx >= static_cast<int>(m_rowOfLine.size())) {
@@ -77,7 +77,7 @@ int ConversationListView::rowAt(int localY) const
     return m_rowOfLine.at(idx); // -1 on the gap line between cards
 }
 
-void ConversationListView::activateAtLocalY(int localY)
+void SessionListView::activateAtLocalY(int localY)
 {
     const int row = rowAt(localY);
     if (row >= 0) {
@@ -86,29 +86,29 @@ void ConversationListView::activateAtLocalY(int localY)
     }
 }
 
-void ConversationListView::scrollByLines(int delta)
+void SessionListView::scrollByLines(int delta)
 {
     m_scrollTop += delta;
     clampScrollTop();
     update();
 }
 
-int ConversationListView::visibleRows() const
+int SessionListView::visibleRows() const
 {
     return qMax(0, geometry().height());
 }
 
-int ConversationListView::maxScrollTop() const
+int SessionListView::maxScrollTop() const
 {
     return qMax(0, static_cast<int>(m_lines.size()) - visibleRows());
 }
 
-void ConversationListView::clampScrollTop()
+void SessionListView::clampScrollTop()
 {
     m_scrollTop = qBound(0, m_scrollTop, maxScrollTop());
 }
 
-void ConversationListView::ensureVisible(int row)
+void SessionListView::ensureVisible(int row)
 {
     if (row < 0 || row >= static_cast<int>(m_lineOfRow.size())) {
         return;
@@ -127,7 +127,7 @@ void ConversationListView::ensureVisible(int row)
     clampScrollTop();
 }
 
-void ConversationListView::rebuild()
+void SessionListView::rebuild()
 {
     m_lines.clear();
     m_rowOfLine.clear();
@@ -151,15 +151,15 @@ void ConversationListView::rebuild()
         const QModelIndex idx = m_model->index(row, 0);
         const auto role = [&](int r) { return m_model->data(idx, r); };
 
-        const bool selected = role(ConversationsListModel::CurrentRole).toBool();
-        const QString title = role(ConversationsListModel::TitleRole).toString();
-        const QString snippet = role(ConversationsListModel::SnippetRole).toString();
-        const QDateTime modified = role(ConversationsListModel::ModifiedRole).toDateTime();
-        const QString agent = role(ConversationsListModel::UnitNameRole).toString();
+        const bool selected = role(SessionsListModel::CurrentRole).toBool();
+        const QString title = role(SessionsListModel::TitleRole).toString();
+        const QString snippet = role(SessionsListModel::SnippetRole).toString();
+        const QDateTime modified = role(SessionsListModel::ModifiedRole).toDateTime();
+        const QString agent = role(SessionsListModel::UnitNameRole).toString();
         const QString kind = DisplayPresenter::agentKindIconKeyFor(
-            role(ConversationsListModel::UnitKindRole).toInt());
-        const QStringList tagNames = role(ConversationsListModel::TagNamesRole).toStringList();
-        const QStringList tagColors = role(ConversationsListModel::TagColorsRole).toStringList();
+            role(SessionsListModel::UnitKindRole).toInt());
+        const QStringList tagNames = role(SessionsListModel::TagNamesRole).toStringList();
+        const QStringList tagColors = role(SessionsListModel::TagColorsRole).toStringList();
 
         const Tui::ZColor titleFg = selected ? tpal::accent() : tpal::fg();
 
@@ -229,7 +229,7 @@ void ConversationListView::rebuild()
     update();
 }
 
-void ConversationListView::resizeEvent(Tui::ZResizeEvent* event)
+void SessionListView::resizeEvent(Tui::ZResizeEvent* event)
 {
     Tui::ZWidget::resizeEvent(event);
     rebuild();
@@ -238,7 +238,7 @@ void ConversationListView::resizeEvent(Tui::ZResizeEvent* event)
     }
 }
 
-void ConversationListView::paintEvent(Tui::ZPaintEvent* event)
+void SessionListView::paintEvent(Tui::ZPaintEvent* event)
 {
     Tui::ZPainter* p = event->painter();
     const Tui::ZColor pageFg = tpal::fg();
@@ -304,7 +304,7 @@ void ConversationListView::paintEvent(Tui::ZPaintEvent* event)
     }
 }
 
-void ConversationListView::keyEvent(Tui::ZKeyEvent* event)
+void SessionListView::keyEvent(Tui::ZKeyEvent* event)
 {
     // Ctrl-modified session actions on the current row (rename/export/pin-toggle).
     // Tui delivers Ctrl+letter as a char event (text()==letter), so match text.
@@ -422,7 +422,7 @@ void ConversationListView::keyEvent(Tui::ZKeyEvent* event)
     Tui::ZWidget::keyEvent(event);
 }
 
-void ConversationListView::focusInEvent(Tui::ZFocusEvent* event)
+void SessionListView::focusInEvent(Tui::ZFocusEvent* event)
 {
     Tui::ZWidget::focusInEvent(event);
     // Entering the list with nothing selected: anchor on the first card so a single
@@ -434,7 +434,7 @@ void ConversationListView::focusInEvent(Tui::ZFocusEvent* event)
     update(); // repaint the selection wash in its focused (brighter) tone
 }
 
-void ConversationListView::focusOutEvent(Tui::ZFocusEvent* event)
+void SessionListView::focusOutEvent(Tui::ZFocusEvent* event)
 {
     Tui::ZWidget::focusOutEvent(event);
     emit focusChanged(false);

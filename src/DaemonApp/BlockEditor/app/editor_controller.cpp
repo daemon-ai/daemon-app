@@ -194,12 +194,12 @@ void EditorController::loadMarkdown(const QString &markdown, bool activateFirstB
     m_commands.clear();
     // A read-first host (the Transcript) passes false so no block is activated on
     // load: every block renders passively and nothing arms a focus callLater, so a
-    // subsequent reset (conversation switch) cannot invalidate a pending one.
+    // subsequent reset (session switch) cannot invalidate a pending one.
     m_activeBlockId = activateFirstBlock && m_store.blockCount() > 0 ? m_store.blockAt(0)->id : 0;
     m_activeCursorOffset = 0;
     resetModel();
     // Re-anchor find matches to the freshly loaded document (loadMarkdown is the
-    // conversation-switch / reload path and does not emit documentChanged).
+    // session-switch / reload path and does not emit documentChanged).
     m_search.refresh();
     emit activeBlockIdChanged();
     emit activeCursorOffsetChanged();

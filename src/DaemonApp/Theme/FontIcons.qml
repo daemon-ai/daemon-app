@@ -64,7 +64,7 @@ QtObject {
     readonly property string fa_font: "\uf031"
     readonly property string fa_image: "\uf03e"
     readonly property string fa_indent: "\uf03c"
-    // Conversation-domain glyphs (full FontAwesome).
+    // Session-domain glyphs (full FontAwesome).
     readonly property string fa_folder: "\uf07b"
     readonly property string fa_file: "\uf15b"
     readonly property string fa_tag: "\uf02b"

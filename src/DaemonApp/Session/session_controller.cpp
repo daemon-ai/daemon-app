@@ -1,38 +1,38 @@
-#include "conversation_controller.h"
+#include "session_controller.h"
 
 #include "persistence/isession_store.h"
 
 #include <QDateTime>
 
-ConversationController::ConversationController(QObject* parent)
+SessionController::SessionController(QObject* parent)
     : QObject(parent)
 {
 }
 
-QObject* ConversationController::store() const
+QObject* SessionController::store() const
 {
     return m_store;
 }
 
-void ConversationController::setStore(QObject* store)
+void SessionController::setStore(QObject* store)
 {
-    auto* conversationStore = qobject_cast<persistence::ISessionStore*>(store);
-    if (m_store == conversationStore) {
+    auto* sessionStore = qobject_cast<persistence::ISessionStore*>(store);
+    if (m_store == sessionStore) {
         return;
     }
     if (m_store) {
         m_store->disconnect(this);
     }
-    m_store = conversationStore;
+    m_store = sessionStore;
     if (m_store) {
         connect(m_store, &persistence::ISessionStore::changed, this,
-                &ConversationController::refresh);
+                &SessionController::refresh);
     }
     emit storeChanged();
     refresh();
 }
 
-void ConversationController::open(int sessionId)
+void SessionController::open(int sessionId)
 {
     if (m_currentId == sessionId) {
         return;
@@ -40,10 +40,10 @@ void ConversationController::open(int sessionId)
     m_currentId = sessionId;
     emit currentChanged();
     refresh();
-    emit conversationChanged();
+    emit sessionChanged();
 }
 
-void ConversationController::appendUserText(const QString& text)
+void SessionController::appendUserText(const QString& text)
 {
     const QString trimmed = text.trimmed();
     if (!m_store || m_currentId < 0 || trimmed.isEmpty()) {
@@ -65,7 +65,7 @@ void ConversationController::appendUserText(const QString& text)
     m_store->setContent(m_currentId, next); // emits changed() -> refresh()
 }
 
-void ConversationController::updateContent(const QString& markdown)
+void SessionController::updateContent(const QString& markdown)
 {
     if (!m_store || m_currentId < 0 || markdown == m_content) {
         return;
@@ -76,23 +76,23 @@ void ConversationController::updateContent(const QString& markdown)
     m_store->setContent(m_currentId, markdown);
 }
 
-void ConversationController::moveCurrentToTrash()
+void SessionController::moveCurrentToTrash()
 {
     if (!m_store || m_currentId < 0) {
         return;
     }
     const int archivedId = m_currentId;
     // Clear the current selection first so the editor falls back to the empty
-    // state; the store's changed() refreshes the lists (the conversation moves
+    // state; the store's changed() refreshes the lists (the session moves
     // into the Trash scope).
     m_currentId = -1;
     m_content.clear();
     emit currentChanged();
-    emit conversationChanged();
+    emit sessionChanged();
     m_store->setArchived(archivedId, true); // emits changed() -> refresh()
 }
 
-int ConversationController::createSession(const QString& agentId)
+int SessionController::createSession(const QString& agentId)
 {
     if (!m_store) {
         return -1;
@@ -102,7 +102,7 @@ int ConversationController::createSession(const QString& agentId)
     return id;
 }
 
-void ConversationController::refresh()
+void SessionController::refresh()
 {
     const QString next = (m_store && m_currentId >= 0) ? m_store->content(m_currentId) : QString{};
     if (next == m_content) {

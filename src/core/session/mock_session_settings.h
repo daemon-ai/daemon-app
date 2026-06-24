@@ -12,8 +12,8 @@ class MockSessionSettings : public ISessionSettings {
 public:
     explicit MockSessionSettings(QObject* parent = nullptr);
 
-    [[nodiscard]] int sessionId() const override { return m_conversationId; }
-    void setConversationId(int id) override;
+    [[nodiscard]] int sessionId() const override { return m_sessionId; }
+    void setSessionId(int id) override;
 
     [[nodiscard]] QString profile() const override { return entry().profile; }
     void setProfile(const QString& profile) override;
@@ -27,7 +27,7 @@ public:
     [[nodiscard]] QStringList effortOptions() const override;
 
 private:
-    // The per-conversation override set. Defaults use the unified off/low/medium/
+    // The per-session override set. Defaults use the unified off/low/medium/
     // high effort vocabulary (matches the composer's default reasoning effort).
     struct Settings {
         QString profile = QStringLiteral("General Assistant");
@@ -36,12 +36,12 @@ private:
         bool verbose = false;
     };
 
-    // The active conversation's entry (const + mutable accessors), created lazily.
+    // The active session's entry (const + mutable accessors), created lazily.
     [[nodiscard]] const Settings& entry() const;
     [[nodiscard]] Settings& entry();
 
-    int m_conversationId = -1;
-    mutable QHash<int, Settings> m_byConversation;
+    int m_sessionId = -1;
+    mutable QHash<int, Settings> m_bySession;
 };
 
 } // namespace session

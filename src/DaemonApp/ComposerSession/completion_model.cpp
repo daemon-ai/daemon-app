@@ -7,7 +7,7 @@ namespace {
 const QList<CompletionModel::Item>& slashCommands()
 {
     static const QList<CompletionModel::Item> pool = {
-        { QStringLiteral("/new"), QObject::tr("Start a new conversation"),
+        { QStringLiteral("/new"), QObject::tr("Start a new session"),
           QStringLiteral("Command"), QStringLiteral("/new"), QStringLiteral("new") },
         { QStringLiteral("/theme"), QObject::tr("Open theme & settings"),
           QStringLiteral("Command"), QStringLiteral("/theme"), QStringLiteral("theme") },
@@ -24,7 +24,7 @@ const QList<CompletionModel::Item>& slashCommands()
           QStringLiteral("Command"), QStringLiteral("/undo"), QStringLiteral("undo") },
         { QStringLiteral("/model"), QObject::tr("Choose the active model"),
           QStringLiteral("Command"), QStringLiteral("/model"), QStringLiteral("model") },
-        { QStringLiteral("/title"), QObject::tr("Rename this conversation"),
+        { QStringLiteral("/title"), QObject::tr("Rename this session"),
           QStringLiteral("Command"), QStringLiteral("/title"), QStringLiteral("title") },
         { QStringLiteral("/save"), QObject::tr("Export the transcript (JSON)"),
           QStringLiteral("Command"), QStringLiteral("/save"), QStringLiteral("save") },

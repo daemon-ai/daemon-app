@@ -19,7 +19,7 @@ private slots:
     void searchMatchesContent();
     void memoryIsOwnedByAgent();
     void sessionFiltersWithinAgent();
-    void requestSessionsListsAgentConversations();
+    void requestSessionsListsAgentSessions();
     void statsAggregate();
     void graphHasNodesAndNeighbours();
     void graphKnowledgeKind();
@@ -151,7 +151,7 @@ void TestMemory::sessionFiltersWithinAgent()
     QVERIFY(model.rowCount() <= whole);
 }
 
-void TestMemory::requestSessionsListsAgentConversations()
+void TestMemory::requestSessionsListsAgentSessions()
 {
     memory::MockMemoryService svc;
     QSignalSpy spy(&svc, &memory::IMemoryService::sessionsReady);

@@ -1,4 +1,4 @@
-#include "conversations_list_model.h"
+#include "sessions_list_model.h"
 
 #include "domain/unit_node.h"
 #include "domain/ids.h"
@@ -27,17 +27,17 @@ QString snippetOf(const Session& c)
 
 } // namespace
 
-ConversationsListModel::ConversationsListModel(QObject* parent)
+SessionsListModel::SessionsListModel(QObject* parent)
     : QAbstractListModel(parent)
 {
 }
 
-QObject* ConversationsListModel::store() const
+QObject* SessionsListModel::store() const
 {
     return m_store;
 }
 
-void ConversationsListModel::setStore(QObject* store)
+void SessionsListModel::setStore(QObject* store)
 {
     auto* sessionStore = qobject_cast<persistence::ISessionStore*>(store);
     if (m_store == sessionStore) {
@@ -49,13 +49,13 @@ void ConversationsListModel::setStore(QObject* store)
     m_store = sessionStore;
     if (m_store) {
         connect(m_store, &persistence::ISessionStore::changed, this,
-                &ConversationsListModel::reload);
+                &SessionsListModel::reload);
     }
     emit storeChanged();
     reload();
 }
 
-void ConversationsListModel::setSearch(const QString& search)
+void SessionsListModel::setSearch(const QString& search)
 {
     if (m_search == search) {
         return;
@@ -65,7 +65,7 @@ void ConversationsListModel::setSearch(const QString& search)
     applyFilter();
 }
 
-void ConversationsListModel::setScope(int nodeType, int tagId, const QString& unitId)
+void SessionsListModel::setScope(int nodeType, int tagId, const QString& unitId)
 {
     m_scope = { static_cast<NodeType>(nodeType), tagId, UnitId(unitId) };
     // A new scope is a fresh list of sessions; drop the old selection so a stale
@@ -78,7 +78,7 @@ void ConversationsListModel::setScope(int nodeType, int tagId, const QString& un
     emit scopeChanged();
 }
 
-void ConversationsListModel::reload()
+void SessionsListModel::reload()
 {
     rebuildLookups();
     m_all = m_store ? m_store->sessions(m_scope) : QList<Session>{};
@@ -87,7 +87,7 @@ void ConversationsListModel::reload()
     applyFilter();
 }
 
-void ConversationsListModel::rebuildLookups()
+void SessionsListModel::rebuildLookups()
 {
     m_unitInfo.clear();
     m_tagInfo.clear();
@@ -110,7 +110,7 @@ void ConversationsListModel::rebuildLookups()
     }
 }
 
-void ConversationsListModel::applyFilter()
+void SessionsListModel::applyFilter()
 {
     beginResetModel();
     m_filtered.clear();
@@ -125,11 +125,11 @@ void ConversationsListModel::applyFilter()
     emit countChanged();
 }
 
-QString ConversationsListModel::computeScopeTitle() const
+QString SessionsListModel::computeScopeTitle() const
 {
     switch (m_scope.type) {
-    case NodeType::AllConversations:
-        return tr("All Conversations");
+    case NodeType::AllSessions:
+        return tr("All Sessions");
     case NodeType::Archived:
         return tr("Archived");
     case NodeType::Unit:
@@ -153,15 +153,15 @@ QString ConversationsListModel::computeScopeTitle() const
     case NodeType::TagSeparator:
         break;
     }
-    return tr("Conversations");
+    return tr("Sessions");
 }
 
-int ConversationsListModel::rowCount(const QModelIndex& parent) const
+int SessionsListModel::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : static_cast<int>(m_filtered.size());
 }
 
-QVariant ConversationsListModel::data(const QModelIndex& index, int role) const
+QVariant SessionsListModel::data(const QModelIndex& index, int role) const
 {
     if (index.row() < 0 || index.row() >= m_filtered.size()) {
         return {};
@@ -203,7 +203,7 @@ QVariant ConversationsListModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> ConversationsListModel::roleNames() const
+QHash<int, QByteArray> SessionsListModel::roleNames() const
 {
     return {
         { IdRole, "sessionId" },
@@ -219,7 +219,7 @@ QHash<int, QByteArray> ConversationsListModel::roleNames() const
     };
 }
 
-int ConversationsListModel::idAt(int row) const
+int SessionsListModel::idAt(int row) const
 {
     if (row < 0 || row >= m_filtered.size()) {
         return -1;
@@ -227,14 +227,14 @@ int ConversationsListModel::idAt(int row) const
     return m_filtered.at(row).id;
 }
 
-void ConversationsListModel::emitCurrentChanged()
+void SessionsListModel::emitCurrentChanged()
 {
     if (!m_filtered.isEmpty()) {
         emit dataChanged(index(0), index(static_cast<int>(m_filtered.size()) - 1), { CurrentRole });
     }
 }
 
-void ConversationsListModel::setCurrentId(int id)
+void SessionsListModel::setCurrentId(int id)
 {
     if (m_currentId == id) {
         return;
@@ -244,7 +244,7 @@ void ConversationsListModel::setCurrentId(int id)
     emitCurrentChanged();
 }
 
-void ConversationsListModel::activate(int row)
+void SessionsListModel::activate(int row)
 {
     const int id = idAt(row);
     if (id >= 0) {
@@ -252,7 +252,7 @@ void ConversationsListModel::activate(int row)
     }
 }
 
-void ConversationsListModel::selectNext()
+void SessionsListModel::selectNext()
 {
     const int cur = currentRow();
     const int next = cur < 0 ? 0 : cur + 1;
@@ -261,7 +261,7 @@ void ConversationsListModel::selectNext()
     }
 }
 
-void ConversationsListModel::selectPrevious()
+void SessionsListModel::selectPrevious()
 {
     const int cur = currentRow();
     if (cur > 0) {
@@ -269,7 +269,7 @@ void ConversationsListModel::selectPrevious()
     }
 }
 
-int ConversationsListModel::currentRow() const
+int SessionsListModel::currentRow() const
 {
     if (m_currentId < 0) {
         return -1;

@@ -94,22 +94,22 @@ void MockMemoryService::seed()
     };
 
     // Memory is owned by the AGENT (one bank per profile). Each profile below is a
-    // distinct bank holding several conversations (sessions), global + session
+    // distinct bank holding several sessions (sessions), global + session
     // scope, working + episodic tiers (1/2/3 degradation), varied veracity/sources.
     static const Spec specs[] = {
         // prof-1 / General Assistant: planning + app notes.
         { "m01", "User prefers Rust for systems work and dislikes heavy frameworks.",
-          "conversation", "ga-plan", "global", "working", 1, 0.9, "stated", 5,
+          "session", "ga-plan", "global", "working", 1, 0.9, "stated", 5,
           "2026-06-22T09:10:00Z", "", "prof-1" },
-        { "m02", "Ada is the lead engineer on the daemon orchestrator.", "conversation",
+        { "m02", "Ada is the lead engineer on the daemon orchestrator.", "session",
           "ga-plan", "global", "working", 1, 0.85, "stated", 3, "2026-06-22T09:14:00Z", "",
           "prof-1" },
-        { "m03", "The daemon uses Rust for the core engine.", "conversation", "ga-plan",
+        { "m03", "The daemon uses Rust for the core engine.", "session", "ga-plan",
           "session", "working", 1, 0.7, "stated", 2, "2026-06-22T09:20:00Z", "", "prof-1" },
-        { "m11", "The graph view should be GUI-only with a TUI fallback.", "conversation",
+        { "m11", "The graph view should be GUI-only with a TUI fallback.", "session",
           "ga-plan", "session", "working", 1, 0.7, "stated", 1, "2026-06-24T08:40:00Z", "",
           "prof-1" },
-        { "m15", "Daemon-app is a thin client with GUI and TUI front ends.", "conversation",
+        { "m15", "Daemon-app is a thin client with GUI and TUI front ends.", "session",
           "ga-notes", "global", "working", 1, 0.8, "stated", 2, "2026-06-22T09:30:00Z", "",
           "prof-1" },
         { "m16", "Consolidated summary of the June planning session.", "consolidation",
@@ -119,7 +119,7 @@ void MockMemoryService::seed()
           "ga-notes", "session", "scratchpad", 1, 0.2, "unknown", 0, "2026-06-24T08:42:00Z", "",
           "prof-1" },
         // prof-2 / Coder: API work + review.
-        { "m05", "Qt Quick renders the GUI; the TUI uses Tui Widgets.", "conversation",
+        { "m05", "Qt Quick renders the GUI; the TUI uses Tui Widgets.", "session",
           "cd-api", "session", "episodic", 1, 0.6, "stated", 1, "2026-06-21T16:30:00Z", "",
           "prof-2" },
         { "m06", "SQLite backs the Mnemosyne bank with WAL mode.", "tool", "cd-api",
@@ -127,22 +127,22 @@ void MockMemoryService::seed()
         { "m13", "Mnemosyne supports hybrid recall: FTS5 + vector + importance.", "tool",
           "cd-review", "global", "episodic", 1, 0.6, "tool", 1, "2026-06-19T12:00:00Z", "",
           "prof-2" },
-        { "m10", "Old preference: user liked TypeScript (superseded).", "conversation",
+        { "m10", "Old preference: user liked TypeScript (superseded).", "session",
           "cd-review", "global", "episodic", 3, 0.3, "stated", 0, "2026-02-01T09:00:00Z", "m05",
           "prof-2" },
         // prof-3 / Researcher: a survey session.
         { "m04", "Mnemosyne is the agent memory system being ported to Rust.", "tool",
           "rs-survey", "global", "episodic", 1, 0.8, "tool", 4, "2026-06-21T15:00:00Z", "",
           "prof-3" },
-        { "m07", "The user mentioned a deadline near the end of June.", "conversation",
+        { "m07", "The user mentioned a deadline near the end of June.", "session",
           "rs-survey", "session", "working", 1, 0.65, "inferred", 1, "2026-06-23T08:05:00Z", "",
           "prof-3" },
         { "m08", "Imported note: prior project used Python for the daemon.", "import",
           "rs-survey", "session", "episodic", 2, 0.4, "imported", 0, "2026-04-12T10:00:00Z", "",
           "prof-3" },
-        { "m09", "Ada works at the platform team.", "conversation", "rs-survey", "global",
+        { "m09", "Ada works at the platform team.", "session", "rs-survey", "global",
           "episodic", 1, 0.75, "stated", 2, "2026-06-20T13:45:00Z", "", "prof-3" },
-        { "m14", "User dislikes notifications during focus time.", "conversation", "rs-survey",
+        { "m14", "User dislikes notifications during focus time.", "session", "rs-survey",
           "global", "episodic", 2, 0.5, "inferred", 0, "2026-05-15T18:20:00Z", "", "prof-3" },
     };
 
@@ -233,7 +233,7 @@ bool MockMemoryService::inScope(const MemoryEntry& e) const
     if (!m_profile.isEmpty() && e.profile != m_profile)
         return false;
     // Within the bank, an empty session means the whole bank; otherwise narrow to
-    // that conversation's rows (optionally folding in global-scope rows).
+    // that session's rows (optionally folding in global-scope rows).
     if (m_session.isEmpty())
         return true;
     if (e.sessionId == m_session)
@@ -615,7 +615,7 @@ void MockMemoryService::requestTimeline(const QString& group, int limit)
 
 void MockMemoryService::requestSessions(const QString& profile)
 {
-    // Distinct conversations (sessions) within this agent's bank, in first-seen
+    // Distinct sessions (sessions) within this agent's bank, in first-seen
     // order, for the Memory page's session-filter facet.
     QVariantList sessions;
     QSet<QString> seen;

@@ -8,13 +8,13 @@
 
 // A pane-level tab strip model shared by the QML GUI and the Tui Widgets TUI.
 // It is the single source of truth for the ordered list of open tabs and which
-// one is active; the heavy per-tab objects (conversation controllers, turn
+// one is active; the heavy per-tab objects (session controllers, turn
 // orchestrators, documents) are owned by each frontend and keyed by the stable
 // `tabId` this model hands out.
 //
-// Tabs are either Transcript tabs (one per open conversation, identified by
+// Tabs are either Transcript tabs (one per open session, identified by
 // `sessionId`) or singleton page tabs (Settings now, extensible). The model
-// enforces find-or-create semantics: opening a conversation/page that is already
+// enforces find-or-create semantics: opening a session/page that is already
 // open re-activates its existing tab instead of duplicating it. This maps cleanly
 // onto the daemon's SessionId session tree (a transcript tab == an open session).
 class TabModel : public QAbstractListModel {
@@ -79,14 +79,14 @@ public:
     // Find-or-create a PINNED (permanent) transcript tab for `sessionId`,
     // activate it, and return its stable tab id. An existing tab is reused (title
     // refreshed) and pinned. This is the deliberate "open" path (list double-click
-    // / new conversation).
+    // / new session).
     Q_INVOKABLE int openTranscript(int sessionId, const QString& title);
     // Alias kept for clarity at call sites; identical to openTranscript.
     Q_INVOKABLE int openTranscriptPinned(int sessionId, const QString& title);
 
     // VSCode-style transient open: if `sessionId` is already open in any tab,
     // activate it; otherwise reuse the single preview tab (reassigning its
-    // conversation in place and emitting tabConversationChanged) or, if none
+    // session in place and emitting tabSessionChanged) or, if none
     // exists, append a new preview tab. Returns the active tab's id. The preview
     // tab is replaced by the next preview and becomes permanent via pinTab*.
     Q_INVOKABLE int previewTranscript(int sessionId, const QString& title);
@@ -134,7 +134,7 @@ public:
     // Frontend accessors keyed by row or id.
     [[nodiscard]] Q_INVOKABLE int tabIdAt(int index) const;
     [[nodiscard]] Q_INVOKABLE int kindAt(int index) const;
-    [[nodiscard]] Q_INVOKABLE int conversationIdAt(int index) const;
+    [[nodiscard]] Q_INVOKABLE int sessionIdAt(int index) const;
     [[nodiscard]] Q_INVOKABLE QString titleAt(int index) const;
     [[nodiscard]] Q_INVOKABLE bool isPreviewAt(int index) const;
     [[nodiscard]] Q_INVOKABLE int indexOfTabId(int tabId) const;
@@ -147,9 +147,9 @@ signals:
     // A tab was removed; carries its (now-defunct) tab id so the frontend can
     // dispose of the matching per-tab session.
     void tabClosed(int tabId);
-    // A preview tab was reassigned to a different conversation in place (its tab id
+    // A preview tab was reassigned to a different session in place (its tab id
     // is stable). The frontend rebinds the matching per-tab page/session.
-    void tabConversationChanged(int tabId, int sessionId);
+    void tabSessionChanged(int tabId, int sessionId);
     // A preview tab changed kind/path in place (e.g. Transcript <-> File). The
     // frontend must tear down the old per-tab controller/session and rebind.
     void tabKindChanged(int tabId);

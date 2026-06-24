@@ -2,7 +2,7 @@ import QtQuick
 
 import DaemonApp.Theme
 
-// Streaming-state conversation chrome that overlays the transcript bottom,
+// Streaming-state session chrome that overlays the transcript bottom,
 // driven entirely by the turn driver (TurnSimulator or a future gateway). Pure
 // overlay: no input handlers, so the ListView underneath still scrolls.
 //   N27 response loading + elapsed timer

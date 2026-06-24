@@ -2,7 +2,7 @@
 // geometry itself is covered by tst_transcript_search (the shared
 // be::TranscriptSearchController); this only proves the controller exposes a
 // non-null `search`, keeps it bound to its own DocumentStore, and re-collects
-// matches on both load paths: loadMarkdown() (the reload/conversation-switch
+// matches on both load paths: loadMarkdown() (the reload/session-switch
 // path, which does not emit documentChanged) and documentChanged-driven
 // mutations (message append / typed-block ingest / rewind).
 

@@ -16,7 +16,7 @@
 #include "attachment_bar_view.h"
 #include "completion_view.h"
 #include "composer_chrome.h"
-#include "conversation_list_view.h"
+#include "session_list_view.h"
 #include "interactive_turn_host.h"
 #include "line_editor.h"
 #include "mouse_terminal.h"
@@ -78,9 +78,9 @@ class MemoryGraphModel;
 }
 
 class SidebarModel;
-class ConversationsListModel;
-class ConversationController;
-class ConversationOrchestrator;
+class SessionsListModel;
+class SessionController;
+class SessionOrchestrator;
 class ComposerSessionController;
 class TurnController;
 class StatusBarModel;
@@ -165,10 +165,10 @@ private:
     static constexpr int kMaxRows = 6;
 };
 
-// A one-line search field above the conversation list. It is NOT a focus stop:
-// the conversation list owns focus and forwards typed characters here (type-ahead),
+// A one-line search field above the session list. It is NOT a focus stop:
+// the session list owns focus and forwards typed characters here (type-ahead),
 // so this box is a passive display of the live query bound to
-// ConversationsListModel::setSearch. When the list is focused it shows a caret
+// SessionsListModel::setSearch. When the list is focused it shows a caret
 // after the query to mark where keystrokes land; when empty it shows a placeholder.
 class SearchInputBox : public Tui::ZInputBox {
     Q_OBJECT
@@ -176,7 +176,7 @@ class SearchInputBox : public Tui::ZInputBox {
 public:
     using Tui::ZInputBox::ZInputBox;
 
-    // Toggle the typing caret (driven by the conversation list's focus state).
+    // Toggle the typing caret (driven by the session list's focus state).
     void setTypingActive(bool active);
 
 protected:
@@ -250,7 +250,7 @@ signals:
 };
 
 // A small modal text-input dialog (ZInputBox + OK/Cancel), used for renaming a
-// conversation. Seeded with the current title; Enter / OK emits accepted(text).
+// session. Seeded with the current title; Enter / OK emits accepted(text).
 class TextPromptDialog : public Tui::ZDialog {
     Q_OBJECT
 
@@ -314,7 +314,7 @@ private:
 };
 
 // The TUI shell: a single full-screen window holding the three-column layout
-// (Sidebar | ConversationsList | Conversation), driven entirely by the app's
+// (Sidebar | SessionsList | Session), driven entirely by the app's
 // existing C++ view models against the in-memory store.
 class RootWidget : public Tui::ZRoot {
     Q_OBJECT
@@ -400,7 +400,7 @@ private:
     bool handlePageActionKey(Tui::ZKeyEvent* event);
 
     // Composer overlays (parity with the GUI popovers), bound to the active tab's
-    // conversation: session settings (profile/effort/fast/verbose) and the
+    // session: session settings (profile/effort/fast/verbose) and the
     // checkpoint/rewind timeline.
     void openSessionSettingsOverlay();
     void openCheckpointsOverlay();
@@ -435,16 +435,16 @@ private:
     void updateCompletion();
 
     // --- Tabs -----------------------------------------------------------------
-    // Transient open (arrow nav / single click): load the conversation into the
+    // Transient open (arrow nav / single click): load the session into the
     // VSCode-style preview tab (reused on the next preview).
-    void previewConversationTab(int sessionId);
+    void previewSessionTab(int sessionId);
     // Deliberate open (Enter / double-activate): a permanent, pinned tab.
-    void openConversationPinnedTab(int sessionId);
-    // Create a brand-new conversation in the store and open it in a pinned tab (Ctrl+T).
+    void openSessionPinnedTab(int sessionId);
+    // Create a brand-new session in the store and open it in a pinned tab (Ctrl+T).
     void newTranscriptTab();
     // Close the active tab (Ctrl+W / tab "x").
     void closeCurrentTab();
-    // A preview tab was reassigned to a different conversation: rebind its existing
+    // A preview tab was reassigned to a different session: rebind its existing
     // session to `sessionId` (re-open + reload) instead of spawning a new one.
     void rebindSession(int tabId, int sessionId);
     // Lazily create the per-tab session for a transcript tab id (no-op if present
@@ -479,7 +479,7 @@ private:
     // Reused, unchanged from the GUI build.
     persistence::InMemorySessionStore* m_store = nullptr;
     SidebarModel* m_sidebar = nullptr;
-    ConversationsListModel* m_list = nullptr;
+    SessionsListModel* m_list = nullptr;
     // Shared composer FSM (draft/queue/history/submit), identical to the GUI. Its
     // sessionId is switched to the active tab; its intents are dispatched to
     // the active session's orchestrator.
@@ -499,9 +499,9 @@ private:
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;
     Tui::ZWindow* m_window = nullptr;
     TreeListView* m_sidebarView = nullptr;
-    // One-line search field above the conversation list (filters via setSearch).
+    // One-line search field above the session list (filters via setSearch).
     SearchInputBox* m_search = nullptr;
-    ConversationListView* m_listView = nullptr;
+    SessionListView* m_listView = nullptr;
     TranscriptView* m_transcript = nullptr;
     // In-transcript find bar (one-line field + match counter), inserted between the
     // tab strip and the transcript; hidden until Ctrl+F / /find. m_searchActive
@@ -521,7 +521,7 @@ private:
     // The pane tab strip (replaces the old single header label).
     TabStripView* m_tabStrip = nullptr;
     // File tree (right Explorer column, toggled with Ctrl+E) + code editor view
-    // (shown in the conversation column when a File tab is active). Both render the
+    // (shown in the session column when a File tab is active). Both render the
     // same shared C++ view-models the GUI binds.
     fs::IFsService* m_fs = nullptr;
     files::FsExplorerModel* m_fileTree = nullptr;
@@ -572,7 +572,7 @@ private:
     fleet::IDashboard* m_dashboard = nullptr;
     automation::IRoutingStore* m_routing = nullptr;
     automation::ICronStore* m_cron = nullptr;
-    // Per-conversation composer overrides + rewind timeline (same mocks the GUI
+    // Per-session composer overrides + rewind timeline (same mocks the GUI
     // binds), driven by the composer's session-settings / checkpoints overlays.
     session::ISessionSettings* m_sessionSettings = nullptr;
     session::ICheckpointTimeline* m_checkpoints = nullptr;

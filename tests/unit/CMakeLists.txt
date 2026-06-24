@@ -170,7 +170,7 @@ target_link_libraries(tst_store
 add_test(NAME tst_store COMMAND tst_store)
 set_tests_properties(tst_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_session_store_sqlite: the durable SQLite conversation store - a fresh
+# tst_session_store_sqlite: the durable SQLite session store - a fresh
 # database seeds the demo data, and mutations (create/rename/content/pin/archive/
 # delete + the id counters) survive closing and reopening the same file.
 qt_add_executable(tst_session_store_sqlite tst_session_store_sqlite.cpp)
@@ -230,13 +230,13 @@ set_tests_properties(tst_status_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=of
 # exposure, setTodos replacement + signalling, and clear.
 qt_add_executable(tst_todos tst_todos.cpp)
 target_include_directories(tst_todos
-    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Conversation"
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Session"
 )
 target_link_libraries(tst_todos
     PRIVATE
         Qt6::Test
         Qt6::Quick
-        daemon-app::conversation
+        daemon-app::session_view
 )
 add_test(NAME tst_todos COMMAND tst_todos)
 set_tests_properties(tst_todos PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -246,13 +246,13 @@ set_tests_properties(tst_todos PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen
 # count, and clear. Both front ends render this model off the turn event stream.
 qt_add_executable(tst_subagent_model tst_subagent_model.cpp)
 target_include_directories(tst_subagent_model
-    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Conversation"
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Session"
 )
 target_link_libraries(tst_subagent_model
     PRIVATE
         Qt6::Test
         Qt6::Quick
-        daemon-app::conversation
+        daemon-app::session_view
 )
 add_test(NAME tst_subagent_model COMMAND tst_subagent_model)
 set_tests_properties(tst_subagent_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -321,24 +321,24 @@ target_link_libraries(tst_tab_model
 add_test(NAME tst_tab_model COMMAND tst_tab_model)
 set_tests_properties(tst_tab_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_conversation_orchestrator: the shared submit pipeline - submit starts the
+# tst_session_orchestrator: the shared submit pipeline - submit starts the
 # turn + populates todos (and clears them after the turn settles), cancel resets,
 # and slash "/new" is handled while other commands surface via commandRequested.
-qt_add_executable(tst_conversation_orchestrator tst_conversation_orchestrator.cpp)
-target_include_directories(tst_conversation_orchestrator
-    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Conversation"
+qt_add_executable(tst_session_orchestrator tst_session_orchestrator.cpp)
+target_include_directories(tst_session_orchestrator
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Session"
 )
-target_link_libraries(tst_conversation_orchestrator
+target_link_libraries(tst_session_orchestrator
     PRIVATE
         Qt6::Test
         Qt6::Quick
-        daemon-app::conversation
+        daemon-app::session_view
         daemon-app::turn
         daemon-app::persistence
         daemon-app::domain
 )
-add_test(NAME tst_conversation_orchestrator COMMAND tst_conversation_orchestrator)
-set_tests_properties(tst_conversation_orchestrator PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+add_test(NAME tst_session_orchestrator COMMAND tst_session_orchestrator)
+set_tests_properties(tst_session_orchestrator PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_transcript_search: the in-transcript search feasibility spike - the shared
 # be::TranscriptSearchController collecting ordered matches over a be::DocumentStore

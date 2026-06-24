@@ -2063,7 +2063,7 @@ void CoreTests::agentBlocksSceneParses()
     // typed block in its canonical fenced form, interleaved with prose. Asserts
     // the document parses into the right BlockTypes with hydrated metadata, and
     // that the detail payloads feed the sub-renderer parsers - the parse-level
-    // proof behind the visual demo conversation.
+    // proof behind the visual demo session.
     const QString scene = QStringLiteral(
         "# Agent transcript blocks\n\n"
         "Intro paragraph.\n\n"

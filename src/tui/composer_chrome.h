@@ -11,7 +11,7 @@ class TurnController;
 class ComposerSessionController;
 
 // A one-line painted indicator above the composer. It merges the GUI's
-// ConversationChrome streaming pill with a send/stop/steer affordance hint, driven
+// SessionChrome streaming pill with a send/stop/steer affordance hint, driven
 // entirely by the shared TurnController:
 //   - error    -> "\u26a0 <errorText>" (red)
 //   - stalled  -> "\u25d0 Still thinking\u2026 Ns" (peach)

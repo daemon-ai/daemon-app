@@ -1,5 +1,5 @@
-# Shared transcript exporter: serializes a conversation to JSON and writes a file,
-# reading through the IConversationStore seam. GUI binds it as the `Exporter`
+# Shared transcript exporter: serializes a session to JSON and writes a file,
+# reading through the ISessionStore seam. GUI binds it as the `Exporter`
 # context property; the TUI calls it directly. Core-only.
 add_library(da_export STATIC
     transcript_exporter.h

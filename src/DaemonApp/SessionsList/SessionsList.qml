@@ -17,9 +17,9 @@ Rectangle {
     color: Theme.listBackground
 
     // Single-click / Enter: activate (opens in the transient preview tab).
-    signal conversationActivated(int sessionId)
+    signal sessionActivated(int sessionId)
     // Double-click: open as a permanent (pinned) tab.
-    signal conversationOpened(int sessionId)
+    signal sessionOpened(int sessionId)
     signal toggleSidebarRequested()
 
     property bool searchActive: false
@@ -44,7 +44,7 @@ Rectangle {
         root.searchActive = false;
     }
 
-    ConversationsListModel {
+    SessionsListModel {
         id: convModel
         store: SessionStore
     }
@@ -91,7 +91,7 @@ Rectangle {
     Kit.Dialog {
         id: renameDialog
         property int targetId: -1
-        title: qsTr("Rename conversation")
+        title: qsTr("Rename session")
         width: 380
         acceptText: qsTr("Rename")
 
@@ -109,7 +109,7 @@ Rectangle {
         contentItem: Kit.TextField {
             id: renameField
             underline: true
-            placeholderText: qsTr("Conversation title")
+            placeholderText: qsTr("Session title")
             onAccepted: renameDialog.accept()
         }
     }
@@ -117,7 +117,7 @@ Rectangle {
     Kit.Dialog {
         id: deleteDialog
         property int targetId: -1
-        title: qsTr("Delete conversation")
+        title: qsTr("Delete session")
         width: 360
         acceptText: qsTr("Delete")
         destructive: true
@@ -131,7 +131,7 @@ Rectangle {
                 SessionStore.deleteSession(deleteDialog.targetId);
         }
         contentItem: QQC.Label {
-            text: qsTr("Permanently delete this conversation? This cannot be undone.")
+            text: qsTr("Permanently delete this session? This cannot be undone.")
             wrapMode: Text.WordWrap
             color: Theme.text
             font.family: FontIcons.display
@@ -150,7 +150,7 @@ Rectangle {
         function openFor(sessionId) {
             exportDialog.targetId = sessionId;
             const t = SessionStore.title(sessionId);
-            exportDialog.currentFile = "file:" + (t && t.length > 0 ? t : "conversation") + ".json";
+            exportDialog.currentFile = "file:" + (t && t.length > 0 ? t : "session") + ".json";
             open();
         }
         onAccepted: {
@@ -201,8 +201,8 @@ Rectangle {
                     }
 
                     QQC.Label {
-                        text: convModel.count === 1 ? qsTr("1 conversation")
-                                                    : qsTr("%1 conversations").arg(convModel.count)
+                        text: convModel.count === 1 ? qsTr("1 session")
+                                                    : qsTr("%1 sessions").arg(convModel.count)
                         color: Theme.countText
                         font.family: FontIcons.display
                         font.pixelSize: 11
@@ -234,7 +234,7 @@ Rectangle {
                     id: searchField
                     anchors.fill: parent
                     underline: true
-                    placeholderText: qsTr("Search conversations")
+                    placeholderText: qsTr("Search sessions")
                     leftPadding: 21
                     rightPadding: 30
                     text: convModel.search
@@ -444,11 +444,11 @@ Rectangle {
                                 return;
                             }
                             convModel.activate(del.index);
-                            root.conversationActivated(convModel.idAt(del.index));
+                            root.sessionActivated(convModel.idAt(del.index));
                         }
                         // Double-click promotes the preview into a pinned tab. The
                         // preceding single `clicked` already previewed it.
-                        onDoubleClicked: root.conversationOpened(convModel.idAt(del.index))
+                        onDoubleClicked: root.sessionOpened(convModel.idAt(del.index))
                     }
                 }
             }

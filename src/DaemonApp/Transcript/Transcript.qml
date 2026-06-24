@@ -9,8 +9,8 @@ import DaemonApp.Editor
 import DaemonApp.Turn
 import DaemonApp.Controls as Kit
 
-// Renders (and edits) the conversation's markdown as a virtualized column of
-// blocks via the ported BlockEditor engine. The host calls load() on conversation
+// Renders (and edits) the session's markdown as a virtualized column of
+// blocks via the ported BlockEditor engine. The host calls load() on session
 // change; user edits are debounced and surfaced through edited(markdown).
 Rectangle {
     id: root
@@ -21,7 +21,7 @@ Rectangle {
     property string content: ""
 
     // The shared turn-lifecycle FSM, injected by the host (owned by the
-    // ConversationOrchestrator). The transcript is a pure consumer: it reads
+    // SessionOrchestrator). The transcript is a pure consumer: it reads
     // active/turnState/elapsedMs/errorText and feeds eventsEmitted into the editor.
     property TurnController turn: null
 
@@ -37,14 +37,14 @@ Rectangle {
     }
 
     // The markdown currently loaded, so redundant reloads (e.g. open() fires both
-    // contentChanged and conversationChanged) don't reset the model twice.
+    // contentChanged and sessionChanged) don't reset the model twice.
     property string _loadedMarkdown
 
     // Emitted (debounced) when the user edits a block, carrying the full markdown.
     signal edited(string markdown)
 
     // Re-run the assistant turn after a rewind (edit / regenerate / restore). The
-    // host routes this to ConversationOrchestrator.rerun: the document was already
+    // host routes this to SessionOrchestrator.rerun: the document was already
     // truncated (and, for edit/restore, the user message re-added) by the editor,
     // so this only re-runs the turn without re-appending a user message.
     signal rerunRequested(string text)
@@ -71,13 +71,13 @@ Rectangle {
 
     // Replace the document with `md` without triggering edited() (loads do not
     // funnel through the edit chokepoint, so no echo back to the store). Loads
-    // read-first (no auto-focus) so a conversation switch never drops a cursor
+    // read-first (no auto-focus) so a session switch never drops a cursor
     // into the first block or arms a focus callLater that the next reset races.
     function load(md) {
         if (md === _loadedMarkdown)
             return
         // Abort any in-flight simulated turn so its scheduled events can't land
-        // in the freshly-loaded conversation.
+        // in the freshly-loaded session.
         if (turn)
             turn.cancel()
         _loadedMarkdown = md
@@ -178,7 +178,7 @@ Rectangle {
         id: lightbox
     }
 
-    // The injected turn (owned by the ConversationOrchestrator) streams a simulated
+    // The injected turn (owned by the SessionOrchestrator) streams a simulated
     // assistant turn (reasoning / tool / text) through the editor's ingest path;
     // the chrome overlay below reads its turnState/elapsedMs/errorText. The FSM
     // lives in the shared C++ TurnController (DaemonApp.Turn), which emits daemon-
@@ -248,7 +248,7 @@ Rectangle {
         onTriggered: root.edited(editor.exportMarkdown())
     }
 
-    // Settle pass after a conversation load: a fresh model lands at the top and
+    // Settle pass after a session load: a fresh model lands at the top and
     // block heights resolve over several frames, so re-pin to the bottom until
     // the content height stops growing (or a frame cap), then stop.
     Timer {
@@ -464,7 +464,7 @@ Rectangle {
         }
 
         // Empty-thread intro (inventory #21): a centered welcome shown when the
-        // conversation has no blocks, replacing the bare empty column.
+        // session has no blocks, replacing the bare empty column.
         Column {
             id: emptyIntro
             anchors.centerIn: parent
@@ -481,7 +481,7 @@ Rectangle {
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: qsTr("Start the conversation")
+                text: qsTr("Start the session")
                 color: Theme.text
                 font.family: FontIcons.display
                 font.pixelSize: Theme.bodyFontSize + 3
@@ -573,7 +573,7 @@ Rectangle {
 
     // Streaming chrome (loading + elapsed, stall, error), overlaid on the block
     // view and driven by the turn simulator. Pure overlay: no input handlers.
-    ConversationChrome {
+    SessionChrome {
         anchors.fill: parent
         visible: !UiSettings.showRawMarkdown
         active: root.busy

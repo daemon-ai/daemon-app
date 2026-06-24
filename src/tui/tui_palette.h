@@ -65,9 +65,9 @@ QString toneGlyph(const QString &tone);
 QString barGlyph();       // card left rule (left half block)
 QString reasoningGlyph(); // reasoning header marker
 
-// --- Chrome (conversation list / status bar / completion popup) ---------------
+// --- Chrome (session list / status bar / completion popup) ---------------
 // Colors reused by the custom-painted chrome widgets that bring the TUI shell to
-// visual parity with the GUI (ConversationListView, StatusBarView, ComposerChrome,
+// visual parity with the GUI (SessionListView, StatusBarView, ComposerChrome,
 // CompletionView). They mirror the same Theme.qml tokens the GUI chrome uses.
 
 Tui::ZColor selectionBg();         // active-row wash when the list is focused

@@ -9,9 +9,9 @@ Modules:
 - `App` - shell window + `main()`.
 - `Theme` - palette / theming.
 - `Controls` - reusable UI kit.
-- `Sidebar` - navigation (All Conversations / Archived / Folders / Tags).
-- `ConversationsList` - the list of chat threads.
-- `Conversation` - center container; composes `Transcript` above `Composer`.
+- `Sidebar` - navigation (All Sessions / Archived / Folders / Tags).
+- `SessionsList` - the list of chat threads.
+- `Session` - center container; composes `Transcript` above `Composer`.
 - `Transcript` - scrollable list of message bubbles.
 - `Composer` - bottom-middle message input.
 - `Settings` - settings menu.

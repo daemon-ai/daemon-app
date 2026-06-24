@@ -40,7 +40,7 @@ MockCronStore::MockCronStore(QObject* parent)
                       QStringLiteral("today 22:00"), QStringLiteral("yesterday 22:00"), true));
     m_jobs->upsert(mk(QStringLiteral("c-3"), QStringLiteral("Weekly cleanup"),
                       QStringLiteral("0 3 * * 0"), QStringLiteral("General Assistant"),
-                      QStringLiteral("Archive stale conversations."),
+                      QStringLiteral("Archive stale sessions."),
                       QStringLiteral("Sun 03:00"), QStringLiteral("—"), false));
     m_nextId = 4;
 

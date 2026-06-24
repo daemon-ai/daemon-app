@@ -8,11 +8,11 @@ import DaemonApp.Settings
 // editor settings popup: Style / Text / Theme / Options, plus Move to
 // Trash and Reset all settings. Reads/writes the persisted UiSettings singleton
 // and drives DaemonApp.Theme for live theme switching. The host positions the
-// popup and supplies the conversation controller for Move to Trash.
+// popup and supplies the session controller for Move to Trash.
 QQC.Popup {
     id: root
 
-    // ConversationController; Move to Trash archives the open conversation.
+    // SessionController; Move to Trash archives the open session.
     property var controller: null
 
     // The user asked to find within the open transcript (host opens the find bar).
@@ -57,7 +57,7 @@ QQC.Popup {
                 Layout.topMargin: 4
                 icon: FontIcons.fa_magnifying_glass
                 label: qsTr("Search transcript")
-                enabled: root.controller && root.controller.hasConversation
+                enabled: root.controller && root.controller.hasSession
                 onTriggered: {
                     root.searchRequested();
                     root.close();
@@ -249,7 +249,7 @@ QQC.Popup {
                 Layout.rightMargin: root.hMargin
                 icon: FontIcons.fa_trash
                 label: qsTr("Move to Trash")
-                enabled: root.controller && root.controller.hasConversation
+                enabled: root.controller && root.controller.hasSession
                 onTriggered: {
                     if (root.controller)
                         root.controller.moveCurrentToTrash();

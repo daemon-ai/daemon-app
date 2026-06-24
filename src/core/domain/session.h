@@ -9,7 +9,7 @@
 
 namespace domain {
 
-// A session: a running conversation/transcript (mirrors a daemon `SessionId` /
+// A session: a running session/transcript (mirrors a daemon `SessionId` /
 // `SessionInfo`). For now the whole transcript is a single markdown string
 // (`content`); a structured message model can replace it later behind the store
 // seam without changing this type's role. `id` is the local row handle (int);

@@ -3,7 +3,7 @@ import QtTest
 import DaemonApp.Composer
 
 // Behavioral coverage for the ported composer: enter-to-send, shift+enter
-// newline, queue-while-busy with idle auto-drain, per-conversation draft swap,
+// newline, queue-while-busy with idle auto-drain, per-session draft swap,
 // and sent-message history recall. Logic paths are driven through the composer's
 // public functions/signals; the newline case exercises the real key handler.
 TestCase {
@@ -26,7 +26,7 @@ TestCase {
     }
 
     function init() {
-        // Reset to a clean, idle state on a fresh conversation each test.
+        // Reset to a clean, idle state on a fresh session each test.
         composer.busy = false;
         composer.sessionId = 900;
         composer.draftText = "";
@@ -74,19 +74,19 @@ TestCase {
         tryCompare(composer, "queueCount", 0, 1000);
     }
 
-    function test_draft_swaps_per_conversation() {
+    function test_draft_swaps_per_session() {
         composer.sessionId = 10;
         composer.draftText = "draft-A";
 
         composer.sessionId = 11;
-        compare(composer.draftText, "", "new conversation starts empty");
+        compare(composer.draftText, "", "new session starts empty");
         composer.draftText = "draft-B";
 
         composer.sessionId = 10;
-        compare(composer.draftText, "draft-A", "conversation 10 draft restored");
+        compare(composer.draftText, "draft-A", "session 10 draft restored");
 
         composer.sessionId = 11;
-        compare(composer.draftText, "draft-B", "conversation 11 draft restored");
+        compare(composer.draftText, "draft-B", "session 11 draft restored");
     }
 
     function test_history_recall() {

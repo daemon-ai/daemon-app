@@ -6,7 +6,7 @@ import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
 // Behavioral coverage for the pane tab strip: the shared TabModel drives a real
-// TabBar (chips) and a StackLayout (pages) exactly as the Conversation host wires
+// TabBar (chips) and a StackLayout (pages) exactly as the Session host wires
 // them. Asserts add/remove/switch, find-or-create re-activation, the "+"/settings
 // affordances, and that clicking a chip activates it and flips the visible page.
 TestCase {
@@ -36,7 +36,7 @@ TestCase {
         y: 60
         width: 600
         height: 120
-        // The same binding Conversation.qml uses to show the active tab's page.
+        // The same binding Session.qml uses to show the active tab's page.
         currentIndex: tabModel.currentIndex
 
         Repeater {
@@ -49,7 +49,7 @@ TestCase {
         }
     }
 
-    // Mirrors the real Conversation.qml tab body: a plain Item with a Repeater of
+    // Mirrors the real Session.qml tab body: a plain Item with a Repeater of
     // Loaders that anchors.fill the body and toggle visible on the active index.
     // This guards the layout fix - the regression was pages with zero size, so we
     // assert each loaded page fills the body and only the active one is visible.
@@ -72,9 +72,9 @@ TestCase {
                 visible: pageVisible
                 sourceComponent: Rectangle {
                     objectName: "bodyPage"
-                    property int boundConversationId: pageLoader.sessionId
+                    property int boundSessionId: pageLoader.sessionId
                 }
-                onLoaded: item.boundConversationId = Qt.binding(() => pageLoader.sessionId)
+                onLoaded: item.boundSessionId = Qt.binding(() => pageLoader.sessionId)
             }
         }
     }
@@ -101,7 +101,7 @@ TestCase {
         return findChild(tabBar, "tabListView");
     }
 
-    // Opening conversations appends chips, activates the newest, and the bound
+    // Opening sessions appends chips, activates the newest, and the bound
     // StackLayout follows the model's active index.
     function test_open_adds_chips_and_tracks_active() {
         tabModel.openTranscript(1, "Alpha");
@@ -114,7 +114,7 @@ TestCase {
         compare(stack.currentIndex, 1, "StackLayout follows the active tab");
     }
 
-    // Re-opening an already-open conversation re-activates its tab (no duplicate).
+    // Re-opening an already-open session re-activates its tab (no duplicate).
     function test_reopen_reuses_existing_tab() {
         tabModel.openTranscript(1, "Alpha");
         tabModel.openTranscript(2, "Beta");
@@ -135,7 +135,7 @@ TestCase {
         tabModel.closeTab(1);
         compare(tabListView().count, 2, "chip removed");
         compare(stack.currentIndex, tabModel.currentIndex, "stack tracks model");
-        compare(tabModel.conversationIdAt(tabModel.currentIndex), 3, "Gamma is active");
+        compare(tabModel.sessionIdAt(tabModel.currentIndex), 3, "Gamma is active");
     }
 
     // The Settings page opens as a singleton page tab alongside transcripts.
@@ -185,7 +185,7 @@ TestCase {
 
         tabModel.previewTranscript(2, "Beta");
         compare(tabListView().count, 1, "preview reused, not appended");
-        compare(tabModel.conversationIdAt(0), 2, "preview reassigned to Beta");
+        compare(tabModel.sessionIdAt(0), 2, "preview reassigned to Beta");
         verify(tabModel.isPreviewAt(0), "still a preview tab");
     }
 
@@ -202,7 +202,7 @@ TestCase {
         compare(tabListView().count, 2, "next preview opened a fresh chip");
     }
 
-    // A deliberate open (openTranscript) of the previewed conversation pins it.
+    // A deliberate open (openTranscript) of the previewed session pins it.
     function test_open_pins_preview() {
         tabModel.previewTranscript(1, "Alpha");
         verify(tabModel.isPreviewAt(0), "preview before open");
@@ -252,18 +252,18 @@ TestCase {
     }
 
     // A reassigned preview tab reloads in place: the page's bound sessionId
-    // updates (this is what makes TranscriptPage.onConversationIdChanged reload).
+    // updates (this is what makes TranscriptPage.onSessionIdChanged reload).
     function test_preview_reassign_rebinds_page() {
         tabModel.previewTranscript(7, "Alpha");
         wait(0);
         let pages = bodyPages();
         compare(pages.length, 1, "single preview page");
-        compare(pages[0].boundConversationId, 7, "page bound to conversation 7");
+        compare(pages[0].boundSessionId, 7, "page bound to session 7");
 
         tabModel.previewTranscript(8, "Beta"); // reuse the same slot
         wait(0);
         pages = bodyPages();
         compare(pages.length, 1, "still one page (reused)");
-        compare(pages[0].boundConversationId, 8, "page rebound to conversation 8");
+        compare(pages[0].boundSessionId, 8, "page rebound to session 8");
     }
 }

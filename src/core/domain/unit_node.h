@@ -28,7 +28,7 @@ enum class UnitState {
 // A unit's hierarchy role, mirroring `daemon-protocol::SessionRole`. Lets a
 // client keep stable nodes pinned and collapse ephemeral subagent churn.
 enum class SessionRole {
-    Primary,           // a top-level conversation (an inbox/operator session)
+    Primary,           // a top-level session (an inbox/operator session)
     ManagedChild,      // a long-lived delegated child, stable in the tree
     EphemeralSubagent, // a transient subagent (high churn)
 };

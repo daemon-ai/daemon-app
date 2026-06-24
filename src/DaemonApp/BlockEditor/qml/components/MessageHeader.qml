@@ -14,7 +14,7 @@ Item {
     readonly property bool isUser: role === "user"
 
     signal editRequested()
-    // "Restore checkpoint": rewind the conversation to this user message and re-run
+    // "Restore checkpoint": rewind the session to this user message and re-run
     // it with its own text (drops everything after).
     signal restoreRequested()
 

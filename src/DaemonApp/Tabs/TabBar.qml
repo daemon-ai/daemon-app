@@ -7,7 +7,7 @@ import DaemonApp.Controls as Kit
 // The pane-level tab strip: a horizontal, scrollable row of tab chips bound to a
 // shared TabModel, plus a "+" affordance to open a new tab and a settings entry.
 // Clicking a chip activates it; the chip's "x" closes it. This replaces the old
-// placeholder markdown-formatting header at the top of the conversation pane.
+// placeholder markdown-formatting header at the top of the session pane.
 RowLayout {
     id: root
 
@@ -16,7 +16,7 @@ RowLayout {
 
     spacing: 4
 
-    // Request a brand-new transcript tab (host decides which conversation).
+    // Request a brand-new transcript tab (host decides which session).
     signal newTabRequested()
     // Open the Settings page tab.
     signal settingsRequested()

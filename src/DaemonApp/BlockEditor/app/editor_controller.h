@@ -224,13 +224,13 @@ signals:
     void streamContentAppended();
     // Interactive-block host signals: the user answered a clarify prompt or
     // decided a tool approval in the transcript, or asked to preview an image.
-    // A host (Conversation / agent gateway) connects these to the runtime.
+    // A host (Session / agent gateway) connects these to the runtime.
     void imagePreviewRequested(const QString &url, const QString &alt);
     void clarifyAnswered(qulonglong blockId, const QString &requestId, const QVariantMap &answers);
     void toolApprovalAnswered(qulonglong blockId, const QString &callId, const QString &decision, bool permanent);
     // The user edited a prior message (the document was truncated to it and the
     // new text re-added), or asked to regenerate the assistant reply for a
-    // message. The host (Conversation) re-runs the assistant turn in response.
+    // message. The host (Session) re-runs the assistant turn in response.
     void userMessageEdited(const QString &messageId, const QString &text);
     void regenerateRequested(const QString &messageId);
     // An inline message editor opened; the transcript escapes stick-to-bottom.

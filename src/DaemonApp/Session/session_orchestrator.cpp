@@ -1,16 +1,16 @@
-#include "conversation_orchestrator.h"
+#include "session_orchestrator.h"
 
-#include "conversation_controller.h"
+#include "session_controller.h"
 #include "turn_controller.h"
 
-ConversationOrchestrator::ConversationOrchestrator(QObject* parent)
+SessionOrchestrator::SessionOrchestrator(QObject* parent)
     : QObject(parent)
     , m_turn(new TurnController(this))
     , m_todos(new TodoListModel(this))
     , m_subagents(new SubagentModel(this))
 {
     // busy mirrors the turn's active state.
-    connect(m_turn, &TurnController::activeChanged, this, &ConversationOrchestrator::busyChanged);
+    connect(m_turn, &TurnController::activeChanged, this, &SessionOrchestrator::busyChanged);
 
     // Live subagent rows ride the same event stream the transcript/status bar
     // consume; the model upserts the subagent.* events and ignores the rest.
@@ -28,24 +28,24 @@ ConversationOrchestrator::ConversationOrchestrator(QObject* parent)
     connect(m_turn, &TurnController::turnFinished, this, [this] { m_todoClearTimer.start(); });
 }
 
-void ConversationOrchestrator::setConversation(ConversationController* conversation)
+void SessionOrchestrator::setSession(SessionController* session)
 {
-    if (m_conversation == conversation) {
+    if (m_session == session) {
         return;
     }
-    m_conversation = conversation;
-    emit conversationChanged();
+    m_session = session;
+    emit sessionChanged();
 }
 
-bool ConversationOrchestrator::busy() const
+bool SessionOrchestrator::busy() const
 {
     return m_turn->active();
 }
 
-void ConversationOrchestrator::submit(const QString& text, const QString& refs)
+void SessionOrchestrator::submit(const QString& text, const QString& refs)
 {
-    if (m_conversation != nullptr) {
-        m_conversation->appendUserText(refs.isEmpty() ? text
+    if (m_session != nullptr) {
+        m_session->appendUserText(refs.isEmpty() ? text
                                                        : (refs + QStringLiteral("\n") + text));
     }
     // A fresh turn pre-empts a pending clear of the previous turn's todos.
@@ -54,7 +54,7 @@ void ConversationOrchestrator::submit(const QString& text, const QString& refs)
     populateDemoTodos();
 }
 
-void ConversationOrchestrator::rerun(const QString& text)
+void SessionOrchestrator::rerun(const QString& text)
 {
     // Interrupt-first: a rewind that lands while a turn is live must pre-empt it so
     // the replayed turn is the only one streaming. No appendUserText here - the
@@ -68,23 +68,23 @@ void ConversationOrchestrator::rerun(const QString& text)
     populateDemoTodos();
 }
 
-void ConversationOrchestrator::steer(const QString& text)
+void SessionOrchestrator::steer(const QString& text)
 {
-    if (m_conversation != nullptr) {
-        m_conversation->appendUserText(tr("(steer) ") + text);
+    if (m_session != nullptr) {
+        m_session->appendUserText(tr("(steer) ") + text);
     }
 }
 
-void ConversationOrchestrator::cancel()
+void SessionOrchestrator::cancel()
 {
     m_turn->cancel();
 }
 
-void ConversationOrchestrator::invokeCommand(const QString& command)
+void SessionOrchestrator::invokeCommand(const QString& command)
 {
     if (command == QStringLiteral("new")) {
-        if (m_conversation != nullptr) {
-            m_conversation->createSession(QString());
+        if (m_session != nullptr) {
+            m_session->createSession(QString());
         }
         return;
     }
@@ -103,14 +103,14 @@ void ConversationOrchestrator::invokeCommand(const QString& command)
     emit commandRequested(command);
 }
 
-void ConversationOrchestrator::populateDemoTodos()
+void SessionOrchestrator::populateDemoTodos()
 {
     // Drop any settled subagent rows from the previous turn so the status stack
     // starts clean; this turn's subagent.* events repopulate it.
     m_subagents->clear();
 
     // Demo content: no real todo backend exists yet, so a canned plan stands in
-    // for the turn (mirrors the former Conversation.qml seam).
+    // for the turn (mirrors the former Session.qml seam).
     m_todos->setTodos(QVariantList{
         QVariantMap{ { QStringLiteral("text"), tr("Inspect the project") },
                      { QStringLiteral("done"), true } },

@@ -19,7 +19,7 @@ struct UnitNode;
 
 // Flattened supervision-tree sidebar (VSCode AsyncDataTree style): a single flat
 // list of rows where the unit tree is rendered as indented rows. Rows are: All
-// Conversations / Archived / a "Fleet" header + the recursively flattened unit
+// Sessions / Archived / a "Fleet" header + the recursively flattened unit
 // tree (only descending into expanded units) / a "Tags" header + tag rows.
 //
 // The flatten is uniformly recursive with NO depth limit and NO per-level
@@ -107,7 +107,7 @@ private:
     struct Row {
         QString label;
         int count = -1;
-        domain::NodeType type = domain::NodeType::AllConversations;
+        domain::NodeType type = domain::NodeType::AllSessions;
         int tagId = -1;      // tag id
         QString unitId;      // unit id (string at the model boundary)
         bool separator = false;
@@ -144,7 +144,7 @@ private:
     QSet<QString> m_collapsed;
 
     // The selection, stored by identity so it is stable across rebuilds.
-    domain::NodeType m_selType = domain::NodeType::AllConversations;
+    domain::NodeType m_selType = domain::NodeType::AllSessions;
     int m_selTag = -1;
     QString m_selUnit;
 };

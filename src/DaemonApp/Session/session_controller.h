@@ -8,36 +8,36 @@ namespace persistence {
 class ISessionStore;
 }
 
-// Drives the open conversation: loads its markdown content and appends user
+// Drives the open session: loads its markdown content and appends user
 // input. The Transcript renders `content`; the Composer calls appendUserText().
-class ConversationController : public QObject {
+class SessionController : public QObject {
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(QObject* store READ store WRITE setStore NOTIFY storeChanged)
     Q_PROPERTY(int currentId READ currentId NOTIFY currentChanged)
     Q_PROPERTY(QString content READ content NOTIFY contentChanged)
-    Q_PROPERTY(bool hasConversation READ hasConversation NOTIFY currentChanged)
+    Q_PROPERTY(bool hasSession READ hasSession NOTIFY currentChanged)
 
 public:
-    explicit ConversationController(QObject* parent = nullptr);
+    explicit SessionController(QObject* parent = nullptr);
 
     [[nodiscard]] QObject* store() const;
     void setStore(QObject* store);
 
     [[nodiscard]] int currentId() const { return m_currentId; }
     [[nodiscard]] QString content() const { return m_content; }
-    [[nodiscard]] bool hasConversation() const { return m_currentId >= 0; }
+    [[nodiscard]] bool hasSession() const { return m_currentId >= 0; }
 
     Q_INVOKABLE void open(int sessionId);
     Q_INVOKABLE void appendUserText(const QString& text);
-    // Create a conversation owned by the given agent node (empty = unassigned).
+    // Create a session owned by the given agent node (empty = unassigned).
     Q_INVOKABLE int createSession(const QString& agentId = QString());
-    // Persist an in-place edit of the open conversation from the Transcript.
+    // Persist an in-place edit of the open session from the Transcript.
     // Adopts the markdown locally first so the store's changed() -> refresh()
     // does not echo back as a contentChanged() (which would reload the editor and
     // drop the user's cursor). List snippets still refresh via the store signal.
     Q_INVOKABLE void updateContent(const QString& markdown);
-    // Archive (move to trash) the open conversation and clear the current
+    // Archive (move to trash) the open session and clear the current
     // selection, "Move to Trash" action.
     Q_INVOKABLE void moveCurrentToTrash();
 
@@ -45,10 +45,10 @@ signals:
     void storeChanged();
     void currentChanged();
     void contentChanged();
-    // Emitted when a different conversation becomes current (open/create), so the
+    // Emitted when a different session becomes current (open/create), so the
     // Transcript reloads. Distinct from contentChanged so the user's own edits do
     // not trigger a reload.
-    void conversationChanged();
+    void sessionChanged();
 
 private:
     void refresh();

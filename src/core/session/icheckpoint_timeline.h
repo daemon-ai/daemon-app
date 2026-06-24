@@ -12,11 +12,11 @@ class ICheckpointTimeline : public QObject {
     Q_OBJECT
     Q_PROPERTY(QObject* checkpoints READ checkpoints CONSTANT)
     Q_PROPERTY(int count READ count NOTIFY changed)
-    // The conversation whose timeline is shown. Setting it swaps the live
-    // checkpoints to that conversation's own timeline (per-conversation rewind),
+    // The session whose timeline is shown. Setting it swaps the live
+    // checkpoints to that session's own timeline (per-session rewind),
     // emitting changed() so the bound panel refreshes.
-    Q_PROPERTY(int sessionId READ sessionId WRITE setConversationId NOTIFY
-                   conversationIdChanged)
+    Q_PROPERTY(int sessionId READ sessionId WRITE setSessionId NOTIFY
+                   sessionIdChanged)
 
 public:
     using QObject::QObject;
@@ -25,14 +25,14 @@ public:
     [[nodiscard]] virtual QObject* checkpoints() const = 0;
     [[nodiscard]] virtual int count() const = 0;
     [[nodiscard]] virtual int sessionId() const = 0;
-    virtual void setConversationId(int id) = 0;
+    virtual void setSessionId(int id) = 0;
 
     Q_INVOKABLE virtual void restore(const QString& id) = 0;
     Q_INVOKABLE virtual QString createCheckpoint(const QString& label) = 0;
 
 signals:
     void changed();
-    void conversationIdChanged();
+    void sessionIdChanged();
 };
 
 } // namespace session

@@ -23,7 +23,7 @@ void InMemorySessionStore::applyUnitMeta(UnitNode& n)
     // UnitId == SessionId on the durable path.
     n.session = SessionId(n.id.toString());
 
-    // Role: roots are the top-level (Primary) conversations; children are managed,
+    // Role: roots are the top-level (Primary) sessions; children are managed,
     // with the deepest demo worker flagged ephemeral to exercise that styling.
     if (n.parentId.isEmpty()) {
         n.role = SessionRole::Primary;
@@ -303,7 +303,7 @@ bool InMemorySessionStore::isInSubtree(const UnitId& unitId, const UnitId& rootI
 bool InMemorySessionStore::matchesScope(const Session& c, const ListScope& scope) const
 {
     switch (scope.type) {
-    case NodeType::AllConversations:
+    case NodeType::AllSessions:
         return !c.isArchived;
     case NodeType::Archived:
         return c.isArchived;

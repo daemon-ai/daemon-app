@@ -182,20 +182,20 @@ private slots:
         SidebarModel model;
         model.setStore(&store);
 
-        model.activate(findRow(model, QStringLiteral("All Conversations")));
+        model.activate(findRow(model, QStringLiteral("All Sessions")));
         QSignalSpy spy(&model, &SidebarModel::scopeSelected);
 
         model.selectNext(); // -> Archived
         QCOMPARE(model.currentRow(), findRow(model, QStringLiteral("Archived")));
         QCOMPARE(spy.takeFirst().at(0).toInt(), 1); // NodeType::Archived
 
-        model.selectPrevious(); // -> All Conversations
-        QCOMPARE(model.currentRow(), findRow(model, QStringLiteral("All Conversations")));
+        model.selectPrevious(); // -> All Sessions
+        QCOMPARE(model.currentRow(), findRow(model, QStringLiteral("All Sessions")));
 
         spy.clear();
         model.activateCurrent(); // Enter re-emits without moving
         QCOMPARE(spy.count(), 1);
-        QCOMPARE(spy.takeFirst().at(0).toInt(), 0); // NodeType::AllConversations
+        QCOMPARE(spy.takeFirst().at(0).toInt(), 0); // NodeType::AllSessions
     }
 
     // Right expands a collapsed node then descends; Left collapses then climbs.

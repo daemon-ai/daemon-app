@@ -51,8 +51,8 @@ target_link_libraries(daemon-app
         daemon-app::controls
         daemon-app::blockeditor
         daemon-app::sidebar
-        daemon-app::conversationslist
-        daemon-app::conversation
+        daemon-app::sessionslist
+        daemon-app::session_view
         daemon-app::tabs
         daemon-app::files
         daemon-app::editor
@@ -71,8 +71,8 @@ target_link_libraries(daemon-app
         da_controlsplugin
         da_blockeditorplugin
         da_sidebarplugin
-        da_conversationslistplugin
-        da_conversationplugin
+        da_sessionslistplugin
+        da_session_viewplugin
         da_tabsplugin
         da_filesplugin
         da_editorplugin

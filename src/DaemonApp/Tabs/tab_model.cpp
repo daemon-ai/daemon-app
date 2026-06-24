@@ -98,7 +98,7 @@ int TabModel::openTranscript(int sessionId, const QString& title)
     Tab tab;
     tab.id = m_nextId++;
     tab.kind = Transcript;
-    tab.title = title.isEmpty() ? QStringLiteral("Conversation") : title;
+    tab.title = title.isEmpty() ? QStringLiteral("Session") : title;
     tab.sessionId = sessionId;
     tab.closable = true;
     tab.preview = false;
@@ -124,7 +124,7 @@ int TabModel::previewTranscript(int sessionId, const QString& title)
         return m_tabs.at(existing).id;
     }
 
-    // Reuse the single preview slot, reassigning its conversation in place.
+    // Reuse the single preview slot, reassigning its session in place.
     const int previewRow = findPreviewRow();
     if (previewRow >= 0) {
         Tab& tab = m_tabs[previewRow];
@@ -134,14 +134,14 @@ int TabModel::previewTranscript(int sessionId, const QString& title)
         tab.rootId.clear();
         tab.path.clear();
         tab.dirty = false;
-        tab.title = title.isEmpty() ? QStringLiteral("Conversation") : title;
+        tab.title = title.isEmpty() ? QStringLiteral("Session") : title;
         const QModelIndex idx = index(previewRow, 0);
         emit dataChanged(idx, idx,
                          { KindRole, TitleRole, Qt::DisplayRole, SessionIdRole, FilePathRole,
                            FileRootRole, DirtyRole });
         if (kindChanged)
             emit tabKindChanged(tab.id);
-        emit tabConversationChanged(tab.id, sessionId);
+        emit tabSessionChanged(tab.id, sessionId);
         // Make sure it is the active tab (it may not have been).
         if (m_currentIndex != previewRow) {
             setCurrentInternal(previewRow);
@@ -157,7 +157,7 @@ int TabModel::previewTranscript(int sessionId, const QString& title)
     Tab tab;
     tab.id = m_nextId++;
     tab.kind = Transcript;
-    tab.title = title.isEmpty() ? QStringLiteral("Conversation") : title;
+    tab.title = title.isEmpty() ? QStringLiteral("Session") : title;
     tab.sessionId = sessionId;
     tab.closable = true;
     tab.preview = true;
@@ -455,7 +455,7 @@ int TabModel::kindAt(int index) const
     return m_tabs.at(index).kind;
 }
 
-int TabModel::conversationIdAt(int index) const
+int TabModel::sessionIdAt(int index) const
 {
     if (index < 0 || index >= m_tabs.size()) {
         return -1;

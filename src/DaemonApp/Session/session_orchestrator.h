@@ -1,6 +1,6 @@
 #pragma once
 
-#include "conversation_controller.h"
+#include "session_controller.h"
 #include "subagent_model.h"
 #include "todo_list_model.h"
 #include "turn_controller.h"
@@ -10,31 +10,31 @@
 #include <QTimer>
 #include <QtQml/qqmlregistration.h>
 
-// The submit pipeline, extracted from Conversation.qml (the per-front-end glue at
+// The submit pipeline, extracted from Session.qml (the per-front-end glue at
 // lines 331-357) so both the QML GUI and the TUI drive submit -> turn identically.
 // It owns the TurnController (the assistant-turn FSM) and a TodoListModel (the
-// status-stack todos), and references the front-end's ConversationController for
+// status-stack todos), and references the front-end's SessionController for
 // the persisted content. The view only routes input to the invokables and renders
 // `turn`/`todos`; it performs no submit orchestration itself.
 //
-// Slash commands: the shared "new" is handled here (creates a conversation); any
+// Slash commands: the shared "new" is handled here (creates a session); any
 // other command (e.g. "theme"/"distraction") is a front-end UI action and is
 // surfaced via commandRequested for the front end to perform.
-class ConversationOrchestrator : public QObject {
+class SessionOrchestrator : public QObject {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(ConversationController* conversation READ conversation WRITE setConversation NOTIFY
-                   conversationChanged)
+    Q_PROPERTY(SessionController* session READ session WRITE setSession NOTIFY
+                   sessionChanged)
     Q_PROPERTY(TurnController* turn READ turn CONSTANT)
     Q_PROPERTY(TodoListModel* todos READ todos CONSTANT)
     Q_PROPERTY(SubagentModel* subagents READ subagents CONSTANT)
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
 
 public:
-    explicit ConversationOrchestrator(QObject* parent = nullptr);
+    explicit SessionOrchestrator(QObject* parent = nullptr);
 
-    [[nodiscard]] ConversationController* conversation() const { return m_conversation; }
-    void setConversation(ConversationController* conversation);
+    [[nodiscard]] SessionController* session() const { return m_session; }
+    void setSession(SessionController* session);
 
     [[nodiscard]] TurnController* turn() const { return m_turn; }
     [[nodiscard]] TodoListModel* todos() const { return m_todos; }
@@ -54,14 +54,14 @@ public:
     Q_INVOKABLE void steer(const QString& text);
     // Interrupt the running turn (Stop / Esc).
     Q_INVOKABLE void cancel();
-    // Client-side slash command: "new" creates a conversation here; the rewind
+    // Client-side slash command: "new" creates a session here; the rewind
     // commands ("retry"/"edit"/"undo") surface as the rewind*Requested signals for
     // the front end to apply against its document owner (EditorController / the TUI
     // DocumentStore); all others are emitted via commandRequested.
     Q_INVOKABLE void invokeCommand(const QString& command);
 
 signals:
-    void conversationChanged();
+    void sessionChanged();
     void busyChanged();
     // A non-shared slash command the front end must perform (e.g. open settings,
     // toggle distraction-free).
@@ -78,7 +78,7 @@ signals:
 private:
     void populateDemoTodos();
 
-    ConversationController* m_conversation = nullptr;
+    SessionController* m_session = nullptr;
     TurnController* m_turn = nullptr;
     TodoListModel* m_todos = nullptr;
     SubagentModel* m_subagents = nullptr;

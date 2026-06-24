@@ -76,9 +76,9 @@ void SidebarModel::rebuild()
     beginResetModel();
     m_rows.clear();
     if (m_store) {
-        m_rows.push_back({ tr("All Conversations"),
-                           m_store->sessionCount({ NodeType::AllConversations, -1, {} }),
-                           NodeType::AllConversations, -1, {}, false, true, {}, 0, false, false, 0,
+        m_rows.push_back({ tr("All Sessions"),
+                           m_store->sessionCount({ NodeType::AllSessions, -1, {} }),
+                           NodeType::AllSessions, -1, {}, false, true, {}, 0, false, false, 0,
                            0, {}, {} });
         m_rows.push_back({ tr("Archived"), m_store->sessionCount({ NodeType::Archived, -1, {} }),
                            NodeType::Archived, -1, {}, false, true, {}, 0, false, false, 0, 0, {},

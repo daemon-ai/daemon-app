@@ -98,12 +98,12 @@ bool maybeRenderThemeShots(QQmlApplicationEngine& engine)
 
     window->show();
 
-    // Open a conversation so the Transcript renders real markdown (headings,
+    // Open a session so the Transcript renders real markdown (headings,
     // lists, inline code, a table) instead of the empty-state placeholder. The
-    // ConversationController lives in the QML object tree; reach it by class name.
+    // SessionController lives in the QML object tree; reach it by class name.
     const QList<QObject*> children = window->findChildren<QObject*>();
     for (QObject* obj : children) {
-        if (qstrcmp(obj->metaObject()->className(), "ConversationController") == 0) {
+        if (qstrcmp(obj->metaObject()->className(), "SessionController") == 0) {
             QMetaObject::invokeMethod(obj, "open", Q_ARG(int, 1));
             break;
         }
@@ -169,8 +169,8 @@ Q_IMPORT_QML_PLUGIN(DaemonApp_ThemePlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ControlsPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_BlockEditorPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_SidebarPlugin)
-Q_IMPORT_QML_PLUGIN(DaemonApp_ConversationsListPlugin)
-Q_IMPORT_QML_PLUGIN(DaemonApp_ConversationPlugin)
+Q_IMPORT_QML_PLUGIN(DaemonApp_SessionsListPlugin)
+Q_IMPORT_QML_PLUGIN(DaemonApp_SessionPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_TabsPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_FilesPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_EditorPlugin)

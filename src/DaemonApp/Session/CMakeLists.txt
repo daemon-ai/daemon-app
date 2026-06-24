@@ -1,24 +1,24 @@
-qt_add_qml_module(da_conversation
+qt_add_qml_module(da_session_view
     STATIC
-    URI DaemonApp.Conversation
+    URI DaemonApp.Session
     VERSION 1.0
     SOURCES
-        conversation_controller.h
-        conversation_controller.cpp
-        conversation_orchestrator.h
-        conversation_orchestrator.cpp
+        session_controller.h
+        session_controller.cpp
+        session_orchestrator.h
+        session_orchestrator.cpp
         todo_list_model.h
         todo_list_model.cpp
         subagent_model.h
         subagent_model.cpp
     QML_FILES
-        Conversation.qml
+        Session.qml
         TranscriptPage.qml
         ToolGroup.qml
 )
-add_library(daemon-app::conversation ALIAS da_conversation)
+add_library(daemon-app::session_view ALIAS da_session_view)
 
-target_link_libraries(da_conversation
+target_link_libraries(da_session_view
     PRIVATE
         Qt6::Quick
         daemon-app::domain

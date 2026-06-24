@@ -35,7 +35,7 @@ enum class BlockType : quint16 {
     Unknown,
 };
 
-// Conversation message role a block belongs to. Derived at parse time from
+// Session message role a block belongs to. Derived at parse time from
 // persisted boundary markers (see agent_block message-marker helpers) and used
 // by the QML grouping layer to draw user bubbles / assistant containers /
 // system notices. None == an un-roled (legacy / plain-markdown) block.

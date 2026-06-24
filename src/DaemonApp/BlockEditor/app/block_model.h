@@ -36,7 +36,7 @@ public:
         ToolDataRole,
         ReasoningDataRole,
         ContentDataRole,
-        // Message/role layer (Strategy C): the block's conversation role, its
+        // Message/role layer (Strategy C): the block's session role, its
         // stable message id, and run-edge flags (first/last block of its
         // contiguous message run) the QML grouping layer uses for bubbles,
         // footers, and inter-turn spacing.

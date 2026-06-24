@@ -8,7 +8,7 @@ DisplayPresenter::DisplayPresenter(QObject* parent) : QObject(parent) {}
 QString DisplayPresenter::scopeIconKeyFor(int nodeType)
 {
     switch (static_cast<domain::NodeType>(nodeType)) {
-    case domain::NodeType::AllConversations:
+    case domain::NodeType::AllSessions:
         return QStringLiteral("comments");
     case domain::NodeType::Archived:
         return QStringLiteral("archive");

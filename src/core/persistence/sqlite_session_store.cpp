@@ -56,7 +56,7 @@ SqliteSessionStore::SqliteSessionStore(const QString& dbPath, QObject* parent)
 {
     // A unique connection name per instance so multiple stores (GUI + a test, or
     // GUI + TUI in one process) never collide in Qt's global connection registry.
-    m_connectionName = QStringLiteral("daemon-app-conversations-%1")
+    m_connectionName = QStringLiteral("daemon-app-sessions-%1")
                            .arg(reinterpret_cast<quintptr>(this));
 
     openDatabase();
@@ -93,7 +93,7 @@ QString SqliteSessionStore::defaultDatabasePath()
         dir = QDir::tempPath();
     }
     QDir().mkpath(dir);
-    return dir + QStringLiteral("/conversations.db");
+    return dir + QStringLiteral("/sessions.db");
 }
 
 void SqliteSessionStore::openDatabase()
@@ -118,7 +118,7 @@ void SqliteSessionStore::createSchema()
                           "kind INTEGER, state INTEGER, work TEXT, ord INTEGER)"));
     q.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS tags("
                           "id INTEGER PRIMARY KEY, name TEXT, color TEXT, ord INTEGER)"));
-    q.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS conversations("
+    q.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS sessions("
                           "id INTEGER PRIMARY KEY, agent_id TEXT, tag_ids TEXT, "
                           "title TEXT, content TEXT, archived INTEGER, pinned INTEGER, "
                           "created TEXT, modified TEXT, ord INTEGER)"));
@@ -161,7 +161,7 @@ bool SqliteSessionStore::loadAll()
 
     QSqlQuery cq(db);
     cq.exec(QStringLiteral("SELECT id, agent_id, tag_ids, title, content, archived, "
-                           "pinned, created, modified FROM conversations ORDER BY ord ASC"));
+                           "pinned, created, modified FROM sessions ORDER BY ord ASC"));
     while (cq.next()) {
         Session c;
         c.id = cq.value(0).toInt();
@@ -218,7 +218,7 @@ void SqliteSessionStore::saveAll()
     QSqlQuery del(db);
     del.exec(QStringLiteral("DELETE FROM nodes"));
     del.exec(QStringLiteral("DELETE FROM tags"));
-    del.exec(QStringLiteral("DELETE FROM conversations"));
+    del.exec(QStringLiteral("DELETE FROM sessions"));
 
     QSqlQuery nq(db);
     nq.prepare(QStringLiteral("INSERT INTO nodes(id, parent_id, name, kind, state, work, ord) "
@@ -247,7 +247,7 @@ void SqliteSessionStore::saveAll()
     }
 
     QSqlQuery cq(db);
-    cq.prepare(QStringLiteral("INSERT INTO conversations(id, agent_id, tag_ids, title, content, "
+    cq.prepare(QStringLiteral("INSERT INTO sessions(id, agent_id, tag_ids, title, content, "
                               "archived, pinned, created, modified, ord) "
                               "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
     for (int i = 0; i < m_sessions.size(); ++i) {

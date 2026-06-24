@@ -5,5 +5,5 @@ rows to/from `domain` types. Target: `da_persistence` (Qt6::Sql) -> `da_domain`.
 
 Planned contents:
 - `db_manager.*` - GUI-thread facade over a `QThread`-bound worker.
-- repositories - conversation (and later message/tag) queries.
+- repositories - session (and later message/tag) queries.
 - `migrations/` - schema creation and version upgrades.

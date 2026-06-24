@@ -8,16 +8,16 @@ import DaemonApp.Transcript
 import DaemonApp.Composer
 
 // A single transcript tab's content: the Transcript + Composer for one open
-// conversation, backed by its OWN ConversationController + ConversationOrchestrator
+// session, backed by its OWN SessionController + SessionOrchestrator
 // so each tab keeps independent streaming/scroll state while it sits in the
-// background of the pane's StackLayout. The tab host (Conversation.qml) sets
+// background of the pane's StackLayout. The tab host (Session.qml) sets
 // `sessionId`; this page owns everything below the tab strip.
 Rectangle {
     id: root
 
     color: Theme.background
 
-    // The conversation this tab shows. Set once by the host when the tab is
+    // The session this tab shows. Set once by the host when the tab is
     // created; re-assigning re-opens (kept for completeness, tabs are 1:1).
     property int sessionId: -1
 
@@ -37,16 +37,16 @@ Rectangle {
     // the host (Main.qml) routes it to a window-level action.
     signal commandForwarded(string command)
 
-    // The tab title resolved from the conversation content (first heading/line).
+    // The tab title resolved from the session content (first heading/line).
     // The host binds this to TabModel.setTitle so the chip reflects the thread.
     signal titleResolved(string title)
 
-    // The user committed to this conversation (submitted a turn or edited the
+    // The user committed to this session (submitted a turn or edited the
     // transcript); the host pins the tab so a preview tab becomes permanent.
     signal committed()
 
-    // Exposed so the pane's settings popup can act on this tab's conversation.
-    readonly property alias conversationController: controller
+    // Exposed so the pane's settings popup can act on this tab's session.
+    readonly property alias sessionController: controller
 
     // Route a palette/slash command into this tab's orchestrator (the same entry
     // point the composer uses), so the command palette reaches the foreground tab.
@@ -61,26 +61,26 @@ Rectangle {
         Status.setContextUsed(Math.max(1500, Math.round(Status.contextUsed * 0.2)));
     }
 
-    // The chip label is the conversation's canonical title (the same string the
+    // The chip label is the session's canonical title (the same string the
     // list shows), not the first line of the markdown content.
     function _resolveTitle() {
         if (sessionId < 0)
             return;
         const t = SessionStore.title(sessionId);
-        root.titleResolved((t && t.length > 0) ? t : qsTr("Conversation"));
+        root.titleResolved((t && t.length > 0) ? t : qsTr("Session"));
     }
 
-    ConversationController {
+    SessionController {
         id: controller
         store: SessionStore
     }
 
     // The shared submit pipeline: owns the turn (injected into the transcript) and
     // the status-stack todos (rendered by the composer).
-    ConversationOrchestrator {
+    SessionOrchestrator {
         id: orchestrator
-        conversation: controller
-        // Route the orchestrator's front-end commands. Conversation-scoped ones act
+        session: controller
+        // Route the orchestrator's front-end commands. Session-scoped ones act
         // on this tab's composer/session/status here; window-level ones (help,
         // title, save) bubble up via commandForwarded.
         onCommandRequested: function(command) {
@@ -111,8 +111,8 @@ Rectangle {
         onUndoRequested: transcript.undoLast()
     }
 
-    // Open the bound conversation on realize and whenever it changes.
-    onConversationIdChanged: {
+    // Open the bound session on realize and whenever it changes.
+    onSessionIdChanged: {
         if (sessionId >= 0)
             controller.open(sessionId);
         root._resolveTitle();
@@ -123,10 +123,10 @@ Rectangle {
         root._resolveTitle();
     }
 
-    // Keep the tab title in sync with the conversation (e.g. a future rename).
+    // Keep the tab title in sync with the session (e.g. a future rename).
     Connections {
         target: controller
-        function onConversationChanged() { root._resolveTitle(); }
+        function onSessionChanged() { root._resolveTitle(); }
         function onContentChanged() { root._resolveTitle(); }
     }
 
@@ -189,7 +189,7 @@ Rectangle {
     }
 
     // On (re)activation, resync the footer to THIS tab's live turn state so the
-    // running indicator/timer reflect the foreground conversation.
+    // running indicator/timer reflect the foreground session.
     onIsActiveChanged: {
         if (!isActive)
             return;
@@ -209,7 +209,7 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
-        visible: controller.hasConversation
+        visible: controller.hasSession
 
         Transcript {
             id: transcript
@@ -231,7 +231,7 @@ Rectangle {
 
             Connections {
                 target: controller
-                function onConversationChanged() { transcript.load(controller.content); }
+                function onSessionChanged() { transcript.load(controller.content); }
                 function onContentChanged() { transcript.load(controller.content); }
             }
         }
@@ -255,10 +255,10 @@ Rectangle {
         }
     }
 
-    // Empty state: shown until the controller has a conversation.
+    // Empty state: shown until the controller has a session.
     Column {
         anchors.centerIn: parent
-        visible: !controller.hasConversation
+        visible: !controller.hasSession
         spacing: Theme.spacing
 
         Kit.Glyph {
@@ -270,7 +270,7 @@ Rectangle {
 
         QQC.Label {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: qsTr("Select a conversation")
+            text: qsTr("Select a session")
             color: Theme.textMuted
             font.family: FontIcons.display
             font.pixelSize: 16
@@ -278,16 +278,16 @@ Rectangle {
     }
 
     // --- HITL surfaces ------------------------------------------------------
-    // Destructive-confirm before clearing the conversation (/clear).
+    // Destructive-confirm before clearing the session (/clear).
     Kit.Dialog {
         id: clearConfirmDialog
-        title: qsTr("Clear conversation")
+        title: qsTr("Clear session")
         width: 360
         acceptText: qsTr("Clear")
         destructive: true
         onAccepted: controller.updateContent("")
         contentItem: QQC.Label {
-            text: qsTr("Remove all messages from this conversation? This cannot be undone.")
+            text: qsTr("Remove all messages from this session? This cannot be undone.")
             wrapMode: Text.WordWrap
             color: Theme.text
             font.family: FontIcons.display

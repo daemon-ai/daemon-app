@@ -41,7 +41,7 @@ public:
     [[nodiscard]] QString textAt(int index) const;
     [[nodiscard]] QString refsAt(int index) const;
 
-    // Bulk swap for per-conversation stash/restore.
+    // Bulk swap for per-session stash/restore.
     [[nodiscard]] QList<Entry> entries() const { return m_entries; }
     void setEntries(const QList<Entry>& entries);
 

@@ -18,7 +18,7 @@ class IModelCatalog;
 
 // The composer's domain/session state machine, extracted from Composer.qml so it
 // is shared verbatim between the QML GUI and the TUI. It owns: the live draft,
-// per-conversation draft/queue stashing, a sent-message history ring, the prompt
+// per-session draft/queue stashing, a sent-message history ring, the prompt
 // queue (drained when the turn goes idle), in-place queue editing, and the
 // pending attachments. It emits exactly the four outbound signals the QML
 // composer emitted (submitted/steer/cancelRequested/commandInvoked).
@@ -27,12 +27,12 @@ class IModelCatalog;
 // popover, attachment chips, layout, and key routing. It pushes typed text in via
 // `setDraft`, calls the invokables for intents, and listens to `draftReset` to
 // replace the field's text (caret-to-end) when the controller changes the draft
-// programmatically (history recall, conversation swap, clear, queue edit).
+// programmatically (history recall, session swap, clear, queue edit).
 class ComposerSessionController : public QObject {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(int sessionId READ sessionId WRITE setConversationId NOTIFY
-                   conversationIdChanged)
+    Q_PROPERTY(int sessionId READ sessionId WRITE setSessionId NOTIFY
+                   sessionIdChanged)
     Q_PROPERTY(bool busy READ busy WRITE setBusy NOTIFY busyChanged)
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(QString draft READ draft WRITE setDraft NOTIFY draftChanged)
@@ -93,8 +93,8 @@ class ComposerSessionController : public QObject {
 public:
     explicit ComposerSessionController(QObject* parent = nullptr);
 
-    [[nodiscard]] int sessionId() const { return m_conversationId; }
-    void setConversationId(int id);
+    [[nodiscard]] int sessionId() const { return m_sessionId; }
+    void setSessionId(int id);
 
     [[nodiscard]] bool busy() const { return m_busy; }
     void setBusy(bool busy);
@@ -204,7 +204,7 @@ signals:
     void completionActiveIndexChanged();
     void reverseSearchChanged();
 
-    void conversationIdChanged();
+    void sessionIdChanged();
     void busyChanged();
     void enabledChanged();
     void draftChanged();
@@ -224,7 +224,7 @@ private:
     void applyDraftWithCursor(const QString& text, int cursor);
     void resetBrowse();
     // Clears reverse-search state and notifies (without restoring the draft); used
-    // when the context changes out from under an active search (conversation swap,
+    // when the context changes out from under an active search (session swap,
     // submit, clear, or an external draft edit).
     void resetReverseSearch();
     // Re-resolve the current query: scan history newest-first from `fromIndex`,
@@ -242,7 +242,7 @@ private:
     ComposerAttachmentModel* m_attachments = nullptr;
     CompletionModel* m_completion = nullptr;
 
-    int m_conversationId = -1;
+    int m_sessionId = -1;
     bool m_busy = false;
     bool m_enabled = true;
     QString m_draft;
@@ -278,7 +278,7 @@ private:
     bool m_fastMode = false;
     bool m_verbose = false;
 
-    // Per-conversation persisted state (keyed by conversation id).
+    // Per-session persisted state (keyed by session id).
     QHash<int, QString> m_drafts;
     QHash<int, QList<ComposerQueueModel::Entry>> m_queues;
     QHash<int, QStringList> m_histories;

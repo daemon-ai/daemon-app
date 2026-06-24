@@ -64,7 +64,7 @@ class ISessionSettings;
 class ICheckpointTimeline;
 }
 
-// Owns the application-wide services (conversation store, platform integrations) and
+// Owns the application-wide services (session store, platform integrations) and
 // wires them to the QML scene. Kept UI-toolkit agnostic: the only desktop bit
 // (tray) lives behind IPlatformServices.
 class Application : public QObject {
@@ -101,7 +101,7 @@ private:
     persistence::InMemorySessionStore* m_store = nullptr;
     platform::IPlatformServices* m_platform = nullptr;
     // The shared footer status model, exposed to QML as the `Status` context
-    // property so the footer StatusBar and the active conversation's turn feed a
+    // property so the footer StatusBar and the active session's turn feed a
     // single instance (the TUI builds its own equivalent in RootWidget).
     StatusBarModel* m_status = nullptr;
     // Shared command-palette catalog, exposed to QML as `Commands`.

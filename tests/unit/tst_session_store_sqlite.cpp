@@ -15,7 +15,7 @@ using persistence::SqliteSessionStore;
 namespace {
 ListScope allScope()
 {
-    return { NodeType::AllConversations, -1, UnitId() };
+    return { NodeType::AllSessions, -1, UnitId() };
 }
 ListScope archivedScope()
 {
@@ -24,7 +24,7 @@ ListScope archivedScope()
 UnitId U(const char* s) { return UnitId(QString::fromLatin1(s)); }
 } // namespace
 
-// Exercises the durable SQLite conversation store: a fresh database seeds the
+// Exercises the durable SQLite session store: a fresh database seeds the
 // demo data, and every mutation survives closing and reopening the same file
 // (the offline cache the audit calls for).
 class TestSqliteStore : public QObject {
@@ -33,13 +33,13 @@ class TestSqliteStore : public QObject {
 private:
     QTemporaryDir m_dir;
 
-    QString dbPath() const { return m_dir.path() + QStringLiteral("/conversations.db"); }
+    QString dbPath() const { return m_dir.path() + QStringLiteral("/sessions.db"); }
 
 private slots:
     void freshDatabaseSeeds()
     {
         SqliteSessionStore store(dbPath());
-        // The demo seed includes several non-archived conversations and a root tree.
+        // The demo seed includes several non-archived sessions and a root tree.
         QVERIFY(store.sessionCount(allScope()) > 0);
         QVERIFY(!store.unitChildren(UnitId()).isEmpty());
     }
@@ -82,7 +82,7 @@ private slots:
         }
         {
             SqliteSessionStore store(dbPath());
-            // Archived conversation is gone from All but present in Archived.
+            // Archived session is gone from All but present in Archived.
             const QList<Session> archived = store.sessions(archivedScope());
             bool found = false;
             for (const Session& c : archived) {
@@ -90,8 +90,8 @@ private slots:
                     found = true;
                 }
             }
-            QVERIFY2(found, "archived conversation should persist in the Archived scope");
-            // Deleted conversation has no title (unknown) after reopen.
+            QVERIFY2(found, "archived session should persist in the Archived scope");
+            // Deleted session has no title (unknown) after reopen.
             QVERIFY(store.title(dropId).isEmpty());
         }
     }

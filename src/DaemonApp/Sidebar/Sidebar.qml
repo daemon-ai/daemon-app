@@ -9,7 +9,7 @@ import DaemonApp.Presentation
 // tree (VSCode-explorer style) - any node can contain any node to any depth.
 // Rows: All / Archived, a "Fleet" header with the indented node tree (twistie +
 // kind icon + state dot + folded subtree count), and a "Tags" header with tag
-// rows. Selecting a node lists its whole subtree's conversations in the middle.
+// rows. Selecting a node lists its whole subtree's sessions in the middle.
 Rectangle {
     id: root
 
@@ -112,7 +112,6 @@ Rectangle {
                     required property string label
                     required property int count
                     required property int nodeType
-                    required property int nodeId
                     required property string unitId
                     required property bool isSeparator
                     required property bool selectable

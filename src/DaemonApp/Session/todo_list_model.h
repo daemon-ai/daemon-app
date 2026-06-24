@@ -8,7 +8,7 @@
 // The composer status-stack todo list. A flat list of { text, done } rows shown
 // above the composer during a turn. Extracted from the QML demo seam so the model
 // and its populate/clear lifecycle live in shared C++ (owned by
-// ConversationOrchestrator); both front ends render the same rows. GUI-free: it is
+// SessionOrchestrator); both front ends render the same rows. GUI-free: it is
 // consumed as a QML model (role names below) and directly from C++ in the TUI.
 class TodoListModel : public QAbstractListModel {
     Q_OBJECT

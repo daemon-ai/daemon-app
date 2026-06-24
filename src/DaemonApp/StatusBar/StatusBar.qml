@@ -17,7 +17,7 @@ Rectangle {
     // --- Backend-bound state + formatting -----------------------------------
     // The daemon-bound status state and all derived/formatted strings live in the
     // shared C++ StatusBarModel. It is owned by Application and exposed as the
-    // `Status` context property so the footer and the active conversation's turn
+    // `Status` context property so the footer and the active session's turn
     // (TranscriptPage.qml feeds busy/usage/context) drive ONE instance.
     readonly property var model: Status
 

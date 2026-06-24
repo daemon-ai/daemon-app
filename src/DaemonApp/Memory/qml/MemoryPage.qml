@@ -7,7 +7,7 @@ import DaemonApp.Pages
 // The Memory page: inspect ONE agent's Mnemosyne memory. Memory is owned by the
 // agent (== its profile / per-profile bank), so this tab is bound to a `profile`
 // (set from the tab's profile) and shows that agent's WHOLE bank by default. A
-// session == a conversation; the session filter is an optional lens within the
+// session == a session; the session filter is an optional lens within the
 // agent's memory (not the binding), and `scope` (session/global) is row metadata.
 // Internal sub-tabs: Overview / Memories / Graph / Timeline. Graph is GUI-only;
 // the TUI mirrors the rest plus a graph adjacency fallback.
@@ -31,9 +31,9 @@ Item {
         return root.section && root.section.length > 0 ? root.section : "overview";
     }
 
-    // Session FILTER over the agent's bank: index 0 = "All conversations" (whole
-    // bank); the rest are the agent's conversations (populated from sessionsReady).
-    property var sessionFilter: [{ id: "", label: qsTr("All conversations") }]
+    // Session FILTER over the agent's bank: index 0 = "All sessions" (whole
+    // bank); the rest are the agent's sessions (populated from sessionsReady).
+    property var sessionFilter: [{ id: "", label: qsTr("All sessions") }]
     property bool includeGlobal: true
 
     // Apply the agent binding + the current session/global filter. `profile` is the
@@ -61,13 +61,13 @@ Item {
         }
     }
 
-    // Populate the session filter facet with the agent's conversations.
+    // Populate the session filter facet with the agent's sessions.
     Connections {
         target: typeof Memory !== "undefined" ? Memory : null
         function onSessionsReady(profile, sessions) {
             if (profile !== root.profile)
                 return;
-            const list = [{ id: "", label: qsTr("All conversations") }];
+            const list = [{ id: "", label: qsTr("All sessions") }];
             for (let i = 0; i < sessions.length; ++i)
                 list.push({ id: sessions[i].id, label: sessions[i].label });
             root.sessionFilter = list;
@@ -96,7 +96,7 @@ Item {
         spacing: 12
 
         Text {
-            text: qsTr("Conversation")
+            text: qsTr("Session")
             font.family: FontIcons.display
             font.pixelSize: 12
             color: Theme.textMuted

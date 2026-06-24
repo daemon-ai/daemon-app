@@ -20,7 +20,7 @@ namespace persistence {
 // snapshot whenever changed() fires. The dataset is small and local, so a
 // whole-snapshot write is simpler and safe than per-row dirty tracking.
 //
-// On-disk table/column names keep their historical `conversations`/`agent_id`
+// On-disk table/column names keep their historical `sessions`/`agent_id`
 // spelling to avoid a data migration; only the C++ vocabulary is daemon-aligned.
 class SqliteSessionStore : public InMemorySessionStore {
     Q_OBJECT

@@ -108,7 +108,7 @@ public:
     Q_INVOKABLE void increaseFontSize() { setEditorFontSize(m_editorFontSize + 1); }
     Q_INVOKABLE void decreaseFontSize() { setEditorFontSize(m_editorFontSize - 1); }
 
-    // Restore every preference to its default (does not touch conversation data).
+    // Restore every preference to its default (does not touch session data).
     Q_INVOKABLE void resetAll();
 
 signals:

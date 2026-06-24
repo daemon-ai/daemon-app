@@ -21,11 +21,11 @@ MockCheckpointTimeline::MockCheckpointTimeline(QObject* parent)
     : ICheckpointTimeline(parent)
     , m_checkpoints(new uimodels::VariantListModel(this))
 {
-    // Seed the initial (default) conversation so the panel has content before any
-    // conversation id is bound.
-    ensureConversation(m_conversationId);
-    m_checkpoints->setRows(m_rowsByConv.value(m_conversationId));
-    m_nextId = m_nextIdByConv.value(m_conversationId);
+    // Seed the initial (default) session so the panel has content before any
+    // session id is bound.
+    ensureSession(m_sessionId);
+    m_checkpoints->setRows(m_rowsBySession.value(m_sessionId));
+    m_nextId = m_nextIdBySession.value(m_sessionId);
     connect(m_checkpoints, &uimodels::VariantListModel::countChanged, this,
             &ICheckpointTimeline::changed);
 }
@@ -44,29 +44,29 @@ QList<QVariantMap> MockCheckpointTimeline::seedRows()
     };
 }
 
-void MockCheckpointTimeline::ensureConversation(int id)
+void MockCheckpointTimeline::ensureSession(int id)
 {
-    if (!m_rowsByConv.contains(id)) {
-        m_rowsByConv.insert(id, seedRows());
-        m_nextIdByConv.insert(id, 5);
+    if (!m_rowsBySession.contains(id)) {
+        m_rowsBySession.insert(id, seedRows());
+        m_nextIdBySession.insert(id, 5);
     }
 }
 
-void MockCheckpointTimeline::setConversationId(int id)
+void MockCheckpointTimeline::setSessionId(int id)
 {
-    if (m_conversationId == id) {
+    if (m_sessionId == id) {
         return;
     }
-    // Stash the outgoing conversation's live timeline, then swap in the target's.
-    m_rowsByConv[m_conversationId] = m_checkpoints->rows();
-    m_nextIdByConv[m_conversationId] = m_nextId;
+    // Stash the outgoing session's live timeline, then swap in the target's.
+    m_rowsBySession[m_sessionId] = m_checkpoints->rows();
+    m_nextIdBySession[m_sessionId] = m_nextId;
 
-    m_conversationId = id;
-    ensureConversation(id);
-    m_checkpoints->setRows(m_rowsByConv.value(id));
-    m_nextId = m_nextIdByConv.value(id);
+    m_sessionId = id;
+    ensureSession(id);
+    m_checkpoints->setRows(m_rowsBySession.value(id));
+    m_nextId = m_nextIdBySession.value(id);
 
-    emit conversationIdChanged();
+    emit sessionIdChanged();
     emit changed();
 }
 

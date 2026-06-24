@@ -11,7 +11,7 @@ import DaemonApp.BlockEditor
 // when "Show Raw Markdown" is enabled); other text -> the QML-native code editor;
 // image/binary -> a placeholder. Saves with optimistic concurrency
 // (the held revision) and reloads on external change when not dirty. Dirty/title
-// are mirrored back to the TabModel by the Conversation host.
+// are mirrored back to the TabModel by the Session host.
 Item {
     id: root
 

@@ -9,7 +9,7 @@ import DaemonApp.Tabs
 import DaemonApp.Pages
 import DaemonApp.Memory
 
-// The conversation pane host, built as two stacked containers with EXPLICIT
+// The session pane host, built as two stacked containers with EXPLICIT
 // anchored geometry (no outer ColumnLayout): a fixed-height tab bar at the top
 // and the transcript body filling the rest. The previous nested-Layout shell let
 // the tab strip's height balloon and swallow the transcript; anchoring the bar to
@@ -26,16 +26,16 @@ Rectangle {
     // into the transcript region.
     readonly property int barHeight: 36
 
-    // Compact (phone) only: pop back to the conversation list.
+    // Compact (phone) only: pop back to the session list.
     signal backRequested()
 
     // A page forwarded a window-level command (help / title / save); the shell
     // (Main.qml) routes it.
     signal paneCommandForwarded(string command)
 
-    // A throwaway controller used solely to create new conversations in the
+    // A throwaway controller used solely to create new sessions in the
     // shared store; each TranscriptPage owns its own controller for display.
-    ConversationController {
+    SessionController {
         id: creator
         store: SessionStore
     }
@@ -45,30 +45,30 @@ Rectangle {
     }
 
     // The active tab's TranscriptPage (null when no transcript tab is active), so
-    // the settings popup's "Move to Trash" can act on the open conversation.
+    // the settings popup's "Move to Trash" can act on the open session.
     readonly property Item activePage: {
         const ld = tabRepeater.itemAt(tabModel.currentIndex);
         return (ld && ld.item) ? ld.item : null;
     }
 
     // --- Public API used by the shell (Main.qml) ----------------------------
-    // The canonical conversation title (the same string the list shows), with a
+    // The canonical session title (the same string the list shows), with a
     // generic fallback so a chip is never blank.
     function _titleFor(sessionId) {
         const t = SessionStore.title(sessionId);
-        return (t && t.length > 0) ? t : qsTr("Conversation");
+        return (t && t.length > 0) ? t : qsTr("Session");
     }
-    // Single-click / type-ahead open: load the conversation into the transient
+    // Single-click / type-ahead open: load the session into the transient
     // preview tab (reused on the next preview), VSCode-style.
     function open(sessionId) {
-        openConversation(sessionId);
+        openSession(sessionId);
     }
-    function openConversation(sessionId) {
+    function openSession(sessionId) {
         tabModel.previewTranscript(sessionId, _titleFor(sessionId));
     }
     // Deliberate open (list double-click): a permanent, pinned tab. Passing the
     // real title (same as preview) keeps the pin from clobbering the chip label.
-    function openConversationPinned(sessionId) {
+    function openSessionPinned(sessionId) {
         tabModel.openTranscriptPinned(sessionId, _titleFor(sessionId));
     }
     // Open a workspace file as an editor tab (File kind). pinned=false is a
@@ -81,7 +81,7 @@ Rectangle {
         else
             tabModel.previewFile(rootId, path, title);
     }
-    // Create a brand-new conversation and open it in a pinned tab.
+    // Create a brand-new session and open it in a pinned tab.
     function createNew() {
         const id = creator.createSession("");
         tabModel.openTranscriptPinned(id, _titleFor(id));
@@ -132,26 +132,26 @@ Rectangle {
         tabModel.openAgentTab(entry[0], profileRef, label);
     }
     // Route a command (palette / slash) to the active tab's orchestrator, so the
-    // command palette can drive the foreground conversation. No-op without a tab.
+    // command palette can drive the foreground session. No-op without a tab.
     function invokeActiveCommand(command) {
         if (root.activePage && root.activePage.invokeCommand)
             root.activePage.invokeCommand(command);
     }
 
-    // Rename / export the active conversation (the /title + /save targets, and the
+    // Rename / export the active session (the /title + /save targets, and the
     // command palette's session actions), acting through the shared store + exporter.
     function renameActive() {
-        if (root.activePage && root.activePage.conversationController)
-            renameDialog.openFor(root.activePage.conversationController.currentId);
+        if (root.activePage && root.activePage.sessionController)
+            renameDialog.openFor(root.activePage.sessionController.currentId);
     }
     function exportActive() {
-        if (root.activePage && root.activePage.conversationController)
-            exportDialog.openFor(root.activePage.conversationController.currentId);
+        if (root.activePage && root.activePage.sessionController)
+            exportDialog.openFor(root.activePage.sessionController.currentId);
     }
-    // Open the settings popup over the pane, bound to the active conversation.
+    // Open the settings popup over the pane, bound to the active session.
     function openSettings() {
-        settingsMenu.controller = root.activePage && root.activePage.conversationController
-                                ? root.activePage.conversationController : null;
+        settingsMenu.controller = root.activePage && root.activePage.sessionController
+                                ? root.activePage.sessionController : null;
         settingsMenu.open();
     }
 
@@ -181,7 +181,7 @@ Rectangle {
             anchors.rightMargin: 8
             spacing: 4
 
-            // Compact (phone) only: pop back to the conversation list.
+            // Compact (phone) only: pop back to the session list.
             Kit.IconButton {
                 icon: FontIcons.fa_chevron_left
                 iconColor: Theme.iconMuted
@@ -213,7 +213,7 @@ Rectangle {
 
         // One page per tab, all kept alive (background streaming/scroll), only
         // the active one shown. Keyed by the model so a reassigned preview tab
-        // reuses its page (and reloads via TranscriptPage.onConversationIdChanged).
+        // reuses its page (and reloads via TranscriptPage.onSessionIdChanged).
         Repeater {
             id: tabRepeater
             model: tabModel
@@ -279,11 +279,11 @@ Rectangle {
                     }
                     // Manager/settings pages are self-contained (they bind global
                     // context-property seams); only transcript tabs need the
-                    // conversation wiring below.
+                    // session wiring below.
                     if (pageLoader.kind !== TabModel.Transcript)
                         return;
                     // Bind reactively so a preview tab reassigned to another
-                    // conversation reloads in place.
+                    // session reloads in place.
                     item.sessionId = Qt.binding(() => pageLoader.sessionId);
                     // Only the foreground tab feeds the shared footer status model.
                     item.isActive = Qt.binding(() => pageLoader.index === tabModel.currentIndex);
@@ -292,7 +292,7 @@ Rectangle {
                     });
                     item.openSettingsRequested.connect(root.openSettings);
                     item.commandForwarded.connect(root.paneCommandForwarded);
-                    // A submit/edit "commits" to the conversation -> pin the tab.
+                    // A submit/edit "commits" to the session -> pin the tab.
                     item.committed.connect(function() {
                         tabModel.pinTabById(pageLoader.tabId);
                     });
@@ -315,7 +315,7 @@ Rectangle {
 
             QQC.Label {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: qsTr("Select a conversation")
+                text: qsTr("Select a session")
                 color: Theme.textMuted
                 font.family: FontIcons.display
                 font.pixelSize: 16
@@ -359,12 +359,12 @@ Rectangle {
     Component { id: fileComp;      FilePage {} }
 
     // --- Session-action dialogs (rename + export) ---------------------------
-    // Rename the conversation via the store. openFor(id) seeds the field with the
+    // Rename the session via the store. openFor(id) seeds the field with the
     // current title and remembers the target id.
     Kit.Dialog {
         id: renameDialog
         property int targetId: -1
-        title: qsTr("Rename conversation")
+        title: qsTr("Rename session")
         width: 380
         acceptText: qsTr("Rename")
 
@@ -384,12 +384,12 @@ Rectangle {
         contentItem: Kit.TextField {
             id: renameField
             underline: true
-            placeholderText: qsTr("Conversation title")
+            placeholderText: qsTr("Session title")
             onAccepted: renameDialog.accept()
         }
     }
 
-    // Export the conversation transcript to a JSON file via the shared Exporter.
+    // Export the session transcript to a JSON file via the shared Exporter.
     FileDialog {
         id: exportDialog
         property int targetId: -1
@@ -401,7 +401,7 @@ Rectangle {
         function openFor(sessionId) {
             exportDialog.targetId = sessionId;
             const t = SessionStore.title(sessionId);
-            exportDialog.currentFile = "file:" + (t && t.length > 0 ? t : "conversation") + ".json";
+            exportDialog.currentFile = "file:" + (t && t.length > 0 ? t : "session") + ".json";
             open();
         }
 

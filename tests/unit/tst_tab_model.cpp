@@ -18,7 +18,7 @@ private:
     }
 
 private slots:
-    // Opening a fresh conversation appends a transcript tab, activates it, and
+    // Opening a fresh session appends a transcript tab, activates it, and
     // assigns a stable monotonic id.
     void openTranscriptAppendsAndActivates()
     {
@@ -44,7 +44,7 @@ private slots:
         QCOMPARE(currentSpy.takeFirst().at(0).toInt(), id1);
     }
 
-    // Re-opening an already-open conversation re-activates its existing tab
+    // Re-opening an already-open session re-activates its existing tab
     // instead of creating a duplicate (and refreshes its title).
     void openTranscriptReusesExistingTab()
     {
@@ -190,12 +190,12 @@ private slots:
         QCOMPARE(model.currentIndex(), 0);
     }
 
-    // previewTranscript opens a transient tab; previewing a different conversation
+    // previewTranscript opens a transient tab; previewing a different session
     // reuses that single slot (reassigns it in place) rather than appending.
     void previewReusesSingleSlot()
     {
         TabModel model;
-        QSignalSpy reassignSpy(&model, &TabModel::tabConversationChanged);
+        QSignalSpy reassignSpy(&model, &TabModel::tabSessionChanged);
 
         const int id0 = model.previewTranscript(10, QStringLiteral("Alpha"));
         QCOMPARE(model.count(), 1);
@@ -223,7 +223,7 @@ private slots:
         QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), 30);
     }
 
-    // Previewing a conversation that is already open in some tab activates that
+    // Previewing a session that is already open in some tab activates that
     // tab instead of reassigning the preview slot.
     void previewActivatesExistingTab()
     {
@@ -260,7 +260,7 @@ private slots:
         QVERIFY(roleAt<bool>(model, 1, TabModel::PreviewRole));
     }
 
-    // A deliberate open (openTranscript) of the previewed conversation pins it.
+    // A deliberate open (openTranscript) of the previewed session pins it.
     void openTranscriptPinsThePreview()
     {
         TabModel model;

@@ -3,9 +3,9 @@
 #include "display_role_adapter.h"
 #include "tui_palette.h"
 
-#include "conversation_controller.h"
-#include "conversation_orchestrator.h"
-#include "conversations_list_model.h"
+#include "session_controller.h"
+#include "session_orchestrator.h"
+#include "sessions_list_model.h"
 #include "sidebar_model.h"
 #include "todo_list_model.h"
 
@@ -106,8 +106,8 @@ void emitDesktopNotification(const QString& title, const QString& body)
 struct TabSession {
     int tabId = -1;
     int sessionId = -1;
-    ConversationController* controller = nullptr;
-    ConversationOrchestrator* orchestrator = nullptr; // owns `turn`
+    SessionController* controller = nullptr;
+    SessionOrchestrator* orchestrator = nullptr; // owns `turn`
     TurnController* turn = nullptr;
     InteractiveTurnHost* host = nullptr;
     be::DocumentStore doc;
@@ -128,13 +128,13 @@ struct TabSession {
 
 namespace {
 
-// A short tab title for a conversation: the first non-empty content line (heading
+// A short tab title for a session: the first non-empty content line (heading
 // markers stripped, capped), falling back to a generic label.
 QString titleForContent(const QString& markdown)
 {
     const QString trimmed = markdown.trimmed();
     if (trimmed.isEmpty()) {
-        return QStringLiteral("New conversation");
+        return QStringLiteral("New session");
     }
     QString first = trimmed.section(QLatin1Char('\n'), 0, 0);
     while (first.startsWith(QLatin1Char('#'))) {
@@ -142,7 +142,7 @@ QString titleForContent(const QString& markdown)
     }
     first = first.trimmed();
     if (first.isEmpty()) {
-        return QStringLiteral("Conversation");
+        return QStringLiteral("Session");
     }
     return first.left(24);
 }
@@ -539,7 +539,7 @@ void SearchInputBox::setTypingActive(bool active)
 
 void SearchInputBox::paintEvent(Tui::ZPaintEvent* event)
 {
-    // Fully custom paint: this box never edits text itself (the conversation list
+    // Fully custom paint: this box never edits text itself (the session list
     // forwards keystrokes), so we draw a search affordance instead of the stock
     // line-edit chrome.
     Tui::ZPainter* p = event->painter();
@@ -557,7 +557,7 @@ void SearchInputBox::paintEvent(Tui::ZPaintEvent* event)
     const QString q = text();
     if (q.isEmpty()) {
         if (x < w) {
-            p->writeWithColors(x, 0, QStringLiteral("Search conversations").left(w - x),
+            p->writeWithColors(x, 0, QStringLiteral("Search sessions").left(w - x),
                                tpal::muted(), bg);
         }
         return;
@@ -971,7 +971,7 @@ RootWidget::RootWidget()
     m_sidebar = new SidebarModel(this);
     m_sidebar->setStore(m_store);
 
-    m_list = new ConversationsListModel(this);
+    m_list = new SessionsListModel(this);
     m_list->setStore(m_store);
 
     // The shared composer FSM - the same C++ class the QML composer drives. The
@@ -1003,9 +1003,9 @@ RootWidget::RootWidget()
         }
     });
     connect(m_tabModel, &TabModel::tabClosed, this, &RootWidget::destroySession);
-    // A preview tab was reassigned to another conversation: rebind its session
+    // A preview tab was reassigned to another session: rebind its session
     // in place rather than spawning a new one.
-    connect(m_tabModel, &TabModel::tabConversationChanged, this,
+    connect(m_tabModel, &TabModel::tabSessionChanged, this,
             [this](int tabId, int sessionId) { rebindSession(tabId, sessionId); });
     connect(m_tabModel, &TabModel::tabKindChanged, this, [this](int tabId) {
         destroySession(tabId);
@@ -1017,9 +1017,9 @@ RootWidget::RootWidget()
             activateTab(tabId);
     });
 
-    // Sidebar scope selection drives the conversation list - the model-to-model
+    // Sidebar scope selection drives the session list - the model-to-model
     // contract is untouched by the choice of toolkit.
-    connect(m_sidebar, &SidebarModel::scopeSelected, m_list, &ConversationsListModel::setScope);
+    connect(m_sidebar, &SidebarModel::scopeSelected, m_list, &SessionsListModel::setScope);
 
     // File tree seam + model, shared verbatim with the GUI. Serve the daemon-config
     // workspace root (the GUI's Application does the same); a daemon adapter
@@ -1319,7 +1319,7 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
         return;
     }
 
-    // The tab strip is topmost in the conversation column: a click activates /
+    // The tab strip is topmost in the session column: a click activates /
     // closes a tab or hits the "+" affordance (handled inside TabStripView).
     if (hit(m_tabStrip)) {
         m_tabStrip->setFocus(); // clicking the strip focuses it, like any pane
@@ -1334,7 +1334,7 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
         m_fileTreeView->clickAt(local);
         return;
     }
-    // The code editor (shown in the conversation column for a File tab): a click
+    // The code editor (shown in the session column for a File tab): a click
     // focuses it (caret placement is keyboard-driven for now).
     if (m_editorView != nullptr && m_editorView->isVisible() && hit(m_editorView)) {
         m_editorView->setFocus();
@@ -1414,7 +1414,7 @@ void RootWidget::buildUi()
 
     // Ctrl+E toggles the file Explorer (parity with the GUI). It is handled on the
     // key-bubble path in keyEvent() rather than as an ApplicationShortcut, so a
-    // focused composer (readline C-e = end-of-line) or conversation list (C-e =
+    // focused composer (readline C-e = end-of-line) or session list (C-e =
     // export) consume it first; it only toggles when those panes don't. This
     // resolves the Ctrl+E collision without rebinding either widget's binding.
 
@@ -1434,7 +1434,7 @@ void RootWidget::buildUi()
     // min == max width pins the column; Preferred (not Fixed, which would shrink
     // to the sizeHint/content width) lets the clamp take effect.
     // Preferred sizes each list column to its content (clamped to a sensible
-    // minimum); the conversation pane is the sole Expanding child, so it absorbs
+    // minimum); the session pane is the sole Expanding child, so it absorbs
     // the remaining width.
     m_sidebarView = new TreeListView(m_window);
     m_sidebarView->setMinimumSize(26, 3);
@@ -1442,7 +1442,7 @@ void RootWidget::buildUi()
     m_sidebarView->setSizePolicyV(Tui::SizePolicy::Expanding);
     columns->addWidget(m_sidebarView);
 
-    // --- Column 2: search field + conversation list (custom-painted cards) ---
+    // --- Column 2: search field + session list (custom-painted cards) ---
     auto* listCol = new Tui::ZWidget(m_window);
     listCol->setMinimumSize(34, 3);
     listCol->setSizePolicyH(Tui::SizePolicy::Preferred);
@@ -1453,20 +1453,20 @@ void RootWidget::buildUi()
     m_search = new SearchInputBox(listCol);
     m_search->setText(QString());
     m_search->setMaximumSize(Tui::tuiMaxSize, 1);
-    // Not a focus stop: the conversation list owns focus and forwards typed
+    // Not a focus stop: the session list owns focus and forwards typed
     // characters here (type-ahead), so the box is a passive query display and is
     // skipped by the Tab cycle.
     m_search->setFocusPolicy(Tui::NoFocus);
     listColLayout->addWidget(m_search);
 
-    m_listView = new ConversationListView(listCol);
+    m_listView = new SessionListView(listCol);
     m_listView->setMinimumSize(34, 3);
     m_listView->setSizePolicyV(Tui::SizePolicy::Expanding);
     listColLayout->addWidget(m_listView);
 
     columns->addWidget(listCol);
 
-    // --- Column 3: conversation pane (transcript + composer), expanding ---
+    // --- Column 3: session pane (transcript + composer), expanding ---
     auto* right = new Tui::ZWidget(m_window);
     right->setSizePolicyH(Tui::SizePolicy::Expanding);
     auto* rightCol = new Tui::ZVBoxLayout();
@@ -1612,7 +1612,7 @@ void RootWidget::wireViews()
     m_sidebarAdapter->setSourceModel(m_sidebar);
     m_sidebarView->setModel(m_sidebarAdapter);
 
-    // The conversation list is a custom-painted view bound straight to the shared
+    // The session list is a custom-painted view bound straight to the shared
     // model (no display-role adapter): it reads title/snippet/timestamp/agent/tags
     // directly and renders multi-line cards.
     m_listView->setModel(m_list);
@@ -1655,29 +1655,29 @@ void RootWidget::wireViews()
     connect(m_memStats, &memoryui::MemoryStatsModel::changed, this,
             [this] { refreshPageIfActive(TabModel::Memory); });
 
-    // Type-ahead search. The conversation list is the only focus stop in the
+    // Type-ahead search. The session list is the only focus stop in the
     // column; printable keys it receives build the query in the passive search box,
     // whose textChanged drives the shared live filter. Backspace edits, Esc clears.
-    connect(m_search, &Tui::ZInputBox::textChanged, m_list, &ConversationsListModel::setSearch);
-    connect(m_listView, &ConversationListView::searchAppend, this, [this](const QString& text) {
+    connect(m_search, &Tui::ZInputBox::textChanged, m_list, &SessionsListModel::setSearch);
+    connect(m_listView, &SessionListView::searchAppend, this, [this](const QString& text) {
         m_search->setText(m_search->text() + text);
     });
-    connect(m_listView, &ConversationListView::searchBackspace, this, [this] {
+    connect(m_listView, &SessionListView::searchBackspace, this, [this] {
         QString q = m_search->text();
         if (!q.isEmpty()) {
             q.chop(1);
             m_search->setText(q);
         }
     });
-    connect(m_listView, &ConversationListView::searchClear, this,
+    connect(m_listView, &SessionListView::searchClear, this,
             [this] { m_search->setText(QString()); });
     // The search box shows its typing caret only while the list is focused.
-    connect(m_listView, &ConversationListView::focusChanged, m_search,
+    connect(m_listView, &SessionListView::focusChanged, m_search,
             &SearchInputBox::setTypingActive);
     // After the query changes, re-anchor the selection onto the first match so the
     // highlight (and Enter) follow the filtered list instead of stranding off-list.
     // (The view already rebuilds from the model's reset/selection signals.)
-    connect(m_list, &ConversationsListModel::searchChanged, this, [this] {
+    connect(m_list, &SessionsListModel::searchChanged, this, [this] {
         if (m_list->currentRow() < 0 && m_list->rowCount() > 0) {
             m_list->activate(0);
         }
@@ -1710,7 +1710,7 @@ void RootWidget::wireViews()
         syncSidebarCurrent();
     });
 
-    // Conversation highlight / open -> record selection in the model (so the model
+    // Session highlight / open -> record selection in the model (so the model
     // owns `current`, consistent with the sidebar) and surface it in a tab. A
     // transient activation (arrow nav / single click) loads into the VSCode-style
     // preview tab; a deliberate Enter opens a permanent (pinned) tab.
@@ -1724,50 +1724,50 @@ void RootWidget::wireViews()
             return;
         }
         if (pinned) {
-            openConversationPinnedTab(id);
+            openSessionPinnedTab(id);
         } else {
-            previewConversationTab(id);
+            previewSessionTab(id);
         }
     };
-    connect(m_listView, &ConversationListView::rowActivated, this, openRow);
+    connect(m_listView, &SessionListView::rowActivated, this, openRow);
 
     // Session actions on the focused list row (Ctrl+R rename, Ctrl+E export,
     // Ctrl+K pin, Delete delete). All run against the shared store.
-    connect(m_listView, &ConversationListView::pinToggleRequested, this, [this](int row) {
+    connect(m_listView, &SessionListView::pinToggleRequested, this, [this](int row) {
         const int id = m_list->idAt(row);
         if (id >= 0) {
             m_store->setPinned(id, !m_store->isPinned(id));
         }
     });
-    connect(m_listView, &ConversationListView::deleteRequested, this, [this](int row) {
+    connect(m_listView, &SessionListView::deleteRequested, this, [this](int row) {
         const int id = m_list->idAt(row);
         if (id < 0) {
             return;
         }
         auto* confirm = new ConfirmDialog(
-            QStringLiteral("Delete conversation"),
-            QStringLiteral("Permanently delete this conversation?"), this);
+            QStringLiteral("Delete session"),
+            QStringLiteral("Permanently delete this session?"), this);
         connect(confirm, &ConfirmDialog::confirmed, this,
                 [this, id] { m_store->deleteSession(id); });
     });
-    connect(m_listView, &ConversationListView::exportRequested, this, [this](int row) {
+    connect(m_listView, &SessionListView::exportRequested, this, [this](int row) {
         const int id = m_list->idAt(row);
         if (id < 0) {
             return;
         }
         QString name = m_store->title(id);
         if (name.isEmpty()) {
-            name = QStringLiteral("conversation");
+            name = QStringLiteral("session");
         }
         const QString path = QDir(QDir::homePath()).filePath(name + QStringLiteral(".json"));
         m_exporter->exportToPath(m_store, id, path);
     });
-    connect(m_listView, &ConversationListView::renameRequested, this, [this](int row) {
+    connect(m_listView, &SessionListView::renameRequested, this, [this](int row) {
         const int id = m_list->idAt(row);
         if (id < 0) {
             return;
         }
-        auto* dialog = new TextPromptDialog(QStringLiteral("Rename conversation"),
+        auto* dialog = new TextPromptDialog(QStringLiteral("Rename session"),
                                             m_store->title(id), /*masked=*/false, this);
         connect(dialog, &TextPromptDialog::submitted, this, [this, id](const QString& text) {
             if (!text.trimmed().isEmpty()) {
@@ -1775,7 +1775,7 @@ void RootWidget::wireViews()
             }
         });
     });
-    connect(m_listView, &ConversationListView::moveRequested, this, [this](int row, int delta) {
+    connect(m_listView, &SessionListView::moveRequested, this, [this](int row, int delta) {
         const int id = m_list->idAt(row);
         if (id >= 0) {
             m_store->moveSession(id, delta);
@@ -1810,9 +1810,9 @@ void RootWidget::wireViews()
 
     // Composer <-> session controller. The controller is the source of truth for
     // the draft; the input box is its view. Typed edits flow in via textChanged;
-    // programmatic changes (history recall, conversation swap, clear-on-send) flow
+    // programmatic changes (history recall, session swap, clear-on-send) flow
     // back out via draftReset. Enter routes to submit(); the controller emits the
-    // submitted turn, which the conversation controller appends.
+    // submitted turn, which the session controller appends.
     // The composer pushes live edits into the session itself (via its document /
     // cursor signals), so there is no textChanged wire here. Programmatic draft
     // changes flow back out via draftReset: replace the text and drop the caret at
@@ -1832,7 +1832,7 @@ void RootWidget::wireViews()
     connect(m_composerSession, &ComposerSessionController::submitted, this,
             [this](const QString& text, const QString& refs) {
                 if (m_active != nullptr) {
-                    // Submitting commits to this conversation: a preview tab becomes
+                    // Submitting commits to this session: a preview tab becomes
                     // permanent (VSCode-style) so the next preview opens elsewhere.
                     m_tabModel->pinCurrent();
                     m_active->orchestrator->submit(text, refs);
@@ -1882,15 +1882,15 @@ void RootWidget::wireViews()
                     openTranscriptSearch();
                     return;
                 }
-                // Session actions on the ACTIVE conversation, so "/title" and
+                // Session actions on the ACTIVE session, so "/title" and
                 // "/save" (and the palette) match the GUI; the list shortcuts
                 // (Ctrl+R / Ctrl+E) act on the focused row instead.
                 if (command == QStringLiteral("title")) {
-                    if (m_active == nullptr || !m_active->controller->hasConversation()) {
+                    if (m_active == nullptr || !m_active->controller->hasSession()) {
                         return;
                     }
                     const int id = m_active->sessionId;
-                    auto* dialog = new TextPromptDialog(QStringLiteral("Rename conversation"),
+                    auto* dialog = new TextPromptDialog(QStringLiteral("Rename session"),
                                                         m_store->title(id), /*masked=*/false, this);
                     connect(dialog, &TextPromptDialog::submitted, this,
                             [this, id](const QString& text) {
@@ -1901,13 +1901,13 @@ void RootWidget::wireViews()
                     return;
                 }
                 if (command == QStringLiteral("save")) {
-                    if (m_active == nullptr || !m_active->controller->hasConversation()) {
+                    if (m_active == nullptr || !m_active->controller->hasSession()) {
                         return;
                     }
                     const int id = m_active->sessionId;
                     QString name = m_store->title(id);
                     if (name.isEmpty()) {
-                        name = QStringLiteral("conversation");
+                        name = QStringLiteral("session");
                     }
                     const QString path =
                         QDir(QDir::homePath()).filePath(name + QStringLiteral(".json"));
@@ -1927,10 +1927,10 @@ void RootWidget::wireViews()
                         return;
                     }
                     auto* confirm = new ConfirmDialog(
-                        QStringLiteral("Clear conversation"),
-                        QStringLiteral("Remove all messages from this conversation?"), this);
+                        QStringLiteral("Clear session"),
+                        QStringLiteral("Remove all messages from this session?"), this);
                     connect(confirm, &ConfirmDialog::confirmed, this, [this] {
-                        if (m_active != nullptr && m_active->controller->hasConversation()) {
+                        if (m_active != nullptr && m_active->controller->hasSession()) {
                             m_active->doc.loadMarkdown(QString());
                             m_active->controller->updateContent(QString());
                             m_active->search.refresh();
@@ -1967,7 +1967,7 @@ void RootWidget::wireViews()
                             m_active->orchestrator->cancel();
                         }
                         m_active->doc.rewindToMessage(lastUserId);
-                        if (m_active->controller->hasConversation()) {
+                        if (m_active->controller->hasSession()) {
                             m_active->controller->updateContent(m_active->doc.toMarkdown());
                         }
                         m_transcript->reload();
@@ -2029,7 +2029,7 @@ void RootWidget::wireViews()
             QStringLiteral("attachment-%1.txt").arg(n + 1), QStringLiteral("file"));
     });
 
-    // Esc on an empty composer hands focus back to the conversation list, where a
+    // Esc on an empty composer hands focus back to the session list, where a
     // further Esc bubbles up to the quit prompt (context-sensitive Esc, level 2).
     connect(m_composer, &SubmitInputBox::leaveRequested, this, [this] {
         if (m_listView != nullptr) {
@@ -2043,7 +2043,7 @@ void RootWidget::wireViews()
     m_composerChrome->setSession(m_composerSession);
 
     // Initial selection: first sidebar row populates the list, then open its first
-    // conversation in a tab so the transcript is non-empty on launch.
+    // session in a tab so the transcript is non-empty on launch.
     if (m_sidebarAdapter->rowCount() > 0) {
         m_sidebarView->setCurrentIndex(m_sidebarAdapter->index(0, 0));
     }
@@ -2055,7 +2055,7 @@ void RootWidget::wireViews()
 
 // --- Tabs --------------------------------------------------------------------
 
-void RootWidget::previewConversationTab(int sessionId)
+void RootWidget::previewSessionTab(int sessionId)
 {
     if (m_tabModel == nullptr) {
         return;
@@ -2067,7 +2067,7 @@ void RootWidget::previewConversationTab(int sessionId)
     m_tabModel->previewTranscript(sessionId, title);
 }
 
-void RootWidget::openConversationPinnedTab(int sessionId)
+void RootWidget::openSessionPinnedTab(int sessionId)
 {
     if (m_tabModel == nullptr) {
         return;
@@ -2085,7 +2085,7 @@ void RootWidget::newTranscriptTab()
         return;
     }
     const int id = m_store->createSession(domain::UnitId());
-    m_tabModel->openTranscriptPinned(id, QStringLiteral("New conversation"));
+    m_tabModel->openTranscriptPinned(id, QStringLiteral("New session"));
     // A new tab is a natural place to start typing.
     if (m_composer != nullptr) {
         m_composer->setFocus();
@@ -2096,7 +2096,7 @@ void RootWidget::rebindSession(int tabId, int sessionId)
 {
     auto it = m_sessions.find(tabId);
     if (it == m_sessions.end()) {
-        return; // no session yet; ensureSession will open the right conversation
+        return; // no session yet; ensureSession will open the right session
     }
     TabSession* s = it.value();
     if (s->sessionId == sessionId) {
@@ -2105,7 +2105,7 @@ void RootWidget::rebindSession(int tabId, int sessionId)
     s->sessionId = sessionId;
     s->controller->open(sessionId);
     if (s == m_active) {
-        m_composerSession->setConversationId(sessionId);
+        m_composerSession->setSessionId(sessionId);
         refreshTranscript();
         updateTodos();
         updateSubagents();
@@ -2185,11 +2185,11 @@ TabSession* RootWidget::ensureSession(int tabId)
 
     auto* s = new TabSession();
     s->tabId = tabId;
-    s->sessionId = m_tabModel->conversationIdAt(row);
-    s->controller = new ConversationController();
+    s->sessionId = m_tabModel->sessionIdAt(row);
+    s->controller = new SessionController();
     s->controller->setStore(m_store);
-    s->orchestrator = new ConversationOrchestrator();
-    s->orchestrator->setConversation(s->controller);
+    s->orchestrator = new SessionOrchestrator();
+    s->orchestrator->setSession(s->controller);
     s->turn = s->orchestrator->turn();
     s->host = new InteractiveTurnHost(&s->doc, &s->ingest);
     m_sessions.insert(tabId, s);
@@ -2218,7 +2218,7 @@ void RootWidget::wireSession(TabSession* s)
         // Settle the open stream and persist the grown document regardless of which
         // tab is active, so a background turn's result is saved.
         s->ingest.finish();
-        if (s->controller->hasConversation()) {
+        if (s->controller->hasSession()) {
             s->controller->updateContent(s->doc.toMarkdown());
         }
         if (s == m_active) {
@@ -2231,7 +2231,7 @@ void RootWidget::wireSession(TabSession* s)
             // whenever the pref is on rather than only when hidden.
             if (m_appSettings != nullptr
                 && m_appSettings->value(QStringLiteral("notify/turnDone"), false).toBool()) {
-                const QString convTitle = s->controller->hasConversation()
+                const QString convTitle = s->controller->hasSession()
                     ? m_store->title(s->sessionId)
                     : QStringLiteral("daemon");
                 emitDesktopNotification(convTitle, QStringLiteral("The turn finished."));
@@ -2263,7 +2263,7 @@ void RootWidget::wireSession(TabSession* s)
         if (terminal() != nullptr) {
             terminal()->setTitle(QStringLiteral("\u25cf daemon \u2014 needs ") + what);
         }
-        const QString convTitle = (m_active != nullptr && m_active->controller->hasConversation())
+        const QString convTitle = (m_active != nullptr && m_active->controller->hasSession())
             ? m_store->title(m_active->sessionId)
             : QStringLiteral("daemon");
         emitDesktopNotification(convTitle, QStringLiteral("The turn needs your ") + what
@@ -2290,18 +2290,18 @@ void RootWidget::wireSession(TabSession* s)
                 connect(dialog, &TextPromptDialog::canceled, this,
                         [s] { s->turn->cancel(); });
             });
-    connect(s->controller, &ConversationController::conversationChanged, this, [this, s] {
+    connect(s->controller, &SessionController::sessionChanged, this, [this, s] {
         if (s == m_active) {
             refreshTranscript();
         }
     });
-    connect(s->controller, &ConversationController::contentChanged, this, [this, s] {
+    connect(s->controller, &SessionController::contentChanged, this, [this, s] {
         if (s == m_active) {
             refreshTranscript();
         }
     });
     connect(s->host, &InteractiveTurnHost::documentChanged, this, [this, s] {
-        if (s->controller->hasConversation()) {
+        if (s->controller->hasSession()) {
             s->controller->updateContent(s->doc.toMarkdown());
         }
         if (s == m_active && m_transcript != nullptr) {
@@ -2388,7 +2388,7 @@ void RootWidget::activateTab(int tabId)
         if (m_composerChrome != nullptr) {
             m_composerChrome->setTurn(s->turn);
         }
-        m_composerSession->setConversationId(s->sessionId);
+        m_composerSession->setSessionId(s->sessionId);
         m_composerSession->setBusy(s->turn->active());
         m_status->setBusy(s->turn->active());
         // Resync the elapsed timer to THIS tab's live turn (mirrors the GUI's
@@ -2789,12 +2789,12 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event)
 
 void RootWidget::openSessionSettingsOverlay()
 {
-    // Only meaningful over a transcript tab; bind the per-conversation overrides to
+    // Only meaningful over a transcript tab; bind the per-session overrides to
     // the focused chat first (parity with ComposerControls setting sessionId).
     if (m_active == nullptr || m_sessionSettings == nullptr) {
         return;
     }
-    m_sessionSettings->setConversationId(m_active->sessionId);
+    m_sessionSettings->setSessionId(m_active->sessionId);
     session::ISessionSettings* ss = m_sessionSettings;
 
     auto* dlg = new Tui::ZDialog(this);
@@ -2872,7 +2872,7 @@ void RootWidget::openCheckpointsOverlay()
     if (m_active == nullptr || m_checkpoints == nullptr) {
         return;
     }
-    m_checkpoints->setConversationId(m_active->sessionId);
+    m_checkpoints->setSessionId(m_active->sessionId);
     auto* model = qobject_cast<uimodels::VariantListModel*>(m_checkpoints->checkpoints());
     const QList<QVariantMap> rows = model != nullptr ? model->rows() : QList<QVariantMap>{};
 
@@ -3573,7 +3573,7 @@ void RootWidget::openCommandPalette()
     if (m_commandPalette == nullptr) {
         m_commandPalette = new PaletteDialog(QStringLiteral("Commands"), this);
         connect(m_commandPalette, &PaletteDialog::activated, this, [this](const QString& id) {
-            // Route palette ids to existing actions; conversation-scoped verbs go to
+            // Route palette ids to existing actions; session-scoped verbs go to
             // the active orchestrator (which has no UI of its own here, so the slash
             // handlers above cover the rest).
             // App-level manager pages open as singleton page tabs (the TUI's
@@ -3651,7 +3651,7 @@ void RootWidget::cycleTheme()
         const Tui::ZColor accent = tpal::accent();
         terminal()->setCursorColor(accent.red(), accent.green(), accent.blue());
     }
-    // The conversation list and transcript bake tpal::* colors into cached span
+    // The session list and transcript bake tpal::* colors into cached span
     // lists at build time, so a bare update() would repaint stale colors: rebuild
     // them. (Selection + scroll survive the rebuild.)
     if (m_listView != nullptr) {
@@ -3697,7 +3697,7 @@ void RootWidget::refreshTranscript()
         return;
     }
     m_active->doc.loadMarkdown(
-        m_active->controller->hasConversation() ? m_active->controller->content() : QString());
+        m_active->controller->hasSession() ? m_active->controller->content() : QString());
     m_active->search.refresh();
     m_transcript->reload();
 }
@@ -3719,7 +3719,7 @@ void RootWidget::rewindActiveTab(const QString& messageId, bool editMode)
     if (text.isEmpty()) {
         return;
     }
-    if (m_active->controller->hasConversation()) {
+    if (m_active->controller->hasSession()) {
         m_active->controller->updateContent(m_active->doc.toMarkdown());
     }
     m_active->search.refresh();

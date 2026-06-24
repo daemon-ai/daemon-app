@@ -18,24 +18,24 @@ public:
 
     [[nodiscard]] QObject* checkpoints() const override;
     [[nodiscard]] int count() const override;
-    [[nodiscard]] int sessionId() const override { return m_conversationId; }
-    void setConversationId(int id) override;
+    [[nodiscard]] int sessionId() const override { return m_sessionId; }
+    void setSessionId(int id) override;
 
     void restore(const QString& id) override;
     QString createCheckpoint(const QString& label) override;
 
 private:
-    // The canonical demo timeline a freshly-seen conversation starts with.
+    // The canonical demo timeline a freshly-seen session starts with.
     [[nodiscard]] static QList<QVariantMap> seedRows();
     // Make sure `id` has a timeline (seeding the demo rows the first time).
-    void ensureConversation(int id);
+    void ensureSession(int id);
 
-    uimodels::VariantListModel* m_checkpoints = nullptr; // the active conversation's view
-    int m_conversationId = -1;
+    uimodels::VariantListModel* m_checkpoints = nullptr; // the active session's view
+    int m_sessionId = -1;
     int m_nextId = 5;
-    // Per-conversation timelines + id counters, swapped in/out of m_checkpoints.
-    QHash<int, QList<QVariantMap>> m_rowsByConv;
-    QHash<int, int> m_nextIdByConv;
+    // Per-session timelines + id counters, swapped in/out of m_checkpoints.
+    QHash<int, QList<QVariantMap>> m_rowsBySession;
+    QHash<int, int> m_nextIdBySession;
 };
 
 } // namespace session

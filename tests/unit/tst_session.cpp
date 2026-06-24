@@ -60,44 +60,44 @@ private slots:
                     .toBool());
     }
 
-    // Per-session overrides are keyed by conversation: editing one chat's effort
+    // Per-session overrides are keyed by session: editing one chat's effort
     // does not leak into another, and switching back restores it.
-    void sessionSettingsArePerConversation()
+    void sessionSettingsArePerSession()
     {
         MockSessionSettings s;
-        s.setConversationId(1);
+        s.setSessionId(1);
         s.setEffort(QStringLiteral("high"));
         s.setProfile(QStringLiteral("Coder"));
 
-        s.setConversationId(2);
-        // A fresh conversation starts at the defaults, not chat 1's overrides.
+        s.setSessionId(2);
+        // A fresh session starts at the defaults, not chat 1's overrides.
         QCOMPARE(s.effort(), QStringLiteral("medium"));
         QCOMPARE(s.profile(), QStringLiteral("General Assistant"));
         s.setEffort(QStringLiteral("low"));
 
         // Switching back restores chat 1's overrides.
-        s.setConversationId(1);
+        s.setSessionId(1);
         QCOMPARE(s.effort(), QStringLiteral("high"));
         QCOMPARE(s.profile(), QStringLiteral("Coder"));
     }
 
-    // The checkpoint timeline is per-conversation: a rewind in one chat does not
+    // The checkpoint timeline is per-session: a rewind in one chat does not
     // shorten another's, and switching back shows the rewound timeline.
-    void checkpointTimelineIsPerConversation()
+    void checkpointTimelineIsPerSession()
     {
         MockCheckpointTimeline t;
-        t.setConversationId(1);
+        t.setSessionId(1);
         const int full = t.count();
         QVERIFY(full >= 3);
         t.restore(QStringLiteral("cp-2"));
         QCOMPARE(t.count(), 2);
 
         // Chat 2 has its own full timeline, untouched by chat 1's rewind.
-        t.setConversationId(2);
+        t.setSessionId(2);
         QCOMPARE(t.count(), full);
 
         // Back to chat 1: still rewound to two entries.
-        t.setConversationId(1);
+        t.setSessionId(1);
         QCOMPARE(t.count(), 2);
     }
 };

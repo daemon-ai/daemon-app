@@ -10,7 +10,7 @@
 // subagent rows). Fed off the same turn event stream as the status bar: each
 // "subagent" event upserts a row keyed by id, carrying a title, a status
 // ("running"|"done"|"error") and a short live detail line. Owned by
-// ConversationOrchestrator; rendered as a QML model (GUI) and read directly in
+// SessionOrchestrator; rendered as a QML model (GUI) and read directly in
 // the TUI. Pre-shapes the daemon's subagent.* contract.
 class SubagentModel : public QAbstractListModel {
     Q_OBJECT

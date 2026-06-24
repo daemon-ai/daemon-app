@@ -71,7 +71,7 @@ private slots:
     void allAndArchivedScopes()
     {
         InMemorySessionStore store;
-        QCOMPARE(store.sessionCount({ NodeType::AllConversations, -1, {} }), 8);
+        QCOMPARE(store.sessionCount({ NodeType::AllSessions, -1, {} }), 8);
         QCOMPARE(store.sessionCount({ NodeType::Archived, -1, {} }), 1);
     }
 
@@ -96,7 +96,7 @@ private slots:
         QCOMPARE(store.sessionCount(unitScope("n-worker")), 2);
         QCOMPARE(store.sessionCount(unitScope("n-deep")), 2);
         QCOMPARE(store.sessionCount(unitScope("n-acme")), before + 1);
-        QCOMPARE(store.sessionCount({ NodeType::AllConversations, -1, {} }), 9);
+        QCOMPARE(store.sessionCount({ NodeType::AllSessions, -1, {} }), 9);
     }
 
     void unknownUnitYieldsNothing()

@@ -15,7 +15,7 @@
 // Canonical mapping (daemon is authoritative; there is no `Agent` type):
 //   - ProfileRef = the agent IDENTITY (the configured profile / ProfileSpec).
 //   - UnitId     = a supervision-tree node (UnitNode; kind Engine/Host/Orchestrator).
-//   - SessionId  = a running conversation incarnation backing a unit.
+//   - SessionId  = a running session incarnation backing a unit.
 namespace domain {
 
 #define DAEMON_APP_STRING_ID(Name)                                                                 \
@@ -37,7 +37,7 @@ namespace domain {
 DAEMON_APP_STRING_ID(ProfileRef)
 // A managed unit in the supervision tree (`daemon-protocol::UnitId`).
 DAEMON_APP_STRING_ID(UnitId)
-// A durable engine incarnation / running conversation (`daemon-common::SessionId`).
+// A durable engine incarnation / running session (`daemon-common::SessionId`).
 DAEMON_APP_STRING_ID(SessionId)
 
 #undef DAEMON_APP_STRING_ID

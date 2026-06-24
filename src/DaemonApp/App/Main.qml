@@ -3,8 +3,8 @@ import QtQuick.Controls
 import DaemonApp.Theme
 import DaemonApp.Settings
 import DaemonApp.Sidebar
-import DaemonApp.ConversationsList
-import DaemonApp.Conversation
+import DaemonApp.SessionsList
+import DaemonApp.Session
 import DaemonApp.StatusBar
 import DaemonApp.Pages
 import DaemonApp.Files
@@ -22,8 +22,8 @@ ApplicationWindow {
     // The active structure (SplitView or StackView) is rebuilt by the shell
     // Loader when the window size class changes. These hold the current
     // selection so the rebuilt structure can restore the same scope and open
-    // conversation instead of resetting to the empty state.
-    property int activeConversationId: -1
+    // session instead of resetting to the empty state.
+    property int activeSessionId: -1
     property bool hasScope: false
     property int scopeNodeType: 0
     property int scopeId: -1
@@ -36,10 +36,10 @@ ApplicationWindow {
         root.scopeNodeId = nodeId;
     }
 
-    // The active Conversation pane (set by whichever shell is mounted), so the
-    // command palette can route conversation-scoped commands (slash actions, model
+    // The active Session pane (set by whichever shell is mounted), so the
+    // command palette can route session-scoped commands (slash actions, model
     // picker, modes) to the foreground tab.
-    property var activeConversation: null
+    property var activeSessionPane: null
 
     // Cycle the four built-in themes, mirroring the TUI's F8 (kept in one place so
     // the palette "Cycle theme" entry and a future menu agree).
@@ -57,12 +57,12 @@ ApplicationWindow {
     }
     // Open a file (from the Explorer) as an editor tab in the active pane.
     function openFileInPane(rootId, path, pinned) {
-        if (root.activeConversation)
-            root.activeConversation.openFile(rootId, path, pinned);
+        if (root.activeSessionPane)
+            root.activeSessionPane.openFile(rootId, path, pinned);
     }
 
     // Route a command-palette id to an existing action. Window-level ids are
-    // handled here; conversation-scoped ids fall through to the active pane's
+    // handled here; session-scoped ids fall through to the active pane's
     // orchestrator (which raises front-end overlays via commandRequested). The
     // window-level set is handled directly (never delegated) so a pane that
     // forwards one back up cannot loop.
@@ -70,7 +70,7 @@ ApplicationWindow {
         switch (commandId) {
         case "theme": root.cycleTheme(); break;
         case "distraction": UiSettings.distractionFree = true; break;
-        case "new": if (root.activeConversation) root.activeConversation.createNew(); break;
+        case "new": if (root.activeSessionPane) root.activeSessionPane.createNew(); break;
         // App-level pages open as full-window overlays via the shared Nav seam.
         // (The transcript-scoped appearance popup stays on the tab-bar "..." only.)
         case "settings": Nav.open("settings"); break;
@@ -85,11 +85,11 @@ ApplicationWindow {
         case "cron": Nav.open("cron"); break;
         case "files": root.toggleExplorer(); break;
         case "help": commandPalette.open(); break;
-        case "title": if (root.activeConversation) root.activeConversation.renameActive(); break;
-        case "save": if (root.activeConversation) root.activeConversation.exportActive(); break;
+        case "title": if (root.activeSessionPane) root.activeSessionPane.renameActive(); break;
+        case "save": if (root.activeSessionPane) root.activeSessionPane.exportActive(); break;
         default:
-            if (root.activeConversation)
-                root.activeConversation.invokeActiveCommand(commandId);
+            if (root.activeSessionPane)
+                root.activeSessionPane.invokeActiveCommand(commandId);
         }
     }
 
@@ -113,9 +113,9 @@ ApplicationWindow {
         }
     }
 
-    // A conversation pane forwarded a window-level command (e.g. typed "/help").
+    // A session pane forwarded a window-level command (e.g. typed "/help").
     Connections {
-        target: root.activeConversation
+        target: root.activeSessionPane
         ignoreUnknownSignals: true
         function onPaneCommandForwarded(command) { root.routeCommand(command); }
     }
@@ -125,20 +125,20 @@ ApplicationWindow {
     }
 
     // App-level manager/settings pages open as singleton TABS in the active
-    // conversation pane's tab strip (not a modal overlay). The shared Nav
+    // session pane's tab strip (not a modal overlay). The shared Nav
     // controller is repurposed as the "open page" signal bus: every Nav.open()
     // call site (command palette, slash commands, sidebar cog, in-page links)
     // routes here and we forward it to the active pane's openManagerPage().
     Connections {
         target: Nav
         function onOpenRequested(page, section) {
-            if (root.activeConversation)
-                root.activeConversation.openManagerPage(page, section);
+            if (root.activeSessionPane)
+                root.activeSessionPane.openManagerPage(page, section);
         }
         // Per-agent (ProfileRef-keyed) Memory / Profile tabs.
         function onOpenAgentRequested(kind, profileRef, title) {
-            if (root.activeConversation)
-                root.activeConversation.openAgentTab(kind, profileRef, title);
+            if (root.activeSessionPane)
+                root.activeSessionPane.openAgentTab(kind, profileRef, title);
         }
     }
 
@@ -197,7 +197,7 @@ ApplicationWindow {
         visible: !UiSettings.distractionFree
     }
 
-    // The adaptive shell: the same Sidebar / ConversationsList / Conversation
+    // The adaptive shell: the same Sidebar / SessionsList / Session
     // components, arranged by size class. Rebuilt on size-class transitions; the
     // root selection state above lets each structure restore on completion.
     Loader {
@@ -234,7 +234,7 @@ ApplicationWindow {
                 }
             }
 
-            ConversationsList {
+            SessionsList {
                 id: listExpanded
                 SplitView.preferredWidth: Theme.listWidth
                 SplitView.minimumWidth: 220
@@ -242,13 +242,13 @@ ApplicationWindow {
                 visible: UiSettings.showSessionsList && !UiSettings.distractionFree
 
                 onToggleSidebarRequested: sidebarExpanded.collapsed = !sidebarExpanded.collapsed
-                onConversationActivated: function(sessionId) {
-                    root.activeConversationId = sessionId;
-                    conversationExpanded.open(sessionId); // preview
+                onSessionActivated: function(sessionId) {
+                    root.activeSessionId = sessionId;
+                    sessionExpanded.open(sessionId); // preview
                 }
-                onConversationOpened: function(sessionId) {
-                    root.activeConversationId = sessionId;
-                    conversationExpanded.openConversationPinned(sessionId);
+                onSessionOpened: function(sessionId) {
+                    root.activeSessionId = sessionId;
+                    sessionExpanded.openSessionPinned(sessionId);
                 }
                 Component.onCompleted: {
                     if (root.hasScope)
@@ -256,19 +256,19 @@ ApplicationWindow {
                 }
             }
 
-            Conversation {
-                id: conversationExpanded
+            Session {
+                id: sessionExpanded
                 SplitView.fillWidth: true
                 SplitView.minimumWidth: 320
                 Component.onCompleted: {
-                    root.activeConversation = conversationExpanded;
-                    if (root.activeConversationId >= 0)
-                        open(root.activeConversationId);
+                    root.activeSessionPane = sessionExpanded;
+                    if (root.activeSessionId >= 0)
+                        open(root.activeSessionId);
                 }
             }
 
-            // Right-side file Explorer (opposite the conversations sidebar, like
-            // Hermes Desktop). Files open as editor tabs in the conversation pane.
+            // Right-side file Explorer (opposite the sessions sidebar, like
+            // Hermes Desktop). Files open as editor tabs in the session pane.
             FileExplorer {
                 id: explorerExpanded
                 SplitView.preferredWidth: Theme.listWidth
@@ -281,7 +281,7 @@ ApplicationWindow {
         }
     }
 
-    // --- Compact (touch, narrow): single pane, list -> conversation stack + drawer --
+    // --- Compact (touch, narrow): single pane, list -> session stack + drawer --
     Component {
         id: compactShell
 
@@ -295,13 +295,13 @@ ApplicationWindow {
             Component {
                 id: listPage
 
-                ConversationsList {
+                SessionsList {
                     // Always the home page on a phone, regardless of the desktop
                     // "Show Sessions" option (which only hides a side column).
                     onToggleSidebarRequested: sidebarDrawerCompact.open()
-                    onConversationActivated: function(sessionId) {
-                        root.activeConversationId = sessionId;
-                        compactStack.push(conversationPage);
+                    onSessionActivated: function(sessionId) {
+                        root.activeSessionId = sessionId;
+                        compactStack.push(sessionPage);
                     }
                     Component.onCompleted: {
                         if (root.hasScope)
@@ -311,13 +311,13 @@ ApplicationWindow {
             }
 
             Component {
-                id: conversationPage
+                id: sessionPage
 
-                Conversation {
+                Session {
                     Component.onCompleted: {
-                        root.activeConversation = this;
-                        if (root.activeConversationId >= 0)
-                            open(root.activeConversationId);
+                        root.activeSessionPane = this;
+                        if (root.activeSessionId >= 0)
+                            open(root.activeSessionId);
                     }
                     onBackRequested: compactStack.pop()
                 }
@@ -345,7 +345,7 @@ ApplicationWindow {
 
             // Right-edge file Explorer drawer, driven by UiSettings.showFileExplorer
             // (the same flag the expanded shell binds a pane to). Opening a file
-            // pushes the conversation page so the editor tab is visible.
+            // pushes the session page so the editor tab is visible.
             Drawer {
                 id: explorerDrawerCompact
                 edge: Qt.RightEdge
@@ -356,14 +356,14 @@ ApplicationWindow {
                 FileExplorer {
                     anchors.fill: parent
                     onFileActivated: (rootId, path) => {
-                        if (!root.activeConversation)
-                            compactStack.push(conversationPage);
+                        if (!root.activeSessionPane)
+                            compactStack.push(sessionPage);
                         Qt.callLater(() => root.openFileInPane(rootId, path, false));
                         explorerDrawerCompact.close();
                     }
                     onFileOpened: (rootId, path) => {
-                        if (!root.activeConversation)
-                            compactStack.push(conversationPage);
+                        if (!root.activeSessionPane)
+                            compactStack.push(sessionPage);
                         Qt.callLater(() => root.openFileInPane(rootId, path, true));
                         explorerDrawerCompact.close();
                     }

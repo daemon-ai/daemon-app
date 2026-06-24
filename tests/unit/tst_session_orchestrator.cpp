@@ -1,5 +1,5 @@
-#include "conversation_controller.h"
-#include "conversation_orchestrator.h"
+#include "session_controller.h"
+#include "session_orchestrator.h"
 #include "todo_list_model.h"
 #include "turn_controller.h"
 
@@ -8,17 +8,17 @@
 #include <QSignalSpy>
 #include <QtTest>
 
-// Exercises the shared submit pipeline (ConversationOrchestrator): submit starts
+// Exercises the shared submit pipeline (SessionOrchestrator): submit starts
 // the turn and populates the status-stack todos; the todos clear a beat after the
 // turn settles; cancel stops the turn; slash "/new" is handled here while other
 // commands surface via commandRequested. Both front ends drive this identically.
-class TestConversationOrchestrator : public QObject {
+class TestSessionOrchestrator : public QObject {
     Q_OBJECT
 
 private slots:
     void submitStartsTurnAndPopulatesTodos()
     {
-        ConversationOrchestrator orch;
+        SessionOrchestrator orch;
         QVERIFY(!orch.busy());
         QCOMPARE(orch.todos()->count(), 0);
 
@@ -33,16 +33,16 @@ private slots:
         QVERIFY(!orch.turn()->active());
     }
 
-    void submitAppendsUserTextToConversation()
+    void submitAppendsUserTextToSession()
     {
         persistence::InMemorySessionStore store;
-        ConversationController controller;
+        SessionController controller;
         controller.setStore(&store);
         const int id = controller.createSession(QString());
         QVERIFY(id >= 0);
 
-        ConversationOrchestrator orch;
-        orch.setConversation(&controller);
+        SessionOrchestrator orch;
+        orch.setSession(&controller);
         orch.submit(QStringLiteral("hello there"), QStringLiteral("@file:README.md"));
 
         const QString content = controller.content();
@@ -52,27 +52,27 @@ private slots:
         orch.cancel();
     }
 
-    void invokeCommandNewCreatesConversation()
+    void invokeCommandNewCreatesSession()
     {
         persistence::InMemorySessionStore store;
-        ConversationController controller;
+        SessionController controller;
         controller.setStore(&store);
-        QVERIFY(!controller.hasConversation());
+        QVERIFY(!controller.hasSession());
 
-        ConversationOrchestrator orch;
-        orch.setConversation(&controller);
-        QSignalSpy requestedSpy(&orch, &ConversationOrchestrator::commandRequested);
+        SessionOrchestrator orch;
+        orch.setSession(&controller);
+        QSignalSpy requestedSpy(&orch, &SessionOrchestrator::commandRequested);
 
         orch.invokeCommand(QStringLiteral("new"));
 
-        QVERIFY(controller.hasConversation());
+        QVERIFY(controller.hasSession());
         QCOMPARE(requestedSpy.count(), 0); // "new" is handled, not surfaced
     }
 
     void invokeCommandOtherEmitsRequested()
     {
-        ConversationOrchestrator orch;
-        QSignalSpy requestedSpy(&orch, &ConversationOrchestrator::commandRequested);
+        SessionOrchestrator orch;
+        QSignalSpy requestedSpy(&orch, &SessionOrchestrator::commandRequested);
 
         orch.invokeCommand(QStringLiteral("theme"));
 
@@ -82,7 +82,7 @@ private slots:
 
     void todosClearAfterTurnSettles()
     {
-        ConversationOrchestrator orch;
+        SessionOrchestrator orch;
         QSignalSpy finished(orch.turn(), &TurnController::turnFinished);
 
         orch.submit(QStringLiteral("hello"), QString());
@@ -95,5 +95,5 @@ private slots:
     }
 };
 
-QTEST_GUILESS_MAIN(TestConversationOrchestrator)
-#include "tst_conversation_orchestrator.moc"
+QTEST_GUILESS_MAIN(TestSessionOrchestrator)
+#include "tst_session_orchestrator.moc"

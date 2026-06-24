@@ -13,7 +13,7 @@ import DaemonApp.Files
 // The surface holds an attachments row, an optional queue-edit banner, and a
 // reflowing menu | input | controls grid that stacks when narrow or multiline.
 //
-// Owns its own client-side state: per-conversation draft persistence, a sent-
+// Owns its own client-side state: per-session draft persistence, a sent-
 // message history ring, a prompt queue (drained when the turn goes idle), and
 // drag-dropped attachment chips. Voice / dictation and a real model/upload
 // backend are out of scope (no gateway wired yet).
@@ -23,7 +23,7 @@ Rectangle {
     // --- Public API ---------------------------------------------------------
     // True while an assistant turn is running (host binds Transcript.busy).
     property bool busy: false
-    // The open conversation; drives per-conversation draft/queue/history swap.
+    // The open session; drives per-session draft/queue/history swap.
     property int sessionId: -1
     property bool composerEnabled: true
 
@@ -46,7 +46,7 @@ Rectangle {
 
     // The live draft text (also a test/host seam for setting the input).
     property alias draftText: inputArea.text
-    // Number of queued prompts for the active conversation.
+    // Number of queued prompts for the active session.
     readonly property int queueCount: controller.queueCount
     // The status-stack todo list (a TodoListModel owned by the host/orchestrator).
     property var todosModel: null
@@ -84,7 +84,7 @@ Rectangle {
         onSteer: function(text) { root.steer(text); }
         onCancelRequested: root.cancelRequested()
         onCommandInvoked: function(command) { root.commandInvoked(command); }
-        // Programmatic draft changes (history recall, conversation swap, clear,
+        // Programmatic draft changes (history recall, session swap, clear,
         // queue edit) replace the field text with the caret at the end.
         onDraftReset: function(text) { root.setText(text); }
         // A completion accept lands the caret at a specific offset (emitted right
@@ -174,8 +174,8 @@ Rectangle {
         return slash >= 0 ? s.slice(slash + 1) : s;
     }
 
-    // Per-conversation draft/queue swap, history, the idle drain, and dismissing
-    // the completion popover on conversation change all live in the controller now.
+    // Per-session draft/queue swap, history, the idle drain, and dismissing
+    // the completion popover on session change all live in the controller now.
 
     // --- Top separator hairline --------------------------------------------
     Rectangle {

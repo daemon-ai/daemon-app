@@ -17,9 +17,9 @@ pkg_check_modules(TERMPAINT REQUIRED IMPORTED_TARGET termpaint)
 # da_tui_viewmodels - the existing view models/controllers, compiled WITHOUT the
 # Qt Quick UI stack.
 #
-# The GUI feature libs (da_sidebar, da_conversationslist, da_conversation) are
+# The GUI feature libs (da_sidebar, da_sessionslist, da_session_view) are
 # qt_add_qml_module targets that link Qt6::Quick + Theme + Controls (and the
-# conversation one drags in Transcript/Composer/BlockEditor). None of that is
+# session one drags in Transcript/Composer/BlockEditor). None of that is
 # needed by the C++ classes themselves: they only use QAbstractListModel/QObject
 # plus the core domain + persistence libs. Recompiling just the .cpp here proves
 # the model/controller layer is genuinely toolkit-agnostic - the basis of the
@@ -28,16 +28,16 @@ pkg_check_modules(TERMPAINT REQUIRED IMPORTED_TARGET termpaint)
 add_library(da_tui_viewmodels STATIC
     ../DaemonApp/Sidebar/sidebar_model.h
     ../DaemonApp/Sidebar/sidebar_model.cpp
-    ../DaemonApp/ConversationsList/conversations_list_model.h
-    ../DaemonApp/ConversationsList/conversations_list_model.cpp
-    ../DaemonApp/Conversation/conversation_controller.h
-    ../DaemonApp/Conversation/conversation_controller.cpp
-    ../DaemonApp/Conversation/conversation_orchestrator.h
-    ../DaemonApp/Conversation/conversation_orchestrator.cpp
-    ../DaemonApp/Conversation/todo_list_model.h
-    ../DaemonApp/Conversation/todo_list_model.cpp
-    ../DaemonApp/Conversation/subagent_model.h
-    ../DaemonApp/Conversation/subagent_model.cpp
+    ../DaemonApp/SessionsList/sessions_list_model.h
+    ../DaemonApp/SessionsList/sessions_list_model.cpp
+    ../DaemonApp/Session/session_controller.h
+    ../DaemonApp/Session/session_controller.cpp
+    ../DaemonApp/Session/session_orchestrator.h
+    ../DaemonApp/Session/session_orchestrator.cpp
+    ../DaemonApp/Session/todo_list_model.h
+    ../DaemonApp/Session/todo_list_model.cpp
+    ../DaemonApp/Session/subagent_model.h
+    ../DaemonApp/Session/subagent_model.cpp
     ../DaemonApp/Tabs/tab_model.h
     ../DaemonApp/Tabs/tab_model.cpp
     ../DaemonApp/Command/command_registry.h
@@ -70,8 +70,8 @@ set_target_properties(da_tui_viewmodels PROPERTIES AUTOMOC ON)
 # include the model headers by basename.
 target_include_directories(da_tui_viewmodels PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Sidebar"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/ConversationsList"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Conversation"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/SessionsList"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Session"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Tabs"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Command"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Files"
@@ -87,7 +87,7 @@ target_link_libraries(da_tui_viewmodels
         Qt6::Qml
         daemon-app::domain
         daemon-app::persistence
-        # ConversationOrchestrator owns a TurnController (turn_controller.h).
+        # SessionOrchestrator owns a TurnController (turn_controller.h).
         daemon-app::turn
         # FsExplorerModel talks to the fs seam; the editor controller owns the
         # de_core engine (block buffer + incremental KSyntaxHighlighting).
@@ -116,8 +116,8 @@ qt_add_executable(daemon-tui
     transcript_render.cpp
     transcript_view.h
     transcript_view.cpp
-    conversation_list_view.h
-    conversation_list_view.cpp
+    session_list_view.h
+    session_list_view.cpp
     queue_strip_view.h
     queue_strip_view.cpp
     attachment_bar_view.h

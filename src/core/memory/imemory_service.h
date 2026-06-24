@@ -52,7 +52,7 @@ public:
     Q_INVOKABLE virtual void requestSearch(const QString& text, int limit) = 0;
     // Grouped event timeline. `group` is "day" | "session". Result via timelineReady.
     Q_INVOKABLE virtual void requestTimeline(const QString& group, int limit) = 0;
-    // The conversations (sessions) within `profile`'s bank, for the session-filter
+    // The sessions (sessions) within `profile`'s bank, for the session-filter
     // facet (memory is owned by the agent; sessions are an optional lens). Result
     // via sessionsReady.
     Q_INVOKABLE virtual void requestSessions(const QString& profile) = 0;
@@ -69,7 +69,7 @@ signals:
     void graphReady(const memory::MemoryGraph& graph);
     void timelineReady(const QList<memory::MemoryTimelineGroup>& groups);
     void memoryEvent(const memory::MemoryEvent& event);
-    // The agent's conversations: [{ id, label }] for the session-filter facet.
+    // The agent's sessions: [{ id, label }] for the session-filter facet.
     void sessionsReady(const QString& profile, const QVariantList& sessions);
     void failed(const QString& op, const QString& message);
 

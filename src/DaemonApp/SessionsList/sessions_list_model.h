@@ -17,7 +17,7 @@ class ISessionStore;
 }
 
 // The sessions for the current sidebar scope, filtered by `search`.
-class ConversationsListModel : public QAbstractListModel {
+class SessionsListModel : public QAbstractListModel {
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(QObject* store READ store WRITE setStore NOTIFY storeChanged)
@@ -39,7 +39,7 @@ public:
         PinnedRole,      // true when the session is pinned (floats to top)
     };
 
-    explicit ConversationsListModel(QObject* parent = nullptr);
+    explicit SessionsListModel(QObject* parent = nullptr);
 
     [[nodiscard]] QObject* store() const;
     void setStore(QObject* store);
@@ -59,7 +59,7 @@ public:
     Q_INVOKABLE int idAt(int row) const;
 
     // Identity-based selection (mirrors SidebarModel): the selection is stored by
-    // conversation id so it survives search/scope rebuilds; the highlight is
+    // session id so it survives search/scope rebuilds; the highlight is
     // driven by CurrentRole rather than a view-local row index.
     // Select a row: records the selection by id, emits selectionChanged, and
     // repaints the highlight.

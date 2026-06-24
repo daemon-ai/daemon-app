@@ -27,7 +27,7 @@
 namespace appcache {
 
 // The writable app-data directory (created if missing), or the temp dir as a
-// last resort. Same root the durable conversation store writes into.
+// last resort. Same root the durable session store writes into.
 inline QString dir()
 {
     QString d = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);

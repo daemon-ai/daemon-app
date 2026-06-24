@@ -99,7 +99,7 @@ void Application::registerContext(QQmlApplicationEngine& engine)
     engine.rootContext()->setContextProperty(QStringLiteral("SessionStore"), m_store);
 
     // Shared footer status model: the StatusBar footer renders it and the active
-    // conversation's turn feeds it (see TranscriptPage.qml), so both halves of the
+    // session's turn feeds it (see TranscriptPage.qml), so both halves of the
     // window agree on one busy/usage/context source.
     engine.rootContext()->setContextProperty(QStringLiteral("Status"), m_status);
 

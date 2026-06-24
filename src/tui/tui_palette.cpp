@@ -64,7 +64,7 @@ Tui::ZPalette daemonPalette(theme::ThemeName name)
         {"window.default.control.focused.fg", accent},
         {"window.default.control.shortcut.fg", accent},
 
-        // List views (sidebar + conversation list).
+        // List views (sidebar + session list).
         {"window.default.dataview.bg", bg},
         {"window.default.dataview.fg", fg},
         {"window.default.dataview.selected.bg", sel},

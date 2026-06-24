@@ -26,25 +26,25 @@ ComposerSessionController::ComposerSessionController(QObject* parent)
     }
 }
 
-void ComposerSessionController::setConversationId(int id)
+void ComposerSessionController::setSessionId(int id)
 {
-    if (m_conversationId == id) {
+    if (m_sessionId == id) {
         return;
     }
-    // Editing/browsing state never crosses a conversation boundary.
+    // Editing/browsing state never crosses a session boundary.
     if (m_editingIndex != -1) {
         m_editingIndex = -1;
         emit editingIndexChanged();
     }
     m_preEditDraft.clear();
     resetBrowse();
-    resetReverseSearch(); // an in-flight Ctrl+R never crosses a conversation boundary
-    closeTrigger(); // a completion popover never crosses a conversation boundary
+    resetReverseSearch(); // an in-flight Ctrl+R never crosses a session boundary
+    closeTrigger(); // a completion popover never crosses a session boundary
 
-    stash(m_conversationId);
-    m_conversationId = id;
+    stash(m_sessionId);
+    m_sessionId = id;
     restore(id);
-    emit conversationIdChanged();
+    emit sessionIdChanged();
 }
 
 void ComposerSessionController::setBusy(bool busy)
@@ -333,14 +333,14 @@ void ComposerSessionController::resetBrowse()
 
 void ComposerSessionController::pushHistory(const QString& text)
 {
-    QStringList arr = m_histories.value(m_conversationId);
+    QStringList arr = m_histories.value(m_sessionId);
     if (arr.isEmpty() || arr.last() != text) {
         arr.push_back(text);
     }
     if (arr.size() > 100) {
         arr = arr.mid(arr.size() - 100);
     }
-    m_histories[m_conversationId] = arr;
+    m_histories[m_sessionId] = arr;
 }
 
 void ComposerSessionController::enqueue(const QString& text, const QString& refs)
@@ -433,7 +433,7 @@ void ComposerSessionController::cancel()
 
 bool ComposerSessionController::browseUp()
 {
-    const QStringList arr = m_histories.value(m_conversationId);
+    const QStringList arr = m_histories.value(m_sessionId);
     if (arr.isEmpty()) {
         return false;
     }
@@ -454,7 +454,7 @@ bool ComposerSessionController::browseDown()
     if (m_browseIndex == -1) {
         return false;
     }
-    const QStringList arr = m_histories.value(m_conversationId);
+    const QStringList arr = m_histories.value(m_sessionId);
     if (m_browseIndex < arr.size() - 1) {
         m_browseIndex += 1;
         applyDraft(arr.at(m_browseIndex));
@@ -479,7 +479,7 @@ void ComposerSessionController::resetReverseSearch()
 
 int ComposerSessionController::reverseSearchResolve(int fromIndex)
 {
-    const QStringList arr = m_histories.value(m_conversationId);
+    const QStringList arr = m_histories.value(m_sessionId);
     for (int i = qMin(fromIndex, static_cast<int>(arr.size()) - 1); i >= 0; --i) {
         if (arr.at(i).contains(m_reverseQuery, Qt::CaseInsensitive)) {
             m_reverseIndex = i;
@@ -516,7 +516,7 @@ void ComposerSessionController::reverseSearchNext()
     if (!m_reverseSearching) {
         return;
     }
-    const QStringList arr = m_histories.value(m_conversationId);
+    const QStringList arr = m_histories.value(m_sessionId);
     const int from = (m_reverseIndex == -1) ? static_cast<int>(arr.size()) - 1 : m_reverseIndex - 1;
     reverseSearchResolve(from);
     emit reverseSearchChanged();
@@ -529,7 +529,7 @@ void ComposerSessionController::reverseSearchType(const QString& chars)
     }
     m_reverseQuery += chars;
     // Narrowing always re-scans from the newest entry so the most recent match wins.
-    reverseSearchResolve(static_cast<int>(m_histories.value(m_conversationId).size()) - 1);
+    reverseSearchResolve(static_cast<int>(m_histories.value(m_sessionId).size()) - 1);
     emit reverseSearchChanged();
 }
 
@@ -548,7 +548,7 @@ void ComposerSessionController::reverseSearchBackspace()
         m_reverseFound = true;
         applyDraft(m_reverseSavedDraft);
     } else {
-        reverseSearchResolve(static_cast<int>(m_histories.value(m_conversationId).size()) - 1);
+        reverseSearchResolve(static_cast<int>(m_histories.value(m_sessionId).size()) - 1);
     }
     emit reverseSearchChanged();
 }

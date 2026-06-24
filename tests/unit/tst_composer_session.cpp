@@ -122,10 +122,10 @@ private slots:
     }
 
     // --- Reverse incremental history search (Ctrl+R) -----------------------------
-    // Seeds a three-entry history (oldest -> newest) for the active conversation.
+    // Seeds a three-entry history (oldest -> newest) for the active session.
     static void seedHistory(ComposerSessionController& c)
     {
-        c.setConversationId(1);
+        c.setSessionId(1);
         const char* entries[] = { "alpha one", "beta two", "alpha three" };
         for (const char* e : entries) {
             c.setDraft(QString::fromLatin1(e));
@@ -222,8 +222,8 @@ private slots:
         QCOMPARE(c.draft(), QStringLiteral("keep me"));
     }
 
-    // A conversation swap (or any external draft edit) drops out of an active search.
-    void reverseSearchResetsOnConversationSwap()
+    // A session swap (or any external draft edit) drops out of an active search.
+    void reverseSearchResetsOnSessionSwap()
     {
         ComposerSessionController c;
         seedHistory(c);
@@ -232,7 +232,7 @@ private slots:
         c.reverseSearchType(QStringLiteral("alpha"));
         QVERIFY(c.reverseSearching());
 
-        c.setConversationId(2);
+        c.setSessionId(2);
         QVERIFY(!c.reverseSearching());
         QVERIFY(c.reverseSearchQuery().isEmpty());
     }

@@ -128,7 +128,7 @@ private slots:
         // Click chip 0's "x" -> it closes (Beta remains).
         strip->clickAt({ 7, 0 });
         QCOMPARE(model.count(), 1);
-        QCOMPARE(model.conversationIdAt(0), 2);
+        QCOMPARE(model.sessionIdAt(0), 2);
     }
 
     // A preview open reuses the single preview chip in place: the strip repaints

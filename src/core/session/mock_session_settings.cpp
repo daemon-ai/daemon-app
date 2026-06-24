@@ -9,22 +9,22 @@ MockSessionSettings::MockSessionSettings(QObject* parent)
 
 const MockSessionSettings::Settings& MockSessionSettings::entry() const
 {
-    return m_byConversation[m_conversationId];
+    return m_bySession[m_sessionId];
 }
 
 MockSessionSettings::Settings& MockSessionSettings::entry()
 {
-    return m_byConversation[m_conversationId];
+    return m_bySession[m_sessionId];
 }
 
-void MockSessionSettings::setConversationId(int id)
+void MockSessionSettings::setSessionId(int id)
 {
-    if (m_conversationId == id) {
+    if (m_sessionId == id) {
         return;
     }
-    m_conversationId = id;
-    m_byConversation[id]; // materialize defaults for a new chat
-    emit conversationIdChanged();
+    m_sessionId = id;
+    m_bySession[id]; // materialize defaults for a new chat
+    emit sessionIdChanged();
     // The active override set changed wholesale; refresh every bound value.
     emit changed();
 }

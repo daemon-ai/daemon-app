@@ -8,7 +8,7 @@ namespace persistence {
 class ISessionStore;
 }
 
-// A small, front-end-agnostic helper that serializes a conversation to a JSON
+// A small, front-end-agnostic helper that serializes a session to a JSON
 // document and writes text to a local file. The GUI binds it as the `Exporter`
 // context property (the /save + session "Export" action); the TUI calls it
 // directly. Reads through the ISessionStore seam so the daemon-backed store
@@ -20,7 +20,7 @@ public:
     using QObject::QObject;
 
     // Build a pretty-printed JSON document {id,title,content,exportedAt} for the
-    // conversation in `store` (a QObject* so QML can pass the context property).
+    // session in `store` (a QObject* so QML can pass the context property).
     [[nodiscard]] Q_INVOKABLE QString toJson(QObject* store, int sessionId) const;
 
     // Write `text` to a local-file URL (or plain path). Returns false on failure.

@@ -235,7 +235,7 @@ void TabStripView::paintEvent(Tui::ZPaintEvent* event)
         const bool isActive = s.index == active;
         const bool isPreview = m_model->isPreviewAt(s.index);
         // Brighter wash for the active chip when the strip holds focus, weaker
-        // when another pane is focused (mirrors the conversation list).
+        // when another pane is focused (mirrors the session list).
         const Tui::ZColor activeBg = focused ? tpal::selectionBg() : tpal::selectionInactiveBg();
         const Tui::ZColor bg = isActive ? activeBg : tpal::surfaceAlt();
         const Tui::ZColor fg = isActive ? tpal::fg() : tpal::muted();
