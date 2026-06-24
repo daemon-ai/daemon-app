@@ -6,7 +6,7 @@ import DaemonApp.Pages
 
 // The Memory page: inspect ONE agent's Mnemosyne memory. Memory is owned by the
 // agent (== its profile / per-profile bank), so this tab is bound to a `profile`
-// (set from the tab's agentRef) and shows that agent's WHOLE bank by default. A
+// (set from the tab's profile) and shows that agent's WHOLE bank by default. A
 // session == a conversation; the session filter is an optional lens within the
 // agent's memory (not the binding), and `scope` (session/global) is row metadata.
 // Internal sub-tabs: Overview / Memories / Graph / Timeline. Graph is GUI-only;

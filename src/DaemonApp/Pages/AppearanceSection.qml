@@ -113,18 +113,18 @@ ColumnLayout {
     }
     OptionRow {
         Layout.fillWidth: true
-        label: qsTr("Plain-text editor"); checked: UiSettings.showPlainText
-        onToggled: function(on) { UiSettings.showPlainText = on; }
+        label: qsTr("Raw markdown editor"); checked: UiSettings.showRawMarkdown
+        onToggled: function(on) { UiSettings.showRawMarkdown = on; }
     }
     OptionRow {
         Layout.fillWidth: true
-        label: qsTr("Show notes list"); checked: UiSettings.showNotesList
-        onToggled: function(on) { UiSettings.showNotesList = on; }
+        label: qsTr("Show Sessions"); checked: UiSettings.showSessionsList
+        onToggled: function(on) { UiSettings.showSessionsList = on; }
     }
     OptionRow {
         Layout.fillWidth: true
-        label: qsTr("Show folders tree"); checked: UiSettings.showFoldersTree
-        onToggled: function(on) { UiSettings.showFoldersTree = on; }
+        label: qsTr("Show Fleet Tree"); checked: UiSettings.showFleetTree
+        onToggled: function(on) { UiSettings.showFleetTree = on; }
     }
     OptionRow {
         Layout.fillWidth: true

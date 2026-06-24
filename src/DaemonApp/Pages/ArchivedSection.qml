@@ -4,7 +4,7 @@ import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 import DaemonApp.ConversationsList
 
-// Archived chats over the shared IConversationStore: a live list (scope =
+// Archived chats over the shared ISessionStore: a live list (scope =
 // Archived) with unarchive / delete actions, mirroring the GUI's other
 // store-backed views.
 ColumnLayout {
@@ -13,7 +13,7 @@ ColumnLayout {
 
     ConversationsListModel {
         id: archived
-        store: ConversationStore
+        store: SessionStore
         // NodeType::Archived == 1 (see domain/sidebar_node.h).
         Component.onCompleted: setScope(1, -1, "")
     }
@@ -38,7 +38,7 @@ ColumnLayout {
         delegate: Rectangle {
             id: rowDelegate
             required property string title
-            required property int conversationId
+            required property int sessionId
             Layout.fillWidth: true
             Layout.preferredHeight: 40
             radius: 6
@@ -56,13 +56,13 @@ ColumnLayout {
                 }
                 Kit.TextButton {
                     text: qsTr("Unarchive")
-                    onClicked: ConversationStore.setArchived(rowDelegate.conversationId, false)
+                    onClicked: SessionStore.setArchived(rowDelegate.sessionId, false)
                 }
                 Kit.IconButton {
                     icon: FontIcons.fa_trash; iconColor: Theme.danger; iconPointSize: 13
                     implicitWidth: 32; implicitHeight: 28
                     tooltipText: qsTr("Delete permanently")
-                    onClicked: ConversationStore.deleteConversation(rowDelegate.conversationId)
+                    onClicked: SessionStore.deleteSession(rowDelegate.sessionId)
                 }
             }
             HoverHandler { id: hover }

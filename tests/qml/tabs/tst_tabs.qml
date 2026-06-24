@@ -66,15 +66,15 @@ TestCase {
             delegate: Loader {
                 id: pageLoader
                 required property int index
-                required property int conversationId
+                required property int sessionId
                 property bool pageVisible: index === tabModel.currentIndex
                 anchors.fill: parent
                 visible: pageVisible
                 sourceComponent: Rectangle {
                     objectName: "bodyPage"
-                    property int boundConversationId: pageLoader.conversationId
+                    property int boundConversationId: pageLoader.sessionId
                 }
-                onLoaded: item.boundConversationId = Qt.binding(() => pageLoader.conversationId)
+                onLoaded: item.boundConversationId = Qt.binding(() => pageLoader.sessionId)
             }
         }
     }
@@ -251,7 +251,7 @@ TestCase {
         compare(bodyRepeater.itemAt(1).pageVisible, false, "previously active page hidden");
     }
 
-    // A reassigned preview tab reloads in place: the page's bound conversationId
+    // A reassigned preview tab reloads in place: the page's bound sessionId
     // updates (this is what makes TranscriptPage.onConversationIdChanged reload).
     function test_preview_reassign_rebinds_page() {
         tabModel.previewTranscript(7, "Alpha");

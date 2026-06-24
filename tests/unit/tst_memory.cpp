@@ -125,7 +125,7 @@ void TestMemory::memoryIsOwnedByAgent()
 
     QVERIFY(!a.isEmpty());
     QVERIFY(!b.isEmpty());
-    QVERIFY(a.intersect(b).isEmpty()); // distinct agents => disjoint memory
+    QVERIFY(!a.intersects(b)); // distinct agents => disjoint memory
 }
 
 void TestMemory::sessionFiltersWithinAgent()
@@ -224,7 +224,7 @@ void TestMemory::timelineGroupsEvents()
 
 void TestMemory::tabsAreKeyedPerAgent()
 {
-    // Memory/Profile tabs are multi-instance keyed by (kind, agentRef): the same
+    // Memory/Profile tabs are multi-instance keyed by (kind, profile): the same
     // agent re-activates its tab; a different agent opens a new one; and the two
     // kinds are independent keyspaces.
     TabModel tabs;

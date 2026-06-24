@@ -1,24 +1,27 @@
-#include "domain/conversation.h"
+#include "domain/session.h"
+#include "domain/ids.h"
 #include "domain/sidebar_node.h"
-#include "persistence/sqlite_conversation_store.h"
+#include "persistence/sqlite_session_store.h"
 
 #include <QTemporaryDir>
 #include <QtTest>
 
-using domain::Conversation;
 using domain::ListScope;
 using domain::NodeType;
-using persistence::SqliteConversationStore;
+using domain::Session;
+using domain::UnitId;
+using persistence::SqliteSessionStore;
 
 namespace {
 ListScope allScope()
 {
-    return { NodeType::AllConversations, -1, QString() };
+    return { NodeType::AllConversations, -1, UnitId() };
 }
 ListScope archivedScope()
 {
-    return { NodeType::Archived, -1, QString() };
+    return { NodeType::Archived, -1, UnitId() };
 }
+UnitId U(const char* s) { return UnitId(QString::fromLatin1(s)); }
 } // namespace
 
 // Exercises the durable SQLite conversation store: a fresh database seeds the
@@ -35,10 +38,10 @@ private:
 private slots:
     void freshDatabaseSeeds()
     {
-        SqliteConversationStore store(dbPath());
+        SqliteSessionStore store(dbPath());
         // The demo seed includes several non-archived conversations and a root tree.
-        QVERIFY(store.conversationCount(allScope()) > 0);
-        QVERIFY(!store.agentChildren(QString()).isEmpty());
+        QVERIFY(store.sessionCount(allScope()) > 0);
+        QVERIFY(!store.unitChildren(UnitId()).isEmpty());
     }
 
     void mutationsSurviveReopen()
@@ -46,20 +49,20 @@ private slots:
         int newId = -1;
         int baselineCount = 0;
         {
-            SqliteConversationStore store(dbPath());
-            baselineCount = store.conversationCount(allScope());
+            SqliteSessionStore store(dbPath());
+            baselineCount = store.sessionCount(allScope());
 
-            newId = store.createConversation(QStringLiteral("n-scratch"));
-            store.renameConversation(newId, QStringLiteral("Persisted thread"));
+            newId = store.createSession(U("n-scratch"));
+            store.renameSession(newId, QStringLiteral("Persisted thread"));
             store.setContent(newId, QStringLiteral("# durable\n\nhello"));
             store.setPinned(newId, true);
-            QCOMPARE(store.conversationCount(allScope()), baselineCount + 1);
+            QCOMPARE(store.sessionCount(allScope()), baselineCount + 1);
         }
 
         // Reopen the SAME file in a new store instance: state must be restored.
         {
-            SqliteConversationStore store(dbPath());
-            QCOMPARE(store.conversationCount(allScope()), baselineCount + 1);
+            SqliteSessionStore store(dbPath());
+            QCOMPARE(store.sessionCount(allScope()), baselineCount + 1);
             QCOMPARE(store.title(newId), QStringLiteral("Persisted thread"));
             QCOMPARE(store.content(newId), QStringLiteral("# durable\n\nhello"));
             QVERIFY(store.isPinned(newId));
@@ -71,18 +74,18 @@ private slots:
         int keepId = -1;
         int dropId = -1;
         {
-            SqliteConversationStore store(dbPath());
-            keepId = store.createConversation(QStringLiteral("n-scratch"));
-            dropId = store.createConversation(QStringLiteral("n-scratch"));
+            SqliteSessionStore store(dbPath());
+            keepId = store.createSession(U("n-scratch"));
+            dropId = store.createSession(U("n-scratch"));
             store.setArchived(keepId, true);
-            store.deleteConversation(dropId);
+            store.deleteSession(dropId);
         }
         {
-            SqliteConversationStore store(dbPath());
+            SqliteSessionStore store(dbPath());
             // Archived conversation is gone from All but present in Archived.
-            const QList<Conversation> archived = store.conversations(archivedScope());
+            const QList<Session> archived = store.sessions(archivedScope());
             bool found = false;
-            for (const Conversation& c : archived) {
+            for (const Session& c : archived) {
                 if (c.id == keepId) {
                     found = true;
                 }
@@ -97,16 +100,16 @@ private slots:
     {
         int firstNew = -1;
         {
-            SqliteConversationStore store(dbPath());
-            firstNew = store.createConversation(QString());
+            SqliteSessionStore store(dbPath());
+            firstNew = store.createSession(UnitId());
         }
         {
-            SqliteConversationStore store(dbPath());
-            const int secondNew = store.createConversation(QString());
+            SqliteSessionStore store(dbPath());
+            const int secondNew = store.createSession(UnitId());
             QVERIFY2(secondNew != firstNew, "id counter must persist so ids never collide");
         }
     }
 };
 
 QTEST_MAIN(TestSqliteStore)
-#include "tst_conversation_store_sqlite.moc"
+#include "tst_session_store_sqlite.moc"

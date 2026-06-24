@@ -37,7 +37,7 @@ Rectangle {
     // shared store; each TranscriptPage owns its own controller for display.
     ConversationController {
         id: creator
-        store: ConversationStore
+        store: SessionStore
     }
 
     TabModel {
@@ -54,22 +54,22 @@ Rectangle {
     // --- Public API used by the shell (Main.qml) ----------------------------
     // The canonical conversation title (the same string the list shows), with a
     // generic fallback so a chip is never blank.
-    function _titleFor(conversationId) {
-        const t = ConversationStore.title(conversationId);
+    function _titleFor(sessionId) {
+        const t = SessionStore.title(sessionId);
         return (t && t.length > 0) ? t : qsTr("Conversation");
     }
     // Single-click / type-ahead open: load the conversation into the transient
     // preview tab (reused on the next preview), VSCode-style.
-    function open(conversationId) {
-        openConversation(conversationId);
+    function open(sessionId) {
+        openConversation(sessionId);
     }
-    function openConversation(conversationId) {
-        tabModel.previewTranscript(conversationId, _titleFor(conversationId));
+    function openConversation(sessionId) {
+        tabModel.previewTranscript(sessionId, _titleFor(sessionId));
     }
     // Deliberate open (list double-click): a permanent, pinned tab. Passing the
     // real title (same as preview) keeps the pin from clobbering the chip label.
-    function openConversationPinned(conversationId) {
-        tabModel.openTranscriptPinned(conversationId, _titleFor(conversationId));
+    function openConversationPinned(sessionId) {
+        tabModel.openTranscriptPinned(sessionId, _titleFor(sessionId));
     }
     // Open a workspace file as an editor tab (File kind). pinned=false is a
     // VSCode-style preview (reused on the next single-click open); pinned=true
@@ -83,7 +83,7 @@ Rectangle {
     }
     // Create a brand-new conversation and open it in a pinned tab.
     function createNew() {
-        const id = creator.createConversation("");
+        const id = creator.createSession("");
         tabModel.openTranscriptPinned(id, _titleFor(id));
     }
     // Open an app-level manager/settings page as a singleton tab (the GUI's
@@ -116,7 +116,7 @@ Rectangle {
 
     // Open (or re-activate) a per-agent surface keyed by the agent's ProfileRef.
     // `kind` is "memory" or "profile"; the loaded page binds its `profile` from
-    // the tab's agentRef (see the Loader.onLoaded above). Memory and Profile are
+    // the tab's profile (see the Loader.onLoaded above). Memory and Profile are
     // owned by the agent, so opening the same agent re-uses its existing tab.
     function openAgentTab(kind, profileRef, title) {
         if (!profileRef || profileRef.length === 0)
@@ -223,11 +223,11 @@ Rectangle {
 
                 required property int index
                 required property int kind
-                required property int conversationId
+                required property int sessionId
                 required property int tabId
                 required property string filePath
                 required property string fileRoot
-                required property string agentRef
+                required property string profile
 
                 anchors.fill: parent
                 visible: index === tabModel.currentIndex
@@ -271,10 +271,10 @@ Rectangle {
                         return;
                     }
                     // Per-agent surfaces (Memory / Profile) bind their `profile`
-                    // from the tab's agentRef so each agent's tab shows its own bank.
+                    // from the tab's profile so each agent's tab shows its own bank.
                     if (pageLoader.kind === TabModel.Memory
                         || pageLoader.kind === TabModel.Profile) {
-                        item.profile = Qt.binding(() => pageLoader.agentRef);
+                        item.profile = Qt.binding(() => pageLoader.profile);
                         return;
                     }
                     // Manager/settings pages are self-contained (they bind global
@@ -284,7 +284,7 @@ Rectangle {
                         return;
                     // Bind reactively so a preview tab reassigned to another
                     // conversation reloads in place.
-                    item.conversationId = Qt.binding(() => pageLoader.conversationId);
+                    item.sessionId = Qt.binding(() => pageLoader.sessionId);
                     // Only the foreground tab feeds the shared footer status model.
                     item.isActive = Qt.binding(() => pageLoader.index === tabModel.currentIndex);
                     item.titleResolved.connect(function(t) {
@@ -368,9 +368,9 @@ Rectangle {
         width: 380
         acceptText: qsTr("Rename")
 
-        function openFor(conversationId) {
-            renameDialog.targetId = conversationId;
-            renameField.text = ConversationStore.title(conversationId);
+        function openFor(sessionId) {
+            renameDialog.targetId = sessionId;
+            renameField.text = SessionStore.title(sessionId);
             open();
             renameField.forceActiveFocus();
             renameField.selectAll();
@@ -378,7 +378,7 @@ Rectangle {
 
         onAccepted: {
             if (renameDialog.targetId >= 0 && renameField.text.trim().length > 0)
-                ConversationStore.renameConversation(renameDialog.targetId, renameField.text.trim());
+                SessionStore.renameSession(renameDialog.targetId, renameField.text.trim());
         }
 
         contentItem: Kit.TextField {
@@ -398,16 +398,16 @@ Rectangle {
         nameFilters: [qsTr("JSON files (*.json)"), qsTr("All files (*)")]
         defaultSuffix: "json"
 
-        function openFor(conversationId) {
-            exportDialog.targetId = conversationId;
-            const t = ConversationStore.title(conversationId);
+        function openFor(sessionId) {
+            exportDialog.targetId = sessionId;
+            const t = SessionStore.title(sessionId);
             exportDialog.currentFile = "file:" + (t && t.length > 0 ? t : "conversation") + ".json";
             open();
         }
 
         onAccepted: {
             if (exportDialog.targetId >= 0)
-                Exporter.writeFile(selectedFile, Exporter.toJson(ConversationStore, exportDialog.targetId));
+                Exporter.writeFile(selectedFile, Exporter.toJson(SessionStore, exportDialog.targetId));
         }
     }
 }

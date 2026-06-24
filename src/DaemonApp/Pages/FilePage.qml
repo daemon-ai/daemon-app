@@ -8,7 +8,7 @@ import DaemonApp.BlockEditor
 
 // Hosts an open file as a tab: reads bytes through the Fs seam and routes by type
 // - markdown -> the shared MarkdownDocumentView (rendered by default, raw source
-// when "Show plain text" is enabled); other text -> the QML-native code editor;
+// when "Show Raw Markdown" is enabled); other text -> the QML-native code editor;
 // image/binary -> a placeholder. Saves with optimistic concurrency
 // (the held revision) and reloads on external change when not dirty. Dirty/title
 // are mirrored back to the TabModel by the Conversation host.

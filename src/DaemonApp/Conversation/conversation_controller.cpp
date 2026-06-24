@@ -1,6 +1,6 @@
 #include "conversation_controller.h"
 
-#include "persistence/iconversation_store.h"
+#include "persistence/isession_store.h"
 
 #include <QDateTime>
 
@@ -16,7 +16,7 @@ QObject* ConversationController::store() const
 
 void ConversationController::setStore(QObject* store)
 {
-    auto* conversationStore = qobject_cast<persistence::IConversationStore*>(store);
+    auto* conversationStore = qobject_cast<persistence::ISessionStore*>(store);
     if (m_store == conversationStore) {
         return;
     }
@@ -25,19 +25,19 @@ void ConversationController::setStore(QObject* store)
     }
     m_store = conversationStore;
     if (m_store) {
-        connect(m_store, &persistence::IConversationStore::changed, this,
+        connect(m_store, &persistence::ISessionStore::changed, this,
                 &ConversationController::refresh);
     }
     emit storeChanged();
     refresh();
 }
 
-void ConversationController::open(int conversationId)
+void ConversationController::open(int sessionId)
 {
-    if (m_currentId == conversationId) {
+    if (m_currentId == sessionId) {
         return;
     }
-    m_currentId = conversationId;
+    m_currentId = sessionId;
     emit currentChanged();
     refresh();
     emit conversationChanged();
@@ -92,12 +92,12 @@ void ConversationController::moveCurrentToTrash()
     m_store->setArchived(archivedId, true); // emits changed() -> refresh()
 }
 
-int ConversationController::createConversation(const QString& agentId)
+int ConversationController::createSession(const QString& agentId)
 {
     if (!m_store) {
         return -1;
     }
-    const int id = m_store->createConversation(agentId);
+    const int id = m_store->createSession(domain::UnitId(agentId));
     open(id);
     return id;
 }

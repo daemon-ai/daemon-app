@@ -1,6 +1,6 @@
 #include "display_presenter.h"
 
-#include "domain/agent_node.h"
+#include "domain/unit_node.h"
 #include "domain/sidebar_node.h"
 
 DisplayPresenter::DisplayPresenter(QObject* parent) : QObject(parent) {}
@@ -19,12 +19,12 @@ QString DisplayPresenter::scopeIconKeyFor(int nodeType)
 
 QString DisplayPresenter::agentKindIconKeyFor(int kind)
 {
-    switch (static_cast<domain::AgentNodeKind>(kind)) {
-    case domain::AgentNodeKind::Orchestrator:
+    switch (static_cast<domain::UnitKind>(kind)) {
+    case domain::UnitKind::Orchestrator:
         return QStringLiteral("sitemap");
-    case domain::AgentNodeKind::Host:
+    case domain::UnitKind::Host:
         return QStringLiteral("server");
-    case domain::AgentNodeKind::Engine:
+    case domain::UnitKind::Engine:
     default:
         return QStringLiteral("robot");
     }
@@ -32,12 +32,12 @@ QString DisplayPresenter::agentKindIconKeyFor(int kind)
 
 DisplayPresenter::StateTone DisplayPresenter::agentStateToneFor(int state)
 {
-    switch (static_cast<domain::AgentState>(state)) {
-    case domain::AgentState::Running:
+    switch (static_cast<domain::UnitState>(state)) {
+    case domain::UnitState::Running:
         return StateTone::Running;
-    case domain::AgentState::Finished:
+    case domain::UnitState::Finished:
         return StateTone::Finished;
-    case domain::AgentState::Unknown:
+    case domain::UnitState::Unknown:
     default:
         return StateTone::Neutral;
     }

@@ -50,7 +50,7 @@ RowLayout {
         onClicked: {
             // Bind the timeline to the focused chat so rewind is per-conversation.
             if (root.session)
-                Checkpoints.conversationId = root.session.conversationId;
+                Checkpoints.sessionId = root.session.sessionId;
             checkpointsPopover.open();
         }
 
@@ -70,7 +70,7 @@ RowLayout {
         onClicked: {
             // Bind the overrides to the focused chat so they are per-conversation.
             if (root.session)
-                SessionSettings.conversationId = root.session.conversationId;
+                SessionSettings.sessionId = root.session.sessionId;
             sessionSettingsPopover.open();
         }
 

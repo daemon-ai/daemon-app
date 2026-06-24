@@ -6,7 +6,7 @@ import DaemonApp.Controls as Kit
 import DaemonApp.Pages
 
 // Per-agent Profile tab: renders an agent's ProfileSpec (agent == profile). Bound
-// to a ProfileRef via the `profile` property (set from the tab's agentRef). Reads
+// to a ProfileRef via the `profile` property (set from the tab's profile). Reads
 // the reshaped profiles seam (daemon-aligned fields: provider/model/baseUrl/
 // systemPrompt/toolAllowlist/memoryProvider/contextEngine/credentialRef). Display
 // surface for now; the existing Profiles manager page remains the editor.

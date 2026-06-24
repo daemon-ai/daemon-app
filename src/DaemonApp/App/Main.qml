@@ -222,9 +222,9 @@ ApplicationWindow {
                 id: sidebarExpanded
                 SplitView.preferredWidth: Theme.sidebarWidth
                 SplitView.minimumWidth: 160
-                // "Show folders tree" option + the middle-column collapse toggle,
+                // "Show Fleet Tree" option + the middle-column collapse toggle,
                 // and hidden entirely in distraction-free mode.
-                visible: !collapsed && UiSettings.showFoldersTree && !UiSettings.distractionFree
+                visible: !collapsed && UiSettings.showFleetTree && !UiSettings.distractionFree
 
                 property bool collapsed: false
 
@@ -238,17 +238,17 @@ ApplicationWindow {
                 id: listExpanded
                 SplitView.preferredWidth: Theme.listWidth
                 SplitView.minimumWidth: 220
-                // "Show notes list" option; hidden in distraction-free mode.
-                visible: UiSettings.showNotesList && !UiSettings.distractionFree
+                // "Show Sessions" option; hidden in distraction-free mode.
+                visible: UiSettings.showSessionsList && !UiSettings.distractionFree
 
                 onToggleSidebarRequested: sidebarExpanded.collapsed = !sidebarExpanded.collapsed
-                onConversationActivated: function(conversationId) {
-                    root.activeConversationId = conversationId;
-                    conversationExpanded.open(conversationId); // preview
+                onConversationActivated: function(sessionId) {
+                    root.activeConversationId = sessionId;
+                    conversationExpanded.open(sessionId); // preview
                 }
-                onConversationOpened: function(conversationId) {
-                    root.activeConversationId = conversationId;
-                    conversationExpanded.openConversationPinned(conversationId);
+                onConversationOpened: function(sessionId) {
+                    root.activeConversationId = sessionId;
+                    conversationExpanded.openConversationPinned(sessionId);
                 }
                 Component.onCompleted: {
                     if (root.hasScope)
@@ -297,10 +297,10 @@ ApplicationWindow {
 
                 ConversationsList {
                     // Always the home page on a phone, regardless of the desktop
-                    // "show notes list" option (which only hides a side column).
+                    // "Show Sessions" option (which only hides a side column).
                     onToggleSidebarRequested: sidebarDrawerCompact.open()
-                    onConversationActivated: function(conversationId) {
-                        root.activeConversationId = conversationId;
+                    onConversationActivated: function(sessionId) {
+                        root.activeConversationId = sessionId;
                         compactStack.push(conversationPage);
                     }
                     Component.onCompleted: {

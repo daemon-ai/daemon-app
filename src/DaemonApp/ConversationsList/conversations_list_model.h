@@ -1,6 +1,7 @@
 #pragma once
 
-#include "domain/conversation.h"
+#include "domain/session.h"
+#include "domain/ids.h"
 #include "domain/sidebar_node.h"
 
 #include <QAbstractListModel>
@@ -12,10 +13,10 @@
 #include <QtQml/qqmlregistration.h>
 
 namespace persistence {
-class IConversationStore;
+class ISessionStore;
 }
 
-// The conversations for the current sidebar scope, filtered by `search`.
+// The sessions for the current sidebar scope, filtered by `search`.
 class ConversationsListModel : public QAbstractListModel {
     Q_OBJECT
     QML_ELEMENT
@@ -30,12 +31,12 @@ public:
         TitleRole,
         SnippetRole,
         ModifiedRole,
-        AgentNameRole,   // resolved owning agent-node name ("" if none)
-        AgentKindRole,   // domain::AgentNodeKind of the owning node (cosmetic)
+        UnitNameRole,    // resolved owning unit name ("" if none)
+        UnitKindRole,    // domain::UnitKind of the owning unit (cosmetic)
         TagNamesRole,    // QStringList of tag names
         TagColorsRole,   // QStringList of tag colors, parallel to TagNamesRole
         CurrentRole,     // true for the currently-selected row (identity match)
-        PinnedRole,      // true when the conversation is pinned (floats to top)
+        PinnedRole,      // true when the session is pinned (floats to top)
     };
 
     explicit ConversationsListModel(QObject* parent = nullptr);
@@ -53,8 +54,8 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    // `id` is the tag id (Tag scope); `nodeId` is the agent node id (Node scope).
-    Q_INVOKABLE void setScope(int nodeType, int id, const QString& nodeId);
+    // `tagId` is the tag id (Tag scope); `unitId` is the unit id (Unit scope).
+    Q_INVOKABLE void setScope(int nodeType, int tagId, const QString& unitId);
     Q_INVOKABLE int idAt(int row) const;
 
     // Identity-based selection (mirrors SidebarModel): the selection is stored by
@@ -73,9 +74,9 @@ signals:
     void searchChanged();
     void scopeChanged();
     void countChanged();
-    // Emitted whenever the current selection changes (id is the conversation id,
-    // -1 when cleared).
-    void selectionChanged(int conversationId);
+    // Emitted whenever the current selection changes (id is the session id, -1
+    // when cleared).
+    void selectionChanged(int sessionId);
 
 private:
     void reload();
@@ -85,13 +86,13 @@ private:
     void setCurrentId(int id);             // records id + emits + repaints
     void emitCurrentChanged();             // dataChanged(CurrentRole) for all rows
 
-    persistence::IConversationStore* m_store = nullptr;
+    persistence::ISessionStore* m_store = nullptr;
     domain::ListScope m_scope;
     QString m_search;
     QString m_scopeTitle;
-    QList<domain::Conversation> m_all;
-    QList<domain::Conversation> m_filtered;
-    QHash<QString, QPair<QString, int>> m_nodeInfo; // agent id -> (name, kind)
-    QHash<int, QPair<QString, QString>> m_tagInfo;   // tag id -> (name, color)
-    int m_currentId = -1; // selected conversation id (identity-stable), -1 = none
+    QList<domain::Session> m_all;
+    QList<domain::Session> m_filtered;
+    QHash<QString, QPair<QString, int>> m_unitInfo; // unit id -> (name, kind)
+    QHash<int, QPair<QString, QString>> m_tagInfo;  // tag id -> (name, color)
+    int m_currentId = -1; // selected session id (identity-stable), -1 = none
 };

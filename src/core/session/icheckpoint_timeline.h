@@ -15,7 +15,7 @@ class ICheckpointTimeline : public QObject {
     // The conversation whose timeline is shown. Setting it swaps the live
     // checkpoints to that conversation's own timeline (per-conversation rewind),
     // emitting changed() so the bound panel refreshes.
-    Q_PROPERTY(int conversationId READ conversationId WRITE setConversationId NOTIFY
+    Q_PROPERTY(int sessionId READ sessionId WRITE setConversationId NOTIFY
                    conversationIdChanged)
 
 public:
@@ -24,7 +24,7 @@ public:
 
     [[nodiscard]] virtual QObject* checkpoints() const = 0;
     [[nodiscard]] virtual int count() const = 0;
-    [[nodiscard]] virtual int conversationId() const = 0;
+    [[nodiscard]] virtual int sessionId() const = 0;
     virtual void setConversationId(int id) = 0;
 
     Q_INVOKABLE virtual void restore(const QString& id) = 0;

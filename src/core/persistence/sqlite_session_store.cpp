@@ -1,4 +1,4 @@
-#include "persistence/sqlite_conversation_store.h"
+#include "persistence/sqlite_session_store.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -11,11 +11,12 @@
 
 namespace persistence {
 
-using domain::AgentNode;
-using domain::AgentNodeKind;
-using domain::AgentState;
-using domain::Conversation;
+using domain::Session;
 using domain::Tag;
+using domain::UnitId;
+using domain::UnitKind;
+using domain::UnitNode;
+using domain::UnitState;
 
 namespace {
 
@@ -49,8 +50,8 @@ QList<int> splitTagIds(const QString& csv)
 
 } // namespace
 
-SqliteConversationStore::SqliteConversationStore(const QString& dbPath, QObject* parent)
-    : InMemoryConversationStore(parent, /*seed=*/false)
+SqliteSessionStore::SqliteSessionStore(const QString& dbPath, QObject* parent)
+    : InMemorySessionStore(parent, /*seed=*/false)
     , m_dbPath(dbPath.isEmpty() ? defaultDatabasePath() : dbPath)
 {
     // A unique connection name per instance so multiple stores (GUI + a test, or
@@ -71,10 +72,10 @@ SqliteConversationStore::SqliteConversationStore(const QString& dbPath, QObject*
     // Write-through: the base emits changed() after every mutation (create /
     // rename / archive / pin / move / delete / setContent). Persist a fresh
     // snapshot each time. saveAll() never emits changed(), so there is no loop.
-    connect(this, &IConversationStore::changed, this, &SqliteConversationStore::saveAll);
+    connect(this, &ISessionStore::changed, this, &SqliteSessionStore::saveAll);
 }
 
-SqliteConversationStore::~SqliteConversationStore()
+SqliteSessionStore::~SqliteSessionStore()
 {
     {
         QSqlDatabase db = QSqlDatabase::database(m_connectionName);
@@ -85,7 +86,7 @@ SqliteConversationStore::~SqliteConversationStore()
     QSqlDatabase::removeDatabase(m_connectionName);
 }
 
-QString SqliteConversationStore::defaultDatabasePath()
+QString SqliteSessionStore::defaultDatabasePath()
 {
     QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (dir.isEmpty()) {
@@ -95,17 +96,17 @@ QString SqliteConversationStore::defaultDatabasePath()
     return dir + QStringLiteral("/conversations.db");
 }
 
-void SqliteConversationStore::openDatabase()
+void SqliteSessionStore::openDatabase()
 {
     QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), m_connectionName);
     db.setDatabaseName(m_dbPath);
     if (!db.open()) {
-        qWarning("SqliteConversationStore: failed to open %s: %s", qPrintable(m_dbPath),
+        qWarning("SqliteSessionStore: failed to open %s: %s", qPrintable(m_dbPath),
                  qPrintable(db.lastError().text()));
     }
 }
 
-void SqliteConversationStore::createSchema()
+void SqliteSessionStore::createSchema()
 {
     QSqlDatabase db = QSqlDatabase::database(m_connectionName);
     QSqlQuery q(db);
@@ -123,29 +124,29 @@ void SqliteConversationStore::createSchema()
                           "created TEXT, modified TEXT, ord INTEGER)"));
 }
 
-bool SqliteConversationStore::loadAll()
+bool SqliteSessionStore::loadAll()
 {
     QSqlDatabase db = QSqlDatabase::database(m_connectionName);
 
-    m_nodes.clear();
+    m_units.clear();
     m_tags.clear();
-    m_conversations.clear();
+    m_sessions.clear();
 
     QSqlQuery nq(db);
     nq.exec(QStringLiteral("SELECT id, parent_id, name, kind, state, work "
                            "FROM nodes ORDER BY ord ASC"));
     while (nq.next()) {
-        AgentNode n;
-        n.id = nq.value(0).toString();
-        n.parentId = nq.value(1).toString();
+        UnitNode n;
+        n.id = UnitId(nq.value(0).toString());
+        n.parentId = UnitId(nq.value(1).toString());
         n.name = nq.value(2).toString();
-        n.kind = static_cast<AgentNodeKind>(nq.value(3).toInt());
-        n.state = static_cast<AgentState>(nq.value(4).toInt());
+        n.kind = static_cast<UnitKind>(nq.value(3).toInt());
+        n.state = static_cast<UnitState>(nq.value(4).toInt());
         n.work = nq.value(5).toString();
         // profile/session/role are derived (not persisted; the schema predates
-        // them), so a loaded node carries the same agent identity as a seeded one.
+        // them), so a loaded unit carries the same agent identity as a seeded one.
         applyUnitMeta(n);
-        m_nodes.push_back(n);
+        m_units.push_back(n);
     }
 
     QSqlQuery tq(db);
@@ -162,9 +163,9 @@ bool SqliteConversationStore::loadAll()
     cq.exec(QStringLiteral("SELECT id, agent_id, tag_ids, title, content, archived, "
                            "pinned, created, modified FROM conversations ORDER BY ord ASC"));
     while (cq.next()) {
-        Conversation c;
+        Session c;
         c.id = cq.value(0).toInt();
-        c.agentId = cq.value(1).toString();
+        c.unitId = UnitId(cq.value(1).toString());
         c.tagIds = splitTagIds(cq.value(2).toString());
         c.title = cq.value(3).toString();
         c.content = cq.value(4).toString();
@@ -172,7 +173,7 @@ bool SqliteConversationStore::loadAll()
         c.isPinned = cq.value(6).toInt() != 0;
         c.created = QDateTime::fromString(cq.value(7).toString(), Qt::ISODate);
         c.modified = QDateTime::fromString(cq.value(8).toString(), Qt::ISODate);
-        m_conversations.push_back(c);
+        m_sessions.push_back(c);
     }
 
     // Restore the id counters from meta, falling back to max+1 over loaded rows.
@@ -191,7 +192,7 @@ bool SqliteConversationStore::loadAll()
     };
 
     int maxConv = 0;
-    for (const Conversation& c : m_conversations) {
+    for (const Session& c : m_sessions) {
         maxConv = std::max(maxConv, c.id);
     }
     int maxTag = 0;
@@ -200,12 +201,12 @@ bool SqliteConversationStore::loadAll()
     }
     m_nextId = metaInt(QStringLiteral("next_conv_id"), maxConv + 1);
     m_nextTagId = metaInt(QStringLiteral("next_tag_id"), maxTag + 1);
-    m_nextNodeSeq = metaInt(QStringLiteral("next_node_seq"), m_nodes.size() + 1);
+    m_nextUnitSeq = metaInt(QStringLiteral("next_node_seq"), m_units.size() + 1);
 
-    return !m_conversations.isEmpty() || !m_nodes.isEmpty();
+    return !m_sessions.isEmpty() || !m_units.isEmpty();
 }
 
-void SqliteConversationStore::saveAll()
+void SqliteSessionStore::saveAll()
 {
     QSqlDatabase db = QSqlDatabase::database(m_connectionName);
     if (!db.isOpen()) {
@@ -222,10 +223,10 @@ void SqliteConversationStore::saveAll()
     QSqlQuery nq(db);
     nq.prepare(QStringLiteral("INSERT INTO nodes(id, parent_id, name, kind, state, work, ord) "
                               "VALUES(?, ?, ?, ?, ?, ?, ?)"));
-    for (int i = 0; i < m_nodes.size(); ++i) {
-        const AgentNode& n = m_nodes.at(i);
-        nq.addBindValue(n.id);
-        nq.addBindValue(n.parentId);
+    for (int i = 0; i < m_units.size(); ++i) {
+        const UnitNode& n = m_units.at(i);
+        nq.addBindValue(n.id.toString());
+        nq.addBindValue(n.parentId.toString());
         nq.addBindValue(n.name);
         nq.addBindValue(static_cast<int>(n.kind));
         nq.addBindValue(static_cast<int>(n.state));
@@ -249,10 +250,10 @@ void SqliteConversationStore::saveAll()
     cq.prepare(QStringLiteral("INSERT INTO conversations(id, agent_id, tag_ids, title, content, "
                               "archived, pinned, created, modified, ord) "
                               "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
-    for (int i = 0; i < m_conversations.size(); ++i) {
-        const Conversation& c = m_conversations.at(i);
+    for (int i = 0; i < m_sessions.size(); ++i) {
+        const Session& c = m_sessions.at(i);
         cq.addBindValue(c.id);
-        cq.addBindValue(c.agentId);
+        cq.addBindValue(c.unitId.toString());
         cq.addBindValue(joinTagIds(c.tagIds));
         cq.addBindValue(c.title);
         cq.addBindValue(c.content);
@@ -273,7 +274,7 @@ void SqliteConversationStore::saveAll()
     };
     setMeta(QStringLiteral("next_conv_id"), m_nextId);
     setMeta(QStringLiteral("next_tag_id"), m_nextTagId);
-    setMeta(QStringLiteral("next_node_seq"), m_nextNodeSeq);
+    setMeta(QStringLiteral("next_node_seq"), m_nextUnitSeq);
 
     db.commit();
 }

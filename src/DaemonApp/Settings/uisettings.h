@@ -44,13 +44,13 @@ class UiSettings : public QObject {
                    distractionFreeChanged)
 
     Q_PROPERTY(
-        bool showNotesList READ showNotesList WRITE setShowNotesList NOTIFY showNotesListChanged)
-    Q_PROPERTY(bool showFoldersTree READ showFoldersTree WRITE setShowFoldersTree NOTIFY
-                   showFoldersTreeChanged)
+        bool showSessionsList READ showSessionsList WRITE setShowSessionsList NOTIFY showSessionsListChanged)
+    Q_PROPERTY(bool showFleetTree READ showFleetTree WRITE setShowFleetTree NOTIFY
+                   showFleetTreeChanged)
     Q_PROPERTY(bool showFileExplorer READ showFileExplorer WRITE setShowFileExplorer NOTIFY
                    showFileExplorerChanged)
     Q_PROPERTY(
-        bool showPlainText READ showPlainText WRITE setShowPlainText NOTIFY showPlainTextChanged)
+        bool showRawMarkdown READ showRawMarkdown WRITE setShowRawMarkdown NOTIFY showRawMarkdownChanged)
     Q_PROPERTY(
         bool showUserRail READ showUserRail WRITE setShowUserRail NOTIFY showUserRailChanged)
 
@@ -83,14 +83,14 @@ public:
     [[nodiscard]] bool distractionFree() const { return m_distractionFree; }
     void setDistractionFree(bool on);
 
-    [[nodiscard]] bool showNotesList() const { return m_showNotesList; }
-    void setShowNotesList(bool on);
-    [[nodiscard]] bool showFoldersTree() const { return m_showFoldersTree; }
-    void setShowFoldersTree(bool on);
+    [[nodiscard]] bool showSessionsList() const { return m_showSessionsList; }
+    void setShowSessionsList(bool on);
+    [[nodiscard]] bool showFleetTree() const { return m_showFleetTree; }
+    void setShowFleetTree(bool on);
     [[nodiscard]] bool showFileExplorer() const { return m_showFileExplorer; }
     void setShowFileExplorer(bool on);
-    [[nodiscard]] bool showPlainText() const { return m_showPlainText; }
-    void setShowPlainText(bool on);
+    [[nodiscard]] bool showRawMarkdown() const { return m_showRawMarkdown; }
+    void setShowRawMarkdown(bool on);
     [[nodiscard]] bool showUserRail() const { return m_showUserRail; }
     void setShowUserRail(bool on);
 
@@ -117,10 +117,10 @@ signals:
     void editorFontSizeChanged();
     void centerTextChanged();
     void distractionFreeChanged();
-    void showNotesListChanged();
-    void showFoldersTreeChanged();
+    void showSessionsListChanged();
+    void showFleetTreeChanged();
     void showFileExplorerChanged();
-    void showPlainTextChanged();
+    void showRawMarkdownChanged();
     void showUserRailChanged();
 
 private:
@@ -142,9 +142,9 @@ private:
     int m_editorFontSize = kDefaultFontSize;
     bool m_centerText = false;
     bool m_distractionFree = false;
-    bool m_showNotesList = true;
-    bool m_showFoldersTree = true;
+    bool m_showSessionsList = true;
+    bool m_showFleetTree = true;
     bool m_showFileExplorer = false;
-    bool m_showPlainText = false;
+    bool m_showRawMarkdown = false;
     bool m_showUserRail = true;
 };

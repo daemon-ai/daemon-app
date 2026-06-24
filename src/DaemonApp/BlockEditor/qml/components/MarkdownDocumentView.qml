@@ -7,7 +7,7 @@ import DaemonApp.BlockEditor
 import DaemonApp.Editor
 
 // Shared markdown document host. Markdown is rendered with the BlockEditor by
-// default everywhere; the global "Show plain text" setting switches the same
+// default everywhere; the global "Show Raw Markdown" setting switches the same
 // document to the native source editor.
 Rectangle {
     id: root
@@ -25,14 +25,14 @@ Rectangle {
         _loading = true;
         _bytes = bytes;
         editor.loadMarkdownBytes(bytes);
-        if (UiSettings.showPlainText)
+        if (UiSettings.showRawMarkdown)
             _loadSource(bytes);
         modified = false;
         _loading = false;
     }
 
     function textBytes() {
-        if (UiSettings.showPlainText && sourceLoader.item)
+        if (UiSettings.showRawMarkdown && sourceLoader.item)
             return sourceLoader.item.controller.textBytes();
         return editor.exportMarkdownBytes();
     }
@@ -52,7 +52,7 @@ Rectangle {
         if (!isCurrent)
             return;
         _loading = true;
-        if (UiSettings.showPlainText) {
+        if (UiSettings.showRawMarkdown) {
             _loadSource(editor.exportMarkdownBytes());
         } else if (sourceLoader.item) {
             editor.loadMarkdownBytes(sourceLoader.item.controller.textBytes());
@@ -82,7 +82,7 @@ Rectangle {
     Loader {
         id: sourceLoader
         anchors.fill: parent
-        active: root.isCurrent && root._bytes !== null && UiSettings.showPlainText
+        active: root.isCurrent && root._bytes !== null && UiSettings.showRawMarkdown
         visible: active
         sourceComponent: sourceComponent
         onLoaded: root._syncForMode()
@@ -113,7 +113,7 @@ Rectangle {
         id: blocks
         anchors.fill: parent
         anchors.margins: root.contentMargin
-        visible: root.isCurrent && root._bytes !== null && !UiSettings.showPlainText
+        visible: root.isCurrent && root._bytes !== null && !UiSettings.showRawMarkdown
         clip: true
         model: editor.blockModel
         reuseItems: true
@@ -139,7 +139,7 @@ Rectangle {
 
     Connections {
         target: UiSettings
-        function onShowPlainTextChanged() {
+        function onShowRawMarkdownChanged() {
             root._syncForMode();
         }
     }

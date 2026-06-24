@@ -7,7 +7,7 @@
 
 namespace connection {
 
-// Transport-agnostic connection seam (sibling of IConversationStore /
+// Transport-agnostic connection seam (sibling of ISessionStore /
 // IPlatformServices). It owns the active connection to a node, a liveness state
 // machine that drives StatusBarModel.gatewayState, and a Test-connection probe.
 // The mock cycles believable states now; a daemon adapter (Unix-socket CBOR /

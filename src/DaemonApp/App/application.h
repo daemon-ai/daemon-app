@@ -13,8 +13,8 @@ class CommandRegistry;
 class TranscriptExporter;
 
 namespace persistence {
-class IConversationStore;
-class InMemoryConversationStore;
+class ISessionStore;
+class InMemorySessionStore;
 }
 namespace platform {
 class IPlatformServices;
@@ -98,7 +98,7 @@ protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
-    persistence::InMemoryConversationStore* m_store = nullptr;
+    persistence::InMemorySessionStore* m_store = nullptr;
     platform::IPlatformServices* m_platform = nullptr;
     // The shared footer status model, exposed to QML as the `Status` context
     // property so the footer StatusBar and the active conversation's turn feed a

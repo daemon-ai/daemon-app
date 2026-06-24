@@ -82,8 +82,8 @@ Rectangle {
             turn.cancel()
         _loadedMarkdown = md
         editor.loadMarkdown(md, false)
-        if (UiSettings.showPlainText)
-            _loadPlain(md)
+        if (UiSettings.showRawMarkdown)
+            _loadRaw(md)
         // Open at the bottom (latest message), like a chat transcript. A reset
         // lands the view at the top and block heights settle asynchronously, so
         // re-pin across a few frames until the layout stops growing.
@@ -99,12 +99,12 @@ Rectangle {
         editorView.pinToBottom()
     }
 
-    // Load markdown into the plain-text code editor (syntax-highlighted as
+    // Load markdown into the raw markdown source editor (syntax-highlighted as
     // Markdown via the file name). The plain editor is the source of truth while
-    // "Show plain text" is on. No-op until the Loader has built the editor.
-    function _loadPlain(md) {
-        if (plainLoader.item)
-            plainLoader.item.controller.load(md, "document.md", "")
+    // "Show Raw Markdown" is on. No-op until the Loader has built the editor.
+    function _loadRaw(md) {
+        if (rawLoader.item)
+            rawLoader.item.controller.load(md, "document.md", "")
     }
 
     EditorController {
@@ -122,9 +122,9 @@ Rectangle {
 
         onDocumentChanged: {
             persistTimer.restart()
-            if (UiSettings.showPlainText && plainLoader.item
-                    && !plainLoader.item.controller.modified)
-                plainSyncTimer.restart()
+            if (UiSettings.showRawMarkdown && rawLoader.item
+                    && !rawLoader.item.controller.modified)
+                rawSyncTimer.restart()
         }
 
         // Open the shared lightbox when a block (image / generated image) asks
@@ -314,7 +314,7 @@ Rectangle {
             // "Center text": clamp to a readable column centered in the surface;
             // otherwise fill the available width.
             width: UiSettings.centerText ? Math.min(parent.width, 720) : parent.width
-            visible: !UiSettings.showPlainText
+            visible: !UiSettings.showRawMarkdown
             clip: true
             model: editor.blockModel
             reuseItems: true
@@ -470,7 +470,7 @@ Rectangle {
             anchors.centerIn: parent
             width: Math.min(parent.width - Theme.spacingLarge * 2, 420)
             spacing: Theme.smallSpacing
-            visible: !UiSettings.showPlainText && editorView.count === 0 && !root.busy
+            visible: !UiSettings.showRawMarkdown && editorView.count === 0 && !root.busy
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -500,61 +500,61 @@ Rectangle {
 
     }
 
-    // "Show plain text": raw markdown uses the same native source editor surface
+    // "Show Raw Markdown": raw markdown uses the same native source editor surface
     // as file tabs and is a sibling of EditorSurface, so it does not inherit the
     // transcript prose/page margins.
     Loader {
-        id: plainLoader
+        id: rawLoader
         anchors.fill: parent
-        active: UiSettings.showPlainText && root.visible
-        visible: UiSettings.showPlainText
-        sourceComponent: plainEditorComponent
+        active: UiSettings.showRawMarkdown && root.visible
+        visible: UiSettings.showRawMarkdown
+        sourceComponent: rawEditorComponent
     }
 
-    // Persist edits made in the plain-text editor (its text is the source of
-    // truth while plain-text mode is on, not the block model).
+    // Persist edits made in the raw markdown editor (its text is the source of
+    // truth while raw markdown mode is on, not the block model).
     Timer {
-        id: plainPersist
+        id: rawPersist
         interval: 400
-        onTriggered: if (plainLoader.item) root.edited(plainLoader.item.controller.text())
+        onTriggered: if (rawLoader.item) root.edited(rawLoader.item.controller.text())
     }
 
     // While the rendered controller ingests streaming turn events, mirror the
     // current markdown into the visible source editor unless the user has local
-    // raw edits. This keeps Show Plain Text live without clobbering dirty text.
+    // raw edits. This keeps Show Raw Markdown live without clobbering dirty text.
     Timer {
-        id: plainSyncTimer
+        id: rawSyncTimer
         interval: 80
         onTriggered: {
-            if (UiSettings.showPlainText && plainLoader.item
-                    && !plainLoader.item.controller.modified)
-                root._loadPlain(editor.exportMarkdown())
+            if (UiSettings.showRawMarkdown && rawLoader.item
+                    && !rawLoader.item.controller.modified)
+                root._loadRaw(editor.exportMarkdown())
         }
     }
 
     Component {
-        id: plainEditorComponent
+        id: rawEditorComponent
         FocusScope {
-            property alias controller: plainCtl
+            property alias controller: rawCtl
             focus: true
 
-            CodeEditorController { id: plainCtl }
+            CodeEditorController { id: rawCtl }
 
             CodeEditor {
                 anchors.fill: parent
-                controller: plainCtl
+                controller: rawCtl
                 focus: true
             }
 
-            // Entering plain text: seed from the live block markdown.
-            Component.onCompleted: plainCtl.load(editor.exportMarkdown(), "document.md", "")
+            // Entering raw markdown: seed from the live block markdown.
+            Component.onCompleted: rawCtl.load(editor.exportMarkdown(), "document.md", "")
 
-            // Leaving plain text: push the edited text back to the block editor
+            // Leaving raw markdown: push the edited text back to the block editor
             // before this controller is destroyed (runs while it is still alive,
             // avoiding any deactivate/read race).
             Component.onDestruction: {
-                if (plainCtl.modified) {
-                    const md = plainCtl.text()
+                if (rawCtl.modified) {
+                    const md = rawCtl.text()
                     root._loadedMarkdown = md
                     editor.loadMarkdown(md, false)
                     root.edited(md)
@@ -562,10 +562,10 @@ Rectangle {
             }
 
             Connections {
-                target: plainCtl
+                target: rawCtl
                 function onModifiedChanged() {
-                    if (UiSettings.showPlainText && plainCtl.modified)
-                        plainPersist.restart()
+                    if (UiSettings.showRawMarkdown && rawCtl.modified)
+                        rawPersist.restart()
                 }
             }
         }
@@ -575,7 +575,7 @@ Rectangle {
     // view and driven by the turn simulator. Pure overlay: no input handlers.
     ConversationChrome {
         anchors.fill: parent
-        visible: !UiSettings.showPlainText
+        visible: !UiSettings.showRawMarkdown
         active: root.busy
         turnState: root.turn ? root.turn.turnState : ""
         elapsedMs: root.turn ? root.turn.elapsedMs : 0
@@ -587,7 +587,7 @@ Rectangle {
     // presence is the explicit "not following" signal.
     Rectangle {
         id: jumpButton
-        visible: !UiSettings.showPlainText && !editorView.stickToBottom
+        visible: !UiSettings.showRawMarkdown && !editorView.stickToBottom
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.rightMargin: Theme.spacing + 12

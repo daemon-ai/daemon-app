@@ -155,9 +155,9 @@ void ConversationListView::rebuild()
         const QString title = role(ConversationsListModel::TitleRole).toString();
         const QString snippet = role(ConversationsListModel::SnippetRole).toString();
         const QDateTime modified = role(ConversationsListModel::ModifiedRole).toDateTime();
-        const QString agent = role(ConversationsListModel::AgentNameRole).toString();
+        const QString agent = role(ConversationsListModel::UnitNameRole).toString();
         const QString kind = DisplayPresenter::agentKindIconKeyFor(
-            role(ConversationsListModel::AgentKindRole).toInt());
+            role(ConversationsListModel::UnitKindRole).toInt());
         const QStringList tagNames = role(ConversationsListModel::TagNamesRole).toStringList();
         const QStringList tagColors = role(ConversationsListModel::TagColorsRole).toStringList();
 

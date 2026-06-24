@@ -1,16 +1,18 @@
 #include "conversations_list_model.h"
 
-#include "domain/agent_node.h"
-#include "persistence/iconversation_store.h"
+#include "domain/unit_node.h"
+#include "domain/ids.h"
+#include "persistence/isession_store.h"
 
-using domain::AgentNode;
-using domain::Conversation;
 using domain::ListScope;
 using domain::NodeType;
+using domain::Session;
+using domain::UnitId;
+using domain::UnitNode;
 
 namespace {
 
-QString snippetOf(const Conversation& c)
+QString snippetOf(const Session& c)
 {
     QString text = c.content;
     text.replace(QLatin1Char('\n'), QLatin1Char(' '));
@@ -37,16 +39,16 @@ QObject* ConversationsListModel::store() const
 
 void ConversationsListModel::setStore(QObject* store)
 {
-    auto* conversationStore = qobject_cast<persistence::IConversationStore*>(store);
-    if (m_store == conversationStore) {
+    auto* sessionStore = qobject_cast<persistence::ISessionStore*>(store);
+    if (m_store == sessionStore) {
         return;
     }
     if (m_store) {
         m_store->disconnect(this);
     }
-    m_store = conversationStore;
+    m_store = sessionStore;
     if (m_store) {
-        connect(m_store, &persistence::IConversationStore::changed, this,
+        connect(m_store, &persistence::ISessionStore::changed, this,
                 &ConversationsListModel::reload);
     }
     emit storeChanged();
@@ -63,11 +65,11 @@ void ConversationsListModel::setSearch(const QString& search)
     applyFilter();
 }
 
-void ConversationsListModel::setScope(int nodeType, int id, const QString& nodeId)
+void ConversationsListModel::setScope(int nodeType, int tagId, const QString& unitId)
 {
-    m_scope = { static_cast<NodeType>(nodeType), id, nodeId };
-    // A new scope is a fresh list of conversations; drop the old selection so a
-    // stale id doesn't linger as a phantom highlight.
+    m_scope = { static_cast<NodeType>(nodeType), tagId, UnitId(unitId) };
+    // A new scope is a fresh list of sessions; drop the old selection so a stale
+    // id doesn't linger as a phantom highlight.
     if (m_currentId != -1) {
         m_currentId = -1;
         emit selectionChanged(-1);
@@ -79,7 +81,7 @@ void ConversationsListModel::setScope(int nodeType, int id, const QString& nodeI
 void ConversationsListModel::reload()
 {
     rebuildLookups();
-    m_all = m_store ? m_store->conversations(m_scope) : QList<Conversation>{};
+    m_all = m_store ? m_store->sessions(m_scope) : QList<Session>{};
     m_scopeTitle = computeScopeTitle();
     emit scopeChanged();
     applyFilter();
@@ -87,21 +89,21 @@ void ConversationsListModel::reload()
 
 void ConversationsListModel::rebuildLookups()
 {
-    m_nodeInfo.clear();
+    m_unitInfo.clear();
     m_tagInfo.clear();
     if (!m_store) {
         return;
     }
-    // Walk the whole agent tree via the single recursive primitive so each
-    // conversation's owning-node name/kind can be resolved (any depth).
-    persistence::IConversationStore* store = m_store;
-    auto collect = [store, this](const QString& parentId, auto&& self) -> void {
-        for (const AgentNode& n : store->agentChildren(parentId)) {
-            m_nodeInfo.insert(n.id, { n.name, static_cast<int>(n.kind) });
+    // Walk the whole unit tree via the single recursive primitive so each
+    // session's owning-unit name/kind can be resolved (any depth).
+    persistence::ISessionStore* store = m_store;
+    auto collect = [store, this](const UnitId& parentId, auto&& self) -> void {
+        for (const UnitNode& n : store->unitChildren(parentId)) {
+            m_unitInfo.insert(n.id.toString(), { n.name, static_cast<int>(n.kind) });
             self(n.id, self);
         }
     };
-    collect(QString(), collect);
+    collect(UnitId(), collect);
 
     for (const domain::Tag& t : m_store->tags()) {
         m_tagInfo.insert(t.id, { t.name, t.color });
@@ -112,7 +114,7 @@ void ConversationsListModel::applyFilter()
 {
     beginResetModel();
     m_filtered.clear();
-    for (const Conversation& c : m_all) {
+    for (const Session& c : m_all) {
         if (m_search.isEmpty()
             || c.title.contains(m_search, Qt::CaseInsensitive)
             || c.content.contains(m_search, Qt::CaseInsensitive)) {
@@ -130,9 +132,9 @@ QString ConversationsListModel::computeScopeTitle() const
         return tr("All Conversations");
     case NodeType::Archived:
         return tr("Archived");
-    case NodeType::Node:
+    case NodeType::Unit:
         if (m_store) {
-            const AgentNode n = m_store->agentNode(m_scope.nodeId);
+            const UnitNode n = m_store->unit(m_scope.unitId);
             if (n.isValid()) {
                 return n.name;
             }
@@ -141,7 +143,7 @@ QString ConversationsListModel::computeScopeTitle() const
     case NodeType::Tag:
         if (m_store) {
             for (const domain::Tag& t : m_store->tags()) {
-                if (t.id == m_scope.id) {
+                if (t.id == m_scope.tagId) {
                     return t.name;
                 }
             }
@@ -164,7 +166,7 @@ QVariant ConversationsListModel::data(const QModelIndex& index, int role) const
     if (index.row() < 0 || index.row() >= m_filtered.size()) {
         return {};
     }
-    const Conversation& c = m_filtered.at(index.row());
+    const Session& c = m_filtered.at(index.row());
     switch (role) {
     case IdRole:
         return c.id;
@@ -174,10 +176,10 @@ QVariant ConversationsListModel::data(const QModelIndex& index, int role) const
         return snippetOf(c);
     case ModifiedRole:
         return c.modified;
-    case AgentNameRole:
-        return m_nodeInfo.value(c.agentId).first;
-    case AgentKindRole:
-        return m_nodeInfo.value(c.agentId).second;
+    case UnitNameRole:
+        return m_unitInfo.value(c.unitId.toString()).first;
+    case UnitKindRole:
+        return m_unitInfo.value(c.unitId.toString()).second;
     case TagNamesRole: {
         QStringList names;
         for (int tagId : c.tagIds) {
@@ -204,12 +206,12 @@ QVariant ConversationsListModel::data(const QModelIndex& index, int role) const
 QHash<int, QByteArray> ConversationsListModel::roleNames() const
 {
     return {
-        { IdRole, "conversationId" },
+        { IdRole, "sessionId" },
         { TitleRole, "title" },
         { SnippetRole, "snippet" },
         { ModifiedRole, "modified" },
-        { AgentNameRole, "agentName" },
-        { AgentKindRole, "agentKind" },
+        { UnitNameRole, "unitName" },
+        { UnitKindRole, "unitKind" },
         { TagNamesRole, "tagNames" },
         { TagColorsRole, "tagColors" },
         { CurrentRole, "current" },

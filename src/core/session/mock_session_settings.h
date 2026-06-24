@@ -12,7 +12,7 @@ class MockSessionSettings : public ISessionSettings {
 public:
     explicit MockSessionSettings(QObject* parent = nullptr);
 
-    [[nodiscard]] int conversationId() const override { return m_conversationId; }
+    [[nodiscard]] int sessionId() const override { return m_conversationId; }
     void setConversationId(int id) override;
 
     [[nodiscard]] QString profile() const override { return entry().profile; }

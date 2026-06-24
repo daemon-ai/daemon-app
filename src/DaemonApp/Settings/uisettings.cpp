@@ -102,14 +102,14 @@ void UiSettings::load()
     m_centerText = m_settings.value(QStringLiteral("centerText"), m_centerText).toBool();
     m_distractionFree
         = m_settings.value(QStringLiteral("distractionFree"), m_distractionFree).toBool();
-    m_showNotesList
-        = m_settings.value(QStringLiteral("showNotesList"), m_showNotesList).toBool();
-    m_showFoldersTree
-        = m_settings.value(QStringLiteral("showFoldersTree"), m_showFoldersTree).toBool();
+    m_showSessionsList
+        = m_settings.value(QStringLiteral("showSessionsList"), m_showSessionsList).toBool();
+    m_showFleetTree
+        = m_settings.value(QStringLiteral("showFleetTree"), m_showFleetTree).toBool();
     m_showFileExplorer
         = m_settings.value(QStringLiteral("showFileExplorer"), m_showFileExplorer).toBool();
-    m_showPlainText
-        = m_settings.value(QStringLiteral("showPlainText"), m_showPlainText).toBool();
+    m_showRawMarkdown
+        = m_settings.value(QStringLiteral("showRawMarkdown"), m_showRawMarkdown).toBool();
     m_showUserRail
         = m_settings.value(QStringLiteral("showUserRail"), m_showUserRail).toBool();
     m_settings.endGroup();
@@ -265,24 +265,24 @@ void UiSettings::setDistractionFree(bool on)
     emit distractionFreeChanged();
 }
 
-void UiSettings::setShowNotesList(bool on)
+void UiSettings::setShowSessionsList(bool on)
 {
-    if (on == m_showNotesList) {
+    if (on == m_showSessionsList) {
         return;
     }
-    m_showNotesList = on;
-    store(QStringLiteral("showNotesList"), m_showNotesList);
-    emit showNotesListChanged();
+    m_showSessionsList = on;
+    store(QStringLiteral("showSessionsList"), m_showSessionsList);
+    emit showSessionsListChanged();
 }
 
-void UiSettings::setShowFoldersTree(bool on)
+void UiSettings::setShowFleetTree(bool on)
 {
-    if (on == m_showFoldersTree) {
+    if (on == m_showFleetTree) {
         return;
     }
-    m_showFoldersTree = on;
-    store(QStringLiteral("showFoldersTree"), m_showFoldersTree);
-    emit showFoldersTreeChanged();
+    m_showFleetTree = on;
+    store(QStringLiteral("showFleetTree"), m_showFleetTree);
+    emit showFleetTreeChanged();
 }
 
 void UiSettings::setShowFileExplorer(bool on)
@@ -295,14 +295,14 @@ void UiSettings::setShowFileExplorer(bool on)
     emit showFileExplorerChanged();
 }
 
-void UiSettings::setShowPlainText(bool on)
+void UiSettings::setShowRawMarkdown(bool on)
 {
-    if (on == m_showPlainText) {
+    if (on == m_showRawMarkdown) {
         return;
     }
-    m_showPlainText = on;
-    store(QStringLiteral("showPlainText"), m_showPlainText);
-    emit showPlainTextChanged();
+    m_showRawMarkdown = on;
+    store(QStringLiteral("showRawMarkdown"), m_showRawMarkdown);
+    emit showRawMarkdownChanged();
 }
 
 void UiSettings::setShowUserRail(bool on)
@@ -326,8 +326,8 @@ void UiSettings::resetAll()
     setEditorFontSize(kDefaultFontSize);
     setCenterText(false);
     setDistractionFree(false);
-    setShowNotesList(true);
-    setShowFoldersTree(true);
-    setShowPlainText(false);
+    setShowSessionsList(true);
+    setShowFleetTree(true);
+    setShowRawMarkdown(false);
     setShowUserRail(true);
 }

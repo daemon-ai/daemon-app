@@ -1,12 +1,14 @@
 #include "sidebar_model.h"
 
-#include "domain/agent_node.h"
-#include "persistence/iconversation_store.h"
+#include "domain/unit_node.h"
+#include "domain/ids.h"
+#include "persistence/isession_store.h"
 
-using domain::AgentNode;
-using domain::AgentNodeKind;
 using domain::ListScope;
 using domain::NodeType;
+using domain::UnitId;
+using domain::UnitKind;
+using domain::UnitNode;
 
 SidebarModel::SidebarModel(QObject* parent)
     : QAbstractListModel(parent)
@@ -20,16 +22,16 @@ QObject* SidebarModel::store() const
 
 void SidebarModel::setStore(QObject* store)
 {
-    auto* conversationStore = qobject_cast<persistence::IConversationStore*>(store);
-    if (m_store == conversationStore) {
+    auto* sessionStore = qobject_cast<persistence::ISessionStore*>(store);
+    if (m_store == sessionStore) {
         return;
     }
     if (m_store) {
         m_store->disconnect(this);
     }
-    m_store = conversationStore;
+    m_store = sessionStore;
     if (m_store) {
-        connect(m_store, &persistence::IConversationStore::changed, this, &SidebarModel::rebuild);
+        connect(m_store, &persistence::ISessionStore::changed, this, &SidebarModel::rebuild);
     }
     emit storeChanged();
     rebuild();
@@ -40,31 +42,31 @@ bool SidebarModel::isExpanded(const QString& id) const
     return !m_collapsed.contains(id);
 }
 
-void SidebarModel::appendNodeRows(const AgentNode& node, int depth)
+void SidebarModel::appendUnitRows(const UnitNode& node, int depth)
 {
-    const QList<AgentNode> children = m_store->agentChildren(node.id);
-    const bool expanded = isExpanded(node.id);
+    const QList<UnitNode> children = m_store->unitChildren(node.id);
+    const bool expanded = isExpanded(node.id.toString());
 
     Row r;
     r.label = node.name;
-    r.count = m_store->conversationCount({ NodeType::Node, -1, node.id });
-    r.type = NodeType::Node;
-    r.agentId = node.id;
+    r.count = m_store->sessionCount({ NodeType::Unit, -1, node.id });
+    r.type = NodeType::Unit;
+    r.unitId = node.id.toString();
     r.selectable = true;
     r.depth = depth;
     r.hasChildren = !children.isEmpty();
     r.expanded = expanded;
     r.kind = static_cast<int>(node.kind);
     r.state = static_cast<int>(node.state);
-    r.profile = node.profile;
-    r.session = node.session;
+    r.profile = node.profile.toString();
+    r.session = node.session.toString();
     m_rows.push_back(r);
 
-    // Uniformly recursive: descend into any expanded node, to any depth. No
+    // Uniformly recursive: descend into any expanded unit, to any depth. No
     // branching on kind, no level cap.
     if (r.hasChildren && expanded) {
-        for (const AgentNode& child : children) {
-            appendNodeRows(child, depth + 1);
+        for (const UnitNode& child : children) {
+            appendUnitRows(child, depth + 1);
         }
     }
 }
@@ -75,26 +77,25 @@ void SidebarModel::rebuild()
     m_rows.clear();
     if (m_store) {
         m_rows.push_back({ tr("All Conversations"),
-                           m_store->conversationCount({ NodeType::AllConversations, -1, {} }),
+                           m_store->sessionCount({ NodeType::AllConversations, -1, {} }),
                            NodeType::AllConversations, -1, {}, false, true, {}, 0, false, false, 0,
                            0, {}, {} });
-        m_rows.push_back({ tr("Archived"),
-                           m_store->conversationCount({ NodeType::Archived, -1, {} }),
+        m_rows.push_back({ tr("Archived"), m_store->sessionCount({ NodeType::Archived, -1, {} }),
                            NodeType::Archived, -1, {}, false, true, {}, 0, false, false, 0, 0, {},
                            {} });
 
         m_rows.push_back({ tr("Fleet"), -1, NodeType::FleetSeparator, -1, {}, true, false, {},
                            0, false, false, 0, 0, {}, {} });
-        // Top-level roots have an empty parent; each may be a lone agent or the
-        // head of an arbitrarily deep fleet.
-        for (const AgentNode& root : m_store->agentChildren(QString())) {
-            appendNodeRows(root, 0);
+        // Top-level roots have an empty parent; each may be a lone unit or the head
+        // of an arbitrarily deep fleet.
+        for (const UnitNode& root : m_store->unitChildren(UnitId())) {
+            appendUnitRows(root, 0);
         }
 
         m_rows.push_back({ tr("Tags"), -1, NodeType::TagSeparator, -1, {}, true, false, {},
                            0, false, false, 0, 0, {}, {} });
         for (const domain::Tag& t : m_store->tags()) {
-            m_rows.push_back({ t.name, m_store->conversationCount({ NodeType::Tag, t.id, {} }),
+            m_rows.push_back({ t.name, m_store->sessionCount({ NodeType::Tag, t.id, {} }),
                                NodeType::Tag, t.id, {}, false, true, t.color,
                                0, false, false, 0, 0, {}, {} });
         }
@@ -114,10 +115,10 @@ bool SidebarModel::rowIsCurrent(const Row& r) const
         return false;
     }
     switch (r.type) {
-    case NodeType::Node:
-        return m_selType == NodeType::Node && r.agentId == m_selAgent;
+    case NodeType::Unit:
+        return m_selType == NodeType::Unit && r.unitId == m_selUnit;
     case NodeType::Tag:
-        return m_selType == NodeType::Tag && r.nodeId == m_selTag;
+        return m_selType == NodeType::Tag && r.tagId == m_selTag;
     default:
         return m_selType == r.type;
     }
@@ -136,10 +137,10 @@ QVariant SidebarModel::data(const QModelIndex& index, int role) const
         return r.count;
     case NodeTypeRole:
         return static_cast<int>(r.type);
-    case NodeIdRole:
-        return r.nodeId;
-    case AgentIdRole:
-        return r.agentId;
+    case TagIdRole:
+        return r.tagId;
+    case UnitIdRole:
+        return r.unitId;
     case IsSeparatorRole:
         return r.separator;
     case SelectableRole:
@@ -173,8 +174,8 @@ QHash<int, QByteArray> SidebarModel::roleNames() const
         { LabelRole, "label" },
         { CountRole, "count" },
         { NodeTypeRole, "nodeType" },
-        { NodeIdRole, "nodeId" },
-        { AgentIdRole, "agentId" },
+        { TagIdRole, "tagId" },
+        { UnitIdRole, "unitId" },
         { IsSeparatorRole, "isSeparator" },
         { SelectableRole, "selectable" },
         { ColorRole, "color" },
@@ -206,9 +207,9 @@ void SidebarModel::setSelectionFromRow(int row)
         return;
     }
     m_selType = r.type;
-    m_selTag = r.nodeId;
-    m_selAgent = r.agentId;
-    emit scopeSelected(static_cast<int>(r.type), r.nodeId, r.agentId);
+    m_selTag = r.tagId;
+    m_selUnit = r.unitId;
+    emit scopeSelected(static_cast<int>(r.type), r.tagId, r.unitId);
     emitCurrentChanged();
 }
 
@@ -244,16 +245,16 @@ int SidebarModel::parentRow(int row) const
         return -1;
     }
     const Row& r = m_rows.at(row);
-    if (r.type != NodeType::Node) {
+    if (r.type != NodeType::Unit) {
         return -1;
     }
-    const QString parentId = m_store->agentNode(r.agentId).parentId;
+    const QString parentId = m_store->unit(UnitId(r.unitId)).parentId.toString();
     if (parentId.isEmpty()) {
         return -1;
     }
     for (int i = 0; i < m_rows.size(); ++i) {
         const Row& cand = m_rows.at(i);
-        if (cand.type == NodeType::Node && cand.agentId == parentId) {
+        if (cand.type == NodeType::Unit && cand.unitId == parentId) {
             return i;
         }
     }
@@ -262,10 +263,10 @@ int SidebarModel::parentRow(int row) const
 
 bool SidebarModel::selectionInSubtree(const QString& rootId) const
 {
-    if (m_selType != NodeType::Node || !m_store) {
+    if (m_selType != NodeType::Unit || !m_store) {
         return false;
     }
-    QString cur = m_selAgent;
+    QString cur = m_selUnit;
     for (int guard = 0; !cur.isEmpty(); ++guard) {
         if (cur == rootId) {
             return true;
@@ -274,7 +275,7 @@ bool SidebarModel::selectionInSubtree(const QString& rootId) const
         if (guard > 4096) {
             break;
         }
-        cur = m_store->agentNode(cur).parentId;
+        cur = m_store->unit(UnitId(cur)).parentId.toString();
     }
     return false;
 }
@@ -285,19 +286,19 @@ void SidebarModel::toggleExpand(int row)
         return;
     }
     const Row& r = m_rows.at(row);
-    if (r.type != NodeType::Node || !r.hasChildren) {
+    if (r.type != NodeType::Unit || !r.hasChildren) {
         return;
     }
-    const QString id = r.agentId;
+    const QString id = r.unitId;
     const bool collapsing = isExpanded(id);
 
-    // If we are about to hide the current selection, move it up to this node so
-    // a highlighted row stays visible (and the middle pane follows).
+    // If we are about to hide the current selection, move it up to this unit so a
+    // highlighted row stays visible (and the middle pane follows).
     bool moved = false;
     if (collapsing && selectionInSubtree(id)) {
-        m_selType = NodeType::Node;
+        m_selType = NodeType::Unit;
         m_selTag = -1;
-        m_selAgent = id;
+        m_selUnit = id;
         moved = true;
     }
 
@@ -308,7 +309,7 @@ void SidebarModel::toggleExpand(int row)
     }
     rebuild();
     if (moved) {
-        emit scopeSelected(static_cast<int>(NodeType::Node), -1, id);
+        emit scopeSelected(static_cast<int>(NodeType::Unit), -1, id);
     }
 }
 
@@ -337,8 +338,8 @@ void SidebarModel::collapseCurrent()
         return;
     }
     const Row& r = m_rows.at(cur);
-    if (r.type == NodeType::Node && r.hasChildren && r.expanded) {
-        toggleExpand(cur); // collapse; selection stays on this node
+    if (r.type == NodeType::Unit && r.hasChildren && r.expanded) {
+        toggleExpand(cur); // collapse; selection stays on this unit
         return;
     }
     const int pr = parentRow(cur);
@@ -354,7 +355,7 @@ void SidebarModel::expandCurrent()
         return;
     }
     const Row& r = m_rows.at(cur);
-    if (r.type != NodeType::Node || !r.hasChildren) {
+    if (r.type != NodeType::Unit || !r.hasChildren) {
         return;
     }
     if (!r.expanded) {
@@ -382,12 +383,12 @@ void SidebarModel::collectExpandableIds(const QString& parentId, QSet<QString>& 
     if (!m_store) {
         return;
     }
-    for (const AgentNode& n : m_store->agentChildren(parentId)) {
-        const QList<AgentNode> kids = m_store->agentChildren(n.id);
+    for (const UnitNode& n : m_store->unitChildren(UnitId(parentId))) {
+        const QList<UnitNode> kids = m_store->unitChildren(n.id);
         if (!kids.isEmpty()) {
-            out.insert(n.id);
+            out.insert(n.id.toString());
         }
-        collectExpandableIds(n.id, out);
+        collectExpandableIds(n.id.toString(), out);
     }
 }
 
@@ -415,35 +416,35 @@ void SidebarModel::collapseAll()
     collectExpandableIds(QString(), expandable);
     m_collapsed = expandable;
 
-    // If the selection is now hidden (a collapsed node's descendant), lift it to
+    // If the selection is now hidden (a collapsed unit's descendant), lift it to
     // its top-level root ancestor so a row stays highlighted.
-    if (m_selType == NodeType::Node && m_store) {
-        QString cur = m_selAgent;
+    if (m_selType == NodeType::Unit && m_store) {
+        QString cur = m_selUnit;
         QString root = cur;
         for (int guard = 0; !cur.isEmpty() && guard <= 4096; ++guard) {
             root = cur;
-            cur = m_store->agentNode(cur).parentId;
+            cur = m_store->unit(UnitId(cur)).parentId.toString();
         }
-        if (root != m_selAgent) {
-            m_selAgent = root;
-            emit scopeSelected(static_cast<int>(NodeType::Node), -1, root);
+        if (root != m_selUnit) {
+            m_selUnit = root;
+            emit scopeSelected(static_cast<int>(NodeType::Unit), -1, root);
         }
     }
     rebuild();
 }
 
-void SidebarModel::createRootNode()
+void SidebarModel::createRootUnit()
 {
     if (!m_store) {
         return;
     }
-    // A new top-level node. Kind is cosmetic; default to Orchestrator so it
-    // reads as a fresh fleet/workspace. changed() -> rebuild() runs first.
-    const QString id = m_store->createNode(QString(), AgentNodeKind::Orchestrator);
-    m_selType = NodeType::Node;
+    // A new top-level unit. Kind is cosmetic; default to Orchestrator so it reads
+    // as a fresh fleet/workspace. changed() -> rebuild() runs first.
+    const QString id = m_store->createUnit(UnitId(), UnitKind::Orchestrator).toString();
+    m_selType = NodeType::Unit;
     m_selTag = -1;
-    m_selAgent = id;
-    emit scopeSelected(static_cast<int>(NodeType::Node), -1, id);
+    m_selUnit = id;
+    emit scopeSelected(static_cast<int>(NodeType::Unit), -1, id);
     emitCurrentChanged();
 }
 
@@ -455,7 +456,7 @@ void SidebarModel::createTag()
     const int id = m_store->createTag(tr("New tag"), QStringLiteral("#8e9296"));
     m_selType = NodeType::Tag;
     m_selTag = id;
-    m_selAgent.clear();
+    m_selUnit.clear();
     emit scopeSelected(static_cast<int>(NodeType::Tag), id, {});
     emitCurrentChanged();
 }

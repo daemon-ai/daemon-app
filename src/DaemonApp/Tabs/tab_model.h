@@ -13,7 +13,7 @@
 // `tabId` this model hands out.
 //
 // Tabs are either Transcript tabs (one per open conversation, identified by
-// `conversationId`) or singleton page tabs (Settings now, extensible). The model
+// `sessionId`) or singleton page tabs (Settings now, extensible). The model
 // enforces find-or-create semantics: opening a conversation/page that is already
 // open re-activates its existing tab instead of duplicating it. This maps cleanly
 // onto the daemon's SessionId session tree (a transcript tab == an open session).
@@ -24,7 +24,7 @@ class TabModel : public QAbstractListModel {
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 
 public:
-    // Tab kinds. Transcript tabs carry a conversationId; page kinds are
+    // Tab kinds. Transcript tabs carry a sessionId; page kinds are
     // singletons (at most one open at a time).
     enum Kind {
         Transcript = 0,
@@ -42,7 +42,7 @@ public:
         Routing = 9,
         Cron = 10,
         // Open file tabs: multi-instance (unlike the singleton manager pages),
-        // keyed by (rootId, path) rather than a conversationId.
+        // keyed by (rootId, path) rather than a sessionId.
         File = 11,
         // Per-agent surfaces (multi-instance, keyed by an agent ref == ProfileRef):
         // Memory visualization (Mnemosyne, per-profile bank) and the agent's
@@ -56,14 +56,14 @@ public:
         TabIdRole = Qt::UserRole + 1, // stable, monotonically-assigned id
         KindRole,                     // Kind
         TitleRole,                    // display label
-        ConversationIdRole,           // transcript tabs only; -1 for pages
+        SessionIdRole,           // transcript tabs only; -1 for pages
         ClosableRole,                 // false pins the tab open
         CurrentRole,                  // true for the active row
         PreviewRole,                  // true for the transient "preview" tab
         FilePathRole,                 // File tabs: root-relative path
         FileRootRole,                 // File tabs: owning root id
         DirtyRole,                    // File tabs: unsaved-changes flag
-        AgentRefRole,                 // Memory/Profile tabs: agent ref (ProfileRef)
+        ProfileRole,                 // Memory/Profile tabs: agent ref (ProfileRef)
     };
 
     explicit TabModel(QObject* parent = nullptr);
@@ -76,20 +76,20 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    // Find-or-create a PINNED (permanent) transcript tab for `conversationId`,
+    // Find-or-create a PINNED (permanent) transcript tab for `sessionId`,
     // activate it, and return its stable tab id. An existing tab is reused (title
     // refreshed) and pinned. This is the deliberate "open" path (list double-click
     // / new conversation).
-    Q_INVOKABLE int openTranscript(int conversationId, const QString& title);
+    Q_INVOKABLE int openTranscript(int sessionId, const QString& title);
     // Alias kept for clarity at call sites; identical to openTranscript.
-    Q_INVOKABLE int openTranscriptPinned(int conversationId, const QString& title);
+    Q_INVOKABLE int openTranscriptPinned(int sessionId, const QString& title);
 
-    // VSCode-style transient open: if `conversationId` is already open in any tab,
+    // VSCode-style transient open: if `sessionId` is already open in any tab,
     // activate it; otherwise reuse the single preview tab (reassigning its
     // conversation in place and emitting tabConversationChanged) or, if none
     // exists, append a new preview tab. Returns the active tab's id. The preview
     // tab is replaced by the next preview and becomes permanent via pinTab*.
-    Q_INVOKABLE int previewTranscript(int conversationId, const QString& title);
+    Q_INVOKABLE int previewTranscript(int sessionId, const QString& title);
 
     // Pin (make permanent) the tab at `index` / with `tabId` / the active tab:
     // clears its preview flag so the next preview opens a fresh slot instead of
@@ -102,10 +102,10 @@ public:
     // and return its tab id.
     Q_INVOKABLE int openPage(int kind, const QString& title);
 
-    // Per-agent tabs (multi-instance, keyed by (kind, agentRef)). Used by the
+    // Per-agent tabs (multi-instance, keyed by (kind, profile)). Used by the
     // Memory and Profile kinds so each agent (ProfileRef) gets its own tab;
     // opening the same agent re-activates the existing tab. Returns the tab id.
-    Q_INVOKABLE int openAgentTab(int kind, const QString& agentRef, const QString& title);
+    Q_INVOKABLE int openAgentTab(int kind, const QString& profile, const QString& title);
     [[nodiscard]] Q_INVOKABLE QString agentRefAt(int index) const;
 
     // File tabs (multi-instance, keyed by (rootId, path)). previewFile reuses the
@@ -149,7 +149,7 @@ signals:
     void tabClosed(int tabId);
     // A preview tab was reassigned to a different conversation in place (its tab id
     // is stable). The frontend rebinds the matching per-tab page/session.
-    void tabConversationChanged(int tabId, int conversationId);
+    void tabConversationChanged(int tabId, int sessionId);
     // A preview tab changed kind/path in place (e.g. Transcript <-> File). The
     // frontend must tear down the old per-tab controller/session and rebind.
     void tabKindChanged(int tabId);
@@ -162,24 +162,24 @@ private:
         int id = 0;
         int kind = Transcript;
         QString title;
-        int conversationId = -1;
+        int sessionId = -1;
         bool closable = true;
         bool preview = false; // transient (VSCode-style) tab; at most one exists
         QString rootId;       // File tabs: owning root id
         QString path;         // File tabs: root-relative path
         bool dirty = false;   // File tabs: unsaved changes
-        QString agentRef;     // Memory/Profile tabs: agent ref (ProfileRef)
+        QString profile;     // Memory/Profile tabs: agent ref (ProfileRef)
     };
 
     // Move the active row to `index` (already validated/clamped by the caller),
     // emitting currentIndexChanged + currentTabChanged + the CurrentRole repaint.
     void setCurrentInternal(int index);
     void emitCurrentChanged(); // dataChanged(CurrentRole) across all rows
-    [[nodiscard]] int findTranscriptRow(int conversationId) const;
+    [[nodiscard]] int findTranscriptRow(int sessionId) const;
     [[nodiscard]] int findPageRow(int kind) const;
     [[nodiscard]] int findPreviewRow() const;
     [[nodiscard]] int findFileRow(const QString& rootId, const QString& path) const;
-    [[nodiscard]] int findAgentRow(int kind, const QString& agentRef) const;
+    [[nodiscard]] int findAgentRow(int kind, const QString& profile) const;
 
     QList<Tab> m_tabs;
     int m_currentIndex = -1;

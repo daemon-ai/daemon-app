@@ -5,7 +5,7 @@
 #include <QtQml/qqmlregistration.h>
 
 namespace persistence {
-class IConversationStore;
+class ISessionStore;
 }
 
 // Drives the open conversation: loads its markdown content and appends user
@@ -28,10 +28,10 @@ public:
     [[nodiscard]] QString content() const { return m_content; }
     [[nodiscard]] bool hasConversation() const { return m_currentId >= 0; }
 
-    Q_INVOKABLE void open(int conversationId);
+    Q_INVOKABLE void open(int sessionId);
     Q_INVOKABLE void appendUserText(const QString& text);
     // Create a conversation owned by the given agent node (empty = unassigned).
-    Q_INVOKABLE int createConversation(const QString& agentId = QString());
+    Q_INVOKABLE int createSession(const QString& agentId = QString());
     // Persist an in-place edit of the open conversation from the Transcript.
     // Adopts the markdown locally first so the store's changed() -> refresh()
     // does not echo back as a contentChanged() (which would reload the editor and
@@ -53,7 +53,7 @@ signals:
 private:
     void refresh();
 
-    persistence::IConversationStore* m_store = nullptr;
+    persistence::ISessionStore* m_store = nullptr;
     int m_currentId = -1;
     QString m_content;
 };

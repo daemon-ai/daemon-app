@@ -11,7 +11,7 @@ import DaemonApp.Composer
 // conversation, backed by its OWN ConversationController + ConversationOrchestrator
 // so each tab keeps independent streaming/scroll state while it sits in the
 // background of the pane's StackLayout. The tab host (Conversation.qml) sets
-// `conversationId`; this page owns everything below the tab strip.
+// `sessionId`; this page owns everything below the tab strip.
 Rectangle {
     id: root
 
@@ -19,7 +19,7 @@ Rectangle {
 
     // The conversation this tab shows. Set once by the host when the tab is
     // created; re-assigning re-opens (kept for completeness, tabs are 1:1).
-    property int conversationId: -1
+    property int sessionId: -1
 
     // True while this is the foreground tab (bound by the host). Only the active
     // tab feeds the shared footer status model, so a background tab can keep
@@ -64,15 +64,15 @@ Rectangle {
     // The chip label is the conversation's canonical title (the same string the
     // list shows), not the first line of the markdown content.
     function _resolveTitle() {
-        if (conversationId < 0)
+        if (sessionId < 0)
             return;
-        const t = ConversationStore.title(conversationId);
+        const t = SessionStore.title(sessionId);
         root.titleResolved((t && t.length > 0) ? t : qsTr("Conversation"));
     }
 
     ConversationController {
         id: controller
-        store: ConversationStore
+        store: SessionStore
     }
 
     // The shared submit pipeline: owns the turn (injected into the transcript) and
@@ -113,13 +113,13 @@ Rectangle {
 
     // Open the bound conversation on realize and whenever it changes.
     onConversationIdChanged: {
-        if (conversationId >= 0)
-            controller.open(conversationId);
+        if (sessionId >= 0)
+            controller.open(sessionId);
         root._resolveTitle();
     }
     Component.onCompleted: {
-        if (conversationId >= 0)
-            controller.open(conversationId);
+        if (sessionId >= 0)
+            controller.open(sessionId);
         root._resolveTitle();
     }
 
@@ -145,7 +145,7 @@ Rectangle {
             // Turn-done desktop notification (opt-in): App.notifyGate no-ops while
             // the window is on-screen and active, so this only alerts when hidden.
             if (AppSettings.value("notify/turnDone", false))
-                App.notifyGate(ConversationStore.title(root.conversationId),
+                App.notifyGate(SessionStore.title(root.sessionId),
                                qsTr("The turn finished."));
         }
         function onEventsEmitted(events) { Status.applyTurnEvents(events); }
@@ -183,7 +183,7 @@ Rectangle {
                 return;
             const what = kind === "approval" ? qsTr("needs your approval")
                                              : qsTr("needs a credential");
-            App.notifyGate(ConversationStore.title(root.conversationId),
+            App.notifyGate(SessionStore.title(root.sessionId),
                            qsTr("The turn %1.").arg(what));
         }
     }
@@ -241,7 +241,7 @@ Rectangle {
             Layout.fillWidth: true
             centerContent: UiSettings.centerText
             busy: transcript.busy
-            conversationId: controller.currentId
+            sessionId: controller.currentId
             todosModel: orchestrator.todos
             subagentsModel: orchestrator.subagents
 

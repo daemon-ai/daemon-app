@@ -1,10 +1,10 @@
-#include "persistence/in_memory_conversation_store.h"
+#include "persistence/in_memory_session_store.h"
 #include "sidebar_model.h"
 
 #include <QSignalSpy>
 #include <QtTest>
 
-using persistence::InMemoryConversationStore;
+using persistence::InMemorySessionStore;
 
 // Exercises the flattened agent-tree sidebar model: recursive flattening to
 // arbitrary depth, the per-row tree roles, expand/collapse, and scope selection.
@@ -33,7 +33,7 @@ private slots:
     // unbounded (worker sits three levels under its root).
     void flattensTreeWithDepths()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -53,7 +53,7 @@ private slots:
     // children, leaves do not.
     void exposesTreeRoles()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -64,7 +64,7 @@ private slots:
         QCOMPARE(roleAt<int>(model, acme, SidebarModel::KindRole), 2);
         QCOMPARE(roleAt<int>(model, acme, SidebarModel::NodeTypeRole), 4);
         QVERIFY(roleAt<bool>(model, acme, SidebarModel::HasChildrenRole));
-        QCOMPARE(roleAt<QString>(model, acme, SidebarModel::AgentIdRole), QStringLiteral("n-acme"));
+        QCOMPARE(roleAt<QString>(model, acme, SidebarModel::UnitIdRole), QStringLiteral("n-acme"));
 
         QCOMPARE(roleAt<int>(model, coder, SidebarModel::KindRole), 0);
         QVERIFY(!roleAt<bool>(model, coder, SidebarModel::HasChildrenRole));
@@ -73,7 +73,7 @@ private slots:
     // Collapsing a node hides its whole subtree; expanding restores it.
     void toggleExpandHidesAndRestoresSubtree()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -99,7 +99,7 @@ private slots:
     // agent id carried through).
     void activateEmitsNodeScope()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -109,14 +109,14 @@ private slots:
 
         QCOMPARE(spy.count(), 1);
         const QList<QVariant> args = spy.takeFirst();
-        QCOMPARE(args.at(0).toInt(), 4); // NodeType::Node
+        QCOMPARE(args.at(0).toInt(), 4); // NodeType::Unit
         QCOMPARE(args.at(2).toString(), QStringLiteral("n-acme"));
     }
 
     // Separator rows (Fleet / Tags headers) are not selectable and emit nothing.
     void separatorsAreNotSelectable()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -134,7 +134,7 @@ private slots:
     // contain the selection rebuilds the list but must leave Coder highlighted.
     void currentRoleTracksIdentityAcrossRebuild()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -156,7 +156,7 @@ private slots:
     // collapsed node (VSCode behavior) and re-emits its scope.
     void collapsingAncestorMovesSelectionUp()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -178,7 +178,7 @@ private slots:
     // separators; Enter re-emits the current scope.
     void keyboardNavigationMovesSelection()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -201,7 +201,7 @@ private slots:
     // Right expands a collapsed node then descends; Left collapses then climbs.
     void arrowKeysExpandCollapseAndTraverse()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -227,7 +227,7 @@ private slots:
     // Collapse-all hides every subtree (roots remain); expand-all restores them.
     void expandAllAndCollapseAllToggleWholeTree()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -247,7 +247,7 @@ private slots:
     // collapseAll while a deep node is selected lifts the highlight to its root.
     void collapseAllLiftsSelectionToRoot()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
@@ -261,24 +261,24 @@ private slots:
     // Creating a root node adds a top-level row and selects it.
     void createRootNodeAddsAndSelects()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 
         QSignalSpy spy(&model, &SidebarModel::scopeSelected);
-        model.createRootNode();
+        model.createRootUnit();
 
         const int created = findRow(model, QStringLiteral("New fleet"));
         QVERIFY(created >= 0);
         QCOMPARE(roleAt<int>(model, created, SidebarModel::DepthRole), 0);
         QVERIFY(roleAt<bool>(model, created, SidebarModel::CurrentRole));
-        QCOMPARE(spy.takeLast().at(0).toInt(), 4); // NodeType::Node
+        QCOMPARE(spy.takeLast().at(0).toInt(), 4); // NodeType::Unit
     }
 
     // Creating a tag adds a tag row and selects it.
     void createTagAddsAndSelects()
     {
-        InMemoryConversationStore store;
+        InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
 

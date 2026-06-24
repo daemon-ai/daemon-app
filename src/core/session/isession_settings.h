@@ -15,7 +15,7 @@ class ISessionSettings : public QObject {
     // The conversation these overrides apply to. Setting it switches the active
     // per-conversation state (so the composer popover reflects the focused chat,
     // not a single global), emitting changed() so bound views refresh.
-    Q_PROPERTY(int conversationId READ conversationId WRITE setConversationId NOTIFY
+    Q_PROPERTY(int sessionId READ sessionId WRITE setConversationId NOTIFY
                    conversationIdChanged)
     Q_PROPERTY(QString profile READ profile WRITE setProfile NOTIFY changed)
     Q_PROPERTY(QString effort READ effort WRITE setEffort NOTIFY changed)
@@ -26,7 +26,7 @@ public:
     using QObject::QObject;
     ~ISessionSettings() override = default;
 
-    [[nodiscard]] virtual int conversationId() const = 0;
+    [[nodiscard]] virtual int sessionId() const = 0;
     virtual void setConversationId(int id) = 0;
 
     [[nodiscard]] virtual QString profile() const = 0;

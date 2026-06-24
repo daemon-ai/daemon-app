@@ -32,8 +32,8 @@ QVariant TabModel::data(const QModelIndex& index, int role) const
     case TitleRole:
     case Qt::DisplayRole:
         return tab.title;
-    case ConversationIdRole:
-        return tab.conversationId;
+    case SessionIdRole:
+        return tab.sessionId;
     case ClosableRole:
         return tab.closable;
     case CurrentRole:
@@ -46,8 +46,8 @@ QVariant TabModel::data(const QModelIndex& index, int role) const
         return tab.rootId;
     case DirtyRole:
         return tab.dirty;
-    case AgentRefRole:
-        return tab.agentRef;
+    case ProfileRole:
+        return tab.profile;
     default:
         return {};
     }
@@ -59,20 +59,20 @@ QHash<int, QByteArray> TabModel::roleNames() const
         { TabIdRole, "tabId" },
         { KindRole, "kind" },
         { TitleRole, "title" },
-        { ConversationIdRole, "conversationId" },
+        { SessionIdRole, "sessionId" },
         { ClosableRole, "closable" },
         { CurrentRole, "current" },
         { PreviewRole, "preview" },
         { FilePathRole, "filePath" },
         { FileRootRole, "fileRoot" },
         { DirtyRole, "dirty" },
-        { AgentRefRole, "agentRef" },
+        { ProfileRole, "profile" },
     };
 }
 
-int TabModel::openTranscript(int conversationId, const QString& title)
+int TabModel::openTranscript(int sessionId, const QString& title)
 {
-    const int existing = findTranscriptRow(conversationId);
+    const int existing = findTranscriptRow(sessionId);
     if (existing >= 0) {
         // Reuse the open tab; refresh its title if the caller supplies a new one,
         // and pin it (a deliberate open promotes a preview tab to permanent).
@@ -99,7 +99,7 @@ int TabModel::openTranscript(int conversationId, const QString& title)
     tab.id = m_nextId++;
     tab.kind = Transcript;
     tab.title = title.isEmpty() ? QStringLiteral("Conversation") : title;
-    tab.conversationId = conversationId;
+    tab.sessionId = sessionId;
     tab.closable = true;
     tab.preview = false;
     m_tabs.append(tab);
@@ -110,15 +110,15 @@ int TabModel::openTranscript(int conversationId, const QString& title)
     return tab.id;
 }
 
-int TabModel::openTranscriptPinned(int conversationId, const QString& title)
+int TabModel::openTranscriptPinned(int sessionId, const QString& title)
 {
-    return openTranscript(conversationId, title);
+    return openTranscript(sessionId, title);
 }
 
-int TabModel::previewTranscript(int conversationId, const QString& title)
+int TabModel::previewTranscript(int sessionId, const QString& title)
 {
     // Already open anywhere: just activate it (do not change its pinned state).
-    const int existing = findTranscriptRow(conversationId);
+    const int existing = findTranscriptRow(sessionId);
     if (existing >= 0) {
         activate(existing);
         return m_tabs.at(existing).id;
@@ -130,18 +130,18 @@ int TabModel::previewTranscript(int conversationId, const QString& title)
         Tab& tab = m_tabs[previewRow];
         const bool kindChanged = tab.kind != Transcript;
         tab.kind = Transcript;
-        tab.conversationId = conversationId;
+        tab.sessionId = sessionId;
         tab.rootId.clear();
         tab.path.clear();
         tab.dirty = false;
         tab.title = title.isEmpty() ? QStringLiteral("Conversation") : title;
         const QModelIndex idx = index(previewRow, 0);
         emit dataChanged(idx, idx,
-                         { KindRole, TitleRole, Qt::DisplayRole, ConversationIdRole, FilePathRole,
+                         { KindRole, TitleRole, Qt::DisplayRole, SessionIdRole, FilePathRole,
                            FileRootRole, DirtyRole });
         if (kindChanged)
             emit tabKindChanged(tab.id);
-        emit tabConversationChanged(tab.id, conversationId);
+        emit tabConversationChanged(tab.id, sessionId);
         // Make sure it is the active tab (it may not have been).
         if (m_currentIndex != previewRow) {
             setCurrentInternal(previewRow);
@@ -158,7 +158,7 @@ int TabModel::previewTranscript(int conversationId, const QString& title)
     tab.id = m_nextId++;
     tab.kind = Transcript;
     tab.title = title.isEmpty() ? QStringLiteral("Conversation") : title;
-    tab.conversationId = conversationId;
+    tab.sessionId = sessionId;
     tab.closable = true;
     tab.preview = true;
     m_tabs.append(tab);
@@ -203,7 +203,7 @@ int TabModel::openPage(int kind, const QString& title)
     tab.id = m_nextId++;
     tab.kind = kind;
     tab.title = title.isEmpty() ? QStringLiteral("Page") : title;
-    tab.conversationId = -1;
+    tab.sessionId = -1;
     tab.closable = true;
     m_tabs.append(tab);
     endInsertRows();
@@ -213,9 +213,9 @@ int TabModel::openPage(int kind, const QString& title)
     return tab.id;
 }
 
-int TabModel::openAgentTab(int kind, const QString& agentRef, const QString& title)
+int TabModel::openAgentTab(int kind, const QString& profile, const QString& title)
 {
-    const int existing = findAgentRow(kind, agentRef);
+    const int existing = findAgentRow(kind, profile);
     if (existing >= 0) {
         if (!title.isEmpty() && m_tabs.at(existing).title != title) {
             m_tabs[existing].title = title;
@@ -232,9 +232,9 @@ int TabModel::openAgentTab(int kind, const QString& agentRef, const QString& tit
     tab.id = m_nextId++;
     tab.kind = kind;
     tab.title = title.isEmpty() ? QStringLiteral("Agent") : title;
-    tab.conversationId = -1;
+    tab.sessionId = -1;
     tab.closable = true;
-    tab.agentRef = agentRef;
+    tab.profile = profile;
     m_tabs.append(tab);
     endInsertRows();
     emit countChanged();
@@ -245,7 +245,7 @@ int TabModel::openAgentTab(int kind, const QString& agentRef, const QString& tit
 
 QString TabModel::agentRefAt(int index) const
 {
-    return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).agentRef : QString();
+    return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).profile : QString();
 }
 
 int TabModel::previewFile(const QString& rootId, const QString& path, const QString& title)
@@ -265,14 +265,14 @@ int TabModel::previewFile(const QString& rootId, const QString& path, const QStr
         Tab& tab = m_tabs[previewRow];
         const bool kindChanged = tab.kind != File;
         tab.kind = File;
-        tab.conversationId = -1;
+        tab.sessionId = -1;
         tab.rootId = rootId;
         tab.path = path;
         tab.title = label;
         tab.dirty = false;
         const QModelIndex idx = index(previewRow, 0);
         emit dataChanged(idx, idx,
-                         { KindRole, TitleRole, Qt::DisplayRole, ConversationIdRole, FilePathRole,
+                         { KindRole, TitleRole, Qt::DisplayRole, SessionIdRole, FilePathRole,
                            FileRootRole, DirtyRole });
         if (kindChanged)
             emit tabKindChanged(tab.id);
@@ -460,7 +460,7 @@ int TabModel::conversationIdAt(int index) const
     if (index < 0 || index >= m_tabs.size()) {
         return -1;
     }
-    return m_tabs.at(index).conversationId;
+    return m_tabs.at(index).sessionId;
 }
 
 QString TabModel::titleAt(int index) const
@@ -505,14 +505,14 @@ void TabModel::emitCurrentChanged()
     emit dataChanged(index(0, 0), index(static_cast<int>(m_tabs.size()) - 1, 0), { CurrentRole });
 }
 
-int TabModel::findTranscriptRow(int conversationId) const
+int TabModel::findTranscriptRow(int sessionId) const
 {
-    if (conversationId < 0) {
+    if (sessionId < 0) {
         return -1;
     }
     for (int i = 0; i < m_tabs.size(); ++i) {
         const Tab& tab = m_tabs.at(i);
-        if (tab.kind == Transcript && tab.conversationId == conversationId) {
+        if (tab.kind == Transcript && tab.sessionId == sessionId) {
             return i;
         }
     }
@@ -550,11 +550,11 @@ int TabModel::findFileRow(const QString& rootId, const QString& path) const
     return -1;
 }
 
-int TabModel::findAgentRow(int kind, const QString& agentRef) const
+int TabModel::findAgentRow(int kind, const QString& profile) const
 {
     for (int i = 0; i < m_tabs.size(); ++i) {
         const Tab& tab = m_tabs.at(i);
-        if (tab.kind == kind && tab.agentRef == agentRef) {
+        if (tab.kind == kind && tab.profile == profile) {
             return i;
         }
     }

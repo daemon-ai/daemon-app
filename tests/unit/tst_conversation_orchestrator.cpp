@@ -3,7 +3,7 @@
 #include "todo_list_model.h"
 #include "turn_controller.h"
 
-#include "persistence/in_memory_conversation_store.h"
+#include "persistence/in_memory_session_store.h"
 
 #include <QSignalSpy>
 #include <QtTest>
@@ -35,10 +35,10 @@ private slots:
 
     void submitAppendsUserTextToConversation()
     {
-        persistence::InMemoryConversationStore store;
+        persistence::InMemorySessionStore store;
         ConversationController controller;
         controller.setStore(&store);
-        const int id = controller.createConversation(QString());
+        const int id = controller.createSession(QString());
         QVERIFY(id >= 0);
 
         ConversationOrchestrator orch;
@@ -54,7 +54,7 @@ private slots:
 
     void invokeCommandNewCreatesConversation()
     {
-        persistence::InMemoryConversationStore store;
+        persistence::InMemorySessionStore store;
         ConversationController controller;
         controller.setStore(&store);
         QVERIFY(!controller.hasConversation());

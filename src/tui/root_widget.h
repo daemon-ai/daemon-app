@@ -56,7 +56,7 @@
 #include <QVariantMap>
 
 namespace persistence {
-class InMemoryConversationStore;
+class InMemorySessionStore;
 }
 namespace fs {
 class IFsService;
@@ -437,16 +437,16 @@ private:
     // --- Tabs -----------------------------------------------------------------
     // Transient open (arrow nav / single click): load the conversation into the
     // VSCode-style preview tab (reused on the next preview).
-    void previewConversationTab(int conversationId);
+    void previewConversationTab(int sessionId);
     // Deliberate open (Enter / double-activate): a permanent, pinned tab.
-    void openConversationPinnedTab(int conversationId);
+    void openConversationPinnedTab(int sessionId);
     // Create a brand-new conversation in the store and open it in a pinned tab (Ctrl+T).
     void newTranscriptTab();
     // Close the active tab (Ctrl+W / tab "x").
     void closeCurrentTab();
     // A preview tab was reassigned to a different conversation: rebind its existing
-    // session to `conversationId` (re-open + reload) instead of spawning a new one.
-    void rebindSession(int tabId, int conversationId);
+    // session to `sessionId` (re-open + reload) instead of spawning a new one.
+    void rebindSession(int tabId, int sessionId);
     // Lazily create the per-tab session for a transcript tab id (no-op if present
     // or if the tab is a non-transcript page).
     TabSession* ensureSession(int tabId);
@@ -477,11 +477,11 @@ private:
     void updateSearchCounter();
 
     // Reused, unchanged from the GUI build.
-    persistence::InMemoryConversationStore* m_store = nullptr;
+    persistence::InMemorySessionStore* m_store = nullptr;
     SidebarModel* m_sidebar = nullptr;
     ConversationsListModel* m_list = nullptr;
     // Shared composer FSM (draft/queue/history/submit), identical to the GUI. Its
-    // conversationId is switched to the active tab; its intents are dispatched to
+    // sessionId is switched to the active tab; its intents are dispatched to
     // the active session's orchestrator.
     ComposerSessionController* m_composerSession = nullptr;
     // The shared status-bar model (DaemonApp.StatusModel) - one footer for the app.

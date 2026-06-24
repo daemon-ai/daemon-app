@@ -17,9 +17,9 @@ Rectangle {
     color: Theme.listBackground
 
     // Single-click / Enter: activate (opens in the transient preview tab).
-    signal conversationActivated(int conversationId)
+    signal conversationActivated(int sessionId)
     // Double-click: open as a permanent (pinned) tab.
-    signal conversationOpened(int conversationId)
+    signal conversationOpened(int sessionId)
     signal toggleSidebarRequested()
 
     property bool searchActive: false
@@ -46,7 +46,7 @@ Rectangle {
 
     ConversationsListModel {
         id: convModel
-        store: ConversationStore
+        store: SessionStore
     }
 
     // --- Row actions (right-click): rename / pin / export / delete ----------
@@ -55,8 +55,8 @@ Rectangle {
         property int targetId: -1
         property bool targetPinned: false
 
-        function openFor(conversationId, pinned) {
-            rowMenu.targetId = conversationId;
+        function openFor(sessionId, pinned) {
+            rowMenu.targetId = sessionId;
             rowMenu.targetPinned = pinned;
             popup();
         }
@@ -67,15 +67,15 @@ Rectangle {
         }
         Kit.MenuItem {
             text: rowMenu.targetPinned ? qsTr("Unpin") : qsTr("Pin")
-            onTriggered: ConversationStore.setPinned(rowMenu.targetId, !rowMenu.targetPinned)
+            onTriggered: SessionStore.setPinned(rowMenu.targetId, !rowMenu.targetPinned)
         }
         Kit.MenuItem {
             text: qsTr("Move up")
-            onTriggered: ConversationStore.moveConversation(rowMenu.targetId, -1)
+            onTriggered: SessionStore.moveSession(rowMenu.targetId, -1)
         }
         Kit.MenuItem {
             text: qsTr("Move down")
-            onTriggered: ConversationStore.moveConversation(rowMenu.targetId, 1)
+            onTriggered: SessionStore.moveSession(rowMenu.targetId, 1)
         }
         Kit.MenuItem {
             text: qsTr("Export\u2026")
@@ -95,16 +95,16 @@ Rectangle {
         width: 380
         acceptText: qsTr("Rename")
 
-        function openFor(conversationId) {
-            renameDialog.targetId = conversationId;
-            renameField.text = ConversationStore.title(conversationId);
+        function openFor(sessionId) {
+            renameDialog.targetId = sessionId;
+            renameField.text = SessionStore.title(sessionId);
             open();
             renameField.forceActiveFocus();
             renameField.selectAll();
         }
         onAccepted: {
             if (renameDialog.targetId >= 0 && renameField.text.trim().length > 0)
-                ConversationStore.renameConversation(renameDialog.targetId, renameField.text.trim());
+                SessionStore.renameSession(renameDialog.targetId, renameField.text.trim());
         }
         contentItem: Kit.TextField {
             id: renameField
@@ -122,13 +122,13 @@ Rectangle {
         acceptText: qsTr("Delete")
         destructive: true
 
-        function openFor(conversationId) {
-            deleteDialog.targetId = conversationId;
+        function openFor(sessionId) {
+            deleteDialog.targetId = sessionId;
             open();
         }
         onAccepted: {
             if (deleteDialog.targetId >= 0)
-                ConversationStore.deleteConversation(deleteDialog.targetId);
+                SessionStore.deleteSession(deleteDialog.targetId);
         }
         contentItem: QQC.Label {
             text: qsTr("Permanently delete this conversation? This cannot be undone.")
@@ -147,15 +147,15 @@ Rectangle {
         nameFilters: [qsTr("JSON files (*.json)"), qsTr("All files (*)")]
         defaultSuffix: "json"
 
-        function openFor(conversationId) {
-            exportDialog.targetId = conversationId;
-            const t = ConversationStore.title(conversationId);
+        function openFor(sessionId) {
+            exportDialog.targetId = sessionId;
+            const t = SessionStore.title(sessionId);
             exportDialog.currentFile = "file:" + (t && t.length > 0 ? t : "conversation") + ".json";
             open();
         }
         onAccepted: {
             if (exportDialog.targetId >= 0)
-                Exporter.writeFile(selectedFile, Exporter.toJson(ConversationStore, exportDialog.targetId));
+                Exporter.writeFile(selectedFile, Exporter.toJson(SessionStore, exportDialog.targetId));
         }
     }
 
@@ -286,8 +286,8 @@ Rectangle {
                     required property string title
                     required property string snippet
                     required property var modified
-                    required property string agentName
-                    required property int agentKind
+                    required property string unitName
+                    required property int unitKind
                     required property var tagNames
                     required property var tagColors
                     required property bool current
@@ -383,19 +383,19 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.topMargin: 14
                             spacing: Theme.spacing
-                            visible: del.agentName !== "" || (del.tagNames && del.tagNames.length > 0)
+                            visible: del.unitName !== "" || (del.tagNames && del.tagNames.length > 0)
 
                             Row {
-                                visible: del.agentName !== ""
+                                visible: del.unitName !== ""
                                 spacing: 5
                                 Kit.Glyph {
-                                    glyph: root.kindIcon(del.agentKind)
+                                    glyph: root.kindIcon(del.unitKind)
                                     font.pointSize: 10 + Theme.pointSizeOffset
                                     color: Theme.listSnippet
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 QQC.Label {
-                                    text: del.agentName
+                                    text: del.unitName
                                     color: Theme.listSnippet
                                     font.family: FontIcons.display
                                     font.pixelSize: 11

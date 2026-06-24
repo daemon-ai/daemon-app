@@ -31,7 +31,7 @@ class IModelCatalog;
 class ComposerSessionController : public QObject {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(int conversationId READ conversationId WRITE setConversationId NOTIFY
+    Q_PROPERTY(int sessionId READ sessionId WRITE setConversationId NOTIFY
                    conversationIdChanged)
     Q_PROPERTY(bool busy READ busy WRITE setBusy NOTIFY busyChanged)
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
@@ -93,7 +93,7 @@ class ComposerSessionController : public QObject {
 public:
     explicit ComposerSessionController(QObject* parent = nullptr);
 
-    [[nodiscard]] int conversationId() const { return m_conversationId; }
+    [[nodiscard]] int sessionId() const { return m_conversationId; }
     void setConversationId(int id);
 
     [[nodiscard]] bool busy() const { return m_busy; }

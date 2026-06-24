@@ -35,10 +35,10 @@ public:
     // that carry no scope icon). Accepts int so QML can pass the role value.
     Q_INVOKABLE [[nodiscard]] QString scopeIconKey(int nodeType) const;
 
-    // domain::AgentNodeKind -> node icon key ("sitemap", "server", "robot").
+    // domain::UnitKind -> node icon key ("sitemap", "server", "robot").
     Q_INVOKABLE [[nodiscard]] QString agentKindIconKey(int kind) const;
 
-    // domain::AgentState -> semantic tone.
+    // domain::UnitState -> semantic tone.
     Q_INVOKABLE [[nodiscard]] StateTone agentStateTone(int state) const;
 
     // Static cores: callable from non-QML C++ (the TUI) without an instance.

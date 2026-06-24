@@ -50,7 +50,7 @@ Rectangle {
 
     SidebarModel {
         id: sidebarModel
-        store: ConversationStore
+        store: SessionStore
     }
 
     ColumnLayout {
@@ -113,7 +113,7 @@ Rectangle {
                     required property int count
                     required property int nodeType
                     required property int nodeId
-                    required property string agentId
+                    required property string unitId
                     required property bool isSeparator
                     required property bool selectable
                     required property string color
@@ -192,7 +192,7 @@ Rectangle {
                             iconPointSize: 12
                             iconColor: Theme.addButton
                             tooltipText: del.nodeType === 2 ? qsTr("New root node") : qsTr("New tag")
-                            onClicked: del.nodeType === 2 ? sidebarModel.createRootNode()
+                            onClicked: del.nodeType === 2 ? sidebarModel.createRootUnit()
                                                           : sidebarModel.createTag()
                         }
 

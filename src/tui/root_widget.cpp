@@ -16,7 +16,7 @@
 #include "tab_model.h"
 #include "turn_controller.h"
 
-#include "persistence/sqlite_conversation_store.h"
+#include "persistence/sqlite_session_store.h"
 
 #include "fs_explorer_model.h"
 #include "app/code_editor_controller.h"
@@ -105,7 +105,7 @@ void emitDesktopNotification(const QString& title, const QString& body)
 // behind pointers in the map and are never moved).
 struct TabSession {
     int tabId = -1;
-    int conversationId = -1;
+    int sessionId = -1;
     ConversationController* controller = nullptr;
     ConversationOrchestrator* orchestrator = nullptr; // owns `turn`
     TurnController* turn = nullptr;
@@ -966,7 +966,7 @@ RootWidget::RootWidget()
 
     // The reused layer: store + view models, wired exactly as in the GUI. None
     // of this depends on Tui Widgets - the same objects back the QML frontend.
-    m_store = new persistence::SqliteConversationStore(QString(), this);
+    m_store = new persistence::SqliteSessionStore(QString(), this);
 
     m_sidebar = new SidebarModel(this);
     m_sidebar->setStore(m_store);
@@ -977,7 +977,7 @@ RootWidget::RootWidget()
     // The shared composer FSM - the same C++ class the QML composer drives. The
     // TUI binds its single-line input to it, gaining draft persistence, history,
     // and the submit/queue/drain logic without re-implementing any of it. One
-    // composer is shared across tabs; its conversationId follows the active tab and
+    // composer is shared across tabs; its sessionId follows the active tab and
     // its intents are dispatched to the active tab's orchestrator.
     m_composerSession = new ComposerSessionController(this);
 
@@ -1006,7 +1006,7 @@ RootWidget::RootWidget()
     // A preview tab was reassigned to another conversation: rebind its session
     // in place rather than spawning a new one.
     connect(m_tabModel, &TabModel::tabConversationChanged, this,
-            [this](int tabId, int conversationId) { rebindSession(tabId, conversationId); });
+            [this](int tabId, int sessionId) { rebindSession(tabId, sessionId); });
     connect(m_tabModel, &TabModel::tabKindChanged, this, [this](int tabId) {
         destroySession(tabId);
     });
@@ -1748,7 +1748,7 @@ void RootWidget::wireViews()
             QStringLiteral("Delete conversation"),
             QStringLiteral("Permanently delete this conversation?"), this);
         connect(confirm, &ConfirmDialog::confirmed, this,
-                [this, id] { m_store->deleteConversation(id); });
+                [this, id] { m_store->deleteSession(id); });
     });
     connect(m_listView, &ConversationListView::exportRequested, this, [this](int row) {
         const int id = m_list->idAt(row);
@@ -1771,14 +1771,14 @@ void RootWidget::wireViews()
                                             m_store->title(id), /*masked=*/false, this);
         connect(dialog, &TextPromptDialog::submitted, this, [this, id](const QString& text) {
             if (!text.trimmed().isEmpty()) {
-                m_store->renameConversation(id, text.trimmed());
+                m_store->renameSession(id, text.trimmed());
             }
         });
     });
     connect(m_listView, &ConversationListView::moveRequested, this, [this](int row, int delta) {
         const int id = m_list->idAt(row);
         if (id >= 0) {
-            m_store->moveConversation(id, delta);
+            m_store->moveSession(id, delta);
         }
     });
 
@@ -1889,13 +1889,13 @@ void RootWidget::wireViews()
                     if (m_active == nullptr || !m_active->controller->hasConversation()) {
                         return;
                     }
-                    const int id = m_active->conversationId;
+                    const int id = m_active->sessionId;
                     auto* dialog = new TextPromptDialog(QStringLiteral("Rename conversation"),
                                                         m_store->title(id), /*masked=*/false, this);
                     connect(dialog, &TextPromptDialog::submitted, this,
                             [this, id](const QString& text) {
                                 if (!text.trimmed().isEmpty()) {
-                                    m_store->renameConversation(id, text.trimmed());
+                                    m_store->renameSession(id, text.trimmed());
                                 }
                             });
                     return;
@@ -1904,7 +1904,7 @@ void RootWidget::wireViews()
                     if (m_active == nullptr || !m_active->controller->hasConversation()) {
                         return;
                     }
-                    const int id = m_active->conversationId;
+                    const int id = m_active->sessionId;
                     QString name = m_store->title(id);
                     if (name.isEmpty()) {
                         name = QStringLiteral("conversation");
@@ -2055,28 +2055,28 @@ void RootWidget::wireViews()
 
 // --- Tabs --------------------------------------------------------------------
 
-void RootWidget::previewConversationTab(int conversationId)
+void RootWidget::previewConversationTab(int sessionId)
 {
     if (m_tabModel == nullptr) {
         return;
     }
-    QString title = m_store->title(conversationId);
+    QString title = m_store->title(sessionId);
     if (title.isEmpty()) {
-        title = titleForContent(m_store->content(conversationId));
+        title = titleForContent(m_store->content(sessionId));
     }
-    m_tabModel->previewTranscript(conversationId, title);
+    m_tabModel->previewTranscript(sessionId, title);
 }
 
-void RootWidget::openConversationPinnedTab(int conversationId)
+void RootWidget::openConversationPinnedTab(int sessionId)
 {
     if (m_tabModel == nullptr) {
         return;
     }
-    QString title = m_store->title(conversationId);
+    QString title = m_store->title(sessionId);
     if (title.isEmpty()) {
-        title = titleForContent(m_store->content(conversationId));
+        title = titleForContent(m_store->content(sessionId));
     }
-    m_tabModel->openTranscriptPinned(conversationId, title);
+    m_tabModel->openTranscriptPinned(sessionId, title);
 }
 
 void RootWidget::newTranscriptTab()
@@ -2084,7 +2084,7 @@ void RootWidget::newTranscriptTab()
     if (m_store == nullptr || m_tabModel == nullptr) {
         return;
     }
-    const int id = m_store->createConversation(QString());
+    const int id = m_store->createSession(domain::UnitId());
     m_tabModel->openTranscriptPinned(id, QStringLiteral("New conversation"));
     // A new tab is a natural place to start typing.
     if (m_composer != nullptr) {
@@ -2092,20 +2092,20 @@ void RootWidget::newTranscriptTab()
     }
 }
 
-void RootWidget::rebindSession(int tabId, int conversationId)
+void RootWidget::rebindSession(int tabId, int sessionId)
 {
     auto it = m_sessions.find(tabId);
     if (it == m_sessions.end()) {
         return; // no session yet; ensureSession will open the right conversation
     }
     TabSession* s = it.value();
-    if (s->conversationId == conversationId) {
+    if (s->sessionId == sessionId) {
         return;
     }
-    s->conversationId = conversationId;
-    s->controller->open(conversationId);
+    s->sessionId = sessionId;
+    s->controller->open(sessionId);
     if (s == m_active) {
-        m_composerSession->setConversationId(conversationId);
+        m_composerSession->setConversationId(sessionId);
         refreshTranscript();
         updateTodos();
         updateSubagents();
@@ -2185,7 +2185,7 @@ TabSession* RootWidget::ensureSession(int tabId)
 
     auto* s = new TabSession();
     s->tabId = tabId;
-    s->conversationId = m_tabModel->conversationIdAt(row);
+    s->sessionId = m_tabModel->conversationIdAt(row);
     s->controller = new ConversationController();
     s->controller->setStore(m_store);
     s->orchestrator = new ConversationOrchestrator();
@@ -2194,7 +2194,7 @@ TabSession* RootWidget::ensureSession(int tabId)
     s->host = new InteractiveTurnHost(&s->doc, &s->ingest);
     m_sessions.insert(tabId, s);
     wireSession(s);
-    s->controller->open(s->conversationId);
+    s->controller->open(s->sessionId);
     return s;
 }
 
@@ -2232,7 +2232,7 @@ void RootWidget::wireSession(TabSession* s)
             if (m_appSettings != nullptr
                 && m_appSettings->value(QStringLiteral("notify/turnDone"), false).toBool()) {
                 const QString convTitle = s->controller->hasConversation()
-                    ? m_store->title(s->conversationId)
+                    ? m_store->title(s->sessionId)
                     : QStringLiteral("daemon");
                 emitDesktopNotification(convTitle, QStringLiteral("The turn finished."));
             }
@@ -2264,7 +2264,7 @@ void RootWidget::wireSession(TabSession* s)
             terminal()->setTitle(QStringLiteral("\u25cf daemon \u2014 needs ") + what);
         }
         const QString convTitle = (m_active != nullptr && m_active->controller->hasConversation())
-            ? m_store->title(m_active->conversationId)
+            ? m_store->title(m_active->sessionId)
             : QStringLiteral("daemon");
         emitDesktopNotification(convTitle, QStringLiteral("The turn needs your ") + what
                                     + QStringLiteral("."));
@@ -2388,7 +2388,7 @@ void RootWidget::activateTab(int tabId)
         if (m_composerChrome != nullptr) {
             m_composerChrome->setTurn(s->turn);
         }
-        m_composerSession->setConversationId(s->conversationId);
+        m_composerSession->setConversationId(s->sessionId);
         m_composerSession->setBusy(s->turn->active());
         m_status->setBusy(s->turn->active());
         // Resync the elapsed timer to THIS tab's live turn (mirrors the GUI's
@@ -2790,11 +2790,11 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event)
 void RootWidget::openSessionSettingsOverlay()
 {
     // Only meaningful over a transcript tab; bind the per-conversation overrides to
-    // the focused chat first (parity with ComposerControls setting conversationId).
+    // the focused chat first (parity with ComposerControls setting sessionId).
     if (m_active == nullptr || m_sessionSettings == nullptr) {
         return;
     }
-    m_sessionSettings->setConversationId(m_active->conversationId);
+    m_sessionSettings->setConversationId(m_active->sessionId);
     session::ISessionSettings* ss = m_sessionSettings;
 
     auto* dlg = new Tui::ZDialog(this);
@@ -2872,7 +2872,7 @@ void RootWidget::openCheckpointsOverlay()
     if (m_active == nullptr || m_checkpoints == nullptr) {
         return;
     }
-    m_checkpoints->setConversationId(m_active->conversationId);
+    m_checkpoints->setConversationId(m_active->sessionId);
     auto* model = qobject_cast<uimodels::VariantListModel*>(m_checkpoints->checkpoints());
     const QList<QVariantMap> rows = model != nullptr ? model->rows() : QList<QVariantMap>{};
 

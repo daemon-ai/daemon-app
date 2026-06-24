@@ -1,9 +1,9 @@
 add_library(da_persistence STATIC
-    iconversation_store.h
-    in_memory_conversation_store.h
-    in_memory_conversation_store.cpp
-    sqlite_conversation_store.h
-    sqlite_conversation_store.cpp
+    isession_store.h
+    in_memory_session_store.h
+    in_memory_session_store.cpp
+    sqlite_session_store.h
+    sqlite_session_store.cpp
 )
 add_library(daemon-app::persistence ALIAS da_persistence)
 

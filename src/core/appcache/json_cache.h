@@ -5,7 +5,7 @@
 // snapshot on construct and writes it back on every mutation, so the GUI/TUI
 // keep their seeded state across restarts while there is no daemon to be the
 // source of truth. JSON under the app data dir keeps the files human-inspectable
-// and matches the location SqliteConversationStore already uses.
+// and matches the location SqliteSessionStore already uses.
 //
 // Header-only (inline, no .cpp) so the five independent mock libraries can each
 // include it without a shared link dependency. When the daemon becomes

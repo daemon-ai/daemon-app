@@ -28,7 +28,7 @@ private slots:
         const int id0 = model.openTranscript(10, QStringLiteral("Alpha"));
         QCOMPARE(model.count(), 1);
         QCOMPARE(model.currentIndex(), 0);
-        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), 10);
+        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), 10);
         QCOMPARE(roleAt<QString>(model, 0, TabModel::TitleRole), QStringLiteral("Alpha"));
         QVERIFY(roleAt<bool>(model, 0, TabModel::CurrentRole));
 
@@ -71,7 +71,7 @@ private slots:
         const int settings = model.openPage(TabModel::Settings, QStringLiteral("Settings"));
         QCOMPARE(model.count(), 2);
         QCOMPARE(roleAt<int>(model, 1, TabModel::KindRole), int(TabModel::Settings));
-        QCOMPARE(roleAt<int>(model, 1, TabModel::ConversationIdRole), -1);
+        QCOMPARE(roleAt<int>(model, 1, TabModel::SessionIdRole), -1);
 
         const int again = model.openPage(TabModel::Settings, QStringLiteral("Settings"));
         QCOMPARE(again, settings);
@@ -204,7 +204,7 @@ private slots:
         const int id1 = model.previewTranscript(20, QStringLiteral("Beta"));
         QCOMPARE(id1, id0);                 // same (stable) tab id
         QCOMPARE(model.count(), 1);         // reused, not appended
-        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), 20);
+        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), 20);
         QCOMPARE(roleAt<QString>(model, 0, TabModel::TitleRole), QStringLiteral("Beta"));
         QVERIFY(roleAt<bool>(model, 0, TabModel::PreviewRole)); // still preview
 
@@ -220,7 +220,7 @@ private slots:
         model.previewTranscript(20, QStringLiteral("Beta"));
         model.previewTranscript(30, QStringLiteral("Gamma"));
         QCOMPARE(model.count(), 1);
-        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), 30);
+        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), 30);
     }
 
     // Previewing a conversation that is already open in some tab activates that
@@ -239,7 +239,7 @@ private slots:
         QCOMPARE(model.currentIndex(), 0); // activated the existing pinned tab
         // The preview slot is untouched (still Beta).
         QCOMPARE(model.tabIdAt(1), idP);
-        QCOMPARE(roleAt<int>(model, 1, TabModel::ConversationIdRole), 20);
+        QCOMPARE(roleAt<int>(model, 1, TabModel::SessionIdRole), 20);
     }
 
     // Pinning the preview tab makes it permanent: the next preview opens a fresh
@@ -255,8 +255,8 @@ private slots:
 
         model.previewTranscript(20, QStringLiteral("Beta"));
         QCOMPARE(model.count(), 2); // appended, the pinned tab was not reused
-        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), 10);
-        QCOMPARE(roleAt<int>(model, 1, TabModel::ConversationIdRole), 20);
+        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), 10);
+        QCOMPARE(roleAt<int>(model, 1, TabModel::SessionIdRole), 20);
         QVERIFY(roleAt<bool>(model, 1, TabModel::PreviewRole));
     }
 
@@ -287,7 +287,7 @@ private slots:
         QCOMPARE(fileId, id);
         QCOMPARE(model.count(), 1);
         QCOMPARE(roleAt<int>(model, 0, TabModel::KindRole), int(TabModel::File));
-        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), -1);
+        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), -1);
         QCOMPARE(roleAt<QString>(model, 0, TabModel::FileRootRole), QStringLiteral("workspace"));
         QCOMPARE(roleAt<QString>(model, 0, TabModel::FilePathRole), QStringLiteral("src/main.cpp"));
         QCOMPARE(kindSpy.count(), 1);
@@ -308,7 +308,7 @@ private slots:
         QCOMPARE(transcriptId, id);
         QCOMPARE(model.count(), 1);
         QCOMPARE(roleAt<int>(model, 0, TabModel::KindRole), int(TabModel::Transcript));
-        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), 42);
+        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), 42);
         QCOMPARE(roleAt<QString>(model, 0, TabModel::FileRootRole), QString());
         QCOMPARE(roleAt<QString>(model, 0, TabModel::FilePathRole), QString());
         QCOMPARE(kindSpy.count(), 1);

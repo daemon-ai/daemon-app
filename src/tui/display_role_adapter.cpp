@@ -77,7 +77,7 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
         if (nodeType == static_cast<int>(domain::NodeType::Tag)) {
             return QStringLiteral("\u25cf");
         }
-        if (nodeType == static_cast<int>(domain::NodeType::Node)) {
+        if (nodeType == static_cast<int>(domain::NodeType::Unit)) {
             return QStringLiteral("\u2022");
         }
         return {};
@@ -86,7 +86,7 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
         if (nodeType == static_cast<int>(domain::NodeType::Tag)) {
             return QVariant::fromValue(rgbFromHex(srcData(SidebarModel::ColorRole).toString()));
         }
-        if (nodeType == static_cast<int>(domain::NodeType::Node)) {
+        if (nodeType == static_cast<int>(domain::NodeType::Unit)) {
             // Reuse the shared C++ categorization (same source the GUI sidebar
             // uses), then resolve the semantic tone to a Tui color here.
             const int state = srcData(SidebarModel::StateRole).toInt();
@@ -117,7 +117,7 @@ QVariant DisplayRoleAdapter::listData(const QModelIndex& src, int role) const
 
     if (role == Qt::DisplayRole) {
         QString text = srcData(ConversationsListModel::TitleRole).toString();
-        const QString agent = srcData(ConversationsListModel::AgentNameRole).toString();
+        const QString agent = srcData(ConversationsListModel::UnitNameRole).toString();
         if (!agent.isEmpty()) {
             text += QStringLiteral("  \u2014 %1").arg(agent);
         }

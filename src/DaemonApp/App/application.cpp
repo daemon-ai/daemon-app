@@ -3,7 +3,7 @@
 #include "app/cached_image_provider.h"
 #include "app/image_cache.h"
 #include "app/math_image_provider.h"
-#include "persistence/sqlite_conversation_store.h"
+#include "persistence/sqlite_session_store.h"
 #include "platform/iplatform_services.h"
 #include "platform/platform_services_factory.h"
 #include "config/mock_daemon_config.h"
@@ -40,7 +40,7 @@
 
 Application::Application(QObject* parent)
     : QObject(parent)
-    , m_store(new persistence::SqliteConversationStore(QString(), this))
+    , m_store(new persistence::SqliteSessionStore(QString(), this))
     , m_platform(platform::createPlatformServices(this))
     , m_status(new StatusBarModel(this))
     , m_commands(new CommandRegistry(this))
@@ -96,7 +96,7 @@ Application::~Application()
 void Application::registerContext(QQmlApplicationEngine& engine)
 {
     // Shared store; QML view models bind their `store` property to this.
-    engine.rootContext()->setContextProperty(QStringLiteral("ConversationStore"), m_store);
+    engine.rootContext()->setContextProperty(QStringLiteral("SessionStore"), m_store);
 
     // Shared footer status model: the StatusBar footer renders it and the active
     // conversation's turn feeds it (see TranscriptPage.qml), so both halves of the

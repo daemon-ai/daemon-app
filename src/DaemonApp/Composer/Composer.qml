@@ -24,7 +24,7 @@ Rectangle {
     // True while an assistant turn is running (host binds Transcript.busy).
     property bool busy: false
     // The open conversation; drives per-conversation draft/queue/history swap.
-    property int conversationId: -1
+    property int sessionId: -1
     property bool composerEnabled: true
 
     // When true, the composer's inner content (status stack + input surface) is
@@ -75,7 +75,7 @@ Rectangle {
         id: controller
         busy: root.busy
         enabled: root.composerEnabled
-        conversationId: root.conversationId
+        sessionId: root.sessionId
         // Single source of truth for the model list + active model: the shared
         // Models-hub catalog (installed models + active id), so the composer
         // picker, the Models hub, and Settings -> Model default all agree.

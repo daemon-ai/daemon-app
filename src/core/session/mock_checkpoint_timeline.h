@@ -18,7 +18,7 @@ public:
 
     [[nodiscard]] QObject* checkpoints() const override;
     [[nodiscard]] int count() const override;
-    [[nodiscard]] int conversationId() const override { return m_conversationId; }
+    [[nodiscard]] int sessionId() const override { return m_conversationId; }
     void setConversationId(int id) override;
 
     void restore(const QString& id) override;

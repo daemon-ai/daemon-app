@@ -1,4 +1,4 @@
-#include "persistence/in_memory_conversation_store.h"
+#include "persistence/in_memory_session_store.h"
 
 #include <QDateTime>
 
@@ -6,36 +6,40 @@
 
 namespace persistence {
 
-using domain::AgentNode;
-using domain::AgentNodeKind;
-using domain::AgentState;
-using domain::Conversation;
 using domain::ListScope;
 using domain::NodeType;
+using domain::ProfileRef;
+using domain::Session;
+using domain::SessionId;
+using domain::SessionRole;
 using domain::Tag;
+using domain::UnitId;
+using domain::UnitKind;
+using domain::UnitNode;
+using domain::UnitState;
 
-void InMemoryConversationStore::applyUnitMeta(AgentNode& n)
+void InMemorySessionStore::applyUnitMeta(UnitNode& n)
 {
     // UnitId == SessionId on the durable path.
-    n.session = n.id;
+    n.session = SessionId(n.id.toString());
 
     // Role: roots are the top-level (Primary) conversations; children are managed,
     // with the deepest demo worker flagged ephemeral to exercise that styling.
     if (n.parentId.isEmpty()) {
-        n.role = domain::SessionRole::Primary;
-    } else if (n.id == QStringLiteral("n-worker")) {
-        n.role = domain::SessionRole::EphemeralSubagent;
+        n.role = SessionRole::Primary;
+    } else if (n.id == UnitId(QStringLiteral("n-worker"))) {
+        n.role = SessionRole::EphemeralSubagent;
     } else {
-        n.role = domain::SessionRole::ManagedChild;
+        n.role = SessionRole::ManagedChild;
     }
 
     // Hosts are substrate, not profile-backed agents (mirrors the daemon: Host
     // units carry no profile). Everything else binds to a seeded profile id.
-    if (n.kind == AgentNodeKind::Host) {
-        n.profile.clear();
+    if (n.kind == UnitKind::Host) {
+        n.profile = ProfileRef();
         return;
     }
-    static const QHash<QString, QString> kNodeProfiles = {
+    static const QHash<QString, QString> kUnitProfiles = {
         { QStringLiteral("n-scratch"), QStringLiteral("prof-1") },
         { QStringLiteral("n-acme"), QStringLiteral("prof-1") },
         { QStringLiteral("n-build"), QStringLiteral("prof-1") },
@@ -44,54 +48,61 @@ void InMemoryConversationStore::applyUnitMeta(AgentNode& n)
         { QStringLiteral("n-review"), QStringLiteral("prof-3") },
         { QStringLiteral("n-deep"), QStringLiteral("prof-3") },
     };
-    n.profile = kNodeProfiles.value(n.id, QStringLiteral("prof-1"));
+    n.profile = ProfileRef(kUnitProfiles.value(n.id.toString(), QStringLiteral("prof-1")));
 }
 
-InMemoryConversationStore::InMemoryConversationStore(QObject* parent)
-    : InMemoryConversationStore(parent, true)
+InMemorySessionStore::InMemorySessionStore(QObject* parent)
+    : InMemorySessionStore(parent, true)
 {
 }
 
-InMemoryConversationStore::InMemoryConversationStore(QObject* parent, bool seed)
-    : IConversationStore(parent)
+InMemorySessionStore::InMemorySessionStore(QObject* parent, bool seed)
+    : ISessionStore(parent)
 {
     if (seed) {
         seedSampleData();
     }
 }
 
-void InMemoryConversationStore::seedSampleData()
+void InMemorySessionStore::seedSampleData()
 {
     // A fleet-of-fleets that deliberately exercises the recursion:
-    //  - "scratchpad" is a LONE root agent (a tree of one, no children).
+    //  - "scratchpad" is a LONE root unit (a tree of one, no children).
     //  - "Acme Platform" is a deep root: Orchestrator -> Orchestrator ("Build
     //    Fleet") -> Orchestrator ("Deep Fleet") -> Engine, i.e. orchestrators
     //    nested inside orchestrators (no fixed "fleet/agent/subagent" shape).
-    //  - conversations hang off nodes at multiple depths, including off
-    //    intermediate orchestrator nodes (their own reasoning transcript).
-    m_nodes = {
-        { QStringLiteral("n-scratch"), {}, QStringLiteral("scratchpad"),
-          AgentNodeKind::Engine, AgentState::Running, {} },
-
-        { QStringLiteral("n-acme"), {}, QStringLiteral("Acme Platform"),
-          AgentNodeKind::Orchestrator, AgentState::Running,
-          QStringLiteral("Coordinating release") },
-        { QStringLiteral("n-build"), QStringLiteral("n-acme"), QStringLiteral("Build Fleet"),
-          AgentNodeKind::Orchestrator, AgentState::Running, QStringLiteral("Dispatching work") },
-        { QStringLiteral("n-coder"), QStringLiteral("n-build"), QStringLiteral("Coder"),
-          AgentNodeKind::Engine, AgentState::Running, QStringLiteral("Implementing API") },
-        { QStringLiteral("n-review"), QStringLiteral("n-build"), QStringLiteral("Reviewer"),
-          AgentNodeKind::Engine, AgentState::Finished, {} },
-        { QStringLiteral("n-deep"), QStringLiteral("n-build"), QStringLiteral("Deep Fleet"),
-          AgentNodeKind::Orchestrator, AgentState::Running, QStringLiteral("Verifying outputs") },
-        { QStringLiteral("n-worker"), QStringLiteral("n-deep"), QStringLiteral("Worker A"),
-          AgentNodeKind::Engine, AgentState::Running, QStringLiteral("Running checks") },
-        { QStringLiteral("n-ops"), QStringLiteral("n-acme"), QStringLiteral("Ops Host"),
-          AgentNodeKind::Host, AgentState::Running, {} },
+    //  - sessions hang off units at multiple depths, including off intermediate
+    //    orchestrator units (their own reasoning transcript).
+    const auto mkUnit = [](const char* id, const char* parent, const char* name, UnitKind kind,
+                           UnitState state, const char* work) {
+        UnitNode n;
+        n.id = UnitId(QString::fromLatin1(id));
+        const QString p = QString::fromLatin1(parent);
+        n.parentId = p.isEmpty() ? UnitId() : UnitId(p);
+        n.name = QString::fromUtf8(name);
+        n.kind = kind;
+        n.state = state;
+        n.work = QString::fromUtf8(work);
+        return n;
+    };
+    m_units = {
+        mkUnit("n-scratch", "", "scratchpad", UnitKind::Engine, UnitState::Running, ""),
+        mkUnit("n-acme", "", "Acme Platform", UnitKind::Orchestrator, UnitState::Running,
+               "Coordinating release"),
+        mkUnit("n-build", "n-acme", "Build Fleet", UnitKind::Orchestrator, UnitState::Running,
+               "Dispatching work"),
+        mkUnit("n-coder", "n-build", "Coder", UnitKind::Engine, UnitState::Running,
+               "Implementing API"),
+        mkUnit("n-review", "n-build", "Reviewer", UnitKind::Engine, UnitState::Finished, ""),
+        mkUnit("n-deep", "n-build", "Deep Fleet", UnitKind::Orchestrator, UnitState::Running,
+               "Verifying outputs"),
+        mkUnit("n-worker", "n-deep", "Worker A", UnitKind::Engine, UnitState::Running,
+               "Running checks"),
+        mkUnit("n-ops", "n-acme", "Ops Host", UnitKind::Host, UnitState::Running, ""),
     };
     // Stamp daemon-parity metadata (profile/session/role) on every seeded unit so
-    // each agent node carries an identity the Memory/Profile surfaces key off.
-    for (AgentNode& n : m_nodes) {
+    // each unit carries the agent identity the Memory/Profile surfaces key off.
+    for (UnitNode& n : m_units) {
         applyUnitMeta(n);
     }
 
@@ -102,24 +113,24 @@ void InMemoryConversationStore::seedSampleData()
     m_nextTagId = 3; // next id after the seeded tags
 
     const QDateTime now = QDateTime::currentDateTime();
-    auto make = [&](const QString& agentId, const QList<int>& tagIds, bool archived,
+    auto make = [&](const QString& unitId, const QList<int>& tagIds, bool archived,
                     const QString& title, const QString& content) {
-        Conversation c;
+        Session c;
         c.id = m_nextId++;
-        c.agentId = agentId;
+        c.unitId = UnitId(unitId);
         c.tagIds = tagIds;
         c.isArchived = archived;
         c.title = title;
         c.content = content;
         c.created = now;
         c.modified = now;
-        m_conversations.push_back(c);
+        m_sessions.push_back(c);
     };
 
     make(QStringLiteral("n-scratch"), { 1 }, false, QStringLiteral("Scratch ideas"),
-         QStringLiteral("# Scratchpad\n\nA lone agent with **no fleet** behind it:\n\n"
-                        "- One root, one conversation\n- Still the same surface\n"));
-    // An orchestrator's own reasoning transcript (a parent node owns a conversation too).
+         QStringLiteral("# Scratchpad\n\nA lone unit with **no fleet** behind it:\n\n"
+                        "- One root, one session\n- Still the same surface\n"));
+    // An orchestrator's own reasoning transcript (a parent unit owns a session too).
     make(QStringLiteral("n-acme"), {}, false, QStringLiteral("Release planning"),
          QStringLiteral("## Release planning\n\nClassify, gate, and route the incoming work.\n"));
     make(QStringLiteral("n-build"), { 2 }, false, QStringLiteral("Dispatch log"),
@@ -135,21 +146,16 @@ void InMemoryConversationStore::seedSampleData()
 
     // A demo transcript exercising every Phase 1 agent block (reasoning, tool
     // calls with each detail kind, a standalone content stream) for visual
-    // inspection. Each block is its canonical fenced form: a ```tool/```reasoning/
-    // ```content fence whose body is the compact-JSON metadata (the same form the
-    // runtime inject path serializes and the parser round-trips).
+    // inspection. Each block is its canonical fenced form.
     make(QStringLiteral("n-coder"), { 1 }, false, QStringLiteral("Agent blocks demo"),
          agentBlocksSampleMarkdown());
 
-    // A demo transcript exercising the message/role layer: user bubbles (with
-    // directive chips), assistant turns (reasoning + tool + text, with a footer),
-    // a system steer/slash notice, and a process notification. Roles are carried
-    // by ```msg boundary markers the parser consumes into per-block role/messageId.
+    // A demo transcript exercising the message/role layer.
     make(QStringLiteral("n-coder"), { 1 }, false, QStringLiteral("Message roles demo"),
          roleLayerSampleMarkdown());
 }
 
-QString InMemoryConversationStore::agentBlocksSampleMarkdown()
+QString InMemorySessionStore::agentBlocksSampleMarkdown()
 {
     return QStringLiteral(R"SAMPLE(# Agent transcript blocks
 
@@ -219,7 +225,7 @@ That wraps the demo turn.
 )SAMPLE");
 }
 
-QString InMemoryConversationStore::roleLayerSampleMarkdown()
+QString InMemorySessionStore::roleLayerSampleMarkdown()
 {
     return QStringLiteral(R"ROLES(```msg
 {"id":"u1","role":"user"}
@@ -281,30 +287,30 @@ Reindexed 3 tables in 4.2s with no errors.
 )ROLES");
 }
 
-bool InMemoryConversationStore::isInSubtree(const QString& nodeId, const QString& rootId) const
+bool InMemorySessionStore::isInSubtree(const UnitId& unitId, const UnitId& rootId) const
 {
-    QString cur = nodeId;
+    UnitId cur = unitId;
     // Walk up the parent chain; guard against cycles with a bounded loop.
-    for (int guard = 0; guard < m_nodes.size() + 1 && !cur.isEmpty(); ++guard) {
+    for (int guard = 0; guard < m_units.size() + 1 && !cur.isEmpty(); ++guard) {
         if (cur == rootId) {
             return true;
         }
-        cur = agentNode(cur).parentId;
+        cur = unit(cur).parentId;
     }
     return false;
 }
 
-bool InMemoryConversationStore::matchesScope(const Conversation& c, const ListScope& scope) const
+bool InMemorySessionStore::matchesScope(const Session& c, const ListScope& scope) const
 {
     switch (scope.type) {
     case NodeType::AllConversations:
         return !c.isArchived;
     case NodeType::Archived:
         return c.isArchived;
-    case NodeType::Node:
-        return !c.isArchived && isInSubtree(c.agentId, scope.nodeId);
+    case NodeType::Unit:
+        return !c.isArchived && isInSubtree(c.unitId, scope.unitId);
     case NodeType::Tag:
-        return !c.isArchived && c.tagIds.contains(scope.id);
+        return !c.isArchived && c.tagIds.contains(scope.tagId);
     case NodeType::FleetSeparator:
     case NodeType::TagSeparator:
         return false;
@@ -312,10 +318,10 @@ bool InMemoryConversationStore::matchesScope(const Conversation& c, const ListSc
     return false;
 }
 
-QList<AgentNode> InMemoryConversationStore::agentChildren(const QString& parentId) const
+QList<UnitNode> InMemorySessionStore::unitChildren(const UnitId& parentId) const
 {
-    QList<AgentNode> out;
-    for (const AgentNode& n : m_nodes) {
+    QList<UnitNode> out;
+    for (const UnitNode& n : m_units) {
         if (n.parentId == parentId) {
             out.push_back(n);
         }
@@ -323,9 +329,9 @@ QList<AgentNode> InMemoryConversationStore::agentChildren(const QString& parentI
     return out;
 }
 
-AgentNode InMemoryConversationStore::agentNode(const QString& id) const
+UnitNode InMemorySessionStore::unit(const UnitId& id) const
 {
-    for (const AgentNode& n : m_nodes) {
+    for (const UnitNode& n : m_units) {
         if (n.id == id) {
             return n;
         }
@@ -333,30 +339,29 @@ AgentNode InMemoryConversationStore::agentNode(const QString& id) const
     return {};
 }
 
-QList<Tag> InMemoryConversationStore::tags() const
+QList<Tag> InMemorySessionStore::tags() const
 {
     return m_tags;
 }
 
-QList<Conversation> InMemoryConversationStore::conversations(const ListScope& scope) const
+QList<Session> InMemorySessionStore::sessions(const ListScope& scope) const
 {
-    QList<Conversation> out;
-    for (const Conversation& c : m_conversations) {
+    QList<Session> out;
+    for (const Session& c : m_sessions) {
         if (matchesScope(c, scope)) {
             out.push_back(c);
         }
     }
-    // Pinned conversations float to the top; store order is otherwise preserved
-    // (stable partition), so /title + moveConversation stay predictable.
-    std::stable_partition(out.begin(), out.end(),
-                          [](const Conversation& c) { return c.isPinned; });
+    // Pinned sessions float to the top; store order is otherwise preserved
+    // (stable partition), so /title + moveSession stay predictable.
+    std::stable_partition(out.begin(), out.end(), [](const Session& c) { return c.isPinned; });
     return out;
 }
 
-int InMemoryConversationStore::conversationCount(const ListScope& scope) const
+int InMemorySessionStore::sessionCount(const ListScope& scope) const
 {
     int count = 0;
-    for (const Conversation& c : m_conversations) {
+    for (const Session& c : m_sessions) {
         if (matchesScope(c, scope)) {
             ++count;
         }
@@ -364,54 +369,54 @@ int InMemoryConversationStore::conversationCount(const ListScope& scope) const
     return count;
 }
 
-QString InMemoryConversationStore::content(int conversationId) const
+QString InMemorySessionStore::content(int sessionId) const
 {
-    for (const Conversation& c : m_conversations) {
-        if (c.id == conversationId) {
+    for (const Session& c : m_sessions) {
+        if (c.id == sessionId) {
             return c.content;
         }
     }
     return {};
 }
 
-QString InMemoryConversationStore::title(int conversationId) const
+QString InMemorySessionStore::title(int sessionId) const
 {
-    for (const Conversation& c : m_conversations) {
-        if (c.id == conversationId) {
+    for (const Session& c : m_sessions) {
+        if (c.id == sessionId) {
             return c.title;
         }
     }
     return {};
 }
 
-int InMemoryConversationStore::createConversation(const QString& agentId)
+int InMemorySessionStore::createSession(const UnitId& unitId)
 {
-    Conversation c;
+    Session c;
     c.id = m_nextId++;
-    c.agentId = agentId;
-    c.title = QStringLiteral("New conversation");
+    c.unitId = unitId;
+    c.title = QStringLiteral("New session");
     c.created = QDateTime::currentDateTime();
     c.modified = c.created;
-    m_conversations.push_back(c);
+    m_sessions.push_back(c);
     emit changed();
     return c.id;
 }
 
-QString InMemoryConversationStore::createNode(const QString& parentId, AgentNodeKind kind)
+UnitId InMemorySessionStore::createUnit(const UnitId& parentId, UnitKind kind)
 {
-    AgentNode n;
-    n.id = QStringLiteral("n-new-%1").arg(m_nextNodeSeq++);
+    UnitNode n;
+    n.id = UnitId(QStringLiteral("n-new-%1").arg(m_nextUnitSeq++));
     n.parentId = parentId;
-    n.name = parentId.isEmpty() ? QStringLiteral("New fleet") : QStringLiteral("New node");
+    n.name = parentId.isEmpty() ? QStringLiteral("New fleet") : QStringLiteral("New unit");
     n.kind = kind;
-    n.state = AgentState::Unknown;
+    n.state = UnitState::Unknown;
     applyUnitMeta(n);
-    m_nodes.push_back(n);
+    m_units.push_back(n);
     emit changed();
     return n.id;
 }
 
-int InMemoryConversationStore::createTag(const QString& name, const QString& color)
+int InMemorySessionStore::createTag(const QString& name, const QString& color)
 {
     Tag t;
     t.id = m_nextTagId++;
@@ -422,10 +427,10 @@ int InMemoryConversationStore::createTag(const QString& name, const QString& col
     return t.id;
 }
 
-void InMemoryConversationStore::setContent(int conversationId, const QString& markdown)
+void InMemorySessionStore::setContent(int sessionId, const QString& markdown)
 {
-    for (Conversation& c : m_conversations) {
-        if (c.id == conversationId) {
+    for (Session& c : m_sessions) {
+        if (c.id == sessionId) {
             c.content = markdown;
             c.modified = QDateTime::currentDateTime();
             emit changed();
@@ -434,10 +439,10 @@ void InMemoryConversationStore::setContent(int conversationId, const QString& ma
     }
 }
 
-void InMemoryConversationStore::renameConversation(int conversationId, const QString& title)
+void InMemorySessionStore::renameSession(int sessionId, const QString& title)
 {
-    for (Conversation& c : m_conversations) {
-        if (c.id == conversationId) {
+    for (Session& c : m_sessions) {
+        if (c.id == sessionId) {
             c.title = title;
             c.modified = QDateTime::currentDateTime();
             emit changed();
@@ -446,21 +451,21 @@ void InMemoryConversationStore::renameConversation(int conversationId, const QSt
     }
 }
 
-void InMemoryConversationStore::deleteConversation(int conversationId)
+void InMemorySessionStore::deleteSession(int sessionId)
 {
-    for (int i = 0; i < m_conversations.size(); ++i) {
-        if (m_conversations.at(i).id == conversationId) {
-            m_conversations.removeAt(i);
+    for (int i = 0; i < m_sessions.size(); ++i) {
+        if (m_sessions.at(i).id == sessionId) {
+            m_sessions.removeAt(i);
             emit changed();
             return;
         }
     }
 }
 
-void InMemoryConversationStore::setPinned(int conversationId, bool pinned)
+void InMemorySessionStore::setPinned(int sessionId, bool pinned)
 {
-    for (Conversation& c : m_conversations) {
-        if (c.id == conversationId) {
+    for (Session& c : m_sessions) {
+        if (c.id == sessionId) {
             if (c.isPinned != pinned) {
                 c.isPinned = pinned;
                 emit changed();
@@ -470,39 +475,39 @@ void InMemoryConversationStore::setPinned(int conversationId, bool pinned)
     }
 }
 
-bool InMemoryConversationStore::isPinned(int conversationId) const
+bool InMemorySessionStore::isPinned(int sessionId) const
 {
-    for (const Conversation& c : m_conversations) {
-        if (c.id == conversationId) {
+    for (const Session& c : m_sessions) {
+        if (c.id == sessionId) {
             return c.isPinned;
         }
     }
     return false;
 }
 
-void InMemoryConversationStore::moveConversation(int conversationId, int delta)
+void InMemorySessionStore::moveSession(int sessionId, int delta)
 {
     if (delta == 0) {
         return;
     }
-    for (int i = 0; i < m_conversations.size(); ++i) {
-        if (m_conversations.at(i).id != conversationId) {
+    for (int i = 0; i < m_sessions.size(); ++i) {
+        if (m_sessions.at(i).id != sessionId) {
             continue;
         }
         const int target = qBound(0, i + (delta < 0 ? -1 : 1),
-                                  static_cast<int>(m_conversations.size()) - 1);
+                                  static_cast<int>(m_sessions.size()) - 1);
         if (target != i) {
-            m_conversations.move(i, target);
+            m_sessions.move(i, target);
             emit changed();
         }
         return;
     }
 }
 
-void InMemoryConversationStore::setArchived(int conversationId, bool archived)
+void InMemorySessionStore::setArchived(int sessionId, bool archived)
 {
-    for (Conversation& c : m_conversations) {
-        if (c.id == conversationId) {
+    for (Session& c : m_sessions) {
+        if (c.id == sessionId) {
             c.isArchived = archived;
             emit changed();
             return;

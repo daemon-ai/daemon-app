@@ -1,194 +1,180 @@
-#include "domain/agent_node.h"
+#include "domain/unit_node.h"
+#include "domain/ids.h"
 #include "domain/sidebar_node.h"
-#include "persistence/in_memory_conversation_store.h"
+#include "persistence/in_memory_session_store.h"
 
 #include <QSignalSpy>
 #include <QtTest>
 
-using domain::AgentNode;
 using domain::ListScope;
 using domain::NodeType;
-using persistence::InMemoryConversationStore;
+using domain::UnitId;
+using domain::UnitNode;
+using persistence::InMemorySessionStore;
 
-// Exercises the uniformly-recursive agent tree in the in-memory store: roots,
+namespace {
+UnitId U(const char* s) { return UnitId(QString::fromLatin1(s)); }
+} // namespace
+
+// Exercises the uniformly-recursive unit tree in the in-memory store: roots,
 // arbitrary depth, subtree-folded counts/scope matching, and creation. These
-// guard the invariant that nothing branches on a fixed depth or node kind.
+// guard the invariant that nothing branches on a fixed depth or unit kind.
 class TestStore : public QObject {
     Q_OBJECT
 
 private:
-    static ListScope nodeScope(const QString& id)
-    {
-        return { NodeType::Node, -1, id };
-    }
+    static ListScope unitScope(const char* id) { return { NodeType::Unit, -1, U(id) }; }
 
 private slots:
-    // Roots are the parentless nodes; one of them is a lone agent (a tree of
-    // one) with no children at all.
+    // Roots are the parentless units; one of them is a lone agent (a tree of one)
+    // with no children at all.
     void rootsIncludeLoneAgentAndFleet()
     {
-        InMemoryConversationStore store;
-        const QList<AgentNode> roots = store.agentChildren(QString());
+        InMemorySessionStore store;
+        const QList<UnitNode> roots = store.unitChildren(UnitId());
         QStringList ids;
-        for (const AgentNode& n : roots) {
-            ids << n.id;
+        for (const UnitNode& n : roots) {
+            ids << n.id.toString();
         }
         QVERIFY2(ids.contains("n-scratch"), "expected lone-agent root");
         QVERIFY2(ids.contains("n-acme"), "expected fleet root");
-        QVERIFY2(store.agentChildren("n-scratch").isEmpty(), "lone root must have no children");
-        QVERIFY(!store.agentChildren("n-acme").isEmpty());
+        QVERIFY2(store.unitChildren(U("n-scratch")).isEmpty(), "lone root must have no children");
+        QVERIFY(!store.unitChildren(U("n-acme")).isEmpty());
     }
 
     // Orchestrators nest inside orchestrators: acme -> build -> deep -> worker.
     // The parent chain is walked the same way at every level.
     void treeNestsToArbitraryDepth()
     {
-        InMemoryConversationStore store;
-        QCOMPARE(store.agentNode("n-worker").parentId, QStringLiteral("n-deep"));
-        QCOMPARE(store.agentNode("n-deep").parentId, QStringLiteral("n-build"));
-        QCOMPARE(store.agentNode("n-build").parentId, QStringLiteral("n-acme"));
-        QCOMPARE(store.agentNode("n-acme").parentId, QString());
+        InMemorySessionStore store;
+        QCOMPARE(store.unit(U("n-worker")).parentId.toString(), QStringLiteral("n-deep"));
+        QCOMPARE(store.unit(U("n-deep")).parentId.toString(), QStringLiteral("n-build"));
+        QCOMPARE(store.unit(U("n-build")).parentId.toString(), QStringLiteral("n-acme"));
+        QCOMPARE(store.unit(U("n-acme")).parentId.toString(), QString());
         // The deep orchestrator really does carry a child.
-        QVERIFY(!store.agentChildren("n-deep").isEmpty());
+        QVERIFY(!store.unitChildren(U("n-deep")).isEmpty());
     }
 
-    // A node scope folds over the WHOLE subtree (node + all descendants), and a
-    // leaf folds to just its own conversations. Archived items never count.
-    void nodeScopeFoldsSubtree()
+    // A unit scope folds over the WHOLE subtree (unit + all descendants), and a
+    // leaf folds to just its own sessions. Archived items never count.
+    void unitScopeFoldsSubtree()
     {
-        InMemoryConversationStore store;
-        // Whole platform subtree (acme/build/coder/worker own non-archived convs;
-        // n-coder also carries the seeded "Agent blocks demo" transcript).
-        QCOMPARE(store.conversationCount(nodeScope("n-acme")), 7);
-        QCOMPARE(store.conversationCount(nodeScope("n-build")), 6);
-        QCOMPARE(store.conversationCount(nodeScope("n-deep")), 1);
-        // Leaves fold to their own (n-coder owns the agent-blocks and the
-        // message-roles demo transcripts on top of its two working notes).
-        QCOMPARE(store.conversationCount(nodeScope("n-coder")), 4);
-        QCOMPARE(store.conversationCount(nodeScope("n-scratch")), 1);
-        // The actual conversations come back for the fold too.
-        QCOMPARE(store.conversations(nodeScope("n-deep")).size(), 1);
+        InMemorySessionStore store;
+        QCOMPARE(store.sessionCount(unitScope("n-acme")), 7);
+        QCOMPARE(store.sessionCount(unitScope("n-build")), 6);
+        QCOMPARE(store.sessionCount(unitScope("n-deep")), 1);
+        QCOMPARE(store.sessionCount(unitScope("n-coder")), 4);
+        QCOMPARE(store.sessionCount(unitScope("n-scratch")), 1);
+        QCOMPARE(store.sessions(unitScope("n-deep")).size(), 1);
     }
 
     void allAndArchivedScopes()
     {
-        InMemoryConversationStore store;
-        QCOMPARE(store.conversationCount({ NodeType::AllConversations, -1, {} }), 8);
-        QCOMPARE(store.conversationCount({ NodeType::Archived, -1, {} }), 1);
+        InMemorySessionStore store;
+        QCOMPARE(store.sessionCount({ NodeType::AllConversations, -1, {} }), 8);
+        QCOMPARE(store.sessionCount({ NodeType::Archived, -1, {} }), 1);
     }
 
     void tagScopeIgnoresArchived()
     {
-        InMemoryConversationStore store;
-        // "ideas" (1) is on the scratch conversation, the seeded agent-blocks demo,
-        // the message-roles demo, and an archived review note; the archived one is
-        // excluded.
-        QCOMPARE(store.conversationCount({ NodeType::Tag, 1, {} }), 3);
-        // "todo" (2) is on the build dispatch log and the coder endpoint.
-        QCOMPARE(store.conversationCount({ NodeType::Tag, 2, {} }), 2);
+        InMemorySessionStore store;
+        QCOMPARE(store.sessionCount({ NodeType::Tag, 1, {} }), 3);
+        QCOMPARE(store.sessionCount({ NodeType::Tag, 2, {} }), 2);
     }
 
-    // Creating a conversation under a deep node lifts the folded counts of that
-    // node, its ancestors, and the global All scope, via the same recursion.
-    void createUnderDeepNodeFoldsUp()
+    // Creating a session under a deep unit lifts the folded counts of that unit,
+    // its ancestors, and the global All scope, via the same recursion.
+    void createUnderDeepUnitFoldsUp()
     {
-        InMemoryConversationStore store;
-        QSignalSpy spy(&store, &persistence::IConversationStore::changed);
-        const int before = store.conversationCount(nodeScope("n-acme"));
+        InMemorySessionStore store;
+        QSignalSpy spy(&store, &persistence::ISessionStore::changed);
+        const int before = store.sessionCount(unitScope("n-acme"));
 
-        const int id = store.createConversation(QStringLiteral("n-worker"));
+        const int id = store.createSession(U("n-worker"));
         QVERIFY(id > 0);
         QCOMPARE(spy.count(), 1);
-        QCOMPARE(store.conversationCount(nodeScope("n-worker")), 2);
-        QCOMPARE(store.conversationCount(nodeScope("n-deep")), 2);
-        QCOMPARE(store.conversationCount(nodeScope("n-acme")), before + 1);
-        QCOMPARE(store.conversationCount({ NodeType::AllConversations, -1, {} }), 9);
+        QCOMPARE(store.sessionCount(unitScope("n-worker")), 2);
+        QCOMPARE(store.sessionCount(unitScope("n-deep")), 2);
+        QCOMPARE(store.sessionCount(unitScope("n-acme")), before + 1);
+        QCOMPARE(store.sessionCount({ NodeType::AllConversations, -1, {} }), 9);
     }
 
-    void unknownNodeYieldsNothing()
+    void unknownUnitYieldsNothing()
     {
-        InMemoryConversationStore store;
-        QVERIFY(!store.agentNode("nope").isValid());
-        QCOMPARE(store.conversationCount(nodeScope("nope")), 0);
+        InMemorySessionStore store;
+        QVERIFY(!store.unit(U("nope")).isValid());
+        QCOMPARE(store.sessionCount(unitScope("nope")), 0);
     }
 
-    // title(id) returns the stored canonical title (the string the list shows),
-    // independent of the conversation's content; an unknown id yields empty.
     void titleReturnsStoredTitle()
     {
-        InMemoryConversationStore store;
-        const int id = store.createConversation(QStringLiteral("n-worker"));
-        QCOMPARE(store.title(id), QStringLiteral("New conversation"));
+        InMemorySessionStore store;
+        const int id = store.createSession(U("n-worker"));
+        QCOMPARE(store.title(id), QStringLiteral("New session"));
 
         store.setContent(id, QStringLiteral("Some unrelated first content line.\nmore"));
-        // Content changes must not bleed into the title.
-        QCOMPARE(store.title(id), QStringLiteral("New conversation"));
+        QCOMPARE(store.title(id), QStringLiteral("New session"));
         QVERIFY(store.title(id) != store.content(id));
 
         QVERIFY(store.title(-1).isEmpty());
     }
 
-    // createNode with an empty parent adds a new root; with a parent it becomes
-    // a child reachable via the same agentChildren primitive.
-    void createNodeAsRootAndChild()
+    // createUnit with an empty parent adds a new root; with a parent it becomes a
+    // child reachable via the same unitChildren primitive.
+    void createUnitAsRootAndChild()
     {
-        InMemoryConversationStore store;
-        QSignalSpy spy(&store, &persistence::IConversationStore::changed);
+        InMemorySessionStore store;
+        QSignalSpy spy(&store, &persistence::ISessionStore::changed);
 
-        const int rootsBefore = store.agentChildren(QString()).size();
-        const QString root = store.createNode(QString(), domain::AgentNodeKind::Orchestrator);
+        const int rootsBefore = store.unitChildren(UnitId()).size();
+        const UnitId root = store.createUnit(UnitId(), domain::UnitKind::Orchestrator);
         QVERIFY(!root.isEmpty());
         QCOMPARE(spy.count(), 1);
-        QCOMPARE(store.agentChildren(QString()).size(), rootsBefore + 1);
-        QVERIFY(store.agentNode(root).isValid());
-        QCOMPARE(store.agentNode(root).parentId, QString());
+        QCOMPARE(store.unitChildren(UnitId()).size(), rootsBefore + 1);
+        QVERIFY(store.unit(root).isValid());
+        QCOMPARE(store.unit(root).parentId.toString(), QString());
 
-        const QString child = store.createNode(root, domain::AgentNodeKind::Engine);
-        QCOMPARE(store.agentNode(child).parentId, root);
-        QCOMPARE(store.agentChildren(root).size(), 1);
-        // Distinct ids each time.
+        const UnitId child = store.createUnit(root, domain::UnitKind::Engine);
+        QCOMPARE(store.unit(child).parentId, root);
+        QCOMPARE(store.unitChildren(root).size(), 1);
         QVERIFY(child != root);
     }
 
-    // Session actions: rename sets the canonical title and signals changed.
     void renameSetsTitle()
     {
-        InMemoryConversationStore store;
-        const int id = store.createConversation(QStringLiteral("n-worker"));
-        QSignalSpy spy(&store, &persistence::IConversationStore::changed);
+        InMemorySessionStore store;
+        const int id = store.createSession(U("n-worker"));
+        QSignalSpy spy(&store, &persistence::ISessionStore::changed);
 
-        store.renameConversation(id, QStringLiteral("Release plan"));
+        store.renameSession(id, QStringLiteral("Release plan"));
         QCOMPARE(store.title(id), QStringLiteral("Release plan"));
         QVERIFY(spy.count() >= 1);
     }
 
-    // delete removes the conversation from every scope and the count.
-    void deleteRemovesConversation()
+    void deleteRemovesSession()
     {
-        InMemoryConversationStore store;
-        const int id = store.createConversation(QStringLiteral("n-worker"));
-        QCOMPARE(store.conversationCount(nodeScope("n-worker")), 2);
+        InMemorySessionStore store;
+        const int id = store.createSession(U("n-worker"));
+        QCOMPARE(store.sessionCount(unitScope("n-worker")), 2);
 
-        QSignalSpy spy(&store, &persistence::IConversationStore::changed);
-        store.deleteConversation(id);
+        QSignalSpy spy(&store, &persistence::ISessionStore::changed);
+        store.deleteSession(id);
         QVERIFY(spy.count() >= 1);
-        QCOMPARE(store.conversationCount(nodeScope("n-worker")), 1);
+        QCOMPARE(store.sessionCount(unitScope("n-worker")), 1);
         QVERIFY(store.title(id).isEmpty()); // gone
     }
 
-    // pin toggles the flag and floats the conversation to the top of its scope.
     void pinFloatsToTopOfScope()
     {
-        InMemoryConversationStore store;
-        const int a = store.createConversation(QStringLiteral("n-worker"));
-        const int b = store.createConversation(QStringLiteral("n-worker"));
+        InMemorySessionStore store;
+        const int a = store.createSession(U("n-worker"));
+        const int b = store.createSession(U("n-worker"));
         QVERIFY(!store.isPinned(b));
 
         store.setPinned(b, true);
         QVERIFY(store.isPinned(b));
 
-        // Pinned-first ordering: b comes before a in the worker's own list.
-        const auto convs = store.conversations(nodeScope("n-worker"));
+        const auto convs = store.sessions(unitScope("n-worker"));
         QList<int> ids;
         for (const auto& c : convs) {
             ids << c.id;
@@ -199,11 +185,10 @@ private slots:
         QVERIFY(!store.isPinned(b));
     }
 
-    // createTag adds a selectable tag with a fresh, unique id.
     void createTagAppendsWithUniqueId()
     {
-        InMemoryConversationStore store;
-        QSignalSpy spy(&store, &persistence::IConversationStore::changed);
+        InMemorySessionStore store;
+        QSignalSpy spy(&store, &persistence::ISessionStore::changed);
 
         const int before = store.tags().size();
         const int a = store.createTag(QStringLiteral("alpha"), QStringLiteral("#111111"));
@@ -211,8 +196,17 @@ private slots:
         QCOMPARE(spy.count(), 2);
         QCOMPARE(store.tags().size(), before + 2);
         QVERIFY(a != b);
-        // Existing seeded ids (1,2) are not reused.
         QVERIFY(a > 2 && b > 2);
+    }
+
+    // Typed ids round-trip through their string form (daemon string_id parity).
+    void typedIdsRoundTrip()
+    {
+        QCOMPARE(UnitId(QStringLiteral("u-1")).toString(), QStringLiteral("u-1"));
+        QVERIFY(UnitId() != UnitId(QStringLiteral("u-1")));
+        QVERIFY(UnitId(QStringLiteral("x")) == UnitId(QStringLiteral("x")));
+        QVERIFY(domain::ProfileRef().isEmpty());
+        QCOMPARE(domain::SessionId(QStringLiteral("s-9")).toString(), QStringLiteral("s-9"));
     }
 };
 

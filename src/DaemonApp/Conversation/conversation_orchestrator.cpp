@@ -84,7 +84,7 @@ void ConversationOrchestrator::invokeCommand(const QString& command)
 {
     if (command == QStringLiteral("new")) {
         if (m_conversation != nullptr) {
-            m_conversation->createConversation(QString());
+            m_conversation->createSession(QString());
         }
         return;
     }
