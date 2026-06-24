@@ -118,6 +118,14 @@ qt_add_executable(daemon-tui
     tui_dialogs.cpp
     tui_page_hub.h
     tui_page_hub.cpp
+    tui_file_tab_controller.h
+    tui_file_tab_controller.cpp
+    tui_shell_layout.h
+    tui_shell_layout.cpp
+    tui_overlay_host.h
+    tui_overlay_host.cpp
+    tab_session_manager.h
+    tab_session_manager.cpp
     display_role_adapter.h
     display_role_adapter.cpp
     tui_palette.h

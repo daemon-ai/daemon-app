@@ -10,6 +10,8 @@
 #include <Tui/ZPainter.h>
 #include <Tui/ZTextOption.h>
 
+#include <QRect>
+
 SubmitInputBox::SubmitInputBox(const Tui::ZTextMetrics& metrics, Tui::ZWidget* parent)
     : Tui::ZTextEdit(metrics, parent)
 {

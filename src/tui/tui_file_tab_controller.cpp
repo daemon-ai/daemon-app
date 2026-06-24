@@ -9,6 +9,8 @@
 
 #include <Tui/ZLabel.h>
 
+#include <utility>
+
 TuiFileTabController::TuiFileTabController(fs::IFsService* fs, TabModel* tabs, QObject* parent)
     : QObject(parent)
     , m_fs(fs)
@@ -108,5 +110,12 @@ void TuiFileTabController::saveActive(CodeEditorView* editorView)
         && !m_activePath.isEmpty()) {
         m_fs->write(m_activeRoot, m_activePath, editorView->controller()->textBytes(),
                     editorView->controller()->revision(), false);
+    }
+}
+
+void TuiFileTabController::setDarkTheme(bool dark)
+{
+    for (editor::CodeEditorController* c : std::as_const(m_fileSessions)) {
+        c->setDarkTheme(dark);
     }
 }

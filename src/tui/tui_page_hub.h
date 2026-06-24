@@ -1,13 +1,11 @@
 #pragma once
 
+#include <Tui/ZEvent.h>
+
 #include <QHash>
 #include <QList>
 #include <QString>
 #include <QVariantMap>
-
-namespace Tui {
-class ZKeyEvent;
-}
 
 namespace accounts {
 class IAccountsService;

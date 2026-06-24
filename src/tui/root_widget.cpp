@@ -2,8 +2,11 @@
 
 #include "display_role_adapter.h"
 #include "tui_file_tab_controller.h"
+#include "tui_overlay_host.h"
 #include "tui_page_hub.h"
 #include "tui_palette.h"
+#include "tui_shell_layout.h"
+#include "tab_session_manager.h"
 
 #include "session_controller.h"
 #include "session_orchestrator.h"
@@ -93,33 +96,6 @@ void emitDesktopNotification(const QString& title, const QString& body)
 
 } // namespace
 
-// Per-transcript-tab backend state (see the forward declaration in root_widget.h).
-// Owns its QObjects unparented and deletes them on close; the document + ingest are
-// value members (the ingest holds a stable &doc back-pointer because sessions live
-// behind pointers in the map and are never moved).
-struct TabSession {
-    int tabId = -1;
-    int sessionId = -1;
-    SessionController* controller = nullptr;
-    SessionOrchestrator* orchestrator = nullptr; // owns `turn`
-    TurnController* turn = nullptr;
-    InteractiveTurnHost* host = nullptr;
-    be::DocumentStore doc;
-    be::TranscriptIngest ingest { &doc };
-    // Per-tab in-transcript find engine, bound to this tab's document. refresh()
-    // is called at the transcript-reload sites so matches track the live content.
-    be::TranscriptSearchController search;
-
-    TabSession() { search.setDocument(&doc); }
-
-    ~TabSession()
-    {
-        delete host;
-        delete orchestrator; // deletes its child TurnController
-        delete controller;
-    }
-};
-
 namespace {
 
 // A short tab title for a session: the first non-empty content line (heading
@@ -203,11 +179,13 @@ RootWidget::RootWidget()
 
     // Transcript exporter for the list "export" action + /save.
     m_exporter = new TranscriptExporter(this);
+    m_overlays = std::make_unique<TuiOverlayHost>(this);
 
     // The shared pane-tab model (the same C++ class the QML TabBar binds). It is
     // the single source of truth for the open tabs and the active one; the TUI
     // creates a per-tab TabSession on demand and binds the views to the active one.
     m_tabModel = new TabModel(this);
+    m_tabSessions = std::make_unique<TabSessionManager>(m_store, m_tabModel);
     connect(m_tabModel, &TabModel::currentTabChanged, this, [this](int tabId) {
         if (tabId >= 0) {
             activateTab(tabId);
@@ -240,33 +218,7 @@ RootWidget::RootWidget()
         m_daemonConfig->value(QStringLiteral("workspace/root")).toString(), QString(), this);
     m_fileTree = new files::FsExplorerModel(this);
     m_fileTree->setService(m_fs);
-    // Resolve async file reads/writes back to the owning File tab's controller.
-    connect(m_fs, &fs::IFsService::fileRead, this,
-            [this](const QString& rootId, const QString& path, const QByteArray& bytes,
-                   const QString& revision, bool binary, bool /*truncated*/) {
-                editor::CodeEditorController* c =
-                    m_fileByKey.value(rootId + QChar(0x1f) + path, nullptr);
-                if (c != nullptr && !binary) {
-                    c->loadBytes(bytes, path, revision);
-                    if (m_fileStatus != nullptr)
-                        m_fileStatus->setText(QString());
-                } else if (c != nullptr && m_fileStatus != nullptr) {
-                    m_fileStatus->setText(QStringLiteral("Binary file - not editable"));
-                }
-            });
-    connect(m_fs, &fs::IFsService::writeResult, this,
-            [this](const QString& rootId, const QString& path, bool ok, const QString& revision,
-                   const QString& error) {
-                editor::CodeEditorController* c =
-                    m_fileByKey.value(rootId + QChar(0x1f) + path, nullptr);
-                if (c != nullptr && ok) {
-                    c->markSaved(revision);
-                    if (m_fileStatus != nullptr)
-                        m_fileStatus->setText(QStringLiteral("Saved"));
-                } else if (c != nullptr && m_fileStatus != nullptr) {
-                    m_fileStatus->setText(error.isEmpty() ? QStringLiteral("Save failed") : error);
-                }
-            });
+    m_fileTabs = std::make_unique<TuiFileTabController>(m_fs, m_tabModel, this);
 
     // Phase 0 shared seams (identical classes to the GUI). The connection seam
     // owns liveness; mirror its state into the footer's gateway indicator, then
@@ -355,6 +307,8 @@ RootWidget::RootWidget()
                                     : m_appSettings->lastConnectionTarget());
     }
 }
+
+RootWidget::~RootWidget() = default;
 
 void RootWidget::terminalChanged()
 {
@@ -527,8 +481,8 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
 
     // The modal quit dialog is topmost: a press activates its button (or is
     // swallowed) so clicks never leak to the panes behind it.
-    if (m_quitDialog != nullptr) {
-        const QList<Tui::ZButton*> buttons = m_quitDialog->findChildren<Tui::ZButton*>();
+    if (m_overlays != nullptr && m_overlays->quitDialog() != nullptr) {
+        const QList<Tui::ZButton*> buttons = m_overlays->quitDialog()->findChildren<Tui::ZButton*>();
         for (Tui::ZButton* b : buttons) {
             if (hit(b)) {
                 b->click();
@@ -649,83 +603,31 @@ void RootWidget::buildUi()
     // export) consume it first; it only toggles when those panes don't. This
     // resolves the Ctrl+E collision without rebinding either widget's binding.
 
-    m_window = new Tui::ZWindow(QStringLiteral("Daemon"), this);
-    m_window->setOptions({});
-    m_window->setFocusMode(Tui::FocusContainerMode::Cycle); // Tab cycles the panes
-    m_window->setGeometry(QRect(QPoint(0, 0), geometry().size()));
+    const TuiShellWidgets shell = TuiShellLayout::build(
+        this, terminal(), QRect(QPoint(0, 0), geometry().size()), m_tabModel, m_fileTree,
+        &m_pageDoc);
+    m_window = shell.window;
+    m_sidebarView = shell.sidebarView;
+    m_search = shell.search;
+    m_listView = shell.listView;
+    m_tabStrip = shell.tabStrip;
+    m_searchRow = shell.searchRow;
+    m_transcriptSearch = shell.transcriptSearch;
+    m_searchCounter = shell.searchCounter;
+    m_transcript = shell.transcript;
+    m_editorView = shell.editorView;
+    m_fileStatus = shell.fileStatus;
+    m_composerChrome = shell.composerChrome;
+    m_queue = shell.queue;
+    m_subagents = shell.subagents;
+    m_todos = shell.todos;
+    m_attachments = shell.attachments;
+    m_composer = shell.composer;
+    m_completionPopup = shell.completionPopup;
+    m_fileTreeView = shell.fileTreeView;
+    m_footer = shell.footer;
 
-    // The window stacks the three-column row above a one-line status footer.
-    auto* outer = new Tui::ZVBoxLayout();
-    m_window->setLayout(outer);
-
-    auto* columns = new Tui::ZHBoxLayout();
-    outer->add(columns);
-
-    // --- Column 1: sidebar (fixed width) ---
-    // min == max width pins the column; Preferred (not Fixed, which would shrink
-    // to the sizeHint/content width) lets the clamp take effect.
-    // Preferred sizes each list column to its content (clamped to a sensible
-    // minimum); the session pane is the sole Expanding child, so it absorbs
-    // the remaining width.
-    m_sidebarView = new TreeListView(m_window);
-    m_sidebarView->setMinimumSize(26, 3);
-    m_sidebarView->setSizePolicyH(Tui::SizePolicy::Preferred);
-    m_sidebarView->setSizePolicyV(Tui::SizePolicy::Expanding);
-    columns->addWidget(m_sidebarView);
-
-    // --- Column 2: search field + session list (custom-painted cards) ---
-    auto* listCol = new Tui::ZWidget(m_window);
-    listCol->setMinimumSize(34, 3);
-    listCol->setSizePolicyH(Tui::SizePolicy::Preferred);
-    listCol->setSizePolicyV(Tui::SizePolicy::Expanding);
-    auto* listColLayout = new Tui::ZVBoxLayout();
-    listCol->setLayout(listColLayout);
-
-    m_search = new SearchInputBox(listCol);
-    m_search->setText(QString());
-    m_search->setMaximumSize(Tui::tuiMaxSize, 1);
-    // Not a focus stop: the session list owns focus and forwards typed
-    // characters here (type-ahead), so the box is a passive query display and is
-    // skipped by the Tab cycle.
-    m_search->setFocusPolicy(Tui::NoFocus);
-    listColLayout->addWidget(m_search);
-
-    m_listView = new SessionListView(listCol);
-    m_listView->setMinimumSize(34, 3);
-    m_listView->setSizePolicyV(Tui::SizePolicy::Expanding);
-    listColLayout->addWidget(m_listView);
-
-    columns->addWidget(listCol);
-
-    // --- Column 3: session pane (transcript + composer), expanding ---
-    auto* right = new Tui::ZWidget(m_window);
-    right->setSizePolicyH(Tui::SizePolicy::Expanding);
-    auto* rightCol = new Tui::ZVBoxLayout();
-    right->setLayout(rightCol);
-
-    // Pane-level tab strip (replaces the old single header label): a one-line row
-    // of tab chips bound to the shared TabModel, with a trailing "+" affordance.
-    m_tabStrip = new TabStripView(right);
-    m_tabStrip->setModel(m_tabModel);
-    rightCol->addWidget(m_tabStrip);
     connect(m_tabStrip, &TabStripView::newTabRequested, this, &RootWidget::newTranscriptTab);
-
-    // In-transcript find bar (Ctrl+F / /find): a one-line query field + match
-    // counter, hidden until opened. Placed at the top of the transcript column so
-    // it reads like a find bar; toggling its visibility collapses the layout row.
-    m_searchRow = new Tui::ZWidget(right);
-    m_searchRow->setMaximumSize(Tui::tuiMaxSize, 1);
-    auto* searchRowLayout = new Tui::ZHBoxLayout();
-    searchRowLayout->setSpacing(1);
-    m_searchRow->setLayout(searchRowLayout);
-    m_transcriptSearch = new TranscriptSearchBox(m_searchRow);
-    m_transcriptSearch->setSizePolicyH(Tui::SizePolicy::Expanding);
-    searchRowLayout->addWidget(m_transcriptSearch);
-    m_searchCounter = new Tui::ZLabel(m_searchRow);
-    m_searchCounter->setSizePolicyH(Tui::SizePolicy::Fixed);
-    searchRowLayout->addWidget(m_searchCounter);
-    m_searchRow->setVisible(false);
-    rightCol->addWidget(m_searchRow);
     connect(m_transcriptSearch, &Tui::ZInputBox::textChanged, this, [this](const QString& q) {
         if (m_active != nullptr) {
             m_active->search.setQuery(q);
@@ -744,81 +646,15 @@ void RootWidget::buildUi()
     });
     connect(m_transcriptSearch, &TranscriptSearchBox::closeRequested, this,
             &RootWidget::closeTranscriptSearch);
-
-    // Custom-painted transcript: renders the shared be::DocumentStore (the GUI's
-    // parse/ingest engine) as colored tool/reasoning cards, ANSI output, diffs,
-    // and YOU/DAEMON headers instead of a raw-markdown text dump. The active tab's
-    // session swaps its document in; before any tab opens it shows the (empty)
-    // page document.
-    m_transcript = new TranscriptView(right);
-    m_transcript->setDocument(&m_pageDoc);
-    m_transcript->setSizePolicyV(Tui::SizePolicy::Expanding);
-    rightCol->addWidget(m_transcript);
-
-    // Code editor view (shown in place of the transcript + composer when a File
-    // tab is active). Bound to the active File tab's CodeEditorController.
-    m_editorView = new CodeEditorView(right);
-    m_editorView->setSizePolicyV(Tui::SizePolicy::Expanding);
-    m_editorView->setVisible(false);
-    rightCol->addWidget(m_editorView);
     connect(m_editorView, &CodeEditorView::saveRequested, this, [this] {
-        if (m_fs != nullptr && m_editorView->controller() != nullptr && !m_activeFilePath.isEmpty())
-            m_fs->write(m_activeFileRoot, m_activeFilePath, m_editorView->controller()->textBytes(),
-                        m_editorView->controller()->revision(), false);
+        if (m_fileTabs != nullptr)
+            m_fileTabs->saveActive(m_editorView);
     });
-
-    m_fileStatus = new Tui::ZLabel(right);
-    m_fileStatus->setMaximumSize(Tui::tuiMaxSize, 1);
-    m_fileStatus->setVisible(false);
-    rightCol->addWidget(m_fileStatus);
-
-    // One-line streaming/affordance chrome (Thinking.../error + send/stop/steer).
-    m_composerChrome = new ComposerChrome(right);
-    m_composerChrome->setMaximumSize(Tui::tuiMaxSize, 1);
-    rightCol->addWidget(m_composerChrome);
-
-    // Queued-prompt strip (auto-sized; 0 height when the queue is empty).
-    m_queue = new QueueStripView(right);
-    rightCol->addWidget(m_queue);
-
-    // Compact status-stack subagent strip (above the composer); blank at rest.
-    m_subagents = new Tui::ZLabel(right);
-    m_subagents->setMaximumSize(Tui::tuiMaxSize, 1);
-    rightCol->addWidget(m_subagents);
-
-    // Compact status-stack todo strip (above the composer); blank at rest.
-    m_todos = new Tui::ZLabel(right);
-    m_todos->setMaximumSize(Tui::tuiMaxSize, 1);
-    rightCol->addWidget(m_todos);
-
-    // Attachment chips (auto-sized; 0 height when there are none).
-    m_attachments = new AttachmentBarView(right);
-    rightCol->addWidget(m_attachments);
-
-    // Multiline composer (ZTextEdit). Height follows the document line count via
-    // sizeHint() (1..kMaxRows); the transcript above it is the Expanding pane.
-    m_composer = new SubmitInputBox(terminal()->textMetrics(), right);
-    m_composer->setMinimumSize(8, 1);
-    rightCol->addWidget(m_composer);
-
-    // Completion overlay: a borderless custom-painted popup floated above the
-    // composer. It is not in the layout - updateCompletion() positions it manually
-    // over the transcript just above the input and raises it; the input box keeps
-    // focus and routes navigation keys to the shared controller.
-    m_completionPopup = new CompletionView(right);
-
-    columns->addWidget(right);
-
-    // --- Column 4: file Explorer (right side, like the GUI), hidden until Ctrl+E ---
-    m_fileTreeView = new FileTreeView(m_window);
-    m_fileTreeView->setMinimumSize(28, 3);
-    m_fileTreeView->setSizePolicyH(Tui::SizePolicy::Preferred);
-    m_fileTreeView->setSizePolicyV(Tui::SizePolicy::Expanding);
-    m_fileTreeView->setModel(m_fileTree);
+    if (m_fileTabs != nullptr)
+        m_fileTabs->setStatusLabel(m_fileStatus);
     // Restore the persisted open/closed state (shared "ui/showFileExplorer" key).
     m_fileTreeView->setVisible(
         QSettings().value(QStringLiteral("ui/showFileExplorer"), false).toBool());
-    columns->addWidget(m_fileTreeView);
     connect(m_fileTreeView, &FileTreeView::fileChosen, this,
             [this](const QString& rootId, const QString& path, bool pinned) {
                 const int slash = static_cast<int>(path.lastIndexOf(QLatin1Char('/')));
@@ -828,12 +664,6 @@ void RootWidget::buildUi()
                 else
                     m_tabModel->previewFile(rootId, path, title);
             });
-
-    // --- Footer: StatusBarModel-driven colored status strip ---
-    m_footer = new StatusBarView(m_window);
-    outer->addWidget(m_footer);
-
-    m_sidebarView->setFocus();
 }
 
 void RootWidget::wireViews()
@@ -1325,17 +1155,13 @@ void RootWidget::newTranscriptTab()
 
 void RootWidget::rebindSession(int tabId, int sessionId)
 {
-    auto it = m_sessions.find(tabId);
-    if (it == m_sessions.end()) {
-        return; // no session yet; ensureSession will open the right session
-    }
-    TabSession* s = it.value();
-    if (s->sessionId == sessionId) {
+    if (m_tabSessions == nullptr) {
         return;
     }
-    s->sessionId = sessionId;
-    s->controller->open(sessionId);
-    if (s == m_active) {
+    const bool wasActive = m_active != nullptr && m_active->tabId == tabId
+        && m_active->sessionId != sessionId;
+    m_tabSessions->rebindSession(tabId, sessionId, [this](TabSession* s) { wireSession(s); });
+    if (wasActive) {
         m_composerSession->setSessionId(sessionId);
         refreshTranscript();
         updateTodos();
@@ -1406,27 +1232,10 @@ void RootWidget::updateSearchCounter()
 
 TabSession* RootWidget::ensureSession(int tabId)
 {
-    if (auto it = m_sessions.find(tabId); it != m_sessions.end()) {
-        return it.value();
+    if (m_tabSessions == nullptr) {
+        return nullptr;
     }
-    const int row = m_tabModel->indexOfTabId(tabId);
-    if (row < 0 || m_tabModel->kindAt(row) != TabModel::Transcript) {
-        return nullptr; // page tabs have no backend session
-    }
-
-    auto* s = new TabSession();
-    s->tabId = tabId;
-    s->sessionId = m_tabModel->sessionIdAt(row);
-    s->controller = new SessionController();
-    s->controller->setStore(m_store);
-    s->orchestrator = new SessionOrchestrator();
-    s->orchestrator->setSession(s->controller);
-    s->turn = s->orchestrator->turn();
-    s->host = new InteractiveTurnHost(&s->doc, &s->ingest);
-    m_sessions.insert(tabId, s);
-    wireSession(s);
-    s->controller->open(s->sessionId);
-    return s;
+    return m_tabSessions->ensureSession(tabId, [this](TabSession* s) { wireSession(s); });
 }
 
 void RootWidget::wireSession(TabSession* s)
@@ -1636,9 +1445,8 @@ void RootWidget::activateTab(int tabId)
         // read through the fs seam) and show it in place of the transcript stack.
         closeTranscriptSearch();
         m_active = nullptr;
-        editor::CodeEditorController* c = ensureFileSession(tabId);
-        m_activeFileRoot = m_tabModel->fileRootAt(row);
-        m_activeFilePath = m_tabModel->filePathAt(row);
+        editor::CodeEditorController* c =
+            m_fileTabs != nullptr ? m_fileTabs->ensureFileSession(tabId) : nullptr;
         if (m_editorView != nullptr) {
             m_editorView->setController(c);
             m_editorView->setFocus();
@@ -1675,29 +1483,6 @@ void RootWidget::activateTab(int tabId)
         updateTodos();
         updateSubagents();
     }
-}
-
-editor::CodeEditorController* RootWidget::ensureFileSession(int tabId)
-{
-    if (m_fileSessions.contains(tabId))
-        return m_fileSessions.value(tabId);
-    const int row = m_tabModel->indexOfTabId(tabId);
-    if (row < 0)
-        return nullptr;
-    const QString rootId = m_tabModel->fileRootAt(row);
-    const QString path = m_tabModel->filePathAt(row);
-
-    auto* c = new editor::CodeEditorController(this);
-    c->setDarkTheme(tpal::activeTheme() != theme::ThemeName::Light
-                    && tpal::activeTheme() != theme::ThemeName::Sepia);
-    m_fileSessions.insert(tabId, c);
-    m_fileByKey.insert(rootId + QChar(0x1f) + path, c);
-    connect(c, &editor::CodeEditorController::modifiedChanged, this,
-            [this, tabId, c] { m_tabModel->setDirtyById(tabId, c->modified()); });
-    // Kick off the async read; the fileRead handler loads bytes into this controller.
-    if (m_fs != nullptr)
-        m_fs->read(rootId, path);
-    return c;
 }
 
 void RootWidget::showEditor(bool on)
@@ -1947,36 +1732,18 @@ void RootWidget::openCheckpointsOverlay()
 void RootWidget::destroySession(int tabId)
 {
     // File tabs hold an editor controller rather than a TabSession.
-    if (auto fit = m_fileSessions.find(tabId); fit != m_fileSessions.end()) {
-        editor::CodeEditorController* c = fit.value();
-        if (m_editorView != nullptr && m_editorView->controller() == c)
-            m_editorView->setController(nullptr);
-        for (auto kit = m_fileByKey.begin(); kit != m_fileByKey.end();) {
-            if (kit.value() == c)
-                kit = m_fileByKey.erase(kit);
-            else
-                ++kit;
-        }
-        m_fileSessions.erase(fit);
-        delete c;
+    if (m_fileTabs != nullptr && m_fileTabs->destroySession(tabId, m_editorView)) {
         return;
     }
 
-    auto it = m_sessions.find(tabId);
-    if (it == m_sessions.end()) {
+    if (m_tabSessions == nullptr) {
         return;
     }
-    TabSession* s = it.value();
-    if (m_active == s) {
-        m_active = nullptr;
-        // Detach the transcript from the doc we are about to delete; the follow-up
-        // currentTabChanged -> activateTab repoints it at the new active tab.
+    m_tabSessions->destroySession(tabId, m_active, [this] {
         if (m_transcript != nullptr) {
             m_transcript->setDocument(&m_pageDoc);
         }
-    }
-    m_sessions.erase(it);
-    delete s;
+    });
 }
 
 void RootWidget::dumpGeometry() const
@@ -2015,16 +1782,10 @@ void RootWidget::focusTranscript() const
 
 void RootWidget::promptQuit()
 {
-    if (m_quitDialog != nullptr) {
-        return; // already asking
+    if (m_overlays == nullptr) {
+        return;
     }
-    // While the modal is up it holds focus, so its own keyEvent maps Esc ->
-    // reject(); the RootWidget Esc fallback never fires (no juggling needed).
-    m_quitDialog = new QuitDialog(this);
-
-    connect(m_quitDialog, &QuitDialog::quitConfirmed, this, [] { QCoreApplication::quit(); });
-    connect(m_quitDialog, &Tui::ZDialog::rejected, this, [this] {
-        m_quitDialog = nullptr; // DeleteOnClose frees it
+    m_overlays->promptQuit([this] {
         if (m_sidebarView != nullptr) {
             m_sidebarView->setFocus(); // restore keyboard focus to the panes
         }
@@ -2033,36 +1794,13 @@ void RootWidget::promptQuit()
 
 void RootWidget::openModelPicker()
 {
-    if (m_composerSession == nullptr) {
+    if (m_overlays == nullptr) {
         return;
     }
-    if (m_modelPicker == nullptr) {
-        m_modelPicker = new PaletteDialog(QStringLiteral("Model"), this);
-        connect(m_modelPicker, &PaletteDialog::activated, this, [this](const QString& id) {
-            // Entry ids are the catalog index (stringified).
-            bool ok = false;
-            const int index = id.toInt(&ok);
-            if (ok) {
-                m_composerSession->selectModel(index);
-            }
-            if (m_composer != nullptr) {
-                m_composer->setFocus();
-            }
-        });
-    }
-    const QVariantList catalog = m_composerSession->modelCatalog();
-    QVector<PaletteDialog::Item> items;
-    items.reserve(catalog.size());
-    for (int i = 0; i < catalog.size(); ++i) {
-        const QVariantMap m = catalog.at(i).toMap();
-        const bool current = i == m_composerSession->currentModelIndex();
-        items.push_back({ QString::number(i),
-                          (current ? QStringLiteral("\u2713 ") : QStringLiteral("  "))
-                              + m.value(QStringLiteral("label")).toString(),
-                          m.value(QStringLiteral("provider")).toString() });
-    }
-    m_modelPicker->setItems(items);
-    m_modelPicker->openCentered();
+    m_overlays->openModelPicker(m_composerSession, [this] {
+        if (m_composer != nullptr)
+            m_composer->setFocus();
+    });
 }
 
 void RootWidget::toggleExplorer()
@@ -2083,60 +1821,36 @@ void RootWidget::toggleExplorer()
 
 void RootWidget::openCommandPalette()
 {
-    if (m_commands == nullptr) {
+    if (m_overlays == nullptr) {
         return;
     }
-    if (m_commandPalette == nullptr) {
-        m_commandPalette = new PaletteDialog(QStringLiteral("Commands"), this);
-        connect(m_commandPalette, &PaletteDialog::activated, this, [this](const QString& id) {
-            // Route palette ids to existing actions; session-scoped verbs go to
-            // the active orchestrator (which has no UI of its own here, so the slash
-            // handlers above cover the rest).
-            // App-level manager pages open as singleton page tabs (the TUI's
-            // equivalent of the GUI's Nav overlay).
-            if (openManagerPage(id)) {
-                // routed to a page tab
-            } else if (id == QStringLiteral("new")) {
-                newTranscriptTab();
-            } else if (id == QStringLiteral("theme")) {
-                cycleTheme();
-            } else if (id == QStringLiteral("model")) {
-                openModelPicker();
-            } else if (id == QStringLiteral("search")) {
-                if (m_search != nullptr) {
-                    m_listView->setFocus();
-                }
-            } else if (id == QStringLiteral("files")) {
-                toggleExplorer();
-            } else if (id == QStringLiteral("reasoning")) {
-                m_composerSession->cycleReasoningEffort();
-            } else if (id == QStringLiteral("fast")) {
-                m_composerSession->toggleFastMode();
-            } else if (id == QStringLiteral("verbose")) {
-                m_composerSession->toggleVerbose();
-            } else if (m_active != nullptr) {
-                // retry/edit/undo/clear/usage/compress/save/title/help/distraction.
-                m_composerSession->invokeCommand(id);
-            }
-            if (m_composer != nullptr) {
-                m_composer->setFocus();
-            }
-        });
-    }
-    // Reset the filter to show the full catalog, then build the items.
-    m_commands->search(QString());
-    const QVector<CommandRegistry::Command> cmds = m_commands->visibleCommands();
-    QVector<PaletteDialog::Item> items;
-    items.reserve(cmds.size());
-    for (const CommandRegistry::Command& c : cmds) {
-        QString hint = c.group;
-        if (!c.shortcut.isEmpty()) {
-            hint += QStringLiteral("  ") + c.shortcut;
+    TuiOverlayHost::CommandCallbacks callbacks;
+    callbacks.openManagerPage = [this](const QString& id) { return openManagerPage(id); };
+    callbacks.newTranscriptTab = [this] { newTranscriptTab(); };
+    callbacks.cycleTheme = [this] { cycleTheme(); };
+    callbacks.openModelPicker = [this] { openModelPicker(); };
+    callbacks.focusSearch = [this] {
+        if (m_search != nullptr)
+            m_listView->setFocus();
+    };
+    callbacks.toggleExplorer = [this] { toggleExplorer(); };
+    callbacks.openTranscriptSearch = [this] { openTranscriptSearch(); };
+    callbacks.invokeActiveCommand = [this](const QString& id) {
+        if (id == QStringLiteral("reasoning")) {
+            m_composerSession->cycleReasoningEffort();
+        } else if (id == QStringLiteral("fast")) {
+            m_composerSession->toggleFastMode();
+        } else if (id == QStringLiteral("verbose")) {
+            m_composerSession->toggleVerbose();
+        } else if (m_active != nullptr) {
+            m_composerSession->invokeCommand(id);
         }
-        items.push_back({ c.id, c.title, hint });
-    }
-    m_commandPalette->setItems(items);
-    m_commandPalette->openCentered();
+    };
+    callbacks.focusComposer = [this] {
+        if (m_composer != nullptr)
+            m_composer->setFocus();
+    };
+    m_overlays->openCommandPalette(m_commands, callbacks);
 }
 
 void RootWidget::cycleTheme()
@@ -2191,10 +1905,8 @@ void RootWidget::cycleTheme()
     // The editor's syntax colors are baked by KSyntaxHighlighting per the theme;
     // re-pick the light/dark definition theme for every open file controller.
     const bool dark = next != ThemeName::Light && next != ThemeName::Sepia;
-    for (editor::CodeEditorController* c : std::as_const(m_fileSessions)) {
-        if (c != nullptr)
-            c->setDarkTheme(dark);
-    }
+    if (m_fileTabs != nullptr)
+        m_fileTabs->setDarkTheme(dark);
 
     // Persist to the GUI-shared key so both front ends honor the same choice.
     QSettings settings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"));

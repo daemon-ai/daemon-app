@@ -2,6 +2,8 @@
 
 #include <Tui/ZListView.h>
 
+#include <QPoint>
+
 // ZListView handles Up/Down/Home/End but ignores Left/Right. The sidebar is a
 // flattened tree, so map Left/Right to collapse/expand requests (mirroring the
 // GUI's Keys.onLeft/RightPressed -> SidebarModel.collapse/expandCurrent).

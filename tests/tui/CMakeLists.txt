@@ -89,3 +89,23 @@ target_link_libraries(tui_tab_strip_tests
 )
 add_test(NAME tui_tab_strip_tests COMMAND tui_tab_strip_tests)
 set_tests_properties(tui_tab_strip_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+add_test(NAME daemon_tui_offscreen_startup
+    COMMAND ${CMAKE_COMMAND} -E env
+        DAEMON_TUI_OFFSCREEN=100x30
+        $<TARGET_FILE:daemon-tui>
+)
+
+add_test(NAME daemon_tui_offscreen_tabs_and_find
+    COMMAND ${CMAKE_COMMAND} -E env
+        DAEMON_TUI_OFFSCREEN=120x36
+        DAEMON_TUI_KEYS=ctrl-t,ctrl-tab,ctrl-f,esc
+        $<TARGET_FILE:daemon-tui>
+)
+
+add_test(NAME daemon_tui_offscreen_explorer_theme
+    COMMAND ${CMAKE_COMMAND} -E env
+        DAEMON_TUI_OFFSCREEN=120x36
+        DAEMON_TUI_KEYS=ctrl-e,cycle-theme
+        $<TARGET_FILE:daemon-tui>
+)

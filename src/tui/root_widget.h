@@ -95,7 +95,9 @@ class TranscriptExporter;
 class DisplayRoleAdapter;
 class TabModel;
 class TuiFileTabController;
+class TuiOverlayHost;
 class TuiPageHub;
+class TabSessionManager;
 
 // Per-transcript-tab backend state. Each transcript tab owns an independent
 // controller / orchestrator (turn) / document / ingest / mock host, so a tab that
@@ -112,6 +114,7 @@ class RootWidget : public Tui::ZRoot {
 
 public:
     RootWidget();
+    ~RootWidget() override;
 
     void dumpGeometry() const;    // debug helper for the offscreen self-check
     void focusComposer() const;   // offscreen-test helper: focus the input box
@@ -216,9 +219,6 @@ private:
     // Lazily create the per-tab session for a transcript tab id (no-op if present
     // or if the tab is a non-transcript page).
     TabSession* ensureSession(int tabId);
-    // Lazily create the per-File-tab editor controller, kick off a read through
-    // the fs seam, and wire its dirty flag back to the tab. Returns the controller.
-    editor::CodeEditorController* ensureFileSession(int tabId);
     // Show the code editor view (File tab) or the transcript+composer stack.
     void showEditor(bool on);
     // Toggle the right-side file Explorer column (Ctrl+E / palette "files"), and
@@ -257,7 +257,7 @@ private:
     // for the open tabs and the active one.
     TabModel* m_tabModel = nullptr;
     // Per-transcript-tab backend state, keyed by tab id. Page tabs have no session.
-    QHash<int, TabSession*> m_sessions;
+    std::unique_ptr<TabSessionManager> m_tabSessions;
     // The active transcript session (nullptr while a page tab is active).
     TabSession* m_active = nullptr;
 
@@ -306,13 +306,8 @@ private:
     // the shared controller's completion state (the input box keeps focus).
     CompletionView* m_completionPopup = nullptr;
 
-    // Exit handling: the quit confirmation modal (nullptr when closed).
-    QuitDialog* m_quitDialog = nullptr;
-
-    // Filterable overlays (created lazily, reused). The model picker lists the
-    // shared composer catalog; the command palette lists the shared CommandRegistry.
-    PaletteDialog* m_modelPicker = nullptr;
-    PaletteDialog* m_commandPalette = nullptr;
+    // Filterable overlays and modal host (quit/model picker/command palette).
+    std::unique_ptr<TuiOverlayHost> m_overlays;
     CommandRegistry* m_commands = nullptr;
     // Transcript exporter for the /save + list "export" action (writes JSON).
     TranscriptExporter* m_exporter = nullptr;

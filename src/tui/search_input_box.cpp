@@ -5,6 +5,8 @@
 #include <Tui/ZEvent.h>
 #include <Tui/ZPainter.h>
 
+#include <QRect>
+
 void SearchInputBox::setTypingActive(bool active)
 {
     if (m_typingActive == active) {

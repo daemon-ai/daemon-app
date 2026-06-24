@@ -4,9 +4,7 @@
 #include <QHash>
 #include <QString>
 
-namespace Tui {
-class ZLabel;
-}
+#include <Tui/ZLabel.h>
 
 namespace editor {
 class CodeEditorController;
@@ -29,6 +27,7 @@ public:
     editor::CodeEditorController* ensureFileSession(int tabId);
     bool destroySession(int tabId, CodeEditorView* editorView);
     void saveActive(CodeEditorView* editorView);
+    void setDarkTheme(bool dark);
 
 private:
     [[nodiscard]] QString keyFor(const QString& rootId, const QString& path) const;
