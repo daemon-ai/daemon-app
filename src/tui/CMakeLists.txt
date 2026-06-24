@@ -108,6 +108,16 @@ qt_add_executable(daemon-tui
     mouse_terminal.cpp
     root_widget.h
     root_widget.cpp
+    submit_input_box.h
+    submit_input_box.cpp
+    search_input_box.h
+    search_input_box.cpp
+    tree_list_view.h
+    tree_list_view.cpp
+    tui_dialogs.h
+    tui_dialogs.cpp
+    tui_page_hub.h
+    tui_page_hub.cpp
     display_role_adapter.h
     display_role_adapter.cpp
     tui_palette.h

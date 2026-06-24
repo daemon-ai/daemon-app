@@ -27,6 +27,10 @@
 #include "transcript_view.h"
 #include "file_tree_view.h"
 #include "code_editor_view.h"
+#include "search_input_box.h"
+#include "submit_input_box.h"
+#include "tree_list_view.h"
+#include "tui_dialogs.h"
 
 #include "core/agent_ingest.h"
 #include "core/document_store.h"
@@ -54,6 +58,8 @@
 #include <QStringList>
 #include <QVariantList>
 #include <QVariantMap>
+
+#include <memory>
 
 namespace persistence {
 class InMemorySessionStore;
@@ -88,6 +94,8 @@ class CommandRegistry;
 class TranscriptExporter;
 class DisplayRoleAdapter;
 class TabModel;
+class TuiFileTabController;
+class TuiPageHub;
 
 // Per-transcript-tab backend state. Each transcript tab owns an independent
 // controller / orchestrator (turn) / document / ingest / mock host, so a tab that
@@ -95,223 +103,6 @@ class TabModel;
 // views always binds to the active session. Stored by pointer (never moved) so the
 // ingest's &doc back-pointer stays valid. Defined in root_widget.cpp.
 struct TabSession;
-
-// The composer input: a multiline editor (ZTextEdit) matching the GUI's TextArea.
-// Plain Enter submits, Shift+Enter inserts a newline, Ctrl+Enter steers; it grows
-// with content up to a row cap, supports readline-style editing (executed against
-// the document cursor via the shared lineedit keymap), and drives the shared
-// session's draft + completion + reverse-search state.
-class SubmitInputBox : public Tui::ZTextEdit {
-    Q_OBJECT
-
-public:
-    explicit SubmitInputBox(const Tui::ZTextMetrics& metrics, Tui::ZWidget* parent = nullptr);
-
-    // The shared composer session. When set, the input box routes completion
-    // navigation (Up/Down/Enter/Tab/Esc while completionActive) to it and refreshes
-    // the slash/@ trigger after every key (text/caret change).
-    void setSession(ComposerSessionController* session) { m_session = session; }
-
-    // Flat offset into text() (counting embedded '\n') <-> document Position, so the
-    // completion FSM and the controller's cursorRequested keep using one linear
-    // caret offset across both front ends.
-    [[nodiscard]] int linearCursor() const;
-    void setLinearCursor(int linear);
-    // Place the caret at the end of the document (draftReset's caret-to-end contract).
-    void moveCursorToEnd();
-
-signals:
-    void submitted(const QString& text);
-    // Esc on an empty composer: ask the shell to move focus back to the panes.
-    void leaveRequested();
-    // Up/Down at the first/last line with the caret idle: walk the shared history.
-    void historyPrevious();
-    void historyNext();
-    // Ctrl+O: add a (mock) attachment, mirroring the GUI's attachment menu.
-    void attachRequested();
-
-protected:
-    void keyEvent(Tui::ZKeyEvent* event) override;
-    // Draw a dim placeholder when the draft is empty (over the base paint, so the
-    // editor's own caret still shows).
-    void paintEvent(Tui::ZPaintEvent* event) override;
-    [[nodiscard]] QSize sizeHint() const override;
-
-private:
-    // Push the live text + caret into the shared session (draft + completion
-    // trigger). The controller guards against echoing the value back.
-    void syncToSession();
-    // Re-evaluate the desired height (1..kMaxRows) from the document line count and
-    // relayout if it changed.
-    void recomputeHeight();
-    // Execute a readline EditCommand against the current line via the tested
-    // lineedit transform (line-relative motions/kills with kill-ring); line-boundary
-    // deletes fall through to the base editor. Returns true if consumed.
-    bool applyReadline(lineedit::EditCommand cmd);
-    // Route a key to the active reverse-search FSM. Returns true if the key was
-    // consumed by the search; false means the FSM accepted the match and the caller
-    // should keep processing the key.
-    bool handleReverseSearch(Tui::ZKeyEvent* event);
-
-    [[nodiscard]] Tui::ZTextEdit::Position positionForLinear(int linear) const;
-    [[nodiscard]] int linearForPosition(Tui::ZTextEdit::Position pos) const;
-
-    ComposerSessionController* m_session = nullptr;
-    // Kill buffer for the readline-style edit commands (Ctrl+K/U/W -> Ctrl+Y).
-    lineedit::KillRing m_killRing;
-    // Current laid-out height in rows (drives sizeHint); grows with the document.
-    int m_rows = 1;
-
-    static constexpr int kMaxRows = 6;
-};
-
-// A one-line search field above the session list. It is NOT a focus stop:
-// the session list owns focus and forwards typed characters here (type-ahead),
-// so this box is a passive display of the live query bound to
-// SessionsListModel::setSearch. When the list is focused it shows a caret
-// after the query to mark where keystrokes land; when empty it shows a placeholder.
-class SearchInputBox : public Tui::ZInputBox {
-    Q_OBJECT
-
-public:
-    using Tui::ZInputBox::ZInputBox;
-
-    // Toggle the typing caret (driven by the session list's focus state).
-    void setTypingActive(bool active);
-
-protected:
-    void paintEvent(Tui::ZPaintEvent* event) override;
-
-private:
-    bool m_typingActive = false;
-};
-
-// The one-line in-transcript find field (Ctrl+F). Live text edits drive the
-// query; Enter / Down cycle to the next match, Up / Shift+Enter to the previous,
-// Esc closes. Everything else edits the query text (so 'n'/'N' type normally).
-class TranscriptSearchBox : public Tui::ZInputBox {
-    Q_OBJECT
-
-public:
-    using Tui::ZInputBox::ZInputBox;
-
-signals:
-    void nextRequested();
-    void previousRequested();
-    void closeRequested();
-
-protected:
-    void keyEvent(Tui::ZKeyEvent* event) override;
-};
-
-// ZListView handles Up/Down/Home/End but ignores Left/Right. The sidebar is a
-// flattened tree, so map Left/Right to collapse/expand requests (mirroring the
-// GUI's Keys.onLeft/RightPressed -> SidebarModel.collapse/expandCurrent).
-class TreeListView : public Tui::ZListView {
-    Q_OBJECT
-
-public:
-    using Tui::ZListView::ZListView;
-
-    // Mouse: act on a click at widget-local point `local`. Selects the row under
-    // the cursor (sets the current index); a click on a parent row's disclosure
-    // triangle expands/collapses it instead (via the signals below).
-    void clickAt(QPoint local);
-
-    // Mouse wheel: move the selection by `delta` rows (negative = up). ZListView
-    // scrolls to keep the current index visible, so moving the selection is the
-    // public-API way to scroll a flattened tree.
-    void scrollByLines(int delta);
-
-signals:
-    void collapseRequested();
-    void expandRequested();
-
-protected:
-    void keyEvent(Tui::ZKeyEvent* event) override;
-
-private:
-    // The first visible model row (ZListView's private scroll offset, read via
-    // the vendored same-rev ZListViewPrivate). 0 when unavailable.
-    [[nodiscard]] int scrollOffset() const;
-};
-
-// A small modal "Quit daemon-app?" confirmation. ZDialog auto-centers, handles
-// Esc -> reject(), and routes Enter to the default button; we add Quit/Cancel and
-// surface the confirmed choice via quitConfirmed().
-class QuitDialog : public Tui::ZDialog {
-    Q_OBJECT
-
-public:
-    explicit QuitDialog(Tui::ZWidget* parent);
-
-signals:
-    void quitConfirmed();
-};
-
-// A small modal text-input dialog (ZInputBox + OK/Cancel), used for renaming a
-// session. Seeded with the current title; Enter / OK emits accepted(text).
-class TextPromptDialog : public Tui::ZDialog {
-    Q_OBJECT
-
-public:
-    // `masked` switches the input to password echo (sudo/secret prompts).
-    TextPromptDialog(const QString& title, const QString& initial, bool masked,
-                     Tui::ZWidget* parent);
-
-signals:
-    void submitted(const QString& text);
-    // Emitted when the user cancels (Esc / Cancel), so a host gate can abort.
-    void canceled();
-
-private:
-    Tui::ZInputBox* m_input = nullptr;
-};
-
-// A minimal modal Yes/No confirmation (destructive-confirm). Esc/No reject; the
-// default focus is the cancelling choice. Surfaces the affirmative via confirmed().
-class ConfirmDialog : public Tui::ZDialog {
-    Q_OBJECT
-
-public:
-    ConfirmDialog(const QString& title, const QString& message, Tui::ZWidget* parent);
-
-signals:
-    void confirmed();
-};
-
-// The TUI first-run gate: a lighter "Setup Required" modal mirroring the GUI's
-// FirstRunGate. A target field + Connect drives the shared connection seam; the
-// FirstRunModel advances connect -> connecting -> inference, and Finish completes
-// setup. Reuses the same shared FirstRunModel the GUI binds.
-class FirstRunDialog : public Tui::ZDialog {
-    Q_OBJECT
-
-public:
-    FirstRunDialog(firstrun::FirstRunModel* model, connection::IConnectionService* connection,
-                   settings::ISettingsStore* settings, const QString& defaultTarget,
-                   Tui::ZWidget* parent);
-
-private:
-    void syncToPhase();
-    // Apply the selected transport mode to the editable fields: swap the target
-    // placeholder/seed and show the token field only for "remote" (parity with the
-    // GUI ConnectionPicker's mode cards).
-    void applyMode(const QString& mode);
-
-    firstrun::FirstRunModel* m_model = nullptr;
-    connection::IConnectionService* m_connection = nullptr;
-    settings::ISettingsStore* m_settings = nullptr;
-    Tui::ZLabel* m_status = nullptr;
-    Tui::ZInputBox* m_target = nullptr;
-    Tui::ZInputBox* m_token = nullptr;
-    Tui::ZButton* m_localBtn = nullptr;
-    Tui::ZButton* m_remoteBtn = nullptr;
-    Tui::ZButton* m_testBtn = nullptr;
-    Tui::ZLabel* m_testResult = nullptr;
-    Tui::ZButton* m_primary = nullptr; // Connect / Finish
-    QString m_mode = QStringLiteral("local");
-};
 
 // The TUI shell: a single full-screen window holding the three-column layout
 // (Sidebar | SessionsList | Session), driven entirely by the app's
@@ -350,31 +141,6 @@ private:
     // through it.
     void rewindActiveTab(const QString& messageId, bool editMode);
     void promptQuit(); // open the quit-confirmation modal (idempotent)
-    // Render the Settings page document from the shared seams (DaemonConfig +
-    // AppSettings + Connection) so the TUI settings page reflects live values
-    // (parity with the GUI Settings page; the GUI is the interactive editor).
-    [[nodiscard]] QString buildSettingsMarkdown() const;
-    // Markdown projection for the Models hub page (Installed + Discover + Providers).
-    // The interactive hubs take `sel`: the index of the highlighted actionable row
-    // (marked with a caret), so the markdown projection doubles as the selection
-    // cursor for the keyboard-driven page actions.
-    [[nodiscard]] QString buildModelsMarkdown(int sel = -1) const;
-    [[nodiscard]] QString buildAccountsMarkdown(int sel = -1) const;
-    [[nodiscard]] QString buildProfilesMarkdown(int sel = -1) const;
-    [[nodiscard]] QString buildDashboardMarkdown() const;
-    [[nodiscard]] QString buildFleetMarkdown(int sel = -1) const;
-    [[nodiscard]] QString buildSessionsMarkdown(int sel = -1) const;
-    [[nodiscard]] QString buildApprovalsMarkdown(int sel = -1) const;
-    [[nodiscard]] QString buildRoutingMarkdown(int sel = -1) const;
-    [[nodiscard]] QString buildCronMarkdown(int sel = -1) const;
-    // Memory page projection: Overview stats + Memories list + Knowledge-graph
-    // adjacency + Timeline, all from the shared memory view-models (the graph
-    // node-link render is GUI-only; here it degrades to an adjacency listing).
-    // Scoped to the active Memory tab's agent (profile == bank), set in activateTab.
-    [[nodiscard]] QString buildMemoryMarkdown() const;
-    // Per-agent Profile projection: the agent's ProfileSpec (provider/model/
-    // memory provider/persona/tool allowlist) from the shared profiles seam.
-    [[nodiscard]] QString buildProfileMarkdown(const QString& profileRef) const;
     // Route a page-tab kind to the right markdown projection.
     [[nodiscard]] QString pageMarkdownForKind(int kind) const;
 
@@ -528,12 +294,8 @@ private:
     FileTreeView* m_fileTreeView = nullptr;
     CodeEditorView* m_editorView = nullptr;
     Tui::ZLabel* m_fileStatus = nullptr;
-    // Per-File-tab editor controllers (keyed by tab id) and a (rootId\x1f path)
-    // index so async fs reads/writes resolve back to the right controller.
-    QHash<int, editor::CodeEditorController*> m_fileSessions;
-    QHash<QString, editor::CodeEditorController*> m_fileByKey;
-    QString m_activeFileRoot;
-    QString m_activeFilePath;
+    // Per-File-tab editor controllers and async fs resolution.
+    std::unique_ptr<TuiFileTabController> m_fileTabs;
     // Custom-painted colored status footer (gateway/agents/context/session/version).
     StatusBarView* m_footer = nullptr;
     // Compact status-stack todo strip (above the composer).
@@ -585,9 +347,8 @@ private:
     memoryui::MemoryTimelineModel* m_memTimeline = nullptr;
     memoryui::MemoryGraphModel* m_memGraph = nullptr;
 
-    // The highlighted actionable row for each interactive hub page, keyed by tab
-    // kind. Persists across tab switches so re-opening a hub keeps its cursor.
-    QHash<int, int> m_pageSel;
+    // Manager-page projection + keyboard actions for seam-backed hub tabs.
+    std::unique_ptr<TuiPageHub> m_pageHub;
 
     // Static document backing non-transcript page tabs (e.g. Settings): the
     // transcript view points here while a page tab is active.
