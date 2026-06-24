@@ -510,6 +510,7 @@ private:
     files::FsExplorerModel* m_fileTree = nullptr;
     FileTreeView* m_fileTreeView = nullptr;
     CodeEditorView* m_editorView = nullptr;
+    Tui::ZLabel* m_fileStatus = nullptr;
     // Per-File-tab editor controllers (keyed by tab id) and a (rootId\x1f path)
     // index so async fs reads/writes resolve back to the right controller.
     QHash<int, editor::CodeEditorController*> m_fileSessions;

@@ -32,7 +32,7 @@ public:
     void stat(const QString& rootId, const QString& path) override;
     void read(const QString& rootId, const QString& path) override;
     void write(const QString& rootId, const QString& path, const QByteArray& bytes,
-               const QString& baseRevision) override;
+               const QString& baseRevision, bool force = false) override;
     void search(const QString& rootId, const QString& query, const QVariantMap& opts) override;
     void watch(const QString& rootId, const QString& dir) override;
     void unwatch(const QString& rootId, const QString& dir) override;

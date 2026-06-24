@@ -28,7 +28,9 @@ Item {
     property bool binary: false
     property bool truncated: false
     property bool loaded: false
+    property bool saving: false
     property string errorText: ""
+    property string statusText: ""
     // The fs content revision held as the optimistic-write base (markdown path;
     // the code editor tracks its own revision internally).
     property string _revision: ""
@@ -48,12 +50,15 @@ Item {
     function save() {
         if (!service || !loaded || binary || isImage || truncated)
             return;
+        saving = true;
+        errorText = "";
+        statusText = qsTr("Saving\u2026");
         if (isMarkdown) {
             if (mdLoader.item)
-                service.write(rootId, path, mdLoader.item.textBytes(), root._revision);
+                service.write(rootId, path, mdLoader.item.textBytes(), root._revision, false);
         } else if (codeLoader.item) {
             service.write(rootId, path, codeLoader.item.controller.textBytes(),
-                          codeLoader.item.controller.revision);
+                          codeLoader.item.controller.revision, false);
         }
     }
 
@@ -102,10 +107,14 @@ Item {
             if (r !== root.rootId || p !== root.path)
                 return;
             if (!ok) {
+                root.saving = false;
                 root.errorText = err || qsTr("Save failed.");
+                root.statusText = "";
                 return;
             }
+            root.saving = false;
             root.errorText = "";
+            root.statusText = qsTr("Saved");
             root._revision = revision;
             if (root.isMarkdown) {
                 if (mdLoader.item)
@@ -209,6 +218,27 @@ Item {
             color: Theme.text
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
+        }
+    }
+
+    Rectangle {
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: Theme.smallSpacing
+        width: statusLabel.implicitWidth + 2 * Theme.smallSpacing
+        height: statusLabel.implicitHeight + Theme.smallSpacing
+        visible: root.statusText !== "" && root.errorText === ""
+        color: Theme.toolSurface
+        border.color: Theme.toolBorder
+        border.width: Theme.hairline
+        radius: Theme.radius
+
+        Label {
+            id: statusLabel
+            anchors.centerIn: parent
+            text: root.statusText
+            color: Theme.mutedText
+            font.pixelSize: Theme.captionFontSize
         }
     }
 

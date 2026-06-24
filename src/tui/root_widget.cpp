@@ -1029,16 +1029,26 @@ RootWidget::RootWidget()
                    const QString& revision, bool binary, bool /*truncated*/) {
                 editor::CodeEditorController* c =
                     m_fileByKey.value(rootId + QChar(0x1f) + path, nullptr);
-                if (c != nullptr && !binary)
+                if (c != nullptr && !binary) {
                     c->loadBytes(bytes, path, revision);
+                    if (m_fileStatus != nullptr)
+                        m_fileStatus->setText(QString());
+                } else if (c != nullptr && m_fileStatus != nullptr) {
+                    m_fileStatus->setText(QStringLiteral("Binary file - not editable"));
+                }
             });
     connect(m_fs, &fs::IFsService::writeResult, this,
             [this](const QString& rootId, const QString& path, bool ok, const QString& revision,
-                   const QString& /*error*/) {
+                   const QString& error) {
                 editor::CodeEditorController* c =
                     m_fileByKey.value(rootId + QChar(0x1f) + path, nullptr);
-                if (c != nullptr && ok)
+                if (c != nullptr && ok) {
                     c->markSaved(revision);
+                    if (m_fileStatus != nullptr)
+                        m_fileStatus->setText(QStringLiteral("Saved"));
+                } else if (c != nullptr && m_fileStatus != nullptr) {
+                    m_fileStatus->setText(error.isEmpty() ? QStringLiteral("Save failed") : error);
+                }
             });
 
     // Phase 0 shared seams (identical classes to the GUI). The connection seam
@@ -1470,8 +1480,13 @@ void RootWidget::buildUi()
     connect(m_editorView, &CodeEditorView::saveRequested, this, [this] {
         if (m_fs != nullptr && m_editorView->controller() != nullptr && !m_activeFilePath.isEmpty())
             m_fs->write(m_activeFileRoot, m_activeFilePath, m_editorView->controller()->textBytes(),
-                        m_editorView->controller()->revision());
+                        m_editorView->controller()->revision(), false);
     });
+
+    m_fileStatus = new Tui::ZLabel(right);
+    m_fileStatus->setMaximumSize(Tui::tuiMaxSize, 1);
+    m_fileStatus->setVisible(false);
+    rightCol->addWidget(m_fileStatus);
 
     // One-line streaming/affordance chrome (Thinking.../error + send/stop/steer).
     m_composerChrome = new ComposerChrome(right);
@@ -2392,6 +2407,8 @@ void RootWidget::showEditor(bool on)
 {
     if (m_editorView != nullptr)
         m_editorView->setVisible(on);
+    if (m_fileStatus != nullptr)
+        m_fileStatus->setVisible(on);
     // Transcript + composer chrome are hidden while a file is open.
     const bool stack = !on;
     if (m_transcript != nullptr)

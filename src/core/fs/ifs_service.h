@@ -37,7 +37,8 @@ public:
     // Write with optimistic concurrency: a stale `baseRevision` is rejected
     // (empty base = unconditional / new file). Result via writeResult.
     Q_INVOKABLE virtual void write(const QString& rootId, const QString& path,
-                                   const QByteArray& bytes, const QString& baseRevision) = 0;
+                                   const QByteArray& bytes, const QString& baseRevision,
+                                   bool force = false) = 0;
     // Server-side project search (content; opts may carry "regex","caseSensitive",
     // "maxResults"). Result via searchResults (possibly several, last is complete).
     Q_INVOKABLE virtual void search(const QString& rootId, const QString& query,

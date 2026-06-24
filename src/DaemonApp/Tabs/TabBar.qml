@@ -47,6 +47,7 @@ RowLayout {
             required property bool current
             required property bool closable
             required property bool preview
+            required property bool dirty
 
             height: tabList.height - 6
             y: 3
@@ -81,11 +82,11 @@ RowLayout {
                 implicitWidth: 20
                 implicitHeight: 20
                 visible: chip.closable
-                icon: FontIcons.fa_xmark
-                iconColor: Theme.iconMuted
+                icon: chip.dirty ? FontIcons.fa_circle : FontIcons.fa_xmark
+                iconColor: chip.dirty ? Theme.accent : Theme.iconMuted
                 iconPointSize: 11
                 backgroundRadius: width / 2
-                tooltipText: qsTr("Close tab")
+                tooltipText: chip.dirty ? qsTr("Unsaved changes") : qsTr("Close tab")
                 onClicked: root.tabModel.closeTab(chip.index)
             }
 

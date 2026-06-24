@@ -264,7 +264,7 @@ void LocalDiskFsService::read(const QString& rootId, const QString& path)
 }
 
 void LocalDiskFsService::write(const QString& rootId, const QString& path, const QByteArray& bytes,
-                               const QString& baseRevision)
+                               const QString& baseRevision, bool force)
 {
     const QString abs = resolve(rootId, path);
     if (abs.isEmpty()) {
@@ -278,7 +278,7 @@ void LocalDiskFsService::write(const QString& rootId, const QString& path, const
     }
     // Optimistic concurrency: reject if the on-disk revision moved out from
     // under a non-empty base (empty base = unconditional / new file).
-    if (!baseRevision.isEmpty()) {
+    if (!force && !baseRevision.isEmpty()) {
         const QString current = revisionFor(abs);
         if (!current.isEmpty() && current != baseRevision) {
             QMetaObject::invokeMethod(

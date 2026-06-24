@@ -51,7 +51,7 @@ void FsExplorerModel::setShowIgnored(bool show)
 
 int FsExplorerModel::rowCount(const QModelIndex& parent) const
 {
-    return parent.isValid() ? 0 : m_rows.size();
+    return parent.isValid() ? 0 : static_cast<int>(m_rows.size());
 }
 
 QVariant FsExplorerModel::data(const QModelIndex& index, int role) const
@@ -225,7 +225,7 @@ void FsExplorerModel::insertChildren(int row, const QList<fs::FsEntry>& entries)
     }
     if (children.isEmpty())
         return;
-    beginInsertRows({}, row + 1, row + children.size());
+    beginInsertRows({}, row + 1, row + static_cast<int>(children.size()));
     for (int i = 0; i < children.size(); ++i)
         m_rows.insert(row + 1 + i, children.at(i));
     endInsertRows();

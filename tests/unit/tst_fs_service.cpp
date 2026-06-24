@@ -64,6 +64,41 @@ private slots:
         QVERIFY(errorSpy.wait());
         QCOMPARE(readSpy.count(), 0);
     }
+
+    void forceWriteOverridesStaleRevision()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.path() + QStringLiteral("/note.txt");
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            QCOMPARE(f.write("one"), qint64(3));
+        }
+
+        fs::LocalDiskFsService svc(dir.path());
+        QSignalSpy readSpy(&svc, &fs::IFsService::fileRead);
+        svc.read(QStringLiteral("workspace"), QStringLiteral("note.txt"));
+        QVERIFY(readSpy.wait());
+        const QString staleBase = readSpy.takeFirst().at(3).toString();
+
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            QCOMPARE(f.write("external"), qint64(8));
+        }
+
+        QSignalSpy writeSpy(&svc, &fs::IFsService::writeResult);
+        svc.write(QStringLiteral("workspace"), QStringLiteral("note.txt"), QByteArray("forced"),
+                  staleBase, true);
+        QVERIFY(writeSpy.wait());
+        const QList<QVariant> args = writeSpy.takeFirst();
+        QCOMPARE(args.at(2).toBool(), true);
+
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QCOMPARE(f.readAll(), QByteArray("forced"));
+    }
 };
 
 QTEST_MAIN(TestFsService)
