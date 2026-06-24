@@ -28,6 +28,9 @@ class IConnectionService;
 namespace fs {
 class IFsService;
 }
+namespace memory {
+class IMemoryService;
+}
 namespace nav {
 class NavController;
 }
@@ -113,6 +116,10 @@ private:
     // Filesystem seam (dev local-disk impl now), exposed to QML as `Fs`; backs
     // the file tree, finder, and editor. A daemon adapter replaces it later.
     fs::IFsService* m_fs = nullptr;
+    // Memory-inspection seam (seeded mock now), exposed to QML as `Memory`; backs
+    // the Memory page (overview / list / graph / timeline). A daemon NodeApi
+    // adapter replaces it later.
+    memory::IMemoryService* m_memory = nullptr;
     // App-level page navigation seam, exposed to QML as `Nav`.
     nav::NavController* m_nav = nullptr;
     // First-run / onboarding gate, exposed to QML as `FirstRun`.

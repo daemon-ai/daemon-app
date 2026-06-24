@@ -370,3 +370,31 @@ target_link_libraries(tst_editor_search
 )
 add_test(NAME tst_editor_search COMMAND tst_editor_search)
 set_tests_properties(tst_editor_search PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_memory: the seeded memory seam (MockMemoryService) + the shared view-models
+# that back BOTH front ends - list filter/sort/search, scope filtering, stat
+# aggregation, the graph nodes/neighbours + kinds, the flattened timeline, and the
+# Memory page singleton. Compiles the view-model sources directly (they need only
+# QtCore/QtQml, no QML engine) so the logic test stays in the fast unit suite.
+qt_add_executable(tst_memory
+    tst_memory.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Memory/memory_list_model.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Memory/memory_stats_model.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Memory/memory_timeline_model.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Memory/memory_graph_model.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs/tab_model.cpp
+)
+set_target_properties(tst_memory PROPERTIES AUTOMOC ON)
+target_include_directories(tst_memory
+    PRIVATE
+        "${CMAKE_SOURCE_DIR}/src/DaemonApp/Memory"
+        "${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs"
+)
+target_link_libraries(tst_memory
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        daemon-app::memory
+)
+add_test(NAME tst_memory COMMAND tst_memory)
+set_tests_properties(tst_memory PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

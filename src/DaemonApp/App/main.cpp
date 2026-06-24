@@ -178,6 +178,7 @@ Q_IMPORT_QML_PLUGIN(DaemonApp_TranscriptPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_ComposerPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_SettingsPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_PagesPlugin)
+Q_IMPORT_QML_PLUGIN(DaemonApp_MemoryPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_StatusBarPlugin)
 
 int main(int argc, char* argv[])

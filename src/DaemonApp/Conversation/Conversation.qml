@@ -7,6 +7,7 @@ import DaemonApp.Controls as Kit
 import DaemonApp.Settings
 import DaemonApp.Tabs
 import DaemonApp.Pages
+import DaemonApp.Memory
 
 // The conversation pane host, built as two stacked containers with EXPLICIT
 // anchored geometry (no outer ColumnLayout): a fixed-height tab bar at the top
@@ -112,6 +113,24 @@ Rectangle {
                 ld.item.section = section;
         }
     }
+
+    // Open (or re-activate) a per-agent surface keyed by the agent's ProfileRef.
+    // `kind` is "memory" or "profile"; the loaded page binds its `profile` from
+    // the tab's agentRef (see the Loader.onLoaded above). Memory and Profile are
+    // owned by the agent, so opening the same agent re-uses its existing tab.
+    function openAgentTab(kind, profileRef, title) {
+        if (!profileRef || profileRef.length === 0)
+            return;
+        const map = {
+            "memory":  [TabModel.Memory,  qsTr("Memory")],
+            "profile": [TabModel.Profile, qsTr("Profile")],
+        };
+        const entry = map[kind];
+        if (!entry)
+            return;
+        const label = entry[1] + (title && title.length > 0 ? " \u00b7 " + title : "");
+        tabModel.openAgentTab(entry[0], profileRef, label);
+    }
     // Route a command (palette / slash) to the active tab's orchestrator, so the
     // command palette can drive the foreground conversation. No-op without a tab.
     function invokeActiveCommand(command) {
@@ -208,6 +227,7 @@ Rectangle {
                 required property int tabId
                 required property string filePath
                 required property string fileRoot
+                required property string agentRef
 
                 anchors.fill: parent
                 visible: index === tabModel.currentIndex
@@ -228,6 +248,8 @@ Rectangle {
                     case TabModel.Approvals:  return approvalsComp;
                     case TabModel.Routing:    return routingComp;
                     case TabModel.Cron:       return cronComp;
+                    case TabModel.Memory:     return memoryComp;
+                    case TabModel.Profile:    return agentProfileComp;
                     case TabModel.File:       return fileComp;
                     default:                  return transcriptComp;
                     }
@@ -246,6 +268,13 @@ Rectangle {
                         item.titleResolved.connect(function(t) {
                             tabModel.setTitle(tabModel.indexOfTabId(pageLoader.tabId), t);
                         });
+                        return;
+                    }
+                    // Per-agent surfaces (Memory / Profile) bind their `profile`
+                    // from the tab's agentRef so each agent's tab shows its own bank.
+                    if (pageLoader.kind === TabModel.Memory
+                        || pageLoader.kind === TabModel.Profile) {
+                        item.profile = Qt.binding(() => pageLoader.agentRef);
                         return;
                     }
                     // Manager/settings pages are self-contained (they bind global
@@ -325,6 +354,8 @@ Rectangle {
     Component { id: approvalsComp; ApprovalsPage {} }
     Component { id: routingComp;   RoutingPage {} }
     Component { id: cronComp;      CronPage {} }
+    Component { id: memoryComp;    MemoryPage {} }
+    Component { id: agentProfileComp; AgentProfilePage {} }
     Component { id: fileComp;      FilePage {} }
 
     // --- Session-action dialogs (rename + export) ---------------------------

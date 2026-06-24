@@ -22,6 +22,12 @@
 #include "app/code_editor_controller.h"
 #include "fs/local_disk_fs_service.h"
 
+#include "memory_graph_model.h"
+#include "memory_list_model.h"
+#include "memory_stats_model.h"
+#include "memory_timeline_model.h"
+#include "memory/mock_memory_service.h"
+
 #include "accounts/mock_accounts_service.h"
 #include "config/mock_daemon_config.h"
 #include "connection/mock_connection_service.h"
@@ -1073,11 +1079,38 @@ RootWidget::RootWidget()
     m_sessionSettings = new session::MockSessionSettings(this);
     m_checkpoints = new session::MockCheckpointTimeline(this);
 
+    // Memory-inspection seam (seeded mock) + the shared view-models. Setting the
+    // service kicks off the initial async requests; the page markdown re-renders
+    // when results land (see the liveRefresh wiring in wireViews).
+    m_memory = new memory::MockMemoryService(this);
+    m_memList = new memoryui::MemoryListModel(this);
+    m_memStats = new memoryui::MemoryStatsModel(this);
+    m_memTimeline = new memoryui::MemoryTimelineModel(this);
+    m_memGraph = new memoryui::MemoryGraphModel(this);
+    m_memList->setService(m_memory);
+    m_memStats->setService(m_memory);
+    m_memTimeline->setService(m_memory);
+    m_memGraph->setService(m_memory);
+
     // Wire the app-level navigation seam (constructed-but-unused until now): an
     // open() from anywhere (slash, palette, a future cog menu) raises the matching
     // manager page tab, exactly like the GUI mounts the page overlay.
     connect(m_nav, &nav::NavController::openRequested, this,
             [this](const QString& page, const QString&) { openManagerPage(page); });
+    // Per-agent (ProfileRef-keyed) Memory / Profile tabs.
+    connect(m_nav, &nav::NavController::openAgentRequested, this,
+            [this](const QString& kind, const QString& profileRef, const QString& title) {
+                if (m_tabModel == nullptr || profileRef.isEmpty())
+                    return;
+                const int tabKind = kind == QStringLiteral("profile") ? TabModel::Profile
+                                                                       : TabModel::Memory;
+                const QString base = tabKind == TabModel::Profile ? QStringLiteral("Profile")
+                                                                  : QStringLiteral("Memory");
+                const QString label = title.isEmpty()
+                    ? base
+                    : base + QStringLiteral(" \u00b7 ") + title;
+                m_tabModel->openAgentTab(tabKind, profileRef, label);
+            });
 
     connect(m_connection, &connection::IConnectionService::stateChanged, this,
             [this] { m_status->setGatewayState(m_connection->state()); });
@@ -1146,6 +1179,26 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
         openTranscriptSearch();
         event->accept();
         return;
+    }
+    // Sidebar agent shortcuts (parity with the GUI right-click menu): with the
+    // Fleet tree focused, 'p' opens the selected agent's Profile and 'm' its
+    // Memory. Only fires on profile-backed (agent) rows.
+    if (mods == Qt::NoModifier && m_sidebarView != nullptr && m_sidebarView->focus()
+        && m_sidebar != nullptr && m_nav != nullptr
+        && (event->text() == QStringLiteral("p") || event->text() == QStringLiteral("m"))) {
+        const int row = m_sidebar->currentRow();
+        if (row >= 0) {
+            const QModelIndex idx = m_sidebar->index(row);
+            const QString profile = m_sidebar->data(idx, SidebarModel::ProfileRole).toString();
+            const QString label = m_sidebar->data(idx, SidebarModel::LabelRole).toString();
+            if (!profile.isEmpty()) {
+                m_nav->openAgent(event->text() == QStringLiteral("p") ? QStringLiteral("profile")
+                                                                      : QStringLiteral("memory"),
+                                 profile, label);
+                event->accept();
+                return;
+            }
+        }
     }
     if ((mods & Qt::ControlModifier) && m_tabModel != nullptr
         && (event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backtab)) {
@@ -1594,6 +1647,13 @@ void RootWidget::wireViews()
     // it when either of those churns too.
     liveRefresh(m_roster->sessions(), TabModel::Dashboard);
     liveRefresh(m_approvals->pending(), TabModel::Dashboard);
+    // The Memory page is a read-only projection of the shared memory view-models;
+    // re-render it when any of them deliver async results.
+    liveRefresh(m_memList, TabModel::Memory);
+    liveRefresh(m_memTimeline, TabModel::Memory);
+    liveRefresh(m_memGraph, TabModel::Memory);
+    connect(m_memStats, &memoryui::MemoryStatsModel::changed, this,
+            [this] { refreshPageIfActive(TabModel::Memory); });
 
     // Type-ahead search. The conversation list is the only focus stop in the
     // column; printable keys it receives build the query in the passive search box,
@@ -2363,6 +2423,12 @@ void RootWidget::activateTab(int tabId)
         showEditor(false);
         m_active = nullptr;
         const int kind = m_tabModel->kindAt(row);
+        // Per-agent Memory tab: re-scope the shared memory models to this tab's
+        // agent (profile == bank) before projecting. Switching between agents'
+        // Memory tabs re-scopes the same shared service.
+        if (kind == TabModel::Memory && m_memory != nullptr) {
+            m_memory->setScope(m_tabModel->agentRefAt(row), QString(), true);
+        }
         m_pageDoc.loadMarkdown(pageMarkdownForKind(kind));
         if (m_transcript != nullptr) {
             m_transcript->setSearch(nullptr);
@@ -2451,6 +2517,11 @@ QString RootWidget::pageMarkdownForKind(int kind) const
         return buildRoutingMarkdown(sel);
     case TabModel::Cron:
         return buildCronMarkdown(sel);
+    case TabModel::Memory:
+        return buildMemoryMarkdown();
+    case TabModel::Profile:
+        return buildProfileMarkdown(
+            m_tabModel != nullptr ? m_tabModel->agentRefAt(m_tabModel->currentIndex()) : QString());
     default:
         return pageMarkdown(kind);
     }
@@ -2472,6 +2543,8 @@ bool RootWidget::openManagerPage(const QString& id)
         { QStringLiteral("approvals"), { TabModel::Approvals, QStringLiteral("Approvals") } },
         { QStringLiteral("routing"), { TabModel::Routing, QStringLiteral("Routing") } },
         { QStringLiteral("cron"), { TabModel::Cron, QStringLiteral("Scheduled jobs") } },
+        // Memory/Profile are NOT here: they are per-agent (keyed by ProfileRef) and
+        // open via openAgentTab(), not as singleton manager pages.
     };
     const auto route = kPageRoutes.constFind(id);
     if (route == kPageRoutes.constEnd()) {
@@ -2970,6 +3043,156 @@ QString RootWidget::buildCronMarkdown(int sel) const
                            j.value(QStringLiteral("lastRun")).toString());
         }
     }
+    return md;
+}
+
+QString RootWidget::buildMemoryMarkdown() const
+{
+    QString md;
+    const QString agent = m_memory != nullptr ? m_memory->profile() : QString();
+    md += QStringLiteral("# Memory - %1\n\n").arg(agent.isEmpty() ? QStringLiteral("agent") : agent);
+    md += QStringLiteral("Mnemosyne memory for the active scope, shared with the GUI. The "
+                         "knowledge graph renders as a node-link diagram in the GUI; here it is "
+                         "an adjacency listing.\n\n");
+
+    // --- Overview ---------------------------------------------------------
+    if (m_memStats != nullptr) {
+        md += QStringLiteral("## Overview\n\n");
+        md += QStringLiteral("- Working: **%1** · Episodic: **%2** · Scratchpad: **%3**\n")
+                  .arg(m_memStats->working())
+                  .arg(m_memStats->episodic())
+                  .arg(m_memStats->scratchpad());
+        md += QStringLiteral("- Facts: **%1** · Conflicts: **%2**\n\n")
+                  .arg(m_memStats->facts())
+                  .arg(m_memStats->conflicts());
+
+        const auto gauges = [&md](const QString& title, const QVariantList& rows) {
+            if (rows.isEmpty())
+                return;
+            md += QStringLiteral("**%1**\n\n").arg(title);
+            for (const QVariant& v : rows) {
+                const QVariantMap r = v.toMap();
+                const double frac = r.value(QStringLiteral("fraction")).toDouble();
+                const int filled = qBound(0, static_cast<int>(frac * 12.0 + 0.5), 12);
+                const QString bar = QString(filled, QChar('#')) + QString(12 - filled, QChar('-'));
+                md += QStringLiteral("- `%1` %2 %3\n")
+                          .arg(bar, r.value(QStringLiteral("key")).toString())
+                          .arg(r.value(QStringLiteral("count")).toInt());
+            }
+            md += QStringLiteral("\n");
+        };
+        gauges(QStringLiteral("By source"), m_memStats->bySource());
+        gauges(QStringLiteral("By veracity"), m_memStats->byVeracity());
+        gauges(QStringLiteral("By lifecycle"), m_memStats->byDegradation());
+    }
+
+    // --- Memories ---------------------------------------------------------
+    if (m_memList != nullptr) {
+        md += QStringLiteral("## Memories\n\n");
+        const int n = m_memList->rowCount();
+        if (n == 0)
+            md += QStringLiteral("_No memories in scope._\n\n");
+        for (int i = 0; i < n; ++i) {
+            const QVariantMap e = m_memList->entryAt(i);
+            md += QStringLiteral("- **%1** _(%2 · %3 · imp %4)_\n")
+                      .arg(e.value(QStringLiteral("content")).toString(),
+                           e.value(QStringLiteral("tier")).toString(),
+                           e.value(QStringLiteral("veracity")).toString())
+                      .arg(e.value(QStringLiteral("importance")).toDouble(), 0, 'f', 2);
+        }
+        md += QStringLiteral("\n");
+    }
+
+    // --- Knowledge graph adjacency (GUI renders this as a node-link graph) -
+    if (m_memGraph != nullptr) {
+        md += QStringLiteral("## Graph adjacency\n\n");
+        const QVariantList edges = m_memGraph->edges();
+        if (edges.isEmpty())
+            md += QStringLiteral("_No edges in scope._\n\n");
+        for (const QVariant& v : edges) {
+            const QVariantMap e = v.toMap();
+            md += QStringLiteral("- `%1` --%2--> `%3`\n")
+                      .arg(e.value(QStringLiteral("source")).toString(),
+                           e.value(QStringLiteral("edgeType")).toString(),
+                           e.value(QStringLiteral("target")).toString());
+        }
+        md += QStringLiteral("\n");
+    }
+
+    // --- Timeline ---------------------------------------------------------
+    if (m_memTimeline != nullptr) {
+        md += QStringLiteral("## Timeline\n\n");
+        const int n = m_memTimeline->rowCount();
+        for (int i = 0; i < n; ++i) {
+            const QModelIndex idx = m_memTimeline->index(i);
+            const bool header =
+                m_memTimeline->data(idx, memoryui::MemoryTimelineModel::IsHeaderRole).toBool();
+            if (header) {
+                md += QStringLiteral("\n**%1**\n\n")
+                          .arg(m_memTimeline
+                                   ->data(idx, memoryui::MemoryTimelineModel::GroupKeyRole)
+                                   .toString());
+            } else {
+                md += QStringLiteral("- _%1_ %2\n")
+                          .arg(m_memTimeline->data(idx, memoryui::MemoryTimelineModel::KindRole)
+                                   .toString(),
+                               m_memTimeline
+                                   ->data(idx, memoryui::MemoryTimelineModel::SummaryRole)
+                                   .toString());
+            }
+        }
+        md += QStringLiteral("\n");
+    }
+
+    return md;
+}
+
+QString RootWidget::buildProfileMarkdown(const QString& profileRef) const
+{
+    QString md;
+    if (profileRef.isEmpty() || m_profiles == nullptr) {
+        md += QStringLiteral("# Profile\n\n_No agent selected._\n");
+        return md;
+    }
+    const QVariantMap p = m_profiles->profile(profileRef);
+    const auto val = [&p](const QString& key, const QString& fallback) {
+        const QString v = p.value(key).toString();
+        return v.isEmpty() ? fallback : v;
+    };
+
+    md += QStringLiteral("# Profile - %1\n\n")
+              .arg(val(QStringLiteral("name"), profileRef));
+    md += QStringLiteral("Agent == profile. Memory lives in this agent's bank (`%1`).\n\n")
+              .arg(profileRef);
+
+    md += QStringLiteral("## Engine\n\n");
+    md += QStringLiteral("- Provider: **%1**\n").arg(val(QStringLiteral("provider"), QStringLiteral("-")));
+    md += QStringLiteral("- Model: **%1**\n").arg(val(QStringLiteral("model"), QStringLiteral("-")));
+    md += QStringLiteral("- Base URL: %1\n")
+              .arg(val(QStringLiteral("baseUrl"), QStringLiteral("(provider default)")));
+    md += QStringLiteral("- Context engine: %1\n\n")
+              .arg(val(QStringLiteral("contextEngine"), QStringLiteral("lcm")));
+
+    md += QStringLiteral("## Memory\n\n");
+    md += QStringLiteral("- Memory provider: **%1**\n\n")
+              .arg(val(QStringLiteral("memoryProvider"), QStringLiteral("mnemosyne")));
+
+    md += QStringLiteral("## Persona\n\n");
+    md += val(QStringLiteral("systemPrompt"), QStringLiteral("-")) + QStringLiteral("\n\n");
+
+    const auto chips = [&md, &p](const QString& title, const QString& key) {
+        const QStringList items = p.value(key).toStringList();
+        md += QStringLiteral("## %1\n\n").arg(title);
+        if (items.isEmpty()) {
+            md += QStringLiteral("_none_\n\n");
+            return;
+        }
+        for (const QString& it : items)
+            md += QStringLiteral("- `%1`\n").arg(it);
+        md += QStringLiteral("\n");
+    };
+    chips(QStringLiteral("Tool allowlist"), QStringLiteral("toolAllowlist"));
+    chips(QStringLiteral("Skills"), QStringLiteral("skills"));
     return md;
 }
 

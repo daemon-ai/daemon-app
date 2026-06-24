@@ -14,6 +14,39 @@ using domain::ListScope;
 using domain::NodeType;
 using domain::Tag;
 
+void InMemoryConversationStore::applyUnitMeta(AgentNode& n)
+{
+    // UnitId == SessionId on the durable path.
+    n.session = n.id;
+
+    // Role: roots are the top-level (Primary) conversations; children are managed,
+    // with the deepest demo worker flagged ephemeral to exercise that styling.
+    if (n.parentId.isEmpty()) {
+        n.role = domain::SessionRole::Primary;
+    } else if (n.id == QStringLiteral("n-worker")) {
+        n.role = domain::SessionRole::EphemeralSubagent;
+    } else {
+        n.role = domain::SessionRole::ManagedChild;
+    }
+
+    // Hosts are substrate, not profile-backed agents (mirrors the daemon: Host
+    // units carry no profile). Everything else binds to a seeded profile id.
+    if (n.kind == AgentNodeKind::Host) {
+        n.profile.clear();
+        return;
+    }
+    static const QHash<QString, QString> kNodeProfiles = {
+        { QStringLiteral("n-scratch"), QStringLiteral("prof-1") },
+        { QStringLiteral("n-acme"), QStringLiteral("prof-1") },
+        { QStringLiteral("n-build"), QStringLiteral("prof-1") },
+        { QStringLiteral("n-coder"), QStringLiteral("prof-2") },
+        { QStringLiteral("n-worker"), QStringLiteral("prof-2") },
+        { QStringLiteral("n-review"), QStringLiteral("prof-3") },
+        { QStringLiteral("n-deep"), QStringLiteral("prof-3") },
+    };
+    n.profile = kNodeProfiles.value(n.id, QStringLiteral("prof-1"));
+}
+
 InMemoryConversationStore::InMemoryConversationStore(QObject* parent)
     : InMemoryConversationStore(parent, true)
 {
@@ -56,6 +89,11 @@ void InMemoryConversationStore::seedSampleData()
         { QStringLiteral("n-ops"), QStringLiteral("n-acme"), QStringLiteral("Ops Host"),
           AgentNodeKind::Host, AgentState::Running, {} },
     };
+    // Stamp daemon-parity metadata (profile/session/role) on every seeded unit so
+    // each agent node carries an identity the Memory/Profile surfaces key off.
+    for (AgentNode& n : m_nodes) {
+        applyUnitMeta(n);
+    }
 
     m_tags = {
         { 1, QStringLiteral("ideas"), QStringLiteral("#2383e2") },
@@ -367,6 +405,7 @@ QString InMemoryConversationStore::createNode(const QString& parentId, AgentNode
     n.name = parentId.isEmpty() ? QStringLiteral("New fleet") : QStringLiteral("New node");
     n.kind = kind;
     n.state = AgentState::Unknown;
+    applyUnitMeta(n);
     m_nodes.push_back(n);
     emit changed();
     return n.id;

@@ -46,6 +46,8 @@ QVariant TabModel::data(const QModelIndex& index, int role) const
         return tab.rootId;
     case DirtyRole:
         return tab.dirty;
+    case AgentRefRole:
+        return tab.agentRef;
     default:
         return {};
     }
@@ -64,6 +66,7 @@ QHash<int, QByteArray> TabModel::roleNames() const
         { FilePathRole, "filePath" },
         { FileRootRole, "fileRoot" },
         { DirtyRole, "dirty" },
+        { AgentRefRole, "agentRef" },
     };
 }
 
@@ -208,6 +211,41 @@ int TabModel::openPage(int kind, const QString& title)
 
     setCurrentInternal(row);
     return tab.id;
+}
+
+int TabModel::openAgentTab(int kind, const QString& agentRef, const QString& title)
+{
+    const int existing = findAgentRow(kind, agentRef);
+    if (existing >= 0) {
+        if (!title.isEmpty() && m_tabs.at(existing).title != title) {
+            m_tabs[existing].title = title;
+            const QModelIndex idx = index(existing, 0);
+            emit dataChanged(idx, idx, { TitleRole, Qt::DisplayRole });
+        }
+        activate(existing);
+        return m_tabs.at(existing).id;
+    }
+
+    const int row = static_cast<int>(m_tabs.size());
+    beginInsertRows({}, row, row);
+    Tab tab;
+    tab.id = m_nextId++;
+    tab.kind = kind;
+    tab.title = title.isEmpty() ? QStringLiteral("Agent") : title;
+    tab.conversationId = -1;
+    tab.closable = true;
+    tab.agentRef = agentRef;
+    m_tabs.append(tab);
+    endInsertRows();
+    emit countChanged();
+
+    setCurrentInternal(row);
+    return tab.id;
+}
+
+QString TabModel::agentRefAt(int index) const
+{
+    return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).agentRef : QString();
 }
 
 int TabModel::previewFile(const QString& rootId, const QString& path, const QString& title)
@@ -506,6 +544,17 @@ int TabModel::findFileRow(const QString& rootId, const QString& path) const
     for (int i = 0; i < m_tabs.size(); ++i) {
         const Tab& tab = m_tabs.at(i);
         if (tab.kind == File && tab.rootId == rootId && tab.path == path) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int TabModel::findAgentRow(int kind, const QString& agentRef) const
+{
+    for (int i = 0; i < m_tabs.size(); ++i) {
+        const Tab& tab = m_tabs.at(i);
+        if (tab.kind == kind && tab.agentRef == agentRef) {
             return i;
         }
     }

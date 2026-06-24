@@ -10,7 +10,9 @@ const QString kCacheFile = QStringLiteral("profiles.json");
 
 QVariantMap mkProfile(const QString& id, const QString& name, const QString& model,
                       const QString& description, const QString& systemPrompt,
-                      const QStringList& skills, const QStringList& tools, bool isDefault)
+                      const QStringList& skills, const QStringList& tools, bool isDefault,
+                      const QString& provider, const QString& memoryProvider,
+                      const QString& contextEngine)
 {
     QVariantMap m;
     m[QStringLiteral("id")] = id;
@@ -21,7 +23,34 @@ QVariantMap mkProfile(const QString& id, const QString& name, const QString& mod
     m[QStringLiteral("skills")] = skills;
     m[QStringLiteral("tools")] = tools;
     m[QStringLiteral("isDefault")] = isDefault;
+    // Daemon ProfileSpec parity (agent == profile). `toolAllowlist` mirrors the
+    // tool list (daemon: None=full toolset, Some(list)=allowlist); `memoryProvider`
+    // is mnemosyne|file|none; `contextEngine` is lcm|budgeted. `credentialRef`
+    // empty defaults to the profile id, and `baseUrl` empty = provider default.
+    m[QStringLiteral("provider")] = provider;
+    m[QStringLiteral("baseUrl")] = QString();
+    m[QStringLiteral("toolAllowlist")] = tools;
+    m[QStringLiteral("memoryProvider")] = memoryProvider;
+    m[QStringLiteral("contextEngine")] = contextEngine;
+    m[QStringLiteral("credentialRef")] = QString();
     return m;
+}
+
+// Fill any missing daemon ProfileSpec keys on a (possibly cached, older-shape)
+// row so the per-agent Profile tab always has the full field set to render.
+void normalizeProfile(QVariantMap& m)
+{
+    const auto ensure = [&m](const QString& key, const QVariant& fallback) {
+        if (!m.contains(key)) {
+            m.insert(key, fallback);
+        }
+    };
+    ensure(QStringLiteral("provider"), QStringLiteral("genai"));
+    ensure(QStringLiteral("baseUrl"), QString());
+    ensure(QStringLiteral("toolAllowlist"), m.value(QStringLiteral("tools")));
+    ensure(QStringLiteral("memoryProvider"), QStringLiteral("mnemosyne"));
+    ensure(QStringLiteral("contextEngine"), QStringLiteral("lcm"));
+    ensure(QStringLiteral("credentialRef"), QString());
 }
 
 } // namespace
@@ -36,7 +65,8 @@ MockProfileStore::MockProfileStore(QObject* parent)
         QStringLiteral("Balanced everyday agent."),
         QStringLiteral("You are a helpful, concise assistant."),
         { QStringLiteral("web-search"), QStringLiteral("summarize") },
-        { QStringLiteral("read"), QStringLiteral("search") }, true));
+        { QStringLiteral("read"), QStringLiteral("search") }, true,
+        QStringLiteral("genai"), QStringLiteral("mnemosyne"), QStringLiteral("lcm")));
     m_profiles->upsert(mkProfile(
         QStringLiteral("prof-2"), QStringLiteral("Coder"),
         QStringLiteral("qwen2.5-coder-32b"),
@@ -44,14 +74,16 @@ MockProfileStore::MockProfileStore(QObject* parent)
         QStringLiteral("You are an expert software engineer. Prefer minimal diffs."),
         { QStringLiteral("code-review"), QStringLiteral("refactor") },
         { QStringLiteral("read"), QStringLiteral("write"), QStringLiteral("shell"),
-          QStringLiteral("search") }, false));
+          QStringLiteral("search") }, false,
+        QStringLiteral("llama_cpp"), QStringLiteral("mnemosyne"), QStringLiteral("lcm")));
     m_profiles->upsert(mkProfile(
         QStringLiteral("prof-3"), QStringLiteral("Researcher"),
         QStringLiteral("mixtral-8x7b"),
         QStringLiteral("Long-form research + citations."),
         QStringLiteral("You are a meticulous research analyst. Cite sources."),
         { QStringLiteral("web-search"), QStringLiteral("summarize"), QStringLiteral("cite") },
-        { QStringLiteral("read"), QStringLiteral("search"), QStringLiteral("browse") }, false));
+        { QStringLiteral("read"), QStringLiteral("search"), QStringLiteral("browse") }, false,
+        QStringLiteral("genai"), QStringLiteral("mnemosyne"), QStringLiteral("budgeted")));
     m_defaultId = QStringLiteral("prof-1");
     m_nextId = 4;
 
@@ -61,6 +93,21 @@ MockProfileStore::MockProfileStore(QObject* parent)
         m_profiles->setRows(appcache::rowsFromJson(cached.value(QStringLiteral("rows")).toArray()));
         m_defaultId = cached.value(QStringLiteral("defaultId")).toString(m_defaultId);
         m_nextId = cached.value(QStringLiteral("nextId")).toInt(m_nextId);
+    }
+
+    // Backfill daemon ProfileSpec keys on any rows (seeded or restored from an
+    // older cache) that predate them, so the Profile tab always renders fully.
+    {
+        QList<QVariantMap> rows = m_profiles->rows();
+        bool changed = false;
+        for (QVariantMap& row : rows) {
+            const int before = row.size();
+            normalizeProfile(row);
+            changed = changed || (row.size() != before);
+        }
+        if (changed) {
+            m_profiles->setRows(rows);
+        }
     }
 }
 
@@ -145,7 +192,9 @@ QString MockProfileStore::createProfile(const QString& name)
                                  QStringLiteral("llama-3.1-8b-instruct"), QString(),
                                  QStringLiteral("You are a helpful assistant."),
                                  { QStringLiteral("web-search") },
-                                 { QStringLiteral("read"), QStringLiteral("search") }, false));
+                                 { QStringLiteral("read"), QStringLiteral("search") }, false,
+                                 QStringLiteral("genai"), QStringLiteral("mnemosyne"),
+                                 QStringLiteral("lcm")));
     save();
     emit changed();
     return id;

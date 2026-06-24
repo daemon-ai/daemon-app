@@ -56,6 +56,8 @@ void SidebarModel::appendNodeRows(const AgentNode& node, int depth)
     r.expanded = expanded;
     r.kind = static_cast<int>(node.kind);
     r.state = static_cast<int>(node.state);
+    r.profile = node.profile;
+    r.session = node.session;
     m_rows.push_back(r);
 
     // Uniformly recursive: descend into any expanded node, to any depth. No
@@ -74,13 +76,15 @@ void SidebarModel::rebuild()
     if (m_store) {
         m_rows.push_back({ tr("All Conversations"),
                            m_store->conversationCount({ NodeType::AllConversations, -1, {} }),
-                           NodeType::AllConversations, -1, {}, false, true, {}, 0, false, false, 0, 0 });
+                           NodeType::AllConversations, -1, {}, false, true, {}, 0, false, false, 0,
+                           0, {}, {} });
         m_rows.push_back({ tr("Archived"),
                            m_store->conversationCount({ NodeType::Archived, -1, {} }),
-                           NodeType::Archived, -1, {}, false, true, {}, 0, false, false, 0, 0 });
+                           NodeType::Archived, -1, {}, false, true, {}, 0, false, false, 0, 0, {},
+                           {} });
 
         m_rows.push_back({ tr("Fleet"), -1, NodeType::FleetSeparator, -1, {}, true, false, {},
-                           0, false, false, 0, 0 });
+                           0, false, false, 0, 0, {}, {} });
         // Top-level roots have an empty parent; each may be a lone agent or the
         // head of an arbitrarily deep fleet.
         for (const AgentNode& root : m_store->agentChildren(QString())) {
@@ -88,11 +92,11 @@ void SidebarModel::rebuild()
         }
 
         m_rows.push_back({ tr("Tags"), -1, NodeType::TagSeparator, -1, {}, true, false, {},
-                           0, false, false, 0, 0 });
+                           0, false, false, 0, 0, {}, {} });
         for (const domain::Tag& t : m_store->tags()) {
             m_rows.push_back({ t.name, m_store->conversationCount({ NodeType::Tag, t.id, {} }),
                                NodeType::Tag, t.id, {}, false, true, t.color,
-                               0, false, false, 0, 0 });
+                               0, false, false, 0, 0, {}, {} });
         }
     }
     endResetModel();
@@ -154,6 +158,10 @@ QVariant SidebarModel::data(const QModelIndex& index, int role) const
         return r.state;
     case CurrentRole:
         return rowIsCurrent(r);
+    case ProfileRole:
+        return r.profile;
+    case SessionIdRole:
+        return r.session;
     default:
         return {};
     }
@@ -176,6 +184,8 @@ QHash<int, QByteArray> SidebarModel::roleNames() const
         { KindRole, "kind" },
         { StateRole, "state" },
         { CurrentRole, "current" },
+        { ProfileRole, "profile" },
+        { SessionIdRole, "sessionId" },
     };
 }
 

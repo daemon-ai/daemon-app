@@ -67,6 +67,15 @@ class FsExplorerModel;
 namespace editor {
 class CodeEditorController;
 }
+namespace memory {
+class MockMemoryService;
+}
+namespace memoryui {
+class MemoryListModel;
+class MemoryStatsModel;
+class MemoryTimelineModel;
+class MemoryGraphModel;
+}
 
 class SidebarModel;
 class ConversationsListModel;
@@ -358,6 +367,14 @@ private:
     [[nodiscard]] QString buildApprovalsMarkdown(int sel = -1) const;
     [[nodiscard]] QString buildRoutingMarkdown(int sel = -1) const;
     [[nodiscard]] QString buildCronMarkdown(int sel = -1) const;
+    // Memory page projection: Overview stats + Memories list + Knowledge-graph
+    // adjacency + Timeline, all from the shared memory view-models (the graph
+    // node-link render is GUI-only; here it degrades to an adjacency listing).
+    // Scoped to the active Memory tab's agent (profile == bank), set in activateTab.
+    [[nodiscard]] QString buildMemoryMarkdown() const;
+    // Per-agent Profile projection: the agent's ProfileSpec (provider/model/
+    // memory provider/persona/tool allowlist) from the shared profiles seam.
+    [[nodiscard]] QString buildProfileMarkdown(const QString& profileRef) const;
     // Route a page-tab kind to the right markdown projection.
     [[nodiscard]] QString pageMarkdownForKind(int kind) const;
 
@@ -559,6 +576,14 @@ private:
     // binds), driven by the composer's session-settings / checkpoints overlays.
     session::ISessionSettings* m_sessionSettings = nullptr;
     session::ICheckpointTimeline* m_checkpoints = nullptr;
+    // Memory-inspection seam (seeded mock) + the shared view-models that back the
+    // Memory page projection (same models the GUI binds; the TUI renders them as
+    // markdown + a graph adjacency listing).
+    memory::MockMemoryService* m_memory = nullptr;
+    memoryui::MemoryListModel* m_memList = nullptr;
+    memoryui::MemoryStatsModel* m_memStats = nullptr;
+    memoryui::MemoryTimelineModel* m_memTimeline = nullptr;
+    memoryui::MemoryGraphModel* m_memGraph = nullptr;
 
     // The highlighted actionable row for each interactive hub page, keyed by tab
     // kind. Persists across tab switches so re-opening a hub keeps its cursor.

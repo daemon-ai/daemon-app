@@ -123,6 +123,8 @@ Rectangle {
                     required property int kind
                     required property int state
                     required property bool current
+                    required property string profile
+                    required property string sessionId
 
                     width: ListView.view.width
                     // Dense column: compact section header / 28px nav row
@@ -342,9 +344,17 @@ Rectangle {
                         anchors.fill: parent
                         hoverEnabled: !del.isSeparator
                         enabled: del.selectable && !del.isSeparator
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onClicked: {
+                        onClicked: function(mouse) {
                             list.forceActiveFocus();
+                            // Right-click an agent (a profile-backed unit) for its
+                            // per-agent Profile + Memory surfaces.
+                            if (mouse.button === Qt.RightButton) {
+                                if (del.isNode && del.profile.length > 0)
+                                    agentMenu.openFor(del.profile, del.label);
+                                return;
+                            }
                             sidebarModel.activate(del.index);
                         }
                         // Double-clicking anywhere on a node row toggles it,
@@ -409,6 +419,30 @@ Rectangle {
         Kit.MenuItem {
             text: qsTr("Scheduled jobs")
             onTriggered: Nav.open("cron")
+        }
+    }
+
+    // Per-agent context menu (right-click a profile-backed unit in the Fleet tree).
+    // Memory and Profile are owned by the agent (== its profile), so both open a
+    // tab keyed by the unit's ProfileRef.
+    Kit.Menu {
+        id: agentMenu
+        property string targetProfile: ""
+        property string targetTitle: ""
+
+        function openFor(profile, title) {
+            agentMenu.targetProfile = profile;
+            agentMenu.targetTitle = title;
+            popup();
+        }
+
+        Kit.MenuItem {
+            text: qsTr("Profile settings")
+            onTriggered: Nav.openAgent("profile", agentMenu.targetProfile, agentMenu.targetTitle)
+        }
+        Kit.MenuItem {
+            text: qsTr("Memory")
+            onTriggered: Nav.openAgent("memory", agentMenu.targetProfile, agentMenu.targetTitle)
         }
     }
 

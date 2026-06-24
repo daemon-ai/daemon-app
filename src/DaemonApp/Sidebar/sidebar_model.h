@@ -53,6 +53,8 @@ public:
         KindRole,       // domain::AgentNodeKind (cosmetic) for Node rows
         StateRole,      // domain::AgentState for Node rows
         CurrentRole,    // true for the currently-selected row (identity match)
+        ProfileRole,    // the unit's profile (ProfileRef == agent identity); empty if none
+        SessionIdRole,  // the unit's backing session id (UnitNode.session)
     };
 
     explicit SidebarModel(QObject* parent = nullptr);
@@ -115,6 +117,8 @@ private:
         bool expanded = false;
         int kind = 0;        // domain::AgentNodeKind
         int state = 0;       // domain::AgentState
+        QString profile;     // ProfileRef (agent identity) for Node rows; empty otherwise
+        QString session;     // backing session id for Node rows; empty otherwise
     };
 
     void rebuild();

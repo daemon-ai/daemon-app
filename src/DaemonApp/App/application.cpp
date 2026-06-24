@@ -9,6 +9,7 @@
 #include "config/mock_daemon_config.h"
 #include "connection/mock_connection_service.h"
 #include "fs/local_disk_fs_service.h"
+#include "memory/mock_memory_service.h"
 #include "accounts/mock_accounts_service.h"
 #include "automation/mock_cron_store.h"
 #include "automation/mock_routing_store.h"
@@ -46,6 +47,7 @@ Application::Application(QObject* parent)
     , m_exporter(new TranscriptExporter(this))
     , m_settings(new settings::QtSettingsStore(this))
     , m_connection(new connection::MockConnectionService(this))
+    , m_memory(new memory::MockMemoryService(this))
     , m_nav(new nav::NavController(this))
     , m_firstRun(new firstrun::FirstRunModel(m_settings, m_connection, this))
     , m_daemonConfig(new config::MockDaemonConfig(this))
@@ -129,6 +131,9 @@ void Application::registerContext(QQmlApplicationEngine& engine)
 
     // Filesystem seam (dev local-disk impl) backing the file tree, finder, and editor.
     engine.rootContext()->setContextProperty(QStringLiteral("Fs"), m_fs);
+
+    // Memory-inspection seam (seeded mock) backing the Memory page.
+    engine.rootContext()->setContextProperty(QStringLiteral("Memory"), m_memory);
 
     // Model catalog facade (mock) backing the Models hub.
     engine.rootContext()->setContextProperty(QStringLiteral("ModelCatalog"), m_modelCatalog);

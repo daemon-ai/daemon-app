@@ -51,6 +51,16 @@ add_library(da_tui_viewmodels STATIC
     ../DaemonApp/Editor/app/code_editor_controller.cpp
     ../DaemonApp/Editor/app/line_model.h
     ../DaemonApp/Editor/app/line_model.cpp
+    # Memory view-models, shared verbatim with the GUI (graph render is GUI-only;
+    # the TUI projects the same models as markdown / adjacency).
+    ../DaemonApp/Memory/memory_list_model.h
+    ../DaemonApp/Memory/memory_list_model.cpp
+    ../DaemonApp/Memory/memory_stats_model.h
+    ../DaemonApp/Memory/memory_stats_model.cpp
+    ../DaemonApp/Memory/memory_timeline_model.h
+    ../DaemonApp/Memory/memory_timeline_model.cpp
+    ../DaemonApp/Memory/memory_graph_model.h
+    ../DaemonApp/Memory/memory_graph_model.cpp
 )
 add_library(daemon-app::tui_viewmodels ALIAS da_tui_viewmodels)
 
@@ -67,6 +77,7 @@ target_include_directories(da_tui_viewmodels PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Files"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Editor"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Editor/app"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Memory"
 )
 
 target_link_libraries(da_tui_viewmodels
@@ -82,6 +93,8 @@ target_link_libraries(da_tui_viewmodels
         # de_core engine (block buffer + incremental KSyntaxHighlighting).
         daemon-app::fs
         daemon-app::editor_core
+        # The memory view-models talk to the memory-inspection seam.
+        daemon-app::memory
     PRIVATE
         daemon-app::warnings
 )
@@ -174,6 +187,8 @@ target_link_libraries(daemon-tui
         # File tree + editor: the fs seam and the de_core engine, shared with GUI.
         daemon-app::fs
         daemon-app::editor_core
+        # Memory-inspection seam (seeded mock) + shared view-models.
+        daemon-app::memory
         daemon-app::warnings
 )
 

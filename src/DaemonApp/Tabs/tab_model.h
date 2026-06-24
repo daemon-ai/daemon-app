@@ -44,6 +44,11 @@ public:
         // Open file tabs: multi-instance (unlike the singleton manager pages),
         // keyed by (rootId, path) rather than a conversationId.
         File = 11,
+        // Per-agent surfaces (multi-instance, keyed by an agent ref == ProfileRef):
+        // Memory visualization (Mnemosyne, per-profile bank) and the agent's
+        // Profile (ProfileSpec) editor. Opening the same agent re-activates its tab.
+        Memory = 12,
+        Profile = 13,
     };
     Q_ENUM(Kind)
 
@@ -58,6 +63,7 @@ public:
         FilePathRole,                 // File tabs: root-relative path
         FileRootRole,                 // File tabs: owning root id
         DirtyRole,                    // File tabs: unsaved-changes flag
+        AgentRefRole,                 // Memory/Profile tabs: agent ref (ProfileRef)
     };
 
     explicit TabModel(QObject* parent = nullptr);
@@ -95,6 +101,12 @@ public:
     // Find-or-create the singleton page of `kind` (e.g. Settings), activate it,
     // and return its tab id.
     Q_INVOKABLE int openPage(int kind, const QString& title);
+
+    // Per-agent tabs (multi-instance, keyed by (kind, agentRef)). Used by the
+    // Memory and Profile kinds so each agent (ProfileRef) gets its own tab;
+    // opening the same agent re-activates the existing tab. Returns the tab id.
+    Q_INVOKABLE int openAgentTab(int kind, const QString& agentRef, const QString& title);
+    [[nodiscard]] Q_INVOKABLE QString agentRefAt(int index) const;
 
     // File tabs (multi-instance, keyed by (rootId, path)). previewFile reuses the
     // single preview slot (VSCode-style transient open); openFilePinned makes a
@@ -156,6 +168,7 @@ private:
         QString rootId;       // File tabs: owning root id
         QString path;         // File tabs: root-relative path
         bool dirty = false;   // File tabs: unsaved changes
+        QString agentRef;     // Memory/Profile tabs: agent ref (ProfileRef)
     };
 
     // Move the active row to `index` (already validated/clamped by the caller),
@@ -166,6 +179,7 @@ private:
     [[nodiscard]] int findPageRow(int kind) const;
     [[nodiscard]] int findPreviewRow() const;
     [[nodiscard]] int findFileRow(const QString& rootId, const QString& path) const;
+    [[nodiscard]] int findAgentRow(int kind, const QString& agentRef) const;
 
     QList<Tab> m_tabs;
     int m_currentIndex = -1;

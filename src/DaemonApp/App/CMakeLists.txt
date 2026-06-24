@@ -28,6 +28,7 @@ target_link_libraries(daemon-app
         daemon-app::settings_store
         daemon-app::connection
         daemon-app::fs
+        daemon-app::memory
         daemon-app::nav
         daemon-app::firstrun
         daemon-app::config
@@ -59,6 +60,7 @@ target_link_libraries(daemon-app
         daemon-app::composer
         daemon-app::settings
         daemon-app::pages
+        daemon-app::memory_views
         daemon-app::statusbar
         da_presentationplugin
         da_theme_coreplugin
@@ -78,6 +80,7 @@ target_link_libraries(daemon-app
         da_composerplugin
         da_settingsplugin
         da_pagesplugin
+        da_memory_viewsplugin
         da_statusbarplugin
         # KSyntaxHighlighting C++ engine. Linking it here builds the framework as a
         # dependency, records its shared lib on the executable rpath, and ensures

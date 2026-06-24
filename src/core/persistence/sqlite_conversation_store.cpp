@@ -142,6 +142,9 @@ bool SqliteConversationStore::loadAll()
         n.kind = static_cast<AgentNodeKind>(nq.value(3).toInt());
         n.state = static_cast<AgentState>(nq.value(4).toInt());
         n.work = nq.value(5).toString();
+        // profile/session/role are derived (not persisted; the schema predates
+        // them), so a loaded node carries the same agent identity as a seeded one.
+        applyUnitMeta(n);
         m_nodes.push_back(n);
     }
 

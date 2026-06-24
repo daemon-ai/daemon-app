@@ -44,6 +44,15 @@ protected:
     // data. Protected so a durable subclass can seed a fresh (empty) database.
     void seedSampleData();
 
+    // Derive a unit's daemon-parity metadata (profile / session / role) from its
+    // id + kind. These fields are NOT persisted (the SQLite schema predates them),
+    // so this is applied uniformly after both seeding and loading so every node
+    // carries an agent identity regardless of where it came from. The mapping is
+    // deterministic: `session == id`, roots are Primary (children ManagedChild,
+    // with one EphemeralSubagent for variety), and a small id->profile table binds
+    // engine/orchestrator units to a seeded profile (Hosts get no profile).
+    static void applyUnitMeta(domain::AgentNode& n);
+
     // In-memory state. Protected so a durable subclass (e.g. the SQLite store)
     // can load these from disk and persist them write-through. The query and
     // mutation logic above operates on exactly these members.

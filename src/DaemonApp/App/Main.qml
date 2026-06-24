@@ -135,6 +135,11 @@ ApplicationWindow {
             if (root.activeConversation)
                 root.activeConversation.openManagerPage(page, section);
         }
+        // Per-agent (ProfileRef-keyed) Memory / Profile tabs.
+        function onOpenAgentRequested(kind, profileRef, title) {
+            if (root.activeConversation)
+                root.activeConversation.openAgentTab(kind, profileRef, title);
+        }
     }
 
     // First-run / onboarding gate: full-screen over everything until setup

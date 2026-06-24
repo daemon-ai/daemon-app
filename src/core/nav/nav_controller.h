@@ -32,11 +32,21 @@ public:
     Q_INVOKABLE void setSection(const QString& section);
     Q_INVOKABLE void close();
 
+    // Open a per-agent surface keyed by `profileRef` (agent identity). `kind` is
+    // "memory" or "profile"; `title` is the tab label. Multi-instance (one tab per
+    // agent), unlike the singleton page open() above.
+    Q_INVOKABLE void openAgent(const QString& kind, const QString& profileRef,
+                               const QString& title);
+
 signals:
     void changed();
     // Fired on every open() so the TUI can raise/replace its page window even
     // when the page id is unchanged (e.g. re-deep-linking a section).
     void openRequested(const QString& page, const QString& section);
+    // Fired on openAgent(): open/raise a per-agent (ProfileRef-keyed) Memory or
+    // Profile tab. Both front ends route this to TabModel::openAgentTab.
+    void openAgentRequested(const QString& kind, const QString& profileRef,
+                            const QString& title);
     void closeRequested();
 
 private:

@@ -23,6 +23,14 @@ enum class AgentState {
     Unknown,  // state could not be resolved
 };
 
+// A unit's hierarchy role, mirroring `daemon_protocol::SessionRole`. Lets a
+// client keep stable nodes pinned and collapse ephemeral subagent churn.
+enum class SessionRole {
+    Primary,           // a top-level conversation (an inbox/operator session)
+    ManagedChild,      // a long-lived delegated child, stable in the tree
+    EphemeralSubagent, // a transient subagent (high churn)
+};
+
 // One uniform node in the agent supervision tree, mirroring
 // `daemon_api::UnitNode`. The tree is arbitrary-depth and uniformly recursive:
 // ANY node may contain ANY number of children, to ANY depth and composition
@@ -38,6 +46,20 @@ struct AgentNode {
     AgentNodeKind kind = AgentNodeKind::Engine;
     AgentState state = AgentState::Unknown;
     QString work; // short description of current work, when known
+    // --- daemon UnitNode parity (added fields) ---------------------------------
+    // The profile this unit's engine runs under == the agent identity
+    // (`daemon-protocol::UnitNode.profile`, a `ProfileRef`). Memory and profile
+    // settings are keyed by this. Empty when the unit has no resolvable profile
+    // (e.g. a Host or a synthetic root). Default member initializers keep the
+    // 6-field aggregate seeds warning-free.
+    QString profile = {};
+    // The session id backing this unit when it maps to one (`UnitNode.session`).
+    // On the durable path `UnitId == SessionId`, so this usually equals `id`.
+    QString session = {};
+    // This unit's hierarchy role (`UnitNode.role`).
+    SessionRole role = SessionRole::Primary;
+    // The terminal end reason when `state == Finished` (`UnitState::Finished`).
+    QString endReason = {};
 
     [[nodiscard]] bool isValid() const { return !id.isEmpty(); }
 };

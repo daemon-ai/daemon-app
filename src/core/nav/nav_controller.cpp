@@ -23,6 +23,14 @@ void NavController::setSection(const QString& section)
     emit openRequested(m_page, m_section);
 }
 
+void NavController::openAgent(const QString& kind, const QString& profileRef, const QString& title)
+{
+    if (profileRef.isEmpty()) {
+        return;
+    }
+    emit openAgentRequested(kind, profileRef, title);
+}
+
 void NavController::close()
 {
     if (m_page.isEmpty()) {
