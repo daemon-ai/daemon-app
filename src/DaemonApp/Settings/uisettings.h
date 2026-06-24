@@ -47,6 +47,8 @@ class UiSettings : public QObject {
         bool showNotesList READ showNotesList WRITE setShowNotesList NOTIFY showNotesListChanged)
     Q_PROPERTY(bool showFoldersTree READ showFoldersTree WRITE setShowFoldersTree NOTIFY
                    showFoldersTreeChanged)
+    Q_PROPERTY(bool showFileExplorer READ showFileExplorer WRITE setShowFileExplorer NOTIFY
+                   showFileExplorerChanged)
     Q_PROPERTY(
         bool showPlainText READ showPlainText WRITE setShowPlainText NOTIFY showPlainTextChanged)
     Q_PROPERTY(
@@ -85,6 +87,8 @@ public:
     void setShowNotesList(bool on);
     [[nodiscard]] bool showFoldersTree() const { return m_showFoldersTree; }
     void setShowFoldersTree(bool on);
+    [[nodiscard]] bool showFileExplorer() const { return m_showFileExplorer; }
+    void setShowFileExplorer(bool on);
     [[nodiscard]] bool showPlainText() const { return m_showPlainText; }
     void setShowPlainText(bool on);
     [[nodiscard]] bool showUserRail() const { return m_showUserRail; }
@@ -115,6 +119,7 @@ signals:
     void distractionFreeChanged();
     void showNotesListChanged();
     void showFoldersTreeChanged();
+    void showFileExplorerChanged();
     void showPlainTextChanged();
     void showUserRailChanged();
 
@@ -139,6 +144,7 @@ private:
     bool m_distractionFree = false;
     bool m_showNotesList = true;
     bool m_showFoldersTree = true;
+    bool m_showFileExplorer = false;
     bool m_showPlainText = false;
     bool m_showUserRail = true;
 };

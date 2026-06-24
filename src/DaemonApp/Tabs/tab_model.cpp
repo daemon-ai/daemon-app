@@ -40,6 +40,12 @@ QVariant TabModel::data(const QModelIndex& index, int role) const
         return index.row() == m_currentIndex;
     case PreviewRole:
         return tab.preview;
+    case FilePathRole:
+        return tab.path;
+    case FileRootRole:
+        return tab.rootId;
+    case DirtyRole:
+        return tab.dirty;
     default:
         return {};
     }
@@ -55,6 +61,9 @@ QHash<int, QByteArray> TabModel::roleNames() const
         { ClosableRole, "closable" },
         { CurrentRole, "current" },
         { PreviewRole, "preview" },
+        { FilePathRole, "filePath" },
+        { FileRootRole, "fileRoot" },
+        { DirtyRole, "dirty" },
     };
 }
 
@@ -116,14 +125,25 @@ int TabModel::previewTranscript(int conversationId, const QString& title)
     const int previewRow = findPreviewRow();
     if (previewRow >= 0) {
         Tab& tab = m_tabs[previewRow];
+        const bool kindChanged = tab.kind != Transcript;
+        tab.kind = Transcript;
         tab.conversationId = conversationId;
+        tab.rootId.clear();
+        tab.path.clear();
+        tab.dirty = false;
         tab.title = title.isEmpty() ? QStringLiteral("Conversation") : title;
         const QModelIndex idx = index(previewRow, 0);
-        emit dataChanged(idx, idx, { TitleRole, Qt::DisplayRole, ConversationIdRole });
+        emit dataChanged(idx, idx,
+                         { KindRole, TitleRole, Qt::DisplayRole, ConversationIdRole, FilePathRole,
+                           FileRootRole, DirtyRole });
+        if (kindChanged)
+            emit tabKindChanged(tab.id);
         emit tabConversationChanged(tab.id, conversationId);
         // Make sure it is the active tab (it may not have been).
         if (m_currentIndex != previewRow) {
             setCurrentInternal(previewRow);
+        } else {
+            emit currentTabChanged(tab.id);
         }
         return tab.id;
     }
@@ -188,6 +208,95 @@ int TabModel::openPage(int kind, const QString& title)
 
     setCurrentInternal(row);
     return tab.id;
+}
+
+int TabModel::previewFile(const QString& rootId, const QString& path, const QString& title)
+{
+    const QString label = title.isEmpty() ? path.section(QLatin1Char('/'), -1) : title;
+
+    const int existing = findFileRow(rootId, path);
+    if (existing >= 0) {
+        activate(existing);
+        return m_tabs.at(existing).id;
+    }
+
+    // Reuse the single preview slot (it may currently hold a transcript preview;
+    // the page Loader keys on KindRole, so it reloads as a FilePage in place).
+    const int previewRow = findPreviewRow();
+    if (previewRow >= 0) {
+        Tab& tab = m_tabs[previewRow];
+        const bool kindChanged = tab.kind != File;
+        tab.kind = File;
+        tab.conversationId = -1;
+        tab.rootId = rootId;
+        tab.path = path;
+        tab.title = label;
+        tab.dirty = false;
+        const QModelIndex idx = index(previewRow, 0);
+        emit dataChanged(idx, idx,
+                         { KindRole, TitleRole, Qt::DisplayRole, ConversationIdRole, FilePathRole,
+                           FileRootRole, DirtyRole });
+        if (kindChanged)
+            emit tabKindChanged(tab.id);
+        emit tabFileChanged(tab.id, rootId, path);
+        if (m_currentIndex != previewRow)
+            setCurrentInternal(previewRow);
+        else
+            emit currentTabChanged(tab.id);
+        return tab.id;
+    }
+
+    const int row = static_cast<int>(m_tabs.size());
+    beginInsertRows({}, row, row);
+    Tab tab;
+    tab.id = m_nextId++;
+    tab.kind = File;
+    tab.title = label;
+    tab.rootId = rootId;
+    tab.path = path;
+    tab.preview = true;
+    m_tabs.append(tab);
+    endInsertRows();
+    emit countChanged();
+    setCurrentInternal(row);
+    return tab.id;
+}
+
+int TabModel::openFilePinned(const QString& rootId, const QString& path, const QString& title)
+{
+    const int existing = findFileRow(rootId, path);
+    if (existing >= 0) {
+        if (m_tabs.at(existing).preview) {
+            m_tabs[existing].preview = false;
+            const QModelIndex idx = index(existing, 0);
+            emit dataChanged(idx, idx, { PreviewRole });
+        }
+        activate(existing);
+        return m_tabs.at(existing).id;
+    }
+    const int id = previewFile(rootId, path, title);
+    pinTabById(id);
+    return id;
+}
+
+void TabModel::setDirtyById(int tabId, bool dirty)
+{
+    const int row = indexOfTabId(tabId);
+    if (row < 0 || m_tabs.at(row).dirty == dirty)
+        return;
+    m_tabs[row].dirty = dirty;
+    const QModelIndex idx = index(row, 0);
+    emit dataChanged(idx, idx, { DirtyRole });
+}
+
+QString TabModel::filePathAt(int index) const
+{
+    return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).path : QString();
+}
+
+QString TabModel::fileRootAt(int index) const
+{
+    return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).rootId : QString();
 }
 
 void TabModel::closeTab(int index)
@@ -385,7 +494,18 @@ int TabModel::findPageRow(int kind) const
 int TabModel::findPreviewRow() const
 {
     for (int i = 0; i < m_tabs.size(); ++i) {
-        if (m_tabs.at(i).preview) {
+        if (m_tabs.at(i).preview && !m_tabs.at(i).dirty) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int TabModel::findFileRow(const QString& rootId, const QString& path) const
+{
+    for (int i = 0; i < m_tabs.size(); ++i) {
+        const Tab& tab = m_tabs.at(i);
+        if (tab.kind == File && tab.rootId == rootId && tab.path == path) {
             return i;
         }
     }

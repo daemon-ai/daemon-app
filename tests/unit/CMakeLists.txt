@@ -37,6 +37,17 @@ target_link_libraries(tst_connection_service
 add_test(NAME tst_connection_service COMMAND tst_connection_service)
 set_tests_properties(tst_connection_service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_fs_service: the filesystem seam's local mock must preserve the daemon FS
+# contract around optimistic concurrency and path containment.
+qt_add_executable(tst_fs_service tst_fs_service.cpp)
+target_link_libraries(tst_fs_service
+    PRIVATE
+        Qt6::Test
+        daemon-app::fs
+)
+add_test(NAME tst_fs_service COMMAND tst_fs_service)
+set_tests_properties(tst_fs_service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_first_run_model: the shared onboarding gate (Phase 1) - fresh install
 # starts at connect, a good connection advances to inference, completeInference
 # finishes + persists setupComplete, and a returning user boots straight to done.

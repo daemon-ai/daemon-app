@@ -8,8 +8,8 @@ qt_add_qml_module(da_transcript
 )
 add_library(daemon-app::transcript ALIAS da_transcript)
 
-target_link_libraries(da_transcript PRIVATE Qt6::Quick daemon-app::theme daemon-app::settings daemon-app::controls daemon-app::blockeditor daemon-app::turn daemon-app::warnings)
+target_link_libraries(da_transcript PRIVATE Qt6::Quick daemon-app::theme daemon-app::settings daemon-app::controls daemon-app::blockeditor daemon-app::editor daemon-app::turn daemon-app::warnings)
 
-# Transcript.qml imports the external org.kde.syntaxhighlighting module (plain-text
-# highlighting); point qmllint at the build-tree dir where its plugin is emitted.
+# The BlockEditor's CodeBlock still imports org.kde.syntaxhighlighting; the plain-
+# text mode now uses DaemonApp.Editor. Point qmllint at the build-tree qml dir.
 set_property(TARGET da_transcript APPEND PROPERTY QT_QML_IMPORT_PATH "${CMAKE_BINARY_DIR}/qml")

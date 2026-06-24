@@ -98,6 +98,7 @@ qt_add_qml_module(da_blockeditor
         qml/components/ImageBlock.qml
         qml/components/MathBlock.qml
         qml/components/CodeBlock.qml
+        qml/components/MarkdownDocumentView.qml
         qml/components/ReasoningBlock.qml
         qml/components/ToolCallBlock.qml
         qml/components/ContentBlock.qml
@@ -136,6 +137,7 @@ target_link_libraries(da_blockeditor
         daemon-app::theme
         daemon-app::settings
         daemon-app::controls
+        daemon-app::editor
         # MicroTeX LaTeX math renderer (tex::LaTeX / tex::Graphics2D_qt), used by
         # the MathImageProvider to rasterize formulas into QImages.
         LaTeX

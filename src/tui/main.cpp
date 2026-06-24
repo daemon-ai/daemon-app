@@ -10,14 +10,73 @@
 #include <Tui/ZTest.h>
 
 #include <QCoreApplication>
+#include <QDateTime>
+#include <QDir>
+#include <QFile>
+#include <QMutex>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QString>
 #include <QTextStream>
 #include <QTimer>
+#include <QtGlobal>
 
 #include <cstdio>
 #include <functional>
 #include <memory>
+
+namespace {
+
+// Route ALL Qt logging to a file instead of stderr. A terminal UI owns the
+// alt-screen with absolute cursor addressing, so a single stray line on stderr
+// (e.g. a QFileSystemWatcher warning when a watched $HOME log dir churns, a
+// model-consistency warning, a font/locale notice from a linked library) is
+// written into the live frame and scrolls it - the footer is shoved up, content
+// is pushed down, and partial glyphs appear. The offscreen ZTerminal is immune
+// (its grab can't be scrolled), which is why this only bites the real TTY. The
+// GUI needs no such guard. Installed before any widget or terminal is created.
+void tuiMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    static QMutex mutex;
+    const QMutexLocker lock(&mutex);
+
+    QString dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    if (dir.isEmpty()) {
+        dir = QDir::tempPath();
+    }
+    QDir().mkpath(dir);
+    QFile file(dir + QStringLiteral("/daemon-tui.log"));
+    if (!file.open(QIODevice::Append | QIODevice::Text)) {
+        return; // never fall back to stderr: that is what corrupts the screen
+    }
+
+    const char* level = "INFO";
+    switch (type) {
+    case QtDebugMsg:
+        level = "DEBUG";
+        break;
+    case QtInfoMsg:
+        level = "INFO";
+        break;
+    case QtWarningMsg:
+        level = "WARN";
+        break;
+    case QtCriticalMsg:
+        level = "CRIT";
+        break;
+    case QtFatalMsg:
+        level = "FATAL";
+        break;
+    }
+    QTextStream out(&file);
+    out << QDateTime::currentDateTimeUtc().toString(Qt::ISODate) << ' ' << level << ' ' << msg;
+    if (context.file != nullptr) {
+        out << "  (" << context.file << ':' << context.line << ')';
+    }
+    out << '\n';
+}
+
+} // namespace
 
 namespace {
 
@@ -97,6 +156,10 @@ bool maybeRenderOffscreen()
                 } else if (name == "shift-enter") {
                     // Multiline composer: Shift+Enter inserts a newline.
                     Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::ShiftModifier);
+                } else if (name == "ctrl-e") {
+                    // Toggle the file Explorer (text-matched on the key-bubble path
+                    // in RootWidget::keyEvent), so emulate the char event.
+                    Tui::ZTest::sendText(&terminal, QStringLiteral("e"), Qt::ControlModifier);
                 } else if (name == "ctrl-o") {
                     Tui::ZTest::sendKey(&terminal, Qt::Key_O, Qt::ControlModifier);
                 } else if (name == "ctrl-t") {
@@ -208,6 +271,10 @@ bool maybeRenderOffscreen()
 // reuses the app's C++ view models verbatim - see src/tui/CMakeLists.txt.
 int main(int argc, char* argv[])
 {
+    // Keep all Qt/library logging off the terminal before anything can emit a
+    // message (a stray stderr line corrupts the Tui alt-screen).
+    qInstallMessageHandler(tuiMessageHandler);
+
     QCoreApplication app(argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("daemon-tui"));
     QCoreApplication::setOrganizationName(QStringLiteral("daemon-app"));

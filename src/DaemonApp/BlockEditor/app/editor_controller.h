@@ -84,6 +84,10 @@ public:
     void setBodyFontSize(int pixelSize);
 
     Q_INVOKABLE void loadMarkdown(const QString &markdown, bool activateFirstBlock = true);
+    // Decode UTF-8 bytes (e.g. a file read through the Fs seam) and load them as
+    // markdown, read-first (no block activated). Mirrors CodeEditorController's
+    // loadBytes for the rich block editor path.
+    Q_INVOKABLE void loadMarkdownBytes(const QByteArray &bytes);
     Q_INVOKABLE void beginStream();
     Q_INVOKABLE void streamAppend(const QString &text);
     Q_INVOKABLE void endStream();
@@ -196,6 +200,8 @@ public:
     Q_INVOKABLE bool openPersistence(const QString &path);
     Q_INVOKABLE bool flushChangedBlocks();
     Q_INVOKABLE QString exportMarkdown() const;
+    // UTF-8 bytes of exportMarkdown(), for writing a markdown file through the Fs seam.
+    Q_INVOKABLE QByteArray exportMarkdownBytes() const { return exportMarkdown().toUtf8(); }
     Q_INVOKABLE void importMarkdown(const QString &markdown);
     Q_INVOKABLE QString normalizeClipboardText(const QString &plainText, const QString &markdownText = {}, const QString &htmlText = {}) const;
     // Build an image://math URL for the given LaTeX with the live theme palette,

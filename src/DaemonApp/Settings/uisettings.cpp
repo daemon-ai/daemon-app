@@ -106,6 +106,8 @@ void UiSettings::load()
         = m_settings.value(QStringLiteral("showNotesList"), m_showNotesList).toBool();
     m_showFoldersTree
         = m_settings.value(QStringLiteral("showFoldersTree"), m_showFoldersTree).toBool();
+    m_showFileExplorer
+        = m_settings.value(QStringLiteral("showFileExplorer"), m_showFileExplorer).toBool();
     m_showPlainText
         = m_settings.value(QStringLiteral("showPlainText"), m_showPlainText).toBool();
     m_showUserRail
@@ -281,6 +283,16 @@ void UiSettings::setShowFoldersTree(bool on)
     m_showFoldersTree = on;
     store(QStringLiteral("showFoldersTree"), m_showFoldersTree);
     emit showFoldersTreeChanged();
+}
+
+void UiSettings::setShowFileExplorer(bool on)
+{
+    if (on == m_showFileExplorer) {
+        return;
+    }
+    m_showFileExplorer = on;
+    store(QStringLiteral("showFileExplorer"), m_showFileExplorer);
+    emit showFileExplorerChanged();
 }
 
 void UiSettings::setShowPlainText(bool on)

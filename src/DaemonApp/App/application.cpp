@@ -8,6 +8,7 @@
 #include "platform/platform_services_factory.h"
 #include "config/mock_daemon_config.h"
 #include "connection/mock_connection_service.h"
+#include "fs/local_disk_fs_service.h"
 #include "accounts/mock_accounts_service.h"
 #include "automation/mock_cron_store.h"
 #include "automation/mock_routing_store.h"
@@ -65,6 +66,13 @@ Application::Application(QObject* parent)
     connect(m_connection, &connection::IConnectionService::stateChanged, this,
             [this] { m_status->setGatewayState(m_connection->state()); });
 
+    // Filesystem seam: a DEV local-disk implementation rooted at the configured
+    // workspace root (falls back to $HOME). This is not the production source of
+    // truth; a daemon adapter over IFsService replaces it later. Built in the
+    // body so it can read the daemon-config workspace root.
+    m_fs = new fs::LocalDiskFsService(
+        m_daemonConfig->value(QStringLiteral("workspace/root")).toString(), QString(), this);
+
     // MicroTeX loads its fonts/XML resources once; the path is baked in at build
     // time (MICROTEX_RES_DIR). Done here so the "math" image provider can parse
     // formulas as soon as the scene requests them.
@@ -118,6 +126,9 @@ void Application::registerContext(QQmlApplicationEngine& engine)
 
     // Daemon-authoritative config facade (mock) backing the settings sections.
     engine.rootContext()->setContextProperty(QStringLiteral("DaemonConfig"), m_daemonConfig);
+
+    // Filesystem seam (dev local-disk impl) backing the file tree, finder, and editor.
+    engine.rootContext()->setContextProperty(QStringLiteral("Fs"), m_fs);
 
     // Model catalog facade (mock) backing the Models hub.
     engine.rootContext()->setContextProperty(QStringLiteral("ModelCatalog"), m_modelCatalog);

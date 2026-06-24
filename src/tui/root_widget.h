@@ -25,6 +25,8 @@
 #include "status_bar_view.h"
 #include "tab_strip_view.h"
 #include "transcript_view.h"
+#include "file_tree_view.h"
+#include "code_editor_view.h"
 
 #include "core/agent_ingest.h"
 #include "core/document_store.h"
@@ -55,6 +57,15 @@
 
 namespace persistence {
 class InMemoryConversationStore;
+}
+namespace fs {
+class IFsService;
+}
+namespace files {
+class FsExplorerModel;
+}
+namespace editor {
+class CodeEditorController;
 }
 
 class SidebarModel;
@@ -422,6 +433,14 @@ private:
     // Lazily create the per-tab session for a transcript tab id (no-op if present
     // or if the tab is a non-transcript page).
     TabSession* ensureSession(int tabId);
+    // Lazily create the per-File-tab editor controller, kick off a read through
+    // the fs seam, and wire its dirty flag back to the tab. Returns the controller.
+    editor::CodeEditorController* ensureFileSession(int tabId);
+    // Show the code editor view (File tab) or the transcript+composer stack.
+    void showEditor(bool on);
+    // Toggle the right-side file Explorer column (Ctrl+E / palette "files"), and
+    // persist the choice to the shared "ui/showFileExplorer" setting.
+    void toggleExplorer();
     // Make the tab with `tabId` the active one: bind the views to its session (or
     // to the static page document for page tabs) and refresh.
     void activateTab(int tabId);
@@ -484,6 +503,19 @@ private:
     SubmitInputBox* m_composer = nullptr;
     // The pane tab strip (replaces the old single header label).
     TabStripView* m_tabStrip = nullptr;
+    // File tree (right Explorer column, toggled with Ctrl+E) + code editor view
+    // (shown in the conversation column when a File tab is active). Both render the
+    // same shared C++ view-models the GUI binds.
+    fs::IFsService* m_fs = nullptr;
+    files::FsExplorerModel* m_fileTree = nullptr;
+    FileTreeView* m_fileTreeView = nullptr;
+    CodeEditorView* m_editorView = nullptr;
+    // Per-File-tab editor controllers (keyed by tab id) and a (rootId\x1f path)
+    // index so async fs reads/writes resolve back to the right controller.
+    QHash<int, editor::CodeEditorController*> m_fileSessions;
+    QHash<QString, editor::CodeEditorController*> m_fileByKey;
+    QString m_activeFileRoot;
+    QString m_activeFilePath;
     // Custom-painted colored status footer (gateway/agents/context/session/version).
     StatusBarView* m_footer = nullptr;
     // Compact status-stack todo strip (above the composer).

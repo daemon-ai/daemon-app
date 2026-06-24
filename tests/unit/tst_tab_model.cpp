@@ -272,6 +272,88 @@ private slots:
         QCOMPARE(model.count(), 1);
         QVERIFY(!roleAt<bool>(model, 0, TabModel::PreviewRole));
     }
+
+    void previewFileReusesTranscriptPreviewAndSignalsKindChange()
+    {
+        TabModel model;
+        const int id = model.previewTranscript(10, QStringLiteral("Alpha"));
+        QSignalSpy kindSpy(&model, &TabModel::tabKindChanged);
+        QSignalSpy currentSpy(&model, &TabModel::currentTabChanged);
+
+        const int fileId = model.previewFile(QStringLiteral("workspace"),
+                                             QStringLiteral("src/main.cpp"),
+                                             QStringLiteral("main.cpp"));
+
+        QCOMPARE(fileId, id);
+        QCOMPARE(model.count(), 1);
+        QCOMPARE(roleAt<int>(model, 0, TabModel::KindRole), int(TabModel::File));
+        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), -1);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::FileRootRole), QStringLiteral("workspace"));
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::FilePathRole), QStringLiteral("src/main.cpp"));
+        QCOMPARE(kindSpy.count(), 1);
+        QCOMPARE(kindSpy.takeFirst().at(0).toInt(), id);
+        QVERIFY(currentSpy.count() >= 1); // already-active preview still rebinds
+    }
+
+    void previewTranscriptReusesFilePreviewAndSignalsKindChange()
+    {
+        TabModel model;
+        const int id = model.previewFile(QStringLiteral("workspace"),
+                                         QStringLiteral("README.md"),
+                                         QStringLiteral("README.md"));
+        QSignalSpy kindSpy(&model, &TabModel::tabKindChanged);
+
+        const int transcriptId = model.previewTranscript(42, QStringLiteral("Answer"));
+
+        QCOMPARE(transcriptId, id);
+        QCOMPARE(model.count(), 1);
+        QCOMPARE(roleAt<int>(model, 0, TabModel::KindRole), int(TabModel::Transcript));
+        QCOMPARE(roleAt<int>(model, 0, TabModel::ConversationIdRole), 42);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::FileRootRole), QString());
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::FilePathRole), QString());
+        QCOMPARE(kindSpy.count(), 1);
+    }
+
+    void dirtyFilePreviewIsNotReused()
+    {
+        TabModel model;
+        const int dirtyId = model.previewFile(QStringLiteral("workspace"),
+                                              QStringLiteral("a.cpp"),
+                                              QStringLiteral("a.cpp"));
+        model.setDirtyById(dirtyId, true);
+
+        const int nextId = model.previewFile(QStringLiteral("workspace"),
+                                             QStringLiteral("b.cpp"),
+                                             QStringLiteral("b.cpp"));
+
+        QVERIFY(nextId != dirtyId);
+        QCOMPARE(model.count(), 2);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::FilePathRole), QStringLiteral("a.cpp"));
+        QCOMPARE(roleAt<bool>(model, 0, TabModel::DirtyRole), true);
+        QCOMPARE(roleAt<QString>(model, 1, TabModel::FilePathRole), QStringLiteral("b.cpp"));
+    }
+
+    void previewFileReassignmentEmitsFileChanged()
+    {
+        TabModel model;
+        const int id = model.previewFile(QStringLiteral("workspace"),
+                                         QStringLiteral("a.cpp"),
+                                         QStringLiteral("a.cpp"));
+        QSignalSpy fileSpy(&model, &TabModel::tabFileChanged);
+
+        const int again = model.previewFile(QStringLiteral("workspace"),
+                                            QStringLiteral("b.cpp"),
+                                            QStringLiteral("b.cpp"));
+
+        QCOMPARE(again, id);
+        QCOMPARE(model.count(), 1);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::FilePathRole), QStringLiteral("b.cpp"));
+        QCOMPARE(fileSpy.count(), 1);
+        const QList<QVariant> args = fileSpy.takeFirst();
+        QCOMPARE(args.at(0).toInt(), id);
+        QCOMPARE(args.at(1).toString(), QStringLiteral("workspace"));
+        QCOMPARE(args.at(2).toString(), QStringLiteral("b.cpp"));
+    }
 };
 
 QTEST_MAIN(TestTabModel)

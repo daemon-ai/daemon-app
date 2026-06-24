@@ -183,6 +183,11 @@ void EditorController::setBodyFontSize(int pixelSize)
     emit bodyFontChanged();
 }
 
+void EditorController::loadMarkdownBytes(const QByteArray &bytes)
+{
+    loadMarkdown(QString::fromUtf8(bytes), false);
+}
+
 void EditorController::loadMarkdown(const QString &markdown, bool activateFirstBlock)
 {
     m_store.loadMarkdown(markdown);

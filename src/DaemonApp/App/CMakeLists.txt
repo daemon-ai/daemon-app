@@ -27,6 +27,7 @@ target_link_libraries(daemon-app
         daemon-app::export
         daemon-app::settings_store
         daemon-app::connection
+        daemon-app::fs
         daemon-app::nav
         daemon-app::firstrun
         daemon-app::config
@@ -52,6 +53,8 @@ target_link_libraries(daemon-app
         daemon-app::conversationslist
         daemon-app::conversation
         daemon-app::tabs
+        daemon-app::files
+        daemon-app::editor
         daemon-app::transcript
         daemon-app::composer
         daemon-app::settings
@@ -69,6 +72,8 @@ target_link_libraries(daemon-app
         da_conversationslistplugin
         da_conversationplugin
         da_tabsplugin
+        da_filesplugin
+        da_editorplugin
         da_transcriptplugin
         da_composerplugin
         da_settingsplugin

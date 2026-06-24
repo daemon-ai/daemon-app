@@ -265,8 +265,16 @@ void TabStripView::paintEvent(Tui::ZPaintEvent* event)
             }
         }
         if (closable && s.closeX >= 0 && s.closeX < w) {
-            p->writeWithColors(s.closeX, 0, QStringLiteral("\u00d7"),
-                               isActive ? tpal::warn() : tpal::muted(), bg);
+            // A File tab with unsaved changes shows a dirty dot in place of the
+            // close glyph (VS Code-style); other tabs show the close affordance.
+            const bool dirty =
+                m_model->data(m_model->index(s.index, 0), TabModel::DirtyRole).toBool();
+            if (dirty) {
+                p->writeWithColors(s.closeX, 0, QStringLiteral("\u25cf"), tpal::accent(), bg);
+            } else {
+                p->writeWithColors(s.closeX, 0, QStringLiteral("\u00d7"),
+                                   isActive ? tpal::warn() : tpal::muted(), bg);
+            }
         }
     }
 }

@@ -18,6 +18,10 @@
 
 #include "persistence/sqlite_conversation_store.h"
 
+#include "fs_explorer_model.h"
+#include "app/code_editor_controller.h"
+#include "fs/local_disk_fs_service.h"
+
 #include "accounts/mock_accounts_service.h"
 #include "config/mock_daemon_config.h"
 #include "connection/mock_connection_service.h"
@@ -997,10 +1001,45 @@ RootWidget::RootWidget()
     // in place rather than spawning a new one.
     connect(m_tabModel, &TabModel::tabConversationChanged, this,
             [this](int tabId, int conversationId) { rebindSession(tabId, conversationId); });
+    connect(m_tabModel, &TabModel::tabKindChanged, this, [this](int tabId) {
+        destroySession(tabId);
+    });
+    connect(m_tabModel, &TabModel::tabFileChanged, this, [this](int tabId, const QString&, const QString&) {
+        const bool active = m_tabModel->indexOfTabId(tabId) == m_tabModel->currentIndex();
+        destroySession(tabId);
+        if (active)
+            activateTab(tabId);
+    });
 
     // Sidebar scope selection drives the conversation list - the model-to-model
     // contract is untouched by the choice of toolkit.
     connect(m_sidebar, &SidebarModel::scopeSelected, m_list, &ConversationsListModel::setScope);
+
+    // File tree seam + model, shared verbatim with the GUI. Serve the daemon-config
+    // workspace root (the GUI's Application does the same); a daemon adapter
+    // replaces it later. The editor controllers are created per File tab.
+    m_daemonConfig = new config::MockDaemonConfig(this);
+    m_fs = new fs::LocalDiskFsService(
+        m_daemonConfig->value(QStringLiteral("workspace/root")).toString(), QString(), this);
+    m_fileTree = new files::FsExplorerModel(this);
+    m_fileTree->setService(m_fs);
+    // Resolve async file reads/writes back to the owning File tab's controller.
+    connect(m_fs, &fs::IFsService::fileRead, this,
+            [this](const QString& rootId, const QString& path, const QByteArray& bytes,
+                   const QString& revision, bool binary, bool /*truncated*/) {
+                editor::CodeEditorController* c =
+                    m_fileByKey.value(rootId + QChar(0x1f) + path, nullptr);
+                if (c != nullptr && !binary)
+                    c->loadBytes(bytes, path, revision);
+            });
+    connect(m_fs, &fs::IFsService::writeResult, this,
+            [this](const QString& rootId, const QString& path, bool ok, const QString& revision,
+                   const QString& /*error*/) {
+                editor::CodeEditorController* c =
+                    m_fileByKey.value(rootId + QChar(0x1f) + path, nullptr);
+                if (c != nullptr && ok)
+                    c->markSaved(revision);
+            });
 
     // Phase 0 shared seams (identical classes to the GUI). The connection seam
     // owns liveness; mirror its state into the footer's gateway indicator, then
@@ -1009,7 +1048,6 @@ RootWidget::RootWidget()
     m_connection = new connection::MockConnectionService(this);
     m_nav = new nav::NavController(this);
     m_firstRun = new firstrun::FirstRunModel(m_appSettings, m_connection, this);
-    m_daemonConfig = new config::MockDaemonConfig(this);
     m_modelCatalog = new models::MockModelCatalog(this);
     // Single source of truth for the composer's model list/selection (shared with
     // the Models hub), exactly as the GUI wires it via Composer.qml's modelSource.
@@ -1127,6 +1165,17 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
         return;
     }
 
+    // Ctrl+E, when it bubbles up unconsumed (i.e. the composer/list did not claim
+    // it for end-of-line / export), toggles the file Explorer. Tui delivers
+    // Ctrl+letter as a char event, so match the text as well as the key.
+    if ((event->modifiers() & Qt::ControlModifier)
+        && (event->key() == Qt::Key_E
+            || event->text().compare(QStringLiteral("e"), Qt::CaseInsensitive) == 0)) {
+        toggleExplorer();
+        event->accept();
+        return;
+    }
+
     // Final fallback for the context-sensitive Esc chain: when a pane leaves Esc
     // unhandled it bubbles up the parent chain to here (the ZRoot), where it
     // opens the quit confirmation. The composer consumes Esc itself; the quit
@@ -1140,7 +1189,7 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
 }
 
 void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, int button,
-                             Qt::KeyboardModifiers /*modifiers*/)
+                             Qt::KeyboardModifiers modifiers)
 {
     using MA = MouseTerminal::MouseAction;
     // Click + wheel only: a primary-button press focuses + selects/opens, the wheel
@@ -1167,7 +1216,12 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
 
     if (isWheel) {
         const int delta = (action == MA::WheelUp) ? -3 : 3;
-        if (hit(m_transcript)) {
+        if (m_editorView != nullptr && m_editorView->isVisible() && hit(m_editorView)) {
+            m_editorView->scrollByLines(delta);
+        } else if (m_fileTreeView != nullptr && m_fileTreeView->isVisible()
+                   && hit(m_fileTreeView)) {
+            m_fileTreeView->scrollByLines(delta);
+        } else if (hit(m_transcript)) {
             m_transcript->scrollByLines(delta);
         } else if (hit(m_listView)) {
             m_listView->scrollByLines(delta);
@@ -1207,6 +1261,21 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
     if (hit(m_tabStrip)) {
         m_tabStrip->setFocus(); // clicking the strip focuses it, like any pane
         m_tabStrip->clickAt(local);
+        return;
+    }
+
+    // The file Explorer column (right side, shown via Ctrl+E): a click focuses it
+    // and selects/opens the row under the cursor.
+    if (m_fileTreeView != nullptr && m_fileTreeView->isVisible() && hit(m_fileTreeView)) {
+        m_fileTreeView->setFocus();
+        m_fileTreeView->clickAt(local);
+        return;
+    }
+    // The code editor (shown in the conversation column for a File tab): a click
+    // focuses it (caret placement is keyboard-driven for now).
+    if (m_editorView != nullptr && m_editorView->isVisible() && hit(m_editorView)) {
+        m_editorView->setFocus();
+        m_editorView->clickAt(local, modifiers);
         return;
     }
 
@@ -1279,6 +1348,12 @@ void RootWidget::buildUi()
                                                   Qt::ApplicationShortcut);
     connect(checkpointShortcut, &Tui::ZShortcut::activated, this,
             &RootWidget::openCheckpointsOverlay);
+
+    // Ctrl+E toggles the file Explorer (parity with the GUI). It is handled on the
+    // key-bubble path in keyEvent() rather than as an ApplicationShortcut, so a
+    // focused composer (readline C-e = end-of-line) or conversation list (C-e =
+    // export) consume it first; it only toggles when those panes don't. This
+    // resolves the Ctrl+E collision without rebinding either widget's binding.
 
     m_window = new Tui::ZWindow(QStringLiteral("Daemon"), this);
     m_window->setOptions({});
@@ -1386,6 +1461,18 @@ void RootWidget::buildUi()
     m_transcript->setSizePolicyV(Tui::SizePolicy::Expanding);
     rightCol->addWidget(m_transcript);
 
+    // Code editor view (shown in place of the transcript + composer when a File
+    // tab is active). Bound to the active File tab's CodeEditorController.
+    m_editorView = new CodeEditorView(right);
+    m_editorView->setSizePolicyV(Tui::SizePolicy::Expanding);
+    m_editorView->setVisible(false);
+    rightCol->addWidget(m_editorView);
+    connect(m_editorView, &CodeEditorView::saveRequested, this, [this] {
+        if (m_fs != nullptr && m_editorView->controller() != nullptr && !m_activeFilePath.isEmpty())
+            m_fs->write(m_activeFileRoot, m_activeFilePath, m_editorView->controller()->textBytes(),
+                        m_editorView->controller()->revision());
+    });
+
     // One-line streaming/affordance chrome (Thinking.../error + send/stop/steer).
     m_composerChrome = new ComposerChrome(right);
     m_composerChrome->setMaximumSize(Tui::tuiMaxSize, 1);
@@ -1422,6 +1509,26 @@ void RootWidget::buildUi()
     m_completionPopup = new CompletionView(right);
 
     columns->addWidget(right);
+
+    // --- Column 4: file Explorer (right side, like the GUI), hidden until Ctrl+E ---
+    m_fileTreeView = new FileTreeView(m_window);
+    m_fileTreeView->setMinimumSize(28, 3);
+    m_fileTreeView->setSizePolicyH(Tui::SizePolicy::Preferred);
+    m_fileTreeView->setSizePolicyV(Tui::SizePolicy::Expanding);
+    m_fileTreeView->setModel(m_fileTree);
+    // Restore the persisted open/closed state (shared "ui/showFileExplorer" key).
+    m_fileTreeView->setVisible(
+        QSettings().value(QStringLiteral("ui/showFileExplorer"), false).toBool());
+    columns->addWidget(m_fileTreeView);
+    connect(m_fileTreeView, &FileTreeView::fileChosen, this,
+            [this](const QString& rootId, const QString& path, bool pinned) {
+                const int slash = static_cast<int>(path.lastIndexOf(QLatin1Char('/')));
+                const QString title = slash >= 0 ? path.mid(slash + 1) : path;
+                if (pinned)
+                    m_tabModel->openFilePinned(rootId, path, title);
+                else
+                    m_tabModel->previewFile(rootId, path, title);
+            });
 
     // --- Footer: StatusBarModel-driven colored status strip ---
     m_footer = new StatusBarView(m_window);
@@ -2197,6 +2304,7 @@ void RootWidget::activateTab(int tabId)
         // Switching tabs closes any open find bar so it never shows stale matches
         // from the previous tab's engine.
         closeTranscriptSearch();
+        showEditor(false);
         m_active = s;
         if (m_transcript != nullptr) {
             m_transcript->setDocument(&s->doc);
@@ -2217,10 +2325,27 @@ void RootWidget::activateTab(int tabId)
         refreshTranscript();
         updateTodos();
         updateSubagents();
+    } else if (m_tabModel->kindAt(row) == TabModel::File) {
+        // A file tab: bind the editor to this tab's controller (lazily created +
+        // read through the fs seam) and show it in place of the transcript stack.
+        closeTranscriptSearch();
+        m_active = nullptr;
+        editor::CodeEditorController* c = ensureFileSession(tabId);
+        m_activeFileRoot = m_tabModel->fileRootAt(row);
+        m_activeFilePath = m_tabModel->filePathAt(row);
+        if (m_editorView != nullptr) {
+            m_editorView->setController(c);
+            m_editorView->setFocus();
+        }
+        showEditor(true);
+        m_status->setBusy(false);
+        updateTodos();
+        updateSubagents();
     } else {
         // A non-transcript page tab (Settings): no backend session; show the static
         // page document and clear the per-tab strips.
         closeTranscriptSearch();
+        showEditor(false);
         m_active = nullptr;
         const int kind = m_tabModel->kindAt(row);
         m_pageDoc.loadMarkdown(pageMarkdownForKind(kind));
@@ -2238,6 +2363,51 @@ void RootWidget::activateTab(int tabId)
         updateTodos();
         updateSubagents();
     }
+}
+
+editor::CodeEditorController* RootWidget::ensureFileSession(int tabId)
+{
+    if (m_fileSessions.contains(tabId))
+        return m_fileSessions.value(tabId);
+    const int row = m_tabModel->indexOfTabId(tabId);
+    if (row < 0)
+        return nullptr;
+    const QString rootId = m_tabModel->fileRootAt(row);
+    const QString path = m_tabModel->filePathAt(row);
+
+    auto* c = new editor::CodeEditorController(this);
+    c->setDarkTheme(tpal::activeTheme() != theme::ThemeName::Light
+                    && tpal::activeTheme() != theme::ThemeName::Sepia);
+    m_fileSessions.insert(tabId, c);
+    m_fileByKey.insert(rootId + QChar(0x1f) + path, c);
+    connect(c, &editor::CodeEditorController::modifiedChanged, this,
+            [this, tabId, c] { m_tabModel->setDirtyById(tabId, c->modified()); });
+    // Kick off the async read; the fileRead handler loads bytes into this controller.
+    if (m_fs != nullptr)
+        m_fs->read(rootId, path);
+    return c;
+}
+
+void RootWidget::showEditor(bool on)
+{
+    if (m_editorView != nullptr)
+        m_editorView->setVisible(on);
+    // Transcript + composer chrome are hidden while a file is open.
+    const bool stack = !on;
+    if (m_transcript != nullptr)
+        m_transcript->setVisible(stack);
+    if (m_composerChrome != nullptr)
+        m_composerChrome->setVisible(stack);
+    if (m_queue != nullptr)
+        m_queue->setVisible(stack);
+    if (m_subagents != nullptr)
+        m_subagents->setVisible(stack);
+    if (m_todos != nullptr)
+        m_todos->setVisible(stack);
+    if (m_attachments != nullptr)
+        m_attachments->setVisible(stack);
+    if (m_composer != nullptr)
+        m_composer->setVisible(stack);
 }
 
 QString RootWidget::pageMarkdownForKind(int kind) const
@@ -3020,6 +3190,22 @@ QString RootWidget::buildSettingsMarkdown() const
 
 void RootWidget::destroySession(int tabId)
 {
+    // File tabs hold an editor controller rather than a TabSession.
+    if (auto fit = m_fileSessions.find(tabId); fit != m_fileSessions.end()) {
+        editor::CodeEditorController* c = fit.value();
+        if (m_editorView != nullptr && m_editorView->controller() == c)
+            m_editorView->setController(nullptr);
+        for (auto kit = m_fileByKey.begin(); kit != m_fileByKey.end();) {
+            if (kit.value() == c)
+                kit = m_fileByKey.erase(kit);
+            else
+                ++kit;
+        }
+        m_fileSessions.erase(fit);
+        delete c;
+        return;
+    }
+
     auto it = m_sessions.find(tabId);
     if (it == m_sessions.end()) {
         return;
@@ -3052,6 +3238,9 @@ void RootWidget::dumpGeometry() const
     g("transcript", m_transcript);
     g("chrome", m_composerChrome);
     g("composer", m_composer);
+    g("filetree", m_fileTreeView);
+    g("editor", m_editorView);
+    g("footer", m_footer);
 }
 
 void RootWidget::focusComposer() const
@@ -3120,6 +3309,22 @@ void RootWidget::openModelPicker()
     m_modelPicker->openCentered();
 }
 
+void RootWidget::toggleExplorer()
+{
+    if (m_fileTreeView == nullptr) {
+        return;
+    }
+    const bool show = !m_fileTreeView->isVisible();
+    m_fileTreeView->setVisible(show);
+    if (show) {
+        m_fileTreeView->setFocus();
+    }
+    // Persist via the same "ui/showFileExplorer" key the GUI's UiSettings uses, so
+    // the explorer's open/closed state survives a restart (and stays in sync when
+    // both shells share an org/app QSettings scope).
+    QSettings().setValue(QStringLiteral("ui/showFileExplorer"), show);
+}
+
 void RootWidget::openCommandPalette()
 {
     if (m_commands == nullptr) {
@@ -3145,6 +3350,8 @@ void RootWidget::openCommandPalette()
                 if (m_search != nullptr) {
                     m_listView->setFocus();
                 }
+            } else if (id == QStringLiteral("files")) {
+                toggleExplorer();
             } else if (id == QStringLiteral("reasoning")) {
                 m_composerSession->cycleReasoningEffort();
             } else if (id == QStringLiteral("fast")) {
@@ -3218,11 +3425,19 @@ void RootWidget::cycleTheme()
     Tui::ZWidget* views[] = { m_window,       m_sidebarView,    m_composerChrome,
                               m_queue,        m_attachments,    m_footer,
                               m_completionPopup, m_search,       m_composer,
-                              m_tabStrip,     m_todos,          m_subagents };
+                              m_tabStrip,     m_todos,          m_subagents,
+                              m_fileTreeView, m_editorView };
     for (Tui::ZWidget* w : views) {
         if (w != nullptr) {
             w->update();
         }
+    }
+    // The editor's syntax colors are baked by KSyntaxHighlighting per the theme;
+    // re-pick the light/dark definition theme for every open file controller.
+    const bool dark = next != ThemeName::Light && next != ThemeName::Sepia;
+    for (editor::CodeEditorController* c : std::as_const(m_fileSessions)) {
+        if (c != nullptr)
+            c->setDarkTheme(dark);
     }
 
     // Persist to the GUI-shared key so both front ends honor the same choice.

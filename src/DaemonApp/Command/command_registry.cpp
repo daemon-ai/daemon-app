@@ -13,6 +13,8 @@ CommandRegistry::CommandRegistry(QObject* parent)
           tr("Jump to a conversation"), QString() },
         { QStringLiteral("settings"), tr("Open settings"), tr("Navigation"), QString(),
           QString() },
+        { QStringLiteral("files"), tr("Toggle file explorer"), tr("Navigation"),
+          tr("Show / hide the workspace file tree"), QStringLiteral("Ctrl+E") },
         // App-level manager pages (GUI: Nav overlay; TUI: page tabs). ids match
         // the front-end route strings both shells already understand.
         { QStringLiteral("dashboard"), tr("Open dashboard"), tr("Navigation"),

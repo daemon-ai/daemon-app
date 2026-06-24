@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 import DaemonApp.ComposerSession
+import DaemonApp.Files
 
 // The message composer - the QML port of Hermes' ChatBar
 // (apps/desktop/src/app/chat/composer/index.tsx). A docked, full-width bar that
@@ -95,12 +96,19 @@ Rectangle {
     // FileDialog/FolderDialog-backed pickers (same dialect as the transcript
     // export dialog). The picked path is added as an attachment chip and folded
     // into the submitted @file:/@image:/@folder: refs.
-    FileDialog {
-        id: filePicker
-        title: qsTr("Attach file")
-        fileMode: FileDialog.OpenFile
-        nameFilters: [qsTr("All files (*)")]
-        onAccepted: root.addAttachment(root._baseName(selectedFile), "file")
+    // Daemon-served file picker (browses the node's workspace through the Fs
+    // seam, not the local disk): the @file attach path. Picked files are added as
+    // chips by their root-relative path.
+    FilePicker {
+        id: workspaceFilePicker
+        onPicked: (rootId, path) => root.addAttachment(path, "file")
+    }
+    // Daemon-served folder picker: the same FileExplorer in folder-select mode
+    // (replaces the unthemed native FolderDialog). Picked dirs attach as @folder:.
+    FilePicker {
+        id: workspaceFolderPicker
+        selectDirs: true
+        onPicked: (rootId, path) => root.addAttachment(path + "/", "folder")
     }
     FileDialog {
         id: imagePicker
@@ -109,11 +117,6 @@ Rectangle {
         nameFilters: [qsTr("Images (*.png *.jpg *.jpeg *.gif *.webp *.bmp *.svg)"),
                       qsTr("All files (*)")]
         onAccepted: root.addAttachment(root._baseName(selectedFile), "image")
-    }
-    FolderDialog {
-        id: folderPicker
-        title: qsTr("Attach folder")
-        onAccepted: root.addAttachment(root._baseName(selectedFolder) + "/", "folder")
     }
 
     // Stack on touch so the finger-sized menu/controls never crowd the input on
@@ -365,8 +368,8 @@ Rectangle {
                         // Real local pickers: the chosen path becomes a @file:/
                         // @image:/@folder: ref on submit (the actual upload/read
                         // stays daemon-coupled). URL has no native picker.
-                        onRequestFiles: filePicker.open()
-                        onRequestFolder: folderPicker.open()
+                        onRequestFiles: workspaceFilePicker.open()
+                        onRequestFolder: workspaceFolderPicker.open()
                         onRequestImages: imagePicker.open()
                         onRequestUrl: root.addAttachment("example.com", "url")
                         onInsertText: function(text) { root.insertAtCursor(text); }

@@ -41,6 +41,9 @@ public:
         Approvals = 8,
         Routing = 9,
         Cron = 10,
+        // Open file tabs: multi-instance (unlike the singleton manager pages),
+        // keyed by (rootId, path) rather than a conversationId.
+        File = 11,
     };
     Q_ENUM(Kind)
 
@@ -52,6 +55,9 @@ public:
         ClosableRole,                 // false pins the tab open
         CurrentRole,                  // true for the active row
         PreviewRole,                  // true for the transient "preview" tab
+        FilePathRole,                 // File tabs: root-relative path
+        FileRootRole,                 // File tabs: owning root id
+        DirtyRole,                    // File tabs: unsaved-changes flag
     };
 
     explicit TabModel(QObject* parent = nullptr);
@@ -89,6 +95,17 @@ public:
     // Find-or-create the singleton page of `kind` (e.g. Settings), activate it,
     // and return its tab id.
     Q_INVOKABLE int openPage(int kind, const QString& title);
+
+    // File tabs (multi-instance, keyed by (rootId, path)). previewFile reuses the
+    // single preview slot (VSCode-style transient open); openFilePinned makes a
+    // permanent tab. An already-open file is re-activated.
+    Q_INVOKABLE int previewFile(const QString& rootId, const QString& path, const QString& title);
+    Q_INVOKABLE int openFilePinned(const QString& rootId, const QString& path,
+                                   const QString& title);
+    // Set the unsaved-changes flag for a File tab (drives the tab dirty dot).
+    Q_INVOKABLE void setDirtyById(int tabId, bool dirty);
+    [[nodiscard]] Q_INVOKABLE QString filePathAt(int index) const;
+    [[nodiscard]] Q_INVOKABLE QString fileRootAt(int index) const;
     // Close the tab at `index` (no-op when out of range or not closable). The
     // active tab moves to a neighbour; emits tabClosed(id) for frontend teardown.
     Q_INVOKABLE void closeTab(int index);
@@ -121,6 +138,12 @@ signals:
     // A preview tab was reassigned to a different conversation in place (its tab id
     // is stable). The frontend rebinds the matching per-tab page/session.
     void tabConversationChanged(int tabId, int conversationId);
+    // A preview tab changed kind/path in place (e.g. Transcript <-> File). The
+    // frontend must tear down the old per-tab controller/session and rebind.
+    void tabKindChanged(int tabId);
+    // A File preview tab was reassigned to a different root/path in place while
+    // keeping the same tab id. Frontends must reload the file controller.
+    void tabFileChanged(int tabId, const QString& rootId, const QString& path);
 
 private:
     struct Tab {
@@ -130,6 +153,9 @@ private:
         int conversationId = -1;
         bool closable = true;
         bool preview = false; // transient (VSCode-style) tab; at most one exists
+        QString rootId;       // File tabs: owning root id
+        QString path;         // File tabs: root-relative path
+        bool dirty = false;   // File tabs: unsaved changes
     };
 
     // Move the active row to `index` (already validated/clamped by the caller),
@@ -139,6 +165,7 @@ private:
     [[nodiscard]] int findTranscriptRow(int conversationId) const;
     [[nodiscard]] int findPageRow(int kind) const;
     [[nodiscard]] int findPreviewRow() const;
+    [[nodiscard]] int findFileRow(const QString& rootId, const QString& path) const;
 
     QList<Tab> m_tabs;
     int m_currentIndex = -1;

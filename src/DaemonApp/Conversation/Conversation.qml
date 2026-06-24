@@ -70,6 +70,16 @@ Rectangle {
     function openConversationPinned(conversationId) {
         tabModel.openTranscriptPinned(conversationId, _titleFor(conversationId));
     }
+    // Open a workspace file as an editor tab (File kind). pinned=false is a
+    // VSCode-style preview (reused on the next single-click open); pinned=true
+    // makes a permanent tab. The File tab loads a FilePage -> CodeEditor.
+    function openFile(rootId, path, pinned) {
+        const title = path.length > 0 ? path.substring(path.lastIndexOf('/') + 1) : qsTr("File");
+        if (pinned)
+            tabModel.openFilePinned(rootId, path, title);
+        else
+            tabModel.previewFile(rootId, path, title);
+    }
     // Create a brand-new conversation and open it in a pinned tab.
     function createNew() {
         const id = creator.createConversation("");
@@ -196,6 +206,8 @@ Rectangle {
                 required property int kind
                 required property int conversationId
                 required property int tabId
+                required property string filePath
+                required property string fileRoot
 
                 anchors.fill: parent
                 visible: index === tabModel.currentIndex
@@ -216,11 +228,26 @@ Rectangle {
                     case TabModel.Approvals:  return approvalsComp;
                     case TabModel.Routing:    return routingComp;
                     case TabModel.Cron:       return cronComp;
+                    case TabModel.File:       return fileComp;
                     default:                  return transcriptComp;
                     }
                 }
 
                 onLoaded: {
+                    // File tabs host a FilePage: bind its (root, path) and mirror
+                    // its dirty/title back to the shared TabModel.
+                    if (pageLoader.kind === TabModel.File) {
+                        item.rootId = Qt.binding(() => pageLoader.fileRoot);
+                        item.path = Qt.binding(() => pageLoader.filePath);
+                        item.isCurrent = Qt.binding(() => pageLoader.index === tabModel.currentIndex);
+                        item.dirtyChanged.connect(function(d) {
+                            tabModel.setDirtyById(pageLoader.tabId, d);
+                        });
+                        item.titleResolved.connect(function(t) {
+                            tabModel.setTitle(tabModel.indexOfTabId(pageLoader.tabId), t);
+                        });
+                        return;
+                    }
                     // Manager/settings pages are self-contained (they bind global
                     // context-property seams); only transcript tabs need the
                     // conversation wiring below.
@@ -298,6 +325,7 @@ Rectangle {
     Component { id: approvalsComp; ApprovalsPage {} }
     Component { id: routingComp;   RoutingPage {} }
     Component { id: cronComp;      CronPage {} }
+    Component { id: fileComp;      FilePage {} }
 
     // --- Session-action dialogs (rename + export) ---------------------------
     // Rename the conversation via the store. openFor(id) seeds the field with the

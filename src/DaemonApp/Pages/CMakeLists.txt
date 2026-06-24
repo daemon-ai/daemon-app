@@ -45,11 +45,16 @@ qt_add_qml_module(da_pages
         CronPage.qml
         CronJobDialog.qml
         FirstRunGate.qml
+        FilePage.qml
 )
 add_library(daemon-app::pages ALIAS da_pages)
 
 target_link_libraries(da_pages
     PRIVATE
         Qt6::Quick
+        # FilePage hosts the code editor (DaemonApp.Editor) and the rich markdown
+        # block editor (DaemonApp.BlockEditor).
+        daemon-app::editor
+        daemon-app::blockeditor
         daemon-app::warnings
 )

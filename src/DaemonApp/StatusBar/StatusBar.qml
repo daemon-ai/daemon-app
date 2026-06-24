@@ -91,6 +91,13 @@ Rectangle {
             active: root.cronOpen
             onClicked: root.cronOpen = !root.cronOpen
         }
+        StatusBarItem {
+            glyph: FontIcons.fa_folder
+            label: qsTr("Files")
+            tooltipText: qsTr("Toggle file explorer (Ctrl+E)")
+            active: UiSettings.showFileExplorer
+            onClicked: UiSettings.showFileExplorer = !UiSettings.showFileExplorer
+        }
     }
 
     // --- Right cluster ------------------------------------------------------

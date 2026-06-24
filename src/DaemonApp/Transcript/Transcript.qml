@@ -2,11 +2,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import org.kde.syntaxhighlighting
-
 import DaemonApp.Theme
 import DaemonApp.Settings
 import DaemonApp.BlockEditor
+import DaemonApp.Editor
 import DaemonApp.Turn
 import DaemonApp.Controls as Kit
 
@@ -84,7 +83,7 @@ Rectangle {
         _loadedMarkdown = md
         editor.loadMarkdown(md, false)
         if (UiSettings.showPlainText)
-            plainText.text = md
+            _loadPlain(md)
         // Open at the bottom (latest message), like a chat transcript. A reset
         // lands the view at the top and block heights settle asynchronously, so
         // re-pin across a few frames until the layout stops growing.
@@ -100,6 +99,14 @@ Rectangle {
         editorView.pinToBottom()
     }
 
+    // Load markdown into the plain-text code editor (syntax-highlighted as
+    // Markdown via the file name). The plain editor is the source of truth while
+    // "Show plain text" is on. No-op until the Loader has built the editor.
+    function _loadPlain(md) {
+        if (plainLoader.item)
+            plainLoader.item.controller.load(md, "document.md", "")
+    }
+
     EditorController {
         id: editor
 
@@ -113,7 +120,12 @@ Rectangle {
         bodyFontFamily: UiSettings.editorFontFamily
         bodyFontSize: UiSettings.editorFontSize
 
-        onDocumentChanged: persistTimer.restart()
+        onDocumentChanged: {
+            persistTimer.restart()
+            if (UiSettings.showPlainText && plainLoader.item
+                    && !plainLoader.item.controller.modified)
+                plainSyncTimer.restart()
+        }
 
         // Open the shared lightbox when a block (image / generated image) asks
         // to preview an image.
@@ -486,76 +498,74 @@ Rectangle {
             }
         }
 
-        // "Show plain text": a raw-markdown editor that replaces the block view.
-        // Content syncs with the block editor whenever the option is toggled.
-        ScrollView {
-            id: plainScroll
-            anchors.fill: parent
-            visible: UiSettings.showPlainText
-            clip: true
+    }
 
-            TextArea {
-                id: plainText
-                wrapMode: TextArea.Wrap
-                background: null
-                color: Theme.text
-                selectionColor: Theme.selection
-                selectedTextColor: Theme.selectionText
-                font.family: UiSettings.editorFontFamily !== "" ? UiSettings.editorFontFamily
-                                                                : FontIcons.mono
-                font.pixelSize: UiSettings.editorFontSize
+    // "Show plain text": raw markdown uses the same native source editor surface
+    // as file tabs and is a sibling of EditorSurface, so it does not inherit the
+    // transcript prose/page margins.
+    Loader {
+        id: plainLoader
+        anchors.fill: parent
+        active: UiSettings.showPlainText && root.visible
+        visible: UiSettings.showPlainText
+        sourceComponent: plainEditorComponent
+    }
 
-                // Themed right-click context menu (suppress Qt's default one).
-                ContextMenu.menu: null
-                TapHandler {
-                    acceptedButtons: Qt.RightButton
-                    onTapped: plainEditMenu.popup()
-                }
-                Kit.EditMenu {
-                    id: plainEditMenu
-                    target: plainText
-                }
+    // Persist edits made in the plain-text editor (its text is the source of
+    // truth while plain-text mode is on, not the block model).
+    Timer {
+        id: plainPersist
+        interval: 400
+        onTriggered: if (plainLoader.item) root.edited(plainLoader.item.controller.text())
+    }
 
-                onTextChanged: {
-                    if (UiSettings.showPlainText && activeFocus)
-                        plainPersist.restart()
-                }
+    // While the rendered controller ingests streaming turn events, mirror the
+    // current markdown into the visible source editor unless the user has local
+    // raw edits. This keeps Show Plain Text live without clobbering dirty text.
+    Timer {
+        id: plainSyncTimer
+        interval: 80
+        onTriggered: {
+            if (UiSettings.showPlainText && plainLoader.item
+                    && !plainLoader.item.controller.modified)
+                root._loadPlain(editor.exportMarkdown())
+        }
+    }
 
-                // Highlight the raw document as Markdown (the definition also
-                // colors fenced code blocks inside it), so "Show plain text"
-                // matches the highlighting of the block view. The app theme picks
-                // a light/dark highlighting theme so it recolors on theme switch.
-                SyntaxHighlighter {
-                    textEdit: plainText
-                    repository: Repository
-                    definition: Repository.definitionForName("Markdown")
-                    theme: Theme.isDarkMode
-                        ? Repository.defaultTheme(Repository.DarkTheme)
-                        : Repository.defaultTheme(Repository.LightTheme)
-                }
+    Component {
+        id: plainEditorComponent
+        FocusScope {
+            property alias controller: plainCtl
+            focus: true
+
+            CodeEditorController { id: plainCtl }
+
+            CodeEditor {
+                anchors.fill: parent
+                controller: plainCtl
+                focus: true
             }
-        }
 
-        // Persist edits made in the plain-text editor (its text is the source of
-        // truth while plain-text mode is on, not the block model).
-        Timer {
-            id: plainPersist
-            interval: 400
-            onTriggered: root.edited(plainText.text)
-        }
+            // Entering plain text: seed from the live block markdown.
+            Component.onCompleted: plainCtl.load(editor.exportMarkdown(), "document.md", "")
 
-        // Keep the two editors in sync across the toggle: capture the block
-        // markdown when entering plain text; push edits back on exit.
-        Connections {
-            target: UiSettings
-            function onShowPlainTextChanged() {
-                if (UiSettings.showPlainText) {
-                    plainText.text = editor.exportMarkdown()
-                } else {
-                    const md = plainText.text
+            // Leaving plain text: push the edited text back to the block editor
+            // before this controller is destroyed (runs while it is still alive,
+            // avoiding any deactivate/read race).
+            Component.onDestruction: {
+                if (plainCtl.modified) {
+                    const md = plainCtl.text()
                     root._loadedMarkdown = md
                     editor.loadMarkdown(md, false)
                     root.edited(md)
+                }
+            }
+
+            Connections {
+                target: plainCtl
+                function onModifiedChanged() {
+                    if (UiSettings.showPlainText && plainCtl.modified)
+                        plainPersist.restart()
                 }
             }
         }

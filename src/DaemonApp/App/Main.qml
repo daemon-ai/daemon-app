@@ -7,6 +7,7 @@ import DaemonApp.ConversationsList
 import DaemonApp.Conversation
 import DaemonApp.StatusBar
 import DaemonApp.Pages
+import DaemonApp.Files
 
 ApplicationWindow {
     id: root
@@ -48,6 +49,18 @@ ApplicationWindow {
         Theme.setTheme(order[(i + 1) % order.length]);
     }
 
+    // Toggle the file Explorer side panel. UiSettings.showFileExplorer is the
+    // single source of truth: the expanded shell binds a pane's visibility to it
+    // and the compact shell opens/closes a right-edge drawer from it.
+    function toggleExplorer() {
+        UiSettings.showFileExplorer = !UiSettings.showFileExplorer;
+    }
+    // Open a file (from the Explorer) as an editor tab in the active pane.
+    function openFileInPane(rootId, path, pinned) {
+        if (root.activeConversation)
+            root.activeConversation.openFile(rootId, path, pinned);
+    }
+
     // Route a command-palette id to an existing action. Window-level ids are
     // handled here; conversation-scoped ids fall through to the active pane's
     // orchestrator (which raises front-end overlays via commandRequested). The
@@ -70,6 +83,7 @@ ApplicationWindow {
         case "approvals": Nav.open("approvals"); break;
         case "routing": Nav.open("routing"); break;
         case "cron": Nav.open("cron"); break;
+        case "files": root.toggleExplorer(); break;
         case "help": commandPalette.open(); break;
         case "title": if (root.activeConversation) root.activeConversation.renameActive(); break;
         case "save": if (root.activeConversation) root.activeConversation.exportActive(); break;
@@ -83,6 +97,12 @@ ApplicationWindow {
     Shortcut {
         sequences: [StandardKey.QuickOpen, "Ctrl+K", "Meta+K"]
         onActivated: commandPalette.open()
+    }
+
+    // Toggle the file Explorer side panel (VS Code-style).
+    Shortcut {
+        sequences: ["Ctrl+E", "Meta+E"]
+        onActivated: root.toggleExplorer()
     }
 
     Connections {
@@ -241,6 +261,18 @@ ApplicationWindow {
                         open(root.activeConversationId);
                 }
             }
+
+            // Right-side file Explorer (opposite the conversations sidebar, like
+            // Hermes Desktop). Files open as editor tabs in the conversation pane.
+            FileExplorer {
+                id: explorerExpanded
+                SplitView.preferredWidth: Theme.listWidth
+                SplitView.minimumWidth: 200
+                visible: UiSettings.showFileExplorer && !UiSettings.distractionFree
+                onFileActivated: (rootId, path) => root.openFileInPane(rootId, path, false)
+                onFileOpened: (rootId, path) => root.openFileInPane(rootId, path, true)
+                onCollapseRequested: UiSettings.showFileExplorer = false
+            }
         }
     }
 
@@ -303,6 +335,44 @@ ApplicationWindow {
                         // Surface the freshly scoped list.
                         compactStack.pop(null);
                     }
+                }
+            }
+
+            // Right-edge file Explorer drawer, driven by UiSettings.showFileExplorer
+            // (the same flag the expanded shell binds a pane to). Opening a file
+            // pushes the conversation page so the editor tab is visible.
+            Drawer {
+                id: explorerDrawerCompact
+                edge: Qt.RightEdge
+                width: Math.min(360, root.width * 0.9)
+                height: root.height
+                onClosed: UiSettings.showFileExplorer = false
+
+                FileExplorer {
+                    anchors.fill: parent
+                    onFileActivated: (rootId, path) => {
+                        if (!root.activeConversation)
+                            compactStack.push(conversationPage);
+                        Qt.callLater(() => root.openFileInPane(rootId, path, false));
+                        explorerDrawerCompact.close();
+                    }
+                    onFileOpened: (rootId, path) => {
+                        if (!root.activeConversation)
+                            compactStack.push(conversationPage);
+                        Qt.callLater(() => root.openFileInPane(rootId, path, true));
+                        explorerDrawerCompact.close();
+                    }
+                    onCollapseRequested: explorerDrawerCompact.close()
+                }
+            }
+
+            Connections {
+                target: UiSettings
+                function onShowFileExplorerChanged() {
+                    if (UiSettings.showFileExplorer)
+                        explorerDrawerCompact.open();
+                    else
+                        explorerDrawerCompact.close();
                 }
             }
         }

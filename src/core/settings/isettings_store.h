@@ -24,7 +24,8 @@ public:
     using QObject::QObject;
     ~ISettingsStore() override = default;
 
-    [[nodiscard]] virtual QVariant value(const QString& key, const QVariant& fallback = {}) const = 0;
+    [[nodiscard]] Q_INVOKABLE virtual QVariant value(const QString& key,
+                                                     const QVariant& fallback = {}) const = 0;
     Q_INVOKABLE virtual void setValue(const QString& key, const QVariant& value) = 0;
 
     // Named convenience over the raw keys (so QML/TUI never hardcode key strings).

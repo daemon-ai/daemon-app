@@ -25,6 +25,9 @@ class ISettingsStore;
 namespace connection {
 class IConnectionService;
 }
+namespace fs {
+class IFsService;
+}
 namespace nav {
 class NavController;
 }
@@ -107,6 +110,9 @@ private:
     // Connection seam (mock now), exposed to QML as `Connection`; its liveness
     // state drives the StatusBarModel gateway state.
     connection::IConnectionService* m_connection = nullptr;
+    // Filesystem seam (dev local-disk impl now), exposed to QML as `Fs`; backs
+    // the file tree, finder, and editor. A daemon adapter replaces it later.
+    fs::IFsService* m_fs = nullptr;
     // App-level page navigation seam, exposed to QML as `Nav`.
     nav::NavController* m_nav = nullptr;
     // First-run / onboarding gate, exposed to QML as `FirstRun`.

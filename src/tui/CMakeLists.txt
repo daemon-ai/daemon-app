@@ -42,6 +42,15 @@ add_library(da_tui_viewmodels STATIC
     ../DaemonApp/Tabs/tab_model.cpp
     ../DaemonApp/Command/command_registry.h
     ../DaemonApp/Command/command_registry.cpp
+    # File tree + editor view-models, shared verbatim with the GUI.
+    ../DaemonApp/Files/fs_explorer_model.h
+    ../DaemonApp/Files/fs_explorer_model.cpp
+    ../DaemonApp/Files/file_finder_model.h
+    ../DaemonApp/Files/file_finder_model.cpp
+    ../DaemonApp/Editor/app/code_editor_controller.h
+    ../DaemonApp/Editor/app/code_editor_controller.cpp
+    ../DaemonApp/Editor/app/line_model.h
+    ../DaemonApp/Editor/app/line_model.cpp
 )
 add_library(daemon-app::tui_viewmodels ALIAS da_tui_viewmodels)
 
@@ -55,6 +64,9 @@ target_include_directories(da_tui_viewmodels PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Conversation"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Tabs"
     "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Command"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Files"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Editor"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../DaemonApp/Editor/app"
 )
 
 target_link_libraries(da_tui_viewmodels
@@ -66,6 +78,10 @@ target_link_libraries(da_tui_viewmodels
         daemon-app::persistence
         # ConversationOrchestrator owns a TurnController (turn_controller.h).
         daemon-app::turn
+        # FsExplorerModel talks to the fs seam; the editor controller owns the
+        # de_core engine (block buffer + incremental KSyntaxHighlighting).
+        daemon-app::fs
+        daemon-app::editor_core
     PRIVATE
         daemon-app::warnings
 )
@@ -97,6 +113,10 @@ qt_add_executable(daemon-tui
     status_bar_view.cpp
     tab_strip_view.h
     tab_strip_view.cpp
+    file_tree_view.h
+    file_tree_view.cpp
+    code_editor_view.h
+    code_editor_view.cpp
     composer_chrome.h
     composer_chrome.cpp
     completion_view.h
@@ -151,6 +171,9 @@ target_link_libraries(daemon-tui
         # link time but needs no QGuiApplication (QColor works under QCoreApplication),
         # so the TUI shares the exact same transcript blocks as the QML front end.
         be_core
+        # File tree + editor: the fs seam and the de_core engine, shared with GUI.
+        daemon-app::fs
+        daemon-app::editor_core
         daemon-app::warnings
 )
 
