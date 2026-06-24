@@ -1,5 +1,7 @@
 #pragma once
 
+#include "daemon/app_service_graph.h"
+
 #include <QObject>
 
 QT_BEGIN_NAMESPACE
@@ -96,6 +98,7 @@ protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
+    daemonapp::daemon::AppServiceGraph m_services;
     persistence::ISessionStore* m_store = nullptr;
     platform::IPlatformServices* m_platform = nullptr;
     // The shared footer status model, exposed to QML as the `Status` context

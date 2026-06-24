@@ -198,6 +198,7 @@ target_link_libraries(daemon-tui
         daemon-app::fleet
         daemon-app::automation
         daemon-app::session
+        daemon-app::daemon_client
         # The GUI's parse/ingest/view-model engine. It links Qt Gui/Sql + md4qt at
         # link time but needs no QGuiApplication (QColor works under QCoreApplication),
         # so the TUI shares the exact same transcript blocks as the QML front end.

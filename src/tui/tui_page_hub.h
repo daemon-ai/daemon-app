@@ -27,7 +27,7 @@ class IFleetTree;
 class ISessionRoster;
 }
 namespace memory {
-class MockMemoryService;
+class IMemoryService;
 }
 namespace memoryui {
 class MemoryGraphModel;
@@ -59,7 +59,7 @@ public:
         fleet::IDashboard* dashboard = nullptr;
         automation::IRoutingStore* routing = nullptr;
         automation::ICronStore* cron = nullptr;
-        memory::MockMemoryService* memory = nullptr;
+        memory::IMemoryService* memory = nullptr;
         memoryui::MemoryListModel* memList = nullptr;
         memoryui::MemoryStatsModel* memStats = nullptr;
         memoryui::MemoryTimelineModel* memTimeline = nullptr;

@@ -1,0 +1,70 @@
+#pragma once
+
+#include <QObject>
+
+namespace accounts { class IAccountsService; }
+namespace automation { class ICronStore; class IRoutingStore; }
+namespace config { class IDaemonConfig; }
+namespace connection { class IConnectionService; }
+namespace firstrun { class FirstRunModel; }
+namespace fleet { class IApprovalsInbox; class IDashboard; class IFleetTree; class ISessionRoster; }
+namespace fs { class IFsService; }
+namespace memory { class IMemoryService; }
+namespace models { class IModelCatalog; }
+namespace nav { class NavController; }
+namespace persistence { class ISessionStore; }
+namespace profiles { class IProfileStore; }
+namespace session { class ICheckpointTimeline; class ISessionSettings; }
+namespace settings { class ISettingsStore; }
+
+namespace daemonapp::daemon {
+
+class ApprovalRepository;
+class CheckpointRepository;
+class DaemonCacheStore;
+class FsRepository;
+class ModelRepository;
+class NodeApiClient;
+class ProfileRepository;
+class SessionRepository;
+
+enum class ServiceMode {
+    Mock,
+    Daemon,
+};
+
+struct AppServiceGraph {
+    persistence::ISessionStore* store = nullptr;
+    settings::ISettingsStore* settings = nullptr;
+    connection::IConnectionService* connection = nullptr;
+    config::IDaemonConfig* daemonConfig = nullptr;
+    fs::IFsService* fs = nullptr;
+    memory::IMemoryService* memory = nullptr;
+    nav::NavController* nav = nullptr;
+    firstrun::FirstRunModel* firstRun = nullptr;
+    models::IModelCatalog* modelCatalog = nullptr;
+    accounts::IAccountsService* accounts = nullptr;
+    profiles::IProfileStore* profiles = nullptr;
+    fleet::ISessionRoster* roster = nullptr;
+    fleet::IFleetTree* fleetTree = nullptr;
+    fleet::IApprovalsInbox* approvals = nullptr;
+    fleet::IDashboard* dashboard = nullptr;
+    automation::IRoutingStore* routing = nullptr;
+    automation::ICronStore* cron = nullptr;
+    session::ISessionSettings* sessionSettings = nullptr;
+    session::ICheckpointTimeline* checkpoints = nullptr;
+    DaemonCacheStore* cache = nullptr;
+    NodeApiClient* nodeApi = nullptr;
+    SessionRepository* sessions = nullptr;
+    ProfileRepository* profileRepository = nullptr;
+    ModelRepository* models = nullptr;
+    FsRepository* files = nullptr;
+    ApprovalRepository* approvalRepository = nullptr;
+    CheckpointRepository* checkpointRepository = nullptr;
+};
+
+// Shared service factory for GUI and TUI. The current Mock mode preserves existing behavior; Daemon
+// mode swaps in daemon-backed services as they land, starting with the connection seam.
+AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner);
+
+} // namespace daemonapp::daemon

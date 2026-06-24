@@ -32,6 +32,7 @@
 #include "tree_list_view.h"
 #include "tui_dialogs.h"
 
+#include "daemon/app_service_graph.h"
 #include "core/agent_ingest.h"
 #include "core/document_store.h"
 #include "core/transcript_search.h"
@@ -62,7 +63,7 @@
 #include <memory>
 
 namespace persistence {
-class InMemorySessionStore;
+class ISessionStore;
 }
 namespace fs {
 class IFsService;
@@ -74,7 +75,7 @@ namespace editor {
 class CodeEditorController;
 }
 namespace memory {
-class MockMemoryService;
+class IMemoryService;
 }
 namespace memoryui {
 class MemoryListModel;
@@ -243,7 +244,8 @@ private:
     void updateSearchCounter();
 
     // Reused, unchanged from the GUI build.
-    persistence::InMemorySessionStore* m_store = nullptr;
+    daemonapp::daemon::AppServiceGraph m_services;
+    persistence::ISessionStore* m_store = nullptr;
     SidebarModel* m_sidebar = nullptr;
     SessionsListModel* m_list = nullptr;
     // Shared composer FSM (draft/queue/history/submit), identical to the GUI. Its
@@ -336,7 +338,7 @@ private:
     // Memory-inspection seam (seeded mock) + the shared view-models that back the
     // Memory page projection (same models the GUI binds; the TUI renders them as
     // markdown + a graph adjacency listing).
-    memory::MockMemoryService* m_memory = nullptr;
+    memory::IMemoryService* m_memory = nullptr;
     memoryui::MemoryListModel* m_memList = nullptr;
     memoryui::MemoryStatsModel* m_memStats = nullptr;
     memoryui::MemoryTimelineModel* m_memTimeline = nullptr;

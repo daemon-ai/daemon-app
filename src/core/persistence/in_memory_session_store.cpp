@@ -117,6 +117,7 @@ void InMemorySessionStore::seedSampleData()
                     const QString& title, const QString& content) {
         Session c;
         c.id = m_nextId++;
+        c.sessionId = SessionId(QStringLiteral("local-%1").arg(c.id));
         c.unitId = UnitId(unitId);
         c.tagIds = tagIds;
         c.isArchived = archived;
@@ -393,6 +394,7 @@ int InMemorySessionStore::createSession(const UnitId& unitId)
 {
     Session c;
     c.id = m_nextId++;
+    c.sessionId = SessionId(QStringLiteral("local-%1").arg(c.id));
     c.unitId = unitId;
     c.title = QStringLiteral("New session");
     c.created = QDateTime::currentDateTime();

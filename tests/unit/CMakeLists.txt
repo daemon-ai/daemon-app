@@ -37,6 +37,28 @@ target_link_libraries(tst_connection_service
 add_test(NAME tst_connection_service COMMAND tst_connection_service)
 set_tests_properties(tst_connection_service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_daemon_integration: guards the daemon thin-client scaffolding - Unix-socket
+# frame parsing, durable cache schema expectations, and first-slice ordering.
+qt_add_executable(tst_daemon_integration tst_daemon_integration.cpp)
+target_link_libraries(tst_daemon_integration
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+)
+add_test(NAME tst_daemon_integration COMMAND tst_daemon_integration)
+set_tests_properties(tst_daemon_integration PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_app_service_graph: shared GUI/TUI service construction; mock mode must
+# preserve the existing graph, daemon mode only swaps the connection seam for now.
+qt_add_executable(tst_app_service_graph tst_app_service_graph.cpp)
+target_link_libraries(tst_app_service_graph
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+)
+add_test(NAME tst_app_service_graph COMMAND tst_app_service_graph)
+set_tests_properties(tst_app_service_graph PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_fs_service: the filesystem seam's local mock must preserve the daemon FS
 # contract around optimistic concurrency and path containment.
 qt_add_executable(tst_fs_service tst_fs_service.cpp)

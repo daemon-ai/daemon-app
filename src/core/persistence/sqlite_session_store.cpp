@@ -165,6 +165,7 @@ bool SqliteSessionStore::loadAll()
     while (cq.next()) {
         Session c;
         c.id = cq.value(0).toInt();
+        c.sessionId = domain::SessionId(QStringLiteral("local-%1").arg(c.id));
         c.unitId = UnitId(cq.value(1).toString());
         c.tagIds = splitTagIds(cq.value(2).toString());
         c.title = cq.value(3).toString();

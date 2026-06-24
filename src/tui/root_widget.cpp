@@ -21,34 +21,17 @@
 #include "tab_model.h"
 #include "turn_controller.h"
 
-#include "persistence/sqlite_session_store.h"
-
 #include "fs_explorer_model.h"
 #include "app/code_editor_controller.h"
-#include "fs/local_disk_fs_service.h"
+#include "fs/ifs_service.h"
 
 #include "memory_graph_model.h"
+#include "memory/imemory_service.h"
 #include "memory_list_model.h"
 #include "memory_stats_model.h"
 #include "memory_timeline_model.h"
-#include "memory/mock_memory_service.h"
-
-#include "accounts/mock_accounts_service.h"
-#include "config/mock_daemon_config.h"
-#include "connection/mock_connection_service.h"
-#include "automation/mock_cron_store.h"
-#include "automation/mock_routing_store.h"
-#include "fleet/mock_approvals_inbox.h"
-#include "fleet/mock_dashboard.h"
-#include "fleet/mock_fleet_tree.h"
-#include "fleet/mock_session_roster.h"
-#include "models/mock_model_catalog.h"
-#include "profiles/mock_profile_store.h"
-#include "session/mock_checkpoint_timeline.h"
-#include "session/mock_session_settings.h"
 #include "uimodels/variant_list_model.h"
-#include "nav/nav_controller.h"
-#include "settings/qt_settings_store.h"
+#include "persistence/isession_store.h"
 
 #include <Tui/ZButton.h>
 #include <Tui/ZCommon.h>
@@ -146,6 +129,7 @@ QString pageMarkdown(int kind)
 } // namespace
 
 RootWidget::RootWidget()
+    : m_services(daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, this))
 {
     // Build the stock-widget palette (incl. the quit dialog frame/body) from the
     // active theme - set from the persisted ui/theme in main() before we run.
@@ -153,7 +137,7 @@ RootWidget::RootWidget()
 
     // The reused layer: store + view models, wired exactly as in the GUI. None
     // of this depends on Tui Widgets - the same objects back the QML frontend.
-    m_store = new persistence::SqliteSessionStore(QString(), this);
+    m_store = m_services.store;
 
     m_sidebar = new SidebarModel(this);
     m_sidebar->setStore(m_store);
@@ -210,12 +194,8 @@ RootWidget::RootWidget()
     // contract is untouched by the choice of toolkit.
     connect(m_sidebar, &SidebarModel::scopeSelected, m_list, &SessionsListModel::setScope);
 
-    // File tree seam + model, shared verbatim with the GUI. Serve the daemon-config
-    // workspace root (the GUI's Application does the same); a daemon adapter
-    // replaces it later. The editor controllers are created per File tab.
-    m_daemonConfig = new config::MockDaemonConfig(this);
-    m_fs = new fs::LocalDiskFsService(
-        m_daemonConfig->value(QStringLiteral("workspace/root")).toString(), QString(), this);
+    m_daemonConfig = m_services.daemonConfig;
+    m_fs = m_services.fs;
     m_fileTree = new files::FsExplorerModel(this);
     m_fileTree->setService(m_fs);
     m_fileTabs = std::make_unique<TuiFileTabController>(m_fs, m_tabModel, this);
@@ -223,29 +203,29 @@ RootWidget::RootWidget()
     // Phase 0 shared seams (identical classes to the GUI). The connection seam
     // owns liveness; mirror its state into the footer's gateway indicator, then
     // open the saved (or default local) connection so the state machine runs.
-    m_appSettings = new settings::QtSettingsStore(this);
-    m_connection = new connection::MockConnectionService(this);
-    m_nav = new nav::NavController(this);
-    m_firstRun = new firstrun::FirstRunModel(m_appSettings, m_connection, this);
-    m_modelCatalog = new models::MockModelCatalog(this);
+    m_appSettings = m_services.settings;
+    m_connection = m_services.connection;
+    m_nav = m_services.nav;
+    m_firstRun = m_services.firstRun;
+    m_modelCatalog = m_services.modelCatalog;
     // Single source of truth for the composer's model list/selection (shared with
     // the Models hub), exactly as the GUI wires it via Composer.qml's modelSource.
     m_composerSession->setModelSource(m_modelCatalog);
-    m_accounts = new accounts::MockAccountsService(this);
-    m_profiles = new profiles::MockProfileStore(this);
-    m_roster = new fleet::MockSessionRoster(this);
-    m_fleetTree = new fleet::MockFleetTree(this);
-    m_approvals = new fleet::MockApprovalsInbox(this);
-    m_dashboard = new fleet::MockDashboard(m_roster, m_fleetTree, m_approvals, this);
-    m_routing = new automation::MockRoutingStore(this);
-    m_cron = new automation::MockCronStore(this);
-    m_sessionSettings = new session::MockSessionSettings(this);
-    m_checkpoints = new session::MockCheckpointTimeline(this);
+    m_accounts = m_services.accounts;
+    m_profiles = m_services.profiles;
+    m_roster = m_services.roster;
+    m_fleetTree = m_services.fleetTree;
+    m_approvals = m_services.approvals;
+    m_dashboard = m_services.dashboard;
+    m_routing = m_services.routing;
+    m_cron = m_services.cron;
+    m_sessionSettings = m_services.sessionSettings;
+    m_checkpoints = m_services.checkpoints;
 
     // Memory-inspection seam (seeded mock) + the shared view-models. Setting the
     // service kicks off the initial async requests; the page markdown re-renders
     // when results land (see the liveRefresh wiring in wireViews).
-    m_memory = new memory::MockMemoryService(this);
+    m_memory = m_services.memory;
     m_memList = new memoryui::MemoryListModel(this);
     m_memStats = new memoryui::MemoryStatsModel(this);
     m_memTimeline = new memoryui::MemoryTimelineModel(this);

@@ -11,7 +11,7 @@
 #include "fleet/idashboard.h"
 #include "fleet/ifleet_tree.h"
 #include "fleet/isession_roster.h"
-#include "memory/mock_memory_service.h"
+#include "memory/imemory_service.h"
 #include "memory_graph_model.h"
 #include "memory_list_model.h"
 #include "memory_stats_model.h"

@@ -3,27 +3,27 @@
 #include "app/cached_image_provider.h"
 #include "app/image_cache.h"
 #include "app/math_image_provider.h"
-#include "persistence/sqlite_session_store.h"
+#include "accounts/iaccounts_service.h"
+#include "automation/icron_store.h"
+#include "automation/irouting_store.h"
+#include "config/idaemon_config.h"
+#include "connection/iconnection_service.h"
 #include "platform/iplatform_services.h"
 #include "platform/platform_services_factory.h"
-#include "config/mock_daemon_config.h"
-#include "connection/mock_connection_service.h"
-#include "fs/local_disk_fs_service.h"
-#include "memory/mock_memory_service.h"
-#include "accounts/mock_accounts_service.h"
-#include "automation/mock_cron_store.h"
-#include "automation/mock_routing_store.h"
-#include "fleet/mock_approvals_inbox.h"
-#include "fleet/mock_dashboard.h"
-#include "fleet/mock_fleet_tree.h"
-#include "fleet/mock_session_roster.h"
-#include "models/mock_model_catalog.h"
-#include "profiles/mock_profile_store.h"
-#include "session/mock_checkpoint_timeline.h"
-#include "session/mock_session_settings.h"
 #include "firstrun/first_run_model.h"
+#include "fleet/iapprovals_inbox.h"
+#include "fleet/idashboard.h"
+#include "fleet/ifleet_tree.h"
+#include "fleet/isession_roster.h"
+#include "fs/ifs_service.h"
+#include "memory/imemory_service.h"
+#include "models/imodel_catalog.h"
 #include "nav/nav_controller.h"
-#include "settings/qt_settings_store.h"
+#include "persistence/isession_store.h"
+#include "profiles/iprofile_store.h"
+#include "session/icheckpoint_timeline.h"
+#include "session/isession_settings.h"
+#include "settings/isettings_store.h"
 #include "command_registry.h"
 #include "status_bar_model.h"
 #include "transcript_exporter.h"
@@ -40,40 +40,35 @@
 
 Application::Application(QObject* parent)
     : QObject(parent)
-    , m_store(new persistence::SqliteSessionStore(QString(), this))
+    , m_services(daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, this))
+    , m_store(m_services.store)
     , m_platform(platform::createPlatformServices(this))
     , m_status(new StatusBarModel(this))
     , m_commands(new CommandRegistry(this))
     , m_exporter(new TranscriptExporter(this))
-    , m_settings(new settings::QtSettingsStore(this))
-    , m_connection(new connection::MockConnectionService(this))
-    , m_memory(new memory::MockMemoryService(this))
-    , m_nav(new nav::NavController(this))
-    , m_firstRun(new firstrun::FirstRunModel(m_settings, m_connection, this))
-    , m_daemonConfig(new config::MockDaemonConfig(this))
-    , m_modelCatalog(new models::MockModelCatalog(this))
-    , m_accounts(new accounts::MockAccountsService(this))
-    , m_profiles(new profiles::MockProfileStore(this))
-    , m_roster(new fleet::MockSessionRoster(this))
-    , m_fleetTree(new fleet::MockFleetTree(this))
-    , m_approvals(new fleet::MockApprovalsInbox(this))
-    , m_dashboard(new fleet::MockDashboard(m_roster, m_fleetTree, m_approvals, this))
-    , m_routing(new automation::MockRoutingStore(this))
-    , m_cron(new automation::MockCronStore(this))
-    , m_sessionSettings(new session::MockSessionSettings(this))
-    , m_checkpoints(new session::MockCheckpointTimeline(this))
+    , m_settings(m_services.settings)
+    , m_connection(m_services.connection)
+    , m_fs(m_services.fs)
+    , m_memory(m_services.memory)
+    , m_nav(m_services.nav)
+    , m_firstRun(m_services.firstRun)
+    , m_daemonConfig(m_services.daemonConfig)
+    , m_modelCatalog(m_services.modelCatalog)
+    , m_accounts(m_services.accounts)
+    , m_profiles(m_services.profiles)
+    , m_roster(m_services.roster)
+    , m_fleetTree(m_services.fleetTree)
+    , m_approvals(m_services.approvals)
+    , m_dashboard(m_services.dashboard)
+    , m_routing(m_services.routing)
+    , m_cron(m_services.cron)
+    , m_sessionSettings(m_services.sessionSettings)
+    , m_checkpoints(m_services.checkpoints)
 {
     // The connection seam owns liveness; mirror its state into the footer's
     // gateway indicator (the single surface for connection state).
     connect(m_connection, &connection::IConnectionService::stateChanged, this,
             [this] { m_status->setGatewayState(m_connection->state()); });
-
-    // Filesystem seam: a DEV local-disk implementation rooted at the configured
-    // workspace root (falls back to $HOME). This is not the production source of
-    // truth; a daemon adapter over IFsService replaces it later. Built in the
-    // body so it can read the daemon-config workspace root.
-    m_fs = new fs::LocalDiskFsService(
-        m_daemonConfig->value(QStringLiteral("workspace/root")).toString(), QString(), this);
 
     // MicroTeX loads its fonts/XML resources once; the path is baked in at build
     // time (MICROTEX_RES_DIR). Done here so the "math" image provider can parse
