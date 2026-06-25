@@ -42,7 +42,7 @@ void FirstRunModel::onConnectionStateChanged()
         setError(QString());
         setPhase(QStringLiteral("inference"));
     } else if (s == QStringLiteral("offline")) {
-        setError(QStringLiteral("Could not reach the node. Check the target and try again."));
+        setError(tr("Could not reach the node. Check the target and try again."));
         setPhase(QStringLiteral("connect"));
     }
 }

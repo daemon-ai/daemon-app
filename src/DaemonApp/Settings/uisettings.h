@@ -4,6 +4,7 @@
 #include <QSettings>
 #include <QString>
 #include <QStringList>
+#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
 // Single source of truth for user-facing UI preferences, persisted via QSettings
@@ -20,6 +21,12 @@ class UiSettings : public QObject {
     QML_SINGLETON
 
     Q_PROPERTY(QString theme READ theme WRITE setTheme NOTIFY themeChanged)
+
+    // UI language. Persisted as a code ("system"/"en"/"ar"/"pseudo"); the App
+    // (and TUI at startup) load the matching translations. availableLanguages is
+    // the {code,label} list the settings picker renders.
+    Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY languageChanged)
+    Q_PROPERTY(QVariantList availableLanguages READ availableLanguages CONSTANT)
 
     // Editor text style: a category (Sans/Serif/Mono) plus the chosen font index
     // within that category. editorFontFamily is the resolved family name the
@@ -59,6 +66,10 @@ public:
 
     [[nodiscard]] QString theme() const { return m_theme; }
     void setTheme(const QString& theme);
+
+    [[nodiscard]] QString language() const { return m_language; }
+    void setLanguage(const QString& language);
+    [[nodiscard]] QVariantList availableLanguages() const;
 
     [[nodiscard]] QString fontCategory() const { return m_fontCategory; }
     void setFontCategory(const QString& category);
@@ -113,6 +124,7 @@ public:
 
 signals:
     void themeChanged();
+    void languageChanged();
     void fontStyleChanged();
     void editorFontSizeChanged();
     void centerTextChanged();
@@ -135,6 +147,7 @@ private:
     QSettings m_settings;
 
     QString m_theme = QStringLiteral("Light");
+    QString m_language = QStringLiteral("system");
     QString m_fontCategory = QStringLiteral("Sans");
     int m_sansIndex = 0;
     int m_serifIndex = 0;

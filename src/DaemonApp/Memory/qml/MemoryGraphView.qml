@@ -76,7 +76,7 @@ Item {
             }
             Item { Layout.fillWidth: true }
             Text {
-                text: qsTr("%1 nodes · %2 edges").arg(gm.nodeCount).arg(gm.edgeCount)
+                text: qsTr("%n node(s)", "", gm.nodeCount) + " · " + qsTr("%n edge(s)", "", gm.edgeCount)
                 font.family: FontIcons.mono
                 font.pixelSize: 10
                 color: Theme.textMuted

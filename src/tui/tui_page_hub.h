@@ -2,6 +2,7 @@
 
 #include <Tui/ZEvent.h>
 
+#include <QCoreApplication>
 #include <QHash>
 #include <QList>
 #include <QString>
@@ -45,6 +46,8 @@ class IProfileStore;
 class TabModel;
 
 class TuiPageHub {
+    Q_DECLARE_TR_FUNCTIONS(TuiPageHub)
+
 public:
     struct Dependencies {
         TabModel* tabModel = nullptr;

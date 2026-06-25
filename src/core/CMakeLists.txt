@@ -1,4 +1,5 @@
 add_subdirectory(domain)
+add_subdirectory(i18n)
 add_subdirectory(persistence)
 add_subdirectory(platform)
 add_subdirectory(presentation)

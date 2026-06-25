@@ -11,6 +11,7 @@
 #include <Tui/ZPainter.h>
 
 #include <QDateTime>
+#include <QLocale>
 #include <QRect>
 #include <QStringList>
 
@@ -165,8 +166,10 @@ void SessionListView::rebuild()
 
         // Line 1: " title .... timestamp" (timestamp right-aligned, muted).
         {
+            // Locale-aware short date/time so the stamp follows the active UI
+            // language's conventions rather than a fixed English format.
             const QString stamp = modified.isValid()
-                ? modified.toString(QStringLiteral("MMM d, h:mm AP"))
+                ? QLocale().toString(modified, QLocale::ShortFormat)
                 : QString();
             const int stampW = static_cast<int>(stamp.size());
             // 1 leading space + title + at least 2 gap + stamp.

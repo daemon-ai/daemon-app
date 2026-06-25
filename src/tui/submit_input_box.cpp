@@ -361,6 +361,6 @@ void SubmitInputBox::paintEvent(Tui::ZPaintEvent* event)
     }
     const Tui::ZColor fieldBg = focus() ? getColor(QStringLiteral("textedit.focused.bg"))
                                         : getColor(QStringLiteral("textedit.bg"));
-    const QString hint = QStringLiteral("Message daemon…  (Enter to send, Shift+Enter newline)");
+    const QString hint = tr("Message daemon…  (Enter to send, Shift+Enter newline)");
     p->writeWithColors(0, 0, hint.left(w), tpal::muted(), fieldBg);
 }

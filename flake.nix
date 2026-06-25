@@ -153,6 +153,9 @@
             kdePackages.extra-cmake-modules
             perl
             qt6.wrapQtAppsHook
+            # Linguist tools (lupdate/lrelease) for qt_add_translations: needed
+            # on the host at build time to compile i18n/*.ts -> embedded .qm.
+            qt6.qttools
           ];
 
           # MicroTeX (LaTeX math renderer) links tinyxml2 via pkg-config.

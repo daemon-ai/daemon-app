@@ -204,7 +204,7 @@ Rectangle {
                 parts.push(Array.isArray(value) ? value.join(", ") : value)
             }
             editor.ingestEvents([
-                { type: "text", text: "\n\nThanks — proceeding with: " + parts.join("; ") + "\n" },
+                { type: "text", text: qsTr("\n\nThanks — proceeding with: %1\n").arg(parts.join("; ")) },
                 { type: "flush" }
             ])
         }

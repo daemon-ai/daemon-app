@@ -141,7 +141,7 @@ Item {
                                 }
                                 Item { Layout.fillWidth: true }
                                 Text {
-                                    text: "imp " + memRow.importance.toFixed(2)
+                                    text: qsTr("imp %1").arg(memRow.importance.toFixed(2))
                                     font.family: FontIcons.mono
                                     font.pixelSize: 10
                                     color: Theme.textMuted

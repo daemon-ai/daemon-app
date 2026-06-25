@@ -53,10 +53,10 @@ QString StatusBarModel::gatewayTone() const
 QString StatusBarModel::agentsDetail() const
 {
     if (m_agentsFailed > 0) {
-        return m_agentsFailed == 1 ? tr("1 failed") : tr("%1 failed").arg(m_agentsFailed);
+        return tr("%n failed", nullptr, m_agentsFailed);
     }
     if (m_agentsRunning > 0) {
-        return m_agentsRunning == 1 ? tr("1 running") : tr("%1 running").arg(m_agentsRunning);
+        return tr("%n running", nullptr, m_agentsRunning);
     }
     return QString();
 }

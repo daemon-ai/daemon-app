@@ -22,5 +22,6 @@ target_link_libraries(da_settings
         daemon-app::theme
         daemon-app::theme_core
         daemon-app::controls
+        daemon-app::i18n
         daemon-app::warnings
 )

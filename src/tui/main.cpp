@@ -2,6 +2,7 @@
 #include "root_widget.h"
 #include "tui_palette.h"
 
+#include "i18n/localization.h"
 #include "theme/theme_palette.h"
 
 #include <Tui/ZCommon.h>
@@ -93,6 +94,19 @@ void applyStartupTheme()
     if (theme::ThemePalette::isKnown(name)) {
         tpal::setActiveTheme(theme::ThemePalette::fromString(name));
     }
+}
+
+// Load translations for the persisted UI language (shared with the GUI). The
+// TUI applies the choice at startup; live switching is GUI-only. DAEMON_TUI_LANG
+// overrides it for offscreen tests.
+void applyStartupLanguage()
+{
+    QString code = QString::fromUtf8(qgetenv("DAEMON_TUI_LANG"));
+    if (code.isEmpty()) {
+        const QSettings settings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"));
+        code = settings.value(QStringLiteral("ui/language"), QStringLiteral("system")).toString();
+    }
+    i18n::applyLocale(code);
 }
 
 } // namespace
@@ -295,6 +309,7 @@ int main(int argc, char* argv[])
     // builds its palette. The TUI's app name differs (daemon-tui), so the lookup
     // inside applyStartupTheme() names the GUI's daemon-app file explicitly.
     applyStartupTheme();
+    applyStartupLanguage();
 
     if (maybeRenderOffscreen()) {
         return 0;
