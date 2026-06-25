@@ -140,6 +140,80 @@ private slots:
         QVERIFY(net.sessionDetail(SessionId(QStringLiteral("nope"))).sessionId.isEmpty());
         QVERIFY(net.content(SessionId(QStringLiteral("nope"))).isEmpty());
     }
+
+    // The capability-driven Transports tree: messaging instances expand to ConversationType-grouped
+    // conversations -> session leaves; generic instances expand to origin-tagged session leaves.
+    void transportsTreeShape()
+    {
+        MockDaemonNet net;
+        const QList<daemonnet::TransportTreeRow> rows = net.transportsTree();
+        QVERIFY(!rows.isEmpty());
+
+        QHash<QString, daemonnet::TransportTreeRow> byId;
+        QHash<QString, int> childCount;
+        for (const auto& r : rows) {
+            byId.insert(r.id, r);
+            if (!r.parentId.isEmpty()) {
+                childCount[r.parentId] += 1;
+            }
+        }
+
+        // Four transport accounts at depth 0; two messaging (presence), two generic.
+        QStringList accounts;
+        for (const auto& r : rows) {
+            if (r.kind == QStringLiteral("account")) {
+                accounts << r.id;
+                QCOMPARE(r.depth, 0);
+            }
+        }
+        QCOMPARE(accounts.size(), 4);
+        QVERIFY(accounts.contains(QStringLiteral("tx:matrix")));
+        QVERIFY(accounts.contains(QStringLiteral("tx:internal")));
+        QVERIFY(accounts.contains(QStringLiteral("tx:cron")));
+        QVERIFY(accounts.contains(QStringLiteral("tx:http")));
+
+        // Matrix (messaging) groups its conversations under Channels + Direct Messages.
+        QCOMPARE(byId.value(QStringLiteral("tx:matrix")).presence, QStringLiteral("available"));
+        QCOMPARE(byId.value(QStringLiteral("tx:matrix/ch")).kind, QStringLiteral("convGroup"));
+        QCOMPARE(byId.value(QStringLiteral("tx:matrix/dm")).kind, QStringLiteral("convGroup"));
+        QCOMPARE(childCount.value(QStringLiteral("tx:matrix/ch")), 2); // #secops + #help
+        QCOMPARE(childCount.value(QStringLiteral("tx:matrix/dm")), 2); // @alice + @bob
+
+        // #secops is a Channel conversation whose openable leaf is the s-secops session.
+        const auto secops = byId.value(QStringLiteral("tx:matrix/ch/secops"));
+        QCOMPARE(secops.kind, QStringLiteral("conversation"));
+        QCOMPARE(secops.convType, QStringLiteral("channel"));
+        QCOMPARE(secops.sessionId, QStringLiteral("s-secops"));
+        // @alice is a Dm conversation cross-linked to the s-help session (agent member n-coder).
+        const auto alice = byId.value(QStringLiteral("tx:matrix/dm/alice"));
+        QCOMPARE(alice.convType, QStringLiteral("dm"));
+        QCOMPARE(alice.sessionId, QStringLiteral("s-help"));
+        // #help / @bob are joined but have no active session.
+        QVERIFY(byId.value(QStringLiteral("tx:matrix/ch/help")).sessionId.isEmpty());
+        QVERIFY(byId.value(QStringLiteral("tx:matrix/dm/bob")).sessionId.isEmpty());
+
+        // internal rooms: a multi-party GroupDm -> s-design.
+        const auto design = byId.value(QStringLiteral("tx:internal/design"));
+        QCOMPARE(design.convType, QStringLiteral("groupdm"));
+        QCOMPARE(design.sessionId, QStringLiteral("s-design"));
+        QCOMPARE(design.memberCount, 3);
+
+        // Generic transports: no convGroups - jobs/callers carry their session directly.
+        const auto backup = byId.value(QStringLiteral("tx:cron/backup"));
+        QCOMPARE(backup.kind, QStringLiteral("job"));
+        QCOMPARE(backup.sessionId, QStringLiteral("s-cron-backup"));
+        const auto dashboard = byId.value(QStringLiteral("tx:http/dashboard"));
+        QCOMPARE(dashboard.kind, QStringLiteral("caller"));
+        QCOMPARE(dashboard.sessionId, QStringLiteral("s-http-dashboard"));
+
+        // Every session leaf resolves to a real session (openable transcript).
+        for (const auto& r : rows) {
+            if (!r.sessionId.isEmpty()) {
+                QVERIFY2(!net.sessionDetail(SessionId(r.sessionId)).sessionId.isEmpty(),
+                         qPrintable(QStringLiteral("leaf %1 must resolve to a real session").arg(r.id)));
+            }
+        }
+    }
 };
 
 QTEST_MAIN(TestDaemonNet)

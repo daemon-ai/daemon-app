@@ -324,6 +324,12 @@ void MockDaemonNet::buildSeed()
          QStringLiteral("Multi-agent design review in the internal room.\n"));
     sess("s-secops", "n-build", {}, false, Lifecycle::Live, QStringLiteral("#secops triage"),
          QStringLiteral("Triaging #secops with @alice and @bob.\n"));
+    // Generic (non-messaging) transport sessions: a scheduled cron trigger + an HTTP/API caller. These
+    // have no conversation/channel taxonomy - they are origin-tagged sessions on their transport.
+    sess("s-cron-backup", "n-ops", {}, false, Lifecycle::Live, QStringLiteral("Nightly backup"),
+         QStringLiteral("Scheduled `nightly-backup` trigger, run #1842.\n"));
+    sess("s-http-dashboard", "n-build", {}, false, Lifecycle::Live, QStringLiteral("Dashboard query"),
+         QStringLiteral("Inbound `GET /status` from the `dashboard` API key.\n"));
 
     // --- Raw graph (agents + sessions + transports/peers/rooms + edges) for channels/byPeer/patch-bay ---
     const auto node = [&](const QString& id, const QString& kind, const QString& label,
@@ -424,7 +430,95 @@ void MockDaemonNet::buildSeed()
          QStringLiteral("participant"), QStringLiteral("author"));
     edge(QStringLiteral("p-secops-b"), QStringLiteral("s-secops"), QStringLiteral("@bob:hs.org"),
          QStringLiteral("participant"), QStringLiteral("author"));
+
+    // Generic-transport bindings (so a ByTransport account scope folds their sessions too).
+    edge(QStringLiteral("o-cron"), QStringLiteral("s-cron-backup"), QStringLiteral("cron"),
+         QStringLiteral("over"));
+    edge(QStringLiteral("o-http"), QStringLiteral("s-http-dashboard"), QStringLiteral("http"),
+         QStringLiteral("over"));
+
+    buildTransportsTree();
 }
+
+void MockDaemonNet::buildTransportsTree()
+{
+    // The Transports tree is the events-IO axis (daemon-messaging-adapter-spec.md): each transport
+    // instance declares its own subtree from its adapter capabilities. MESSAGING transports
+    // (matrix/rooms; `messaging() == Some`) expand to their conversations grouped by ConversationType
+    // (Channel/GroupDm/Dm/Thread) -> session leaf; GENERIC transports (cron/http; `messaging() == None`)
+    // expand directly to their origin-tagged sessions. Mock-seeded here; a daemon adapter fills the same
+    // rows from `transport_instances` + capabilities later. The split + coarse capabilities mirror
+    // MockTransportRegistry (matrix/internal = messaging; cron/http = generic).
+    m_transports.clear();
+    const auto row = [&](int depth, const QString& id, const QString& parentId, const QString& kind,
+                         const QString& convType, const QString& label, const QString& sublabel,
+                         const QString& sessionId, const QString& scopeKey, const QString& presence,
+                         int memberCount, bool hasChildren) {
+        TransportTreeRow r;
+        r.depth = depth;
+        r.id = id;
+        r.parentId = parentId;
+        r.kind = kind;
+        r.convType = convType;
+        r.label = label;
+        r.sublabel = sublabel;
+        r.sessionId = sessionId;
+        r.scopeKey = scopeKey;
+        r.presence = presence;
+        r.memberCount = memberCount;
+        r.hasChildren = hasChildren;
+        m_transports.push_back(r);
+    };
+
+    // matrix /@bot:hs.org (messaging) -> Channels {#secops -> s-secops, #help}, DMs {@alice -> s-help, @bob}
+    row(0, QStringLiteral("tx:matrix"), QString(), QStringLiteral("account"), QString(),
+        QStringLiteral("matrix /@bot:hs.org"), QString(), QString(),
+        QStringLiteral("matrix/@bot:hs.org"), QStringLiteral("available"), 0, true);
+    row(1, QStringLiteral("tx:matrix/ch"), QStringLiteral("tx:matrix"), QStringLiteral("convGroup"),
+        QString(), QStringLiteral("Channels"), QString(), QString(), QString(), QString(), 0, true);
+    row(2, QStringLiteral("tx:matrix/ch/secops"), QStringLiteral("tx:matrix/ch"),
+        QStringLiteral("conversation"), QStringLiteral("channel"), QStringLiteral("#secops"),
+        QStringLiteral("triage"), QStringLiteral("s-secops"), QStringLiteral("#secops"), QString(), 2,
+        false);
+    row(2, QStringLiteral("tx:matrix/ch/help"), QStringLiteral("tx:matrix/ch"),
+        QStringLiteral("conversation"), QStringLiteral("channel"), QStringLiteral("#help"), QString(),
+        QString(), QStringLiteral("#help"), QString(), 0, false);
+    row(1, QStringLiteral("tx:matrix/dm"), QStringLiteral("tx:matrix"), QStringLiteral("convGroup"),
+        QString(), QStringLiteral("Direct Messages"), QString(), QString(), QString(), QString(), 0,
+        true);
+    row(2, QStringLiteral("tx:matrix/dm/alice"), QStringLiteral("tx:matrix/dm"),
+        QStringLiteral("conversation"), QStringLiteral("dm"), QStringLiteral("@alice"),
+        QStringLiteral("Onboarding help"), QStringLiteral("s-help"), QStringLiteral("@alice:hs.org"),
+        QString(), 0, false);
+    row(2, QStringLiteral("tx:matrix/dm/bob"), QStringLiteral("tx:matrix/dm"),
+        QStringLiteral("conversation"), QStringLiteral("dm"), QStringLiteral("@bob"), QString(),
+        QString(), QStringLiteral("@bob:hs.org"), QString(), 0, false);
+
+    // internal (rooms; messaging) -> design-review (GroupDm, 3 agents) -> s-design
+    row(0, QStringLiteral("tx:internal"), QString(), QStringLiteral("account"), QString(),
+        QStringLiteral("internal (rooms)"), QString(), QString(), QStringLiteral("internal"),
+        QStringLiteral("available"), 0, true);
+    row(1, QStringLiteral("tx:internal/design"), QStringLiteral("tx:internal"),
+        QStringLiteral("conversation"), QStringLiteral("groupdm"), QStringLiteral("design-review"),
+        QStringLiteral("(3 agents)"), QStringLiteral("s-design"), QStringLiteral("design-review"),
+        QString(), 3, false);
+
+    // cron (generic) -> nightly-backup -> s-cron-backup
+    row(0, QStringLiteral("tx:cron"), QString(), QStringLiteral("account"), QString(),
+        QStringLiteral("cron"), QString(), QString(), QStringLiteral("cron"), QString(), 0, true);
+    row(1, QStringLiteral("tx:cron/backup"), QStringLiteral("tx:cron"), QStringLiteral("job"),
+        QString(), QStringLiteral("nightly-backup"), QStringLiteral("run #1842"),
+        QStringLiteral("s-cron-backup"), QString(), QString(), 0, false);
+
+    // http /api (generic) -> key: dashboard -> s-http-dashboard
+    row(0, QStringLiteral("tx:http"), QString(), QStringLiteral("account"), QString(),
+        QStringLiteral("http /api"), QString(), QString(), QStringLiteral("http"), QString(), 0, true);
+    row(1, QStringLiteral("tx:http/dashboard"), QStringLiteral("tx:http"), QStringLiteral("caller"),
+        QString(), QStringLiteral("key: dashboard"), QStringLiteral("GET /status"),
+        QStringLiteral("s-http-dashboard"), QString(), QString(), 0, false);
+}
+
+QList<TransportTreeRow> MockDaemonNet::transportsTree() const { return m_transports; }
 
 void MockDaemonNet::computeProjections()
 {

@@ -46,6 +46,7 @@ public:
     sessionsInScope(const domain::ListScope& scope) const override;
     [[nodiscard]] domain::Session sessionDetail(const domain::SessionId& id) const override;
     [[nodiscard]] QString content(const domain::SessionId& id) const override;
+    [[nodiscard]] QList<TransportTreeRow> transportsTree() const override;
 
 private:
     // True when `unitId` is `rootId` or any descendant of it (parent-chain walk); the Unit-scope fold.
@@ -53,6 +54,7 @@ private:
     // The set of session ids bound to `lensKey` by an edge of `edgeKind` (Over / Participant).
     [[nodiscard]] QSet<QString> sessionsBoundBy(const QString& edgeKind, const QString& lensKey) const;
     void buildSeed();
+    void buildTransportsTree();
     void computeProjections();
 
     // Typed seed (the single source; copied by the session store).
@@ -63,6 +65,9 @@ private:
     // Raw graph for the future patch-bay + the channels/byPeer projections (transport combos).
     QList<QVariantMap> m_nodes;
     QList<QVariantMap> m_edges;
+
+    // The capability-driven Transports tree (events-IO axis), pre-order flattened.
+    QList<TransportTreeRow> m_transports;
 
     // QML-boundary projections derived from the typed seed + transport graph.
     uimodels::VariantListModel* m_fleetModel = nullptr;

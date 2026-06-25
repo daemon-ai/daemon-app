@@ -1,9 +1,13 @@
 #include "sidebar_model.h"
 
+#include "daemonnet/idaemonnet.h"
 #include "domain/unit_node.h"
 #include "domain/ids.h"
 #include "persistence/isession_store.h"
 
+#include <QHash>
+
+using daemonnet::TransportTreeRow;
 using domain::ListScope;
 using domain::NodeType;
 using domain::UnitId;
@@ -34,6 +38,28 @@ void SidebarModel::setStore(QObject* store)
         connect(m_store, &persistence::ISessionStore::changed, this, &SidebarModel::rebuild);
     }
     emit storeChanged();
+    rebuild();
+}
+
+QObject* SidebarModel::daemonNet() const
+{
+    return m_net;
+}
+
+void SidebarModel::setDaemonNet(QObject* net)
+{
+    auto* dn = qobject_cast<daemonnet::IDaemonNet*>(net);
+    if (m_net == dn) {
+        return;
+    }
+    if (m_net) {
+        m_net->disconnect(this);
+    }
+    m_net = dn;
+    if (m_net) {
+        connect(m_net, &daemonnet::IDaemonNet::changed, this, &SidebarModel::rebuild);
+    }
+    emit daemonNetChanged();
     rebuild();
 }
 
@@ -79,14 +105,14 @@ void SidebarModel::rebuild()
         m_rows.push_back({ tr("All Sessions"),
                            m_store->sessionCount({ NodeType::AllSessions, -1, {}, {} }),
                            NodeType::AllSessions, -1, {}, false, true, {}, 0, false, false, 0,
-                           0, {}, {} });
+                           0, {}, {}, {}, {}, {}, {}, {}, {}, -1 });
         m_rows.push_back({ tr("Archived"),
                            m_store->sessionCount({ NodeType::Archived, -1, {}, {} }),
                            NodeType::Archived, -1, {}, false, true, {}, 0, false, false, 0, 0, {},
-                           {} });
+                           {}, {}, {}, {}, {}, {}, {}, -1 });
 
         m_rows.push_back({ tr("Fleet"), -1, NodeType::FleetSeparator, -1, {}, true, false, {},
-                           0, false, false, 0, 0, {}, {} });
+                           0, false, false, 0, 0, {}, {}, {}, {}, {}, {}, {}, {}, -1 });
         // Top-level roots have an empty parent; each may be a lone unit or the head
         // of an arbitrarily deep fleet.
         for (const UnitNode& root : m_store->unitChildren(UnitId())) {
@@ -94,15 +120,82 @@ void SidebarModel::rebuild()
         }
 
         m_rows.push_back({ tr("Tags"), -1, NodeType::TagSeparator, -1, {}, true, false, {},
-                           0, false, false, 0, 0, {}, {} });
+                           0, false, false, 0, 0, {}, {}, {}, {}, {}, {}, {}, {}, -1 });
         for (const domain::Tag& t : m_store->tags()) {
             m_rows.push_back({ t.name, m_store->sessionCount({ NodeType::Tag, t.id, {}, {} }),
                                NodeType::Tag, t.id, {}, false, true, t.color,
-                               0, false, false, 0, 0, {}, {} });
+                               0, false, false, 0, 0, {}, {}, {}, {}, {}, {}, {}, {}, -1 });
         }
     }
+    // The co-equal events-IO axis: a "Transports" header + the capability-driven
+    // transport tree (account -> taxonomy -> session leaf), sourced from DaemonNet.
+    appendTransportRows();
     endResetModel();
     emit treeChanged();
+}
+
+void SidebarModel::appendTransportRows()
+{
+    if (!m_net) {
+        return;
+    }
+    const QList<TransportTreeRow> tree = m_net->transportsTree();
+    if (tree.isEmpty()) {
+        return;
+    }
+
+    Row header;
+    header.label = tr("Transports");
+    header.type = NodeType::TransportSeparator;
+    header.separator = true;
+    header.selectable = false;
+    m_rows.push_back(header);
+
+    // Parent-chain map so a collapsed account/group hides its whole subtree.
+    QHash<QString, QString> parentOf;
+    for (const TransportTreeRow& t : tree) {
+        parentOf.insert(t.id, t.parentId);
+    }
+    const auto hiddenByCollapse = [&](const QString& id) {
+        QString cur = parentOf.value(id);
+        for (int guard = 0; !cur.isEmpty() && guard <= 4096; ++guard) {
+            if (!isExpanded(cur)) {
+                return true;
+            }
+            cur = parentOf.value(cur);
+        }
+        return false;
+    };
+
+    for (const TransportTreeRow& t : tree) {
+        if (hiddenByCollapse(t.id)) {
+            continue;
+        }
+        Row r;
+        r.label = t.label;
+        r.type = NodeType::Transport;
+        r.selectable = true;
+        r.depth = t.depth;
+        r.hasChildren = t.hasChildren;
+        r.expanded = isExpanded(t.id);
+        r.count = t.memberCount > 0 ? t.memberCount : -1;
+        r.session = t.sessionId;
+        r.txNode = t.id;
+        r.txKind = t.kind;
+        r.convType = t.convType;
+        r.sublabel = t.sublabel;
+        r.presence = t.presence;
+        r.scopeKey = t.scopeKey;
+        // When a row has no session leaf, selecting it scopes the list: an account
+        // groups all sessions over its transport (ByTransport); a 1:1 Dm peer groups
+        // by that peer (ByPeer). Channels / convGroups carry no list scope.
+        if (t.kind == QStringLiteral("account")) {
+            r.scopeType = static_cast<int>(NodeType::ByTransport);
+        } else if (t.convType == QStringLiteral("dm")) {
+            r.scopeType = static_cast<int>(NodeType::ByPeer);
+        }
+        m_rows.push_back(r);
+    }
 }
 
 int SidebarModel::rowCount(const QModelIndex& parent) const
@@ -120,6 +213,8 @@ bool SidebarModel::rowIsCurrent(const Row& r) const
         return m_selType == NodeType::Unit && r.unitId == m_selUnit;
     case NodeType::Tag:
         return m_selType == NodeType::Tag && r.tagId == m_selTag;
+    case NodeType::Transport:
+        return m_selType == NodeType::Transport && r.txNode == m_selTxNode;
     default:
         return m_selType == r.type;
     }
@@ -164,6 +259,14 @@ QVariant SidebarModel::data(const QModelIndex& index, int role) const
         return r.profile;
     case SessionIdRole:
         return r.session;
+    case TxKindRole:
+        return r.txKind;
+    case ConvTypeRole:
+        return r.convType;
+    case SubLabelRole:
+        return r.sublabel;
+    case PresenceRole:
+        return r.presence;
     default:
         return {};
     }
@@ -188,6 +291,10 @@ QHash<int, QByteArray> SidebarModel::roleNames() const
         { CurrentRole, "current" },
         { ProfileRole, "profile" },
         { SessionIdRole, "sessionId" },
+        { TxKindRole, "txKind" },
+        { ConvTypeRole, "convType" },
+        { SubLabelRole, "subLabel" },
+        { PresenceRole, "presence" },
     };
 }
 
@@ -210,7 +317,18 @@ void SidebarModel::setSelectionFromRow(int row)
     m_selType = r.type;
     m_selTag = r.tagId;
     m_selUnit = r.unitId;
-    emit scopeSelected(static_cast<int>(r.type), r.tagId, r.unitId);
+    m_selTxNode = r.txNode;
+    if (r.type == NodeType::Transport) {
+        // A session leaf opens its transcript directly; a scope-bearing group
+        // (account / Dm peer) regroups the list; everything else just highlights.
+        if (!r.session.isEmpty()) {
+            emit sessionActivated(r.session);
+        } else if (r.scopeType >= 0 && !r.scopeKey.isEmpty()) {
+            emit scopeSelected(r.scopeType, -1, r.scopeKey);
+        }
+    } else {
+        emit scopeSelected(static_cast<int>(r.type), r.tagId, r.unitId);
+    }
     emitCurrentChanged();
 }
 
@@ -287,7 +405,19 @@ void SidebarModel::toggleExpand(int row)
         return;
     }
     const Row& r = m_rows.at(row);
-    if (r.type != NodeType::Unit || !r.hasChildren) {
+    if ((r.type != NodeType::Unit && r.type != NodeType::Transport) || !r.hasChildren) {
+        return;
+    }
+    // Transport group rows toggle by their tree-node id (a disjoint id namespace
+    // from unit ids, so they share m_collapsed safely).
+    if (r.type == NodeType::Transport) {
+        const QString id = r.txNode;
+        if (isExpanded(id)) {
+            m_collapsed.insert(id);
+        } else {
+            m_collapsed.remove(id);
+        }
+        rebuild();
         return;
     }
     const QString id = r.unitId;
@@ -339,8 +469,9 @@ void SidebarModel::collapseCurrent()
         return;
     }
     const Row& r = m_rows.at(cur);
-    if (r.type == NodeType::Unit && r.hasChildren && r.expanded) {
-        toggleExpand(cur); // collapse; selection stays on this unit
+    if ((r.type == NodeType::Unit || r.type == NodeType::Transport) && r.hasChildren
+        && r.expanded) {
+        toggleExpand(cur); // collapse; selection stays on this row
         return;
     }
     const int pr = parentRow(cur);
@@ -356,7 +487,7 @@ void SidebarModel::expandCurrent()
         return;
     }
     const Row& r = m_rows.at(cur);
-    if (r.type != NodeType::Unit || !r.hasChildren) {
+    if ((r.type != NodeType::Unit && r.type != NodeType::Transport) || !r.hasChildren) {
         return;
     }
     if (!r.expanded) {

@@ -21,6 +21,10 @@ enum class NodeType {
     // transport instance / remote peer; `lensKey` carries the grouping key.
     ByTransport,          // 6: sessions over one transport instance (lensKey = transport id)
     ByPeer,               // 7: sessions with one remote peer (lensKey = peer id)
+    TransportSeparator,   // 8: the "Transports" section header (events-IO axis)
+    Transport,            // 9: a row of the capability-driven Transports tree (account/convGroup/
+                          //    conversation/job/caller; the row's transport-kind + convType +
+                          //    sessionId are carried in dedicated roles)
 };
 
 // What the session list is currently filtered to (the sidebar selection). For

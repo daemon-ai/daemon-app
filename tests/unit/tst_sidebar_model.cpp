@@ -1,9 +1,11 @@
+#include "daemonnet/mock_daemonnet.h"
 #include "persistence/in_memory_session_store.h"
 #include "sidebar_model.h"
 
 #include <QSignalSpy>
 #include <QtTest>
 
+using daemonnet::MockDaemonNet;
 using persistence::InMemorySessionStore;
 
 // Exercises the flattened agent-tree sidebar model: recursive flattening to
@@ -290,6 +292,118 @@ private slots:
         QCOMPARE(roleAt<int>(model, created, SidebarModel::NodeTypeRole), 5); // Tag
         QVERIFY(roleAt<bool>(model, created, SidebarModel::CurrentRole));
         QCOMPARE(spy.takeLast().at(0).toInt(), 5);
+    }
+
+    // --- The co-equal Transports section (events-IO axis) -------------------
+
+    // With a DaemonNet source, a "Transports" header + the capability-driven tree
+    // appear after the Fleet/Tags sections, each instance expanded to its taxonomy.
+    void transportsSectionShape()
+    {
+        InMemorySessionStore store;
+        MockDaemonNet net;
+        SidebarModel model;
+        model.setStore(&store);
+        model.setDaemonNet(&net);
+
+        // The header (NodeType::TransportSeparator == 8) is a non-selectable separator.
+        const int header = findRow(model, QStringLiteral("Transports"));
+        QVERIFY(header >= 0);
+        QVERIFY(roleAt<bool>(model, header, SidebarModel::IsSeparatorRole));
+        QCOMPARE(roleAt<int>(model, header, SidebarModel::NodeTypeRole), 8);
+
+        // Four transport accounts, two messaging (with presence) + two generic.
+        const int matrix = findRow(model, QStringLiteral("matrix /@bot:hs.org"));
+        const int internal = findRow(model, QStringLiteral("internal (rooms)"));
+        const int cron = findRow(model, QStringLiteral("cron"));
+        const int http = findRow(model, QStringLiteral("http /api"));
+        QVERIFY(matrix >= 0 && internal >= 0 && cron >= 0 && http >= 0);
+        QCOMPARE(roleAt<int>(model, matrix, SidebarModel::NodeTypeRole), 9); // Transport
+        QCOMPARE(roleAt<QString>(model, matrix, SidebarModel::TxKindRole),
+                 QStringLiteral("account"));
+        QCOMPARE(roleAt<QString>(model, matrix, SidebarModel::PresenceRole),
+                 QStringLiteral("available"));
+
+        // Matrix groups its conversations under Channels + Direct Messages.
+        QVERIFY(findRow(model, QStringLiteral("Channels")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("Direct Messages")) >= 0);
+
+        // #secops is a Channel conversation; @alice a Dm; design-review a GroupDm.
+        const int secops = findRow(model, QStringLiteral("#secops"));
+        QVERIFY(secops >= 0);
+        QCOMPARE(roleAt<QString>(model, secops, SidebarModel::ConvTypeRole),
+                 QStringLiteral("channel"));
+        QCOMPARE(roleAt<QString>(model, secops, SidebarModel::SessionIdRole),
+                 QStringLiteral("s-secops"));
+        QCOMPARE(roleAt<QString>(model, secops, SidebarModel::SubLabelRole),
+                 QStringLiteral("triage"));
+        QCOMPARE(roleAt<QString>(model, findRow(model, QStringLiteral("@alice")),
+                                 SidebarModel::ConvTypeRole),
+                 QStringLiteral("dm"));
+
+        // Generic transports skip conversation groups: jobs/callers sit directly under.
+        QVERIFY(findRow(model, QStringLiteral("nightly-backup")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("key: dashboard")) >= 0);
+    }
+
+    // Selecting a conversation/job leaf with a session opens it (sessionActivated),
+    // not a list scope.
+    void transportLeafOpensSession()
+    {
+        InMemorySessionStore store;
+        MockDaemonNet net;
+        SidebarModel model;
+        model.setStore(&store);
+        model.setDaemonNet(&net);
+
+        QSignalSpy opened(&model, &SidebarModel::sessionActivated);
+        QSignalSpy scoped(&model, &SidebarModel::scopeSelected);
+        model.activate(findRow(model, QStringLiteral("#secops")));
+
+        QCOMPARE(opened.count(), 1);
+        QCOMPARE(opened.takeFirst().at(0).toString(), QStringLiteral("s-secops"));
+        QCOMPARE(scoped.count(), 0);
+    }
+
+    // Selecting a transport account scopes the list to its sessions (ByTransport,
+    // the lens key in the string slot).
+    void transportAccountScopesList()
+    {
+        InMemorySessionStore store;
+        MockDaemonNet net;
+        SidebarModel model;
+        model.setStore(&store);
+        model.setDaemonNet(&net);
+
+        QSignalSpy scoped(&model, &SidebarModel::scopeSelected);
+        QSignalSpy opened(&model, &SidebarModel::sessionActivated);
+        model.activate(findRow(model, QStringLiteral("matrix /@bot:hs.org")));
+
+        QCOMPARE(scoped.count(), 1);
+        const QList<QVariant> args = scoped.takeFirst();
+        QCOMPARE(args.at(0).toInt(), 6); // NodeType::ByTransport
+        QCOMPARE(args.at(2).toString(), QStringLiteral("matrix/@bot:hs.org"));
+        QCOMPARE(opened.count(), 0);
+    }
+
+    // Collapsing a transport account hides its whole conversation subtree.
+    void transportAccountCollapses()
+    {
+        InMemorySessionStore store;
+        MockDaemonNet net;
+        SidebarModel model;
+        model.setStore(&store);
+        model.setDaemonNet(&net);
+
+        QVERIFY(findRow(model, QStringLiteral("#secops")) >= 0);
+        const int matrix = findRow(model, QStringLiteral("matrix /@bot:hs.org"));
+        QVERIFY(roleAt<bool>(model, matrix, SidebarModel::HasChildrenRole));
+        model.toggleExpand(matrix);
+
+        QVERIFY(findRow(model, QStringLiteral("Channels")) < 0);
+        QVERIFY(findRow(model, QStringLiteral("#secops")) < 0);
+        // A sibling account is untouched.
+        QVERIFY(findRow(model, QStringLiteral("internal (rooms)")) >= 0);
     }
 };
 

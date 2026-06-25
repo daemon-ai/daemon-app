@@ -67,7 +67,12 @@ void SessionsListModel::setSearch(const QString& search)
 
 void SessionsListModel::setScope(int nodeType, int tagId, const QString& unitId)
 {
-    m_scope = { static_cast<NodeType>(nodeType), tagId, UnitId(unitId), QString() };
+    // For the DaemonNet lens scopes (ByTransport/ByPeer) the string slot carries the
+    // lens key (transport-instance / peer id) rather than a unit id; everything else
+    // treats it as the unit id.
+    const NodeType type = static_cast<NodeType>(nodeType);
+    const bool isLens = (type == NodeType::ByTransport || type == NodeType::ByPeer);
+    m_scope = { type, tagId, isLens ? UnitId() : UnitId(unitId), isLens ? unitId : QString() };
     // A new scope is a fresh list of sessions; drop the old selection so a stale
     // id doesn't linger as a phantom highlight.
     if (!m_currentId.isEmpty()) {
@@ -155,6 +160,8 @@ QString SessionsListModel::computeScopeTitle() const
         return m_scope.lensKey.isEmpty() ? tr("Sessions") : m_scope.lensKey;
     case NodeType::FleetSeparator:
     case NodeType::TagSeparator:
+    case NodeType::TransportSeparator:
+    case NodeType::Transport:
         break;
     }
     return tr("Sessions");

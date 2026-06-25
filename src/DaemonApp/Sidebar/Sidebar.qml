@@ -16,8 +16,11 @@ Rectangle {
     color: Theme.sidebar
 
     // nodeType is a domain::NodeType; `id` is the tag id (Tag scope), `nodeId`
-    // is the agent node id (Node scope). Unused fields are -1 / "".
+    // is the agent node id (Node scope) / the lens key (ByTransport/ByPeer scopes).
+    // Unused fields are -1 / "".
     signal scopeSelected(int nodeType, int id, string nodeId)
+    // A Transports-section session leaf was activated - open its transcript.
+    signal sessionActivated(string sessionId)
     signal settingsRequested()
 
     // The category decision (which NodeType/Kind/State maps to which icon/tone)
@@ -48,9 +51,39 @@ Rectangle {
         }
     }
 
+    // Transports-section row icon: the transport account, its conversation groups,
+    // and the per-ConversationType conversation leaves / generic job & caller leaves.
+    function transportIcon(txKind, convType) {
+        switch (txKind) {
+        case "account": return FontIcons.fa_server;
+        case "convGroup": return FontIcons.fa_comments;
+        case "job": return FontIcons.fa_clock;
+        case "caller": return FontIcons.fa_globe;
+        case "conversation":
+            switch (convType) {
+            case "channel": return FontIcons.fa_hashtag;
+            case "dm": return FontIcons.fa_user;
+            case "groupdm": return FontIcons.fa_users;
+            default: return FontIcons.fa_comments;
+            }
+        default: return FontIcons.fa_comments;
+        }
+    }
+
+    // Presence dot color for a transport account (the faithful PresencePrimitive,
+    // coarsened to the sidebar's three tones).
+    function presenceColor(presence) {
+        switch (presence) {
+        case "available": return Theme.stateRunning;
+        case "": return Theme.transparent;
+        default: return Theme.stateFinished;
+        }
+    }
+
     SidebarModel {
         id: sidebarModel
         store: SessionStore
+        daemonNet: DaemonNet
     }
 
     ColumnLayout {
@@ -124,6 +157,10 @@ Rectangle {
                     required property bool current
                     required property string profile
                     required property string sessionId
+                    required property string txKind
+                    required property string convType
+                    required property string subLabel
+                    required property string presence
 
                     width: ListView.view.width
                     // Dense column: compact section header / 28px nav row
@@ -135,6 +172,9 @@ Rectangle {
                     readonly property bool isSelected: !isSeparator && current
                     readonly property bool isTag: nodeType === 5
                     readonly property bool isNode: nodeType === 4
+                    readonly property bool isTransport: nodeType === 9
+                    // Transport account/convGroup rows are expandable like fleet units.
+                    readonly property bool isTwistable: (isNode || isTransport) && hasChildren
                     // Row hover stays stable even when the cursor is over the
                     // twistie (which has its own hover-enabled hit area).
                     readonly property bool hovered: rowMouse.containsMouse || twMouse.containsMouse
@@ -181,6 +221,9 @@ Rectangle {
                         }
 
                         Kit.IconButton {
+                            // Fleet (2) adds a root node; Tags (3) adds a tag; the
+                            // Transports (8) header is read-only (mock-seeded).
+                            visible: del.nodeType === 2 || del.nodeType === 3
                             anchors.right: parent.right
                             anchors.rightMargin: 4
                             anchors.bottom: parent.bottom
@@ -230,7 +273,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             width: Theme.twistieSize
                             height: Theme.twistieSize
-                            visible: del.isNode && del.hasChildren
+                            visible: del.isTwistable
                             // Sit above the full-row MouseArea so twistie clicks
                             // toggle expand instead of selecting the row.
                             z: 2
@@ -283,22 +326,40 @@ Rectangle {
                                      : del.color !== "" ? del.color : Theme.sidebarIcon
                             }
 
-                            // Node kind icon (cosmetic) or All/Archived icon.
+                            // Node kind icon (cosmetic), transport-tree icon, or
+                            // the All/Archived scope icon.
                             Kit.Glyph {
                                 anchors.centerIn: parent
                                 visible: !del.isTag
                                 glyph: del.isNode ? root.kindIcon(del.kind)
-                                                  : root.iconFor(del.nodeType)
+                                     : del.isTransport ? root.transportIcon(del.txKind, del.convType)
+                                                       : root.iconFor(del.nodeType)
                                 font.pointSize: 12 + Theme.pointSizeOffset
                                 color: del.isSelected || del.hovered
                                      ? Theme.sidebarSelectedText : Theme.sidebarIcon
                             }
+
+                            // Presence dot on a transport account (bottom-right of
+                            // its icon), the coarsened PresencePrimitive.
+                            Rectangle {
+                                visible: del.isTransport && del.txKind === "account"
+                                      && del.presence !== ""
+                                width: 6
+                                height: 6
+                                radius: 3
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                color: root.presenceColor(del.presence)
+                                border.width: 1
+                                border.color: Theme.sidebar
+                            }
                         }
 
                         QQC.Label {
+                            id: rowLabel
                             anchors.left: iconBox.right
                             anchors.leftMargin: del.isTag ? 11 : 5
-                            anchors.right: stateDot.left
+                            anchors.right: subLabelText.visible ? subLabelText.left : stateDot.left
                             anchors.rightMargin: 5
                             anchors.verticalCenter: parent.verticalCenter
                             text: del.label
@@ -308,6 +369,23 @@ Rectangle {
                             font.weight: Font.Medium
                             color: del.isSelected || del.hovered
                                  ? Theme.sidebarSelectedText : Theme.sidebarText
+                        }
+
+                        // Inline session title for a transport leaf ("#secops > triage"),
+                        // a muted secondary label that elides before the main label.
+                        QQC.Label {
+                            id: subLabelText
+                            visible: del.isTransport && del.subLabel !== ""
+                            anchors.right: stateDot.left
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(implicitWidth, parent.width * 0.42)
+                            text: del.subLabel
+                            elide: Text.ElideRight
+                            horizontalAlignment: Text.AlignRight
+                            font.family: FontIcons.display
+                            font.pixelSize: 11
+                            color: Theme.countText
                         }
 
                         // State dot: a small lifecycle indicator for node rows.
@@ -360,7 +438,7 @@ Rectangle {
                         // matching the twistie.
                         onDoubleClicked: {
                             list.forceActiveFocus();
-                            if (del.isNode && del.hasChildren)
+                            if (del.isTwistable)
                                 sidebarModel.toggleExpand(del.index);
                         }
                     }
@@ -449,6 +527,9 @@ Rectangle {
         target: sidebarModel
         function onScopeSelected(nodeType, id, nodeId) {
             root.scopeSelected(nodeType, id, nodeId);
+        }
+        function onSessionActivated(sessionId) {
+            root.sessionActivated(sessionId);
         }
     }
 

@@ -237,6 +237,11 @@ ApplicationWindow {
                     root.rememberScope(nodeType, id, nodeId);
                     listExpanded.setScope(nodeType, id, nodeId);
                 }
+                // A Transports-tree session leaf opens its transcript directly.
+                onSessionActivated: function(sessionId) {
+                    root.activeSessionId = sessionId;
+                    sessionExpanded.open(sessionId);
+                }
             }
 
             SessionsList {
@@ -344,6 +349,11 @@ ApplicationWindow {
                         sidebarDrawerCompact.close();
                         // Surface the freshly scoped list.
                         compactStack.pop(null);
+                    }
+                    onSessionActivated: function(sessionId) {
+                        root.activeSessionId = sessionId;
+                        sidebarDrawerCompact.close();
+                        compactStack.push(sessionPage);
                     }
                 }
             }

@@ -23,6 +23,27 @@ struct SeedBundle {
     QList<domain::Tag> tags;
 };
 
+// One pre-order row of the Transports tree (the events-IO axis: transport account -> capability-driven
+// taxonomy -> session leaf). The transport's adapter capabilities declare the shape
+// (daemon-messaging-adapter-spec.md): a MESSAGING transport (matrix/rooms) expands to its conversations
+// grouped by ConversationType; a GENERIC transport (cron/http) expands to its origin-tagged sessions.
+// `kind` discriminates the row; a row with a non-empty `sessionId` is an openable session leaf (the
+// shared leaf, cross-linked to the Fleet tree).
+struct TransportTreeRow {
+    int depth = 0;        // 0 = transport account/instance
+    QString id;           // stable node id (expand/collapse + selection): "tx:matrix", "tx:matrix/ch", ...
+    QString parentId;     // owning row id ("" for account rows)
+    QString kind;         // "account" | "convGroup" | "conversation" | "job" | "caller"
+    QString convType;     // conversation kind: "channel" | "groupdm" | "dm" | "thread" (else "")
+    QString label;        // display label ("matrix /@bot:hs.org", "Channels", "#secops", ...)
+    QString sublabel;     // inline session title / "(N agents)" (else "")
+    QString sessionId;    // openable session leaf (empty = no active conversation/session)
+    QString scopeKey;     // ByTransport/ByPeer key (transport instance / peer id) for account/conv rows
+    QString presence;     // account rows: PresencePrimitive ("available"/"away"/... ; else "")
+    int memberCount = 0;  // occupant count badge (0 = none)
+    bool hasChildren = false;
+};
+
 // The DaemonNet seam (daemon-app/docs/multi-protocol-client-surface.md §1): the daemon's network of
 // actors (Agents / Peers / Users) and places (Rooms / Channels) joined by
 // Runs/Over/Participant/InPlace/Delegation edges, with **Sessions as first-class nodes**. It is the
@@ -91,6 +112,11 @@ public:
     // The session's transcript markdown by SessionId (roadmap P4 swaps this for a SessionLogEntry
     // sequence; the seam shape stays SessionId-keyed).
     [[nodiscard]] virtual QString content(const domain::SessionId& id) const = 0;
+
+    // The Transports tree (events-IO axis): a flattened pre-order list of TransportTreeRow, each
+    // transport instance expanding into its capability-declared taxonomy down to session leaves. The
+    // sidebar renders this as a co-equal section beside the Fleet tree.
+    [[nodiscard]] virtual QList<TransportTreeRow> transportsTree() const = 0;
 
 signals:
     void changed();

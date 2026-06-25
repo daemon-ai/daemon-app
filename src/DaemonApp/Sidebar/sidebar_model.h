@@ -13,6 +13,10 @@ namespace persistence {
 class ISessionStore;
 }
 
+namespace daemonnet {
+class IDaemonNet;
+}
+
 namespace domain {
 struct UnitNode;
 }
@@ -34,6 +38,9 @@ class SidebarModel : public QAbstractListModel {
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(QObject* store READ store WRITE setStore NOTIFY storeChanged)
+    // The DaemonNet seam: the source for the co-equal "Transports" section (events-IO axis). Bound
+    // from QML to the shared `DaemonNet` context property. Null => no Transports section is shown.
+    Q_PROPERTY(QObject* daemonNet READ daemonNet WRITE setDaemonNet NOTIFY daemonNetChanged)
     // True when at least one unit-with-children is currently expanded; drives the
     // Fleet header's collapse-all/expand-all toggle. Refreshed on rebuild.
     Q_PROPERTY(bool anyExpanded READ anyExpanded NOTIFY treeChanged)
@@ -55,13 +62,21 @@ public:
         StateRole,      // domain::UnitState for Unit rows
         CurrentRole,    // true for the currently-selected row (identity match)
         ProfileRole,    // the unit's profile (ProfileRef == agent identity); empty if none
-        SessionIdRole,  // the unit's backing session id (UnitNode.session)
+        SessionIdRole,  // the unit's backing session id (UnitNode.session) / a transport leaf's session
+        // Transports-section rows (NodeType::Transport):
+        TxKindRole,     // "account" | "convGroup" | "conversation" | "job" | "caller"
+        ConvTypeRole,   // conversation type: "channel"|"groupdm"|"dm"|"thread" (else "")
+        SubLabelRole,   // inline session title / "(N agents)" (else "")
+        PresenceRole,   // account rows: PresencePrimitive ("available"/... ; else "")
     };
 
     explicit SidebarModel(QObject* parent = nullptr);
 
     [[nodiscard]] QObject* store() const;
     void setStore(QObject* store);
+
+    [[nodiscard]] QObject* daemonNet() const;
+    void setDaemonNet(QObject* net);
 
     [[nodiscard]] bool anyExpanded() const;
 
@@ -98,10 +113,15 @@ public:
 
 signals:
     void storeChanged();
+    void daemonNetChanged();
     void treeChanged();
     // nodeType is a domain::NodeType; `tagId` is the tag id (Tag scope); `unitId`
-    // is the supervision unit id (Unit scope). Unused fields are -1 / empty.
+    // is the supervision unit id (Unit scope). For the DaemonNet lens scopes
+    // (ByTransport/ByPeer) the `unitId` string slot carries the lens key.
     void scopeSelected(int nodeType, int tagId, const QString& unitId);
+    // A Transports-section session leaf was activated: open its transcript directly
+    // (the shared session leaf, cross-linked to the Fleet tree).
+    void sessionActivated(const QString& sessionId);
 
 private:
     struct Row {
@@ -119,11 +139,20 @@ private:
         int kind = 0;        // domain::UnitKind
         int state = 0;       // domain::UnitState
         QString profile;     // ProfileRef (agent identity) for Unit rows; empty otherwise
-        QString session;     // backing session id for Unit rows; empty otherwise
+        QString session;     // backing session id for Unit rows / transport leaf; empty otherwise
+        // Transport rows (NodeType::Transport):
+        QString txNode;      // transport tree node id (expand/collapse + selection identity)
+        QString txKind;      // account|convGroup|conversation|job|caller
+        QString convType;    // conversation type (else "")
+        QString sublabel;    // inline session title / "(N agents)" (else "")
+        QString presence;    // account presence (else "")
+        QString scopeKey;    // ByTransport/ByPeer key when the row has no session leaf
+        int scopeType = -1;  // domain::NodeType to emit for scopeKey (-1 = none)
     };
 
     void rebuild();
     void appendUnitRows(const domain::UnitNode& node, int depth);
+    void appendTransportRows();
     [[nodiscard]] bool isExpanded(const QString& id) const;
 
     // Selection helpers (identity-based).
@@ -138,6 +167,7 @@ private:
     void collectExpandableIds(const QString& parentId, QSet<QString>& out) const;
 
     persistence::ISessionStore* m_store = nullptr;
+    daemonnet::IDaemonNet* m_net = nullptr;
     QList<Row> m_rows;
     // Units are expanded by default; only explicitly-collapsed ids live here, so
     // the whole fleet tree is visible on first load (and toggling collapses).
@@ -147,4 +177,5 @@ private:
     domain::NodeType m_selType = domain::NodeType::AllSessions;
     int m_selTag = -1;
     QString m_selUnit;
+    QString m_selTxNode; // selected Transports-section node id (identity-stable)
 };

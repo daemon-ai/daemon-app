@@ -14,6 +14,8 @@
 #include "sidebar_model.h"
 #include "todo_list_model.h"
 
+#include "daemonnet/idaemonnet.h" // complete type for setDaemonNet(QObject*)
+
 #include "composer_session_controller.h"
 #include "command_registry.h"
 #include "status_bar_model.h"
@@ -144,6 +146,8 @@ RootWidget::RootWidget()
     // of this depends on Tui Widgets - the same objects back the QML frontend.
     m_sidebar = new SidebarModel(this);
     m_sidebar->setStore(m_services.store);
+    // The same co-equal Transports section as the GUI (events-IO axis).
+    m_sidebar->setDaemonNet(m_services.daemonNet);
 
     m_list = new SessionsListModel(this);
     m_list->setStore(m_services.store);
@@ -196,6 +200,9 @@ RootWidget::RootWidget()
     // Sidebar scope selection drives the session list - the model-to-model
     // contract is untouched by the choice of toolkit.
     connect(m_sidebar, &SidebarModel::scopeSelected, m_list, &SessionsListModel::setScope);
+    // A Transports-tree session leaf opens its transcript in a pinned tab.
+    connect(m_sidebar, &SidebarModel::sessionActivated, this,
+            [this](const QString& sessionId) { openSessionPinnedTab(sessionId); });
 
     m_fileTree = new files::FsExplorerModel(this);
     m_fileTree->setService(m_services.fs);

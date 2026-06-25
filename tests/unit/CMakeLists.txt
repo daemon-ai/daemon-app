@@ -254,6 +254,7 @@ target_link_libraries(tst_sidebar_model
         Qt6::Quick
         daemon-app::domain
         daemon-app::persistence
+        daemon-app::daemonnet
         daemon-app::sidebar
 )
 

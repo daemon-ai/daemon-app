@@ -63,6 +63,17 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
         }
         text += label;
 
+        // Transports rows carry an inline session title ("#secops -> triage");
+        // their member count is already conveyed by that sublabel.
+        const int nodeTypeForLabel = srcData(SidebarModel::NodeTypeRole).toInt();
+        if (nodeTypeForLabel == static_cast<int>(domain::NodeType::Transport)) {
+            const QString sub = srcData(SidebarModel::SubLabelRole).toString();
+            if (!sub.isEmpty()) {
+                text += QStringLiteral("  \u2192 %1").arg(sub);
+            }
+            return text;
+        }
+
         const int count = srcData(SidebarModel::CountRole).toInt();
         if (count >= 0) {
             text += QStringLiteral("  (%1)").arg(count);
@@ -80,11 +91,22 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
         if (nodeType == static_cast<int>(domain::NodeType::Unit)) {
             return QStringLiteral("\u2022");
         }
+        // A presence dot on a transport account (the events-IO instance).
+        if (nodeType == static_cast<int>(domain::NodeType::Transport)
+            && srcData(SidebarModel::TxKindRole).toString() == QStringLiteral("account")
+            && !srcData(SidebarModel::PresenceRole).toString().isEmpty()) {
+            return QStringLiteral("\u25cf");
+        }
         return {};
     }
     if (role == Tui::LeftDecorationFgRole) {
         if (nodeType == static_cast<int>(domain::NodeType::Tag)) {
             return QVariant::fromValue(rgbFromHex(srcData(SidebarModel::ColorRole).toString()));
+        }
+        if (nodeType == static_cast<int>(domain::NodeType::Transport)) {
+            return srcData(SidebarModel::PresenceRole).toString() == QStringLiteral("available")
+                ? QVariant::fromValue(tpal::statusOk())
+                : QVariant::fromValue(tpal::muted());
         }
         if (nodeType == static_cast<int>(domain::NodeType::Unit)) {
             // Reuse the shared C++ categorization (same source the GUI sidebar
