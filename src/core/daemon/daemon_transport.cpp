@@ -1,7 +1,6 @@
 #include "daemon/daemon_transport.h"
 
 #include <QLocalSocket>
-#include <QSharedPointer>
 #include <QtEndian>
 
 namespace daemonapp::daemon {
@@ -33,36 +32,103 @@ bool DaemonTransport::tryTakeFrame(QByteArray& buffer, QByteArray* payload)
     return true;
 }
 
+DaemonTransport::DaemonTransport(QObject* parent)
+    : QObject(parent)
+{
+}
+
+void DaemonTransport::setSocketPath(const QString& path)
+{
+    if (path == m_socketPath) {
+        return;
+    }
+    m_socketPath = path;
+    // Drop any connection to the previous target so the next send reconnects.
+    close();
+}
+
+bool DaemonTransport::isConnected() const
+{
+    return m_socket != nullptr && m_socket->state() == QLocalSocket::ConnectedState;
+}
+
+void DaemonTransport::ensureSocket()
+{
+    if (m_socket != nullptr) {
+        return;
+    }
+    m_socket = new QLocalSocket(this);
+    connect(m_socket, &QLocalSocket::connected, this, [this] {
+        flushOutbox();
+        emit connected();
+    });
+    connect(m_socket, &QLocalSocket::readyRead, this, &DaemonTransport::handleReadyRead);
+    connect(m_socket, &QLocalSocket::errorOccurred, this,
+            [this](QLocalSocket::LocalSocketError) { emit failed(m_socket->errorString()); });
+    connect(m_socket, &QLocalSocket::disconnected, this, [this] { emit disconnected(); });
+}
+
+void DaemonTransport::open()
+{
+    if (m_socketPath.isEmpty()) {
+        emit failed(QStringLiteral("No daemon socket path configured"));
+        return;
+    }
+    ensureSocket();
+    if (m_socket->state() == QLocalSocket::UnconnectedState) {
+        m_buffer.clear();
+        m_socket->connectToServer(m_socketPath);
+    }
+}
+
+void DaemonTransport::close()
+{
+    if (m_socket != nullptr) {
+        m_socket->abort();
+        m_socket->deleteLater();
+        m_socket = nullptr;
+    }
+    m_buffer.clear();
+    m_outbox.clear();
+}
+
+void DaemonTransport::flushOutbox()
+{
+    if (m_socket == nullptr) {
+        return;
+    }
+    const QList<QByteArray> pending = m_outbox;
+    m_outbox.clear();
+    for (const QByteArray& frame : pending) {
+        m_socket->write(framePayload(frame));
+    }
+    m_socket->flush();
+}
+
 void DaemonTransport::sendFrame(const QByteArray& cborPayload)
 {
     if (m_socketPath.isEmpty()) {
         emit failed(QStringLiteral("No daemon socket path configured"));
         return;
     }
+    ensureSocket();
+    if (isConnected()) {
+        m_socket->write(framePayload(cborPayload));
+        m_socket->flush();
+    } else {
+        // Buffer until the socket connects; flushOutbox() drains it on the connected signal.
+        m_outbox.append(cborPayload);
+        open();
+    }
+}
 
-    auto* socket = new QLocalSocket(this);
-    auto buffer = QSharedPointer<QByteArray>::create();
-
-    connect(socket, &QLocalSocket::connected, socket, [socket, cborPayload] {
-        socket->write(framePayload(cborPayload));
-        socket->flush();
-    });
-    connect(socket, &QLocalSocket::readyRead, this, [this, socket, buffer] {
-        buffer->append(socket->readAll());
-        QByteArray payload;
-        if (tryTakeFrame(*buffer, &payload)) {
-            emit frameReceived(payload);
-            socket->disconnectFromServer();
-        }
-    });
-    connect(socket, &QLocalSocket::errorOccurred, this, [this, socket](QLocalSocket::LocalSocketError) {
-        emit failed(socket->errorString());
-        socket->deleteLater();
-    });
-    connect(socket, &QLocalSocket::disconnected, socket, [socket] {
-        socket->deleteLater();
-    });
-    socket->connectToServer(m_socketPath);
+void DaemonTransport::handleReadyRead()
+{
+    m_buffer.append(m_socket->readAll());
+    QByteArray payload;
+    while (tryTakeFrame(m_buffer, &payload)) {
+        emit frameReceived(payload);
+    }
 }
 
 } // namespace daemonapp::daemon

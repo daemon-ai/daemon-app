@@ -40,35 +40,17 @@
 
 Application::Application(QObject* parent)
     : QObject(parent)
-    , m_services(daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, this))
-    , m_store(m_services.store)
+    , m_services(daemonapp::daemon::createAppServiceGraph(
+          daemonapp::daemon::serviceModeFromEnvironment(), this))
     , m_platform(platform::createPlatformServices(this))
     , m_status(new StatusBarModel(this))
     , m_commands(new CommandRegistry(this))
     , m_exporter(new TranscriptExporter(this))
-    , m_settings(m_services.settings)
-    , m_connection(m_services.connection)
-    , m_fs(m_services.fs)
-    , m_memory(m_services.memory)
-    , m_nav(m_services.nav)
-    , m_firstRun(m_services.firstRun)
-    , m_daemonConfig(m_services.daemonConfig)
-    , m_modelCatalog(m_services.modelCatalog)
-    , m_accounts(m_services.accounts)
-    , m_profiles(m_services.profiles)
-    , m_roster(m_services.roster)
-    , m_fleetTree(m_services.fleetTree)
-    , m_approvals(m_services.approvals)
-    , m_dashboard(m_services.dashboard)
-    , m_routing(m_services.routing)
-    , m_cron(m_services.cron)
-    , m_sessionSettings(m_services.sessionSettings)
-    , m_checkpoints(m_services.checkpoints)
 {
     // The connection seam owns liveness; mirror its state into the footer's
     // gateway indicator (the single surface for connection state).
-    connect(m_connection, &connection::IConnectionService::stateChanged, this,
-            [this] { m_status->setGatewayState(m_connection->state()); });
+    connect(m_services.connection, &connection::IConnectionService::stateChanged, this,
+            [this] { m_status->setGatewayState(m_services.connection->state()); });
 
     // MicroTeX loads its fonts/XML resources once; the path is baked in at build
     // time (MICROTEX_RES_DIR). Done here so the "math" image provider can parse
@@ -91,7 +73,7 @@ Application::~Application()
 void Application::registerContext(QQmlApplicationEngine& engine)
 {
     // Shared store; QML view models bind their `store` property to this.
-    engine.rootContext()->setContextProperty(QStringLiteral("SessionStore"), m_store);
+    engine.rootContext()->setContextProperty(QStringLiteral("SessionStore"), m_services.store);
 
     // Shared footer status model: the StatusBar footer renders it and the active
     // session's turn feeds it (see TranscriptPage.qml), so both halves of the
@@ -106,52 +88,52 @@ void Application::registerContext(QQmlApplicationEngine& engine)
     engine.rootContext()->setContextProperty(QStringLiteral("Exporter"), m_exporter);
 
     // Shared client-local preference store (setupComplete, last connection, ...).
-    engine.rootContext()->setContextProperty(QStringLiteral("AppSettings"), m_settings);
+    engine.rootContext()->setContextProperty(QStringLiteral("AppSettings"), m_services.settings);
 
     // Connection seam: the first-run gate + Connection settings drive it; the
     // footer reads its liveness via the StatusBarModel mirror wired above.
-    engine.rootContext()->setContextProperty(QStringLiteral("Connection"), m_connection);
+    engine.rootContext()->setContextProperty(QStringLiteral("Connection"), m_services.connection);
 
     // App-level page navigation: Main.qml mounts the active manager/settings page
     // as an overlay bound to Nav.page.
-    engine.rootContext()->setContextProperty(QStringLiteral("Nav"), m_nav);
+    engine.rootContext()->setContextProperty(QStringLiteral("Nav"), m_services.nav);
 
     // First-run / onboarding gate: Main.qml mounts it over the shell until setup
     // completes. Compute the initial phase from persisted setupComplete now.
-    engine.rootContext()->setContextProperty(QStringLiteral("FirstRun"), m_firstRun);
-    m_firstRun->begin();
+    engine.rootContext()->setContextProperty(QStringLiteral("FirstRun"), m_services.firstRun);
+    m_services.firstRun->begin();
 
     // Daemon-authoritative config facade (mock) backing the settings sections.
-    engine.rootContext()->setContextProperty(QStringLiteral("DaemonConfig"), m_daemonConfig);
+    engine.rootContext()->setContextProperty(QStringLiteral("DaemonConfig"), m_services.daemonConfig);
 
     // Filesystem seam (dev local-disk impl) backing the file tree, finder, and editor.
-    engine.rootContext()->setContextProperty(QStringLiteral("Fs"), m_fs);
+    engine.rootContext()->setContextProperty(QStringLiteral("Fs"), m_services.fs);
 
     // Memory-inspection seam (seeded mock) backing the Memory page.
-    engine.rootContext()->setContextProperty(QStringLiteral("Memory"), m_memory);
+    engine.rootContext()->setContextProperty(QStringLiteral("Memory"), m_services.memory);
 
     // Model catalog facade (mock) backing the Models hub.
-    engine.rootContext()->setContextProperty(QStringLiteral("ModelCatalog"), m_modelCatalog);
+    engine.rootContext()->setContextProperty(QStringLiteral("ModelCatalog"), m_services.modelCatalog);
 
     // Accounts/auth facade (mock) backing the Accounts manager + wizard.
-    engine.rootContext()->setContextProperty(QStringLiteral("Accounts"), m_accounts);
+    engine.rootContext()->setContextProperty(QStringLiteral("Accounts"), m_services.accounts);
 
     // Profiles/agents facade (mock) backing the profile editor + curator.
-    engine.rootContext()->setContextProperty(QStringLiteral("Profiles"), m_profiles);
+    engine.rootContext()->setContextProperty(QStringLiteral("Profiles"), m_services.profiles);
 
     // Fleet/ops facades (mock) backing the dashboard / fleet / sessions / approvals.
-    engine.rootContext()->setContextProperty(QStringLiteral("SessionRoster"), m_roster);
-    engine.rootContext()->setContextProperty(QStringLiteral("FleetTree"), m_fleetTree);
-    engine.rootContext()->setContextProperty(QStringLiteral("Approvals"), m_approvals);
-    engine.rootContext()->setContextProperty(QStringLiteral("Dashboard"), m_dashboard);
+    engine.rootContext()->setContextProperty(QStringLiteral("SessionRoster"), m_services.roster);
+    engine.rootContext()->setContextProperty(QStringLiteral("FleetTree"), m_services.fleetTree);
+    engine.rootContext()->setContextProperty(QStringLiteral("Approvals"), m_services.approvals);
+    engine.rootContext()->setContextProperty(QStringLiteral("Dashboard"), m_services.dashboard);
 
     // Automation facades (mock) backing the routing matrix + cron manager.
-    engine.rootContext()->setContextProperty(QStringLiteral("Routing"), m_routing);
-    engine.rootContext()->setContextProperty(QStringLiteral("Cron"), m_cron);
+    engine.rootContext()->setContextProperty(QStringLiteral("Routing"), m_services.routing);
+    engine.rootContext()->setContextProperty(QStringLiteral("Cron"), m_services.cron);
 
     // Per-session override + checkpoint facades (mock) backing the composer popovers.
-    engine.rootContext()->setContextProperty(QStringLiteral("SessionSettings"), m_sessionSettings);
-    engine.rootContext()->setContextProperty(QStringLiteral("Checkpoints"), m_checkpoints);
+    engine.rootContext()->setContextProperty(QStringLiteral("SessionSettings"), m_services.sessionSettings);
+    engine.rootContext()->setContextProperty(QStringLiteral("Checkpoints"), m_services.checkpoints);
 
     // Notifier seam: QML binds the active turn's awaitingInput signal to
     // App.notifyGate(...) to raise an OS notification when the window is hidden.
@@ -168,7 +150,7 @@ void Application::registerContext(QQmlApplicationEngine& engine)
 
 void Application::openPageForRenderHarness(const QString& page, const QString& section)
 {
-    m_nav->open(page, section);
+    m_services.nav->open(page, section);
 }
 
 void Application::completeWiring(QQmlApplicationEngine& engine)
@@ -217,11 +199,11 @@ void Application::completeWiring(QQmlApplicationEngine& engine)
     // Returning users (setup already complete) auto-open the saved connection so
     // the footer gateway indicator reflects liveness. On first launch the
     // onboarding connection picker drives connectTo instead.
-    if (m_settings->setupComplete()) {
-        m_connection->connectTo(m_settings->lastConnectionMode(),
-                                m_settings->lastConnectionTarget().isEmpty()
-                                    ? QStringLiteral("/run/daemon.sock")
-                                    : m_settings->lastConnectionTarget());
+    if (m_services.settings->setupComplete()) {
+        m_services.connection->connectTo(m_services.settings->lastConnectionMode(),
+                                         m_services.settings->lastConnectionTarget().isEmpty()
+                                             ? QStringLiteral("/run/daemon.sock")
+                                             : m_services.settings->lastConnectionTarget());
     }
 }
 

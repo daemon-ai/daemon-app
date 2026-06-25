@@ -129,7 +129,8 @@ QString pageMarkdown(int kind)
 } // namespace
 
 RootWidget::RootWidget()
-    : m_services(daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, this))
+    : m_services(daemonapp::daemon::createAppServiceGraph(
+          daemonapp::daemon::serviceModeFromEnvironment(), this))
 {
     // Build the stock-widget palette (incl. the quit dialog frame/body) from the
     // active theme - set from the persisted ui/theme in main() before we run.
@@ -137,13 +138,11 @@ RootWidget::RootWidget()
 
     // The reused layer: store + view models, wired exactly as in the GUI. None
     // of this depends on Tui Widgets - the same objects back the QML frontend.
-    m_store = m_services.store;
-
     m_sidebar = new SidebarModel(this);
-    m_sidebar->setStore(m_store);
+    m_sidebar->setStore(m_services.store);
 
     m_list = new SessionsListModel(this);
-    m_list->setStore(m_store);
+    m_list->setStore(m_services.store);
 
     // The shared composer FSM - the same C++ class the QML composer drives. The
     // TUI binds its single-line input to it, gaining draft persistence, history,
@@ -169,7 +168,7 @@ RootWidget::RootWidget()
     // the single source of truth for the open tabs and the active one; the TUI
     // creates a per-tab TabSession on demand and binds the views to the active one.
     m_tabModel = new TabModel(this);
-    m_tabSessions = std::make_unique<TabSessionManager>(m_store, m_tabModel);
+    m_tabSessions = std::make_unique<TabSessionManager>(m_services.store, m_tabModel);
     connect(m_tabModel, &TabModel::currentTabChanged, this, [this](int tabId) {
         if (tabId >= 0) {
             activateTab(tabId);
@@ -194,61 +193,43 @@ RootWidget::RootWidget()
     // contract is untouched by the choice of toolkit.
     connect(m_sidebar, &SidebarModel::scopeSelected, m_list, &SessionsListModel::setScope);
 
-    m_daemonConfig = m_services.daemonConfig;
-    m_fs = m_services.fs;
     m_fileTree = new files::FsExplorerModel(this);
-    m_fileTree->setService(m_fs);
-    m_fileTabs = std::make_unique<TuiFileTabController>(m_fs, m_tabModel, this);
+    m_fileTree->setService(m_services.fs);
+    m_fileTabs = std::make_unique<TuiFileTabController>(m_services.fs, m_tabModel, this);
 
     // Phase 0 shared seams (identical classes to the GUI). The connection seam
     // owns liveness; mirror its state into the footer's gateway indicator, then
     // open the saved (or default local) connection so the state machine runs.
-    m_appSettings = m_services.settings;
-    m_connection = m_services.connection;
-    m_nav = m_services.nav;
-    m_firstRun = m_services.firstRun;
-    m_modelCatalog = m_services.modelCatalog;
     // Single source of truth for the composer's model list/selection (shared with
     // the Models hub), exactly as the GUI wires it via Composer.qml's modelSource.
-    m_composerSession->setModelSource(m_modelCatalog);
-    m_accounts = m_services.accounts;
-    m_profiles = m_services.profiles;
-    m_roster = m_services.roster;
-    m_fleetTree = m_services.fleetTree;
-    m_approvals = m_services.approvals;
-    m_dashboard = m_services.dashboard;
-    m_routing = m_services.routing;
-    m_cron = m_services.cron;
-    m_sessionSettings = m_services.sessionSettings;
-    m_checkpoints = m_services.checkpoints;
+    m_composerSession->setModelSource(m_services.modelCatalog);
 
     // Memory-inspection seam (seeded mock) + the shared view-models. Setting the
     // service kicks off the initial async requests; the page markdown re-renders
     // when results land (see the liveRefresh wiring in wireViews).
-    m_memory = m_services.memory;
     m_memList = new memoryui::MemoryListModel(this);
     m_memStats = new memoryui::MemoryStatsModel(this);
     m_memTimeline = new memoryui::MemoryTimelineModel(this);
     m_memGraph = new memoryui::MemoryGraphModel(this);
-    m_memList->setService(m_memory);
-    m_memStats->setService(m_memory);
-    m_memTimeline->setService(m_memory);
-    m_memGraph->setService(m_memory);
+    m_memList->setService(m_services.memory);
+    m_memStats->setService(m_services.memory);
+    m_memTimeline->setService(m_services.memory);
+    m_memGraph->setService(m_services.memory);
 
     m_pageHub = std::make_unique<TuiPageHub>(TuiPageHub::Dependencies{
         m_tabModel,
-        m_daemonConfig,
-        m_connection,
-        m_modelCatalog,
-        m_accounts,
-        m_profiles,
-        m_roster,
-        m_fleetTree,
-        m_approvals,
-        m_dashboard,
-        m_routing,
-        m_cron,
-        m_memory,
+        m_services.daemonConfig,
+        m_services.connection,
+        m_services.modelCatalog,
+        m_services.accounts,
+        m_services.profiles,
+        m_services.roster,
+        m_services.fleetTree,
+        m_services.approvals,
+        m_services.dashboard,
+        m_services.routing,
+        m_services.cron,
+        m_services.memory,
         m_memList,
         m_memStats,
         m_memTimeline,
@@ -258,10 +239,10 @@ RootWidget::RootWidget()
     // Wire the app-level navigation seam (constructed-but-unused until now): an
     // open() from anywhere (slash, palette, a future cog menu) raises the matching
     // manager page tab, exactly like the GUI mounts the page overlay.
-    connect(m_nav, &nav::NavController::openRequested, this,
+    connect(m_services.nav, &nav::NavController::openRequested, this,
             [this](const QString& page, const QString&) { openManagerPage(page); });
     // Per-agent (ProfileRef-keyed) Memory / Profile tabs.
-    connect(m_nav, &nav::NavController::openAgentRequested, this,
+    connect(m_services.nav, &nav::NavController::openAgentRequested, this,
             [this](const QString& kind, const QString& profileRef, const QString& title) {
                 if (m_tabModel == nullptr || profileRef.isEmpty())
                     return;
@@ -275,16 +256,16 @@ RootWidget::RootWidget()
                 m_tabModel->openAgentTab(tabKind, profileRef, label);
             });
 
-    connect(m_connection, &connection::IConnectionService::stateChanged, this,
-            [this] { m_status->setGatewayState(m_connection->state()); });
-    m_firstRun->begin();
+    connect(m_services.connection, &connection::IConnectionService::stateChanged, this,
+            [this] { m_status->setGatewayState(m_services.connection->state()); });
+    m_services.firstRun->begin();
     // Returning users auto-open the saved connection; on first launch the gate's
     // connection picker drives connectTo instead.
-    if (m_appSettings->setupComplete()) {
-        m_connection->connectTo(m_appSettings->lastConnectionMode(),
-                                m_appSettings->lastConnectionTarget().isEmpty()
+    if (m_services.settings->setupComplete()) {
+        m_services.connection->connectTo(m_services.settings->lastConnectionMode(),
+                                m_services.settings->lastConnectionTarget().isEmpty()
                                     ? QStringLiteral("/run/daemon.sock")
-                                    : m_appSettings->lastConnectionTarget());
+                                    : m_services.settings->lastConnectionTarget());
     }
 }
 
@@ -301,11 +282,11 @@ void RootWidget::terminalChanged()
 
     // First-run gate (parity with the GUI): on first launch, raise the lighter
     // "Setup Required" modal over the shell until setup completes.
-    if (m_firstRun != nullptr && m_firstRun->active()) {
-        auto* gate = new FirstRunDialog(m_firstRun, m_connection, m_appSettings,
-                                        m_appSettings->lastConnectionTarget().isEmpty()
+    if (m_services.firstRun != nullptr && m_services.firstRun->active()) {
+        auto* gate = new FirstRunDialog(m_services.firstRun, m_services.connection, m_services.settings,
+                                        m_services.settings->lastConnectionTarget().isEmpty()
                                             ? QStringLiteral("/run/daemon/daemon.sock")
-                                            : m_appSettings->lastConnectionTarget(),
+                                            : m_services.settings->lastConnectionTarget(),
                                         this);
         gate->setFocus();
     }
@@ -349,7 +330,7 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
     // Fleet tree focused, 'p' opens the selected agent's Profile and 'm' its
     // Memory. Only fires on profile-backed (agent) rows.
     if (mods == Qt::NoModifier && m_sidebarView != nullptr && m_sidebarView->focus()
-        && m_sidebar != nullptr && m_nav != nullptr
+        && m_sidebar != nullptr && m_services.nav != nullptr
         && (event->text() == QStringLiteral("p") || event->text() == QStringLiteral("m"))) {
         const int row = m_sidebar->currentRow();
         if (row >= 0) {
@@ -357,7 +338,7 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
             const QString profile = m_sidebar->data(idx, SidebarModel::ProfileRole).toString();
             const QString label = m_sidebar->data(idx, SidebarModel::LabelRole).toString();
             if (!profile.isEmpty()) {
-                m_nav->openAgent(event->text() == QStringLiteral("p") ? QStringLiteral("profile")
+                m_services.nav->openAgent(event->text() == QStringLiteral("p") ? QStringLiteral("profile")
                                                                       : QStringLiteral("memory"),
                                  profile, label);
                 event->accept();
@@ -564,7 +545,7 @@ void RootWidget::buildUi()
     auto* settingsShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F9), this,
                                                 Qt::ApplicationShortcut);
     connect(settingsShortcut, &Tui::ZShortcut::activated, this,
-            [this] { m_nav->open(QStringLiteral("settings")); });
+            [this] { m_services.nav->open(QStringLiteral("settings")); });
 
     // F2 / F3 raise the composer overlays (session settings / checkpoints) for the
     // active transcript tab, the TUI analog of the GUI composer popovers.
@@ -676,18 +657,18 @@ void RootWidget::wireViews()
         connect(m, &QAbstractItemModel::modelReset, this,
                 [this, kind] { refreshPageIfActive(kind); });
     };
-    liveRefresh(m_modelCatalog->installed(), TabModel::Models);
-    liveRefresh(m_accounts->accounts(), TabModel::Accounts);
-    liveRefresh(m_profiles->profiles(), TabModel::Profiles);
-    liveRefresh(m_roster->sessions(), TabModel::Sessions);
-    liveRefresh(m_fleetTree->nodes(), TabModel::Fleet);
-    liveRefresh(m_approvals->pending(), TabModel::Approvals);
-    liveRefresh(m_routing->rules(), TabModel::Routing);
-    liveRefresh(m_cron->jobs(), TabModel::Cron);
+    liveRefresh(m_services.modelCatalog->installed(), TabModel::Models);
+    liveRefresh(m_services.accounts->accounts(), TabModel::Accounts);
+    liveRefresh(m_services.profiles->profiles(), TabModel::Profiles);
+    liveRefresh(m_services.roster->sessions(), TabModel::Sessions);
+    liveRefresh(m_services.fleetTree->nodes(), TabModel::Fleet);
+    liveRefresh(m_services.approvals->pending(), TabModel::Approvals);
+    liveRefresh(m_services.routing->rules(), TabModel::Routing);
+    liveRefresh(m_services.cron->jobs(), TabModel::Cron);
     // The Dashboard is a read-only projection of the roster / approvals, so refresh
     // it when either of those churns too.
-    liveRefresh(m_roster->sessions(), TabModel::Dashboard);
-    liveRefresh(m_approvals->pending(), TabModel::Dashboard);
+    liveRefresh(m_services.roster->sessions(), TabModel::Dashboard);
+    liveRefresh(m_services.approvals->pending(), TabModel::Dashboard);
     // The Memory page is a read-only projection of the shared memory view-models;
     // re-render it when any of them deliver async results.
     liveRefresh(m_memList, TabModel::Memory);
@@ -777,7 +758,7 @@ void RootWidget::wireViews()
     connect(m_listView, &SessionListView::pinToggleRequested, this, [this](int row) {
         const int id = m_list->idAt(row);
         if (id >= 0) {
-            m_store->setPinned(id, !m_store->isPinned(id));
+            m_services.store->setPinned(id, !m_services.store->isPinned(id));
         }
     });
     connect(m_listView, &SessionListView::deleteRequested, this, [this](int row) {
@@ -789,19 +770,19 @@ void RootWidget::wireViews()
             QStringLiteral("Delete session"),
             QStringLiteral("Permanently delete this session?"), this);
         connect(confirm, &ConfirmDialog::confirmed, this,
-                [this, id] { m_store->deleteSession(id); });
+                [this, id] { m_services.store->deleteSession(id); });
     });
     connect(m_listView, &SessionListView::exportRequested, this, [this](int row) {
         const int id = m_list->idAt(row);
         if (id < 0) {
             return;
         }
-        QString name = m_store->title(id);
+        QString name = m_services.store->title(id);
         if (name.isEmpty()) {
             name = QStringLiteral("session");
         }
         const QString path = QDir(QDir::homePath()).filePath(name + QStringLiteral(".json"));
-        m_exporter->exportToPath(m_store, id, path);
+        m_exporter->exportToPath(m_services.store, id, path);
     });
     connect(m_listView, &SessionListView::renameRequested, this, [this](int row) {
         const int id = m_list->idAt(row);
@@ -809,17 +790,17 @@ void RootWidget::wireViews()
             return;
         }
         auto* dialog = new TextPromptDialog(QStringLiteral("Rename session"),
-                                            m_store->title(id), /*masked=*/false, this);
+                                            m_services.store->title(id), /*masked=*/false, this);
         connect(dialog, &TextPromptDialog::submitted, this, [this, id](const QString& text) {
             if (!text.trimmed().isEmpty()) {
-                m_store->renameSession(id, text.trimmed());
+                m_services.store->renameSession(id, text.trimmed());
             }
         });
     });
     connect(m_listView, &SessionListView::moveRequested, this, [this](int row, int delta) {
         const int id = m_list->idAt(row);
         if (id >= 0) {
-            m_store->moveSession(id, delta);
+            m_services.store->moveSession(id, delta);
         }
     });
 
@@ -932,11 +913,11 @@ void RootWidget::wireViews()
                     }
                     const int id = m_active->sessionId;
                     auto* dialog = new TextPromptDialog(QStringLiteral("Rename session"),
-                                                        m_store->title(id), /*masked=*/false, this);
+                                                        m_services.store->title(id), /*masked=*/false, this);
                     connect(dialog, &TextPromptDialog::submitted, this,
                             [this, id](const QString& text) {
                                 if (!text.trimmed().isEmpty()) {
-                                    m_store->renameSession(id, text.trimmed());
+                                    m_services.store->renameSession(id, text.trimmed());
                                 }
                             });
                     return;
@@ -946,13 +927,13 @@ void RootWidget::wireViews()
                         return;
                     }
                     const int id = m_active->sessionId;
-                    QString name = m_store->title(id);
+                    QString name = m_services.store->title(id);
                     if (name.isEmpty()) {
                         name = QStringLiteral("session");
                     }
                     const QString path =
                         QDir(QDir::homePath()).filePath(name + QStringLiteral(".json"));
-                    m_exporter->exportToPath(m_store, id, path);
+                    m_exporter->exportToPath(m_services.store, id, path);
                     return;
                 }
                 if (command == QStringLiteral("compress")) {
@@ -1101,9 +1082,9 @@ void RootWidget::previewSessionTab(int sessionId)
     if (m_tabModel == nullptr) {
         return;
     }
-    QString title = m_store->title(sessionId);
+    QString title = m_services.store->title(sessionId);
     if (title.isEmpty()) {
-        title = titleForContent(m_store->content(sessionId));
+        title = titleForContent(m_services.store->content(sessionId));
     }
     m_tabModel->previewTranscript(sessionId, title);
 }
@@ -1113,19 +1094,19 @@ void RootWidget::openSessionPinnedTab(int sessionId)
     if (m_tabModel == nullptr) {
         return;
     }
-    QString title = m_store->title(sessionId);
+    QString title = m_services.store->title(sessionId);
     if (title.isEmpty()) {
-        title = titleForContent(m_store->content(sessionId));
+        title = titleForContent(m_services.store->content(sessionId));
     }
     m_tabModel->openTranscriptPinned(sessionId, title);
 }
 
 void RootWidget::newTranscriptTab()
 {
-    if (m_store == nullptr || m_tabModel == nullptr) {
+    if (m_services.store == nullptr || m_tabModel == nullptr) {
         return;
     }
-    const int id = m_store->createSession(domain::UnitId());
+    const int id = m_services.store->createSession(domain::UnitId());
     m_tabModel->openTranscriptPinned(id, QStringLiteral("New session"));
     // A new tab is a natural place to start typing.
     if (m_composer != nullptr) {
@@ -1249,10 +1230,10 @@ void RootWidget::wireSession(TabSession* s)
             // Turn-done desktop notification (opt-in via notify/turnDone, shared
             // with the GUI). The TUI cannot detect terminal focus, so this fires
             // whenever the pref is on rather than only when hidden.
-            if (m_appSettings != nullptr
-                && m_appSettings->value(QStringLiteral("notify/turnDone"), false).toBool()) {
+            if (m_services.settings != nullptr
+                && m_services.settings->value(QStringLiteral("notify/turnDone"), false).toBool()) {
                 const QString convTitle = s->controller->hasSession()
-                    ? m_store->title(s->sessionId)
+                    ? m_services.store->title(s->sessionId)
                     : QStringLiteral("daemon");
                 emitDesktopNotification(convTitle, QStringLiteral("The turn finished."));
             }
@@ -1272,8 +1253,8 @@ void RootWidget::wireSession(TabSession* s)
         }
         // Honor the "notify when a turn needs my input" preference (shared with the
         // GUI's notify/gates), defaulting on.
-        if (m_appSettings != nullptr
-            && !m_appSettings->value(QStringLiteral("notify/gates"), true).toBool()) {
+        if (m_services.settings != nullptr
+            && !m_services.settings->value(QStringLiteral("notify/gates"), true).toBool()) {
             return;
         }
         std::fputs("\a", stdout); // BEL: most terminals raise an urgency hint
@@ -1284,7 +1265,7 @@ void RootWidget::wireSession(TabSession* s)
             terminal()->setTitle(QStringLiteral("\u25cf daemon \u2014 needs ") + what);
         }
         const QString convTitle = (m_active != nullptr && m_active->controller->hasSession())
-            ? m_store->title(m_active->sessionId)
+            ? m_services.store->title(m_active->sessionId)
             : QStringLiteral("daemon");
         emitDesktopNotification(convTitle, QStringLiteral("The turn needs your ") + what
                                     + QStringLiteral("."));
@@ -1445,8 +1426,8 @@ void RootWidget::activateTab(int tabId)
         // Per-agent Memory tab: re-scope the shared memory models to this tab's
         // agent (profile == bank) before projecting. Switching between agents'
         // Memory tabs re-scopes the same shared service.
-        if (kind == TabModel::Memory && m_memory != nullptr) {
-            m_memory->setScope(m_tabModel->agentRefAt(row), QString(), true);
+        if (kind == TabModel::Memory && m_services.memory != nullptr) {
+            m_services.memory->setScope(m_tabModel->agentRefAt(row), QString(), true);
         }
         m_pageDoc.loadMarkdown(pageMarkdownForKind(kind));
         if (m_transcript != nullptr) {
@@ -1566,11 +1547,11 @@ void RootWidget::openSessionSettingsOverlay()
 {
     // Only meaningful over a transcript tab; bind the per-session overrides to
     // the focused chat first (parity with ComposerControls setting sessionId).
-    if (m_active == nullptr || m_sessionSettings == nullptr) {
+    if (m_active == nullptr || m_services.sessionSettings == nullptr) {
         return;
     }
-    m_sessionSettings->setSessionId(m_active->sessionId);
-    session::ISessionSettings* ss = m_sessionSettings;
+    m_services.sessionSettings->setSessionId(m_active->sessionId);
+    session::ISessionSettings* ss = m_services.sessionSettings;
 
     auto* dlg = new Tui::ZDialog(this);
     dlg->setOptions(Tui::ZWindow::DeleteOnClose);
@@ -1621,7 +1602,7 @@ void RootWidget::openSessionSettingsOverlay()
         sync();
     });
     connect(profileBtn, &Tui::ZButton::clicked, dlg, [this, ss, sync] {
-        const QStringList names = m_profiles->profileNames();
+        const QStringList names = m_services.profiles->profileNames();
         if (!names.isEmpty()) {
             const int idx = static_cast<int>(qMax<qsizetype>(0, names.indexOf(ss->profile())));
             ss->setProfile(names.at((idx + 1) % static_cast<int>(names.size())));
@@ -1644,11 +1625,11 @@ void RootWidget::openSessionSettingsOverlay()
 
 void RootWidget::openCheckpointsOverlay()
 {
-    if (m_active == nullptr || m_checkpoints == nullptr) {
+    if (m_active == nullptr || m_services.checkpoints == nullptr) {
         return;
     }
-    m_checkpoints->setSessionId(m_active->sessionId);
-    auto* model = qobject_cast<uimodels::VariantListModel*>(m_checkpoints->checkpoints());
+    m_services.checkpoints->setSessionId(m_active->sessionId);
+    auto* model = qobject_cast<uimodels::VariantListModel*>(m_services.checkpoints->checkpoints());
     const QList<QVariantMap> rows = model != nullptr ? model->rows() : QList<QVariantMap>{};
 
     auto* dlg = new Tui::ZDialog(this);
@@ -1697,7 +1678,7 @@ void RootWidget::openCheckpointsOverlay()
     const auto doRestore = [this, dlg, list, ids] {
         const int row = list->currentIndex().row();
         if (row >= 0 && row < ids.size()) {
-            m_checkpoints->restore(ids.at(row));
+            m_services.checkpoints->restore(ids.at(row));
         }
         dlg->close();
     };

@@ -1,5 +1,7 @@
 #include "daemon/repositories.h"
 
+#include "daemon/node_api_codec.h"
+
 #include <QDateTime>
 
 namespace daemonapp::daemon {
@@ -9,6 +11,16 @@ RepositoryBase::RepositoryBase(NodeApiClient* client, DaemonCacheStore* cache, Q
     , m_client(client)
     , m_cache(cache)
 {
+}
+
+SessionRepository::SessionRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
+    : RepositoryBase(client, cache, parent)
+{
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &SessionRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &SessionRepository::handleFailure);
+    }
 }
 
 bool SessionRepository::upsertCachedSession(const CachedSessionRow& row)
@@ -47,18 +59,53 @@ quint64 SessionRepository::logCursor(const QString& sessionId) const
         : 0;
 }
 
-void SessionRepository::refreshSessions(const QByteArray& sessionsQueryRequestCbor)
+void SessionRepository::refreshSessions()
 {
-    if (client() != nullptr) {
-        client()->sendRequest(sessionsQueryRequestCbor, QStringLiteral("sessions-query"));
+    if (client() == nullptr) {
+        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeSessionsQueryRequest(),
+                          QLatin1String(kSessionsCorrelation));
+}
+
+void SessionRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor)
+{
+    if (correlationId != QLatin1String(kSessionsCorrelation)) {
+        return;
+    }
+    QList<CachedSessionRow> rows;
+    QString nextCursor;
+    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor)) {
+        emit refreshFailed(QStringLiteral("Failed to decode SessionPage response"));
+        return;
+    }
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    for (CachedSessionRow& row : rows) {
+        row.updatedAtMs = now;
+        upsertCachedSession(row);
+    }
+    if (!nextCursor.isEmpty() && cache() != nullptr) {
+        cache()->setCursor(QStringLiteral("sessions-query/cursor"), nextCursor, now);
+    }
+    emit sessionsRefreshed();
+}
+
+void SessionRepository::handleFailure(const QString& correlationId, const QString& message)
+{
+    if (correlationId == QLatin1String(kSessionsCorrelation)) {
+        emit refreshFailed(message);
     }
 }
 
-void SessionRepository::subscribe(const QString& sessionId, const QByteArray& subscribeRequestCbor)
+bool ProfileRepository::upsertCachedProfile(const CachedProfileRow& row)
 {
-    if (client() != nullptr) {
-        client()->sendRequest(subscribeRequestCbor, QStringLiteral("subscribe/%1").arg(sessionId));
-    }
+    return cache() != nullptr && cache()->upsertProfile(row);
+}
+
+QList<CachedProfileRow> ProfileRepository::cachedProfiles() const
+{
+    return cache() != nullptr ? cache()->profiles() : QList<CachedProfileRow>{};
 }
 
 bool FsRepository::upsertCachedEntry(const CachedFsEntryRow& row)
@@ -79,13 +126,6 @@ bool ApprovalRepository::upsertCachedApproval(const CachedApprovalRow& row)
 QList<CachedApprovalRow> ApprovalRepository::cachedApprovals() const
 {
     return cache() != nullptr ? cache()->approvals() : QList<CachedApprovalRow>{};
-}
-
-void ApprovalRepository::respond(const QByteArray& respondRequestCbor)
-{
-    if (client() != nullptr) {
-        client()->sendRequest(respondRequestCbor, QStringLiteral("respond-approval"));
-    }
 }
 
 } // namespace daemonapp::daemon

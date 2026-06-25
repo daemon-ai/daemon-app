@@ -63,6 +63,11 @@ struct AppServiceGraph {
     CheckpointRepository* checkpointRepository = nullptr;
 };
 
+// Resolve the service mode from the DAEMON_APP_SERVICE_MODE environment variable
+// ("daemon" / "mock", case-insensitive). Anything else (including unset) returns the fallback,
+// which keeps Mock as the default until a caller explicitly opts in.
+ServiceMode serviceModeFromEnvironment(ServiceMode fallback = ServiceMode::Mock);
+
 // Shared service factory for GUI and TUI. The current Mock mode preserves existing behavior; Daemon
 // mode swaps in daemon-backed services as they land, starting with the connection seam.
 AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner);

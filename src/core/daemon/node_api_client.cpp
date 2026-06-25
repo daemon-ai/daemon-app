@@ -8,12 +8,31 @@ NodeApiClient::NodeApiClient(DaemonTransport* transport, QObject* parent)
 {
     if (m_transport != nullptr) {
         connect(m_transport, &DaemonTransport::frameReceived, this, [this](const QByteArray& cbor) {
-            const QString correlationId = m_pending.isEmpty() ? QString() : m_pending.takeFirst();
+            if (!m_inFlight) {
+                // No request is outstanding; without a request-id envelope an unsolicited frame
+                // cannot be correlated, so drop it.
+                return;
+            }
+            const QString correlationId = m_currentCorrelation;
+            m_inFlight = false;
+            m_currentCorrelation.clear();
             emit responseReady(correlationId, cbor);
+            dispatchNext();
         });
         connect(m_transport, &DaemonTransport::failed, this, [this](const QString& message) {
-            const QString correlationId = m_pending.isEmpty() ? QString() : m_pending.takeFirst();
-            emit failed(correlationId, message);
+            // Fail the in-flight request, then drain the queue with the same error so callers
+            // are not left waiting on a dead socket.
+            if (m_inFlight) {
+                const QString correlationId = m_currentCorrelation;
+                m_inFlight = false;
+                m_currentCorrelation.clear();
+                emit failed(correlationId, message);
+            }
+            const QList<PendingRequest> pending = m_queue;
+            m_queue.clear();
+            for (const PendingRequest& request : pending) {
+                emit failed(request.correlationId, message);
+            }
         });
     }
 }
@@ -28,8 +47,19 @@ void NodeApiClient::sendRequest(const QByteArray& requestCbor, const QString& co
         emit failed(correlationId, QStringLiteral("Refusing to send an empty NodeApi request"));
         return;
     }
-    m_pending.append(correlationId);
-    m_transport->sendFrame(requestCbor);
+    m_queue.append({ correlationId, requestCbor });
+    dispatchNext();
+}
+
+void NodeApiClient::dispatchNext()
+{
+    if (m_inFlight || m_queue.isEmpty()) {
+        return;
+    }
+    const PendingRequest next = m_queue.takeFirst();
+    m_inFlight = true;
+    m_currentCorrelation = next.correlationId;
+    m_transport->sendFrame(next.requestCbor);
 }
 
 } // namespace daemonapp::daemon

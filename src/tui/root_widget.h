@@ -243,9 +243,11 @@ private:
     void closeTranscriptSearch();
     void updateSearchCounter();
 
-    // Reused, unchanged from the GUI build.
+    // Shared GUI/TUI service graph (store, connection, fs, memory, nav, first-run, config,
+    // models, accounts, profiles, fleet, automation, session facades). Read members via
+    // m_services.* instead of mirroring them as duplicate pointers; only TUI-local widgets and
+    // view-models live as their own members below.
     daemonapp::daemon::AppServiceGraph m_services;
-    persistence::ISessionStore* m_store = nullptr;
     SidebarModel* m_sidebar = nullptr;
     SessionsListModel* m_list = nullptr;
     // Shared composer FSM (draft/queue/history/submit), identical to the GUI. Its
@@ -291,7 +293,6 @@ private:
     // File tree (right Explorer column, toggled with Ctrl+E) + code editor view
     // (shown in the session column when a File tab is active). Both render the
     // same shared C++ view-models the GUI binds.
-    fs::IFsService* m_fs = nullptr;
     files::FsExplorerModel* m_fileTree = nullptr;
     FileTreeView* m_fileTreeView = nullptr;
     CodeEditorView* m_editorView = nullptr;
@@ -314,31 +315,11 @@ private:
     // Transcript exporter for the /save + list "export" action (writes JSON).
     TranscriptExporter* m_exporter = nullptr;
 
-    // Phase 0 shared seams (same classes the GUI binds): client-local prefs, the
-    // connection liveness state machine (drives the footer gateway state), and the
-    // app-level page navigation controller.
-    settings::ISettingsStore* m_appSettings = nullptr;
-    connection::IConnectionService* m_connection = nullptr;
-    nav::NavController* m_nav = nullptr;
-    firstrun::FirstRunModel* m_firstRun = nullptr;
-    config::IDaemonConfig* m_daemonConfig = nullptr;
-    models::IModelCatalog* m_modelCatalog = nullptr;
-    accounts::IAccountsService* m_accounts = nullptr;
-    profiles::IProfileStore* m_profiles = nullptr;
-    fleet::ISessionRoster* m_roster = nullptr;
-    fleet::IFleetTree* m_fleetTree = nullptr;
-    fleet::IApprovalsInbox* m_approvals = nullptr;
-    fleet::IDashboard* m_dashboard = nullptr;
-    automation::IRoutingStore* m_routing = nullptr;
-    automation::ICronStore* m_cron = nullptr;
-    // Per-session composer overrides + rewind timeline (same mocks the GUI
-    // binds), driven by the composer's session-settings / checkpoints overlays.
-    session::ISessionSettings* m_sessionSettings = nullptr;
-    session::ICheckpointTimeline* m_checkpoints = nullptr;
-    // Memory-inspection seam (seeded mock) + the shared view-models that back the
-    // Memory page projection (same models the GUI binds; the TUI renders them as
-    // markdown + a graph adjacency listing).
-    memory::IMemoryService* m_memory = nullptr;
+    // Phase 0 shared seams now live in m_services (prefs, connection liveness, nav, first-run,
+    // config, models, accounts, profiles, fleet, automation, session overrides/checkpoints,
+    // memory). The TUI keeps only the view-models it composes on top of them.
+    // Memory-page view-models (same models the GUI binds; the TUI renders them as markdown + a
+    // graph adjacency listing) backed by m_services.memory.
     memoryui::MemoryListModel* m_memList = nullptr;
     memoryui::MemoryStatsModel* m_memStats = nullptr;
     memoryui::MemoryTimelineModel* m_memTimeline = nullptr;

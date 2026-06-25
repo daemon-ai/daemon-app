@@ -98,8 +98,11 @@ protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
+    // Shared GUI/TUI service graph (session store, connection, fs, memory, nav, first-run,
+    // config, models, accounts, profiles, fleet, automation, session facades). Read members
+    // via m_services.* rather than mirroring them as duplicate pointers.
     daemonapp::daemon::AppServiceGraph m_services;
-    persistence::ISessionStore* m_store = nullptr;
+    // GUI-local services that are not part of the shared graph.
     platform::IPlatformServices* m_platform = nullptr;
     // The shared footer status model, exposed to QML as the `Status` context
     // property so the footer StatusBar and the active session's turn feed a
@@ -109,42 +112,5 @@ private:
     CommandRegistry* m_commands = nullptr;
     // Transcript exporter, exposed to QML as `Exporter`.
     TranscriptExporter* m_exporter = nullptr;
-    // Shared client-local preference store, exposed to QML as `AppSettings`.
-    settings::ISettingsStore* m_settings = nullptr;
-    // Connection seam (mock now), exposed to QML as `Connection`; its liveness
-    // state drives the StatusBarModel gateway state.
-    connection::IConnectionService* m_connection = nullptr;
-    // Filesystem seam (dev local-disk impl now), exposed to QML as `Fs`; backs
-    // the file tree, finder, and editor. A daemon adapter replaces it later.
-    fs::IFsService* m_fs = nullptr;
-    // Memory-inspection seam (seeded mock now), exposed to QML as `Memory`; backs
-    // the Memory page (overview / list / graph / timeline). A daemon NodeApi
-    // adapter replaces it later.
-    memory::IMemoryService* m_memory = nullptr;
-    // App-level page navigation seam, exposed to QML as `Nav`.
-    nav::NavController* m_nav = nullptr;
-    // First-run / onboarding gate, exposed to QML as `FirstRun`.
-    firstrun::FirstRunModel* m_firstRun = nullptr;
-    // Daemon-authoritative config facade (mock), exposed to QML as `DaemonConfig`.
-    config::IDaemonConfig* m_daemonConfig = nullptr;
-    // Model catalog facade (mock), exposed to QML as `ModelCatalog`.
-    models::IModelCatalog* m_modelCatalog = nullptr;
-    // Accounts/auth facade (mock), exposed to QML as `Accounts`.
-    accounts::IAccountsService* m_accounts = nullptr;
-    // Profiles/agents facade (mock), exposed to QML as `Profiles`.
-    profiles::IProfileStore* m_profiles = nullptr;
-    // Fleet/ops facades (mock), exposed to QML as `SessionRoster`, `FleetTree`,
-    // `Approvals`, `Dashboard`.
-    fleet::ISessionRoster* m_roster = nullptr;
-    fleet::IFleetTree* m_fleetTree = nullptr;
-    fleet::IApprovalsInbox* m_approvals = nullptr;
-    fleet::IDashboard* m_dashboard = nullptr;
-    // Automation facades (mock), exposed to QML as `Routing` and `Cron`.
-    automation::IRoutingStore* m_routing = nullptr;
-    automation::ICronStore* m_cron = nullptr;
-    // Per-session override + checkpoint facades (mock), exposed to QML as
-    // `SessionSettings` and `Checkpoints`.
-    session::ISessionSettings* m_sessionSettings = nullptr;
-    session::ICheckpointTimeline* m_checkpoints = nullptr;
     QQuickWindow* m_window = nullptr;
 };

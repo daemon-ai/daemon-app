@@ -2,7 +2,6 @@
 
 #include "daemon/client_cache_schema.h"
 
-#include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
 #include <QSqlDatabase>
@@ -12,14 +11,6 @@
 #include <QVariant>
 
 namespace daemonapp::daemon {
-namespace {
-
-qint64 nowMs()
-{
-    return QDateTime::currentMSecsSinceEpoch();
-}
-
-} // namespace
 
 DaemonCacheStore::DaemonCacheStore(const QString& dbPath, QObject* parent)
     : QObject(parent)
@@ -33,7 +24,11 @@ DaemonCacheStore::DaemonCacheStore(const QString& dbPath, QObject* parent)
         setLastError(db.lastError().text());
         return;
     }
-    execSchema();
+    if (!ensureSchema()) {
+        // m_lastError already carries the failing statement's error; close so isOpen()
+        // reports the store as unusable rather than half-initialized.
+        db.close();
+    }
 }
 
 DaemonCacheStore::~DaemonCacheStore()
@@ -63,16 +58,76 @@ QString DaemonCacheStore::defaultDatabasePath()
     return QDir(dir).filePath(QStringLiteral("daemon_cache.db"));
 }
 
-bool DaemonCacheStore::execSchema()
+bool DaemonCacheStore::ensureSchema()
 {
-    return execSql(cache::kCreateMetaSql)
-        && execSql(cache::kCreateSessionsSql)
+    if (!execSql(cache::kCreateMetaSql)) {
+        return false;
+    }
+    const QString stored = meta(QStringLiteral("schema_version"));
+    if (!stored.isEmpty() && stored.toInt() != cache::kSchemaVersion) {
+        // daemon_cache.db is a non-authoritative last-known cache; the daemon is the
+        // source of truth, so a schema bump just drops and rebuilds the data tables
+        // rather than running per-version migrations.
+        if (!dropDataTables()) {
+            return false;
+        }
+    }
+    if (!createDataTables()) {
+        return false;
+    }
+    return setMeta(QStringLiteral("schema_version"), QString::number(cache::kSchemaVersion));
+}
+
+bool DaemonCacheStore::createDataTables()
+{
+    return execSql(cache::kCreateSessionsSql)
         && execSql(cache::kCreateSessionLogSql)
         && execSql(cache::kCreateSyncCursorsSql)
         && execSql(cache::kCreateProfilesSql)
         && execSql(cache::kCreateApprovalsSql)
-        && execSql(cache::kCreateFsEntriesSql)
-        && setCursor(QStringLiteral("schema_version"), QString::number(cache::kSchemaVersion), nowMs());
+        && execSql(cache::kCreateFsEntriesSql);
+}
+
+bool DaemonCacheStore::dropDataTables()
+{
+    return execSql("DROP TABLE IF EXISTS daemon_sessions")
+        && execSql("DROP TABLE IF EXISTS daemon_session_log")
+        && execSql("DROP TABLE IF EXISTS daemon_sync_cursors")
+        && execSql("DROP TABLE IF EXISTS daemon_profiles")
+        && execSql("DROP TABLE IF EXISTS daemon_approvals")
+        && execSql("DROP TABLE IF EXISTS daemon_fs_entries");
+}
+
+int DaemonCacheStore::schemaVersion() const
+{
+    return meta(QStringLiteral("schema_version")).toInt();
+}
+
+bool DaemonCacheStore::setMeta(const QString& key, const QString& value)
+{
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral(
+        "INSERT INTO daemon_cache_meta(key,value) VALUES(?,?) "
+        "ON CONFLICT(key) DO UPDATE SET value=excluded.value"));
+    q.addBindValue(key);
+    q.addBindValue(value);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+QString DaemonCacheStore::meta(const QString& key) const
+{
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral("SELECT value FROM daemon_cache_meta WHERE key=?"));
+    q.addBindValue(key);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return {};
+    }
+    return q.next() ? q.value(0).toString() : QString();
 }
 
 bool DaemonCacheStore::execSql(const char* sql)
@@ -315,6 +370,48 @@ QList<CachedFsEntryRow> DaemonCacheStore::fsEntries(const QString& rootId) const
         row.mtimeMs = q.value(4).toLongLong();
         row.revisionCbor = q.value(5).toByteArray();
         row.updatedAtMs = q.value(6).toLongLong();
+        rows.append(row);
+    }
+    return rows;
+}
+
+bool DaemonCacheStore::upsertProfile(const CachedProfileRow& row)
+{
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral(
+        "INSERT INTO daemon_profiles(profile_ref,display_name,spec_cbor,active,updated_at_ms) "
+        "VALUES(?,?,?,?,?) "
+        "ON CONFLICT(profile_ref) DO UPDATE SET display_name=excluded.display_name,"
+        "spec_cbor=excluded.spec_cbor,active=excluded.active,updated_at_ms=excluded.updated_at_ms"));
+    q.addBindValue(row.profileRef);
+    q.addBindValue(row.displayName);
+    q.addBindValue(row.specCbor);
+    q.addBindValue(row.active ? 1 : 0);
+    q.addBindValue(row.updatedAtMs);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+QList<CachedProfileRow> DaemonCacheStore::profiles() const
+{
+    QList<CachedProfileRow> rows;
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    if (!q.exec(QStringLiteral(
+            "SELECT profile_ref,display_name,spec_cbor,active,updated_at_ms FROM daemon_profiles "
+            "ORDER BY profile_ref ASC"))) {
+        setLastError(q.lastError().text());
+        return rows;
+    }
+    while (q.next()) {
+        CachedProfileRow row;
+        row.profileRef = q.value(0).toString();
+        row.displayName = q.value(1).toString();
+        row.specCbor = q.value(2).toByteArray();
+        row.active = q.value(3).toInt() != 0;
+        row.updatedAtMs = q.value(4).toLongLong();
         rows.append(row);
     }
     return rows;

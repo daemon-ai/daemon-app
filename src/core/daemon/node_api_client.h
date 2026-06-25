@@ -2,18 +2,22 @@
 
 #include "daemon/daemon_transport.h"
 
-#include <QObject>
 #include <QByteArray>
-#include <QStringList>
+#include <QList>
+#include <QObject>
 #include <QString>
 
 namespace daemonapp::daemon {
 
-// Thin NodeApi request dispatcher.
+// NodeApi request dispatcher with client-side correlation.
 //
-// The public API intentionally speaks raw CBOR for now: Phase 2 will replace callers with typed
-// zcbor wrappers, while transport/cache/repository tests can already use golden CBOR fixtures from
-// ../daemon. UI layers must not depend on this class directly; repositories own it.
+// NodeApi has no top-level request-id envelope, so a response carries nothing that identifies which
+// request it answers. This client therefore keeps at most one request in flight at a time: callers
+// queue encoded ApiRequests with a correlation id, requests are sent in order, and each response
+// frame is matched to the outstanding request before the next one is dispatched.
+//
+// The public API speaks raw CBOR; encoding/decoding lives in NodeApiCodec and is owned by
+// repositories. UI layers must not depend on this class directly.
 class NodeApiClient : public QObject {
     Q_OBJECT
 
@@ -22,7 +26,8 @@ public:
 
     [[nodiscard]] DaemonTransport* transport() const { return m_transport; }
 
-    // Queue one encoded ApiRequest. The response is delivered as raw ApiResponse CBOR.
+    // Queue one encoded ApiRequest. The response is delivered as raw ApiResponse CBOR via
+    // responseReady, tagged with the same correlationId.
     void sendRequest(const QByteArray& requestCbor, const QString& correlationId = QString());
 
 signals:
@@ -30,8 +35,17 @@ signals:
     void failed(const QString& correlationId, const QString& message);
 
 private:
+    struct PendingRequest {
+        QString correlationId;
+        QByteArray requestCbor;
+    };
+
+    void dispatchNext();
+
     DaemonTransport* m_transport = nullptr;
-    QStringList m_pending;
+    QList<PendingRequest> m_queue;
+    bool m_inFlight = false;
+    QString m_currentCorrelation;
 };
 
 } // namespace daemonapp::daemon

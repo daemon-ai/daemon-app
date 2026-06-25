@@ -47,6 +47,14 @@ struct CachedFsEntryRow {
     qint64 updatedAtMs = 0;
 };
 
+struct CachedProfileRow {
+    QString profileRef;
+    QString displayName;
+    QByteArray specCbor;
+    bool active = false;
+    qint64 updatedAtMs = 0;
+};
+
 class DaemonCacheStore : public QObject {
 public:
     explicit DaemonCacheStore(const QString& dbPath = QString(), QObject* parent = nullptr);
@@ -55,6 +63,9 @@ public:
     [[nodiscard]] QString databasePath() const { return m_dbPath; }
     [[nodiscard]] bool isOpen() const;
     [[nodiscard]] QString lastError() const { return m_lastError; }
+
+    // Persisted schema version, read from daemon_cache_meta (0 if absent/unopened).
+    [[nodiscard]] int schemaVersion() const;
 
     bool upsertSession(const CachedSessionRow& row);
     [[nodiscard]] QList<CachedSessionRow> sessions() const;
@@ -72,9 +83,20 @@ public:
     bool upsertFsEntry(const CachedFsEntryRow& row);
     [[nodiscard]] QList<CachedFsEntryRow> fsEntries(const QString& rootId) const;
 
+    bool upsertProfile(const CachedProfileRow& row);
+    [[nodiscard]] QList<CachedProfileRow> profiles() const;
+
+    // Generic typed metadata stored in daemon_cache_meta (schema version, etc).
+    bool setMeta(const QString& key, const QString& value);
+    [[nodiscard]] QString meta(const QString& key) const;
+
 private:
     [[nodiscard]] static QString defaultDatabasePath();
-    bool execSchema();
+    // Create the meta table, reconcile the persisted schema version (rebuilding the
+    // non-authoritative cache on a version mismatch), then create the data tables.
+    bool ensureSchema();
+    bool createDataTables();
+    bool dropDataTables();
     bool execSql(const char* sql);
     void setLastError(const QString& message) const;
 

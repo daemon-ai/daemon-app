@@ -1,11 +1,30 @@
 #include "daemon/daemon_connection_service.h"
 
+#include "daemon/node_api_codec.h"
+
 namespace daemonapp::daemon {
 
 DaemonConnectionService::DaemonConnectionService(QObject* parent)
     : connection::IConnectionService(parent)
     , m_transport(std::make_unique<DaemonTransport>())
+    , m_client(std::make_unique<NodeApiClient>(m_transport.get()))
 {
+    connect(m_client.get(), &NodeApiClient::responseReady, this,
+            [this](const QString& correlationId, const QByteArray& responseCbor) {
+                if (correlationId != QLatin1String(kHealthCorrelation)) {
+                    return;
+                }
+                DecodedHealth health;
+                setState(NodeApiCodec::decodeHealth(responseCbor, &health)
+                             ? QStringLiteral("ready")
+                             : QStringLiteral("offline"));
+            });
+    connect(m_client.get(), &NodeApiClient::failed, this,
+            [this](const QString& correlationId, const QString&) {
+                if (correlationId == QLatin1String(kHealthCorrelation)) {
+                    setState(QStringLiteral("offline"));
+                }
+            });
 }
 
 void DaemonConnectionService::connectTo(const QString& mode, const QString& target,
@@ -20,14 +39,21 @@ void DaemonConnectionService::connectTo(const QString& mode, const QString& targ
         setState(QStringLiteral("needs setup"));
         return;
     }
+    if (target.isEmpty()) {
+        setState(QStringLiteral("needs setup"));
+        return;
+    }
 
     m_transport->setSocketPath(target);
-    // The first real slice will replace this optimistic state with an actual Health request.
-    setState(target.isEmpty() ? QStringLiteral("needs setup") : QStringLiteral("ready"));
+    // Liveness is resolved by the Health response handler wired in the constructor.
+    setState(QStringLiteral("connecting"));
+    m_client->sendRequest(NodeApiCodec::encodeHealthRequest(),
+                          QLatin1String(kHealthCorrelation));
 }
 
 void DaemonConnectionService::disconnect()
 {
+    m_transport->close();
     setState(QStringLiteral("offline"));
 }
 

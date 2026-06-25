@@ -3,6 +3,8 @@
 #include "accounts/mock_accounts_service.h"
 #include "automation/mock_cron_store.h"
 #include "automation/mock_routing_store.h"
+#include "connection/iconnection_service.h"
+#include "daemon/cached_session_store.h"
 #include "daemon/daemon_cache_store.h"
 #include "config/mock_daemon_config.h"
 #include "daemon/daemon_connection_service.h"
@@ -25,12 +27,31 @@
 #include "session/mock_session_settings.h"
 #include "settings/qt_settings_store.h"
 
+#include <QByteArray>
+#include <QString>
+#include <QtGlobal>
+
 namespace daemonapp::daemon {
+
+ServiceMode serviceModeFromEnvironment(ServiceMode fallback)
+{
+    const QByteArray raw = qgetenv("DAEMON_APP_SERVICE_MODE");
+    if (raw.isEmpty()) {
+        return fallback;
+    }
+    const QString value = QString::fromUtf8(raw).trimmed().toLower();
+    if (value == QStringLiteral("daemon")) {
+        return ServiceMode::Daemon;
+    }
+    if (value == QStringLiteral("mock")) {
+        return ServiceMode::Mock;
+    }
+    return fallback;
+}
 
 AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner)
 {
     AppServiceGraph graph;
-    graph.store = new persistence::SqliteSessionStore(QString(), owner);
     graph.settings = new settings::QtSettingsStore(owner);
     graph.connection = mode == ServiceMode::Daemon
         ? static_cast<connection::IConnectionService*>(new DaemonConnectionService(owner))
@@ -54,16 +75,35 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner)
     graph.checkpoints = new session::MockCheckpointTimeline(owner);
     graph.cache = new DaemonCacheStore(QString(), owner);
     auto* daemonConnection = qobject_cast<DaemonConnectionService*>(graph.connection);
-    DaemonTransport* transport = daemonConnection != nullptr
-        ? daemonConnection->transport()
-        : new DaemonTransport(owner);
-    graph.nodeApi = new NodeApiClient(transport, owner);
+    if (daemonConnection != nullptr) {
+        // Reuse the connection seam's transport + client so repositories share the single
+        // serialized request pipeline (and the Health probe) rather than a parallel one.
+        graph.nodeApi = daemonConnection->client();
+    } else {
+        auto* transport = new DaemonTransport(owner);
+        graph.nodeApi = new NodeApiClient(transport, owner);
+    }
     graph.sessions = new SessionRepository(graph.nodeApi, graph.cache, owner);
     graph.profileRepository = new ProfileRepository(graph.nodeApi, graph.cache, owner);
     graph.models = new ModelRepository(graph.nodeApi, graph.cache, owner);
     graph.files = new FsRepository(graph.nodeApi, graph.cache, owner);
     graph.approvalRepository = new ApprovalRepository(graph.nodeApi, graph.cache, owner);
     graph.checkpointRepository = new CheckpointRepository(graph.nodeApi, graph.cache, owner);
+
+    if (daemonConnection != nullptr) {
+        // Daemon mode reads sessions through the cache projection rather than the local sqlite
+        // store, and kicks a SessionsQuery once the Health probe reports the daemon is ready so
+        // the cache (and therefore the UI) populates end-to-end.
+        graph.store = new CachedSessionStore(graph.cache, graph.sessions, owner);
+        QObject::connect(graph.connection, &connection::IConnectionService::stateChanged,
+                         graph.sessions, [conn = graph.connection, sessions = graph.sessions] {
+                             if (conn->ready()) {
+                                 sessions->refreshSessions();
+                             }
+                         });
+    } else {
+        graph.store = new persistence::SqliteSessionStore(QString(), owner);
+    }
     return graph;
 }
 
