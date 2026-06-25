@@ -201,9 +201,7 @@ void Application::completeWiring(QQmlApplicationEngine& engine)
     // onboarding connection picker drives connectTo instead.
     if (m_services.settings->setupComplete()) {
         m_services.connection->connectTo(m_services.settings->lastConnectionMode(),
-                                         m_services.settings->lastConnectionTarget().isEmpty()
-                                             ? QStringLiteral("/run/daemon.sock")
-                                             : m_services.settings->lastConnectionTarget());
+                                         m_services.settings->resolvedConnectionTarget());
     }
 }
 

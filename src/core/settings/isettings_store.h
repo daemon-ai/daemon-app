@@ -49,6 +49,21 @@ public:
         setValue(QStringLiteral("conn/target"), target);
     }
 
+    // The local socket path to auto-open, resolving the test/CI override first.
+    // `DAEMON_APP_SOCKET` lets the end-to-end harness point a headless GUI/TUI at an isolated
+    // per-test socket without seeding QSettings; it wins over the persisted `conn/target`, which in
+    // turn wins over the built-in default.
+    [[nodiscard]] QString resolvedConnectionTarget(
+        const QString& fallback = QStringLiteral("/run/daemon.sock")) const
+    {
+        const QString override = qEnvironmentVariable("DAEMON_APP_SOCKET");
+        if (!override.isEmpty()) {
+            return override;
+        }
+        const QString saved = lastConnectionTarget();
+        return saved.isEmpty() ? fallback : saved;
+    }
+
 signals:
     // Emitted on every write (carries the key), plus a no-arg overload so QML
     // property bindings (setupComplete) refresh without naming the key.

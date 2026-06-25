@@ -263,9 +263,7 @@ RootWidget::RootWidget()
     // connection picker drives connectTo instead.
     if (m_services.settings->setupComplete()) {
         m_services.connection->connectTo(m_services.settings->lastConnectionMode(),
-                                m_services.settings->lastConnectionTarget().isEmpty()
-                                    ? QStringLiteral("/run/daemon.sock")
-                                    : m_services.settings->lastConnectionTarget());
+                                         m_services.settings->resolvedConnectionTarget());
     }
 }
 
@@ -284,9 +282,7 @@ void RootWidget::terminalChanged()
     // "Setup Required" modal over the shell until setup completes.
     if (m_services.firstRun != nullptr && m_services.firstRun->active()) {
         auto* gate = new FirstRunDialog(m_services.firstRun, m_services.connection, m_services.settings,
-                                        m_services.settings->lastConnectionTarget().isEmpty()
-                                            ? QStringLiteral("/run/daemon/daemon.sock")
-                                            : m_services.settings->lastConnectionTarget(),
+                                        m_services.settings->resolvedConnectionTarget(),
                                         this);
         gate->setFocus();
     }
