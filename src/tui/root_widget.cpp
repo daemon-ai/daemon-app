@@ -53,8 +53,10 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QDateTime>
+#include <QEventLoop>
 #include <QItemSelectionModel>
 #include <QProcess>
+#include <QTimer>
 #include <QRect>
 #include <QSettings>
 #include <QStandardPaths>
@@ -1735,6 +1737,29 @@ void RootWidget::focusTranscript() const
     if (m_transcript != nullptr) {
         m_transcript->setFocus();
     }
+}
+
+bool RootWidget::awaitConnectionReady(int timeoutMs)
+{
+    auto* conn = m_services.connection;
+    if (conn == nullptr) {
+        return false;
+    }
+    if (conn->ready()) {
+        return true;
+    }
+    QEventLoop loop;
+    QTimer timeout;
+    timeout.setSingleShot(true);
+    connect(conn, &connection::IConnectionService::stateChanged, &loop, [&] {
+        if (conn->ready()) {
+            loop.quit();
+        }
+    });
+    connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timeout.start(timeoutMs);
+    loop.exec();
+    return conn->ready();
 }
 
 void RootWidget::promptQuit()

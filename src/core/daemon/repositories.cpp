@@ -69,31 +69,70 @@ void SessionRepository::refreshSessions()
                           QLatin1String(kSessionsCorrelation));
 }
 
+void SessionRepository::subscribe(const QString& sessionId)
+{
+    if (client() == nullptr) {
+        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    // Resume from the persisted cursor so each poll only pulls new entries.
+    constexpr quint32 kMaxEntries = 256;
+    client()->sendRequest(
+        NodeApiCodec::encodeSubscribeRequest(sessionId, logCursor(sessionId), kMaxEntries),
+        subscribeCorrelation(sessionId));
+}
+
+QString SessionRepository::subscribeCorrelation(const QString& sessionId)
+{
+    return QLatin1String(kSubscribePrefix) + sessionId;
+}
+
 void SessionRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor)
 {
-    if (correlationId != QLatin1String(kSessionsCorrelation)) {
+    if (correlationId == QLatin1String(kSessionsCorrelation)) {
+        QList<CachedSessionRow> rows;
+        QString nextCursor;
+        if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor)) {
+            emit refreshFailed(QStringLiteral("Failed to decode SessionPage response"));
+            return;
+        }
+        const qint64 now = QDateTime::currentMSecsSinceEpoch();
+        for (CachedSessionRow& row : rows) {
+            row.updatedAtMs = now;
+            upsertCachedSession(row);
+        }
+        if (!nextCursor.isEmpty() && cache() != nullptr) {
+            cache()->setCursor(QStringLiteral("sessions-query/cursor"), nextCursor, now);
+        }
+        emit sessionsRefreshed();
         return;
     }
-    QList<CachedSessionRow> rows;
-    QString nextCursor;
-    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor)) {
-        emit refreshFailed(QStringLiteral("Failed to decode SessionPage response"));
+
+    if (correlationId.startsWith(QLatin1String(kSubscribePrefix))) {
+        const QString sessionId = correlationId.mid(int(qstrlen(kSubscribePrefix)));
+        QList<CachedLogRow> rows;
+        quint64 nextSeq = 0;
+        if (!NodeApiCodec::decodeLogPage(responseCbor, sessionId, &rows, &nextSeq)) {
+            emit refreshFailed(QStringLiteral("Failed to decode LogPage response"));
+            return;
+        }
+        const qint64 now = QDateTime::currentMSecsSinceEpoch();
+        for (CachedLogRow& row : rows) {
+            row.updatedAtMs = now;
+            appendCachedLog(row);
+        }
+        if (nextSeq > 0) {
+            setLogCursor(sessionId, nextSeq);
+        }
+        emit logUpdated(sessionId);
         return;
     }
-    const qint64 now = QDateTime::currentMSecsSinceEpoch();
-    for (CachedSessionRow& row : rows) {
-        row.updatedAtMs = now;
-        upsertCachedSession(row);
-    }
-    if (!nextCursor.isEmpty() && cache() != nullptr) {
-        cache()->setCursor(QStringLiteral("sessions-query/cursor"), nextCursor, now);
-    }
-    emit sessionsRefreshed();
 }
 
 void SessionRepository::handleFailure(const QString& correlationId, const QString& message)
 {
-    if (correlationId == QLatin1String(kSessionsCorrelation)) {
+    if (correlationId == QLatin1String(kSessionsCorrelation)
+        || correlationId.startsWith(QLatin1String(kSubscribePrefix))) {
         emit refreshFailed(message);
     }
 }

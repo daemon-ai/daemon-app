@@ -41,6 +41,9 @@ private:
     };
 
     void dispatchNext();
+    // Fail the in-flight request (if any) then drain the queue with the same error. Idempotent, so
+    // it is safe to call from both the transport's failed and disconnected signals.
+    void failAllPending(const QString& message);
 
     DaemonTransport* m_transport = nullptr;
     QList<PendingRequest> m_queue;

@@ -121,6 +121,10 @@ public:
     void focusComposer() const;   // offscreen-test helper: focus the input box
     void focusTranscript() const; // offscreen-test helper: focus the transcript
 
+    // Headless E2E hook (mirrors Application::awaitConnectionReady): spin the event loop until the
+    // connection seam reaches "ready" or timeoutMs elapses; returns true iff ready.
+    [[nodiscard]] bool awaitConnectionReady(int timeoutMs);
+
     // Mouse entry point (connected to MouseTerminal::mouseInput). Hit-tests the
     // panes by terminal coordinate and routes a primary-button press to focus +
     // select/open, or a wheel event to scroll the pane under the cursor. No-op for

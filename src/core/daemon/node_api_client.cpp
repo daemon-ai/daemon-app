@@ -19,21 +19,30 @@ NodeApiClient::NodeApiClient(DaemonTransport* transport, QObject* parent)
             emit responseReady(correlationId, cbor);
             dispatchNext();
         });
-        connect(m_transport, &DaemonTransport::failed, this, [this](const QString& message) {
-            // Fail the in-flight request, then drain the queue with the same error so callers
-            // are not left waiting on a dead socket.
-            if (m_inFlight) {
-                const QString correlationId = m_currentCorrelation;
-                m_inFlight = false;
-                m_currentCorrelation.clear();
-                emit failed(correlationId, message);
-            }
-            const QList<PendingRequest> pending = m_queue;
-            m_queue.clear();
-            for (const PendingRequest& request : pending) {
-                emit failed(request.correlationId, message);
-            }
-        });
+        connect(m_transport, &DaemonTransport::failed, this,
+                [this](const QString& message) { failAllPending(message); });
+        // An unexpected close (daemon exit / peer disconnect) while a request is in flight would
+        // otherwise leave m_inFlight stuck true and stall the queue forever; treat it as a failure.
+        connect(m_transport, &DaemonTransport::disconnected, this,
+                [this] { failAllPending(QStringLiteral("daemon connection closed")); });
+    }
+}
+
+void NodeApiClient::failAllPending(const QString& message)
+{
+    // Fail the in-flight request, then drain the queue with the same error so callers are not left
+    // waiting on a dead socket. Idempotent: once nothing is in flight and the queue is empty this is
+    // a no-op, so the error+disconnect double-fire is harmless.
+    if (m_inFlight) {
+        const QString correlationId = m_currentCorrelation;
+        m_inFlight = false;
+        m_currentCorrelation.clear();
+        emit failed(correlationId, message);
+    }
+    const QList<PendingRequest> pending = m_queue;
+    m_queue.clear();
+    for (const PendingRequest& request : pending) {
+        emit failed(request.correlationId, message);
     }
 }
 

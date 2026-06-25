@@ -118,6 +118,18 @@ bool maybeRenderOffscreen()
     RootWidget root;
     terminal.setMainWidget(&root);
 
+    // Headless connectivity self-check for the cross-repo E2E harness: block until the daemon-mode
+    // auto-connect Health round-trip resolves (or times out) and emit a stable sentinel, so the
+    // harness can hard-assert TUI -> daemon connectivity rather than only logging it. The frame dump
+    // below still runs afterwards (the daemon has been probed by then).
+    const QByteArray waitReadyMs = qgetenv("DAEMON_APP_WAIT_READY");
+    if (!waitReadyMs.isEmpty()) {
+        const int timeoutMs = waitReadyMs.toInt() > 0 ? waitReadyMs.toInt() : 5000;
+        const bool ready = root.awaitConnectionReady(timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_READY %s\n", ready ? "ok" : "timeout");
+        std::fflush(stdout);
+    }
+
     // Let the event loop run the deferred layout/paint, then optionally drive the
     // focused widget before grabbing the frame: DAEMON_TUI_KEYS sends a sequence
     // of named keys to the default-focused sidebar (e.g. "down,down,left" to

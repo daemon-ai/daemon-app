@@ -64,7 +64,14 @@ void DaemonTransport::ensureSocket()
     });
     connect(m_socket, &QLocalSocket::readyRead, this, &DaemonTransport::handleReadyRead);
     connect(m_socket, &QLocalSocket::errorOccurred, this,
-            [this](QLocalSocket::LocalSocketError) { emit failed(m_socket->errorString()); });
+            [this](QLocalSocket::LocalSocketError) {
+                // Capture the message, then fully reset: a failed/aborted socket must not leave a
+                // queued frame in m_outbox, or it would flush ahead of the next request on the next
+                // successful connect and corrupt request/response correlation.
+                const QString message = m_socket->errorString();
+                close();
+                emit failed(message);
+            });
     connect(m_socket, &QLocalSocket::disconnected, this, [this] { emit disconnected(); });
 }
 

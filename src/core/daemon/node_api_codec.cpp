@@ -95,6 +95,21 @@ QByteArray NodeApiCodec::encodeSessionsQueryRequest()
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
+QByteArray NodeApiCodec::encodeSubscribeRequest(const QString& sessionId, quint64 afterSeq,
+                                                quint32 max)
+{
+    const QByteArray session = sessionId.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_subscribe_m_c;
+    request_subscribe& subscribe = request.api_request_request_subscribe_m;
+    subscribe.Subscribe_session.value = reinterpret_cast<const uint8_t*>(session.constData());
+    subscribe.Subscribe_session.len = static_cast<size_t>(session.size());
+    subscribe.Subscribe_after_seq = static_cast<uint32_t>(afterSeq);
+    subscribe.Subscribe_max = max;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
 ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor)
 {
     auto response = std::make_unique<api_response_r>();
@@ -203,6 +218,43 @@ bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<Cache
             *nextCursor =
                 fromZcbor(page.session_page_next_cursor.session_page_next_cursor_session_id_m);
         }
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeLogPage(const QByteArray& responseCbor, const QString& sessionId,
+                                 QList<CachedLogRow>* out, quint64* nextSeq, quint64* headSeq)
+{
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get())
+        || response->api_response_choice != api_response_r::api_response_response_log_page_m_c) {
+        return false;
+    }
+    const log_page_view& page = response->api_response_response_log_page_m.response_log_page_LogPage;
+    out->clear();
+    for (size_t i = 0; i < page.log_page_view_entries_session_log_entry_m_count; ++i) {
+        const session_log_entry& entry = page.log_page_view_entries_session_log_entry_m[i];
+        CachedLogRow row;
+        row.sessionId = sessionId;
+        row.seq = entry.session_log_entry_seq;
+        row.direction = entry.session_log_entry_direction.direction_choice
+                == direction_r::direction_Outbound_tstr_c
+            ? QStringLiteral("Outbound")
+            : QStringLiteral("Inbound");
+        row.disposition = entry.session_log_entry_disposition.disposition_choice
+                == disposition_r::disposition_Transport_tstr_c
+            ? QStringLiteral("Transport")
+            : QStringLiteral("Context");
+        out->append(row);
+    }
+    if (nextSeq != nullptr) {
+        *nextSeq = page.log_page_view_next_seq;
+    }
+    if (headSeq != nullptr) {
+        *headSeq = page.log_page_view_head_seq;
     }
     return true;
 }

@@ -40,16 +40,22 @@ public:
 
     // Issue a SessionsQuery; on success the cache is updated and sessionsRefreshed() fires.
     void refreshSessions();
+    // Subscribe to a session's merged log from its persisted cursor; on success the new entries are
+    // appended to daemon_session_log, the cursor is advanced, and logUpdated(sessionId) fires.
+    void subscribe(const QString& sessionId);
 
 signals:
     void sessionsRefreshed();
     void refreshFailed(const QString& message);
+    void logUpdated(const QString& sessionId);
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
+    [[nodiscard]] static QString subscribeCorrelation(const QString& sessionId);
 
     static constexpr auto kSessionsCorrelation = "repo/sessions-query";
+    static constexpr auto kSubscribePrefix = "repo/subscribe/";
 };
 
 class ProfileRepository : public RepositoryBase {

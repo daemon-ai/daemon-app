@@ -33,6 +33,14 @@ enum class ServiceMode {
     Daemon,
 };
 
+// The shared GUI/TUI service bundle.
+//
+// ServiceMode::Daemon is only partially live today: `connection` (real Health probe) and `store`
+// (sessions projected from DaemonCacheStore via NodeApi SessionsQuery) are daemon-backed, while
+// `fs`, `daemonConfig`, `memory`, `modelCatalog`, `accounts`, the fleet group
+// (`roster`/`fleetTree`/`approvals`/`dashboard`), `routing`/`cron`, `sessionSettings`, and
+// `checkpoints` remain mock-backed until each grows its own daemon adapter. createAppServiceGraph()
+// logs this at startup in daemon mode so the partial state is not mistaken for fully live.
 struct AppServiceGraph {
     persistence::ISessionStore* store = nullptr;
     settings::ISettingsStore* settings = nullptr;

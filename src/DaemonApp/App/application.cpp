@@ -30,10 +30,12 @@
 
 #include <QCoreApplication>
 #include <QEvent>
+#include <QEventLoop>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QTimer>
 
 #include <core/formula.h>
 #include <latex.h>
@@ -151,6 +153,26 @@ void Application::registerContext(QQmlApplicationEngine& engine)
 void Application::openPageForRenderHarness(const QString& page, const QString& section)
 {
     m_services.nav->open(page, section);
+}
+
+bool Application::awaitConnectionReady(int timeoutMs)
+{
+    auto* conn = m_services.connection;
+    if (conn->ready()) {
+        return true;
+    }
+    QEventLoop loop;
+    QTimer timeout;
+    timeout.setSingleShot(true);
+    connect(conn, &connection::IConnectionService::stateChanged, &loop, [&] {
+        if (conn->ready()) {
+            loop.quit();
+        }
+    });
+    connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timeout.start(timeoutMs);
+    loop.exec();
+    return conn->ready();
 }
 
 void Application::completeWiring(QQmlApplicationEngine& engine)

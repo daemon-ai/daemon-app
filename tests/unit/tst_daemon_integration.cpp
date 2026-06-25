@@ -3,12 +3,15 @@
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/integration_slice.h"
+#include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
 #include "daemon/repositories.h"
 #include "daemon/seam_migration.h"
 #include "persistence/in_memory_session_store.h"
 
 #include <QtTest/QtTest>
+#include <QCoreApplication>
+#include <QDir>
 #include <QTemporaryDir>
 
 #include <array>
@@ -121,6 +124,32 @@ private slots:
         QVERIFY(sessions.first().id >= 0);
     }
 
+    void clientFailsAndRecoversOnBadSocket()
+    {
+        // A socket path that does not exist makes connectToServer raise errorOccurred. The transport
+        // must reset cleanly and the client must fail the in-flight request and stay usable.
+        const QString bogus =
+            QDir::tempPath() + QStringLiteral("/daemon-app-bogus-%1.sock").arg(QCoreApplication::applicationPid());
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(bogus);
+        daemonapp::daemon::NodeApiClient client(&transport);
+
+        QSignalSpy failures(&client, &daemonapp::daemon::NodeApiClient::failed);
+        QVERIFY(failures.isValid());
+
+        // QTRY_COMPARE polls while pumping events, so it is robust whether errorOccurred is
+        // delivered synchronously during sendRequest or asynchronously afterwards.
+        client.sendRequest(QByteArray("\x66Health", 7), QStringLiteral("c1"));
+        QTRY_COMPARE_WITH_TIMEOUT(failures.count(), 1, 3000);
+        QCOMPARE(failures.at(0).at(0).toString(), QStringLiteral("c1"));
+
+        // The in-flight flag must have reset: a second request must dispatch and fail in turn rather
+        // than stall behind the first.
+        client.sendRequest(QByteArray("\x66Health", 7), QStringLiteral("c2"));
+        QTRY_COMPARE_WITH_TIMEOUT(failures.count(), 2, 3000);
+        QCOMPARE(failures.at(1).at(0).toString(), QStringLiteral("c2"));
+    }
+
     void cachePolicyDocumentsDaemonModeOwnership()
     {
         using daemonapp::daemon::cache::PersistenceOwner;
@@ -207,6 +236,32 @@ private slots:
         QCOMPARE(rows.size(), 1);
         QCOMPARE(rows.first().sessionId, QStringLiteral("s1"));
         QCOMPARE(rows.first().state, QStringLiteral("Active"));
+    }
+
+    void codecEncodesSubscribeRequest()
+    {
+        const QByteArray sub =
+            daemonapp::daemon::NodeApiCodec::encodeSubscribeRequest(QStringLiteral("s1"), 3, 64);
+        QVERIFY(!sub.isEmpty());
+        // {"Subscribe": {...}} is a CBOR map (major type 5).
+        QCOMPARE(static_cast<quint8>(sub.front()) >> 5, 5);
+    }
+
+    void codecDecodesLogPageCursors()
+    {
+        // {"LogPage": {"entries": [], "next_seq": 5, "head_seq": 5}}
+        const QByteArray response(
+            "\xA1\x67LogPage\xA3\x67""entries\x80\x68next_seq\x05\x68head_seq\x05", 39);
+        QList<daemonapp::daemon::CachedLogRow> rows;
+        quint64 nextSeq = 0;
+        quint64 headSeq = 0;
+        QVERIFY(daemonapp::daemon::NodeApiCodec::decodeLogPage(response, QStringLiteral("s1"), &rows,
+                                                              &nextSeq, &headSeq));
+        QVERIFY(rows.isEmpty());
+        QCOMPARE(nextSeq, static_cast<quint64>(5));
+        QCOMPARE(headSeq, static_cast<quint64>(5));
+        QCOMPARE(daemonapp::daemon::NodeApiCodec::responseKind(response),
+                 daemonapp::daemon::ApiResponseKind::LogPage);
     }
 };
 

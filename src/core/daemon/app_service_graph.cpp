@@ -28,6 +28,7 @@
 #include "settings/qt_settings_store.h"
 
 #include <QByteArray>
+#include <QDebug>
 #include <QString>
 #include <QtGlobal>
 
@@ -101,6 +102,14 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner)
                                  sessions->refreshSessions();
                              }
                          });
+        // Daemon mode is only partially live: be explicit so testers/operators don't read it as a
+        // fully daemon-backed app. Live now: connection (real Health probe) and sessions (NodeApi
+        // SessionsQuery projected through DaemonCacheStore). Everything else is still mock-backed
+        // until its own daemon adapter lands.
+        qInfo().noquote() << "AppServiceGraph: ServiceMode::Daemon - live seams: connection, "
+                             "sessions(cache); still mock: fs, daemonConfig, memory, modelCatalog, "
+                             "accounts, roster/fleetTree/approvals/dashboard, routing/cron, "
+                             "sessionSettings, checkpoints.";
     } else {
         graph.store = new persistence::SqliteSessionStore(QString(), owner);
     }

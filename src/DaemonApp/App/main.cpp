@@ -26,6 +26,8 @@ using AppBase = QApplication;
 #include <QVariant>
 #include <QtQml/qqmlextensionplugin.h>
 
+#include <cstdio>
+
 namespace {
 
 // Loads the bundled fonts into the application database and sets Inter as the
@@ -241,6 +243,18 @@ int main(int argc, char* argv[])
         } else {
             application.openPageForRenderHarness(spec);
         }
+    }
+
+    // Headless connectivity self-check for the cross-repo E2E harness: block until the daemon-mode
+    // auto-connect Health round-trip resolves (or times out), emit a stable sentinel on stdout, and
+    // exit deterministically. Keeps the harness from racing the async connect.
+    const QByteArray waitReadyMs = qgetenv("DAEMON_APP_WAIT_READY");
+    if (!waitReadyMs.isEmpty()) {
+        const int timeoutMs = waitReadyMs.toInt() > 0 ? waitReadyMs.toInt() : 5000;
+        const bool ready = application.awaitConnectionReady(timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_READY %s\n", ready ? "ok" : "timeout");
+        std::fflush(stdout);
+        return ready ? 0 : 2;
     }
 
     if (maybeRunOffscreenRenderHarness(engine)) {
