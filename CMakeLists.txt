@@ -24,7 +24,8 @@ endif()
 
 # Qt Quick + Controls for the UI; QtWidgets on desktop for the tray.
 # QuickControls2 is needed for QQuickStyle (pinning the app style in main).
-find_package(Qt6 6.11 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Network Sql)
+# LinguistTools provides qt_add_translations (lupdate/lrelease + .qm embedding).
+find_package(Qt6 6.11 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Network Sql LinguistTools)
 if(NOT DAEMON_APP_MOBILE)
     find_package(Qt6 6.11 REQUIRED COMPONENTS Widgets)
 endif()
@@ -47,6 +48,17 @@ include(CompilerWarnings)
 include(Dependencies)
 
 add_subdirectory(src)
+
+# --- Internationalization -------------------------------------------------
+# A single translation catalog shared by both frontends: lupdate scans the
+# whole src tree (QML qsTr + C++ tr), lrelease compiles each i18n/*.ts to a
+# .qm, and qt_add_translations embeds them into the GUI (and TUI when built)
+# under the ":/i18n" resource prefix. main() loads them via QTranslator.
+#
+# The .ts files are committed; refresh them with `cmake --build . --target
+# update_translations` after changing strings. Add a locale by listing it in
+# DAEMON_APP_LOCALES and re-running that target.
+include(Translations)
 
 # Tests. Building/running them is opt-in (BUILD_TESTING, default ON) so it can
 # be turned off for lean release builds.

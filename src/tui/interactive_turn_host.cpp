@@ -36,7 +36,7 @@ void InteractiveTurnHost::onApprovalDecided(const QString &callId, const QString
         done.insert(QStringLiteral("durationMs"), 1400);
         done.insert(QStringLiteral("detailKind"), QStringLiteral("ansi-stream"));
         done.insert(QStringLiteral("stdout"),
-                    QStringLiteral("\u001b[32m\u2713\u001b[0m approved \u2014 command finished\n"));
+                    tr("\u001b[32m\u2713\u001b[0m approved \u2014 command finished\n"));
         m_doc->updateBlockMetadata(id, done);
     }
     emit documentChanged();
@@ -69,8 +69,8 @@ void InteractiveTurnHost::onClarifySubmitted(const QString &callId, const QStrin
         QVariantMap text;
         text.insert(QStringLiteral("type"), QStringLiteral("text"));
         text.insert(QStringLiteral("text"),
-                    QStringLiteral("\n\nThanks \u2014 proceeding with: ")
-                        + parts.join(QStringLiteral("; ")) + QStringLiteral("\n"));
+                    tr("\n\nThanks \u2014 proceeding with: %1\n")
+                        .arg(parts.join(QStringLiteral("; "))));
         QVariantMap flush;
         flush.insert(QStringLiteral("type"), QStringLiteral("flush"));
         m_ingest->ingestAll(QVariantList { text, flush });

@@ -34,7 +34,7 @@ Item {
             id: field
             Layout.fillWidth: true
             placeholderText: finder.indexing
-                ? qsTr("Indexing\u2026 (%1 files)").arg(finder.fileCount)
+                ? qsTr("Indexing\u2026 (%n file(s))", "", finder.fileCount)
                 : qsTr("Go to file\u2026")
             text: finder.query
             onTextChanged: finder.query = text

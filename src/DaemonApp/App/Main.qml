@@ -18,6 +18,11 @@ ApplicationWindow {
     title: qsTr("Daemon")
     color: Theme.background
 
+    // Right-to-left locales (e.g. Arabic) mirror the whole shell. Bound to the
+    // app layout direction, which Application updates on a live language switch.
+    LayoutMirroring.enabled: Qt.application.layoutDirection === Qt.RightToLeft
+    LayoutMirroring.childrenInherit: true
+
     // --- Adaptive shell state -----------------------------------------------
     // The active structure (SplitView or StackView) is rebuilt by the shell
     // Loader when the window size class changes. These hold the current

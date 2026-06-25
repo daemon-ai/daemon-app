@@ -38,7 +38,7 @@ void TuiOverlayHost::openModelPicker(ComposerSessionController* composer,
         return;
     }
     if (m_modelPicker == nullptr) {
-        m_modelPicker = new PaletteDialog(QStringLiteral("Model"), m_parent);
+        m_modelPicker = new PaletteDialog(tr("Model"), m_parent);
         connect(m_modelPicker, &PaletteDialog::activated, this,
                 [composer, focusComposer](const QString& id) {
                     bool ok = false;
@@ -73,7 +73,7 @@ void TuiOverlayHost::openCommandPalette(CommandRegistry* commands,
         return;
     }
     if (m_commandPalette == nullptr) {
-        m_commandPalette = new PaletteDialog(QStringLiteral("Commands"), m_parent);
+        m_commandPalette = new PaletteDialog(tr("Commands"), m_parent);
         connect(m_commandPalette, &PaletteDialog::activated, this,
                 [callbacks](const QString& id) {
                     if (callbacks.openManagerPage && callbacks.openManagerPage(id)) {

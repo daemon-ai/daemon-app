@@ -21,6 +21,7 @@ target_link_libraries(daemon-app
         Qt6::QuickControls2
         daemon-app::warnings
         # Core services
+        daemon-app::i18n
         daemon-app::persistence
         daemon-app::platform
         daemon-app::command

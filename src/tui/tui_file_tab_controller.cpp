@@ -28,7 +28,7 @@ TuiFileTabController::TuiFileTabController(fs::IFsService* fs, TabModel* tabs, Q
                     if (m_status != nullptr)
                         m_status->setText(QString());
                 } else if (c != nullptr && m_status != nullptr) {
-                    m_status->setText(QStringLiteral("Binary file - not editable"));
+                    m_status->setText(tr("Binary file - not editable"));
                 }
             });
     connect(m_fs, &fs::IFsService::writeResult, this,
@@ -38,9 +38,9 @@ TuiFileTabController::TuiFileTabController(fs::IFsService* fs, TabModel* tabs, Q
                 if (c != nullptr && ok) {
                     c->markSaved(revision);
                     if (m_status != nullptr)
-                        m_status->setText(QStringLiteral("Saved"));
+                        m_status->setText(tr("Saved"));
                 } else if (c != nullptr && m_status != nullptr) {
-                    m_status->setText(error.isEmpty() ? QStringLiteral("Save failed") : error);
+                    m_status->setText(error.isEmpty() ? tr("Save failed") : error);
                 }
             });
 }

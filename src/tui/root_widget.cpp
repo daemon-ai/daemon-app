@@ -87,7 +87,7 @@ QString titleForContent(const QString& markdown)
 {
     const QString trimmed = markdown.trimmed();
     if (trimmed.isEmpty()) {
-        return QStringLiteral("New session");
+        return QObject::tr("New session");
     }
     QString first = trimmed.section(QLatin1Char('\n'), 0, 0);
     while (first.startsWith(QLatin1Char('#'))) {
@@ -95,7 +95,7 @@ QString titleForContent(const QString& markdown)
     }
     first = first.trimmed();
     if (first.isEmpty()) {
-        return QStringLiteral("Session");
+        return QObject::tr("Session");
     }
     return first.left(24);
 }
@@ -104,7 +104,7 @@ QString titleForContent(const QString& markdown)
 QString pageMarkdown(int kind)
 {
     if (kind == TabModel::Settings) {
-        return QStringLiteral(
+        return QObject::tr(
             "# Settings\n\n"
             "A generic, non-transcript page hosted by the same tab strip.\n\n"
             "- Press **F8** to cycle the theme (Light / Dark / Sepia / Midnight)\n"
@@ -248,8 +248,8 @@ RootWidget::RootWidget()
                     return;
                 const int tabKind = kind == QStringLiteral("profile") ? TabModel::Profile
                                                                        : TabModel::Memory;
-                const QString base = tabKind == TabModel::Profile ? QStringLiteral("Profile")
-                                                                  : QStringLiteral("Memory");
+                const QString base = tabKind == TabModel::Profile ? tr("Profile")
+                                                                  : tr("Memory");
                 const QString label = title.isEmpty()
                     ? base
                     : base + QStringLiteral(" \u00b7 ") + title;
@@ -763,8 +763,8 @@ void RootWidget::wireViews()
             return;
         }
         auto* confirm = new ConfirmDialog(
-            QStringLiteral("Delete session"),
-            QStringLiteral("Permanently delete this session?"), this);
+            tr("Delete session"),
+            tr("Permanently delete this session?"), this);
         connect(confirm, &ConfirmDialog::confirmed, this,
                 [this, id] { m_services.store->deleteSession(id); });
     });
@@ -785,7 +785,7 @@ void RootWidget::wireViews()
         if (id < 0) {
             return;
         }
-        auto* dialog = new TextPromptDialog(QStringLiteral("Rename session"),
+        auto* dialog = new TextPromptDialog(tr("Rename session"),
                                             m_services.store->title(id), /*masked=*/false, this);
         connect(dialog, &TextPromptDialog::submitted, this, [this, id](const QString& text) {
             if (!text.trimmed().isEmpty()) {
@@ -908,7 +908,7 @@ void RootWidget::wireViews()
                         return;
                     }
                     const int id = m_active->sessionId;
-                    auto* dialog = new TextPromptDialog(QStringLiteral("Rename session"),
+                    auto* dialog = new TextPromptDialog(tr("Rename session"),
                                                         m_services.store->title(id), /*masked=*/false, this);
                     connect(dialog, &TextPromptDialog::submitted, this,
                             [this, id](const QString& text) {
@@ -945,8 +945,8 @@ void RootWidget::wireViews()
                         return;
                     }
                     auto* confirm = new ConfirmDialog(
-                        QStringLiteral("Clear session"),
-                        QStringLiteral("Remove all messages from this session?"), this);
+                        tr("Clear session"),
+                        tr("Remove all messages from this session?"), this);
                     connect(confirm, &ConfirmDialog::confirmed, this, [this] {
                         if (m_active != nullptr && m_active->controller->hasSession()) {
                             m_active->doc.loadMarkdown(QString());
@@ -1103,7 +1103,7 @@ void RootWidget::newTranscriptTab()
         return;
     }
     const int id = m_services.store->createSession(domain::UnitId());
-    m_tabModel->openTranscriptPinned(id, QStringLiteral("New session"));
+    m_tabModel->openTranscriptPinned(id, tr("New session"));
     // A new tab is a natural place to start typing.
     if (m_composer != nullptr) {
         m_composer->setFocus();
@@ -1231,7 +1231,7 @@ void RootWidget::wireSession(TabSession* s)
                 const QString convTitle = s->controller->hasSession()
                     ? m_services.store->title(s->sessionId)
                     : QStringLiteral("daemon");
-                emitDesktopNotification(convTitle, QStringLiteral("The turn finished."));
+                emitDesktopNotification(convTitle, tr("The turn finished."));
             }
         }
     });
@@ -1255,16 +1255,15 @@ void RootWidget::wireSession(TabSession* s)
         }
         std::fputs("\a", stdout); // BEL: most terminals raise an urgency hint
         std::fflush(stdout);
-        const QString what = kind == QStringLiteral("approval") ? QStringLiteral("approval")
-                                                                : QStringLiteral("credential");
+        const QString what = kind == QStringLiteral("approval") ? tr("approval")
+                                                                : tr("credential");
         if (terminal() != nullptr) {
-            terminal()->setTitle(QStringLiteral("\u25cf daemon \u2014 needs ") + what);
+            terminal()->setTitle(tr("\u25cf daemon \u2014 needs %1").arg(what));
         }
         const QString convTitle = (m_active != nullptr && m_active->controller->hasSession())
             ? m_services.store->title(m_active->sessionId)
             : QStringLiteral("daemon");
-        emitDesktopNotification(convTitle, QStringLiteral("The turn needs your ") + what
-                                    + QStringLiteral("."));
+        emitDesktopNotification(convTitle, tr("The turn needs your %1.").arg(what));
     });
     // Clear the title alert once the turn settles.
     connect(s->turn, &TurnController::turnFinished, this, [this, s] {
@@ -1278,8 +1277,8 @@ void RootWidget::wireSession(TabSession* s)
     connect(s->turn, &TurnController::hostRequested, this,
             [this, s](const QString& kind, const QString& prompt) {
                 const QString title = prompt.isEmpty()
-                    ? (kind == QStringLiteral("secret") ? QStringLiteral("Secret required")
-                                                        : QStringLiteral("Password required"))
+                    ? (kind == QStringLiteral("secret") ? tr("Secret required")
+                                                        : tr("Password required"))
                     : prompt;
                 auto* dialog = new TextPromptDialog(title, QString(), /*masked=*/true, this);
                 connect(dialog, &TextPromptDialog::submitted, this,
@@ -1551,13 +1550,13 @@ void RootWidget::openSessionSettingsOverlay()
 
     auto* dlg = new Tui::ZDialog(this);
     dlg->setOptions(Tui::ZWindow::DeleteOnClose);
-    dlg->setWindowTitle(QStringLiteral("Session settings"));
+    dlg->setWindowTitle(tr("Session settings"));
     dlg->setContentsMargins({ 2, 1, 2, 1 });
     auto* layout = new Tui::ZVBoxLayout();
     dlg->setLayout(layout);
 
     auto* hint = new Tui::ZLabel(
-        QStringLiteral("Enter / Space on a row cycles or toggles it · Esc closes"), dlg);
+        tr("Enter / Space on a row cycles or toggles it · Esc closes"), dlg);
     layout->addWidget(hint);
     layout->addSpacing(1);
 
@@ -1574,18 +1573,18 @@ void RootWidget::openSessionSettingsOverlay()
     auto* buttons = new Tui::ZHBoxLayout();
     layout->add(buttons);
     buttons->addStretch();
-    auto* closeBtn = new Tui::ZButton(QStringLiteral("Close"), dlg);
+    auto* closeBtn = new Tui::ZButton(tr("Close"), dlg);
     closeBtn->setDefault(true);
     buttons->addWidget(closeBtn);
 
     const auto sync = [ss, profileBtn, effortBtn, fastBtn, verboseBtn] {
-        profileBtn->setText(QStringLiteral("Profile: %1").arg(ss->profile()));
-        effortBtn->setText(QStringLiteral("Effort:  %1").arg(ss->effort()));
-        fastBtn->setText(QStringLiteral("Fast:    %1")
-                             .arg(ss->fast() ? QStringLiteral("on") : QStringLiteral("off")));
-        verboseBtn->setText(QStringLiteral("Verbose: %1")
-                                .arg(ss->verbose() ? QStringLiteral("on")
-                                                   : QStringLiteral("off")));
+        profileBtn->setText(tr("Profile: %1").arg(ss->profile()));
+        effortBtn->setText(tr("Effort:  %1").arg(ss->effort()));
+        fastBtn->setText(tr("Fast:    %1")
+                             .arg(ss->fast() ? tr("on") : tr("off")));
+        verboseBtn->setText(tr("Verbose: %1")
+                                .arg(ss->verbose() ? tr("on")
+                                                   : tr("off")));
     };
     sync();
 
@@ -1630,13 +1629,13 @@ void RootWidget::openCheckpointsOverlay()
 
     auto* dlg = new Tui::ZDialog(this);
     dlg->setOptions(Tui::ZWindow::DeleteOnClose);
-    dlg->setWindowTitle(QStringLiteral("Checkpoints"));
+    dlg->setWindowTitle(tr("Checkpoints"));
     dlg->setContentsMargins({ 2, 1, 2, 1 });
     auto* layout = new Tui::ZVBoxLayout();
     dlg->setLayout(layout);
 
     auto* hint = new Tui::ZLabel(
-        QStringLiteral("Enter restores the selected checkpoint · Esc closes"), dlg);
+        tr("Enter restores the selected checkpoint · Esc closes"), dlg);
     layout->addWidget(hint);
 
     auto* list = new Tui::ZListView(dlg);
@@ -1644,16 +1643,16 @@ void RootWidget::openCheckpointsOverlay()
     QStringList ids;
     for (const QVariantMap& c : rows) {
         ids << c.value(QStringLiteral("id")).toString();
-        display << QStringLiteral("%1  ·  %2  ·  %3 tok%4")
+        display << tr("%1  ·  %2  ·  %3 tok%4")
                        .arg(c.value(QStringLiteral("label")).toString(),
                             c.value(QStringLiteral("time")).toString(),
                             c.value(QStringLiteral("tokens")).toString(),
                             c.value(QStringLiteral("current")).toBool()
-                                ? QStringLiteral("  (current)")
+                                ? tr("  (current)")
                                 : QString());
     }
     if (display.isEmpty()) {
-        display << QStringLiteral("(no checkpoints)");
+        display << tr("(no checkpoints)");
     }
     list->setItems(display);
     if (list->model() != nullptr && !rows.isEmpty()) {
@@ -1665,9 +1664,9 @@ void RootWidget::openCheckpointsOverlay()
     auto* buttons = new Tui::ZHBoxLayout();
     layout->add(buttons);
     buttons->addStretch();
-    auto* restoreBtn = new Tui::ZButton(QStringLiteral("Restore"), dlg);
+    auto* restoreBtn = new Tui::ZButton(tr("Restore"), dlg);
     buttons->addWidget(restoreBtn);
-    auto* closeBtn = new Tui::ZButton(QStringLiteral("Close"), dlg);
+    auto* closeBtn = new Tui::ZButton(tr("Close"), dlg);
     closeBtn->setDefault(true);
     buttons->addWidget(closeBtn);
 
@@ -1965,7 +1964,7 @@ void RootWidget::updateTodos()
             todos->doneAt(i) ? QStringLiteral("\u2713") : QStringLiteral("\u25cb");
         parts << (glyph + QStringLiteral(" ") + todos->textAt(i));
     }
-    m_todos->setText(QStringLiteral("Tasks:  ") + parts.join(QStringLiteral("   ")));
+    m_todos->setText(tr("Tasks:  ") + parts.join(QStringLiteral("   ")));
 }
 
 void RootWidget::updateSubagents()
@@ -2005,7 +2004,7 @@ void RootWidget::updateSubagents()
         }
         parts << row;
     }
-    m_subagents->setText(QStringLiteral("Subagents:  ") + parts.join(QStringLiteral("   ")));
+    m_subagents->setText(tr("Subagents:  ") + parts.join(QStringLiteral("   ")));
 }
 
 void RootWidget::updateCompletion()

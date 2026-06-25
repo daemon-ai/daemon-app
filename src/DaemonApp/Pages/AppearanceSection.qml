@@ -37,6 +37,23 @@ ColumnLayout {
         }
     }
 
+    SectionLabel { text: qsTr("Language") }
+
+    SettingRow {
+        label: qsTr("Language")
+        description: qsTr("Language used across the interface. Applied immediately.")
+        Kit.Dropdown {
+            id: languageCombo
+            Layout.preferredWidth: 200
+            // {code,label} list from UiSettings; show labels, persist codes.
+            readonly property var langs: UiSettings.availableLanguages
+            model: langs.map(function(entry) { return entry.label })
+            Component.onCompleted: currentIndex = Math.max(0, langs.findIndex(
+                function(entry) { return entry.code === UiSettings.language }))
+            onActivated: UiSettings.language = langs[currentIndex].code
+        }
+    }
+
     SectionLabel { text: qsTr("Editor text") }
 
     SettingRow {

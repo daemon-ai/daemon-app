@@ -448,7 +448,7 @@ void TranscriptView::paintEvent(Tui::ZPaintEvent *event)
         const int screenRow = m_anchors.at(m_rewindIndex).line - m_scrollTop;
         if (screenRow >= 0 && screenRow < h) {
             p->writeWithColors(0, screenRow, QStringLiteral("\u25b6"), tpal::accent(), pageBg);
-            const QString hint = QStringLiteral("Enter restore  e edit  Esc cancel");
+            const QString hint = tr("Enter restore  e edit  Esc cancel");
             const int hx = contentW - static_cast<int>(hint.size()) - 1;
             if (hx > 0) {
                 p->writeWithColors(hx, screenRow, hint, tpal::accent(), pageBg);

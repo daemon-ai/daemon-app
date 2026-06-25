@@ -97,6 +97,12 @@ protected:
     // (X) event and hide instead of quitting.
     bool eventFilter(QObject* watched, QEvent* event) override;
 
+private slots:
+    // Reload translations and retranslate the live QML scene when the user picks
+    // a new language in Settings (UiSettings.language). Connected generically so
+    // the App module need not depend on the Settings type.
+    void onLanguageChanged();
+
 private:
     // Shared GUI/TUI service graph (session store, connection, fs, memory, nav, first-run,
     // config, models, accounts, profiles, fleet, automation, session facades). Read members
@@ -113,4 +119,8 @@ private:
     // Transcript exporter, exposed to QML as `Exporter`.
     TranscriptExporter* m_exporter = nullptr;
     QQuickWindow* m_window = nullptr;
+    // Held for live language switching: the engine to retranslate and the
+    // UiSettings singleton whose `language` property drives it.
+    QQmlApplicationEngine* m_engine = nullptr;
+    QObject* m_uiSettings = nullptr;
 };

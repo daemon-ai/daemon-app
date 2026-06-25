@@ -13,6 +13,29 @@ add_test(NAME tst_fonts COMMAND tst_fonts)
 # QRawFont needs a platform integration; run headless in CI.
 set_tests_properties(tst_fonts PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_localization: the shared runtime translation layer (src/core/i18n) - the
+# offered locale list, code->name resolution, that installing the embedded
+# pseudolocale actually translates marked C++ and QML strings, that switching
+# back to the source language uninstalls it, and that Arabic reports RTL. The
+# pseudolocale catalog is compiled (lrelease) and embedded into the test under
+# ":/i18n" so applyLocale("pseudo") can load it; custom lupdate/lrelease target
+# names avoid clashing with the app-wide update_translations/release_translations.
+qt_add_executable(tst_localization tst_localization.cpp)
+target_link_libraries(tst_localization
+    PRIVATE
+        Qt6::Test
+        daemon-app::i18n
+)
+qt_add_translations(tst_localization
+    TS_FILES "${CMAKE_SOURCE_DIR}/i18n/daemon-app_pseudo.ts"
+    RESOURCE_PREFIX "/i18n"
+    NO_GENERATE_PLURALS_TS_FILE
+    LUPDATE_TARGET tst_localization_lupdate
+    LRELEASE_TARGET tst_localization_lrelease
+)
+add_test(NAME tst_localization COMMAND tst_localization)
+set_tests_properties(tst_localization PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_settings_store: the shared client-local preference store (Phase 0) - typed
 # get/set defaults, setupComplete + last-connection convenience accessors, change
 # signalling, and write de-duplication.

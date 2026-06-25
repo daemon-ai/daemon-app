@@ -177,6 +177,7 @@ target_link_libraries(daemon-tui
         PkgConfig::TERMPAINT
         Qt6::Core
         Qt6::Core5Compat
+        daemon-app::i18n
         daemon-app::tui_viewmodels
         daemon-app::presentation
         daemon-app::theme_core

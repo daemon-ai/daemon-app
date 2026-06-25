@@ -1,5 +1,7 @@
 #include "application.h"
 
+#include "i18n/localization.h"
+
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
 #include <QGuiApplication>
 using AppBase = QGuiApplication;
@@ -20,6 +22,7 @@ using AppBase = QApplication;
 #include <QQmlError>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QSettings>
 #include <QString>
 #include <QStringList>
 #include <QTimer>
@@ -194,6 +197,19 @@ int main(int argc, char* argv[])
     QQuickStyle::setStyle(QStringLiteral("Basic"));
 
     loadBundledFonts();
+
+    // Install translations for the persisted UI language (default: follow the OS
+    // locale) before the scene loads, so the first frame is already localized.
+    // The settings picker can switch it live later (Application wires the
+    // languageChanged signal to a QQmlEngine retranslate).
+    {
+        const QString language = QSettings(QStringLiteral("daemon-app"),
+                                           QStringLiteral("daemon-app"))
+                                     .value(QStringLiteral("ui/language"),
+                                            QStringLiteral("system"))
+                                     .toString();
+        app.setLayoutDirection(i18n::applyLocale(language));
+    }
 
     Application application;
 

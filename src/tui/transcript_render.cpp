@@ -312,11 +312,11 @@ void emitMessageHeader(QVector<RenderLine> &dst, be::MessageRole role, bool firs
     ZColor tone;
     switch (role) {
     case be::MessageRole::User:
-        label = QStringLiteral("YOU");
+        label = QObject::tr("YOU");
         tone = tpal::accent();
         break;
     case be::MessageRole::Assistant:
-        label = QStringLiteral("DAEMON");
+        label = QObject::tr("DAEMON");
         tone = tpal::statusOk();
         break;
     default:
@@ -367,7 +367,7 @@ void emitReasoning(QVector<RenderLine> &dst, const be::BlockRecord &b, int width
     head.fg = tpal::faint();
     head.attr |= ZTextAttribute::Bold;
     QString headText = tpal::reasoningGlyph() + QLatin1Char(' ')
-        + (running ? QStringLiteral("Reasoning\u2026") : QStringLiteral("Reasoning"));
+        + (running ? QObject::tr("Reasoning\u2026") : QObject::tr("Reasoning"));
     RenderLine headLine { mkSpan(headText, head) };
     if (!duration.isEmpty()) {
         Style dim;
@@ -424,7 +424,7 @@ void emitToolBody(QVector<RenderLine> &body, const QVariantMap &view, int inner)
         Style s;
         s.fg = tpal::muted();
         const QString url = view.value(QStringLiteral("imageUrl")).toString();
-        emitMono(body, QStringLiteral("[image: ") + url + QLatin1Char(']'), inner, s);
+        emitMono(body, QObject::tr("[image: ") + url + QLatin1Char(']'), inner, s);
         return;
     }
     // Default: a free-text body, else any stdout/stderr present.
@@ -460,7 +460,7 @@ QVariantList clarifyQuestions(const QVariantMap &metadata)
     one.insert(QStringLiteral("id"), QStringLiteral("q"));
     one.insert(QStringLiteral("prompt"),
                metadata.value(QStringLiteral("question"),
-                              QStringLiteral("The agent needs your input."))
+                              QObject::tr("The agent needs your input."))
                    .toString());
     one.insert(QStringLiteral("choices"), metadata.value(QStringLiteral("choices")).toList());
     one.insert(QStringLiteral("multiSelect"), false);
@@ -563,7 +563,7 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
         if (cmd.isEmpty()) {
             cmd = subtitle;
         }
-        emitMono(body, QStringLiteral("\u26a0 Approve: ") + cmd, inner, warn);
+        emitMono(body, QObject::tr("\u26a0 Approve: ") + cmd, inner, warn);
 
         const bool allowPermanent = b.metadata.value(QStringLiteral("allowPermanent")).toBool();
         Style sp;
@@ -578,10 +578,10 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
             c.kind = kind;
             addControl(rowIdx, c);
         };
-        button(QStringLiteral("Approve"), Control::Kind::Approve, tpal::statusOk());
-        button(QStringLiteral("Deny"), Control::Kind::Deny, tpal::statusError());
+        button(QObject::tr("Approve"), Control::Kind::Approve, tpal::statusOk());
+        button(QObject::tr("Deny"), Control::Kind::Deny, tpal::statusError());
         if (allowPermanent) {
-            button(QStringLiteral("Allow permanently"), Control::Kind::Permanent, tpal::warn());
+            button(QObject::tr("Allow permanently"), Control::Kind::Permanent, tpal::warn());
         }
         body.push_back(row);
     } else if (variant == QStringLiteral("clarify") && !answered) {
@@ -602,7 +602,7 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
                 Style hint;
                 hint.fg = tpal::muted();
                 hint.attr |= ZTextAttribute::Italic;
-                body.push_back(RenderLine { mkSpan(QStringLiteral("  (select all that apply)"), hint) });
+                body.push_back(RenderLine { mkSpan(QObject::tr("  (select all that apply)"), hint) });
             }
 
             const QStringList sel = draft.selected.value(qid);
@@ -634,8 +634,8 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
                     Style ph;
                     ph.fg = tpal::muted();
                     ph.attr |= ZTextAttribute::Italic;
-                    const QString placeholder = choices.isEmpty() ? QStringLiteral("Type a reply\u2026")
-                                                                  : QStringLiteral("Or type a reply\u2026");
+                    const QString placeholder = choices.isEmpty() ? QObject::tr("Type a reply\u2026")
+                                                                  : QObject::tr("Or type a reply\u2026");
                     const int rowIdx = static_cast<int>(body.size());
                     body.push_back(RenderLine { mkSpan(QStringLiteral("  \u203a "), s),
                                                 mkSpan(placeholder, ph) });
@@ -660,7 +660,7 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
         Style sp;
         const int rowIdx = static_cast<int>(body.size());
         RenderLine row { mkSpan(QStringLiteral("  "), sp),
-                         mkSpan(QStringLiteral(" Submit "),
+                         mkSpan(QStringLiteral(" ") + QObject::tr("Submit") + QStringLiteral(" "),
                                 controlStyle(gi == activeControl, tpal::statusOk())) };
         body.push_back(row);
         Control c;
@@ -738,7 +738,7 @@ void emitCodeFence(QVector<RenderLine> &dst, const be::BlockRecord &b, int width
     label.fg = tpal::muted();
     label.bg = tpal::codeBg();
     body.push_back(RenderLine {
-        mkSpan(QStringLiteral("\u2039") + (lang.isEmpty() ? QStringLiteral("code") : lang)
+        mkSpan(QStringLiteral("\u2039") + (lang.isEmpty() ? QObject::tr("code") : lang)
                    + QStringLiteral("\u203a"),
                label),
     });
@@ -986,13 +986,13 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
         case be::BlockType::Image: {
             Style s;
             s.fg = tpal::muted();
-            emitMono(out, QStringLiteral("[image] ") + b.markdown().trimmed(), W, s);
+            emitMono(out, QObject::tr("[image] ") + b.markdown().trimmed(), W, s);
             break;
         }
         case be::BlockType::Math: {
             Style s;
             s.fg = tpal::muted();
-            emitMono(out, QStringLiteral("[math] ") + be::fencedBodyOf(b.markdown()).trimmed(), W, s);
+            emitMono(out, QObject::tr("[math] ") + be::fencedBodyOf(b.markdown()).trimmed(), W, s);
             break;
         }
         case be::BlockType::Paragraph:

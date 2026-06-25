@@ -89,12 +89,12 @@ QVector<Span> ComposerChrome::buildSpans() const
     if (m_session != nullptr && m_session->reverseSearching()) {
         const bool found = m_session->reverseSearchFound();
         const Tui::ZColor label = found ? tpal::accent() : tpal::warn();
-        spans << mkSpan(found ? QStringLiteral("(reverse-i-search)`")
-                              : QStringLiteral("(failed reverse-i-search)`"),
+        spans << mkSpan(found ? tr("(reverse-i-search)`")
+                              : tr("(failed reverse-i-search)`"),
                         label);
         spans << mkSpan(m_session->reverseSearchQuery(), tpal::fg());
         spans << mkSpan(QStringLiteral("': "), label);
-        spans << mkSpan(QStringLiteral("Enter accept  \u00b7  Ctrl+R next  \u00b7  Esc cancel"),
+        spans << mkSpan(tr("Enter accept  \u00b7  Ctrl+R next  \u00b7  Esc cancel"),
                         tpal::faint());
         return spans;
     }
@@ -105,7 +105,7 @@ QVector<Span> ComposerChrome::buildSpans() const
 
     const QString state = m_turn->turnState();
     if (state == QStringLiteral("error")) {
-        const QString msg = m_turn->errorText().isEmpty() ? QStringLiteral("turn failed")
+        const QString msg = m_turn->errorText().isEmpty() ? tr("turn failed")
                                                            : m_turn->errorText();
         spans << mkSpan(tpal::warnGlyph() + QStringLiteral(" ") + msg, tpal::statusError());
         return spans;
@@ -115,23 +115,21 @@ QVector<Span> ComposerChrome::buildSpans() const
         const int secs = m_turn->elapsedMs() / 1000;
         const QString spin = tpal::spinnerFrame(m_spinnerTick);
         if (state == QStringLiteral("stalled")) {
-            spans << mkSpan(spin + QStringLiteral(" Still thinking\u2026 ")
-                                + QString::number(secs) + QStringLiteral("s"),
+            spans << mkSpan(spin + tr(" Still thinking\u2026 %1s").arg(secs),
                             tpal::warn());
         } else {
-            spans << mkSpan(spin + QStringLiteral(" Thinking\u2026 ")
-                                + QString::number(secs) + QStringLiteral("s"),
+            spans << mkSpan(spin + tr(" Thinking\u2026 %1s").arg(secs),
                             tpal::accent());
         }
         spans << mkSpan(QStringLiteral("   "), tpal::muted());
-        spans << mkSpan(tpal::stopGlyph() + QStringLiteral(" Esc stop"), tpal::muted());
+        spans << mkSpan(tpal::stopGlyph() + tr(" Esc stop"), tpal::muted());
         return spans;
     }
 
     // Idle: a dim affordance hint, plus the shared current-model name (model pill).
-    spans << mkSpan(tpal::sendGlyph() + QStringLiteral(" Enter send"), tpal::muted());
+    spans << mkSpan(tpal::sendGlyph() + tr(" Enter send"), tpal::muted());
     spans << mkSpan(QStringLiteral("  \u00b7  "), tpal::faint());
-    spans << mkSpan(tpal::steerGlyph() + QStringLiteral(" Ctrl+Enter steer"), tpal::muted());
+    spans << mkSpan(tpal::steerGlyph() + tr(" Ctrl+Enter steer"), tpal::muted());
     if (m_session != nullptr && !m_session->currentModel().isEmpty()) {
         spans << mkSpan(QStringLiteral("  \u00b7  "), tpal::faint());
         spans << mkSpan(m_session->currentModel(), tpal::muted());

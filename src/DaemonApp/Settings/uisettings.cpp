@@ -1,8 +1,10 @@
 #include "uisettings.h"
 
+#include "i18n/localization.h"
 #include "theme/theme_palette.h"
 
 #include <QVariant>
+#include <QVariantMap>
 
 #include <algorithm>
 
@@ -75,6 +77,16 @@ bool isKnownTheme(const QString& theme)
     return theme::ThemePalette::isKnown(theme);
 }
 
+bool isKnownLanguage(const QString& code)
+{
+    for (const i18n::LocaleOption& opt : i18n::availableLocales()) {
+        if (opt.code == code) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace
 
 UiSettings::UiSettings(QObject* parent) : QObject(parent)
@@ -88,6 +100,10 @@ void UiSettings::load()
     const QString theme = m_settings.value(QStringLiteral("theme"), m_theme).toString();
     if (isKnownTheme(theme)) {
         m_theme = theme;
+    }
+    const QString language = m_settings.value(QStringLiteral("language"), m_language).toString();
+    if (isKnownLanguage(language)) {
+        m_language = language;
     }
     const QString category
         = m_settings.value(QStringLiteral("fontCategory"), m_fontCategory).toString();
@@ -149,6 +165,26 @@ void UiSettings::setTheme(const QString& theme)
     m_theme = theme;
     store(QStringLiteral("theme"), m_theme);
     emit themeChanged();
+}
+
+void UiSettings::setLanguage(const QString& language)
+{
+    if (language == m_language || !isKnownLanguage(language)) {
+        return;
+    }
+    m_language = language;
+    store(QStringLiteral("language"), m_language);
+    emit languageChanged();
+}
+
+QVariantList UiSettings::availableLanguages() const
+{
+    QVariantList out;
+    for (const i18n::LocaleOption& opt : i18n::availableLocales()) {
+        out.append(QVariantMap{ { QStringLiteral("code"), opt.code },
+                                { QStringLiteral("label"), opt.label } });
+    }
+    return out;
 }
 
 void UiSettings::setFontCategory(const QString& category)
@@ -318,6 +354,7 @@ void UiSettings::setShowUserRail(bool on)
 void UiSettings::resetAll()
 {
     setTheme(QStringLiteral("Light"));
+    setLanguage(QStringLiteral("system"));
     setFontCategory(QStringLiteral("Sans"));
     selectFont(QStringLiteral("Sans"), 0);
     selectFont(QStringLiteral("Serif"), 0);

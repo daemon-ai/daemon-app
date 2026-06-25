@@ -36,7 +36,7 @@ void SearchInputBox::paintEvent(Tui::ZPaintEvent* event)
     const QString q = text();
     if (q.isEmpty()) {
         if (x < w) {
-            p->writeWithColors(x, 0, QStringLiteral("Search sessions").left(w - x),
+            p->writeWithColors(x, 0, tr("Search sessions").left(w - x),
                                tpal::muted(), bg);
         }
         return;

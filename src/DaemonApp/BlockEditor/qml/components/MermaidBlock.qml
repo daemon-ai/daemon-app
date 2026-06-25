@@ -109,7 +109,7 @@ Item {
 
         Text {
             width: parent.width
-            text: "Diagram error: " + controller.errorText
+            text: qsTr("Diagram error: %1").arg(controller.errorText)
             color: Theme.mutedText
             font.pixelSize: Theme.captionFontSize
             wrapMode: Text.Wrap

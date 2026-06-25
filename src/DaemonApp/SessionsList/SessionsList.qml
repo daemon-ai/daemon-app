@@ -201,8 +201,7 @@ Rectangle {
                     }
 
                     QQC.Label {
-                        text: convModel.count === 1 ? qsTr("1 session")
-                                                    : qsTr("%1 sessions").arg(convModel.count)
+                        text: qsTr("%n session(s)", "", convModel.count)
                         color: Theme.countText
                         font.family: FontIcons.display
                         font.pixelSize: 11

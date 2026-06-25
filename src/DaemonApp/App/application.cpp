@@ -28,12 +28,15 @@
 #include "status_bar_model.h"
 #include "transcript_exporter.h"
 
+#include "i18n/localization.h"
+
 #include <QCoreApplication>
 #include <QEvent>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QString>
 
 #include <core/formula.h>
 #include <latex.h>
@@ -72,6 +75,10 @@ Application::~Application()
 
 void Application::registerContext(QQmlApplicationEngine& engine)
 {
+    // Held so a language change can retranslate the live scene (see
+    // onLanguageChanged, wired in completeWiring once the singleton exists).
+    m_engine = &engine;
+
     // Shared store; QML view models bind their `store` property to this.
     engine.rootContext()->setContextProperty(QStringLiteral("SessionStore"), m_services.store);
 
@@ -184,6 +191,16 @@ void Application::completeWiring(QQmlApplicationEngine& engine)
     connect(m_platform, &platform::IPlatformServices::quitRequested, this,
             [] { QCoreApplication::quit(); });
 
+    // Live language switching: the DaemonApp.Settings/UiSettings singleton owns
+    // the persisted `language`; reload translations and retranslate the scene
+    // whenever it changes. Resolved + connected generically (QObject + property)
+    // so this module needs no dependency on the Settings C++ type.
+    m_uiSettings = engine.singletonInstance<QObject*>(QStringLiteral("DaemonApp.Settings"),
+                                                      QStringLiteral("UiSettings"));
+    if (m_uiSettings != nullptr) {
+        connect(m_uiSettings, SIGNAL(languageChanged()), this, SLOT(onLanguageChanged()));
+    }
+
     const bool trayInstalled = m_platform->installTray(QCoreApplication::applicationName());
 
     // Close-to-tray: only when a tray is actually present, so a desktop without a
@@ -217,6 +234,20 @@ bool Application::notifyGate(const QString& title, const QString& body)
         return false;
     }
     return m_platform->notify(title, body);
+}
+
+void Application::onLanguageChanged()
+{
+    if (m_uiSettings == nullptr) {
+        return;
+    }
+    const QString code = m_uiSettings->property("language").toString();
+    QGuiApplication::setLayoutDirection(i18n::applyLocale(code));
+    if (m_engine != nullptr) {
+        // Re-evaluates every qsTr()/tr() binding in the live QML scene so the UI
+        // updates in place without a restart.
+        m_engine->retranslate();
+    }
 }
 
 bool Application::eventFilter(QObject* watched, QEvent* event)

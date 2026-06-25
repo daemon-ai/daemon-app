@@ -93,7 +93,7 @@ QVector<Span> StatusBarView::buildLeft() const
     const QString tone = m_model->gatewayTone();
     const bool alert = m_model->gatewayOffline() || m_model->gatewayDegraded();
     const Tui::ZColor gw = tpal::gatewayToneColor(tone);
-    spans << mkSpan(tpal::gatewayGlyph(alert) + QStringLiteral(" Gateway "), gw)
+    spans << mkSpan(tpal::gatewayGlyph(alert) + tr(" Gateway "), gw)
           << mkSpan(m_model->gatewayState(), gw);
 
     spans << mkSpan(separator(), tpal::muted());
@@ -101,8 +101,8 @@ QVector<Span> StatusBarView::buildLeft() const
     const QString detail = m_model->agentsDetail();
     const bool failed = m_model->agentsFailed() > 0;
     const Tui::ZColor agentsFg = failed ? tpal::statusError() : tpal::faint();
-    spans << mkSpan(tpal::agentsGlyph() + QStringLiteral(" Agents "), agentsFg)
-          << mkSpan(detail.isEmpty() ? QStringLiteral("idle") : detail, agentsFg);
+    spans << mkSpan(tpal::agentsGlyph() + tr(" Agents "), agentsFg)
+          << mkSpan(detail.isEmpty() ? tr("idle") : detail, agentsFg);
     return spans;
 }
 
@@ -140,7 +140,7 @@ QVector<Span> StatusBarView::buildRight() const
         QString usage = m_model->costLabel();
         const int tok = m_model->tokensIn() + m_model->tokensOut();
         if (tok > 0) {
-            usage += QStringLiteral(" ") + m_model->abbrev(tok) + QStringLiteral(" tok");
+            usage += QStringLiteral(" ") + m_model->abbrev(tok) + tr(" tok");
         }
         spans << mkSpan(usage, tpal::muted());
     }
