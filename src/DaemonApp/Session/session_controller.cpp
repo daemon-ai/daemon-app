@@ -32,7 +32,7 @@ void SessionController::setStore(QObject* store)
     refresh();
 }
 
-void SessionController::open(int sessionId)
+void SessionController::open(const QString& sessionId)
 {
     if (m_currentId == sessionId) {
         return;
@@ -46,7 +46,7 @@ void SessionController::open(int sessionId)
 void SessionController::appendUserText(const QString& text)
 {
     const QString trimmed = text.trimmed();
-    if (!m_store || m_currentId < 0 || trimmed.isEmpty()) {
+    if (!m_store || m_currentId.isEmpty() || trimmed.isEmpty()) {
         return;
     }
     // Prefix a message boundary marker (role layer, Strategy C) so the persisted
@@ -67,7 +67,7 @@ void SessionController::appendUserText(const QString& text)
 
 void SessionController::updateContent(const QString& markdown)
 {
-    if (!m_store || m_currentId < 0 || markdown == m_content) {
+    if (!m_store || m_currentId.isEmpty() || markdown == m_content) {
         return;
     }
     // Adopt locally first so the store's changed() -> refresh() is a no-op for
@@ -78,33 +78,34 @@ void SessionController::updateContent(const QString& markdown)
 
 void SessionController::moveCurrentToTrash()
 {
-    if (!m_store || m_currentId < 0) {
+    if (!m_store || m_currentId.isEmpty()) {
         return;
     }
-    const int archivedId = m_currentId;
+    const QString archivedId = m_currentId;
     // Clear the current selection first so the editor falls back to the empty
     // state; the store's changed() refreshes the lists (the session moves
     // into the Trash scope).
-    m_currentId = -1;
+    m_currentId.clear();
     m_content.clear();
     emit currentChanged();
     emit sessionChanged();
     m_store->setArchived(archivedId, true); // emits changed() -> refresh()
 }
 
-int SessionController::createSession(const QString& agentId)
+QString SessionController::createSession(const QString& agentId)
 {
     if (!m_store) {
-        return -1;
+        return {};
     }
-    const int id = m_store->createSession(domain::UnitId(agentId));
+    const QString id = m_store->newSessionId(domain::UnitId(agentId));
     open(id);
     return id;
 }
 
 void SessionController::refresh()
 {
-    const QString next = (m_store && m_currentId >= 0) ? m_store->content(m_currentId) : QString{};
+    const QString next =
+        (m_store && !m_currentId.isEmpty()) ? m_store->content(m_currentId) : QString{};
     if (next == m_content) {
         return;
     }

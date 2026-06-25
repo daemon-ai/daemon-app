@@ -28,7 +28,7 @@ ApplicationWindow {
     // Loader when the window size class changes. These hold the current
     // selection so the rebuilt structure can restore the same scope and open
     // session instead of resetting to the empty state.
-    property int activeSessionId: -1
+    property string activeSessionId: ""
     property bool hasScope: false
     property int scopeNodeType: 0
     property int scopeId: -1
@@ -267,7 +267,7 @@ ApplicationWindow {
                 SplitView.minimumWidth: 320
                 Component.onCompleted: {
                     root.activeSessionPane = sessionExpanded;
-                    if (root.activeSessionId >= 0)
+                    if (root.activeSessionId !== "")
                         open(root.activeSessionId);
                 }
             }
@@ -321,7 +321,7 @@ ApplicationWindow {
                 Session {
                     Component.onCompleted: {
                         root.activeSessionPane = this;
-                        if (root.activeSessionId >= 0)
+                        if (root.activeSessionId !== "")
                             open(root.activeSessionId);
                     }
                     onBackRequested: compactStack.pop()

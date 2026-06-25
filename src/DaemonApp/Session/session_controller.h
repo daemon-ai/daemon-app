@@ -14,7 +14,7 @@ class SessionController : public QObject {
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(QObject* store READ store WRITE setStore NOTIFY storeChanged)
-    Q_PROPERTY(int currentId READ currentId NOTIFY currentChanged)
+    Q_PROPERTY(QString currentId READ currentId NOTIFY currentChanged)
     Q_PROPERTY(QString content READ content NOTIFY contentChanged)
     Q_PROPERTY(bool hasSession READ hasSession NOTIFY currentChanged)
 
@@ -24,14 +24,14 @@ public:
     [[nodiscard]] QObject* store() const;
     void setStore(QObject* store);
 
-    [[nodiscard]] int currentId() const { return m_currentId; }
+    [[nodiscard]] QString currentId() const { return m_currentId; }
     [[nodiscard]] QString content() const { return m_content; }
-    [[nodiscard]] bool hasSession() const { return m_currentId >= 0; }
+    [[nodiscard]] bool hasSession() const { return !m_currentId.isEmpty(); }
 
-    Q_INVOKABLE void open(int sessionId);
+    Q_INVOKABLE void open(const QString& sessionId);
     Q_INVOKABLE void appendUserText(const QString& text);
-    // Create a session owned by the given agent node (empty = unassigned).
-    Q_INVOKABLE int createSession(const QString& agentId = QString());
+    // Create a session owned by the given agent node (empty = unassigned); returns its SessionId.
+    Q_INVOKABLE QString createSession(const QString& agentId = QString());
     // Persist an in-place edit of the open session from the Transcript.
     // Adopts the markdown locally first so the store's changed() -> refresh()
     // does not echo back as a contentChanged() (which would reload the editor and
@@ -54,6 +54,6 @@ private:
     void refresh();
 
     persistence::ISessionStore* m_store = nullptr;
-    int m_currentId = -1;
+    QString m_currentId;
     QString m_content;
 };

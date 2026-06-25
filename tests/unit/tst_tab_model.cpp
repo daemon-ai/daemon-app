@@ -16,6 +16,8 @@ private:
     {
         return m.data(m.index(row, 0), role).value<T>();
     }
+    // Transcript session ids are opaque strings (roadmap P3); the tests use "s-N".
+    static QString sid(int n) { return QStringLiteral("s-%1").arg(n); }
 
 private slots:
     // Opening a fresh session appends a transcript tab, activates it, and
@@ -25,14 +27,14 @@ private slots:
         TabModel model;
         QSignalSpy currentSpy(&model, &TabModel::currentTabChanged);
 
-        const int id0 = model.openTranscript(10, QStringLiteral("Alpha"));
+        const int id0 = model.openTranscript(sid(10), QStringLiteral("Alpha"));
         QCOMPARE(model.count(), 1);
         QCOMPARE(model.currentIndex(), 0);
-        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), 10);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::SessionIdRole), sid(10));
         QCOMPARE(roleAt<QString>(model, 0, TabModel::TitleRole), QStringLiteral("Alpha"));
         QVERIFY(roleAt<bool>(model, 0, TabModel::CurrentRole));
 
-        const int id1 = model.openTranscript(20, QStringLiteral("Beta"));
+        const int id1 = model.openTranscript(sid(20), QStringLiteral("Beta"));
         QCOMPARE(model.count(), 2);
         QCOMPARE(model.currentIndex(), 1);
         QVERIFY(id1 != id0);
@@ -49,11 +51,11 @@ private slots:
     void openTranscriptReusesExistingTab()
     {
         TabModel model;
-        const int id0 = model.openTranscript(10, QStringLiteral("Alpha"));
-        model.openTranscript(20, QStringLiteral("Beta")); // active -> row 1
+        const int id0 = model.openTranscript(sid(10), QStringLiteral("Alpha"));
+        model.openTranscript(sid(20), QStringLiteral("Beta")); // active -> row 1
 
         QSignalSpy insertSpy(&model, &TabModel::rowsInserted);
-        const int again = model.openTranscript(10, QStringLiteral("Alpha (edited)"));
+        const int again = model.openTranscript(sid(10), QStringLiteral("Alpha (edited)"));
 
         QCOMPARE(again, id0);
         QCOMPARE(insertSpy.count(), 0);   // no new row
@@ -67,11 +69,11 @@ private slots:
     void openPageIsSingletonPerKind()
     {
         TabModel model;
-        model.openTranscript(10, QStringLiteral("Alpha"));
+        model.openTranscript(sid(10), QStringLiteral("Alpha"));
         const int settings = model.openPage(TabModel::Settings, QStringLiteral("Settings"));
         QCOMPARE(model.count(), 2);
         QCOMPARE(roleAt<int>(model, 1, TabModel::KindRole), int(TabModel::Settings));
-        QCOMPARE(roleAt<int>(model, 1, TabModel::SessionIdRole), -1);
+        QCOMPARE(roleAt<QString>(model, 1, TabModel::SessionIdRole), QString());
 
         const int again = model.openPage(TabModel::Settings, QStringLiteral("Settings"));
         QCOMPARE(again, settings);
@@ -84,9 +86,9 @@ private slots:
     void closingTabBeforeActiveShiftsIndex()
     {
         TabModel model;
-        model.openTranscript(10, QStringLiteral("Alpha"));
-        const int idB = model.openTranscript(20, QStringLiteral("Beta"));
-        model.openTranscript(30, QStringLiteral("Gamma")); // active = row 2 (Gamma)
+        model.openTranscript(sid(10), QStringLiteral("Alpha"));
+        const int idB = model.openTranscript(sid(20), QStringLiteral("Beta"));
+        model.openTranscript(sid(30), QStringLiteral("Gamma")); // active = row 2 (Gamma)
         model.activate(1);                                  // active = Beta (row 1)
         QCOMPARE(model.currentIndex(), 1);
 
@@ -102,9 +104,9 @@ private slots:
     void closingActiveTabSelectsNeighbour()
     {
         TabModel model;
-        model.openTranscript(10, QStringLiteral("Alpha"));
-        const int idB = model.openTranscript(20, QStringLiteral("Beta"));
-        const int idG = model.openTranscript(30, QStringLiteral("Gamma"));
+        model.openTranscript(sid(10), QStringLiteral("Alpha"));
+        const int idB = model.openTranscript(sid(20), QStringLiteral("Beta"));
+        const int idG = model.openTranscript(sid(30), QStringLiteral("Gamma"));
         model.activate(1); // active = Beta
 
         QSignalSpy closedSpy(&model, &TabModel::tabClosed);
@@ -121,8 +123,8 @@ private slots:
     void closingLastActiveTabFallsBackLeft()
     {
         TabModel model;
-        const int idA = model.openTranscript(10, QStringLiteral("Alpha"));
-        model.openTranscript(20, QStringLiteral("Beta")); // active = row 1 (Beta)
+        const int idA = model.openTranscript(sid(10), QStringLiteral("Alpha"));
+        model.openTranscript(sid(20), QStringLiteral("Beta")); // active = row 1 (Beta)
 
         model.closeTab(1); // remove the active right-most tab
         QCOMPARE(model.count(), 1);
@@ -134,7 +136,7 @@ private slots:
     void closingOnlyTabEmptiesModel()
     {
         TabModel model;
-        model.openTranscript(10, QStringLiteral("Alpha"));
+        model.openTranscript(sid(10), QStringLiteral("Alpha"));
 
         QSignalSpy currentSpy(&model, &TabModel::currentTabChanged);
         model.closeTab(0);
@@ -149,9 +151,9 @@ private slots:
     void cycleWrapsAround()
     {
         TabModel model;
-        model.openTranscript(10, QStringLiteral("Alpha"));
-        model.openTranscript(20, QStringLiteral("Beta"));
-        model.openTranscript(30, QStringLiteral("Gamma")); // active = 2
+        model.openTranscript(sid(10), QStringLiteral("Alpha"));
+        model.openTranscript(sid(20), QStringLiteral("Beta"));
+        model.openTranscript(sid(30), QStringLiteral("Gamma")); // active = 2
 
         model.cycle(1); // wraps 2 -> 0
         QCOMPARE(model.currentIndex(), 0);
@@ -165,9 +167,9 @@ private slots:
     void moveTabKeepsActiveIdentity()
     {
         TabModel model;
-        const int idA = model.openTranscript(10, QStringLiteral("Alpha"));
-        model.openTranscript(20, QStringLiteral("Beta"));
-        model.openTranscript(30, QStringLiteral("Gamma"));
+        const int idA = model.openTranscript(sid(10), QStringLiteral("Alpha"));
+        model.openTranscript(sid(20), QStringLiteral("Beta"));
+        model.openTranscript(sid(30), QStringLiteral("Gamma"));
         model.activate(0); // active = Alpha (row 0)
 
         model.moveTab(0, 2); // Alpha goes to the end
@@ -181,8 +183,8 @@ private slots:
     void setCurrentIndexActivates()
     {
         TabModel model;
-        model.openTranscript(10, QStringLiteral("Alpha"));
-        model.openTranscript(20, QStringLiteral("Beta"));
+        model.openTranscript(sid(10), QStringLiteral("Alpha"));
+        model.openTranscript(sid(20), QStringLiteral("Beta"));
 
         model.setCurrentIndex(0);
         QCOMPARE(model.currentIndex(), 0);
@@ -197,14 +199,14 @@ private slots:
         TabModel model;
         QSignalSpy reassignSpy(&model, &TabModel::tabSessionChanged);
 
-        const int id0 = model.previewTranscript(10, QStringLiteral("Alpha"));
+        const int id0 = model.previewTranscript(sid(10), QStringLiteral("Alpha"));
         QCOMPARE(model.count(), 1);
         QVERIFY(roleAt<bool>(model, 0, TabModel::PreviewRole));
 
-        const int id1 = model.previewTranscript(20, QStringLiteral("Beta"));
+        const int id1 = model.previewTranscript(sid(20), QStringLiteral("Beta"));
         QCOMPARE(id1, id0);                 // same (stable) tab id
         QCOMPARE(model.count(), 1);         // reused, not appended
-        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), 20);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::SessionIdRole), sid(20));
         QCOMPARE(roleAt<QString>(model, 0, TabModel::TitleRole), QStringLiteral("Beta"));
         QVERIFY(roleAt<bool>(model, 0, TabModel::PreviewRole)); // still preview
 
@@ -216,11 +218,11 @@ private slots:
     void previewSingleInvariant()
     {
         TabModel model;
-        model.previewTranscript(10, QStringLiteral("Alpha"));
-        model.previewTranscript(20, QStringLiteral("Beta"));
-        model.previewTranscript(30, QStringLiteral("Gamma"));
+        model.previewTranscript(sid(10), QStringLiteral("Alpha"));
+        model.previewTranscript(sid(20), QStringLiteral("Beta"));
+        model.previewTranscript(sid(30), QStringLiteral("Gamma"));
         QCOMPARE(model.count(), 1);
-        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), 30);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::SessionIdRole), sid(30));
     }
 
     // Previewing a session that is already open in some tab activates that
@@ -228,18 +230,18 @@ private slots:
     void previewActivatesExistingTab()
     {
         TabModel model;
-        const int idA = model.openTranscript(10, QStringLiteral("Alpha")); // pinned, row 0
-        const int idP = model.previewTranscript(20, QStringLiteral("Beta")); // preview, row 1
+        const int idA = model.openTranscript(sid(10), QStringLiteral("Alpha")); // pinned, row 0
+        const int idP = model.previewTranscript(sid(20), QStringLiteral("Beta")); // preview, row 1
         QCOMPARE(model.count(), 2);
         QCOMPARE(model.currentIndex(), 1);
 
-        const int again = model.previewTranscript(10, QStringLiteral("Alpha"));
+        const int again = model.previewTranscript(sid(10), QStringLiteral("Alpha"));
         QCOMPARE(again, idA);
         QCOMPARE(model.count(), 2);        // nothing reassigned/appended
         QCOMPARE(model.currentIndex(), 0); // activated the existing pinned tab
         // The preview slot is untouched (still Beta).
         QCOMPARE(model.tabIdAt(1), idP);
-        QCOMPARE(roleAt<int>(model, 1, TabModel::SessionIdRole), 20);
+        QCOMPARE(roleAt<QString>(model, 1, TabModel::SessionIdRole), sid(20));
     }
 
     // Pinning the preview tab makes it permanent: the next preview opens a fresh
@@ -247,16 +249,16 @@ private slots:
     void pinPromotesPreviewSoNextPreviewAppends()
     {
         TabModel model;
-        model.previewTranscript(10, QStringLiteral("Alpha"));
+        model.previewTranscript(sid(10), QStringLiteral("Alpha"));
         QVERIFY(roleAt<bool>(model, 0, TabModel::PreviewRole));
 
         model.pinTab(0);
         QVERIFY(!roleAt<bool>(model, 0, TabModel::PreviewRole));
 
-        model.previewTranscript(20, QStringLiteral("Beta"));
+        model.previewTranscript(sid(20), QStringLiteral("Beta"));
         QCOMPARE(model.count(), 2); // appended, the pinned tab was not reused
-        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), 10);
-        QCOMPARE(roleAt<int>(model, 1, TabModel::SessionIdRole), 20);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::SessionIdRole), sid(10));
+        QCOMPARE(roleAt<QString>(model, 1, TabModel::SessionIdRole), sid(20));
         QVERIFY(roleAt<bool>(model, 1, TabModel::PreviewRole));
     }
 
@@ -264,10 +266,10 @@ private slots:
     void openTranscriptPinsThePreview()
     {
         TabModel model;
-        const int idP = model.previewTranscript(10, QStringLiteral("Alpha"));
+        const int idP = model.previewTranscript(sid(10), QStringLiteral("Alpha"));
         QVERIFY(roleAt<bool>(model, 0, TabModel::PreviewRole));
 
-        const int opened = model.openTranscript(10, QStringLiteral("Alpha"));
+        const int opened = model.openTranscript(sid(10), QStringLiteral("Alpha"));
         QCOMPARE(opened, idP);
         QCOMPARE(model.count(), 1);
         QVERIFY(!roleAt<bool>(model, 0, TabModel::PreviewRole));
@@ -276,7 +278,7 @@ private slots:
     void previewFileReusesTranscriptPreviewAndSignalsKindChange()
     {
         TabModel model;
-        const int id = model.previewTranscript(10, QStringLiteral("Alpha"));
+        const int id = model.previewTranscript(sid(10), QStringLiteral("Alpha"));
         QSignalSpy kindSpy(&model, &TabModel::tabKindChanged);
         QSignalSpy currentSpy(&model, &TabModel::currentTabChanged);
 
@@ -287,7 +289,7 @@ private slots:
         QCOMPARE(fileId, id);
         QCOMPARE(model.count(), 1);
         QCOMPARE(roleAt<int>(model, 0, TabModel::KindRole), int(TabModel::File));
-        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), -1);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::SessionIdRole), QString());
         QCOMPARE(roleAt<QString>(model, 0, TabModel::FileRootRole), QStringLiteral("workspace"));
         QCOMPARE(roleAt<QString>(model, 0, TabModel::FilePathRole), QStringLiteral("src/main.cpp"));
         QCOMPARE(kindSpy.count(), 1);
@@ -303,12 +305,12 @@ private slots:
                                          QStringLiteral("README.md"));
         QSignalSpy kindSpy(&model, &TabModel::tabKindChanged);
 
-        const int transcriptId = model.previewTranscript(42, QStringLiteral("Answer"));
+        const int transcriptId = model.previewTranscript(sid(42), QStringLiteral("Answer"));
 
         QCOMPARE(transcriptId, id);
         QCOMPARE(model.count(), 1);
         QCOMPARE(roleAt<int>(model, 0, TabModel::KindRole), int(TabModel::Transcript));
-        QCOMPARE(roleAt<int>(model, 0, TabModel::SessionIdRole), 42);
+        QCOMPARE(roleAt<QString>(model, 0, TabModel::SessionIdRole), sid(42));
         QCOMPARE(roleAt<QString>(model, 0, TabModel::FileRootRole), QString());
         QCOMPARE(roleAt<QString>(model, 0, TabModel::FilePathRole), QString());
         QCOMPARE(kindSpy.count(), 1);

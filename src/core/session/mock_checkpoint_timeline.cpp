@@ -44,7 +44,7 @@ QList<QVariantMap> MockCheckpointTimeline::seedRows()
     };
 }
 
-void MockCheckpointTimeline::ensureSession(int id)
+void MockCheckpointTimeline::ensureSession(const QString& id)
 {
     if (!m_rowsBySession.contains(id)) {
         m_rowsBySession.insert(id, seedRows());
@@ -52,7 +52,7 @@ void MockCheckpointTimeline::ensureSession(int id)
     }
 }
 
-void MockCheckpointTimeline::setSessionId(int id)
+void MockCheckpointTimeline::setSessionId(const QString& id)
 {
     if (m_sessionId == id) {
         return;

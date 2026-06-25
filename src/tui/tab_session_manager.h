@@ -8,6 +8,7 @@
 
 #include <QHash>
 #include <QObject>
+#include <QString>
 
 #include <functional>
 
@@ -22,7 +23,7 @@ class TurnController;
 // views always binds to the active session.
 struct TabSession {
     int tabId = -1;
-    int sessionId = -1;
+    QString sessionId;
     SessionController* controller = nullptr;
     SessionOrchestrator* orchestrator = nullptr; // owns `turn`
     TurnController* turn = nullptr;
@@ -41,7 +42,7 @@ public:
     ~TabSessionManager();
 
     [[nodiscard]] TabSession* ensureSession(int tabId, std::function<void(TabSession*)> wire);
-    void rebindSession(int tabId, int sessionId, std::function<void(TabSession*)> wire);
+    void rebindSession(int tabId, const QString& sessionId, std::function<void(TabSession*)> wire);
     bool destroySession(int tabId, TabSession*& active, std::function<void()> detachActiveDocument);
 
 private:

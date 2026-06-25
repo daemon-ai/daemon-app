@@ -66,13 +66,13 @@ TestCase {
             delegate: Loader {
                 id: pageLoader
                 required property int index
-                required property int sessionId
+                required property string sessionId
                 property bool pageVisible: index === tabModel.currentIndex
                 anchors.fill: parent
                 visible: pageVisible
                 sourceComponent: Rectangle {
                     objectName: "bodyPage"
-                    property int boundSessionId: pageLoader.sessionId
+                    property string boundSessionId: pageLoader.sessionId
                 }
                 onLoaded: item.boundSessionId = Qt.binding(() => pageLoader.sessionId)
             }
@@ -104,8 +104,8 @@ TestCase {
     // Opening sessions appends chips, activates the newest, and the bound
     // StackLayout follows the model's active index.
     function test_open_adds_chips_and_tracks_active() {
-        tabModel.openTranscript(1, "Alpha");
-        tabModel.openTranscript(2, "Beta");
+        tabModel.openTranscript("1", "Alpha");
+        tabModel.openTranscript("2", "Beta");
 
         const lv = tabListView();
         verify(lv !== null, "tab ListView exists");
@@ -116,9 +116,9 @@ TestCase {
 
     // Re-opening an already-open session re-activates its tab (no duplicate).
     function test_reopen_reuses_existing_tab() {
-        tabModel.openTranscript(1, "Alpha");
-        tabModel.openTranscript(2, "Beta");
-        tabModel.openTranscript(1, "Alpha");
+        tabModel.openTranscript("1", "Alpha");
+        tabModel.openTranscript("2", "Beta");
+        tabModel.openTranscript("1", "Alpha");
 
         compare(tabListView().count, 2, "no duplicate chip");
         compare(tabModel.currentIndex, 0, "re-activated the existing tab");
@@ -127,20 +127,20 @@ TestCase {
     // Closing the active tab removes its chip and selects the right-hand
     // neighbour; the StackLayout stays in sync.
     function test_close_removes_and_switches() {
-        tabModel.openTranscript(1, "Alpha");
-        tabModel.openTranscript(2, "Beta");
-        tabModel.openTranscript(3, "Gamma");
+        tabModel.openTranscript("1", "Alpha");
+        tabModel.openTranscript("2", "Beta");
+        tabModel.openTranscript("3", "Gamma");
         tabModel.activate(1); // Beta
 
         tabModel.closeTab(1);
         compare(tabListView().count, 2, "chip removed");
         compare(stack.currentIndex, tabModel.currentIndex, "stack tracks model");
-        compare(tabModel.sessionIdAt(tabModel.currentIndex), 3, "Gamma is active");
+        compare(tabModel.sessionIdAt(tabModel.currentIndex), "3", "Gamma is active");
     }
 
     // The Settings page opens as a singleton page tab alongside transcripts.
     function test_settings_page_tab() {
-        tabModel.openTranscript(1, "Alpha");
+        tabModel.openTranscript("1", "Alpha");
         tabModel.openPage(TabModel.Settings, "Settings");
         compare(tabListView().count, 2, "transcript + settings");
         compare(tabModel.kindAt(tabModel.currentIndex), TabModel.Settings, "settings active");
@@ -162,8 +162,8 @@ TestCase {
 
     // Clicking a background chip activates it and flips the visible page.
     function test_click_chip_activates() {
-        tabModel.openTranscript(1, "Alpha");
-        tabModel.openTranscript(2, "Beta"); // active = index 1
+        tabModel.openTranscript("1", "Alpha");
+        tabModel.openTranscript("2", "Beta"); // active = index 1
         compare(tabModel.currentIndex, 1);
 
         const lv = tabListView();
@@ -180,33 +180,33 @@ TestCase {
 
     // A preview open reuses the single preview chip in place (VSCode-style).
     function test_preview_reuses_single_chip() {
-        tabModel.previewTranscript(1, "Alpha");
+        tabModel.previewTranscript("1", "Alpha");
         verify(tabModel.isPreviewAt(0), "first preview is a preview tab");
 
-        tabModel.previewTranscript(2, "Beta");
+        tabModel.previewTranscript("2", "Beta");
         compare(tabListView().count, 1, "preview reused, not appended");
-        compare(tabModel.sessionIdAt(0), 2, "preview reassigned to Beta");
+        compare(tabModel.sessionIdAt(0), "2", "preview reassigned to Beta");
         verify(tabModel.isPreviewAt(0), "still a preview tab");
     }
 
     // Double-clicking a preview chip pins it (makes it permanent), so the next
     // preview opens a fresh chip instead of replacing it.
     function test_double_click_pins_chip() {
-        tabModel.previewTranscript(1, "Alpha");
+        tabModel.previewTranscript("1", "Alpha");
         const chip = tabListView().itemAtIndex(0);
         verify(chip !== null, "preview chip realized");
         findChild(chip, "tabChipArea").doubleClicked(null);
         verify(!tabModel.isPreviewAt(0), "double-click pinned the chip");
 
-        tabModel.previewTranscript(2, "Beta");
+        tabModel.previewTranscript("2", "Beta");
         compare(tabListView().count, 2, "next preview opened a fresh chip");
     }
 
     // A deliberate open (openTranscript) of the previewed session pins it.
     function test_open_pins_preview() {
-        tabModel.previewTranscript(1, "Alpha");
+        tabModel.previewTranscript("1", "Alpha");
         verify(tabModel.isPreviewAt(0), "preview before open");
-        tabModel.openTranscript(1, "Alpha");
+        tabModel.openTranscript("1", "Alpha");
         verify(!tabModel.isPreviewAt(0), "open pinned the preview");
         compare(tabListView().count, 1, "no duplicate chip");
     }
@@ -227,8 +227,8 @@ TestCase {
     // only the active tab's page is visible. This is exactly what regressed before
     // (StackLayout + Loader with no fill -> zero-size, invisible transcript).
     function test_body_pages_fill_and_toggle_visibility() {
-        tabModel.openTranscript(1, "Alpha");
-        tabModel.openTranscript(2, "Beta"); // active = index 1
+        tabModel.openTranscript("1", "Alpha");
+        tabModel.openTranscript("2", "Beta"); // active = index 1
         wait(0); // let the Loaders instantiate
 
         const pages = bodyPages();
@@ -254,16 +254,16 @@ TestCase {
     // A reassigned preview tab reloads in place: the page's bound sessionId
     // updates (this is what makes TranscriptPage.onSessionIdChanged reload).
     function test_preview_reassign_rebinds_page() {
-        tabModel.previewTranscript(7, "Alpha");
+        tabModel.previewTranscript("7", "Alpha");
         wait(0);
         let pages = bodyPages();
         compare(pages.length, 1, "single preview page");
-        compare(pages[0].boundSessionId, 7, "page bound to session 7");
+        compare(pages[0].boundSessionId, "7", "page bound to session 7");
 
-        tabModel.previewTranscript(8, "Beta"); // reuse the same slot
+        tabModel.previewTranscript("8", "Beta"); // reuse the same slot
         wait(0);
         pages = bodyPages();
         compare(pages.length, 1, "still one page (reused)");
-        compare(pages[0].boundSessionId, 8, "page rebound to session 8");
+        compare(pages[0].boundSessionId, "8", "page rebound to session 8");
     }
 }

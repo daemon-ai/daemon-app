@@ -7,6 +7,7 @@
 #include "daemon/cached_session_store.h"
 #include "daemon/daemon_cache_store.h"
 #include "config/mock_daemon_config.h"
+#include "daemonnet/mock_daemonnet.h"
 #include "daemon/daemon_connection_service.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_client.h"
@@ -21,11 +22,13 @@
 #include "memory/mock_memory_service.h"
 #include "models/mock_model_catalog.h"
 #include "nav/nav_controller.h"
-#include "persistence/sqlite_session_store.h"
+#include "persistence/in_memory_session_store.h"
 #include "profiles/mock_profile_store.h"
 #include "session/mock_checkpoint_timeline.h"
 #include "session/mock_session_settings.h"
 #include "settings/qt_settings_store.h"
+#include "transports/mock_presence_service.h"
+#include "transports/mock_transport_registry.h"
 
 #include <QByteArray>
 #include <QDebug>
@@ -66,12 +69,20 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner)
     graph.modelCatalog = new models::MockModelCatalog(owner);
     graph.accounts = new accounts::MockAccountsService(owner);
     graph.profiles = new profiles::MockProfileStore(owner);
-    graph.roster = new fleet::MockSessionRoster(owner);
-    graph.fleetTree = new fleet::MockFleetTree(owner);
+    // The unified mock DaemonNet (the single source the fleet/roster mocks now project from, plus the
+    // future lenses + patch-bay); construct it before the surfaces that derive from it.
+    graph.daemonNet = new daemonnet::MockDaemonNet(owner);
+    graph.roster = new fleet::MockSessionRoster(graph.daemonNet, owner);
+    graph.fleetTree = new fleet::MockFleetTree(graph.daemonNet, owner);
     graph.approvals = new fleet::MockApprovalsInbox(owner);
     graph.dashboard = new fleet::MockDashboard(graph.roster, graph.fleetTree, graph.approvals, owner);
     graph.routing = new automation::MockRoutingStore(owner);
     graph.cron = new automation::MockCronStore(owner);
+    // Transport-adapter seams (daemon-transport-adapter-spec.md): inert mocks until a daemon adapter
+    // decodes transport_adapters / transport_instances. The registry advertises the existing adapter
+    // families for the "Add channel" picker; presence reports offline/unknown.
+    graph.transportRegistry = new transports::MockTransportRegistry(owner);
+    graph.presence = new transports::MockPresenceService(owner);
     graph.sessionSettings = new session::MockSessionSettings(owner);
     graph.checkpoints = new session::MockCheckpointTimeline(owner);
     graph.cache = new DaemonCacheStore(QString(), owner);
@@ -108,10 +119,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner)
         // until its own daemon adapter lands.
         qInfo().noquote() << "AppServiceGraph: ServiceMode::Daemon - live seams: connection, "
                              "sessions(cache); still mock: fs, daemonConfig, memory, modelCatalog, "
-                             "accounts, roster/fleetTree/approvals/dashboard, routing/cron, "
-                             "sessionSettings, checkpoints.";
+                             "accounts, daemonNet, roster/fleetTree/approvals/dashboard, "
+                             "routing/cron, transports/presence, sessionSettings, checkpoints.";
     } else {
-        graph.store = new persistence::SqliteSessionStore(QString(), owner);
+        // Mock mode: a non-persisted in-memory store re-seeded fresh from the unified DaemonNet each
+        // run (deterministic, always matches the current seed - no stale-db drift). The sidebar/list/
+        // transcript and the Fleet/Sessions pages now all reflect the one DaemonNet source.
+        graph.store = new persistence::InMemorySessionStore(graph.daemonNet, owner);
     }
     return graph;
 }

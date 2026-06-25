@@ -26,7 +26,7 @@ ComposerSessionController::ComposerSessionController(QObject* parent)
     }
 }
 
-void ComposerSessionController::setSessionId(int id)
+void ComposerSessionController::setSessionId(const QString& id)
 {
     if (m_sessionId == id) {
         return;
@@ -758,13 +758,13 @@ void ComposerSessionController::accept(int index)
     applyDraftWithCursor(next, caret);
 }
 
-void ComposerSessionController::stash(int key)
+void ComposerSessionController::stash(const QString& key)
 {
     m_drafts[key] = m_draft;
     m_queues[key] = m_queue->entries();
 }
 
-void ComposerSessionController::restore(int key)
+void ComposerSessionController::restore(const QString& key)
 {
     applyDraft(m_drafts.value(key));
     m_queue->setEntries(m_queues.value(key));

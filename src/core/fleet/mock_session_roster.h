@@ -4,13 +4,19 @@
 
 #include "uimodels/variant_list_model.h"
 
+namespace daemonnet {
+class IDaemonNet;
+}
+
 namespace fleet {
 
 class MockSessionRoster : public ISessionRoster {
     Q_OBJECT
 
 public:
-    explicit MockSessionRoster(QObject* parent = nullptr);
+    // Derives its rows from the DaemonNet `sessions()` projection (the single source);
+    // suspend/resume/close mutate the local copy. `net` may be null (then the roster is empty).
+    explicit MockSessionRoster(daemonnet::IDaemonNet* net, QObject* parent = nullptr);
 
     [[nodiscard]] QObject* sessions() const override;
     [[nodiscard]] int count() const override;

@@ -56,7 +56,8 @@ public:
 
     // `tagId` is the tag id (Tag scope); `unitId` is the unit id (Unit scope).
     Q_INVOKABLE void setScope(int nodeType, int tagId, const QString& unitId);
-    Q_INVOKABLE int idAt(int row) const;
+    // The authoritative string SessionId at `row` ("" if out of range).
+    Q_INVOKABLE QString idAt(int row) const;
 
     // Identity-based selection (mirrors SidebarModel): the selection is stored by
     // session id so it survives search/scope rebuilds; the highlight is
@@ -74,16 +75,15 @@ signals:
     void searchChanged();
     void scopeChanged();
     void countChanged();
-    // Emitted whenever the current selection changes (id is the session id, -1
-    // when cleared).
-    void selectionChanged(int sessionId);
+    // Emitted whenever the current selection changes (the string SessionId, "" when cleared).
+    void selectionChanged(const QString& sessionId);
 
 private:
     void reload();
     void applyFilter();
     void rebuildLookups();
     [[nodiscard]] QString computeScopeTitle() const;
-    void setCurrentId(int id);             // records id + emits + repaints
+    void setCurrentId(const QString& id);  // records id + emits + repaints
     void emitCurrentChanged();             // dataChanged(CurrentRole) for all rows
 
     persistence::ISessionStore* m_store = nullptr;
@@ -94,5 +94,5 @@ private:
     QList<domain::Session> m_filtered;
     QHash<QString, QPair<QString, int>> m_unitInfo; // unit id -> (name, kind)
     QHash<int, QPair<QString, QString>> m_tagInfo;  // tag id -> (name, color)
-    int m_currentId = -1; // selected session id (identity-stable), -1 = none
+    QString m_currentId; // selected session id (identity-stable), "" = none
 };

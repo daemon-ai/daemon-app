@@ -91,22 +91,17 @@ int CachedSessionStore::sessionCount(const domain::ListScope& scope) const
     return count;
 }
 
-QString CachedSessionStore::content(int sessionId) const
+int CachedSessionStore::indexOfSessionId(const domain::SessionId& id) const
 {
-    // Structured session-log projection is a later slice; the transcript is not cached as markdown.
-    Q_UNUSED(sessionId)
-    return {};
-}
-
-QString CachedSessionStore::title(int sessionId) const
-{
-    return sessionId >= 0 && sessionId < m_snapshot.size() ? m_snapshot.at(sessionId).title
-                                                           : QString();
-}
-
-int CachedSessionStore::createSession(const domain::UnitId&)
-{
-    // Session lifecycle is daemon-owned; creation flows through Submit, not the cache adapter.
+    if (id.isEmpty()) {
+        return -1;
+    }
+    const QString key = id.toString();
+    for (int i = 0; i < m_snapshot.size(); ++i) {
+        if (m_snapshot.at(i).sessionId == key) {
+            return i;
+        }
+    }
     return -1;
 }
 
@@ -120,16 +115,40 @@ int CachedSessionStore::createTag(const QString&, const QString&)
     return -1;
 }
 
-void CachedSessionStore::setContent(int, const QString&)
+// --- SessionId-keyed implementations (canonical; daemon-owned mutations stay inert) ---
+QString CachedSessionStore::content(const domain::SessionId&) const
 {
+    // Structured session-log projection is a later slice; the transcript is not cached as markdown.
+    return {};
 }
 
-void CachedSessionStore::setArchived(int sessionId, bool archived)
+QString CachedSessionStore::title(const domain::SessionId& id) const
 {
-    if (sessionId < 0 || sessionId >= m_snapshot.size() || m_cache == nullptr) {
+    const int i = indexOfSessionId(id);
+    return i >= 0 ? m_snapshot.at(i).title : QString();
+}
+
+bool CachedSessionStore::isPinned(const domain::SessionId& id) const
+{
+    const int i = indexOfSessionId(id);
+    return i >= 0 && m_snapshot.at(i).pinned;
+}
+
+domain::SessionId CachedSessionStore::newSession(const domain::UnitId&)
+{
+    // Session lifecycle is daemon-owned; creation flows through Submit, not the cache adapter.
+    return {};
+}
+
+void CachedSessionStore::setContent(const domain::SessionId&, const QString&) {}
+
+void CachedSessionStore::setArchived(const domain::SessionId& id, bool archived)
+{
+    const int i = indexOfSessionId(id);
+    if (i < 0 || m_cache == nullptr) {
         return;
     }
-    CachedSessionRow row = m_snapshot.at(sessionId);
+    CachedSessionRow row = m_snapshot.at(i);
     row.archived = archived;
     row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
     if (m_cache->upsertSession(row)) {
@@ -137,20 +156,17 @@ void CachedSessionStore::setArchived(int sessionId, bool archived)
     }
 }
 
-void CachedSessionStore::renameSession(int, const QString&)
-{
-}
+void CachedSessionStore::renameSession(const domain::SessionId&, const QString&) {}
 
-void CachedSessionStore::deleteSession(int)
-{
-}
+void CachedSessionStore::deleteSession(const domain::SessionId&) {}
 
-void CachedSessionStore::setPinned(int sessionId, bool pinned)
+void CachedSessionStore::setPinned(const domain::SessionId& id, bool pinned)
 {
-    if (sessionId < 0 || sessionId >= m_snapshot.size() || m_cache == nullptr) {
+    const int i = indexOfSessionId(id);
+    if (i < 0 || m_cache == nullptr) {
         return;
     }
-    CachedSessionRow row = m_snapshot.at(sessionId);
+    CachedSessionRow row = m_snapshot.at(i);
     row.pinned = pinned;
     row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
     if (m_cache->upsertSession(row)) {
@@ -158,13 +174,6 @@ void CachedSessionStore::setPinned(int sessionId, bool pinned)
     }
 }
 
-bool CachedSessionStore::isPinned(int sessionId) const
-{
-    return sessionId >= 0 && sessionId < m_snapshot.size() && m_snapshot.at(sessionId).pinned;
-}
-
-void CachedSessionStore::moveSession(int, int)
-{
-}
+void CachedSessionStore::moveSession(const domain::SessionId&, int) {}
 
 } // namespace daemonapp::daemon

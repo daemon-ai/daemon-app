@@ -66,6 +66,18 @@ add_library(be_core STATIC
 target_include_directories(be_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(be_core PUBLIC Qt6::Core Qt6::Gui Qt6::Sql md4qt::md4qt)
 
+# --- be_transcript: the SessionLogEntry <-> document bridge (roadmap P4) ---------
+# Decompose/apply between domain::SessionLogEntry and the DocumentStore. Kept out of
+# be_core (which stays domain-free, vendored) and out of the QML module so BOTH the
+# GUI (EditorController) and the TUI (RootWidget) can use it without pulling in QtQuick.
+add_library(be_transcript STATIC
+    app/transcript_log.cpp
+    app/transcript_log.h
+)
+target_include_directories(be_transcript PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(be_transcript PUBLIC Qt6::Core be_core daemon-app::domain)
+add_library(daemon-app::transcript_bridge ALIAS be_transcript)
+
 # --- QML module: controllers + block delegates ------------------------------
 qt_add_qml_module(da_blockeditor
     STATIC
@@ -134,6 +146,7 @@ target_link_libraries(da_blockeditor
         Qt6::Gui
         be_core
         be_diagram
+        be_transcript
         daemon-app::theme
         daemon-app::settings
         daemon-app::controls

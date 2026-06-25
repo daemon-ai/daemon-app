@@ -4,13 +4,19 @@
 
 #include "uimodels/variant_list_model.h"
 
+namespace daemonnet {
+class IDaemonNet;
+}
+
 namespace fleet {
 
 class MockFleetTree : public IFleetTree {
     Q_OBJECT
 
 public:
-    explicit MockFleetTree(QObject* parent = nullptr);
+    // Derives its rows from the DaemonNet `fleet()` projection (the single source); `pause`/`resume`
+    // mutate the local copy. `net` may be null (then the tree is empty).
+    explicit MockFleetTree(daemonnet::IDaemonNet* net, QObject* parent = nullptr);
 
     [[nodiscard]] QObject* nodes() const override;
 

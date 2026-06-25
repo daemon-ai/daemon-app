@@ -17,7 +17,7 @@ MockSessionSettings::Settings& MockSessionSettings::entry()
     return m_bySession[m_sessionId];
 }
 
-void MockSessionSettings::setSessionId(int id)
+void MockSessionSettings::setSessionId(const QString& id)
 {
     if (m_sessionId == id) {
         return;

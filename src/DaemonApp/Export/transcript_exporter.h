@@ -21,12 +21,12 @@ public:
 
     // Build a pretty-printed JSON document {id,title,content,exportedAt} for the
     // session in `store` (a QObject* so QML can pass the context property).
-    [[nodiscard]] Q_INVOKABLE QString toJson(QObject* store, int sessionId) const;
+    [[nodiscard]] Q_INVOKABLE QString toJson(QObject* store, const QString& sessionId) const;
 
     // Write `text` to a local-file URL (or plain path). Returns false on failure.
     Q_INVOKABLE bool writeFile(const QUrl& fileUrl, const QString& text) const;
 
     // Convenience for non-QML callers (the TUI): build + write in one step.
-    bool exportToPath(persistence::ISessionStore* store, int sessionId,
+    bool exportToPath(persistence::ISessionStore* store, const QString& sessionId,
                       const QString& filePath) const;
 };

@@ -1,5 +1,9 @@
 add_library(da_domain STATIC
+    ids.h
     session.h
+    session_log.h
+    origin.h
+    delivery.h
     unit_node.h
     tag.h
     sidebar_node.h

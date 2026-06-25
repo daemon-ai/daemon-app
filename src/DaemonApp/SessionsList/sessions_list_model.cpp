@@ -67,12 +67,12 @@ void SessionsListModel::setSearch(const QString& search)
 
 void SessionsListModel::setScope(int nodeType, int tagId, const QString& unitId)
 {
-    m_scope = { static_cast<NodeType>(nodeType), tagId, UnitId(unitId) };
+    m_scope = { static_cast<NodeType>(nodeType), tagId, UnitId(unitId), QString() };
     // A new scope is a fresh list of sessions; drop the old selection so a stale
     // id doesn't linger as a phantom highlight.
-    if (m_currentId != -1) {
-        m_currentId = -1;
-        emit selectionChanged(-1);
+    if (!m_currentId.isEmpty()) {
+        m_currentId.clear();
+        emit selectionChanged(QString());
     }
     reload();
     emit scopeChanged();
@@ -149,6 +149,10 @@ QString SessionsListModel::computeScopeTitle() const
             }
         }
         return tr("Tag");
+    case NodeType::ByTransport:
+    case NodeType::ByPeer:
+        // The lens scopes (roadmap P2) are not surfaced by the sidebar yet; title by their key.
+        return m_scope.lensKey.isEmpty() ? tr("Sessions") : m_scope.lensKey;
     case NodeType::FleetSeparator:
     case NodeType::TagSeparator:
         break;
@@ -169,7 +173,7 @@ QVariant SessionsListModel::data(const QModelIndex& index, int role) const
     const Session& c = m_filtered.at(index.row());
     switch (role) {
     case IdRole:
-        return c.id;
+        return c.sessionId.toString();
     case TitleRole:
         return c.title;
     case SnippetRole:
@@ -195,7 +199,7 @@ QVariant SessionsListModel::data(const QModelIndex& index, int role) const
         return colors;
     }
     case CurrentRole:
-        return c.id == m_currentId;
+        return c.sessionId.toString() == m_currentId;
     case PinnedRole:
         return c.isPinned;
     default:
@@ -219,12 +223,12 @@ QHash<int, QByteArray> SessionsListModel::roleNames() const
     };
 }
 
-int SessionsListModel::idAt(int row) const
+QString SessionsListModel::idAt(int row) const
 {
     if (row < 0 || row >= m_filtered.size()) {
-        return -1;
+        return {};
     }
-    return m_filtered.at(row).id;
+    return m_filtered.at(row).sessionId.toString();
 }
 
 void SessionsListModel::emitCurrentChanged()
@@ -234,7 +238,7 @@ void SessionsListModel::emitCurrentChanged()
     }
 }
 
-void SessionsListModel::setCurrentId(int id)
+void SessionsListModel::setCurrentId(const QString& id)
 {
     if (m_currentId == id) {
         return;
@@ -246,8 +250,8 @@ void SessionsListModel::setCurrentId(int id)
 
 void SessionsListModel::activate(int row)
 {
-    const int id = idAt(row);
-    if (id >= 0) {
+    const QString id = idAt(row);
+    if (!id.isEmpty()) {
         setCurrentId(id);
     }
 }
@@ -257,7 +261,7 @@ void SessionsListModel::selectNext()
     const int cur = currentRow();
     const int next = cur < 0 ? 0 : cur + 1;
     if (next < m_filtered.size()) {
-        setCurrentId(m_filtered.at(next).id);
+        setCurrentId(m_filtered.at(next).sessionId.toString());
     }
 }
 
@@ -265,17 +269,17 @@ void SessionsListModel::selectPrevious()
 {
     const int cur = currentRow();
     if (cur > 0) {
-        setCurrentId(m_filtered.at(cur - 1).id);
+        setCurrentId(m_filtered.at(cur - 1).sessionId.toString());
     }
 }
 
 int SessionsListModel::currentRow() const
 {
-    if (m_currentId < 0) {
+    if (m_currentId.isEmpty()) {
         return -1;
     }
     for (int i = 0; i < m_filtered.size(); ++i) {
-        if (m_filtered.at(i).id == m_currentId) {
+        if (m_filtered.at(i).sessionId.toString() == m_currentId) {
             return i;
         }
     }

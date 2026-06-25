@@ -211,16 +211,16 @@ private:
     // --- Tabs -----------------------------------------------------------------
     // Transient open (arrow nav / single click): load the session into the
     // VSCode-style preview tab (reused on the next preview).
-    void previewSessionTab(int sessionId);
+    void previewSessionTab(const QString& sessionId);
     // Deliberate open (Enter / double-activate): a permanent, pinned tab.
-    void openSessionPinnedTab(int sessionId);
+    void openSessionPinnedTab(const QString& sessionId);
     // Create a brand-new session in the store and open it in a pinned tab (Ctrl+T).
     void newTranscriptTab();
     // Close the active tab (Ctrl+W / tab "x").
     void closeCurrentTab();
     // A preview tab was reassigned to a different session: rebind its existing
     // session to `sessionId` (re-open + reload) instead of spawning a new one.
-    void rebindSession(int tabId, int sessionId);
+    void rebindSession(int tabId, const QString& sessionId);
     // Lazily create the per-tab session for a transcript tab id (no-op if present
     // or if the tab is a non-transcript page).
     TabSession* ensureSession(int tabId);

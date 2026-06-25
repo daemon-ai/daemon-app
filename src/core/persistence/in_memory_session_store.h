@@ -2,17 +2,24 @@
 
 #include "persistence/isession_store.h"
 
+namespace daemonnet {
+class IDaemonNet;
+}
+
 namespace persistence {
 
-// In-memory ISessionStore seeded with sample data, so the UI is fully alive
-// without a backend. Not persisted across runs. The sample data is a deliberate
-// fleet-of-fleets that exercises arbitrary depth (orchestrators nested inside
-// orchestrators) and a lone-unit root, so the recursive tree code is tested.
+// In-memory ISessionStore. Two seed sources: the canonical demo `seedSampleData()` (test fixtures),
+// and `seedFromDaemonNet()` which copies the unified DaemonNet seed (the single source for the mock
+// UI). Not persisted across runs. The demo data is a deliberate fleet-of-fleets that exercises
+// arbitrary depth (orchestrators nested inside orchestrators) and a lone-unit root.
 class InMemorySessionStore : public ISessionStore {
     Q_OBJECT
 
 public:
     explicit InMemorySessionStore(QObject* parent = nullptr);
+    // Seed the store from the DaemonNet (the single source): copies its units/sessions/tags, assigning
+    // each session a stable int handle while carrying its authoritative string `sessionId`.
+    explicit InMemorySessionStore(daemonnet::IDaemonNet* net, QObject* parent = nullptr);
 
     [[nodiscard]] QList<domain::UnitNode>
     unitChildren(const domain::UnitId& parentId) const override;
@@ -21,19 +28,21 @@ public:
     [[nodiscard]] QList<domain::Session>
     sessions(const domain::ListScope& scope) const override;
     [[nodiscard]] int sessionCount(const domain::ListScope& scope) const override;
-    [[nodiscard]] QString content(int sessionId) const override;
-    [[nodiscard]] QString title(int sessionId) const override;
 
-    int createSession(const domain::UnitId& unitId) override;
+    // SessionId-keyed canonical API.
+    [[nodiscard]] QString content(const domain::SessionId& id) const override;
+    [[nodiscard]] QString title(const domain::SessionId& id) const override;
+    [[nodiscard]] bool isPinned(const domain::SessionId& id) const override;
+    domain::SessionId newSession(const domain::UnitId& unitId) override;
+    void setContent(const domain::SessionId& id, const QString& markdown) override;
+    void setArchived(const domain::SessionId& id, bool archived) override;
+    void renameSession(const domain::SessionId& id, const QString& title) override;
+    void deleteSession(const domain::SessionId& id) override;
+    void setPinned(const domain::SessionId& id, bool pinned) override;
+    void moveSession(const domain::SessionId& id, int delta) override;
+
     domain::UnitId createUnit(const domain::UnitId& parentId, domain::UnitKind kind) override;
     int createTag(const QString& name, const QString& color) override;
-    void setContent(int sessionId, const QString& markdown) override;
-    void setArchived(int sessionId, bool archived) override;
-    void renameSession(int sessionId, const QString& title) override;
-    void deleteSession(int sessionId) override;
-    void setPinned(int sessionId, bool pinned) override;
-    [[nodiscard]] bool isPinned(int sessionId) const override;
-    void moveSession(int sessionId, int delta) override;
 
 protected:
     // Subclass entry point: build the base without the sample seed (a durable
@@ -43,6 +52,9 @@ protected:
     // Populate the in-memory tree/tags/sessions with the canonical demo data.
     // Protected so a durable subclass can seed a fresh (empty) database.
     void seedSampleData();
+
+    // Replace the in-memory tree/tags/sessions with the DaemonNet's unified seed bundle.
+    void seedFromDaemonNet(daemonnet::IDaemonNet* net);
 
     // Derive a unit's daemon-parity metadata (profile / session / role) from its
     // id + kind. These fields are NOT persisted (the SQLite schema predates them),
@@ -70,10 +82,8 @@ private:
     // Walks the parent chain - a single recursive rule for every depth.
     [[nodiscard]] bool isInSubtree(const domain::UnitId& unitId,
                                    const domain::UnitId& rootId) const;
-    // Canonical demo transcript markdown exercising every Phase 1 agent block,
-    // seeded as a session for visual inspection of the renderers.
-    [[nodiscard]] static QString agentBlocksSampleMarkdown();
-    [[nodiscard]] static QString roleLayerSampleMarkdown();
+    // Mint a fresh authoritative SessionId for a locally-created session.
+    [[nodiscard]] static domain::SessionId mintSessionId();
 };
 
 } // namespace persistence

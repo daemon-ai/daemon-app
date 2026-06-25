@@ -21,6 +21,8 @@
 #include "tab_model.h"
 #include "turn_controller.h"
 
+#include "app/transcript_log.h"
+
 #include "fs_explorer_model.h"
 #include "app/code_editor_controller.h"
 #include "fs/ifs_service.h"
@@ -180,7 +182,7 @@ RootWidget::RootWidget()
     // A preview tab was reassigned to another session: rebind its session
     // in place rather than spawning a new one.
     connect(m_tabModel, &TabModel::tabSessionChanged, this,
-            [this](int tabId, int sessionId) { rebindSession(tabId, sessionId); });
+            [this](int tabId, const QString& sessionId) { rebindSession(tabId, sessionId); });
     connect(m_tabModel, &TabModel::tabKindChanged, this, [this](int tabId) {
         destroySession(tabId);
     });
@@ -231,6 +233,7 @@ RootWidget::RootWidget()
         m_services.dashboard,
         m_services.routing,
         m_services.cron,
+        m_services.daemonNet,
         m_services.memory,
         m_memList,
         m_memStats,
@@ -739,8 +742,8 @@ void RootWidget::wireViews()
             return;
         }
         m_list->activate(row); // identity-based selection in the shared model
-        const int id = m_list->idAt(row);
-        if (id < 0) {
+        const QString id = m_list->idAt(row);
+        if (id.isEmpty()) {
             return;
         }
         if (pinned) {
@@ -754,14 +757,14 @@ void RootWidget::wireViews()
     // Session actions on the focused list row (Ctrl+R rename, Ctrl+E export,
     // Ctrl+K pin, Delete delete). All run against the shared store.
     connect(m_listView, &SessionListView::pinToggleRequested, this, [this](int row) {
-        const int id = m_list->idAt(row);
-        if (id >= 0) {
+        const QString id = m_list->idAt(row);
+        if (!id.isEmpty()) {
             m_services.store->setPinned(id, !m_services.store->isPinned(id));
         }
     });
     connect(m_listView, &SessionListView::deleteRequested, this, [this](int row) {
-        const int id = m_list->idAt(row);
-        if (id < 0) {
+        const QString id = m_list->idAt(row);
+        if (id.isEmpty()) {
             return;
         }
         auto* confirm = new ConfirmDialog(
@@ -771,8 +774,8 @@ void RootWidget::wireViews()
                 [this, id] { m_services.store->deleteSession(id); });
     });
     connect(m_listView, &SessionListView::exportRequested, this, [this](int row) {
-        const int id = m_list->idAt(row);
-        if (id < 0) {
+        const QString id = m_list->idAt(row);
+        if (id.isEmpty()) {
             return;
         }
         QString name = m_services.store->title(id);
@@ -783,8 +786,8 @@ void RootWidget::wireViews()
         m_exporter->exportToPath(m_services.store, id, path);
     });
     connect(m_listView, &SessionListView::renameRequested, this, [this](int row) {
-        const int id = m_list->idAt(row);
-        if (id < 0) {
+        const QString id = m_list->idAt(row);
+        if (id.isEmpty()) {
             return;
         }
         auto* dialog = new TextPromptDialog(tr("Rename session"),
@@ -796,8 +799,8 @@ void RootWidget::wireViews()
         });
     });
     connect(m_listView, &SessionListView::moveRequested, this, [this](int row, int delta) {
-        const int id = m_list->idAt(row);
-        if (id >= 0) {
+        const QString id = m_list->idAt(row);
+        if (!id.isEmpty()) {
             m_services.store->moveSession(id, delta);
         }
     });
@@ -909,7 +912,7 @@ void RootWidget::wireViews()
                     if (m_active == nullptr || !m_active->controller->hasSession()) {
                         return;
                     }
-                    const int id = m_active->sessionId;
+                    const QString id = m_active->sessionId;
                     auto* dialog = new TextPromptDialog(tr("Rename session"),
                                                         m_services.store->title(id), /*masked=*/false, this);
                     connect(dialog, &TextPromptDialog::submitted, this,
@@ -924,7 +927,7 @@ void RootWidget::wireViews()
                     if (m_active == nullptr || !m_active->controller->hasSession()) {
                         return;
                     }
-                    const int id = m_active->sessionId;
+                    const QString id = m_active->sessionId;
                     QString name = m_services.store->title(id);
                     if (name.isEmpty()) {
                         name = QStringLiteral("session");
@@ -1075,7 +1078,7 @@ void RootWidget::wireViews()
 
 // --- Tabs --------------------------------------------------------------------
 
-void RootWidget::previewSessionTab(int sessionId)
+void RootWidget::previewSessionTab(const QString& sessionId)
 {
     if (m_tabModel == nullptr) {
         return;
@@ -1087,7 +1090,7 @@ void RootWidget::previewSessionTab(int sessionId)
     m_tabModel->previewTranscript(sessionId, title);
 }
 
-void RootWidget::openSessionPinnedTab(int sessionId)
+void RootWidget::openSessionPinnedTab(const QString& sessionId)
 {
     if (m_tabModel == nullptr) {
         return;
@@ -1104,7 +1107,7 @@ void RootWidget::newTranscriptTab()
     if (m_services.store == nullptr || m_tabModel == nullptr) {
         return;
     }
-    const int id = m_services.store->createSession(domain::UnitId());
+    const QString id = m_services.store->newSessionId(domain::UnitId());
     m_tabModel->openTranscriptPinned(id, tr("New session"));
     // A new tab is a natural place to start typing.
     if (m_composer != nullptr) {
@@ -1112,7 +1115,7 @@ void RootWidget::newTranscriptTab()
     }
 }
 
-void RootWidget::rebindSession(int tabId, int sessionId)
+void RootWidget::rebindSession(int tabId, const QString& sessionId)
 {
     if (m_tabSessions == nullptr) {
         return;
@@ -1905,8 +1908,12 @@ void RootWidget::refreshTranscript()
     if (m_active->turn != nullptr && m_active->turn->active()) {
         return;
     }
-    m_active->doc.loadMarkdown(
-        m_active->controller->hasSession() ? m_active->controller->content() : QString());
+    // Drive the document from the session's SessionLogEntry sequence (decomposed from
+    // its stored markdown) rather than the markdown blob (roadmap P4); same render path
+    // a daemon adapter feeding decoded log pages will use.
+    const QString md
+        = m_active->controller->hasSession() ? m_active->controller->content() : QString();
+    be::applyTranscriptLog(m_active->doc, be::decomposeMarkdown(md));
     m_active->search.refresh();
     m_transcript->reload();
 }

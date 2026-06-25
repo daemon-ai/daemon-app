@@ -19,7 +19,7 @@ Rectangle {
 
     // The session this tab shows. Set once by the host when the tab is
     // created; re-assigning re-opens (kept for completeness, tabs are 1:1).
-    property int sessionId: -1
+    property string sessionId: ""
 
     // True while this is the foreground tab (bound by the host). Only the active
     // tab feeds the shared footer status model, so a background tab can keep
@@ -64,7 +64,7 @@ Rectangle {
     // The chip label is the session's canonical title (the same string the
     // list shows), not the first line of the markdown content.
     function _resolveTitle() {
-        if (sessionId < 0)
+        if (sessionId === "")
             return;
         const t = SessionStore.title(sessionId);
         root.titleResolved((t && t.length > 0) ? t : qsTr("Session"));
@@ -113,12 +113,12 @@ Rectangle {
 
     // Open the bound session on realize and whenever it changes.
     onSessionIdChanged: {
-        if (sessionId >= 0)
+        if (sessionId !== "")
             controller.open(sessionId);
         root._resolveTitle();
     }
     Component.onCompleted: {
-        if (sessionId >= 0)
+        if (sessionId !== "")
             controller.open(sessionId);
         root._resolveTitle();
     }
@@ -215,6 +215,8 @@ Rectangle {
             id: transcript
             Layout.fillWidth: true
             Layout.fillHeight: true
+            // The session whose SessionLogEntry sequence the transcript renders.
+            sessionId: root.sessionId
             // The orchestrator owns the turn; the transcript is a consumer.
             turn: orchestrator.turn
             onEdited: function(markdown) {

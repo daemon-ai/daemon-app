@@ -63,6 +63,8 @@ target_link_libraries(da_daemon_client
         daemon-app::fleet
         daemon-app::automation
         daemon-app::session
+        daemon-app::transports
+        daemon-app::daemonnet
         daemon-app::nav
         daemon-app::firstrun
     PRIVATE

@@ -6,6 +6,7 @@ namespace accounts { class IAccountsService; }
 namespace automation { class ICronStore; class IRoutingStore; }
 namespace config { class IDaemonConfig; }
 namespace connection { class IConnectionService; }
+namespace daemonnet { class IDaemonNet; }
 namespace firstrun { class FirstRunModel; }
 namespace fleet { class IApprovalsInbox; class IDashboard; class IFleetTree; class ISessionRoster; }
 namespace fs { class IFsService; }
@@ -16,6 +17,7 @@ namespace persistence { class ISessionStore; }
 namespace profiles { class IProfileStore; }
 namespace session { class ICheckpointTimeline; class ISessionSettings; }
 namespace settings { class ISettingsStore; }
+namespace transports { class IPresenceService; class ITransportRegistry; }
 
 namespace daemonapp::daemon {
 
@@ -59,6 +61,9 @@ struct AppServiceGraph {
     fleet::IDashboard* dashboard = nullptr;
     automation::IRoutingStore* routing = nullptr;
     automation::ICronStore* cron = nullptr;
+    transports::ITransportRegistry* transportRegistry = nullptr;
+    transports::IPresenceService* presence = nullptr;
+    daemonnet::IDaemonNet* daemonNet = nullptr;
     session::ISessionSettings* sessionSettings = nullptr;
     session::ICheckpointTimeline* checkpoints = nullptr;
     DaemonCacheStore* cache = nullptr;

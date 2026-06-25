@@ -1171,9 +1171,22 @@ QString DocumentStore::beginMessage(MessageRole role)
     return m_currentMessageId;
 }
 
-QString DocumentStore::appendMessageBlocks(MessageRole role, const QString &markdown)
+QString DocumentStore::appendMessageBlocks(MessageRole role, const QString &markdown,
+                                           const QString &explicitId)
 {
-    const QString id = beginMessage(role);
+    QString id;
+    if (!explicitId.isEmpty()) {
+        // Preserve the authored message id (the transcript-log applier path).
+        m_currentRole = role;
+        m_currentMessageId = explicitId;
+        id = explicitId;
+    } else if (role == MessageRole::None) {
+        // An un-roled run: no message id, no boundary marker on serialize.
+        m_currentRole = MessageRole::None;
+        m_currentMessageId.clear();
+    } else {
+        id = beginMessage(role);
+    }
     QVector<BlockRecord> records = recordsFromParse(markdown);
     for (BlockRecord &record : records) {
         record.id = allocateId();

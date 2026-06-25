@@ -31,7 +31,7 @@ class IModelCatalog;
 class ComposerSessionController : public QObject {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(int sessionId READ sessionId WRITE setSessionId NOTIFY
+    Q_PROPERTY(QString sessionId READ sessionId WRITE setSessionId NOTIFY
                    sessionIdChanged)
     Q_PROPERTY(bool busy READ busy WRITE setBusy NOTIFY busyChanged)
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
@@ -93,8 +93,8 @@ class ComposerSessionController : public QObject {
 public:
     explicit ComposerSessionController(QObject* parent = nullptr);
 
-    [[nodiscard]] int sessionId() const { return m_sessionId; }
-    void setSessionId(int id);
+    [[nodiscard]] QString sessionId() const { return m_sessionId; }
+    void setSessionId(const QString& id);
 
     [[nodiscard]] bool busy() const { return m_busy; }
     void setBusy(bool busy);
@@ -234,15 +234,15 @@ private:
     void pushHistory(const QString& text);
     void enqueue(const QString& text, const QString& refs);
     void drainNext();
-    void stash(int key);
-    void restore(int key);
+    void stash(const QString& key);
+    void restore(const QString& key);
     void setEditingIndex(int index);
 
     ComposerQueueModel* m_queue = nullptr;
     ComposerAttachmentModel* m_attachments = nullptr;
     CompletionModel* m_completion = nullptr;
 
-    int m_sessionId = -1;
+    QString m_sessionId;
     bool m_busy = false;
     bool m_enabled = true;
     QString m_draft;
@@ -280,9 +280,9 @@ private:
     bool m_verbose = false;
 
     // Per-session persisted state (keyed by session id).
-    QHash<int, QString> m_drafts;
-    QHash<int, QList<ComposerQueueModel::Entry>> m_queues;
-    QHash<int, QStringList> m_histories;
+    QHash<QString, QString> m_drafts;
+    QHash<QString, QList<ComposerQueueModel::Entry>> m_queues;
+    QHash<QString, QStringList> m_histories;
 
     int m_browseIndex = -1;
     QString m_historyDraft;

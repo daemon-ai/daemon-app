@@ -24,6 +24,7 @@ target_link_libraries(da_fleet
     PUBLIC
         Qt6::Core
         daemon-app::uimodels
+        daemon-app::daemonnet
     PRIVATE
         daemon-app::warnings
 )

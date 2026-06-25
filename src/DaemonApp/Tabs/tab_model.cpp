@@ -70,7 +70,7 @@ QHash<int, QByteArray> TabModel::roleNames() const
     };
 }
 
-int TabModel::openTranscript(int sessionId, const QString& title)
+int TabModel::openTranscript(const QString& sessionId, const QString& title)
 {
     const int existing = findTranscriptRow(sessionId);
     if (existing >= 0) {
@@ -110,12 +110,12 @@ int TabModel::openTranscript(int sessionId, const QString& title)
     return tab.id;
 }
 
-int TabModel::openTranscriptPinned(int sessionId, const QString& title)
+int TabModel::openTranscriptPinned(const QString& sessionId, const QString& title)
 {
     return openTranscript(sessionId, title);
 }
 
-int TabModel::previewTranscript(int sessionId, const QString& title)
+int TabModel::previewTranscript(const QString& sessionId, const QString& title)
 {
     // Already open anywhere: just activate it (do not change its pinned state).
     const int existing = findTranscriptRow(sessionId);
@@ -203,7 +203,7 @@ int TabModel::openPage(int kind, const QString& title)
     tab.id = m_nextId++;
     tab.kind = kind;
     tab.title = title.isEmpty() ? QStringLiteral("Page") : title;
-    tab.sessionId = -1;
+    tab.sessionId.clear();
     tab.closable = true;
     m_tabs.append(tab);
     endInsertRows();
@@ -232,7 +232,7 @@ int TabModel::openAgentTab(int kind, const QString& profile, const QString& titl
     tab.id = m_nextId++;
     tab.kind = kind;
     tab.title = title.isEmpty() ? QStringLiteral("Agent") : title;
-    tab.sessionId = -1;
+    tab.sessionId.clear();
     tab.closable = true;
     tab.profile = profile;
     m_tabs.append(tab);
@@ -265,7 +265,7 @@ int TabModel::previewFile(const QString& rootId, const QString& path, const QStr
         Tab& tab = m_tabs[previewRow];
         const bool kindChanged = tab.kind != File;
         tab.kind = File;
-        tab.sessionId = -1;
+        tab.sessionId.clear();
         tab.rootId = rootId;
         tab.path = path;
         tab.title = label;
@@ -455,10 +455,10 @@ int TabModel::kindAt(int index) const
     return m_tabs.at(index).kind;
 }
 
-int TabModel::sessionIdAt(int index) const
+QString TabModel::sessionIdAt(int index) const
 {
     if (index < 0 || index >= m_tabs.size()) {
-        return -1;
+        return {};
     }
     return m_tabs.at(index).sessionId;
 }
@@ -505,9 +505,9 @@ void TabModel::emitCurrentChanged()
     emit dataChanged(index(0, 0), index(static_cast<int>(m_tabs.size()) - 1, 0), { CurrentRole });
 }
 
-int TabModel::findTranscriptRow(int sessionId) const
+int TabModel::findTranscriptRow(const QString& sessionId) const
 {
-    if (sessionId < 0) {
+    if (sessionId.isEmpty()) {
         return -1;
     }
     for (int i = 0; i < m_tabs.size(); ++i) {

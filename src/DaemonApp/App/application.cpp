@@ -24,6 +24,9 @@
 #include "session/icheckpoint_timeline.h"
 #include "session/isession_settings.h"
 #include "settings/isettings_store.h"
+#include "daemonnet/idaemonnet.h"
+#include "transports/ipresence_service.h"
+#include "transports/itransport_registry.h"
 #include "command_registry.h"
 #include "status_bar_model.h"
 #include "transcript_exporter.h"
@@ -139,6 +142,16 @@ void Application::registerContext(QQmlApplicationEngine& engine)
     // Automation facades (mock) backing the routing matrix + cron manager.
     engine.rootContext()->setContextProperty(QStringLiteral("Routing"), m_services.routing);
     engine.rootContext()->setContextProperty(QStringLiteral("Cron"), m_services.cron);
+
+    // Transport-adapter seams (mock): the multi-protocol "Add channel" picker + configured
+    // instances (Transports) and per-account connection/presence (Presence). See
+    // daemon-transport-adapter-spec.md + docs/multi-protocol-client-surface.md.
+    engine.rootContext()->setContextProperty(QStringLiteral("Transports"), m_services.transportRegistry);
+    engine.rootContext()->setContextProperty(QStringLiteral("Presence"), m_services.presence);
+
+    // The unified mock DaemonNet (actors/places + sessions-as-nodes); surfaces project from it. See
+    // multi-protocol-client-surface.md §1 + the DaemonNet meta-plan.
+    engine.rootContext()->setContextProperty(QStringLiteral("DaemonNet"), m_services.daemonNet);
 
     // Per-session override + checkpoint facades (mock) backing the composer popovers.
     engine.rootContext()->setContextProperty(QStringLiteral("SessionSettings"), m_services.sessionSettings);

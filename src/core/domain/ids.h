@@ -39,6 +39,11 @@ DAEMON_APP_STRING_ID(ProfileRef)
 DAEMON_APP_STRING_ID(UnitId)
 // A durable engine incarnation / running session (`daemon-common::SessionId`).
 DAEMON_APP_STRING_ID(SessionId)
+// An events-IO transport instance, instance-qualified (`daemon-protocol::TransportId`,
+// e.g. "matrix/@bot:hs.org", "room/<id>", "internal").
+DAEMON_APP_STRING_ID(TransportId)
+// A transport-specific outbound delivery address (`daemon-protocol::RouteAddr`).
+DAEMON_APP_STRING_ID(RouteAddr)
 
 #undef DAEMON_APP_STRING_ID
 
@@ -47,3 +52,5 @@ DAEMON_APP_STRING_ID(SessionId)
 Q_DECLARE_METATYPE(domain::ProfileRef)
 Q_DECLARE_METATYPE(domain::UnitId)
 Q_DECLARE_METATYPE(domain::SessionId)
+Q_DECLARE_METATYPE(domain::TransportId)
+Q_DECLARE_METATYPE(domain::RouteAddr)

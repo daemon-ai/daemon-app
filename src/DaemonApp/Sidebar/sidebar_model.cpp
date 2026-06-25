@@ -49,7 +49,7 @@ void SidebarModel::appendUnitRows(const UnitNode& node, int depth)
 
     Row r;
     r.label = node.name;
-    r.count = m_store->sessionCount({ NodeType::Unit, -1, node.id });
+    r.count = m_store->sessionCount({ NodeType::Unit, -1, node.id, {} });
     r.type = NodeType::Unit;
     r.unitId = node.id.toString();
     r.selectable = true;
@@ -77,10 +77,11 @@ void SidebarModel::rebuild()
     m_rows.clear();
     if (m_store) {
         m_rows.push_back({ tr("All Sessions"),
-                           m_store->sessionCount({ NodeType::AllSessions, -1, {} }),
+                           m_store->sessionCount({ NodeType::AllSessions, -1, {}, {} }),
                            NodeType::AllSessions, -1, {}, false, true, {}, 0, false, false, 0,
                            0, {}, {} });
-        m_rows.push_back({ tr("Archived"), m_store->sessionCount({ NodeType::Archived, -1, {} }),
+        m_rows.push_back({ tr("Archived"),
+                           m_store->sessionCount({ NodeType::Archived, -1, {}, {} }),
                            NodeType::Archived, -1, {}, false, true, {}, 0, false, false, 0, 0, {},
                            {} });
 
@@ -95,7 +96,7 @@ void SidebarModel::rebuild()
         m_rows.push_back({ tr("Tags"), -1, NodeType::TagSeparator, -1, {}, true, false, {},
                            0, false, false, 0, 0, {}, {} });
         for (const domain::Tag& t : m_store->tags()) {
-            m_rows.push_back({ t.name, m_store->sessionCount({ NodeType::Tag, t.id, {} }),
+            m_rows.push_back({ t.name, m_store->sessionCount({ NodeType::Tag, t.id, {}, {} }),
                                NodeType::Tag, t.id, {}, false, true, t.color,
                                0, false, false, 0, 0, {}, {} });
         }

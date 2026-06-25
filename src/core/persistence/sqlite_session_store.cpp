@@ -121,7 +121,23 @@ void SqliteSessionStore::createSchema()
     q.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS sessions("
                           "id INTEGER PRIMARY KEY, agent_id TEXT, tag_ids TEXT, "
                           "title TEXT, content TEXT, archived INTEGER, pinned INTEGER, "
-                          "created TEXT, modified TEXT, ord INTEGER)"));
+                          "created TEXT, modified TEXT, ord INTEGER, session_id TEXT)"));
+
+    // Migrate an existing db that predates the authoritative session_id column. SQLite has no
+    // "ADD COLUMN IF NOT EXISTS", so probe PRAGMA table_info first; old rows get a NULL session_id
+    // that loadAll() backfills with the legacy local-{id} form.
+    bool hasSessionId = false;
+    QSqlQuery info(db);
+    info.exec(QStringLiteral("PRAGMA table_info(sessions)"));
+    while (info.next()) {
+        if (info.value(1).toString() == QStringLiteral("session_id")) {
+            hasSessionId = true;
+            break;
+        }
+    }
+    if (!hasSessionId) {
+        q.exec(QStringLiteral("ALTER TABLE sessions ADD COLUMN session_id TEXT"));
+    }
 }
 
 bool SqliteSessionStore::loadAll()
@@ -161,11 +177,10 @@ bool SqliteSessionStore::loadAll()
 
     QSqlQuery cq(db);
     cq.exec(QStringLiteral("SELECT id, agent_id, tag_ids, title, content, archived, "
-                           "pinned, created, modified FROM sessions ORDER BY ord ASC"));
+                           "pinned, created, modified, session_id FROM sessions ORDER BY ord ASC"));
     while (cq.next()) {
         Session c;
         c.id = cq.value(0).toInt();
-        c.sessionId = domain::SessionId(QStringLiteral("local-%1").arg(c.id));
         c.unitId = UnitId(cq.value(1).toString());
         c.tagIds = splitTagIds(cq.value(2).toString());
         c.title = cq.value(3).toString();
@@ -174,6 +189,10 @@ bool SqliteSessionStore::loadAll()
         c.isPinned = cq.value(6).toInt() != 0;
         c.created = QDateTime::fromString(cq.value(7).toString(), Qt::ISODate);
         c.modified = QDateTime::fromString(cq.value(8).toString(), Qt::ISODate);
+        // Authoritative id from disk; legacy rows (NULL/empty column) keep the historical local-{id}.
+        const QString storedId = cq.value(9).toString();
+        c.sessionId = domain::SessionId(
+            storedId.isEmpty() ? QStringLiteral("local-%1").arg(c.id) : storedId);
         m_sessions.push_back(c);
     }
 
@@ -249,8 +268,8 @@ void SqliteSessionStore::saveAll()
 
     QSqlQuery cq(db);
     cq.prepare(QStringLiteral("INSERT INTO sessions(id, agent_id, tag_ids, title, content, "
-                              "archived, pinned, created, modified, ord) "
-                              "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
+                              "archived, pinned, created, modified, ord, session_id) "
+                              "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
     for (int i = 0; i < m_sessions.size(); ++i) {
         const Session& c = m_sessions.at(i);
         cq.addBindValue(c.id);
@@ -263,6 +282,7 @@ void SqliteSessionStore::saveAll()
         cq.addBindValue(c.created.toString(Qt::ISODate));
         cq.addBindValue(c.modified.toString(Qt::ISODate));
         cq.addBindValue(i);
+        cq.addBindValue(c.sessionId.toString());
         cq.exec();
     }
 

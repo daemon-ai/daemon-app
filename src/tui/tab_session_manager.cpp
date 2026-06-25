@@ -62,7 +62,8 @@ TabSession* TabSessionManager::ensureSession(int tabId, std::function<void(TabSe
     return s;
 }
 
-void TabSessionManager::rebindSession(int tabId, int sessionId, std::function<void(TabSession*)> wire)
+void TabSessionManager::rebindSession(int tabId, const QString& sessionId,
+                                      std::function<void(TabSession*)> wire)
 {
     Q_UNUSED(wire)
     auto it = m_sessions.find(tabId);

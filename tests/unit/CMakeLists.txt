@@ -82,6 +82,19 @@ target_link_libraries(tst_app_service_graph
 add_test(NAME tst_app_service_graph COMMAND tst_app_service_graph)
 set_tests_properties(tst_app_service_graph PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_daemonnet: the P2 IDaemonNet typed read seam - unit tree accessors, the
+# All/Archived/Unit-subtree/Tag scope folds, the ByTransport/ByPeer lens grouping,
+# and sessionDetail/content by SessionId, all over the one mock DaemonNet seed.
+qt_add_executable(tst_daemonnet tst_daemonnet.cpp)
+target_link_libraries(tst_daemonnet
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemonnet
+        daemon-app::domain
+)
+add_test(NAME tst_daemonnet COMMAND tst_daemonnet)
+set_tests_properties(tst_daemonnet PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_fs_service: the filesystem seam's local mock must preserve the daemon FS
 # contract around optimistic concurrency and path containment.
 qt_add_executable(tst_fs_service tst_fs_service.cpp)
@@ -397,6 +410,19 @@ target_link_libraries(tst_transcript_search
 )
 add_test(NAME tst_transcript_search COMMAND tst_transcript_search)
 set_tests_properties(tst_transcript_search PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_transcript_log: the P4 transcript<->SessionLogEntry bridge - decomposing a
+# session's markdown into entries and rebuilding the document round-trips to the same
+# markdown the parse path produces (the showcase agent blocks + the role layer).
+qt_add_executable(tst_transcript_log tst_transcript_log.cpp)
+target_link_libraries(tst_transcript_log
+    PRIVATE
+        Qt6::Test
+        daemon-app::transcript_bridge
+        daemon-app::domain
+)
+add_test(NAME tst_transcript_log COMMAND tst_transcript_log)
+set_tests_properties(tst_transcript_log PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_editor_search: proves EditorController owns and exposes the shared find
 # engine bound to its DocumentStore, re-collecting matches on both the reload

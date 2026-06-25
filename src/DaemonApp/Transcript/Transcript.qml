@@ -20,6 +20,10 @@ Rectangle {
     // Kept for compatibility; the renderer is driven by load(), not this binding.
     property string content: ""
 
+    // The open session. The renderer is fed by its SessionLogEntry sequence
+    // (editor.loadTranscript), with `content` only the dedup key + raw-markdown source.
+    property string sessionId: ""
+
     // The shared turn-lifecycle FSM, injected by the host (owned by the
     // SessionOrchestrator). The transcript is a pure consumer: it reads
     // active/turnState/elapsedMs/errorText and feeds eventsEmitted into the editor.
@@ -81,7 +85,9 @@ Rectangle {
         if (turn)
             turn.cancel()
         _loadedMarkdown = md
-        editor.loadMarkdown(md, false)
+        // Drive the document from the session's SessionLogEntry sequence (decomposed
+        // from its stored markdown) rather than the markdown blob (roadmap P4).
+        editor.loadTranscript(SessionStore, root.sessionId)
         if (UiSettings.showRawMarkdown)
             _loadRaw(md)
         // Open at the bottom (latest message), like a chat transcript. A reset

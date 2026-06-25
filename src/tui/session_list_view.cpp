@@ -55,7 +55,7 @@ void SessionListView::setModel(SessionsListModel* model)
         connect(m_model, &QAbstractItemModel::dataChanged, this, repaint);
         connect(m_model, &QAbstractItemModel::rowsInserted, this, repaint);
         connect(m_model, &QAbstractItemModel::rowsRemoved, this, repaint);
-        connect(m_model, &SessionsListModel::selectionChanged, this, [this](int) {
+        connect(m_model, &SessionsListModel::selectionChanged, this, [this](const QString&) {
             rebuild();
             ensureVisible(m_model->currentRow());
             update();

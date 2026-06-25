@@ -1,6 +1,7 @@
 #include "app/editor_controller.h"
 
 #include "app/math_image_provider.h"
+#include "app/transcript_log.h"
 #include "core/agent_block.h"
 #include "core/markdown_table.h"
 #include "core/math_url.h"
@@ -206,6 +207,29 @@ void EditorController::loadMarkdown(const QString &markdown, bool activateFirstB
     if (activateFirstBlock && m_activeBlockId != 0) {
         emit editorFocusRequested(m_activeBlockId, ExactOffset, m_activeCursorOffset, 0.0);
     }
+}
+
+void EditorController::loadTranscript(QObject *store, const QString &sessionId)
+{
+    // Fetch the session's stored markdown via the store's Q_INVOKABLE content(QString)
+    // (kept dynamic so the block editor needs no link to the persistence layer).
+    QString markdown;
+    if (store != nullptr && !sessionId.isEmpty()) {
+        QMetaObject::invokeMethod(store, "content", Q_RETURN_ARG(QString, markdown),
+                                  Q_ARG(QString, sessionId));
+    }
+
+    // Rebuild the document from the decomposed entry sequence (the P4 render path),
+    // then mirror loadMarkdown's read-first post-load (no block activation, re-anchor
+    // search; loadTranscript is a session-switch/reload path, not an edit).
+    be::applyTranscriptLog(m_store, be::decomposeMarkdown(markdown));
+    m_commands.clear();
+    m_activeBlockId = 0;
+    m_activeCursorOffset = 0;
+    resetModel();
+    m_search.refresh();
+    emit activeBlockIdChanged();
+    emit activeCursorOffsetChanged();
 }
 
 void EditorController::beginStream()

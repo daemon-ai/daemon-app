@@ -4,6 +4,8 @@
 #include "persistence/sqlite_session_store.h"
 
 #include <QFile>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -60,13 +62,13 @@ private slots:
 
     void mutationsSurviveReopen()
     {
-        int newId = -1;
+        domain::SessionId newId;
         int baselineCount = 0;
         {
             SqliteSessionStore store(dbPath());
             baselineCount = store.sessionCount(allScope());
 
-            newId = store.createSession(U("n-scratch"));
+            newId = store.newSession(U("n-scratch"));
             store.renameSession(newId, QStringLiteral("Persisted thread"));
             store.setContent(newId, QStringLiteral("# durable\n\nhello"));
             store.setPinned(newId, true);
@@ -85,12 +87,12 @@ private slots:
 
     void archiveAndDeleteSurviveReopen()
     {
-        int keepId = -1;
-        int dropId = -1;
+        domain::SessionId keepId;
+        domain::SessionId dropId;
         {
             SqliteSessionStore store(dbPath());
-            keepId = store.createSession(U("n-scratch"));
-            dropId = store.createSession(U("n-scratch"));
+            keepId = store.newSession(U("n-scratch"));
+            dropId = store.newSession(U("n-scratch"));
             store.setArchived(keepId, true);
             store.deleteSession(dropId);
         }
@@ -100,7 +102,7 @@ private slots:
             const QList<Session> archived = store.sessions(archivedScope());
             bool found = false;
             for (const Session& c : archived) {
-                if (c.id == keepId) {
+                if (c.sessionId == keepId) {
                     found = true;
                 }
             }
@@ -112,16 +114,72 @@ private slots:
 
     void newIdsDoNotCollideAfterReopen()
     {
-        int firstNew = -1;
+        domain::SessionId firstNew;
         {
             SqliteSessionStore store(dbPath());
-            firstNew = store.createSession(UnitId());
+            firstNew = store.newSession(UnitId());
         }
         {
             SqliteSessionStore store(dbPath());
-            const int secondNew = store.createSession(UnitId());
-            QVERIFY2(secondNew != firstNew, "id counter must persist so ids never collide");
+            const domain::SessionId secondNew = store.newSession(UnitId());
+            QVERIFY2(secondNew != firstNew, "newSession mints distinct ids across reopen");
         }
+    }
+
+    // The authoritative string sessionId is a persisted column, so it survives a reopen unchanged
+    // (no longer regenerated as local-{id}).
+    void realSessionIdSurvivesReopen()
+    {
+        domain::SessionId sid;
+        {
+            SqliteSessionStore store(dbPath());
+            sid = store.newSession(U("n-scratch"));
+            QVERIFY(!sid.isEmpty());
+            QVERIFY2(!sid.toString().startsWith(QLatin1String("local-")),
+                     "newSession mints a real id");
+            store.renameSession(sid, QStringLiteral("Persisted"));
+        }
+        {
+            SqliteSessionStore store(dbPath());
+            // The same string SessionId keys the row after reopen (persisted verbatim).
+            QCOMPARE(store.title(sid), QStringLiteral("Persisted"));
+            bool present = false;
+            for (const Session& c : store.sessions(allScope())) {
+                present = present || c.sessionId == sid;
+            }
+            QVERIFY(present);
+        }
+    }
+
+    // A pre-migration db (sessions table without a session_id column) still loads: createSchema adds
+    // the column and loadAll backfills the legacy local-{id} form for the null value.
+    void legacyRowWithoutSessionIdFallsBack()
+    {
+        {
+            QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"),
+                                                       QStringLiteral("legacy-seed"));
+            db.setDatabaseName(dbPath());
+            QVERIFY(db.open());
+            QSqlQuery q(db);
+            QVERIFY(q.exec(QStringLiteral(
+                "CREATE TABLE sessions(id INTEGER PRIMARY KEY, agent_id TEXT, tag_ids TEXT, "
+                "title TEXT, content TEXT, archived INTEGER, pinned INTEGER, created TEXT, "
+                "modified TEXT, ord INTEGER)")));
+            QVERIFY(q.exec(QStringLiteral(
+                "INSERT INTO sessions(id, agent_id, tag_ids, title, content, archived, pinned, "
+                "created, modified, ord) VALUES(5,'n-scratch','','Legacy thread','body',0,0,'','',0)")));
+            db.close();
+        }
+        QSqlDatabase::removeDatabase(QStringLiteral("legacy-seed"));
+
+        SqliteSessionStore store(dbPath());
+        QString sid;
+        for (const Session& c : store.sessions(allScope())) {
+            if (c.title == QStringLiteral("Legacy thread")) {
+                sid = c.sessionId.toString();
+            }
+        }
+        QCOMPARE(sid, QStringLiteral("local-5"));
     }
 };
 

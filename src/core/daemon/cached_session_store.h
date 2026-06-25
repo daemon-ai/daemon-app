@@ -33,24 +33,29 @@ public:
 
     [[nodiscard]] QList<domain::Session> sessions(const domain::ListScope& scope) const override;
     [[nodiscard]] int sessionCount(const domain::ListScope& scope) const override;
-    [[nodiscard]] QString content(int sessionId) const override;
-    [[nodiscard]] QString title(int sessionId) const override;
 
-    int createSession(const domain::UnitId& unitId) override;
     domain::UnitId createUnit(const domain::UnitId& parentId, domain::UnitKind kind) override;
     int createTag(const QString& name, const QString& color) override;
-    void setContent(int sessionId, const QString& markdown) override;
-    void setArchived(int sessionId, bool archived) override;
-    void renameSession(int sessionId, const QString& title) override;
-    void deleteSession(int sessionId) override;
-    void setPinned(int sessionId, bool pinned) override;
-    [[nodiscard]] bool isPinned(int sessionId) const override;
-    void moveSession(int sessionId, int delta) override;
+
+    // SessionId-keyed canonical API (matches the daemon-authoritative row.sessionId).
+    [[nodiscard]] QString content(const domain::SessionId& id) const override;
+    [[nodiscard]] QString title(const domain::SessionId& id) const override;
+    [[nodiscard]] bool isPinned(const domain::SessionId& id) const override;
+    domain::SessionId newSession(const domain::UnitId& unitId) override;
+    void setContent(const domain::SessionId& id, const QString& markdown) override;
+    void setArchived(const domain::SessionId& id, bool archived) override;
+    void renameSession(const domain::SessionId& id, const QString& title) override;
+    void deleteSession(const domain::SessionId& id) override;
+    void setPinned(const domain::SessionId& id, bool pinned) override;
+    void moveSession(const domain::SessionId& id, int delta) override;
 
 private:
     void reload();
     [[nodiscard]] static bool matchesScope(const CachedSessionRow& row,
                                            const domain::ListScope& scope);
+    // Index of the snapshot row with this SessionId, or -1. The bridge from the canonical id to the
+    // cache row (and the int shims' resolution target).
+    [[nodiscard]] int indexOfSessionId(const domain::SessionId& id) const;
 
     DaemonCacheStore* m_cache = nullptr;
     SessionRepository* m_sessions = nullptr;

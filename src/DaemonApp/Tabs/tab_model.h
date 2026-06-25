@@ -56,7 +56,7 @@ public:
         TabIdRole = Qt::UserRole + 1, // stable, monotonically-assigned id
         KindRole,                     // Kind
         TitleRole,                    // display label
-        SessionIdRole,           // transcript tabs only; -1 for pages
+        SessionIdRole,           // transcript tabs only; "" for pages (string SessionId)
         ClosableRole,                 // false pins the tab open
         CurrentRole,                  // true for the active row
         PreviewRole,                  // true for the transient "preview" tab
@@ -80,16 +80,16 @@ public:
     // activate it, and return its stable tab id. An existing tab is reused (title
     // refreshed) and pinned. This is the deliberate "open" path (list double-click
     // / new session).
-    Q_INVOKABLE int openTranscript(int sessionId, const QString& title);
+    Q_INVOKABLE int openTranscript(const QString& sessionId, const QString& title);
     // Alias kept for clarity at call sites; identical to openTranscript.
-    Q_INVOKABLE int openTranscriptPinned(int sessionId, const QString& title);
+    Q_INVOKABLE int openTranscriptPinned(const QString& sessionId, const QString& title);
 
     // VSCode-style transient open: if `sessionId` is already open in any tab,
     // activate it; otherwise reuse the single preview tab (reassigning its
     // session in place and emitting tabSessionChanged) or, if none
     // exists, append a new preview tab. Returns the active tab's id. The preview
     // tab is replaced by the next preview and becomes permanent via pinTab*.
-    Q_INVOKABLE int previewTranscript(int sessionId, const QString& title);
+    Q_INVOKABLE int previewTranscript(const QString& sessionId, const QString& title);
 
     // Pin (make permanent) the tab at `index` / with `tabId` / the active tab:
     // clears its preview flag so the next preview opens a fresh slot instead of
@@ -134,7 +134,7 @@ public:
     // Frontend accessors keyed by row or id.
     [[nodiscard]] Q_INVOKABLE int tabIdAt(int index) const;
     [[nodiscard]] Q_INVOKABLE int kindAt(int index) const;
-    [[nodiscard]] Q_INVOKABLE int sessionIdAt(int index) const;
+    [[nodiscard]] Q_INVOKABLE QString sessionIdAt(int index) const;
     [[nodiscard]] Q_INVOKABLE QString titleAt(int index) const;
     [[nodiscard]] Q_INVOKABLE bool isPreviewAt(int index) const;
     [[nodiscard]] Q_INVOKABLE int indexOfTabId(int tabId) const;
@@ -149,7 +149,7 @@ signals:
     void tabClosed(int tabId);
     // A preview tab was reassigned to a different session in place (its tab id
     // is stable). The frontend rebinds the matching per-tab page/session.
-    void tabSessionChanged(int tabId, int sessionId);
+    void tabSessionChanged(int tabId, const QString& sessionId);
     // A preview tab changed kind/path in place (e.g. Transcript <-> File). The
     // frontend must tear down the old per-tab controller/session and rebind.
     void tabKindChanged(int tabId);
@@ -162,7 +162,7 @@ private:
         int id = 0;
         int kind = Transcript;
         QString title;
-        int sessionId = -1;
+        QString sessionId; // string SessionId for transcript tabs; "" for pages
         bool closable = true;
         bool preview = false; // transient (VSCode-style) tab; at most one exists
         QString rootId;       // File tabs: owning root id
@@ -175,7 +175,7 @@ private:
     // emitting currentIndexChanged + currentTabChanged + the CurrentRole repaint.
     void setCurrentInternal(int index);
     void emitCurrentChanged(); // dataChanged(CurrentRole) across all rows
-    [[nodiscard]] int findTranscriptRow(int sessionId) const;
+    [[nodiscard]] int findTranscriptRow(const QString& sessionId) const;
     [[nodiscard]] int findPageRow(int kind) const;
     [[nodiscard]] int findPreviewRow() const;
     [[nodiscard]] int findFileRow(const QString& rootId, const QString& path) const;

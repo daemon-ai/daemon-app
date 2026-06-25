@@ -21,6 +21,9 @@ class IDaemonConfig;
 namespace connection {
 class IConnectionService;
 }
+namespace daemonnet {
+class IDaemonNet;
+}
 namespace fleet {
 class IApprovalsInbox;
 class IDashboard;
@@ -62,6 +65,7 @@ public:
         fleet::IDashboard* dashboard = nullptr;
         automation::IRoutingStore* routing = nullptr;
         automation::ICronStore* cron = nullptr;
+        daemonnet::IDaemonNet* daemonNet = nullptr;
         memory::IMemoryService* memory = nullptr;
         memoryui::MemoryListModel* memList = nullptr;
         memoryui::MemoryStatsModel* memStats = nullptr;

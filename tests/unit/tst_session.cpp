@@ -65,18 +65,18 @@ private slots:
     void sessionSettingsArePerSession()
     {
         MockSessionSettings s;
-        s.setSessionId(1);
+        s.setSessionId(QStringLiteral("s-1"));
         s.setEffort(QStringLiteral("high"));
         s.setProfile(QStringLiteral("Coder"));
 
-        s.setSessionId(2);
+        s.setSessionId(QStringLiteral("s-2"));
         // A fresh session starts at the defaults, not chat 1's overrides.
         QCOMPARE(s.effort(), QStringLiteral("medium"));
         QCOMPARE(s.profile(), QStringLiteral("General Assistant"));
         s.setEffort(QStringLiteral("low"));
 
         // Switching back restores chat 1's overrides.
-        s.setSessionId(1);
+        s.setSessionId(QStringLiteral("s-1"));
         QCOMPARE(s.effort(), QStringLiteral("high"));
         QCOMPARE(s.profile(), QStringLiteral("Coder"));
     }
@@ -86,18 +86,18 @@ private slots:
     void checkpointTimelineIsPerSession()
     {
         MockCheckpointTimeline t;
-        t.setSessionId(1);
+        t.setSessionId(QStringLiteral("s-1"));
         const int full = t.count();
         QVERIFY(full >= 3);
         t.restore(QStringLiteral("cp-2"));
         QCOMPARE(t.count(), 2);
 
         // Chat 2 has its own full timeline, untouched by chat 1's rewind.
-        t.setSessionId(2);
+        t.setSessionId(QStringLiteral("s-2"));
         QCOMPARE(t.count(), full);
 
         // Back to chat 1: still rewound to two entries.
-        t.setSessionId(1);
+        t.setSessionId(QStringLiteral("s-1"));
         QCOMPARE(t.count(), 2);
     }
 };

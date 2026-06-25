@@ -7,7 +7,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-QString TranscriptExporter::toJson(QObject* store, int sessionId) const
+QString TranscriptExporter::toJson(QObject* store, const QString& sessionId) const
 {
     auto* s = qobject_cast<persistence::ISessionStore*>(store);
     if (s == nullptr) {
@@ -35,7 +35,7 @@ bool TranscriptExporter::writeFile(const QUrl& fileUrl, const QString& text) con
     return ok;
 }
 
-bool TranscriptExporter::exportToPath(persistence::ISessionStore* store, int sessionId,
+bool TranscriptExporter::exportToPath(persistence::ISessionStore* store, const QString& sessionId,
                                       const QString& filePath) const
 {
     if (store == nullptr) {

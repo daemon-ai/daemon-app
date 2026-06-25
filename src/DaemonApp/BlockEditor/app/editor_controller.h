@@ -84,6 +84,11 @@ public:
     void setBodyFontSize(int pixelSize);
 
     Q_INVOKABLE void loadMarkdown(const QString &markdown, bool activateFirstBlock = true);
+    // Load a persisted session by decomposing its stored markdown (fetched from
+    // `store`'s Q_INVOKABLE content(QString)) into a SessionLogEntry sequence and
+    // rebuilding the document from those entries (roadmap P4). The render is driven by
+    // the entry log, not the markdown blob; a daemon adapter feeds the same applier.
+    Q_INVOKABLE void loadTranscript(QObject *store, const QString &sessionId);
     // Decode UTF-8 bytes (e.g. a file read through the Fs seam) and load them as
     // markdown, read-first (no block activated). Mirrors CodeEditorController's
     // loadBytes for the rich block editor path.

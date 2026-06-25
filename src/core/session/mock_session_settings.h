@@ -12,8 +12,8 @@ class MockSessionSettings : public ISessionSettings {
 public:
     explicit MockSessionSettings(QObject* parent = nullptr);
 
-    [[nodiscard]] int sessionId() const override { return m_sessionId; }
-    void setSessionId(int id) override;
+    [[nodiscard]] QString sessionId() const override { return m_sessionId; }
+    void setSessionId(const QString& id) override;
 
     [[nodiscard]] QString profile() const override { return entry().profile; }
     void setProfile(const QString& profile) override;
@@ -40,8 +40,8 @@ private:
     [[nodiscard]] const Settings& entry() const;
     [[nodiscard]] Settings& entry();
 
-    int m_sessionId = -1;
-    mutable QHash<int, Settings> m_bySession;
+    QString m_sessionId;
+    mutable QHash<QString, Settings> m_bySession;
 };
 
 } // namespace session

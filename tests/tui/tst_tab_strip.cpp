@@ -64,8 +64,8 @@ private slots:
         strip->setGeometry({ 0, 0, 80, 1 });
         strip->setModel(&model);
 
-        model.openTranscript(1, QStringLiteral("Alpha"));
-        model.openTranscript(2, QStringLiteral("Beta"));
+        model.openTranscript(QStringLiteral("s-1"), QStringLiteral("Alpha"));
+        model.openTranscript(QStringLiteral("s-2"), QStringLiteral("Beta"));
         settle();
 
         const QString frame = frameText(terminal);
@@ -87,8 +87,8 @@ private slots:
         strip->setGeometry({ 0, 0, 80, 1 });
         strip->setModel(&model);
 
-        model.openTranscript(1, QStringLiteral("Alpha"));
-        model.openTranscript(2, QStringLiteral("Beta"));
+        model.openTranscript(QStringLiteral("s-1"), QStringLiteral("Alpha"));
+        model.openTranscript(QStringLiteral("s-2"), QStringLiteral("Beta"));
         model.closeTab(0); // remove Alpha
         settle();
 
@@ -112,8 +112,8 @@ private slots:
         strip->setModel(&model);
         QSignalSpy newSpy(strip, &TabStripView::newTabRequested);
 
-        model.openTranscript(1, QStringLiteral("Alpha")); // chip 0: x0=0  x1=9  closeX=7
-        model.openTranscript(2, QStringLiteral("Beta"));  // chip 1: x0=9  x1=17 closeX=15
+        model.openTranscript(QStringLiteral("s-1"), QStringLiteral("Alpha")); // chip 0: x0=0  x1=9  closeX=7
+        model.openTranscript(QStringLiteral("s-2"), QStringLiteral("Beta"));  // chip 1: x0=9  x1=17 closeX=15
                                                           // "+":     x0=17 x1=20
         QCOMPARE(model.currentIndex(), 1);
 
@@ -128,7 +128,7 @@ private slots:
         // Click chip 0's "x" -> it closes (Beta remains).
         strip->clickAt({ 7, 0 });
         QCOMPARE(model.count(), 1);
-        QCOMPARE(model.sessionIdAt(0), 2);
+        QCOMPARE(model.sessionIdAt(0), QStringLiteral("s-2"));
     }
 
     // A preview open reuses the single preview chip in place: the strip repaints
@@ -144,12 +144,12 @@ private slots:
         strip->setGeometry({ 0, 0, 80, 1 });
         strip->setModel(&model);
 
-        model.previewTranscript(1, QStringLiteral("Alpha"));
+        model.previewTranscript(QStringLiteral("s-1"), QStringLiteral("Alpha"));
         settle();
         QString frame = frameText(terminal);
         QVERIFY2(frame.contains(QStringLiteral("Alpha")), qPrintable(frame));
 
-        model.previewTranscript(2, QStringLiteral("Beta"));
+        model.previewTranscript(QStringLiteral("s-2"), QStringLiteral("Beta"));
         settle();
         QCOMPARE(model.count(), 1); // reused, not appended
         frame = frameText(terminal);
@@ -172,9 +172,9 @@ private slots:
         strip->setGeometry({ 0, 0, 80, 1 });
         strip->setModel(&model);
 
-        model.openTranscript(1, QStringLiteral("Alpha"));
-        model.openTranscript(2, QStringLiteral("Beta"));
-        model.openTranscript(3, QStringLiteral("Gamma"));
+        model.openTranscript(QStringLiteral("s-1"), QStringLiteral("Alpha"));
+        model.openTranscript(QStringLiteral("s-2"), QStringLiteral("Beta"));
+        model.openTranscript(QStringLiteral("s-3"), QStringLiteral("Gamma"));
         QCOMPARE(model.currentIndex(), 2);
 
         strip->setFocus();
@@ -205,14 +205,14 @@ private slots:
         strip->setGeometry({ 0, 0, 80, 1 });
         strip->setModel(&model);
 
-        model.previewTranscript(1, QStringLiteral("Alpha"));
+        model.previewTranscript(QStringLiteral("s-1"), QStringLiteral("Alpha"));
         QVERIFY(model.isPreviewAt(0));
         strip->setFocus();
 
         Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
         QVERIFY(!model.isPreviewAt(0)); // graduated to a pinned tab
 
-        model.openTranscript(2, QStringLiteral("Beta"));
+        model.openTranscript(QStringLiteral("s-2"), QStringLiteral("Beta"));
         QCOMPARE(model.count(), 2);
         QCOMPARE(model.currentIndex(), 1);
         Tui::ZTest::sendKey(&terminal, Qt::Key_Delete, Qt::NoModifier);

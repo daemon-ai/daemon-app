@@ -14,6 +14,7 @@ target_include_directories(da_persistence PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..
 target_link_libraries(da_persistence
     PUBLIC
         daemon-app::domain
+        daemon-app::daemonnet
         Qt6::Core
         Qt6::Sql
     PRIVATE

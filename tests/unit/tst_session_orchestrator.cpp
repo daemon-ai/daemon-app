@@ -38,8 +38,8 @@ private slots:
         persistence::InMemorySessionStore store;
         SessionController controller;
         controller.setStore(&store);
-        const int id = controller.createSession(QString());
-        QVERIFY(id >= 0);
+        const QString id = controller.createSession(QString());
+        QVERIFY(!id.isEmpty());
 
         SessionOrchestrator orch;
         orch.setSession(&controller);

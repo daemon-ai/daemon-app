@@ -223,7 +223,7 @@ Rectangle {
 
                 required property int index
                 required property int kind
-                required property int sessionId
+                required property string sessionId
                 required property int tabId
                 required property string filePath
                 required property string fileRoot
@@ -363,7 +363,7 @@ Rectangle {
     // current title and remembers the target id.
     Kit.Dialog {
         id: renameDialog
-        property int targetId: -1
+        property string targetId: ""
         title: qsTr("Rename session")
         width: 380
         acceptText: qsTr("Rename")
@@ -377,7 +377,7 @@ Rectangle {
         }
 
         onAccepted: {
-            if (renameDialog.targetId >= 0 && renameField.text.trim().length > 0)
+            if (renameDialog.targetId !== "" && renameField.text.trim().length > 0)
                 SessionStore.renameSession(renameDialog.targetId, renameField.text.trim());
         }
 
@@ -392,7 +392,7 @@ Rectangle {
     // Export the session transcript to a JSON file via the shared Exporter.
     FileDialog {
         id: exportDialog
-        property int targetId: -1
+        property string targetId: ""
         title: qsTr("Export transcript")
         fileMode: FileDialog.SaveFile
         nameFilters: [qsTr("JSON files (*.json)"), qsTr("All files (*)")]
@@ -406,7 +406,7 @@ Rectangle {
         }
 
         onAccepted: {
-            if (exportDialog.targetId >= 0)
+            if (exportDialog.targetId !== "")
                 Exporter.writeFile(selectedFile, Exporter.toJson(SessionStore, exportDialog.targetId));
         }
     }

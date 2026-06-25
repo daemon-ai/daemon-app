@@ -100,7 +100,11 @@ public:
     // `markdown` and appends the resulting blocks under a fresh user message
     // (the runtime path for a typed-in prompt); it returns the new message id.
     QString beginMessage(MessageRole role);
-    QString appendMessageBlocks(MessageRole role, const QString &markdown);
+    // Append `markdown` parsed under a message of `role`. `explicitId` preserves an
+    // authored message id (round-trips the boundary marker); empty allocates a fresh
+    // id for a roled message, or leaves an un-roled (None) run with no id/marker.
+    QString appendMessageBlocks(MessageRole role, const QString &markdown,
+                                const QString &explicitId = {});
     MessageRole currentMessageRole() const;
     QString currentMessageId() const;
     // First row whose block belongs to `messageId`, or -1 if none.

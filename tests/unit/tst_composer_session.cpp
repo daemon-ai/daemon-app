@@ -125,7 +125,7 @@ private slots:
     // Seeds a three-entry history (oldest -> newest) for the active session.
     static void seedHistory(ComposerSessionController& c)
     {
-        c.setSessionId(1);
+        c.setSessionId(QStringLiteral("s-1"));
         const char* entries[] = { "alpha one", "beta two", "alpha three" };
         for (const char* e : entries) {
             c.setDraft(QString::fromLatin1(e));
@@ -232,7 +232,7 @@ private slots:
         c.reverseSearchType(QStringLiteral("alpha"));
         QVERIFY(c.reverseSearching());
 
-        c.setSessionId(2);
+        c.setSessionId(QStringLiteral("s-2"));
         QVERIFY(!c.reverseSearching());
         QVERIFY(c.reverseSearchQuery().isEmpty());
     }

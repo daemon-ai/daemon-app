@@ -24,7 +24,7 @@ Rectangle {
     // True while an assistant turn is running (host binds Transcript.busy).
     property bool busy: false
     // The open session; drives per-session draft/queue/history swap.
-    property int sessionId: -1
+    property string sessionId: ""
     property bool composerEnabled: true
 
     // When true, the composer's inner content (status stack + input surface) is

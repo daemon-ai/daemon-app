@@ -16,7 +16,7 @@ TestCase {
     Composer {
         id: composer
         width: 640
-        sessionId: 1
+        sessionId: "s-1"
     }
 
     SignalSpy {
@@ -28,7 +28,7 @@ TestCase {
     function init() {
         // Reset to a clean, idle state on a fresh session each test.
         composer.busy = false;
-        composer.sessionId = 900;
+        composer.sessionId = "s-900";
         composer.draftText = "";
         submitSpy.clear();
     }
@@ -75,22 +75,22 @@ TestCase {
     }
 
     function test_draft_swaps_per_session() {
-        composer.sessionId = 10;
+        composer.sessionId = "s-10";
         composer.draftText = "draft-A";
 
-        composer.sessionId = 11;
+        composer.sessionId = "s-11";
         compare(composer.draftText, "", "new session starts empty");
         composer.draftText = "draft-B";
 
-        composer.sessionId = 10;
+        composer.sessionId = "s-10";
         compare(composer.draftText, "draft-A", "session 10 draft restored");
 
-        composer.sessionId = 11;
+        composer.sessionId = "s-11";
         compare(composer.draftText, "draft-B", "session 11 draft restored");
     }
 
     function test_history_recall() {
-        composer.sessionId = 20;
+        composer.sessionId = "s-20";
         composer.draftText = "first";
         composer.submitDraft();
         composer.draftText = "second";

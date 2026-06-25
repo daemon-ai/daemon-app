@@ -8,6 +8,7 @@
 
 using domain::ListScope;
 using domain::NodeType;
+using domain::SessionId;
 using domain::UnitId;
 using domain::UnitNode;
 using persistence::InMemorySessionStore;
@@ -90,8 +91,8 @@ private slots:
         QSignalSpy spy(&store, &persistence::ISessionStore::changed);
         const int before = store.sessionCount(unitScope("n-acme"));
 
-        const int id = store.createSession(U("n-worker"));
-        QVERIFY(id > 0);
+        const SessionId id = store.newSession(U("n-worker"));
+        QVERIFY(!id.isEmpty());
         QCOMPARE(spy.count(), 1);
         QCOMPARE(store.sessionCount(unitScope("n-worker")), 2);
         QCOMPARE(store.sessionCount(unitScope("n-deep")), 2);
@@ -109,14 +110,14 @@ private slots:
     void titleReturnsStoredTitle()
     {
         InMemorySessionStore store;
-        const int id = store.createSession(U("n-worker"));
+        const SessionId id = store.newSession(U("n-worker"));
         QCOMPARE(store.title(id), QStringLiteral("New session"));
 
         store.setContent(id, QStringLiteral("Some unrelated first content line.\nmore"));
         QCOMPARE(store.title(id), QStringLiteral("New session"));
         QVERIFY(store.title(id) != store.content(id));
 
-        QVERIFY(store.title(-1).isEmpty());
+        QVERIFY(store.title(SessionId()).isEmpty());
     }
 
     // createUnit with an empty parent adds a new root; with a parent it becomes a
@@ -143,7 +144,7 @@ private slots:
     void renameSetsTitle()
     {
         InMemorySessionStore store;
-        const int id = store.createSession(U("n-worker"));
+        const SessionId id = store.newSession(U("n-worker"));
         QSignalSpy spy(&store, &persistence::ISessionStore::changed);
 
         store.renameSession(id, QStringLiteral("Release plan"));
@@ -154,7 +155,7 @@ private slots:
     void deleteRemovesSession()
     {
         InMemorySessionStore store;
-        const int id = store.createSession(U("n-worker"));
+        const SessionId id = store.newSession(U("n-worker"));
         QCOMPARE(store.sessionCount(unitScope("n-worker")), 2);
 
         QSignalSpy spy(&store, &persistence::ISessionStore::changed);
@@ -167,19 +168,19 @@ private slots:
     void pinFloatsToTopOfScope()
     {
         InMemorySessionStore store;
-        const int a = store.createSession(U("n-worker"));
-        const int b = store.createSession(U("n-worker"));
+        const SessionId a = store.newSession(U("n-worker"));
+        const SessionId b = store.newSession(U("n-worker"));
         QVERIFY(!store.isPinned(b));
 
         store.setPinned(b, true);
         QVERIFY(store.isPinned(b));
 
         const auto convs = store.sessions(unitScope("n-worker"));
-        QList<int> ids;
+        QStringList ids;
         for (const auto& c : convs) {
-            ids << c.id;
+            ids << c.sessionId.toString();
         }
-        QVERIFY(ids.indexOf(b) < ids.indexOf(a));
+        QVERIFY(ids.indexOf(b.toString()) < ids.indexOf(a.toString()));
 
         store.setPinned(b, false);
         QVERIFY(!store.isPinned(b));
@@ -197,6 +198,41 @@ private slots:
         QCOMPARE(store.tags().size(), before + 2);
         QVERIFY(a != b);
         QVERIFY(a > 2 && b > 2);
+    }
+
+    // The SessionId-keyed API is the only session key into the store: newSession mints a real opaque
+    // id, and content/title/pin/archive/delete all round-trip through it.
+    void sessionIdKeyedCrud()
+    {
+        InMemorySessionStore store;
+        const SessionId sid = store.newSession(U("n-worker"));
+        QVERIFY(!sid.isEmpty());
+        QVERIFY2(!sid.toString().startsWith(QLatin1String("local-")),
+                 "newSession mints a real opaque id, not the legacy local- form");
+
+        // The new session appears in the All scope keyed by its real SessionId.
+        bool present = false;
+        for (const auto& c : store.sessions({ NodeType::AllSessions, -1, {} })) {
+            present = present || c.sessionId == sid;
+        }
+        QVERIFY(present);
+
+        store.setContent(sid, QStringLiteral("# canonical"));
+        QCOMPARE(store.content(sid), QStringLiteral("# canonical"));
+
+        store.renameSession(sid, QStringLiteral("Renamed by id"));
+        QCOMPARE(store.title(sid), QStringLiteral("Renamed by id"));
+
+        store.setPinned(sid, true);
+        QVERIFY(store.isPinned(sid));
+        store.setPinned(sid, false);
+        QVERIFY(!store.isPinned(sid));
+
+        store.setArchived(sid, true);
+        QCOMPARE(store.sessionCount({ NodeType::Archived, -1, {} }), 2); // seed has 1 archived + this
+
+        store.deleteSession(sid);
+        QVERIFY(store.title(sid).isEmpty());
     }
 
     // Typed ids round-trip through their string form (daemon string_id parity).

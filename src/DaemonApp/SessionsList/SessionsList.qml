@@ -17,9 +17,9 @@ Rectangle {
     color: Theme.listBackground
 
     // Single-click / Enter: activate (opens in the transient preview tab).
-    signal sessionActivated(int sessionId)
+    signal sessionActivated(string sessionId)
     // Double-click: open as a permanent (pinned) tab.
-    signal sessionOpened(int sessionId)
+    signal sessionOpened(string sessionId)
     signal toggleSidebarRequested()
 
     property bool searchActive: false
@@ -52,7 +52,7 @@ Rectangle {
     // --- Row actions (right-click): rename / pin / export / delete ----------
     Kit.Menu {
         id: rowMenu
-        property int targetId: -1
+        property string targetId: ""
         property bool targetPinned: false
 
         function openFor(sessionId, pinned) {
@@ -90,7 +90,7 @@ Rectangle {
 
     Kit.Dialog {
         id: renameDialog
-        property int targetId: -1
+        property string targetId: ""
         title: qsTr("Rename session")
         width: 380
         acceptText: qsTr("Rename")
@@ -103,7 +103,7 @@ Rectangle {
             renameField.selectAll();
         }
         onAccepted: {
-            if (renameDialog.targetId >= 0 && renameField.text.trim().length > 0)
+            if (renameDialog.targetId !== "" && renameField.text.trim().length > 0)
                 SessionStore.renameSession(renameDialog.targetId, renameField.text.trim());
         }
         contentItem: Kit.TextField {
@@ -116,7 +116,7 @@ Rectangle {
 
     Kit.Dialog {
         id: deleteDialog
-        property int targetId: -1
+        property string targetId: ""
         title: qsTr("Delete session")
         width: 360
         acceptText: qsTr("Delete")
@@ -127,7 +127,7 @@ Rectangle {
             open();
         }
         onAccepted: {
-            if (deleteDialog.targetId >= 0)
+            if (deleteDialog.targetId !== "")
                 SessionStore.deleteSession(deleteDialog.targetId);
         }
         contentItem: QQC.Label {
@@ -141,7 +141,7 @@ Rectangle {
 
     FileDialog {
         id: exportDialog
-        property int targetId: -1
+        property string targetId: ""
         title: qsTr("Export transcript")
         fileMode: FileDialog.SaveFile
         nameFilters: [qsTr("JSON files (*.json)"), qsTr("All files (*)")]
@@ -154,7 +154,7 @@ Rectangle {
             open();
         }
         onAccepted: {
-            if (exportDialog.targetId >= 0)
+            if (exportDialog.targetId !== "")
                 Exporter.writeFile(selectedFile, Exporter.toJson(SessionStore, exportDialog.targetId));
         }
     }

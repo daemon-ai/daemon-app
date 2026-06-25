@@ -204,6 +204,8 @@ target_link_libraries(daemon-tui
         # link time but needs no QGuiApplication (QColor works under QCoreApplication),
         # so the TUI shares the exact same transcript blocks as the QML front end.
         be_core
+        # The SessionLogEntry <-> document bridge (roadmap P4), shared with the GUI.
+        be_transcript
         # File tree + editor: the fs seam and the de_core engine, shared with GUI.
         daemon-app::fs
         daemon-app::editor_core

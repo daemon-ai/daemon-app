@@ -51,9 +51,22 @@ public:
     static bool decodeHealth(const QByteArray& responseCbor, DecodedHealth* out);
     static bool decodeSessionPage(const QByteArray& responseCbor, QList<CachedSessionRow>* out,
                                   QString* nextCursor = nullptr);
-    // Decode a LogPage into cache rows tagged with sessionId. The whole-message codec does not
-    // expose per-entry payload re-encoding, so payloadCbor is left empty for now; seq/direction/
-    // disposition + the next/head cursors are populated (enough to advance the sync cursor).
+    // Decode a LogPage into cache rows tagged with sessionId. Populates seq/direction/disposition +
+    // the next/head cursors (enough to advance the sync cursor and project the envelope into a
+    // domain::SessionLogEntry for the P4 transcript applier).
+    //
+    // DEFERRED (roadmap P5 - "dn-codec"): the entry's `origin` and `payload` are NOT captured yet.
+    // This is blocked at the vendored client codec, not here:
+    //   - The client subset (daemon-node .../daemon-api-client.cddl) models `session-payload` as ONLY
+    //     `{ "Command": agent-command }` and `origin.scope` as a flat tstr; the wire union's
+    //     Event/Request/Response/Meta arms (the assistant AgentEvents that make up a transcript) and
+    //     the Dm/Group/Api/Internal scope union are not generated (a zcbor codegen collision the CDDL
+    //     itself flags as future work).
+    //   - There is no `encode_session_payload` and zcbor does not retain the raw per-entry bytes, so
+    //     `CachedLogRow.payloadCbor` cannot be filled by re-encoding either.
+    // Capturing payload/origin therefore requires growing that client CDDL subset + regenerating the
+    // vendored codec in daemon-node (a separate, cross-repo task) before the daemon path can feed full
+    // transcript content into the shared store.
     static bool decodeLogPage(const QByteArray& responseCbor, const QString& sessionId,
                               QList<CachedLogRow>* out, quint64* nextSeq = nullptr,
                               quint64* headSeq = nullptr);

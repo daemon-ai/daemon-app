@@ -1,42 +1,20 @@
 #include "fleet/mock_session_roster.h"
 
+#include "daemonnet/idaemonnet.h"
+
 namespace fleet {
-namespace {
 
-QVariantMap mk(const QString& id, const QString& title, const QString& profile,
-               const QString& state, const QString& lifecycle, const QString& lastActivity,
-               int tokens, bool rewindable)
-{
-    QVariantMap m;
-    m[QStringLiteral("id")] = id;
-    m[QStringLiteral("title")] = title;
-    m[QStringLiteral("profile")] = profile;
-    m[QStringLiteral("state")] = state;
-    m[QStringLiteral("lifecycle")] = lifecycle;
-    m[QStringLiteral("lastActivity")] = lastActivity;
-    m[QStringLiteral("tokens")] = tokens;
-    m[QStringLiteral("rewindable")] = rewindable;
-    return m;
-}
-
-} // namespace
-
-MockSessionRoster::MockSessionRoster(QObject* parent)
+MockSessionRoster::MockSessionRoster(daemonnet::IDaemonNet* net, QObject* parent)
     : ISessionRoster(parent)
     , m_sessions(new uimodels::VariantListModel(this))
 {
-    m_sessions->upsert(mk(QStringLiteral("s-1"), QStringLiteral("Refactor auth module"),
-                          QStringLiteral("Coder"), QStringLiteral("active"),
-                          QStringLiteral("durable"), QStringLiteral("just now"), 48210, true));
-    m_sessions->upsert(mk(QStringLiteral("s-2"), QStringLiteral("Research vector DBs"),
-                          QStringLiteral("Researcher"), QStringLiteral("idle"),
-                          QStringLiteral("durable"), QStringLiteral("4m ago"), 17650, true));
-    m_sessions->upsert(mk(QStringLiteral("s-3"), QStringLiteral("Daily standup summary"),
-                          QStringLiteral("General Assistant"), QStringLiteral("suspended"),
-                          QStringLiteral("live"), QStringLiteral("1h ago"), 3120, false));
-    m_sessions->upsert(mk(QStringLiteral("s-4"), QStringLiteral("Migrate CI pipeline"),
-                          QStringLiteral("Coder"), QStringLiteral("active"),
-                          QStringLiteral("durable"), QStringLiteral("12m ago"), 62890, true));
+    // Single source: copy the DaemonNet's flat session projection at construction;
+    // suspend/resume/close then mutate this local copy.
+    if (net != nullptr) {
+        if (auto* src = qobject_cast<uimodels::VariantListModel*>(net->sessions())) {
+            m_sessions->setRows(src->rows());
+        }
+    }
     connect(m_sessions, &uimodels::VariantListModel::countChanged, this, &ISessionRoster::changed);
 }
 

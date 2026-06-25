@@ -1,6 +1,10 @@
 #include "persistence/in_memory_session_store.h"
 
+#include "daemonnet/idaemonnet.h"
+#include "daemonnet/seed_transcripts.h"
+
 #include <QDateTime>
+#include <QUuid>
 
 #include <algorithm>
 
@@ -64,6 +68,38 @@ InMemorySessionStore::InMemorySessionStore(QObject* parent, bool seed)
     }
 }
 
+InMemorySessionStore::InMemorySessionStore(daemonnet::IDaemonNet* net, QObject* parent)
+    : ISessionStore(parent)
+{
+    seedFromDaemonNet(net);
+}
+
+void InMemorySessionStore::seedFromDaemonNet(daemonnet::IDaemonNet* net)
+{
+    if (net == nullptr) {
+        return;
+    }
+    const daemonnet::SeedBundle bundle = net->seed();
+    m_units = bundle.units;
+    m_tags = bundle.tags;
+    // Copy the sessions, assigning each a stable local int handle (deterministic order) while keeping
+    // its authoritative string sessionId. The int handle is transitional (the pipeline migrates to
+    // SessionId in P3).
+    m_sessions.clear();
+    m_sessions.reserve(bundle.sessions.size());
+    int nextId = 1;
+    for (Session s : bundle.sessions) {
+        s.id = nextId++;
+        m_sessions.push_back(s);
+    }
+    m_nextId = nextId;
+    int maxTag = 0;
+    for (const Tag& t : m_tags) {
+        maxTag = std::max(maxTag, t.id);
+    }
+    m_nextTagId = maxTag + 1;
+}
+
 void InMemorySessionStore::seedSampleData()
 {
     // A fleet-of-fleets that deliberately exercises the recursion:
@@ -117,7 +153,7 @@ void InMemorySessionStore::seedSampleData()
                     const QString& title, const QString& content) {
         Session c;
         c.id = m_nextId++;
-        c.sessionId = SessionId(QStringLiteral("local-%1").arg(c.id));
+        c.sessionId = SessionId(QStringLiteral("s-seed-%1").arg(c.id));
         c.unitId = UnitId(unitId);
         c.tagIds = tagIds;
         c.isArchived = archived;
@@ -149,143 +185,11 @@ void InMemorySessionStore::seedSampleData()
     // calls with each detail kind, a standalone content stream) for visual
     // inspection. Each block is its canonical fenced form.
     make(QStringLiteral("n-coder"), { 1 }, false, QStringLiteral("Agent blocks demo"),
-         agentBlocksSampleMarkdown());
+         daemonnet::seed::agentBlocksMarkdown());
 
     // A demo transcript exercising the message/role layer.
     make(QStringLiteral("n-coder"), { 1 }, false, QStringLiteral("Message roles demo"),
-         roleLayerSampleMarkdown());
-}
-
-QString InMemorySessionStore::agentBlocksSampleMarkdown()
-{
-    return QStringLiteral(R"SAMPLE(# Agent transcript blocks
-
-A demo turn exercising every Phase 1 block. Activate (click) any card to reveal
-its raw fenced markdown.
-
-```reasoning
-{"status":"complete","durationMs":4200,"body":"First I'll inspect the repo, then run the build and the tests, and finally summarize any failures. The `/tree` endpoint is the likely culprit."}
-```
-
-Running a shell command:
-
-```tool
-{"callId":"c1","name":"terminal","tone":"terminal","status":"ok","durationMs":1200,"argsSummary":"ninja -C build-test be_core_tests","detailKind":"ansi-stream","stdout":"\u001b[32mPASS\u001b[0m  80 tests\n\u001b[33mWARN\u001b[0m  1 deprecation\n\u001b[1mBuild OK\u001b[0m\n"}
-```
-
-Searching the web:
-
-```tool
-{"callId":"c2","name":"web_search","tone":"web","status":"ok","durationMs":820,"argsSummary":"qml block editor","detailKind":"search-results","hits":[{"title":"Qt QML Applications","url":"https://doc.qt.io/qt-6/qmlapplications.html","snippet":"Build native, fluid UIs with QML backed by C++."},{"title":"md4qt - C++ Markdown parser","url":"https://github.com/igormironchik/md4qt","snippet":"A header-only C++17/20 CommonMark parser."}]}
-```
-
-Applying a patch:
-
-```tool
-{"callId":"c3","name":"apply_patch","tone":"edit","status":"ok","durationMs":260,"argsSummary":"src/main.cpp","detailKind":"diff","diff":"--- a/src/main.cpp\n+++ b/src/main.cpp\n@@ -1,4 +1,4 @@\n int main(int argc, char** argv) {\n-    return 0;\n+    return App(argc, argv).run();\n }\n"}
-```
-
-A tool still in flight:
-
-```tool
-{"callId":"c4","name":"compile","tone":"tool","status":"running","argsSummary":"cmake --build build-test"}
-```
-
-A failing tool:
-
-```tool
-{"callId":"c5","name":"terminal","tone":"terminal","status":"error","durationMs":90,"detailKind":"ansi-stream","stderr":"\u001b[31merror:\u001b[0m expected ';' before '}' token\n"}
-```
-
-A standalone content stream:
-
-```content
-{"kind":"ansi-stream","body":"\u001b[36mi\u001b[0m tailing logs\n\u001b[2mwaiting for events...\u001b[0m\n"}
-```
-
-A generated image (image_generate):
-
-```tool
-{"callId":"c6","name":"image_generate","status":"ok","durationMs":5200,"aspectRatio":"1:1","imageUrl":"https://doc.qt.io/qt-6/images/qt-logo.png"}
-```
-
-The agent needs a decision (clarify - a multi-question form: single-select,
-multi-select, and a freeform reply, submitted together):
-
-```tool
-{"callId":"c7","name":"clarify","requestId":"q1","questions":[{"id":"db","prompt":"Which database should I target for the migration?","choices":["PostgreSQL","SQLite","MySQL"]},{"id":"scope","prompt":"Which parts should I migrate? (select all that apply)","choices":["Schema","Data","Indexes","Triggers"],"multiSelect":true},{"id":"notes","prompt":"Any extra constraints I should know about?","allowFreeform":true}]}
-```
-
-A dangerous command awaiting approval:
-
-```tool
-{"callId":"c8","name":"terminal","tone":"terminal","status":"running","needsApproval":true,"allowPermanent":true,"approvalCommand":"rm -rf build-test && cmake --preset test","argsSummary":"rm -rf build-test"}
-```
-
-That wraps the demo turn.
-)SAMPLE");
-}
-
-QString InMemorySessionStore::roleLayerSampleMarkdown()
-{
-    return QStringLiteral(R"ROLES(```msg
-{"id":"u1","role":"user"}
-```
-
-Can you migrate the database layer? See @file:src/db/schema.sql and @url:https://example.com/migrations for context.
-
-```msg
-{"id":"m1","role":"assistant"}
-```
-
-```reasoning
-{"status":"complete","durationMs":3100,"body":"The user wants a DB migration. I'll inspect the schema, then propose a plan and apply it."}
-```
-
-```tool
-{"callId":"r1","name":"read_file","tone":"edit","status":"ok","durationMs":120,"argsSummary":"src/db/schema.sql","detailKind":"diff","diff":"--- a/src/db/schema.sql\n+++ b/src/db/schema.sql\n@@\n-CREATE TABLE t(id INT);\n+CREATE TABLE t(id BIGINT);\n"}
-```
-
-Here's the migration plan: add a versioned `schema_migrations` table and widen every `id` column to `BIGINT` across the schema.
-
-```msg
-{"id":"s1","role":"system"}
-```
-
-steer:Prefer PostgreSQL syntax for all migrations.
-
-```msg
-{"id":"u2","role":"user"}
-```
-
-Sounds good — go ahead and run it.
-
-```msg
-{"id":"m2","role":"assistant"}
-```
-
-Applying the migration now.
-
-```tool
-{"callId":"r2","name":"terminal","tone":"terminal","status":"ok","durationMs":2400,"argsSummary":"psql -f migrate.sql","detailKind":"ansi-stream","stdout":"\u001b[32mOK\u001b[0m  3 tables migrated\n"}
-```
-
-Migration complete. All `id` columns are now `BIGINT` and a `schema_migrations` table tracks versions.
-
-```msg
-{"id":"s2","role":"system"}
-```
-
-slash:/model gpt-5
-Switched model to gpt-5 for this thread.
-
-```msg
-{"id":"s3","role":"system"}
-```
-
-process:Background indexing finished
-Reindexed 3 tables in 4.2s with no errors.
-)ROLES");
+         daemonnet::seed::roleLayerMarkdown());
 }
 
 bool InMemorySessionStore::isInSubtree(const UnitId& unitId, const UnitId& rootId) const
@@ -312,6 +216,11 @@ bool InMemorySessionStore::matchesScope(const Session& c, const ListScope& scope
         return !c.isArchived && isInSubtree(c.unitId, scope.unitId);
     case NodeType::Tag:
         return !c.isArchived && c.tagIds.contains(scope.tagId);
+    case NodeType::ByTransport:
+    case NodeType::ByPeer:
+        // Transport/peer grouping needs the DaemonNet's edges (IDaemonNet::sessionsInScope); the flat
+        // store has no edge data, so these scopes never match here.
+        return false;
     case NodeType::FleetSeparator:
     case NodeType::TagSeparator:
         return false;
@@ -370,38 +279,43 @@ int InMemorySessionStore::sessionCount(const ListScope& scope) const
     return count;
 }
 
-QString InMemorySessionStore::content(int sessionId) const
+SessionId InMemorySessionStore::mintSessionId()
+{
+    return SessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
+}
+
+QString InMemorySessionStore::content(const SessionId& id) const
 {
     for (const Session& c : m_sessions) {
-        if (c.id == sessionId) {
+        if (c.sessionId == id) {
             return c.content;
         }
     }
     return {};
 }
 
-QString InMemorySessionStore::title(int sessionId) const
+QString InMemorySessionStore::title(const SessionId& id) const
 {
     for (const Session& c : m_sessions) {
-        if (c.id == sessionId) {
+        if (c.sessionId == id) {
             return c.title;
         }
     }
     return {};
 }
 
-int InMemorySessionStore::createSession(const UnitId& unitId)
+SessionId InMemorySessionStore::newSession(const UnitId& unitId)
 {
     Session c;
     c.id = m_nextId++;
-    c.sessionId = SessionId(QStringLiteral("local-%1").arg(c.id));
+    c.sessionId = mintSessionId();
     c.unitId = unitId;
     c.title = QStringLiteral("New session");
     c.created = QDateTime::currentDateTime();
     c.modified = c.created;
     m_sessions.push_back(c);
     emit changed();
-    return c.id;
+    return c.sessionId;
 }
 
 UnitId InMemorySessionStore::createUnit(const UnitId& parentId, UnitKind kind)
@@ -429,10 +343,14 @@ int InMemorySessionStore::createTag(const QString& name, const QString& color)
     return t.id;
 }
 
-void InMemorySessionStore::setContent(int sessionId, const QString& markdown)
+// --- SessionId-keyed implementations (the canonical path) ---
+void InMemorySessionStore::setContent(const SessionId& id, const QString& markdown)
 {
+    if (id.isEmpty()) {
+        return;
+    }
     for (Session& c : m_sessions) {
-        if (c.id == sessionId) {
+        if (c.sessionId == id) {
             c.content = markdown;
             c.modified = QDateTime::currentDateTime();
             emit changed();
@@ -441,10 +359,13 @@ void InMemorySessionStore::setContent(int sessionId, const QString& markdown)
     }
 }
 
-void InMemorySessionStore::renameSession(int sessionId, const QString& title)
+void InMemorySessionStore::renameSession(const SessionId& id, const QString& title)
 {
+    if (id.isEmpty()) {
+        return;
+    }
     for (Session& c : m_sessions) {
-        if (c.id == sessionId) {
+        if (c.sessionId == id) {
             c.title = title;
             c.modified = QDateTime::currentDateTime();
             emit changed();
@@ -453,10 +374,13 @@ void InMemorySessionStore::renameSession(int sessionId, const QString& title)
     }
 }
 
-void InMemorySessionStore::deleteSession(int sessionId)
+void InMemorySessionStore::deleteSession(const SessionId& id)
 {
+    if (id.isEmpty()) {
+        return;
+    }
     for (int i = 0; i < m_sessions.size(); ++i) {
-        if (m_sessions.at(i).id == sessionId) {
+        if (m_sessions.at(i).sessionId == id) {
             m_sessions.removeAt(i);
             emit changed();
             return;
@@ -464,10 +388,13 @@ void InMemorySessionStore::deleteSession(int sessionId)
     }
 }
 
-void InMemorySessionStore::setPinned(int sessionId, bool pinned)
+void InMemorySessionStore::setPinned(const SessionId& id, bool pinned)
 {
+    if (id.isEmpty()) {
+        return;
+    }
     for (Session& c : m_sessions) {
-        if (c.id == sessionId) {
+        if (c.sessionId == id) {
             if (c.isPinned != pinned) {
                 c.isPinned = pinned;
                 emit changed();
@@ -477,23 +404,23 @@ void InMemorySessionStore::setPinned(int sessionId, bool pinned)
     }
 }
 
-bool InMemorySessionStore::isPinned(int sessionId) const
+bool InMemorySessionStore::isPinned(const SessionId& id) const
 {
     for (const Session& c : m_sessions) {
-        if (c.id == sessionId) {
+        if (c.sessionId == id) {
             return c.isPinned;
         }
     }
     return false;
 }
 
-void InMemorySessionStore::moveSession(int sessionId, int delta)
+void InMemorySessionStore::moveSession(const SessionId& id, int delta)
 {
-    if (delta == 0) {
+    if (delta == 0 || id.isEmpty()) {
         return;
     }
     for (int i = 0; i < m_sessions.size(); ++i) {
-        if (m_sessions.at(i).id != sessionId) {
+        if (m_sessions.at(i).sessionId != id) {
             continue;
         }
         const int target = qBound(0, i + (delta < 0 ? -1 : 1),
@@ -506,10 +433,13 @@ void InMemorySessionStore::moveSession(int sessionId, int delta)
     }
 }
 
-void InMemorySessionStore::setArchived(int sessionId, bool archived)
+void InMemorySessionStore::setArchived(const SessionId& id, bool archived)
 {
+    if (id.isEmpty()) {
+        return;
+    }
     for (Session& c : m_sessions) {
-        if (c.id == sessionId) {
+        if (c.sessionId == id) {
             c.isArchived = archived;
             emit changed();
             return;
