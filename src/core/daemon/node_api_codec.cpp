@@ -4,8 +4,8 @@
 #include <memory>
 
 extern "C" {
-#include "daemon_api_smoke_decode.h"
-#include "daemon_api_smoke_encode.h"
+#include "daemon_api_client_decode.h"
+#include "daemon_api_client_encode.h"
 }
 
 namespace daemonapp::daemon {

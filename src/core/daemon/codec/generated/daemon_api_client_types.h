@@ -4,8 +4,8 @@
  * Generated with a --default-max-qty of 16
  */
 
-#ifndef DAEMON_API_SMOKE_TYPES_H__
-#define DAEMON_API_SMOKE_TYPES_H__
+#ifndef DAEMON_API_CLIENT_TYPES_H__
+#define DAEMON_API_CLIENT_TYPES_H__
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -473,4 +473,4 @@ struct api_response_r {
 }
 #endif
 
-#endif /* DAEMON_API_SMOKE_TYPES_H__ */
+#endif /* DAEMON_API_CLIENT_TYPES_H__ */

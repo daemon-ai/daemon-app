@@ -4,14 +4,14 @@
  * Generated with a --default-max-qty of 16
  */
 
-#ifndef DAEMON_API_SMOKE_ENCODE_H__
-#define DAEMON_API_SMOKE_ENCODE_H__
+#ifndef DAEMON_API_CLIENT_ENCODE_H__
+#define DAEMON_API_CLIENT_ENCODE_H__
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
-#include "daemon_api_smoke_types.h"
+#include "daemon_api_client_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,4 +38,4 @@ int cbor_encode_api_response(
 }
 #endif
 
-#endif /* DAEMON_API_SMOKE_ENCODE_H__ */
+#endif /* DAEMON_API_CLIENT_ENCODE_H__ */

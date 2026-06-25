@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <string.h>
 #include "zcbor_decode.h"
-#include "daemon_api_smoke_decode.h"
+#include "daemon_api_client_decode.h"
 #include "zcbor_print.h"
 
 #if DEFAULT_MAX_QTY != 16

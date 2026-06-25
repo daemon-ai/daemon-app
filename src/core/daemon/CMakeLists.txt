@@ -1,5 +1,5 @@
-# Vendored NodeApi CBOR codec: the zcbor C runtime plus the generated daemon-api subset
-# codec (codec/generated, regenerated from ../daemon `daemon-api.cddl` via `xtask zcbor-spike`).
+# Vendored NodeApi CBOR codec: the zcbor C runtime plus the generated daemon-api client codec
+# (codec/generated), produced and drift-checked by the superproject from the daemon-node contract.
 # Built as plain C and kept free of the project's -Werror warning set since it is third-party /
 # generated code; see codec/README.md for the regeneration recipe.
 enable_language(C)
@@ -9,8 +9,8 @@ add_library(da_daemon_codec STATIC
     codec/vendor/zcbor_decode.c
     codec/vendor/zcbor_encode.c
     codec/vendor/zcbor_print.c
-    codec/generated/daemon_api_smoke_decode.c
-    codec/generated/daemon_api_smoke_encode.c
+    codec/generated/daemon_api_client_decode.c
+    codec/generated/daemon_api_client_encode.c
 )
 add_library(daemon-app::daemon_codec ALIAS da_daemon_codec)
 set_target_properties(da_daemon_codec PROPERTIES C_STANDARD 11 POSITION_INDEPENDENT_CODE ON)
