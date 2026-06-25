@@ -38,9 +38,13 @@ static bool encode_user_msg(zcbor_state_t *state, const struct user_msg *input);
 static bool encode_agent_command_start_turn(zcbor_state_t *state, const struct agent_command_start_turn *input);
 static bool encode_agent_command_steer(zcbor_state_t *state, const struct agent_command_steer *input);
 static bool encode_agent_command(zcbor_state_t *state, const struct agent_command_r *input);
+static bool encode_origin(zcbor_state_t *state, const struct origin *input);
+static bool encode_repeated_Submit_origin(zcbor_state_t *state, const struct Submit_origin_r *input);
 static bool encode_repeated_Submit_profile(zcbor_state_t *state, const struct Submit_profile_r *input);
 static bool encode_request_submit(zcbor_state_t *state, const struct request_submit *input);
 static bool encode_request_model_current(zcbor_state_t *state, const struct request_model_current *input);
+static bool encode_command_invocation(zcbor_state_t *state, const struct command_invocation *input);
+static bool encode_request_command_invoke(zcbor_state_t *state, const struct request_command_invoke *input);
 static bool encode_service_health(zcbor_state_t *state, const struct service_health *input);
 static bool encode_health_report(zcbor_state_t *state, const struct health_report *input);
 static bool encode_response_health(zcbor_state_t *state, const struct response_health *input);
@@ -59,7 +63,6 @@ static bool encode_repeated_session_page_next_cursor(zcbor_state_t *state, const
 static bool encode_session_page(zcbor_state_t *state, const struct session_page *input);
 static bool encode_response_session_page(zcbor_state_t *state, const struct response_session_page *input);
 static bool encode_direction(zcbor_state_t *state, const struct direction_r *input);
-static bool encode_origin(zcbor_state_t *state, const struct origin *input);
 static bool encode_disposition(zcbor_state_t *state, const struct disposition_r *input);
 static bool encode_session_payload(zcbor_state_t *state, const struct session_payload *input);
 static bool encode_session_log_entry(zcbor_state_t *state, const struct session_log_entry *input);
@@ -68,6 +71,13 @@ static bool encode_response_log_page(zcbor_state_t *state, const struct response
 static bool encode_repeated_fs_root_session(zcbor_state_t *state, const struct fs_root_session_r *input);
 static bool encode_fs_root(zcbor_state_t *state, const struct fs_root *input);
 static bool encode_response_fs_roots(zcbor_state_t *state, const struct response_fs_roots *input);
+static bool encode_command_scope(zcbor_state_t *state, const struct command_scope_r *input);
+static bool encode_command_surface(zcbor_state_t *state, const struct command_surface_r *input);
+static bool encode_command_access(zcbor_state_t *state, const struct command_access_r *input);
+static bool encode_command_spec(zcbor_state_t *state, const struct command_spec *input);
+static bool encode_response_commands(zcbor_state_t *state, const struct response_commands *input);
+static bool encode_command_output(zcbor_state_t *state, const struct command_output *input);
+static bool encode_response_command_output(zcbor_state_t *state, const struct response_command_output *input);
 static bool encode_api_response(zcbor_state_t *state, const struct api_response_r *input);
 static bool encode_api_request(zcbor_state_t *state, const struct api_request_r *input);
 
@@ -264,6 +274,36 @@ static bool encode_agent_command(
 	return res;
 }
 
+static bool encode_origin(
+		zcbor_state_t *state, const struct origin *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).origin_transport))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"scope", tmp_str.len = sizeof("scope") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).origin_scope))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_Submit_origin(
+		zcbor_state_t *state, const struct Submit_origin_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"origin", tmp_str.len = sizeof("origin") - 1, &tmp_str)))))
+	&& (((*input).Submit_origin_choice == Submit_origin_origin_m_c) ? ((encode_origin(state, (&(*input).Submit_origin_origin_m))))
+	: (((*input).Submit_origin_choice == Submit_origin_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_repeated_Submit_profile(
 		zcbor_state_t *state, const struct Submit_profile_r *input)
 {
@@ -286,11 +326,12 @@ static bool encode_request_submit(
 	struct zcbor_string tmp_str;
 
 	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Submit", tmp_str.len = sizeof("Submit") - 1, &tmp_str)))))
-	&& (zcbor_map_start_encode(state, 3) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 4) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).Submit_session))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"command", tmp_str.len = sizeof("command") - 1, &tmp_str)))))
 	&& (encode_agent_command(state, (&(*input).Submit_command))))
-	&& (!(*input).Submit_profile_present || encode_repeated_Submit_profile(state, (&(*input).Submit_profile)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 3)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+	&& (!(*input).Submit_origin_present || encode_repeated_Submit_origin(state, (&(*input).Submit_origin)))
+	&& (!(*input).Submit_profile_present || encode_repeated_Submit_profile(state, (&(*input).Submit_profile)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 4)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -307,6 +348,43 @@ static bool encode_request_model_current(
 	&& (((*input).ModelCurrent_profile_choice == ModelCurrent_profile_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).ModelCurrent_profile_tstr))))
 	: (((*input).ModelCurrent_profile_choice == ModelCurrent_profile_null_m_c) ? ((zcbor_nil_put(state, NULL)))
 	: false)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_command_invocation(
+		zcbor_state_t *state, const struct command_invocation *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 4) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"name", tmp_str.len = sizeof("name") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).command_invocation_name))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"args", tmp_str.len = sizeof("args") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).command_invocation_args))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
+	&& (((*input).command_invocation_session_choice == command_invocation_session_session_id_m_c) ? ((zcbor_tstr_encode(state, (&(*input).command_invocation_session_session_id_m))))
+	: (((*input).command_invocation_session_choice == command_invocation_session_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false)))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"origin", tmp_str.len = sizeof("origin") - 1, &tmp_str)))))
+	&& (((*input).command_invocation_origin_choice == command_invocation_origin_origin_m_c) ? ((encode_origin(state, (&(*input).command_invocation_origin_origin_m))))
+	: (((*input).command_invocation_origin_choice == command_invocation_origin_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 4))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_command_invoke(
+		zcbor_state_t *state, const struct request_command_invoke *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"CommandInvoke", tmp_str.len = sizeof("CommandInvoke") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"invocation", tmp_str.len = sizeof("invocation") - 1, &tmp_str)))))
+	&& (encode_command_invocation(state, (&(*input).CommandInvoke_invocation))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -581,21 +659,6 @@ static bool encode_direction(
 	return res;
 }
 
-static bool encode_origin(
-		zcbor_state_t *state, const struct origin *input)
-{
-	zcbor_log("%s\r\n", __func__);
-	struct zcbor_string tmp_str;
-
-	bool res = (((zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
-	&& (zcbor_tstr_encode(state, (&(*input).origin_transport))))
-	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"scope", tmp_str.len = sizeof("scope") - 1, &tmp_str)))))
-	&& (zcbor_tstr_encode(state, (&(*input).origin_scope))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2))));
-
-	log_result(state, res, __func__);
-	return res;
-}
-
 static bool encode_disposition(
 		zcbor_state_t *state, const struct disposition_r *input)
 {
@@ -720,6 +783,125 @@ static bool encode_response_fs_roots(
 	return res;
 }
 
+static bool encode_command_scope(
+		zcbor_state_t *state, const struct command_scope_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((((*input).command_scope_choice == command_scope_Session_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Session", tmp_str.len = sizeof("Session") - 1, &tmp_str)))))
+	: (((*input).command_scope_choice == command_scope_Node_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Node", tmp_str.len = sizeof("Node") - 1, &tmp_str)))))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_command_surface(
+		zcbor_state_t *state, const struct command_surface_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((((*input).command_surface_choice == command_surface_Cli_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Cli", tmp_str.len = sizeof("Cli") - 1, &tmp_str)))))
+	: (((*input).command_surface_choice == command_surface_Gui_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Gui", tmp_str.len = sizeof("Gui") - 1, &tmp_str)))))
+	: (((*input).command_surface_choice == command_surface_Chat_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Chat", tmp_str.len = sizeof("Chat") - 1, &tmp_str)))))
+	: false)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_command_access(
+		zcbor_state_t *state, const struct command_access_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((((*input).command_access_choice == command_access_User_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"User", tmp_str.len = sizeof("User") - 1, &tmp_str)))))
+	: (((*input).command_access_choice == command_access_Admin_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Admin", tmp_str.len = sizeof("Admin") - 1, &tmp_str)))))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_command_spec(
+		zcbor_state_t *state, const struct command_spec *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 12) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"name", tmp_str.len = sizeof("name") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).command_spec_name))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"aliases", tmp_str.len = sizeof("aliases") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 16) && ((zcbor_multi_encode_minmax(0, 16, &(*input).command_spec_aliases_tstr_count, (zcbor_encoder_t *)zcbor_tstr_encode, state, (*&(*input).command_spec_aliases_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 16)))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"summary", tmp_str.len = sizeof("summary") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).command_spec_summary))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"category", tmp_str.len = sizeof("category") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).command_spec_category))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"args_hint", tmp_str.len = sizeof("args_hint") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).command_spec_args_hint))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"subcommands", tmp_str.len = sizeof("subcommands") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 16) && ((zcbor_multi_encode_minmax(0, 16, &(*input).command_spec_subcommands_tstr_count, (zcbor_encoder_t *)zcbor_tstr_encode, state, (*&(*input).command_spec_subcommands_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 16)))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"scope", tmp_str.len = sizeof("scope") - 1, &tmp_str)))))
+	&& (encode_command_scope(state, (&(*input).command_spec_scope))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"surfaces", tmp_str.len = sizeof("surfaces") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 16) && ((zcbor_multi_encode_minmax(0, 16, &(*input).command_spec_surfaces_command_surface_m_count, (zcbor_encoder_t *)encode_command_surface, state, (*&(*input).command_spec_surfaces_command_surface_m), sizeof(struct command_surface_r))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 16)))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"side_effecting", tmp_str.len = sizeof("side_effecting") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).command_spec_side_effecting))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"confirm", tmp_str.len = sizeof("confirm") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).command_spec_confirm))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"min_access", tmp_str.len = sizeof("min_access") - 1, &tmp_str)))))
+	&& (encode_command_access(state, (&(*input).command_spec_min_access))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"source", tmp_str.len = sizeof("source") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).command_spec_source))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 12))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_response_commands(
+		zcbor_state_t *state, const struct response_commands *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Commands", tmp_str.len = sizeof("Commands") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 16) && ((zcbor_multi_encode_minmax(0, 16, &(*input).response_commands_Commands_command_spec_m_count, (zcbor_encoder_t *)encode_command_spec, state, (*&(*input).response_commands_Commands_command_spec_m), sizeof(struct command_spec))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 16)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_command_output(
+		zcbor_state_t *state, const struct command_output *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"text", tmp_str.len = sizeof("text") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).command_output_text))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ephemeral", tmp_str.len = sizeof("ephemeral") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).command_output_ephemeral))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_response_command_output(
+		zcbor_state_t *state, const struct response_command_output *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"CommandOutput", tmp_str.len = sizeof("CommandOutput") - 1, &tmp_str)))))
+	&& (encode_command_output(state, (&(*input).response_command_output_CommandOutput))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_api_response(
 		zcbor_state_t *state, const struct api_response_r *input)
 {
@@ -730,8 +912,10 @@ static bool encode_api_response(
 	: (((*input).api_response_choice == api_response_response_session_page_m_c) ? ((encode_response_session_page(state, (&(*input).api_response_response_session_page_m))))
 	: (((*input).api_response_choice == api_response_response_log_page_m_c) ? ((encode_response_log_page(state, (&(*input).api_response_response_log_page_m))))
 	: (((*input).api_response_choice == api_response_response_fs_roots_m_c) ? ((encode_response_fs_roots(state, (&(*input).api_response_response_fs_roots_m))))
+	: (((*input).api_response_choice == api_response_response_commands_m_c) ? ((encode_response_commands(state, (&(*input).api_response_response_commands_m))))
+	: (((*input).api_response_choice == api_response_response_command_output_m_c) ? ((encode_response_command_output(state, (&(*input).api_response_response_command_output_m))))
 	: (((*input).api_response_choice == api_response_response_ok_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Ok", tmp_str.len = sizeof("Ok") - 1, &tmp_str)))))
-	: false)))))));
+	: false)))))))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -750,7 +934,9 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_profile_list_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ProfileList", tmp_str.len = sizeof("ProfileList") - 1, &tmp_str)))))
 	: (((*input).api_request_choice == api_request_request_model_current_m_c) ? ((encode_request_model_current(state, (&(*input).api_request_request_model_current_m))))
 	: (((*input).api_request_choice == api_request_request_fs_roots_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"FsRoots", tmp_str.len = sizeof("FsRoots") - 1, &tmp_str)))))
-	: false)))))))));
+	: (((*input).api_request_choice == api_request_request_command_list_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"CommandList", tmp_str.len = sizeof("CommandList") - 1, &tmp_str)))))
+	: (((*input).api_request_choice == api_request_request_command_invoke_m_c) ? ((encode_request_command_invoke(state, (&(*input).api_request_request_command_invoke_m))))
+	: false)))))))))));
 
 	log_result(state, res, __func__);
 	return res;

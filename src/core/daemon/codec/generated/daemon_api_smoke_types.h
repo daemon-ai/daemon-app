@@ -114,6 +114,21 @@ struct agent_command_r {
 	} agent_command_choice;
 };
 
+struct origin {
+	struct zcbor_string origin_transport;
+	struct zcbor_string origin_scope;
+};
+
+struct Submit_origin_r {
+	union {
+		struct origin Submit_origin_origin_m;
+	};
+	enum {
+		Submit_origin_origin_m_c,
+		Submit_origin_null_m_c,
+	} Submit_origin_choice;
+};
+
 struct Submit_profile_r {
 	union {
 		struct zcbor_string Submit_profile_profile_ref_m;
@@ -127,6 +142,8 @@ struct Submit_profile_r {
 struct request_submit {
 	struct zcbor_string Submit_session;
 	struct agent_command_r Submit_command;
+	struct Submit_origin_r Submit_origin;
+	bool Submit_origin_present;
 	struct Submit_profile_r Submit_profile;
 	bool Submit_profile_present;
 };
@@ -141,12 +158,36 @@ struct request_model_current {
 	} ModelCurrent_profile_choice;
 };
 
+struct command_invocation {
+	struct zcbor_string command_invocation_name;
+	struct zcbor_string command_invocation_args;
+	union {
+		struct zcbor_string command_invocation_session_session_id_m;
+	};
+	enum {
+		command_invocation_session_session_id_m_c,
+		command_invocation_session_null_m_c,
+	} command_invocation_session_choice;
+	union {
+		struct origin command_invocation_origin_origin_m;
+	};
+	enum {
+		command_invocation_origin_origin_m_c,
+		command_invocation_origin_null_m_c,
+	} command_invocation_origin_choice;
+};
+
+struct request_command_invoke {
+	struct command_invocation CommandInvoke_invocation;
+};
+
 struct api_request_r {
 	union {
 		struct request_sessions_query api_request_request_sessions_query_m;
 		struct request_subscribe api_request_request_subscribe_m;
 		struct request_submit api_request_request_submit_m;
 		struct request_model_current api_request_request_model_current_m;
+		struct request_command_invoke api_request_request_command_invoke_m;
 	};
 	enum {
 		api_request_request_health_m_c,
@@ -156,6 +197,8 @@ struct api_request_r {
 		api_request_request_profile_list_m_c,
 		api_request_request_model_current_m_c,
 		api_request_request_fs_roots_m_c,
+		api_request_request_command_list_m_c,
+		api_request_request_command_invoke_m_c,
 	} api_request_choice;
 };
 
@@ -299,11 +342,6 @@ struct direction_r {
 	} direction_choice;
 };
 
-struct origin {
-	struct zcbor_string origin_transport;
-	struct zcbor_string origin_scope;
-};
-
 struct disposition_r {
 	enum {
 		disposition_Context_tstr_c,
@@ -357,18 +395,76 @@ struct response_fs_roots {
 	size_t response_fs_roots_FsRoots_fs_root_m_count;
 };
 
+struct command_scope_r {
+	enum {
+		command_scope_Session_tstr_c,
+		command_scope_Node_tstr_c,
+	} command_scope_choice;
+};
+
+struct command_surface_r {
+	enum {
+		command_surface_Cli_tstr_c,
+		command_surface_Gui_tstr_c,
+		command_surface_Chat_tstr_c,
+	} command_surface_choice;
+};
+
+struct command_access_r {
+	enum {
+		command_access_User_tstr_c,
+		command_access_Admin_tstr_c,
+	} command_access_choice;
+};
+
+struct command_spec {
+	struct zcbor_string command_spec_name;
+	struct zcbor_string command_spec_aliases_tstr[16];
+	size_t command_spec_aliases_tstr_count;
+	struct zcbor_string command_spec_summary;
+	struct zcbor_string command_spec_category;
+	struct zcbor_string command_spec_args_hint;
+	struct zcbor_string command_spec_subcommands_tstr[16];
+	size_t command_spec_subcommands_tstr_count;
+	struct command_scope_r command_spec_scope;
+	struct command_surface_r command_spec_surfaces_command_surface_m[16];
+	size_t command_spec_surfaces_command_surface_m_count;
+	bool command_spec_side_effecting;
+	bool command_spec_confirm;
+	struct command_access_r command_spec_min_access;
+	struct zcbor_string command_spec_source;
+};
+
+struct response_commands {
+	struct command_spec response_commands_Commands_command_spec_m[16];
+	size_t response_commands_Commands_command_spec_m_count;
+};
+
+struct command_output {
+	struct zcbor_string command_output_text;
+	bool command_output_ephemeral;
+};
+
+struct response_command_output {
+	struct command_output response_command_output_CommandOutput;
+};
+
 struct api_response_r {
 	union {
 		struct response_health api_response_response_health_m;
 		struct response_session_page api_response_response_session_page_m;
 		struct response_log_page api_response_response_log_page_m;
 		struct response_fs_roots api_response_response_fs_roots_m;
+		struct response_commands api_response_response_commands_m;
+		struct response_command_output api_response_response_command_output_m;
 	};
 	enum {
 		api_response_response_health_m_c,
 		api_response_response_session_page_m_c,
 		api_response_response_log_page_m_c,
 		api_response_response_fs_roots_m_c,
+		api_response_response_commands_m_c,
+		api_response_response_command_output_m_c,
 		api_response_response_ok_m_c,
 	} api_response_choice;
 };
