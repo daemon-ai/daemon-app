@@ -1,6 +1,5 @@
 #include "daemon/node_api_codec.h"
 
-#include <array>
 #include <memory>
 
 extern "C" {
@@ -53,15 +52,24 @@ QString roleName(int choice)
 
 bool encodeRequest(const api_request_r& request, QByteArray* out)
 {
-    // Requests in the first slice are small (Health is a bare string, SessionsQuery an empty
-    // map); 256 bytes is comfortably above their canonical encoding size.
-    std::array<uint8_t, 256> buffer{};
-    size_t written = 0;
-    if (cbor_encode_api_request(buffer.data(), buffer.size(), &request, &written) != ZCBOR_SUCCESS) {
-        return false;
+    // Grow the output buffer until the request fits rather than truncating: most requests are tiny,
+    // but Submit/CommandInvoke carry user text and can exceed any small fixed size. Retry on encode
+    // failure (zcbor signals a too-small buffer that way) up to a sane cap.
+    constexpr size_t kMaxBuffer = 1u << 20; // 1 MiB
+    for (size_t capacity = 256;; capacity *= 2) {
+        QByteArray buffer(static_cast<qsizetype>(capacity), Qt::Uninitialized);
+        size_t written = 0;
+        const int rc = cbor_encode_api_request(reinterpret_cast<uint8_t*>(buffer.data()), capacity,
+                                               &request, &written);
+        if (rc == ZCBOR_SUCCESS) {
+            buffer.resize(static_cast<qsizetype>(written));
+            *out = buffer;
+            return true;
+        }
+        if (capacity >= kMaxBuffer) {
+            return false;
+        }
     }
-    *out = QByteArray(reinterpret_cast<const char*>(buffer.data()), static_cast<int>(written));
-    return true;
 }
 
 bool decodeResponse(const QByteArray& responseCbor, api_response_r* out)
@@ -69,9 +77,14 @@ bool decodeResponse(const QByteArray& responseCbor, api_response_r* out)
     if (responseCbor.isEmpty()) {
         return false;
     }
-    return cbor_decode_api_response(reinterpret_cast<const uint8_t*>(responseCbor.constData()),
-                                    static_cast<size_t>(responseCbor.size()), out, nullptr)
-        == ZCBOR_SUCCESS;
+    const auto size = static_cast<size_t>(responseCbor.size());
+    size_t consumed = 0;
+    // Require the whole frame to decode: a short read that leaves trailing bytes is a malformed or
+    // truncated response, not a success.
+    return cbor_decode_api_response(reinterpret_cast<const uint8_t*>(responseCbor.constData()), size,
+                                    out, &consumed)
+            == ZCBOR_SUCCESS
+        && consumed == size;
 }
 
 } // namespace
