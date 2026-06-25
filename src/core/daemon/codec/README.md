@@ -16,14 +16,23 @@ Health / SessionPage responses).
 
 ## Regeneration
 
-The source of truth is the contract in the daemon repo, not these files. Regenerate from there:
+The source of truth is the contract in the `daemon-node` repo (the `daemon-node/` submodule of the
+superproject), not these files. Do not edit `generated/` by hand. The superproject owns the sync, the
+Nix-idiomatic way:
 
 ```
-# in ../daemon (inside the flake dev shell, which provides zcbor)
-cargo run -p xtask -- zcbor-spike
+# from the superproject root
+nix build .#daemon-zcbor-codec     # pure derivation: zcbor-smoke.cddl -> generated C/H in the store
+nix flake check                    # checks.codec-drift fails if generated/ here is stale
+nix run .#update-codec             # the one impure step: copy the store output into generated/
 ```
 
-That writes `target/zcbor-spike/{src,include}/daemon_api_smoke_*`. Copy the generated `*.c`/`*.h`
-into `generated/`, and refresh `vendor/` from the same `zcbor` package if its version changes.
-The codegen subset currently covers `zcbor-smoke.cddl`; growing it to the full `daemon-api.cddl`
-(e.g. the command surface) requires concrete DTOs in that CDDL first.
+Under the hood that runs `daemon-node`'s single canonical `crates/contracts/daemon-api/zcbor-codegen.sh`
+(also exposed as `cargo run -p xtask -- gen-zcbor` inside the daemon-node flake shell). The
+`daemon-api` contract is proven byte-compatible with this codec by `cargo run -p xtask -- verify-codec`
+(daemon-node `checks.verify-codec`).
+
+Refresh `vendor/` from the same `zcbor` package only if its version changes. The codegen subset
+currently covers `zcbor-smoke.cddl`; growing it toward the full `daemon-api.cddl` requires quoting the
+CDDL's bareword map keys (zcbor needs `"key":`), resolving its `any` members, and working around
+zcbor's helper-name collisions on unions of single-key maps (e.g. `origin-scope`).
