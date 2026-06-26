@@ -146,6 +146,19 @@ target_link_libraries(tst_first_run_model
 add_test(NAME tst_first_run_model COMMAND tst_first_run_model)
 set_tests_properties(tst_first_run_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_local_daemon_launcher: the managed local-daemon launcher (CON-1b) - binary discovery
+# precedence (explicit override resolves/rejects) and the liveness probe against a real QLocalServer
+# vs an absent path. Spawn + poll are covered end-to-end by the system-tests suite.
+qt_add_executable(tst_local_daemon_launcher tst_local_daemon_launcher.cpp)
+target_link_libraries(tst_local_daemon_launcher
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+)
+add_test(NAME tst_local_daemon_launcher COMMAND tst_local_daemon_launcher)
+set_tests_properties(tst_local_daemon_launcher PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_daemon_config: the Phase 2 daemon-config facade mock - seeded defaults,
 # enumerated options, typed round-trip, and change signalling/dedup.
 qt_add_executable(tst_daemon_config tst_daemon_config.cpp)

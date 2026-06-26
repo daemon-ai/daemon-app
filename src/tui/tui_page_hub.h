@@ -44,6 +44,9 @@ class IModelCatalog;
 namespace profiles {
 class IProfileStore;
 }
+namespace settings {
+class ISettingsStore;
+}
 
 class TabModel;
 
@@ -70,6 +73,7 @@ public:
         memoryui::MemoryStatsModel* memStats = nullptr;
         memoryui::MemoryTimelineModel* memTimeline = nullptr;
         memoryui::MemoryGraphModel* memGraph = nullptr;
+        settings::ISettingsStore* settings = nullptr;
     };
 
     explicit TuiPageHub(Dependencies deps);

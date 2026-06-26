@@ -22,6 +22,9 @@ class IConnectionService : public QObject {
     Q_PROPERTY(QString target READ target NOTIFY configChanged)
     Q_PROPERTY(bool ready READ ready NOTIFY stateChanged)
     Q_PROPERTY(bool testing READ testing NOTIFY testingChanged)
+    // A human-readable detail for the current state (e.g. an actionable reason a local connect
+    // failed). Empty when there is nothing specific to say; the UI falls back to generic copy.
+    Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY stateChanged)
 
 public:
     using QObject::QObject;
@@ -32,6 +35,7 @@ public:
     [[nodiscard]] QString target() const { return m_config.target; }
     [[nodiscard]] bool ready() const { return m_state == QStringLiteral("ready"); }
     [[nodiscard]] bool testing() const { return m_testing; }
+    [[nodiscard]] QString statusMessage() const { return m_statusMessage; }
     [[nodiscard]] ConnectionConfig config() const { return m_config; }
 
     // Open (or switch) the active connection. Drives the liveness state machine
@@ -64,9 +68,16 @@ protected:
             emit testingChanged();
         }
     }
+    void setStatusMessage(const QString& message) {
+        if (m_statusMessage != message) {
+            m_statusMessage = message;
+            emit stateChanged();
+        }
+    }
 
     QString m_state = QStringLiteral("checking");
     bool m_testing = false;
+    QString m_statusMessage;
     ConnectionConfig m_config;
 };
 

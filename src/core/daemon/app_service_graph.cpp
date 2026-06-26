@@ -55,11 +55,11 @@ ServiceMode serviceModeFromEnvironment(ServiceMode fallback) {
 AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     AppServiceGraph graph;
     graph.settings = new settings::QtSettingsStore(owner);
-    graph.connection =
-        mode == ServiceMode::Daemon
-            ? static_cast<connection::IConnectionService*>(new DaemonConnectionService(owner))
-            : static_cast<connection::IConnectionService*>(
-                  new connection::MockConnectionService(owner));
+    graph.connection = mode == ServiceMode::Daemon
+                           ? static_cast<connection::IConnectionService*>(
+                                 new DaemonConnectionService(owner, graph.settings))
+                           : static_cast<connection::IConnectionService*>(
+                                 new connection::MockConnectionService(owner));
     graph.daemonConfig = new config::MockDaemonConfig(owner);
     graph.fs = new fs::LocalDiskFsService(
         graph.daemonConfig->value(QStringLiteral("workspace/root")).toString(), QString(), owner);

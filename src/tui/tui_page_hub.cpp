@@ -16,6 +16,7 @@
 #include "memory_timeline_model.h"
 #include "models/imodel_catalog.h"
 #include "profiles/iprofile_store.h"
+#include "settings/isettings_store.h"
 #include "tab_model.h"
 #include "uimodels/variant_list_model.h"
 
@@ -697,7 +698,14 @@ QString TuiPageHub::buildSettingsMarkdown() const {
     md += tr("## Connection\n\n");
     md += tr("- State: **%1**\n").arg(m_deps.connection->state());
     md += tr("- Mode: %1\n").arg(m_deps.connection->mode());
-    md += tr("- Target: `%1`\n\n").arg(m_deps.connection->target());
+    md += tr("- Target: `%1`\n").arg(m_deps.connection->target());
+    if (m_deps.settings != nullptr) {
+        md += tr("- Start a local daemon automatically: %1\n")
+                  .arg(m_deps.settings->managedLocalDaemon() ? tr("on") : tr("off"));
+        md += tr("- Stop the managed daemon on exit: %1\n")
+                  .arg(m_deps.settings->managedDaemonShutdownOnExit() ? tr("on") : tr("off"));
+    }
+    md += QStringLiteral("\n");
 
     md += tr("## Model\n\n");
     md += tr("- Default: `%1`\n").arg(cfg("model/default"));

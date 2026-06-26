@@ -9,6 +9,7 @@
 #include "command_registry.h"
 #include "config/idaemon_config.h"
 #include "connection/iconnection_service.h"
+#include "daemon/daemon_connection_service.h"
 #include "daemonnet/idaemonnet.h"
 #include "firstrun/first_run_model.h"
 #include "fleet/iapprovals_inbox.h"
@@ -68,7 +69,15 @@ Application::Application(QObject* parent)
 }
 
 Application::~Application() {
+    shutdownManagedDaemon();
     tex::LaTeX::release();
+}
+
+void Application::shutdownManagedDaemon() const {
+    if (auto* daemonConnection =
+            qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection)) {
+        daemonConnection->shutdownManagedDaemon();
+    }
 }
 
 void Application::registerContext(QQmlApplicationEngine& engine) {
@@ -187,6 +196,15 @@ bool Application::awaitConnectionReady(int timeoutMs) const {
     timeout.start(timeoutMs);
     loop.exec();
     return conn->ready();
+}
+
+void Application::driveFirstRunConnect() const {
+    if (m_services.firstRun == nullptr || !m_services.firstRun->active()) {
+        return; // returning users already auto-connected in completeWiring
+    }
+    const QString target = m_services.settings->resolvedConnectionTarget();
+    m_services.settings->setLastConnection(QStringLiteral("local"), target);
+    m_services.connection->connectTo(QStringLiteral("local"), target);
 }
 
 void Application::completeWiring(QQmlApplicationEngine& engine) {

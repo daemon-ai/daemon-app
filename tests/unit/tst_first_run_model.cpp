@@ -53,6 +53,23 @@ private slots:
         QVERIFY(settings.setupComplete());
     }
 
+    // CON-1: the connection succeeding (state -> ready) persists setupComplete immediately, before
+    // the (placeholder) inference step, so the next launch auto-connects even if the user leaves.
+    void connectionSuccessPersistsSetupComplete() {
+        QTemporaryFile socketStandIn;
+        QVERIFY(socketStandIn.open());
+        QtSettingsStore settings;
+        MockConnectionService conn;
+        FirstRunModel m(&settings, &conn);
+        m.begin();
+        QVERIFY(!settings.setupComplete());
+
+        conn.connectTo(QStringLiteral("local"), socketStandIn.fileName());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
+        // Persisted on connection success, without needing the explicit completeInference().
+        QVERIFY(settings.setupComplete());
+    }
+
     void badConnectionReturnsToConnectWithError() {
         QtSettingsStore settings;
         MockConnectionService conn;

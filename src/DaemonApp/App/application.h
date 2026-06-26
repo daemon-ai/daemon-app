@@ -97,6 +97,12 @@ public:
     // system-tests harness hard-assert the GUI -> daemon connectivity instead of racing it.
     [[nodiscard]] bool awaitConnectionReady(int timeoutMs) const;
 
+    // Headless E2E hook: drive a first-run "Local" connect programmatically (the equivalent of the
+    // user picking Local + Connect), using the resolved target (honors DAEMON_APP_SOCKET). No-op
+    // once setup is complete, so it is safe to call unconditionally before awaitConnectionReady.
+    // Lets the system-tests harness exercise the onboarding connect path without QML click sim.
+    void driveFirstRunConnect() const;
+
 protected:
     // Close-to-tray: when a tray is installed, intercept the root window's close
     // (X) event and hide instead of quitting.
@@ -109,6 +115,11 @@ private slots:
     void onLanguageChanged();
 
 private:
+    // Stop a daemon this client spawned, honoring the shutdown-on-exit preference (no-op
+    // otherwise). Called from the destructor so every exit path - normal quit and the early-return
+    // headless harness modes - cleans up a managed daemon when the user opted in.
+    void shutdownManagedDaemon() const;
+
     // Shared GUI/TUI service graph (session store, connection, fs, memory, nav, first-run,
     // config, models, accounts, profiles, fleet, automation, session facades). Read members
     // via m_services.* rather than mirroring them as duplicate pointers.

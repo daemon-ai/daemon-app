@@ -26,6 +26,8 @@ add_library(da_daemon_client STATIC
     node_api_client.cpp
     node_api_codec.h
     node_api_codec.cpp
+    local_daemon_launcher.h
+    local_daemon_launcher.cpp
     daemon_connection_service.h
     daemon_connection_service.cpp
     daemon_cache_store.h

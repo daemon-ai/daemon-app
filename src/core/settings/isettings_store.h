@@ -19,6 +19,13 @@ class ISettingsStore : public QObject {
     // The first-run gate flips this once setup finishes; the shell mounts
     // straight to the main view on subsequent launches.
     Q_PROPERTY(bool setupComplete READ setupComplete WRITE setSetupComplete NOTIFY changedAny)
+    // Managed local daemon (CON-1b) preferences, two-way bound by the settings UI.
+    Q_PROPERTY(bool managedLocalDaemon READ managedLocalDaemon WRITE setManagedLocalDaemon NOTIFY
+                   changedAny)
+    Q_PROPERTY(bool managedDaemonShutdownOnExit READ managedDaemonShutdownOnExit WRITE
+                   setManagedDaemonShutdownOnExit NOTIFY changedAny)
+    Q_PROPERTY(
+        QString daemonBinaryPath READ daemonBinaryPath WRITE setDaemonBinaryPath NOTIFY changedAny)
 
 public:
     using QObject::QObject;
@@ -45,11 +52,37 @@ public:
         setValue(QStringLiteral("conn/target"), target);
     }
 
+    // Managed local daemon (CON-1b): when no daemon answers on the local target, the client may
+    // discover + spawn one itself. On by default so first-run "Local" works without a terminal.
+    [[nodiscard]] bool managedLocalDaemon() const {
+        return value(QStringLiteral("conn/managedLocalDaemon"), true).toBool();
+    }
+    void setManagedLocalDaemon(bool on) { setValue(QStringLiteral("conn/managedLocalDaemon"), on); }
+
+    // Whether a daemon THIS client spawned is terminated when the client exits. Off by default: a
+    // managed daemon is persistent (background wake/cron outlive the GUI/TUI). A daemon the client
+    // only attached to is never affected by this preference.
+    [[nodiscard]] bool managedDaemonShutdownOnExit() const {
+        return value(QStringLiteral("conn/managedDaemonShutdownOnExit"), false).toBool();
+    }
+    void setManagedDaemonShutdownOnExit(bool on) {
+        setValue(QStringLiteral("conn/managedDaemonShutdownOnExit"), on);
+    }
+
+    // Optional explicit path to the `daemon` binary; takes precedence over all other discovery
+    // (env, co-located, PATH). Empty means "discover automatically".
+    [[nodiscard]] QString daemonBinaryPath() const {
+        return value(QStringLiteral("conn/daemonBinaryPath"), QString()).toString();
+    }
+    void setDaemonBinaryPath(const QString& path) {
+        setValue(QStringLiteral("conn/daemonBinaryPath"), path);
+    }
+
     // The local socket path to auto-open, resolving the test/CI override first.
     // `DAEMON_APP_SOCKET` lets the end-to-end harness point a headless GUI/TUI at an isolated
     // per-test socket without seeding QSettings; it wins over the persisted `conn/target`, which in
     // turn wins over the built-in default.
-    [[nodiscard]] QString
+    [[nodiscard]] Q_INVOKABLE QString
     resolvedConnectionTarget(const QString& fallback = QStringLiteral("/run/daemon.sock")) const {
         const QString override = qEnvironmentVariable("DAEMON_APP_SOCKET");
         if (!override.isEmpty()) {

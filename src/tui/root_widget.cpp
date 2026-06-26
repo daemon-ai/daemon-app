@@ -4,7 +4,8 @@
 #include "app/transcript_log.h"
 #include "command_registry.h"
 #include "composer_session_controller.h"
-#include "daemonnet/idaemonnet.h" // complete type for setDaemonNet(QObject*)
+#include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
+#include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
@@ -242,6 +243,7 @@ RootWidget::RootWidget()
         m_memStats,
         m_memTimeline,
         m_memGraph,
+        m_services.settings,
     });
 
     // Wire the app-level navigation seam (constructed-but-unused until now): an
@@ -273,7 +275,14 @@ RootWidget::RootWidget()
     }
 }
 
-RootWidget::~RootWidget() = default;
+RootWidget::~RootWidget() {
+    // Stop a daemon this client spawned if the user opted into shutdown-on-exit (persistent
+    // otherwise). A daemon the client only attached to is never affected.
+    if (auto* daemonConnection =
+            qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection)) {
+        daemonConnection->shutdownManagedDaemon();
+    }
+}
 
 void RootWidget::terminalChanged() {
     if (m_built || terminal() == nullptr) {
@@ -1734,6 +1743,15 @@ bool RootWidget::awaitConnectionReady(int timeoutMs) const {
     timeout.start(timeoutMs);
     loop.exec();
     return conn->ready();
+}
+
+void RootWidget::driveFirstRunConnect() const {
+    if (m_services.firstRun == nullptr || !m_services.firstRun->active()) {
+        return; // returning users already auto-connected in the constructor
+    }
+    const QString target = m_services.settings->resolvedConnectionTarget();
+    m_services.settings->setLastConnection(QStringLiteral("local"), target);
+    m_services.connection->connectTo(QStringLiteral("local"), target);
 }
 
 void RootWidget::promptQuit() {

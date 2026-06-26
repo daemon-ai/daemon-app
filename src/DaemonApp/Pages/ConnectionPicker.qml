@@ -86,8 +86,15 @@ ColumnLayout {
         placeholderText: root._placeholder()
         // Two-way with the connection seam: seed from the active target and follow
         // external changes (connect/disconnect) while the user isn't editing, but
-        // let typed edits stand (they drive the next connect/test).
-        Component.onCompleted: text = Connection ? Connection.target : ""
+        // let typed edits stand (they drive the next connect/test). On first run the
+        // seam has no target yet, so fall back to the resolved local target (which
+        // honors DAEMON_APP_SOCKET / the saved target) instead of leaving it blank.
+        Component.onCompleted: {
+            var t = Connection ? Connection.target : "";
+            if (!t && typeof AppSettings !== "undefined")
+                t = AppSettings.resolvedConnectionTarget();
+            text = t;
+        }
         Connections {
             target: Connection
             function onConfigChanged() {

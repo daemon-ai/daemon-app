@@ -132,6 +132,9 @@ bool maybeRenderOffscreen() {
     const QByteArray waitReadyMs = qgetenv("DAEMON_APP_WAIT_READY");
     if (!waitReadyMs.isEmpty()) {
         const int timeoutMs = waitReadyMs.toInt() > 0 ? waitReadyMs.toInt() : 5000;
+        // On first run nothing auto-connects; drive the onboarding "Local" connect (which, with
+        // managed local daemon on, spawns the daemon if needed) so the harness can assert it.
+        root.driveFirstRunConnect();
         const bool ready = root.awaitConnectionReady(timeoutMs);
         std::fprintf(stdout, "DAEMON_APP_READY %s\n", ready ? "ok" : "timeout");
         std::fflush(stdout);

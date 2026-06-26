@@ -125,6 +125,11 @@ public:
     // connection seam reaches "ready" or timeoutMs elapses; returns true iff ready.
     [[nodiscard]] bool awaitConnectionReady(int timeoutMs) const;
 
+    // Headless E2E hook (mirrors Application::driveFirstRunConnect): drive a first-run "Local"
+    // connect programmatically, using the resolved target (honors DAEMON_APP_SOCKET). No-op once
+    // setup is complete, so it is safe to call before awaitConnectionReady.
+    void driveFirstRunConnect() const;
+
     // Mouse entry point (connected to MouseTerminal::mouseInput). Hit-tests the
     // panes by terminal coordinate and routes a primary-button press to focus +
     // select/open, or a wheel event to scroll the pane under the cursor. No-op for

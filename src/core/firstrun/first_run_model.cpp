@@ -35,9 +35,19 @@ void FirstRunModel::onConnectionStateChanged() {
         setPhase(QStringLiteral("connecting"));
     } else if (s == QStringLiteral("ready")) {
         setError(QString());
+        // CON-1: the connection succeeded, so persist setupComplete now - the next launch
+        // auto-connects even if the user leaves before finishing the (placeholder) inference step.
+        // finish() remains idempotent for the explicit "Finish"/"Skip" completion.
+        if (m_settings != nullptr) {
+            m_settings->setSetupComplete(true);
+        }
         setPhase(QStringLiteral("inference"));
     } else if (s == QStringLiteral("offline")) {
-        setError(tr("Could not reach the node. Check the target and try again."));
+        // Prefer a specific, actionable reason from the connection seam (e.g. the daemon binary
+        // could not be found for managed local spawn) over the generic fallback.
+        const QString detail = m_connection != nullptr ? m_connection->statusMessage() : QString();
+        setError(detail.isEmpty() ? tr("Could not reach the node. Check the target and try again.")
+                                  : detail);
         setPhase(QStringLiteral("connect"));
     }
 }

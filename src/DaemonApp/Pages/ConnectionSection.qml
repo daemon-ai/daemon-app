@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.Settings
 
 // Settings -> Connection. Shows the live gateway state and hosts the shared
 // ConnectionPicker so reconfiguring the node uses the exact same control as the
@@ -39,5 +40,23 @@ ColumnLayout {
     ConnectionPicker {
         Layout.fillWidth: true
         showConnect: true
+    }
+
+    SectionLabel { text: qsTr("Local daemon") }
+
+    // CON-1b: when "Local" can't reach a running daemon, the client can start one for you.
+    OptionRow {
+        Layout.fillWidth: true
+        label: qsTr("Start a local daemon automatically")
+        checked: AppSettings.managedLocalDaemon
+        onToggled: function(on) { AppSettings.managedLocalDaemon = on; }
+    }
+    // A daemon the client started keeps running by default (background work outlives the window);
+    // enable this to stop it on close. Only affects daemons the client itself spawned.
+    OptionRow {
+        Layout.fillWidth: true
+        label: qsTr("Stop the managed daemon when I close the app")
+        checked: AppSettings.managedDaemonShutdownOnExit
+        onToggled: function(on) { AppSettings.managedDaemonShutdownOnExit = on; }
     }
 }
