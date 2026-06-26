@@ -53,10 +53,19 @@
       url = "github:hluk/qxtglobalshortcut/0e47e8c6bddfe42ecb1f3706ead805d3abc56a7e";
       flake = false;
     };
+
+    # Embedded terminal: QML port of qtermwidget (qmake-built, Qt6 master).
+    # Built into a standalone QML plugin (import QMLTermWidget) and surfaced on
+    # the QML import path; it cannot use the CMake add_subdirectory vendoring
+    # path the other deps use.
+    qmltermwidget = {
+      url = "github:Swordfish90/qmltermwidget";
+      flake = false;
+    };
   };
 
   outputs =
-    { nixpkgs, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, ... }:
+    { nixpkgs, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, ... }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -124,6 +133,38 @@
         # devShell so pkg-config resolves TuiWidgetsQt6.
         tuiDeps = [ pkgs.termpaint posixsignalmanager-qt6 tuiwidgets-qt6 ];
 
+        # --- Embedded terminal QML plugin --------------------------------------
+        # qmltermwidget is a qmake project (not CMake), so it builds as its own
+        # derivation rather than via the add_subdirectory vendoring used for the
+        # CMake deps below. It emits a QML plugin (import QMLTermWidget) which we
+        # surface on the QML import path for the build, devShell, and the wrapped
+        # app. The .pro installs into $$[QT_INSTALL_QML] (qtbase's store path);
+        # redirect that into our own $out so it is relocatable.
+        qmltermwidget-qt6 = pkgs.qt6.qtbase.stdenv.mkDerivation {
+          pname = "qmltermwidget-qt6";
+          version = "unstable";
+          src = qmltermwidget;
+          nativeBuildInputs = with pkgs; [ qt6.qmake qt6.wrapQtAppsHook ];
+          buildInputs = with pkgs.qt6; [ qtbase qtdeclarative ];
+          postPatch = ''
+            substituteInPlace qmltermwidget.pro \
+              --replace-fail '$$[QT_INSTALL_QML]' "$out/${pkgs.qt6.qtbase.qtQmlPrefix}"
+          '';
+          # Ship our per-theme color schemes alongside the bundled ones, in the
+          # dir the plugin points COLORSCHEMES_DIR at, so TerminalPanel can select
+          # them by name (colorScheme: "daemon-<Theme>").
+          postInstall = ''
+            cp ${./src/DaemonApp/Terminal/color-schemes}/*.colorscheme \
+               "$out/${pkgs.qt6.qtbase.qtQmlPrefix}/QMLTermWidget/color-schemes/"
+          '';
+          dontWrapQtApps = true;
+        };
+
+        # The directory holding the QMLTermWidget plugin, reused by the package
+        # buildInputs, the devShell import-path exports, and the CMake flag that
+        # lets qmllint resolve `import QMLTermWidget`.
+        qmltermwidgetQmlDir = "${qmltermwidget-qt6}/${pkgs.qt6.qtbase.qtQmlPrefix}";
+
         # Source dirs exported to CMake as <DEP>_SOURCE_DIR.
         depFlags = [
           "-DMD4QT_SOURCE_DIR=${md4qt}"
@@ -134,6 +175,7 @@
           "-DQSIMPLEUPDATER_SOURCE_DIR=${qsimpleupdater}"
           "-DQAUTOSTART_SOURCE_DIR=${qautostart}"
           "-DQXTGLOBALSHORTCUT_SOURCE_DIR=${qxtglobalshortcut}"
+          "-DQMLTERMWIDGET_QML_DIR=${qmltermwidgetQmlDir}"
         ];
 
         daemon-app = pkgs.ccacheStdenv.mkDerivation {
@@ -159,7 +201,9 @@
           ];
 
           # MicroTeX (LaTeX math renderer) links tinyxml2 via pkg-config.
-          buildInputs = qtPackages ++ [ pkgs.tinyxml-2 ];
+          # qmltermwidget-qt6 ships the embedded-terminal QML plugin;
+          # wrapQtAppsHook adds its lib/qml to the wrapped app's import path.
+          buildInputs = qtPackages ++ [ pkgs.tinyxml-2 qmltermwidget-qt6 ];
 
           cmakeFlags = depFlags;
         };
@@ -203,11 +247,11 @@
             gitleaks # secret scanning
             typos # source spell-checker
             nodejs # provides npx for jscpd duplicate detection (not packaged in nixpkgs)
-          ] ++ qtPackages ++ tuiDeps;
+          ] ++ qtPackages ++ tuiDeps ++ [ qmltermwidget-qt6 ];
 
           shellHook = ''
             export QT_PLUGIN_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtPluginPrefix qtPackages}:$QT_PLUGIN_PATH"
-            export QML_IMPORT_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtQmlPrefix qtPackages}:$QML_IMPORT_PATH"
+            export QML_IMPORT_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtQmlPrefix qtPackages}:${qmltermwidgetQmlDir}:$QML_IMPORT_PATH"
             export QML2_IMPORT_PATH="$QML_IMPORT_PATH:$QML2_IMPORT_PATH"
             export CMAKE_PREFIX_PATH="${pkgs.lib.makeSearchPath "lib/cmake" qtPackages}:$CMAKE_PREFIX_PATH"
             export MD4QT_SOURCE_DIR="${md4qt}"
@@ -218,6 +262,7 @@
             export QSIMPLEUPDATER_SOURCE_DIR="${qsimpleupdater}"
             export QAUTOSTART_SOURCE_DIR="${qautostart}"
             export QXTGLOBALSHORTCUT_SOURCE_DIR="${qxtglobalshortcut}"
+            export QMLTERMWIDGET_QML_DIR="${qmltermwidgetQmlDir}"
           '';
         };
       }

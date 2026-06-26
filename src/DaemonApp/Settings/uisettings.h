@@ -55,6 +55,11 @@ class UiSettings : public QObject {
         bool showFleetTree READ showFleetTree WRITE setShowFleetTree NOTIFY showFleetTreeChanged)
     Q_PROPERTY(bool showFileExplorer READ showFileExplorer WRITE setShowFileExplorer NOTIFY
                    showFileExplorerChanged)
+    Q_PROPERTY(bool showTerminal READ showTerminal WRITE setShowTerminal NOTIFY showTerminalChanged)
+    // Last working directory of the embedded terminal, persisted so a reopened
+    // session resumes where it left off (empty => fall back to $HOME).
+    Q_PROPERTY(QString terminalWorkingDirectory READ terminalWorkingDirectory WRITE
+                   setTerminalWorkingDirectory NOTIFY terminalWorkingDirectoryChanged)
     Q_PROPERTY(bool showRawMarkdown READ showRawMarkdown WRITE setShowRawMarkdown NOTIFY
                    showRawMarkdownChanged)
     Q_PROPERTY(bool showUserRail READ showUserRail WRITE setShowUserRail NOTIFY showUserRailChanged)
@@ -98,6 +103,10 @@ public:
     void setShowFleetTree(bool on);
     [[nodiscard]] bool showFileExplorer() const { return m_showFileExplorer; }
     void setShowFileExplorer(bool on);
+    [[nodiscard]] bool showTerminal() const { return m_showTerminal; }
+    void setShowTerminal(bool on);
+    [[nodiscard]] QString terminalWorkingDirectory() const { return m_terminalWorkingDirectory; }
+    void setTerminalWorkingDirectory(const QString& dir);
     [[nodiscard]] bool showRawMarkdown() const { return m_showRawMarkdown; }
     void setShowRawMarkdown(bool on);
     [[nodiscard]] bool showUserRail() const { return m_showUserRail; }
@@ -130,6 +139,8 @@ signals:
     void showSessionsListChanged();
     void showFleetTreeChanged();
     void showFileExplorerChanged();
+    void showTerminalChanged();
+    void terminalWorkingDirectoryChanged();
     void showRawMarkdownChanged();
     void showUserRailChanged();
 
@@ -156,6 +167,8 @@ private:
     bool m_showSessionsList = true;
     bool m_showFleetTree = true;
     bool m_showFileExplorer = false;
+    bool m_showTerminal = false;
+    QString m_terminalWorkingDirectory;
     bool m_showRawMarkdown = false;
     bool m_showUserRail = true;
 };

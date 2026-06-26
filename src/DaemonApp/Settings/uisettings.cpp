@@ -107,6 +107,10 @@ void UiSettings::load() {
     m_showFleetTree = m_settings.value(QStringLiteral("showFleetTree"), m_showFleetTree).toBool();
     m_showFileExplorer =
         m_settings.value(QStringLiteral("showFileExplorer"), m_showFileExplorer).toBool();
+    m_showTerminal = m_settings.value(QStringLiteral("showTerminal"), m_showTerminal).toBool();
+    m_terminalWorkingDirectory =
+        m_settings.value(QStringLiteral("terminalWorkingDirectory"), m_terminalWorkingDirectory)
+            .toString();
     m_showRawMarkdown =
         m_settings.value(QStringLiteral("showRawMarkdown"), m_showRawMarkdown).toBool();
     m_showUserRail = m_settings.value(QStringLiteral("showUserRail"), m_showUserRail).toBool();
@@ -301,6 +305,24 @@ void UiSettings::setShowFileExplorer(bool on) {
     m_showFileExplorer = on;
     store(QStringLiteral("showFileExplorer"), m_showFileExplorer);
     emit showFileExplorerChanged();
+}
+
+void UiSettings::setShowTerminal(bool on) {
+    if (on == m_showTerminal) {
+        return;
+    }
+    m_showTerminal = on;
+    store(QStringLiteral("showTerminal"), m_showTerminal);
+    emit showTerminalChanged();
+}
+
+void UiSettings::setTerminalWorkingDirectory(const QString& dir) {
+    if (dir == m_terminalWorkingDirectory) {
+        return;
+    }
+    m_terminalWorkingDirectory = dir;
+    store(QStringLiteral("terminalWorkingDirectory"), m_terminalWorkingDirectory);
+    emit terminalWorkingDirectoryChanged();
 }
 
 void UiSettings::setShowRawMarkdown(bool on) {

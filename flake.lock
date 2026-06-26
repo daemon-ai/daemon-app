@@ -143,6 +143,22 @@
         "type": "github"
       }
     },
+    "qmltermwidget": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780221685,
+        "narHash": "sha256-Tm4ABLH4dquCNyee8vrlWN5S5ehtZBFU2rseW6IA/dw=",
+        "owner": "Swordfish90",
+        "repo": "qmltermwidget",
+        "rev": "8913504fa2ebd220ebe7c680c32954e1b3c035c5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Swordfish90",
+        "repo": "qmltermwidget",
+        "type": "github"
+      }
+    },
     "qsimpleupdater": {
       "flake": false,
       "locked": {
@@ -208,6 +224,7 @@
         "nixpkgs": "nixpkgs",
         "posixsignalmanager": "posixsignalmanager",
         "qautostart": "qautostart",
+        "qmltermwidget": "qmltermwidget",
         "qsimpleupdater": "qsimpleupdater",
         "qwindowkit": "qwindowkit",
         "qxtglobalshortcut": "qxtglobalshortcut",

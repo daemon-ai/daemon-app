@@ -8,6 +8,7 @@ import DaemonApp.Settings
 import DaemonApp.Tabs
 import DaemonApp.Pages
 import DaemonApp.Memory
+import DaemonApp.Terminal
 
 // The session pane host, built as two stacked containers with EXPLICIT
 // anchored geometry (no outer ColumnLayout): a fixed-height tab bar at the top
@@ -203,13 +204,30 @@ Rectangle {
         }
     }
 
-    // --- Bar 2: the transcript body (fills everything below the tab bar) ----
-    Item {
-        id: body
+    // --- Bar 2: the transcript body + the optional bottom terminal ----------
+    // A vertical split (VSCode-style): the tab content fills the top, and the
+    // embedded bash terminal docks at the bottom when toggled on from the status
+    // bar. SplitView excludes an invisible pane from the layout, so when the
+    // terminal is hidden the body reclaims the full height (and the handle with
+    // it), leaving the original single-pane geometry intact.
+    QQC.SplitView {
+        id: lowerSplit
+        orientation: Qt.Vertical
         anchors.top: tabBarBar.visible ? tabBarBar.bottom : parent.top
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
+
+        handle: Rectangle {
+            implicitHeight: 1
+            color: QQC.SplitHandle.pressed || QQC.SplitHandle.hovered
+                 ? Theme.accent : Theme.border
+        }
+
+    Item {
+        id: body
+        QQC.SplitView.fillHeight: true
+        QQC.SplitView.minimumHeight: 120
 
         // One page per tab, all kept alive (background streaming/scroll), only
         // the active one shown. Keyed by the model so a reassigned preview tab
@@ -320,6 +338,18 @@ Rectangle {
                 font.family: FontIcons.display
                 font.pixelSize: 16
             }
+        }
+    }
+
+        // The embedded shell, docked below the tab content. Kept in the tree
+        // (not destroyed) when hidden so the running bash session survives a
+        // toggle; SplitView drops it from layout while `visible` is false.
+        TerminalPanel {
+            id: terminalPanel
+            visible: UiSettings.showTerminal && !UiSettings.distractionFree
+            QQC.SplitView.preferredHeight: 240
+            QQC.SplitView.minimumHeight: 120
+            onCloseRequested: UiSettings.showTerminal = false
         }
     }
 

@@ -25,7 +25,7 @@ Rectangle {
     // These controls stay hidden until there is real approval-mode / terminal
     // behavior behind them. Manager-page buttons route through Nav below.
     readonly property bool yoloAvailable: false
-    readonly property bool terminalAvailable: false
+    readonly property bool terminalAvailable: true
 
     function openPage(page) {
         if (typeof Nav !== "undefined" && Nav)
@@ -155,7 +155,9 @@ Rectangle {
         StatusBarItem {
             visible: root.terminalAvailable
             glyph: FontIcons.fa_terminal
-            tooltipText: qsTr("Terminal")
+            tooltipText: qsTr("Toggle terminal")
+            active: UiSettings.showTerminal
+            onClicked: UiSettings.showTerminal = !UiSettings.showTerminal
         }
         StatusBarItem {
             glyph: FontIcons.fa_hashtag
@@ -305,6 +307,8 @@ Rectangle {
                         visible: root.terminalAvailable
                         glyph: FontIcons.fa_terminal
                         label: qsTr("Terminal")
+                        active: UiSettings.showTerminal
+                        onClicked: { UiSettings.showTerminal = !UiSettings.showTerminal; overflowSheet.close(); }
                     }
                     StatusBarItem {
                         Layout.fillWidth: true
