@@ -95,6 +95,19 @@ target_link_libraries(tst_daemonnet
 add_test(NAME tst_daemonnet COMMAND tst_daemonnet)
 set_tests_properties(tst_daemonnet PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_routing_model: the routing-manager model on MockDaemonNet - resolve() precedence
+# (pin > rule > account-bound > default), the pin/handover/bindAccount mutations, and the
+# routes/delivery/accounts projections.
+qt_add_executable(tst_routing_model tst_routing_model.cpp)
+target_link_libraries(tst_routing_model
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemonnet
+        daemon-app::domain
+)
+add_test(NAME tst_routing_model COMMAND tst_routing_model)
+set_tests_properties(tst_routing_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_fs_service: the filesystem seam's local mock must preserve the daemon FS
 # contract around optimistic concurrency and path containment.
 qt_add_executable(tst_fs_service tst_fs_service.cpp)

@@ -1,6 +1,9 @@
 #pragma once
 
+#include "daemonnet/routing_dtos.h"
+#include "domain/delivery.h"
 #include "domain/ids.h"
+#include "domain/origin.h"
 #include "domain/session.h"
 #include "domain/sidebar_node.h"
 #include "domain/tag.h"
@@ -117,6 +120,37 @@ public:
     // transport instance expanding into its capability-declared taxonomy down to session leaves. The
     // sidebar renders this as a co-equal section beside the Fleet tree.
     [[nodiscard]] virtual QList<TransportTreeRow> transportsTree() const = 0;
+
+    // --- Routing (the routing-manager surface; routing-manager-design.md) ---
+    // Reads = projections of the routing state; writes = mutations (mock today, the wire
+    // `routing_*`/`delivery_*`/`handover` ops later). All SessionId/Origin-keyed.
+
+    // The explicit chat pins (origin -> session [+agent]); mirrors `routing_list_chats`.
+    [[nodiscard]] virtual QList<RoutingPin> routes() const = 0;
+    // The ordered, config-time binding rules (read-only; no runtime wire CRUD).
+    [[nodiscard]] virtual QList<BindingRule> bindingRules() const = 0;
+    // The account -> agent baseline bindings (`instance_profiles`).
+    [[nodiscard]] virtual QList<AccountAgent> accountsAgents() const = 0;
+    // A session's outbound delivery targets (exactly one Primary); mirrors `delivery_targets`.
+    [[nodiscard]] virtual QList<domain::DeliveryTarget>
+    deliveryTargets(const domain::SessionId& session) const = 0;
+    // The bindable rooms/chats on a transport instance (+ pinned session); mirrors `transport_rooms`.
+    [[nodiscard]] virtual QList<RoomBinding>
+    transportRooms(const domain::TransportId& transport) const = 0;
+    // Resolve an origin to {session, profile, delivery} + which rung decided it (the explainer).
+    // Mock-complete over the full precedence (pin > rule > account-bound > default).
+    [[nodiscard]] virtual Resolution resolve(const domain::Origin& origin) const = 0;
+
+    // Pin an origin to a session (+ optional agent); mirrors `routing_bind_chat`.
+    virtual void bindChat(const domain::Origin& origin, const domain::SessionId& session,
+                          const domain::ProfileRef& profile) = 0;
+    // Remove an origin's pin; mirrors `routing_unbind_chat`.
+    virtual void unbindChat(const domain::Origin& origin) = 0;
+    // Re-point a session's Primary delivery (prior Primary demotes to Spectator); mirrors `handover`.
+    virtual void handover(const domain::SessionId& session, const domain::DeliveryTarget& target) = 0;
+    // Bind a transport account to an agent baseline; mirrors `profile_update(bound_accounts)`.
+    virtual void bindAccount(const domain::TransportId& transport,
+                             const domain::ProfileRef& profile) = 0;
 
 signals:
     void changed();

@@ -294,10 +294,10 @@ private slots:
         QCOMPARE(spy.takeLast().at(0).toInt(), 5);
     }
 
-    // --- The co-equal Transports section (events-IO axis) -------------------
+    // --- The co-equal Integrations section (events-IO axis) -----------------
 
-    // With a DaemonNet source, a "Transports" header + the capability-driven tree
-    // appear after the Fleet/Tags sections, each instance expanded to its taxonomy.
+    // With a DaemonNet source, an "Integrations" header + the capability-driven tree
+    // appear alongside the Fleet/Tags sections, each instance expanded to its taxonomy.
     void transportsSectionShape()
     {
         InMemorySessionStore store;
@@ -306,8 +306,9 @@ private slots:
         model.setStore(&store);
         model.setDaemonNet(&net);
 
-        // The header (NodeType::TransportSeparator == 8) is a non-selectable separator.
-        const int header = findRow(model, QStringLiteral("Transports"));
+        // The header (NodeType::TransportSeparator == 8) is a non-selectable separator,
+        // presented to the user as "Integrations".
+        const int header = findRow(model, QStringLiteral("Integrations"));
         QVERIFY(header >= 0);
         QVERIFY(roleAt<bool>(model, header, SidebarModel::IsSeparatorRole));
         QCOMPARE(roleAt<int>(model, header, SidebarModel::NodeTypeRole), 8);
@@ -404,6 +405,145 @@ private slots:
         QVERIFY(findRow(model, QStringLiteral("#secops")) < 0);
         // A sibling account is untouched.
         QVERIFY(findRow(model, QStringLiteral("internal (rooms)")) >= 0);
+    }
+
+    // --- Collapsible section headers (Fleet / Tags / Integrations) ----------
+
+    // Folding the Fleet header hides its whole unit body while the header stays,
+    // and its ExpandedRole flips; other sections are untouched.
+    void fleetSectionHeaderCollapses()
+    {
+        InMemorySessionStore store;
+        SidebarModel model;
+        model.setStore(&store);
+
+        const int fleet = findRow(model, QStringLiteral("Fleet"));
+        QVERIFY(fleet >= 0);
+        QVERIFY(roleAt<bool>(model, fleet, SidebarModel::IsSeparatorRole));
+        QVERIFY(roleAt<bool>(model, fleet, SidebarModel::HasChildrenRole));
+        QVERIFY(roleAt<bool>(model, fleet, SidebarModel::ExpandedRole));
+        QVERIFY(findRow(model, QStringLiteral("Acme Platform")) >= 0);
+
+        model.toggleExpand(fleet);
+
+        // Body gone, header stays and reads collapsed.
+        const int fleetAfter = findRow(model, QStringLiteral("Fleet"));
+        QVERIFY(fleetAfter >= 0);
+        QVERIFY(!roleAt<bool>(model, fleetAfter, SidebarModel::ExpandedRole));
+        QVERIFY(findRow(model, QStringLiteral("Acme Platform")) < 0);
+        QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
+        // Other sections remain.
+        QVERIFY(findRow(model, QStringLiteral("Tags")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("All Sessions")) >= 0);
+
+        // Re-expand restores the body.
+        model.toggleExpand(findRow(model, QStringLiteral("Fleet")));
+        QVERIFY(findRow(model, QStringLiteral("Acme Platform")) >= 0);
+    }
+
+    // The Tags section folds independently of Fleet.
+    void tagsSectionHeaderCollapses()
+    {
+        InMemorySessionStore store;
+        SidebarModel model;
+        model.setStore(&store);
+
+        // A seeded demo tag exists under the Tags header.
+        QVERIFY(!store.tags().isEmpty());
+        const QString firstTag = store.tags().first().name;
+        QVERIFY(findRow(model, firstTag) >= 0);
+
+        model.toggleExpand(findRow(model, QStringLiteral("Tags")));
+        QVERIFY(findRow(model, firstTag) < 0);
+        QVERIFY(findRow(model, QStringLiteral("Tags")) >= 0);
+        // Fleet is unaffected.
+        QVERIFY(findRow(model, QStringLiteral("Acme Platform")) >= 0);
+    }
+
+    // The Integrations section folds its whole transport tree.
+    void integrationsSectionHeaderCollapses()
+    {
+        InMemorySessionStore store;
+        MockDaemonNet net;
+        SidebarModel model;
+        model.setStore(&store);
+        model.setDaemonNet(&net);
+
+        const int header = findRow(model, QStringLiteral("Integrations"));
+        QVERIFY(header >= 0);
+        QVERIFY(roleAt<bool>(model, header, SidebarModel::HasChildrenRole));
+        QVERIFY(findRow(model, QStringLiteral("matrix /@bot:hs.org")) >= 0);
+
+        model.toggleExpand(header);
+        QVERIFY(findRow(model, QStringLiteral("Integrations")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("matrix /@bot:hs.org")) < 0);
+        QVERIFY(findRow(model, QStringLiteral("#secops")) < 0);
+
+        model.toggleExpand(findRow(model, QStringLiteral("Integrations")));
+        QVERIFY(findRow(model, QStringLiteral("matrix /@bot:hs.org")) >= 0);
+    }
+
+    // Tags section is ordered above the Fleet section in the flattened list.
+    void tagsSectionIsAboveFleet()
+    {
+        InMemorySessionStore store;
+        SidebarModel model;
+        model.setStore(&store);
+
+        const int tags = findRow(model, QStringLiteral("Tags"));
+        const int fleet = findRow(model, QStringLiteral("Fleet"));
+        QVERIFY(tags >= 0 && fleet >= 0);
+        QVERIFY2(tags < fleet, "Tags section must render above the Fleet section");
+    }
+
+    // The Integrations header's expand-all/collapse-all folds/unfolds the whole
+    // transport tree (the events-IO equivalent of Fleet's control).
+    void integrationsExpandAllCollapseAll()
+    {
+        InMemorySessionStore store;
+        MockDaemonNet net;
+        SidebarModel model;
+        model.setStore(&store);
+        model.setDaemonNet(&net);
+
+        QVERIFY(model.anyTransportExpanded()); // expanded by default
+
+        model.collapseAllTransports();
+        QVERIFY(!model.anyTransportExpanded());
+        // Accounts stay (top of the section); their children are folded away.
+        QVERIFY(findRow(model, QStringLiteral("matrix /@bot:hs.org")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("Channels")) < 0);
+        QVERIFY(findRow(model, QStringLiteral("#secops")) < 0);
+
+        model.expandAllTransports();
+        QVERIFY(model.anyTransportExpanded());
+        QVERIFY(findRow(model, QStringLiteral("Channels")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("#secops")) >= 0);
+    }
+
+    // Fleet and Integrations expand/collapse-all are independent: one must not
+    // clobber the other's fold state (they share m_collapsed across id namespaces).
+    void fleetAndIntegrationsExpandAllAreIndependent()
+    {
+        InMemorySessionStore store;
+        MockDaemonNet net;
+        SidebarModel model;
+        model.setStore(&store);
+        model.setDaemonNet(&net);
+
+        // Fold one transport account by hand.
+        model.toggleExpand(findRow(model, QStringLiteral("matrix /@bot:hs.org")));
+        QVERIFY(findRow(model, QStringLiteral("Channels")) < 0);
+
+        // Fleet expand-all must leave that transport account folded.
+        model.expandAll();
+        QVERIFY(findRow(model, QStringLiteral("Channels")) < 0);
+
+        // Conversely, collapse a fleet unit then Integrations expand-all keeps it folded.
+        model.toggleExpand(findRow(model, QStringLiteral("Build Fleet")));
+        QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
+        model.expandAllTransports();
+        QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
     }
 };
 

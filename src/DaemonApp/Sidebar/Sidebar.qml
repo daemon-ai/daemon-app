@@ -19,7 +19,7 @@ Rectangle {
     // is the agent node id (Node scope) / the lens key (ByTransport/ByPeer scopes).
     // Unused fields are -1 / "".
     signal scopeSelected(int nodeType, int id, string nodeId)
-    // A Transports-section session leaf was activated - open its transcript.
+    // An Integrations-section session leaf was activated - open its transcript.
     signal sessionActivated(string sessionId)
     signal settingsRequested()
 
@@ -51,7 +51,7 @@ Rectangle {
         }
     }
 
-    // Transports-section row icon: the transport account, its conversation groups,
+    // Integrations-section row icon: the transport account, its conversation groups,
     // and the per-ConversationType conversation leaves / generic job & caller leaves.
     function transportIcon(txKind, convType) {
         switch (txKind) {
@@ -201,14 +201,42 @@ Rectangle {
                         }
                     }
 
-                    // --- Separator row: label + blue "+" add button ----------
+                    // --- Separator row: collapsible section header (twistie +
+                    //     label + blue "+" add button) -------------------------
                     Item {
                         anchors.fill: parent
                         visible: del.isSeparator
 
+                        // Whole-header click folds/unfolds the section (Fleet / Tags
+                        // / Integrations). The "+" and expand-all buttons are declared
+                        // after this and sit on top, so they handle their own clicks.
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: del.hasChildren
+                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: sidebarModel.toggleExpand(del.index)
+                        }
+
+                        // Section disclosure chevron (rotated 90deg when expanded).
+                        Kit.Glyph {
+                            id: sectionChevron
+                            visible: del.hasChildren
+                            anchors.left: parent.left
+                            anchors.leftMargin: 12
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 6
+                            glyph: FontIcons.fa_chevron_right
+                            font.pointSize: 8 + Theme.pointSizeOffset
+                            rotation: del.expanded ? 90 : 0
+                            color: Theme.separatorText
+                            Behavior on rotation {
+                                NumberAnimation { duration: Theme.motionFast }
+                            }
+                        }
+
                         QQC.Label {
                             anchors.left: parent.left
-                            anchors.leftMargin: 14
+                            anchors.leftMargin: del.hasChildren ? 28 : 14
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 5
                             text: del.label
@@ -222,7 +250,7 @@ Rectangle {
 
                         Kit.IconButton {
                             // Fleet (2) adds a root node; Tags (3) adds a tag; the
-                            // Transports (8) header is read-only (mock-seeded).
+                            // Integrations (8) header is read-only (mock-seeded).
                             visible: del.nodeType === 2 || del.nodeType === 3
                             anchors.right: parent.right
                             anchors.rightMargin: 4
@@ -255,6 +283,28 @@ Rectangle {
                                                                   : qsTr("Expand all")
                             onClicked: sidebarModel.anyExpanded ? sidebarModel.collapseAll()
                                                                 : sidebarModel.expandAll()
+                        }
+
+                        // Integrations header: the same one-shot expand-all /
+                        // collapse-all over the transport tree. No "+" button here,
+                        // so it sits at the right edge.
+                        Kit.IconButton {
+                            visible: del.nodeType === 8
+                            anchors.right: parent.right
+                            anchors.rightMargin: 4
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 2
+                            implicitWidth: 30
+                            implicitHeight: 24
+                            icon: sidebarModel.anyTransportExpanded ? FontIcons.fa_angles_up
+                                                                    : FontIcons.fa_angles_down
+                            iconPointSize: 11
+                            iconColor: Theme.iconMuted
+                            tooltipText: sidebarModel.anyTransportExpanded ? qsTr("Collapse all")
+                                                                           : qsTr("Expand all")
+                            onClicked: sidebarModel.anyTransportExpanded
+                                ? sidebarModel.collapseAllTransports()
+                                : sidebarModel.expandAllTransports()
                         }
                     }
 

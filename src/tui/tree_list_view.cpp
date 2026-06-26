@@ -76,6 +76,15 @@ void TreeListView::clickAt(QPoint local)
     }
     const QModelIndex idx = m->index(row, 0);
 
+    // A collapsible section header (separator with children) folds/unfolds its whole
+    // section. It is not selectable, so route it by explicit row rather than through
+    // the selection-based collapse/expand requests.
+    if (m->data(idx, SidebarModel::IsSeparatorRole).toBool()
+        && m->data(idx, SidebarModel::HasChildrenRole).toBool()) {
+        emit toggleRowRequested(row);
+        return;
+    }
+
     // Disclosure toggle: a click on a parent row's expand triangle expands or
     // collapses it (via the existing signals, which act on the model's current
     // row - so set the current index first). ZListView lays each row out as

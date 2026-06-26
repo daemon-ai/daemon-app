@@ -50,6 +50,14 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
     if (role == Qt::DisplayRole) {
         const QString label = srcData(SidebarModel::LabelRole).toString();
         if (srcData(SidebarModel::IsSeparatorRole).toBool()) {
+            // Collapsible section headers (Fleet / Tags / Integrations) carry a
+            // disclosure glyph; plain dividers (none today) render without one.
+            if (srcData(SidebarModel::HasChildrenRole).toBool()) {
+                const QString tw = srcData(SidebarModel::ExpandedRole).toBool()
+                    ? QStringLiteral("\u25be ")
+                    : QStringLiteral("\u25b8 ");
+                return QStringLiteral("%1\u2500\u2500 %2 \u2500\u2500").arg(tw, label);
+            }
             return QStringLiteral("\u2500\u2500 %1 \u2500\u2500").arg(label);
         }
 
@@ -63,7 +71,7 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
         }
         text += label;
 
-        // Transports rows carry an inline session title ("#secops -> triage");
+        // Integrations rows carry an inline session title ("#secops -> triage");
         // their member count is already conveyed by that sublabel.
         const int nodeTypeForLabel = srcData(SidebarModel::NodeTypeRole).toInt();
         if (nodeTypeForLabel == static_cast<int>(domain::NodeType::Transport)) {

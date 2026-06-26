@@ -6,6 +6,9 @@ qt_add_qml_module(da_pages
     STATIC
     URI DaemonApp.Pages
     VERSION 1.0
+    SOURCES
+        routing_manager_controller.h
+        routing_manager_controller.cpp
     QML_FILES
         SettingsPage.qml
         PageHeader.qml
@@ -42,6 +45,7 @@ qt_add_qml_module(da_pages
         SessionsPage.qml
         ApprovalsPage.qml
         RoutingPage.qml
+        RouteDialog.qml
         CronPage.qml
         CronJobDialog.qml
         FirstRunGate.qml
@@ -56,5 +60,9 @@ target_link_libraries(da_pages
         # block editor (DaemonApp.BlockEditor).
         daemon-app::editor
         daemon-app::blockeditor
+        # RoutingManagerController bridges the DaemonNet routing projections/mutations.
+        daemon-app::daemonnet
+        daemon-app::domain
+        daemon-app::uimodels
         daemon-app::warnings
 )

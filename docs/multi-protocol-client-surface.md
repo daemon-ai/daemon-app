@@ -316,6 +316,9 @@ Kopete `Capability` / Adium service-flag pattern. New transports get correct UI 
 - `IPresenceService` — `connectionState(transport)` / `presence(transport)` (the status dots). Mock
   reports offline/unknown.
 - Registered as the `Transports` / `Presence` QML context properties in `application.cpp`.
+- Sidebar presentation: the transport-adapter tree renders as the sidebar section labelled
+  **"Integrations"** (a collapsible section beside Fleet/Tags). "Transport adapter" stays the
+  engine-level term; "Integration" is the user-facing name for a configured instance.
 
 **Follow-up (not built):**
 - A daemon adapter decoding `transport_adapters` / `transport_instances` (and emitting

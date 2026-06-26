@@ -68,6 +68,27 @@ bool SidebarModel::isExpanded(const QString& id) const
     return !m_collapsed.contains(id);
 }
 
+bool SidebarModel::isSectionExpanded(const QString& sectionKey) const
+{
+    return !m_sectionCollapsed.contains(sectionKey);
+}
+
+void SidebarModel::pushSectionHeader(const QString& label, NodeType type, const QString& sectionKey)
+{
+    // A collapsible section group: not selectable (it is a header), but carries
+    // hasChildren + expanded so the GUI twistie and the TUI disclosure plumbing
+    // (clickAt / tree_list_view) fold the whole section under it.
+    Row r;
+    r.label = label;
+    r.type = type;
+    r.separator = true;
+    r.selectable = false;
+    r.hasChildren = true;
+    r.expanded = isSectionExpanded(sectionKey);
+    r.sectionKey = sectionKey;
+    m_rows.push_back(r);
+}
+
 void SidebarModel::appendUnitRows(const UnitNode& node, int depth)
 {
     const QList<UnitNode> children = m_store->unitChildren(node.id);
@@ -105,29 +126,32 @@ void SidebarModel::rebuild()
         m_rows.push_back({ tr("All Sessions"),
                            m_store->sessionCount({ NodeType::AllSessions, -1, {}, {} }),
                            NodeType::AllSessions, -1, {}, false, true, {}, 0, false, false, 0,
-                           0, {}, {}, {}, {}, {}, {}, {}, {}, -1 });
+                           0, {}, {}, {}, {}, {}, {}, {}, {}, -1, {} });
         m_rows.push_back({ tr("Archived"),
                            m_store->sessionCount({ NodeType::Archived, -1, {}, {} }),
                            NodeType::Archived, -1, {}, false, true, {}, 0, false, false, 0, 0, {},
-                           {}, {}, {}, {}, {}, {}, {}, -1 });
+                           {}, {}, {}, {}, {}, {}, {}, -1, {} });
 
-        m_rows.push_back({ tr("Fleet"), -1, NodeType::FleetSeparator, -1, {}, true, false, {},
-                           0, false, false, 0, 0, {}, {}, {}, {}, {}, {}, {}, {}, -1 });
-        // Top-level roots have an empty parent; each may be a lone unit or the head
-        // of an arbitrarily deep fleet.
-        for (const UnitNode& root : m_store->unitChildren(UnitId())) {
-            appendUnitRows(root, 0);
+        // Tags section sits above Fleet (cross-cutting labels before the org chart).
+        pushSectionHeader(tr("Tags"), NodeType::TagSeparator, QStringLiteral("tags"));
+        if (isSectionExpanded(QStringLiteral("tags"))) {
+            for (const domain::Tag& t : m_store->tags()) {
+                m_rows.push_back({ t.name, m_store->sessionCount({ NodeType::Tag, t.id, {}, {} }),
+                                   NodeType::Tag, t.id, {}, false, true, t.color,
+                                   0, false, false, 0, 0, {}, {}, {}, {}, {}, {}, {}, {}, -1, {} });
+            }
         }
 
-        m_rows.push_back({ tr("Tags"), -1, NodeType::TagSeparator, -1, {}, true, false, {},
-                           0, false, false, 0, 0, {}, {}, {}, {}, {}, {}, {}, {}, -1 });
-        for (const domain::Tag& t : m_store->tags()) {
-            m_rows.push_back({ t.name, m_store->sessionCount({ NodeType::Tag, t.id, {}, {} }),
-                               NodeType::Tag, t.id, {}, false, true, t.color,
-                               0, false, false, 0, 0, {}, {}, {}, {}, {}, {}, {}, {}, -1 });
+        pushSectionHeader(tr("Fleet"), NodeType::FleetSeparator, QStringLiteral("fleet"));
+        if (isSectionExpanded(QStringLiteral("fleet"))) {
+            // Top-level roots have an empty parent; each may be a lone unit or the
+            // head of an arbitrarily deep fleet.
+            for (const UnitNode& root : m_store->unitChildren(UnitId())) {
+                appendUnitRows(root, 0);
+            }
         }
     }
-    // The co-equal events-IO axis: a "Transports" header + the capability-driven
+    // The co-equal events-IO axis: an "Integrations" header + the capability-driven
     // transport tree (account -> taxonomy -> session leaf), sourced from DaemonNet.
     appendTransportRows();
     endResetModel();
@@ -144,12 +168,13 @@ void SidebarModel::appendTransportRows()
         return;
     }
 
-    Row header;
-    header.label = tr("Transports");
-    header.type = NodeType::TransportSeparator;
-    header.separator = true;
-    header.selectable = false;
-    m_rows.push_back(header);
+    // The "Integrations" section header (the user-facing name for the events-IO
+    // transport-adapter tree). Collapsible like Fleet/Tags.
+    pushSectionHeader(tr("Integrations"), NodeType::TransportSeparator,
+                      QStringLiteral("integrations"));
+    if (!isSectionExpanded(QStringLiteral("integrations"))) {
+        return; // section folded: header only, no body
+    }
 
     // Parent-chain map so a collapsed account/group hides its whole subtree.
     QHash<QString, QString> parentOf;
@@ -405,6 +430,16 @@ void SidebarModel::toggleExpand(int row)
         return;
     }
     const Row& r = m_rows.at(row);
+    // Section header rows (Fleet/Tags/Integrations) fold their whole section.
+    if (r.separator && !r.sectionKey.isEmpty()) {
+        if (isSectionExpanded(r.sectionKey)) {
+            m_sectionCollapsed.insert(r.sectionKey);
+        } else {
+            m_sectionCollapsed.remove(r.sectionKey);
+        }
+        rebuild();
+        return;
+    }
     if ((r.type != NodeType::Unit && r.type != NodeType::Transport) || !r.hasChildren) {
         return;
     }
@@ -536,9 +571,60 @@ bool SidebarModel::anyExpanded() const
     return false;
 }
 
+void SidebarModel::collectTransportExpandableIds(QSet<QString>& out) const
+{
+    if (!m_net) {
+        return;
+    }
+    // The Integrations-tree nodes that can fold (accounts + conversation groups).
+    for (const TransportTreeRow& t : m_net->transportsTree()) {
+        if (t.hasChildren) {
+            out.insert(t.id);
+        }
+    }
+}
+
+bool SidebarModel::anyTransportExpanded() const
+{
+    QSet<QString> expandable;
+    collectTransportExpandableIds(expandable);
+    for (const QString& id : expandable) {
+        if (isExpanded(id)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void SidebarModel::expandAllTransports()
+{
+    QSet<QString> expandable;
+    collectTransportExpandableIds(expandable);
+    for (const QString& id : expandable) {
+        m_collapsed.remove(id);
+    }
+    rebuild();
+}
+
+void SidebarModel::collapseAllTransports()
+{
+    QSet<QString> expandable;
+    collectTransportExpandableIds(expandable);
+    for (const QString& id : expandable) {
+        m_collapsed.insert(id);
+    }
+    rebuild();
+}
+
 void SidebarModel::expandAll()
 {
-    m_collapsed.clear();
+    // Unit-scoped: only un-collapse fleet unit ids, leaving any collapsed transport
+    // nodes (a disjoint id namespace sharing m_collapsed) untouched.
+    QSet<QString> expandable;
+    collectExpandableIds(QString(), expandable);
+    for (const QString& id : expandable) {
+        m_collapsed.remove(id);
+    }
     rebuild();
 }
 
@@ -546,7 +632,10 @@ void SidebarModel::collapseAll()
 {
     QSet<QString> expandable;
     collectExpandableIds(QString(), expandable);
-    m_collapsed = expandable;
+    // Union (not replace) so transport-node collapse state survives.
+    for (const QString& id : expandable) {
+        m_collapsed.insert(id);
+    }
 
     // If the selection is now hidden (a collapsed unit's descendant), lift it to
     // its top-level root ancestor so a row stays highlighted.

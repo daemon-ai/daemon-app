@@ -26,6 +26,10 @@ public:
 signals:
     void collapseRequested();
     void expandRequested();
+    // A collapsible section header was clicked: fold/unfold by explicit row (the
+    // header is not selectable, so the selection-based collapse/expand requests
+    // can't target it).
+    void toggleRowRequested(int row);
 
 protected:
     void keyEvent(Tui::ZKeyEvent* event) override;

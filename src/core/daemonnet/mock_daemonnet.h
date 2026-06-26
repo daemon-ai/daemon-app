@@ -48,6 +48,23 @@ public:
     [[nodiscard]] QString content(const domain::SessionId& id) const override;
     [[nodiscard]] QList<TransportTreeRow> transportsTree() const override;
 
+    // --- Routing (routing-manager-design.md) ---
+    [[nodiscard]] QList<RoutingPin> routes() const override;
+    [[nodiscard]] QList<BindingRule> bindingRules() const override;
+    [[nodiscard]] QList<AccountAgent> accountsAgents() const override;
+    [[nodiscard]] QList<domain::DeliveryTarget>
+    deliveryTargets(const domain::SessionId& session) const override;
+    [[nodiscard]] QList<RoomBinding>
+    transportRooms(const domain::TransportId& transport) const override;
+    [[nodiscard]] Resolution resolve(const domain::Origin& origin) const override;
+
+    void bindChat(const domain::Origin& origin, const domain::SessionId& session,
+                  const domain::ProfileRef& profile) override;
+    void unbindChat(const domain::Origin& origin) override;
+    void handover(const domain::SessionId& session, const domain::DeliveryTarget& target) override;
+    void bindAccount(const domain::TransportId& transport,
+                     const domain::ProfileRef& profile) override;
+
 private:
     // True when `unitId` is `rootId` or any descendant of it (parent-chain walk); the Unit-scope fold.
     [[nodiscard]] bool isInSubtree(const domain::UnitId& unitId, const domain::UnitId& rootId) const;
@@ -55,6 +72,10 @@ private:
     [[nodiscard]] QSet<QString> sessionsBoundBy(const QString& edgeKind, const QString& lensKey) const;
     void buildSeed();
     void buildTransportsTree();
+    void buildRoutingSeed();
+    // Re-derive the routing graph nodes/edges (origins, destinations, inbound/outbound edges with
+    // provenance + SinkKind, account->agent edges) from the routing state; called after mutations.
+    void rebuildRoutingGraph();
     void computeProjections();
 
     // Typed seed (the single source; copied by the session store).
@@ -68,6 +89,14 @@ private:
 
     // The capability-driven Transports tree (events-IO axis), pre-order flattened.
     QList<TransportTreeRow> m_transports;
+
+    // Routing state (the mock mirror of the host RoutingRegistry + chat_routes store).
+    QList<RoutingPin> m_pins;
+    QList<BindingRule> m_rules;
+    QList<AccountAgent> m_accountAgents;
+    domain::ProfileRef m_defaultProfile;
+    // Per-session outbound delivery targets (exactly one Primary each).
+    QHash<QString, QList<domain::DeliveryTarget>> m_delivery;
 
     // QML-boundary projections derived from the typed seed + transport graph.
     uimodels::VariantListModel* m_fleetModel = nullptr;

@@ -237,7 +237,7 @@ ApplicationWindow {
                     root.rememberScope(nodeType, id, nodeId);
                     listExpanded.setScope(nodeType, id, nodeId);
                 }
-                // A Transports-tree session leaf opens its transcript directly.
+                // An Integrations-tree session leaf opens its transcript directly.
                 onSessionActivated: function(sessionId) {
                     root.activeSessionId = sessionId;
                     sessionExpanded.open(sessionId);

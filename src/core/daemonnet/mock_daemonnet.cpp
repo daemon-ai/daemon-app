@@ -193,7 +193,9 @@ QList<domain::Session> MockDaemonNet::sessionsInScope(const domain::ListScope& s
             break;
         case NodeType::FleetSeparator:
         case NodeType::TagSeparator:
-            keep = false; // headers carry no session list
+        case NodeType::TransportSeparator:
+        case NodeType::Transport:
+            keep = false; // headers / transport-tree rows carry no session list
             break;
         }
         if (keep) {
@@ -438,6 +440,8 @@ void MockDaemonNet::buildSeed()
          QStringLiteral("over"));
 
     buildTransportsTree();
+    buildRoutingSeed();
+    rebuildRoutingGraph();
 }
 
 void MockDaemonNet::buildTransportsTree()
@@ -667,6 +671,443 @@ void MockDaemonNet::computeProjections()
         peerRows.append(row);
     }
     m_byPeerModel->setRows(peerRows);
+}
+
+namespace {
+
+using domain::Origin;
+using domain::OriginScope;
+using domain::OriginScopeKind;
+
+// `*`-wildcard glob (the only metacharacter is `*`), ported from daemon-node routing.rs.
+bool globMatch(const QString& pattern, const QString& value)
+{
+    const QString& p = pattern;
+    const QString& v = value;
+    int pi = 0;
+    int vi = 0;
+    int star = -1;
+    int mark = 0;
+    while (vi < v.size()) {
+        if (pi < p.size() && p[pi] == v[vi]) {
+            ++pi;
+            ++vi;
+        } else if (pi < p.size() && p[pi] == QLatin1Char('*')) {
+            star = pi++;
+            mark = vi;
+        } else if (star >= 0) {
+            pi = star + 1;
+            vi = ++mark;
+        } else {
+            return false;
+        }
+    }
+    while (pi < p.size() && p[pi] == QLatin1Char('*')) {
+        ++pi;
+    }
+    return pi == p.size();
+}
+
+bool transportMatches(const QString& pattern, const domain::TransportId& t)
+{
+    if (pattern == QStringLiteral("*")) {
+        return true;
+    }
+    if (pattern.contains(QLatin1Char('/'))) {
+        return pattern == t.toString(); // exact instance
+    }
+    return t.toString().section(QLatin1Char('/'), 0, 0) == pattern; // family prefix
+}
+
+bool scopeMatches(const QString& glob, const OriginScope& s)
+{
+    if (glob == QStringLiteral("*")) {
+        return true;
+    }
+    if (glob == QStringLiteral("dm")) {
+        return s.kind == OriginScopeKind::Dm;
+    }
+    if (glob == QStringLiteral("api")) {
+        return s.kind == OriginScopeKind::Api;
+    }
+    if (glob == QStringLiteral("internal")) {
+        return s.kind == OriginScopeKind::Internal;
+    }
+    return s.kind == OriginScopeKind::Group && globMatch(glob, s.chat);
+}
+
+} // namespace
+
+void MockDaemonNet::buildRoutingSeed()
+{
+    using domain::DeliveryTarget;
+    using domain::ProfileRef;
+    using domain::RouteAddr;
+    using domain::SessionId;
+    using domain::SinkKind;
+    using domain::TransportId;
+
+    const auto grp = [](const char* t, const char* chat) {
+        Origin o;
+        o.transport = TransportId(QString::fromLatin1(t));
+        o.scope.kind = OriginScopeKind::Group;
+        o.scope.chat = QString::fromLatin1(chat);
+        return o;
+    };
+    const auto dm = [](const char* t, const char* user) {
+        Origin o;
+        o.transport = TransportId(QString::fromLatin1(t));
+        o.scope.kind = OriginScopeKind::Dm;
+        o.scope.user = QString::fromLatin1(user);
+        return o;
+    };
+
+    m_defaultProfile = ProfileRef(QStringLiteral("prof-1"));
+
+    // Account -> agent baselines (instance_profiles; precedence step 3).
+    m_accountAgents = {
+        { TransportId(QStringLiteral("matrix/@bot:hs.org")), ProfileRef(QStringLiteral("prof-1")) },
+        { TransportId(QStringLiteral("internal")), ProfileRef(QStringLiteral("prof-2")) },
+    };
+
+    // Config-time binding rules (read-only): a #secops* override + a catch-all.
+    m_rules = {
+        { QStringLiteral("matrix"), QStringLiteral("#secops*"), QStringLiteral("perChat"),
+          ProfileRef(QStringLiteral("prof-3")), QStringLiteral("fromOrigin") },
+        { QStringLiteral("*"), QStringLiteral("*"), QStringLiteral("perThread"), ProfileRef(),
+          QStringLiteral("fromOrigin") },
+    };
+
+    // Explicit pins (resolve-first): a channel pin (with an agent override) + a DM pin (fall-through).
+    m_pins = {
+        { grp("matrix/@bot:hs.org", "#secops"), SessionId(QStringLiteral("s-secops")),
+          ProfileRef(QStringLiteral("prof-2")), QStringLiteral("perChat") },
+        { dm("matrix/@bot:hs.org", "@alice:hs.org"), SessionId(QStringLiteral("s-help")),
+          ProfileRef(), QStringLiteral("perUser") },
+    };
+
+    // Per-session delivery (one Primary each; two carry a Spectator to exercise SinkKind).
+    const auto tgt = [](const char* t, const char* route, SinkKind k) {
+        DeliveryTarget d;
+        d.transport = TransportId(QString::fromLatin1(t));
+        d.route = RouteAddr(QString::fromLatin1(route));
+        d.kind = k;
+        return d;
+    };
+    m_delivery.clear();
+    m_delivery[QStringLiteral("s-secops")]
+        = { tgt("matrix/@bot:hs.org", "#secops", SinkKind::Primary),
+            tgt("internal", "operator-bob", SinkKind::Spectator) };
+    m_delivery[QStringLiteral("s-help")]
+        = { tgt("matrix/@bot:hs.org", "@alice:hs.org", SinkKind::Primary) };
+    m_delivery[QStringLiteral("s-design")] = { tgt("internal", "design-review", SinkKind::Primary),
+                                               tgt("gui", "desktop", SinkKind::Spectator) };
+    m_delivery[QStringLiteral("s-cron-backup")] = { tgt("gui", "desktop", SinkKind::Primary) };
+    m_delivery[QStringLiteral("s-http-dashboard")] = { tgt("http", "dashboard", SinkKind::Primary) };
+}
+
+QList<RoutingPin> MockDaemonNet::routes() const { return m_pins; }
+QList<BindingRule> MockDaemonNet::bindingRules() const { return m_rules; }
+QList<AccountAgent> MockDaemonNet::accountsAgents() const { return m_accountAgents; }
+
+QList<domain::DeliveryTarget>
+MockDaemonNet::deliveryTargets(const domain::SessionId& session) const
+{
+    return m_delivery.value(session.toString());
+}
+
+QList<RoomBinding> MockDaemonNet::transportRooms(const domain::TransportId& transport) const
+{
+    // Derive bindable rooms/chats from the graph: places (channel/room) a session is `inPlace` of
+    // while bound `over` this transport. pinnedSession = that session when a pin targets it.
+    QHash<QString, QString> overOf;   // session -> transport
+    QHash<QString, QString> placeOf;  // session -> place id
+    for (const QVariantMap& e : m_edges) {
+        const QString kind = e.value(QStringLiteral("edgeKind")).toString();
+        const QString src = e.value(QStringLiteral("source")).toString();
+        const QString dst = e.value(QStringLiteral("target")).toString();
+        if (kind == QStringLiteral("over")) {
+            overOf.insert(src, dst);
+        } else if (kind == QStringLiteral("inPlace")) {
+            placeOf.insert(src, dst);
+        }
+    }
+    QHash<QString, QString> labelOf;
+    for (const QVariantMap& n : m_nodes) {
+        labelOf.insert(n.value(QStringLiteral("id")).toString(),
+                       n.value(QStringLiteral("label")).toString());
+    }
+    QSet<QString> pinnedSessions;
+    for (const RoutingPin& p : m_pins) {
+        pinnedSessions.insert(p.session.toString());
+    }
+    QList<RoomBinding> out;
+    for (auto it = overOf.constBegin(); it != overOf.constEnd(); ++it) {
+        if (it.value() != transport.toString()) {
+            continue;
+        }
+        const QString session = it.key();
+        const QString place = placeOf.value(session);
+        if (place.isEmpty()) {
+            continue;
+        }
+        RoomBinding rb;
+        rb.transport = transport;
+        rb.chat = place;
+        rb.label = labelOf.value(place, place);
+        if (pinnedSessions.contains(session)) {
+            rb.pinnedSession = domain::SessionId(session);
+        }
+        out.push_back(rb);
+    }
+    return out;
+}
+
+Resolution MockDaemonNet::resolve(const Origin& origin) const
+{
+    Resolution r;
+    const QString key = originKey(origin);
+
+    // The non-pin profile precedence (rule override > account-bound > default) + which rung.
+    const BindingRule* rule = nullptr;
+    for (const BindingRule& b : m_rules) {
+        if (transportMatches(b.transportPattern, origin.transport)
+            && scopeMatches(b.scopeGlob, origin.scope)) {
+            rule = &b;
+            break;
+        }
+    }
+    domain::ProfileRef accountProfile;
+    for (const AccountAgent& a : m_accountAgents) {
+        if (a.transport == origin.transport) {
+            accountProfile = a.profile;
+            break;
+        }
+    }
+    const auto precedenceProfile = [&](DecidedBy& decided) -> domain::ProfileRef {
+        if (rule && !rule->profile.isEmpty()) {
+            decided = DecidedBy::Rule;
+            return rule->profile;
+        }
+        if (!accountProfile.isEmpty()) {
+            decided = DecidedBy::AccountBound;
+            return accountProfile;
+        }
+        decided = DecidedBy::Default;
+        return m_defaultProfile;
+    };
+
+    // 1. Pin (resolve-first): overrides the session; profile falls through when the pin carries none.
+    for (const RoutingPin& p : m_pins) {
+        if (originKey(p.origin) == key) {
+            r.session = p.session;
+            r.decidedBy = DecidedBy::Pin;
+            if (!p.profile.isEmpty()) {
+                r.profile = p.profile;
+            } else {
+                DecidedBy ignored = DecidedBy::Default;
+                r.profile = precedenceProfile(ignored);
+            }
+            const QList<domain::DeliveryTarget> d = m_delivery.value(p.session.toString());
+            for (const domain::DeliveryTarget& t : d) {
+                if (t.kind == domain::SinkKind::Primary) {
+                    r.delivery = t;
+                    break;
+                }
+            }
+            return r;
+        }
+    }
+
+    // 2-4. Deterministic path: derived session id + precedence profile.
+    r.session = domain::SessionId(QStringLiteral("derived-") + key);
+    r.profile = precedenceProfile(r.decidedBy);
+    domain::DeliveryTarget d;
+    d.transport = origin.transport;
+    d.route = domain::RouteAddr(origin.scope.kind == OriginScopeKind::Group ? origin.scope.chat
+                                : origin.scope.kind == OriginScopeKind::Dm   ? origin.scope.user
+                                                                             : QString());
+    d.kind = domain::SinkKind::Primary;
+    r.delivery = d;
+    return r;
+}
+
+void MockDaemonNet::rebuildRoutingGraph()
+{
+    // Drop any prior routing additions (id prefix "rt:") so mutations don't accumulate duplicates.
+    m_nodes.removeIf([](const QVariantMap& n) {
+        return n.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("rt:"));
+    });
+    m_edges.removeIf([](const QVariantMap& e) {
+        return e.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("rt:"));
+    });
+
+    const auto addNode = [&](const QString& id, const QString& kind, const QString& label,
+                             QVariantMap extra = {}) {
+        QVariantMap n = std::move(extra);
+        n[QStringLiteral("id")] = id;
+        n[QStringLiteral("kind")] = kind;
+        n[QStringLiteral("label")] = label;
+        m_nodes.append(n);
+    };
+    const auto addEdge = [&](const QString& id, const QString& src, const QString& dst,
+                             const QString& kind, QVariantMap extra = {}) {
+        QVariantMap e = std::move(extra);
+        e[QStringLiteral("id")] = id;
+        e[QStringLiteral("source")] = src;
+        e[QStringLiteral("target")] = dst;
+        e[QStringLiteral("edgeKind")] = kind;
+        m_edges.append(e);
+    };
+
+    QSet<QString> pinnedKeys;
+
+    // Inbound: pinned origin -> session (provenance pinned).
+    for (const RoutingPin& p : m_pins) {
+        const QString key = originKey(p.origin);
+        pinnedKeys.insert(key);
+        const QString oid = QStringLiteral("rt:o:") + key;
+        QVariantMap ox;
+        ox[QStringLiteral("transport")] = p.origin.transport.toString();
+        addNode(oid, QStringLiteral("origin"),
+                p.origin.transport.toString() + QStringLiteral(" · ")
+                    + (p.origin.scope.kind == OriginScopeKind::Dm ? p.origin.scope.user
+                                                                  : p.origin.scope.chat),
+                ox);
+        QVariantMap ex;
+        ex[QStringLiteral("provenance")] = QStringLiteral("pinned");
+        addEdge(QStringLiteral("rt:in:") + key, oid, p.session.toString(),
+                QStringLiteral("inbound"), ex);
+    }
+
+    // Inbound: every other session bound `over` a transport (provenance bound|derived).
+    QHash<QString, QString> overOf;
+    QHash<QString, QString> placeOf;
+    for (const QVariantMap& e : m_edges) {
+        const QString kind = e.value(QStringLiteral("edgeKind")).toString();
+        if (kind == QStringLiteral("over")) {
+            overOf.insert(e.value(QStringLiteral("source")).toString(),
+                          e.value(QStringLiteral("target")).toString());
+        } else if (kind == QStringLiteral("inPlace")) {
+            placeOf.insert(e.value(QStringLiteral("source")).toString(),
+                           e.value(QStringLiteral("target")).toString());
+        }
+    }
+    QSet<QString> accountTransports;
+    for (const AccountAgent& a : m_accountAgents) {
+        accountTransports.insert(a.transport.toString());
+    }
+    for (auto it = overOf.constBegin(); it != overOf.constEnd(); ++it) {
+        const QString session = it.key();
+        const QString transport = it.value();
+        const QString synthKey = QStringLiteral("over:") + session;
+        // Skip sessions already represented by a pin edge above (best-effort by session id).
+        bool pinnedSession = false;
+        for (const RoutingPin& p : m_pins) {
+            if (p.session.toString() == session) {
+                pinnedSession = true;
+                break;
+            }
+        }
+        if (pinnedSession) {
+            continue;
+        }
+        const QString oid = QStringLiteral("rt:o:") + synthKey;
+        addNode(oid, QStringLiteral("origin"), transport, {});
+        QVariantMap ex;
+        ex[QStringLiteral("provenance")]
+            = accountTransports.contains(transport) ? QStringLiteral("bound") : QStringLiteral("derived");
+        addEdge(QStringLiteral("rt:in:") + synthKey, oid, session, QStringLiteral("inbound"), ex);
+    }
+
+    // Outbound: session -> destination (SinkKind), one node per (transport,route).
+    for (auto it = m_delivery.constBegin(); it != m_delivery.constEnd(); ++it) {
+        const QString session = it.key();
+        for (const domain::DeliveryTarget& t : it.value()) {
+            const QString did = QStringLiteral("rt:d:") + t.transport.toString()
+                + QLatin1Char('/') + t.route.toString();
+            addNode(did, QStringLiteral("destination"),
+                    t.transport.toString() + QStringLiteral(" · ") + t.route.toString(), {});
+            QVariantMap ex;
+            ex[QStringLiteral("sinkKind")] = t.kind == domain::SinkKind::Primary
+                ? QStringLiteral("primary")
+                : QStringLiteral("spectator");
+            addEdge(QStringLiteral("rt:out:") + session + QLatin1Char('/') + did, session, did,
+                    QStringLiteral("outbound"), ex);
+        }
+    }
+}
+
+void MockDaemonNet::bindChat(const Origin& origin, const domain::SessionId& session,
+                             const domain::ProfileRef& profile)
+{
+    const QString key = originKey(origin);
+    for (RoutingPin& p : m_pins) {
+        if (originKey(p.origin) == key) {
+            p.session = session;
+            p.profile = profile;
+            rebuildRoutingGraph();
+            emit changed();
+            return;
+        }
+    }
+    m_pins.push_back({ origin, session, profile, QStringLiteral("perThread") });
+    rebuildRoutingGraph();
+    emit changed();
+}
+
+void MockDaemonNet::unbindChat(const Origin& origin)
+{
+    const QString key = originKey(origin);
+    const qsizetype before = m_pins.size();
+    m_pins.removeIf([&](const RoutingPin& p) { return originKey(p.origin) == key; });
+    if (m_pins.size() != before) {
+        rebuildRoutingGraph();
+        emit changed();
+    }
+}
+
+void MockDaemonNet::handover(const domain::SessionId& session, const domain::DeliveryTarget& target)
+{
+    QList<domain::DeliveryTarget>& targets = m_delivery[session.toString()];
+    // Demote the current Primary to Spectator.
+    for (domain::DeliveryTarget& t : targets) {
+        if (t.kind == domain::SinkKind::Primary) {
+            t.kind = domain::SinkKind::Spectator;
+        }
+    }
+    // Install the new Primary (replacing an existing entry for the same target if present).
+    bool found = false;
+    for (domain::DeliveryTarget& t : targets) {
+        if (t.transport == target.transport && t.route == target.route) {
+            t.kind = domain::SinkKind::Primary;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        domain::DeliveryTarget t = target;
+        t.kind = domain::SinkKind::Primary;
+        targets.push_back(t);
+    }
+    rebuildRoutingGraph();
+    emit changed();
+}
+
+void MockDaemonNet::bindAccount(const domain::TransportId& transport,
+                                const domain::ProfileRef& profile)
+{
+    for (AccountAgent& a : m_accountAgents) {
+        if (a.transport == transport) {
+            a.profile = profile;
+            rebuildRoutingGraph();
+            emit changed();
+            return;
+        }
+    }
+    m_accountAgents.push_back({ transport, profile });
+    rebuildRoutingGraph();
+    emit changed();
 }
 
 } // namespace daemonnet

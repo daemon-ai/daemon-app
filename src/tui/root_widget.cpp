@@ -146,7 +146,7 @@ RootWidget::RootWidget()
     // of this depends on Tui Widgets - the same objects back the QML frontend.
     m_sidebar = new SidebarModel(this);
     m_sidebar->setStore(m_services.store);
-    // The same co-equal Transports section as the GUI (events-IO axis).
+    // The same co-equal Integrations section as the GUI (events-IO axis).
     m_sidebar->setDaemonNet(m_services.daemonNet);
 
     m_list = new SessionsListModel(this);
@@ -200,7 +200,7 @@ RootWidget::RootWidget()
     // Sidebar scope selection drives the session list - the model-to-model
     // contract is untouched by the choice of toolkit.
     connect(m_sidebar, &SidebarModel::scopeSelected, m_list, &SessionsListModel::setScope);
-    // A Transports-tree session leaf opens its transcript in a pinned tab.
+    // An Integrations-tree session leaf opens its transcript in a pinned tab.
     connect(m_sidebar, &SidebarModel::sessionActivated, this,
             [this](const QString& sessionId) { openSessionPinnedTab(sessionId); });
 
@@ -739,6 +739,12 @@ void RootWidget::wireViews()
         m_sidebar->expandCurrent();
         syncSidebarCurrent();
     });
+    // Section headers (Fleet/Tags/Integrations) fold/unfold by explicit row.
+    connect(m_sidebarView, &TreeListView::toggleRowRequested, this,
+            [this, syncSidebarCurrent](int row) {
+                m_sidebar->toggleExpand(row);
+                syncSidebarCurrent();
+            });
 
     // Session highlight / open -> record selection in the model (so the model
     // owns `current`, consistent with the sidebar) and surface it in a tab. A
