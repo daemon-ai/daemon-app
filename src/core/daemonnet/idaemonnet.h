@@ -4,6 +4,7 @@
 #include "domain/delivery.h"
 #include "domain/ids.h"
 #include "domain/origin.h"
+#include "domain/participant.h"
 #include "domain/session.h"
 #include "domain/sidebar_node.h"
 #include "domain/tag.h"
@@ -24,6 +25,7 @@ struct SeedBundle {
     QList<domain::UnitNode> units;
     QList<domain::Session> sessions;
     QList<domain::Tag> tags;
+    QList<domain::Participant> participants;
 };
 
 // One pre-order row of the Transports tree (the events-IO axis: transport account -> capability-driven
@@ -105,6 +107,9 @@ public:
     [[nodiscard]] virtual domain::UnitNode unit(const domain::UnitId& id) const = 0;
     // The client-local cross-cutting tags.
     [[nodiscard]] virtual QList<domain::Tag> tags() const = 0;
+    // The participants of the active chat/transcript (the daemon `ConversationMember` roster,
+    // client-derived). Mock today; a daemon adapter fills the same shape from `conv_get`/`conv_list`.
+    [[nodiscard]] virtual QList<domain::Participant> participants() const = 0;
     // Sessions matching a sidebar scope: All/Archived, a unit's whole subtree (Unit), a Tag, or the
     // DaemonNet lens scopes ByTransport/ByPeer (grouping by `scope.lensKey`).
     [[nodiscard]] virtual QList<domain::Session>

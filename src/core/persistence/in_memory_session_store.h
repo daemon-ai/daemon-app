@@ -25,6 +25,7 @@ public:
     unitChildren(const domain::UnitId& parentId) const override;
     [[nodiscard]] domain::UnitNode unit(const domain::UnitId& id) const override;
     [[nodiscard]] QList<domain::Tag> tags() const override;
+    [[nodiscard]] QList<domain::Participant> participants() const override;
     [[nodiscard]] QList<domain::Session>
     sessions(const domain::ListScope& scope) const override;
     [[nodiscard]] int sessionCount(const domain::ListScope& scope) const override;
@@ -70,6 +71,7 @@ protected:
     // logic above operates on exactly these members.
     QList<domain::UnitNode> m_units;
     QList<domain::Tag> m_tags;
+    QList<domain::Participant> m_participants;
     QList<domain::Session> m_sessions;
     int m_nextId = 1;        // session ids
     int m_nextUnitSeq = 1;   // suffix for generated unit ids

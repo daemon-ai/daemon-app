@@ -3,6 +3,7 @@
 #include "domain/unit_node.h"
 #include "domain/session.h"
 #include "domain/ids.h"
+#include "domain/participant.h"
 #include "domain/sidebar_node.h"
 #include "domain/tag.h"
 
@@ -35,6 +36,9 @@ public:
     [[nodiscard]] virtual domain::UnitNode unit(const domain::UnitId& id) const = 0;
 
     [[nodiscard]] virtual QList<domain::Tag> tags() const = 0;
+
+    // The participants of the active chat/transcript (copied from the DaemonNet seed, like tags).
+    [[nodiscard]] virtual QList<domain::Participant> participants() const = 0;
 
     // Sessions matching the given sidebar scope (metadata + content). For a Unit
     // scope this folds over the unit's whole subtree.

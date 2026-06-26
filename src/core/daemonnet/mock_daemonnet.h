@@ -2,6 +2,7 @@
 
 #include "daemonnet/idaemonnet.h"
 
+#include "domain/participant.h"
 #include "domain/session.h"
 #include "domain/tag.h"
 #include "domain/unit_node.h"
@@ -42,6 +43,7 @@ public:
     unitChildren(const domain::UnitId& parent) const override;
     [[nodiscard]] domain::UnitNode unit(const domain::UnitId& id) const override;
     [[nodiscard]] QList<domain::Tag> tags() const override;
+    [[nodiscard]] QList<domain::Participant> participants() const override;
     [[nodiscard]] QList<domain::Session>
     sessionsInScope(const domain::ListScope& scope) const override;
     [[nodiscard]] domain::Session sessionDetail(const domain::SessionId& id) const override;
@@ -82,6 +84,7 @@ private:
     QList<domain::UnitNode> m_units;
     QList<domain::Session> m_sessions;
     QList<domain::Tag> m_tags;
+    QList<domain::Participant> m_participants;
 
     // Raw graph for the future patch-bay + the channels/byPeer projections (transport combos).
     QList<QVariantMap> m_nodes;

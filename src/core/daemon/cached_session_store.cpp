@@ -55,6 +55,12 @@ QList<domain::Tag> CachedSessionStore::tags() const
     return {};
 }
 
+QList<domain::Participant> CachedSessionStore::participants() const
+{
+    // Daemon-backed participant rosters are a later slice; the cache has none yet.
+    return {};
+}
+
 QList<domain::Session> CachedSessionStore::sessions(const domain::ListScope& scope) const
 {
     QList<domain::Session> out;

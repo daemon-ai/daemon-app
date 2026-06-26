@@ -274,6 +274,27 @@ target_link_libraries(tst_sidebar_model
 add_test(NAME tst_sidebar_model COMMAND tst_sidebar_model)
 set_tests_properties(tst_sidebar_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_participants_model: the right sidebar's Participants section model (shared by
+# the GUI and TUI) - the collapsible header, the seeded Agent/User rows with their
+# green "available" presence dots, and the section fold.
+qt_add_executable(tst_participants_model tst_participants_model.cpp)
+target_include_directories(tst_participants_model
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Participants"
+)
+target_link_libraries(tst_participants_model
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        Qt6::Quick
+        daemon-app::domain
+        daemon-app::persistence
+        daemon-app::daemonnet
+        daemon-app::participants
+)
+
+add_test(NAME tst_participants_model COMMAND tst_participants_model)
+set_tests_properties(tst_participants_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_turn_controller: exercises the shared turn-lifecycle FSM (the C++ port of
 # TurnSimulator.qml) - a started turn runs its scripted events to completion and
 # settles idle, the "fail" prompt drives the error branch, and cancel resets.

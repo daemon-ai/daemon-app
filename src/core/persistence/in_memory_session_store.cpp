@@ -82,6 +82,7 @@ void InMemorySessionStore::seedFromDaemonNet(daemonnet::IDaemonNet* net)
     const daemonnet::SeedBundle bundle = net->seed();
     m_units = bundle.units;
     m_tags = bundle.tags;
+    m_participants = bundle.participants;
     // Copy the sessions, assigning each a stable local int handle (deterministic order) while keeping
     // its authoritative string sessionId. The int handle is transitional (the pipeline migrates to
     // SessionId in P3).
@@ -252,6 +253,11 @@ UnitNode InMemorySessionStore::unit(const UnitId& id) const
 QList<Tag> InMemorySessionStore::tags() const
 {
     return m_tags;
+}
+
+QList<domain::Participant> InMemorySessionStore::participants() const
+{
+    return m_participants;
 }
 
 QList<Session> InMemorySessionStore::sessions(const ListScope& scope) const

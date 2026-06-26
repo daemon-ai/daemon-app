@@ -112,7 +112,7 @@ QVariantList MockDaemonNet::edges() const
 
 SeedBundle MockDaemonNet::seed() const
 {
-    return SeedBundle{ m_units, m_sessions, m_tags };
+    return SeedBundle{ m_units, m_sessions, m_tags, m_participants };
 }
 
 QList<domain::UnitNode> MockDaemonNet::unitChildren(const domain::UnitId& parent) const
@@ -137,6 +137,8 @@ domain::UnitNode MockDaemonNet::unit(const domain::UnitId& id) const
 }
 
 QList<domain::Tag> MockDaemonNet::tags() const { return m_tags; }
+
+QList<domain::Participant> MockDaemonNet::participants() const { return m_participants; }
 
 bool MockDaemonNet::isInSubtree(const domain::UnitId& unitId, const domain::UnitId& rootId) const
 {
@@ -228,6 +230,15 @@ void MockDaemonNet::buildSeed()
     m_tags = {
         { 1, QStringLiteral("ideas"), QStringLiteral("#2383e2") },
         { 2, QStringLiteral("todo"), QStringLiteral("#e2a423") },
+    };
+
+    // --- Participants (the active chat/transcript roster: a local Agent + a human User, both
+    //     present/"available" so their dots render green). Mirrors the daemon ConversationMember set. ---
+    m_participants = {
+        { QStringLiteral("agent"), tr("Agent"), QStringLiteral("available"),
+          QStringLiteral("#3fb950"), true },
+        { QStringLiteral("user"), tr("User"), QStringLiteral("available"),
+          QStringLiteral("#3fb950"), false },
     };
 
     // --- Units: the fleet-of-fleets (a lone Engine root, nested orchestrators, a Host) ---

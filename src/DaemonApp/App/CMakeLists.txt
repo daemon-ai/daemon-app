@@ -13,6 +13,7 @@ qt_add_qml_module(daemon-app
     QML_FILES
         Main.qml
         CommandPalette.qml
+        RightPanel.qml
 )
 
 target_link_libraries(daemon-app
@@ -57,6 +58,7 @@ target_link_libraries(daemon-app
         daemon-app::session_view
         daemon-app::tabs
         daemon-app::files
+        daemon-app::participants
         daemon-app::editor
         daemon-app::transcript
         daemon-app::composer
@@ -77,6 +79,7 @@ target_link_libraries(daemon-app
         da_session_viewplugin
         da_tabsplugin
         da_filesplugin
+        da_participantsplugin
         da_editorplugin
         da_transcriptplugin
         da_composerplugin

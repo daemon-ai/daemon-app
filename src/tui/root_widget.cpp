@@ -26,6 +26,8 @@
 #include "app/transcript_log.h"
 
 #include "fs_explorer_model.h"
+#include "participants_model.h"
+#include "participants_view.h"
 #include "app/code_editor_controller.h"
 #include "fs/ifs_service.h"
 
@@ -207,6 +209,10 @@ RootWidget::RootWidget()
     m_fileTree = new files::FsExplorerModel(this);
     m_fileTree->setService(m_services.fs);
     m_fileTabs = std::make_unique<TuiFileTabController>(m_services.fs, m_tabModel, this);
+
+    // The right sidebar's Participants section: the same shared model the GUI binds.
+    m_participants = new participants::ParticipantsModel(this);
+    m_participants->setStore(m_services.store);
 
     // Phase 0 shared seams (identical classes to the GUI). The connection seam
     // owns liveness; mirror its state into the footer's gateway indicator, then
@@ -574,7 +580,7 @@ void RootWidget::buildUi()
 
     const TuiShellWidgets shell = TuiShellLayout::build(
         this, terminal(), QRect(QPoint(0, 0), geometry().size()), m_tabModel, m_fileTree,
-        &m_pageDoc);
+        m_participants, &m_pageDoc);
     m_window = shell.window;
     m_sidebarView = shell.sidebarView;
     m_search = shell.search;
@@ -593,6 +599,8 @@ void RootWidget::buildUi()
     m_attachments = shell.attachments;
     m_composer = shell.composer;
     m_completionPopup = shell.completionPopup;
+    m_rightColumn = shell.rightColumn;
+    m_participantsView = shell.participantsView;
     m_fileTreeView = shell.fileTreeView;
     m_footer = shell.footer;
 
@@ -622,8 +630,14 @@ void RootWidget::buildUi()
     if (m_fileTabs != nullptr)
         m_fileTabs->setStatusLabel(m_fileStatus);
     // Restore the persisted open/closed state (shared "ui/showFileExplorer" key).
-    m_fileTreeView->setVisible(
-        QSettings().value(QStringLiteral("ui/showFileExplorer"), false).toBool());
+    // The Participants section and the Explorer toggle together as one right column.
+    {
+        const bool showExplorer
+            = QSettings().value(QStringLiteral("ui/showFileExplorer"), false).toBool();
+        m_fileTreeView->setVisible(showExplorer);
+        if (m_participantsView != nullptr)
+            m_participantsView->setVisible(showExplorer);
+    }
     connect(m_fileTreeView, &FileTreeView::fileChosen, this,
             [this](const QString& rootId, const QString& path, bool pinned) {
                 const int slash = static_cast<int>(path.lastIndexOf(QLatin1Char('/')));
@@ -1807,6 +1821,9 @@ void RootWidget::toggleExplorer()
     }
     const bool show = !m_fileTreeView->isVisible();
     m_fileTreeView->setVisible(show);
+    if (m_participantsView != nullptr) {
+        m_participantsView->setVisible(show);
+    }
     if (show) {
         m_fileTreeView->setFocus();
     }

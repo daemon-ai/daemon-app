@@ -71,6 +71,9 @@ class IFsService;
 namespace files {
 class FsExplorerModel;
 }
+namespace participants {
+class ParticipantsModel;
+}
 namespace editor {
 class CodeEditorController;
 }
@@ -94,6 +97,7 @@ class StatusBarModel;
 class CommandRegistry;
 class TranscriptExporter;
 class DisplayRoleAdapter;
+class ParticipantsView;
 class TabModel;
 class TuiFileTabController;
 class TuiOverlayHost;
@@ -299,6 +303,10 @@ private:
     // same shared C++ view-models the GUI binds.
     files::FsExplorerModel* m_fileTree = nullptr;
     FileTreeView* m_fileTreeView = nullptr;
+    // Right-sidebar Participants section (above the Explorer, toggled as one column).
+    participants::ParticipantsModel* m_participants = nullptr;
+    Tui::ZWidget* m_rightColumn = nullptr;
+    ParticipantsView* m_participantsView = nullptr;
     CodeEditorView* m_editorView = nullptr;
     Tui::ZLabel* m_fileStatus = nullptr;
     // Per-File-tab editor controllers and async fs resolution.

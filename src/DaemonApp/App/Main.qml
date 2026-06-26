@@ -277,9 +277,10 @@ ApplicationWindow {
                 }
             }
 
-            // Right-side file Explorer (opposite the sessions sidebar, like
-            // Hermes Desktop). Files open as editor tabs in the session pane.
-            FileExplorer {
+            // Right-side panel: the Participants section above the file Explorer
+            // (opposite the sessions sidebar, like Hermes Desktop). Files open as
+            // editor tabs in the session pane.
+            RightPanel {
                 id: explorerExpanded
                 SplitView.preferredWidth: Theme.listWidth
                 SplitView.minimumWidth: 200
@@ -368,7 +369,7 @@ ApplicationWindow {
                 height: root.height
                 onClosed: UiSettings.showFileExplorer = false
 
-                FileExplorer {
+                RightPanel {
                     anchors.fill: parent
                     onFileActivated: (rootId, path) => {
                         if (!root.activeSessionPane)

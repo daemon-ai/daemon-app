@@ -30,6 +30,7 @@ public:
     unitChildren(const domain::UnitId& parentId) const override;
     [[nodiscard]] domain::UnitNode unit(const domain::UnitId& id) const override;
     [[nodiscard]] QList<domain::Tag> tags() const override;
+    [[nodiscard]] QList<domain::Participant> participants() const override;
 
     [[nodiscard]] QList<domain::Session> sessions(const domain::ListScope& scope) const override;
     [[nodiscard]] int sessionCount(const domain::ListScope& scope) const override;

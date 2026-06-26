@@ -54,6 +54,21 @@ private slots:
 
     void tagsAccessor() { QCOMPARE(MockDaemonNet().tags().size(), 2); }
 
+    void participantsAccessor()
+    {
+        const QList<domain::Participant> parts = MockDaemonNet().participants();
+        QCOMPARE(parts.size(), 2);
+        // A local Agent + a human User, both "available" (green dot) per the seed.
+        QCOMPARE(parts.at(0).name, QStringLiteral("Agent"));
+        QVERIFY(parts.at(0).isAgent);
+        QCOMPARE(parts.at(1).name, QStringLiteral("User"));
+        QVERIFY(!parts.at(1).isAgent);
+        for (const domain::Participant& p : parts) {
+            QCOMPARE(p.presence, QStringLiteral("available"));
+            QVERIFY(!p.color.isEmpty());
+        }
+    }
+
     void allAndArchivedScopes()
     {
         MockDaemonNet net;
