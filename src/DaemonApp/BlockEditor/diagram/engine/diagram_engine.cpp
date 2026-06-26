@@ -47,8 +47,8 @@ Style styleForNode(const DiagramNode& node, const DiagramModel& model, const Sty
 void sizeNode(DiagramNode& node, const TextMeasurer& measurer, const Style& style,
               qreal labelWrap) {
     const TextMetrics m = measurer.measure(node.label, style.font, labelWrap);
-    qreal w = m.width + 2 * kPadX;
-    qreal h = m.height + 2 * kPadY;
+    qreal w = m.width + (2 * kPadX);
+    qreal h = m.height + (2 * kPadY);
 
     switch (node.shape) {
     case NodeShape::Circle:
@@ -191,8 +191,8 @@ RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString& source, const Styl
 
         if (!edge.label.isEmpty()) {
             const TextMetrics tm = m_measurer.measure(edge.label, style.font);
-            const QRectF bg(edge.labelPos.x() - tm.width / 2.0 - 3.0,
-                            edge.labelPos.y() - tm.height / 2.0 - 1.0, tm.width + 6.0,
+            const QRectF bg(edge.labelPos.x() - (tm.width / 2.0) - 3.0,
+                            edge.labelPos.y() - (tm.height / 2.0) - 1.0, tm.width + 6.0,
                             tm.height + 2.0);
             QPainterPath bgPath;
             bgPath.addRect(bg);
@@ -202,8 +202,8 @@ RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString& source, const Styl
             LabelRun run;
             run.layout = layout;
             run.color = style.textColor;
-            run.origin =
-                QPointF(edge.labelPos.x() - tm.width / 2.0, edge.labelPos.y() - tm.height / 2.0);
+            run.origin = QPointF(edge.labelPos.x() - (tm.width / 2.0),
+                                 edge.labelPos.y() - (tm.height / 2.0));
             run.bounds = bg;
             snap->labels.push_back(run);
         }
@@ -215,7 +215,7 @@ RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString& source, const Styl
     // mitred path stroke would self-intersect.
     for (const DiagramNode& node : model.nodes) {
         const Style ns = styleForNode(node, model, style);
-        const QRectF rect(node.x - node.width / 2.0, node.y - node.height / 2.0, node.width,
+        const QRectF rect(node.x - (node.width / 2.0), node.y - (node.height / 2.0), node.width,
                           node.height);
         const qreal sw = ns.nodeStrokeWidth;
         const QRectF inset = rect.adjusted(sw, sw, -sw, -sw);
@@ -224,13 +224,13 @@ RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString& source, const Styl
 
         // Lay the label out (and centre it) within the node's content box so the
         // text wrap width matches the box that determined the node's size.
-        const qreal textBox = qMax(8.0, node.width - 2 * kPadX);
+        const qreal textBox = qMax(8.0, node.width - (2 * kPadX));
         auto layout = m_measurer.layout(node.label, ns.font, textBox);
         const qreal th = layout->boundingRect().height();
         LabelRun run;
         run.layout = layout;
         run.color = ns.textColor;
-        run.origin = QPointF(node.x - textBox / 2.0, node.y - th / 2.0);
+        run.origin = QPointF(node.x - (textBox / 2.0), node.y - (th / 2.0));
         run.bounds = rect;
         snap->labels.push_back(run);
 

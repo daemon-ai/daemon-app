@@ -1,5 +1,6 @@
 #include "palette_dialog.h"
 
+#include <algorithm>
 #include <QAbstractItemModel>
 #include <QRect>
 #include <Tui/ZEvent.h>
@@ -115,9 +116,7 @@ void PaletteDialog::step(int delta) {
         return;
     }
     int row = m_list->currentIndex().row();
-    if (row < 0) {
-        row = 0;
-    }
+    row = std::max(row, 0);
     row = qBound(0, row + delta, static_cast<int>(m_filtered.size()) - 1);
     m_list->setCurrentIndex(m_list->model()->index(row, 0));
 }

@@ -251,7 +251,7 @@ Chains normalize(WorkGraph& g, const DiagramModel& model, const LayoutOptions& o
         }
         const DiagramEdge& de = model.edges[edge.edgeIdx];
         const bool hasLabel = de.labelWidth > 0.0 && de.labelHeight > 0.0;
-        const int midRank = r0 + (r1 - r0) / 2;
+        const int midRank = r0 + ((r1 - r0) / 2);
         const QString cluster = topCluster(model, model.nodes[edge.v].parentCluster) ==
                                         topCluster(model, model.nodes[edge.u].parentCluster)
                                     ? g.nodes[edge.u].cluster
@@ -306,8 +306,8 @@ QVector<QVector<int>> buildLayering(const WorkGraph& g, int& numRanks) {
         layers[g.nodes[i].rank].push_back(i);
     }
     for (QVector<int>& layer : layers) {
-        std::stable_sort(layer.begin(), layer.end(),
-                         [&](int a, int b) { return g.nodes[a].order < g.nodes[b].order; });
+        std::ranges::stable_sort(layer,
+                                 [&](int a, int b) { return g.nodes[a].order < g.nodes[b].order; });
     }
     return layers;
 }
@@ -353,7 +353,7 @@ int crossCount(const WorkGraph& g, const QVector<QVector<int>>& layers) {
                 }
             }
         }
-        std::sort(segs.begin(), segs.end());
+        std::ranges::sort(segs);
         for (int i = 0; i < segs.size(); ++i) {
             for (int j = i + 1; j < segs.size(); ++j) {
                 if (segs[j].second < segs[i].second) {
@@ -431,7 +431,7 @@ void sortRank(WorkGraph& g, QVector<int>& layer, const Adj& adj, bool useSucc) {
         }
         return 0;
     };
-    std::stable_sort(layer.begin(), layer.end(), [&](int a, int b) {
+    std::ranges::stable_sort(layer, [&](int a, int b) {
         if (g.nodes[a].cluster == g.nodes[b].cluster && !g.nodes[a].cluster.isEmpty()) {
             const int ta = withinTier(a);
             const int tb = withinTier(b);
@@ -494,14 +494,16 @@ struct BK {
     QVector<QVector<int>> layers;
     QVector<int> pos; // order within rank (canonical)
 
-    double halfCross(int v) const { return 0.5 * (vertical ? g.nodes[v].w : g.nodes[v].h); }
+    [[nodiscard]] double halfCross(int v) const {
+        return 0.5 * (vertical ? g.nodes[v].w : g.nodes[v].h);
+    }
 
     static bool isBorder(const WorkNode& n) {
         return n.kind == WorkKind::BorderLeft || n.kind == WorkKind::BorderRight;
     }
 
     // Minimum center-to-center spacing between two nodes adjacent in a rank.
-    double sep(int a, int b) const {
+    [[nodiscard]] double sep(int a, int b) const {
         double gap = opts.edgeSep;
         if (isBorder(g.nodes[a]) || isBorder(g.nodes[b])) {
             gap = opts.clusterPad; // a wall hugs its own members
@@ -514,18 +516,18 @@ struct BK {
         return halfCross(a) + halfCross(b) + gap;
     }
 
-    bool conflict(const QSet<qint64>& cf, int a, int b) const {
+    [[nodiscard]] bool conflict(const QSet<qint64>& cf, int a, int b) const {
         const qint64 lo = std::min(a, b);
         const qint64 hi = std::max(a, b);
-        return cf.contains(lo * qint64(g.nodes.size()) + hi);
+        return cf.contains((lo * qint64(g.nodes.size())) + hi);
     }
 
-    QSet<qint64> type1Conflicts() const {
+    [[nodiscard]] QSet<qint64> type1Conflicts() const {
         QSet<qint64> cf;
         const auto add = [&](int a, int b) {
             const qint64 lo = std::min(a, b);
             const qint64 hi = std::max(a, b);
-            cf.insert(lo * qint64(g.nodes.size()) + hi);
+            cf.insert((lo * qint64(g.nodes.size())) + hi);
         };
         for (int r = 1; r < layers.size(); ++r) {
             const QVector<int>& layer = layers[r];
@@ -569,11 +571,11 @@ struct BK {
              QHash<int, double>& outX) {
         QVector<QVector<int>> ls = layers;
         if (vertReverse) {
-            std::reverse(ls.begin(), ls.end());
+            std::ranges::reverse(ls);
         }
         if (horizReverse) {
             for (QVector<int>& l : ls) {
-                std::reverse(l.begin(), l.end());
+                std::ranges::reverse(l);
             }
         }
         QVector<int> lpos(g.nodes.size(), 0);
@@ -601,7 +603,7 @@ struct BK {
                 if (ws.isEmpty()) {
                     continue;
                 }
-                std::sort(ws.begin(), ws.end(), [&](int a, int b) { return lpos[a] < lpos[b]; });
+                std::ranges::sort(ws, [&](int a, int b) { return lpos[a] < lpos[b]; });
                 const double mp = (ws.size() - 1) / 2.0;
                 const int from = int(std::floor(mp));
                 const int to = int(std::ceil(mp));
@@ -725,7 +727,7 @@ struct BK {
         QHash<int, double> result;
         for (int v = 0; v < g.nodes.size(); ++v) {
             QVector<double> vals{xss[0][v], xss[1][v], xss[2][v], xss[3][v]};
-            std::sort(vals.begin(), vals.end());
+            std::ranges::sort(vals);
             result.insert(v, (vals[1] + vals[2]) / 2.0);
         }
         return result;
@@ -762,7 +764,7 @@ QRectF layoutFlowchart(DiagramModel& model, const LayoutOptions& opts) {
         for (int v : layers[r]) {
             thick = std::max(thick, vertical ? g.nodes[v].h : g.nodes[v].w);
         }
-        rankCenter[r] = cursor + thick / 2.0;
+        rankCenter[r] = cursor + (thick / 2.0);
         cursor += thick + halfRankSep;
     }
     const double rankTotal = cursor - halfRankSep + opts.margin;
@@ -851,11 +853,11 @@ QRectF layoutFlowchart(DiagramModel& model, const LayoutOptions& opts) {
             }
         }
         if (reversed) {
-            std::reverse(mids.begin(), mids.end());
+            std::ranges::reverse(mids);
         }
 
-        const QRectF ra(na.x - na.width / 2.0, na.y - na.height / 2.0, na.width, na.height);
-        const QRectF rb(nb.x - nb.width / 2.0, nb.y - nb.height / 2.0, nb.width, nb.height);
+        const QRectF ra(na.x - (na.width / 2.0), na.y - (na.height / 2.0), na.width, na.height);
+        const QRectF rb(nb.x - (nb.width / 2.0), nb.y - (nb.height / 2.0), nb.width, nb.height);
         const QPointF towardA = mids.isEmpty() ? QPointF(nb.x, nb.y) : mids.first();
         const QPointF towardB = mids.isEmpty() ? QPointF(na.x, na.y) : mids.last();
         const QPointF start = shapeBoundaryPoint(na.shape, ra, towardA);
@@ -900,7 +902,7 @@ QRectF layoutFlowchart(DiagramModel& model, const LayoutOptions& opts) {
             if (!inside) {
                 continue;
             }
-            const QRectF r(node.x - node.width / 2.0, node.y - node.height / 2.0, node.width,
+            const QRectF r(node.x - (node.width / 2.0), node.y - (node.height / 2.0), node.width,
                            node.height);
             box = first ? r : box.united(r);
             first = false;
@@ -916,7 +918,7 @@ QRectF layoutFlowchart(DiagramModel& model, const LayoutOptions& opts) {
     QRectF bounds;
     bool first = true;
     for (const DiagramNode& node : model.nodes) {
-        const QRectF r(node.x - node.width / 2.0, node.y - node.height / 2.0, node.width,
+        const QRectF r(node.x - (node.width / 2.0), node.y - (node.height / 2.0), node.width,
                        node.height);
         bounds = first ? r : bounds.united(r);
         first = false;

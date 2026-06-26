@@ -166,11 +166,11 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     engine.addImageProvider(QStringLiteral("math"), new be::app::MathImageProvider);
 }
 
-void Application::openPageForRenderHarness(const QString& page, const QString& section) {
+void Application::openPageForRenderHarness(const QString& page, const QString& section) const {
     m_services.nav->open(page, section);
 }
 
-bool Application::awaitConnectionReady(int timeoutMs) {
+bool Application::awaitConnectionReady(int timeoutMs) const {
     auto* conn = m_services.connection;
     if (conn->ready()) {
         return true;

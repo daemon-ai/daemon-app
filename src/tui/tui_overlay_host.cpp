@@ -10,7 +10,7 @@
 
 TuiOverlayHost::TuiOverlayHost(Tui::ZWidget* parent) : QObject(parent), m_parent(parent) {}
 
-void TuiOverlayHost::promptQuit(std::function<void()> restoreFocus) {
+void TuiOverlayHost::promptQuit(const std::function<void()>& restoreFocus) {
     if (m_quitDialog != nullptr) {
         return;
     }
@@ -26,7 +26,7 @@ void TuiOverlayHost::promptQuit(std::function<void()> restoreFocus) {
 }
 
 void TuiOverlayHost::openModelPicker(ComposerSessionController* composer,
-                                     std::function<void()> focusComposer) {
+                                     const std::function<void()>& focusComposer) {
     if (composer == nullptr) {
         return;
     }

@@ -649,8 +649,8 @@ void MockDaemonNet::computeProjections() {
     }
     QList<QVariantMap> channelRows;
     for (auto it = overOf.constBegin(); it != overOf.constEnd(); ++it) {
-        const QString sid = it.key();
-        const QString transportId = it.value();
+        const QString& sid = it.key();
+        const QString& transportId = it.value();
         const QString placeId = placeOf.value(sid);
         const QStringList parts = partsOf.value(sid);
         QString peerLabel = QStringLiteral("(group)");
@@ -875,7 +875,7 @@ QList<RoomBinding> MockDaemonNet::transportRooms(const domain::TransportId& tran
         if (it.value() != transport.toString()) {
             continue;
         }
-        const QString session = it.key();
+        const QString& session = it.key();
         const QString place = placeOf.value(session);
         if (place.isEmpty()) {
             continue;
@@ -1029,8 +1029,8 @@ void MockDaemonNet::rebuildRoutingGraph() {
         accountTransports.insert(a.transport.toString());
     }
     for (auto it = overOf.constBegin(); it != overOf.constEnd(); ++it) {
-        const QString session = it.key();
-        const QString transport = it.value();
+        const QString& session = it.key();
+        const QString& transport = it.value();
         const QString synthKey = QStringLiteral("over:") + session;
         // Skip sessions already represented by a pin edge above (best-effort by session id).
         bool pinnedSession = false;
@@ -1054,7 +1054,7 @@ void MockDaemonNet::rebuildRoutingGraph() {
 
     // Outbound: session -> destination (SinkKind), one node per (transport,route).
     for (auto it = m_delivery.constBegin(); it != m_delivery.constEnd(); ++it) {
-        const QString session = it.key();
+        const QString& session = it.key();
         for (const domain::DeliveryTarget& t : it.value()) {
             const QString did = QStringLiteral("rt:d:") + t.transport.toString() +
                                 QLatin1Char('/') + t.route.toString();

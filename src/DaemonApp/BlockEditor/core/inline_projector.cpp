@@ -44,7 +44,7 @@ static QString firstImageUrlIn(const QString& raw, qsizetype start, qsizetype en
             }
         }
     }
-    return QString();
+    return {};
 }
 
 // True when [innerStart, innerEnd) (after trimming surrounding spaces) is exactly

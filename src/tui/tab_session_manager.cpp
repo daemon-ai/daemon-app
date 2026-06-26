@@ -25,7 +25,8 @@ TabSessionManager::~TabSessionManager() {
     qDeleteAll(m_sessions);
 }
 
-TabSession* TabSessionManager::ensureSession(int tabId, std::function<void(TabSession*)> wire) {
+TabSession* TabSessionManager::ensureSession(int tabId,
+                                             const std::function<void(TabSession*)>& wire) {
     if (auto it = m_sessions.find(tabId); it != m_sessions.end()) {
         return it.value();
     }
@@ -55,7 +56,7 @@ TabSession* TabSessionManager::ensureSession(int tabId, std::function<void(TabSe
 }
 
 void TabSessionManager::rebindSession(int tabId, const QString& sessionId,
-                                      std::function<void(TabSession*)> wire) {
+                                      const std::function<void(TabSession*)>& wire) {
     Q_UNUSED(wire)
     auto it = m_sessions.find(tabId);
     if (it == m_sessions.end()) {
@@ -70,7 +71,7 @@ void TabSessionManager::rebindSession(int tabId, const QString& sessionId,
 }
 
 bool TabSessionManager::destroySession(int tabId, TabSession*& active,
-                                       std::function<void()> detachActiveDocument) {
+                                       const std::function<void()>& detachActiveDocument) {
     auto it = m_sessions.find(tabId);
     if (it == m_sessions.end()) {
         return false;

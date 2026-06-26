@@ -253,7 +253,7 @@ QList<Session> InMemorySessionStore::sessions(const ListScope& scope) const {
     }
     // Pinned sessions float to the top; store order is otherwise preserved
     // (stable partition), so /title + moveSession stay predictable.
-    std::stable_partition(out.begin(), out.end(), [](const Session& c) { return c.isPinned; });
+    std::ranges::stable_partition(out, [](const Session& c) { return c.isPinned; });
     return out;
 }
 

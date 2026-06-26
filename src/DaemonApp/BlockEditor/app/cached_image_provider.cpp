@@ -34,11 +34,11 @@ public:
                                   Q_ARG(QSize, requestedSize));
     }
 
-    QQuickTextureFactory* textureFactory() const override {
+    [[nodiscard]] QQuickTextureFactory* textureFactory() const override {
         return QQuickTextureFactory::textureFactoryForImage(m_image);
     }
 
-    QString errorString() const override {
+    [[nodiscard]] QString errorString() const override {
         return m_image.isNull() ? QStringLiteral("image load failed") : QString();
     }
 

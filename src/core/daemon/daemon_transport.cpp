@@ -18,7 +18,7 @@ bool DaemonTransport::tryTakeFrame(QByteArray& buffer, QByteArray* payload) {
     if (buffer.size() < 4) {
         return false;
     }
-    const quint32 len = qFromBigEndian<quint32>(reinterpret_cast<const uchar*>(buffer.constData()));
+    const auto len = qFromBigEndian<quint32>(reinterpret_cast<const uchar*>(buffer.constData()));
     const qsizetype frameSize = 4 + static_cast<qsizetype>(len);
     if (buffer.size() < frameSize) {
         return false;

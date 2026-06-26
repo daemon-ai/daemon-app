@@ -43,7 +43,7 @@ QByteArray PieceTable::slice(qsizetype offset, qsizetype length) const {
     return all.mid(offset, length);
 }
 
-void PieceTable::replace(qsizetype offset, qsizetype length, QByteArray inserted) {
+void PieceTable::replace(qsizetype offset, qsizetype length, const QByteArray& inserted) {
     offset = qBound<qsizetype>(0, offset, size());
     length = qBound<qsizetype>(0, length, size() - offset);
 

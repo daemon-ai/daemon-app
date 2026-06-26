@@ -70,7 +70,7 @@ int CompletionView::topForActive(int h) const {
     if (total <= h) {
         return 0;
     }
-    int top = activeLine - h / 2;
+    int top = activeLine - (h / 2);
     top = qBound(0, top, total - h);
     return top;
 }

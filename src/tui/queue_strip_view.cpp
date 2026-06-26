@@ -20,7 +20,7 @@ Span mkSpan(const QString& text, const Tui::ZColor& fg, const Tui::ZColor& bg,
 
 QString elide(const QString& text, int width) {
     if (width <= 0) {
-        return QString();
+        return {};
     }
     if (text.size() <= width) {
         return text;

@@ -19,10 +19,10 @@ Tui::ZColor rgbFromHex(const QString& hex) {
         bool ok = false;
         const int rgb = hex.mid(1).toInt(&ok, 16);
         if (ok) {
-            return Tui::ZColor((rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff);
+            return {(rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff};
         }
     }
-    return Tui::ZColor(0xaa, 0xaa, 0xaa);
+    return {0xaa, 0xaa, 0xaa};
 }
 
 } // namespace

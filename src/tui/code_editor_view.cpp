@@ -5,6 +5,7 @@
 #include "transcript_render.h" // Span / RenderLine
 #include "tui_palette.h"
 
+#include <algorithm>
 #include <QHash>
 #include <QModelIndex>
 #include <QRect>
@@ -109,8 +110,7 @@ void CodeEditorView::clampScroll() {
     const int rows = m_model ? m_model->rowCount() : 0;
     const int maxTop = qMax(0, rows - visibleRows());
     m_scrollTop = qBound(0, m_scrollTop, maxTop);
-    if (m_hScroll < 0)
-        m_hScroll = 0;
+    m_hScroll = std::max(m_hScroll, 0);
 }
 
 void CodeEditorView::ensureCaretVisible() {

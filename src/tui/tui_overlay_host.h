@@ -27,8 +27,9 @@ public:
 
     explicit TuiOverlayHost(Tui::ZWidget* parent);
 
-    void promptQuit(std::function<void()> restoreFocus);
-    void openModelPicker(ComposerSessionController* composer, std::function<void()> focusComposer);
+    void promptQuit(const std::function<void()>& restoreFocus);
+    void openModelPicker(ComposerSessionController* composer,
+                         const std::function<void()>& focusComposer);
     void openCommandPalette(CommandRegistry* commands, const CommandCallbacks& callbacks);
     [[nodiscard]] class QuitDialog* quitDialog() const { return m_quitDialog; }
 

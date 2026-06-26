@@ -60,7 +60,7 @@ QString TuiPageHub::pageMarkdownForKind(int kind, const QString& profileRef) con
     case TabModel::Profile:
         return buildProfileMarkdown(profileRef);
     default:
-        return QString();
+        return {};
     }
 }
 
@@ -173,7 +173,7 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
         return false;
     }
     const int sel = qBound(0, m_pageSel.value(kind, 0), static_cast<int>(rows.size()) - 1);
-    const QVariantMap row = rows.at(sel);
+    const QVariantMap& row = rows.at(sel);
     const QString id = row.value(QStringLiteral("id")).toString();
     const bool enter = key == Qt::Key_Enter || key == Qt::Key_Return;
     bool acted = false;
@@ -395,7 +395,7 @@ QString TuiPageHub::buildMemoryMarkdown() const {
             for (const QVariant& v : rows) {
                 const QVariantMap r = v.toMap();
                 const double frac = r.value(QStringLiteral("fraction")).toDouble();
-                const int filled = qBound(0, static_cast<int>(frac * 12.0 + 0.5), 12);
+                const int filled = qBound(0, static_cast<int>((frac * 12.0) + 0.5), 12);
                 const QString bar = QString(filled, QChar('#')) + QString(12 - filled, QChar('-'));
                 md += QStringLiteral("- `%1` %2 %3\n")
                           .arg(bar, r.value(QStringLiteral("key")).toString())

@@ -90,8 +90,8 @@ bool maybeRunOffscreenRenderHarness(QQmlApplicationEngine& engine) {
         return true;
     }
 
-    QObject* theme = engine.singletonInstance<QObject*>(QStringLiteral("DaemonApp.Theme"),
-                                                        QStringLiteral("Theme"));
+    auto* theme = engine.singletonInstance<QObject*>(QStringLiteral("DaemonApp.Theme"),
+                                                     QStringLiteral("Theme"));
     if (theme == nullptr) {
         qWarning("render-shots: could not resolve the Theme singleton");
         return true;
@@ -205,7 +205,7 @@ int main(int argc, char* argv[]) {
             QSettings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"))
                 .value(QStringLiteral("ui/language"), QStringLiteral("system"))
                 .toString();
-        app.setLayoutDirection(i18n::applyLocale(language));
+        AppBase::setLayoutDirection(i18n::applyLocale(language));
     }
 
     Application application;
@@ -272,5 +272,5 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    return app.exec();
+    return AppBase::exec();
 }

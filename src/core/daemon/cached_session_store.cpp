@@ -70,8 +70,7 @@ QList<domain::Session> CachedSessionStore::sessions(const domain::ListScope& sco
         }
         out.push_back(session);
     }
-    std::stable_partition(out.begin(), out.end(),
-                          [](const domain::Session& s) { return s.isPinned; });
+    std::ranges::stable_partition(out, [](const domain::Session& s) { return s.isPinned; });
     return out;
 }
 

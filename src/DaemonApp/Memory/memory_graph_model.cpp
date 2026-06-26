@@ -235,7 +235,7 @@ void MemoryGraphModel::layout() {
         idx.insert(id, i);
         // Seed on a circle to avoid degenerate all-equal start.
         const double a = 2.0 * M_PI * i / n;
-        p.append(QPointF(0.5 + 0.35 * std::cos(a), 0.5 + 0.35 * std::sin(a)));
+        p.append(QPointF(0.5 + (0.35 * std::cos(a)), 0.5 + (0.35 * std::sin(a))));
     }
 
     struct E {
@@ -278,8 +278,7 @@ void MemoryGraphModel::layout() {
         for (const E& e : es) {
             QPointF delta = p[e.a] - p[e.b];
             double dist = std::hypot(delta.x(), delta.y());
-            if (dist < 1e-4)
-                dist = 1e-4;
+            dist = std::max(dist, 1e-4);
             const double force = (dist * dist) / k;
             const QPointF dir = delta / dist;
             disp[e.a] -= dir * force;

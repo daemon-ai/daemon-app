@@ -29,7 +29,7 @@ QSizeF layoutLines(QTextLayout& layout, std::optional<qreal> maxWidth) {
         widest = qMax(widest, line.naturalTextWidth());
     }
     layout.endLayout();
-    return QSizeF(widest, height);
+    return {widest, height};
 }
 
 } // namespace

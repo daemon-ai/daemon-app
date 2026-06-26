@@ -3,6 +3,7 @@
 #include "tab_model.h"
 #include "tui_palette.h"
 
+#include <algorithm>
 #include <QRect>
 #include <QSize>
 #include <Tui/ZColor.h>
@@ -74,9 +75,7 @@ void TabStripView::layout() {
     if (active >= 0 && active < m_firstVisible) {
         m_firstVisible = active;
     }
-    if (m_firstVisible > qMax(0, n - 1)) {
-        m_firstVisible = qMax(0, n - 1);
-    }
+    m_firstVisible = std::min(m_firstVisible, qMax(0, n - 1));
 
     const auto build = [&](int first) {
         QVector<Segment> segs;

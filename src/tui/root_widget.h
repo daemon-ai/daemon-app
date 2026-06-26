@@ -123,7 +123,7 @@ public:
 
     // Headless E2E hook (mirrors Application::awaitConnectionReady): spin the event loop until the
     // connection seam reaches "ready" or timeoutMs elapses; returns true iff ready.
-    [[nodiscard]] bool awaitConnectionReady(int timeoutMs);
+    [[nodiscard]] bool awaitConnectionReady(int timeoutMs) const;
 
     // Mouse entry point (connected to MouseTerminal::mouseInput). Hit-tests the
     // panes by terminal coordinate and routes a primary-button press to focus +

@@ -122,7 +122,7 @@ qreal DiagramItem::fitScale() const {
     if (w <= 0.0 || width() <= 0.0) {
         return 1.0;
     }
-    const qreal avail = width() - 2 * kPad;
+    const qreal avail = width() - (2 * kPad);
     return avail < w ? avail / w : 1.0;
 }
 
@@ -139,7 +139,7 @@ void DiagramItem::updateImplicitSize() {
     if (m_controller) {
         h = m_controller->diagramHeight() * fitScale();
     }
-    setImplicitHeight(h > 0.0 ? h + 2 * kPad : 0.0);
+    setImplicitHeight(h > 0.0 ? h + (2 * kPad) : 0.0);
 }
 
 void DiagramItem::geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry) {
@@ -161,10 +161,10 @@ QPointF DiagramItem::toDiagram(const QPointF& itemPoint) const {
         return itemPoint;
     }
     const qreal contentW = bounds.width() * scale;
-    const qreal offsetX = (width() - contentW) / 2.0 + m_panX;
+    const qreal offsetX = ((width() - contentW) / 2.0) + m_panX;
     const qreal offsetY = kPad + m_panY;
-    return QPointF((itemPoint.x() - offsetX) / scale + bounds.left(),
-                   (itemPoint.y() - offsetY) / scale + bounds.top());
+    return {((itemPoint.x() - offsetX) / scale) + bounds.left(),
+            ((itemPoint.y() - offsetY) / scale) + bounds.top()};
 }
 
 QString DiagramItem::hitTest(const QPointF& itemPoint) const {
@@ -323,7 +323,7 @@ QSGNode* DiagramItem::updatePaintNode(QSGNode* oldNode, UpdatePaintNodeData*) {
         const QRectF bounds = snap->diagramBounds;
         const qreal scale = contentScale();
         const qreal contentW = bounds.width() * scale;
-        const qreal offsetX = (width() - contentW) / 2.0 + m_panX;
+        const qreal offsetX = ((width() - contentW) / 2.0) + m_panX;
         const qreal offsetY = kPad + m_panY;
         matrix.translate(offsetX, offsetY);
         matrix.scale(scale);

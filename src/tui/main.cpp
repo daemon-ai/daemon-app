@@ -336,5 +336,5 @@ int main(int argc, char* argv[]) {
     // ZTerminal has initialized the terminal/alt-screen, not interleaved with it).
     QTimer::singleShot(0, &terminal, [] { MouseTerminal::enableMouseReporting(); });
 
-    return app.exec();
+    return QCoreApplication::exec();
 }

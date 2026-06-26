@@ -59,7 +59,7 @@ double polygonArea(const std::vector<QPointF>& ring) {
     for (size_t i = 0, n = ring.size(); i < n; ++i) {
         const QPointF& a = ring[i];
         const QPointF& b = ring[(i + 1) % n];
-        area += a.x() * b.y() - b.x() * a.y();
+        area += (a.x() * b.y()) - (b.x() * a.y());
     }
     return area * 0.5;
 }
@@ -108,7 +108,7 @@ void addQuad(const QPointF& a, const QPointF& b, const QPointF& c, const QPointF
         mesh.vertices.push_back(makeVertex(p, color));
         growBounds(mesh, p);
     }
-    const quint16 i0 = static_cast<quint16>(base);
+    const auto i0 = static_cast<quint16>(base);
     mesh.indices.push_back(i0);
     mesh.indices.push_back(i0 + 1);
     mesh.indices.push_back(i0 + 2);
@@ -223,8 +223,8 @@ QPointF cubicBezier(const QPointF& p0, const QPointF& p1, const QPointF& p2, con
     const qreal b = 3.0 * u * u * t;
     const qreal c = 3.0 * u * t * t;
     const qreal d = t * t * t;
-    return QPointF(a * p0.x() + b * p1.x() + c * p2.x() + d * p3.x(),
-                   a * p0.y() + b * p1.y() + c * p2.y() + d * p3.y());
+    return {(a * p0.x()) + (b * p1.x()) + (c * p2.x()) + (d * p3.x()),
+            (a * p0.y()) + (b * p1.y()) + (c * p2.y()) + (d * p3.y())};
 }
 
 // Round near-orthogonal corners by replacing the corner knot with two knots a
@@ -249,7 +249,7 @@ QVector<QPointF> fixCorners(const QVector<QPointF>& knots) {
         }
         din /= lin;
         dout /= lout;
-        const qreal cosang = din.x() * dout.x() + din.y() * dout.y();
+        const qreal cosang = (din.x() * dout.x()) + (din.y() * dout.y());
         if (cosang > 0.96) { // nearly collinear: keep the knot
             out.push_back(b);
             continue;

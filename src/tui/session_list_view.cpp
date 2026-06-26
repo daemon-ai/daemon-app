@@ -22,7 +22,7 @@ Span mkSpan(const QString& text, const Tui::ZColor& fg, const Tui::ZColor& bg,
 // Single-line elide to `width` columns with a trailing ellipsis.
 QString elide(const QString& text, int width) {
     if (width <= 0) {
-        return QString();
+        return {};
     }
     if (text.size() <= width) {
         return text;
@@ -191,7 +191,7 @@ void SessionListView::rebuild() {
                 // Parse the tag's "#rrggbb" color directly to an RGB ZColor.
                 Tui::ZColor tagFg = tpal::muted();
                 if (t < tagColors.size()) {
-                    const QString hex = tagColors.at(t);
+                    const QString& hex = tagColors.at(t);
                     if (hex.size() == 7 && hex.startsWith(QLatin1Char('#'))) {
                         bool ok = false;
                         const int rgb = hex.mid(1).toInt(&ok, 16);

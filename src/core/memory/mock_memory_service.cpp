@@ -435,8 +435,9 @@ MemoryGraph MockMemoryService::buildConstellation(int limit) const {
 
 QList<MemoryTimelineGroup> MockMemoryService::buildTimeline(const QString& group, int limit) const {
     QList<MemoryEntry> items = scoped();
-    std::sort(items.begin(), items.end(),
-              [](const MemoryEntry& a, const MemoryEntry& b) { return a.timestamp > b.timestamp; });
+    std::ranges::sort(items, [](const MemoryEntry& a, const MemoryEntry& b) {
+        return a.timestamp > b.timestamp;
+    });
 
     QList<MemoryTimelineGroup> groups;
     const auto groupKeyFor = [&group](const MemoryEntry& e) -> QString {
@@ -509,15 +510,15 @@ void MockMemoryService::requestList(const QVariantMap& query) {
         items.append(e);
     }
     if (sort == QStringLiteral("importance")) {
-        std::sort(items.begin(), items.end(), [](const MemoryEntry& a, const MemoryEntry& b) {
+        std::ranges::sort(items, [](const MemoryEntry& a, const MemoryEntry& b) {
             return a.importance > b.importance;
         });
     } else if (sort == QStringLiteral("recall")) {
-        std::sort(items.begin(), items.end(), [](const MemoryEntry& a, const MemoryEntry& b) {
+        std::ranges::sort(items, [](const MemoryEntry& a, const MemoryEntry& b) {
             return a.recallCount > b.recallCount;
         });
     } else {
-        std::sort(items.begin(), items.end(), [](const MemoryEntry& a, const MemoryEntry& b) {
+        std::ranges::sort(items, [](const MemoryEntry& a, const MemoryEntry& b) {
             return a.timestamp > b.timestamp;
         });
     }
@@ -562,13 +563,13 @@ void MockMemoryService::requestSearch(const QString& text, int limit) {
         if (needle.isEmpty() || e.content.contains(needle, Qt::CaseInsensitive)) {
             MemoryEntry hit = e;
             // Cheap relevance: text presence + importance + recency tilt.
-            hit.score = (needle.isEmpty() ? 0.0 : 0.5) + e.importance * 0.5 +
+            hit.score = (needle.isEmpty() ? 0.0 : 0.5) + (e.importance * 0.5) +
                         (e.recallCount > 0 ? 0.1 : 0.0);
             items.append(hit);
         }
     }
-    std::sort(items.begin(), items.end(),
-              [](const MemoryEntry& a, const MemoryEntry& b) { return a.score > b.score; });
+    std::ranges::sort(items,
+                      [](const MemoryEntry& a, const MemoryEntry& b) { return a.score > b.score; });
     if (limit > 0 && items.size() > limit)
         items = items.mid(0, limit);
     QMetaObject::invokeMethod(

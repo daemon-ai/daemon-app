@@ -1,5 +1,6 @@
 #include "fs/local_disk_fs_service.h"
 
+#include <algorithm>
 #include <functional>
 #include <QDir>
 #include <QDirIterator>
@@ -207,7 +208,7 @@ void LocalDiskFsService::open(const QString& rootId, const QString& dir) {
         e.mtimeMs = fi.lastModified().toMSecsSinceEpoch();
         entries.push_back(e);
     }
-    std::sort(entries.begin(), entries.end(), entryLess);
+    std::ranges::sort(entries, entryLess);
 
     QMetaObject::invokeMethod(
         this, [this, rootId, dir, entries] { emit listed(rootId, dir, entries); },

@@ -10,7 +10,7 @@ namespace {
 theme::ThemeName g_active = theme::ThemeName::Dark;
 
 Tui::ZColor toZ(const QColor& c) {
-    return Tui::ZColor(c.red(), c.green(), c.blue());
+    return {c.red(), c.green(), c.blue()};
 }
 
 // Resolve a shared theme token to a ZColor for a specific theme / the active one.
@@ -209,22 +209,22 @@ ZColor diffHunk() {
 ZColor toneColor(const QString& tone) {
     const QString t = tone.trimmed().toLower();
     if (t == QStringLiteral("terminal") || t == QStringLiteral("pty")) {
-        return ZColor(166, 227, 161); // green
+        return {166, 227, 161}; // green
     }
     if (t == QStringLiteral("web") || t == QStringLiteral("search")) {
-        return ZColor(137, 220, 235); // sky
+        return {137, 220, 235}; // sky
     }
     if (t == QStringLiteral("edit") || t == QStringLiteral("file")) {
-        return ZColor(250, 179, 135); // peach
+        return {250, 179, 135}; // peach
     }
     if (t == QStringLiteral("code")) {
-        return ZColor(203, 166, 247); // mauve
+        return {203, 166, 247}; // mauve
     }
     if (t == QStringLiteral("image")) {
-        return ZColor(245, 194, 231); // pink
+        return {245, 194, 231}; // pink
     }
     if (t == QStringLiteral("agent")) {
-        return ZColor(180, 190, 254); // lavender
+        return {180, 190, 254}; // lavender
     }
     return accent(); // default tone tracks the theme accent
 }
@@ -233,37 +233,37 @@ ZColor ansi(int index) {
     // Classic xterm 16-color table; bright variants for 8-15. -1 == default fg.
     switch (index) {
     case 0:
-        return ZColor(0, 0, 0);
+        return {0, 0, 0};
     case 1:
-        return ZColor(205, 49, 49);
+        return {205, 49, 49};
     case 2:
-        return ZColor(13, 188, 121);
+        return {13, 188, 121};
     case 3:
-        return ZColor(229, 229, 16);
+        return {229, 229, 16};
     case 4:
-        return ZColor(36, 114, 200);
+        return {36, 114, 200};
     case 5:
-        return ZColor(188, 63, 188);
+        return {188, 63, 188};
     case 6:
-        return ZColor(17, 168, 205);
+        return {17, 168, 205};
     case 7:
-        return ZColor(229, 229, 229);
+        return {229, 229, 229};
     case 8:
-        return ZColor(102, 102, 102);
+        return {102, 102, 102};
     case 9:
-        return ZColor(241, 76, 76);
+        return {241, 76, 76};
     case 10:
-        return ZColor(35, 209, 139);
+        return {35, 209, 139};
     case 11:
-        return ZColor(245, 245, 67);
+        return {245, 245, 67};
     case 12:
-        return ZColor(59, 142, 234);
+        return {59, 142, 234};
     case 13:
-        return ZColor(214, 112, 214);
+        return {214, 112, 214};
     case 14:
-        return ZColor(41, 184, 219);
+        return {41, 184, 219};
     case 15:
-        return ZColor(255, 255, 255);
+        return {255, 255, 255};
     default:
         return fg();
     }
@@ -401,7 +401,7 @@ QString tagDot() {
 QString spinnerFrame(int tick) {
     static const char16_t frames[] = {0x25d0, 0x25d3, 0x25d1, 0x25d2}; // ◐◓◑◒
     const int i = ((tick % 4) + 4) % 4;
-    return QString(QChar(frames[i]));
+    return {QChar(frames[i])};
 }
 
 } // namespace tpal

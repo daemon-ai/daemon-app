@@ -90,12 +90,12 @@ public:
     // Guarded render-harness hook: open an app-level page (and optional section)
     // via the shared Nav seam. Used only by DAEMON_APP_RENDER_PAGE before the
     // offscreen screenshot pass; no effect on a normal run.
-    void openPageForRenderHarness(const QString& page, const QString& section = QString());
+    void openPageForRenderHarness(const QString& page, const QString& section = QString()) const;
 
     // Headless E2E hook: spin the event loop until the connection seam reaches "ready" (its Health
     // round-trip completes) or timeoutMs elapses; returns true iff ready. Lets the cross-repo
     // system-tests harness hard-assert the GUI -> daemon connectivity instead of racing it.
-    [[nodiscard]] bool awaitConnectionReady(int timeoutMs);
+    [[nodiscard]] bool awaitConnectionReady(int timeoutMs) const;
 
 protected:
     // Close-to-tray: when a tray is installed, intercept the root window's close

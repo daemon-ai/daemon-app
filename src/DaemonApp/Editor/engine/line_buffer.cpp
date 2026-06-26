@@ -1,5 +1,7 @@
 #include "engine/line_buffer.h"
 
+#include <algorithm>
+
 namespace editor {
 
 const QString LineBuffer::s_empty;
@@ -43,10 +45,8 @@ void LineBuffer::setAt(int line, const QString& text) {
 }
 
 void LineBuffer::replace(int line, int removeCount, const QStringList& lines) {
-    if (line < 0)
-        line = 0;
-    if (line > m_count)
-        line = m_count;
+    line = std::max(line, 0);
+    line = std::min(line, m_count);
     removeCount = qBound(0, removeCount, m_count - line);
 
     // Remove first (block by block).

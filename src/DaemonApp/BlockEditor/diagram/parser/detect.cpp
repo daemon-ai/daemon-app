@@ -14,9 +14,9 @@ QString detectFamily(const QString& source) {
             line.startsWith(QStringLiteral("graph"))) {
             return QStringLiteral("flowchart");
         }
-        return QString(); // first meaningful line decides
+        return {}; // first meaningful line decides
     }
-    return QString();
+    return {};
 }
 
 } // namespace be::diagram

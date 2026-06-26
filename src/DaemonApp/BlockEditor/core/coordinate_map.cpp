@@ -89,8 +89,7 @@ LineColumn CoordinateMap::utf16ToLineColumn(qsizetype utf16Offset) const {
     }
 
     utf16Offset = qBound<qsizetype>(0, utf16Offset, m_text.size());
-    const auto it =
-        std::upper_bound(m_lineStartsUtf16.cbegin(), m_lineStartsUtf16.cend(), utf16Offset);
+    const auto it = std::ranges::upper_bound(m_lineStartsUtf16, utf16Offset);
     const qsizetype line =
         std::max<qsizetype>(0, std::distance(m_lineStartsUtf16.cbegin(), it) - 1);
     return {line, utf16Offset - m_lineStartsUtf16[line]};

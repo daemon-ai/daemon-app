@@ -89,7 +89,7 @@ void TreeListView::clickAt(QPoint local) {
         const int depth = m->data(idx, SidebarModel::DepthRole).toInt();
         const bool hasDecoration = !m->data(idx, Tui::LeftDecorationRole).toString().isEmpty();
         const int decorationSpace = m->data(idx, Tui::LeftDecorationSpaceRole).toInt();
-        const int triangleX = 1 + (hasDecoration ? 1 : 0) + decorationSpace + depth * 2;
+        const int triangleX = 1 + (hasDecoration ? 1 : 0) + decorationSpace + (depth * 2);
         if (local.x() <= triangleX + 1) { // +1 tolerance: triangle + trailing space
             setCurrentIndex(idx);
             if (m->data(idx, SidebarModel::ExpandedRole).toBool()) {

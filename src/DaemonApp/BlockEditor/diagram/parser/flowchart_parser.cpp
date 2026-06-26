@@ -50,7 +50,7 @@ QString stripComment(const QString& line) {
 
 // Rewrite the inline-label edge form `A -- text --> B` into `A -->|text| B` so
 // the tokenizer only has to deal with operator + optional |label|.
-QString normalizeInlineLabels(QString stmt) {
+QString normalizeInlineLabels(const QString& stmt) {
     static const QRegularExpression mid(
         QStringLiteral("(--|==|-\\.)\\s+([^|>\\n]+?)\\s+(-->|---|-\\.->|==>|===)"));
     QString out;

@@ -81,7 +81,7 @@ QString headingSlug(const QString& headingText) {
 QString fenceLanguageOf(const QString& content) {
     const QString line = firstLineOf(content).trimmed();
     if (!line.startsWith(QStringLiteral("```")) && !line.startsWith(QStringLiteral("~~~"))) {
-        return QString();
+        return {};
     }
     const QString rest = line.mid(3).trimmed();
     const qsizetype sp = rest.indexOf(QLatin1Char(' '));
@@ -861,7 +861,7 @@ bool DocumentStore::adjustListIndent(BlockId id, int deltaUnits, qsizetype* curs
     }
 
     const qsizetype currentSpaces = block->indent;
-    qsizetype newSpaces = currentSpaces + deltaUnits * kIndentUnit;
+    qsizetype newSpaces = currentSpaces + (deltaUnits * kIndentUnit);
 
     if (deltaUnits > 0) {
         // CommonMark: an item may be at most one level deeper than the item above

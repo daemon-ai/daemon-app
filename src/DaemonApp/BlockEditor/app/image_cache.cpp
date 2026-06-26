@@ -21,7 +21,7 @@ constexpr int kMaxDecodeDim = 2048;
 
 QSize cappedTarget(const QSize& source, const QSize& requested) {
     if (source.isEmpty()) {
-        return QSize();
+        return {};
     }
 
     int cap = kMaxDecodeDim;
@@ -38,7 +38,7 @@ QSize cappedTarget(const QSize& source, const QSize& requested) {
     }
 
     const double scale = double(cap) / double(longest);
-    return QSize(qMax(1, int(source.width() * scale)), qMax(1, int(source.height() * scale)));
+    return {qMax(1, int(source.width() * scale)), qMax(1, int(source.height() * scale))};
 }
 
 } // namespace
@@ -53,7 +53,7 @@ ImageCache::ImageCache(QObject* parent) : QObject(parent) {
 }
 
 ImageCache* ImageCache::instance() {
-    static ImageCache* cache = new ImageCache();
+    static auto* cache = new ImageCache();
     return cache;
 }
 
@@ -142,7 +142,7 @@ QImage ImageCache::decodeCapped(const QByteArray& data, const QSize& requested) 
     QBuffer buffer;
     buffer.setData(data);
     if (!buffer.open(QIODevice::ReadOnly)) {
-        return QImage();
+        return {};
     }
 
     QImageReader reader(&buffer);
@@ -165,7 +165,7 @@ QByteArray ImageCache::readLocalBytes(const QUrl& url) {
         const QString text = url.toString();
         const qsizetype comma = text.indexOf(QLatin1Char(','));
         if (comma < 0) {
-            return QByteArray();
+            return {};
         }
         const QString meta = text.left(comma);
         const QByteArray payload = text.mid(comma + 1).toUtf8();
@@ -183,12 +183,12 @@ QByteArray ImageCache::readLocalBytes(const QUrl& url) {
     } else if (scheme.isEmpty()) {
         path = url.toString();
     } else {
-        return QByteArray();
+        return {};
     }
 
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        return QByteArray();
+        return {};
     }
     return file.readAll();
 }

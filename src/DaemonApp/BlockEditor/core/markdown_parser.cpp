@@ -328,7 +328,7 @@ bool parseImageBlock(const QString& content, ImageBlockInfo* out) {
 
 QString imageAttribute(const QString& attrs, const QString& key) {
     if (attrs.isEmpty()) {
-        return QString();
+        return {};
     }
     const QRegularExpression re(QStringLiteral("(?:^|[\\s{])") + QRegularExpression::escape(key) +
                                 QStringLiteral("\\s*=\\s*\"?([^\\s\"}]+)\"?"));

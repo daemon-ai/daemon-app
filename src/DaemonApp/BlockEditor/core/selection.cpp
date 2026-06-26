@@ -1,5 +1,7 @@
 #include "core/selection.h"
 
+#include <algorithm>
+
 namespace be {
 
 bool Selection::isActive() const {
@@ -104,9 +106,7 @@ QPair<qsizetype, qsizetype> SelectionControllerCore::wordRangeAt(const QString& 
     QTextBoundaryFinder finder(QTextBoundaryFinder::Word, text);
     finder.setPosition(qBound<qsizetype>(0, offset, text.size()));
     qsizetype start = finder.toPreviousBoundary();
-    if (start < 0) {
-        start = 0;
-    }
+    start = std::max<qsizetype>(start, 0);
     qsizetype end = finder.toNextBoundary();
     if (end < 0) {
         end = text.size();

@@ -175,7 +175,7 @@ bool FileFinderModel::fuzzyScore(const QString& text, const QString& pattern, in
         const QChar sc = text.at(si);
         const QChar pc = pattern.at(pi);
         if (sc.toLower() == pc.toLower()) {
-            s += 1 + run * 8;
+            s += 1 + (run * 8);
             if (sc == pc)
                 s += 1;
             ++run;
@@ -232,9 +232,9 @@ void FileFinderModel::rerank() {
             if (fuzzyScore(m_index[i].path, m_query, &sc))
                 scored.push_back(qMakePair(sc, i));
         }
-        std::stable_sort(
-            scored.begin(), scored.end(),
-            [](const QPair<int, int>& a, const QPair<int, int>& b) { return a.first > b.first; });
+        std::ranges::stable_sort(scored, [](const QPair<int, int>& a, const QPair<int, int>& b) {
+            return a.first > b.first;
+        });
         for (int i = 0; i < scored.size() && i < kMaxResults; ++i)
             m_results.push_back(scored[i].second);
     }

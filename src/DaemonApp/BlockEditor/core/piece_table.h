@@ -23,7 +23,7 @@ public:
     bool isEmpty() const;
     QByteArray toUtf8() const;
     QByteArray slice(qsizetype offset, qsizetype length) const;
-    void replace(qsizetype offset, qsizetype length, QByteArray inserted);
+    void replace(qsizetype offset, qsizetype length, const QByteArray& inserted);
     const QVector<Piece>& pieces() const;
 
 private:

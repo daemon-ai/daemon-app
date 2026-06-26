@@ -168,7 +168,7 @@ Chord parseSymbolicSeq(const QString& s) {
             return {}; // unknown modifier token
         }
     }
-    const QString last = parts.last();
+    const QString& last = parts.last();
     if (last.size() == 1) {
         return chordForChar(last.at(0), ctrl, meta);
     }

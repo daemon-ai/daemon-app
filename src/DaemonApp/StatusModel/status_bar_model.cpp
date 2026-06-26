@@ -52,7 +52,7 @@ QString StatusBarModel::agentsDetail() const {
     if (m_agentsRunning > 0) {
         return tr("%n running", nullptr, m_agentsRunning);
     }
-    return QString();
+    return {};
 }
 
 int StatusBarModel::contextPercent() const {
@@ -86,7 +86,7 @@ QString StatusBarModel::costLabel() const {
 
 QString StatusBarModel::rateLabel() const {
     if (m_rateLimit <= 0) {
-        return QString();
+        return {};
     }
     return QString::number(m_rateRemaining) + QStringLiteral("/") + QString::number(m_rateLimit);
 }

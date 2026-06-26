@@ -1,5 +1,7 @@
 #include "tab_model.h"
 
+#include <algorithm>
+
 TabModel::TabModel(QObject* parent) : QAbstractListModel(parent) {}
 
 void TabModel::setCurrentIndex(int index) {
@@ -340,12 +342,8 @@ void TabModel::closeTab(int index) {
     if (index < m_currentIndex) {
         next = m_currentIndex - 1;
     }
-    if (next > last) {
-        next = last;
-    }
-    if (next < 0) {
-        next = 0;
-    }
+    next = std::min(next, last);
+    next = std::max(next, 0);
     // Force a refresh: even when the numeric index is unchanged the tab under it
     // is now a different one, so re-emit and repaint the CurrentRole.
     m_currentIndex = -1;

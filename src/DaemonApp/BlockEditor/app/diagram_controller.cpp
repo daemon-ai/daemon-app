@@ -15,7 +15,8 @@ public:
     using SnapshotPtr = be::diagram::RenderSnapshotPtr;
 
 public slots:
-    void build(const QString& source, be::diagram::Style style, qreal maxWidth, quint64 requestId) {
+    void build(const QString& source, const be::diagram::Style& style, qreal maxWidth,
+               quint64 requestId) {
         be::diagram::DiagramEngine engine;
         SnapshotPtr snap = engine.buildSnapshot(source, style, maxWidth, requestId);
         emit produced(snap, requestId);

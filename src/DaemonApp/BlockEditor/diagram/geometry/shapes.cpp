@@ -35,7 +35,7 @@ QPointF polyBoundary(const QList<QPointF>& poly, const QRectF& rect, const QPoin
         const QPointF b = poly[(i + 1) % poly.size()];
         const QPointF e = b - a;
         // Solve c + t*d = a + s*e, t>=0, s in [0,1].
-        const qreal denom = d.x() * e.y() - d.y() * e.x();
+        const qreal denom = (d.x() * e.y()) - (d.y() * e.x());
         if (qFuzzyIsNull(denom)) {
             continue;
         }
@@ -82,7 +82,7 @@ QPainterPath shapeOutline(NodeShape shape, const QRectF& rect) {
         path.moveTo(rect.left(), top + ry);
         path.arcTo(QRectF(rect.left(), top, w, 2 * ry), 180, -180);
         path.lineTo(rect.right(), bottom - ry);
-        path.arcTo(QRectF(rect.left(), bottom - 2 * ry, w, 2 * ry), 0, -180);
+        path.arcTo(QRectF(rect.left(), bottom - (2 * ry), w, 2 * ry), 0, -180);
         path.closeSubpath();
         break;
     }
@@ -126,7 +126,7 @@ QPointF shapeBoundaryPoint(NodeShape shape, const QRectF& rect, const QPointF& t
         if (a <= 0.0 || b <= 0.0) {
             return c;
         }
-        const qreal k = 1.0 / std::sqrt((d.x() * d.x()) / (a * a) + (d.y() * d.y()) / (b * b));
+        const qreal k = 1.0 / std::sqrt(((d.x() * d.x()) / (a * a)) + ((d.y() * d.y()) / (b * b)));
         return c + d * k;
     }
     case NodeShape::Diamond: {

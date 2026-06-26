@@ -584,7 +584,7 @@ void emitToolCall(QVector<RenderLine>& dst, QVector<Control>& controls, const be
 
             const QStringList sel = draft.selected.value(qid);
             for (int ci = 0; ci < choices.size(); ++ci) {
-                const QString label = choices.at(ci);
+                const QString& label = choices.at(ci);
                 const bool on = sel.contains(label);
                 const QString box = multi ? (on ? QStringLiteral("[x] ") : QStringLiteral("[ ] "))
                                           : (on ? QStringLiteral("(o) ") : QStringLiteral("( ) "));

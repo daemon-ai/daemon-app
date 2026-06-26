@@ -48,7 +48,7 @@ qsizetype BlockHeightIndex::rowAtContentY(qreal y) const {
     qsizetype low = 0;
     qsizetype high = m_heights.size() - 1;
     while (low < high) {
-        const qsizetype mid = low + (high - low) / 2;
+        const qsizetype mid = low + ((high - low) / 2);
         if (prefixInclusive(mid) <= y) {
             low = mid + 1;
         } else {

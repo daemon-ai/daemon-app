@@ -3,6 +3,7 @@
 #include "fs_explorer_model.h"
 #include "tui_palette.h"
 
+#include <algorithm>
 #include <QPoint>
 #include <QRect>
 #include <Tui/ZColor.h>
@@ -33,8 +34,7 @@ void FileTreeView::rebuild() {
     const int rows = m_model ? m_model->rowCount() : 0;
     if (m_current >= rows)
         m_current = rows - 1;
-    if (m_current < 0)
-        m_current = 0;
+    m_current = std::max(m_current, 0);
     clampScroll();
     update();
 }

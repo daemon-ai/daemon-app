@@ -1,5 +1,6 @@
 #include "engine/text_document.h"
 
+#include <algorithm>
 #include <QDateTime>
 #include <utility>
 
@@ -56,15 +57,12 @@ QString TextDocument::text() const {
 Pos TextDocument::clamp(const Pos& p) const {
     Pos c = p;
     const int n = m_buffer.count();
-    if (c.line < 0)
-        c.line = 0;
+    c.line = std::max(c.line, 0);
     if (c.line >= n)
         c.line = n - 1;
     const int len = static_cast<int>(m_buffer.at(c.line).size());
-    if (c.col < 0)
-        c.col = 0;
-    if (c.col > len)
-        c.col = len;
+    c.col = std::max(c.col, 0);
+    c.col = std::min(c.col, len);
     return c;
 }
 

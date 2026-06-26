@@ -33,6 +33,7 @@
 #include "turn_controller.h"
 #include "uimodels/variant_list_model.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <QAbstractItemModel>
 #include <QCoreApplication>
@@ -120,7 +121,7 @@ QString pageMarkdown(int kind) {
             "- **/retry**, **/edit**, **/undo** rewind the last message from the "
             "composer\n");
     }
-    return QString();
+    return {};
 }
 
 } // namespace
@@ -1712,7 +1713,7 @@ void RootWidget::focusTranscript() const {
     }
 }
 
-bool RootWidget::awaitConnectionReady(int timeoutMs) {
+bool RootWidget::awaitConnectionReady(int timeoutMs) const {
     auto* conn = m_services.connection;
     if (conn == nullptr) {
         return false;
@@ -2028,9 +2029,7 @@ void RootWidget::updateCompletion() {
     const QRect composerGeo = m_composer->geometry();
     const int height = qBound(1, m_completionPopup->desiredHeight(), 8);
     int y = composerGeo.y() - height;
-    if (y < 0) {
-        y = 0;
-    }
+    y = std::max(y, 0);
     m_completionPopup->setGeometry(QRect(composerGeo.x(), y, composerGeo.width(), height));
     m_completionPopup->setVisible(true);
     m_completionPopup->raise();

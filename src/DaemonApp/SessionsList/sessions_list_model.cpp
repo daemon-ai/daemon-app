@@ -61,7 +61,7 @@ void SessionsListModel::setScope(int nodeType, int tagId, const QString& unitId)
     // For the DaemonNet lens scopes (ByTransport/ByPeer) the string slot carries the
     // lens key (transport-instance / peer id) rather than a unit id; everything else
     // treats it as the unit id.
-    const NodeType type = static_cast<NodeType>(nodeType);
+    const auto type = static_cast<NodeType>(nodeType);
     const bool isLens = (type == NodeType::ByTransport || type == NodeType::ByPeer);
     m_scope = {type, tagId, isLens ? UnitId() : UnitId(unitId), isLens ? unitId : QString()};
     // A new scope is a fresh list of sessions; drop the old selection so a stale

@@ -39,9 +39,12 @@ public:
     TabSessionManager(QObject* store, TabModel* tabs);
     ~TabSessionManager();
 
-    [[nodiscard]] TabSession* ensureSession(int tabId, std::function<void(TabSession*)> wire);
-    void rebindSession(int tabId, const QString& sessionId, std::function<void(TabSession*)> wire);
-    bool destroySession(int tabId, TabSession*& active, std::function<void()> detachActiveDocument);
+    [[nodiscard]] TabSession* ensureSession(int tabId,
+                                            const std::function<void(TabSession*)>& wire);
+    void rebindSession(int tabId, const QString& sessionId,
+                       const std::function<void(TabSession*)>& wire);
+    bool destroySession(int tabId, TabSession*& active,
+                        const std::function<void()>& detachActiveDocument);
 
 private:
     QObject* m_store = nullptr;
