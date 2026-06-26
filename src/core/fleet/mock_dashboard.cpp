@@ -8,8 +8,7 @@
 namespace fleet {
 namespace {
 
-int countWhere(QObject* model, const QString& key, const QString& value)
-{
+int countWhere(QObject* model, const QString& key, const QString& value) {
     auto* vlm = qobject_cast<uimodels::VariantListModel*>(model);
     if (vlm == nullptr) {
         return 0;
@@ -23,8 +22,7 @@ int countWhere(QObject* model, const QString& key, const QString& value)
     return n;
 }
 
-QVariantMap mkActivity(const QString& time, const QString& text, const QString& kind)
-{
+QVariantMap mkActivity(const QString& time, const QString& text, const QString& kind) {
     QVariantMap m;
     m[QStringLiteral("id")] = time + text; // stable enough for a static feed
     m[QStringLiteral("time")] = time;
@@ -37,12 +35,8 @@ QVariantMap mkActivity(const QString& time, const QString& text, const QString& 
 
 MockDashboard::MockDashboard(ISessionRoster* roster, IFleetTree* fleet, IApprovalsInbox* approvals,
                              QObject* parent)
-    : IDashboard(parent)
-    , m_roster(roster)
-    , m_fleet(fleet)
-    , m_approvals(approvals)
-    , m_activity(new uimodels::VariantListModel(this))
-{
+    : IDashboard(parent), m_roster(roster), m_fleet(fleet), m_approvals(approvals),
+      m_activity(new uimodels::VariantListModel(this)) {
     m_activity->upsert(mkActivity(QStringLiteral("just now"),
                                   QStringLiteral("Coder requested shell approval"),
                                   QStringLiteral("approval")));
@@ -83,8 +77,7 @@ MockDashboard::MockDashboard(ISessionRoster* roster, IFleetTree* fleet, IApprova
     }
 }
 
-void MockDashboard::prependActivity(const QString& text, const QString& kind)
-{
+void MockDashboard::prependActivity(const QString& text, const QString& kind) {
     QList<QVariantMap> rows = m_activity->rows();
     QVariantMap row = mkActivity(QStringLiteral("now"), text, kind);
     // A unique id so successive same-text events stay distinct rows.
@@ -94,24 +87,23 @@ void MockDashboard::prependActivity(const QString& text, const QString& kind)
     emit changed();
 }
 
-int MockDashboard::activeSessions() const
-{
-    return m_roster ? countWhere(m_roster->sessions(), QStringLiteral("state"),
-                                 QStringLiteral("active"))
-                    : 0;
+int MockDashboard::activeSessions() const {
+    return m_roster
+               ? countWhere(m_roster->sessions(), QStringLiteral("state"), QStringLiteral("active"))
+               : 0;
 }
 
-int MockDashboard::runningAgents() const
-{
-    return m_fleet ? countWhere(m_fleet->nodes(), QStringLiteral("status"),
-                                QStringLiteral("running"))
-                   : 0;
+int MockDashboard::runningAgents() const {
+    return m_fleet
+               ? countWhere(m_fleet->nodes(), QStringLiteral("status"), QStringLiteral("running"))
+               : 0;
 }
 
-int MockDashboard::pendingApprovals() const { return m_approvals ? m_approvals->count() : 0; }
+int MockDashboard::pendingApprovals() const {
+    return m_approvals ? m_approvals->count() : 0;
+}
 
-QString MockDashboard::tokensToday() const
-{
+QString MockDashboard::tokensToday() const {
     // Derived from the live roster (sum of per-session token usage) rather than a
     // hardcoded figure, so closing/adding sessions moves the number.
     long long total = 0;
@@ -130,6 +122,8 @@ QString MockDashboard::tokensToday() const
     return QString::number(total);
 }
 
-QObject* MockDashboard::activity() const { return m_activity; }
+QObject* MockDashboard::activity() const {
+    return m_activity;
+}
 
 } // namespace fleet

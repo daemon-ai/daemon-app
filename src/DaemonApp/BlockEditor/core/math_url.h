@@ -23,8 +23,8 @@ struct MathRequest {
 // LaTeX is base64url-encoded so it can carry any character (including '&', '=',
 // '%', '/') without colliding with the field separators or the provider's URL
 // parsing, regardless of how Qt percent-handles the image id.
-inline QString mathImageUrl(const QString &latex, bool displayMode, int fontPx, const QColor &color)
-{
+inline QString mathImageUrl(const QString& latex, bool displayMode, int fontPx,
+                            const QColor& color) {
     const QColor resolved = color.isValid() ? color : QColor(Qt::black);
     const QByteArray latexB64 =
         latex.toUtf8().toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
@@ -38,11 +38,10 @@ inline QString mathImageUrl(const QString &latex, bool displayMode, int fontPx, 
 
 // Parse the <payload> id passed to MathImageProvider::requestImage back into a
 // MathRequest. Returns a request with valid==false when the LaTeX is empty.
-inline MathRequest parseMathImageId(const QString &id)
-{
+inline MathRequest parseMathImageId(const QString& id) {
     MathRequest req;
     const QStringList parts = id.split(QLatin1Char('&'), Qt::SkipEmptyParts);
-    for (const QString &part : parts) {
+    for (const QString& part : parts) {
         const qsizetype eq = part.indexOf(QLatin1Char('='));
         if (eq < 0) {
             continue;
@@ -78,8 +77,7 @@ inline MathRequest parseMathImageId(const QString &id)
 //   * a fenced ```math / ~~~math block (fence lines stripped).
 // Inline `$...$` within prose is intentionally NOT matched here (it stays a
 // paragraph and renders through the inline projector).
-inline QString blockMathSource(const QString &markdown)
-{
+inline QString blockMathSource(const QString& markdown) {
     static const QRegularExpression displayRe(
         QStringLiteral("\\A\\s*\\$\\$([\\s\\S]+?)\\$\\$\\s*\\z"));
     const QRegularExpressionMatch dm = displayRe.match(markdown);

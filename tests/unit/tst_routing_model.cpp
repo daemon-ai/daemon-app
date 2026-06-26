@@ -1,6 +1,5 @@
 #include "daemonnet/mock_daemonnet.h"
 #include "daemonnet/routing_dtos.h"
-
 #include "domain/delivery.h"
 #include "domain/ids.h"
 #include "domain/origin.h"
@@ -24,16 +23,14 @@ using domain::TransportId;
 class TestRoutingModel : public QObject {
     Q_OBJECT
 
-    static Origin grp(const char* t, const char* chat)
-    {
+    static Origin grp(const char* t, const char* chat) {
         Origin o;
         o.transport = TransportId(QString::fromLatin1(t));
         o.scope.kind = OriginScopeKind::Group;
         o.scope.chat = QString::fromLatin1(chat);
         return o;
     }
-    static Origin dm(const char* t, const char* user)
-    {
+    static Origin dm(const char* t, const char* user) {
         Origin o;
         o.transport = TransportId(QString::fromLatin1(t));
         o.scope.kind = OriginScopeKind::Dm;
@@ -43,8 +40,7 @@ class TestRoutingModel : public QObject {
 
 private slots:
     // A seeded pin resolves first: session + agent come from the pin.
-    void pinResolvesFirst()
-    {
+    void pinResolvesFirst() {
         MockDaemonNet net;
         const Resolution r = net.resolve(grp("matrix/@bot:hs.org", "#secops"));
         QCOMPARE(r.decidedBy, DecidedBy::Pin);
@@ -53,8 +49,7 @@ private slots:
     }
 
     // An unpinned chat matching the #secops* rule is decided by the rule's profile.
-    void ruleDecidesUnpinned()
-    {
+    void ruleDecidesUnpinned() {
         MockDaemonNet net;
         const Resolution r = net.resolve(grp("matrix/@bot:hs.org", "#secops-2"));
         QCOMPARE(r.decidedBy, DecidedBy::Rule);
@@ -62,8 +57,7 @@ private slots:
     }
 
     // A chat on a bound account that matches no profile-bearing rule falls to the account baseline.
-    void accountBoundFallback()
-    {
+    void accountBoundFallback() {
         MockDaemonNet net;
         const Resolution r = net.resolve(grp("matrix/@bot:hs.org", "#general"));
         QCOMPARE(r.decidedBy, DecidedBy::AccountBound);
@@ -71,8 +65,7 @@ private slots:
     }
 
     // An origin on an unbound transport falls to the node default.
-    void nodeDefaultFallback()
-    {
+    void nodeDefaultFallback() {
         MockDaemonNet net;
         const Resolution r = net.resolve(dm("slack/@bot", "@x:hs.org"));
         QCOMPARE(r.decidedBy, DecidedBy::Default);
@@ -80,8 +73,7 @@ private slots:
     }
 
     // bindChat adds a pin (resolve-first), unbindChat removes it.
-    void bindAndUnbindChat()
-    {
+    void bindAndUnbindChat() {
         MockDaemonNet net;
         const int before = net.routes().size();
         const Origin o = grp("matrix/@ops:hs.org", "#ops");
@@ -99,8 +91,7 @@ private slots:
     }
 
     // Handover re-points the Primary; the prior Primary demotes to Spectator (exactly one Primary).
-    void handoverRepointsPrimary()
-    {
+    void handoverRepointsPrimary() {
         MockDaemonNet net;
         const SessionId design(QStringLiteral("s-design"));
         DeliveryTarget gui;
@@ -124,22 +115,21 @@ private slots:
     }
 
     // bindAccount changes the account->agent baseline (and thus AccountBound resolution).
-    void bindAccountChangesBaseline()
-    {
+    void bindAccountChangesBaseline() {
         MockDaemonNet net;
-        net.bindAccount(TransportId(QStringLiteral("slack/@bot")), ProfileRef(QStringLiteral("prof-2")));
+        net.bindAccount(TransportId(QStringLiteral("slack/@bot")),
+                        ProfileRef(QStringLiteral("prof-2")));
         const Resolution r = net.resolve(dm("slack/@bot", "@x:hs.org"));
         QCOMPARE(r.decidedBy, DecidedBy::AccountBound);
         QCOMPARE(r.profile.toString(), QStringLiteral("prof-2"));
     }
 
     // The projections expose the seeded state.
-    void projectionsExposeSeed()
-    {
+    void projectionsExposeSeed() {
         MockDaemonNet net;
-        QVERIFY(net.routes().size() >= 2);          // the seeded pins
-        QVERIFY(net.bindingRules().size() >= 1);    // the config rules
-        QVERIFY(net.accountsAgents().size() >= 1);  // instance_profiles
+        QVERIFY(net.routes().size() >= 2);         // the seeded pins
+        QVERIFY(net.bindingRules().size() >= 1);   // the config rules
+        QVERIFY(net.accountsAgents().size() >= 1); // instance_profiles
         // s-design has a Primary + a Spectator in the seed.
         const auto d = net.deliveryTargets(SessionId(QStringLiteral("s-design")));
         QVERIFY(d.size() >= 2);

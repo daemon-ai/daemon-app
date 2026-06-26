@@ -1,9 +1,8 @@
+#include "persistence/in_memory_session_store.h"
 #include "session_controller.h"
 #include "session_orchestrator.h"
 #include "todo_list_model.h"
 #include "turn_controller.h"
-
-#include "persistence/in_memory_session_store.h"
 
 #include <QSignalSpy>
 #include <QtTest>
@@ -16,8 +15,7 @@ class TestSessionOrchestrator : public QObject {
     Q_OBJECT
 
 private slots:
-    void submitStartsTurnAndPopulatesTodos()
-    {
+    void submitStartsTurnAndPopulatesTodos() {
         SessionOrchestrator orch;
         QVERIFY(!orch.busy());
         QCOMPARE(orch.todos()->count(), 0);
@@ -33,8 +31,7 @@ private slots:
         QVERIFY(!orch.turn()->active());
     }
 
-    void submitAppendsUserTextToSession()
-    {
+    void submitAppendsUserTextToSession() {
         persistence::InMemorySessionStore store;
         SessionController controller;
         controller.setStore(&store);
@@ -52,8 +49,7 @@ private slots:
         orch.cancel();
     }
 
-    void invokeCommandNewCreatesSession()
-    {
+    void invokeCommandNewCreatesSession() {
         persistence::InMemorySessionStore store;
         SessionController controller;
         controller.setStore(&store);
@@ -69,8 +65,7 @@ private slots:
         QCOMPARE(requestedSpy.count(), 0); // "new" is handled, not surfaced
     }
 
-    void invokeCommandOtherEmitsRequested()
-    {
+    void invokeCommandOtherEmitsRequested() {
         SessionOrchestrator orch;
         QSignalSpy requestedSpy(&orch, &SessionOrchestrator::commandRequested);
 
@@ -80,8 +75,7 @@ private slots:
         QCOMPARE(requestedSpy.last().at(0).toString(), QStringLiteral("theme"));
     }
 
-    void todosClearAfterTurnSettles()
-    {
+    void todosClearAfterTurnSettles() {
         SessionOrchestrator orch;
         QSignalSpy finished(orch.turn(), &TurnController::turnFinished);
 

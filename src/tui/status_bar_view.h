@@ -2,10 +2,9 @@
 
 #include "transcript_render.h" // Span / RenderLine
 
-#include <Tui/ZWidget.h>
-
 #include <QTimer>
 #include <QVector>
+#include <Tui/ZWidget.h>
 
 class StatusBarModel;
 

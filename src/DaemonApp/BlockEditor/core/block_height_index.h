@@ -4,8 +4,7 @@
 
 namespace be {
 
-class BlockHeightIndex
-{
+class BlockHeightIndex {
 public:
     void reset(qsizetype count, qreal defaultHeight = 28.0);
     qsizetype size() const;

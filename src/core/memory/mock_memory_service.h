@@ -57,9 +57,9 @@ private:
     void emitTick();
 
     QList<MemoryEntry> m_memories;
-    QList<Mention> m_mentions; // memory -> entity
+    QList<Mention> m_mentions;             // memory -> entity
     QList<QPair<QString, QString>> m_refs; // memory -> memory ("references")
-    QList<Fact> m_facts; // SPO knowledge
+    QList<Fact> m_facts;                   // SPO knowledge
     QStringList m_sessions;
     QTimer m_watch;
     quint64 m_seq = 0;

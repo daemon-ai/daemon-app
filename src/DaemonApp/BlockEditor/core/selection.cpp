@@ -2,56 +2,49 @@
 
 namespace be {
 
-bool Selection::isActive() const
-{
-    return anchor.blockId != 0 && head.blockId != 0
-        && (anchor.blockId != head.blockId || anchor.rawUtf16Offset != head.rawUtf16Offset);
+bool Selection::isActive() const {
+    return anchor.blockId != 0 && head.blockId != 0 &&
+           (anchor.blockId != head.blockId || anchor.rawUtf16Offset != head.rawUtf16Offset);
 }
 
-bool Selection::isBackward() const
-{
+bool Selection::isBackward() const {
     if (anchor.blockIndex == head.blockIndex) {
         return head.rawUtf16Offset < anchor.rawUtf16Offset;
     }
     return head.blockIndex < anchor.blockIndex;
 }
 
-DocPos Selection::start() const
-{
+DocPos Selection::start() const {
     return isBackward() ? head : anchor;
 }
 
-DocPos Selection::end() const
-{
+DocPos Selection::end() const {
     return isBackward() ? anchor : head;
 }
 
-void SelectionControllerCore::clear()
-{
+void SelectionControllerCore::clear() {
     m_selection = {};
     ++m_selection.revision;
 }
 
-void SelectionControllerCore::setAnchor(const DocPos &pos)
-{
+void SelectionControllerCore::setAnchor(const DocPos& pos) {
     m_selection.anchor = pos;
     m_selection.head = pos;
     ++m_selection.revision;
 }
 
-void SelectionControllerCore::setHead(const DocPos &pos)
-{
+void SelectionControllerCore::setHead(const DocPos& pos) {
     m_selection.head = pos;
     ++m_selection.revision;
 }
 
-const Selection &SelectionControllerCore::selection() const
-{
+const Selection& SelectionControllerCore::selection() const {
     return m_selection;
 }
 
-SelectionSpan SelectionControllerCore::spanForBlock(BlockId id, qsizetype row, qsizetype visualLength, qsizetype rawLength) const
-{
+SelectionSpan SelectionControllerCore::spanForBlock(BlockId id, qsizetype row,
+                                                    qsizetype visualLength,
+                                                    qsizetype rawLength) const {
     if (!m_selection.isActive()) {
         return {};
     }
@@ -66,10 +59,12 @@ SelectionSpan SelectionControllerCore::spanForBlock(BlockId id, qsizetype row, q
         return {SelectionSpan::Kind::FullBlock, 0, visualLength, 0, rawLength};
     }
     if (id == start.blockId && id == end.blockId) {
-        return {SelectionSpan::Kind::Partial, start.visualOffset, end.visualOffset, start.rawUtf16Offset, end.rawUtf16Offset};
+        return {SelectionSpan::Kind::Partial, start.visualOffset, end.visualOffset,
+                start.rawUtf16Offset, end.rawUtf16Offset};
     }
     if (id == start.blockId) {
-        return {SelectionSpan::Kind::Partial, start.visualOffset, visualLength, start.rawUtf16Offset, rawLength};
+        return {SelectionSpan::Kind::Partial, start.visualOffset, visualLength,
+                start.rawUtf16Offset, rawLength};
     }
     if (id == end.blockId) {
         return {SelectionSpan::Kind::Partial, 0, end.visualOffset, 0, end.rawUtf16Offset};
@@ -77,8 +72,7 @@ SelectionSpan SelectionControllerCore::spanForBlock(BlockId id, qsizetype row, q
     return {SelectionSpan::Kind::FullBlock, 0, visualLength, 0, rawLength};
 }
 
-QString SelectionControllerCore::copyMarkdown(const QVector<BlockRecord> &blocks) const
-{
+QString SelectionControllerCore::copyMarkdown(const QVector<BlockRecord>& blocks) const {
     if (!m_selection.isActive()) {
         return {};
     }
@@ -105,8 +99,8 @@ QString SelectionControllerCore::copyMarkdown(const QVector<BlockRecord> &blocks
     return out;
 }
 
-QPair<qsizetype, qsizetype> SelectionControllerCore::wordRangeAt(const QString &text, qsizetype offset)
-{
+QPair<qsizetype, qsizetype> SelectionControllerCore::wordRangeAt(const QString& text,
+                                                                 qsizetype offset) {
     QTextBoundaryFinder finder(QTextBoundaryFinder::Word, text);
     finder.setPosition(qBound<qsizetype>(0, offset, text.size()));
     qsizetype start = finder.toPreviousBoundary();
@@ -120,8 +114,8 @@ QPair<qsizetype, qsizetype> SelectionControllerCore::wordRangeAt(const QString &
     return {start, end};
 }
 
-QPair<qsizetype, qsizetype> SelectionControllerCore::lineRangeAt(const QString &text, qsizetype offset)
-{
+QPair<qsizetype, qsizetype> SelectionControllerCore::lineRangeAt(const QString& text,
+                                                                 qsizetype offset) {
     offset = qBound<qsizetype>(0, offset, text.size());
     qsizetype start = text.lastIndexOf(QLatin1Char('\n'), offset - 1);
     qsizetype end = text.indexOf(QLatin1Char('\n'), offset);

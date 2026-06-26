@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core/document_store.h"
-
 #include "domain/session_log.h"
 
 #include <QList>
@@ -13,7 +12,7 @@ namespace be {
 // lets the transcript be driven by a wire-shaped `domain::SessionLogEntry` sequence
 // instead of a raw markdown blob:
 //
-//   markdown  --decomposeMarkdown-->  QList<SessionLogEntry>  --applyTranscriptLog-->  DocumentStore
+//   markdown  --decomposeMarkdown-->  QList<SessionLogEntry>  --applyTranscriptLog--> DocumentStore
 //
 // The mock decomposes a session's stored markdown into entries; a future daemon adapter
 // fills the same entry shape from the decoded wire `SessionPayload`, and rendering goes

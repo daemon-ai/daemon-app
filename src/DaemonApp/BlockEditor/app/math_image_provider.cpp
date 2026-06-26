@@ -2,17 +2,15 @@
 
 #include "core/math_url.h"
 
+#include <exception>
+#include <latex.h>
+#include <platform/qt/graphic_qt.h>
 #include <QGuiApplication>
 #include <QHash>
 #include <QMutex>
 #include <QPainter>
 #include <QScreen>
 #include <QtMath>
-
-#include <exception>
-
-#include <latex.h>
-#include <platform/qt/graphic_qt.h>
 #include <render.h>
 #include <utils/utf.h>
 
@@ -23,8 +21,7 @@ namespace {
 // MicroTeX's parser uses non-reentrant global macro/symbol state, so every parse
 // (rasterizing on the pixmap thread, measuring on the GUI thread) serializes on
 // this one lock.
-QMutex &microtexMutex()
-{
+QMutex& microtexMutex() {
     static QMutex mutex;
     return mutex;
 }
@@ -33,10 +30,9 @@ QMutex &microtexMutex()
 // physical pixels. The old qCeil() rounded 1.5x up to 2x, then the compositor
 // scaled back down to 1.5x and softened the glyphs. Clamped so an exotic DPR
 // can't blow up the cached pixel budget.
-qreal renderScale()
-{
+qreal renderScale() {
     qreal dpr = 1.0;
-    if (auto *screen = QGuiApplication::primaryScreen()) {
+    if (auto* screen = QGuiApplication::primaryScreen()) {
         dpr = screen->devicePixelRatio();
     }
     return qBound(1.0, dpr > 0.0 ? dpr : 1.0, 3.0);
@@ -44,21 +40,18 @@ qreal renderScale()
 
 } // namespace
 
-MathImageProvider::MathImageProvider()
-    : QQuickImageProvider(QQuickImageProvider::Image)
-{
+MathImageProvider::MathImageProvider() : QQuickImageProvider(QQuickImageProvider::Image) {
     // Bound the memoized rasters; theme/size changes rotate ids, so stale
     // entries age out naturally under the LRU policy.
     m_cache.setMaxCost(256);
 }
 
-QImage MathImageProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
-{
+QImage MathImageProvider::requestImage(const QString& id, QSize* size, const QSize& requestedSize) {
     Q_UNUSED(requestedSize);
 
     QMutexLocker locker(&microtexMutex());
 
-    if (const QImage *cached = m_cache.object(id)) {
+    if (const QImage* cached = m_cache.object(id)) {
         if (size) {
             *size = cached->size() / cached->devicePixelRatio();
         }
@@ -84,8 +77,8 @@ QImage MathImageProvider::requestImage(const QString &id, QSize *size, const QSi
     return image;
 }
 
-QImage MathImageProvider::renderLatex(const QString &latex, bool displayMode, int fontPx, quint32 colorArgb)
-{
+QImage MathImageProvider::renderLatex(const QString& latex, bool displayMode, int fontPx,
+                                      quint32 colorArgb) {
     Q_UNUSED(displayMode);
 
     try {
@@ -95,7 +88,7 @@ QImage MathImageProvider::renderLatex(const QString &latex, bool displayMode, in
         // width is a MAX width (MicroTeX renders to the formula's natural width
         // when narrower), so a large value disables wrapping.
         const float textSize = static_cast<float>(fontPx) / kMathBaseFontPt;
-        tex::TeXRender *render =
+        tex::TeXRender* render =
             tex::LaTeX::parse(wide, 100000, textSize, 7.f, static_cast<tex::color>(colorArgb));
         if (render == nullptr) {
             return {};
@@ -109,7 +102,8 @@ QImage MathImageProvider::renderLatex(const QString &latex, bool displayMode, in
         // sub-pixel off a thin glyph like a superscript, clipping it at small
         // font sizes (the crop vanishes as the font grows). Ceiling guarantees
         // the box fully contains the formula's ink.
-        QImage image(QSize(qCeil(w * scale), qCeil(h * scale)), QImage::Format_ARGB32_Premultiplied);
+        QImage image(QSize(qCeil(w * scale), qCeil(h * scale)),
+                     QImage::Format_ARGB32_Premultiplied);
         // MicroTeX maps 1 size-unit to PIXELS_PER_POINT pixels; rendering on a
         // 72-DPI surface makes a point equal a pixel, so glyph rasterization and
         // the layout metrics agree. With the base font pinned, the only painter
@@ -132,25 +126,22 @@ QImage MathImageProvider::renderLatex(const QString &latex, bool displayMode, in
 
         delete render;
         return image;
-    } catch (const std::exception &) {
+    } catch (const std::exception&) {
         return {};
     }
 }
 
-QImage MathImageProvider::errorImage() const
-{
+QImage MathImageProvider::errorImage() const {
     return {};
 }
 
-QSizeF measureMathLogicalSize(const QString &latex, bool display, int fontPx)
-{
+QSizeF measureMathLogicalSize(const QString& latex, bool display, int fontPx) {
     Q_UNUSED(display);
 
     // Projection re-runs on every edit, so memoize the (cheap but non-trivial)
     // parse. display is part of the key for symmetry with the image id even
     // though the size is currently display-independent.
-    const QString key =
-        QStringLiteral("%1|%2|%3").arg(latex).arg(display ? 1 : 0).arg(fontPx);
+    const QString key = QStringLiteral("%1|%2|%3").arg(latex).arg(display ? 1 : 0).arg(fontPx);
 
     QMutexLocker locker(&microtexMutex());
 
@@ -165,12 +156,12 @@ QSizeF measureMathLogicalSize(const QString &latex, bool display, int fontPx)
         // Same parse parameters as renderLatex() (color does not affect layout),
         // so the logical size matches the rasterized image exactly.
         const float textSize = static_cast<float>(fontPx) / kMathBaseFontPt;
-        tex::TeXRender *render = tex::LaTeX::parse(wide, 100000, textSize, 7.f, 0x00000000);
+        tex::TeXRender* render = tex::LaTeX::parse(wide, 100000, textSize, 7.f, 0x00000000);
         if (render != nullptr) {
             result = QSizeF(qMax(1, render->getWidth()), qMax(1, render->getHeight()));
             delete render;
         }
-    } catch (const std::exception &) {
+    } catch (const std::exception&) {
         result = QSizeF();
     }
 

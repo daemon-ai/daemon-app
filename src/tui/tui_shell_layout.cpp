@@ -4,7 +4,9 @@
 #include "code_editor_view.h"
 #include "completion_view.h"
 #include "composer_chrome.h"
+#include "core/document_store.h"
 #include "file_tree_view.h"
+#include "fs_explorer_model.h"
 #include "participants_view.h"
 #include "queue_strip_view.h"
 #include "search_input_box.h"
@@ -14,9 +16,6 @@
 #include "tab_strip_view.h"
 #include "transcript_view.h"
 #include "tree_list_view.h"
-
-#include "core/document_store.h"
-#include "fs_explorer_model.h"
 
 #include <Tui/ZCommon.h>
 #include <Tui/ZHBoxLayout.h>
@@ -31,8 +30,7 @@ TuiShellWidgets TuiShellLayout::build(Tui::ZRoot* root, Tui::ZTerminal* terminal
                                       const QRect& geometry, TabModel* tabModel,
                                       files::FsExplorerModel* fileTree,
                                       participants::ParticipantsModel* participants,
-                                      be::DocumentStore* pageDoc)
-{
+                                      be::DocumentStore* pageDoc) {
     TuiShellWidgets w;
 
     w.window = new Tui::ZWindow(QStringLiteral("Daemon"), root);

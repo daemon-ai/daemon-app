@@ -1,26 +1,22 @@
 #include "file_tree_view.h"
 
+#include "fs_explorer_model.h"
 #include "tui_palette.h"
 
-#include "fs_explorer_model.h"
-
+#include <QPoint>
+#include <QRect>
 #include <Tui/ZColor.h>
 #include <Tui/ZEvent.h>
 #include <Tui/ZPainter.h>
 
-#include <QPoint>
-#include <QRect>
-
 using files::FsExplorerModel;
 
-FileTreeView::FileTreeView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
-{
+FileTreeView::FileTreeView(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
     setFocusPolicy(Tui::StrongFocus);
     setSizePolicyV(Tui::SizePolicy::Expanding);
 }
 
-void FileTreeView::setModel(FsExplorerModel* model)
-{
+void FileTreeView::setModel(FsExplorerModel* model) {
     m_model = model;
     if (m_model != nullptr) {
         const auto rebuildSlot = [this] { rebuild(); };
@@ -33,8 +29,7 @@ void FileTreeView::setModel(FsExplorerModel* model)
     rebuild();
 }
 
-void FileTreeView::rebuild()
-{
+void FileTreeView::rebuild() {
     const int rows = m_model ? m_model->rowCount() : 0;
     if (m_current >= rows)
         m_current = rows - 1;
@@ -44,20 +39,17 @@ void FileTreeView::rebuild()
     update();
 }
 
-int FileTreeView::visibleRows() const
-{
+int FileTreeView::visibleRows() const {
     return qMax(0, geometry().height());
 }
 
-void FileTreeView::clampScroll()
-{
+void FileTreeView::clampScroll() {
     const int rows = m_model ? m_model->rowCount() : 0;
     const int maxTop = qMax(0, rows - visibleRows());
     m_scrollTop = qBound(0, m_scrollTop, maxTop);
 }
 
-void FileTreeView::ensureVisible(int row)
-{
+void FileTreeView::ensureVisible(int row) {
     if (row < 0)
         return;
     const int h = visibleRows();
@@ -68,26 +60,24 @@ void FileTreeView::ensureVisible(int row)
     clampScroll();
 }
 
-int FileTreeView::rowAt(int localY) const
-{
+int FileTreeView::rowAt(int localY) const {
     const int idx = m_scrollTop + localY;
     const int rows = m_model ? m_model->rowCount() : 0;
     return (idx >= 0 && idx < rows) ? idx : -1;
 }
 
-void FileTreeView::toggleExpand(int row, bool expand)
-{
+void FileTreeView::toggleExpand(int row, bool expand) {
     if (m_model == nullptr || row < 0 || row >= m_model->rowCount())
         return;
     if (!m_model->data(m_model->index(row, 0), FsExplorerModel::IsDirRole).toBool())
         return;
-    const bool expanded = m_model->data(m_model->index(row, 0), FsExplorerModel::ExpandedRole).toBool();
+    const bool expanded =
+        m_model->data(m_model->index(row, 0), FsExplorerModel::ExpandedRole).toBool();
     if (expanded != expand)
         m_model->toggleExpand(row);
 }
 
-void FileTreeView::activate(int row, bool pinned)
-{
+void FileTreeView::activate(int row, bool pinned) {
     if (m_model == nullptr || row < 0 || row >= m_model->rowCount())
         return;
     const QModelIndex idx = m_model->index(row, 0);
@@ -99,14 +89,14 @@ void FileTreeView::activate(int row, bool pinned)
                     m_model->data(idx, FsExplorerModel::PathRole).toString(), pinned);
 }
 
-void FileTreeView::clickAt(QPoint local)
-{
+void FileTreeView::clickAt(QPoint local) {
     const int row = rowAt(local.y());
     if (row < 0)
         return;
-    const bool sameRow = row == m_lastClickRow && m_lastClick.isValid() && m_lastClick.elapsed() < 450;
-    const bool isDir = m_model != nullptr
-        && m_model->data(m_model->index(row, 0), FsExplorerModel::IsDirRole).toBool();
+    const bool sameRow =
+        row == m_lastClickRow && m_lastClick.isValid() && m_lastClick.elapsed() < 450;
+    const bool isDir = m_model != nullptr &&
+                       m_model->data(m_model->index(row, 0), FsExplorerModel::IsDirRole).toBool();
     m_current = row;
     activate(row, sameRow && !isDir); // second click on same file = pinned open
     m_lastClickRow = row;
@@ -114,21 +104,18 @@ void FileTreeView::clickAt(QPoint local)
     update();
 }
 
-void FileTreeView::scrollByLines(int delta)
-{
+void FileTreeView::scrollByLines(int delta) {
     m_scrollTop += delta;
     clampScroll();
     update();
 }
 
-void FileTreeView::resizeEvent(Tui::ZResizeEvent* event)
-{
+void FileTreeView::resizeEvent(Tui::ZResizeEvent* event) {
     Tui::ZWidget::resizeEvent(event);
     clampScroll();
 }
 
-void FileTreeView::paintEvent(Tui::ZPaintEvent* event)
-{
+void FileTreeView::paintEvent(Tui::ZPaintEvent* event) {
     Tui::ZPainter* p = event->painter();
     const Tui::ZColor fg = tpal::fg();
     const Tui::ZColor bg = tpal::bg();
@@ -149,9 +136,8 @@ void FileTreeView::paintEvent(Tui::ZPaintEvent* event)
         const QString name = m_model->data(modelIndex, FsExplorerModel::LabelRole).toString();
         const bool current = idx == m_current;
 
-        const Tui::ZColor rowBg = current
-            ? (focus() ? tpal::selectionBg() : tpal::selectionInactiveBg())
-            : bg;
+        const Tui::ZColor rowBg =
+            current ? (focus() ? tpal::selectionBg() : tpal::selectionInactiveBg()) : bg;
         if (current)
             p->clearRect(0, rowY, w, 1, fg, rowBg);
 
@@ -168,8 +154,7 @@ void FileTreeView::paintEvent(Tui::ZPaintEvent* event)
     }
 }
 
-void FileTreeView::keyEvent(Tui::ZKeyEvent* event)
-{
+void FileTreeView::keyEvent(Tui::ZKeyEvent* event) {
     if (m_model == nullptr || m_model->rowCount() == 0) {
         Tui::ZWidget::keyEvent(event);
         return;
@@ -227,14 +212,12 @@ void FileTreeView::keyEvent(Tui::ZKeyEvent* event)
     Tui::ZWidget::keyEvent(event);
 }
 
-void FileTreeView::focusInEvent(Tui::ZFocusEvent* event)
-{
+void FileTreeView::focusInEvent(Tui::ZFocusEvent* event) {
     Tui::ZWidget::focusInEvent(event);
     update();
 }
 
-void FileTreeView::focusOutEvent(Tui::ZFocusEvent* event)
-{
+void FileTreeView::focusOutEvent(Tui::ZFocusEvent* event) {
     Tui::ZWidget::focusOutEvent(event);
     update();
 }

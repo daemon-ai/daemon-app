@@ -14,18 +14,17 @@ QT_END_NAMESPACE
 
 namespace be::app {
 
-class ActiveBlockTextController : public QObject
-{
+class ActiveBlockTextController : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("ActiveBlockTextController is owned by EditorController")
 
 public:
-    explicit ActiveBlockTextController(QObject *parent = nullptr);
+    explicit ActiveBlockTextController(QObject* parent = nullptr);
 
-    Q_INVOKABLE void attach(QObject *textDocument);
-    void attachPlainDocument(QTextDocument *document);
-    Q_INVOKABLE void detach(QObject *textDocument);
+    Q_INVOKABLE void attach(QObject* textDocument);
+    void attachPlainDocument(QTextDocument* document);
+    Q_INVOKABLE void detach(QObject* textDocument);
     Q_INVOKABLE bool hasDocument() const;
     Q_INVOKABLE bool isOnFirstVisualLine(int cursorPosition) const;
     Q_INVOKABLE bool isOnLastVisualLine(int cursorPosition) const;
@@ -38,11 +37,13 @@ public:
     // Coordinates are in document-layout space and include only the document
     // margin; the caller adds the TextEdit's leftPadding/topPadding. Does not
     // touch the active attach state.
-    Q_INVOKABLE QVariantList lineRectsForRange(QObject *textDocument, int visualStart, int visualEnd) const;
+    Q_INVOKABLE QVariantList lineRectsForRange(QObject* textDocument, int visualStart,
+                                               int visualEnd) const;
     // Same computation as lineRectsForRange, on a raw QTextDocument (testable
     // without a QQuickTextDocument).
-    static QVariantList lineRects(QTextDocument *doc, int visualStart, int visualEnd);
-    Q_INVOKABLE void applyMarkdownFormatting(const QString &markdown, int blockType, int headingLevel);
+    static QVariantList lineRects(QTextDocument* doc, int visualStart, int visualEnd);
+    Q_INVOKABLE void applyMarkdownFormatting(const QString& markdown, int blockType,
+                                             int headingLevel);
     Q_INVOKABLE void clearFormatting();
     Q_INVOKABLE int rehighlightCount() const;
 
@@ -58,12 +59,12 @@ private:
         qreal height = 0.0;
     };
 
-    QTextDocument *document() const;
-    bool attachHighlighter(QTextDocument *document);
-    static QVector<LineInfo> visualLinesOf(QTextDocument *doc);
+    QTextDocument* document() const;
+    bool attachHighlighter(QTextDocument* document);
+    static QVector<LineInfo> visualLinesOf(QTextDocument* doc);
     QVector<LineInfo> visualLines() const;
     int lineIndexForCursor(int cursorPosition) const;
-    int cursorAtLineVisualX(const LineInfo &line, qreal visualX) const;
+    int cursorAtLineVisualX(const LineInfo& line, qreal visualX) const;
 
     QPointer<QQuickTextDocument> m_textDocument;
     QPointer<QTextDocument> m_plainDocument;

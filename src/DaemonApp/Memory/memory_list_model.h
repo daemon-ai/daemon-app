@@ -6,8 +6,8 @@
 #include <QHash>
 #include <QList>
 #include <QString>
-#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
+#include <QVariantMap>
 
 namespace memory {
 class IMemoryService;

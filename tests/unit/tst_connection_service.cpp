@@ -13,8 +13,7 @@ class TestConnectionService : public QObject {
     Q_OBJECT
 
 private slots:
-    void reachesReadyForGoodTarget()
-    {
+    void reachesReadyForGoodTarget() {
         QTemporaryFile socketStandIn;
         QVERIFY(socketStandIn.open());
         MockConnectionService c;
@@ -26,23 +25,20 @@ private slots:
         QVERIFY(spy.count() >= 2);
     }
 
-    void goesOfflineForBadTarget()
-    {
+    void goesOfflineForBadTarget() {
         MockConnectionService c;
         c.connectTo(QStringLiteral("local"), QStringLiteral("/run/daemon.sock"));
         QVERIFY(QTest::qWaitFor([&] { return c.state() == QStringLiteral("offline"); }, 3000));
         QVERIFY(!c.ready());
     }
 
-    void embeddedModeIsGatedOffline()
-    {
+    void embeddedModeIsGatedOffline() {
         MockConnectionService c;
         c.connectTo(QStringLiteral("embedded"), QStringLiteral("ffi"));
         QVERIFY(QTest::qWaitFor([&] { return c.state() == QStringLiteral("offline"); }, 3000));
     }
 
-    void testConnectionReportsResult()
-    {
+    void testConnectionReportsResult() {
         MockConnectionService c;
         QSignalSpy ok(&c, &connection::IConnectionService::testResult);
         c.testConnection(QStringLiteral("remote"), QStringLiteral("https://mock.local"));
@@ -55,8 +51,7 @@ private slots:
         QCOMPARE(bad.takeFirst().at(0).toBool(), false);
     }
 
-    void disconnectGoesOffline()
-    {
+    void disconnectGoesOffline() {
         QTemporaryFile socketStandIn;
         QVERIFY(socketStandIn.open());
         MockConnectionService c;

@@ -30,7 +30,8 @@ class FirstRunModel : public QObject {
     Q_PROPERTY(bool active READ active NOTIFY phaseChanged)
     Q_PROPERTY(QString error READ error NOTIFY errorChanged)
     // Whether a usable model is reachable; the inference gate blocks until true.
-    Q_PROPERTY(bool inferenceReady READ inferenceReady WRITE setInferenceReady NOTIFY inferenceReadyChanged)
+    Q_PROPERTY(bool inferenceReady READ inferenceReady WRITE setInferenceReady NOTIFY
+                   inferenceReadyChanged)
 
 public:
     FirstRunModel(settings::ISettingsStore* settings, connection::IConnectionService* connection,

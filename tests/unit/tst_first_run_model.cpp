@@ -20,14 +20,12 @@ class TestFirstRunModel : public QObject {
 private slots:
     void initTestCase() { QStandardPaths::setTestModeEnabled(true); }
 
-    void init()
-    {
+    void init() {
         QtSettingsStore s;
         s.setSetupComplete(false);
     }
 
-    void freshInstallStartsAtConnect()
-    {
+    void freshInstallStartsAtConnect() {
         QtSettingsStore settings;
         MockConnectionService conn;
         FirstRunModel m(&settings, &conn);
@@ -36,8 +34,7 @@ private slots:
         QVERIFY(m.active());
     }
 
-    void goodConnectionAdvancesToInferenceThenDone()
-    {
+    void goodConnectionAdvancesToInferenceThenDone() {
         QTemporaryFile socketStandIn;
         QVERIFY(socketStandIn.open());
         QtSettingsStore settings;
@@ -56,8 +53,7 @@ private slots:
         QVERIFY(settings.setupComplete());
     }
 
-    void badConnectionReturnsToConnectWithError()
-    {
+    void badConnectionReturnsToConnectWithError() {
         QtSettingsStore settings;
         MockConnectionService conn;
         FirstRunModel m(&settings, &conn);
@@ -68,8 +64,7 @@ private slots:
             [&] { return m.phase() == QStringLiteral("connect") && !m.error().isEmpty(); }, 3000));
     }
 
-    void returningUserBootsToDone()
-    {
+    void returningUserBootsToDone() {
         QtSettingsStore settings;
         settings.setSetupComplete(true);
         MockConnectionService conn;

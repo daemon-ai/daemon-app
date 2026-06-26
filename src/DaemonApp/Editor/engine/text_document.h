@@ -13,8 +13,7 @@ struct Pos {
     int line = 0;
     int col = 0;
     [[nodiscard]] bool operator==(const Pos& o) const { return line == o.line && col == o.col; }
-    [[nodiscard]] bool operator<(const Pos& o) const
-    {
+    [[nodiscard]] bool operator<(const Pos& o) const {
         return line != o.line ? line < o.line : col < o.col;
     }
 };
@@ -58,19 +57,19 @@ public:
     [[nodiscard]] Pos clamp(const Pos& p) const;
 
 signals:
-    void lineChanged(int line);                 // in-place single-line edit
-    void linesReset();                          // structural change: model resets
+    void lineChanged(int line); // in-place single-line edit
+    void linesReset();          // structural change: model resets
     void revisionChanged();
     void modifiedChanged();
 
 private:
     struct Edit {
-        Pos start;            // replaced-range start
-        QString removed;      // text removed (for undo)
-        QString inserted;     // text inserted (for redo)
-        Pos insertedEnd;      // end after inserting `inserted`
-        qint64 time = 0;      // ms, for typing merge
-        int group = 0;        // transaction id
+        Pos start;        // replaced-range start
+        QString removed;  // text removed (for undo)
+        QString inserted; // text inserted (for redo)
+        Pos insertedEnd;  // end after inserting `inserted`
+        qint64 time = 0;  // ms, for typing merge
+        int group = 0;    // transaction id
     };
 
     // The single mutation primitive: replace [from,to) with `replacement`.

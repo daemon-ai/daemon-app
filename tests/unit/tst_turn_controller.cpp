@@ -1,9 +1,9 @@
 #include "turn_controller.h"
 
 #include <QSignalSpy>
+#include <QtTest>
 #include <QVariantList>
 #include <QVariantMap>
-#include <QtTest>
 
 // Exercises the shared TurnController FSM (the C++ port of TurnSimulator.qml):
 // a started turn runs to completion via its internal timers, emits the scripted
@@ -16,8 +16,7 @@ private:
     // Run a turn to completion (or time out), collecting the flattened event
     // stream. Returns the total number of events emitted across all steps.
     static int runToCompletion(TurnController& turn, const QString& prompt,
-                               QList<QVariantMap>& events)
-    {
+                               QList<QVariantMap>& events) {
         QObject::connect(&turn, &TurnController::eventsEmitted, &turn,
                          [&events](const QVariantList& batch) {
                              for (const QVariant& v : batch) {
@@ -35,8 +34,7 @@ private:
 
 private slots:
     // A normal turn streams reasoning -> tools -> text -> flush and settles idle.
-    void normalTurnCompletesIdle()
-    {
+    void normalTurnCompletesIdle() {
         TurnController turn;
         QCOMPARE(turn.turnState(), QStringLiteral("idle"));
         QVERIFY(!turn.active());
@@ -52,8 +50,7 @@ private slots:
         QVERIFY(turn.errorText().isEmpty());
 
         // The last emitted event is the turn-end flush.
-        QCOMPARE(events.last().value(QStringLiteral("type")).toString(),
-                 QStringLiteral("flush"));
+        QCOMPARE(events.last().value(QStringLiteral("type")).toString(), QStringLiteral("flush"));
         // The scripted text deltas and live status events both make it through.
         int textCount = 0;
         bool sawUsage = false;
@@ -75,8 +72,7 @@ private slots:
 
     // A prompt containing "fail" drives the error branch: the terminal tool fails
     // and the turn settles in the "error" state with a surfaced error message.
-    void failPromptEndsInError()
-    {
+    void failPromptEndsInError() {
         TurnController turn;
         QList<QVariantMap> events;
         const int count = runToCompletion(turn, QStringLiteral("make the build fail"), events);
@@ -91,8 +87,8 @@ private slots:
         // The failing tool reports error status.
         bool sawError = false;
         for (const QVariantMap& e : events) {
-            if (e.value(QStringLiteral("type")).toString() == QStringLiteral("toolFinished")
-                && e.value(QStringLiteral("status")).toString() == QStringLiteral("error")) {
+            if (e.value(QStringLiteral("type")).toString() == QStringLiteral("toolFinished") &&
+                e.value(QStringLiteral("status")).toString() == QStringLiteral("error")) {
                 sawError = true;
             }
         }
@@ -102,8 +98,7 @@ private slots:
     // A prompt mentioning "sudo" pauses the turn at a host-input gate: the
     // controller emits hostRequested + awaitingInput and parks (paused, no finish)
     // until resume() drives it to completion.
-    void sudoPromptGatesForHostInput()
-    {
+    void sudoPromptGatesForHostInput() {
         TurnController turn;
         QSignalSpy hostSpy(&turn, &TurnController::hostRequested);
         QSignalSpy awaitSpy(&turn, &TurnController::awaitingInput);
@@ -130,8 +125,7 @@ private slots:
     }
 
     // A prompt mentioning a "secret" / "api key" gates with the secret kind.
-    void secretPromptGatesWithSecretKind()
-    {
+    void secretPromptGatesWithSecretKind() {
         TurnController turn;
         QSignalSpy hostSpy(&turn, &TurnController::hostRequested);
         turn.start(QStringLiteral("rotate the api key"));
@@ -142,8 +136,7 @@ private slots:
     }
 
     // cancel() stops an in-flight turn and resets to idle without emitting finish.
-    void cancelResetsToIdle()
-    {
+    void cancelResetsToIdle() {
         TurnController turn;
         turn.start(QStringLiteral("anything"));
         QVERIFY(turn.active());

@@ -38,18 +38,18 @@ struct SelectionSpan {
     qsizetype rawEnd = 0;
 };
 
-class SelectionControllerCore
-{
+class SelectionControllerCore {
 public:
     void clear();
-    void setAnchor(const DocPos &pos);
-    void setHead(const DocPos &pos);
-    const Selection &selection() const;
-    SelectionSpan spanForBlock(BlockId id, qsizetype row, qsizetype visualLength, qsizetype rawLength) const;
-    QString copyMarkdown(const QVector<BlockRecord> &blocks) const;
+    void setAnchor(const DocPos& pos);
+    void setHead(const DocPos& pos);
+    const Selection& selection() const;
+    SelectionSpan spanForBlock(BlockId id, qsizetype row, qsizetype visualLength,
+                               qsizetype rawLength) const;
+    QString copyMarkdown(const QVector<BlockRecord>& blocks) const;
 
-    static QPair<qsizetype, qsizetype> wordRangeAt(const QString &text, qsizetype offset);
-    static QPair<qsizetype, qsizetype> lineRangeAt(const QString &text, qsizetype offset);
+    static QPair<qsizetype, qsizetype> wordRangeAt(const QString& text, qsizetype offset);
+    static QPair<qsizetype, qsizetype> lineRangeAt(const QString& text, qsizetype offset);
 
 private:
     Selection m_selection;

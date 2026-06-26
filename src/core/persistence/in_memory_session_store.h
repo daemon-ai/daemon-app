@@ -17,8 +17,9 @@ class InMemorySessionStore : public ISessionStore {
 
 public:
     explicit InMemorySessionStore(QObject* parent = nullptr);
-    // Seed the store from the DaemonNet (the single source): copies its units/sessions/tags, assigning
-    // each session a stable int handle while carrying its authoritative string `sessionId`.
+    // Seed the store from the DaemonNet (the single source): copies its units/sessions/tags,
+    // assigning each session a stable int handle while carrying its authoritative string
+    // `sessionId`.
     explicit InMemorySessionStore(daemonnet::IDaemonNet* net, QObject* parent = nullptr);
 
     [[nodiscard]] QList<domain::UnitNode>
@@ -26,8 +27,7 @@ public:
     [[nodiscard]] domain::UnitNode unit(const domain::UnitId& id) const override;
     [[nodiscard]] QList<domain::Tag> tags() const override;
     [[nodiscard]] QList<domain::Participant> participants() const override;
-    [[nodiscard]] QList<domain::Session>
-    sessions(const domain::ListScope& scope) const override;
+    [[nodiscard]] QList<domain::Session> sessions(const domain::ListScope& scope) const override;
     [[nodiscard]] int sessionCount(const domain::ListScope& scope) const override;
 
     // SessionId-keyed canonical API.
@@ -73,13 +73,12 @@ protected:
     QList<domain::Tag> m_tags;
     QList<domain::Participant> m_participants;
     QList<domain::Session> m_sessions;
-    int m_nextId = 1;        // session ids
-    int m_nextUnitSeq = 1;   // suffix for generated unit ids
-    int m_nextTagId = 1;     // tag ids
+    int m_nextId = 1;      // session ids
+    int m_nextUnitSeq = 1; // suffix for generated unit ids
+    int m_nextTagId = 1;   // tag ids
 
 private:
-    [[nodiscard]] bool matchesScope(const domain::Session& c,
-                                    const domain::ListScope& scope) const;
+    [[nodiscard]] bool matchesScope(const domain::Session& c, const domain::ListScope& scope) const;
     // True when `unitId` is `rootId` or any descendant of it (subtree fold).
     // Walks the parent chain - a single recursive rule for every depth.
     [[nodiscard]] bool isInSubtree(const domain::UnitId& unitId,

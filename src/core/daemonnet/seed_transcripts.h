@@ -10,8 +10,7 @@ namespace daemonnet::seed {
 
 // A demo turn exercising every Phase-1 agent block (reasoning, tool calls with each detail kind, a
 // standalone content stream, clarify, approval). Each block is its canonical fenced form.
-[[nodiscard]] inline QString agentBlocksMarkdown()
-{
+[[nodiscard]] inline QString agentBlocksMarkdown() {
     return QStringLiteral(R"SAMPLE(# Agent transcript blocks
 
 A demo turn exercising every Phase 1 block. Activate (click) any card to reveal
@@ -82,8 +81,7 @@ That wraps the demo turn.
 
 // A demo transcript exercising the message/role layer (user/assistant/system turns, steer, slash,
 // process), interleaved with reasoning and tool blocks.
-[[nodiscard]] inline QString roleLayerMarkdown()
-{
+[[nodiscard]] inline QString roleLayerMarkdown() {
     return QStringLiteral(R"ROLES(```msg
 {"id":"u1","role":"user"}
 ```

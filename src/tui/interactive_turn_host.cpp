@@ -9,15 +9,12 @@
 #include <QStringList>
 #include <QVariantList>
 
-InteractiveTurnHost::InteractiveTurnHost(be::DocumentStore *doc, be::TranscriptIngest *ingest,
-                                         QObject *parent)
-    : QObject(parent), m_doc(doc), m_ingest(ingest)
-{
-}
+InteractiveTurnHost::InteractiveTurnHost(be::DocumentStore* doc, be::TranscriptIngest* ingest,
+                                         QObject* parent)
+    : QObject(parent), m_doc(doc), m_ingest(ingest) {}
 
-void InteractiveTurnHost::onApprovalDecided(const QString &callId, const QString &decision,
-                                            bool /*permanent*/)
-{
+void InteractiveTurnHost::onApprovalDecided(const QString& callId, const QString& decision,
+                                            bool /*permanent*/) {
     if (m_doc == nullptr) {
         return;
     }
@@ -42,9 +39,8 @@ void InteractiveTurnHost::onApprovalDecided(const QString &callId, const QString
     emit documentChanged();
 }
 
-void InteractiveTurnHost::onClarifySubmitted(const QString &callId, const QString & /*requestId*/,
-                                             const QVariantMap &answers)
-{
+void InteractiveTurnHost::onClarifySubmitted(const QString& callId, const QString& /*requestId*/,
+                                             const QVariantMap& answers) {
     if (m_doc == nullptr) {
         return;
     }
@@ -68,12 +64,12 @@ void InteractiveTurnHost::onClarifySubmitted(const QString &callId, const QStrin
     if (m_ingest != nullptr) {
         QVariantMap text;
         text.insert(QStringLiteral("type"), QStringLiteral("text"));
-        text.insert(QStringLiteral("text"),
-                    tr("\n\nThanks \u2014 proceeding with: %1\n")
-                        .arg(parts.join(QStringLiteral("; "))));
+        text.insert(
+            QStringLiteral("text"),
+            tr("\n\nThanks \u2014 proceeding with: %1\n").arg(parts.join(QStringLiteral("; "))));
         QVariantMap flush;
         flush.insert(QStringLiteral("type"), QStringLiteral("flush"));
-        m_ingest->ingestAll(QVariantList { text, flush });
+        m_ingest->ingestAll(QVariantList{text, flush});
     }
     emit documentChanged();
 }

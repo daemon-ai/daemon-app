@@ -1,11 +1,10 @@
 #pragma once
 
+#include <QString>
+#include <QVector>
 #include <Tui/ZDialog.h>
 #include <Tui/ZInputBox.h>
 #include <Tui/ZListView.h>
-
-#include <QString>
-#include <QVector>
 
 // A one-line filter input that drives a sibling result list: Up/Down move the
 // list selection, Enter activates, Esc cancels; everything else edits the text.
@@ -51,8 +50,8 @@ signals:
     void activated(const QString& id);
 
 private:
-    void rebuild();        // apply the filter text -> visible list rows
-    void step(int delta);  // move the list selection within the filtered rows
+    void rebuild();       // apply the filter text -> visible list rows
+    void step(int delta); // move the list selection within the filtered rows
     void activateRow(int row);
 
     QVector<Item> m_items;

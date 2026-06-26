@@ -6,34 +6,26 @@
 #include "turn_controller.h"
 
 #include <QtAlgorithms>
-
 #include <utility>
 
-TabSession::TabSession()
-{
+TabSession::TabSession() {
     search.setDocument(&doc);
 }
 
-TabSession::~TabSession()
-{
+TabSession::~TabSession() {
     delete host;
     delete orchestrator; // deletes its child TurnController
     delete controller;
 }
 
 TabSessionManager::TabSessionManager(QObject* store, TabModel* tabs)
-    : m_store(store)
-    , m_tabs(tabs)
-{
-}
+    : m_store(store), m_tabs(tabs) {}
 
-TabSessionManager::~TabSessionManager()
-{
+TabSessionManager::~TabSessionManager() {
     qDeleteAll(m_sessions);
 }
 
-TabSession* TabSessionManager::ensureSession(int tabId, std::function<void(TabSession*)> wire)
-{
+TabSession* TabSessionManager::ensureSession(int tabId, std::function<void(TabSession*)> wire) {
     if (auto it = m_sessions.find(tabId); it != m_sessions.end()) {
         return it.value();
     }
@@ -63,8 +55,7 @@ TabSession* TabSessionManager::ensureSession(int tabId, std::function<void(TabSe
 }
 
 void TabSessionManager::rebindSession(int tabId, const QString& sessionId,
-                                      std::function<void(TabSession*)> wire)
-{
+                                      std::function<void(TabSession*)> wire) {
     Q_UNUSED(wire)
     auto it = m_sessions.find(tabId);
     if (it == m_sessions.end()) {
@@ -79,8 +70,7 @@ void TabSessionManager::rebindSession(int tabId, const QString& sessionId,
 }
 
 bool TabSessionManager::destroySession(int tabId, TabSession*& active,
-                                       std::function<void()> detachActiveDocument)
-{
+                                       std::function<void()> detachActiveDocument) {
     auto it = m_sessions.find(tabId);
     if (it == m_sessions.end()) {
         return false;

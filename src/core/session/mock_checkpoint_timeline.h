@@ -1,7 +1,6 @@
 #pragma once
 
 #include "session/icheckpoint_timeline.h"
-
 #include "uimodels/variant_list_model.h"
 
 #include <QHash>

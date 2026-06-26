@@ -8,13 +8,12 @@
 
 namespace be {
 
-class ChangedBlockStore
-{
+class ChangedBlockStore {
 public:
-    bool open(const QString &path);
+    bool open(const QString& path);
     bool isOpen() const;
     bool initialize();
-    bool saveBlocks(const QVector<BlockRecord> &blocks);
+    bool saveBlocks(const QVector<BlockRecord>& blocks);
     QVector<BlockRecord> loadBlocks() const;
     QString lastError() const;
 

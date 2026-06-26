@@ -1,45 +1,38 @@
 #include "transcript_view.h"
 
-#include "tui_palette.h"
-
 #include "core/block_record.h"
 #include "core/document_store.h"
 #include "core/transcript_search.h"
+#include "tui_palette.h"
 
+#include <QRect>
 #include <Tui/ZColor.h>
 #include <Tui/ZEvent.h>
 #include <Tui/ZPainter.h>
 
-#include <QRect>
-
-TranscriptView::TranscriptView(Tui::ZWidget *parent) : Tui::ZWidget(parent)
-{
+TranscriptView::TranscriptView(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
     // Focusable so it joins the Tab cycle and can take scroll keys, but it never
     // consumes Esc (see keyEvent) so the context-sensitive quit chain still works.
     setFocusPolicy(Tui::StrongFocus);
     setSizePolicyV(Tui::SizePolicy::Expanding);
 }
 
-void TranscriptView::setDocument(const be::DocumentStore *doc)
-{
+void TranscriptView::setDocument(const be::DocumentStore* doc) {
     m_doc = doc;
     m_scrollTop = 0;
     m_stickToBottom = true;
     rebuild();
 }
 
-void TranscriptView::setSearch(const be::TranscriptSearchController *search)
-{
+void TranscriptView::setSearch(const be::TranscriptSearchController* search) {
     m_search = search;
 }
 
-void TranscriptView::reload()
-{
+void TranscriptView::reload() {
     rebuild();
 }
 
-void TranscriptView::scrollBlockIntoView(int blockIndex)
-{
+void TranscriptView::scrollBlockIntoView(int blockIndex) {
     if (blockIndex < 0 || blockIndex >= m_blockFirstLine.size()) {
         return;
     }
@@ -58,8 +51,7 @@ void TranscriptView::scrollBlockIntoView(int blockIndex)
     update();
 }
 
-void TranscriptView::scrollByLines(int delta)
-{
+void TranscriptView::scrollByLines(int delta) {
     m_scrollTop += delta;
     clampScrollTop();
     // Pin to the bottom only when the scroll lands all the way down.
@@ -67,33 +59,27 @@ void TranscriptView::scrollByLines(int delta)
     update();
 }
 
-int TranscriptView::visibleRows() const
-{
+int TranscriptView::visibleRows() const {
     return qMax(0, geometry().height());
 }
 
-int TranscriptView::maxScrollTop() const
-{
+int TranscriptView::maxScrollTop() const {
     return qMax(0, static_cast<int>(m_lines.size()) - visibleRows());
 }
 
-void TranscriptView::clampScrollTop()
-{
+void TranscriptView::clampScrollTop() {
     m_scrollTop = qBound(0, m_scrollTop, maxScrollTop());
 }
 
-void TranscriptView::scrollToBottom()
-{
+void TranscriptView::scrollToBottom() {
     m_scrollTop = maxScrollTop();
 }
 
-bool TranscriptView::atBottom() const
-{
+bool TranscriptView::atBottom() const {
     return m_scrollTop >= maxScrollTop();
 }
 
-void TranscriptView::rebuild()
-{
+void TranscriptView::rebuild() {
     const int width = qMax(1, geometry().width());
     if (m_doc != nullptr) {
         const LayoutResult res = TranscriptLayout::build(*m_doc, width, m_draft, m_activeControl);
@@ -144,8 +130,7 @@ void TranscriptView::rebuild()
     update();
 }
 
-void TranscriptView::applySearchHighlight()
-{
+void TranscriptView::applySearchHighlight() {
     if (m_search == nullptr) {
         return;
     }
@@ -160,11 +145,10 @@ void TranscriptView::applySearchHighlight()
     const Tui::ZColor activeFg = tpal::bg();
 
     for (int li = 0; li < m_lines.size(); ++li) {
-        const bool isActiveBlock =
-            li < m_lineBlock.size() && m_lineBlock.at(li) == activeBlock;
+        const bool isActiveBlock = li < m_lineBlock.size() && m_lineBlock.at(li) == activeBlock;
         RenderLine rebuilt;
         bool changed = false;
-        for (const Span &span : m_lines.at(li)) {
+        for (const Span& span : m_lines.at(li)) {
             int from = 0;
             int at = static_cast<int>(span.text.indexOf(query, from, Qt::CaseInsensitive));
             if (at < 0) {
@@ -174,8 +158,8 @@ void TranscriptView::applySearchHighlight()
             changed = true;
             while (at >= 0) {
                 if (at > from) {
-                    rebuilt.push_back(Span { span.text.mid(from, at - from), span.fg,
-                                             span.bg, span.attr });
+                    rebuilt.push_back(
+                        Span{span.text.mid(from, at - from), span.fg, span.bg, span.attr});
                 }
                 Span hit;
                 hit.text = span.text.mid(at, qlen);
@@ -193,7 +177,7 @@ void TranscriptView::applySearchHighlight()
                 at = static_cast<int>(span.text.indexOf(query, from, Qt::CaseInsensitive));
             }
             if (from < span.text.size()) {
-                rebuilt.push_back(Span { span.text.mid(from), span.fg, span.bg, span.attr });
+                rebuilt.push_back(Span{span.text.mid(from), span.fg, span.bg, span.attr});
             }
         }
         if (changed) {
@@ -202,8 +186,7 @@ void TranscriptView::applySearchHighlight()
     }
 }
 
-void TranscriptView::clickAt(QPoint local)
-{
+void TranscriptView::clickAt(QPoint local) {
     // In the rewind picker, a click on (or nearest above) an anchor row selects it.
     if (rewindActive()) {
         const int absLine = m_scrollTop + local.y();
@@ -251,8 +234,7 @@ void TranscriptView::clickAt(QPoint local)
     activateControl(); // button decides / choice toggles / submit fires
 }
 
-void TranscriptView::moveControl(int delta)
-{
+void TranscriptView::moveControl(int delta) {
     if (!interactive()) {
         return;
     }
@@ -261,8 +243,7 @@ void TranscriptView::moveControl(int delta)
     rebuild();
 }
 
-void TranscriptView::ensureControlVisible()
-{
+void TranscriptView::ensureControlVisible() {
     if (m_activeControl < 0 || m_activeControl >= m_controls.size()) {
         return;
     }
@@ -276,8 +257,7 @@ void TranscriptView::ensureControlVisible()
     clampScrollTop();
 }
 
-void TranscriptView::enterRewind()
-{
+void TranscriptView::enterRewind() {
     if (m_anchors.isEmpty() || interactive()) {
         return;
     }
@@ -289,8 +269,7 @@ void TranscriptView::enterRewind()
     update();
 }
 
-void TranscriptView::exitRewind()
-{
+void TranscriptView::exitRewind() {
     if (!m_rewindMode) {
         return;
     }
@@ -299,8 +278,7 @@ void TranscriptView::exitRewind()
     update();
 }
 
-void TranscriptView::moveRewind(int delta)
-{
+void TranscriptView::moveRewind(int delta) {
     if (!rewindActive()) {
         return;
     }
@@ -310,8 +288,7 @@ void TranscriptView::moveRewind(int delta)
     update();
 }
 
-void TranscriptView::ensureAnchorVisible()
-{
+void TranscriptView::ensureAnchorVisible() {
     if (m_rewindIndex < 0 || m_rewindIndex >= m_anchors.size()) {
         return;
     }
@@ -325,27 +302,25 @@ void TranscriptView::ensureAnchorVisible()
     clampScrollTop();
 }
 
-QVariantMap TranscriptView::toolMetadataForCallId(const QString &callId) const
-{
+QVariantMap TranscriptView::toolMetadataForCallId(const QString& callId) const {
     if (m_doc == nullptr) {
         return {};
     }
-    const QVector<be::BlockRecord> &blocks = m_doc->blocks();
-    for (const be::BlockRecord &b : blocks) {
-        if (b.type == be::BlockType::ToolCall
-            && b.metadata.value(QStringLiteral("callId")).toString() == callId) {
+    const QVector<be::BlockRecord>& blocks = m_doc->blocks();
+    for (const be::BlockRecord& b : blocks) {
+        if (b.type == be::BlockType::ToolCall &&
+            b.metadata.value(QStringLiteral("callId")).toString() == callId) {
             return b.metadata;
         }
     }
     return {};
 }
 
-void TranscriptView::toggleChoice()
-{
+void TranscriptView::toggleChoice() {
     if (m_activeControl < 0 || m_activeControl >= m_controls.size()) {
         return;
     }
-    const Control &c = m_controls.at(m_activeControl);
+    const Control& c = m_controls.at(m_activeControl);
     if (c.kind != Control::Kind::Choice) {
         return;
     }
@@ -358,14 +333,13 @@ void TranscriptView::toggleChoice()
         }
     } else {
         // Radio: re-selecting the active choice clears it.
-        sel = sel.contains(c.choiceLabel) ? QStringList {} : QStringList { c.choiceLabel };
+        sel = sel.contains(c.choiceLabel) ? QStringList{} : QStringList{c.choiceLabel};
     }
     m_draft.selected.insert(c.questionId, sel);
     rebuild();
 }
 
-void TranscriptView::activateControl()
-{
+void TranscriptView::activateControl() {
     if (m_activeControl < 0 || m_activeControl >= m_controls.size()) {
         return;
     }
@@ -395,16 +369,14 @@ void TranscriptView::activateControl()
     }
 }
 
-void TranscriptView::resizeEvent(Tui::ZResizeEvent *event)
-{
+void TranscriptView::resizeEvent(Tui::ZResizeEvent* event) {
     Tui::ZWidget::resizeEvent(event);
     // Width affects wrapping, height affects the bottom pin; rebuild either way.
     rebuild();
 }
 
-void TranscriptView::paintEvent(Tui::ZPaintEvent *event)
-{
-    Tui::ZPainter *p = event->painter();
+void TranscriptView::paintEvent(Tui::ZPaintEvent* event) {
+    Tui::ZPainter* p = event->painter();
     const Tui::ZColor pageFg = tpal::fg();
     const Tui::ZColor pageBg = tpal::bg();
     p->clear(pageFg, pageBg);
@@ -422,7 +394,7 @@ void TranscriptView::paintEvent(Tui::ZPaintEvent *event)
             continue;
         }
         int x = 0;
-        for (const Span &s : m_lines.at(idx)) {
+        for (const Span& s : m_lines.at(idx)) {
             if (x >= contentW) {
                 break;
             }
@@ -432,7 +404,7 @@ void TranscriptView::paintEvent(Tui::ZPaintEvent *event)
                 text = text.left(contentW - x);
             }
             if (!text.isEmpty()) {
-                if (s.attr != Tui::ZTextAttributes {}) {
+                if (s.attr != Tui::ZTextAttributes{}) {
                     p->writeWithAttributes(x, row, text, s.fg, s.bg, s.attr);
                 } else {
                     p->writeWithColors(x, row, text, s.fg, s.bg);
@@ -471,8 +443,7 @@ void TranscriptView::paintEvent(Tui::ZPaintEvent *event)
     }
 }
 
-void TranscriptView::keyEvent(Tui::ZKeyEvent *event)
-{
+void TranscriptView::keyEvent(Tui::ZKeyEvent* event) {
     // Rewind picker: a selection mode over the prior user-message anchors, entered
     // with 'r' (when no interactive block owns the keys). Up/Down (or k/j) walk the
     // anchors, Enter restores (re-run with the same text), 'e' edits (seed the
@@ -514,8 +485,8 @@ void TranscriptView::keyEvent(Tui::ZKeyEvent *event)
         }
         // Any other key leaves the picker and falls through to normal handling.
         exitRewind();
-    } else if (event->modifiers() == Qt::NoModifier && event->text() == QStringLiteral("r")
-               && !interactive() && !m_anchors.isEmpty()) {
+    } else if (event->modifiers() == Qt::NoModifier && event->text() == QStringLiteral("r") &&
+               !interactive() && !m_anchors.isEmpty()) {
         enterRewind();
         event->accept();
         return;
@@ -531,7 +502,7 @@ void TranscriptView::keyEvent(Tui::ZKeyEvent *event)
     if (interactive()) {
         const int key = event->key();
         const Qt::KeyboardModifiers mods = event->modifiers();
-        const Control &active = m_controls.at(qBound(0, m_activeControl, m_controls.size() - 1));
+        const Control& active = m_controls.at(qBound(0, m_activeControl, m_controls.size() - 1));
         const bool onFreeform = active.kind == Control::Kind::Freeform;
 
         if (mods == Qt::NoModifier) {
@@ -566,8 +537,8 @@ void TranscriptView::keyEvent(Tui::ZKeyEvent *event)
                 return;
             }
         }
-        if (onFreeform && !event->text().isEmpty()
-            && (mods == Qt::NoModifier || mods == Qt::ShiftModifier)) {
+        if (onFreeform && !event->text().isEmpty() &&
+            (mods == Qt::NoModifier || mods == Qt::ShiftModifier)) {
             const QString t = event->text();
             // Ignore control chars (Enter handled above).
             if (t.at(0).isPrint()) {

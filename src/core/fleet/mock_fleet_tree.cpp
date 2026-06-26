@@ -5,9 +5,7 @@
 namespace fleet {
 
 MockFleetTree::MockFleetTree(daemonnet::IDaemonNet* net, QObject* parent)
-    : IFleetTree(parent)
-    , m_nodes(new uimodels::VariantListModel(this))
-{
+    : IFleetTree(parent), m_nodes(new uimodels::VariantListModel(this)) {
     // Single source: copy the DaemonNet's fleet projection (the delegation spanning tree) at
     // construction; pause/resume then mutate this local copy.
     if (net != nullptr) {
@@ -17,10 +15,11 @@ MockFleetTree::MockFleetTree(daemonnet::IDaemonNet* net, QObject* parent)
     }
 }
 
-QObject* MockFleetTree::nodes() const { return m_nodes; }
+QObject* MockFleetTree::nodes() const {
+    return m_nodes;
+}
 
-void MockFleetTree::setStatus(const QString& id, const QString& status)
-{
+void MockFleetTree::setStatus(const QString& id, const QString& status) {
     const int row = m_nodes->indexOfId(id);
     if (row < 0) {
         return;
@@ -31,7 +30,11 @@ void MockFleetTree::setStatus(const QString& id, const QString& status)
     emit changed();
 }
 
-void MockFleetTree::pause(const QString& id) { setStatus(id, QStringLiteral("paused")); }
-void MockFleetTree::resume(const QString& id) { setStatus(id, QStringLiteral("running")); }
+void MockFleetTree::pause(const QString& id) {
+    setStatus(id, QStringLiteral("paused"));
+}
+void MockFleetTree::resume(const QString& id) {
+    setStatus(id, QStringLiteral("running"));
+}
 
 } // namespace fleet

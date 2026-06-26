@@ -16,12 +16,11 @@ struct ConnectionConfig {
     QString target;
     QString token;
 
-    [[nodiscard]] QVariantMap toVariantMap() const
-    {
+    [[nodiscard]] QVariantMap toVariantMap() const {
         return {
-            { QStringLiteral("mode"), mode },
-            { QStringLiteral("target"), target },
-            { QStringLiteral("token"), token },
+            {QStringLiteral("mode"), mode},
+            {QStringLiteral("target"), target},
+            {QStringLiteral("token"), token},
         };
     }
 };

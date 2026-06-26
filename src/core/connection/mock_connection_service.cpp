@@ -7,8 +7,7 @@
 namespace connection {
 
 namespace {
-QString expandHome(QString path)
-{
+QString expandHome(QString path) {
     path = path.trimmed();
     if (path == QStringLiteral("~")) {
         return QDir::homePath();
@@ -20,15 +19,12 @@ QString expandHome(QString path)
 }
 } // namespace
 
-MockConnectionService::MockConnectionService(QObject* parent)
-    : IConnectionService(parent)
-{
+MockConnectionService::MockConnectionService(QObject* parent) : IConnectionService(parent) {
     m_connectTimer.setSingleShot(true);
     m_testTimer.setSingleShot(true);
 }
 
-bool MockConnectionService::plausible(const QString& mode, const QString& target)
-{
+bool MockConnectionService::plausible(const QString& mode, const QString& target) {
     const QString trimmed = target.trimmed();
     if (mode == QStringLiteral("embedded")) {
         return false; // gated until full-node FFI lands
@@ -41,16 +37,16 @@ bool MockConnectionService::plausible(const QString& mode, const QString& target
     }
     if (mode == QStringLiteral("remote")) {
         const QUrl url(trimmed);
-        return url.isValid() && (url.scheme() == QStringLiteral("http")
-                                 || url.scheme() == QStringLiteral("https"))
-            && url.host() == QStringLiteral("mock.local");
+        return url.isValid() &&
+               (url.scheme() == QStringLiteral("http") ||
+                url.scheme() == QStringLiteral("https")) &&
+               url.host() == QStringLiteral("mock.local");
     }
     return mode == QStringLiteral("mock") && trimmed == QStringLiteral("ready");
 }
 
 void MockConnectionService::connectTo(const QString& mode, const QString& target,
-                                      const QString& token)
-{
+                                      const QString& token) {
     m_config.mode = mode;
     m_config.target = target;
     m_config.token = token;
@@ -64,21 +60,18 @@ void MockConnectionService::connectTo(const QString& mode, const QString& target
     // checking -> connecting (250ms) -> ready/offline (+450ms).
     QTimer::singleShot(250, this, [this] { setState(QStringLiteral("connecting")); });
     m_connectTimer.disconnect();
-    connect(&m_connectTimer, &QTimer::timeout, this, [this, ok] {
-        setState(ok ? QStringLiteral("ready") : QStringLiteral("offline"));
-    });
+    connect(&m_connectTimer, &QTimer::timeout, this,
+            [this, ok] { setState(ok ? QStringLiteral("ready") : QStringLiteral("offline")); });
     m_connectTimer.start(700);
 }
 
-void MockConnectionService::disconnect()
-{
+void MockConnectionService::disconnect() {
     m_connectTimer.stop();
     setState(QStringLiteral("offline"));
 }
 
 void MockConnectionService::testConnection(const QString& mode, const QString& target,
-                                           const QString& token)
-{
+                                           const QString& token) {
     Q_UNUSED(token)
     setTesting(true);
     m_testTimer.stop();
@@ -87,7 +80,7 @@ void MockConnectionService::testConnection(const QString& mode, const QString& t
     connect(&m_testTimer, &QTimer::timeout, this, [this, ok, target] {
         setTesting(false);
         emit testResult(ok, ok ? QStringLiteral("Connected to %1").arg(target)
-                                : QStringLiteral("Could not reach %1").arg(target));
+                               : QStringLiteral("Could not reach %1").arg(target));
     });
     m_testTimer.start(600);
 }

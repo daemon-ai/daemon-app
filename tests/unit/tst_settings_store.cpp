@@ -13,39 +13,34 @@ class TestSettingsStore : public QObject {
     Q_OBJECT
 
 private slots:
-    void initTestCase()
-    {
+    void initTestCase() {
         // Redirect QSettings to a throwaway location so the suite never touches
         // the developer's real config.
         QStandardPaths::setTestModeEnabled(true);
     }
 
-    void init()
-    {
+    void init() {
         QtSettingsStore s;
         s.setValue(QStringLiteral("app/setupComplete"), false);
         s.setValue(QStringLiteral("conn/mode"), QStringLiteral("local"));
         s.setValue(QStringLiteral("conn/target"), QString());
     }
 
-    void defaultsAndRoundTrip()
-    {
+    void defaultsAndRoundTrip() {
         QtSettingsStore s;
         QCOMPARE(s.value(QStringLiteral("nope"), 42).toInt(), 42);
         s.setValue(QStringLiteral("ui/x"), 7);
         QCOMPARE(s.value(QStringLiteral("ui/x")).toInt(), 7);
     }
 
-    void setupCompleteFlag()
-    {
+    void setupCompleteFlag() {
         QtSettingsStore s;
         QVERIFY(!s.setupComplete());
         s.setSetupComplete(true);
         QVERIFY(s.setupComplete());
     }
 
-    void lastConnectionHelpers()
-    {
+    void lastConnectionHelpers() {
         QtSettingsStore s;
         QCOMPARE(s.lastConnectionMode(), QStringLiteral("local"));
         s.setLastConnection(QStringLiteral("remote"), QStringLiteral("https://node.example"));
@@ -53,8 +48,7 @@ private slots:
         QCOMPARE(s.lastConnectionTarget(), QStringLiteral("https://node.example"));
     }
 
-    void emitsChangeAndDeduplicates()
-    {
+    void emitsChangeAndDeduplicates() {
         QtSettingsStore s;
         s.setValue(QStringLiteral("k"), 1);
         QSignalSpy spy(&s, &settings::ISettingsStore::changed);

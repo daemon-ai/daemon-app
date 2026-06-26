@@ -1,7 +1,6 @@
 #pragma once
 
 #include "models/imodel_catalog.h"
-
 #include "uimodels/variant_list_model.h"
 
 #include <QHash>
@@ -49,10 +48,10 @@ private:
     QTimer* m_timer = nullptr;
     QString m_currentId;
 
-    QList<QVariantMap> m_catalog;            // the full fake universe
-    QHash<QString, double> m_jobProgress;    // jobId -> 0..1
-    QHash<QString, bool> m_jobPaused;        // jobId -> paused
-    QHash<QString, QString> m_jobModel;      // jobId -> modelId
+    QList<QVariantMap> m_catalog;         // the full fake universe
+    QHash<QString, double> m_jobProgress; // jobId -> 0..1
+    QHash<QString, bool> m_jobPaused;     // jobId -> paused
+    QHash<QString, QString> m_jobModel;   // jobId -> modelId
     int m_nextJob = 1;
 };
 

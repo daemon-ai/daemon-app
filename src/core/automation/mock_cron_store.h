@@ -1,7 +1,6 @@
 #pragma once
 
 #include "automation/icron_store.h"
-
 #include "uimodels/variant_list_model.h"
 
 namespace automation {

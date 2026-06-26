@@ -1,19 +1,17 @@
 #include "fs/local_disk_fs_service.h"
 
+#include <filesystem>
 #include <QDir>
 #include <QFile>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
 
-#include <filesystem>
-
 class TestFsService : public QObject {
     Q_OBJECT
 
 private slots:
-    void staleWriteIsRejected()
-    {
+    void staleWriteIsRejected() {
         QTemporaryDir dir;
         QVERIFY(dir.isValid());
         const QString path = dir.path() + QStringLiteral("/note.txt");
@@ -36,15 +34,15 @@ private slots:
         }
 
         QSignalSpy writeSpy(&svc, &fs::IFsService::writeResult);
-        svc.write(QStringLiteral("workspace"), QStringLiteral("note.txt"), QByteArray("three"), base);
+        svc.write(QStringLiteral("workspace"), QStringLiteral("note.txt"), QByteArray("three"),
+                  base);
         QVERIFY(writeSpy.wait());
         const QList<QVariant> args = writeSpy.takeFirst();
         QCOMPARE(args.at(2).toBool(), false);
         QVERIFY(args.at(4).toString().contains(QStringLiteral("stale")));
     }
 
-    void symlinkEscapeIsRejected()
-    {
+    void symlinkEscapeIsRejected() {
         QTemporaryDir root;
         QTemporaryDir outside;
         QVERIFY(root.isValid());
@@ -54,8 +52,9 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             QCOMPARE(f.write("secret"), qint64(6));
         }
-        std::filesystem::create_symlink((outside.path() + QStringLiteral("/secret.txt")).toStdString(),
-                                        (root.path() + QStringLiteral("/link.txt")).toStdString());
+        std::filesystem::create_symlink(
+            (outside.path() + QStringLiteral("/secret.txt")).toStdString(),
+            (root.path() + QStringLiteral("/link.txt")).toStdString());
 
         fs::LocalDiskFsService svc(root.path());
         QSignalSpy errorSpy(&svc, &fs::IFsService::error);
@@ -65,8 +64,7 @@ private slots:
         QCOMPARE(readSpy.count(), 0);
     }
 
-    void forceWriteOverridesStaleRevision()
-    {
+    void forceWriteOverridesStaleRevision() {
         QTemporaryDir dir;
         QVERIFY(dir.isValid());
         const QString path = dir.path() + QStringLiteral("/note.txt");

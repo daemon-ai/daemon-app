@@ -55,15 +55,15 @@ class ISessionRoster;
 class IFleetTree;
 class IApprovalsInbox;
 class IDashboard;
-}
+} // namespace fleet
 namespace automation {
 class IRoutingStore;
 class ICronStore;
-}
+} // namespace automation
 namespace session {
 class ISessionSettings;
 class ICheckpointTimeline;
-}
+} // namespace session
 
 // Owns the application-wide services (session store, platform integrations) and
 // wires them to the QML scene. Kept UI-toolkit agnostic: the only desktop bit

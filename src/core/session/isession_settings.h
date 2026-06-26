@@ -15,8 +15,7 @@ class ISessionSettings : public QObject {
     // The session these overrides apply to. Setting it switches the active
     // per-session state (so the composer popover reflects the focused chat,
     // not a single global), emitting changed() so bound views refresh.
-    Q_PROPERTY(QString sessionId READ sessionId WRITE setSessionId NOTIFY
-                   sessionIdChanged)
+    Q_PROPERTY(QString sessionId READ sessionId WRITE setSessionId NOTIFY sessionIdChanged)
     Q_PROPERTY(QString profile READ profile WRITE setProfile NOTIFY changed)
     Q_PROPERTY(QString effort READ effort WRITE setEffort NOTIFY changed)
     Q_PROPERTY(bool fast READ fast WRITE setFast NOTIFY changed)

@@ -2,9 +2,9 @@
 
 #include <QColor>
 #include <QObject>
+#include <qqmlintegration.h>
 #include <QString>
 #include <QStringList>
-#include <qqmlintegration.h>
 
 // Shared, front-end-agnostic palette: the single source of truth for the four
 // named themes' color tokens (Light / Dark / Sepia / Midnight). The GUI's

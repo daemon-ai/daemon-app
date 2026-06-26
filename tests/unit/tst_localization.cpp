@@ -21,8 +21,7 @@ private slots:
     void arabicIsRightToLeft();
 };
 
-void TestLocalization::availableLocalesAreOffered()
-{
+void TestLocalization::availableLocalesAreOffered() {
     QStringList codes;
     for (const i18n::LocaleOption& opt : i18n::availableLocales()) {
         codes << opt.code;
@@ -34,16 +33,14 @@ void TestLocalization::availableLocalesAreOffered()
     QVERIFY(codes.contains(QStringLiteral("pseudo")));
 }
 
-void TestLocalization::resolveLocaleName()
-{
+void TestLocalization::resolveLocaleName() {
     QCOMPARE(i18n::resolveLocaleName(QStringLiteral("pseudo")), QStringLiteral("pseudo"));
     QCOMPARE(i18n::resolveLocaleName(QStringLiteral("ar")), QStringLiteral("ar"));
     // "system" resolves to the OS locale name, which is always non-empty.
     QVERIFY(!i18n::resolveLocaleName(QStringLiteral("system")).isEmpty());
 }
 
-void TestLocalization::pseudolocaleTranslatesMarkedStrings()
-{
+void TestLocalization::pseudolocaleTranslatesMarkedStrings() {
     i18n::applyLocale(QStringLiteral("pseudo"));
 
     // A C++ (QObject::tr) string and a QML (qsTr) string, in their respective
@@ -60,8 +57,7 @@ void TestLocalization::pseudolocaleTranslatesMarkedStrings()
     i18n::applyLocale(QStringLiteral("en"));
 }
 
-void TestLocalization::sourceLanguageRemovesTranslations()
-{
+void TestLocalization::sourceLanguageRemovesTranslations() {
     i18n::applyLocale(QStringLiteral("pseudo"));
     QVERIFY(QCoreApplication::translate("QObject", "YOU") != QStringLiteral("YOU"));
 
@@ -71,8 +67,7 @@ void TestLocalization::sourceLanguageRemovesTranslations()
     QCOMPARE(QCoreApplication::translate("QObject", "YOU"), QStringLiteral("YOU"));
 }
 
-void TestLocalization::arabicIsRightToLeft()
-{
+void TestLocalization::arabicIsRightToLeft() {
     QCOMPARE(i18n::applyLocale(QStringLiteral("ar")), Qt::RightToLeft);
     QCOMPARE(i18n::applyLocale(QStringLiteral("en")), Qt::LeftToRight);
     i18n::applyLocale(QStringLiteral("en"));

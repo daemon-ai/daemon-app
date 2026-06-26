@@ -1,14 +1,13 @@
 #pragma once
 
-#include <QColor>
-#include <QList>
-#include <QObject>
-#include <QString>
-
 #include <KSyntaxHighlighting/AbstractHighlighter>
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/State>
 #include <KSyntaxHighlighting/Theme>
+#include <QColor>
+#include <QList>
+#include <QObject>
+#include <QString>
 
 namespace editor {
 

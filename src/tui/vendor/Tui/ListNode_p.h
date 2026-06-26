@@ -24,13 +24,11 @@ class ListNode;
 template <typename T, typename Tag>
 class ListHead {
 public:
-    ListHead(){}
+    ListHead() {}
     ListHead(const ListHead&) = delete;
-    ListHead &operator=(const ListHead&) = delete;
+    ListHead& operator=(const ListHead&) = delete;
 
-    ~ListHead() {
-        clear();
-    }
+    ~ListHead() { clear(); }
 
     void clear() {
         while (first) {
@@ -38,14 +36,14 @@ public:
         }
     }
 
-    void appendOrMoveToLast(T *e) {
+    void appendOrMoveToLast(T* e) {
         constexpr auto nodeOffset = ListTrait<Tag>::offset;
         auto& node = e->*nodeOffset;
         if (last == e) {
             return;
         }
         if (node.next) {
-            //move
+            // move
             remove(e);
         }
         if (last) {
@@ -58,9 +56,9 @@ public:
         }
     }
 
-    void remove(T *e) {
+    void remove(T* e) {
         constexpr auto nodeOffset = ListTrait<Tag>::offset;
-        auto &node = e->*nodeOffset;
+        auto& node = e->*nodeOffset;
         if (e == first) {
             first = node.next;
         }
@@ -77,20 +75,19 @@ public:
         node.next = nullptr;
     }
 
-    T *first = nullptr;
-    T *last = nullptr;
+    T* first = nullptr;
+    T* last = nullptr;
 };
-
 
 template <typename T>
 class ListNode {
 public:
     ListNode() = default;
     ListNode(const ListNode&) = delete;
-    ListNode &operator=(const ListNode&) = delete;
+    ListNode& operator=(const ListNode&) = delete;
 
-    T *prev = nullptr;
-    T *next = nullptr;
+    T* prev = nullptr;
+    T* next = nullptr;
 };
 
 TUIWIDGETS_NS_END

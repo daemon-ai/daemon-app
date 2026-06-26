@@ -3,12 +3,11 @@
 #include "daemonnet/seed_transcripts.h"
 #include "uimodels/variant_list_model.h"
 
+#include <functional>
 #include <QDateTime>
 #include <QHash>
 #include <QSet>
 #include <QStringList>
-
-#include <functional>
 
 namespace daemonnet {
 namespace {
@@ -25,73 +24,84 @@ using domain::UnitKind;
 using domain::UnitNode;
 using domain::UnitState;
 
-QString profileModel(const QString& profile)
-{
+QString profileModel(const QString& profile) {
     static const QHash<QString, QString> kModels = {
-        { QStringLiteral("prof-1"), QStringLiteral("llama-3.1-70b-instruct") },
-        { QStringLiteral("prof-2"), QStringLiteral("qwen2.5-coder-32b") },
-        { QStringLiteral("prof-3"), QStringLiteral("mixtral-8x7b") },
+        {QStringLiteral("prof-1"), QStringLiteral("llama-3.1-70b-instruct")},
+        {QStringLiteral("prof-2"), QStringLiteral("qwen2.5-coder-32b")},
+        {QStringLiteral("prof-3"), QStringLiteral("mixtral-8x7b")},
     };
     return kModels.value(profile, QString());
 }
 
-QString unitKindStr(UnitKind k)
-{
+QString unitKindStr(UnitKind k) {
     switch (k) {
-    case UnitKind::Orchestrator: return QStringLiteral("orchestrator");
-    case UnitKind::Host: return QStringLiteral("host");
-    case UnitKind::Engine: return QStringLiteral("worker");
+    case UnitKind::Orchestrator:
+        return QStringLiteral("orchestrator");
+    case UnitKind::Host:
+        return QStringLiteral("host");
+    case UnitKind::Engine:
+        return QStringLiteral("worker");
     }
     return QStringLiteral("worker");
 }
 
-QString unitStatusStr(UnitState s)
-{
+QString unitStatusStr(UnitState s) {
     switch (s) {
-    case UnitState::Running: return QStringLiteral("running");
-    case UnitState::Finished: return QStringLiteral("idle");
-    case UnitState::Unknown: return QStringLiteral("idle");
+    case UnitState::Running:
+        return QStringLiteral("running");
+    case UnitState::Finished:
+        return QStringLiteral("idle");
+    case UnitState::Unknown:
+        return QStringLiteral("idle");
     }
     return QStringLiteral("idle");
 }
 
-QString sessionStateStr(SessionState s)
-{
+QString sessionStateStr(SessionState s) {
     switch (s) {
-    case SessionState::Active: return QStringLiteral("active");
-    case SessionState::Suspended: return QStringLiteral("suspended");
-    case SessionState::Ready: return QStringLiteral("ready");
-    case SessionState::Completed: return QStringLiteral("completed");
-    case SessionState::Unknown: return QStringLiteral("idle");
+    case SessionState::Active:
+        return QStringLiteral("active");
+    case SessionState::Suspended:
+        return QStringLiteral("suspended");
+    case SessionState::Ready:
+        return QStringLiteral("ready");
+    case SessionState::Completed:
+        return QStringLiteral("completed");
+    case SessionState::Unknown:
+        return QStringLiteral("idle");
     }
     return QStringLiteral("idle");
 }
 
-QString lifecycleStr(Lifecycle l)
-{
+QString lifecycleStr(Lifecycle l) {
     return l == Lifecycle::Live ? QStringLiteral("live") : QStringLiteral("durable");
 }
 
 } // namespace
 
 MockDaemonNet::MockDaemonNet(QObject* parent)
-    : IDaemonNet(parent)
-    , m_fleetModel(new uimodels::VariantListModel(this))
-    , m_sessionsModel(new uimodels::VariantListModel(this))
-    , m_channelsModel(new uimodels::VariantListModel(this))
-    , m_byPeerModel(new uimodels::VariantListModel(this))
-{
+    : IDaemonNet(parent), m_fleetModel(new uimodels::VariantListModel(this)),
+      m_sessionsModel(new uimodels::VariantListModel(this)),
+      m_channelsModel(new uimodels::VariantListModel(this)),
+      m_byPeerModel(new uimodels::VariantListModel(this)) {
     buildSeed();
     computeProjections();
 }
 
-QObject* MockDaemonNet::fleet() const { return m_fleetModel; }
-QObject* MockDaemonNet::sessions() const { return m_sessionsModel; }
-QObject* MockDaemonNet::channels() const { return m_channelsModel; }
-QObject* MockDaemonNet::byPeer() const { return m_byPeerModel; }
+QObject* MockDaemonNet::fleet() const {
+    return m_fleetModel;
+}
+QObject* MockDaemonNet::sessions() const {
+    return m_sessionsModel;
+}
+QObject* MockDaemonNet::channels() const {
+    return m_channelsModel;
+}
+QObject* MockDaemonNet::byPeer() const {
+    return m_byPeerModel;
+}
 
-QVariantList MockDaemonNet::nodes() const
-{
+QVariantList MockDaemonNet::nodes() const {
     QVariantList out;
     out.reserve(static_cast<int>(m_nodes.size()));
     for (const QVariantMap& n : m_nodes) {
@@ -100,8 +110,7 @@ QVariantList MockDaemonNet::nodes() const
     return out;
 }
 
-QVariantList MockDaemonNet::edges() const
-{
+QVariantList MockDaemonNet::edges() const {
     QVariantList out;
     out.reserve(static_cast<int>(m_edges.size()));
     for (const QVariantMap& e : m_edges) {
@@ -110,13 +119,11 @@ QVariantList MockDaemonNet::edges() const
     return out;
 }
 
-SeedBundle MockDaemonNet::seed() const
-{
-    return SeedBundle{ m_units, m_sessions, m_tags, m_participants };
+SeedBundle MockDaemonNet::seed() const {
+    return SeedBundle{m_units, m_sessions, m_tags, m_participants};
 }
 
-QList<domain::UnitNode> MockDaemonNet::unitChildren(const domain::UnitId& parent) const
-{
+QList<domain::UnitNode> MockDaemonNet::unitChildren(const domain::UnitId& parent) const {
     QList<domain::UnitNode> out;
     for (const UnitNode& u : m_units) {
         if (u.parentId == parent) {
@@ -126,8 +133,7 @@ QList<domain::UnitNode> MockDaemonNet::unitChildren(const domain::UnitId& parent
     return out;
 }
 
-domain::UnitNode MockDaemonNet::unit(const domain::UnitId& id) const
-{
+domain::UnitNode MockDaemonNet::unit(const domain::UnitId& id) const {
     for (const UnitNode& u : m_units) {
         if (u.id == id) {
             return u;
@@ -136,12 +142,15 @@ domain::UnitNode MockDaemonNet::unit(const domain::UnitId& id) const
     return {};
 }
 
-QList<domain::Tag> MockDaemonNet::tags() const { return m_tags; }
+QList<domain::Tag> MockDaemonNet::tags() const {
+    return m_tags;
+}
 
-QList<domain::Participant> MockDaemonNet::participants() const { return m_participants; }
+QList<domain::Participant> MockDaemonNet::participants() const {
+    return m_participants;
+}
 
-bool MockDaemonNet::isInSubtree(const domain::UnitId& unitId, const domain::UnitId& rootId) const
-{
+bool MockDaemonNet::isInSubtree(const domain::UnitId& unitId, const domain::UnitId& rootId) const {
     domain::UnitId cur = unitId;
     while (!cur.isEmpty()) {
         if (cur == rootId) {
@@ -152,20 +161,19 @@ bool MockDaemonNet::isInSubtree(const domain::UnitId& unitId, const domain::Unit
     return false;
 }
 
-QSet<QString> MockDaemonNet::sessionsBoundBy(const QString& edgeKind, const QString& lensKey) const
-{
+QSet<QString> MockDaemonNet::sessionsBoundBy(const QString& edgeKind,
+                                             const QString& lensKey) const {
     QSet<QString> ids;
     for (const QVariantMap& e : m_edges) {
-        if (e.value(QStringLiteral("edgeKind")).toString() == edgeKind
-            && e.value(QStringLiteral("target")).toString() == lensKey) {
+        if (e.value(QStringLiteral("edgeKind")).toString() == edgeKind &&
+            e.value(QStringLiteral("target")).toString() == lensKey) {
             ids.insert(e.value(QStringLiteral("source")).toString());
         }
     }
     return ids;
 }
 
-QList<domain::Session> MockDaemonNet::sessionsInScope(const domain::ListScope& scope) const
-{
+QList<domain::Session> MockDaemonNet::sessionsInScope(const domain::ListScope& scope) const {
     using domain::NodeType;
     QList<domain::Session> out;
     QSet<QString> lensIds;
@@ -207,8 +215,7 @@ QList<domain::Session> MockDaemonNet::sessionsInScope(const domain::ListScope& s
     return out;
 }
 
-domain::Session MockDaemonNet::sessionDetail(const domain::SessionId& id) const
-{
+domain::Session MockDaemonNet::sessionDetail(const domain::SessionId& id) const {
     for (const Session& s : m_sessions) {
         if (s.sessionId == id) {
             return s;
@@ -217,39 +224,38 @@ domain::Session MockDaemonNet::sessionDetail(const domain::SessionId& id) const
     return {};
 }
 
-QString MockDaemonNet::content(const domain::SessionId& id) const
-{
+QString MockDaemonNet::content(const domain::SessionId& id) const {
     return sessionDetail(id).content;
 }
 
-void MockDaemonNet::buildSeed()
-{
+void MockDaemonNet::buildSeed() {
     const QDateTime now = QDateTime::currentDateTime();
 
     // --- Tags (client-local cross-cutting labels) ---
     m_tags = {
-        { 1, QStringLiteral("ideas"), QStringLiteral("#2383e2") },
-        { 2, QStringLiteral("todo"), QStringLiteral("#e2a423") },
+        {1, QStringLiteral("ideas"), QStringLiteral("#2383e2")},
+        {2, QStringLiteral("todo"), QStringLiteral("#e2a423")},
     };
 
     // --- Participants (the active chat/transcript roster: a local Agent + a human User, both
-    //     present/"available" so their dots render green). Mirrors the daemon ConversationMember set. ---
+    //     present/"available" so their dots render green). Mirrors the daemon ConversationMember
+    //     set. ---
     m_participants = {
-        { QStringLiteral("agent"), tr("Agent"), QStringLiteral("available"),
-          QStringLiteral("#3fb950"), true },
-        { QStringLiteral("user"), tr("User"), QStringLiteral("available"),
-          QStringLiteral("#3fb950"), false },
+        {QStringLiteral("agent"), tr("Agent"), QStringLiteral("available"),
+         QStringLiteral("#3fb950"), true},
+        {QStringLiteral("user"), tr("User"), QStringLiteral("available"), QStringLiteral("#3fb950"),
+         false},
     };
 
     // --- Units: the fleet-of-fleets (a lone Engine root, nested orchestrators, a Host) ---
     static const QHash<QString, QString> kUnitProfiles = {
-        { QStringLiteral("n-scratch"), QStringLiteral("prof-1") },
-        { QStringLiteral("n-acme"), QStringLiteral("prof-1") },
-        { QStringLiteral("n-build"), QStringLiteral("prof-1") },
-        { QStringLiteral("n-coder"), QStringLiteral("prof-2") },
-        { QStringLiteral("n-worker"), QStringLiteral("prof-2") },
-        { QStringLiteral("n-review"), QStringLiteral("prof-3") },
-        { QStringLiteral("n-deep"), QStringLiteral("prof-3") },
+        {QStringLiteral("n-scratch"), QStringLiteral("prof-1")},
+        {QStringLiteral("n-acme"), QStringLiteral("prof-1")},
+        {QStringLiteral("n-build"), QStringLiteral("prof-1")},
+        {QStringLiteral("n-coder"), QStringLiteral("prof-2")},
+        {QStringLiteral("n-worker"), QStringLiteral("prof-2")},
+        {QStringLiteral("n-review"), QStringLiteral("prof-3")},
+        {QStringLiteral("n-deep"), QStringLiteral("prof-3")},
     };
     const auto mkUnit = [&](const char* id, const char* parent, const char* name, UnitKind kind,
                             UnitState state, const char* work) {
@@ -262,12 +268,14 @@ void MockDaemonNet::buildSeed()
         n.state = state;
         n.work = QString::fromUtf8(work);
         n.session = SessionId(n.id.toString());
-        n.role = n.parentId.isEmpty() ? SessionRole::Primary
-            : (n.id == UnitId(QStringLiteral("n-worker")) ? SessionRole::EphemeralSubagent
-                                                          : SessionRole::ManagedChild);
-        n.profile = (kind == UnitKind::Host)
-            ? ProfileRef()
-            : ProfileRef(kUnitProfiles.value(n.id.toString(), QStringLiteral("prof-1")));
+        n.role = n.parentId.isEmpty()
+                     ? SessionRole::Primary
+                     : (n.id == UnitId(QStringLiteral("n-worker")) ? SessionRole::EphemeralSubagent
+                                                                   : SessionRole::ManagedChild);
+        n.profile =
+            (kind == UnitKind::Host)
+                ? ProfileRef()
+                : ProfileRef(kUnitProfiles.value(n.id.toString(), QStringLiteral("prof-1")));
         m_units.push_back(n);
     };
     mkUnit("n-scratch", "", "scratchpad", UnitKind::Engine, UnitState::Running, "");
@@ -279,12 +287,14 @@ void MockDaemonNet::buildSeed()
     mkUnit("n-review", "n-build", "Reviewer", UnitKind::Engine, UnitState::Finished, "");
     mkUnit("n-deep", "n-build", "Deep Fleet", UnitKind::Orchestrator, UnitState::Running,
            "Verifying outputs");
-    mkUnit("n-worker", "n-deep", "Worker A", UnitKind::Engine, UnitState::Running, "Running checks");
+    mkUnit("n-worker", "n-deep", "Worker A", UnitKind::Engine, UnitState::Running,
+           "Running checks");
     mkUnit("n-ops", "n-acme", "Ops Host", UnitKind::Host, UnitState::Running, "");
 
     // --- Sessions: hung off units at multiple depths (+ the renderer-demo transcripts) ---
-    const auto sess = [&](const char* sid, const char* unit, const QList<int>& tagIds, bool archived,
-                          Lifecycle lifecycle, const QString& title, const QString& content) {
+    const auto sess = [&](const char* sid, const char* unit, const QList<int>& tagIds,
+                          bool archived, Lifecycle lifecycle, const QString& title,
+                          const QString& content) {
         Session c;
         c.sessionId = SessionId(QString::fromLatin1(sid));
         c.unitId = UnitId(QString::fromLatin1(unit));
@@ -307,27 +317,27 @@ void MockDaemonNet::buildSeed()
         m_sessions.push_back(c);
     };
 
-    sess("s-scratch", "n-scratch", { 1 }, false, Lifecycle::Durable, QStringLiteral("Scratch ideas"),
+    sess("s-scratch", "n-scratch", {1}, false, Lifecycle::Durable, QStringLiteral("Scratch ideas"),
          QStringLiteral("# Scratchpad\n\nA lone unit with **no fleet** behind it:\n\n"
                         "- One root, one session\n- Still the same surface\n"));
     sess("s-acme", "n-acme", {}, false, Lifecycle::Durable, QStringLiteral("Release planning"),
          QStringLiteral("## Release planning\n\nClassify, gate, and route the incoming work.\n"));
-    sess("s-build", "n-build", { 2 }, false, Lifecycle::Live, QStringLiteral("Dispatch log"),
+    sess("s-build", "n-build", {2}, false, Lifecycle::Live, QStringLiteral("Dispatch log"),
          QStringLiteral("Spawned Coder and Reviewer; admitted within budget.\n"));
-    sess("s-coder-impl", "n-coder", { 2 }, false, Lifecycle::Live,
+    sess("s-coder-impl", "n-coder", {2}, false, Lifecycle::Live,
          QStringLiteral("Implement endpoint"),
          QStringLiteral("Working the `/tree` endpoint.\n\n> Stream UnitNode children.\n"));
     sess("s-coder-refactor", "n-coder", {}, false, Lifecycle::Live, QStringLiteral("Refactor pass"),
          QStringLiteral("Tidy the projection before review.\n"));
-    sess("s-review-old", "n-review", { 1 }, true, Lifecycle::Durable,
+    sess("s-review-old", "n-review", {1}, true, Lifecycle::Durable,
          QStringLiteral("Old review notes"),
          QStringLiteral("Archived notes from an earlier review session.\n"));
     sess("s-worker-verify", "n-worker", {}, false, Lifecycle::Live,
          QStringLiteral("Verification run"),
          QStringLiteral("Read-only checker over the worktree.\n"));
-    sess("s-demo-blocks", "n-coder", { 1 }, false, Lifecycle::Live,
+    sess("s-demo-blocks", "n-coder", {1}, false, Lifecycle::Live,
          QStringLiteral("Agent blocks demo"), seed::agentBlocksMarkdown());
-    sess("s-demo-roles", "n-coder", { 1 }, false, Lifecycle::Live,
+    sess("s-demo-roles", "n-coder", {1}, false, Lifecycle::Live,
          QStringLiteral("Message roles demo"), seed::roleLayerMarkdown());
 
     // Transport-bearing sessions (the combos): a matrix DM, an internal Room, a Matrix channel.
@@ -337,14 +347,17 @@ void MockDaemonNet::buildSeed()
          QStringLiteral("Multi-agent design review in the internal room.\n"));
     sess("s-secops", "n-build", {}, false, Lifecycle::Live, QStringLiteral("#secops triage"),
          QStringLiteral("Triaging #secops with @alice and @bob.\n"));
-    // Generic (non-messaging) transport sessions: a scheduled cron trigger + an HTTP/API caller. These
-    // have no conversation/channel taxonomy - they are origin-tagged sessions on their transport.
+    // Generic (non-messaging) transport sessions: a scheduled cron trigger + an HTTP/API caller.
+    // These have no conversation/channel taxonomy - they are origin-tagged sessions on their
+    // transport.
     sess("s-cron-backup", "n-ops", {}, false, Lifecycle::Live, QStringLiteral("Nightly backup"),
          QStringLiteral("Scheduled `nightly-backup` trigger, run #1842.\n"));
-    sess("s-http-dashboard", "n-build", {}, false, Lifecycle::Live, QStringLiteral("Dashboard query"),
+    sess("s-http-dashboard", "n-build", {}, false, Lifecycle::Live,
+         QStringLiteral("Dashboard query"),
          QStringLiteral("Inbound `GET /status` from the `dashboard` API key.\n"));
 
-    // --- Raw graph (agents + sessions + transports/peers/rooms + edges) for channels/byPeer/patch-bay ---
+    // --- Raw graph (agents + sessions + transports/peers/rooms + edges) for
+    // channels/byPeer/patch-bay ---
     const auto node = [&](const QString& id, const QString& kind, const QString& label,
                           QVariantMap extra = {}) {
         QVariantMap n = std::move(extra);
@@ -408,7 +421,8 @@ void MockDaemonNet::buildSeed()
          aliceX);
     QVariantMap bobX;
     bobX[QStringLiteral("nature")] = QStringLiteral("human");
-    node(QStringLiteral("@bob:hs.org"), QStringLiteral("peer"), QStringLiteral("@bob:hs.org"), bobX);
+    node(QStringLiteral("@bob:hs.org"), QStringLiteral("peer"), QStringLiteral("@bob:hs.org"),
+         bobX);
 
     QVariantMap viewerX;
     viewerX[QStringLiteral("role")] = QStringLiteral("viewer");
@@ -435,8 +449,8 @@ void MockDaemonNet::buildSeed()
     edge(QStringLiteral("p-design-op"), QStringLiteral("s-design"), QStringLiteral("operator-bob"),
          QStringLiteral("participant"), QStringLiteral("spectator"));
 
-    edge(QStringLiteral("o-secops"), QStringLiteral("s-secops"), QStringLiteral("matrix/@bot:hs.org"),
-         QStringLiteral("over"));
+    edge(QStringLiteral("o-secops"), QStringLiteral("s-secops"),
+         QStringLiteral("matrix/@bot:hs.org"), QStringLiteral("over"));
     edge(QStringLiteral("ip-secops"), QStringLiteral("s-secops"), QStringLiteral("#secops"),
          QStringLiteral("inPlace"));
     edge(QStringLiteral("p-secops-a"), QStringLiteral("s-secops"), QStringLiteral("@alice:hs.org"),
@@ -455,15 +469,15 @@ void MockDaemonNet::buildSeed()
     rebuildRoutingGraph();
 }
 
-void MockDaemonNet::buildTransportsTree()
-{
+void MockDaemonNet::buildTransportsTree() {
     // The Transports tree is the events-IO axis (daemon-messaging-adapter-spec.md): each transport
     // instance declares its own subtree from its adapter capabilities. MESSAGING transports
-    // (matrix/rooms; `messaging() == Some`) expand to their conversations grouped by ConversationType
-    // (Channel/GroupDm/Dm/Thread) -> session leaf; GENERIC transports (cron/http; `messaging() == None`)
-    // expand directly to their origin-tagged sessions. Mock-seeded here; a daemon adapter fills the same
-    // rows from `transport_instances` + capabilities later. The split + coarse capabilities mirror
-    // MockTransportRegistry (matrix/internal = messaging; cron/http = generic).
+    // (matrix/rooms; `messaging() == Some`) expand to their conversations grouped by
+    // ConversationType (Channel/GroupDm/Dm/Thread) -> session leaf; GENERIC transports (cron/http;
+    // `messaging() == None`) expand directly to their origin-tagged sessions. Mock-seeded here; a
+    // daemon adapter fills the same rows from `transport_instances` + capabilities later. The split
+    // + coarse capabilities mirror MockTransportRegistry (matrix/internal = messaging; cron/http =
+    // generic).
     m_transports.clear();
     const auto row = [&](int depth, const QString& id, const QString& parentId, const QString& kind,
                          const QString& convType, const QString& label, const QString& sublabel,
@@ -485,7 +499,8 @@ void MockDaemonNet::buildTransportsTree()
         m_transports.push_back(r);
     };
 
-    // matrix /@bot:hs.org (messaging) -> Channels {#secops -> s-secops, #help}, DMs {@alice -> s-help, @bob}
+    // matrix /@bot:hs.org (messaging) -> Channels {#secops -> s-secops, #help}, DMs {@alice ->
+    // s-help, @bob}
     row(0, QStringLiteral("tx:matrix"), QString(), QStringLiteral("account"), QString(),
         QStringLiteral("matrix /@bot:hs.org"), QString(), QString(),
         QStringLiteral("matrix/@bot:hs.org"), QStringLiteral("available"), 0, true);
@@ -493,18 +508,18 @@ void MockDaemonNet::buildTransportsTree()
         QString(), QStringLiteral("Channels"), QString(), QString(), QString(), QString(), 0, true);
     row(2, QStringLiteral("tx:matrix/ch/secops"), QStringLiteral("tx:matrix/ch"),
         QStringLiteral("conversation"), QStringLiteral("channel"), QStringLiteral("#secops"),
-        QStringLiteral("triage"), QStringLiteral("s-secops"), QStringLiteral("#secops"), QString(), 2,
-        false);
+        QStringLiteral("triage"), QStringLiteral("s-secops"), QStringLiteral("#secops"), QString(),
+        2, false);
     row(2, QStringLiteral("tx:matrix/ch/help"), QStringLiteral("tx:matrix/ch"),
-        QStringLiteral("conversation"), QStringLiteral("channel"), QStringLiteral("#help"), QString(),
-        QString(), QStringLiteral("#help"), QString(), 0, false);
+        QStringLiteral("conversation"), QStringLiteral("channel"), QStringLiteral("#help"),
+        QString(), QString(), QStringLiteral("#help"), QString(), 0, false);
     row(1, QStringLiteral("tx:matrix/dm"), QStringLiteral("tx:matrix"), QStringLiteral("convGroup"),
         QString(), QStringLiteral("Direct Messages"), QString(), QString(), QString(), QString(), 0,
         true);
     row(2, QStringLiteral("tx:matrix/dm/alice"), QStringLiteral("tx:matrix/dm"),
         QStringLiteral("conversation"), QStringLiteral("dm"), QStringLiteral("@alice"),
-        QStringLiteral("Onboarding help"), QStringLiteral("s-help"), QStringLiteral("@alice:hs.org"),
-        QString(), 0, false);
+        QStringLiteral("Onboarding help"), QStringLiteral("s-help"),
+        QStringLiteral("@alice:hs.org"), QString(), 0, false);
     row(2, QStringLiteral("tx:matrix/dm/bob"), QStringLiteral("tx:matrix/dm"),
         QStringLiteral("conversation"), QStringLiteral("dm"), QStringLiteral("@bob"), QString(),
         QString(), QStringLiteral("@bob:hs.org"), QString(), 0, false);
@@ -527,16 +542,18 @@ void MockDaemonNet::buildTransportsTree()
 
     // http /api (generic) -> key: dashboard -> s-http-dashboard
     row(0, QStringLiteral("tx:http"), QString(), QStringLiteral("account"), QString(),
-        QStringLiteral("http /api"), QString(), QString(), QStringLiteral("http"), QString(), 0, true);
+        QStringLiteral("http /api"), QString(), QString(), QStringLiteral("http"), QString(), 0,
+        true);
     row(1, QStringLiteral("tx:http/dashboard"), QStringLiteral("tx:http"), QStringLiteral("caller"),
         QString(), QStringLiteral("key: dashboard"), QStringLiteral("GET /status"),
         QStringLiteral("s-http-dashboard"), QString(), QString(), 0, false);
 }
 
-QList<TransportTreeRow> MockDaemonNet::transportsTree() const { return m_transports; }
+QList<TransportTreeRow> MockDaemonNet::transportsTree() const {
+    return m_transports;
+}
 
-void MockDaemonNet::computeProjections()
-{
+void MockDaemonNet::computeProjections() {
     const QString kEdgeKind = QStringLiteral("edgeKind");
     const QString kSource = QStringLiteral("source");
     const QString kTarget = QStringLiteral("target");
@@ -586,16 +603,16 @@ void MockDaemonNet::computeProjections()
     m_fleetModel->setRows(fleetRows);
 
     // --- sessions roster (from typed sessions) ---
-    // Per-session token usage (deterministic; drives the dashboard's live "tokens today" total). Kept
-    // explicit rather than content-derived so the figures read like real usage and closing any session
-    // visibly moves the total.
+    // Per-session token usage (deterministic; drives the dashboard's live "tokens today" total).
+    // Kept explicit rather than content-derived so the figures read like real usage and closing any
+    // session visibly moves the total.
     static const QHash<QString, int> kTokens = {
-        { QStringLiteral("s-scratch"), 320 },         { QStringLiteral("s-acme"), 880 },
-        { QStringLiteral("s-build"), 540 },           { QStringLiteral("s-coder-impl"), 1240 },
-        { QStringLiteral("s-coder-refactor"), 760 },  { QStringLiteral("s-review-old"), 410 },
-        { QStringLiteral("s-worker-verify"), 600 },   { QStringLiteral("s-demo-blocks"), 1500 },
-        { QStringLiteral("s-demo-roles"), 980 },      { QStringLiteral("s-help"), 1840 },
-        { QStringLiteral("s-design"), 720 },          { QStringLiteral("s-secops"), 1100 },
+        {QStringLiteral("s-scratch"), 320},        {QStringLiteral("s-acme"), 880},
+        {QStringLiteral("s-build"), 540},          {QStringLiteral("s-coder-impl"), 1240},
+        {QStringLiteral("s-coder-refactor"), 760}, {QStringLiteral("s-review-old"), 410},
+        {QStringLiteral("s-worker-verify"), 600},  {QStringLiteral("s-demo-blocks"), 1500},
+        {QStringLiteral("s-demo-roles"), 980},     {QStringLiteral("s-help"), 1840},
+        {QStringLiteral("s-design"), 720},         {QStringLiteral("s-secops"), 1100},
     };
     QList<QVariantMap> sessionRows;
     for (const Session& c : m_sessions) {
@@ -653,8 +670,8 @@ void MockDaemonNet::computeProjections()
         row[QStringLiteral("transport")] = byId.value(transportId).value(kLabel);
         row[QStringLiteral("peer")] = peerLabel;
         row[QStringLiteral("scope")] = scope;
-        row[QStringLiteral("presence")]
-            = byId.value(transportId).value(QStringLiteral("presence"), QStringLiteral("unknown"));
+        row[QStringLiteral("presence")] =
+            byId.value(transportId).value(QStringLiteral("presence"), QStringLiteral("unknown"));
         row[QStringLiteral("session")] = sid;
         channelRows.append(row);
     }
@@ -691,8 +708,7 @@ using domain::OriginScope;
 using domain::OriginScopeKind;
 
 // `*`-wildcard glob (the only metacharacter is `*`), ported from daemon-node routing.rs.
-bool globMatch(const QString& pattern, const QString& value)
-{
+bool globMatch(const QString& pattern, const QString& value) {
     const QString& p = pattern;
     const QString& v = value;
     int pi = 0;
@@ -719,8 +735,7 @@ bool globMatch(const QString& pattern, const QString& value)
     return pi == p.size();
 }
 
-bool transportMatches(const QString& pattern, const domain::TransportId& t)
-{
+bool transportMatches(const QString& pattern, const domain::TransportId& t) {
     if (pattern == QStringLiteral("*")) {
         return true;
     }
@@ -730,8 +745,7 @@ bool transportMatches(const QString& pattern, const domain::TransportId& t)
     return t.toString().section(QLatin1Char('/'), 0, 0) == pattern; // family prefix
 }
 
-bool scopeMatches(const QString& glob, const OriginScope& s)
-{
+bool scopeMatches(const QString& glob, const OriginScope& s) {
     if (glob == QStringLiteral("*")) {
         return true;
     }
@@ -749,8 +763,7 @@ bool scopeMatches(const QString& glob, const OriginScope& s)
 
 } // namespace
 
-void MockDaemonNet::buildRoutingSeed()
-{
+void MockDaemonNet::buildRoutingSeed() {
     using domain::DeliveryTarget;
     using domain::ProfileRef;
     using domain::RouteAddr;
@@ -777,24 +790,25 @@ void MockDaemonNet::buildRoutingSeed()
 
     // Account -> agent baselines (instance_profiles; precedence step 3).
     m_accountAgents = {
-        { TransportId(QStringLiteral("matrix/@bot:hs.org")), ProfileRef(QStringLiteral("prof-1")) },
-        { TransportId(QStringLiteral("internal")), ProfileRef(QStringLiteral("prof-2")) },
+        {TransportId(QStringLiteral("matrix/@bot:hs.org")), ProfileRef(QStringLiteral("prof-1"))},
+        {TransportId(QStringLiteral("internal")), ProfileRef(QStringLiteral("prof-2"))},
     };
 
     // Config-time binding rules (read-only): a #secops* override + a catch-all.
     m_rules = {
-        { QStringLiteral("matrix"), QStringLiteral("#secops*"), QStringLiteral("perChat"),
-          ProfileRef(QStringLiteral("prof-3")), QStringLiteral("fromOrigin") },
-        { QStringLiteral("*"), QStringLiteral("*"), QStringLiteral("perThread"), ProfileRef(),
-          QStringLiteral("fromOrigin") },
+        {QStringLiteral("matrix"), QStringLiteral("#secops*"), QStringLiteral("perChat"),
+         ProfileRef(QStringLiteral("prof-3")), QStringLiteral("fromOrigin")},
+        {QStringLiteral("*"), QStringLiteral("*"), QStringLiteral("perThread"), ProfileRef(),
+         QStringLiteral("fromOrigin")},
     };
 
-    // Explicit pins (resolve-first): a channel pin (with an agent override) + a DM pin (fall-through).
+    // Explicit pins (resolve-first): a channel pin (with an agent override) + a DM pin
+    // (fall-through).
     m_pins = {
-        { grp("matrix/@bot:hs.org", "#secops"), SessionId(QStringLiteral("s-secops")),
-          ProfileRef(QStringLiteral("prof-2")), QStringLiteral("perChat") },
-        { dm("matrix/@bot:hs.org", "@alice:hs.org"), SessionId(QStringLiteral("s-help")),
-          ProfileRef(), QStringLiteral("perUser") },
+        {grp("matrix/@bot:hs.org", "#secops"), SessionId(QStringLiteral("s-secops")),
+         ProfileRef(QStringLiteral("prof-2")), QStringLiteral("perChat")},
+        {dm("matrix/@bot:hs.org", "@alice:hs.org"), SessionId(QStringLiteral("s-help")),
+         ProfileRef(), QStringLiteral("perUser")},
     };
 
     // Per-session delivery (one Primary each; two carry a Spectator to exercise SinkKind).
@@ -806,33 +820,37 @@ void MockDaemonNet::buildRoutingSeed()
         return d;
     };
     m_delivery.clear();
-    m_delivery[QStringLiteral("s-secops")]
-        = { tgt("matrix/@bot:hs.org", "#secops", SinkKind::Primary),
-            tgt("internal", "operator-bob", SinkKind::Spectator) };
-    m_delivery[QStringLiteral("s-help")]
-        = { tgt("matrix/@bot:hs.org", "@alice:hs.org", SinkKind::Primary) };
-    m_delivery[QStringLiteral("s-design")] = { tgt("internal", "design-review", SinkKind::Primary),
-                                               tgt("gui", "desktop", SinkKind::Spectator) };
-    m_delivery[QStringLiteral("s-cron-backup")] = { tgt("gui", "desktop", SinkKind::Primary) };
-    m_delivery[QStringLiteral("s-http-dashboard")] = { tgt("http", "dashboard", SinkKind::Primary) };
+    m_delivery[QStringLiteral("s-secops")] = {
+        tgt("matrix/@bot:hs.org", "#secops", SinkKind::Primary),
+        tgt("internal", "operator-bob", SinkKind::Spectator)};
+    m_delivery[QStringLiteral("s-help")] = {
+        tgt("matrix/@bot:hs.org", "@alice:hs.org", SinkKind::Primary)};
+    m_delivery[QStringLiteral("s-design")] = {tgt("internal", "design-review", SinkKind::Primary),
+                                              tgt("gui", "desktop", SinkKind::Spectator)};
+    m_delivery[QStringLiteral("s-cron-backup")] = {tgt("gui", "desktop", SinkKind::Primary)};
+    m_delivery[QStringLiteral("s-http-dashboard")] = {tgt("http", "dashboard", SinkKind::Primary)};
 }
 
-QList<RoutingPin> MockDaemonNet::routes() const { return m_pins; }
-QList<BindingRule> MockDaemonNet::bindingRules() const { return m_rules; }
-QList<AccountAgent> MockDaemonNet::accountsAgents() const { return m_accountAgents; }
+QList<RoutingPin> MockDaemonNet::routes() const {
+    return m_pins;
+}
+QList<BindingRule> MockDaemonNet::bindingRules() const {
+    return m_rules;
+}
+QList<AccountAgent> MockDaemonNet::accountsAgents() const {
+    return m_accountAgents;
+}
 
 QList<domain::DeliveryTarget>
-MockDaemonNet::deliveryTargets(const domain::SessionId& session) const
-{
+MockDaemonNet::deliveryTargets(const domain::SessionId& session) const {
     return m_delivery.value(session.toString());
 }
 
-QList<RoomBinding> MockDaemonNet::transportRooms(const domain::TransportId& transport) const
-{
+QList<RoomBinding> MockDaemonNet::transportRooms(const domain::TransportId& transport) const {
     // Derive bindable rooms/chats from the graph: places (channel/room) a session is `inPlace` of
     // while bound `over` this transport. pinnedSession = that session when a pin targets it.
-    QHash<QString, QString> overOf;   // session -> transport
-    QHash<QString, QString> placeOf;  // session -> place id
+    QHash<QString, QString> overOf;  // session -> transport
+    QHash<QString, QString> placeOf; // session -> place id
     for (const QVariantMap& e : m_edges) {
         const QString kind = e.value(QStringLiteral("edgeKind")).toString();
         const QString src = e.value(QStringLiteral("source")).toString();
@@ -874,16 +892,15 @@ QList<RoomBinding> MockDaemonNet::transportRooms(const domain::TransportId& tran
     return out;
 }
 
-Resolution MockDaemonNet::resolve(const Origin& origin) const
-{
+Resolution MockDaemonNet::resolve(const Origin& origin) const {
     Resolution r;
     const QString key = originKey(origin);
 
     // The non-pin profile precedence (rule override > account-bound > default) + which rung.
     const BindingRule* rule = nullptr;
     for (const BindingRule& b : m_rules) {
-        if (transportMatches(b.transportPattern, origin.transport)
-            && scopeMatches(b.scopeGlob, origin.scope)) {
+        if (transportMatches(b.transportPattern, origin.transport) &&
+            scopeMatches(b.scopeGlob, origin.scope)) {
             rule = &b;
             break;
         }
@@ -908,7 +925,8 @@ Resolution MockDaemonNet::resolve(const Origin& origin) const
         return m_defaultProfile;
     };
 
-    // 1. Pin (resolve-first): overrides the session; profile falls through when the pin carries none.
+    // 1. Pin (resolve-first): overrides the session; profile falls through when the pin carries
+    // none.
     for (const RoutingPin& p : m_pins) {
         if (originKey(p.origin) == key) {
             r.session = p.session;
@@ -936,15 +954,14 @@ Resolution MockDaemonNet::resolve(const Origin& origin) const
     domain::DeliveryTarget d;
     d.transport = origin.transport;
     d.route = domain::RouteAddr(origin.scope.kind == OriginScopeKind::Group ? origin.scope.chat
-                                : origin.scope.kind == OriginScopeKind::Dm   ? origin.scope.user
-                                                                             : QString());
+                                : origin.scope.kind == OriginScopeKind::Dm  ? origin.scope.user
+                                                                            : QString());
     d.kind = domain::SinkKind::Primary;
     r.delivery = d;
     return r;
 }
 
-void MockDaemonNet::rebuildRoutingGraph()
-{
+void MockDaemonNet::rebuildRoutingGraph() {
     // Drop any prior routing additions (id prefix "rt:") so mutations don't accumulate duplicates.
     m_nodes.removeIf([](const QVariantMap& n) {
         return n.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("rt:"));
@@ -984,9 +1001,9 @@ void MockDaemonNet::rebuildRoutingGraph()
         // a key the routing controller can pin).
         ox[QStringLiteral("originKey")] = key;
         addNode(oid, QStringLiteral("origin"),
-                p.origin.transport.toString() + QStringLiteral(" · ")
-                    + (p.origin.scope.kind == OriginScopeKind::Dm ? p.origin.scope.user
-                                                                  : p.origin.scope.chat),
+                p.origin.transport.toString() + QStringLiteral(" · ") +
+                    (p.origin.scope.kind == OriginScopeKind::Dm ? p.origin.scope.user
+                                                                : p.origin.scope.chat),
                 ox);
         QVariantMap ex;
         ex[QStringLiteral("provenance")] = QStringLiteral("pinned");
@@ -1029,8 +1046,9 @@ void MockDaemonNet::rebuildRoutingGraph()
         const QString oid = QStringLiteral("rt:o:") + synthKey;
         addNode(oid, QStringLiteral("origin"), transport, {});
         QVariantMap ex;
-        ex[QStringLiteral("provenance")]
-            = accountTransports.contains(transport) ? QStringLiteral("bound") : QStringLiteral("derived");
+        ex[QStringLiteral("provenance")] = accountTransports.contains(transport)
+                                               ? QStringLiteral("bound")
+                                               : QStringLiteral("derived");
         addEdge(QStringLiteral("rt:in:") + synthKey, oid, session, QStringLiteral("inbound"), ex);
     }
 
@@ -1038,14 +1056,14 @@ void MockDaemonNet::rebuildRoutingGraph()
     for (auto it = m_delivery.constBegin(); it != m_delivery.constEnd(); ++it) {
         const QString session = it.key();
         for (const domain::DeliveryTarget& t : it.value()) {
-            const QString did = QStringLiteral("rt:d:") + t.transport.toString()
-                + QLatin1Char('/') + t.route.toString();
+            const QString did = QStringLiteral("rt:d:") + t.transport.toString() +
+                                QLatin1Char('/') + t.route.toString();
             addNode(did, QStringLiteral("destination"),
                     t.transport.toString() + QStringLiteral(" · ") + t.route.toString(), {});
             QVariantMap ex;
             ex[QStringLiteral("sinkKind")] = t.kind == domain::SinkKind::Primary
-                ? QStringLiteral("primary")
-                : QStringLiteral("spectator");
+                                                 ? QStringLiteral("primary")
+                                                 : QStringLiteral("spectator");
             addEdge(QStringLiteral("rt:out:") + session + QLatin1Char('/') + did, session, did,
                     QStringLiteral("outbound"), ex);
         }
@@ -1053,8 +1071,7 @@ void MockDaemonNet::rebuildRoutingGraph()
 }
 
 void MockDaemonNet::bindChat(const Origin& origin, const domain::SessionId& session,
-                             const domain::ProfileRef& profile)
-{
+                             const domain::ProfileRef& profile) {
     const QString key = originKey(origin);
     for (RoutingPin& p : m_pins) {
         if (originKey(p.origin) == key) {
@@ -1065,13 +1082,12 @@ void MockDaemonNet::bindChat(const Origin& origin, const domain::SessionId& sess
             return;
         }
     }
-    m_pins.push_back({ origin, session, profile, QStringLiteral("perThread") });
+    m_pins.push_back({origin, session, profile, QStringLiteral("perThread")});
     rebuildRoutingGraph();
     emit changed();
 }
 
-void MockDaemonNet::unbindChat(const Origin& origin)
-{
+void MockDaemonNet::unbindChat(const Origin& origin) {
     const QString key = originKey(origin);
     const qsizetype before = m_pins.size();
     m_pins.removeIf([&](const RoutingPin& p) { return originKey(p.origin) == key; });
@@ -1081,8 +1097,8 @@ void MockDaemonNet::unbindChat(const Origin& origin)
     }
 }
 
-void MockDaemonNet::handover(const domain::SessionId& session, const domain::DeliveryTarget& target)
-{
+void MockDaemonNet::handover(const domain::SessionId& session,
+                             const domain::DeliveryTarget& target) {
     QList<domain::DeliveryTarget>& targets = m_delivery[session.toString()];
     // Demote the current Primary to Spectator.
     for (domain::DeliveryTarget& t : targets) {
@@ -1109,8 +1125,7 @@ void MockDaemonNet::handover(const domain::SessionId& session, const domain::Del
 }
 
 void MockDaemonNet::bindAccount(const domain::TransportId& transport,
-                                const domain::ProfileRef& profile)
-{
+                                const domain::ProfileRef& profile) {
     for (AccountAgent& a : m_accountAgents) {
         if (a.transport == transport) {
             a.profile = profile;
@@ -1119,7 +1134,7 @@ void MockDaemonNet::bindAccount(const domain::TransportId& transport,
             return;
         }
     }
-    m_accountAgents.push_back({ transport, profile });
+    m_accountAgents.push_back({transport, profile});
     rebuildRoutingGraph();
     emit changed();
 }

@@ -1,31 +1,26 @@
 #include "session_list_view.h"
 
-#include "tui_palette.h"
-
-#include "sessions_list_model.h"
-
 #include "presentation/display_presenter.h"
-
-#include <Tui/ZColor.h>
-#include <Tui/ZEvent.h>
-#include <Tui/ZPainter.h>
+#include "sessions_list_model.h"
+#include "tui_palette.h"
 
 #include <QDateTime>
 #include <QLocale>
 #include <QRect>
 #include <QStringList>
+#include <Tui/ZColor.h>
+#include <Tui/ZEvent.h>
+#include <Tui/ZPainter.h>
 
 namespace {
 
 Span mkSpan(const QString& text, const Tui::ZColor& fg, const Tui::ZColor& bg,
-            Tui::ZTextAttributes attr = {})
-{
-    return Span { text, fg, bg, attr };
+            Tui::ZTextAttributes attr = {}) {
+    return Span{text, fg, bg, attr};
 }
 
 // Single-line elide to `width` columns with a trailing ellipsis.
-QString elide(const QString& text, int width)
-{
+QString elide(const QString& text, int width) {
     if (width <= 0) {
         return QString();
     }
@@ -40,14 +35,12 @@ QString elide(const QString& text, int width)
 
 } // namespace
 
-SessionListView::SessionListView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
-{
+SessionListView::SessionListView(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
     setFocusPolicy(Tui::StrongFocus);
     setSizePolicyV(Tui::SizePolicy::Expanding);
 }
 
-void SessionListView::setModel(SessionsListModel* model)
-{
+void SessionListView::setModel(SessionsListModel* model) {
     m_model = model;
     if (m_model != nullptr) {
         const auto repaint = [this] { rebuild(); };
@@ -64,13 +57,11 @@ void SessionListView::setModel(SessionsListModel* model)
     rebuild();
 }
 
-void SessionListView::relayout()
-{
+void SessionListView::relayout() {
     rebuild();
 }
 
-int SessionListView::rowAt(int localY) const
-{
+int SessionListView::rowAt(int localY) const {
     const int idx = m_scrollTop + localY;
     if (idx < 0 || idx >= static_cast<int>(m_rowOfLine.size())) {
         return -1;
@@ -78,8 +69,7 @@ int SessionListView::rowAt(int localY) const
     return m_rowOfLine.at(idx); // -1 on the gap line between cards
 }
 
-void SessionListView::activateAtLocalY(int localY)
-{
+void SessionListView::activateAtLocalY(int localY) {
     const int row = rowAt(localY);
     if (row >= 0) {
         // A single click previews (transient); double-click/Enter pins.
@@ -87,37 +77,32 @@ void SessionListView::activateAtLocalY(int localY)
     }
 }
 
-void SessionListView::scrollByLines(int delta)
-{
+void SessionListView::scrollByLines(int delta) {
     m_scrollTop += delta;
     clampScrollTop();
     update();
 }
 
-int SessionListView::visibleRows() const
-{
+int SessionListView::visibleRows() const {
     return qMax(0, geometry().height());
 }
 
-int SessionListView::maxScrollTop() const
-{
+int SessionListView::maxScrollTop() const {
     return qMax(0, static_cast<int>(m_lines.size()) - visibleRows());
 }
 
-void SessionListView::clampScrollTop()
-{
+void SessionListView::clampScrollTop() {
     m_scrollTop = qBound(0, m_scrollTop, maxScrollTop());
 }
 
-void SessionListView::ensureVisible(int row)
-{
+void SessionListView::ensureVisible(int row) {
     if (row < 0 || row >= static_cast<int>(m_lineOfRow.size())) {
         return;
     }
     const int first = m_lineOfRow.at(row);
     const int next = (row + 1 < static_cast<int>(m_lineOfRow.size()))
-        ? m_lineOfRow.at(row + 1)
-        : static_cast<int>(m_lines.size());
+                         ? m_lineOfRow.at(row + 1)
+                         : static_cast<int>(m_lines.size());
     const int last = qMax(first, next - 2); // exclude the trailing gap line
     const int h = visibleRows();
     if (first < m_scrollTop) {
@@ -128,8 +113,7 @@ void SessionListView::ensureVisible(int row)
     clampScrollTop();
 }
 
-void SessionListView::rebuild()
-{
+void SessionListView::rebuild() {
     m_lines.clear();
     m_rowOfLine.clear();
     m_lineOfRow.clear();
@@ -157,8 +141,8 @@ void SessionListView::rebuild()
         const QString snippet = role(SessionsListModel::SnippetRole).toString();
         const QDateTime modified = role(SessionsListModel::ModifiedRole).toDateTime();
         const QString agent = role(SessionsListModel::UnitNameRole).toString();
-        const QString kind = DisplayPresenter::agentKindIconKeyFor(
-            role(SessionsListModel::UnitKindRole).toInt());
+        const QString kind =
+            DisplayPresenter::agentKindIconKeyFor(role(SessionsListModel::UnitKindRole).toInt());
         const QStringList tagNames = role(SessionsListModel::TagNamesRole).toStringList();
         const QStringList tagColors = role(SessionsListModel::TagColorsRole).toStringList();
 
@@ -168,9 +152,8 @@ void SessionListView::rebuild()
         {
             // Locale-aware short date/time so the stamp follows the active UI
             // language's conventions rather than a fixed English format.
-            const QString stamp = modified.isValid()
-                ? QLocale().toString(modified, QLocale::ShortFormat)
-                : QString();
+            const QString stamp =
+                modified.isValid() ? QLocale().toString(modified, QLocale::ShortFormat) : QString();
             const int stampW = static_cast<int>(stamp.size());
             // 1 leading space + title + at least 2 gap + stamp.
             const int titleBudget = qMax(1, contentW - 1 - stampW - 2);
@@ -225,15 +208,14 @@ void SessionListView::rebuild()
         }
 
         // Gap line between cards.
-        push(RenderLine {}, -1);
+        push(RenderLine{}, -1);
     }
 
     clampScrollTop();
     update();
 }
 
-void SessionListView::resizeEvent(Tui::ZResizeEvent* event)
-{
+void SessionListView::resizeEvent(Tui::ZResizeEvent* event) {
     Tui::ZWidget::resizeEvent(event);
     rebuild();
     if (m_model != nullptr) {
@@ -241,8 +223,7 @@ void SessionListView::resizeEvent(Tui::ZResizeEvent* event)
     }
 }
 
-void SessionListView::paintEvent(Tui::ZPaintEvent* event)
-{
+void SessionListView::paintEvent(Tui::ZPaintEvent* event) {
     Tui::ZPainter* p = event->painter();
     const Tui::ZColor pageFg = tpal::fg();
     const Tui::ZColor pageBg = tpal::bg();
@@ -282,7 +263,7 @@ void SessionListView::paintEvent(Tui::ZPaintEvent* event)
             }
             if (!text.isEmpty()) {
                 const Tui::ZColor bg = washed ? rowBg : s.bg;
-                if (s.attr != Tui::ZTextAttributes {}) {
+                if (s.attr != Tui::ZTextAttributes{}) {
                     p->writeWithAttributes(x, rowY, text, s.fg, bg, s.attr);
                 } else {
                     p->writeWithColors(x, rowY, text, s.fg, bg);
@@ -307,8 +288,7 @@ void SessionListView::paintEvent(Tui::ZPaintEvent* event)
     }
 }
 
-void SessionListView::keyEvent(Tui::ZKeyEvent* event)
-{
+void SessionListView::keyEvent(Tui::ZKeyEvent* event) {
     // Ctrl-modified session actions on the current row (rename/export/pin-toggle).
     // Tui delivers Ctrl+letter as a char event (text()==letter), so match text.
     if (m_model != nullptr && (event->modifiers() & Qt::ControlModifier)) {
@@ -347,8 +327,8 @@ void SessionListView::keyEvent(Tui::ZKeyEvent* event)
         }
     }
 
-    if (m_model != nullptr
-        && (event->modifiers() == Qt::NoModifier || event->modifiers() == Qt::ShiftModifier)) {
+    if (m_model != nullptr &&
+        (event->modifiers() == Qt::NoModifier || event->modifiers() == Qt::ShiftModifier)) {
         const int key = event->key();
         const Qt::KeyboardModifiers mods = event->modifiers();
 
@@ -425,8 +405,7 @@ void SessionListView::keyEvent(Tui::ZKeyEvent* event)
     Tui::ZWidget::keyEvent(event);
 }
 
-void SessionListView::focusInEvent(Tui::ZFocusEvent* event)
-{
+void SessionListView::focusInEvent(Tui::ZFocusEvent* event) {
     Tui::ZWidget::focusInEvent(event);
     // Entering the list with nothing selected: anchor on the first card so a single
     // Up/Down isn't "spent" just selecting row 0, and Enter works immediately.
@@ -437,8 +416,7 @@ void SessionListView::focusInEvent(Tui::ZFocusEvent* event)
     update(); // repaint the selection wash in its focused (brighter) tone
 }
 
-void SessionListView::focusOutEvent(Tui::ZFocusEvent* event)
-{
+void SessionListView::focusOutEvent(Tui::ZFocusEvent* event) {
     Tui::ZWidget::focusOutEvent(event);
     emit focusChanged(false);
     update(); // dim the selection wash now the column is unfocused

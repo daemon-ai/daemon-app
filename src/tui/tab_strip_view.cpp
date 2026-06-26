@@ -1,15 +1,13 @@
 #include "tab_strip_view.h"
 
-#include "tui_palette.h"
-
 #include "tab_model.h"
-
-#include <Tui/ZColor.h>
-#include <Tui/ZEvent.h>
-#include <Tui/ZPainter.h>
+#include "tui_palette.h"
 
 #include <QRect>
 #include <QSize>
+#include <Tui/ZColor.h>
+#include <Tui/ZEvent.h>
+#include <Tui/ZPainter.h>
 
 namespace {
 
@@ -17,14 +15,12 @@ constexpr int kMaxTitle = 16; // cap a chip's title width
 
 // The on-screen width of a chip for `title` (closable adds an "x" column):
 //   " " + title(capped) + " " + ["x"] + " "
-int chipWidth(const QString& title, bool closable)
-{
+int chipWidth(const QString& title, bool closable) {
     const int len = qMin(static_cast<int>(title.size()), kMaxTitle);
     return 1 + len + 1 + (closable ? 1 : 0) + 1;
 }
 
-QString elide(const QString& text, int width)
-{
+QString elide(const QString& text, int width) {
     if (width <= 0) {
         return {};
     }
@@ -36,16 +32,14 @@ QString elide(const QString& text, int width)
 
 } // namespace
 
-TabStripView::TabStripView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
-{
+TabStripView::TabStripView(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
     setSizePolicyH(Tui::SizePolicy::Expanding);
     setSizePolicyV(Tui::SizePolicy::Fixed);
     setMaximumSize(Tui::tuiMaxSize, 1);
     setFocusPolicy(Tui::StrongFocus); // a Tab-cycle stop; Left/Right move tabs
 }
 
-void TabStripView::setModel(TabModel* model)
-{
+void TabStripView::setModel(TabModel* model) {
     m_model = model;
     if (m_model != nullptr) {
         const auto repaint = [this] {
@@ -62,13 +56,11 @@ void TabStripView::setModel(TabModel* model)
     update();
 }
 
-QSize TabStripView::sizeHint() const
-{
-    return { 40, 1 };
+QSize TabStripView::sizeHint() const {
+    return {40, 1};
 }
 
-void TabStripView::layout()
-{
+void TabStripView::layout() {
     m_segments.clear();
     if (m_model == nullptr) {
         return;
@@ -139,14 +131,12 @@ void TabStripView::layout()
     }
 }
 
-void TabStripView::resizeEvent(Tui::ZResizeEvent* event)
-{
+void TabStripView::resizeEvent(Tui::ZResizeEvent* event) {
     Tui::ZWidget::resizeEvent(event);
     layout();
 }
 
-void TabStripView::clickAt(QPoint local)
-{
+void TabStripView::clickAt(QPoint local) {
     if (m_model == nullptr) {
         return;
     }
@@ -169,8 +159,7 @@ void TabStripView::clickAt(QPoint local)
     }
 }
 
-void TabStripView::keyEvent(Tui::ZKeyEvent* event)
-{
+void TabStripView::keyEvent(Tui::ZKeyEvent* event) {
     if (m_model != nullptr && event->modifiers() == Qt::NoModifier) {
         const int n = m_model->count();
         const int cur = m_model->currentIndex();
@@ -184,8 +173,8 @@ void TabStripView::keyEvent(Tui::ZKeyEvent* event)
         } else if (key == Qt::Key_Enter || key == Qt::Key_Return) {
             m_model->pinCurrent(); // graduate a preview tab, like the GUI double-click
         } else if (key == Qt::Key_Delete || key == Qt::Key_Backspace) {
-            if (cur >= 0
-                && m_model->data(m_model->index(cur, 0), TabModel::ClosableRole).toBool()) {
+            if (cur >= 0 &&
+                m_model->data(m_model->index(cur, 0), TabModel::ClosableRole).toBool()) {
                 m_model->closeTab(cur);
             }
         } else {
@@ -199,20 +188,17 @@ void TabStripView::keyEvent(Tui::ZKeyEvent* event)
     Tui::ZWidget::keyEvent(event);
 }
 
-void TabStripView::focusInEvent(Tui::ZFocusEvent* event)
-{
+void TabStripView::focusInEvent(Tui::ZFocusEvent* event) {
     Tui::ZWidget::focusInEvent(event);
     update();
 }
 
-void TabStripView::focusOutEvent(Tui::ZFocusEvent* event)
-{
+void TabStripView::focusOutEvent(Tui::ZFocusEvent* event) {
     Tui::ZWidget::focusOutEvent(event);
     update();
 }
 
-void TabStripView::paintEvent(Tui::ZPaintEvent* event)
-{
+void TabStripView::paintEvent(Tui::ZPaintEvent* event) {
     Tui::ZPainter* p = event->painter();
     p->clear(tpal::muted(), tpal::surfaceAlt());
     if (m_model == nullptr) {

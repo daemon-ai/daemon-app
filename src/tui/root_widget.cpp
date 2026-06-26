@@ -1,44 +1,51 @@
 #include "root_widget.h"
 
+#include "app/code_editor_controller.h"
+#include "app/transcript_log.h"
+#include "command_registry.h"
+#include "composer_session_controller.h"
+#include "daemonnet/idaemonnet.h" // complete type for setDaemonNet(QObject*)
 #include "display_role_adapter.h"
+#include "fs/ifs_service.h"
+#include "fs_explorer_model.h"
+#include "memory/imemory_service.h"
+#include "memory_graph_model.h"
+#include "memory_list_model.h"
+#include "memory_stats_model.h"
+#include "memory_timeline_model.h"
+#include "participants_model.h"
+#include "participants_view.h"
+#include "persistence/isession_store.h"
+#include "session_controller.h"
+#include "session_orchestrator.h"
+#include "sessions_list_model.h"
+#include "sidebar_model.h"
+#include "status_bar_model.h"
+#include "tab_model.h"
+#include "tab_session_manager.h"
+#include "todo_list_model.h"
+#include "transcript_exporter.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
 #include "tui_page_hub.h"
 #include "tui_palette.h"
 #include "tui_shell_layout.h"
-#include "tab_session_manager.h"
-
-#include "session_controller.h"
-#include "session_orchestrator.h"
-#include "sessions_list_model.h"
-#include "sidebar_model.h"
-#include "todo_list_model.h"
-
-#include "daemonnet/idaemonnet.h" // complete type for setDaemonNet(QObject*)
-
-#include "composer_session_controller.h"
-#include "command_registry.h"
-#include "status_bar_model.h"
-#include "transcript_exporter.h"
-#include "tab_model.h"
 #include "turn_controller.h"
-
-#include "app/transcript_log.h"
-
-#include "fs_explorer_model.h"
-#include "participants_model.h"
-#include "participants_view.h"
-#include "app/code_editor_controller.h"
-#include "fs/ifs_service.h"
-
-#include "memory_graph_model.h"
-#include "memory/imemory_service.h"
-#include "memory_list_model.h"
-#include "memory_stats_model.h"
-#include "memory_timeline_model.h"
 #include "uimodels/variant_list_model.h"
-#include "persistence/isession_store.h"
 
+#include <cstdio>
+#include <QAbstractItemModel>
+#include <QCoreApplication>
+#include <QDateTime>
+#include <QDir>
+#include <QEventLoop>
+#include <QItemSelectionModel>
+#include <QProcess>
+#include <QRect>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QTimer>
+#include <QVariantMap>
 #include <Tui/ZButton.h>
 #include <Tui/ZCommon.h>
 #include <Tui/ZDialog.h>
@@ -49,35 +56,19 @@
 #include <Tui/ZRoot.h>
 #include <Tui/ZShortcut.h>
 #include <Tui/ZTerminal.h>
-
-#include <cstdio>
 #include <Tui/ZVBoxLayout.h>
 #include <Tui/ZWidget.h>
 #include <Tui/ZWindow.h>
-
-#include <QAbstractItemModel>
-#include <QCoreApplication>
-#include <QDir>
-#include <QDateTime>
-#include <QEventLoop>
-#include <QItemSelectionModel>
-#include <QProcess>
-#include <QTimer>
-#include <QRect>
-#include <QSettings>
-#include <QStandardPaths>
-#include <QVariantMap>
 
 namespace {
 
 // Best-effort desktop notification from the TUI: notify-send when present
 // (reliable on Linux desktops), plus an OSC 9 escape as a terminal-native
 // fallback. The BEL urgency hint is rung separately by the caller.
-void emitDesktopNotification(const QString& title, const QString& body)
-{
+void emitDesktopNotification(const QString& title, const QString& body) {
     const QString notifySend = QStandardPaths::findExecutable(QStringLiteral("notify-send"));
     if (!notifySend.isEmpty()) {
-        QProcess::startDetached(notifySend, QStringList{ title, body });
+        QProcess::startDetached(notifySend, QStringList{title, body});
     }
     // OSC 9 (iTerm2-style growl): ESC ] 9 ; <text> BEL.
     const QString msg = body.isEmpty() ? title : (title + QStringLiteral(" \u2014 ") + body);
@@ -91,8 +82,7 @@ namespace {
 
 // A short tab title for a session: the first non-empty content line (heading
 // markers stripped, capped), falling back to a generic label.
-QString titleForContent(const QString& markdown)
-{
+QString titleForContent(const QString& markdown) {
     const QString trimmed = markdown.trimmed();
     if (trimmed.isEmpty()) {
         return QObject::tr("New session");
@@ -109,8 +99,7 @@ QString titleForContent(const QString& markdown)
 }
 
 // The static markdown shown for a (non-transcript) page tab.
-QString pageMarkdown(int kind)
-{
+QString pageMarkdown(int kind) {
     if (kind == TabModel::Settings) {
         return QObject::tr(
             "# Settings\n\n"
@@ -138,8 +127,7 @@ QString pageMarkdown(int kind)
 
 RootWidget::RootWidget()
     : m_services(daemonapp::daemon::createAppServiceGraph(
-          daemonapp::daemon::serviceModeFromEnvironment(), this))
-{
+          daemonapp::daemon::serviceModeFromEnvironment(), this)) {
     // Build the stock-widget palette (incl. the quit dialog frame/body) from the
     // active theme - set from the persisted ui/theme in main() before we run.
     setPalette(daemonPalette(tpal::activeTheme()));
@@ -189,15 +177,15 @@ RootWidget::RootWidget()
     // in place rather than spawning a new one.
     connect(m_tabModel, &TabModel::tabSessionChanged, this,
             [this](int tabId, const QString& sessionId) { rebindSession(tabId, sessionId); });
-    connect(m_tabModel, &TabModel::tabKindChanged, this, [this](int tabId) {
-        destroySession(tabId);
-    });
-    connect(m_tabModel, &TabModel::tabFileChanged, this, [this](int tabId, const QString&, const QString&) {
-        const bool active = m_tabModel->indexOfTabId(tabId) == m_tabModel->currentIndex();
-        destroySession(tabId);
-        if (active)
-            activateTab(tabId);
-    });
+    connect(m_tabModel, &TabModel::tabKindChanged, this,
+            [this](int tabId) { destroySession(tabId); });
+    connect(m_tabModel, &TabModel::tabFileChanged, this,
+            [this](int tabId, const QString&, const QString&) {
+                const bool active = m_tabModel->indexOfTabId(tabId) == m_tabModel->currentIndex();
+                destroySession(tabId);
+                if (active)
+                    activateTab(tabId);
+            });
 
     // Sidebar scope selection drives the session list - the model-to-model
     // contract is untouched by the choice of toolkit.
@@ -264,13 +252,11 @@ RootWidget::RootWidget()
             [this](const QString& kind, const QString& profileRef, const QString& title) {
                 if (m_tabModel == nullptr || profileRef.isEmpty())
                     return;
-                const int tabKind = kind == QStringLiteral("profile") ? TabModel::Profile
-                                                                       : TabModel::Memory;
-                const QString base = tabKind == TabModel::Profile ? tr("Profile")
-                                                                  : tr("Memory");
-                const QString label = title.isEmpty()
-                    ? base
-                    : base + QStringLiteral(" \u00b7 ") + title;
+                const int tabKind =
+                    kind == QStringLiteral("profile") ? TabModel::Profile : TabModel::Memory;
+                const QString base = tabKind == TabModel::Profile ? tr("Profile") : tr("Memory");
+                const QString label =
+                    title.isEmpty() ? base : base + QStringLiteral(" \u00b7 ") + title;
                 m_tabModel->openAgentTab(tabKind, profileRef, label);
             });
 
@@ -287,8 +273,7 @@ RootWidget::RootWidget()
 
 RootWidget::~RootWidget() = default;
 
-void RootWidget::terminalChanged()
-{
+void RootWidget::terminalChanged() {
     if (m_built || terminal() == nullptr) {
         return;
     }
@@ -299,43 +284,41 @@ void RootWidget::terminalChanged()
     // First-run gate (parity with the GUI): on first launch, raise the lighter
     // "Setup Required" modal over the shell until setup completes.
     if (m_services.firstRun != nullptr && m_services.firstRun->active()) {
-        auto* gate = new FirstRunDialog(m_services.firstRun, m_services.connection, m_services.settings,
-                                        m_services.settings->resolvedConnectionTarget(),
-                                        this);
+        auto* gate =
+            new FirstRunDialog(m_services.firstRun, m_services.connection, m_services.settings,
+                               m_services.settings->resolvedConnectionTarget(), this);
         gate->setFocus();
     }
 }
 
-void RootWidget::resizeEvent(Tui::ZResizeEvent* event)
-{
+void RootWidget::resizeEvent(Tui::ZResizeEvent* event) {
     Tui::ZRoot::resizeEvent(event);
     if (m_window != nullptr) {
         m_window->setGeometry(QRect(QPoint(0, 0), geometry().size()));
     }
 }
 
-void RootWidget::keyEvent(Tui::ZKeyEvent* event)
-{
+void RootWidget::keyEvent(Tui::ZKeyEvent* event) {
     // Tab management keys are handled here at the ZRoot, i.e. only AFTER the
     // focused pane leaves them unhandled. This keeps them contextual: the composer
     // consumes Ctrl+W (word-rubout) and Ctrl+T (transpose) for its readline editing
     // while it has focus, so tab open/close fire only from the panes/transcript.
     // Ctrl+Tab switching has no composer conflict and works everywhere.
     const Qt::KeyboardModifiers mods = event->modifiers();
-    if (mods == Qt::ControlModifier
-        && event->text().compare(QStringLiteral("t"), Qt::CaseInsensitive) == 0) {
+    if (mods == Qt::ControlModifier &&
+        event->text().compare(QStringLiteral("t"), Qt::CaseInsensitive) == 0) {
         newTranscriptTab();
         event->accept();
         return;
     }
-    if (mods == Qt::ControlModifier
-        && event->text().compare(QStringLiteral("w"), Qt::CaseInsensitive) == 0) {
+    if (mods == Qt::ControlModifier &&
+        event->text().compare(QStringLiteral("w"), Qt::CaseInsensitive) == 0) {
         closeCurrentTab();
         event->accept();
         return;
     }
-    if (mods == Qt::ControlModifier
-        && event->text().compare(QStringLiteral("f"), Qt::CaseInsensitive) == 0) {
+    if (mods == Qt::ControlModifier &&
+        event->text().compare(QStringLiteral("f"), Qt::CaseInsensitive) == 0) {
         openTranscriptSearch();
         event->accept();
         return;
@@ -343,25 +326,26 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
     // Sidebar agent shortcuts (parity with the GUI right-click menu): with the
     // Fleet tree focused, 'p' opens the selected agent's Profile and 'm' its
     // Memory. Only fires on profile-backed (agent) rows.
-    if (mods == Qt::NoModifier && m_sidebarView != nullptr && m_sidebarView->focus()
-        && m_sidebar != nullptr && m_services.nav != nullptr
-        && (event->text() == QStringLiteral("p") || event->text() == QStringLiteral("m"))) {
+    if (mods == Qt::NoModifier && m_sidebarView != nullptr && m_sidebarView->focus() &&
+        m_sidebar != nullptr && m_services.nav != nullptr &&
+        (event->text() == QStringLiteral("p") || event->text() == QStringLiteral("m"))) {
         const int row = m_sidebar->currentRow();
         if (row >= 0) {
             const QModelIndex idx = m_sidebar->index(row);
             const QString profile = m_sidebar->data(idx, SidebarModel::ProfileRole).toString();
             const QString label = m_sidebar->data(idx, SidebarModel::LabelRole).toString();
             if (!profile.isEmpty()) {
-                m_services.nav->openAgent(event->text() == QStringLiteral("p") ? QStringLiteral("profile")
-                                                                      : QStringLiteral("memory"),
-                                 profile, label);
+                m_services.nav->openAgent(event->text() == QStringLiteral("p")
+                                              ? QStringLiteral("profile")
+                                              : QStringLiteral("memory"),
+                                          profile, label);
                 event->accept();
                 return;
             }
         }
     }
-    if ((mods & Qt::ControlModifier) && m_tabModel != nullptr
-        && (event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backtab)) {
+    if ((mods & Qt::ControlModifier) && m_tabModel != nullptr &&
+        (event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backtab)) {
         const bool backward = event->key() == Qt::Key_Backtab || (mods & Qt::ShiftModifier);
         m_tabModel->cycle(backward ? -1 : 1);
         event->accept();
@@ -391,9 +375,9 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
     // Ctrl+E, when it bubbles up unconsumed (i.e. the composer/list did not claim
     // it for end-of-line / export), toggles the file Explorer. Tui delivers
     // Ctrl+letter as a char event, so match the text as well as the key.
-    if ((event->modifiers() & Qt::ControlModifier)
-        && (event->key() == Qt::Key_E
-            || event->text().compare(QStringLiteral("e"), Qt::CaseInsensitive) == 0)) {
+    if ((event->modifiers() & Qt::ControlModifier) &&
+        (event->key() == Qt::Key_E ||
+         event->text().compare(QStringLiteral("e"), Qt::CaseInsensitive) == 0)) {
         toggleExplorer();
         event->accept();
         return;
@@ -412,8 +396,7 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event)
 }
 
 void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, int button,
-                             Qt::KeyboardModifiers modifiers)
-{
+                             Qt::KeyboardModifiers modifiers) {
     using MA = MouseTerminal::MouseAction;
     // Click + wheel only: a primary-button press focuses + selects/opens, the wheel
     // scrolls the pane under the cursor. Release/move and middle/right are ignored.
@@ -433,16 +416,16 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
         }
         local = w->mapFromTerminal(termPos);
         const QSize sz = w->geometry().size();
-        return local.x() >= 0 && local.y() >= 0 && local.x() < sz.width()
-            && local.y() < sz.height();
+        return local.x() >= 0 && local.y() >= 0 && local.x() < sz.width() &&
+               local.y() < sz.height();
     };
 
     if (isWheel) {
         const int delta = (action == MA::WheelUp) ? -3 : 3;
         if (m_editorView != nullptr && m_editorView->isVisible() && hit(m_editorView)) {
             m_editorView->scrollByLines(delta);
-        } else if (m_fileTreeView != nullptr && m_fileTreeView->isVisible()
-                   && hit(m_fileTreeView)) {
+        } else if (m_fileTreeView != nullptr && m_fileTreeView->isVisible() &&
+                   hit(m_fileTreeView)) {
             m_fileTreeView->scrollByLines(delta);
         } else if (hit(m_transcript)) {
             m_transcript->scrollByLines(delta);
@@ -457,7 +440,8 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
     // The modal quit dialog is topmost: a press activates its button (or is
     // swallowed) so clicks never leak to the panes behind it.
     if (m_overlays != nullptr && m_overlays->quitDialog() != nullptr) {
-        const QList<Tui::ZButton*> buttons = m_overlays->quitDialog()->findChildren<Tui::ZButton*>();
+        const QList<Tui::ZButton*> buttons =
+            m_overlays->quitDialog()->findChildren<Tui::ZButton*>();
         for (Tui::ZButton* b : buttons) {
             if (hit(b)) {
                 b->click();
@@ -469,8 +453,8 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
 
     // The completion popup floats above the composer: a click on an item row
     // selects it and accepts (group-header lines return -1 and are ignored).
-    if (m_completionPopup != nullptr && m_completionPopup->isLocallyVisible()
-        && hit(m_completionPopup)) {
+    if (m_completionPopup != nullptr && m_completionPopup->isLocallyVisible() &&
+        hit(m_completionPopup)) {
         const int row = m_completionPopup->modelRowAt(local.y());
         if (row >= 0 && m_composerSession != nullptr) {
             m_composerSession->setActiveIndex(row);
@@ -527,8 +511,7 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
     }
 }
 
-void RootWidget::buildUi()
-{
+void RootWidget::buildUi() {
     // Exit affordances. Ctrl+Q opens a confirmation modal; Ctrl+C is the
     // terminal-convention hard exit (no prompt). Esc is NOT a global shortcut:
     // it is handled contextually by the focused widget and only bubbles up to
@@ -537,38 +520,38 @@ void RootWidget::buildUi()
                                             this, Qt::ApplicationShortcut);
     connect(quitShortcut, &Tui::ZShortcut::activated, this, &RootWidget::promptQuit);
 
-    auto* forceQuitShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forShortcut(QStringLiteral("c")),
-                                                 this, Qt::ApplicationShortcut);
+    auto* forceQuitShortcut = new Tui::ZShortcut(
+        Tui::ZKeySequence::forShortcut(QStringLiteral("c")), this, Qt::ApplicationShortcut);
     connect(forceQuitShortcut, &Tui::ZShortcut::activated, this, [] { QCoreApplication::quit(); });
 
     // F8 cycles the theme live (Light -> Dark -> Sepia -> Midnight), the TUI analog
     // of the GUI's theme picker. The choice persists to the same QSettings key the
     // GUI uses, so the two front ends stay in sync.
-    auto* themeShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F8), this,
-                                             Qt::ApplicationShortcut);
+    auto* themeShortcut =
+        new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F8), this, Qt::ApplicationShortcut);
     connect(themeShortcut, &Tui::ZShortcut::activated, this, &RootWidget::cycleTheme);
 
     // Ctrl+P opens the command palette (the TUI analog of the GUI's Mod+K),
     // filterable over the shared CommandRegistry.
-    auto* paletteShortcut = new Tui::ZShortcut(
-        Tui::ZKeySequence::forShortcut(QStringLiteral("p")), this, Qt::ApplicationShortcut);
+    auto* paletteShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forShortcut(QStringLiteral("p")),
+                                               this, Qt::ApplicationShortcut);
     connect(paletteShortcut, &Tui::ZShortcut::activated, this, &RootWidget::openCommandPalette);
 
     // F9 opens the Settings page (the TUI settings keybinding), routed through the
     // shared NavController so it goes through the same open() path as the GUI.
-    auto* settingsShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F9), this,
-                                                Qt::ApplicationShortcut);
+    auto* settingsShortcut =
+        new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F9), this, Qt::ApplicationShortcut);
     connect(settingsShortcut, &Tui::ZShortcut::activated, this,
             [this] { m_services.nav->open(QStringLiteral("settings")); });
 
     // F2 / F3 raise the composer overlays (session settings / checkpoints) for the
     // active transcript tab, the TUI analog of the GUI composer popovers.
-    auto* sessionShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F2), this,
-                                               Qt::ApplicationShortcut);
+    auto* sessionShortcut =
+        new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F2), this, Qt::ApplicationShortcut);
     connect(sessionShortcut, &Tui::ZShortcut::activated, this,
             &RootWidget::openSessionSettingsOverlay);
-    auto* checkpointShortcut = new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F3), this,
-                                                  Qt::ApplicationShortcut);
+    auto* checkpointShortcut =
+        new Tui::ZShortcut(Tui::ZKeySequence::forKey(Qt::Key_F3), this, Qt::ApplicationShortcut);
     connect(checkpointShortcut, &Tui::ZShortcut::activated, this,
             &RootWidget::openCheckpointsOverlay);
 
@@ -578,9 +561,9 @@ void RootWidget::buildUi()
     // export) consume it first; it only toggles when those panes don't. This
     // resolves the Ctrl+E collision without rebinding either widget's binding.
 
-    const TuiShellWidgets shell = TuiShellLayout::build(
-        this, terminal(), QRect(QPoint(0, 0), geometry().size()), m_tabModel, m_fileTree,
-        m_participants, &m_pageDoc);
+    const TuiShellWidgets shell =
+        TuiShellLayout::build(this, terminal(), QRect(QPoint(0, 0), geometry().size()), m_tabModel,
+                              m_fileTree, m_participants, &m_pageDoc);
     m_window = shell.window;
     m_sidebarView = shell.sidebarView;
     m_search = shell.search;
@@ -632,8 +615,8 @@ void RootWidget::buildUi()
     // Restore the persisted open/closed state (shared "ui/showFileExplorer" key).
     // The Participants section and the Explorer toggle together as one right column.
     {
-        const bool showExplorer
-            = QSettings().value(QStringLiteral("ui/showFileExplorer"), false).toBool();
+        const bool showExplorer =
+            QSettings().value(QStringLiteral("ui/showFileExplorer"), false).toBool();
         m_fileTreeView->setVisible(showExplorer);
         if (m_participantsView != nullptr)
             m_participantsView->setVisible(showExplorer);
@@ -649,8 +632,7 @@ void RootWidget::buildUi()
             });
 }
 
-void RootWidget::wireViews()
-{
+void RootWidget::wireViews() {
     // Bind the reused models through the display-role adapters.
     m_sidebarAdapter = new DisplayRoleAdapter(DisplayRoleAdapter::Kind::Sidebar, this);
     m_sidebarAdapter->setSourceModel(m_sidebar);
@@ -703,9 +685,8 @@ void RootWidget::wireViews()
     // column; printable keys it receives build the query in the passive search box,
     // whose textChanged drives the shared live filter. Backspace edits, Esc clears.
     connect(m_search, &Tui::ZInputBox::textChanged, m_list, &SessionsListModel::setSearch);
-    connect(m_listView, &SessionListView::searchAppend, this, [this](const QString& text) {
-        m_search->setText(m_search->text() + text);
-    });
+    connect(m_listView, &SessionListView::searchAppend, this,
+            [this](const QString& text) { m_search->setText(m_search->text() + text); });
     connect(m_listView, &SessionListView::searchBackspace, this, [this] {
         QString q = m_search->text();
         if (!q.isEmpty()) {
@@ -716,8 +697,7 @@ void RootWidget::wireViews()
     connect(m_listView, &SessionListView::searchClear, this,
             [this] { m_search->setText(QString()); });
     // The search box shows its typing caret only while the list is focused.
-    connect(m_listView, &SessionListView::focusChanged, m_search,
-            &SearchInputBox::setTypingActive);
+    connect(m_listView, &SessionListView::focusChanged, m_search, &SearchInputBox::setTypingActive);
     // After the query changes, re-anchor the selection onto the first match so the
     // highlight (and Enter) follow the filtered list instead of stranding off-list.
     // (The view already rebuilds from the model's reset/selection signals.)
@@ -794,9 +774,8 @@ void RootWidget::wireViews()
         if (id.isEmpty()) {
             return;
         }
-        auto* confirm = new ConfirmDialog(
-            tr("Delete session"),
-            tr("Permanently delete this session?"), this);
+        auto* confirm =
+            new ConfirmDialog(tr("Delete session"), tr("Permanently delete this session?"), this);
         connect(confirm, &ConfirmDialog::confirmed, this,
                 [this, id] { m_services.store->deleteSession(id); });
     });
@@ -817,8 +796,8 @@ void RootWidget::wireViews()
         if (id.isEmpty()) {
             return;
         }
-        auto* dialog = new TextPromptDialog(tr("Rename session"),
-                                            m_services.store->title(id), /*masked=*/false, this);
+        auto* dialog = new TextPromptDialog(tr("Rename session"), m_services.store->title(id),
+                                            /*masked=*/false, this);
         connect(dialog, &TextPromptDialog::submitted, this, [this, id](const QString& text) {
             if (!text.trimmed().isEmpty()) {
                 m_services.store->renameSession(id, text.trimmed());
@@ -940,8 +919,8 @@ void RootWidget::wireViews()
                         return;
                     }
                     const QString id = m_active->sessionId;
-                    auto* dialog = new TextPromptDialog(tr("Rename session"),
-                                                        m_services.store->title(id), /*masked=*/false, this);
+                    auto* dialog = new TextPromptDialog(
+                        tr("Rename session"), m_services.store->title(id), /*masked=*/false, this);
                     connect(dialog, &TextPromptDialog::submitted, this,
                             [this, id](const QString& text) {
                                 if (!text.trimmed().isEmpty()) {
@@ -977,8 +956,7 @@ void RootWidget::wireViews()
                         return;
                     }
                     auto* confirm = new ConfirmDialog(
-                        tr("Clear session"),
-                        tr("Remove all messages from this session?"), this);
+                        tr("Clear session"), tr("Remove all messages from this session?"), this);
                     connect(confirm, &ConfirmDialog::confirmed, this, [this] {
                         if (m_active != nullptr && m_active->controller->hasSession()) {
                             m_active->doc.loadMarkdown(QString());
@@ -995,16 +973,16 @@ void RootWidget::wireViews()
                 // TUI owns the document, so it resolves the anchor here rather than
                 // round-tripping through the orchestrator's rewind*Requested signals
                 // (which the GUI uses).
-                if (command == QStringLiteral("retry") || command == QStringLiteral("edit")
-                    || command == QStringLiteral("undo")) {
+                if (command == QStringLiteral("retry") || command == QStringLiteral("edit") ||
+                    command == QStringLiteral("undo")) {
                     if (m_active == nullptr) {
                         return;
                     }
                     QString lastUserId;
                     for (qsizetype row = 0; row < m_active->doc.blockCount(); ++row) {
                         const be::BlockRecord* b = m_active->doc.blockAt(row);
-                        if (b != nullptr && b->role == be::MessageRole::User
-                            && !b->messageId.isEmpty()) {
+                        if (b != nullptr && b->role == be::MessageRole::User &&
+                            !b->messageId.isEmpty()) {
                             lastUserId = b->messageId;
                         }
                     }
@@ -1075,8 +1053,8 @@ void RootWidget::wireViews()
     m_attachments->setController(m_composerSession);
     connect(m_composer, &SubmitInputBox::attachRequested, m_composerSession, [this] {
         const int n = m_composerSession->attachments()->count();
-        m_composerSession->addAttachment(
-            QStringLiteral("attachment-%1.txt").arg(n + 1), QStringLiteral("file"));
+        m_composerSession->addAttachment(QStringLiteral("attachment-%1.txt").arg(n + 1),
+                                         QStringLiteral("file"));
     });
 
     // Esc on an empty composer hands focus back to the session list, where a
@@ -1105,8 +1083,7 @@ void RootWidget::wireViews()
 
 // --- Tabs --------------------------------------------------------------------
 
-void RootWidget::previewSessionTab(const QString& sessionId)
-{
+void RootWidget::previewSessionTab(const QString& sessionId) {
     if (m_tabModel == nullptr) {
         return;
     }
@@ -1117,8 +1094,7 @@ void RootWidget::previewSessionTab(const QString& sessionId)
     m_tabModel->previewTranscript(sessionId, title);
 }
 
-void RootWidget::openSessionPinnedTab(const QString& sessionId)
-{
+void RootWidget::openSessionPinnedTab(const QString& sessionId) {
     if (m_tabModel == nullptr) {
         return;
     }
@@ -1129,8 +1105,7 @@ void RootWidget::openSessionPinnedTab(const QString& sessionId)
     m_tabModel->openTranscriptPinned(sessionId, title);
 }
 
-void RootWidget::newTranscriptTab()
-{
+void RootWidget::newTranscriptTab() {
     if (m_services.store == nullptr || m_tabModel == nullptr) {
         return;
     }
@@ -1142,13 +1117,12 @@ void RootWidget::newTranscriptTab()
     }
 }
 
-void RootWidget::rebindSession(int tabId, const QString& sessionId)
-{
+void RootWidget::rebindSession(int tabId, const QString& sessionId) {
     if (m_tabSessions == nullptr) {
         return;
     }
-    const bool wasActive = m_active != nullptr && m_active->tabId == tabId
-        && m_active->sessionId != sessionId;
+    const bool wasActive =
+        m_active != nullptr && m_active->tabId == tabId && m_active->sessionId != sessionId;
     m_tabSessions->rebindSession(tabId, sessionId, [this](TabSession* s) { wireSession(s); });
     if (wasActive) {
         m_composerSession->setSessionId(sessionId);
@@ -1158,15 +1132,13 @@ void RootWidget::rebindSession(int tabId, const QString& sessionId)
     }
 }
 
-void RootWidget::closeCurrentTab()
-{
+void RootWidget::closeCurrentTab() {
     if (m_tabModel != nullptr && m_tabModel->currentIndex() >= 0) {
         m_tabModel->closeTab(m_tabModel->currentIndex());
     }
 }
 
-void RootWidget::openTranscriptSearch()
-{
+void RootWidget::openTranscriptSearch() {
     // Find only applies to a live transcript tab (page tabs have no session).
     if (m_active == nullptr || m_searchRow == nullptr || m_transcriptSearch == nullptr) {
         return;
@@ -1178,8 +1150,7 @@ void RootWidget::openTranscriptSearch()
     updateSearchCounter();
 }
 
-void RootWidget::closeTranscriptSearch()
-{
+void RootWidget::closeTranscriptSearch() {
     if (!m_searchActive) {
         return;
     }
@@ -1199,8 +1170,7 @@ void RootWidget::closeTranscriptSearch()
     }
 }
 
-void RootWidget::updateSearchCounter()
-{
+void RootWidget::updateSearchCounter() {
     if (m_searchCounter == nullptr) {
         return;
     }
@@ -1219,16 +1189,14 @@ void RootWidget::updateSearchCounter()
     }
 }
 
-TabSession* RootWidget::ensureSession(int tabId)
-{
+TabSession* RootWidget::ensureSession(int tabId) {
     if (m_tabSessions == nullptr) {
         return nullptr;
     }
     return m_tabSessions->ensureSession(tabId, [this](TabSession* s) { wireSession(s); });
 }
 
-void RootWidget::wireSession(TabSession* s)
-{
+void RootWidget::wireSession(TabSession* s) {
     // Stream this session's turn events into ITS OWN document (so a background tab
     // keeps growing while another is on screen); repaint only when it is active.
     connect(s->turn, &TurnController::eventsEmitted, this,
@@ -1236,8 +1204,7 @@ void RootWidget::wireSession(TabSession* s)
     connect(s->turn, &TurnController::turnStarted, this, [this, s] {
         if (s == m_active) {
             m_status->setBusy(true);
-            m_status->setTurnStartedAt(
-                static_cast<double>(QDateTime::currentMSecsSinceEpoch()));
+            m_status->setTurnStartedAt(static_cast<double>(QDateTime::currentMSecsSinceEpoch()));
             if (m_transcript != nullptr) {
                 m_transcript->reload();
             }
@@ -1258,11 +1225,11 @@ void RootWidget::wireSession(TabSession* s)
             // Turn-done desktop notification (opt-in via notify/turnDone, shared
             // with the GUI). The TUI cannot detect terminal focus, so this fires
             // whenever the pref is on rather than only when hidden.
-            if (m_services.settings != nullptr
-                && m_services.settings->value(QStringLiteral("notify/turnDone"), false).toBool()) {
+            if (m_services.settings != nullptr &&
+                m_services.settings->value(QStringLiteral("notify/turnDone"), false).toBool()) {
                 const QString convTitle = s->controller->hasSession()
-                    ? m_services.store->title(s->sessionId)
-                    : QStringLiteral("daemon");
+                                              ? m_services.store->title(s->sessionId)
+                                              : QStringLiteral("daemon");
                 emitDesktopNotification(convTitle, tr("The turn finished."));
             }
         }
@@ -1281,20 +1248,19 @@ void RootWidget::wireSession(TabSession* s)
         }
         // Honor the "notify when a turn needs my input" preference (shared with the
         // GUI's notify/gates), defaulting on.
-        if (m_services.settings != nullptr
-            && !m_services.settings->value(QStringLiteral("notify/gates"), true).toBool()) {
+        if (m_services.settings != nullptr &&
+            !m_services.settings->value(QStringLiteral("notify/gates"), true).toBool()) {
             return;
         }
         std::fputs("\a", stdout); // BEL: most terminals raise an urgency hint
         std::fflush(stdout);
-        const QString what = kind == QStringLiteral("approval") ? tr("approval")
-                                                                : tr("credential");
+        const QString what = kind == QStringLiteral("approval") ? tr("approval") : tr("credential");
         if (terminal() != nullptr) {
             terminal()->setTitle(tr("\u25cf daemon \u2014 needs %1").arg(what));
         }
         const QString convTitle = (m_active != nullptr && m_active->controller->hasSession())
-            ? m_services.store->title(m_active->sessionId)
-            : QStringLiteral("daemon");
+                                      ? m_services.store->title(m_active->sessionId)
+                                      : QStringLiteral("daemon");
         emitDesktopNotification(convTitle, tr("The turn needs your %1.").arg(what));
     });
     // Clear the title alert once the turn settles.
@@ -1308,15 +1274,14 @@ void RootWidget::wireSession(TabSession* s)
     // replaces this mock responder later), cancel aborts it.
     connect(s->turn, &TurnController::hostRequested, this,
             [this, s](const QString& kind, const QString& prompt) {
-                const QString title = prompt.isEmpty()
-                    ? (kind == QStringLiteral("secret") ? tr("Secret required")
-                                                        : tr("Password required"))
-                    : prompt;
+                const QString title =
+                    prompt.isEmpty() ? (kind == QStringLiteral("secret") ? tr("Secret required")
+                                                                         : tr("Password required"))
+                                     : prompt;
                 auto* dialog = new TextPromptDialog(title, QString(), /*masked=*/true, this);
                 connect(dialog, &TextPromptDialog::submitted, this,
                         [s](const QString&) { s->turn->resume(); });
-                connect(dialog, &TextPromptDialog::canceled, this,
-                        [s] { s->turn->cancel(); });
+                connect(dialog, &TextPromptDialog::canceled, this, [s] { s->turn->cancel(); });
             });
     connect(s->controller, &SessionController::sessionChanged, this, [this, s] {
         if (s == m_active) {
@@ -1392,8 +1357,7 @@ void RootWidget::wireSession(TabSession* s)
     });
 }
 
-void RootWidget::activateTab(int tabId)
-{
+void RootWidget::activateTab(int tabId) {
     const int row = m_tabModel->indexOfTabId(tabId);
     if (row < 0) {
         return;
@@ -1422,8 +1386,8 @@ void RootWidget::activateTab(int tabId)
         // Resync the elapsed timer to THIS tab's live turn (mirrors the GUI's
         // onIsActiveChanged), so a switched-to busy tab shows the right elapsed.
         if (s->turn->active()) {
-            m_status->setTurnStartedAt(static_cast<double>(QDateTime::currentMSecsSinceEpoch())
-                                       - static_cast<double>(s->turn->elapsedMs()));
+            m_status->setTurnStartedAt(static_cast<double>(QDateTime::currentMSecsSinceEpoch()) -
+                                       static_cast<double>(s->turn->elapsedMs()));
         }
         refreshTranscript();
         updateTodos();
@@ -1473,8 +1437,7 @@ void RootWidget::activateTab(int tabId)
     }
 }
 
-void RootWidget::showEditor(bool on)
-{
+void RootWidget::showEditor(bool on) {
     if (m_editorView != nullptr)
         m_editorView->setVisible(on);
     if (m_fileStatus != nullptr)
@@ -1497,8 +1460,7 @@ void RootWidget::showEditor(bool on)
         m_composer->setVisible(stack);
 }
 
-QString RootWidget::pageMarkdownForKind(int kind) const
-{
+QString RootWidget::pageMarkdownForKind(int kind) const {
     if (m_pageHub == nullptr) {
         return pageMarkdown(kind);
     }
@@ -1508,23 +1470,19 @@ QString RootWidget::pageMarkdownForKind(int kind) const
     return markdown.isEmpty() ? pageMarkdown(kind) : markdown;
 }
 
-bool RootWidget::openManagerPage(const QString& id)
-{
+bool RootWidget::openManagerPage(const QString& id) {
     return m_pageHub != nullptr && m_pageHub->openManagerPage(id);
 }
 
-int RootWidget::activePageKind() const
-{
+int RootWidget::activePageKind() const {
     return m_pageHub != nullptr ? m_pageHub->activePageKind(m_active != nullptr) : -1;
 }
 
-QList<QVariantMap> RootWidget::pageActionRows(int kind) const
-{
+QList<QVariantMap> RootWidget::pageActionRows(int kind) const {
     return m_pageHub != nullptr ? m_pageHub->pageActionRows(kind) : QList<QVariantMap>{};
 }
 
-void RootWidget::refreshPageIfActive(int kind)
-{
+void RootWidget::refreshPageIfActive(int kind) {
     // Re-render `kind`'s page doc in place if it is the active page tab. Works for
     // both interactive hubs and the read-only Dashboard projection (so a live
     // roster/approvals change repaints the counters).
@@ -1542,13 +1500,11 @@ void RootWidget::refreshPageIfActive(int kind)
     }
 }
 
-void RootWidget::refreshActivePage()
-{
+void RootWidget::refreshActivePage() {
     refreshPageIfActive(activePageKind());
 }
 
-void RootWidget::movePageSelection(int delta)
-{
+void RootWidget::movePageSelection(int delta) {
     const int kind = activePageKind();
     if (kind < 0) {
         return;
@@ -1557,8 +1513,7 @@ void RootWidget::movePageSelection(int delta)
     refreshActivePage();
 }
 
-bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event)
-{
+bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
     const int kind = activePageKind();
     if (kind < 0 || m_pageHub == nullptr) {
         return false;
@@ -1570,8 +1525,7 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event)
     return false;
 }
 
-void RootWidget::openSessionSettingsOverlay()
-{
+void RootWidget::openSessionSettingsOverlay() {
     // Only meaningful over a transcript tab; bind the per-session overrides to
     // the focused chat first (parity with ComposerControls setting sessionId).
     if (m_active == nullptr || m_services.sessionSettings == nullptr) {
@@ -1583,12 +1537,12 @@ void RootWidget::openSessionSettingsOverlay()
     auto* dlg = new Tui::ZDialog(this);
     dlg->setOptions(Tui::ZWindow::DeleteOnClose);
     dlg->setWindowTitle(tr("Session settings"));
-    dlg->setContentsMargins({ 2, 1, 2, 1 });
+    dlg->setContentsMargins({2, 1, 2, 1});
     auto* layout = new Tui::ZVBoxLayout();
     dlg->setLayout(layout);
 
-    auto* hint = new Tui::ZLabel(
-        tr("Enter / Space on a row cycles or toggles it · Esc closes"), dlg);
+    auto* hint =
+        new Tui::ZLabel(tr("Enter / Space on a row cycles or toggles it · Esc closes"), dlg);
     layout->addWidget(hint);
     layout->addSpacing(1);
 
@@ -1612,11 +1566,8 @@ void RootWidget::openSessionSettingsOverlay()
     const auto sync = [ss, profileBtn, effortBtn, fastBtn, verboseBtn] {
         profileBtn->setText(tr("Profile: %1").arg(ss->profile()));
         effortBtn->setText(tr("Effort:  %1").arg(ss->effort()));
-        fastBtn->setText(tr("Fast:    %1")
-                             .arg(ss->fast() ? tr("on") : tr("off")));
-        verboseBtn->setText(tr("Verbose: %1")
-                                .arg(ss->verbose() ? tr("on")
-                                                   : tr("off")));
+        fastBtn->setText(tr("Fast:    %1").arg(ss->fast() ? tr("on") : tr("off")));
+        verboseBtn->setText(tr("Verbose: %1").arg(ss->verbose() ? tr("on") : tr("off")));
     };
     sync();
 
@@ -1650,8 +1601,7 @@ void RootWidget::openSessionSettingsOverlay()
     effortBtn->setFocus();
 }
 
-void RootWidget::openCheckpointsOverlay()
-{
+void RootWidget::openCheckpointsOverlay() {
     if (m_active == nullptr || m_services.checkpoints == nullptr) {
         return;
     }
@@ -1662,12 +1612,11 @@ void RootWidget::openCheckpointsOverlay()
     auto* dlg = new Tui::ZDialog(this);
     dlg->setOptions(Tui::ZWindow::DeleteOnClose);
     dlg->setWindowTitle(tr("Checkpoints"));
-    dlg->setContentsMargins({ 2, 1, 2, 1 });
+    dlg->setContentsMargins({2, 1, 2, 1});
     auto* layout = new Tui::ZVBoxLayout();
     dlg->setLayout(layout);
 
-    auto* hint = new Tui::ZLabel(
-        tr("Enter restores the selected checkpoint · Esc closes"), dlg);
+    auto* hint = new Tui::ZLabel(tr("Enter restores the selected checkpoint · Esc closes"), dlg);
     layout->addWidget(hint);
 
     auto* list = new Tui::ZListView(dlg);
@@ -1679,9 +1628,8 @@ void RootWidget::openCheckpointsOverlay()
                        .arg(c.value(QStringLiteral("label")).toString(),
                             c.value(QStringLiteral("time")).toString(),
                             c.value(QStringLiteral("tokens")).toString(),
-                            c.value(QStringLiteral("current")).toBool()
-                                ? tr("  (current)")
-                                : QString());
+                            c.value(QStringLiteral("current")).toBool() ? tr("  (current)")
+                                                                        : QString());
     }
     if (display.isEmpty()) {
         display << tr("(no checkpoints)");
@@ -1717,8 +1665,7 @@ void RootWidget::openCheckpointsOverlay()
     list->setFocus();
 }
 
-void RootWidget::destroySession(int tabId)
-{
+void RootWidget::destroySession(int tabId) {
     // File tabs hold an editor controller rather than a TabSession.
     if (m_fileTabs != nullptr && m_fileTabs->destroySession(tabId, m_editorView)) {
         return;
@@ -1734,8 +1681,7 @@ void RootWidget::destroySession(int tabId)
     });
 }
 
-void RootWidget::dumpGeometry() const
-{
+void RootWidget::dumpGeometry() const {
     const auto g = [](const char* n, const Tui::ZWidget* w) {
         if (w == nullptr) {
             return;
@@ -1754,22 +1700,19 @@ void RootWidget::dumpGeometry() const
     g("footer", m_footer);
 }
 
-void RootWidget::focusComposer() const
-{
+void RootWidget::focusComposer() const {
     if (m_composer != nullptr) {
         m_composer->setFocus();
     }
 }
 
-void RootWidget::focusTranscript() const
-{
+void RootWidget::focusTranscript() const {
     if (m_transcript != nullptr) {
         m_transcript->setFocus();
     }
 }
 
-bool RootWidget::awaitConnectionReady(int timeoutMs)
-{
+bool RootWidget::awaitConnectionReady(int timeoutMs) {
     auto* conn = m_services.connection;
     if (conn == nullptr) {
         return false;
@@ -1791,8 +1734,7 @@ bool RootWidget::awaitConnectionReady(int timeoutMs)
     return conn->ready();
 }
 
-void RootWidget::promptQuit()
-{
+void RootWidget::promptQuit() {
     if (m_overlays == nullptr) {
         return;
     }
@@ -1803,8 +1745,7 @@ void RootWidget::promptQuit()
     });
 }
 
-void RootWidget::openModelPicker()
-{
+void RootWidget::openModelPicker() {
     if (m_overlays == nullptr) {
         return;
     }
@@ -1814,8 +1755,7 @@ void RootWidget::openModelPicker()
     });
 }
 
-void RootWidget::toggleExplorer()
-{
+void RootWidget::toggleExplorer() {
     if (m_fileTreeView == nullptr) {
         return;
     }
@@ -1833,8 +1773,7 @@ void RootWidget::toggleExplorer()
     QSettings().setValue(QStringLiteral("ui/showFileExplorer"), show);
 }
 
-void RootWidget::openCommandPalette()
-{
+void RootWidget::openCommandPalette() {
     if (m_overlays == nullptr) {
         return;
     }
@@ -1867,8 +1806,7 @@ void RootWidget::openCommandPalette()
     m_overlays->openCommandPalette(m_commands, callbacks);
 }
 
-void RootWidget::cycleTheme()
-{
+void RootWidget::cycleTheme() {
     using theme::ThemeName;
     // Advance through the four themes in a fixed order.
     ThemeName next = ThemeName::Light;
@@ -1906,11 +1844,10 @@ void RootWidget::cycleTheme()
     }
     // The remaining custom-painted views sample tpal::* live at paint, so a plain
     // repaint suffices.
-    Tui::ZWidget* views[] = { m_window,       m_sidebarView,    m_composerChrome,
-                              m_queue,        m_attachments,    m_footer,
-                              m_completionPopup, m_search,       m_composer,
-                              m_tabStrip,     m_todos,          m_subagents,
-                              m_fileTreeView, m_editorView };
+    Tui::ZWidget* views[] = {m_window,       m_sidebarView, m_composerChrome,  m_queue,
+                             m_attachments,  m_footer,      m_completionPopup, m_search,
+                             m_composer,     m_tabStrip,    m_todos,           m_subagents,
+                             m_fileTreeView, m_editorView};
     for (Tui::ZWidget* w : views) {
         if (w != nullptr) {
             w->update();
@@ -1927,8 +1864,7 @@ void RootWidget::cycleTheme()
     settings.setValue(QStringLiteral("ui/theme"), theme::ThemePalette::toString(next));
 }
 
-void RootWidget::refreshTranscript()
-{
+void RootWidget::refreshTranscript() {
     if (m_transcript == nullptr || m_active == nullptr) {
         return;
     }
@@ -1941,15 +1877,14 @@ void RootWidget::refreshTranscript()
     // Drive the document from the session's SessionLogEntry sequence (decomposed from
     // its stored markdown) rather than the markdown blob (roadmap P4); same render path
     // a daemon adapter feeding decoded log pages will use.
-    const QString md
-        = m_active->controller->hasSession() ? m_active->controller->content() : QString();
+    const QString md =
+        m_active->controller->hasSession() ? m_active->controller->content() : QString();
     be::applyTranscriptLog(m_active->doc, be::decomposeMarkdown(md));
     m_active->search.refresh();
     m_transcript->reload();
 }
 
-void RootWidget::rewindActiveTab(const QString& messageId, bool editMode)
-{
+void RootWidget::rewindActiveTab(const QString& messageId, bool editMode) {
     if (m_active == nullptr || messageId.isEmpty()) {
         return;
     }
@@ -1985,8 +1920,7 @@ void RootWidget::rewindActiveTab(const QString& messageId, bool editMode)
     }
 }
 
-void RootWidget::onTurnEvents(TabSession* session, const QVariantList& events)
-{
+void RootWidget::onTurnEvents(TabSession* session, const QVariantList& events) {
     // Route the daemon-shaped events into THIS session's ingest: it appends/patches
     // typed reasoning/tool/content blocks on the session's document keyed by callId,
     // exactly as the GUI's EditorController does. Repaint only when it is on screen.
@@ -2004,8 +1938,7 @@ void RootWidget::onTurnEvents(TabSession* session, const QVariantList& events)
     }
 }
 
-void RootWidget::updateTodos()
-{
+void RootWidget::updateTodos() {
     if (m_todos == nullptr) {
         return;
     }
@@ -2029,8 +1962,7 @@ void RootWidget::updateTodos()
     m_todos->setText(tr("Tasks:  ") + parts.join(QStringLiteral("   ")));
 }
 
-void RootWidget::updateSubagents()
-{
+void RootWidget::updateSubagents() {
     if (m_subagents == nullptr) {
         return;
     }
@@ -2056,9 +1988,9 @@ void RootWidget::updateSubagents()
     QStringList parts;
     for (int i = 0; i < n; ++i) {
         const QString status = subs->statusAt(i);
-        const QString glyph = status == QStringLiteral("done") ? QStringLiteral("\u2713")
-            : status == QStringLiteral("error")                ? QStringLiteral("\u2717")
-                                                               : QStringLiteral("\u25cf");
+        const QString glyph = status == QStringLiteral("done")    ? QStringLiteral("\u2713")
+                              : status == QStringLiteral("error") ? QStringLiteral("\u2717")
+                                                                  : QStringLiteral("\u25cf");
         QString row = glyph + QStringLiteral(" ") + subs->titleAt(i);
         const QString detail = subs->detailAt(i);
         if (!detail.isEmpty()) {
@@ -2069,8 +2001,7 @@ void RootWidget::updateSubagents()
     m_subagents->setText(tr("Subagents:  ") + parts.join(QStringLiteral("   ")));
 }
 
-void RootWidget::updateCompletion()
-{
+void RootWidget::updateCompletion() {
     if (m_completionPopup == nullptr) {
         return;
     }

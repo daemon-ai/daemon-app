@@ -10,16 +10,12 @@
 #ifndef TUIWIDGETS_ZWIDGET_P_INCLUDED
 #define TUIWIDGETS_ZWIDGET_P_INCLUDED
 
-#include <QRect>
-
-#include <Tui/tuiwidgets_internal.h>
-
 #include <QPointer>
+#include <QRect>
 #include <QVector>
-
-#include <Tui/ZPalette.h>
 #include <Tui/ListNode_p.h>
-
+#include <Tui/tuiwidgets_internal.h>
+#include <Tui/ZPalette.h>
 #include <Tui/ZWidget.h>
 
 TUIWIDGETS_NS_START
@@ -31,15 +27,16 @@ class ZTerminal;
 struct FocusHistoryTag;
 
 template <typename CALLABLE>
-void zwidgetForEachDescendant(ZWidget *start, CALLABLE &&callable) {
+void zwidgetForEachDescendant(ZWidget* start, CALLABLE&& callable) {
     QVector<QPointer<QObject>> todo;
-    for (QObject *x : start->children()) {
+    for (QObject* x : start->children()) {
         todo.append(x);
     }
     while (todo.size()) {
-        QObject *o = todo.takeLast();
-        if (!o) continue;
-        for (QObject *x : o->children()) {
+        QObject* o = todo.takeLast();
+        if (!o)
+            continue;
+        for (QObject* x : o->children()) {
             todo.append(x);
         }
         callable(o);
@@ -48,17 +45,19 @@ void zwidgetForEachDescendant(ZWidget *start, CALLABLE &&callable) {
 
 class ZWidgetPrivate {
 public:
-    ZWidgetPrivate(ZWidget *pub);
+    ZWidgetPrivate(ZWidget* pub);
     virtual ~ZWidgetPrivate();
 
-    void updateRequestEvent(ZPaintEvent *event);
+    void updateRequestEvent(ZPaintEvent* event);
 
-    ZTerminal *findTerminal() const;
+    ZTerminal* findTerminal() const;
 
     void unsetTerminal();
-    void setManagingTerminal(ZTerminal *terminal);
+    void setManagingTerminal(ZTerminal* terminal);
 
-    bool isTabFocusable() const { return effectivelyEnabled && effectivelyVisible && (focusPolicy & FocusPolicy::TabFocus); }
+    bool isTabFocusable() const {
+        return effectivelyEnabled && effectivelyVisible && (focusPolicy & FocusPolicy::TabFocus);
+    }
 
     void updateEffectivelyEnabledRecursively();
     void updateEffectivelyVisibleRecursively();
@@ -92,10 +91,10 @@ public:
     CursorStyle cursorStyle = CursorStyle::Unset;
     int cursorColorR = -1, cursorColorG = -1, cursorColorB = -1;
 
-    ZTerminal *terminal = nullptr;
+    ZTerminal* terminal = nullptr;
     ListNode<ZWidgetPrivate> focusHistory;
 
-    ZCommandManager *commandManager = nullptr;
+    ZCommandManager* commandManager = nullptr;
 
     uint64_t focusCount = 0;
 
@@ -103,16 +102,16 @@ public:
     int doLayoutScratchDepth;
 
     // back door
-    static ZWidgetPrivate *get(ZWidget *widget) { return widget->tuiwidgets_impl(); }
-    static const ZWidgetPrivate *get(const ZWidget *widget) { return widget->tuiwidgets_impl(); }
+    static ZWidgetPrivate* get(ZWidget* widget) { return widget->tuiwidgets_impl(); }
+    static const ZWidgetPrivate* get(const ZWidget* widget) { return widget->tuiwidgets_impl(); }
 
     // internal
     const unsigned int tui_magic = tui_magic_v0;
-    ZWidget *pub_ptr;
+    ZWidget* pub_ptr;
     TUIWIDGETS_DECLARE_PUBLIC(ZWidget)
 };
 
-template<>
+template <>
 struct ListTrait<FocusHistoryTag> {
     static constexpr auto offset = &ZWidgetPrivate::focusHistory;
 };

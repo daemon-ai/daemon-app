@@ -1,9 +1,8 @@
 #pragma once
 
-#include <Tui/ZWidget.h>
-
 #include <QElapsedTimer>
 #include <QString>
+#include <Tui/ZWidget.h>
 
 namespace files {
 class FsExplorerModel;

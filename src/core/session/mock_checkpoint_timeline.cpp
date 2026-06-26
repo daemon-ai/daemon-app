@@ -4,8 +4,7 @@ namespace session {
 namespace {
 
 QVariantMap mk(const QString& id, const QString& label, const QString& time, int tokens,
-               bool current)
-{
+               bool current) {
     QVariantMap m;
     m[QStringLiteral("id")] = id;
     m[QStringLiteral("label")] = label;
@@ -18,9 +17,7 @@ QVariantMap mk(const QString& id, const QString& label, const QString& time, int
 } // namespace
 
 MockCheckpointTimeline::MockCheckpointTimeline(QObject* parent)
-    : ICheckpointTimeline(parent)
-    , m_checkpoints(new uimodels::VariantListModel(this))
-{
+    : ICheckpointTimeline(parent), m_checkpoints(new uimodels::VariantListModel(this)) {
     // Seed the initial (default) session so the panel has content before any
     // session id is bound.
     ensureSession(m_sessionId);
@@ -30,8 +27,7 @@ MockCheckpointTimeline::MockCheckpointTimeline(QObject* parent)
             &ICheckpointTimeline::changed);
 }
 
-QList<QVariantMap> MockCheckpointTimeline::seedRows()
-{
+QList<QVariantMap> MockCheckpointTimeline::seedRows() {
     return {
         mk(QStringLiteral("cp-1"), QStringLiteral("Initial prompt"), QStringLiteral("10:02"), 1280,
            false),
@@ -44,16 +40,14 @@ QList<QVariantMap> MockCheckpointTimeline::seedRows()
     };
 }
 
-void MockCheckpointTimeline::ensureSession(const QString& id)
-{
+void MockCheckpointTimeline::ensureSession(const QString& id) {
     if (!m_rowsBySession.contains(id)) {
         m_rowsBySession.insert(id, seedRows());
         m_nextIdBySession.insert(id, 5);
     }
 }
 
-void MockCheckpointTimeline::setSessionId(const QString& id)
-{
+void MockCheckpointTimeline::setSessionId(const QString& id) {
     if (m_sessionId == id) {
         return;
     }
@@ -70,11 +64,14 @@ void MockCheckpointTimeline::setSessionId(const QString& id)
     emit changed();
 }
 
-QObject* MockCheckpointTimeline::checkpoints() const { return m_checkpoints; }
-int MockCheckpointTimeline::count() const { return m_checkpoints->count(); }
+QObject* MockCheckpointTimeline::checkpoints() const {
+    return m_checkpoints;
+}
+int MockCheckpointTimeline::count() const {
+    return m_checkpoints->count();
+}
 
-void MockCheckpointTimeline::restore(const QString& id)
-{
+void MockCheckpointTimeline::restore(const QString& id) {
     const int target = m_checkpoints->indexOfId(id);
     if (target < 0) {
         return;
@@ -95,8 +92,7 @@ void MockCheckpointTimeline::restore(const QString& id)
     emit changed();
 }
 
-QString MockCheckpointTimeline::createCheckpoint(const QString& label)
-{
+QString MockCheckpointTimeline::createCheckpoint(const QString& label) {
     const QString id = QStringLiteral("cp-%1").arg(m_nextId++);
     for (const QVariantMap& row : m_checkpoints->rows()) {
         if (row.value(QStringLiteral("current")).toBool()) {

@@ -2,9 +2,8 @@
 
 #include "transcript_render.h" // Span / RenderLine
 
-#include <Tui/ZWidget.h>
-
 #include <QVector>
+#include <Tui/ZWidget.h>
 
 class ComposerSessionController;
 

@@ -17,11 +17,11 @@ namespace be::app {
 
 namespace {
 
-QString sampleDocument()
-{
+QString sampleDocument() {
     return QStringLiteral(
         "# QML Markdown Block Editor\n\n"
-        "This shell is backed by a C++ `DocumentStore`, `BlockModel`, and md4qt parser plumbing.\n\n"
+        "This shell is backed by a C++ `DocumentStore`, `BlockModel`, and md4qt parser "
+        "plumbing.\n\n"
         "- Virtualized blocks are rendered by a `ListView` with `reuseItems`.\n"
         "- Click a block to activate its raw Markdown editor.\n"
         "- Persistence, undo, selection, and projection code now have core homes.\n\n"
@@ -45,11 +45,8 @@ QString sampleDocument()
 
 } // namespace
 
-EditorController::EditorController(QObject *parent)
-    : QObject(parent)
-    , m_ingest(&m_store)
-    , m_model(this)
-{
+EditorController::EditorController(QObject* parent)
+    : QObject(parent), m_ingest(&m_store), m_model(this) {
     m_model.setStore(&m_store);
     m_flushTimer.setSingleShot(true);
     m_flushTimer.setInterval(750);
@@ -64,7 +61,8 @@ EditorController::EditorController(QObject *parent)
     // The active row is derived from the active block id and the current row
     // layout. Track id changes here; structural row shifts (reset/stream) emit
     // activeBlockRowChanged from their own sites.
-    connect(this, &EditorController::activeBlockIdChanged, this, &EditorController::activeBlockRowChanged);
+    connect(this, &EditorController::activeBlockIdChanged, this,
+            &EditorController::activeBlockRowChanged);
 
     // Keep the in-transcript find engine bound to this controller's store and
     // re-collected as the document mutates. loadMarkdown() refreshes directly (it
@@ -77,57 +75,47 @@ EditorController::EditorController(QObject *parent)
     loadMarkdown(sampleDocument());
 }
 
-BlockModel *EditorController::blockModel()
-{
+BlockModel* EditorController::blockModel() {
     return &m_model;
 }
 
-ActiveBlockTextController *EditorController::activeTextController()
-{
+ActiveBlockTextController* EditorController::activeTextController() {
     return &m_activeTextController;
 }
 
-qulonglong EditorController::activeBlockId() const
-{
+qulonglong EditorController::activeBlockId() const {
     return m_activeBlockId;
 }
 
-int EditorController::activeBlockRow() const
-{
+int EditorController::activeBlockRow() const {
     return static_cast<int>(m_store.rowForBlock(m_activeBlockId));
 }
 
-int EditorController::activeCursorOffset() const
-{
+int EditorController::activeCursorOffset() const {
     return m_activeCursorOffset;
 }
 
-qulonglong EditorController::selectionRevision() const
-{
+qulonglong EditorController::selectionRevision() const {
     return m_selection.selection().revision;
 }
 
-bool EditorController::streaming() const
-{
+bool EditorController::streaming() const {
     return m_streaming;
 }
 
-void EditorController::applyPalette()
-{
+void EditorController::applyPalette() {
     m_projector.setPalette(m_palette);
     m_model.setPalette(m_palette);
     emit paletteChanged();
 }
 
-void EditorController::reprojectAll()
-{
+void EditorController::reprojectAll() {
     // The display markup is read live from the model role, so a palette refresh
     // is enough to re-render every block; no document mutation is involved.
     m_model.setPalette(m_palette);
 }
 
-void EditorController::setCodeBackgroundColor(const QColor &color)
-{
+void EditorController::setCodeBackgroundColor(const QColor& color) {
     if (m_palette.codeBackground == color) {
         return;
     }
@@ -135,8 +123,7 @@ void EditorController::setCodeBackgroundColor(const QColor &color)
     applyPalette();
 }
 
-void EditorController::setLinkColor(const QColor &color)
-{
+void EditorController::setLinkColor(const QColor& color) {
     if (m_palette.link == color) {
         return;
     }
@@ -144,8 +131,7 @@ void EditorController::setLinkColor(const QColor &color)
     applyPalette();
 }
 
-void EditorController::setBodyTextColor(const QColor &color)
-{
+void EditorController::setBodyTextColor(const QColor& color) {
     if (m_palette.text == color) {
         return;
     }
@@ -153,8 +139,7 @@ void EditorController::setBodyTextColor(const QColor &color)
     applyPalette();
 }
 
-void EditorController::setMonoFamily(const QString &family)
-{
+void EditorController::setMonoFamily(const QString& family) {
     if (m_palette.monoFamily == family) {
         return;
     }
@@ -162,8 +147,7 @@ void EditorController::setMonoFamily(const QString &family)
     applyPalette();
 }
 
-void EditorController::setBodyFontFamily(const QString &family)
-{
+void EditorController::setBodyFontFamily(const QString& family) {
     if (m_bodyFontFamily == family) {
         return;
     }
@@ -173,8 +157,7 @@ void EditorController::setBodyFontFamily(const QString &family)
     emit bodyFontChanged();
 }
 
-void EditorController::setBodyFontSize(int pixelSize)
-{
+void EditorController::setBodyFontSize(int pixelSize) {
     if (pixelSize <= 0 || m_palette.bodyPixelSize == pixelSize) {
         return;
     }
@@ -184,13 +167,11 @@ void EditorController::setBodyFontSize(int pixelSize)
     emit bodyFontChanged();
 }
 
-void EditorController::loadMarkdownBytes(const QByteArray &bytes)
-{
+void EditorController::loadMarkdownBytes(const QByteArray& bytes) {
     loadMarkdown(QString::fromUtf8(bytes), false);
 }
 
-void EditorController::loadMarkdown(const QString &markdown, bool activateFirstBlock)
-{
+void EditorController::loadMarkdown(const QString& markdown, bool activateFirstBlock) {
     m_store.loadMarkdown(markdown);
     m_commands.clear();
     // A read-first host (the Transcript) passes false so no block is activated on
@@ -209,8 +190,7 @@ void EditorController::loadMarkdown(const QString &markdown, bool activateFirstB
     }
 }
 
-void EditorController::loadTranscript(QObject *store, const QString &sessionId)
-{
+void EditorController::loadTranscript(QObject* store, const QString& sessionId) {
     // Fetch the session's stored markdown via the store's Q_INVOKABLE content(QString)
     // (kept dynamic so the block editor needs no link to the persistence layer).
     QString markdown;
@@ -232,8 +212,7 @@ void EditorController::loadTranscript(QObject *store, const QString &sessionId)
     emit activeCursorOffsetChanged();
 }
 
-void EditorController::beginStream()
-{
+void EditorController::beginStream() {
     if (m_streaming) {
         return;
     }
@@ -245,8 +224,7 @@ void EditorController::beginStream()
     emit streamingChanged();
 }
 
-void EditorController::streamAppend(const QString &text)
-{
+void EditorController::streamAppend(const QString& text) {
     if (!m_streaming || text.isEmpty()) {
         return;
     }
@@ -256,8 +234,7 @@ void EditorController::streamAppend(const QString &text)
     }
 }
 
-void EditorController::flushStreamBuffer()
-{
+void EditorController::flushStreamBuffer() {
     if (!m_streaming || m_streamPending.isEmpty()) {
         return;
     }
@@ -273,8 +250,7 @@ void EditorController::flushStreamBuffer()
     emit streamContentAppended();
 }
 
-void EditorController::endStream()
-{
+void EditorController::endStream() {
     if (!m_streaming) {
         return;
     }
@@ -287,7 +263,7 @@ void EditorController::endStream()
     // Record the stream as a single scoped undo step over just the appended tail.
     QVector<be::BlockRecord> appended;
     for (qsizetype row = m_streamStartRow; row < m_store.blockCount(); ++row) {
-        if (const be::BlockRecord *block = m_store.blockAt(row)) {
+        if (const be::BlockRecord* block = m_store.blockAt(row)) {
             appended.push_back(*block);
         }
     }
@@ -302,8 +278,7 @@ void EditorController::endStream()
     scheduleFlush();
 }
 
-qulonglong EditorController::appendTypedBlock(const QString &kind, const QVariantMap &metadata)
-{
+qulonglong EditorController::appendTypedBlock(const QString& kind, const QVariantMap& metadata) {
     const be::BlockType type = be::agentBlockTypeForFence(kind);
     if (type == be::BlockType::Unknown) {
         return 0;
@@ -318,8 +293,7 @@ qulonglong EditorController::appendTypedBlock(const QString &kind, const QVarian
     return id;
 }
 
-void EditorController::updateTypedBlock(qulonglong blockId, const QVariantMap &patch)
-{
+void EditorController::updateTypedBlock(qulonglong blockId, const QVariantMap& patch) {
     const be::BlockChangeSet changeSet = m_store.updateBlockMetadata(blockId, patch);
     if (changeSet.changedFirst < 0) {
         return;
@@ -329,15 +303,13 @@ void EditorController::updateTypedBlock(qulonglong blockId, const QVariantMap &p
     emit documentChanged();
 }
 
-qulonglong EditorController::blockIdForCallId(const QString &callId) const
-{
+qulonglong EditorController::blockIdForCallId(const QString& callId) const {
     return m_store.blockIdForMetadata(QStringLiteral("callId"), callId);
 }
 
-void EditorController::ingestEvent(const QVariantMap &event)
-{
+void EditorController::ingestEvent(const QVariantMap& event) {
     const QVector<be::BlockChangeSet> sets = m_ingest.ingest(event);
-    for (const be::BlockChangeSet &cs : sets) {
+    for (const be::BlockChangeSet& cs : sets) {
         m_model.applyChangeSet(cs);
     }
     rebuildHeightIndex();
@@ -346,23 +318,21 @@ void EditorController::ingestEvent(const QVariantMap &event)
     emit documentChanged();
 }
 
-void EditorController::ingestEvents(const QVariantList &events)
-{
-    for (const QVariant &event : events) {
+void EditorController::ingestEvents(const QVariantList& events) {
+    for (const QVariant& event : events) {
         ingestEvent(event.toMap());
     }
 }
 
-void EditorController::requestImagePreview(const QString &url, const QString &alt)
-{
+void EditorController::requestImagePreview(const QString& url, const QString& alt) {
     if (url.isEmpty()) {
         return;
     }
     emit imagePreviewRequested(url, alt);
 }
 
-void EditorController::answerClarify(qulonglong blockId, const QString &requestId, const QVariantMap &answers)
-{
+void EditorController::answerClarify(qulonglong blockId, const QString& requestId,
+                                     const QVariantMap& answers) {
     // Local echo: mark the clarify tool answered so it collapses to a compact
     // resolved row, persisted via the canonical fenced markdown. The patch
     // contract (structured `answers` + flat `answer` summary) is single-sourced
@@ -371,8 +341,8 @@ void EditorController::answerClarify(qulonglong blockId, const QString &requestI
     emit clarifyAnswered(blockId, requestId, answers);
 }
 
-void EditorController::answerToolApproval(qulonglong blockId, const QString &callId, const QString &decision, bool permanent)
-{
+void EditorController::answerToolApproval(qulonglong blockId, const QString& callId,
+                                          const QString& decision, bool permanent) {
     // Local echo: record the decision so the approval bar clears (shared patch
     // contract with the TUI). A denial flips the tool to an error state; an
     // approval leaves it running for the host to drive to completion.
@@ -380,8 +350,7 @@ void EditorController::answerToolApproval(qulonglong blockId, const QString &cal
     emit toolApprovalAnswered(blockId, callId, decision, permanent);
 }
 
-void EditorController::appendUserMessage(const QString &text)
-{
+void EditorController::appendUserMessage(const QString& text) {
     const QString trimmed = text.trimmed();
     if (trimmed.isEmpty()) {
         return;
@@ -393,8 +362,7 @@ void EditorController::appendUserMessage(const QString &text)
     emit documentChanged();
 }
 
-void EditorController::appendSystemMessage(const QString &text, const QString &variant)
-{
+void EditorController::appendSystemMessage(const QString& text, const QString& variant) {
     Q_UNUSED(variant);
     const QString trimmed = text.trimmed();
     if (trimmed.isEmpty()) {
@@ -407,8 +375,7 @@ void EditorController::appendSystemMessage(const QString &text, const QString &v
     emit documentChanged();
 }
 
-void EditorController::editUserMessage(const QString &messageId, const QString &text)
-{
+void EditorController::editUserMessage(const QString& messageId, const QString& text) {
     const QString trimmed = text.trimmed();
     if (m_store.rowForMessage(messageId) < 0 || trimmed.isEmpty()) {
         return;
@@ -421,8 +388,7 @@ void EditorController::editUserMessage(const QString &messageId, const QString &
     emit userMessageEdited(newId, trimmed);
 }
 
-void EditorController::requestRegenerate(const QString &messageId)
-{
+void EditorController::requestRegenerate(const QString& messageId) {
     // Drop the assistant message (and anything after it) so the host can stream a
     // fresh reply in its place; the prior user turn is kept.
     if (m_store.regenerateFromMessage(messageId)) {
@@ -431,8 +397,7 @@ void EditorController::requestRegenerate(const QString &messageId)
     emit regenerateRequested(messageId);
 }
 
-void EditorController::restoreToMessage(const QString &messageId)
-{
+void EditorController::restoreToMessage(const QString& messageId) {
     // "Restore checkpoint": rewind to this user message and re-run with its own
     // text. Reuses the edit path (same text), so userMessageEdited fires and the
     // host re-runs the turn.
@@ -443,8 +408,7 @@ void EditorController::restoreToMessage(const QString &messageId)
     editUserMessage(messageId, text);
 }
 
-QString EditorController::editFromMessage(const QString &messageId)
-{
+QString EditorController::editFromMessage(const QString& messageId) {
     if (m_store.rowForMessage(messageId) < 0) {
         return {};
     }
@@ -453,8 +417,7 @@ QString EditorController::editFromMessage(const QString &messageId)
     return text.trimmed();
 }
 
-void EditorController::undoToMessage(const QString &messageId)
-{
+void EditorController::undoToMessage(const QString& messageId) {
     if (m_store.rowForMessage(messageId) < 0) {
         return;
     }
@@ -462,27 +425,25 @@ void EditorController::undoToMessage(const QString &messageId)
     afterStructuralRewind();
 }
 
-QString EditorController::lastUserMessageId() const
-{
+QString EditorController::lastUserMessageId() const {
     QString id;
     for (qsizetype row = 0; row < m_store.blockCount(); ++row) {
-        const be::BlockRecord *block = m_store.blockAt(row);
-        if (block != nullptr && block->role == be::MessageRole::User
-            && !block->messageId.isEmpty()) {
+        const be::BlockRecord* block = m_store.blockAt(row);
+        if (block != nullptr && block->role == be::MessageRole::User &&
+            !block->messageId.isEmpty()) {
             id = block->messageId;
         }
     }
     return id;
 }
 
-QString EditorController::messageText(const QString &messageId) const
-{
+QString EditorController::messageText(const QString& messageId) const {
     if (messageId.isEmpty()) {
         return {};
     }
     QStringList parts;
     for (qsizetype row = 0; row < m_store.blockCount(); ++row) {
-        const be::BlockRecord *block = m_store.blockAt(row);
+        const be::BlockRecord* block = m_store.blockAt(row);
         if (block && block->messageId == messageId) {
             parts << block->markdown();
         }
@@ -490,35 +451,30 @@ QString EditorController::messageText(const QString &messageId) const
     return parts.join(QStringLiteral("\n\n"));
 }
 
-void EditorController::copyMessageToClipboard(const QString &messageId) const
-{
+void EditorController::copyMessageToClipboard(const QString& messageId) const {
     const QString text = messageText(messageId);
     if (text.isEmpty()) {
         return;
     }
-    if (QClipboard *clipboard = QGuiApplication::clipboard()) {
+    if (QClipboard* clipboard = QGuiApplication::clipboard()) {
         clipboard->setText(text);
     }
 }
 
-void EditorController::notifyInlineEditOpen()
-{
+void EditorController::notifyInlineEditOpen() {
     emit inlineEditOpened();
 }
 
-QVariantList EditorController::ansiSpans(const QString &text) const
-{
+QVariantList EditorController::ansiSpans(const QString& text) const {
     return be::ansiToSpans(text);
 }
 
-QVariantList EditorController::parseDiff(const QString &diff) const
-{
+QVariantList EditorController::parseDiff(const QString& diff) const {
     return be::parseUnifiedDiff(diff);
 }
 
-void EditorController::activateBlock(qulonglong blockId)
-{
-    const be::BlockRecord *block = m_store.blockAt(m_store.rowForBlock(blockId));
+void EditorController::activateBlock(qulonglong blockId) {
+    const be::BlockRecord* block = m_store.blockAt(m_store.rowForBlock(blockId));
     if (!block) {
         return;
     }
@@ -536,16 +492,14 @@ void EditorController::activateBlock(qulonglong blockId)
     emit editorFocusRequested(m_activeBlockId, ExactOffset, m_activeCursorOffset, 0.0);
 }
 
-void EditorController::activateBlockAt(int row, int cursorOffset)
-{
-    const be::BlockRecord *block = m_store.blockAt(row);
+void EditorController::activateBlockAt(int row, int cursorOffset) {
+    const be::BlockRecord* block = m_store.blockAt(row);
     if (!block) {
         return;
     }
 
-    const int boundedOffset = cursorOffset < 0
-        ? block->markdown().size()
-        : qBound(0, cursorOffset, block->markdown().size());
+    const int boundedOffset = cursorOffset < 0 ? block->markdown().size()
+                                               : qBound(0, cursorOffset, block->markdown().size());
 
     const bool blockChanged = m_activeBlockId != block->id;
     const bool cursorChanged = m_activeCursorOffset != boundedOffset;
@@ -564,36 +518,35 @@ void EditorController::activateBlockAt(int row, int cursorOffset)
     emit editorFocusRequested(m_activeBlockId, ExactOffset, m_activeCursorOffset, 0.0);
 }
 
-void EditorController::requestFocusForActiveBlock(int placement, int cursorOffset, qreal visualX)
-{
-    const be::BlockRecord *block = m_store.blockAt(m_store.rowForBlock(m_activeBlockId));
+void EditorController::requestFocusForActiveBlock(int placement, int cursorOffset, qreal visualX) {
+    const be::BlockRecord* block = m_store.blockAt(m_store.rowForBlock(m_activeBlockId));
     if (!block) {
         return;
     }
 
-    const int boundedOffset = cursorOffset < 0
-        ? block->markdown().size()
-        : qBound(0, cursorOffset, block->markdown().size());
+    const int boundedOffset = cursorOffset < 0 ? block->markdown().size()
+                                               : qBound(0, cursorOffset, block->markdown().size());
     if (placement == ExactOffset || placement == Start || placement == End) {
-        m_activeCursorOffset = placement == Start ? 0 : (placement == End ? block->markdown().size() : boundedOffset);
+        m_activeCursorOffset =
+            placement == Start ? 0 : (placement == End ? block->markdown().size() : boundedOffset);
         emit activeCursorOffsetChanged();
     }
     emit editorFocusRequested(m_activeBlockId, placement, m_activeCursorOffset, visualX);
 }
 
-void EditorController::moveActiveBlock(int delta, int placement, qreal visualX)
-{
+void EditorController::moveActiveBlock(int delta, int placement, qreal visualX) {
     const qsizetype currentRow = m_store.rowForBlock(m_activeBlockId);
     if (currentRow < 0) {
         return;
     }
 
-    const be::BlockRecord *target = m_store.blockAt(currentRow + delta);
+    const be::BlockRecord* target = m_store.blockAt(currentRow + delta);
     if (!target) {
         return;
     }
 
-    const int cursorOffset = placement == End || placement == LastVisualLineAtX ? target->markdown().size() : 0;
+    const int cursorOffset =
+        placement == End || placement == LastVisualLineAtX ? target->markdown().size() : 0;
     const bool blockChanged = m_activeBlockId != target->id;
     m_activeBlockId = target->id;
     m_activeCursorOffset = cursorOffset;
@@ -605,9 +558,8 @@ void EditorController::moveActiveBlock(int delta, int placement, qreal visualX)
     emit editorFocusRequested(m_activeBlockId, placement, m_activeCursorOffset, visualX);
 }
 
-void EditorController::updateActiveCursorOffset(int cursorOffset)
-{
-    const be::BlockRecord *block = m_store.blockAt(m_store.rowForBlock(m_activeBlockId));
+void EditorController::updateActiveCursorOffset(int cursorOffset) {
+    const be::BlockRecord* block = m_store.blockAt(m_store.rowForBlock(m_activeBlockId));
     const int maxOffset = block ? block->markdown().size() : 0;
     const int boundedOffset = qBound(0, cursorOffset, maxOffset);
     if (m_activeCursorOffset == boundedOffset) {
@@ -617,8 +569,7 @@ void EditorController::updateActiveCursorOffset(int cursorOffset)
     emit activeCursorOffsetChanged();
 }
 
-void EditorController::replaceBlockMarkdown(qulonglong blockId, const QString &markdown)
-{
+void EditorController::replaceBlockMarkdown(qulonglong blockId, const QString& markdown) {
     const QString before = m_store.blockMarkdown(blockId);
     if (before == markdown) {
         return;
@@ -633,18 +584,18 @@ void EditorController::replaceBlockMarkdown(qulonglong blockId, const QString &m
     scheduleFlush();
 }
 
-QString EditorController::projectionText(qulonglong blockId, bool revealMarkdown, int rawCursor) const
-{
-    const be::BlockRecord *block = m_store.blockAt(m_store.rowForBlock(blockId));
+QString EditorController::projectionText(qulonglong blockId, bool revealMarkdown,
+                                         int rawCursor) const {
+    const be::BlockRecord* block = m_store.blockAt(m_store.rowForBlock(blockId));
     if (!block) {
         return {};
     }
     return m_projector.project(*block, revealMarkdown, rawCursor).visualText;
 }
 
-void EditorController::replaceVisualRange(qulonglong blockId, int visualStart, int visualEnd, const QString &insertedText)
-{
-    const be::BlockRecord *block = m_store.blockAt(m_store.rowForBlock(blockId));
+void EditorController::replaceVisualRange(qulonglong blockId, int visualStart, int visualEnd,
+                                          const QString& insertedText) {
+    const be::BlockRecord* block = m_store.blockAt(m_store.rowForBlock(blockId));
     if (!block) {
         return;
     }
@@ -657,30 +608,27 @@ void EditorController::replaceVisualRange(qulonglong blockId, int visualStart, i
     replaceBlockMarkdown(blockId, markdown);
 }
 
-void EditorController::insertBlockAfter(qulonglong blockId, const QString &markdown)
-{
+void EditorController::insertBlockAfter(qulonglong blockId, const QString& markdown) {
     QVector<be::BlockRecord> before = m_store.snapshot();
     if (!m_store.insertBlockAfter(blockId, markdown)) {
         return;
     }
-    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()), m_store);
+    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()),
+                    m_store);
     clearActiveSelection();
     resetModel();
     scheduleFlush();
 }
 
-void EditorController::splitBlock(qulonglong blockId, int rawOffset)
-{
+void EditorController::splitBlock(qulonglong blockId, int rawOffset) {
     performSplit(blockId, rawOffset, false);
 }
 
-void EditorController::splitParagraph(qulonglong blockId, int rawOffset)
-{
+void EditorController::splitParagraph(qulonglong blockId, int rawOffset) {
     performSplit(blockId, rawOffset, true);
 }
 
-void EditorController::performSplit(qulonglong blockId, int rawOffset, bool trimBoundary)
-{
+void EditorController::performSplit(qulonglong blockId, int rawOffset, bool trimBoundary) {
     QVector<be::BlockRecord> before = m_store.snapshot();
     be::BlockId resultBlock = blockId;
     qsizetype resultCursor = 0;
@@ -688,7 +636,8 @@ void EditorController::performSplit(qulonglong blockId, int rawOffset, bool trim
         return;
     }
 
-    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()), m_store);
+    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()),
+                    m_store);
     clearActiveSelection();
 
     m_activeBlockId = resultBlock;
@@ -700,14 +649,13 @@ void EditorController::performSplit(qulonglong blockId, int rawOffset, bool trim
     scheduleFlush();
 }
 
-void EditorController::mergeWithPrevious(qulonglong blockId)
-{
+void EditorController::mergeWithPrevious(qulonglong blockId) {
     const qsizetype row = m_store.rowForBlock(blockId);
     if (row <= 0) {
         return;
     }
 
-    const be::BlockRecord *previous = m_store.blockAt(row - 1);
+    const be::BlockRecord* previous = m_store.blockAt(row - 1);
     if (!previous) {
         return;
     }
@@ -719,7 +667,8 @@ void EditorController::mergeWithPrevious(qulonglong blockId)
         return;
     }
 
-    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()), m_store);
+    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()),
+                    m_store);
     clearActiveSelection();
 
     m_activeBlockId = previousId;
@@ -731,8 +680,8 @@ void EditorController::mergeWithPrevious(qulonglong blockId)
     scheduleFlush();
 }
 
-void EditorController::pasteMarkdownAtRange(qulonglong blockId, int rawStart, int rawEnd, const QString &text)
-{
+void EditorController::pasteMarkdownAtRange(qulonglong blockId, int rawStart, int rawEnd,
+                                            const QString& text) {
     if (text.isEmpty()) {
         return;
     }
@@ -747,7 +696,8 @@ void EditorController::pasteMarkdownAtRange(qulonglong blockId, int rawStart, in
         return;
     }
 
-    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()), m_store);
+    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()),
+                    m_store);
     clearActiveSelection();
 
     m_activeBlockId = caretBlock;
@@ -759,13 +709,12 @@ void EditorController::pasteMarkdownAtRange(qulonglong blockId, int rawStart, in
     scheduleFlush();
 }
 
-void EditorController::pasteFromClipboard(qulonglong blockId, int rawStart, int rawEnd)
-{
-    const QClipboard *clipboard = QGuiApplication::clipboard();
+void EditorController::pasteFromClipboard(qulonglong blockId, int rawStart, int rawEnd) {
+    const QClipboard* clipboard = QGuiApplication::clipboard();
     if (!clipboard) {
         return;
     }
-    const QMimeData *mime = clipboard->mimeData();
+    const QMimeData* mime = clipboard->mimeData();
     if (!mime) {
         return;
     }
@@ -784,15 +733,15 @@ void EditorController::pasteFromClipboard(qulonglong blockId, int rawStart, int 
     pasteMarkdownAtRange(blockId, rawStart, rawEnd, text);
 }
 
-void EditorController::applyListIndent(qulonglong blockId, int deltaUnits)
-{
+void EditorController::applyListIndent(qulonglong blockId, int deltaUnits) {
     QVector<be::BlockRecord> before = m_store.snapshot();
     qsizetype cursorDelta = 0;
     if (!m_store.adjustListIndent(blockId, deltaUnits, &cursorDelta)) {
         return;
     }
 
-    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()), m_store);
+    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()),
+                    m_store);
     clearActiveSelection();
 
     m_activeBlockId = blockId;
@@ -804,27 +753,24 @@ void EditorController::applyListIndent(qulonglong blockId, int deltaUnits)
     scheduleFlush();
 }
 
-void EditorController::indentListItem(qulonglong blockId)
-{
+void EditorController::indentListItem(qulonglong blockId) {
     applyListIndent(blockId, 1);
 }
 
-void EditorController::outdentListItem(qulonglong blockId)
-{
+void EditorController::outdentListItem(qulonglong blockId) {
     applyListIndent(blockId, -1);
 }
 
-void EditorController::backspaceAtStart(qulonglong blockId)
-{
+void EditorController::backspaceAtStart(qulonglong blockId) {
     const qsizetype row = m_store.rowForBlock(blockId);
-    const be::BlockRecord *block = m_store.blockAt(row);
+    const be::BlockRecord* block = m_store.blockAt(row);
     if (!block) {
         return;
     }
 
-    const bool isListItem = block->type == be::BlockType::BulletListItem
-        || block->type == be::BlockType::OrderedListItem
-        || block->type == be::BlockType::TaskListItem;
+    const bool isListItem = block->type == be::BlockType::BulletListItem ||
+                            block->type == be::BlockType::OrderedListItem ||
+                            block->type == be::BlockType::TaskListItem;
 
     if (isListItem) {
         if (block->indent > 0) {
@@ -840,7 +786,9 @@ void EditorController::backspaceAtStart(qulonglong blockId)
             return;
         }
 
-        m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()), m_store);
+        m_commands.push(
+            std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()),
+            m_store);
         clearActiveSelection();
 
         m_activeBlockId = blockId;
@@ -856,8 +804,7 @@ void EditorController::backspaceAtStart(qulonglong blockId)
     mergeWithPrevious(blockId);
 }
 
-void EditorController::deleteBlock(qulonglong blockId)
-{
+void EditorController::deleteBlock(qulonglong blockId) {
     const qsizetype row = m_store.rowForBlock(blockId);
     if (row < 0) {
         return;
@@ -867,10 +814,12 @@ void EditorController::deleteBlock(qulonglong blockId)
     if (!m_store.deleteBlocks(row, 1)) {
         return;
     }
-    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()), m_store);
+    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()),
+                    m_store);
 
     if (m_activeBlockId == blockId) {
-        m_activeBlockId = m_store.blockCount() > 0 ? m_store.blockAt(qMin(row, m_store.blockCount() - 1))->id : 0;
+        m_activeBlockId =
+            m_store.blockCount() > 0 ? m_store.blockAt(qMin(row, m_store.blockCount() - 1))->id : 0;
         emit activeBlockIdChanged();
     }
     clearActiveSelection();
@@ -878,64 +827,61 @@ void EditorController::deleteBlock(qulonglong blockId)
     scheduleFlush();
 }
 
-void EditorController::moveBlock(int fromRow, int toRow)
-{
+void EditorController::moveBlock(int fromRow, int toRow) {
     QVector<be::BlockRecord> before = m_store.snapshot();
     if (!m_store.moveBlocks(fromRow, 1, toRow)) {
         return;
     }
-    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()), m_store);
+    m_commands.push(std::make_unique<be::StructuralCommand>(std::move(before), m_store.snapshot()),
+                    m_store);
     clearActiveSelection();
     resetModel();
     scheduleFlush();
 }
 
-void EditorController::undo()
-{
+void EditorController::undo() {
     m_commands.undo(m_store);
     syncActiveBlockAfterUndo();
     resetModel();
     scheduleFlush();
 }
 
-void EditorController::redo()
-{
+void EditorController::redo() {
     m_commands.redo(m_store);
     syncActiveBlockAfterUndo();
     resetModel();
     scheduleFlush();
 }
 
-void EditorController::beginSelection(int row, int visualOffset)
-{
-    const be::BlockRecord *block = m_store.blockAt(row);
+void EditorController::beginSelection(int row, int visualOffset) {
+    const be::BlockRecord* block = m_store.blockAt(row);
     if (!block) {
         return;
     }
     const be::BlockProjection projection = m_projector.project(*block);
-    const qsizetype visual = qBound<qsizetype>(0, qsizetype(visualOffset), projection.visualText.size());
+    const qsizetype visual =
+        qBound<qsizetype>(0, qsizetype(visualOffset), projection.visualText.size());
     const qsizetype raw = projection.visualToRaw(visual);
     m_activeNativeStart = m_activeNativeEnd = 0;
     m_selection.setAnchor({block->id, row, raw, visual});
     emit selectionRevisionChanged();
 }
 
-void EditorController::updateSelection(int row, int visualOffset)
-{
-    const be::BlockRecord *block = m_store.blockAt(row);
+void EditorController::updateSelection(int row, int visualOffset) {
+    const be::BlockRecord* block = m_store.blockAt(row);
     if (!block) {
         return;
     }
     const be::BlockProjection projection = m_projector.project(*block);
-    const qsizetype visual = qBound<qsizetype>(0, qsizetype(visualOffset), projection.visualText.size());
+    const qsizetype visual =
+        qBound<qsizetype>(0, qsizetype(visualOffset), projection.visualText.size());
     const qsizetype raw = projection.visualToRaw(visual);
     m_selection.setHead({block->id, row, raw, visual});
     emit selectionRevisionChanged();
 }
 
-void EditorController::beginSelectionAtRaw(int row, int rawOffset)
-{
-    const be::BlockRecord *block = m_store.blockAt(row);
+void EditorController::beginSelectionAtRaw(int row, int rawOffset) {
+    const be::BlockRecord* block = m_store.blockAt(row);
     if (!block) {
         return;
     }
@@ -948,9 +894,8 @@ void EditorController::beginSelectionAtRaw(int row, int rawOffset)
     emit selectionRevisionChanged();
 }
 
-void EditorController::updateSelectionAtRaw(int row, int rawOffset)
-{
-    const be::BlockRecord *block = m_store.blockAt(row);
+void EditorController::updateSelectionAtRaw(int row, int rawOffset) {
+    const be::BlockRecord* block = m_store.blockAt(row);
     if (!block) {
         return;
     }
@@ -961,57 +906,55 @@ void EditorController::updateSelectionAtRaw(int row, int rawOffset)
     emit selectionRevisionChanged();
 }
 
-void EditorController::clearSelection()
-{
+void EditorController::clearSelection() {
     m_activeNativeStart = m_activeNativeEnd = 0;
     m_selection.clear();
     emit selectionRevisionChanged();
 }
 
-void EditorController::selectAll()
-{
+void EditorController::selectAll() {
     if (m_store.blockCount() == 0) {
         return;
     }
 
-    const be::BlockRecord *first = m_store.blockAt(0);
-    const be::BlockRecord *last = m_store.blockAt(m_store.blockCount() - 1);
+    const be::BlockRecord* first = m_store.blockAt(0);
+    const be::BlockRecord* last = m_store.blockAt(m_store.blockCount() - 1);
     const be::BlockProjection lastProjection = m_projector.project(*last);
     m_activeNativeStart = m_activeNativeEnd = 0;
     m_selection.setAnchor({first->id, 0, 0, 0});
-    m_selection.setHead({last->id, m_store.blockCount() - 1, last->markdown().size(), lastProjection.visualText.size()});
+    m_selection.setHead({last->id, m_store.blockCount() - 1, last->markdown().size(),
+                         lastProjection.visualText.size()});
     emit selectionRevisionChanged();
 }
 
-void EditorController::selectWord(int row, int visualOffset)
-{
-    const be::BlockRecord *block = m_store.blockAt(row);
+void EditorController::selectWord(int row, int visualOffset) {
+    const be::BlockRecord* block = m_store.blockAt(row);
     if (!block) {
         return;
     }
     const be::BlockProjection projection = m_projector.project(*block);
-    const auto range = be::SelectionControllerCore::wordRangeAt(projection.visualText, visualOffset);
+    const auto range =
+        be::SelectionControllerCore::wordRangeAt(projection.visualText, visualOffset);
     m_selection.setAnchor({block->id, row, projection.visualToRaw(range.first), range.first});
     m_selection.setHead({block->id, row, projection.visualToRaw(range.second), range.second});
     emit selectionRevisionChanged();
 }
 
-void EditorController::selectLine(int row, int visualOffset)
-{
-    const be::BlockRecord *block = m_store.blockAt(row);
+void EditorController::selectLine(int row, int visualOffset) {
+    const be::BlockRecord* block = m_store.blockAt(row);
     if (!block) {
         return;
     }
     const be::BlockProjection projection = m_projector.project(*block);
-    const auto range = be::SelectionControllerCore::lineRangeAt(projection.visualText, visualOffset);
+    const auto range =
+        be::SelectionControllerCore::lineRangeAt(projection.visualText, visualOffset);
     m_selection.setAnchor({block->id, row, projection.visualToRaw(range.first), range.first});
     m_selection.setHead({block->id, row, projection.visualToRaw(range.second), range.second});
     emit selectionRevisionChanged();
 }
 
-void EditorController::selectWordAtRaw(int row, int rawOffset)
-{
-    const be::BlockRecord *block = m_store.blockAt(row);
+void EditorController::selectWordAtRaw(int row, int rawOffset) {
+    const be::BlockRecord* block = m_store.blockAt(row);
     if (!block) {
         return;
     }
@@ -1024,9 +967,8 @@ void EditorController::selectWordAtRaw(int row, int rawOffset)
     emit selectionRevisionChanged();
 }
 
-void EditorController::selectLineAtRaw(int row, int rawOffset)
-{
-    const be::BlockRecord *block = m_store.blockAt(row);
+void EditorController::selectLineAtRaw(int row, int rawOffset) {
+    const be::BlockRecord* block = m_store.blockAt(row);
     if (!block) {
         return;
     }
@@ -1039,9 +981,8 @@ void EditorController::selectLineAtRaw(int row, int rawOffset)
     emit selectionRevisionChanged();
 }
 
-void EditorController::extendSelectionFromActive(int row, int offset, bool offsetIsRaw)
-{
-    const be::BlockRecord *headBlock = m_store.blockAt(row);
+void EditorController::extendSelectionFromActive(int row, int offset, bool offsetIsRaw) {
+    const be::BlockRecord* headBlock = m_store.blockAt(row);
     if (!headBlock) {
         return;
     }
@@ -1060,11 +1001,13 @@ void EditorController::extendSelectionFromActive(int row, int offset, bool offse
     // Shift+click extends from where editing left off (else anchor at the click).
     if (!m_selection.selection().isActive()) {
         const qsizetype anchorRow = m_store.rowForBlock(m_activeBlockId);
-        const be::BlockRecord *anchorBlock = m_store.blockAt(anchorRow);
+        const be::BlockRecord* anchorBlock = m_store.blockAt(anchorRow);
         if (anchorBlock) {
             const be::BlockProjection anchorProjection = m_projector.project(*anchorBlock);
-            const qsizetype anchorRaw = qBound<qsizetype>(0, qsizetype(m_activeCursorOffset), anchorBlock->markdown().size());
-            m_selection.setAnchor({anchorBlock->id, anchorRow, anchorRaw, anchorProjection.rawToVisual(anchorRaw)});
+            const qsizetype anchorRaw = qBound<qsizetype>(0, qsizetype(m_activeCursorOffset),
+                                                          anchorBlock->markdown().size());
+            m_selection.setAnchor(
+                {anchorBlock->id, anchorRow, anchorRaw, anchorProjection.rawToVisual(anchorRaw)});
         } else {
             m_selection.setAnchor({headBlock->id, row, headRaw, headVisual});
         }
@@ -1075,15 +1018,14 @@ void EditorController::extendSelectionFromActive(int row, int offset, bool offse
     emit selectionRevisionChanged();
 }
 
-void EditorController::setActiveNativeSelection(int rawStart, int rawEnd)
-{
+void EditorController::setActiveNativeSelection(int rawStart, int rawEnd) {
     m_activeNativeStart = rawStart;
     m_activeNativeEnd = rawEnd;
 }
 
-QVariantMap EditorController::selectionSpanForBlock(qulonglong blockId, int row, int visualLength) const
-{
-    const be::BlockRecord *block = m_store.blockAt(row);
+QVariantMap EditorController::selectionSpanForBlock(qulonglong blockId, int row,
+                                                    int visualLength) const {
+    const be::BlockRecord* block = m_store.blockAt(row);
     const qsizetype rawLength = block ? block->markdown().size() : 0;
     const be::SelectionSpan span = m_selection.spanForBlock(blockId, row, visualLength, rawLength);
     QVariantMap map;
@@ -1095,17 +1037,15 @@ QVariantMap EditorController::selectionSpanForBlock(qulonglong blockId, int row,
     return map;
 }
 
-const EditorController::TableCellMap *EditorController::tableCellMap(qulonglong blockId) const
-{
-    const be::BlockRecord *block = m_store.blockAt(m_store.rowForBlock(blockId));
+const EditorController::TableCellMap* EditorController::tableCellMap(qulonglong blockId) const {
+    const be::BlockRecord* block = m_store.blockAt(m_store.rowForBlock(blockId));
     if (!block || block->type != be::BlockType::Table) {
         return nullptr;
     }
 
     // Reuse the cached grid while the block content is unchanged.
-    if (m_tableCellCache.blockId == blockId
-        && m_tableCellCache.revision == block->revision
-        && m_tableCellCache.columns > 0) {
+    if (m_tableCellCache.blockId == blockId && m_tableCellCache.revision == block->revision &&
+        m_tableCellCache.columns > 0) {
         return &m_tableCellCache;
     }
 
@@ -1114,7 +1054,7 @@ const EditorController::TableCellMap *EditorController::tableCellMap(qulonglong 
         return nullptr;
     }
 
-    const auto projectCell = [this](const be::TableCell &cell) {
+    const auto projectCell = [this](const be::TableCell& cell) {
         TableCellProjection tcp;
         tcp.rawStart = cell.rawStart;
         tcp.rawLen = cell.rawEnd - cell.rawStart;
@@ -1132,15 +1072,15 @@ const EditorController::TableCellMap *EditorController::tableCellMap(qulonglong 
 
     QVector<TableCellProjection> headerRow;
     headerRow.reserve(table.header.size());
-    for (const be::TableCell &cell : table.header) {
+    for (const be::TableCell& cell : table.header) {
         headerRow.push_back(projectCell(cell));
     }
     map.grid.push_back(std::move(headerRow));
 
-    for (const QVector<be::TableCell> &row : table.rows) {
+    for (const QVector<be::TableCell>& row : table.rows) {
         QVector<TableCellProjection> projected;
         projected.reserve(row.size());
-        for (const be::TableCell &cell : row) {
+        for (const be::TableCell& cell : row) {
             projected.push_back(projectCell(cell));
         }
         map.grid.push_back(std::move(projected));
@@ -1150,40 +1090,41 @@ const EditorController::TableCellMap *EditorController::tableCellMap(qulonglong 
     return &m_tableCellCache;
 }
 
-int EditorController::tableRawOffsetForCell(qulonglong blockId, int rowIndex, int col, int inCellVisualOffset) const
-{
-    const TableCellMap *map = tableCellMap(blockId);
+int EditorController::tableRawOffsetForCell(qulonglong blockId, int rowIndex, int col,
+                                            int inCellVisualOffset) const {
+    const TableCellMap* map = tableCellMap(blockId);
     if (!map || rowIndex < 0 || rowIndex >= map->grid.size()) {
         return 0;
     }
-    const QVector<TableCellProjection> &row = map->grid[rowIndex];
+    const QVector<TableCellProjection>& row = map->grid[rowIndex];
     if (col < 0 || col >= row.size()) {
         return 0;
     }
-    const TableCellProjection &cell = row[col];
-    const qsizetype visual = qBound<qsizetype>(0, qsizetype(inCellVisualOffset), cell.projection.visualText.size());
+    const TableCellProjection& cell = row[col];
+    const qsizetype visual =
+        qBound<qsizetype>(0, qsizetype(inCellVisualOffset), cell.projection.visualText.size());
     return static_cast<int>(cell.rawStart + cell.projection.visualToRaw(visual));
 }
 
-QVariantMap EditorController::tableCellSelectionSpan(qulonglong blockId, int rowIndex, int col) const
-{
+QVariantMap EditorController::tableCellSelectionSpan(qulonglong blockId, int rowIndex,
+                                                     int col) const {
     QVariantMap result;
     result.insert(QStringLiteral("has"), false);
     result.insert(QStringLiteral("start"), 0);
     result.insert(QStringLiteral("end"), 0);
 
-    const TableCellMap *map = tableCellMap(blockId);
+    const TableCellMap* map = tableCellMap(blockId);
     if (!map || rowIndex < 0 || rowIndex >= map->grid.size()) {
         return result;
     }
-    const QVector<TableCellProjection> &row = map->grid[rowIndex];
+    const QVector<TableCellProjection>& row = map->grid[rowIndex];
     if (col < 0 || col >= row.size()) {
         return result;
     }
-    const TableCellProjection &cell = row[col];
+    const TableCellProjection& cell = row[col];
 
     const qsizetype blockRow = m_store.rowForBlock(blockId);
-    const be::BlockRecord *block = m_store.blockAt(blockRow);
+    const be::BlockRecord* block = m_store.blockAt(blockRow);
     if (!block) {
         return result;
     }
@@ -1211,8 +1152,7 @@ QVariantMap EditorController::tableCellSelectionSpan(qulonglong blockId, int row
     return result;
 }
 
-QString EditorController::copySelectionMarkdown() const
-{
+QString EditorController::copySelectionMarkdown() const {
     const QString documentSelection = m_selection.copyMarkdown(m_store.blocks());
     if (!documentSelection.isEmpty()) {
         return documentSelection;
@@ -1221,32 +1161,32 @@ QString EditorController::copySelectionMarkdown() const
     // Fallback: a selection made entirely inside the active editor with the
     // keyboard is native-only (not in the document model). Copy that raw slice.
     if (m_activeNativeStart != m_activeNativeEnd) {
-        const be::BlockRecord *block = m_store.blockAt(m_store.rowForBlock(m_activeBlockId));
+        const be::BlockRecord* block = m_store.blockAt(m_store.rowForBlock(m_activeBlockId));
         if (block) {
             const QString markdown = block->markdown();
-            const int lo = qBound(0, qMin(m_activeNativeStart, m_activeNativeEnd), int(markdown.size()));
-            const int hi = qBound(0, qMax(m_activeNativeStart, m_activeNativeEnd), int(markdown.size()));
+            const int lo =
+                qBound(0, qMin(m_activeNativeStart, m_activeNativeEnd), int(markdown.size()));
+            const int hi =
+                qBound(0, qMax(m_activeNativeStart, m_activeNativeEnd), int(markdown.size()));
             return markdown.mid(lo, hi - lo);
         }
     }
     return {};
 }
 
-void EditorController::copySelectionToClipboard() const
-{
+void EditorController::copySelectionToClipboard() const {
     const QString markdown = copySelectionMarkdown();
     if (markdown.isEmpty()) {
         return;
     }
-    if (QClipboard *clipboard = QGuiApplication::clipboard()) {
+    if (QClipboard* clipboard = QGuiApplication::clipboard()) {
         clipboard->setText(markdown);
     }
 }
 
-void EditorController::reportBlockHeight(qulonglong blockId, qreal height)
-{
+void EditorController::reportBlockHeight(qulonglong blockId, qreal height) {
     const qsizetype row = m_store.rowForBlock(blockId);
-    be::BlockRecord *block = m_store.mutableBlockAt(row);
+    be::BlockRecord* block = m_store.mutableBlockAt(row);
     if (!block) {
         return;
     }
@@ -1254,34 +1194,29 @@ void EditorController::reportBlockHeight(qulonglong blockId, qreal height)
     m_heightIndex.setHeight(row, height);
 }
 
-int EditorController::rowAtContentY(qreal y) const
-{
+int EditorController::rowAtContentY(qreal y) const {
     return static_cast<int>(m_heightIndex.rowAtContentY(y));
 }
 
-int EditorController::rowForAnchor(const QString &fragment) const
-{
+int EditorController::rowForAnchor(const QString& fragment) const {
     return static_cast<int>(m_store.rowForHeadingAnchor(fragment));
 }
 
-qreal EditorController::prefixHeight(int row) const
-{
+qreal EditorController::prefixHeight(int row) const {
     return m_heightIndex.prefixHeight(row);
 }
 
-bool EditorController::openPersistence(const QString &path)
-{
+bool EditorController::openPersistence(const QString& path) {
     return m_persistence.open(path);
 }
 
-bool EditorController::flushChangedBlocks()
-{
+bool EditorController::flushChangedBlocks() {
     if (!m_persistence.isOpen()) {
         return false;
     }
     const bool ok = m_persistence.saveBlocks(m_store.blocks());
     if (ok) {
-        for (const be::BlockRecord &block : m_store.blocks()) {
+        for (const be::BlockRecord& block : m_store.blocks()) {
             m_store.markPersisted(block.id);
         }
         resetModel();
@@ -1289,44 +1224,47 @@ bool EditorController::flushChangedBlocks()
     return ok;
 }
 
-QString EditorController::exportMarkdown() const
-{
+QString EditorController::exportMarkdown() const {
     return m_store.toMarkdown();
 }
 
-void EditorController::importMarkdown(const QString &markdown)
-{
+void EditorController::importMarkdown(const QString& markdown) {
     loadMarkdown(markdown);
     scheduleFlush();
 }
 
-QString EditorController::normalizeClipboardText(const QString &plainText, const QString &markdownText, const QString &htmlText) const
-{
+QString EditorController::normalizeClipboardText(const QString& plainText,
+                                                 const QString& markdownText,
+                                                 const QString& htmlText) const {
     if (!markdownText.isEmpty()) {
         return markdownText;
     }
     if (!htmlText.isEmpty()) {
         QString text = htmlText;
-        text.replace(QRegularExpression(QStringLiteral("<br\\s*/?>"), QRegularExpression::CaseInsensitiveOption), QStringLiteral("\n"));
-        text.replace(QRegularExpression(QStringLiteral("</p\\s*>"), QRegularExpression::CaseInsensitiveOption), QStringLiteral("\n\n"));
+        text.replace(QRegularExpression(QStringLiteral("<br\\s*/?>"),
+                                        QRegularExpression::CaseInsensitiveOption),
+                     QStringLiteral("\n"));
+        text.replace(QRegularExpression(QStringLiteral("</p\\s*>"),
+                                        QRegularExpression::CaseInsensitiveOption),
+                     QStringLiteral("\n\n"));
         text.remove(QRegularExpression(QStringLiteral("<[^>]+>")));
-        return text.toHtmlEscaped().replace(QStringLiteral("&lt;"), QStringLiteral("<")).replace(QStringLiteral("&gt;"), QStringLiteral(">")).replace(QStringLiteral("&amp;"), QStringLiteral("&"));
+        return text.toHtmlEscaped()
+            .replace(QStringLiteral("&lt;"), QStringLiteral("<"))
+            .replace(QStringLiteral("&gt;"), QStringLiteral(">"))
+            .replace(QStringLiteral("&amp;"), QStringLiteral("&"));
     }
     return plainText;
 }
 
-QString EditorController::mathImageUrl(const QString &latex, bool displayMode) const
-{
+QString EditorController::mathImageUrl(const QString& latex, bool displayMode) const {
     return be::mathImageUrl(latex, displayMode, m_palette.bodyPixelSize, m_palette.text);
 }
 
-QSizeF EditorController::mathLogicalSize(const QString &latex, bool displayMode) const
-{
+QSizeF EditorController::mathLogicalSize(const QString& latex, bool displayMode) const {
     return be::app::measureMathLogicalSize(latex, displayMode, m_palette.bodyPixelSize);
 }
 
-void EditorController::clearActiveSelection()
-{
+void EditorController::clearActiveSelection() {
     // Structural edits shift row indices, so any active selection (DocPos is
     // row-based) is stale; drop it.
     m_activeNativeStart = m_activeNativeEnd = 0;
@@ -1334,8 +1272,7 @@ void EditorController::clearActiveSelection()
     emit selectionRevisionChanged();
 }
 
-void EditorController::syncActiveBlockAfterUndo()
-{
+void EditorController::syncActiveBlockAfterUndo() {
     if (m_store.rowForBlock(m_activeBlockId) < 0) {
         m_activeBlockId = m_store.blockCount() > 0 ? m_store.blockAt(0)->id : 0;
         m_activeCursorOffset = 0;
@@ -1346,8 +1283,7 @@ void EditorController::syncActiveBlockAfterUndo()
     emit selectionRevisionChanged();
 }
 
-void EditorController::afterStructuralRewind()
-{
+void EditorController::afterStructuralRewind() {
     clearActiveSelection();
     m_activeBlockId = 0;
     resetModel();
@@ -1357,8 +1293,7 @@ void EditorController::afterStructuralRewind()
     emit documentChanged();
 }
 
-void EditorController::resetModel()
-{
+void EditorController::resetModel() {
     rebuildHeightIndex();
     m_model.resetFromStore();
     // A reset can move the active block to a new row without changing its id;
@@ -1366,18 +1301,16 @@ void EditorController::resetModel()
     emit activeBlockRowChanged();
 }
 
-void EditorController::rebuildHeightIndex()
-{
+void EditorController::rebuildHeightIndex() {
     m_heightIndex.reset(m_store.blockCount());
     for (qsizetype row = 0; row < m_store.blockCount(); ++row) {
-        if (const be::BlockRecord *block = m_store.blockAt(row)) {
+        if (const be::BlockRecord* block = m_store.blockAt(row)) {
             m_heightIndex.setHeight(row, block->heightHint);
         }
     }
 }
 
-void EditorController::scheduleFlush()
-{
+void EditorController::scheduleFlush() {
     if (m_persistence.isOpen()) {
         m_flushTimer.start();
     }

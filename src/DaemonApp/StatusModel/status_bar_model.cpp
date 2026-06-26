@@ -1,12 +1,10 @@
 #include "status_bar_model.h"
 
+#include <cmath>
 #include <QDateTime>
 #include <QVariantMap>
-#include <cmath>
 
-StatusBarModel::StatusBarModel(QObject* parent)
-    : QObject(parent)
-{
+StatusBarModel::StatusBarModel(QObject* parent) : QObject(parent) {
     // Empty by default: the connection/daemon adapter owns live gateway facts.
     // Mock/demo providers may still set these through the public setters.
     m_gatewayConnectionText = tr("No daemon connection");
@@ -27,20 +25,17 @@ StatusBarModel::StatusBarModel(QObject* parent)
     m_tick.start();
 }
 
-bool StatusBarModel::gatewayOffline() const
-{
+bool StatusBarModel::gatewayOffline() const {
     return m_gatewayState == QStringLiteral("offline");
 }
 
-bool StatusBarModel::gatewayDegraded() const
-{
-    return m_gatewayState == QStringLiteral("needs setup")
-        || m_gatewayState == QStringLiteral("connecting")
-        || m_gatewayState == QStringLiteral("checking");
+bool StatusBarModel::gatewayDegraded() const {
+    return m_gatewayState == QStringLiteral("needs setup") ||
+           m_gatewayState == QStringLiteral("connecting") ||
+           m_gatewayState == QStringLiteral("checking");
 }
 
-QString StatusBarModel::gatewayTone() const
-{
+QString StatusBarModel::gatewayTone() const {
     if (gatewayOffline()) {
         return QStringLiteral("danger");
     }
@@ -50,8 +45,7 @@ QString StatusBarModel::gatewayTone() const
     return QStringLiteral("default");
 }
 
-QString StatusBarModel::agentsDetail() const
-{
+QString StatusBarModel::agentsDetail() const {
     if (m_agentsFailed > 0) {
         return tr("%n failed", nullptr, m_agentsFailed);
     }
@@ -61,15 +55,13 @@ QString StatusBarModel::agentsDetail() const
     return QString();
 }
 
-int StatusBarModel::contextPercent() const
-{
-    return m_contextMax > 0
-        ? static_cast<int>(std::lround((static_cast<double>(m_contextUsed) / m_contextMax) * 100.0))
-        : 0;
+int StatusBarModel::contextPercent() const {
+    return m_contextMax > 0 ? static_cast<int>(std::lround(
+                                  (static_cast<double>(m_contextUsed) / m_contextMax) * 100.0))
+                            : 0;
 }
 
-QString StatusBarModel::contextBar() const
-{
+QString StatusBarModel::contextBar() const {
     const int percent = contextPercent();
     int filled = static_cast<int>(std::lround(percent / 10.0));
     filled = qBound(0, filled, 10);
@@ -77,43 +69,37 @@ QString StatusBarModel::contextBar() const
     for (int i = 0; i < 10; ++i) {
         bar += (i < filled ? QStringLiteral("\u2588") : QStringLiteral("\u2591"));
     }
-    return QStringLiteral("[") + bar + QStringLiteral("] ") + QString::number(percent)
-        + QStringLiteral("%");
+    return QStringLiteral("[") + bar + QStringLiteral("] ") + QString::number(percent) +
+           QStringLiteral("%");
 }
 
-QString StatusBarModel::contextLabel() const
-{
+QString StatusBarModel::contextLabel() const {
     if (m_contextMax > 0) {
         return abbrev(m_contextUsed) + QStringLiteral("/") + abbrev(m_contextMax);
     }
     return abbrev(m_contextUsed) + tr(" tok");
 }
 
-QString StatusBarModel::costLabel() const
-{
+QString StatusBarModel::costLabel() const {
     return QStringLiteral("$") + QString::number(m_usdCost, 'f', m_usdCost >= 1.0 ? 2 : 3);
 }
 
-QString StatusBarModel::rateLabel() const
-{
+QString StatusBarModel::rateLabel() const {
     if (m_rateLimit <= 0) {
         return QString();
     }
     return QString::number(m_rateRemaining) + QStringLiteral("/") + QString::number(m_rateLimit);
 }
 
-QString StatusBarModel::turnElapsed() const
-{
+QString StatusBarModel::turnElapsed() const {
     return formatElapsed(m_turnStartedAt);
 }
 
-QString StatusBarModel::sessionElapsed() const
-{
+QString StatusBarModel::sessionElapsed() const {
     return formatElapsed(m_sessionStartedAt);
 }
 
-void StatusBarModel::setGatewayState(const QString& state)
-{
+void StatusBarModel::setGatewayState(const QString& state) {
     if (m_gatewayState == state) {
         return;
     }
@@ -121,8 +107,7 @@ void StatusBarModel::setGatewayState(const QString& state)
     emit gatewayStateChanged();
 }
 
-void StatusBarModel::setAgentsRunning(int n)
-{
+void StatusBarModel::setAgentsRunning(int n) {
     if (m_agentsRunning == n) {
         return;
     }
@@ -131,8 +116,7 @@ void StatusBarModel::setAgentsRunning(int n)
     emit agentsDetailChanged();
 }
 
-void StatusBarModel::setAgentsFailed(int n)
-{
+void StatusBarModel::setAgentsFailed(int n) {
     if (m_agentsFailed == n) {
         return;
     }
@@ -141,8 +125,7 @@ void StatusBarModel::setAgentsFailed(int n)
     emit agentsDetailChanged();
 }
 
-void StatusBarModel::setBusy(bool busy)
-{
+void StatusBarModel::setBusy(bool busy) {
     if (m_busy == busy) {
         return;
     }
@@ -150,8 +133,7 @@ void StatusBarModel::setBusy(bool busy)
     emit busyChanged();
 }
 
-void StatusBarModel::setTurnStartedAt(double ms)
-{
+void StatusBarModel::setTurnStartedAt(double ms) {
     if (qFuzzyCompare(m_turnStartedAt, ms)) {
         return;
     }
@@ -160,8 +142,7 @@ void StatusBarModel::setTurnStartedAt(double ms)
     emit turnElapsedChanged();
 }
 
-void StatusBarModel::setSessionStartedAt(double ms)
-{
+void StatusBarModel::setSessionStartedAt(double ms) {
     if (qFuzzyCompare(m_sessionStartedAt, ms)) {
         return;
     }
@@ -170,8 +151,7 @@ void StatusBarModel::setSessionStartedAt(double ms)
     emit sessionElapsedChanged();
 }
 
-void StatusBarModel::setContextUsed(int n)
-{
+void StatusBarModel::setContextUsed(int n) {
     if (m_contextUsed == n) {
         return;
     }
@@ -180,8 +160,7 @@ void StatusBarModel::setContextUsed(int n)
     emit contextChanged();
 }
 
-void StatusBarModel::setContextMax(int n)
-{
+void StatusBarModel::setContextMax(int n) {
     if (m_contextMax == n) {
         return;
     }
@@ -190,8 +169,7 @@ void StatusBarModel::setContextMax(int n)
     emit contextChanged();
 }
 
-void StatusBarModel::setTokensIn(int n)
-{
+void StatusBarModel::setTokensIn(int n) {
     if (m_tokensIn == n) {
         return;
     }
@@ -199,8 +177,7 @@ void StatusBarModel::setTokensIn(int n)
     emit usageChanged();
 }
 
-void StatusBarModel::setTokensOut(int n)
-{
+void StatusBarModel::setTokensOut(int n) {
     if (m_tokensOut == n) {
         return;
     }
@@ -208,8 +185,7 @@ void StatusBarModel::setTokensOut(int n)
     emit usageChanged();
 }
 
-void StatusBarModel::setUsdCost(double cost)
-{
+void StatusBarModel::setUsdCost(double cost) {
     if (qFuzzyCompare(m_usdCost, cost)) {
         return;
     }
@@ -217,8 +193,7 @@ void StatusBarModel::setUsdCost(double cost)
     emit usageChanged();
 }
 
-void StatusBarModel::setRateRemaining(int n)
-{
+void StatusBarModel::setRateRemaining(int n) {
     if (m_rateRemaining == n) {
         return;
     }
@@ -226,8 +201,7 @@ void StatusBarModel::setRateRemaining(int n)
     emit rateChanged();
 }
 
-void StatusBarModel::setRateLimit(int n)
-{
+void StatusBarModel::setRateLimit(int n) {
     if (m_rateLimit == n) {
         return;
     }
@@ -235,8 +209,7 @@ void StatusBarModel::setRateLimit(int n)
     emit rateChanged();
 }
 
-void StatusBarModel::applyTurnEvents(const QVariantList& events)
-{
+void StatusBarModel::applyTurnEvents(const QVariantList& events) {
     bool usage = false;
     bool rate = false;
     for (const QVariant& e : events) {
@@ -266,16 +239,14 @@ void StatusBarModel::applyTurnEvents(const QVariantList& events)
     }
 }
 
-void StatusBarModel::resetUsage()
-{
+void StatusBarModel::resetUsage() {
     m_tokensIn = 0;
     m_tokensOut = 0;
     m_usdCost = 0.0;
     emit usageChanged();
 }
 
-void StatusBarModel::setAppVersion(const QString& version)
-{
+void StatusBarModel::setAppVersion(const QString& version) {
     if (m_appVersion == version) {
         return;
     }
@@ -283,8 +254,7 @@ void StatusBarModel::setAppVersion(const QString& version)
     emit appVersionChanged();
 }
 
-void StatusBarModel::setGatewayConnectionText(const QString& text)
-{
+void StatusBarModel::setGatewayConnectionText(const QString& text) {
     if (m_gatewayConnectionText == text) {
         return;
     }
@@ -292,8 +262,7 @@ void StatusBarModel::setGatewayConnectionText(const QString& text)
     emit gatewayInfoChanged();
 }
 
-void StatusBarModel::setGatewayLog(const QStringList& log)
-{
+void StatusBarModel::setGatewayLog(const QStringList& log) {
     if (m_gatewayLog == log) {
         return;
     }
@@ -301,8 +270,7 @@ void StatusBarModel::setGatewayLog(const QStringList& log)
     emit gatewayInfoChanged();
 }
 
-void StatusBarModel::setGatewayPlatforms(const QVariantList& platforms)
-{
+void StatusBarModel::setGatewayPlatforms(const QVariantList& platforms) {
     if (m_gatewayPlatforms == platforms) {
         return;
     }
@@ -310,8 +278,7 @@ void StatusBarModel::setGatewayPlatforms(const QVariantList& platforms)
     emit gatewayInfoChanged();
 }
 
-QString StatusBarModel::formatElapsed(double startMs) const
-{
+QString StatusBarModel::formatElapsed(double startMs) const {
     if (startMs == 0) {
         return QStringLiteral("0:00");
     }
@@ -321,15 +288,13 @@ QString StatusBarModel::formatElapsed(double startMs) const
     const int s = total % 60;
     const QString ss = s < 10 ? (QStringLiteral("0") + QString::number(s)) : QString::number(s);
     if (h > 0) {
-        const QString mm
-            = m < 10 ? (QStringLiteral("0") + QString::number(m)) : QString::number(m);
+        const QString mm = m < 10 ? (QStringLiteral("0") + QString::number(m)) : QString::number(m);
         return QString::number(h) + QStringLiteral(":") + mm + QStringLiteral(":") + ss;
     }
     return QString::number(m) + QStringLiteral(":") + ss;
 }
 
-QString StatusBarModel::abbrev(int n) const
-{
+QString StatusBarModel::abbrev(int n) const {
     const auto trim = [](double value, const QString& suffix) {
         QString text = QString::number(value, 'f', 1);
         if (text.endsWith(QStringLiteral(".0"))) {

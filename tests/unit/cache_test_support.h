@@ -9,8 +9,7 @@
 // test sandbox so they never read or clobber the real user dir, and (b) wipe it
 // before every case so each construction starts from the seed instead of a prior
 // case's persisted mutation. Call from an `init()` slot (runs before each test).
-inline void resetMockCache()
-{
+inline void resetMockCache() {
     QStandardPaths::setTestModeEnabled(true);
     QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).removeRecursively();
 }

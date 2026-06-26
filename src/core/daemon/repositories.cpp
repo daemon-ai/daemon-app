@@ -7,15 +7,11 @@
 namespace daemonapp::daemon {
 
 RepositoryBase::RepositoryBase(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
-    : QObject(parent)
-    , m_client(client)
-    , m_cache(cache)
-{
-}
+    : QObject(parent), m_client(client), m_cache(cache) {}
 
-SessionRepository::SessionRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
-    : RepositoryBase(client, cache, parent)
-{
+SessionRepository::SessionRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                     QObject* parent)
+    : RepositoryBase(client, cache, parent) {
     if (this->client() != nullptr) {
         connect(this->client(), &NodeApiClient::responseReady, this,
                 &SessionRepository::handleResponse);
@@ -23,44 +19,37 @@ SessionRepository::SessionRepository(NodeApiClient* client, DaemonCacheStore* ca
     }
 }
 
-bool SessionRepository::upsertCachedSession(const CachedSessionRow& row)
-{
+bool SessionRepository::upsertCachedSession(const CachedSessionRow& row) {
     return cache() != nullptr && cache()->upsertSession(row);
 }
 
-QList<CachedSessionRow> SessionRepository::cachedSessions() const
-{
+QList<CachedSessionRow> SessionRepository::cachedSessions() const {
     return cache() != nullptr ? cache()->sessions() : QList<CachedSessionRow>{};
 }
 
-bool SessionRepository::appendCachedLog(const CachedLogRow& row)
-{
+bool SessionRepository::appendCachedLog(const CachedLogRow& row) {
     return cache() != nullptr && cache()->appendSessionLog(row);
 }
 
 QList<CachedLogRow> SessionRepository::cachedLog(const QString& sessionId, quint64 afterSeq,
-                                                 int limit) const
-{
+                                                 int limit) const {
     return cache() != nullptr ? cache()->sessionLog(sessionId, afterSeq, limit)
                               : QList<CachedLogRow>{};
 }
 
-bool SessionRepository::setLogCursor(const QString& sessionId, quint64 seq)
-{
-    return cache() != nullptr
-        && cache()->setCursor(QStringLiteral("session-log/%1").arg(sessionId),
-                              QString::number(seq), QDateTime::currentMSecsSinceEpoch());
+bool SessionRepository::setLogCursor(const QString& sessionId, quint64 seq) {
+    return cache() != nullptr &&
+           cache()->setCursor(QStringLiteral("session-log/%1").arg(sessionId), QString::number(seq),
+                              QDateTime::currentMSecsSinceEpoch());
 }
 
-quint64 SessionRepository::logCursor(const QString& sessionId) const
-{
+quint64 SessionRepository::logCursor(const QString& sessionId) const {
     return cache() != nullptr
-        ? cache()->cursor(QStringLiteral("session-log/%1").arg(sessionId)).toULongLong()
-        : 0;
+               ? cache()->cursor(QStringLiteral("session-log/%1").arg(sessionId)).toULongLong()
+               : 0;
 }
 
-void SessionRepository::refreshSessions()
-{
+void SessionRepository::refreshSessions() {
     if (client() == nullptr) {
         emit refreshFailed(QStringLiteral("No NodeApi client configured"));
         return;
@@ -69,8 +58,7 @@ void SessionRepository::refreshSessions()
                           QLatin1String(kSessionsCorrelation));
 }
 
-void SessionRepository::subscribe(const QString& sessionId)
-{
+void SessionRepository::subscribe(const QString& sessionId) {
     if (client() == nullptr) {
         emit refreshFailed(QStringLiteral("No NodeApi client configured"));
         return;
@@ -82,13 +70,12 @@ void SessionRepository::subscribe(const QString& sessionId)
         subscribeCorrelation(sessionId));
 }
 
-QString SessionRepository::subscribeCorrelation(const QString& sessionId)
-{
+QString SessionRepository::subscribeCorrelation(const QString& sessionId) {
     return QLatin1String(kSubscribePrefix) + sessionId;
 }
 
-void SessionRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor)
-{
+void SessionRepository::handleResponse(const QString& correlationId,
+                                       const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kSessionsCorrelation)) {
         QList<CachedSessionRow> rows;
         QString nextCursor;
@@ -129,41 +116,34 @@ void SessionRepository::handleResponse(const QString& correlationId, const QByte
     }
 }
 
-void SessionRepository::handleFailure(const QString& correlationId, const QString& message)
-{
-    if (correlationId == QLatin1String(kSessionsCorrelation)
-        || correlationId.startsWith(QLatin1String(kSubscribePrefix))) {
+void SessionRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kSessionsCorrelation) ||
+        correlationId.startsWith(QLatin1String(kSubscribePrefix))) {
         emit refreshFailed(message);
     }
 }
 
-bool ProfileRepository::upsertCachedProfile(const CachedProfileRow& row)
-{
+bool ProfileRepository::upsertCachedProfile(const CachedProfileRow& row) {
     return cache() != nullptr && cache()->upsertProfile(row);
 }
 
-QList<CachedProfileRow> ProfileRepository::cachedProfiles() const
-{
+QList<CachedProfileRow> ProfileRepository::cachedProfiles() const {
     return cache() != nullptr ? cache()->profiles() : QList<CachedProfileRow>{};
 }
 
-bool FsRepository::upsertCachedEntry(const CachedFsEntryRow& row)
-{
+bool FsRepository::upsertCachedEntry(const CachedFsEntryRow& row) {
     return cache() != nullptr && cache()->upsertFsEntry(row);
 }
 
-QList<CachedFsEntryRow> FsRepository::cachedEntries(const QString& rootId) const
-{
+QList<CachedFsEntryRow> FsRepository::cachedEntries(const QString& rootId) const {
     return cache() != nullptr ? cache()->fsEntries(rootId) : QList<CachedFsEntryRow>{};
 }
 
-bool ApprovalRepository::upsertCachedApproval(const CachedApprovalRow& row)
-{
+bool ApprovalRepository::upsertCachedApproval(const CachedApprovalRow& row) {
     return cache() != nullptr && cache()->upsertApproval(row);
 }
 
-QList<CachedApprovalRow> ApprovalRepository::cachedApprovals() const
-{
+QList<CachedApprovalRow> ApprovalRepository::cachedApprovals() const {
     return cache() != nullptr ? cache()->approvals() : QList<CachedApprovalRow>{};
 }
 

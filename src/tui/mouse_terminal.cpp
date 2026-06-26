@@ -1,11 +1,9 @@
 #include "mouse_terminal.h"
 
-#include <Tui/ZEvent.h>
-
-#include <termpaint_event.h>
-
 #include <cstdlib>
 #include <cstring>
+#include <termpaint_event.h>
+#include <Tui/ZEvent.h>
 #include <unistd.h>
 
 namespace {
@@ -14,8 +12,7 @@ namespace {
 // idempotent (the destructor + atexit hook may both fire).
 bool g_mouseReportingOn = false;
 
-Qt::KeyboardModifiers translateModifiers(int mod)
-{
+Qt::KeyboardModifiers translateModifiers(int mod) {
     Qt::KeyboardModifiers mods = Qt::NoModifier;
     if ((mod & TERMPAINT_MOD_SHIFT) != 0) {
         mods |= Qt::ShiftModifier;
@@ -31,8 +28,7 @@ Qt::KeyboardModifiers translateModifiers(int mod)
 
 // Write the whole buffer to stdout, tolerating short writes. Used only for the
 // tiny mouse-mode control sequences, kept separate from ZTerminal's own output.
-void writeRaw(const char* seq)
-{
+void writeRaw(const char* seq) {
     const std::size_t len = std::strlen(seq);
     std::size_t off = 0;
     while (off < len) {
@@ -46,8 +42,7 @@ void writeRaw(const char* seq)
 
 } // namespace
 
-void MouseTerminal::enableMouseReporting()
-{
+void MouseTerminal::enableMouseReporting() {
     if (g_mouseReportingOn) {
         return;
     }
@@ -66,8 +61,7 @@ void MouseTerminal::enableMouseReporting()
     }
 }
 
-void MouseTerminal::disableMouseReporting()
-{
+void MouseTerminal::disableMouseReporting() {
     if (!g_mouseReportingOn) {
         return;
     }
@@ -75,13 +69,11 @@ void MouseTerminal::disableMouseReporting()
     g_mouseReportingOn = false;
 }
 
-MouseTerminal::~MouseTerminal()
-{
+MouseTerminal::~MouseTerminal() {
     disableMouseReporting();
 }
 
-bool MouseTerminal::event(QEvent* event)
-{
+bool MouseTerminal::event(QEvent* event) {
     if (event->type() == Tui::ZEventType::terminalNativeEvent()) {
         auto* native = static_cast<Tui::ZTerminalNativeEvent*>(event);
         auto* tpe = static_cast<termpaint_event*>(native->nativeEventPointer());

@@ -7,8 +7,7 @@
 namespace be {
 namespace {
 
-QString blockKind(BlockType type)
-{
+QString blockKind(BlockType type) {
     switch (type) {
     case BlockType::Reasoning:
         return QStringLiteral("reasoning");
@@ -23,8 +22,7 @@ QString blockKind(BlockType type)
 
 } // namespace
 
-QList<domain::SessionLogEntry> decomposeMarkdown(const QString& markdown)
-{
+QList<domain::SessionLogEntry> decomposeMarkdown(const QString& markdown) {
     DocumentStore tmp;
     tmp.loadMarkdown(markdown);
 
@@ -50,8 +48,7 @@ QList<domain::SessionLogEntry> decomposeMarkdown(const QString& markdown)
     return out;
 }
 
-void applyTranscriptLog(DocumentStore& store, const QList<domain::SessionLogEntry>& entries)
-{
+void applyTranscriptLog(DocumentStore& store, const QList<domain::SessionLogEntry>& entries) {
     // Reset to an empty document, then rebuild group-by-group.
     store.loadMarkdown(QString());
 
@@ -64,18 +61,17 @@ void applyTranscriptLog(DocumentStore& store, const QList<domain::SessionLogEntr
         // Gather the contiguous run of blocks in the same role/message.
         QStringList parts;
         int j = i;
-        while (j < entries.size()
-               && entries.at(j).payload.value(QStringLiteral("role")).toString() == role
-               && entries.at(j).payload.value(QStringLiteral("messageId")).toString()
-                   == messageId) {
+        while (j < entries.size() &&
+               entries.at(j).payload.value(QStringLiteral("role")).toString() == role &&
+               entries.at(j).payload.value(QStringLiteral("messageId")).toString() == messageId) {
             parts << entries.at(j).payload.value(QStringLiteral("markdown")).toString();
             ++j;
         }
 
         // Reconstruct the message's blocks through the role-aware append API (preserving
         // the authored message id so the serialized boundary marker round-trips).
-        store.appendMessageBlocks(messageRoleFromString(role),
-                                  parts.join(QStringLiteral("\n\n")), messageId);
+        store.appendMessageBlocks(messageRoleFromString(role), parts.join(QStringLiteral("\n\n")),
+                                  messageId);
         i = j;
     }
 }

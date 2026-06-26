@@ -1,23 +1,21 @@
 #include "diagram/geometry/path_mesh.h"
 
-#include <QPainterPathStroker>
-
 #include <array>
 #include <cmath>
-#include <vector>
-
 #include <mapbox/earcut.hpp>
+#include <QPainterPathStroker>
+#include <vector>
 
 // Teach earcut how to read a QPointF (specialize after the primary template).
 namespace mapbox {
 namespace util {
 template <>
 struct nth<0, QPointF> {
-    static double get(const QPointF &p) { return p.x(); }
+    static double get(const QPointF& p) { return p.x(); }
 };
 template <>
 struct nth<1, QPointF> {
-    static double get(const QPointF &p) { return p.y(); }
+    static double get(const QPointF& p) { return p.y(); }
 };
 } // namespace util
 } // namespace mapbox
@@ -26,8 +24,7 @@ namespace be::diagram {
 
 namespace {
 
-Vertex makeVertex(const QPointF &p, const QColor &c)
-{
+Vertex makeVertex(const QPointF& p, const QColor& c) {
     Vertex v;
     v.x = static_cast<float>(p.x());
     v.y = static_cast<float>(p.y());
@@ -38,8 +35,7 @@ Vertex makeVertex(const QPointF &p, const QColor &c)
     return v;
 }
 
-void growBounds(Mesh &mesh, const QPointF &p)
-{
+void growBounds(Mesh& mesh, const QPointF& p) {
     if (mesh.bounds.isNull()) {
         mesh.bounds = QRectF(p, QSizeF(0.0001, 0.0001));
     } else {
@@ -58,22 +54,20 @@ void growBounds(Mesh &mesh, const QPointF &p)
     }
 }
 
-double polygonArea(const std::vector<QPointF> &ring)
-{
+double polygonArea(const std::vector<QPointF>& ring) {
     double area = 0.0;
     for (size_t i = 0, n = ring.size(); i < n; ++i) {
-        const QPointF &a = ring[i];
-        const QPointF &b = ring[(i + 1) % n];
+        const QPointF& a = ring[i];
+        const QPointF& b = ring[(i + 1) % n];
         area += a.x() * b.y() - b.x() * a.y();
     }
     return area * 0.5;
 }
 
-std::vector<QPointF> toRing(const QPolygonF &poly)
-{
+std::vector<QPointF> toRing(const QPolygonF& poly) {
     std::vector<QPointF> ring;
     ring.reserve(poly.size());
-    for (const QPointF &p : poly) {
+    for (const QPointF& p : poly) {
         ring.push_back(p);
     }
     // Drop a duplicated closing vertex.
@@ -84,10 +78,10 @@ std::vector<QPointF> toRing(const QPolygonF &poly)
 }
 
 // Triangulate a single polygon (outer ring + optional holes) into mesh.
-void triangulate(const std::vector<std::vector<QPointF>> &polygon, const QColor &color, Mesh &mesh)
-{
+void triangulate(const std::vector<std::vector<QPointF>>& polygon, const QColor& color,
+                 Mesh& mesh) {
     size_t total = 0;
-    for (const auto &ring : polygon) {
+    for (const auto& ring : polygon) {
         total += ring.size();
     }
     if (total < 3) {
@@ -95,8 +89,8 @@ void triangulate(const std::vector<std::vector<QPointF>> &polygon, const QColor 
     }
     const std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(polygon);
     const int base = mesh.vertices.size();
-    for (const auto &ring : polygon) {
-        for (const QPointF &p : ring) {
+    for (const auto& ring : polygon) {
+        for (const QPointF& p : ring) {
             mesh.vertices.push_back(makeVertex(p, color));
             growBounds(mesh, p);
         }
@@ -107,11 +101,10 @@ void triangulate(const std::vector<std::vector<QPointF>> &polygon, const QColor 
     }
 }
 
-void addQuad(const QPointF &a, const QPointF &b, const QPointF &c, const QPointF &d,
-             const QColor &color, Mesh &mesh)
-{
+void addQuad(const QPointF& a, const QPointF& b, const QPointF& c, const QPointF& d,
+             const QColor& color, Mesh& mesh) {
     const int base = mesh.vertices.size();
-    for (const QPointF &p : {a, b, c, d}) {
+    for (const QPointF& p : {a, b, c, d}) {
         mesh.vertices.push_back(makeVertex(p, color));
         growBounds(mesh, p);
     }
@@ -124,8 +117,8 @@ void addQuad(const QPointF &a, const QPointF &b, const QPointF &c, const QPointF
     mesh.indices.push_back(i0 + 3);
 }
 
-void addSegment(const QPointF &p0, const QPointF &p1, qreal halfW, const QColor &color, Mesh &mesh)
-{
+void addSegment(const QPointF& p0, const QPointF& p1, qreal halfW, const QColor& color,
+                Mesh& mesh) {
     QPointF d = p1 - p0;
     const qreal len = std::hypot(d.x(), d.y());
     if (len < 1e-6) {
@@ -138,18 +131,16 @@ void addSegment(const QPointF &p0, const QPointF &p1, qreal halfW, const QColor 
 
 } // namespace
 
-void addFilledPath(const QPainterPath &path, const QColor &color, Mesh &mesh)
-{
+void addFilledPath(const QPainterPath& path, const QColor& color, Mesh& mesh) {
     const QList<QPolygonF> polys = path.toFillPolygons();
-    for (const QPolygonF &poly : polys) {
+    for (const QPolygonF& poly : polys) {
         std::vector<std::vector<QPointF>> polygon;
         polygon.push_back(toRing(poly));
         triangulate(polygon, color, mesh);
     }
 }
 
-void addStrokedPath(const QPainterPath &path, qreal width, const QColor &color, Mesh &mesh)
-{
+void addStrokedPath(const QPainterPath& path, qreal width, const QColor& color, Mesh& mesh) {
     QPainterPathStroker stroker;
     stroker.setWidth(width);
     stroker.setJoinStyle(Qt::MiterJoin);
@@ -184,9 +175,8 @@ void addStrokedPath(const QPainterPath &path, qreal width, const QColor &color, 
     triangulate(polygon, color, mesh);
 }
 
-void addThickPolyline(const QVector<QPointF> &points, qreal width, const QColor &color, Mesh &mesh,
-                      qreal dash)
-{
+void addThickPolyline(const QVector<QPointF>& points, qreal width, const QColor& color, Mesh& mesh,
+                      qreal dash) {
     if (points.size() < 2) {
         return;
     }
@@ -226,9 +216,8 @@ void addThickPolyline(const QVector<QPointF> &points, qreal width, const QColor 
 
 namespace {
 
-QPointF cubicBezier(const QPointF &p0, const QPointF &p1, const QPointF &p2, const QPointF &p3,
-                    qreal t)
-{
+QPointF cubicBezier(const QPointF& p0, const QPointF& p1, const QPointF& p2, const QPointF& p3,
+                    qreal t) {
     const qreal u = 1.0 - t;
     const qreal a = u * u * u;
     const qreal b = 3.0 * u * u * t;
@@ -240,8 +229,7 @@ QPointF cubicBezier(const QPointF &p0, const QPointF &p1, const QPointF &p2, con
 
 // Round near-orthogonal corners by replacing the corner knot with two knots a
 // small radius back along each incident segment (mermaid's fixCorners).
-QVector<QPointF> fixCorners(const QVector<QPointF> &knots)
-{
+QVector<QPointF> fixCorners(const QVector<QPointF>& knots) {
     if (knots.size() < 3) {
         return knots;
     }
@@ -276,8 +264,7 @@ QVector<QPointF> fixCorners(const QVector<QPointF> &knots)
 
 } // namespace
 
-QVector<QPointF> sampleCurveBasis(const QVector<QPointF> &knots)
-{
+QVector<QPointF> sampleCurveBasis(const QVector<QPointF>& knots) {
     QVector<QPointF> out;
     const int n = knots.size();
     if (n == 0) {
@@ -311,7 +298,7 @@ QVector<QPointF> sampleCurveBasis(const QVector<QPointF> &knots)
     };
 
     int point = 0;
-    for (const QPointF &k : knots) {
+    for (const QPointF& k : knots) {
         const qreal x = k.x();
         const qreal y = k.y();
         switch (point) {
@@ -345,19 +332,17 @@ QVector<QPointF> sampleCurveBasis(const QVector<QPointF> &knots)
     return out;
 }
 
-QVector<QPointF> curvedPath(const QVector<QPointF> &knots)
-{
+QVector<QPointF> curvedPath(const QVector<QPointF>& knots) {
     return sampleCurveBasis(fixCorners(knots));
 }
 
-void addCurvedPolyline(const QVector<QPointF> &knots, qreal width, const QColor &color, Mesh &mesh,
-                       qreal dash)
-{
+void addCurvedPolyline(const QVector<QPointF>& knots, qreal width, const QColor& color, Mesh& mesh,
+                       qreal dash) {
     addThickPolyline(curvedPath(knots), width, color, mesh, dash);
 }
 
-void addArrowhead(const QPointF &tip, const QPointF &dir, qreal size, const QColor &color, Mesh &mesh)
-{
+void addArrowhead(const QPointF& tip, const QPointF& dir, qreal size, const QColor& color,
+                  Mesh& mesh) {
     QPointF d = dir;
     const qreal len = std::hypot(d.x(), d.y());
     if (len < 1e-6) {
@@ -369,7 +354,7 @@ void addArrowhead(const QPointF &tip, const QPointF &dir, qreal size, const QCol
     const QPointF left = base + n * (size * 0.5);
     const QPointF right = base - n * (size * 0.5);
     const int b = mesh.vertices.size();
-    for (const QPointF &p : {tip, left, right}) {
+    for (const QPointF& p : {tip, left, right}) {
         mesh.vertices.push_back(makeVertex(p, color));
         growBounds(mesh, p);
     }

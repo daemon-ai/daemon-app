@@ -6,11 +6,8 @@
 #include <QRegularExpression>
 
 ComposerSessionController::ComposerSessionController(QObject* parent)
-    : QObject(parent)
-    , m_queue(new ComposerQueueModel(this))
-    , m_attachments(new ComposerAttachmentModel(this))
-    , m_completion(new CompletionModel(this))
-{
+    : QObject(parent), m_queue(new ComposerQueueModel(this)),
+      m_attachments(new ComposerAttachmentModel(this)), m_completion(new CompletionModel(this)) {
     // The queue count feeds the queueCount property; attachments feed the derived
     // hasPayload/canSteer flags.
     connect(m_queue, &ComposerQueueModel::countChanged, this,
@@ -26,8 +23,7 @@ ComposerSessionController::ComposerSessionController(QObject* parent)
     }
 }
 
-void ComposerSessionController::setSessionId(const QString& id)
-{
+void ComposerSessionController::setSessionId(const QString& id) {
     if (m_sessionId == id) {
         return;
     }
@@ -39,7 +35,7 @@ void ComposerSessionController::setSessionId(const QString& id)
     m_preEditDraft.clear();
     resetBrowse();
     resetReverseSearch(); // an in-flight Ctrl+R never crosses a session boundary
-    closeTrigger(); // a completion popover never crosses a session boundary
+    closeTrigger();       // a completion popover never crosses a session boundary
 
     stash(m_sessionId);
     m_sessionId = id;
@@ -47,8 +43,7 @@ void ComposerSessionController::setSessionId(const QString& id)
     emit sessionIdChanged();
 }
 
-void ComposerSessionController::setBusy(bool busy)
-{
+void ComposerSessionController::setBusy(bool busy) {
     if (m_busy == busy) {
         return;
     }
@@ -61,8 +56,7 @@ void ComposerSessionController::setBusy(bool busy)
     }
 }
 
-void ComposerSessionController::setEnabled(bool enabled)
-{
+void ComposerSessionController::setEnabled(bool enabled) {
     if (m_enabled == enabled) {
         return;
     }
@@ -71,8 +65,7 @@ void ComposerSessionController::setEnabled(bool enabled)
     emit derivedChanged(); // primaryActionEnabled folds in `enabled`
 }
 
-void ComposerSessionController::setDraft(const QString& draft)
-{
+void ComposerSessionController::setDraft(const QString& draft) {
     if (m_draft == draft) {
         return;
     }
@@ -85,49 +78,42 @@ void ComposerSessionController::setDraft(const QString& draft)
     emit derivedChanged();
 }
 
-void ComposerSessionController::applyDraft(const QString& text)
-{
+void ComposerSessionController::applyDraft(const QString& text) {
     m_draft = text;
     emit draftReset(text); // view replaces its text + moves caret to end
     emit draftChanged();
     emit derivedChanged();
 }
 
-void ComposerSessionController::applyDraftWithCursor(const QString& text, int cursor)
-{
+void ComposerSessionController::applyDraftWithCursor(const QString& text, int cursor) {
     m_draft = text;
-    emit draftReset(text); // view replaces its text (caret-to-end)...
+    emit draftReset(text);        // view replaces its text (caret-to-end)...
     emit cursorRequested(cursor); // ...then we override the caret to `cursor`
     emit draftChanged();
     emit derivedChanged();
 }
 
-bool ComposerSessionController::hasPayload() const
-{
+bool ComposerSessionController::hasPayload() const {
     return m_draft.trimmed().length() > 0 || m_attachments->count() > 0;
 }
 
-bool ComposerSessionController::canSteer() const
-{
+bool ComposerSessionController::canSteer() const {
     return m_busy && m_draft.trimmed().length() > 0 && m_attachments->count() == 0;
 }
 
-QString ComposerSessionController::primaryAction() const
-{
+QString ComposerSessionController::primaryAction() const {
     if (m_busy) {
         return hasPayload() ? QStringLiteral("queue") : QStringLiteral("stop");
     }
     return QStringLiteral("send");
 }
 
-bool ComposerSessionController::primaryActionEnabled() const
-{
+bool ComposerSessionController::primaryActionEnabled() const {
     // Stop/queue are always actionable while enabled; send needs a payload.
     return m_enabled && (primaryAction() != QStringLiteral("send") || hasPayload());
 }
 
-QVariantList ComposerSessionController::catalogEntries() const
-{
+QVariantList ComposerSessionController::catalogEntries() const {
     // Injected source: project the installed models into the {provider,id,label}
     // shape the GUI picker + TUI expect (label = the model's display name).
     if (m_modelSource != nullptr) {
@@ -139,10 +125,10 @@ QVariantList ComposerSessionController::catalogEntries() const
             for (const QVariantMap& r : rows) {
                 const QString name = r.value(QStringLiteral("name")).toString();
                 const QString id = r.value(QStringLiteral("id")).toString();
-                out.append(QVariantMap {
-                    { QStringLiteral("provider"), r.value(QStringLiteral("provider")) },
-                    { QStringLiteral("id"), id },
-                    { QStringLiteral("label"), name.isEmpty() ? id : name },
+                out.append(QVariantMap{
+                    {QStringLiteral("provider"), r.value(QStringLiteral("provider"))},
+                    {QStringLiteral("id"), id},
+                    {QStringLiteral("label"), name.isEmpty() ? id : name},
                 });
             }
         }
@@ -153,22 +139,20 @@ QVariantList ComposerSessionController::catalogEntries() const
     QVariantList out;
     out.reserve(m_catalog.size());
     for (const ModelEntry& e : m_catalog) {
-        out.append(QVariantMap {
-            { QStringLiteral("provider"), e.provider },
-            { QStringLiteral("id"), e.id },
-            { QStringLiteral("label"), e.label },
+        out.append(QVariantMap{
+            {QStringLiteral("provider"), e.provider},
+            {QStringLiteral("id"), e.id},
+            {QStringLiteral("label"), e.label},
         });
     }
     return out;
 }
 
-QVariantList ComposerSessionController::modelCatalog() const
-{
+QVariantList ComposerSessionController::modelCatalog() const {
     return catalogEntries();
 }
 
-QStringList ComposerSessionController::models() const
-{
+QStringList ComposerSessionController::models() const {
     QStringList out;
     const QVariantList entries = catalogEntries();
     out.reserve(entries.size());
@@ -178,8 +162,7 @@ QStringList ComposerSessionController::models() const
     return out;
 }
 
-int ComposerSessionController::currentModelIndex() const
-{
+int ComposerSessionController::currentModelIndex() const {
     if (m_modelSource != nullptr) {
         const QString cur = m_modelSource->currentModelId();
         const QVariantList entries = catalogEntries();
@@ -193,26 +176,23 @@ int ComposerSessionController::currentModelIndex() const
     return m_currentModelIndex;
 }
 
-QString ComposerSessionController::currentModel() const
-{
+QString ComposerSessionController::currentModel() const {
     const QVariantList entries = catalogEntries();
     const int idx = currentModelIndex();
     return (idx >= 0 && idx < entries.size())
-        ? entries.at(idx).toMap().value(QStringLiteral("label")).toString()
-        : QString();
+               ? entries.at(idx).toMap().value(QStringLiteral("label")).toString()
+               : QString();
 }
 
-QString ComposerSessionController::currentProvider() const
-{
+QString ComposerSessionController::currentProvider() const {
     const QVariantList entries = catalogEntries();
     const int idx = currentModelIndex();
     return (idx >= 0 && idx < entries.size())
-        ? entries.at(idx).toMap().value(QStringLiteral("provider")).toString()
-        : QString();
+               ? entries.at(idx).toMap().value(QStringLiteral("provider")).toString()
+               : QString();
 }
 
-void ComposerSessionController::setCurrentModelIndex(int index)
-{
+void ComposerSessionController::setCurrentModelIndex(int index) {
     const QVariantList entries = catalogEntries();
     if (index < 0 || index >= entries.size()) {
         return;
@@ -231,18 +211,15 @@ void ComposerSessionController::setCurrentModelIndex(int index)
     emit currentModelChanged();
 }
 
-void ComposerSessionController::selectModel(int index)
-{
+void ComposerSessionController::selectModel(int index) {
     setCurrentModelIndex(index);
 }
 
-QObject* ComposerSessionController::modelSource() const
-{
+QObject* ComposerSessionController::modelSource() const {
     return m_modelSource.data();
 }
 
-void ComposerSessionController::setModelSource(QObject* source)
-{
+void ComposerSessionController::setModelSource(QObject* source) {
     auto* catalog = qobject_cast<models::IModelCatalog*>(source);
     if (m_modelSource == catalog) {
         return;
@@ -260,8 +237,8 @@ void ComposerSessionController::setModelSource(QObject* source)
                 &ComposerSessionController::currentModelChanged);
         // The installed list changing (install/remove) reshapes our model list and
         // can shift the current index, so refresh both.
-        if (auto* installed
-            = qobject_cast<uimodels::VariantListModel*>(m_modelSource->installed())) {
+        if (auto* installed =
+                qobject_cast<uimodels::VariantListModel*>(m_modelSource->installed())) {
             const auto refresh = [this] {
                 emit modelCatalogChanged();
                 emit currentModelChanged();
@@ -276,12 +253,11 @@ void ComposerSessionController::setModelSource(QObject* source)
     emit currentModelChanged();
 }
 
-void ComposerSessionController::setReasoningEffort(const QString& effort)
-{
+void ComposerSessionController::setReasoningEffort(const QString& effort) {
     // Accept only the known levels; ignore anything else so a bad write can't
     // wedge the segmented control.
-    static const QStringList kLevels { QStringLiteral("off"), QStringLiteral("low"),
-                                       QStringLiteral("medium"), QStringLiteral("high") };
+    static const QStringList kLevels{QStringLiteral("off"), QStringLiteral("low"),
+                                     QStringLiteral("medium"), QStringLiteral("high")};
     if (!kLevels.contains(effort) || m_reasoningEffort == effort) {
         return;
     }
@@ -289,8 +265,7 @@ void ComposerSessionController::setReasoningEffort(const QString& effort)
     emit modesChanged();
 }
 
-void ComposerSessionController::setFastMode(bool on)
-{
+void ComposerSessionController::setFastMode(bool on) {
     if (m_fastMode == on) {
         return;
     }
@@ -298,8 +273,7 @@ void ComposerSessionController::setFastMode(bool on)
     emit modesChanged();
 }
 
-void ComposerSessionController::setVerbose(bool on)
-{
+void ComposerSessionController::setVerbose(bool on) {
     if (m_verbose == on) {
         return;
     }
@@ -307,32 +281,27 @@ void ComposerSessionController::setVerbose(bool on)
     emit modesChanged();
 }
 
-void ComposerSessionController::cycleReasoningEffort()
-{
-    static const QStringList kLevels { QStringLiteral("off"), QStringLiteral("low"),
-                                       QStringLiteral("medium"), QStringLiteral("high") };
+void ComposerSessionController::cycleReasoningEffort() {
+    static const QStringList kLevels{QStringLiteral("off"), QStringLiteral("low"),
+                                     QStringLiteral("medium"), QStringLiteral("high")};
     const int i = kLevels.indexOf(m_reasoningEffort);
     setReasoningEffort(kLevels.at((i + 1) % kLevels.size()));
 }
 
-void ComposerSessionController::toggleFastMode()
-{
+void ComposerSessionController::toggleFastMode() {
     setFastMode(!m_fastMode);
 }
 
-void ComposerSessionController::toggleVerbose()
-{
+void ComposerSessionController::toggleVerbose() {
     setVerbose(!m_verbose);
 }
 
-void ComposerSessionController::resetBrowse()
-{
+void ComposerSessionController::resetBrowse() {
     m_browseIndex = -1;
     m_historyDraft.clear();
 }
 
-void ComposerSessionController::pushHistory(const QString& text)
-{
+void ComposerSessionController::pushHistory(const QString& text) {
     QStringList arr = m_histories.value(m_sessionId);
     if (arr.isEmpty() || arr.last() != text) {
         arr.push_back(text);
@@ -343,13 +312,11 @@ void ComposerSessionController::pushHistory(const QString& text)
     m_histories[m_sessionId] = arr;
 }
 
-void ComposerSessionController::enqueue(const QString& text, const QString& refs)
-{
+void ComposerSessionController::enqueue(const QString& text, const QString& refs) {
     m_queue->append(text, refs);
 }
 
-void ComposerSessionController::drainNext()
-{
+void ComposerSessionController::drainNext() {
     if (m_draining || m_busy || m_queue->count() == 0) {
         return;
     }
@@ -365,8 +332,7 @@ void ComposerSessionController::drainNext()
     m_draining = false;
 }
 
-void ComposerSessionController::submit()
-{
+void ComposerSessionController::submit() {
     if (!m_enabled) {
         return;
     }
@@ -405,8 +371,7 @@ void ComposerSessionController::submit()
     emit submitted(text, refs);
 }
 
-void ComposerSessionController::enqueueDraft()
-{
+void ComposerSessionController::enqueueDraft() {
     if (!hasPayload()) {
         return;
     }
@@ -415,8 +380,7 @@ void ComposerSessionController::enqueueDraft()
     resetBrowse();
 }
 
-void ComposerSessionController::steerDraft()
-{
+void ComposerSessionController::steerDraft() {
     if (!canSteer()) {
         return;
     }
@@ -426,13 +390,11 @@ void ComposerSessionController::steerDraft()
     emit steer(text);
 }
 
-void ComposerSessionController::cancel()
-{
+void ComposerSessionController::cancel() {
     emit cancelRequested();
 }
 
-bool ComposerSessionController::browseUp()
-{
+bool ComposerSessionController::browseUp() {
     const QStringList arr = m_histories.value(m_sessionId);
     if (arr.isEmpty()) {
         return false;
@@ -449,8 +411,7 @@ bool ComposerSessionController::browseUp()
     return true;
 }
 
-bool ComposerSessionController::browseDown()
-{
+bool ComposerSessionController::browseDown() {
     if (m_browseIndex == -1) {
         return false;
     }
@@ -465,8 +426,7 @@ bool ComposerSessionController::browseDown()
     return true;
 }
 
-void ComposerSessionController::resetReverseSearch()
-{
+void ComposerSessionController::resetReverseSearch() {
     if (!m_reverseSearching) {
         return;
     }
@@ -477,8 +437,7 @@ void ComposerSessionController::resetReverseSearch()
     emit reverseSearchChanged();
 }
 
-int ComposerSessionController::reverseSearchResolve(int fromIndex)
-{
+int ComposerSessionController::reverseSearchResolve(int fromIndex) {
     const QStringList arr = m_histories.value(m_sessionId);
     for (int i = qMin(fromIndex, static_cast<int>(arr.size()) - 1); i >= 0; --i) {
         if (arr.at(i).contains(m_reverseQuery, Qt::CaseInsensitive)) {
@@ -494,8 +453,7 @@ int ComposerSessionController::reverseSearchResolve(int fromIndex)
     return -1;
 }
 
-void ComposerSessionController::reverseSearchStart()
-{
+void ComposerSessionController::reverseSearchStart() {
     // A second Ctrl+R while already searching steps to the next older match.
     if (m_reverseSearching) {
         reverseSearchNext();
@@ -511,8 +469,7 @@ void ComposerSessionController::reverseSearchStart()
     emit reverseSearchChanged();
 }
 
-void ComposerSessionController::reverseSearchNext()
-{
+void ComposerSessionController::reverseSearchNext() {
     if (!m_reverseSearching) {
         return;
     }
@@ -522,8 +479,7 @@ void ComposerSessionController::reverseSearchNext()
     emit reverseSearchChanged();
 }
 
-void ComposerSessionController::reverseSearchType(const QString& chars)
-{
+void ComposerSessionController::reverseSearchType(const QString& chars) {
     if (!m_reverseSearching || chars.isEmpty()) {
         return;
     }
@@ -533,8 +489,7 @@ void ComposerSessionController::reverseSearchType(const QString& chars)
     emit reverseSearchChanged();
 }
 
-void ComposerSessionController::reverseSearchBackspace()
-{
+void ComposerSessionController::reverseSearchBackspace() {
     if (!m_reverseSearching) {
         return;
     }
@@ -553,8 +508,7 @@ void ComposerSessionController::reverseSearchBackspace()
     emit reverseSearchChanged();
 }
 
-void ComposerSessionController::reverseSearchAccept()
-{
+void ComposerSessionController::reverseSearchAccept() {
     if (!m_reverseSearching) {
         return;
     }
@@ -566,8 +520,7 @@ void ComposerSessionController::reverseSearchAccept()
     emit reverseSearchChanged();
 }
 
-void ComposerSessionController::reverseSearchCancel()
-{
+void ComposerSessionController::reverseSearchCancel() {
     if (!m_reverseSearching) {
         return;
     }
@@ -580,8 +533,7 @@ void ComposerSessionController::reverseSearchCancel()
     emit reverseSearchChanged();
 }
 
-void ComposerSessionController::sendNowEntry(int index)
-{
+void ComposerSessionController::sendNowEntry(int index) {
     if (index < 0 || index >= m_queue->count()) {
         return;
     }
@@ -603,8 +555,7 @@ void ComposerSessionController::sendNowEntry(int index)
     emit submitted(text, refs);
 }
 
-void ComposerSessionController::deleteEntry(int index)
-{
+void ComposerSessionController::deleteEntry(int index) {
     if (index < 0 || index >= m_queue->count()) {
         return;
     }
@@ -616,8 +567,7 @@ void ComposerSessionController::deleteEntry(int index)
     m_queue->removeAt(index);
 }
 
-void ComposerSessionController::beginEdit(int index)
-{
+void ComposerSessionController::beginEdit(int index) {
     if (index < 0 || index >= m_queue->count() || m_editingIndex >= 0) {
         return;
     }
@@ -626,8 +576,7 @@ void ComposerSessionController::beginEdit(int index)
     applyDraft(m_queue->textAt(index));
 }
 
-void ComposerSessionController::exitEdit(bool restore)
-{
+void ComposerSessionController::exitEdit(bool restore) {
     if (m_editingIndex < 0) {
         return;
     }
@@ -636,26 +585,22 @@ void ComposerSessionController::exitEdit(bool restore)
     m_preEditDraft.clear();
 }
 
-void ComposerSessionController::addAttachment(const QString& name, const QString& kind)
-{
+void ComposerSessionController::addAttachment(const QString& name, const QString& kind) {
     m_attachments->append(name, kind);
 }
 
-void ComposerSessionController::invokeCommand(const QString& command)
-{
+void ComposerSessionController::invokeCommand(const QString& command) {
     emit commandInvoked(command);
 }
 
-void ComposerSessionController::clear()
-{
+void ComposerSessionController::clear() {
     resetReverseSearch();
     applyDraft(QString());
     m_attachments->clear();
     closeTrigger();
 }
 
-void ComposerSessionController::refreshTrigger(const QString& text, int cursorPos)
-{
+void ComposerSessionController::refreshTrigger(const QString& text, int cursorPos) {
     const int caret = qBound(0, cursorPos, text.length());
     const QString before = text.left(caret);
 
@@ -691,8 +636,7 @@ void ComposerSessionController::refreshTrigger(const QString& text, int cursorPo
     }
 }
 
-void ComposerSessionController::closeTrigger()
-{
+void ComposerSessionController::closeTrigger() {
     m_triggerStart = -1;
     m_triggerEnd = -1;
     if (m_completionActive) {
@@ -701,8 +645,7 @@ void ComposerSessionController::closeTrigger()
     }
 }
 
-void ComposerSessionController::moveActive(int delta)
-{
+void ComposerSessionController::moveActive(int delta) {
     const int n = m_completion->count();
     if (!m_completionActive || n == 0) {
         return;
@@ -710,8 +653,7 @@ void ComposerSessionController::moveActive(int delta)
     setActiveIndex(((m_completionActiveIndex + delta) % n + n) % n);
 }
 
-void ComposerSessionController::setActiveIndex(int index)
-{
+void ComposerSessionController::setActiveIndex(int index) {
     if (m_completionActiveIndex == index) {
         return;
     }
@@ -719,13 +661,11 @@ void ComposerSessionController::setActiveIndex(int index)
     emit completionActiveIndexChanged();
 }
 
-void ComposerSessionController::acceptActive()
-{
+void ComposerSessionController::acceptActive() {
     accept(m_completionActiveIndex);
 }
 
-void ComposerSessionController::accept(int index)
-{
+void ComposerSessionController::accept(int index) {
     const int n = m_completion->count();
     if (index < 0 || index >= n) {
         closeTrigger();
@@ -758,20 +698,17 @@ void ComposerSessionController::accept(int index)
     applyDraftWithCursor(next, caret);
 }
 
-void ComposerSessionController::stash(const QString& key)
-{
+void ComposerSessionController::stash(const QString& key) {
     m_drafts[key] = m_draft;
     m_queues[key] = m_queue->entries();
 }
 
-void ComposerSessionController::restore(const QString& key)
-{
+void ComposerSessionController::restore(const QString& key) {
     applyDraft(m_drafts.value(key));
     m_queue->setEntries(m_queues.value(key));
 }
 
-void ComposerSessionController::setEditingIndex(int index)
-{
+void ComposerSessionController::setEditingIndex(int index) {
     if (m_editingIndex == index) {
         return;
     }

@@ -19,8 +19,7 @@ constexpr qreal kMinW = 40.0;
 constexpr qreal kMinH = 30.0;
 constexpr qreal kArrow = 11.0;
 
-QColor parseColor(const QString &s, const QColor &fallback)
-{
+QColor parseColor(const QString& s, const QColor& fallback) {
     if (s.isEmpty()) {
         return fallback;
     }
@@ -29,8 +28,7 @@ QColor parseColor(const QString &s, const QColor &fallback)
 }
 
 // Apply a node's classDef overrides (fill/stroke/color) onto a base style.
-Style styleForNode(const DiagramNode &node, const DiagramModel &model, const Style &base)
-{
+Style styleForNode(const DiagramNode& node, const DiagramModel& model, const Style& base) {
     Style style = base;
     if (node.classRef.isEmpty()) {
         return style;
@@ -39,15 +37,15 @@ Style styleForNode(const DiagramNode &node, const DiagramModel &model, const Sty
     if (it == model.classDefs.constEnd()) {
         return style;
     }
-    const QHash<QString, QString> &props = it.value();
+    const QHash<QString, QString>& props = it.value();
     style.nodeFill = parseColor(props.value(QStringLiteral("fill")), style.nodeFill);
     style.nodeStroke = parseColor(props.value(QStringLiteral("stroke")), style.nodeStroke);
     style.textColor = parseColor(props.value(QStringLiteral("color")), style.textColor);
     return style;
 }
 
-void sizeNode(DiagramNode &node, const TextMeasurer &measurer, const Style &style, qreal labelWrap)
-{
+void sizeNode(DiagramNode& node, const TextMeasurer& measurer, const Style& style,
+              qreal labelWrap) {
     const TextMetrics m = measurer.measure(node.label, style.font, labelWrap);
     qreal w = m.width + 2 * kPadX;
     qreal h = m.height + 2 * kPadY;
@@ -76,26 +74,25 @@ void sizeNode(DiagramNode &node, const TextMeasurer &measurer, const Style &styl
     node.height = std::max(h, kMinH);
 }
 
-QColor withAlpha(QColor c, int a)
-{
+QColor withAlpha(QColor c, int a) {
     c.setAlpha(a);
     return c;
 }
 
 } // namespace
 
-DiagramModel DiagramEngine::buildModel(const QString &source, const Style &style, qreal maxWidth) const
-{
+DiagramModel DiagramEngine::buildModel(const QString& source, const Style& style,
+                                       qreal maxWidth) const {
     DiagramModel model = parseFlowchart(source);
     if (!model.valid) {
         return model;
     }
     const qreal labelWrap = std::clamp(maxWidth * 0.5, 120.0, 240.0);
-    for (DiagramNode &node : model.nodes) {
+    for (DiagramNode& node : model.nodes) {
         sizeNode(node, m_measurer, styleForNode(node, model, style), labelWrap);
     }
     // Measure edge labels so the layout can reserve space via label dummies.
-    for (DiagramEdge &edge : model.edges) {
+    for (DiagramEdge& edge : model.edges) {
         if (edge.label.isEmpty()) {
             continue;
         }
@@ -107,18 +104,16 @@ DiagramModel DiagramEngine::buildModel(const QString &source, const Style &style
     return model;
 }
 
-RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString &source, const Style &style,
-                                               qreal maxWidth, quint64 revision) const
-{
+RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString& source, const Style& style,
+                                               qreal maxWidth, quint64 revision) const {
     auto snap = std::make_shared<RenderSnapshot>();
     snap->contentRevision = revision;
 
     const QString family = detectFamily(source);
     if (family != QStringLiteral("flowchart")) {
         snap->hasError = true;
-        snap->errorText = family.isEmpty()
-            ? QStringLiteral("Unsupported or empty diagram")
-            : QStringLiteral("Unsupported diagram: %1").arg(family);
+        snap->errorText = family.isEmpty() ? QStringLiteral("Unsupported or empty diagram")
+                                           : QStringLiteral("Unsupported diagram: %1").arg(family);
         return snap;
     }
 
@@ -132,7 +127,7 @@ RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString &source, const Styl
     const qreal labelWrap = std::clamp(maxWidth * 0.5, 120.0, 240.0);
 
     // Subgraph cluster boxes (behind everything).
-    for (const DiagramCluster &cluster : model.clusters) {
+    for (const DiagramCluster& cluster : model.clusters) {
         if (!cluster.bounds.isValid()) {
             continue;
         }
@@ -152,13 +147,13 @@ RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString &source, const Styl
     }
 
     // Edges first (under nodes), then arrowheads.
-    for (const DiagramEdge &edge : model.edges) {
+    for (const DiagramEdge& edge : model.edges) {
         if (edge.points.size() < 2) {
             continue;
         }
         const QColor color = style.edgeStroke;
-        const qreal width = edge.kind == EdgeKind::Thick ? style.edgeStrokeWidth * 2.2
-                                                         : style.edgeStrokeWidth;
+        const qreal width =
+            edge.kind == EdgeKind::Thick ? style.edgeStrokeWidth * 2.2 : style.edgeStrokeWidth;
         const qreal dash = edge.kind == EdgeKind::Dotted ? 6.0 : 0.0;
 
         // Densify into the same curveBasis spline the renderer draws so the
@@ -197,8 +192,8 @@ RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString &source, const Styl
         if (!edge.label.isEmpty()) {
             const TextMetrics tm = m_measurer.measure(edge.label, style.font);
             const QRectF bg(edge.labelPos.x() - tm.width / 2.0 - 3.0,
-                            edge.labelPos.y() - tm.height / 2.0 - 1.0,
-                            tm.width + 6.0, tm.height + 2.0);
+                            edge.labelPos.y() - tm.height / 2.0 - 1.0, tm.width + 6.0,
+                            tm.height + 2.0);
             QPainterPath bgPath;
             bgPath.addRect(bg);
             addFilledPath(bgPath, withAlpha(style.labelBackground, 235), snap->nodeFills);
@@ -207,8 +202,8 @@ RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString &source, const Styl
             LabelRun run;
             run.layout = layout;
             run.color = style.textColor;
-            run.origin = QPointF(edge.labelPos.x() - tm.width / 2.0,
-                                 edge.labelPos.y() - tm.height / 2.0);
+            run.origin =
+                QPointF(edge.labelPos.x() - tm.width / 2.0, edge.labelPos.y() - tm.height / 2.0);
             run.bounds = bg;
             snap->labels.push_back(run);
         }
@@ -218,10 +213,10 @@ RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString &source, const Styl
     // inset shape in the fill color on top (nodeFills) yields a clean, uniform
     // border for every shape, including sharp-cornered diamonds/hexagons where a
     // mitred path stroke would self-intersect.
-    for (const DiagramNode &node : model.nodes) {
+    for (const DiagramNode& node : model.nodes) {
         const Style ns = styleForNode(node, model, style);
-        const QRectF rect(node.x - node.width / 2.0, node.y - node.height / 2.0,
-                          node.width, node.height);
+        const QRectF rect(node.x - node.width / 2.0, node.y - node.height / 2.0, node.width,
+                          node.height);
         const qreal sw = ns.nodeStrokeWidth;
         const QRectF inset = rect.adjusted(sw, sw, -sw, -sw);
         addFilledPath(shapeOutline(node.shape, rect), ns.nodeStroke, snap->nodeBorders);
@@ -243,22 +238,22 @@ RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString &source, const Styl
     }
 
     // Edge hit shapes (bounding box over the full polyline incl. bends).
-    for (const DiagramEdge &edge : model.edges) {
+    for (const DiagramEdge& edge : model.edges) {
         if (edge.points.size() < 2) {
             continue;
         }
         QRectF box(edge.points.first(), QSizeF(0.0, 0.0));
-        for (const QPointF &p : edge.points) {
+        for (const QPointF& p : edge.points) {
             box = box.united(QRectF(p, QSizeF(0.0, 0.0)));
         }
         box = box.normalized().adjusted(-4, -4, 4, 4);
-        snap->hits.push_back(HitShape{box, edge.fromId + QStringLiteral("->") + edge.toId,
-                                      HitKind::Edge});
+        snap->hits.push_back(
+            HitShape{box, edge.fromId + QStringLiteral("->") + edge.toId, HitKind::Edge});
     }
 
     QRectF bounds;
-    for (const Mesh *m : {&snap->clusters, &snap->edges, &snap->arrowheads, &snap->nodeFills,
-                          &snap->nodeBorders}) {
+    for (const Mesh* m :
+         {&snap->clusters, &snap->edges, &snap->arrowheads, &snap->nodeFills, &snap->nodeBorders}) {
         if (!m->bounds.isNull()) {
             bounds = bounds.isNull() ? m->bounds : bounds.united(m->bounds);
         }

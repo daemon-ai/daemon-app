@@ -16,14 +16,12 @@ class TestLineEditor : public QObject {
 private:
     // Apply a command to a (text, cursor) pair, returning the handled flag and
     // mutating the inputs in place. A fresh ring unless the caller supplies one.
-    static bool apply(EditCommand cmd, QString& text, int& cursor, KillRing& ring)
-    {
+    static bool apply(EditCommand cmd, QString& text, int& cursor, KillRing& ring) {
         return LineEditor::applyCommand(cmd, text, cursor, ring);
     }
 
 private slots:
-    void movementCommands()
-    {
+    void movementCommands() {
         QString t = QStringLiteral("hello world");
         int c = 5; // between "hello" and " world"
         KillRing ring;
@@ -53,8 +51,7 @@ private slots:
         QCOMPARE(t, QStringLiteral("hello world"));
     }
 
-    void deleteCommands()
-    {
+    void deleteCommands() {
         QString t = QStringLiteral("abc");
         int c = 1;
         KillRing ring;
@@ -74,8 +71,7 @@ private slots:
         QCOMPARE(end, QStringLiteral("x"));
     }
 
-    void killLineAndYank()
-    {
+    void killLineAndYank() {
         QString t = QStringLiteral("hello world");
         int c = 6; // before "world"
         KillRing ring;
@@ -90,8 +86,7 @@ private slots:
         QCOMPARE(c, 11);
     }
 
-    void unixLineDiscard()
-    {
+    void unixLineDiscard() {
         QString t = QStringLiteral("hello world");
         int c = 6;
         KillRing ring;
@@ -106,8 +101,7 @@ private slots:
         QCOMPARE(t, QStringLiteral("worldhello "));
     }
 
-    void wordKills()
-    {
+    void wordKills() {
         // backward-kill-word (word-char delimited).
         QString t = QStringLiteral("foo bar baz");
         int c = t.size();
@@ -134,8 +128,7 @@ private slots:
         QCOMPARE(c3, 0);
     }
 
-    void consecutiveKillsAccumulate()
-    {
+    void consecutiveKillsAccumulate() {
         // Two kill-words in a row accumulate into one kill-ring entry, so a single
         // yank brings back both (readline's kill-sequence behavior).
         QString t = QStringLiteral("alpha beta gamma");
@@ -149,8 +142,7 @@ private slots:
         QCOMPARE(t, QStringLiteral("alpha beta gamma"));
     }
 
-    void yankPopRotatesRing()
-    {
+    void yankPopRotatesRing() {
         // Build two independent kill entries (separated by a non-kill command so
         // they do not merge).
         QString t = QStringLiteral("one two");
@@ -169,8 +161,7 @@ private slots:
         QCOMPARE(t, QStringLiteral("two"));
     }
 
-    void transposeChars()
-    {
+    void transposeChars() {
         QString t = QStringLiteral("ab");
         int c = 2; // at end -> transpose the two preceding chars
         KillRing ring;
@@ -178,10 +169,8 @@ private slots:
         QCOMPARE(t, QStringLiteral("ba"));
     }
 
-    void defaultKeymapBindings()
-    {
-        QCOMPARE(LineEditor::lookup(Qt::Key_A, Qt::ControlModifier),
-                 EditCommand::BeginningOfLine);
+    void defaultKeymapBindings() {
+        QCOMPARE(LineEditor::lookup(Qt::Key_A, Qt::ControlModifier), EditCommand::BeginningOfLine);
         QCOMPARE(LineEditor::lookup(Qt::Key_E, Qt::ControlModifier), EditCommand::EndOfLine);
         QCOMPARE(LineEditor::lookup(Qt::Key_B, Qt::AltModifier), EditCommand::BackwardWord);
         QCOMPARE(LineEditor::lookup(Qt::Key_K, Qt::ControlModifier), EditCommand::KillLine);
@@ -190,35 +179,29 @@ private slots:
         QCOMPARE(LineEditor::lookup(Qt::Key_A, Qt::NoModifier), EditCommand::None);
     }
 
-    void lookupEventDerivesLetterFromText()
-    {
+    void lookupEventDerivesLetterFromText() {
         // Tui Widgets delivers Ctrl/Alt+letter as char events: key()==Key_unknown
         // with the letter in text(). lookupEvent must still resolve the binding.
-        QCOMPARE(LineEditor::lookupEvent(Qt::Key_unknown, Qt::ControlModifier,
-                                         QStringLiteral("a")),
+        QCOMPARE(LineEditor::lookupEvent(Qt::Key_unknown, Qt::ControlModifier, QStringLiteral("a")),
                  EditCommand::BeginningOfLine);
-        QCOMPARE(LineEditor::lookupEvent(Qt::Key_unknown, Qt::AltModifier,
-                                         QStringLiteral("b")),
+        QCOMPARE(LineEditor::lookupEvent(Qt::Key_unknown, Qt::AltModifier, QStringLiteral("b")),
                  EditCommand::BackwardWord);
         // Uppercase (Shift held / caps) still resolves the letter.
-        QCOMPARE(LineEditor::lookupEvent(Qt::Key_unknown, Qt::ControlModifier,
-                                         QStringLiteral("E")),
+        QCOMPARE(LineEditor::lookupEvent(Qt::Key_unknown, Qt::ControlModifier, QStringLiteral("E")),
                  EditCommand::EndOfLine);
         // A plain letter (normal typing) is never a command.
-        QCOMPARE(LineEditor::lookupEvent(Qt::Key_unknown, Qt::NoModifier,
-                                         QStringLiteral("a")),
+        QCOMPARE(LineEditor::lookupEvent(Qt::Key_unknown, Qt::NoModifier, QStringLiteral("a")),
                  EditCommand::None);
         // A named key still resolves directly (Alt+Backspace -> backward-kill-word).
         QCOMPARE(LineEditor::lookupEvent(Qt::Key_Backspace, Qt::AltModifier, QString()),
                  EditCommand::BackwardKillWord);
     }
 
-    void inputrcRemapQuoted()
-    {
+    void inputrcRemapQuoted() {
         QHash<quint64, EditCommand> map = LineEditor::defaultKeymap();
         // Rebind Ctrl+X to kill-line and Alt+P (\ep) to backward-word.
-        LineEditor::parseInputrcInto(map,
-            QStringLiteral("\"\\C-x\": kill-line\n\"\\ep\": backward-word\n"));
+        LineEditor::parseInputrcInto(
+            map, QStringLiteral("\"\\C-x\": kill-line\n\"\\ep\": backward-word\n"));
 
         QCOMPARE(map.value(LineEditor::encode(Qt::Key_X, Qt::ControlModifier)),
                  EditCommand::KillLine);
@@ -226,29 +209,26 @@ private slots:
                  EditCommand::BackwardWord);
     }
 
-    void inputrcRemapSymbolicAndSkips()
-    {
+    void inputrcRemapSymbolicAndSkips() {
         QHash<quint64, EditCommand> map = LineEditor::defaultKeymap();
-        LineEditor::parseInputrcInto(map,
-            QStringLiteral(
-                "# a comment\n"
-                "Control-l: end-of-line\n"
-                "Meta-u: forward-word\n"
-                "\"\\C-x\": \"a macro string\"\n" // macro -> skipped
-                "\"\\C-g\": some-unknown-function\n" // unknown -> skipped
-                "$if mode=vi\n"
-                "\"\\C-a\": kill-line\n" // inside vi block -> skipped
-                "$endif\n"));
+        LineEditor::parseInputrcInto(
+            map,
+            QStringLiteral("# a comment\n"
+                           "Control-l: end-of-line\n"
+                           "Meta-u: forward-word\n"
+                           "\"\\C-x\": \"a macro string\"\n"    // macro -> skipped
+                           "\"\\C-g\": some-unknown-function\n" // unknown -> skipped
+                           "$if mode=vi\n"
+                           "\"\\C-a\": kill-line\n" // inside vi block -> skipped
+                           "$endif\n"));
 
         QCOMPARE(map.value(LineEditor::encode(Qt::Key_L, Qt::ControlModifier)),
                  EditCommand::EndOfLine);
         QCOMPARE(map.value(LineEditor::encode(Qt::Key_U, Qt::AltModifier)),
                  EditCommand::ForwardWord);
         // Macro / unknown bindings did not register.
-        QCOMPARE(map.value(LineEditor::encode(Qt::Key_X, Qt::ControlModifier)),
-                 EditCommand::None);
-        QCOMPARE(map.value(LineEditor::encode(Qt::Key_G, Qt::ControlModifier)),
-                 EditCommand::None);
+        QCOMPARE(map.value(LineEditor::encode(Qt::Key_X, Qt::ControlModifier)), EditCommand::None);
+        QCOMPARE(map.value(LineEditor::encode(Qt::Key_G, Qt::ControlModifier)), EditCommand::None);
         // The vi-block rebind of Ctrl+A was skipped, so the default survives.
         QCOMPARE(map.value(LineEditor::encode(Qt::Key_A, Qt::ControlModifier)),
                  EditCommand::BeginningOfLine);

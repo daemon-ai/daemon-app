@@ -1,8 +1,7 @@
 #include "tui_palette.h"
 
-#include <Tui/ZColor.h>
-
 #include <QColor>
+#include <Tui/ZColor.h>
 
 namespace {
 
@@ -10,19 +9,21 @@ namespace {
 // its historical look until main.cpp applies the persisted ui/theme.
 theme::ThemeName g_active = theme::ThemeName::Dark;
 
-Tui::ZColor toZ(const QColor &c) { return Tui::ZColor(c.red(), c.green(), c.blue()); }
+Tui::ZColor toZ(const QColor& c) {
+    return Tui::ZColor(c.red(), c.green(), c.blue());
+}
 
 // Resolve a shared theme token to a ZColor for a specific theme / the active one.
-Tui::ZColor tokColor(theme::ThemeName t, theme::Token token)
-{
+Tui::ZColor tokColor(theme::ThemeName t, theme::Token token) {
     return toZ(theme::ThemePalette::color(t, token));
 }
-Tui::ZColor tok(theme::Token token) { return tokColor(g_active, token); }
+Tui::ZColor tok(theme::Token token) {
+    return tokColor(g_active, token);
+}
 
 } // namespace
 
-Tui::ZPalette daemonPalette(theme::ThemeName name)
-{
+Tui::ZPalette daemonPalette(theme::ThemeName name) {
     using theme::Token;
 
     // Stock-widget chrome roles, sourced from the shared theme tokens for `name`
@@ -156,27 +157,56 @@ namespace tpal {
 
 using Tui::ZColor;
 
-void setActiveTheme(theme::ThemeName name) { g_active = name; }
-theme::ThemeName activeTheme() { return g_active; }
+void setActiveTheme(theme::ThemeName name) {
+    g_active = name;
+}
+theme::ThemeName activeTheme() {
+    return g_active;
+}
 
-ZColor fg() { return tok(theme::Token::Text); }
-ZColor muted() { return tok(theme::Token::TextMuted); }
-ZColor faint() { return tok(theme::Token::TextMuted); }
-ZColor bg() { return tok(theme::Token::Background); }
-ZColor codeBg() { return tok(theme::Token::CodeBackground); }
-ZColor accent() { return tok(theme::Token::Accent); }
+ZColor fg() {
+    return tok(theme::Token::Text);
+}
+ZColor muted() {
+    return tok(theme::Token::TextMuted);
+}
+ZColor faint() {
+    return tok(theme::Token::TextMuted);
+}
+ZColor bg() {
+    return tok(theme::Token::Background);
+}
+ZColor codeBg() {
+    return tok(theme::Token::CodeBackground);
+}
+ZColor accent() {
+    return tok(theme::Token::Accent);
+}
 
-ZColor statusOk() { return tok(theme::Token::StatusOk); }
-ZColor statusError() { return tok(theme::Token::Danger); }
-ZColor statusRunning() { return tok(theme::Token::Accent); }
-ZColor warn() { return tok(theme::Token::Warning); }
+ZColor statusOk() {
+    return tok(theme::Token::StatusOk);
+}
+ZColor statusError() {
+    return tok(theme::Token::Danger);
+}
+ZColor statusRunning() {
+    return tok(theme::Token::Accent);
+}
+ZColor warn() {
+    return tok(theme::Token::Warning);
+}
 
-ZColor diffAdd() { return tok(theme::Token::DiffAddText); }
-ZColor diffDel() { return tok(theme::Token::DiffDelText); }
-ZColor diffHunk() { return tok(theme::Token::Accent); }
+ZColor diffAdd() {
+    return tok(theme::Token::DiffAddText);
+}
+ZColor diffDel() {
+    return tok(theme::Token::DiffDelText);
+}
+ZColor diffHunk() {
+    return tok(theme::Token::Accent);
+}
 
-ZColor toneColor(const QString &tone)
-{
+ZColor toneColor(const QString& tone) {
     const QString t = tone.trimmed().toLower();
     if (t == QStringLiteral("terminal") || t == QStringLiteral("pty")) {
         return ZColor(166, 227, 161); // green
@@ -199,40 +229,54 @@ ZColor toneColor(const QString &tone)
     return accent(); // default tone tracks the theme accent
 }
 
-ZColor ansi(int index)
-{
+ZColor ansi(int index) {
     // Classic xterm 16-color table; bright variants for 8-15. -1 == default fg.
     switch (index) {
-    case 0: return ZColor(0, 0, 0);
-    case 1: return ZColor(205, 49, 49);
-    case 2: return ZColor(13, 188, 121);
-    case 3: return ZColor(229, 229, 16);
-    case 4: return ZColor(36, 114, 200);
-    case 5: return ZColor(188, 63, 188);
-    case 6: return ZColor(17, 168, 205);
-    case 7: return ZColor(229, 229, 229);
-    case 8: return ZColor(102, 102, 102);
-    case 9: return ZColor(241, 76, 76);
-    case 10: return ZColor(35, 209, 139);
-    case 11: return ZColor(245, 245, 67);
-    case 12: return ZColor(59, 142, 234);
-    case 13: return ZColor(214, 112, 214);
-    case 14: return ZColor(41, 184, 219);
-    case 15: return ZColor(255, 255, 255);
-    default: return fg();
+    case 0:
+        return ZColor(0, 0, 0);
+    case 1:
+        return ZColor(205, 49, 49);
+    case 2:
+        return ZColor(13, 188, 121);
+    case 3:
+        return ZColor(229, 229, 16);
+    case 4:
+        return ZColor(36, 114, 200);
+    case 5:
+        return ZColor(188, 63, 188);
+    case 6:
+        return ZColor(17, 168, 205);
+    case 7:
+        return ZColor(229, 229, 229);
+    case 8:
+        return ZColor(102, 102, 102);
+    case 9:
+        return ZColor(241, 76, 76);
+    case 10:
+        return ZColor(35, 209, 139);
+    case 11:
+        return ZColor(245, 245, 67);
+    case 12:
+        return ZColor(59, 142, 234);
+    case 13:
+        return ZColor(214, 112, 214);
+    case 14:
+        return ZColor(41, 184, 219);
+    case 15:
+        return ZColor(255, 255, 255);
+    default:
+        return fg();
     }
 }
 
-ZColor ansiBg(int index)
-{
+ZColor ansiBg(int index) {
     if (index < 0 || index > 15) {
         return codeBg();
     }
     return ansi(index);
 }
 
-QString statusGlyph(const QString &status)
-{
+QString statusGlyph(const QString& status) {
     const QString s = status.trimmed().toLower();
     if (s == QStringLiteral("running")) {
         return QStringLiteral("\u25d0"); // ◐
@@ -243,8 +287,7 @@ QString statusGlyph(const QString &status)
     return QStringLiteral("\u2713"); // ✓
 }
 
-QString toneGlyph(const QString &tone)
-{
+QString toneGlyph(const QString& tone) {
     const QString t = tone.trimmed().toLower();
     if (t == QStringLiteral("terminal") || t == QStringLiteral("pty")) {
         return QStringLiteral("\u276f"); // ❯
@@ -267,18 +310,29 @@ QString toneGlyph(const QString &tone)
     return QStringLiteral("\u2699"); // ⚙
 }
 
-QString barGlyph() { return QStringLiteral("\u258c"); }      // ▌
-QString reasoningGlyph() { return QStringLiteral("\u2732"); } // ✲
+QString barGlyph() {
+    return QStringLiteral("\u258c");
+} // ▌
+QString reasoningGlyph() {
+    return QStringLiteral("\u2732");
+} // ✲
 
 // --- Chrome -------------------------------------------------------------------
 
-ZColor selectionBg() { return tok(theme::Token::RowActive); } // focused row wash
-ZColor selectionInactiveBg() { return tok(theme::Token::RowActiveInactive); } // unfocused
-ZColor surfaceAlt() { return tok(theme::Token::SurfaceRaised); } // recessed surface
-ZColor activeFieldBg() { return tok(theme::Token::ActiveBlockBackground); } // focused field
+ZColor selectionBg() {
+    return tok(theme::Token::RowActive);
+} // focused row wash
+ZColor selectionInactiveBg() {
+    return tok(theme::Token::RowActiveInactive);
+} // unfocused
+ZColor surfaceAlt() {
+    return tok(theme::Token::SurfaceRaised);
+} // recessed surface
+ZColor activeFieldBg() {
+    return tok(theme::Token::ActiveBlockBackground);
+} // focused field
 
-ZColor gatewayToneColor(const QString &tone)
-{
+ZColor gatewayToneColor(const QString& tone) {
     const QString t = tone.trimmed().toLower();
     if (t == QStringLiteral("danger")) {
         return statusError();
@@ -289,26 +343,44 @@ ZColor gatewayToneColor(const QString &tone)
     return statusOk(); // "default" == ready
 }
 
-ZColor gaugeFill() { return accent(); }
-ZColor gaugeTrack() { return muted(); }
-
-QString gatewayGlyph(bool alert)
-{
-    return alert ? QStringLiteral("\u26a0")   // ⚠
-                 : QStringLiteral("\u25c9");   // ◉ (signal/connected)
+ZColor gaugeFill() {
+    return accent();
+}
+ZColor gaugeTrack() {
+    return muted();
 }
 
-QString agentsGlyph() { return QStringLiteral("\u2726"); }   // ✦
-QString contextGlyph() { return QStringLiteral("\u25a4"); }  // ▤
-QString sessionGlyph() { return QStringLiteral("\u25f7"); }  // ◷ clock-ish
-QString versionGlyph() { return QStringLiteral("#"); }
-QString sendGlyph() { return QStringLiteral("\u25b2"); }     // ▲
-QString stopGlyph() { return QStringLiteral("\u25a0"); }     // ■
-QString steerGlyph() { return QStringLiteral("\u2726"); }    // ✦
-QString warnGlyph() { return QStringLiteral("\u26a0"); }     // ⚠
+QString gatewayGlyph(bool alert) {
+    return alert ? QStringLiteral("\u26a0")  // ⚠
+                 : QStringLiteral("\u25c9"); // ◉ (signal/connected)
+}
 
-QString agentKindGlyph(const QString &kindKey)
-{
+QString agentsGlyph() {
+    return QStringLiteral("\u2726");
+} // ✦
+QString contextGlyph() {
+    return QStringLiteral("\u25a4");
+} // ▤
+QString sessionGlyph() {
+    return QStringLiteral("\u25f7");
+} // ◷ clock-ish
+QString versionGlyph() {
+    return QStringLiteral("#");
+}
+QString sendGlyph() {
+    return QStringLiteral("\u25b2");
+} // ▲
+QString stopGlyph() {
+    return QStringLiteral("\u25a0");
+} // ■
+QString steerGlyph() {
+    return QStringLiteral("\u2726");
+} // ✦
+QString warnGlyph() {
+    return QStringLiteral("\u26a0");
+} // ⚠
+
+QString agentKindGlyph(const QString& kindKey) {
     const QString k = kindKey.trimmed().toLower();
     if (k == QStringLiteral("sitemap")) {
         return QStringLiteral("\u2261"); // ≡ (orchestrator / hierarchy)
@@ -322,10 +394,11 @@ QString agentKindGlyph(const QString &kindKey)
     return QStringLiteral("\u2022"); // • fallback
 }
 
-QString tagDot() { return QStringLiteral("\u25cf"); } // ●
+QString tagDot() {
+    return QStringLiteral("\u25cf");
+} // ●
 
-QString spinnerFrame(int tick)
-{
+QString spinnerFrame(int tick) {
     static const char16_t frames[] = {0x25d0, 0x25d3, 0x25d1, 0x25d2}; // ◐◓◑◒
     const int i = ((tick % 4) + 4) % 4;
     return QString(QChar(frames[i]));

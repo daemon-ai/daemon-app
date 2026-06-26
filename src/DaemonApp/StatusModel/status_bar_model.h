@@ -4,8 +4,8 @@
 #include <QString>
 #include <QStringList>
 #include <QTimer>
-#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
+#include <QVariantList>
 
 // Backing model for the footer StatusBar. Holds the daemon-bound status state
 // (gateway health, agent counts, busy/turn timing, session timing, context-window
@@ -21,12 +21,16 @@ class StatusBarModel : public QObject {
     QML_ELEMENT
 
     // "ready" | "needs setup" | "checking" | "connecting" | "offline".
-    Q_PROPERTY(QString gatewayState READ gatewayState WRITE setGatewayState NOTIFY gatewayStateChanged)
-    Q_PROPERTY(int agentsRunning READ agentsRunning WRITE setAgentsRunning NOTIFY agentsRunningChanged)
+    Q_PROPERTY(
+        QString gatewayState READ gatewayState WRITE setGatewayState NOTIFY gatewayStateChanged)
+    Q_PROPERTY(
+        int agentsRunning READ agentsRunning WRITE setAgentsRunning NOTIFY agentsRunningChanged)
     Q_PROPERTY(int agentsFailed READ agentsFailed WRITE setAgentsFailed NOTIFY agentsFailedChanged)
     Q_PROPERTY(bool busy READ busy WRITE setBusy NOTIFY busyChanged)
-    Q_PROPERTY(double turnStartedAt READ turnStartedAt WRITE setTurnStartedAt NOTIFY turnStartedAtChanged)
-    Q_PROPERTY(double sessionStartedAt READ sessionStartedAt WRITE setSessionStartedAt NOTIFY sessionStartedAtChanged)
+    Q_PROPERTY(
+        double turnStartedAt READ turnStartedAt WRITE setTurnStartedAt NOTIFY turnStartedAtChanged)
+    Q_PROPERTY(double sessionStartedAt READ sessionStartedAt WRITE setSessionStartedAt NOTIFY
+                   sessionStartedAtChanged)
     Q_PROPERTY(int contextUsed READ contextUsed WRITE setContextUsed NOTIFY contextUsedChanged)
     Q_PROPERTY(int contextMax READ contextMax WRITE setContextMax NOTIFY contextMaxChanged)
     // Cumulative token usage + spend for the session (fed by the turn's usage

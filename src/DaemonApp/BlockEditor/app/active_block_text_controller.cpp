@@ -9,27 +9,21 @@
 
 namespace be::app {
 
-ActiveBlockTextController::ActiveBlockTextController(QObject *parent)
-    : QObject(parent)
-{
-}
+ActiveBlockTextController::ActiveBlockTextController(QObject* parent) : QObject(parent) {}
 
-void ActiveBlockTextController::attach(QObject *textDocument)
-{
-    m_textDocument = qobject_cast<QQuickTextDocument *>(textDocument);
+void ActiveBlockTextController::attach(QObject* textDocument) {
+    m_textDocument = qobject_cast<QQuickTextDocument*>(textDocument);
     m_plainDocument.clear();
     attachHighlighter(document());
 }
 
-void ActiveBlockTextController::attachPlainDocument(QTextDocument *document)
-{
+void ActiveBlockTextController::attachPlainDocument(QTextDocument* document) {
     m_plainDocument = document;
     m_textDocument.clear();
     attachHighlighter(document);
 }
 
-void ActiveBlockTextController::detach(QObject *textDocument)
-{
+void ActiveBlockTextController::detach(QObject* textDocument) {
     if (!textDocument || textDocument == m_textDocument) {
         clearFormatting();
         m_textDocument.clear();
@@ -37,13 +31,11 @@ void ActiveBlockTextController::detach(QObject *textDocument)
     }
 }
 
-bool ActiveBlockTextController::hasDocument() const
-{
+bool ActiveBlockTextController::hasDocument() const {
     return document() != nullptr;
 }
 
-bool ActiveBlockTextController::isOnFirstVisualLine(int cursorPosition) const
-{
+bool ActiveBlockTextController::isOnFirstVisualLine(int cursorPosition) const {
     const QVector<LineInfo> lines = visualLines();
     if (lines.isEmpty()) {
         return true;
@@ -51,8 +43,7 @@ bool ActiveBlockTextController::isOnFirstVisualLine(int cursorPosition) const
     return lineIndexForCursor(cursorPosition) == 0;
 }
 
-bool ActiveBlockTextController::isOnLastVisualLine(int cursorPosition) const
-{
+bool ActiveBlockTextController::isOnLastVisualLine(int cursorPosition) const {
     const QVector<LineInfo> lines = visualLines();
     if (lines.isEmpty()) {
         return true;
@@ -60,9 +51,8 @@ bool ActiveBlockTextController::isOnLastVisualLine(int cursorPosition) const
     return lineIndexForCursor(cursorPosition) == lines.size() - 1;
 }
 
-qreal ActiveBlockTextController::cursorVisualX(int cursorPosition) const
-{
-    QTextDocument *doc = document();
+qreal ActiveBlockTextController::cursorVisualX(int cursorPosition) const {
+    QTextDocument* doc = document();
     if (!doc) {
         return 0.0;
     }
@@ -73,10 +63,11 @@ qreal ActiveBlockTextController::cursorVisualX(int cursorPosition) const
     }
 
     const int localPosition = cursorPosition - block.position();
-    QTextLayout *layout = block.layout();
+    QTextLayout* layout = block.layout();
     for (int i = 0; i < layout->lineCount(); ++i) {
         const QTextLine line = layout->lineAt(i);
-        if (localPosition >= line.textStart() && localPosition <= line.textStart() + line.textLength()) {
+        if (localPosition >= line.textStart() &&
+            localPosition <= line.textStart() + line.textLength()) {
             return line.cursorToX(localPosition);
         }
     }
@@ -84,8 +75,7 @@ qreal ActiveBlockTextController::cursorVisualX(int cursorPosition) const
     return 0.0;
 }
 
-int ActiveBlockTextController::cursorAtFirstVisualLine(qreal visualX) const
-{
+int ActiveBlockTextController::cursorAtFirstVisualLine(qreal visualX) const {
     const QVector<LineInfo> lines = visualLines();
     if (lines.isEmpty()) {
         return 0;
@@ -93,27 +83,27 @@ int ActiveBlockTextController::cursorAtFirstVisualLine(qreal visualX) const
     return cursorAtLineVisualX(lines.first(), visualX);
 }
 
-int ActiveBlockTextController::cursorAtLastVisualLine(qreal visualX) const
-{
+int ActiveBlockTextController::cursorAtLastVisualLine(qreal visualX) const {
     const QVector<LineInfo> lines = visualLines();
     if (lines.isEmpty()) {
-        QTextDocument *doc = document();
+        QTextDocument* doc = document();
         return doc ? qMax(0, doc->characterCount() - 1) : 0;
     }
     return cursorAtLineVisualX(lines.last(), visualX);
 }
 
-void ActiveBlockTextController::applyMarkdownFormatting(const QString &markdown, int blockType, int headingLevel)
-{
+void ActiveBlockTextController::applyMarkdownFormatting(const QString& markdown, int blockType,
+                                                        int headingLevel) {
     Q_UNUSED(markdown)
 
-    QTextDocument *doc = document();
+    QTextDocument* doc = document();
     if (!doc) {
         return;
     }
 
     const bool documentChanged = attachHighlighter(doc) || m_highlightDocumentDirty;
-    const bool contextChanged = m_highlightBlockType != blockType || m_highlightHeadingLevel != headingLevel;
+    const bool contextChanged =
+        m_highlightBlockType != blockType || m_highlightHeadingLevel != headingLevel;
     if (!documentChanged && !contextChanged) {
         return;
     }
@@ -126,28 +116,26 @@ void ActiveBlockTextController::applyMarkdownFormatting(const QString &markdown,
     ++m_rehighlightCount;
 }
 
-void ActiveBlockTextController::clearFormatting()
-{
+void ActiveBlockTextController::clearFormatting() {
     m_highlighter.setDocument(nullptr);
     m_highlightBlockType = -1;
     m_highlightHeadingLevel = -1;
     m_highlightDocumentDirty = false;
 }
 
-int ActiveBlockTextController::rehighlightCount() const
-{
+int ActiveBlockTextController::rehighlightCount() const {
     return m_rehighlightCount;
 }
 
-QVariantList ActiveBlockTextController::lineRectsForRange(QObject *textDocument, int visualStart, int visualEnd) const
-{
-    auto *quickDocument = qobject_cast<QQuickTextDocument *>(textDocument);
-    QTextDocument *doc = quickDocument ? quickDocument->textDocument() : nullptr;
+QVariantList ActiveBlockTextController::lineRectsForRange(QObject* textDocument, int visualStart,
+                                                          int visualEnd) const {
+    auto* quickDocument = qobject_cast<QQuickTextDocument*>(textDocument);
+    QTextDocument* doc = quickDocument ? quickDocument->textDocument() : nullptr;
     return lineRects(doc, visualStart, visualEnd);
 }
 
-QVariantList ActiveBlockTextController::lineRects(QTextDocument *doc, int visualStart, int visualEnd)
-{
+QVariantList ActiveBlockTextController::lineRects(QTextDocument* doc, int visualStart,
+                                                  int visualEnd) {
     QVariantList rects;
     if (!doc) {
         return rects;
@@ -165,7 +153,7 @@ QVariantList ActiveBlockTextController::lineRects(QTextDocument *doc, int visual
     const qreal margin = doc->documentMargin();
 
     for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
-        QTextLayout *layout = block.layout();
+        QTextLayout* layout = block.layout();
         if (!layout) {
             continue;
         }
@@ -203,16 +191,14 @@ QVariantList ActiveBlockTextController::lineRects(QTextDocument *doc, int visual
     return rects;
 }
 
-QTextDocument *ActiveBlockTextController::document() const
-{
+QTextDocument* ActiveBlockTextController::document() const {
     if (m_plainDocument) {
         return m_plainDocument;
     }
     return m_textDocument ? m_textDocument->textDocument() : nullptr;
 }
 
-bool ActiveBlockTextController::attachHighlighter(QTextDocument *document)
-{
+bool ActiveBlockTextController::attachHighlighter(QTextDocument* document) {
     if (m_highlighter.document() != document) {
         m_highlighter.setDocument(document);
         m_highlightDocumentDirty = document != nullptr;
@@ -221,20 +207,19 @@ bool ActiveBlockTextController::attachHighlighter(QTextDocument *document)
     return false;
 }
 
-QVector<ActiveBlockTextController::LineInfo> ActiveBlockTextController::visualLines() const
-{
+QVector<ActiveBlockTextController::LineInfo> ActiveBlockTextController::visualLines() const {
     return visualLinesOf(document());
 }
 
-QVector<ActiveBlockTextController::LineInfo> ActiveBlockTextController::visualLinesOf(QTextDocument *doc)
-{
+QVector<ActiveBlockTextController::LineInfo>
+ActiveBlockTextController::visualLinesOf(QTextDocument* doc) {
     QVector<LineInfo> lines;
     if (!doc) {
         return lines;
     }
 
     for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
-        QTextLayout *layout = block.layout();
+        QTextLayout* layout = block.layout();
         if (!layout) {
             continue;
         }
@@ -256,19 +241,18 @@ QVector<ActiveBlockTextController::LineInfo> ActiveBlockTextController::visualLi
     return lines;
 }
 
-int ActiveBlockTextController::lineIndexForCursor(int cursorPosition) const
-{
+int ActiveBlockTextController::lineIndexForCursor(int cursorPosition) const {
     const QVector<LineInfo> lines = visualLines();
     if (lines.isEmpty()) {
         return 0;
     }
 
-    QTextDocument *doc = document();
+    QTextDocument* doc = document();
     const int maxPosition = doc ? qMax(0, doc->characterCount() - 1) : 0;
     cursorPosition = qBound(0, cursorPosition, maxPosition);
 
     for (int i = 0; i < lines.size(); ++i) {
-        const LineInfo &line = lines[i];
+        const LineInfo& line = lines[i];
         const int globalStart = line.blockPosition + line.start;
         const int globalEnd = globalStart + line.length;
         if (cursorPosition >= globalStart && cursorPosition <= globalEnd) {
@@ -276,12 +260,12 @@ int ActiveBlockTextController::lineIndexForCursor(int cursorPosition) const
         }
     }
 
-    return cursorPosition <= lines.first().blockPosition + lines.first().start ? 0 : lines.size() - 1;
+    return cursorPosition <= lines.first().blockPosition + lines.first().start ? 0
+                                                                               : lines.size() - 1;
 }
 
-int ActiveBlockTextController::cursorAtLineVisualX(const LineInfo &line, qreal visualX) const
-{
-    QTextDocument *doc = document();
+int ActiveBlockTextController::cursorAtLineVisualX(const LineInfo& line, qreal visualX) const {
+    QTextDocument* doc = document();
     if (!doc) {
         return 0;
     }

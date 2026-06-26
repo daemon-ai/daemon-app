@@ -2,13 +2,11 @@
 
 namespace be {
 
-QString BlockRecord::markdown() const
-{
+QString BlockRecord::markdown() const {
     return QString::fromUtf8(markdownUtf8);
 }
 
-QString messageRoleToString(MessageRole role)
-{
+QString messageRoleToString(MessageRole role) {
     switch (role) {
     case MessageRole::User:
         return QStringLiteral("user");
@@ -22,8 +20,7 @@ QString messageRoleToString(MessageRole role)
     return QStringLiteral("none");
 }
 
-MessageRole messageRoleFromString(const QString &name)
-{
+MessageRole messageRoleFromString(const QString& name) {
     const QString key = name.trimmed().toLower();
     if (key == QStringLiteral("user")) {
         return MessageRole::User;
@@ -37,8 +34,7 @@ MessageRole messageRoleFromString(const QString &name)
     return MessageRole::None;
 }
 
-QString blockTypeName(BlockType type)
-{
+QString blockTypeName(BlockType type) {
     switch (type) {
     case BlockType::Paragraph:
         return QStringLiteral("paragraph");

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+#include <memory>
 #include <QColor>
 #include <QMetaType>
 #include <QPointF>
@@ -7,9 +9,6 @@
 #include <QString>
 #include <QTextLayout>
 #include <QVector>
-
-#include <cstdint>
-#include <memory>
 
 namespace be::diagram {
 
@@ -32,8 +31,7 @@ struct Mesh {
     QRectF bounds;
 
     bool isEmpty() const { return vertices.isEmpty() || indices.isEmpty(); }
-    void clear()
-    {
+    void clear() {
         vertices.clear();
         indices.clear();
         bounds = {};
@@ -44,16 +42,16 @@ struct Mesh {
 // a QSGTextNode unchanged, so it is shared (immutable after publication).
 struct LabelRun {
     std::shared_ptr<QTextLayout> layout;
-    QPointF origin;          // top-left in diagram space
+    QPointF origin; // top-left in diagram space
     QColor color;
-    QRectF bounds;           // diagram space
-    int lod = 0;             // minimum zoom tier at which the label is shown
+    QRectF bounds; // diagram space
+    int lod = 0;   // minimum zoom tier at which the label is shown
 };
 
 enum class HitKind { Node, Edge };
 
 struct HitShape {
-    QRectF bounds;           // diagram space
+    QRectF bounds; // diagram space
     QString id;
     HitKind kind = HitKind::Node;
 };
@@ -61,14 +59,14 @@ struct HitShape {
 // Immutable snapshot transferred from the engine (worker) to the item (render).
 // Opaque and translucent geometry are split because opaque batches are cheaper.
 struct RenderSnapshot {
-    Mesh nodeFills;          // opaque
+    Mesh nodeFills; // opaque
     Mesh nodeBorders;
     Mesh edges;
     Mesh arrowheads;
-    Mesh clusters;           // subgraph boxes (drawn behind nodes)
+    Mesh clusters; // subgraph boxes (drawn behind nodes)
 
     QVector<LabelRun> labels;
-    QVector<HitShape> hits;  // simple linear index; small diagrams
+    QVector<HitShape> hits; // simple linear index; small diagrams
 
     QRectF diagramBounds;
     quint64 contentRevision = 0;

@@ -2,18 +2,13 @@
 
 #include <QStringList>
 
-ComposerAttachmentModel::ComposerAttachmentModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
-}
+ComposerAttachmentModel::ComposerAttachmentModel(QObject* parent) : QAbstractListModel(parent) {}
 
-int ComposerAttachmentModel::rowCount(const QModelIndex& parent) const
-{
+int ComposerAttachmentModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(m_items.size());
 }
 
-QVariant ComposerAttachmentModel::data(const QModelIndex& index, int role) const
-{
+QVariant ComposerAttachmentModel::data(const QModelIndex& index, int role) const {
     if (index.row() < 0 || index.row() >= m_items.size()) {
         return {};
     }
@@ -28,25 +23,22 @@ QVariant ComposerAttachmentModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> ComposerAttachmentModel::roleNames() const
-{
+QHash<int, QByteArray> ComposerAttachmentModel::roleNames() const {
     return {
-        { NameRole, "name" },
-        { KindRole, "kind" },
+        {NameRole, "name"},
+        {KindRole, "kind"},
     };
 }
 
-void ComposerAttachmentModel::append(const QString& name, const QString& kind)
-{
+void ComposerAttachmentModel::append(const QString& name, const QString& kind) {
     const int row = static_cast<int>(m_items.size());
     beginInsertRows({}, row, row);
-    m_items.push_back({ name, kind });
+    m_items.push_back({name, kind});
     endInsertRows();
     emit countChanged();
 }
 
-void ComposerAttachmentModel::removeAt(int index)
-{
+void ComposerAttachmentModel::removeAt(int index) {
     if (index < 0 || index >= m_items.size()) {
         return;
     }
@@ -56,8 +48,7 @@ void ComposerAttachmentModel::removeAt(int index)
     emit countChanged();
 }
 
-void ComposerAttachmentModel::clear()
-{
+void ComposerAttachmentModel::clear() {
     if (m_items.isEmpty()) {
         return;
     }
@@ -67,8 +58,7 @@ void ComposerAttachmentModel::clear()
     emit countChanged();
 }
 
-QString ComposerAttachmentModel::buildRefs() const
-{
+QString ComposerAttachmentModel::buildRefs() const {
     QStringList refs;
     refs.reserve(static_cast<int>(m_items.size()));
     for (const Attachment& a : m_items) {

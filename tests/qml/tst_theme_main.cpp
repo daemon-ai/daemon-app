@@ -1,5 +1,5 @@
-#include <QtQuickTest/quicktest.h>
 #include <QtQml/qqmlextensionplugin.h>
+#include <QtQuickTest/quicktest.h>
 
 // DaemonApp.Theme is a STATIC QML module, so its plugin must be referenced
 // explicitly or the linker drops it and the `import DaemonApp.Theme` fails.

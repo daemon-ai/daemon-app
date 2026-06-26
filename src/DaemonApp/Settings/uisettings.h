@@ -4,8 +4,8 @@
 #include <QSettings>
 #include <QString>
 #include <QStringList>
-#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
+#include <QVariantList>
 
 // Single source of truth for user-facing UI preferences, persisted via QSettings
 // so they survive restarts. Exposed to QML as a
@@ -31,8 +31,7 @@ class UiSettings : public QObject {
     // Editor text style: a category (Sans/Serif/Mono) plus the chosen font index
     // within that category. editorFontFamily is the resolved family name the
     // transcript applies.
-    Q_PROPERTY(QString fontCategory READ fontCategory WRITE setFontCategory NOTIFY
-                   fontStyleChanged)
+    Q_PROPERTY(QString fontCategory READ fontCategory WRITE setFontCategory NOTIFY fontStyleChanged)
     Q_PROPERTY(int sansIndex READ sansIndex NOTIFY fontStyleChanged)
     Q_PROPERTY(int serifIndex READ serifIndex NOTIFY fontStyleChanged)
     Q_PROPERTY(int monoIndex READ monoIndex NOTIFY fontStyleChanged)
@@ -41,8 +40,8 @@ class UiSettings : public QObject {
     Q_PROPERTY(QStringList monoFonts READ monoFonts CONSTANT)
     Q_PROPERTY(QString editorFontFamily READ editorFontFamily NOTIFY fontStyleChanged)
 
-    Q_PROPERTY(int editorFontSize READ editorFontSize WRITE setEditorFontSize NOTIFY
-                   editorFontSizeChanged)
+    Q_PROPERTY(
+        int editorFontSize READ editorFontSize WRITE setEditorFontSize NOTIFY editorFontSizeChanged)
     Q_PROPERTY(int minFontSize READ minFontSize CONSTANT)
     Q_PROPERTY(int maxFontSize READ maxFontSize CONSTANT)
 
@@ -50,16 +49,15 @@ class UiSettings : public QObject {
     Q_PROPERTY(bool distractionFree READ distractionFree WRITE setDistractionFree NOTIFY
                    distractionFreeChanged)
 
+    Q_PROPERTY(bool showSessionsList READ showSessionsList WRITE setShowSessionsList NOTIFY
+                   showSessionsListChanged)
     Q_PROPERTY(
-        bool showSessionsList READ showSessionsList WRITE setShowSessionsList NOTIFY showSessionsListChanged)
-    Q_PROPERTY(bool showFleetTree READ showFleetTree WRITE setShowFleetTree NOTIFY
-                   showFleetTreeChanged)
+        bool showFleetTree READ showFleetTree WRITE setShowFleetTree NOTIFY showFleetTreeChanged)
     Q_PROPERTY(bool showFileExplorer READ showFileExplorer WRITE setShowFileExplorer NOTIFY
                    showFileExplorerChanged)
-    Q_PROPERTY(
-        bool showRawMarkdown READ showRawMarkdown WRITE setShowRawMarkdown NOTIFY showRawMarkdownChanged)
-    Q_PROPERTY(
-        bool showUserRail READ showUserRail WRITE setShowUserRail NOTIFY showUserRailChanged)
+    Q_PROPERTY(bool showRawMarkdown READ showRawMarkdown WRITE setShowRawMarkdown NOTIFY
+                   showRawMarkdownChanged)
+    Q_PROPERTY(bool showUserRail READ showUserRail WRITE setShowUserRail NOTIFY showUserRailChanged)
 
 public:
     explicit UiSettings(QObject* parent = nullptr);

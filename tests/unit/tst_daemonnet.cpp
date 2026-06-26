@@ -1,5 +1,4 @@
 #include "daemonnet/mock_daemonnet.h"
-
 #include "domain/ids.h"
 #include "domain/session.h"
 #include "domain/sidebar_node.h"
@@ -21,8 +20,7 @@ using domain::UnitNode;
 class TestDaemonNet : public QObject {
     Q_OBJECT
 
-    static QStringList sessionIds(const QList<Session>& sessions)
-    {
+    static QStringList sessionIds(const QList<Session>& sessions) {
         QStringList ids;
         for (const Session& s : sessions) {
             ids << s.sessionId.toString();
@@ -31,8 +29,7 @@ class TestDaemonNet : public QObject {
     }
 
 private slots:
-    void unitTreeAccessors()
-    {
+    void unitTreeAccessors() {
         MockDaemonNet net;
         const QList<UnitNode> roots = net.unitChildren(UnitId());
         QCOMPARE(roots.size(), 2); // the lone Engine root + the Acme orchestrator
@@ -54,8 +51,7 @@ private slots:
 
     void tagsAccessor() { QCOMPARE(MockDaemonNet().tags().size(), 2); }
 
-    void participantsAccessor()
-    {
+    void participantsAccessor() {
         const QList<domain::Participant> parts = MockDaemonNet().participants();
         QCOMPARE(parts.size(), 2);
         // A local Agent + a human User, both "available" (green dot) per the seed.
@@ -69,17 +65,16 @@ private slots:
         }
     }
 
-    void allAndArchivedScopes()
-    {
+    void allAndArchivedScopes() {
         MockDaemonNet net;
-        const QList<Session> all = net.sessionsInScope(ListScope{ NodeType::AllSessions });
+        const QList<Session> all = net.sessionsInScope(ListScope{NodeType::AllSessions});
         QVERIFY(!all.isEmpty());
         for (const Session& s : all) {
             QVERIFY2(!s.sessionId.isEmpty(), "every session carries its real SessionId");
             QVERIFY(!s.isArchived);
         }
 
-        const QList<Session> archived = net.sessionsInScope(ListScope{ NodeType::Archived });
+        const QList<Session> archived = net.sessionsInScope(ListScope{NodeType::Archived});
         QVERIFY(!archived.isEmpty());
         for (const Session& s : archived) {
             QVERIFY(s.isArchived);
@@ -92,8 +87,7 @@ private slots:
         }
     }
 
-    void unitSubtreeScopeFolds()
-    {
+    void unitSubtreeScopeFolds() {
         MockDaemonNet net;
         ListScope scope;
         scope.type = NodeType::Unit;
@@ -101,17 +95,16 @@ private slots:
         const QList<Session> sessions = net.sessionsInScope(scope);
         QVERIFY(sessions.size() >= 5); // folds the whole n-build subtree, not just direct children
 
-        const QSet<QString> subtree = { QStringLiteral("n-build"), QStringLiteral("n-coder"),
-                                        QStringLiteral("n-review"), QStringLiteral("n-deep"),
-                                        QStringLiteral("n-worker") };
+        const QSet<QString> subtree = {QStringLiteral("n-build"), QStringLiteral("n-coder"),
+                                       QStringLiteral("n-review"), QStringLiteral("n-deep"),
+                                       QStringLiteral("n-worker")};
         for (const Session& s : sessions) {
             QVERIFY2(subtree.contains(s.unitId.toString()),
                      "unit scope must only return sessions inside the subtree");
         }
     }
 
-    void tagScopeFilters()
-    {
+    void tagScopeFilters() {
         MockDaemonNet net;
         ListScope scope;
         scope.type = NodeType::Tag;
@@ -124,8 +117,7 @@ private slots:
         }
     }
 
-    void lensScopesGroupByEdge()
-    {
+    void lensScopesGroupByEdge() {
         MockDaemonNet net;
         ListScope byTransport;
         byTransport.type = NodeType::ByTransport;
@@ -142,8 +134,7 @@ private slots:
         QVERIFY(withAlice.contains(QStringLiteral("s-secops")));
     }
 
-    void sessionDetailAndContent()
-    {
+    void sessionDetailAndContent() {
         MockDaemonNet net;
         const SessionId id(QStringLiteral("s-demo-blocks"));
         const Session detail = net.sessionDetail(id);
@@ -158,8 +149,7 @@ private slots:
 
     // The capability-driven Transports tree: messaging instances expand to ConversationType-grouped
     // conversations -> session leaves; generic instances expand to origin-tagged session leaves.
-    void transportsTreeShape()
-    {
+    void transportsTreeShape() {
         MockDaemonNet net;
         const QList<daemonnet::TransportTreeRow> rows = net.transportsTree();
         QVERIFY(!rows.isEmpty());
@@ -224,8 +214,9 @@ private slots:
         // Every session leaf resolves to a real session (openable transcript).
         for (const auto& r : rows) {
             if (!r.sessionId.isEmpty()) {
-                QVERIFY2(!net.sessionDetail(SessionId(r.sessionId)).sessionId.isEmpty(),
-                         qPrintable(QStringLiteral("leaf %1 must resolve to a real session").arg(r.id)));
+                QVERIFY2(
+                    !net.sessionDetail(SessionId(r.sessionId)).sessionId.isEmpty(),
+                    qPrintable(QStringLiteral("leaf %1 must resolve to a real session").arg(r.id)));
             }
         }
     }

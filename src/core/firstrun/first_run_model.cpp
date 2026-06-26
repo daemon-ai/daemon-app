@@ -7,18 +7,14 @@ namespace firstrun {
 
 FirstRunModel::FirstRunModel(settings::ISettingsStore* settings,
                              connection::IConnectionService* connection, QObject* parent)
-    : QObject(parent)
-    , m_settings(settings)
-    , m_connection(connection)
-{
+    : QObject(parent), m_settings(settings), m_connection(connection) {
     if (m_connection != nullptr) {
         connect(m_connection, &connection::IConnectionService::stateChanged, this,
                 &FirstRunModel::onConnectionStateChanged);
     }
 }
 
-void FirstRunModel::begin()
-{
+void FirstRunModel::begin() {
     if (m_settings != nullptr && m_settings->setupComplete()) {
         setPhase(QStringLiteral("done"));
         return;
@@ -27,8 +23,7 @@ void FirstRunModel::begin()
     setPhase(QStringLiteral("connect"));
 }
 
-void FirstRunModel::onConnectionStateChanged()
-{
+void FirstRunModel::onConnectionStateChanged() {
     // The connection seam only matters while we are gating on it (connect /
     // connecting). Once setup is done, footer state changes are cosmetic.
     if (m_phase == QStringLiteral("done") || m_phase == QStringLiteral("inference")) {
@@ -47,8 +42,7 @@ void FirstRunModel::onConnectionStateChanged()
     }
 }
 
-void FirstRunModel::setInferenceReady(bool ready)
-{
+void FirstRunModel::setInferenceReady(bool ready) {
     if (m_inferenceReady == ready) {
         return;
     }
@@ -56,19 +50,16 @@ void FirstRunModel::setInferenceReady(bool ready)
     emit inferenceReadyChanged();
 }
 
-void FirstRunModel::completeInference()
-{
+void FirstRunModel::completeInference() {
     setInferenceReady(true);
     finish();
 }
 
-void FirstRunModel::skip()
-{
+void FirstRunModel::skip() {
     finish();
 }
 
-void FirstRunModel::restart()
-{
+void FirstRunModel::restart() {
     if (m_settings != nullptr) {
         m_settings->setSetupComplete(false);
     }
@@ -76,8 +67,7 @@ void FirstRunModel::restart()
     begin();
 }
 
-void FirstRunModel::finish()
-{
+void FirstRunModel::finish() {
     if (m_settings != nullptr) {
         m_settings->setSetupComplete(true);
     }
@@ -85,8 +75,7 @@ void FirstRunModel::finish()
     emit finished();
 }
 
-void FirstRunModel::setPhase(const QString& phase)
-{
+void FirstRunModel::setPhase(const QString& phase) {
     if (m_phase == phase) {
         return;
     }
@@ -94,8 +83,7 @@ void FirstRunModel::setPhase(const QString& phase)
     emit phaseChanged();
 }
 
-void FirstRunModel::setError(const QString& error)
-{
+void FirstRunModel::setError(const QString& error) {
     if (m_error == error) {
         return;
     }

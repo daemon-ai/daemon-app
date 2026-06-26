@@ -3,6 +3,7 @@
 #include "composer_session_controller.h"
 #include "tui_palette.h"
 
+#include <QRect>
 #include <Tui/ZCommon.h>
 #include <Tui/ZDocument.h>
 #include <Tui/ZDocumentCursor.h>
@@ -10,11 +11,8 @@
 #include <Tui/ZPainter.h>
 #include <Tui/ZTextOption.h>
 
-#include <QRect>
-
 SubmitInputBox::SubmitInputBox(const Tui::ZTextMetrics& metrics, Tui::ZWidget* parent)
-    : Tui::ZTextEdit(metrics, parent)
-{
+    : Tui::ZTextEdit(metrics, parent) {
     setShowLineNumbers(false);
     setWordWrapMode(Tui::ZTextOption::WrapAnywhere);
     setTabChangesFocus(true); // Tab moves focus (completion accept is intercepted)
@@ -32,8 +30,7 @@ SubmitInputBox::SubmitInputBox(const Tui::ZTextMetrics& metrics, Tui::ZWidget* p
     });
 }
 
-int SubmitInputBox::linearForPosition(Tui::ZTextEdit::Position pos) const
-{
+int SubmitInputBox::linearForPosition(Tui::ZTextEdit::Position pos) const {
     int linear = 0;
     for (int i = 0; i < pos.line; ++i) {
         linear += document()->lineCodeUnits(i) + 1; // + the joining '\n'
@@ -41,39 +38,34 @@ int SubmitInputBox::linearForPosition(Tui::ZTextEdit::Position pos) const
     return linear + pos.codeUnit;
 }
 
-Tui::ZTextEdit::Position SubmitInputBox::positionForLinear(int linear) const
-{
+Tui::ZTextEdit::Position SubmitInputBox::positionForLinear(int linear) const {
     int remaining = qMax(0, linear);
     const int lines = document()->lineCount();
     for (int i = 0; i < lines; ++i) {
         const int len = document()->lineCodeUnits(i);
         if (remaining <= len) {
-            return { remaining, i };
+            return {remaining, i};
         }
         remaining -= len + 1; // consume the line plus its '\n'
     }
     const int last = qMax(0, lines - 1);
-    return { document()->lineCodeUnits(last), last };
+    return {document()->lineCodeUnits(last), last};
 }
 
-int SubmitInputBox::linearCursor() const
-{
+int SubmitInputBox::linearCursor() const {
     return linearForPosition(cursorPosition());
 }
 
-void SubmitInputBox::setLinearCursor(int linear)
-{
+void SubmitInputBox::setLinearCursor(int linear) {
     setCursorPosition(positionForLinear(linear));
 }
 
-void SubmitInputBox::moveCursorToEnd()
-{
+void SubmitInputBox::moveCursorToEnd() {
     const int last = qMax(0, document()->lineCount() - 1);
-    setCursorPosition({ document()->lineCodeUnits(last), last });
+    setCursorPosition({document()->lineCodeUnits(last), last});
 }
 
-void SubmitInputBox::syncToSession()
-{
+void SubmitInputBox::syncToSession() {
     if (m_session == nullptr) {
         return;
     }
@@ -86,8 +78,7 @@ void SubmitInputBox::syncToSession()
     m_session->refreshTrigger(text(), linearCursor());
 }
 
-void SubmitInputBox::recomputeHeight()
-{
+void SubmitInputBox::recomputeHeight() {
     const int rows = qBound(1, document()->lineCount(), kMaxRows);
     if (rows == m_rows) {
         return;
@@ -100,15 +91,13 @@ void SubmitInputBox::recomputeHeight()
     updateGeometry();
 }
 
-QSize SubmitInputBox::sizeHint() const
-{
+QSize SubmitInputBox::sizeHint() const {
     QSize hint = Tui::ZTextEdit::sizeHint();
     hint.setHeight(m_rows);
     return hint;
 }
 
-bool SubmitInputBox::applyReadline(lineedit::EditCommand cmd)
-{
+bool SubmitInputBox::applyReadline(lineedit::EditCommand cmd) {
     using EC = lineedit::EditCommand;
     const Tui::ZTextEdit::Position pos = cursorPosition();
     const QString lineText = document()->line(pos.line);
@@ -132,17 +121,16 @@ bool SubmitInputBox::applyReadline(lineedit::EditCommand cmd)
     }
     if (edited != lineText) {
         Tui::ZDocumentCursor cur = textCursor();
-        cur.setPosition({ 0, pos.line });
+        cur.setPosition({0, pos.line});
         cur.moveToEndOfLine(true); // select the whole current line
         cur.removeSelectedText();
         cur.insertText(edited);
     }
-    setCursorPosition({ qBound(0, caret, document()->lineCodeUnits(pos.line)), pos.line });
+    setCursorPosition({qBound(0, caret, document()->lineCodeUnits(pos.line)), pos.line});
     return true;
 }
 
-bool SubmitInputBox::handleReverseSearch(Tui::ZKeyEvent* event)
-{
+bool SubmitInputBox::handleReverseSearch(Tui::ZKeyEvent* event) {
     const int key = event->key();
     const Qt::KeyboardModifiers mods = event->modifiers();
     const QString t = event->text();
@@ -187,8 +175,7 @@ bool SubmitInputBox::handleReverseSearch(Tui::ZKeyEvent* event)
     return false;
 }
 
-void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
-{
+void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event) {
     // (0) Reverse incremental search owns all keys while active.
     if (m_session != nullptr && m_session->reverseSearching()) {
         if (handleReverseSearch(event)) {
@@ -200,8 +187,8 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
     // (1) Completion navigation takes priority while the popup is open: Up/Down move
     // the active row, Enter/Tab accept it, Esc dismisses. Driven by the shared
     // controller so the TUI matches the GUI behavior exactly.
-    if (m_session != nullptr && m_session->completionActive()
-        && event->modifiers() == Qt::NoModifier) {
+    if (m_session != nullptr && m_session->completionActive() &&
+        event->modifiers() == Qt::NoModifier) {
         const int key = event->key();
         if (key == Qt::Key_Down) {
             m_session->moveActive(1);
@@ -213,8 +200,8 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
             event->accept();
             return;
         }
-        if (key == Qt::Key_Enter || key == Qt::Key_Return || key == Qt::Key_Tab
-            || event->text() == QStringLiteral("\r")) {
+        if (key == Qt::Key_Enter || key == Qt::Key_Return || key == Qt::Key_Tab ||
+            event->text() == QStringLiteral("\r")) {
             m_session->acceptActive();
             event->accept();
             return;
@@ -226,8 +213,8 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
         }
     }
 
-    const bool isEnter = event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return
-                         || event->text() == QStringLiteral("\r");
+    const bool isEnter = event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
+                         event->text() == QStringLiteral("\r");
     // (2) Enter rules: Shift+Enter inserts a newline, Ctrl+Enter steers, plain Enter
     // submits (matching the GUI's multiline TextArea).
     if (isEnter) {
@@ -271,8 +258,8 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
     }
     // (3) Ctrl+R enters reverse incremental search (delivered as a char event:
     // key()==Key_unknown, text()=="r", Ctrl held).
-    if (m_session != nullptr && (event->modifiers() & Qt::ControlModifier)
-        && event->text().compare(QStringLiteral("r"), Qt::CaseInsensitive) == 0) {
+    if (m_session != nullptr && (event->modifiers() & Qt::ControlModifier) &&
+        event->text().compare(QStringLiteral("r"), Qt::CaseInsensitive) == 0) {
         m_session->reverseSearchStart();
         event->accept();
         return;
@@ -280,9 +267,9 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
     // (4) Ctrl+O: add a (mock) attachment, mirroring the GUI's "+" attachment menu.
     // Tui Widgets delivers Ctrl+letter as a char event (key()==Key_unknown, letter
     // in text()), so match the letter rather than Qt::Key_O.
-    if ((event->modifiers() & Qt::ControlModifier)
-        && (event->key() == Qt::Key_O
-            || event->text().compare(QStringLiteral("o"), Qt::CaseInsensitive) == 0)) {
+    if ((event->modifiers() & Qt::ControlModifier) &&
+        (event->key() == Qt::Key_O ||
+         event->text().compare(QStringLiteral("o"), Qt::CaseInsensitive) == 0)) {
         emit attachRequested();
         event->accept();
         return;
@@ -314,8 +301,8 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
         const Tui::ZTextEdit::Position pos = cursorPosition();
         const bool atFirstLine = pos.line == 0;
         const bool atLastLine = pos.line == document()->lineCount() - 1;
-        if (event->key() == Qt::Key_Up && atFirstLine
-            && (text().isEmpty() || m_session->browsing())) {
+        if (event->key() == Qt::Key_Up && atFirstLine &&
+            (text().isEmpty() || m_session->browsing())) {
             emit historyPrevious();
             event->accept();
             return;
@@ -329,8 +316,8 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
     // (7) Readline/emacs-style editing (Ctrl+A/E/B/F, Alt+B/F, Ctrl+K/U/W/D, Ctrl+Y,
     // Alt+Y, Ctrl+T ...), honoring ~/.inputrc remaps. Runs after the app-priority
     // keys above so it never shadows submit/steer/attach/history/completion.
-    const lineedit::EditCommand cmd
-        = lineedit::LineEditor::lookupEvent(event->key(), event->modifiers(), event->text());
+    const lineedit::EditCommand cmd =
+        lineedit::LineEditor::lookupEvent(event->key(), event->modifiers(), event->text());
     if (cmd != lineedit::EditCommand::None && applyReadline(cmd)) {
         recomputeHeight();
         adjustScrollPosition();
@@ -346,8 +333,7 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event)
     syncToSession();
 }
 
-void SubmitInputBox::paintEvent(Tui::ZPaintEvent* event)
-{
+void SubmitInputBox::paintEvent(Tui::ZPaintEvent* event) {
     // Base paints the multiline field bg/text and positions the terminal caret.
     Tui::ZTextEdit::paintEvent(event);
     if (!text().isEmpty()) {

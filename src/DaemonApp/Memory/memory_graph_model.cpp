@@ -2,22 +2,21 @@
 
 #include "memory/imemory_service.h"
 
+#include <algorithm>
 #include <QtGlobal>
 #include <QtMath>
-#include <algorithm>
 
 namespace memoryui {
 
-MemoryGraphModel::MemoryGraphModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
+MemoryGraphModel::MemoryGraphModel(QObject* parent) : QAbstractListModel(parent) {
     memory::registerMemoryMetatypes();
 }
 
-QObject* MemoryGraphModel::service() const { return m_service; }
+QObject* MemoryGraphModel::service() const {
+    return m_service;
+}
 
-void MemoryGraphModel::setService(QObject* service)
-{
+void MemoryGraphModel::setService(QObject* service) {
     auto* svc = qobject_cast<memory::IMemoryService*>(service);
     if (svc == m_service)
         return;
@@ -34,8 +33,7 @@ void MemoryGraphModel::setService(QObject* service)
     }
 }
 
-void MemoryGraphModel::setKind(const QString& kind)
-{
+void MemoryGraphModel::setKind(const QString& kind) {
     if (m_kind == kind)
         return;
     m_kind = kind;
@@ -45,8 +43,7 @@ void MemoryGraphModel::setKind(const QString& kind)
     refresh();
 }
 
-void MemoryGraphModel::setSeed(const QString& seed)
-{
+void MemoryGraphModel::setSeed(const QString& seed) {
     if (m_seed == seed)
         return;
     m_seed = seed;
@@ -54,8 +51,7 @@ void MemoryGraphModel::setSeed(const QString& seed)
     refresh();
 }
 
-void MemoryGraphModel::setDepth(int depth)
-{
+void MemoryGraphModel::setDepth(int depth) {
     depth = qBound(1, depth, 5);
     if (m_depth == depth)
         return;
@@ -64,24 +60,21 @@ void MemoryGraphModel::setDepth(int depth)
     refresh();
 }
 
-void MemoryGraphModel::setSelectedId(const QString& id)
-{
+void MemoryGraphModel::setSelectedId(const QString& id) {
     if (m_selectedId == id)
         return;
     m_selectedId = id;
     emit selectionChanged();
     if (!m_graph.nodes.isEmpty())
         emit dataChanged(index(0), index(static_cast<int>(m_graph.nodes.size()) - 1),
-                         { SelectedRole });
+                         {SelectedRole});
 }
 
-int MemoryGraphModel::rowCount(const QModelIndex& parent) const
-{
+int MemoryGraphModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(m_graph.nodes.size());
 }
 
-QVariant MemoryGraphModel::data(const QModelIndex& index, int role) const
-{
+QVariant MemoryGraphModel::data(const QModelIndex& index, int role) const {
     if (index.row() < 0 || index.row() >= m_graph.nodes.size())
         return {};
     const memory::MemoryNode& n = m_graph.nodes.at(index.row());
@@ -108,39 +101,36 @@ QVariant MemoryGraphModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> MemoryGraphModel::roleNames() const
-{
+QHash<int, QByteArray> MemoryGraphModel::roleNames() const {
     return {
-        { IdRole, "nodeId" }, { KindRole, "nodeKind" }, { LabelRole, "label" },
-        { WeightRole, "weight" }, { XRole, "nx" }, { YRole, "ny" },
-        { SelectedRole, "selected" }, { DegreeRole, "degree" },
+        {IdRole, "nodeId"},         {KindRole, "nodeKind"}, {LabelRole, "label"},
+        {WeightRole, "weight"},     {XRole, "nx"},          {YRole, "ny"},
+        {SelectedRole, "selected"}, {DegreeRole, "degree"},
     };
 }
 
-QVariantList MemoryGraphModel::edges() const
-{
+QVariantList MemoryGraphModel::edges() const {
     QVariantList out;
     out.reserve(m_graph.edges.size());
     for (const memory::MemoryEdge& e : m_graph.edges) {
         const QPointF a = m_pos.value(e.source, QPointF(0.5, 0.5));
         const QPointF b = m_pos.value(e.target, QPointF(0.5, 0.5));
         out.append(QVariantMap{
-            { QStringLiteral("source"), e.source },
-            { QStringLiteral("target"), e.target },
-            { QStringLiteral("edgeType"), e.edgeType },
-            { QStringLiteral("label"), e.label },
-            { QStringLiteral("weight"), e.weight },
-            { QStringLiteral("x1"), a.x() },
-            { QStringLiteral("y1"), a.y() },
-            { QStringLiteral("x2"), b.x() },
-            { QStringLiteral("y2"), b.y() },
+            {QStringLiteral("source"), e.source},
+            {QStringLiteral("target"), e.target},
+            {QStringLiteral("edgeType"), e.edgeType},
+            {QStringLiteral("label"), e.label},
+            {QStringLiteral("weight"), e.weight},
+            {QStringLiteral("x1"), a.x()},
+            {QStringLiteral("y1"), a.y()},
+            {QStringLiteral("x2"), b.x()},
+            {QStringLiteral("y2"), b.y()},
         });
     }
     return out;
 }
 
-QVariantList MemoryGraphModel::neighborsOf(const QString& id) const
-{
+QVariantList MemoryGraphModel::neighborsOf(const QString& id) const {
     QHash<QString, memory::MemoryNode> byId;
     for (const memory::MemoryNode& n : m_graph.nodes)
         byId.insert(n.id, n);
@@ -155,26 +145,25 @@ QVariantList MemoryGraphModel::neighborsOf(const QString& id) const
             continue;
         const memory::MemoryNode n = byId.value(other);
         out.append(QVariantMap{
-            { QStringLiteral("id"), other },
-            { QStringLiteral("label"), n.label.isEmpty() ? other : n.label },
-            { QStringLiteral("kind"), n.kind },
-            { QStringLiteral("edgeType"), e.edgeType },
-            { QStringLiteral("edgeLabel"), e.label },
+            {QStringLiteral("id"), other},
+            {QStringLiteral("label"), n.label.isEmpty() ? other : n.label},
+            {QStringLiteral("kind"), n.kind},
+            {QStringLiteral("edgeType"), e.edgeType},
+            {QStringLiteral("edgeLabel"), e.label},
         });
     }
     return out;
 }
 
-QVariantMap MemoryGraphModel::nodeById(const QString& id) const
-{
+QVariantMap MemoryGraphModel::nodeById(const QString& id) const {
     for (const memory::MemoryNode& n : m_graph.nodes) {
         if (n.id == id) {
             QVariantMap m{
-                { QStringLiteral("id"), n.id },
-                { QStringLiteral("kind"), n.kind },
-                { QStringLiteral("label"), n.label },
-                { QStringLiteral("weight"), n.weight },
-                { QStringLiteral("degree"), m_degree.value(n.id, 0) },
+                {QStringLiteral("id"), n.id},
+                {QStringLiteral("kind"), n.kind},
+                {QStringLiteral("label"), n.label},
+                {QStringLiteral("weight"), n.weight},
+                {QStringLiteral("degree"), m_degree.value(n.id, 0)},
             };
             for (auto it = n.meta.constBegin(); it != n.meta.constEnd(); ++it)
                 m.insert(it.key(), it.value());
@@ -184,14 +173,12 @@ QVariantMap MemoryGraphModel::nodeById(const QString& id) const
     return {};
 }
 
-void MemoryGraphModel::refresh()
-{
+void MemoryGraphModel::refresh() {
     if (m_service)
         m_service->requestGraph(m_kind, m_seed, m_depth, 200);
 }
 
-void MemoryGraphModel::expand(const QString& id)
-{
+void MemoryGraphModel::expand(const QString& id) {
     m_seed = id;
     m_depth = qBound(1, m_depth + 1, 5);
     emit seedChanged();
@@ -199,8 +186,7 @@ void MemoryGraphModel::expand(const QString& id)
     refresh();
 }
 
-void MemoryGraphModel::resetFocus()
-{
+void MemoryGraphModel::resetFocus() {
     if (m_seed.isEmpty() && m_depth == 1)
         return;
     m_seed.clear();
@@ -210,8 +196,7 @@ void MemoryGraphModel::resetFocus()
     refresh();
 }
 
-void MemoryGraphModel::onGraphReady(const memory::MemoryGraph& graph)
-{
+void MemoryGraphModel::onGraphReady(const memory::MemoryGraph& graph) {
     beginResetModel();
     m_graph = graph;
     m_degree.clear();
@@ -224,11 +209,12 @@ void MemoryGraphModel::onGraphReady(const memory::MemoryGraph& graph)
     emit graphChanged();
 }
 
-void MemoryGraphModel::onScopeChanged() { refresh(); }
+void MemoryGraphModel::onScopeChanged() {
+    refresh();
+}
 
 // Fruchterman-Reingold layout in a unit square; positions normalized to [0,1].
-void MemoryGraphModel::layout()
-{
+void MemoryGraphModel::layout() {
     const int n = static_cast<int>(m_graph.nodes.size());
     m_pos.clear();
     if (n == 0)
@@ -260,7 +246,7 @@ void MemoryGraphModel::layout()
     es.reserve(m_graph.edges.size());
     for (const memory::MemoryEdge& e : m_graph.edges) {
         if (idx.contains(e.source) && idx.contains(e.target))
-            es.append(E{ idx.value(e.source), idx.value(e.target) });
+            es.append(E{idx.value(e.source), idx.value(e.target)});
     }
 
     const double area = 1.0;

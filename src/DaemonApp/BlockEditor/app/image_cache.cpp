@@ -19,8 +19,7 @@ namespace {
 // when no explicit sourceSize was requested (e.g. rich-text <img>).
 constexpr int kMaxDecodeDim = 2048;
 
-QSize cappedTarget(const QSize &source, const QSize &requested)
-{
+QSize cappedTarget(const QSize& source, const QSize& requested) {
     if (source.isEmpty()) {
         return QSize();
     }
@@ -39,31 +38,26 @@ QSize cappedTarget(const QSize &source, const QSize &requested)
     }
 
     const double scale = double(cap) / double(longest);
-    return QSize(qMax(1, int(source.width() * scale)),
-                 qMax(1, int(source.height() * scale)));
+    return QSize(qMax(1, int(source.width() * scale)), qMax(1, int(source.height() * scale)));
 }
 
 } // namespace
 
-ImageCache::ImageCache(QObject *parent)
-    : QObject(parent)
-{
+ImageCache::ImageCache(QObject* parent) : QObject(parent) {
     const QString base = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     if (!base.isEmpty()) {
-        auto *diskCache = new QNetworkDiskCache(this);
+        auto* diskCache = new QNetworkDiskCache(this);
         diskCache->setCacheDirectory(QDir(base).filePath(QStringLiteral("images")));
         m_network.setCache(diskCache);
     }
 }
 
-ImageCache *ImageCache::instance()
-{
-    static ImageCache *cache = new ImageCache();
+ImageCache* ImageCache::instance() {
+    static ImageCache* cache = new ImageCache();
     return cache;
 }
 
-bool ImageCache::tryGet(const QUrl &url, QImage &out) const
-{
+bool ImageCache::tryGet(const QUrl& url, QImage& out) const {
     QMutexLocker lock(&m_mutex);
     const auto it = m_memory.constFind(url);
     if (it == m_memory.constEnd()) {
@@ -73,8 +67,7 @@ bool ImageCache::tryGet(const QUrl &url, QImage &out) const
     return true;
 }
 
-void ImageCache::request(const QUrl &url, const QSize &requestedSize)
-{
+void ImageCache::request(const QUrl& url, const QSize& requestedSize) {
     {
         QMutexLocker lock(&m_mutex);
         if (m_memory.contains(url)) {
@@ -93,12 +86,11 @@ void ImageCache::request(const QUrl &url, const QSize &requestedSize)
     const QString scheme = url.scheme().toLower();
     if (scheme == QStringLiteral("http") || scheme == QStringLiteral("https")) {
         QNetworkRequest req(url);
-        req.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
-                         QNetworkRequest::PreferCache);
+        req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
         req.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                          QNetworkRequest::NoLessSafeRedirectPolicy);
         req.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("qml-block-editor"));
-        QNetworkReply *reply = m_network.get(req);
+        QNetworkReply* reply = m_network.get(req);
         connect(reply, &QNetworkReply::finished, this, [this, reply, url, requestedSize]() {
             QByteArray data;
             if (reply->error() == QNetworkReply::NoError) {
@@ -114,8 +106,7 @@ void ImageCache::request(const QUrl &url, const QSize &requestedSize)
     decodeAsync(url, readLocalBytes(url), requestedSize);
 }
 
-void ImageCache::decodeAsync(const QUrl &url, const QByteArray &data, const QSize &requested)
-{
+void ImageCache::decodeAsync(const QUrl& url, const QByteArray& data, const QSize& requested) {
     if (data.isEmpty()) {
         finish(url, QImage());
         return;
@@ -124,21 +115,17 @@ void ImageCache::decodeAsync(const QUrl &url, const QByteArray &data, const QSiz
     QThreadPool::globalInstance()->start([this, url, data, requested]() {
         const QImage image = decodeCapped(data, requested);
         QMetaObject::invokeMethod(
-            this,
-            [this, url, image]() { finish(url, image); },
-            Qt::QueuedConnection);
+            this, [this, url, image]() { finish(url, image); }, Qt::QueuedConnection);
     });
 }
 
-void ImageCache::finish(const QUrl &url, const QImage &image)
-{
+void ImageCache::finish(const QUrl& url, const QImage& image) {
     store(url, image);
     m_inFlight.remove(url);
     emit ready(url);
 }
 
-void ImageCache::store(const QUrl &url, const QImage &image)
-{
+void ImageCache::store(const QUrl& url, const QImage& image) {
     QMutexLocker lock(&m_mutex);
     if (m_memory.contains(url)) {
         m_lru.removeOne(url);
@@ -151,8 +138,7 @@ void ImageCache::store(const QUrl &url, const QImage &image)
     }
 }
 
-QImage ImageCache::decodeCapped(const QByteArray &data, const QSize &requested)
-{
+QImage ImageCache::decodeCapped(const QByteArray& data, const QSize& requested) {
     QBuffer buffer;
     buffer.setData(data);
     if (!buffer.open(QIODevice::ReadOnly)) {
@@ -171,8 +157,7 @@ QImage ImageCache::decodeCapped(const QByteArray &data, const QSize &requested)
     return reader.read();
 }
 
-QByteArray ImageCache::readLocalBytes(const QUrl &url)
-{
+QByteArray ImageCache::readLocalBytes(const QUrl& url) {
     const QString scheme = url.scheme().toLower();
 
     if (scheme == QStringLiteral("data")) {

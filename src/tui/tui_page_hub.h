@@ -1,12 +1,11 @@
 #pragma once
 
-#include <Tui/ZEvent.h>
-
 #include <QCoreApplication>
 #include <QHash>
 #include <QList>
 #include <QString>
 #include <QVariantMap>
+#include <Tui/ZEvent.h>
 
 namespace accounts {
 class IAccountsService;
@@ -14,7 +13,7 @@ class IAccountsService;
 namespace automation {
 class ICronStore;
 class IRoutingStore;
-}
+} // namespace automation
 namespace config {
 class IDaemonConfig;
 }
@@ -29,7 +28,7 @@ class IApprovalsInbox;
 class IDashboard;
 class IFleetTree;
 class ISessionRoster;
-}
+} // namespace fleet
 namespace memory {
 class IMemoryService;
 }
@@ -38,7 +37,7 @@ class MemoryGraphModel;
 class MemoryListModel;
 class MemoryStatsModel;
 class MemoryTimelineModel;
-}
+} // namespace memoryui
 namespace models {
 class IModelCatalog;
 }
@@ -75,7 +74,8 @@ public:
 
     explicit TuiPageHub(Dependencies deps);
 
-    [[nodiscard]] QString pageMarkdownForKind(int kind, const QString& profileRef = QString()) const;
+    [[nodiscard]] QString pageMarkdownForKind(int kind,
+                                              const QString& profileRef = QString()) const;
     [[nodiscard]] bool openManagerPage(const QString& id) const;
     [[nodiscard]] int activePageKind(bool transcriptActive) const;
     [[nodiscard]] QList<QVariantMap> pageActionRows(int kind) const;

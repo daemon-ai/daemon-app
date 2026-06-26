@@ -2,22 +2,60 @@
 
 #include <QObject>
 
-namespace accounts { class IAccountsService; }
-namespace automation { class ICronStore; class IRoutingStore; }
-namespace config { class IDaemonConfig; }
-namespace connection { class IConnectionService; }
-namespace daemonnet { class IDaemonNet; }
-namespace firstrun { class FirstRunModel; }
-namespace fleet { class IApprovalsInbox; class IDashboard; class IFleetTree; class ISessionRoster; }
-namespace fs { class IFsService; }
-namespace memory { class IMemoryService; }
-namespace models { class IModelCatalog; }
-namespace nav { class NavController; }
-namespace persistence { class ISessionStore; }
-namespace profiles { class IProfileStore; }
-namespace session { class ICheckpointTimeline; class ISessionSettings; }
-namespace settings { class ISettingsStore; }
-namespace transports { class IPresenceService; class ITransportRegistry; }
+namespace accounts {
+class IAccountsService;
+}
+namespace automation {
+class ICronStore;
+class IRoutingStore;
+} // namespace automation
+namespace config {
+class IDaemonConfig;
+}
+namespace connection {
+class IConnectionService;
+}
+namespace daemonnet {
+class IDaemonNet;
+}
+namespace firstrun {
+class FirstRunModel;
+}
+namespace fleet {
+class IApprovalsInbox;
+class IDashboard;
+class IFleetTree;
+class ISessionRoster;
+} // namespace fleet
+namespace fs {
+class IFsService;
+}
+namespace memory {
+class IMemoryService;
+}
+namespace models {
+class IModelCatalog;
+}
+namespace nav {
+class NavController;
+}
+namespace persistence {
+class ISessionStore;
+}
+namespace profiles {
+class IProfileStore;
+}
+namespace session {
+class ICheckpointTimeline;
+class ISessionSettings;
+} // namespace session
+namespace settings {
+class ISettingsStore;
+}
+namespace transports {
+class IPresenceService;
+class ITransportRegistry;
+} // namespace transports
 
 namespace daemonapp::daemon {
 

@@ -4,11 +4,8 @@
 #include "turn_controller.h"
 
 SessionOrchestrator::SessionOrchestrator(QObject* parent)
-    : QObject(parent)
-    , m_turn(new TurnController(this))
-    , m_todos(new TodoListModel(this))
-    , m_subagents(new SubagentModel(this))
-{
+    : QObject(parent), m_turn(new TurnController(this)), m_todos(new TodoListModel(this)),
+      m_subagents(new SubagentModel(this)) {
     // busy mirrors the turn's active state.
     connect(m_turn, &TurnController::activeChanged, this, &SessionOrchestrator::busyChanged);
 
@@ -28,8 +25,7 @@ SessionOrchestrator::SessionOrchestrator(QObject* parent)
     connect(m_turn, &TurnController::turnFinished, this, [this] { m_todoClearTimer.start(); });
 }
 
-void SessionOrchestrator::setSession(SessionController* session)
-{
+void SessionOrchestrator::setSession(SessionController* session) {
     if (m_session == session) {
         return;
     }
@@ -37,16 +33,13 @@ void SessionOrchestrator::setSession(SessionController* session)
     emit sessionChanged();
 }
 
-bool SessionOrchestrator::busy() const
-{
+bool SessionOrchestrator::busy() const {
     return m_turn->active();
 }
 
-void SessionOrchestrator::submit(const QString& text, const QString& refs)
-{
+void SessionOrchestrator::submit(const QString& text, const QString& refs) {
     if (m_session != nullptr) {
-        m_session->appendUserText(refs.isEmpty() ? text
-                                                       : (refs + QStringLiteral("\n") + text));
+        m_session->appendUserText(refs.isEmpty() ? text : (refs + QStringLiteral("\n") + text));
     }
     // A fresh turn pre-empts a pending clear of the previous turn's todos.
     m_todoClearTimer.stop();
@@ -54,8 +47,7 @@ void SessionOrchestrator::submit(const QString& text, const QString& refs)
     populateSimulatorTodos();
 }
 
-void SessionOrchestrator::rerun(const QString& text)
-{
+void SessionOrchestrator::rerun(const QString& text) {
     // Interrupt-first: a rewind that lands while a turn is live must pre-empt it so
     // the replayed turn is the only one streaming. No appendUserText here - the
     // user block is already in the document (edit) or intentionally unchanged
@@ -68,20 +60,17 @@ void SessionOrchestrator::rerun(const QString& text)
     populateSimulatorTodos();
 }
 
-void SessionOrchestrator::steer(const QString& text)
-{
+void SessionOrchestrator::steer(const QString& text) {
     if (m_session != nullptr) {
         m_session->appendUserText(tr("(steer) ") + text);
     }
 }
 
-void SessionOrchestrator::cancel()
-{
+void SessionOrchestrator::cancel() {
     m_turn->cancel();
 }
 
-void SessionOrchestrator::invokeCommand(const QString& command)
-{
+void SessionOrchestrator::invokeCommand(const QString& command) {
     if (command == QStringLiteral("new")) {
         if (m_session != nullptr) {
             m_session->createSession(QString());
@@ -103,8 +92,7 @@ void SessionOrchestrator::invokeCommand(const QString& command)
     emit commandRequested(command);
 }
 
-void SessionOrchestrator::populateSimulatorTodos()
-{
+void SessionOrchestrator::populateSimulatorTodos() {
     // Drop any settled subagent rows from the previous turn so the status stack
     // starts clean; this turn's subagent.* events repopulate it.
     m_subagents->clear();
@@ -112,11 +100,11 @@ void SessionOrchestrator::populateSimulatorTodos()
     // Simulator content: no real todo backend exists yet, so a canned plan stands
     // in for the turn and is cleared shortly after completion.
     m_todos->setTodos(QVariantList{
-        QVariantMap{ { QStringLiteral("text"), tr("Inspect the project") },
-                     { QStringLiteral("done"), true } },
-        QVariantMap{ { QStringLiteral("text"), tr("Run the checks") },
-                     { QStringLiteral("done"), false } },
-        QVariantMap{ { QStringLiteral("text"), tr("Summarize the result") },
-                     { QStringLiteral("done"), false } },
+        QVariantMap{{QStringLiteral("text"), tr("Inspect the project")},
+                    {QStringLiteral("done"), true}},
+        QVariantMap{{QStringLiteral("text"), tr("Run the checks")},
+                    {QStringLiteral("done"), false}},
+        QVariantMap{{QStringLiteral("text"), tr("Summarize the result")},
+                    {QStringLiteral("done"), false}},
     });
 }

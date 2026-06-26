@@ -10,11 +10,11 @@ namespace be::diagram {
 // Layout-only node kinds. Real nodes map back to DiagramModel.nodes; the rest are
 // virtual nodes inserted during the dagre-style pipeline.
 enum class WorkKind {
-    Real,            // a DiagramNode (srcNode >= 0)
-    EdgeDummy,       // long-edge waypoint (becomes a bend point)
-    EdgeLabelDummy,  // sized label slot on an edge
-    BorderLeft,      // left wall of a cluster at a given rank
-    BorderRight,     // right wall of a cluster at a given rank
+    Real,           // a DiagramNode (srcNode >= 0)
+    EdgeDummy,      // long-edge waypoint (becomes a bend point)
+    EdgeLabelDummy, // sized label slot on an edge
+    BorderLeft,     // left wall of a cluster at a given rank
+    BorderRight,    // right wall of a cluster at a given rank
 };
 
 struct WorkNode {
@@ -26,14 +26,14 @@ struct WorkNode {
     qreal y = 0.0;
     qreal w = 0.0;
     qreal h = 0.0;
-    QString cluster;     // innermost cluster id this node belongs to (for ordering)
-    int srcNode = -1;    // index into DiagramModel.nodes (Real only)
-    int edgeIdx = -1;    // index into DiagramModel.edges (dummy/label nodes)
+    QString cluster;  // innermost cluster id this node belongs to (for ordering)
+    int srcNode = -1; // index into DiagramModel.nodes (Real only)
+    int edgeIdx = -1; // index into DiagramModel.edges (dummy/label nodes)
 };
 
 struct WorkEdge {
-    int u = -1;          // tail work-node index
-    int v = -1;          // head work-node index
+    int u = -1; // tail work-node index
+    int v = -1; // head work-node index
     double weight = 1.0;
     int minlen = 1;
     bool reversed = false; // flipped to break a cycle
@@ -47,8 +47,7 @@ struct WorkGraph {
     QVector<WorkEdge> edges;
     QHash<QString, int> index;
 
-    int add(const WorkNode &node)
-    {
+    int add(const WorkNode& node) {
         const int i = nodes.size();
         nodes.push_back(node);
         if (!node.id.isEmpty()) {
@@ -57,8 +56,7 @@ struct WorkGraph {
         return i;
     }
 
-    int addEdge(int u, int v, double weight, int minlen, int edgeIdx)
-    {
+    int addEdge(int u, int v, double weight, int minlen, int edgeIdx) {
         WorkEdge e;
         e.u = u;
         e.v = v;
@@ -70,8 +68,7 @@ struct WorkGraph {
         return i;
     }
 
-    QVector<QVector<int>> outEdges() const
-    {
+    QVector<QVector<int>> outEdges() const {
         QVector<QVector<int>> out(nodes.size());
         for (int i = 0; i < edges.size(); ++i) {
             if (edges[i].u >= 0) {
@@ -81,8 +78,7 @@ struct WorkGraph {
         return out;
     }
 
-    QVector<QVector<int>> inEdges() const
-    {
+    QVector<QVector<int>> inEdges() const {
         QVector<QVector<int>> in(nodes.size());
         for (int i = 0; i < edges.size(); ++i) {
             if (edges[i].v >= 0) {

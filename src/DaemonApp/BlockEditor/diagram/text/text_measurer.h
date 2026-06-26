@@ -1,11 +1,10 @@
 #pragma once
 
+#include <memory>
+#include <optional>
 #include <QFont>
 #include <QString>
 #include <QTextLayout>
-
-#include <memory>
-#include <optional>
 
 namespace be::diagram {
 
@@ -18,14 +17,13 @@ struct TextMetrics {
 // Headless replacement for the browser getBBox()/getComputedTextLength() that
 // mermaid.js relies on. Measures with the exact QFont that will be drawn, so
 // layout boxes and rendered glyphs always agree.
-class TextMeasurer
-{
+class TextMeasurer {
 public:
-    TextMetrics measure(const QString &text, const QFont &font,
+    TextMetrics measure(const QString& text, const QFont& font,
                         std::optional<qreal> maxWidth = std::nullopt) const;
 
     // Builds a positioned QTextLayout reused directly by a QSGTextNode label.
-    std::shared_ptr<QTextLayout> layout(const QString &text, const QFont &font,
+    std::shared_ptr<QTextLayout> layout(const QString& text, const QFont& font,
                                         std::optional<qreal> maxWidth = std::nullopt) const;
 };
 

@@ -5,8 +5,7 @@
 
 namespace daemonapp::daemon {
 
-QByteArray DaemonTransport::framePayload(const QByteArray& cborPayload)
-{
+QByteArray DaemonTransport::framePayload(const QByteArray& cborPayload) {
     QByteArray out;
     out.resize(4);
     qToBigEndian<quint32>(static_cast<quint32>(cborPayload.size()),
@@ -15,8 +14,7 @@ QByteArray DaemonTransport::framePayload(const QByteArray& cborPayload)
     return out;
 }
 
-bool DaemonTransport::tryTakeFrame(QByteArray& buffer, QByteArray* payload)
-{
+bool DaemonTransport::tryTakeFrame(QByteArray& buffer, QByteArray* payload) {
     if (buffer.size() < 4) {
         return false;
     }
@@ -32,13 +30,9 @@ bool DaemonTransport::tryTakeFrame(QByteArray& buffer, QByteArray* payload)
     return true;
 }
 
-DaemonTransport::DaemonTransport(QObject* parent)
-    : QObject(parent)
-{
-}
+DaemonTransport::DaemonTransport(QObject* parent) : QObject(parent) {}
 
-void DaemonTransport::setSocketPath(const QString& path)
-{
+void DaemonTransport::setSocketPath(const QString& path) {
     if (path == m_socketPath) {
         return;
     }
@@ -47,13 +41,11 @@ void DaemonTransport::setSocketPath(const QString& path)
     close();
 }
 
-bool DaemonTransport::isConnected() const
-{
+bool DaemonTransport::isConnected() const {
     return m_socket != nullptr && m_socket->state() == QLocalSocket::ConnectedState;
 }
 
-void DaemonTransport::ensureSocket()
-{
+void DaemonTransport::ensureSocket() {
     if (m_socket != nullptr) {
         return;
     }
@@ -63,20 +55,18 @@ void DaemonTransport::ensureSocket()
         emit connected();
     });
     connect(m_socket, &QLocalSocket::readyRead, this, &DaemonTransport::handleReadyRead);
-    connect(m_socket, &QLocalSocket::errorOccurred, this,
-            [this](QLocalSocket::LocalSocketError) {
-                // Capture the message, then fully reset: a failed/aborted socket must not leave a
-                // queued frame in m_outbox, or it would flush ahead of the next request on the next
-                // successful connect and corrupt request/response correlation.
-                const QString message = m_socket->errorString();
-                close();
-                emit failed(message);
-            });
+    connect(m_socket, &QLocalSocket::errorOccurred, this, [this](QLocalSocket::LocalSocketError) {
+        // Capture the message, then fully reset: a failed/aborted socket must not leave a
+        // queued frame in m_outbox, or it would flush ahead of the next request on the next
+        // successful connect and corrupt request/response correlation.
+        const QString message = m_socket->errorString();
+        close();
+        emit failed(message);
+    });
     connect(m_socket, &QLocalSocket::disconnected, this, [this] { emit disconnected(); });
 }
 
-void DaemonTransport::open()
-{
+void DaemonTransport::open() {
     if (m_socketPath.isEmpty()) {
         emit failed(QStringLiteral("No daemon socket path configured"));
         return;
@@ -88,8 +78,7 @@ void DaemonTransport::open()
     }
 }
 
-void DaemonTransport::close()
-{
+void DaemonTransport::close() {
     if (m_socket != nullptr) {
         m_socket->abort();
         m_socket->deleteLater();
@@ -99,8 +88,7 @@ void DaemonTransport::close()
     m_outbox.clear();
 }
 
-void DaemonTransport::flushOutbox()
-{
+void DaemonTransport::flushOutbox() {
     if (m_socket == nullptr) {
         return;
     }
@@ -112,8 +100,7 @@ void DaemonTransport::flushOutbox()
     m_socket->flush();
 }
 
-void DaemonTransport::sendFrame(const QByteArray& cborPayload)
-{
+void DaemonTransport::sendFrame(const QByteArray& cborPayload) {
     if (m_socketPath.isEmpty()) {
         emit failed(QStringLiteral("No daemon socket path configured"));
         return;
@@ -129,8 +116,7 @@ void DaemonTransport::sendFrame(const QByteArray& cborPayload)
     }
 }
 
-void DaemonTransport::handleReadyRead()
-{
+void DaemonTransport::handleReadyRead() {
     m_buffer.append(m_socket->readAll());
     QByteArray payload;
     while (tryTakeFrame(m_buffer, &payload)) {

@@ -56,14 +56,14 @@ public:
         TabIdRole = Qt::UserRole + 1, // stable, monotonically-assigned id
         KindRole,                     // Kind
         TitleRole,                    // display label
-        SessionIdRole,           // transcript tabs only; "" for pages (string SessionId)
+        SessionIdRole,                // transcript tabs only; "" for pages (string SessionId)
         ClosableRole,                 // false pins the tab open
         CurrentRole,                  // true for the active row
         PreviewRole,                  // true for the transient "preview" tab
         FilePathRole,                 // File tabs: root-relative path
         FileRootRole,                 // File tabs: owning root id
         DirtyRole,                    // File tabs: unsaved-changes flag
-        ProfileRole,                 // Memory/Profile tabs: agent ref (ProfileRef)
+        ProfileRole,                  // Memory/Profile tabs: agent ref (ProfileRef)
     };
 
     explicit TabModel(QObject* parent = nullptr);
@@ -168,7 +168,7 @@ private:
         QString rootId;       // File tabs: owning root id
         QString path;         // File tabs: root-relative path
         bool dirty = false;   // File tabs: unsaved changes
-        QString profile;     // Memory/Profile tabs: agent ref (ProfileRef)
+        QString profile;      // Memory/Profile tabs: agent ref (ProfileRef)
     };
 
     // Move the active row to `index` (already validated/clamped by the caller),

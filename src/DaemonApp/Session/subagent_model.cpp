@@ -2,13 +2,9 @@
 
 #include <QVariantMap>
 
-SubagentModel::SubagentModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
-}
+SubagentModel::SubagentModel(QObject* parent) : QAbstractListModel(parent) {}
 
-int SubagentModel::runningCount() const
-{
+int SubagentModel::runningCount() const {
     int n = 0;
     for (const Item& item : m_items) {
         if (item.status == QStringLiteral("running")) {
@@ -18,8 +14,7 @@ int SubagentModel::runningCount() const
     return n;
 }
 
-int SubagentModel::failedCount() const
-{
+int SubagentModel::failedCount() const {
     int n = 0;
     for (const Item& item : m_items) {
         if (item.status == QStringLiteral("error")) {
@@ -29,16 +24,14 @@ int SubagentModel::failedCount() const
     return n;
 }
 
-int SubagentModel::rowCount(const QModelIndex& parent) const
-{
+int SubagentModel::rowCount(const QModelIndex& parent) const {
     if (parent.isValid()) {
         return 0;
     }
     return static_cast<int>(m_items.size());
 }
 
-QVariant SubagentModel::data(const QModelIndex& index, int role) const
-{
+QVariant SubagentModel::data(const QModelIndex& index, int role) const {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_items.size()) {
         return {};
     }
@@ -57,18 +50,16 @@ QVariant SubagentModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> SubagentModel::roleNames() const
-{
+QHash<int, QByteArray> SubagentModel::roleNames() const {
     return {
-        { IdRole, "subId" },
-        { TitleRole, "title" },
-        { StatusRole, "status" },
-        { DetailRole, "detail" },
+        {IdRole, "subId"},
+        {TitleRole, "title"},
+        {StatusRole, "status"},
+        {DetailRole, "detail"},
     };
 }
 
-void SubagentModel::applyEvents(const QVariantList& events)
-{
+void SubagentModel::applyEvents(const QVariantList& events) {
     bool changed = false;
     for (const QVariant& v : events) {
         const QVariantMap event = v.toMap();
@@ -87,7 +78,7 @@ void SubagentModel::applyEvents(const QVariantList& events)
         if (it == m_indexById.constEnd()) {
             const int row = static_cast<int>(m_items.size());
             beginInsertRows({}, row, row);
-            m_items.push_back({ id, title, status, detail });
+            m_items.push_back({id, title, status, detail});
             m_indexById.insert(id, row);
             endInsertRows();
             changed = true;
@@ -103,7 +94,7 @@ void SubagentModel::applyEvents(const QVariantList& events)
             }
             item.detail = detail;
             const QModelIndex idx = index(row);
-            emit dataChanged(idx, idx, { TitleRole, StatusRole, DetailRole });
+            emit dataChanged(idx, idx, {TitleRole, StatusRole, DetailRole});
         }
     }
     if (changed) {
@@ -111,8 +102,7 @@ void SubagentModel::applyEvents(const QVariantList& events)
     }
 }
 
-void SubagentModel::clear()
-{
+void SubagentModel::clear() {
     if (m_items.isEmpty()) {
         return;
     }
@@ -123,24 +113,21 @@ void SubagentModel::clear()
     emit countChanged();
 }
 
-QString SubagentModel::titleAt(int index) const
-{
+QString SubagentModel::titleAt(int index) const {
     if (index < 0 || index >= m_items.size()) {
         return {};
     }
     return m_items.at(index).title;
 }
 
-QString SubagentModel::statusAt(int index) const
-{
+QString SubagentModel::statusAt(int index) const {
     if (index < 0 || index >= m_items.size()) {
         return {};
     }
     return m_items.at(index).status;
 }
 
-QString SubagentModel::detailAt(int index) const
-{
+QString SubagentModel::detailAt(int index) const {
     if (index < 0 || index >= m_items.size()) {
         return {};
     }

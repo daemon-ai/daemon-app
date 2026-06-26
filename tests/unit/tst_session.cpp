@@ -17,8 +17,7 @@ class TestSession : public QObject {
     static VariantListModel* asModel(QObject* o) { return qobject_cast<VariantListModel*>(o); }
 
 private slots:
-    void sessionSettingsRoundTrip()
-    {
+    void sessionSettingsRoundTrip() {
         MockSessionSettings s;
         QSignalSpy spy(&s, &session::ISessionSettings::changed);
         s.setEffort(QStringLiteral("high"));
@@ -33,8 +32,7 @@ private slots:
         QVERIFY(!s.effortOptions().isEmpty());
     }
 
-    void checkpointRestoreTruncates()
-    {
+    void checkpointRestoreTruncates() {
         MockCheckpointTimeline t;
         const int before = t.count();
         QVERIFY(before >= 3);
@@ -48,8 +46,7 @@ private slots:
                     .toBool());
     }
 
-    void createCheckpointBecomesCurrent()
-    {
+    void createCheckpointBecomesCurrent() {
         MockCheckpointTimeline t;
         const int before = t.count();
         const QString id = t.createCheckpoint(QStringLiteral("Test"));
@@ -62,8 +59,7 @@ private slots:
 
     // Per-session overrides are keyed by session: editing one chat's effort
     // does not leak into another, and switching back restores it.
-    void sessionSettingsArePerSession()
-    {
+    void sessionSettingsArePerSession() {
         MockSessionSettings s;
         s.setSessionId(QStringLiteral("s-1"));
         s.setEffort(QStringLiteral("high"));
@@ -83,8 +79,7 @@ private slots:
 
     // The checkpoint timeline is per-session: a rewind in one chat does not
     // shorten another's, and switching back shows the rewound timeline.
-    void checkpointTimelineIsPerSession()
-    {
+    void checkpointTimelineIsPerSession() {
         MockCheckpointTimeline t;
         t.setSessionId(QStringLiteral("s-1"));
         const int full = t.count();

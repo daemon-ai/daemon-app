@@ -13,32 +13,29 @@ class TestCompletion : public QObject {
 
 private slots:
     // --- CompletionModel::search (ported CompletionProvider data) -----------
-    void searchSlashEmptyReturnsPool()
-    {
+    void searchSlashEmptyReturnsPool() {
         const auto items = CompletionModel::search(QStringLiteral("slash"), QString());
         QVERIFY(items.size() >= 4);
         QCOMPARE(items.first().label, QStringLiteral("/new"));
     }
 
-    void searchSlashFiltersBySubstring()
-    {
+    void searchSlashFiltersBySubstring() {
         const auto items = CompletionModel::search(QStringLiteral("slash"), QStringLiteral("the"));
         QCOMPARE(items.size(), 1);
         QCOMPARE(items.first().label, QStringLiteral("/theme"));
         QCOMPARE(items.first().action, QStringLiteral("theme"));
     }
 
-    void searchMentionPool()
-    {
-        const auto items = CompletionModel::search(QStringLiteral("mention"), QStringLiteral("read"));
+    void searchMentionPool() {
+        const auto items =
+            CompletionModel::search(QStringLiteral("mention"), QStringLiteral("read"));
         QCOMPARE(items.size(), 1);
         QCOMPARE(items.first().label, QStringLiteral("README.md"));
         QCOMPARE(items.first().action, QStringLiteral("insert"));
     }
 
     // --- Trigger detection --------------------------------------------------
-    void slashTriggerActivatesAtLineStart()
-    {
+    void slashTriggerActivatesAtLineStart() {
         ComposerSessionController c;
         QSignalSpy activeSpy(&c, &ComposerSessionController::completionActiveChanged);
 
@@ -49,8 +46,7 @@ private slots:
         QVERIFY(activeSpy.count() >= 1);
     }
 
-    void mentionTriggerActivatesAfterSpace()
-    {
+    void mentionTriggerActivatesAfterSpace() {
         ComposerSessionController c;
         c.refreshTrigger(QStringLiteral("hello @read"), 11);
         QVERIFY(c.completionActive());
@@ -58,15 +54,13 @@ private slots:
         QCOMPARE(c.completionItems()->count(), 1);
     }
 
-    void noTriggerWhenNoToken()
-    {
+    void noTriggerWhenNoToken() {
         ComposerSessionController c;
         c.refreshTrigger(QStringLiteral("just text"), 9);
         QVERIFY(!c.completionActive());
     }
 
-    void unknownQueryClosesTrigger()
-    {
+    void unknownQueryClosesTrigger() {
         ComposerSessionController c;
         c.refreshTrigger(QStringLiteral("/the"), 4);
         QVERIFY(c.completionActive());
@@ -76,8 +70,7 @@ private slots:
     }
 
     // --- Navigation ---------------------------------------------------------
-    void moveActiveWrapsAround()
-    {
+    void moveActiveWrapsAround() {
         ComposerSessionController c;
         c.refreshTrigger(QStringLiteral("/"), 1); // whole slash pool
         const int n = c.completionItems()->count();
@@ -92,8 +85,7 @@ private slots:
     // --- Accept transforms --------------------------------------------------
     // Accepting an "insert" item replaces the trigger token with its value and
     // requests the caret at the end of the inserted text.
-    void acceptInsertReplacesTokenAndMovesCaret()
-    {
+    void acceptInsertReplacesTokenAndMovesCaret() {
         ComposerSessionController c;
         QSignalSpy draftSpy(&c, &ComposerSessionController::draftReset);
         QSignalSpy cursorSpy(&c, &ComposerSessionController::cursorRequested);
@@ -113,8 +105,7 @@ private slots:
 
     // Accepting a command item strips the typed token and forwards the action via
     // commandInvoked (not "clear", which is handled inline).
-    void acceptCommandStripsTokenAndInvokes()
-    {
+    void acceptCommandStripsTokenAndInvokes() {
         ComposerSessionController c;
         QSignalSpy cmdSpy(&c, &ComposerSessionController::commandInvoked);
 
@@ -130,8 +121,7 @@ private slots:
     }
 
     // The "/clear" command is handled inline by clear() rather than commandInvoked.
-    void acceptClearCommandClearsDraft()
-    {
+    void acceptClearCommandClearsDraft() {
         ComposerSessionController c;
         QSignalSpy cmdSpy(&c, &ComposerSessionController::commandInvoked);
 

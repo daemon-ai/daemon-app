@@ -19,36 +19,35 @@ namespace be::app {
 // results (success or failure) are stored in a small in-memory LRU map so repeat
 // requests resolve synchronously. file:/qrc:/data:/local-path sources bypass the
 // network and are read directly.
-class ImageCache : public QObject
-{
+class ImageCache : public QObject {
     Q_OBJECT
 
 public:
-    static ImageCache *instance();
+    static ImageCache* instance();
 
     // Thread-safe lookup. Returns true when a decode has completed for `url`
     // (whether it succeeded or failed); `out` carries the image (null on
     // failure). Returns false when the result is not yet known.
-    bool tryGet(const QUrl &url, QImage &out) const;
+    bool tryGet(const QUrl& url, QImage& out) const;
 
 public slots:
     // Kick off a fetch + decode for `url` if not already cached or in flight.
     // `requestedSize` caps the decoded dimensions (0 == use the global cap).
     // Emits ready(url) once the result is available. Must be invoked on the
     // ImageCache's own (GUI) thread; cross-thread callers use a queued call.
-    void request(const QUrl &url, const QSize &requestedSize);
+    void request(const QUrl& url, const QSize& requestedSize);
 
 signals:
-    void ready(const QUrl &url);
+    void ready(const QUrl& url);
 
 private:
-    explicit ImageCache(QObject *parent = nullptr);
+    explicit ImageCache(QObject* parent = nullptr);
 
-    void decodeAsync(const QUrl &url, const QByteArray &data, const QSize &requested);
-    void finish(const QUrl &url, const QImage &image);
-    void store(const QUrl &url, const QImage &image);
-    static QImage decodeCapped(const QByteArray &data, const QSize &requested);
-    static QByteArray readLocalBytes(const QUrl &url);
+    void decodeAsync(const QUrl& url, const QByteArray& data, const QSize& requested);
+    void finish(const QUrl& url, const QImage& image);
+    void store(const QUrl& url, const QImage& image);
+    static QImage decodeCapped(const QByteArray& data, const QSize& requested);
+    static QByteArray readLocalBytes(const QUrl& url);
 
     QNetworkAccessManager m_network;
 

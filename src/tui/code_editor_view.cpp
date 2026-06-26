@@ -1,26 +1,23 @@
 #include "code_editor_view.h"
 
-#include "transcript_render.h" // Span / RenderLine
-#include "tui_palette.h"
-
 #include "app/code_editor_controller.h"
 #include "app/line_model.h"
-
-#include <Tui/ZColor.h>
-#include <Tui/ZEvent.h>
-#include <Tui/ZPainter.h>
+#include "transcript_render.h" // Span / RenderLine
+#include "tui_palette.h"
 
 #include <QHash>
 #include <QModelIndex>
 #include <QRect>
+#include <Tui/ZColor.h>
+#include <Tui/ZEvent.h>
+#include <Tui/ZPainter.h>
 
 using editor::CodeEditorController;
 using editor::LineModel;
 
 namespace {
 
-Tui::ZColor colorFromHex(const QString& hex, const Tui::ZColor& fallback)
-{
+Tui::ZColor colorFromHex(const QString& hex, const Tui::ZColor& fallback) {
     if (hex.size() != 7 || !hex.startsWith(QLatin1Char('#')))
         return fallback;
     bool ok = false;
@@ -29,14 +26,13 @@ Tui::ZColor colorFromHex(const QString& hex, const Tui::ZColor& fallback)
 }
 
 RenderLine styledLine(const QString& text, const QVariantList& runs, const Tui::ZColor& defaultFg,
-                      const Tui::ZColor& bg)
-{
+                      const Tui::ZColor& bg) {
     RenderLine spans;
     int pos = 0;
     const auto push = [&](int start, int len, const Tui::ZColor& fg, Tui::ZTextAttributes attrs) {
         if (len <= 0)
             return;
-        spans.push_back(Span { text.mid(start, len), fg, bg, attrs });
+        spans.push_back(Span{text.mid(start, len), fg, bg, attrs});
     };
     for (const QVariant& v : runs) {
         const QVariantMap m = v.toMap();
@@ -45,33 +41,31 @@ RenderLine styledLine(const QString& text, const QVariantList& runs, const Tui::
         const int length = qBound(0, m.value(QStringLiteral("length")).toInt(), textSize - start);
         if (start > pos)
             push(pos, start - pos, defaultFg, {});
-        Tui::ZTextAttributes attrs {};
+        Tui::ZTextAttributes attrs{};
         if (m.value(QStringLiteral("bold")).toBool())
             attrs |= Tui::ZTextAttribute::Bold;
         if (m.value(QStringLiteral("italic")).toBool())
             attrs |= Tui::ZTextAttribute::Italic;
-        push(start, length,
-             colorFromHex(m.value(QStringLiteral("color")).toString(), defaultFg), attrs);
+        push(start, length, colorFromHex(m.value(QStringLiteral("color")).toString(), defaultFg),
+             attrs);
         pos = qMax(pos, start + length);
     }
     const int textSize = static_cast<int>(text.size());
     if (pos < textSize)
         push(pos, textSize - pos, defaultFg, {});
     if (spans.isEmpty() && text.isEmpty())
-        spans.push_back(Span { QString(), defaultFg, bg, {} });
+        spans.push_back(Span{QString(), defaultFg, bg, {}});
     return spans;
 }
 
 } // namespace
 
-CodeEditorView::CodeEditorView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
-{
+CodeEditorView::CodeEditorView(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
     setFocusPolicy(Tui::StrongFocus);
     setSizePolicyV(Tui::SizePolicy::Expanding);
 }
 
-void CodeEditorView::setController(CodeEditorController* controller)
-{
+void CodeEditorView::setController(CodeEditorController* controller) {
     if (m_controller != nullptr)
         m_controller->disconnect(this);
     if (m_model != nullptr)
@@ -99,8 +93,7 @@ void CodeEditorView::setController(CodeEditorController* controller)
     update();
 }
 
-int CodeEditorView::gutterWidth() const
-{
+int CodeEditorView::gutterWidth() const {
     const int lines = m_controller ? qMax(1, m_controller->lineCount()) : 1;
     int digits = 1;
     for (int v = lines; v >= 10; v /= 10)
@@ -108,13 +101,11 @@ int CodeEditorView::gutterWidth() const
     return digits + 2; // number + a space on each side
 }
 
-int CodeEditorView::visibleRows() const
-{
+int CodeEditorView::visibleRows() const {
     return qMax(0, geometry().height());
 }
 
-void CodeEditorView::clampScroll()
-{
+void CodeEditorView::clampScroll() {
     const int rows = m_model ? m_model->rowCount() : 0;
     const int maxTop = qMax(0, rows - visibleRows());
     m_scrollTop = qBound(0, m_scrollTop, maxTop);
@@ -122,8 +113,7 @@ void CodeEditorView::clampScroll()
         m_hScroll = 0;
 }
 
-void CodeEditorView::ensureCaretVisible()
-{
+void CodeEditorView::ensureCaretVisible() {
     if (m_model == nullptr || m_controller == nullptr)
         return;
     const int row = m_model->rowForLine(m_controller->cursorLine());
@@ -143,15 +133,13 @@ void CodeEditorView::ensureCaretVisible()
     clampScroll();
 }
 
-void CodeEditorView::scrollByLines(int delta)
-{
+void CodeEditorView::scrollByLines(int delta) {
     m_scrollTop += delta;
     clampScroll();
     update();
 }
 
-void CodeEditorView::clickAt(QPoint local, Qt::KeyboardModifiers modifiers)
-{
+void CodeEditorView::clickAt(QPoint local, Qt::KeyboardModifiers modifiers) {
     if (m_model == nullptr || m_controller == nullptr)
         return;
     const int row = m_scrollTop + local.y();
@@ -168,14 +156,12 @@ void CodeEditorView::clickAt(QPoint local, Qt::KeyboardModifiers modifiers)
     update();
 }
 
-void CodeEditorView::resizeEvent(Tui::ZResizeEvent* event)
-{
+void CodeEditorView::resizeEvent(Tui::ZResizeEvent* event) {
     Tui::ZWidget::resizeEvent(event);
     clampScroll();
 }
 
-void CodeEditorView::paintEvent(Tui::ZPaintEvent* event)
-{
+void CodeEditorView::paintEvent(Tui::ZPaintEvent* event) {
     Tui::ZPainter* p = event->painter();
     const Tui::ZColor fg = tpal::fg();
     const Tui::ZColor bg = tpal::bg();
@@ -217,7 +203,7 @@ void CodeEditorView::paintEvent(Tui::ZPaintEvent* event)
                 if (sx < gw || sx >= w)
                     continue;
                 const QString ch = s.text.mid(k, 1);
-                if (s.attr != Tui::ZTextAttributes {})
+                if (s.attr != Tui::ZTextAttributes{})
                     p->writeWithAttributes(sx, rowY, ch, s.fg, bg, s.attr);
                 else
                     p->writeWithColors(sx, rowY, ch, s.fg, bg);
@@ -234,8 +220,7 @@ void CodeEditorView::paintEvent(Tui::ZPaintEvent* event)
     Q_UNUSED(textW);
 }
 
-void CodeEditorView::keyEvent(Tui::ZKeyEvent* event)
-{
+void CodeEditorView::keyEvent(Tui::ZKeyEvent* event) {
     if (m_controller == nullptr) {
         Tui::ZWidget::keyEvent(event);
         return;
@@ -324,14 +309,12 @@ void CodeEditorView::keyEvent(Tui::ZKeyEvent* event)
     Tui::ZWidget::keyEvent(event);
 }
 
-void CodeEditorView::focusInEvent(Tui::ZFocusEvent* event)
-{
+void CodeEditorView::focusInEvent(Tui::ZFocusEvent* event) {
     Tui::ZWidget::focusInEvent(event);
     update();
 }
 
-void CodeEditorView::focusOutEvent(Tui::ZFocusEvent* event)
-{
+void CodeEditorView::focusOutEvent(Tui::ZFocusEvent* event) {
     Tui::ZWidget::focusOutEvent(event);
     update();
 }

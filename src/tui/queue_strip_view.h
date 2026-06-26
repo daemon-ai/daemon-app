@@ -2,9 +2,8 @@
 
 #include "transcript_render.h" // Span / RenderLine
 
-#include <Tui/ZWidget.h>
-
 #include <QVector>
+#include <Tui/ZWidget.h>
 
 class ComposerSessionController;
 
@@ -40,8 +39,8 @@ protected:
     void resizeEvent(Tui::ZResizeEvent* event) override;
 
 private:
-    void rebuild();      // height + parent relayout on data change
-    void layoutLines();  // rebuild span lines for the current width
+    void rebuild();     // height + parent relayout on data change
+    void layoutLines(); // rebuild span lines for the current width
     [[nodiscard]] int count() const;
 
     ComposerSessionController* m_controller = nullptr;

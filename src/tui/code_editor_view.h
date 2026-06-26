@@ -1,13 +1,12 @@
 #pragma once
 
-#include <Tui/ZWidget.h>
-
 #include <QString>
+#include <Tui/ZWidget.h>
 
 namespace editor {
 class CodeEditorController;
 class LineModel;
-}
+} // namespace editor
 
 // Custom-painted code editor over the shared de_core engine: it binds a
 // CodeEditorController (which owns the TextDocument + incremental

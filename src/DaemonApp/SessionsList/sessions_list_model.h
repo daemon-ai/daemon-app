@@ -1,7 +1,7 @@
 #pragma once
 
-#include "domain/session.h"
 #include "domain/ids.h"
+#include "domain/session.h"
 #include "domain/sidebar_node.h"
 
 #include <QAbstractListModel>
@@ -31,12 +31,12 @@ public:
         TitleRole,
         SnippetRole,
         ModifiedRole,
-        UnitNameRole,    // resolved owning unit name ("" if none)
-        UnitKindRole,    // domain::UnitKind of the owning unit (cosmetic)
-        TagNamesRole,    // QStringList of tag names
-        TagColorsRole,   // QStringList of tag colors, parallel to TagNamesRole
-        CurrentRole,     // true for the currently-selected row (identity match)
-        PinnedRole,      // true when the session is pinned (floats to top)
+        UnitNameRole,  // resolved owning unit name ("" if none)
+        UnitKindRole,  // domain::UnitKind of the owning unit (cosmetic)
+        TagNamesRole,  // QStringList of tag names
+        TagColorsRole, // QStringList of tag colors, parallel to TagNamesRole
+        CurrentRole,   // true for the currently-selected row (identity match)
+        PinnedRole,    // true when the session is pinned (floats to top)
     };
 
     explicit SessionsListModel(QObject* parent = nullptr);
@@ -65,8 +65,8 @@ public:
     // Select a row: records the selection by id, emits selectionChanged, and
     // repaints the highlight.
     Q_INVOKABLE void activate(int row);
-    Q_INVOKABLE void selectNext();      // next row (clamped)
-    Q_INVOKABLE void selectPrevious();  // previous row (clamped)
+    Q_INVOKABLE void selectNext();     // next row (clamped)
+    Q_INVOKABLE void selectPrevious(); // previous row (clamped)
     // Row index of the current selection (-1 if none / filtered out).
     [[nodiscard]] Q_INVOKABLE int currentRow() const;
 
@@ -83,8 +83,8 @@ private:
     void applyFilter();
     void rebuildLookups();
     [[nodiscard]] QString computeScopeTitle() const;
-    void setCurrentId(const QString& id);  // records id + emits + repaints
-    void emitCurrentChanged();             // dataChanged(CurrentRole) for all rows
+    void setCurrentId(const QString& id); // records id + emits + repaints
+    void emitCurrentChanged();            // dataChanged(CurrentRole) for all rows
 
     persistence::ISessionStore* m_store = nullptr;
     domain::ListScope m_scope;

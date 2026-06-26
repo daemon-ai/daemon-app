@@ -20,8 +20,7 @@ class TestFleetOps : public QObject {
     static VariantListModel* asModel(QObject* o) { return qobject_cast<VariantListModel*>(o); }
 
 private slots:
-    void rosterStateTransitions()
-    {
+    void rosterStateTransitions() {
         daemonnet::MockDaemonNet net;
         MockSessionRoster r(&net);
         const int before = r.count();
@@ -41,8 +40,7 @@ private slots:
         QCOMPARE(r.count(), before - 1);
     }
 
-    void fleetPauseResume()
-    {
+    void fleetPauseResume() {
         daemonnet::MockDaemonNet net;
         MockFleetTree f(&net);
         f.pause(QStringLiteral("n-coder"));
@@ -59,8 +57,7 @@ private slots:
                  QStringLiteral("running"));
     }
 
-    void approvalsResolve()
-    {
+    void approvalsResolve() {
         MockApprovalsInbox a;
         const int before = a.count();
         a.approve(QStringLiteral("a-1"));
@@ -68,8 +65,7 @@ private slots:
         QCOMPARE(a.count(), before - 2);
     }
 
-    void dashboardDerivesCounters()
-    {
+    void dashboardDerivesCounters() {
         daemonnet::MockDaemonNet net;
         MockSessionRoster r(&net);
         MockFleetTree f(&net);
@@ -92,8 +88,7 @@ private slots:
 
     // tokensToday is derived from the roster (sum of session tokens), and closing
     // a session both lowers it and appends a "Session closed" activity entry.
-    void dashboardTokensAndActivityAreLive()
-    {
+    void dashboardTokensAndActivityAreLive() {
         daemonnet::MockDaemonNet net;
         MockSessionRoster r(&net);
         MockFleetTree f(&net);

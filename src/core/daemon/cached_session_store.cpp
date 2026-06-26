@@ -2,18 +2,14 @@
 
 #include "daemon/repositories.h"
 
-#include <QDateTime>
-
 #include <algorithm>
+#include <QDateTime>
 
 namespace daemonapp::daemon {
 
 CachedSessionStore::CachedSessionStore(DaemonCacheStore* cache, SessionRepository* sessions,
                                        QObject* parent)
-    : persistence::ISessionStore(parent)
-    , m_cache(cache)
-    , m_sessions(sessions)
-{
+    : persistence::ISessionStore(parent), m_cache(cache), m_sessions(sessions) {
     if (m_sessions != nullptr) {
         connect(m_sessions, &SessionRepository::sessionsRefreshed, this,
                 &CachedSessionStore::reload);
@@ -21,14 +17,12 @@ CachedSessionStore::CachedSessionStore(DaemonCacheStore* cache, SessionRepositor
     reload();
 }
 
-void CachedSessionStore::reload()
-{
+void CachedSessionStore::reload() {
     m_snapshot = m_cache != nullptr ? m_cache->sessions() : QList<CachedSessionRow>{};
     emit changed();
 }
 
-bool CachedSessionStore::matchesScope(const CachedSessionRow& row, const domain::ListScope& scope)
-{
+bool CachedSessionStore::matchesScope(const CachedSessionRow& row, const domain::ListScope& scope) {
     switch (scope.type) {
     case domain::NodeType::Archived:
         return row.archived;
@@ -40,29 +34,24 @@ bool CachedSessionStore::matchesScope(const CachedSessionRow& row, const domain:
     }
 }
 
-QList<domain::UnitNode> CachedSessionStore::unitChildren(const domain::UnitId&) const
-{
+QList<domain::UnitNode> CachedSessionStore::unitChildren(const domain::UnitId&) const {
     return {};
 }
 
-domain::UnitNode CachedSessionStore::unit(const domain::UnitId&) const
-{
+domain::UnitNode CachedSessionStore::unit(const domain::UnitId&) const {
     return {};
 }
 
-QList<domain::Tag> CachedSessionStore::tags() const
-{
+QList<domain::Tag> CachedSessionStore::tags() const {
     return {};
 }
 
-QList<domain::Participant> CachedSessionStore::participants() const
-{
+QList<domain::Participant> CachedSessionStore::participants() const {
     // Daemon-backed participant rosters are a later slice; the cache has none yet.
     return {};
 }
 
-QList<domain::Session> CachedSessionStore::sessions(const domain::ListScope& scope) const
-{
+QList<domain::Session> CachedSessionStore::sessions(const domain::ListScope& scope) const {
     QList<domain::Session> out;
     for (int i = 0; i < m_snapshot.size(); ++i) {
         const CachedSessionRow& row = m_snapshot.at(i);
@@ -86,8 +75,7 @@ QList<domain::Session> CachedSessionStore::sessions(const domain::ListScope& sco
     return out;
 }
 
-int CachedSessionStore::sessionCount(const domain::ListScope& scope) const
-{
+int CachedSessionStore::sessionCount(const domain::ListScope& scope) const {
     int count = 0;
     for (const CachedSessionRow& row : m_snapshot) {
         if (matchesScope(row, scope)) {
@@ -97,8 +85,7 @@ int CachedSessionStore::sessionCount(const domain::ListScope& scope) const
     return count;
 }
 
-int CachedSessionStore::indexOfSessionId(const domain::SessionId& id) const
-{
+int CachedSessionStore::indexOfSessionId(const domain::SessionId& id) const {
     if (id.isEmpty()) {
         return -1;
     }
@@ -111,45 +98,38 @@ int CachedSessionStore::indexOfSessionId(const domain::SessionId& id) const
     return -1;
 }
 
-domain::UnitId CachedSessionStore::createUnit(const domain::UnitId&, domain::UnitKind)
-{
+domain::UnitId CachedSessionStore::createUnit(const domain::UnitId&, domain::UnitKind) {
     return {};
 }
 
-int CachedSessionStore::createTag(const QString&, const QString&)
-{
+int CachedSessionStore::createTag(const QString&, const QString&) {
     return -1;
 }
 
 // --- SessionId-keyed implementations (canonical; daemon-owned mutations stay inert) ---
-QString CachedSessionStore::content(const domain::SessionId&) const
-{
+QString CachedSessionStore::content(const domain::SessionId&) const {
     // Structured session-log projection is a later slice; the transcript is not cached as markdown.
     return {};
 }
 
-QString CachedSessionStore::title(const domain::SessionId& id) const
-{
+QString CachedSessionStore::title(const domain::SessionId& id) const {
     const int i = indexOfSessionId(id);
     return i >= 0 ? m_snapshot.at(i).title : QString();
 }
 
-bool CachedSessionStore::isPinned(const domain::SessionId& id) const
-{
+bool CachedSessionStore::isPinned(const domain::SessionId& id) const {
     const int i = indexOfSessionId(id);
     return i >= 0 && m_snapshot.at(i).pinned;
 }
 
-domain::SessionId CachedSessionStore::newSession(const domain::UnitId&)
-{
+domain::SessionId CachedSessionStore::newSession(const domain::UnitId&) {
     // Session lifecycle is daemon-owned; creation flows through Submit, not the cache adapter.
     return {};
 }
 
 void CachedSessionStore::setContent(const domain::SessionId&, const QString&) {}
 
-void CachedSessionStore::setArchived(const domain::SessionId& id, bool archived)
-{
+void CachedSessionStore::setArchived(const domain::SessionId& id, bool archived) {
     const int i = indexOfSessionId(id);
     if (i < 0 || m_cache == nullptr) {
         return;
@@ -166,8 +146,7 @@ void CachedSessionStore::renameSession(const domain::SessionId&, const QString&)
 
 void CachedSessionStore::deleteSession(const domain::SessionId&) {}
 
-void CachedSessionStore::setPinned(const domain::SessionId& id, bool pinned)
-{
+void CachedSessionStore::setPinned(const domain::SessionId& id, bool pinned) {
     const int i = indexOfSessionId(id);
     if (i < 0 || m_cache == nullptr) {
         return;

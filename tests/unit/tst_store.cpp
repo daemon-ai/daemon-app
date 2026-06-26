@@ -1,6 +1,6 @@
-#include "domain/unit_node.h"
 #include "domain/ids.h"
 #include "domain/sidebar_node.h"
+#include "domain/unit_node.h"
 #include "persistence/in_memory_session_store.h"
 
 #include <QSignalSpy>
@@ -14,7 +14,9 @@ using domain::UnitNode;
 using persistence::InMemorySessionStore;
 
 namespace {
-UnitId U(const char* s) { return UnitId(QString::fromLatin1(s)); }
+UnitId U(const char* s) {
+    return UnitId(QString::fromLatin1(s));
+}
 } // namespace
 
 // Exercises the uniformly-recursive unit tree in the in-memory store: roots,
@@ -24,13 +26,12 @@ class TestStore : public QObject {
     Q_OBJECT
 
 private:
-    static ListScope unitScope(const char* id) { return { NodeType::Unit, -1, U(id) }; }
+    static ListScope unitScope(const char* id) { return {NodeType::Unit, -1, U(id)}; }
 
 private slots:
     // Roots are the parentless units; one of them is a lone agent (a tree of one)
     // with no children at all.
-    void rootsIncludeLoneAgentAndFleet()
-    {
+    void rootsIncludeLoneAgentAndFleet() {
         InMemorySessionStore store;
         const QList<UnitNode> roots = store.unitChildren(UnitId());
         QStringList ids;
@@ -45,8 +46,7 @@ private slots:
 
     // Orchestrators nest inside orchestrators: acme -> build -> deep -> worker.
     // The parent chain is walked the same way at every level.
-    void treeNestsToArbitraryDepth()
-    {
+    void treeNestsToArbitraryDepth() {
         InMemorySessionStore store;
         QCOMPARE(store.unit(U("n-worker")).parentId.toString(), QStringLiteral("n-deep"));
         QCOMPARE(store.unit(U("n-deep")).parentId.toString(), QStringLiteral("n-build"));
@@ -58,8 +58,7 @@ private slots:
 
     // A unit scope folds over the WHOLE subtree (unit + all descendants), and a
     // leaf folds to just its own sessions. Archived items never count.
-    void unitScopeFoldsSubtree()
-    {
+    void unitScopeFoldsSubtree() {
         InMemorySessionStore store;
         QCOMPARE(store.sessionCount(unitScope("n-acme")), 7);
         QCOMPARE(store.sessionCount(unitScope("n-build")), 6);
@@ -69,24 +68,21 @@ private slots:
         QCOMPARE(store.sessions(unitScope("n-deep")).size(), 1);
     }
 
-    void allAndArchivedScopes()
-    {
+    void allAndArchivedScopes() {
         InMemorySessionStore store;
-        QCOMPARE(store.sessionCount({ NodeType::AllSessions, -1, {} }), 8);
-        QCOMPARE(store.sessionCount({ NodeType::Archived, -1, {} }), 1);
+        QCOMPARE(store.sessionCount({NodeType::AllSessions, -1, {}}), 8);
+        QCOMPARE(store.sessionCount({NodeType::Archived, -1, {}}), 1);
     }
 
-    void tagScopeIgnoresArchived()
-    {
+    void tagScopeIgnoresArchived() {
         InMemorySessionStore store;
-        QCOMPARE(store.sessionCount({ NodeType::Tag, 1, {} }), 3);
-        QCOMPARE(store.sessionCount({ NodeType::Tag, 2, {} }), 2);
+        QCOMPARE(store.sessionCount({NodeType::Tag, 1, {}}), 3);
+        QCOMPARE(store.sessionCount({NodeType::Tag, 2, {}}), 2);
     }
 
     // Creating a session under a deep unit lifts the folded counts of that unit,
     // its ancestors, and the global All scope, via the same recursion.
-    void createUnderDeepUnitFoldsUp()
-    {
+    void createUnderDeepUnitFoldsUp() {
         InMemorySessionStore store;
         QSignalSpy spy(&store, &persistence::ISessionStore::changed);
         const int before = store.sessionCount(unitScope("n-acme"));
@@ -97,18 +93,16 @@ private slots:
         QCOMPARE(store.sessionCount(unitScope("n-worker")), 2);
         QCOMPARE(store.sessionCount(unitScope("n-deep")), 2);
         QCOMPARE(store.sessionCount(unitScope("n-acme")), before + 1);
-        QCOMPARE(store.sessionCount({ NodeType::AllSessions, -1, {} }), 9);
+        QCOMPARE(store.sessionCount({NodeType::AllSessions, -1, {}}), 9);
     }
 
-    void unknownUnitYieldsNothing()
-    {
+    void unknownUnitYieldsNothing() {
         InMemorySessionStore store;
         QVERIFY(!store.unit(U("nope")).isValid());
         QCOMPARE(store.sessionCount(unitScope("nope")), 0);
     }
 
-    void titleReturnsStoredTitle()
-    {
+    void titleReturnsStoredTitle() {
         InMemorySessionStore store;
         const SessionId id = store.newSession(U("n-worker"));
         QCOMPARE(store.title(id), QStringLiteral("New session"));
@@ -122,8 +116,7 @@ private slots:
 
     // createUnit with an empty parent adds a new root; with a parent it becomes a
     // child reachable via the same unitChildren primitive.
-    void createUnitAsRootAndChild()
-    {
+    void createUnitAsRootAndChild() {
         InMemorySessionStore store;
         QSignalSpy spy(&store, &persistence::ISessionStore::changed);
 
@@ -141,8 +134,7 @@ private slots:
         QVERIFY(child != root);
     }
 
-    void renameSetsTitle()
-    {
+    void renameSetsTitle() {
         InMemorySessionStore store;
         const SessionId id = store.newSession(U("n-worker"));
         QSignalSpy spy(&store, &persistence::ISessionStore::changed);
@@ -152,8 +144,7 @@ private slots:
         QVERIFY(spy.count() >= 1);
     }
 
-    void deleteRemovesSession()
-    {
+    void deleteRemovesSession() {
         InMemorySessionStore store;
         const SessionId id = store.newSession(U("n-worker"));
         QCOMPARE(store.sessionCount(unitScope("n-worker")), 2);
@@ -165,8 +156,7 @@ private slots:
         QVERIFY(store.title(id).isEmpty()); // gone
     }
 
-    void pinFloatsToTopOfScope()
-    {
+    void pinFloatsToTopOfScope() {
         InMemorySessionStore store;
         const SessionId a = store.newSession(U("n-worker"));
         const SessionId b = store.newSession(U("n-worker"));
@@ -186,8 +176,7 @@ private slots:
         QVERIFY(!store.isPinned(b));
     }
 
-    void createTagAppendsWithUniqueId()
-    {
+    void createTagAppendsWithUniqueId() {
         InMemorySessionStore store;
         QSignalSpy spy(&store, &persistence::ISessionStore::changed);
 
@@ -200,10 +189,9 @@ private slots:
         QVERIFY(a > 2 && b > 2);
     }
 
-    // The SessionId-keyed API is the only session key into the store: newSession mints a real opaque
-    // id, and content/title/pin/archive/delete all round-trip through it.
-    void sessionIdKeyedCrud()
-    {
+    // The SessionId-keyed API is the only session key into the store: newSession mints a real
+    // opaque id, and content/title/pin/archive/delete all round-trip through it.
+    void sessionIdKeyedCrud() {
         InMemorySessionStore store;
         const SessionId sid = store.newSession(U("n-worker"));
         QVERIFY(!sid.isEmpty());
@@ -212,7 +200,7 @@ private slots:
 
         // The new session appears in the All scope keyed by its real SessionId.
         bool present = false;
-        for (const auto& c : store.sessions({ NodeType::AllSessions, -1, {} })) {
+        for (const auto& c : store.sessions({NodeType::AllSessions, -1, {}})) {
             present = present || c.sessionId == sid;
         }
         QVERIFY(present);
@@ -229,15 +217,14 @@ private slots:
         QVERIFY(!store.isPinned(sid));
 
         store.setArchived(sid, true);
-        QCOMPARE(store.sessionCount({ NodeType::Archived, -1, {} }), 2); // seed has 1 archived + this
+        QCOMPARE(store.sessionCount({NodeType::Archived, -1, {}}), 2); // seed has 1 archived + this
 
         store.deleteSession(sid);
         QVERIFY(store.title(sid).isEmpty());
     }
 
     // Typed ids round-trip through their string form (daemon string_id parity).
-    void typedIdsRoundTrip()
-    {
+    void typedIdsRoundTrip() {
         QCOMPARE(UnitId(QStringLiteral("u-1")).toString(), QStringLiteral("u-1"));
         QVERIFY(UnitId() != UnitId(QStringLiteral("u-1")));
         QVERIFY(UnitId(QStringLiteral("x")) == UnitId(QStringLiteral("x")));

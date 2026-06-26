@@ -1,7 +1,6 @@
 #pragma once
 
 #include "fleet/isession_roster.h"
-
 #include "uimodels/variant_list_model.h"
 
 namespace daemonnet {

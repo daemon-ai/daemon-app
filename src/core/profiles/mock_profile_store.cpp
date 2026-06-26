@@ -7,13 +7,11 @@ namespace {
 
 const QString kCacheFile = QStringLiteral("profiles.json");
 
-
 QVariantMap mkProfile(const QString& id, const QString& name, const QString& model,
                       const QString& description, const QString& systemPrompt,
                       const QStringList& skills, const QStringList& tools, bool isDefault,
                       const QString& provider, const QString& memoryProvider,
-                      const QString& contextEngine)
-{
+                      const QString& contextEngine) {
     QVariantMap m;
     m[QStringLiteral("id")] = id;
     m[QStringLiteral("name")] = name;
@@ -38,8 +36,7 @@ QVariantMap mkProfile(const QString& id, const QString& name, const QString& mod
 
 // Fill any missing daemon ProfileSpec keys on a (possibly cached, older-shape)
 // row so the per-agent Profile tab always has the full field set to render.
-void normalizeProfile(QVariantMap& m)
-{
+void normalizeProfile(QVariantMap& m) {
     const auto ensure = [&m](const QString& key, const QVariant& fallback) {
         if (!m.contains(key)) {
             m.insert(key, fallback);
@@ -56,33 +53,28 @@ void normalizeProfile(QVariantMap& m)
 } // namespace
 
 MockProfileStore::MockProfileStore(QObject* parent)
-    : IProfileStore(parent)
-    , m_profiles(new uimodels::VariantListModel(this))
-{
+    : IProfileStore(parent), m_profiles(new uimodels::VariantListModel(this)) {
     m_profiles->upsert(mkProfile(
         QStringLiteral("prof-1"), QStringLiteral("General Assistant"),
-        QStringLiteral("llama-3.1-8b-instruct"),
-        QStringLiteral("Balanced everyday agent."),
+        QStringLiteral("llama-3.1-8b-instruct"), QStringLiteral("Balanced everyday agent."),
         QStringLiteral("You are a helpful, concise assistant."),
-        { QStringLiteral("web-search"), QStringLiteral("summarize") },
-        { QStringLiteral("read"), QStringLiteral("search") }, true,
-        QStringLiteral("genai"), QStringLiteral("mnemosyne"), QStringLiteral("lcm")));
+        {QStringLiteral("web-search"), QStringLiteral("summarize")},
+        {QStringLiteral("read"), QStringLiteral("search")}, true, QStringLiteral("genai"),
+        QStringLiteral("mnemosyne"), QStringLiteral("lcm")));
     m_profiles->upsert(mkProfile(
-        QStringLiteral("prof-2"), QStringLiteral("Coder"),
-        QStringLiteral("qwen2.5-coder-32b"),
+        QStringLiteral("prof-2"), QStringLiteral("Coder"), QStringLiteral("qwen2.5-coder-32b"),
         QStringLiteral("Code-focused agent with shell + edit."),
         QStringLiteral("You are an expert software engineer. Prefer minimal diffs."),
-        { QStringLiteral("code-review"), QStringLiteral("refactor") },
-        { QStringLiteral("read"), QStringLiteral("write"), QStringLiteral("shell"),
-          QStringLiteral("search") }, false,
-        QStringLiteral("llama_cpp"), QStringLiteral("mnemosyne"), QStringLiteral("lcm")));
+        {QStringLiteral("code-review"), QStringLiteral("refactor")},
+        {QStringLiteral("read"), QStringLiteral("write"), QStringLiteral("shell"),
+         QStringLiteral("search")},
+        false, QStringLiteral("llama_cpp"), QStringLiteral("mnemosyne"), QStringLiteral("lcm")));
     m_profiles->upsert(mkProfile(
-        QStringLiteral("prof-3"), QStringLiteral("Researcher"),
-        QStringLiteral("mixtral-8x7b"),
+        QStringLiteral("prof-3"), QStringLiteral("Researcher"), QStringLiteral("mixtral-8x7b"),
         QStringLiteral("Long-form research + citations."),
         QStringLiteral("You are a meticulous research analyst. Cite sources."),
-        { QStringLiteral("web-search"), QStringLiteral("summarize"), QStringLiteral("cite") },
-        { QStringLiteral("read"), QStringLiteral("search"), QStringLiteral("browse") }, false,
+        {QStringLiteral("web-search"), QStringLiteral("summarize"), QStringLiteral("cite")},
+        {QStringLiteral("read"), QStringLiteral("search"), QStringLiteral("browse")}, false,
         QStringLiteral("genai"), QStringLiteral("mnemosyne"), QStringLiteral("budgeted")));
     m_defaultId = QStringLiteral("prof-1");
     m_nextId = 4;
@@ -111,8 +103,7 @@ MockProfileStore::MockProfileStore(QObject* parent)
     }
 }
 
-void MockProfileStore::save() const
-{
+void MockProfileStore::save() const {
     QJsonObject obj;
     obj[QStringLiteral("rows")] = appcache::rowsToJson(m_profiles->rows());
     obj[QStringLiteral("defaultId")] = m_defaultId;
@@ -120,16 +111,16 @@ void MockProfileStore::save() const
     appcache::saveObject(kCacheFile, obj);
 }
 
-QObject* MockProfileStore::profiles() const { return m_profiles; }
+QObject* MockProfileStore::profiles() const {
+    return m_profiles;
+}
 
-QVariantMap MockProfileStore::profile(const QString& id) const
-{
+QVariantMap MockProfileStore::profile(const QString& id) const {
     const int row = m_profiles->indexOfId(id);
     return row >= 0 ? m_profiles->at(row) : QVariantMap{};
 }
 
-QStringList MockProfileStore::profileNames() const
-{
+QStringList MockProfileStore::profileNames() const {
     QStringList out;
     for (const QVariantMap& row : m_profiles->rows()) {
         out << row.value(QStringLiteral("name")).toString();
@@ -137,8 +128,7 @@ QStringList MockProfileStore::profileNames() const
     return out;
 }
 
-QVariantList MockProfileStore::availableSkills() const
-{
+QVariantList MockProfileStore::availableSkills() const {
     const auto mk = [](const QString& id, const QString& name, const QString& desc) {
         QVariantMap m;
         m[QStringLiteral("id")] = id;
@@ -162,8 +152,7 @@ QVariantList MockProfileStore::availableSkills() const
     };
 }
 
-QVariantList MockProfileStore::availableTools() const
-{
+QVariantList MockProfileStore::availableTools() const {
     const auto mk = [](const QString& id, const QString& name, const QString& desc) {
         QVariantMap m;
         m[QStringLiteral("id")] = id;
@@ -176,8 +165,7 @@ QVariantList MockProfileStore::availableTools() const
            QStringLiteral("Read workspace files.")),
         mk(QStringLiteral("write"), QStringLiteral("Write files"),
            QStringLiteral("Create and edit files.")),
-        mk(QStringLiteral("shell"), QStringLiteral("Shell"),
-           QStringLiteral("Run shell commands.")),
+        mk(QStringLiteral("shell"), QStringLiteral("Shell"), QStringLiteral("Run shell commands.")),
         mk(QStringLiteral("search"), QStringLiteral("Search"),
            QStringLiteral("Grep / find across the workspace.")),
         mk(QStringLiteral("browse"), QStringLiteral("Browse"),
@@ -185,23 +173,20 @@ QVariantList MockProfileStore::availableTools() const
     };
 }
 
-QString MockProfileStore::createProfile(const QString& name)
-{
+QString MockProfileStore::createProfile(const QString& name) {
     const QString id = QStringLiteral("prof-%1").arg(m_nextId++);
-    m_profiles->upsert(mkProfile(id, name.isEmpty() ? QStringLiteral("New profile") : name,
-                                 QStringLiteral("llama-3.1-8b-instruct"), QString(),
-                                 QStringLiteral("You are a helpful assistant."),
-                                 { QStringLiteral("web-search") },
-                                 { QStringLiteral("read"), QStringLiteral("search") }, false,
-                                 QStringLiteral("genai"), QStringLiteral("mnemosyne"),
-                                 QStringLiteral("lcm")));
+    m_profiles->upsert(
+        mkProfile(id, name.isEmpty() ? QStringLiteral("New profile") : name,
+                  QStringLiteral("llama-3.1-8b-instruct"), QString(),
+                  QStringLiteral("You are a helpful assistant."), {QStringLiteral("web-search")},
+                  {QStringLiteral("read"), QStringLiteral("search")}, false,
+                  QStringLiteral("genai"), QStringLiteral("mnemosyne"), QStringLiteral("lcm")));
     save();
     emit changed();
     return id;
 }
 
-void MockProfileStore::updateProfile(const QString& id, const QVariantMap& fields)
-{
+void MockProfileStore::updateProfile(const QString& id, const QVariantMap& fields) {
     const int row = m_profiles->indexOfId(id);
     if (row < 0) {
         return;
@@ -215,20 +200,18 @@ void MockProfileStore::updateProfile(const QString& id, const QVariantMap& field
     emit changed();
 }
 
-void MockProfileStore::remove(const QString& id)
-{
+void MockProfileStore::remove(const QString& id) {
     m_profiles->removeById(id);
     if (m_defaultId == id) {
         m_defaultId = m_profiles->count() > 0
-            ? m_profiles->at(0).value(QStringLiteral("id")).toString()
-            : QString();
+                          ? m_profiles->at(0).value(QStringLiteral("id")).toString()
+                          : QString();
     }
     save();
     emit changed();
 }
 
-void MockProfileStore::setDefault(const QString& id)
-{
+void MockProfileStore::setDefault(const QString& id) {
     if (m_profiles->indexOfId(id) < 0 || m_defaultId == id) {
         return;
     }

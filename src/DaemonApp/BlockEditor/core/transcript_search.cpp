@@ -80,8 +80,7 @@ void TranscriptSearchController::refresh() {
     m_current = -1;
 
     if (m_document && !m_query.isEmpty()) {
-        const Qt::CaseSensitivity cs =
-            m_caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive;
+        const Qt::CaseSensitivity cs = m_caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive;
         const int needleLen = static_cast<int>(m_query.size());
         const qsizetype blockCount = m_document->blockCount();
         for (qsizetype row = 0; row < blockCount; ++row) {

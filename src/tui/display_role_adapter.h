@@ -15,7 +15,7 @@ class DisplayRoleAdapter : public QIdentityProxyModel {
 
 public:
     enum class Kind {
-        Sidebar,          // flattened agent tree (depth indent + tag/state dots)
+        Sidebar,     // flattened agent tree (depth indent + tag/state dots)
         SessionList, // sessions for the current scope
     };
 

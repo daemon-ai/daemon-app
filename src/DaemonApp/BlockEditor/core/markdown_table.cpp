@@ -4,7 +4,6 @@
 
 #include <doc.h>
 #include <parser.h>
-
 #include <QRegularExpression>
 #include <QTextStream>
 
@@ -12,8 +11,7 @@ namespace be {
 
 namespace {
 
-const QRegularExpression &delimiterRe()
-{
+const QRegularExpression& delimiterRe() {
     static const QRegularExpression re(
         QStringLiteral("^\\s*\\|?\\s*:?-{1,}:?\\s*(\\|\\s*:?-{1,}:?\\s*)*\\|?\\s*$"));
     return re;
@@ -21,8 +19,7 @@ const QRegularExpression &delimiterRe()
 
 } // namespace
 
-bool looksLikeTable(const QString &content)
-{
+bool looksLikeTable(const QString& content) {
     const qsizetype firstBreak = content.indexOf(QLatin1Char('\n'));
     if (firstBreak < 0) {
         return false;
@@ -35,14 +32,13 @@ bool looksLikeTable(const QString &content)
 
     const qsizetype secondBreak = content.indexOf(QLatin1Char('\n'), firstBreak + 1);
     const QString secondLine = secondBreak < 0
-        ? content.mid(firstBreak + 1)
-        : content.mid(firstBreak + 1, secondBreak - firstBreak - 1);
+                                   ? content.mid(firstBreak + 1)
+                                   : content.mid(firstBreak + 1, secondBreak - firstBreak - 1);
 
     return delimiterRe().match(secondLine).hasMatch();
 }
 
-TableData parseTable(const QString &content)
-{
+TableData parseTable(const QString& content) {
     TableData data;
 
     QString input = content;
@@ -54,11 +50,11 @@ TableData parseTable(const QString &content)
         return data;
     }
 
-    const MD::Table *table = nullptr;
-    for (const auto &itemPtr : document->items()) {
-        const MD::Item *item = itemPtr.data();
+    const MD::Table* table = nullptr;
+    for (const auto& itemPtr : document->items()) {
+        const MD::Item* item = itemPtr.data();
         if (item && item->type() == MD::ItemType::Table) {
-            table = static_cast<const MD::Table *>(item);
+            table = static_cast<const MD::Table*>(item);
             break;
         }
     }
@@ -68,7 +64,7 @@ TableData parseTable(const QString &content)
 
     CoordinateMap map;
     map.rebuild(content);
-    const QString &text = map.text();
+    const QString& text = map.text();
 
     data.columns = table->columnsCount();
     data.alignments.reserve(data.columns);
@@ -79,7 +75,7 @@ TableData parseTable(const QString &content)
     // Slice a cell to its trimmed raw text and the UTF-16 range of that trimmed
     // content within the block markdown. `fallbackOffset` is the insertion point
     // used for empty/null cells so they still produce a usable zero-length range.
-    const auto sliceCell = [&](const MD::TableCell *cell, qsizetype fallbackOffset) -> TableCell {
+    const auto sliceCell = [&](const MD::TableCell* cell, qsizetype fallbackOffset) -> TableCell {
         if (!cell || cell->isNullPositions()) {
             return TableCell{QString(), fallbackOffset, fallbackOffset};
         }
@@ -107,13 +103,13 @@ TableData parseTable(const QString &content)
         return TableCell{trimmed, rawStart, rawStart + trimmed.size()};
     };
 
-    const auto &rows = table->rows();
+    const auto& rows = table->rows();
     for (qsizetype r = 0; r < rows.size(); ++r) {
-        const MD::TableRow *row = rows[r].data();
+        const MD::TableRow* row = rows[r].data();
         QVector<TableCell> cells;
         qsizetype runningOffset = 0;
         if (row) {
-            for (const auto &cellPtr : row->cells()) {
+            for (const auto& cellPtr : row->cells()) {
                 const TableCell cell = sliceCell(cellPtr.data(), runningOffset);
                 runningOffset = cell.rawEnd;
                 cells.push_back(cell);

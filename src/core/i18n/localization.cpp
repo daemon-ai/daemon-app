@@ -13,8 +13,7 @@ namespace {
 QTranslator* g_appTranslator = nullptr;
 QTranslator* g_qtTranslator = nullptr;
 
-void clear(QTranslator*& t)
-{
+void clear(QTranslator*& t) {
     if (t != nullptr) {
         QCoreApplication::removeTranslator(t);
         delete t;
@@ -22,33 +21,30 @@ void clear(QTranslator*& t)
     }
 }
 
-bool isSourceLanguage(const QString& code, const QString& lang)
-{
+bool isSourceLanguage(const QString& code, const QString& lang) {
     return code == QLatin1String("en") || lang == QLatin1String("en");
 }
 
 } // namespace
 
-QList<LocaleOption> availableLocales()
-{
+QList<LocaleOption> availableLocales() {
     return {
-        { QStringLiteral("system"), QStringLiteral("System default") },
-        { QStringLiteral("en"), QStringLiteral("English") },
-        { QStringLiteral("ar"), QStringLiteral("\u0627\u0644\u0639\u0631\u0628\u064a\u0629 (Arabic)") },
-        { QStringLiteral("pseudo"), QStringLiteral("Pseudolocale (i18n test)") },
+        {QStringLiteral("system"), QStringLiteral("System default")},
+        {QStringLiteral("en"), QStringLiteral("English")},
+        {QStringLiteral("ar"),
+         QStringLiteral("\u0627\u0644\u0639\u0631\u0628\u064a\u0629 (Arabic)")},
+        {QStringLiteral("pseudo"), QStringLiteral("Pseudolocale (i18n test)")},
     };
 }
 
-QString resolveLocaleName(const QString& code)
-{
+QString resolveLocaleName(const QString& code) {
     if (code.isEmpty() || code == QLatin1String("system")) {
         return QLocale::system().name();
     }
     return code;
 }
 
-Qt::LayoutDirection applyLocale(const QString& code)
-{
+Qt::LayoutDirection applyLocale(const QString& code) {
     clear(g_appTranslator);
     clear(g_qtTranslator);
 
@@ -61,8 +57,8 @@ Qt::LayoutDirection applyLocale(const QString& code)
     auto* appTranslator = new QTranslator;
     bool appLoaded = false;
     if (code == QLatin1String("pseudo") || code == QLatin1String("ar")) {
-        appLoaded = appTranslator->load(QStringLiteral("daemon-app_") + code,
-                                        QStringLiteral(":/i18n"));
+        appLoaded =
+            appTranslator->load(QStringLiteral("daemon-app_") + code, QStringLiteral(":/i18n"));
     } else if (!isSourceLanguage(code, lang)) {
         appLoaded = appTranslator->load(QLocale(name), QStringLiteral("daemon-app"),
                                         QStringLiteral("_"), QStringLiteral(":/i18n"));

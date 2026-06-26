@@ -2,13 +2,11 @@
 
 #include "tui_palette.h"
 
+#include <QRect>
 #include <Tui/ZEvent.h>
 #include <Tui/ZPainter.h>
 
-#include <QRect>
-
-void SearchInputBox::setTypingActive(bool active)
-{
+void SearchInputBox::setTypingActive(bool active) {
     if (m_typingActive == active) {
         return;
     }
@@ -16,8 +14,7 @@ void SearchInputBox::setTypingActive(bool active)
     update();
 }
 
-void SearchInputBox::paintEvent(Tui::ZPaintEvent* event)
-{
+void SearchInputBox::paintEvent(Tui::ZPaintEvent* event) {
     // Fully custom paint: this box never edits text itself (the session list
     // forwards keystrokes), so we draw a search affordance instead of the stock
     // line-edit chrome.
@@ -36,8 +33,7 @@ void SearchInputBox::paintEvent(Tui::ZPaintEvent* event)
     const QString q = text();
     if (q.isEmpty()) {
         if (x < w) {
-            p->writeWithColors(x, 0, tr("Search sessions").left(w - x),
-                               tpal::muted(), bg);
+            p->writeWithColors(x, 0, tr("Search sessions").left(w - x), tpal::muted(), bg);
         }
         return;
     }
@@ -53,8 +49,7 @@ void SearchInputBox::paintEvent(Tui::ZPaintEvent* event)
     }
 }
 
-void TranscriptSearchBox::keyEvent(Tui::ZKeyEvent* event)
-{
+void TranscriptSearchBox::keyEvent(Tui::ZKeyEvent* event) {
     const int key = event->key();
     const bool shift = (event->modifiers() & Qt::ShiftModifier) != 0;
     if (key == Qt::Key_Escape) {
@@ -62,8 +57,7 @@ void TranscriptSearchBox::keyEvent(Tui::ZKeyEvent* event)
         event->accept();
         return;
     }
-    if (key == Qt::Key_Enter || key == Qt::Key_Return
-        || event->text() == QStringLiteral("\r")) {
+    if (key == Qt::Key_Enter || key == Qt::Key_Return || event->text() == QStringLiteral("\r")) {
         if (shift) {
             emit previousRequested();
         } else {

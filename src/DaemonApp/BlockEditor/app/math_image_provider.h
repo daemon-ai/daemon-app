@@ -29,15 +29,14 @@ inline constexpr float kMathBaseFontPt = 16.f;
 //
 // tex::LaTeX::init()/release() are driven once by the host (application.cpp);
 // this provider only parses, and assumes init has already run.
-class MathImageProvider : public QQuickImageProvider
-{
+class MathImageProvider : public QQuickImageProvider {
 public:
     MathImageProvider();
 
-    QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
+    QImage requestImage(const QString& id, QSize* size, const QSize& requestedSize) override;
 
 private:
-    QImage renderLatex(const QString &latex, bool displayMode, int fontPx, quint32 colorArgb);
+    QImage renderLatex(const QString& latex, bool displayMode, int fontPx, quint32 colorArgb);
     QImage errorImage() const;
 
     QCache<QString, QImage> m_cache;
@@ -51,6 +50,6 @@ private:
 // non-reentrant parser lock with requestImage(), so it is safe to call from the
 // GUI thread while the provider renders on the pixmap thread. Returns an invalid
 // QSizeF if parsing fails.
-QSizeF measureMathLogicalSize(const QString &latex, bool display, int fontPx);
+QSizeF measureMathLogicalSize(const QString& latex, bool display, int fontPx);
 
 } // namespace be::app

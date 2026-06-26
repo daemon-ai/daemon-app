@@ -1,8 +1,8 @@
 #include "sidebar_model.h"
 
 #include "daemonnet/idaemonnet.h"
-#include "domain/unit_node.h"
 #include "domain/ids.h"
+#include "domain/unit_node.h"
 #include "persistence/isession_store.h"
 
 #include <QHash>
@@ -14,18 +14,13 @@ using domain::UnitId;
 using domain::UnitKind;
 using domain::UnitNode;
 
-SidebarModel::SidebarModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
-}
+SidebarModel::SidebarModel(QObject* parent) : QAbstractListModel(parent) {}
 
-QObject* SidebarModel::store() const
-{
+QObject* SidebarModel::store() const {
     return m_store;
 }
 
-void SidebarModel::setStore(QObject* store)
-{
+void SidebarModel::setStore(QObject* store) {
     auto* sessionStore = qobject_cast<persistence::ISessionStore*>(store);
     if (m_store == sessionStore) {
         return;
@@ -41,13 +36,11 @@ void SidebarModel::setStore(QObject* store)
     rebuild();
 }
 
-QObject* SidebarModel::daemonNet() const
-{
+QObject* SidebarModel::daemonNet() const {
     return m_net;
 }
 
-void SidebarModel::setDaemonNet(QObject* net)
-{
+void SidebarModel::setDaemonNet(QObject* net) {
     auto* dn = qobject_cast<daemonnet::IDaemonNet*>(net);
     if (m_net == dn) {
         return;
@@ -63,18 +56,16 @@ void SidebarModel::setDaemonNet(QObject* net)
     rebuild();
 }
 
-bool SidebarModel::isExpanded(const QString& id) const
-{
+bool SidebarModel::isExpanded(const QString& id) const {
     return !m_collapsed.contains(id);
 }
 
-bool SidebarModel::isSectionExpanded(const QString& sectionKey) const
-{
+bool SidebarModel::isSectionExpanded(const QString& sectionKey) const {
     return !m_sectionCollapsed.contains(sectionKey);
 }
 
-void SidebarModel::pushSectionHeader(const QString& label, NodeType type, const QString& sectionKey)
-{
+void SidebarModel::pushSectionHeader(const QString& label, NodeType type,
+                                     const QString& sectionKey) {
     // A collapsible section group: not selectable (it is a header), but carries
     // hasChildren + expanded so the GUI twistie and the TUI disclosure plumbing
     // (clickAt / tree_list_view) fold the whole section under it.
@@ -89,14 +80,13 @@ void SidebarModel::pushSectionHeader(const QString& label, NodeType type, const 
     m_rows.push_back(r);
 }
 
-void SidebarModel::appendUnitRows(const UnitNode& node, int depth)
-{
+void SidebarModel::appendUnitRows(const UnitNode& node, int depth) {
     const QList<UnitNode> children = m_store->unitChildren(node.id);
     const bool expanded = isExpanded(node.id.toString());
 
     Row r;
     r.label = node.name;
-    r.count = m_store->sessionCount({ NodeType::Unit, -1, node.id, {} });
+    r.count = m_store->sessionCount({NodeType::Unit, -1, node.id, {}});
     r.type = NodeType::Unit;
     r.unitId = node.id.toString();
     r.selectable = true;
@@ -118,27 +108,84 @@ void SidebarModel::appendUnitRows(const UnitNode& node, int depth)
     }
 }
 
-void SidebarModel::rebuild()
-{
+void SidebarModel::rebuild() {
     beginResetModel();
     m_rows.clear();
     if (m_store) {
-        m_rows.push_back({ tr("All Sessions"),
-                           m_store->sessionCount({ NodeType::AllSessions, -1, {}, {} }),
-                           NodeType::AllSessions, -1, {}, false, true, {}, 0, false, false, 0,
-                           0, {}, {}, {}, {}, {}, {}, {}, {}, -1, {} });
-        m_rows.push_back({ tr("Archived"),
-                           m_store->sessionCount({ NodeType::Archived, -1, {}, {} }),
-                           NodeType::Archived, -1, {}, false, true, {}, 0, false, false, 0, 0, {},
-                           {}, {}, {}, {}, {}, {}, {}, -1, {} });
+        m_rows.push_back({tr("All Sessions"),
+                          m_store->sessionCount({NodeType::AllSessions, -1, {}, {}}),
+                          NodeType::AllSessions,
+                          -1,
+                          {},
+                          false,
+                          true,
+                          {},
+                          0,
+                          false,
+                          false,
+                          0,
+                          0,
+                          {},
+                          {},
+                          {},
+                          {},
+                          {},
+                          {},
+                          {},
+                          {},
+                          -1,
+                          {}});
+        m_rows.push_back({tr("Archived"),
+                          m_store->sessionCount({NodeType::Archived, -1, {}, {}}),
+                          NodeType::Archived,
+                          -1,
+                          {},
+                          false,
+                          true,
+                          {},
+                          0,
+                          false,
+                          false,
+                          0,
+                          0,
+                          {},
+                          {},
+                          {},
+                          {},
+                          {},
+                          {},
+                          {},
+                          {},
+                          -1,
+                          {}});
 
         // Tags section sits above Fleet (cross-cutting labels before the org chart).
         pushSectionHeader(tr("Tags"), NodeType::TagSeparator, QStringLiteral("tags"));
         if (isSectionExpanded(QStringLiteral("tags"))) {
             for (const domain::Tag& t : m_store->tags()) {
-                m_rows.push_back({ t.name, m_store->sessionCount({ NodeType::Tag, t.id, {}, {} }),
-                                   NodeType::Tag, t.id, {}, false, true, t.color,
-                                   0, false, false, 0, 0, {}, {}, {}, {}, {}, {}, {}, {}, -1, {} });
+                m_rows.push_back({t.name,
+                                  m_store->sessionCount({NodeType::Tag, t.id, {}, {}}),
+                                  NodeType::Tag,
+                                  t.id,
+                                  {},
+                                  false,
+                                  true,
+                                  t.color,
+                                  0,
+                                  false,
+                                  false,
+                                  0,
+                                  0,
+                                  {},
+                                  {},
+                                  {},
+                                  {},
+                                  {},
+                                  {},
+                                  {},
+                                  {},
+                                  -1,
+                                  {}});
             }
         }
 
@@ -158,8 +205,7 @@ void SidebarModel::rebuild()
     emit treeChanged();
 }
 
-void SidebarModel::appendTransportRows()
-{
+void SidebarModel::appendTransportRows() {
     if (!m_net) {
         return;
     }
@@ -223,13 +269,11 @@ void SidebarModel::appendTransportRows()
     }
 }
 
-int SidebarModel::rowCount(const QModelIndex& parent) const
-{
+int SidebarModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(m_rows.size());
 }
 
-bool SidebarModel::rowIsCurrent(const Row& r) const
-{
+bool SidebarModel::rowIsCurrent(const Row& r) const {
     if (r.separator || !r.selectable) {
         return false;
     }
@@ -245,8 +289,7 @@ bool SidebarModel::rowIsCurrent(const Row& r) const
     }
 }
 
-QVariant SidebarModel::data(const QModelIndex& index, int role) const
-{
+QVariant SidebarModel::data(const QModelIndex& index, int role) const {
     if (index.row() < 0 || index.row() >= m_rows.size()) {
         return {};
     }
@@ -297,41 +340,28 @@ QVariant SidebarModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> SidebarModel::roleNames() const
-{
+QHash<int, QByteArray> SidebarModel::roleNames() const {
     return {
-        { LabelRole, "label" },
-        { CountRole, "count" },
-        { NodeTypeRole, "nodeType" },
-        { TagIdRole, "tagId" },
-        { UnitIdRole, "unitId" },
-        { IsSeparatorRole, "isSeparator" },
-        { SelectableRole, "selectable" },
-        { ColorRole, "color" },
-        { DepthRole, "depth" },
-        { HasChildrenRole, "hasChildren" },
-        { ExpandedRole, "expanded" },
-        { KindRole, "kind" },
-        { StateRole, "state" },
-        { CurrentRole, "current" },
-        { ProfileRole, "profile" },
-        { SessionIdRole, "sessionId" },
-        { TxKindRole, "txKind" },
-        { ConvTypeRole, "convType" },
-        { SubLabelRole, "subLabel" },
-        { PresenceRole, "presence" },
+        {LabelRole, "label"},           {CountRole, "count"},
+        {NodeTypeRole, "nodeType"},     {TagIdRole, "tagId"},
+        {UnitIdRole, "unitId"},         {IsSeparatorRole, "isSeparator"},
+        {SelectableRole, "selectable"}, {ColorRole, "color"},
+        {DepthRole, "depth"},           {HasChildrenRole, "hasChildren"},
+        {ExpandedRole, "expanded"},     {KindRole, "kind"},
+        {StateRole, "state"},           {CurrentRole, "current"},
+        {ProfileRole, "profile"},       {SessionIdRole, "sessionId"},
+        {TxKindRole, "txKind"},         {ConvTypeRole, "convType"},
+        {SubLabelRole, "subLabel"},     {PresenceRole, "presence"},
     };
 }
 
-void SidebarModel::emitCurrentChanged()
-{
+void SidebarModel::emitCurrentChanged() {
     if (!m_rows.isEmpty()) {
-        emit dataChanged(index(0), index(static_cast<int>(m_rows.size()) - 1), { CurrentRole });
+        emit dataChanged(index(0), index(static_cast<int>(m_rows.size()) - 1), {CurrentRole});
     }
 }
 
-void SidebarModel::setSelectionFromRow(int row)
-{
+void SidebarModel::setSelectionFromRow(int row) {
     if (row < 0 || row >= m_rows.size()) {
         return;
     }
@@ -357,13 +387,11 @@ void SidebarModel::setSelectionFromRow(int row)
     emitCurrentChanged();
 }
 
-void SidebarModel::activate(int row)
-{
+void SidebarModel::activate(int row) {
     setSelectionFromRow(row);
 }
 
-int SidebarModel::currentRow() const
-{
+int SidebarModel::currentRow() const {
     for (int i = 0; i < m_rows.size(); ++i) {
         if (rowIsCurrent(m_rows.at(i))) {
             return i;
@@ -372,8 +400,7 @@ int SidebarModel::currentRow() const
     return -1;
 }
 
-int SidebarModel::adjacentSelectableRow(int from, int delta) const
-{
+int SidebarModel::adjacentSelectableRow(int from, int delta) const {
     for (int i = from + delta; i >= 0 && i < m_rows.size(); i += delta) {
         const Row& r = m_rows.at(i);
         if (r.selectable && !r.separator) {
@@ -383,8 +410,7 @@ int SidebarModel::adjacentSelectableRow(int from, int delta) const
     return -1;
 }
 
-int SidebarModel::parentRow(int row) const
-{
+int SidebarModel::parentRow(int row) const {
     if (row < 0 || row >= m_rows.size() || !m_store) {
         return -1;
     }
@@ -405,8 +431,7 @@ int SidebarModel::parentRow(int row) const
     return -1;
 }
 
-bool SidebarModel::selectionInSubtree(const QString& rootId) const
-{
+bool SidebarModel::selectionInSubtree(const QString& rootId) const {
     if (m_selType != NodeType::Unit || !m_store) {
         return false;
     }
@@ -424,8 +449,7 @@ bool SidebarModel::selectionInSubtree(const QString& rootId) const
     return false;
 }
 
-void SidebarModel::toggleExpand(int row)
-{
+void SidebarModel::toggleExpand(int row) {
     if (row < 0 || row >= m_rows.size()) {
         return;
     }
@@ -479,8 +503,7 @@ void SidebarModel::toggleExpand(int row)
     }
 }
 
-void SidebarModel::selectNext()
-{
+void SidebarModel::selectNext() {
     const int cur = currentRow();
     const int next = adjacentSelectableRow(cur < 0 ? -1 : cur, 1);
     if (next >= 0) {
@@ -488,8 +511,7 @@ void SidebarModel::selectNext()
     }
 }
 
-void SidebarModel::selectPrevious()
-{
+void SidebarModel::selectPrevious() {
     const int cur = currentRow();
     const int prev = adjacentSelectableRow(cur < 0 ? static_cast<int>(m_rows.size()) : cur, -1);
     if (prev >= 0) {
@@ -497,15 +519,14 @@ void SidebarModel::selectPrevious()
     }
 }
 
-void SidebarModel::collapseCurrent()
-{
+void SidebarModel::collapseCurrent() {
     const int cur = currentRow();
     if (cur < 0) {
         return;
     }
     const Row& r = m_rows.at(cur);
-    if ((r.type == NodeType::Unit || r.type == NodeType::Transport) && r.hasChildren
-        && r.expanded) {
+    if ((r.type == NodeType::Unit || r.type == NodeType::Transport) && r.hasChildren &&
+        r.expanded) {
         toggleExpand(cur); // collapse; selection stays on this row
         return;
     }
@@ -515,8 +536,7 @@ void SidebarModel::collapseCurrent()
     }
 }
 
-void SidebarModel::expandCurrent()
-{
+void SidebarModel::expandCurrent() {
     const int cur = currentRow();
     if (cur < 0) {
         return;
@@ -537,16 +557,14 @@ void SidebarModel::expandCurrent()
     }
 }
 
-void SidebarModel::activateCurrent()
-{
+void SidebarModel::activateCurrent() {
     const int cur = currentRow();
     if (cur >= 0) {
         setSelectionFromRow(cur);
     }
 }
 
-void SidebarModel::collectExpandableIds(const QString& parentId, QSet<QString>& out) const
-{
+void SidebarModel::collectExpandableIds(const QString& parentId, QSet<QString>& out) const {
     if (!m_store) {
         return;
     }
@@ -559,8 +577,7 @@ void SidebarModel::collectExpandableIds(const QString& parentId, QSet<QString>& 
     }
 }
 
-bool SidebarModel::anyExpanded() const
-{
+bool SidebarModel::anyExpanded() const {
     QSet<QString> expandable;
     collectExpandableIds(QString(), expandable);
     for (const QString& id : expandable) {
@@ -571,8 +588,7 @@ bool SidebarModel::anyExpanded() const
     return false;
 }
 
-void SidebarModel::collectTransportExpandableIds(QSet<QString>& out) const
-{
+void SidebarModel::collectTransportExpandableIds(QSet<QString>& out) const {
     if (!m_net) {
         return;
     }
@@ -584,8 +600,7 @@ void SidebarModel::collectTransportExpandableIds(QSet<QString>& out) const
     }
 }
 
-bool SidebarModel::anyTransportExpanded() const
-{
+bool SidebarModel::anyTransportExpanded() const {
     QSet<QString> expandable;
     collectTransportExpandableIds(expandable);
     for (const QString& id : expandable) {
@@ -596,8 +611,7 @@ bool SidebarModel::anyTransportExpanded() const
     return false;
 }
 
-void SidebarModel::expandAllTransports()
-{
+void SidebarModel::expandAllTransports() {
     QSet<QString> expandable;
     collectTransportExpandableIds(expandable);
     for (const QString& id : expandable) {
@@ -606,8 +620,7 @@ void SidebarModel::expandAllTransports()
     rebuild();
 }
 
-void SidebarModel::collapseAllTransports()
-{
+void SidebarModel::collapseAllTransports() {
     QSet<QString> expandable;
     collectTransportExpandableIds(expandable);
     for (const QString& id : expandable) {
@@ -616,8 +629,7 @@ void SidebarModel::collapseAllTransports()
     rebuild();
 }
 
-void SidebarModel::expandAll()
-{
+void SidebarModel::expandAll() {
     // Unit-scoped: only un-collapse fleet unit ids, leaving any collapsed transport
     // nodes (a disjoint id namespace sharing m_collapsed) untouched.
     QSet<QString> expandable;
@@ -628,8 +640,7 @@ void SidebarModel::expandAll()
     rebuild();
 }
 
-void SidebarModel::collapseAll()
-{
+void SidebarModel::collapseAll() {
     QSet<QString> expandable;
     collectExpandableIds(QString(), expandable);
     // Union (not replace) so transport-node collapse state survives.
@@ -654,8 +665,7 @@ void SidebarModel::collapseAll()
     rebuild();
 }
 
-void SidebarModel::createRootUnit()
-{
+void SidebarModel::createRootUnit() {
     if (!m_store) {
         return;
     }
@@ -669,8 +679,7 @@ void SidebarModel::createRootUnit()
     emitCurrentChanged();
 }
 
-void SidebarModel::createTag()
-{
+void SidebarModel::createTag() {
     if (!m_store) {
         return;
     }

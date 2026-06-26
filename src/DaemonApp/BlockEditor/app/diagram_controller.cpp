@@ -8,16 +8,14 @@ namespace {
 
 // Worker object that runs the (pure) engine off the GUI thread. Lives on the
 // controller's worker thread; results are delivered via a queued signal.
-class DiagramWorker : public QObject
-{
+class DiagramWorker : public QObject {
     Q_OBJECT
 public:
     using Style = be::diagram::Style;
     using SnapshotPtr = be::diagram::RenderSnapshotPtr;
 
 public slots:
-    void build(const QString &source, be::diagram::Style style, qreal maxWidth, quint64 requestId)
-    {
+    void build(const QString& source, be::diagram::Style style, qreal maxWidth, quint64 requestId) {
         be::diagram::DiagramEngine engine;
         SnapshotPtr snap = engine.buildSnapshot(source, style, maxWidth, requestId);
         emit produced(snap, requestId);
@@ -29,9 +27,7 @@ signals:
 
 } // namespace
 
-DiagramController::DiagramController(QObject *parent)
-    : QObject(parent)
-{
+DiagramController::DiagramController(QObject* parent) : QObject(parent) {
     qRegisterMetaType<be::diagram::RenderSnapshotPtr>("be::diagram::RenderSnapshotPtr");
     qRegisterMetaType<be::diagram::Style>("be::diagram::Style");
 
@@ -39,7 +35,7 @@ DiagramController::DiagramController(QObject *parent)
     m_debounce.setInterval(0);
     connect(&m_debounce, &QTimer::timeout, this, &DiagramController::startBuild);
 
-    auto *worker = new DiagramWorker;
+    auto* worker = new DiagramWorker;
     worker->moveToThread(&m_worker);
     connect(&m_worker, &QThread::finished, worker, &QObject::deleteLater);
     connect(this, &DiagramController::buildRequested, worker, &DiagramWorker::build);
@@ -50,14 +46,12 @@ DiagramController::DiagramController(QObject *parent)
     m_worker.start();
 }
 
-DiagramController::~DiagramController()
-{
+DiagramController::~DiagramController() {
     m_worker.quit();
     m_worker.wait();
 }
 
-void DiagramController::setSource(const QString &source)
-{
+void DiagramController::setSource(const QString& source) {
     if (m_source == source) {
         return;
     }
@@ -66,8 +60,7 @@ void DiagramController::setSource(const QString &source)
     scheduleRebuild();
 }
 
-void DiagramController::setContentWidth(qreal width)
-{
+void DiagramController::setContentWidth(qreal width) {
     if (qFuzzyCompare(m_contentWidth, width)) {
         return;
     }
@@ -76,8 +69,7 @@ void DiagramController::setContentWidth(qreal width)
     scheduleRebuild();
 }
 
-void DiagramController::setFontPixelSize(qreal size)
-{
+void DiagramController::setFontPixelSize(qreal size) {
     if (qFuzzyCompare(m_fontPixelSize, size)) {
         return;
     }
@@ -86,8 +78,7 @@ void DiagramController::setFontPixelSize(qreal size)
     scheduleRebuild();
 }
 
-void DiagramController::setSurfaceColor(const QColor &c)
-{
+void DiagramController::setSurfaceColor(const QColor& c) {
     if (m_style.nodeFill == c) {
         return;
     }
@@ -96,8 +87,7 @@ void DiagramController::setSurfaceColor(const QColor &c)
     scheduleRebuild();
 }
 
-void DiagramController::setBorderColor(const QColor &c)
-{
+void DiagramController::setBorderColor(const QColor& c) {
     if (m_style.nodeStroke == c) {
         return;
     }
@@ -107,8 +97,7 @@ void DiagramController::setBorderColor(const QColor &c)
     scheduleRebuild();
 }
 
-void DiagramController::setTextColor(const QColor &c)
-{
+void DiagramController::setTextColor(const QColor& c) {
     if (m_style.textColor == c) {
         return;
     }
@@ -117,8 +106,7 @@ void DiagramController::setTextColor(const QColor &c)
     scheduleRebuild();
 }
 
-void DiagramController::setEdgeColor(const QColor &c)
-{
+void DiagramController::setEdgeColor(const QColor& c) {
     if (m_style.edgeStroke == c) {
         return;
     }
@@ -127,8 +115,7 @@ void DiagramController::setEdgeColor(const QColor &c)
     scheduleRebuild();
 }
 
-void DiagramController::setClusterColor(const QColor &c)
-{
+void DiagramController::setClusterColor(const QColor& c) {
     if (m_style.clusterFill == c) {
         return;
     }
@@ -138,33 +125,27 @@ void DiagramController::setClusterColor(const QColor &c)
     scheduleRebuild();
 }
 
-bool DiagramController::hasError() const
-{
+bool DiagramController::hasError() const {
     return m_snapshot && m_snapshot->hasError;
 }
 
-QString DiagramController::errorText() const
-{
+QString DiagramController::errorText() const {
     return m_snapshot ? m_snapshot->errorText : QString();
 }
 
-qreal DiagramController::diagramWidth() const
-{
+qreal DiagramController::diagramWidth() const {
     return m_snapshot ? m_snapshot->diagramBounds.width() : 0.0;
 }
 
-qreal DiagramController::diagramHeight() const
-{
+qreal DiagramController::diagramHeight() const {
     return m_snapshot ? m_snapshot->diagramBounds.height() : 0.0;
 }
 
-void DiagramController::scheduleRebuild()
-{
+void DiagramController::scheduleRebuild() {
     m_debounce.start();
 }
 
-void DiagramController::startBuild()
-{
+void DiagramController::startBuild() {
     if (m_source.trimmed().isEmpty()) {
         publish(nullptr, m_requestId.fetch_add(1) + 1);
         return;
@@ -176,8 +157,7 @@ void DiagramController::startBuild()
     emit buildRequested(m_source, style, maxWidth, id);
 }
 
-void DiagramController::publish(be::diagram::RenderSnapshotPtr snapshot, quint64 requestId)
-{
+void DiagramController::publish(be::diagram::RenderSnapshotPtr snapshot, quint64 requestId) {
     // Latest-wins: drop results from superseded requests.
     if (requestId < m_requestId.load()) {
         return;

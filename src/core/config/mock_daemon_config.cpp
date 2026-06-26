@@ -8,55 +8,53 @@ namespace {
 const QString kCacheFile = QStringLiteral("daemon_config.json");
 } // namespace
 
-MockDaemonConfig::MockDaemonConfig(QObject* parent)
-    : IDaemonConfig(parent)
-{
+MockDaemonConfig::MockDaemonConfig(QObject* parent) : IDaemonConfig(parent) {
     // Believable node-side defaults across every settings section.
     m_values = {
         // Model defaults
-        { QStringLiteral("model/default"), QStringLiteral("llama-3.1-8b-instruct") },
-        { QStringLiteral("model/effort"), QStringLiteral("Balanced") },
-        { QStringLiteral("model/fast"), false },
+        {QStringLiteral("model/default"), QStringLiteral("llama-3.1-8b-instruct")},
+        {QStringLiteral("model/effort"), QStringLiteral("Balanced")},
+        {QStringLiteral("model/fast"), false},
         // Chat
-        { QStringLiteral("chat/streaming"), true },
-        { QStringLiteral("chat/sendOnEnter"), true },
-        { QStringLiteral("chat/showTokenCounts"), true },
-        { QStringLiteral("chat/systemPrompt"), QString() },
+        {QStringLiteral("chat/streaming"), true},
+        {QStringLiteral("chat/sendOnEnter"), true},
+        {QStringLiteral("chat/showTokenCounts"), true},
+        {QStringLiteral("chat/systemPrompt"), QString()},
         // Safety
-        { QStringLiteral("safety/approvalPolicy"), QStringLiteral("On request") },
-        { QStringLiteral("safety/sandbox"), QStringLiteral("Workspace write") },
-        { QStringLiteral("safety/allowNetwork"), false },
+        {QStringLiteral("safety/approvalPolicy"), QStringLiteral("On request")},
+        {QStringLiteral("safety/sandbox"), QStringLiteral("Workspace write")},
+        {QStringLiteral("safety/allowNetwork"), false},
         // Memory & context
-        { QStringLiteral("memory/contextWindow"), 128000 },
-        { QStringLiteral("memory/autoCompact"), true },
-        { QStringLiteral("memory/persistMemory"), true },
+        {QStringLiteral("memory/contextWindow"), 128000},
+        {QStringLiteral("memory/autoCompact"), true},
+        {QStringLiteral("memory/persistMemory"), true},
         // Workspace
-        { QStringLiteral("workspace/root"), QStringLiteral("~/daemon/workspace") },
-        { QStringLiteral("workspace/followGitignore"), true },
+        {QStringLiteral("workspace/root"), QStringLiteral("~/daemon/workspace")},
+        {QStringLiteral("workspace/followGitignore"), true},
         // Voice
-        { QStringLiteral("voice/enabled"), false },
-        { QStringLiteral("voice/model"), QStringLiteral("whisper-small") },
+        {QStringLiteral("voice/enabled"), false},
+        {QStringLiteral("voice/model"), QStringLiteral("whisper-small")},
         // Advanced
-        { QStringLiteral("advanced/logLevel"), QStringLiteral("Info") },
-        { QStringLiteral("advanced/telemetry"), false },
-        { QStringLiteral("advanced/experimentalTools"), false },
+        {QStringLiteral("advanced/logLevel"), QStringLiteral("Info")},
+        {QStringLiteral("advanced/telemetry"), false},
+        {QStringLiteral("advanced/experimentalTools"), false},
     };
 
     m_options = {
-        { QStringLiteral("model/effort"),
-          { QStringLiteral("Fast"), QStringLiteral("Balanced"), QStringLiteral("Thorough") } },
-        { QStringLiteral("safety/approvalPolicy"),
-          { QStringLiteral("Never"), QStringLiteral("On request"), QStringLiteral("On failure"),
-            QStringLiteral("Always") } },
-        { QStringLiteral("safety/sandbox"),
-          { QStringLiteral("Read only"), QStringLiteral("Workspace write"),
-            QStringLiteral("Full access") } },
-        { QStringLiteral("voice/model"),
-          { QStringLiteral("whisper-tiny"), QStringLiteral("whisper-small"),
-            QStringLiteral("whisper-medium") } },
-        { QStringLiteral("advanced/logLevel"),
-          { QStringLiteral("Error"), QStringLiteral("Warn"), QStringLiteral("Info"),
-            QStringLiteral("Debug"), QStringLiteral("Trace") } },
+        {QStringLiteral("model/effort"),
+         {QStringLiteral("Fast"), QStringLiteral("Balanced"), QStringLiteral("Thorough")}},
+        {QStringLiteral("safety/approvalPolicy"),
+         {QStringLiteral("Never"), QStringLiteral("On request"), QStringLiteral("On failure"),
+          QStringLiteral("Always")}},
+        {QStringLiteral("safety/sandbox"),
+         {QStringLiteral("Read only"), QStringLiteral("Workspace write"),
+          QStringLiteral("Full access")}},
+        {QStringLiteral("voice/model"),
+         {QStringLiteral("whisper-tiny"), QStringLiteral("whisper-small"),
+          QStringLiteral("whisper-medium")}},
+        {QStringLiteral("advanced/logLevel"),
+         {QStringLiteral("Error"), QStringLiteral("Warn"), QStringLiteral("Info"),
+          QStringLiteral("Debug"), QStringLiteral("Trace")}},
     };
 
     // Overlay the last-known on-disk values over the seeded defaults (no-op on a
@@ -67,18 +65,15 @@ MockDaemonConfig::MockDaemonConfig(QObject* parent)
     }
 }
 
-void MockDaemonConfig::save() const
-{
+void MockDaemonConfig::save() const {
     appcache::saveObject(kCacheFile, QJsonObject::fromVariantHash(m_values));
 }
 
-QVariant MockDaemonConfig::value(const QString& key, const QVariant& fallback) const
-{
+QVariant MockDaemonConfig::value(const QString& key, const QVariant& fallback) const {
     return m_values.value(key, fallback);
 }
 
-void MockDaemonConfig::setValue(const QString& key, const QVariant& value)
-{
+void MockDaemonConfig::setValue(const QString& key, const QVariant& value) {
     if (m_values.value(key) == value) {
         return;
     }
@@ -87,8 +82,7 @@ void MockDaemonConfig::setValue(const QString& key, const QVariant& value)
     emit changed(key);
 }
 
-QStringList MockDaemonConfig::options(const QString& key) const
-{
+QStringList MockDaemonConfig::options(const QString& key) const {
     return m_options.value(key);
 }
 

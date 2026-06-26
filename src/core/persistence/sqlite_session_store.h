@@ -29,8 +29,7 @@ class SqliteSessionStore : public InMemorySessionStore {
 public:
     // `dbPath` is the SQLite file to open. When empty, a per-user location under
     // QStandardPaths::AppDataLocation is used. Tests pass a temp path.
-    explicit SqliteSessionStore(const QString& dbPath = QString(),
-                                QObject* parent = nullptr,
+    explicit SqliteSessionStore(const QString& dbPath = QString(), QObject* parent = nullptr,
                                 bool seedDemoData = false);
     ~SqliteSessionStore() override;
 

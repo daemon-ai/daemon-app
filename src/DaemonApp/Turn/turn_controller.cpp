@@ -5,43 +5,39 @@
 
 namespace {
 
-QVariantMap hit(const QString& title, const QString& url, const QString& snippet)
-{
+QVariantMap hit(const QString& title, const QString& url, const QString& snippet) {
     return QVariantMap{
-        { QStringLiteral("title"), title },
-        { QStringLiteral("url"), url },
-        { QStringLiteral("snippet"), snippet },
+        {QStringLiteral("title"), title},
+        {QStringLiteral("url"), url},
+        {QStringLiteral("snippet"), snippet},
     };
 }
 
 // Status-only event maps, shaped like the daemon's usage/context/rate-limit
 // stream. They carry no transcript content (the ingest path skips them) and are
 // consumed by StatusBarModel; emitting them now pins the event contract.
-QVariantMap usageEvent(int tokensIn, int tokensOut, double costUsd)
-{
+QVariantMap usageEvent(int tokensIn, int tokensOut, double costUsd) {
     return QVariantMap{
-        { QStringLiteral("type"), QStringLiteral("usage") },
-        { QStringLiteral("tokensIn"), tokensIn },
-        { QStringLiteral("tokensOut"), tokensOut },
-        { QStringLiteral("costUsd"), costUsd },
+        {QStringLiteral("type"), QStringLiteral("usage")},
+        {QStringLiteral("tokensIn"), tokensIn},
+        {QStringLiteral("tokensOut"), tokensOut},
+        {QStringLiteral("costUsd"), costUsd},
     };
 }
 
-QVariantMap contextEvent(int used, int max)
-{
+QVariantMap contextEvent(int used, int max) {
     return QVariantMap{
-        { QStringLiteral("type"), QStringLiteral("context") },
-        { QStringLiteral("used"), used },
-        { QStringLiteral("max"), max },
+        {QStringLiteral("type"), QStringLiteral("context")},
+        {QStringLiteral("used"), used},
+        {QStringLiteral("max"), max},
     };
 }
 
-QVariantMap rateLimitEvent(int remaining, int limit)
-{
+QVariantMap rateLimitEvent(int remaining, int limit) {
     return QVariantMap{
-        { QStringLiteral("type"), QStringLiteral("rateLimit") },
-        { QStringLiteral("remaining"), remaining },
-        { QStringLiteral("limit"), limit },
+        {QStringLiteral("type"), QStringLiteral("rateLimit")},
+        {QStringLiteral("remaining"), remaining},
+        {QStringLiteral("limit"), limit},
     };
 }
 
@@ -49,22 +45,19 @@ QVariantMap rateLimitEvent(int remaining, int limit)
 // per `id`; `status` is "running" | "done" | "error". `detail` is a short live
 // status line. Consumed by SubagentModel; the transcript ingest skips it.
 QVariantMap subagentEvent(const QString& id, const QString& title, const QString& status,
-                          const QString& detail)
-{
+                          const QString& detail) {
     return QVariantMap{
-        { QStringLiteral("type"), QStringLiteral("subagent") },
-        { QStringLiteral("id"), id },
-        { QStringLiteral("title"), title },
-        { QStringLiteral("status"), status },
-        { QStringLiteral("detail"), detail },
+        {QStringLiteral("type"), QStringLiteral("subagent")},
+        {QStringLiteral("id"), id},
+        {QStringLiteral("title"), title},
+        {QStringLiteral("status"), status},
+        {QStringLiteral("detail"), detail},
     };
 }
 
 } // namespace
 
-TurnController::TurnController(QObject* parent)
-    : QObject(parent)
-{
+TurnController::TurnController(QObject* parent) : QObject(parent) {
     m_stepTimer.setSingleShot(true);
     m_stallTimer.setSingleShot(true);
     m_stallTimer.setInterval(kStallMs);
@@ -81,8 +74,7 @@ TurnController::TurnController(QObject* parent)
     });
 }
 
-void TurnController::setActive(bool active)
-{
+void TurnController::setActive(bool active) {
     if (m_active == active) {
         return;
     }
@@ -90,8 +82,7 @@ void TurnController::setActive(bool active)
     emit activeChanged();
 }
 
-void TurnController::setTurnState(const QString& state)
-{
+void TurnController::setTurnState(const QString& state) {
     if (m_turnState == state) {
         return;
     }
@@ -99,8 +90,7 @@ void TurnController::setTurnState(const QString& state)
     emit turnStateChanged();
 }
 
-void TurnController::setElapsedMs(int ms)
-{
+void TurnController::setElapsedMs(int ms) {
     if (m_elapsedMs == ms) {
         return;
     }
@@ -108,8 +98,7 @@ void TurnController::setElapsedMs(int ms)
     emit elapsedMsChanged();
 }
 
-void TurnController::setErrorText(const QString& text)
-{
+void TurnController::setErrorText(const QString& text) {
     if (m_errorText == text) {
         return;
     }
@@ -117,8 +106,7 @@ void TurnController::setErrorText(const QString& text)
     emit errorTextChanged();
 }
 
-void TurnController::start(const QString& prompt)
-{
+void TurnController::start(const QString& prompt) {
     cancel();
     m_steps = buildScript(prompt);
     m_index = 0;
@@ -134,8 +122,7 @@ void TurnController::start(const QString& prompt)
     emit turnStarted();
 }
 
-void TurnController::cancel()
-{
+void TurnController::cancel() {
     m_stepTimer.stop();
     m_stallTimer.stop();
     m_elapsedTimer.stop();
@@ -148,8 +135,7 @@ void TurnController::cancel()
     m_index = 0;
 }
 
-QString TurnController::stateForEvent(const QString& type)
-{
+QString TurnController::stateForEvent(const QString& type) {
     if (type == QStringLiteral("text")) {
         return QStringLiteral("streaming");
     }
@@ -159,8 +145,7 @@ QString TurnController::stateForEvent(const QString& type)
     return QStringLiteral("thinking");
 }
 
-void TurnController::scheduleNext()
-{
+void TurnController::scheduleNext() {
     if (m_index >= m_steps.size()) {
         complete();
         return;
@@ -169,8 +154,7 @@ void TurnController::scheduleNext()
     m_stepTimer.start();
 }
 
-void TurnController::runStep()
-{
+void TurnController::runStep() {
     if (m_index >= m_steps.size()) {
         complete();
         return;
@@ -179,7 +163,7 @@ void TurnController::runStep()
     m_index += 1;
 
     if (!step.event.isEmpty()) {
-        emit eventsEmitted(QVariantList{ step.event });
+        emit eventsEmitted(QVariantList{step.event});
     }
 
     const QString type = step.event.value(QStringLiteral("type")).toString();
@@ -214,8 +198,7 @@ void TurnController::runStep()
     scheduleNext();
 }
 
-void TurnController::resume()
-{
+void TurnController::resume() {
     if (!m_active || !m_paused) {
         return;
     }
@@ -224,8 +207,7 @@ void TurnController::resume()
     scheduleNext();
 }
 
-void TurnController::complete()
-{
+void TurnController::complete() {
     m_stepTimer.stop();
     m_stallTimer.stop();
     m_elapsedTimer.stop();
@@ -234,14 +216,12 @@ void TurnController::complete()
     emit turnFinished();
 }
 
-void TurnController::armStall()
-{
+void TurnController::armStall() {
     m_stallTimer.stop();
     m_stallTimer.start();
 }
 
-QList<TurnController::Step> TurnController::buildScript(const QString& prompt)
-{
+QList<TurnController::Step> TurnController::buildScript(const QString& prompt) {
     // Build a simulator turn. Content is canned but echoes the prompt so the
     // demo UI exercises realistic block shapes; keyword triggers drive specific
     // approval/error/secret branches until a daemon event stream replaces this.
@@ -251,61 +231,58 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt)
     // A prompt mentioning sudo / a secret pauses for a masked host input, so the
     // sudo-password and secret/API-key prompt shells are demoable end-to-end.
     const bool wantsSudo = lower.indexOf(QStringLiteral("sudo")) >= 0;
-    const bool wantsSecret = lower.indexOf(QStringLiteral("secret")) >= 0
-        || lower.indexOf(QStringLiteral("api key")) >= 0
-        || lower.indexOf(QStringLiteral("apikey")) >= 0;
-    const QString shortPrompt
-        = prompt.length() > 60 ? (prompt.left(57) + QStringLiteral("\u2026")) : prompt;
+    const bool wantsSecret = lower.indexOf(QStringLiteral("secret")) >= 0 ||
+                             lower.indexOf(QStringLiteral("api key")) >= 0 ||
+                             lower.indexOf(QStringLiteral("apikey")) >= 0;
+    const QString shortPrompt =
+        prompt.length() > 60 ? (prompt.left(57) + QStringLiteral("\u2026")) : prompt;
     QList<Step> steps;
 
-    steps.push_back({ 250,
-                      QVariantMap{ { QStringLiteral("type"), QStringLiteral("reasoningDelta") },
-                                   { QStringLiteral("text"),
-                                     QStringLiteral("Reading the request")
-                                         + (!shortPrompt.isEmpty()
-                                                ? (QStringLiteral(" \u2014 \"") + shortPrompt
-                                                   + QStringLiteral("\". "))
-                                                : QStringLiteral(". ")) } },
-                      false, QString() });
     steps.push_back(
-        { 450,
-          QVariantMap{ { QStringLiteral("type"), QStringLiteral("reasoningDelta") },
-                       { QStringLiteral("text"),
-                         QStringLiteral(
-                             "I'll inspect the project and run the checks before answering.") } },
-          false, QString() });
-    steps.push_back({ 500,
-                      QVariantMap{ { QStringLiteral("type"), QStringLiteral("reasoningDone") },
-                                   { QStringLiteral("durationMs"), 1200 } },
-                      false, QString() });
+        {250,
+         QVariantMap{{QStringLiteral("type"), QStringLiteral("reasoningDelta")},
+                     {QStringLiteral("text"),
+                      QStringLiteral("Reading the request") +
+                          (!shortPrompt.isEmpty() ? (QStringLiteral(" \u2014 \"") + shortPrompt +
+                                                     QStringLiteral("\". "))
+                                                  : QStringLiteral(". "))}},
+         false, QString()});
+    steps.push_back(
+        {450,
+         QVariantMap{
+             {QStringLiteral("type"), QStringLiteral("reasoningDelta")},
+             {QStringLiteral("text"),
+              QStringLiteral("I'll inspect the project and run the checks before answering.")}},
+         false, QString()});
+    steps.push_back({500,
+                     QVariantMap{{QStringLiteral("type"), QStringLiteral("reasoningDone")},
+                                 {QStringLiteral("durationMs"), 1200}},
+                     false, QString()});
 
     // Prime the status contract: an initial context fill + the prompt's input
     // token cost. Later steps bump these so the status bar animates over a turn.
-    steps.push_back({ 120, contextEvent(14200, 128000), false, QString() });
-    steps.push_back({ 80, usageEvent(1800, 0, 0.011), false, QString() });
+    steps.push_back({120, contextEvent(14200, 128000), false, QString()});
+    steps.push_back({80, usageEvent(1800, 0, 0.011), false, QString()});
 
     if (wantsSudo || wantsSecret) {
         // Pause for a masked host input (the daemon's HostRequestKind seam). The
         // step carries no transcript event - it only raises the prompt and gates.
         const QString kind = wantsSudo ? QStringLiteral("password") : QStringLiteral("secret");
-        const QString ask = wantsSudo
-            ? QStringLiteral("[sudo] password for deploy")
-            : QStringLiteral("Paste the API key for the deploy gateway");
+        const QString ask = wantsSudo ? QStringLiteral("[sudo] password for deploy")
+                                      : QStringLiteral("Paste the API key for the deploy gateway");
         Step gate;
         gate.delayMs = 250;
         gate.gate = true;
         gate.hostRequestKind = kind;
         gate.hostRequestPrompt = ask;
         steps.push_back(gate);
-        steps.push_back(
-            { 250,
-              QVariantMap{ { QStringLiteral("type"), QStringLiteral("text") },
-                           { QStringLiteral("text"),
-                             QStringLiteral("\n\nCredential accepted - continuing.\n") } },
-              false, QString() });
-        steps.push_back({ 200,
-                          QVariantMap{ { QStringLiteral("type"), QStringLiteral("flush") } },
-                          false, QString() });
+        steps.push_back({250,
+                         QVariantMap{{QStringLiteral("type"), QStringLiteral("text")},
+                                     {QStringLiteral("text"),
+                                      QStringLiteral("\n\nCredential accepted - continuing.\n")}},
+                         false, QString()});
+        steps.push_back({200, QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}}, false,
+                         QString()});
         return steps;
     }
 
@@ -314,159 +291,155 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt)
         // awaiting-approval toolStarted, gate (pause) until resume() fires after
         // the user answers, then the host drives the tool to ok and we close out.
         steps.push_back(
-            { 300,
-              QVariantMap{ { QStringLiteral("type"), QStringLiteral("toolStarted") },
-                           { QStringLiteral("callId"), QStringLiteral("sim-approve") },
-                           { QStringLiteral("name"), QStringLiteral("terminal") },
-                           { QStringLiteral("tone"), QStringLiteral("terminal") },
-                           { QStringLiteral("argsSummary"), QStringLiteral("rm -rf build-test") },
-                           { QStringLiteral("needsApproval"), true },
-                           { QStringLiteral("allowPermanent"), true },
-                           { QStringLiteral("approvalCommand"),
-                             QStringLiteral("rm -rf build-test && cmake --preset test") } },
-              false, QString(), /*gate=*/true });
+            {300,
+             QVariantMap{{QStringLiteral("type"), QStringLiteral("toolStarted")},
+                         {QStringLiteral("callId"), QStringLiteral("sim-approve")},
+                         {QStringLiteral("name"), QStringLiteral("terminal")},
+                         {QStringLiteral("tone"), QStringLiteral("terminal")},
+                         {QStringLiteral("argsSummary"), QStringLiteral("rm -rf build-test")},
+                         {QStringLiteral("needsApproval"), true},
+                         {QStringLiteral("allowPermanent"), true},
+                         {QStringLiteral("approvalCommand"),
+                          QStringLiteral("rm -rf build-test && cmake --preset test")}},
+             false, QString(), /*gate=*/true});
         steps.push_back(
-            { 250,
-              QVariantMap{ { QStringLiteral("type"), QStringLiteral("text") },
-                           { QStringLiteral("text"),
-                             QStringLiteral("\n\nThe command finished after your approval.\n") } },
-              false, QString() });
-        steps.push_back({ 200,
-                          QVariantMap{ { QStringLiteral("type"), QStringLiteral("flush") } },
-                          false, QString() });
+            {250,
+             QVariantMap{{QStringLiteral("type"), QStringLiteral("text")},
+                         {QStringLiteral("text"),
+                          QStringLiteral("\n\nThe command finished after your approval.\n")}},
+             false, QString()});
+        steps.push_back({200, QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}}, false,
+                         QString()});
         return steps;
     }
 
-    steps.push_back({ 300,
-                      QVariantMap{ { QStringLiteral("type"), QStringLiteral("toolStarted") },
-                                   { QStringLiteral("callId"), QStringLiteral("sim-term") },
-                                   { QStringLiteral("name"), QStringLiteral("terminal") },
-                                   { QStringLiteral("tone"), QStringLiteral("terminal") },
-                                   { QStringLiteral("argsSummary"),
-                                     QStringLiteral("ninja -C build && ctest") },
-                                   { QStringLiteral("detailKind"),
-                                     QStringLiteral("ansi-stream") } },
-                      false, QString() });
+    steps.push_back(
+        {300,
+         QVariantMap{{QStringLiteral("type"), QStringLiteral("toolStarted")},
+                     {QStringLiteral("callId"), QStringLiteral("sim-term")},
+                     {QStringLiteral("name"), QStringLiteral("terminal")},
+                     {QStringLiteral("tone"), QStringLiteral("terminal")},
+                     {QStringLiteral("argsSummary"), QStringLiteral("ninja -C build && ctest")},
+                     {QStringLiteral("detailKind"), QStringLiteral("ansi-stream")}},
+         false, QString()});
 
     if (wantsError) {
         steps.push_back(
-            { 900,
-              QVariantMap{ { QStringLiteral("type"), QStringLiteral("toolFinished") },
-                           { QStringLiteral("callId"), QStringLiteral("sim-term") },
-                           { QStringLiteral("status"), QStringLiteral("error") },
-                           { QStringLiteral("durationMs"), 900 },
-                           { QStringLiteral("detailKind"), QStringLiteral("ansi-stream") },
-                           { QStringLiteral("stderr"),
-                             QStringLiteral("\u001b[31merror:\u001b[0m build failed \u2014 1 test "
-                                            "did not pass\n") } },
-              true, tr("The build failed while completing this turn.") });
+            {900,
+             QVariantMap{{QStringLiteral("type"), QStringLiteral("toolFinished")},
+                         {QStringLiteral("callId"), QStringLiteral("sim-term")},
+                         {QStringLiteral("status"), QStringLiteral("error")},
+                         {QStringLiteral("durationMs"), 900},
+                         {QStringLiteral("detailKind"), QStringLiteral("ansi-stream")},
+                         {QStringLiteral("stderr"),
+                          QStringLiteral("\u001b[31merror:\u001b[0m build failed \u2014 1 test "
+                                         "did not pass\n")}},
+             true, tr("The build failed while completing this turn.")});
         steps.push_back(
-            { 250,
-              QVariantMap{ { QStringLiteral("type"), QStringLiteral("text") },
-                           { QStringLiteral("text"),
-                             QStringLiteral("I hit a build failure before I could finish. See the "
-                                            "terminal output above for details.\n") } },
-              false, QString() });
-        steps.push_back({ 200,
-                          QVariantMap{ { QStringLiteral("type"), QStringLiteral("flush") } },
-                          false, QString() });
+            {250,
+             QVariantMap{{QStringLiteral("type"), QStringLiteral("text")},
+                         {QStringLiteral("text"),
+                          QStringLiteral("I hit a build failure before I could finish. See the "
+                                         "terminal output above for details.\n")}},
+             false, QString()});
+        steps.push_back({200, QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}}, false,
+                         QString()});
         return steps;
     }
 
     steps.push_back(
-        { 1200,
-          QVariantMap{ { QStringLiteral("type"), QStringLiteral("toolFinished") },
-                       { QStringLiteral("callId"), QStringLiteral("sim-term") },
-                       { QStringLiteral("status"), QStringLiteral("ok") },
-                       { QStringLiteral("durationMs"), 1200 },
-                       { QStringLiteral("detailKind"), QStringLiteral("ansi-stream") },
-                       { QStringLiteral("stdout"),
-                         QStringLiteral(
-                             "\u001b[32mPASS\u001b[0m  88 tests\n\u001b[1mBuild OK\u001b[0m\n") } },
-          false, QString() });
+        {1200,
+         QVariantMap{
+             {QStringLiteral("type"), QStringLiteral("toolFinished")},
+             {QStringLiteral("callId"), QStringLiteral("sim-term")},
+             {QStringLiteral("status"), QStringLiteral("ok")},
+             {QStringLiteral("durationMs"), 1200},
+             {QStringLiteral("detailKind"), QStringLiteral("ansi-stream")},
+             {QStringLiteral("stdout"),
+              QStringLiteral("\u001b[32mPASS\u001b[0m  88 tests\n\u001b[1mBuild OK\u001b[0m\n")}},
+         false, QString()});
 
     // Tool output grew the context and spent output tokens.
-    steps.push_back({ 80, usageEvent(0, 640, 0.018), false, QString() });
-    steps.push_back({ 80, contextEvent(31800, 128000), false, QString() });
+    steps.push_back({80, usageEvent(0, 640, 0.018), false, QString()});
+    steps.push_back({80, contextEvent(31800, 128000), false, QString()});
 
     // Delegate to two subagents (the daemon's delegation concept). They appear in
     // the status stack as live rows, tick progress, then settle done.
-    steps.push_back({ 120,
-                      subagentEvent(QStringLiteral("sub-explore"), QStringLiteral("explore"),
-                                    QStringLiteral("running"), QStringLiteral("scanning sources")),
-                      false, QString() });
-    steps.push_back({ 120,
-                      subagentEvent(QStringLiteral("sub-tests"), QStringLiteral("run-tests"),
-                                    QStringLiteral("running"), QStringLiteral("starting suite")),
-                      false, QString() });
+    steps.push_back({120,
+                     subagentEvent(QStringLiteral("sub-explore"), QStringLiteral("explore"),
+                                   QStringLiteral("running"), QStringLiteral("scanning sources")),
+                     false, QString()});
+    steps.push_back({120,
+                     subagentEvent(QStringLiteral("sub-tests"), QStringLiteral("run-tests"),
+                                   QStringLiteral("running"), QStringLiteral("starting suite")),
+                     false, QString()});
 
     steps.push_back(
-        { 300,
-          QVariantMap{ { QStringLiteral("type"), QStringLiteral("toolStarted") },
-                       { QStringLiteral("callId"), QStringLiteral("sim-search") },
-                       { QStringLiteral("name"), QStringLiteral("web_search") },
-                       { QStringLiteral("tone"), QStringLiteral("web") },
-                       { QStringLiteral("argsSummary"),
-                         !shortPrompt.isEmpty() ? shortPrompt : QStringLiteral("qml streaming") },
-                       { QStringLiteral("detailKind"), QStringLiteral("search-results") } },
-          false, QString() });
+        {300,
+         QVariantMap{{QStringLiteral("type"), QStringLiteral("toolStarted")},
+                     {QStringLiteral("callId"), QStringLiteral("sim-search")},
+                     {QStringLiteral("name"), QStringLiteral("web_search")},
+                     {QStringLiteral("tone"), QStringLiteral("web")},
+                     {QStringLiteral("argsSummary"),
+                      !shortPrompt.isEmpty() ? shortPrompt : QStringLiteral("qml streaming")},
+                     {QStringLiteral("detailKind"), QStringLiteral("search-results")}},
+         false, QString()});
     // Deliberately long gap (> kStallMs) so the "still thinking" stall shows.
     steps.push_back(
-        { 2600,
-          QVariantMap{
-              { QStringLiteral("type"), QStringLiteral("toolFinished") },
-              { QStringLiteral("callId"), QStringLiteral("sim-search") },
-              { QStringLiteral("status"), QStringLiteral("ok") },
-              { QStringLiteral("durationMs"), 2600 },
-              { QStringLiteral("detailKind"), QStringLiteral("search-results") },
-              { QStringLiteral("hits"),
-                QVariantList{
-                    hit(QStringLiteral("Qt Quick \u2014 Streaming UIs"),
-                        QStringLiteral("https://doc.qt.io/qt-6/qtquick-index.html"),
-                        QStringLiteral("Build fluid, virtualized views backed by C++ models.")),
-                    hit(QStringLiteral("md4qt \u2014 incremental Markdown"),
-                        QStringLiteral("https://github.com/igormironchik/md4qt"),
-                        QStringLiteral(
-                            "A header-only CommonMark parser used for the transcript.")) } } },
-          false, QString() });
+        {2600,
+         QVariantMap{
+             {QStringLiteral("type"), QStringLiteral("toolFinished")},
+             {QStringLiteral("callId"), QStringLiteral("sim-search")},
+             {QStringLiteral("status"), QStringLiteral("ok")},
+             {QStringLiteral("durationMs"), 2600},
+             {QStringLiteral("detailKind"), QStringLiteral("search-results")},
+             {QStringLiteral("hits"),
+              QVariantList{
+                  hit(QStringLiteral("Qt Quick \u2014 Streaming UIs"),
+                      QStringLiteral("https://doc.qt.io/qt-6/qtquick-index.html"),
+                      QStringLiteral("Build fluid, virtualized views backed by C++ models.")),
+                  hit(QStringLiteral("md4qt \u2014 incremental Markdown"),
+                      QStringLiteral("https://github.com/igormironchik/md4qt"),
+                      QStringLiteral(
+                          "A header-only CommonMark parser used for the transcript."))}}},
+         false, QString()});
 
     // Search results pushed context further and consumed the provider window.
-    steps.push_back({ 80, usageEvent(0, 1200, 0.034), false, QString() });
-    steps.push_back({ 80, contextEvent(52600, 128000), false, QString() });
-    steps.push_back({ 80, rateLimitEvent(74, 80), false, QString() });
+    steps.push_back({80, usageEvent(0, 1200, 0.034), false, QString()});
+    steps.push_back({80, contextEvent(52600, 128000), false, QString()});
+    steps.push_back({80, rateLimitEvent(74, 80), false, QString()});
 
     // The delegated subagents report progress, then settle.
-    steps.push_back({ 80,
-                      subagentEvent(QStringLiteral("sub-explore"), QStringLiteral("explore"),
-                                    QStringLiteral("done"), QStringLiteral("42 files")),
-                      false, QString() });
-    steps.push_back({ 80,
-                      subagentEvent(QStringLiteral("sub-tests"), QStringLiteral("run-tests"),
-                                    QStringLiteral("done"), QStringLiteral("88 passed")),
-                      false, QString() });
+    steps.push_back({80,
+                     subagentEvent(QStringLiteral("sub-explore"), QStringLiteral("explore"),
+                                   QStringLiteral("done"), QStringLiteral("42 files")),
+                     false, QString()});
+    steps.push_back({80,
+                     subagentEvent(QStringLiteral("sub-tests"), QStringLiteral("run-tests"),
+                                   QStringLiteral("done"), QStringLiteral("88 passed")),
+                     false, QString()});
 
     steps.push_back(
-        { 350,
-          QVariantMap{ { QStringLiteral("type"), QStringLiteral("text") },
-                       { QStringLiteral("text"),
-                         QStringLiteral(
-                             "Here's the summary: the build is green (88 tests pass) and ") } },
-          false, QString() });
+        {350,
+         QVariantMap{
+             {QStringLiteral("type"), QStringLiteral("text")},
+             {QStringLiteral("text"),
+              QStringLiteral("Here's the summary: the build is green (88 tests pass) and ")}},
+         false, QString()});
     steps.push_back(
-        { 250,
-          QVariantMap{ { QStringLiteral("type"), QStringLiteral("text") },
-                       { QStringLiteral("text"),
-                         QStringLiteral("the references confirm the streaming approach. ") } },
-          false, QString() });
+        {250,
+         QVariantMap{{QStringLiteral("type"), QStringLiteral("text")},
+                     {QStringLiteral("text"),
+                      QStringLiteral("the references confirm the streaming approach. ")}},
+         false, QString()});
     steps.push_back(
-        { 250,
-          QVariantMap{ { QStringLiteral("type"), QStringLiteral("text") },
-                       { QStringLiteral("text"),
-                         QStringLiteral(
-                             "Let me know if you'd like me to dig into any part further.\n") } },
-          false, QString() });
-    steps.push_back({ 200,
-                      QVariantMap{ { QStringLiteral("type"), QStringLiteral("flush") } },
-                      false, QString() });
+        {250,
+         QVariantMap{
+             {QStringLiteral("type"), QStringLiteral("text")},
+             {QStringLiteral("text"),
+              QStringLiteral("Let me know if you'd like me to dig into any part further.\n")}},
+         false, QString()});
+    steps.push_back(
+        {200, QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}}, false, QString()});
     return steps;
 }

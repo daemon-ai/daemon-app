@@ -2,13 +2,11 @@
 
 namespace transports {
 
-QString MockPresenceService::connectionState(const QString& /*transport*/) const
-{
+QString MockPresenceService::connectionState(const QString& /*transport*/) const {
     return QStringLiteral("offline");
 }
 
-QString MockPresenceService::presence(const QString& /*transport*/) const
-{
+QString MockPresenceService::presence(const QString& /*transport*/) const {
     return QStringLiteral("unknown");
 }
 

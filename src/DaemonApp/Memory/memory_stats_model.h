@@ -3,8 +3,8 @@
 #include "memory/memory_dtos.h"
 
 #include <QObject>
-#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
+#include <QVariantList>
 
 namespace memory {
 class IMemoryService;
@@ -41,7 +41,9 @@ public:
     [[nodiscard]] int working() const { return m_stats.working; }
     [[nodiscard]] int episodic() const { return m_stats.episodic; }
     [[nodiscard]] int scratchpad() const { return m_stats.scratchpad; }
-    [[nodiscard]] int total() const { return m_stats.working + m_stats.episodic + m_stats.scratchpad; }
+    [[nodiscard]] int total() const {
+        return m_stats.working + m_stats.episodic + m_stats.scratchpad;
+    }
     [[nodiscard]] int triples() const { return m_stats.triples; }
     [[nodiscard]] int facts() const { return m_stats.facts; }
     [[nodiscard]] int conflicts() const { return m_stats.conflicts; }

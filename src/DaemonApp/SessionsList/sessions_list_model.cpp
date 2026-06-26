@@ -1,7 +1,7 @@
 #include "sessions_list_model.h"
 
-#include "domain/unit_node.h"
 #include "domain/ids.h"
+#include "domain/unit_node.h"
 #include "persistence/isession_store.h"
 
 using domain::ListScope;
@@ -12,8 +12,7 @@ using domain::UnitNode;
 
 namespace {
 
-QString snippetOf(const Session& c)
-{
+QString snippetOf(const Session& c) {
     QString text = c.content;
     text.replace(QLatin1Char('\n'), QLatin1Char(' '));
     text = text.simplified();
@@ -27,18 +26,13 @@ QString snippetOf(const Session& c)
 
 } // namespace
 
-SessionsListModel::SessionsListModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
-}
+SessionsListModel::SessionsListModel(QObject* parent) : QAbstractListModel(parent) {}
 
-QObject* SessionsListModel::store() const
-{
+QObject* SessionsListModel::store() const {
     return m_store;
 }
 
-void SessionsListModel::setStore(QObject* store)
-{
+void SessionsListModel::setStore(QObject* store) {
     auto* sessionStore = qobject_cast<persistence::ISessionStore*>(store);
     if (m_store == sessionStore) {
         return;
@@ -48,15 +42,13 @@ void SessionsListModel::setStore(QObject* store)
     }
     m_store = sessionStore;
     if (m_store) {
-        connect(m_store, &persistence::ISessionStore::changed, this,
-                &SessionsListModel::reload);
+        connect(m_store, &persistence::ISessionStore::changed, this, &SessionsListModel::reload);
     }
     emit storeChanged();
     reload();
 }
 
-void SessionsListModel::setSearch(const QString& search)
-{
+void SessionsListModel::setSearch(const QString& search) {
     if (m_search == search) {
         return;
     }
@@ -65,14 +57,13 @@ void SessionsListModel::setSearch(const QString& search)
     applyFilter();
 }
 
-void SessionsListModel::setScope(int nodeType, int tagId, const QString& unitId)
-{
+void SessionsListModel::setScope(int nodeType, int tagId, const QString& unitId) {
     // For the DaemonNet lens scopes (ByTransport/ByPeer) the string slot carries the
     // lens key (transport-instance / peer id) rather than a unit id; everything else
     // treats it as the unit id.
     const NodeType type = static_cast<NodeType>(nodeType);
     const bool isLens = (type == NodeType::ByTransport || type == NodeType::ByPeer);
-    m_scope = { type, tagId, isLens ? UnitId() : UnitId(unitId), isLens ? unitId : QString() };
+    m_scope = {type, tagId, isLens ? UnitId() : UnitId(unitId), isLens ? unitId : QString()};
     // A new scope is a fresh list of sessions; drop the old selection so a stale
     // id doesn't linger as a phantom highlight.
     if (!m_currentId.isEmpty()) {
@@ -83,8 +74,7 @@ void SessionsListModel::setScope(int nodeType, int tagId, const QString& unitId)
     emit scopeChanged();
 }
 
-void SessionsListModel::reload()
-{
+void SessionsListModel::reload() {
     rebuildLookups();
     m_all = m_store ? m_store->sessions(m_scope) : QList<Session>{};
     m_scopeTitle = computeScopeTitle();
@@ -92,8 +82,7 @@ void SessionsListModel::reload()
     applyFilter();
 }
 
-void SessionsListModel::rebuildLookups()
-{
+void SessionsListModel::rebuildLookups() {
     m_unitInfo.clear();
     m_tagInfo.clear();
     if (!m_store) {
@@ -104,25 +93,23 @@ void SessionsListModel::rebuildLookups()
     persistence::ISessionStore* store = m_store;
     auto collect = [store, this](const UnitId& parentId, auto&& self) -> void {
         for (const UnitNode& n : store->unitChildren(parentId)) {
-            m_unitInfo.insert(n.id.toString(), { n.name, static_cast<int>(n.kind) });
+            m_unitInfo.insert(n.id.toString(), {n.name, static_cast<int>(n.kind)});
             self(n.id, self);
         }
     };
     collect(UnitId(), collect);
 
     for (const domain::Tag& t : m_store->tags()) {
-        m_tagInfo.insert(t.id, { t.name, t.color });
+        m_tagInfo.insert(t.id, {t.name, t.color});
     }
 }
 
-void SessionsListModel::applyFilter()
-{
+void SessionsListModel::applyFilter() {
     beginResetModel();
     m_filtered.clear();
     for (const Session& c : m_all) {
-        if (m_search.isEmpty()
-            || c.title.contains(m_search, Qt::CaseInsensitive)
-            || c.content.contains(m_search, Qt::CaseInsensitive)) {
+        if (m_search.isEmpty() || c.title.contains(m_search, Qt::CaseInsensitive) ||
+            c.content.contains(m_search, Qt::CaseInsensitive)) {
             m_filtered.push_back(c);
         }
     }
@@ -130,8 +117,7 @@ void SessionsListModel::applyFilter()
     emit countChanged();
 }
 
-QString SessionsListModel::computeScopeTitle() const
-{
+QString SessionsListModel::computeScopeTitle() const {
     switch (m_scope.type) {
     case NodeType::AllSessions:
         return tr("All Sessions");
@@ -167,13 +153,11 @@ QString SessionsListModel::computeScopeTitle() const
     return tr("Sessions");
 }
 
-int SessionsListModel::rowCount(const QModelIndex& parent) const
-{
+int SessionsListModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(m_filtered.size());
 }
 
-QVariant SessionsListModel::data(const QModelIndex& index, int role) const
-{
+QVariant SessionsListModel::data(const QModelIndex& index, int role) const {
     if (index.row() < 0 || index.row() >= m_filtered.size()) {
         return {};
     }
@@ -214,39 +198,29 @@ QVariant SessionsListModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> SessionsListModel::roleNames() const
-{
+QHash<int, QByteArray> SessionsListModel::roleNames() const {
     return {
-        { IdRole, "sessionId" },
-        { TitleRole, "title" },
-        { SnippetRole, "snippet" },
-        { ModifiedRole, "modified" },
-        { UnitNameRole, "unitName" },
-        { UnitKindRole, "unitKind" },
-        { TagNamesRole, "tagNames" },
-        { TagColorsRole, "tagColors" },
-        { CurrentRole, "current" },
-        { PinnedRole, "pinned" },
+        {IdRole, "sessionId"},      {TitleRole, "title"},         {SnippetRole, "snippet"},
+        {ModifiedRole, "modified"}, {UnitNameRole, "unitName"},   {UnitKindRole, "unitKind"},
+        {TagNamesRole, "tagNames"}, {TagColorsRole, "tagColors"}, {CurrentRole, "current"},
+        {PinnedRole, "pinned"},
     };
 }
 
-QString SessionsListModel::idAt(int row) const
-{
+QString SessionsListModel::idAt(int row) const {
     if (row < 0 || row >= m_filtered.size()) {
         return {};
     }
     return m_filtered.at(row).sessionId.toString();
 }
 
-void SessionsListModel::emitCurrentChanged()
-{
+void SessionsListModel::emitCurrentChanged() {
     if (!m_filtered.isEmpty()) {
-        emit dataChanged(index(0), index(static_cast<int>(m_filtered.size()) - 1), { CurrentRole });
+        emit dataChanged(index(0), index(static_cast<int>(m_filtered.size()) - 1), {CurrentRole});
     }
 }
 
-void SessionsListModel::setCurrentId(const QString& id)
-{
+void SessionsListModel::setCurrentId(const QString& id) {
     if (m_currentId == id) {
         return;
     }
@@ -255,16 +229,14 @@ void SessionsListModel::setCurrentId(const QString& id)
     emitCurrentChanged();
 }
 
-void SessionsListModel::activate(int row)
-{
+void SessionsListModel::activate(int row) {
     const QString id = idAt(row);
     if (!id.isEmpty()) {
         setCurrentId(id);
     }
 }
 
-void SessionsListModel::selectNext()
-{
+void SessionsListModel::selectNext() {
     const int cur = currentRow();
     const int next = cur < 0 ? 0 : cur + 1;
     if (next < m_filtered.size()) {
@@ -272,16 +244,14 @@ void SessionsListModel::selectNext()
     }
 }
 
-void SessionsListModel::selectPrevious()
-{
+void SessionsListModel::selectPrevious() {
     const int cur = currentRow();
     if (cur > 0) {
         setCurrentId(m_filtered.at(cur - 1).sessionId.toString());
     }
 }
 
-int SessionsListModel::currentRow() const
-{
+int SessionsListModel::currentRow() const {
     if (m_currentId.isEmpty()) {
         return -1;
     }

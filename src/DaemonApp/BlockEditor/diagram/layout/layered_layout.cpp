@@ -3,12 +3,11 @@
 #include "diagram/geometry/shapes.h"
 #include "diagram/layout/work_graph.h"
 
-#include <QSet>
-
 #include <algorithm>
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <QSet>
 
 namespace be::diagram {
 
@@ -16,19 +15,16 @@ namespace {
 
 constexpr double kInf = std::numeric_limits<double>::infinity();
 
-bool isVertical(Direction dir)
-{
+bool isVertical(Direction dir) {
     return dir == Direction::TB || dir == Direction::BT;
 }
 
-bool isDummy(const WorkNode &n)
-{
+bool isDummy(const WorkNode& n) {
     return n.kind != WorkKind::Real;
 }
 
 // Resolve the top-level cluster ancestor of a cluster id (walking parentId).
-QString topCluster(const DiagramModel &model, const QString &cid)
-{
+QString topCluster(const DiagramModel& model, const QString& cid) {
     if (cid.isEmpty()) {
         return cid;
     }
@@ -54,12 +50,11 @@ QString topCluster(const DiagramModel &model, const QString &cid)
 // per DiagramEdge (self-loops skipped). Cluster tagging uses the top ancestor so
 // ordering keeps whole subgraphs contiguous.
 // ---------------------------------------------------------------------------
-WorkGraph buildWorkGraph(const DiagramModel &model)
-{
+WorkGraph buildWorkGraph(const DiagramModel& model) {
     WorkGraph g;
     g.nodes.reserve(model.nodes.size());
     for (int i = 0; i < model.nodes.size(); ++i) {
-        const DiagramNode &dn = model.nodes[i];
+        const DiagramNode& dn = model.nodes[i];
         WorkNode wn;
         wn.id = dn.id;
         wn.kind = WorkKind::Real;
@@ -70,7 +65,7 @@ WorkGraph buildWorkGraph(const DiagramModel &model)
         g.add(wn);
     }
     for (int i = 0; i < model.edges.size(); ++i) {
-        const DiagramEdge &e = model.edges[i];
+        const DiagramEdge& e = model.edges[i];
         const int u = g.index.value(e.fromId, -1);
         const int v = g.index.value(e.toId, -1);
         if (u < 0 || v < 0 || u == v) {
@@ -85,8 +80,7 @@ WorkGraph buildWorkGraph(const DiagramModel &model)
 // Acyclic: greedy DFS feedback-arc removal. Back edges (to a node on the current
 // recursion stack) are reversed in place.
 // ---------------------------------------------------------------------------
-void acyclic(WorkGraph &g)
-{
+void acyclic(WorkGraph& g) {
     const int n = g.nodes.size();
     QVector<int> state(n, 0); // 0=unvisited, 1=on-stack, 2=done
     const QVector<QVector<int>> out = g.outEdges();
@@ -94,7 +88,7 @@ void acyclic(WorkGraph &g)
     std::function<void(int)> dfs = [&](int u) {
         state[u] = 1;
         for (int ei : out[u]) {
-            WorkEdge &e = g.edges[ei];
+            WorkEdge& e = g.edges[ei];
             if (e.u != u) {
                 continue; // already reversed away from u
             }
@@ -120,15 +114,14 @@ void acyclic(WorkGraph &g)
 // toward their earliest child. Ranks are then doubled so every edge spans an
 // even number of half-ranks, leaving odd ranks free for edge-label dummies.
 // ---------------------------------------------------------------------------
-void rank(WorkGraph &g)
-{
+void rank(WorkGraph& g) {
     const int n = g.nodes.size();
-    for (WorkNode &nd : g.nodes) {
+    for (WorkNode& nd : g.nodes) {
         nd.rank = 0;
     }
     for (int pass = 0; pass <= n; ++pass) {
         bool changed = false;
-        for (const WorkEdge &e : g.edges) {
+        for (const WorkEdge& e : g.edges) {
             if (e.u < 0 || e.v < 0) {
                 continue;
             }
@@ -168,13 +161,13 @@ void rank(WorkGraph &g)
     }
 
     int minRank = std::numeric_limits<int>::max();
-    for (const WorkNode &nd : g.nodes) {
+    for (const WorkNode& nd : g.nodes) {
         minRank = std::min(minRank, nd.rank);
     }
     if (minRank == std::numeric_limits<int>::max()) {
         minRank = 0;
     }
-    for (WorkNode &nd : g.nodes) {
+    for (WorkNode& nd : g.nodes) {
         nd.rank = (nd.rank - minRank) * 2;
     }
 }
@@ -185,17 +178,16 @@ void rank(WorkGraph &g)
 // rectangular column so foreign nodes cannot intrude into the cluster region;
 // they are layout-only and never written back to the model.
 // ---------------------------------------------------------------------------
-void addBorderSegments(WorkGraph &g, const DiagramModel &model, const LayoutOptions &opts)
-{
+void addBorderSegments(WorkGraph& g, const DiagramModel& model, const LayoutOptions& opts) {
     const int realCount = g.nodes.size();
-    for (const DiagramCluster &c : model.clusters) {
+    for (const DiagramCluster& c : model.clusters) {
         if (!c.parentId.isEmpty()) {
             continue; // top-level clusters only; nested rely on bounds
         }
         int rmin = std::numeric_limits<int>::max();
         int rmax = std::numeric_limits<int>::min();
         for (int i = 0; i < realCount; ++i) {
-            const WorkNode &wn = g.nodes[i];
+            const WorkNode& wn = g.nodes[i];
             if (wn.kind == WorkKind::Real && wn.cluster == c.id) {
                 rmin = std::min(rmin, wn.rank);
                 rmax = std::max(rmax, wn.rank);
@@ -244,8 +236,7 @@ struct Chains {
     QHash<int, int> labelDummy;       // DiagramEdge index -> label dummy node index
 };
 
-Chains normalize(WorkGraph &g, const DiagramModel &model, const LayoutOptions &opts)
-{
+Chains normalize(WorkGraph& g, const DiagramModel& model, const LayoutOptions& opts) {
     Chains chains;
     const int edgeCount = g.edges.size();
     for (int ei = 0; ei < edgeCount; ++ei) {
@@ -258,7 +249,7 @@ Chains normalize(WorkGraph &g, const DiagramModel &model, const LayoutOptions &o
         if (r1 <= r0) {
             continue;
         }
-        const DiagramEdge &de = model.edges[edge.edgeIdx];
+        const DiagramEdge& de = model.edges[edge.edgeIdx];
         const bool hasLabel = de.labelWidth > 0.0 && de.labelHeight > 0.0;
         const int midRank = r0 + (r1 - r0) / 2;
         const QString cluster = topCluster(model, model.nodes[edge.v].parentCluster) ==
@@ -305,17 +296,16 @@ Chains normalize(WorkGraph &g, const DiagramModel &model, const LayoutOptions &o
 }
 
 // Build [rank][order] layering from current node.order values.
-QVector<QVector<int>> buildLayering(const WorkGraph &g, int &numRanks)
-{
+QVector<QVector<int>> buildLayering(const WorkGraph& g, int& numRanks) {
     numRanks = 0;
-    for (const WorkNode &n : g.nodes) {
+    for (const WorkNode& n : g.nodes) {
         numRanks = std::max(numRanks, n.rank + 1);
     }
     QVector<QVector<int>> layers(numRanks);
     for (int i = 0; i < g.nodes.size(); ++i) {
         layers[g.nodes[i].rank].push_back(i);
     }
-    for (QVector<int> &layer : layers) {
+    for (QVector<int>& layer : layers) {
         std::stable_sort(layer.begin(), layer.end(),
                          [&](int a, int b) { return g.nodes[a].order < g.nodes[b].order; });
     }
@@ -328,12 +318,11 @@ struct Adj {
     QVector<QVector<int>> succs; // by node -> successor node indices (rank+1)
 };
 
-Adj buildAdj(const WorkGraph &g)
-{
+Adj buildAdj(const WorkGraph& g) {
     Adj a;
     a.preds.resize(g.nodes.size());
     a.succs.resize(g.nodes.size());
-    for (const WorkEdge &e : g.edges) {
+    for (const WorkEdge& e : g.edges) {
         if (e.u < 0 || e.v < 0) {
             continue;
         }
@@ -347,10 +336,9 @@ Adj buildAdj(const WorkGraph &g)
 // Ordering: DFS init then barycenter sweeps, keeping the layering with the
 // fewest crossings. Cluster contiguity keeps subgraph members adjacent.
 // ---------------------------------------------------------------------------
-int crossCount(const WorkGraph &g, const QVector<QVector<int>> &layers)
-{
+int crossCount(const WorkGraph& g, const QVector<QVector<int>>& layers) {
     QVector<int> pos(g.nodes.size(), 0);
-    for (const QVector<int> &layer : layers) {
+    for (const QVector<int>& layer : layers) {
         for (int i = 0; i < layer.size(); ++i) {
             pos[layer[i]] = i;
         }
@@ -359,7 +347,7 @@ int crossCount(const WorkGraph &g, const QVector<QVector<int>> &layers)
     for (int r = 0; r + 1 < layers.size(); ++r) {
         QVector<QPair<int, int>> segs; // (pos in r, pos in r+1)
         for (int u : layers[r]) {
-            for (const WorkEdge &e : g.edges) {
+            for (const WorkEdge& e : g.edges) {
                 if (e.u == u && e.v >= 0 && g.nodes[e.v].rank == r + 1) {
                     segs.push_back({pos[u], pos[e.v]});
                 }
@@ -377,8 +365,7 @@ int crossCount(const WorkGraph &g, const QVector<QVector<int>> &layers)
     return total;
 }
 
-void initOrder(WorkGraph &g, const Adj &adj, int numRanks)
-{
+void initOrder(WorkGraph& g, const Adj& adj, int numRanks) {
     QVector<int> counter(numRanks, 0);
     QVector<bool> visited(g.nodes.size(), false);
     std::function<void(int)> dfs = [&](int v) {
@@ -402,13 +389,12 @@ void initOrder(WorkGraph &g, const Adj &adj, int numRanks)
     }
 }
 
-void sortRank(WorkGraph &g, QVector<int> &layer, const Adj &adj, bool useSucc)
-{
+void sortRank(WorkGraph& g, QVector<int>& layer, const Adj& adj, bool useSucc) {
     const int m = layer.size();
     QHash<int, double> bc;
     for (int i = 0; i < m; ++i) {
         const int v = layer[i];
-        const QVector<int> &nbrs = useSucc ? adj.succs[v] : adj.preds[v];
+        const QVector<int>& nbrs = useSucc ? adj.succs[v] : adj.preds[v];
         double sum = 0.0;
         int cnt = 0;
         for (int nb : nbrs) {
@@ -422,14 +408,14 @@ void sortRank(WorkGraph &g, QVector<int> &layer, const Adj &adj, bool useSucc)
     // per-rank average would be meaningless.
     QHash<QString, double> colSum;
     QHash<QString, int> colCnt;
-    for (const WorkNode &n : g.nodes) {
+    for (const WorkNode& n : g.nodes) {
         if (n.kind == WorkKind::Real && !n.cluster.isEmpty()) {
             colSum[n.cluster] += n.order;
             colCnt[n.cluster] += 1;
         }
     }
     const auto groupKey = [&](int v) -> double {
-        const QString &c = g.nodes[v].cluster;
+        const QString& c = g.nodes[v].cluster;
         if (c.isEmpty() || !colCnt.contains(c)) {
             return bc[v];
         }
@@ -458,13 +444,12 @@ void sortRank(WorkGraph &g, QVector<int> &layer, const Adj &adj, bool useSucc)
     });
 }
 
-void order(WorkGraph &g, const Adj &adj, int numRanks)
-{
+void order(WorkGraph& g, const Adj& adj, int numRanks) {
     initOrder(g, adj, numRanks);
     QVector<QVector<int>> layers = buildLayering(g, numRanks);
 
-    const auto applyOrders = [&](const QVector<QVector<int>> &ls) {
-        for (const QVector<int> &layer : ls) {
+    const auto applyOrders = [&](const QVector<QVector<int>>& ls) {
+        for (const QVector<int>& layer : ls) {
             for (int i = 0; i < layer.size(); ++i) {
                 g.nodes[layer[i]].order = i;
             }
@@ -502,23 +487,21 @@ void order(WorkGraph &g, const Adj &adj, int numRanks)
 // node width for vertical layouts and the node height for horizontal layouts.
 // ---------------------------------------------------------------------------
 struct BK {
-    const WorkGraph &g;
-    const Adj &adj;
-    const LayoutOptions &opts;
+    const WorkGraph& g;
+    const Adj& adj;
+    const LayoutOptions& opts;
     bool vertical;
     QVector<QVector<int>> layers;
     QVector<int> pos; // order within rank (canonical)
 
     double halfCross(int v) const { return 0.5 * (vertical ? g.nodes[v].w : g.nodes[v].h); }
 
-    static bool isBorder(const WorkNode &n)
-    {
+    static bool isBorder(const WorkNode& n) {
         return n.kind == WorkKind::BorderLeft || n.kind == WorkKind::BorderRight;
     }
 
     // Minimum center-to-center spacing between two nodes adjacent in a rank.
-    double sep(int a, int b) const
-    {
+    double sep(int a, int b) const {
         double gap = opts.edgeSep;
         if (isBorder(g.nodes[a]) || isBorder(g.nodes[b])) {
             gap = opts.clusterPad; // a wall hugs its own members
@@ -531,15 +514,13 @@ struct BK {
         return halfCross(a) + halfCross(b) + gap;
     }
 
-    bool conflict(const QSet<qint64> &cf, int a, int b) const
-    {
+    bool conflict(const QSet<qint64>& cf, int a, int b) const {
         const qint64 lo = std::min(a, b);
         const qint64 hi = std::max(a, b);
         return cf.contains(lo * qint64(g.nodes.size()) + hi);
     }
 
-    QSet<qint64> type1Conflicts() const
-    {
+    QSet<qint64> type1Conflicts() const {
         QSet<qint64> cf;
         const auto add = [&](int a, int b) {
             const qint64 lo = std::min(a, b);
@@ -547,7 +528,7 @@ struct BK {
             cf.insert(lo * qint64(g.nodes.size()) + hi);
         };
         for (int r = 1; r < layers.size(); ++r) {
-            const QVector<int> &layer = layers[r];
+            const QVector<int>& layer = layers[r];
             int k0 = 0;
             int scanPos = 0;
             const int last = layer.size() - 1;
@@ -568,7 +549,8 @@ struct BK {
                         const int u2 = layer[l];
                         for (int uu : adj.preds[u2]) {
                             const int p = pos[uu];
-                            if ((p < k0 || p > k1) && !(isDummy(g.nodes[uu]) && isDummy(g.nodes[u2]))) {
+                            if ((p < k0 || p > k1) &&
+                                !(isDummy(g.nodes[uu]) && isDummy(g.nodes[u2]))) {
                                 add(uu, u2);
                             }
                         }
@@ -583,20 +565,20 @@ struct BK {
 
     // One alignment pass. `vertReverse` walks ranks bottom-up using successors;
     // `horizReverse` reverses each layer so compaction packs from the right.
-    void run(const QSet<qint64> &cf, bool vertReverse, bool horizReverse, QHash<int, double> &outX)
-    {
+    void run(const QSet<qint64>& cf, bool vertReverse, bool horizReverse,
+             QHash<int, double>& outX) {
         QVector<QVector<int>> ls = layers;
         if (vertReverse) {
             std::reverse(ls.begin(), ls.end());
         }
         if (horizReverse) {
-            for (QVector<int> &l : ls) {
+            for (QVector<int>& l : ls) {
                 std::reverse(l.begin(), l.end());
             }
         }
         QVector<int> lpos(g.nodes.size(), 0);
         QVector<int> leftOf(g.nodes.size(), -1);
-        for (const QVector<int> &l : ls) {
+        for (const QVector<int>& l : ls) {
             for (int i = 0; i < l.size(); ++i) {
                 lpos[l[i]] = i;
                 if (i > 0) {
@@ -612,15 +594,14 @@ struct BK {
             root[i] = i;
             align[i] = i;
         }
-        for (const QVector<int> &layer : ls) {
+        for (const QVector<int>& layer : ls) {
             int prevIdx = -1;
             for (int v : layer) {
                 QVector<int> ws = vertReverse ? adj.succs[v] : adj.preds[v];
                 if (ws.isEmpty()) {
                     continue;
                 }
-                std::sort(ws.begin(), ws.end(),
-                          [&](int a, int b) { return lpos[a] < lpos[b]; });
+                std::sort(ws.begin(), ws.end(), [&](int a, int b) { return lpos[a] < lpos[b]; });
                 const double mp = (ws.size() - 1) / 2.0;
                 const int from = int(std::floor(mp));
                 const int to = int(std::ceil(mp));
@@ -693,8 +674,7 @@ struct BK {
         }
     }
 
-    QHash<int, double> assign()
-    {
+    QHash<int, double> assign() {
         const QSet<qint64> cf = type1Conflicts();
         QVector<QHash<int, double>> xss(4);
         int k = 0;
@@ -754,8 +734,7 @@ struct BK {
 
 } // namespace
 
-QRectF layoutFlowchart(DiagramModel &model, const LayoutOptions &opts)
-{
+QRectF layoutFlowchart(DiagramModel& model, const LayoutOptions& opts) {
     if (model.nodes.isEmpty()) {
         return {};
     }
@@ -791,7 +770,7 @@ QRectF layoutFlowchart(DiagramModel &model, const LayoutOptions &opts)
     // X (cross axis) via Brandes-Koepf.
     BK bk{g, adj, opts, vertical, layers, {}};
     bk.pos.resize(g.nodes.size());
-    for (const QVector<int> &layer : layers) {
+    for (const QVector<int>& layer : layers) {
         for (int i = 0; i < layer.size(); ++i) {
             bk.pos[layer[i]] = i;
         }
@@ -835,7 +814,7 @@ QRectF layoutFlowchart(DiagramModel &model, const LayoutOptions &opts)
     }
 
     // Write real node centers back to the model.
-    for (const WorkNode &wn : g.nodes) {
+    for (const WorkNode& wn : g.nodes) {
         if (wn.kind == WorkKind::Real && wn.srcNode >= 0) {
             model.nodes[wn.srcNode].x = wn.x;
             model.nodes[wn.srcNode].y = wn.y;
@@ -846,14 +825,14 @@ QRectF layoutFlowchart(DiagramModel &model, const LayoutOptions &opts)
 
     // Edge routing: collect dummy bend points, clip endpoints to node shapes.
     for (int ei = 0; ei < model.edges.size(); ++ei) {
-        DiagramEdge &edge = model.edges[ei];
+        DiagramEdge& edge = model.edges[ei];
         const int a = model.indexOf(edge.fromId);
         const int b = model.indexOf(edge.toId);
         if (a < 0 || b < 0) {
             continue;
         }
-        const DiagramNode &na = model.nodes[a];
-        const DiagramNode &nb = model.nodes[b];
+        const DiagramNode& na = model.nodes[a];
+        const DiagramNode& nb = model.nodes[b];
 
         QVector<QPointF> mids;
         const auto it = chains.dummies.constFind(ei);
@@ -865,7 +844,7 @@ QRectF layoutFlowchart(DiagramModel &model, const LayoutOptions &opts)
         // Dummy chain runs low-rank -> high-rank. If the original edge was
         // reversed for acyclicity, that is target -> source, so flip it.
         bool reversed = false;
-        for (const WorkEdge &we : g.edges) {
+        for (const WorkEdge& we : g.edges) {
             if (we.edgeIdx == ei && we.reversed) {
                 reversed = true;
                 break;
@@ -897,10 +876,10 @@ QRectF layoutFlowchart(DiagramModel &model, const LayoutOptions &opts)
     }
 
     // Cluster bounds from member rectangles (recursive over nested members).
-    for (DiagramCluster &cluster : model.clusters) {
+    for (DiagramCluster& cluster : model.clusters) {
         QRectF box;
         bool first = true;
-        for (const DiagramNode &node : model.nodes) {
+        for (const DiagramNode& node : model.nodes) {
             // Membership: node's cluster chain includes this cluster.
             QString cid = node.parentCluster;
             bool inside = false;
@@ -936,18 +915,18 @@ QRectF layoutFlowchart(DiagramModel &model, const LayoutOptions &opts)
     // Overall bounds.
     QRectF bounds;
     bool first = true;
-    for (const DiagramNode &node : model.nodes) {
+    for (const DiagramNode& node : model.nodes) {
         const QRectF r(node.x - node.width / 2.0, node.y - node.height / 2.0, node.width,
                        node.height);
         bounds = first ? r : bounds.united(r);
         first = false;
     }
-    for (const DiagramEdge &edge : model.edges) {
-        for (const QPointF &p : edge.points) {
+    for (const DiagramEdge& edge : model.edges) {
+        for (const QPointF& p : edge.points) {
             bounds = bounds.united(QRectF(p, QSizeF(0.1, 0.1)));
         }
     }
-    for (const DiagramCluster &cluster : model.clusters) {
+    for (const DiagramCluster& cluster : model.clusters) {
         if (cluster.bounds.isValid()) {
             bounds = bounds.united(cluster.bounds);
         }

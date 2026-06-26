@@ -14,8 +14,7 @@ struct ShapeDelim {
 };
 
 // Ordered longest-open-first so two-char delimiters win over one-char ones.
-const QVector<ShapeDelim> &shapeDelims()
-{
+const QVector<ShapeDelim>& shapeDelims() {
     static const QVector<ShapeDelim> delims = {
         {QStringLiteral("(("), QStringLiteral("))"), NodeShape::Circle},
         {QStringLiteral("(["), QStringLiteral("])"), NodeShape::Stadium},
@@ -29,8 +28,7 @@ const QVector<ShapeDelim> &shapeDelims()
     return delims;
 }
 
-QString unquote(QString s)
-{
+QString unquote(QString s) {
     s = s.trimmed();
     if (s.size() >= 2 && s.startsWith(QLatin1Char('"')) && s.endsWith(QLatin1Char('"'))) {
         s = s.mid(1, s.size() - 2);
@@ -38,24 +36,21 @@ QString unquote(QString s)
     return s;
 }
 
-bool isIdChar(QChar c)
-{
+bool isIdChar(QChar c) {
     // Mermaid node ids are alphanumeric + underscore; '-'/'.' are reserved for
     // connectors so they must not be consumed as part of an id.
     return c.isLetterOrNumber() || c == QLatin1Char('_');
 }
 
 // Strip %% comments (whole line or trailing) and trim.
-QString stripComment(const QString &line)
-{
+QString stripComment(const QString& line) {
     const qsizetype idx = line.indexOf(QStringLiteral("%%"));
     return (idx < 0 ? line : line.left(idx));
 }
 
 // Rewrite the inline-label edge form `A -- text --> B` into `A -->|text| B` so
 // the tokenizer only has to deal with operator + optional |label|.
-QString normalizeInlineLabels(QString stmt)
-{
+QString normalizeInlineLabels(QString stmt) {
     static const QRegularExpression mid(
         QStringLiteral("(--|==|-\\.)\\s+([^|>\\n]+?)\\s+(-->|---|-\\.->|==>|===)"));
     QString out;
@@ -81,8 +76,7 @@ struct ParsedNodeRef {
     qsizetype next = 0;
 };
 
-ParsedNodeRef parseNodeRef(const QString &s, qsizetype pos)
-{
+ParsedNodeRef parseNodeRef(const QString& s, qsizetype pos) {
     ParsedNodeRef ref;
     while (pos < s.size() && s.at(pos).isSpace()) {
         ++pos;
@@ -100,7 +94,7 @@ ParsedNodeRef parseNodeRef(const QString &s, qsizetype pos)
     ref.valid = true;
 
     // Optional shape with label.
-    for (const ShapeDelim &d : shapeDelims()) {
+    for (const ShapeDelim& d : shapeDelims()) {
         if (s.mid(pos, d.open.size()) == d.open) {
             const qsizetype contentStart = pos + d.open.size();
             const qsizetype closeAt = s.indexOf(d.close, contentStart);
@@ -137,18 +131,17 @@ struct ParsedConnector {
     qsizetype next = 0;
 };
 
-ParsedConnector parseConnector(const QString &s, qsizetype pos)
-{
+ParsedConnector parseConnector(const QString& s, qsizetype pos) {
     ParsedConnector c;
     while (pos < s.size() && s.at(pos).isSpace()) {
         ++pos;
     }
     static const QVector<QString> ops = {
         QStringLiteral("-.->"), QStringLiteral("-.-"), QStringLiteral("-->"),
-        QStringLiteral("---"), QStringLiteral("==>"), QStringLiteral("==="),
+        QStringLiteral("---"),  QStringLiteral("==>"), QStringLiteral("==="),
     };
     QString matched;
-    for (const QString &op : ops) {
+    for (const QString& op : ops) {
         if (s.mid(pos, op.size()) == op) {
             matched = op;
             break;
@@ -160,9 +153,9 @@ ParsedConnector parseConnector(const QString &s, qsizetype pos)
     }
     pos += matched.size();
     c.valid = true;
-    c.kind = matched.contains(QLatin1Char('.')) ? EdgeKind::Dotted
-        : matched.contains(QLatin1Char('=')) ? EdgeKind::Thick
-                                             : EdgeKind::Normal;
+    c.kind = matched.contains(QLatin1Char('.'))   ? EdgeKind::Dotted
+             : matched.contains(QLatin1Char('=')) ? EdgeKind::Thick
+                                                  : EdgeKind::Normal;
     c.head = matched.endsWith(QLatin1Char('>')) ? ArrowHead::Arrow : ArrowHead::None;
 
     // Optional |label|.
@@ -181,13 +174,11 @@ ParsedConnector parseConnector(const QString &s, qsizetype pos)
     return c;
 }
 
-class Builder
-{
+class Builder {
 public:
     DiagramModel model;
 
-    DiagramNode &ensureNode(const QString &id)
-    {
+    DiagramNode& ensureNode(const QString& id) {
         int idx = model.nodeIndex.value(id, -1);
         if (idx < 0) {
             DiagramNode node;
@@ -200,21 +191,19 @@ public:
         // Assign cluster membership on the first reference seen inside a subgraph,
         // even if the node was first introduced outside it (mermaid semantics).
         if (!m_clusterStack.isEmpty() && model.nodes[idx].parentCluster.isEmpty()) {
-            DiagramCluster &cluster = model.clusters[m_clusterStack.last()];
+            DiagramCluster& cluster = model.clusters[m_clusterStack.last()];
             cluster.memberIds.push_back(id);
             model.nodes[idx].parentCluster = cluster.id;
         }
         return model.nodes[idx];
     }
 
-    DiagramCluster *currentCluster()
-    {
+    DiagramCluster* currentCluster() {
         return m_clusterStack.isEmpty() ? nullptr : &model.clusters[m_clusterStack.last()];
     }
 
-    void applyRef(const ParsedNodeRef &ref)
-    {
-        DiagramNode &node = ensureNode(ref.id);
+    void applyRef(const ParsedNodeRef& ref) {
+        DiagramNode& node = ensureNode(ref.id);
         if (ref.hasShape) {
             node.label = ref.label;
             node.shape = ref.shape;
@@ -224,8 +213,7 @@ public:
         }
     }
 
-    void pushCluster(const QString &id, const QString &title)
-    {
+    void pushCluster(const QString& id, const QString& title) {
         DiagramCluster cluster;
         cluster.id = id.isEmpty() ? QStringLiteral("sg%1").arg(model.clusters.size()) : id;
         cluster.title = title;
@@ -236,8 +224,7 @@ public:
         m_clusterStack.push_back(model.clusters.size() - 1);
     }
 
-    void popCluster()
-    {
+    void popCluster() {
         if (!m_clusterStack.isEmpty()) {
             m_clusterStack.removeLast();
         }
@@ -249,8 +236,7 @@ private:
     QVector<int> m_clusterStack;
 };
 
-Direction parseDirection(const QString &token)
-{
+Direction parseDirection(const QString& token) {
     const QString t = token.toUpper();
     if (t == QStringLiteral("LR")) {
         return Direction::LR;
@@ -266,22 +252,21 @@ Direction parseDirection(const QString &token)
 
 } // namespace
 
-DiagramModel parseFlowchart(const QString &source)
-{
+DiagramModel parseFlowchart(const QString& source) {
     Builder builder;
-    DiagramModel &model = builder.model;
+    DiagramModel& model = builder.model;
     model.family = QStringLiteral("flowchart");
 
     // Split into statements on newlines and ';'.
     QStringList rawLines;
-    for (const QString &line : source.split(QLatin1Char('\n'))) {
-        for (const QString &part : stripComment(line).split(QLatin1Char(';'))) {
+    for (const QString& line : source.split(QLatin1Char('\n'))) {
+        for (const QString& part : stripComment(line).split(QLatin1Char(';'))) {
             rawLines.push_back(part);
         }
     }
 
     bool headerSeen = false;
-    for (const QString &raw : rawLines) {
+    for (const QString& raw : rawLines) {
         const QString stmt = raw.trimmed();
         if (stmt.isEmpty()) {
             continue;
@@ -321,8 +306,9 @@ DiagramModel parseFlowchart(const QString &source)
             continue;
         }
         if (stmt.startsWith(QStringLiteral("direction"))) {
-            const Direction d = parseDirection(stmt.mid(QStringLiteral("direction").size()).trimmed());
-            if (DiagramCluster *cluster = builder.currentCluster()) {
+            const Direction d =
+                parseDirection(stmt.mid(QStringLiteral("direction").size()).trimmed());
+            if (DiagramCluster* cluster = builder.currentCluster()) {
                 cluster->dir = d;
                 cluster->dirSet = true;
             } else {
@@ -336,7 +322,7 @@ DiagramModel parseFlowchart(const QString &source)
             if (sp > 0) {
                 const QString name = rest.left(sp);
                 QHash<QString, QString> props;
-                for (const QString &kv : rest.mid(sp + 1).split(QLatin1Char(','))) {
+                for (const QString& kv : rest.mid(sp + 1).split(QLatin1Char(','))) {
                     const qsizetype colon = kv.indexOf(QLatin1Char(':'));
                     if (colon > 0) {
                         props.insert(kv.left(colon).trimmed(), kv.mid(colon + 1).trimmed());
@@ -351,8 +337,8 @@ DiagramModel parseFlowchart(const QString &source)
             const qsizetype sp = rest.lastIndexOf(QLatin1Char(' '));
             if (sp > 0) {
                 const QString name = rest.mid(sp + 1).trimmed();
-                for (const QString &id : rest.left(sp).split(QLatin1Char(','))) {
-                    DiagramNode &node = builder.ensureNode(id.trimmed());
+                for (const QString& id : rest.left(sp).split(QLatin1Char(','))) {
+                    DiagramNode& node = builder.ensureNode(id.trimmed());
                     node.classRef = name;
                 }
             }

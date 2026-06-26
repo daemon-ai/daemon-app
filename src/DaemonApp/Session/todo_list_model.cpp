@@ -2,21 +2,16 @@
 
 #include <QVariantMap>
 
-TodoListModel::TodoListModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
-}
+TodoListModel::TodoListModel(QObject* parent) : QAbstractListModel(parent) {}
 
-int TodoListModel::rowCount(const QModelIndex& parent) const
-{
+int TodoListModel::rowCount(const QModelIndex& parent) const {
     if (parent.isValid()) {
         return 0;
     }
     return static_cast<int>(m_items.size());
 }
 
-QVariant TodoListModel::data(const QModelIndex& index, int role) const
-{
+QVariant TodoListModel::data(const QModelIndex& index, int role) const {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_items.size()) {
         return {};
     }
@@ -31,30 +26,27 @@ QVariant TodoListModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> TodoListModel::roleNames() const
-{
+QHash<int, QByteArray> TodoListModel::roleNames() const {
     return {
-        { TextRole, QByteArrayLiteral("text") },
-        { DoneRole, QByteArrayLiteral("done") },
+        {TextRole, QByteArrayLiteral("text")},
+        {DoneRole, QByteArrayLiteral("done")},
     };
 }
 
-void TodoListModel::setTodos(const QVariantList& items)
-{
+void TodoListModel::setTodos(const QVariantList& items) {
     beginResetModel();
     m_items.clear();
     m_items.reserve(items.size());
     for (const QVariant& v : items) {
         const QVariantMap map = v.toMap();
-        m_items.push_back(Item{ map.value(QStringLiteral("text")).toString(),
-                                map.value(QStringLiteral("done")).toBool() });
+        m_items.push_back(Item{map.value(QStringLiteral("text")).toString(),
+                               map.value(QStringLiteral("done")).toBool()});
     }
     endResetModel();
     emit countChanged();
 }
 
-void TodoListModel::clear()
-{
+void TodoListModel::clear() {
     if (m_items.isEmpty()) {
         return;
     }
@@ -64,16 +56,14 @@ void TodoListModel::clear()
     emit countChanged();
 }
 
-QString TodoListModel::textAt(int index) const
-{
+QString TodoListModel::textAt(int index) const {
     if (index < 0 || index >= m_items.size()) {
         return {};
     }
     return m_items.at(index).text;
 }
 
-bool TodoListModel::doneAt(int index) const
-{
+bool TodoListModel::doneAt(int index) const {
     if (index < 0 || index >= m_items.size()) {
         return false;
     }

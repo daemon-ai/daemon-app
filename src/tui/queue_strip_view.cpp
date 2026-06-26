@@ -1,29 +1,24 @@
 #include "queue_strip_view.h"
 
-#include "tui_palette.h"
-
 #include "composer_queue_model.h"
 #include "composer_session_controller.h"
-
-#include <Tui/ZColor.h>
-#include <Tui/ZEvent.h>
-#include <Tui/ZPainter.h>
-
-#include <Tui/ZTerminal.h>
+#include "tui_palette.h"
 
 #include <QRect>
 #include <QSize>
+#include <Tui/ZColor.h>
+#include <Tui/ZEvent.h>
+#include <Tui/ZPainter.h>
+#include <Tui/ZTerminal.h>
 
 namespace {
 
 Span mkSpan(const QString& text, const Tui::ZColor& fg, const Tui::ZColor& bg,
-            Tui::ZTextAttributes attr = {})
-{
-    return Span { text, fg, bg, attr };
+            Tui::ZTextAttributes attr = {}) {
+    return Span{text, fg, bg, attr};
 }
 
-QString elide(const QString& text, int width)
-{
+QString elide(const QString& text, int width) {
     if (width <= 0) {
         return QString();
     }
@@ -35,21 +30,18 @@ QString elide(const QString& text, int width)
 
 } // namespace
 
-QueueStripView::QueueStripView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
-{
+QueueStripView::QueueStripView(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
     setFocusPolicy(Tui::NoFocus); // gains focus only when it has entries
     setSizePolicyH(Tui::SizePolicy::Expanding);
     setSizePolicyV(Tui::SizePolicy::Fixed);
     setMaximumSize(Tui::tuiMaxSize, 0);
 }
 
-int QueueStripView::count() const
-{
+int QueueStripView::count() const {
     return m_controller != nullptr ? m_controller->queueCount() : 0;
 }
 
-void QueueStripView::setController(ComposerSessionController* controller)
-{
+void QueueStripView::setController(ComposerSessionController* controller) {
     m_controller = controller;
     if (m_controller != nullptr) {
         const auto repaint = [this] { rebuild(); };
@@ -65,13 +57,11 @@ void QueueStripView::setController(ComposerSessionController* controller)
     rebuild();
 }
 
-QSize QueueStripView::sizeHint() const
-{
-    return { 40, m_height };
+QSize QueueStripView::sizeHint() const {
+    return {40, m_height};
 }
 
-void QueueStripView::layoutLines()
-{
+void QueueStripView::layoutLines() {
     m_lines.clear();
     const int n = count();
     const int editing = m_controller != nullptr ? m_controller->editingIndex() : -1;
@@ -87,20 +77,19 @@ void QueueStripView::layoutLines()
         const Tui::ZColor idxFg = sel ? tpal::accent() : tpal::muted();
 
         RenderLine line;
-        const QString marker = isEditing ? QStringLiteral("\u270e ")  // pencil while editing
-                             : sel        ? QStringLiteral("\u25b8 ")  // arrow on selection
-                                          : QStringLiteral("  ");
+        const QString marker = isEditing ? QStringLiteral("\u270e ") // pencil while editing
+                               : sel     ? QStringLiteral("\u25b8 ") // arrow on selection
+                                         : QStringLiteral("  ");
         line.push_back(mkSpan(marker, idxFg, bg));
         line.push_back(mkSpan(QString::number(i + 1) + QStringLiteral(". "), idxFg, bg));
         line.push_back(mkSpan(elide(text, qMax(1, w - 6)), tpal::fg(), bg,
-                              sel ? Tui::ZTextAttribute::Bold : Tui::ZTextAttributes {}));
+                              sel ? Tui::ZTextAttribute::Bold : Tui::ZTextAttributes{}));
         m_lines.push_back(line);
     }
     update();
 }
 
-void QueueStripView::rebuild()
-{
+void QueueStripView::rebuild() {
     const int n = count();
     m_height = qMin(n, kMaxRows);
     setFocusPolicy(n > 0 ? Tui::StrongFocus : Tui::NoFocus);
@@ -119,8 +108,7 @@ void QueueStripView::rebuild()
     layoutLines();
 }
 
-void QueueStripView::clickAt(QPoint local)
-{
+void QueueStripView::clickAt(QPoint local) {
     const int n = count();
     if (n <= 0) {
         return;
@@ -135,14 +123,12 @@ void QueueStripView::clickAt(QPoint local)
     }
 }
 
-void QueueStripView::resizeEvent(Tui::ZResizeEvent* event)
-{
+void QueueStripView::resizeEvent(Tui::ZResizeEvent* event) {
     Tui::ZWidget::resizeEvent(event);
     layoutLines();
 }
 
-void QueueStripView::paintEvent(Tui::ZPaintEvent* event)
-{
+void QueueStripView::paintEvent(Tui::ZPaintEvent* event) {
     Tui::ZPainter* p = event->painter();
     p->clear(tpal::fg(), tpal::bg());
 
@@ -158,7 +144,7 @@ void QueueStripView::paintEvent(Tui::ZPaintEvent* event)
             if (x + static_cast<int>(text.size()) > w) {
                 text = text.left(w - x);
             }
-            if (s.attr != Tui::ZTextAttributes {}) {
+            if (s.attr != Tui::ZTextAttributes{}) {
                 p->writeWithAttributes(x, row, text, s.fg, s.bg, s.attr);
             } else {
                 p->writeWithColors(x, row, text, s.fg, s.bg);
@@ -168,8 +154,7 @@ void QueueStripView::paintEvent(Tui::ZPaintEvent* event)
     }
 }
 
-void QueueStripView::keyEvent(Tui::ZKeyEvent* event)
-{
+void QueueStripView::keyEvent(Tui::ZKeyEvent* event) {
     const int n = count();
     if (m_controller != nullptr && n > 0 && event->modifiers() == Qt::NoModifier) {
         const int key = event->key();

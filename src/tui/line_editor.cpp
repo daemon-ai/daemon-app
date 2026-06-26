@@ -1,21 +1,19 @@
 #include "line_editor.h"
 
+#include <QDir>
 #include <QFile>
 #include <QProcessEnvironment>
-#include <QDir>
 
 namespace lineedit {
 namespace {
 
-bool isWordChar(QChar c)
-{
+bool isWordChar(QChar c) {
     // readline's default word boundary: alphanumeric only (underscore is NOT a
     // word char in the stock emacs keymap).
     return c.isLetterOrNumber();
 }
 
-int forwardWordIndex(const QString& text, int i)
-{
+int forwardWordIndex(const QString& text, int i) {
     const int n = static_cast<int>(text.size());
     while (i < n && !isWordChar(text.at(i))) {
         ++i;
@@ -26,8 +24,7 @@ int forwardWordIndex(const QString& text, int i)
     return i;
 }
 
-int backwardWordIndex(const QString& text, int i)
-{
+int backwardWordIndex(const QString& text, int i) {
     while (i > 0 && !isWordChar(text.at(i - 1))) {
         --i;
     }
@@ -38,8 +35,7 @@ int backwardWordIndex(const QString& text, int i)
 }
 
 // unix-word-rubout uses whitespace (not word-char) as the only delimiter.
-int backwardWhitespaceIndex(const QString& text, int i)
-{
+int backwardWhitespaceIndex(const QString& text, int i) {
     while (i > 0 && text.at(i - 1).isSpace()) {
         --i;
     }
@@ -49,25 +45,24 @@ int backwardWhitespaceIndex(const QString& text, int i)
     return i;
 }
 
-const QHash<QString, EditCommand>& functionTable()
-{
+const QHash<QString, EditCommand>& functionTable() {
     static const QHash<QString, EditCommand> table = {
-        { QStringLiteral("beginning-of-line"), EditCommand::BeginningOfLine },
-        { QStringLiteral("end-of-line"), EditCommand::EndOfLine },
-        { QStringLiteral("forward-char"), EditCommand::ForwardChar },
-        { QStringLiteral("backward-char"), EditCommand::BackwardChar },
-        { QStringLiteral("forward-word"), EditCommand::ForwardWord },
-        { QStringLiteral("backward-word"), EditCommand::BackwardWord },
-        { QStringLiteral("delete-char"), EditCommand::DeleteChar },
-        { QStringLiteral("backward-delete-char"), EditCommand::BackwardDeleteChar },
-        { QStringLiteral("kill-line"), EditCommand::KillLine },
-        { QStringLiteral("unix-line-discard"), EditCommand::UnixLineDiscard },
-        { QStringLiteral("kill-word"), EditCommand::KillWord },
-        { QStringLiteral("backward-kill-word"), EditCommand::BackwardKillWord },
-        { QStringLiteral("unix-word-rubout"), EditCommand::UnixWordRubout },
-        { QStringLiteral("yank"), EditCommand::Yank },
-        { QStringLiteral("yank-pop"), EditCommand::YankPop },
-        { QStringLiteral("transpose-chars"), EditCommand::TransposeChars },
+        {QStringLiteral("beginning-of-line"), EditCommand::BeginningOfLine},
+        {QStringLiteral("end-of-line"), EditCommand::EndOfLine},
+        {QStringLiteral("forward-char"), EditCommand::ForwardChar},
+        {QStringLiteral("backward-char"), EditCommand::BackwardChar},
+        {QStringLiteral("forward-word"), EditCommand::ForwardWord},
+        {QStringLiteral("backward-word"), EditCommand::BackwardWord},
+        {QStringLiteral("delete-char"), EditCommand::DeleteChar},
+        {QStringLiteral("backward-delete-char"), EditCommand::BackwardDeleteChar},
+        {QStringLiteral("kill-line"), EditCommand::KillLine},
+        {QStringLiteral("unix-line-discard"), EditCommand::UnixLineDiscard},
+        {QStringLiteral("kill-word"), EditCommand::KillWord},
+        {QStringLiteral("backward-kill-word"), EditCommand::BackwardKillWord},
+        {QStringLiteral("unix-word-rubout"), EditCommand::UnixWordRubout},
+        {QStringLiteral("yank"), EditCommand::Yank},
+        {QStringLiteral("yank-pop"), EditCommand::YankPop},
+        {QStringLiteral("transpose-chars"), EditCommand::TransposeChars},
     };
     return table;
 }
@@ -80,11 +75,10 @@ struct Chord {
 };
 
 // Map a base character (plus accumulated Ctrl/Alt flags) to a Qt key chord.
-Chord chordForChar(QChar base, bool ctrl, bool meta)
-{
+Chord chordForChar(QChar base, bool ctrl, bool meta) {
     Chord c;
-    c.mods = (ctrl ? Qt::ControlModifier : Qt::NoModifier)
-        | (meta ? Qt::AltModifier : Qt::NoModifier);
+    c.mods =
+        (ctrl ? Qt::ControlModifier : Qt::NoModifier) | (meta ? Qt::AltModifier : Qt::NoModifier);
     const QChar up = base.toUpper();
     if (up >= QLatin1Char('A') && up <= QLatin1Char('Z')) {
         c.key = Qt::Key_A + (up.unicode() - u'A');
@@ -101,8 +95,7 @@ Chord chordForChar(QChar base, bool ctrl, bool meta)
 
 // Parse a quoted readline key sequence (the part inside the quotes). Returns a
 // single chord; multi-chord sequences (e.g. "\C-x\C-e") are rejected (ok=false).
-Chord parseQuotedSeq(const QString& s)
-{
+Chord parseQuotedSeq(const QString& s) {
     Chord result;
     bool ctrl = false;
     bool meta = false;
@@ -113,14 +106,14 @@ Chord parseQuotedSeq(const QString& s)
         QChar ch = s.at(i);
         if (ch == QLatin1Char('\\') && i + 1 < n) {
             const QChar next = s.at(i + 1);
-            if ((next == QLatin1Char('C') || next == QLatin1Char('c')) && i + 2 < n
-                && s.at(i + 2) == QLatin1Char('-')) {
+            if ((next == QLatin1Char('C') || next == QLatin1Char('c')) && i + 2 < n &&
+                s.at(i + 2) == QLatin1Char('-')) {
                 ctrl = true;
                 i += 3;
                 continue;
             }
-            if ((next == QLatin1Char('M') || next == QLatin1Char('m')) && i + 2 < n
-                && s.at(i + 2) == QLatin1Char('-')) {
+            if ((next == QLatin1Char('M') || next == QLatin1Char('m')) && i + 2 < n &&
+                s.at(i + 2) == QLatin1Char('-')) {
                 meta = true;
                 i += 3;
                 continue;
@@ -132,8 +125,7 @@ Chord parseQuotedSeq(const QString& s)
             }
             // A literal escaped character (\\, \" ...). \t/\r/\n are not supported
             // as chord bases here.
-            if (next == QLatin1Char('t') || next == QLatin1Char('r')
-                || next == QLatin1Char('n')) {
+            if (next == QLatin1Char('t') || next == QLatin1Char('r') || next == QLatin1Char('n')) {
                 return {};
             }
             if (sawChord) {
@@ -153,12 +145,11 @@ Chord parseQuotedSeq(const QString& s)
         ctrl = meta = false;
         ++i;
     }
-    return sawChord ? result : Chord {};
+    return sawChord ? result : Chord{};
 }
 
 // Parse the unquoted symbolic form: "Control-a", "Meta-b", "C-M-x", etc.
-Chord parseSymbolicSeq(const QString& s)
-{
+Chord parseSymbolicSeq(const QString& s) {
     const QStringList parts = s.split(QLatin1Char('-'), Qt::SkipEmptyParts);
     if (parts.isEmpty()) {
         return {};
@@ -167,11 +158,11 @@ Chord parseSymbolicSeq(const QString& s)
     bool meta = false;
     for (int i = 0; i < parts.size() - 1; ++i) {
         const QString p = parts.at(i).toLower();
-        if (p == QStringLiteral("control") || p == QStringLiteral("ctrl")
-            || p == QStringLiteral("c")) {
+        if (p == QStringLiteral("control") || p == QStringLiteral("ctrl") ||
+            p == QStringLiteral("c")) {
             ctrl = true;
-        } else if (p == QStringLiteral("meta") || p == QStringLiteral("alt")
-            || p == QStringLiteral("m")) {
+        } else if (p == QStringLiteral("meta") || p == QStringLiteral("alt") ||
+                   p == QStringLiteral("m")) {
             meta = true;
         } else {
             return {}; // unknown modifier token
@@ -188,11 +179,10 @@ Chord parseSymbolicSeq(const QString& s)
     return {};
 }
 
-Chord parseKeyseq(const QString& raw)
-{
+Chord parseKeyseq(const QString& raw) {
     const QString trimmed = raw.trimmed();
-    if (trimmed.size() >= 2 && trimmed.startsWith(QLatin1Char('"'))
-        && trimmed.endsWith(QLatin1Char('"'))) {
+    if (trimmed.size() >= 2 && trimmed.startsWith(QLatin1Char('"')) &&
+        trimmed.endsWith(QLatin1Char('"'))) {
         return parseQuotedSeq(trimmed.mid(1, trimmed.size() - 2));
     }
     return parseSymbolicSeq(trimmed);
@@ -200,8 +190,7 @@ Chord parseKeyseq(const QString& raw)
 
 } // namespace
 
-void KillRing::pushKill(const QString& killed, bool backward, bool merge)
-{
+void KillRing::pushKill(const QString& killed, bool backward, bool merge) {
     if (killed.isEmpty()) {
         return;
     }
@@ -217,14 +206,12 @@ void KillRing::pushKill(const QString& killed, bool backward, bool merge)
     m_yankIndex = 0;
 }
 
-QString KillRing::beginYank()
-{
+QString KillRing::beginYank() {
     m_yankIndex = 0;
     return m_ring.isEmpty() ? QString() : m_ring.front();
 }
 
-QString KillRing::rotate()
-{
+QString KillRing::rotate() {
     if (m_ring.isEmpty()) {
         return {};
     }
@@ -232,14 +219,12 @@ QString KillRing::rotate()
     return m_ring.at(m_yankIndex);
 }
 
-void KillRing::endCommand(bool didKill, bool didYank)
-{
+void KillRing::endCommand(bool didKill, bool didYank) {
     m_lastWasKill = didKill;
     m_lastWasYank = didYank;
 }
 
-bool LineEditor::applyCommand(EditCommand cmd, QString& text, int& cursor, KillRing& ring)
-{
+bool LineEditor::applyCommand(EditCommand cmd, QString& text, int& cursor, KillRing& ring) {
     cursor = qBound(0, cursor, static_cast<int>(text.size()));
     const bool wasKill = ring.lastWasKill();
     const bool wasYank = ring.lastWasYank();
@@ -371,21 +356,17 @@ bool LineEditor::applyCommand(EditCommand cmd, QString& text, int& cursor, KillR
     return handled;
 }
 
-quint64 LineEditor::encode(int key, Qt::KeyboardModifiers mods)
-{
-    const Qt::KeyboardModifiers kept = mods
-        & (Qt::ControlModifier | Qt::AltModifier | Qt::ShiftModifier | Qt::MetaModifier);
-    return (static_cast<quint64>(static_cast<unsigned>(kept)) << 32)
-        | static_cast<quint32>(key);
+quint64 LineEditor::encode(int key, Qt::KeyboardModifiers mods) {
+    const Qt::KeyboardModifiers kept =
+        mods & (Qt::ControlModifier | Qt::AltModifier | Qt::ShiftModifier | Qt::MetaModifier);
+    return (static_cast<quint64>(static_cast<unsigned>(kept)) << 32) | static_cast<quint32>(key);
 }
 
-EditCommand LineEditor::commandForFunction(const QString& name)
-{
+EditCommand LineEditor::commandForFunction(const QString& name) {
     return functionTable().value(name.trimmed(), EditCommand::None);
 }
 
-QHash<quint64, EditCommand> LineEditor::defaultKeymap()
-{
+QHash<quint64, EditCommand> LineEditor::defaultKeymap() {
     QHash<quint64, EditCommand> m;
     const auto bind = [&](int key, Qt::KeyboardModifiers mods, EditCommand cmd) {
         m.insert(encode(key, mods), cmd);
@@ -408,8 +389,7 @@ QHash<quint64, EditCommand> LineEditor::defaultKeymap()
     return m;
 }
 
-void LineEditor::parseInputrcInto(QHash<quint64, EditCommand>& map, const QString& contents)
-{
+void LineEditor::parseInputrcInto(QHash<quint64, EditCommand>& map, const QString& contents) {
     // A stack of conditional frames; a frame is `true` when its block is being
     // skipped (e.g. `$if mode=vi`). We ignore bindings while any frame is active.
     QList<bool> condStack;
@@ -424,8 +404,8 @@ void LineEditor::parseInputrcInto(QHash<quint64, EditCommand>& map, const QStrin
         if (line.startsWith(QStringLiteral("$if"))) {
             const QString cond = line.mid(3).trimmed().toLower();
             // Skip mode-conditional blocks that are not emacs; descend into the rest.
-            const bool skip = cond.startsWith(QStringLiteral("mode="))
-                && !cond.contains(QStringLiteral("emacs"));
+            const bool skip =
+                cond.startsWith(QStringLiteral("mode=")) && !cond.contains(QStringLiteral("emacs"));
             condStack.append(skip);
             continue;
         }
@@ -470,8 +450,7 @@ void LineEditor::parseInputrcInto(QHash<quint64, EditCommand>& map, const QStrin
     }
 }
 
-const QHash<quint64, EditCommand>& LineEditor::keymap()
-{
+const QHash<quint64, EditCommand>& LineEditor::keymap() {
     static const QHash<quint64, EditCommand> cached = [] {
         QHash<quint64, EditCommand> m = defaultKeymap();
         const QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
@@ -493,13 +472,11 @@ const QHash<quint64, EditCommand>& LineEditor::keymap()
     return cached;
 }
 
-EditCommand LineEditor::lookup(int key, Qt::KeyboardModifiers mods)
-{
+EditCommand LineEditor::lookup(int key, Qt::KeyboardModifiers mods) {
     return keymap().value(encode(key, mods), EditCommand::None);
 }
 
-EditCommand LineEditor::lookupEvent(int key, Qt::KeyboardModifiers mods, const QString& text)
-{
+EditCommand LineEditor::lookupEvent(int key, Qt::KeyboardModifiers mods, const QString& text) {
     const EditCommand direct = lookup(key, mods);
     if (direct != EditCommand::None) {
         return direct;

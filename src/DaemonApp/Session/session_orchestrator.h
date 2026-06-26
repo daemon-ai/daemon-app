@@ -23,8 +23,7 @@
 class SessionOrchestrator : public QObject {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(SessionController* session READ session WRITE setSession NOTIFY
-                   sessionChanged)
+    Q_PROPERTY(SessionController* session READ session WRITE setSession NOTIFY sessionChanged)
     Q_PROPERTY(TurnController* turn READ turn CONSTANT)
     Q_PROPERTY(TodoListModel* todos READ todos CONSTANT)
     Q_PROPERTY(SubagentModel* subagents READ subagents CONSTANT)

@@ -8,11 +8,10 @@ namespace be {
 
 // True when the raw image URL points at a remote http(s) resource that must be
 // downloaded (and is therefore routed through the shared CachedImageProvider).
-inline bool isRemoteImage(const QString &rawUrl)
-{
+inline bool isRemoteImage(const QString& rawUrl) {
     const QString trimmed = rawUrl.trimmed();
-    return trimmed.startsWith(QStringLiteral("http://"), Qt::CaseInsensitive)
-        || trimmed.startsWith(QStringLiteral("https://"), Qt::CaseInsensitive);
+    return trimmed.startsWith(QStringLiteral("http://"), Qt::CaseInsensitive) ||
+           trimmed.startsWith(QStringLiteral("https://"), Qt::CaseInsensitive);
 }
 
 // Map a raw Markdown image URL to a QML-ready source string.
@@ -22,23 +21,22 @@ inline bool isRemoteImage(const QString &rawUrl)
 // absolute paths) are returned as a directly-loadable URL and bypass the cache.
 // Bare relative paths are a known gap (no document base directory exists yet) and
 // are returned unchanged so they at least resolve against the working directory.
-inline QString resolveImageSource(const QString &rawUrl)
-{
+inline QString resolveImageSource(const QString& rawUrl) {
     const QString trimmed = rawUrl.trimmed();
     if (trimmed.isEmpty()) {
         return QString();
     }
 
     if (isRemoteImage(trimmed)) {
-        return QStringLiteral("image://imgcache/")
-            + QString::fromLatin1(QUrl::toPercentEncoding(trimmed));
+        return QStringLiteral("image://imgcache/") +
+               QString::fromLatin1(QUrl::toPercentEncoding(trimmed));
     }
 
     // Already a usable local/embedded URL scheme: load directly, no caching.
-    if (trimmed.startsWith(QStringLiteral("file:"), Qt::CaseInsensitive)
-        || trimmed.startsWith(QStringLiteral("data:"), Qt::CaseInsensitive)
-        || trimmed.startsWith(QStringLiteral("qrc:"), Qt::CaseInsensitive)
-        || trimmed.startsWith(QStringLiteral("image://"), Qt::CaseInsensitive)) {
+    if (trimmed.startsWith(QStringLiteral("file:"), Qt::CaseInsensitive) ||
+        trimmed.startsWith(QStringLiteral("data:"), Qt::CaseInsensitive) ||
+        trimmed.startsWith(QStringLiteral("qrc:"), Qt::CaseInsensitive) ||
+        trimmed.startsWith(QStringLiteral("image://"), Qt::CaseInsensitive)) {
         return trimmed;
     }
 

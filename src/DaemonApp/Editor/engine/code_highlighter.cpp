@@ -11,18 +11,14 @@ namespace {
 
 // One shared repository for the whole app (definitions/themes are loaded from
 // the baked-in Qt resources via QRC_SYNTAX).
-KSyntaxHighlighting::Repository& sharedRepository()
-{
+KSyntaxHighlighting::Repository& sharedRepository() {
     static KSyntaxHighlighting::Repository repo;
     return repo;
 }
 
 } // namespace
 
-CodeHighlighter::CodeHighlighter(TextDocument* doc, QObject* parent)
-    : QObject(parent)
-    , m_doc(doc)
-{
+CodeHighlighter::CodeHighlighter(TextDocument* doc, QObject* parent) : QObject(parent), m_doc(doc) {
     m_theme = sharedRepository().defaultTheme(KSyntaxHighlighting::Repository::LightTheme);
     setTheme(m_theme);
     if (m_doc) {
@@ -32,29 +28,25 @@ CodeHighlighter::CodeHighlighter(TextDocument* doc, QObject* parent)
     onLinesReset();
 }
 
-QString CodeHighlighter::definitionName() const
-{
+QString CodeHighlighter::definitionName() const {
     return definition().name();
 }
 
-void CodeHighlighter::setLanguageForFile(const QString& fileName)
-{
+void CodeHighlighter::setLanguageForFile(const QString& fileName) {
     const auto def = sharedRepository().definitionForFileName(fileName);
     setDefinition(def.isValid() ? def
                                 : sharedRepository().definitionForName(QStringLiteral("None")));
     invalidateFrom(0);
 }
 
-void CodeHighlighter::setLanguageName(const QString& name)
-{
+void CodeHighlighter::setLanguageName(const QString& name) {
     const auto def = sharedRepository().definitionForName(name);
     if (def.isValid())
         setDefinition(def);
     invalidateFrom(0);
 }
 
-void CodeHighlighter::setDarkTheme(bool dark)
-{
+void CodeHighlighter::setDarkTheme(bool dark) {
     if (m_dark == dark)
         return;
     m_dark = dark;
@@ -64,8 +56,7 @@ void CodeHighlighter::setDarkTheme(bool dark)
     invalidateFrom(0);
 }
 
-void CodeHighlighter::ensureCacheSize()
-{
+void CodeHighlighter::ensureCacheSize() {
     const int n = m_doc ? m_doc->lineCount() : 0;
     if (m_endState.size() == n)
         return;
@@ -82,26 +73,22 @@ void CodeHighlighter::ensureCacheSize()
     }
 }
 
-void CodeHighlighter::invalidateFrom(int line)
-{
+void CodeHighlighter::invalidateFrom(int line) {
     if (line < m_firstInvalid)
         m_firstInvalid = qMax(0, line);
 }
 
-void CodeHighlighter::onLineChanged(int line)
-{
+void CodeHighlighter::onLineChanged(int line) {
     ensureCacheSize();
     invalidateFrom(line);
 }
 
-void CodeHighlighter::onLinesReset()
-{
+void CodeHighlighter::onLinesReset() {
     ensureCacheSize();
     m_firstInvalid = 0;
 }
 
-void CodeHighlighter::highlightTo(int target)
-{
+void CodeHighlighter::highlightTo(int target) {
     // KateBuffer::doHighlight: highlight the contiguous gap from the watermark up
     // to `target`, carrying the previous line's lexer state forward, and advance
     // the watermark. Bounded to `target` only - never a whole-document sweep.
@@ -131,15 +118,13 @@ void CodeHighlighter::highlightTo(int target)
     emit highlightingChanged(changedFirst, l - 1);
 }
 
-void CodeHighlighter::ensureHighlighted(int lastLine)
-{
+void CodeHighlighter::ensureHighlighted(int lastLine) {
     // KateBuffer::ensureHighlighted(line, lookAhead=64): bring the watermark up to
     // the requested line plus a small look-ahead, lazily and on demand.
     highlightTo(lastLine + kLookahead);
 }
 
-const QList<FormatRun>& CodeHighlighter::runs(int line)
-{
+const QList<FormatRun>& CodeHighlighter::runs(int line) {
     static const QList<FormatRun> empty;
     if (line < 0)
         return empty;
@@ -149,13 +134,12 @@ const QList<FormatRun>& CodeHighlighter::runs(int line)
     return m_runs[line];
 }
 
-bool CodeHighlighter::foldingStartsAt(int line) const
-{
+bool CodeHighlighter::foldingStartsAt(int line) const {
     return line >= 0 && line < m_foldStart.size() && m_foldStart[line];
 }
 
-void CodeHighlighter::applyFormat(int offset, int length, const KSyntaxHighlighting::Format& format)
-{
+void CodeHighlighter::applyFormat(int offset, int length,
+                                  const KSyntaxHighlighting::Format& format) {
     if (length <= 0)
         return;
     FormatRun run;
@@ -167,8 +151,8 @@ void CodeHighlighter::applyFormat(int offset, int length, const KSyntaxHighlight
     m_curRuns.push_back(run);
 }
 
-void CodeHighlighter::applyFolding(int offset, int length, KSyntaxHighlighting::FoldingRegion region)
-{
+void CodeHighlighter::applyFolding(int offset, int length,
+                                   KSyntaxHighlighting::FoldingRegion region) {
     Q_UNUSED(offset);
     Q_UNUSED(length);
     if (region.type() == KSyntaxHighlighting::FoldingRegion::Begin)

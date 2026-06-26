@@ -4,9 +4,9 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QtQml/qqmlregistration.h>
 #include <QVariantList>
 #include <QVariantMap>
-#include <QtQml/qqmlregistration.h>
 
 // Demo/simulator runtime for pre-backend UI coverage - the C++ port of
 // TurnSimulator.qml. Given a user prompt it plays a canned assistant turn

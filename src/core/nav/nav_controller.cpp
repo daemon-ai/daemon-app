@@ -2,8 +2,7 @@
 
 namespace nav {
 
-void NavController::open(const QString& page, const QString& section)
-{
+void NavController::open(const QString& page, const QString& section) {
     const bool pageChanged = (m_page != page) || (m_section != section);
     m_page = page;
     m_section = section;
@@ -13,8 +12,7 @@ void NavController::open(const QString& page, const QString& section)
     emit openRequested(page, section);
 }
 
-void NavController::setSection(const QString& section)
-{
+void NavController::setSection(const QString& section) {
     if (m_page.isEmpty() || m_section == section) {
         return;
     }
@@ -23,16 +21,15 @@ void NavController::setSection(const QString& section)
     emit openRequested(m_page, m_section);
 }
 
-void NavController::openAgent(const QString& kind, const QString& profileRef, const QString& title)
-{
+void NavController::openAgent(const QString& kind, const QString& profileRef,
+                              const QString& title) {
     if (profileRef.isEmpty()) {
         return;
     }
     emit openAgentRequested(kind, profileRef, title);
 }
 
-void NavController::close()
-{
+void NavController::close() {
     if (m_page.isEmpty()) {
         return;
     }

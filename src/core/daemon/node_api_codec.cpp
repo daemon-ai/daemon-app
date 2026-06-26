@@ -10,16 +10,14 @@ extern "C" {
 namespace daemonapp::daemon {
 namespace {
 
-QString fromZcbor(const zcbor_string& s)
-{
+QString fromZcbor(const zcbor_string& s) {
     if (s.value == nullptr || s.len == 0) {
         return {};
     }
     return QString::fromUtf8(reinterpret_cast<const char*>(s.value), static_cast<int>(s.len));
 }
 
-QString sessionStateName(int choice)
-{
+QString sessionStateName(int choice) {
     switch (choice) {
     case session_state_r::session_state_Active_tstr_c:
         return QStringLiteral("Active");
@@ -32,14 +30,12 @@ QString sessionStateName(int choice)
     }
 }
 
-QString lifecycleName(int choice)
-{
+QString lifecycleName(int choice) {
     return choice == lifecycle_r::lifecycle_Live_tstr_c ? QStringLiteral("Live")
-                                                    : QStringLiteral("Durable");
+                                                        : QStringLiteral("Durable");
 }
 
-QString roleName(int choice)
-{
+QString roleName(int choice) {
     switch (choice) {
     case session_role_r::session_role_ManagedChild_tstr_c:
         return QStringLiteral("ManagedChild");
@@ -50,8 +46,7 @@ QString roleName(int choice)
     }
 }
 
-bool encodeRequest(const api_request_r& request, QByteArray* out)
-{
+bool encodeRequest(const api_request_r& request, QByteArray* out) {
     // Grow the output buffer until the request fits rather than truncating: most requests are tiny,
     // but Submit/CommandInvoke carry user text and can exceed any small fixed size. Retry on encode
     // failure (zcbor signals a too-small buffer that way) up to a sane cap.
@@ -72,8 +67,7 @@ bool encodeRequest(const api_request_r& request, QByteArray* out)
     }
 }
 
-bool decodeResponse(const QByteArray& responseCbor, api_response_r* out)
-{
+bool decodeResponse(const QByteArray& responseCbor, api_response_r* out) {
     if (responseCbor.isEmpty()) {
         return false;
     }
@@ -81,24 +75,21 @@ bool decodeResponse(const QByteArray& responseCbor, api_response_r* out)
     size_t consumed = 0;
     // Require the whole frame to decode: a short read that leaves trailing bytes is a malformed or
     // truncated response, not a success.
-    return cbor_decode_api_response(reinterpret_cast<const uint8_t*>(responseCbor.constData()), size,
-                                    out, &consumed)
-            == ZCBOR_SUCCESS
-        && consumed == size;
+    return cbor_decode_api_response(reinterpret_cast<const uint8_t*>(responseCbor.constData()),
+                                    size, out, &consumed) == ZCBOR_SUCCESS &&
+           consumed == size;
 }
 
 } // namespace
 
-QByteArray NodeApiCodec::encodeHealthRequest()
-{
+QByteArray NodeApiCodec::encodeHealthRequest() {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_health_m_c;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
-QByteArray NodeApiCodec::encodeSessionsQueryRequest()
-{
+QByteArray NodeApiCodec::encodeSessionsQueryRequest() {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_sessions_query_m_c;
     // Leave every optional field absent: an empty session-query map asks the daemon for its
@@ -109,8 +100,7 @@ QByteArray NodeApiCodec::encodeSessionsQueryRequest()
 }
 
 QByteArray NodeApiCodec::encodeSubscribeRequest(const QString& sessionId, quint64 afterSeq,
-                                                quint32 max)
-{
+                                                quint32 max) {
     const QByteArray session = sessionId.toUtf8();
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_subscribe_m_c;
@@ -123,8 +113,7 @@ QByteArray NodeApiCodec::encodeSubscribeRequest(const QString& sessionId, quint6
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
-ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor)
-{
+ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
     auto response = std::make_unique<api_response_r>();
     if (!decodeResponse(responseCbor, response.get())) {
         return ApiResponseKind::Unknown;
@@ -145,14 +134,13 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor)
     }
 }
 
-bool NodeApiCodec::decodeHealth(const QByteArray& responseCbor, DecodedHealth* out)
-{
+bool NodeApiCodec::decodeHealth(const QByteArray& responseCbor, DecodedHealth* out) {
     if (out == nullptr) {
         return false;
     }
     auto response = std::make_unique<api_response_r>();
-    if (!decodeResponse(responseCbor, response.get())
-        || response->api_response_choice != api_response_r::api_response_response_health_m_c) {
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_health_m_c) {
         return false;
     }
     const health_report& report = response->api_response_response_health_m.response_health_Health;
@@ -173,14 +161,13 @@ bool NodeApiCodec::decodeHealth(const QByteArray& responseCbor, DecodedHealth* o
 }
 
 bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<CachedSessionRow>* out,
-                                     QString* nextCursor)
-{
+                                     QString* nextCursor) {
     if (out == nullptr) {
         return false;
     }
     auto response = std::make_unique<api_response_r>();
-    if (!decodeResponse(responseCbor, response.get())
-        || response->api_response_choice != api_response_r::api_response_response_session_page_m_c) {
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_session_page_m_c) {
         return false;
     }
     const session_page& page =
@@ -191,15 +178,15 @@ bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<Cache
         CachedSessionRow row;
         row.sessionId = fromZcbor(info.session_info_session);
         row.state = sessionStateName(info.session_info_state.session_state_choice);
-        if (info.session_info_bound_profile_present
-            && info.session_info_bound_profile.session_info_bound_profile_choice
-                == session_info_bound_profile_r::session_info_bound_profile_profile_ref_m_c) {
+        if (info.session_info_bound_profile_present &&
+            info.session_info_bound_profile.session_info_bound_profile_choice ==
+                session_info_bound_profile_r::session_info_bound_profile_profile_ref_m_c) {
             row.profileRef =
                 fromZcbor(info.session_info_bound_profile.session_info_bound_profile_profile_ref_m);
         }
-        if (info.session_info_title_present
-            && info.session_info_title.session_info_title_choice
-                == session_info_title_r::session_info_title_tstr_c) {
+        if (info.session_info_title_present &&
+            info.session_info_title.session_info_title_choice ==
+                session_info_title_r::session_info_title_tstr_c) {
             row.title = fromZcbor(info.session_info_title.session_info_title_tstr);
         }
         if (info.session_info_lifecycle_present) {
@@ -209,9 +196,9 @@ bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<Cache
         if (info.session_info_role_present) {
             row.role = roleName(info.session_info_role.session_info_role.session_role_choice);
         }
-        if (info.session_info_parent_present
-            && info.session_info_parent.session_info_parent_choice
-                == session_info_parent_r::session_info_parent_session_id_m_c) {
+        if (info.session_info_parent_present &&
+            info.session_info_parent.session_info_parent_choice ==
+                session_info_parent_r::session_info_parent_session_id_m_c) {
             row.parentSessionId =
                 fromZcbor(info.session_info_parent.session_info_parent_session_id_m);
         }
@@ -225,9 +212,9 @@ bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<Cache
     }
     if (nextCursor != nullptr) {
         nextCursor->clear();
-        if (page.session_page_next_cursor_present
-            && page.session_page_next_cursor.session_page_next_cursor_choice
-                == session_page_next_cursor_r::session_page_next_cursor_session_id_m_c) {
+        if (page.session_page_next_cursor_present &&
+            page.session_page_next_cursor.session_page_next_cursor_choice ==
+                session_page_next_cursor_r::session_page_next_cursor_session_id_m_c) {
             *nextCursor =
                 fromZcbor(page.session_page_next_cursor.session_page_next_cursor_session_id_m);
         }
@@ -236,31 +223,31 @@ bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<Cache
 }
 
 bool NodeApiCodec::decodeLogPage(const QByteArray& responseCbor, const QString& sessionId,
-                                 QList<CachedLogRow>* out, quint64* nextSeq, quint64* headSeq)
-{
+                                 QList<CachedLogRow>* out, quint64* nextSeq, quint64* headSeq) {
     if (out == nullptr) {
         return false;
     }
     auto response = std::make_unique<api_response_r>();
-    if (!decodeResponse(responseCbor, response.get())
-        || response->api_response_choice != api_response_r::api_response_response_log_page_m_c) {
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_log_page_m_c) {
         return false;
     }
-    const log_page_view& page = response->api_response_response_log_page_m.response_log_page_LogPage;
+    const log_page_view& page =
+        response->api_response_response_log_page_m.response_log_page_LogPage;
     out->clear();
     for (size_t i = 0; i < page.log_page_view_entries_session_log_entry_m_count; ++i) {
         const session_log_entry& entry = page.log_page_view_entries_session_log_entry_m[i];
         CachedLogRow row;
         row.sessionId = sessionId;
         row.seq = entry.session_log_entry_seq;
-        row.direction = entry.session_log_entry_direction.direction_choice
-                == direction_r::direction_Outbound_tstr_c
-            ? QStringLiteral("Outbound")
-            : QStringLiteral("Inbound");
-        row.disposition = entry.session_log_entry_disposition.disposition_choice
-                == disposition_r::disposition_Transport_tstr_c
-            ? QStringLiteral("Transport")
-            : QStringLiteral("Context");
+        row.direction = entry.session_log_entry_direction.direction_choice ==
+                                direction_r::direction_Outbound_tstr_c
+                            ? QStringLiteral("Outbound")
+                            : QStringLiteral("Inbound");
+        row.disposition = entry.session_log_entry_disposition.disposition_choice ==
+                                  disposition_r::disposition_Transport_tstr_c
+                              ? QStringLiteral("Transport")
+                              : QStringLiteral("Context");
         out->append(row);
     }
     if (nextSeq != nullptr) {

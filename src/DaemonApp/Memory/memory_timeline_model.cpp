@@ -4,16 +4,15 @@
 
 namespace memoryui {
 
-MemoryTimelineModel::MemoryTimelineModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
+MemoryTimelineModel::MemoryTimelineModel(QObject* parent) : QAbstractListModel(parent) {
     memory::registerMemoryMetatypes();
 }
 
-QObject* MemoryTimelineModel::service() const { return m_service; }
+QObject* MemoryTimelineModel::service() const {
+    return m_service;
+}
 
-void MemoryTimelineModel::setService(QObject* service)
-{
+void MemoryTimelineModel::setService(QObject* service) {
     auto* svc = qobject_cast<memory::IMemoryService*>(service);
     if (svc == m_service)
         return;
@@ -30,8 +29,7 @@ void MemoryTimelineModel::setService(QObject* service)
     }
 }
 
-void MemoryTimelineModel::setGroup(const QString& group)
-{
+void MemoryTimelineModel::setGroup(const QString& group) {
     if (m_group == group)
         return;
     m_group = group;
@@ -39,13 +37,11 @@ void MemoryTimelineModel::setGroup(const QString& group)
     refresh();
 }
 
-int MemoryTimelineModel::rowCount(const QModelIndex& parent) const
-{
+int MemoryTimelineModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(m_rows.size());
 }
 
-QVariant MemoryTimelineModel::data(const QModelIndex& index, int role) const
-{
+QVariant MemoryTimelineModel::data(const QModelIndex& index, int role) const {
     if (index.row() < 0 || index.row() >= m_rows.size())
         return {};
     const Row& r = m_rows.at(index.row());
@@ -68,32 +64,35 @@ QVariant MemoryTimelineModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> MemoryTimelineModel::roleNames() const
-{
+QHash<int, QByteArray> MemoryTimelineModel::roleNames() const {
     return {
-        { IsHeaderRole, "isHeader" }, { GroupKeyRole, "groupKey" }, { KindRole, "eventKind" },
-        { MemoryIdRole, "memId" },    { AtRole, "at" },             { SummaryRole, "summary" },
+        {IsHeaderRole, "isHeader"},
+        {GroupKeyRole, "groupKey"},
+        {KindRole, "eventKind"},
+        {MemoryIdRole, "memId"},
+        {AtRole, "at"},
+        {SummaryRole, "summary"},
     };
 }
 
-void MemoryTimelineModel::refresh()
-{
+void MemoryTimelineModel::refresh() {
     if (m_service)
         m_service->requestTimeline(m_group, 200);
 }
 
-void MemoryTimelineModel::onTimelineReady(const QList<memory::MemoryTimelineGroup>& groups)
-{
+void MemoryTimelineModel::onTimelineReady(const QList<memory::MemoryTimelineGroup>& groups) {
     beginResetModel();
     m_rows.clear();
     for (const memory::MemoryTimelineGroup& g : groups) {
-        m_rows.append(Row{ true, g.key, {} });
+        m_rows.append(Row{true, g.key, {}});
         for (const memory::MemoryEvent& ev : g.events)
-            m_rows.append(Row{ false, g.key, ev });
+            m_rows.append(Row{false, g.key, ev});
     }
     endResetModel();
 }
 
-void MemoryTimelineModel::onScopeChanged() { refresh(); }
+void MemoryTimelineModel::onScopeChanged() {
+    refresh();
+}
 
 } // namespace memoryui

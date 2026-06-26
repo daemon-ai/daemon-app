@@ -9,10 +9,8 @@ namespace {
 
 const QString kCacheFile = QStringLiteral("accounts.json");
 
-
 QVariantMap mkAccount(const QString& id, const QString& provider, const QString& label,
-                      const QString& kind, const QString& status, const QString& detail)
-{
+                      const QString& kind, const QString& status, const QString& detail) {
     QVariantMap m;
     m[QStringLiteral("id")] = id;
     m[QStringLiteral("provider")] = provider;
@@ -26,9 +24,7 @@ QVariantMap mkAccount(const QString& id, const QString& provider, const QString&
 } // namespace
 
 MockAccountsService::MockAccountsService(QObject* parent)
-    : IAccountsService(parent)
-    , m_accounts(new uimodels::VariantListModel(this))
-{
+    : IAccountsService(parent), m_accounts(new uimodels::VariantListModel(this)) {
     m_accounts->upsert(mkAccount(QStringLiteral("acc-1"), QStringLiteral("anthropic"),
                                  QStringLiteral("Anthropic"), QStringLiteral("oauth"),
                                  QStringLiteral("connected"), QStringLiteral("jane@example.com")));
@@ -42,7 +38,8 @@ MockAccountsService::MockAccountsService(QObject* parent)
     // is no live timer to resolve it after a restart.
     const QJsonObject cached = appcache::loadObject(kCacheFile);
     if (cached.contains(QStringLiteral("rows"))) {
-        QList<QVariantMap> rows = appcache::rowsFromJson(cached.value(QStringLiteral("rows")).toArray());
+        QList<QVariantMap> rows =
+            appcache::rowsFromJson(cached.value(QStringLiteral("rows")).toArray());
         for (QVariantMap& r : rows) {
             if (r.value(QStringLiteral("status")).toString() == QLatin1String("pending")) {
                 r[QStringLiteral("status")] = QStringLiteral("error");
@@ -54,18 +51,18 @@ MockAccountsService::MockAccountsService(QObject* parent)
     }
 }
 
-void MockAccountsService::save() const
-{
+void MockAccountsService::save() const {
     QJsonObject obj;
     obj[QStringLiteral("rows")] = appcache::rowsToJson(m_accounts->rows());
     obj[QStringLiteral("nextId")] = m_nextId;
     appcache::saveObject(kCacheFile, obj);
 }
 
-QObject* MockAccountsService::accounts() const { return m_accounts; }
+QObject* MockAccountsService::accounts() const {
+    return m_accounts;
+}
 
-QString MockAccountsService::providerName(const QString& providerId) const
-{
+QString MockAccountsService::providerName(const QString& providerId) const {
     for (const QVariant& v : availableProviders()) {
         const QVariantMap m = v.toMap();
         if (m.value(QStringLiteral("id")).toString() == providerId) {
@@ -75,8 +72,7 @@ QString MockAccountsService::providerName(const QString& providerId) const
     return providerId;
 }
 
-QVariantList MockAccountsService::availableProviders() const
-{
+QVariantList MockAccountsService::availableProviders() const {
     const auto mkp = [](const QString& id, const QString& name, const QStringList& kinds,
                         bool needsBaseUrl) {
         QVariantMap m;
@@ -88,35 +84,31 @@ QVariantList MockAccountsService::availableProviders() const
     };
     return {
         mkp(QStringLiteral("anthropic"), QStringLiteral("Anthropic"),
-            { QStringLiteral("oauth"), QStringLiteral("apikey") }, false),
-        mkp(QStringLiteral("openai"), QStringLiteral("OpenAI"), { QStringLiteral("apikey") }, false),
-        mkp(QStringLiteral("openrouter"), QStringLiteral("OpenRouter"),
-            { QStringLiteral("apikey") }, false),
+            {QStringLiteral("oauth"), QStringLiteral("apikey")}, false),
+        mkp(QStringLiteral("openai"), QStringLiteral("OpenAI"), {QStringLiteral("apikey")}, false),
+        mkp(QStringLiteral("openrouter"), QStringLiteral("OpenRouter"), {QStringLiteral("apikey")},
+            false),
         mkp(QStringLiteral("google"), QStringLiteral("Google"),
-            { QStringLiteral("oauth"), QStringLiteral("apikey") }, false),
-        mkp(QStringLiteral("azure"), QStringLiteral("Azure OpenAI"), { QStringLiteral("apikey") },
+            {QStringLiteral("oauth"), QStringLiteral("apikey")}, false),
+        mkp(QStringLiteral("azure"), QStringLiteral("Azure OpenAI"), {QStringLiteral("apikey")},
             true),
         mkp(QStringLiteral("custom"), QStringLiteral("Custom (OpenAI-compatible)"),
-            { QStringLiteral("apikey") }, true),
+            {QStringLiteral("apikey")}, true),
     };
 }
 
 void MockAccountsService::addApiKey(const QString& provider, const QString& label,
-                                    const QString& key, const QString& baseUrl)
-{
+                                    const QString& key, const QString& baseUrl) {
     Q_UNUSED(baseUrl);
     const QString id = QStringLiteral("acc-%1").arg(m_nextId++);
-    const QString masked = key.size() > 4
-        ? QStringLiteral("sk-•••• %1").arg(key.right(4))
-        : QStringLiteral("•••• stored");
-    m_accounts->upsert(mkAccount(id, provider,
-                                 label.isEmpty() ? providerName(provider) : label,
+    const QString masked = key.size() > 4 ? QStringLiteral("sk-•••• %1").arg(key.right(4))
+                                          : QStringLiteral("•••• stored");
+    m_accounts->upsert(mkAccount(id, provider, label.isEmpty() ? providerName(provider) : label,
                                  QStringLiteral("apikey"), QStringLiteral("connected"), masked));
     save();
 }
 
-void MockAccountsService::beginOAuth(const QString& provider)
-{
+void MockAccountsService::beginOAuth(const QString& provider) {
     if (m_busy) {
         return;
     }
@@ -144,8 +136,7 @@ void MockAccountsService::beginOAuth(const QString& provider)
     });
 }
 
-void MockAccountsService::rename(const QString& accountId, const QString& label)
-{
+void MockAccountsService::rename(const QString& accountId, const QString& label) {
     const int row = m_accounts->indexOfId(accountId);
     if (row < 0 || label.isEmpty()) {
         return;
@@ -159,8 +150,7 @@ void MockAccountsService::rename(const QString& accountId, const QString& label)
     save();
 }
 
-void MockAccountsService::reauth(const QString& accountId)
-{
+void MockAccountsService::reauth(const QString& accountId) {
     const int row = m_accounts->indexOfId(accountId);
     if (row < 0) {
         return;
@@ -202,8 +192,7 @@ void MockAccountsService::reauth(const QString& accountId)
     });
 }
 
-void MockAccountsService::remove(const QString& accountId)
-{
+void MockAccountsService::remove(const QString& accountId) {
     m_accounts->removeById(accountId);
     save();
 }

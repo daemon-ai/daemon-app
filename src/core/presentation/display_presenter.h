@@ -1,8 +1,8 @@
 #pragma once
 
 #include <QObject>
-#include <QString>
 #include <qqmlintegration.h>
+#include <QString>
 
 // Shared, front-end-agnostic mapping from domain enums to *semantic* display
 // tokens. This is the single source of truth for decisions like "which icon does

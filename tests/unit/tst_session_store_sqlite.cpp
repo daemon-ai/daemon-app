@@ -1,5 +1,5 @@
-#include "domain/session.h"
 #include "domain/ids.h"
+#include "domain/session.h"
 #include "domain/sidebar_node.h"
 #include "persistence/sqlite_session_store.h"
 
@@ -16,15 +16,15 @@ using domain::UnitId;
 using persistence::SqliteSessionStore;
 
 namespace {
-ListScope allScope()
-{
-    return { NodeType::AllSessions, -1, UnitId() };
+ListScope allScope() {
+    return {NodeType::AllSessions, -1, UnitId()};
 }
-ListScope archivedScope()
-{
-    return { NodeType::Archived, -1, UnitId() };
+ListScope archivedScope() {
+    return {NodeType::Archived, -1, UnitId()};
 }
-UnitId U(const char* s) { return UnitId(QString::fromLatin1(s)); }
+UnitId U(const char* s) {
+    return UnitId(QString::fromLatin1(s));
+}
 } // namespace
 
 // Exercises the durable SQLite session store: a fresh production database starts
@@ -39,29 +39,25 @@ private:
     QString dbPath() const { return m_dir.path() + QStringLiteral("/sessions.db"); }
 
 private slots:
-    void init()
-    {
+    void init() {
         QFile::remove(dbPath());
         QFile::remove(dbPath() + QStringLiteral("-shm"));
         QFile::remove(dbPath() + QStringLiteral("-wal"));
     }
 
-    void freshDatabaseStartsEmpty()
-    {
+    void freshDatabaseStartsEmpty() {
         SqliteSessionStore store(dbPath());
         QCOMPARE(store.sessionCount(allScope()), 0);
         QVERIFY(store.unitChildren(UnitId()).isEmpty());
     }
 
-    void demoSeedIsOptIn()
-    {
+    void demoSeedIsOptIn() {
         SqliteSessionStore store(dbPath(), nullptr, true);
         QVERIFY(store.sessionCount(allScope()) > 0);
         QVERIFY(!store.unitChildren(UnitId()).isEmpty());
     }
 
-    void mutationsSurviveReopen()
-    {
+    void mutationsSurviveReopen() {
         domain::SessionId newId;
         int baselineCount = 0;
         {
@@ -85,8 +81,7 @@ private slots:
         }
     }
 
-    void archiveAndDeleteSurviveReopen()
-    {
+    void archiveAndDeleteSurviveReopen() {
         domain::SessionId keepId;
         domain::SessionId dropId;
         {
@@ -112,8 +107,7 @@ private slots:
         }
     }
 
-    void newIdsDoNotCollideAfterReopen()
-    {
+    void newIdsDoNotCollideAfterReopen() {
         domain::SessionId firstNew;
         {
             SqliteSessionStore store(dbPath());
@@ -128,8 +122,7 @@ private slots:
 
     // The authoritative string sessionId is a persisted column, so it survives a reopen unchanged
     // (no longer regenerated as local-{id}).
-    void realSessionIdSurvivesReopen()
-    {
+    void realSessionIdSurvivesReopen() {
         domain::SessionId sid;
         {
             SqliteSessionStore store(dbPath());
@@ -151,13 +144,12 @@ private slots:
         }
     }
 
-    // A pre-migration db (sessions table without a session_id column) still loads: createSchema adds
-    // the column and loadAll backfills the legacy local-{id} form for the null value.
-    void legacyRowWithoutSessionIdFallsBack()
-    {
+    // A pre-migration db (sessions table without a session_id column) still loads: createSchema
+    // adds the column and loadAll backfills the legacy local-{id} form for the null value.
+    void legacyRowWithoutSessionIdFallsBack() {
         {
-            QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"),
-                                                       QStringLiteral("legacy-seed"));
+            QSqlDatabase db =
+                QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("legacy-seed"));
             db.setDatabaseName(dbPath());
             QVERIFY(db.open());
             QSqlQuery q(db);
@@ -167,7 +159,8 @@ private slots:
                 "modified TEXT, ord INTEGER)")));
             QVERIFY(q.exec(QStringLiteral(
                 "INSERT INTO sessions(id, agent_id, tag_ids, title, content, archived, pinned, "
-                "created, modified, ord) VALUES(5,'n-scratch','','Legacy thread','body',0,0,'','',0)")));
+                "created, modified, ord) VALUES(5,'n-scratch','','Legacy "
+                "thread','body',0,0,'','',0)")));
             db.close();
         }
         QSqlDatabase::removeDatabase(QStringLiteral("legacy-seed"));

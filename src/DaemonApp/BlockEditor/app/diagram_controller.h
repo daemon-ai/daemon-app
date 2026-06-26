@@ -3,6 +3,7 @@
 #include "diagram/engine/diagram_engine.h"
 #include "diagram/snapshot/render_snapshot.h"
 
+#include <atomic>
 #include <QColor>
 #include <QObject>
 #include <QString>
@@ -10,20 +11,18 @@
 #include <QTimer>
 #include <QtQmlIntegration/qqmlintegration.h>
 
-#include <atomic>
-
 namespace be::app {
 
 // Owns the diagram source/theme inputs and produces an immutable RenderSnapshot.
 // The build runs on a worker thread (latest-wins); results are published back to
 // the GUI thread. DiagramItem reads the published snapshot in updatePaintNode.
-class DiagramController : public QObject
-{
+class DiagramController : public QObject {
     Q_OBJECT
     QML_ELEMENT
 
     Q_PROPERTY(QString source READ source WRITE setSource NOTIFY sourceChanged)
-    Q_PROPERTY(qreal contentWidth READ contentWidth WRITE setContentWidth NOTIFY contentWidthChanged)
+    Q_PROPERTY(
+        qreal contentWidth READ contentWidth WRITE setContentWidth NOTIFY contentWidthChanged)
     Q_PROPERTY(qreal fontPixelSize READ fontPixelSize WRITE setFontPixelSize NOTIFY styleChanged)
     Q_PROPERTY(QColor surfaceColor READ surfaceColor WRITE setSurfaceColor NOTIFY styleChanged)
     Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY styleChanged)
@@ -36,11 +35,11 @@ class DiagramController : public QObject
     Q_PROPERTY(qreal diagramHeight READ diagramHeight NOTIFY snapshotChanged)
 
 public:
-    explicit DiagramController(QObject *parent = nullptr);
+    explicit DiagramController(QObject* parent = nullptr);
     ~DiagramController() override;
 
     QString source() const { return m_source; }
-    void setSource(const QString &source);
+    void setSource(const QString& source);
 
     qreal contentWidth() const { return m_contentWidth; }
     void setContentWidth(qreal width);
@@ -49,15 +48,15 @@ public:
     void setFontPixelSize(qreal size);
 
     QColor surfaceColor() const { return m_style.nodeFill; }
-    void setSurfaceColor(const QColor &c);
+    void setSurfaceColor(const QColor& c);
     QColor borderColor() const { return m_style.nodeStroke; }
-    void setBorderColor(const QColor &c);
+    void setBorderColor(const QColor& c);
     QColor textColor() const { return m_style.textColor; }
-    void setTextColor(const QColor &c);
+    void setTextColor(const QColor& c);
     QColor edgeColor() const { return m_style.edgeStroke; }
-    void setEdgeColor(const QColor &c);
+    void setEdgeColor(const QColor& c);
     QColor clusterColor() const { return m_style.clusterFill; }
-    void setClusterColor(const QColor &c);
+    void setClusterColor(const QColor& c);
 
     bool hasError() const;
     QString errorText() const;
@@ -72,7 +71,7 @@ signals:
     void contentWidthChanged();
     void styleChanged();
     void snapshotChanged();
-    void buildRequested(const QString &source, be::diagram::Style style, qreal maxWidth,
+    void buildRequested(const QString& source, be::diagram::Style style, qreal maxWidth,
                         quint64 requestId);
 
 private:

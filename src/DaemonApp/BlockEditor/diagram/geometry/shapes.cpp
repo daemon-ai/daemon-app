@@ -9,8 +9,7 @@ namespace be::diagram {
 namespace {
 
 // Intersection of segment center->toward with the rectangle boundary.
-QPointF rectBoundary(const QRectF &rect, const QPointF &toward)
-{
+QPointF rectBoundary(const QRectF& rect, const QPointF& toward) {
     const QPointF c = rect.center();
     QPointF d = toward - c;
     if (qFuzzyIsNull(d.x()) && qFuzzyIsNull(d.y())) {
@@ -18,16 +17,15 @@ QPointF rectBoundary(const QRectF &rect, const QPointF &toward)
     }
     const qreal hw = rect.width() / 2.0;
     const qreal hh = rect.height() / 2.0;
-    const qreal sx = qFuzzyIsNull(d.x()) ? std::numeric_limits<qreal>::infinity()
-                                         : hw / std::abs(d.x());
-    const qreal sy = qFuzzyIsNull(d.y()) ? std::numeric_limits<qreal>::infinity()
-                                         : hh / std::abs(d.y());
+    const qreal sx =
+        qFuzzyIsNull(d.x()) ? std::numeric_limits<qreal>::infinity() : hw / std::abs(d.x());
+    const qreal sy =
+        qFuzzyIsNull(d.y()) ? std::numeric_limits<qreal>::infinity() : hh / std::abs(d.y());
     return c + d * std::min(sx, sy);
 }
 
 // Closest intersection of the ray center->toward with a closed polygon.
-QPointF polyBoundary(const QList<QPointF> &poly, const QRectF &rect, const QPointF &toward)
-{
+QPointF polyBoundary(const QList<QPointF>& poly, const QRectF& rect, const QPointF& toward) {
     const QPointF c = rect.center();
     const QPointF d = toward - c;
     qreal best = std::numeric_limits<qreal>::infinity();
@@ -54,8 +52,7 @@ QPointF polyBoundary(const QList<QPointF> &poly, const QRectF &rect, const QPoin
 
 } // namespace
 
-QPainterPath shapeOutline(NodeShape shape, const QRectF &rect)
-{
+QPainterPath shapeOutline(NodeShape shape, const QRectF& rect) {
     QPainterPath path;
     const qreal w = rect.width();
     const qreal h = rect.height();
@@ -114,8 +111,7 @@ QPainterPath shapeOutline(NodeShape shape, const QRectF &rect)
     return path;
 }
 
-QPointF shapeBoundaryPoint(NodeShape shape, const QRectF &rect, const QPointF &toward)
-{
+QPointF shapeBoundaryPoint(NodeShape shape, const QRectF& rect, const QPointF& toward) {
     const QPointF c = rect.center();
     QPointF d = toward - c;
     if (qFuzzyIsNull(d.x()) && qFuzzyIsNull(d.y())) {
@@ -134,18 +130,19 @@ QPointF shapeBoundaryPoint(NodeShape shape, const QRectF &rect, const QPointF &t
         return c + d * k;
     }
     case NodeShape::Diamond: {
-        const QList<QPointF> poly{
-            QPointF(c.x(), rect.top()), QPointF(rect.right(), c.y()),
-            QPointF(c.x(), rect.bottom()), QPointF(rect.left(), c.y())};
+        const QList<QPointF> poly{QPointF(c.x(), rect.top()), QPointF(rect.right(), c.y()),
+                                  QPointF(c.x(), rect.bottom()), QPointF(rect.left(), c.y())};
         return polyBoundary(poly, rect, toward);
     }
     case NodeShape::Hexagon: {
         const qreal inset = std::min<qreal>(rect.width() * 0.18, rect.height());
         const qreal midY = c.y();
-        const QList<QPointF> poly{
-            QPointF(rect.left() + inset, rect.top()), QPointF(rect.right() - inset, rect.top()),
-            QPointF(rect.right(), midY), QPointF(rect.right() - inset, rect.bottom()),
-            QPointF(rect.left() + inset, rect.bottom()), QPointF(rect.left(), midY)};
+        const QList<QPointF> poly{QPointF(rect.left() + inset, rect.top()),
+                                  QPointF(rect.right() - inset, rect.top()),
+                                  QPointF(rect.right(), midY),
+                                  QPointF(rect.right() - inset, rect.bottom()),
+                                  QPointF(rect.left() + inset, rect.bottom()),
+                                  QPointF(rect.left(), midY)};
         return polyBoundary(poly, rect, toward);
     }
     default:

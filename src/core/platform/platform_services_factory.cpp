@@ -8,8 +8,7 @@
 
 namespace platform {
 
-IPlatformServices* createPlatformServices(QObject* parent)
-{
+IPlatformServices* createPlatformServices(QObject* parent) {
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     return new NoopPlatformServices(parent);
 #else

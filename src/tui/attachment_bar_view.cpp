@@ -1,27 +1,23 @@
 #include "attachment_bar_view.h"
 
-#include "tui_palette.h"
-
 #include "composer_attachment_model.h"
 #include "composer_session_controller.h"
+#include "tui_palette.h"
 
+#include <QRect>
+#include <QSize>
 #include <Tui/ZColor.h>
 #include <Tui/ZEvent.h>
 #include <Tui/ZPainter.h>
 #include <Tui/ZTerminal.h>
 
-#include <QRect>
-#include <QSize>
-
 namespace {
 
-Span mkSpan(const QString& text, const Tui::ZColor& fg, const Tui::ZColor& bg)
-{
-    return Span { text, fg, bg, {} };
+Span mkSpan(const QString& text, const Tui::ZColor& fg, const Tui::ZColor& bg) {
+    return Span{text, fg, bg, {}};
 }
 
-QString kindGlyph(const QString& kind)
-{
+QString kindGlyph(const QString& kind) {
     if (kind == QStringLiteral("image")) {
         return QStringLiteral("\u25a3"); // ▣
     }
@@ -36,21 +32,18 @@ QString kindGlyph(const QString& kind)
 
 } // namespace
 
-AttachmentBarView::AttachmentBarView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
-{
+AttachmentBarView::AttachmentBarView(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
     setFocusPolicy(Tui::NoFocus);
     setSizePolicyH(Tui::SizePolicy::Expanding);
     setSizePolicyV(Tui::SizePolicy::Fixed);
     setMaximumSize(Tui::tuiMaxSize, 0);
 }
 
-int AttachmentBarView::count() const
-{
+int AttachmentBarView::count() const {
     return m_controller != nullptr ? m_controller->attachments()->count() : 0;
 }
 
-void AttachmentBarView::setController(ComposerSessionController* controller)
-{
+void AttachmentBarView::setController(ComposerSessionController* controller) {
     m_controller = controller;
     if (m_controller != nullptr) {
         if (ComposerAttachmentModel* a = m_controller->attachments()) {
@@ -64,13 +57,11 @@ void AttachmentBarView::setController(ComposerSessionController* controller)
     rebuild();
 }
 
-QSize AttachmentBarView::sizeHint() const
-{
-    return { 40, m_height };
+QSize AttachmentBarView::sizeHint() const {
+    return {40, m_height};
 }
 
-void AttachmentBarView::rebuild()
-{
+void AttachmentBarView::rebuild() {
     m_line.clear();
     const int n = count();
     m_sel = qBound(0, m_sel, qMax(0, n - 1));
@@ -104,8 +95,7 @@ void AttachmentBarView::rebuild()
     update();
 }
 
-void AttachmentBarView::clickAt(QPoint local)
-{
+void AttachmentBarView::clickAt(QPoint local) {
     const int n = count();
     if (n <= 0 || local.y() != 0) {
         return;
@@ -119,10 +109,10 @@ void AttachmentBarView::clickAt(QPoint local)
     int x = 0;
     for (int i = 0; i < n; ++i) {
         const QString name = a->data(a->index(i, 0), ComposerAttachmentModel::NameRole).toString();
-        const int wGlyph = 3;               // " <glyph> "
+        const int wGlyph = 3;                                // " <glyph> "
         const int wName = static_cast<int>(name.size()) + 1; // name + trailing space
-        const int wClose = (i == m_sel) ? 2 : 0; // "x " on the selected chip
-        const int wTrail = 2;               // gap between chips
+        const int wClose = (i == m_sel) ? 2 : 0;             // "x " on the selected chip
+        const int wTrail = 2;                                // gap between chips
         const int start = x;
         const int end = start + wGlyph + wName + wClose;
         if (local.x() >= start && local.x() < end) {
@@ -136,8 +126,7 @@ void AttachmentBarView::clickAt(QPoint local)
     }
 }
 
-void AttachmentBarView::paintEvent(Tui::ZPaintEvent* event)
-{
+void AttachmentBarView::paintEvent(Tui::ZPaintEvent* event) {
     Tui::ZPainter* p = event->painter();
     p->clear(tpal::fg(), tpal::bg());
 
@@ -156,8 +145,7 @@ void AttachmentBarView::paintEvent(Tui::ZPaintEvent* event)
     }
 }
 
-void AttachmentBarView::keyEvent(Tui::ZKeyEvent* event)
-{
+void AttachmentBarView::keyEvent(Tui::ZKeyEvent* event) {
     const int n = count();
     if (m_controller != nullptr && n > 0 && event->modifiers() == Qt::NoModifier) {
         const int key = event->key();
@@ -168,8 +156,8 @@ void AttachmentBarView::keyEvent(Tui::ZKeyEvent* event)
         } else if (key == Qt::Key_Right) {
             m_sel = qMin(n - 1, m_sel + 1);
             rebuild();
-        } else if (key == Qt::Key_Delete || key == Qt::Key_Backspace
-                   || event->text() == QStringLiteral("x")) {
+        } else if (key == Qt::Key_Delete || key == Qt::Key_Backspace ||
+                   event->text() == QStringLiteral("x")) {
             m_controller->attachments()->removeAt(m_sel);
         } else {
             handled = false;

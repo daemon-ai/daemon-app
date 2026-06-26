@@ -1,3 +1,4 @@
+#include <array>
 #include <QFile>
 #include <QFont>
 #include <QFontDatabase>
@@ -5,8 +6,6 @@
 #include <QString>
 #include <QStringList>
 #include <QtTest>
-
-#include <array>
 
 // Validates the bundled font assets so we never ship "tofu" icons again.
 //
@@ -23,8 +22,7 @@ private:
     // that get embedded into the Theme module.
     static QString fontsDir() { return QStringLiteral(DAEMON_APP_FONTS_DIR); }
 
-    static QRawFont loadRaw(const QString& fileName)
-    {
+    static QRawFont loadRaw(const QString& fileName) {
         QFile file(fontsDir() + QLatin1Char('/') + fileName);
         if (!file.open(QIODevice::ReadOnly)) {
             return {};
@@ -35,8 +33,7 @@ private:
     }
 
 private slots:
-    void allBundledFontFilesExist()
-    {
+    void allBundledFontFilesExist() {
         const QStringList files = {
             QStringLiteral("InterVariable.ttf"),
             QStringLiteral("fa-solid-900.ttf"),
@@ -49,24 +46,21 @@ private slots:
         }
     }
 
-    void interLoadsAsInter()
-    {
+    void interLoadsAsInter() {
         const QRawFont inter = loadRaw(QStringLiteral("InterVariable.ttf"));
         QVERIFY2(inter.isValid(), "InterVariable.ttf failed to parse");
         QVERIFY2(inter.familyName().contains(QStringLiteral("Inter")),
                  qPrintable(QStringLiteral("unexpected Inter family: ") + inter.familyName()));
     }
 
-    void faSolidLoadsAsFontAwesome()
-    {
+    void faSolidLoadsAsFontAwesome() {
         const QRawFont fa = loadRaw(QStringLiteral("fa-solid-900.ttf"));
         QVERIFY2(fa.isValid(), "fa-solid-900.ttf failed to parse");
         QVERIFY2(fa.familyName().contains(QStringLiteral("Font Awesome")),
                  qPrintable(QStringLiteral("unexpected FA family: ") + fa.familyName()));
     }
 
-    void faSolidCarriesEveryGlyphTheChromeUses_data()
-    {
+    void faSolidCarriesEveryGlyphTheChromeUses_data() {
         QTest::addColumn<QString>("name");
         QTest::addColumn<uint>("code");
 
@@ -75,60 +69,59 @@ private slots:
             char32_t code;
         };
         // Every standalone icon the UI binds, by FontAwesome 6 Free codepoint.
-        static const std::array<Glyph, 40> glyphs = { {
-            { "gear", 0xf013 },
-            { "magnifying_glass", 0xf002 },
-            { "trash", 0xf1f8 },
-            { "plus", 0xf067 },
-            { "xmark", 0xf00d },
-            { "folder", 0xf07b },
-            { "tag", 0xf02b },
-            { "comments", 0xf086 },
-            { "box_archive", 0xf187 },
-            { "paper_plane", 0xf1d8 },
-            { "ellipsis_h", 0xf141 },
-            { "heading", 0xf1dc },
-            { "square_check", 0xf14a },
-            { "chevron_down", 0xf078 },
-            { "chevron_right", 0xf054 },
-            { "angles_up", 0xf102 },
-            { "angles_down", 0xf103 },
-            { "list_ul", 0xf0ca },
-            { "link", 0xf0c1 },
-            { "image", 0xf03e },
-            { "circle", 0xf111 },
-            { "angles_left", 0xf100 },
+        static const std::array<Glyph, 40> glyphs = {{
+            {"gear", 0xf013},
+            {"magnifying_glass", 0xf002},
+            {"trash", 0xf1f8},
+            {"plus", 0xf067},
+            {"xmark", 0xf00d},
+            {"folder", 0xf07b},
+            {"tag", 0xf02b},
+            {"comments", 0xf086},
+            {"box_archive", 0xf187},
+            {"paper_plane", 0xf1d8},
+            {"ellipsis_h", 0xf141},
+            {"heading", 0xf1dc},
+            {"square_check", 0xf14a},
+            {"chevron_down", 0xf078},
+            {"chevron_right", 0xf054},
+            {"angles_up", 0xf102},
+            {"angles_down", 0xf103},
+            {"list_ul", 0xf0ca},
+            {"link", 0xf0c1},
+            {"image", 0xf03e},
+            {"circle", 0xf111},
+            {"angles_left", 0xf100},
             // Agent-tree node-kind icons (one per AgentNodeKind).
-            { "robot", 0xf544 },
-            { "server", 0xf233 },
-            { "sitemap", 0xf0e8 },
+            {"robot", 0xf544},
+            {"server", 0xf233},
+            {"sitemap", 0xf0e8},
             // Agent transcript block icons (reasoning disclosure + tool tones).
-            { "brain", 0xf5dc },
-            { "wrench", 0xf0ad },
-            { "copy", 0xf0c5 },
-            { "globe", 0xf0ac },
-            { "code", 0xf121 },
+            {"brain", 0xf5dc},
+            {"wrench", 0xf0ad},
+            {"copy", 0xf0c5},
+            {"globe", 0xf0ac},
+            {"code", 0xf121},
             // Tier-1 interactive/specialized tool block icons.
-            { "circle_question", 0xf059 },
-            { "download", 0xf019 },
-            { "wand_magic_sparkles", 0xf72b },
+            {"circle_question", 0xf059},
+            {"download", 0xf019},
+            {"wand_magic_sparkles", 0xf72b},
             // Message/role layer icons (user bubble edit, assistant footer, and
             // system / process notices).
-            { "pen_to_square", 0xf044 },
-            { "check", 0xf00c },
-            { "rotate", 0xf2f1 },
-            { "chevron_left", 0xf053 },
-            { "terminal", 0xf120 },
-            { "circle_info", 0xf05a },
-            { "indent", 0xf03c },
-        } };
+            {"pen_to_square", 0xf044},
+            {"check", 0xf00c},
+            {"rotate", 0xf2f1},
+            {"chevron_left", 0xf053},
+            {"terminal", 0xf120},
+            {"circle_info", 0xf05a},
+            {"indent", 0xf03c},
+        }};
         for (const Glyph& g : glyphs) {
             QTest::newRow(g.name) << QString::fromUtf8(g.name) << static_cast<uint>(g.code);
         }
     }
 
-    void faSolidCarriesEveryGlyphTheChromeUses()
-    {
+    void faSolidCarriesEveryGlyphTheChromeUses() {
         QFETCH(QString, name);
         QFETCH(uint, code);
 
@@ -140,8 +133,7 @@ private slots:
                                 .arg(code, 4, 16, QLatin1Char('0'))));
     }
 
-    void materialCarriesKanban()
-    {
+    void materialCarriesKanban() {
         const QRawFont mt = loadRaw(QStringLiteral("material-symbols-outlined.ttf"));
         QVERIFY2(mt.isValid(), "material-symbols-outlined.ttf failed to parse");
         QVERIFY2(mt.supportsCharacter(static_cast<char32_t>(0xeb7f)),
@@ -151,26 +143,23 @@ private slots:
     // The editor text-style families (UiSettings exposes these exact family
     // strings to QML; the bundled .ttf must register under the same name or
     // font.family matching silently falls back to Inter).
-    void editorTextStyleFamiliesResolve_data()
-    {
+    void editorTextStyleFamiliesResolve_data() {
         QTest::addColumn<QString>("file");
         QTest::addColumn<QString>("family");
 
-        QTest::newRow("trykker")
-            << QStringLiteral("Trykker-Regular.ttf") << QStringLiteral("Trykker");
-        QTest::newRow("ibarra")
-            << QStringLiteral("IbarraRealNova.ttf") << QStringLiteral("Ibarra Real Nova");
-        QTest::newRow("ia-mono")
-            << QStringLiteral("iAWriterMonoS-Regular.ttf") << QStringLiteral("iA Writer Mono S");
-        QTest::newRow("ia-duo")
-            << QStringLiteral("iAWriterDuoS-Regular.ttf") << QStringLiteral("iA Writer Duo S");
-        QTest::newRow("ia-quattro")
-            << QStringLiteral("iAWriterQuattroS-Regular.ttf")
-            << QStringLiteral("iA Writer Quattro S");
+        QTest::newRow("trykker") << QStringLiteral("Trykker-Regular.ttf")
+                                 << QStringLiteral("Trykker");
+        QTest::newRow("ibarra") << QStringLiteral("IbarraRealNova.ttf")
+                                << QStringLiteral("Ibarra Real Nova");
+        QTest::newRow("ia-mono") << QStringLiteral("iAWriterMonoS-Regular.ttf")
+                                 << QStringLiteral("iA Writer Mono S");
+        QTest::newRow("ia-duo") << QStringLiteral("iAWriterDuoS-Regular.ttf")
+                                << QStringLiteral("iA Writer Duo S");
+        QTest::newRow("ia-quattro") << QStringLiteral("iAWriterQuattroS-Regular.ttf")
+                                    << QStringLiteral("iA Writer Quattro S");
     }
 
-    void editorTextStyleFamiliesResolve()
-    {
+    void editorTextStyleFamiliesResolve() {
         QFETCH(QString, file);
         QFETCH(QString, family);
 

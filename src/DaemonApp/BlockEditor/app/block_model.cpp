@@ -7,24 +7,22 @@
 #include "core/markdown_table.h"
 #include "core/math_url.h"
 
-#include <QVariantList>
-#include <QVariantMap>
-
 #include <algorithm>
 #include <cmath>
+#include <QVariantList>
+#include <QVariantMap>
 
 namespace be::app {
 
 namespace {
 
-QVariantMap buildTableData(const be::BlockRecord &block, const be::InlineProjector &projector)
-{
+QVariantMap buildTableData(const be::BlockRecord& block, const be::InlineProjector& projector) {
     const be::TableData table = be::parseTable(block.markdown());
     if (table.columns == 0) {
         return {};
     }
 
-    const auto cellMarkup = [&projector](const QString &raw) -> QString {
+    const auto cellMarkup = [&projector](const QString& raw) -> QString {
         be::BlockRecord cell;
         cell.type = be::BlockType::Paragraph;
         cell.markdownUtf8 = raw.toUtf8();
@@ -37,14 +35,14 @@ QVariantMap buildTableData(const be::BlockRecord &block, const be::InlineProject
     }
 
     QVariantList header;
-    for (const be::TableCell &cell : table.header) {
+    for (const be::TableCell& cell : table.header) {
         header.push_back(cellMarkup(cell.raw));
     }
 
     QVariantList rows;
-    for (const QVector<be::TableCell> &row : table.rows) {
+    for (const QVector<be::TableCell>& row : table.rows) {
         QVariantList cells;
-        for (const be::TableCell &cell : row) {
+        for (const be::TableCell& cell : row) {
             cells.push_back(cellMarkup(cell.raw));
         }
         rows.push_back(cells);
@@ -60,8 +58,7 @@ QVariantMap buildTableData(const be::BlockRecord &block, const be::InlineProject
 
 // Language token from the block: prefer captured metadata, fall back to a
 // leading ``` fence on the first line (covers freshly typed blocks).
-QString mermaidLanguageOf(const be::BlockRecord &block)
-{
+QString mermaidLanguageOf(const be::BlockRecord& block) {
     const QString meta = block.metadata.value(QStringLiteral("fenceLanguage")).toString();
     if (!meta.isEmpty()) {
         return meta;
@@ -80,8 +77,7 @@ QString mermaidLanguageOf(const be::BlockRecord &block)
 // The diagram source for the block: the fenced body with any opening/closing
 // fence lines stripped (md4qt already stores the body alone, but a freshly typed
 // block keeps its fences, so handle both).
-QString mermaidSourceOf(const be::BlockRecord &block)
-{
+QString mermaidSourceOf(const be::BlockRecord& block) {
     const QString md = block.markdown();
     QStringList lines = md.split(QLatin1Char('\n'));
     if (!lines.isEmpty()) {
@@ -90,7 +86,8 @@ QString mermaidSourceOf(const be::BlockRecord &block)
             lines.removeFirst();
             if (!lines.isEmpty()) {
                 const QString last = lines.last().trimmed();
-                if (last.startsWith(QStringLiteral("```")) || last.startsWith(QStringLiteral("~~~"))) {
+                if (last.startsWith(QStringLiteral("```")) ||
+                    last.startsWith(QStringLiteral("~~~"))) {
                     lines.removeLast();
                 }
             }
@@ -99,8 +96,7 @@ QString mermaidSourceOf(const be::BlockRecord &block)
     return lines.join(QLatin1Char('\n'));
 }
 
-QVariantMap buildMermaidData(const be::BlockRecord &block)
-{
+QVariantMap buildMermaidData(const be::BlockRecord& block) {
     const QString lang = mermaidLanguageOf(block);
     if (lang.compare(QStringLiteral("mermaid"), Qt::CaseInsensitive) != 0) {
         return {};
@@ -115,8 +111,7 @@ QVariantMap buildMermaidData(const be::BlockRecord &block)
 // formula. Detected from EITHER a ```math fence (reusing the fence helpers) OR a
 // block whose entire content is a single $$...$$ span. `source` is the bare
 // LaTeX; the QML layer turns it into an image://math URL with the live palette.
-QVariantMap buildMathData(const be::BlockRecord &block)
-{
+QVariantMap buildMathData(const be::BlockRecord& block) {
     QString source;
 
     // An already-parsed math fence keeps its language in metadata and stores the
@@ -143,15 +138,14 @@ QVariantMap buildMathData(const be::BlockRecord &block)
 // KSyntaxHighlighting definition lookup) and the fenced body with the fence
 // lines stripped. Mermaid fences are excluded - they render as diagrams via
 // buildMermaidData, not as highlighted source.
-QVariantMap buildCodeData(const be::BlockRecord &block)
-{
+QVariantMap buildCodeData(const be::BlockRecord& block) {
     if (block.type != be::BlockType::CodeFence) {
         return {};
     }
     const QString lang = mermaidLanguageOf(block);
     // Mermaid and math fences render as their own block types, not code cards.
-    if (lang.compare(QStringLiteral("mermaid"), Qt::CaseInsensitive) == 0
-        || lang.compare(QStringLiteral("math"), Qt::CaseInsensitive) == 0) {
+    if (lang.compare(QStringLiteral("mermaid"), Qt::CaseInsensitive) == 0 ||
+        lang.compare(QStringLiteral("math"), Qt::CaseInsensitive) == 0) {
         return {};
     }
     QVariantMap data;
@@ -163,8 +157,7 @@ QVariantMap buildCodeData(const be::BlockRecord &block)
 // Image attributes for an Image block: prefer the captured metadata, fall back to
 // re-parsing the block's markdown (covers streamed/typed blocks that never went
 // through the full parse path). `source` is the QML-ready, scheme-resolved URL.
-QVariantMap buildImageData(const be::BlockRecord &block)
-{
+QVariantMap buildImageData(const be::BlockRecord& block) {
     be::ImageBlockInfo info;
     info.url = block.metadata.value(QStringLiteral("imageUrl")).toString();
     if (info.url.isEmpty()) {
@@ -205,8 +198,7 @@ QVariantMap buildImageData(const be::BlockRecord &block)
 // Tool-call view model for a ToolCall block: the structured metadata shaped into
 // display fields (title flip, status, duration, detail kind) by the shared core
 // transform, ready for ToolCallBlock.qml + its sub-renderers.
-QVariantMap buildToolData(const be::BlockRecord &block)
-{
+QVariantMap buildToolData(const be::BlockRecord& block) {
     if (block.type != be::BlockType::ToolCall) {
         return {};
     }
@@ -216,8 +208,7 @@ QVariantMap buildToolData(const be::BlockRecord &block)
 // Reasoning view model: the scalar fields (status/duration) plus the chain-of-
 // thought body rendered to display markup via the projector, so ReasoningBlock
 // shows real markdown (mirrors buildTableData projecting its cells).
-QVariantMap buildReasoningData(const be::BlockRecord &block, const be::InlineProjector &projector)
-{
+QVariantMap buildReasoningData(const be::BlockRecord& block, const be::InlineProjector& projector) {
     if (block.type != be::BlockType::Reasoning) {
         return {};
     }
@@ -232,8 +223,7 @@ QVariantMap buildReasoningData(const be::BlockRecord &block, const be::InlinePro
     return view;
 }
 
-QVariantMap buildContentData(const be::BlockRecord &block)
-{
+QVariantMap buildContentData(const be::BlockRecord& block) {
     if (block.type != be::BlockType::Content) {
         return {};
     }
@@ -242,32 +232,28 @@ QVariantMap buildContentData(const be::BlockRecord &block)
 
 } // namespace
 
-BlockModel::BlockModel(QObject *parent)
-    : QAbstractListModel(parent)
-{
+BlockModel::BlockModel(QObject* parent) : QAbstractListModel(parent) {
     // Inline math needs an explicit logical size on its <img> (RichText won't
     // ask the provider for one). Delegate to MicroTeX's measurer here so core
     // stays free of any rendering dependency.
-    m_projector.setMathMeasurer([](const QString &latex, bool display, int fontPx) {
+    m_projector.setMathMeasurer([](const QString& latex, bool display, int fontPx) {
         return be::app::measureMathLogicalSize(latex, display, fontPx);
     });
 }
 
-int BlockModel::rowCount(const QModelIndex &parent) const
-{
+int BlockModel::rowCount(const QModelIndex& parent) const {
     if (parent.isValid() || !m_store) {
         return 0;
     }
     return static_cast<int>(m_store->blockCount());
 }
 
-QVariant BlockModel::data(const QModelIndex &index, int role) const
-{
+QVariant BlockModel::data(const QModelIndex& index, int role) const {
     if (!m_store || !index.isValid()) {
         return {};
     }
 
-    const be::BlockRecord *block = m_store->blockAt(index.row());
+    const be::BlockRecord* block = m_store->blockAt(index.row());
     if (!block) {
         return {};
     }
@@ -292,7 +278,8 @@ QVariant BlockModel::data(const QModelIndex &index, int role) const
     case IndentRole:
         return static_cast<int>(block->indent);
     case TableDataRole:
-        return block->type == be::BlockType::Table ? buildTableData(*block, m_projector) : QVariantMap();
+        return block->type == be::BlockType::Table ? buildTableData(*block, m_projector)
+                                                   : QVariantMap();
     case MermaidDataRole:
         return buildMermaidData(*block);
     case CodeDataRole:
@@ -315,14 +302,14 @@ QVariant BlockModel::data(const QModelIndex &index, int role) const
         if (block->role == be::MessageRole::None) {
             return false;
         }
-        const be::BlockRecord *prev = m_store->blockAt(index.row() - 1);
+        const be::BlockRecord* prev = m_store->blockAt(index.row() - 1);
         return !prev || prev->role != block->role || prev->messageId != block->messageId;
     }
     case MessageLastRole: {
         if (block->role == be::MessageRole::None) {
             return false;
         }
-        const be::BlockRecord *next = m_store->blockAt(index.row() + 1);
+        const be::BlockRecord* next = m_store->blockAt(index.row() + 1);
         return !next || next->role != block->role || next->messageId != block->messageId;
     }
     default:
@@ -330,8 +317,7 @@ QVariant BlockModel::data(const QModelIndex &index, int role) const
     }
 }
 
-QHash<int, QByteArray> BlockModel::roleNames() const
-{
+QHash<int, QByteArray> BlockModel::roleNames() const {
     return {
         {BlockIdRole, "blockId"},
         {TypeRole, "blockType"},
@@ -357,15 +343,13 @@ QHash<int, QByteArray> BlockModel::roleNames() const
     };
 }
 
-void BlockModel::setStore(be::DocumentStore *store)
-{
+void BlockModel::setStore(be::DocumentStore* store) {
     beginResetModel();
     m_store = store;
     endResetModel();
 }
 
-void BlockModel::setContentWidth(qreal width)
-{
+void BlockModel::setContentWidth(qreal width) {
     // Quantize to whole px so a resize drag emits at most one refresh per pixel.
     const qreal rounded = std::max(0.0, std::floor(width));
     if (qFuzzyCompare(rounded, m_contentWidth)) {
@@ -382,8 +366,7 @@ void BlockModel::setContentWidth(qreal width)
     }
 }
 
-void BlockModel::setPalette(const be::Palette &palette)
-{
+void BlockModel::setPalette(const be::Palette& palette) {
     m_projector.setPalette(palette);
     const int rows = rowCount();
     if (rows > 0) {
@@ -391,14 +374,12 @@ void BlockModel::setPalette(const be::Palette &palette)
     }
 }
 
-void BlockModel::resetFromStore()
-{
+void BlockModel::resetFromStore() {
     beginResetModel();
     endResetModel();
 }
 
-void BlockModel::notifyBlockChanged(be::BlockId id)
-{
+void BlockModel::notifyBlockChanged(be::BlockId id) {
     if (!m_store) {
         return;
     }
@@ -411,8 +392,7 @@ void BlockModel::notifyBlockChanged(be::BlockId id)
     emit dataChanged(modelIndex, modelIndex);
 }
 
-void BlockModel::applyChangeSet(const be::BlockChangeSet &changeSet)
-{
+void BlockModel::applyChangeSet(const be::BlockChangeSet& changeSet) {
     if (!m_store) {
         return;
     }
@@ -449,19 +429,18 @@ void BlockModel::applyChangeSet(const be::BlockChangeSet &changeSet)
         if (rows > 0) {
             const int structuralRow = static_cast<int>(changeSet.structuralRow);
             const int first = std::clamp(structuralRow - 1, 0, rows - 1);
-            const int last = std::clamp(
-                structuralRow + static_cast<int>(changeSet.insertedCount), 0, rows - 1);
+            const int last =
+                std::clamp(structuralRow + static_cast<int>(changeSet.insertedCount), 0, rows - 1);
             emit dataChanged(index(first), index(last), {MessageFirstRole, MessageLastRole});
         }
     }
 }
 
-be::BlockId BlockModel::blockIdAt(int row) const
-{
+be::BlockId BlockModel::blockIdAt(int row) const {
     if (!m_store) {
         return 0;
     }
-    const be::BlockRecord *block = m_store->blockAt(row);
+    const be::BlockRecord* block = m_store->blockAt(row);
     return block ? block->id : 0;
 }
 

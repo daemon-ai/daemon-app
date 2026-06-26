@@ -5,9 +5,7 @@
 namespace fleet {
 
 MockSessionRoster::MockSessionRoster(daemonnet::IDaemonNet* net, QObject* parent)
-    : ISessionRoster(parent)
-    , m_sessions(new uimodels::VariantListModel(this))
-{
+    : ISessionRoster(parent), m_sessions(new uimodels::VariantListModel(this)) {
     // Single source: copy the DaemonNet's flat session projection at construction;
     // suspend/resume/close then mutate this local copy.
     if (net != nullptr) {
@@ -18,11 +16,14 @@ MockSessionRoster::MockSessionRoster(daemonnet::IDaemonNet* net, QObject* parent
     connect(m_sessions, &uimodels::VariantListModel::countChanged, this, &ISessionRoster::changed);
 }
 
-QObject* MockSessionRoster::sessions() const { return m_sessions; }
-int MockSessionRoster::count() const { return m_sessions->count(); }
+QObject* MockSessionRoster::sessions() const {
+    return m_sessions;
+}
+int MockSessionRoster::count() const {
+    return m_sessions->count();
+}
 
-void MockSessionRoster::setState(const QString& id, const QString& state)
-{
+void MockSessionRoster::setState(const QString& id, const QString& state) {
     const int row = m_sessions->indexOfId(id);
     if (row < 0) {
         return;
@@ -33,11 +34,14 @@ void MockSessionRoster::setState(const QString& id, const QString& state)
     emit changed();
 }
 
-void MockSessionRoster::suspend(const QString& id) { setState(id, QStringLiteral("suspended")); }
-void MockSessionRoster::resume(const QString& id) { setState(id, QStringLiteral("active")); }
+void MockSessionRoster::suspend(const QString& id) {
+    setState(id, QStringLiteral("suspended"));
+}
+void MockSessionRoster::resume(const QString& id) {
+    setState(id, QStringLiteral("active"));
+}
 
-void MockSessionRoster::close(const QString& id)
-{
+void MockSessionRoster::close(const QString& id) {
     m_sessions->removeById(id);
     emit changed();
 }

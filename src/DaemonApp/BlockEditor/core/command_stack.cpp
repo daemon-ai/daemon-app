@@ -2,31 +2,23 @@
 
 namespace be {
 
-bool EditorCommand::mergeWith(const EditorCommand &)
-{
+bool EditorCommand::mergeWith(const EditorCommand&) {
     return false;
 }
 
 ReplaceBlockCommand::ReplaceBlockCommand(BlockId id, QString before, QString after)
-    : m_id(id)
-    , m_before(std::move(before))
-    , m_after(std::move(after))
-{
-}
+    : m_id(id), m_before(std::move(before)), m_after(std::move(after)) {}
 
-void ReplaceBlockCommand::redo(DocumentStore &store)
-{
+void ReplaceBlockCommand::redo(DocumentStore& store) {
     store.replaceBlockMarkdown(m_id, m_after);
 }
 
-void ReplaceBlockCommand::undo(DocumentStore &store)
-{
+void ReplaceBlockCommand::undo(DocumentStore& store) {
     store.replaceBlockMarkdown(m_id, m_before);
 }
 
-bool ReplaceBlockCommand::mergeWith(const EditorCommand &next)
-{
-    const auto *replace = dynamic_cast<const ReplaceBlockCommand *>(&next);
+bool ReplaceBlockCommand::mergeWith(const EditorCommand& next) {
+    const auto* replace = dynamic_cast<const ReplaceBlockCommand*>(&next);
     if (!replace || replace->m_id != m_id) {
         return false;
     }
@@ -35,26 +27,21 @@ bool ReplaceBlockCommand::mergeWith(const EditorCommand &next)
 }
 
 DeleteBlocksCommand::DeleteBlocksCommand(qsizetype row, QVector<BlockRecord> removed)
-    : m_row(row)
-    , m_removed(std::move(removed))
-{
-}
+    : m_row(row), m_removed(std::move(removed)) {}
 
-void DeleteBlocksCommand::redo(DocumentStore &store)
-{
+void DeleteBlocksCommand::redo(DocumentStore& store) {
     store.deleteBlocks(m_row, m_removed.size());
 }
 
-void DeleteBlocksCommand::undo(DocumentStore &store)
-{
+void DeleteBlocksCommand::undo(DocumentStore& store) {
     BlockId anchor = 0;
     if (m_row > 0) {
-        if (const BlockRecord *previous = store.blockAt(m_row - 1)) {
+        if (const BlockRecord* previous = store.blockAt(m_row - 1)) {
             anchor = previous->id;
         }
     }
 
-    for (const BlockRecord &block : m_removed) {
+    for (const BlockRecord& block : m_removed) {
         if (anchor == 0 && store.blockCount() > 0) {
             store.insertBlockAfter(store.blockAt(0)->id, block.markdown());
         } else if (anchor != 0) {
@@ -66,58 +53,42 @@ void DeleteBlocksCommand::undo(DocumentStore &store)
 }
 
 MoveBlocksCommand::MoveBlocksCommand(qsizetype firstRow, qsizetype count, qsizetype destinationRow)
-    : m_firstRow(firstRow)
-    , m_count(count)
-    , m_destinationRow(destinationRow)
-{
-}
+    : m_firstRow(firstRow), m_count(count), m_destinationRow(destinationRow) {}
 
-void MoveBlocksCommand::redo(DocumentStore &store)
-{
+void MoveBlocksCommand::redo(DocumentStore& store) {
     store.moveBlocks(m_firstRow, m_count, m_destinationRow);
 }
 
-void MoveBlocksCommand::undo(DocumentStore &store)
-{
-    const qsizetype movedStart = m_destinationRow > m_firstRow ? m_destinationRow - m_count : m_destinationRow;
+void MoveBlocksCommand::undo(DocumentStore& store) {
+    const qsizetype movedStart =
+        m_destinationRow > m_firstRow ? m_destinationRow - m_count : m_destinationRow;
     store.moveBlocks(movedStart, m_count, m_firstRow);
 }
 
 StructuralCommand::StructuralCommand(QVector<BlockRecord> before, QVector<BlockRecord> after)
-    : m_before(std::move(before))
-    , m_after(std::move(after))
-{
-}
+    : m_before(std::move(before)), m_after(std::move(after)) {}
 
-void StructuralCommand::redo(DocumentStore &store)
-{
+void StructuralCommand::redo(DocumentStore& store) {
     store.restore(m_after);
 }
 
-void StructuralCommand::undo(DocumentStore &store)
-{
+void StructuralCommand::undo(DocumentStore& store) {
     store.restore(m_before);
 }
 
-StreamCommand::StreamCommand(qsizetype firstRow, QVector<BlockRecord> before, QVector<BlockRecord> after)
-    : m_firstRow(firstRow)
-    , m_before(std::move(before))
-    , m_after(std::move(after))
-{
-}
+StreamCommand::StreamCommand(qsizetype firstRow, QVector<BlockRecord> before,
+                             QVector<BlockRecord> after)
+    : m_firstRow(firstRow), m_before(std::move(before)), m_after(std::move(after)) {}
 
-void StreamCommand::redo(DocumentStore &store)
-{
+void StreamCommand::redo(DocumentStore& store) {
     store.spliceBlocks(m_firstRow, m_before.size(), m_after);
 }
 
-void StreamCommand::undo(DocumentStore &store)
-{
+void StreamCommand::undo(DocumentStore& store) {
     store.spliceBlocks(m_firstRow, m_after.size(), m_before);
 }
 
-void CommandStack::push(std::unique_ptr<EditorCommand> command, DocumentStore &store)
-{
+void CommandStack::push(std::unique_ptr<EditorCommand> command, DocumentStore& store) {
     if (!command) {
         return;
     }
@@ -131,8 +102,7 @@ void CommandStack::push(std::unique_ptr<EditorCommand> command, DocumentStore &s
     m_redo.clear();
 }
 
-void CommandStack::pushApplied(std::unique_ptr<EditorCommand> command)
-{
+void CommandStack::pushApplied(std::unique_ptr<EditorCommand> command) {
     if (!command) {
         return;
     }
@@ -140,18 +110,15 @@ void CommandStack::pushApplied(std::unique_ptr<EditorCommand> command)
     m_redo.clear();
 }
 
-bool CommandStack::canUndo() const
-{
+bool CommandStack::canUndo() const {
     return !m_undo.empty();
 }
 
-bool CommandStack::canRedo() const
-{
+bool CommandStack::canRedo() const {
     return !m_redo.empty();
 }
 
-void CommandStack::undo(DocumentStore &store)
-{
+void CommandStack::undo(DocumentStore& store) {
     if (m_undo.empty()) {
         return;
     }
@@ -161,8 +128,7 @@ void CommandStack::undo(DocumentStore &store)
     m_redo.push_back(std::move(command));
 }
 
-void CommandStack::redo(DocumentStore &store)
-{
+void CommandStack::redo(DocumentStore& store) {
     if (m_redo.empty()) {
         return;
     }
@@ -172,8 +138,7 @@ void CommandStack::redo(DocumentStore &store)
     m_undo.push_back(std::move(command));
 }
 
-void CommandStack::clear()
-{
+void CommandStack::clear() {
     m_undo.clear();
     m_redo.clear();
 }

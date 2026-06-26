@@ -2,38 +2,32 @@
 
 #include "fs/ifs_service.h"
 
-#include <QSet>
-
 #include <algorithm>
+#include <QSet>
 
 namespace files {
 namespace {
-constexpr int kMaxFiles = 20000;     // index cap (Lite XL-style budget)
-constexpr int kMaxConcurrent = 8;    // outstanding open() requests
-constexpr int kMaxResults = 200;     // ranked rows shown
+constexpr int kMaxFiles = 20000;  // index cap (Lite XL-style budget)
+constexpr int kMaxConcurrent = 8; // outstanding open() requests
+constexpr int kMaxResults = 200;  // ranked rows shown
 const QChar kSep(0x1f);
 
-QString recentKey(const QString& rootId, const QString& path)
-{
+QString recentKey(const QString& rootId, const QString& path) {
     return rootId + kSep + path;
 }
 } // namespace
 
-FileFinderModel::FileFinderModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
+FileFinderModel::FileFinderModel(QObject* parent) : QAbstractListModel(parent) {
     fs::registerFsMetatypes();
 }
 
 FileFinderModel::~FileFinderModel() = default;
 
-QObject* FileFinderModel::service() const
-{
+QObject* FileFinderModel::service() const {
     return m_service;
 }
 
-void FileFinderModel::setService(QObject* service)
-{
+void FileFinderModel::setService(QObject* service) {
     auto* svc = qobject_cast<fs::IFsService*>(service);
     if (svc == m_service)
         return;
@@ -48,8 +42,7 @@ void FileFinderModel::setService(QObject* service)
     }
 }
 
-void FileFinderModel::setQuery(const QString& query)
-{
+void FileFinderModel::setQuery(const QString& query) {
     if (m_query == query)
         return;
     m_query = query;
@@ -57,13 +50,11 @@ void FileFinderModel::setQuery(const QString& query)
     rerank();
 }
 
-int FileFinderModel::rowCount(const QModelIndex& parent) const
-{
+int FileFinderModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(m_results.size());
 }
 
-QVariant FileFinderModel::data(const QModelIndex& index, int role) const
-{
+QVariant FileFinderModel::data(const QModelIndex& index, int role) const {
     if (index.row() < 0 || index.row() >= m_results.size())
         return {};
     const File& f = m_index.at(m_results.at(index.row()));
@@ -80,17 +71,15 @@ QVariant FileFinderModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> FileFinderModel::roleNames() const
-{
+QHash<int, QByteArray> FileFinderModel::roleNames() const {
     return {
-        { PathRole, "path" },
-        { NameRole, "name" },
-        { RootIdRole, "rootId" },
+        {PathRole, "path"},
+        {NameRole, "name"},
+        {RootIdRole, "rootId"},
     };
 }
 
-void FileFinderModel::onRootsChanged(const QList<fs::FsRoot>& roots)
-{
+void FileFinderModel::onRootsChanged(const QList<fs::FsRoot>& roots) {
     // Start a fresh index walk from each root's top directory. (Seeding here,
     // not in rebuildIndex(), avoids a listRoots/rebuild recursion.)
     beginResetModel();
@@ -114,23 +103,20 @@ void FileFinderModel::onRootsChanged(const QList<fs::FsRoot>& roots)
     }
 }
 
-void FileFinderModel::rebuildIndex()
-{
+void FileFinderModel::rebuildIndex() {
     // Re-request roots; the walk (re)starts in onRootsChanged.
     if (m_service)
         m_service->listRoots();
 }
 
-void FileFinderModel::enqueueDir(const QString& rootId, const QString& dir)
-{
+void FileFinderModel::enqueueDir(const QString& rootId, const QString& dir) {
     if (m_filesSeen >= kMaxFiles)
         return;
     m_dirQueue.enqueue(qMakePair(rootId, dir));
     pump();
 }
 
-void FileFinderModel::pump()
-{
+void FileFinderModel::pump() {
     if (!m_service)
         return;
     while (m_inFlight < kMaxConcurrent && !m_dirQueue.isEmpty() && m_filesSeen < kMaxFiles) {
@@ -148,8 +134,7 @@ void FileFinderModel::pump()
 }
 
 void FileFinderModel::onListed(const QString& rootId, const QString& dir,
-                               const QList<fs::FsEntry>& entries)
-{
+                               const QList<fs::FsEntry>& entries) {
     // A `listed` may be ours (from the index walk) or from another consumer
     // (e.g. the tree browsing). Either way, fold its files into the index; only
     // our own requests drive the walk queue.
@@ -167,7 +152,7 @@ void FileFinderModel::onListed(const QString& rootId, const QString& dir,
             const QString k = recentKey(rootId, e.path);
             if (!m_seenKeys.contains(k)) {
                 m_seenKeys.insert(k);
-                m_index.push_back(File{ rootId, e.path, e.name });
+                m_index.push_back(File{rootId, e.path, e.name});
                 ++m_filesSeen;
             }
         }
@@ -176,8 +161,7 @@ void FileFinderModel::onListed(const QString& rootId, const QString& dir,
     Q_UNUSED(dir);
 }
 
-bool FileFinderModel::fuzzyScore(const QString& text, const QString& pattern, int* score)
-{
+bool FileFinderModel::fuzzyScore(const QString& text, const QString& pattern, int* score) {
     if (pattern.isEmpty()) {
         if (score)
             *score = 0;
@@ -211,8 +195,7 @@ bool FileFinderModel::fuzzyScore(const QString& text, const QString& pattern, in
     return true;
 }
 
-void FileFinderModel::noteRecent(const QString& rootId, const QString& path)
-{
+void FileFinderModel::noteRecent(const QString& rootId, const QString& path) {
     const QString k = recentKey(rootId, path);
     m_recents.removeAll(k);
     m_recents.prepend(k);
@@ -221,8 +204,7 @@ void FileFinderModel::noteRecent(const QString& rootId, const QString& path)
     rerank();
 }
 
-void FileFinderModel::rerank()
-{
+void FileFinderModel::rerank() {
     beginResetModel();
     m_results.clear();
     if (m_query.trimmed().isEmpty()) {
@@ -250,10 +232,9 @@ void FileFinderModel::rerank()
             if (fuzzyScore(m_index[i].path, m_query, &sc))
                 scored.push_back(qMakePair(sc, i));
         }
-        std::stable_sort(scored.begin(), scored.end(),
-                         [](const QPair<int, int>& a, const QPair<int, int>& b) {
-                             return a.first > b.first;
-                         });
+        std::stable_sort(
+            scored.begin(), scored.end(),
+            [](const QPair<int, int>& a, const QPair<int, int>& b) { return a.first > b.first; });
         for (int i = 0; i < scored.size() && i < kMaxResults; ++i)
             m_results.push_back(scored[i].second);
     }
@@ -264,21 +245,17 @@ void FileFinderModel::rerank()
 // SearchResultsModel
 // ---------------------------------------------------------------------------
 
-SearchResultsModel::SearchResultsModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
+SearchResultsModel::SearchResultsModel(QObject* parent) : QAbstractListModel(parent) {
     fs::registerFsMetatypes();
 }
 
 SearchResultsModel::~SearchResultsModel() = default;
 
-QObject* SearchResultsModel::service() const
-{
+QObject* SearchResultsModel::service() const {
     return m_service;
 }
 
-void SearchResultsModel::setService(QObject* service)
-{
+void SearchResultsModel::setService(QObject* service) {
     auto* svc = qobject_cast<fs::IFsService*>(service);
     if (svc == m_service)
         return;
@@ -291,13 +268,11 @@ void SearchResultsModel::setService(QObject* service)
                 &SearchResultsModel::onSearchResults);
 }
 
-int SearchResultsModel::rowCount(const QModelIndex& parent) const
-{
+int SearchResultsModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(m_hits.size());
 }
 
-QVariant SearchResultsModel::data(const QModelIndex& index, int role) const
-{
+QVariant SearchResultsModel::data(const QModelIndex& index, int role) const {
     if (index.row() < 0 || index.row() >= m_hits.size())
         return {};
     const fs::FsSearchHit& h = m_hits.at(index.row());
@@ -318,16 +293,15 @@ QVariant SearchResultsModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> SearchResultsModel::roleNames() const
-{
+QHash<int, QByteArray> SearchResultsModel::roleNames() const {
     return {
-        { PathRole, "path" },     { LineRole, "line" },        { ColumnRole, "column" },
-        { PreviewRole, "preview" }, { RootIdRole, "rootId" },
+        {PathRole, "path"},       {LineRole, "line"},     {ColumnRole, "column"},
+        {PreviewRole, "preview"}, {RootIdRole, "rootId"},
     };
 }
 
-void SearchResultsModel::search(const QString& rootId, const QString& query, const QVariantMap& opts)
-{
+void SearchResultsModel::search(const QString& rootId, const QString& query,
+                                const QVariantMap& opts) {
     if (!m_service)
         return;
     m_rootId = rootId;
@@ -342,8 +316,7 @@ void SearchResultsModel::search(const QString& rootId, const QString& query, con
 }
 
 void SearchResultsModel::onSearchResults(const QString& rootId, const QString& query,
-                                         const QList<fs::FsSearchHit>& hits, bool complete)
-{
+                                         const QList<fs::FsSearchHit>& hits, bool complete) {
     if (rootId != m_rootId || query != m_query)
         return;
     beginResetModel();

@@ -3,7 +3,6 @@
 #include <QHash>
 #include <QMetaType>
 #include <QString>
-
 #include <utility>
 
 // Typed identifier newtypes mirroring the daemon `string_id!` newtypes
@@ -24,12 +23,11 @@ namespace domain {
         Name() = default;                                                                          \
         explicit Name(QString v) : value(std::move(v)) {}                                          \
         [[nodiscard]] bool isEmpty() const { return value.isEmpty(); }                             \
-        [[nodiscard]] QString toString() const { return value; }                                  \
+        [[nodiscard]] QString toString() const { return value; }                                   \
         friend bool operator==(const Name& a, const Name& b) { return a.value == b.value; }        \
         friend bool operator!=(const Name& a, const Name& b) { return a.value != b.value; }        \
     };                                                                                             \
-    inline size_t qHash(const Name& id, size_t seed = 0) noexcept                                  \
-    {                                                                                              \
+    inline size_t qHash(const Name& id, size_t seed = 0) noexcept {                                \
         return qHash(id.value, seed);                                                              \
     }
 

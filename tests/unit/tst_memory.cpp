@@ -1,11 +1,11 @@
-#include <QtTest/QtTest>
-
 #include "memory/mock_memory_service.h"
 #include "memory_graph_model.h"
 #include "memory_list_model.h"
 #include "memory_stats_model.h"
 #include "memory_timeline_model.h"
 #include "tab_model.h"
+
+#include <QtTest/QtTest>
 
 // Exercises the seeded memory seam + the shared view-models that back BOTH the GUI
 // and the TUI memory views. The mock delivers results asynchronously (queued
@@ -27,8 +27,7 @@ private slots:
     void tabsAreKeyedPerAgent();
 };
 
-void TestMemory::listPopulatesAndFilters()
-{
+void TestMemory::listPopulatesAndFilters() {
     memory::MockMemoryService svc;
     memoryui::MemoryListModel model;
     model.setService(&svc);
@@ -39,8 +38,8 @@ void TestMemory::listPopulatesAndFilters()
     // the precise predicate (every row is working) rather than just rowCount > 0.
     const auto allWorking = [&model] {
         for (int i = 0; i < model.rowCount(); ++i) {
-            if (model.entryAt(i).value(QStringLiteral("tier")).toString()
-                != QStringLiteral("working"))
+            if (model.entryAt(i).value(QStringLiteral("tier")).toString() !=
+                QStringLiteral("working"))
                 return false;
         }
         return true;
@@ -54,8 +53,7 @@ void TestMemory::listPopulatesAndFilters()
     QTRY_VERIFY(model.rowCount() >= filtered);
 }
 
-void TestMemory::listSortsByImportance()
-{
+void TestMemory::listSortsByImportance() {
     memory::MockMemoryService svc;
     memoryui::MemoryListModel model;
     model.setService(&svc);
@@ -70,8 +68,7 @@ void TestMemory::listSortsByImportance()
     }
 }
 
-void TestMemory::searchMatchesContent()
-{
+void TestMemory::searchMatchesContent() {
     memory::MockMemoryService svc;
     memoryui::MemoryListModel model;
     model.setService(&svc);
@@ -91,8 +88,7 @@ void TestMemory::searchMatchesContent()
     QTRY_VERIFY(model.rowCount() > 0 && allMatchRust());
 }
 
-void TestMemory::memoryIsOwnedByAgent()
-{
+void TestMemory::memoryIsOwnedByAgent() {
     // Memory is owned by the agent (one bank per profile): two agents' banks are
     // disjoint, and binding to a profile shows that agent's whole bank.
     memory::MockMemoryService svc;
@@ -128,8 +124,7 @@ void TestMemory::memoryIsOwnedByAgent()
     QVERIFY(!a.intersects(b)); // distinct agents => disjoint memory
 }
 
-void TestMemory::sessionFiltersWithinAgent()
-{
+void TestMemory::sessionFiltersWithinAgent() {
     // A session is an optional lens WITHIN one agent's bank, not the binding.
     memory::MockMemoryService svc;
     memoryui::MemoryListModel model;
@@ -151,8 +146,7 @@ void TestMemory::sessionFiltersWithinAgent()
     QVERIFY(model.rowCount() <= whole);
 }
 
-void TestMemory::requestSessionsListsAgentSessions()
-{
+void TestMemory::requestSessionsListsAgentSessions() {
     memory::MockMemoryService svc;
     QSignalSpy spy(&svc, &memory::IMemoryService::sessionsReady);
     svc.requestSessions(QStringLiteral("prof-1"));
@@ -165,8 +159,7 @@ void TestMemory::requestSessionsListsAgentSessions()
     QVERIFY(ids.contains(QStringLiteral("ga-notes")));
 }
 
-void TestMemory::statsAggregate()
-{
+void TestMemory::statsAggregate() {
     memory::MockMemoryService svc;
     memoryui::MemoryStatsModel stats;
     stats.setService(&svc);
@@ -177,8 +170,7 @@ void TestMemory::statsAggregate()
     QVERIFY(stats.facts() > 0);
 }
 
-void TestMemory::graphHasNodesAndNeighbours()
-{
+void TestMemory::graphHasNodesAndNeighbours() {
     memory::MockMemoryService svc;
     memoryui::MemoryGraphModel graph;
     graph.setService(&svc); // defaults to the association graph
@@ -192,8 +184,7 @@ void TestMemory::graphHasNodesAndNeighbours()
     QVERIFY(!graph.neighborsOf(seed).isEmpty());
 }
 
-void TestMemory::graphKnowledgeKind()
-{
+void TestMemory::graphKnowledgeKind() {
     memory::MockMemoryService svc;
     memoryui::MemoryGraphModel graph;
     graph.setService(&svc);
@@ -204,8 +195,7 @@ void TestMemory::graphKnowledgeKind()
     QVERIFY(graph.edgeCount() > 0);
 }
 
-void TestMemory::timelineGroupsEvents()
-{
+void TestMemory::timelineGroupsEvents() {
     memory::MockMemoryService svc;
     memoryui::MemoryTimelineModel timeline;
     timeline.setService(&svc);
@@ -214,7 +204,8 @@ void TestMemory::timelineGroupsEvents()
     // The flattened model must contain at least one group header row.
     bool sawHeader = false;
     for (int i = 0; i < timeline.rowCount(); ++i) {
-        if (timeline.data(timeline.index(i), memoryui::MemoryTimelineModel::IsHeaderRole).toBool()) {
+        if (timeline.data(timeline.index(i), memoryui::MemoryTimelineModel::IsHeaderRole)
+                .toBool()) {
             sawHeader = true;
             break;
         }
@@ -222,28 +213,27 @@ void TestMemory::timelineGroupsEvents()
     QVERIFY(sawHeader);
 }
 
-void TestMemory::tabsAreKeyedPerAgent()
-{
+void TestMemory::tabsAreKeyedPerAgent() {
     // Memory/Profile tabs are multi-instance keyed by (kind, profile): the same
     // agent re-activates its tab; a different agent opens a new one; and the two
     // kinds are independent keyspaces.
     TabModel tabs;
-    const int memA = tabs.openAgentTab(TabModel::Memory, QStringLiteral("prof-1"),
-                                       QStringLiteral("Memory - A"));
+    const int memA =
+        tabs.openAgentTab(TabModel::Memory, QStringLiteral("prof-1"), QStringLiteral("Memory - A"));
     const int afterFirst = tabs.count();
-    const int memASame = tabs.openAgentTab(TabModel::Memory, QStringLiteral("prof-1"),
-                                           QStringLiteral("Memory - A"));
-    QCOMPARE(memASame, memA);          // same agent -> same tab
+    const int memASame =
+        tabs.openAgentTab(TabModel::Memory, QStringLiteral("prof-1"), QStringLiteral("Memory - A"));
+    QCOMPARE(memASame, memA); // same agent -> same tab
     QCOMPARE(tabs.count(), afterFirst);
 
-    const int memB = tabs.openAgentTab(TabModel::Memory, QStringLiteral("prof-2"),
-                                       QStringLiteral("Memory - B"));
-    QVERIFY(memB != memA);             // different agent -> new tab
+    const int memB =
+        tabs.openAgentTab(TabModel::Memory, QStringLiteral("prof-2"), QStringLiteral("Memory - B"));
+    QVERIFY(memB != memA); // different agent -> new tab
     QCOMPARE(tabs.count(), afterFirst + 1);
 
     const int profA = tabs.openAgentTab(TabModel::Profile, QStringLiteral("prof-1"),
                                         QStringLiteral("Profile - A"));
-    QVERIFY(profA != memA);            // Profile is an independent keyspace
+    QVERIFY(profA != memA); // Profile is an independent keyspace
     QCOMPARE(tabs.agentRefAt(tabs.indexOfTabId(profA)), QStringLiteral("prof-1"));
 }
 

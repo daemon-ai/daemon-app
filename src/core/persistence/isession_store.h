@@ -1,11 +1,11 @@
 #pragma once
 
-#include "domain/unit_node.h"
-#include "domain/session.h"
 #include "domain/ids.h"
 #include "domain/participant.h"
+#include "domain/session.h"
 #include "domain/sidebar_node.h"
 #include "domain/tag.h"
+#include "domain/unit_node.h"
 
 #include <QList>
 #include <QObject>
@@ -42,21 +42,21 @@ public:
 
     // Sessions matching the given sidebar scope (metadata + content). For a Unit
     // scope this folds over the unit's whole subtree.
-    [[nodiscard]] virtual QList<domain::Session>
-    sessions(const domain::ListScope& scope) const = 0;
+    [[nodiscard]] virtual QList<domain::Session> sessions(const domain::ListScope& scope) const = 0;
 
     [[nodiscard]] virtual int sessionCount(const domain::ListScope& scope) const = 0;
 
     // --- SessionId-keyed API (the canonical session identity) ---
-    // The authoritative string `SessionId` is the only session key into the store. `domain::Session.id`
-    // (int) survives solely as a store-internal handle (the SQLite primary key / list ordering) and is
-    // exposed by no method here.
+    // The authoritative string `SessionId` is the only session key into the store.
+    // `domain::Session.id` (int) survives solely as a store-internal handle (the SQLite primary key
+    // / list ordering) and is exposed by no method here.
     [[nodiscard]] virtual QString content(const domain::SessionId& id) const = 0;
-    // The canonical session title (the same string the list shows), or an empty string when unknown.
+    // The canonical session title (the same string the list shows), or an empty string when
+    // unknown.
     [[nodiscard]] virtual QString title(const domain::SessionId& id) const = 0;
     [[nodiscard]] virtual bool isPinned(const domain::SessionId& id) const = 0;
-    // Create a session under `unitId` and return its authoritative `SessionId`. Empty when the backend
-    // owns lifecycle (the daemon cache).
+    // Create a session under `unitId` and return its authoritative `SessionId`. Empty when the
+    // backend owns lifecycle (the daemon cache).
     virtual domain::SessionId newSession(const domain::UnitId& unitId) = 0;
     virtual void setContent(const domain::SessionId& id, const QString& markdown) = 0;
     virtual void setArchived(const domain::SessionId& id, bool archived) = 0;
@@ -74,45 +74,37 @@ public:
     virtual int createTag(const QString& name, const QString& color) = 0;
 
     // --- QML/TUI boundary: QString-keyed Q_INVOKABLE convenience overloads ---
-    // QML and the TUI thread session ids as `QString` (empty = none); these inline shims construct the
-    // typed `SessionId` and delegate to the canonical methods above. SessionId is not implicitly
-    // constructible from QString, so these never clash with the int or SessionId overloads.
-    [[nodiscard]] Q_INVOKABLE QString content(const QString& id) const
-    {
+    // QML and the TUI thread session ids as `QString` (empty = none); these inline shims construct
+    // the typed `SessionId` and delegate to the canonical methods above. SessionId is not
+    // implicitly constructible from QString, so these never clash with the int or SessionId
+    // overloads.
+    [[nodiscard]] Q_INVOKABLE QString content(const QString& id) const {
         return content(domain::SessionId(id));
     }
-    [[nodiscard]] Q_INVOKABLE QString title(const QString& id) const
-    {
+    [[nodiscard]] Q_INVOKABLE QString title(const QString& id) const {
         return title(domain::SessionId(id));
     }
-    [[nodiscard]] Q_INVOKABLE bool isPinned(const QString& id) const
-    {
+    [[nodiscard]] Q_INVOKABLE bool isPinned(const QString& id) const {
         return isPinned(domain::SessionId(id));
     }
-    Q_INVOKABLE void setContent(const QString& id, const QString& markdown)
-    {
+    Q_INVOKABLE void setContent(const QString& id, const QString& markdown) {
         setContent(domain::SessionId(id), markdown);
     }
-    Q_INVOKABLE void setArchived(const QString& id, bool archived)
-    {
+    Q_INVOKABLE void setArchived(const QString& id, bool archived) {
         setArchived(domain::SessionId(id), archived);
     }
-    Q_INVOKABLE void renameSession(const QString& id, const QString& title)
-    {
+    Q_INVOKABLE void renameSession(const QString& id, const QString& title) {
         renameSession(domain::SessionId(id), title);
     }
     Q_INVOKABLE void deleteSession(const QString& id) { deleteSession(domain::SessionId(id)); }
-    Q_INVOKABLE void setPinned(const QString& id, bool pinned)
-    {
+    Q_INVOKABLE void setPinned(const QString& id, bool pinned) {
         setPinned(domain::SessionId(id), pinned);
     }
-    Q_INVOKABLE void moveSession(const QString& id, int delta)
-    {
+    Q_INVOKABLE void moveSession(const QString& id, int delta) {
         moveSession(domain::SessionId(id), delta);
     }
     // Create + return the new id as a QString (the QML/TUI form of newSession).
-    Q_INVOKABLE QString newSessionId(const domain::UnitId& unitId)
-    {
+    Q_INVOKABLE QString newSessionId(const domain::UnitId& unitId) {
         return newSession(unitId).toString();
     }
 

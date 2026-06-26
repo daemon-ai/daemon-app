@@ -13,10 +13,8 @@
 namespace daemonapp::daemon {
 
 DaemonCacheStore::DaemonCacheStore(const QString& dbPath, QObject* parent)
-    : QObject(parent)
-    , m_dbPath(dbPath.isEmpty() ? defaultDatabasePath() : dbPath)
-    , m_connectionName(QStringLiteral("daemon-cache-%1").arg(reinterpret_cast<quintptr>(this)))
-{
+    : QObject(parent), m_dbPath(dbPath.isEmpty() ? defaultDatabasePath() : dbPath),
+      m_connectionName(QStringLiteral("daemon-cache-%1").arg(reinterpret_cast<quintptr>(this))) {
     QDir().mkpath(QFileInfo(m_dbPath).absolutePath());
     QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), m_connectionName);
     db.setDatabaseName(m_dbPath);
@@ -31,8 +29,7 @@ DaemonCacheStore::DaemonCacheStore(const QString& dbPath, QObject* parent)
     }
 }
 
-DaemonCacheStore::~DaemonCacheStore()
-{
+DaemonCacheStore::~DaemonCacheStore() {
     {
         QSqlDatabase db = QSqlDatabase::database(m_connectionName, false);
         if (db.isValid()) {
@@ -42,14 +39,12 @@ DaemonCacheStore::~DaemonCacheStore()
     QSqlDatabase::removeDatabase(m_connectionName);
 }
 
-bool DaemonCacheStore::isOpen() const
-{
+bool DaemonCacheStore::isOpen() const {
     const QSqlDatabase db = QSqlDatabase::database(m_connectionName, false);
     return db.isValid() && db.isOpen();
 }
 
-QString DaemonCacheStore::defaultDatabasePath()
-{
+QString DaemonCacheStore::defaultDatabasePath() {
     QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (dir.isEmpty()) {
         dir = QDir::tempPath();
@@ -58,8 +53,7 @@ QString DaemonCacheStore::defaultDatabasePath()
     return QDir(dir).filePath(QStringLiteral("daemon_cache.db"));
 }
 
-bool DaemonCacheStore::ensureSchema()
-{
+bool DaemonCacheStore::ensureSchema() {
     if (!execSql(cache::kCreateMetaSql)) {
         return false;
     }
@@ -78,37 +72,29 @@ bool DaemonCacheStore::ensureSchema()
     return setMeta(QStringLiteral("schema_version"), QString::number(cache::kSchemaVersion));
 }
 
-bool DaemonCacheStore::createDataTables()
-{
-    return execSql(cache::kCreateSessionsSql)
-        && execSql(cache::kCreateSessionLogSql)
-        && execSql(cache::kCreateSyncCursorsSql)
-        && execSql(cache::kCreateProfilesSql)
-        && execSql(cache::kCreateApprovalsSql)
-        && execSql(cache::kCreateFsEntriesSql);
+bool DaemonCacheStore::createDataTables() {
+    return execSql(cache::kCreateSessionsSql) && execSql(cache::kCreateSessionLogSql) &&
+           execSql(cache::kCreateSyncCursorsSql) && execSql(cache::kCreateProfilesSql) &&
+           execSql(cache::kCreateApprovalsSql) && execSql(cache::kCreateFsEntriesSql);
 }
 
-bool DaemonCacheStore::dropDataTables()
-{
-    return execSql("DROP TABLE IF EXISTS daemon_sessions")
-        && execSql("DROP TABLE IF EXISTS daemon_session_log")
-        && execSql("DROP TABLE IF EXISTS daemon_sync_cursors")
-        && execSql("DROP TABLE IF EXISTS daemon_profiles")
-        && execSql("DROP TABLE IF EXISTS daemon_approvals")
-        && execSql("DROP TABLE IF EXISTS daemon_fs_entries");
+bool DaemonCacheStore::dropDataTables() {
+    return execSql("DROP TABLE IF EXISTS daemon_sessions") &&
+           execSql("DROP TABLE IF EXISTS daemon_session_log") &&
+           execSql("DROP TABLE IF EXISTS daemon_sync_cursors") &&
+           execSql("DROP TABLE IF EXISTS daemon_profiles") &&
+           execSql("DROP TABLE IF EXISTS daemon_approvals") &&
+           execSql("DROP TABLE IF EXISTS daemon_fs_entries");
 }
 
-int DaemonCacheStore::schemaVersion() const
-{
+int DaemonCacheStore::schemaVersion() const {
     return meta(QStringLiteral("schema_version")).toInt();
 }
 
-bool DaemonCacheStore::setMeta(const QString& key, const QString& value)
-{
+bool DaemonCacheStore::setMeta(const QString& key, const QString& value) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
-    q.prepare(QStringLiteral(
-        "INSERT INTO daemon_cache_meta(key,value) VALUES(?,?) "
-        "ON CONFLICT(key) DO UPDATE SET value=excluded.value"));
+    q.prepare(QStringLiteral("INSERT INTO daemon_cache_meta(key,value) VALUES(?,?) "
+                             "ON CONFLICT(key) DO UPDATE SET value=excluded.value"));
     q.addBindValue(key);
     q.addBindValue(value);
     if (!q.exec()) {
@@ -118,8 +104,7 @@ bool DaemonCacheStore::setMeta(const QString& key, const QString& value)
     return true;
 }
 
-QString DaemonCacheStore::meta(const QString& key) const
-{
+QString DaemonCacheStore::meta(const QString& key) const {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral("SELECT value FROM daemon_cache_meta WHERE key=?"));
     q.addBindValue(key);
@@ -130,8 +115,7 @@ QString DaemonCacheStore::meta(const QString& key) const
     return q.next() ? q.value(0).toString() : QString();
 }
 
-bool DaemonCacheStore::execSql(const char* sql)
-{
+bool DaemonCacheStore::execSql(const char* sql) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     if (!q.exec(QString::fromUtf8(sql))) {
         setLastError(q.lastError().text());
@@ -140,13 +124,11 @@ bool DaemonCacheStore::execSql(const char* sql)
     return true;
 }
 
-void DaemonCacheStore::setLastError(const QString& message) const
-{
+void DaemonCacheStore::setLastError(const QString& message) const {
     m_lastError = message;
 }
 
-bool DaemonCacheStore::upsertSession(const CachedSessionRow& row)
-{
+bool DaemonCacheStore::upsertSession(const CachedSessionRow& row) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral(
         "INSERT INTO daemon_sessions(session_id,title,state,profile_ref,lifecycle,role,"
@@ -154,7 +136,8 @@ bool DaemonCacheStore::upsertSession(const CachedSessionRow& row)
         "VALUES(?,?,?,?,?,?,?,?,?,?) "
         "ON CONFLICT(session_id) DO UPDATE SET "
         "title=excluded.title,state=excluded.state,profile_ref=excluded.profile_ref,"
-        "lifecycle=excluded.lifecycle,role=excluded.role,parent_session_id=excluded.parent_session_id,"
+        "lifecycle=excluded.lifecycle,role=excluded.role,parent_session_id=excluded.parent_session_"
+        "id,"
         "pinned=excluded.pinned,archived=excluded.archived,updated_at_ms=excluded.updated_at_ms"));
     q.addBindValue(row.sessionId);
     q.addBindValue(row.title);
@@ -173,8 +156,7 @@ bool DaemonCacheStore::upsertSession(const CachedSessionRow& row)
     return true;
 }
 
-QList<CachedSessionRow> DaemonCacheStore::sessions() const
-{
+QList<CachedSessionRow> DaemonCacheStore::sessions() const {
     QList<CachedSessionRow> rows;
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     if (!q.exec(QStringLiteral(
@@ -200,11 +182,11 @@ QList<CachedSessionRow> DaemonCacheStore::sessions() const
     return rows;
 }
 
-bool DaemonCacheStore::appendSessionLog(const CachedLogRow& row)
-{
+bool DaemonCacheStore::appendSessionLog(const CachedLogRow& row) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral(
-        "INSERT INTO daemon_session_log(session_id,seq,payload_cbor,direction,disposition,updated_at_ms) "
+        "INSERT INTO "
+        "daemon_session_log(session_id,seq,payload_cbor,direction,disposition,updated_at_ms) "
         "VALUES(?,?,?,?,?,?) "
         "ON CONFLICT(session_id,seq) DO UPDATE SET "
         "payload_cbor=excluded.payload_cbor,direction=excluded.direction,"
@@ -223,12 +205,11 @@ bool DaemonCacheStore::appendSessionLog(const CachedLogRow& row)
 }
 
 QList<CachedLogRow> DaemonCacheStore::sessionLog(const QString& sessionId, quint64 afterSeq,
-                                                int limit) const
-{
+                                                 int limit) const {
     QList<CachedLogRow> rows;
-    QString sql = QStringLiteral(
-        "SELECT session_id,seq,payload_cbor,direction,disposition,updated_at_ms "
-        "FROM daemon_session_log WHERE session_id=? AND seq>? ORDER BY seq ASC");
+    QString sql =
+        QStringLiteral("SELECT session_id,seq,payload_cbor,direction,disposition,updated_at_ms "
+                       "FROM daemon_session_log WHERE session_id=? AND seq>? ORDER BY seq ASC");
     if (limit > 0) {
         sql += QStringLiteral(" LIMIT ?");
     }
@@ -256,12 +237,12 @@ QList<CachedLogRow> DaemonCacheStore::sessionLog(const QString& sessionId, quint
     return rows;
 }
 
-bool DaemonCacheStore::setCursor(const QString& scope, const QString& cursor, qint64 updatedAtMs)
-{
+bool DaemonCacheStore::setCursor(const QString& scope, const QString& cursor, qint64 updatedAtMs) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
-    q.prepare(QStringLiteral(
-        "INSERT INTO daemon_sync_cursors(scope,cursor,updated_at_ms) VALUES(?,?,?) "
-        "ON CONFLICT(scope) DO UPDATE SET cursor=excluded.cursor,updated_at_ms=excluded.updated_at_ms"));
+    q.prepare(
+        QStringLiteral("INSERT INTO daemon_sync_cursors(scope,cursor,updated_at_ms) VALUES(?,?,?) "
+                       "ON CONFLICT(scope) DO UPDATE SET "
+                       "cursor=excluded.cursor,updated_at_ms=excluded.updated_at_ms"));
     q.addBindValue(scope);
     q.addBindValue(cursor);
     q.addBindValue(updatedAtMs);
@@ -272,8 +253,7 @@ bool DaemonCacheStore::setCursor(const QString& scope, const QString& cursor, qi
     return true;
 }
 
-QString DaemonCacheStore::cursor(const QString& scope) const
-{
+QString DaemonCacheStore::cursor(const QString& scope) const {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral("SELECT cursor FROM daemon_sync_cursors WHERE scope=?"));
     q.addBindValue(scope);
@@ -284,8 +264,7 @@ QString DaemonCacheStore::cursor(const QString& scope) const
     return q.next() ? q.value(0).toString() : QString();
 }
 
-bool DaemonCacheStore::upsertApproval(const CachedApprovalRow& row)
-{
+bool DaemonCacheStore::upsertApproval(const CachedApprovalRow& row) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral(
         "INSERT INTO daemon_approvals(session_id,request_id,prompt,path,updated_at_ms) "
@@ -304,8 +283,7 @@ bool DaemonCacheStore::upsertApproval(const CachedApprovalRow& row)
     return true;
 }
 
-QList<CachedApprovalRow> DaemonCacheStore::approvals() const
-{
+QList<CachedApprovalRow> DaemonCacheStore::approvals() const {
     QList<CachedApprovalRow> rows;
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     if (!q.exec(QStringLiteral(
@@ -326,11 +304,11 @@ QList<CachedApprovalRow> DaemonCacheStore::approvals() const
     return rows;
 }
 
-bool DaemonCacheStore::upsertFsEntry(const CachedFsEntryRow& row)
-{
+bool DaemonCacheStore::upsertFsEntry(const CachedFsEntryRow& row) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral(
-        "INSERT INTO daemon_fs_entries(root_id,path,kind,size,mtime_ms,revision_cbor,updated_at_ms) "
+        "INSERT INTO "
+        "daemon_fs_entries(root_id,path,kind,size,mtime_ms,revision_cbor,updated_at_ms) "
         "VALUES(?,?,?,?,?,?,?) "
         "ON CONFLICT(root_id,path) DO UPDATE SET kind=excluded.kind,size=excluded.size,"
         "mtime_ms=excluded.mtime_ms,revision_cbor=excluded.revision_cbor,"
@@ -349,13 +327,11 @@ bool DaemonCacheStore::upsertFsEntry(const CachedFsEntryRow& row)
     return true;
 }
 
-QList<CachedFsEntryRow> DaemonCacheStore::fsEntries(const QString& rootId) const
-{
+QList<CachedFsEntryRow> DaemonCacheStore::fsEntries(const QString& rootId) const {
     QList<CachedFsEntryRow> rows;
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
-    q.prepare(QStringLiteral(
-        "SELECT root_id,path,kind,size,mtime_ms,revision_cbor,updated_at_ms "
-        "FROM daemon_fs_entries WHERE root_id=? ORDER BY path ASC"));
+    q.prepare(QStringLiteral("SELECT root_id,path,kind,size,mtime_ms,revision_cbor,updated_at_ms "
+                             "FROM daemon_fs_entries WHERE root_id=? ORDER BY path ASC"));
     q.addBindValue(rootId);
     if (!q.exec()) {
         setLastError(q.lastError().text());
@@ -375,14 +351,14 @@ QList<CachedFsEntryRow> DaemonCacheStore::fsEntries(const QString& rootId) const
     return rows;
 }
 
-bool DaemonCacheStore::upsertProfile(const CachedProfileRow& row)
-{
+bool DaemonCacheStore::upsertProfile(const CachedProfileRow& row) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral(
         "INSERT INTO daemon_profiles(profile_ref,display_name,spec_cbor,active,updated_at_ms) "
         "VALUES(?,?,?,?,?) "
         "ON CONFLICT(profile_ref) DO UPDATE SET display_name=excluded.display_name,"
-        "spec_cbor=excluded.spec_cbor,active=excluded.active,updated_at_ms=excluded.updated_at_ms"));
+        "spec_cbor=excluded.spec_cbor,active=excluded.active,updated_at_ms=excluded.updated_at_"
+        "ms"));
     q.addBindValue(row.profileRef);
     q.addBindValue(row.displayName);
     q.addBindValue(row.specCbor);
@@ -395,8 +371,7 @@ bool DaemonCacheStore::upsertProfile(const CachedProfileRow& row)
     return true;
 }
 
-QList<CachedProfileRow> DaemonCacheStore::profiles() const
-{
+QList<CachedProfileRow> DaemonCacheStore::profiles() const {
     QList<CachedProfileRow> rows;
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     if (!q.exec(QStringLiteral(

@@ -25,39 +25,39 @@ using domain::TransportId;
 
 namespace {
 
-QString scopeLabel(const OriginScope& s)
-{
+QString scopeLabel(const OriginScope& s) {
     switch (s.kind) {
-    case OriginScopeKind::Dm: return s.user;
-    case OriginScopeKind::Group: return s.chat;
-    case OriginScopeKind::Api: return QStringLiteral("key:") + s.apiKey;
-    case OriginScopeKind::Internal: return QStringLiteral("internal");
+    case OriginScopeKind::Dm:
+        return s.user;
+    case OriginScopeKind::Group:
+        return s.chat;
+    case OriginScopeKind::Api:
+        return QStringLiteral("key:") + s.apiKey;
+    case OriginScopeKind::Internal:
+        return QStringLiteral("internal");
     }
     return {};
 }
 
-QString sinkStr(SinkKind k)
-{
+QString sinkStr(SinkKind k) {
     return k == SinkKind::Primary ? QStringLiteral("primary") : QStringLiteral("spectator");
 }
 
 } // namespace
 
 RoutingManagerController::RoutingManagerController(QObject* parent)
-    : QObject(parent)
-    , m_routes(new uimodels::VariantListModel(this))
-    , m_accounts(new uimodels::VariantListModel(this))
-    , m_rules(new uimodels::VariantListModel(this))
-    , m_bindable(new uimodels::VariantListModel(this))
-    , m_sessions(new uimodels::VariantListModel(this))
-    , m_delivery(new uimodels::VariantListModel(this))
-{
+    : QObject(parent), m_routes(new uimodels::VariantListModel(this)),
+      m_accounts(new uimodels::VariantListModel(this)),
+      m_rules(new uimodels::VariantListModel(this)),
+      m_bindable(new uimodels::VariantListModel(this)),
+      m_sessions(new uimodels::VariantListModel(this)),
+      m_delivery(new uimodels::VariantListModel(this)) {}
+
+QObject* RoutingManagerController::daemonNet() const {
+    return m_net;
 }
 
-QObject* RoutingManagerController::daemonNet() const { return m_net; }
-
-void RoutingManagerController::setDaemonNet(QObject* net)
-{
+void RoutingManagerController::setDaemonNet(QObject* net) {
     auto* dn = qobject_cast<IDaemonNet*>(net);
     if (m_net == dn) {
         return;
@@ -73,15 +73,26 @@ void RoutingManagerController::setDaemonNet(QObject* net)
     rebuild();
 }
 
-QObject* RoutingManagerController::routes() const { return m_routes; }
-QObject* RoutingManagerController::accounts() const { return m_accounts; }
-QObject* RoutingManagerController::rules() const { return m_rules; }
-QObject* RoutingManagerController::bindable() const { return m_bindable; }
-QObject* RoutingManagerController::sessions() const { return m_sessions; }
-QObject* RoutingManagerController::delivery() const { return m_delivery; }
+QObject* RoutingManagerController::routes() const {
+    return m_routes;
+}
+QObject* RoutingManagerController::accounts() const {
+    return m_accounts;
+}
+QObject* RoutingManagerController::rules() const {
+    return m_rules;
+}
+QObject* RoutingManagerController::bindable() const {
+    return m_bindable;
+}
+QObject* RoutingManagerController::sessions() const {
+    return m_sessions;
+}
+QObject* RoutingManagerController::delivery() const {
+    return m_delivery;
+}
 
-void RoutingManagerController::setSelectedSession(const QString& session)
-{
+void RoutingManagerController::setSelectedSession(const QString& session) {
     if (m_selectedSession == session) {
         return;
     }
@@ -90,8 +101,7 @@ void RoutingManagerController::setSelectedSession(const QString& session)
     rebuildDelivery();
 }
 
-void RoutingManagerController::rebuild()
-{
+void RoutingManagerController::rebuild() {
     m_originByKey.clear();
     if (!m_net) {
         m_routes->setRows({});
@@ -114,8 +124,8 @@ void RoutingManagerController::rebuild()
         row[QStringLiteral("transport")] = p.origin.transport.toString();
         row[QStringLiteral("scope")] = scopeLabel(p.origin.scope);
         row[QStringLiteral("session")] = p.session.toString();
-        row[QStringLiteral("profile")]
-            = r.profile.isEmpty() ? p.profile.toString() : r.profile.toString();
+        row[QStringLiteral("profile")] =
+            r.profile.isEmpty() ? p.profile.toString() : r.profile.toString();
         row[QStringLiteral("decidedBy")] = daemonnet::decidedByStr(r.decidedBy);
         routeRows.append(row);
     }
@@ -176,8 +186,9 @@ void RoutingManagerController::rebuild()
         bindableRows.append(row);
     };
     for (const RoutingPin& p : m_net->routes()) {
-        addBindable(p.origin, p.origin.transport.toString() + QStringLiteral(" · ")
-                                  + scopeLabel(p.origin.scope),
+        addBindable(p.origin,
+                    p.origin.transport.toString() + QStringLiteral(" · ") +
+                        scopeLabel(p.origin.scope),
                     p.session.toString());
     }
     for (const TransportTreeRow& t : m_net->transportsTree()) {
@@ -199,13 +210,13 @@ void RoutingManagerController::rebuild()
     rebuildDelivery();
 }
 
-void RoutingManagerController::rebuildDelivery()
-{
+void RoutingManagerController::rebuildDelivery() {
     QList<QVariantMap> rows;
     if (m_net && !m_selectedSession.isEmpty()) {
         for (const DeliveryTarget& t : m_net->deliveryTargets(SessionId(m_selectedSession))) {
             QVariantMap row;
-            row[QStringLiteral("id")] = t.transport.toString() + QLatin1Char('/') + t.route.toString();
+            row[QStringLiteral("id")] =
+                t.transport.toString() + QLatin1Char('/') + t.route.toString();
             row[QStringLiteral("transport")] = t.transport.toString();
             row[QStringLiteral("route")] = t.route.toString();
             row[QStringLiteral("kind")] = sinkStr(t.kind);
@@ -216,16 +227,14 @@ void RoutingManagerController::rebuildDelivery()
 }
 
 void RoutingManagerController::pin(const QString& originKey, const QString& session,
-                                   const QString& profile)
-{
+                                   const QString& profile) {
     if (!m_net || !m_originByKey.contains(originKey)) {
         return;
     }
     m_net->bindChat(m_originByKey.value(originKey), SessionId(session), ProfileRef(profile));
 }
 
-void RoutingManagerController::unbind(const QString& originKey)
-{
+void RoutingManagerController::unbind(const QString& originKey) {
     if (!m_net || !m_originByKey.contains(originKey)) {
         return;
     }
@@ -233,8 +242,7 @@ void RoutingManagerController::unbind(const QString& originKey)
 }
 
 void RoutingManagerController::handoverTo(const QString& session, const QString& transport,
-                                          const QString& route)
-{
+                                          const QString& route) {
     if (!m_net) {
         return;
     }
@@ -245,16 +253,14 @@ void RoutingManagerController::handoverTo(const QString& session, const QString&
     m_net->handover(SessionId(session), t);
 }
 
-void RoutingManagerController::bindAccount(const QString& transport, const QString& profile)
-{
+void RoutingManagerController::bindAccount(const QString& transport, const QString& profile) {
     if (!m_net) {
         return;
     }
     m_net->bindAccount(TransportId(transport), ProfileRef(profile));
 }
 
-QVariantMap RoutingManagerController::explain(const QString& originKey) const
-{
+QVariantMap RoutingManagerController::explain(const QString& originKey) const {
     QVariantMap out;
     if (!m_net || !m_originByKey.contains(originKey)) {
         out[QStringLiteral("found")] = false;

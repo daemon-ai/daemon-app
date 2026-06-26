@@ -14,7 +14,6 @@
 #include <QHash>
 #include <QString>
 #include <QStringList>
-
 #include <Qt> // Qt::Key, Qt::KeyboardModifiers
 
 namespace lineedit {
@@ -58,7 +57,10 @@ public:
     // Advance to the next ring entry (yank-pop) and return it.
     QString rotate();
 
-    void setYankSpan(int pos, int len) { m_yankPos = pos; m_yankLen = len; }
+    void setYankSpan(int pos, int len) {
+        m_yankPos = pos;
+        m_yankLen = len;
+    }
     [[nodiscard]] int yankPos() const { return m_yankPos; }
     [[nodiscard]] int yankLen() const { return m_yankLen; }
 

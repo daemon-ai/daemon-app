@@ -4,23 +4,20 @@
 // styled rows: structural glyphs/titles are present, the persisted fences/JSON are
 // gone, and ANSI/diff spans carry the right semantic colors.
 
+#include "core/block_record.h"
+#include "core/document_store.h"
 #include "transcript_render.h"
 #include "tui_palette.h"
 
-#include "core/block_record.h"
-#include "core/document_store.h"
-
-#include <Tui/ZColor.h>
-
 #include <QtTest>
+#include <Tui/ZColor.h>
 
 namespace {
 
 // Sample assistant turn: a user message, then an assistant message with a
 // reasoning block, an ANSI tool, and a diff tool. \u001b is a literal JSON escape
 // (QJsonDocument decodes it to ESC) so the raw string stays portable.
-QString sampleMarkdown()
-{
+QString sampleMarkdown() {
     return QStringLiteral(R"md(```msg
 {"id":"u1","role":"user"}
 ```
@@ -48,8 +45,7 @@ Build it please.
 // An interactive turn: a dangerous tool awaiting approval and a multi-question
 // clarify (single-select, multi-select, freeform) - the shapes the inline
 // controls must surface.
-QString interactiveMarkdown()
-{
+QString interactiveMarkdown() {
     return QStringLiteral(R"md(```msg
 {"id":"m1","role":"assistant"}
 ```
@@ -64,12 +60,11 @@ QString interactiveMarkdown()
 )md");
 }
 
-QString flatten(const QVector<RenderLine> &lines)
-{
+QString flatten(const QVector<RenderLine>& lines) {
     QStringList rows;
-    for (const RenderLine &line : lines) {
+    for (const RenderLine& line : lines) {
         QString row;
-        for (const Span &s : line) {
+        for (const Span& s : line) {
             row += s.text;
         }
         rows << row;
@@ -79,10 +74,9 @@ QString flatten(const QVector<RenderLine> &lines)
 
 // True when some span whose text contains `needle` also satisfies `pred`.
 template <typename Pred>
-bool anySpan(const QVector<RenderLine> &lines, const QString &needle, Pred pred)
-{
-    for (const RenderLine &line : lines) {
-        for (const Span &s : line) {
+bool anySpan(const QVector<RenderLine>& lines, const QString& needle, Pred pred) {
+    for (const RenderLine& line : lines) {
+        for (const Span& s : line) {
             if (s.text.contains(needle) && pred(s)) {
                 return true;
             }
@@ -109,8 +103,7 @@ private slots:
     void blockLineMapsAddressEveryRow();
 };
 
-void TranscriptRenderTests::rendersStructureNotFences()
-{
+void TranscriptRenderTests::rendersStructureNotFences() {
     be::DocumentStore doc;
     doc.loadMarkdown(sampleMarkdown());
     const QVector<RenderLine> lines = TranscriptLayout::build(doc, 80).lines;
@@ -126,8 +119,7 @@ void TranscriptRenderTests::rendersStructureNotFences()
     QVERIFY(text.contains(QStringLiteral("Build it please.")));
 }
 
-void TranscriptRenderTests::messageHeaders()
-{
+void TranscriptRenderTests::messageHeaders() {
     be::DocumentStore doc;
     doc.loadMarkdown(sampleMarkdown());
     const QString text = flatten(TranscriptLayout::build(doc, 80).lines);
@@ -139,8 +131,7 @@ void TranscriptRenderTests::messageHeaders()
     QVERIFY(text.contains(QStringLiteral("Reasoning")));
 }
 
-void TranscriptRenderTests::toolHeaderGlyphsAndTitles()
-{
+void TranscriptRenderTests::toolHeaderGlyphsAndTitles() {
     be::DocumentStore doc;
     doc.loadMarkdown(sampleMarkdown());
     const QVector<RenderLine> lines = TranscriptLayout::build(doc, 80).lines;
@@ -158,11 +149,10 @@ void TranscriptRenderTests::toolHeaderGlyphsAndTitles()
 
     // The ok status glyph is painted in the ok (green) color.
     QVERIFY(anySpan(lines, tpal::statusGlyph(QStringLiteral("ok")),
-                    [](const Span &s) { return s.fg == tpal::statusOk(); }));
+                    [](const Span& s) { return s.fg == tpal::statusOk(); }));
 }
 
-void TranscriptRenderTests::ansiOutputCarriesColor()
-{
+void TranscriptRenderTests::ansiOutputCarriesColor() {
     be::DocumentStore doc;
     doc.loadMarkdown(sampleMarkdown());
     const QVector<RenderLine> lines = TranscriptLayout::build(doc, 80).lines;
@@ -170,27 +160,24 @@ void TranscriptRenderTests::ansiOutputCarriesColor()
     // The ANSI \u001b[32m run colors "PASS" with ANSI green (index 2); the reset
     // returns " ok" to the default foreground.
     QVERIFY(anySpan(lines, QStringLiteral("PASS"),
-                    [](const Span &s) { return s.fg == tpal::ansi(2); }));
-    QVERIFY(anySpan(lines, QStringLiteral("ok"),
-                    [](const Span &s) { return s.fg == tpal::fg(); }));
+                    [](const Span& s) { return s.fg == tpal::ansi(2); }));
+    QVERIFY(anySpan(lines, QStringLiteral("ok"), [](const Span& s) { return s.fg == tpal::fg(); }));
 }
 
-void TranscriptRenderTests::diffLinesCarryColor()
-{
+void TranscriptRenderTests::diffLinesCarryColor() {
     be::DocumentStore doc;
     doc.loadMarkdown(sampleMarkdown());
     const QVector<RenderLine> lines = TranscriptLayout::build(doc, 80).lines;
 
     QVERIFY(anySpan(lines, QStringLiteral("+new"),
-                    [](const Span &s) { return s.fg == tpal::diffAdd(); }));
+                    [](const Span& s) { return s.fg == tpal::diffAdd(); }));
     QVERIFY(anySpan(lines, QStringLiteral("-old"),
-                    [](const Span &s) { return s.fg == tpal::diffDel(); }));
+                    [](const Span& s) { return s.fg == tpal::diffDel(); }));
     QVERIFY(anySpan(lines, QStringLiteral("@@"),
-                    [](const Span &s) { return s.fg == tpal::diffHunk(); }));
+                    [](const Span& s) { return s.fg == tpal::diffHunk(); }));
 }
 
-void TranscriptRenderTests::approvalEmitsButtonControls()
-{
+void TranscriptRenderTests::approvalEmitsButtonControls() {
     be::DocumentStore doc;
     doc.loadMarkdown(interactiveMarkdown());
     const LayoutResult res = TranscriptLayout::build(doc, 80);
@@ -203,7 +190,7 @@ void TranscriptRenderTests::approvalEmitsButtonControls()
     QVERIFY(text.contains(QStringLiteral("Allow permanently")));
 
     int approve = 0, deny = 0, permanent = 0;
-    for (const Control &c : res.controls) {
+    for (const Control& c : res.controls) {
         if (c.kind == Control::Kind::Approve) {
             ++approve;
             QCOMPARE(c.callId, QStringLiteral("c8"));
@@ -218,14 +205,13 @@ void TranscriptRenderTests::approvalEmitsButtonControls()
     QCOMPARE(permanent, 1);
 }
 
-void TranscriptRenderTests::clarifyEmitsChoiceAndFreeformControls()
-{
+void TranscriptRenderTests::clarifyEmitsChoiceAndFreeformControls() {
     be::DocumentStore doc;
     doc.loadMarkdown(interactiveMarkdown());
     const LayoutResult res = TranscriptLayout::build(doc, 80);
 
     int radios = 0, checkboxes = 0, freeform = 0, submit = 0;
-    for (const Control &c : res.controls) {
+    for (const Control& c : res.controls) {
         if (c.kind == Control::Kind::Choice) {
             (c.multi ? checkboxes : radios) += 1;
             QCOMPARE(c.callId, QStringLiteral("c7"));
@@ -249,15 +235,14 @@ void TranscriptRenderTests::clarifyEmitsChoiceAndFreeformControls()
     QVERIFY(text.contains(QStringLiteral("Submit")));
 }
 
-void TranscriptRenderTests::clarifyDraftReflectsSelection()
-{
+void TranscriptRenderTests::clarifyDraftReflectsSelection() {
     be::DocumentStore doc;
     doc.loadMarkdown(interactiveMarkdown());
 
     // A draft that picks PostgreSQL (radio) and Schema (checkbox) and types a note.
     AnswerDraft draft;
-    draft.selected.insert(QStringLiteral("db"), { QStringLiteral("PostgreSQL") });
-    draft.selected.insert(QStringLiteral("scope"), { QStringLiteral("Schema") });
+    draft.selected.insert(QStringLiteral("db"), {QStringLiteral("PostgreSQL")});
+    draft.selected.insert(QStringLiteral("scope"), {QStringLiteral("Schema")});
     draft.freeform.insert(QStringLiteral("notes"), QStringLiteral("be careful"));
     const QString text = flatten(TranscriptLayout::build(doc, 80, draft).lines);
 
@@ -269,7 +254,7 @@ void TranscriptRenderTests::clarifyDraftReflectsSelection()
 
     // The collected answers map matches the canonical clarify contract.
     QVariantMap meta;
-    for (const be::BlockRecord &b : doc.blocks()) {
+    for (const be::BlockRecord& b : doc.blocks()) {
         if (b.metadata.value(QStringLiteral("callId")).toString() == QStringLiteral("c7")) {
             meta = b.metadata;
         }
@@ -277,12 +262,11 @@ void TranscriptRenderTests::clarifyDraftReflectsSelection()
     const QVariantMap answers = collectClarifyAnswers(meta, draft);
     QCOMPARE(answers.value(QStringLiteral("db")).toString(), QStringLiteral("PostgreSQL"));
     QCOMPARE(answers.value(QStringLiteral("scope")).toStringList(),
-             QStringList { QStringLiteral("Schema") });
+             QStringList{QStringLiteral("Schema")});
     QCOMPARE(answers.value(QStringLiteral("notes")).toString(), QStringLiteral("be careful"));
 }
 
-void TranscriptRenderTests::multiParagraphMessageKeepsBlankLines()
-{
+void TranscriptRenderTests::multiParagraphMessageKeepsBlankLines() {
     // A multiline composer message with an intentional blank line lands as two
     // markdown paragraphs sharing one message id. They must render with a blank
     // row between them (mirroring the GUI's paragraph margins) - a single newline
@@ -296,7 +280,8 @@ first paragraph
 
 second paragraph
 )md"));
-    const QStringList rows = flatten(TranscriptLayout::build(doc, 80).lines).split(QLatin1Char('\n'));
+    const QStringList rows =
+        flatten(TranscriptLayout::build(doc, 80).lines).split(QLatin1Char('\n'));
 
     int firstIdx = -1, secondIdx = -1;
     for (int i = 0; i < rows.size(); ++i) {
@@ -313,8 +298,7 @@ second paragraph
     QVERIFY(rows.at(firstIdx + 1).trimmed().isEmpty());
 }
 
-void TranscriptRenderTests::blockLineMapsAddressEveryRow()
-{
+void TranscriptRenderTests::blockLineMapsAddressEveryRow() {
     be::DocumentStore doc;
     doc.loadMarkdown(sampleMarkdown());
     const LayoutResult res = TranscriptLayout::build(doc, 80);
@@ -355,7 +339,7 @@ void TranscriptRenderTests::blockLineMapsAddressEveryRow()
     const int proseLine = res.blockFirstLine.at(proseBlock);
     QVERIFY(proseLine >= 0);
     QString rowText;
-    for (const Span &s : res.lines.at(proseLine)) {
+    for (const Span& s : res.lines.at(proseLine)) {
         rowText += s.text;
     }
     QVERIFY(rowText.contains(QStringLiteral("Build it please.")));

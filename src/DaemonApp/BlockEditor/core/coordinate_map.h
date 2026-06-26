@@ -11,13 +11,12 @@ struct LineColumn {
     qsizetype column = 0;
 };
 
-class CoordinateMap
-{
+class CoordinateMap {
 public:
-    void rebuild(const QByteArray &utf8);
-    void rebuild(const QString &text);
+    void rebuild(const QByteArray& utf8);
+    void rebuild(const QString& text);
 
-    const QString &text() const;
+    const QString& text() const;
     qsizetype utf16Length() const;
     qsizetype utf8Length() const;
     qsizetype lineCount() const;

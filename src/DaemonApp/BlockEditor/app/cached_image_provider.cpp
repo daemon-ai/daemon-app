@@ -11,13 +11,11 @@ namespace {
 
 // One in-flight request. Created on the QQuickPixmap reader thread (which runs an
 // event loop), so the queued ImageCache::ready signal is delivered here safely.
-class CachedImageResponse : public QQuickImageResponse
-{
+class CachedImageResponse : public QQuickImageResponse {
 public:
-    CachedImageResponse(const QString &id, const QSize &requestedSize)
-        : m_url(QUrl::fromPercentEncoding(id.toUtf8()))
-    {
-        ImageCache *cache = ImageCache::instance();
+    CachedImageResponse(const QString& id, const QSize& requestedSize)
+        : m_url(QUrl::fromPercentEncoding(id.toUtf8())) {
+        ImageCache* cache = ImageCache::instance();
 
         if (cache->tryGet(m_url, m_image)) {
             emit finished();
@@ -32,26 +30,20 @@ public:
             return;
         }
 
-        QMetaObject::invokeMethod(cache,
-                                  "request",
-                                  Qt::QueuedConnection,
-                                  Q_ARG(QUrl, m_url),
+        QMetaObject::invokeMethod(cache, "request", Qt::QueuedConnection, Q_ARG(QUrl, m_url),
                                   Q_ARG(QSize, requestedSize));
     }
 
-    QQuickTextureFactory *textureFactory() const override
-    {
+    QQuickTextureFactory* textureFactory() const override {
         return QQuickTextureFactory::textureFactoryForImage(m_image);
     }
 
-    QString errorString() const override
-    {
+    QString errorString() const override {
         return m_image.isNull() ? QStringLiteral("image load failed") : QString();
     }
 
 private:
-    void onReady(const QUrl &url)
-    {
+    void onReady(const QUrl& url) {
         if (url != m_url || m_done) {
             return;
         }
@@ -67,9 +59,8 @@ private:
 
 } // namespace
 
-QQuickImageResponse *CachedImageProvider::requestImageResponse(const QString &id,
-                                                               const QSize &requestedSize)
-{
+QQuickImageResponse* CachedImageProvider::requestImageResponse(const QString& id,
+                                                               const QSize& requestedSize) {
     return new CachedImageResponse(id, requestedSize);
 }
 

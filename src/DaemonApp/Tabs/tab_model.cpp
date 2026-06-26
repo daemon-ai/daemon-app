@@ -2,24 +2,21 @@
 
 TabModel::TabModel(QObject* parent) : QAbstractListModel(parent) {}
 
-void TabModel::setCurrentIndex(int index)
-{
+void TabModel::setCurrentIndex(int index) {
     if (index < 0 || index >= m_tabs.size() || index == m_currentIndex) {
         return;
     }
     setCurrentInternal(index);
 }
 
-int TabModel::rowCount(const QModelIndex& parent) const
-{
+int TabModel::rowCount(const QModelIndex& parent) const {
     if (parent.isValid()) {
         return 0;
     }
     return static_cast<int>(m_tabs.size());
 }
 
-QVariant TabModel::data(const QModelIndex& index, int role) const
-{
+QVariant TabModel::data(const QModelIndex& index, int role) const {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_tabs.size()) {
         return {};
     }
@@ -53,25 +50,16 @@ QVariant TabModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> TabModel::roleNames() const
-{
+QHash<int, QByteArray> TabModel::roleNames() const {
     return {
-        { TabIdRole, "tabId" },
-        { KindRole, "kind" },
-        { TitleRole, "title" },
-        { SessionIdRole, "sessionId" },
-        { ClosableRole, "closable" },
-        { CurrentRole, "current" },
-        { PreviewRole, "preview" },
-        { FilePathRole, "filePath" },
-        { FileRootRole, "fileRoot" },
-        { DirtyRole, "dirty" },
-        { ProfileRole, "profile" },
+        {TabIdRole, "tabId"},         {KindRole, "kind"},         {TitleRole, "title"},
+        {SessionIdRole, "sessionId"}, {ClosableRole, "closable"}, {CurrentRole, "current"},
+        {PreviewRole, "preview"},     {FilePathRole, "filePath"}, {FileRootRole, "fileRoot"},
+        {DirtyRole, "dirty"},         {ProfileRole, "profile"},
     };
 }
 
-int TabModel::openTranscript(const QString& sessionId, const QString& title)
-{
+int TabModel::openTranscript(const QString& sessionId, const QString& title) {
     const int existing = findTranscriptRow(sessionId);
     if (existing >= 0) {
         // Reuse the open tab; refresh its title if the caller supplies a new one,
@@ -110,13 +98,11 @@ int TabModel::openTranscript(const QString& sessionId, const QString& title)
     return tab.id;
 }
 
-int TabModel::openTranscriptPinned(const QString& sessionId, const QString& title)
-{
+int TabModel::openTranscriptPinned(const QString& sessionId, const QString& title) {
     return openTranscript(sessionId, title);
 }
 
-int TabModel::previewTranscript(const QString& sessionId, const QString& title)
-{
+int TabModel::previewTranscript(const QString& sessionId, const QString& title) {
     // Already open anywhere: just activate it (do not change its pinned state).
     const int existing = findTranscriptRow(sessionId);
     if (existing >= 0) {
@@ -137,8 +123,8 @@ int TabModel::previewTranscript(const QString& sessionId, const QString& title)
         tab.title = title.isEmpty() ? QStringLiteral("Session") : title;
         const QModelIndex idx = index(previewRow, 0);
         emit dataChanged(idx, idx,
-                         { KindRole, TitleRole, Qt::DisplayRole, SessionIdRole, FilePathRole,
-                           FileRootRole, DirtyRole });
+                         {KindRole, TitleRole, Qt::DisplayRole, SessionIdRole, FilePathRole,
+                          FileRootRole, DirtyRole});
         if (kindChanged)
             emit tabKindChanged(tab.id);
         emit tabSessionChanged(tab.id, sessionId);
@@ -169,28 +155,24 @@ int TabModel::previewTranscript(const QString& sessionId, const QString& title)
     return tab.id;
 }
 
-void TabModel::pinTab(int index)
-{
+void TabModel::pinTab(int index) {
     if (index < 0 || index >= m_tabs.size() || !m_tabs.at(index).preview) {
         return;
     }
     m_tabs[index].preview = false;
     const QModelIndex idx = this->index(index, 0);
-    emit dataChanged(idx, idx, { PreviewRole });
+    emit dataChanged(idx, idx, {PreviewRole});
 }
 
-void TabModel::pinTabById(int tabId)
-{
+void TabModel::pinTabById(int tabId) {
     pinTab(indexOfTabId(tabId));
 }
 
-void TabModel::pinCurrent()
-{
+void TabModel::pinCurrent() {
     pinTab(m_currentIndex);
 }
 
-int TabModel::openPage(int kind, const QString& title)
-{
+int TabModel::openPage(int kind, const QString& title) {
     const int existing = findPageRow(kind);
     if (existing >= 0) {
         activate(existing);
@@ -213,14 +195,13 @@ int TabModel::openPage(int kind, const QString& title)
     return tab.id;
 }
 
-int TabModel::openAgentTab(int kind, const QString& profile, const QString& title)
-{
+int TabModel::openAgentTab(int kind, const QString& profile, const QString& title) {
     const int existing = findAgentRow(kind, profile);
     if (existing >= 0) {
         if (!title.isEmpty() && m_tabs.at(existing).title != title) {
             m_tabs[existing].title = title;
             const QModelIndex idx = index(existing, 0);
-            emit dataChanged(idx, idx, { TitleRole, Qt::DisplayRole });
+            emit dataChanged(idx, idx, {TitleRole, Qt::DisplayRole});
         }
         activate(existing);
         return m_tabs.at(existing).id;
@@ -243,13 +224,11 @@ int TabModel::openAgentTab(int kind, const QString& profile, const QString& titl
     return tab.id;
 }
 
-QString TabModel::agentRefAt(int index) const
-{
+QString TabModel::agentRefAt(int index) const {
     return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).profile : QString();
 }
 
-int TabModel::previewFile(const QString& rootId, const QString& path, const QString& title)
-{
+int TabModel::previewFile(const QString& rootId, const QString& path, const QString& title) {
     const QString label = title.isEmpty() ? path.section(QLatin1Char('/'), -1) : title;
 
     const int existing = findFileRow(rootId, path);
@@ -272,8 +251,8 @@ int TabModel::previewFile(const QString& rootId, const QString& path, const QStr
         tab.dirty = false;
         const QModelIndex idx = index(previewRow, 0);
         emit dataChanged(idx, idx,
-                         { KindRole, TitleRole, Qt::DisplayRole, SessionIdRole, FilePathRole,
-                           FileRootRole, DirtyRole });
+                         {KindRole, TitleRole, Qt::DisplayRole, SessionIdRole, FilePathRole,
+                          FileRootRole, DirtyRole});
         if (kindChanged)
             emit tabKindChanged(tab.id);
         emit tabFileChanged(tab.id, rootId, path);
@@ -300,14 +279,13 @@ int TabModel::previewFile(const QString& rootId, const QString& path, const QStr
     return tab.id;
 }
 
-int TabModel::openFilePinned(const QString& rootId, const QString& path, const QString& title)
-{
+int TabModel::openFilePinned(const QString& rootId, const QString& path, const QString& title) {
     const int existing = findFileRow(rootId, path);
     if (existing >= 0) {
         if (m_tabs.at(existing).preview) {
             m_tabs[existing].preview = false;
             const QModelIndex idx = index(existing, 0);
-            emit dataChanged(idx, idx, { PreviewRole });
+            emit dataChanged(idx, idx, {PreviewRole});
         }
         activate(existing);
         return m_tabs.at(existing).id;
@@ -317,28 +295,24 @@ int TabModel::openFilePinned(const QString& rootId, const QString& path, const Q
     return id;
 }
 
-void TabModel::setDirtyById(int tabId, bool dirty)
-{
+void TabModel::setDirtyById(int tabId, bool dirty) {
     const int row = indexOfTabId(tabId);
     if (row < 0 || m_tabs.at(row).dirty == dirty)
         return;
     m_tabs[row].dirty = dirty;
     const QModelIndex idx = index(row, 0);
-    emit dataChanged(idx, idx, { DirtyRole });
+    emit dataChanged(idx, idx, {DirtyRole});
 }
 
-QString TabModel::filePathAt(int index) const
-{
+QString TabModel::filePathAt(int index) const {
     return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).path : QString();
 }
 
-QString TabModel::fileRootAt(int index) const
-{
+QString TabModel::fileRootAt(int index) const {
     return (index >= 0 && index < m_tabs.size()) ? m_tabs.at(index).rootId : QString();
 }
 
-void TabModel::closeTab(int index)
-{
+void TabModel::closeTab(int index) {
     if (index < 0 || index >= m_tabs.size() || !m_tabs.at(index).closable) {
         return;
     }
@@ -378,21 +352,18 @@ void TabModel::closeTab(int index)
     setCurrentInternal(next);
 }
 
-void TabModel::closeTabById(int tabId)
-{
+void TabModel::closeTabById(int tabId) {
     closeTab(indexOfTabId(tabId));
 }
 
-void TabModel::activate(int index)
-{
+void TabModel::activate(int index) {
     if (index < 0 || index >= m_tabs.size() || index == m_currentIndex) {
         return;
     }
     setCurrentInternal(index);
 }
 
-void TabModel::cycle(int delta)
-{
+void TabModel::cycle(int delta) {
     if (m_tabs.isEmpty() || delta == 0) {
         return;
     }
@@ -403,8 +374,7 @@ void TabModel::cycle(int delta)
     }
 }
 
-void TabModel::moveTab(int from, int to)
-{
+void TabModel::moveTab(int from, int to) {
     if (from < 0 || from >= m_tabs.size() || to < 0 || to >= m_tabs.size() || from == to) {
         return;
     }
@@ -429,58 +399,51 @@ void TabModel::moveTab(int from, int to)
     }
 }
 
-void TabModel::setTitle(int index, const QString& title)
-{
+void TabModel::setTitle(int index, const QString& title) {
     if (index < 0 || index >= m_tabs.size() || m_tabs.at(index).title == title) {
         return;
     }
     m_tabs[index].title = title;
     const QModelIndex idx = this->index(index, 0);
-    emit dataChanged(idx, idx, { TitleRole, Qt::DisplayRole });
+    emit dataChanged(idx, idx, {TitleRole, Qt::DisplayRole});
 }
 
-int TabModel::tabIdAt(int index) const
-{
+int TabModel::tabIdAt(int index) const {
     if (index < 0 || index >= m_tabs.size()) {
         return -1;
     }
     return m_tabs.at(index).id;
 }
 
-int TabModel::kindAt(int index) const
-{
+int TabModel::kindAt(int index) const {
     if (index < 0 || index >= m_tabs.size()) {
         return -1;
     }
     return m_tabs.at(index).kind;
 }
 
-QString TabModel::sessionIdAt(int index) const
-{
+QString TabModel::sessionIdAt(int index) const {
     if (index < 0 || index >= m_tabs.size()) {
         return {};
     }
     return m_tabs.at(index).sessionId;
 }
 
-QString TabModel::titleAt(int index) const
-{
+QString TabModel::titleAt(int index) const {
     if (index < 0 || index >= m_tabs.size()) {
         return {};
     }
     return m_tabs.at(index).title;
 }
 
-bool TabModel::isPreviewAt(int index) const
-{
+bool TabModel::isPreviewAt(int index) const {
     if (index < 0 || index >= m_tabs.size()) {
         return false;
     }
     return m_tabs.at(index).preview;
 }
 
-int TabModel::indexOfTabId(int tabId) const
-{
+int TabModel::indexOfTabId(int tabId) const {
     for (int i = 0; i < m_tabs.size(); ++i) {
         if (m_tabs.at(i).id == tabId) {
             return i;
@@ -489,24 +452,21 @@ int TabModel::indexOfTabId(int tabId) const
     return -1;
 }
 
-void TabModel::setCurrentInternal(int index)
-{
+void TabModel::setCurrentInternal(int index) {
     m_currentIndex = index;
     emit currentIndexChanged();
     emit currentTabChanged(m_tabs.at(index).id);
     emitCurrentChanged();
 }
 
-void TabModel::emitCurrentChanged()
-{
+void TabModel::emitCurrentChanged() {
     if (m_tabs.isEmpty()) {
         return;
     }
-    emit dataChanged(index(0, 0), index(static_cast<int>(m_tabs.size()) - 1, 0), { CurrentRole });
+    emit dataChanged(index(0, 0), index(static_cast<int>(m_tabs.size()) - 1, 0), {CurrentRole});
 }
 
-int TabModel::findTranscriptRow(const QString& sessionId) const
-{
+int TabModel::findTranscriptRow(const QString& sessionId) const {
     if (sessionId.isEmpty()) {
         return -1;
     }
@@ -519,8 +479,7 @@ int TabModel::findTranscriptRow(const QString& sessionId) const
     return -1;
 }
 
-int TabModel::findPageRow(int kind) const
-{
+int TabModel::findPageRow(int kind) const {
     for (int i = 0; i < m_tabs.size(); ++i) {
         if (m_tabs.at(i).kind == kind) {
             return i;
@@ -529,8 +488,7 @@ int TabModel::findPageRow(int kind) const
     return -1;
 }
 
-int TabModel::findPreviewRow() const
-{
+int TabModel::findPreviewRow() const {
     for (int i = 0; i < m_tabs.size(); ++i) {
         if (m_tabs.at(i).preview && !m_tabs.at(i).dirty) {
             return i;
@@ -539,8 +497,7 @@ int TabModel::findPreviewRow() const
     return -1;
 }
 
-int TabModel::findFileRow(const QString& rootId, const QString& path) const
-{
+int TabModel::findFileRow(const QString& rootId, const QString& path) const {
     for (int i = 0; i < m_tabs.size(); ++i) {
         const Tab& tab = m_tabs.at(i);
         if (tab.kind == File && tab.rootId == rootId && tab.path == path) {
@@ -550,8 +507,7 @@ int TabModel::findFileRow(const QString& rootId, const QString& path) const
     return -1;
 }
 
-int TabModel::findAgentRow(int kind, const QString& profile) const
-{
+int TabModel::findAgentRow(int kind, const QString& profile) const {
     for (int i = 0; i < m_tabs.size(); ++i) {
         const Tab& tab = m_tabs.at(i);
         if (tab.kind == kind && tab.profile == profile) {

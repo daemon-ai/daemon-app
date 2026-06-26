@@ -18,8 +18,7 @@ class TabsTestSetup : public QObject {
     Q_OBJECT
 
 public slots:
-    void qmlEngineAvailable(QQmlEngine* engine)
-    {
+    void qmlEngineAvailable(QQmlEngine* engine) {
 #ifdef TEST_QML_IMPORT_PATH
         const QString paths = QStringLiteral(TEST_QML_IMPORT_PATH);
         const auto parts = paths.split(QLatin1Char(':'), Qt::SkipEmptyParts);

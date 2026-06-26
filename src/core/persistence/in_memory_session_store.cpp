@@ -3,10 +3,9 @@
 #include "daemonnet/idaemonnet.h"
 #include "daemonnet/seed_transcripts.h"
 
+#include <algorithm>
 #include <QDateTime>
 #include <QUuid>
-
-#include <algorithm>
 
 namespace persistence {
 
@@ -22,8 +21,7 @@ using domain::UnitKind;
 using domain::UnitNode;
 using domain::UnitState;
 
-void InMemorySessionStore::applyUnitMeta(UnitNode& n)
-{
+void InMemorySessionStore::applyUnitMeta(UnitNode& n) {
     // UnitId == SessionId on the durable path.
     n.session = SessionId(n.id.toString());
 
@@ -44,38 +42,31 @@ void InMemorySessionStore::applyUnitMeta(UnitNode& n)
         return;
     }
     static const QHash<QString, QString> kUnitProfiles = {
-        { QStringLiteral("n-scratch"), QStringLiteral("prof-1") },
-        { QStringLiteral("n-acme"), QStringLiteral("prof-1") },
-        { QStringLiteral("n-build"), QStringLiteral("prof-1") },
-        { QStringLiteral("n-coder"), QStringLiteral("prof-2") },
-        { QStringLiteral("n-worker"), QStringLiteral("prof-2") },
-        { QStringLiteral("n-review"), QStringLiteral("prof-3") },
-        { QStringLiteral("n-deep"), QStringLiteral("prof-3") },
+        {QStringLiteral("n-scratch"), QStringLiteral("prof-1")},
+        {QStringLiteral("n-acme"), QStringLiteral("prof-1")},
+        {QStringLiteral("n-build"), QStringLiteral("prof-1")},
+        {QStringLiteral("n-coder"), QStringLiteral("prof-2")},
+        {QStringLiteral("n-worker"), QStringLiteral("prof-2")},
+        {QStringLiteral("n-review"), QStringLiteral("prof-3")},
+        {QStringLiteral("n-deep"), QStringLiteral("prof-3")},
     };
     n.profile = ProfileRef(kUnitProfiles.value(n.id.toString(), QStringLiteral("prof-1")));
 }
 
-InMemorySessionStore::InMemorySessionStore(QObject* parent)
-    : InMemorySessionStore(parent, true)
-{
-}
+InMemorySessionStore::InMemorySessionStore(QObject* parent) : InMemorySessionStore(parent, true) {}
 
-InMemorySessionStore::InMemorySessionStore(QObject* parent, bool seed)
-    : ISessionStore(parent)
-{
+InMemorySessionStore::InMemorySessionStore(QObject* parent, bool seed) : ISessionStore(parent) {
     if (seed) {
         seedSampleData();
     }
 }
 
 InMemorySessionStore::InMemorySessionStore(daemonnet::IDaemonNet* net, QObject* parent)
-    : ISessionStore(parent)
-{
+    : ISessionStore(parent) {
     seedFromDaemonNet(net);
 }
 
-void InMemorySessionStore::seedFromDaemonNet(daemonnet::IDaemonNet* net)
-{
+void InMemorySessionStore::seedFromDaemonNet(daemonnet::IDaemonNet* net) {
     if (net == nullptr) {
         return;
     }
@@ -83,9 +74,9 @@ void InMemorySessionStore::seedFromDaemonNet(daemonnet::IDaemonNet* net)
     m_units = bundle.units;
     m_tags = bundle.tags;
     m_participants = bundle.participants;
-    // Copy the sessions, assigning each a stable local int handle (deterministic order) while keeping
-    // its authoritative string sessionId. The int handle is transitional (the pipeline migrates to
-    // SessionId in P3).
+    // Copy the sessions, assigning each a stable local int handle (deterministic order) while
+    // keeping its authoritative string sessionId. The int handle is transitional (the pipeline
+    // migrates to SessionId in P3).
     m_sessions.clear();
     m_sessions.reserve(bundle.sessions.size());
     int nextId = 1;
@@ -101,8 +92,7 @@ void InMemorySessionStore::seedFromDaemonNet(daemonnet::IDaemonNet* net)
     m_nextTagId = maxTag + 1;
 }
 
-void InMemorySessionStore::seedSampleData()
-{
+void InMemorySessionStore::seedSampleData() {
     // A fleet-of-fleets that deliberately exercises the recursion:
     //  - "scratchpad" is a LONE root unit (a tree of one, no children).
     //  - "Acme Platform" is a deep root: Orchestrator -> Orchestrator ("Build
@@ -144,8 +134,8 @@ void InMemorySessionStore::seedSampleData()
     }
 
     m_tags = {
-        { 1, QStringLiteral("ideas"), QStringLiteral("#2383e2") },
-        { 2, QStringLiteral("todo"), QStringLiteral("#e2a423") },
+        {1, QStringLiteral("ideas"), QStringLiteral("#2383e2")},
+        {2, QStringLiteral("todo"), QStringLiteral("#e2a423")},
     };
     m_nextTagId = 3; // next id after the seeded tags
 
@@ -165,19 +155,19 @@ void InMemorySessionStore::seedSampleData()
         m_sessions.push_back(c);
     };
 
-    make(QStringLiteral("n-scratch"), { 1 }, false, QStringLiteral("Scratch ideas"),
+    make(QStringLiteral("n-scratch"), {1}, false, QStringLiteral("Scratch ideas"),
          QStringLiteral("# Scratchpad\n\nA lone unit with **no fleet** behind it:\n\n"
                         "- One root, one session\n- Still the same surface\n"));
     // An orchestrator's own reasoning transcript (a parent unit owns a session too).
     make(QStringLiteral("n-acme"), {}, false, QStringLiteral("Release planning"),
          QStringLiteral("## Release planning\n\nClassify, gate, and route the incoming work.\n"));
-    make(QStringLiteral("n-build"), { 2 }, false, QStringLiteral("Dispatch log"),
+    make(QStringLiteral("n-build"), {2}, false, QStringLiteral("Dispatch log"),
          QStringLiteral("Spawned Coder and Reviewer; admitted within budget.\n"));
-    make(QStringLiteral("n-coder"), { 2 }, false, QStringLiteral("Implement endpoint"),
+    make(QStringLiteral("n-coder"), {2}, false, QStringLiteral("Implement endpoint"),
          QStringLiteral("Working the `/tree` endpoint.\n\n> Stream UnitNode children.\n"));
     make(QStringLiteral("n-coder"), {}, false, QStringLiteral("Refactor pass"),
          QStringLiteral("Tidy the projection before review.\n"));
-    make(QStringLiteral("n-review"), { 1 }, true, QStringLiteral("Old review notes"),
+    make(QStringLiteral("n-review"), {1}, true, QStringLiteral("Old review notes"),
          QStringLiteral("Archived notes from an earlier review session.\n"));
     make(QStringLiteral("n-worker"), {}, false, QStringLiteral("Verification run"),
          QStringLiteral("Read-only checker over the worktree.\n"));
@@ -185,16 +175,15 @@ void InMemorySessionStore::seedSampleData()
     // A demo transcript exercising every Phase 1 agent block (reasoning, tool
     // calls with each detail kind, a standalone content stream) for visual
     // inspection. Each block is its canonical fenced form.
-    make(QStringLiteral("n-coder"), { 1 }, false, QStringLiteral("Agent blocks demo"),
+    make(QStringLiteral("n-coder"), {1}, false, QStringLiteral("Agent blocks demo"),
          daemonnet::seed::agentBlocksMarkdown());
 
     // A demo transcript exercising the message/role layer.
-    make(QStringLiteral("n-coder"), { 1 }, false, QStringLiteral("Message roles demo"),
+    make(QStringLiteral("n-coder"), {1}, false, QStringLiteral("Message roles demo"),
          daemonnet::seed::roleLayerMarkdown());
 }
 
-bool InMemorySessionStore::isInSubtree(const UnitId& unitId, const UnitId& rootId) const
-{
+bool InMemorySessionStore::isInSubtree(const UnitId& unitId, const UnitId& rootId) const {
     UnitId cur = unitId;
     // Walk up the parent chain; guard against cycles with a bounded loop.
     for (int guard = 0; guard < m_units.size() + 1 && !cur.isEmpty(); ++guard) {
@@ -206,8 +195,7 @@ bool InMemorySessionStore::isInSubtree(const UnitId& unitId, const UnitId& rootI
     return false;
 }
 
-bool InMemorySessionStore::matchesScope(const Session& c, const ListScope& scope) const
-{
+bool InMemorySessionStore::matchesScope(const Session& c, const ListScope& scope) const {
     switch (scope.type) {
     case NodeType::AllSessions:
         return !c.isArchived;
@@ -219,8 +207,8 @@ bool InMemorySessionStore::matchesScope(const Session& c, const ListScope& scope
         return !c.isArchived && c.tagIds.contains(scope.tagId);
     case NodeType::ByTransport:
     case NodeType::ByPeer:
-        // Transport/peer grouping needs the DaemonNet's edges (IDaemonNet::sessionsInScope); the flat
-        // store has no edge data, so these scopes never match here.
+        // Transport/peer grouping needs the DaemonNet's edges (IDaemonNet::sessionsInScope); the
+        // flat store has no edge data, so these scopes never match here.
         return false;
     case NodeType::FleetSeparator:
     case NodeType::TagSeparator:
@@ -229,8 +217,7 @@ bool InMemorySessionStore::matchesScope(const Session& c, const ListScope& scope
     return false;
 }
 
-QList<UnitNode> InMemorySessionStore::unitChildren(const UnitId& parentId) const
-{
+QList<UnitNode> InMemorySessionStore::unitChildren(const UnitId& parentId) const {
     QList<UnitNode> out;
     for (const UnitNode& n : m_units) {
         if (n.parentId == parentId) {
@@ -240,8 +227,7 @@ QList<UnitNode> InMemorySessionStore::unitChildren(const UnitId& parentId) const
     return out;
 }
 
-UnitNode InMemorySessionStore::unit(const UnitId& id) const
-{
+UnitNode InMemorySessionStore::unit(const UnitId& id) const {
     for (const UnitNode& n : m_units) {
         if (n.id == id) {
             return n;
@@ -250,18 +236,15 @@ UnitNode InMemorySessionStore::unit(const UnitId& id) const
     return {};
 }
 
-QList<Tag> InMemorySessionStore::tags() const
-{
+QList<Tag> InMemorySessionStore::tags() const {
     return m_tags;
 }
 
-QList<domain::Participant> InMemorySessionStore::participants() const
-{
+QList<domain::Participant> InMemorySessionStore::participants() const {
     return m_participants;
 }
 
-QList<Session> InMemorySessionStore::sessions(const ListScope& scope) const
-{
+QList<Session> InMemorySessionStore::sessions(const ListScope& scope) const {
     QList<Session> out;
     for (const Session& c : m_sessions) {
         if (matchesScope(c, scope)) {
@@ -274,8 +257,7 @@ QList<Session> InMemorySessionStore::sessions(const ListScope& scope) const
     return out;
 }
 
-int InMemorySessionStore::sessionCount(const ListScope& scope) const
-{
+int InMemorySessionStore::sessionCount(const ListScope& scope) const {
     int count = 0;
     for (const Session& c : m_sessions) {
         if (matchesScope(c, scope)) {
@@ -285,13 +267,11 @@ int InMemorySessionStore::sessionCount(const ListScope& scope) const
     return count;
 }
 
-SessionId InMemorySessionStore::mintSessionId()
-{
+SessionId InMemorySessionStore::mintSessionId() {
     return SessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
 }
 
-QString InMemorySessionStore::content(const SessionId& id) const
-{
+QString InMemorySessionStore::content(const SessionId& id) const {
     for (const Session& c : m_sessions) {
         if (c.sessionId == id) {
             return c.content;
@@ -300,8 +280,7 @@ QString InMemorySessionStore::content(const SessionId& id) const
     return {};
 }
 
-QString InMemorySessionStore::title(const SessionId& id) const
-{
+QString InMemorySessionStore::title(const SessionId& id) const {
     for (const Session& c : m_sessions) {
         if (c.sessionId == id) {
             return c.title;
@@ -310,8 +289,7 @@ QString InMemorySessionStore::title(const SessionId& id) const
     return {};
 }
 
-SessionId InMemorySessionStore::newSession(const UnitId& unitId)
-{
+SessionId InMemorySessionStore::newSession(const UnitId& unitId) {
     Session c;
     c.id = m_nextId++;
     c.sessionId = mintSessionId();
@@ -324,8 +302,7 @@ SessionId InMemorySessionStore::newSession(const UnitId& unitId)
     return c.sessionId;
 }
 
-UnitId InMemorySessionStore::createUnit(const UnitId& parentId, UnitKind kind)
-{
+UnitId InMemorySessionStore::createUnit(const UnitId& parentId, UnitKind kind) {
     UnitNode n;
     n.id = UnitId(QStringLiteral("n-new-%1").arg(m_nextUnitSeq++));
     n.parentId = parentId;
@@ -338,8 +315,7 @@ UnitId InMemorySessionStore::createUnit(const UnitId& parentId, UnitKind kind)
     return n.id;
 }
 
-int InMemorySessionStore::createTag(const QString& name, const QString& color)
-{
+int InMemorySessionStore::createTag(const QString& name, const QString& color) {
     Tag t;
     t.id = m_nextTagId++;
     t.name = name;
@@ -350,8 +326,7 @@ int InMemorySessionStore::createTag(const QString& name, const QString& color)
 }
 
 // --- SessionId-keyed implementations (the canonical path) ---
-void InMemorySessionStore::setContent(const SessionId& id, const QString& markdown)
-{
+void InMemorySessionStore::setContent(const SessionId& id, const QString& markdown) {
     if (id.isEmpty()) {
         return;
     }
@@ -365,8 +340,7 @@ void InMemorySessionStore::setContent(const SessionId& id, const QString& markdo
     }
 }
 
-void InMemorySessionStore::renameSession(const SessionId& id, const QString& title)
-{
+void InMemorySessionStore::renameSession(const SessionId& id, const QString& title) {
     if (id.isEmpty()) {
         return;
     }
@@ -380,8 +354,7 @@ void InMemorySessionStore::renameSession(const SessionId& id, const QString& tit
     }
 }
 
-void InMemorySessionStore::deleteSession(const SessionId& id)
-{
+void InMemorySessionStore::deleteSession(const SessionId& id) {
     if (id.isEmpty()) {
         return;
     }
@@ -394,8 +367,7 @@ void InMemorySessionStore::deleteSession(const SessionId& id)
     }
 }
 
-void InMemorySessionStore::setPinned(const SessionId& id, bool pinned)
-{
+void InMemorySessionStore::setPinned(const SessionId& id, bool pinned) {
     if (id.isEmpty()) {
         return;
     }
@@ -410,8 +382,7 @@ void InMemorySessionStore::setPinned(const SessionId& id, bool pinned)
     }
 }
 
-bool InMemorySessionStore::isPinned(const SessionId& id) const
-{
+bool InMemorySessionStore::isPinned(const SessionId& id) const {
     for (const Session& c : m_sessions) {
         if (c.sessionId == id) {
             return c.isPinned;
@@ -420,8 +391,7 @@ bool InMemorySessionStore::isPinned(const SessionId& id) const
     return false;
 }
 
-void InMemorySessionStore::moveSession(const SessionId& id, int delta)
-{
+void InMemorySessionStore::moveSession(const SessionId& id, int delta) {
     if (delta == 0 || id.isEmpty()) {
         return;
     }
@@ -429,8 +399,8 @@ void InMemorySessionStore::moveSession(const SessionId& id, int delta)
         if (m_sessions.at(i).sessionId != id) {
             continue;
         }
-        const int target = qBound(0, i + (delta < 0 ? -1 : 1),
-                                  static_cast<int>(m_sessions.size()) - 1);
+        const int target =
+            qBound(0, i + (delta < 0 ? -1 : 1), static_cast<int>(m_sessions.size()) - 1);
         if (target != i) {
             m_sessions.move(i, target);
             emit changed();
@@ -439,8 +409,7 @@ void InMemorySessionStore::moveSession(const SessionId& id, int delta)
     }
 }
 
-void InMemorySessionStore::setArchived(const SessionId& id, bool archived)
-{
+void InMemorySessionStore::setArchived(const SessionId& id, bool archived) {
     if (id.isEmpty()) {
         return;
     }

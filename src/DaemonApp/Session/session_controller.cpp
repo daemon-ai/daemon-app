@@ -4,18 +4,13 @@
 
 #include <QDateTime>
 
-SessionController::SessionController(QObject* parent)
-    : QObject(parent)
-{
-}
+SessionController::SessionController(QObject* parent) : QObject(parent) {}
 
-QObject* SessionController::store() const
-{
+QObject* SessionController::store() const {
     return m_store;
 }
 
-void SessionController::setStore(QObject* store)
-{
+void SessionController::setStore(QObject* store) {
     auto* sessionStore = qobject_cast<persistence::ISessionStore*>(store);
     if (m_store == sessionStore) {
         return;
@@ -25,15 +20,13 @@ void SessionController::setStore(QObject* store)
     }
     m_store = sessionStore;
     if (m_store) {
-        connect(m_store, &persistence::ISessionStore::changed, this,
-                &SessionController::refresh);
+        connect(m_store, &persistence::ISessionStore::changed, this, &SessionController::refresh);
     }
     emit storeChanged();
     refresh();
 }
 
-void SessionController::open(const QString& sessionId)
-{
+void SessionController::open(const QString& sessionId) {
     if (m_currentId == sessionId) {
         return;
     }
@@ -43,8 +36,7 @@ void SessionController::open(const QString& sessionId)
     emit sessionChanged();
 }
 
-void SessionController::appendUserText(const QString& text)
-{
+void SessionController::appendUserText(const QString& text) {
     const QString trimmed = text.trimmed();
     if (!m_store || m_currentId.isEmpty() || trimmed.isEmpty()) {
         return;
@@ -54,8 +46,7 @@ void SessionController::appendUserText(const QString& text)
     // and tags the text as a user message. A "u<epochMs>" id stays distinct from
     // the runtime's "m<n>" assistant ids, so the two never collide.
     const QString id = QStringLiteral("u%1").arg(QDateTime::currentMSecsSinceEpoch());
-    const QString marker =
-        QStringLiteral("```msg\n{\"id\":\"%1\",\"role\":\"user\"}\n```").arg(id);
+    const QString marker = QStringLiteral("```msg\n{\"id\":\"%1\",\"role\":\"user\"}\n```").arg(id);
 
     QString next = m_content;
     if (!next.isEmpty()) {
@@ -65,8 +56,7 @@ void SessionController::appendUserText(const QString& text)
     m_store->setContent(m_currentId, next); // emits changed() -> refresh()
 }
 
-void SessionController::updateContent(const QString& markdown)
-{
+void SessionController::updateContent(const QString& markdown) {
     if (!m_store || m_currentId.isEmpty() || markdown == m_content) {
         return;
     }
@@ -76,8 +66,7 @@ void SessionController::updateContent(const QString& markdown)
     m_store->setContent(m_currentId, markdown);
 }
 
-void SessionController::moveCurrentToTrash()
-{
+void SessionController::moveCurrentToTrash() {
     if (!m_store || m_currentId.isEmpty()) {
         return;
     }
@@ -92,8 +81,7 @@ void SessionController::moveCurrentToTrash()
     m_store->setArchived(archivedId, true); // emits changed() -> refresh()
 }
 
-QString SessionController::createSession(const QString& agentId)
-{
+QString SessionController::createSession(const QString& agentId) {
     if (!m_store) {
         return {};
     }
@@ -102,8 +90,7 @@ QString SessionController::createSession(const QString& agentId)
     return id;
 }
 
-void SessionController::refresh()
-{
+void SessionController::refresh() {
     const QString next =
         (m_store && !m_currentId.isEmpty()) ? m_store->content(m_currentId) : QString{};
     if (next == m_content) {

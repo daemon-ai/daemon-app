@@ -7,7 +7,7 @@
 namespace be {
 class DocumentStore;
 class TranscriptIngest;
-}
+} // namespace be
 
 // TUI-local stand-in for the daemon runtime, replicating the QML mock host in
 // Transcript.qml so the inline interactive blocks (clarify / approval) round-trip
@@ -25,13 +25,13 @@ class InteractiveTurnHost : public QObject {
     Q_OBJECT
 
 public:
-    InteractiveTurnHost(be::DocumentStore *doc, be::TranscriptIngest *ingest,
-                        QObject *parent = nullptr);
+    InteractiveTurnHost(be::DocumentStore* doc, be::TranscriptIngest* ingest,
+                        QObject* parent = nullptr);
 
 public slots:
-    void onApprovalDecided(const QString &callId, const QString &decision, bool permanent);
-    void onClarifySubmitted(const QString &callId, const QString &requestId,
-                            const QVariantMap &answers);
+    void onApprovalDecided(const QString& callId, const QString& decision, bool permanent);
+    void onClarifySubmitted(const QString& callId, const QString& requestId,
+                            const QVariantMap& answers);
 
 signals:
     // The host mutated the document; the owner should persist toMarkdown() and
@@ -39,6 +39,6 @@ signals:
     void documentChanged();
 
 private:
-    be::DocumentStore *m_doc = nullptr;
-    be::TranscriptIngest *m_ingest = nullptr;
+    be::DocumentStore* m_doc = nullptr;
+    be::TranscriptIngest* m_ingest = nullptr;
 };

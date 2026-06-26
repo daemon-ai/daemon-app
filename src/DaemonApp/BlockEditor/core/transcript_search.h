@@ -27,8 +27,8 @@ class DocumentStore;
 class TranscriptSearchController : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString query READ query WRITE setQuery NOTIFY queryChanged)
-    Q_PROPERTY(bool caseSensitive READ caseSensitive WRITE setCaseSensitive NOTIFY
-                   caseSensitiveChanged)
+    Q_PROPERTY(
+        bool caseSensitive READ caseSensitive WRITE setCaseSensitive NOTIFY caseSensitiveChanged)
     Q_PROPERTY(int matchCount READ matchCount NOTIFY matchesChanged)
     Q_PROPERTY(int currentMatch READ currentMatch NOTIFY currentMatchChanged)
 

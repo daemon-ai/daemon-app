@@ -1,6 +1,5 @@
 #include "app/transcript_log.h"
 #include "core/document_store.h"
-
 #include "daemonnet/seed_transcripts.h"
 #include "domain/session_log.h"
 
@@ -18,15 +17,13 @@ class TestTranscriptLog : public QObject {
     Q_OBJECT
 
     // The markdown path's canonical form (parse + reserialize).
-    static QString normalized(const QString& md)
-    {
+    static QString normalized(const QString& md) {
         DocumentStore doc;
         doc.loadMarkdown(md);
         return doc.toMarkdown();
     }
     // The entry path: decompose to a SessionLogEntry sequence, then rebuild the document.
-    static QString viaEntries(const QString& md)
-    {
+    static QString viaEntries(const QString& md) {
         DocumentStore doc;
         applyTranscriptLog(doc, decomposeMarkdown(md));
         return doc.toMarkdown();
@@ -35,30 +32,26 @@ class TestTranscriptLog : public QObject {
 private slots:
     // The agent-block showcase (reasoning, every tool detail kind, clarify, approval,
     // image, content stream) - all un-roled - reproduces exactly via entries.
-    void agentBlocksRoundTrips()
-    {
+    void agentBlocksRoundTrips() {
         const QString md = daemonnet::seed::agentBlocksMarkdown();
         QCOMPARE(viaEntries(md), normalized(md));
     }
 
     // The message/role layer (user/assistant/system turns, steer/slash/process) - the
     // part the streaming ingest can't do - reproduces exactly via entries.
-    void roleLayerRoundTrips()
-    {
+    void roleLayerRoundTrips() {
         const QString md = daemonnet::seed::roleLayerMarkdown();
         QCOMPARE(viaEntries(md), normalized(md));
     }
 
     // A short plain-prose session round-trips (the common case).
-    void plainProseRoundTrips()
-    {
+    void plainProseRoundTrips() {
         const QString md = QStringLiteral("# Title\n\nA paragraph.\n\n- one\n- two\n");
         QCOMPARE(viaEntries(md), normalized(md));
     }
 
     // Decompose yields one entry per block, carrying the role envelope + payload.
-    void decomposeCarriesRoleAndPayload()
-    {
+    void decomposeCarriesRoleAndPayload() {
         const auto entries = decomposeMarkdown(daemonnet::seed::roleLayerMarkdown());
         QVERIFY(!entries.isEmpty());
         bool sawUser = false;

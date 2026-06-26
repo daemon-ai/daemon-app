@@ -5,8 +5,7 @@
 
 namespace be {
 
-class PieceTable
-{
+class PieceTable {
 public:
     enum class Source : quint8 {
         Original,
@@ -25,11 +24,11 @@ public:
     QByteArray toUtf8() const;
     QByteArray slice(qsizetype offset, qsizetype length) const;
     void replace(qsizetype offset, qsizetype length, QByteArray inserted);
-    const QVector<Piece> &pieces() const;
+    const QVector<Piece>& pieces() const;
 
 private:
-    QByteArray pieceBytes(const Piece &piece) const;
-    void appendPiece(QVector<Piece> &out, const Piece &piece) const;
+    QByteArray pieceBytes(const Piece& piece) const;
+    void appendPiece(QVector<Piece>& out, const Piece& piece) const;
 
     QByteArray m_original;
     QByteArray m_add;

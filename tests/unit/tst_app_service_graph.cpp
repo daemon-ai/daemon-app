@@ -1,6 +1,5 @@
-#include "daemon/app_service_graph.h"
-
 #include "connection/mock_connection_service.h"
+#include "daemon/app_service_graph.h"
 #include "daemon/daemon_connection_service.h"
 #include "domain/session.h"
 #include "domain/sidebar_node.h"
@@ -12,8 +11,7 @@ class AppServiceGraphTests : public QObject {
     Q_OBJECT
 
 private slots:
-    void mockGraphConstructsAllSharedServices()
-    {
+    void mockGraphConstructsAllSharedServices() {
         QObject owner;
         const auto graph =
             daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, &owner);
@@ -48,11 +46,10 @@ private slots:
         QVERIFY(qobject_cast<connection::MockConnectionService*>(graph.connection) != nullptr);
     }
 
-    // P1 single-source: in mock mode the session store is re-seeded from the unified DaemonNet, so the
-    // sidebar/list/transcript reflect the same source as the Fleet/Sessions pages - and every session
-    // now carries its authoritative string sessionId (not just an int handle).
-    void mockStoreIsSeededFromDaemonNet()
-    {
+    // P1 single-source: in mock mode the session store is re-seeded from the unified DaemonNet, so
+    // the sidebar/list/transcript reflect the same source as the Fleet/Sessions pages - and every
+    // session now carries its authoritative string sessionId (not just an int handle).
+    void mockStoreIsSeededFromDaemonNet() {
         QObject owner;
         const auto graph =
             daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, &owner);
@@ -74,13 +71,13 @@ private slots:
         }
     }
 
-    void daemonGraphSwapsConnectionOnlyForNow()
-    {
+    void daemonGraphSwapsConnectionOnlyForNow() {
         QObject owner;
-        const auto graph =
-            daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Daemon, &owner);
+        const auto graph = daemonapp::daemon::createAppServiceGraph(
+            daemonapp::daemon::ServiceMode::Daemon, &owner);
 
-        QVERIFY(qobject_cast<daemonapp::daemon::DaemonConnectionService*>(graph.connection) != nullptr);
+        QVERIFY(qobject_cast<daemonapp::daemon::DaemonConnectionService*>(graph.connection) !=
+                nullptr);
         QVERIFY(graph.nodeApi != nullptr);
         QVERIFY(graph.sessions != nullptr);
         QVERIFY(graph.cache != nullptr);

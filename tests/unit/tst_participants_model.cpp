@@ -16,15 +16,13 @@ class TestParticipantsModel : public QObject {
 
 private:
     template <typename T>
-    static T roleAt(const ParticipantsModel& m, int row, ParticipantsModel::Role role)
-    {
+    static T roleAt(const ParticipantsModel& m, int row, ParticipantsModel::Role role) {
         return m.data(m.index(row, 0), role).template value<T>();
     }
 
 private slots:
     // Row 0 is the collapsible section header ("Participants").
-    void exposesSectionHeader()
-    {
+    void exposesSectionHeader() {
         MockDaemonNet net;
         InMemorySessionStore store(&net);
         ParticipantsModel model;
@@ -40,8 +38,7 @@ private slots:
 
     // The two seeded participants ("Agent"/"User") follow the header, both with a
     // green ("available") presence dot; the agent flag distinguishes them.
-    void exposesParticipantRows()
-    {
+    void exposesParticipantRows() {
         MockDaemonNet net;
         InMemorySessionStore store(&net);
         ParticipantsModel model;
@@ -65,8 +62,7 @@ private slots:
     }
 
     // Folding the header hides the participant rows; unfolding restores them.
-    void headerCollapsesAndExpands()
-    {
+    void headerCollapsesAndExpands() {
         MockDaemonNet net;
         InMemorySessionStore store(&net);
         ParticipantsModel model;
@@ -83,8 +79,7 @@ private slots:
     }
 
     // With no store bound the section is just the (empty) header - no crash.
-    void emptyWithoutStore()
-    {
+    void emptyWithoutStore() {
         ParticipantsModel model;
         QCOMPARE(model.rowCount(), 1);
         QVERIFY(roleAt<bool>(model, 0, ParticipantsModel::IsSeparatorRole));

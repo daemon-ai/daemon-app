@@ -2,8 +2,7 @@
 
 namespace memory {
 
-void IMemoryService::setScope(const QString& profile, const QString& session, bool includeGlobal)
-{
+void IMemoryService::setScope(const QString& profile, const QString& session, bool includeGlobal) {
     if (m_profile == profile && m_session == session && m_includeGlobal == includeGlobal) {
         return;
     }
@@ -13,8 +12,7 @@ void IMemoryService::setScope(const QString& profile, const QString& session, bo
     emit scopeChanged();
 }
 
-void registerMemoryMetatypes()
-{
+void registerMemoryMetatypes() {
     qRegisterMetaType<memory::MemoryEntry>("memory::MemoryEntry");
     qRegisterMetaType<QList<memory::MemoryEntry>>("QList<memory::MemoryEntry>");
     qRegisterMetaType<memory::Bucket>("memory::Bucket");

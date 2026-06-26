@@ -1,12 +1,11 @@
 #include "display_presenter.h"
 
-#include "domain/unit_node.h"
 #include "domain/sidebar_node.h"
+#include "domain/unit_node.h"
 
 DisplayPresenter::DisplayPresenter(QObject* parent) : QObject(parent) {}
 
-QString DisplayPresenter::scopeIconKeyFor(int nodeType)
-{
+QString DisplayPresenter::scopeIconKeyFor(int nodeType) {
     switch (static_cast<domain::NodeType>(nodeType)) {
     case domain::NodeType::AllSessions:
         return QStringLiteral("comments");
@@ -17,8 +16,7 @@ QString DisplayPresenter::scopeIconKeyFor(int nodeType)
     }
 }
 
-QString DisplayPresenter::agentKindIconKeyFor(int kind)
-{
+QString DisplayPresenter::agentKindIconKeyFor(int kind) {
     switch (static_cast<domain::UnitKind>(kind)) {
     case domain::UnitKind::Orchestrator:
         return QStringLiteral("sitemap");
@@ -30,8 +28,7 @@ QString DisplayPresenter::agentKindIconKeyFor(int kind)
     }
 }
 
-DisplayPresenter::StateTone DisplayPresenter::agentStateToneFor(int state)
-{
+DisplayPresenter::StateTone DisplayPresenter::agentStateToneFor(int state) {
     switch (static_cast<domain::UnitState>(state)) {
     case domain::UnitState::Running:
         return StateTone::Running;
@@ -43,17 +40,14 @@ DisplayPresenter::StateTone DisplayPresenter::agentStateToneFor(int state)
     }
 }
 
-QString DisplayPresenter::scopeIconKey(int nodeType) const
-{
+QString DisplayPresenter::scopeIconKey(int nodeType) const {
     return scopeIconKeyFor(nodeType);
 }
 
-QString DisplayPresenter::agentKindIconKey(int kind) const
-{
+QString DisplayPresenter::agentKindIconKey(int kind) const {
     return agentKindIconKeyFor(kind);
 }
 
-DisplayPresenter::StateTone DisplayPresenter::agentStateTone(int state) const
-{
+DisplayPresenter::StateTone DisplayPresenter::agentStateTone(int state) const {
     return agentStateToneFor(state);
 }

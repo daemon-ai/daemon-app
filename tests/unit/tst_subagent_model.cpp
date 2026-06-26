@@ -1,21 +1,20 @@
 #include "subagent_model.h"
 
 #include <QSignalSpy>
+#include <QtTest>
 #include <QVariantList>
 #include <QVariantMap>
-#include <QtTest>
 
 namespace {
 
 QVariantMap sub(const QString& id, const QString& title, const QString& status,
-                const QString& detail)
-{
+                const QString& detail) {
     return QVariantMap{
-        { QStringLiteral("type"), QStringLiteral("subagent") },
-        { QStringLiteral("id"), id },
-        { QStringLiteral("title"), title },
-        { QStringLiteral("status"), status },
-        { QStringLiteral("detail"), detail },
+        {QStringLiteral("type"), QStringLiteral("subagent")},
+        {QStringLiteral("id"), id},
+        {QStringLiteral("title"), title},
+        {QStringLiteral("status"), status},
+        {QStringLiteral("detail"), detail},
     };
 }
 
@@ -29,12 +28,10 @@ class TestSubagentModel : public QObject {
     Q_OBJECT
 
 private slots:
-    void rolesExposeTitleStatusDetail()
-    {
+    void rolesExposeTitleStatusDetail() {
         SubagentModel model;
-        model.applyEvents(QVariantList{ sub(QStringLiteral("a"), QStringLiteral("explore"),
-                                            QStringLiteral("running"),
-                                            QStringLiteral("scanning")) });
+        model.applyEvents(QVariantList{sub(QStringLiteral("a"), QStringLiteral("explore"),
+                                           QStringLiteral("running"), QStringLiteral("scanning"))});
 
         QCOMPARE(model.count(), 1);
         const QModelIndex i0 = model.index(0, 0);
@@ -47,16 +44,15 @@ private slots:
         QCOMPARE(roles.value(SubagentModel::StatusRole), QByteArrayLiteral("status"));
     }
 
-    void upsertUpdatesExistingRowByIdNotAppend()
-    {
+    void upsertUpdatesExistingRowByIdNotAppend() {
         SubagentModel model;
-        model.applyEvents(QVariantList{ sub(QStringLiteral("a"), QStringLiteral("explore"),
-                                            QStringLiteral("running"), QStringLiteral("0%")) });
+        model.applyEvents(QVariantList{sub(QStringLiteral("a"), QStringLiteral("explore"),
+                                           QStringLiteral("running"), QStringLiteral("0%"))});
         QCOMPARE(model.count(), 1);
 
         // Same id -> in-place update (running count drops to zero, no new row).
-        model.applyEvents(QVariantList{ sub(QStringLiteral("a"), QString(),
-                                            QStringLiteral("done"), QStringLiteral("42 files")) });
+        model.applyEvents(QVariantList{sub(QStringLiteral("a"), QString(), QStringLiteral("done"),
+                                           QStringLiteral("42 files"))});
         QCOMPARE(model.count(), 1);
         QCOMPARE(model.statusAt(0), QStringLiteral("done"));
         QCOMPARE(model.detailAt(0), QStringLiteral("42 files"));
@@ -64,16 +60,15 @@ private slots:
         QCOMPARE(model.runningCount(), 0);
 
         // A new id appends a second row.
-        model.applyEvents(QVariantList{ sub(QStringLiteral("b"), QStringLiteral("tests"),
-                                            QStringLiteral("running"), QString()) });
+        model.applyEvents(QVariantList{sub(QStringLiteral("b"), QStringLiteral("tests"),
+                                           QStringLiteral("running"), QString())});
         QCOMPARE(model.count(), 2);
         QCOMPARE(model.runningCount(), 1);
     }
 
     // runningCount / failedCount classify rows by status (fed to the footer's
     // agentsRunning/agentsFailed in both front ends).
-    void runningAndFailedCounts()
-    {
+    void runningAndFailedCounts() {
         SubagentModel model;
         model.applyEvents(QVariantList{
             sub(QStringLiteral("a"), QStringLiteral("explore"), QStringLiteral("running"),
@@ -86,29 +81,27 @@ private slots:
         QCOMPARE(model.failedCount(), 1);
 
         // A status transition reclassifies without changing the row count.
-        model.applyEvents(QVariantList{ sub(QStringLiteral("a"), QString(),
-                                            QStringLiteral("error"), QString()) });
+        model.applyEvents(
+            QVariantList{sub(QStringLiteral("a"), QString(), QStringLiteral("error"), QString())});
         QCOMPARE(model.count(), 4);
         QCOMPARE(model.runningCount(), 1);
         QCOMPARE(model.failedCount(), 2);
     }
 
-    void ignoresNonSubagentEvents()
-    {
+    void ignoresNonSubagentEvents() {
         SubagentModel model;
         model.applyEvents(QVariantList{
-            QVariantMap{ { QStringLiteral("type"), QStringLiteral("usage") } },
-            QVariantMap{ { QStringLiteral("type"), QStringLiteral("text") },
-                         { QStringLiteral("text"), QStringLiteral("hi") } },
+            QVariantMap{{QStringLiteral("type"), QStringLiteral("usage")}},
+            QVariantMap{{QStringLiteral("type"), QStringLiteral("text")},
+                        {QStringLiteral("text"), QStringLiteral("hi")}},
         });
         QCOMPARE(model.count(), 0);
     }
 
-    void clearEmptiesAndSignals()
-    {
+    void clearEmptiesAndSignals() {
         SubagentModel model;
-        model.applyEvents(QVariantList{ sub(QStringLiteral("a"), QStringLiteral("explore"),
-                                            QStringLiteral("running"), QString()) });
+        model.applyEvents(QVariantList{sub(QStringLiteral("a"), QStringLiteral("explore"),
+                                           QStringLiteral("running"), QString())});
         QCOMPARE(model.count(), 1);
 
         QSignalSpy countSpy(&model, &SubagentModel::countChanged);

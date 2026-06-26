@@ -2,11 +2,9 @@
 
 #include "palette_dialog.h"
 
-#include <Tui/ZWidget.h>
-
-#include <QObject>
-
 #include <functional>
+#include <QObject>
+#include <Tui/ZWidget.h>
 
 class CommandRegistry;
 class ComposerSessionController;

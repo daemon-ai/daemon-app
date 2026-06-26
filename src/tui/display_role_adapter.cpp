@@ -1,10 +1,9 @@
 #include "display_role_adapter.h"
 
-#include "sessions_list_model.h"
-#include "sidebar_model.h"
-
 #include "domain/sidebar_node.h"
 #include "presentation/display_presenter.h"
+#include "sessions_list_model.h"
+#include "sidebar_model.h"
 #include "tui_palette.h"
 
 #include <Tui/ZColor.h>
@@ -15,8 +14,7 @@ namespace {
 // Map a "#rrggbb" token (the colors the models carry, mirroring Theme.qml) to a
 // Tui RGB color for a list-row decoration glyph. Parsed by hand so the TUI need
 // not link QtGui just for QColor.
-Tui::ZColor rgbFromHex(const QString& hex)
-{
+Tui::ZColor rgbFromHex(const QString& hex) {
     if (hex.size() == 7 && hex.startsWith(QLatin1Char('#'))) {
         bool ok = false;
         const int rgb = hex.mid(1).toInt(&ok, 16);
@@ -30,12 +28,9 @@ Tui::ZColor rgbFromHex(const QString& hex)
 } // namespace
 
 DisplayRoleAdapter::DisplayRoleAdapter(Kind kind, QObject* parent)
-    : QIdentityProxyModel(parent), m_kind(kind)
-{
-}
+    : QIdentityProxyModel(parent), m_kind(kind) {}
 
-QVariant DisplayRoleAdapter::data(const QModelIndex& index, int role) const
-{
+QVariant DisplayRoleAdapter::data(const QModelIndex& index, int role) const {
     if (!sourceModel() || !index.isValid()) {
         return {};
     }
@@ -43,8 +38,7 @@ QVariant DisplayRoleAdapter::data(const QModelIndex& index, int role) const
     return m_kind == Kind::Sidebar ? sidebarData(src, role) : listData(src, role);
 }
 
-QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
-{
+QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const {
     const auto srcData = [&](int r) { return sourceModel()->data(src, r); };
 
     if (role == Qt::DisplayRole) {
@@ -54,8 +48,8 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
             // disclosure glyph; plain dividers (none today) render without one.
             if (srcData(SidebarModel::HasChildrenRole).toBool()) {
                 const QString tw = srcData(SidebarModel::ExpandedRole).toBool()
-                    ? QStringLiteral("\u25be ")
-                    : QStringLiteral("\u25b8 ");
+                                       ? QStringLiteral("\u25be ")
+                                       : QStringLiteral("\u25b8 ");
                 return QStringLiteral("%1\u2500\u2500 %2 \u2500\u2500").arg(tw, label);
             }
             return QStringLiteral("\u2500\u2500 %1 \u2500\u2500").arg(label);
@@ -100,9 +94,9 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
             return QStringLiteral("\u2022");
         }
         // A presence dot on a transport account (the events-IO instance).
-        if (nodeType == static_cast<int>(domain::NodeType::Transport)
-            && srcData(SidebarModel::TxKindRole).toString() == QStringLiteral("account")
-            && !srcData(SidebarModel::PresenceRole).toString().isEmpty()) {
+        if (nodeType == static_cast<int>(domain::NodeType::Transport) &&
+            srcData(SidebarModel::TxKindRole).toString() == QStringLiteral("account") &&
+            !srcData(SidebarModel::PresenceRole).toString().isEmpty()) {
             return QStringLiteral("\u25cf");
         }
         return {};
@@ -113,8 +107,8 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
         }
         if (nodeType == static_cast<int>(domain::NodeType::Transport)) {
             return srcData(SidebarModel::PresenceRole).toString() == QStringLiteral("available")
-                ? QVariant::fromValue(tpal::statusOk())
-                : QVariant::fromValue(tpal::muted());
+                       ? QVariant::fromValue(tpal::statusOk())
+                       : QVariant::fromValue(tpal::muted());
         }
         if (nodeType == static_cast<int>(domain::NodeType::Unit)) {
             // Reuse the shared C++ categorization (same source the GUI sidebar
@@ -141,8 +135,7 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
     return sourceModel()->data(src, role);
 }
 
-QVariant DisplayRoleAdapter::listData(const QModelIndex& src, int role) const
-{
+QVariant DisplayRoleAdapter::listData(const QModelIndex& src, int role) const {
     const auto srcData = [&](int r) { return sourceModel()->data(src, r); };
 
     if (role == Qt::DisplayRole) {

@@ -1,8 +1,7 @@
 #include "automation/mock_cron_store.h"
 #include "automation/mock_routing_store.h"
-#include "uimodels/variant_list_model.h"
-
 #include "cache_test_support.h"
+#include "uimodels/variant_list_model.h"
 
 #include <QtTest/QtTest>
 
@@ -19,31 +18,34 @@ class TestAutomation : public QObject {
 private slots:
     void init() { resetMockCache(); }
 
-    void routingEdits()
-    {
+    void routingEdits() {
         MockRoutingStore r;
         QVERIFY(asModel(r.rules())->count() >= 3);
         QVERIFY(!r.targets().isEmpty());
 
         r.setTarget(QStringLiteral("r-1"), QStringLiteral("gemma-2-9b-it"));
-        QCOMPARE(asModel(r.rules())->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
+        QCOMPARE(asModel(r.rules())
+                     ->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
                      .value(QStringLiteral("target"))
                      .toString(),
                  QStringLiteral("gemma-2-9b-it"));
 
         r.setEnabled(QStringLiteral("r-1"), false);
-        QVERIFY(!asModel(r.rules())->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
+        QVERIFY(!asModel(r.rules())
+                     ->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
                      .value(QStringLiteral("enabled"))
                      .toBool());
 
         r.setIntent(QStringLiteral("r-1"), QStringLiteral("Renamed intent"));
-        QCOMPARE(asModel(r.rules())->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
+        QCOMPARE(asModel(r.rules())
+                     ->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
                      .value(QStringLiteral("intent"))
                      .toString(),
                  QStringLiteral("Renamed intent"));
 
         r.setFallback(QStringLiteral("r-1"), QStringLiteral("phi-3.5-mini"));
-        QCOMPARE(asModel(r.rules())->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
+        QCOMPARE(asModel(r.rules())
+                     ->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
                      .value(QStringLiteral("fallback"))
                      .toString(),
                  QStringLiteral("phi-3.5-mini"));
@@ -55,15 +57,14 @@ private slots:
         QCOMPARE(asModel(r.rules())->count(), before);
     }
 
-    void cronLifecycle()
-    {
+    void cronLifecycle() {
         MockCronStore c;
         const int before = asModel(c.jobs())->count();
         const QString id = c.createJob(QStringLiteral("Test job"), QStringLiteral("0 6 * * *"),
                                        QStringLiteral("Coder"));
         QCOMPARE(asModel(c.jobs())->count(), before + 1);
 
-        c.updateJob(id, { { QStringLiteral("schedule"), QStringLiteral("30 7 * * 1") } });
+        c.updateJob(id, {{QStringLiteral("schedule"), QStringLiteral("30 7 * * 1")}});
         QCOMPARE(c.job(id).value(QStringLiteral("schedule")).toString(),
                  QStringLiteral("30 7 * * 1"));
 
@@ -79,8 +80,7 @@ private slots:
 
     // Tier 3: a created cron job survives across construction via the last-known
     // on-disk cache.
-    void cronPersistsAcrossRestart()
-    {
+    void cronPersistsAcrossRestart() {
         QString id;
         {
             MockCronStore c;

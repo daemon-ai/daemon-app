@@ -16,17 +16,13 @@ enum class IntegrationStep {
 };
 
 inline constexpr std::array<IntegrationStep, 7> kFirstIntegrationSlice = {
-    IntegrationStep::ConnectUnixSocket,
-    IntegrationStep::Health,
-    IntegrationStep::SessionsQuery,
-    IntegrationStep::Submit,
-    IntegrationStep::Subscribe,
-    IntegrationStep::PersistCursor,
+    IntegrationStep::ConnectUnixSocket, IntegrationStep::Health,
+    IntegrationStep::SessionsQuery,     IntegrationStep::Submit,
+    IntegrationStep::Subscribe,         IntegrationStep::PersistCursor,
     IntegrationStep::RespondApproval,
 };
 
-inline QStringView integrationStepName(IntegrationStep step)
-{
+inline QStringView integrationStepName(IntegrationStep step) {
     switch (step) {
     case IntegrationStep::ConnectUnixSocket:
         return QStringView(u"connect-unix-socket");

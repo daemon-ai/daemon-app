@@ -20,10 +20,9 @@ private slots:
     // The `search` engine is exposed (non-null) and re-collects against the
     // controller's own store after loadMarkdown(), with the query persisting
     // across loads (the reload path calls refresh() directly).
-    void loadMarkdownRefreshesMatches()
-    {
+    void loadMarkdownRefreshesMatches() {
         EditorController ed;
-        be::TranscriptSearchController *search = ed.search();
+        be::TranscriptSearchController* search = ed.search();
         QVERIFY(search != nullptr);
 
         ed.loadMarkdown(QStringLiteral("# Zephyr heading\n\nZephyr again here."), false);
@@ -42,10 +41,9 @@ private slots:
 
     // A documentChanged-driven mutation (appendUserMessage) re-collects matches
     // for the active query without an explicit refresh call.
-    void documentChangeRefreshesMatches()
-    {
+    void documentChangeRefreshesMatches() {
         EditorController ed;
-        be::TranscriptSearchController *search = ed.search();
+        be::TranscriptSearchController* search = ed.search();
         QVERIFY(search != nullptr);
 
         ed.loadMarkdown(QString(), false);

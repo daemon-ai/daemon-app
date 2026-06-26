@@ -2,9 +2,8 @@
 
 #include "transcript_render.h" // Span / RenderLine
 
-#include <Tui/ZWidget.h>
-
 #include <QVector>
+#include <Tui/ZWidget.h>
 
 class SessionsListModel;
 
@@ -76,8 +75,8 @@ private:
     void clampScrollTop();
 
     SessionsListModel* m_model = nullptr;
-    QVector<RenderLine> m_lines;   // all rendered rows (cards stacked)
-    QVector<int> m_rowOfLine;      // source row for each rendered line (-1 = gap)
-    QVector<int> m_lineOfRow;      // first rendered line index for each source row
+    QVector<RenderLine> m_lines; // all rendered rows (cards stacked)
+    QVector<int> m_rowOfLine;    // source row for each rendered line (-1 = gap)
+    QVector<int> m_lineOfRow;    // first rendered line index for each source row
     int m_scrollTop = 0;
 };

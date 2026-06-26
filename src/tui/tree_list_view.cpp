@@ -6,12 +6,10 @@
 
 // Vendored same-rev private header: exposes ZListViewPrivate so we can read the
 // sidebar list's private scroll offset (no public accessor exists).
+#include <QAbstractItemModel>
 #include <Tui/ZListView_p.h>
 
-#include <QAbstractItemModel>
-
-void TreeListView::keyEvent(Tui::ZKeyEvent* event)
-{
+void TreeListView::keyEvent(Tui::ZKeyEvent* event) {
     if (event->modifiers() == Qt::NoModifier) {
         if (event->key() == Qt::Key_Left) {
             emit collapseRequested();
@@ -27,21 +25,18 @@ void TreeListView::keyEvent(Tui::ZKeyEvent* event)
     Tui::ZListView::keyEvent(event);
 }
 
-int TreeListView::scrollOffset() const
-{
+int TreeListView::scrollOffset() const {
     // ZListView paints model row (scrollPosition + i) at local y == i. The offset
     // lives in the private object with no public accessor; read it through the
     // vendored same-rev ZListViewPrivate (validated by the tui_magic in the base).
-    const auto* priv = static_cast<const Tui::ZListViewPrivate*>(
-        Tui::ZWidgetPrivate::get(this));
+    const auto* priv = static_cast<const Tui::ZListViewPrivate*>(Tui::ZWidgetPrivate::get(this));
     if (priv == nullptr || priv->tui_magic != tui_magic_v0) {
         return 0;
     }
     return priv->scrollPosition;
 }
 
-void TreeListView::scrollByLines(int delta)
-{
+void TreeListView::scrollByLines(int delta) {
     QAbstractItemModel* m = model();
     if (m == nullptr) {
         return;
@@ -57,8 +52,7 @@ void TreeListView::scrollByLines(int delta)
     }
 }
 
-void TreeListView::clickAt(QPoint local)
-{
+void TreeListView::clickAt(QPoint local) {
     QAbstractItemModel* m = model();
     if (m == nullptr) {
         return;
@@ -79,8 +73,8 @@ void TreeListView::clickAt(QPoint local)
     // A collapsible section header (separator with children) folds/unfolds its whole
     // section. It is not selectable, so route it by explicit row rather than through
     // the selection-based collapse/expand requests.
-    if (m->data(idx, SidebarModel::IsSeparatorRole).toBool()
-        && m->data(idx, SidebarModel::HasChildrenRole).toBool()) {
+    if (m->data(idx, SidebarModel::IsSeparatorRole).toBool() &&
+        m->data(idx, SidebarModel::HasChildrenRole).toBool()) {
         emit toggleRowRequested(row);
         return;
     }

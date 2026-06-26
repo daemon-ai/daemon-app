@@ -1,10 +1,9 @@
 #include "graph_model.h"
 
-#include <QtGlobal>
-#include <QtMath>
-
 #include <algorithm>
 #include <cmath>
+#include <QtGlobal>
+#include <QtMath>
 
 namespace daemongraph {
 
@@ -16,30 +15,24 @@ const QString kSource = QStringLiteral("source");
 const QString kTarget = QStringLiteral("target");
 } // namespace
 
-GraphModel::GraphModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
-}
+GraphModel::GraphModel(QObject* parent) : QAbstractListModel(parent) {}
 
-void GraphModel::setSelectedId(const QString& id)
-{
+void GraphModel::setSelectedId(const QString& id) {
     if (m_selectedId == id) {
         return;
     }
     m_selectedId = id;
     emit selectionChanged();
     if (!m_nodes.isEmpty()) {
-        emit dataChanged(index(0), index(static_cast<int>(m_nodes.size()) - 1), { SelectedRole });
+        emit dataChanged(index(0), index(static_cast<int>(m_nodes.size()) - 1), {SelectedRole});
     }
 }
 
-int GraphModel::rowCount(const QModelIndex& parent) const
-{
+int GraphModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(m_nodes.size());
 }
 
-QVariant GraphModel::data(const QModelIndex& index, int role) const
-{
+QVariant GraphModel::data(const QModelIndex& index, int role) const {
     if (index.row() < 0 || index.row() >= m_nodes.size()) {
         return {};
     }
@@ -68,17 +61,20 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> GraphModel::roleNames() const
-{
+QHash<int, QByteArray> GraphModel::roleNames() const {
     return {
-        { IdRole, "nodeId" },   { KindRole, "nodeKind" }, { LabelRole, "label" },
-        { XRole, "nx" },        { YRole, "ny" },          { DegreeRole, "degree" },
-        { SelectedRole, "selected" }, { DataRole, "nodeData" },
+        {IdRole, "nodeId"},
+        {KindRole, "nodeKind"},
+        {LabelRole, "label"},
+        {XRole, "nx"},
+        {YRole, "ny"},
+        {DegreeRole, "degree"},
+        {SelectedRole, "selected"},
+        {DataRole, "nodeData"},
     };
 }
 
-void GraphModel::setNodes(const QVariantList& nodes)
-{
+void GraphModel::setNodes(const QVariantList& nodes) {
     m_nodes.clear();
     m_nodes.reserve(nodes.size());
     for (const QVariant& v : nodes) {
@@ -87,8 +83,7 @@ void GraphModel::setNodes(const QVariantList& nodes)
     rebuild();
 }
 
-void GraphModel::setEdges(const QVariantList& edges)
-{
+void GraphModel::setEdges(const QVariantList& edges) {
     m_edges.clear();
     m_edges.reserve(edges.size());
     for (const QVariant& v : edges) {
@@ -97,8 +92,7 @@ void GraphModel::setEdges(const QVariantList& edges)
     rebuild();
 }
 
-void GraphModel::rebuild()
-{
+void GraphModel::rebuild() {
     beginResetModel();
     m_index.clear();
     for (int i = 0; i < m_nodes.size(); ++i) {
@@ -114,8 +108,7 @@ void GraphModel::rebuild()
     emit graphChanged();
 }
 
-QVariantList GraphModel::edges() const
-{
+QVariantList GraphModel::edges() const {
     QVariantList out;
     out.reserve(static_cast<int>(m_edges.size()));
     for (const QVariantMap& e : m_edges) {
@@ -131,14 +124,12 @@ QVariantList GraphModel::edges() const
     return out;
 }
 
-QVariantMap GraphModel::nodeById(const QString& id) const
-{
+QVariantMap GraphModel::nodeById(const QString& id) const {
     const int row = m_index.value(id, -1);
     return row >= 0 ? m_nodes.at(row) : QVariantMap{};
 }
 
-QVariantList GraphModel::neighborsOf(const QString& id) const
-{
+QVariantList GraphModel::neighborsOf(const QString& id) const {
     QVariantList out;
     for (const QVariantMap& e : m_edges) {
         const QString src = e.value(kSource).toString();
@@ -153,18 +144,17 @@ QVariantList GraphModel::neighborsOf(const QString& id) const
         }
         const QVariantMap n = nodeById(other);
         out.append(QVariantMap{
-            { QStringLiteral("id"), other },
-            { QStringLiteral("label"), n.value(kLabel, other) },
-            { QStringLiteral("kind"), n.value(kKind) },
-            { QStringLiteral("edgeType"), e.value(QStringLiteral("edgeType")) },
+            {QStringLiteral("id"), other},
+            {QStringLiteral("label"), n.value(kLabel, other)},
+            {QStringLiteral("kind"), n.value(kKind)},
+            {QStringLiteral("edgeType"), e.value(QStringLiteral("edgeType"))},
         });
     }
     return out;
 }
 
 // Fruchterman-Reingold layout in a unit square; positions normalized to [0,1].
-void GraphModel::relayout()
-{
+void GraphModel::relayout() {
     const int n = static_cast<int>(m_nodes.size());
     m_pos.clear();
     if (n == 0) {
@@ -195,7 +185,7 @@ void GraphModel::relayout()
         const int a = m_index.value(e.value(kSource).toString(), -1);
         const int b = m_index.value(e.value(kTarget).toString(), -1);
         if (a >= 0 && b >= 0) {
-            es.append(E{ a, b });
+            es.append(E{a, b});
         }
     }
 

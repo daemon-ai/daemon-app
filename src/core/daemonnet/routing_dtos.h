@@ -17,13 +17,16 @@ enum class DecidedBy {
     Default,
 };
 
-[[nodiscard]] inline QString decidedByStr(DecidedBy d)
-{
+[[nodiscard]] inline QString decidedByStr(DecidedBy d) {
     switch (d) {
-    case DecidedBy::Pin: return QStringLiteral("pin");
-    case DecidedBy::Rule: return QStringLiteral("rule");
-    case DecidedBy::AccountBound: return QStringLiteral("account");
-    case DecidedBy::Default: return QStringLiteral("default");
+    case DecidedBy::Pin:
+        return QStringLiteral("pin");
+    case DecidedBy::Rule:
+        return QStringLiteral("rule");
+    case DecidedBy::AccountBound:
+        return QStringLiteral("account");
+    case DecidedBy::Default:
+        return QStringLiteral("default");
     }
     return {};
 }
@@ -40,11 +43,11 @@ struct RoutingPin {
 // One ordered, config-time binding rule. Read-only in the client (no runtime CRUD op exists; it is
 // built from TOML at boot). Mirrors `SessionBinding`.
 struct BindingRule {
-    QString transportPattern; // "matrix/@ops:hs.org" | "matrix" (family) | "*"
-    QString scopeGlob;        // "#secops*" | "dm" | "api" | "*"
-    QString isolation;        // perThread | perChat | perUser | shared
+    QString transportPattern;   // "matrix/@ops:hs.org" | "matrix" (family) | "*"
+    QString scopeGlob;          // "#secops*" | "dm" | "api" | "*"
+    QString isolation;          // perThread | perChat | perUser | shared
     domain::ProfileRef profile; // optional override (empty = none)
-    QString delivery;         // "fromOrigin" | "fixed"
+    QString delivery;           // "fromOrigin" | "fixed"
 };
 
 // An account -> agent baseline binding (the `instance_profiles` map, derived from a profile's
@@ -66,15 +69,14 @@ struct Resolution {
 // of the `transport_rooms` op (`RoomInfo`) used by the pin picker.
 struct RoomBinding {
     domain::TransportId transport;
-    QString chat;  // the chat handle / room id (the Group scope key)
-    QString label; // display label
+    QString chat;                    // the chat handle / room id (the Group scope key)
+    QString label;                   // display label
     domain::SessionId pinnedSession; // empty = not yet pinned
 };
 
 // The canonical, order-stable key for an origin (transport instance + scope), mirroring
 // daemon-node's `origin_pin_key`. The pin map + graph nodes key on this.
-[[nodiscard]] inline QString originKey(const domain::Origin& o)
-{
+[[nodiscard]] inline QString originKey(const domain::Origin& o) {
     const QString t = o.transport.toString();
     switch (o.scope.kind) {
     case domain::OriginScopeKind::Dm:

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "daemonnet/idaemonnet.h"
-
 #include "domain/participant.h"
 #include "domain/session.h"
 #include "domain/tag.h"
@@ -17,12 +16,13 @@ class VariantListModel;
 
 namespace daemonnet {
 
-// Inert mock DaemonNet: one unified, typed seed is the single source for the whole mock UI. It builds
-// the fleet-of-fleets supervision units, the sessions (each with content + tags + owning unit + its
-// authoritative `sessionId`), the tags, and the transport combos (matrix DM / internal room / channel
-// / peers / spectator). The session store copies `seed()`; the `fleet()`/`sessions()` projections feed
-// the Fleet/Sessions pages; `channels()`/`byPeer()` + `nodes()`/`edges()` feed the future
-// lenses/patch-bay. The Admin is the implicit viewer (not a node).
+// Inert mock DaemonNet: one unified, typed seed is the single source for the whole mock UI. It
+// builds the fleet-of-fleets supervision units, the sessions (each with content + tags + owning
+// unit + its authoritative `sessionId`), the tags, and the transport combos (matrix DM / internal
+// room / channel / peers / spectator). The session store copies `seed()`; the
+// `fleet()`/`sessions()` projections feed the Fleet/Sessions pages; `channels()`/`byPeer()` +
+// `nodes()`/`edges()` feed the future lenses/patch-bay. The Admin is the implicit viewer (not a
+// node).
 class MockDaemonNet : public IDaemonNet {
     Q_OBJECT
 
@@ -39,8 +39,7 @@ public:
 
     [[nodiscard]] SeedBundle seed() const override;
 
-    [[nodiscard]] QList<domain::UnitNode>
-    unitChildren(const domain::UnitId& parent) const override;
+    [[nodiscard]] QList<domain::UnitNode> unitChildren(const domain::UnitId& parent) const override;
     [[nodiscard]] domain::UnitNode unit(const domain::UnitId& id) const override;
     [[nodiscard]] QList<domain::Tag> tags() const override;
     [[nodiscard]] QList<domain::Participant> participants() const override;
@@ -68,10 +67,13 @@ public:
                      const domain::ProfileRef& profile) override;
 
 private:
-    // True when `unitId` is `rootId` or any descendant of it (parent-chain walk); the Unit-scope fold.
-    [[nodiscard]] bool isInSubtree(const domain::UnitId& unitId, const domain::UnitId& rootId) const;
+    // True when `unitId` is `rootId` or any descendant of it (parent-chain walk); the Unit-scope
+    // fold.
+    [[nodiscard]] bool isInSubtree(const domain::UnitId& unitId,
+                                   const domain::UnitId& rootId) const;
     // The set of session ids bound to `lensKey` by an edge of `edgeKind` (Over / Participant).
-    [[nodiscard]] QSet<QString> sessionsBoundBy(const QString& edgeKind, const QString& lensKey) const;
+    [[nodiscard]] QSet<QString> sessionsBoundBy(const QString& edgeKind,
+                                                const QString& lensKey) const;
     void buildSeed();
     void buildTransportsTree();
     void buildRoutingSeed();

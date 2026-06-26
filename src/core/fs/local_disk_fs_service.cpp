@@ -1,5 +1,6 @@
 #include "fs/local_disk_fs_service.h"
 
+#include <functional>
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
@@ -9,19 +10,16 @@
 #include <QSaveFile>
 #include <QTimer>
 
-#include <functional>
-
 namespace fs {
 namespace {
 
-constexpr qint64 kMaxReadBytes = 5 * 1024 * 1024;     // skip huge files in the viewer
-constexpr int kMaxSearchFiles = 5000;                 // dev-impl walk caps
+constexpr qint64 kMaxReadBytes = 5 * 1024 * 1024; // skip huge files in the viewer
+constexpr int kMaxSearchFiles = 5000;             // dev-impl walk caps
 constexpr int kMaxSearchHits = 1000;
 constexpr qint64 kMaxSearchFileBytes = 2 * 1024 * 1024;
 
 // Natural, directories-first ordering (port of Lite XL's path_compare semantics).
-bool entryLess(const FsEntry& a, const FsEntry& b)
-{
+bool entryLess(const FsEntry& a, const FsEntry& b) {
     if (a.isDir != b.isDir)
         return a.isDir; // directories first
     const QString& x = a.name;
@@ -58,8 +56,7 @@ bool entryLess(const FsEntry& a, const FsEntry& b)
     return (x.size() - i) < (y.size() - j);
 }
 
-bool looksBinary(const QByteArray& head)
-{
+bool looksBinary(const QByteArray& head) {
     const int n = static_cast<int>(qMin<qsizetype>(head.size(), 8000));
     for (int i = 0; i < n; ++i) {
         if (head.at(i) == '\0')
@@ -68,8 +65,7 @@ bool looksBinary(const QByteArray& head)
     return false;
 }
 
-QString expandHome(QString path)
-{
+QString expandHome(QString path) {
     path = path.trimmed();
     if (path == QStringLiteral("~")) {
         return QDir::homePath();
@@ -84,9 +80,7 @@ QString expandHome(QString path)
 
 LocalDiskFsService::LocalDiskFsService(const QString& rootPath, const QString& label,
                                        QObject* parent)
-    : IFsService(parent)
-    , m_watcher(new QFileSystemWatcher(this))
-{
+    : IFsService(parent), m_watcher(new QFileSystemWatcher(this)) {
     registerFsMetatypes();
 
     QString base = expandHome(rootPath);
@@ -121,8 +115,7 @@ LocalDiskFsService::LocalDiskFsService(const QString& rootPath, const QString& l
 
 LocalDiskFsService::~LocalDiskFsService() = default;
 
-QString LocalDiskFsService::resolve(const QString& rootId, const QString& path) const
-{
+QString LocalDiskFsService::resolve(const QString& rootId, const QString& path) const {
     const auto it = m_roots.constFind(rootId);
     if (it == m_roots.constEnd())
         return {};
@@ -149,8 +142,7 @@ QString LocalDiskFsService::resolve(const QString& rootId, const QString& path) 
     return contained;
 }
 
-bool LocalDiskFsService::relativize(const QString& absPath, QString& rootId, QString& rel) const
-{
+bool LocalDiskFsService::relativize(const QString& absPath, QString& rootId, QString& rel) const {
     const QString abs = QDir::cleanPath(absPath);
     for (auto it = m_roots.constBegin(); it != m_roots.constEnd(); ++it) {
         if (abs == it->base) {
@@ -167,35 +159,31 @@ bool LocalDiskFsService::relativize(const QString& absPath, QString& rootId, QSt
     return false;
 }
 
-bool LocalDiskFsService::isIgnored(const QString& name)
-{
+bool LocalDiskFsService::isIgnored(const QString& name) {
     static const QStringList kIgnored = {
-        QStringLiteral(".git"),    QStringLiteral(".hg"),      QStringLiteral(".svn"),
-        QStringLiteral("node_modules"), QStringLiteral("target"), QStringLiteral(".cache"),
-        QStringLiteral("__pycache__"), QStringLiteral(".direnv"), QStringLiteral(".venv"),
+        QStringLiteral(".git"),         QStringLiteral(".hg"),     QStringLiteral(".svn"),
+        QStringLiteral("node_modules"), QStringLiteral("target"),  QStringLiteral(".cache"),
+        QStringLiteral("__pycache__"),  QStringLiteral(".direnv"), QStringLiteral(".venv"),
     };
     return kIgnored.contains(name);
 }
 
-QString LocalDiskFsService::revisionFor(const QString& absPath)
-{
+QString LocalDiskFsService::revisionFor(const QString& absPath) {
     const QFileInfo fi(absPath);
     if (!fi.exists())
         return {};
     return QStringLiteral("%1:%2").arg(fi.lastModified().toMSecsSinceEpoch()).arg(fi.size());
 }
 
-void LocalDiskFsService::listRoots()
-{
+void LocalDiskFsService::listRoots() {
     QList<FsRoot> roots;
     for (auto it = m_roots.constBegin(); it != m_roots.constEnd(); ++it)
-        roots.push_back(FsRoot{ it->id, it->label, QString() });
+        roots.push_back(FsRoot{it->id, it->label, QString()});
     QMetaObject::invokeMethod(
         this, [this, roots] { emit rootsChanged(roots); }, Qt::QueuedConnection);
 }
 
-void LocalDiskFsService::open(const QString& rootId, const QString& dir)
-{
+void LocalDiskFsService::open(const QString& rootId, const QString& dir) {
     const QString abs = resolve(rootId, dir);
     if (abs.isEmpty()) {
         QMetaObject::invokeMethod(
@@ -226,8 +214,7 @@ void LocalDiskFsService::open(const QString& rootId, const QString& dir)
         Qt::QueuedConnection);
 }
 
-void LocalDiskFsService::stat(const QString& rootId, const QString& path)
-{
+void LocalDiskFsService::stat(const QString& rootId, const QString& path) {
     const QString abs = resolve(rootId, path);
     const QFileInfo fi(abs);
     FsEntry e;
@@ -246,12 +233,12 @@ void LocalDiskFsService::stat(const QString& rootId, const QString& path)
         Qt::QueuedConnection);
 }
 
-void LocalDiskFsService::read(const QString& rootId, const QString& path)
-{
+void LocalDiskFsService::read(const QString& rootId, const QString& path) {
     const QString abs = resolve(rootId, path);
     if (abs.isEmpty()) {
         QMetaObject::invokeMethod(
-            this, [this, rootId, path] { emit error(rootId, path, QStringLiteral("invalid path")); },
+            this,
+            [this, rootId, path] { emit error(rootId, path, QStringLiteral("invalid path")); },
             Qt::QueuedConnection);
         return;
     }
@@ -276,8 +263,7 @@ void LocalDiskFsService::read(const QString& rootId, const QString& path)
 }
 
 void LocalDiskFsService::write(const QString& rootId, const QString& path, const QByteArray& bytes,
-                               const QString& baseRevision, bool force)
-{
+                               const QString& baseRevision, bool force) {
     const QString abs = resolve(rootId, path);
     if (abs.isEmpty()) {
         QMetaObject::invokeMethod(
@@ -319,8 +305,8 @@ void LocalDiskFsService::write(const QString& rootId, const QString& path, const
         Qt::QueuedConnection);
 }
 
-void LocalDiskFsService::search(const QString& rootId, const QString& query, const QVariantMap& opts)
-{
+void LocalDiskFsService::search(const QString& rootId, const QString& query,
+                                const QVariantMap& opts) {
     const QString abs = resolve(rootId, QString());
     QList<FsSearchHit> hits;
     if (abs.isEmpty() || query.isEmpty()) {
@@ -354,8 +340,8 @@ void LocalDiskFsService::search(const QString& rootId, const QString& query, con
         const QFileInfo fi = it.fileInfo();
         // Skip ignored ancestors and oversized files.
         bool skip = fi.size() > kMaxSearchFileBytes;
-        for (const QString& part : fi.absolutePath().mid(abs.size()).split(QLatin1Char('/'),
-                                                                           Qt::SkipEmptyParts)) {
+        for (const QString& part :
+             fi.absolutePath().mid(abs.size()).split(QLatin1Char('/'), Qt::SkipEmptyParts)) {
             if (isIgnored(part)) {
                 skip = true;
                 break;
@@ -391,7 +377,7 @@ void LocalDiskFsService::search(const QString& rootId, const QString& query, con
                 col = static_cast<int>(line.indexOf(query, 0, cs));
             }
             if (col >= 0)
-                hits.push_back(FsSearchHit{ rootRel, lineNo, col + 1, line });
+                hits.push_back(FsSearchHit{rootRel, lineNo, col + 1, line});
         }
         f.close();
     }
@@ -400,8 +386,7 @@ void LocalDiskFsService::search(const QString& rootId, const QString& query, con
         Qt::QueuedConnection);
 }
 
-void LocalDiskFsService::watch(const QString& rootId, const QString& dir)
-{
+void LocalDiskFsService::watch(const QString& rootId, const QString& dir) {
     const QString abs = resolve(rootId, dir);
     if (abs.isEmpty() || m_watched.contains(abs))
         return;
@@ -409,8 +394,7 @@ void LocalDiskFsService::watch(const QString& rootId, const QString& dir)
         m_watched.insert(abs, qMakePair(rootId, dir));
 }
 
-void LocalDiskFsService::unwatch(const QString& rootId, const QString& dir)
-{
+void LocalDiskFsService::unwatch(const QString& rootId, const QString& dir) {
     const QString abs = resolve(rootId, dir);
     if (abs.isEmpty())
         return;

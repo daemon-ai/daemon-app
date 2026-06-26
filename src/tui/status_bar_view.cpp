@@ -1,25 +1,21 @@
 #include "status_bar_view.h"
 
+#include "status_bar_model.h"
 #include "tui_palette.h"
 
-#include "status_bar_model.h"
-
+#include <QRect>
+#include <QSize>
 #include <Tui/ZColor.h>
 #include <Tui/ZEvent.h>
 #include <Tui/ZPainter.h>
 
-#include <QRect>
-#include <QSize>
-
 namespace {
 
-Span mkSpan(const QString& text, const Tui::ZColor& fg)
-{
-    return Span { text, fg, tpal::surfaceAlt(), {} };
+Span mkSpan(const QString& text, const Tui::ZColor& fg) {
+    return Span{text, fg, tpal::surfaceAlt(), {}};
 }
 
-int spansWidth(const QVector<Span>& spans)
-{
+int spansWidth(const QVector<Span>& spans) {
     int n = 0;
     for (const Span& s : spans) {
         n += static_cast<int>(s.text.size());
@@ -27,15 +23,13 @@ int spansWidth(const QVector<Span>& spans)
     return n;
 }
 
-QString separator()
-{
+QString separator() {
     return QStringLiteral("  \u00b7  ");
 }
 
 } // namespace
 
-StatusBarView::StatusBarView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
-{
+StatusBarView::StatusBarView(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
     setMaximumSize(Tui::tuiMaxSize, 1);
     setSizePolicyV(Tui::SizePolicy::Fixed);
     setSizePolicyH(Tui::SizePolicy::Expanding);
@@ -46,8 +40,7 @@ StatusBarView::StatusBarView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
     });
 }
 
-void StatusBarView::setModel(StatusBarModel* model)
-{
+void StatusBarView::setModel(StatusBarModel* model) {
     m_model = model;
     if (m_model != nullptr) {
         const auto repaint = [this] { update(); };
@@ -68,13 +61,11 @@ void StatusBarView::setModel(StatusBarModel* model)
     update();
 }
 
-QSize StatusBarView::sizeHint() const
-{
-    return { 40, 1 };
+QSize StatusBarView::sizeHint() const {
+    return {40, 1};
 }
 
-void StatusBarView::syncSpinner()
-{
+void StatusBarView::syncSpinner() {
     if (m_model != nullptr && m_model->busy()) {
         if (!m_spinner.isActive()) {
             m_spinner.start();
@@ -84,8 +75,7 @@ void StatusBarView::syncSpinner()
     }
 }
 
-QVector<Span> StatusBarView::buildLeft() const
-{
+QVector<Span> StatusBarView::buildLeft() const {
     QVector<Span> spans;
     if (m_model == nullptr) {
         return spans;
@@ -106,22 +96,22 @@ QVector<Span> StatusBarView::buildLeft() const
     return spans;
 }
 
-QVector<Span> StatusBarView::buildRight() const
-{
+QVector<Span> StatusBarView::buildRight() const {
     QVector<Span> spans;
     if (m_model == nullptr) {
         return spans;
     }
 
     if (m_model->busy()) {
-        spans << mkSpan(tpal::spinnerFrame(m_spinnerTick) + QStringLiteral(" ") + m_model->turnElapsed(),
+        spans << mkSpan(tpal::spinnerFrame(m_spinnerTick) + QStringLiteral(" ") +
+                            m_model->turnElapsed(),
                         tpal::accent())
               << mkSpan(separator(), tpal::muted());
     }
 
     // Context: label + colored ASCII gauge (fill vs track).
-    spans << mkSpan(tpal::contextGlyph() + QStringLiteral(" ") + m_model->contextLabel()
-                        + QStringLiteral(" "),
+    spans << mkSpan(tpal::contextGlyph() + QStringLiteral(" ") + m_model->contextLabel() +
+                        QStringLiteral(" "),
                     tpal::muted());
     const QString bar = m_model->contextBar();
     for (const QChar ch : bar) {
@@ -160,8 +150,7 @@ QVector<Span> StatusBarView::buildRight() const
     return spans;
 }
 
-void StatusBarView::paintEvent(Tui::ZPaintEvent* event)
-{
+void StatusBarView::paintEvent(Tui::ZPaintEvent* event) {
     Tui::ZPainter* p = event->painter();
     p->clear(tpal::fg(), tpal::surfaceAlt());
 

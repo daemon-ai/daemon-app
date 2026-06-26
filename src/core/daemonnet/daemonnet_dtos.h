@@ -28,29 +28,40 @@ enum class EdgeKind {
     Delegation,  // Agent -> Agent
 };
 
-[[nodiscard]] inline QString nodeKindStr(NodeKind k)
-{
+[[nodiscard]] inline QString nodeKindStr(NodeKind k) {
     switch (k) {
-    case NodeKind::Agent: return QStringLiteral("agent");
-    case NodeKind::Peer: return QStringLiteral("peer");
-    case NodeKind::User: return QStringLiteral("user");
-    case NodeKind::Session: return QStringLiteral("session");
-    case NodeKind::Room: return QStringLiteral("room");
-    case NodeKind::Channel: return QStringLiteral("channel");
-    case NodeKind::Transport: return QStringLiteral("transport");
-    case NodeKind::Host: return QStringLiteral("host");
+    case NodeKind::Agent:
+        return QStringLiteral("agent");
+    case NodeKind::Peer:
+        return QStringLiteral("peer");
+    case NodeKind::User:
+        return QStringLiteral("user");
+    case NodeKind::Session:
+        return QStringLiteral("session");
+    case NodeKind::Room:
+        return QStringLiteral("room");
+    case NodeKind::Channel:
+        return QStringLiteral("channel");
+    case NodeKind::Transport:
+        return QStringLiteral("transport");
+    case NodeKind::Host:
+        return QStringLiteral("host");
     }
     return QStringLiteral("unknown");
 }
 
-[[nodiscard]] inline QString edgeKindStr(EdgeKind k)
-{
+[[nodiscard]] inline QString edgeKindStr(EdgeKind k) {
     switch (k) {
-    case EdgeKind::Runs: return QStringLiteral("runs");
-    case EdgeKind::Over: return QStringLiteral("over");
-    case EdgeKind::Participant: return QStringLiteral("participant");
-    case EdgeKind::InPlace: return QStringLiteral("inPlace");
-    case EdgeKind::Delegation: return QStringLiteral("delegation");
+    case EdgeKind::Runs:
+        return QStringLiteral("runs");
+    case EdgeKind::Over:
+        return QStringLiteral("over");
+    case EdgeKind::Participant:
+        return QStringLiteral("participant");
+    case EdgeKind::InPlace:
+        return QStringLiteral("inPlace");
+    case EdgeKind::Delegation:
+        return QStringLiteral("delegation");
     }
     return QStringLiteral("unknown");
 }

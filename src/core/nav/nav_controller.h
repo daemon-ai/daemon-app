@@ -45,8 +45,7 @@ signals:
     void openRequested(const QString& page, const QString& section);
     // Fired on openAgent(): open/raise a per-agent (ProfileRef-keyed) Memory or
     // Profile tab. Both front ends route this to TabModel::openAgentTab.
-    void openAgentRequested(const QString& kind, const QString& profileRef,
-                            const QString& title);
+    void openAgentRequested(const QString& kind, const QString& profileRef, const QString& title);
     void closeRequested();
 
 private:

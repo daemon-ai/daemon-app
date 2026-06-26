@@ -1,21 +1,16 @@
 #include "tui_file_tab_controller.h"
 
+#include "app/code_editor_controller.h"
 #include "code_editor_view.h"
+#include "fs/ifs_service.h"
 #include "tab_model.h"
 #include "tui_palette.h"
 
-#include "app/code_editor_controller.h"
-#include "fs/ifs_service.h"
-
 #include <Tui/ZLabel.h>
-
 #include <utility>
 
 TuiFileTabController::TuiFileTabController(fs::IFsService* fs, TabModel* tabs, QObject* parent)
-    : QObject(parent)
-    , m_fs(fs)
-    , m_tabs(tabs)
-{
+    : QObject(parent), m_fs(fs), m_tabs(tabs) {
     if (m_fs == nullptr) {
         return;
     }
@@ -45,18 +40,15 @@ TuiFileTabController::TuiFileTabController(fs::IFsService* fs, TabModel* tabs, Q
             });
 }
 
-void TuiFileTabController::setStatusLabel(Tui::ZLabel* label)
-{
+void TuiFileTabController::setStatusLabel(Tui::ZLabel* label) {
     m_status = label;
 }
 
-QString TuiFileTabController::keyFor(const QString& rootId, const QString& path) const
-{
+QString TuiFileTabController::keyFor(const QString& rootId, const QString& path) const {
     return rootId + QChar(0x1f) + path;
 }
 
-editor::CodeEditorController* TuiFileTabController::ensureFileSession(int tabId)
-{
+editor::CodeEditorController* TuiFileTabController::ensureFileSession(int tabId) {
     if (m_fileSessions.contains(tabId))
         return m_fileSessions.value(tabId);
     if (m_tabs == nullptr)
@@ -70,22 +62,20 @@ editor::CodeEditorController* TuiFileTabController::ensureFileSession(int tabId)
     m_activePath = path;
 
     auto* c = new editor::CodeEditorController(this);
-    c->setDarkTheme(tpal::activeTheme() != theme::ThemeName::Light
-                    && tpal::activeTheme() != theme::ThemeName::Sepia);
+    c->setDarkTheme(tpal::activeTheme() != theme::ThemeName::Light &&
+                    tpal::activeTheme() != theme::ThemeName::Sepia);
     m_fileSessions.insert(tabId, c);
     m_fileByKey.insert(keyFor(rootId, path), c);
-    connect(c, &editor::CodeEditorController::modifiedChanged, this,
-            [this, tabId, c] {
-                if (m_tabs != nullptr)
-                    m_tabs->setDirtyById(tabId, c->modified());
-            });
+    connect(c, &editor::CodeEditorController::modifiedChanged, this, [this, tabId, c] {
+        if (m_tabs != nullptr)
+            m_tabs->setDirtyById(tabId, c->modified());
+    });
     if (m_fs != nullptr)
         m_fs->read(rootId, path);
     return c;
 }
 
-bool TuiFileTabController::destroySession(int tabId, CodeEditorView* editorView)
-{
+bool TuiFileTabController::destroySession(int tabId, CodeEditorView* editorView) {
     auto fit = m_fileSessions.find(tabId);
     if (fit == m_fileSessions.end()) {
         return false;
@@ -104,17 +94,15 @@ bool TuiFileTabController::destroySession(int tabId, CodeEditorView* editorView)
     return true;
 }
 
-void TuiFileTabController::saveActive(CodeEditorView* editorView)
-{
-    if (m_fs != nullptr && editorView != nullptr && editorView->controller() != nullptr
-        && !m_activePath.isEmpty()) {
+void TuiFileTabController::saveActive(CodeEditorView* editorView) {
+    if (m_fs != nullptr && editorView != nullptr && editorView->controller() != nullptr &&
+        !m_activePath.isEmpty()) {
         m_fs->write(m_activeRoot, m_activePath, editorView->controller()->textBytes(),
                     editorView->controller()->revision(), false);
     }
 }
 
-void TuiFileTabController::setDarkTheme(bool dark)
-{
+void TuiFileTabController::setDarkTheme(bool dark) {
     for (editor::CodeEditorController* c : std::as_const(m_fileSessions)) {
         c->setDarkTheme(dark);
     }

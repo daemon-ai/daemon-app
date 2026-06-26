@@ -2,6 +2,7 @@
 
 #include "diagram/geometry/path_mesh.h"
 
+#include <cstring>
 #include <QMatrix4x4>
 #include <QPainterPath>
 #include <QQuickWindow>
@@ -10,8 +11,6 @@
 #include <QSGTextNode>
 #include <QSGTransformNode>
 #include <QSGVertexColorMaterial>
-
-#include <cstring>
 
 namespace be::app {
 
@@ -23,15 +22,14 @@ namespace {
 
 constexpr qreal kPad = 6.0;
 
-QSGGeometryNode *buildMeshNode(const Mesh &mesh)
-{
+QSGGeometryNode* buildMeshNode(const Mesh& mesh) {
     if (mesh.isEmpty()) {
         return nullptr;
     }
-    auto *node = new QSGGeometryNode;
-    auto *geometry = new QSGGeometry(QSGGeometry::defaultAttributes_ColoredPoint2D(),
-                                     mesh.vertices.size(), mesh.indices.size(),
-                                     QSGGeometry::UnsignedShortType);
+    auto* node = new QSGGeometryNode;
+    auto* geometry =
+        new QSGGeometry(QSGGeometry::defaultAttributes_ColoredPoint2D(), mesh.vertices.size(),
+                        mesh.indices.size(), QSGGeometry::UnsignedShortType);
     geometry->setDrawingMode(QSGGeometry::DrawTriangles);
     std::memcpy(geometry->vertexData(), mesh.vertices.constData(),
                 size_t(mesh.vertices.size()) * sizeof(Vertex));
@@ -39,15 +37,14 @@ QSGGeometryNode *buildMeshNode(const Mesh &mesh)
                 size_t(mesh.indices.size()) * sizeof(quint16));
     node->setGeometry(geometry);
     node->setFlag(QSGNode::OwnsGeometry);
-    auto *material = new QSGVertexColorMaterial;
+    auto* material = new QSGVertexColorMaterial;
     node->setMaterial(material);
     node->setFlag(QSGNode::OwnsMaterial);
     return node;
 }
 
-void clearChildren(QSGNode *node)
-{
-    while (QSGNode *child = node->firstChild()) {
+void clearChildren(QSGNode* node) {
+    while (QSGNode* child = node->firstChild()) {
         node->removeChildNode(child);
         delete child;
     }
@@ -55,14 +52,11 @@ void clearChildren(QSGNode *node)
 
 } // namespace
 
-DiagramItem::DiagramItem(QQuickItem *parent)
-    : QQuickItem(parent)
-{
+DiagramItem::DiagramItem(QQuickItem* parent) : QQuickItem(parent) {
     setFlag(ItemHasContents, true);
 }
 
-void DiagramItem::setController(DiagramController *controller)
-{
+void DiagramItem::setController(DiagramController* controller) {
     if (m_controller == controller) {
         return;
     }
@@ -78,8 +72,7 @@ void DiagramItem::setController(DiagramController *controller)
     onSnapshotChanged();
 }
 
-void DiagramItem::setZoom(qreal zoom)
-{
+void DiagramItem::setZoom(qreal zoom) {
     zoom = qBound(0.2, zoom, 6.0);
     if (qFuzzyCompare(m_zoom, zoom)) {
         return;
@@ -89,8 +82,7 @@ void DiagramItem::setZoom(qreal zoom)
     update();
 }
 
-void DiagramItem::setPanX(qreal v)
-{
+void DiagramItem::setPanX(qreal v) {
     if (qFuzzyCompare(m_panX, v)) {
         return;
     }
@@ -99,8 +91,7 @@ void DiagramItem::setPanX(qreal v)
     update();
 }
 
-void DiagramItem::setPanY(qreal v)
-{
+void DiagramItem::setPanY(qreal v) {
     if (qFuzzyCompare(m_panY, v)) {
         return;
     }
@@ -109,8 +100,7 @@ void DiagramItem::setPanY(qreal v)
     update();
 }
 
-void DiagramItem::setSelectedId(const QString &id)
-{
+void DiagramItem::setSelectedId(const QString& id) {
     if (m_selectedId == id) {
         return;
     }
@@ -120,13 +110,11 @@ void DiagramItem::setSelectedId(const QString &id)
     update();
 }
 
-qreal DiagramItem::contentScale() const
-{
+qreal DiagramItem::contentScale() const {
     return fitScale() * m_zoom;
 }
 
-qreal DiagramItem::fitScale() const
-{
+qreal DiagramItem::fitScale() const {
     if (!m_controller) {
         return 1.0;
     }
@@ -138,8 +126,7 @@ qreal DiagramItem::fitScale() const
     return avail < w ? avail / w : 1.0;
 }
 
-void DiagramItem::onSnapshotChanged()
-{
+void DiagramItem::onSnapshotChanged() {
     m_geometryDirty = true;
     m_highlightDirty = true;
     updateImplicitSize();
@@ -147,8 +134,7 @@ void DiagramItem::onSnapshotChanged()
     update();
 }
 
-void DiagramItem::updateImplicitSize()
-{
+void DiagramItem::updateImplicitSize() {
     qreal h = 0.0;
     if (m_controller) {
         h = m_controller->diagramHeight() * fitScale();
@@ -156,8 +142,7 @@ void DiagramItem::updateImplicitSize()
     setImplicitHeight(h > 0.0 ? h + 2 * kPad : 0.0);
 }
 
-void DiagramItem::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
-{
+void DiagramItem::geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry) {
     QQuickItem::geometryChange(newGeometry, oldGeometry);
     if (newGeometry.width() != oldGeometry.width()) {
         updateImplicitSize();
@@ -165,8 +150,7 @@ void DiagramItem::geometryChange(const QRectF &newGeometry, const QRectF &oldGeo
     }
 }
 
-QPointF DiagramItem::toDiagram(const QPointF &itemPoint) const
-{
+QPointF DiagramItem::toDiagram(const QPointF& itemPoint) const {
     if (!m_controller) {
         return itemPoint;
     }
@@ -183,8 +167,7 @@ QPointF DiagramItem::toDiagram(const QPointF &itemPoint) const
                    (itemPoint.y() - offsetY) / scale + bounds.top());
 }
 
-QString DiagramItem::hitTest(const QPointF &itemPoint) const
-{
+QString DiagramItem::hitTest(const QPointF& itemPoint) const {
     if (!m_controller) {
         return {};
     }
@@ -194,12 +177,12 @@ QString DiagramItem::hitTest(const QPointF &itemPoint) const
     }
     const QPointF p = toDiagram(itemPoint);
     // Nodes first (top of z-order for picking), then edges.
-    for (const auto &hit : snap->hits) {
+    for (const auto& hit : snap->hits) {
         if (hit.kind == be::diagram::HitKind::Node && hit.bounds.contains(p)) {
             return hit.id;
         }
     }
-    for (const auto &hit : snap->hits) {
+    for (const auto& hit : snap->hits) {
         if (hit.kind == be::diagram::HitKind::Edge && hit.bounds.contains(p)) {
             return hit.id;
         }
@@ -207,8 +190,7 @@ QString DiagramItem::hitTest(const QPointF &itemPoint) const
     return {};
 }
 
-void DiagramItem::setHoverAt(const QPointF &itemPoint)
-{
+void DiagramItem::setHoverAt(const QPointF& itemPoint) {
     const QString id = hitTest(itemPoint);
     if (id == m_hoverId) {
         return;
@@ -219,8 +201,7 @@ void DiagramItem::setHoverAt(const QPointF &itemPoint)
     update();
 }
 
-void DiagramItem::zoomAt(qreal factor, const QPointF &itemPoint)
-{
+void DiagramItem::zoomAt(qreal factor, const QPointF& itemPoint) {
     const QPointF before = toDiagram(itemPoint);
     setZoom(m_zoom * factor);
     const QPointF after = toDiagram(itemPoint);
@@ -232,8 +213,7 @@ void DiagramItem::zoomAt(qreal factor, const QPointF &itemPoint)
     update();
 }
 
-void DiagramItem::resetView()
-{
+void DiagramItem::resetView() {
     m_zoom = 1.0;
     m_panX = 0.0;
     m_panY = 0.0;
@@ -242,11 +222,10 @@ void DiagramItem::resetView()
     update();
 }
 
-QSGNode *DiagramItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
-{
-    auto *camera = static_cast<QSGTransformNode *>(oldNode);
-    QSGNode *content = nullptr;
-    QSGGeometryNode *highlight = nullptr;
+QSGNode* DiagramItem::updatePaintNode(QSGNode* oldNode, UpdatePaintNodeData*) {
+    auto* camera = static_cast<QSGTransformNode*>(oldNode);
+    QSGNode* content = nullptr;
+    QSGGeometryNode* highlight = nullptr;
 
     if (!camera) {
         camera = new QSGTransformNode;
@@ -276,14 +255,14 @@ QSGNode *DiagramItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     if (m_geometryDirty || rev != m_builtRevision) {
         clearChildren(content);
         if (snap && !snap->hasError) {
-            for (const Mesh *mesh : {&snap->clusters, &snap->edges, &snap->arrowheads,
+            for (const Mesh* mesh : {&snap->clusters, &snap->edges, &snap->arrowheads,
                                      &snap->nodeBorders, &snap->nodeFills}) {
-                if (QSGGeometryNode *node = buildMeshNode(*mesh)) {
+                if (QSGGeometryNode* node = buildMeshNode(*mesh)) {
                     content->appendChildNode(node);
                 }
             }
             if (!snap->labels.isEmpty() && window()) {
-                for (const auto &label : snap->labels) {
+                for (const auto& label : snap->labels) {
                     if (!label.layout) {
                         continue;
                     }
@@ -291,7 +270,7 @@ QSGNode *DiagramItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
                     if (m_lodTier == 0 && label.layout->boundingRect().height() < 16.0) {
                         continue;
                     }
-                    QSGTextNode *textNode = window()->createTextNode();
+                    QSGTextNode* textNode = window()->createTextNode();
                     textNode->setFlag(QSGNode::OwnedByParent);
                     textNode->setColor(label.color);
                     textNode->addTextLayout(label.origin, label.layout.get());
@@ -305,7 +284,7 @@ QSGNode *DiagramItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     }
 
     // Highlight node (hover/selection outline) lives after content.
-    QSGNode *maybeHighlight = content->nextSibling();
+    QSGNode* maybeHighlight = content->nextSibling();
     if (m_highlightDirty) {
         if (maybeHighlight) {
             camera->removeChildNode(maybeHighlight);
@@ -313,11 +292,11 @@ QSGNode *DiagramItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
         }
         if (snap) {
             Mesh hl;
-            const auto addOutline = [&](const QString &id, const QColor &color) {
+            const auto addOutline = [&](const QString& id, const QColor& color) {
                 if (id.isEmpty()) {
                     return;
                 }
-                for (const auto &hit : snap->hits) {
+                for (const auto& hit : snap->hits) {
                     if (hit.id == id) {
                         QPainterPath p;
                         p.addRoundedRect(hit.bounds.adjusted(-1, -1, 1, 1), 4, 4);

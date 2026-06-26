@@ -1,9 +1,8 @@
 #pragma once
 
-#include <QObject>
 #include <QHash>
+#include <QObject>
 #include <QString>
-
 #include <Tui/ZLabel.h>
 
 namespace editor {

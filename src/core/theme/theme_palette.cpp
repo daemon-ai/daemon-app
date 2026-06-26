@@ -10,8 +10,7 @@ namespace {
 // Midnight. QColor::fromString accepts "#rrggbb" and "#aarrggbb" (e.g. the
 // translucent listSeparator in Dark).
 QColor pick(ThemeName t, const char* light, const char* dark, const char* sepia,
-            const char* midnight)
-{
+            const char* midnight) {
     switch (t) {
     case ThemeName::Light:
         return QColor::fromString(QLatin1String(light));
@@ -25,77 +24,73 @@ QColor pick(ThemeName t, const char* light, const char* dark, const char* sepia,
     return {};
 }
 
-const QHash<QString, Token>& tokenIndex()
-{
+const QHash<QString, Token>& tokenIndex() {
     static const QHash<QString, Token> index = {
-        { QStringLiteral("background"), Token::Background },
-        { QStringLiteral("listBackground"), Token::ListBackground },
-        { QStringLiteral("sidebar"), Token::Sidebar },
-        { QStringLiteral("border"), Token::Border },
-        { QStringLiteral("splitter"), Token::Splitter },
-        { QStringLiteral("text"), Token::Text },
-        { QStringLiteral("textMuted"), Token::TextMuted },
-        { QStringLiteral("countText"), Token::CountText },
-        { QStringLiteral("hover"), Token::Hover },
-        { QStringLiteral("pressed"), Token::Pressed },
-        { QStringLiteral("rowHover"), Token::RowHover },
-        { QStringLiteral("rowActive"), Token::RowActive },
-        { QStringLiteral("rowActiveInactive"), Token::RowActiveInactive },
-        { QStringLiteral("accent"), Token::Accent },
-        { QStringLiteral("sidebarText"), Token::SidebarText },
-        { QStringLiteral("listText"), Token::ListText },
-        { QStringLiteral("listSnippet"), Token::ListSnippet },
-        { QStringLiteral("listSeparator"), Token::ListSeparator },
-        { QStringLiteral("searchBackground"), Token::SearchBackground },
-        { QStringLiteral("searchBorder"), Token::SearchBorder },
-        { QStringLiteral("searchFocusBorder"), Token::SearchFocusBorder },
-        { QStringLiteral("searchText"), Token::SearchText },
-        { QStringLiteral("searchSelection"), Token::SearchSelection },
-        { QStringLiteral("codeBackground"), Token::CodeBackground },
-        { QStringLiteral("surfaceRaised"), Token::SurfaceRaised },
-        { QStringLiteral("activeBlockBackground"), Token::ActiveBlockBackground },
-        { QStringLiteral("activeBlockBorder"), Token::ActiveBlockBorder },
-        { QStringLiteral("toolHeader"), Token::ToolHeader },
-        { QStringLiteral("statusOk"), Token::StatusOk },
-        { QStringLiteral("diffAddBackground"), Token::DiffAddBackground },
-        { QStringLiteral("diffDelBackground"), Token::DiffDelBackground },
-        { QStringLiteral("diffAddText"), Token::DiffAddText },
-        { QStringLiteral("diffDelText"), Token::DiffDelText },
-        { QStringLiteral("bubbleUser"), Token::BubbleUser },
-        { QStringLiteral("bubbleUserBorder"), Token::BubbleUserBorder },
-        { QStringLiteral("roleAvatarAssistant"), Token::RoleAvatarAssistant },
-        { QStringLiteral("roleAvatarUserIcon"), Token::RoleAvatarUserIcon },
-        { QStringLiteral("iconColor"), Token::IconColor },
-        { QStringLiteral("iconMuted"), Token::IconMuted },
-        { QStringLiteral("chipLight"), Token::ChipLight },
-        { QStringLiteral("chipDark"), Token::ChipDark },
-        { QStringLiteral("chipSepia"), Token::ChipSepia },
-        { QStringLiteral("chipMidnight"), Token::ChipMidnight },
-        { QStringLiteral("statusBarBackground"), Token::StatusBarBackground },
-        { QStringLiteral("statusBarText"), Token::StatusBarText },
-        { QStringLiteral("statusBarHover"), Token::StatusBarHover },
-        { QStringLiteral("warning"), Token::Warning },
-        { QStringLiteral("danger"), Token::Danger },
+        {QStringLiteral("background"), Token::Background},
+        {QStringLiteral("listBackground"), Token::ListBackground},
+        {QStringLiteral("sidebar"), Token::Sidebar},
+        {QStringLiteral("border"), Token::Border},
+        {QStringLiteral("splitter"), Token::Splitter},
+        {QStringLiteral("text"), Token::Text},
+        {QStringLiteral("textMuted"), Token::TextMuted},
+        {QStringLiteral("countText"), Token::CountText},
+        {QStringLiteral("hover"), Token::Hover},
+        {QStringLiteral("pressed"), Token::Pressed},
+        {QStringLiteral("rowHover"), Token::RowHover},
+        {QStringLiteral("rowActive"), Token::RowActive},
+        {QStringLiteral("rowActiveInactive"), Token::RowActiveInactive},
+        {QStringLiteral("accent"), Token::Accent},
+        {QStringLiteral("sidebarText"), Token::SidebarText},
+        {QStringLiteral("listText"), Token::ListText},
+        {QStringLiteral("listSnippet"), Token::ListSnippet},
+        {QStringLiteral("listSeparator"), Token::ListSeparator},
+        {QStringLiteral("searchBackground"), Token::SearchBackground},
+        {QStringLiteral("searchBorder"), Token::SearchBorder},
+        {QStringLiteral("searchFocusBorder"), Token::SearchFocusBorder},
+        {QStringLiteral("searchText"), Token::SearchText},
+        {QStringLiteral("searchSelection"), Token::SearchSelection},
+        {QStringLiteral("codeBackground"), Token::CodeBackground},
+        {QStringLiteral("surfaceRaised"), Token::SurfaceRaised},
+        {QStringLiteral("activeBlockBackground"), Token::ActiveBlockBackground},
+        {QStringLiteral("activeBlockBorder"), Token::ActiveBlockBorder},
+        {QStringLiteral("toolHeader"), Token::ToolHeader},
+        {QStringLiteral("statusOk"), Token::StatusOk},
+        {QStringLiteral("diffAddBackground"), Token::DiffAddBackground},
+        {QStringLiteral("diffDelBackground"), Token::DiffDelBackground},
+        {QStringLiteral("diffAddText"), Token::DiffAddText},
+        {QStringLiteral("diffDelText"), Token::DiffDelText},
+        {QStringLiteral("bubbleUser"), Token::BubbleUser},
+        {QStringLiteral("bubbleUserBorder"), Token::BubbleUserBorder},
+        {QStringLiteral("roleAvatarAssistant"), Token::RoleAvatarAssistant},
+        {QStringLiteral("roleAvatarUserIcon"), Token::RoleAvatarUserIcon},
+        {QStringLiteral("iconColor"), Token::IconColor},
+        {QStringLiteral("iconMuted"), Token::IconMuted},
+        {QStringLiteral("chipLight"), Token::ChipLight},
+        {QStringLiteral("chipDark"), Token::ChipDark},
+        {QStringLiteral("chipSepia"), Token::ChipSepia},
+        {QStringLiteral("chipMidnight"), Token::ChipMidnight},
+        {QStringLiteral("statusBarBackground"), Token::StatusBarBackground},
+        {QStringLiteral("statusBarText"), Token::StatusBarText},
+        {QStringLiteral("statusBarHover"), Token::StatusBarHover},
+        {QStringLiteral("warning"), Token::Warning},
+        {QStringLiteral("danger"), Token::Danger},
     };
     return index;
 }
 
 } // namespace
 
-bool ThemePalette::isKnown(const QString& name)
-{
-    return name == QStringLiteral("Light") || name == QStringLiteral("Dark")
-        || name == QStringLiteral("Sepia") || name == QStringLiteral("Midnight");
+bool ThemePalette::isKnown(const QString& name) {
+    return name == QStringLiteral("Light") || name == QStringLiteral("Dark") ||
+           name == QStringLiteral("Sepia") || name == QStringLiteral("Midnight");
 }
 
-QStringList ThemePalette::allNames()
-{
-    return { QStringLiteral("Light"), QStringLiteral("Dark"), QStringLiteral("Sepia"),
-             QStringLiteral("Midnight") };
+QStringList ThemePalette::allNames() {
+    return {QStringLiteral("Light"), QStringLiteral("Dark"), QStringLiteral("Sepia"),
+            QStringLiteral("Midnight")};
 }
 
-ThemeName ThemePalette::fromString(const QString& name)
-{
+ThemeName ThemePalette::fromString(const QString& name) {
     if (name == QStringLiteral("Dark")) {
         return ThemeName::Dark;
     }
@@ -108,8 +103,7 @@ ThemeName ThemePalette::fromString(const QString& name)
     return ThemeName::Light;
 }
 
-QString ThemePalette::toString(ThemeName name)
-{
+QString ThemePalette::toString(ThemeName name) {
     switch (name) {
     case ThemeName::Light:
         return QStringLiteral("Light");
@@ -123,13 +117,11 @@ QString ThemePalette::toString(ThemeName name)
     return QStringLiteral("Light");
 }
 
-bool ThemePalette::hasToken(const QString& token)
-{
+bool ThemePalette::hasToken(const QString& token) {
     return tokenIndex().contains(token);
 }
 
-QColor ThemePalette::color(const QString& theme, const QString& token)
-{
+QColor ThemePalette::color(const QString& theme, const QString& token) {
     const auto it = tokenIndex().constFind(token);
     if (it == tokenIndex().constEnd()) {
         return {};
@@ -137,8 +129,7 @@ QColor ThemePalette::color(const QString& theme, const QString& token)
     return color(fromString(theme), it.value());
 }
 
-QColor ThemePalette::color(ThemeName t, Token token)
-{
+QColor ThemePalette::color(ThemeName t, Token token) {
     switch (token) {
     case Token::Background:
         return pick(t, "#ffffff", "#191919", "#fbf0d9", "#0d162d");
@@ -246,12 +237,10 @@ QColor ThemePalette::color(ThemeName t, Token token)
 
 ThemeTokens::ThemeTokens(QObject* parent) : QObject(parent) {}
 
-QColor ThemeTokens::colorFor(const QString& theme, const QString& token) const
-{
+QColor ThemeTokens::colorFor(const QString& theme, const QString& token) const {
     return theme::ThemePalette::color(theme, token);
 }
 
-bool ThemeTokens::isKnownTheme(const QString& name) const
-{
+bool ThemeTokens::isKnownTheme(const QString& name) const {
     return theme::ThemePalette::isKnown(name);
 }

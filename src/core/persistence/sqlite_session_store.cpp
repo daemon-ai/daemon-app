@@ -6,8 +6,8 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStandardPaths>
-#include <QVariant>
 #include <QtGlobal>
+#include <QVariant>
 
 namespace persistence {
 
@@ -21,8 +21,7 @@ using domain::UnitState;
 namespace {
 
 // Serialize a tag-id list as a compact comma-separated string for storage.
-QString joinTagIds(const QList<int>& ids)
-{
+QString joinTagIds(const QList<int>& ids) {
     QStringList parts;
     parts.reserve(ids.size());
     for (int id : ids) {
@@ -31,8 +30,7 @@ QString joinTagIds(const QList<int>& ids)
     return parts.join(QLatin1Char(','));
 }
 
-QList<int> splitTagIds(const QString& csv)
-{
+QList<int> splitTagIds(const QString& csv) {
     QList<int> out;
     if (csv.isEmpty()) {
         return out;
@@ -51,13 +49,12 @@ QList<int> splitTagIds(const QString& csv)
 } // namespace
 
 SqliteSessionStore::SqliteSessionStore(const QString& dbPath, QObject* parent, bool seedDemoData)
-    : InMemorySessionStore(parent, /*seed=*/false)
-    , m_dbPath(dbPath.isEmpty() ? defaultDatabasePath() : dbPath)
-{
+    : InMemorySessionStore(parent, /*seed=*/false),
+      m_dbPath(dbPath.isEmpty() ? defaultDatabasePath() : dbPath) {
     // A unique connection name per instance so multiple stores (GUI + a test, or
     // GUI + TUI in one process) never collide in Qt's global connection registry.
-    m_connectionName = QStringLiteral("daemon-app-sessions-%1")
-                           .arg(reinterpret_cast<quintptr>(this));
+    m_connectionName =
+        QStringLiteral("daemon-app-sessions-%1").arg(reinterpret_cast<quintptr>(this));
 
     openDatabase();
     createSchema();
@@ -75,8 +72,7 @@ SqliteSessionStore::SqliteSessionStore(const QString& dbPath, QObject* parent, b
     connect(this, &ISessionStore::changed, this, &SqliteSessionStore::saveAll);
 }
 
-SqliteSessionStore::~SqliteSessionStore()
-{
+SqliteSessionStore::~SqliteSessionStore() {
     {
         QSqlDatabase db = QSqlDatabase::database(m_connectionName);
         if (db.isOpen()) {
@@ -86,8 +82,7 @@ SqliteSessionStore::~SqliteSessionStore()
     QSqlDatabase::removeDatabase(m_connectionName);
 }
 
-QString SqliteSessionStore::defaultDatabasePath()
-{
+QString SqliteSessionStore::defaultDatabasePath() {
     QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (dir.isEmpty()) {
         dir = QDir::tempPath();
@@ -96,8 +91,7 @@ QString SqliteSessionStore::defaultDatabasePath()
     return dir + QStringLiteral("/sessions.db");
 }
 
-void SqliteSessionStore::openDatabase()
-{
+void SqliteSessionStore::openDatabase() {
     QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), m_connectionName);
     db.setDatabaseName(m_dbPath);
     if (!db.open()) {
@@ -106,8 +100,7 @@ void SqliteSessionStore::openDatabase()
     }
 }
 
-void SqliteSessionStore::createSchema()
-{
+void SqliteSessionStore::createSchema() {
     QSqlDatabase db = QSqlDatabase::database(m_connectionName);
     QSqlQuery q(db);
     q.exec(QStringLiteral("PRAGMA journal_mode=WAL"));
@@ -140,8 +133,7 @@ void SqliteSessionStore::createSchema()
     }
 }
 
-bool SqliteSessionStore::loadAll()
-{
+bool SqliteSessionStore::loadAll() {
     QSqlDatabase db = QSqlDatabase::database(m_connectionName);
 
     m_units.clear();
@@ -189,10 +181,11 @@ bool SqliteSessionStore::loadAll()
         c.isPinned = cq.value(6).toInt() != 0;
         c.created = QDateTime::fromString(cq.value(7).toString(), Qt::ISODate);
         c.modified = QDateTime::fromString(cq.value(8).toString(), Qt::ISODate);
-        // Authoritative id from disk; legacy rows (NULL/empty column) keep the historical local-{id}.
+        // Authoritative id from disk; legacy rows (NULL/empty column) keep the historical
+        // local-{id}.
         const QString storedId = cq.value(9).toString();
-        c.sessionId = domain::SessionId(
-            storedId.isEmpty() ? QStringLiteral("local-%1").arg(c.id) : storedId);
+        c.sessionId =
+            domain::SessionId(storedId.isEmpty() ? QStringLiteral("local-%1").arg(c.id) : storedId);
         m_sessions.push_back(c);
     }
 
@@ -226,8 +219,7 @@ bool SqliteSessionStore::loadAll()
     return !m_sessions.isEmpty() || !m_units.isEmpty();
 }
 
-void SqliteSessionStore::saveAll()
-{
+void SqliteSessionStore::saveAll() {
     QSqlDatabase db = QSqlDatabase::database(m_connectionName);
     if (!db.isOpen()) {
         return;

@@ -1,6 +1,6 @@
-#include <QtTest>
-
 #include "theme/theme_palette.h"
+
+#include <QtTest>
 
 using theme::ThemeName;
 using theme::ThemePalette;
@@ -22,8 +22,7 @@ private slots:
     void unknownTokenIsInvalid();
 };
 
-void ThemePaletteTests::namesRoundTrip()
-{
+void ThemePaletteTests::namesRoundTrip() {
     QCOMPARE(ThemePalette::toString(ThemeName::Light), QStringLiteral("Light"));
     QCOMPARE(ThemePalette::toString(ThemeName::Dark), QStringLiteral("Dark"));
     QCOMPARE(ThemePalette::toString(ThemeName::Sepia), QStringLiteral("Sepia"));
@@ -41,8 +40,7 @@ void ThemePaletteTests::namesRoundTrip()
     QVERIFY(names.contains(QStringLiteral("Midnight")));
 }
 
-void ThemePaletteTests::knownThemes()
-{
+void ThemePaletteTests::knownThemes() {
     QVERIFY(ThemePalette::isKnown(QStringLiteral("Light")));
     QVERIFY(ThemePalette::isKnown(QStringLiteral("Dark")));
     QVERIFY(ThemePalette::isKnown(QStringLiteral("Sepia")));
@@ -51,8 +49,7 @@ void ThemePaletteTests::knownThemes()
     QVERIFY(!ThemePalette::isKnown(QString()));
 }
 
-void ThemePaletteTests::canonicalHexes_data()
-{
+void ThemePaletteTests::canonicalHexes_data() {
     QTest::addColumn<int>("theme");
     QTest::addColumn<QString>("background");
     QTest::addColumn<QString>("sidebar");
@@ -78,8 +75,7 @@ void ThemePaletteTests::canonicalHexes_data()
                               << "#f06a6a";
 }
 
-void ThemePaletteTests::canonicalHexes()
-{
+void ThemePaletteTests::canonicalHexes() {
     QFETCH(int, theme);
     const auto t = static_cast<ThemeName>(theme);
 
@@ -109,8 +105,7 @@ void ThemePaletteTests::canonicalHexes()
              background);
 }
 
-void ThemePaletteTests::tokensDifferBetweenThemes()
-{
+void ThemePaletteTests::tokensDifferBetweenThemes() {
     // Switching themes must actually change tokens (guards a constant table).
     const QString light = ThemePalette::color(ThemeName::Light, Token::Background).name();
     const QString dark = ThemePalette::color(ThemeName::Dark, Token::Background).name();
@@ -122,8 +117,7 @@ void ThemePaletteTests::tokensDifferBetweenThemes()
     QVERIFY(light != midnight);
 }
 
-void ThemePaletteTests::unknownTokenIsInvalid()
-{
+void ThemePaletteTests::unknownTokenIsInvalid() {
     QVERIFY(!ThemePalette::hasToken(QStringLiteral("nope")));
     QVERIFY(!ThemePalette::color(QStringLiteral("Dark"), QStringLiteral("nope")).isValid());
     QVERIFY(ThemePalette::hasToken(QStringLiteral("background")));

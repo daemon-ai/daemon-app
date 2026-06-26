@@ -7,8 +7,7 @@ namespace transports {
 namespace {
 
 QVariantMap adapterRow(const QString& family, const QString& displayName, bool rooms, bool dms,
-                       bool presence, bool interactiveAuth)
-{
+                       bool presence, bool interactiveAuth) {
     QVariantMap caps;
     caps.insert(QStringLiteral("rooms"), rooms);
     caps.insert(QStringLiteral("directMessages"), dms);
@@ -25,8 +24,7 @@ QVariantMap adapterRow(const QString& family, const QString& displayName, bool r
 
 } // namespace
 
-QVariantList MockTransportRegistry::availableAdapters() const
-{
+QVariantList MockTransportRegistry::availableAdapters() const {
     return QVariantList{
         adapterRow(QStringLiteral("matrix"), QStringLiteral("Matrix"), true, true, true, true),
         adapterRow(QStringLiteral("room"), QStringLiteral("Rooms (internal)"), true, true, false,
@@ -34,8 +32,7 @@ QVariantList MockTransportRegistry::availableAdapters() const
     };
 }
 
-QVariantList MockTransportRegistry::instances() const
-{
+QVariantList MockTransportRegistry::instances() const {
     return QVariantList{};
 }
 

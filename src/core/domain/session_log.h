@@ -41,8 +41,8 @@ struct SessionLogEntry {
     Direction direction = Direction::Outbound;
     Origin origin;
     Disposition disposition = Disposition::Context;
-    QString kind;          // payload discriminator (see above)
-    QVariantMap payload;   // the decoded, structured payload for `kind`
+    QString kind;        // payload discriminator (see above)
+    QVariantMap payload; // the decoded, structured payload for `kind`
 };
 
 } // namespace domain

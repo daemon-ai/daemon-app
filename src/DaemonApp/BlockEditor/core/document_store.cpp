@@ -14,8 +14,7 @@ namespace {
 // hydrate its metadata from the fenced JSON body. This is the markdown -> typed
 // step of the round-trip; the inverse (typed -> markdown) lives in
 // serializeAgentBlock, kept in sync by appendTypedBlock/updateBlockMetadata.
-void applyAgentBlockFromFence(BlockRecord &record, const QString &info)
-{
+void applyAgentBlockFromFence(BlockRecord& record, const QString& info) {
     const BlockType type = agentBlockTypeForFence(info);
     if (type == BlockType::Unknown) {
         return;
@@ -27,39 +26,32 @@ void applyAgentBlockFromFence(BlockRecord &record, const QString &info)
     }
 }
 
-bool isListType(BlockType type)
-{
-    return type == BlockType::BulletListItem
-        || type == BlockType::OrderedListItem
-        || type == BlockType::TaskListItem;
+bool isListType(BlockType type) {
+    return type == BlockType::BulletListItem || type == BlockType::OrderedListItem ||
+           type == BlockType::TaskListItem;
 }
 
-const QRegularExpression &headingRe()
-{
+const QRegularExpression& headingRe() {
     static const QRegularExpression re(QStringLiteral("^(#{1,6})\\s+"));
     return re;
 }
 
-const QRegularExpression &taskRe()
-{
+const QRegularExpression& taskRe() {
     static const QRegularExpression re(QStringLiteral("^(\\s*)[-*+]\\s+\\[[ xX]\\]\\s+"));
     return re;
 }
 
-const QRegularExpression &bulletRe()
-{
+const QRegularExpression& bulletRe() {
     static const QRegularExpression re(QStringLiteral("^(\\s*)[-*+]\\s+"));
     return re;
 }
 
-const QRegularExpression &orderedRe()
-{
+const QRegularExpression& orderedRe() {
     static const QRegularExpression re(QStringLiteral("^(\\s*)\\d+[.)]\\s+"));
     return re;
 }
 
-QString firstLineOf(const QString &content)
-{
+QString firstLineOf(const QString& content) {
     const qsizetype newline = content.indexOf(QLatin1Char('\n'));
     return newline < 0 ? content : content.left(newline);
 }
@@ -67,8 +59,7 @@ QString firstLineOf(const QString &content)
 // GitHub-style heading slug: lowercase, drop characters other than letters,
 // digits, space and hyphen, then turn runs of spaces into single hyphens.
 // "## Foo Bar!" -> "foo-bar", matching the "#foo-bar" fragment a TOC links to.
-QString headingSlug(const QString &headingText)
-{
+QString headingSlug(const QString& headingText) {
     QString slug;
     slug.reserve(headingText.size());
     for (const QChar c : headingText) {
@@ -87,8 +78,7 @@ QString headingSlug(const QString &headingText)
 }
 
 // Language token after a leading ``` / ~~~ fence on the first line, or empty.
-QString fenceLanguageOf(const QString &content)
-{
+QString fenceLanguageOf(const QString& content) {
     const QString line = firstLineOf(content).trimmed();
     if (!line.startsWith(QStringLiteral("```")) && !line.startsWith(QStringLiteral("~~~"))) {
         return QString();
@@ -100,8 +90,7 @@ QString fenceLanguageOf(const QString &content)
 
 // Store image attributes (url/alt/title/link) from a single-line standalone
 // image block into `metadata`, mirroring how fenceLanguage is captured.
-void applyImageMetadata(QVariantMap &metadata, const QString &content)
-{
+void applyImageMetadata(QVariantMap& metadata, const QString& content) {
     ImageBlockInfo info;
     if (!parseImageBlock(content, &info)) {
         return;
@@ -116,10 +105,9 @@ void applyImageMetadata(QVariantMap &metadata, const QString &content)
 
 // Length (in UTF-16 code units) of the leading block marker for a list item,
 // including indentation and trailing whitespace. Returns 0 when absent.
-qsizetype leadingMarkerLength(const QString &content, BlockType type)
-{
+qsizetype leadingMarkerLength(const QString& content, BlockType type) {
     const QString line = firstLineOf(content);
-    const QRegularExpression *re = nullptr;
+    const QRegularExpression* re = nullptr;
     switch (type) {
     case BlockType::TaskListItem:
         re = &taskRe();
@@ -140,8 +128,7 @@ qsizetype leadingMarkerLength(const QString &content, BlockType type)
 
 // Strip a leading block-level marker (list bullet/number/checkbox or heading
 // hashes) so the inline text can be concatenated onto another block.
-QString strippedLineText(const QString &content, BlockType type)
-{
+QString strippedLineText(const QString& content, BlockType type) {
     if (isListType(type)) {
         return content.mid(leadingMarkerLength(content, type));
     }
@@ -157,8 +144,7 @@ QString strippedLineText(const QString &content, BlockType type)
 // Produce the marker a freshly continued list item should carry. Bullets are
 // copied verbatim, tasks reset to unchecked, ordered numbers are normalized by
 // reserialize() so the literal number here is a placeholder.
-QString continuationMarker(const QString &content, BlockType type)
-{
+QString continuationMarker(const QString& content, BlockType type) {
     const qsizetype len = leadingMarkerLength(content, type);
     QString marker = content.left(len);
     if (type == BlockType::TaskListItem) {
@@ -168,8 +154,7 @@ QString continuationMarker(const QString &content, BlockType type)
     return marker;
 }
 
-QByteArray separatorBetween(const BlockRecord &prev, const BlockRecord &cur)
-{
+QByteArray separatorBetween(const BlockRecord& prev, const BlockRecord& cur) {
     if (isListType(prev.type) && isListType(cur.type)) {
         return QByteArrayLiteral("\n");
     }
@@ -182,8 +167,7 @@ QByteArray separatorBetween(const BlockRecord &prev, const BlockRecord &cur)
 // everything at/after it stays volatile. Computed by a raw line scan because
 // md4qt reports a fenced code block's start *after* its opening fence, so parsed
 // positions cannot be used to locate (and preserve) the fence marker.
-qsizetype fenceSafeLastBoundary(const QString &buffer)
-{
+qsizetype fenceSafeLastBoundary(const QString& buffer) {
     bool inFence = false;
     bool afterBlank = false;
     qsizetype groupStart = 0;
@@ -197,8 +181,8 @@ qsizetype fenceSafeLastBoundary(const QString &buffer)
 
         const QStringView line = QStringView(buffer).mid(lineStart, i - lineStart);
         const QStringView trimmed = line.trimmed();
-        const bool isFenceMarker = trimmed.startsWith(QLatin1String("```"))
-            || trimmed.startsWith(QLatin1String("~~~"));
+        const bool isFenceMarker =
+            trimmed.startsWith(QLatin1String("```")) || trimmed.startsWith(QLatin1String("~~~"));
 
         if (isFenceMarker) {
             if (!inFence && afterBlank) {
@@ -221,8 +205,7 @@ qsizetype fenceSafeLastBoundary(const QString &buffer)
     return groupStart;
 }
 
-QString withOrderedNumber(const QString &content, int number)
-{
+QString withOrderedNumber(const QString& content, int number) {
     static const QRegularExpression re(QStringLiteral("^(\\s*)(\\d+)([.)])"));
     const QRegularExpressionMatch match = re.match(content);
     if (!match.hasMatch()) {
@@ -234,16 +217,14 @@ QString withOrderedNumber(const QString &content, int number)
 }
 
 // True when `line` (after trimming) opens or closes a fenced code block.
-bool isFenceMarkerLine(QStringView line)
-{
+bool isFenceMarkerLine(QStringView line) {
     const QStringView trimmed = line.trimmed();
     return trimmed.startsWith(QLatin1String("```")) || trimmed.startsWith(QLatin1String("~~~"));
 }
 
 // Raw text of `line` in `text` (without its trailing newline), or an empty view
 // when out of range.
-QStringView lineViewAt(const CoordinateMap &map, const QString &text, qsizetype line)
-{
+QStringView lineViewAt(const CoordinateMap& map, const QString& text, qsizetype line) {
     if (line < 0 || line >= map.lineCount()) {
         return {};
     }
@@ -256,8 +237,7 @@ QStringView lineViewAt(const CoordinateMap &map, const QString &text, qsizetype 
 }
 
 // UTF-16 offset just past the last (non-newline) character of `line`.
-qsizetype lineEndUtf16(const CoordinateMap &map, const QString &text, qsizetype line)
-{
+qsizetype lineEndUtf16(const CoordinateMap& map, const QString& text, qsizetype line) {
     const qsizetype start = map.lineColumnToUtf16(line, 0);
     const qsizetype nl = text.indexOf(QLatin1Char('\n'), start);
     return nl < 0 ? text.size() : nl;
@@ -278,9 +258,8 @@ qsizetype lineEndUtf16(const CoordinateMap &map, const QString &text, qsizetype 
 // reported body start, take the first marker after it as the close, and when the
 // anchor itself is the closing fence (empty-body) re-find the open before it.
 // Returns false when no fence span can be recovered at all.
-bool fenceSpanUtf16(const CoordinateMap &map, const QString &text, const ParsedBlock &pb,
-                    qsizetype &startUtf16, qsizetype &endUtf16)
-{
+bool fenceSpanUtf16(const CoordinateMap& map, const QString& text, const ParsedBlock& pb,
+                    qsizetype& startUtf16, qsizetype& endUtf16) {
     const qsizetype lineCount = map.lineCount();
     if (lineCount <= 0) {
         return false;
@@ -290,8 +269,8 @@ bool fenceSpanUtf16(const CoordinateMap &map, const QString &text, const ParsedB
     if (pb.fenceStartLine >= 0 && pb.fenceStartLine < lineCount) {
         startUtf16 = map.lineColumnToUtf16(pb.fenceStartLine, 0);
         endUtf16 = (pb.fenceEndLine >= 0 && pb.fenceEndLine < lineCount)
-            ? lineEndUtf16(map, text, pb.fenceEndLine)
-            : text.size();
+                       ? lineEndUtf16(map, text, pb.fenceEndLine)
+                       : text.size();
         return true;
     }
 
@@ -339,8 +318,7 @@ bool fenceSpanUtf16(const CoordinateMap &map, const QString &text, const ParsedB
 // spaces so the stored markdown's leading whitespace always matches the block's
 // indent depth (and reclassifies consistently when edited). Code fences are
 // expanded to include their ``` / ~~~ delimiters (see fenceSpanUtf16).
-QString sliceBlockContent(const CoordinateMap &map, const QString &text, const ParsedBlock &pb)
-{
+QString sliceBlockContent(const CoordinateMap& map, const QString& text, const ParsedBlock& pb) {
     qsizetype startUtf16 = map.lineColumnToUtf16(pb.startLine, pb.startColumn);
     qsizetype endUtf16 = map.lineColumnToUtf16(pb.endLine, pb.endColumn) + 1;
     // Only fenced code needs delimiter recovery; indented code blocks have no
@@ -365,8 +343,7 @@ QString sliceBlockContent(const CoordinateMap &map, const QString &text, const P
     return content;
 }
 
-int orderedNumberOf(const QString &content, int fallback)
-{
+int orderedNumberOf(const QString& content, int fallback) {
     static const QRegularExpression re(QStringLiteral("^\\s*(\\d+)[.)]"));
     const QRegularExpressionMatch match = re.match(content);
     if (!match.hasMatch()) {
@@ -379,24 +356,21 @@ int orderedNumberOf(const QString &content, int fallback)
 
 } // namespace
 
-void DocumentStore::loadMarkdown(const QString &markdown)
-{
+void DocumentStore::loadMarkdown(const QString& markdown) {
     loadFromParse(markdown);
 }
 
-void DocumentStore::loadMarkdownUtf8(const QByteArray &markdown)
-{
+void DocumentStore::loadMarkdownUtf8(const QByteArray& markdown) {
     loadFromParse(QString::fromUtf8(markdown));
 }
 
-void DocumentStore::loadFromParse(const QString &markdown)
-{
+void DocumentStore::loadFromParse(const QString& markdown) {
     m_nextBlockId = 1;
     m_blocks.clear();
 
     QVector<BlockRecord> records = recordsFromParse(markdown);
     m_blocks.reserve(records.size());
-    for (BlockRecord &record : records) {
+    for (BlockRecord& record : records) {
         record.id = allocateId();
         m_blocks.push_back(record);
     }
@@ -408,7 +382,7 @@ void DocumentStore::loadFromParse(const QString &markdown)
     // beginMessage never collides with an id already present in the document.
     static const QRegularExpression messageSeqRe(QStringLiteral("^m(\\d+)$"));
     quint64 maxSeq = 0;
-    for (const BlockRecord &block : m_blocks) {
+    for (const BlockRecord& block : m_blocks) {
         const QRegularExpressionMatch match = messageSeqRe.match(block.messageId);
         if (match.hasMatch()) {
             maxSeq = qMax(maxSeq, match.captured(1).toULongLong());
@@ -426,15 +400,14 @@ void DocumentStore::loadFromParse(const QString &markdown)
     reserialize();
 }
 
-QVector<BlockRecord> DocumentStore::recordsFromParse(const QString &markdown) const
-{
+QVector<BlockRecord> DocumentStore::recordsFromParse(const QString& markdown) const {
     QVector<BlockRecord> records;
 
     const ParsedMarkdown parsed = m_parser.parse(markdown);
 
     CoordinateMap input;
     input.rebuild(markdown);
-    const QString &text = input.text();
+    const QString& text = input.text();
 
     if (!parsed.blocks.isEmpty()) {
         records.reserve(parsed.blocks.size());
@@ -448,7 +421,7 @@ QVector<BlockRecord> DocumentStore::recordsFromParse(const QString &markdown) co
         // marker itself is dropped (never becomes a row).
         MessageRole currentRole = MessageRole::None;
         QString currentMessageId;
-        for (const ParsedBlock &pb : parsed.blocks) {
+        for (const ParsedBlock& pb : parsed.blocks) {
             const qsizetype pbStart = input.lineColumnToUtf16(pb.startLine, pb.startColumn);
             if (pbStart < fenceConsumedThrough) {
                 continue;
@@ -505,8 +478,7 @@ QVector<BlockRecord> DocumentStore::recordsFromParse(const QString &markdown) co
     return records;
 }
 
-BlockRecord DocumentStore::makeClassifiedRecord(const QString &content) const
-{
+BlockRecord DocumentStore::makeClassifiedRecord(const QString& content) const {
     BlockRecord record;
     quint16 level = 0;
     quint16 indent = 0;
@@ -531,39 +503,33 @@ BlockRecord DocumentStore::makeClassifiedRecord(const QString &content) const
     return record;
 }
 
-qsizetype DocumentStore::blockCount() const
-{
+qsizetype DocumentStore::blockCount() const {
     return m_blocks.size();
 }
 
-const QVector<BlockRecord> &DocumentStore::blocks() const
-{
+const QVector<BlockRecord>& DocumentStore::blocks() const {
     return m_blocks;
 }
 
-const BlockRecord *DocumentStore::blockAt(qsizetype row) const
-{
+const BlockRecord* DocumentStore::blockAt(qsizetype row) const {
     if (row < 0 || row >= m_blocks.size()) {
         return nullptr;
     }
     return &m_blocks[row];
 }
 
-BlockRecord *DocumentStore::mutableBlockAt(qsizetype row)
-{
+BlockRecord* DocumentStore::mutableBlockAt(qsizetype row) {
     if (row < 0 || row >= m_blocks.size()) {
         return nullptr;
     }
     return &m_blocks[row];
 }
 
-qsizetype DocumentStore::rowForBlock(BlockId id) const
-{
+qsizetype DocumentStore::rowForBlock(BlockId id) const {
     return m_rowsById.value(id, -1);
 }
 
-qsizetype DocumentStore::rowForHeadingAnchor(const QString &fragment) const
-{
+qsizetype DocumentStore::rowForHeadingAnchor(const QString& fragment) const {
     QString target = fragment;
     if (target.startsWith(QLatin1Char('#'))) {
         target = target.mid(1);
@@ -578,7 +544,7 @@ qsizetype DocumentStore::rowForHeadingAnchor(const QString &fragment) const
     static const QRegularExpression linkRe(QStringLiteral("!?\\[([^\\]]*)\\]\\([^)]*\\)"));
 
     for (qsizetype row = 0; row < m_blocks.size(); ++row) {
-        const BlockRecord &block = m_blocks[row];
+        const BlockRecord& block = m_blocks[row];
         if (block.type != BlockType::Heading) {
             continue;
         }
@@ -595,28 +561,24 @@ qsizetype DocumentStore::rowForHeadingAnchor(const QString &fragment) const
     return -1;
 }
 
-QByteArray DocumentStore::toUtf8() const
-{
+QByteArray DocumentStore::toUtf8() const {
     ensureSerialized();
     return m_pieceTable.toUtf8();
 }
 
-QString DocumentStore::toMarkdown() const
-{
+QString DocumentStore::toMarkdown() const {
     return QString::fromUtf8(toUtf8());
 }
 
-QString DocumentStore::blockMarkdown(BlockId id) const
-{
+QString DocumentStore::blockMarkdown(BlockId id) const {
     const qsizetype row = rowForBlock(id);
-    const BlockRecord *block = blockAt(row);
+    const BlockRecord* block = blockAt(row);
     return block ? block->markdown() : QString();
 }
 
-bool DocumentStore::replaceBlockMarkdown(BlockId id, const QString &markdown)
-{
+bool DocumentStore::replaceBlockMarkdown(BlockId id, const QString& markdown) {
     const qsizetype row = rowForBlock(id);
-    BlockRecord *block = mutableBlockAt(row);
+    BlockRecord* block = mutableBlockAt(row);
     if (!block) {
         return false;
     }
@@ -626,14 +588,13 @@ bool DocumentStore::replaceBlockMarkdown(BlockId id, const QString &markdown)
     return true;
 }
 
-bool DocumentStore::insertBlockAfter(BlockId id, const QString &markdown)
-{
+bool DocumentStore::insertBlockAfter(BlockId id, const QString& markdown) {
     const qsizetype row = rowForBlock(id);
     if (row < 0) {
         return false;
     }
 
-    const BlockRecord *anchor = blockAt(row);
+    const BlockRecord* anchor = blockAt(row);
     BlockRecord record;
     record.id = allocateId();
     if (anchor) {
@@ -646,10 +607,10 @@ bool DocumentStore::insertBlockAfter(BlockId id, const QString &markdown)
     return true;
 }
 
-bool DocumentStore::splitBlock(BlockId id, qsizetype utf16Offset, BlockId *resultBlock, qsizetype *resultCursor, bool trimBoundary)
-{
+bool DocumentStore::splitBlock(BlockId id, qsizetype utf16Offset, BlockId* resultBlock,
+                               qsizetype* resultCursor, bool trimBoundary) {
     const qsizetype row = rowForBlock(id);
-    BlockRecord *block = mutableBlockAt(row);
+    BlockRecord* block = mutableBlockAt(row);
     if (!block) {
         return false;
     }
@@ -766,19 +727,19 @@ bool DocumentStore::splitBlock(BlockId id, qsizetype utf16Offset, BlockId *resul
     }
     if (resultCursor) {
         // Place the caret after any continued list marker so typing lands in text.
-        *resultCursor = isListType(inserted.type)
-            ? leadingMarkerLength(QString::fromUtf8(inserted.markdownUtf8), inserted.type)
-            : 0;
+        *resultCursor =
+            isListType(inserted.type)
+                ? leadingMarkerLength(QString::fromUtf8(inserted.markdownUtf8), inserted.type)
+                : 0;
     }
     return true;
 }
 
-bool DocumentStore::mergeBlocks(BlockId previousId, BlockId currentId, qsizetype *resultCursor)
-{
+bool DocumentStore::mergeBlocks(BlockId previousId, BlockId currentId, qsizetype* resultCursor) {
     const qsizetype previousRow = rowForBlock(previousId);
     const qsizetype currentRow = rowForBlock(currentId);
-    BlockRecord *previous = mutableBlockAt(previousRow);
-    const BlockRecord *current = blockAt(currentRow);
+    BlockRecord* previous = mutableBlockAt(previousRow);
+    const BlockRecord* current = blockAt(currentRow);
     if (!previous || !current || previousRow == currentRow) {
         return false;
     }
@@ -796,10 +757,10 @@ bool DocumentStore::mergeBlocks(BlockId previousId, BlockId currentId, qsizetype
 }
 
 bool DocumentStore::pasteMarkdown(BlockId id, qsizetype rawStart, qsizetype rawEnd,
-                                  const QString &pasted, BlockId *caretBlock, qsizetype *caretOffset)
-{
+                                  const QString& pasted, BlockId* caretBlock,
+                                  qsizetype* caretOffset) {
     const qsizetype row = rowForBlock(id);
-    BlockRecord *block = mutableBlockAt(row);
+    BlockRecord* block = mutableBlockAt(row);
     if (!block) {
         return false;
     }
@@ -820,8 +781,8 @@ bool DocumentStore::pasteMarkdown(BlockId id, qsizetype rawStart, qsizetype rawE
     // no newline. Anything multi-line/multi-block is a structural paste so a
     // pasted heading never merges into the current block. Whitespace-only pastes
     // (no parsed blocks) also merge inline so they never create a stray block.
-    const bool inlinePaste = pastedBlocks.isEmpty()
-        || (pastedBlocks.size() == 1 && !normalized.contains(QLatin1Char('\n')));
+    const bool inlinePaste = pastedBlocks.isEmpty() ||
+                             (pastedBlocks.size() == 1 && !normalized.contains(QLatin1Char('\n')));
     if (inlinePaste) {
         setBlockContent(*block, before + normalized + after);
         reserialize();
@@ -874,20 +835,18 @@ bool DocumentStore::pasteMarkdown(BlockId id, qsizetype rawStart, qsizetype rawE
     return true;
 }
 
-qsizetype DocumentStore::previousListIndentSpaces(qsizetype row) const
-{
+qsizetype DocumentStore::previousListIndentSpaces(qsizetype row) const {
     if (row <= 0) {
         return -1;
     }
-    const BlockRecord *previous = blockAt(row - 1);
+    const BlockRecord* previous = blockAt(row - 1);
     if (!previous || !isListType(previous->type)) {
         return -1;
     }
     return previous->indent;
 }
 
-bool DocumentStore::adjustListIndent(BlockId id, int deltaUnits, qsizetype *cursorDelta)
-{
+bool DocumentStore::adjustListIndent(BlockId id, int deltaUnits, qsizetype* cursorDelta) {
     if (cursorDelta) {
         *cursorDelta = 0;
     }
@@ -896,7 +855,7 @@ bool DocumentStore::adjustListIndent(BlockId id, int deltaUnits, qsizetype *curs
     }
 
     const qsizetype row = rowForBlock(id);
-    BlockRecord *block = mutableBlockAt(row);
+    BlockRecord* block = mutableBlockAt(row);
     if (!block || !isListType(block->type)) {
         return false;
     }
@@ -937,10 +896,9 @@ bool DocumentStore::adjustListIndent(BlockId id, int deltaUnits, qsizetype *curs
     return true;
 }
 
-bool DocumentStore::unlistItem(BlockId id, qsizetype *resultCursor)
-{
+bool DocumentStore::unlistItem(BlockId id, qsizetype* resultCursor) {
     const qsizetype row = rowForBlock(id);
-    BlockRecord *block = mutableBlockAt(row);
+    BlockRecord* block = mutableBlockAt(row);
     if (!block || !isListType(block->type)) {
         return false;
     }
@@ -954,8 +912,7 @@ bool DocumentStore::unlistItem(BlockId id, qsizetype *resultCursor)
     return true;
 }
 
-bool DocumentStore::deleteBlocks(qsizetype firstRow, qsizetype count)
-{
+bool DocumentStore::deleteBlocks(qsizetype firstRow, qsizetype count) {
     if (firstRow < 0 || count <= 0 || firstRow >= m_blocks.size()) {
         return false;
     }
@@ -966,10 +923,9 @@ bool DocumentStore::deleteBlocks(qsizetype firstRow, qsizetype count)
     return true;
 }
 
-bool DocumentStore::moveBlocks(qsizetype firstRow, qsizetype count, qsizetype destinationRow)
-{
-    if (firstRow < 0 || count <= 0 || firstRow >= m_blocks.size()
-        || destinationRow < 0 || destinationRow > m_blocks.size()) {
+bool DocumentStore::moveBlocks(qsizetype firstRow, qsizetype count, qsizetype destinationRow) {
+    if (firstRow < 0 || count <= 0 || firstRow >= m_blocks.size() || destinationRow < 0 ||
+        destinationRow > m_blocks.size()) {
         return false;
     }
 
@@ -989,16 +945,14 @@ bool DocumentStore::moveBlocks(qsizetype firstRow, qsizetype count, qsizetype de
     return true;
 }
 
-void DocumentStore::markPersisted(BlockId id)
-{
-    BlockRecord *block = mutableBlockAt(rowForBlock(id));
+void DocumentStore::markPersisted(BlockId id) {
+    BlockRecord* block = mutableBlockAt(rowForBlock(id));
     if (block) {
         block->dirtyPersistence = false;
     }
 }
 
-void DocumentStore::beginStreamAtEnd()
-{
+void DocumentStore::beginStreamAtEnd() {
     // Settle any pending derived state, then open a fresh (empty) volatile tail at
     // the end of the document. Streamed content forms new blocks appended after the
     // existing ones; the canonical separator is regenerated by reserialize().
@@ -1008,8 +962,7 @@ void DocumentStore::beginStreamAtEnd()
     m_windowBuffer.clear();
 }
 
-BlockChangeSet DocumentStore::streamAppend(const QString &text)
-{
+BlockChangeSet DocumentStore::streamAppend(const QString& text) {
     if (!m_streaming) {
         return {};
     }
@@ -1018,8 +971,7 @@ BlockChangeSet DocumentStore::streamAppend(const QString &text)
     return reparseWindow();
 }
 
-BlockChangeSet DocumentStore::reparseWindow()
-{
+BlockChangeSet DocumentStore::reparseWindow() {
     // Cap on the raw tail buffer; bounds per-token cost when a single construct
     // (e.g. a long paragraph or list with no blank line) grows without a boundary.
     static constexpr qsizetype kMaxWindowBytes = 1 << 16;
@@ -1028,7 +980,7 @@ BlockChangeSet DocumentStore::reparseWindow()
 
     CoordinateMap windowMap;
     windowMap.rebuild(m_windowBuffer);
-    const QString &text = windowMap.text();
+    const QString& text = windowMap.text();
 
     struct NewBlock {
         BlockType type = BlockType::Paragraph;
@@ -1041,7 +993,7 @@ BlockChangeSet DocumentStore::reparseWindow()
     QVector<NewBlock> news;
     if (!parsed.blocks.isEmpty()) {
         news.reserve(parsed.blocks.size());
-        for (const ParsedBlock &pb : parsed.blocks) {
+        for (const ParsedBlock& pb : parsed.blocks) {
             const QString content = sliceBlockContent(windowMap, text, pb);
             news.push_back({pb.type, pb.headingLevel, pb.indent, content.toUtf8(), pb.info});
         }
@@ -1066,8 +1018,8 @@ BlockChangeSet DocumentStore::reparseWindow()
 
     // Update overlapping volatile rows in place, preserving stable ids/revisions.
     for (qsizetype i = 0; i < overlap; ++i) {
-        BlockRecord &block = m_blocks[base + i];
-        const NewBlock &nb = news[i];
+        BlockRecord& block = m_blocks[base + i];
+        const NewBlock& nb = news[i];
         if (block.markdownUtf8 != nb.content || block.type != nb.type) {
             block.markdownUtf8 = nb.content;
             block.type = nb.type;
@@ -1093,7 +1045,7 @@ BlockChangeSet DocumentStore::reparseWindow()
     if (newCount > oldCount) {
         cs.insertedCount = newCount - oldCount;
         for (qsizetype i = oldCount; i < newCount; ++i) {
-            const NewBlock &nb = news[i];
+            const NewBlock& nb = news[i];
             BlockRecord record;
             record.id = allocateId();
             record.role = m_currentRole;
@@ -1148,8 +1100,7 @@ BlockChangeSet DocumentStore::reparseWindow()
     return cs;
 }
 
-void DocumentStore::endStream()
-{
+void DocumentStore::endStream() {
     if (!m_streaming) {
         return;
     }
@@ -1159,21 +1110,18 @@ void DocumentStore::endStream()
     reserialize();
 }
 
-bool DocumentStore::isStreaming() const
-{
+bool DocumentStore::isStreaming() const {
     return m_streaming;
 }
 
-QString DocumentStore::beginMessage(MessageRole role)
-{
+QString DocumentStore::beginMessage(MessageRole role) {
     m_currentRole = role;
     m_currentMessageId = QStringLiteral("m%1").arg(m_nextMessageSeq++);
     return m_currentMessageId;
 }
 
-QString DocumentStore::appendMessageBlocks(MessageRole role, const QString &markdown,
-                                           const QString &explicitId)
-{
+QString DocumentStore::appendMessageBlocks(MessageRole role, const QString& markdown,
+                                           const QString& explicitId) {
     QString id;
     if (!explicitId.isEmpty()) {
         // Preserve the authored message id (the transcript-log applier path).
@@ -1188,7 +1136,7 @@ QString DocumentStore::appendMessageBlocks(MessageRole role, const QString &mark
         id = beginMessage(role);
     }
     QVector<BlockRecord> records = recordsFromParse(markdown);
-    for (BlockRecord &record : records) {
+    for (BlockRecord& record : records) {
         record.id = allocateId();
         record.role = role;
         record.messageId = id;
@@ -1198,8 +1146,7 @@ QString DocumentStore::appendMessageBlocks(MessageRole role, const QString &mark
     return id;
 }
 
-qsizetype DocumentStore::rowForMessage(const QString &messageId) const
-{
+qsizetype DocumentStore::rowForMessage(const QString& messageId) const {
     if (messageId.isEmpty()) {
         return -1;
     }
@@ -1211,8 +1158,7 @@ qsizetype DocumentStore::rowForMessage(const QString &messageId) const
     return -1;
 }
 
-QString DocumentStore::rewindToMessage(const QString &messageId)
-{
+QString DocumentStore::rewindToMessage(const QString& messageId) {
     const qsizetype row = rowForMessage(messageId);
     if (row < 0) {
         return {};
@@ -1229,8 +1175,7 @@ QString DocumentStore::rewindToMessage(const QString &messageId)
     return parts.join(QStringLiteral("\n\n"));
 }
 
-bool DocumentStore::regenerateFromMessage(const QString &messageId)
-{
+bool DocumentStore::regenerateFromMessage(const QString& messageId) {
     const qsizetype row = rowForMessage(messageId);
     if (row < 0) {
         return false;
@@ -1238,18 +1183,16 @@ bool DocumentStore::regenerateFromMessage(const QString &messageId)
     return deleteBlocks(row, m_blocks.size() - row);
 }
 
-MessageRole DocumentStore::currentMessageRole() const
-{
+MessageRole DocumentStore::currentMessageRole() const {
     return m_currentRole;
 }
 
-QString DocumentStore::currentMessageId() const
-{
+QString DocumentStore::currentMessageId() const {
     return m_currentMessageId;
 }
 
-BlockId DocumentStore::appendTypedBlock(BlockType type, const QVariantMap &metadata, BlockChangeSet *changeSet)
-{
+BlockId DocumentStore::appendTypedBlock(BlockType type, const QVariantMap& metadata,
+                                        BlockChangeSet* changeSet) {
     // An open text-stream window is committed first: a typed block is a hard
     // boundary, so the streamed paragraph above it settles and the volatile tail
     // restarts after the injected block.
@@ -1291,15 +1234,14 @@ BlockId DocumentStore::appendTypedBlock(BlockType type, const QVariantMap &metad
     return record.id;
 }
 
-BlockChangeSet DocumentStore::updateBlockMetadata(BlockId id, const QVariantMap &patch)
-{
+BlockChangeSet DocumentStore::updateBlockMetadata(BlockId id, const QVariantMap& patch) {
     BlockChangeSet cs;
     const qsizetype row = rowForBlock(id);
     if (row < 0) {
         return cs;
     }
 
-    BlockRecord &block = m_blocks[row];
+    BlockRecord& block = m_blocks[row];
     for (auto it = patch.constBegin(); it != patch.constEnd(); ++it) {
         block.metadata.insert(it.key(), it.value());
     }
@@ -1320,9 +1262,8 @@ BlockChangeSet DocumentStore::updateBlockMetadata(BlockId id, const QVariantMap 
     return cs;
 }
 
-BlockId DocumentStore::blockIdForMetadata(const QString &key, const QVariant &value) const
-{
-    for (const BlockRecord &block : m_blocks) {
+BlockId DocumentStore::blockIdForMetadata(const QString& key, const QVariant& value) const {
+    for (const BlockRecord& block : m_blocks) {
         if (block.metadata.value(key) == value) {
             return block.id;
         }
@@ -1330,8 +1271,8 @@ BlockId DocumentStore::blockIdForMetadata(const QString &key, const QVariant &va
     return 0;
 }
 
-void DocumentStore::spliceBlocks(qsizetype firstRow, qsizetype removeCount, const QVector<BlockRecord> &insert)
-{
+void DocumentStore::spliceBlocks(qsizetype firstRow, qsizetype removeCount,
+                                 const QVector<BlockRecord>& insert) {
     firstRow = qBound<qsizetype>(0, firstRow, m_blocks.size());
     removeCount = qBound<qsizetype>(0, removeCount, m_blocks.size() - firstRow);
     m_blocks.remove(firstRow, removeCount);
@@ -1341,25 +1282,22 @@ void DocumentStore::spliceBlocks(qsizetype firstRow, qsizetype removeCount, cons
     reserialize();
 }
 
-QVector<BlockRecord> DocumentStore::snapshot() const
-{
+QVector<BlockRecord> DocumentStore::snapshot() const {
     return m_blocks;
 }
 
-void DocumentStore::restore(const QVector<BlockRecord> &blocks)
-{
+void DocumentStore::restore(const QVector<BlockRecord>& blocks) {
     m_blocks = blocks;
     reserialize();
 }
 
-void DocumentStore::reserialize()
-{
+void DocumentStore::reserialize() {
     // Normalize ordered-list numbering, tracking an independent counter per
     // nesting depth. Returning to a shallower depth drops deeper counters (so
     // re-entering a level restarts it), a bullet/task item resets the ordered
     // counter at its depth, and any non-list block ends all runs.
     QVector<int> orderedCounters;
-    for (BlockRecord &block : m_blocks) {
+    for (BlockRecord& block : m_blocks) {
         if (!isListType(block.type)) {
             orderedCounters.clear();
             continue;
@@ -1372,9 +1310,8 @@ void DocumentStore::reserialize()
             // A fresh top-level run honours its written start number; a fresh
             // nested run always restarts at 1 (its inherited literal is stale).
             const int freshStart = depth == 0 ? orderedNumberOf(block.markdown(), 1) : 1;
-            const int number = orderedCounters[depth] == 0
-                ? freshStart
-                : orderedCounters[depth] + 1;
+            const int number =
+                orderedCounters[depth] == 0 ? freshStart : orderedCounters[depth] + 1;
             const QString renumbered = withOrderedNumber(block.markdown(), number);
             if (renumbered.toUtf8() != block.markdownUtf8) {
                 block.markdownUtf8 = renumbered.toUtf8();
@@ -1389,15 +1326,17 @@ void DocumentStore::reserialize()
     MessageRole prevRole = MessageRole::None;
     QString prevMessageId;
     for (qsizetype row = 0; row < m_blocks.size(); ++row) {
-        BlockRecord &block = m_blocks[row];
+        BlockRecord& block = m_blocks[row];
         // A message boundary: the first roled block, or any block whose role or
         // message id differs from the block above it. Emit a ```msg marker (a
         // blank line on each side so it always parses as its own fenced block,
         // even between list items whose normal separator is a single newline).
-        const bool boundary = block.role != MessageRole::None
-            && (row == 0 || block.role != prevRole || block.messageId != prevMessageId);
+        const bool boundary =
+            block.role != MessageRole::None &&
+            (row == 0 || block.role != prevRole || block.messageId != prevMessageId);
         if (row > 0) {
-            joined += boundary ? QByteArrayLiteral("\n\n") : separatorBetween(m_blocks[row - 1], block);
+            joined +=
+                boundary ? QByteArrayLiteral("\n\n") : separatorBetween(m_blocks[row - 1], block);
         }
         if (boundary) {
             joined += serializeMessageMarker(block.role, block.messageId);
@@ -1418,28 +1357,24 @@ void DocumentStore::reserialize()
     m_serializeDirty = false;
 }
 
-void DocumentStore::ensureSerialized() const
-{
+void DocumentStore::ensureSerialized() const {
     if (m_serializeDirty) {
-        const_cast<DocumentStore *>(this)->reserialize();
+        const_cast<DocumentStore*>(this)->reserialize();
     }
 }
 
-void DocumentStore::rebuildRowIndex()
-{
+void DocumentStore::rebuildRowIndex() {
     m_rowsById.clear();
     for (qsizetype row = 0; row < m_blocks.size(); ++row) {
         m_rowsById.insert(m_blocks[row].id, row);
     }
 }
 
-BlockId DocumentStore::allocateId()
-{
+BlockId DocumentStore::allocateId() {
     return m_nextBlockId++;
 }
 
-void DocumentStore::setBlockContent(BlockRecord &block, const QString &content) const
-{
+void DocumentStore::setBlockContent(BlockRecord& block, const QString& content) const {
     quint16 level = 0;
     quint16 indent = 0;
     block.markdownUtf8 = content.toUtf8();
@@ -1462,8 +1397,8 @@ void DocumentStore::setBlockContent(BlockRecord &block, const QString &content) 
     block.dirtyPersistence = true;
 }
 
-BlockType DocumentStore::classifyContent(const QString &content, quint16 *headingLevel, quint16 *indent) const
-{
+BlockType DocumentStore::classifyContent(const QString& content, quint16* headingLevel,
+                                         quint16* indent) const {
     if (headingLevel) {
         *headingLevel = 0;
     }

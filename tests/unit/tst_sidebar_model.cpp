@@ -14,8 +14,7 @@ class TestSidebarModel : public QObject {
     Q_OBJECT
 
 private:
-    static int findRow(const SidebarModel& m, const QString& label)
-    {
+    static int findRow(const SidebarModel& m, const QString& label) {
         for (int i = 0; i < m.rowCount(); ++i) {
             if (m.data(m.index(i, 0), SidebarModel::LabelRole).toString() == label) {
                 return i;
@@ -25,16 +24,14 @@ private:
     }
 
     template <typename T>
-    static T roleAt(const SidebarModel& m, int row, SidebarModel::Role role)
-    {
+    static T roleAt(const SidebarModel& m, int row, SidebarModel::Role role) {
         return m.data(m.index(row, 0), role).value<T>();
     }
 
 private slots:
     // The whole fleet-of-fleets is flattened with correct depths; nesting is
     // unbounded (worker sits three levels under its root).
-    void flattensTreeWithDepths()
-    {
+    void flattensTreeWithDepths() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -53,8 +50,7 @@ private slots:
 
     // Tree roles are cosmetic-kind + structural flags; orchestrators carry
     // children, leaves do not.
-    void exposesTreeRoles()
-    {
+    void exposesTreeRoles() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -73,8 +69,7 @@ private slots:
     }
 
     // Collapsing a node hides its whole subtree; expanding restores it.
-    void toggleExpandHidesAndRestoresSubtree()
-    {
+    void toggleExpandHidesAndRestoresSubtree() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -99,8 +94,7 @@ private slots:
 
     // Activating a node row selects its subtree scope (nodeType Node, the
     // agent id carried through).
-    void activateEmitsNodeScope()
-    {
+    void activateEmitsNodeScope() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -116,8 +110,7 @@ private slots:
     }
 
     // Separator rows (Fleet / Tags headers) are not selectable and emit nothing.
-    void separatorsAreNotSelectable()
-    {
+    void separatorsAreNotSelectable() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -134,8 +127,7 @@ private slots:
     // The highlight is identity-based: it follows the node across a model reset
     // rather than sticking to a row index. Collapsing a node that does NOT
     // contain the selection rebuilds the list but must leave Coder highlighted.
-    void currentRoleTracksIdentityAcrossRebuild()
-    {
+    void currentRoleTracksIdentityAcrossRebuild() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -156,8 +148,7 @@ private slots:
 
     // Collapsing an ancestor of the selection lifts the selection up to the
     // collapsed node (VSCode behavior) and re-emits its scope.
-    void collapsingAncestorMovesSelectionUp()
-    {
+    void collapsingAncestorMovesSelectionUp() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -178,8 +169,7 @@ private slots:
 
     // Up/Down move the selection between adjacent selectable rows, skipping
     // separators; Enter re-emits the current scope.
-    void keyboardNavigationMovesSelection()
-    {
+    void keyboardNavigationMovesSelection() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -201,8 +191,7 @@ private slots:
     }
 
     // Right expands a collapsed node then descends; Left collapses then climbs.
-    void arrowKeysExpandCollapseAndTraverse()
-    {
+    void arrowKeysExpandCollapseAndTraverse() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -227,8 +216,7 @@ private slots:
     }
 
     // Collapse-all hides every subtree (roots remain); expand-all restores them.
-    void expandAllAndCollapseAllToggleWholeTree()
-    {
+    void expandAllAndCollapseAllToggleWholeTree() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -247,8 +235,7 @@ private slots:
     }
 
     // collapseAll while a deep node is selected lifts the highlight to its root.
-    void collapseAllLiftsSelectionToRoot()
-    {
+    void collapseAllLiftsSelectionToRoot() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -261,8 +248,7 @@ private slots:
     }
 
     // Creating a root node adds a top-level row and selects it.
-    void createRootNodeAddsAndSelects()
-    {
+    void createRootNodeAddsAndSelects() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -278,8 +264,7 @@ private slots:
     }
 
     // Creating a tag adds a tag row and selects it.
-    void createTagAddsAndSelects()
-    {
+    void createTagAddsAndSelects() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -298,8 +283,7 @@ private slots:
 
     // With a DaemonNet source, an "Integrations" header + the capability-driven tree
     // appear alongside the Fleet/Tags sections, each instance expanded to its taxonomy.
-    void transportsSectionShape()
-    {
+    void transportsSectionShape() {
         InMemorySessionStore store;
         MockDaemonNet net;
         SidebarModel model;
@@ -349,8 +333,7 @@ private slots:
 
     // Selecting a conversation/job leaf with a session opens it (sessionActivated),
     // not a list scope.
-    void transportLeafOpensSession()
-    {
+    void transportLeafOpensSession() {
         InMemorySessionStore store;
         MockDaemonNet net;
         SidebarModel model;
@@ -368,8 +351,7 @@ private slots:
 
     // Selecting a transport account scopes the list to its sessions (ByTransport,
     // the lens key in the string slot).
-    void transportAccountScopesList()
-    {
+    void transportAccountScopesList() {
         InMemorySessionStore store;
         MockDaemonNet net;
         SidebarModel model;
@@ -388,8 +370,7 @@ private slots:
     }
 
     // Collapsing a transport account hides its whole conversation subtree.
-    void transportAccountCollapses()
-    {
+    void transportAccountCollapses() {
         InMemorySessionStore store;
         MockDaemonNet net;
         SidebarModel model;
@@ -411,8 +392,7 @@ private slots:
 
     // Folding the Fleet header hides its whole unit body while the header stays,
     // and its ExpandedRole flips; other sections are untouched.
-    void fleetSectionHeaderCollapses()
-    {
+    void fleetSectionHeaderCollapses() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -442,8 +422,7 @@ private slots:
     }
 
     // The Tags section folds independently of Fleet.
-    void tagsSectionHeaderCollapses()
-    {
+    void tagsSectionHeaderCollapses() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -461,8 +440,7 @@ private slots:
     }
 
     // The Integrations section folds its whole transport tree.
-    void integrationsSectionHeaderCollapses()
-    {
+    void integrationsSectionHeaderCollapses() {
         InMemorySessionStore store;
         MockDaemonNet net;
         SidebarModel model;
@@ -484,8 +462,7 @@ private slots:
     }
 
     // Tags section is ordered above the Fleet section in the flattened list.
-    void tagsSectionIsAboveFleet()
-    {
+    void tagsSectionIsAboveFleet() {
         InMemorySessionStore store;
         SidebarModel model;
         model.setStore(&store);
@@ -498,8 +475,7 @@ private slots:
 
     // The Integrations header's expand-all/collapse-all folds/unfolds the whole
     // transport tree (the events-IO equivalent of Fleet's control).
-    void integrationsExpandAllCollapseAll()
-    {
+    void integrationsExpandAllCollapseAll() {
         InMemorySessionStore store;
         MockDaemonNet net;
         SidebarModel model;
@@ -523,8 +499,7 @@ private slots:
 
     // Fleet and Integrations expand/collapse-all are independent: one must not
     // clobber the other's fold state (they share m_collapsed across id namespaces).
-    void fleetAndIntegrationsExpandAllAreIndependent()
-    {
+    void fleetAndIntegrationsExpandAllAreIndependent() {
         InMemorySessionStore store;
         MockDaemonNet net;
         SidebarModel model;

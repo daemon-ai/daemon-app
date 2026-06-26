@@ -27,13 +27,12 @@ namespace be {
 //
 // Each ingest() returns the BlockChangeSets to apply to a model, in order, so a
 // controller can drive incremental view updates; tests inspect the store directly.
-class TranscriptIngest
-{
+class TranscriptIngest {
 public:
-    explicit TranscriptIngest(DocumentStore *store);
+    explicit TranscriptIngest(DocumentStore* store);
 
-    QVector<BlockChangeSet> ingest(const QVariantMap &event);
-    QVector<BlockChangeSet> ingestAll(const QVariantList &events);
+    QVector<BlockChangeSet> ingest(const QVariantMap& event);
+    QVector<BlockChangeSet> ingestAll(const QVariantList& events);
 
     // Settle any open text stream / reasoning block (call at end of a turn).
     QVector<BlockChangeSet> finish();
@@ -44,7 +43,7 @@ private:
     // finish() (the turn-end marker), so the next turn opens a fresh message.
     void ensureTurn();
 
-    DocumentStore *m_store = nullptr;
+    DocumentStore* m_store = nullptr;
     bool m_textStreaming = false;
     bool m_turnOpen = false;
     BlockId m_reasoningBlock = 0;

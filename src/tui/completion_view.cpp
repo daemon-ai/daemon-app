@@ -1,23 +1,19 @@
 #include "completion_view.h"
 
+#include "completion_model.h"
 #include "tui_palette.h"
 
-#include "completion_model.h"
-
+#include <QRect>
 #include <Tui/ZColor.h>
 #include <Tui/ZCommon.h>
 #include <Tui/ZEvent.h>
 #include <Tui/ZPainter.h>
 
-#include <QRect>
-
-CompletionView::CompletionView(Tui::ZWidget* parent) : Tui::ZWidget(parent)
-{
+CompletionView::CompletionView(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
     setVisible(false);
 }
 
-void CompletionView::setData(CompletionModel* model, int activeIndex, const QString& kind)
-{
+void CompletionView::setData(CompletionModel* model, int activeIndex, const QString& kind) {
     m_rows.clear();
     m_kind = kind;
     if (model == nullptr) {
@@ -49,8 +45,7 @@ void CompletionView::setData(CompletionModel* model, int activeIndex, const QStr
     update();
 }
 
-int CompletionView::modelRowAt(int localY) const
-{
+int CompletionView::modelRowAt(int localY) const {
     if (localY < 0 || localY >= geometry().height()) {
         return -1;
     }
@@ -62,8 +57,7 @@ int CompletionView::modelRowAt(int localY) const
     return r.header ? -1 : r.modelRow;
 }
 
-int CompletionView::topForActive(int h) const
-{
+int CompletionView::topForActive(int h) const {
     // Find the rendered line of the active item and scroll so it stays visible.
     int activeLine = 0;
     for (int i = 0; i < m_rows.size(); ++i) {
@@ -81,8 +75,7 @@ int CompletionView::topForActive(int h) const
     return top;
 }
 
-void CompletionView::paintEvent(Tui::ZPaintEvent* event)
-{
+void CompletionView::paintEvent(Tui::ZPaintEvent* event) {
     Tui::ZPainter* p = event->painter();
     p->clear(tpal::fg(), tpal::surfaceAlt());
 
@@ -111,8 +104,8 @@ void CompletionView::paintEvent(Tui::ZPaintEvent* event)
 
         int x = 0;
         // Kind badge (accent on a recessed cell, like the GUI's leading chip).
-        const QString badge = (m_kind == QStringLiteral("mention")) ? QStringLiteral(" @ ")
-                                                                     : QStringLiteral(" / ");
+        const QString badge =
+            (m_kind == QStringLiteral("mention")) ? QStringLiteral(" @ ") : QStringLiteral(" / ");
         p->writeWithColors(x, rowY, badge, tpal::accent(), active ? rowBg : tpal::codeBg());
         x += static_cast<int>(badge.size());
 

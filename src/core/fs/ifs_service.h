@@ -53,8 +53,8 @@ signals:
     void statResult(const QString& rootId, const QString& path, const fs::FsEntry& entry, bool ok);
     void fileRead(const QString& rootId, const QString& path, const QByteArray& bytes,
                   const QString& revision, bool binary, bool truncated);
-    void writeResult(const QString& rootId, const QString& path, bool ok,
-                     const QString& revision, const QString& error);
+    void writeResult(const QString& rootId, const QString& path, bool ok, const QString& revision,
+                     const QString& error);
     void searchResults(const QString& rootId, const QString& query,
                        const QList<fs::FsSearchHit>& hits, bool complete);
     // The directory changed externally; consumers invalidate that subtree / reload.

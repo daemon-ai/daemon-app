@@ -13,8 +13,7 @@ namespace {
 
 // A tray needs an icon to be shown on most platforms; synthesize a simple one
 // so the foundation has no asset dependency yet.
-QIcon placeholderTrayIcon()
-{
+QIcon placeholderTrayIcon() {
     QIcon themed = QIcon::fromTheme(QStringLiteral("application-x-executable"));
     if (!themed.isNull()) {
         return themed;
@@ -32,18 +31,13 @@ QIcon placeholderTrayIcon()
 
 } // namespace
 
-DesktopPlatformServices::DesktopPlatformServices(QObject* parent)
-    : IPlatformServices(parent)
-{
-}
+DesktopPlatformServices::DesktopPlatformServices(QObject* parent) : IPlatformServices(parent) {}
 
-DesktopPlatformServices::~DesktopPlatformServices()
-{
+DesktopPlatformServices::~DesktopPlatformServices() {
     delete m_menu; // QMenu is not parented (context menu doesn't take ownership)
 }
 
-bool DesktopPlatformServices::installTray(const QString& appName)
-{
+bool DesktopPlatformServices::installTray(const QString& appName) {
     if (m_tray) {
         return true;
     }
@@ -53,12 +47,10 @@ bool DesktopPlatformServices::installTray(const QString& appName)
 
     m_menu = new QMenu;
     QAction* toggle = m_menu->addAction(QObject::tr("Show/Hide %1").arg(appName));
-    QObject::connect(toggle, &QAction::triggered, this,
-                     &IPlatformServices::toggleWindowRequested);
+    QObject::connect(toggle, &QAction::triggered, this, &IPlatformServices::toggleWindowRequested);
     m_menu->addSeparator();
     QAction* quit = m_menu->addAction(QObject::tr("Quit"));
-    QObject::connect(quit, &QAction::triggered, this,
-                     &IPlatformServices::quitRequested);
+    QObject::connect(quit, &QAction::triggered, this, &IPlatformServices::quitRequested);
 
     m_tray = new QSystemTrayIcon(placeholderTrayIcon(), this);
     m_tray->setToolTip(appName);
@@ -73,8 +65,7 @@ bool DesktopPlatformServices::installTray(const QString& appName)
     return true;
 }
 
-bool DesktopPlatformServices::notify(const QString& title, const QString& body)
-{
+bool DesktopPlatformServices::notify(const QString& title, const QString& body) {
     // Notifications ride the tray icon (the portable Qt path). Without a tray
     // there's nowhere to anchor the balloon, so report that nothing was shown.
     if (m_tray == nullptr || !QSystemTrayIcon::supportsMessages()) {

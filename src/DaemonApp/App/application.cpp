@@ -1,38 +1,39 @@
 #include "application.h"
 
+#include "accounts/iaccounts_service.h"
 #include "app/cached_image_provider.h"
 #include "app/image_cache.h"
 #include "app/math_image_provider.h"
-#include "accounts/iaccounts_service.h"
 #include "automation/icron_store.h"
 #include "automation/irouting_store.h"
+#include "command_registry.h"
 #include "config/idaemon_config.h"
 #include "connection/iconnection_service.h"
-#include "platform/iplatform_services.h"
-#include "platform/platform_services_factory.h"
+#include "daemonnet/idaemonnet.h"
 #include "firstrun/first_run_model.h"
 #include "fleet/iapprovals_inbox.h"
 #include "fleet/idashboard.h"
 #include "fleet/ifleet_tree.h"
 #include "fleet/isession_roster.h"
 #include "fs/ifs_service.h"
+#include "i18n/localization.h"
 #include "memory/imemory_service.h"
 #include "models/imodel_catalog.h"
 #include "nav/nav_controller.h"
 #include "persistence/isession_store.h"
+#include "platform/iplatform_services.h"
+#include "platform/platform_services_factory.h"
 #include "profiles/iprofile_store.h"
 #include "session/icheckpoint_timeline.h"
 #include "session/isession_settings.h"
 #include "settings/isettings_store.h"
-#include "daemonnet/idaemonnet.h"
-#include "transports/ipresence_service.h"
-#include "transports/itransport_registry.h"
-#include "command_registry.h"
 #include "status_bar_model.h"
 #include "transcript_exporter.h"
+#include "transports/ipresence_service.h"
+#include "transports/itransport_registry.h"
 
-#include "i18n/localization.h"
-
+#include <core/formula.h>
+#include <latex.h>
 #include <QCoreApplication>
 #include <QEvent>
 #include <QEventLoop>
@@ -43,18 +44,11 @@
 #include <QString>
 #include <QTimer>
 
-#include <core/formula.h>
-#include <latex.h>
-
 Application::Application(QObject* parent)
-    : QObject(parent)
-    , m_services(daemonapp::daemon::createAppServiceGraph(
-          daemonapp::daemon::serviceModeFromEnvironment(), this))
-    , m_platform(platform::createPlatformServices(this))
-    , m_status(new StatusBarModel(this))
-    , m_commands(new CommandRegistry(this))
-    , m_exporter(new TranscriptExporter(this))
-{
+    : QObject(parent), m_services(daemonapp::daemon::createAppServiceGraph(
+                           daemonapp::daemon::serviceModeFromEnvironment(), this)),
+      m_platform(platform::createPlatformServices(this)), m_status(new StatusBarModel(this)),
+      m_commands(new CommandRegistry(this)), m_exporter(new TranscriptExporter(this)) {
     // The connection seam owns liveness; mirror its state into the footer's
     // gateway indicator (the single surface for connection state).
     connect(m_services.connection, &connection::IConnectionService::stateChanged, this,
@@ -73,13 +67,11 @@ Application::Application(QObject* parent)
     tex::Formula::setDPITarget(72.f * be::app::kMathBaseFontPt);
 }
 
-Application::~Application()
-{
+Application::~Application() {
     tex::LaTeX::release();
 }
 
-void Application::registerContext(QQmlApplicationEngine& engine)
-{
+void Application::registerContext(QQmlApplicationEngine& engine) {
     // Held so a language change can retranslate the live scene (see
     // onLanguageChanged, wired in completeWiring once the singleton exists).
     m_engine = &engine;
@@ -116,7 +108,8 @@ void Application::registerContext(QQmlApplicationEngine& engine)
     m_services.firstRun->begin();
 
     // Daemon-authoritative config facade (mock) backing the settings sections.
-    engine.rootContext()->setContextProperty(QStringLiteral("DaemonConfig"), m_services.daemonConfig);
+    engine.rootContext()->setContextProperty(QStringLiteral("DaemonConfig"),
+                                             m_services.daemonConfig);
 
     // Filesystem seam (dev local-disk impl) backing the file tree, finder, and editor.
     engine.rootContext()->setContextProperty(QStringLiteral("Fs"), m_services.fs);
@@ -125,7 +118,8 @@ void Application::registerContext(QQmlApplicationEngine& engine)
     engine.rootContext()->setContextProperty(QStringLiteral("Memory"), m_services.memory);
 
     // Model catalog facade (mock) backing the Models hub.
-    engine.rootContext()->setContextProperty(QStringLiteral("ModelCatalog"), m_services.modelCatalog);
+    engine.rootContext()->setContextProperty(QStringLiteral("ModelCatalog"),
+                                             m_services.modelCatalog);
 
     // Accounts/auth facade (mock) backing the Accounts manager + wizard.
     engine.rootContext()->setContextProperty(QStringLiteral("Accounts"), m_services.accounts);
@@ -146,7 +140,8 @@ void Application::registerContext(QQmlApplicationEngine& engine)
     // Transport-adapter seams (mock): the multi-protocol "Add channel" picker + configured
     // instances (Transports) and per-account connection/presence (Presence). See
     // daemon-transport-adapter-spec.md + docs/multi-protocol-client-surface.md.
-    engine.rootContext()->setContextProperty(QStringLiteral("Transports"), m_services.transportRegistry);
+    engine.rootContext()->setContextProperty(QStringLiteral("Transports"),
+                                             m_services.transportRegistry);
     engine.rootContext()->setContextProperty(QStringLiteral("Presence"), m_services.presence);
 
     // The unified mock DaemonNet (actors/places + sessions-as-nodes); surfaces project from it. See
@@ -154,7 +149,8 @@ void Application::registerContext(QQmlApplicationEngine& engine)
     engine.rootContext()->setContextProperty(QStringLiteral("DaemonNet"), m_services.daemonNet);
 
     // Per-session override + checkpoint facades (mock) backing the composer popovers.
-    engine.rootContext()->setContextProperty(QStringLiteral("SessionSettings"), m_services.sessionSettings);
+    engine.rootContext()->setContextProperty(QStringLiteral("SessionSettings"),
+                                             m_services.sessionSettings);
     engine.rootContext()->setContextProperty(QStringLiteral("Checkpoints"), m_services.checkpoints);
 
     // Notifier seam: QML binds the active turn's awaitingInput signal to
@@ -170,13 +166,11 @@ void Application::registerContext(QQmlApplicationEngine& engine)
     engine.addImageProvider(QStringLiteral("math"), new be::app::MathImageProvider);
 }
 
-void Application::openPageForRenderHarness(const QString& page, const QString& section)
-{
+void Application::openPageForRenderHarness(const QString& page, const QString& section) {
     m_services.nav->open(page, section);
 }
 
-bool Application::awaitConnectionReady(int timeoutMs)
-{
+bool Application::awaitConnectionReady(int timeoutMs) {
     auto* conn = m_services.connection;
     if (conn->ready()) {
         return true;
@@ -195,8 +189,7 @@ bool Application::awaitConnectionReady(int timeoutMs)
     return conn->ready();
 }
 
-void Application::completeWiring(QQmlApplicationEngine& engine)
-{
+void Application::completeWiring(QQmlApplicationEngine& engine) {
     QQuickWindow* window = nullptr;
     const auto roots = engine.rootObjects();
     for (QObject* obj : roots) {
@@ -257,22 +250,20 @@ void Application::completeWiring(QQmlApplicationEngine& engine)
     }
 }
 
-bool Application::notifyGate(const QString& title, const QString& body)
-{
+bool Application::notifyGate(const QString& title, const QString& body) {
     if (m_platform == nullptr) {
         return false;
     }
     // An on-screen, active window already shows the inline gate, so only alert
     // when the window is hidden, minimized, or not the active window.
-    if (m_window != nullptr && m_window->isVisible()
-        && m_window->visibility() != QWindow::Minimized && m_window->isActive()) {
+    if (m_window != nullptr && m_window->isVisible() &&
+        m_window->visibility() != QWindow::Minimized && m_window->isActive()) {
         return false;
     }
     return m_platform->notify(title, body);
 }
 
-void Application::onLanguageChanged()
-{
+void Application::onLanguageChanged() {
     if (m_uiSettings == nullptr) {
         return;
     }
@@ -285,8 +276,7 @@ void Application::onLanguageChanged()
     }
 }
 
-bool Application::eventFilter(QObject* watched, QEvent* event)
-{
+bool Application::eventFilter(QObject* watched, QEvent* event) {
     if (watched == m_window && event->type() == QEvent::Close) {
         event->ignore();
         m_window->hide(); // hide to tray; the app keeps running

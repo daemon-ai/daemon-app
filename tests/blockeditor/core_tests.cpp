@@ -1,8 +1,8 @@
 #include "core/agent_block.h"
 #include "core/agent_ingest.h"
-#include "core/coordinate_map.h"
 #include "core/block_height_index.h"
 #include "core/command_stack.h"
+#include "core/coordinate_map.h"
 #include "core/document_store.h"
 #include "core/image_url.h"
 #include "core/inline_projector.h"
@@ -16,8 +16,7 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
-class CoreTests : public QObject
-{
+class CoreTests : public QObject {
     Q_OBJECT
 
 private slots:
@@ -119,8 +118,7 @@ namespace {
 
 // Feed a markdown string into a streaming session in fixed-size chunks, mimicking
 // token-by-token arrival (no coalescing timer at the store level).
-void streamInChunks(be::DocumentStore &store, const QString &markdown, int chunkSize)
-{
+void streamInChunks(be::DocumentStore& store, const QString& markdown, int chunkSize) {
     store.beginStreamAtEnd();
     for (qsizetype i = 0; i < markdown.size(); i += chunkSize) {
         store.streamAppend(markdown.mid(i, chunkSize));
@@ -130,10 +128,10 @@ void streamInChunks(be::DocumentStore &store, const QString &markdown, int chunk
 
 } // namespace
 
-void CoreTests::parserSmoke()
-{
+void CoreTests::parserSmoke() {
     be::MarkdownParser parser;
-    const be::ParsedMarkdown parsed = parser.parse(QStringLiteral("# Title\n\nA **bold** paragraph.\n"));
+    const be::ParsedMarkdown parsed =
+        parser.parse(QStringLiteral("# Title\n\nA **bold** paragraph.\n"));
     QVERIFY(parsed.document);
     QVERIFY(parsed.blocks.size() >= 2);
     QCOMPARE(parsed.blocks.first().type, be::BlockType::Heading);
@@ -141,8 +139,7 @@ void CoreTests::parserSmoke()
     QCOMPARE(parsed.blocks.first().startLine, qsizetype(0));
 }
 
-void CoreTests::coordinateMapRoundTrip_data()
-{
+void CoreTests::coordinateMapRoundTrip_data() {
     QTest::addColumn<QString>("text");
 
     QTest::newRow("ascii") << QStringLiteral("alpha\nbeta");
@@ -152,8 +149,7 @@ void CoreTests::coordinateMapRoundTrip_data()
     QTest::newRow("rtl") << QString::fromUtf8("אבג\ntext");
 }
 
-void CoreTests::coordinateMapRoundTrip()
-{
+void CoreTests::coordinateMapRoundTrip() {
     QFETCH(QString, text);
 
     be::CoordinateMap map;
@@ -170,8 +166,7 @@ void CoreTests::coordinateMapRoundTrip()
     }
 }
 
-void CoreTests::pieceTableReplace()
-{
+void CoreTests::pieceTableReplace() {
     be::PieceTable table;
     table.setOriginal(QByteArrayLiteral("hello world"));
     table.replace(6, 5, QByteArrayLiteral("markdown"));
@@ -180,8 +175,7 @@ void CoreTests::pieceTableReplace()
     QCOMPARE(table.toUtf8(), QByteArrayLiteral("hi markdown"));
 }
 
-void CoreTests::documentStoreRoundTrip()
-{
+void CoreTests::documentStoreRoundTrip() {
     const QString markdown = QStringLiteral("# Title\n\nParagraph\n\n- item\n");
     be::DocumentStore store;
     store.loadMarkdown(markdown);
@@ -190,8 +184,7 @@ void CoreTests::documentStoreRoundTrip()
     QCOMPARE(store.blockAt(0)->type, be::BlockType::Heading);
 }
 
-void CoreTests::codeFenceRoundTrips_data()
-{
+void CoreTests::codeFenceRoundTrips_data() {
     QTest::addColumn<QString>("markdown");
 
     QTest::newRow("code") << QStringLiteral("```javascript\ncode\n```\n");
@@ -203,8 +196,7 @@ void CoreTests::codeFenceRoundTrips_data()
         << QStringLiteral("Intro\n\n```javascript\ncode\n```\n\nOutro\n");
 }
 
-void CoreTests::codeFenceRoundTrips()
-{
+void CoreTests::codeFenceRoundTrips() {
     QFETCH(QString, markdown);
 
     be::DocumentStore store;
@@ -216,7 +208,7 @@ void CoreTests::codeFenceRoundTrips()
 
     // Find the code fence block and confirm its stored markdown keeps both the
     // opening and closing delimiters (md4qt drops them from its span).
-    const be::BlockRecord *fence = nullptr;
+    const be::BlockRecord* fence = nullptr;
     for (qsizetype row = 0; row < store.blockCount(); ++row) {
         if (store.blockAt(row)->type == be::BlockType::CodeFence) {
             fence = store.blockAt(row);
@@ -232,8 +224,7 @@ void CoreTests::codeFenceRoundTrips()
                                                         : QStringLiteral("```")));
 }
 
-void CoreTests::fenceDoesNotAbsorbFollowingBlocks_data()
-{
+void CoreTests::fenceDoesNotAbsorbFollowingBlocks_data() {
     QTest::addColumn<QString>("markdown");
     QTest::addColumn<int>("expectedFences");
     QTest::addColumn<int>("expectedListItems");
@@ -257,12 +248,10 @@ void CoreTests::fenceDoesNotAbsorbFollowingBlocks_data()
     QTest::newRow("indented code then list")
         << QStringLiteral("    code line\n\n- a\n- b\n") << 1 << 2 << false;
     // An unterminated fence keeps its opening delimiter and runs to end-of-text.
-    QTest::newRow("unterminated fence")
-        << QStringLiteral("```js\ncode\nmore\n") << 1 << 0 << true;
+    QTest::newRow("unterminated fence") << QStringLiteral("```js\ncode\nmore\n") << 1 << 0 << true;
 }
 
-void CoreTests::fenceDoesNotAbsorbFollowingBlocks()
-{
+void CoreTests::fenceDoesNotAbsorbFollowingBlocks() {
     QFETCH(QString, markdown);
     QFETCH(int, expectedFences);
     QFETCH(int, expectedListItems);
@@ -281,9 +270,8 @@ void CoreTests::fenceDoesNotAbsorbFollowingBlocks()
         const be::BlockType type = store.blockAt(row)->type;
         if (type == be::BlockType::CodeFence) {
             ++fences;
-        } else if (type == be::BlockType::BulletListItem
-                   || type == be::BlockType::OrderedListItem
-                   || type == be::BlockType::TaskListItem) {
+        } else if (type == be::BlockType::BulletListItem ||
+                   type == be::BlockType::OrderedListItem || type == be::BlockType::TaskListItem) {
             ++listItems;
         }
     }
@@ -293,15 +281,14 @@ void CoreTests::fenceDoesNotAbsorbFollowingBlocks()
     // The list rows must keep their own bullet markdown rather than being folded
     // into a code block's stored text.
     for (qsizetype row = 0; row < store.blockCount(); ++row) {
-        const be::BlockRecord *block = store.blockAt(row);
+        const be::BlockRecord* block = store.blockAt(row);
         if (block->type == be::BlockType::CodeFence) {
             QVERIFY(!block->markdown().contains(QStringLiteral("\n- a")));
         }
     }
 }
 
-void CoreTests::projectionMapsMarkdown()
-{
+void CoreTests::projectionMapsMarkdown() {
     be::BlockRecord block;
     block.id = 1;
     block.type = be::BlockType::Paragraph;
@@ -314,10 +301,9 @@ void CoreTests::projectionMapsMarkdown()
     QCOMPARE(projection.rawToVisual(4), qsizetype(2));
 }
 
-void CoreTests::projectionOffsetEndpointsRoundTrip()
-{
+void CoreTests::projectionOffsetEndpointsRoundTrip() {
     struct Case {
-        const char *name;
+        const char* name;
         be::BlockType type;
         quint16 headingLevel;
         QByteArray markdown;
@@ -337,7 +323,7 @@ void CoreTests::projectionOffsetEndpointsRoundTrip()
     };
 
     be::InlineProjector projector;
-    for (const Case &c : cases) {
+    for (const Case& c : cases) {
         be::BlockRecord block;
         block.id = 1;
         block.type = c.type;
@@ -356,8 +342,7 @@ void CoreTests::projectionOffsetEndpointsRoundTrip()
     }
 }
 
-void CoreTests::projectionRendersLinks()
-{
+void CoreTests::projectionRendersLinks() {
     be::InlineProjector projector;
 
     {
@@ -389,7 +374,8 @@ void CoreTests::projectionRendersLinks()
         block.markdownUtf8 = QByteArrayLiteral("[a](https://x.com/p?q=1&r=2)");
         const be::BlockProjection p = projector.project(block);
         QCOMPARE(p.visualText, QStringLiteral("a"));
-        QVERIFY(p.displayMarkup.contains(QStringLiteral("<a href=\"https://x.com/p?q=1&amp;r=2\"")));
+        QVERIFY(
+            p.displayMarkup.contains(QStringLiteral("<a href=\"https://x.com/p?q=1&amp;r=2\"")));
     }
 
     {
@@ -398,12 +384,14 @@ void CoreTests::projectionRendersLinks()
         be::BlockRecord block;
         block.id = 4;
         block.type = be::BlockType::Paragraph;
-        block.markdownUtf8 = QByteArrayLiteral(
-            "[![](https://e/f?domain=a&sz=128)GitHub+3![](https://e/f?domain=b)Ruby+3](https://rubymamistvalove.com/block-editor)");
+        block.markdownUtf8 =
+            QByteArrayLiteral("[![](https://e/f?domain=a&sz=128)GitHub+3![](https://e/"
+                              "f?domain=b)Ruby+3](https://rubymamistvalove.com/block-editor)");
         const be::BlockProjection p = projector.project(block);
         QCOMPARE(p.visualText, QStringLiteral("GitHub+3Ruby+3"));
         QCOMPARE(p.displayMarkup.count(QStringLiteral("<a href")), qsizetype(1));
-        QVERIFY(p.displayMarkup.contains(QStringLiteral("<a href=\"https://rubymamistvalove.com/block-editor\"")));
+        QVERIFY(p.displayMarkup.contains(
+            QStringLiteral("<a href=\"https://rubymamistvalove.com/block-editor\"")));
         QVERIFY(!p.displayMarkup.contains(QStringLiteral("![")));
     }
 
@@ -431,8 +419,7 @@ void CoreTests::projectionRendersLinks()
     }
 }
 
-void CoreTests::linkInsideEmphasisIsClickable()
-{
+void CoreTests::linkInsideEmphasisIsClickable() {
     be::InlineProjector projector;
 
     // **[text](url)**: the link is wrapped in bold, but must still render as a
@@ -467,15 +454,16 @@ void CoreTests::linkInsideEmphasisIsClickable()
         be::BlockRecord block;
         block.id = 3;
         block.type = be::BlockType::Paragraph;
-        block.markdownUtf8 = QByteArrayLiteral("**[\xE2\xAC\x86 Back to Top](#table-of-contents)**");
+        block.markdownUtf8 =
+            QByteArrayLiteral("**[\xE2\xAC\x86 Back to Top](#table-of-contents)**");
         const be::BlockProjection p = projector.project(block);
-        QCOMPARE(p.displayMarkup.count(QStringLiteral("<a href=\"#table-of-contents\"")), qsizetype(1));
+        QCOMPARE(p.displayMarkup.count(QStringLiteral("<a href=\"#table-of-contents\"")),
+                 qsizetype(1));
         QVERIFY(p.displayMarkup.contains(QStringLiteral("<b>")));
     }
 }
 
-void CoreTests::headingAnchorResolvesToRow()
-{
+void CoreTests::headingAnchorResolvesToRow() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("### Table of Contents\n\nbody\n\n## Foo Bar!\n"));
 
@@ -488,8 +476,7 @@ void CoreTests::headingAnchorResolvesToRow()
     QCOMPARE(store.rowForHeadingAnchor(QStringLiteral("#nope")), qsizetype(-1));
 }
 
-void CoreTests::linkSelectionCopiesFullSyntax()
-{
+void CoreTests::linkSelectionCopiesFullSyntax() {
     be::InlineProjector projector;
 
     // Selecting the rendered label of a link-only block copies the full Markdown
@@ -499,7 +486,7 @@ void CoreTests::linkSelectionCopiesFullSyntax()
         be::DocumentStore store;
         store.loadMarkdown(QStringLiteral("[Qt](https://qt.io)\n"));
         QVERIFY(store.blockCount() >= 1);
-        const be::BlockRecord *block = store.blockAt(0);
+        const be::BlockRecord* block = store.blockAt(0);
         const be::BlockProjection p = projector.project(*block);
         QCOMPARE(p.visualText, QStringLiteral("Qt"));
 
@@ -513,13 +500,14 @@ void CoreTests::linkSelectionCopiesFullSyntax()
     {
         be::DocumentStore store;
         store.loadMarkdown(QStringLiteral("See [Qt](https://qt.io) docs\n"));
-        const be::BlockRecord *block = store.blockAt(0);
+        const be::BlockRecord* block = store.blockAt(0);
         const be::BlockProjection p = projector.project(*block);
 
         be::SelectionControllerCore selection;
         selection.setAnchor({block->id, 0, p.visualToRaw(0), 0});
         selection.setHead({block->id, 0, p.visualToRaw(p.visualText.size()), p.visualText.size()});
-        QCOMPARE(selection.copyMarkdown(store.blocks()), QStringLiteral("See [Qt](https://qt.io) docs"));
+        QCOMPARE(selection.copyMarkdown(store.blocks()),
+                 QStringLiteral("See [Qt](https://qt.io) docs"));
     }
 
     // Cross-block selection fully containing the link block preserves the URL.
@@ -527,22 +515,22 @@ void CoreTests::linkSelectionCopiesFullSyntax()
         be::DocumentStore store;
         store.loadMarkdown(QStringLiteral("first\n\n[Qt](https://qt.io)\n\nthird\n"));
         QVERIFY(store.blockCount() >= 3);
-        const be::BlockRecord *b0 = store.blockAt(0);
-        const be::BlockRecord *b2 = store.blockAt(2);
+        const be::BlockRecord* b0 = store.blockAt(0);
+        const be::BlockRecord* b2 = store.blockAt(2);
 
         be::SelectionControllerCore selection;
         selection.setAnchor({b0->id, 0, 2, 2});
         selection.setHead({b2->id, 2, 3, 3});
-        QVERIFY(selection.copyMarkdown(store.blocks()).contains(QStringLiteral("[Qt](https://qt.io)")));
+        QVERIFY(
+            selection.copyMarkdown(store.blocks()).contains(QStringLiteral("[Qt](https://qt.io)")));
     }
 }
 
-void CoreTests::linkNegativeCasesNotLinks()
-{
+void CoreTests::linkNegativeCasesNotLinks() {
     be::InlineProjector projector;
 
     struct Case {
-        const char *name;
+        const char* name;
         QByteArray markdown;
         QString expectedVisual;
     };
@@ -552,7 +540,7 @@ void CoreTests::linkNegativeCasesNotLinks()
         {"space-url", QByteArrayLiteral("[x](a b)"), QStringLiteral("[x](a b)")},
     };
 
-    for (const Case &c : cases) {
+    for (const Case& c : cases) {
         be::BlockRecord block;
         block.id = 1;
         block.type = be::BlockType::Paragraph;
@@ -560,7 +548,7 @@ void CoreTests::linkNegativeCasesNotLinks()
         const be::BlockProjection p = projector.project(block);
         QVERIFY2(!p.displayMarkup.contains(QStringLiteral("<a href")), c.name);
         bool hasLinkSpan = false;
-        for (const be::InlineSpan &span : p.spans) {
+        for (const be::InlineSpan& span : p.spans) {
             if (span.kind == be::SpanKind::Link) {
                 hasLinkSpan = true;
             }
@@ -570,14 +558,13 @@ void CoreTests::linkNegativeCasesNotLinks()
     }
 }
 
-void CoreTests::imageBlocksClassify()
-{
+void CoreTests::imageBlocksClassify() {
     // A line that is solely an image becomes an Image block with url/alt captured.
     {
         be::DocumentStore store;
         store.loadMarkdown(QStringLiteral("![logo](https://x/a.png)\n"));
         QVERIFY(store.blockCount() >= 1);
-        const be::BlockRecord *block = store.blockAt(0);
+        const be::BlockRecord* block = store.blockAt(0);
         QCOMPARE(block->type, be::BlockType::Image);
         QCOMPARE(block->metadata.value(QStringLiteral("imageUrl")).toString(),
                  QStringLiteral("https://x/a.png"));
@@ -591,7 +578,7 @@ void CoreTests::imageBlocksClassify()
         be::DocumentStore store;
         store.loadMarkdown(QStringLiteral("[![alt](https://i/p.png)](https://page)\n"));
         QVERIFY(store.blockCount() >= 1);
-        const be::BlockRecord *block = store.blockAt(0);
+        const be::BlockRecord* block = store.blockAt(0);
         QCOMPARE(block->type, be::BlockType::Image);
         QCOMPARE(block->metadata.value(QStringLiteral("imageUrl")).toString(),
                  QStringLiteral("https://i/p.png"));
@@ -605,7 +592,7 @@ void CoreTests::imageBlocksClassify()
         be::DocumentStore store;
         store.loadMarkdown(QStringLiteral("[![](https://f/icon.png)Docs](https://page)\n"));
         QVERIFY(store.blockCount() >= 1);
-        const be::BlockRecord *block = store.blockAt(0);
+        const be::BlockRecord* block = store.blockAt(0);
         QCOMPARE(block->type, be::BlockType::Paragraph);
     }
 
@@ -613,17 +600,16 @@ void CoreTests::imageBlocksClassify()
     {
         be::DocumentStore store;
         store.loadMarkdown(QStringLiteral("hello\n"));
-        const be::BlockRecord *block = store.blockAt(0);
+        const be::BlockRecord* block = store.blockAt(0);
         store.replaceBlockMarkdown(block->id, QStringLiteral("![pic](https://y/b.png)"));
-        const be::BlockRecord *updated = store.blockAt(0);
+        const be::BlockRecord* updated = store.blockAt(0);
         QCOMPARE(updated->type, be::BlockType::Image);
         QCOMPARE(updated->metadata.value(QStringLiteral("imageUrl")).toString(),
                  QStringLiteral("https://y/b.png"));
     }
 }
 
-void CoreTests::inlineImagesProject()
-{
+void CoreTests::inlineImagesProject() {
     be::InlineProjector projector;
 
     // Favicon-in-link: the paragraph stays inline; its display markup carries both
@@ -650,7 +636,7 @@ void CoreTests::inlineImagesProject()
         QVERIFY(p.displayMarkup.contains(QStringLiteral("<img src=\"image://imgcache")));
         QVERIFY(!p.displayMarkup.contains(QStringLiteral("<a href")));
         int imageSpans = 0;
-        for (const be::InlineSpan &span : p.spans) {
+        for (const be::InlineSpan& span : p.spans) {
             if (span.kind == be::SpanKind::Image) {
                 ++imageSpans;
             }
@@ -659,14 +645,13 @@ void CoreTests::inlineImagesProject()
     }
 }
 
-void CoreTests::inlineMathProjectsAsImage()
-{
+void CoreTests::inlineMathProjectsAsImage() {
     be::InlineProjector projector;
 
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("a $x^2$ b\n"));
     QVERIFY(store.blockCount() >= 1);
-    const be::BlockRecord *block = store.blockAt(0);
+    const be::BlockRecord* block = store.blockAt(0);
     QCOMPARE(block->type, be::BlockType::Paragraph);
 
     const be::BlockProjection p = projector.project(*block);
@@ -685,7 +670,7 @@ void CoreTests::inlineMathProjectsAsImage()
     QCOMPARE(p.displayMarkup.count(QStringLiteral("<img src=\"image://math/")), 1);
     QVERIFY(!p.displayMarkup.contains(QStringLiteral("<img src=\"image://imgcache")));
     int mathSpans = 0;
-    for (const be::InlineSpan &span : p.spans) {
+    for (const be::InlineSpan& span : p.spans) {
         if (span.kind == be::SpanKind::Math) {
             ++mathSpans;
             QCOMPARE(span.mathLatex, QStringLiteral("x^2"));
@@ -702,8 +687,7 @@ void CoreTests::inlineMathProjectsAsImage()
     QCOMPARE(selection.copyMarkdown(store.blocks()), QStringLiteral("a $x^2$ b"));
 }
 
-void CoreTests::displayMathInlineProjects()
-{
+void CoreTests::displayMathInlineProjects() {
     be::InlineProjector projector;
 
     be::BlockRecord block;
@@ -714,7 +698,7 @@ void CoreTests::displayMathInlineProjects()
 
     QVERIFY(p.displayMarkup.contains(QStringLiteral("<img src=\"image://math/")));
     int mathSpans = 0;
-    for (const be::InlineSpan &span : p.spans) {
+    for (const be::InlineSpan& span : p.spans) {
         if (span.kind == be::SpanKind::Math) {
             ++mathSpans;
             QCOMPARE(span.mathLatex, QStringLiteral("\\int"));
@@ -724,12 +708,10 @@ void CoreTests::displayMathInlineProjects()
     QCOMPARE(mathSpans, 1);
 }
 
-void CoreTests::blockMathDataDetected()
-{
+void CoreTests::blockMathDataDetected() {
     // A whole-block $$...$$ span yields the stripped LaTeX (single- and
     // multi-line forms).
-    QCOMPARE(be::blockMathSource(QStringLiteral("$$x^2 + y^2$$")),
-             QStringLiteral("x^2 + y^2"));
+    QCOMPARE(be::blockMathSource(QStringLiteral("$$x^2 + y^2$$")), QStringLiteral("x^2 + y^2"));
     QCOMPARE(be::blockMathSource(QStringLiteral("$$\n\\frac{a}{b}\n$$")),
              QStringLiteral("\\frac{a}{b}"));
 
@@ -742,8 +724,7 @@ void CoreTests::blockMathDataDetected()
     QVERIFY(be::blockMathSource(QStringLiteral("inline $x$ math")).isEmpty());
 }
 
-void CoreTests::resolveImageSourceCases()
-{
+void CoreTests::resolveImageSourceCases() {
     // Remote -> provider URL with the original percent-encoded as the id.
     QVERIFY(be::isRemoteImage(QStringLiteral("https://x/a.png")));
     QVERIFY(be::resolveImageSource(QStringLiteral("https://x/a.png?q=1&s=2"))
@@ -757,12 +738,11 @@ void CoreTests::resolveImageSourceCases()
              QStringLiteral("data:image/png;base64,AAAA"));
 
     // A bare absolute path becomes a file:// URL (loaded directly, never cached).
-    QVERIFY(be::resolveImageSource(QStringLiteral("/tmp/a.png"))
-                .startsWith(QStringLiteral("file://")));
+    QVERIFY(
+        be::resolveImageSource(QStringLiteral("/tmp/a.png")).startsWith(QStringLiteral("file://")));
 }
 
-void CoreTests::imageSizingParses()
-{
+void CoreTests::imageSizingParses() {
 
     // Dimension parsing: units, percent, and physical conversions.
     {
@@ -789,7 +769,8 @@ void CoreTests::imageSizingParses()
     // parseImageBlock captures the trailing attribute block.
     {
         be::ImageBlockInfo info;
-        QVERIFY(be::parseImageBlock(QStringLiteral("![Tux](https://x/tux.png){ width=300 }"), &info));
+        QVERIFY(
+            be::parseImageBlock(QStringLiteral("![Tux](https://x/tux.png){ width=300 }"), &info));
         QCOMPARE(info.url, QStringLiteral("https://x/tux.png"));
         QCOMPARE(info.width, QStringLiteral("300"));
         QVERIFY(info.height.isEmpty());
@@ -800,7 +781,7 @@ void CoreTests::imageSizingParses()
         be::DocumentStore store;
         store.loadMarkdown(QStringLiteral("![Tux](https://x/tux.png){ width=50% }\n"));
         QVERIFY(store.blockCount() >= 1);
-        const be::BlockRecord *block = store.blockAt(0);
+        const be::BlockRecord* block = store.blockAt(0);
         QCOMPARE(block->type, be::BlockType::Image);
         QCOMPARE(block->metadata.value(QStringLiteral("imageWidth")).toString(),
                  QStringLiteral("50%"));
@@ -836,28 +817,26 @@ void CoreTests::imageSizingParses()
     }
 }
 
-void CoreTests::selectionCopiesMarkdown()
-{
+void CoreTests::selectionCopiesMarkdown() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("alpha\nbeta\n"));
     QVERIFY(store.blockCount() >= 1);
 
     be::SelectionControllerCore selection;
-    const be::BlockRecord *first = store.blockAt(0);
+    const be::BlockRecord* first = store.blockAt(0);
     selection.setAnchor({first->id, 0, 0, 0});
     selection.setHead({first->id, 0, 5, 5});
     QCOMPARE(selection.copyMarkdown(store.blocks()), QStringLiteral("alpha"));
 }
 
-void CoreTests::selectionSpanExposesRawOffsets()
-{
+void CoreTests::selectionSpanExposesRawOffsets() {
     // Three blocks; the middle one carries markdown markers so raw != visual.
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("first\n\nuse **bold** word\n\nthird\n"));
     QVERIFY(store.blockCount() >= 3);
-    const be::BlockRecord *b0 = store.blockAt(0);
-    const be::BlockRecord *b1 = store.blockAt(1);
-    const be::BlockRecord *b2 = store.blockAt(2);
+    const be::BlockRecord* b0 = store.blockAt(0);
+    const be::BlockRecord* b1 = store.blockAt(1);
+    const be::BlockRecord* b2 = store.blockAt(2);
 
     be::InlineProjector projector;
     const be::BlockProjection p1 = projector.project(*b1);
@@ -878,7 +857,8 @@ void CoreTests::selectionSpanExposesRawOffsets()
     QCOMPARE(mid.visualEnd, vis1);
 
     // Start block: partial from the anchor raw offset to the block's raw end.
-    const be::SelectionSpan startSpan = selection.spanForBlock(b0->id, 0, p1.visualText.size(), b0->markdown().size());
+    const be::SelectionSpan startSpan =
+        selection.spanForBlock(b0->id, 0, p1.visualText.size(), b0->markdown().size());
     QCOMPARE(startSpan.kind, be::SelectionSpan::Kind::Partial);
     QCOMPARE(startSpan.rawStart, qsizetype(2));
     QCOMPARE(startSpan.rawEnd, b0->markdown().size());
@@ -890,8 +870,7 @@ void CoreTests::selectionSpanExposesRawOffsets()
     QCOMPARE(endSpan.rawEnd, qsizetype(3));
 }
 
-void CoreTests::persistenceSavesDirtyBlocks()
-{
+void CoreTests::persistenceSavesDirtyBlocks() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
 
@@ -906,8 +885,7 @@ void CoreTests::persistenceSavesDirtyBlocks()
     QCOMPARE(blocks.first().markdown(), store.blockAt(0)->markdown());
 }
 
-void CoreTests::blockHeightIndexFindsRows()
-{
+void CoreTests::blockHeightIndexFindsRows() {
     be::BlockHeightIndex index;
     index.reset(3, 10.0);
     index.setHeight(1, 25.0);
@@ -919,15 +897,15 @@ void CoreTests::blockHeightIndexFindsRows()
     QCOMPARE(index.rowAtContentY(35.0), qsizetype(2));
 }
 
-void CoreTests::commandStackUndoRedo()
-{
+void CoreTests::commandStackUndoRedo() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("alpha\n"));
     const be::BlockId id = store.blockAt(0)->id;
     const QString before = store.blockMarkdown(id);
 
     be::CommandStack commands;
-    commands.push(std::make_unique<be::ReplaceBlockCommand>(id, before, QStringLiteral("beta")), store);
+    commands.push(std::make_unique<be::ReplaceBlockCommand>(id, before, QStringLiteral("beta")),
+                  store);
     QCOMPARE(store.toMarkdown(), QStringLiteral("beta\n"));
     QVERIFY(commands.canUndo());
 
@@ -939,8 +917,7 @@ void CoreTests::commandStackUndoRedo()
     QCOMPARE(store.toMarkdown(), QStringLiteral("beta\n"));
 }
 
-void CoreTests::listFlattensPerItem()
-{
+void CoreTests::listFlattensPerItem() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("- a\n- b\n- c\n"));
     QCOMPARE(store.blockCount(), qsizetype(3));
@@ -951,8 +928,7 @@ void CoreTests::listFlattensPerItem()
     QCOMPARE(store.toMarkdown(), QStringLiteral("- a\n- b\n- c\n"));
 }
 
-void CoreTests::splitKeepsBlocksSeparate()
-{
+void CoreTests::splitKeepsBlocksSeparate() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("Para\n"));
     const be::BlockId id = store.blockAt(0)->id;
@@ -966,8 +942,7 @@ void CoreTests::splitKeepsBlocksSeparate()
     QCOMPARE(store.toMarkdown(), QStringLiteral("Pa\n\nra\n"));
 }
 
-void CoreTests::splitPreservesBlockIdentity()
-{
+void CoreTests::splitPreservesBlockIdentity() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("# Title\n\nParagraph\n\n- item\n"));
     const be::BlockId headingId = store.blockAt(0)->id;
@@ -987,8 +962,7 @@ void CoreTests::splitPreservesBlockIdentity()
     QCOMPARE(store.blockAt(3)->id, listId);
 }
 
-void CoreTests::splitMergeRoundTrips()
-{
+void CoreTests::splitMergeRoundTrips() {
     be::DocumentStore store;
     const QString original = QStringLiteral("# Title\n\nParagraph\n\n- item\n");
     store.loadMarkdown(original);
@@ -1001,10 +975,10 @@ void CoreTests::splitMergeRoundTrips()
     QCOMPARE(store.toMarkdown(), original);
 }
 
-void CoreTests::splitUsesUtf16CursorOffset()
-{
+void CoreTests::splitUsesUtf16CursorOffset() {
     be::DocumentStore store;
-    store.loadMarkdown(QString::fromUtf8("a\xF0\x9F\x98\x80""b\n")); // "a<emoji>b"
+    store.loadMarkdown(QString::fromUtf8("a\xF0\x9F\x98\x80"
+                                         "b\n")); // "a<emoji>b"
     const be::BlockId id = store.blockAt(0)->id;
 
     // The emoji occupies two UTF-16 code units, so offset 3 sits right after it.
@@ -1013,8 +987,7 @@ void CoreTests::splitUsesUtf16CursorOffset()
     QCOMPARE(store.blockAt(1)->markdown(), QStringLiteral("b"));
 }
 
-void CoreTests::listItemSplitContinuesMarker()
-{
+void CoreTests::listItemSplitContinuesMarker() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("- foo\n"));
     const be::BlockId id = store.blockAt(0)->id;
@@ -1026,8 +999,7 @@ void CoreTests::listItemSplitContinuesMarker()
     QCOMPARE(store.blockAt(1)->type, be::BlockType::BulletListItem);
 }
 
-void CoreTests::emptyListItemSplitExitsList()
-{
+void CoreTests::emptyListItemSplitExitsList() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("- foo\n"));
     const be::BlockId id = store.blockAt(0)->id;
@@ -1041,8 +1013,7 @@ void CoreTests::emptyListItemSplitExitsList()
     QVERIFY(store.blockAt(1)->markdown().isEmpty());
 }
 
-void CoreTests::orderedListRenumbersOnSplit()
-{
+void CoreTests::orderedListRenumbersOnSplit() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("1. a\n2. b\n"));
     const be::BlockId firstId = store.blockAt(0)->id;
@@ -1055,8 +1026,7 @@ void CoreTests::orderedListRenumbersOnSplit()
     QCOMPARE(store.toMarkdown(), QStringLiteral("1. a\n2. \n3. b\n"));
 }
 
-void CoreTests::headingSplitTailBecomesParagraph()
-{
+void CoreTests::headingSplitTailBecomesParagraph() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("# Title\n"));
     const be::BlockId id = store.blockAt(0)->id;
@@ -1068,8 +1038,7 @@ void CoreTests::headingSplitTailBecomesParagraph()
     QVERIFY(store.blockAt(1)->markdown().isEmpty());
 }
 
-void CoreTests::codeFenceEnterExitsToNewParagraph()
-{
+void CoreTests::codeFenceEnterExitsToNewParagraph() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("```js\ncode\n```\n"));
     const be::BlockId id = store.blockAt(0)->id;
@@ -1092,8 +1061,7 @@ void CoreTests::codeFenceEnterExitsToNewParagraph()
     QVERIFY(store.toMarkdown().startsWith(QStringLiteral("```js\ncode\n```")));
 }
 
-void CoreTests::codeFenceEnterInBodyStaysInFence()
-{
+void CoreTests::codeFenceEnterInBodyStaysInFence() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("```js\ncode\n```\n"));
     const be::BlockId id = store.blockAt(0)->id;
@@ -1114,10 +1082,8 @@ void CoreTests::codeFenceEnterInBodyStaysInFence()
     QCOMPARE(store2.blockAt(0)->type, be::BlockType::CodeFence);
 }
 
-void CoreTests::streamMatchesOneShotLoad()
-{
-    const QString markdown = QStringLiteral(
-        "# Title\n\nPara\n\n```\ncode\n\n```\n\n- a\n- b\n");
+void CoreTests::streamMatchesOneShotLoad() {
+    const QString markdown = QStringLiteral("# Title\n\nPara\n\n```\ncode\n\n```\n\n- a\n- b\n");
 
     be::DocumentStore oneShot;
     oneShot.loadMarkdown(markdown);
@@ -1141,8 +1107,7 @@ void CoreTests::streamMatchesOneShotLoad()
     }
 }
 
-void CoreTests::streamCommitsBlockIdentity()
-{
+void CoreTests::streamCommitsBlockIdentity() {
     be::DocumentStore store;
     store.beginStreamAtEnd();
 
@@ -1160,8 +1125,7 @@ void CoreTests::streamCommitsBlockIdentity()
     QCOMPARE(store.blockAt(0)->markdown(), QStringLiteral("# Title"));
 }
 
-void CoreTests::streamSetextReclassifies()
-{
+void CoreTests::streamSetextReclassifies() {
     be::DocumentStore store;
     store.beginStreamAtEnd();
     store.streamAppend(QStringLiteral("Title"));
@@ -1175,8 +1139,7 @@ void CoreTests::streamSetextReclassifies()
     QCOMPARE(store.blockAt(0)->type, be::BlockType::Heading);
 }
 
-void CoreTests::streamRoundTripThenStructuralEdit()
-{
+void CoreTests::streamRoundTripThenStructuralEdit() {
     const QString markdown = QStringLiteral("# Title\n\nParagraph\n\n- a\n- b\n");
     be::DocumentStore store;
     streamInChunks(store, markdown, 2);
@@ -1191,8 +1154,7 @@ void CoreTests::streamRoundTripThenStructuralEdit()
     QCOMPARE(store.toMarkdown(), markdown);
 }
 
-void CoreTests::streamUndoRemovesAppendedBlocks()
-{
+void CoreTests::streamUndoRemovesAppendedBlocks() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("Existing\n"));
     const qsizetype startRow = store.blockCount();
@@ -1216,8 +1178,7 @@ void CoreTests::streamUndoRemovesAppendedBlocks()
     QCOMPARE(store.toMarkdown(), QStringLiteral("Existing\n\n# Added\n\nMore\n"));
 }
 
-void CoreTests::multilineParagraphRoundTrips()
-{
+void CoreTests::multilineParagraphRoundTrips() {
     const QString markdown = QStringLiteral("a\nb\n\nc\n");
     be::DocumentStore store;
     store.loadMarkdown(markdown);
@@ -1229,8 +1190,7 @@ void CoreTests::multilineParagraphRoundTrips()
     QCOMPARE(store.toMarkdown(), markdown);
 }
 
-void CoreTests::paragraphBreakTrimsBlankLine()
-{
+void CoreTests::paragraphBreakTrimsBlankLine() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("foo\n"));
     const be::BlockId id = store.blockAt(0)->id;
@@ -1244,8 +1204,7 @@ void CoreTests::paragraphBreakTrimsBlankLine()
     QCOMPARE(store.toMarkdown(), QStringLiteral("foo\n\n\n"));
 }
 
-void CoreTests::paragraphBreakTrimsTrailingSpaces()
-{
+void CoreTests::paragraphBreakTrimsTrailingSpaces() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("placeholder\n"));
     const be::BlockId id = store.blockAt(0)->id;
@@ -1257,8 +1216,7 @@ void CoreTests::paragraphBreakTrimsTrailingSpaces()
     QVERIFY(store.blockAt(1)->markdown().isEmpty());
 }
 
-void CoreTests::paragraphBreakPreservesInternalSoftBreak()
-{
+void CoreTests::paragraphBreakPreservesInternalSoftBreak() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("placeholder\n"));
     const be::BlockId id = store.blockAt(0)->id;
@@ -1270,8 +1228,7 @@ void CoreTests::paragraphBreakPreservesInternalSoftBreak()
     QVERIFY(store.blockAt(1)->markdown().isEmpty());
 }
 
-void CoreTests::nestedListRoundTrips()
-{
+void CoreTests::nestedListRoundTrips() {
     const QString markdown = QStringLiteral("- a\n  - b\n  - c\n- d\n");
     be::DocumentStore store;
     store.loadMarkdown(markdown);
@@ -1285,8 +1242,7 @@ void CoreTests::nestedListRoundTrips()
     QCOMPARE(store.toMarkdown(), markdown);
 }
 
-void CoreTests::indentRespectsMaxDepth()
-{
+void CoreTests::indentRespectsMaxDepth() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("- a\n- b\n"));
     const be::BlockId first = store.blockAt(0)->id;
@@ -1306,16 +1262,14 @@ void CoreTests::indentRespectsMaxDepth()
     QCOMPARE(store.blockAt(1)->indent, quint16(2));
 }
 
-void CoreTests::outdentFloorsAtZero()
-{
+void CoreTests::outdentFloorsAtZero() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("- a\n"));
     QVERIFY(!store.adjustListIndent(store.blockAt(0)->id, -1));
     QCOMPARE(store.blockAt(0)->indent, quint16(0));
 }
 
-void CoreTests::backspacePolicyOutdentUnlistMerge()
-{
+void CoreTests::backspacePolicyOutdentUnlistMerge() {
     // Nested list item -> outdent one level (and report the caret shift).
     {
         be::DocumentStore store;
@@ -1348,8 +1302,7 @@ void CoreTests::backspacePolicyOutdentUnlistMerge()
     }
 }
 
-void CoreTests::nestedOrderedRenumbering()
-{
+void CoreTests::nestedOrderedRenumbering() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("1. a\n2. b\n3. c\n4. d\n"));
 
@@ -1364,8 +1317,7 @@ void CoreTests::nestedOrderedRenumbering()
     QCOMPARE(store.blockAt(3)->markdown(), QStringLiteral("2. d"));
 }
 
-void CoreTests::mixedListRunDepthAndSeparators()
-{
+void CoreTests::mixedListRunDepthAndSeparators() {
     const QString markdown = QStringLiteral("- a\n  - b\n- c\n\npara\n");
     be::DocumentStore store;
     store.loadMarkdown(markdown);
@@ -1380,27 +1332,22 @@ void CoreTests::mixedListRunDepthAndSeparators()
     QCOMPARE(store.toMarkdown(), markdown);
 }
 
-void CoreTests::tableClassifiedFromContent()
-{
+void CoreTests::tableClassifiedFromContent() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("placeholder\n"));
     const be::BlockId id = store.blockAt(0)->id;
 
-    QVERIFY(store.replaceBlockMarkdown(
-        id, QStringLiteral("| L | R |\n| :-- | --: |\n| a | b |")));
+    QVERIFY(store.replaceBlockMarkdown(id, QStringLiteral("| L | R |\n| :-- | --: |\n| a | b |")));
     QCOMPARE(store.blockAt(0)->type, be::BlockType::Table);
 
     // A paragraph that merely contains a stray pipe must not be mistaken for a
     // table (the second line is not a delimiter row).
-    QVERIFY(store.replaceBlockMarkdown(
-        id, QStringLiteral("Just a | pipe\nplain text")));
+    QVERIFY(store.replaceBlockMarkdown(id, QStringLiteral("Just a | pipe\nplain text")));
     QCOMPARE(store.blockAt(0)->type, be::BlockType::Paragraph);
 }
 
-void CoreTests::tableRoundTrips()
-{
-    const QString markdown =
-        QStringLiteral("| Name | Age |\n| :--- | ---: |\n| Bob | 3 |\n");
+void CoreTests::tableRoundTrips() {
+    const QString markdown = QStringLiteral("| Name | Age |\n| :--- | ---: |\n| Bob | 3 |\n");
     be::DocumentStore store;
     store.loadMarkdown(markdown);
 
@@ -1409,10 +1356,9 @@ void CoreTests::tableRoundTrips()
     QCOMPARE(store.toMarkdown(), markdown);
 }
 
-void CoreTests::tableParseStructure()
-{
-    const be::TableData table = be::parseTable(
-        QStringLiteral("| L | C | R |\n| :-- | :--: | --: |\n| a | b | c |"));
+void CoreTests::tableParseStructure() {
+    const be::TableData table =
+        be::parseTable(QStringLiteral("| L | C | R |\n| :-- | :--: | --: |\n| a | b | c |"));
 
     QCOMPARE(table.columns, 3);
     QCOMPARE(table.alignments.size(), qsizetype(3));
@@ -1432,13 +1378,12 @@ void CoreTests::tableParseStructure()
     QCOMPARE(table.rows[0][2].raw, QStringLiteral("c"));
 }
 
-void CoreTests::tableParsePipesInCodeAndEscapes()
-{
+void CoreTests::tableParsePipesInCodeAndEscapes() {
     // A backslash-escaped pipe is literal cell text, not a column separator. A
     // naive split-on-'|' scanner would wrongly produce three cells here; the
     // md4qt-backed split keeps two, validating GFM-correct handling.
-    const be::TableData escaped = be::parseTable(
-        QStringLiteral("| A | B |\n| --- | --- |\n| x \\| y | z |"));
+    const be::TableData escaped =
+        be::parseTable(QStringLiteral("| A | B |\n| --- | --- |\n| x \\| y | z |"));
     QCOMPARE(escaped.columns, 2);
     QCOMPARE(escaped.rows.size(), qsizetype(1));
     QCOMPARE(escaped.rows[0].size(), qsizetype(2));
@@ -1447,24 +1392,21 @@ void CoreTests::tableParsePipesInCodeAndEscapes()
 
     // An escaped pipe inside an inline-code span likewise stays within one cell
     // (an unescaped pipe, even inside backticks, is a GFM delimiter).
-    const be::TableData code = be::parseTable(
-        QStringLiteral("| Code |\n| --- |\n| `a \\| b` |"));
+    const be::TableData code = be::parseTable(QStringLiteral("| Code |\n| --- |\n| `a \\| b` |"));
     QCOMPARE(code.columns, 1);
     QCOMPARE(code.rows.size(), qsizetype(1));
     QCOMPARE(code.rows[0].size(), qsizetype(1));
     QVERIFY(code.rows[0][0].raw.contains(QLatin1Char('|')));
 }
 
-void CoreTests::tableCellRawOffsets()
-{
+void CoreTests::tableCellRawOffsets() {
     // Each cell's [rawStart, rawEnd) must index the block markdown back to the
     // cell's trimmed raw text, even with leading padding and inline markup.
-    const QString markdown =
-        QStringLiteral("| Name | Tag |\n| --- | --- |\n|  **x**  | y |");
+    const QString markdown = QStringLiteral("| Name | Tag |\n| --- | --- |\n|  **x**  | y |");
     const be::TableData table = be::parseTable(markdown);
     QCOMPARE(table.columns, 2);
 
-    const auto verifyCell = [&](const be::TableCell &cell) {
+    const auto verifyCell = [&](const be::TableCell& cell) {
         QCOMPARE(markdown.mid(cell.rawStart, cell.rawEnd - cell.rawStart), cell.raw);
         QVERIFY(cell.rawStart <= cell.rawEnd);
     };
@@ -1506,8 +1448,7 @@ void CoreTests::tableCellRawOffsets()
     QCOMPARE(headerEmpty.header[1].rawStart, headerEmpty.header[1].rawEnd);
 }
 
-void CoreTests::tableSurvivesEdit()
-{
+void CoreTests::tableSurvivesEdit() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("| A | B |\n| --- | --- |\n| 1 | 2 |\n"));
     QCOMPARE(store.blockAt(0)->type, be::BlockType::Table);
@@ -1518,13 +1459,11 @@ void CoreTests::tableSurvivesEdit()
     QCOMPARE(store.blockAt(0)->type, be::BlockType::Table);
 }
 
-void CoreTests::tableSplitCreatesTrailingParagraph()
-{
+void CoreTests::tableSplitCreatesTrailingParagraph() {
     // A double-Enter at the end of a table (the controller's splitParagraph path,
     // i.e. splitBlock with trimBoundary) must keep the table intact and append a
     // fresh empty paragraph, mirroring paragraph escape behavior.
-    const QString markdown =
-        QStringLiteral("| A | B |\n| --- | --- |\n| 1 | 2 |\n");
+    const QString markdown = QStringLiteral("| A | B |\n| --- | --- |\n| 1 | 2 |\n");
     be::DocumentStore store;
     store.loadMarkdown(markdown);
     QCOMPARE(store.blockCount(), qsizetype(1));
@@ -1546,8 +1485,7 @@ void CoreTests::tableSplitCreatesTrailingParagraph()
     QVERIFY(store.blockAt(0)->markdown().startsWith(QStringLiteral("| A | B |")));
 }
 
-void CoreTests::pasteHeadingDocIntoHeadingNoLeadingNewline()
-{
+void CoreTests::pasteHeadingDocIntoHeadingNoLeadingNewline() {
     // Primary regression: pasting a document that itself starts with a heading
     // (no leading blank line) at the end of an existing heading must NOT merge
     // the pasted "# Title" into "# Heading"; each pasted block stays its own.
@@ -1560,8 +1498,8 @@ void CoreTests::pasteHeadingDocIntoHeadingNoLeadingNewline()
 
     be::BlockId caretBlock = 0;
     qsizetype caretOffset = -1;
-    QVERIFY(store.pasteMarkdown(id, end, end,
-        QStringLiteral("# Title\n\npara\n\n- item"), &caretBlock, &caretOffset));
+    QVERIFY(store.pasteMarkdown(id, end, end, QStringLiteral("# Title\n\npara\n\n- item"),
+                                &caretBlock, &caretOffset));
 
     QCOMPARE(store.blockCount(), qsizetype(4));
     QCOMPARE(store.blockAt(0)->type, be::BlockType::Heading);
@@ -1580,8 +1518,7 @@ void CoreTests::pasteHeadingDocIntoHeadingNoLeadingNewline()
     QCOMPARE(store.toMarkdown(), QStringLiteral("# Heading\n\n# Title\n\npara\n\n- item\n"));
 }
 
-void CoreTests::pasteSplitsMidParagraph()
-{
+void CoreTests::pasteSplitsMidParagraph() {
     // Pasting multi-block content into the middle of a paragraph keeps the
     // before/after halves as their own blocks around the inserted blocks.
     be::DocumentStore store;
@@ -1591,8 +1528,7 @@ void CoreTests::pasteSplitsMidParagraph()
     be::BlockId caretBlock = 0;
     qsizetype caretOffset = -1;
     // Cursor between "alpha " and "omega" (offset 6).
-    QVERIFY(store.pasteMarkdown(id, 6, 6,
-        QStringLiteral("one\n\ntwo"), &caretBlock, &caretOffset));
+    QVERIFY(store.pasteMarkdown(id, 6, 6, QStringLiteral("one\n\ntwo"), &caretBlock, &caretOffset));
 
     QCOMPARE(store.blockCount(), qsizetype(4));
     QCOMPARE(store.blockAt(0)->markdown(), QStringLiteral("alpha "));
@@ -1603,8 +1539,7 @@ void CoreTests::pasteSplitsMidParagraph()
     QCOMPARE(caretOffset, qsizetype(3)); // end of "two"
 }
 
-void CoreTests::pasteSingleLineMergesInline()
-{
+void CoreTests::pasteSingleLineMergesInline() {
     // A single-line paste with no block boundary merges inline (no new blocks).
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("hello world\n"));
@@ -1621,8 +1556,7 @@ void CoreTests::pasteSingleLineMergesInline()
     QCOMPARE(caretOffset, qsizetype(11)); // after "hello there"
 }
 
-void CoreTests::agentBlockSerializeIsStable()
-{
+void CoreTests::agentBlockSerializeIsStable() {
     QVariantMap meta;
     meta.insert(QStringLiteral("callId"), QStringLiteral("c1"));
     meta.insert(QStringLiteral("name"), QStringLiteral("terminal"));
@@ -1645,22 +1579,22 @@ void CoreTests::agentBlockSerializeIsStable()
     QCOMPARE(be::serializeAgentBlock(be::BlockType::ToolCall, withFence), md);
 }
 
-void CoreTests::agentFenceParsesToTypedBlock()
-{
-    const QString markdown = QStringLiteral(
-        "```reasoning\n{\"body\":\"Think first.\",\"status\":\"complete\"}\n```\n");
+void CoreTests::agentFenceParsesToTypedBlock() {
+    const QString markdown =
+        QStringLiteral("```reasoning\n{\"body\":\"Think first.\",\"status\":\"complete\"}\n```\n");
     be::DocumentStore store;
     store.loadMarkdown(markdown);
 
-    const be::BlockRecord *block = store.blockAt(0);
+    const be::BlockRecord* block = store.blockAt(0);
     QVERIFY(block != nullptr);
     QCOMPARE(block->type, be::BlockType::Reasoning);
-    QCOMPARE(block->metadata.value(QStringLiteral("status")).toString(), QStringLiteral("complete"));
-    QCOMPARE(block->metadata.value(QStringLiteral("body")).toString(), QStringLiteral("Think first."));
+    QCOMPARE(block->metadata.value(QStringLiteral("status")).toString(),
+             QStringLiteral("complete"));
+    QCOMPARE(block->metadata.value(QStringLiteral("body")).toString(),
+             QStringLiteral("Think first."));
 }
 
-void CoreTests::agentBlockMarkdownRoundTrips()
-{
+void CoreTests::agentBlockMarkdownRoundTrips() {
     QVariantMap meta;
     meta.insert(QStringLiteral("callId"), QStringLiteral("c7"));
     meta.insert(QStringLiteral("name"), QStringLiteral("search"));
@@ -1671,7 +1605,7 @@ void CoreTests::agentBlockMarkdownRoundTrips()
     be::DocumentStore store;
     store.loadMarkdown(md + QLatin1Char('\n'));
 
-    const be::BlockRecord *block = store.blockAt(0);
+    const be::BlockRecord* block = store.blockAt(0);
     QVERIFY(block != nullptr);
     QCOMPARE(block->type, be::BlockType::ToolCall);
     // The block's stored markdown round-trips back to the canonical fenced form.
@@ -1681,11 +1615,11 @@ void CoreTests::agentBlockMarkdownRoundTrips()
     be::DocumentStore reloaded;
     reloaded.loadMarkdown(store.toMarkdown());
     QCOMPARE(reloaded.blockAt(0)->type, be::BlockType::ToolCall);
-    QCOMPARE(reloaded.blockAt(0)->metadata.value(QStringLiteral("callId")).toString(), QStringLiteral("c7"));
+    QCOMPARE(reloaded.blockAt(0)->metadata.value(QStringLiteral("callId")).toString(),
+             QStringLiteral("c7"));
 }
 
-void CoreTests::injectTypedBlockAppendsRow()
-{
+void CoreTests::injectTypedBlockAppendsRow() {
     be::DocumentStore store;
     store.loadMarkdown(QStringLiteral("Intro\n"));
     const qsizetype before = store.blockCount();
@@ -1705,8 +1639,7 @@ void CoreTests::injectTypedBlockAppendsRow()
     QCOMPARE(store.blockIdForMetadata(QStringLiteral("callId"), QStringLiteral("c1")), id);
 }
 
-void CoreTests::updateBlockMetadataByCallIdFlipsStatus()
-{
+void CoreTests::updateBlockMetadataByCallIdFlipsStatus() {
     be::DocumentStore store;
     QVariantMap meta;
     meta.insert(QStringLiteral("callId"), QStringLiteral("abc"));
@@ -1714,7 +1647,8 @@ void CoreTests::updateBlockMetadataByCallIdFlipsStatus()
     meta.insert(QStringLiteral("status"), QStringLiteral("running"));
     const be::BlockId id = store.appendTypedBlock(be::BlockType::ToolCall, meta, nullptr);
 
-    const be::BlockId found = store.blockIdForMetadata(QStringLiteral("callId"), QStringLiteral("abc"));
+    const be::BlockId found =
+        store.blockIdForMetadata(QStringLiteral("callId"), QStringLiteral("abc"));
     QCOMPARE(found, id);
 
     QVariantMap patch;
@@ -1725,14 +1659,14 @@ void CoreTests::updateBlockMetadataByCallIdFlipsStatus()
     const qsizetype row = store.rowForBlock(id);
     QCOMPARE(cs.changedFirst, row);
     QCOMPARE(cs.changedLast, row);
-    QCOMPARE(store.blockAt(row)->metadata.value(QStringLiteral("status")).toString(), QStringLiteral("ok"));
+    QCOMPARE(store.blockAt(row)->metadata.value(QStringLiteral("status")).toString(),
+             QStringLiteral("ok"));
     QCOMPARE(store.blockAt(row)->metadata.value(QStringLiteral("durationMs")).toInt(), 850);
     // The patch also re-serialized the canonical markdown so a later save persists it.
     QVERIFY(store.blockAt(row)->markdown().contains(QStringLiteral("\"status\":\"ok\"")));
 }
 
-void CoreTests::buildToolViewFlipsTitleAndDuration()
-{
+void CoreTests::buildToolViewFlipsTitleAndDuration() {
     QVariantMap running;
     running.insert(QStringLiteral("name"), QStringLiteral("terminal"));
     running.insert(QStringLiteral("status"), QStringLiteral("running"));
@@ -1750,8 +1684,7 @@ void CoreTests::buildToolViewFlipsTitleAndDuration()
     QCOMPARE(dv.value(QStringLiteral("durationLabel")).toString(), QStringLiteral("1.5s"));
 }
 
-void CoreTests::toolViewDerivesClarifyVariant()
-{
+void CoreTests::toolViewDerivesClarifyVariant() {
     QVariantMap clarify;
     clarify.insert(QStringLiteral("name"), QStringLiteral("clarify"));
     clarify.insert(QStringLiteral("question"), QStringLiteral("Which DB?"));
@@ -1766,8 +1699,7 @@ void CoreTests::toolViewDerivesClarifyVariant()
     QCOMPARE(answered.value(QStringLiteral("title")).toString(), QStringLiteral("Answered"));
 }
 
-void CoreTests::toolViewDerivesImageGenerate()
-{
+void CoreTests::toolViewDerivesImageGenerate() {
     QVariantMap gen;
     gen.insert(QStringLiteral("name"), QStringLiteral("image_generate"));
     gen.insert(QStringLiteral("status"), QStringLiteral("ok"));
@@ -1785,8 +1717,7 @@ void CoreTests::toolViewDerivesImageGenerate()
     QCOMPARE(be::buildToolView(pending).value(QStringLiteral("detailKind")).toString(), QString());
 }
 
-void CoreTests::toolViewFlagsAwaitingApproval()
-{
+void CoreTests::toolViewFlagsAwaitingApproval() {
     QVariantMap meta;
     meta.insert(QStringLiteral("name"), QStringLiteral("terminal"));
     meta.insert(QStringLiteral("status"), QStringLiteral("running"));
@@ -1804,8 +1735,7 @@ void CoreTests::toolViewFlagsAwaitingApproval()
     QVERIFY(!be::buildToolView(plain).value(QStringLiteral("awaitingApproval")).toBool());
 }
 
-void CoreTests::clarifyAnswerRoundTrips()
-{
+void CoreTests::clarifyAnswerRoundTrips() {
     be::DocumentStore store;
     QVariantMap meta;
     meta.insert(QStringLiteral("callId"), QStringLiteral("q1"));
@@ -1821,7 +1751,8 @@ void CoreTests::clarifyAnswerRoundTrips()
 
     const qsizetype row = store.rowForBlock(id);
     QVERIFY(store.blockAt(row)->metadata.value(QStringLiteral("answered")).toBool());
-    QCOMPARE(store.blockAt(row)->metadata.value(QStringLiteral("answer")).toString(), QStringLiteral("PostgreSQL"));
+    QCOMPARE(store.blockAt(row)->metadata.value(QStringLiteral("answer")).toString(),
+             QStringLiteral("PostgreSQL"));
     // The answer persists in the canonical fenced markdown and re-parses stably.
     const QString md = store.toMarkdown();
     QVERIFY(md.contains(QStringLiteral("\"answer\":\"PostgreSQL\"")));
@@ -1830,31 +1761,34 @@ void CoreTests::clarifyAnswerRoundTrips()
     QCOMPARE(reloaded.toMarkdown(), md);
 }
 
-void CoreTests::clarifyMultiQuestionAnswerRoundTrips()
-{
+void CoreTests::clarifyMultiQuestionAnswerRoundTrips() {
     be::DocumentStore store;
     // A clarify block carrying several questions, one of them multi-select.
     QVariantMap qDb;
     qDb.insert(QStringLiteral("id"), QStringLiteral("db"));
     qDb.insert(QStringLiteral("prompt"), QStringLiteral("Which DB?"));
-    qDb.insert(QStringLiteral("choices"), QVariantList{ QStringLiteral("PostgreSQL"), QStringLiteral("SQLite") });
+    qDb.insert(QStringLiteral("choices"),
+               QVariantList{QStringLiteral("PostgreSQL"), QStringLiteral("SQLite")});
     QVariantMap qScope;
     qScope.insert(QStringLiteral("id"), QStringLiteral("scope"));
     qScope.insert(QStringLiteral("prompt"), QStringLiteral("What to migrate?"));
-    qScope.insert(QStringLiteral("choices"), QVariantList{ QStringLiteral("Schema"), QStringLiteral("Data"), QStringLiteral("Indexes") });
+    qScope.insert(
+        QStringLiteral("choices"),
+        QVariantList{QStringLiteral("Schema"), QStringLiteral("Data"), QStringLiteral("Indexes")});
     qScope.insert(QStringLiteral("multiSelect"), true);
 
     QVariantMap meta;
     meta.insert(QStringLiteral("callId"), QStringLiteral("q1"));
     meta.insert(QStringLiteral("name"), QStringLiteral("clarify"));
-    meta.insert(QStringLiteral("questions"), QVariantList{ qDb, qScope });
+    meta.insert(QStringLiteral("questions"), QVariantList{qDb, qScope});
     const be::BlockId id = store.appendTypedBlock(be::BlockType::ToolCall, meta, nullptr);
 
     // The structured answers the controller would apply: a scalar for the
     // single-select question and a list for the multi-select one.
     QVariantMap answers;
     answers.insert(QStringLiteral("db"), QStringLiteral("PostgreSQL"));
-    answers.insert(QStringLiteral("scope"), QVariantList{ QStringLiteral("Schema"), QStringLiteral("Indexes") });
+    answers.insert(QStringLiteral("scope"),
+                   QVariantList{QStringLiteral("Schema"), QStringLiteral("Indexes")});
     QVariantMap patch;
     patch.insert(QStringLiteral("answered"), true);
     patch.insert(QStringLiteral("answers"), answers);
@@ -1867,7 +1801,7 @@ void CoreTests::clarifyMultiQuestionAnswerRoundTrips()
     const QVariantMap storedAnswers = stored.value(QStringLiteral("answers")).toMap();
     QCOMPARE(storedAnswers.value(QStringLiteral("db")).toString(), QStringLiteral("PostgreSQL"));
     QCOMPARE(storedAnswers.value(QStringLiteral("scope")).toStringList(),
-             QStringList({ QStringLiteral("Schema"), QStringLiteral("Indexes") }));
+             QStringList({QStringLiteral("Schema"), QStringLiteral("Indexes")}));
 
     // The nested questions + structured answers survive a markdown round-trip.
     const QString md = store.toMarkdown();
@@ -1878,8 +1812,7 @@ void CoreTests::clarifyMultiQuestionAnswerRoundTrips()
     QCOMPARE(reloaded.toMarkdown(), md);
 }
 
-void CoreTests::approvalAnswerRoundTrips()
-{
+void CoreTests::approvalAnswerRoundTrips() {
     be::DocumentStore store;
     QVariantMap meta;
     meta.insert(QStringLiteral("callId"), QStringLiteral("c8"));
@@ -1888,7 +1821,8 @@ void CoreTests::approvalAnswerRoundTrips()
     meta.insert(QStringLiteral("needsApproval"), true);
     const be::BlockId id = store.appendTypedBlock(be::BlockType::ToolCall, meta, nullptr);
     QVERIFY(be::buildToolView(store.blockAt(store.rowForBlock(id))->metadata)
-                .value(QStringLiteral("awaitingApproval")).toBool());
+                .value(QStringLiteral("awaitingApproval"))
+                .toBool());
 
     // A denial (what answerToolApproval applies) clears the gate and errors out.
     QVariantMap patch;
@@ -1903,8 +1837,7 @@ void CoreTests::approvalAnswerRoundTrips()
     QVERIFY(store.toMarkdown().contains(QStringLiteral("\"approval\":\"denied\"")));
 }
 
-void CoreTests::clarifyAnswerPatchContract()
-{
+void CoreTests::clarifyAnswerPatchContract() {
     // The shared be::clarifyAnswerPatch must produce exactly what
     // EditorController::answerClarify used to build inline, so the GUI and the TUI
     // answer identically. A scalar answer and a list answer, with the flat human
@@ -1912,7 +1845,7 @@ void CoreTests::clarifyAnswerPatchContract()
     QVariantMap answers;
     answers.insert(QStringLiteral("db"), QStringLiteral("PostgreSQL"));
     answers.insert(QStringLiteral("scope"),
-                   QVariantList { QStringLiteral("Schema"), QStringLiteral("Indexes") });
+                   QVariantList{QStringLiteral("Schema"), QStringLiteral("Indexes")});
 
     const QVariantMap patch = be::clarifyAnswerPatch(answers);
     QCOMPARE(patch.value(QStringLiteral("answered")).toBool(), true);
@@ -1922,8 +1855,7 @@ void CoreTests::clarifyAnswerPatchContract()
              QStringLiteral("PostgreSQL; Schema, Indexes"));
 }
 
-void CoreTests::toolApprovalPatchContract()
-{
+void CoreTests::toolApprovalPatchContract() {
     // Approval clears the gate and leaves the tool running for the host to finish.
     const QVariantMap approved = be::toolApprovalPatch(QStringLiteral("approved"));
     QCOMPARE(approved.value(QStringLiteral("approval")).toString(), QStringLiteral("approved"));
@@ -1937,17 +1869,16 @@ void CoreTests::toolApprovalPatchContract()
     QCOMPARE(denied.value(QStringLiteral("status")).toString(), QStringLiteral("error"));
 }
 
-void CoreTests::ansiSpansParseSgr()
-{
+void CoreTests::ansiSpansParseSgr() {
     // "plain \x1b[31mred\x1b[1m bold\x1b[0m done"
-    const QString text = QStringLiteral("plain ")
-        + QChar(0x1B) + QStringLiteral("[31mred")
-        + QChar(0x1B) + QStringLiteral("[1m bold")
-        + QChar(0x1B) + QStringLiteral("[0m done");
+    const QString text = QStringLiteral("plain ") + QChar(0x1B) + QStringLiteral("[31mred") +
+                         QChar(0x1B) + QStringLiteral("[1m bold") + QChar(0x1B) +
+                         QStringLiteral("[0m done");
     const QVariantList spans = be::ansiToSpans(text);
     QCOMPARE(spans.size(), 4);
 
-    QCOMPARE(spans.at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("plain "));
+    QCOMPARE(spans.at(0).toMap().value(QStringLiteral("text")).toString(),
+             QStringLiteral("plain "));
     QCOMPARE(spans.at(0).toMap().value(QStringLiteral("fg")).toInt(), -1);
 
     QCOMPARE(spans.at(1).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("red"));
@@ -1964,27 +1895,26 @@ void CoreTests::ansiSpansParseSgr()
     QVERIFY(!reset.value(QStringLiteral("bold")).toBool());
 }
 
-void CoreTests::unifiedDiffTypesLines()
-{
-    const QString diff = QStringLiteral(
-        "--- a/file\n+++ b/file\n@@ -1,2 +1,2 @@\n context\n-old line\n+new line\n");
+void CoreTests::unifiedDiffTypesLines() {
+    const QString diff =
+        QStringLiteral("--- a/file\n+++ b/file\n@@ -1,2 +1,2 @@\n context\n-old line\n+new line\n");
     const QVariantList lines = be::parseUnifiedDiff(diff);
     QVERIFY(lines.size() >= 6);
     QCOMPARE(lines.at(0).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("meta"));
     QCOMPARE(lines.at(1).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("meta"));
     QCOMPARE(lines.at(2).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("hunk"));
-    QCOMPARE(lines.at(3).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("context"));
+    QCOMPARE(lines.at(3).toMap().value(QStringLiteral("kind")).toString(),
+             QStringLiteral("context"));
     QCOMPARE(lines.at(4).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("del"));
     QCOMPARE(lines.at(5).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("add"));
 }
 
-void CoreTests::ingestShimReplayBuildsBlocks()
-{
+void CoreTests::ingestShimReplayBuildsBlocks() {
     be::DocumentStore store;
     be::TranscriptIngest ingest(&store);
 
     QVariantList feed;
-    auto event = [](const char *type) {
+    auto event = [](const char* type) {
         QVariantMap e;
         e.insert(QStringLiteral("type"), QString::fromLatin1(type));
         return e;
@@ -2018,17 +1948,20 @@ void CoreTests::ingestShimReplayBuildsBlocks()
 
     QCOMPARE(store.blockCount(), qsizetype(2));
     QCOMPARE(store.blockAt(0)->type, be::BlockType::Reasoning);
-    QCOMPARE(store.blockAt(0)->metadata.value(QStringLiteral("status")).toString(), QStringLiteral("complete"));
-    QCOMPARE(store.blockAt(0)->metadata.value(QStringLiteral("body")).toString(), QStringLiteral("Let me check."));
+    QCOMPARE(store.blockAt(0)->metadata.value(QStringLiteral("status")).toString(),
+             QStringLiteral("complete"));
+    QCOMPARE(store.blockAt(0)->metadata.value(QStringLiteral("body")).toString(),
+             QStringLiteral("Let me check."));
 
     QCOMPARE(store.blockAt(1)->type, be::BlockType::ToolCall);
-    QCOMPARE(store.blockAt(1)->metadata.value(QStringLiteral("status")).toString(), QStringLiteral("ok"));
+    QCOMPARE(store.blockAt(1)->metadata.value(QStringLiteral("status")).toString(),
+             QStringLiteral("ok"));
     QCOMPARE(store.blockAt(1)->metadata.value(QStringLiteral("durationMs")).toInt(), 1200);
-    QCOMPARE(store.blockAt(1)->metadata.value(QStringLiteral("stdout")).toString(), QStringLiteral("done\n"));
+    QCOMPARE(store.blockAt(1)->metadata.value(QStringLiteral("stdout")).toString(),
+             QStringLiteral("done\n"));
 }
 
-void CoreTests::ingestFlushClosesTextStream()
-{
+void CoreTests::ingestFlushClosesTextStream() {
     be::DocumentStore store;
     be::TranscriptIngest ingest(&store);
 
@@ -2057,8 +1990,7 @@ void CoreTests::ingestFlushClosesTextStream()
     QCOMPARE(store.toMarkdown(), md);
 }
 
-void CoreTests::agentBlocksSceneParses()
-{
+void CoreTests::agentBlocksSceneParses() {
     // A miniature of the seeded "Agent blocks demo" transcript: a heading, each
     // typed block in its canonical fenced form, interleaved with prose. Asserts
     // the document parses into the right BlockTypes with hydrated metadata, and
@@ -2068,9 +2000,11 @@ void CoreTests::agentBlocksSceneParses()
         "# Agent transcript blocks\n\n"
         "Intro paragraph.\n\n"
         "```reasoning\n{\"status\":\"complete\",\"body\":\"Think then act.\"}\n```\n\n"
-        "```tool\n{\"callId\":\"c1\",\"name\":\"terminal\",\"status\":\"ok\",\"detailKind\":\"ansi-stream\","
+        "```tool\n{\"callId\":\"c1\",\"name\":\"terminal\",\"status\":\"ok\",\"detailKind\":\"ansi-"
+        "stream\","
         "\"stdout\":\"\\u001b[32mPASS\\u001b[0m\\n\"}\n```\n\n"
-        "```tool\n{\"callId\":\"c3\",\"name\":\"apply_patch\",\"status\":\"ok\",\"detailKind\":\"diff\","
+        "```tool\n{\"callId\":\"c3\",\"name\":\"apply_patch\",\"status\":\"ok\",\"detailKind\":"
+        "\"diff\","
         "\"diff\":\"--- a\\n+++ b\\n@@ -1 +1 @@\\n-x\\n+y\\n\"}\n```\n\n"
         "```content\n{\"kind\":\"ansi-stream\",\"body\":\"tailing\\n\"}\n```\n\n"
         "Outro paragraph.\n");
@@ -2079,16 +2013,17 @@ void CoreTests::agentBlocksSceneParses()
     store.loadMarkdown(scene);
 
     // Collect the typed blocks by walking the document.
-    const be::BlockRecord *reasoning = nullptr;
-    const be::BlockRecord *ansiTool = nullptr;
-    const be::BlockRecord *diffTool = nullptr;
-    const be::BlockRecord *content = nullptr;
+    const be::BlockRecord* reasoning = nullptr;
+    const be::BlockRecord* ansiTool = nullptr;
+    const be::BlockRecord* diffTool = nullptr;
+    const be::BlockRecord* content = nullptr;
     for (qsizetype row = 0; row < store.blockCount(); ++row) {
-        const be::BlockRecord *b = store.blockAt(row);
+        const be::BlockRecord* b = store.blockAt(row);
         if (b->type == be::BlockType::Reasoning) {
             reasoning = b;
         } else if (b->type == be::BlockType::ToolCall) {
-            if (b->metadata.value(QStringLiteral("detailKind")).toString() == QStringLiteral("diff")) {
+            if (b->metadata.value(QStringLiteral("detailKind")).toString() ==
+                QStringLiteral("diff")) {
                 diffTool = b;
             } else {
                 ansiTool = b;
@@ -2103,32 +2038,33 @@ void CoreTests::agentBlocksSceneParses()
     QVERIFY(diffTool != nullptr);
     QVERIFY(content != nullptr);
 
-    QCOMPARE(reasoning->metadata.value(QStringLiteral("status")).toString(), QStringLiteral("complete"));
+    QCOMPARE(reasoning->metadata.value(QStringLiteral("status")).toString(),
+             QStringLiteral("complete"));
 
     // The ansi stdout decodes into colored spans (the AnsiText input).
-    const QVariantList spans = be::ansiToSpans(ansiTool->metadata.value(QStringLiteral("stdout")).toString());
+    const QVariantList spans =
+        be::ansiToSpans(ansiTool->metadata.value(QStringLiteral("stdout")).toString());
     QVERIFY(spans.size() >= 2);
     QCOMPARE(spans.at(0).toMap().value(QStringLiteral("fg")).toInt(), 2); // green PASS
 
     // The diff decodes into typed lines (the DiffBlock input).
-    const QVariantList diffLines = be::parseUnifiedDiff(diffTool->metadata.value(QStringLiteral("diff")).toString());
+    const QVariantList diffLines =
+        be::parseUnifiedDiff(diffTool->metadata.value(QStringLiteral("diff")).toString());
     QVERIFY(diffLines.size() >= 5);
 
     // The whole document round-trips back to the same markdown.
     QCOMPARE(store.toMarkdown(), scene);
 }
 
-void CoreTests::messageMarkerDerivesRolesAndDropsRows()
-{
+void CoreTests::messageMarkerDerivesRolesAndDropsRows() {
     // A document with msg boundary markers: each marker tags the blocks that
     // follow it and is itself consumed (never becomes a row).
-    const QString md = QStringLiteral(
-        "```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
-        "Migrate the database, please.\n\n"
-        "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
-        "Working on it.\n\nDone — all tables migrated.\n\n"
-        "```msg\n{\"id\":\"s1\",\"role\":\"system\"}\n```\n\n"
-        "steer:Use PostgreSQL syntax.\n");
+    const QString md = QStringLiteral("```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
+                                      "Migrate the database, please.\n\n"
+                                      "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
+                                      "Working on it.\n\nDone — all tables migrated.\n\n"
+                                      "```msg\n{\"id\":\"s1\",\"role\":\"system\"}\n```\n\n"
+                                      "steer:Use PostgreSQL syntax.\n");
 
     be::DocumentStore store;
     store.loadMarkdown(md);
@@ -2148,13 +2084,11 @@ void CoreTests::messageMarkerDerivesRolesAndDropsRows()
     QCOMPARE(store.blockAt(3)->messageId, QStringLiteral("s1"));
 }
 
-void CoreTests::messageMarkerRoundTripIsStable()
-{
-    const QString md = QStringLiteral(
-        "```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
-        "Hello there.\n\n"
-        "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
-        "Hi! How can I help?\n");
+void CoreTests::messageMarkerRoundTripIsStable() {
+    const QString md = QStringLiteral("```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
+                                      "Hello there.\n\n"
+                                      "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
+                                      "Hi! How can I help?\n");
 
     be::DocumentStore store;
     store.loadMarkdown(md);
@@ -2171,13 +2105,13 @@ void CoreTests::messageMarkerRoundTripIsStable()
     QVERIFY(once.contains(QStringLiteral("\"role\":\"assistant\"")));
 }
 
-void CoreTests::beginMessageTagsTypedAndStreamBlocks()
-{
+void CoreTests::beginMessageTagsTypedAndStreamBlocks() {
     be::DocumentStore store;
 
     // A user message via the runtime append path, then an assistant message that
     // mixes a streamed paragraph and a typed tool block.
-    const QString userId = store.appendMessageBlocks(be::MessageRole::User, QStringLiteral("Run the build."));
+    const QString userId =
+        store.appendMessageBlocks(be::MessageRole::User, QStringLiteral("Run the build."));
     QCOMPARE(store.blockAt(0)->role, be::MessageRole::User);
     QCOMPARE(store.blockAt(0)->messageId, userId);
 
@@ -2208,8 +2142,7 @@ void CoreTests::beginMessageTagsTypedAndStreamBlocks()
     QCOMPARE(reloaded.blockAt(reloaded.blockCount() - 1)->role, be::MessageRole::Assistant);
 }
 
-void CoreTests::ingestOpensAssistantMessage()
-{
+void CoreTests::ingestOpensAssistantMessage() {
     be::DocumentStore store;
     be::TranscriptIngest ingest(&store);
 
@@ -2241,13 +2174,11 @@ void CoreTests::ingestOpensAssistantMessage()
     QVERIFY(store.blockAt(store.blockCount() - 1)->messageId != firstId);
 }
 
-void CoreTests::editUserMessageTruncatesAndRetags()
-{
-    const QString md = QStringLiteral(
-        "```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
-        "First question.\n\n"
-        "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
-        "First answer.\n");
+void CoreTests::editUserMessageTruncatesAndRetags() {
+    const QString md = QStringLiteral("```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
+                                      "First question.\n\n"
+                                      "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
+                                      "First answer.\n");
 
     be::DocumentStore store;
     store.loadMarkdown(md);
@@ -2259,7 +2190,8 @@ void CoreTests::editUserMessageTruncatesAndRetags()
     store.deleteBlocks(row, store.blockCount() - row);
     QCOMPARE(store.blockCount(), qsizetype(0));
 
-    const QString newId = store.appendMessageBlocks(be::MessageRole::User, QStringLiteral("Edited question."));
+    const QString newId =
+        store.appendMessageBlocks(be::MessageRole::User, QStringLiteral("Edited question."));
     QCOMPARE(store.blockCount(), qsizetype(1));
     QCOMPARE(store.blockAt(0)->role, be::MessageRole::User);
     QCOMPARE(store.blockAt(0)->messageId, newId);
@@ -2267,15 +2199,13 @@ void CoreTests::editUserMessageTruncatesAndRetags()
     QVERIFY(newId != QStringLiteral("u1"));
 }
 
-void CoreTests::rewindToMessageReturnsTextAndTruncates()
-{
-    const QString md = QStringLiteral(
-        "```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
-        "First question.\n\n"
-        "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
-        "First answer.\n\n"
-        "```msg\n{\"id\":\"u2\",\"role\":\"user\"}\n```\n\n"
-        "Second question.\n");
+void CoreTests::rewindToMessageReturnsTextAndTruncates() {
+    const QString md = QStringLiteral("```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
+                                      "First question.\n\n"
+                                      "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
+                                      "First answer.\n\n"
+                                      "```msg\n{\"id\":\"u2\",\"role\":\"user\"}\n```\n\n"
+                                      "Second question.\n");
 
     be::DocumentStore store;
     store.loadMarkdown(md);
@@ -2294,13 +2224,11 @@ void CoreTests::rewindToMessageReturnsTextAndTruncates()
     QCOMPARE(store.blockCount(), qsizetype(2));
 }
 
-void CoreTests::regenerateFromMessageKeepsUserTurn()
-{
-    const QString md = QStringLiteral(
-        "```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
-        "Question.\n\n"
-        "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
-        "Answer.\n");
+void CoreTests::regenerateFromMessageKeepsUserTurn() {
+    const QString md = QStringLiteral("```msg\n{\"id\":\"u1\",\"role\":\"user\"}\n```\n\n"
+                                      "Question.\n\n"
+                                      "```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n"
+                                      "Answer.\n");
 
     be::DocumentStore store;
     store.loadMarkdown(md);

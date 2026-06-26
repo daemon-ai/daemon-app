@@ -2,6 +2,51 @@
 
 // Include the concrete Tui headers (their classes live in the inline namespace
 // Tui::v0, so forward-declaring them as Tui::Foo would mint a different type).
+#include "accounts/iaccounts_service.h"
+#include "attachment_bar_view.h"
+#include "automation/icron_store.h"
+#include "automation/irouting_store.h"
+#include "code_editor_view.h"
+#include "completion_view.h"
+#include "composer_chrome.h"
+#include "config/idaemon_config.h"
+#include "connection/iconnection_service.h"
+#include "core/agent_ingest.h"
+#include "core/document_store.h"
+#include "core/transcript_search.h"
+#include "daemon/app_service_graph.h"
+#include "file_tree_view.h"
+#include "firstrun/first_run_model.h"
+#include "fleet/iapprovals_inbox.h"
+#include "fleet/idashboard.h"
+#include "fleet/ifleet_tree.h"
+#include "fleet/isession_roster.h"
+#include "interactive_turn_host.h"
+#include "line_editor.h"
+#include "models/imodel_catalog.h"
+#include "mouse_terminal.h"
+#include "nav/nav_controller.h"
+#include "palette_dialog.h"
+#include "profiles/iprofile_store.h"
+#include "queue_strip_view.h"
+#include "search_input_box.h"
+#include "session/icheckpoint_timeline.h"
+#include "session/isession_settings.h"
+#include "session_list_view.h"
+#include "settings/isettings_store.h"
+#include "status_bar_view.h"
+#include "submit_input_box.h"
+#include "tab_strip_view.h"
+#include "transcript_view.h"
+#include "tree_list_view.h"
+#include "tui_dialogs.h"
+
+#include <memory>
+#include <QHash>
+#include <QString>
+#include <QStringList>
+#include <QVariantList>
+#include <QVariantMap>
 #include <Tui/ZButton.h>
 #include <Tui/ZDialog.h>
 #include <Tui/ZInputBox.h>
@@ -12,55 +57,6 @@
 #include <Tui/ZTextEdit.h>
 #include <Tui/ZTextMetrics.h>
 #include <Tui/ZWindow.h>
-
-#include "attachment_bar_view.h"
-#include "completion_view.h"
-#include "composer_chrome.h"
-#include "session_list_view.h"
-#include "interactive_turn_host.h"
-#include "line_editor.h"
-#include "mouse_terminal.h"
-#include "palette_dialog.h"
-#include "queue_strip_view.h"
-#include "status_bar_view.h"
-#include "tab_strip_view.h"
-#include "transcript_view.h"
-#include "file_tree_view.h"
-#include "code_editor_view.h"
-#include "search_input_box.h"
-#include "submit_input_box.h"
-#include "tree_list_view.h"
-#include "tui_dialogs.h"
-
-#include "daemon/app_service_graph.h"
-#include "core/agent_ingest.h"
-#include "core/document_store.h"
-#include "core/transcript_search.h"
-
-#include "accounts/iaccounts_service.h"
-#include "config/idaemon_config.h"
-#include "connection/iconnection_service.h"
-#include "models/imodel_catalog.h"
-#include "automation/icron_store.h"
-#include "automation/irouting_store.h"
-#include "fleet/iapprovals_inbox.h"
-#include "fleet/idashboard.h"
-#include "fleet/ifleet_tree.h"
-#include "fleet/isession_roster.h"
-#include "profiles/iprofile_store.h"
-#include "session/icheckpoint_timeline.h"
-#include "session/isession_settings.h"
-#include "firstrun/first_run_model.h"
-#include "nav/nav_controller.h"
-#include "settings/isettings_store.h"
-
-#include <QHash>
-#include <QString>
-#include <QStringList>
-#include <QVariantList>
-#include <QVariantMap>
-
-#include <memory>
 
 namespace persistence {
 class ISessionStore;
@@ -85,7 +81,7 @@ class MemoryListModel;
 class MemoryStatsModel;
 class MemoryTimelineModel;
 class MemoryGraphModel;
-}
+} // namespace memoryui
 
 class SidebarModel;
 class SessionsListModel;

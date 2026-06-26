@@ -2,8 +2,7 @@
 
 namespace fs {
 
-void registerFsMetatypes()
-{
+void registerFsMetatypes() {
     qRegisterMetaType<fs::FsEntry>("fs::FsEntry");
     qRegisterMetaType<fs::FsRoot>("fs::FsRoot");
     qRegisterMetaType<fs::FsSearchHit>("fs::FsSearchHit");

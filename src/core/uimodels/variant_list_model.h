@@ -23,13 +23,11 @@ public:
 
     using QAbstractListModel::QAbstractListModel;
 
-    [[nodiscard]] int rowCount(const QModelIndex& parent = {}) const override
-    {
+    [[nodiscard]] int rowCount(const QModelIndex& parent = {}) const override {
         return parent.isValid() ? 0 : static_cast<int>(m_rows.size());
     }
 
-    [[nodiscard]] QVariant data(const QModelIndex& index, int role) const override
-    {
+    [[nodiscard]] QVariant data(const QModelIndex& index, int role) const override {
         if (!index.isValid() || index.row() < 0 || index.row() >= m_rows.size()) {
             return {};
         }
@@ -39,21 +37,18 @@ public:
         return {};
     }
 
-    [[nodiscard]] QHash<int, QByteArray> roleNames() const override
-    {
-        return { { EntryRole, "entry" } };
+    [[nodiscard]] QHash<int, QByteArray> roleNames() const override {
+        return {{EntryRole, "entry"}};
     }
 
     [[nodiscard]] int count() const { return static_cast<int>(m_rows.size()); }
 
-    [[nodiscard]] Q_INVOKABLE QVariantMap at(int row) const
-    {
+    [[nodiscard]] Q_INVOKABLE QVariantMap at(int row) const {
         return (row >= 0 && row < m_rows.size()) ? m_rows.at(row) : QVariantMap{};
     }
 
     // Replace all rows (used for search results / scope changes).
-    void setRows(const QList<QVariantMap>& rows)
-    {
+    void setRows(const QList<QVariantMap>& rows) {
         beginResetModel();
         m_rows = rows;
         endResetModel();
@@ -63,14 +58,13 @@ public:
     [[nodiscard]] const QList<QVariantMap>& rows() const { return m_rows; }
 
     // Insert or update a row matched by its "id" field. Returns the row index.
-    int upsert(const QVariantMap& row)
-    {
+    int upsert(const QVariantMap& row) {
         const QVariant id = row.value(QStringLiteral("id"));
         for (int i = 0; i < m_rows.size(); ++i) {
             if (m_rows.at(i).value(QStringLiteral("id")) == id) {
                 m_rows[i] = row;
                 const QModelIndex idx = index(i);
-                emit dataChanged(idx, idx, { EntryRole });
+                emit dataChanged(idx, idx, {EntryRole});
                 return i;
             }
         }
@@ -82,8 +76,7 @@ public:
         return at;
     }
 
-    void removeById(const QVariant& id)
-    {
+    void removeById(const QVariant& id) {
         for (int i = 0; i < m_rows.size(); ++i) {
             if (m_rows.at(i).value(QStringLiteral("id")) == id) {
                 beginRemoveRows({}, i, i);
@@ -95,8 +88,7 @@ public:
         }
     }
 
-    [[nodiscard]] int indexOfId(const QVariant& id) const
-    {
+    [[nodiscard]] int indexOfId(const QVariant& id) const {
         for (int i = 0; i < m_rows.size(); ++i) {
             if (m_rows.at(i).value(QStringLiteral("id")) == id) {
                 return i;

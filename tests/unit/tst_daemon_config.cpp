@@ -1,6 +1,5 @@
-#include "config/mock_daemon_config.h"
-
 #include "cache_test_support.h"
+#include "config/mock_daemon_config.h"
 
 #include <QSignalSpy>
 #include <QtTest/QtTest>
@@ -15,24 +14,21 @@ class TestDaemonConfig : public QObject {
 private slots:
     void init() { resetMockCache(); }
 
-    void seededDefaults()
-    {
+    void seededDefaults() {
         MockDaemonConfig c;
         QCOMPARE(c.value(QStringLiteral("model/effort")).toString(), QStringLiteral("Balanced"));
         QCOMPARE(c.value(QStringLiteral("chat/streaming")).toBool(), true);
         QCOMPARE(c.value(QStringLiteral("memory/contextWindow")).toInt(), 128000);
     }
 
-    void optionsForEnumKeys()
-    {
+    void optionsForEnumKeys() {
         MockDaemonConfig c;
         const QStringList policy = c.options(QStringLiteral("safety/approvalPolicy"));
         QVERIFY(policy.contains(QStringLiteral("On request")));
         QVERIFY(c.options(QStringLiteral("model/default")).isEmpty()); // not an enum key
     }
 
-    void roundTripAndSignal()
-    {
+    void roundTripAndSignal() {
         MockDaemonConfig c;
         QSignalSpy spy(&c, &config::IDaemonConfig::changed);
         c.setValue(QStringLiteral("safety/allowNetwork"), true);
@@ -43,8 +39,7 @@ private slots:
     }
 
     // Tier 3: a changed value survives across construction, overlaying the seed.
-    void valuePersistsAcrossRestart()
-    {
+    void valuePersistsAcrossRestart() {
         {
             MockDaemonConfig c;
             c.setValue(QStringLiteral("memory/contextWindow"), 64000);

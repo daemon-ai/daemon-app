@@ -5,8 +5,8 @@
 #include <QHash>
 #include <QObject>
 #include <QString>
-#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
+#include <QVariantMap>
 
 namespace daemonnet {
 class IDaemonNet;

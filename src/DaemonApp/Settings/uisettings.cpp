@@ -3,10 +3,9 @@
 #include "i18n/localization.h"
 #include "theme/theme_palette.h"
 
+#include <algorithm>
 #include <QVariant>
 #include <QVariantMap>
-
-#include <algorithm>
 
 namespace {
 
@@ -18,33 +17,29 @@ struct FontEntry {
     const char* family;
 };
 
-const QList<FontEntry>& sansTable()
-{
-    static const QList<FontEntry> table = { { "Inter", "Inter" } };
+const QList<FontEntry>& sansTable() {
+    static const QList<FontEntry> table = {{"Inter", "Inter"}};
     return table;
 }
 
-const QList<FontEntry>& serifTable()
-{
+const QList<FontEntry>& serifTable() {
     static const QList<FontEntry> table = {
-        { "Trykker", "Trykker" },
-        { "Ibarra Real Nova", "Ibarra Real Nova" },
+        {"Trykker", "Trykker"},
+        {"Ibarra Real Nova", "Ibarra Real Nova"},
     };
     return table;
 }
 
-const QList<FontEntry>& monoTable()
-{
+const QList<FontEntry>& monoTable() {
     static const QList<FontEntry> table = {
-        { "iA Writer Mono", "iA Writer Mono S" },
-        { "iA Writer Duo", "iA Writer Duo S" },
-        { "iA Writer Quattro", "iA Writer Quattro S" },
+        {"iA Writer Mono", "iA Writer Mono S"},
+        {"iA Writer Duo", "iA Writer Duo S"},
+        {"iA Writer Quattro", "iA Writer Quattro S"},
     };
     return table;
 }
 
-const QList<FontEntry>& tableForCategory(const QString& category)
-{
+const QList<FontEntry>& tableForCategory(const QString& category) {
     if (category == QStringLiteral("Serif")) {
         return serifTable();
     }
@@ -54,8 +49,7 @@ const QList<FontEntry>& tableForCategory(const QString& category)
     return sansTable();
 }
 
-QStringList labelsOf(const QList<FontEntry>& table)
-{
+QStringList labelsOf(const QList<FontEntry>& table) {
     QStringList out;
     out.reserve(table.size());
     for (const FontEntry& e : table) {
@@ -64,21 +58,18 @@ QStringList labelsOf(const QList<FontEntry>& table)
     return out;
 }
 
-bool isKnownCategory(const QString& category)
-{
-    return category == QStringLiteral("Sans") || category == QStringLiteral("Serif")
-        || category == QStringLiteral("Mono");
+bool isKnownCategory(const QString& category) {
+    return category == QStringLiteral("Sans") || category == QStringLiteral("Serif") ||
+           category == QStringLiteral("Mono");
 }
 
-bool isKnownTheme(const QString& theme)
-{
+bool isKnownTheme(const QString& theme) {
     // Single-sourced with the GUI palette + the TUI: the set of valid theme names
     // lives in the shared theme lib.
     return theme::ThemePalette::isKnown(theme);
 }
 
-bool isKnownLanguage(const QString& code)
-{
+bool isKnownLanguage(const QString& code) {
     for (const i18n::LocaleOption& opt : i18n::availableLocales()) {
         if (opt.code == code) {
             return true;
@@ -89,13 +80,11 @@ bool isKnownLanguage(const QString& code)
 
 } // namespace
 
-UiSettings::UiSettings(QObject* parent) : QObject(parent)
-{
+UiSettings::UiSettings(QObject* parent) : QObject(parent) {
     load();
 }
 
-void UiSettings::load()
-{
+void UiSettings::load() {
     m_settings.beginGroup(QStringLiteral("ui"));
     const QString theme = m_settings.value(QStringLiteral("theme"), m_theme).toString();
     if (isKnownTheme(theme)) {
@@ -105,29 +94,26 @@ void UiSettings::load()
     if (isKnownLanguage(language)) {
         m_language = language;
     }
-    const QString category
-        = m_settings.value(QStringLiteral("fontCategory"), m_fontCategory).toString();
+    const QString category =
+        m_settings.value(QStringLiteral("fontCategory"), m_fontCategory).toString();
     if (isKnownCategory(category)) {
         m_fontCategory = category;
     }
     m_sansIndex = m_settings.value(QStringLiteral("sansIndex"), m_sansIndex).toInt();
     m_serifIndex = m_settings.value(QStringLiteral("serifIndex"), m_serifIndex).toInt();
     m_monoIndex = m_settings.value(QStringLiteral("monoIndex"), m_monoIndex).toInt();
-    m_editorFontSize
-        = m_settings.value(QStringLiteral("fontSize"), m_editorFontSize).toInt();
+    m_editorFontSize = m_settings.value(QStringLiteral("fontSize"), m_editorFontSize).toInt();
     m_centerText = m_settings.value(QStringLiteral("centerText"), m_centerText).toBool();
-    m_distractionFree
-        = m_settings.value(QStringLiteral("distractionFree"), m_distractionFree).toBool();
-    m_showSessionsList
-        = m_settings.value(QStringLiteral("showSessionsList"), m_showSessionsList).toBool();
-    m_showFleetTree
-        = m_settings.value(QStringLiteral("showFleetTree"), m_showFleetTree).toBool();
-    m_showFileExplorer
-        = m_settings.value(QStringLiteral("showFileExplorer"), m_showFileExplorer).toBool();
-    m_showRawMarkdown
-        = m_settings.value(QStringLiteral("showRawMarkdown"), m_showRawMarkdown).toBool();
-    m_showUserRail
-        = m_settings.value(QStringLiteral("showUserRail"), m_showUserRail).toBool();
+    m_distractionFree =
+        m_settings.value(QStringLiteral("distractionFree"), m_distractionFree).toBool();
+    m_showSessionsList =
+        m_settings.value(QStringLiteral("showSessionsList"), m_showSessionsList).toBool();
+    m_showFleetTree = m_settings.value(QStringLiteral("showFleetTree"), m_showFleetTree).toBool();
+    m_showFileExplorer =
+        m_settings.value(QStringLiteral("showFileExplorer"), m_showFileExplorer).toBool();
+    m_showRawMarkdown =
+        m_settings.value(QStringLiteral("showRawMarkdown"), m_showRawMarkdown).toBool();
+    m_showUserRail = m_settings.value(QStringLiteral("showUserRail"), m_showUserRail).toBool();
     m_settings.endGroup();
 
     // Clamp persisted values defensively (font tables / limits can change between
@@ -138,13 +124,11 @@ void UiSettings::load()
     m_monoIndex = std::clamp(m_monoIndex, 0, static_cast<int>(monoTable().size()) - 1);
 }
 
-void UiSettings::store(const QString& key, const QVariant& value)
-{
+void UiSettings::store(const QString& key, const QVariant& value) {
     m_settings.setValue(QStringLiteral("ui/") + key, value);
 }
 
-int* UiSettings::indexForCategory(const QString& category)
-{
+int* UiSettings::indexForCategory(const QString& category) {
     if (category == QStringLiteral("Serif")) {
         return &m_serifIndex;
     }
@@ -157,8 +141,7 @@ int* UiSettings::indexForCategory(const QString& category)
     return nullptr;
 }
 
-void UiSettings::setTheme(const QString& theme)
-{
+void UiSettings::setTheme(const QString& theme) {
     if (theme == m_theme || !isKnownTheme(theme)) {
         return;
     }
@@ -167,8 +150,7 @@ void UiSettings::setTheme(const QString& theme)
     emit themeChanged();
 }
 
-void UiSettings::setLanguage(const QString& language)
-{
+void UiSettings::setLanguage(const QString& language) {
     if (language == m_language || !isKnownLanguage(language)) {
         return;
     }
@@ -177,18 +159,16 @@ void UiSettings::setLanguage(const QString& language)
     emit languageChanged();
 }
 
-QVariantList UiSettings::availableLanguages() const
-{
+QVariantList UiSettings::availableLanguages() const {
     QVariantList out;
     for (const i18n::LocaleOption& opt : i18n::availableLocales()) {
-        out.append(QVariantMap{ { QStringLiteral("code"), opt.code },
-                                { QStringLiteral("label"), opt.label } });
+        out.append(
+            QVariantMap{{QStringLiteral("code"), opt.code}, {QStringLiteral("label"), opt.label}});
     }
     return out;
 }
 
-void UiSettings::setFontCategory(const QString& category)
-{
+void UiSettings::setFontCategory(const QString& category) {
     if (category == m_fontCategory || !isKnownCategory(category)) {
         return;
     }
@@ -197,12 +177,17 @@ void UiSettings::setFontCategory(const QString& category)
     emit fontStyleChanged();
 }
 
-QStringList UiSettings::sansFonts() const { return labelsOf(sansTable()); }
-QStringList UiSettings::serifFonts() const { return labelsOf(serifTable()); }
-QStringList UiSettings::monoFonts() const { return labelsOf(monoTable()); }
+QStringList UiSettings::sansFonts() const {
+    return labelsOf(sansTable());
+}
+QStringList UiSettings::serifFonts() const {
+    return labelsOf(serifTable());
+}
+QStringList UiSettings::monoFonts() const {
+    return labelsOf(monoTable());
+}
 
-QString UiSettings::editorFontFamily() const
-{
+QString UiSettings::editorFontFamily() const {
     const QList<FontEntry>& table = tableForCategory(m_fontCategory);
     int index = 0;
     if (m_fontCategory == QStringLiteral("Serif")) {
@@ -216,15 +201,13 @@ QString UiSettings::editorFontFamily() const
     return QString::fromUtf8(table.at(index).family);
 }
 
-QString UiSettings::familyAt(const QString& category, int index) const
-{
+QString UiSettings::familyAt(const QString& category, int index) const {
     const QList<FontEntry>& table = tableForCategory(category);
     const int clamped = std::clamp(index, 0, static_cast<int>(table.size()) - 1);
     return QString::fromUtf8(table.at(clamped).family);
 }
 
-void UiSettings::selectFont(const QString& category, int index)
-{
+void UiSettings::selectFont(const QString& category, int index) {
     int* slot = indexForCategory(category);
     if (slot == nullptr) {
         return;
@@ -249,8 +232,7 @@ void UiSettings::selectFont(const QString& category, int index)
     }
 }
 
-void UiSettings::cycleFont(const QString& category)
-{
+void UiSettings::cycleFont(const QString& category) {
     int* slot = indexForCategory(category);
     if (slot == nullptr) {
         return;
@@ -270,8 +252,7 @@ void UiSettings::cycleFont(const QString& category)
     emit fontStyleChanged();
 }
 
-void UiSettings::setEditorFontSize(int size)
-{
+void UiSettings::setEditorFontSize(int size) {
     const int clamped = std::clamp(size, kMinFontSize, kMaxFontSize);
     if (clamped == m_editorFontSize) {
         return;
@@ -281,8 +262,7 @@ void UiSettings::setEditorFontSize(int size)
     emit editorFontSizeChanged();
 }
 
-void UiSettings::setCenterText(bool on)
-{
+void UiSettings::setCenterText(bool on) {
     if (on == m_centerText) {
         return;
     }
@@ -291,8 +271,7 @@ void UiSettings::setCenterText(bool on)
     emit centerTextChanged();
 }
 
-void UiSettings::setDistractionFree(bool on)
-{
+void UiSettings::setDistractionFree(bool on) {
     if (on == m_distractionFree) {
         return;
     }
@@ -301,8 +280,7 @@ void UiSettings::setDistractionFree(bool on)
     emit distractionFreeChanged();
 }
 
-void UiSettings::setShowSessionsList(bool on)
-{
+void UiSettings::setShowSessionsList(bool on) {
     if (on == m_showSessionsList) {
         return;
     }
@@ -311,8 +289,7 @@ void UiSettings::setShowSessionsList(bool on)
     emit showSessionsListChanged();
 }
 
-void UiSettings::setShowFleetTree(bool on)
-{
+void UiSettings::setShowFleetTree(bool on) {
     if (on == m_showFleetTree) {
         return;
     }
@@ -321,8 +298,7 @@ void UiSettings::setShowFleetTree(bool on)
     emit showFleetTreeChanged();
 }
 
-void UiSettings::setShowFileExplorer(bool on)
-{
+void UiSettings::setShowFileExplorer(bool on) {
     if (on == m_showFileExplorer) {
         return;
     }
@@ -331,8 +307,7 @@ void UiSettings::setShowFileExplorer(bool on)
     emit showFileExplorerChanged();
 }
 
-void UiSettings::setShowRawMarkdown(bool on)
-{
+void UiSettings::setShowRawMarkdown(bool on) {
     if (on == m_showRawMarkdown) {
         return;
     }
@@ -341,8 +316,7 @@ void UiSettings::setShowRawMarkdown(bool on)
     emit showRawMarkdownChanged();
 }
 
-void UiSettings::setShowUserRail(bool on)
-{
+void UiSettings::setShowUserRail(bool on) {
     if (on == m_showUserRail) {
         return;
     }
@@ -351,8 +325,7 @@ void UiSettings::setShowUserRail(bool on)
     emit showUserRailChanged();
 }
 
-void UiSettings::resetAll()
-{
+void UiSettings::resetAll() {
     setTheme(QStringLiteral("Light"));
     setLanguage(QStringLiteral("system"));
     setFontCategory(QStringLiteral("Sans"));

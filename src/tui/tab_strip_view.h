@@ -1,8 +1,7 @@
 #pragma once
 
-#include <Tui/ZWidget.h>
-
 #include <QVector>
+#include <Tui/ZWidget.h>
 
 class TabModel;
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "profiles/iprofile_store.h"
-
 #include "uimodels/variant_list_model.h"
 
 namespace profiles {

@@ -6,8 +6,7 @@
 namespace editor {
 namespace {
 
-int leadingIndent(const QString& s)
-{
+int leadingIndent(const QString& s) {
     int i = 0;
     while (i < s.size() && (s[i] == QLatin1Char(' ') || s[i] == QLatin1Char('\t')))
         ++i;
@@ -17,10 +16,7 @@ int leadingIndent(const QString& s)
 } // namespace
 
 LineModel::LineModel(TextDocument* doc, CodeHighlighter* hl, QObject* parent)
-    : QAbstractListModel(parent)
-    , m_doc(doc)
-    , m_hl(hl)
-{
+    : QAbstractListModel(parent), m_doc(doc), m_hl(hl) {
     if (m_doc) {
         connect(m_doc, &TextDocument::lineChanged, this, &LineModel::onLineChanged);
         connect(m_doc, &TextDocument::linesReset, this, &LineModel::onLinesReset);
@@ -31,13 +27,11 @@ LineModel::LineModel(TextDocument* doc, CodeHighlighter* hl, QObject* parent)
     rebuildVisible();
 }
 
-int LineModel::rowCount(const QModelIndex& parent) const
-{
+int LineModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(m_visible.size());
 }
 
-QVariant LineModel::data(const QModelIndex& index, int role) const
-{
+QVariant LineModel::data(const QModelIndex& index, int role) const {
     const int row = index.row();
     if (row < 0 || row >= m_visible.size() || !m_doc)
         return {};
@@ -59,16 +53,14 @@ QVariant LineModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> LineModel::roleNames() const
-{
+QHash<int, QByteArray> LineModel::roleNames() const {
     return {
-        { TextRole, "text" },       { StyleRunsRole, "styleRuns" }, { FoldStartRole, "foldStart" },
-        { FoldedRole, "folded" },   { RealLineRole, "realLine" },
+        {TextRole, "text"},     {StyleRunsRole, "styleRuns"}, {FoldStartRole, "foldStart"},
+        {FoldedRole, "folded"}, {RealLineRole, "realLine"},
     };
 }
 
-QVariantList LineModel::styleRunsForLine(int line) const
-{
+QVariantList LineModel::styleRunsForLine(int line) const {
     QVariantList out;
     if (!m_hl)
         return out;
@@ -86,18 +78,15 @@ QVariantList LineModel::styleRunsForLine(int line) const
     return out;
 }
 
-int LineModel::realLine(int row) const
-{
+int LineModel::realLine(int row) const {
     return (row >= 0 && row < m_visible.size()) ? m_visible.at(row) : -1;
 }
 
-int LineModel::rowForLine(int line) const
-{
+int LineModel::rowForLine(int line) const {
     return static_cast<int>(m_visible.indexOf(line));
 }
 
-int LineModel::foldRegionEnd(int startLine) const
-{
+int LineModel::foldRegionEnd(int startLine) const {
     if (!m_doc)
         return startLine;
     const int n = m_doc->lineCount();
@@ -115,8 +104,7 @@ int LineModel::foldRegionEnd(int startLine) const
     return end;
 }
 
-void LineModel::rebuildVisible()
-{
+void LineModel::rebuildVisible() {
     m_visible.clear();
     if (!m_doc)
         return;
@@ -133,40 +121,35 @@ void LineModel::rebuildVisible()
     }
 }
 
-void LineModel::onLineChanged(int line)
-{
+void LineModel::onLineChanged(int line) {
     const int row = rowForLine(line);
     if (row >= 0) {
         // Repaint from the edited row to the end of the visible list; the view
         // only re-fetches the rows actually on screen, each of which lazily
         // re-highlights via runs() -> highlightTo().
         const int last = static_cast<int>(m_visible.size()) - 1;
-        emit dataChanged(index(row, 0), index(last, 0),
-                         { TextRole, StyleRunsRole, Qt::DisplayRole });
+        emit dataChanged(index(row, 0), index(last, 0), {TextRole, StyleRunsRole, Qt::DisplayRole});
     }
 }
 
-void LineModel::onLinesReset()
-{
+void LineModel::onLinesReset() {
     beginResetModel();
     m_folded.clear();
     rebuildVisible();
     endResetModel();
 }
 
-void LineModel::onHighlightingChanged(int firstLine, int lastLine)
-{
+void LineModel::onHighlightingChanged(int firstLine, int lastLine) {
     for (int l = firstLine; l <= lastLine; ++l) {
         const int row = rowForLine(l);
         if (row >= 0) {
             const QModelIndex idx = index(row, 0);
-            emit dataChanged(idx, idx, { StyleRunsRole });
+            emit dataChanged(idx, idx, {StyleRunsRole});
         }
     }
 }
 
-void LineModel::toggleFold(int realLine)
-{
+void LineModel::toggleFold(int realLine) {
     if (realLine < 0)
         return;
     beginResetModel();
@@ -178,8 +161,7 @@ void LineModel::toggleFold(int realLine)
     endResetModel();
 }
 
-void LineModel::resetFolds()
-{
+void LineModel::resetFolds() {
     beginResetModel();
     m_folded.clear();
     rebuildVisible();

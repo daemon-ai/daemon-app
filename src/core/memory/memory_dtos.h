@@ -19,10 +19,10 @@ struct MemoryEntry {
     QString content;
     QString source;
     QString timestamp; // RFC3339-ish; sortable lexically
-    QString profile; // the owning agent (ProfileRef == the Mnemosyne bank)
+    QString profile;   // the owning agent (ProfileRef == the Mnemosyne bank)
     QString sessionId;
-    QString scope; // "session" | "global"
-    QString tier; // "working" | "episodic" | "scratchpad"
+    QString scope;     // "session" | "global"
+    QString tier;      // "working" | "episodic" | "scratchpad"
     int tierLevel = 1; // episodic degradation tier 1/2/3; else 1
     double importance = 0.0;
     QString veracity; // stated|inferred|tool|imported|unknown
@@ -31,7 +31,7 @@ struct MemoryEntry {
     QString lastRecalled;
     QString validUntil;
     QString supersededBy;
-    QString status; // active|expired|superseded
+    QString status;           // active|expired|superseded
     QString degradationLabel; // hot|warm|cold (episodic)
     double trustWeight = 1.0;
     double degradationWeight = 1.0;

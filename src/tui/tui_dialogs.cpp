@@ -4,11 +4,10 @@
 #include <Tui/ZVBoxLayout.h>
 #include <Tui/ZWindow.h>
 
-QuitDialog::QuitDialog(Tui::ZWidget* parent) : Tui::ZDialog(parent)
-{
+QuitDialog::QuitDialog(Tui::ZWidget* parent) : Tui::ZDialog(parent) {
     setOptions(Tui::ZWindow::DeleteOnClose);
     setWindowTitle(tr("Quit"));
-    setContentsMargins({ 2, 1, 2, 1 });
+    setContentsMargins({2, 1, 2, 1});
 
     auto* layout = new Tui::ZVBoxLayout();
     setLayout(layout);
@@ -38,11 +37,10 @@ QuitDialog::QuitDialog(Tui::ZWidget* parent) : Tui::ZDialog(parent)
 
 TextPromptDialog::TextPromptDialog(const QString& title, const QString& initial, bool masked,
                                    Tui::ZWidget* parent)
-    : Tui::ZDialog(parent)
-{
+    : Tui::ZDialog(parent) {
     setOptions(Tui::ZWindow::DeleteOnClose);
     setWindowTitle(title);
-    setContentsMargins({ 2, 1, 2, 1 });
+    setContentsMargins({2, 1, 2, 1});
 
     auto* layout = new Tui::ZVBoxLayout();
     setLayout(layout);
@@ -76,11 +74,10 @@ TextPromptDialog::TextPromptDialog(const QString& title, const QString& initial,
 }
 
 ConfirmDialog::ConfirmDialog(const QString& title, const QString& message, Tui::ZWidget* parent)
-    : Tui::ZDialog(parent)
-{
+    : Tui::ZDialog(parent) {
     setOptions(Tui::ZWindow::DeleteOnClose);
     setWindowTitle(title);
-    setContentsMargins({ 2, 1, 2, 1 });
+    setContentsMargins({2, 1, 2, 1});
 
     auto* layout = new Tui::ZVBoxLayout();
     setLayout(layout);
@@ -113,20 +110,16 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
                                connection::IConnectionService* connection,
                                settings::ISettingsStore* settings, const QString& defaultTarget,
                                Tui::ZWidget* parent)
-    : Tui::ZDialog(parent)
-    , m_model(model)
-    , m_connection(connection)
-    , m_settings(settings)
-{
+    : Tui::ZDialog(parent), m_model(model), m_connection(connection), m_settings(settings) {
     setOptions(Tui::ZWindow::DeleteOnClose);
     setWindowTitle(tr("Setup Required"));
-    setContentsMargins({ 2, 1, 2, 1 });
+    setContentsMargins({2, 1, 2, 1});
 
     auto* layout = new Tui::ZVBoxLayout();
     setLayout(layout);
 
-    auto* intro = new Tui::ZLabel(
-        tr("Connect to a daemon node to get started. Choose a transport:"), this);
+    auto* intro =
+        new Tui::ZLabel(tr("Connect to a daemon node to get started. Choose a transport:"), this);
     layout->addWidget(intro);
 
     // Transport mode "cards": the TUI analog of ConnectionPicker's cards. Embedded
@@ -184,9 +177,7 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     if (m_connection != nullptr) {
         connect(m_connection, &connection::IConnectionService::testResult, this,
                 [this](bool ok, const QString& message) {
-                    m_testResult->setText((ok ? tr("OK — ")
-                                              : tr("Failed — "))
-                                          + message);
+                    m_testResult->setText((ok ? tr("OK — ") : tr("Failed — ")) + message);
                 });
     }
 
@@ -219,19 +210,16 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     setGeometry(QRect(0, 0, 66, 16));
 }
 
-void FirstRunDialog::applyMode(const QString& mode)
-{
+void FirstRunDialog::applyMode(const QString& mode) {
     m_mode = mode;
     const bool remote = mode == QStringLiteral("remote");
     // Mark the active card by (de)emphasising via the default flag, and seed the
     // target with a representative placeholder if the field is empty.
     if (m_localBtn != nullptr) {
-        m_localBtn->setText(remote ? tr("Local")
-                                   : QStringLiteral("[%1]").arg(tr("Local")));
+        m_localBtn->setText(remote ? tr("Local") : QStringLiteral("[%1]").arg(tr("Local")));
     }
     if (m_remoteBtn != nullptr) {
-        m_remoteBtn->setText(remote ? QStringLiteral("[%1]").arg(tr("Remote"))
-                                    : tr("Remote"));
+        m_remoteBtn->setText(remote ? QStringLiteral("[%1]").arg(tr("Remote")) : tr("Remote"));
     }
     if (m_token != nullptr) {
         m_token->setVisible(remote);
@@ -245,8 +233,7 @@ void FirstRunDialog::applyMode(const QString& mode)
     }
 }
 
-void FirstRunDialog::syncToPhase()
-{
+void FirstRunDialog::syncToPhase() {
     const QString p = m_model->phase();
     if (p == QStringLiteral("connecting")) {
         m_status->setText(tr("Connecting..."));

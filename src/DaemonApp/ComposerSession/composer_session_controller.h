@@ -9,8 +9,8 @@
 #include <QPointer>
 #include <QString>
 #include <QStringList>
-#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
+#include <QVariantList>
 
 namespace models {
 class IModelCatalog;
@@ -31,8 +31,7 @@ class IModelCatalog;
 class ComposerSessionController : public QObject {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(QString sessionId READ sessionId WRITE setSessionId NOTIFY
-                   sessionIdChanged)
+    Q_PROPERTY(QString sessionId READ sessionId WRITE setSessionId NOTIFY sessionIdChanged)
     Q_PROPERTY(bool busy READ busy WRITE setBusy NOTIFY busyChanged)
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(QString draft READ draft WRITE setDraft NOTIFY draftChanged)
@@ -80,13 +79,14 @@ class ComposerSessionController : public QObject {
     // The live model-catalog seam (IModelCatalog) shared with the Models hub.
     // Settable from QML (modelSource: ModelCatalog) and from the TUI; null = use
     // the built-in fallback catalog.
-    Q_PROPERTY(QObject* modelSource READ modelSource WRITE setModelSource NOTIFY modelCatalogChanged)
+    Q_PROPERTY(
+        QObject* modelSource READ modelSource WRITE setModelSource NOTIFY modelCatalogChanged)
 
     // Turn modes (client state; no backend yet). reasoningEffort is one of
     // off/low/medium/high; fastMode trades depth for latency; verbose surfaces
     // extra detail. The daemon later reads these off the same controller.
-    Q_PROPERTY(QString reasoningEffort READ reasoningEffort WRITE setReasoningEffort NOTIFY
-                   modesChanged)
+    Q_PROPERTY(
+        QString reasoningEffort READ reasoningEffort WRITE setReasoningEffort NOTIFY modesChanged)
     Q_PROPERTY(bool fastMode READ fastMode WRITE setFastMode NOTIFY modesChanged)
     Q_PROPERTY(bool verbose READ verbose WRITE setVerbose NOTIFY modesChanged)
 
@@ -142,11 +142,11 @@ public:
     Q_INVOKABLE void setVerbose(bool on);
 
     // Intents (mirror the QML composer's functions).
-    Q_INVOKABLE void submit();        // Enter: send / save-edit / drain
-    Q_INVOKABLE void enqueueDraft();  // explicit "queue" control
-    Q_INVOKABLE void steerDraft();    // Ctrl+Enter mid-turn nudge
-    Q_INVOKABLE void cancel();        // Esc/Stop while busy
-    Q_INVOKABLE bool browseUp();      // history recall (true = swallow the key)
+    Q_INVOKABLE void submit();       // Enter: send / save-edit / drain
+    Q_INVOKABLE void enqueueDraft(); // explicit "queue" control
+    Q_INVOKABLE void steerDraft();   // Ctrl+Enter mid-turn nudge
+    Q_INVOKABLE void cancel();       // Esc/Stop while busy
+    Q_INVOKABLE bool browseUp();     // history recall (true = swallow the key)
     Q_INVOKABLE bool browseDown();
     [[nodiscard]] Q_INVOKABLE bool browsing() const { return m_browseIndex != -1; }
     Q_INVOKABLE void sendNowEntry(int index);
@@ -155,7 +155,7 @@ public:
     Q_INVOKABLE void exitEdit(bool restore);
     Q_INVOKABLE void addAttachment(const QString& name, const QString& kind);
     Q_INVOKABLE void invokeCommand(const QString& command);
-    Q_INVOKABLE void clear(); // clear draft + attachments
+    Q_INVOKABLE void clear();                // clear draft + attachments
     Q_INVOKABLE void selectModel(int index); // pick the active model (clamped)
     // Cycle reasoning effort off->low->medium->high->off (TUI chrome toggle).
     Q_INVOKABLE void cycleReasoningEffort();
@@ -255,17 +255,16 @@ private:
         QString id;
         QString label;
     };
-    QList<ModelEntry> m_catalog {
-        { QStringLiteral("Meta"), QStringLiteral("llama-3.1-8b-instruct"),
-          QStringLiteral("Llama 3.1 8B Instruct") },
-        { QStringLiteral("Meta"), QStringLiteral("llama-3.1-70b-instruct"),
-          QStringLiteral("Llama 3.1 70B Instruct") },
-        { QStringLiteral("Mistral"), QStringLiteral("mistral-7b-instruct"),
-          QStringLiteral("Mistral 7B Instruct") },
-        { QStringLiteral("Mistral"), QStringLiteral("mixtral-8x7b"),
-          QStringLiteral("Mixtral 8x7B") },
-        { QStringLiteral("Google"), QStringLiteral("gemma-2-9b-it"),
-          QStringLiteral("Gemma 2 9B IT") },
+    QList<ModelEntry> m_catalog{
+        {QStringLiteral("Meta"), QStringLiteral("llama-3.1-8b-instruct"),
+         QStringLiteral("Llama 3.1 8B Instruct")},
+        {QStringLiteral("Meta"), QStringLiteral("llama-3.1-70b-instruct"),
+         QStringLiteral("Llama 3.1 70B Instruct")},
+        {QStringLiteral("Mistral"), QStringLiteral("mistral-7b-instruct"),
+         QStringLiteral("Mistral 7B Instruct")},
+        {QStringLiteral("Mistral"), QStringLiteral("mixtral-8x7b"), QStringLiteral("Mixtral 8x7B")},
+        {QStringLiteral("Google"), QStringLiteral("gemma-2-9b-it"),
+         QStringLiteral("Gemma 2 9B IT")},
     };
     QStringList m_models;
     int m_currentModelIndex = 0;

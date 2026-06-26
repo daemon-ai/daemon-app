@@ -1,14 +1,12 @@
 #include "palette_dialog.h"
 
+#include <QAbstractItemModel>
+#include <QRect>
 #include <Tui/ZEvent.h>
 #include <Tui/ZLabel.h>
 #include <Tui/ZVBoxLayout.h>
 
-#include <QAbstractItemModel>
-#include <QRect>
-
-void PaletteInput::keyEvent(Tui::ZKeyEvent* event)
-{
+void PaletteInput::keyEvent(Tui::ZKeyEvent* event) {
     const int key = event->key();
     if (key == Qt::Key_Up) {
         emit moveUp();
@@ -20,8 +18,7 @@ void PaletteInput::keyEvent(Tui::ZKeyEvent* event)
         event->accept();
         return;
     }
-    if (key == Qt::Key_Enter || key == Qt::Key_Return
-        || event->text() == QStringLiteral("\r")) {
+    if (key == Qt::Key_Enter || key == Qt::Key_Return || event->text() == QStringLiteral("\r")) {
         emit accepted();
         event->accept();
         return;
@@ -34,11 +31,9 @@ void PaletteInput::keyEvent(Tui::ZKeyEvent* event)
     Tui::ZInputBox::keyEvent(event);
 }
 
-PaletteDialog::PaletteDialog(const QString& title, Tui::ZWidget* parent)
-    : Tui::ZDialog(parent)
-{
+PaletteDialog::PaletteDialog(const QString& title, Tui::ZWidget* parent) : Tui::ZDialog(parent) {
     setWindowTitle(title);
-    setContentsMargins({ 1, 1, 1, 1 });
+    setContentsMargins({1, 1, 1, 1});
 
     auto* layout = new Tui::ZVBoxLayout();
     setLayout(layout);
@@ -60,8 +55,7 @@ PaletteDialog::PaletteDialog(const QString& title, Tui::ZWidget* parent)
             [this](int selected) { activateRow(selected); });
 }
 
-void PaletteDialog::setItems(const QVector<Item>& items)
-{
+void PaletteDialog::setItems(const QVector<Item>& items) {
     m_items = items;
     if (m_filter != nullptr) {
         m_filter->setText(QString());
@@ -69,8 +63,7 @@ void PaletteDialog::setItems(const QVector<Item>& items)
     rebuild();
 }
 
-void PaletteDialog::openCentered()
-{
+void PaletteDialog::openCentered() {
     // Size to a comfortable fraction of the parent, then center.
     Tui::ZWidget* p = parentWidget();
     const QSize parentSize = p != nullptr ? p->geometry().size() : QSize(80, 24);
@@ -91,17 +84,15 @@ void PaletteDialog::openCentered()
     }
 }
 
-void PaletteDialog::rebuild()
-{
+void PaletteDialog::rebuild() {
     const QString q = m_filter != nullptr ? m_filter->text().toLower() : QString();
     QStringList display;
     m_filtered.clear();
     for (int i = 0; i < m_items.size(); ++i) {
         const Item& it = m_items.at(i);
         if (!q.isEmpty()) {
-            const QString hay = (it.title + QStringLiteral(" ") + it.hint + QStringLiteral(" ")
-                                 + it.id)
-                                    .toLower();
+            const QString hay =
+                (it.title + QStringLiteral(" ") + it.hint + QStringLiteral(" ") + it.id).toLower();
             if (!hay.contains(q)) {
                 continue;
             }
@@ -119,8 +110,7 @@ void PaletteDialog::rebuild()
     }
 }
 
-void PaletteDialog::step(int delta)
-{
+void PaletteDialog::step(int delta) {
     if (m_filtered.isEmpty() || m_list->model() == nullptr) {
         return;
     }
@@ -132,8 +122,7 @@ void PaletteDialog::step(int delta)
     m_list->setCurrentIndex(m_list->model()->index(row, 0));
 }
 
-void PaletteDialog::activateRow(int row)
-{
+void PaletteDialog::activateRow(int row) {
     if (row < 0 || row >= m_filtered.size()) {
         return;
     }

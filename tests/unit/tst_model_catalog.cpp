@@ -1,7 +1,6 @@
+#include "cache_test_support.h"
 #include "models/mock_model_catalog.h"
 #include "uimodels/variant_list_model.h"
-
-#include "cache_test_support.h"
 
 #include <QSignalSpy>
 #include <QtTest/QtTest>
@@ -20,15 +19,16 @@ class TestModelCatalog : public QObject {
 private slots:
     void init() { resetMockCache(); }
 
-    void searchFiltersByQueryAndSize()
-    {
+    void searchFiltersByQueryAndSize() {
         MockModelCatalog c;
         c.search(QStringLiteral("llama"), QString());
         auto* d = asModel(c.discover());
         QVERIFY(d->count() >= 2);
         for (const QVariantMap& m : d->rows()) {
-            QVERIFY(m.value(QStringLiteral("name")).toString().toLower().contains(
-                QStringLiteral("llama")));
+            QVERIFY(m.value(QStringLiteral("name"))
+                        .toString()
+                        .toLower()
+                        .contains(QStringLiteral("llama")));
         }
 
         c.search(QString(), QStringLiteral("<=8B"));
@@ -37,8 +37,7 @@ private slots:
         }
     }
 
-    void downloadTicksToInstalled()
-    {
+    void downloadTicksToInstalled() {
         MockModelCatalog c;
         auto* installed = asModel(c.installed());
         const int before = installed->count();
@@ -53,8 +52,7 @@ private slots:
         QVERIFY(installed->indexOfId(QStringLiteral("mistral-7b-instruct")) >= 0);
     }
 
-    void activateAndRemove()
-    {
+    void activateAndRemove() {
         MockModelCatalog c;
         // The seeded default is installed; activate a freshly-installed one.
         QSignalSpy done(&c, &models::IModelCatalog::downloadFinished);
@@ -71,8 +69,7 @@ private slots:
         QVERIFY(c.currentModelId().isEmpty());
     }
 
-    void installedIdsMirrorsInstalledModel()
-    {
+    void installedIdsMirrorsInstalledModel() {
         MockModelCatalog c;
         auto* installed = asModel(c.installed());
         QStringList ids = c.installedIds();
@@ -90,8 +87,7 @@ private slots:
 
     // Tier 3: the installed set + active model survive across construction via the
     // last-known on-disk cache (download/activate save; a fresh instance reloads).
-    void installedAndCurrentPersistAcrossRestart()
-    {
+    void installedAndCurrentPersistAcrossRestart() {
         {
             MockModelCatalog c;
             QSignalSpy done(&c, &models::IModelCatalog::downloadFinished);

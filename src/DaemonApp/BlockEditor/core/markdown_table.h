@@ -29,11 +29,11 @@ struct TableData {
 
 // Cheap structural test used on the per-keystroke classification path: a line
 // containing a pipe followed by a GFM delimiter row. Does not parse the table.
-bool looksLikeTable(const QString &content);
+bool looksLikeTable(const QString& content);
 
 // Parse block-local table markdown into structured data using md4qt (so pipes
 // inside inline code and escaped pipes are handled correctly). Returns an empty
 // TableData (columns == 0) when no table is found.
-TableData parseTable(const QString &content);
+TableData parseTable(const QString& content);
 
 } // namespace be

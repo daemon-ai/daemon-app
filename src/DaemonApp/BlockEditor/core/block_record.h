@@ -1,11 +1,10 @@
 #pragma once
 
+#include <cstdint>
 #include <QByteArray>
 #include <QMetaType>
 #include <QString>
 #include <QVariantMap>
-
-#include <cstdint>
 
 namespace be {
 
@@ -47,7 +46,7 @@ enum class MessageRole : quint8 {
 };
 
 QString messageRoleToString(MessageRole role);
-MessageRole messageRoleFromString(const QString &name);
+MessageRole messageRoleFromString(const QString& name);
 
 struct TextRangeUtf8 {
     qsizetype byteOffset = 0;

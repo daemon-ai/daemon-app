@@ -6,8 +6,7 @@
 
 namespace be {
 
-bool ChangedBlockStore::open(const QString &path)
-{
+bool ChangedBlockStore::open(const QString& path) {
     m_connectionName = QStringLiteral("be_%1").arg(QUuid::createUuid().toString(QUuid::Id128));
     QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), m_connectionName);
     db.setDatabaseName(path);
@@ -20,36 +19,32 @@ bool ChangedBlockStore::open(const QString &path)
     return initialize();
 }
 
-bool ChangedBlockStore::isOpen() const
-{
+bool ChangedBlockStore::isOpen() const {
     return !m_connectionName.isEmpty() && QSqlDatabase::database(m_connectionName).isOpen();
 }
 
-bool ChangedBlockStore::initialize()
-{
+bool ChangedBlockStore::initialize() {
     if (!isOpen()) {
         m_lastError = QStringLiteral("database is not open");
         return false;
     }
 
     QSqlQuery query(QSqlDatabase::database(m_connectionName));
-    const bool ok = query.exec(QStringLiteral(
-        "CREATE TABLE IF NOT EXISTS block ("
-        "block_id INTEGER PRIMARY KEY,"
-        "ordinal INTEGER NOT NULL,"
-        "type INTEGER NOT NULL,"
-        "heading_level INTEGER NOT NULL,"
-        "markdown_utf8 BLOB NOT NULL,"
-        "updated_at INTEGER NOT NULL DEFAULT (unixepoch())"
-        ")"));
+    const bool ok = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS block ("
+                                              "block_id INTEGER PRIMARY KEY,"
+                                              "ordinal INTEGER NOT NULL,"
+                                              "type INTEGER NOT NULL,"
+                                              "heading_level INTEGER NOT NULL,"
+                                              "markdown_utf8 BLOB NOT NULL,"
+                                              "updated_at INTEGER NOT NULL DEFAULT (unixepoch())"
+                                              ")"));
     if (!ok) {
         m_lastError = query.lastError().text();
     }
     return ok;
 }
 
-bool ChangedBlockStore::saveBlocks(const QVector<BlockRecord> &blocks)
-{
+bool ChangedBlockStore::saveBlocks(const QVector<BlockRecord>& blocks) {
     if (!isOpen()) {
         m_lastError = QStringLiteral("database is not open");
         return false;
@@ -70,7 +65,7 @@ bool ChangedBlockStore::saveBlocks(const QVector<BlockRecord> &blocks)
         "markdown_utf8=excluded.markdown_utf8, updated_at=excluded.updated_at"));
 
     for (qsizetype row = 0; row < blocks.size(); ++row) {
-        const BlockRecord &block = blocks[row];
+        const BlockRecord& block = blocks[row];
         if (!block.dirtyPersistence) {
             continue;
         }
@@ -93,8 +88,7 @@ bool ChangedBlockStore::saveBlocks(const QVector<BlockRecord> &blocks)
     return true;
 }
 
-QVector<BlockRecord> ChangedBlockStore::loadBlocks() const
-{
+QVector<BlockRecord> ChangedBlockStore::loadBlocks() const {
     QVector<BlockRecord> blocks;
     if (!isOpen()) {
         m_lastError = QStringLiteral("database is not open");
@@ -102,7 +96,8 @@ QVector<BlockRecord> ChangedBlockStore::loadBlocks() const
     }
 
     QSqlQuery query(QSqlDatabase::database(m_connectionName));
-    if (!query.exec(QStringLiteral("SELECT block_id, type, heading_level, markdown_utf8 FROM block ORDER BY ordinal"))) {
+    if (!query.exec(QStringLiteral(
+            "SELECT block_id, type, heading_level, markdown_utf8 FROM block ORDER BY ordinal"))) {
         m_lastError = query.lastError().text();
         return blocks;
     }
@@ -119,8 +114,7 @@ QVector<BlockRecord> ChangedBlockStore::loadBlocks() const
     return blocks;
 }
 
-QString ChangedBlockStore::lastError() const
-{
+QString ChangedBlockStore::lastError() const {
     return m_lastError;
 }
 

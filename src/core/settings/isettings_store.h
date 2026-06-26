@@ -29,22 +29,18 @@ public:
     Q_INVOKABLE virtual void setValue(const QString& key, const QVariant& value) = 0;
 
     // Named convenience over the raw keys (so QML/TUI never hardcode key strings).
-    [[nodiscard]] bool setupComplete() const
-    {
+    [[nodiscard]] bool setupComplete() const {
         return value(QStringLiteral("app/setupComplete"), false).toBool();
     }
     void setSetupComplete(bool on) { setValue(QStringLiteral("app/setupComplete"), on); }
 
-    [[nodiscard]] Q_INVOKABLE QString lastConnectionMode() const
-    {
+    [[nodiscard]] Q_INVOKABLE QString lastConnectionMode() const {
         return value(QStringLiteral("conn/mode"), QStringLiteral("local")).toString();
     }
-    [[nodiscard]] Q_INVOKABLE QString lastConnectionTarget() const
-    {
+    [[nodiscard]] Q_INVOKABLE QString lastConnectionTarget() const {
         return value(QStringLiteral("conn/target"), QString()).toString();
     }
-    Q_INVOKABLE void setLastConnection(const QString& mode, const QString& target)
-    {
+    Q_INVOKABLE void setLastConnection(const QString& mode, const QString& target) {
         setValue(QStringLiteral("conn/mode"), mode);
         setValue(QStringLiteral("conn/target"), target);
     }
@@ -53,9 +49,8 @@ public:
     // `DAEMON_APP_SOCKET` lets the end-to-end harness point a headless GUI/TUI at an isolated
     // per-test socket without seeding QSettings; it wins over the persisted `conn/target`, which in
     // turn wins over the built-in default.
-    [[nodiscard]] QString resolvedConnectionTarget(
-        const QString& fallback = QStringLiteral("/run/daemon.sock")) const
-    {
+    [[nodiscard]] QString
+    resolvedConnectionTarget(const QString& fallback = QStringLiteral("/run/daemon.sock")) const {
         const QString override = qEnvironmentVariable("DAEMON_APP_SOCKET");
         if (!override.isEmpty()) {
             return override;

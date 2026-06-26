@@ -10,8 +10,7 @@
 // properties (query/matchCount/currentMatch), call its invokables (next/previous/
 // clear/setCurrent), and connect its signals (navigateTo). It is not creatable
 // from QML - it only ever lives as a child of an EditorController.
-struct TranscriptSearchControllerForeign
-{
+struct TranscriptSearchControllerForeign {
     Q_GADGET
     QML_FOREIGN(be::TranscriptSearchController)
     QML_ANONYMOUS

@@ -1,8 +1,7 @@
 #pragma once
 
-#include <Tui/ZListView.h>
-
 #include <QPoint>
+#include <Tui/ZListView.h>
 
 // ZListView handles Up/Down/Home/End but ignores Left/Right. The sidebar is a
 // flattened tree, so map Left/Right to collapse/expand requests (mirroring the

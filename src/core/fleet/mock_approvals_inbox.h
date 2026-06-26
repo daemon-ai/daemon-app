@@ -1,7 +1,6 @@
 #pragma once
 
 #include "fleet/iapprovals_inbox.h"
-
 #include "uimodels/variant_list_model.h"
 
 namespace fleet {

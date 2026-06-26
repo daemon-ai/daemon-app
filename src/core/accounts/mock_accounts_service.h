@@ -1,7 +1,6 @@
 #pragma once
 
 #include "accounts/iaccounts_service.h"
-
 #include "uimodels/variant_list_model.h"
 
 namespace accounts {

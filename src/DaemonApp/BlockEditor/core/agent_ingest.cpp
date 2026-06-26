@@ -4,18 +4,16 @@ namespace be {
 
 namespace {
 
-QString stringField(const QVariantMap &m, const QString &key)
-{
+QString stringField(const QVariantMap& m, const QString& key) {
     return m.value(key).toString();
 }
 
 // Copy the detail payload fields a ToolFinished event may carry through to the
 // block metadata, so buildToolView's sub-renderer has what it needs.
-void copyToolDetail(const QVariantMap &event, QVariantMap &meta)
-{
-    static const char *keys[] = {"detailKind", "stdout", "stderr", "body", "diff",
-                                 "hits", "imageUrl", "count", "exitCode"};
-    for (const char *key : keys) {
+void copyToolDetail(const QVariantMap& event, QVariantMap& meta) {
+    static const char* keys[] = {"detailKind", "stdout",   "stderr", "body",    "diff",
+                                 "hits",       "imageUrl", "count",  "exitCode"};
+    for (const char* key : keys) {
         const QString k = QString::fromLatin1(key);
         if (event.contains(k)) {
             meta.insert(k, event.value(k));
@@ -25,13 +23,9 @@ void copyToolDetail(const QVariantMap &event, QVariantMap &meta)
 
 } // namespace
 
-TranscriptIngest::TranscriptIngest(DocumentStore *store)
-    : m_store(store)
-{
-}
+TranscriptIngest::TranscriptIngest(DocumentStore* store) : m_store(store) {}
 
-QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap &event)
-{
+QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap& event) {
     QVector<BlockChangeSet> out;
     if (!m_store) {
         return out;
@@ -50,9 +44,8 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap &event)
     // and subagent/delegation progress) carry no transcript content: the status
     // bar and subagent model consume them off the same stream. Ignore them here
     // so they neither open an assistant turn nor create blocks.
-    if (type == QStringLiteral("usage") || type == QStringLiteral("context")
-        || type == QStringLiteral("rateLimit")
-        || type.startsWith(QStringLiteral("subagent"))) {
+    if (type == QStringLiteral("usage") || type == QStringLiteral("context") ||
+        type == QStringLiteral("rateLimit") || type.startsWith(QStringLiteral("subagent"))) {
         return out;
     }
 
@@ -103,7 +96,8 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap &event)
             QVariantMap patch;
             patch.insert(QStringLiteral("status"), QStringLiteral("complete"));
             if (event.contains(QStringLiteral("durationMs"))) {
-                patch.insert(QStringLiteral("durationMs"), event.value(QStringLiteral("durationMs")));
+                patch.insert(QStringLiteral("durationMs"),
+                             event.value(QStringLiteral("durationMs")));
             }
             out.push_back(m_store->updateBlockMetadata(m_reasoningBlock, patch));
         }
@@ -116,7 +110,8 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap &event)
         QVariantMap meta;
         meta.insert(QStringLiteral("callId"), event.value(QStringLiteral("callId")));
         meta.insert(QStringLiteral("name"), stringField(event, QStringLiteral("name")));
-        meta.insert(QStringLiteral("argsSummary"), stringField(event, QStringLiteral("argsSummary")));
+        meta.insert(QStringLiteral("argsSummary"),
+                    stringField(event, QStringLiteral("argsSummary")));
         meta.insert(QStringLiteral("tone"), stringField(event, QStringLiteral("tone")));
         meta.insert(QStringLiteral("status"), QStringLiteral("running"));
         if (event.contains(QStringLiteral("detailKind"))) {
@@ -126,10 +121,10 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap &event)
         // verbatim when present so a live turn can stream an awaiting-approval or
         // clarify tool that the inline controls answer. Absent for ordinary tools,
         // so non-interactive turns are unchanged.
-        for (const QString &key :
-             { QStringLiteral("needsApproval"), QStringLiteral("allowPermanent"),
-               QStringLiteral("approvalCommand"), QStringLiteral("questions"),
-               QStringLiteral("requestId") }) {
+        for (const QString& key :
+             {QStringLiteral("needsApproval"), QStringLiteral("allowPermanent"),
+              QStringLiteral("approvalCommand"), QStringLiteral("questions"),
+              QStringLiteral("requestId")}) {
             if (event.contains(key)) {
                 meta.insert(key, event.value(key));
             }
@@ -148,7 +143,8 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap &event)
             patch.insert(QStringLiteral("status"),
                          event.value(QStringLiteral("status"), QStringLiteral("ok")));
             if (event.contains(QStringLiteral("durationMs"))) {
-                patch.insert(QStringLiteral("durationMs"), event.value(QStringLiteral("durationMs")));
+                patch.insert(QStringLiteral("durationMs"),
+                             event.value(QStringLiteral("durationMs")));
             }
             copyToolDetail(event, patch);
             out.push_back(m_store->updateBlockMetadata(id, patch));
@@ -169,17 +165,15 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap &event)
     return out;
 }
 
-QVector<BlockChangeSet> TranscriptIngest::ingestAll(const QVariantList &events)
-{
+QVector<BlockChangeSet> TranscriptIngest::ingestAll(const QVariantList& events) {
     QVector<BlockChangeSet> out;
-    for (const QVariant &e : events) {
+    for (const QVariant& e : events) {
         out += ingest(e.toMap());
     }
     return out;
 }
 
-void TranscriptIngest::ensureTurn()
-{
+void TranscriptIngest::ensureTurn() {
     if (!m_store || m_turnOpen) {
         return;
     }
@@ -187,8 +181,7 @@ void TranscriptIngest::ensureTurn()
     m_turnOpen = true;
 }
 
-QVector<BlockChangeSet> TranscriptIngest::finish()
-{
+QVector<BlockChangeSet> TranscriptIngest::finish() {
     QVector<BlockChangeSet> out;
     if (!m_store) {
         return out;

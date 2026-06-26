@@ -29,8 +29,7 @@ namespace appcache {
 
 // The writable mock-cache directory (created if missing), or the temp dir as a
 // last resort. Kept separate from durable product data.
-inline QString dir()
-{
+inline QString dir() {
     QString d = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (d.isEmpty()) {
         d = QDir::tempPath();
@@ -40,15 +39,13 @@ inline QString dir()
     return d;
 }
 
-inline QString path(const QString& file)
-{
+inline QString path(const QString& file) {
     return dir() + QLatin1Char('/') + file;
 }
 
 // Read a cached JSON object (empty if the file is missing / unreadable / not an
 // object), so a first run with no cache transparently falls back to the seed.
-inline QJsonObject loadObject(const QString& file)
-{
+inline QJsonObject loadObject(const QString& file) {
     QFile f(path(file));
     if (!f.open(QIODevice::ReadOnly)) {
         return {};
@@ -56,8 +53,7 @@ inline QJsonObject loadObject(const QString& file)
     return QJsonDocument::fromJson(f.readAll()).object();
 }
 
-inline void saveObject(const QString& file, const QJsonObject& obj)
-{
+inline void saveObject(const QString& file, const QJsonObject& obj) {
     QFile f(path(file));
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         return;
@@ -68,8 +64,7 @@ inline void saveObject(const QString& file, const QJsonObject& obj)
 // QVariantMap rows <-> a JSON array, the shape every VariantListModel-backed mock
 // (profiles / accounts / models / cron) persists. String-list fields survive the
 // round-trip via QVariant::toStringList() on the QVariantList JSON produces.
-inline QJsonArray rowsToJson(const QList<QVariantMap>& rows)
-{
+inline QJsonArray rowsToJson(const QList<QVariantMap>& rows) {
     QJsonArray arr;
     for (const QVariantMap& r : rows) {
         arr.append(QJsonObject::fromVariantMap(r));
@@ -77,8 +72,7 @@ inline QJsonArray rowsToJson(const QList<QVariantMap>& rows)
     return arr;
 }
 
-inline QList<QVariantMap> rowsFromJson(const QJsonArray& arr)
-{
+inline QList<QVariantMap> rowsFromJson(const QJsonArray& arr) {
     QList<QVariantMap> rows;
     rows.reserve(arr.size());
     for (const QJsonValue& v : arr) {

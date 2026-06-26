@@ -1,9 +1,7 @@
+#include "cache_test_support.h"
 #include "composer_session_controller.h"
-
 #include "models/mock_model_catalog.h"
 #include "uimodels/variant_list_model.h"
-
-#include "cache_test_support.h"
 
 #include <QSignalSpy>
 #include <QtTest>
@@ -21,8 +19,7 @@ private slots:
 
     // primaryAction mirrors ComposerControls.qml: idle -> "send", busy with a
     // payload -> "queue", busy with no payload -> "stop".
-    void primaryActionTracksBusyAndPayload()
-    {
+    void primaryActionTracksBusyAndPayload() {
         ComposerSessionController c;
 
         // Idle, empty: send but not actionable (needs a payload).
@@ -46,8 +43,7 @@ private slots:
     }
 
     // primaryActionEnabled folds in `enabled` and re-notifies via derivedChanged.
-    void primaryActionEnabledFoldsEnabled()
-    {
+    void primaryActionEnabledFoldsEnabled() {
         ComposerSessionController c;
         c.setBusy(true); // stop mode -> normally actionable
         QVERIFY(c.primaryActionEnabled());
@@ -60,8 +56,7 @@ private slots:
 
     // Model selector exposes the canned list with a default selection, and
     // selectModel clamps + notifies via currentModelChanged.
-    void modelSelectionClampsAndNotifies()
-    {
+    void modelSelectionClampsAndNotifies() {
         ComposerSessionController c;
         QVERIFY(c.models().size() >= 2);
         QCOMPARE(c.currentModelIndex(), 0);
@@ -84,8 +79,7 @@ private slots:
     // the current selection is the catalog's active model: selecting in the
     // composer activates in the catalog (single source of truth), and a catalog
     // activation flows back into the composer's current selection.
-    void modelSourceUnifiesWithCatalog()
-    {
+    void modelSourceUnifiesWithCatalog() {
         models::MockModelCatalog catalog;
         ComposerSessionController c;
         c.setModelSource(&catalog);
@@ -123,10 +117,9 @@ private slots:
 
     // --- Reverse incremental history search (Ctrl+R) -----------------------------
     // Seeds a three-entry history (oldest -> newest) for the active session.
-    static void seedHistory(ComposerSessionController& c)
-    {
+    static void seedHistory(ComposerSessionController& c) {
         c.setSessionId(QStringLiteral("s-1"));
-        const char* entries[] = { "alpha one", "beta two", "alpha three" };
+        const char* entries[] = {"alpha one", "beta two", "alpha three"};
         for (const char* e : entries) {
             c.setDraft(QString::fromLatin1(e));
             c.submit(); // idle send: pushes history + clears the draft
@@ -136,8 +129,7 @@ private slots:
     // Typing narrows to the newest match; Ctrl+R steps to the next older match and
     // flags failure (keeping the last preview) when none remains. The match is
     // previewed into the draft via draftReset so both front ends show it.
-    void reverseSearchNarrowsAndSteps()
-    {
+    void reverseSearchNarrowsAndSteps() {
         ComposerSessionController c;
         seedHistory(c);
 
@@ -163,8 +155,7 @@ private slots:
 
     // Backspacing widens the query; emptying it reverts the preview to the draft
     // that was in the field when the search began.
-    void reverseSearchBackspaceWidensAndRestores()
-    {
+    void reverseSearchBackspaceWidensAndRestores() {
         ComposerSessionController c;
         seedHistory(c);
         c.setDraft(QStringLiteral("work in progress"));
@@ -190,8 +181,7 @@ private slots:
     }
 
     // Accept keeps the previewed match as the editable draft and never submits.
-    void reverseSearchAcceptKeepsDraftWithoutSubmit()
-    {
+    void reverseSearchAcceptKeepsDraftWithoutSubmit() {
         ComposerSessionController c;
         seedHistory(c);
         QSignalSpy submitSpy(&c, &ComposerSessionController::submitted);
@@ -207,8 +197,7 @@ private slots:
     }
 
     // Cancel restores the pre-search draft and exits the mode.
-    void reverseSearchCancelRestoresDraft()
-    {
+    void reverseSearchCancelRestoresDraft() {
         ComposerSessionController c;
         seedHistory(c);
         c.setDraft(QStringLiteral("keep me"));
@@ -223,8 +212,7 @@ private slots:
     }
 
     // A session swap (or any external draft edit) drops out of an active search.
-    void reverseSearchResetsOnSessionSwap()
-    {
+    void reverseSearchResetsOnSessionSwap() {
         ComposerSessionController c;
         seedHistory(c);
 

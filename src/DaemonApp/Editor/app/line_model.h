@@ -55,8 +55,8 @@ private:
 
     TextDocument* m_doc = nullptr;
     CodeHighlighter* m_hl = nullptr;
-    QList<int> m_visible;        // visible row -> document line
-    QSet<int> m_folded;          // collapsed fold-start lines
+    QList<int> m_visible; // visible row -> document line
+    QSet<int> m_folded;   // collapsed fold-start lines
 };
 
 } // namespace editor

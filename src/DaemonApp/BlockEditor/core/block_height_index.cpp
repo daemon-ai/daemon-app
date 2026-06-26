@@ -4,8 +4,7 @@
 
 namespace be {
 
-void BlockHeightIndex::reset(qsizetype count, qreal defaultHeight)
-{
+void BlockHeightIndex::reset(qsizetype count, qreal defaultHeight) {
     m_heights.fill(defaultHeight, count);
     m_tree.fill(0.0, count + 1);
     for (qsizetype row = 0; row < count; ++row) {
@@ -13,13 +12,11 @@ void BlockHeightIndex::reset(qsizetype count, qreal defaultHeight)
     }
 }
 
-qsizetype BlockHeightIndex::size() const
-{
+qsizetype BlockHeightIndex::size() const {
     return m_heights.size();
 }
 
-void BlockHeightIndex::setHeight(qsizetype row, qreal height)
-{
+void BlockHeightIndex::setHeight(qsizetype row, qreal height) {
     if (row < 0 || row >= m_heights.size()) {
         return;
     }
@@ -29,24 +26,21 @@ void BlockHeightIndex::setHeight(qsizetype row, qreal height)
     add(row, delta);
 }
 
-qreal BlockHeightIndex::height(qsizetype row) const
-{
+qreal BlockHeightIndex::height(qsizetype row) const {
     if (row < 0 || row >= m_heights.size()) {
         return 0.0;
     }
     return m_heights[row];
 }
 
-qreal BlockHeightIndex::prefixHeight(qsizetype row) const
-{
+qreal BlockHeightIndex::prefixHeight(qsizetype row) const {
     if (m_heights.isEmpty() || row <= 0) {
         return 0.0;
     }
     return prefixInclusive(qMin(row - 1, m_heights.size() - 1));
 }
 
-qsizetype BlockHeightIndex::rowAtContentY(qreal y) const
-{
+qsizetype BlockHeightIndex::rowAtContentY(qreal y) const {
     if (m_heights.isEmpty()) {
         return -1;
     }
@@ -64,20 +58,17 @@ qsizetype BlockHeightIndex::rowAtContentY(qreal y) const
     return low;
 }
 
-qreal BlockHeightIndex::totalHeight() const
-{
+qreal BlockHeightIndex::totalHeight() const {
     return prefixHeight(m_heights.size());
 }
 
-void BlockHeightIndex::add(qsizetype row, qreal delta)
-{
+void BlockHeightIndex::add(qsizetype row, qreal delta) {
     for (qsizetype i = row + 1; i < m_tree.size(); i += i & -i) {
         m_tree[i] += delta;
     }
 }
 
-qreal BlockHeightIndex::prefixInclusive(qsizetype row) const
-{
+qreal BlockHeightIndex::prefixInclusive(qsizetype row) const {
     qreal sum = 0.0;
     for (qsizetype i = row + 1; i > 0; i -= i & -i) {
         sum += m_tree[i];

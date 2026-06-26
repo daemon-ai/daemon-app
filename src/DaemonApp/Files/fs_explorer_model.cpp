@@ -4,16 +4,15 @@
 
 namespace files {
 
-FsExplorerModel::FsExplorerModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
+FsExplorerModel::FsExplorerModel(QObject* parent) : QAbstractListModel(parent) {
     fs::registerFsMetatypes();
 }
 
-QObject* FsExplorerModel::service() const { return m_service; }
+QObject* FsExplorerModel::service() const {
+    return m_service;
+}
 
-void FsExplorerModel::setService(QObject* service)
-{
+void FsExplorerModel::setService(QObject* service) {
     auto* svc = qobject_cast<fs::IFsService*>(service);
     if (svc == m_service)
         return;
@@ -39,8 +38,7 @@ void FsExplorerModel::setService(QObject* service)
     }
 }
 
-void FsExplorerModel::setShowIgnored(bool show)
-{
+void FsExplorerModel::setShowIgnored(bool show) {
     if (m_showIgnored == show)
         return;
     m_showIgnored = show;
@@ -49,13 +47,11 @@ void FsExplorerModel::setShowIgnored(bool show)
     rebuildFromRoots();
 }
 
-int FsExplorerModel::rowCount(const QModelIndex& parent) const
-{
+int FsExplorerModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(m_rows.size());
 }
 
-QVariant FsExplorerModel::data(const QModelIndex& index, int role) const
-{
+QVariant FsExplorerModel::data(const QModelIndex& index, int role) const {
     if (index.row() < 0 || index.row() >= m_rows.size())
         return {};
     const Row& r = m_rows.at(index.row());
@@ -90,25 +86,22 @@ QVariant FsExplorerModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> FsExplorerModel::roleNames() const
-{
+QHash<int, QByteArray> FsExplorerModel::roleNames() const {
     return {
-        { LabelRole, "label" },       { PathRole, "path" },
-        { RootIdRole, "rootId" },     { DepthRole, "depth" },
-        { IsDirRole, "isDir" },       { IsRootRole, "isRoot" },
-        { IgnoredRole, "ignored" },   { HasChildrenRole, "hasChildren" },
-        { ExpandedRole, "expanded" }, { CurrentRole, "current" },
-        { LoadingRole, "loading" },   { ErrorRole, "error" },
+        {LabelRole, "label"},       {PathRole, "path"},
+        {RootIdRole, "rootId"},     {DepthRole, "depth"},
+        {IsDirRole, "isDir"},       {IsRootRole, "isRoot"},
+        {IgnoredRole, "ignored"},   {HasChildrenRole, "hasChildren"},
+        {ExpandedRole, "expanded"}, {CurrentRole, "current"},
+        {LoadingRole, "loading"},   {ErrorRole, "error"},
     };
 }
 
-QString FsExplorerModel::key(const QString& rootId, const QString& path)
-{
+QString FsExplorerModel::key(const QString& rootId, const QString& path) {
     return rootId + QChar(0x1f) + path;
 }
 
-int FsExplorerModel::rowForKey(const QString& rowKey) const
-{
+int FsExplorerModel::rowForKey(const QString& rowKey) const {
     for (int i = 0; i < m_rows.size(); ++i) {
         if (key(m_rows.at(i).rootId, m_rows.at(i).path) == rowKey)
             return i;
@@ -116,8 +109,7 @@ int FsExplorerModel::rowForKey(const QString& rowKey) const
     return -1;
 }
 
-int FsExplorerModel::subtreeEnd(int row) const
-{
+int FsExplorerModel::subtreeEnd(int row) const {
     if (row < 0 || row >= m_rows.size())
         return row;
     const int depth = m_rows.at(row).depth;
@@ -127,21 +119,19 @@ int FsExplorerModel::subtreeEnd(int row) const
     return end;
 }
 
-void FsExplorerModel::setCurrentKey(const QString& rowKey)
-{
+void FsExplorerModel::setCurrentKey(const QString& rowKey) {
     if (m_currentKey == rowKey)
         return;
     const int old = rowForKey(m_currentKey);
     m_currentKey = rowKey;
     const int now = rowForKey(m_currentKey);
     if (old >= 0)
-        emit dataChanged(index(old), index(old), { CurrentRole });
+        emit dataChanged(index(old), index(old), {CurrentRole});
     if (now >= 0)
-        emit dataChanged(index(now), index(now), { CurrentRole });
+        emit dataChanged(index(now), index(now), {CurrentRole});
 }
 
-void FsExplorerModel::activate(int row)
-{
+void FsExplorerModel::activate(int row) {
     if (row < 0 || row >= m_rows.size())
         return;
     const Row& r = m_rows.at(row);
@@ -154,8 +144,7 @@ void FsExplorerModel::activate(int row)
     }
 }
 
-void FsExplorerModel::toggleExpand(int row)
-{
+void FsExplorerModel::toggleExpand(int row) {
     if (row < 0 || row >= m_rows.size() || !m_rows.at(row).isDir)
         return;
     const QString rowKey = key(m_rows.at(row).rootId, m_rows.at(row).path);
@@ -163,13 +152,13 @@ void FsExplorerModel::toggleExpand(int row)
         m_expanded.remove(rowKey);
         m_rows[row].expanded = false;
         removeChildren(row);
-        emit dataChanged(index(row), index(row), { ExpandedRole });
+        emit dataChanged(index(row), index(row), {ExpandedRole});
         emit treeChanged();
         return;
     }
     m_expanded.insert(rowKey);
     m_rows[row].expanded = true;
-    emit dataChanged(index(row), index(row), { ExpandedRole });
+    emit dataChanged(index(row), index(row), {ExpandedRole});
     if (m_cache.contains(rowKey))
         insertChildren(row, m_cache.value(rowKey));
     else
@@ -177,8 +166,7 @@ void FsExplorerModel::toggleExpand(int row)
     emit treeChanged();
 }
 
-void FsExplorerModel::requestChildren(int row)
-{
+void FsExplorerModel::requestChildren(int row) {
     if (!m_service || row < 0 || row >= m_rows.size())
         return;
     Row& r = m_rows[row];
@@ -188,12 +176,11 @@ void FsExplorerModel::requestChildren(int row)
     m_pending.insert(rowKey);
     r.loading = true;
     r.error.clear();
-    emit dataChanged(index(row), index(row), { LoadingRole, ErrorRole });
+    emit dataChanged(index(row), index(row), {LoadingRole, ErrorRole});
     m_service->open(r.rootId, r.path);
 }
 
-void FsExplorerModel::removeChildren(int row)
-{
+void FsExplorerModel::removeChildren(int row) {
     const int end = subtreeEnd(row);
     if (end <= row + 1)
         return;
@@ -202,8 +189,7 @@ void FsExplorerModel::removeChildren(int row)
     endRemoveRows();
 }
 
-void FsExplorerModel::insertChildren(int row, const QList<fs::FsEntry>& entries)
-{
+void FsExplorerModel::insertChildren(int row, const QList<fs::FsEntry>& entries) {
     if (row < 0 || row >= m_rows.size())
         return;
     removeChildren(row);
@@ -231,16 +217,14 @@ void FsExplorerModel::insertChildren(int row, const QList<fs::FsEntry>& entries)
     endInsertRows();
 }
 
-void FsExplorerModel::expandAll()
-{
+void FsExplorerModel::expandAll() {
     for (int i = 0; i < m_rows.size(); ++i) {
         if (m_rows.at(i).isDir && !m_rows.at(i).expanded)
             toggleExpand(i);
     }
 }
 
-void FsExplorerModel::collapseAll()
-{
+void FsExplorerModel::collapseAll() {
     beginResetModel();
     m_expanded.clear();
     for (Row& r : m_rows)
@@ -250,13 +234,20 @@ void FsExplorerModel::collapseAll()
     emit treeChanged();
 }
 
-int FsExplorerModel::currentRow() const { return rowForKey(m_currentKey); }
-QString FsExplorerModel::rootIdAt(int row) const { return row >= 0 && row < m_rows.size() ? m_rows.at(row).rootId : QString(); }
-QString FsExplorerModel::pathAt(int row) const { return row >= 0 && row < m_rows.size() ? m_rows.at(row).path : QString(); }
-bool FsExplorerModel::isDirAt(int row) const { return row >= 0 && row < m_rows.size() && m_rows.at(row).isDir; }
+int FsExplorerModel::currentRow() const {
+    return rowForKey(m_currentKey);
+}
+QString FsExplorerModel::rootIdAt(int row) const {
+    return row >= 0 && row < m_rows.size() ? m_rows.at(row).rootId : QString();
+}
+QString FsExplorerModel::pathAt(int row) const {
+    return row >= 0 && row < m_rows.size() ? m_rows.at(row).path : QString();
+}
+bool FsExplorerModel::isDirAt(int row) const {
+    return row >= 0 && row < m_rows.size() && m_rows.at(row).isDir;
+}
 
-void FsExplorerModel::rebuildFromRoots()
-{
+void FsExplorerModel::rebuildFromRoots() {
     beginResetModel();
     m_rows.clear();
     for (const fs::FsRoot& root : std::as_const(m_roots)) {
@@ -277,15 +268,13 @@ void FsExplorerModel::rebuildFromRoots()
     emit treeChanged();
 }
 
-void FsExplorerModel::onRootsChanged(const QList<fs::FsRoot>& roots)
-{
+void FsExplorerModel::onRootsChanged(const QList<fs::FsRoot>& roots) {
     m_roots = roots;
     rebuildFromRoots();
 }
 
 void FsExplorerModel::onListed(const QString& rootId, const QString& dir,
-                               const QList<fs::FsEntry>& entries)
-{
+                               const QList<fs::FsEntry>& entries) {
     const QString rowKey = key(rootId, dir);
     if (!m_pending.remove(rowKey) && !m_expanded.contains(rowKey))
         return;
@@ -295,13 +284,12 @@ void FsExplorerModel::onListed(const QString& rootId, const QString& dir,
         return;
     m_rows[row].loading = false;
     m_rows[row].error.clear();
-    emit dataChanged(index(row), index(row), { LoadingRole, ErrorRole });
+    emit dataChanged(index(row), index(row), {LoadingRole, ErrorRole});
     if (m_rows.at(row).expanded)
         insertChildren(row, entries);
 }
 
-void FsExplorerModel::onChanged(const QString& rootId, const QString& dir)
-{
+void FsExplorerModel::onChanged(const QString& rootId, const QString& dir) {
     const QString rowKey = key(rootId, dir);
     m_cache.remove(rowKey);
     const int row = rowForKey(rowKey);
@@ -309,8 +297,7 @@ void FsExplorerModel::onChanged(const QString& rootId, const QString& dir)
         requestChildren(row);
 }
 
-void FsExplorerModel::onError(const QString& rootId, const QString& path, const QString& message)
-{
+void FsExplorerModel::onError(const QString& rootId, const QString& path, const QString& message) {
     const QString rowKey = key(rootId, path);
     m_pending.remove(rowKey);
     const int row = rowForKey(rowKey);
@@ -318,7 +305,7 @@ void FsExplorerModel::onError(const QString& rootId, const QString& path, const 
         return;
     m_rows[row].loading = false;
     m_rows[row].error = message;
-    emit dataChanged(index(row), index(row), { LoadingRole, ErrorRole });
+    emit dataChanged(index(row), index(row), {LoadingRole, ErrorRole});
 }
 
 } // namespace files

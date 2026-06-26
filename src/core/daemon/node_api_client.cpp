@@ -3,9 +3,7 @@
 namespace daemonapp::daemon {
 
 NodeApiClient::NodeApiClient(DaemonTransport* transport, QObject* parent)
-    : QObject(parent)
-    , m_transport(transport)
-{
+    : QObject(parent), m_transport(transport) {
     if (m_transport != nullptr) {
         connect(m_transport, &DaemonTransport::frameReceived, this, [this](const QByteArray& cbor) {
             if (!m_inFlight) {
@@ -28,11 +26,10 @@ NodeApiClient::NodeApiClient(DaemonTransport* transport, QObject* parent)
     }
 }
 
-void NodeApiClient::failAllPending(const QString& message)
-{
+void NodeApiClient::failAllPending(const QString& message) {
     // Fail the in-flight request, then drain the queue with the same error so callers are not left
-    // waiting on a dead socket. Idempotent: once nothing is in flight and the queue is empty this is
-    // a no-op, so the error+disconnect double-fire is harmless.
+    // waiting on a dead socket. Idempotent: once nothing is in flight and the queue is empty this
+    // is a no-op, so the error+disconnect double-fire is harmless.
     if (m_inFlight) {
         const QString correlationId = m_currentCorrelation;
         m_inFlight = false;
@@ -46,8 +43,7 @@ void NodeApiClient::failAllPending(const QString& message)
     }
 }
 
-void NodeApiClient::sendRequest(const QByteArray& requestCbor, const QString& correlationId)
-{
+void NodeApiClient::sendRequest(const QByteArray& requestCbor, const QString& correlationId) {
     if (m_transport == nullptr) {
         emit failed(correlationId, QStringLiteral("No daemon transport configured"));
         return;
@@ -56,12 +52,11 @@ void NodeApiClient::sendRequest(const QByteArray& requestCbor, const QString& co
         emit failed(correlationId, QStringLiteral("Refusing to send an empty NodeApi request"));
         return;
     }
-    m_queue.append({ correlationId, requestCbor });
+    m_queue.append({correlationId, requestCbor});
     dispatchNext();
 }
 
-void NodeApiClient::dispatchNext()
-{
+void NodeApiClient::dispatchNext() {
     if (m_inFlight || m_queue.isEmpty()) {
         return;
     }

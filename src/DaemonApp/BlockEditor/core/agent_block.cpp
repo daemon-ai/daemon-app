@@ -11,8 +11,7 @@ namespace {
 // Specialized tool variant for the QML dispatch (mirrors Hermes'
 // ChainToolFallback tool-name routing): clarify -> interactive Q&A,
 // image_generate -> generated-image frame, everything else generic.
-QString variantForName(const QString &name)
-{
+QString variantForName(const QString& name) {
     const QString key = name.trimmed().toLower();
     if (key == QStringLiteral("clarify")) {
         return QStringLiteral("clarify");
@@ -25,8 +24,7 @@ QString variantForName(const QString &name)
 
 // A tone may be omitted on the wire; derive a sensible default from the tool
 // name so the header glyph matches the specialized variant.
-QString toneToKey(const QString &tone, const QString &name)
-{
+QString toneToKey(const QString& tone, const QString& name) {
     if (!tone.isEmpty()) {
         return tone;
     }
@@ -40,8 +38,7 @@ QString toneToKey(const QString &tone, const QString &name)
     return QStringLiteral("tool");
 }
 
-QString humanDuration(qint64 ms)
-{
+QString humanDuration(qint64 ms) {
     if (ms <= 0) {
         return {};
     }
@@ -62,13 +59,14 @@ QString humanDuration(qint64 ms)
 
 // Normalize a status string to one of running/ok/error. Treats finished/done/
 // complete/success as ok, and failed/error as error.
-QString normalizeStatus(const QString &raw)
-{
+QString normalizeStatus(const QString& raw) {
     const QString s = raw.trimmed().toLower();
-    if (s == QStringLiteral("running") || s == QStringLiteral("pending") || s == QStringLiteral("started")) {
+    if (s == QStringLiteral("running") || s == QStringLiteral("pending") ||
+        s == QStringLiteral("started")) {
         return QStringLiteral("running");
     }
-    if (s == QStringLiteral("error") || s == QStringLiteral("failed") || s == QStringLiteral("failure")) {
+    if (s == QStringLiteral("error") || s == QStringLiteral("failed") ||
+        s == QStringLiteral("failure")) {
         return QStringLiteral("error");
     }
     return QStringLiteral("ok");
@@ -76,8 +74,7 @@ QString normalizeStatus(const QString &raw)
 
 } // namespace
 
-QString agentFenceInfo(BlockType type)
-{
+QString agentFenceInfo(BlockType type) {
     switch (type) {
     case BlockType::Reasoning:
         return QStringLiteral("reasoning");
@@ -90,18 +87,15 @@ QString agentFenceInfo(BlockType type)
     }
 }
 
-QString messageMarkerFenceInfo()
-{
+QString messageMarkerFenceInfo() {
     return QStringLiteral("msg");
 }
 
-bool isMessageMarkerFence(const QString &info)
-{
+bool isMessageMarkerFence(const QString& info) {
     return info.trimmed().toLower() == messageMarkerFenceInfo();
 }
 
-QByteArray serializeMessageMarker(MessageRole role, const QString &messageId)
-{
+QByteArray serializeMessageMarker(MessageRole role, const QString& messageId) {
     QVariantMap payload;
     payload.insert(QStringLiteral("id"), messageId);
     payload.insert(QStringLiteral("role"), messageRoleToString(role));
@@ -117,8 +111,7 @@ QByteArray serializeMessageMarker(MessageRole role, const QString &messageId)
     return out;
 }
 
-void parseMessageMarker(const QString &body, MessageRole *role, QString *messageId)
-{
+void parseMessageMarker(const QString& body, MessageRole* role, QString* messageId) {
     const QVariantMap meta = parseAgentBlockMetadata(body);
     if (role) {
         *role = messageRoleFromString(meta.value(QStringLiteral("role")).toString());
@@ -128,8 +121,7 @@ void parseMessageMarker(const QString &body, MessageRole *role, QString *message
     }
 }
 
-BlockType agentBlockTypeForFence(const QString &info)
-{
+BlockType agentBlockTypeForFence(const QString& info) {
     const QString key = info.trimmed().toLower();
     if (key == QStringLiteral("tool")) {
         return BlockType::ToolCall;
@@ -143,13 +135,12 @@ BlockType agentBlockTypeForFence(const QString &info)
     return BlockType::Unknown;
 }
 
-bool isAgentBlockType(BlockType type)
-{
-    return type == BlockType::Reasoning || type == BlockType::ToolCall || type == BlockType::Content;
+bool isAgentBlockType(BlockType type) {
+    return type == BlockType::Reasoning || type == BlockType::ToolCall ||
+           type == BlockType::Content;
 }
 
-QByteArray serializeAgentBlock(BlockType type, const QVariantMap &metadata)
-{
+QByteArray serializeAgentBlock(BlockType type, const QVariantMap& metadata) {
     const QString info = agentFenceInfo(type);
     if (info.isEmpty()) {
         return {};
@@ -171,13 +162,12 @@ QByteArray serializeAgentBlock(BlockType type, const QVariantMap &metadata)
     return out;
 }
 
-QVariantMap parseAgentBlockMetadata(const QString &body)
-{
+QVariantMap parseAgentBlockMetadata(const QString& body) {
     const QByteArray trimmed = body.trimmed().toUtf8();
     if (trimmed.isEmpty()) {
         return {};
     }
-    QJsonParseError err {};
+    QJsonParseError err{};
     const QJsonDocument doc = QJsonDocument::fromJson(trimmed, &err);
     if (err.error != QJsonParseError::NoError || !doc.isObject()) {
         return {};
@@ -185,8 +175,7 @@ QVariantMap parseAgentBlockMetadata(const QString &body)
     return doc.object().toVariantMap();
 }
 
-QString fencedBodyOf(const QString &markdown)
-{
+QString fencedBodyOf(const QString& markdown) {
     QStringList lines = markdown.split(QLatin1Char('\n'));
     if (lines.isEmpty()) {
         return {};
@@ -204,8 +193,7 @@ QString fencedBodyOf(const QString &markdown)
     return lines.join(QLatin1Char('\n'));
 }
 
-QVariantMap buildToolView(const QVariantMap &metadata)
-{
+QVariantMap buildToolView(const QVariantMap& metadata) {
     QVariantMap view = metadata;
 
     const QString name = metadata.value(QStringLiteral("name")).toString();
@@ -219,8 +207,8 @@ QVariantMap buildToolView(const QVariantMap &metadata)
     // interactive panel. An explicit detailKind always wins.
     QString detailKind = metadata.value(QStringLiteral("detailKind")).toString();
     if (detailKind.isEmpty()) {
-        if (variant == QStringLiteral("image-generate")
-            && !metadata.value(QStringLiteral("imageUrl")).toString().isEmpty()) {
+        if (variant == QStringLiteral("image-generate") &&
+            !metadata.value(QStringLiteral("imageUrl")).toString().isEmpty()) {
             detailKind = QStringLiteral("generated-image");
         }
     }
@@ -230,14 +218,16 @@ QVariantMap buildToolView(const QVariantMap &metadata)
     // is set once the user answers, which clears the gate.
     const bool needsApproval = metadata.value(QStringLiteral("needsApproval")).toBool();
     const QString approval = metadata.value(QStringLiteral("approval")).toString();
-    const bool awaitingApproval = needsApproval && status == QStringLiteral("running") && approval.isEmpty();
+    const bool awaitingApproval =
+        needsApproval && status == QStringLiteral("running") && approval.isEmpty();
 
     // Title flips with status: a present-progressive verb while running, the
     // tool name once settled (mirrors Hermes ToolView's running/done title).
     QString title;
     if (variant == QStringLiteral("clarify")) {
-        title = metadata.value(QStringLiteral("answered")).toBool() ? QStringLiteral("Answered")
-                                                                     : QStringLiteral("Needs your input");
+        title = metadata.value(QStringLiteral("answered")).toBool()
+                    ? QStringLiteral("Answered")
+                    : QStringLiteral("Needs your input");
     } else if (status == QStringLiteral("running")) {
         title = name.isEmpty() ? QStringLiteral("Working") : QStringLiteral("Running %1").arg(name);
     } else if (status == QStringLiteral("error")) {
@@ -259,28 +249,26 @@ QVariantMap buildToolView(const QVariantMap &metadata)
     return view;
 }
 
-QVariantMap buildReasoningView(const QVariantMap &metadata)
-{
+QVariantMap buildReasoningView(const QVariantMap& metadata) {
     QVariantMap view;
     const QString status = metadata.value(QStringLiteral("status")).toString().trimmed().toLower();
-    view.insert(QStringLiteral("status"), status == QStringLiteral("running") ? QStringLiteral("running")
-                                                                              : QStringLiteral("complete"));
+    view.insert(QStringLiteral("status"), status == QStringLiteral("running")
+                                              ? QStringLiteral("running")
+                                              : QStringLiteral("complete"));
     view.insert(QStringLiteral("durationLabel"),
                 humanDuration(metadata.value(QStringLiteral("durationMs")).toLongLong()));
     view.insert(QStringLiteral("body"), metadata.value(QStringLiteral("body")).toString());
     return view;
 }
 
-QVariantMap buildContentView(const QVariantMap &metadata)
-{
+QVariantMap buildContentView(const QVariantMap& metadata) {
     QVariantMap view;
     view.insert(QStringLiteral("kind"), metadata.value(QStringLiteral("kind")).toString());
     view.insert(QStringLiteral("body"), metadata.value(QStringLiteral("body")).toString());
     return view;
 }
 
-QVariantMap clarifyAnswerPatch(const QVariantMap &answers)
-{
+QVariantMap clarifyAnswerPatch(const QVariantMap& answers) {
     // Derive a flat human summary for the compact resolved row and for older
     // single-question consumers reading `answer` (lists are comma-joined; the
     // per-answer summaries are then joined with "; ").
@@ -289,7 +277,7 @@ QVariantMap clarifyAnswerPatch(const QVariantMap &answers)
         if (it.value().typeId() == QMetaType::QVariantList) {
             QStringList items;
             const QVariantList list = it.value().toList();
-            for (const QVariant &item : list) {
+            for (const QVariant& item : list) {
                 items << item.toString();
             }
             if (!items.isEmpty()) {
@@ -310,8 +298,7 @@ QVariantMap clarifyAnswerPatch(const QVariantMap &answers)
     return patch;
 }
 
-QVariantMap toolApprovalPatch(const QString &decision)
-{
+QVariantMap toolApprovalPatch(const QString& decision) {
     // Record the decision so the approval bar clears. A denial also flips the
     // tool to an error state; an approval leaves it running for the host to drive
     // to completion.
@@ -324,8 +311,7 @@ QVariantMap toolApprovalPatch(const QString &decision)
     return patch;
 }
 
-QVariantList ansiToSpans(const QString &text)
-{
+QVariantList ansiToSpans(const QString& text) {
     QVariantList spans;
 
     int fg = -1;
@@ -354,9 +340,9 @@ QVariantList ansiToSpans(const QString &text)
         run.clear();
     };
 
-    const auto applySgr = [&](const QString &params) {
-        const QStringList parts = params.isEmpty() ? QStringList { QStringLiteral("0") }
-                                                   : params.split(QLatin1Char(';'));
+    const auto applySgr = [&](const QString& params) {
+        const QStringList parts =
+            params.isEmpty() ? QStringList{QStringLiteral("0")} : params.split(QLatin1Char(';'));
         for (int i = 0; i < parts.size(); ++i) {
             bool ok = false;
             const int code = parts.at(i).toInt(&ok);
@@ -437,16 +423,17 @@ QVariantList ansiToSpans(const QString &text)
     return spans;
 }
 
-QVariantList parseUnifiedDiff(const QString &diff)
-{
+QVariantList parseUnifiedDiff(const QString& diff) {
     QVariantList out;
     const QStringList lines = diff.split(QLatin1Char('\n'));
-    for (const QString &line : lines) {
+    for (const QString& line : lines) {
         QString kind = QStringLiteral("context");
         if (line.startsWith(QStringLiteral("@@"))) {
             kind = QStringLiteral("hunk");
-        } else if (line.startsWith(QStringLiteral("+++")) || line.startsWith(QStringLiteral("---"))
-                   || line.startsWith(QStringLiteral("diff ")) || line.startsWith(QStringLiteral("index "))) {
+        } else if (line.startsWith(QStringLiteral("+++")) ||
+                   line.startsWith(QStringLiteral("---")) ||
+                   line.startsWith(QStringLiteral("diff ")) ||
+                   line.startsWith(QStringLiteral("index "))) {
             kind = QStringLiteral("meta");
         } else if (line.startsWith(QLatin1Char('+'))) {
             kind = QStringLiteral("add");

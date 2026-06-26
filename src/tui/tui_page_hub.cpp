@@ -1,7 +1,5 @@
 #include "tui_page_hub.h"
 
-#include "tab_model.h"
-
 #include "accounts/iaccounts_service.h"
 #include "automation/icron_store.h"
 #include "automation/irouting_store.h"
@@ -18,14 +16,14 @@
 #include "memory_timeline_model.h"
 #include "models/imodel_catalog.h"
 #include "profiles/iprofile_store.h"
+#include "tab_model.h"
 #include "uimodels/variant_list_model.h"
 
 #include <Tui/ZEvent.h>
 
 namespace {
 
-QList<QVariantMap> rowsOfModel(QObject* m)
-{
+QList<QVariantMap> rowsOfModel(QObject* m) {
     auto* vlm = qobject_cast<uimodels::VariantListModel*>(m);
     return vlm ? vlm->rows() : QList<QVariantMap>{};
 }
@@ -34,8 +32,7 @@ QList<QVariantMap> rowsOfModel(QObject* m)
 
 TuiPageHub::TuiPageHub(Dependencies deps) : m_deps(deps) {}
 
-QString TuiPageHub::pageMarkdownForKind(int kind, const QString& profileRef) const
-{
+QString TuiPageHub::pageMarkdownForKind(int kind, const QString& profileRef) const {
     const int sel = m_pageSel.value(kind, 0);
     switch (kind) {
     case TabModel::Settings:
@@ -67,19 +64,18 @@ QString TuiPageHub::pageMarkdownForKind(int kind, const QString& profileRef) con
     }
 }
 
-bool TuiPageHub::openManagerPage(const QString& id) const
-{
+bool TuiPageHub::openManagerPage(const QString& id) const {
     const QHash<QString, QPair<int, QString>> kPageRoutes = {
-        { QStringLiteral("settings"), { TabModel::Settings, tr("Settings") } },
-        { QStringLiteral("dashboard"), { TabModel::Dashboard, tr("Dashboard") } },
-        { QStringLiteral("models"), { TabModel::Models, tr("Models") } },
-        { QStringLiteral("accounts"), { TabModel::Accounts, tr("Accounts") } },
-        { QStringLiteral("profiles"), { TabModel::Profiles, tr("Profiles") } },
-        { QStringLiteral("fleet"), { TabModel::Fleet, tr("Fleet") } },
-        { QStringLiteral("sessions"), { TabModel::Sessions, tr("Sessions") } },
-        { QStringLiteral("approvals"), { TabModel::Approvals, tr("Approvals") } },
-        { QStringLiteral("routing"), { TabModel::Routing, tr("Routing") } },
-        { QStringLiteral("cron"), { TabModel::Cron, tr("Scheduled jobs") } },
+        {QStringLiteral("settings"), {TabModel::Settings, tr("Settings")}},
+        {QStringLiteral("dashboard"), {TabModel::Dashboard, tr("Dashboard")}},
+        {QStringLiteral("models"), {TabModel::Models, tr("Models")}},
+        {QStringLiteral("accounts"), {TabModel::Accounts, tr("Accounts")}},
+        {QStringLiteral("profiles"), {TabModel::Profiles, tr("Profiles")}},
+        {QStringLiteral("fleet"), {TabModel::Fleet, tr("Fleet")}},
+        {QStringLiteral("sessions"), {TabModel::Sessions, tr("Sessions")}},
+        {QStringLiteral("approvals"), {TabModel::Approvals, tr("Approvals")}},
+        {QStringLiteral("routing"), {TabModel::Routing, tr("Routing")}},
+        {QStringLiteral("cron"), {TabModel::Cron, tr("Scheduled jobs")}},
     };
     const auto route = kPageRoutes.constFind(id);
     if (route == kPageRoutes.constEnd()) {
@@ -91,8 +87,7 @@ bool TuiPageHub::openManagerPage(const QString& id) const
     return true;
 }
 
-int TuiPageHub::activePageKind(bool transcriptActive) const
-{
+int TuiPageHub::activePageKind(bool transcriptActive) const {
     if (transcriptActive || m_deps.tabModel == nullptr) {
         return -1;
     }
@@ -115,8 +110,7 @@ int TuiPageHub::activePageKind(bool transcriptActive) const
     }
 }
 
-QList<QVariantMap> TuiPageHub::pageActionRows(int kind) const
-{
+QList<QVariantMap> TuiPageHub::pageActionRows(int kind) const {
     switch (kind) {
     case TabModel::Models:
         return rowsOfModel(m_deps.modelCatalog->installed());
@@ -139,8 +133,7 @@ QList<QVariantMap> TuiPageHub::pageActionRows(int kind) const
     }
 }
 
-void TuiPageHub::clampSelection(int kind)
-{
+void TuiPageHub::clampSelection(int kind) {
     const int rows = static_cast<int>(pageActionRows(kind).size());
     if (rows > 0) {
         int& sel = m_pageSel[kind];
@@ -148,8 +141,7 @@ void TuiPageHub::clampSelection(int kind)
     }
 }
 
-void TuiPageHub::moveSelection(int kind, int delta)
-{
+void TuiPageHub::moveSelection(int kind, int delta) {
     const int rows = static_cast<int>(pageActionRows(kind).size());
     if (rows == 0) {
         return;
@@ -158,8 +150,7 @@ void TuiPageHub::moveSelection(int kind, int delta)
     sel = qBound(0, sel + delta, rows - 1);
 }
 
-bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event)
-{
+bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
     if (event->modifiers() != Qt::NoModifier || kind < 0) {
         return false;
     }
@@ -229,8 +220,8 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event)
         break;
     case TabModel::Fleet:
         if (key == Qt::Key_Space || enter || text == QStringLiteral("p")) {
-            const bool paused = row.value(QStringLiteral("status")).toString()
-                == QLatin1String("paused");
+            const bool paused =
+                row.value(QStringLiteral("status")).toString() == QLatin1String("paused");
             if (paused) {
                 m_deps.fleetTree->resume(id);
             } else {
@@ -280,8 +271,7 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event)
     return false;
 }
 
-QString TuiPageHub::buildModelsMarkdown(int sel) const
-{
+QString TuiPageHub::buildModelsMarkdown(int sel) const {
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
 
     QString md;
@@ -300,9 +290,8 @@ QString TuiPageHub::buildModelsMarkdown(int sel) const
                       .arg(mark(i), m.value(QStringLiteral("name")).toString(),
                            m.value(QStringLiteral("params")).toString(),
                            m.value(QStringLiteral("sizeGiB")).toString(),
-                           m.value(QStringLiteral("active")).toBool()
-                               ? tr(" — **active**")
-                               : QString());
+                           m.value(QStringLiteral("active")).toBool() ? tr(" — **active**")
+                                                                      : QString());
         }
         md += QLatin1Char('\n');
     }
@@ -314,9 +303,8 @@ QString TuiPageHub::buildModelsMarkdown(int sel) const
                        m.value(QStringLiteral("params")).toString(),
                        m.value(QStringLiteral("sizeGiB")).toString(),
                        m.value(QStringLiteral("provider")).toString(),
-                       m.value(QStringLiteral("installed")).toBool()
-                           ? tr(" (installed)")
-                           : QString());
+                       m.value(QStringLiteral("installed")).toBool() ? tr(" (installed)")
+                                                                     : QString());
     }
 
     md += tr("\n## Providers\n\n");
@@ -326,16 +314,14 @@ QString TuiPageHub::buildModelsMarkdown(int sel) const
         md += tr("- %1 (%2)%3\n")
                   .arg(m.value(QStringLiteral("name")).toString(),
                        m.value(QStringLiteral("kind")).toString(),
-                       m.value(QStringLiteral("configured")).toBool()
-                           ? tr(" — configured")
-                           : QString());
+                       m.value(QStringLiteral("configured")).toBool() ? tr(" — configured")
+                                                                      : QString());
     }
 
     return md;
 }
 
-QString TuiPageHub::buildRoutingMarkdown(int sel) const
-{
+QString TuiPageHub::buildRoutingMarkdown(int sel) const {
     auto* model = qobject_cast<uimodels::VariantListModel*>(m_deps.routing->rules());
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
 
@@ -351,16 +337,14 @@ QString TuiPageHub::buildRoutingMarkdown(int sel) const
                       .arg(mark(i), r.value(QStringLiteral("intent")).toString(),
                            r.value(QStringLiteral("target")).toString(),
                            r.value(QStringLiteral("fallback")).toString(),
-                           r.value(QStringLiteral("enabled")).toBool()
-                               ? QString()
-                               : tr(" — _disabled_"));
+                           r.value(QStringLiteral("enabled")).toBool() ? QString()
+                                                                       : tr(" — _disabled_"));
         }
     }
     return md;
 }
 
-QString TuiPageHub::buildCronMarkdown(int sel) const
-{
+QString TuiPageHub::buildCronMarkdown(int sel) const {
     auto* model = qobject_cast<uimodels::VariantListModel*>(m_deps.cron->jobs());
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
 
@@ -374,11 +358,9 @@ QString TuiPageHub::buildCronMarkdown(int sel) const
             const QVariantMap& j = rows.at(i);
             md += tr("## %1%2%3\n\n")
                       .arg(mark(i), j.value(QStringLiteral("name")).toString(),
-                           j.value(QStringLiteral("enabled")).toBool()
-                               ? QString()
-                               : tr(" (disabled)"));
-            md += tr("- Schedule: `%1`\n")
-                      .arg(j.value(QStringLiteral("schedule")).toString());
+                           j.value(QStringLiteral("enabled")).toBool() ? QString()
+                                                                       : tr(" (disabled)"));
+            md += tr("- Schedule: `%1`\n").arg(j.value(QStringLiteral("schedule")).toString());
             md += tr("- Profile: %1\n").arg(j.value(QStringLiteral("profile")).toString());
             md += tr("- Next: %1 · Last: %2\n\n")
                       .arg(j.value(QStringLiteral("nextRun")).toString(),
@@ -388,8 +370,7 @@ QString TuiPageHub::buildCronMarkdown(int sel) const
     return md;
 }
 
-QString TuiPageHub::buildMemoryMarkdown() const
-{
+QString TuiPageHub::buildMemoryMarkdown() const {
     QString md;
     const QString agent = m_deps.memory != nullptr ? m_deps.memory->profile() : QString();
     md += tr("# Memory - %1\n\n").arg(agent.isEmpty() ? tr("agent") : agent);
@@ -471,12 +452,13 @@ QString TuiPageHub::buildMemoryMarkdown() const
                                    ->data(idx, memoryui::MemoryTimelineModel::GroupKeyRole)
                                    .toString());
             } else {
-                md += QStringLiteral("- _%1_ %2\n")
-                          .arg(m_deps.memTimeline->data(idx, memoryui::MemoryTimelineModel::KindRole)
-                                   .toString(),
-                               m_deps.memTimeline
-                                   ->data(idx, memoryui::MemoryTimelineModel::SummaryRole)
-                                   .toString());
+                md +=
+                    QStringLiteral("- _%1_ %2\n")
+                        .arg(m_deps.memTimeline->data(idx, memoryui::MemoryTimelineModel::KindRole)
+                                 .toString(),
+                             m_deps.memTimeline
+                                 ->data(idx, memoryui::MemoryTimelineModel::SummaryRole)
+                                 .toString());
             }
         }
         md += QStringLiteral("\n");
@@ -485,8 +467,7 @@ QString TuiPageHub::buildMemoryMarkdown() const
     return md;
 }
 
-QString TuiPageHub::buildProfileMarkdown(const QString& profileRef) const
-{
+QString TuiPageHub::buildProfileMarkdown(const QString& profileRef) const {
     QString md;
     if (profileRef.isEmpty() || m_deps.profiles == nullptr) {
         md += tr("# Profile\n\n_No agent selected._\n");
@@ -498,16 +479,13 @@ QString TuiPageHub::buildProfileMarkdown(const QString& profileRef) const
         return v.isEmpty() ? fallback : v;
     };
 
-    md += tr("# Profile - %1\n\n")
-              .arg(val(QStringLiteral("name"), profileRef));
-    md += tr("Agent == profile. Memory lives in this agent's bank (`%1`).\n\n")
-              .arg(profileRef);
+    md += tr("# Profile - %1\n\n").arg(val(QStringLiteral("name"), profileRef));
+    md += tr("Agent == profile. Memory lives in this agent's bank (`%1`).\n\n").arg(profileRef);
 
     md += tr("## Engine\n\n");
     md += tr("- Provider: **%1**\n").arg(val(QStringLiteral("provider"), QStringLiteral("-")));
     md += tr("- Model: **%1**\n").arg(val(QStringLiteral("model"), QStringLiteral("-")));
-    md += tr("- Base URL: %1\n")
-              .arg(val(QStringLiteral("baseUrl"), tr("(provider default)")));
+    md += tr("- Base URL: %1\n").arg(val(QStringLiteral("baseUrl"), tr("(provider default)")));
     md += tr("- Context engine: %1\n\n")
               .arg(val(QStringLiteral("contextEngine"), QStringLiteral("lcm")));
 
@@ -534,8 +512,7 @@ QString TuiPageHub::buildProfileMarkdown(const QString& profileRef) const
     return md;
 }
 
-QString TuiPageHub::buildDashboardMarkdown() const
-{
+QString TuiPageHub::buildDashboardMarkdown() const {
     auto* activity = qobject_cast<uimodels::VariantListModel*>(m_deps.dashboard->activity());
 
     QString md;
@@ -558,8 +535,7 @@ QString TuiPageHub::buildDashboardMarkdown() const
     return md;
 }
 
-QString TuiPageHub::buildFleetMarkdown(int sel) const
-{
+QString TuiPageHub::buildFleetMarkdown(int sel) const {
     auto* nodes = qobject_cast<uimodels::VariantListModel*>(m_deps.fleetTree->nodes());
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
 
@@ -582,8 +558,7 @@ QString TuiPageHub::buildFleetMarkdown(int sel) const
     return md;
 }
 
-QString TuiPageHub::buildSessionsMarkdown(int sel) const
-{
+QString TuiPageHub::buildSessionsMarkdown(int sel) const {
     auto* model = qobject_cast<uimodels::VariantListModel*>(m_deps.roster->sessions());
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
 
@@ -606,8 +581,7 @@ QString TuiPageHub::buildSessionsMarkdown(int sel) const
     return md;
 }
 
-QString TuiPageHub::buildApprovalsMarkdown(int sel) const
-{
+QString TuiPageHub::buildApprovalsMarkdown(int sel) const {
     auto* model = qobject_cast<uimodels::VariantListModel*>(m_deps.approvals->pending());
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
 
@@ -625,14 +599,12 @@ QString TuiPageHub::buildApprovalsMarkdown(int sel) const
                   .arg(mark(i), a.value(QStringLiteral("tool")).toString(),
                        a.value(QStringLiteral("risk")).toString());
         md += tr("- Session: %1\n").arg(a.value(QStringLiteral("session")).toString());
-        md += tr("- Command: `%1`\n\n")
-                  .arg(a.value(QStringLiteral("command")).toString());
+        md += tr("- Command: `%1`\n\n").arg(a.value(QStringLiteral("command")).toString());
     }
     return md;
 }
 
-QString TuiPageHub::buildProfilesMarkdown(int sel) const
-{
+QString TuiPageHub::buildProfilesMarkdown(int sel) const {
     auto* model = qobject_cast<uimodels::VariantListModel*>(m_deps.profiles->profiles());
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
 
@@ -648,28 +620,28 @@ QString TuiPageHub::buildProfilesMarkdown(int sel) const
             const QVariantMap& p = rows.at(i);
             md += tr("## %1%2%3\n\n")
                       .arg(mark(i), p.value(QStringLiteral("name")).toString(),
-                           p.value(QStringLiteral("isDefault")).toBool()
-                               ? tr(" (default)")
-                               : QString());
+                           p.value(QStringLiteral("isDefault")).toBool() ? tr(" (default)")
+                                                                         : QString());
             md += tr("- Model: `%1`\n").arg(p.value(QStringLiteral("model")).toString());
             const QString desc = p.value(QStringLiteral("description")).toString();
             if (!desc.isEmpty()) {
                 md += QStringLiteral("- %1\n").arg(desc);
             }
             md += tr("- Skills: %1\n")
-                      .arg(p.value(QStringLiteral("skills")).toStringList().join(
-                          QStringLiteral(", ")));
-            md += tr("- Tools: %1\n\n")
-                      .arg(p.value(QStringLiteral("tools")).toStringList().join(
-                          QStringLiteral(", ")));
+                      .arg(p.value(QStringLiteral("skills"))
+                               .toStringList()
+                               .join(QStringLiteral(", ")));
+            md +=
+                tr("- Tools: %1\n\n")
+                    .arg(
+                        p.value(QStringLiteral("tools")).toStringList().join(QStringLiteral(", ")));
         }
     }
 
     return md;
 }
 
-QString TuiPageHub::buildAccountsMarkdown(int sel) const
-{
+QString TuiPageHub::buildAccountsMarkdown(int sel) const {
     auto* model = qobject_cast<uimodels::VariantListModel*>(m_deps.accounts->accounts());
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
 
@@ -708,14 +680,12 @@ QString TuiPageHub::buildAccountsMarkdown(int sel) const
     return md;
 }
 
-QString TuiPageHub::buildSettingsMarkdown() const
-{
+QString TuiPageHub::buildSettingsMarkdown() const {
     const auto cfg = [this](const char* key) {
         return m_deps.daemonConfig->value(QString::fromLatin1(key)).toString();
     };
     const auto onoff = [this](const char* key) {
-        return m_deps.daemonConfig->value(QString::fromLatin1(key)).toBool() ? tr("on")
-                                                                             : tr("off");
+        return m_deps.daemonConfig->value(QString::fromLatin1(key)).toBool() ? tr("on") : tr("off");
     };
 
     QString md;

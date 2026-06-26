@@ -1,15 +1,12 @@
+#include "i18n/localization.h"
 #include "mouse_terminal.h"
 #include "root_widget.h"
+#include "theme/theme_palette.h"
 #include "tui_palette.h"
 
-#include "i18n/localization.h"
-#include "theme/theme_palette.h"
-
-#include <Tui/ZCommon.h>
-#include <Tui/ZImage.h>
-#include <Tui/ZTerminal.h>
-#include <Tui/ZTest.h>
-
+#include <cstdio>
+#include <functional>
+#include <memory>
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
@@ -19,12 +16,12 @@
 #include <QStandardPaths>
 #include <QString>
 #include <QTextStream>
-#include <QTimer>
 #include <QtGlobal>
-
-#include <cstdio>
-#include <functional>
-#include <memory>
+#include <QTimer>
+#include <Tui/ZCommon.h>
+#include <Tui/ZImage.h>
+#include <Tui/ZTerminal.h>
+#include <Tui/ZTest.h>
 
 namespace {
 
@@ -36,8 +33,7 @@ namespace {
 // is pushed down, and partial glyphs appear. The offscreen ZTerminal is immune
 // (its grab can't be scrolled), which is why this only bites the real TTY. The
 // GUI needs no such guard. Installed before any widget or terminal is created.
-void tuiMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
-{
+void tuiMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg) {
     static QMutex mutex;
     const QMutexLocker lock(&mutex);
 
@@ -84,8 +80,7 @@ namespace {
 // Apply the persisted (GUI-shared) theme before any widget is built so the
 // startup palette is correct. DAEMON_TUI_THEME overrides it for offscreen tests.
 // The TUI defaults to Dark (its historical look) when nothing is persisted.
-void applyStartupTheme()
-{
+void applyStartupTheme() {
     QString name = QString::fromUtf8(qgetenv("DAEMON_TUI_THEME"));
     if (name.isEmpty()) {
         const QSettings settings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"));
@@ -99,8 +94,7 @@ void applyStartupTheme()
 // Load translations for the persisted UI language (shared with the GUI). The
 // TUI applies the choice at startup; live switching is GUI-only. DAEMON_TUI_LANG
 // overrides it for offscreen tests.
-void applyStartupLanguage()
-{
+void applyStartupLanguage() {
     QString code = QString::fromUtf8(qgetenv("DAEMON_TUI_LANG"));
     if (code.isEmpty()) {
         const QSettings settings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"));
@@ -117,8 +111,7 @@ namespace {
 // "WIDTHxHEIGHT" and dump it as plain text. Lets the spike be validated in CI / a
 // sandbox with no real TTY (set DAEMON_TUI_OFFSCREEN=120x36). Returns true if the
 // offscreen path ran (and the app should exit).
-bool maybeRenderOffscreen()
-{
+bool maybeRenderOffscreen() {
     const QByteArray spec = qgetenv("DAEMON_TUI_OFFSCREEN");
     if (spec.isEmpty()) {
         return false;
@@ -134,8 +127,8 @@ bool maybeRenderOffscreen()
 
     // Headless connectivity self-check for the cross-repo E2E harness: block until the daemon-mode
     // auto-connect Health round-trip resolves (or times out) and emit a stable sentinel, so the
-    // harness can hard-assert TUI -> daemon connectivity rather than only logging it. The frame dump
-    // below still runs afterwards (the daemon has been probed by then).
+    // harness can hard-assert TUI -> daemon connectivity rather than only logging it. The frame
+    // dump below still runs afterwards (the daemon has been probed by then).
     const QByteArray waitReadyMs = qgetenv("DAEMON_APP_WAIT_READY");
     if (!waitReadyMs.isEmpty()) {
         const int timeoutMs = waitReadyMs.toInt() > 0 ? waitReadyMs.toInt() : 5000;
@@ -157,80 +150,79 @@ bool maybeRenderOffscreen()
     const auto sendOne = [&terminal, &root](const QByteArray& k) {
         const QByteArray name = k.trimmed().toLower();
         {
-                if (name == "down") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Down, Qt::NoModifier);
-                } else if (name == "up") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Up, Qt::NoModifier);
-                } else if (name == "left") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Left, Qt::NoModifier);
-                } else if (name == "right") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Right, Qt::NoModifier);
-                } else if (name == "tab") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Tab, Qt::NoModifier);
-                } else if (name == "enter") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
-                } else if (name == "esc") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Escape, Qt::NoModifier);
-                } else if (name == "ctrl-q") {
-                    // forShortcut() matches char events, so emulate via sendText
-                    // (sendKey with a letter+Control does not trigger it).
-                    Tui::ZTest::sendText(&terminal, QStringLiteral("q"), Qt::ControlModifier);
-                } else if (name == "ctrl-c") {
-                    Tui::ZTest::sendText(&terminal, QStringLiteral("c"), Qt::ControlModifier);
-                } else if (name == "ctrl-enter") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::ControlModifier);
-                } else if (name == "shift-enter") {
-                    // Multiline composer: Shift+Enter inserts a newline.
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::ShiftModifier);
-                } else if (name == "ctrl-e") {
-                    // Toggle the file Explorer (text-matched on the key-bubble path
-                    // in RootWidget::keyEvent), so emulate the char event.
-                    Tui::ZTest::sendText(&terminal, QStringLiteral("e"), Qt::ControlModifier);
-                } else if (name == "ctrl-o") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_O, Qt::ControlModifier);
-                } else if (name == "ctrl-t") {
-                    // New transcript tab (text-matched in RootWidget::keyEvent, so
-                    // emulate the char event like ctrl-q rather than sendKey).
-                    Tui::ZTest::sendText(&terminal, QStringLiteral("t"), Qt::ControlModifier);
-                } else if (name == "ctrl-w") {
-                    // Close the current tab.
-                    Tui::ZTest::sendText(&terminal, QStringLiteral("w"), Qt::ControlModifier);
-                } else if (name == "ctrl-tab") {
-                    // Switch to the next tab (wraps).
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Tab, Qt::ControlModifier);
-                } else if (name == "ctrl-shift-tab") {
-                    // Switch to the previous tab (wraps).
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Tab,
-                                        Qt::ControlModifier | Qt::ShiftModifier);
-                } else if (name.size() == 5 && name.startsWith("alt-") && name.at(4) >= '1'
-                           && name.at(4) <= '9') {
-                    // Alt+<digit>: jump directly to tab N (1-based).
-                    Tui::ZTest::sendText(&terminal, QString::fromLatin1(name.mid(4)),
-                                         Qt::AltModifier);
-                } else if (name == "ctrl-r") {
-                    // Reverse incremental history search (delivered as a char event).
-                    Tui::ZTest::sendText(&terminal, QStringLiteral("r"), Qt::ControlModifier);
-                } else if (name == "ctrl-a") {
-                    Tui::ZTest::sendText(&terminal, QStringLiteral("a"), Qt::ControlModifier);
-                } else if (name == "backspace") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Backspace, Qt::NoModifier);
-                } else if (name == "del") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Delete, Qt::NoModifier);
-                } else if (name == "space") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_Space, Qt::NoModifier);
-                } else if (name == "cycle-theme") {
-                    Tui::ZTest::sendKey(&terminal, Qt::Key_F8, Qt::NoModifier);
-                } else if (name == "focus-composer") {
-                    root.focusComposer();
-                } else if (name == "focus-transcript") {
-                    root.focusTranscript();
-                } else if (name.startsWith("t:")) {
-                    // Type a literal into whatever holds focus (e.g. the composer),
-                    // without the auto-Enter that DAEMON_TUI_TYPE appends. Used to
-                    // exercise the context-sensitive Esc levels.
-                    Tui::ZTest::sendText(&terminal, QString::fromUtf8(k.trimmed().mid(2)),
-                                         Qt::NoModifier);
-                }
+            if (name == "down") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Down, Qt::NoModifier);
+            } else if (name == "up") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Up, Qt::NoModifier);
+            } else if (name == "left") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Left, Qt::NoModifier);
+            } else if (name == "right") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Right, Qt::NoModifier);
+            } else if (name == "tab") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Tab, Qt::NoModifier);
+            } else if (name == "enter") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
+            } else if (name == "esc") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Escape, Qt::NoModifier);
+            } else if (name == "ctrl-q") {
+                // forShortcut() matches char events, so emulate via sendText
+                // (sendKey with a letter+Control does not trigger it).
+                Tui::ZTest::sendText(&terminal, QStringLiteral("q"), Qt::ControlModifier);
+            } else if (name == "ctrl-c") {
+                Tui::ZTest::sendText(&terminal, QStringLiteral("c"), Qt::ControlModifier);
+            } else if (name == "ctrl-enter") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::ControlModifier);
+            } else if (name == "shift-enter") {
+                // Multiline composer: Shift+Enter inserts a newline.
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::ShiftModifier);
+            } else if (name == "ctrl-e") {
+                // Toggle the file Explorer (text-matched on the key-bubble path
+                // in RootWidget::keyEvent), so emulate the char event.
+                Tui::ZTest::sendText(&terminal, QStringLiteral("e"), Qt::ControlModifier);
+            } else if (name == "ctrl-o") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_O, Qt::ControlModifier);
+            } else if (name == "ctrl-t") {
+                // New transcript tab (text-matched in RootWidget::keyEvent, so
+                // emulate the char event like ctrl-q rather than sendKey).
+                Tui::ZTest::sendText(&terminal, QStringLiteral("t"), Qt::ControlModifier);
+            } else if (name == "ctrl-w") {
+                // Close the current tab.
+                Tui::ZTest::sendText(&terminal, QStringLiteral("w"), Qt::ControlModifier);
+            } else if (name == "ctrl-tab") {
+                // Switch to the next tab (wraps).
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Tab, Qt::ControlModifier);
+            } else if (name == "ctrl-shift-tab") {
+                // Switch to the previous tab (wraps).
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Tab,
+                                    Qt::ControlModifier | Qt::ShiftModifier);
+            } else if (name.size() == 5 && name.startsWith("alt-") && name.at(4) >= '1' &&
+                       name.at(4) <= '9') {
+                // Alt+<digit>: jump directly to tab N (1-based).
+                Tui::ZTest::sendText(&terminal, QString::fromLatin1(name.mid(4)), Qt::AltModifier);
+            } else if (name == "ctrl-r") {
+                // Reverse incremental history search (delivered as a char event).
+                Tui::ZTest::sendText(&terminal, QStringLiteral("r"), Qt::ControlModifier);
+            } else if (name == "ctrl-a") {
+                Tui::ZTest::sendText(&terminal, QStringLiteral("a"), Qt::ControlModifier);
+            } else if (name == "backspace") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Backspace, Qt::NoModifier);
+            } else if (name == "del") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Delete, Qt::NoModifier);
+            } else if (name == "space") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_Space, Qt::NoModifier);
+            } else if (name == "cycle-theme") {
+                Tui::ZTest::sendKey(&terminal, Qt::Key_F8, Qt::NoModifier);
+            } else if (name == "focus-composer") {
+                root.focusComposer();
+            } else if (name == "focus-transcript") {
+                root.focusTranscript();
+            } else if (name.startsWith("t:")) {
+                // Type a literal into whatever holds focus (e.g. the composer),
+                // without the auto-Enter that DAEMON_TUI_TYPE appends. Used to
+                // exercise the context-sensitive Esc levels.
+                Tui::ZTest::sendText(&terminal, QString::fromUtf8(k.trimmed().mid(2)),
+                                     Qt::NoModifier);
+            }
         }
     };
 
@@ -295,8 +287,7 @@ bool maybeRenderOffscreen()
 // daemon-tui: a feasibility spike of the GUI ported to a terminal UI on Tui
 // Widgets. It runs on a plain QCoreApplication event loop (no QtGui/QtQuick) and
 // reuses the app's C++ view models verbatim - see src/tui/CMakeLists.txt.
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     // Keep all Qt/library logging off the terminal before anything can emit a
     // message (a stray stderr line corrupts the Tui alt-screen).
     qInstallMessageHandler(tuiMessageHandler);
@@ -334,8 +325,8 @@ int main(int argc, char* argv[])
                      [&root, mouseDebug](QPoint pos, MouseTerminal::MouseAction action, int button,
                                          Qt::KeyboardModifiers mods) {
                          if (mouseDebug) {
-                             fprintf(stderr, "mouse: (%d,%d) action=%d button=%d mods=%d\n", pos.x(),
-                                     pos.y(), static_cast<int>(action), button,
+                             fprintf(stderr, "mouse: (%d,%d) action=%d button=%d mods=%d\n",
+                                     pos.x(), pos.y(), static_cast<int>(action), button,
                                      static_cast<int>(mods));
                          }
                          root.handleMouse(pos, action, button, mods);

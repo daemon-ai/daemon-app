@@ -72,7 +72,7 @@ public:
 
     bool appendSessionLog(const CachedLogRow& row);
     [[nodiscard]] QList<CachedLogRow> sessionLog(const QString& sessionId, quint64 afterSeq = 0,
-                                                int limit = 0) const;
+                                                 int limit = 0) const;
 
     bool setCursor(const QString& scope, const QString& cursor, qint64 updatedAtMs);
     [[nodiscard]] QString cursor(const QString& scope) const;

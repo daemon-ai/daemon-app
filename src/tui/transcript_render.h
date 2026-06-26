@@ -1,13 +1,12 @@
 #pragma once
 
-#include <Tui/ZColor.h>
-#include <Tui/ZCommon.h>
-
 #include <QHash>
 #include <QString>
 #include <QStringList>
 #include <QVariantMap>
 #include <QVector>
+#include <Tui/ZColor.h>
+#include <Tui/ZCommon.h>
 
 namespace be {
 class DocumentStore;
@@ -36,7 +35,7 @@ struct Control {
     Kind kind = Kind::Approve;
     QString callId;
     QString requestId;
-    QString questionId; // clarify controls only
+    QString questionId;   // clarify controls only
     int choiceIndex = -1; // Choice only
     bool multi = false;   // Choice: checkbox (multi-select) vs radio
     QString choiceLabel;  // Choice only (the choice's text)
@@ -94,8 +93,8 @@ public:
     // `draft` supplies the in-progress clarify answer (radios/checkboxes/field);
     // `activeControl` indexes the returned controls list to paint the focused
     // control with an active wash (-1 = none focused).
-    static LayoutResult build(const be::DocumentStore &doc, int width,
-                              const AnswerDraft &draft = {}, int activeControl = -1);
+    static LayoutResult build(const be::DocumentStore& doc, int width,
+                              const AnswerDraft& draft = {}, int activeControl = -1);
 };
 
 // Merge an in-progress AnswerDraft against a clarify tool's question list into
@@ -103,4 +102,4 @@ public:
 // ClarifyBlock.qml's collectAnswers: freeform text augments a multi-select list
 // and fills an unanswered single-select. Returns the map ready for
 // be::clarifyAnswerPatch.
-QVariantMap collectClarifyAnswers(const QVariantMap &toolMetadata, const AnswerDraft &draft);
+QVariantMap collectClarifyAnswers(const QVariantMap& toolMetadata, const AnswerDraft& draft);

@@ -1,12 +1,11 @@
 #pragma once
 
+#include <QRect>
 #include <Tui/ZLabel.h>
 #include <Tui/ZRoot.h>
 #include <Tui/ZTerminal.h>
 #include <Tui/ZWidget.h>
 #include <Tui/ZWindow.h>
-
-#include <QRect>
 
 namespace be {
 class DocumentStore;

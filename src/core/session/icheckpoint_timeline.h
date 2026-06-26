@@ -15,8 +15,7 @@ class ICheckpointTimeline : public QObject {
     // The session whose timeline is shown. Setting it swaps the live
     // checkpoints to that session's own timeline (per-session rewind),
     // emitting changed() so the bound panel refreshes.
-    Q_PROPERTY(QString sessionId READ sessionId WRITE setSessionId NOTIFY
-                   sessionIdChanged)
+    Q_PROPERTY(QString sessionId READ sessionId WRITE setSessionId NOTIFY sessionIdChanged)
 
 public:
     using QObject::QObject;

@@ -2,10 +2,9 @@
 
 #include "transcript_render.h" // Span
 
-#include <Tui/ZWidget.h>
-
 #include <QTimer>
 #include <QVector>
+#include <Tui/ZWidget.h>
 
 class TurnController;
 class ComposerSessionController;

@@ -12,8 +12,7 @@ class TestStatusModel : public QObject {
 private slots:
     // formatElapsed mirrors the QML: "0:00" for an unset start, m:ss under an
     // hour, and h:mm:ss past it, measured against the model's nowMs.
-    void formatElapsedMatchesQml()
-    {
+    void formatElapsedMatchesQml() {
         // Capture the baseline BEFORE constructing so the model's internal nowMs
         // (seeded at construction) is >= now. Feeding start = now - N then yields
         // an elapsed of N + epsilon, which floors to the intended whole second
@@ -29,8 +28,7 @@ private slots:
     }
 
     // abbrev mirrors the QML: k/M suffixes with a trailing ".0" stripped.
-    void abbrevMatchesQml()
-    {
+    void abbrevMatchesQml() {
         StatusBarModel model;
         QCOMPARE(model.abbrev(0), QStringLiteral("0"));
         QCOMPARE(model.abbrev(999), QStringLiteral("999"));
@@ -42,8 +40,7 @@ private slots:
     }
 
     // contextPercent rounds used/max to a whole percent.
-    void contextPercentRounds()
-    {
+    void contextPercentRounds() {
         StatusBarModel model;
         // Defaults: 12500 / 128000 ~= 9.77% -> 10.
         QCOMPARE(model.contextPercent(), 10);
@@ -55,8 +52,7 @@ private slots:
     }
 
     // contextBar renders a 10-cell filled/empty unicode meter with the percent.
-    void contextBarMatchesQml()
-    {
+    void contextBarMatchesQml() {
         StatusBarModel model;
         model.setContextUsed(50);
         model.setContextMax(100);
@@ -71,8 +67,7 @@ private slots:
     }
 
     // contextLabel abbreviates used/max (or "used tok" when max is unknown).
-    void contextLabelMatchesQml()
-    {
+    void contextLabelMatchesQml() {
         StatusBarModel model;
         model.setContextUsed(12500);
         model.setContextMax(128000);
@@ -82,8 +77,7 @@ private slots:
     }
 
     // Gateway tone maps the placeholder states to default/warning/danger.
-    void gatewayToneMapsStates()
-    {
+    void gatewayToneMapsStates() {
         StatusBarModel model;
         QCOMPARE(model.gatewayTone(), QStringLiteral("default"));
         model.setGatewayState(QStringLiteral("connecting"));
@@ -95,8 +89,7 @@ private slots:
     }
 
     // agentsDetail prefers the failed count, falls back to running, else empty.
-    void agentsDetailPrefersFailed()
-    {
+    void agentsDetailPrefersFailed() {
         StatusBarModel model;
         QVERIFY(model.agentsDetail().isEmpty());
         model.setAgentsRunning(3);
@@ -107,17 +100,16 @@ private slots:
 
     // rateLabel is empty until a rateLimit window is known, then "remaining/limit".
     // applyTurnEvents ingests the same absolute rateLimit shape the daemon emits.
-    void rateLabelFromTurnEvents()
-    {
+    void rateLabelFromTurnEvents() {
         StatusBarModel model;
         QVERIFY(model.rateLabel().isEmpty()); // no window yet
 
         QSignalSpy spy(&model, &StatusBarModel::rateChanged);
-        const QVariantList events { QVariantMap {
-            { QStringLiteral("type"), QStringLiteral("rateLimit") },
-            { QStringLiteral("remaining"), 74 },
-            { QStringLiteral("limit"), 80 },
-        } };
+        const QVariantList events{QVariantMap{
+            {QStringLiteral("type"), QStringLiteral("rateLimit")},
+            {QStringLiteral("remaining"), 74},
+            {QStringLiteral("limit"), 80},
+        }};
         model.applyTurnEvents(events);
         QCOMPARE(spy.count(), 1);
         QCOMPARE(model.rateRemaining(), 74);
@@ -127,8 +119,7 @@ private slots:
 
     // Gateway dropdown content starts empty/honest and is settable, emitting
     // gatewayInfoChanged when a daemon or demo provider supplies details.
-    void gatewayInfoDefaultsAndSettable()
-    {
+    void gatewayInfoDefaultsAndSettable() {
         StatusBarModel model;
         QCOMPARE(model.gatewayConnectionText(), QStringLiteral("No daemon connection"));
         QVERIFY(model.gatewayLog().isEmpty());
@@ -137,7 +128,7 @@ private slots:
         QSignalSpy spy(&model, &StatusBarModel::gatewayInfoChanged);
         model.setGatewayConnectionText(QStringLiteral("Reconnecting\u2026"));
         QCOMPARE(model.gatewayConnectionText(), QStringLiteral("Reconnecting\u2026"));
-        model.setGatewayLog({ QStringLiteral("gateway: down") });
+        model.setGatewayLog({QStringLiteral("gateway: down")});
         QCOMPARE(model.gatewayLog().size(), 1);
         QCOMPARE(spy.count(), 2);
     }

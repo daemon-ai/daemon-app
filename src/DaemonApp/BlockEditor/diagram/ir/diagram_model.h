@@ -16,12 +16,12 @@ enum class Direction { TB, BT, LR, RL };
 enum class NodeShape {
     Rect,
     RoundRect,
-    Stadium,     // ([text])
-    Subroutine,  // [[text]]
-    Cylinder,    // [(text)]
-    Circle,      // ((text))
-    Diamond,     // {text}
-    Hexagon,     // {{text}}
+    Stadium,    // ([text])
+    Subroutine, // [[text]]
+    Cylinder,   // [(text)]
+    Circle,     // ((text))
+    Diamond,    // {text}
+    Hexagon,    // {{text}}
 };
 
 enum class EdgeKind { Normal, Thick, Dotted };
@@ -48,13 +48,13 @@ struct DiagramNode {
     QString label;
     NodeShape shape = NodeShape::Rect;
     QString classRef;
-    QString parentCluster;   // innermost enclosing subgraph id, or empty
+    QString parentCluster; // innermost enclosing subgraph id, or empty
 
     // Filled by layout (diagram space).
     int rank = -1;
     int order = -1;
-    qreal x = 0.0;       // center
-    qreal y = 0.0;       // center
+    qreal x = 0.0; // center
+    qreal y = 0.0; // center
     qreal width = 0.0;
     qreal height = 0.0;
 };
@@ -80,28 +80,28 @@ struct DiagramEdge {
 struct DiagramCluster {
     QString id;
     QString title;
-    QString parentId;            // enclosing subgraph id, or empty
+    QString parentId; // enclosing subgraph id, or empty
     Direction dir = Direction::TB;
-    bool dirSet = false;         // true if the subgraph declared its own direction
-    QStringList memberIds;       // direct child node ids (not nested-cluster members)
+    bool dirSet = false;   // true if the subgraph declared its own direction
+    QStringList memberIds; // direct child node ids (not nested-cluster members)
 
     // Filled by layout (diagram space).
     QRectF bounds;
 };
 
 struct DiagramModel {
-    QString family;                  // "flowchart"
+    QString family; // "flowchart"
     Direction dir = Direction::TB;
     QVector<DiagramNode> nodes;
     QVector<DiagramEdge> edges;
     QVector<DiagramCluster> clusters;
-    QHash<QString, int> nodeIndex;                       // id -> index into nodes
-    QHash<QString, QHash<QString, QString>> classDefs;   // classDef name -> props
+    QHash<QString, int> nodeIndex;                     // id -> index into nodes
+    QHash<QString, QHash<QString, QString>> classDefs; // classDef name -> props
 
     bool valid = false;
     QString error;
 
-    int indexOf(const QString &id) const { return nodeIndex.value(id, -1); }
+    int indexOf(const QString& id) const { return nodeIndex.value(id, -1); }
 };
 
 } // namespace be::diagram

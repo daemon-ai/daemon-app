@@ -1,10 +1,8 @@
 #pragma once
 
-#include <Tui/ZTerminal.h>
-
 #include <QPoint>
-
 #include <QtCore/qnamespace.h>
+#include <Tui/ZTerminal.h>
 
 // Mouse support layer for the TUI.
 //

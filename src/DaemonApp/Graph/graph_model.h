@@ -2,12 +2,12 @@
 
 #include <QAbstractListModel>
 #include <QHash>
-#include <QPointF>
 #include <QList>
+#include <QPointF>
 #include <QString>
+#include <QtQml/qqmlregistration.h>
 #include <QVariantList>
 #include <QVariantMap>
-#include <QtQml/qqmlregistration.h>
 
 namespace daemongraph {
 
@@ -15,8 +15,8 @@ namespace daemongraph {
 // QML/C++ (no service/domain coupling - every surface, e.g. the memory graph or the routing
 // topology, feeds it its own nodes/edges), a force-directed (Fruchterman-Reingold) layout is
 // computed in C++ (normalized [0,1] so both front ends could agree on positions), and the nodes are
-// exposed as a flat list model (x/y/kind/label/degree/selected + the whole node map under `nodeData`
-// for kind-specific delegate fields) alongside edge/neighbour invokables.
+// exposed as a flat list model (x/y/kind/label/degree/selected + the whole node map under
+// `nodeData` for kind-specific delegate fields) alongside edge/neighbour invokables.
 class GraphModel : public QAbstractListModel {
     Q_OBJECT
     QML_ELEMENT
@@ -65,14 +65,14 @@ signals:
     void graphChanged();
 
 private:
-    void rebuild();   // re-index + degree + relayout + reset
-    void relayout();  // Fruchterman-Reingold over the current node/edge sets
+    void rebuild();  // re-index + degree + relayout + reset
+    void relayout(); // Fruchterman-Reingold over the current node/edge sets
 
     QList<QVariantMap> m_nodes;
     QList<QVariantMap> m_edges;
-    QHash<QString, int> m_index;     // node id -> row
-    QHash<QString, QPointF> m_pos;   // node id -> normalized position
-    QHash<QString, int> m_degree;    // node id -> degree
+    QHash<QString, int> m_index;   // node id -> row
+    QHash<QString, QPointF> m_pos; // node id -> normalized position
+    QHash<QString, int> m_degree;  // node id -> degree
     QString m_selectedId;
 };
 

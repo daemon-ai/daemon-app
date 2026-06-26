@@ -2,16 +2,15 @@
 
 #include "transcript_render.h"
 
-#include <Tui/ZWidget.h>
-
 #include <QString>
 #include <QVariantMap>
 #include <QVector>
+#include <Tui/ZWidget.h>
 
 namespace be {
 class DocumentStore;
 class TranscriptSearchController;
-}
+} // namespace be
 
 // The TUI transcript pane: a scrollable, custom-painted widget that renders a
 // be::DocumentStore via TranscriptLayout (the GUI's parse/view-model engine). It
@@ -25,14 +24,14 @@ class TranscriptView : public Tui::ZWidget {
     Q_OBJECT
 
 public:
-    explicit TranscriptView(Tui::ZWidget *parent = nullptr);
+    explicit TranscriptView(Tui::ZWidget* parent = nullptr);
 
-    void setDocument(const be::DocumentStore *doc);
+    void setDocument(const be::DocumentStore* doc);
 
     // Bind the active tab's in-transcript find engine so reload() can highlight the
     // query's occurrences (the active match's block gets a stronger wash). May be
     // null (no highlighting). The view does not own it.
-    void setSearch(const be::TranscriptSearchController *search);
+    void setSearch(const be::TranscriptSearchController* search);
 
     // Scroll so the first rendered row of document block `blockIndex` is visible
     // (anchor-style, mirroring ensureAnchorVisible). Unpins stick-to-bottom so the
@@ -59,22 +58,22 @@ signals:
     // The focused approval bar was decided (Enter on [Approve]/[Deny]/[Allow
     // permanently]). `decision` is "approved" / "denied"; `permanent` is the
     // "allow permanently" variant.
-    void approvalDecided(const QString &callId, const QString &decision, bool permanent);
+    void approvalDecided(const QString& callId, const QString& decision, bool permanent);
     // The focused clarify form was submitted (Enter on [Submit] / a freeform
     // field). `answers` is the canonical collected map (be::clarifyAnswerPatch
     // input).
-    void clarifySubmitted(const QString &callId, const QString &requestId,
-                          const QVariantMap &answers);
+    void clarifySubmitted(const QString& callId, const QString& requestId,
+                          const QVariantMap& answers);
     // Rewind picker actions on the selected prior user-message anchor. Restore
     // re-runs it with its own text; edit asks the host to seed the composer with
     // `text` (after truncating). The host interrupts a live turn and truncates.
-    void rewindRestoreRequested(const QString &messageId);
-    void rewindEditRequested(const QString &messageId, const QString &text);
+    void rewindRestoreRequested(const QString& messageId);
+    void rewindEditRequested(const QString& messageId, const QString& text);
 
 protected:
-    void paintEvent(Tui::ZPaintEvent *event) override;
-    void keyEvent(Tui::ZKeyEvent *event) override;
-    void resizeEvent(Tui::ZResizeEvent *event) override;
+    void paintEvent(Tui::ZPaintEvent* event) override;
+    void keyEvent(Tui::ZKeyEvent* event) override;
+    void resizeEvent(Tui::ZResizeEvent* event) override;
 
 private:
     int visibleRows() const;
@@ -94,7 +93,7 @@ private:
     void ensureControlVisible();
     void activateControl(); // Enter on the focused control
     void toggleChoice();    // Space on a focused choice
-    QVariantMap toolMetadataForCallId(const QString &callId) const;
+    QVariantMap toolMetadataForCallId(const QString& callId) const;
 
     // Rewind picker helpers (a selection mode over the user-message anchors,
     // distinct from the interactive-control focus). enterRewind selects the last
@@ -106,8 +105,8 @@ private:
     void moveRewind(int delta);
     void ensureAnchorVisible();
 
-    const be::DocumentStore *m_doc = nullptr;
-    const be::TranscriptSearchController *m_search = nullptr;
+    const be::DocumentStore* m_doc = nullptr;
+    const be::TranscriptSearchController* m_search = nullptr;
     QVector<RenderLine> m_lines;
     QVector<Control> m_controls;
     // Block <-> line maps from the last build (see LayoutResult), used to scroll a

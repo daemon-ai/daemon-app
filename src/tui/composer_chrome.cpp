@@ -1,28 +1,24 @@
 #include "composer_chrome.h"
 
-#include "tui_palette.h"
-
 #include "composer_session_controller.h"
+#include "tui_palette.h"
 #include "turn_controller.h"
 
+#include <QRect>
+#include <QSize>
 #include <Tui/ZColor.h>
 #include <Tui/ZEvent.h>
 #include <Tui/ZPainter.h>
 
-#include <QRect>
-#include <QSize>
-
 namespace {
 
-Span mkSpan(const QString& text, const Tui::ZColor& fg)
-{
-    return Span { text, fg, tpal::bg(), {} };
+Span mkSpan(const QString& text, const Tui::ZColor& fg) {
+    return Span{text, fg, tpal::bg(), {}};
 }
 
 } // namespace
 
-ComposerChrome::ComposerChrome(Tui::ZWidget* parent) : Tui::ZWidget(parent)
-{
+ComposerChrome::ComposerChrome(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
     setMaximumSize(Tui::tuiMaxSize, 1);
     setSizePolicyV(Tui::SizePolicy::Fixed);
     setSizePolicyH(Tui::SizePolicy::Expanding);
@@ -33,8 +29,7 @@ ComposerChrome::ComposerChrome(Tui::ZWidget* parent) : Tui::ZWidget(parent)
     });
 }
 
-void ComposerChrome::setTurn(TurnController* turn)
-{
+void ComposerChrome::setTurn(TurnController* turn) {
     m_turn = turn;
     if (m_turn != nullptr) {
         const auto repaint = [this] { update(); };
@@ -50,27 +45,23 @@ void ComposerChrome::setTurn(TurnController* turn)
     update();
 }
 
-void ComposerChrome::setSession(ComposerSessionController* session)
-{
+void ComposerChrome::setSession(ComposerSessionController* session) {
     m_session = session;
     if (m_session != nullptr) {
         connect(m_session, &ComposerSessionController::currentModelChanged, this,
                 [this] { update(); });
-        connect(m_session, &ComposerSessionController::modesChanged, this,
-                [this] { update(); });
+        connect(m_session, &ComposerSessionController::modesChanged, this, [this] { update(); });
         connect(m_session, &ComposerSessionController::reverseSearchChanged, this,
                 [this] { update(); });
     }
     update();
 }
 
-QSize ComposerChrome::sizeHint() const
-{
-    return { 40, 1 };
+QSize ComposerChrome::sizeHint() const {
+    return {40, 1};
 }
 
-void ComposerChrome::syncSpinner()
-{
+void ComposerChrome::syncSpinner() {
     if (m_turn != nullptr && m_turn->active()) {
         if (!m_spinner.isActive()) {
             m_spinner.start();
@@ -80,8 +71,7 @@ void ComposerChrome::syncSpinner()
     }
 }
 
-QVector<Span> ComposerChrome::buildSpans() const
-{
+QVector<Span> ComposerChrome::buildSpans() const {
     QVector<Span> spans;
 
     // Reverse incremental history search owns the chrome line while active, mirroring
@@ -89,13 +79,11 @@ QVector<Span> ComposerChrome::buildSpans() const
     if (m_session != nullptr && m_session->reverseSearching()) {
         const bool found = m_session->reverseSearchFound();
         const Tui::ZColor label = found ? tpal::accent() : tpal::warn();
-        spans << mkSpan(found ? tr("(reverse-i-search)`")
-                              : tr("(failed reverse-i-search)`"),
+        spans << mkSpan(found ? tr("(reverse-i-search)`") : tr("(failed reverse-i-search)`"),
                         label);
         spans << mkSpan(m_session->reverseSearchQuery(), tpal::fg());
         spans << mkSpan(QStringLiteral("': "), label);
-        spans << mkSpan(tr("Enter accept  \u00b7  Ctrl+R next  \u00b7  Esc cancel"),
-                        tpal::faint());
+        spans << mkSpan(tr("Enter accept  \u00b7  Ctrl+R next  \u00b7  Esc cancel"), tpal::faint());
         return spans;
     }
 
@@ -105,8 +93,7 @@ QVector<Span> ComposerChrome::buildSpans() const
 
     const QString state = m_turn->turnState();
     if (state == QStringLiteral("error")) {
-        const QString msg = m_turn->errorText().isEmpty() ? tr("turn failed")
-                                                           : m_turn->errorText();
+        const QString msg = m_turn->errorText().isEmpty() ? tr("turn failed") : m_turn->errorText();
         spans << mkSpan(tpal::warnGlyph() + QStringLiteral(" ") + msg, tpal::statusError());
         return spans;
     }
@@ -115,11 +102,9 @@ QVector<Span> ComposerChrome::buildSpans() const
         const int secs = m_turn->elapsedMs() / 1000;
         const QString spin = tpal::spinnerFrame(m_spinnerTick);
         if (state == QStringLiteral("stalled")) {
-            spans << mkSpan(spin + tr(" Still thinking\u2026 %1s").arg(secs),
-                            tpal::warn());
+            spans << mkSpan(spin + tr(" Still thinking\u2026 %1s").arg(secs), tpal::warn());
         } else {
-            spans << mkSpan(spin + tr(" Thinking\u2026 %1s").arg(secs),
-                            tpal::accent());
+            spans << mkSpan(spin + tr(" Thinking\u2026 %1s").arg(secs), tpal::accent());
         }
         spans << mkSpan(QStringLiteral("   "), tpal::muted());
         spans << mkSpan(tpal::stopGlyph() + tr(" Esc stop"), tpal::muted());
@@ -154,8 +139,7 @@ QVector<Span> ComposerChrome::buildSpans() const
     return spans;
 }
 
-void ComposerChrome::paintEvent(Tui::ZPaintEvent* event)
-{
+void ComposerChrome::paintEvent(Tui::ZPaintEvent* event) {
     Tui::ZPainter* p = event->painter();
     p->clear(tpal::fg(), tpal::bg());
 

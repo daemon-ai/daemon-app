@@ -1,7 +1,7 @@
-#include <QtQuickTest/quicktest.h>
+#include <QtCore/qstring.h>
 #include <QtQml/qqmlengine.h>
 #include <QtQml/qqmlextensionplugin.h>
-#include <QtCore/qstring.h>
+#include <QtQuickTest/quicktest.h>
 
 // The composer and its dependencies are STATIC QML modules, so each plugin must
 // be referenced explicitly or the linker drops it and the imports fail. Composer
@@ -18,8 +18,7 @@ class ComposerTestSetup : public QObject {
     Q_OBJECT
 
 public slots:
-    void qmlEngineAvailable(QQmlEngine* engine)
-    {
+    void qmlEngineAvailable(QQmlEngine* engine) {
 #ifdef TEST_QML_IMPORT_PATH
         const QString paths = QStringLiteral(TEST_QML_IMPORT_PATH);
         const auto parts = paths.split(QLatin1Char(':'), Qt::SkipEmptyParts);

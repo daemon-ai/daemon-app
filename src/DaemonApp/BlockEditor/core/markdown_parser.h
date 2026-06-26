@@ -9,7 +9,7 @@
 namespace MD {
 class Document;
 class Item;
-}
+} // namespace MD
 
 namespace be {
 
@@ -50,7 +50,7 @@ struct ImageBlockInfo {
     QString url;
     QString alt;
     QString title;
-    QString link; // click-through page URL for [![alt](img)](page), else empty
+    QString link;  // click-through page URL for [![alt](img)](page), else empty
     QString width; // raw Pandoc dimension ("200", "200px", "50%", "2cm"), else empty
     QString height;
 };
@@ -59,16 +59,16 @@ struct ImageBlockInfo {
 // linked standalone image (`[![alt](img)](page)`), each optionally followed by a
 // Pandoc attribute block (`{ width=.. height=.. }`). Returns true and fills `out`
 // (when non-null) on a match; returns false for anything else.
-bool parseImageBlock(const QString &content, ImageBlockInfo *out);
+bool parseImageBlock(const QString& content, ImageBlockInfo* out);
 
 // Parse a Pandoc image dimension ("200", "200px", "50%", "2cm", ...). Returns the
 // value in logical pixels for absolute units; for "%" returns the percent value
 // and sets *percent=true (when non-null). Returns 0 for empty/invalid input.
-qreal imageDimensionValue(const QString &raw, bool *percent = nullptr);
+qreal imageDimensionValue(const QString& raw, bool* percent = nullptr);
 
 // Extract a `key=value` attribute (value optionally quoted) from a Pandoc-style
 // attribute string such as "{ width=50% height=200 }". Returns empty if absent.
-QString imageAttribute(const QString &attrs, const QString &key);
+QString imageAttribute(const QString& attrs, const QString& key);
 
 struct ParsedMarkdown {
     QSharedPointer<MD::Document> document;
@@ -81,13 +81,13 @@ struct DirtyWindow {
     bool structural = false;
 };
 
-class MarkdownParser
-{
+class MarkdownParser {
 public:
-    ParsedMarkdown parse(const QString &markdown) const;
+    ParsedMarkdown parse(const QString& markdown) const;
 
-    static BlockType blockTypeForItem(const MD::Item *item);
-    static DirtyWindow dirtyWindowForEdit(qsizetype blockIndex, const QString &inserted, const QString &removed, qsizetype blockCount);
+    static BlockType blockTypeForItem(const MD::Item* item);
+    static DirtyWindow dirtyWindowForEdit(qsizetype blockIndex, const QString& inserted,
+                                          const QString& removed, qsizetype blockCount);
 };
 
 } // namespace be

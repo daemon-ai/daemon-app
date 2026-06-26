@@ -4,14 +4,12 @@ namespace editor {
 
 const QString LineBuffer::s_empty;
 
-LineBuffer::LineBuffer()
-{
-    m_blocks.append(QStringList{ QString() });
+LineBuffer::LineBuffer() {
+    m_blocks.append(QStringList{QString()});
     m_count = 1;
 }
 
-void LineBuffer::locate(int line, int& block, int& off) const
-{
+void LineBuffer::locate(int line, int& block, int& off) const {
     int acc = 0;
     for (int b = 0; b < m_blocks.size(); ++b) {
         const int n = m_blocks[b].size();
@@ -26,8 +24,7 @@ void LineBuffer::locate(int line, int& block, int& off) const
     off = m_blocks.isEmpty() ? 0 : m_blocks.last().size();
 }
 
-const QString& LineBuffer::at(int line) const
-{
+const QString& LineBuffer::at(int line) const {
     if (line < 0 || line >= m_count)
         return s_empty;
     int b = 0;
@@ -36,8 +33,7 @@ const QString& LineBuffer::at(int line) const
     return m_blocks[b].at(off);
 }
 
-void LineBuffer::setAt(int line, const QString& text)
-{
+void LineBuffer::setAt(int line, const QString& text) {
     if (line < 0 || line >= m_count)
         return;
     int b = 0;
@@ -46,8 +42,7 @@ void LineBuffer::setAt(int line, const QString& text)
     m_blocks[b][off] = text;
 }
 
-void LineBuffer::replace(int line, int removeCount, const QStringList& lines)
-{
+void LineBuffer::replace(int line, int removeCount, const QStringList& lines) {
     if (line < 0)
         line = 0;
     if (line > m_count)
@@ -88,13 +83,12 @@ void LineBuffer::replace(int line, int removeCount, const QStringList& lines)
 
     if (m_count == 0) {
         m_blocks.clear();
-        m_blocks.append(QStringList{ QString() });
+        m_blocks.append(QStringList{QString()});
         m_count = 1;
     }
 }
 
-void LineBuffer::rebalanceFrom(int block)
-{
+void LineBuffer::rebalanceFrom(int block) {
     if (block < 0 || block >= m_blocks.size())
         return;
     // Split oversized blocks.
@@ -113,18 +107,16 @@ void LineBuffer::rebalanceFrom(int block)
     }
 }
 
-void LineBuffer::clear()
-{
+void LineBuffer::clear() {
     m_blocks.clear();
-    m_blocks.append(QStringList{ QString() });
+    m_blocks.append(QStringList{QString()});
     m_count = 1;
 }
 
-void LineBuffer::setAll(const QStringList& lines)
-{
+void LineBuffer::setAll(const QStringList& lines) {
     m_blocks.clear();
     if (lines.isEmpty()) {
-        m_blocks.append(QStringList{ QString() });
+        m_blocks.append(QStringList{QString()});
         m_count = 1;
         return;
     }
@@ -133,8 +125,7 @@ void LineBuffer::setAll(const QStringList& lines)
         m_blocks.append(lines.mid(i, kTarget));
 }
 
-QStringList LineBuffer::toList() const
-{
+QStringList LineBuffer::toList() const {
     QStringList out;
     out.reserve(m_count);
     for (const QStringList& b : m_blocks)

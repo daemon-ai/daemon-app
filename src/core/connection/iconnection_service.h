@@ -52,15 +52,13 @@ signals:
     void testResult(bool ok, const QString& message);
 
 protected:
-    void setState(const QString& s)
-    {
+    void setState(const QString& s) {
         if (m_state != s) {
             m_state = s;
             emit stateChanged();
         }
     }
-    void setTesting(bool t)
-    {
+    void setTesting(bool t) {
         if (m_testing != t) {
             m_testing = t;
             emit testingChanged();

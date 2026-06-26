@@ -6,16 +6,15 @@
 
 namespace memoryui {
 
-MemoryStatsModel::MemoryStatsModel(QObject* parent)
-    : QObject(parent)
-{
+MemoryStatsModel::MemoryStatsModel(QObject* parent) : QObject(parent) {
     memory::registerMemoryMetatypes();
 }
 
-QObject* MemoryStatsModel::service() const { return m_service; }
+QObject* MemoryStatsModel::service() const {
+    return m_service;
+}
 
-void MemoryStatsModel::setService(QObject* service)
-{
+void MemoryStatsModel::setService(QObject* service) {
     auto* svc = qobject_cast<memory::IMemoryService*>(service);
     if (svc == m_service)
         return;
@@ -32,14 +31,12 @@ void MemoryStatsModel::setService(QObject* service)
     }
 }
 
-void MemoryStatsModel::refresh()
-{
+void MemoryStatsModel::refresh() {
     if (m_service)
         m_service->requestStats();
 }
 
-QVariantList MemoryStatsModel::toList(const QList<memory::Bucket>& buckets)
-{
+QVariantList MemoryStatsModel::toList(const QList<memory::Bucket>& buckets) {
     int maxCount = 1;
     for (const memory::Bucket& b : buckets)
         maxCount = std::max(maxCount, b.count);
@@ -47,20 +44,21 @@ QVariantList MemoryStatsModel::toList(const QList<memory::Bucket>& buckets)
     out.reserve(buckets.size());
     for (const memory::Bucket& b : buckets) {
         out.append(QVariantMap{
-            { QStringLiteral("key"), b.key },
-            { QStringLiteral("count"), b.count },
-            { QStringLiteral("fraction"), static_cast<double>(b.count) / maxCount },
+            {QStringLiteral("key"), b.key},
+            {QStringLiteral("count"), b.count},
+            {QStringLiteral("fraction"), static_cast<double>(b.count) / maxCount},
         });
     }
     return out;
 }
 
-void MemoryStatsModel::onStatsReady(const memory::MemoryStats& stats)
-{
+void MemoryStatsModel::onStatsReady(const memory::MemoryStats& stats) {
     m_stats = stats;
     emit changed();
 }
 
-void MemoryStatsModel::onScopeChanged() { refresh(); }
+void MemoryStatsModel::onScopeChanged() {
+    refresh();
+}
 
 } // namespace memoryui

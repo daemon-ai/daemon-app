@@ -1,7 +1,6 @@
-#include <QtTest>
-
 #include "tui_palette.h"
 
+#include <QtTest>
 #include <Tui/ZColor.h>
 
 using theme::ThemeName;
@@ -9,8 +8,7 @@ using theme::ThemeName;
 namespace {
 
 // Compare a ZColor to an expected "#rrggbb" hex (the TUI renders truecolor RGB).
-void compareHex(const Tui::ZColor& c, const char* hex)
-{
+void compareHex(const Tui::ZColor& c, const char* hex) {
     const QColor expected = QColor::fromString(QLatin1String(hex));
     QCOMPARE(c.red(), expected.red());
     QCOMPARE(c.green(), expected.green());
@@ -33,14 +31,12 @@ private slots:
     void daemonPaletteBuildsForEveryTheme();
 };
 
-void TuiPaletteTests::cleanup()
-{
+void TuiPaletteTests::cleanup() {
     // Leave the module in its default state for the next test / the app.
     tpal::setActiveTheme(ThemeName::Dark);
 }
 
-void TuiPaletteTests::resolvesActiveThemeTokens()
-{
+void TuiPaletteTests::resolvesActiveThemeTokens() {
     tpal::setActiveTheme(ThemeName::Light);
     QCOMPARE(tpal::activeTheme(), ThemeName::Light);
     compareHex(tpal::fg(), "#37352e");
@@ -56,8 +52,7 @@ void TuiPaletteTests::resolvesActiveThemeTokens()
     compareHex(tpal::accent(), "#9fb3e6");
 }
 
-void TuiPaletteTests::switchingThemeChangesColors()
-{
+void TuiPaletteTests::switchingThemeChangesColors() {
     tpal::setActiveTheme(ThemeName::Light);
     const Tui::ZColor lightBg = tpal::bg();
     tpal::setActiveTheme(ThemeName::Dark);
@@ -70,13 +65,11 @@ void TuiPaletteTests::switchingThemeChangesColors()
     QVERIFY(lightBg != sepiaBg);
 }
 
-void TuiPaletteTests::daemonPaletteBuildsForEveryTheme()
-{
+void TuiPaletteTests::daemonPaletteBuildsForEveryTheme() {
     // Building the stock-widget palette for every theme must not crash (the quit
     // dialog and lists inherit it). We can't assert role colors without a widget
     // context, so this is a construction smoke test.
-    for (ThemeName t : { ThemeName::Light, ThemeName::Dark, ThemeName::Sepia,
-                         ThemeName::Midnight }) {
+    for (ThemeName t : {ThemeName::Light, ThemeName::Dark, ThemeName::Sepia, ThemeName::Midnight}) {
         Tui::ZPalette p = daemonPalette(t);
         Q_UNUSED(p);
     }

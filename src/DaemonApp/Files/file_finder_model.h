@@ -82,14 +82,14 @@ private:
     fs::IFsService* m_service = nullptr;
     QString m_query;
     bool m_indexing = false;
-    QList<File> m_index;        // all known files
-    QList<int> m_results;       // indices into m_index, ranked
+    QList<File> m_index;                        // all known files
+    QList<int> m_results;                       // indices into m_index, ranked
     QQueue<QPair<QString, QString>> m_dirQueue; // (rootId, dir) to walk
-    QSet<QString> m_pendingDirs; // request keys this model owns
-    QSet<QString> m_seenKeys;    // indexed file keys for this rebuild
+    QSet<QString> m_pendingDirs;                // request keys this model owns
+    QSet<QString> m_seenKeys;                   // indexed file keys for this rebuild
     int m_inFlight = 0;
     int m_filesSeen = 0;
-    QStringList m_recents;      // "rootId\u001fpath", most recent first
+    QStringList m_recents; // "rootId\u001fpath", most recent first
 };
 
 // Project-wide content search results (server-side search via IFsService). A
@@ -125,7 +125,8 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     // Run a project search under `rootId` (opts: regex, caseSensitive, maxResults).
-    Q_INVOKABLE void search(const QString& rootId, const QString& query, const QVariantMap& opts = {});
+    Q_INVOKABLE void search(const QString& rootId, const QString& query,
+                            const QVariantMap& opts = {});
 
 signals:
     void serviceChanged();

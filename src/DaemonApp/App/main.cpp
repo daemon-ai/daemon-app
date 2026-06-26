@@ -1,5 +1,4 @@
 #include "application.h"
-
 #include "i18n/localization.h"
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
@@ -11,6 +10,7 @@ using AppBase = QGuiApplication;
 using AppBase = QApplication;
 #endif
 
+#include <cstdio>
 #include <QByteArray>
 #include <QDir>
 #include <QEventLoop>
@@ -26,10 +26,8 @@ using AppBase = QApplication;
 #include <QString>
 #include <QStringList>
 #include <QTimer>
-#include <QVariant>
 #include <QtQml/qqmlextensionplugin.h>
-
-#include <cstdio>
+#include <QVariant>
 
 namespace {
 
@@ -39,8 +37,7 @@ namespace {
 //
 // The bundled .ttf files are validated by tests/unit (tst_fonts) so we don't
 // need a runtime probe here.
-void loadBundledFonts()
-{
+void loadBundledFonts() {
     const QString prefix = QStringLiteral(":/qt/qml/DaemonApp/Theme/fonts/");
     const QStringList bundled = {
         QStringLiteral("InterVariable.ttf"),
@@ -79,8 +76,7 @@ void loadBundledFonts()
 // DaemonApp.App/Main module is baked into this executable.
 // Run it offscreen (QT_QPA_PLATFORM=offscreen, QT_QUICK_BACKEND=software).
 // Returns true if shots were requested (and the app should exit).
-bool maybeRunOffscreenRenderHarness(QQmlApplicationEngine& engine)
-{
+bool maybeRunOffscreenRenderHarness(QQmlApplicationEngine& engine) {
     const QByteArray outDir = qgetenv("DAEMON_APP_RENDER_SHOTS");
     if (outDir.isEmpty()) {
         return false;
@@ -132,8 +128,8 @@ bool maybeRunOffscreenRenderHarness(QQmlApplicationEngine& engine)
     }
     const QString prefix = withMenu ? QStringLiteral("menu-") : QStringLiteral("theme-");
 
-    const QStringList themeNames = { QStringLiteral("Light"), QStringLiteral("Dark"),
-                                     QStringLiteral("Sepia"), QStringLiteral("Midnight") };
+    const QStringList themeNames = {QStringLiteral("Light"), QStringLiteral("Dark"),
+                                    QStringLiteral("Sepia"), QStringLiteral("Midnight")};
 
     for (const QString& name : themeNames) {
         const QString file = prefix + name.toLower() + QStringLiteral(".png");
@@ -152,8 +148,7 @@ bool maybeRunOffscreenRenderHarness(QQmlApplicationEngine& engine)
         if (shot.isNull() || !shot.save(path)) {
             qWarning("render-shots: failed to save %s", qPrintable(path));
         } else {
-            qInfo("render-shots: wrote %s (%dx%d)", qPrintable(path), shot.width(),
-                  shot.height());
+            qInfo("render-shots: wrote %s (%dx%d)", qPrintable(path), shot.width(), shot.height());
         }
     }
 
@@ -188,8 +183,7 @@ Q_IMPORT_QML_PLUGIN(DaemonApp_PagesPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_MemoryPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_StatusBarPlugin)
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     AppBase app(argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("daemon-app"));
     QCoreApplication::setOrganizationName(QStringLiteral("daemon-app"));
@@ -207,11 +201,10 @@ int main(int argc, char* argv[])
     // The settings picker can switch it live later (Application wires the
     // languageChanged signal to a QQmlEngine retranslate).
     {
-        const QString language = QSettings(QStringLiteral("daemon-app"),
-                                           QStringLiteral("daemon-app"))
-                                     .value(QStringLiteral("ui/language"),
-                                            QStringLiteral("system"))
-                                     .toString();
+        const QString language =
+            QSettings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"))
+                .value(QStringLiteral("ui/language"), QStringLiteral("system"))
+                .toString();
         app.setLayoutDirection(i18n::applyLocale(language));
     }
 

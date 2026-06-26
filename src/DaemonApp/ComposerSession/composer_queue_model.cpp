@@ -1,17 +1,12 @@
 #include "composer_queue_model.h"
 
-ComposerQueueModel::ComposerQueueModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
-}
+ComposerQueueModel::ComposerQueueModel(QObject* parent) : QAbstractListModel(parent) {}
 
-int ComposerQueueModel::rowCount(const QModelIndex& parent) const
-{
+int ComposerQueueModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(m_entries.size());
 }
 
-QVariant ComposerQueueModel::data(const QModelIndex& index, int role) const
-{
+QVariant ComposerQueueModel::data(const QModelIndex& index, int role) const {
     if (index.row() < 0 || index.row() >= m_entries.size()) {
         return {};
     }
@@ -26,46 +21,41 @@ QVariant ComposerQueueModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> ComposerQueueModel::roleNames() const
-{
+QHash<int, QByteArray> ComposerQueueModel::roleNames() const {
     return {
-        { TextRole, "text" },
-        { RefsRole, "refs" },
+        {TextRole, "text"},
+        {RefsRole, "refs"},
     };
 }
 
-void ComposerQueueModel::append(const QString& text, const QString& refs)
-{
+void ComposerQueueModel::append(const QString& text, const QString& refs) {
     const int row = static_cast<int>(m_entries.size());
     beginInsertRows({}, row, row);
-    m_entries.push_back({ text, refs });
+    m_entries.push_back({text, refs});
     endInsertRows();
     emit countChanged();
 }
 
-void ComposerQueueModel::setEntry(int index, const QString& text, const QString& refs)
-{
+void ComposerQueueModel::setEntry(int index, const QString& text, const QString& refs) {
     if (index < 0 || index >= m_entries.size()) {
         return;
     }
-    m_entries[index] = { text, refs };
+    m_entries[index] = {text, refs};
     const QModelIndex idx = this->index(index);
-    emit dataChanged(idx, idx, { TextRole, RefsRole });
+    emit dataChanged(idx, idx, {TextRole, RefsRole});
 }
 
-void ComposerQueueModel::insertAt(int index, const QString& text, const QString& refs)
-{
+void ComposerQueueModel::insertAt(int index, const QString& text, const QString& refs) {
     if (index < 0 || index > m_entries.size()) {
         return;
     }
     beginInsertRows({}, index, index);
-    m_entries.insert(index, { text, refs });
+    m_entries.insert(index, {text, refs});
     endInsertRows();
     emit countChanged();
 }
 
-void ComposerQueueModel::removeAt(int index)
-{
+void ComposerQueueModel::removeAt(int index) {
     if (index < 0 || index >= m_entries.size()) {
         return;
     }
@@ -75,8 +65,7 @@ void ComposerQueueModel::removeAt(int index)
     emit countChanged();
 }
 
-void ComposerQueueModel::clear()
-{
+void ComposerQueueModel::clear() {
     if (m_entries.isEmpty()) {
         return;
     }
@@ -86,18 +75,15 @@ void ComposerQueueModel::clear()
     emit countChanged();
 }
 
-QString ComposerQueueModel::textAt(int index) const
-{
+QString ComposerQueueModel::textAt(int index) const {
     return (index >= 0 && index < m_entries.size()) ? m_entries.at(index).text : QString();
 }
 
-QString ComposerQueueModel::refsAt(int index) const
-{
+QString ComposerQueueModel::refsAt(int index) const {
     return (index >= 0 && index < m_entries.size()) ? m_entries.at(index).refs : QString();
 }
 
-void ComposerQueueModel::setEntries(const QList<Entry>& entries)
-{
+void ComposerQueueModel::setEntries(const QList<Entry>& entries) {
     beginResetModel();
     m_entries = entries;
     endResetModel();

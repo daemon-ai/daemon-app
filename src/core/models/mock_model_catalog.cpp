@@ -9,10 +9,8 @@ namespace {
 
 const QString kCacheFile = QStringLiteral("models.json");
 
-
 QVariantMap mk(const QString& id, const QString& name, const QString& provider,
-               const QString& params, double gib, const QString& quant, const QString& blurb)
-{
+               const QString& params, double gib, const QString& quant, const QString& blurb) {
     QVariantMap m;
     m[QStringLiteral("id")] = id;
     m[QStringLiteral("name")] = name;
@@ -29,12 +27,9 @@ QVariantMap mk(const QString& id, const QString& name, const QString& provider,
 } // namespace
 
 MockModelCatalog::MockModelCatalog(QObject* parent)
-    : IModelCatalog(parent)
-    , m_discover(new uimodels::VariantListModel(this))
-    , m_downloads(new uimodels::VariantListModel(this))
-    , m_installed(new uimodels::VariantListModel(this))
-    , m_timer(new QTimer(this))
-{
+    : IModelCatalog(parent), m_discover(new uimodels::VariantListModel(this)),
+      m_downloads(new uimodels::VariantListModel(this)),
+      m_installed(new uimodels::VariantListModel(this)), m_timer(new QTimer(this)) {
     m_catalog = {
         mk(QStringLiteral("llama-3.1-8b-instruct"), QStringLiteral("Llama 3.1 8B Instruct"),
            QStringLiteral("Meta"), QStringLiteral("8B"), 4.7, QStringLiteral("Q4_K_M"),
@@ -87,20 +82,24 @@ MockModelCatalog::MockModelCatalog(QObject* parent)
     search(QString(), QString()); // populate Discover with everything
 }
 
-void MockModelCatalog::save() const
-{
+void MockModelCatalog::save() const {
     QJsonObject obj;
     obj[QStringLiteral("installed")] = appcache::rowsToJson(m_installed->rows());
     obj[QStringLiteral("currentId")] = m_currentId;
     appcache::saveObject(kCacheFile, obj);
 }
 
-QObject* MockModelCatalog::discover() const { return m_discover; }
-QObject* MockModelCatalog::downloads() const { return m_downloads; }
-QObject* MockModelCatalog::installed() const { return m_installed; }
+QObject* MockModelCatalog::discover() const {
+    return m_discover;
+}
+QObject* MockModelCatalog::downloads() const {
+    return m_downloads;
+}
+QObject* MockModelCatalog::installed() const {
+    return m_installed;
+}
 
-QStringList MockModelCatalog::installedIds() const
-{
+QStringList MockModelCatalog::installedIds() const {
     QStringList out;
     for (const QVariantMap& row : m_installed->rows()) {
         out << row.value(QStringLiteral("id")).toString();
@@ -108,8 +107,7 @@ QStringList MockModelCatalog::installedIds() const
     return out;
 }
 
-QVariantList MockModelCatalog::providers() const
-{
+QVariantList MockModelCatalog::providers() const {
     const auto mkp = [](const QString& id, const QString& name, const QString& kind,
                         bool configured) {
         QVariantMap m;
@@ -120,8 +118,8 @@ QVariantList MockModelCatalog::providers() const
         return QVariant(m);
     };
     return {
-        mkp(QStringLiteral("huggingface"), QStringLiteral("Hugging Face"),
-            QStringLiteral("local"), true),
+        mkp(QStringLiteral("huggingface"), QStringLiteral("Hugging Face"), QStringLiteral("local"),
+            true),
         mkp(QStringLiteral("ollama"), QStringLiteral("Ollama"), QStringLiteral("local"), true),
         mkp(QStringLiteral("openai"), QStringLiteral("OpenAI"), QStringLiteral("remote"), false),
         mkp(QStringLiteral("anthropic"), QStringLiteral("Anthropic"), QStringLiteral("remote"),
@@ -131,8 +129,7 @@ QVariantList MockModelCatalog::providers() const
     };
 }
 
-QVariantMap MockModelCatalog::catalogEntry(const QString& modelId) const
-{
+QVariantMap MockModelCatalog::catalogEntry(const QString& modelId) const {
     for (const QVariantMap& m : m_catalog) {
         if (m.value(QStringLiteral("id")).toString() == modelId) {
             return m;
@@ -141,16 +138,14 @@ QVariantMap MockModelCatalog::catalogEntry(const QString& modelId) const
     return {};
 }
 
-void MockModelCatalog::search(const QString& query, const QString& sizeFilter)
-{
+void MockModelCatalog::search(const QString& query, const QString& sizeFilter) {
     const QString q = query.trimmed().toLower();
     QList<QVariantMap> out;
     for (QVariantMap m : m_catalog) {
-        const QString hay =
-            (m.value(QStringLiteral("name")).toString() + QLatin1Char(' ')
-             + m.value(QStringLiteral("provider")).toString() + QLatin1Char(' ')
-             + m.value(QStringLiteral("id")).toString())
-                .toLower();
+        const QString hay = (m.value(QStringLiteral("name")).toString() + QLatin1Char(' ') +
+                             m.value(QStringLiteral("provider")).toString() + QLatin1Char(' ') +
+                             m.value(QStringLiteral("id")).toString())
+                                .toLower();
         if (!q.isEmpty() && !hay.contains(q)) {
             continue;
         }
@@ -167,8 +162,7 @@ void MockModelCatalog::search(const QString& query, const QString& sizeFilter)
     m_discover->setRows(out);
 }
 
-void MockModelCatalog::download(const QString& modelId)
-{
+void MockModelCatalog::download(const QString& modelId) {
     if (m_installed->indexOfId(modelId) >= 0) {
         return; // already installed
     }
@@ -190,8 +184,7 @@ void MockModelCatalog::download(const QString& modelId)
     }
 }
 
-void MockModelCatalog::pauseDownload(const QString& jobId)
-{
+void MockModelCatalog::pauseDownload(const QString& jobId) {
     if (!m_jobModel.contains(jobId)) {
         return;
     }
@@ -204,8 +197,7 @@ void MockModelCatalog::pauseDownload(const QString& jobId)
     }
 }
 
-void MockModelCatalog::resumeDownload(const QString& jobId)
-{
+void MockModelCatalog::resumeDownload(const QString& jobId) {
     if (!m_jobModel.contains(jobId)) {
         return;
     }
@@ -221,16 +213,14 @@ void MockModelCatalog::resumeDownload(const QString& jobId)
     }
 }
 
-void MockModelCatalog::cancelDownload(const QString& jobId)
-{
+void MockModelCatalog::cancelDownload(const QString& jobId) {
     m_jobProgress.remove(jobId);
     m_jobPaused.remove(jobId);
     m_jobModel.remove(jobId);
     m_downloads->removeById(jobId);
 }
 
-void MockModelCatalog::tick()
-{
+void MockModelCatalog::tick() {
     QStringList finished;
     for (auto it = m_jobProgress.begin(); it != m_jobProgress.end(); ++it) {
         const QString& jobId = it.key();
@@ -273,8 +263,7 @@ void MockModelCatalog::tick()
     }
 }
 
-void MockModelCatalog::activate(const QString& modelId)
-{
+void MockModelCatalog::activate(const QString& modelId) {
     if (m_installed->indexOfId(modelId) < 0 || m_currentId == modelId) {
         return;
     }
@@ -293,8 +282,7 @@ void MockModelCatalog::activate(const QString& modelId)
     emit currentChanged();
 }
 
-void MockModelCatalog::remove(const QString& modelId)
-{
+void MockModelCatalog::remove(const QString& modelId) {
     m_installed->removeById(modelId);
     if (m_currentId == modelId) {
         m_currentId.clear();

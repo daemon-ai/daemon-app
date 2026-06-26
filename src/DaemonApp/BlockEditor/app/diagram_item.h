@@ -12,12 +12,12 @@ namespace be::app {
 // QSGTextNodes. Geometry is rebuilt only when the snapshot revision changes; pan,
 // zoom, and hover/selection only touch the camera transform / highlight node, so
 // interaction never re-uploads diagram geometry.
-class DiagramItem : public QQuickItem
-{
+class DiagramItem : public QQuickItem {
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(be::app::DiagramController *controller READ controller WRITE setController NOTIFY controllerChanged)
+    Q_PROPERTY(be::app::DiagramController* controller READ controller WRITE setController NOTIFY
+                   controllerChanged)
     Q_PROPERTY(qreal zoom READ zoom WRITE setZoom NOTIFY zoomChanged)
     Q_PROPERTY(qreal panX READ panX WRITE setPanX NOTIFY panChanged)
     Q_PROPERTY(qreal panY READ panY WRITE setPanY NOTIFY panChanged)
@@ -26,10 +26,10 @@ class DiagramItem : public QQuickItem
     Q_PROPERTY(qreal contentScale READ contentScale NOTIFY layoutChanged)
 
 public:
-    explicit DiagramItem(QQuickItem *parent = nullptr);
+    explicit DiagramItem(QQuickItem* parent = nullptr);
 
-    DiagramController *controller() const { return m_controller; }
-    void setController(DiagramController *controller);
+    DiagramController* controller() const { return m_controller; }
+    void setController(DiagramController* controller);
 
     qreal zoom() const { return m_zoom; }
     void setZoom(qreal zoom);
@@ -40,17 +40,17 @@ public:
 
     QString hoverId() const { return m_hoverId; }
     QString selectedId() const { return m_selectedId; }
-    void setSelectedId(const QString &id);
+    void setSelectedId(const QString& id);
 
     qreal contentScale() const;
 
     // Map an item-space point into diagram space (accounts for fit/zoom/pan).
-    Q_INVOKABLE QPointF toDiagram(const QPointF &itemPoint) const;
+    Q_INVOKABLE QPointF toDiagram(const QPointF& itemPoint) const;
     // Hit-test an item-space point; returns the node/edge id or "" .
-    Q_INVOKABLE QString hitTest(const QPointF &itemPoint) const;
+    Q_INVOKABLE QString hitTest(const QPointF& itemPoint) const;
     // Convenience for QML wheel handlers: zoom around an item-space focus point.
-    Q_INVOKABLE void zoomAt(qreal factor, const QPointF &itemPoint);
-    Q_INVOKABLE void setHoverAt(const QPointF &itemPoint);
+    Q_INVOKABLE void zoomAt(qreal factor, const QPointF& itemPoint);
+    Q_INVOKABLE void setHoverAt(const QPointF& itemPoint);
     Q_INVOKABLE void resetView();
 
 signals:
@@ -62,8 +62,8 @@ signals:
     void layoutChanged();
 
 protected:
-    QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
-    void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+    QSGNode* updatePaintNode(QSGNode* oldNode, UpdatePaintNodeData*) override;
+    void geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry) override;
 
 private:
     qreal fitScale() const;

@@ -1,7 +1,6 @@
 #include "accounts/mock_accounts_service.h"
-#include "uimodels/variant_list_model.h"
-
 #include "cache_test_support.h"
+#include "uimodels/variant_list_model.h"
 
 #include <QSignalSpy>
 #include <QtTest/QtTest>
@@ -19,15 +18,13 @@ class TestAccountsService : public QObject {
 private slots:
     void init() { resetMockCache(); }
 
-    void seededAndProviders()
-    {
+    void seededAndProviders() {
         MockAccountsService a;
         QCOMPARE(asModel(a.accounts())->count(), 2);
         QVERIFY(!a.availableProviders().isEmpty());
     }
 
-    void addApiKeyMasksAndStores()
-    {
+    void addApiKeyMasksAndStores() {
         MockAccountsService a;
         const int before = asModel(a.accounts())->count();
         a.addApiKey(QStringLiteral("openrouter"), QStringLiteral("My key"),
@@ -39,8 +36,7 @@ private slots:
         QVERIFY(!row.value(QStringLiteral("detail")).toString().contains(QStringLiteral("secret")));
     }
 
-    void oauthRoundTrip()
-    {
+    void oauthRoundTrip() {
         MockAccountsService a;
         QSignalSpy busy(&a, &accounts::IAccountsService::busyChanged);
         QSignalSpy done(&a, &accounts::IAccountsService::oauthCompleted);
@@ -58,15 +54,13 @@ private slots:
         QVERIFY(busy.count() >= 2); // on + off
     }
 
-    void removeDrops()
-    {
+    void removeDrops() {
         MockAccountsService a;
         a.remove(QStringLiteral("acc-1"));
         QVERIFY(asModel(a.accounts())->indexOfId(QStringLiteral("acc-1")) < 0);
     }
 
-    void renameUpdatesLabel()
-    {
+    void renameUpdatesLabel() {
         MockAccountsService a;
         a.rename(QStringLiteral("acc-2"), QStringLiteral("Work OpenAI"));
         const int row = asModel(a.accounts())->indexOfId(QStringLiteral("acc-2"));
@@ -75,8 +69,7 @@ private slots:
                  QStringLiteral("Work OpenAI"));
     }
 
-    void reauthApiKeyIsInstant()
-    {
+    void reauthApiKeyIsInstant() {
         MockAccountsService a;
         // acc-2 is an API-key account; reauth resolves synchronously to connected.
         a.reauth(QStringLiteral("acc-2"));
@@ -86,8 +79,7 @@ private slots:
                  QStringLiteral("connected"));
     }
 
-    void reauthOAuthRoundTrips()
-    {
+    void reauthOAuthRoundTrips() {
         MockAccountsService a;
         QSignalSpy done(&a, &accounts::IAccountsService::oauthCompleted);
         // acc-1 is an OAuth account; reauth flips to pending then back to connected.
@@ -104,8 +96,7 @@ private slots:
 
     // Tier 3: an added account survives across construction via the last-known
     // on-disk cache, and a removed seeded account stays removed.
-    void accountsPersistAcrossRestart()
-    {
+    void accountsPersistAcrossRestart() {
         {
             MockAccountsService a;
             a.addApiKey(QStringLiteral("openrouter"), QStringLiteral("Persisted key"),

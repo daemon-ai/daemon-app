@@ -1,10 +1,9 @@
 #include "transcript_render.h"
 
-#include "tui_palette.h"
-
 #include "core/agent_block.h"
 #include "core/block_record.h"
 #include "core/document_store.h"
+#include "tui_palette.h"
 
 #include <QMetaType>
 #include <QPair>
@@ -12,7 +11,6 @@
 #include <QStringList>
 #include <QVariantList>
 #include <QVariantMap>
-
 #include <utility>
 
 namespace {
@@ -28,13 +26,11 @@ struct Style {
     ZTextAttributes attr = {};
 };
 
-Span mkSpan(const QString &text, const Style &s)
-{
-    return Span { text, s.fg, s.bg, s.attr };
+Span mkSpan(const QString& text, const Style& s) {
+    return Span{text, s.fg, s.bg, s.attr};
 }
 
-bool sameStyle(const Span &a, const Style &b)
-{
+bool sameStyle(const Span& a, const Style& b) {
     return a.fg == b.fg && a.bg == b.bg && a.attr == b.attr;
 }
 
@@ -42,12 +38,11 @@ bool sameStyle(const Span &a, const Style &b)
 
 // Greedy word-wrap. Internal whitespace is collapsed; blank source lines are
 // preserved as empty rows. Words longer than `width` are hard-broken.
-QStringList wordWrap(const QString &text, int width)
-{
+QStringList wordWrap(const QString& text, int width) {
     const int w = qMax(1, width);
     QStringList out;
     const QStringList paras = text.split(QLatin1Char('\n'));
-    for (const QString &para : paras) {
+    for (const QString& para : paras) {
         static const QRegularExpression ws(QStringLiteral("\\s+"));
         const QStringList words = para.split(ws, Qt::SkipEmptyParts);
         if (words.isEmpty()) {
@@ -55,7 +50,7 @@ QStringList wordWrap(const QString &text, int width)
             continue;
         }
         QString line;
-        for (const QString &wd : words) {
+        for (const QString& wd : words) {
             QString word = wd;
             while (word.size() > w) {
                 if (!line.isEmpty()) {
@@ -83,8 +78,7 @@ QStringList wordWrap(const QString &text, int width)
 
 // Parse light inline emphasis (**bold**, *italic*/_italic_, `code`) over a base
 // style into styled runs. Operates on one already-wrapped line.
-RenderLine inlineRuns(const QString &line, const Style &base)
-{
+RenderLine inlineRuns(const QString& line, const Style& base) {
     RenderLine runs;
     QString buf;
     const auto flush = [&] {
@@ -145,56 +139,52 @@ RenderLine inlineRuns(const QString &line, const Style &base)
 // --- low-level emitters -----------------------------------------------------
 
 // Word-wrapped prose with inline emphasis.
-void emitProse(QVector<RenderLine> &dst, const QString &text, int width, const Style &base)
-{
+void emitProse(QVector<RenderLine>& dst, const QString& text, int width, const Style& base) {
     const QStringList wrapped = wordWrap(text, width);
-    for (const QString &wl : wrapped) {
+    for (const QString& wl : wrapped) {
         dst.push_back(inlineRuns(wl, base));
     }
 }
 
 // One mono (no inline parsing) source line, char-wrapped, uniform style.
-void emitMonoLine(QVector<RenderLine> &dst, const QString &text, int width, const Style &s)
-{
+void emitMonoLine(QVector<RenderLine>& dst, const QString& text, int width, const Style& s) {
     const int w = qMax(1, width);
     if (text.isEmpty()) {
-        dst.push_back(RenderLine { mkSpan(QString(), s) });
+        dst.push_back(RenderLine{mkSpan(QString(), s)});
         return;
     }
     for (int i = 0; i < text.size(); i += w) {
-        dst.push_back(RenderLine { mkSpan(text.mid(i, w), s) });
+        dst.push_back(RenderLine{mkSpan(text.mid(i, w), s)});
     }
 }
 
 // Multi-line mono text (splits on newlines, then char-wraps each line).
-void emitMono(QVector<RenderLine> &dst, const QString &text, int width, const Style &s)
-{
+void emitMono(QVector<RenderLine>& dst, const QString& text, int width, const Style& s) {
     const QStringList lines = text.split(QLatin1Char('\n'));
-    for (const QString &l : lines) {
+    for (const QString& l : lines) {
         emitMonoLine(dst, l, width, s);
     }
 }
 
 // ANSI/SGR terminal text -> styled, char-wrapped rows (newlines preserved).
-void emitAnsi(QVector<RenderLine> &dst, const QString &text, int width)
-{
+void emitAnsi(QVector<RenderLine>& dst, const QString& text, int width) {
     const int w = qMax(1, width);
     const QVariantList spans = be::ansiToSpans(text);
     RenderLine cur;
     int col = 0;
     const auto flush = [&] {
         dst.push_back(cur);
-        cur = RenderLine {};
+        cur = RenderLine{};
         col = 0;
     };
-    for (const QVariant &sv : spans) {
+    for (const QVariant& sv : spans) {
         const QVariantMap m = sv.toMap();
         Style st;
         const int fg = m.value(QStringLiteral("fg")).toInt();
         const int bg = m.value(QStringLiteral("bg")).toInt();
         st.fg = tpal::ansi(fg);
         st.bg = tpal::ansiBg(bg);
-        ZTextAttributes a {};
+        ZTextAttributes a{};
         if (m.value(QStringLiteral("bold")).toBool()) {
             a |= ZTextAttribute::Bold;
         }
@@ -234,10 +224,9 @@ void emitAnsi(QVector<RenderLine> &dst, const QString &text, int width)
 }
 
 // Unified diff -> red/green/hunk styled rows on a code background.
-void emitDiff(QVector<RenderLine> &dst, const QString &diff, int width)
-{
+void emitDiff(QVector<RenderLine>& dst, const QString& diff, int width) {
     const QVariantList lines = be::parseUnifiedDiff(diff);
-    for (const QVariant &v : lines) {
+    for (const QVariant& v : lines) {
         const QVariantMap m = v.toMap();
         const QString kind = m.value(QStringLiteral("kind")).toString();
         Style s;
@@ -260,33 +249,29 @@ void emitDiff(QVector<RenderLine> &dst, const QString &diff, int width)
 // --- card framing -----------------------------------------------------------
 
 // Build a card's left rule prefix (a tone-colored bar + a space).
-RenderLine barPrefix(const ZColor &tone)
-{
+RenderLine barPrefix(const ZColor& tone) {
     Style bar;
     bar.fg = tone;
     Style sp;
-    return RenderLine { mkSpan(tpal::barGlyph(), bar), mkSpan(QStringLiteral(" "), sp) };
+    return RenderLine{mkSpan(tpal::barGlyph(), bar), mkSpan(QStringLiteral(" "), sp)};
 }
 
 // Append `inner` rows to `dst`, each prefixed with the card bar.
-void emitCard(QVector<RenderLine> &dst, const ZColor &tone, const QVector<RenderLine> &inner)
-{
-    for (const RenderLine &row : inner) {
+void emitCard(QVector<RenderLine>& dst, const ZColor& tone, const QVector<RenderLine>& inner) {
+    for (const RenderLine& row : inner) {
         RenderLine line = barPrefix(tone);
         line += row;
         dst.push_back(line);
     }
 }
 
-void addBlank(QVector<RenderLine> &dst)
-{
-    dst.push_back(RenderLine {});
+void addBlank(QVector<RenderLine>& dst) {
+    dst.push_back(RenderLine{});
 }
 
 // --- block helpers ----------------------------------------------------------
 
-QString stripLeading(const QString &text, const QRegularExpression &re)
-{
+QString stripLeading(const QString& text, const QRegularExpression& re) {
     QString out = text;
     const QRegularExpressionMatch m = re.match(out);
     if (m.hasMatch()) {
@@ -295,16 +280,14 @@ QString stripLeading(const QString &text, const QRegularExpression &re)
     return out;
 }
 
-QString headingText(const be::BlockRecord &b)
-{
+QString headingText(const be::BlockRecord& b) {
     static const QRegularExpression re(QStringLiteral("^\\s*#{1,6}\\s+"));
     return stripLeading(b.markdown(), re).trimmed();
 }
 
 // --- message header ---------------------------------------------------------
 
-void emitMessageHeader(QVector<RenderLine> &dst, be::MessageRole role, bool first, int /*width*/)
-{
+void emitMessageHeader(QVector<RenderLine>& dst, be::MessageRole role, bool first, int /*width*/) {
     if (!first) {
         addBlank(dst); // turn gap
     }
@@ -328,20 +311,19 @@ void emitMessageHeader(QVector<RenderLine> &dst, be::MessageRole role, bool firs
     txt.fg = tone;
     txt.attr |= ZTextAttribute::Bold;
     Style sp;
-    dst.push_back(RenderLine {
+    dst.push_back(RenderLine{
         mkSpan(tpal::barGlyph(), bar),
         mkSpan(QStringLiteral(" "), sp),
         mkSpan(label, txt),
     });
 }
 
-void emitSystemNotice(QVector<RenderLine> &dst, const QString &text, int width)
-{
+void emitSystemNotice(QVector<RenderLine>& dst, const QString& text, int width) {
     Style s;
     s.fg = tpal::muted();
     s.attr |= ZTextAttribute::Italic;
     const QStringList wrapped = wordWrap(text, qMax(1, width - 4));
-    for (const QString &wl : wrapped) {
+    for (const QString& wl : wrapped) {
         const int pad = qMax(0, static_cast<int>(width - wl.size()) / 2);
         Style sp;
         RenderLine line;
@@ -355,20 +337,20 @@ void emitSystemNotice(QVector<RenderLine> &dst, const QString &text, int width)
 
 // --- agent block delegates --------------------------------------------------
 
-void emitReasoning(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
-{
+void emitReasoning(QVector<RenderLine>& dst, const be::BlockRecord& b, int width) {
     const QVariantMap view = be::buildReasoningView(b.metadata);
     const int inner = qMax(1, width - 2);
-    const bool running = view.value(QStringLiteral("status")).toString() == QStringLiteral("running");
+    const bool running =
+        view.value(QStringLiteral("status")).toString() == QStringLiteral("running");
     const QString duration = view.value(QStringLiteral("durationLabel")).toString();
 
     QVector<RenderLine> body;
     Style head;
     head.fg = tpal::faint();
     head.attr |= ZTextAttribute::Bold;
-    QString headText = tpal::reasoningGlyph() + QLatin1Char(' ')
-        + (running ? QObject::tr("Reasoning\u2026") : QObject::tr("Reasoning"));
-    RenderLine headLine { mkSpan(headText, head) };
+    QString headText = tpal::reasoningGlyph() + QLatin1Char(' ') +
+                       (running ? QObject::tr("Reasoning\u2026") : QObject::tr("Reasoning"));
+    RenderLine headLine{mkSpan(headText, head)};
     if (!duration.isEmpty()) {
         Style dim;
         dim.fg = tpal::muted();
@@ -385,8 +367,7 @@ void emitReasoning(QVector<RenderLine> &dst, const be::BlockRecord &b, int width
     addBlank(dst);
 }
 
-void emitToolBody(QVector<RenderLine> &body, const QVariantMap &view, int inner)
-{
+void emitToolBody(QVector<RenderLine>& body, const QVariantMap& view, int inner) {
     const QString detail = view.value(QStringLiteral("detailKind")).toString();
     if (detail == QStringLiteral("ansi-stream") || detail == QStringLiteral("pty")) {
         const QString out = view.value(QStringLiteral("stdout")).toString();
@@ -405,7 +386,7 @@ void emitToolBody(QVector<RenderLine> &body, const QVariantMap &view, int inner)
     }
     if (detail == QStringLiteral("search-results")) {
         const QVariantList hits = view.value(QStringLiteral("hits")).toList();
-        for (const QVariant &hv : hits) {
+        for (const QVariant& hv : hits) {
             const QVariantMap hit = hv.toMap();
             Style title;
             title.fg = tpal::accent();
@@ -450,34 +431,31 @@ void emitToolBody(QVector<RenderLine> &body, const QVariantMap &view, int inner)
 // Normalize a clarify tool's metadata into the list of question maps the form
 // renders (mirrors ClarifyBlock.qml's `questions` normalization, including the
 // legacy single-question fallback).
-QVariantList clarifyQuestions(const QVariantMap &metadata)
-{
+QVariantList clarifyQuestions(const QVariantMap& metadata) {
     const QVariantList qs = metadata.value(QStringLiteral("questions")).toList();
     if (!qs.isEmpty()) {
         return qs;
     }
     QVariantMap one;
     one.insert(QStringLiteral("id"), QStringLiteral("q"));
-    one.insert(QStringLiteral("prompt"),
-               metadata.value(QStringLiteral("question"),
-                              QObject::tr("The agent needs your input."))
-                   .toString());
+    one.insert(
+        QStringLiteral("prompt"),
+        metadata.value(QStringLiteral("question"), QObject::tr("The agent needs your input."))
+            .toString());
     one.insert(QStringLiteral("choices"), metadata.value(QStringLiteral("choices")).toList());
     one.insert(QStringLiteral("multiSelect"), false);
     one.insert(QStringLiteral("allowFreeform"), true);
-    return QVariantList { one };
+    return QVariantList{one};
 }
 
-QString clarifyQuestionId(const QVariantMap &q, int index)
-{
+QString clarifyQuestionId(const QVariantMap& q, int index) {
     const QVariant id = q.value(QStringLiteral("id"));
     return id.isValid() ? id.toString() : (QStringLiteral("q") + QString::number(index));
 }
 
 // A choice/button style: an active control gets an accent wash; otherwise a
 // muted surface chip in `toneFg`.
-Style controlStyle(bool active, const ZColor &toneFg)
-{
+Style controlStyle(bool active, const ZColor& toneFg) {
     Style s;
     if (active) {
         s.fg = tpal::bg();
@@ -490,9 +468,8 @@ Style controlStyle(bool active, const ZColor &toneFg)
     return s;
 }
 
-void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be::BlockRecord &b,
-                  int width, const AnswerDraft &draft, int activeControl, int &controlSeq)
-{
+void emitToolCall(QVector<RenderLine>& dst, QVector<Control>& controls, const be::BlockRecord& b,
+                  int width, const AnswerDraft& draft, int activeControl, int& controlSeq) {
     const QVariantMap view = be::buildToolView(b.metadata);
     const int inner = qMax(1, width - 2);
     const QString status = view.value(QStringLiteral("status")).toString();
@@ -528,11 +505,11 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
     ttl.attr |= ZTextAttribute::Bold;
     Style dim;
     dim.fg = tpal::muted();
-    RenderLine header {
+    RenderLine header{
         mkSpan(tpal::statusGlyph(status), st),
-        mkSpan(QStringLiteral(" "), Style {}),
+        mkSpan(QStringLiteral(" "), Style{}),
         mkSpan(tpal::toneGlyph(tone), tn),
-        mkSpan(QStringLiteral(" "), Style {}),
+        mkSpan(QStringLiteral(" "), Style{}),
         mkSpan(title, ttl),
     };
     if (!subtitle.isEmpty()) {
@@ -552,7 +529,7 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
     const auto addControl = [&](int bodyRow, Control c) {
         c.callId = callId;
         c.requestId = requestId;
-        pending.push_back({ bodyRow, c });
+        pending.push_back({bodyRow, c});
     };
 
     if (awaitingApproval) {
@@ -569,7 +546,7 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
         Style sp;
         RenderLine row;
         const int rowIdx = static_cast<int>(body.size());
-        const auto button = [&](const QString &label, Control::Kind kind, const ZColor &toneFg) {
+        const auto button = [&](const QString& label, Control::Kind kind, const ZColor& toneFg) {
             const int gi = controlSeq++;
             row.push_back(mkSpan(QStringLiteral(" "), sp));
             row.push_back(mkSpan(QStringLiteral(" ") + label + QStringLiteral(" "),
@@ -602,7 +579,7 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
                 Style hint;
                 hint.fg = tpal::muted();
                 hint.attr |= ZTextAttribute::Italic;
-                body.push_back(RenderLine { mkSpan(QObject::tr("  (select all that apply)"), hint) });
+                body.push_back(RenderLine{mkSpan(QObject::tr("  (select all that apply)"), hint)});
             }
 
             const QStringList sel = draft.selected.value(qid);
@@ -614,7 +591,7 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
                 const int gi = controlSeq++;
                 const Style s = controlStyle(gi == activeControl, on ? tpal::accent() : tpal::fg());
                 const int rowIdx = static_cast<int>(body.size());
-                body.push_back(RenderLine { mkSpan(QStringLiteral("  ") + box + label, s) });
+                body.push_back(RenderLine{mkSpan(QStringLiteral("  ") + box + label, s)});
                 Control c;
                 c.kind = Control::Kind::Choice;
                 c.questionId = qid;
@@ -634,11 +611,12 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
                     Style ph;
                     ph.fg = tpal::muted();
                     ph.attr |= ZTextAttribute::Italic;
-                    const QString placeholder = choices.isEmpty() ? QObject::tr("Type a reply\u2026")
-                                                                  : QObject::tr("Or type a reply\u2026");
+                    const QString placeholder = choices.isEmpty()
+                                                    ? QObject::tr("Type a reply\u2026")
+                                                    : QObject::tr("Or type a reply\u2026");
                     const int rowIdx = static_cast<int>(body.size());
-                    body.push_back(RenderLine { mkSpan(QStringLiteral("  \u203a "), s),
-                                                mkSpan(placeholder, ph) });
+                    body.push_back(RenderLine{mkSpan(QStringLiteral("  \u203a "), s),
+                                              mkSpan(placeholder, ph)});
                     Control c;
                     c.kind = Control::Kind::Freeform;
                     c.questionId = qid;
@@ -646,7 +624,7 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
                 } else {
                     text = typed + (active ? QStringLiteral("\u2588") : QString());
                     const int rowIdx = static_cast<int>(body.size());
-                    body.push_back(RenderLine { mkSpan(QStringLiteral("  \u203a ") + text, s) });
+                    body.push_back(RenderLine{mkSpan(QStringLiteral("  \u203a ") + text, s)});
                     Control c;
                     c.kind = Control::Kind::Freeform;
                     c.questionId = qid;
@@ -659,9 +637,9 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
         const int gi = controlSeq++;
         Style sp;
         const int rowIdx = static_cast<int>(body.size());
-        RenderLine row { mkSpan(QStringLiteral("  "), sp),
-                         mkSpan(QStringLiteral(" ") + QObject::tr("Submit") + QStringLiteral(" "),
-                                controlStyle(gi == activeControl, tpal::statusOk())) };
+        RenderLine row{mkSpan(QStringLiteral("  "), sp),
+                       mkSpan(QStringLiteral(" ") + QObject::tr("Submit") + QStringLiteral(" "),
+                              controlStyle(gi == activeControl, tpal::statusOk()))};
         body.push_back(row);
         Control c;
         c.kind = Control::Kind::Submit;
@@ -678,8 +656,8 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
                 continue;
             }
             const QString shown = val.typeId() == QMetaType::QVariantList
-                ? val.toStringList().join(QStringLiteral(", "))
-                : val.toString();
+                                      ? val.toStringList().join(QStringLiteral(", "))
+                                      : val.toString();
             if (shown.isEmpty()) {
                 continue;
             }
@@ -690,9 +668,10 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
             Style val2;
             val2.fg = tpal::fg();
             val2.attr |= ZTextAttribute::Bold;
-            body.push_back(RenderLine {
+            body.push_back(RenderLine{
                 mkSpan(QStringLiteral("\u2713 "), ok),
-                mkSpan(q.value(QStringLiteral("prompt")).toString() + QStringLiteral(": "), promptStyle),
+                mkSpan(q.value(QStringLiteral("prompt")).toString() + QStringLiteral(": "),
+                       promptStyle),
                 mkSpan(shown, val2),
             });
         }
@@ -700,7 +679,7 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
 
     const int dstStart = static_cast<int>(dst.size());
     emitCard(dst, barColor, body);
-    for (const auto &pc : pending) {
+    for (const auto& pc : pending) {
         Control c = pc.second;
         c.line = dstStart + pc.first;
         controls.push_back(c);
@@ -708,8 +687,7 @@ void emitToolCall(QVector<RenderLine> &dst, QVector<Control> &controls, const be
     addBlank(dst);
 }
 
-void emitContent(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
-{
+void emitContent(QVector<RenderLine>& dst, const be::BlockRecord& b, int width) {
     const QVariantMap view = be::buildContentView(b.metadata);
     const int inner = qMax(1, width - 2);
     const QString kind = view.value(QStringLiteral("kind")).toString();
@@ -727,8 +705,7 @@ void emitContent(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
     addBlank(dst);
 }
 
-void emitCodeFence(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
-{
+void emitCodeFence(QVector<RenderLine>& dst, const be::BlockRecord& b, int width) {
     const int inner = qMax(1, width - 2);
     const QString lang = b.metadata.value(QStringLiteral("fenceLanguage")).toString();
     const QString code = be::fencedBodyOf(b.markdown());
@@ -737,9 +714,9 @@ void emitCodeFence(QVector<RenderLine> &dst, const be::BlockRecord &b, int width
     Style label;
     label.fg = tpal::muted();
     label.bg = tpal::codeBg();
-    body.push_back(RenderLine {
-        mkSpan(QStringLiteral("\u2039") + (lang.isEmpty() ? QObject::tr("code") : lang)
-                   + QStringLiteral("\u203a"),
+    body.push_back(RenderLine{
+        mkSpan(QStringLiteral("\u2039") + (lang.isEmpty() ? QObject::tr("code") : lang) +
+                   QStringLiteral("\u203a"),
                label),
     });
     Style mono;
@@ -750,8 +727,7 @@ void emitCodeFence(QVector<RenderLine> &dst, const be::BlockRecord &b, int width
     addBlank(dst);
 }
 
-void emitList(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
-{
+void emitList(QVector<RenderLine>& dst, const be::BlockRecord& b, int width) {
     static const QRegularExpression bulletRe(QStringLiteral("^(\\s*)([-*+])\\s+"));
     static const QRegularExpression orderedRe(QStringLiteral("^(\\s*)(\\d+[.)])\\s+"));
     static const QRegularExpression taskRe(QStringLiteral("^(\\s*)[-*+]\\s+\\[([ xX])\\]\\s+"));
@@ -764,7 +740,8 @@ void emitList(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
     if (b.type == be::BlockType::TaskListItem) {
         const QRegularExpressionMatch m = taskRe.match(text);
         if (m.hasMatch()) {
-            const bool done = m.captured(1).trimmed().compare(QStringLiteral("x"), Qt::CaseInsensitive) == 0;
+            const bool done =
+                m.captured(1).trimmed().compare(QStringLiteral("x"), Qt::CaseInsensitive) == 0;
             marker = done ? QStringLiteral("\u2713") : QStringLiteral("\u25cb"); // ✓ / ○
             markerStyle.fg = done ? tpal::statusOk() : tpal::muted();
             text.remove(0, m.capturedLength());
@@ -804,8 +781,7 @@ void emitList(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
     }
 }
 
-void emitQuote(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
-{
+void emitQuote(QVector<RenderLine>& dst, const be::BlockRecord& b, int width) {
     static const QRegularExpression quoteRe(QStringLiteral("^\\s*>\\s?"));
     const QString text = stripLeading(b.markdown(), quoteRe);
     const int inner = qMax(1, width - 2);
@@ -817,11 +793,10 @@ void emitQuote(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
     emitCard(dst, tpal::muted(), wrapped);
 }
 
-void emitTable(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
-{
+void emitTable(QVector<RenderLine>& dst, const be::BlockRecord& b, int width) {
     const QStringList lines = b.markdown().split(QLatin1Char('\n'), Qt::SkipEmptyParts);
     static const QRegularExpression sepRe(QStringLiteral("^\\s*\\|?[\\s:\\-|]+\\|?\\s*$"));
-    for (const QString &l : lines) {
+    for (const QString& l : lines) {
         Style s;
         s.fg = sepRe.match(l).hasMatch() ? tpal::muted() : tpal::fg();
         emitMonoLine(dst, l, width, s);
@@ -829,8 +804,7 @@ void emitTable(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
     addBlank(dst);
 }
 
-void emitParagraph(QVector<RenderLine> &dst, const be::BlockRecord &b, int width)
-{
+void emitParagraph(QVector<RenderLine>& dst, const be::BlockRecord& b, int width) {
     if (b.role == be::MessageRole::System) {
         emitSystemNotice(dst, b.markdown().trimmed(), width);
         return;
@@ -842,8 +816,7 @@ void emitParagraph(QVector<RenderLine> &dst, const be::BlockRecord &b, int width
 
 } // namespace
 
-QVariantMap collectClarifyAnswers(const QVariantMap &toolMetadata, const AnswerDraft &draft)
-{
+QVariantMap collectClarifyAnswers(const QVariantMap& toolMetadata, const AnswerDraft& draft) {
     const QVariantList questions = clarifyQuestions(toolMetadata);
     QVariantMap out;
     for (int qi = 0; qi < questions.size(); ++qi) {
@@ -878,21 +851,20 @@ QVariantMap collectClarifyAnswers(const QVariantMap &toolMetadata, const AnswerD
     return out;
 }
 
-LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
-                                     const AnswerDraft &draft, int activeControl)
-{
+LayoutResult TranscriptLayout::build(const be::DocumentStore& doc, int width,
+                                     const AnswerDraft& draft, int activeControl) {
     LayoutResult result;
-    QVector<RenderLine> &out = result.lines;
-    QVector<Control> &controls = result.controls;
-    QVector<Anchor> &anchors = result.anchors;
+    QVector<RenderLine>& out = result.lines;
+    QVector<Control>& controls = result.controls;
+    QVector<Anchor>& anchors = result.anchors;
     int controlSeq = 0;
     const int W = qMax(20, width);
 
     // The concatenated text of every (non-tombstoned) block tagged with messageId,
     // used to seed an anchor for restore / edit-composer prefill.
-    const auto messageText = [&](const QString &id) {
+    const auto messageText = [&](const QString& id) {
         QStringList parts;
-        for (const be::BlockRecord &mb : doc.blocks()) {
+        for (const be::BlockRecord& mb : doc.blocks()) {
             if (!mb.tombstoned && mb.messageId == id) {
                 parts << mb.markdown();
             }
@@ -905,7 +877,7 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
     be::BlockType prevType = be::BlockType::Unknown;
     bool first = true;
 
-    const QVector<be::BlockRecord> &blocks = doc.blocks();
+    const QVector<be::BlockRecord>& blocks = doc.blocks();
     result.blockFirstLine.fill(-1, blocks.size());
     // Tag every emitted row with its source block as we go (cheap parallel append).
     const auto tagLines = [&](int blockIdx) {
@@ -914,7 +886,7 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
         }
     };
     for (int bi = 0; bi < blocks.size(); ++bi) {
-        const be::BlockRecord &b = blocks.at(bi);
+        const be::BlockRecord& b = blocks.at(bi);
         if (b.tombstoned) {
             continue;
         }
@@ -926,11 +898,11 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
             // A user message header is a rewind anchor: record its banner row,
             // routing id, and own text for restore / edit prefill.
             if (b.role == be::MessageRole::User) {
-                anchors.push_back(Anchor { static_cast<int>(out.size()) - 1, b.messageId,
-                                           messageText(b.messageId) });
+                anchors.push_back(Anchor{static_cast<int>(out.size()) - 1, b.messageId,
+                                         messageText(b.messageId)});
             }
-        } else if (!msgChanged && b.type == be::BlockType::Paragraph
-                   && prevType == be::BlockType::Paragraph) {
+        } else if (!msgChanged && b.type == be::BlockType::Paragraph &&
+                   prevType == be::BlockType::Paragraph) {
             // Consecutive paragraphs in one message render with a blank row between
             // them (mirrors the GUI's paragraph margins), so a multiline composer
             // message keeps the blank lines the user typed (markdown collapses each
@@ -980,7 +952,7 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore &doc, int width,
         case be::BlockType::HorizontalRule: {
             Style s;
             s.fg = tpal::muted();
-            out.push_back(RenderLine { mkSpan(QString(W, QChar(0x2500)), s) });
+            out.push_back(RenderLine{mkSpan(QString(W, QChar(0x2500)), s)});
             break;
         }
         case be::BlockType::Image: {

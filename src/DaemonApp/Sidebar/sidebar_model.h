@@ -1,7 +1,7 @@
 #pragma once
 
-#include "domain/unit_node.h"
 #include "domain/sidebar_node.h"
+#include "domain/unit_node.h"
 
 #include <QAbstractListModel>
 #include <QList>
@@ -55,24 +55,25 @@ public:
         LabelRole = Qt::UserRole + 1,
         CountRole,
         NodeTypeRole,
-        TagIdRole,      // tag id for Tag rows; -1 otherwise
-        UnitIdRole,     // unit id for Unit rows; empty otherwise
+        TagIdRole,  // tag id for Tag rows; -1 otherwise
+        UnitIdRole, // unit id for Unit rows; empty otherwise
         IsSeparatorRole,
         SelectableRole,
-        ColorRole,      // tag color for the dot; empty otherwise
-        DepthRole,      // tree depth (0 = top-level root / non-unit rows)
+        ColorRole, // tag color for the dot; empty otherwise
+        DepthRole, // tree depth (0 = top-level root / non-unit rows)
         HasChildrenRole,
         ExpandedRole,
-        KindRole,       // domain::UnitKind (cosmetic) for Unit rows
-        StateRole,      // domain::UnitState for Unit rows
-        CurrentRole,    // true for the currently-selected row (identity match)
-        ProfileRole,    // the unit's profile (ProfileRef == agent identity); empty if none
-        SessionIdRole,  // the unit's backing session id (UnitNode.session) / a transport leaf's session
+        KindRole,      // domain::UnitKind (cosmetic) for Unit rows
+        StateRole,     // domain::UnitState for Unit rows
+        CurrentRole,   // true for the currently-selected row (identity match)
+        ProfileRole,   // the unit's profile (ProfileRef == agent identity); empty if none
+        SessionIdRole, // the unit's backing session id (UnitNode.session) / a transport leaf's
+                       // session
         // Integrations-section rows (NodeType::Transport):
-        TxKindRole,     // "account" | "convGroup" | "conversation" | "job" | "caller"
-        ConvTypeRole,   // conversation type: "channel"|"groupdm"|"dm"|"thread" (else "")
-        SubLabelRole,   // inline session title / "(N agents)" (else "")
-        PresenceRole,   // account rows: PresencePrimitive ("available"/... ; else "")
+        TxKindRole,   // "account" | "convGroup" | "conversation" | "job" | "caller"
+        ConvTypeRole, // conversation type: "channel"|"groupdm"|"dm"|"thread" (else "")
+        SubLabelRole, // inline session title / "(N agents)" (else "")
+        PresenceRole, // account rows: PresencePrimitive ("available"/... ; else "")
     };
 
     explicit SidebarModel(QObject* parent = nullptr);
@@ -99,11 +100,11 @@ public:
     Q_INVOKABLE void toggleExpand(int row);
 
     // Keyboard navigation, all operating on the currently-selected row.
-    Q_INVOKABLE void selectNext();       // Down: next selectable row
-    Q_INVOKABLE void selectPrevious();   // Up: previous selectable row
-    Q_INVOKABLE void collapseCurrent();  // Left: collapse, else go to parent
-    Q_INVOKABLE void expandCurrent();    // Right: expand, else go to first child
-    Q_INVOKABLE void activateCurrent();  // Enter: re-emit the current scope
+    Q_INVOKABLE void selectNext();      // Down: next selectable row
+    Q_INVOKABLE void selectPrevious();  // Up: previous selectable row
+    Q_INVOKABLE void collapseCurrent(); // Left: collapse, else go to parent
+    Q_INVOKABLE void expandCurrent();   // Right: expand, else go to first child
+    Q_INVOKABLE void activateCurrent(); // Enter: re-emit the current scope
 
     // Whole-tree expand/collapse (Fleet header control; unit-scoped).
     Q_INVOKABLE void expandAll();
@@ -139,26 +140,26 @@ private:
         QString label;
         int count = -1;
         domain::NodeType type = domain::NodeType::AllSessions;
-        int tagId = -1;      // tag id
-        QString unitId;      // unit id (string at the model boundary)
+        int tagId = -1; // tag id
+        QString unitId; // unit id (string at the model boundary)
         bool separator = false;
         bool selectable = true;
-        QString color;       // tag dot color
+        QString color; // tag dot color
         int depth = 0;
         bool hasChildren = false;
         bool expanded = false;
-        int kind = 0;        // domain::UnitKind
-        int state = 0;       // domain::UnitState
-        QString profile;     // ProfileRef (agent identity) for Unit rows; empty otherwise
-        QString session;     // backing session id for Unit rows / transport leaf; empty otherwise
+        int kind = 0;    // domain::UnitKind
+        int state = 0;   // domain::UnitState
+        QString profile; // ProfileRef (agent identity) for Unit rows; empty otherwise
+        QString session; // backing session id for Unit rows / transport leaf; empty otherwise
         // Transport rows (NodeType::Transport):
-        QString txNode;      // transport tree node id (expand/collapse + selection identity)
-        QString txKind;      // account|convGroup|conversation|job|caller
-        QString convType;    // conversation type (else "")
-        QString sublabel;    // inline session title / "(N agents)" (else "")
-        QString presence;    // account presence (else "")
-        QString scopeKey;    // ByTransport/ByPeer key when the row has no session leaf
-        int scopeType = -1;  // domain::NodeType to emit for scopeKey (-1 = none)
+        QString txNode;     // transport tree node id (expand/collapse + selection identity)
+        QString txKind;     // account|convGroup|conversation|job|caller
+        QString convType;   // conversation type (else "")
+        QString sublabel;   // inline session title / "(N agents)" (else "")
+        QString presence;   // account presence (else "")
+        QString scopeKey;   // ByTransport/ByPeer key when the row has no session leaf
+        int scopeType = -1; // domain::NodeType to emit for scopeKey (-1 = none)
         // Section header rows (Fleet/Tags/Integrations): a stable section id so the
         // whole section folds under its header (else ""). These headers carry
         // hasChildren = true + expanded so GUI/TUI reuse the disclosure plumbing.
@@ -176,9 +177,9 @@ private:
     [[nodiscard]] bool isSectionExpanded(const QString& sectionKey) const;
 
     // Selection helpers (identity-based).
-    void setSelectionFromRow(int row);     // records identity + emits + repaints
+    void setSelectionFromRow(int row); // records identity + emits + repaints
     [[nodiscard]] bool rowIsCurrent(const Row& r) const;
-    void emitCurrentChanged();             // dataChanged(CurrentRole) for all rows
+    void emitCurrentChanged(); // dataChanged(CurrentRole) for all rows
     [[nodiscard]] int adjacentSelectableRow(int from, int delta) const;
     [[nodiscard]] int parentRow(int row) const;
     // True when the current selection is `rootId` or a descendant of it.

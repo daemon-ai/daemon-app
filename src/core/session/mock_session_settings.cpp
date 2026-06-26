@@ -2,23 +2,17 @@
 
 namespace session {
 
-MockSessionSettings::MockSessionSettings(QObject* parent)
-    : ISessionSettings(parent)
-{
-}
+MockSessionSettings::MockSessionSettings(QObject* parent) : ISessionSettings(parent) {}
 
-const MockSessionSettings::Settings& MockSessionSettings::entry() const
-{
+const MockSessionSettings::Settings& MockSessionSettings::entry() const {
     return m_bySession[m_sessionId];
 }
 
-MockSessionSettings::Settings& MockSessionSettings::entry()
-{
+MockSessionSettings::Settings& MockSessionSettings::entry() {
     return m_bySession[m_sessionId];
 }
 
-void MockSessionSettings::setSessionId(const QString& id)
-{
+void MockSessionSettings::setSessionId(const QString& id) {
     if (m_sessionId == id) {
         return;
     }
@@ -29,8 +23,7 @@ void MockSessionSettings::setSessionId(const QString& id)
     emit changed();
 }
 
-void MockSessionSettings::setProfile(const QString& profile)
-{
+void MockSessionSettings::setProfile(const QString& profile) {
     if (entry().profile == profile) {
         return;
     }
@@ -38,8 +31,7 @@ void MockSessionSettings::setProfile(const QString& profile)
     emit changed();
 }
 
-void MockSessionSettings::setEffort(const QString& effort)
-{
+void MockSessionSettings::setEffort(const QString& effort) {
     if (entry().effort == effort) {
         return;
     }
@@ -47,8 +39,7 @@ void MockSessionSettings::setEffort(const QString& effort)
     emit changed();
 }
 
-void MockSessionSettings::setFast(bool on)
-{
+void MockSessionSettings::setFast(bool on) {
     if (entry().fast == on) {
         return;
     }
@@ -56,8 +47,7 @@ void MockSessionSettings::setFast(bool on)
     emit changed();
 }
 
-void MockSessionSettings::setVerbose(bool on)
-{
+void MockSessionSettings::setVerbose(bool on) {
     if (entry().verbose == on) {
         return;
     }
@@ -65,13 +55,12 @@ void MockSessionSettings::setVerbose(bool on)
     emit changed();
 }
 
-QStringList MockSessionSettings::effortOptions() const
-{
+QStringList MockSessionSettings::effortOptions() const {
     // One reasoning-effort vocabulary across the whole app: the same off/low/
     // medium/high levels the composer's ModelPickerOverlay + ComposerSessionController
     // use, so the per-session popover and the inline modes never disagree.
-    return { QStringLiteral("off"), QStringLiteral("low"), QStringLiteral("medium"),
-             QStringLiteral("high") };
+    return {QStringLiteral("off"), QStringLiteral("low"), QStringLiteral("medium"),
+            QStringLiteral("high")};
 }
 
 } // namespace session

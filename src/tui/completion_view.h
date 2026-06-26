@@ -1,9 +1,8 @@
 #pragma once
 
-#include <Tui/ZWidget.h>
-
 #include <QString>
 #include <QVector>
+#include <Tui/ZWidget.h>
 
 class CompletionModel;
 

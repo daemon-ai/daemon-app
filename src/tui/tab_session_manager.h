@@ -1,16 +1,14 @@
 #pragma once
 
-#include "interactive_turn_host.h"
-
 #include "core/agent_ingest.h"
 #include "core/document_store.h"
 #include "core/transcript_search.h"
+#include "interactive_turn_host.h"
 
+#include <functional>
 #include <QHash>
 #include <QObject>
 #include <QString>
-
-#include <functional>
 
 class SessionController;
 class SessionOrchestrator;
@@ -29,7 +27,7 @@ struct TabSession {
     TurnController* turn = nullptr;
     InteractiveTurnHost* host = nullptr;
     be::DocumentStore doc;
-    be::TranscriptIngest ingest { &doc };
+    be::TranscriptIngest ingest{&doc};
     be::TranscriptSearchController search;
 
     TabSession();

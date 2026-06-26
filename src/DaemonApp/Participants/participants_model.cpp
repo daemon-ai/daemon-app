@@ -4,19 +4,15 @@
 
 namespace participants {
 
-ParticipantsModel::ParticipantsModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
+ParticipantsModel::ParticipantsModel(QObject* parent) : QAbstractListModel(parent) {
     rebuild();
 }
 
-QObject* ParticipantsModel::store() const
-{
+QObject* ParticipantsModel::store() const {
     return m_store;
 }
 
-void ParticipantsModel::setStore(QObject* store)
-{
+void ParticipantsModel::setStore(QObject* store) {
     auto* typed = qobject_cast<persistence::ISessionStore*>(store);
     if (typed == m_store) {
         return;
@@ -32,8 +28,7 @@ void ParticipantsModel::setStore(QObject* store)
     rebuild();
 }
 
-void ParticipantsModel::rebuild()
-{
+void ParticipantsModel::rebuild() {
     beginResetModel();
     m_rows.clear();
 
@@ -56,16 +51,14 @@ void ParticipantsModel::rebuild()
     endResetModel();
 }
 
-int ParticipantsModel::rowCount(const QModelIndex& parent) const
-{
+int ParticipantsModel::rowCount(const QModelIndex& parent) const {
     if (parent.isValid()) {
         return 0;
     }
     return static_cast<int>(m_rows.size());
 }
 
-QVariant ParticipantsModel::data(const QModelIndex& index, int role) const
-{
+QVariant ParticipantsModel::data(const QModelIndex& index, int role) const {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_rows.size()) {
         return {};
     }
@@ -90,18 +83,19 @@ QVariant ParticipantsModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> ParticipantsModel::roleNames() const
-{
+QHash<int, QByteArray> ParticipantsModel::roleNames() const {
     return {
-        { LabelRole, "label" },       { IsSeparatorRole, "isSeparator" },
-        { HasChildrenRole, "hasChildren" }, { ExpandedRole, "expanded" },
-        { ColorRole, "color" },       { PresenceRole, "presence" },
-        { IsAgentRole, "isAgent" },
+        {LabelRole, "label"},
+        {IsSeparatorRole, "isSeparator"},
+        {HasChildrenRole, "hasChildren"},
+        {ExpandedRole, "expanded"},
+        {ColorRole, "color"},
+        {PresenceRole, "presence"},
+        {IsAgentRole, "isAgent"},
     };
 }
 
-void ParticipantsModel::toggleExpand(int row)
-{
+void ParticipantsModel::toggleExpand(int row) {
     if (row < 0 || row >= m_rows.size() || !m_rows.at(row).separator) {
         return;
     }

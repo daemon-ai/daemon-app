@@ -7,9 +7,9 @@
 #include <QList>
 #include <QPointF>
 #include <QString>
+#include <QtQml/qqmlregistration.h>
 #include <QVariantList>
 #include <QVariantMap>
-#include <QtQml/qqmlregistration.h>
 
 namespace memory {
 class IMemoryService;
