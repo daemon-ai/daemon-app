@@ -980,6 +980,9 @@ void MockDaemonNet::rebuildRoutingGraph()
         const QString oid = QStringLiteral("rt:o:") + key;
         QVariantMap ox;
         ox[QStringLiteral("transport")] = p.origin.transport.toString();
+        // The pinnable origin key (so the topology's drag-to-pin maps a dragged origin node back to
+        // a key the routing controller can pin).
+        ox[QStringLiteral("originKey")] = key;
         addNode(oid, QStringLiteral("origin"),
                 p.origin.transport.toString() + QStringLiteral(" · ")
                     + (p.origin.scope.kind == OriginScopeKind::Dm ? p.origin.scope.user

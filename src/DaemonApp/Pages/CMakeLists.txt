@@ -46,6 +46,7 @@ qt_add_qml_module(da_pages
         ApprovalsPage.qml
         RoutingPage.qml
         RouteDialog.qml
+        RoutingTopology.qml
         CronPage.qml
         CronJobDialog.qml
         FirstRunGate.qml
@@ -64,5 +65,7 @@ target_link_libraries(da_pages
         daemon-app::daemonnet
         daemon-app::domain
         daemon-app::uimodels
+        # RoutingTopology imports the reusable DaemonApp.Graph kit module.
+        daemon-app::graph
         daemon-app::warnings
 )

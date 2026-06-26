@@ -46,29 +46,26 @@ Item {
         anchors.margins: 16
         spacing: 12
 
-        // --- Topology slot (deferred) -----------------------------------------
-        Rectangle {
+        // --- Topology: force-directed DaemonNet view (above the control surface) ---
+        RoutingTopology {
+            id: topology
             Layout.fillWidth: true
-            Layout.preferredHeight: 96
-            radius: 8
-            color: Theme.surface
-            border.color: Theme.border
-
-            RowLayout {
-                anchors.centerIn: parent
-                spacing: 8
-                Kit.Glyph {
-                    glyph: FontIcons.fa_sitemap
-                    font.pointSize: 14 + Theme.pointSizeOffset
-                    color: Theme.iconMuted
-                }
-                Text {
-                    text: qsTr("Topology patch-bay \u2014 coming soon")
-                    font.family: FontIcons.display
-                    font.pixelSize: 12
-                    color: Theme.textMuted
-                }
+            Layout.preferredHeight: Math.max(220, root.height * 0.4)
+            // A session node tap selects that route's session in the control below.
+            onSessionActivated: function(sessionId) {
+                root.selectedRouteId = "";
+                rm.selectedSession = sessionId;
             }
+            // Drag an origin onto a session -> pin it.
+            onPinRequested: function(originKey, sessionId) {
+                rm.pin(originKey, sessionId, "");
+            }
+        }
+
+        // Control -> topology selection sync (selecting a route highlights its node).
+        Connections {
+            target: rm
+            function onSelectedSessionChanged() { topology.highlight(rm.selectedSession); }
         }
 
         // --- Routes (primary) -------------------------------------------------

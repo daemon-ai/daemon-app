@@ -108,6 +108,19 @@ target_link_libraries(tst_routing_model
 add_test(NAME tst_routing_model COMMAND tst_routing_model)
 set_tests_properties(tst_routing_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_graph_model: the reusable Daemon Kit graph model - generic node/edge ingestion, degree, the
+# normalized force layout, and edges()/nodeById/neighborsOf.
+qt_add_executable(tst_graph_model tst_graph_model.cpp)
+target_include_directories(tst_graph_model PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Graph")
+target_link_libraries(tst_graph_model
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        daemon-app::graph
+)
+add_test(NAME tst_graph_model COMMAND tst_graph_model)
+set_tests_properties(tst_graph_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_fs_service: the filesystem seam's local mock must preserve the daemon FS
 # contract around optimistic concurrency and path containment.
 qt_add_executable(tst_fs_service tst_fs_service.cpp)

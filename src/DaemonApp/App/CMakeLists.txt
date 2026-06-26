@@ -52,6 +52,7 @@ target_link_libraries(daemon-app
         daemon-app::status_model
         daemon-app::theme
         daemon-app::controls
+        daemon-app::graph
         daemon-app::blockeditor
         daemon-app::sidebar
         daemon-app::sessionslist
@@ -73,6 +74,7 @@ target_link_libraries(daemon-app
         da_status_modelplugin
         da_themeplugin
         da_controlsplugin
+        da_graphplugin
         da_blockeditorplugin
         da_sidebarplugin
         da_sessionslistplugin
