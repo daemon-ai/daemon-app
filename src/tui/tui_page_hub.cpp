@@ -548,7 +548,7 @@ QString TuiPageHub::buildFleetMarkdown(int sel) const {
         for (int i = 0; i < rows.size(); ++i) {
             const QVariantMap& n = rows.at(i);
             const int depth = n.value(QStringLiteral("depth")).toInt();
-            md += QString(depth * 2, QLatin1Char(' '));
+            md += QString(static_cast<qsizetype>(depth) * 2, QLatin1Char(' '));
             md += tr("- %1%2 — %3 (`%4`)\n")
                       .arg(mark(i), n.value(QStringLiteral("name")).toString(),
                            n.value(QStringLiteral("status")).toString(),

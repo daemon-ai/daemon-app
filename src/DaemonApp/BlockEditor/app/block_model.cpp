@@ -59,7 +59,7 @@ QVariantMap buildTableData(const be::BlockRecord& block, const be::InlineProject
 // Language token from the block: prefer captured metadata, fall back to a
 // leading ``` fence on the first line (covers freshly typed blocks).
 QString mermaidLanguageOf(const be::BlockRecord& block) {
-    const QString meta = block.metadata.value(QStringLiteral("fenceLanguage")).toString();
+    QString meta = block.metadata.value(QStringLiteral("fenceLanguage")).toString();
     if (!meta.isEmpty()) {
         return meta;
     }

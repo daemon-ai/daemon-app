@@ -5,11 +5,12 @@
 #include <mapbox/earcut.hpp>
 #include <QPainterPathStroker>
 #include <util/numeric.h>
+#include <utility>
 #include <vector>
 
 // Teach earcut how to read a QPointF (specialize after the primary template).
-namespace mapbox {
-namespace util {
+
+namespace mapbox::util {
 template <>
 struct nth<0, QPointF> {
     static double get(const QPointF& p) { return p.x(); }
@@ -18,8 +19,7 @@ template <>
 struct nth<1, QPointF> {
     static double get(const QPointF& p) { return p.y(); }
 };
-} // namespace util
-} // namespace mapbox
+} // namespace mapbox::util
 
 namespace be::diagram {
 
@@ -168,7 +168,7 @@ void addStrokedPath(const QPainterPath& path, qreal width, const QColor& color, 
     }
     std::vector<std::vector<QPointF>> polygon;
     polygon.push_back(rings[outer]);
-    for (int i = 0; i < int(rings.size()); ++i) {
+    for (int i = 0; std::cmp_less(i, rings.size()); ++i) {
         if (i != outer) {
             polygon.push_back(rings[i]);
         }
@@ -286,7 +286,10 @@ QVector<QPointF> sampleCurveBasis(const QVector<QPointF>& knots) {
         out.push_back(cur);
     };
 
-    qreal x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+    qreal x0 = 0;
+    qreal y0 = 0;
+    qreal x1 = 0;
+    qreal y1 = 0;
     const auto basisPoint = [&](qreal x, qreal y) {
         const QPointF c1((2 * x0 + x1) / 3.0, (2 * y0 + y1) / 3.0);
         const QPointF c2((x0 + 2 * x1) / 3.0, (y0 + 2 * y1) / 3.0);

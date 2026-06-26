@@ -5,6 +5,7 @@
 #include "domain/unit_node.h"
 #include "persistence/isession_store.h"
 
+#include <algorithm>
 #include <QHash>
 
 using daemonnet::TransportTreeRow;
@@ -580,12 +581,7 @@ void SidebarModel::collectExpandableIds(const QString& parentId, QSet<QString>& 
 bool SidebarModel::anyExpanded() const {
     QSet<QString> expandable;
     collectExpandableIds(QString(), expandable);
-    for (const QString& id : expandable) {
-        if (isExpanded(id)) {
-            return true;
-        }
-    }
-    return false;
+    return std::ranges::any_of(expandable, [this](const QString& id) { return isExpanded(id); });
 }
 
 void SidebarModel::collectTransportExpandableIds(QSet<QString>& out) const {
@@ -603,12 +599,7 @@ void SidebarModel::collectTransportExpandableIds(QSet<QString>& out) const {
 bool SidebarModel::anyTransportExpanded() const {
     QSet<QString> expandable;
     collectTransportExpandableIds(expandable);
-    for (const QString& id : expandable) {
-        if (isExpanded(id)) {
-            return true;
-        }
-    }
-    return false;
+    return std::ranges::any_of(expandable, [this](const QString& id) { return isExpanded(id); });
 }
 
 void SidebarModel::expandAllTransports() {

@@ -70,12 +70,8 @@ bool isKnownTheme(const QString& theme) {
 }
 
 bool isKnownLanguage(const QString& code) {
-    for (const i18n::LocaleOption& opt : i18n::availableLocales()) {
-        if (opt.code == code) {
-            return true;
-        }
-    }
-    return false;
+    return std::ranges::any_of(i18n::availableLocales(),
+                               [&](const i18n::LocaleOption& opt) { return opt.code == code; });
 }
 
 } // namespace

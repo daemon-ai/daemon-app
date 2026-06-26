@@ -1159,7 +1159,7 @@ QVariantMap EditorController::tableCellSelectionSpan(qulonglong blockId, int row
 }
 
 QString EditorController::copySelectionMarkdown() const {
-    const QString documentSelection = m_selection.copyMarkdown(m_store.blocks());
+    QString documentSelection = m_selection.copyMarkdown(m_store.blocks());
     if (!documentSelection.isEmpty()) {
         return documentSelection;
     }

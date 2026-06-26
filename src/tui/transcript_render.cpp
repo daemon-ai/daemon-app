@@ -23,7 +23,7 @@ using Tui::ZTextAttributes;
 struct Style {
     ZColor fg = tpal::fg();
     ZColor bg = tpal::bg();
-    ZTextAttributes attr = {};
+    ZTextAttributes attr;
 };
 
 Span mkSpan(const QString& text, const Style& s) {
@@ -432,7 +432,7 @@ void emitToolBody(QVector<RenderLine>& body, const QVariantMap& view, int inner)
 // renders (mirrors ClarifyBlock.qml's `questions` normalization, including the
 // legacy single-question fallback).
 QVariantList clarifyQuestions(const QVariantMap& metadata) {
-    const QVariantList qs = metadata.value(QStringLiteral("questions")).toList();
+    QVariantList qs = metadata.value(QStringLiteral("questions")).toList();
     if (!qs.isEmpty()) {
         return qs;
     }

@@ -344,9 +344,9 @@ QVariantList ansiToSpans(const QString& text) {
     const auto applySgr = [&](const QString& params) {
         const QStringList parts =
             params.isEmpty() ? QStringList{QStringLiteral("0")} : params.split(QLatin1Char(';'));
-        for (int i = 0; i < parts.size(); ++i) {
+        for (const auto& part : parts) {
             bool ok = false;
-            const int code = parts.at(i).toInt(&ok);
+            const int code = part.toInt(&ok);
             if (!ok) {
                 continue;
             }

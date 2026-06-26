@@ -57,7 +57,7 @@ QVariant DisplayRoleAdapter::sidebarData(const QModelIndex& src, int role) const
 
         QString text;
         const int depth = srcData(SidebarModel::DepthRole).toInt();
-        text += QString(depth * 2, QLatin1Char(' '));
+        text += QString(static_cast<qsizetype>(depth) * 2, QLatin1Char(' '));
 
         if (srcData(SidebarModel::HasChildrenRole).toBool()) {
             text += srcData(SidebarModel::ExpandedRole).toBool() ? QStringLiteral("\u25be ")

@@ -4,6 +4,8 @@
 #include "core/markdown_parser.h"
 #include "core/math_url.h"
 
+#include <algorithm>
+#include <array>
 #include <QRegularExpression>
 
 namespace be {
@@ -149,12 +151,7 @@ BlockProjection InlineProjector::project(const BlockRecord& block, bool revealMa
     }
 
     const auto hasWhitespace = [](const QString& s) {
-        for (const QChar c : s) {
-            if (c.isSpace()) {
-                return true;
-            }
-        }
-        return false;
+        return std::ranges::any_of(s, [](QChar c) { return c.isSpace(); });
     };
 
     qsizetype i = contentStart;
@@ -216,7 +213,7 @@ BlockProjection InlineProjector::project(const BlockRecord& block, bool revealMa
         // text while the span's raw range covers the whole link, so selecting the
         // rendered label copies the full Markdown syntax.
         if (!revealAll && raw.at(i) == QLatin1Char('[') &&
-            !(i > 0 && raw.at(i - 1) == QLatin1Char('!'))) {
+            (i <= 0 || raw.at(i - 1) != QLatin1Char('!'))) {
             const qsizetype labelClose = matchClosingBracket(raw, i, contentEnd);
             if (labelClose > i + 1 && labelClose + 1 < contentEnd &&
                 raw.at(labelClose + 1) == QLatin1Char('(')) {
@@ -260,7 +257,7 @@ BlockProjection InlineProjector::project(const BlockRecord& block, bool revealMa
         // missing closing delimiter falls through to literal text. Matched before
         // emphasis/code so a '*' or '`' inside a formula is never consumed first.
         if (!revealAll && raw.at(i) == QLatin1Char('$') &&
-            !(i > 0 && raw.at(i - 1) == QLatin1Char('\\'))) {
+            (i <= 0 || raw.at(i - 1) != QLatin1Char('\\'))) {
             const bool display = (i + 1 < contentEnd && raw.at(i + 1) == QLatin1Char('$'));
             const qsizetype delimLen = display ? 2 : 1;
             const qsizetype bodyStart = i + delimLen;
@@ -476,7 +473,8 @@ QString InlineProjector::makeDisplayMarkup(const BlockRecord& block,
     if (block.type == BlockType::Heading) {
         // Scale relative to the body size so the whole type scale tracks the
         // "Font size" preference. Multipliers for H1..H6.
-        static const double kHeadingScale[6] = {2.0, 1.6, 1.35, 1.2, 1.1, 1.0};
+        static constexpr auto kHeadingScale =
+            std::to_array<double>({2.0, 1.6, 1.35, 1.2, 1.1, 1.0});
         const int base = m_palette.bodyPixelSize > 0 ? m_palette.bodyPixelSize : 15;
         const int level = qBound(1, int(block.headingLevel), 6);
         const int size = qRound(base * kHeadingScale[level - 1]);

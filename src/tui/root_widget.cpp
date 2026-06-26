@@ -34,6 +34,7 @@
 #include "uimodels/variant_list_model.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdio>
 #include <QAbstractItemModel>
 #include <QCoreApplication>
@@ -1845,10 +1846,10 @@ void RootWidget::cycleTheme() {
     }
     // The remaining custom-painted views sample tpal::* live at paint, so a plain
     // repaint suffices.
-    Tui::ZWidget* views[] = {m_window,       m_sidebarView, m_composerChrome,  m_queue,
-                             m_attachments,  m_footer,      m_completionPopup, m_search,
-                             m_composer,     m_tabStrip,    m_todos,           m_subagents,
-                             m_fileTreeView, m_editorView};
+    const auto views = std::to_array<Tui::ZWidget*>(
+        {m_window, m_sidebarView, m_composerChrome, m_queue, m_attachments, m_footer,
+         m_completionPopup, m_search, m_composer, m_tabStrip, m_todos, m_subagents, m_fileTreeView,
+         m_editorView});
     for (Tui::ZWidget* w : views) {
         if (w != nullptr) {
             w->update();

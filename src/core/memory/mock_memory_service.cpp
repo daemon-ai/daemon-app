@@ -1,6 +1,7 @@
 #include "memory/mock_memory_service.h"
 
 #include <algorithm>
+#include <array>
 #include <QHash>
 #include <QSet>
 
@@ -89,6 +90,8 @@ void MockMemoryService::seed() {
     // Memory is owned by the AGENT (one bank per profile). Each profile below is a
     // distinct bank holding several sessions (sessions), global + session
     // scope, working + episodic tiers (1/2/3 degradation), varied veracity/sources.
+    // Large static fixture table; a C array is the clearest form here.
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays)
     static const Spec specs[] = {
         // prof-1 / General Assistant: planning + app notes.
         {"m01", "User prefers Rust for systems work and dislikes heavy frameworks.", "session",
@@ -615,7 +618,8 @@ void MockMemoryService::emitTick() {
     const QList<MemoryEntry> items = scoped();
     if (items.isEmpty())
         return;
-    static const char* kinds[] = {"recalled", "added", "updated", "consolidated"};
+    static constexpr auto kinds =
+        std::to_array<const char*>({"recalled", "added", "updated", "consolidated"});
     m_seq += 1;
     const MemoryEntry& e = items.at(static_cast<int>(m_seq % static_cast<quint64>(items.size())));
     MemoryEvent ev;

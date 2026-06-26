@@ -1,5 +1,6 @@
 #include "core/markdown_parser.h"
 
+#include <algorithm>
 #include <doc.h>
 #include <parser.h>
 #include <QRegularExpression>
@@ -16,15 +17,11 @@ bool linkLabelIsImageOnly(const MD::Link* link) {
     if (!p) {
         return true;
     }
-    for (const auto& itemPtr : p->items()) {
+    return std::ranges::none_of(p->items(), [](const auto& itemPtr) {
         const MD::Item* item = itemPtr.data();
-        if (item && item->type() == MD::ItemType::Text) {
-            if (!static_cast<const MD::Text*>(item)->text().trimmed().isEmpty()) {
-                return false;
-            }
-        }
-    }
-    return true;
+        return item && item->type() == MD::ItemType::Text &&
+               !static_cast<const MD::Text*>(item)->text().trimmed().isEmpty();
+    });
 }
 
 // True when `text` is a lone Pandoc attribute block, e.g. "{ width=50% }".

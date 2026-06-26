@@ -26,7 +26,7 @@ QIcon placeholderTrayIcon() {
     p.setPen(Qt::NoPen);
     p.drawRoundedRect(pm.rect().adjusted(2, 2, -2, -2), 8, 8);
     p.end();
-    return QIcon(pm);
+    return {pm};
 }
 
 } // namespace

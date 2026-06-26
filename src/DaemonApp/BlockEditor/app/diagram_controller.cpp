@@ -14,7 +14,6 @@ public:
     using Style = be::diagram::Style;
     using SnapshotPtr = be::diagram::RenderSnapshotPtr;
 
-public slots:
     void build(const QString& source, const be::diagram::Style& style, qreal maxWidth,
                quint64 requestId) {
         be::diagram::DiagramEngine engine;
@@ -23,7 +22,7 @@ public slots:
     }
 
 signals:
-    void produced(be::diagram::RenderSnapshotPtr snapshot, quint64 requestId);
+    void produced(be::diagram::RenderSnapshotPtr _t1, quint64 _t2);
 };
 
 } // namespace

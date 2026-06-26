@@ -141,7 +141,7 @@ void FileTreeView::paintEvent(Tui::ZPaintEvent* event) {
         if (current)
             p->clearRect(0, rowY, w, 1, fg, rowBg);
 
-        const QString indent(depth * 2, QLatin1Char(' '));
+        const QString indent(static_cast<qsizetype>(depth) * 2, QLatin1Char(' '));
         QString chevron;
         if (isDir)
             chevron = expanded ? QStringLiteral("\u25be ") : QStringLiteral("\u25b8 ");

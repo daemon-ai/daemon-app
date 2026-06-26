@@ -1,5 +1,6 @@
 #include "tui_palette.h"
 
+#include <array>
 #include <QColor>
 #include <Tui/ZColor.h>
 
@@ -399,7 +400,8 @@ QString tagDot() {
 } // ●
 
 QString spinnerFrame(int tick) {
-    static const char16_t frames[] = {0x25d0, 0x25d3, 0x25d1, 0x25d2}; // ◐◓◑◒
+    static constexpr auto frames =
+        std::to_array<char16_t>({0x25d0, 0x25d3, 0x25d1, 0x25d2}); // ◐◓◑◒
     const int i = ((tick % 4) + 4) % 4;
     return {QChar(frames[i])};
 }

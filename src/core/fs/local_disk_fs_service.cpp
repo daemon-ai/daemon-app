@@ -14,10 +14,10 @@
 namespace fs {
 namespace {
 
-constexpr qint64 kMaxReadBytes = 5 * 1024 * 1024; // skip huge files in the viewer
-constexpr int kMaxSearchFiles = 5000;             // dev-impl walk caps
+constexpr qint64 kMaxReadBytes = 5LL * 1024 * 1024; // skip huge files in the viewer
+constexpr int kMaxSearchFiles = 5000;               // dev-impl walk caps
 constexpr int kMaxSearchHits = 1000;
-constexpr qint64 kMaxSearchFileBytes = 2 * 1024 * 1024;
+constexpr qint64 kMaxSearchFileBytes = 2LL * 1024 * 1024;
 
 // Natural, directories-first ordering (port of Lite XL's path_compare semantics).
 bool entryLess(const FsEntry& a, const FsEntry& b) {

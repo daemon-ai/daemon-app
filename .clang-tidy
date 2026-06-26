@@ -2,6 +2,9 @@
 # High-signal set: bugprone correctness + performance + the fixable readability/modernize checks.
 # The disabled checks below were the dominant noise in the initial audit (pure-style or
 # metric-only, low value / high churn); re-enable individually as the codebase is cleaned up.
+# `readability-convert-member-functions-to-static` is disabled specifically because clang-tidy
+# cannot tell a Q_INVOKABLE / slot / meta-object method apart from a plain one, so its "make static"
+# advice is wrong for QObject classes (it broke Q_INVOKABLE declarations when auto-applied).
 Checks: >
   -*,
   bugprone-*,
@@ -18,8 +21,11 @@ Checks: >
   -readability-named-parameter,
   -readability-uppercase-literal-suffix,
   -readability-avoid-nested-conditional-operator,
-  -bugprone-easily-swappable-parameters
-WarningsAsErrors: ''
+  -bugprone-easily-swappable-parameters,
+  -readability-convert-member-functions-to-static
+# Blocking gate: the tree is clang-tidy-clean as of this commit, so any new finding is an error
+# (enforced locally by `just lint-cpp` and in CI by the lint-cpp job).
+WarningsAsErrors: '*'
 HeaderFilterRegex: '^src/'
 FormatStyle: file
 ...

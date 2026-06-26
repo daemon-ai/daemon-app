@@ -1,5 +1,7 @@
 #include "core/agent_ingest.h"
 
+#include <array>
+
 namespace be {
 
 namespace {
@@ -11,8 +13,9 @@ QString stringField(const QVariantMap& m, const QString& key) {
 // Copy the detail payload fields a ToolFinished event may carry through to the
 // block metadata, so buildToolView's sub-renderer has what it needs.
 void copyToolDetail(const QVariantMap& event, QVariantMap& meta) {
-    static const char* keys[] = {"detailKind", "stdout",   "stderr", "body",    "diff",
-                                 "hits",       "imageUrl", "count",  "exitCode"};
+    static constexpr auto keys =
+        std::to_array<const char*>({"detailKind", "stdout", "stderr", "body", "diff", "hits",
+                                    "imageUrl", "count", "exitCode"});
     for (const char* key : keys) {
         const QString k = QString::fromLatin1(key);
         if (event.contains(k)) {
