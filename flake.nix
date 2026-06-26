@@ -191,12 +191,18 @@
             cmake
             ninja
             pkg-config
-            clang-tools
+            clang-tools # clang-tidy, clang-format, run-clang-tidy (see justfile `lint-cpp`)
             gcc
             gdb
             kdePackages.extra-cmake-modules
             perl
             tinyxml-2
+            # --- code-quality tooling (see justfile `lint-cpp` / `audit-cleanup`) ---
+            cppcheck # whole-program dead code (--enable=unusedFunction) + extra static analysis
+            gersemi # CMake formatter
+            gitleaks # secret scanning
+            typos # source spell-checker
+            nodejs # provides npx for jscpd duplicate detection (not packaged in nixpkgs)
           ] ++ qtPackages ++ tuiDeps;
 
           shellHook = ''

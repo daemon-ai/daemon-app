@@ -10,6 +10,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Emit compile_commands.json so clang-tidy / cppcheck / run-clang-tidy can analyze the tree
+# (consumed by the justfile `lint-cpp` and `audit-cleanup` recipes).
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Generate a .qmlls.ini so qmlls/qmllint can resolve the project's QML modules.
 set(QT_QML_GENERATE_QMLLS_INI ON)
 

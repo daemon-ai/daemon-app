@@ -1,0 +1,4 @@
+# Vendored / generated zcbor codec: kept byte-identical to the daemon-node contract (enforced by the
+# superproject codec-drift gate). Never reformat - clang-format must skip these entirely.
+src/core/daemon/codec/generated/*
+src/core/daemon/codec/vendor/*

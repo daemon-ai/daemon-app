@@ -1,5 +1,7 @@
 ---
-# Conservative starting set; tighten as the codebase grows.
+# High-signal set: bugprone correctness + performance + the fixable readability/modernize checks.
+# The disabled checks below were the dominant noise in the initial audit (pure-style or
+# metric-only, low value / high churn); re-enable individually as the codebase is cleaned up.
 Checks: >
   -*,
   bugprone-*,
@@ -7,8 +9,16 @@ Checks: >
   modernize-*,
   readability-*,
   -modernize-use-trailing-return-type,
+  -modernize-use-designated-initializers,
   -readability-magic-numbers,
-  -readability-identifier-length
+  -readability-identifier-length,
+  -readability-braces-around-statements,
+  -readability-implicit-bool-conversion,
+  -readability-function-cognitive-complexity,
+  -readability-named-parameter,
+  -readability-uppercase-literal-suffix,
+  -readability-avoid-nested-conditional-operator,
+  -bugprone-easily-swappable-parameters
 WarningsAsErrors: ''
 HeaderFilterRegex: '^src/'
 FormatStyle: file
