@@ -243,7 +243,6 @@ BlockType MarkdownParser::blockTypeForItem(const MD::Item* item) {
     case MD::ItemType::Blockquote:
         return BlockType::Quote;
     case MD::ItemType::ListItem:
-        return BlockType::BulletListItem;
     case MD::ItemType::List:
         return BlockType::BulletListItem;
     case MD::ItemType::Code:

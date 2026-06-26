@@ -207,11 +207,10 @@ bool InMemorySessionStore::matchesScope(const Session& c, const ListScope& scope
         return !c.isArchived && c.tagIds.contains(scope.tagId);
     case NodeType::ByTransport:
     case NodeType::ByPeer:
-        // Transport/peer grouping needs the DaemonNet's edges (IDaemonNet::sessionsInScope); the
-        // flat store has no edge data, so these scopes never match here.
-        return false;
     case NodeType::FleetSeparator:
     case NodeType::TagSeparator:
+        // Transport/peer grouping needs the DaemonNet's edges (IDaemonNet::sessionsInScope), which
+        // the flat store has no data for; separators are never matchable. None match here.
         return false;
     }
     return false;

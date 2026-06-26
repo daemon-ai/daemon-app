@@ -395,7 +395,7 @@ QString TuiPageHub::buildMemoryMarkdown() const {
             for (const QVariant& v : rows) {
                 const QVariantMap r = v.toMap();
                 const double frac = r.value(QStringLiteral("fraction")).toDouble();
-                const int filled = qBound(0, static_cast<int>((frac * 12.0) + 0.5), 12);
+                const int filled = qBound(0, qRound(frac * 12.0), 12);
                 const QString bar = QString(filled, QChar('#')) + QString(12 - filled, QChar('-'));
                 md += QStringLiteral("- `%1` %2 %3\n")
                           .arg(bar, r.value(QStringLiteral("key")).toString())

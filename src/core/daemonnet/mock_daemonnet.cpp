@@ -50,7 +50,6 @@ QString unitStatusStr(UnitState s) {
     case UnitState::Running:
         return QStringLiteral("running");
     case UnitState::Finished:
-        return QStringLiteral("idle");
     case UnitState::Unknown:
         return QStringLiteral("idle");
     }

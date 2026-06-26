@@ -460,7 +460,7 @@ QList<MemoryTimelineGroup> MockMemoryService::buildTimeline(const QString& group
             break;
         MemoryTimelineGroup* g = findGroup(groupKeyFor(e));
         MemoryEvent ev;
-        ev.seq = static_cast<quint64>(count + 1);
+        ev.seq = static_cast<quint64>(count) + 1;
         ev.kind = e.source == QStringLiteral("consolidation") ? QStringLiteral("consolidated")
                                                               : QStringLiteral("added");
         ev.memoryId = e.id;
@@ -470,7 +470,7 @@ QList<MemoryTimelineGroup> MockMemoryService::buildTimeline(const QString& group
         count += 1;
         if (e.recallCount > 0) {
             MemoryEvent rec;
-            rec.seq = static_cast<quint64>(count + 1000);
+            rec.seq = static_cast<quint64>(count) + 1000;
             rec.kind = QStringLiteral("recalled");
             rec.memoryId = e.id;
             rec.at = e.lastRecalled;
