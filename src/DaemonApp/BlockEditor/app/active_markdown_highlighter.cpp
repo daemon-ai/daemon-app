@@ -3,6 +3,7 @@
 #include "core/block_record.h"
 
 #include <QColor>
+#include <util/numeric.h>
 
 namespace be::app {
 
@@ -53,12 +54,13 @@ void ActiveMarkdownHighlighter::setContext(int blockType, int headingLevel) {
 void ActiveMarkdownHighlighter::highlightBlock(const QString& text) {
     const bool isHeading = m_blockType == static_cast<int>(be::BlockType::Heading);
     if (isHeading && currentBlock().blockNumber() == 0) {
-        setFormat(0, text.size(), m_headingFormat);
+        setFormat(0, daemon_app::to_int(text.size()), m_headingFormat);
 
         const QRegularExpression heading(QStringLiteral("^(#{1,6})\\s+"));
         const QRegularExpressionMatch match = heading.match(text);
         if (match.hasMatch()) {
-            setFormat(match.capturedStart(1), match.capturedLength(1), m_markerFormat);
+            setFormat(daemon_app::to_int(match.capturedStart(1)),
+                      daemon_app::to_int(match.capturedLength(1)), m_markerFormat);
         }
     }
 
@@ -66,7 +68,8 @@ void ActiveMarkdownHighlighter::highlightBlock(const QString& text) {
         QStringLiteral("^\\s*((?:[-*+])|(?:\\d+[.)])|(?:[-*+]\\s+\\[[ xX]\\]))\\s+"));
     const QRegularExpressionMatch listMatch = listMarker.match(text);
     if (listMatch.hasMatch()) {
-        setFormat(listMatch.capturedStart(1), listMatch.capturedLength(1), m_markerFormat);
+        setFormat(daemon_app::to_int(listMatch.capturedStart(1)),
+                  daemon_app::to_int(listMatch.capturedLength(1)), m_markerFormat);
     }
 
     applyInlineFormats(text);
@@ -99,11 +102,13 @@ void ActiveMarkdownHighlighter::applyLinkFormats(const QString& text) {
             text.at(labelClose + 1) == QLatin1Char('(')) {
             const qsizetype urlClose = text.indexOf(QLatin1Char(')'), labelClose + 2);
             if (urlClose > labelClose + 2) {
-                setFormat(i, 1, m_markerFormat);                                        // '['
-                setFormat(i + 1, labelClose - (i + 1), m_linkFormat);                   // label
-                setFormat(labelClose, 2, m_markerFormat);                               // ']('
-                setFormat(labelClose + 2, urlClose - (labelClose + 2), m_markerFormat); // url
-                setFormat(urlClose, 1, m_markerFormat);                                 // ')'
+                setFormat(daemon_app::to_int(i), 1, m_markerFormat); // '['
+                setFormat(daemon_app::to_int(i + 1), daemon_app::to_int(labelClose - (i + 1)),
+                          m_linkFormat);                                      // label
+                setFormat(daemon_app::to_int(labelClose), 2, m_markerFormat); // ']('
+                setFormat(daemon_app::to_int(labelClose + 2),
+                          daemon_app::to_int(urlClose - (labelClose + 2)), m_markerFormat); // url
+                setFormat(daemon_app::to_int(urlClose), 1, m_markerFormat);                 // ')'
                 i = urlClose + 1;
                 continue;
             }
@@ -117,9 +122,12 @@ void ActiveMarkdownHighlighter::applyLinkFormats(const QString& text) {
     QRegularExpressionMatchIterator autoIt = autolink.globalMatch(text);
     while (autoIt.hasNext()) {
         const QRegularExpressionMatch match = autoIt.next();
-        setFormat(match.capturedStart(1), match.capturedLength(1), m_markerFormat);
-        setFormat(match.capturedStart(2), match.capturedLength(2), m_linkFormat);
-        setFormat(match.capturedStart(3), match.capturedLength(3), m_markerFormat);
+        setFormat(daemon_app::to_int(match.capturedStart(1)),
+                  daemon_app::to_int(match.capturedLength(1)), m_markerFormat);
+        setFormat(daemon_app::to_int(match.capturedStart(2)),
+                  daemon_app::to_int(match.capturedLength(2)), m_linkFormat);
+        setFormat(daemon_app::to_int(match.capturedStart(3)),
+                  daemon_app::to_int(match.capturedLength(3)), m_markerFormat);
     }
 }
 
@@ -131,13 +139,16 @@ void ActiveMarkdownHighlighter::applyRegexFormat(const QString& text,
     while (it.hasNext()) {
         const QRegularExpressionMatch match = it.next();
         if (match.lastCapturedIndex() >= 1) {
-            setFormat(match.capturedStart(1), match.capturedLength(1), delimiterFormat);
+            setFormat(daemon_app::to_int(match.capturedStart(1)),
+                      daemon_app::to_int(match.capturedLength(1)), delimiterFormat);
         }
         if (match.lastCapturedIndex() >= 2) {
-            setFormat(match.capturedStart(2), match.capturedLength(2), contentFormat);
+            setFormat(daemon_app::to_int(match.capturedStart(2)),
+                      daemon_app::to_int(match.capturedLength(2)), contentFormat);
         }
         if (match.lastCapturedIndex() >= 3) {
-            setFormat(match.capturedStart(3), match.capturedLength(3), delimiterFormat);
+            setFormat(daemon_app::to_int(match.capturedStart(3)),
+                      daemon_app::to_int(match.capturedLength(3)), delimiterFormat);
         }
     }
 }

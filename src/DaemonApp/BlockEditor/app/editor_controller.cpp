@@ -12,6 +12,7 @@
 #include <QRegularExpression>
 #include <QVariantList>
 #include <QVariantMap>
+#include <util/numeric.h>
 
 namespace be::app {
 
@@ -498,8 +499,9 @@ void EditorController::activateBlockAt(int row, int cursorOffset) {
         return;
     }
 
-    const int boundedOffset = cursorOffset < 0 ? block->markdown().size()
-                                               : qBound(0, cursorOffset, block->markdown().size());
+    const int boundedOffset =
+        cursorOffset < 0 ? daemon_app::to_int(block->markdown().size())
+                         : qBound(0, cursorOffset, daemon_app::to_int(block->markdown().size()));
 
     const bool blockChanged = m_activeBlockId != block->id;
     const bool cursorChanged = m_activeCursorOffset != boundedOffset;
@@ -524,11 +526,14 @@ void EditorController::requestFocusForActiveBlock(int placement, int cursorOffse
         return;
     }
 
-    const int boundedOffset = cursorOffset < 0 ? block->markdown().size()
-                                               : qBound(0, cursorOffset, block->markdown().size());
+    const int boundedOffset =
+        cursorOffset < 0 ? daemon_app::to_int(block->markdown().size())
+                         : qBound(0, cursorOffset, daemon_app::to_int(block->markdown().size()));
     if (placement == ExactOffset || placement == Start || placement == End) {
         m_activeCursorOffset =
-            placement == Start ? 0 : (placement == End ? block->markdown().size() : boundedOffset);
+            placement == Start
+                ? 0
+                : (placement == End ? daemon_app::to_int(block->markdown().size()) : boundedOffset);
         emit activeCursorOffsetChanged();
     }
     emit editorFocusRequested(m_activeBlockId, placement, m_activeCursorOffset, visualX);
@@ -545,8 +550,9 @@ void EditorController::moveActiveBlock(int delta, int placement, qreal visualX) 
         return;
     }
 
-    const int cursorOffset =
-        placement == End || placement == LastVisualLineAtX ? target->markdown().size() : 0;
+    const int cursorOffset = placement == End || placement == LastVisualLineAtX
+                                 ? daemon_app::to_int(target->markdown().size())
+                                 : 0;
     const bool blockChanged = m_activeBlockId != target->id;
     m_activeBlockId = target->id;
     m_activeCursorOffset = cursorOffset;
@@ -560,7 +566,7 @@ void EditorController::moveActiveBlock(int delta, int placement, qreal visualX) 
 
 void EditorController::updateActiveCursorOffset(int cursorOffset) {
     const be::BlockRecord* block = m_store.blockAt(m_store.rowForBlock(m_activeBlockId));
-    const int maxOffset = block ? block->markdown().size() : 0;
+    const int maxOffset = block ? daemon_app::to_int(block->markdown().size()) : 0;
     const int boundedOffset = qBound(0, cursorOffset, maxOffset);
     if (m_activeCursorOffset == boundedOffset) {
         return;
@@ -577,7 +583,7 @@ void EditorController::replaceBlockMarkdown(qulonglong blockId, const QString& m
 
     m_commands.push(std::make_unique<be::ReplaceBlockCommand>(blockId, before, markdown), m_store);
     m_activeBlockId = blockId;
-    m_activeCursorOffset = qBound(0, m_activeCursorOffset, markdown.size());
+    m_activeCursorOffset = qBound(0, m_activeCursorOffset, daemon_app::to_int(markdown.size()));
     m_activeNativeStart = m_activeNativeEnd = 0;
     m_model.notifyBlockChanged(blockId);
     emit activeCursorOffsetChanged();

@@ -3,6 +3,8 @@
 #include "app/line_model.h"
 #include "engine/code_highlighter.h"
 
+#include <util/numeric.h>
+
 namespace editor {
 
 CodeEditorController::CodeEditorController(QObject* parent)
@@ -32,7 +34,7 @@ QString CodeEditorController::text() const {
     return m_doc->text();
 }
 int CodeEditorController::columnsInLine(int line) const {
-    return m_doc->line(line).size();
+    return daemon_app::to_int(m_doc->line(line).size());
 }
 
 Pos CodeEditorController::selMin() const {
@@ -148,7 +150,7 @@ void CodeEditorController::removeBackward() {
             m_doc->remove(Pos{c.line, c.col - 1}, c);
             m_caret = Pos{c.line, c.col - 1};
         } else if (c.line > 0) {
-            const int prevLen = m_doc->line(c.line - 1).size();
+            const int prevLen = daemon_app::to_int(m_doc->line(c.line - 1).size());
             m_doc->remove(Pos{c.line - 1, prevLen}, Pos{c.line, 0});
             m_caret = Pos{c.line - 1, prevLen};
         }
@@ -166,7 +168,7 @@ void CodeEditorController::removeForward() {
         deleteSelection();
     } else {
         const Pos c = m_caret;
-        const int len = m_doc->line(c.line).size();
+        const int len = daemon_app::to_int(m_doc->line(c.line).size());
         if (c.col < len)
             m_doc->remove(c, Pos{c.line, c.col + 1});
         else if (c.line < m_doc->lineCount() - 1)
@@ -204,7 +206,7 @@ void CodeEditorController::moveLeft(bool extend) {
         --c.col;
     else if (c.line > 0) {
         --c.line;
-        c.col = m_doc->line(c.line).size();
+        c.col = daemon_app::to_int(m_doc->line(c.line).size());
     }
     setCaret(c, extend);
 }
@@ -268,7 +270,7 @@ bool CodeEditorController::find(const QString& query, bool forward, bool caseSen
             int line = (from.line + offset) % n;
             const QString t = m_doc->line(line);
             const int startCol = (offset == 0) ? from.col : 0;
-            const int idx = t.indexOf(query, startCol, cs);
+            const int idx = daemon_app::to_int(t.indexOf(query, startCol, cs));
             if (idx >= 0) {
                 m_anchor = Pos{line, idx};
                 m_caret = Pos{line, idx + static_cast<int>(query.size())};
@@ -279,8 +281,9 @@ bool CodeEditorController::find(const QString& query, bool forward, bool caseSen
         } else {
             int line = ((from.line - offset) % n + n) % n;
             const QString t = m_doc->line(line);
-            const int fromCol = (offset == 0) ? qMax(0, from.col - 1) : t.size();
-            const int idx = t.lastIndexOf(query, fromCol, cs);
+            const int fromCol =
+                (offset == 0) ? qMax(0, from.col - 1) : daemon_app::to_int(t.size());
+            const int idx = daemon_app::to_int(t.lastIndexOf(query, fromCol, cs));
             if (idx >= 0) {
                 m_anchor = Pos{line, idx};
                 m_caret = Pos{line, idx + static_cast<int>(query.size())};

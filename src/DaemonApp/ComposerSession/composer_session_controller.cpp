@@ -4,6 +4,7 @@
 #include "uimodels/variant_list_model.h"
 
 #include <QRegularExpression>
+#include <util/numeric.h>
 
 ComposerSessionController::ComposerSessionController(QObject* parent)
     : QObject(parent), m_queue(new ComposerQueueModel(this)),
@@ -284,7 +285,7 @@ void ComposerSessionController::setVerbose(bool on) {
 void ComposerSessionController::cycleReasoningEffort() {
     static const QStringList kLevels{QStringLiteral("off"), QStringLiteral("low"),
                                      QStringLiteral("medium"), QStringLiteral("high")};
-    const int i = kLevels.indexOf(m_reasoningEffort);
+    const int i = daemon_app::to_int(kLevels.indexOf(m_reasoningEffort));
     setReasoningEffort(kLevels.at((i + 1) % kLevels.size()));
 }
 
@@ -401,7 +402,7 @@ bool ComposerSessionController::browseUp() {
     }
     if (m_browseIndex == -1) {
         m_historyDraft = m_draft;
-        m_browseIndex = arr.size() - 1;
+        m_browseIndex = daemon_app::to_int(arr.size() - 1);
     } else if (m_browseIndex > 0) {
         m_browseIndex -= 1;
     } else {
@@ -601,7 +602,7 @@ void ComposerSessionController::clear() {
 }
 
 void ComposerSessionController::refreshTrigger(const QString& text, int cursorPos) {
-    const int caret = qBound(0, cursorPos, text.length());
+    const int caret = qBound(0, cursorPos, daemon_app::to_int(text.length()));
     const QString before = text.left(caret);
 
     // Match a trigger token at the caret: start-of-line or whitespace, then a
@@ -622,7 +623,7 @@ void ComposerSessionController::refreshTrigger(const QString& text, int cursorPo
         return;
     }
 
-    m_triggerStart = caret - (query.length() + 1); // include the trigger char
+    m_triggerStart = caret - daemon_app::to_int(query.length() + 1); // include the trigger char
     m_triggerEnd = caret;
     m_completion->setItems(items);
     setActiveIndex(0);
@@ -673,10 +674,10 @@ void ComposerSessionController::accept(int index) {
     }
     const CompletionModel::Item item = m_completion->at(index);
 
-    const int start = m_triggerStart >= 0 ? m_triggerStart : m_draft.length();
+    const int start = m_triggerStart >= 0 ? m_triggerStart : daemon_app::to_int(m_draft.length());
     const int end = m_triggerEnd >= 0 ? m_triggerEnd : start;
-    const int s = qBound(0, start, m_draft.length());
-    const int e = qBound(s, end, m_draft.length());
+    const int s = qBound(0, start, daemon_app::to_int(m_draft.length()));
+    const int e = qBound(s, end, daemon_app::to_int(m_draft.length()));
 
     if (item.action != QStringLiteral("insert")) {
         // Strip the typed trigger token, then run the command.
@@ -693,7 +694,7 @@ void ComposerSessionController::accept(int index) {
 
     // Insert: replace the trigger token with the item value.
     const QString next = m_draft.left(s) + item.value + m_draft.mid(e);
-    const int caret = s + item.value.length();
+    const int caret = s + daemon_app::to_int(item.value.length());
     closeTrigger();
     applyDraftWithCursor(next, caret);
 }

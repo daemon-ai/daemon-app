@@ -6,6 +6,7 @@
 #include <QTextLayout>
 #include <QVariantList>
 #include <QVariantMap>
+#include <util/numeric.h>
 
 namespace be::app {
 
@@ -260,8 +261,9 @@ int ActiveBlockTextController::lineIndexForCursor(int cursorPosition) const {
         }
     }
 
-    return cursorPosition <= lines.first().blockPosition + lines.first().start ? 0
-                                                                               : lines.size() - 1;
+    return cursorPosition <= lines.first().blockPosition + lines.first().start
+               ? 0
+               : daemon_app::to_int(lines.size() - 1);
 }
 
 int ActiveBlockTextController::cursorAtLineVisualX(const LineInfo& line, qreal visualX) const {

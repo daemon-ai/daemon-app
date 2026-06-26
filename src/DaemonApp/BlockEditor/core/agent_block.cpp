@@ -3,6 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStringList>
+#include <util/numeric.h>
 
 namespace be {
 
@@ -45,7 +46,7 @@ QString humanDuration(qint64 ms) {
     if (ms < 1000) {
         return QStringLiteral("%1ms").arg(ms);
     }
-    const double seconds = ms / 1000.0;
+    const double seconds = static_cast<double>(ms) / 1000.0;
     if (seconds < 10.0) {
         return QStringLiteral("%1s").arg(seconds, 0, 'f', 1);
     }
@@ -386,7 +387,7 @@ QVariantList ansiToSpans(const QString& text) {
         }
     };
 
-    const int n = text.size();
+    const int n = daemon_app::to_int(text.size());
     int i = 0;
     while (i < n) {
         const QChar ch = text.at(i);

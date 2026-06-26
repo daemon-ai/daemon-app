@@ -4,6 +4,7 @@
 #include <cmath>
 #include <mapbox/earcut.hpp>
 #include <QPainterPathStroker>
+#include <util/numeric.h>
 #include <vector>
 
 // Teach earcut how to read a QPointF (specialize after the primary template).
@@ -88,14 +89,14 @@ void triangulate(const std::vector<std::vector<QPointF>>& polygon, const QColor&
         return;
     }
     const std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(polygon);
-    const int base = mesh.vertices.size();
+    const int base = daemon_app::to_int(mesh.vertices.size());
     for (const auto& ring : polygon) {
         for (const QPointF& p : ring) {
             mesh.vertices.push_back(makeVertex(p, color));
             growBounds(mesh, p);
         }
     }
-    mesh.indices.reserve(mesh.indices.size() + indices.size());
+    mesh.indices.reserve(mesh.indices.size() + static_cast<qsizetype>(indices.size()));
     for (uint32_t i : indices) {
         mesh.indices.push_back(static_cast<quint16>(base + i));
     }
@@ -103,7 +104,7 @@ void triangulate(const std::vector<std::vector<QPointF>>& polygon, const QColor&
 
 void addQuad(const QPointF& a, const QPointF& b, const QPointF& c, const QPointF& d,
              const QColor& color, Mesh& mesh) {
-    const int base = mesh.vertices.size();
+    const int base = daemon_app::to_int(mesh.vertices.size());
     for (const QPointF& p : {a, b, c, d}) {
         mesh.vertices.push_back(makeVertex(p, color));
         growBounds(mesh, p);
@@ -266,7 +267,7 @@ QVector<QPointF> fixCorners(const QVector<QPointF>& knots) {
 
 QVector<QPointF> sampleCurveBasis(const QVector<QPointF>& knots) {
     QVector<QPointF> out;
-    const int n = knots.size();
+    const int n = daemon_app::to_int(knots.size());
     if (n == 0) {
         return out;
     }
@@ -353,7 +354,7 @@ void addArrowhead(const QPointF& tip, const QPointF& dir, qreal size, const QCol
     const QPointF base = tip - d * size;
     const QPointF left = base + n * (size * 0.5);
     const QPointF right = base - n * (size * 0.5);
-    const int b = mesh.vertices.size();
+    const int b = daemon_app::to_int(mesh.vertices.size());
     for (const QPointF& p : {tip, left, right}) {
         mesh.vertices.push_back(makeVertex(p, color));
         growBounds(mesh, p);

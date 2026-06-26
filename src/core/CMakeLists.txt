@@ -1,3 +1,4 @@
+add_subdirectory(util)
 add_subdirectory(domain)
 # uimodels + daemonnet provide the unified DaemonNet seed that persistence (InMemorySessionStore)
 # is re-seeded from, so they must be configured before persistence.

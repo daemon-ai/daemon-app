@@ -2,6 +2,8 @@
 
 #include "appcache/json_cache.h"
 
+#include <util/numeric.h>
+
 namespace profiles {
 namespace {
 
@@ -93,7 +95,7 @@ MockProfileStore::MockProfileStore(QObject* parent)
         QList<QVariantMap> rows = m_profiles->rows();
         bool changed = false;
         for (QVariantMap& row : rows) {
-            const int before = row.size();
+            const int before = daemon_app::to_int(row.size());
             normalizeProfile(row);
             changed = changed || (row.size() != before);
         }

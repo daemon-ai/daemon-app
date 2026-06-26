@@ -11,6 +11,7 @@
 #include <QSGTextNode>
 #include <QSGTransformNode>
 #include <QSGVertexColorMaterial>
+#include <util/numeric.h>
 
 namespace be::app {
 
@@ -27,9 +28,9 @@ QSGGeometryNode* buildMeshNode(const Mesh& mesh) {
         return nullptr;
     }
     auto* node = new QSGGeometryNode;
-    auto* geometry =
-        new QSGGeometry(QSGGeometry::defaultAttributes_ColoredPoint2D(), mesh.vertices.size(),
-                        mesh.indices.size(), QSGGeometry::UnsignedShortType);
+    auto* geometry = new QSGGeometry(
+        QSGGeometry::defaultAttributes_ColoredPoint2D(), daemon_app::to_int(mesh.vertices.size()),
+        daemon_app::to_int(mesh.indices.size()), QSGGeometry::UnsignedShortType);
     geometry->setDrawingMode(QSGGeometry::DrawTriangles);
     std::memcpy(geometry->vertexData(), mesh.vertices.constData(),
                 size_t(mesh.vertices.size()) * sizeof(Vertex));
@@ -325,9 +326,9 @@ QSGNode* DiagramItem::updatePaintNode(QSGNode* oldNode, UpdatePaintNodeData*) {
         const qreal contentW = bounds.width() * scale;
         const qreal offsetX = ((width() - contentW) / 2.0) + m_panX;
         const qreal offsetY = kPad + m_panY;
-        matrix.translate(offsetX, offsetY);
-        matrix.scale(scale);
-        matrix.translate(-bounds.left(), -bounds.top());
+        matrix.translate(static_cast<float>(offsetX), static_cast<float>(offsetY));
+        matrix.scale(static_cast<float>(scale));
+        matrix.translate(static_cast<float>(-bounds.left()), static_cast<float>(-bounds.top()));
     }
     camera->setMatrix(matrix);
 

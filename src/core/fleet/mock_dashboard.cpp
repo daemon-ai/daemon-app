@@ -114,10 +114,12 @@ QString MockDashboard::tokensToday() const {
         }
     }
     if (total >= 1000000) {
-        return QStringLiteral("%1M").arg(QString::number(total / 1000000.0, 'f', 2));
+        return QStringLiteral("%1M").arg(
+            QString::number(static_cast<double>(total) / 1000000.0, 'f', 2));
     }
     if (total >= 1000) {
-        return QStringLiteral("%1k").arg(QString::number(total / 1000.0, 'f', 1));
+        return QStringLiteral("%1k").arg(
+            QString::number(static_cast<double>(total) / 1000.0, 'f', 1));
     }
     return QString::number(total);
 }

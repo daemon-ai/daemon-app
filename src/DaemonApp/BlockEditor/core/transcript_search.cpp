@@ -2,6 +2,8 @@
 
 #include "core/document_store.h"
 
+#include <util/numeric.h>
+
 namespace be {
 
 TranscriptSearchController::TranscriptSearchController(QObject* parent) : QObject(parent) {}
@@ -87,7 +89,7 @@ void TranscriptSearchController::refresh() {
             const QString hay = searchableTextFor(*m_document->blockAt(row));
             int from = 0;
             while (true) {
-                const int at = hay.indexOf(m_query, from, cs);
+                const int at = daemon_app::to_int(hay.indexOf(m_query, from, cs));
                 if (at < 0) {
                     break;
                 }
@@ -118,7 +120,7 @@ void TranscriptSearchController::next() {
     if (m_matches.isEmpty()) {
         return;
     }
-    m_current = (m_current + 1) % m_matches.size();
+    m_current = daemon_app::to_int((m_current + 1) % m_matches.size());
     emit currentMatchChanged();
     emitNavigateToCurrent();
 }
@@ -127,7 +129,7 @@ void TranscriptSearchController::previous() {
     if (m_matches.isEmpty()) {
         return;
     }
-    m_current = (m_current - 1 + m_matches.size()) % m_matches.size();
+    m_current = daemon_app::to_int((m_current - 1 + m_matches.size()) % m_matches.size());
     emit currentMatchChanged();
     emitNavigateToCurrent();
 }

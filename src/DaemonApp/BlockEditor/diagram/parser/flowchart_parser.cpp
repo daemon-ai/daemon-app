@@ -2,6 +2,7 @@
 
 #include <QRegularExpression>
 #include <QStringList>
+#include <util/numeric.h>
 
 namespace be::diagram {
 
@@ -185,7 +186,7 @@ public:
             node.id = id;
             node.label = id;
             model.nodes.push_back(node);
-            idx = model.nodes.size() - 1;
+            idx = daemon_app::to_int(model.nodes.size() - 1);
             model.nodeIndex.insert(id, idx);
         }
         // Assign cluster membership on the first reference seen inside a subgraph,
@@ -221,7 +222,7 @@ public:
             cluster.parentId = model.clusters[m_clusterStack.last()].id;
         }
         model.clusters.push_back(cluster);
-        m_clusterStack.push_back(model.clusters.size() - 1);
+        m_clusterStack.push_back(daemon_app::to_int(model.clusters.size() - 1));
     }
 
     void popCluster() {

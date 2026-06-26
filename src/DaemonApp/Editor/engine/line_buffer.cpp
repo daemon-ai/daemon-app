@@ -1,6 +1,7 @@
 #include "engine/line_buffer.h"
 
 #include <algorithm>
+#include <util/numeric.h>
 
 namespace editor {
 
@@ -14,7 +15,7 @@ LineBuffer::LineBuffer() {
 void LineBuffer::locate(int line, int& block, int& off) const {
     int acc = 0;
     for (int b = 0; b < m_blocks.size(); ++b) {
-        const int n = m_blocks[b].size();
+        const int n = daemon_app::to_int(m_blocks[b].size());
         if (line < acc + n) {
             block = b;
             off = line - acc;
@@ -22,8 +23,8 @@ void LineBuffer::locate(int line, int& block, int& off) const {
         }
         acc += n;
     }
-    block = m_blocks.isEmpty() ? 0 : m_blocks.size() - 1;
-    off = m_blocks.isEmpty() ? 0 : m_blocks.last().size();
+    block = m_blocks.isEmpty() ? 0 : daemon_app::to_int(m_blocks.size() - 1);
+    off = m_blocks.isEmpty() ? 0 : daemon_app::to_int(m_blocks.last().size());
 }
 
 const QString& LineBuffer::at(int line) const {
@@ -55,7 +56,7 @@ void LineBuffer::replace(int line, int removeCount, const QStringList& lines) {
         int b = 0;
         int off = 0;
         locate(line, b, off);
-        const int take = qMin(remaining, m_blocks[b].size() - off);
+        const int take = daemon_app::to_int(qMin(remaining, m_blocks[b].size() - off));
         m_blocks[b].remove(off, take);
         remaining -= take;
         m_count -= take;
@@ -77,7 +78,7 @@ void LineBuffer::replace(int line, int removeCount, const QStringList& lines) {
         }
         for (int i = 0; i < lines.size(); ++i)
             m_blocks[b].insert(off + i, lines[i]);
-        m_count += lines.size();
+        m_count += daemon_app::to_int(lines.size());
         rebalanceFrom(b);
     }
 
@@ -93,7 +94,7 @@ void LineBuffer::rebalanceFrom(int block) {
         return;
     // Split oversized blocks.
     while (m_blocks[block].size() > kSplit) {
-        const int half = m_blocks[block].size() / 2;
+        const int half = daemon_app::to_int(m_blocks[block].size() / 2);
         QStringList tail = m_blocks[block].mid(half);
         m_blocks[block] = m_blocks[block].mid(0, half);
         m_blocks.insert(block + 1, tail);
@@ -120,7 +121,7 @@ void LineBuffer::setAll(const QStringList& lines) {
         m_count = 1;
         return;
     }
-    m_count = lines.size();
+    m_count = daemon_app::to_int(lines.size());
     for (int i = 0; i < lines.size(); i += kTarget)
         m_blocks.append(lines.mid(i, kTarget));
 }

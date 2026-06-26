@@ -23,6 +23,7 @@ target_link_libraries(de_core
         KF6SyntaxHighlighting
     PRIVATE
         daemon-app::warnings
+        daemon-app::numeric
 )
 
 # --- da_editor: QML module (controller + line model + the view) -------------
@@ -55,4 +56,5 @@ target_link_libraries(da_editor
         daemon-app::theme
         daemon-app::controls
         daemon-app::warnings
+        daemon-app::numeric
 )

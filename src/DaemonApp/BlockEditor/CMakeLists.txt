@@ -28,7 +28,7 @@ add_library(be_diagram STATIC
     diagram/text/text_measurer.h
 )
 target_include_directories(be_diagram PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(be_diagram PUBLIC Qt6::Core Qt6::Gui earcut::earcut)
+target_link_libraries(be_diagram PUBLIC Qt6::Core Qt6::Gui earcut::earcut PRIVATE daemon-app::numeric)
 
 # --- be_core: markdown parse / project / document store ---------------------
 add_library(be_core STATIC
@@ -64,7 +64,7 @@ add_library(be_core STATIC
     core/transcript_search.h
 )
 target_include_directories(be_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(be_core PUBLIC Qt6::Core Qt6::Gui Qt6::Sql md4qt::md4qt)
+target_link_libraries(be_core PUBLIC Qt6::Core Qt6::Gui Qt6::Sql md4qt::md4qt PRIVATE daemon-app::numeric)
 
 # --- be_transcript: the SessionLogEntry <-> document bridge (roadmap P4) ---------
 # Decompose/apply between domain::SessionLogEntry and the DocumentStore. Kept out of

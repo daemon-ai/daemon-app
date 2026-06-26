@@ -8,6 +8,7 @@
 #include <functional>
 #include <limits>
 #include <QSet>
+#include <util/numeric.h>
 
 namespace be::diagram {
 
@@ -81,7 +82,7 @@ WorkGraph buildWorkGraph(const DiagramModel& model) {
 // recursion stack) are reversed in place.
 // ---------------------------------------------------------------------------
 void acyclic(WorkGraph& g) {
-    const int n = g.nodes.size();
+    const int n = daemon_app::to_int(g.nodes.size());
     QVector<int> state(n, 0); // 0=unvisited, 1=on-stack, 2=done
     const QVector<QVector<int>> out = g.outEdges();
 
@@ -115,7 +116,7 @@ void acyclic(WorkGraph& g) {
 // even number of half-ranks, leaving odd ranks free for edge-label dummies.
 // ---------------------------------------------------------------------------
 void rank(WorkGraph& g) {
-    const int n = g.nodes.size();
+    const int n = daemon_app::to_int(g.nodes.size());
     for (WorkNode& nd : g.nodes) {
         nd.rank = 0;
     }
@@ -179,7 +180,7 @@ void rank(WorkGraph& g) {
 // they are layout-only and never written back to the model.
 // ---------------------------------------------------------------------------
 void addBorderSegments(WorkGraph& g, const DiagramModel& model, const LayoutOptions& opts) {
-    const int realCount = g.nodes.size();
+    const int realCount = daemon_app::to_int(g.nodes.size());
     for (const DiagramCluster& c : model.clusters) {
         if (!c.parentId.isEmpty()) {
             continue; // top-level clusters only; nested rely on bounds
@@ -238,7 +239,7 @@ struct Chains {
 
 Chains normalize(WorkGraph& g, const DiagramModel& model, const LayoutOptions& opts) {
     Chains chains;
-    const int edgeCount = g.edges.size();
+    const int edgeCount = daemon_app::to_int(g.edges.size());
     for (int ei = 0; ei < edgeCount; ++ei) {
         WorkEdge edge = g.edges[ei];
         if (edge.u < 0 || edge.v < 0 || edge.edgeIdx < 0) {
@@ -390,7 +391,7 @@ void initOrder(WorkGraph& g, const Adj& adj, int numRanks) {
 }
 
 void sortRank(WorkGraph& g, QVector<int>& layer, const Adj& adj, bool useSucc) {
-    const int m = layer.size();
+    const int m = daemon_app::to_int(layer.size());
     QHash<int, double> bc;
     for (int i = 0; i < m; ++i) {
         const int v = layer[i];
@@ -467,7 +468,7 @@ void order(WorkGraph& g, const Adj& adj, int numRanks) {
                 applyOrders(layers);
             }
         } else {
-            for (int r = layers.size() - 2; r >= 0; --r) {
+            for (int r = daemon_app::to_int(layers.size() - 2); r >= 0; --r) {
                 sortRank(g, layers[r], adj, /*useSucc=*/true);
                 applyOrders(layers);
             }
@@ -533,7 +534,7 @@ struct BK {
             const QVector<int>& layer = layers[r];
             int k0 = 0;
             int scanPos = 0;
-            const int last = layer.size() - 1;
+            const int last = daemon_app::to_int(layer.size() - 1);
             for (int l1 = 0; l1 < layer.size(); ++l1) {
                 const int v = layer[l1];
                 int w = -1; // inner-segment predecessor (dummy->dummy)
@@ -546,7 +547,8 @@ struct BK {
                     }
                 }
                 if (w != -1 || l1 == last) {
-                    const int k1 = (w != -1) ? pos[w] : (layers[r - 1].size() - 1);
+                    const int k1 =
+                        (w != -1) ? pos[w] : daemon_app::to_int(layers[r - 1].size() - 1);
                     for (int l = scanPos; l <= l1; ++l) {
                         const int u2 = layer[l];
                         for (int uu : adj.preds[u2]) {
@@ -604,7 +606,7 @@ struct BK {
                     continue;
                 }
                 std::ranges::sort(ws, [&](int a, int b) { return lpos[a] < lpos[b]; });
-                const double mp = (ws.size() - 1) / 2.0;
+                const double mp = static_cast<double>(ws.size() - 1) / 2.0;
                 const int from = int(std::floor(mp));
                 const int to = int(std::ceil(mp));
                 for (int m = from; m <= to; ++m) {
