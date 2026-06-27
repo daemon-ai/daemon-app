@@ -61,6 +61,7 @@ namespace daemonapp::daemon {
 
 class ApprovalRepository;
 class CheckpointRepository;
+class CredentialRepository;
 class DaemonCacheStore;
 class FsRepository;
 class ModelRepository;
@@ -109,6 +110,7 @@ struct AppServiceGraph {
     SessionRepository* sessions = nullptr;
     ProfileRepository* profileRepository = nullptr;
     ModelRepository* models = nullptr;
+    CredentialRepository* credentialRepository = nullptr;
     FsRepository* files = nullptr;
     ApprovalRepository* approvalRepository = nullptr;
     CheckpointRepository* checkpointRepository = nullptr;

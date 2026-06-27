@@ -257,6 +257,22 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // Headless full-onboarding self-check (CON-4/6/7): connect, add the provider key, pick a model,
+    // and finish - so the E2E harness can assert the credential/model wire ops + persisted setup
+    // without QML clicks. Gated on DAEMON_APP_ONBOARD_KEY so a normal run is unaffected.
+    const QByteArray onboardKey = qgetenv("DAEMON_APP_ONBOARD_KEY");
+    if (!onboardKey.isEmpty()) {
+        const QByteArray waitMs = qgetenv("DAEMON_APP_WAIT_READY");
+        const int timeoutMs = waitMs.toInt() > 0 ? waitMs.toInt() : 15000;
+        const QString provider = QString::fromUtf8(qgetenv("DAEMON_APP_ONBOARD_PROVIDER"));
+        const bool ready = application.runHeadlessOnboarding(
+            provider.isEmpty() ? QStringLiteral("anthropic") : provider,
+            QString::fromUtf8(onboardKey), timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_READY %s\n", ready ? "ok" : "timeout");
+        std::fflush(stdout);
+        return ready ? 0 : 2;
+    }
+
     // Headless connectivity self-check for the cross-repo E2E harness: block until the daemon-mode
     // auto-connect Health round-trip resolves (or times out), emit a stable sentinel on stdout, and
     // exit deterministically. Keeps the harness from racing the async connect.

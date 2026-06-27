@@ -295,9 +295,9 @@ void RootWidget::terminalChanged() {
     // First-run gate (parity with the GUI): on first launch, raise the lighter
     // "Setup Required" modal over the shell until setup completes.
     if (m_services.firstRun != nullptr && m_services.firstRun->active()) {
-        auto* gate =
-            new FirstRunDialog(m_services.firstRun, m_services.connection, m_services.settings,
-                               m_services.settings->resolvedConnectionTarget(), this);
+        auto* gate = new FirstRunDialog(
+            m_services.firstRun, m_services.connection, m_services.settings, m_services.accounts,
+            m_services.modelCatalog, m_services.settings->resolvedConnectionTarget(), this);
         gate->setFocus();
     }
 }
@@ -1752,6 +1752,34 @@ void RootWidget::driveFirstRunConnect() const {
     const QString target = m_services.settings->resolvedConnectionTarget();
     m_services.settings->setLastConnection(QStringLiteral("local"), target);
     m_services.connection->connectTo(QStringLiteral("local"), target);
+}
+
+bool RootWidget::runHeadlessOnboarding(const QString& provider, const QString& key,
+                                       int timeoutMs) const {
+    const auto settle = [](int ms) {
+        QEventLoop loop;
+        QTimer::singleShot(ms, &loop, &QEventLoop::quit);
+        loop.exec();
+    };
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return false;
+    }
+    settle(1000); // let the on-ready ProfileList/CredentialList/Models/ModelCurrent flush
+    if (!key.isEmpty() && m_services.accounts != nullptr) {
+        m_services.accounts->addApiKey(provider, QString(), key, QString());
+    }
+    if (m_services.modelCatalog != nullptr) {
+        const QStringList ids = m_services.modelCatalog->installedIds();
+        if (!ids.isEmpty()) {
+            m_services.modelCatalog->activate(ids.first());
+        }
+    }
+    if (m_services.firstRun != nullptr) {
+        m_services.firstRun->completeInference();
+    }
+    settle(1000); // flush the CredentialSet (+ its re-list) round-trip
+    return true;
 }
 
 void RootWidget::promptQuit() {

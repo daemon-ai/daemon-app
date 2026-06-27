@@ -2,7 +2,9 @@
 
 #include "daemon/daemon_cache_store.h"
 #include "daemon/node_api_client.h"
+#include "daemon/node_api_codec.h"
 
+#include <QList>
 #include <QObject>
 #include <QString>
 
@@ -59,18 +61,106 @@ private:
 };
 
 class ProfileRepository : public RepositoryBase {
+    Q_OBJECT
+
 public:
-    using RepositoryBase::RepositoryBase;
+    ProfileRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
 
     bool upsertCachedProfile(const CachedProfileRow& row);
     [[nodiscard]] QList<CachedProfileRow> cachedProfiles() const;
+
+    [[nodiscard]] const QList<DecodedProfileInfo>& profiles() const { return m_profiles; }
+    // The active default profile id (what new sessions bind to), or empty if unknown. Falls back to
+    // the first listed profile when none is flagged active. Onboarding stores credentials under it.
+    [[nodiscard]] QString activeProfileId() const;
+
+    // Issue a ProfileList; on success profilesRefreshed() fires with profiles() populated.
+    void refreshProfiles();
+
+signals:
+    void profilesRefreshed();
+    void refreshFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kProfilesCorrelation = "repo/profile-list";
+
+    QList<DecodedProfileInfo> m_profiles;
 };
 
-// Not part of the first daemon slice: kept as a cache/NodeApi-aware stub until its
-// daemon-api codec subset (model catalog) is generated.
-class ModelRepository : public RepositoryBase {
+// Onboarding credential slice (CON-4): a `CredentialList` keeps a redacted view in memory (no
+// secret ever lands here), and `CredentialSet`/`CredentialRemove` mutate the daemon store and
+// re-list. The DaemonAccountsService projects this list into its account rows.
+class CredentialRepository : public RepositoryBase {
+    Q_OBJECT
+
 public:
-    using RepositoryBase::RepositoryBase;
+    CredentialRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    [[nodiscard]] const QList<DecodedCredentialInfo>& credentials() const { return m_credentials; }
+
+    // Issue a CredentialList; on success listRefreshed() fires with credentials() populated.
+    void refreshList();
+    // Store `secret` under `profile` (CredentialSet); on Ok the list is re-fetched.
+    void setCredential(const QString& profile, const QString& secret);
+    // Remove the secret under `profile` (CredentialRemove); on Ok the list is re-fetched.
+    void removeCredential(const QString& profile);
+
+signals:
+    void listRefreshed();
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kListCorrelation = "repo/credential-list";
+    static constexpr auto kSetCorrelation = "repo/credential-set";
+    static constexpr auto kRemoveCorrelation = "repo/credential-remove";
+
+    QList<DecodedCredentialInfo> m_credentials;
+};
+
+// Onboarding model slice (CON-6): `Models` discovery + `ModelCurrent` resolution kept in memory,
+// plus `SetSessionModel` to choose a model for a live session. The DaemonModelCatalog projects
+// these into its discover/installed rows + current selection.
+class ModelRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    ModelRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    [[nodiscard]] const QList<DecodedModelDescriptor>& models() const { return m_models; }
+    [[nodiscard]] bool hasCurrent() const { return m_hasCurrent; }
+    [[nodiscard]] const DecodedModelDescriptor& currentModel() const { return m_current; }
+
+    // Issue a Models request; on success modelsRefreshed() fires with models() populated.
+    void refreshModels();
+    // Resolve the current model for `profile` (empty = active default); currentRefreshed() fires.
+    void refreshCurrent(const QString& profile = QString());
+    // Set the model (and optionally re-bind provider) for a live session; on Ok modelSet() fires.
+    void setSessionModel(const QString& sessionId, const QString& model,
+                         const QString& provider = QString());
+
+signals:
+    void modelsRefreshed();
+    void currentRefreshed();
+    void modelSet();
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kModelsCorrelation = "repo/models";
+    static constexpr auto kCurrentCorrelation = "repo/model-current";
+    static constexpr auto kSetModelCorrelation = "repo/set-session-model";
+
+    QList<DecodedModelDescriptor> m_models;
+    DecodedModelDescriptor m_current;
+    bool m_hasCurrent = false;
 };
 
 class FsRepository : public RepositoryBase {

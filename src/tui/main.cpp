@@ -129,8 +129,20 @@ bool maybeRenderOffscreen() {
     // auto-connect Health round-trip resolves (or times out) and emit a stable sentinel, so the
     // harness can hard-assert TUI -> daemon connectivity rather than only logging it. The frame
     // dump below still runs afterwards (the daemon has been probed by then).
+    const QByteArray onboardKey = qgetenv("DAEMON_APP_ONBOARD_KEY");
     const QByteArray waitReadyMs = qgetenv("DAEMON_APP_WAIT_READY");
-    if (!waitReadyMs.isEmpty()) {
+    if (!onboardKey.isEmpty()) {
+        // Headless full onboarding (CON-4/6/7): connect, add the key, pick a model, finish - so the
+        // E2E harness can assert the credential/model wire ops + persisted setup without key
+        // driving.
+        const int timeoutMs = waitReadyMs.toInt() > 0 ? waitReadyMs.toInt() : 15000;
+        const QString provider = QString::fromUtf8(qgetenv("DAEMON_APP_ONBOARD_PROVIDER"));
+        const bool ready =
+            root.runHeadlessOnboarding(provider.isEmpty() ? QStringLiteral("anthropic") : provider,
+                                       QString::fromUtf8(onboardKey), timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_READY %s\n", ready ? "ok" : "timeout");
+        std::fflush(stdout);
+    } else if (!waitReadyMs.isEmpty()) {
         const int timeoutMs = waitReadyMs.toInt() > 0 ? waitReadyMs.toInt() : 5000;
         // On first run nothing auto-connects; drive the onboarding "Local" connect (which, with
         // managed local daemon on, spawns the daemon if needed) so the harness can assert it.

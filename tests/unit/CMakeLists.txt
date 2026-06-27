@@ -142,6 +142,7 @@ target_link_libraries(tst_first_run_model
         daemon-app::firstrun
         daemon-app::connection
         daemon-app::settings_store
+        daemon-app::models
 )
 add_test(NAME tst_first_run_model COMMAND tst_first_run_model)
 set_tests_properties(tst_first_run_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

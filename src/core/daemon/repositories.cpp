@@ -123,12 +123,211 @@ void SessionRepository::handleFailure(const QString& correlationId, const QStrin
     }
 }
 
+// --- CredentialRepository (CON-4) -----------------------------------------------------------
+
+CredentialRepository::CredentialRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                           QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &CredentialRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &CredentialRepository::handleFailure);
+    }
+}
+
+void CredentialRepository::refreshList() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeCredentialListRequest(),
+                          QLatin1String(kListCorrelation));
+}
+
+void CredentialRepository::setCredential(const QString& profile, const QString& secret) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeCredentialSetRequest(profile, secret),
+                          QLatin1String(kSetCorrelation));
+}
+
+void CredentialRepository::removeCredential(const QString& profile) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeCredentialRemoveRequest(profile),
+                          QLatin1String(kRemoveCorrelation));
+}
+
+void CredentialRepository::handleResponse(const QString& correlationId,
+                                          const QByteArray& responseCbor) {
+    if (correlationId == QLatin1String(kListCorrelation)) {
+        if (!NodeApiCodec::decodeCredentials(responseCbor, &m_credentials)) {
+            emit operationFailed(QStringLiteral("Failed to decode Credentials response"));
+            return;
+        }
+        emit listRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kSetCorrelation) ||
+        correlationId == QLatin1String(kRemoveCorrelation)) {
+        const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+        if (kind == ApiResponseKind::Ok) {
+            refreshList(); // reflect the mutation in the redacted view
+            return;
+        }
+        DecodedApiError err;
+        if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(QStringLiteral("Credential operation failed"));
+        }
+        return;
+    }
+}
+
+void CredentialRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kListCorrelation) ||
+        correlationId == QLatin1String(kSetCorrelation) ||
+        correlationId == QLatin1String(kRemoveCorrelation)) {
+        emit operationFailed(message);
+    }
+}
+
+// --- ModelRepository (CON-6) ----------------------------------------------------------------
+
+ModelRepository::ModelRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &ModelRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &ModelRepository::handleFailure);
+    }
+}
+
+void ModelRepository::refreshModels() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelsRequest(), QLatin1String(kModelsCorrelation));
+}
+
+void ModelRepository::refreshCurrent(const QString& profile) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelCurrentRequest(profile),
+                          QLatin1String(kCurrentCorrelation));
+}
+
+void ModelRepository::setSessionModel(const QString& sessionId, const QString& model,
+                                      const QString& provider) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeSetSessionModelRequest(sessionId, model, provider),
+                          QLatin1String(kSetModelCorrelation));
+}
+
+void ModelRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
+    if (correlationId == QLatin1String(kModelsCorrelation)) {
+        if (!NodeApiCodec::decodeModels(responseCbor, &m_models)) {
+            emit operationFailed(QStringLiteral("Failed to decode Models response"));
+            return;
+        }
+        emit modelsRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kCurrentCorrelation)) {
+        if (!NodeApiCodec::decodeModelCurrent(responseCbor, &m_current, &m_hasCurrent)) {
+            emit operationFailed(QStringLiteral("Failed to decode ModelCurrent response"));
+            return;
+        }
+        emit currentRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kSetModelCorrelation)) {
+        const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+        if (kind == ApiResponseKind::Ok) {
+            emit modelSet();
+            return;
+        }
+        DecodedApiError err;
+        if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(QStringLiteral("Set-model operation failed"));
+        }
+        return;
+    }
+}
+
+void ModelRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kModelsCorrelation) ||
+        correlationId == QLatin1String(kCurrentCorrelation) ||
+        correlationId == QLatin1String(kSetModelCorrelation)) {
+        emit operationFailed(message);
+    }
+}
+
+ProfileRepository::ProfileRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                     QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &ProfileRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &ProfileRepository::handleFailure);
+    }
+}
+
 bool ProfileRepository::upsertCachedProfile(const CachedProfileRow& row) {
     return cache() != nullptr && cache()->upsertProfile(row);
 }
 
 QList<CachedProfileRow> ProfileRepository::cachedProfiles() const {
     return cache() != nullptr ? cache()->profiles() : QList<CachedProfileRow>{};
+}
+
+QString ProfileRepository::activeProfileId() const {
+    for (const DecodedProfileInfo& p : m_profiles) {
+        if (p.isActive) {
+            return p.id;
+        }
+    }
+    return m_profiles.isEmpty() ? QString() : m_profiles.first().id;
+}
+
+void ProfileRepository::refreshProfiles() {
+    if (client() == nullptr) {
+        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProfileListRequest(),
+                          QLatin1String(kProfilesCorrelation));
+}
+
+void ProfileRepository::handleResponse(const QString& correlationId,
+                                       const QByteArray& responseCbor) {
+    if (correlationId != QLatin1String(kProfilesCorrelation)) {
+        return;
+    }
+    if (!NodeApiCodec::decodeProfiles(responseCbor, &m_profiles)) {
+        emit refreshFailed(QStringLiteral("Failed to decode Profiles response"));
+        return;
+    }
+    emit profilesRefreshed();
+}
+
+void ProfileRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kProfilesCorrelation)) {
+        emit refreshFailed(message);
+    }
 }
 
 bool FsRepository::upsertCachedEntry(const CachedFsEntryRow& row) {

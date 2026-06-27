@@ -130,6 +130,12 @@ public:
     // setup is complete, so it is safe to call before awaitConnectionReady.
     void driveFirstRunConnect() const;
 
+    // Headless E2E hook (mirrors Application::runHeadlessOnboarding): connect, add the API key,
+    // pick the first discovered model, and finish - pumping the event loop so the credential/model
+    // requests round-trip. Returns true iff the connection reached ready.
+    [[nodiscard]] bool runHeadlessOnboarding(const QString& provider, const QString& key,
+                                             int timeoutMs) const;
+
     // Mouse entry point (connected to MouseTerminal::mouseInput). Hit-tests the
     // panes by terminal coordinate and routes a primary-button press to focus +
     // select/open, or a wheel event to scroll the pane under the cursor. No-op for

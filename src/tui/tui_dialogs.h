@@ -9,6 +9,13 @@
 #include <Tui/ZInputBox.h>
 #include <Tui/ZLabel.h>
 
+namespace accounts {
+class IAccountsService;
+}
+namespace models {
+class IModelCatalog;
+}
+
 // A small modal "Quit daemon-app?" confirmation. ZDialog auto-centers, handles
 // Esc -> reject(), and routes Enter to the default button; we add Quit/Cancel and
 // surface the confirmed choice via quitConfirmed().
@@ -62,7 +69,8 @@ class FirstRunDialog : public Tui::ZDialog {
 
 public:
     FirstRunDialog(firstrun::FirstRunModel* model, connection::IConnectionService* connection,
-                   settings::ISettingsStore* settings, const QString& defaultTarget,
+                   settings::ISettingsStore* settings, accounts::IAccountsService* accounts,
+                   models::IModelCatalog* modelCatalog, const QString& defaultTarget,
                    Tui::ZWidget* parent);
 
 private:
@@ -71,13 +79,19 @@ private:
     // placeholder/seed and show the token field only for "remote" (parity with the
     // GUI ConnectionPicker's mode cards).
     void applyMode(const QString& mode);
+    // The inference step's commit: store the typed provider key (if any), pick the first discovered
+    // model, then complete (gated on inferenceReady). Mirrors the GUI inference step minimally.
+    void commitInference();
 
     firstrun::FirstRunModel* m_model = nullptr;
     connection::IConnectionService* m_connection = nullptr;
     settings::ISettingsStore* m_settings = nullptr;
+    accounts::IAccountsService* m_accounts = nullptr;
+    models::IModelCatalog* m_modelCatalog = nullptr;
     Tui::ZLabel* m_status = nullptr;
     Tui::ZInputBox* m_target = nullptr;
     Tui::ZInputBox* m_token = nullptr;
+    Tui::ZInputBox* m_key = nullptr; // provider API key (inference phase)
     Tui::ZButton* m_localBtn = nullptr;
     Tui::ZButton* m_remoteBtn = nullptr;
     Tui::ZButton* m_testBtn = nullptr;

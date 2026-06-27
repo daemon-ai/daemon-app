@@ -103,6 +103,13 @@ public:
     // Lets the system-tests harness exercise the onboarding connect path without QML click sim.
     void driveFirstRunConnect() const;
 
+    // Headless E2E hook (CON-4/6/7): drive the full first-run provider+model step without QML
+    // clicks - connect, wait until ready, add the API key (CredentialSet on the active profile),
+    // pick the first discovered model, and finish. Pumps the event loop so the credential/model
+    // requests + responses actually round-trip. Returns true iff the connection reached ready.
+    [[nodiscard]] bool runHeadlessOnboarding(const QString& provider, const QString& key,
+                                             int timeoutMs);
+
 protected:
     // Close-to-tray: when a tray is installed, intercept the root window's close
     // (X) event and hide instead of quitting.
@@ -119,6 +126,10 @@ private:
     // otherwise). Called from the destructor so every exit path - normal quit and the early-return
     // headless harness modes - cleans up a managed daemon when the user opted in.
     void shutdownManagedDaemon() const;
+
+    // Run the event loop for `ms` (a bounded settle so queued NodeApi requests + their responses
+    // flush before a headless harness exits). Used only by the headless onboarding hook.
+    void settle(int ms) const;
 
     // Shared GUI/TUI service graph (session store, connection, fs, memory, nav, first-run,
     // config, models, accounts, profiles, fleet, automation, session facades). Read members

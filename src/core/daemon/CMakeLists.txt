@@ -14,6 +14,12 @@ add_library(da_daemon_codec STATIC
 )
 add_library(daemon-app::daemon_codec ALIAS da_daemon_codec)
 set_target_properties(da_daemon_codec PROPERTIES C_STANDARD 11 POSITION_INDEPENDENT_CODE ON)
+# Encode in canonical (definite-length) CBOR. Without this, zcbor emits indefinite-length maps
+# (0xBF..0xFF), which the daemon's serde/ciborium decoder rejects for externally-tagged enum
+# variants ("invalid type: map, expected enum") - so every data-carrying ApiRequest (CredentialSet,
+# ModelCurrent, SessionsQuery, ...) would fail to decode. Canonical maps (0xA1/0xA2) match the
+# daemon's own serde encoding byte-for-byte. PUBLIC so the codec headers + callers agree.
+target_compile_definitions(da_daemon_codec PUBLIC ZCBOR_CANONICAL)
 target_include_directories(da_daemon_codec PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/codec/vendor"
     "${CMAKE_CURRENT_SOURCE_DIR}/codec/generated"
@@ -30,6 +36,10 @@ add_library(da_daemon_client STATIC
     local_daemon_launcher.cpp
     daemon_connection_service.h
     daemon_connection_service.cpp
+    daemon_accounts_service.h
+    daemon_accounts_service.cpp
+    daemon_model_catalog.h
+    daemon_model_catalog.cpp
     daemon_cache_store.h
     daemon_cache_store.cpp
     cached_session_store.h

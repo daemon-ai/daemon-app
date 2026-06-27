@@ -9,6 +9,9 @@ class ISettingsStore;
 namespace connection {
 class IConnectionService;
 }
+namespace models {
+class IModelCatalog;
+}
 
 namespace firstrun {
 
@@ -34,8 +37,11 @@ class FirstRunModel : public QObject {
                    inferenceReadyChanged)
 
 public:
+    // `modelCatalog` (optional) drives inference readiness (CON-7): the inference gate's Finish is
+    // enabled once a usable model is reachable (a current model resolves). Null keeps the gate
+    // permissive (the mock/standalone path).
     FirstRunModel(settings::ISettingsStore* settings, connection::IConnectionService* connection,
-                  QObject* parent = nullptr);
+                  models::IModelCatalog* modelCatalog = nullptr, QObject* parent = nullptr);
 
     [[nodiscard]] QString phase() const { return m_phase; }
     [[nodiscard]] bool active() const { return m_phase != QStringLiteral("done"); }
@@ -64,10 +70,14 @@ private:
     void setPhase(const QString& phase);
     void setError(const QString& error);
     void onConnectionStateChanged();
+    // Recompute inferenceReady from the model catalog (a current model is reachable). When no
+    // catalog is wired the gate stays permissive (ready) so the mock/standalone path is unblocked.
+    void refreshInferenceReady();
     void finish();
 
     settings::ISettingsStore* m_settings = nullptr;
     connection::IConnectionService* m_connection = nullptr;
+    models::IModelCatalog* m_modelCatalog = nullptr;
     QString m_phase = QStringLiteral("connect");
     QString m_error;
     bool m_inferenceReady = false;

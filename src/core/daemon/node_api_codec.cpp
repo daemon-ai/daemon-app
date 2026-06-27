@@ -46,6 +46,54 @@ QString roleName(int choice) {
     }
 }
 
+// ProviderSelector wire string <-> generated choice (serde rename_all = snake_case).
+QString providerName(int choice) {
+    switch (choice) {
+    case provider_selector_r::provider_selector_genai_tstr_c:
+        return QStringLiteral("genai");
+    case provider_selector_r::provider_selector_llama_cpp_tstr_c:
+        return QStringLiteral("llama_cpp");
+    case provider_selector_r::provider_selector_mistral_rs_tstr_c:
+        return QStringLiteral("mistral_rs");
+    default:
+        return QStringLiteral("mock");
+    }
+}
+
+int providerChoice(const QString& provider) {
+    if (provider == QStringLiteral("genai")) {
+        return provider_selector_r::provider_selector_genai_tstr_c;
+    }
+    if (provider == QStringLiteral("llama_cpp")) {
+        return provider_selector_r::provider_selector_llama_cpp_tstr_c;
+    }
+    if (provider == QStringLiteral("mistral_rs")) {
+        return provider_selector_r::provider_selector_mistral_rs_tstr_c;
+    }
+    return provider_selector_r::provider_selector_mock_tstr_c;
+}
+
+void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out) {
+    out->id = fromZcbor(m.model_descriptor_id);
+    out->provider = providerName(m.model_descriptor_provider.provider_selector_choice);
+    if (m.model_descriptor_context_length_choice ==
+        model_descriptor::model_descriptor_context_length_uint_c) {
+        out->hasContextLength = true;
+        out->contextLength = m.model_descriptor_context_length_uint;
+    }
+    if (m.model_descriptor_input_price_micros_per_mtok_choice ==
+        model_descriptor::model_descriptor_input_price_micros_per_mtok_uint_c) {
+        out->hasInputPrice = true;
+        out->inputPriceMicrosPerMtok = m.model_descriptor_input_price_micros_per_mtok_uint;
+    }
+    if (m.model_descriptor_output_price_micros_per_mtok_choice ==
+        model_descriptor::model_descriptor_output_price_micros_per_mtok_uint_c) {
+        out->hasOutputPrice = true;
+        out->outputPriceMicrosPerMtok = m.model_descriptor_output_price_micros_per_mtok_uint;
+    }
+    out->local = m.model_descriptor_local;
+}
+
 bool encodeRequest(const api_request_r& request, QByteArray* out) {
     // Grow the output buffer until the request fits rather than truncating: most requests are tiny,
     // but Submit/CommandInvoke carry user text and can exceed any small fixed size. Retry on encode
@@ -113,6 +161,97 @@ QByteArray NodeApiCodec::encodeSubscribeRequest(const QString& sessionId, quint6
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
+QByteArray NodeApiCodec::encodeCredentialSetRequest(const QString& profile, const QString& secret) {
+    const QByteArray profileUtf8 = profile.toUtf8();
+    const QByteArray secretUtf8 = secret.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_credential_set_m_c;
+    request_credential_set& set = request.api_request_request_credential_set_m;
+    set.CredentialSet_profile.value = reinterpret_cast<const uint8_t*>(profileUtf8.constData());
+    set.CredentialSet_profile.len = static_cast<size_t>(profileUtf8.size());
+    set.CredentialSet_secret.value = reinterpret_cast<const uint8_t*>(secretUtf8.constData());
+    set.CredentialSet_secret.len = static_cast<size_t>(secretUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeCredentialListRequest() {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_credential_list_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeCredentialRemoveRequest(const QString& profile) {
+    const QByteArray profileUtf8 = profile.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_credential_remove_m_c;
+    request_credential_remove& remove = request.api_request_request_credential_remove_m;
+    remove.CredentialRemove_profile.value =
+        reinterpret_cast<const uint8_t*>(profileUtf8.constData());
+    remove.CredentialRemove_profile.len = static_cast<size_t>(profileUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelsRequest() {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_models_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelCurrentRequest(const QString& profile) {
+    const QByteArray profileUtf8 = profile.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_current_m_c;
+    request_model_current& current = request.api_request_request_model_current_m;
+    if (profile.isEmpty()) {
+        current.ModelCurrent_profile_choice = request_model_current::ModelCurrent_profile_null_m_c;
+    } else {
+        current.ModelCurrent_profile_choice = request_model_current::ModelCurrent_profile_tstr_c;
+        current.ModelCurrent_profile_tstr.value =
+            reinterpret_cast<const uint8_t*>(profileUtf8.constData());
+        current.ModelCurrent_profile_tstr.len = static_cast<size_t>(profileUtf8.size());
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeSetSessionModelRequest(const QString& sessionId,
+                                                      const QString& model,
+                                                      const QString& provider) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray modelUtf8 = model.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_set_session_model_m_c;
+    request_set_session_model& set = request.api_request_request_set_session_model_m;
+    set.SetSessionModel_session.value = reinterpret_cast<const uint8_t*>(sessionUtf8.constData());
+    set.SetSessionModel_session.len = static_cast<size_t>(sessionUtf8.size());
+    set.SetSessionModel_model.value = reinterpret_cast<const uint8_t*>(modelUtf8.constData());
+    set.SetSessionModel_model.len = static_cast<size_t>(modelUtf8.size());
+    if (provider.isEmpty()) {
+        // Omit the optional `provider` key: keep the session's current provider binding.
+        set.SetSessionModel_provider_present = false;
+    } else {
+        set.SetSessionModel_provider_present = true;
+        set.SetSessionModel_provider.SetSessionModel_provider_choice =
+            SetSessionModel_provider_r::SetSessionModel_provider_provider_selector_m_c;
+        auto& selector = set.SetSessionModel_provider.SetSessionModel_provider_provider_selector_m;
+        selector.provider_selector_choice =
+            static_cast<decltype(selector.provider_selector_choice)>(providerChoice(provider));
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeProfileListRequest() {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_profile_list_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
 ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
     auto response = std::make_unique<api_response_r>();
     if (!decodeResponse(responseCbor, response.get())) {
@@ -129,6 +268,16 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         return ApiResponseKind::FsRoots;
     case api_response_r::api_response_response_ok_m_c:
         return ApiResponseKind::Ok;
+    case api_response_r::api_response_response_credentials_m_c:
+        return ApiResponseKind::Credentials;
+    case api_response_r::api_response_response_models_m_c:
+        return ApiResponseKind::Models;
+    case api_response_r::api_response_response_model_current_m_c:
+        return ApiResponseKind::ModelCurrent;
+    case api_response_r::api_response_response_profiles_m_c:
+        return ApiResponseKind::Profiles;
+    case api_response_r::api_response_response_error_m_c:
+        return ApiResponseKind::Error;
     default:
         return ApiResponseKind::Unknown;
     }
@@ -255,6 +404,125 @@ bool NodeApiCodec::decodeLogPage(const QByteArray& responseCbor, const QString& 
     }
     if (headSeq != nullptr) {
         *headSeq = page.log_page_view_head_seq;
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeCredentials(const QByteArray& responseCbor,
+                                     QList<DecodedCredentialInfo>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_credentials_m_c) {
+        return false;
+    }
+    const response_credentials& creds = response->api_response_response_credentials_m;
+    out->clear();
+    for (size_t i = 0; i < creds.response_credentials_Credentials_credential_info_m_count; ++i) {
+        const credential_info& info = creds.response_credentials_Credentials_credential_info_m[i];
+        DecodedCredentialInfo entry;
+        entry.profile = fromZcbor(info.credential_info_profile);
+        entry.present = info.credential_info_present;
+        entry.hint = fromZcbor(info.credential_info_hint);
+        out->append(entry);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeModels(const QByteArray& responseCbor,
+                                QList<DecodedModelDescriptor>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_models_m_c) {
+        return false;
+    }
+    const response_models& models = response->api_response_response_models_m;
+    out->clear();
+    for (size_t i = 0; i < models.response_models_Models_model_descriptor_m_count; ++i) {
+        DecodedModelDescriptor descriptor;
+        fillDescriptor(models.response_models_Models_model_descriptor_m[i], &descriptor);
+        out->append(descriptor);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeModelCurrent(const QByteArray& responseCbor, DecodedModelDescriptor* out,
+                                      bool* hasModel) {
+    if (out == nullptr || hasModel == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_model_current_m_c) {
+        return false;
+    }
+    const response_model_current& current = response->api_response_response_model_current_m;
+    if (current.response_model_current_ModelCurrent_choice ==
+        response_model_current::response_model_current_ModelCurrent_model_descriptor_m_c) {
+        *hasModel = true;
+        fillDescriptor(current.response_model_current_ModelCurrent_model_descriptor_m, out);
+    } else {
+        *hasModel = false;
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeError(const QByteArray& responseCbor, DecodedApiError* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_error_m_c) {
+        return false;
+    }
+    const api_error_r& err = response->api_response_response_error_m.response_error_Error;
+    switch (err.api_error_choice) {
+    case api_error_r::api_error_unknown_session_m_c:
+        out->kind = QStringLiteral("UnknownSession");
+        out->message =
+            fromZcbor(err.api_error_unknown_session_m.api_error_unknown_session_UnknownSession);
+        break;
+    case api_error_r::api_error_unsupported_m_c:
+        out->kind = QStringLiteral("Unsupported");
+        out->message = fromZcbor(err.api_error_unsupported_m.api_error_unsupported_Unsupported);
+        break;
+    case api_error_r::api_error_conflict_m_c:
+        out->kind = QStringLiteral("Conflict");
+        out->message = fromZcbor(err.api_error_conflict_m.api_error_conflict_Conflict);
+        break;
+    default:
+        out->kind = QStringLiteral("Other");
+        out->message = fromZcbor(err.api_error_other_m.api_error_other_Other);
+        break;
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeProfiles(const QByteArray& responseCbor, QList<DecodedProfileInfo>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_profiles_m_c) {
+        return false;
+    }
+    const response_profiles& profiles = response->api_response_response_profiles_m;
+    out->clear();
+    for (size_t i = 0; i < profiles.response_profiles_Profiles_profile_info_m_count; ++i) {
+        const profile_info& info = profiles.response_profiles_Profiles_profile_info_m[i];
+        DecodedProfileInfo entry;
+        entry.id = fromZcbor(info.profile_info_id);
+        entry.provider = providerName(info.profile_info_provider.provider_selector_choice);
+        entry.model = fromZcbor(info.profile_info_model);
+        entry.isActive = info.profile_info_is_active;
+        out->append(entry);
     }
     return true;
 }

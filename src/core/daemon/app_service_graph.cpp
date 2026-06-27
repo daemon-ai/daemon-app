@@ -7,8 +7,10 @@
 #include "connection/iconnection_service.h"
 #include "connection/mock_connection_service.h"
 #include "daemon/cached_session_store.h"
+#include "daemon/daemon_accounts_service.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/daemon_model_catalog.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_client.h"
 #include "daemon/repositories.h"
@@ -65,9 +67,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.daemonConfig->value(QStringLiteral("workspace/root")).toString(), QString(), owner);
     graph.memory = new memory::MockMemoryService(owner);
     graph.nav = new nav::NavController(owner);
-    graph.firstRun = new firstrun::FirstRunModel(graph.settings, graph.connection, owner);
-    graph.modelCatalog = new models::MockModelCatalog(owner);
-    graph.accounts = new accounts::MockAccountsService(owner);
+    // firstRun + accounts + modelCatalog are constructed per-mode below (after the repositories the
+    // daemon-backed services need); firstRun binds the resulting modelCatalog for inference
+    // readiness.
     graph.profiles = new profiles::MockProfileStore(owner);
     // The unified mock DaemonNet (the single source the fleet/roster mocks now project from, plus
     // the future lenses + patch-bay); construct it before the surfaces that derive from it.
@@ -102,33 +104,52 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.files = new FsRepository(graph.nodeApi, graph.cache, owner);
     graph.approvalRepository = new ApprovalRepository(graph.nodeApi, graph.cache, owner);
     graph.checkpointRepository = new CheckpointRepository(graph.nodeApi, graph.cache, owner);
+    graph.credentialRepository = new CredentialRepository(graph.nodeApi, graph.cache, owner);
 
     if (daemonConnection != nullptr) {
         // Daemon mode reads sessions through the cache projection rather than the local sqlite
         // store, and kicks a SessionsQuery once the Health probe reports the daemon is ready so
         // the cache (and therefore the UI) populates end-to-end.
         graph.store = new CachedSessionStore(graph.cache, graph.sessions, owner);
-        QObject::connect(graph.connection, &connection::IConnectionService::stateChanged,
-                         graph.sessions, [conn = graph.connection, sessions = graph.sessions] {
-                             if (conn->ready()) {
-                                 sessions->refreshSessions();
-                             }
-                         });
-        // Daemon mode is only partially live: be explicit so testers/operators don't read it as a
-        // fully daemon-backed app. Live now: connection (real Health probe) and sessions (NodeApi
-        // SessionsQuery projected through DaemonCacheStore). Everything else is still mock-backed
-        // until its own daemon adapter lands.
+        // Provider credentials + model discovery are daemon-backed in this mode (CON-4 / CON-6).
+        graph.accounts = new accounts::DaemonAccountsService(graph.credentialRepository,
+                                                             graph.profileRepository, owner);
+        graph.modelCatalog = new models::DaemonModelCatalog(graph.models, owner);
+        // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
+        // provider/model step and the shell reflect the daemon end-to-end.
+        QObject::connect(
+            graph.connection, &connection::IConnectionService::stateChanged, graph.sessions,
+            [conn = graph.connection, sessions = graph.sessions, profiles = graph.profileRepository,
+             credentials = graph.credentialRepository, models = graph.models] {
+                if (conn->ready()) {
+                    sessions->refreshSessions();
+                    profiles->refreshProfiles();
+                    credentials->refreshList();
+                    models->refreshModels();
+                    models->refreshCurrent();
+                }
+            });
+        // Daemon mode is partially live: be explicit so testers/operators don't read it as a fully
+        // daemon-backed app. Live now: connection (Health), sessions (SessionsQuery), accounts
+        // (CredentialSet/List), modelCatalog (Models/ModelCurrent). Still mock below.
         qInfo().noquote() << "AppServiceGraph: ServiceMode::Daemon - live seams: connection, "
-                             "sessions(cache); still mock: fs, daemonConfig, memory, modelCatalog, "
-                             "accounts, daemonNet, roster/fleetTree/approvals/dashboard, "
-                             "routing/cron, transports/presence, sessionSettings, checkpoints.";
+                             "sessions(cache), accounts(credentials), modelCatalog(models); still "
+                             "mock: fs, daemonConfig, memory, daemonNet, "
+                             "roster/fleetTree/approvals/dashboard, routing/cron, "
+                             "transports/presence, sessionSettings, checkpoints.";
     } else {
         // Mock mode: a non-persisted in-memory store re-seeded fresh from the unified DaemonNet
         // each run (deterministic, always matches the current seed - no stale-db drift). The
         // sidebar/list/ transcript and the Fleet/Sessions pages now all reflect the one DaemonNet
         // source.
         graph.store = new persistence::InMemorySessionStore(graph.daemonNet, owner);
+        graph.modelCatalog = new models::MockModelCatalog(owner);
+        graph.accounts = new accounts::MockAccountsService(owner);
     }
+    // Built last so it binds the resolved modelCatalog (daemon-backed or mock) for the inference
+    // readiness gate (CON-7).
+    graph.firstRun =
+        new firstrun::FirstRunModel(graph.settings, graph.connection, graph.modelCatalog, owner);
     return graph;
 }
 

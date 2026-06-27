@@ -1,5 +1,8 @@
 #include "tui_dialogs.h"
 
+#include "accounts/iaccounts_service.h"
+#include "models/imodel_catalog.h"
+
 #include <Tui/ZHBoxLayout.h>
 #include <Tui/ZVBoxLayout.h>
 #include <Tui/ZWindow.h>
@@ -108,9 +111,12 @@ ConfirmDialog::ConfirmDialog(const QString& title, const QString& message, Tui::
 
 FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
                                connection::IConnectionService* connection,
-                               settings::ISettingsStore* settings, const QString& defaultTarget,
+                               settings::ISettingsStore* settings,
+                               accounts::IAccountsService* accounts,
+                               models::IModelCatalog* modelCatalog, const QString& defaultTarget,
                                Tui::ZWidget* parent)
-    : Tui::ZDialog(parent), m_model(model), m_connection(connection), m_settings(settings) {
+    : Tui::ZDialog(parent), m_model(model), m_connection(connection), m_settings(settings),
+      m_accounts(accounts), m_modelCatalog(modelCatalog) {
     setOptions(Tui::ZWindow::DeleteOnClose);
     setWindowTitle(tr("Setup Required"));
     setContentsMargins({2, 1, 2, 1});
@@ -142,6 +148,12 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     m_token = new Tui::ZInputBox(QString(), this);
     m_token->setEchoMode(Tui::ZInputBox::Password);
     layout->addWidget(m_token);
+
+    // Provider API key: only shown in the inference phase (onboarding CON-4). Masked.
+    m_key = new Tui::ZInputBox(QString(), this);
+    m_key->setEchoMode(Tui::ZInputBox::Password);
+    m_key->setVisible(false);
+    layout->addWidget(m_key);
     layout->addSpacing(1);
 
     m_status = new Tui::ZLabel(QString(), this);
@@ -183,7 +195,7 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
 
     connect(m_primary, &Tui::ZButton::clicked, this, [this] {
         if (m_model->phase() == QStringLiteral("inference")) {
-            m_model->completeInference();
+            commitInference();
         } else if (m_connection != nullptr) {
             // Persist the choice so the next boot reuses it (parity with the GUI
             // picker writing AppSettings.setLastConnection before connecting).
@@ -203,6 +215,9 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
             syncToPhase();
         }
     });
+    // Readiness gates the inference Finish button; re-sync when it flips.
+    connect(m_model, &firstrun::FirstRunModel::inferenceReadyChanged, this,
+            &FirstRunDialog::syncToPhase);
 
     applyMode(m_mode);
     syncToPhase();
@@ -241,14 +256,40 @@ void FirstRunDialog::syncToPhase() {
         m_primary->setEnabled(false);
         m_target->setEnabled(false);
     } else if (p == QStringLiteral("inference")) {
-        m_status->setText(tr("Connected. A default model will be used."));
+        m_status->setText(tr("Connected. Paste a provider API key (optional), then Finish."));
         m_primary->setText(tr("Finish"));
-        m_primary->setEnabled(true);
+        // CON-7: Finish is enabled once a usable model is reachable.
+        m_primary->setEnabled(m_model->inferenceReady());
         m_target->setEnabled(false);
+        if (m_token != nullptr) {
+            m_token->setVisible(false);
+        }
+        if (m_key != nullptr) {
+            m_key->setVisible(true);
+        }
     } else { // connect
         m_status->setText(m_model->error().isEmpty() ? QString() : m_model->error());
         m_primary->setText(tr("Connect"));
         m_primary->setEnabled(true);
         m_target->setEnabled(true);
+        if (m_key != nullptr) {
+            m_key->setVisible(false);
+        }
     }
+}
+
+void FirstRunDialog::commitInference() {
+    // Store the typed provider key (if any) on the active profile, then pick the first discovered
+    // model so a usable model is current; completeInference is gated on inferenceReady.
+    if (m_accounts != nullptr && m_key != nullptr && !m_key->text().isEmpty()) {
+        m_accounts->addApiKey(QStringLiteral("anthropic"), QString(), m_key->text(), QString());
+        m_key->setText(QString());
+    }
+    if (m_modelCatalog != nullptr) {
+        const QStringList ids = m_modelCatalog->installedIds();
+        if (!ids.isEmpty()) {
+            m_modelCatalog->activate(ids.first());
+        }
+    }
+    m_model->completeInference();
 }

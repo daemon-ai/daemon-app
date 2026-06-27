@@ -81,27 +81,71 @@ Rectangle {
                 Item { Layout.preferredHeight: 8 }
             }
 
-            // --- Phase: inference gate ---
+            // --- Phase: inference gate (provider key + model pick) ---
             ColumnLayout {
                 visible: root.phase === "inference"
                 Layout.fillWidth: true
-                spacing: 12
+                spacing: 10
+
+                SectionLabel { text: qsTr("Provider") }
                 RowLayout {
-                    spacing: 10
-                    Text {
-                        text: FontIcons.fa_circle_check; font.family: FontIcons.faSolid
-                        font.pixelSize: 16; color: Theme.accent
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Kit.Dropdown {
+                        id: providerBox
+                        Layout.preferredWidth: 150
+                        model: (Accounts ? Accounts.availableProviders() : []).map(function(p) {
+                            return p.name;
+                        })
                     }
-                    Text {
-                        text: qsTr("Connected. A default model will be used for inference.")
-                        font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
-                        Layout.fillWidth: true; wrapMode: Text.WordWrap
+                    Kit.TextField {
+                        id: keyField
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("Paste API key")
+                        echoMode: TextInput.Password
                     }
                 }
+                Kit.TextButton {
+                    text: qsTr("Connect provider")
+                    enabled: keyField.text.length > 0
+                    onClicked: {
+                        var provs = Accounts ? Accounts.availableProviders() : [];
+                        var pid = (providerBox.currentIndex >= 0
+                                   && providerBox.currentIndex < provs.length)
+                                  ? provs[providerBox.currentIndex].id : "anthropic";
+                        Accounts.addApiKey(pid, "", keyField.text, "");
+                        keyField.text = "";
+                    }
+                }
+
+                SectionLabel { text: qsTr("Model") }
                 Text {
-                    text: qsTr("You can browse and install more models later from the Models hub.")
+                    text: (ModelCatalog && ModelCatalog.currentModelId.length > 0)
+                          ? qsTr("Selected: %1").arg(ModelCatalog.currentModelId)
+                          : qsTr("Discovering models…")
                     font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
                     Layout.fillWidth: true; wrapMode: Text.WordWrap
+                }
+                ListView {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.min(contentHeight, 132)
+                    clip: true
+                    model: ModelCatalog ? ModelCatalog.installed : null
+                    delegate: Rectangle {
+                        required property var entry
+                        width: ListView.view ? ListView.view.width : 0
+                        height: 30
+                        radius: 6
+                        color: entry.active ? Theme.hover : "transparent"
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.leftMargin: 8
+                            text: entry.name + "  \u00b7  " + entry.provider
+                            font.family: FontIcons.display; font.pixelSize: 12; color: Theme.text
+                        }
+                        TapHandler { onTapped: ModelCatalog.activate(entry.id) }
+                    }
                 }
             }
 
@@ -118,6 +162,8 @@ Rectangle {
                     visible: root.phase === "inference"
                     text: qsTr("Finish setup")
                     accentFilled: true
+                    // CON-7: only enabled once a usable model is reachable.
+                    enabled: !FirstRun || FirstRun.inferenceReady
                     onClicked: FirstRun.completeInference()
                 }
             }

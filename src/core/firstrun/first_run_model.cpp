@@ -1,17 +1,25 @@
 #include "firstrun/first_run_model.h"
 
 #include "connection/iconnection_service.h"
+#include "models/imodel_catalog.h"
 #include "settings/isettings_store.h"
 
 namespace firstrun {
 
 FirstRunModel::FirstRunModel(settings::ISettingsStore* settings,
-                             connection::IConnectionService* connection, QObject* parent)
-    : QObject(parent), m_settings(settings), m_connection(connection) {
+                             connection::IConnectionService* connection,
+                             models::IModelCatalog* modelCatalog, QObject* parent)
+    : QObject(parent), m_settings(settings), m_connection(connection),
+      m_modelCatalog(modelCatalog) {
     if (m_connection != nullptr) {
         connect(m_connection, &connection::IConnectionService::stateChanged, this,
                 &FirstRunModel::onConnectionStateChanged);
     }
+    if (m_modelCatalog != nullptr) {
+        connect(m_modelCatalog, &models::IModelCatalog::currentChanged, this,
+                &FirstRunModel::refreshInferenceReady);
+    }
+    refreshInferenceReady();
 }
 
 void FirstRunModel::begin() {
@@ -41,6 +49,7 @@ void FirstRunModel::onConnectionStateChanged() {
         if (m_settings != nullptr) {
             m_settings->setSetupComplete(true);
         }
+        refreshInferenceReady();
         setPhase(QStringLiteral("inference"));
     } else if (s == QStringLiteral("offline")) {
         // Prefer a specific, actionable reason from the connection seam (e.g. the daemon binary
@@ -60,8 +69,19 @@ void FirstRunModel::setInferenceReady(bool ready) {
     emit inferenceReadyChanged();
 }
 
+void FirstRunModel::refreshInferenceReady() {
+    // Ready when a usable model is reachable. With no catalog wired (mock/standalone), stay
+    // permissive so the gate never traps that path.
+    const bool ready = m_modelCatalog == nullptr || !m_modelCatalog->currentModelId().isEmpty();
+    setInferenceReady(ready);
+}
+
 void FirstRunModel::completeInference() {
-    setInferenceReady(true);
+    // CON-7: only finish once a usable model is reachable; otherwise the user must pick one (or
+    // Skip, which the front ends still offer and which leads to the first-send nudge, CON-8).
+    if (!m_inferenceReady) {
+        return;
+    }
     finish();
 }
 

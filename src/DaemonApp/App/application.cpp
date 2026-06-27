@@ -207,6 +207,38 @@ void Application::driveFirstRunConnect() const {
     m_services.connection->connectTo(QStringLiteral("local"), target);
 }
 
+void Application::settle(int ms) const {
+    QEventLoop loop;
+    QTimer::singleShot(ms, &loop, &QEventLoop::quit);
+    loop.exec();
+}
+
+bool Application::runHeadlessOnboarding(const QString& provider, const QString& key,
+                                        int timeoutMs) {
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return false;
+    }
+    // Let the on-ready auto-refreshes (ProfileList / CredentialList / Models / ModelCurrent) flush
+    // so the active profile + discovered models are known before we add the key / pick a model.
+    settle(1000);
+    if (!key.isEmpty() && m_services.accounts != nullptr) {
+        m_services.accounts->addApiKey(provider, QString(), key, QString());
+    }
+    if (m_services.modelCatalog != nullptr) {
+        const QStringList ids = m_services.modelCatalog->installedIds();
+        if (!ids.isEmpty()) {
+            m_services.modelCatalog->activate(ids.first());
+        }
+    }
+    if (m_services.firstRun != nullptr) {
+        m_services.firstRun->completeInference();
+    }
+    // Flush the CredentialSet (+ its re-list) round-trip before the harness exits.
+    settle(1000);
+    return true;
+}
+
 void Application::completeWiring(QQmlApplicationEngine& engine) {
     QQuickWindow* window = nullptr;
     const auto roots = engine.rootObjects();
