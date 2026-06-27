@@ -1542,6 +1542,13 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         refreshActivePage();
         return true;
     }
+    // Local model track: 'd' on the Models page opens the discover -> quant download flow.
+    if (kind == TabModel::Models && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("d")) {
+        openModelDownload();
+        event->accept();
+        return true;
+    }
     return false;
 }
 
@@ -1843,6 +1850,13 @@ void RootWidget::openModelPicker() {
         if (m_composer != nullptr)
             m_composer->setFocus();
     });
+}
+
+void RootWidget::openModelDownload() {
+    if (m_overlays == nullptr) {
+        return;
+    }
+    m_overlays->openModelDownload(m_services.modelCatalog, [this] { refreshActivePage(); });
 }
 
 void RootWidget::toggleExplorer() {

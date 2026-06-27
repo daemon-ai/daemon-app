@@ -7,7 +7,10 @@
 #include <QHash>
 #include <QList>
 #include <QObject>
+#include <QSet>
 #include <QString>
+
+class QTimer;
 
 namespace daemonapp::daemon {
 
@@ -170,23 +173,93 @@ public:
     void setSessionModel(const QString& sessionId, const QString& model,
                          const QString& provider = QString());
 
+    // --- Local model track (Phase 2) ---------------------------------------------------------
+    // Cached decoded views (the UI/catalog read these, never the wire).
+    [[nodiscard]] const QList<DecodedSearchHit>& searchHits() const { return m_searchHits; }
+    [[nodiscard]] const QList<DecodedModelFile>& files() const { return m_files; }
+    [[nodiscard]] QString filesRepo() const { return m_filesRepo; }
+    [[nodiscard]] bool hasRecommendation() const { return m_hasRecommendation; }
+    [[nodiscard]] const DecodedQuantRecommendation& recommendation() const {
+        return m_recommendation;
+    }
+    [[nodiscard]] const QList<DecodedDownloadStatus>& downloads() const { return m_downloads; }
+    [[nodiscard]] const QList<DecodedInstalledModel>& installed() const { return m_installed; }
+
+    // Step 1: search HF repos (ModelSearch); on success searchHitsChanged() fires.
+    void search(const QString& text, const QString& engine = QStringLiteral("llama"),
+                const QString& sort = QStringLiteral("trending"));
+    // Step 2: list a repo's loadable files (ModelFiles); on success filesLoaded(repo) fires.
+    void requestFiles(const QString& repo, const QString& engine = QStringLiteral("llama"));
+    // The hardware-aware quant recommendation for a repo; on success recommendLoaded(repo) fires.
+    void recommend(const QString& repo, const QString& engine = QStringLiteral("llama"),
+                   bool hasBudget = false, quint64 budgetBytes = 0);
+    // Start a download of one repo file (ModelDownload); on success downloadStarted(id) fires and
+    // the poll loop begins refreshing downloads() until all jobs settle.
+    void download(const QString& repo, const QString& file,
+                  const QString& engine = QStringLiteral("llama"),
+                  const QString& revision = QStringLiteral("main"));
+    // Poll all download jobs (ModelDownloads); on success downloadsChanged() fires. Reaching a
+    // Completed job that was not completed before triggers a catalog refresh.
+    void refreshDownloads();
+    // Refresh the installed catalog (ModelCatalog); on success catalogChanged() fires.
+    void refreshCatalog();
+    // Delete an installed model (ModelDelete); on Ok the catalog is re-fetched.
+    void deleteModel(const QString& id);
+    // Activate an installed model for `profile` (empty = default local); on Ok modelActivated()
+    // fires.
+    void activate(const QString& id, const QString& profile = QString());
+    // Download lifecycle controls; on Ok the downloads list is re-polled.
+    void cancelDownload(quint64 id);
+    void pauseDownload(quint64 id);
+    void resumeDownload(quint64 id);
+
 signals:
     void modelsRefreshed();
     void currentRefreshed();
     void modelSet();
     void operationFailed(const QString& message);
+    void searchHitsChanged();
+    void filesLoaded(const QString& repo);
+    void recommendLoaded(const QString& repo);
+    void downloadsChanged();
+    void catalogChanged();
+    void downloadStarted(quint64 id);
+    void modelActivated();
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
+    // Ensure the QTimer poll loop runs while any download job is unsettled; stop it once idle.
+    void syncDownloadPolling();
 
     static constexpr auto kModelsCorrelation = "repo/models";
     static constexpr auto kCurrentCorrelation = "repo/model-current";
     static constexpr auto kSetModelCorrelation = "repo/set-session-model";
+    static constexpr auto kSearchCorrelation = "repo/model-search";
+    static constexpr auto kFilesCorrelation = "repo/model-files";
+    static constexpr auto kRecommendCorrelation = "repo/model-recommend";
+    static constexpr auto kDownloadCorrelation = "repo/model-download";
+    static constexpr auto kDownloadsCorrelation = "repo/model-downloads";
+    static constexpr auto kCatalogCorrelation = "repo/model-catalog";
+    static constexpr auto kDeleteCorrelation = "repo/model-delete";
+    static constexpr auto kActivateCorrelation = "repo/model-activate";
+    static constexpr auto kLifecycleCorrelation = "repo/model-lifecycle";
 
     QList<DecodedModelDescriptor> m_models;
     DecodedModelDescriptor m_current;
     bool m_hasCurrent = false;
+
+    QList<DecodedSearchHit> m_searchHits;
+    QList<DecodedModelFile> m_files;
+    QString m_filesRepo;
+    QString m_pendingFilesRepo;
+    DecodedQuantRecommendation m_recommendation;
+    bool m_hasRecommendation = false;
+    QString m_pendingRecommendRepo;
+    QList<DecodedDownloadStatus> m_downloads;
+    QList<DecodedInstalledModel> m_installed;
+    QSet<quint64> m_completedDownloads; // ids already seen Completed (debounces catalog refresh)
+    QTimer* m_downloadPoll = nullptr;
 };
 
 class FsRepository : public RepositoryBase {

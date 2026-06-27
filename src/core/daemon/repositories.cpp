@@ -3,6 +3,7 @@
 #include "daemon/node_api_codec.h"
 
 #include <QDateTime>
+#include <QTimer>
 
 namespace daemonapp::daemon {
 
@@ -235,6 +236,134 @@ void ModelRepository::setSessionModel(const QString& sessionId, const QString& m
                           QLatin1String(kSetModelCorrelation));
 }
 
+void ModelRepository::search(const QString& text, const QString& engine, const QString& sort) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelSearchRequest(text, engine, sort),
+                          QLatin1String(kSearchCorrelation));
+}
+
+void ModelRepository::requestFiles(const QString& repo, const QString& engine) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    m_pendingFilesRepo = repo;
+    client()->sendRequest(NodeApiCodec::encodeModelFilesRequest(repo, engine),
+                          QLatin1String(kFilesCorrelation));
+}
+
+void ModelRepository::recommend(const QString& repo, const QString& engine, bool hasBudget,
+                                quint64 budgetBytes) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    m_pendingRecommendRepo = repo;
+    client()->sendRequest(
+        NodeApiCodec::encodeModelRecommendRequest(repo, engine, hasBudget, budgetBytes),
+        QLatin1String(kRecommendCorrelation));
+}
+
+void ModelRepository::download(const QString& repo, const QString& file, const QString& engine,
+                               const QString& revision) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelDownloadRequest(repo, file, engine, revision),
+                          QLatin1String(kDownloadCorrelation));
+}
+
+void ModelRepository::refreshDownloads() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelDownloadsRequest(),
+                          QLatin1String(kDownloadsCorrelation));
+}
+
+void ModelRepository::refreshCatalog() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelCatalogRequest(),
+                          QLatin1String(kCatalogCorrelation));
+}
+
+void ModelRepository::deleteModel(const QString& id) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelDeleteRequest(id),
+                          QLatin1String(kDeleteCorrelation));
+}
+
+void ModelRepository::activate(const QString& id, const QString& profile) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelActivateRequest(id, profile),
+                          QLatin1String(kActivateCorrelation));
+}
+
+void ModelRepository::cancelDownload(quint64 id) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelCancelRequest(id),
+                          QLatin1String(kLifecycleCorrelation));
+}
+
+void ModelRepository::pauseDownload(quint64 id) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelPauseRequest(id),
+                          QLatin1String(kLifecycleCorrelation));
+}
+
+void ModelRepository::resumeDownload(quint64 id) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelResumeRequest(id),
+                          QLatin1String(kLifecycleCorrelation));
+}
+
+void ModelRepository::syncDownloadPolling() {
+    // A job is "unsettled" while queued or actively downloading; once everything is terminal
+    // (Completed / Paused / Cancelled / Failed) the poll loop can stop.
+    bool active = false;
+    for (const DecodedDownloadStatus& s : m_downloads) {
+        if (s.state == QStringLiteral("Queued") || s.state == QStringLiteral("Downloading")) {
+            active = true;
+            break;
+        }
+    }
+    if (active) {
+        if (m_downloadPoll == nullptr) {
+            m_downloadPoll = new QTimer(this);
+            m_downloadPoll->setInterval(600);
+            connect(m_downloadPoll, &QTimer::timeout, this, &ModelRepository::refreshDownloads);
+        }
+        if (!m_downloadPoll->isActive()) {
+            m_downloadPoll->start();
+        }
+    } else if (m_downloadPoll != nullptr) {
+        m_downloadPoll->stop();
+    }
+}
+
 void ModelRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kModelsCorrelation)) {
         if (!NodeApiCodec::decodeModels(responseCbor, &m_models)) {
@@ -266,12 +395,121 @@ void ModelRepository::handleResponse(const QString& correlationId, const QByteAr
         }
         return;
     }
+    if (correlationId == QLatin1String(kSearchCorrelation)) {
+        if (!NodeApiCodec::decodeModelSearch(responseCbor, &m_searchHits)) {
+            emit operationFailed(QStringLiteral("Failed to decode ModelSearch response"));
+            return;
+        }
+        emit searchHitsChanged();
+        return;
+    }
+    if (correlationId == QLatin1String(kFilesCorrelation)) {
+        if (!NodeApiCodec::decodeModelFiles(responseCbor, &m_files)) {
+            emit operationFailed(QStringLiteral("Failed to decode ModelFiles response"));
+            return;
+        }
+        m_filesRepo = m_pendingFilesRepo;
+        emit filesLoaded(m_filesRepo);
+        return;
+    }
+    if (correlationId == QLatin1String(kRecommendCorrelation)) {
+        if (!NodeApiCodec::decodeModelRecommend(responseCbor, &m_recommendation)) {
+            emit operationFailed(QStringLiteral("Failed to decode ModelRecommend response"));
+            return;
+        }
+        m_hasRecommendation = true;
+        emit recommendLoaded(m_pendingRecommendRepo);
+        return;
+    }
+    if (correlationId == QLatin1String(kDownloadCorrelation)) {
+        quint64 id = 0;
+        if (NodeApiCodec::decodeModelDownloadStarted(responseCbor, &id)) {
+            emit downloadStarted(id);
+            refreshDownloads(); // kick the poll loop immediately
+            return;
+        }
+        DecodedApiError err;
+        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error &&
+            NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(QStringLiteral("Download could not be started"));
+        }
+        return;
+    }
+    if (correlationId == QLatin1String(kDownloadsCorrelation)) {
+        if (!NodeApiCodec::decodeModelDownloads(responseCbor, &m_downloads)) {
+            emit operationFailed(QStringLiteral("Failed to decode ModelDownloads response"));
+            return;
+        }
+        // Refresh the catalog once for each job that newly reaches Completed.
+        bool newlyCompleted = false;
+        for (const DecodedDownloadStatus& s : m_downloads) {
+            if (s.state == QStringLiteral("Completed") && !m_completedDownloads.contains(s.id)) {
+                m_completedDownloads.insert(s.id);
+                newlyCompleted = true;
+            }
+        }
+        emit downloadsChanged();
+        syncDownloadPolling();
+        if (newlyCompleted) {
+            refreshCatalog();
+        }
+        return;
+    }
+    if (correlationId == QLatin1String(kCatalogCorrelation)) {
+        if (!NodeApiCodec::decodeModelCatalog(responseCbor, &m_installed)) {
+            emit operationFailed(QStringLiteral("Failed to decode ModelCatalog response"));
+            return;
+        }
+        emit catalogChanged();
+        return;
+    }
+    if (correlationId == QLatin1String(kDeleteCorrelation)) {
+        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
+            refreshCatalog();
+            return;
+        }
+        emit operationFailed(QStringLiteral("Delete failed"));
+        return;
+    }
+    if (correlationId == QLatin1String(kActivateCorrelation)) {
+        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
+            emit modelActivated();
+            return;
+        }
+        DecodedApiError err;
+        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error &&
+            NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(QStringLiteral("Activate failed"));
+        }
+        return;
+    }
+    if (correlationId == QLatin1String(kLifecycleCorrelation)) {
+        // Cancel/Pause/Resume Ok (or Error) -> re-poll so the new state surfaces.
+        refreshDownloads();
+        return;
+    }
 }
 
 void ModelRepository::handleFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == QLatin1String(kModelsCorrelation) ||
-        correlationId == QLatin1String(kCurrentCorrelation) ||
-        correlationId == QLatin1String(kSetModelCorrelation)) {
+    static const QSet<QString> kOurs = {
+        QString::fromLatin1(kModelsCorrelation),   QString::fromLatin1(kCurrentCorrelation),
+        QString::fromLatin1(kSetModelCorrelation), QString::fromLatin1(kSearchCorrelation),
+        QString::fromLatin1(kFilesCorrelation),    QString::fromLatin1(kRecommendCorrelation),
+        QString::fromLatin1(kDownloadCorrelation), QString::fromLatin1(kDownloadsCorrelation),
+        QString::fromLatin1(kCatalogCorrelation),  QString::fromLatin1(kDeleteCorrelation),
+        QString::fromLatin1(kActivateCorrelation), QString::fromLatin1(kLifecycleCorrelation),
+    };
+    if (kOurs.contains(correlationId)) {
+        if (correlationId == QLatin1String(kDownloadsCorrelation)) {
+            // A failed poll should not spin the loop forever; stop until the next user action.
+            if (m_downloadPoll != nullptr) {
+                m_downloadPoll->stop();
+            }
+        }
         emit operationFailed(message);
     }
 }

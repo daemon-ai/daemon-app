@@ -289,6 +289,25 @@ int main(int argc, char* argv[]) {
         return ready ? 0 : 2;
     }
 
+    // Headless model-track self-check (Phase 2): connect, then exercise the model wire ops
+    // (ModelCatalog / ModelDownloads / ModelSearch / ModelFiles / ModelDownload) and print a
+    // per-frame round-trip summary so the E2E harness can assert the client wires them. Gated on
+    // DAEMON_APP_MODELS_PROBE (the search query); DAEMON_APP_MODELS_REPO names the repo to probe.
+    const QByteArray modelsProbe = qgetenv("DAEMON_APP_MODELS_PROBE");
+    if (!modelsProbe.isEmpty()) {
+        const QByteArray waitMs = qgetenv("DAEMON_APP_WAIT_READY");
+        const int timeoutMs = waitMs.toInt() > 0 ? waitMs.toInt() : 30000;
+        const QByteArray repoEnv = qgetenv("DAEMON_APP_MODELS_REPO");
+        const QString repo = repoEnv.isEmpty()
+                                 ? QStringLiteral("bartowski/SmolLM2-135M-Instruct-GGUF")
+                                 : QString::fromUtf8(repoEnv);
+        const QString summary =
+            application.runHeadlessModels(QString::fromUtf8(modelsProbe), repo, timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_MODELS %s\n", summary.toUtf8().constData());
+        std::fflush(stdout);
+        return summary.isEmpty() ? 2 : 0;
+    }
+
     // Headless chat self-check (CHA-1/CHA-2): connect, drive one real turn, and emit the streamed
     // assistant text so the E2E harness can assert Submit + Subscribe crossed the socket and the
     // client consumed the AgentEvent stream. Gated on DAEMON_APP_CHAT_PROMPT.

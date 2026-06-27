@@ -200,6 +200,8 @@ private:
     // shared composer session; selecting sets the active model. Opened by /model
     // and the command palette.
     void openModelPicker();
+    // Local model track: open the discover -> quant download flow ('d' on the Models page).
+    void openModelDownload();
     // Open the command palette (Ctrl+P): a filterable list of nav / theme / mode /
     // slash actions, backed by the shared CommandRegistry, routed to existing
     // handlers on activation.

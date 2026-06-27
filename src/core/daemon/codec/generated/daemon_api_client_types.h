@@ -1,7 +1,7 @@
 /*
  * Generated using zcbor version 0.9.1
  * https://github.com/NordicSemiconductor/zcbor
- * Generated with a --default-max-qty of 16
+ * Generated with a --default-max-qty of 64
  */
 
 #ifndef DAEMON_API_CLIENT_TYPES_H__
@@ -23,10 +23,10 @@ extern "C" {
  *
  *  See `zcbor --help` for more information about --default-max-qty
  */
-#define DEFAULT_MAX_QTY 16
+#define DEFAULT_MAX_QTY 64
 
 struct byte_array {
-	uint32_t byte_array_uint[16];
+	uint32_t byte_array_uint[64];
 	size_t byte_array_uint_count;
 };
 
@@ -60,7 +60,7 @@ struct blob_ref {
 };
 
 struct user_msg_attachments_r {
-	struct blob_ref user_msg_attachments_blob_ref_m[16];
+	struct blob_ref user_msg_attachments_blob_ref_m[64];
 	size_t user_msg_attachments_blob_ref_m_count;
 };
 
@@ -426,7 +426,7 @@ struct session_overlay_provider_r {
 };
 
 struct tools_override_allowlist {
-	struct zcbor_string tools_override_allowlist_allowlist_tstr[16];
+	struct zcbor_string tools_override_allowlist_allowlist_tstr[64];
 	size_t tools_override_allowlist_allowlist_tstr_count;
 };
 
@@ -604,7 +604,7 @@ struct profile_spec {
 	struct zcbor_string profile_spec_system_prompt;
 	union {
 		struct {
-			struct zcbor_string tool_allowlist_tstr_l_tstr[16];
+			struct zcbor_string tool_allowlist_tstr_l_tstr[64];
 			size_t tool_allowlist_tstr_l_tstr_count;
 		};
 	};
@@ -630,7 +630,7 @@ struct profile_spec {
 		profile_spec_fallback_credential_ref_tstr_c,
 		profile_spec_fallback_credential_ref_null_m_c,
 	} profile_spec_fallback_credential_ref_choice;
-	struct bound_account profile_spec_bound_accounts_bound_account_m[16];
+	struct bound_account profile_spec_bound_accounts_bound_account_m[64];
 	size_t profile_spec_bound_accounts_bound_account_m_count;
 };
 
@@ -673,7 +673,7 @@ struct skill_bundle {
 		skill_bundle_category_tstr_c,
 		skill_bundle_category_null_m_c,
 	} skill_bundle_category_choice;
-	struct files_tstrtstr files_tstrtstr[16];
+	struct files_tstrtstr files_tstrtstr[64];
 	size_t files_tstrtstr_count;
 };
 
@@ -700,7 +700,7 @@ struct distribution_source_r {
 struct distribution {
 	uint32_t distribution_wire_version;
 	struct profile_spec distribution_profile;
-	struct skill_bundle distribution_skills_skill_bundle_m[16];
+	struct skill_bundle distribution_skills_skill_bundle_m[64];
 	size_t distribution_skills_skill_bundle_m_count;
 	struct distribution_head_seq_r distribution_head_seq;
 	bool distribution_head_seq_present;
@@ -1046,7 +1046,7 @@ struct auth_begin_request_bind_r {
 
 struct auth_begin_request {
 	struct zcbor_string auth_begin_request_family;
-	struct params_tstrtstr params_tstrtstr[16];
+	struct params_tstrtstr params_tstrtstr[64];
 	size_t params_tstrtstr_count;
 	struct zcbor_string auth_begin_request_redirect_uri;
 	struct auth_begin_request_bind_r auth_begin_request_bind;
@@ -1222,7 +1222,7 @@ struct acp_recipe_program_r {
 };
 
 struct acp_recipe_args_r {
-	struct zcbor_string acp_recipe_args_tstr[16];
+	struct zcbor_string acp_recipe_args_tstr[64];
 	size_t acp_recipe_args_tstr_count;
 };
 
@@ -1232,7 +1232,7 @@ struct kv_pair {
 };
 
 struct acp_recipe_env_r {
-	struct kv_pair acp_recipe_env_kv_pair_m[16];
+	struct kv_pair acp_recipe_env_kv_pair_m[64];
 	size_t acp_recipe_env_kv_pair_m_count;
 };
 
@@ -1280,7 +1280,7 @@ struct acp_agent_entry_version_r {
 };
 
 struct acp_agent_entry_capabilities_r {
-	struct kv_pair acp_agent_entry_capabilities_kv_pair_m[16];
+	struct kv_pair acp_agent_entry_capabilities_kv_pair_m[64];
 	size_t acp_agent_entry_capabilities_kv_pair_m_count;
 };
 
@@ -1477,7 +1477,7 @@ struct cron_spec_no_agent {
 };
 
 struct cron_spec_context_from_r {
-	struct zcbor_string cron_spec_context_from_tstr[16];
+	struct zcbor_string cron_spec_context_from_tstr[64];
 	size_t cron_spec_context_from_tstr_count;
 };
 
@@ -1494,7 +1494,7 @@ struct cron_spec_deliver_r {
 struct cron_spec_enabled_toolsets_r {
 	union {
 		struct {
-			struct zcbor_string enabled_toolsets_tstr_l_tstr[16];
+			struct zcbor_string enabled_toolsets_tstr_l_tstr[64];
 			size_t enabled_toolsets_tstr_l_tstr_count;
 		};
 	};
@@ -1535,7 +1535,7 @@ struct cron_spec_provider_r {
 };
 
 struct cron_spec_skills_r {
-	struct zcbor_string cron_spec_skills_tstr[16];
+	struct zcbor_string cron_spec_skills_tstr[64];
 	size_t cron_spec_skills_tstr_count;
 };
 
@@ -1802,7 +1802,7 @@ struct contact_info {
 };
 
 struct create_conversation_details_participants_r {
-	struct contact_info create_conversation_details_participants_contact_info_m[16];
+	struct contact_info create_conversation_details_participants_contact_info_m[64];
 	size_t create_conversation_details_participants_contact_info_m_count;
 };
 
@@ -1813,7 +1813,7 @@ struct auth_param_field {
 };
 
 struct account_settings_schema_fields_r {
-	struct auth_param_field account_settings_schema_fields_auth_param_field_m[16];
+	struct auth_param_field account_settings_schema_fields_auth_param_field_m[64];
 	size_t account_settings_schema_fields_auth_param_field_m_count;
 };
 
@@ -1832,7 +1832,7 @@ struct values_tstrtstr {
 };
 
 struct account_settings_values_values_r {
-	struct values_tstrtstr values_tstrtstr[16];
+	struct values_tstrtstr values_tstrtstr[64];
 	size_t values_tstrtstr_count;
 };
 
@@ -2851,15 +2851,15 @@ struct agent_event_steered {
 struct conv_turn_view {
 	struct zcbor_string conv_turn_view_role;
 	struct zcbor_string conv_turn_view_text;
-	struct zcbor_string conv_turn_view_tools_tstr[16];
+	struct zcbor_string conv_turn_view_tools_tstr[64];
 	size_t conv_turn_view_tools_tstr_count;
 };
 
 struct conv_view {
 	uint32_t conv_view_epoch;
-	struct conv_turn_view conv_view_turns_conv_turn_view_m[16];
+	struct conv_turn_view conv_view_turns_conv_turn_view_m[64];
 	size_t conv_view_turns_conv_turn_view_m_count;
-	struct zcbor_string conv_view_waiting_for_tstr[16];
+	struct zcbor_string conv_view_waiting_for_tstr[64];
 	size_t conv_view_waiting_for_tstr_count;
 };
 
@@ -2925,7 +2925,7 @@ struct host_request_kind_input {
 
 struct host_request_kind_choice {
 	struct zcbor_string Choice_prompt;
-	struct zcbor_string Choice_options_tstr[16];
+	struct zcbor_string Choice_options_tstr[64];
 	size_t Choice_options_tstr_count;
 };
 
@@ -2980,7 +2980,7 @@ struct outbound_r {
 };
 
 struct response_drained {
-	struct outbound_r response_drained_Drained_outbound_m[16];
+	struct outbound_r response_drained_Drained_outbound_m[64];
 	size_t response_drained_Drained_outbound_m_count;
 };
 
@@ -2999,7 +2999,7 @@ struct service_health {
 
 struct health_report {
 	bool health_report_all_ok;
-	struct service_health health_report_services_service_health_m[16];
+	struct service_health health_report_services_service_health_m[64];
 	size_t health_report_services_service_health_m_count;
 };
 
@@ -3149,7 +3149,7 @@ struct session_info {
 };
 
 struct response_sessions {
-	struct session_info response_sessions_Sessions_session_info_m[16];
+	struct session_info response_sessions_Sessions_session_info_m[64];
 	size_t response_sessions_Sessions_session_info_m_count;
 };
 
@@ -3172,12 +3172,12 @@ struct approval_info {
 };
 
 struct response_approvals {
-	struct approval_info response_approvals_Approvals_approval_info_m[16];
+	struct approval_info response_approvals_Approvals_approval_info_m[64];
 	size_t response_approvals_Approvals_approval_info_m_count;
 };
 
 struct fleet_report {
-	struct zcbor_string fleet_report_children_unit_id_m[16];
+	struct zcbor_string fleet_report_children_unit_id_m[64];
 	size_t fleet_report_children_unit_id_m_count;
 	struct usage_delta fleet_report_usage;
 };
@@ -3261,7 +3261,7 @@ struct unit_node {
 		unit_node_work_null_m_c,
 	} unit_node_work_choice;
 	struct usage_delta unit_node_usage;
-	struct zcbor_string unit_node_children_unit_id_m[16];
+	struct zcbor_string unit_node_children_unit_id_m[64];
 	size_t unit_node_children_unit_id_m_count;
 	struct unit_node_profile_r unit_node_profile;
 	bool unit_node_profile_present;
@@ -3281,7 +3281,7 @@ struct tree_report {
 		tree_report_root_unit_id_m_c,
 		tree_report_root_null_m_c,
 	} tree_report_root_choice;
-	struct unit_node tree_report_nodes_unit_node_m[16];
+	struct unit_node tree_report_nodes_unit_node_m[64];
 	size_t tree_report_nodes_unit_node_m_count;
 };
 
@@ -3371,7 +3371,7 @@ struct manage_event_view_r {
 };
 
 struct response_unit_events {
-	struct manage_event_view_r response_unit_events_UnitEvents_manage_event_view_m[16];
+	struct manage_event_view_r response_unit_events_UnitEvents_manage_event_view_m[64];
 	size_t response_unit_events_UnitEvents_manage_event_view_m_count;
 };
 
@@ -3483,7 +3483,7 @@ struct journal_record {
 };
 
 struct journal_page_view {
-	struct journal_record journal_page_view_entries_journal_record_m[16];
+	struct journal_record journal_page_view_entries_journal_record_m[64];
 	size_t journal_page_view_entries_journal_record_m_count;
 	uint32_t journal_page_view_next_cursor;
 	uint32_t journal_page_view_head_cursor;
@@ -3561,7 +3561,7 @@ struct session_log_entry {
 };
 
 struct log_page_view {
-	struct session_log_entry log_page_view_entries_session_log_entry_m[16];
+	struct session_log_entry log_page_view_entries_session_log_entry_m[64];
 	size_t log_page_view_entries_session_log_entry_m_count;
 	uint32_t log_page_view_next_seq;
 	uint32_t log_page_view_head_seq;
@@ -3572,12 +3572,12 @@ struct response_log_page {
 };
 
 struct response_delivery_targets {
-	struct delivery_target response_delivery_targets_DeliveryTargets_delivery_target_m[16];
+	struct delivery_target response_delivery_targets_DeliveryTargets_delivery_target_m[64];
 	size_t response_delivery_targets_DeliveryTargets_delivery_target_m_count;
 };
 
 struct response_delivery_sessions {
-	struct zcbor_string response_delivery_sessions_DeliverySessions_session_id_m[16];
+	struct zcbor_string response_delivery_sessions_DeliverySessions_session_id_m[64];
 	size_t response_delivery_sessions_DeliverySessions_session_id_m_count;
 };
 
@@ -3629,7 +3629,7 @@ struct search_hit {
 
 struct search_page {
 	uint32_t search_page_page;
-	struct search_hit search_page_results_search_hit_m[16];
+	struct search_hit search_page_results_search_hit_m[64];
 	size_t search_page_results_search_hit_m_count;
 	bool search_page_has_more;
 };
@@ -3653,7 +3653,7 @@ struct model_file {
 };
 
 struct response_model_files {
-	struct model_file response_model_files_ModelFiles_model_file_m[16];
+	struct model_file response_model_files_ModelFiles_model_file_m[64];
 	size_t response_model_files_ModelFiles_model_file_m_count;
 };
 
@@ -3690,7 +3690,7 @@ struct download_status {
 };
 
 struct response_model_downloads {
-	struct download_status response_model_downloads_ModelDownloads_download_status_m[16];
+	struct download_status response_model_downloads_ModelDownloads_download_status_m[64];
 	size_t response_model_downloads_ModelDownloads_download_status_m_count;
 };
 
@@ -3747,7 +3747,7 @@ struct installed_model {
 };
 
 struct response_model_catalog {
-	struct installed_model response_model_catalog_ModelCatalog_installed_model_m[16];
+	struct installed_model response_model_catalog_ModelCatalog_installed_model_m[64];
 	size_t response_model_catalog_ModelCatalog_installed_model_m_count;
 };
 
@@ -3791,7 +3791,7 @@ struct quant_recommendation {
 	uint32_t quant_recommendation_budget_bytes;
 	bool quant_recommendation_fits;
 	struct zcbor_string quant_recommendation_reason;
-	struct quant_candidate quant_recommendation_candidates_quant_candidate_m[16];
+	struct quant_candidate quant_recommendation_candidates_quant_candidate_m[64];
 	size_t quant_recommendation_candidates_quant_candidate_m_count;
 };
 
@@ -3843,7 +3843,7 @@ struct quantize_status {
 };
 
 struct response_model_quantizes {
-	struct quantize_status response_model_quantizes_ModelQuantizes_quantize_status_m[16];
+	struct quantize_status response_model_quantizes_ModelQuantizes_quantize_status_m[64];
 	size_t response_model_quantizes_ModelQuantizes_quantize_status_m_count;
 };
 
@@ -3909,12 +3909,12 @@ struct profile_info {
 	struct provider_selector_r profile_info_provider;
 	struct zcbor_string profile_info_model;
 	bool profile_info_is_active;
-	struct bound_account profile_info_bound_accounts_bound_account_m[16];
+	struct bound_account profile_info_bound_accounts_bound_account_m[64];
 	size_t profile_info_bound_accounts_bound_account_m_count;
 };
 
 struct response_profiles {
-	struct profile_info response_profiles_Profiles_profile_info_m[16];
+	struct profile_info response_profiles_Profiles_profile_info_m[64];
 	size_t response_profiles_Profiles_profile_info_m_count;
 };
 
@@ -3935,7 +3935,7 @@ struct credential_info {
 };
 
 struct response_credentials {
-	struct credential_info response_credentials_Credentials_credential_info_m[16];
+	struct credential_info response_credentials_Credentials_credential_info_m[64];
 	size_t response_credentials_Credentials_credential_info_m_count;
 };
 
@@ -3967,7 +3967,7 @@ struct model_descriptor {
 };
 
 struct response_models {
-	struct model_descriptor response_models_Models_model_descriptor_m[16];
+	struct model_descriptor response_models_Models_model_descriptor_m[64];
 	size_t response_models_Models_model_descriptor_m_count;
 };
 
@@ -4019,7 +4019,7 @@ struct revision {
 };
 
 struct response_revisions {
-	struct revision response_revisions_Revisions_revision_m[16];
+	struct revision response_revisions_Revisions_revision_m[64];
 	size_t response_revisions_Revisions_revision_m_count;
 };
 
@@ -4088,7 +4088,7 @@ struct curator_entry {
 };
 
 struct response_curator_skills {
-	struct curator_entry response_curator_skills_CuratorSkills_curator_entry_m[16];
+	struct curator_entry response_curator_skills_CuratorSkills_curator_entry_m[64];
 	size_t response_curator_skills_CuratorSkills_curator_entry_m_count;
 };
 
@@ -4099,7 +4099,7 @@ struct curator_change {
 };
 
 struct response_curator_run {
-	struct curator_change response_curator_run_CuratorRun_curator_change_m[16];
+	struct curator_change response_curator_run_CuratorRun_curator_change_m[64];
 	size_t response_curator_run_CuratorRun_curator_change_m_count;
 };
 
@@ -4143,12 +4143,12 @@ struct auth_provider_info {
 	struct zcbor_string auth_provider_info_family;
 	struct auth_flow_kind_r auth_provider_info_flow_kind;
 	struct zcbor_string auth_provider_info_display_name;
-	struct auth_param_field auth_provider_info_params_schema_auth_param_field_m[16];
+	struct auth_param_field auth_provider_info_params_schema_auth_param_field_m[64];
 	size_t auth_provider_info_params_schema_auth_param_field_m_count;
 };
 
 struct response_auth_providers {
-	struct auth_provider_info response_auth_providers_AuthProviders_auth_provider_info_m[16];
+	struct auth_provider_info response_auth_providers_AuthProviders_auth_provider_info_m[64];
 	size_t response_auth_providers_AuthProviders_auth_provider_info_m_count;
 };
 
@@ -4184,7 +4184,7 @@ struct checkpoint_info {
 };
 
 struct response_checkpoints {
-	struct checkpoint_info response_checkpoints_Checkpoints_checkpoint_info_m[16];
+	struct checkpoint_info response_checkpoints_Checkpoints_checkpoint_info_m[64];
 	size_t response_checkpoints_Checkpoints_checkpoint_info_m_count;
 };
 
@@ -4199,7 +4199,7 @@ struct session_page_next_cursor_r {
 };
 
 struct session_page {
-	struct session_info session_page_sessions_session_info_m[16];
+	struct session_info session_page_sessions_session_info_m[64];
 	size_t session_page_sessions_session_info_m_count;
 	struct session_page_next_cursor_r session_page_next_cursor;
 	bool session_page_next_cursor_present;
@@ -4230,12 +4230,12 @@ struct session_detail_model_r {
 };
 
 struct session_detail_delivery_targets_r {
-	struct delivery_target session_detail_delivery_targets_delivery_target_m[16];
+	struct delivery_target session_detail_delivery_targets_delivery_target_m[64];
 	size_t session_detail_delivery_targets_delivery_target_m_count;
 };
 
 struct session_detail_children_r {
-	struct zcbor_string session_detail_children_session_id_m[16];
+	struct zcbor_string session_detail_children_session_id_m[64];
 	size_t session_detail_children_session_id_m_count;
 };
 
@@ -4269,12 +4269,12 @@ struct response_session_detail {
 
 struct SessionsByProfile_profile_l {
 	struct zcbor_string SessionsByProfile_profile_l_profile;
-	struct session_info profile_l_sessions_session_info_m[16];
+	struct session_info profile_l_sessions_session_info_m[64];
 	size_t profile_l_sessions_session_info_m_count;
 };
 
 struct response_sessions_by_profile {
-	struct SessionsByProfile_profile_l SessionsByProfile_profile_l[16];
+	struct SessionsByProfile_profile_l SessionsByProfile_profile_l[64];
 	size_t SessionsByProfile_profile_l_count;
 };
 
@@ -4285,22 +4285,22 @@ struct session_search_hit {
 };
 
 struct response_session_search {
-	struct session_search_hit response_session_search_SessionSearch_session_search_hit_m[16];
+	struct session_search_hit response_session_search_SessionSearch_session_search_hit_m[64];
 	size_t response_session_search_SessionSearch_session_search_hit_m_count;
 };
 
 struct response_acp_catalog {
-	struct acp_agent_entry response_acp_catalog_AcpCatalog_acp_agent_entry_m[16];
+	struct acp_agent_entry response_acp_catalog_AcpCatalog_acp_agent_entry_m[64];
 	size_t response_acp_catalog_AcpCatalog_acp_agent_entry_m_count;
 };
 
 struct response_providers {
-	struct provider_info response_providers_Providers_provider_info_m[16];
+	struct provider_info response_providers_Providers_provider_info_m[64];
 	size_t response_providers_Providers_provider_info_m_count;
 };
 
 struct response_tools {
-	struct tool_info response_tools_Tools_tool_info_m[16];
+	struct tool_info response_tools_Tools_tool_info_m[64];
 	size_t response_tools_Tools_tool_info_m_count;
 };
 
@@ -4328,15 +4328,15 @@ struct command_access_r {
 
 struct command_spec {
 	struct zcbor_string command_spec_name;
-	struct zcbor_string command_spec_aliases_tstr[16];
+	struct zcbor_string command_spec_aliases_tstr[64];
 	size_t command_spec_aliases_tstr_count;
 	struct zcbor_string command_spec_summary;
 	struct zcbor_string command_spec_category;
 	struct zcbor_string command_spec_args_hint;
-	struct zcbor_string command_spec_subcommands_tstr[16];
+	struct zcbor_string command_spec_subcommands_tstr[64];
 	size_t command_spec_subcommands_tstr_count;
 	struct command_scope_r command_spec_scope;
-	struct command_surface_r command_spec_surfaces_command_surface_m[16];
+	struct command_surface_r command_spec_surfaces_command_surface_m[64];
 	size_t command_spec_surfaces_command_surface_m_count;
 	bool command_spec_side_effecting;
 	bool command_spec_confirm;
@@ -4345,7 +4345,7 @@ struct command_spec {
 };
 
 struct response_commands {
-	struct command_spec response_commands_Commands_command_spec_m[16];
+	struct command_spec response_commands_Commands_command_spec_m[64];
 	size_t response_commands_Commands_command_spec_m_count;
 };
 
@@ -4428,7 +4428,7 @@ struct cron_job {
 };
 
 struct response_cron_jobs {
-	struct cron_job response_cron_jobs_CronJobs_cron_job_m[16];
+	struct cron_job response_cron_jobs_CronJobs_cron_job_m[64];
 	size_t response_cron_jobs_CronJobs_cron_job_m_count;
 };
 
@@ -4491,7 +4491,7 @@ struct cron_run {
 };
 
 struct response_cron_runs {
-	struct cron_run response_cron_runs_CronRuns_cron_run_m[16];
+	struct cron_run response_cron_runs_CronRuns_cron_run_m[64];
 	size_t response_cron_runs_CronRuns_cron_run_m_count;
 };
 
@@ -4529,12 +4529,12 @@ struct cron_suggestion {
 };
 
 struct response_cron_suggestions {
-	struct cron_suggestion response_cron_suggestions_CronSuggestions_cron_suggestion_m[16];
+	struct cron_suggestion response_cron_suggestions_CronSuggestions_cron_suggestion_m[64];
 	size_t response_cron_suggestions_CronSuggestions_cron_suggestion_m_count;
 };
 
 struct response_chat_routes {
-	struct chat_route response_chat_routes_ChatRoutes_chat_route_m[16];
+	struct chat_route response_chat_routes_ChatRoutes_chat_route_m[64];
 	size_t response_chat_routes_ChatRoutes_chat_route_m_count;
 };
 
@@ -4578,7 +4578,7 @@ struct room_info {
 };
 
 struct response_rooms {
-	struct room_info response_rooms_Rooms_room_info_m[16];
+	struct room_info response_rooms_Rooms_room_info_m[64];
 	size_t response_rooms_Rooms_room_info_m_count;
 };
 
@@ -4604,7 +4604,7 @@ struct adapter_info {
 };
 
 struct response_adapters {
-	struct adapter_info response_adapters_Adapters_adapter_info_m[16];
+	struct adapter_info response_adapters_Adapters_adapter_info_m[64];
 	size_t response_adapters_Adapters_adapter_info_m_count;
 };
 
@@ -4659,7 +4659,7 @@ struct transport_instance_info {
 };
 
 struct response_transport_instances {
-	struct transport_instance_info response_transport_instances_TransportInstances_transport_instance_info_m[16];
+	struct transport_instance_info response_transport_instances_TransportInstances_transport_instance_info_m[64];
 	size_t response_transport_instances_TransportInstances_transport_instance_info_m_count;
 };
 
@@ -4764,7 +4764,7 @@ struct conversation_member {
 };
 
 struct conversation_info_members_r {
-	struct conversation_member conversation_info_members_conversation_member_m[16];
+	struct conversation_member conversation_info_members_conversation_member_m[64];
 	size_t conversation_info_members_conversation_member_m_count;
 };
 
@@ -4783,7 +4783,7 @@ struct conversation_info {
 };
 
 struct response_conversations {
-	struct conversation_info response_conversations_Conversations_conversation_info_m[16];
+	struct conversation_info response_conversations_Conversations_conversation_info_m[64];
 	size_t response_conversations_Conversations_conversation_info_m_count;
 };
 
@@ -4810,12 +4810,12 @@ struct response_contact_profile {
 };
 
 struct response_contacts {
-	struct contact_info response_contacts_Contacts_contact_info_m[16];
+	struct contact_info response_contacts_Contacts_contact_info_m[64];
 	size_t response_contacts_Contacts_contact_info_m_count;
 };
 
 struct action_menu_items_r {
-	struct zcbor_string action_menu_items_tstr[16];
+	struct zcbor_string action_menu_items_tstr[64];
 	size_t action_menu_items_tstr_count;
 };
 
@@ -4896,7 +4896,7 @@ struct fs_root {
 };
 
 struct response_fs_roots {
-	struct fs_root response_fs_roots_FsRoots_fs_root_m[16];
+	struct fs_root response_fs_roots_FsRoots_fs_root_m[64];
 	size_t response_fs_roots_FsRoots_fs_root_m_count;
 };
 
@@ -4923,7 +4923,7 @@ struct fs_entry {
 };
 
 struct response_fs_list {
-	struct fs_entry response_fs_list_FsList_fs_entry_m[16];
+	struct fs_entry response_fs_list_FsList_fs_entry_m[64];
 	size_t response_fs_list_FsList_fs_entry_m_count;
 };
 
@@ -4974,7 +4974,7 @@ struct fs_search_page_has_more {
 };
 
 struct fs_search_page {
-	struct fs_search_hit fs_search_page_hits_fs_search_hit_m[16];
+	struct fs_search_hit fs_search_page_hits_fs_search_hit_m[64];
 	size_t fs_search_page_hits_fs_search_hit_m_count;
 	struct fs_search_page_has_more fs_search_page_has_more;
 	bool fs_search_page_has_more_present;
@@ -4998,7 +4998,7 @@ struct fs_change {
 };
 
 struct fs_watch_page_view {
-	struct fs_change fs_watch_page_view_events_fs_change_m[16];
+	struct fs_change fs_watch_page_view_events_fs_change_m[64];
 	size_t fs_watch_page_view_events_fs_change_m_count;
 	uint32_t fs_watch_page_view_next_seq;
 };
