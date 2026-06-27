@@ -6,6 +6,7 @@
 #include <QList>
 #include <QObject>
 #include <QString>
+#include <QTimer>
 
 namespace daemonapp::daemon {
 
@@ -30,6 +31,10 @@ public:
     // responseReady, tagged with the same correlationId.
     void sendRequest(const QByteArray& requestCbor, const QString& correlationId = QString());
 
+    // Per-request timeout override (defaults to kRequestTimeoutMs). Exposed so tests can drive the
+    // hung-daemon path without a 30s wait; production code keeps the default.
+    void setRequestTimeoutMs(int ms) { m_requestTimer.setInterval(ms); }
+
 signals:
     void responseReady(const QString& correlationId, const QByteArray& responseCbor);
     void failed(const QString& correlationId, const QString& message);
@@ -45,10 +50,16 @@ private:
     // it is safe to call from both the transport's failed and disconnected signals.
     void failAllPending(const QString& message);
 
+    // A hung-but-connected daemon (accepts the frame, never replies) would otherwise leave
+    // m_inFlight stuck forever and stall the queue. Bound every in-flight request so the queue
+    // self-unsticks (and so the connection heartbeat can detect a dead-but-open socket).
+    static constexpr int kRequestTimeoutMs = 30000;
+
     DaemonTransport* m_transport = nullptr;
     QList<PendingRequest> m_queue;
     bool m_inFlight = false;
     QString m_currentCorrelation;
+    QTimer m_requestTimer;
 };
 
 } // namespace daemonapp::daemon

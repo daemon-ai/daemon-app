@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QList>
 #include <QObject>
 #include <QString>
 
@@ -36,6 +37,13 @@ public:
     // Cheap liveness probe: true iff a server currently accepts a connection on socketPath.
     [[nodiscard]] static bool isDaemonListening(const QString& socketPath, int timeoutMs = 200);
 
+    // Sliding-window restart budget (pure, so it is unit-testable without spawning): prunes spawns
+    // older than windowMs from `history`, returns false if `maxRestarts` remain inside the window,
+    // otherwise records nowMs and returns true. The instance method below applies it to live
+    // spawns.
+    [[nodiscard]] static bool evaluateRestartBudget(QList<qint64>& history, qint64 nowMs,
+                                                    qint64 windowMs, int maxRestarts);
+
     // Async. Probe socketPath; if no daemon answers, discover + spawn one and poll until it is
     // ready. Emits ready(managed) on success or failed(message) on discovery/spawn/timeout failure.
     // `managed` is true iff this call spawned the daemon.
@@ -53,6 +61,13 @@ signals:
 
 private:
     void pollUntilReady();
+    // Spawn budget: a crash-looping daemon (dies, gets re-spawned by the reconnect path, dies
+    // again) must not spawn-storm. Returns false (and prunes stale entries) once kMaxRestarts
+    // spawns have happened inside kRestartWindowMs; records the spawn time on success.
+    [[nodiscard]] bool restartBudgetAvailable();
+
+    static constexpr int kMaxRestarts = 3;
+    static constexpr qint64 kRestartWindowMs = 60000;
 
     settings::ISettingsStore* m_settings = nullptr;
     QString m_socketPath;
@@ -60,6 +75,7 @@ private:
     bool m_managed = false;
     QTimer* m_pollTimer = nullptr;
     int m_pollElapsedMs = 0;
+    QList<qint64> m_spawnTimesMs; // epoch-ms of recent spawns (pruned to the window)
 };
 
 } // namespace daemonapp::daemon

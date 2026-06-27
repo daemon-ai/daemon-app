@@ -3,6 +3,7 @@
 #include "settings/isettings_store.h"
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
 #include <QIODevice>
@@ -80,6 +81,14 @@ void LocalDaemonLauncher::ensureRunning(const QString& socketPath) {
         return;
     }
 
+    // A daemon that crash-loops would otherwise be re-spawned forever by the reconnect path; cap
+    // it.
+    if (!restartBudgetAvailable()) {
+        emit failed(tr("The local daemon keeps crashing (restarted too many times). Check its log "
+                       "and your configuration."));
+        return;
+    }
+
     // Spawn detached so the daemon outlives the client (background wake/cron). Give it the chosen
     // socket + an isolated data dir; capture its output to a log file for diagnostics.
     const QString dataDir = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
@@ -115,6 +124,24 @@ void LocalDaemonLauncher::ensureRunning(const QString& socketPath) {
         connect(m_pollTimer, &QTimer::timeout, this, &LocalDaemonLauncher::pollUntilReady);
     }
     m_pollTimer->start();
+}
+
+bool LocalDaemonLauncher::evaluateRestartBudget(QList<qint64>& history, qint64 nowMs,
+                                                qint64 windowMs, int maxRestarts) {
+    // Drop spawns that aged out of the sliding window.
+    while (!history.isEmpty() && nowMs - history.first() > windowMs) {
+        history.removeFirst();
+    }
+    if (history.size() >= maxRestarts) {
+        return false;
+    }
+    history.append(nowMs);
+    return true;
+}
+
+bool LocalDaemonLauncher::restartBudgetAvailable() {
+    return evaluateRestartBudget(m_spawnTimesMs, QDateTime::currentMSecsSinceEpoch(),
+                                 kRestartWindowMs, kMaxRestarts);
 }
 
 void LocalDaemonLauncher::pollUntilReady() {

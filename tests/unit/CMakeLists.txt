@@ -71,6 +71,21 @@ target_link_libraries(tst_daemon_integration
 add_test(NAME tst_daemon_integration COMMAND tst_daemon_integration)
 set_tests_properties(tst_daemon_integration PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_connection_resilience: the daemon-mode connection-resilience phase over a controllable
+# QLocalServer fixture - the per-request timeout unsticks a hung daemon, the connection service
+# self-corrects out of stale "ready" after a drop and auto-reconnects, a turn resumes from its cursor
+# across a mid-stream drop, and the launcher restart budget caps re-spawns.
+qt_add_executable(tst_connection_resilience tst_connection_resilience.cpp)
+target_link_libraries(tst_connection_resilience
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::turn
+)
+add_test(NAME tst_connection_resilience COMMAND tst_connection_resilience)
+set_tests_properties(tst_connection_resilience PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_daemon_profile_store: client-side id-derivation (slug) for ProfileCreate/Clone; encode +
 # daemon acceptance are covered by verify-codec fixtures + the system-tests.
 qt_add_executable(tst_daemon_profile_store tst_daemon_profile_store.cpp)

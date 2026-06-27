@@ -4,6 +4,10 @@ namespace daemonapp::daemon {
 
 NodeApiClient::NodeApiClient(DaemonTransport* transport, QObject* parent)
     : QObject(parent), m_transport(transport) {
+    m_requestTimer.setSingleShot(true);
+    m_requestTimer.setInterval(kRequestTimeoutMs);
+    connect(&m_requestTimer, &QTimer::timeout, this,
+            [this] { failAllPending(QStringLiteral("request timed out")); });
     if (m_transport != nullptr) {
         connect(m_transport, &DaemonTransport::frameReceived, this, [this](const QByteArray& cbor) {
             if (!m_inFlight) {
@@ -11,6 +15,7 @@ NodeApiClient::NodeApiClient(DaemonTransport* transport, QObject* parent)
                 // cannot be correlated, so drop it.
                 return;
             }
+            m_requestTimer.stop();
             const QString correlationId = m_currentCorrelation;
             m_inFlight = false;
             m_currentCorrelation.clear();
@@ -30,6 +35,7 @@ void NodeApiClient::failAllPending(const QString& message) {
     // Fail the in-flight request, then drain the queue with the same error so callers are not left
     // waiting on a dead socket. Idempotent: once nothing is in flight and the queue is empty this
     // is a no-op, so the error+disconnect double-fire is harmless.
+    m_requestTimer.stop();
     if (m_inFlight) {
         const QString correlationId = m_currentCorrelation;
         m_inFlight = false;
@@ -63,6 +69,7 @@ void NodeApiClient::dispatchNext() {
     const PendingRequest next = m_queue.takeFirst();
     m_inFlight = true;
     m_currentCorrelation = next.correlationId;
+    m_requestTimer.start(); // bound this request so a silent daemon can't stall the queue
     m_transport->sendFrame(next.requestCbor);
 }
 

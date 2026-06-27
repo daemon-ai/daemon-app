@@ -33,6 +33,7 @@
 #include "transports/mock_presence_service.h"
 #include "transports/mock_transport_registry.h"
 
+#include <memory>
 #include <QByteArray>
 #include <QDebug>
 #include <QString>
@@ -117,18 +118,25 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.modelCatalog = new models::DaemonModelCatalog(graph.models, owner);
         graph.profiles = new profiles::DaemonProfileStore(graph.profileRepository, owner);
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
-        // provider/model step and the shell reflect the daemon end-to-end.
+        // provider/model step and the shell reflect the daemon end-to-end. Fire only on the
+        // transition INTO ready: stateChanged also fires for statusMessage churn (e.g. the
+        // "Reconnecting..." status) and the heartbeat re-affirming ready, which must not trigger a
+        // re-refresh storm; a genuine reconnect (connecting -> ready) does re-sync once, as
+        // desired.
+        auto wasReady = std::make_shared<bool>(false);
         QObject::connect(
             graph.connection, &connection::IConnectionService::stateChanged, graph.sessions,
             [conn = graph.connection, sessions = graph.sessions, profiles = graph.profileRepository,
-             credentials = graph.credentialRepository, models = graph.models] {
-                if (conn->ready()) {
+             credentials = graph.credentialRepository, models = graph.models, wasReady] {
+                const bool nowReady = conn->ready();
+                if (nowReady && !*wasReady) {
                     sessions->refreshSessions();
                     profiles->refreshProfiles();
                     credentials->refreshList();
                     models->refreshModels();
                     models->refreshCurrent();
                 }
+                *wasReady = nowReady;
             });
         // Daemon mode is partially live: be explicit so testers/operators don't read it as a fully
         // daemon-backed app. Live now: connection (Health), sessions (SessionsQuery), accounts

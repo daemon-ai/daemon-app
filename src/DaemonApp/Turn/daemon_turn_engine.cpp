@@ -3,6 +3,7 @@
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
 
+#include <algorithm>
 #include <QDateTime>
 #include <QVariantList>
 #include <QVariantMap>
@@ -44,7 +45,9 @@ DaemonTurnEngine::DaemonTurnEngine(NodeApiClient* client, QObject* parent)
     m_elapsedTimer.setInterval(1000);
     m_deadlineTimer.setSingleShot(true);
     m_deadlineTimer.setInterval(kDeadlineMs);
+    m_resumeTimer.setSingleShot(true);
 
+    connect(&m_resumeTimer, &QTimer::timeout, this, &DaemonTurnEngine::pollSubscribe);
     connect(&m_pollTimer, &QTimer::timeout, this, &DaemonTurnEngine::pollSubscribe);
     connect(&m_elapsedTimer, &QTimer::timeout, this, [this] {
         setElapsedMs(static_cast<int>(QDateTime::currentMSecsSinceEpoch() - m_startedAt));
@@ -75,6 +78,8 @@ void DaemonTurnEngine::start(const QString& prompt) {
     }
     m_cursor = 0;
     m_finished = false;
+    m_resumeAttempts = 0;
+    m_resumeBackoffMs = kResumeMinMs;
     m_startedAt = QDateTime::currentMSecsSinceEpoch();
     setElapsedMs(0);
     setErrorText(QString());
@@ -90,6 +95,7 @@ void DaemonTurnEngine::start(const QString& prompt) {
 
 void DaemonTurnEngine::cancel() {
     m_pollTimer.stop();
+    m_resumeTimer.stop();
     m_elapsedTimer.stop();
     m_deadlineTimer.stop();
     if (m_active) {
@@ -136,6 +142,13 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
             finishTurn(tr("Failed to read the agent's response stream."));
             return;
         }
+        // A good page means the connection is live again: clear any resume backoff and lift the
+        // transient "stalled" state (text below may bump it to "streaming").
+        m_resumeAttempts = 0;
+        m_resumeBackoffMs = kResumeMinMs;
+        if (m_turnState == QStringLiteral("stalled")) {
+            setTurnState(QStringLiteral("thinking"));
+        }
         for (const DecodedLogEntry& entry : entries) {
             if (entry.payloadKind != DecodedLogEntry::PayloadKind::Event) {
                 continue; // skip the inbound user command echo, meta, etc.
@@ -169,8 +182,27 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
 }
 
 void DaemonTurnEngine::onFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == submitCorrelation() || correlationId == subscribeCorrelation()) {
+    // Submit-phase failure: the turn was never accepted, so there is nothing to resume - error out.
+    if (correlationId == submitCorrelation()) {
         finishTurn(message.isEmpty() ? tr("The connection to the agent was lost.") : message);
+        return;
+    }
+    // Subscribe-phase failure: the turn is in flight on the daemon and m_cursor marks how far we
+    // read, so a dropped socket is recoverable. Suspend into "stalled" and retry from m_cursor with
+    // backoff (the shared transport reconnects lazily under pollSubscribe) until the resume budget
+    // is exhausted, only then giving up.
+    if (correlationId == subscribeCorrelation()) {
+        if (m_finished) {
+            return;
+        }
+        if (m_resumeAttempts >= kResumeMaxAttempts) {
+            finishTurn(message.isEmpty() ? tr("The connection to the agent was lost.") : message);
+            return;
+        }
+        ++m_resumeAttempts;
+        setTurnState(QStringLiteral("stalled"));
+        m_resumeTimer.start(m_resumeBackoffMs);
+        m_resumeBackoffMs = std::min(m_resumeBackoffMs * 2, kResumeMaxMs);
     }
 }
 
@@ -179,6 +211,7 @@ void DaemonTurnEngine::finishTurn(const QString& errorText) {
         return;
     }
     m_pollTimer.stop();
+    m_resumeTimer.stop();
     m_elapsedTimer.stop();
     m_deadlineTimer.stop();
     m_finished = true;

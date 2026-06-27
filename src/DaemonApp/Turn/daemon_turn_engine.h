@@ -63,9 +63,17 @@ private:
     QTimer m_pollTimer;     // re-arms the Subscribe poll
     QTimer m_elapsedTimer;  // 1s tick for elapsedMs
     QTimer m_deadlineTimer; // hard cap so a stuck turn cannot poll forever
+    QTimer m_resumeTimer;   // backoff re-Subscribe after a mid-turn drop (turn resume)
     qint64 m_startedAt = 0;
+    int m_resumeBackoffMs = kResumeMinMs; // grows per consecutive subscribe failure
+    int m_resumeAttempts = 0;             // consecutive subscribe failures since the last good page
 
     static constexpr int kPollIntervalMs = 120;
     static constexpr int kDeadlineMs = 180000; // 3 min safety cap
     static constexpr quint32 kSubscribeMax = 256;
+    // Turn resume: a mid-turn Subscribe failure (the socket dropped) is transient - the shared
+    // transport reconnects lazily, so retry from m_cursor with backoff instead of killing the turn.
+    static constexpr int kResumeMinMs = 250;
+    static constexpr int kResumeMaxMs = 4000;
+    static constexpr int kResumeMaxAttempts = 12; // give up -> finish with error after this many
 };

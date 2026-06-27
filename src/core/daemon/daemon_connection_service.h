@@ -6,6 +6,7 @@
 #include "daemon/node_api_client.h"
 
 #include <memory>
+#include <QTimer>
 
 namespace settings {
 class ISettingsStore;
@@ -47,13 +48,32 @@ public:
 
 private:
     static constexpr auto kHealthCorrelation = "connection/health";
+    // Steady liveness probe while ready; backoff bounds + a hard episode budget while reconnecting.
+    static constexpr int kHeartbeatMs = 12000;
+    static constexpr int kReprobeMinMs = 500;
+    static constexpr int kReprobeMaxMs = 10000;
+    static constexpr int kReconnectBudgetMs = 120000; // give up -> offline after 2 min
 
     void sendHealthProbe();
+    // The connection became live: ready state, clear status, reset backoff, (re)start the
+    // heartbeat.
+    void markReady();
+    // A drop/timeout was observed: enter the transient reconnecting episode (state "connecting" +
+    // "Reconnecting..." status) and start retrying. Idempotent while an episode is already running.
+    void enterReconnecting();
+    // One attach-only reprobe tick: re-send Health and re-arm with growing backoff.
+    void onReprobeTick();
+    // True iff a reconnect episode is currently in progress.
+    [[nodiscard]] bool reconnecting() const { return m_reconnectDeadline.isActive(); }
 
     std::unique_ptr<DaemonTransport> m_transport;
     std::unique_ptr<NodeApiClient> m_client;
     settings::ISettingsStore* m_settings = nullptr;
     LocalDaemonLauncher* m_launcher = nullptr;
+    QTimer m_heartbeat;         // periodic Health while ready
+    QTimer m_reprobe;           // attach-only backoff Health reprobe while reconnecting
+    QTimer m_reconnectDeadline; // single-shot episode budget -> offline
+    int m_backoffMs = kReprobeMinMs;
 };
 
 } // namespace daemonapp::daemon
