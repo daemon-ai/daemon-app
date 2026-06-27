@@ -135,6 +135,59 @@ private slots:
         QVERIFY(!turn.active());
     }
 
+    // CHA-5 (mock seam): a "clarify"/"which" prompt gates with an inline clarify form
+    // (a toolStarted carrying `questions`); respondChoice() maps onto the mock's resume()
+    // and drives the turn to completion. Guards the ITurnEngine respond* seam's mock side.
+    void clarifyPromptGatesAndResumesViaRespondChoice() {
+        TurnController turn;
+        QList<QVariantMap> events;
+        QObject::connect(&turn, &TurnController::eventsEmitted, &turn,
+                         [&events](const QVariantList& batch) {
+                             for (const QVariant& v : batch) {
+                                 events.append(v.toMap());
+                             }
+                         });
+        QSignalSpy awaitSpy(&turn, &TurnController::awaitingInput);
+        QSignalSpy finished(&turn, &TurnController::turnFinished);
+
+        turn.start(QStringLiteral("which environment should I clarify?"));
+        QVERIFY(awaitSpy.wait(5000));
+        QVERIFY(turn.paused());
+        QCOMPARE(finished.count(), 0);
+
+        // The gate emitted a clarify tool (a `questions` form), not a plain tool row.
+        bool sawClarifyForm = false;
+        for (const QVariantMap& e : events) {
+            if (e.value(QStringLiteral("type")).toString() == QStringLiteral("toolStarted") &&
+                e.contains(QStringLiteral("questions"))) {
+                sawClarifyForm = true;
+            }
+        }
+        QVERIFY(sawClarifyForm);
+
+        // respondChoice (the typed seam) maps onto the mock's resume() and completes the turn.
+        turn.respondChoice(QStringLiteral("sim-clarify"), 0);
+        QVERIFY(finished.wait(5000));
+        QVERIFY(!turn.active());
+        QCOMPARE(turn.turnState(), QStringLiteral("idle"));
+    }
+
+    // CHA-4 (mock seam): respondApproval() maps onto the approval gate's resume().
+    void approvalPromptResumesViaRespondApproval() {
+        TurnController turn;
+        QSignalSpy awaitSpy(&turn, &TurnController::awaitingInput);
+        QSignalSpy finished(&turn, &TurnController::turnFinished);
+
+        turn.start(QStringLiteral("please approve the command"));
+        QVERIFY(awaitSpy.wait(5000));
+        QVERIFY(turn.paused());
+
+        turn.respondApproval(QStringLiteral("sim-approve"), true);
+        QVERIFY(finished.wait(5000));
+        QVERIFY(!turn.active());
+        QCOMPARE(turn.turnState(), QStringLiteral("idle"));
+    }
+
     // cancel() stops an in-flight turn and resets to idle without emitting finish.
     void cancelResetsToIdle() {
         TurnController turn;

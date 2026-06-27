@@ -89,6 +89,33 @@ QQC.Popup {
             }
         }
 
+        // --- Approval mode (CHA-4) ---------------------------------------
+        // Per-session HITL policy. The setter sends SetSessionMode in daemon mode (the node parks
+        // or auto-resolves tool approvals accordingly); default Ask.
+        Text {
+            text: qsTr("Approval mode")
+            font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Repeater {
+                model: SessionSettings.approvalModeOptions()
+                delegate: Kit.TextButton {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    // Stored values are the canonical ask/accept_edits/auto_allow/deny; show a
+                    // friendlier label.
+                    text: modelData === "accept_edits" ? qsTr("Edits")
+                          : modelData === "auto_allow" ? qsTr("Auto")
+                          : modelData === "deny" ? qsTr("Deny")
+                          : qsTr("Ask")
+                    accentFilled: SessionSettings.approvalMode === modelData
+                    onClicked: SessionSettings.setApprovalMode(modelData)
+                }
+            }
+        }
+
         // --- Modes -------------------------------------------------------
         RowLayout {
             Layout.fillWidth: true

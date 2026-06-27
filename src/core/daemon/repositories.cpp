@@ -677,12 +677,75 @@ QList<CachedFsEntryRow> FsRepository::cachedEntries(const QString& rootId) const
     return cache() != nullptr ? cache()->fsEntries(rootId) : QList<CachedFsEntryRow>{};
 }
 
+ApprovalRepository::ApprovalRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                       QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &ApprovalRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &ApprovalRepository::handleFailure);
+    }
+}
+
 bool ApprovalRepository::upsertCachedApproval(const CachedApprovalRow& row) {
     return cache() != nullptr && cache()->upsertApproval(row);
 }
 
 QList<CachedApprovalRow> ApprovalRepository::cachedApprovals() const {
     return cache() != nullptr ? cache()->approvals() : QList<CachedApprovalRow>{};
+}
+
+void ApprovalRepository::refreshPending(const QString& sessionId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    m_lastSession = sessionId;
+    client()->sendRequest(NodeApiCodec::encodeApprovalsPendingRequest(sessionId),
+                          QLatin1String(kPendingCorrelation));
+}
+
+void ApprovalRepository::decide(const QString& sessionId, const QString& requestId, bool allow) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeApprovalDecideRequest(sessionId, requestId, allow),
+                          QLatin1String(kDecideCorrelation));
+}
+
+void ApprovalRepository::handleResponse(const QString& correlationId,
+                                        const QByteArray& responseCbor) {
+    if (correlationId == QLatin1String(kPendingCorrelation)) {
+        if (!NodeApiCodec::decodeApprovals(responseCbor, &m_pending)) {
+            emit operationFailed(QStringLiteral("Failed to decode Approvals response"));
+            return;
+        }
+        emit pendingRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kDecideCorrelation)) {
+        const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+        if (kind == ApiResponseKind::Ok) {
+            emit decided();
+            refreshPending(m_lastSession); // re-sync the inbox after a decision
+            return;
+        }
+        DecodedApiError err;
+        if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(QStringLiteral("Approval decision failed"));
+        }
+        return;
+    }
+}
+
+void ApprovalRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kPendingCorrelation) ||
+        correlationId == QLatin1String(kDecideCorrelation)) {
+        emit operationFailed(message);
+    }
 }
 
 } // namespace daemonapp::daemon

@@ -135,6 +135,23 @@ public:
     [[nodiscard]] QString runHeadlessModels(const QString& query, const QString& repo,
                                             int timeoutMs);
 
+    // Headless E2E hook (CHA-7): connect, issue a CommandList (and optionally CommandInvoke
+    // `invoke`), and return the discovered command names (newline-joined), or the CommandOutput
+    // text when `invoke` is set. Empty on connect failure. Exercises the slash-command wire ops
+    // over the real NodeApiClient.
+    [[nodiscard]] QString runHeadlessCommands(const QString& invoke, int timeoutMs);
+
+    // Headless E2E hook (CHA-8): connect, issue a SessionSearch for `query`, and return the hit
+    // session ids (newline-joined). Empty on connect failure / no hits.
+    [[nodiscard]] QString runHeadlessSearch(const QString& query, int timeoutMs);
+
+    // Headless E2E hook (CHA-4 / CHA-5 HITL): connect, drive one real turn that parks on a host
+    // gate (the scripted provider's tool call), auto-resolve the gate per `decision`
+    // ("approve"|"deny"|"choice"|"input:<text>"), and return the streamed assistant text. Proves
+    // the park -> Respond -> resume loop end-to-end (the proxy sees Submit + Respond crossing).
+    [[nodiscard]] QString runHeadlessHitl(const QString& prompt, const QString& decision,
+                                          int timeoutMs);
+
 protected:
     // Close-to-tray: when a tray is installed, intercept the root window's close
     // (X) event and hide instead of quitting.

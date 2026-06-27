@@ -117,6 +117,15 @@ struct DecodedAgentEvent {
     quint64 seq = 0;
     QString text;               // TextDelta / ReasoningDelta text; Error failure message
     QString toolName;           // ToolStarted / ToolFinished tool name
+    QString callId;             // ToolStarted / ToolFinished tool call id (CHA-3)
+    QString toolArgs;           // ToolStarted args summary (CHA-3)
+    bool toolOk = false;        // ToolFinished result ok (CHA-3)
+    quint32 inputTokens = 0;    // Usage delta (CHA-3)
+    quint32 outputTokens = 0;   // Usage delta (CHA-3)
+    quint32 costMicros = 0;     // Usage delta (CHA-3)
+    quint32 contextUsed = 0;    // Context status used_tokens (CHA-3)
+    bool hasContextMax = false; // Context status max_tokens present
+    quint32 contextMax = 0;     // Context status max_tokens (CHA-3)
     QString endReason;          // TurnFinished: Completed | Failed | Interrupted | ...
     QString finalText;          // TurnFinished: the turn's final assistant text (if any)
     bool turnCompleted = false; // TurnFinished with end_reason == Completed
@@ -139,6 +148,37 @@ struct DecodedLogEntry {
         Meta
     } payloadKind = PayloadKind::None;
     DecodedAgentEvent event; // valid when payloadKind == Event
+    // Valid when payloadKind == Request (a parked HostRequest the turn is blocked on, HITL).
+    quint32 hostRequestId = 0;
+    QString hostKind; // "Approval" | "Input" | "Choice" | "Delegate" | "Spawn"
+    QString hostPrompt;
+    QStringList hostOptions; // Choice options
+};
+
+// A pending approval (ApprovalsPending -> Approvals). request_id is a STRING here (the aggregate
+// inbox), distinct from the in-stream HostRequest.request_id (uint).
+struct DecodedApprovalInfo {
+    QString session;
+    QString requestId;
+    QString prompt;
+    bool hasPath = false;
+    QString path;
+};
+
+// A slash command (CommandList -> Commands). CHA-7.
+struct DecodedCommandSpec {
+    QString name;
+    QString summary;
+    QString category;
+    QString argsHint;
+    bool sideEffecting = false;
+};
+
+// A session-search hit (SessionSearch -> SessionSearch). CHA-8.
+struct DecodedSessionSearchHit {
+    QString session;
+    QString title;
+    QString snippet;
 };
 
 // --- Local model track (Phase 2): search -> quant -> download -> install ----------------------
@@ -238,6 +278,10 @@ enum class ApiResponseKind {
     ModelCurrent,
     Profiles,
     Drained,
+    Approvals,
+    Commands,
+    CommandOutput,
+    SessionSearch,
     Error,
     ModelSearch,
     ModelFiles,
@@ -343,6 +387,41 @@ public:
     [[nodiscard]] static QByteArray encodeModelPauseRequest(quint64 id);
     [[nodiscard]] static QByteArray encodeModelResumeRequest(quint64 id);
 
+    // --- HITL (CHA-4 / CHA-5) ---
+    // Resolve a parked Approval HostRequest (request_id from the stream) with allow/deny.
+    [[nodiscard]] static QByteArray encodeRespondApprovalRequest(const QString& sessionId,
+                                                                 quint32 requestId, bool allow);
+    // Resolve a parked Input (clarify free-text) HostRequest.
+    [[nodiscard]] static QByteArray
+    encodeRespondInputRequest(const QString& sessionId, quint32 requestId, const QString& text);
+    // Resolve a parked Choice (clarify) HostRequest with the chosen option index.
+    [[nodiscard]] static QByteArray encodeRespondChoiceRequest(const QString& sessionId,
+                                                               quint32 requestId, quint32 chosen);
+    // Decide an inbox approval (PRO-11; request_id is the string id from ApprovalInfo).
+    [[nodiscard]] static QByteArray
+    encodeApprovalDecideRequest(const QString& sessionId, const QString& requestId, bool allow);
+    // Set a session's approval mode (CHA-4): "ask" | "accept_edits" | "auto_allow" | "deny".
+    [[nodiscard]] static QByteArray encodeSetSessionModeRequest(const QString& sessionId,
+                                                                const QString& mode);
+    // List pending approvals (PRO-11). Empty session = across all sessions.
+    [[nodiscard]] static QByteArray
+    encodeApprovalsPendingRequest(const QString& sessionId = QString());
+
+    // --- CHA-6 interrupt / steer ---
+    [[nodiscard]] static QByteArray encodeSubmitInterruptRequest(const QString& sessionId,
+                                                                 const QString& reason = QString());
+    [[nodiscard]] static QByteArray
+    encodeSubmitSteerRequest(const QString& sessionId, const QString& text, quint32 requestId = 1);
+
+    // --- CHA-7 slash commands ---
+    [[nodiscard]] static QByteArray encodeCommandListRequest();
+    [[nodiscard]] static QByteArray
+    encodeCommandInvokeRequest(const QString& name, const QString& args = QString(),
+                               const QString& sessionId = QString());
+
+    // --- CHA-8 session search ---
+    [[nodiscard]] static QByteArray encodeSessionSearchRequest(const QString& query, quint32 limit);
+
     // Response inspection / decode.
     [[nodiscard]] static ApiResponseKind responseKind(const QByteArray& responseCbor);
     static bool decodeHealth(const QByteArray& responseCbor, DecodedHealth* out);
@@ -405,6 +484,15 @@ public:
     // Decode a ModelRecommend response into the hardware-aware quant recommendation.
     static bool decodeModelRecommend(const QByteArray& responseCbor,
                                      DecodedQuantRecommendation* out);
+    // Decode an Approvals response (PRO-11) into pending entries.
+    static bool decodeApprovals(const QByteArray& responseCbor, QList<DecodedApprovalInfo>* out);
+    // Decode a Commands response (CHA-7) into the slash-command catalog.
+    static bool decodeCommands(const QByteArray& responseCbor, QList<DecodedCommandSpec>* out);
+    // Decode a CommandOutput response (CHA-7) into its text.
+    static bool decodeCommandOutput(const QByteArray& responseCbor, QString* outText);
+    // Decode a SessionSearch response (CHA-8) into hits.
+    static bool decodeSessionSearch(const QByteArray& responseCbor,
+                                    QList<DecodedSessionSearchHit>* out);
 };
 
 } // namespace daemonapp::daemon

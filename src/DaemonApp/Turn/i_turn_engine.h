@@ -48,6 +48,32 @@ public:
     Q_INVOKABLE virtual void cancel() = 0;
     Q_INVOKABLE virtual void resume() = 0;
 
+    // HITL gate resolution (CHA-4 / CHA-5). `requestId` is the gate's call id (the stream
+    // HostRequest.request_id rendered as a string). The mock maps these onto its single gate;
+    // the daemon engine sends the matching Respond / ApprovalDecide and resumes the Subscribe loop.
+    Q_INVOKABLE virtual void respondApproval(const QString& requestId, bool allow) {
+        Q_UNUSED(requestId)
+        Q_UNUSED(allow)
+        resume();
+    }
+    Q_INVOKABLE virtual void respondInput(const QString& requestId, const QString& text) {
+        Q_UNUSED(requestId)
+        Q_UNUSED(text)
+        resume();
+    }
+    Q_INVOKABLE virtual void respondChoice(const QString& requestId, int index) {
+        Q_UNUSED(requestId)
+        Q_UNUSED(index)
+        resume();
+    }
+
+    // CHA-6: interrupt a running turn (composer Stop), or steer it with extra text mid-flight.
+    Q_INVOKABLE virtual void interrupt(const QString& reason) {
+        Q_UNUSED(reason)
+        cancel();
+    }
+    Q_INVOKABLE virtual void steer(const QString& text) { Q_UNUSED(text) }
+
 signals:
     void activeChanged();
     void turnStateChanged();

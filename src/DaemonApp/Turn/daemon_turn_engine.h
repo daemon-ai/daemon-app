@@ -4,11 +4,13 @@
 
 #include <QByteArray>
 #include <QString>
+#include <QStringList>
 #include <QTimer>
 
 namespace daemonapp::daemon {
 class NodeApiClient;
-}
+struct DecodedLogEntry;
+} // namespace daemonapp::daemon
 
 // The real turn engine (CHA-1 / CHA-2): on start() it sends Submit{StartTurn} for the bound
 // session, then drives a non-destructive Subscribe loop, decoding the node's AgentEvent stream and
@@ -33,13 +35,26 @@ public:
 
     void start(const QString& prompt) override;
     void cancel() override;
-    void resume() override; // host-gate resume (CHA-4/5) - no-op in this slice
+    void resume() override; // bare resume: continues the Subscribe loop if parked
+
+    // HITL gate resolution (CHA-4 / CHA-5): send the matching Respond, then resume the loop.
+    void respondApproval(const QString& requestId, bool allow) override;
+    void respondInput(const QString& requestId, const QString& text) override;
+    void respondChoice(const QString& requestId, int index) override;
+    // CHA-6: interrupt / steer a running turn via Submit{Interrupt/Steer}.
+    void interrupt(const QString& reason) override;
+    void steer(const QString& text) override;
 
 private:
     void onResponse(const QString& correlationId, const QByteArray& responseCbor);
     void onFailure(const QString& correlationId, const QString& message);
     void pollSubscribe();
     void finishTurn(const QString& errorText = QString());
+    // Park the turn on a decoded HostRequest: surface the gate to the transcript and stop polling
+    // until a respond* arrives.
+    void parkOnRequest(const daemonapp::daemon::DecodedLogEntry& entry);
+    // Send an encoded Respond/ApprovalDecide for the parked gate, then resume the Subscribe loop.
+    void sendRespond(const QByteArray& cbor);
 
     void setActive(bool active);
     void setTurnState(const QString& state);
@@ -48,6 +63,7 @@ private:
 
     [[nodiscard]] QString submitCorrelation() const;
     [[nodiscard]] QString subscribeCorrelation() const;
+    [[nodiscard]] QString respondCorrelation() const;
 
     daemonapp::daemon::NodeApiClient* m_client = nullptr;
     QString m_sessionId;
@@ -56,6 +72,11 @@ private:
     quint32 m_requestId = 1;
     bool m_active = false;
     bool m_finished = false;
+    // HITL: the turn is parked on a HostRequest waiting for a respond* call.
+    bool m_parked = false;
+    quint32 m_pendingRequestId = 0;
+    QString m_pendingKind; // "Approval" | "Input" | "Choice"
+    QStringList m_pendingOptions;
     QString m_turnState = QStringLiteral("idle");
     int m_elapsedMs = 0;
     QString m_errorText;

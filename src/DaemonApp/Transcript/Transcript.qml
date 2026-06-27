@@ -195,9 +195,11 @@ Rectangle {
         function onTurnStarted() { root._onTurnStarted(); }
     }
 
-    // Mock agent host: stands in for the daemon runtime so the interactive
-    // blocks (clarify / approval) round-trip end-to-end in the demo. A real host
-    // would forward these answers to the gateway and stream the follow-up turn.
+    // HITL gate routing (CHA-4 / CHA-5): the inline approval/clarify controls answer
+    // here, and we forward the decision to the bound turn engine. In daemon mode the
+    // engine sends Respond{HostResponse}/Chosen and resumes the Subscribe loop; the
+    // mock maps it onto its scripted gate. When no turn is live (e.g. a clarify block
+    // in a loaded transcript), fall back to the local optimistic echo.
     Connections {
         target: editor
 
@@ -209,13 +211,20 @@ Rectangle {
                 var value = answers[key]
                 parts.push(Array.isArray(value) ? value.join(", ") : value)
             }
-            editor.ingestEvents([
-                { type: "text", text: qsTr("\n\nThanks — proceeding with: %1\n").arg(parts.join("; ")) },
-                { type: "flush" }
-            ])
+            if (root.turn && root.turn.active) {
+                root.turn.respondInput(requestId, parts.join("; "))
+            } else {
+                editor.ingestEvents([
+                    { type: "text", text: qsTr("\n\nThanks — proceeding with: %1\n").arg(parts.join("; ")) },
+                    { type: "flush" }
+                ])
+            }
         }
 
         function onToolApprovalAnswered(blockId, callId, decision, permanent) {
+            if (root.turn && root.turn.active) {
+                root.turn.respondApproval(callId, decision === "approved")
+            }
             if (decision === "approved") {
                 editor.updateTypedBlock(blockId, {
                     status: "ok",

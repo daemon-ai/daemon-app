@@ -323,6 +323,50 @@ int main(int argc, char* argv[]) {
         return answer.isEmpty() ? 2 : 0;
     }
 
+    // Headless HITL self-check (CHA-4/5): connect, drive a turn that parks on a host gate, and
+    // auto-resolve it per DAEMON_APP_HITL_DECISION ("approve"|"deny"|"choice"|"input:<text>").
+    // Emits the streamed answer so the E2E harness can assert the park -> Respond -> resume loop.
+    const QByteArray hitlPrompt = qgetenv("DAEMON_APP_HITL_PROMPT");
+    if (!hitlPrompt.isEmpty()) {
+        const QByteArray waitMs = qgetenv("DAEMON_APP_WAIT_READY");
+        const int timeoutMs = waitMs.toInt() > 0 ? waitMs.toInt() : 30000;
+        const QString decision = QString::fromUtf8(qgetenv("DAEMON_APP_HITL_DECISION"));
+        const QString answer =
+            application.runHeadlessHitl(QString::fromUtf8(hitlPrompt), decision, timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_ANSWER %s\n", answer.toUtf8().constData());
+        std::fflush(stdout);
+        return answer.isEmpty() ? 2 : 0;
+    }
+
+    // Headless slash-command self-check (CHA-7): connect, CommandList (+ optional CommandInvoke),
+    // emit the discovered names (or invoked output) so the E2E harness can assert the wire ops.
+    // Gated on DAEMON_APP_COMMAND_LIST (set to "1" to just list; DAEMON_APP_COMMAND_INVOKE
+    // invokes).
+    const QByteArray commandList = qgetenv("DAEMON_APP_COMMAND_LIST");
+    if (!commandList.isEmpty()) {
+        const QByteArray waitMs = qgetenv("DAEMON_APP_WAIT_READY");
+        const int timeoutMs = waitMs.toInt() > 0 ? waitMs.toInt() : 30000;
+        QString out = application.runHeadlessCommands(
+            QString::fromUtf8(qgetenv("DAEMON_APP_COMMAND_INVOKE")), timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_COMMANDS %s\n",
+                     out.replace(QLatin1Char('\n'), QLatin1Char(',')).toUtf8().constData());
+        std::fflush(stdout);
+        return out.isEmpty() ? 2 : 0;
+    }
+
+    // Headless session-search self-check (CHA-8): connect, SessionSearch, emit the hit session ids.
+    // Gated on DAEMON_APP_SESSION_SEARCH (the query string).
+    const QByteArray searchQuery = qgetenv("DAEMON_APP_SESSION_SEARCH");
+    if (!searchQuery.isEmpty()) {
+        const QByteArray waitMs = qgetenv("DAEMON_APP_WAIT_READY");
+        const int timeoutMs = waitMs.toInt() > 0 ? waitMs.toInt() : 30000;
+        QString out = application.runHeadlessSearch(QString::fromUtf8(searchQuery), timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_SEARCH %s\n",
+                     out.replace(QLatin1Char('\n'), QLatin1Char(',')).toUtf8().constData());
+        std::fflush(stdout);
+        return 0;
+    }
+
     // Headless connectivity self-check for the cross-repo E2E harness: block until the daemon-mode
     // auto-connect Health round-trip resolves (or times out), emit a stable sentinel on stdout, and
     // exit deterministically. Keeps the harness from racing the async connect.

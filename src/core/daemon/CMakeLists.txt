@@ -42,6 +42,10 @@ add_library(da_daemon_client STATIC
     daemon_model_catalog.cpp
     daemon_profile_store.h
     daemon_profile_store.cpp
+    daemon_session_settings.h
+    daemon_session_settings.cpp
+    daemon_approvals_inbox.h
+    daemon_approvals_inbox.cpp
     daemon_cache_store.h
     daemon_cache_store.cpp
     cached_session_store.h

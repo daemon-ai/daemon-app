@@ -107,8 +107,22 @@ void SessionOrchestrator::rerun(const QString& text) {
 }
 
 void SessionOrchestrator::steer(const QString& text) {
+    // CHA-6: a live turn takes the steer over the wire (daemon Submit{Steer}); the mock no-ops the
+    // engine call. Keep the local note so the steer is visible in either mode.
+    if (m_turn != nullptr && m_turn->active()) {
+        m_turn->steer(text);
+    }
     if (m_session != nullptr) {
         m_session->appendUserText(tr("(steer) ") + text);
+    }
+}
+
+void SessionOrchestrator::interrupt() {
+    // CHA-6 Stop: ask the engine to interrupt. The daemon engine sends Submit{Interrupt} and keeps
+    // draining so the transcript settles on TurnFinished(Interrupted); the mock maps it onto
+    // cancel.
+    if (m_turn != nullptr) {
+        m_turn->interrupt(QString());
     }
 }
 

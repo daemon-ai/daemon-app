@@ -23,10 +23,13 @@ public:
     void setFast(bool on) override;
     [[nodiscard]] bool verbose() const override { return entry().verbose; }
     void setVerbose(bool on) override;
+    [[nodiscard]] QString approvalMode() const override { return entry().approvalMode; }
+    void setApprovalMode(const QString& mode) override;
 
     [[nodiscard]] QStringList effortOptions() const override;
+    [[nodiscard]] QStringList approvalModeOptions() const override;
 
-private:
+protected:
     // The per-session override set. Defaults use the unified off/low/medium/
     // high effort vocabulary (matches the composer's default reasoning effort).
     struct Settings {
@@ -34,6 +37,7 @@ private:
         QString effort = QStringLiteral("medium");
         bool fast = false;
         bool verbose = false;
+        QString approvalMode = QStringLiteral("ask");
     };
 
     // The active session's entry (const + mutable accessors), created lazily.

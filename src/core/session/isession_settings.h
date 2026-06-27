@@ -20,6 +20,10 @@ class ISessionSettings : public QObject {
     Q_PROPERTY(QString effort READ effort WRITE setEffort NOTIFY changed)
     Q_PROPERTY(bool fast READ fast WRITE setFast NOTIFY changed)
     Q_PROPERTY(bool verbose READ verbose WRITE setVerbose NOTIFY changed)
+    // The per-session approval mode (CHA-4): "ask" | "accept_edits" | "auto_allow" | "deny".
+    // Default "ask" (interactive). In daemon mode the setter sends SetSessionMode so the node's
+    // SessionOverlay.approval_mode tracks it; the mock holds it in memory.
+    Q_PROPERTY(QString approvalMode READ approvalMode WRITE setApprovalMode NOTIFY changed)
 
 public:
     using QObject::QObject;
@@ -36,8 +40,12 @@ public:
     virtual void setFast(bool on) = 0;
     [[nodiscard]] virtual bool verbose() const = 0;
     virtual void setVerbose(bool on) = 0;
+    [[nodiscard]] virtual QString approvalMode() const = 0;
+    virtual void setApprovalMode(const QString& mode) = 0;
 
     [[nodiscard]] Q_INVOKABLE virtual QStringList effortOptions() const = 0;
+    // The selectable approval modes for the popover (CHA-4).
+    [[nodiscard]] Q_INVOKABLE virtual QStringList approvalModeOptions() const = 0;
 
 signals:
     void changed();

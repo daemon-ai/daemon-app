@@ -8,10 +8,12 @@
 #include "connection/mock_connection_service.h"
 #include "daemon/cached_session_store.h"
 #include "daemon/daemon_accounts_service.h"
+#include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_connection_service.h"
 #include "daemon/daemon_model_catalog.h"
 #include "daemon/daemon_profile_store.h"
+#include "daemon/daemon_session_settings.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_client.h"
 #include "daemon/repositories.h"
@@ -87,7 +89,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // existing adapter families for the "Add channel" picker; presence reports offline/unknown.
     graph.transportRegistry = new transports::MockTransportRegistry(owner);
     graph.presence = new transports::MockPresenceService(owner);
-    graph.sessionSettings = new session::MockSessionSettings(owner);
+    // sessionSettings is constructed per-mode below (the daemon variant needs nodeApi to send
+    // SetSessionMode); checkpoints is mock in both.
     graph.checkpoints = new session::MockCheckpointTimeline(owner);
     graph.cache = new DaemonCacheStore(QString(), owner);
     auto* daemonConnection = qobject_cast<DaemonConnectionService*>(graph.connection);
@@ -117,6 +120,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                                                              graph.profileRepository, owner);
         graph.modelCatalog = new models::DaemonModelCatalog(graph.models, owner);
         graph.profiles = new profiles::DaemonProfileStore(graph.profileRepository, owner);
+        // Per-session approval mode (CHA-4): the setter sends SetSessionMode to the node.
+        graph.sessionSettings = new DaemonSessionSettings(graph.nodeApi, owner);
+        // PRO-11: pending-approvals inbox backed by the ApprovalRepository (ApprovalsPending poll
+        // on ready + ApprovalDecide), replacing the mock fleet inbox.
+        graph.approvals = new DaemonApprovalsInbox(graph.approvalRepository, owner);
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end. Fire only on the
         // transition INTO ready: stateChanged also fires for statusMessage churn (e.g. the
@@ -127,7 +135,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         QObject::connect(
             graph.connection, &connection::IConnectionService::stateChanged, graph.sessions,
             [conn = graph.connection, sessions = graph.sessions, profiles = graph.profileRepository,
-             credentials = graph.credentialRepository, models = graph.models, wasReady] {
+             credentials = graph.credentialRepository, models = graph.models,
+             approvals = graph.approvalRepository, wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
                     sessions->refreshSessions();
@@ -135,6 +144,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     credentials->refreshList();
                     models->refreshModels();
                     models->refreshCurrent();
+                    approvals->refreshPending();
                 }
                 *wasReady = nowReady;
             });
@@ -142,10 +152,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // daemon-backed app. Live now: connection (Health), sessions (SessionsQuery), accounts
         // (CredentialSet/List), modelCatalog (Models/ModelCurrent). Still mock below.
         qInfo().noquote() << "AppServiceGraph: ServiceMode::Daemon - live seams: connection, "
-                             "sessions(cache), accounts(credentials), modelCatalog(models); still "
-                             "mock: fs, daemonConfig, memory, daemonNet, "
-                             "roster/fleetTree/approvals/dashboard, routing/cron, "
-                             "transports/presence, sessionSettings, checkpoints.";
+                             "sessions(cache), accounts(credentials), modelCatalog(models), "
+                             "profiles, approvals(ApprovalsPending/Decide), "
+                             "sessionSettings(SetSessionMode); still mock: fs, daemonConfig, "
+                             "memory, daemonNet, roster/fleetTree/dashboard, routing/cron, "
+                             "transports/presence, checkpoints.";
     } else {
         // Mock mode: a non-persisted in-memory store re-seeded fresh from the unified DaemonNet
         // each run (deterministic, always matches the current seed - no stale-db drift). The
@@ -155,6 +166,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.modelCatalog = new models::MockModelCatalog(owner);
         graph.accounts = new accounts::MockAccountsService(owner);
         graph.profiles = new profiles::MockProfileStore(owner);
+        graph.sessionSettings = new session::MockSessionSettings(owner);
     }
     // Built last so it binds the resolved modelCatalog (daemon-backed or mock) for the inference
     // readiness gate (CON-7).

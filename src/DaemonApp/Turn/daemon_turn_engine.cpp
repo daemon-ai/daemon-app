@@ -28,10 +28,32 @@ QVariantMap toIngestEvent(const DecodedAgentEvent& event) {
     case AgentEventKind::ReasoningDelta:
         return QVariantMap{{QStringLiteral("type"), QStringLiteral("reasoningDelta")},
                            {QStringLiteral("text"), event.text}};
+    case AgentEventKind::ToolStarted:
+        // CHA-3: render the real tool row (the call id lets ToolFinished patch it).
+        return QVariantMap{{QStringLiteral("type"), QStringLiteral("toolStarted")},
+                           {QStringLiteral("callId"), event.callId},
+                           {QStringLiteral("name"), event.toolName},
+                           {QStringLiteral("argsSummary"), event.toolArgs}};
+    case AgentEventKind::ToolFinished:
+        return QVariantMap{{QStringLiteral("type"), QStringLiteral("toolFinished")},
+                           {QStringLiteral("callId"), event.callId},
+                           {QStringLiteral("status"),
+                            event.toolOk ? QStringLiteral("ok") : QStringLiteral("error")}};
+    case AgentEventKind::Usage:
+        // CHA-3 HUD: consumed off-stream by StatusBarModel (the ingest skips it).
+        return QVariantMap{
+            {QStringLiteral("type"), QStringLiteral("usage")},
+            {QStringLiteral("tokensIn"), event.inputTokens},
+            {QStringLiteral("tokensOut"), event.outputTokens},
+            {QStringLiteral("costUsd"), static_cast<double>(event.costMicros) / 1'000'000.0}};
+    case AgentEventKind::Context:
+        return QVariantMap{{QStringLiteral("type"), QStringLiteral("context")},
+                           {QStringLiteral("used"), event.contextUsed},
+                           {QStringLiteral("max"),
+                            event.hasContextMax ? QVariant(event.contextMax) : QVariant(0)}};
     case AgentEventKind::TurnFinished:
         return QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}};
     default:
-        // ToolStarted/ToolFinished/Usage/Context/etc. are CHA-3 work; not rendered in this slice.
         return {};
     }
 }
@@ -69,6 +91,10 @@ QString DaemonTurnEngine::subscribeCorrelation() const {
     return QStringLiteral("turn/subscribe/") + m_sessionId;
 }
 
+QString DaemonTurnEngine::respondCorrelation() const {
+    return QStringLiteral("turn/respond/") + m_sessionId;
+}
+
 void DaemonTurnEngine::start(const QString& prompt) {
     cancel();
     if (m_client == nullptr || m_sessionId.isEmpty()) {
@@ -78,6 +104,10 @@ void DaemonTurnEngine::start(const QString& prompt) {
     }
     m_cursor = 0;
     m_finished = false;
+    m_parked = false;
+    m_pendingRequestId = 0;
+    m_pendingKind.clear();
+    m_pendingOptions.clear();
     m_resumeAttempts = 0;
     m_resumeBackoffMs = kResumeMinMs;
     m_startedAt = QDateTime::currentMSecsSinceEpoch();
@@ -98,6 +128,7 @@ void DaemonTurnEngine::cancel() {
     m_resumeTimer.stop();
     m_elapsedTimer.stop();
     m_deadlineTimer.stop();
+    m_parked = false;
     if (m_active) {
         setActive(false);
         if (m_turnState != QStringLiteral("error")) {
@@ -108,7 +139,127 @@ void DaemonTurnEngine::cancel() {
 }
 
 void DaemonTurnEngine::resume() {
-    // Host-gate resume (approval/clarify) is CHA-4/5; not part of the basic-chat slice.
+    // Bare resume: if parked without an explicit answer, just continue draining (used by the
+    // base-class default and by host-input flows that supply the answer separately).
+    if (m_parked) {
+        m_parked = false;
+        m_deadlineTimer.start();
+        pollSubscribe();
+    }
+}
+
+void DaemonTurnEngine::parkOnRequest(const DecodedLogEntry& entry) {
+    m_parked = true;
+    m_pendingRequestId = entry.hostRequestId;
+    m_pendingKind = entry.hostKind;
+    m_pendingOptions = entry.hostOptions;
+    m_pollTimer.stop();
+    m_resumeTimer.stop();
+    // A parked turn is waiting on the user, not stuck: stop the hard deadline so it cannot be
+    // killed mid-approval (it re-arms on resume).
+    m_deadlineTimer.stop();
+    const QString id = QString::number(entry.hostRequestId);
+    if (entry.hostKind == QStringLiteral("Approval")) {
+        // Render an awaiting-approval tool row the inline ToolApprovalBar answers.
+        emit eventsEmitted(
+            QVariantList{QVariantMap{{QStringLiteral("type"), QStringLiteral("toolStarted")},
+                                     {QStringLiteral("callId"), id},
+                                     {QStringLiteral("name"), QStringLiteral("approval")},
+                                     {QStringLiteral("argsSummary"), entry.hostPrompt},
+                                     {QStringLiteral("approvalCommand"), entry.hostPrompt},
+                                     {QStringLiteral("needsApproval"), true},
+                                     {QStringLiteral("requestId"), id}}});
+        emit awaitingInput(QStringLiteral("approval"));
+    } else if (entry.hostKind == QStringLiteral("Choice")) {
+        // Render a clarify form: one single-select question carrying the options.
+        QVariantList options;
+        for (const QString& opt : entry.hostOptions) {
+            options.append(
+                QVariantMap{{QStringLiteral("id"), opt}, {QStringLiteral("label"), opt}});
+        }
+        const QVariantMap question{{QStringLiteral("id"), id},
+                                   {QStringLiteral("prompt"), entry.hostPrompt},
+                                   {QStringLiteral("kind"), QStringLiteral("single")},
+                                   {QStringLiteral("options"), options}};
+        emit eventsEmitted(
+            QVariantList{QVariantMap{{QStringLiteral("type"), QStringLiteral("toolStarted")},
+                                     {QStringLiteral("callId"), id},
+                                     {QStringLiteral("name"), QStringLiteral("clarify")},
+                                     {QStringLiteral("argsSummary"), entry.hostPrompt},
+                                     {QStringLiteral("requestId"), id},
+                                     {QStringLiteral("questions"), QVariantList{question}}}});
+        emit awaitingInput(QStringLiteral("clarify"));
+    } else {
+        // Input: a masked / free-text host prompt the composer answers.
+        emit awaitingInput(QStringLiteral("input"));
+        emit hostRequested(QStringLiteral("input"), entry.hostPrompt);
+    }
+}
+
+void DaemonTurnEngine::sendRespond(const QByteArray& cbor) {
+    if (m_client == nullptr || cbor.isEmpty()) {
+        return;
+    }
+    m_parked = false;
+    m_deadlineTimer.start();
+    m_client->sendRequest(cbor, respondCorrelation());
+}
+
+void DaemonTurnEngine::respondApproval(const QString& requestId, bool allow) {
+    if (!m_parked) {
+        return;
+    }
+    const quint32 id = requestId.isEmpty() ? m_pendingRequestId : requestId.toUInt();
+    sendRespond(NodeApiCodec::encodeRespondApprovalRequest(m_sessionId, id, allow));
+}
+
+void DaemonTurnEngine::respondInput(const QString& requestId, const QString& text) {
+    if (!m_parked) {
+        return;
+    }
+    const quint32 id = requestId.isEmpty() ? m_pendingRequestId : requestId.toUInt();
+    // A Choice gate answered with the option's text resolves to its index (the daemon expects
+    // Chosen); otherwise it is free-text Input.
+    if (m_pendingKind == QStringLiteral("Choice")) {
+        const qsizetype idx = m_pendingOptions.indexOf(text);
+        if (idx >= 0) {
+            sendRespond(NodeApiCodec::encodeRespondChoiceRequest(m_sessionId, id,
+                                                                 static_cast<quint32>(idx)));
+            return;
+        }
+    }
+    sendRespond(NodeApiCodec::encodeRespondInputRequest(m_sessionId, id, text));
+}
+
+void DaemonTurnEngine::respondChoice(const QString& requestId, int index) {
+    if (!m_parked || index < 0) {
+        return;
+    }
+    const quint32 id = requestId.isEmpty() ? m_pendingRequestId : requestId.toUInt();
+    sendRespond(
+        NodeApiCodec::encodeRespondChoiceRequest(m_sessionId, id, static_cast<quint32>(index)));
+}
+
+void DaemonTurnEngine::interrupt(const QString& reason) {
+    if (m_client == nullptr || m_sessionId.isEmpty() || m_finished) {
+        return;
+    }
+    // Interrupt the turn and keep draining: the daemon emits TurnFinished(Interrupted) which
+    // settles the transcript via the normal Subscribe path.
+    m_parked = false;
+    m_client->sendRequest(NodeApiCodec::encodeSubmitInterruptRequest(m_sessionId, reason),
+                          respondCorrelation());
+}
+
+void DaemonTurnEngine::steer(const QString& text) {
+    if (m_client == nullptr || m_sessionId.isEmpty() || m_finished || text.isEmpty()) {
+        return;
+    }
+    m_client->sendRequest(NodeApiCodec::encodeSubmitSteerRequest(m_sessionId, text, m_requestId++),
+                          respondCorrelation());
+    if (!m_parked && !m_pollTimer.isActive()) {
+        pollSubscribe();
+    }
 }
 
 void DaemonTurnEngine::pollSubscribe() {
@@ -135,6 +286,19 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
         return;
     }
 
+    if (correlationId == respondCorrelation()) {
+        // A Respond / Interrupt / Steer was accepted: resume draining the log from the cursor.
+        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+            daemonapp::daemon::DecodedApiError err;
+            NodeApiCodec::decodeError(responseCbor, &err);
+            finishTurn(err.message.isEmpty() ? tr("The agent rejected the response.")
+                                             : err.message);
+        } else if (!m_finished) {
+            pollSubscribe();
+        }
+        return;
+    }
+
     if (correlationId == subscribeCorrelation()) {
         QList<DecodedLogEntry> entries;
         quint64 nextSeq = m_cursor;
@@ -150,6 +314,14 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
             setTurnState(QStringLiteral("thinking"));
         }
         for (const DecodedLogEntry& entry : entries) {
+            if (entry.payloadKind == DecodedLogEntry::PayloadKind::Request) {
+                // A parked HostRequest (approval / clarify): surface the gate and stop polling
+                // until the user answers. Advance the cursor past it so resuming reads what
+                // follows.
+                m_cursor = entry.seq;
+                parkOnRequest(entry);
+                return;
+            }
             if (entry.payloadKind != DecodedLogEntry::PayloadKind::Event) {
                 continue; // skip the inbound user command echo, meta, etc.
             }
@@ -183,7 +355,7 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
 
 void DaemonTurnEngine::onFailure(const QString& correlationId, const QString& message) {
     // Submit-phase failure: the turn was never accepted, so there is nothing to resume - error out.
-    if (correlationId == submitCorrelation()) {
+    if (correlationId == submitCorrelation() || correlationId == respondCorrelation()) {
         finishTurn(message.isEmpty() ? tr("The connection to the agent was lost.") : message);
         return;
     }

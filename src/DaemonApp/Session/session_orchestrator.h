@@ -57,9 +57,13 @@ public:
     // the single turn-execution seam every rewind path funnels through; swapping
     // the scripted TurnController for a daemon NodeApi adapter happens here alone.
     Q_INVOKABLE void rerun(const QString& text);
-    // Mid-turn steer: logged as a user note until a real gateway carries steers.
+    // Mid-turn steer (CHA-6): route extra text to the live engine (daemon Submit{Steer}); also
+    // logged as a user note for the simulator/visual.
     Q_INVOKABLE void steer(const QString& text);
-    // Interrupt the running turn (Stop / Esc).
+    // Interrupt the running turn (Stop / Esc): graceful daemon Submit{Interrupt} when a turn is
+    // live (the daemon settles it with TurnFinished), falling back to a hard local cancel.
+    Q_INVOKABLE void interrupt();
+    // Hard cancel the running turn (rewind pre-empt / teardown): stops the engine locally.
     Q_INVOKABLE void cancel();
     // Client-side slash command: "new" creates a session here; the rewind
     // commands ("retry"/"edit"/"undo") surface as the rewind*Requested signals for

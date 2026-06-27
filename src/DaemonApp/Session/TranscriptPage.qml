@@ -254,7 +254,7 @@ Rectangle {
                 root.committed();
             }
             onSteer: function(text) { orchestrator.steer(text); }
-            onCancelRequested: orchestrator.cancel()
+            onCancelRequested: orchestrator.interrupt()
             onCommandInvoked: function(command) { orchestrator.invokeCommand(command); }
         }
     }
@@ -310,7 +310,9 @@ Rectangle {
         width: 420
         acceptText: qsTr("Submit")
 
-        onAccepted: orchestrator.turn.resume()
+        // Forward the typed secret to the parked Input host-request (empty requestId
+        // resolves to the engine's pending gate); the mock maps respondInput onto resume().
+        onAccepted: orchestrator.turn.respondInput("", maskedField.text)
         onRejected: orchestrator.cancel()
 
         contentItem: ColumnLayout {

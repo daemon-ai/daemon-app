@@ -10,6 +10,8 @@
 #include "config/idaemon_config.h"
 #include "connection/iconnection_service.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/node_api_client.h"
+#include "daemon/node_api_codec.h"
 #include "daemon/repositories.h"
 #include "daemonnet/idaemonnet.h"
 #include "firstrun/first_run_model.h"
@@ -44,6 +46,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QSet>
 #include <QString>
 #include <QTimer>
 #include <QUuid>
@@ -347,6 +350,150 @@ QString Application::runHeadlessModels(const QString& query, const QString& repo
     models->deleteLater();
     return QStringLiteral("catalog=%1 downloads=%2 search=%3 files=%4 download=%5")
         .arg(catalog, downloads, search, files, download);
+}
+
+namespace {
+// Send one request over the client and block (bounded) until its correlated response arrives,
+// returning the response CBOR (empty on timeout). Used by the CHA-7/8 headless harness hooks to
+// exercise a single wire op over the real NodeApiClient.
+QByteArray requestSync(daemonapp::daemon::NodeApiClient* client, const QByteArray& requestCbor,
+                       const QString& correlation, int timeoutMs) {
+    if (client == nullptr || requestCbor.isEmpty()) {
+        return {};
+    }
+    QByteArray response;
+    QEventLoop loop;
+    auto* ctx = new QObject;
+    QObject::connect(client, &daemonapp::daemon::NodeApiClient::responseReady, ctx,
+                     [&](const QString& id, const QByteArray& cbor) {
+                         if (id == correlation) {
+                             response = cbor;
+                             loop.quit();
+                         }
+                     });
+    QObject::connect(client, &daemonapp::daemon::NodeApiClient::failed, ctx,
+                     [&](const QString& id, const QString&) {
+                         if (id == correlation) {
+                             loop.quit();
+                         }
+                     });
+    QTimer::singleShot(timeoutMs, &loop, &QEventLoop::quit);
+    client->sendRequest(requestCbor, correlation);
+    loop.exec();
+    delete ctx;
+    return response;
+}
+} // namespace
+
+QString Application::runHeadlessCommands(const QString& invoke, int timeoutMs) {
+    using daemonapp::daemon::NodeApiCodec;
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return {};
+    }
+    settle(400);
+    const QByteArray listed =
+        requestSync(m_services.nodeApi, NodeApiCodec::encodeCommandListRequest(),
+                    QStringLiteral("harness/commands"), timeoutMs);
+    QList<daemonapp::daemon::DecodedCommandSpec> commands;
+    NodeApiCodec::decodeCommands(listed, &commands);
+    if (!invoke.isEmpty()) {
+        const QByteArray out =
+            requestSync(m_services.nodeApi, NodeApiCodec::encodeCommandInvokeRequest(invoke),
+                        QStringLiteral("harness/command-invoke"), timeoutMs);
+        QString text;
+        NodeApiCodec::decodeCommandOutput(out, &text);
+        return text;
+    }
+    QStringList names;
+    names.reserve(commands.size());
+    for (const daemonapp::daemon::DecodedCommandSpec& c : commands) {
+        names << c.name;
+    }
+    return names.join(QLatin1Char('\n'));
+}
+
+QString Application::runHeadlessSearch(const QString& query, int timeoutMs) {
+    using daemonapp::daemon::NodeApiCodec;
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return {};
+    }
+    settle(400);
+    const QByteArray hitsCbor =
+        requestSync(m_services.nodeApi, NodeApiCodec::encodeSessionSearchRequest(query, 16),
+                    QStringLiteral("harness/session-search"), timeoutMs);
+    QList<daemonapp::daemon::DecodedSessionSearchHit> hits;
+    NodeApiCodec::decodeSessionSearch(hitsCbor, &hits);
+    QStringList sessions;
+    sessions.reserve(hits.size());
+    for (const daemonapp::daemon::DecodedSessionSearchHit& h : hits) {
+        sessions << h.session;
+    }
+    return sessions.join(QLatin1Char('\n'));
+}
+
+QString Application::runHeadlessHitl(const QString& prompt, const QString& decision,
+                                     int timeoutMs) {
+    using daemonapp::daemon::ApprovalRepository;
+    using daemonapp::daemon::DecodedApprovalInfo;
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return {};
+    }
+    settle(600);
+
+    auto* engine = new DaemonTurnEngine(m_services.nodeApi, this);
+    engine->setSessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
+
+    QString answer;
+    QEventLoop loop;
+    connect(engine, &ITurnEngine::eventsEmitted, this, [&answer](const QVariantList& events) {
+        for (const QVariant& item : events) {
+            const QVariantMap map = item.toMap();
+            if (map.value(QStringLiteral("type")).toString() == QStringLiteral("text")) {
+                answer += map.value(QStringLiteral("text")).toString();
+            }
+        }
+    });
+    connect(engine, &ITurnEngine::turnFinished, &loop, &QEventLoop::quit);
+
+    // The headless Submit activates durably, so a gated tool parks for the OPERATOR inbox (PRO-11)
+    // rather than an in-stream gate: drive the approval through the real ApprovalRepository
+    // (ApprovalsPending poll -> ApprovalDecide), the same path the Approvals surface uses. Once the
+    // decision lands the daemon resumes the turn and the engine's Subscribe loop streams it to
+    // completion. (A live/attached session would instead surface an in-stream HostRequest the
+    // engine answers with respondApproval; that gate path is covered by the unit/offscreen mock
+    // coverage.)
+    auto* repo = m_services.approvalRepository;
+    auto decided = std::make_shared<QSet<QString>>();
+    const bool allow = decision != QStringLiteral("deny");
+    if (repo != nullptr) {
+        connect(repo, &ApprovalRepository::pendingRefreshed, this, [repo, decided, allow] {
+            for (const DecodedApprovalInfo& info : repo->pending()) {
+                if (!decided->contains(info.requestId)) {
+                    decided->insert(info.requestId);
+                    repo->decide(info.session, info.requestId, allow);
+                }
+            }
+        });
+    }
+    QTimer pollInbox;
+    pollInbox.setInterval(300);
+    connect(&pollInbox, &QTimer::timeout, this, [repo] {
+        if (repo != nullptr) {
+            repo->refreshPending();
+        }
+    });
+
+    QTimer::singleShot(timeoutMs, &loop, &QEventLoop::quit);
+    pollInbox.start();
+    engine->start(prompt);
+    loop.exec();
+    pollInbox.stop();
+    engine->cancel();
+    engine->deleteLater();
+    return answer;
 }
 
 bool Application::runHeadlessOnboarding(const QString& provider, const QString& key,

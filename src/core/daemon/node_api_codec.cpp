@@ -212,22 +212,44 @@ DecodedAgentEvent decodeAgentEvent(const agent_event_r& ev) {
         out.seq = ev.agent_event_reasoning_delta_m.ReasoningDelta_seq;
         out.text = fromZcbor(ev.agent_event_reasoning_delta_m.ReasoningDelta_text);
         break;
-    case agent_event_r::agent_event_tool_started_m_c:
+    case agent_event_r::agent_event_tool_started_m_c: {
         out.kind = AgentEventKind::ToolStarted;
         out.seq = ev.agent_event_tool_started_m.ToolStarted_seq;
+        const tool_call_view& call = ev.agent_event_tool_started_m.ToolStarted_call;
+        out.callId = fromZcbor(call.tool_call_view_call_id);
+        out.toolName = fromZcbor(call.tool_call_view_name);
+        out.toolArgs = fromZcbor(call.tool_call_view_args_summary);
         break;
-    case agent_event_r::agent_event_tool_finished_m_c:
+    }
+    case agent_event_r::agent_event_tool_finished_m_c: {
         out.kind = AgentEventKind::ToolFinished;
         out.seq = ev.agent_event_tool_finished_m.ToolFinished_seq;
+        const tool_result_view& result = ev.agent_event_tool_finished_m.ToolFinished_result;
+        out.callId = fromZcbor(result.tool_result_view_call_id);
+        out.toolOk = result.tool_result_view_ok;
         break;
-    case agent_event_r::agent_event_usage_m_c:
+    }
+    case agent_event_r::agent_event_usage_m_c: {
         out.kind = AgentEventKind::Usage;
         out.seq = ev.agent_event_usage_m.Usage_seq;
+        const usage_delta& usage = ev.agent_event_usage_m.Usage_delta;
+        out.inputTokens = usage.usage_delta_input_tokens;
+        out.outputTokens = usage.usage_delta_output_tokens;
+        out.costMicros = usage.usage_delta_cost_micros;
         break;
-    case agent_event_r::agent_event_context_m_c:
+    }
+    case agent_event_r::agent_event_context_m_c: {
         out.kind = AgentEventKind::Context;
         out.seq = ev.agent_event_context_m.Context_seq;
+        const context_status& ctx = ev.agent_event_context_m.Context_status;
+        out.contextUsed = ctx.context_status_used_tokens;
+        if (ctx.context_status_max_tokens_choice ==
+            context_status::context_status_max_tokens_uint_c) {
+            out.hasContextMax = true;
+            out.contextMax = ctx.context_status_max_tokens_uint;
+        }
         break;
+    }
     case agent_event_r::agent_event_turn_finished_m_c: {
         out.kind = AgentEventKind::TurnFinished;
         out.seq = ev.agent_event_turn_finished_m.TurnFinished_seq;
@@ -314,6 +336,44 @@ void fillModelRef(const model_ref& m, QString* repo, QString* file, QString* eng
         if (file != nullptr && hf.Hf_file_choice == model_source_hf::Hf_file_tstr_c) {
             *file = fromZcbor(hf.Hf_file_tstr);
         }
+    }
+}
+
+// Decode a parked HostRequest into the DecodedLogEntry HITL fields (CHA-4 / CHA-5).
+void decodeHostRequest(const host_request& req, DecodedLogEntry* out) {
+    out->hostRequestId = req.host_request_request_id;
+    const host_request_kind_t_r& kind = req.host_request_kind;
+    switch (kind.host_request_kind_t_choice) {
+    case host_request_kind_t_r::host_request_kind_t_host_request_kind_approval_m_c:
+        out->hostKind = QStringLiteral("Approval");
+        out->hostPrompt =
+            fromZcbor(kind.host_request_kind_t_host_request_kind_approval_m.Approval_prompt);
+        break;
+    case host_request_kind_t_r::host_request_kind_t_host_request_kind_input_m_c:
+        out->hostKind = QStringLiteral("Input");
+        out->hostPrompt =
+            fromZcbor(kind.host_request_kind_t_host_request_kind_input_m.Input_prompt);
+        break;
+    case host_request_kind_t_r::host_request_kind_t_host_request_kind_choice_m_c: {
+        out->hostKind = QStringLiteral("Choice");
+        const host_request_kind_choice& choice =
+            kind.host_request_kind_t_host_request_kind_choice_m;
+        out->hostPrompt = fromZcbor(choice.Choice_prompt);
+        for (size_t i = 0; i < choice.Choice_options_tstr_count; ++i) {
+            out->hostOptions << fromZcbor(choice.Choice_options_tstr[i]);
+        }
+        break;
+    }
+    case host_request_kind_t_r::host_request_kind_t_host_request_kind_delegate_m_c:
+        out->hostKind = QStringLiteral("Delegate");
+        out->hostPrompt =
+            fromZcbor(kind.host_request_kind_t_host_request_kind_delegate_m.Delegate_label);
+        break;
+    case host_request_kind_t_r::host_request_kind_t_host_request_kind_spawn_m_c:
+        out->hostKind = QStringLiteral("Spawn");
+        break;
+    default:
+        break;
     }
 }
 
@@ -733,6 +793,51 @@ QByteArray NodeApiCodec::encodeModelSearchRequest(const QString& text, const QSt
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
+namespace {
+// Fill a request_respond (HostResponse) shell for `sessionId`/`requestId`; the caller sets the
+// body arm. Returns by writing into `request`; the session bytes are owned by the caller.
+void fillRespondShell(api_request_r* request, const QByteArray& sessionUtf8, quint32 requestId) {
+    request->api_request_choice = api_request_r::api_request_request_respond_m_c;
+    request_respond& respond = request->api_request_request_respond_m;
+    respond.Respond_session.value = reinterpret_cast<const uint8_t*>(sessionUtf8.constData());
+    respond.Respond_session.len = static_cast<size_t>(sessionUtf8.size());
+    respond.Respond_response.host_response_request_id = requestId;
+}
+} // namespace
+
+QByteArray NodeApiCodec::encodeRespondApprovalRequest(const QString& sessionId, quint32 requestId,
+                                                      bool allow) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    api_request_r request{};
+    fillRespondShell(&request, sessionUtf8, requestId);
+    host_response_body_t_r& body =
+        request.api_request_request_respond_m.Respond_response.host_response_body;
+    body.host_response_body_t_choice =
+        host_response_body_t_r::host_response_body_t_host_response_body_approved_m_c;
+    body.host_response_body_t_host_response_body_approved_m.host_response_body_approved_Approved =
+        allow;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeRespondInputRequest(const QString& sessionId, quint32 requestId,
+                                                   const QString& text) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray textUtf8 = text.toUtf8();
+    api_request_r request{};
+    fillRespondShell(&request, sessionUtf8, requestId);
+    host_response_body_t_r& body =
+        request.api_request_request_respond_m.Respond_response.host_response_body;
+    body.host_response_body_t_choice =
+        host_response_body_t_r::host_response_body_t_host_response_body_input_m_c;
+    auto& input = body.host_response_body_t_host_response_body_input_m;
+    input.host_response_body_input_Input.value =
+        reinterpret_cast<const uint8_t*>(textUtf8.constData());
+    input.host_response_body_input_Input.len = static_cast<size_t>(textUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
 QByteArray NodeApiCodec::encodeModelFilesRequest(const QString& repo, const QString& engine,
                                                  const QString& revision) {
     const QByteArray repoUtf8 = repo.toUtf8();
@@ -751,6 +856,20 @@ QByteArray NodeApiCodec::encodeModelFilesRequest(const QString& repo, const QStr
     }
     f.ModelFiles_engine.model_engine_choice =
         static_cast<decltype(f.ModelFiles_engine.model_engine_choice)>(modelEngineChoice(engine));
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeRespondChoiceRequest(const QString& sessionId, quint32 requestId,
+                                                    quint32 chosen) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    api_request_r request{};
+    fillRespondShell(&request, sessionUtf8, requestId);
+    host_response_body_t_r& body =
+        request.api_request_request_respond_m.Respond_response.host_response_body;
+    body.host_response_body_t_choice =
+        host_response_body_t_r::host_response_body_t_host_response_body_chosen_m_c;
+    body.host_response_body_t_host_response_body_chosen_m.host_response_body_chosen_Chosen = chosen;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -789,6 +908,64 @@ QByteArray NodeApiCodec::encodeModelRecommendRequest(const QString& repo, const 
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
+QByteArray NodeApiCodec::encodeApprovalDecideRequest(const QString& sessionId,
+                                                     const QString& requestId, bool allow) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray requestIdUtf8 = requestId.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_approval_decide_m_c;
+    request_approval_decide& decide = request.api_request_request_approval_decide_m;
+    decide.ApprovalDecide_session.value = reinterpret_cast<const uint8_t*>(sessionUtf8.constData());
+    decide.ApprovalDecide_session.len = static_cast<size_t>(sessionUtf8.size());
+    decide.ApprovalDecide_request_id.value =
+        reinterpret_cast<const uint8_t*>(requestIdUtf8.constData());
+    decide.ApprovalDecide_request_id.len = static_cast<size_t>(requestIdUtf8.size());
+    decide.ApprovalDecide_allow = allow;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeSetSessionModeRequest(const QString& sessionId,
+                                                     const QString& mode) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_set_session_mode_m_c;
+    request_set_session_mode& set = request.api_request_request_set_session_mode_m;
+    set.SetSessionMode_session.value = reinterpret_cast<const uint8_t*>(sessionUtf8.constData());
+    set.SetSessionMode_session.len = static_cast<size_t>(sessionUtf8.size());
+    auto choice = approval_mode_r::approval_mode_ask_tstr_c;
+    if (mode == QStringLiteral("accept_edits")) {
+        choice = approval_mode_r::approval_mode_accept_edits_tstr_c;
+    } else if (mode == QStringLiteral("auto_allow")) {
+        choice = approval_mode_r::approval_mode_auto_allow_tstr_c;
+    } else if (mode == QStringLiteral("deny")) {
+        choice = approval_mode_r::approval_mode_deny_tstr_c;
+    }
+    set.SetSessionMode_mode.approval_mode_choice = choice;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeApprovalsPendingRequest(const QString& sessionId) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_approvals_pending_m_c;
+    request_approvals_pending& pending = request.api_request_request_approvals_pending_m;
+    if (sessionId.isEmpty()) {
+        pending.ApprovalsPending_session_present = false;
+    } else {
+        pending.ApprovalsPending_session_present = true;
+        pending.ApprovalsPending_session.ApprovalsPending_session_choice =
+            ApprovalsPending_session_r::ApprovalsPending_session_session_id_m_c;
+        pending.ApprovalsPending_session.ApprovalsPending_session_session_id_m.value =
+            reinterpret_cast<const uint8_t*>(sessionUtf8.constData());
+        pending.ApprovalsPending_session.ApprovalsPending_session_session_id_m.len =
+            static_cast<size_t>(sessionUtf8.size());
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
 QByteArray NodeApiCodec::encodeModelDownloadRequest(const QString& repo, const QString& file,
                                                     const QString& engine,
                                                     const QString& revision) {
@@ -817,6 +994,31 @@ QByteArray NodeApiCodec::encodeModelDownloadRequest(const QString& repo, const Q
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
+QByteArray NodeApiCodec::encodeSubmitInterruptRequest(const QString& sessionId,
+                                                      const QString& reason) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray reasonUtf8 = reason.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_submit_m_c;
+    request_submit& submit = request.api_request_request_submit_m;
+    submit.Submit_session.value = reinterpret_cast<const uint8_t*>(sessionUtf8.constData());
+    submit.Submit_session.len = static_cast<size_t>(sessionUtf8.size());
+    submit.Submit_command.agent_command_choice = agent_command_r::agent_command_interrupt_m_c;
+    agent_command_interrupt& interrupt = submit.Submit_command.agent_command_interrupt_m;
+    if (reason.isEmpty()) {
+        interrupt.Interrupt_reason_choice = agent_command_interrupt::Interrupt_reason_null_m_c;
+    } else {
+        interrupt.Interrupt_reason_choice = agent_command_interrupt::Interrupt_reason_tstr_c;
+        interrupt.Interrupt_reason_tstr.value =
+            reinterpret_cast<const uint8_t*>(reasonUtf8.constData());
+        interrupt.Interrupt_reason_tstr.len = static_cast<size_t>(reasonUtf8.size());
+    }
+    submit.Submit_origin_present = false;
+    submit.Submit_profile_present = false;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
 QByteArray NodeApiCodec::encodeModelDownloadsRequest() {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_model_downloads_m_c;
@@ -824,9 +1026,36 @@ QByteArray NodeApiCodec::encodeModelDownloadsRequest() {
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
+QByteArray NodeApiCodec::encodeSubmitSteerRequest(const QString& sessionId, const QString& text,
+                                                  quint32 requestId) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray textUtf8 = text.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_submit_m_c;
+    request_submit& submit = request.api_request_request_submit_m;
+    submit.Submit_session.value = reinterpret_cast<const uint8_t*>(sessionUtf8.constData());
+    submit.Submit_session.len = static_cast<size_t>(sessionUtf8.size());
+    submit.Submit_command.agent_command_choice = agent_command_r::agent_command_steer_m_c;
+    agent_command_steer& steer = submit.Submit_command.agent_command_steer_m;
+    steer.Steer_text.value = reinterpret_cast<const uint8_t*>(textUtf8.constData());
+    steer.Steer_text.len = static_cast<size_t>(textUtf8.size());
+    steer.Steer_request_id = requestId;
+    submit.Submit_origin_present = false;
+    submit.Submit_profile_present = false;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
 QByteArray NodeApiCodec::encodeModelCatalogRequest() {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_model_catalog_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeCommandListRequest() {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_command_list_m_c;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -862,6 +1091,33 @@ QByteArray NodeApiCodec::encodeModelActivateRequest(const QString& id, const QSt
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
+QByteArray NodeApiCodec::encodeCommandInvokeRequest(const QString& name, const QString& args,
+                                                    const QString& sessionId) {
+    const QByteArray nameUtf8 = name.toUtf8();
+    const QByteArray argsUtf8 = args.toUtf8();
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_command_invoke_m_c;
+    command_invocation& inv = request.api_request_request_command_invoke_m.CommandInvoke_invocation;
+    inv.command_invocation_name.value = reinterpret_cast<const uint8_t*>(nameUtf8.constData());
+    inv.command_invocation_name.len = static_cast<size_t>(nameUtf8.size());
+    inv.command_invocation_args.value = reinterpret_cast<const uint8_t*>(argsUtf8.constData());
+    inv.command_invocation_args.len = static_cast<size_t>(argsUtf8.size());
+    if (sessionId.isEmpty()) {
+        inv.command_invocation_session_choice =
+            command_invocation::command_invocation_session_null_m_c;
+    } else {
+        inv.command_invocation_session_choice =
+            command_invocation::command_invocation_session_session_id_m_c;
+        inv.command_invocation_session_session_id_m.value =
+            reinterpret_cast<const uint8_t*>(sessionUtf8.constData());
+        inv.command_invocation_session_session_id_m.len = static_cast<size_t>(sessionUtf8.size());
+    }
+    inv.command_invocation_origin_choice = command_invocation::command_invocation_origin_null_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
 QByteArray NodeApiCodec::encodeModelCancelRequest(quint64 id) {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_model_cancel_m_c;
@@ -882,6 +1138,18 @@ QByteArray NodeApiCodec::encodeModelResumeRequest(quint64 id) {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_model_resume_m_c;
     request.api_request_request_model_resume_m.ModelResume_id = static_cast<uint32_t>(id);
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeSessionSearchRequest(const QString& query, quint32 limit) {
+    const QByteArray queryUtf8 = query.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_session_search_m_c;
+    request_session_search& search = request.api_request_request_session_search_m;
+    search.SessionSearch_query.value = reinterpret_cast<const uint8_t*>(queryUtf8.constData());
+    search.SessionSearch_query.len = static_cast<size_t>(queryUtf8.size());
+    search.SessionSearch_limit = limit;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -912,6 +1180,14 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         return ApiResponseKind::Profiles;
     case api_response_r::api_response_response_drained_m_c:
         return ApiResponseKind::Drained;
+    case api_response_r::api_response_response_approvals_m_c:
+        return ApiResponseKind::Approvals;
+    case api_response_r::api_response_response_commands_m_c:
+        return ApiResponseKind::Commands;
+    case api_response_r::api_response_response_command_output_m_c:
+        return ApiResponseKind::CommandOutput;
+    case api_response_r::api_response_response_session_search_m_c:
+        return ApiResponseKind::SessionSearch;
     case api_response_r::api_response_response_error_m_c:
         return ApiResponseKind::Error;
     case api_response_r::api_response_response_model_search_m_c:
@@ -1091,6 +1367,8 @@ bool NodeApiCodec::decodeLogPageEntries(const QByteArray& responseCbor, QList<De
             break;
         case session_payload_r::session_payload_request_m_c:
             decoded.payloadKind = DecodedLogEntry::PayloadKind::Request;
+            decodeHostRequest(payload.session_payload_request_m.session_payload_request_Request,
+                              &decoded);
             break;
         case session_payload_r::session_payload_command_m_c:
             decoded.payloadKind = DecodedLogEntry::PayloadKind::Command;
@@ -1496,6 +1774,98 @@ bool NodeApiCodec::decodeModelRecommend(const QByteArray& responseCbor,
         }
         cand.fits = c.quant_candidate_fits;
         out->candidates.append(cand);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeApprovals(const QByteArray& responseCbor,
+                                   QList<DecodedApprovalInfo>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_approvals_m_c) {
+        return false;
+    }
+    const response_approvals& approvals = response->api_response_response_approvals_m;
+    out->clear();
+    for (size_t i = 0; i < approvals.response_approvals_Approvals_approval_info_m_count; ++i) {
+        const approval_info& info = approvals.response_approvals_Approvals_approval_info_m[i];
+        DecodedApprovalInfo entry;
+        entry.session = fromZcbor(info.approval_info_session);
+        entry.requestId = fromZcbor(info.approval_info_request_id);
+        entry.prompt = fromZcbor(info.approval_info_prompt);
+        if (info.approval_info_path_present &&
+            info.approval_info_path.approval_info_path_choice ==
+                approval_info_path_r::approval_info_path_tstr_c) {
+            entry.hasPath = true;
+            entry.path = fromZcbor(info.approval_info_path.approval_info_path_tstr);
+        }
+        out->append(entry);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeCommands(const QByteArray& responseCbor, QList<DecodedCommandSpec>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_commands_m_c) {
+        return false;
+    }
+    const response_commands& commands = response->api_response_response_commands_m;
+    out->clear();
+    for (size_t i = 0; i < commands.response_commands_Commands_command_spec_m_count; ++i) {
+        const command_spec& spec = commands.response_commands_Commands_command_spec_m[i];
+        DecodedCommandSpec entry;
+        entry.name = fromZcbor(spec.command_spec_name);
+        entry.summary = fromZcbor(spec.command_spec_summary);
+        entry.category = fromZcbor(spec.command_spec_category);
+        entry.argsHint = fromZcbor(spec.command_spec_args_hint);
+        entry.sideEffecting = spec.command_spec_side_effecting;
+        out->append(entry);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeCommandOutput(const QByteArray& responseCbor, QString* outText) {
+    if (outText == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_command_output_m_c) {
+        return false;
+    }
+    *outText = fromZcbor(response->api_response_response_command_output_m
+                             .response_command_output_CommandOutput.command_output_text);
+    return true;
+}
+
+bool NodeApiCodec::decodeSessionSearch(const QByteArray& responseCbor,
+                                       QList<DecodedSessionSearchHit>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_session_search_m_c) {
+        return false;
+    }
+    const response_session_search& search = response->api_response_response_session_search_m;
+    out->clear();
+    for (size_t i = 0; i < search.response_session_search_SessionSearch_session_search_hit_m_count;
+         ++i) {
+        const session_search_hit& hit =
+            search.response_session_search_SessionSearch_session_search_hit_m[i];
+        DecodedSessionSearchHit entry;
+        entry.session = fromZcbor(hit.session_search_hit_session);
+        entry.title = fromZcbor(hit.session_search_hit_title);
+        entry.snippet = fromZcbor(hit.session_search_hit_snippet);
+        out->append(entry);
     }
     return true;
 }

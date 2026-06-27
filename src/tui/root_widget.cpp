@@ -839,15 +839,30 @@ void RootWidget::wireViews() {
                 if (m_active == nullptr) {
                     return;
                 }
+                // The mock host patches the local doc for the simulator's visual; the engine
+                // (daemon mode) sends Respond{Approved} and resumes the Subscribe loop. The
+                // mock engine maps respondApproval onto its scripted resume().
                 m_active->host->onApprovalDecided(callId, decision, permanent);
                 if (m_active->turn != nullptr) {
-                    m_active->turn->resume();
+                    m_active->turn->respondApproval(callId, decision == QStringLiteral("approved"));
                 }
             });
     connect(m_transcript, &TranscriptView::clarifySubmitted, this,
             [this](const QString& callId, const QString& requestId, const QVariantMap& answers) {
-                if (m_active != nullptr) {
-                    m_active->host->onClarifySubmitted(callId, requestId, answers);
+                if (m_active == nullptr) {
+                    return;
+                }
+                m_active->host->onClarifySubmitted(callId, requestId, answers);
+                if (m_active->turn != nullptr) {
+                    // Flatten the answers to a readable string; the engine resolves a Choice gate
+                    // to its option index, otherwise sends free-text Input.
+                    QStringList parts;
+                    for (const QVariant& value : answers) {
+                        parts << (value.metaType().id() == QMetaType::QStringList
+                                      ? value.toStringList().join(QStringLiteral(", "))
+                                      : value.toString());
+                    }
+                    m_active->turn->respondInput(requestId, parts.join(QStringLiteral("; ")));
                 }
             });
     // Rewind picker: restore re-runs the selected user message; edit seeds the
@@ -1055,7 +1070,8 @@ void RootWidget::wireViews() {
             });
     connect(m_composerSession, &ComposerSessionController::cancelRequested, this, [this] {
         if (m_active != nullptr) {
-            m_active->orchestrator->cancel();
+            // CHA-6 Stop: graceful interrupt (daemon Submit{Interrupt}); mock maps onto cancel.
+            m_active->orchestrator->interrupt();
         }
     });
 
@@ -1299,8 +1315,10 @@ void RootWidget::wireSession(TabSession* s) {
                                                                          : tr("Password required"))
                                      : prompt;
                 auto* dialog = new TextPromptDialog(title, QString(), /*masked=*/true, this);
+                // Forward the typed secret to the parked Input host-request (empty requestId
+                // resolves to the engine's pending gate); the mock maps respondInput onto resume().
                 connect(dialog, &TextPromptDialog::submitted, this,
-                        [s](const QString&) { s->turn->resume(); });
+                        [s](const QString& text) { s->turn->respondInput(QString(), text); });
                 connect(dialog, &TextPromptDialog::canceled, this, [s] { s->turn->cancel(); });
             });
     connect(s->controller, &SessionController::sessionChanged, this, [this, s] {

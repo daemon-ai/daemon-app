@@ -55,6 +55,20 @@ void MockSessionSettings::setVerbose(bool on) {
     emit changed();
 }
 
+void MockSessionSettings::setApprovalMode(const QString& mode) {
+    if (entry().approvalMode == mode) {
+        return;
+    }
+    entry().approvalMode = mode;
+    emit changed();
+}
+
+QStringList MockSessionSettings::approvalModeOptions() const {
+    // Mirrors the daemon's approval-mode vocabulary (daemon-api approval-mode).
+    return {QStringLiteral("ask"), QStringLiteral("accept_edits"), QStringLiteral("auto_allow"),
+            QStringLiteral("deny")};
+}
+
 QStringList MockSessionSettings::effortOptions() const {
     // One reasoning-effort vocabulary across the whole app: the same off/low/
     // medium/high levels the composer's ModelPickerOverlay + ComposerSessionController

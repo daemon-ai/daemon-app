@@ -270,12 +270,42 @@ public:
     [[nodiscard]] QList<CachedFsEntryRow> cachedEntries(const QString& rootId) const;
 };
 
+// Pending approvals are a live daemon slice (PRO-11): refreshPending() issues an ApprovalsPending
+// query and decode() populates pending(); decide() resolves one via ApprovalDecide. The aggregate
+// inbox keys on the STRING request_id (ApprovalInfo.request_id), distinct from the in-stream
+// HostRequest gate (uint) the turn engine resolves with Respond.
 class ApprovalRepository : public RepositoryBase {
+    Q_OBJECT
+
 public:
-    using RepositoryBase::RepositoryBase;
+    ApprovalRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
 
     bool upsertCachedApproval(const CachedApprovalRow& row);
     [[nodiscard]] QList<CachedApprovalRow> cachedApprovals() const;
+
+    [[nodiscard]] const QList<DecodedApprovalInfo>& pending() const { return m_pending; }
+
+    // Issue an ApprovalsPending query (empty session = across all sessions); on success
+    // pendingRefreshed() fires with pending() populated.
+    void refreshPending(const QString& sessionId = QString());
+    // Resolve a pending approval (ApprovalDecide); on Ok the list is re-fetched and decided()
+    // fires.
+    void decide(const QString& sessionId, const QString& requestId, bool allow);
+
+signals:
+    void pendingRefreshed();
+    void decided();
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kPendingCorrelation = "repo/approvals-pending";
+    static constexpr auto kDecideCorrelation = "repo/approval-decide";
+
+    QList<DecodedApprovalInfo> m_pending;
+    QString m_lastSession; // the session scope of the last refresh, re-used after a decide
 };
 
 // Not part of the first daemon slice: kept as a cache/NodeApi-aware stub until checkpoint

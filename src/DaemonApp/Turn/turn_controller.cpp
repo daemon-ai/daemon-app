@@ -234,6 +234,10 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt) {
     const bool wantsSecret = lower.indexOf(QStringLiteral("secret")) >= 0 ||
                              lower.indexOf(QStringLiteral("api key")) >= 0 ||
                              lower.indexOf(QStringLiteral("apikey")) >= 0;
+    // A prompt mentioning "clarify"/"which" pauses for an inline clarify form (the
+    // daemon's HostRequest::Choice seam), so CHA-5 is exercised in the simulator.
+    const bool wantsClarify = lower.indexOf(QStringLiteral("clarify")) >= 0 ||
+                              lower.indexOf(QStringLiteral("which")) >= 0;
     const QString shortPrompt =
         prompt.length() > 60 ? (prompt.left(57) + QStringLiteral("\u2026")) : prompt;
     QList<Step> steps;
@@ -281,6 +285,39 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt) {
                                      {QStringLiteral("text"),
                                       QStringLiteral("\n\nCredential accepted - continuing.\n")}},
                          false, QString()});
+        steps.push_back({200, QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}}, false,
+                         QString()});
+        return steps;
+    }
+
+    if (wantsClarify) {
+        // Emit a clarify tool (a single-select question) and gate until the inline
+        // ClarifyBlock answer drives resume().
+        const QVariantList options{
+            QVariantMap{{QStringLiteral("id"), QStringLiteral("staging")},
+                        {QStringLiteral("label"), QStringLiteral("Staging")}},
+            QVariantMap{{QStringLiteral("id"), QStringLiteral("production")},
+                        {QStringLiteral("label"), QStringLiteral("Production")}}};
+        const QVariantMap question{
+            {QStringLiteral("id"), QStringLiteral("sim-clarify")},
+            {QStringLiteral("prompt"), QStringLiteral("Which environment should I target?")},
+            {QStringLiteral("kind"), QStringLiteral("single")},
+            {QStringLiteral("options"), options}};
+        steps.push_back(
+            {300,
+             QVariantMap{{QStringLiteral("type"), QStringLiteral("toolStarted")},
+                         {QStringLiteral("callId"), QStringLiteral("sim-clarify")},
+                         {QStringLiteral("name"), QStringLiteral("clarify")},
+                         {QStringLiteral("argsSummary"), QStringLiteral("needs a choice")},
+                         {QStringLiteral("requestId"), QStringLiteral("sim-clarify")},
+                         {QStringLiteral("questions"), QVariantList{question}}},
+             false, QString(), /*gate=*/true});
+        steps.push_back(
+            {250,
+             QVariantMap{{QStringLiteral("type"), QStringLiteral("text")},
+                         {QStringLiteral("text"),
+                          QStringLiteral("\n\nGreat — proceeding with your selection.\n")}},
+             false, QString()});
         steps.push_back({200, QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}}, false,
                          QString()});
         return steps;
