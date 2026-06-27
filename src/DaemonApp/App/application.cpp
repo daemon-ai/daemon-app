@@ -46,7 +46,6 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
-#include <QSet>
 #include <QString>
 #include <QTimer>
 #include <QUuid>
@@ -435,8 +434,6 @@ QString Application::runHeadlessSearch(const QString& query, int timeoutMs) {
 
 QString Application::runHeadlessHitl(const QString& prompt, const QString& decision,
                                      int timeoutMs) {
-    using daemonapp::daemon::ApprovalRepository;
-    using daemonapp::daemon::DecodedApprovalInfo;
     driveFirstRunConnect();
     if (!awaitConnectionReady(timeoutMs)) {
         return {};
@@ -458,39 +455,26 @@ QString Application::runHeadlessHitl(const QString& prompt, const QString& decis
     });
     connect(engine, &ITurnEngine::turnFinished, &loop, &QEventLoop::quit);
 
-    // The headless Submit activates durably, so a gated tool parks for the OPERATOR inbox (PRO-11)
-    // rather than an in-stream gate: drive the approval through the real ApprovalRepository
-    // (ApprovalsPending poll -> ApprovalDecide), the same path the Approvals surface uses. Once the
-    // decision lands the daemon resumes the turn and the engine's Subscribe loop streams it to
-    // completion. (A live/attached session would instead surface an in-stream HostRequest the
-    // engine answers with respondApproval; that gate path is covered by the unit/offscreen mock
-    // coverage.)
-    auto* repo = m_services.approvalRepository;
-    auto decided = std::make_shared<QSet<QString>>();
-    const bool allow = decision != QStringLiteral("deny");
-    if (repo != nullptr) {
-        connect(repo, &ApprovalRepository::pendingRefreshed, this, [repo, decided, allow] {
-            for (const DecodedApprovalInfo& info : repo->pending()) {
-                if (!decided->contains(info.requestId)) {
-                    decided->insert(info.requestId);
-                    repo->decide(info.session, info.requestId, allow);
-                }
-            }
-        });
-    }
-    QTimer pollInbox;
-    pollInbox.setInterval(300);
-    connect(&pollInbox, &QTimer::timeout, this, [repo] {
-        if (repo != nullptr) {
-            repo->refreshPending();
+    // A live socket Submit under the default Ask policy surfaces the gated tool as an IN-STREAM
+    // HostRequest on the Subscribe/merged-log stream (proven by daemon-node's
+    // node_interface::live_approval_park_then_respond conformance test) - NOT the durable
+    // ApprovalsPending inbox (that surface is for assigned/durable sessions). So resolve the parked
+    // gate over the wire with Respond: on the engine's awaitingInput signal, answer per `decision`.
+    connect(engine, &ITurnEngine::awaitingInput, this, [engine, decision](const QString& kind) {
+        if (kind == QStringLiteral("approval")) {
+            engine->respondApproval(QString(), decision != QStringLiteral("deny"));
+        } else if (kind == QStringLiteral("clarify")) {
+            engine->respondChoice(QString(), 0);
+        } else if (kind == QStringLiteral("input")) {
+            const QString text =
+                decision.startsWith(QStringLiteral("input:")) ? decision.mid(6) : decision;
+            engine->respondInput(QString(), text);
         }
     });
 
     QTimer::singleShot(timeoutMs, &loop, &QEventLoop::quit);
-    pollInbox.start();
     engine->start(prompt);
     loop.exec();
-    pollInbox.stop();
     engine->cancel();
     engine->deleteLater();
     return answer;
