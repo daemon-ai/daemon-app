@@ -22,7 +22,7 @@ Nix-idiomatic way:
 
 ```
 # from the superproject root (submodule contents are gitlinks, hence ?submodules=1)
-nix build '.?submodules=1#daemon-zcbor-codec'   # pure: daemon-api-client.cddl -> generated C/H in the store
+nix build '.?submodules=1#daemon-zcbor-codec'   # pure: daemon-api.cddl -> generated C/H in the store
 nix build '.?submodules=1#checks.<system>.codec-drift'   # fails if generated/ here is stale
 nix run '.?submodules=1#update-codec'           # the one impure step: copy the store output into the tree
 ```
@@ -32,7 +32,9 @@ Under the hood that runs `daemon-node`'s single canonical `crates/contracts/daem
 `daemon-api` contract is proven byte-compatible with this codec by `cargo run -p xtask -- verify-codec`
 (daemon-node `checks.verify-codec`).
 
-Refresh `vendor/` from the same `zcbor` package only if its version changes. The codegen subset
-currently covers `daemon-api-client.cddl`; growing it toward the full `daemon-api.cddl` requires
-quoting the CDDL's bareword map keys (zcbor needs `"key":`), resolving its `any` members, and working
-around zcbor's helper-name collisions on unions of single-key maps (e.g. `origin-scope`).
+Refresh `vendor/` from the same `zcbor` package only if its version changes. The codec is generated
+from the single authoritative `daemon-api.cddl` (full surface). That file is authored in zcbor
+dialect: quoted map keys (`"key":`), every union arm is a named rule, same-type tuples are labeled
+(`[k: tstr, v: tstr]`), opaque fields are `any`, and a few type rules carry a `-t` suffix to avoid
+zcbor deriving a coder name that collides with a same-named map member (e.g. `origin-scope` vs map
+`origin`.`scope`). Rule names are local and never on the wire, so these are encoding-invariant.
