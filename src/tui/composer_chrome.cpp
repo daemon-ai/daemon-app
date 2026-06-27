@@ -1,8 +1,8 @@
 #include "composer_chrome.h"
 
 #include "composer_session_controller.h"
+#include "i_turn_engine.h"
 #include "tui_palette.h"
-#include "turn_controller.h"
 
 #include <QRect>
 #include <QSize>
@@ -29,14 +29,14 @@ ComposerChrome::ComposerChrome(Tui::ZWidget* parent) : Tui::ZWidget(parent) {
     });
 }
 
-void ComposerChrome::setTurn(TurnController* turn) {
+void ComposerChrome::setTurn(ITurnEngine* turn) {
     m_turn = turn;
     if (m_turn != nullptr) {
         const auto repaint = [this] { update(); };
-        connect(m_turn, &TurnController::turnStateChanged, this, repaint);
-        connect(m_turn, &TurnController::elapsedMsChanged, this, repaint);
-        connect(m_turn, &TurnController::errorTextChanged, this, repaint);
-        connect(m_turn, &TurnController::activeChanged, this, [this] {
+        connect(m_turn, &ITurnEngine::turnStateChanged, this, repaint);
+        connect(m_turn, &ITurnEngine::elapsedMsChanged, this, repaint);
+        connect(m_turn, &ITurnEngine::errorTextChanged, this, repaint);
+        connect(m_turn, &ITurnEngine::activeChanged, this, [this] {
             syncSpinner();
             update();
         });

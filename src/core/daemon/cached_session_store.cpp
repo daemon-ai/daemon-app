@@ -6,6 +6,41 @@
 #include <QDateTime>
 
 namespace daemonapp::daemon {
+namespace {
+
+// Map the cache's string columns (decoded from the wire by NodeApiCodec) back to the domain enums,
+// so the projected domain::Session mirrors SessionInfo field-for-field rather than dropping them.
+domain::SessionState stateFromString(const QString& s) {
+    if (s == QStringLiteral("Active")) {
+        return domain::SessionState::Active;
+    }
+    if (s == QStringLiteral("Suspended")) {
+        return domain::SessionState::Suspended;
+    }
+    if (s == QStringLiteral("Ready")) {
+        return domain::SessionState::Ready;
+    }
+    if (s == QStringLiteral("Completed")) {
+        return domain::SessionState::Completed;
+    }
+    return domain::SessionState::Unknown;
+}
+
+domain::Lifecycle lifecycleFromString(const QString& s) {
+    return s == QStringLiteral("Live") ? domain::Lifecycle::Live : domain::Lifecycle::Durable;
+}
+
+domain::SessionRole roleFromString(const QString& s) {
+    if (s == QStringLiteral("ManagedChild")) {
+        return domain::SessionRole::ManagedChild;
+    }
+    if (s == QStringLiteral("EphemeralSubagent")) {
+        return domain::SessionRole::EphemeralSubagent;
+    }
+    return domain::SessionRole::Primary;
+}
+
+} // namespace
 
 CachedSessionStore::CachedSessionStore(DaemonCacheStore* cache, SessionRepository* sessions,
                                        QObject* parent)
@@ -64,6 +99,16 @@ QList<domain::Session> CachedSessionStore::sessions(const domain::ListScope& sco
         session.title = row.title;
         session.isArchived = row.archived;
         session.isPinned = row.pinned;
+        // Project the full SessionInfo metadata the cache carries (previously dropped), so the
+        // sidebar/list can show bound profile, lifecycle, role, run-state, and parentage.
+        session.boundProfile = domain::ProfileRef(row.profileRef);
+        session.state = stateFromString(row.state);
+        session.lifecycle = lifecycleFromString(row.lifecycle);
+        session.role = roleFromString(row.role);
+        if (!row.parentSessionId.isEmpty()) {
+            session.parent = domain::SessionId(row.parentSessionId);
+        }
+        session.lastActivityMs = row.updatedAtMs;
         if (row.updatedAtMs > 0) {
             session.modified = QDateTime::fromMSecsSinceEpoch(row.updatedAtMs);
             session.created = session.modified;

@@ -76,16 +76,23 @@ public:
 
     // Issue a ProfileList; on success profilesRefreshed() fires with profiles() populated.
     void refreshProfiles();
+    // Switch the node's active profile (ProfileSelect); on Ok the list is re-fetched (PRO-5).
+    void selectProfile(const QString& id);
+    // Delete a profile (ProfileDelete); on Ok the list is re-fetched (PRO-4).
+    void deleteProfile(const QString& id);
 
 signals:
     void profilesRefreshed();
     void refreshFailed(const QString& message);
+    void operationFailed(const QString& message);
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
 
     static constexpr auto kProfilesCorrelation = "repo/profile-list";
+    static constexpr auto kSelectCorrelation = "repo/profile-select";
+    static constexpr auto kDeleteCorrelation = "repo/profile-delete";
 
     QList<DecodedProfileInfo> m_profiles;
 };

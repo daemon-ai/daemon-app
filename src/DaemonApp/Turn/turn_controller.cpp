@@ -57,7 +57,7 @@ QVariantMap subagentEvent(const QString& id, const QString& title, const QString
 
 } // namespace
 
-TurnController::TurnController(QObject* parent) : QObject(parent) {
+TurnController::TurnController(QObject* parent) : ITurnEngine(parent) {
     m_stepTimer.setSingleShot(true);
     m_stallTimer.setSingleShot(true);
     m_stallTimer.setInterval(kStallMs);

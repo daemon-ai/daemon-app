@@ -94,6 +94,81 @@ void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out) {
     out->local = m.model_descriptor_local;
 }
 
+QString endReasonName(int choice) {
+    switch (choice) {
+    case end_reason_r::end_reason_Completed_tstr_c:
+        return QStringLiteral("Completed");
+    case end_reason_r::end_reason_Suspended_tstr_c:
+        return QStringLiteral("Suspended");
+    case end_reason_r::end_reason_Interrupted_tstr_c:
+        return QStringLiteral("Interrupted");
+    case end_reason_r::end_reason_BudgetExhausted_tstr_c:
+        return QStringLiteral("BudgetExhausted");
+    case end_reason_r::end_reason_NoProgress_tstr_c:
+        return QStringLiteral("NoProgress");
+    default:
+        return QStringLiteral("Failed");
+    }
+}
+
+DecodedAgentEvent decodeAgentEvent(const agent_event_r& ev) {
+    DecodedAgentEvent out;
+    switch (ev.agent_event_choice) {
+    case agent_event_r::agent_event_turn_started_m_c:
+        out.kind = AgentEventKind::TurnStarted;
+        out.seq = ev.agent_event_turn_started_m.TurnStarted_seq;
+        break;
+    case agent_event_r::agent_event_text_delta_m_c:
+        out.kind = AgentEventKind::TextDelta;
+        out.seq = ev.agent_event_text_delta_m.TextDelta_seq;
+        out.text = fromZcbor(ev.agent_event_text_delta_m.TextDelta_text);
+        break;
+    case agent_event_r::agent_event_reasoning_delta_m_c:
+        out.kind = AgentEventKind::ReasoningDelta;
+        out.seq = ev.agent_event_reasoning_delta_m.ReasoningDelta_seq;
+        out.text = fromZcbor(ev.agent_event_reasoning_delta_m.ReasoningDelta_text);
+        break;
+    case agent_event_r::agent_event_tool_started_m_c:
+        out.kind = AgentEventKind::ToolStarted;
+        out.seq = ev.agent_event_tool_started_m.ToolStarted_seq;
+        break;
+    case agent_event_r::agent_event_tool_finished_m_c:
+        out.kind = AgentEventKind::ToolFinished;
+        out.seq = ev.agent_event_tool_finished_m.ToolFinished_seq;
+        break;
+    case agent_event_r::agent_event_usage_m_c:
+        out.kind = AgentEventKind::Usage;
+        out.seq = ev.agent_event_usage_m.Usage_seq;
+        break;
+    case agent_event_r::agent_event_context_m_c:
+        out.kind = AgentEventKind::Context;
+        out.seq = ev.agent_event_context_m.Context_seq;
+        break;
+    case agent_event_r::agent_event_turn_finished_m_c: {
+        out.kind = AgentEventKind::TurnFinished;
+        out.seq = ev.agent_event_turn_finished_m.TurnFinished_seq;
+        const turn_summary& summary = ev.agent_event_turn_finished_m.TurnFinished_summary;
+        out.endReason = endReasonName(summary.turn_summary_end_reason.end_reason_choice);
+        out.turnCompleted = summary.turn_summary_end_reason.end_reason_choice ==
+                            end_reason_r::end_reason_Completed_tstr_c;
+        if (summary.turn_summary_final_text_choice ==
+            turn_summary::turn_summary_final_text_tstr_c) {
+            out.finalText = fromZcbor(summary.turn_summary_final_text_tstr);
+        }
+        break;
+    }
+    case agent_event_r::agent_event_error_m_c:
+        out.kind = AgentEventKind::Error;
+        out.seq = ev.agent_event_error_m.Error_seq;
+        out.text = fromZcbor(ev.agent_event_error_m.Error_failure);
+        break;
+    default:
+        out.kind = AgentEventKind::Other;
+        break;
+    }
+    return out;
+}
+
 bool encodeRequest(const api_request_r& request, QByteArray* out) {
     // Grow the output buffer until the request fits rather than truncating: most requests are tiny,
     // but Submit/CommandInvoke carry user text and can exceed any small fixed size. Retry on encode
@@ -157,6 +232,51 @@ QByteArray NodeApiCodec::encodeSubscribeRequest(const QString& sessionId, quint6
     subscribe.Subscribe_session.len = static_cast<size_t>(session.size());
     subscribe.Subscribe_after_seq = static_cast<uint32_t>(afterSeq);
     subscribe.Subscribe_max = max;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeSubmitStartTurnRequest(const QString& sessionId, const QString& text,
+                                                      const QString& profile, quint32 requestId) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray textUtf8 = text.toUtf8();
+    const QByteArray profileUtf8 = profile.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_submit_m_c;
+    request_submit& submit = request.api_request_request_submit_m;
+    submit.Submit_session.value = reinterpret_cast<const uint8_t*>(sessionUtf8.constData());
+    submit.Submit_session.len = static_cast<size_t>(sessionUtf8.size());
+    submit.Submit_command.agent_command_choice = agent_command_r::agent_command_start_turn_m_c;
+    agent_command_start_turn& start = submit.Submit_command.agent_command_start_turn_m;
+    start.StartTurn_input.user_msg_text.value =
+        reinterpret_cast<const uint8_t*>(textUtf8.constData());
+    start.StartTurn_input.user_msg_text.len = static_cast<size_t>(textUtf8.size());
+    start.StartTurn_input.user_msg_attachments_present = false;
+    start.StartTurn_request_id = requestId;
+    submit.Submit_origin_present = false;
+    if (profile.isEmpty()) {
+        submit.Submit_profile_present = false;
+    } else {
+        submit.Submit_profile_present = true;
+        submit.Submit_profile.Submit_profile_choice =
+            Submit_profile_r::Submit_profile_profile_ref_m_c;
+        submit.Submit_profile.Submit_profile_profile_ref_m.value =
+            reinterpret_cast<const uint8_t*>(profileUtf8.constData());
+        submit.Submit_profile.Submit_profile_profile_ref_m.len =
+            static_cast<size_t>(profileUtf8.size());
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodePollRequest(const QString& sessionId, quint32 max) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_poll_m_c;
+    request_poll& poll = request.api_request_request_poll_m;
+    poll.Poll_session.value = reinterpret_cast<const uint8_t*>(sessionUtf8.constData());
+    poll.Poll_session.len = static_cast<size_t>(sessionUtf8.size());
+    poll.Poll_max = max;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -252,6 +372,28 @@ QByteArray NodeApiCodec::encodeProfileListRequest() {
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
+QByteArray NodeApiCodec::encodeProfileSelectRequest(const QString& id) {
+    const QByteArray idUtf8 = id.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_profile_select_m_c;
+    request_profile_select& select = request.api_request_request_profile_select_m;
+    select.ProfileSelect_id.value = reinterpret_cast<const uint8_t*>(idUtf8.constData());
+    select.ProfileSelect_id.len = static_cast<size_t>(idUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeProfileDeleteRequest(const QString& id) {
+    const QByteArray idUtf8 = id.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_profile_delete_m_c;
+    request_profile_delete& del = request.api_request_request_profile_delete_m;
+    del.ProfileDelete_id.value = reinterpret_cast<const uint8_t*>(idUtf8.constData());
+    del.ProfileDelete_id.len = static_cast<size_t>(idUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
 ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
     auto response = std::make_unique<api_response_r>();
     if (!decodeResponse(responseCbor, response.get())) {
@@ -276,6 +418,8 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         return ApiResponseKind::ModelCurrent;
     case api_response_r::api_response_response_profiles_m_c:
         return ApiResponseKind::Profiles;
+    case api_response_r::api_response_response_drained_m_c:
+        return ApiResponseKind::Drained;
     case api_response_r::api_response_response_error_m_c:
         return ApiResponseKind::Error;
     default:
@@ -404,6 +548,86 @@ bool NodeApiCodec::decodeLogPage(const QByteArray& responseCbor, const QString& 
     }
     if (headSeq != nullptr) {
         *headSeq = page.log_page_view_head_seq;
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeLogPageEntries(const QByteArray& responseCbor, QList<DecodedLogEntry>* out,
+                                        quint64* nextSeq, quint64* headSeq) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_log_page_m_c) {
+        return false;
+    }
+    const log_page_view& page =
+        response->api_response_response_log_page_m.response_log_page_LogPage;
+    out->clear();
+    for (size_t i = 0; i < page.log_page_view_entries_session_log_entry_m_count; ++i) {
+        const session_log_entry& entry = page.log_page_view_entries_session_log_entry_m[i];
+        DecodedLogEntry decoded;
+        decoded.seq = entry.session_log_entry_seq;
+        decoded.direction = entry.session_log_entry_direction.direction_choice ==
+                                    direction_r::direction_Outbound_tstr_c
+                                ? QStringLiteral("Outbound")
+                                : QStringLiteral("Inbound");
+        decoded.disposition = entry.session_log_entry_disposition.disposition_choice ==
+                                      disposition_r::disposition_Transport_tstr_c
+                                  ? QStringLiteral("Transport")
+                                  : QStringLiteral("Context");
+        decoded.originTransport = fromZcbor(entry.session_log_entry_origin.origin_transport);
+        const session_payload_r& payload = entry.session_log_entry_payload;
+        switch (payload.session_payload_choice) {
+        case session_payload_r::session_payload_event_m_c:
+            decoded.payloadKind = DecodedLogEntry::PayloadKind::Event;
+            decoded.event =
+                decodeAgentEvent(payload.session_payload_event_m.session_payload_event_Event);
+            break;
+        case session_payload_r::session_payload_request_m_c:
+            decoded.payloadKind = DecodedLogEntry::PayloadKind::Request;
+            break;
+        case session_payload_r::session_payload_command_m_c:
+            decoded.payloadKind = DecodedLogEntry::PayloadKind::Command;
+            break;
+        case session_payload_r::session_payload_response_m_c:
+            decoded.payloadKind = DecodedLogEntry::PayloadKind::Response;
+            break;
+        case session_payload_r::session_payload_meta_m_c:
+            decoded.payloadKind = DecodedLogEntry::PayloadKind::Meta;
+            break;
+        default:
+            decoded.payloadKind = DecodedLogEntry::PayloadKind::None;
+            break;
+        }
+        out->append(decoded);
+    }
+    if (nextSeq != nullptr) {
+        *nextSeq = page.log_page_view_next_seq;
+    }
+    if (headSeq != nullptr) {
+        *headSeq = page.log_page_view_head_seq;
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeDrained(const QByteArray& responseCbor, QList<DecodedAgentEvent>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_drained_m_c) {
+        return false;
+    }
+    const response_drained& drained = response->api_response_response_drained_m;
+    out->clear();
+    for (size_t i = 0; i < drained.response_drained_Drained_outbound_m_count; ++i) {
+        const outbound_r& item = drained.response_drained_Drained_outbound_m[i];
+        if (item.outbound_choice == outbound_r::outbound_event_m_c) {
+            out->append(decodeAgentEvent(item.outbound_event_m.outbound_event_Event));
+        }
     }
     return true;
 }

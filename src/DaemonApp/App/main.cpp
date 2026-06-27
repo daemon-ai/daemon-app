@@ -273,6 +273,21 @@ int main(int argc, char* argv[]) {
         return ready ? 0 : 2;
     }
 
+    // Headless chat self-check (CHA-1/CHA-2): connect, drive one real turn, and emit the streamed
+    // assistant text so the E2E harness can assert Submit + Subscribe crossed the socket and the
+    // client consumed the AgentEvent stream. Gated on DAEMON_APP_CHAT_PROMPT.
+    const QByteArray chatPrompt = qgetenv("DAEMON_APP_CHAT_PROMPT");
+    if (!chatPrompt.isEmpty()) {
+        const QByteArray waitMs = qgetenv("DAEMON_APP_WAIT_READY");
+        const int timeoutMs = waitMs.toInt() > 0 ? waitMs.toInt() : 30000;
+        const QString answer =
+            application.runHeadlessChat(QString::fromUtf8(chatPrompt), timeoutMs,
+                                        QString::fromUtf8(qgetenv("DAEMON_APP_CHAT_PROFILE")));
+        std::fprintf(stdout, "DAEMON_APP_ANSWER %s\n", answer.toUtf8().constData());
+        std::fflush(stdout);
+        return answer.isEmpty() ? 2 : 0;
+    }
+
     // Headless connectivity self-check for the cross-repo E2E harness: block until the daemon-mode
     // auto-connect Health round-trip resolves (or times out), emit a stable sentinel on stdout, and
     // exit deterministically. Keeps the harness from racing the async connect.

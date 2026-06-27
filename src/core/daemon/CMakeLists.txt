@@ -40,6 +40,8 @@ add_library(da_daemon_client STATIC
     daemon_accounts_service.cpp
     daemon_model_catalog.h
     daemon_model_catalog.cpp
+    daemon_profile_store.h
+    daemon_profile_store.cpp
     daemon_cache_store.h
     daemon_cache_store.cpp
     cached_session_store.h

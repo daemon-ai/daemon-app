@@ -129,9 +129,16 @@ bool maybeRenderOffscreen() {
     // auto-connect Health round-trip resolves (or times out) and emit a stable sentinel, so the
     // harness can hard-assert TUI -> daemon connectivity rather than only logging it. The frame
     // dump below still runs afterwards (the daemon has been probed by then).
+    const QByteArray chatPrompt = qgetenv("DAEMON_APP_CHAT_PROMPT");
     const QByteArray onboardKey = qgetenv("DAEMON_APP_ONBOARD_KEY");
     const QByteArray waitReadyMs = qgetenv("DAEMON_APP_WAIT_READY");
-    if (!onboardKey.isEmpty()) {
+    if (!chatPrompt.isEmpty()) {
+        // Headless chat (CHA-1/CHA-2): drive one real turn, emit the streamed assistant text.
+        const int timeoutMs = waitReadyMs.toInt() > 0 ? waitReadyMs.toInt() : 30000;
+        const QString answer = root.runHeadlessChat(QString::fromUtf8(chatPrompt), timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_ANSWER %s\n", answer.toUtf8().constData());
+        std::fflush(stdout);
+    } else if (!onboardKey.isEmpty()) {
         // Headless full onboarding (CON-4/6/7): connect, add the key, pick a model, finish - so the
         // E2E harness can assert the credential/model wire ops + persisted setup without key
         // driving.

@@ -13,6 +13,7 @@ QT_END_NAMESPACE
 class StatusBarModel;
 class CommandRegistry;
 class TranscriptExporter;
+class ITurnEngineFactory;
 
 namespace persistence {
 class ISessionStore;
@@ -110,6 +111,13 @@ public:
     [[nodiscard]] bool runHeadlessOnboarding(const QString& provider, const QString& key,
                                              int timeoutMs);
 
+    // Headless E2E hook (CHA-1 / CHA-2): connect, then drive one real turn through a
+    // DaemonTurnEngine (Submit{StartTurn} + Subscribe stream) and return the assistant text
+    // accumulated from the AgentEvent stream. Empty string on connect failure / empty turn.
+    // `profile` optionally binds the turn to a specific profile (PRO-5).
+    [[nodiscard]] QString runHeadlessChat(const QString& prompt, int timeoutMs,
+                                          const QString& profile = QString());
+
 protected:
     // Close-to-tray: when a tray is installed, intercept the root window's close
     // (X) event and hide instead of quitting.
@@ -145,6 +153,9 @@ private:
     CommandRegistry* m_commands = nullptr;
     // Transcript exporter, exposed to QML as `Exporter`.
     TranscriptExporter* m_exporter = nullptr;
+    // Turn-engine factory (daemon Submit/Subscribe vs mock simulator), exposed to QML as
+    // `TurnEngines`; each TranscriptPage assigns it onto its SessionOrchestrator.
+    ITurnEngineFactory* m_turnEngines = nullptr;
     QQuickWindow* m_window = nullptr;
     // Held for live language switching: the engine to retranslate and the
     // UiSettings singleton whose `language` property drives it.

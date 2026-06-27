@@ -32,6 +32,7 @@
 #include "tui_palette.h"
 #include "tui_shell_layout.h"
 #include "turn_controller.h"
+#include "turn_engine_factory.h"
 #include "uimodels/variant_list_model.h"
 
 #include <algorithm>
@@ -48,6 +49,7 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QTimer>
+#include <QUuid>
 #include <QVariantMap>
 #include <Tui/ZButton.h>
 #include <Tui/ZCommon.h>
@@ -170,6 +172,13 @@ RootWidget::RootWidget()
     // creates a per-tab TabSession on demand and binds the views to the active one.
     m_tabModel = new TabModel(this);
     m_tabSessions = std::make_unique<TabSessionManager>(m_services.store, m_tabModel);
+    // In daemon mode every session's orchestrator drives a real Submit + Subscribe turn; in mock
+    // mode it keeps its default canned simulator. Detect daemon mode the same way the service graph
+    // does (the connection seam is the DaemonConnectionService).
+    if (qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection) !=
+        nullptr) {
+        m_tabSessions->setTurnEngines(new DaemonTurnEngineFactory(m_services.nodeApi, this));
+    }
     connect(m_tabModel, &TabModel::currentTabChanged, this, [this](int tabId) {
         if (tabId >= 0) {
             activateTab(tabId);
@@ -1210,9 +1219,9 @@ TabSession* RootWidget::ensureSession(int tabId) {
 void RootWidget::wireSession(TabSession* s) {
     // Stream this session's turn events into ITS OWN document (so a background tab
     // keeps growing while another is on screen); repaint only when it is active.
-    connect(s->turn, &TurnController::eventsEmitted, this,
+    connect(s->turn, &ITurnEngine::eventsEmitted, this,
             [this, s](const QVariantList& events) { onTurnEvents(s, events); });
-    connect(s->turn, &TurnController::turnStarted, this, [this, s] {
+    connect(s->turn, &ITurnEngine::turnStarted, this, [this, s] {
         if (s == m_active) {
             m_status->setBusy(true);
             m_status->setTurnStartedAt(static_cast<double>(QDateTime::currentMSecsSinceEpoch()));
@@ -1221,7 +1230,7 @@ void RootWidget::wireSession(TabSession* s) {
             }
         }
     });
-    connect(s->turn, &TurnController::turnFinished, this, [this, s] {
+    connect(s->turn, &ITurnEngine::turnFinished, this, [this, s] {
         // Settle the open stream and persist the grown document regardless of which
         // tab is active, so a background turn's result is saved.
         s->ingest.finish();
@@ -1245,7 +1254,7 @@ void RootWidget::wireSession(TabSession* s) {
             }
         }
     });
-    connect(s->turn, &TurnController::activeChanged, this, [this, s] {
+    connect(s->turn, &ITurnEngine::activeChanged, this, [this, s] {
         if (s == m_active) {
             m_composerSession->setBusy(s->turn->active());
         }
@@ -1253,7 +1262,7 @@ void RootWidget::wireSession(TabSession* s) {
     // A gate (approval/clarify/host) blocked the turn on the user: ring the bell
     // and flag the terminal title so an unfocused terminal alerts (the TUI analog
     // of the GUI's OS notification). Only the active session drives the chrome.
-    connect(s->turn, &TurnController::awaitingInput, this, [this, s](const QString& kind) {
+    connect(s->turn, &ITurnEngine::awaitingInput, this, [this, s](const QString& kind) {
         if (s != m_active) {
             return;
         }
@@ -1275,7 +1284,7 @@ void RootWidget::wireSession(TabSession* s) {
         emitDesktopNotification(convTitle, tr("The turn needs your %1.").arg(what));
     });
     // Clear the title alert once the turn settles.
-    connect(s->turn, &TurnController::turnFinished, this, [this, s] {
+    connect(s->turn, &ITurnEngine::turnFinished, this, [this, s] {
         if (s == m_active && terminal() != nullptr) {
             terminal()->setTitle(QStringLiteral("daemon"));
         }
@@ -1283,7 +1292,7 @@ void RootWidget::wireSession(TabSession* s) {
     // The turn paused for a masked host input (sudo password / secret). Raise a
     // masked prompt; the answer resumes the turn (the daemon's host channel
     // replaces this mock responder later), cancel aborts it.
-    connect(s->turn, &TurnController::hostRequested, this,
+    connect(s->turn, &ITurnEngine::hostRequested, this,
             [this, s](const QString& kind, const QString& prompt) {
                 const QString title =
                     prompt.isEmpty() ? (kind == QStringLiteral("secret") ? tr("Secret required")
@@ -1752,6 +1761,39 @@ void RootWidget::driveFirstRunConnect() const {
     const QString target = m_services.settings->resolvedConnectionTarget();
     m_services.settings->setLastConnection(QStringLiteral("local"), target);
     m_services.connection->connectTo(QStringLiteral("local"), target);
+}
+
+QString RootWidget::runHeadlessChat(const QString& prompt, int timeoutMs) const {
+    const auto settle = [](int ms) {
+        QEventLoop loop;
+        QTimer::singleShot(ms, &loop, &QEventLoop::quit);
+        loop.exec();
+    };
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return {};
+    }
+    settle(600); // drain the on-ready refreshes first
+    auto* engine = new DaemonTurnEngine(m_services.nodeApi, const_cast<RootWidget*>(this));
+    engine->setSessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
+    QString answer;
+    QEventLoop loop;
+    QObject::connect(
+        engine, &ITurnEngine::eventsEmitted, engine, [&answer](const QVariantList& events) {
+            for (const QVariant& item : events) {
+                const QVariantMap map = item.toMap();
+                if (map.value(QStringLiteral("type")).toString() == QStringLiteral("text")) {
+                    answer += map.value(QStringLiteral("text")).toString();
+                }
+            }
+        });
+    QObject::connect(engine, &ITurnEngine::turnFinished, &loop, &QEventLoop::quit);
+    QTimer::singleShot(timeoutMs, &loop, &QEventLoop::quit);
+    engine->start(prompt);
+    loop.exec();
+    engine->cancel();
+    engine->deleteLater();
+    return answer;
 }
 
 bool RootWidget::runHeadlessOnboarding(const QString& provider, const QString& key,

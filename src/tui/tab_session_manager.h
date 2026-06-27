@@ -13,7 +13,8 @@
 class SessionController;
 class SessionOrchestrator;
 class TabModel;
-class TurnController;
+class ITurnEngine;
+class ITurnEngineFactory;
 
 // Per-transcript-tab backend state. Each transcript tab owns an independent
 // controller / orchestrator (turn) / document / ingest / mock host, so a tab that
@@ -24,7 +25,7 @@ struct TabSession {
     QString sessionId;
     SessionController* controller = nullptr;
     SessionOrchestrator* orchestrator = nullptr; // owns `turn`
-    TurnController* turn = nullptr;
+    ITurnEngine* turn = nullptr;
     InteractiveTurnHost* host = nullptr;
     be::DocumentStore doc;
     be::TranscriptIngest ingest{&doc};
@@ -39,6 +40,10 @@ public:
     TabSessionManager(QObject* store, TabModel* tabs);
     ~TabSessionManager();
 
+    // The turn-engine factory injected into every session's orchestrator (daemon engine vs mock
+    // simulator). Set once at startup; null keeps the orchestrator's default mock simulator.
+    void setTurnEngines(ITurnEngineFactory* factory) { m_turnEngines = factory; }
+
     [[nodiscard]] TabSession* ensureSession(int tabId,
                                             const std::function<void(TabSession*)>& wire);
     void rebindSession(int tabId, const QString& sessionId,
@@ -49,5 +54,6 @@ public:
 private:
     QObject* m_store = nullptr;
     TabModel* m_tabs = nullptr;
+    ITurnEngineFactory* m_turnEngines = nullptr;
     QHash<int, TabSession*> m_sessions;
 };

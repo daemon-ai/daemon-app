@@ -45,6 +45,7 @@ TabSession* TabSessionManager::ensureSession(int tabId,
     s->controller->setStore(m_store);
     s->orchestrator = new SessionOrchestrator();
     s->orchestrator->setSession(s->controller);
+    s->orchestrator->setTurnEngines(m_turnEngines); // daemon engine vs mock; no-op when null
     s->turn = s->orchestrator->turn();
     s->host = new InteractiveTurnHost(&s->doc, &s->ingest);
     m_sessions.insert(tabId, s);

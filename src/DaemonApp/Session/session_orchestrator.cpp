@@ -3,17 +3,11 @@
 #include "session_controller.h"
 #include "turn_controller.h"
 
+#include <QUuid>
+
 SessionOrchestrator::SessionOrchestrator(QObject* parent)
     : QObject(parent), m_turn(new TurnController(this)), m_todos(new TodoListModel(this)),
       m_subagents(new SubagentModel(this)) {
-    // busy mirrors the turn's active state.
-    connect(m_turn, &TurnController::activeChanged, this, &SessionOrchestrator::busyChanged);
-
-    // Live subagent rows ride the same event stream the transcript/status bar
-    // consume; the model upserts the subagent.* events and ignores the rest.
-    connect(m_turn, &TurnController::eventsEmitted, this,
-            [this](const QVariantList& events) { m_subagents->applyEvents(events); });
-
     // Clear simulator todos (and the settled subagent rows) a beat after the turn
     // ends (the QML used a 1.5s single-shot timer restarted on busy->false).
     m_todoClearTimer.setSingleShot(true);
@@ -22,7 +16,40 @@ SessionOrchestrator::SessionOrchestrator(QObject* parent)
         m_todos->clear();
         m_subagents->clear();
     });
-    connect(m_turn, &TurnController::turnFinished, this, [this] { m_todoClearTimer.start(); });
+    wireTurn();
+}
+
+void SessionOrchestrator::wireTurn() {
+    // busy mirrors the turn's active state.
+    connect(m_turn, &ITurnEngine::activeChanged, this, &SessionOrchestrator::busyChanged);
+    // Live subagent rows ride the same event stream the transcript/status bar consume; the model
+    // upserts the subagent.* events and ignores the rest.
+    connect(m_turn, &ITurnEngine::eventsEmitted, this,
+            [this](const QVariantList& events) { m_subagents->applyEvents(events); });
+    connect(m_turn, &ITurnEngine::turnFinished, this, [this] { m_todoClearTimer.start(); });
+}
+
+void SessionOrchestrator::setTurnEngines(ITurnEngineFactory* factory) {
+    if (m_turnEngines == factory) {
+        return;
+    }
+    m_turnEngines = factory;
+    if (factory == nullptr) {
+        return;
+    }
+    // Swap the default mock simulator for the factory's engine. QML binds `turn` via re-bindable
+    // Connections and null-guards it, so replacing the object + emitting turnChanged is safe.
+    if (m_turn != nullptr) {
+        m_turn->cancel();
+        m_turn->deleteLater();
+    }
+    m_turn = factory->create(this);
+    wireTurn();
+    if (m_session != nullptr) {
+        m_turn->setSessionId(m_session->currentId());
+    }
+    emit turnChanged();
+    emit busyChanged();
 }
 
 void SessionOrchestrator::setSession(SessionController* session) {
@@ -30,7 +57,24 @@ void SessionOrchestrator::setSession(SessionController* session) {
         return;
     }
     m_session = session;
+    if (m_turn != nullptr && m_session != nullptr) {
+        m_turn->setSessionId(m_session->currentId());
+    }
     emit sessionChanged();
+}
+
+void SessionOrchestrator::ensureSessionBound() {
+    if (m_session == nullptr) {
+        return;
+    }
+    if (m_session->currentId().isEmpty()) {
+        // Daemon mode: the node creates the session lazily on Submit, so the client mints the id.
+        // (Mock mode already opened a session id when the tab was created.)
+        m_session->open(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
+    }
+    if (m_turn != nullptr) {
+        m_turn->setSessionId(m_session->currentId());
+    }
 }
 
 bool SessionOrchestrator::busy() const {
@@ -38,6 +82,7 @@ bool SessionOrchestrator::busy() const {
 }
 
 void SessionOrchestrator::submit(const QString& text, const QString& refs) {
+    ensureSessionBound();
     if (m_session != nullptr) {
         m_session->appendUserText(refs.isEmpty() ? text : (refs + QStringLiteral("\n") + text));
     }
@@ -52,6 +97,7 @@ void SessionOrchestrator::rerun(const QString& text) {
     // the replayed turn is the only one streaming. No appendUserText here - the
     // user block is already in the document (edit) or intentionally unchanged
     // (regenerate).
+    ensureSessionBound();
     if (m_turn->active()) {
         m_turn->cancel();
     }

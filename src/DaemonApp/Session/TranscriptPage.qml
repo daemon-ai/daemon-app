@@ -80,6 +80,8 @@ Rectangle {
     SessionOrchestrator {
         id: orchestrator
         session: controller
+        // Daemon Submit/Subscribe engine vs mock simulator, chosen by the app graph.
+        turnEngines: TurnEngines
         // Route the orchestrator's front-end commands. Session-scoped ones act
         // on this tab's composer/session/status here; window-level ones (help,
         // title, save) bubble up via commandForwarded.

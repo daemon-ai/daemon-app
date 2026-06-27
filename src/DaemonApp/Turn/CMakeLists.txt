@@ -8,8 +8,12 @@ qt_add_qml_module(da_turn
     URI DaemonApp.Turn
     VERSION 1.0
     SOURCES
+        i_turn_engine.h
         turn_controller.h
         turn_controller.cpp
+        daemon_turn_engine.h
+        daemon_turn_engine.cpp
+        turn_engine_factory.h
 )
 add_library(daemon-app::turn ALIAS da_turn)
 
@@ -19,6 +23,8 @@ target_link_libraries(da_turn
     PUBLIC
         Qt6::Qml
         Qt6::Core
+        # The daemon engine wraps the shared NodeApiClient + codec facade.
+        daemon-app::daemon_client
     PRIVATE
         daemon-app::warnings
 )

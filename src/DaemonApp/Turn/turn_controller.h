@@ -1,5 +1,7 @@
 #pragma once
 
+#include "i_turn_engine.h"
+
 #include <QList>
 #include <QObject>
 #include <QString>
@@ -11,61 +13,32 @@
 // Demo/simulator runtime for pre-backend UI coverage - the C++ port of
 // TurnSimulator.qml. Given a user prompt it plays a canned assistant turn
 // (reasoning -> tool running/done -> streamed text -> flush) by emitting daemon-
-// shaped event maps on a re-armed timer. A real gateway later replaces this class
-// by emitting the same event shapes; consumers only read turnState/elapsedMs/
-// errorText and connect to eventsEmitted.
+// shaped event maps on a re-armed timer. The real DaemonTurnEngine emits the same
+// event shapes; consumers (bound to the ITurnEngine seam) are agnostic.
 //
 // GUI-free (Qt6::Qml for QML_ELEMENT + Qt6::Core for QTimer/QVariant): the GUI
 // feeds `eventsEmitted` into EditorController::ingestEvents; the TUI renders the
 // text deltas directly.
 //
 // turnState: "idle" | "thinking" | "running" | "streaming" | "stalled" | "error"
-class TurnController : public QObject {
+class TurnController : public ITurnEngine {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(bool active READ active NOTIFY activeChanged)
-    Q_PROPERTY(QString turnState READ turnState NOTIFY turnStateChanged)
-    Q_PROPERTY(int elapsedMs READ elapsedMs NOTIFY elapsedMsChanged)
-    Q_PROPERTY(QString errorText READ errorText NOTIFY errorTextChanged)
 
 public:
     explicit TurnController(QObject* parent = nullptr);
 
-    [[nodiscard]] bool active() const { return m_active; }
-    [[nodiscard]] QString turnState() const { return m_turnState; }
-    [[nodiscard]] int elapsedMs() const { return m_elapsedMs; }
-    [[nodiscard]] QString errorText() const { return m_errorText; }
+    [[nodiscard]] bool active() const override { return m_active; }
+    [[nodiscard]] QString turnState() const override { return m_turnState; }
+    [[nodiscard]] int elapsedMs() const override { return m_elapsedMs; }
+    [[nodiscard]] QString errorText() const override { return m_errorText; }
+    [[nodiscard]] bool paused() const override { return m_paused; }
 
-    Q_INVOKABLE void start(const QString& prompt);
-    Q_INVOKABLE void cancel();
+    void start(const QString& prompt) override;
+    void cancel() override;
     // Resume a turn paused at an approval gate (a gated step pauses scheduling
     // until the inline approval answer drives this). No-op unless paused.
-    Q_INVOKABLE void resume();
-    [[nodiscard]] bool paused() const { return m_paused; }
-
-signals:
-    void activeChanged();
-    void turnStateChanged();
-    void elapsedMsChanged();
-    void errorTextChanged();
-
-    void turnStarted();
-    void turnFinished();
-    // One scripted step's daemon event(s). The GUI forwards these to
-    // EditorController::ingestEvents; the TUI inspects them for text deltas.
-    void eventsEmitted(const QVariantList& events);
-
-    // The turn paused for a host-mediated input (a masked sudo password or a
-    // secret/API-key). The front end raises a masked prompt and calls resume()
-    // once answered (or cancel()s the turn). `kind` is "password" | "secret".
-    // This pre-shapes the daemon's HostRequestKind seam.
-    void hostRequested(const QString& kind, const QString& prompt);
-
-    // The turn reached a gate and is now blocked on the user (an approval/clarify
-    // tool, or a host-input prompt). Front ends surface this out-of-band: the GUI
-    // raises a native OS notification when its window is hidden, the TUI rings the
-    // bell / flags the title. `kind` is "approval" | "password" | "secret".
-    void awaitingInput(const QString& kind);
+    void resume() override;
 
 private:
     struct Step {

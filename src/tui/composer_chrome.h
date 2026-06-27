@@ -6,7 +6,7 @@
 #include <QVector>
 #include <Tui/ZWidget.h>
 
-class TurnController;
+class ITurnEngine;
 class ComposerSessionController;
 
 // A one-line painted indicator above the composer. It merges the GUI's
@@ -24,7 +24,7 @@ class ComposerChrome : public Tui::ZWidget {
 public:
     explicit ComposerChrome(Tui::ZWidget* parent = nullptr);
 
-    void setTurn(TurnController* turn);
+    void setTurn(ITurnEngine* turn);
     void setSession(ComposerSessionController* session);
 
     [[nodiscard]] QSize sizeHint() const override;
@@ -36,7 +36,7 @@ private:
     [[nodiscard]] QVector<Span> buildSpans() const;
     void syncSpinner();
 
-    TurnController* m_turn = nullptr;
+    ITurnEngine* m_turn = nullptr;
     ComposerSessionController* m_session = nullptr;
     QTimer m_spinner;
     int m_spinnerTick = 0;

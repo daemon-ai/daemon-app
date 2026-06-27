@@ -57,6 +57,51 @@ struct DecodedProfileInfo {
     bool isActive = false;
 };
 
+// The agent-event arms a turn produces (daemon-protocol AgentEvent). Carried inside a
+// session-payload (Subscribe -> LogPage) or an outbound (Poll -> Drained). The turn engine applies
+// these to the transcript: TextDelta grows the assistant message; TurnFinished ends the turn.
+enum class AgentEventKind {
+    Other,
+    TurnStarted,
+    TextDelta,
+    ReasoningDelta,
+    ToolStarted,
+    ToolFinished,
+    Usage,
+    Context,
+    TurnFinished,
+    Error,
+};
+
+struct DecodedAgentEvent {
+    AgentEventKind kind = AgentEventKind::Other;
+    quint64 seq = 0;
+    QString text;               // TextDelta / ReasoningDelta text; Error failure message
+    QString toolName;           // ToolStarted / ToolFinished tool name
+    QString endReason;          // TurnFinished: Completed | Failed | Interrupted | ...
+    QString finalText;          // TurnFinished: the turn's final assistant text (if any)
+    bool turnCompleted = false; // TurnFinished with end_reason == Completed
+};
+
+// One decoded session-log entry (Subscribe -> LogPage). The transcript engine consumes the
+// `event` when payloadKind == Event; other payload kinds (Command echoes, Meta, etc.) are surfaced
+// so callers can advance the cursor without rendering them.
+struct DecodedLogEntry {
+    quint64 seq = 0;
+    QString direction;   // Inbound | Outbound
+    QString disposition; // Context | Transport
+    QString originTransport;
+    enum class PayloadKind {
+        None,
+        Event,
+        Request,
+        Command,
+        Response,
+        Meta
+    } payloadKind = PayloadKind::None;
+    DecodedAgentEvent event; // valid when payloadKind == Event
+};
+
 enum class ApiResponseKind {
     Unknown,
     Health,
@@ -68,6 +113,7 @@ enum class ApiResponseKind {
     Models,
     ModelCurrent,
     Profiles,
+    Drained,
     Error,
 };
 
@@ -88,6 +134,17 @@ public:
     [[nodiscard]] static QByteArray encodeSubscribeRequest(const QString& sessionId,
                                                            quint64 afterSeq, quint32 max);
 
+    // Basic chat (CHA-1): start a turn in `session` with `text`. Empty `profile` omits the optional
+    // profile binding (daemon uses the session's / active profile); `requestId` correlates the
+    // turn.
+    [[nodiscard]] static QByteArray encodeSubmitStartTurnRequest(const QString& sessionId,
+                                                                 const QString& text,
+                                                                 const QString& profile = QString(),
+                                                                 quint32 requestId = 1);
+    // Drain a session's outbound queue (Poll -> Drained). Mainly a harness/diagnostic path; the
+    // client renders from Subscribe (non-destructive) instead. max == 0 means "no limit".
+    [[nodiscard]] static QByteArray encodePollRequest(const QString& sessionId, quint32 max = 0);
+
     // Onboarding (CON-4 / CON-6): credentials + model discovery/selection.
     // Store a provider secret under `profile` (CredentialSet -> Ok). The secret never returns.
     [[nodiscard]] static QByteArray encodeCredentialSetRequest(const QString& profile,
@@ -106,33 +163,34 @@ public:
                                  const QString& provider = QString());
     // List profiles (ProfileList -> Profiles) so the client can find the active default profile.
     [[nodiscard]] static QByteArray encodeProfileListRequest();
+    // Switch the node's active profile (ProfileSelect -> Ok). New sessions bind to it (PRO-5).
+    [[nodiscard]] static QByteArray encodeProfileSelectRequest(const QString& id);
+    // Delete a profile (ProfileDelete -> Ok). The default profile is protected node-side (PRO-4).
+    [[nodiscard]] static QByteArray encodeProfileDeleteRequest(const QString& id);
 
     // Response inspection / decode.
     [[nodiscard]] static ApiResponseKind responseKind(const QByteArray& responseCbor);
     static bool decodeHealth(const QByteArray& responseCbor, DecodedHealth* out);
     static bool decodeSessionPage(const QByteArray& responseCbor, QList<CachedSessionRow>* out,
                                   QString* nextCursor = nullptr);
-    // Decode a LogPage into cache rows tagged with sessionId. Populates seq/direction/disposition +
-    // the next/head cursors (enough to advance the sync cursor and project the envelope into a
-    // domain::SessionLogEntry for the P4 transcript applier).
+    // Decode a LogPage into cache rows tagged with sessionId (seq/direction/disposition + the
+    // next/head cursors). The full payload/origin now generate from the unified contract; use
+    // decodeLogPageEntries() when the typed payload (AgentEvent) is needed (transcript rendering).
     //
-    // DEFERRED (roadmap P5 - "dn-codec"): the entry's `origin` and `payload` are NOT captured yet.
-    // This is blocked at the vendored client codec, not here:
-    //   - The client subset (daemon-node .../daemon-api-client.cddl) models `session-payload` as
-    //   ONLY
-    //     `{ "Command": agent-command }` and `origin.scope` as a flat tstr; the wire union's
-    //     Event/Request/Response/Meta arms (the assistant AgentEvents that make up a transcript)
-    //     and the Dm/Group/Api/Internal scope union are not generated (a zcbor codegen collision
-    //     the CDDL itself flags as future work).
-    //   - There is no `encode_session_payload` and zcbor does not retain the raw per-entry bytes,
-    //   so
-    //     `CachedLogRow.payloadCbor` cannot be filled by re-encoding either.
-    // Capturing payload/origin therefore requires growing that client CDDL subset + regenerating
-    // the vendored codec in daemon-node (a separate, cross-repo task) before the daemon path can
-    // feed full transcript content into the shared store.
+    // NOTE: CachedLogRow.payloadCbor is still left empty here - zcbor does not retain raw per-entry
+    // bytes and there is no standalone session-payload encoder to re-encode with, so durable
+    // payload persistence routes through decodeLogPageEntries() typed events instead (see Phase 3).
     static bool decodeLogPage(const QByteArray& responseCbor, const QString& sessionId,
                               QList<CachedLogRow>* out, quint64* nextSeq = nullptr,
                               quint64* headSeq = nullptr);
+    // Decode a LogPage into typed entries including the session-payload (AgentEvent when the arm is
+    // Event). This is the transcript-rendering path (CHA-2): the turn engine appends TextDeltas and
+    // ends on TurnFinished. nextSeq/headSeq advance the subscribe cursor.
+    static bool decodeLogPageEntries(const QByteArray& responseCbor, QList<DecodedLogEntry>* out,
+                                     quint64* nextSeq = nullptr, quint64* headSeq = nullptr);
+    // Decode a Drained response (Poll) into the outbound agent events (Event arms only; host
+    // requests are skipped here). Used by the harness/diagnostic poll path.
+    static bool decodeDrained(const QByteArray& responseCbor, QList<DecodedAgentEvent>* out);
 
     // Decode a Credentials response into redacted entries.
     static bool decodeCredentials(const QByteArray& responseCbor,

@@ -11,6 +11,7 @@
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_connection_service.h"
 #include "daemon/daemon_model_catalog.h"
+#include "daemon/daemon_profile_store.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_client.h"
 #include "daemon/repositories.h"
@@ -67,10 +68,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.daemonConfig->value(QStringLiteral("workspace/root")).toString(), QString(), owner);
     graph.memory = new memory::MockMemoryService(owner);
     graph.nav = new nav::NavController(owner);
-    // firstRun + accounts + modelCatalog are constructed per-mode below (after the repositories the
-    // daemon-backed services need); firstRun binds the resulting modelCatalog for inference
-    // readiness.
-    graph.profiles = new profiles::MockProfileStore(owner);
+    // firstRun + accounts + modelCatalog + profiles are constructed per-mode below (after the
+    // repositories the daemon-backed services need); firstRun binds the resulting modelCatalog for
+    // inference readiness.
     // The unified mock DaemonNet (the single source the fleet/roster mocks now project from, plus
     // the future lenses + patch-bay); construct it before the surfaces that derive from it.
     graph.daemonNet = new daemonnet::MockDaemonNet(owner);
@@ -115,6 +115,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.accounts = new accounts::DaemonAccountsService(graph.credentialRepository,
                                                              graph.profileRepository, owner);
         graph.modelCatalog = new models::DaemonModelCatalog(graph.models, owner);
+        graph.profiles = new profiles::DaemonProfileStore(graph.profileRepository, owner);
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end.
         QObject::connect(
@@ -145,6 +146,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.store = new persistence::InMemorySessionStore(graph.daemonNet, owner);
         graph.modelCatalog = new models::MockModelCatalog(owner);
         graph.accounts = new accounts::MockAccountsService(owner);
+        graph.profiles = new profiles::MockProfileStore(owner);
     }
     // Built last so it binds the resolved modelCatalog (daemon-backed or mock) for the inference
     // readiness gate (CON-7).

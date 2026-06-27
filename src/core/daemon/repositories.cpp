@@ -312,21 +312,56 @@ void ProfileRepository::refreshProfiles() {
                           QLatin1String(kProfilesCorrelation));
 }
 
+void ProfileRepository::selectProfile(const QString& id) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProfileSelectRequest(id),
+                          QLatin1String(kSelectCorrelation));
+}
+
+void ProfileRepository::deleteProfile(const QString& id) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProfileDeleteRequest(id),
+                          QLatin1String(kDeleteCorrelation));
+}
+
 void ProfileRepository::handleResponse(const QString& correlationId,
                                        const QByteArray& responseCbor) {
-    if (correlationId != QLatin1String(kProfilesCorrelation)) {
+    if (correlationId == QLatin1String(kProfilesCorrelation)) {
+        if (!NodeApiCodec::decodeProfiles(responseCbor, &m_profiles)) {
+            emit refreshFailed(QStringLiteral("Failed to decode Profiles response"));
+            return;
+        }
+        emit profilesRefreshed();
         return;
     }
-    if (!NodeApiCodec::decodeProfiles(responseCbor, &m_profiles)) {
-        emit refreshFailed(QStringLiteral("Failed to decode Profiles response"));
+    if (correlationId == QLatin1String(kSelectCorrelation) ||
+        correlationId == QLatin1String(kDeleteCorrelation)) {
+        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
+            refreshProfiles(); // reflect the new active/default + membership
+            return;
+        }
+        DecodedApiError err;
+        if (NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(QStringLiteral("Profile operation failed"));
+        }
         return;
     }
-    emit profilesRefreshed();
 }
 
 void ProfileRepository::handleFailure(const QString& correlationId, const QString& message) {
     if (correlationId == QLatin1String(kProfilesCorrelation)) {
         emit refreshFailed(message);
+    } else if (correlationId == QLatin1String(kSelectCorrelation) ||
+               correlationId == QLatin1String(kDeleteCorrelation)) {
+        emit operationFailed(message);
     }
 }
 

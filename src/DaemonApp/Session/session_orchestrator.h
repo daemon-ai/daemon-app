@@ -1,9 +1,10 @@
 #pragma once
 
+#include "i_turn_engine.h"
 #include "session_controller.h"
 #include "subagent_model.h"
 #include "todo_list_model.h"
-#include "turn_controller.h"
+#include "turn_engine_factory.h"
 
 #include <QObject>
 #include <QString>
@@ -24,7 +25,12 @@ class SessionOrchestrator : public QObject {
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(SessionController* session READ session WRITE setSession NOTIFY sessionChanged)
-    Q_PROPERTY(TurnController* turn READ turn CONSTANT)
+    Q_PROPERTY(ITurnEngine* turn READ turn NOTIFY turnChanged)
+    // The turn-engine factory (mock simulator vs daemon engine). Front ends assign it from the app
+    // graph - QML via the `TurnEngines` context property; the TUI passes it in. Until then the
+    // default mock simulator is used, so unit/offscreen coverage works with no wiring.
+    Q_PROPERTY(
+        ITurnEngineFactory* turnEngines READ turnEngines WRITE setTurnEngines NOTIFY turnChanged)
     Q_PROPERTY(TodoListModel* todos READ todos CONSTANT)
     Q_PROPERTY(SubagentModel* subagents READ subagents CONSTANT)
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
@@ -35,7 +41,9 @@ public:
     [[nodiscard]] SessionController* session() const { return m_session; }
     void setSession(SessionController* session);
 
-    [[nodiscard]] TurnController* turn() const { return m_turn; }
+    [[nodiscard]] ITurnEngine* turn() const { return m_turn; }
+    [[nodiscard]] ITurnEngineFactory* turnEngines() const { return m_turnEngines; }
+    void setTurnEngines(ITurnEngineFactory* factory);
     [[nodiscard]] TodoListModel* todos() const { return m_todos; }
     [[nodiscard]] SubagentModel* subagents() const { return m_subagents; }
     [[nodiscard]] bool busy() const;
@@ -61,6 +69,7 @@ public:
 
 signals:
     void sessionChanged();
+    void turnChanged();
     void busyChanged();
     // A non-shared slash command the front end must perform (e.g. open settings,
     // toggle distraction-free).
@@ -76,9 +85,16 @@ signals:
 
 private:
     void populateSimulatorTodos();
+    // (Re)connect the orchestrator's internal handlers (busy, subagent rows, todo clear) to the
+    // current engine. Called on construction and whenever the engine is swapped via the factory.
+    void wireTurn();
+    // Ensure the bound session has an id before a turn, minting a client id when the daemon owns
+    // creation (CachedSessionStore::newSession returns empty), then bind it to the engine.
+    void ensureSessionBound();
 
     SessionController* m_session = nullptr;
-    TurnController* m_turn = nullptr;
+    ITurnEngine* m_turn = nullptr;
+    ITurnEngineFactory* m_turnEngines = nullptr;
     TodoListModel* m_todos = nullptr;
     SubagentModel* m_subagents = nullptr;
     // Clears simulator todos a short beat after the turn settles (replaces the QML

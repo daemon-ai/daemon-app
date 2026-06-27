@@ -32,6 +32,7 @@
 #include "transcript_exporter.h"
 #include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
+#include "turn_engine_factory.h"
 
 #include <core/formula.h>
 #include <latex.h>
@@ -44,6 +45,7 @@
 #include <QQuickWindow>
 #include <QString>
 #include <QTimer>
+#include <QUuid>
 
 Application::Application(QObject* parent)
     : QObject(parent), m_services(daemonapp::daemon::createAppServiceGraph(
@@ -54,6 +56,16 @@ Application::Application(QObject* parent)
     // gateway indicator (the single surface for connection state).
     connect(m_services.connection, &connection::IConnectionService::stateChanged, this,
             [this] { m_status->setGatewayState(m_services.connection->state()); });
+
+    // Turn engine: a real Submit + Subscribe engine when the connection is daemon-backed, else the
+    // mock simulator. Exposed to QML as `TurnEngines`; each TranscriptPage assigns it onto its
+    // SessionOrchestrator (mirroring how the other seams are gated by ServiceMode).
+    if (qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection) !=
+        nullptr) {
+        m_turnEngines = new DaemonTurnEngineFactory(m_services.nodeApi, this);
+    } else {
+        m_turnEngines = new MockTurnEngineFactory(this);
+    }
 
     // MicroTeX loads its fonts/XML resources once; the path is baked in at build
     // time (MICROTEX_RES_DIR). Done here so the "math" image provider can parse
@@ -164,6 +176,8 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
 
     // Notifier seam: QML binds the active turn's awaitingInput signal to
     // App.notifyGate(...) to raise an OS notification when the window is hidden.
+    engine.rootContext()->setContextProperty(QStringLiteral("TurnEngines"), m_turnEngines);
+
     engine.rootContext()->setContextProperty(QStringLiteral("App"), this);
 
     // The BlockEditor renderer resolves image://imgcache/<url> through the shared
@@ -211,6 +225,36 @@ void Application::settle(int ms) const {
     QEventLoop loop;
     QTimer::singleShot(ms, &loop, &QEventLoop::quit);
     loop.exec();
+}
+
+QString Application::runHeadlessChat(const QString& prompt, int timeoutMs, const QString& profile) {
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return {};
+    }
+    settle(600); // let the on-ready refreshes drain off the single-in-flight queue first
+
+    auto* engine = new DaemonTurnEngine(m_services.nodeApi, this);
+    engine->setSessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
+    engine->setProfile(profile); // PRO-5: bind the turn to the selected profile (empty = active)
+
+    QString answer;
+    QEventLoop loop;
+    connect(engine, &ITurnEngine::eventsEmitted, this, [&answer](const QVariantList& events) {
+        for (const QVariant& item : events) {
+            const QVariantMap map = item.toMap();
+            if (map.value(QStringLiteral("type")).toString() == QStringLiteral("text")) {
+                answer += map.value(QStringLiteral("text")).toString();
+            }
+        }
+    });
+    connect(engine, &ITurnEngine::turnFinished, &loop, &QEventLoop::quit);
+    QTimer::singleShot(timeoutMs, &loop, &QEventLoop::quit);
+    engine->start(prompt);
+    loop.exec();
+    engine->cancel();
+    engine->deleteLater();
+    return answer;
 }
 
 bool Application::runHeadlessOnboarding(const QString& provider, const QString& key,

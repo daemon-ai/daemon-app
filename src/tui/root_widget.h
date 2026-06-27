@@ -136,6 +136,10 @@ public:
     [[nodiscard]] bool runHeadlessOnboarding(const QString& provider, const QString& key,
                                              int timeoutMs) const;
 
+    // Headless E2E hook (CHA-1 / CHA-2): connect, drive one real turn through a DaemonTurnEngine
+    // and return the assistant text accumulated from the AgentEvent stream.
+    [[nodiscard]] QString runHeadlessChat(const QString& prompt, int timeoutMs) const;
+
     // Mouse entry point (connected to MouseTerminal::mouseInput). Hit-tests the
     // panes by terminal coordinate and routes a primary-button press to focus +
     // select/open, or a wheel event to scroll the pane under the cursor. No-op for
