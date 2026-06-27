@@ -4,6 +4,7 @@
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
 
+#include <QHash>
 #include <QList>
 #include <QObject>
 #include <QString>
@@ -74,17 +75,30 @@ public:
     // the first listed profile when none is flagged active. Onboarding stores credentials under it.
     [[nodiscard]] QString activeProfileId() const;
 
+    // The full spec for `id` if a ProfileGet has loaded it (the editor's hydration source).
+    [[nodiscard]] bool cachedSpec(const QString& id, DecodedProfileSpec* out) const;
+
     // Issue a ProfileList; on success profilesRefreshed() fires with profiles() populated.
     void refreshProfiles();
     // Switch the node's active profile (ProfileSelect); on Ok the list is re-fetched (PRO-5).
     void selectProfile(const QString& id);
     // Delete a profile (ProfileDelete); on Ok the list is re-fetched (PRO-4).
     void deleteProfile(const QString& id);
+    // Create a profile from a full spec (ProfileCreate -> ProfileId); on success re-list (PRO-2).
+    void createProfile(const DecodedProfileSpec& spec);
+    // Replace a profile's spec in place (ProfileUpdate -> Ok); on success re-list + re-get (PRO-3).
+    void updateProfile(const DecodedProfileSpec& spec);
+    // Clone `source` into `newId` (ProfileClone -> ProfileId); on success re-list (PRO-2 clone).
+    void cloneProfile(const QString& source, const QString& newId);
+    // Fetch a profile's full spec (ProfileGet); on success caches it + fires profileSpecLoaded.
+    void getProfile(const QString& id);
 
 signals:
     void profilesRefreshed();
     void refreshFailed(const QString& message);
     void operationFailed(const QString& message);
+    // A ProfileGet completed and cachedSpec(id) is now populated.
+    void profileSpecLoaded(const QString& id);
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
@@ -93,8 +107,13 @@ private:
     static constexpr auto kProfilesCorrelation = "repo/profile-list";
     static constexpr auto kSelectCorrelation = "repo/profile-select";
     static constexpr auto kDeleteCorrelation = "repo/profile-delete";
+    static constexpr auto kCreateCorrelation = "repo/profile-create";
+    static constexpr auto kUpdateCorrelation = "repo/profile-update";
+    static constexpr auto kCloneCorrelation = "repo/profile-clone";
+    static constexpr auto kGetPrefix = "repo/profile-get/";
 
     QList<DecodedProfileInfo> m_profiles;
+    QHash<QString, DecodedProfileSpec> m_specs;
 };
 
 // Onboarding credential slice (CON-4): a `CredentialList` keeps a redacted view in memory (no

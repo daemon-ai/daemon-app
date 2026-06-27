@@ -188,6 +188,21 @@ QString MockProfileStore::createProfile(const QString& name) {
     return id;
 }
 
+QString MockProfileStore::cloneProfile(const QString& source, const QString& newId) {
+    const int row = m_profiles->indexOfId(source);
+    if (row < 0 || newId.isEmpty() || m_profiles->indexOfId(newId) >= 0) {
+        return {};
+    }
+    QVariantMap clone = m_profiles->at(row); // a copy, not a live link
+    clone[QStringLiteral("id")] = newId;
+    clone[QStringLiteral("name")] = newId;
+    clone[QStringLiteral("isDefault")] = false;
+    m_profiles->upsert(clone);
+    save();
+    emit changed();
+    return newId;
+}
+
 void MockProfileStore::updateProfile(const QString& id, const QVariantMap& fields) {
     const int row = m_profiles->indexOfId(id);
     if (row < 0) {

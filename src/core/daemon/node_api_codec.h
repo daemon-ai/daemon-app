@@ -57,6 +57,45 @@ struct DecodedProfileInfo {
     bool isActive = false;
 };
 
+// A transport-instance account bound to a profile (names only, never secrets).
+struct DecodedBoundAccount {
+    QString transportInstance;
+    QString credentialRef;
+};
+
+// The full ProfileSpec (concrete wire profile-spec). Carries every field so a ProfileGet ->
+// edit -> ProfileUpdate round-trip preserves the fields the editor does not touch. Nullable
+// fields use a `has*` flag (Option::None on the wire); enum-ish fields are wire strings.
+struct DecodedProfileSpec {
+    QString id;
+    QString provider = QStringLiteral("genai"); // "mock"|"genai"|"llama_cpp"|"mistral_rs"
+    QString model;
+    bool hasBaseUrl = false;
+    QString baseUrl;
+    QString systemPrompt;
+    bool hasToolAllowlist = false; // None = full node toolset; Some(list) = allowlist
+    QStringList toolAllowlist;
+    bool hasBudgetTokens = false;
+    quint32 budgetTokens = 0;
+    bool hasBudgetWallMs = false;
+    quint32 budgetWallMs = 0;
+    bool hasModelRetryAttempts = false;
+    quint32 modelRetryAttempts = 0;
+    bool hasContextBudgetTokens = false;
+    quint32 contextBudgetTokens = 0;
+    bool hasMaxIterations = false;
+    quint32 maxIterations = 0;
+    bool hasToolResultBudget = false;
+    quint32 toolResultBudget = 0;
+    QString contextEngine = QStringLiteral("lcm");        // "lcm"|"budgeted"
+    QString memoryProvider = QStringLiteral("mnemosyne"); // "mnemosyne"|"file"|"none"
+    bool hasCredentialRef = false;
+    QString credentialRef;
+    bool hasFallbackCredentialRef = false;
+    QString fallbackCredentialRef;
+    QList<DecodedBoundAccount> boundAccounts;
+};
+
 // The agent-event arms a turn produces (daemon-protocol AgentEvent). Carried inside a
 // session-payload (Subscribe -> LogPage) or an outbound (Poll -> Drained). The turn engine applies
 // these to the transcript: TextDelta grows the assistant message; TurnFinished ends the turn.
@@ -167,6 +206,15 @@ public:
     [[nodiscard]] static QByteArray encodeProfileSelectRequest(const QString& id);
     // Delete a profile (ProfileDelete -> Ok). The default profile is protected node-side (PRO-4).
     [[nodiscard]] static QByteArray encodeProfileDeleteRequest(const QString& id);
+    // Create a new profile from a full spec (ProfileCreate -> ProfileId). PRO-2.
+    [[nodiscard]] static QByteArray encodeProfileCreateRequest(const DecodedProfileSpec& spec);
+    // Replace a profile's spec in place (ProfileUpdate -> Ok). The sole durable editor. PRO-3.
+    [[nodiscard]] static QByteArray encodeProfileUpdateRequest(const DecodedProfileSpec& spec);
+    // Clone an existing profile under a new id (ProfileClone -> ProfileId). PRO-2 clone path.
+    [[nodiscard]] static QByteArray encodeProfileCloneRequest(const QString& source,
+                                                              const QString& newId);
+    // Fetch a profile's full spec (ProfileGet -> Profile(opt)). PRO-3 editor hydration.
+    [[nodiscard]] static QByteArray encodeProfileGetRequest(const QString& id);
 
     // Response inspection / decode.
     [[nodiscard]] static ApiResponseKind responseKind(const QByteArray& responseCbor);
@@ -207,6 +255,11 @@ public:
     static bool decodeError(const QByteArray& responseCbor, DecodedApiError* out);
     // Decode a Profiles response into profile listing entries.
     static bool decodeProfiles(const QByteArray& responseCbor, QList<DecodedProfileInfo>* out);
+    // Decode a Profile response (ProfileGet) into a full spec. Sets *found=false on the null arm
+    // (unknown id). PRO-3.
+    static bool decodeProfile(const QByteArray& responseCbor, DecodedProfileSpec* out, bool* found);
+    // Decode a ProfileId response (ProfileCreate/Clone) into the new profile id.
+    static bool decodeProfileId(const QByteArray& responseCbor, QString* outId);
 };
 
 } // namespace daemonapp::daemon

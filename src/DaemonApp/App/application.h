@@ -118,6 +118,12 @@ public:
     [[nodiscard]] QString runHeadlessChat(const QString& prompt, int timeoutMs,
                                           const QString& profile = QString());
 
+    // Headless E2E hook (PRO-2/3): connect, then exercise the profile store - create `createId`
+    // (ProfileCreate), then optionally update its model/prompt (ProfileUpdate), pumping the event
+    // loop so the wire ops round-trip. Returns true iff the connection reached ready.
+    [[nodiscard]] bool runHeadlessProfile(const QString& createId, const QString& model,
+                                          const QString& prompt, int timeoutMs);
+
 protected:
     // Close-to-tray: when a tray is installed, intercept the root window's close
     // (X) event and hide instead of quitting.

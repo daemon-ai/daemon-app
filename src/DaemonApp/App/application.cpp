@@ -227,6 +227,34 @@ void Application::settle(int ms) const {
     loop.exec();
 }
 
+bool Application::runHeadlessProfile(const QString& createId, const QString& model,
+                                     const QString& prompt, int timeoutMs) {
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return false;
+    }
+    settle(800); // let the on-ready ProfileList (+ per-profile ProfileGet) drain
+    if (m_services.profiles == nullptr) {
+        return true;
+    }
+    if (!createId.isEmpty()) {
+        m_services.profiles->createProfile(createId);
+        settle(800); // ProfileCreate -> re-list -> ProfileGet caches the new spec
+        if (!model.isEmpty() || !prompt.isEmpty()) {
+            QVariantMap fields;
+            if (!model.isEmpty()) {
+                fields.insert(QStringLiteral("model"), model);
+            }
+            if (!prompt.isEmpty()) {
+                fields.insert(QStringLiteral("systemPrompt"), prompt);
+            }
+            m_services.profiles->updateProfile(createId, fields);
+            settle(800); // flush ProfileUpdate (+ its re-list/re-get)
+        }
+    }
+    return true;
+}
+
 QString Application::runHeadlessChat(const QString& prompt, int timeoutMs, const QString& profile) {
     driveFirstRunConnect();
     if (!awaitConnectionReady(timeoutMs)) {

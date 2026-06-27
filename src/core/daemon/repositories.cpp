@@ -330,6 +330,53 @@ void ProfileRepository::deleteProfile(const QString& id) {
                           QLatin1String(kDeleteCorrelation));
 }
 
+bool ProfileRepository::cachedSpec(const QString& id, DecodedProfileSpec* out) const {
+    const auto it = m_specs.constFind(id);
+    if (it == m_specs.constEnd()) {
+        return false;
+    }
+    if (out != nullptr) {
+        *out = it.value();
+    }
+    return true;
+}
+
+void ProfileRepository::createProfile(const DecodedProfileSpec& spec) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProfileCreateRequest(spec),
+                          QLatin1String(kCreateCorrelation));
+}
+
+void ProfileRepository::updateProfile(const DecodedProfileSpec& spec) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProfileUpdateRequest(spec),
+                          QLatin1String(kUpdateCorrelation));
+}
+
+void ProfileRepository::cloneProfile(const QString& source, const QString& newId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProfileCloneRequest(source, newId),
+                          QLatin1String(kCloneCorrelation));
+}
+
+void ProfileRepository::getProfile(const QString& id) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProfileGetRequest(id),
+                          QLatin1String(kGetPrefix) + id);
+}
+
 void ProfileRepository::handleResponse(const QString& correlationId,
                                        const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kProfilesCorrelation)) {
@@ -340,10 +387,25 @@ void ProfileRepository::handleResponse(const QString& correlationId,
         emit profilesRefreshed();
         return;
     }
+    if (correlationId.startsWith(QLatin1String(kGetPrefix))) {
+        const QString id = correlationId.mid(int(qstrlen(kGetPrefix)));
+        DecodedProfileSpec spec;
+        bool found = false;
+        if (NodeApiCodec::decodeProfile(responseCbor, &spec, &found) && found) {
+            m_specs.insert(id, spec);
+            emit profileSpecLoaded(id);
+        }
+        return;
+    }
     if (correlationId == QLatin1String(kSelectCorrelation) ||
-        correlationId == QLatin1String(kDeleteCorrelation)) {
-        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
-            refreshProfiles(); // reflect the new active/default + membership
+        correlationId == QLatin1String(kDeleteCorrelation) ||
+        correlationId == QLatin1String(kUpdateCorrelation) ||
+        correlationId == QLatin1String(kCreateCorrelation) ||
+        correlationId == QLatin1String(kCloneCorrelation)) {
+        // Create/Clone answer with ProfileId (ApiResponseKind::Unknown here); Select/Delete/Update
+        // answer with Ok. Any non-error response means the membership/active changed - re-list.
+        if (NodeApiCodec::responseKind(responseCbor) != ApiResponseKind::Error) {
+            refreshProfiles();
             return;
         }
         DecodedApiError err;
@@ -360,7 +422,11 @@ void ProfileRepository::handleFailure(const QString& correlationId, const QStrin
     if (correlationId == QLatin1String(kProfilesCorrelation)) {
         emit refreshFailed(message);
     } else if (correlationId == QLatin1String(kSelectCorrelation) ||
-               correlationId == QLatin1String(kDeleteCorrelation)) {
+               correlationId == QLatin1String(kDeleteCorrelation) ||
+               correlationId == QLatin1String(kUpdateCorrelation) ||
+               correlationId == QLatin1String(kCreateCorrelation) ||
+               correlationId == QLatin1String(kCloneCorrelation) ||
+               correlationId.startsWith(QLatin1String(kGetPrefix))) {
         emit operationFailed(message);
     }
 }

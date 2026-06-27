@@ -522,6 +522,126 @@ struct request_profile_get {
 	struct zcbor_string ProfileGet_id;
 };
 
+struct budget {
+	union {
+		uint32_t budget_tokens_uint;
+	};
+	enum {
+		budget_tokens_uint_c,
+		budget_tokens_null_m_c,
+	} budget_tokens_choice;
+	union {
+		uint32_t budget_wall_ms_uint;
+	};
+	enum {
+		budget_wall_ms_uint_c,
+		budget_wall_ms_null_m_c,
+	} budget_wall_ms_choice;
+};
+
+struct engine_tunables {
+	union {
+		uint32_t engine_tunables_model_retry_attempts_uint;
+	};
+	enum {
+		engine_tunables_model_retry_attempts_uint_c,
+		engine_tunables_model_retry_attempts_null_m_c,
+	} engine_tunables_model_retry_attempts_choice;
+	union {
+		uint32_t engine_tunables_context_budget_tokens_uint;
+	};
+	enum {
+		engine_tunables_context_budget_tokens_uint_c,
+		engine_tunables_context_budget_tokens_null_m_c,
+	} engine_tunables_context_budget_tokens_choice;
+	union {
+		uint32_t engine_tunables_max_iterations_uint;
+	};
+	enum {
+		engine_tunables_max_iterations_uint_c,
+		engine_tunables_max_iterations_null_m_c,
+	} engine_tunables_max_iterations_choice;
+	union {
+		uint32_t engine_tunables_tool_result_budget_uint;
+	};
+	enum {
+		engine_tunables_tool_result_budget_uint_c,
+		engine_tunables_tool_result_budget_null_m_c,
+	} engine_tunables_tool_result_budget_choice;
+};
+
+struct context_engine_sel_r {
+	enum {
+		context_engine_sel_lcm_tstr_c,
+		context_engine_sel_budgeted_tstr_c,
+	} context_engine_sel_choice;
+};
+
+struct memory_provider_sel_r {
+	enum {
+		memory_provider_sel_mnemosyne_tstr_c,
+		memory_provider_sel_file_tstr_c,
+		memory_provider_sel_none_tstr_c,
+	} memory_provider_sel_choice;
+};
+
+struct bound_account {
+	struct zcbor_string bound_account_transport_instance;
+	struct zcbor_string bound_account_credential_ref;
+};
+
+struct profile_spec {
+	struct zcbor_string profile_spec_id;
+	struct provider_selector_r profile_spec_provider;
+	struct zcbor_string profile_spec_model;
+	union {
+		struct zcbor_string profile_spec_base_url_tstr;
+	};
+	enum {
+		profile_spec_base_url_tstr_c,
+		profile_spec_base_url_null_m_c,
+	} profile_spec_base_url_choice;
+	struct zcbor_string profile_spec_system_prompt;
+	union {
+		struct {
+			struct zcbor_string tool_allowlist_tstr_l_tstr[16];
+			size_t tool_allowlist_tstr_l_tstr_count;
+		};
+	};
+	enum {
+		tool_allowlist_tstr_l_c,
+		profile_spec_tool_allowlist_null_m_c,
+	} profile_spec_tool_allowlist_choice;
+	struct budget profile_spec_budget;
+	struct engine_tunables profile_spec_tunables;
+	struct context_engine_sel_r profile_spec_context_engine;
+	struct memory_provider_sel_r profile_spec_memory_provider;
+	union {
+		struct zcbor_string profile_spec_credential_ref_tstr;
+	};
+	enum {
+		profile_spec_credential_ref_tstr_c,
+		profile_spec_credential_ref_null_m_c,
+	} profile_spec_credential_ref_choice;
+	union {
+		struct zcbor_string profile_spec_fallback_credential_ref_tstr;
+	};
+	enum {
+		profile_spec_fallback_credential_ref_tstr_c,
+		profile_spec_fallback_credential_ref_null_m_c,
+	} profile_spec_fallback_credential_ref_choice;
+	struct bound_account profile_spec_bound_accounts_bound_account_m[16];
+	size_t profile_spec_bound_accounts_bound_account_m_count;
+};
+
+struct request_profile_create {
+	struct profile_spec ProfileCreate_spec;
+};
+
+struct request_profile_update {
+	struct profile_spec ProfileUpdate_spec;
+};
+
 struct request_profile_delete {
 	struct zcbor_string ProfileDelete_id;
 };
@@ -579,6 +699,7 @@ struct distribution_source_r {
 
 struct distribution {
 	uint32_t distribution_wire_version;
+	struct profile_spec distribution_profile;
 	struct skill_bundle distribution_skills_skill_bundle_m[16];
 	size_t distribution_skills_skill_bundle_m_count;
 	struct distribution_head_seq_r distribution_head_seq;
@@ -2256,6 +2377,8 @@ struct api_request_r {
 		struct request_approvals_pending api_request_request_approvals_pending_m;
 		struct request_approval_decide api_request_request_approval_decide_m;
 		struct request_profile_get api_request_request_profile_get_m;
+		struct request_profile_create api_request_request_profile_create_m;
+		struct request_profile_update api_request_request_profile_update_m;
 		struct request_profile_delete api_request_request_profile_delete_m;
 		struct request_profile_select api_request_request_profile_select_m;
 		struct request_profile_clone api_request_request_profile_clone_m;
@@ -2804,23 +2927,6 @@ struct host_request_kind_choice {
 	struct zcbor_string Choice_prompt;
 	struct zcbor_string Choice_options_tstr[16];
 	size_t Choice_options_tstr_count;
-};
-
-struct budget {
-	union {
-		uint32_t budget_tokens_uint;
-	};
-	enum {
-		budget_tokens_uint_c,
-		budget_tokens_null_m_c,
-	} budget_tokens_choice;
-	union {
-		uint32_t budget_wall_ms_uint;
-	};
-	enum {
-		budget_wall_ms_uint_c,
-		budget_wall_ms_null_m_c,
-	} budget_wall_ms_choice;
 };
 
 struct host_request_kind_delegate {
@@ -3798,11 +3904,6 @@ struct response_model_inspect {
 	struct gguf_info response_model_inspect_ModelInspect;
 };
 
-struct bound_account {
-	struct zcbor_string bound_account_transport_instance;
-	struct zcbor_string bound_account_credential_ref;
-};
-
 struct profile_info {
 	struct zcbor_string profile_info_id;
 	struct provider_selector_r profile_info_provider;
@@ -3815,6 +3916,16 @@ struct profile_info {
 struct response_profiles {
 	struct profile_info response_profiles_Profiles_profile_info_m[16];
 	size_t response_profiles_Profiles_profile_info_m_count;
+};
+
+struct response_profile {
+	union {
+		struct profile_spec response_profile_Profile_profile_spec_m;
+	};
+	enum {
+		response_profile_Profile_profile_spec_m_c,
+		response_profile_Profile_null_m_c,
+	} response_profile_Profile_choice;
 };
 
 struct credential_info {
@@ -4941,6 +5052,7 @@ struct api_response_r {
 		struct response_model_quantizes api_response_response_model_quantizes_m;
 		struct response_model_inspect api_response_response_model_inspect_m;
 		struct response_profiles api_response_response_profiles_m;
+		struct response_profile api_response_response_profile_m;
 		struct response_credentials api_response_response_credentials_m;
 		struct response_models api_response_response_models_m;
 		struct response_model_current api_response_response_model_current_m;

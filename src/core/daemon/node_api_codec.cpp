@@ -94,6 +94,90 @@ void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out) {
     out->local = m.model_descriptor_local;
 }
 
+QString contextEngineName(int choice) {
+    return choice == context_engine_sel_r::context_engine_sel_budgeted_tstr_c
+               ? QStringLiteral("budgeted")
+               : QStringLiteral("lcm");
+}
+
+QString memoryProviderName(int choice) {
+    switch (choice) {
+    case memory_provider_sel_r::memory_provider_sel_file_tstr_c:
+        return QStringLiteral("file");
+    case memory_provider_sel_r::memory_provider_sel_none_tstr_c:
+        return QStringLiteral("none");
+    default:
+        return QStringLiteral("mnemosyne");
+    }
+}
+
+// Decode the concrete generated profile_spec into the typed mirror (so a ProfileGet -> edit ->
+// ProfileUpdate round-trip preserves untouched fields).
+DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps) {
+    DecodedProfileSpec out;
+    out.id = fromZcbor(ps.profile_spec_id);
+    out.provider = providerName(ps.profile_spec_provider.provider_selector_choice);
+    out.model = fromZcbor(ps.profile_spec_model);
+    if (ps.profile_spec_base_url_choice == profile_spec::profile_spec_base_url_tstr_c) {
+        out.hasBaseUrl = true;
+        out.baseUrl = fromZcbor(ps.profile_spec_base_url_tstr);
+    }
+    out.systemPrompt = fromZcbor(ps.profile_spec_system_prompt);
+    if (ps.profile_spec_tool_allowlist_choice == profile_spec::tool_allowlist_tstr_l_c) {
+        out.hasToolAllowlist = true;
+        for (size_t i = 0; i < ps.tool_allowlist_tstr_l_tstr_count; ++i) {
+            out.toolAllowlist << fromZcbor(ps.tool_allowlist_tstr_l_tstr[i]);
+        }
+    }
+    if (ps.profile_spec_budget.budget_tokens_choice == budget::budget_tokens_uint_c) {
+        out.hasBudgetTokens = true;
+        out.budgetTokens = ps.profile_spec_budget.budget_tokens_uint;
+    }
+    if (ps.profile_spec_budget.budget_wall_ms_choice == budget::budget_wall_ms_uint_c) {
+        out.hasBudgetWallMs = true;
+        out.budgetWallMs = ps.profile_spec_budget.budget_wall_ms_uint;
+    }
+    const engine_tunables& tn = ps.profile_spec_tunables;
+    if (tn.engine_tunables_model_retry_attempts_choice ==
+        engine_tunables::engine_tunables_model_retry_attempts_uint_c) {
+        out.hasModelRetryAttempts = true;
+        out.modelRetryAttempts = tn.engine_tunables_model_retry_attempts_uint;
+    }
+    if (tn.engine_tunables_context_budget_tokens_choice ==
+        engine_tunables::engine_tunables_context_budget_tokens_uint_c) {
+        out.hasContextBudgetTokens = true;
+        out.contextBudgetTokens = tn.engine_tunables_context_budget_tokens_uint;
+    }
+    if (tn.engine_tunables_max_iterations_choice ==
+        engine_tunables::engine_tunables_max_iterations_uint_c) {
+        out.hasMaxIterations = true;
+        out.maxIterations = tn.engine_tunables_max_iterations_uint;
+    }
+    if (tn.engine_tunables_tool_result_budget_choice ==
+        engine_tunables::engine_tunables_tool_result_budget_uint_c) {
+        out.hasToolResultBudget = true;
+        out.toolResultBudget = tn.engine_tunables_tool_result_budget_uint;
+    }
+    out.contextEngine = contextEngineName(ps.profile_spec_context_engine.context_engine_sel_choice);
+    out.memoryProvider =
+        memoryProviderName(ps.profile_spec_memory_provider.memory_provider_sel_choice);
+    if (ps.profile_spec_credential_ref_choice == profile_spec::profile_spec_credential_ref_tstr_c) {
+        out.hasCredentialRef = true;
+        out.credentialRef = fromZcbor(ps.profile_spec_credential_ref_tstr);
+    }
+    if (ps.profile_spec_fallback_credential_ref_choice ==
+        profile_spec::profile_spec_fallback_credential_ref_tstr_c) {
+        out.hasFallbackCredentialRef = true;
+        out.fallbackCredentialRef = fromZcbor(ps.profile_spec_fallback_credential_ref_tstr);
+    }
+    for (size_t i = 0; i < ps.profile_spec_bound_accounts_bound_account_m_count; ++i) {
+        const bound_account& ba = ps.profile_spec_bound_accounts_bound_account_m[i];
+        out.boundAccounts.append(DecodedBoundAccount{fromZcbor(ba.bound_account_transport_instance),
+                                                     fromZcbor(ba.bound_account_credential_ref)});
+    }
+    return out;
+}
+
 QString endReasonName(int choice) {
     switch (choice) {
     case end_reason_r::end_reason_Completed_tstr_c:
@@ -188,6 +272,145 @@ bool encodeRequest(const api_request_r& request, QByteArray* out) {
             return false;
         }
     }
+}
+
+// Encode a ProfileCreate (update=false) or ProfileUpdate (update=true) carrying a full
+// profile_spec. All string buffers are held locally for the duration of the encode (zcbor
+// references them).
+QByteArray encodeProfileMutation(bool update, const DecodedProfileSpec& s) {
+    const auto setZ = [](zcbor_string& z, const QByteArray& b) {
+        z.value = reinterpret_cast<const uint8_t*>(b.constData());
+        z.len = static_cast<size_t>(b.size());
+    };
+    const QByteArray id = s.id.toUtf8();
+    const QByteArray model = s.model.toUtf8();
+    const QByteArray prompt = s.systemPrompt.toUtf8();
+    const QByteArray baseUrl = s.baseUrl.toUtf8();
+    const QByteArray credRef = s.credentialRef.toUtf8();
+    const QByteArray fbCredRef = s.fallbackCredentialRef.toUtf8();
+    QList<QByteArray> toolBufs;
+    for (const QString& t : s.toolAllowlist) {
+        toolBufs.append(t.toUtf8());
+    }
+    QList<QByteArray> baTi;
+    QList<QByteArray> baCr;
+    for (const DecodedBoundAccount& b : s.boundAccounts) {
+        baTi.append(b.transportInstance.toUtf8());
+        baCr.append(b.credentialRef.toUtf8());
+    }
+
+    api_request_r request{};
+    request.api_request_choice = update ? api_request_r::api_request_request_profile_update_m_c
+                                        : api_request_r::api_request_request_profile_create_m_c;
+    profile_spec& ps = update ? request.api_request_request_profile_update_m.ProfileUpdate_spec
+                              : request.api_request_request_profile_create_m.ProfileCreate_spec;
+
+    setZ(ps.profile_spec_id, id);
+    ps.profile_spec_provider.provider_selector_choice =
+        s.provider == QStringLiteral("genai") ? provider_selector_r::provider_selector_genai_tstr_c
+        : s.provider == QStringLiteral("llama_cpp")
+            ? provider_selector_r::provider_selector_llama_cpp_tstr_c
+        : s.provider == QStringLiteral("mistral_rs")
+            ? provider_selector_r::provider_selector_mistral_rs_tstr_c
+            : provider_selector_r::provider_selector_mock_tstr_c;
+    setZ(ps.profile_spec_model, model);
+    if (s.hasBaseUrl) {
+        ps.profile_spec_base_url_choice = profile_spec::profile_spec_base_url_tstr_c;
+        setZ(ps.profile_spec_base_url_tstr, baseUrl);
+    } else {
+        ps.profile_spec_base_url_choice = profile_spec::profile_spec_base_url_null_m_c;
+    }
+    setZ(ps.profile_spec_system_prompt, prompt);
+    if (s.hasToolAllowlist) {
+        ps.profile_spec_tool_allowlist_choice = profile_spec::tool_allowlist_tstr_l_c;
+        const size_t n = qMin<size_t>(static_cast<size_t>(toolBufs.size()), 16);
+        ps.tool_allowlist_tstr_l_tstr_count = n;
+        for (size_t i = 0; i < n; ++i) {
+            setZ(ps.tool_allowlist_tstr_l_tstr[i], toolBufs[static_cast<int>(i)]);
+        }
+    } else {
+        ps.profile_spec_tool_allowlist_choice = profile_spec::profile_spec_tool_allowlist_null_m_c;
+    }
+    if (s.hasBudgetTokens) {
+        ps.profile_spec_budget.budget_tokens_choice = budget::budget_tokens_uint_c;
+        ps.profile_spec_budget.budget_tokens_uint = s.budgetTokens;
+    } else {
+        ps.profile_spec_budget.budget_tokens_choice = budget::budget_tokens_null_m_c;
+    }
+    if (s.hasBudgetWallMs) {
+        ps.profile_spec_budget.budget_wall_ms_choice = budget::budget_wall_ms_uint_c;
+        ps.profile_spec_budget.budget_wall_ms_uint = s.budgetWallMs;
+    } else {
+        ps.profile_spec_budget.budget_wall_ms_choice = budget::budget_wall_ms_null_m_c;
+    }
+    engine_tunables& tn = ps.profile_spec_tunables;
+    if (s.hasModelRetryAttempts) {
+        tn.engine_tunables_model_retry_attempts_choice =
+            engine_tunables::engine_tunables_model_retry_attempts_uint_c;
+        tn.engine_tunables_model_retry_attempts_uint = s.modelRetryAttempts;
+    } else {
+        tn.engine_tunables_model_retry_attempts_choice =
+            engine_tunables::engine_tunables_model_retry_attempts_null_m_c;
+    }
+    if (s.hasContextBudgetTokens) {
+        tn.engine_tunables_context_budget_tokens_choice =
+            engine_tunables::engine_tunables_context_budget_tokens_uint_c;
+        tn.engine_tunables_context_budget_tokens_uint = s.contextBudgetTokens;
+    } else {
+        tn.engine_tunables_context_budget_tokens_choice =
+            engine_tunables::engine_tunables_context_budget_tokens_null_m_c;
+    }
+    if (s.hasMaxIterations) {
+        tn.engine_tunables_max_iterations_choice =
+            engine_tunables::engine_tunables_max_iterations_uint_c;
+        tn.engine_tunables_max_iterations_uint = s.maxIterations;
+    } else {
+        tn.engine_tunables_max_iterations_choice =
+            engine_tunables::engine_tunables_max_iterations_null_m_c;
+    }
+    if (s.hasToolResultBudget) {
+        tn.engine_tunables_tool_result_budget_choice =
+            engine_tunables::engine_tunables_tool_result_budget_uint_c;
+        tn.engine_tunables_tool_result_budget_uint = s.toolResultBudget;
+    } else {
+        tn.engine_tunables_tool_result_budget_choice =
+            engine_tunables::engine_tunables_tool_result_budget_null_m_c;
+    }
+    ps.profile_spec_context_engine.context_engine_sel_choice =
+        s.contextEngine == QStringLiteral("budgeted")
+            ? context_engine_sel_r::context_engine_sel_budgeted_tstr_c
+            : context_engine_sel_r::context_engine_sel_lcm_tstr_c;
+    ps.profile_spec_memory_provider.memory_provider_sel_choice =
+        s.memoryProvider == QStringLiteral("file")
+            ? memory_provider_sel_r::memory_provider_sel_file_tstr_c
+        : s.memoryProvider == QStringLiteral("none")
+            ? memory_provider_sel_r::memory_provider_sel_none_tstr_c
+            : memory_provider_sel_r::memory_provider_sel_mnemosyne_tstr_c;
+    if (s.hasCredentialRef) {
+        ps.profile_spec_credential_ref_choice = profile_spec::profile_spec_credential_ref_tstr_c;
+        setZ(ps.profile_spec_credential_ref_tstr, credRef);
+    } else {
+        ps.profile_spec_credential_ref_choice = profile_spec::profile_spec_credential_ref_null_m_c;
+    }
+    if (s.hasFallbackCredentialRef) {
+        ps.profile_spec_fallback_credential_ref_choice =
+            profile_spec::profile_spec_fallback_credential_ref_tstr_c;
+        setZ(ps.profile_spec_fallback_credential_ref_tstr, fbCredRef);
+    } else {
+        ps.profile_spec_fallback_credential_ref_choice =
+            profile_spec::profile_spec_fallback_credential_ref_null_m_c;
+    }
+    const size_t bn = qMin<size_t>(static_cast<size_t>(baTi.size()), 16);
+    ps.profile_spec_bound_accounts_bound_account_m_count = bn;
+    for (size_t i = 0; i < bn; ++i) {
+        setZ(ps.profile_spec_bound_accounts_bound_account_m[i].bound_account_transport_instance,
+             baTi[static_cast<int>(i)]);
+        setZ(ps.profile_spec_bound_accounts_bound_account_m[i].bound_account_credential_ref,
+             baCr[static_cast<int>(i)]);
+    }
+
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
 bool decodeResponse(const QByteArray& responseCbor, api_response_r* out) {
@@ -390,6 +613,39 @@ QByteArray NodeApiCodec::encodeProfileDeleteRequest(const QString& id) {
     request_profile_delete& del = request.api_request_request_profile_delete_m;
     del.ProfileDelete_id.value = reinterpret_cast<const uint8_t*>(idUtf8.constData());
     del.ProfileDelete_id.len = static_cast<size_t>(idUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeProfileCreateRequest(const DecodedProfileSpec& spec) {
+    return encodeProfileMutation(/*update=*/false, spec);
+}
+
+QByteArray NodeApiCodec::encodeProfileUpdateRequest(const DecodedProfileSpec& spec) {
+    return encodeProfileMutation(/*update=*/true, spec);
+}
+
+QByteArray NodeApiCodec::encodeProfileCloneRequest(const QString& source, const QString& newId) {
+    const QByteArray sourceUtf8 = source.toUtf8();
+    const QByteArray newIdUtf8 = newId.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_profile_clone_m_c;
+    request_profile_clone& clone = request.api_request_request_profile_clone_m;
+    clone.ProfileClone_source.value = reinterpret_cast<const uint8_t*>(sourceUtf8.constData());
+    clone.ProfileClone_source.len = static_cast<size_t>(sourceUtf8.size());
+    clone.ProfileClone_new_id.value = reinterpret_cast<const uint8_t*>(newIdUtf8.constData());
+    clone.ProfileClone_new_id.len = static_cast<size_t>(newIdUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeProfileGetRequest(const QString& id) {
+    const QByteArray idUtf8 = id.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_profile_get_m_c;
+    request_profile_get& get = request.api_request_request_profile_get_m;
+    get.ProfileGet_id.value = reinterpret_cast<const uint8_t*>(idUtf8.constData());
+    get.ProfileGet_id.len = static_cast<size_t>(idUtf8.size());
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -748,6 +1004,40 @@ bool NodeApiCodec::decodeProfiles(const QByteArray& responseCbor, QList<DecodedP
         entry.isActive = info.profile_info_is_active;
         out->append(entry);
     }
+    return true;
+}
+
+bool NodeApiCodec::decodeProfile(const QByteArray& responseCbor, DecodedProfileSpec* out,
+                                 bool* found) {
+    if (out == nullptr || found == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_profile_m_c) {
+        return false;
+    }
+    const response_profile& profile = response->api_response_response_profile_m;
+    if (profile.response_profile_Profile_choice ==
+        response_profile::response_profile_Profile_profile_spec_m_c) {
+        *found = true;
+        *out = decodeProfileSpecStruct(profile.response_profile_Profile_profile_spec_m);
+    } else {
+        *found = false;
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeProfileId(const QByteArray& responseCbor, QString* outId) {
+    if (outId == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_profile_id_m_c) {
+        return false;
+    }
+    *outId = fromZcbor(response->api_response_response_profile_id_m.response_profile_id_ProfileId);
     return true;
 }
 

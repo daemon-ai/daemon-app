@@ -36,6 +36,8 @@ public:
     [[nodiscard]] Q_INVOKABLE virtual QVariantList availableTools() const = 0;
 
     Q_INVOKABLE virtual QString createProfile(const QString& name) = 0;
+    // Clone an existing profile under a new id (a copy, not a live link); returns the new id.
+    Q_INVOKABLE virtual QString cloneProfile(const QString& source, const QString& newId) = 0;
     // Patch a profile with the given fields (only present keys are updated).
     Q_INVOKABLE virtual void updateProfile(const QString& id, const QVariantMap& fields) = 0;
     Q_INVOKABLE virtual void remove(const QString& id) = 0;

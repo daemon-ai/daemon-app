@@ -22,6 +22,7 @@ public:
     [[nodiscard]] QVariantList availableTools() const override;
 
     QString createProfile(const QString& name) override;
+    QString cloneProfile(const QString& source, const QString& newId) override;
     void updateProfile(const QString& id, const QVariantMap& fields) override;
     void remove(const QString& id) override;
     void setDefault(const QString& id) override;

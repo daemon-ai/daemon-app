@@ -71,6 +71,17 @@ target_link_libraries(tst_daemon_integration
 add_test(NAME tst_daemon_integration COMMAND tst_daemon_integration)
 set_tests_properties(tst_daemon_integration PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_daemon_profile_store: client-side id-derivation (slug) for ProfileCreate/Clone; encode +
+# daemon acceptance are covered by verify-codec fixtures + the system-tests.
+qt_add_executable(tst_daemon_profile_store tst_daemon_profile_store.cpp)
+target_link_libraries(tst_daemon_profile_store
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+)
+add_test(NAME tst_daemon_profile_store COMMAND tst_daemon_profile_store)
+set_tests_properties(tst_daemon_profile_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_app_service_graph: shared GUI/TUI service construction; mock mode must
 # preserve the existing graph, daemon mode only swaps the connection seam for now.
 qt_add_executable(tst_app_service_graph tst_app_service_graph.cpp)

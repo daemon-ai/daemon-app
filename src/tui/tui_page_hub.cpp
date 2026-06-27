@@ -205,6 +205,10 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
         } else if (text == QStringLiteral("x")) {
             m_deps.profiles->remove(id);
             acted = true;
+        } else if (text == QStringLiteral("n")) {
+            // New profile via clone of the selected one (a copy; full edit stays in the GUI).
+            m_deps.profiles->cloneProfile(id, id + QStringLiteral("-copy"));
+            acted = true;
         }
         break;
     case TabModel::Sessions:

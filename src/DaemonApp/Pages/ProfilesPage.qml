@@ -44,7 +44,7 @@ Item {
                     Layout.fillWidth: true
                     text: qsTr("+ New profile")
                     accentFilled: true
-                    onClicked: root.selectedId = Profiles.createProfile(qsTr("New profile"))
+                    onClicked: createDialog.open()
                 }
 
                 ListView {
@@ -105,6 +105,42 @@ Item {
             Layout.fillHeight: true
             profileId: root.selectedId
             onDeleted: root.selectedId = Profiles.defaultProfileId
+        }
+    }
+
+    // New-profile dialog: a name/id plus an optional clone source (PRO-2). Empty clone source
+    // creates from scratch; a chosen source clones that profile's spec (a copy, not a live link).
+    QQC.Dialog {
+        id: createDialog
+        anchors.centerIn: parent
+        modal: true
+        title: qsTr("New profile")
+        standardButtons: QQC.Dialog.Ok | QQC.Dialog.Cancel
+        onAboutToShow: {
+            nameField.text = "";
+            cloneBox.currentIndex = 0;
+        }
+        onAccepted: {
+            if (nameField.text.length === 0)
+                return;
+            var src = cloneBox.currentIndex > 0 ? Profiles.profileNames()[cloneBox.currentIndex - 1] : "";
+            root.selectedId = src.length > 0 ? Profiles.cloneProfile(src, nameField.text)
+                                             : Profiles.createProfile(nameField.text);
+        }
+
+        ColumnLayout {
+            spacing: 10
+            Kit.TextField {
+                id: nameField
+                Layout.fillWidth: true
+                Layout.preferredWidth: 280
+                placeholderText: qsTr("Profile id (e.g. work)")
+            }
+            Kit.Dropdown {
+                id: cloneBox
+                Layout.fillWidth: true
+                model: [qsTr("Empty profile")].concat(Profiles.profileNames())
+            }
         }
     }
 }

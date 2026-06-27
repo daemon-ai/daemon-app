@@ -273,6 +273,22 @@ int main(int argc, char* argv[]) {
         return ready ? 0 : 2;
     }
 
+    // Headless profile self-check (PRO-2/3): create (+ optionally edit) a profile via the store so
+    // the E2E harness can assert ProfileCreate/Update cross the socket. Gated on
+    // DAEMON_APP_PROFILE_CREATE.
+    const QByteArray profileCreate = qgetenv("DAEMON_APP_PROFILE_CREATE");
+    if (!profileCreate.isEmpty()) {
+        const QByteArray waitMs = qgetenv("DAEMON_APP_WAIT_READY");
+        const int timeoutMs = waitMs.toInt() > 0 ? waitMs.toInt() : 15000;
+        const bool ready = application.runHeadlessProfile(
+            QString::fromUtf8(profileCreate),
+            QString::fromUtf8(qgetenv("DAEMON_APP_PROFILE_MODEL")),
+            QString::fromUtf8(qgetenv("DAEMON_APP_PROFILE_PROMPT")), timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_READY %s\n", ready ? "ok" : "timeout");
+        std::fflush(stdout);
+        return ready ? 0 : 2;
+    }
+
     // Headless chat self-check (CHA-1/CHA-2): connect, drive one real turn, and emit the streamed
     // assistant text so the E2E harness can assert Submit + Subscribe crossed the socket and the
     // client consumed the AgentEvent stream. Gated on DAEMON_APP_CHAT_PROMPT.
