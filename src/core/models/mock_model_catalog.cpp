@@ -1,7 +1,9 @@
 #include "models/mock_model_catalog.h"
 
 #include "appcache/json_cache.h"
+#include "models/model_format.h"
 
+#include <array>
 #include <QTimer>
 
 namespace models {
@@ -28,6 +30,7 @@ QVariantMap mk(const QString& id, const QString& name, const QString& provider,
 
 MockModelCatalog::MockModelCatalog(QObject* parent)
     : IModelCatalog(parent), m_discover(new uimodels::VariantListModel(this)),
+      m_files(new uimodels::VariantListModel(this)),
       m_downloads(new uimodels::VariantListModel(this)),
       m_installed(new uimodels::VariantListModel(this)), m_timer(new QTimer(this)) {
     m_catalog = {
@@ -91,6 +94,9 @@ void MockModelCatalog::save() const {
 
 QObject* MockModelCatalog::discover() const {
     return m_discover;
+}
+QObject* MockModelCatalog::files() const {
+    return m_files;
 }
 QObject* MockModelCatalog::downloads() const {
     return m_downloads;
@@ -157,9 +163,78 @@ void MockModelCatalog::search(const QString& query, const QString& sizeFilter) {
             continue;
         }
         m[QStringLiteral("installed")] = m_installed->indexOfId(m.value(QStringLiteral("id"))) >= 0;
+        // Repo-centric fields so the Phase-2 quant-picker UI works in mock mode (here a "repo" is
+        // a catalog model id; repoFiles() synthesizes its quant files).
+        m[QStringLiteral("repo")] = m.value(QStringLiteral("id"));
+        m[QStringLiteral("author")] = m.value(QStringLiteral("provider"));
+        m[QStringLiteral("downloads")] = static_cast<double>(12000 + (out.size() * 731));
+        m[QStringLiteral("likes")] = static_cast<double>(40 + (out.size() * 7));
+        m[QStringLiteral("pipelineTag")] = QStringLiteral("text-generation");
         out.append(m);
     }
     m_discover->setRows(out);
+}
+
+void MockModelCatalog::repoFiles(const QString& repo) {
+    // In mock mode the "repo" is a catalog model id; synthesize a couple of GGUF quant files
+    // (sizes derived from the model's nominal GiB) so the quant picker has real-shaped rows.
+    const QVariantMap entry = catalogEntry(repo);
+    m_filesRepo = repo;
+    const double gib = entry.value(QStringLiteral("sizeGiB")).toDouble();
+    const auto bytesFor = [](double g) {
+        return static_cast<quint64>(g * 1024.0 * 1024.0 * 1024.0);
+    };
+    const QString stem =
+        entry.value(QStringLiteral("name")).toString().replace(QLatin1Char(' '), QLatin1Char('-'));
+    struct Quant {
+        QString label;
+        double factor;
+    };
+    const std::array<Quant, 2> quants = {Quant{QStringLiteral("Q4_K_M"), 1.0},
+                                         Quant{QStringLiteral("Q8_0"), 1.85}};
+    QList<QVariantMap> rows;
+    for (const Quant& q : quants) {
+        const quint64 sz = bytesFor(gib * q.factor);
+        QVariantMap row;
+        const QString path = QStringLiteral("%1-%2.gguf").arg(stem, q.label);
+        row[QStringLiteral("id")] = path;
+        row[QStringLiteral("path")] = path;
+        row[QStringLiteral("quant")] = q.label;
+        row[QStringLiteral("sizeBytes")] = static_cast<double>(sz);
+        row[QStringLiteral("sizeLabel")] = formatBytes(sz);
+        row[QStringLiteral("isSplit")] = false;
+        row[QStringLiteral("recommended")] = (q.label == QStringLiteral("Q4_K_M"));
+        rows.append(row);
+    }
+    m_files->setRows(rows);
+    emit filesChanged(repo);
+    recommend(repo);
+}
+
+void MockModelCatalog::recommend(const QString& repo) {
+    const QVariantMap entry = catalogEntry(repo);
+    const double gib = entry.value(QStringLiteral("sizeGiB")).toDouble();
+    const auto stem =
+        entry.value(QStringLiteral("name")).toString().replace(QLatin1Char(' '), QLatin1Char('-'));
+    const auto sz = static_cast<quint64>(gib * 1024.0 * 1024.0 * 1024.0);
+    m_recommendation.clear();
+    m_recommendation[QStringLiteral("repo")] = repo;
+    m_recommendation[QStringLiteral("quant")] = QStringLiteral("Q4_K_M");
+    m_recommendation[QStringLiteral("file")] = QStringLiteral("%1-Q4_K_M.gguf").arg(stem);
+    m_recommendation[QStringLiteral("sizeBytes")] = static_cast<double>(sz);
+    m_recommendation[QStringLiteral("sizeLabel")] = formatBytes(sz);
+    m_recommendation[QStringLiteral("fits")] = true;
+    m_recommendation[QStringLiteral("reason")] =
+        QStringLiteral("Balanced quality that fits the detected budget.");
+    emit recommendChanged(repo);
+}
+
+void MockModelCatalog::downloadFile(const QString& repo, const QString& file,
+                                    const QString& engine) {
+    Q_UNUSED(file)
+    Q_UNUSED(engine)
+    // The mock keys installs by model id; here the repo is the model id.
+    download(repo);
 }
 
 void MockModelCatalog::download(const QString& modelId) {

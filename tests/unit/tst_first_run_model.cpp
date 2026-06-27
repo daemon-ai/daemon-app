@@ -20,13 +20,19 @@ class FakeModelCatalog : public models::IModelCatalog {
 public:
     QString current;
     [[nodiscard]] QObject* discover() const override { return nullptr; }
+    [[nodiscard]] QObject* files() const override { return nullptr; }
     [[nodiscard]] QObject* downloads() const override { return nullptr; }
     [[nodiscard]] QObject* installed() const override { return nullptr; }
     [[nodiscard]] QString currentModelId() const override { return current; }
+    [[nodiscard]] QString filesRepo() const override { return {}; }
     [[nodiscard]] QStringList installedIds() const override { return {}; }
     [[nodiscard]] QVariantList providers() const override { return {}; }
     void search(const QString&, const QString&) override {}
+    void repoFiles(const QString&) override {}
+    void recommend(const QString&) override {}
+    [[nodiscard]] QVariantMap recommendation() const override { return {}; }
     void download(const QString&) override {}
+    void downloadFile(const QString&, const QString&, const QString&) override {}
     void pauseDownload(const QString&) override {}
     void resumeDownload(const QString&) override {}
     void cancelDownload(const QString&) override {}

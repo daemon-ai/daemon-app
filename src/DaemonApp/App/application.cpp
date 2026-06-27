@@ -10,6 +10,7 @@
 #include "config/idaemon_config.h"
 #include "connection/iconnection_service.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/repositories.h"
 #include "daemonnet/idaemonnet.h"
 #include "firstrun/first_run_model.h"
 #include "fleet/iapprovals_inbox.h"
@@ -283,6 +284,69 @@ QString Application::runHeadlessChat(const QString& prompt, int timeoutMs, const
     engine->cancel();
     engine->deleteLater();
     return answer;
+}
+
+QString Application::runHeadlessModels(const QString& query, const QString& repo, int timeoutMs) {
+    using daemonapp::daemon::ModelRepository;
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return {};
+    }
+    settle(600); // let the on-ready auto-refreshes drain off the single-in-flight queue first
+
+    auto* models = new ModelRepository(m_services.nodeApi, nullptr, this);
+    const int perProbe = qMax(2500, timeoutMs / 6);
+
+    // Shared probe state: a persistent operationFailed handler records `err`; each probe wires its
+    // own success signal to record `ok`. Probes run strictly sequentially (no reentrancy).
+    bool got = false;
+    bool ok = false;
+    QEventLoop* active = nullptr;
+    const auto onFail =
+        connect(models, &ModelRepository::operationFailed, this, [&](const QString&) {
+            got = true;
+            ok = false;
+            if (active != nullptr) {
+                active->quit();
+            }
+        });
+
+    const auto probe = [&](auto successSignal, const std::function<void()>& trigger) -> QString {
+        QEventLoop loop;
+        active = &loop;
+        got = false;
+        ok = false;
+        const auto onOk = connect(models, successSignal, this, [&] {
+            got = true;
+            ok = true;
+            loop.quit();
+        });
+        QTimer::singleShot(perProbe, &loop, &QEventLoop::quit);
+        trigger();
+        loop.exec();
+        disconnect(onOk);
+        active = nullptr;
+        return !got ? QStringLiteral("timeout")
+                    : (ok ? QStringLiteral("ok") : QStringLiteral("err"));
+    };
+
+    // Deterministic everywhere (no manager / empty registry -> []): ModelCatalog + ModelDownloads.
+    const QString catalog =
+        probe(&ModelRepository::catalogChanged, [&] { models->refreshCatalog(); });
+    const QString downloads =
+        probe(&ModelRepository::downloadsChanged, [&] { models->refreshDownloads(); });
+    // Network-dependent (HF) -> ok with a real worker/network, err otherwise; never a timeout if
+    // the frame round-trips (the daemon decoded it and replied, even with an error).
+    const QString search =
+        probe(&ModelRepository::searchHitsChanged, [&] { models->search(query); });
+    const QString files = probe(&ModelRepository::filesLoaded, [&] { models->requestFiles(repo); });
+    const QString download = probe(&ModelRepository::downloadStarted,
+                                   [&] { models->download(repo, QStringLiteral("model.gguf")); });
+
+    disconnect(onFail);
+    models->deleteLater();
+    return QStringLiteral("catalog=%1 downloads=%2 search=%3 files=%4 download=%5")
+        .arg(catalog, downloads, search, files, download);
 }
 
 bool Application::runHeadlessOnboarding(const QString& provider, const QString& key,

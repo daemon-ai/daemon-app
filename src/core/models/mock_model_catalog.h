@@ -20,16 +20,23 @@ public:
     explicit MockModelCatalog(QObject* parent = nullptr);
 
     [[nodiscard]] QObject* discover() const override;
+    [[nodiscard]] QObject* files() const override;
     [[nodiscard]] QObject* downloads() const override;
     [[nodiscard]] QObject* installed() const override;
     [[nodiscard]] QString currentModelId() const override { return m_currentId; }
+    [[nodiscard]] QString filesRepo() const override { return m_filesRepo; }
 
     [[nodiscard]] QStringList installedIds() const override;
 
     [[nodiscard]] QVariantList providers() const override;
 
     void search(const QString& query, const QString& sizeFilter) override;
+    void repoFiles(const QString& repo) override;
+    void recommend(const QString& repo) override;
+    [[nodiscard]] QVariantMap recommendation() const override { return m_recommendation; }
     void download(const QString& modelId) override;
+    void downloadFile(const QString& repo, const QString& file,
+                      const QString& engine = QStringLiteral("llama")) override;
     void pauseDownload(const QString& jobId) override;
     void resumeDownload(const QString& jobId) override;
     void cancelDownload(const QString& jobId) override;
@@ -43,10 +50,13 @@ private:
     void save() const;
 
     uimodels::VariantListModel* m_discover = nullptr;
+    uimodels::VariantListModel* m_files = nullptr;
     uimodels::VariantListModel* m_downloads = nullptr;
     uimodels::VariantListModel* m_installed = nullptr;
     QTimer* m_timer = nullptr;
     QString m_currentId;
+    QString m_filesRepo;          // the model id the synthetic quant picker is open on
+    QVariantMap m_recommendation; // the synthetic recommendation for m_filesRepo
 
     QList<QVariantMap> m_catalog;         // the full fake universe
     QHash<QString, double> m_jobProgress; // jobId -> 0..1

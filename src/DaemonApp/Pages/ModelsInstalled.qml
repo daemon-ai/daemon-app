@@ -59,7 +59,15 @@ Item {
                             }
                         }
                         Text {
-                            text: entry.params + " · " + entry.sizeGiB + " GiB · " + entry.provider
+                            // Local models show quant + on-disk size; cloud models show provider.
+                            text: {
+                                var parts = [];
+                                if (entry.quant) parts.push(entry.quant);
+                                if (entry.sizeLabel) parts.push(entry.sizeLabel);
+                                else if (entry.sizeGiB > 0) parts.push(entry.sizeGiB.toFixed(1) + " GiB");
+                                if (entry.provider) parts.push(entry.provider);
+                                return parts.join("  \u00b7  ");
+                            }
                             font.family: FontIcons.mono; font.pixelSize: 11; color: Theme.textMuted
                         }
                     }

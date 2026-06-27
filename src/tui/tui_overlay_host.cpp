@@ -2,9 +2,12 @@
 
 #include "command_registry.h"
 #include "composer_session_controller.h"
+#include "models/imodel_catalog.h"
 #include "tui_dialogs.h"
+#include "uimodels/variant_list_model.h"
 
 #include <QCoreApplication>
+#include <QVector>
 #include <Tui/ZDialog.h>
 #include <Tui/ZWidget.h>
 
@@ -57,6 +60,82 @@ void TuiOverlayHost::openModelPicker(ComposerSessionController* composer,
     }
     m_modelPicker->setItems(items);
     m_modelPicker->openCentered();
+}
+
+void TuiOverlayHost::openModelDownload(models::IModelCatalog* catalog,
+                                       const std::function<void()>& onChange) {
+    if (catalog == nullptr) {
+        return;
+    }
+    if (m_modelDiscover == nullptr) {
+        m_modelDiscover = new PaletteDialog(tr("Download model \u2014 pick a repo"), m_parent);
+    }
+    if (m_quantPicker == nullptr) {
+        m_quantPicker = new PaletteDialog(tr("Choose a quantization"), m_parent);
+    }
+    // Rewire each open to capture the current catalog/callbacks (cheap, avoids stale lambdas).
+    disconnect(m_modelDiscover, &PaletteDialog::activated, this, nullptr);
+    connect(
+        m_modelDiscover, &PaletteDialog::activated, this,
+        [this, catalog, onChange](const QString& repo) {
+            // Step 2: request the repo's files; populate + open the quant palette when they
+            // arrive (single-shot, so a later repo pick doesn't double-fire).
+            catalog->repoFiles(repo);
+            disconnect(m_quantPicker, &PaletteDialog::activated, this, nullptr);
+            connect(m_quantPicker, &PaletteDialog::activated, this,
+                    [catalog, repo, onChange](const QString& file) {
+                        catalog->downloadFile(repo, file);
+                        if (onChange) {
+                            onChange();
+                        }
+                    });
+            auto* conn = new QMetaObject::Connection;
+            *conn = connect(
+                catalog, &models::IModelCatalog::filesChanged, this,
+                [this, catalog, repo, conn](const QString& loadedRepo) {
+                    if (loadedRepo != repo) {
+                        return;
+                    }
+                    QObject::disconnect(*conn);
+                    delete conn;
+                    QVector<PaletteDialog::Item> items;
+                    auto* files = qobject_cast<uimodels::VariantListModel*>(catalog->files());
+                    const QVariantMap rec = catalog->recommendation();
+                    const QString recFile = rec.value(QStringLiteral("file")).toString();
+                    if (files != nullptr) {
+                        for (const QVariantMap& f : files->rows()) {
+                            const QString path = f.value(QStringLiteral("path")).toString();
+                            const bool recommended = (path == recFile);
+                            items.push_back(
+                                {path,
+                                 (recommended ? QStringLiteral("\u2605 ") : QStringLiteral("  ")) +
+                                     f.value(QStringLiteral("quant")).toString() +
+                                     QStringLiteral("  \u00b7  ") +
+                                     f.value(QStringLiteral("sizeLabel")).toString(),
+                                 path});
+                        }
+                    }
+                    m_quantPicker->setItems(items);
+                    m_quantPicker->openCentered();
+                });
+        });
+
+    // Seed the repo palette from the current discovery results; kick a default search if empty so
+    // a first open is not blank (the user can type to filter, then reopen for the fresh set).
+    auto* disc = qobject_cast<uimodels::VariantListModel*>(catalog->discover());
+    if (disc == nullptr || disc->rows().isEmpty()) {
+        catalog->search(QString());
+    }
+    QVector<PaletteDialog::Item> items;
+    if (disc != nullptr) {
+        for (const QVariantMap& r : disc->rows()) {
+            items.push_back({r.value(QStringLiteral("repo")).toString(),
+                             r.value(QStringLiteral("name")).toString(),
+                             r.value(QStringLiteral("params")).toString()});
+        }
+    }
+    m_modelDiscover->setItems(items);
+    m_modelDiscover->openCentered();
 }
 
 void TuiOverlayHost::openCommandPalette(CommandRegistry* commands,

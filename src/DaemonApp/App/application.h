@@ -124,6 +124,17 @@ public:
     [[nodiscard]] bool runHeadlessProfile(const QString& createId, const QString& model,
                                           const QString& prompt, int timeoutMs);
 
+    // Headless E2E hook (Phase 2 local model track): connect, then exercise the model-track wire
+    // ops through a ModelRepository - ModelCatalog, ModelDownloads, ModelSearch(query),
+    // ModelFiles(repo), ModelDownload(repo,file) - and return a machine-readable summary of which
+    // frames round-tripped, e.g. "catalog=ok downloads=ok search=ok files=err download=err". Each
+    // probe records ok (success response), err (ApiError response), or timeout (no response). The
+    // hermetic test asserts the always-deterministic ones (catalog/downloads) are ok and the
+    // network-dependent ones produced a structured response (ok|err, never timeout) - proving the
+    // client encodes + sends + the daemon decodes every model-track frame.
+    [[nodiscard]] QString runHeadlessModels(const QString& query, const QString& repo,
+                                            int timeoutMs);
+
 protected:
     // Close-to-tray: when a tray is installed, intercept the root window's close
     // (X) event and hide instead of quitting.

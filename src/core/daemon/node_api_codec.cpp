@@ -253,6 +253,70 @@ DecodedAgentEvent decodeAgentEvent(const agent_event_r& ev) {
     return out;
 }
 
+// --- Local model track (Phase 2) helpers ---------------------------------------------------
+
+// ModelEngine wire string <-> generated choice (variant names, no serde rename).
+int modelEngineChoice(const QString& engine) {
+    return engine == QStringLiteral("mistral_rs") || engine == QStringLiteral("mistralrs")
+               ? model_engine_r::model_engine_MistralRs_tstr_c
+               : model_engine_r::model_engine_Llama_tstr_c;
+}
+
+QString modelEngineName(int choice) {
+    return choice == model_engine_r::model_engine_MistralRs_tstr_c ? QStringLiteral("mistral_rs")
+                                                                   : QStringLiteral("llama");
+}
+
+int searchSortChoice(const QString& sort) {
+    if (sort == QStringLiteral("downloads")) {
+        return search_sort_r::search_sort_Downloads_tstr_c;
+    }
+    if (sort == QStringLiteral("likes")) {
+        return search_sort_r::search_sort_Likes_tstr_c;
+    }
+    if (sort == QStringLiteral("modified")) {
+        return search_sort_r::search_sort_Modified_tstr_c;
+    }
+    if (sort == QStringLiteral("created")) {
+        return search_sort_r::search_sort_Created_tstr_c;
+    }
+    return search_sort_r::search_sort_Trending_tstr_c;
+}
+
+QString downloadStateName(int choice) {
+    switch (choice) {
+    case download_state_r::download_state_Queued_tstr_c:
+        return QStringLiteral("Queued");
+    case download_state_r::download_state_Downloading_tstr_c:
+        return QStringLiteral("Downloading");
+    case download_state_r::download_state_Completed_tstr_c:
+        return QStringLiteral("Completed");
+    case download_state_r::download_state_Paused_tstr_c:
+        return QStringLiteral("Paused");
+    case download_state_r::download_state_Cancelled_tstr_c:
+        return QStringLiteral("Cancelled");
+    default:
+        return QStringLiteral("Failed");
+    }
+}
+
+// Project a model_ref's engine + (Hf) repo/file into plain strings. A Local source leaves
+// repo/file empty (the installed row still carries its local_path).
+void fillModelRef(const model_ref& m, QString* repo, QString* file, QString* engine) {
+    if (engine != nullptr) {
+        *engine = modelEngineName(m.model_ref_engine.model_engine_choice);
+    }
+    if (m.model_ref_source.model_source_choice == model_source_r::model_source_hf_m_c) {
+        const model_source_hf& hf = m.model_ref_source.model_source_hf_m;
+        if (repo != nullptr) {
+            *repo = fromZcbor(hf.Hf_repo);
+        }
+        if (file != nullptr && hf.Hf_file_choice == model_source_hf::Hf_file_tstr_c) {
+            *file = fromZcbor(hf.Hf_file_tstr);
+        }
+    }
+}
+
 bool encodeRequest(const api_request_r& request, QByteArray* out) {
     // Grow the output buffer until the request fits rather than truncating: most requests are tiny,
     // but Submit/CommandInvoke carry user text and can exceed any small fixed size. Retry on encode
@@ -650,6 +714,178 @@ QByteArray NodeApiCodec::encodeProfileGetRequest(const QString& id) {
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
+QByteArray NodeApiCodec::encodeModelSearchRequest(const QString& text, const QString& engine,
+                                                  const QString& sort, quint32 page,
+                                                  quint32 limit) {
+    const QByteArray textUtf8 = text.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_search_m_c;
+    search_query& q = request.api_request_request_model_search_m.ModelSearch_query;
+    q.search_query_text.value = reinterpret_cast<const uint8_t*>(textUtf8.constData());
+    q.search_query_text.len = static_cast<size_t>(textUtf8.size());
+    q.search_query_engine.model_engine_choice =
+        static_cast<decltype(q.search_query_engine.model_engine_choice)>(modelEngineChoice(engine));
+    q.search_query_sort.search_sort_choice =
+        static_cast<decltype(q.search_query_sort.search_sort_choice)>(searchSortChoice(sort));
+    q.search_query_page = page;
+    q.search_query_limit = limit;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelFilesRequest(const QString& repo, const QString& engine,
+                                                 const QString& revision) {
+    const QByteArray repoUtf8 = repo.toUtf8();
+    const QByteArray revUtf8 = revision.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_files_m_c;
+    request_model_files& f = request.api_request_request_model_files_m;
+    f.ModelFiles_repo.value = reinterpret_cast<const uint8_t*>(repoUtf8.constData());
+    f.ModelFiles_repo.len = static_cast<size_t>(repoUtf8.size());
+    if (revision.isEmpty()) {
+        f.ModelFiles_revision_choice = request_model_files::ModelFiles_revision_null_m_c;
+    } else {
+        f.ModelFiles_revision_choice = request_model_files::ModelFiles_revision_tstr_c;
+        f.ModelFiles_revision_tstr.value = reinterpret_cast<const uint8_t*>(revUtf8.constData());
+        f.ModelFiles_revision_tstr.len = static_cast<size_t>(revUtf8.size());
+    }
+    f.ModelFiles_engine.model_engine_choice =
+        static_cast<decltype(f.ModelFiles_engine.model_engine_choice)>(modelEngineChoice(engine));
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelRecommendRequest(const QString& repo, const QString& engine,
+                                                     bool hasBudget, quint64 budgetBytes,
+                                                     const QString& revision) {
+    const QByteArray repoUtf8 = repo.toUtf8();
+    const QByteArray revUtf8 = revision.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_recommend_m_c;
+    request_model_recommend& r = request.api_request_request_model_recommend_m;
+    r.ModelRecommend_repo.value = reinterpret_cast<const uint8_t*>(repoUtf8.constData());
+    r.ModelRecommend_repo.len = static_cast<size_t>(repoUtf8.size());
+    if (revision.isEmpty()) {
+        r.ModelRecommend_revision_choice =
+            request_model_recommend::ModelRecommend_revision_null_m_c;
+    } else {
+        r.ModelRecommend_revision_choice = request_model_recommend::ModelRecommend_revision_tstr_c;
+        r.ModelRecommend_revision_tstr.value =
+            reinterpret_cast<const uint8_t*>(revUtf8.constData());
+        r.ModelRecommend_revision_tstr.len = static_cast<size_t>(revUtf8.size());
+    }
+    r.ModelRecommend_engine.model_engine_choice =
+        static_cast<decltype(r.ModelRecommend_engine.model_engine_choice)>(
+            modelEngineChoice(engine));
+    if (hasBudget) {
+        r.ModelRecommend_budget_bytes_choice =
+            request_model_recommend::ModelRecommend_budget_bytes_uint_c;
+        r.ModelRecommend_budget_bytes_uint = static_cast<uint32_t>(budgetBytes);
+    } else {
+        r.ModelRecommend_budget_bytes_choice =
+            request_model_recommend::ModelRecommend_budget_bytes_null_m_c;
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelDownloadRequest(const QString& repo, const QString& file,
+                                                    const QString& engine,
+                                                    const QString& revision) {
+    const QByteArray repoUtf8 = repo.toUtf8();
+    const QByteArray fileUtf8 = file.toUtf8();
+    const QByteArray revUtf8 = revision.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_download_m_c;
+    model_ref& m = request.api_request_request_model_download_m.ModelDownload_model;
+    m.model_ref_engine.model_engine_choice =
+        static_cast<decltype(m.model_ref_engine.model_engine_choice)>(modelEngineChoice(engine));
+    m.model_ref_source.model_source_choice = model_source_r::model_source_hf_m_c;
+    model_source_hf& hf = m.model_ref_source.model_source_hf_m;
+    hf.Hf_repo.value = reinterpret_cast<const uint8_t*>(repoUtf8.constData());
+    hf.Hf_repo.len = static_cast<size_t>(repoUtf8.size());
+    if (file.isEmpty()) {
+        hf.Hf_file_choice = model_source_hf::Hf_file_null_m_c;
+    } else {
+        hf.Hf_file_choice = model_source_hf::Hf_file_tstr_c;
+        hf.Hf_file_tstr.value = reinterpret_cast<const uint8_t*>(fileUtf8.constData());
+        hf.Hf_file_tstr.len = static_cast<size_t>(fileUtf8.size());
+    }
+    hf.Hf_revision.value = reinterpret_cast<const uint8_t*>(revUtf8.constData());
+    hf.Hf_revision.len = static_cast<size_t>(revUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelDownloadsRequest() {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_downloads_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelCatalogRequest() {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_catalog_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelDeleteRequest(const QString& id) {
+    const QByteArray idUtf8 = id.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_delete_m_c;
+    request_model_delete& del = request.api_request_request_model_delete_m;
+    del.ModelDelete_id.value = reinterpret_cast<const uint8_t*>(idUtf8.constData());
+    del.ModelDelete_id.len = static_cast<size_t>(idUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelActivateRequest(const QString& id, const QString& profile) {
+    const QByteArray idUtf8 = id.toUtf8();
+    const QByteArray profileUtf8 = profile.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_activate_m_c;
+    request_model_activate& act = request.api_request_request_model_activate_m;
+    act.ModelActivate_id.value = reinterpret_cast<const uint8_t*>(idUtf8.constData());
+    act.ModelActivate_id.len = static_cast<size_t>(idUtf8.size());
+    if (profile.isEmpty()) {
+        act.ModelActivate_profile_choice = request_model_activate::ModelActivate_profile_null_m_c;
+    } else {
+        act.ModelActivate_profile_choice = request_model_activate::ModelActivate_profile_tstr_c;
+        act.ModelActivate_profile_tstr.value =
+            reinterpret_cast<const uint8_t*>(profileUtf8.constData());
+        act.ModelActivate_profile_tstr.len = static_cast<size_t>(profileUtf8.size());
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelCancelRequest(quint64 id) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_cancel_m_c;
+    request.api_request_request_model_cancel_m.ModelCancel_id = static_cast<uint32_t>(id);
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelPauseRequest(quint64 id) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_pause_m_c;
+    request.api_request_request_model_pause_m.ModelPause_id = static_cast<uint32_t>(id);
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeModelResumeRequest(quint64 id) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_model_resume_m_c;
+    request.api_request_request_model_resume_m.ModelResume_id = static_cast<uint32_t>(id);
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
 ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
     auto response = std::make_unique<api_response_r>();
     if (!decodeResponse(responseCbor, response.get())) {
@@ -678,6 +914,18 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         return ApiResponseKind::Drained;
     case api_response_r::api_response_response_error_m_c:
         return ApiResponseKind::Error;
+    case api_response_r::api_response_response_model_search_m_c:
+        return ApiResponseKind::ModelSearch;
+    case api_response_r::api_response_response_model_files_m_c:
+        return ApiResponseKind::ModelFiles;
+    case api_response_r::api_response_response_model_download_started_m_c:
+        return ApiResponseKind::ModelDownloadStarted;
+    case api_response_r::api_response_response_model_downloads_m_c:
+        return ApiResponseKind::ModelDownloads;
+    case api_response_r::api_response_response_model_catalog_m_c:
+        return ApiResponseKind::ModelCatalog;
+    case api_response_r::api_response_response_model_recommend_m_c:
+        return ApiResponseKind::ModelRecommend;
     default:
         return ApiResponseKind::Unknown;
     }
@@ -1038,6 +1286,217 @@ bool NodeApiCodec::decodeProfileId(const QByteArray& responseCbor, QString* outI
         return false;
     }
     *outId = fromZcbor(response->api_response_response_profile_id_m.response_profile_id_ProfileId);
+    return true;
+}
+
+bool NodeApiCodec::decodeModelSearch(const QByteArray& responseCbor, QList<DecodedSearchHit>* out,
+                                     bool* hasMore, quint32* page) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_model_search_m_c) {
+        return false;
+    }
+    const search_page& sp =
+        response->api_response_response_model_search_m.response_model_search_ModelSearch;
+    out->clear();
+    for (size_t i = 0; i < sp.search_page_results_search_hit_m_count; ++i) {
+        const search_hit& h = sp.search_page_results_search_hit_m[i];
+        DecodedSearchHit hit;
+        hit.repo = fromZcbor(h.search_hit_repo);
+        if (h.search_hit_author_choice == search_hit::search_hit_author_tstr_c) {
+            hit.author = fromZcbor(h.search_hit_author_tstr);
+        }
+        hit.downloads = h.search_hit_downloads;
+        hit.likes = h.search_hit_likes;
+        if (h.search_hit_num_parameters_choice == search_hit::search_hit_num_parameters_uint_c) {
+            hit.hasNumParameters = true;
+            hit.numParameters = h.search_hit_num_parameters_uint;
+        }
+        if (h.search_hit_pipeline_tag_choice == search_hit::search_hit_pipeline_tag_tstr_c) {
+            hit.pipelineTag = fromZcbor(h.search_hit_pipeline_tag_tstr);
+        }
+        if (h.search_hit_last_modified_choice == search_hit::search_hit_last_modified_tstr_c) {
+            hit.lastModified = fromZcbor(h.search_hit_last_modified_tstr);
+        }
+        hit.gated = h.search_hit_gated;
+        hit.isPrivate = h.search_hit_private;
+        out->append(hit);
+    }
+    if (hasMore != nullptr) {
+        *hasMore = sp.search_page_has_more;
+    }
+    if (page != nullptr) {
+        *page = sp.search_page_page;
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeModelFiles(const QByteArray& responseCbor, QList<DecodedModelFile>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_model_files_m_c) {
+        return false;
+    }
+    const response_model_files& files = response->api_response_response_model_files_m;
+    out->clear();
+    for (size_t i = 0; i < files.response_model_files_ModelFiles_model_file_m_count; ++i) {
+        const model_file& f = files.response_model_files_ModelFiles_model_file_m[i];
+        DecodedModelFile file;
+        file.path = fromZcbor(f.model_file_path);
+        file.sizeBytes = f.model_file_size_bytes;
+        if (f.model_file_quant_choice == model_file::model_file_quant_tstr_c) {
+            file.quant = fromZcbor(f.model_file_quant_tstr);
+        }
+        file.isSplit = f.model_file_is_split;
+        file.isFirstShard = f.model_file_is_first_shard;
+        out->append(file);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeModelDownloadStarted(const QByteArray& responseCbor, quint64* outId) {
+    if (outId == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice !=
+            api_response_r::api_response_response_model_download_started_m_c) {
+        return false;
+    }
+    *outId = response->api_response_response_model_download_started_m
+                 .response_model_download_started_ModelDownloadStarted;
+    return true;
+}
+
+bool NodeApiCodec::decodeModelDownloads(const QByteArray& responseCbor,
+                                        QList<DecodedDownloadStatus>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice !=
+            api_response_r::api_response_response_model_downloads_m_c) {
+        return false;
+    }
+    const response_model_downloads& dl = response->api_response_response_model_downloads_m;
+    out->clear();
+    for (size_t i = 0; i < dl.response_model_downloads_ModelDownloads_download_status_m_count;
+         ++i) {
+        const download_status& s = dl.response_model_downloads_ModelDownloads_download_status_m[i];
+        DecodedDownloadStatus status;
+        status.id = s.download_status_id;
+        fillModelRef(s.download_status_model, &status.modelRepo, &status.modelFile, nullptr);
+        status.state = downloadStateName(s.download_status_state.download_state_choice);
+        status.downloadedBytes = s.download_status_downloaded_bytes;
+        status.totalBytes = s.download_status_total_bytes;
+        status.filesDone = s.download_status_files_done;
+        status.filesTotal = s.download_status_files_total;
+        if (s.download_status_error_choice == download_status::download_status_error_tstr_c) {
+            status.error = fromZcbor(s.download_status_error_tstr);
+        }
+        out->append(status);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeModelCatalog(const QByteArray& responseCbor,
+                                      QList<DecodedInstalledModel>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_model_catalog_m_c) {
+        return false;
+    }
+    const response_model_catalog& cat = response->api_response_response_model_catalog_m;
+    out->clear();
+    for (size_t i = 0; i < cat.response_model_catalog_ModelCatalog_installed_model_m_count; ++i) {
+        const installed_model& m = cat.response_model_catalog_ModelCatalog_installed_model_m[i];
+        DecodedInstalledModel model;
+        model.id = fromZcbor(m.installed_model_id);
+        model.displayName = fromZcbor(m.installed_model_display_name);
+        fillModelRef(m.installed_model_model, &model.repo, &model.file, &model.engine);
+        model.localPath = fromZcbor(m.installed_model_local_path);
+        model.sizeBytes = m.installed_model_size_bytes;
+        if (m.installed_model_quant_choice == installed_model::installed_model_quant_tstr_c) {
+            model.quant = fromZcbor(m.installed_model_quant_tstr);
+        }
+        model.installedAtMs = m.installed_model_installed_at_ms;
+        if (m.installed_model_arch_present &&
+            m.installed_model_arch.installed_model_arch_choice ==
+                installed_model_arch_r::installed_model_arch_tstr_c) {
+            model.arch = fromZcbor(m.installed_model_arch.installed_model_arch_tstr);
+        }
+        if (m.installed_model_context_length_present &&
+            m.installed_model_context_length.installed_model_context_length_choice ==
+                installed_model_context_length_r::installed_model_context_length_uint_c) {
+            model.hasContextLength = true;
+            model.contextLength =
+                m.installed_model_context_length.installed_model_context_length_uint;
+        }
+        if (m.installed_model_file_type_present &&
+            m.installed_model_file_type.installed_model_file_type_choice ==
+                installed_model_file_type_r::installed_model_file_type_tstr_c) {
+            model.fileType = fromZcbor(m.installed_model_file_type.installed_model_file_type_tstr);
+        }
+        out->append(model);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeModelRecommend(const QByteArray& responseCbor,
+                                        DecodedQuantRecommendation* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice !=
+            api_response_r::api_response_response_model_recommend_m_c) {
+        return false;
+    }
+    const quant_recommendation& r =
+        response->api_response_response_model_recommend_m.response_model_recommend_ModelRecommend;
+    *out = DecodedQuantRecommendation{};
+    out->engine = modelEngineName(r.quant_recommendation_engine.model_engine_choice);
+    out->repo = fromZcbor(r.quant_recommendation_repo);
+    if (r.quant_recommendation_file_choice ==
+        quant_recommendation::quant_recommendation_file_tstr_c) {
+        out->file = fromZcbor(r.quant_recommendation_file_tstr);
+    }
+    out->quant = fromZcbor(r.quant_recommendation_quant);
+    if (r.quant_recommendation_size_bytes_choice ==
+        quant_recommendation::quant_recommendation_size_bytes_uint_c) {
+        out->hasSizeBytes = true;
+        out->sizeBytes = r.quant_recommendation_size_bytes_uint;
+    }
+    out->budgetBytes = r.quant_recommendation_budget_bytes;
+    out->fits = r.quant_recommendation_fits;
+    out->reason = fromZcbor(r.quant_recommendation_reason);
+    for (size_t i = 0; i < r.quant_recommendation_candidates_quant_candidate_m_count; ++i) {
+        const quant_candidate& c = r.quant_recommendation_candidates_quant_candidate_m[i];
+        DecodedQuantCandidate cand;
+        cand.quant = fromZcbor(c.quant_candidate_quant);
+        if (c.quant_candidate_file_choice == quant_candidate::quant_candidate_file_tstr_c) {
+            cand.file = fromZcbor(c.quant_candidate_file_tstr);
+        }
+        if (c.quant_candidate_size_bytes_choice ==
+            quant_candidate::quant_candidate_size_bytes_uint_c) {
+            cand.hasSizeBytes = true;
+            cand.sizeBytes = c.quant_candidate_size_bytes_uint;
+        }
+        cand.fits = c.quant_candidate_fits;
+        out->candidates.append(cand);
+    }
     return true;
 }
 

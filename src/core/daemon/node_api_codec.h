@@ -141,6 +141,91 @@ struct DecodedLogEntry {
     DecodedAgentEvent event; // valid when payloadKind == Event
 };
 
+// --- Local model track (Phase 2): search -> quant -> download -> install ----------------------
+// The repo-centric discovery shapes. Sizes/counts decode as 32-bit (the codec's `uint` width) -
+// fine for the targeted small GGUF quants; a >4 GiB artifact would need a codec bit-size bump.
+
+// One Hugging Face repo hit (ModelSearch -> SearchPage). The Discover list renders these; clicking
+// one drives a ModelFiles call for its quant picker.
+struct DecodedSearchHit {
+    QString repo;
+    QString author; // empty when the Hub omits a distinct author
+    quint64 downloads = 0;
+    quint64 likes = 0;
+    bool hasNumParameters = false;
+    quint64 numParameters = 0;
+    QString pipelineTag;
+    QString lastModified;
+    bool gated = false;
+    bool isPrivate = false;
+};
+
+// One downloadable file in a repo (ModelFiles -> [ModelFile]). The quant picker groups by `quant`;
+// `isSplit`/`isFirstShard` let the UI aggregate multi-part GGUF sets and name the shard to pull.
+struct DecodedModelFile {
+    QString path;
+    quint64 sizeBytes = 0;
+    QString quant; // parsed GGUF quant label (e.g. "Q4_K_M"); empty for non-quantized artifacts
+    bool isSplit = false;
+    bool isFirstShard = false;
+};
+
+// A point-in-time download job snapshot (ModelDownloads -> [DownloadStatus]). The repo poll loop
+// projects these into the Downloads view; reaching Completed triggers a catalog refresh.
+struct DecodedDownloadStatus {
+    quint64 id = 0;
+    QString modelRepo; // resolved from the job's ModelRef::Hf
+    QString modelFile;
+    QString state; // "Queued"|"Downloading"|"Completed"|"Paused"|"Cancelled"|"Failed"
+    quint64 downloadedBytes = 0;
+    quint64 totalBytes = 0;
+    quint32 filesDone = 0;
+    quint32 filesTotal = 0;
+    QString error; // set when state == "Failed"
+};
+
+// An installed (downloaded + cataloged) model (ModelCatalog -> [InstalledModel]). The Installed
+// list renders these; activate -> ModelActivate(id), delete -> ModelDelete(id).
+struct DecodedInstalledModel {
+    QString id;
+    QString displayName;
+    QString repo; // from ModelRef::Hf, when applicable
+    QString file;
+    QString engine; // "llama" | "mistral_rs"
+    QString localPath;
+    quint64 sizeBytes = 0;
+    QString quant;
+    quint64 installedAtMs = 0;
+    QString arch;
+    bool hasContextLength = false;
+    quint32 contextLength = 0;
+    QString fileType;
+};
+
+// One ranked quant candidate inside a recommendation (so the picker can show the full ladder).
+struct DecodedQuantCandidate {
+    QString quant;
+    QString file;
+    bool hasSizeBytes = false;
+    quint64 sizeBytes = 0;
+    bool fits = false;
+};
+
+// The hardware-aware quant recommendation for a repo (ModelRecommend -> QuantRecommendation). The
+// quant picker pre-highlights `quant`/`file` with a "Recommended / fits ~N" badge.
+struct DecodedQuantRecommendation {
+    QString engine; // "llama" | "mistral_rs"
+    QString repo;
+    QString file; // the chosen GGUF (llama); empty for mistral.rs whole-repo + ISQ
+    QString quant;
+    bool hasSizeBytes = false;
+    quint64 sizeBytes = 0;
+    quint64 budgetBytes = 0;
+    bool fits = false;
+    QString reason;
+    QList<DecodedQuantCandidate> candidates;
+};
+
 enum class ApiResponseKind {
     Unknown,
     Health,
@@ -154,6 +239,12 @@ enum class ApiResponseKind {
     Profiles,
     Drained,
     Error,
+    ModelSearch,
+    ModelFiles,
+    ModelDownloadStarted,
+    ModelDownloads,
+    ModelCatalog,
+    ModelRecommend,
 };
 
 // Thin C++ facade over the zcbor-generated NodeApi codec (codec/generated). The generated C is
@@ -216,6 +307,42 @@ public:
     // Fetch a profile's full spec (ProfileGet -> Profile(opt)). PRO-3 editor hydration.
     [[nodiscard]] static QByteArray encodeProfileGetRequest(const QString& id);
 
+    // --- Local model track (Phase 2) requests ------------------------------------------------
+    // Engine/sort args are friendly wire strings: engine "llama"|"mistral_rs" (default "llama"),
+    // sort "trending"|"downloads"|"likes"|"modified"|"created" (default "trending").
+    // Step 1: search HF repos loadable by `engine` (ModelSearch -> SearchPage).
+    [[nodiscard]] static QByteArray
+    encodeModelSearchRequest(const QString& text, const QString& engine = QStringLiteral("llama"),
+                             const QString& sort = QStringLiteral("trending"), quint32 page = 0,
+                             quint32 limit = 25);
+    // Step 2: list a repo's loadable files (ModelFiles -> [ModelFile]). Empty revision = main.
+    [[nodiscard]] static QByteArray
+    encodeModelFilesRequest(const QString& repo, const QString& engine = QStringLiteral("llama"),
+                            const QString& revision = QString());
+    // The hardware-aware quant recommendation for a repo (ModelRecommend -> QuantRecommendation).
+    // hasBudget=false auto-detects VRAM/RAM node-side.
+    [[nodiscard]] static QByteArray encodeModelRecommendRequest(
+        const QString& repo, const QString& engine = QStringLiteral("llama"),
+        bool hasBudget = false, quint64 budgetBytes = 0, const QString& revision = QString());
+    // Start a download of one repo file (ModelDownload{ModelRef::Hf} -> ModelDownloadStarted).
+    [[nodiscard]] static QByteArray
+    encodeModelDownloadRequest(const QString& repo, const QString& file,
+                               const QString& engine = QStringLiteral("llama"),
+                               const QString& revision = QStringLiteral("main"));
+    // Poll all download jobs (ModelDownloads -> [DownloadStatus]).
+    [[nodiscard]] static QByteArray encodeModelDownloadsRequest();
+    // The installed-model catalog (ModelCatalog -> [InstalledModel]).
+    [[nodiscard]] static QByteArray encodeModelCatalogRequest();
+    // Delete an installed model (ModelDelete -> Ok).
+    [[nodiscard]] static QByteArray encodeModelDeleteRequest(const QString& id);
+    // Activate an installed model for `profile` (empty = default local profile) -> Ok.
+    [[nodiscard]] static QByteArray encodeModelActivateRequest(const QString& id,
+                                                               const QString& profile = QString());
+    // Download lifecycle controls (ModelCancel/Pause/Resume -> Ok). id is the DownloadStatus id.
+    [[nodiscard]] static QByteArray encodeModelCancelRequest(quint64 id);
+    [[nodiscard]] static QByteArray encodeModelPauseRequest(quint64 id);
+    [[nodiscard]] static QByteArray encodeModelResumeRequest(quint64 id);
+
     // Response inspection / decode.
     [[nodiscard]] static ApiResponseKind responseKind(const QByteArray& responseCbor);
     static bool decodeHealth(const QByteArray& responseCbor, DecodedHealth* out);
@@ -260,6 +387,24 @@ public:
     static bool decodeProfile(const QByteArray& responseCbor, DecodedProfileSpec* out, bool* found);
     // Decode a ProfileId response (ProfileCreate/Clone) into the new profile id.
     static bool decodeProfileId(const QByteArray& responseCbor, QString* outId);
+
+    // --- Local model track (Phase 2) decoders ------------------------------------------------
+    // Decode a ModelSearch response (SearchPage) into repo hits. `hasMore`/`page` advance paging.
+    static bool decodeModelSearch(const QByteArray& responseCbor, QList<DecodedSearchHit>* out,
+                                  bool* hasMore = nullptr, quint32* page = nullptr);
+    // Decode a ModelFiles response into the repo's loadable files.
+    static bool decodeModelFiles(const QByteArray& responseCbor, QList<DecodedModelFile>* out);
+    // Decode a ModelDownloadStarted response into the new download job id.
+    static bool decodeModelDownloadStarted(const QByteArray& responseCbor, quint64* outId);
+    // Decode a ModelDownloads response into the in-flight/finished job snapshots.
+    static bool decodeModelDownloads(const QByteArray& responseCbor,
+                                     QList<DecodedDownloadStatus>* out);
+    // Decode a ModelCatalog response into the installed-model list.
+    static bool decodeModelCatalog(const QByteArray& responseCbor,
+                                   QList<DecodedInstalledModel>* out);
+    // Decode a ModelRecommend response into the hardware-aware quant recommendation.
+    static bool decodeModelRecommend(const QByteArray& responseCbor,
+                                     DecodedQuantRecommendation* out);
 };
 
 } // namespace daemonapp::daemon
