@@ -268,6 +268,8 @@ QString sessionStateName(int choice) {
     switch (choice) {
     case session_state_r::session_state_Active_tstr_c:
         return QStringLiteral("Active");
+    case session_state_r::session_state_suspended_m_c:
+        return QStringLiteral("Suspended");
     case session_state_r::session_state_Ready_tstr_c:
         return QStringLiteral("Ready");
     case session_state_r::session_state_Completed_tstr_c:

@@ -52,6 +52,10 @@ add_library(da_daemon_client STATIC
     daemon_fs_service.cpp
     daemon_fleet_tree.h
     daemon_fleet_tree.cpp
+    daemon_session_roster.h
+    daemon_session_roster.cpp
+    daemon_dashboard.h
+    daemon_dashboard.cpp
     daemon_cache_store.h
     daemon_cache_store.cpp
     cached_session_store.h

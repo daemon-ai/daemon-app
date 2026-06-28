@@ -11,10 +11,12 @@
 #include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/daemon_dashboard.h"
 #include "daemon/daemon_fleet_tree.h"
 #include "daemon/daemon_fs_service.h"
 #include "daemon/daemon_model_catalog.h"
 #include "daemon/daemon_profile_store.h"
+#include "daemon/daemon_session_roster.h"
 #include "daemon/daemon_session_settings.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_client.h"
@@ -145,6 +147,15 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.fleetRepository = new FleetRepository(graph.nodeApi, graph.cache, owner);
         delete graph.fleetTree;
         graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, owner);
+        // Daemon-backed, offline-first roster + dashboard: project the live cache/fleet/approvals
+        // seams (the SessionsPage roster + the dashboard counters were the last DaemonNet-backed
+        // surfaces still on the mock). The mocks built above are parented to `owner`; drop them.
+        // Order: roster first, then the dashboard which derives from roster + fleet + approvals.
+        delete graph.roster;
+        graph.roster = new fleet::DaemonSessionRoster(graph.store, owner);
+        delete graph.dashboard;
+        graph.dashboard = new fleet::DaemonDashboard(graph.roster, graph.fleetTree, graph.approvals,
+                                                     graph.connection, owner);
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end. Fire only on the
         // transition INTO ready: stateChanged also fires for statusMessage churn (e.g. the
@@ -182,9 +193,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // (CredentialSet/List), modelCatalog (Models/ModelCurrent). Still mock below.
         qInfo().noquote() << "AppServiceGraph: ServiceMode::Daemon - live seams: connection, "
                              "sessions(cache), accounts(credentials), modelCatalog(models), "
-                             "profiles, approvals(ApprovalsPending/Decide), "
-                             "sessionSettings(SetSessionMode); still mock: fs, daemonConfig, "
-                             "memory, daemonNet, roster/fleetTree/dashboard, routing/cron, "
+                             "profiles, approvals(ApprovalsPending/Decide), fs(fs_*), "
+                             "fleetTree(Tree), roster(cache), dashboard(derived), "
+                             "sessionSettings(SetSessionMode); still mock: daemonConfig, "
+                             "memory, daemonNet, routing/cron, "
                              "transports/presence, checkpoints.";
     } else {
         // Mock mode: a non-persisted in-memory store re-seeded fresh from the unified DaemonNet

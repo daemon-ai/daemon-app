@@ -58,10 +58,12 @@ inline constexpr SeamMigrationTarget kTargets[] = {
      "control is meaningful only on orchestrator units - engine leaves return Unsupported).",
      SeamMigrationStatus::DaemonAligned},
     {"ISessionRoster + IDashboard + IApprovalsInbox", "SessionsQuery / Tree / ApprovalsPending",
-     "IApprovalsInbox LANDED (DaemonApprovalsInbox); roster + dashboard still MockOnly (the "
-     "offline-first DaemonSessionRoster/DaemonDashboard are a follow-up over the live "
-     "roster/fleet/approvals).",
-     SeamMigrationStatus::MockOnly},
+     "LANDED: DaemonApprovalsInbox (PRO-11); DaemonSessionRoster projects the offline-first cache "
+     "+ "
+     "DaemonDashboard derives counters from the live roster/fleet/approvals (+ healthy from the "
+     "connection). Session suspend/resume/close stay client-local (no lifecycle wire op); tokens/"
+     "rewindable/tokensToday + the live activity feed are degraded follow-ups.",
+     SeamMigrationStatus::DaemonAligned},
     {"IDaemonConfig", "ProfileApi / SessionOverlay / node capabilities / ISettingsStore",
      kConfigMigration, SeamMigrationStatus::MockOnly},
     {"IFsService", "FsRoots / FsList / FsRead / FsWrite / FsWatchPoll",

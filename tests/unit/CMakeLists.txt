@@ -128,6 +128,22 @@ target_link_libraries(tst_subscription_manager
 add_test(NAME tst_subscription_manager COMMAND tst_subscription_manager)
 set_tests_properties(tst_subscription_manager PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_daemon_roster_dashboard: the daemon-backed, offline-first session roster + dashboard -
+# offline render from cache, client-local suspend overlay + close->archive, and dashboard counters
+# derived from the roster/fleet/approvals/connection seams.
+qt_add_executable(tst_daemon_roster_dashboard tst_daemon_roster_dashboard.cpp)
+target_link_libraries(tst_daemon_roster_dashboard
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::fleet
+        daemon-app::connection
+        daemon-app::uimodels
+)
+add_test(NAME tst_daemon_roster_dashboard COMMAND tst_daemon_roster_dashboard)
+set_tests_properties(tst_daemon_roster_dashboard PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_daemon_fleet_tree: the Phase 5b daemon-backed fleet seam - offline render from cache, a Tree
 # query populating cache+model, and a PRO-10 control rejection (Unsupported) reverting the optimistic
 # pause overlay, all over the WireMuxServer fixture.
