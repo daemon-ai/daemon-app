@@ -20,9 +20,21 @@ public:
 
     Q_INVOKABLE virtual void pause(const QString& id) = 0;
     Q_INVOKABLE virtual void resume(const QString& id) = 0;
+    // Scale an orchestrator unit's worker count (PRO-10). Default is a no-op so the mock seam need
+    // not implement it; the daemon seam sends Scale{unit,n}.
+    Q_INVOKABLE virtual void scale(const QString& id, int n) {
+        Q_UNUSED(id)
+        Q_UNUSED(n)
+    }
+    // Refresh the tree from the node (daemon seam re-fetches Tree; mock is a no-op).
+    Q_INVOKABLE virtual void refresh() {}
 
 signals:
     void changed();
+    // A control op (pause/resume/scale) was rejected by the node (e.g. Unsupported on an
+    // engine-leaf unit - PRO-10 control is only meaningful on orchestrator units). Mock never emits
+    // this.
+    void controlRejected(const QString& message);
 };
 
 } // namespace fleet

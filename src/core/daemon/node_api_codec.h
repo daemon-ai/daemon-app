@@ -404,6 +404,30 @@ struct DecodedEventsPage {
     quint64 headCursor = 0;
 };
 
+// --- Fleet / subagent tree (Phase 5b) ------------------------------------------------------------
+// One node of the supervision tree (Tree -> TreeReport / Unit -> UnitNode). `depth` is set by
+// decodeTreeReport when it flattens root + nodes into a pre-order list; raw wire fields otherwise.
+struct DecodedUnitNode {
+    QString id;
+    QString kind;      // "Engine" | "Host" | "Orchestrator"
+    QString state;     // "Running" | "Finished" | "Unknown"
+    QString endReason; // Finished only
+    QString work;
+    QStringList children; // child unit ids
+    QString profileRef;
+    QString sessionId;
+    QString title;
+    QString role;     // "Primary" | "ManagedChild" | "EphemeralSubagent" | ""
+    QString parentId; // set by decodeTreeReport's flatten ("" = the root)
+    int depth = 0;    // set by decodeTreeReport's flatten
+};
+
+// The top-level fleet roster (Fleet -> FleetReport): the root unit ids (usage omitted from the
+// facade).
+struct DecodedFleetReport {
+    QStringList children;
+};
+
 enum class ApiResponseKind {
     Unknown,
     Health,
@@ -418,6 +442,10 @@ enum class ApiResponseKind {
     FsWrite,
     FsWatch,
     FsSearch,
+    Fleet,
+    Tree,
+    Unit,
+    UnitEvents,
     Ok,
     Credentials,
     Models,
@@ -608,6 +636,23 @@ public:
     static bool decodeFsWrite(const QByteArray& responseCbor, QString* revision);
     static bool decodeFsWatch(const QByteArray& responseCbor, DecodedFsWatchPage* out);
     static bool decodeFsSearch(const QByteArray& responseCbor, DecodedFsSearchPage* out);
+
+    // --- Fleet / subagent tree (Phase 5b: PRO-9 view + PRO-10 control) -----------------------
+    [[nodiscard]] static QByteArray encodeTreeRequest();
+    [[nodiscard]] static QByteArray encodeFleetRequest();
+    [[nodiscard]] static QByteArray encodeUnitRequest(const QString& unitId);
+    [[nodiscard]] static QByteArray encodeUnitEventsRequest(const QString& unitId, quint32 max);
+    [[nodiscard]] static QByteArray encodePauseRequest(const QString& unitId);
+    [[nodiscard]] static QByteArray encodeResumeRequest(const QString& unitId);
+    [[nodiscard]] static QByteArray encodeScaleRequest(const QString& unitId, quint32 n);
+
+    // Decode a Tree response, flattening root + nodes into a pre-order list with depth set (empty
+    // when the tree has no root). `outRoot` (optional) gets the root unit id.
+    static bool decodeTreeReport(const QByteArray& responseCbor, QList<DecodedUnitNode>* outFlat,
+                                 QString* outRoot = nullptr);
+    // Decode a Unit response (Some/None). Sets *found=false on the null arm (unknown unit).
+    static bool decodeUnit(const QByteArray& responseCbor, DecodedUnitNode* out, bool* found);
+    static bool decodeFleetReport(const QByteArray& responseCbor, DecodedFleetReport* out);
 
     // --- Multiplexed socket envelope (wire L0; daemon-sync-protocol-spec.md §2) ---
     // The envelope is hand-coded (not zcbor-generated): it wraps the already-encoded request bytes

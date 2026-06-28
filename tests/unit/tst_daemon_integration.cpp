@@ -150,7 +150,7 @@ private slots:
     void seamMigrationTrackerCoversDaemonSeams() {
         using daemonapp::daemon::migration::SeamMigrationStatus;
         const auto& targets = daemonapp::daemon::migration::kTargets;
-        QCOMPARE(std::size(targets), static_cast<size_t>(6));
+        QCOMPARE(std::size(targets), static_cast<size_t>(7));
         // The session store is the furthest along (additive SessionId landed); the rest are still
         // mock-only until their daemon-api codec subsets exist.
         QCOMPARE(targets[0].status, SeamMigrationStatus::AdditiveIdReady);

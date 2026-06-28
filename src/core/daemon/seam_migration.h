@@ -52,8 +52,16 @@ inline constexpr SeamMigrationTarget kTargets[] = {
      SeamMigrationStatus::MockOnly},
     {"IAccountsService", "CredentialApi / AuthApi", kAccountsMigration,
      SeamMigrationStatus::MockOnly},
-    {"IFleetTree + ISessionRoster + IDashboard + IApprovalsInbox",
-     "Tree / SessionsQuery / ApprovalsPending", kFleetMigration, SeamMigrationStatus::MockOnly},
+    {"IFleetTree", "Tree / Unit / Pause / Resume / Scale",
+     "LANDED (Phase 5b): DaemonFleetTree projects the cached Tree query (daemon_fleet_units, "
+     "offline-first) into the fleet rows; pause/resume/scale issue the wire control op (PRO-10 "
+     "control is meaningful only on orchestrator units - engine leaves return Unsupported).",
+     SeamMigrationStatus::DaemonAligned},
+    {"ISessionRoster + IDashboard + IApprovalsInbox", "SessionsQuery / Tree / ApprovalsPending",
+     "IApprovalsInbox LANDED (DaemonApprovalsInbox); roster + dashboard still MockOnly (the "
+     "offline-first DaemonSessionRoster/DaemonDashboard are a follow-up over the live "
+     "roster/fleet/approvals).",
+     SeamMigrationStatus::MockOnly},
     {"IDaemonConfig", "ProfileApi / SessionOverlay / node capabilities / ISettingsStore",
      kConfigMigration, SeamMigrationStatus::MockOnly},
     {"IFsService", "FsRoots / FsList / FsRead / FsWrite / FsWatchPoll",

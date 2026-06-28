@@ -769,4 +769,115 @@ void ApprovalRepository::handleFailure(const QString& correlationId, const QStri
     }
 }
 
+// --- FleetRepository (PRO-9/10) -------------------------------------------------------------
+
+FleetRepository::FleetRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &FleetRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &FleetRepository::handleFailure);
+    }
+}
+
+QList<CachedFleetUnitRow> FleetRepository::cachedUnits() const {
+    return cache() != nullptr ? cache()->fleetUnits() : QList<CachedFleetUnitRow>{};
+}
+
+void FleetRepository::refreshTree() {
+    if (client() == nullptr) {
+        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeTreeRequest(), QLatin1String(kTreeCorrelation));
+}
+
+void FleetRepository::pause(const QString& unitId) {
+    if (client() == nullptr) {
+        emit controlFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodePauseRequest(unitId),
+                          QLatin1String(kControlCorrelation));
+}
+
+void FleetRepository::resume(const QString& unitId) {
+    if (client() == nullptr) {
+        emit controlFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeResumeRequest(unitId),
+                          QLatin1String(kControlCorrelation));
+}
+
+void FleetRepository::scale(const QString& unitId, quint32 n) {
+    if (client() == nullptr) {
+        emit controlFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeScaleRequest(unitId, n),
+                          QLatin1String(kControlCorrelation));
+}
+
+void FleetRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
+    if (correlationId == QLatin1String(kTreeCorrelation)) {
+        QList<DecodedUnitNode> flat;
+        if (!NodeApiCodec::decodeTreeReport(responseCbor, &flat)) {
+            emit refreshFailed(QStringLiteral("Failed to decode Tree response"));
+            return;
+        }
+        if (cache() != nullptr) {
+            const qint64 now = QDateTime::currentMSecsSinceEpoch();
+            QSet<QString> keep;
+            int ordinal = 0;
+            for (const DecodedUnitNode& n : flat) {
+                CachedFleetUnitRow row;
+                row.unitId = n.id;
+                row.parentId = n.parentId;
+                row.depth = n.depth;
+                row.ordinal = ordinal++;
+                row.name = n.title.isEmpty() ? n.id : n.title;
+                row.kind = n.kind;
+                row.state = n.state;
+                row.role = n.role;
+                row.profileRef = n.profileRef;
+                row.sessionId = n.sessionId;
+                row.work = n.work;
+                row.updatedAtMs = now;
+                cache()->upsertFleetUnit(row);
+                keep.insert(n.id);
+            }
+            // Prune units the live tree no longer lists (finished/removed subagents).
+            for (const CachedFleetUnitRow& existing : cache()->fleetUnits()) {
+                if (!keep.contains(existing.unitId)) {
+                    cache()->deleteFleetUnit(existing.unitId);
+                }
+            }
+        }
+        emit treeRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kControlCorrelation)) {
+        // Pause/Resume/Scale answer Ok (re-fetch the tree) or an ApiError (e.g. Unsupported on an
+        // engine-leaf unit -> surface it, do not silently swallow).
+        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+            DecodedApiError err;
+            NodeApiCodec::decodeError(responseCbor, &err);
+            emit controlFailed(err.message.isEmpty() ? QStringLiteral("Unit control failed")
+                                                     : err.message);
+        } else {
+            refreshTree();
+        }
+        return;
+    }
+}
+
+void FleetRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kTreeCorrelation)) {
+        emit refreshFailed(message);
+    } else if (correlationId == QLatin1String(kControlCorrelation)) {
+        emit controlFailed(message);
+    }
+}
+
 } // namespace daemonapp::daemon

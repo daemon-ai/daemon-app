@@ -78,7 +78,7 @@ bool DaemonCacheStore::createDataTables() {
     // drops them so a stale v2 DB is cleaned on the version bump.
     return execSql(cache::kCreateSessionsSql) && execSql(cache::kCreateSyncCursorsSql) &&
            execSql(cache::kCreateProfilesSql) && execSql(cache::kCreateFsEntriesSql) &&
-           execSql(cache::kCreateTranscriptBlocksSql);
+           execSql(cache::kCreateTranscriptBlocksSql) && execSql(cache::kCreateFleetUnitsSql);
 }
 
 bool DaemonCacheStore::dropDataTables() {
@@ -88,7 +88,8 @@ bool DaemonCacheStore::dropDataTables() {
            execSql("DROP TABLE IF EXISTS daemon_profiles") &&
            execSql("DROP TABLE IF EXISTS daemon_approvals") &&
            execSql("DROP TABLE IF EXISTS daemon_fs_entries") &&
-           execSql("DROP TABLE IF EXISTS daemon_transcript_blocks");
+           execSql("DROP TABLE IF EXISTS daemon_transcript_blocks") &&
+           execSql("DROP TABLE IF EXISTS daemon_fleet_units");
 }
 
 int DaemonCacheStore::schemaVersion() const {
@@ -316,6 +317,73 @@ bool DaemonCacheStore::deleteProfile(const QString& profileRef) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral("DELETE FROM daemon_profiles WHERE profile_ref=?"));
     q.addBindValue(profileRef);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+bool DaemonCacheStore::upsertFleetUnit(const CachedFleetUnitRow& row) {
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral(
+        "INSERT INTO daemon_fleet_units(unit_id,parent_id,depth,ordinal,name,kind,state,role,"
+        "profile_ref,session_id,work,updated_at_ms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?) "
+        "ON CONFLICT(unit_id) DO UPDATE SET parent_id=excluded.parent_id,depth=excluded.depth,"
+        "ordinal=excluded.ordinal,name=excluded.name,kind=excluded.kind,state=excluded.state,"
+        "role=excluded.role,profile_ref=excluded.profile_ref,session_id=excluded.session_id,"
+        "work=excluded.work,updated_at_ms=excluded.updated_at_ms"));
+    q.addBindValue(row.unitId);
+    q.addBindValue(row.parentId);
+    q.addBindValue(row.depth);
+    q.addBindValue(row.ordinal);
+    q.addBindValue(row.name);
+    q.addBindValue(row.kind);
+    q.addBindValue(row.state);
+    q.addBindValue(row.role);
+    q.addBindValue(row.profileRef);
+    q.addBindValue(row.sessionId);
+    q.addBindValue(row.work);
+    q.addBindValue(row.updatedAtMs);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+QList<CachedFleetUnitRow> DaemonCacheStore::fleetUnits() const {
+    QList<CachedFleetUnitRow> rows;
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    if (!q.exec(QStringLiteral(
+            "SELECT unit_id,parent_id,depth,ordinal,name,kind,state,role,profile_ref,session_id,"
+            "work,updated_at_ms FROM daemon_fleet_units ORDER BY ordinal ASC"))) {
+        setLastError(q.lastError().text());
+        return rows;
+    }
+    while (q.next()) {
+        CachedFleetUnitRow row;
+        row.unitId = q.value(0).toString();
+        row.parentId = q.value(1).toString();
+        row.depth = q.value(2).toInt();
+        row.ordinal = q.value(3).toInt();
+        row.name = q.value(4).toString();
+        row.kind = q.value(5).toString();
+        row.state = q.value(6).toString();
+        row.role = q.value(7).toString();
+        row.profileRef = q.value(8).toString();
+        row.sessionId = q.value(9).toString();
+        row.work = q.value(10).toString();
+        row.updatedAtMs = q.value(11).toLongLong();
+        rows.append(row);
+    }
+    return rows;
+}
+
+bool DaemonCacheStore::deleteFleetUnit(const QString& unitId) {
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral("DELETE FROM daemon_fleet_units WHERE unit_id=?"));
+    q.addBindValue(unitId);
     if (!q.exec()) {
         setLastError(q.lastError().text());
         return false;

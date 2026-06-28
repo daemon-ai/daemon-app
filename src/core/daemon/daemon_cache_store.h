@@ -48,6 +48,24 @@ struct CachedProfileRow {
     qint64 updatedAtMs = 0;
 };
 
+// One unit of the offline-first fleet/subagent tree (daemon_fleet_units; schema v4).
+// `depth`/`ordinal` preserve the pre-order flatten so the tree re-renders from cache without a
+// connection.
+struct CachedFleetUnitRow {
+    QString unitId;
+    QString parentId; // "" = a root
+    int depth = 0;
+    int ordinal = 0; // position in the pre-order flatten
+    QString name;
+    QString kind;  // "Engine" | "Host" | "Orchestrator"
+    QString state; // "Running" | "Finished" | "Unknown"
+    QString role;
+    QString profileRef;
+    QString sessionId;
+    QString work;
+    qint64 updatedAtMs = 0;
+};
+
 // One coalesced durable transcript block (schema v2; render-from-cache). Mirrors
 // DecodedTranscriptBlock (journal) / the live coalesced shape, keyed by (sessionId, seq).
 struct CachedTranscriptBlockRow {
@@ -95,6 +113,12 @@ public:
     [[nodiscard]] QList<CachedProfileRow> profiles() const;
     // Remove a cached profile (a live ProfileList no longer lists it). Best-effort.
     bool deleteProfile(const QString& profileRef);
+
+    // Offline-first fleet tree (daemon_fleet_units). fleetUnits() returns pre-order (ORDER BY
+    // ordinal).
+    bool upsertFleetUnit(const CachedFleetUnitRow& row);
+    [[nodiscard]] QList<CachedFleetUnitRow> fleetUnits() const;
+    bool deleteFleetUnit(const QString& unitId);
 
     // Durable transcript blocks (schema v2 render-from-cache). upsert is idempotent per (session,
     // seq); transcriptBlocks reads in seq order past `afterSeq`; clearTranscript wipes a session's

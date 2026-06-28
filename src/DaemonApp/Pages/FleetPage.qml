@@ -5,9 +5,26 @@ import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
 // Fleet tree: the flattened orchestrator/worker hierarchy with indentation by
-// depth, a status badge, and pause/resume.
+// depth, a status badge, pause/resume, and (orchestrator units) scale. Daemon-backed +
+// offline-first; refreshes the Tree on show.
 Item {
     id: root
+
+    // Last control rejection (e.g. Pause/Scale Unsupported on an engine leaf - PRO-10).
+    property string controlError: ""
+
+    // Refresh the daemon tree whenever the page becomes visible (no-op in mock mode).
+    onVisibleChanged: if (visible) FleetTree.refresh()
+    Component.onCompleted: FleetTree.refresh()
+
+    Connections {
+        target: FleetTree
+        function onControlRejected(message) {
+            root.controlError = message;
+            errorClear.restart();
+        }
+    }
+    Timer { id: errorClear; interval: 5000; onTriggered: root.controlError = "" }
 
     PageHeader {
         id: header
@@ -16,6 +33,17 @@ Item {
         anchors.right: parent.right
         title: qsTr("Fleet")
         icon: FontIcons.fa_sitemap
+    }
+
+    Kit.IconButton {
+        anchors.verticalCenter: header.verticalCenter
+        anchors.right: header.right
+        anchors.rightMargin: 12
+        icon: FontIcons.fa_rotate
+        iconColor: Theme.iconMuted
+        iconPointSize: 12
+        tooltipText: qsTr("Refresh")
+        onClicked: FleetTree.refresh()
     }
 
     QQC.ScrollView {
@@ -101,16 +129,68 @@ Item {
                     ColumnLayout {
                         visible: fleetRow.expanded
                         Layout.fillWidth: true
-                        spacing: 3
+                        spacing: 6
                         Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
                         Text {
                             text: qsTr("%1 · %2 · depth %3").arg(entry.id).arg(entry.kind)
                                   .arg(entry.depth)
                             font.family: FontIcons.mono; font.pixelSize: 11; color: Theme.textMuted
                         }
+                        // PRO-10: scale only an orchestrator's worker count (engine leaves reject it).
+                        RowLayout {
+                            visible: entry.kind === "orchestrator"
+                            spacing: 8
+                            Text {
+                                text: qsTr("Workers")
+                                font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+                            }
+                            QQC.SpinBox {
+                                id: scaleSpin
+                                from: 0; to: 16; value: 1
+                                implicitHeight: 26
+                            }
+                            Kit.IconButton {
+                                icon: FontIcons.fa_layer_group
+                                iconPointSize: 11; implicitWidth: 30; implicitHeight: 26
+                                tooltipText: qsTr("Scale to %1").arg(scaleSpin.value)
+                                onClicked: FleetTree.scale(entry.id, scaleSpin.value)
+                            }
+                        }
                     }
                 }
             }
+        }
+    }
+
+    // Empty state (a fresh daemon with no delegated subagents, or offline with an empty cache).
+    Text {
+        anchors.centerIn: parent
+        anchors.verticalCenterOffset: 16
+        visible: FleetTree.nodes.count === 0
+        text: qsTr("No active subagents")
+        color: Theme.textMuted
+        font.family: FontIcons.display
+        font.pixelSize: 13
+    }
+
+    // Control-rejection toast (PRO-10 Unsupported on a leaf, transient drop, etc.).
+    Rectangle {
+        visible: root.controlError !== ""
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottomMargin: 16
+        radius: 8
+        color: Theme.surface
+        border.color: Theme.border
+        implicitWidth: toast.implicitWidth + 24
+        implicitHeight: toast.implicitHeight + 16
+        Text {
+            id: toast
+            anchors.centerIn: parent
+            text: root.controlError
+            color: Theme.text
+            font.family: FontIcons.display
+            font.pixelSize: 12
         }
     }
 }

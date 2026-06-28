@@ -353,6 +353,36 @@ QString Application::runHeadlessModels(const QString& query, const QString& repo
         .arg(catalog, downloads, search, files, download);
 }
 
+QString Application::runHeadlessFleet(int timeoutMs) {
+    using daemonapp::daemon::FleetRepository;
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return {};
+    }
+    settle(600);
+    FleetRepository* repo = m_services.fleetRepository;
+    if (repo == nullptr) {
+        return {};
+    }
+    int units = -1;
+    {
+        QEventLoop loop;
+        const auto c = connect(repo, &FleetRepository::treeRefreshed, this, [&] {
+            units = static_cast<int>(repo->cachedUnits().size());
+            loop.quit();
+        });
+        QTimer::singleShot(qMax(2000, timeoutMs / 2), &loop, &QEventLoop::quit);
+        repo->refreshTree();
+        loop.exec();
+        disconnect(c);
+    }
+    // Exercise the control wire op (result irrelevant: a fresh daemon has no unit, so this is an
+    // error/Unsupported - the proxy records the Pause frame crossing either way).
+    repo->pause(QStringLiteral("probe-unit"));
+    settle(300);
+    return QStringLiteral("units=%1").arg(units);
+}
+
 QString Application::runHeadlessFs(int timeoutMs) {
     driveFirstRunConnect();
     if (!awaitConnectionReady(timeoutMs)) {

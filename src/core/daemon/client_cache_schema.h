@@ -4,13 +4,14 @@
 
 namespace daemonapp::daemon::cache {
 
-// v3 (Phase 4 closeout): retires the dead daemon_session_log + transient daemon_approvals tables
+// v4 (Phase 5b): adds daemon_fleet_units (offline-first fleet/subagent tree). The cache is
+// non-authoritative, so the bump just drops + rebuilds (the daemon re-baselines it).
+// v3 (Phase 4 closeout): retired the dead daemon_session_log + transient daemon_approvals tables
 // (the transcript caches in daemon_transcript_blocks; pending approvals are live). daemon_profiles
-// becomes live (offline-first read). The cache is non-authoritative, so the bump just drops +
-// rebuilds (the daemon re-baselines it).
+// became live (offline-first read).
 // v2 (L3): added daemon_transcript_blocks (render-from-cache transcript) + per-session resync
 // cursors.
-inline constexpr int kSchemaVersion = 3;
+inline constexpr int kSchemaVersion = 4;
 
 inline constexpr const char* kCreateMetaSql = R"sql(
 CREATE TABLE IF NOT EXISTS daemon_cache_meta (
@@ -62,6 +63,25 @@ CREATE TABLE IF NOT EXISTS daemon_fs_entries (
   revision_cbor BLOB,
   updated_at_ms INTEGER NOT NULL,
   PRIMARY KEY (root_id, path)
+);
+)sql";
+
+// v4: the offline-first fleet/subagent tree. One row per unit (DaemonFleetTree projects these to
+// the IFleetTree rows); parent_id ('' = a root) lets the tree be rebuilt without a connection.
+inline constexpr const char* kCreateFleetUnitsSql = R"sql(
+CREATE TABLE IF NOT EXISTS daemon_fleet_units (
+  unit_id TEXT PRIMARY KEY,
+  parent_id TEXT,  -- NULL/'' == a root (a null QString binds as NULL, which reads back as "")
+  depth INTEGER NOT NULL DEFAULT 0,
+  ordinal INTEGER NOT NULL DEFAULT 0,
+  name TEXT,
+  kind TEXT NOT NULL,
+  state TEXT NOT NULL,
+  role TEXT,
+  profile_ref TEXT,
+  session_id TEXT,
+  work TEXT,
+  updated_at_ms INTEGER NOT NULL
 );
 )sql";
 

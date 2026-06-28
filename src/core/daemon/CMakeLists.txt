@@ -50,6 +50,8 @@ add_library(da_daemon_client STATIC
     subscription_manager.cpp
     daemon_fs_service.h
     daemon_fs_service.cpp
+    daemon_fleet_tree.h
+    daemon_fleet_tree.cpp
     daemon_cache_store.h
     daemon_cache_store.cpp
     cached_session_store.h

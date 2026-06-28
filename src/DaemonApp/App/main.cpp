@@ -381,6 +381,19 @@ int main(int argc, char* argv[]) {
         return out.isEmpty() ? 2 : 0;
     }
 
+    // Headless fleet self-check (Phase 5b: PRO-9/10): connect, refresh the subagent Tree, issue a
+    // Pause, and emit "units=N" so the E2E harness can assert Tree + Pause crossed the socket.
+    // Gated on DAEMON_APP_FLEET_PROBE.
+    const QByteArray fleetProbe = qgetenv("DAEMON_APP_FLEET_PROBE");
+    if (!fleetProbe.isEmpty()) {
+        const QByteArray waitMs = qgetenv("DAEMON_APP_WAIT_READY");
+        const int timeoutMs = waitMs.toInt() > 0 ? waitMs.toInt() : 30000;
+        const QString out = application.runHeadlessFleet(timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_FLEET %s\n", out.toUtf8().constData());
+        std::fflush(stdout);
+        return out.isEmpty() ? 2 : 0;
+    }
+
     // Headless connectivity self-check for the cross-repo E2E harness: block until the daemon-mode
     // auto-connect Health round-trip resolves (or times out), emit a stable sentinel on stdout, and
     // exit deterministically. Keeps the harness from racing the async connect.

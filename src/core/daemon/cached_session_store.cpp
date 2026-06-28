@@ -40,6 +40,42 @@ domain::SessionRole roleFromString(const QString& s) {
     return domain::SessionRole::Primary;
 }
 
+domain::UnitKind unitKindFromString(const QString& s) {
+    if (s == QStringLiteral("Host")) {
+        return domain::UnitKind::Host;
+    }
+    if (s == QStringLiteral("Orchestrator")) {
+        return domain::UnitKind::Orchestrator;
+    }
+    return domain::UnitKind::Engine;
+}
+
+domain::UnitState unitStateFromString(const QString& s) {
+    if (s == QStringLiteral("Running")) {
+        return domain::UnitState::Running;
+    }
+    if (s == QStringLiteral("Finished")) {
+        return domain::UnitState::Finished;
+    }
+    return domain::UnitState::Unknown;
+}
+
+// Project a cached fleet-unit row (daemon_fleet_units) onto the domain UnitNode the sidebar
+// renders.
+domain::UnitNode unitNodeFromRow(const CachedFleetUnitRow& r) {
+    domain::UnitNode n;
+    n.id = domain::UnitId(r.unitId);
+    n.parentId = domain::UnitId(r.parentId);
+    n.name = r.name;
+    n.kind = unitKindFromString(r.kind);
+    n.state = unitStateFromString(r.state);
+    n.work = r.work;
+    n.profile = domain::ProfileRef(r.profileRef);
+    n.session = domain::SessionId(r.sessionId);
+    n.role = roleFromString(r.role);
+    return n;
+}
+
 } // namespace
 
 CachedSessionStore::CachedSessionStore(DaemonCacheStore* cache, SessionRepository* sessions,
@@ -73,11 +109,32 @@ bool CachedSessionStore::matchesScope(const CachedSessionRow& row, const domain:
     }
 }
 
-QList<domain::UnitNode> CachedSessionStore::unitChildren(const domain::UnitId&) const {
-    return {};
+QList<domain::UnitNode> CachedSessionStore::unitChildren(const domain::UnitId& parentId) const {
+    // Offline-first fleet sidebar: children of `parentId` (empty == roots) from the cached tree,
+    // preserving the pre-order the fleet repository persisted (fleetUnits() is ORDER BY ordinal).
+    QList<domain::UnitNode> out;
+    if (m_cache == nullptr) {
+        return out;
+    }
+    const QString parent = parentId.toString();
+    for (const CachedFleetUnitRow& r : m_cache->fleetUnits()) {
+        if (r.parentId == parent) {
+            out.push_back(unitNodeFromRow(r));
+        }
+    }
+    return out;
 }
 
-domain::UnitNode CachedSessionStore::unit(const domain::UnitId&) const {
+domain::UnitNode CachedSessionStore::unit(const domain::UnitId& id) const {
+    if (m_cache == nullptr || id.isEmpty()) {
+        return {};
+    }
+    const QString key = id.toString();
+    for (const CachedFleetUnitRow& r : m_cache->fleetUnits()) {
+        if (r.unitId == key) {
+            return unitNodeFromRow(r);
+        }
+    }
     return {};
 }
 

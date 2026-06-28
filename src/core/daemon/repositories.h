@@ -304,6 +304,36 @@ private:
     QString m_lastSession; // the session scope of the last refresh, re-used after a decide
 };
 
+// The agent fleet / subagent tree (PRO-9/10): refreshTree() issues a Tree query, decode() flattens
+// it into daemon_fleet_units (offline-first cache), and treeRefreshed() fires. pause/resume/scale
+// issue the control op; on Ok the tree is re-fetched, on Unsupported/error controlFailed() fires
+// (PRO-10: control is only meaningful on orchestrator units; engine leaves return Unsupported).
+class FleetRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    FleetRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    [[nodiscard]] QList<CachedFleetUnitRow> cachedUnits() const;
+
+    void refreshTree();
+    void pause(const QString& unitId);
+    void resume(const QString& unitId);
+    void scale(const QString& unitId, quint32 n);
+
+signals:
+    void treeRefreshed();
+    void refreshFailed(const QString& message);
+    void controlFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kTreeCorrelation = "repo/tree";
+    static constexpr auto kControlCorrelation = "repo/unit-control";
+};
+
 // Not part of the first daemon slice: kept as a cache/NodeApi-aware stub until checkpoint
 // timelines are modeled in the daemon-api codec subset.
 class CheckpointRepository : public RepositoryBase {

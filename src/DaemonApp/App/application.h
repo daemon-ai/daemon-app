@@ -153,6 +153,12 @@ public:
     // round-trips against the real daemon WorkspaceFs. Empty on connect failure.
     [[nodiscard]] QString runHeadlessFs(int timeoutMs);
 
+    // Headless E2E hook (Phase 5b fleet): connect, refresh the subagent Tree, and issue a Pause so
+    // the FleetRepository's Tree + control wire ops cross the socket. Returns "units=N" (the cached
+    // unit count after the Tree query; 0 on a fresh daemon with no delegation). Empty on connect
+    // failure.
+    [[nodiscard]] QString runHeadlessFleet(int timeoutMs);
+
     // Headless E2E hook (CHA-4 / CHA-5 HITL): connect, drive one real turn that parks on a host
     // gate (the scripted provider's tool call), auto-resolve the gate per `decision`
     // ("approve"|"deny"|"choice"|"input:<text>"), and return the streamed assistant text. Proves

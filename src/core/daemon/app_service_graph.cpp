@@ -11,6 +11,7 @@
 #include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/daemon_fleet_tree.h"
 #include "daemon/daemon_fs_service.h"
 #include "daemon/daemon_model_catalog.h"
 #include "daemon/daemon_profile_store.h"
@@ -138,6 +139,12 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // built above is parented to `owner`; drop it for the daemon one.
         delete graph.fs;
         graph.fs = new fs::DaemonFsService(graph.nodeApi, graph.cache, owner);
+        // Daemon-backed, offline-first fleet/subagent tree (PRO-9/10): replace the mock fleet tree
+        // with one projected from the cached Tree query. The mock built above is parented to
+        // `owner`; drop it for the daemon one.
+        graph.fleetRepository = new FleetRepository(graph.nodeApi, graph.cache, owner);
+        delete graph.fleetTree;
+        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, owner);
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end. Fire only on the
         // transition INTO ready: stateChanged also fires for statusMessage churn (e.g. the
@@ -150,7 +157,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             [conn = graph.connection, sessions = graph.sessions, profiles = graph.profileRepository,
              credentials = graph.credentialRepository, models = graph.models,
              approvals = graph.approvalRepository, subscriptions = graph.subscriptions,
-             fs = graph.fs, wasReady] {
+             fs = graph.fs, fleet = graph.fleetRepository, wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
                     // Initial baseline once per (re)connect; the EventsSince feed then keeps the
@@ -162,7 +169,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     models->refreshModels();
                     models->refreshCurrent();
                     approvals->refreshPending();
-                    fs->listRoots(); // populate the daemon-backed file roots
+                    fs->listRoots();      // populate the daemon-backed file roots
+                    fleet->refreshTree(); // PRO-9: baseline the subagent tree
                     subscriptions->start();
                 } else if (!nowReady && *wasReady) {
                     subscriptions->stop();

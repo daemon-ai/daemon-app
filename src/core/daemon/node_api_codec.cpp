@@ -1,6 +1,9 @@
 #include "daemon/node_api_codec.h"
 
 #include <memory>
+#include <QHash>
+#include <QPair>
+#include <QSet>
 
 extern "C" {
 #include "daemon_api_client_decode.h"
@@ -84,6 +87,78 @@ QString fsChangeKindName(int choice) {
     default:
         return QStringLiteral("modified");
     }
+}
+
+QString unitKindName(int choice) {
+    switch (choice) {
+    case unit_kind_r::unit_kind_Host_tstr_c:
+        return QStringLiteral("Host");
+    case unit_kind_r::unit_kind_Orchestrator_tstr_c:
+        return QStringLiteral("Orchestrator");
+    case unit_kind_r::unit_kind_Engine_tstr_c:
+    default:
+        return QStringLiteral("Engine");
+    }
+}
+
+QString unitStateName(int choice) {
+    switch (choice) {
+    case unit_state_r::unit_state_finished_m_c:
+        return QStringLiteral("Finished");
+    case unit_state_r::unit_state_Unknown_tstr_c:
+        return QStringLiteral("Unknown");
+    case unit_state_r::unit_state_Running_tstr_c:
+    default:
+        return QStringLiteral("Running");
+    }
+}
+
+QString sessionRoleName(int choice) {
+    switch (choice) {
+    case session_role_r::session_role_ManagedChild_tstr_c:
+        return QStringLiteral("ManagedChild");
+    case session_role_r::session_role_EphemeralSubagent_tstr_c:
+        return QStringLiteral("EphemeralSubagent");
+    case session_role_r::session_role_Primary_tstr_c:
+    default:
+        return QStringLiteral("Primary");
+    }
+}
+
+// Project a generated unit_node onto the facade struct (children kept as the raw id list; depth is
+// assigned later by the tree flatten).
+DecodedUnitNode decodeUnitNodeStruct(const unit_node& n) {
+    DecodedUnitNode out;
+    out.id = fromZcbor(n.unit_node_id);
+    out.kind = unitKindName(n.unit_node_kind.unit_kind_choice);
+    out.state = unitStateName(n.unit_node_state.unit_state_choice);
+    if (n.unit_node_state.unit_state_choice == unit_state_r::unit_state_finished_m_c) {
+        out.endReason = fromZcbor(n.unit_node_state.unit_state_finished_m.Finished_end_reason);
+    }
+    if (n.unit_node_work_choice == unit_node::unit_node_work_tstr_c) {
+        out.work = fromZcbor(n.unit_node_work_tstr);
+    }
+    for (size_t i = 0; i < n.unit_node_children_unit_id_m_count; ++i) {
+        out.children << fromZcbor(n.unit_node_children_unit_id_m[i]);
+    }
+    if (n.unit_node_profile_present && n.unit_node_profile.unit_node_profile_choice ==
+                                           unit_node_profile_r::unit_node_profile_profile_ref_m_c) {
+        out.profileRef = fromZcbor(n.unit_node_profile.unit_node_profile_profile_ref_m);
+    }
+    if (n.unit_node_session_present && n.unit_node_session.unit_node_session_choice ==
+                                           unit_node_session_r::unit_node_session_session_id_m_c) {
+        out.sessionId = fromZcbor(n.unit_node_session.unit_node_session_session_id_m);
+    }
+    if (n.unit_node_title_present &&
+        n.unit_node_title.unit_node_title_choice == unit_node_title_r::unit_node_title_tstr_c) {
+        out.title = fromZcbor(n.unit_node_title.unit_node_title_tstr);
+    }
+    if (n.unit_node_role_present && n.unit_node_role.unit_node_role_choice ==
+                                        unit_node_role_r::unit_node_role_session_role_m_c) {
+        out.role =
+            sessionRoleName(n.unit_node_role.unit_node_role_session_role_m.session_role_choice);
+    }
+    return out;
 }
 
 QString fsRootKindName(int choice) {
@@ -1579,6 +1654,14 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         return ApiResponseKind::FsWatch;
     case api_response_r::api_response_response_fs_search_m_c:
         return ApiResponseKind::FsSearch;
+    case api_response_r::api_response_response_fleet_m_c:
+        return ApiResponseKind::Fleet;
+    case api_response_r::api_response_response_tree_m_c:
+        return ApiResponseKind::Tree;
+    case api_response_r::api_response_response_unit_m_c:
+        return ApiResponseKind::Unit;
+    case api_response_r::api_response_response_unit_events_m_c:
+        return ApiResponseKind::UnitEvents;
     case api_response_r::api_response_response_ok_m_c:
         return ApiResponseKind::Ok;
     case api_response_r::api_response_response_credentials_m_c:
@@ -2668,6 +2751,166 @@ bool NodeApiCodec::decodeFsSearch(const QByteArray& responseCbor, DecodedFsSearc
     }
     out->hasMore = page.fs_search_page_has_more_present &&
                    page.fs_search_page_has_more.fs_search_page_has_more;
+    return true;
+}
+
+// --- Fleet / subagent tree (Phase 5b) ------------------------------------------------------------
+
+QByteArray NodeApiCodec::encodeTreeRequest() {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_tree_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeFleetRequest() {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_fleet_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeUnitRequest(const QString& unitId) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_unit_m_c;
+    const QByteArray u = unitId.toUtf8();
+    request.api_request_request_unit_m.Unit_unit.value =
+        reinterpret_cast<const uint8_t*>(u.constData());
+    request.api_request_request_unit_m.Unit_unit.len = static_cast<size_t>(u.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeUnitEventsRequest(const QString& unitId, quint32 max) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_unit_events_m_c;
+    const QByteArray u = unitId.toUtf8();
+    request.api_request_request_unit_events_m.UnitEvents_unit.value =
+        reinterpret_cast<const uint8_t*>(u.constData());
+    request.api_request_request_unit_events_m.UnitEvents_unit.len = static_cast<size_t>(u.size());
+    request.api_request_request_unit_events_m.UnitEvents_max = max;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodePauseRequest(const QString& unitId) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_pause_m_c;
+    const QByteArray u = unitId.toUtf8();
+    request.api_request_request_pause_m.Pause_unit.value =
+        reinterpret_cast<const uint8_t*>(u.constData());
+    request.api_request_request_pause_m.Pause_unit.len = static_cast<size_t>(u.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeResumeRequest(const QString& unitId) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_resume_m_c;
+    const QByteArray u = unitId.toUtf8();
+    request.api_request_request_resume_m.Resume_unit.value =
+        reinterpret_cast<const uint8_t*>(u.constData());
+    request.api_request_request_resume_m.Resume_unit.len = static_cast<size_t>(u.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeScaleRequest(const QString& unitId, quint32 n) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_scale_m_c;
+    const QByteArray u = unitId.toUtf8();
+    request.api_request_request_scale_m.Scale_unit.value =
+        reinterpret_cast<const uint8_t*>(u.constData());
+    request.api_request_request_scale_m.Scale_unit.len = static_cast<size_t>(u.size());
+    request.api_request_request_scale_m.Scale_n = n;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+bool NodeApiCodec::decodeTreeReport(const QByteArray& responseCbor, QList<DecodedUnitNode>* outFlat,
+                                    QString* outRoot) {
+    if (outFlat == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_tree_m_c) {
+        return false;
+    }
+    const tree_report& tr = response->api_response_response_tree_m.response_tree_Tree;
+    outFlat->clear();
+    QHash<QString, DecodedUnitNode> byId;
+    for (size_t i = 0; i < tr.tree_report_nodes_unit_node_m_count; ++i) {
+        DecodedUnitNode n = decodeUnitNodeStruct(tr.tree_report_nodes_unit_node_m[i]);
+        byId.insert(n.id, n);
+    }
+    const QString root = tr.tree_report_root_choice == tree_report::tree_report_root_unit_id_m_c
+                             ? fromZcbor(tr.tree_report_root_unit_id_m)
+                             : QString();
+    if (outRoot != nullptr) {
+        *outRoot = root;
+    }
+    if (root.isEmpty()) {
+        return true; // an empty tree (no root) is a valid, common (fresh-daemon) result
+    }
+    // Pre-order DFS from the root, assigning depth + parent; a visited set guards against cycles.
+    struct Frame {
+        QString id;
+        QString parent;
+        int depth;
+    };
+    QSet<QString> seen;
+    QList<Frame> stack; // processed LIFO so children render in their listed order
+    stack.append({root, QString(), 0});
+    while (!stack.isEmpty()) {
+        const Frame f = stack.takeLast();
+        if (seen.contains(f.id) || !byId.contains(f.id)) {
+            continue;
+        }
+        seen.insert(f.id);
+        DecodedUnitNode node = byId.value(f.id);
+        node.depth = f.depth;
+        node.parentId = f.parent;
+        outFlat->append(node);
+        // Push children in reverse so they pop (LIFO) in their listed order.
+        for (qsizetype k = node.children.size() - 1; k >= 0; --k) {
+            stack.append({node.children.at(k), f.id, f.depth + 1});
+        }
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeUnit(const QByteArray& responseCbor, DecodedUnitNode* out, bool* found) {
+    if (out == nullptr || found == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_unit_m_c) {
+        return false;
+    }
+    const response_unit& u = response->api_response_response_unit_m;
+    *found = u.response_unit_Unit_choice == response_unit::response_unit_Unit_unit_node_m_c;
+    if (*found) {
+        *out = decodeUnitNodeStruct(u.response_unit_Unit_unit_node_m);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeFleetReport(const QByteArray& responseCbor, DecodedFleetReport* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_fleet_m_c) {
+        return false;
+    }
+    const fleet_report& fr = response->api_response_response_fleet_m.response_fleet_Fleet;
+    out->children.clear();
+    for (size_t i = 0; i < fr.fleet_report_children_unit_id_m_count; ++i) {
+        out->children << fromZcbor(fr.fleet_report_children_unit_id_m[i]);
+    }
     return true;
 }
 
