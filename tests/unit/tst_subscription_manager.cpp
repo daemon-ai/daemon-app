@@ -16,6 +16,7 @@ using daemonapp::daemon::CachedSessionStore;
 using daemonapp::daemon::CachedTranscriptBlockRow;
 using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::DaemonTransport;
+using daemonapp::daemon::FleetRepository;
 using daemonapp::daemon::ModelRepository;
 using daemonapp::daemon::NodeApiClient;
 using daemonapp::daemon::SessionRepository;
@@ -95,7 +96,7 @@ private slots:
         SessionRepository sessions(&client, &cache);
         ApprovalRepository approvals(&client, &cache);
         ModelRepository models(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, nullptr, &cache);
 
         mgr.start();
         QTRY_VERIFY_WITH_TIMEOUT(fake.openCount() == 1 && fake.lastOpenId() != 0, 3000);
@@ -113,7 +114,7 @@ private slots:
         SessionRepository sessions(&client, &cache);
         ApprovalRepository approvals(&client, &cache);
         ModelRepository models(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, nullptr, &cache);
 
         mgr.start();
         QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
@@ -137,7 +138,7 @@ private slots:
         SessionRepository sessions(&client, &cache);
         ApprovalRepository approvals(&client, &cache);
         ModelRepository models(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, nullptr, &cache);
 
         mgr.start();
         QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
@@ -146,6 +147,31 @@ private slots:
         fake.pushItem(
             daemonapp::test::buildEventsPage({daemonapp::test::neRosterChanged(7)}, 1, 1));
         // Debounced (~300ms) SessionsQuery one-shot Call.
+        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 4000);
+    }
+
+    // FleetChanged from the feed triggers a debounced FleetRepository::refreshTree() -> a Tree
+    // query crosses the wire, so an open FleetPage updates live (Stream B).
+    void fleetChangedRefetchesTree() {
+        const QString path = sock(QStringLiteral("fleet.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(path), "listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(dbPath(QStringLiteral("cf.db")));
+        SessionRepository sessions(&client, &cache);
+        ApprovalRepository approvals(&client, &cache);
+        ModelRepository models(&client, &cache);
+        FleetRepository fleet(&client, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &fleet, &cache);
+
+        mgr.start();
+        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
+        const int callsBefore = fake.requestCount();
+
+        fake.pushItem(daemonapp::test::buildEventsPage({daemonapp::test::neFleetChanged(3)}, 1, 1));
+        // Debounced (~300ms) -> a Tree one-shot Call crosses the wire (refetch the subagent tree).
         QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 4000);
     }
 
@@ -162,7 +188,7 @@ private slots:
         SessionRepository sessions(&client, &cache);
         ApprovalRepository approvals(&client, &cache);
         ModelRepository models(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, nullptr, &cache);
         FakeEngine engine;
         mgr.registerFocus(QStringLiteral("s-focused"), &engine);
 
@@ -190,7 +216,7 @@ private slots:
         SessionRepository sessions(&client, &cache);
         ApprovalRepository approvals(&client, &cache);
         ModelRepository models(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, nullptr, &cache);
         QSignalSpy resync(&mgr, &SubscriptionManager::resyncNeeded);
 
         mgr.start();
@@ -298,7 +324,7 @@ private slots:
         SessionRepository sessions(&client, &cache);
         ApprovalRepository approvals(&client, &cache);
         ModelRepository models(&client, &cache);
-        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, nullptr, &cache);
 
         // The engine self-registers its bound session with the manager.
         DaemonTurnEngine engine(&client, &cache, &mgr);

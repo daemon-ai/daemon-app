@@ -471,6 +471,7 @@ static bool encode_response_log_page(zcbor_state_t *state, const struct response
 static bool encode_node_event_session_advanced(zcbor_state_t *state, const struct node_event_session_advanced *input);
 static bool encode_node_event_session_meta_changed(zcbor_state_t *state, const struct node_event_session_meta_changed *input);
 static bool encode_node_event_roster_changed(zcbor_state_t *state, const struct node_event_roster_changed *input);
+static bool encode_node_event_fleet_changed(zcbor_state_t *state, const struct node_event_fleet_changed *input);
 static bool encode_node_event_approval_pending(zcbor_state_t *state, const struct node_event_approval_pending *input);
 static bool encode_node_event_download_progress(zcbor_state_t *state, const struct node_event_download_progress *input);
 static bool encode_node_event_resync_needed(zcbor_state_t *state, const struct node_event_resync_needed *input);
@@ -7545,6 +7546,20 @@ static bool encode_node_event_roster_changed(
 	return res;
 }
 
+static bool encode_node_event_fleet_changed(
+		zcbor_state_t *state, const struct node_event_fleet_changed *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"FleetChanged", tmp_str.len = sizeof("FleetChanged") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"rev", tmp_str.len = sizeof("rev") - 1, &tmp_str)))))
+	&& (zcbor_uint32_encode(state, (&(*input).FleetChanged_rev))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_node_event_approval_pending(
 		zcbor_state_t *state, const struct node_event_approval_pending *input)
 {
@@ -7601,10 +7616,11 @@ static bool encode_node_event(
 	bool res = (((((*input).node_event_choice == node_event_session_advanced_m_c) ? ((encode_node_event_session_advanced(state, (&(*input).node_event_session_advanced_m))))
 	: (((*input).node_event_choice == node_event_session_meta_changed_m_c) ? ((encode_node_event_session_meta_changed(state, (&(*input).node_event_session_meta_changed_m))))
 	: (((*input).node_event_choice == node_event_roster_changed_m_c) ? ((encode_node_event_roster_changed(state, (&(*input).node_event_roster_changed_m))))
+	: (((*input).node_event_choice == node_event_fleet_changed_m_c) ? ((encode_node_event_fleet_changed(state, (&(*input).node_event_fleet_changed_m))))
 	: (((*input).node_event_choice == node_event_approval_pending_m_c) ? ((encode_node_event_approval_pending(state, (&(*input).node_event_approval_pending_m))))
 	: (((*input).node_event_choice == node_event_download_progress_m_c) ? ((encode_node_event_download_progress(state, (&(*input).node_event_download_progress_m))))
 	: (((*input).node_event_choice == node_event_resync_needed_m_c) ? ((encode_node_event_resync_needed(state, (&(*input).node_event_resync_needed_m))))
-	: false))))))));
+	: false)))))))));
 
 	log_result(state, res, __func__);
 	return res;

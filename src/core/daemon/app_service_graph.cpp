@@ -129,24 +129,26 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // PRO-11: pending-approvals inbox backed by the ApprovalRepository (ApprovalsPending poll
         // on ready + ApprovalDecide), replacing the mock fleet inbox.
         graph.approvals = new DaemonApprovalsInbox(graph.approvalRepository, owner);
+        // Daemon-backed, offline-first fleet/subagent tree (PRO-9/10): replace the mock fleet tree
+        // with one projected from the cached Tree query. The mock built above is parented to
+        // `owner`; drop it for the daemon one. Built before the SubscriptionManager so the feed can
+        // route FleetChanged -> a live Tree refetch.
+        graph.fleetRepository = new FleetRepository(graph.nodeApi, graph.cache, owner);
+        delete graph.fleetTree;
+        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, owner);
         // L3 node-wide event feed (daemon-sync-protocol §5): one EventsSince stream that routes
-        // out-of-focus changes (roster/meta -> debounced roster refetch, approvals -> badge,
-        // downloads -> models, session-advanced -> focused-engine nudge, resync -> baseline) so the
-        // client stops polling and stops full-refetching on every change.
+        // out-of-focus changes (roster/meta -> debounced roster refetch, fleet -> debounced Tree
+        // refetch, approvals -> badge, downloads -> models, session-advanced -> focused-engine
+        // nudge, resync -> baseline) so the client stops polling and stops full-refetching on every
+        // change.
         graph.subscriptions =
             new SubscriptionManager(graph.nodeApi, graph.sessions, graph.approvalRepository,
-                                    graph.models, graph.cache, owner);
+                                    graph.models, graph.fleetRepository, graph.cache, owner);
         // Daemon-backed filesystem: replace the dev local-disk seam over the NodeApi fs_* ops - the
         // only path that reaches a remote/embedded host's workspace. The common LocalDiskFsService
         // built above is parented to `owner`; drop it for the daemon one.
         delete graph.fs;
         graph.fs = new fs::DaemonFsService(graph.nodeApi, graph.cache, owner);
-        // Daemon-backed, offline-first fleet/subagent tree (PRO-9/10): replace the mock fleet tree
-        // with one projected from the cached Tree query. The mock built above is parented to
-        // `owner`; drop it for the daemon one.
-        graph.fleetRepository = new FleetRepository(graph.nodeApi, graph.cache, owner);
-        delete graph.fleetTree;
-        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, owner);
         // Daemon-backed, offline-first roster + dashboard: project the live cache/fleet/approvals
         // seams (the SessionsPage roster + the dashboard counters were the last DaemonNet-backed
         // surfaces still on the mock). The mocks built above are parented to `owner`; drop them.

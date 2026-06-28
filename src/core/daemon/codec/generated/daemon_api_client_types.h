@@ -3617,6 +3617,10 @@ struct node_event_roster_changed {
 	uint32_t RosterChanged_rev;
 };
 
+struct node_event_fleet_changed {
+	uint32_t FleetChanged_rev;
+};
+
 struct node_event_approval_pending {
 	struct zcbor_string ApprovalPending_session;
 	struct zcbor_string ApprovalPending_request_id;
@@ -3637,6 +3641,7 @@ struct node_event_r {
 		struct node_event_session_advanced node_event_session_advanced_m;
 		struct node_event_session_meta_changed node_event_session_meta_changed_m;
 		struct node_event_roster_changed node_event_roster_changed_m;
+		struct node_event_fleet_changed node_event_fleet_changed_m;
 		struct node_event_approval_pending node_event_approval_pending_m;
 		struct node_event_download_progress node_event_download_progress_m;
 		struct node_event_resync_needed node_event_resync_needed_m;
@@ -3645,6 +3650,7 @@ struct node_event_r {
 		node_event_session_advanced_m_c,
 		node_event_session_meta_changed_m_c,
 		node_event_roster_changed_m_c,
+		node_event_fleet_changed_m_c,
 		node_event_approval_pending_m_c,
 		node_event_download_progress_m_c,
 		node_event_resync_needed_m_c,

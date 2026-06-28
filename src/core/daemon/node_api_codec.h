@@ -410,6 +410,7 @@ struct DecodedNodeEvent {
         SessionAdvanced,
         SessionMetaChanged,
         RosterChanged,
+        FleetChanged,
         ApprovalPending,
         DownloadProgress,
         ResyncNeeded
@@ -417,7 +418,7 @@ struct DecodedNodeEvent {
     QString session;        // SessionAdvanced / SessionMetaChanged / ApprovalPending
     quint64 epoch = 0;      // SessionAdvanced
     quint64 headSeq = 0;    // SessionAdvanced
-    quint64 rev = 0;        // SessionMetaChanged / RosterChanged
+    quint64 rev = 0;        // SessionMetaChanged / RosterChanged / FleetChanged
     QString requestId;      // ApprovalPending
     quint64 downloadId = 0; // DownloadProgress
     quint32 pct = 0;        // DownloadProgress

@@ -2113,6 +2113,10 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
             decoded.kind = DecodedNodeEvent::Kind::RosterChanged;
             decoded.rev = ev.node_event_roster_changed_m.RosterChanged_rev;
             break;
+        case node_event_r::node_event_fleet_changed_m_c:
+            decoded.kind = DecodedNodeEvent::Kind::FleetChanged;
+            decoded.rev = ev.node_event_fleet_changed_m.FleetChanged_rev;
+            break;
         case node_event_r::node_event_approval_pending_m_c: {
             const node_event_approval_pending& m = ev.node_event_approval_pending_m;
             decoded.kind = DecodedNodeEvent::Kind::ApprovalPending;
