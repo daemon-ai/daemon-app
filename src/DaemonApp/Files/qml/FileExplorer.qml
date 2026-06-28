@@ -23,6 +23,7 @@ Rectangle {
     signal collapseRequested()
 
     function openFinder() { finder.visible = true; finder.focusInput(); }
+    function openSearch() { search.visible = true; search.focusInput(); }
 
     color: Theme.sidebar
 
@@ -77,13 +78,24 @@ Rectangle {
                 Kit.IconButton {
                     implicitWidth: 24
                     implicitHeight: 24
-                    icon: FontIcons.fa_magnifying_glass
+                    icon: FontIcons.fa_file
                     iconColor: Theme.iconMuted
                     iconPointSize: 11
                     backgroundRadius: width / 2
                     visible: !root.selectDirs
                     tooltipText: qsTr("Go to file (Ctrl+P)")
                     onClicked: root.openFinder()
+                }
+                Kit.IconButton {
+                    implicitWidth: 24
+                    implicitHeight: 24
+                    icon: FontIcons.fa_magnifying_glass
+                    iconColor: Theme.iconMuted
+                    iconPointSize: 11
+                    backgroundRadius: width / 2
+                    visible: !root.selectDirs
+                    tooltipText: qsTr("Search in files")
+                    onClicked: root.openSearch()
                 }
                 Kit.IconButton {
                     implicitWidth: 24
@@ -137,6 +149,35 @@ Rectangle {
                 root.fileOpened(rootId, path);
             }
             onDismissed: finder.visible = false
+        }
+    }
+
+    // --- Search-in-files overlay ------------------------------------------
+    Rectangle {
+        id: search
+        visible: false
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: 6
+        height: Math.min(parent.height - 12, 420)
+        color: Theme.background
+        border.color: Theme.border
+        border.width: 1
+        radius: Theme.radius
+
+        function focusInput() { searchPanel.focusInput(); }
+
+        SearchResults {
+            id: searchPanel
+            anchors.fill: parent
+            anchors.margins: 8
+            // A hit opens the file (a pinned tab); line-jump on open is a follow-up.
+            onHitChosen: (rootId, path, line, column) => {
+                search.visible = false;
+                root.fileOpened(rootId, path);
+            }
+            onDismissed: search.visible = false
         }
     }
 }

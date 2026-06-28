@@ -353,6 +353,96 @@ QString Application::runHeadlessModels(const QString& query, const QString& repo
         .arg(catalog, downloads, search, files, download);
 }
 
+QString Application::runHeadlessFs(int timeoutMs) {
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return {};
+    }
+    settle(600); // let the on-ready auto-refreshes (incl. the first listRoots) drain first
+    fs::IFsService* fs = m_services.fs;
+    if (fs == nullptr) {
+        return {};
+    }
+    const int perProbe = qMax(2500, timeoutMs / 5);
+    const auto runLoop = [&](const QMetaObject::Connection& c,
+                             const std::function<void()>& trigger) {
+        QEventLoop loop;
+        m_fsLoop = &loop;
+        QTimer::singleShot(perProbe, &loop, &QEventLoop::quit);
+        trigger();
+        loop.exec();
+        m_fsLoop = nullptr;
+        disconnect(c);
+    };
+
+    // listRoots -> rootsChanged (re-issue to be deterministic; capture the first root id).
+    QString rootId;
+    qsizetype rootCount = 0;
+    runLoop(connect(fs, &fs::IFsService::rootsChanged, this,
+                    [&](const QList<fs::FsRoot>& roots) {
+                        rootCount = roots.size();
+                        // Prefer the writable workspace root (Host browse roots are read-only, so a
+                        // write probe there would fail); fall back to the first listed root.
+                        for (const fs::FsRoot& r : roots) {
+                            if (r.id == QStringLiteral("workspace")) {
+                                rootId = r.id;
+                                break;
+                            }
+                        }
+                        if (rootId.isEmpty() && !roots.isEmpty()) {
+                            rootId = roots.first().id;
+                        }
+                        if (m_fsLoop != nullptr) {
+                            m_fsLoop->quit();
+                        }
+                    }),
+            [&] { fs->listRoots(); });
+    if (rootId.isEmpty()) {
+        return QStringLiteral("roots=0");
+    }
+
+    // open(root, "") -> listed.
+    qsizetype listCount = 0;
+    runLoop(connect(fs, &fs::IFsService::listed, this,
+                    [&](const QString&, const QString&, const QList<fs::FsEntry>& entries) {
+                        listCount = entries.size();
+                        if (m_fsLoop != nullptr) {
+                            m_fsLoop->quit();
+                        }
+                    }),
+            [&] { fs->open(rootId, QString()); });
+
+    // write a probe file -> writeResult.
+    const QString probePath = QStringLiteral("daemon-app-e2e-probe.txt");
+    const QByteArray content = QByteArrayLiteral("offline-first fs probe\n");
+    bool wrote = false;
+    runLoop(connect(fs, &fs::IFsService::writeResult, this,
+                    [&](const QString&, const QString&, bool ok, const QString&, const QString&) {
+                        wrote = ok;
+                        if (m_fsLoop != nullptr) {
+                            m_fsLoop->quit();
+                        }
+                    }),
+            [&] { fs->write(rootId, probePath, content, QString(), false); });
+
+    // read it back -> fileRead.
+    QByteArray readBack;
+    runLoop(connect(fs, &fs::IFsService::fileRead, this,
+                    [&](const QString&, const QString&, const QByteArray& bytes, const QString&,
+                        bool, bool) {
+                        readBack = bytes;
+                        if (m_fsLoop != nullptr) {
+                            m_fsLoop->quit();
+                        }
+                    }),
+            [&] { fs->read(rootId, probePath); });
+
+    return QStringLiteral("roots=%1 root=%2 list=%3 write=%4 read=%5")
+        .arg(QString::number(rootCount), rootId, QString::number(listCount),
+             wrote ? QStringLiteral("ok") : QStringLiteral("err"),
+             readBack == content ? QStringLiteral("ok") : QStringLiteral("mismatch"));
+}
+
 namespace {
 // Send one request over the client and block (bounded) until its correlated response arrives,
 // returning the response CBOR (empty on timeout). Used by the CHA-7/8 headless harness hooks to

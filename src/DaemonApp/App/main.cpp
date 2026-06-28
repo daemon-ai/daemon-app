@@ -367,6 +367,20 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // Headless filesystem self-check (Phase 4 fs seam): connect, then drive the daemon-backed
+    // IFsService over the wire (listRoots -> open -> write a probe file -> read it back) and emit a
+    // summary so the E2E harness can assert FsRoots/FsList/FsWrite/FsRead crossed the socket
+    // against the real daemon WorkspaceFs. Gated on DAEMON_APP_FS_PROBE.
+    const QByteArray fsProbe = qgetenv("DAEMON_APP_FS_PROBE");
+    if (!fsProbe.isEmpty()) {
+        const QByteArray waitMs = qgetenv("DAEMON_APP_WAIT_READY");
+        const int timeoutMs = waitMs.toInt() > 0 ? waitMs.toInt() : 30000;
+        const QString out = application.runHeadlessFs(timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_FS %s\n", out.toUtf8().constData());
+        std::fflush(stdout);
+        return out.isEmpty() ? 2 : 0;
+    }
+
     // Headless connectivity self-check for the cross-repo E2E harness: block until the daemon-mode
     // auto-connect Health round-trip resolves (or times out), emit a stable sentinel on stdout, and
     // exit deterministically. Keeps the harness from racing the async connect.

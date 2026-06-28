@@ -73,9 +73,11 @@ bool DaemonCacheStore::ensureSchema() {
 }
 
 bool DaemonCacheStore::createDataTables() {
-    return execSql(cache::kCreateSessionsSql) && execSql(cache::kCreateSessionLogSql) &&
-           execSql(cache::kCreateSyncCursorsSql) && execSql(cache::kCreateProfilesSql) &&
-           execSql(cache::kCreateApprovalsSql) && execSql(cache::kCreateFsEntriesSql) &&
+    // daemon_session_log + daemon_approvals are retired (Phase 4 closeout): the transcript caches
+    // in daemon_transcript_blocks and pending approvals are transient/live. dropDataTables still
+    // drops them so a stale v2 DB is cleaned on the version bump.
+    return execSql(cache::kCreateSessionsSql) && execSql(cache::kCreateSyncCursorsSql) &&
+           execSql(cache::kCreateProfilesSql) && execSql(cache::kCreateFsEntriesSql) &&
            execSql(cache::kCreateTranscriptBlocksSql);
 }
 
@@ -195,61 +197,6 @@ bool DaemonCacheStore::deleteSession(const QString& sessionId) {
     return true;
 }
 
-bool DaemonCacheStore::appendSessionLog(const CachedLogRow& row) {
-    QSqlQuery q(QSqlDatabase::database(m_connectionName));
-    q.prepare(QStringLiteral(
-        "INSERT INTO "
-        "daemon_session_log(session_id,seq,payload_cbor,direction,disposition,updated_at_ms) "
-        "VALUES(?,?,?,?,?,?) "
-        "ON CONFLICT(session_id,seq) DO UPDATE SET "
-        "payload_cbor=excluded.payload_cbor,direction=excluded.direction,"
-        "disposition=excluded.disposition,updated_at_ms=excluded.updated_at_ms"));
-    q.addBindValue(row.sessionId);
-    q.addBindValue(QVariant::fromValue<qulonglong>(row.seq));
-    q.addBindValue(row.payloadCbor);
-    q.addBindValue(row.direction);
-    q.addBindValue(row.disposition);
-    q.addBindValue(row.updatedAtMs);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
-}
-
-QList<CachedLogRow> DaemonCacheStore::sessionLog(const QString& sessionId, quint64 afterSeq,
-                                                 int limit) const {
-    QList<CachedLogRow> rows;
-    QString sql =
-        QStringLiteral("SELECT session_id,seq,payload_cbor,direction,disposition,updated_at_ms "
-                       "FROM daemon_session_log WHERE session_id=? AND seq>? ORDER BY seq ASC");
-    if (limit > 0) {
-        sql += QStringLiteral(" LIMIT ?");
-    }
-    QSqlQuery q(QSqlDatabase::database(m_connectionName));
-    q.prepare(sql);
-    q.addBindValue(sessionId);
-    q.addBindValue(QVariant::fromValue<qulonglong>(afterSeq));
-    if (limit > 0) {
-        q.addBindValue(limit);
-    }
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return rows;
-    }
-    while (q.next()) {
-        CachedLogRow row;
-        row.sessionId = q.value(0).toString();
-        row.seq = q.value(1).toULongLong();
-        row.payloadCbor = q.value(2).toByteArray();
-        row.direction = q.value(3).toString();
-        row.disposition = q.value(4).toString();
-        row.updatedAtMs = q.value(5).toLongLong();
-        rows.append(row);
-    }
-    return rows;
-}
-
 bool DaemonCacheStore::setCursor(const QString& scope, const QString& cursor, qint64 updatedAtMs) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(
@@ -275,46 +222,6 @@ QString DaemonCacheStore::cursor(const QString& scope) const {
         return {};
     }
     return q.next() ? q.value(0).toString() : QString();
-}
-
-bool DaemonCacheStore::upsertApproval(const CachedApprovalRow& row) {
-    QSqlQuery q(QSqlDatabase::database(m_connectionName));
-    q.prepare(QStringLiteral(
-        "INSERT INTO daemon_approvals(session_id,request_id,prompt,path,updated_at_ms) "
-        "VALUES(?,?,?,?,?) "
-        "ON CONFLICT(session_id,request_id) DO UPDATE SET "
-        "prompt=excluded.prompt,path=excluded.path,updated_at_ms=excluded.updated_at_ms"));
-    q.addBindValue(row.sessionId);
-    q.addBindValue(row.requestId);
-    q.addBindValue(row.prompt);
-    q.addBindValue(row.path);
-    q.addBindValue(row.updatedAtMs);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
-}
-
-QList<CachedApprovalRow> DaemonCacheStore::approvals() const {
-    QList<CachedApprovalRow> rows;
-    QSqlQuery q(QSqlDatabase::database(m_connectionName));
-    if (!q.exec(QStringLiteral(
-            "SELECT session_id,request_id,prompt,path,updated_at_ms FROM daemon_approvals "
-            "ORDER BY updated_at_ms DESC"))) {
-        setLastError(q.lastError().text());
-        return rows;
-    }
-    while (q.next()) {
-        CachedApprovalRow row;
-        row.sessionId = q.value(0).toString();
-        row.requestId = q.value(1).toString();
-        row.prompt = q.value(2).toString();
-        row.path = q.value(3).toString();
-        row.updatedAtMs = q.value(4).toLongLong();
-        rows.append(row);
-    }
-    return rows;
 }
 
 bool DaemonCacheStore::upsertFsEntry(const CachedFsEntryRow& row) {
@@ -405,6 +312,17 @@ QList<CachedProfileRow> DaemonCacheStore::profiles() const {
     return rows;
 }
 
+bool DaemonCacheStore::deleteProfile(const QString& profileRef) {
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral("DELETE FROM daemon_profiles WHERE profile_ref=?"));
+    q.addBindValue(profileRef);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
+}
+
 bool DaemonCacheStore::upsertTranscriptBlock(const CachedTranscriptBlockRow& row) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral(
@@ -481,6 +399,23 @@ bool DaemonCacheStore::clearTranscript(const QString& sessionId) {
         return false;
     }
     return true;
+}
+
+QHash<QString, QString> DaemonCacheStore::latestTranscriptSnippets() const {
+    QHash<QString, QString> out;
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    // GROUP BY with MAX(seq) picks the highest-seq row per session (SQLite bare-column rule), so
+    // `text` is the latest message's text - one query for the whole roster.
+    if (!q.exec(QStringLiteral("SELECT session_id,text,MAX(seq) FROM daemon_transcript_blocks "
+                               "WHERE kind='Message' AND text IS NOT NULL AND text<>'' "
+                               "GROUP BY session_id"))) {
+        setLastError(q.lastError().text());
+        return out;
+    }
+    while (q.next()) {
+        out.insert(q.value(0).toString(), q.value(1).toString());
+    }
+    return out;
 }
 
 } // namespace daemonapp::daemon

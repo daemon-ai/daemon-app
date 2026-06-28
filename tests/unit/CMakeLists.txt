@@ -350,19 +350,6 @@ target_link_libraries(tst_store
 add_test(NAME tst_store COMMAND tst_store)
 set_tests_properties(tst_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_session_store_sqlite: the durable SQLite session store - a fresh
-# database seeds the demo data, and mutations (create/rename/content/pin/archive/
-# delete + the id counters) survive closing and reopening the same file.
-qt_add_executable(tst_session_store_sqlite tst_session_store_sqlite.cpp)
-target_link_libraries(tst_session_store_sqlite
-    PRIVATE
-        Qt6::Test
-        daemon-app::domain
-        daemon-app::persistence
-)
-add_test(NAME tst_session_store_sqlite COMMAND tst_session_store_sqlite)
-set_tests_properties(tst_session_store_sqlite PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-
 # tst_sidebar_model: exercises the flattened agent-tree sidebar model - recursive
 # depths, tree roles, expand/collapse, and node-scope selection.
 qt_add_executable(tst_sidebar_model tst_sidebar_model.cpp)

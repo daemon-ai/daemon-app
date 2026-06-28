@@ -4,10 +4,13 @@
 
 namespace daemonapp::daemon::cache {
 
-// v2 (L3): adds daemon_transcript_blocks (render-from-cache transcript) + the per-session resync
-// cursor scopes. The cache is non-authoritative, so the bump just drops + rebuilds (the daemon
-// re-baselines it).
-inline constexpr int kSchemaVersion = 2;
+// v3 (Phase 4 closeout): retires the dead daemon_session_log + transient daemon_approvals tables
+// (the transcript caches in daemon_transcript_blocks; pending approvals are live). daemon_profiles
+// becomes live (offline-first read). The cache is non-authoritative, so the bump just drops +
+// rebuilds (the daemon re-baselines it).
+// v2 (L3): added daemon_transcript_blocks (render-from-cache transcript) + per-session resync
+// cursors.
+inline constexpr int kSchemaVersion = 3;
 
 inline constexpr const char* kCreateMetaSql = R"sql(
 CREATE TABLE IF NOT EXISTS daemon_cache_meta (
@@ -31,18 +34,6 @@ CREATE TABLE IF NOT EXISTS daemon_sessions (
 );
 )sql";
 
-inline constexpr const char* kCreateSessionLogSql = R"sql(
-CREATE TABLE IF NOT EXISTS daemon_session_log (
-  session_id TEXT NOT NULL,
-  seq INTEGER NOT NULL,
-  payload_cbor BLOB NOT NULL,
-  direction TEXT NOT NULL,
-  disposition TEXT NOT NULL,
-  updated_at_ms INTEGER NOT NULL,
-  PRIMARY KEY (session_id, seq)
-);
-)sql";
-
 inline constexpr const char* kCreateSyncCursorsSql = R"sql(
 CREATE TABLE IF NOT EXISTS daemon_sync_cursors (
   scope TEXT PRIMARY KEY,
@@ -58,17 +49,6 @@ CREATE TABLE IF NOT EXISTS daemon_profiles (
   spec_cbor BLOB NOT NULL,
   active INTEGER NOT NULL DEFAULT 0,
   updated_at_ms INTEGER NOT NULL
-);
-)sql";
-
-inline constexpr const char* kCreateApprovalsSql = R"sql(
-CREATE TABLE IF NOT EXISTS daemon_approvals (
-  session_id TEXT NOT NULL,
-  request_id TEXT NOT NULL,
-  prompt TEXT NOT NULL,
-  path TEXT,
-  updated_at_ms INTEGER NOT NULL,
-  PRIMARY KEY (session_id, request_id)
 );
 )sql";
 
@@ -109,17 +89,13 @@ CREATE TABLE IF NOT EXISTS daemon_transcript_blocks (
 )sql";
 
 // Cursor-scope key builders for the per-session resync coordinates persisted in
-// daemon_sync_cursors: the applied (epoch, watermark) and the durable journal cursor. The node-wide
-// feed cursor uses the fixed scope "events-since". Keeping these as cursor rows reuses the existing
-// setCursor/cursor API.
+// daemon_sync_cursors: the applied (epoch, watermark). The node-wide feed cursor uses the fixed
+// scope "events-since". Keeping these as cursor rows reuses the existing setCursor/cursor API.
 inline QString sessionWatermarkScope(const QString& sessionId) {
     return QStringLiteral("session:%1:watermark").arg(sessionId);
 }
 inline QString sessionEpochScope(const QString& sessionId) {
     return QStringLiteral("session:%1:epoch").arg(sessionId);
-}
-inline QString sessionJournalScope(const QString& sessionId) {
-    return QStringLiteral("session:%1:journal").arg(sessionId);
 }
 inline constexpr const char* kEventsSinceScope = "events-since";
 

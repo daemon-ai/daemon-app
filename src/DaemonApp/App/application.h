@@ -6,6 +6,7 @@
 
 QT_BEGIN_NAMESPACE
 class QEvent;
+class QEventLoop;
 class QQmlApplicationEngine;
 class QQuickWindow;
 QT_END_NAMESPACE
@@ -145,6 +146,13 @@ public:
     // session ids (newline-joined). Empty on connect failure / no hits.
     [[nodiscard]] QString runHeadlessSearch(const QString& query, int timeoutMs);
 
+    // Headless E2E hook (Phase 4 fs seam): connect, then drive the daemon-backed IFsService over
+    // the wire - listRoots -> open(root) -> write a probe file -> read it back - and return a
+    // summary
+    // ("roots=.. root=.. list=.. write=ok read=ok"). Proves the FsRoots/FsList/FsWrite/FsRead path
+    // round-trips against the real daemon WorkspaceFs. Empty on connect failure.
+    [[nodiscard]] QString runHeadlessFs(int timeoutMs);
+
     // Headless E2E hook (CHA-4 / CHA-5 HITL): connect, drive one real turn that parks on a host
     // gate (the scripted provider's tool call), auto-resolve the gate per `decision`
     // ("approve"|"deny"|"choice"|"input:<text>"), and return the streamed assistant text. Proves
@@ -172,6 +180,10 @@ private:
     // Run the event loop for `ms` (a bounded settle so queued NodeApi requests + their responses
     // flush before a headless harness exits). Used only by the headless onboarding hook.
     void settle(int ms) const;
+
+    // The active per-probe event loop for runHeadlessFs (so its IFsService signal handlers, which
+    // are connected before the loop is constructed, can quit it). Null outside that hook.
+    QEventLoop* m_fsLoop = nullptr;
 
     // Shared GUI/TUI service graph (session store, connection, fs, memory, nav, first-run,
     // config, models, accounts, profiles, fleet, automation, session facades). Read members

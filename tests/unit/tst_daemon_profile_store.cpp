@@ -1,9 +1,11 @@
+#include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_profile_store.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_client.h"
 #include "daemon/repositories.h"
 #include "uimodels/variant_list_model.h"
 
+#include <QTemporaryDir>
 #include <QtTest/QtTest>
 
 using daemonapp::daemon::NodeApiClient;
@@ -55,6 +57,40 @@ private slots:
         auto* model = qobject_cast<uimodels::VariantListModel*>(store.profiles());
         QVERIFY(model != nullptr);
         QCOMPARE(model->count(), 0); // empty until a ProfileList round-trips
+    }
+
+    // Offline-first: a profile persisted to the cache (as a prior online session would have, via
+    // ProfileGet) renders in the Profiles UI with NO daemon connection - the store seeds from the
+    // cache in its ctor. This is the offline-read guarantee for agents.
+    void rendersCachedProfilesOffline() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("profiles.db")));
+        QVERIFY(cache.isOpen());
+
+        daemonapp::daemon::CachedProfileRow row;
+        row.profileRef = QStringLiteral("work");
+        row.displayName = QStringLiteral("work");
+        // spec_cbor is the raw ProfileGet response in production; a CBOR null here is enough to
+        // exercise the offline-seed path (the row still renders id + active; decode is
+        // best-effort).
+        row.specCbor = QByteArrayLiteral("\xF6");
+        row.active = true;
+        row.updatedAtMs = 1;
+        QVERIFY(cache.upsertProfile(row));
+
+        // An unconnected client (no daemon): the store must still render the cached agent.
+        daemonapp::daemon::DaemonTransport transport;
+        NodeApiClient client(&transport);
+        ProfileRepository repo(&client, &cache);
+        DaemonProfileStore store(&repo);
+
+        auto* model = qobject_cast<uimodels::VariantListModel*>(store.profiles());
+        QVERIFY(model != nullptr);
+        QCOMPARE(model->count(), 1);
+        const int idx = model->indexOfId(QStringLiteral("work"));
+        QVERIFY(idx >= 0);
+        QVERIFY(model->at(idx).value(QStringLiteral("isDefault")).toBool());
     }
 };
 

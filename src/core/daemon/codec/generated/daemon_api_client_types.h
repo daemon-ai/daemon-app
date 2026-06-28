@@ -2257,8 +2257,8 @@ struct request_fs_read {
 };
 
 struct fs_revision {
-	uint32_t fs_revision_mtime_ms;
-	uint32_t fs_revision_size;
+	uint64_t fs_revision_mtime_ms;
+	uint64_t fs_revision_size;
 };
 
 struct FsWrite_base_revision_r {
@@ -5015,8 +5015,8 @@ struct fs_entry {
 	struct zcbor_string fs_entry_name;
 	struct zcbor_string fs_entry_path;
 	struct fs_entry_kind_t_r fs_entry_kind;
-	uint32_t fs_entry_size;
-	uint32_t fs_entry_mtime_ms;
+	uint64_t fs_entry_size;
+	uint64_t fs_entry_mtime_ms;
 	struct fs_entry_ignored fs_entry_ignored;
 	bool fs_entry_ignored_present;
 };

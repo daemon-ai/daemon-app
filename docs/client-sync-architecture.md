@@ -169,26 +169,34 @@ mid-stream session (let alone several at once) has no defined load path in the c
 
 ---
 
-## 7. Durable `SyncCache` — wire up the dormant cache
+## 7. Durable `SyncCache` — offline-first read (wired)
 
-[`client_cache_schema.h`](../src/core/daemon/client_cache_schema.h) defines `daemon_sessions`,
-`daemon_transcript_blocks`, `daemon_sync_cursors`, `daemon_fs_entries`, and others. As of L3/L4 + Phase 4
-the live tables are wired: the **transcript is cached** as coalesced `daemon_transcript_blocks` and
-[`CachedSessionStore::content()`](../src/core/daemon/cached_session_store.cpp) renders from it; the
-roster (`daemon_sessions`), the resync cursors (`roster-rev`, `events-since`, per-session
-`watermark`/`epoch`), and the fs tree (`daemon_fs_entries`, via `DaemonFsService`) are all live. The
-legacy `daemon_session_log` + `SessionRepository::subscribe()` live-log pull path is dead (the turn
-engine streams via the mux `Open` + the transcript cache) and is slated for removal. Target:
+[`client_cache_schema.h`](../src/core/daemon/client_cache_schema.h) (schema **v3**) defines the live
+tables: `daemon_sessions`, `daemon_transcript_blocks`, `daemon_profiles`, `daemon_fs_entries`, and the
+generic `daemon_sync_cursors`. The client is **offline-first for reads**: agents, sessions, and
+transcripts render from this cache with no daemon connection.
 
-- **Persist per session:** the live `(epoch, seq)` watermark `W` and the durable `journal cursor` of
-  the last block rendered, plus the rendered transcript blocks keyed by journal cursor.
-- **Read on startup/refocus/reconnect:** load the cached transcript, then fetch only the journal delta
-  past the stored cursor — cold start and refocus avoid a full re-stream.
-- **Roster delta + prune:** store the roster `rev`; on reconnect query `SessionsQuery{since_rev}` and
-  apply `removed` (today removed sessions are never purged from
-  [`cached_session_store.cpp`](../src/core/daemon/cached_session_store.cpp)).
+- **Sessions roster** — `daemon_sessions` (delta-merged + pruned by `SessionRepository`);
+  [`CachedSessionStore`](../src/core/daemon/cached_session_store.cpp) reloads it in its ctor, so the
+  sidebar/list render at startup before any connect. A per-session latest-message snippet
+  (`latestTranscriptSnippets()`) backs the offline preview + content search.
+- **Transcript** — coalesced `daemon_transcript_blocks`; `CachedSessionStore::content()` projects it
+  and the turn engine renders without a live `Subscribe` (the stream resumes past the persisted
+  `(epoch, seq)` watermark when online).
+- **Profiles (agents)** — `daemon_profiles` is live (Phase 4 closeout): `ProfileRepository` persists
+  each profile on `ProfileGet` (raw spec bytes + active flag) and prunes deleted ones on a live
+  `ProfileList`; `DaemonProfileStore` seeds from it in its ctor so the Profiles UI shows last-known
+  agents offline.
+- **Resync cursors** — `roster-rev`, `events-since`, per-session `watermark`/`epoch` in
+  `daemon_sync_cursors`.
 
-Supersedes: write-only `daemon_sync_cursors`; stale-forever cached roster; no transcript cache.
+Retired in the Phase 4 closeout: the dead `daemon_session_log` + `SessionRepository::subscribe()`
+live-log pull path (the turn engine streams via the mux `Open` + the transcript cache); the transient
+`daemon_approvals` table (pending approvals are live via `ApprovalsPending` + the L3 `ApprovalPending`
+event); the unused `SqliteSessionStore`; and the write-only `sessions-query`/`session:journal`
+cursors. **Future:** offline **modify + resync** (a `daemon_outbox` of edits replayed on reconnect with
+a revision-conflict policy) and a cold-start journal-delta optimization (fetch only past the watermark
+rather than always re-baselining from seq 0).
 
 ---
 

@@ -2478,10 +2478,12 @@ QByteArray NodeApiCodec::encodeFsWriteRequest(const QString& rootId, const QStri
     if (rev.size() == 2) {
         w.FsWrite_base_revision.FsWrite_base_revision_choice =
             FsWrite_base_revision_r::FsWrite_base_revision_fs_revision_m_c;
+        // mtime_ms/size are u64 (ms epoch / file length); parse as 64-bit so a real etag is not
+        // truncated.
         w.FsWrite_base_revision.FsWrite_base_revision_fs_revision_m.fs_revision_mtime_ms =
-            rev[0].toUInt();
+            rev[0].toULongLong();
         w.FsWrite_base_revision.FsWrite_base_revision_fs_revision_m.fs_revision_size =
-            rev[1].toUInt();
+            rev[1].toULongLong();
     }
     w.FsWrite_force_present = force;
     if (force) {

@@ -38,15 +38,18 @@ private slots:
         QCOMPARE(decoded, QByteArray("abc", 3));
     }
 
-    void cacheSchemaUsesDaemonIdsAndStructuredLogs() {
+    void cacheSchemaUsesDaemonIdsAndStructuredBlocks() {
         QVERIFY(QString::fromUtf8(daemonapp::daemon::cache::kCreateSessionsSql)
                     .contains("session_id TEXT PRIMARY KEY"));
-        QVERIFY(QString::fromUtf8(daemonapp::daemon::cache::kCreateSessionLogSql)
-                    .contains("payload_cbor BLOB"));
         QVERIFY(QString::fromUtf8(daemonapp::daemon::cache::kCreateSyncCursorsSql)
                     .contains("cursor TEXT"));
-        QVERIFY(QString::fromUtf8(daemonapp::daemon::cache::kCreateApprovalsSql)
-                    .contains("request_id TEXT"));
+        // The transcript is cached as coalesced blocks (the retired
+        // daemon_session_log/daemon_approvals tables are gone; pending approvals are live, the
+        // transcript renders from these blocks).
+        QVERIFY(QString::fromUtf8(daemonapp::daemon::cache::kCreateTranscriptBlocksSql)
+                    .contains("daemon_transcript_blocks"));
+        QVERIFY(QString::fromUtf8(daemonapp::daemon::cache::kCreateProfilesSql)
+                    .contains("spec_cbor BLOB"));
     }
 
     void firstSliceIsOrderedForThinClientBootstrap() {
@@ -80,26 +83,10 @@ private slots:
         QCOMPARE(cache.sessions().size(), 1);
         QCOMPARE(cache.sessions().first().sessionId, QStringLiteral("s1"));
 
-        daemonapp::daemon::CachedLogRow log;
-        log.sessionId = QStringLiteral("s1");
-        log.seq = 7;
-        log.payloadCbor = QByteArray("\xA1", 1);
-        log.direction = QStringLiteral("Inbound");
-        log.disposition = QStringLiteral("Context");
-        log.updatedAtMs = 11;
-        QVERIFY(cache.appendSessionLog(log));
-        QCOMPARE(cache.sessionLog(QStringLiteral("s1")).first().payloadCbor, QByteArray("\xA1", 1));
-
-        QVERIFY(cache.setCursor(QStringLiteral("session-log/s1"), QStringLiteral("7"), 12));
-        QCOMPARE(cache.cursor(QStringLiteral("session-log/s1")), QStringLiteral("7"));
-
-        daemonapp::daemon::CachedApprovalRow approval;
-        approval.sessionId = QStringLiteral("s1");
-        approval.requestId = QStringLiteral("r1");
-        approval.prompt = QStringLiteral("Allow?");
-        approval.updatedAtMs = 13;
-        QVERIFY(cache.upsertApproval(approval));
-        QCOMPARE(cache.approvals().first().requestId, QStringLiteral("r1"));
+        // The generic cursor KV (used for the roster rev, per-session watermark/epoch,
+        // events-since).
+        QVERIFY(cache.setCursor(QStringLiteral("roster-rev"), QStringLiteral("7"), 12));
+        QCOMPARE(cache.cursor(QStringLiteral("roster-rev")), QStringLiteral("7"));
     }
 
     void repositoriesUseCache() {
@@ -114,8 +101,6 @@ private slots:
         row.updatedAtMs = 20;
         QVERIFY(sessions.upsertCachedSession(row));
         QCOMPARE(sessions.cachedSessions().first().sessionId, QStringLiteral("s2"));
-        QVERIFY(sessions.setLogCursor(QStringLiteral("s2"), 42));
-        QCOMPARE(sessions.logCursor(QStringLiteral("s2")), 42);
     }
 
     void domainSessionsCarryDaemonIds() {

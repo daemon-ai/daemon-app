@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QHash>
 #include <QList>
 #include <QObject>
 #include <QString>
@@ -26,14 +27,6 @@ struct CachedLogRow {
     QByteArray payloadCbor;
     QString direction;
     QString disposition;
-    qint64 updatedAtMs = 0;
-};
-
-struct CachedApprovalRow {
-    QString sessionId;
-    QString requestId;
-    QString prompt;
-    QString path;
     qint64 updatedAtMs = 0;
 };
 
@@ -92,21 +85,16 @@ public:
     // scope). Best-effort; a missing row is not an error.
     bool deleteSession(const QString& sessionId);
 
-    bool appendSessionLog(const CachedLogRow& row);
-    [[nodiscard]] QList<CachedLogRow> sessionLog(const QString& sessionId, quint64 afterSeq = 0,
-                                                 int limit = 0) const;
-
     bool setCursor(const QString& scope, const QString& cursor, qint64 updatedAtMs);
     [[nodiscard]] QString cursor(const QString& scope) const;
-
-    bool upsertApproval(const CachedApprovalRow& row);
-    [[nodiscard]] QList<CachedApprovalRow> approvals() const;
 
     bool upsertFsEntry(const CachedFsEntryRow& row);
     [[nodiscard]] QList<CachedFsEntryRow> fsEntries(const QString& rootId) const;
 
     bool upsertProfile(const CachedProfileRow& row);
     [[nodiscard]] QList<CachedProfileRow> profiles() const;
+    // Remove a cached profile (a live ProfileList no longer lists it). Best-effort.
+    bool deleteProfile(const QString& profileRef);
 
     // Durable transcript blocks (schema v2 render-from-cache). upsert is idempotent per (session,
     // seq); transcriptBlocks reads in seq order past `afterSeq`; clearTranscript wipes a session's
@@ -115,6 +103,9 @@ public:
     [[nodiscard]] QList<CachedTranscriptBlockRow> transcriptBlocks(const QString& sessionId,
                                                                    quint64 afterSeq = 0) const;
     bool clearTranscript(const QString& sessionId);
+    // The latest non-empty Message text per session (one grouped query), for an offline roster
+    // snippet/preview. Maps sessionId -> last message text.
+    [[nodiscard]] QHash<QString, QString> latestTranscriptSnippets() const;
 
     // Generic typed metadata stored in daemon_cache_meta (schema version, etc).
     bool setMeta(const QString& key, const QString& value);

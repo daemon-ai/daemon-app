@@ -37,6 +37,11 @@ DaemonProfileStore::DaemonProfileStore(daemonapp::daemon::ProfileRepository* rep
         // A full spec arrived (ProfileGet): re-project so the editor shows real fields.
         connect(m_repo, &daemonapp::daemon::ProfileRepository::profileSpecLoaded, this,
                 [this](const QString&) { rebuild(); });
+        // Offline-first: seed from the local cache so the Profiles UI renders the last-known agents
+        // immediately, before (or entirely without) a daemon connection. The connect-ready
+        // refreshProfiles() then reconciles against the live node when it comes online.
+        m_repo->loadCachedProfiles();
+        rebuild();
     }
 }
 

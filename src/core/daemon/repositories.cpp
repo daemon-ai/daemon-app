@@ -30,28 +30,6 @@ QList<CachedSessionRow> SessionRepository::cachedSessions() const {
     return cache() != nullptr ? cache()->sessions() : QList<CachedSessionRow>{};
 }
 
-bool SessionRepository::appendCachedLog(const CachedLogRow& row) {
-    return cache() != nullptr && cache()->appendSessionLog(row);
-}
-
-QList<CachedLogRow> SessionRepository::cachedLog(const QString& sessionId, quint64 afterSeq,
-                                                 int limit) const {
-    return cache() != nullptr ? cache()->sessionLog(sessionId, afterSeq, limit)
-                              : QList<CachedLogRow>{};
-}
-
-bool SessionRepository::setLogCursor(const QString& sessionId, quint64 seq) {
-    return cache() != nullptr &&
-           cache()->setCursor(QStringLiteral("session-log/%1").arg(sessionId), QString::number(seq),
-                              QDateTime::currentMSecsSinceEpoch());
-}
-
-quint64 SessionRepository::logCursor(const QString& sessionId) const {
-    return cache() != nullptr
-               ? cache()->cursor(QStringLiteral("session-log/%1").arg(sessionId)).toULongLong()
-               : 0;
-}
-
 void SessionRepository::refreshSessions() {
     if (client() == nullptr) {
         emit refreshFailed(QStringLiteral("No NodeApi client configured"));
@@ -73,30 +51,13 @@ void SessionRepository::refreshSessions() {
         QLatin1String(kSessionsCorrelation));
 }
 
-void SessionRepository::subscribe(const QString& sessionId) {
-    if (client() == nullptr) {
-        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
-        return;
-    }
-    // Resume from the persisted cursor so each poll only pulls new entries.
-    constexpr quint32 kMaxEntries = 256;
-    client()->sendRequest(
-        NodeApiCodec::encodeSubscribeRequest(sessionId, logCursor(sessionId), kMaxEntries),
-        subscribeCorrelation(sessionId));
-}
-
-QString SessionRepository::subscribeCorrelation(const QString& sessionId) {
-    return QLatin1String(kSubscribePrefix) + sessionId;
-}
-
 void SessionRepository::handleResponse(const QString& correlationId,
                                        const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kSessionsCorrelation)) {
         QList<CachedSessionRow> rows;
-        QString nextCursor;
         quint64 rev = 0;
         QStringList removed;
-        if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor, &rev, &removed)) {
+        if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, nullptr, &rev, &removed)) {
             emit refreshFailed(QStringLiteral("Failed to decode SessionPage response"));
             return;
         }
@@ -131,40 +92,16 @@ void SessionRepository::handleResponse(const QString& correlationId,
             }
         }
         if (cache() != nullptr) {
-            if (!nextCursor.isEmpty()) {
-                cache()->setCursor(QStringLiteral("sessions-query/cursor"), nextCursor, now);
-            }
             // Persist the roster revision so the next refresh resumes as a delta.
             cache()->setCursor(QLatin1String(kRosterRevScope), QString::number(rev), now);
         }
         emit sessionsRefreshed();
         return;
     }
-
-    if (correlationId.startsWith(QLatin1String(kSubscribePrefix))) {
-        const QString sessionId = correlationId.mid(int(qstrlen(kSubscribePrefix)));
-        QList<CachedLogRow> rows;
-        quint64 nextSeq = 0;
-        if (!NodeApiCodec::decodeLogPage(responseCbor, sessionId, &rows, &nextSeq)) {
-            emit refreshFailed(QStringLiteral("Failed to decode LogPage response"));
-            return;
-        }
-        const qint64 now = QDateTime::currentMSecsSinceEpoch();
-        for (CachedLogRow& row : rows) {
-            row.updatedAtMs = now;
-            appendCachedLog(row);
-        }
-        if (nextSeq > 0) {
-            setLogCursor(sessionId, nextSeq);
-        }
-        emit logUpdated(sessionId);
-        return;
-    }
 }
 
 void SessionRepository::handleFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == QLatin1String(kSessionsCorrelation) ||
-        correlationId.startsWith(QLatin1String(kSubscribePrefix))) {
+    if (correlationId == QLatin1String(kSessionsCorrelation)) {
         emit refreshFailed(message);
     }
 }
@@ -578,6 +515,30 @@ QList<CachedProfileRow> ProfileRepository::cachedProfiles() const {
     return cache() != nullptr ? cache()->profiles() : QList<CachedProfileRow>{};
 }
 
+void ProfileRepository::loadCachedProfiles() {
+    if (cache() == nullptr) {
+        return;
+    }
+    m_profiles.clear();
+    m_specs.clear();
+    for (const CachedProfileRow& row : cachedProfiles()) {
+        DecodedProfileInfo info;
+        info.id = row.profileRef;
+        info.isActive = row.active;
+        // The persisted spec_cbor is the raw ProfileGet response; decode it to recover
+        // provider/model (for the list row) + the full spec (for the editor) offline.
+        DecodedProfileSpec spec;
+        bool found = false;
+        if (!row.specCbor.isEmpty() && NodeApiCodec::decodeProfile(row.specCbor, &spec, &found) &&
+            found) {
+            info.provider = spec.provider;
+            info.model = spec.model;
+            m_specs.insert(row.profileRef, spec);
+        }
+        m_profiles.append(info);
+    }
+}
+
 QString ProfileRepository::activeProfileId() const {
     for (const DecodedProfileInfo& p : m_profiles) {
         if (p.isActive) {
@@ -668,6 +629,20 @@ void ProfileRepository::handleResponse(const QString& correlationId,
             emit refreshFailed(QStringLiteral("Failed to decode Profiles response"));
             return;
         }
+        // Offline-first prune: drop any cached profile the live list no longer carries (a deleted
+        // agent) so the cache mirrors truth. Surviving rows keep their spec_cbor; the per-profile
+        // ProfileGet that the store kicks next refreshes each row's spec + active flag.
+        if (cache() != nullptr) {
+            QSet<QString> keep;
+            for (const DecodedProfileInfo& p : m_profiles) {
+                keep.insert(p.id);
+            }
+            for (const CachedProfileRow& row : cachedProfiles()) {
+                if (!keep.contains(row.profileRef)) {
+                    cache()->deleteProfile(row.profileRef);
+                }
+            }
+        }
         emit profilesRefreshed();
         return;
     }
@@ -677,6 +652,22 @@ void ProfileRepository::handleResponse(const QString& correlationId,
         bool found = false;
         if (NodeApiCodec::decodeProfile(responseCbor, &spec, &found) && found) {
             m_specs.insert(id, spec);
+            // Offline-first: persist the full profile (raw ProfileGet bytes + the active flag from
+            // the list) so the Profiles UI renders this agent from cache on a later offline start.
+            if (cache() != nullptr) {
+                CachedProfileRow row;
+                row.profileRef = id;
+                row.displayName = id;
+                row.specCbor = responseCbor;
+                for (const DecodedProfileInfo& p : m_profiles) {
+                    if (p.id == id) {
+                        row.active = p.isActive;
+                        break;
+                    }
+                }
+                row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
+                upsertCachedProfile(row);
+            }
             emit profileSpecLoaded(id);
         }
         return;
@@ -723,14 +714,6 @@ ApprovalRepository::ApprovalRepository(NodeApiClient* client, DaemonCacheStore* 
                 &ApprovalRepository::handleResponse);
         connect(this->client(), &NodeApiClient::failed, this, &ApprovalRepository::handleFailure);
     }
-}
-
-bool ApprovalRepository::upsertCachedApproval(const CachedApprovalRow& row) {
-    return cache() != nullptr && cache()->upsertApproval(row);
-}
-
-QList<CachedApprovalRow> ApprovalRepository::cachedApprovals() const {
-    return cache() != nullptr ? cache()->approvals() : QList<CachedApprovalRow>{};
 }
 
 void ApprovalRepository::refreshPending(const QString& sessionId) {

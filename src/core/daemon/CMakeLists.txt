@@ -73,6 +73,7 @@ target_link_libraries(da_daemon_client
     PUBLIC
         Qt6::Core
         Qt6::Network
+        Qt6::Sql
         daemon-app::connection
         daemon-app::persistence
         daemon-app::settings_store

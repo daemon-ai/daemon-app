@@ -38,30 +38,19 @@ public:
 
     bool upsertCachedSession(const CachedSessionRow& row);
     [[nodiscard]] QList<CachedSessionRow> cachedSessions() const;
-    bool appendCachedLog(const CachedLogRow& row);
-    [[nodiscard]] QList<CachedLogRow> cachedLog(const QString& sessionId, quint64 afterSeq = 0,
-                                                int limit = 0) const;
-    bool setLogCursor(const QString& sessionId, quint64 seq);
-    [[nodiscard]] quint64 logCursor(const QString& sessionId) const;
 
     // Issue a SessionsQuery; on success the cache is updated and sessionsRefreshed() fires.
     void refreshSessions();
-    // Subscribe to a session's merged log from its persisted cursor; on success the new entries are
-    // appended to daemon_session_log, the cursor is advanced, and logUpdated(sessionId) fires.
-    void subscribe(const QString& sessionId);
 
 signals:
     void sessionsRefreshed();
     void refreshFailed(const QString& message);
-    void logUpdated(const QString& sessionId);
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
-    [[nodiscard]] static QString subscribeCorrelation(const QString& sessionId);
 
     static constexpr auto kSessionsCorrelation = "repo/sessions-query";
-    static constexpr auto kSubscribePrefix = "repo/subscribe/";
     static constexpr auto kRosterRevScope = "roster-rev"; // L4 persisted roster revision
 
     // L4: the since_rev the in-flight SessionsQuery carried (0 = a full request), so the response
@@ -79,6 +68,11 @@ public:
 
     bool upsertCachedProfile(const CachedProfileRow& row);
     [[nodiscard]] QList<CachedProfileRow> cachedProfiles() const;
+    // Offline-first seed: reconstruct profiles() + the spec cache from the persisted
+    // daemon_profiles rows (no connection needed), so the Profiles UI renders last-known agents on
+    // a cold/offline start. A later live refreshProfiles() reconciles. Does not emit; the store
+    // calls rebuild().
+    void loadCachedProfiles();
 
     [[nodiscard]] const QList<DecodedProfileInfo>& profiles() const { return m_profiles; }
     // The active default profile id (what new sessions bind to), or empty if unknown. Falls back to
@@ -284,9 +278,6 @@ class ApprovalRepository : public RepositoryBase {
 
 public:
     ApprovalRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
-
-    bool upsertCachedApproval(const CachedApprovalRow& row);
-    [[nodiscard]] QList<CachedApprovalRow> cachedApprovals() const;
 
     [[nodiscard]] const QList<DecodedApprovalInfo>& pending() const { return m_pending; }
 

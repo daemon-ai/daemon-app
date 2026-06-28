@@ -5301,9 +5301,9 @@ static bool encode_fs_revision(
 	struct zcbor_string tmp_str;
 
 	bool res = (((zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"mtime_ms", tmp_str.len = sizeof("mtime_ms") - 1, &tmp_str)))))
-	&& (zcbor_uint32_encode(state, (&(*input).fs_revision_mtime_ms))))
+	&& (zcbor_uint64_encode(state, (&(*input).fs_revision_mtime_ms))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"size", tmp_str.len = sizeof("size") - 1, &tmp_str)))))
-	&& (zcbor_uint32_encode(state, (&(*input).fs_revision_size))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2))));
+	&& (zcbor_uint64_encode(state, (&(*input).fs_revision_size))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -10169,9 +10169,9 @@ static bool encode_fs_entry(
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"kind", tmp_str.len = sizeof("kind") - 1, &tmp_str)))))
 	&& (encode_fs_entry_kind_t(state, (&(*input).fs_entry_kind))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"size", tmp_str.len = sizeof("size") - 1, &tmp_str)))))
-	&& (zcbor_uint32_encode(state, (&(*input).fs_entry_size))))
+	&& (zcbor_uint64_encode(state, (&(*input).fs_entry_size))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"mtime_ms", tmp_str.len = sizeof("mtime_ms") - 1, &tmp_str)))))
-	&& (zcbor_uint32_encode(state, (&(*input).fs_entry_mtime_ms))))
+	&& (zcbor_uint64_encode(state, (&(*input).fs_entry_mtime_ms))))
 	&& (!(*input).fs_entry_ignored_present || encode_repeated_fs_entry_ignored(state, (&(*input).fs_entry_ignored)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 6))));
 
 	log_result(state, res, __func__);

@@ -27,6 +27,7 @@ void FsExplorerModel::setService(QObject* service) {
     m_expanded.clear();
     m_pending.clear();
     m_currentKey.clear();
+    m_autoExpandedRoots = false;
     endResetModel();
     emit treeChanged();
     if (m_service) {
@@ -270,6 +271,13 @@ void FsExplorerModel::rebuildFromRoots() {
 
 void FsExplorerModel::onRootsChanged(const QList<fs::FsRoot>& roots) {
     m_roots = roots;
+    // First load: pre-expand each root so the tree opens to its first level (rebuildFromRoots then
+    // marks them expanded + lazy-loads the children). Once-only, so a user collapseAll sticks.
+    if (!m_autoExpandedRoots && !roots.isEmpty()) {
+        m_autoExpandedRoots = true;
+        for (const fs::FsRoot& root : roots)
+            m_expanded.insert(key(root.id, QString()));
+    }
     rebuildFromRoots();
 }
 

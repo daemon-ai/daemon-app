@@ -516,8 +516,7 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
         // Re-baseline replay: render the durable conversation (coalesced blocks), re-surface an
         // unanswered parked Request, then finish - the interrupted turn ended with the reset.
         QList<daemonapp::daemon::DecodedJournalRecord> records;
-        quint64 journalNext = 0;
-        NodeApiCodec::decodeJournal(responseCbor, &records, &journalNext);
+        NodeApiCodec::decodeJournal(responseCbor, &records);
         emit eventsEmitted(
             QVariantList{QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}}});
         // L3: the journal is the authoritative coalesced transcript — rebuild the durable cache
@@ -612,12 +611,10 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
                 break;
             }
         }
-        // Persist the journal + watermark cursors so a later cold-start replays the cache and only
-        // fetches the delta past here.
-        if (m_cache != nullptr && !m_sessionId.isEmpty() && journalNext > 0) {
-            m_cache->setCursor(dcache::sessionJournalScope(m_sessionId),
-                               QString::number(journalNext), QDateTime::currentMSecsSinceEpoch());
-        }
+        // Persist the applied watermark so a later cold-start renders from the transcript cache and
+        // resumes the live stream past here. (The separate session:journal cursor was retired in
+        // the Phase 4 closeout: rebaselineFromJournal always replays from seq 0, so a
+        // delta-from-cursor cold-start is a future optimization, not a current code path.)
         persistWatermark();
         if (!parked) {
             finishTurn(m_errorText.isEmpty() ? tr("The session was reset; recovered from history.")

@@ -62,6 +62,7 @@ private:
     SessionRepository* m_sessions = nullptr;
     // Snapshot of the cache; the list index is the local int id handed to the UI.
     QList<CachedSessionRow> m_snapshot;
+    QHash<QString, QString> m_snippets; // sessionId -> latest message text (offline roster preview)
 };
 
 } // namespace daemonapp::daemon

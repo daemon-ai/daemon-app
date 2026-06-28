@@ -54,6 +54,10 @@ CachedSessionStore::CachedSessionStore(DaemonCacheStore* cache, SessionRepositor
 
 void CachedSessionStore::reload() {
     m_snapshot = m_cache != nullptr ? m_cache->sessions() : QList<CachedSessionRow>{};
+    // Offline roster preview: one grouped query for the latest message per session, so the list
+    // shows snippets (and content search works) without a connection.
+    m_snippets =
+        m_cache != nullptr ? m_cache->latestTranscriptSnippets() : QHash<QString, QString>{};
     emit changed();
 }
 
@@ -113,6 +117,8 @@ QList<domain::Session> CachedSessionStore::sessions(const domain::ListScope& sco
             session.modified = QDateTime::fromMSecsSinceEpoch(row.updatedAtMs);
             session.created = session.modified;
         }
+        // Offline preview text (latest cached message); the list model truncates for the snippet.
+        session.content = m_snippets.value(row.sessionId);
         out.push_back(session);
     }
     std::ranges::stable_partition(out, [](const domain::Session& s) { return s.isPinned; });

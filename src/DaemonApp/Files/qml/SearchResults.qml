@@ -15,6 +15,12 @@ Item {
     property var service: (typeof Fs !== "undefined") ? Fs : null
     property string rootId: "workspace"
     signal hitChosen(string rootId, string path, int line, int column)
+    signal dismissed()
+
+    function focusInput() {
+        field.forceActiveFocus();
+        field.selectAll();
+    }
 
     SearchResultsModel {
         id: results
@@ -34,6 +40,7 @@ Item {
                 placeholderText: qsTr("Search in workspace\u2026")
                 Keys.onReturnPressed: results.search(root.rootId, text, {})
                 Keys.onEnterPressed: results.search(root.rootId, text, {})
+                Keys.onEscapePressed: root.dismissed()
             }
             BusyIndicator {
                 running: results.searching

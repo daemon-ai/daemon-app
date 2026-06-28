@@ -98,6 +98,10 @@ private:
 
     fs::IFsService* m_service = nullptr;
     bool m_showIgnored = false;
+    // Expand each root's first level once, on the initial roots load, so the tree opens to its
+    // top-level entries instead of a bare collapsed root. One-shot so a later user collapseAll (or
+    // a roster refresh) is not overridden.
+    bool m_autoExpandedRoots = false;
     QList<fs::FsRoot> m_roots;
     QList<Row> m_rows;
     QHash<QString, QList<fs::FsEntry>> m_cache;
