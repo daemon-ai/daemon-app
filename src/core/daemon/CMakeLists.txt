@@ -46,6 +46,10 @@ add_library(da_daemon_client STATIC
     daemon_session_settings.cpp
     daemon_approvals_inbox.h
     daemon_approvals_inbox.cpp
+    subscription_manager.h
+    subscription_manager.cpp
+    daemon_fs_service.h
+    daemon_fs_service.cpp
     daemon_cache_store.h
     daemon_cache_store.cpp
     cached_session_store.h

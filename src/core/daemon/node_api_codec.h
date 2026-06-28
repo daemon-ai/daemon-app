@@ -266,12 +266,158 @@ struct DecodedQuantRecommendation {
     QList<DecodedQuantCandidate> candidates;
 };
 
+// --- Filesystem surface (Phase 4 DaemonFsService) ------------------------------------------------
+// A root id is carried as an opaque client string: "workspace" | "host:<id>" | "session:<id>",
+// round-tripping the daemon FsRootId Host/Workspace/Session choice.
+
+// One root the daemon exposes (FsRoots -> [FsRoot]).
+struct DecodedFsRoot {
+    QString id;    // canonical "workspace" | "host:<id>" | "session:<id>"
+    QString label; // human label
+    QString kind;  // "host" | "workspace" | "session"
+};
+
+// One directory entry (FsList -> [FsEntry] / FsStat -> FsEntry).
+struct DecodedFsEntry {
+    QString name;
+    QString path; // root-relative, POSIX
+    QString kind; // "file" | "dir" | "symlink"
+    quint64 size = 0;
+    quint64 mtimeMs = 0;
+    bool ignored = false;
+};
+
+// A file's content (FsRead -> FsContent). `revision` is the opaque "mtime:size" etag the IFsService
+// seam uses for optimistic concurrency; `truncated` marks a partial read (over max_bytes).
+struct DecodedFsContent {
+    QByteArray bytes;
+    QString revision; // "mtime_ms:size"
+    bool truncated = false;
+};
+
+// One filesystem change (FsWatch page event).
+struct DecodedFsChange {
+    QString path;
+    QString kind; // "created" | "modified" | "removed"
+};
+
+// A page of the watch cursor (FsWatchPoll -> FsWatchPageView; L3-aligned: head_seq + reset).
+// `reset`
+// => the reader's cursor aged out of the ring; re-list the dir to reconcile.
+struct DecodedFsWatchPage {
+    QList<DecodedFsChange> events;
+    quint64 nextSeq = 0;
+    quint64 headSeq = 0;
+    bool reset = false;
+};
+
+// One project-search hit (FsSearch -> FsSearchPage).
+struct DecodedFsSearchHit {
+    QString path;
+    quint32 line = 1;
+    quint32 col = 1;
+    QString preview;
+};
+
+struct DecodedFsSearchPage {
+    QList<DecodedFsSearchHit> hits;
+    bool hasMore = false;
+};
+
+// A decoded server->client multiplexed frame (wire L0; daemon-sync-protocol-spec.md §2). The
+// `payload` is the raw inner ApiResponse CBOR for Reply/Item (fed straight to the existing
+// decoders); it is empty for the control frames.
+enum class WireFrameKind {
+    Unknown,
+    Hello,
+    Reply,
+    Item,
+    End,
+    Reset,
+};
+
+struct DecodedWireFrame {
+    WireFrameKind kind = WireFrameKind::Unknown;
+    quint64 id = 0;        // the Call id this frame answers (0 for Hello)
+    QByteArray payload;    // inner ApiResponse CBOR for Reply/Item; empty otherwise
+    bool hasError = false; // End closed with an error
+    quint64 epoch = 0;     // Reset (L2)
+    quint64 headSeq = 0;   // Reset (L2)
+};
+
+// One coalesced durable transcript block (Journal -> journal-record payload Block). The re-baseline
+// path (L2) renders these the way the live AgentEvent stream renders, mapped in the turn engine.
+struct DecodedTranscriptBlock {
+    enum class Kind { Other, Message, ToolCall, ToolResult, Request, Content } kind = Kind::Other;
+    QString role;          // Message: "Assistant" | "User" | "System"
+    QString text;          // Message text
+    QString callId;        // ToolCall / ToolResult call id
+    QString toolName;      // ToolCall tool name
+    QString argsSummary;   // ToolCall args summary
+    bool ok = false;       // ToolResult ok
+    QString summary;       // ToolResult summary
+    quint32 requestId = 0; // Request host-request id
+    QString hostKind;      // Request: "Approval"|"Input"|"Choice"|"Delegate"|"Spawn"
+    QString contentKind;   // Content kind tag
+};
+
+// One decoded durable journal record (SessionHistory -> Journal). Carries the resync coordinates
+// (cursor/seq/epoch) and either a coalesced transcript Block or a Management note.
+struct DecodedJournalRecord {
+    quint64 cursor = 0;
+    quint64 seq = 0;
+    quint64 epoch = 0;
+    QString kind;             // record kind tag
+    bool isBlock = false;     // false => Management
+    QString managementDetail; // Management payload detail
+    DecodedTranscriptBlock block;
+};
+
+// One decoded node-wide feed notification (EventsSince -> EventsPage; L3 daemon-sync-protocol §5).
+// Payload-free pointer: the SubscriptionManager routes by kind and lazily fetches the detail.
+struct DecodedNodeEvent {
+    enum class Kind {
+        Unknown,
+        SessionAdvanced,
+        SessionMetaChanged,
+        RosterChanged,
+        ApprovalPending,
+        DownloadProgress,
+        ResyncNeeded
+    } kind = Kind::Unknown;
+    QString session;        // SessionAdvanced / SessionMetaChanged / ApprovalPending
+    quint64 epoch = 0;      // SessionAdvanced
+    quint64 headSeq = 0;    // SessionAdvanced
+    quint64 rev = 0;        // SessionMetaChanged / RosterChanged
+    QString requestId;      // ApprovalPending
+    quint64 downloadId = 0; // DownloadProgress
+    quint32 pct = 0;        // DownloadProgress
+    QString state;          // DownloadProgress
+    QString scope;          // ResyncNeeded
+};
+
+// A decoded page of the node-wide event feed (EventsSince -> EventsPage). `nextCursor` advances the
+// feed subscription; an in-page ResyncNeeded event tells the client to re-baseline.
+struct DecodedEventsPage {
+    QList<DecodedNodeEvent> events;
+    quint64 nextCursor = 0;
+    quint64 headCursor = 0;
+};
+
 enum class ApiResponseKind {
     Unknown,
     Health,
     SessionPage,
     LogPage,
+    EventsPage,
+    Journal,
     FsRoots,
+    FsList,
+    FsStat,
+    FsRead,
+    FsWrite,
+    FsWatch,
+    FsSearch,
     Ok,
     Credentials,
     Models,
@@ -302,11 +448,23 @@ class NodeApiCodec {
 public:
     // Requests.
     [[nodiscard]] static QByteArray encodeHealthRequest();
-    // SessionsQuery with an empty query map (daemon applies its default scope).
-    [[nodiscard]] static QByteArray encodeSessionsQueryRequest();
+    // SessionsQuery at the daemon's default scope. `hasSinceRev` adds the L4 `since_rev` delta read
+    // (the server then returns only sessions changed past `sinceRev` + a `removed` list); absent =
+    // a full page (back-compat / cold cache).
+    [[nodiscard]] static QByteArray encodeSessionsQueryRequest(bool hasSinceRev = false,
+                                                               quint64 sinceRev = 0);
     // Subscribe to a session's merged log from afterSeq (exclusive), up to max entries.
     [[nodiscard]] static QByteArray encodeSubscribeRequest(const QString& sessionId,
                                                            quint64 afterSeq, quint32 max);
+    // Read the durable verifiable journal for a session from afterCursor (exclusive), up to max
+    // records (SessionHistory -> Journal). The L2 re-baseline source after an epoch change / Reset.
+    [[nodiscard]] static QByteArray encodeSessionHistoryRequest(const QString& sessionId,
+                                                                quint64 afterCursor, quint32 max);
+    // Read the node-wide event feed past `cursor` (exclusive). Served as a push stream over Open
+    // (the SubscriptionManager's single feed) or a one-shot/long-poll page over Call. `hasWaitMs`
+    // adds the long-poll hold for the one-shot form (the push lane ignores it).
+    [[nodiscard]] static QByteArray encodeEventsSinceRequest(quint64 cursor, bool hasWaitMs = false,
+                                                             quint32 waitMs = 0);
 
     // Basic chat (CHA-1): start a turn in `session` with `text`. Empty `profile` omits the optional
     // profile binding (daemon uses the session's / active profile); `requestId` correlates the
@@ -422,11 +580,61 @@ public:
     // --- CHA-8 session search ---
     [[nodiscard]] static QByteArray encodeSessionSearchRequest(const QString& query, quint32 limit);
 
+    // --- Filesystem surface (Phase 4) --------------------------------------------------------
+    // `rootId` is the opaque client string ("workspace" | "host:<id>" | "session:<id>").
+    [[nodiscard]] static QByteArray encodeFsRootsRequest();
+    [[nodiscard]] static QByteArray encodeFsListRequest(const QString& rootId, const QString& dir,
+                                                        bool showIgnored = false);
+    [[nodiscard]] static QByteArray encodeFsReadRequest(const QString& rootId, const QString& path,
+                                                        quint64 maxBytes = 0);
+    // `baseRevision` is the opaque "mtime:size" etag (empty = unconditional write); `force`
+    // overrides a stale-revision conflict.
+    [[nodiscard]] static QByteArray encodeFsWriteRequest(const QString& rootId, const QString& path,
+                                                         const QByteArray& bytes,
+                                                         const QString& baseRevision = QString(),
+                                                         bool force = false);
+    [[nodiscard]] static QByteArray encodeFsWatchPollRequest(const QString& rootId,
+                                                             const QString& dir, quint64 afterSeq,
+                                                             quint32 max = 0);
+    [[nodiscard]] static QByteArray encodeFsSearchRequest(const QString& rootId,
+                                                          const QString& query, bool regex = false,
+                                                          bool caseSensitive = false,
+                                                          quint32 maxResults = 0, quint32 page = 0);
+
+    static bool decodeFsRoots(const QByteArray& responseCbor, QList<DecodedFsRoot>* out);
+    static bool decodeFsList(const QByteArray& responseCbor, QList<DecodedFsEntry>* out);
+    static bool decodeFsRead(const QByteArray& responseCbor, DecodedFsContent* out);
+    // FsWrite returns the new revision as the opaque "mtime:size" etag.
+    static bool decodeFsWrite(const QByteArray& responseCbor, QString* revision);
+    static bool decodeFsWatch(const QByteArray& responseCbor, DecodedFsWatchPage* out);
+    static bool decodeFsSearch(const QByteArray& responseCbor, DecodedFsSearchPage* out);
+
+    // --- Multiplexed socket envelope (wire L0; daemon-sync-protocol-spec.md §2) ---
+    // The envelope is hand-coded (not zcbor-generated): it wraps the already-encoded request bytes
+    // and slices the response bytes back out, so the generated codec stays scoped to
+    // api-request/api-response. Canonical CBOR (definite-length maps; "id" before "req"/"res").
+    // The wire version this client speaks (negotiated by the Hello handshake).
+    static constexpr quint32 kWireVersion = 1;
+    // The client->server Hello opening the multiplexed/streaming session.
+    [[nodiscard]] static QByteArray encodeHelloFrame();
+    // Wrap an already-encoded ApiRequest as a one-shot Call with correlation `id`.
+    [[nodiscard]] static QByteArray encodeCallFrame(quint64 id, const QByteArray& requestCbor);
+    // Wrap an already-encoded streaming ApiRequest (e.g. Subscribe) as an Open with stream `id`.
+    [[nodiscard]] static QByteArray encodeOpenFrame(quint64 id, const QByteArray& requestCbor);
+    // Tear down a streaming exchange.
+    [[nodiscard]] static QByteArray encodeCancelFrame(quint64 id);
+    // Decode one server->client frame, slicing the inner ApiResponse bytes for Reply/Item.
+    static bool decodeWireFrame(const QByteArray& frameCbor, DecodedWireFrame* out);
+
     // Response inspection / decode.
     [[nodiscard]] static ApiResponseKind responseKind(const QByteArray& responseCbor);
     static bool decodeHealth(const QByteArray& responseCbor, DecodedHealth* out);
+    // Decode a SessionPage. `rev` (L4) is the roster revision this page reflects (persist + pass
+    // back as since_rev); `removed` (L4 delta reads) is the ids the client should prune from its
+    // cache.
     static bool decodeSessionPage(const QByteArray& responseCbor, QList<CachedSessionRow>* out,
-                                  QString* nextCursor = nullptr);
+                                  QString* nextCursor = nullptr, quint64* rev = nullptr,
+                                  QStringList* removed = nullptr);
     // Decode a LogPage into cache rows tagged with sessionId (seq/direction/disposition + the
     // next/head cursors). The full payload/origin now generate from the unified contract; use
     // decodeLogPageEntries() when the typed payload (AgentEvent) is needed (transcript rendering).
@@ -441,7 +649,17 @@ public:
     // Event). This is the transcript-rendering path (CHA-2): the turn engine appends TextDeltas and
     // ends on TurnFinished. nextSeq/headSeq advance the subscribe cursor.
     static bool decodeLogPageEntries(const QByteArray& responseCbor, QList<DecodedLogEntry>* out,
-                                     quint64* nextSeq = nullptr, quint64* headSeq = nullptr);
+                                     quint64* nextSeq = nullptr, quint64* headSeq = nullptr,
+                                     quint64* epoch = nullptr);
+    // Decode an EventsPage response (EventsSince; L3) into the node-wide notifications + the feed
+    // cursors. The SubscriptionManager routes each event by kind and advances `nextCursor`.
+    static bool decodeEventsPage(const QByteArray& responseCbor, DecodedEventsPage* out);
+    // Decode a Journal response (SessionHistory) into durable records + the resync cursors. The L2
+    // re-baseline path replays these coalesced blocks; `sealedAfter` (when present) marks a rewind
+    // boundary the client truncates its rendered transcript to before applying the tail.
+    static bool decodeJournal(const QByteArray& responseCbor, QList<DecodedJournalRecord>* out,
+                              quint64* nextCursor = nullptr, quint64* headCursor = nullptr,
+                              bool* hasSealedAfter = nullptr, quint64* sealedAfter = nullptr);
     // Decode a Drained response (Poll) into the outbound agent events (Event arms only; host
     // requests are skipped here). Used by the harness/diagnostic poll path.
     static bool decodeDrained(const QByteArray& responseCbor, QList<DecodedAgentEvent>* out);

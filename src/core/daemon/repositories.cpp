@@ -3,6 +3,8 @@
 #include "daemon/node_api_codec.h"
 
 #include <QDateTime>
+#include <QSet>
+#include <QStringList>
 #include <QTimer>
 
 namespace daemonapp::daemon {
@@ -55,8 +57,20 @@ void SessionRepository::refreshSessions() {
         emit refreshFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    client()->sendRequest(NodeApiCodec::encodeSessionsQueryRequest(),
-                          QLatin1String(kSessionsCorrelation));
+    // L4: resume from the persisted roster revision so a warm reconnect / RosterChanged pulls only
+    // the delta (changed sessions + a removed list) instead of the whole roster. A cold cache (no
+    // persisted rev) sends no since_rev -> a full page.
+    m_sentRosterSinceRev = 0;
+    if (cache() != nullptr) {
+        const QString stored = cache()->cursor(QLatin1String(kRosterRevScope));
+        if (!stored.isEmpty()) {
+            m_sentRosterSinceRev = stored.toULongLong();
+        }
+    }
+    m_sentRosterDelta = m_sentRosterSinceRev > 0;
+    client()->sendRequest(
+        NodeApiCodec::encodeSessionsQueryRequest(m_sentRosterDelta, m_sentRosterSinceRev),
+        QLatin1String(kSessionsCorrelation));
 }
 
 void SessionRepository::subscribe(const QString& sessionId) {
@@ -80,17 +94,48 @@ void SessionRepository::handleResponse(const QString& correlationId,
     if (correlationId == QLatin1String(kSessionsCorrelation)) {
         QList<CachedSessionRow> rows;
         QString nextCursor;
-        if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor)) {
+        quint64 rev = 0;
+        QStringList removed;
+        if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor, &rev, &removed)) {
             emit refreshFailed(QStringLiteral("Failed to decode SessionPage response"));
             return;
         }
         const qint64 now = QDateTime::currentMSecsSinceEpoch();
+        // L4: a full page replaces the roster; a delta merges. A delta whose returned rev went
+        // *backwards* from what we asked for is a daemon-reset fallback (the server returned a full
+        // page because our since_rev was unservable) -> treat it as a replace too.
+        const bool fallbackFull = m_sentRosterDelta && rev < m_sentRosterSinceRev;
+        const bool replace = !m_sentRosterDelta || fallbackFull;
+        if (replace && cache() != nullptr) {
+            // Prune any cached session the full page no longer lists (closes the "removed sessions
+            // never purged" gap on a cold/fallback resync).
+            QSet<QString> keep;
+            for (const CachedSessionRow& row : rows) {
+                keep.insert(row.sessionId);
+            }
+            for (const CachedSessionRow& existing : cache()->sessions()) {
+                if (!keep.contains(existing.sessionId)) {
+                    cache()->deleteSession(existing.sessionId);
+                }
+            }
+        }
         for (CachedSessionRow& row : rows) {
             row.updatedAtMs = now;
             upsertCachedSession(row);
         }
-        if (!nextCursor.isEmpty() && cache() != nullptr) {
-            cache()->setCursor(QStringLiteral("sessions-query/cursor"), nextCursor, now);
+        // L4 delta prune: drop sessions the server reported removed (hard-removed or left the
+        // scope).
+        if (!replace && cache() != nullptr) {
+            for (const QString& id : removed) {
+                cache()->deleteSession(id);
+            }
+        }
+        if (cache() != nullptr) {
+            if (!nextCursor.isEmpty()) {
+                cache()->setCursor(QStringLiteral("sessions-query/cursor"), nextCursor, now);
+            }
+            // Persist the roster revision so the next refresh resumes as a delta.
+            cache()->setCursor(QLatin1String(kRosterRevScope), QString::number(rev), now);
         }
         emit sessionsRefreshed();
         return;
@@ -340,27 +385,35 @@ void ModelRepository::resumeDownload(quint64 id) {
                           QLatin1String(kLifecycleCorrelation));
 }
 
-void ModelRepository::syncDownloadPolling() {
-    // A job is "unsettled" while queued or actively downloading; once everything is terminal
-    // (Completed / Paused / Cancelled / Failed) the poll loop can stop.
-    bool active = false;
-    for (const DecodedDownloadStatus& s : m_downloads) {
-        if (s.state == QStringLiteral("Queued") || s.state == QStringLiteral("Downloading")) {
-            active = true;
+void ModelRepository::applyDownloadProgress(quint64 id, quint32 pct, const QString& state) {
+    // Patch the matching job row in place (or insert a fresh one), so the Downloads view tracks
+    // progress from the push feed instead of a poll. We only carry (id, pct, state) here; derive
+    // downloaded_bytes from pct when a total is known so the existing progress bar keeps working.
+    bool found = false;
+    for (DecodedDownloadStatus& s : m_downloads) {
+        if (s.id == id) {
+            s.state = state;
+            if (s.totalBytes > 0) {
+                s.downloadedBytes = (s.totalBytes * pct) / 100;
+            }
+            found = true;
             break;
         }
     }
-    if (active) {
-        if (m_downloadPoll == nullptr) {
-            m_downloadPoll = new QTimer(this);
-            m_downloadPoll->setInterval(600);
-            connect(m_downloadPoll, &QTimer::timeout, this, &ModelRepository::refreshDownloads);
-        }
-        if (!m_downloadPoll->isActive()) {
-            m_downloadPoll->start();
-        }
-    } else if (m_downloadPoll != nullptr) {
-        m_downloadPoll->stop();
+    if (!found) {
+        DecodedDownloadStatus s;
+        s.id = id;
+        s.state = state;
+        m_downloads.append(s);
+    }
+    bool newlyCompleted = false;
+    if (state == QStringLiteral("Completed") && !m_completedDownloads.contains(id)) {
+        m_completedDownloads.insert(id);
+        newlyCompleted = true;
+    }
+    emit downloadsChanged();
+    if (newlyCompleted) {
+        refreshCatalog();
     }
 }
 
@@ -425,7 +478,7 @@ void ModelRepository::handleResponse(const QString& correlationId, const QByteAr
         quint64 id = 0;
         if (NodeApiCodec::decodeModelDownloadStarted(responseCbor, &id)) {
             emit downloadStarted(id);
-            refreshDownloads(); // kick the poll loop immediately
+            refreshDownloads(); // fetch the initial snapshot; live progress arrives via the L3 feed
             return;
         }
         DecodedApiError err;
@@ -451,7 +504,6 @@ void ModelRepository::handleResponse(const QString& correlationId, const QByteAr
             }
         }
         emit downloadsChanged();
-        syncDownloadPolling();
         if (newlyCompleted) {
             refreshCatalog();
         }
@@ -504,12 +556,6 @@ void ModelRepository::handleFailure(const QString& correlationId, const QString&
         QString::fromLatin1(kActivateCorrelation), QString::fromLatin1(kLifecycleCorrelation),
     };
     if (kOurs.contains(correlationId)) {
-        if (correlationId == QLatin1String(kDownloadsCorrelation)) {
-            // A failed poll should not spin the loop forever; stop until the next user action.
-            if (m_downloadPoll != nullptr) {
-                m_downloadPoll->stop();
-            }
-        }
         emit operationFailed(message);
     }
 }
@@ -667,14 +713,6 @@ void ProfileRepository::handleFailure(const QString& correlationId, const QStrin
                correlationId.startsWith(QLatin1String(kGetPrefix))) {
         emit operationFailed(message);
     }
-}
-
-bool FsRepository::upsertCachedEntry(const CachedFsEntryRow& row) {
-    return cache() != nullptr && cache()->upsertFsEntry(row);
-}
-
-QList<CachedFsEntryRow> FsRepository::cachedEntries(const QString& rootId) const {
-    return cache() != nullptr ? cache()->fsEntries(rootId) : QList<CachedFsEntryRow>{};
 }
 
 ApprovalRepository::ApprovalRepository(NodeApiClient* client, DaemonCacheStore* cache,

@@ -25,9 +25,9 @@ extern "C" {
  */
 #define DEFAULT_MAX_QTY 64
 
-struct byte_array {
-	uint32_t byte_array_uint[64];
-	size_t byte_array_uint_count;
+struct content_hash {
+	uint32_t content_hash_uint[64];
+	size_t content_hash_uint_count;
 };
 
 struct blob_ref_name_r {
@@ -51,7 +51,7 @@ struct blob_ref_mime_r {
 };
 
 struct blob_ref {
-	struct byte_array blob_ref_hash;
+	struct content_hash blob_ref_hash;
 	uint32_t blob_ref_size;
 	struct blob_ref_name_r blob_ref_name;
 	bool blob_ref_name_present;
@@ -313,6 +313,22 @@ struct request_subscribe {
 	uint32_t Subscribe_max;
 };
 
+struct EventsSince_wait_ms_r {
+	union {
+		uint32_t EventsSince_wait_ms_uint;
+	};
+	enum {
+		EventsSince_wait_ms_uint_c,
+		EventsSince_wait_ms_null_m_c,
+	} EventsSince_wait_ms_choice;
+};
+
+struct request_events_since {
+	uint32_t EventsSince_cursor;
+	struct EventsSince_wait_ms_r EventsSince_wait_ms;
+	bool EventsSince_wait_ms_present;
+};
+
 struct request_delivery_targets {
 	struct zcbor_string DeliveryTargets_session;
 };
@@ -343,7 +359,7 @@ struct request_record_meta {
 	struct zcbor_string RecordMeta_session;
 	struct origin RecordMeta_origin;
 	struct zcbor_string RecordMeta_kind;
-	struct byte_array RecordMeta_body;
+	struct zcbor_string RecordMeta_body;
 };
 
 struct request_unit_history {
@@ -1130,6 +1146,16 @@ struct session_query_limit {
 	uint32_t session_query_limit;
 };
 
+struct session_query_since_rev_r {
+	union {
+		uint32_t session_query_since_rev_uint;
+	};
+	enum {
+		session_query_since_rev_uint_c,
+		session_query_since_rev_null_m_c,
+	} session_query_since_rev_choice;
+};
+
 struct session_query {
 	struct session_query_scope session_query_scope;
 	bool session_query_scope_present;
@@ -1137,6 +1163,8 @@ struct session_query {
 	bool session_query_after_present;
 	struct session_query_limit session_query_limit;
 	bool session_query_limit_present;
+	struct session_query_since_rev_r session_query_since_rev;
+	bool session_query_since_rev_present;
 };
 
 struct request_sessions_query {
@@ -1401,7 +1429,7 @@ struct cron_spec_target_r {
 };
 
 struct cron_spec_payload {
-	struct byte_array cron_spec_payload;
+	struct zcbor_string cron_spec_payload;
 };
 
 struct cron_spec_enabled {
@@ -2250,7 +2278,7 @@ struct FsWrite_force {
 struct request_fs_write {
 	struct fs_root_id_t_r FsWrite_root;
 	struct zcbor_string FsWrite_path;
-	struct byte_array FsWrite_bytes;
+	struct zcbor_string FsWrite_bytes;
 	struct FsWrite_base_revision_r FsWrite_base_revision;
 	bool FsWrite_base_revision_present;
 	struct FsWrite_force FsWrite_force;
@@ -2298,7 +2326,7 @@ struct request_fs_watch_poll {
 };
 
 struct request_blob_put {
-	struct byte_array BlobPut_bytes;
+	struct zcbor_string BlobPut_bytes;
 };
 
 struct byte_range {
@@ -2317,13 +2345,13 @@ struct BlobGet_range_r {
 };
 
 struct request_blob_get {
-	struct byte_array BlobGet_hash;
+	struct content_hash BlobGet_hash;
 	struct BlobGet_range_r BlobGet_range;
 	bool BlobGet_range_present;
 };
 
 struct request_blob_stat {
-	struct byte_array BlobStat_hash;
+	struct content_hash BlobStat_hash;
 };
 
 struct FsWriteFromBlob_base_revision_r {
@@ -2343,7 +2371,7 @@ struct FsWriteFromBlob_force {
 struct request_fs_write_from_blob {
 	struct fs_root_id_t_r FsWriteFromBlob_root;
 	struct zcbor_string FsWriteFromBlob_path;
-	struct byte_array FsWriteFromBlob_hash;
+	struct content_hash FsWriteFromBlob_hash;
 	struct FsWriteFromBlob_base_revision_r FsWriteFromBlob_base_revision;
 	bool FsWriteFromBlob_base_revision_present;
 	struct FsWriteFromBlob_force FsWriteFromBlob_force;
@@ -2363,6 +2391,7 @@ struct api_request_r {
 		struct request_unit_outbound api_request_request_unit_outbound_m;
 		struct request_session_history api_request_request_session_history_m;
 		struct request_subscribe api_request_request_subscribe_m;
+		struct request_events_since api_request_request_events_since_m;
 		struct request_delivery_targets api_request_request_delivery_targets_m;
 		struct request_delivery_sessions api_request_request_delivery_sessions_m;
 		struct request_handover api_request_request_handover_m;
@@ -2491,6 +2520,7 @@ struct api_request_r {
 		api_request_request_unit_outbound_m_c,
 		api_request_request_session_history_m_c,
 		api_request_request_subscribe_m_c,
+		api_request_request_events_since_m_c,
 		api_request_request_delivery_targets_m_c,
 		api_request_request_delivery_sessions_m_c,
 		api_request_request_handover_m_c,
@@ -2686,12 +2716,12 @@ struct agent_event_reasoning_delta {
 struct agent_event_content_delta {
 	uint32_t ContentDelta_seq;
 	struct zcbor_string ContentDelta_kind;
-	struct byte_array ContentDelta_body;
+	struct zcbor_string ContentDelta_body;
 };
 
 struct tool_detail {
 	struct zcbor_string tool_detail_kind;
-	struct byte_array tool_detail_body;
+	struct zcbor_string tool_detail_body;
 };
 
 struct tool_call_view_detail_r {
@@ -3435,7 +3465,7 @@ struct transcript_block_request {
 
 struct transcript_block_content {
 	struct zcbor_string Content_kind;
-	struct byte_array Content_body;
+	struct zcbor_string Content_body;
 };
 
 struct transcript_block_r {
@@ -3532,7 +3562,7 @@ struct session_payload_response {
 
 struct session_payload_meta {
 	struct zcbor_string Meta_kind;
-	struct byte_array Meta_body;
+	struct zcbor_string Meta_body;
 };
 
 struct session_payload_r {
@@ -3565,10 +3595,71 @@ struct log_page_view {
 	size_t log_page_view_entries_session_log_entry_m_count;
 	uint32_t log_page_view_next_seq;
 	uint32_t log_page_view_head_seq;
+	uint32_t log_page_view_epoch;
 };
 
 struct response_log_page {
 	struct log_page_view response_log_page_LogPage;
+};
+
+struct node_event_session_advanced {
+	struct zcbor_string SessionAdvanced_session;
+	uint32_t SessionAdvanced_epoch;
+	uint32_t SessionAdvanced_head_seq;
+};
+
+struct node_event_session_meta_changed {
+	struct zcbor_string SessionMetaChanged_session;
+	uint32_t SessionMetaChanged_rev;
+};
+
+struct node_event_roster_changed {
+	uint32_t RosterChanged_rev;
+};
+
+struct node_event_approval_pending {
+	struct zcbor_string ApprovalPending_session;
+	struct zcbor_string ApprovalPending_request_id;
+};
+
+struct node_event_download_progress {
+	uint32_t DownloadProgress_id;
+	uint32_t DownloadProgress_pct;
+	struct zcbor_string DownloadProgress_state;
+};
+
+struct node_event_resync_needed {
+	struct zcbor_string ResyncNeeded_scope;
+};
+
+struct node_event_r {
+	union {
+		struct node_event_session_advanced node_event_session_advanced_m;
+		struct node_event_session_meta_changed node_event_session_meta_changed_m;
+		struct node_event_roster_changed node_event_roster_changed_m;
+		struct node_event_approval_pending node_event_approval_pending_m;
+		struct node_event_download_progress node_event_download_progress_m;
+		struct node_event_resync_needed node_event_resync_needed_m;
+	};
+	enum {
+		node_event_session_advanced_m_c,
+		node_event_session_meta_changed_m_c,
+		node_event_roster_changed_m_c,
+		node_event_approval_pending_m_c,
+		node_event_download_progress_m_c,
+		node_event_resync_needed_m_c,
+	} node_event_choice;
+};
+
+struct events_page {
+	struct node_event_r events_page_events_node_event_m[64];
+	size_t events_page_events_node_event_m_count;
+	uint32_t events_page_next_cursor;
+	uint32_t events_page_head_cursor;
+};
+
+struct response_events_page {
+	struct events_page response_events_page_EventsPage;
 };
 
 struct response_delivery_targets {
@@ -4012,7 +4103,7 @@ struct revision {
 		revision_parent_uint_c,
 		revision_parent_null_m_c,
 	} revision_parent_choice;
-	struct byte_array revision_content_hash;
+	struct content_hash revision_content_hash;
 	struct author_r revision_author;
 	struct zcbor_string revision_reason;
 	uint32_t revision_ts_ms;
@@ -4198,11 +4289,19 @@ struct session_page_next_cursor_r {
 	} session_page_next_cursor_choice;
 };
 
+struct session_page_removed_r {
+	struct zcbor_string session_page_removed_session_id_m[64];
+	size_t session_page_removed_session_id_m_count;
+};
+
 struct session_page {
 	struct session_info session_page_sessions_session_info_m[64];
 	size_t session_page_sessions_session_info_m_count;
 	struct session_page_next_cursor_r session_page_next_cursor;
 	bool session_page_next_cursor_present;
+	uint32_t session_page_rev;
+	struct session_page_removed_r session_page_removed;
+	bool session_page_removed_present;
 };
 
 struct response_session_page {
@@ -4946,7 +5045,7 @@ struct fs_content_blob_ref_r {
 };
 
 struct fs_content {
-	struct byte_array fs_content_bytes;
+	struct zcbor_string fs_content_bytes;
 	struct fs_revision fs_content_revision;
 	struct fs_content_truncated fs_content_truncated;
 	bool fs_content_truncated_present;
@@ -5001,6 +5100,8 @@ struct fs_watch_page_view {
 	struct fs_change fs_watch_page_view_events_fs_change_m[64];
 	size_t fs_watch_page_view_events_fs_change_m_count;
 	uint32_t fs_watch_page_view_next_seq;
+	uint32_t fs_watch_page_view_head_seq;
+	bool fs_watch_page_view_reset;
 };
 
 struct response_fs_watch {
@@ -5012,7 +5113,7 @@ struct response_blob_put {
 };
 
 struct response_blob_get {
-	struct byte_array response_blob_get_BlobGet;
+	struct zcbor_string response_blob_get_BlobGet;
 };
 
 struct blob_stat {
@@ -5039,6 +5140,7 @@ struct api_response_r {
 		struct response_unit_events api_response_response_unit_events_m;
 		struct response_journal api_response_response_journal_m;
 		struct response_log_page api_response_response_log_page_m;
+		struct response_events_page api_response_response_events_page_m;
 		struct response_delivery_targets api_response_response_delivery_targets_m;
 		struct response_delivery_sessions api_response_response_delivery_sessions_m;
 		struct response_verifying_key api_response_response_verifying_key_m;
@@ -5119,6 +5221,7 @@ struct api_response_r {
 		api_response_response_unit_events_m_c,
 		api_response_response_journal_m_c,
 		api_response_response_log_page_m_c,
+		api_response_response_events_page_m_c,
 		api_response_response_delivery_targets_m_c,
 		api_response_response_delivery_sessions_m_c,
 		api_response_response_verifying_key_m_c,

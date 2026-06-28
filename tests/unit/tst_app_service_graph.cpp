@@ -40,7 +40,6 @@ private slots:
         QVERIFY(graph.sessions != nullptr);
         QVERIFY(graph.profileRepository != nullptr);
         QVERIFY(graph.models != nullptr);
-        QVERIFY(graph.files != nullptr);
         QVERIFY(graph.approvalRepository != nullptr);
         QVERIFY(graph.checkpointRepository != nullptr);
         QVERIFY(qobject_cast<connection::MockConnectionService*>(graph.connection) != nullptr);

@@ -75,7 +75,8 @@ bool DaemonCacheStore::ensureSchema() {
 bool DaemonCacheStore::createDataTables() {
     return execSql(cache::kCreateSessionsSql) && execSql(cache::kCreateSessionLogSql) &&
            execSql(cache::kCreateSyncCursorsSql) && execSql(cache::kCreateProfilesSql) &&
-           execSql(cache::kCreateApprovalsSql) && execSql(cache::kCreateFsEntriesSql);
+           execSql(cache::kCreateApprovalsSql) && execSql(cache::kCreateFsEntriesSql) &&
+           execSql(cache::kCreateTranscriptBlocksSql);
 }
 
 bool DaemonCacheStore::dropDataTables() {
@@ -84,7 +85,8 @@ bool DaemonCacheStore::dropDataTables() {
            execSql("DROP TABLE IF EXISTS daemon_sync_cursors") &&
            execSql("DROP TABLE IF EXISTS daemon_profiles") &&
            execSql("DROP TABLE IF EXISTS daemon_approvals") &&
-           execSql("DROP TABLE IF EXISTS daemon_fs_entries");
+           execSql("DROP TABLE IF EXISTS daemon_fs_entries") &&
+           execSql("DROP TABLE IF EXISTS daemon_transcript_blocks");
 }
 
 int DaemonCacheStore::schemaVersion() const {
@@ -180,6 +182,17 @@ QList<CachedSessionRow> DaemonCacheStore::sessions() const {
         rows.append(row);
     }
     return rows;
+}
+
+bool DaemonCacheStore::deleteSession(const QString& sessionId) {
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral("DELETE FROM daemon_sessions WHERE session_id=?"));
+    q.addBindValue(sessionId);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
 }
 
 bool DaemonCacheStore::appendSessionLog(const CachedLogRow& row) {
@@ -390,6 +403,84 @@ QList<CachedProfileRow> DaemonCacheStore::profiles() const {
         rows.append(row);
     }
     return rows;
+}
+
+bool DaemonCacheStore::upsertTranscriptBlock(const CachedTranscriptBlockRow& row) {
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral(
+        "INSERT INTO daemon_transcript_blocks(session_id,seq,kind,role,text,call_id,tool_name,"
+        "args_summary,ok,summary,request_id,host_kind,content_kind,updated_at_ms) "
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+        "ON CONFLICT(session_id,seq) DO UPDATE SET kind=excluded.kind,role=excluded.role,"
+        "text=excluded.text,call_id=excluded.call_id,tool_name=excluded.tool_name,"
+        "args_summary=excluded.args_summary,ok=excluded.ok,summary=excluded.summary,"
+        "request_id=excluded.request_id,host_kind=excluded.host_kind,"
+        "content_kind=excluded.content_kind,updated_at_ms=excluded.updated_at_ms"));
+    q.addBindValue(row.sessionId);
+    q.addBindValue(QVariant::fromValue<qulonglong>(row.seq));
+    q.addBindValue(row.kind);
+    q.addBindValue(row.role);
+    q.addBindValue(row.text);
+    q.addBindValue(row.callId);
+    q.addBindValue(row.toolName);
+    q.addBindValue(row.argsSummary);
+    q.addBindValue(row.ok ? 1 : 0);
+    q.addBindValue(row.summary);
+    q.addBindValue(row.requestId);
+    q.addBindValue(row.hostKind);
+    q.addBindValue(row.contentKind);
+    q.addBindValue(row.updatedAtMs);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+QList<CachedTranscriptBlockRow> DaemonCacheStore::transcriptBlocks(const QString& sessionId,
+                                                                   quint64 afterSeq) const {
+    QList<CachedTranscriptBlockRow> rows;
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral(
+        "SELECT session_id,seq,kind,role,text,call_id,tool_name,args_summary,ok,summary,"
+        "request_id,host_kind,content_kind,updated_at_ms FROM daemon_transcript_blocks "
+        "WHERE session_id=? AND seq>? ORDER BY seq ASC"));
+    q.addBindValue(sessionId);
+    q.addBindValue(QVariant::fromValue<qulonglong>(afterSeq));
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return rows;
+    }
+    while (q.next()) {
+        CachedTranscriptBlockRow row;
+        row.sessionId = q.value(0).toString();
+        row.seq = q.value(1).toULongLong();
+        row.kind = q.value(2).toString();
+        row.role = q.value(3).toString();
+        row.text = q.value(4).toString();
+        row.callId = q.value(5).toString();
+        row.toolName = q.value(6).toString();
+        row.argsSummary = q.value(7).toString();
+        row.ok = q.value(8).toInt() != 0;
+        row.summary = q.value(9).toString();
+        row.requestId = q.value(10).toUInt();
+        row.hostKind = q.value(11).toString();
+        row.contentKind = q.value(12).toString();
+        row.updatedAtMs = q.value(13).toLongLong();
+        rows.append(row);
+    }
+    return rows;
+}
+
+bool DaemonCacheStore::clearTranscript(const QString& sessionId) {
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral("DELETE FROM daemon_transcript_blocks WHERE session_id=?"));
+    q.addBindValue(sessionId);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
 }
 
 } // namespace daemonapp::daemon

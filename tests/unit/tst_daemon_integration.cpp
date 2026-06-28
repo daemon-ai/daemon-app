@@ -226,16 +226,19 @@ private slots:
     }
 
     void codecDecodesSessionPageResponse() {
-        // {"SessionPage": {"sessions": [ {"session": "s1", "state": "Active"} ]}}
+        // {"SessionPage": {"sessions": [ {"session": "s1", "state": "Active"} ], "rev": 0}}
+        // (L4 added the required "rev" field; "removed" is optional and omitted here.)
         const QByteArray response(
-            "\xA1\x6BSessionPage\xA1\x68sessions\x81\xA2\x67session\x62s1\x65state\x66"
-            "Active",
-            49);
+            "\xA1\x6BSessionPage\xA2\x68sessions\x81\xA2\x67session\x62s1\x65state\x66"
+            "Active\x63rev\x00",
+            54);
         QList<daemonapp::daemon::CachedSessionRow> rows;
-        QVERIFY(daemonapp::daemon::NodeApiCodec::decodeSessionPage(response, &rows));
+        quint64 rev = 999;
+        QVERIFY(daemonapp::daemon::NodeApiCodec::decodeSessionPage(response, &rows, nullptr, &rev));
         QCOMPARE(rows.size(), 1);
         QCOMPARE(rows.first().sessionId, QStringLiteral("s1"));
         QCOMPARE(rows.first().state, QStringLiteral("Active"));
+        QCOMPARE(rev, static_cast<quint64>(0));
     }
 
     void codecEncodesSubscribeRequest() {
@@ -247,10 +250,11 @@ private slots:
     }
 
     void codecDecodesLogPageCursors() {
-        // {"LogPage": {"entries": [], "next_seq": 5, "head_seq": 5}}
-        const QByteArray response("\xA1\x67LogPage\xA3\x67"
-                                  "entries\x80\x68next_seq\x05\x68head_seq\x05",
-                                  39);
+        // {"LogPage": {"entries": [], "next_seq": 5, "head_seq": 5, "epoch": 0}} (L2 added epoch)
+        const QByteArray response("\xA1\x67LogPage\xA4\x67"
+                                  "entries\x80\x68next_seq\x05\x68head_seq\x05\x65"
+                                  "epoch\x00",
+                                  46);
         QList<daemonapp::daemon::CachedLogRow> rows;
         quint64 nextSeq = 0;
         quint64 headSeq = 0;

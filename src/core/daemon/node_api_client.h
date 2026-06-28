@@ -3,22 +3,26 @@
 #include "daemon/daemon_transport.h"
 
 #include <QByteArray>
-#include <QList>
+#include <QHash>
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QTimer>
 
 namespace daemonapp::daemon {
 
-// NodeApi request dispatcher with client-side correlation.
+// Multiplexed NodeApi client over the length-framed Unix-socket transport
+// (daemon-sync-protocol-spec §2). On (re)connect it performs a `Hello` handshake, then wraps each
+// request in a correlated envelope frame so many exchanges share one connection without
+// head-of-line blocking:
 //
-// NodeApi has no top-level request-id envelope, so a response carries nothing that identifies which
-// request it answers. This client therefore keeps at most one request in flight at a time: callers
-// queue encoded ApiRequests with a correlation id, requests are sent in order, and each response
-// frame is matched to the outstanding request before the next one is dispatched.
+//   - sendRequest()  -> a one-shot `Call`; the single `Reply` is delivered via responseReady().
+//   - openStream()   -> an `Open`; the server pushes `Item`s (streamItem) until `End`
+//   (streamEnded).
 //
-// The public API speaks raw CBOR; encoding/decoding lives in NodeApiCodec and is owned by
-// repositories. UI layers must not depend on this class directly.
+// The public one-shot API (responseReady / failed, keyed by a caller correlation id) is unchanged
+// from the pre-mux client, so existing repositories/consumers need no changes: the envelope is
+// stripped here and only the inner ApiResponse bytes are surfaced. UI layers never see CBOR.
 class NodeApiClient : public QObject {
     Q_OBJECT
 
@@ -27,39 +31,68 @@ public:
 
     [[nodiscard]] DaemonTransport* transport() const { return m_transport; }
 
-    // Queue one encoded ApiRequest. The response is delivered as raw ApiResponse CBOR via
+    // Queue one one-shot ApiRequest. The response is delivered as raw ApiResponse CBOR via
     // responseReady, tagged with the same correlationId.
     void sendRequest(const QByteArray& requestCbor, const QString& correlationId = QString());
 
-    // Per-request timeout override (defaults to kRequestTimeoutMs). Exposed so tests can drive the
-    // hung-daemon path without a 30s wait; production code keeps the default.
-    void setRequestTimeoutMs(int ms) { m_requestTimer.setInterval(ms); }
+    // Open a server-stream for a streaming-capable request (e.g. Subscribe). Items arrive via
+    // streamItem(id, ...) and the stream closes with streamEnded(id, ...). Returns the stream id
+    // (0 if there is no transport / the request is empty).
+    quint64 openStream(const QByteArray& requestCbor);
+    // Cancel a stream previously opened with openStream.
+    void cancelStream(quint64 id);
+
+    // Per-one-shot timeout override (defaults to kDefaultTimeoutMs). Streams are exempt (they use
+    // their own End/keepalive liveness). Exposed so tests can drive the hung-daemon path fast.
+    void setRequestTimeoutMs(int ms) { m_timeoutMs = ms; }
+
+    // Whether the negotiated server advertised the streaming capability (valid once handshaked).
+    [[nodiscard]] bool streamingAvailable() const {
+        return m_features.contains(QStringLiteral("stream"));
+    }
 
 signals:
     void responseReady(const QString& correlationId, const QByteArray& responseCbor);
     void failed(const QString& correlationId, const QString& message);
+    // Stream lifecycle (openStream): one chunk, a close (clean or error), and a re-baseline signal.
+    void streamItem(quint64 id, const QByteArray& responseCbor);
+    void streamEnded(quint64 id, bool error, const QString& message);
+    void streamReset(quint64 id, quint64 epoch, quint64 headSeq);
 
 private:
-    struct PendingRequest {
+    enum class Handshake { Disconnected, Handshaking, Ready };
+
+    struct Pending {
         QString correlationId;
-        QByteArray requestCbor;
+        bool stream = false;
+        qint64 deadlineMs = 0; // one-shot timeout deadline (epoch ms); 0 for streams
     };
 
-    void dispatchNext();
-    // Fail the in-flight request (if any) then drain the queue with the same error. Idempotent, so
-    // it is safe to call from both the transport's failed and disconnected signals.
-    void failAllPending(const QString& message);
+    void onFrame(const QByteArray& frameCbor);
+    // Assign an id, register the pending exchange, wrap the request, and send-or-queue it. Returns
+    // the id.
+    quint64 enqueue(const QByteArray& requestCbor, const QString& correlationId, bool stream);
+    // Begin the Hello handshake if not already connecting/ready (sends Hello ahead of any queued
+    // frame).
+    void ensureHandshake();
+    // Flush frames buffered during the handshake once the server's Hello arrives.
+    void flushOutbox();
+    // Fail every outstanding exchange (one-shots via failed, streams via streamEnded) and reset to
+    // Disconnected so the next send re-handshakes. Idempotent.
+    void failAll(const QString& message);
+    // (Re)start the periodic one-shot deadline scan while one-shots are outstanding.
+    void armTimeoutScan();
 
-    // A hung-but-connected daemon (accepts the frame, never replies) would otherwise leave
-    // m_inFlight stuck forever and stall the queue. Bound every in-flight request so the queue
-    // self-unsticks (and so the connection heartbeat can detect a dead-but-open socket).
-    static constexpr int kRequestTimeoutMs = 30000;
+    static constexpr int kDefaultTimeoutMs = 30000;
 
     DaemonTransport* m_transport = nullptr;
-    QList<PendingRequest> m_queue;
-    bool m_inFlight = false;
-    QString m_currentCorrelation;
-    QTimer m_requestTimer;
+    Handshake m_handshake = Handshake::Disconnected;
+    quint64 m_nextId = 1;
+    QHash<quint64, Pending> m_pending; // id -> outstanding exchange
+    QList<QByteArray> m_outbox;        // wrapped frames awaiting the Hello ack
+    QStringList m_features;            // server capabilities from the Hello ack
+    int m_timeoutMs = kDefaultTimeoutMs;
+    QTimer m_timeoutTimer; // periodic scan that fails one-shots past their deadline
 };
 
 } // namespace daemonapp::daemon

@@ -177,7 +177,8 @@ RootWidget::RootWidget()
     // does (the connection seam is the DaemonConnectionService).
     if (qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection) !=
         nullptr) {
-        m_tabSessions->setTurnEngines(new DaemonTurnEngineFactory(m_services.nodeApi, this));
+        m_tabSessions->setTurnEngines(new DaemonTurnEngineFactory(
+            m_services.nodeApi, m_services.cache, m_services.subscriptions, this));
     }
     connect(m_tabModel, &TabModel::currentTabChanged, this, [this](int tabId) {
         if (tabId >= 0) {
@@ -1799,7 +1800,8 @@ QString RootWidget::runHeadlessChat(const QString& prompt, int timeoutMs) const 
         return {};
     }
     settle(600); // drain the on-ready refreshes first
-    auto* engine = new DaemonTurnEngine(m_services.nodeApi, const_cast<RootWidget*>(this));
+    auto* engine = new DaemonTurnEngine(m_services.nodeApi, m_services.cache,
+                                        m_services.subscriptions, const_cast<RootWidget*>(this));
     engine->setSessionId(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
     QString answer;
     QEventLoop loop;

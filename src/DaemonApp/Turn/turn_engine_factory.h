@@ -9,7 +9,9 @@
 
 namespace daemonapp::daemon {
 class NodeApiClient;
-}
+class DaemonCacheStore;
+class SubscriptionManager;
+} // namespace daemonapp::daemon
 
 // Builds the per-session turn engine. Injected into SessionOrchestrator (QML assigns the
 // `TurnEngines` context property; the TUI passes it explicitly), so the front ends pick the mock
@@ -43,13 +45,18 @@ class DaemonTurnEngineFactory : public ITurnEngineFactory {
     Q_OBJECT
 
 public:
-    explicit DaemonTurnEngineFactory(daemonapp::daemon::NodeApiClient* client,
-                                     QObject* parent = nullptr)
-        : ITurnEngineFactory(parent), m_client(client) {}
+    explicit DaemonTurnEngineFactory(
+        daemonapp::daemon::NodeApiClient* client,
+        daemonapp::daemon::DaemonCacheStore* cache = nullptr,
+        daemonapp::daemon::SubscriptionManager* subscriptions = nullptr, QObject* parent = nullptr)
+        : ITurnEngineFactory(parent), m_client(client), m_cache(cache),
+          m_subscriptions(subscriptions) {}
     [[nodiscard]] ITurnEngine* create(QObject* parent) override {
-        return new DaemonTurnEngine(m_client, parent);
+        return new DaemonTurnEngine(m_client, m_cache, m_subscriptions, parent);
     }
 
 private:
     daemonapp::daemon::NodeApiClient* m_client = nullptr;
+    daemonapp::daemon::DaemonCacheStore* m_cache = nullptr;
+    daemonapp::daemon::SubscriptionManager* m_subscriptions = nullptr;
 };

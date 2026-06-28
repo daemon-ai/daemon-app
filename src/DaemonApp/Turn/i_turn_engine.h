@@ -74,6 +74,13 @@ public:
     }
     Q_INVOKABLE virtual void steer(const QString& text) { Q_UNUSED(text) }
 
+    // L3 awareness (daemon-sync-protocol §5): the SubscriptionManager calls this by name (via its
+    // focus registry, so the daemon-client module stays decoupled from the Turn module) when the
+    // node reports this engine's focused session advanced out of band — an idle focused engine then
+    // catches up on its push subscription without polling. Default no-op (the simulator ignores
+    // it).
+    Q_INVOKABLE virtual void nudge() {}
+
 signals:
     void activeChanged();
     void turnStateChanged();

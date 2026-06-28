@@ -63,11 +63,11 @@ class ApprovalRepository;
 class CheckpointRepository;
 class CredentialRepository;
 class DaemonCacheStore;
-class FsRepository;
 class ModelRepository;
 class NodeApiClient;
 class ProfileRepository;
 class SessionRepository;
+class SubscriptionManager;
 
 enum class ServiceMode {
     Mock,
@@ -111,14 +111,22 @@ struct AppServiceGraph {
     ProfileRepository* profileRepository = nullptr;
     ModelRepository* models = nullptr;
     CredentialRepository* credentialRepository = nullptr;
-    FsRepository* files = nullptr;
     ApprovalRepository* approvalRepository = nullptr;
     CheckpointRepository* checkpointRepository = nullptr;
+    // The node-wide event feed consumer (L3): owns the single EventsSince stream + routes
+    // notifications. Non-null only in Daemon mode.
+    SubscriptionManager* subscriptions = nullptr;
 };
 
 // Resolve the service mode from the DAEMON_APP_SERVICE_MODE environment variable
 // ("daemon" / "mock", case-insensitive). Anything else (including unset) returns the fallback,
 // which keeps Mock as the default until a caller explicitly opts in.
+//
+// Phase 4 DECISION (default mode): keep the code default `Mock` and let the packaged bundle force
+// `DAEMON_APP_SERVICE_MODE=daemon` (flake.nix). This keeps bare dev runs + the offscreen ctests
+// hermetic (no live daemon) while shipped installs are daemon-backed; flipping the code default
+// would require the 3 `tests/tui/CMakeLists.txt` offscreen tests to set `=mock` explicitly, for no
+// real gain. Not flipped.
 ServiceMode serviceModeFromEnvironment(ServiceMode fallback = ServiceMode::Mock);
 
 // Shared service factory for GUI and TUI. The current Mock mode preserves existing behavior; Daemon

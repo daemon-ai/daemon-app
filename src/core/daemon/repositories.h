@@ -62,6 +62,13 @@ private:
 
     static constexpr auto kSessionsCorrelation = "repo/sessions-query";
     static constexpr auto kSubscribePrefix = "repo/subscribe/";
+    static constexpr auto kRosterRevScope = "roster-rev"; // L4 persisted roster revision
+
+    // L4: the since_rev the in-flight SessionsQuery carried (0 = a full request), so the response
+    // handler knows whether to merge a delta or replace the roster (and detects a daemon-reset
+    // fallback when the returned rev went backwards).
+    bool m_sentRosterDelta = false;
+    quint64 m_sentRosterSinceRev = 0;
 };
 
 class ProfileRepository : public RepositoryBase {
@@ -199,8 +206,13 @@ public:
                   const QString& engine = QStringLiteral("llama"),
                   const QString& revision = QStringLiteral("main"));
     // Poll all download jobs (ModelDownloads); on success downloadsChanged() fires. Reaching a
-    // Completed job that was not completed before triggers a catalog refresh.
+    // Completed job that was not completed before triggers a catalog refresh. Used for the initial
+    // snapshot (on download start / lifecycle ops); live progress now arrives via the L3 feed.
     void refreshDownloads();
+    // Apply one L3 DownloadProgress notification (from the SubscriptionManager): patch the matching
+    // job row in place (insert if new), emit downloadsChanged(), and refresh the catalog when a job
+    // newly reaches Completed. Replaces the retired 600ms poll.
+    void applyDownloadProgress(quint64 id, quint32 pct, const QString& state);
     // Refresh the installed catalog (ModelCatalog); on success catalogChanged() fires.
     void refreshCatalog();
     // Delete an installed model (ModelDelete); on Ok the catalog is re-fetched.
@@ -229,8 +241,6 @@ signals:
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
-    // Ensure the QTimer poll loop runs while any download job is unsettled; stop it once idle.
-    void syncDownloadPolling();
 
     static constexpr auto kModelsCorrelation = "repo/models";
     static constexpr auto kCurrentCorrelation = "repo/model-current";
@@ -259,16 +269,11 @@ private:
     QList<DecodedDownloadStatus> m_downloads;
     QList<DecodedInstalledModel> m_installed;
     QSet<quint64> m_completedDownloads; // ids already seen Completed (debounces catalog refresh)
-    QTimer* m_downloadPoll = nullptr;
 };
 
-class FsRepository : public RepositoryBase {
-public:
-    using RepositoryBase::RepositoryBase;
-
-    bool upsertCachedEntry(const CachedFsEntryRow& row);
-    [[nodiscard]] QList<CachedFsEntryRow> cachedEntries(const QString& rootId) const;
-};
+// (FsRepository removed in Phase 4: DaemonFsService talks to NodeApiClient + the codec directly and
+// uses DaemonCacheStore::{upsertFsEntry,fsEntries} for the daemon_fs_entries offline cache, so the
+// pass-through repository layer was redundant.)
 
 // Pending approvals are a live daemon slice (PRO-11): refreshPending() issues an ApprovalsPending
 // query and decode() populates pending(); decide() resolves one via ApprovalDecide. The aggregate

@@ -11,12 +11,14 @@
 #include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/daemon_fs_service.h"
 #include "daemon/daemon_model_catalog.h"
 #include "daemon/daemon_profile_store.h"
 #include "daemon/daemon_session_settings.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_client.h"
 #include "daemon/repositories.h"
+#include "daemon/subscription_manager.h"
 #include "daemonnet/mock_daemonnet.h"
 #include "firstrun/first_run_model.h"
 #include "fleet/mock_approvals_inbox.h"
@@ -105,7 +107,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.sessions = new SessionRepository(graph.nodeApi, graph.cache, owner);
     graph.profileRepository = new ProfileRepository(graph.nodeApi, graph.cache, owner);
     graph.models = new ModelRepository(graph.nodeApi, graph.cache, owner);
-    graph.files = new FsRepository(graph.nodeApi, graph.cache, owner);
     graph.approvalRepository = new ApprovalRepository(graph.nodeApi, graph.cache, owner);
     graph.checkpointRepository = new CheckpointRepository(graph.nodeApi, graph.cache, owner);
     graph.credentialRepository = new CredentialRepository(graph.nodeApi, graph.cache, owner);
@@ -125,6 +126,18 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // PRO-11: pending-approvals inbox backed by the ApprovalRepository (ApprovalsPending poll
         // on ready + ApprovalDecide), replacing the mock fleet inbox.
         graph.approvals = new DaemonApprovalsInbox(graph.approvalRepository, owner);
+        // L3 node-wide event feed (daemon-sync-protocol §5): one EventsSince stream that routes
+        // out-of-focus changes (roster/meta -> debounced roster refetch, approvals -> badge,
+        // downloads -> models, session-advanced -> focused-engine nudge, resync -> baseline) so the
+        // client stops polling and stops full-refetching on every change.
+        graph.subscriptions =
+            new SubscriptionManager(graph.nodeApi, graph.sessions, graph.approvalRepository,
+                                    graph.models, graph.cache, owner);
+        // Daemon-backed filesystem: replace the dev local-disk seam over the NodeApi fs_* ops - the
+        // only path that reaches a remote/embedded host's workspace. The common LocalDiskFsService
+        // built above is parented to `owner`; drop it for the daemon one.
+        delete graph.fs;
+        graph.fs = new fs::DaemonFsService(graph.nodeApi, graph.cache, owner);
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end. Fire only on the
         // transition INTO ready: stateChanged also fires for statusMessage churn (e.g. the
@@ -136,15 +149,23 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             graph.connection, &connection::IConnectionService::stateChanged, graph.sessions,
             [conn = graph.connection, sessions = graph.sessions, profiles = graph.profileRepository,
              credentials = graph.credentialRepository, models = graph.models,
-             approvals = graph.approvalRepository, wasReady] {
+             approvals = graph.approvalRepository, subscriptions = graph.subscriptions,
+             fs = graph.fs, wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
+                    // Initial baseline once per (re)connect; the EventsSince feed then keeps the
+                    // surfaces fresh incrementally instead of re-running this storm on every
+                    // change.
                     sessions->refreshSessions();
                     profiles->refreshProfiles();
                     credentials->refreshList();
                     models->refreshModels();
                     models->refreshCurrent();
                     approvals->refreshPending();
+                    fs->listRoots(); // populate the daemon-backed file roots
+                    subscriptions->start();
+                } else if (!nowReady && *wasReady) {
+                    subscriptions->stop();
                 }
                 *wasReady = nowReady;
             });

@@ -86,6 +86,62 @@ target_link_libraries(tst_connection_resilience
 add_test(NAME tst_connection_resilience COMMAND tst_connection_resilience)
 set_tests_properties(tst_connection_resilience PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_wire_mux: the daemon-app multiplexed transport (wire L0) - the Hello handshake, one-shot
+# Call/Reply correlation, push Open/Item/End streaming, and Cancel, driven against the shared
+# WireMuxServer fixture over a real DaemonTransport + NodeApiClient.
+qt_add_executable(tst_wire_mux tst_wire_mux.cpp)
+target_link_libraries(tst_wire_mux
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+)
+add_test(NAME tst_wire_mux COMMAND tst_wire_mux)
+set_tests_properties(tst_wire_mux PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_sync_resync: the L2 client resync - the DaemonTurnEngine on a push Subscribe stream tracks the
+# session-activation epoch and re-baselines from the durable journal on a generation change (epoch
+# bump / Reset), and suspends+reopens on a transport drop, driven against the WireMuxServer fixture.
+qt_add_executable(tst_sync_resync tst_sync_resync.cpp)
+target_link_libraries(tst_sync_resync
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::turn
+)
+add_test(NAME tst_sync_resync COMMAND tst_sync_resync)
+set_tests_properties(tst_sync_resync PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_subscription_manager: the L3 node-wide EventsSince feed consumer - the SubscriptionManager
+# routes each NodeEvent (approval -> inbox refetch, roster -> debounced roster refetch,
+# session-advanced -> focused-engine nudge, resync -> baseline) over the WireMuxServer fixture, plus
+# the durable render-from-cache transcript (schema v2 blocks -> content() markdown, refocus replay).
+qt_add_executable(tst_subscription_manager tst_subscription_manager.cpp)
+target_link_libraries(tst_subscription_manager
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::turn
+)
+add_test(NAME tst_subscription_manager COMMAND tst_subscription_manager)
+set_tests_properties(tst_subscription_manager PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_daemon_fs_service: the Phase 4 daemon-backed filesystem seam - DaemonFsService over the fs_*
+# codec facade (roots/list/read/write round-trip + the bstr content fix) and the lossless watch path
+# (a reset page forces changed()), driven against the WireMuxServer fixture.
+qt_add_executable(tst_daemon_fs_service tst_daemon_fs_service.cpp)
+target_link_libraries(tst_daemon_fs_service
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::fs
+)
+add_test(NAME tst_daemon_fs_service COMMAND tst_daemon_fs_service)
+set_tests_properties(tst_daemon_fs_service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_daemon_profile_store: client-side id-derivation (slug) for ProfileCreate/Clone; encode +
 # daemon acceptance are covered by verify-codec fixtures + the system-tests.
 qt_add_executable(tst_daemon_profile_store tst_daemon_profile_store.cpp)

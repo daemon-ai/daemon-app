@@ -17,6 +17,178 @@ QString fromZcbor(const zcbor_string& s) {
     return QString::fromUtf8(reinterpret_cast<const char*>(s.value), static_cast<int>(s.len));
 }
 
+QByteArray bytesFromZcbor(const zcbor_string& s) {
+    if (s.value == nullptr || s.len == 0) {
+        return {};
+    }
+    return {reinterpret_cast<const char*>(s.value), static_cast<qsizetype>(s.len)};
+}
+
+// Set a generated `fs_root_id_t_r` from the opaque client root string
+// ("workspace" | "host:<id>" | "session:<id>"); `scratch` must outlive the encode call (the
+// zcbor_string borrows it).
+void setFsRootId(const QString& rootId, fs_root_id_t_r& out, QByteArray& scratch) {
+    if (rootId.startsWith(QStringLiteral("host:"))) {
+        scratch = rootId.mid(5).toUtf8();
+        out.fs_root_id_t_choice = fs_root_id_t_r::fs_root_id_t_fs_root_id_host_m_c;
+        out.fs_root_id_t_fs_root_id_host_m.fs_root_id_host_host.value =
+            reinterpret_cast<const uint8_t*>(scratch.constData());
+        out.fs_root_id_t_fs_root_id_host_m.fs_root_id_host_host.len =
+            static_cast<size_t>(scratch.size());
+    } else if (rootId.startsWith(QStringLiteral("session:"))) {
+        scratch = rootId.mid(8).toUtf8();
+        out.fs_root_id_t_choice = fs_root_id_t_r::fs_root_id_t_fs_root_id_session_m_c;
+        out.fs_root_id_t_fs_root_id_session_m.fs_root_id_session_session.value =
+            reinterpret_cast<const uint8_t*>(scratch.constData());
+        out.fs_root_id_t_fs_root_id_session_m.fs_root_id_session_session.len =
+            static_cast<size_t>(scratch.size());
+    } else {
+        // "workspace" (and any unrecognized id) -> the Workspace root.
+        out.fs_root_id_t_choice = fs_root_id_t_r::fs_root_id_t_workspace_tstr_c;
+    }
+}
+
+QString fsRootIdToString(const fs_root_id_t_r& r) {
+    switch (r.fs_root_id_t_choice) {
+    case fs_root_id_t_r::fs_root_id_t_fs_root_id_host_m_c:
+        return QStringLiteral("host:") +
+               fromZcbor(r.fs_root_id_t_fs_root_id_host_m.fs_root_id_host_host);
+    case fs_root_id_t_r::fs_root_id_t_fs_root_id_session_m_c:
+        return QStringLiteral("session:") +
+               fromZcbor(r.fs_root_id_t_fs_root_id_session_m.fs_root_id_session_session);
+    case fs_root_id_t_r::fs_root_id_t_workspace_tstr_c:
+    default:
+        return QStringLiteral("workspace");
+    }
+}
+
+QString fsEntryKindName(int choice) {
+    switch (choice) {
+    case fs_entry_kind_t_r::fs_entry_kind_t_dir_tstr_c:
+        return QStringLiteral("dir");
+    case fs_entry_kind_t_r::fs_entry_kind_t_symlink_tstr_c:
+        return QStringLiteral("symlink");
+    case fs_entry_kind_t_r::fs_entry_kind_t_file_tstr_c:
+    default:
+        return QStringLiteral("file");
+    }
+}
+
+QString fsChangeKindName(int choice) {
+    switch (choice) {
+    case fs_change_kind_t_r::fs_change_kind_t_created_tstr_c:
+        return QStringLiteral("created");
+    case fs_change_kind_t_r::fs_change_kind_t_removed_tstr_c:
+        return QStringLiteral("removed");
+    case fs_change_kind_t_r::fs_change_kind_t_modified_tstr_c:
+    default:
+        return QStringLiteral("modified");
+    }
+}
+
+QString fsRootKindName(int choice) {
+    switch (choice) {
+    case fs_root_kind_t_r::fs_root_kind_t_host_tstr_c:
+        return QStringLiteral("host");
+    case fs_root_kind_t_r::fs_root_kind_t_session_tstr_c:
+        return QStringLiteral("session");
+    case fs_root_kind_t_r::fs_root_kind_t_workspace_tstr_c:
+    default:
+        return QStringLiteral("workspace");
+    }
+}
+
+// --- Minimal canonical-CBOR writer/reader for the L0 wire envelope -----------------------------
+// The envelope is a fixed, tiny shape (1-key outer map -> small inner map), so it is hand-coded
+// rather than routed through the generated codec. Definite-length, big-endian args, matching the
+// daemon's ciborium output (which the reader slices).
+
+void cborAppendUint(QByteArray& b, quint64 v) {
+    if (v < 24) {
+        b.append(static_cast<char>(v));
+    } else if (v <= 0xFF) {
+        b.append(static_cast<char>(0x18));
+        b.append(static_cast<char>(v));
+    } else if (v <= 0xFFFF) {
+        b.append(static_cast<char>(0x19));
+        b.append(static_cast<char>((v >> 8) & 0xFF));
+        b.append(static_cast<char>(v & 0xFF));
+    } else if (v <= 0xFFFFFFFF) {
+        b.append(static_cast<char>(0x1A));
+        for (int s = 24; s >= 0; s -= 8) {
+            b.append(static_cast<char>((v >> s) & 0xFF));
+        }
+    } else {
+        b.append(static_cast<char>(0x1B));
+        for (int s = 56; s >= 0; s -= 8) {
+            b.append(static_cast<char>((v >> s) & 0xFF));
+        }
+    }
+}
+
+// Append a short (<24 byte) CBOR text string. All envelope keys/feature values qualify.
+void cborAppendText(QByteArray& b, const char* s) {
+    const auto len = static_cast<quint64>(qstrlen(s));
+    b.append(static_cast<char>(0x60 | static_cast<char>(len)));
+    b.append(s, static_cast<qsizetype>(len));
+}
+
+// Read a CBOR (major, argument) head at `i`, advancing `i`. Returns false on truncation / an
+// indefinite or reserved length (the envelope is always definite).
+bool cborReadHead(const uchar* p, qsizetype n, qsizetype& i, quint8& major, quint64& arg) {
+    if (i >= n) {
+        return false;
+    }
+    const quint8 ib = p[i++];
+    major = ib >> 5;
+    const quint8 lo = ib & 0x1F;
+    if (lo < 24) {
+        arg = lo;
+        return true;
+    }
+    int nbytes = 0;
+    switch (lo) {
+    case 24:
+        nbytes = 1;
+        break;
+    case 25:
+        nbytes = 2;
+        break;
+    case 26:
+        nbytes = 4;
+        break;
+    case 27:
+        nbytes = 8;
+        break;
+    default:
+        return false;
+    }
+    if (i + nbytes > n) {
+        return false;
+    }
+    quint64 v = 0;
+    for (int k = 0; k < nbytes; ++k) {
+        v = (v << 8) | p[i++];
+    }
+    arg = v;
+    return true;
+}
+
+// Read a CBOR text string at `i` into `out`, advancing `i`.
+bool cborReadText(const uchar* p, qsizetype n, qsizetype& i, QByteArray* out) {
+    quint8 major = 0;
+    quint64 arg = 0;
+    if (!cborReadHead(p, n, i, major, arg) || major != 3) {
+        return false;
+    }
+    if (i + static_cast<qsizetype>(arg) > n) {
+        return false;
+    }
+    *out = QByteArray(reinterpret_cast<const char*>(p + i), static_cast<qsizetype>(arg));
+    i += static_cast<qsizetype>(arg);
+    return true;
+}
+
 QString sessionStateName(int choice) {
     switch (choice) {
     case session_state_r::session_state_Active_tstr_c:
@@ -377,6 +549,81 @@ void decodeHostRequest(const host_request& req, DecodedLogEntry* out) {
     }
 }
 
+// The host-request kind name for a journal `Request` block (the block carries the id + kind, not
+// the live prompt - the live merged log carries that).
+QString hostRequestKindName(const host_request_kind_t_r& kind) {
+    switch (kind.host_request_kind_t_choice) {
+    case host_request_kind_t_r::host_request_kind_t_host_request_kind_approval_m_c:
+        return QStringLiteral("Approval");
+    case host_request_kind_t_r::host_request_kind_t_host_request_kind_input_m_c:
+        return QStringLiteral("Input");
+    case host_request_kind_t_r::host_request_kind_t_host_request_kind_choice_m_c:
+        return QStringLiteral("Choice");
+    case host_request_kind_t_r::host_request_kind_t_host_request_kind_delegate_m_c:
+        return QStringLiteral("Delegate");
+    case host_request_kind_t_r::host_request_kind_t_host_request_kind_spawn_m_c:
+        return QStringLiteral("Spawn");
+    default:
+        return {};
+    }
+}
+
+// Map a decoded transcript-block (a coalesced durable journal payload) to the typed facade struct.
+DecodedTranscriptBlock decodeTranscriptBlock(const transcript_block_r& block) {
+    DecodedTranscriptBlock out;
+    switch (block.transcript_block_choice) {
+    case transcript_block_r::transcript_block_message_m_c: {
+        const transcript_block_message& m = block.transcript_block_message_m;
+        out.kind = DecodedTranscriptBlock::Kind::Message;
+        switch (m.Message_role.transcript_role_choice) {
+        case transcript_role_r::transcript_role_User_tstr_c:
+            out.role = QStringLiteral("User");
+            break;
+        case transcript_role_r::transcript_role_System_tstr_c:
+            out.role = QStringLiteral("System");
+            break;
+        default:
+            out.role = QStringLiteral("Assistant");
+            break;
+        }
+        out.text = fromZcbor(m.Message_text);
+        break;
+    }
+    case transcript_block_r::transcript_block_tool_call_m_c: {
+        const transcript_block_tool_call& t = block.transcript_block_tool_call_m;
+        out.kind = DecodedTranscriptBlock::Kind::ToolCall;
+        out.callId = fromZcbor(t.ToolCall_call_id);
+        out.toolName = fromZcbor(t.ToolCall_name);
+        out.argsSummary = fromZcbor(t.ToolCall_args_summary);
+        break;
+    }
+    case transcript_block_r::transcript_block_tool_result_m_c: {
+        const transcript_block_tool_result& t = block.transcript_block_tool_result_m;
+        out.kind = DecodedTranscriptBlock::Kind::ToolResult;
+        out.callId = fromZcbor(t.ToolResult_call_id);
+        out.ok = t.ToolResult_ok;
+        out.summary = fromZcbor(t.ToolResult_summary);
+        break;
+    }
+    case transcript_block_r::transcript_block_request_m_c: {
+        const transcript_block_request& r = block.transcript_block_request_m;
+        out.kind = DecodedTranscriptBlock::Kind::Request;
+        out.requestId = r.Request_request_id;
+        out.hostKind = hostRequestKindName(r.Request_kind);
+        break;
+    }
+    case transcript_block_r::transcript_block_content_m_c: {
+        const transcript_block_content& c = block.transcript_block_content_m;
+        out.kind = DecodedTranscriptBlock::Kind::Content;
+        out.contentKind = fromZcbor(c.Content_kind);
+        break;
+    }
+    default:
+        break;
+    }
+    return out;
+}
+
 bool encodeRequest(const api_request_r& request, QByteArray* out) {
     // Grow the output buffer until the request fits rather than truncating: most requests are tiny,
     // but Submit/CommandInvoke carry user text and can exceed any small fixed size. Retry on encode
@@ -559,12 +806,19 @@ QByteArray NodeApiCodec::encodeHealthRequest() {
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
-QByteArray NodeApiCodec::encodeSessionsQueryRequest() {
+QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 sinceRev) {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_sessions_query_m_c;
-    // Leave every optional field absent: an empty session-query map asks the daemon for its
-    // default (TopLevel) scope.
+    // Leave scope/after/limit absent: an empty session-query map asks the daemon for its default
+    // (TopLevel) scope, first page. `since_rev` (when set) makes it an L4 delta read.
     request.api_request_request_sessions_query_m = request_sessions_query{};
+    session_query& q = request.api_request_request_sessions_query_m.SessionsQuery_query;
+    q.session_query_since_rev_present = hasSinceRev;
+    if (hasSinceRev) {
+        q.session_query_since_rev.session_query_since_rev_choice =
+            session_query_since_rev_r::session_query_since_rev_uint_c;
+        q.session_query_since_rev.session_query_since_rev_uint = static_cast<uint32_t>(sinceRev);
+    }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -579,6 +833,35 @@ QByteArray NodeApiCodec::encodeSubscribeRequest(const QString& sessionId, quint6
     subscribe.Subscribe_session.len = static_cast<size_t>(session.size());
     subscribe.Subscribe_after_seq = static_cast<uint32_t>(afterSeq);
     subscribe.Subscribe_max = max;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeSessionHistoryRequest(const QString& sessionId, quint64 afterCursor,
+                                                     quint32 max) {
+    const QByteArray session = sessionId.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_session_history_m_c;
+    request_session_history& hist = request.api_request_request_session_history_m;
+    hist.SessionHistory_session.value = reinterpret_cast<const uint8_t*>(session.constData());
+    hist.SessionHistory_session.len = static_cast<size_t>(session.size());
+    hist.SessionHistory_after_cursor = static_cast<uint32_t>(afterCursor);
+    hist.SessionHistory_max = max;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeEventsSinceRequest(quint64 cursor, bool hasWaitMs, quint32 waitMs) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_events_since_m_c;
+    request_events_since& feed = request.api_request_request_events_since_m;
+    feed.EventsSince_cursor = static_cast<uint32_t>(cursor);
+    feed.EventsSince_wait_ms_present = hasWaitMs;
+    if (hasWaitMs) {
+        feed.EventsSince_wait_ms.EventsSince_wait_ms_choice =
+            EventsSince_wait_ms_r::EventsSince_wait_ms_uint_c;
+        feed.EventsSince_wait_ms.EventsSince_wait_ms_uint = waitMs;
+    }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -1154,6 +1437,118 @@ QByteArray NodeApiCodec::encodeSessionSearchRequest(const QString& query, quint3
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
+QByteArray NodeApiCodec::encodeHelloFrame() {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1)); // map(1)
+    cborAppendText(b, "Hello");
+    b.append(static_cast<char>(0xA2)); // map(2): wire_version, features
+    cborAppendText(b, "wire_version");
+    cborAppendUint(b, kWireVersion);
+    cborAppendText(b, "features");
+    b.append(static_cast<char>(0x82)); // array(2)
+    cborAppendText(b, "mux");
+    cborAppendText(b, "stream");
+    return b;
+}
+
+QByteArray NodeApiCodec::encodeCallFrame(quint64 id, const QByteArray& requestCbor) {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1)); // map(1)
+    cborAppendText(b, "Call");
+    b.append(static_cast<char>(0xA2)); // map(2): id, req
+    cborAppendText(b, "id");
+    cborAppendUint(b, id);
+    cborAppendText(b, "req");
+    b.append(requestCbor); // req is the final key, so the daemon decodes it as the trailing item
+    return b;
+}
+
+QByteArray NodeApiCodec::encodeOpenFrame(quint64 id, const QByteArray& requestCbor) {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1)); // map(1)
+    cborAppendText(b, "Open");
+    b.append(static_cast<char>(0xA2)); // map(2): id, req
+    cborAppendText(b, "id");
+    cborAppendUint(b, id);
+    cborAppendText(b, "req");
+    b.append(requestCbor);
+    return b;
+}
+
+QByteArray NodeApiCodec::encodeCancelFrame(quint64 id) {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1)); // map(1)
+    cborAppendText(b, "Cancel");
+    b.append(static_cast<char>(0xA1)); // map(1): id
+    cborAppendText(b, "id");
+    cborAppendUint(b, id);
+    return b;
+}
+
+bool NodeApiCodec::decodeWireFrame(const QByteArray& frameCbor, DecodedWireFrame* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    *out = DecodedWireFrame{};
+    const auto* p = reinterpret_cast<const uchar*>(frameCbor.constData());
+    const qsizetype n = frameCbor.size();
+    qsizetype i = 0;
+    quint8 major = 0;
+    quint64 arg = 0;
+    if (!cborReadHead(p, n, i, major, arg) || major != 5 || arg != 1) {
+        return false; // outer must be map(1) { <tag>: ... }
+    }
+    QByteArray tag;
+    if (!cborReadText(p, n, i, &tag)) {
+        return false;
+    }
+    if (!cborReadHead(p, n, i, major, arg) || major != 5) {
+        return false; // inner map
+    }
+    const quint64 innerFields = arg;
+    if (tag == "Hello") {
+        out->kind = WireFrameKind::Hello;
+        return true;
+    }
+    // Every other frame leads with "id" (declaration order). Read it.
+    QByteArray key;
+    if (!cborReadText(p, n, i, &key) || key != "id") {
+        return false;
+    }
+    if (!cborReadHead(p, n, i, major, arg) || major != 0) {
+        return false;
+    }
+    out->id = arg;
+    if (tag == "Reply" || tag == "Item") {
+        if (!cborReadText(p, n, i, &key) || key != "res") {
+            return false;
+        }
+        // "res" is the final field, so the remainder of the frame is the inner ApiResponse item.
+        out->payload = frameCbor.mid(i);
+        out->kind = (tag == "Item") ? WireFrameKind::Item : WireFrameKind::Reply;
+        return true;
+    }
+    if (tag == "End") {
+        out->kind = WireFrameKind::End;
+        if (innerFields >= 2 && cborReadText(p, n, i, &key) && key == "error") {
+            // null (0xF6) means a clean close; anything else (or a missing value) is an error.
+            out->hasError = (i >= n) || (p[i] != 0xF6);
+        }
+        return true;
+    }
+    if (tag == "Reset") {
+        out->kind = WireFrameKind::Reset;
+        if (cborReadText(p, n, i, &key) && key == "epoch" && cborReadHead(p, n, i, major, arg)) {
+            out->epoch = arg;
+        }
+        if (cborReadText(p, n, i, &key) && key == "head_seq" && cborReadHead(p, n, i, major, arg)) {
+            out->headSeq = arg;
+        }
+        return true;
+    }
+    return false;
+}
+
 ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
     auto response = std::make_unique<api_response_r>();
     if (!decodeResponse(responseCbor, response.get())) {
@@ -1166,8 +1561,24 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         return ApiResponseKind::SessionPage;
     case api_response_r::api_response_response_log_page_m_c:
         return ApiResponseKind::LogPage;
+    case api_response_r::api_response_response_events_page_m_c:
+        return ApiResponseKind::EventsPage;
+    case api_response_r::api_response_response_journal_m_c:
+        return ApiResponseKind::Journal;
     case api_response_r::api_response_response_fs_roots_m_c:
         return ApiResponseKind::FsRoots;
+    case api_response_r::api_response_response_fs_list_m_c:
+        return ApiResponseKind::FsList;
+    case api_response_r::api_response_response_fs_stat_m_c:
+        return ApiResponseKind::FsStat;
+    case api_response_r::api_response_response_fs_read_m_c:
+        return ApiResponseKind::FsRead;
+    case api_response_r::api_response_response_fs_write_m_c:
+        return ApiResponseKind::FsWrite;
+    case api_response_r::api_response_response_fs_watch_m_c:
+        return ApiResponseKind::FsWatch;
+    case api_response_r::api_response_response_fs_search_m_c:
+        return ApiResponseKind::FsSearch;
     case api_response_r::api_response_response_ok_m_c:
         return ApiResponseKind::Ok;
     case api_response_r::api_response_response_credentials_m_c:
@@ -1234,7 +1645,7 @@ bool NodeApiCodec::decodeHealth(const QByteArray& responseCbor, DecodedHealth* o
 }
 
 bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<CachedSessionRow>* out,
-                                     QString* nextCursor) {
+                                     QString* nextCursor, quint64* rev, QStringList* removed) {
     if (out == nullptr) {
         return false;
     }
@@ -1292,6 +1703,18 @@ bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<Cache
                 fromZcbor(page.session_page_next_cursor.session_page_next_cursor_session_id_m);
         }
     }
+    if (rev != nullptr) {
+        *rev = page.session_page_rev;
+    }
+    if (removed != nullptr) {
+        removed->clear();
+        if (page.session_page_removed_present) {
+            const session_page_removed_r& rm = page.session_page_removed;
+            for (size_t i = 0; i < rm.session_page_removed_session_id_m_count; ++i) {
+                removed->append(fromZcbor(rm.session_page_removed_session_id_m[i]));
+            }
+        }
+    }
     return true;
 }
 
@@ -1333,7 +1756,7 @@ bool NodeApiCodec::decodeLogPage(const QByteArray& responseCbor, const QString& 
 }
 
 bool NodeApiCodec::decodeLogPageEntries(const QByteArray& responseCbor, QList<DecodedLogEntry>* out,
-                                        quint64* nextSeq, quint64* headSeq) {
+                                        quint64* nextSeq, quint64* headSeq, quint64* epoch) {
     if (out == nullptr) {
         return false;
     }
@@ -1390,6 +1813,126 @@ bool NodeApiCodec::decodeLogPageEntries(const QByteArray& responseCbor, QList<De
     }
     if (headSeq != nullptr) {
         *headSeq = page.log_page_view_head_seq;
+    }
+    if (epoch != nullptr) {
+        *epoch = page.log_page_view_epoch;
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEventsPage* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_events_page_m_c) {
+        return false;
+    }
+    const events_page& page =
+        response->api_response_response_events_page_m.response_events_page_EventsPage;
+    out->events.clear();
+    out->nextCursor = page.events_page_next_cursor;
+    out->headCursor = page.events_page_head_cursor;
+    for (size_t i = 0; i < page.events_page_events_node_event_m_count; ++i) {
+        const node_event_r& ev = page.events_page_events_node_event_m[i];
+        DecodedNodeEvent decoded;
+        switch (ev.node_event_choice) {
+        case node_event_r::node_event_session_advanced_m_c: {
+            const node_event_session_advanced& m = ev.node_event_session_advanced_m;
+            decoded.kind = DecodedNodeEvent::Kind::SessionAdvanced;
+            decoded.session = fromZcbor(m.SessionAdvanced_session);
+            decoded.epoch = m.SessionAdvanced_epoch;
+            decoded.headSeq = m.SessionAdvanced_head_seq;
+            break;
+        }
+        case node_event_r::node_event_session_meta_changed_m_c: {
+            const node_event_session_meta_changed& m = ev.node_event_session_meta_changed_m;
+            decoded.kind = DecodedNodeEvent::Kind::SessionMetaChanged;
+            decoded.session = fromZcbor(m.SessionMetaChanged_session);
+            decoded.rev = m.SessionMetaChanged_rev;
+            break;
+        }
+        case node_event_r::node_event_roster_changed_m_c:
+            decoded.kind = DecodedNodeEvent::Kind::RosterChanged;
+            decoded.rev = ev.node_event_roster_changed_m.RosterChanged_rev;
+            break;
+        case node_event_r::node_event_approval_pending_m_c: {
+            const node_event_approval_pending& m = ev.node_event_approval_pending_m;
+            decoded.kind = DecodedNodeEvent::Kind::ApprovalPending;
+            decoded.session = fromZcbor(m.ApprovalPending_session);
+            decoded.requestId = fromZcbor(m.ApprovalPending_request_id);
+            break;
+        }
+        case node_event_r::node_event_download_progress_m_c: {
+            const node_event_download_progress& m = ev.node_event_download_progress_m;
+            decoded.kind = DecodedNodeEvent::Kind::DownloadProgress;
+            decoded.downloadId = m.DownloadProgress_id;
+            decoded.pct = m.DownloadProgress_pct;
+            decoded.state = fromZcbor(m.DownloadProgress_state);
+            break;
+        }
+        case node_event_r::node_event_resync_needed_m_c:
+            decoded.kind = DecodedNodeEvent::Kind::ResyncNeeded;
+            decoded.scope = fromZcbor(ev.node_event_resync_needed_m.ResyncNeeded_scope);
+            break;
+        default:
+            decoded.kind = DecodedNodeEvent::Kind::Unknown;
+            break;
+        }
+        out->events.append(decoded);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeJournal(const QByteArray& responseCbor, QList<DecodedJournalRecord>* out,
+                                 quint64* nextCursor, quint64* headCursor, bool* hasSealedAfter,
+                                 quint64* sealedAfter) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_journal_m_c) {
+        return false;
+    }
+    const journal_page_view& page =
+        response->api_response_response_journal_m.response_journal_Journal;
+    out->clear();
+    for (size_t i = 0; i < page.journal_page_view_entries_journal_record_m_count; ++i) {
+        const journal_record& rec = page.journal_page_view_entries_journal_record_m[i];
+        DecodedJournalRecord decoded;
+        decoded.cursor = rec.journal_record_cursor;
+        decoded.seq = rec.journal_record_seq;
+        decoded.epoch = rec.journal_record_epoch;
+        decoded.kind = fromZcbor(rec.journal_record_kind);
+        const journal_record_payload_t_r& payload = rec.journal_record_payload;
+        if (payload.journal_record_payload_t_choice ==
+            journal_record_payload_t_r::journal_record_payload_t_journal_record_payload_block_m_c) {
+            decoded.isBlock = true;
+            decoded.block = decodeTranscriptBlock(
+                payload.journal_record_payload_t_journal_record_payload_block_m.Block_block);
+        } else {
+            decoded.isBlock = false;
+            decoded.managementDetail =
+                fromZcbor(payload.journal_record_payload_t_journal_record_payload_management_m
+                              .Management_detail);
+        }
+        out->append(decoded);
+    }
+    if (nextCursor != nullptr) {
+        *nextCursor = page.journal_page_view_next_cursor;
+    }
+    if (headCursor != nullptr) {
+        *headCursor = page.journal_page_view_head_cursor;
+    }
+    const bool sealed = page.journal_page_view_sealed_after_choice ==
+                        journal_page_view::journal_page_view_sealed_after_uint_c;
+    if (hasSealedAfter != nullptr) {
+        *hasSealedAfter = sealed;
+    }
+    if (sealedAfter != nullptr) {
+        *sealedAfter = sealed ? page.journal_page_view_sealed_after_uint : 0;
     }
     return true;
 }
@@ -1867,6 +2410,262 @@ bool NodeApiCodec::decodeSessionSearch(const QByteArray& responseCbor,
         entry.snippet = fromZcbor(hit.session_search_hit_snippet);
         out->append(entry);
     }
+    return true;
+}
+
+// --- Filesystem surface (Phase 4) ----------------------------------------------------------------
+
+QByteArray NodeApiCodec::encodeFsRootsRequest() {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_fs_roots_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeFsListRequest(const QString& rootId, const QString& dir,
+                                             bool showIgnored) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_fs_list_m_c;
+    request_fs_list& l = request.api_request_request_fs_list_m;
+    QByteArray rootScratch;
+    setFsRootId(rootId, l.FsList_root, rootScratch);
+    const QByteArray dirU = dir.toUtf8();
+    l.FsList_dir.value = reinterpret_cast<const uint8_t*>(dirU.constData());
+    l.FsList_dir.len = static_cast<size_t>(dirU.size());
+    l.FsList_show_ignored_present = showIgnored;
+    if (showIgnored) {
+        l.FsList_show_ignored.FsList_show_ignored = true;
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeFsReadRequest(const QString& rootId, const QString& path,
+                                             quint64 maxBytes) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_fs_read_m_c;
+    request_fs_read& r = request.api_request_request_fs_read_m;
+    QByteArray rootScratch;
+    setFsRootId(rootId, r.FsRead_root, rootScratch);
+    const QByteArray pathU = path.toUtf8();
+    r.FsRead_path.value = reinterpret_cast<const uint8_t*>(pathU.constData());
+    r.FsRead_path.len = static_cast<size_t>(pathU.size());
+    r.FsRead_max_bytes_present = maxBytes > 0;
+    if (maxBytes > 0) {
+        r.FsRead_max_bytes.FsRead_max_bytes = static_cast<uint32_t>(maxBytes);
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeFsWriteRequest(const QString& rootId, const QString& path,
+                                              const QByteArray& bytes, const QString& baseRevision,
+                                              bool force) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_fs_write_m_c;
+    request_fs_write& w = request.api_request_request_fs_write_m;
+    QByteArray rootScratch;
+    setFsRootId(rootId, w.FsWrite_root, rootScratch);
+    const QByteArray pathU = path.toUtf8();
+    w.FsWrite_path.value = reinterpret_cast<const uint8_t*>(pathU.constData());
+    w.FsWrite_path.len = static_cast<size_t>(pathU.size());
+    // Content is a CBOR bstr now (no array cap), so arbitrary file sizes round-trip.
+    w.FsWrite_bytes.value = reinterpret_cast<const uint8_t*>(bytes.constData());
+    w.FsWrite_bytes.len = static_cast<size_t>(bytes.size());
+    // Optional optimistic-concurrency precondition: parse the opaque "mtime:size" etag.
+    const QStringList rev = baseRevision.split(QLatin1Char(':'));
+    w.FsWrite_base_revision_present = rev.size() == 2;
+    if (rev.size() == 2) {
+        w.FsWrite_base_revision.FsWrite_base_revision_choice =
+            FsWrite_base_revision_r::FsWrite_base_revision_fs_revision_m_c;
+        w.FsWrite_base_revision.FsWrite_base_revision_fs_revision_m.fs_revision_mtime_ms =
+            rev[0].toUInt();
+        w.FsWrite_base_revision.FsWrite_base_revision_fs_revision_m.fs_revision_size =
+            rev[1].toUInt();
+    }
+    w.FsWrite_force_present = force;
+    if (force) {
+        w.FsWrite_force.FsWrite_force = true;
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeFsWatchPollRequest(const QString& rootId, const QString& dir,
+                                                  quint64 afterSeq, quint32 max) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_fs_watch_poll_m_c;
+    request_fs_watch_poll& w = request.api_request_request_fs_watch_poll_m;
+    QByteArray rootScratch;
+    setFsRootId(rootId, w.FsWatchPoll_root, rootScratch);
+    const QByteArray dirU = dir.toUtf8();
+    w.FsWatchPoll_dir.value = reinterpret_cast<const uint8_t*>(dirU.constData());
+    w.FsWatchPoll_dir.len = static_cast<size_t>(dirU.size());
+    w.FsWatchPoll_after_seq = static_cast<uint32_t>(afterSeq);
+    w.FsWatchPoll_max = max;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeFsSearchRequest(const QString& rootId, const QString& query,
+                                               bool regex, bool caseSensitive, quint32 maxResults,
+                                               quint32 page) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_fs_search_m_c;
+    request_fs_search& s = request.api_request_request_fs_search_m;
+    QByteArray rootScratch;
+    setFsRootId(rootId, s.FsSearch_root, rootScratch);
+    const QByteArray queryU = query.toUtf8();
+    s.FsSearch_query.fs_search_query_query.value =
+        reinterpret_cast<const uint8_t*>(queryU.constData());
+    s.FsSearch_query.fs_search_query_query.len = static_cast<size_t>(queryU.size());
+    s.FsSearch_query.fs_search_query_regex_present = regex;
+    if (regex) {
+        s.FsSearch_query.fs_search_query_regex.fs_search_query_regex = true;
+    }
+    s.FsSearch_query.fs_search_query_case_sensitive_present = caseSensitive;
+    if (caseSensitive) {
+        s.FsSearch_query.fs_search_query_case_sensitive.fs_search_query_case_sensitive = true;
+    }
+    s.FsSearch_query.fs_search_query_max_results_present = maxResults > 0;
+    if (maxResults > 0) {
+        s.FsSearch_query.fs_search_query_max_results.fs_search_query_max_results = maxResults;
+    }
+    s.FsSearch_query.fs_search_query_page_present = page > 0;
+    if (page > 0) {
+        s.FsSearch_query.fs_search_query_page.fs_search_query_page = page;
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+bool NodeApiCodec::decodeFsRoots(const QByteArray& responseCbor, QList<DecodedFsRoot>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_fs_roots_m_c) {
+        return false;
+    }
+    const response_fs_roots& page = response->api_response_response_fs_roots_m;
+    out->clear();
+    for (size_t i = 0; i < page.response_fs_roots_FsRoots_fs_root_m_count; ++i) {
+        const fs_root& fr = page.response_fs_roots_FsRoots_fs_root_m[i];
+        DecodedFsRoot row;
+        row.id = fsRootIdToString(fr.fs_root_id);
+        row.label = fromZcbor(fr.fs_root_label);
+        row.kind = fsRootKindName(fr.fs_root_kind.fs_root_kind_t_choice);
+        out->append(row);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeFsList(const QByteArray& responseCbor, QList<DecodedFsEntry>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_fs_list_m_c) {
+        return false;
+    }
+    const response_fs_list& page = response->api_response_response_fs_list_m;
+    out->clear();
+    for (size_t i = 0; i < page.response_fs_list_FsList_fs_entry_m_count; ++i) {
+        const fs_entry& e = page.response_fs_list_FsList_fs_entry_m[i];
+        DecodedFsEntry row;
+        row.name = fromZcbor(e.fs_entry_name);
+        row.path = fromZcbor(e.fs_entry_path);
+        row.kind = fsEntryKindName(e.fs_entry_kind.fs_entry_kind_t_choice);
+        row.size = e.fs_entry_size;
+        row.mtimeMs = e.fs_entry_mtime_ms;
+        row.ignored = e.fs_entry_ignored_present && e.fs_entry_ignored.fs_entry_ignored;
+        out->append(row);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeFsRead(const QByteArray& responseCbor, DecodedFsContent* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_fs_read_m_c) {
+        return false;
+    }
+    const fs_content& c = response->api_response_response_fs_read_m.response_fs_read_FsRead;
+    out->bytes = bytesFromZcbor(c.fs_content_bytes);
+    out->revision = QStringLiteral("%1:%2")
+                        .arg(c.fs_content_revision.fs_revision_mtime_ms)
+                        .arg(c.fs_content_revision.fs_revision_size);
+    out->truncated = c.fs_content_truncated_present && c.fs_content_truncated.fs_content_truncated;
+    return true;
+}
+
+bool NodeApiCodec::decodeFsWrite(const QByteArray& responseCbor, QString* revision) {
+    if (revision == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_fs_write_m_c) {
+        return false;
+    }
+    const fs_revision& r = response->api_response_response_fs_write_m.response_fs_write_FsWrite;
+    *revision = QStringLiteral("%1:%2").arg(r.fs_revision_mtime_ms).arg(r.fs_revision_size);
+    return true;
+}
+
+bool NodeApiCodec::decodeFsWatch(const QByteArray& responseCbor, DecodedFsWatchPage* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_fs_watch_m_c) {
+        return false;
+    }
+    const fs_watch_page_view& p =
+        response->api_response_response_fs_watch_m.response_fs_watch_FsWatch;
+    out->events.clear();
+    for (size_t i = 0; i < p.fs_watch_page_view_events_fs_change_m_count; ++i) {
+        const fs_change& ch = p.fs_watch_page_view_events_fs_change_m[i];
+        DecodedFsChange c;
+        c.path = fromZcbor(ch.fs_change_path);
+        c.kind = fsChangeKindName(ch.fs_change_kind.fs_change_kind_t_choice);
+        out->events.append(c);
+    }
+    out->nextSeq = p.fs_watch_page_view_next_seq;
+    out->headSeq = p.fs_watch_page_view_head_seq;
+    out->reset = p.fs_watch_page_view_reset;
+    return true;
+}
+
+bool NodeApiCodec::decodeFsSearch(const QByteArray& responseCbor, DecodedFsSearchPage* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_fs_search_m_c) {
+        return false;
+    }
+    const fs_search_page& page =
+        response->api_response_response_fs_search_m.response_fs_search_FsSearch;
+    out->hits.clear();
+    for (size_t i = 0; i < page.fs_search_page_hits_fs_search_hit_m_count; ++i) {
+        const fs_search_hit& h = page.fs_search_page_hits_fs_search_hit_m[i];
+        DecodedFsSearchHit hit;
+        hit.path = fromZcbor(h.fs_search_hit_path);
+        hit.line = h.fs_search_hit_line;
+        hit.col = h.fs_search_hit_col;
+        hit.preview = fromZcbor(h.fs_search_hit_preview);
+        out->hits.append(hit);
+    }
+    out->hasMore = page.fs_search_page_has_more_present &&
+                   page.fs_search_page_has_more.fs_search_page_has_more;
     return true;
 }
 

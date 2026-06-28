@@ -9,6 +9,8 @@
 
 namespace daemonapp::daemon {
 class NodeApiClient;
+class DaemonCacheStore;
+class SubscriptionManager;
 struct DecodedLogEntry;
 } // namespace daemonapp::daemon
 
@@ -23,14 +25,26 @@ class DaemonTurnEngine : public ITurnEngine {
     Q_OBJECT
 
 public:
-    explicit DaemonTurnEngine(daemonapp::daemon::NodeApiClient* client, QObject* parent = nullptr);
+    // `cache` (optional) persists the durable render-from-cache transcript + per-session resync
+    // cursors (epoch/watermark/journal); null disables persistence (mock/test paths).
+    // `subscriptions` (optional) is the L3 feed consumer this engine self-registers with on
+    // `setSessionId`, so a `SessionAdvanced` for its bound session nudges it (the per-tab focus
+    // wiring) regardless of which front end owns the tab.
+    explicit DaemonTurnEngine(daemonapp::daemon::NodeApiClient* client,
+                              daemonapp::daemon::DaemonCacheStore* cache = nullptr,
+                              daemonapp::daemon::SubscriptionManager* subscriptions = nullptr,
+                              QObject* parent = nullptr);
+    ~DaemonTurnEngine() override;
 
     [[nodiscard]] bool active() const override { return m_active; }
     [[nodiscard]] QString turnState() const override { return m_turnState; }
     [[nodiscard]] int elapsedMs() const override { return m_elapsedMs; }
     [[nodiscard]] QString errorText() const override { return m_errorText; }
 
-    void setSessionId(const QString& sessionId) override { m_sessionId = sessionId; }
+    // Bind the session and, on a real change, prime the resync cursors (epoch/watermark) from the
+    // durable cache so the subscribe resumes past what's already cached (render-from-cache) instead
+    // of re-streaming from 0.
+    void setSessionId(const QString& sessionId) override;
     void setProfile(const QString& profile) override { m_profile = profile; }
 
     void start(const QString& prompt) override;
@@ -44,17 +58,37 @@ public:
     // CHA-6: interrupt / steer a running turn via Submit{Interrupt/Steer}.
     void interrupt(const QString& reason) override;
     void steer(const QString& text) override;
+    // L3 lazy-focus catch-up: ensure the push subscription is open so an idle focused session
+    // renders out-of-band activity the node just announced via SessionAdvanced.
+    void nudge() override;
 
 private:
     void onResponse(const QString& correlationId, const QByteArray& responseCbor);
     void onFailure(const QString& correlationId, const QString& message);
-    void pollSubscribe();
+    // Open the push Subscribe stream (L2): the server pushes LogPage Items from m_cursor; replaces
+    // the old 120ms one-shot poll loop.
+    void openSubscribeStream();
+    // Apply one streamed LogPage: epoch/reset detection, then dedup-and-apply entries past
+    // m_cursor.
+    void applyLogPage(const QByteArray& responseCbor);
+    // Mux stream signals (from the shared NodeApiClient), filtered to m_subscribeStreamId.
+    void onStreamItem(quint64 id, const QByteArray& responseCbor);
+    void onStreamEnded(quint64 id, bool error, const QString& message);
+    void onStreamReset(quint64 id, quint64 epoch, quint64 headSeq);
+    // L2 re-baseline: a generation change (epoch bump / head_seq<cursor / Reset) means the live log
+    // we were following is gone (a restart/reactivation); replay the durable journal to recover the
+    // conversation, re-surface any unanswered parked Request, then finish (the interrupted turn).
+    void rebaselineFromJournal();
     void finishTurn(const QString& errorText = QString());
-    // Park the turn on a decoded HostRequest: surface the gate to the transcript and stop polling
-    // until a respond* arrives.
+    // Park the turn on a decoded HostRequest: surface the gate to the transcript and wait for a
+    // respond* (the open stream keeps delivering once the daemon resumes).
     void parkOnRequest(const daemonapp::daemon::DecodedLogEntry& entry);
-    // Send an encoded Respond/ApprovalDecide for the parked gate, then resume the Subscribe loop.
+    // Send an encoded Respond/ApprovalDecide for the parked gate; the open stream delivers the
+    // continuation.
     void sendRespond(const QByteArray& cbor);
+    // Persist the applied (epoch, watermark) for this session so a refocus/cold-start resumes the
+    // subscribe + journal reads past it instead of from 0. No-op without a cache.
+    void persistWatermark();
 
     void setActive(bool active);
     void setTurnState(const QString& state);
@@ -62,13 +96,18 @@ private:
     void setErrorText(const QString& text);
 
     [[nodiscard]] QString submitCorrelation() const;
-    [[nodiscard]] QString subscribeCorrelation() const;
     [[nodiscard]] QString respondCorrelation() const;
+    [[nodiscard]] QString journalCorrelation() const;
 
     daemonapp::daemon::NodeApiClient* m_client = nullptr;
+    daemonapp::daemon::DaemonCacheStore* m_cache = nullptr;
+    daemonapp::daemon::SubscriptionManager* m_subscriptions = nullptr;
     QString m_sessionId;
     QString m_profile;    // optional profile binding for Submit (PRO-5)
-    quint64 m_cursor = 0; // next_seq watermark for Subscribe
+    quint64 m_cursor = 0; // applied-seq watermark: reopen cursor + dedup floor (apply iff seq > it)
+    quint64 m_epoch = 0;  // tracked session-activation generation (L2)
+    bool m_epochKnown = false;
+    quint64 m_subscribeStreamId = 0; // the open push subscription's stream id (0 = none)
     quint32 m_requestId = 1;
     bool m_active = false;
     bool m_finished = false;
@@ -81,19 +120,18 @@ private:
     int m_elapsedMs = 0;
     QString m_errorText;
 
-    QTimer m_pollTimer;     // re-arms the Subscribe poll
     QTimer m_elapsedTimer;  // 1s tick for elapsedMs
-    QTimer m_deadlineTimer; // hard cap so a stuck turn cannot poll forever
-    QTimer m_resumeTimer;   // backoff re-Subscribe after a mid-turn drop (turn resume)
+    QTimer m_deadlineTimer; // hard cap so a stuck turn cannot run forever
+    QTimer m_resumeTimer;   // backoff stream-reopen after a mid-turn transport drop (turn resume)
     qint64 m_startedAt = 0;
-    int m_resumeBackoffMs = kResumeMinMs; // grows per consecutive subscribe failure
-    int m_resumeAttempts = 0;             // consecutive subscribe failures since the last good page
+    int m_resumeBackoffMs = kResumeMinMs; // grows per consecutive stream drop
+    int m_resumeAttempts = 0;             // consecutive drops since the last good page
 
-    static constexpr int kPollIntervalMs = 120;
     static constexpr int kDeadlineMs = 180000; // 3 min safety cap
     static constexpr quint32 kSubscribeMax = 256;
-    // Turn resume: a mid-turn Subscribe failure (the socket dropped) is transient - the shared
-    // transport reconnects lazily, so retry from m_cursor with backoff instead of killing the turn.
+    // Turn resume: a mid-turn stream drop (the socket dropped, daemon alive) is transient - reopen
+    // the stream from m_cursor with backoff instead of killing the turn. A generation change is a
+    // different case (re-baseline, not reopen).
     static constexpr int kResumeMinMs = 250;
     static constexpr int kResumeMaxMs = 4000;
     static constexpr int kResumeMaxAttempts = 12; // give up -> finish with error after this many

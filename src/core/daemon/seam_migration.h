@@ -38,7 +38,12 @@ inline constexpr const char* kFleetMigration =
 
 inline constexpr const char* kConfigMigration =
     "Replace flat IDaemonConfig writes with typed facades over profiles, session overlays, node "
-    "capabilities, and client-local QSettings.";
+    "capabilities, and client-local QSettings. Phase 4 DECISION: do NOT wire the deprecated "
+    "ConfigGet/ConfigSet ops (wire v9 collapsed runtime config into "
+    "ProfileUpdate/SetSessionOverlay; "
+    "the daemon trait still returns Unsupported). IDaemonConfig stays MockOnly until its keys "
+    "migrate "
+    "to those typed homes; it is not a NodeApi-config seam.";
 
 inline constexpr SeamMigrationTarget kTargets[] = {
     {"ISessionStore", "SessionsQuery / Subscribe / SessionLogEntry", kSessionIdMigration,
@@ -52,9 +57,11 @@ inline constexpr SeamMigrationTarget kTargets[] = {
     {"IDaemonConfig", "ProfileApi / SessionOverlay / node capabilities / ISettingsStore",
      kConfigMigration, SeamMigrationStatus::MockOnly},
     {"IFsService", "FsRoots / FsList / FsRead / FsWrite / FsWatchPoll",
-     "Implement daemon-backed IFsService using NodeApi fs calls with DaemonCacheStore as offline "
-     "fallback.",
-     SeamMigrationStatus::MockOnly},
+     "LANDED (Phase 4): DaemonFsService implements IFsService over the NodeApi fs_* ops + the "
+     "NodeApiCodec facade, with DaemonCacheStore (daemon_fs_entries) as the offline fallback and a "
+     "FsWatchPoll cursor loop (reset -> re-list). Wired in daemon mode; mock keeps "
+     "LocalDiskFsService.",
+     SeamMigrationStatus::DaemonAligned},
 };
 
 } // namespace daemonapp::daemon::migration

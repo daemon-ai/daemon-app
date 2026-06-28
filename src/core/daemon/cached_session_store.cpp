@@ -151,9 +151,27 @@ int CachedSessionStore::createTag(const QString&, const QString&) {
 }
 
 // --- SessionId-keyed implementations (canonical; daemon-owned mutations stay inert) ---
-QString CachedSessionStore::content(const domain::SessionId&) const {
-    // Structured session-log projection is a later slice; the transcript is not cached as markdown.
-    return {};
+QString CachedSessionStore::content(const domain::SessionId& id) const {
+    // L3 render-from-cache: project the durable coalesced transcript blocks (schema v2) into the
+    // markdown the transcript view renders, so a refocus / cold start shows the conversation from
+    // disk while the turn engine fetches only a short delta past the persisted watermark.
+    if (m_cache == nullptr || id.isEmpty()) {
+        return {};
+    }
+    QString out;
+    const QList<CachedTranscriptBlockRow> blocks = m_cache->transcriptBlocks(id.toString());
+    for (const CachedTranscriptBlockRow& b : blocks) {
+        if (b.kind == QStringLiteral("Message")) {
+            const QString who = b.role.isEmpty() ? QStringLiteral("Assistant") : b.role;
+            out += QStringLiteral("**%1:** %2\n\n").arg(who, b.text);
+        } else if (b.kind == QStringLiteral("ToolCall")) {
+            out += QStringLiteral("`%1(%2)`\n\n").arg(b.toolName, b.argsSummary);
+        } else if (b.kind == QStringLiteral("ToolResult")) {
+            const QString prefix = b.ok ? QString() : QStringLiteral("[failed] ");
+            out += QStringLiteral("> %1%2\n\n").arg(prefix, b.summary);
+        }
+    }
+    return out.trimmed();
 }
 
 QString CachedSessionStore::title(const domain::SessionId& id) const {

@@ -3,11 +3,8 @@
 #include "daemon/local_daemon_launcher.h"
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
-#include "daemon_turn_engine.h" // daemon-app::turn exposes its include dir
+#include "wire_mux_fixture.h" // shared multiplexed daemon stand-in (wire L0 envelope)
 
-#include <QHash>
-#include <QLocalServer>
-#include <QLocalSocket>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest/QtTest>
@@ -17,89 +14,17 @@ using daemonapp::daemon::DaemonTransport;
 using daemonapp::daemon::LocalDaemonLauncher;
 using daemonapp::daemon::NodeApiClient;
 using daemonapp::daemon::NodeApiCodec;
+using daemonapp::test::WireMuxServer;
 
 namespace {
 
 // A healthy Health response: {"Health": {"all_ok": true, "services": []}} (the same bytes the codec
-// decode tests use). The fixture replies these to drive the connection service to "ready".
+// decode tests use). The fixture wraps these in a Reply to drive the connection service to "ready".
 QByteArray healthResponse() {
     return {"\xA1\x66Health\xA2\x66"
             "all_ok\xF5\x68services\x80",
             27};
 }
-
-// An empty-but-valid LogPage: {"LogPage": {"entries": [], "next_seq": 5, "head_seq": 5}}. An empty
-// page (no TurnFinished) keeps a DaemonTurnEngine polling, so the turn stays in-flight.
-QByteArray logPageResponse() {
-    return {"\xA1\x67LogPage\xA3\x67"
-            "entries\x80\x68next_seq\x05\x68head_seq\x05",
-            39};
-}
-
-// A controllable stand-in for the daemon host: it speaks the length-prefixed frame protocol over a
-// QLocalServer and answers every complete request frame with a fixed payload - or, when set to
-// hang, accepts the frame and never replies (the silent-daemon case the request timeout guards).
-class FakeDaemon : public QObject {
-    Q_OBJECT
-
-public:
-    bool start(const QString& path) {
-        m_path = path;
-        QLocalServer::removeServer(path); // clear a stale socket file from a prior listen
-        m_server = new QLocalServer(this);
-        connect(m_server, &QLocalServer::newConnection, this, &FakeDaemon::onNewConnection);
-        return m_server->listen(path);
-    }
-
-    void stop() {
-        for (QLocalSocket* conn : std::as_const(m_conns)) {
-            conn->abort();
-            conn->deleteLater();
-        }
-        m_conns.clear();
-        m_buffers.clear();
-        if (m_server != nullptr) {
-            m_server->close();
-            m_server->deleteLater();
-            m_server = nullptr;
-        }
-    }
-
-    void setReplyPayload(const QByteArray& payload) { m_payload = payload; }
-    void setHang(bool hang) { m_hang = hang; }
-    [[nodiscard]] int requestCount() const { return m_requestCount; }
-
-private slots:
-    void onNewConnection() {
-        while (m_server != nullptr && m_server->hasPendingConnections()) {
-            QLocalSocket* conn = m_server->nextPendingConnection();
-            m_conns.append(conn);
-            connect(conn, &QLocalSocket::readyRead, this, [this, conn] { onReadyRead(conn); });
-        }
-    }
-
-private:
-    void onReadyRead(QLocalSocket* conn) {
-        m_buffers[conn].append(conn->readAll());
-        QByteArray request;
-        while (DaemonTransport::tryTakeFrame(m_buffers[conn], &request)) {
-            ++m_requestCount;
-            if (m_hang) {
-                continue; // accept-but-never-reply: leave the request in flight forever
-            }
-            conn->write(DaemonTransport::framePayload(m_payload));
-            conn->flush();
-        }
-    }
-
-    QLocalServer* m_server = nullptr;
-    QList<QLocalSocket*> m_conns;
-    QHash<QLocalSocket*, QByteArray> m_buffers;
-    QByteArray m_payload;
-    bool m_hang = false;
-    int m_requestCount = 0;
-    QString m_path;
-};
 
 } // namespace
 
@@ -117,7 +42,7 @@ private slots:
         QTemporaryDir tmp;
         QVERIFY(tmp.isValid());
         const QString path = tmp.filePath(QStringLiteral("hang.sock"));
-        FakeDaemon fake;
+        WireMuxServer fake;
         fake.setHang(true);
         QVERIFY2(fake.start(path), "fixture must listen");
 
@@ -148,7 +73,7 @@ private slots:
         QTemporaryDir tmp;
         QVERIFY(tmp.isValid());
         const QString path = tmp.filePath(QStringLiteral("daemon.sock"));
-        FakeDaemon fake;
+        WireMuxServer fake;
         fake.setReplyPayload(healthResponse());
         QVERIFY2(fake.start(path), "fixture must listen");
 
@@ -168,43 +93,8 @@ private slots:
         QVERIFY(svc.statusMessage().isEmpty());
     }
 
-    // WP4: a Subscribe failure mid-turn must NOT finish the turn; the engine suspends into
-    // "stalled" and retries from its cursor, recovering when the daemon returns.
-    void turnResumesAfterMidStreamDrop() {
-        QTemporaryDir tmp;
-        QVERIFY(tmp.isValid());
-        const QString path = tmp.filePath(QStringLiteral("turn.sock"));
-        FakeDaemon fake;
-        fake.setReplyPayload(logPageResponse()); // empty pages keep the turn polling
-        QVERIFY2(fake.start(path), "fixture must listen");
-
-        DaemonTransport transport;
-        transport.setSocketPath(path);
-        NodeApiClient client(&transport);
-        DaemonTurnEngine engine(&client);
-        engine.setSessionId(QStringLiteral("s1"));
-
-        engine.start(QStringLiteral("hello"));
-        // Wait until the turn is past Submit and actively polling Subscribe (>= 2 frames: the
-        // StartTurn submit + at least one Subscribe), so the drop below lands mid-stream rather
-        // than in the Submit phase (a Submit failure is correctly unrecoverable, not what this
-        // guards).
-        QVERIFY(QTest::qWaitFor([&] { return engine.active() && fake.requestCount() >= 2; }, 5000));
-
-        // Drop mid-turn: the engine must suspend into "stalled", not finish.
-        fake.stop();
-        QVERIFY(
-            QTest::qWaitFor([&] { return engine.turnState() == QLatin1String("stalled"); }, 5000));
-        QVERIFY(engine.active()); // still in-flight on the daemon - resumable
-
-        // Restore: the resume backoff re-Subscribes from the cursor and the turn recovers.
-        QVERIFY2(fake.start(path), "fixture must relisten");
-        QVERIFY(
-            QTest::qWaitFor([&] { return engine.turnState() == QLatin1String("thinking"); }, 8000));
-        QVERIFY(engine.active());
-
-        engine.cancel();
-    }
+    // (The mid-turn-drop / resume behaviour moved to tst_sync_resync, which drives the L2 push
+    // subscription the turn engine now uses instead of the old 120ms Subscribe poll.)
 
     // WP3: the restart budget caps re-spawns within its window (pure logic, no spawning): the first
     // kMax spawns are allowed, the next is refused, and a spawn aging out of the window frees a

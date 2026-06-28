@@ -55,6 +55,25 @@ struct CachedProfileRow {
     qint64 updatedAtMs = 0;
 };
 
+// One coalesced durable transcript block (schema v2; render-from-cache). Mirrors
+// DecodedTranscriptBlock (journal) / the live coalesced shape, keyed by (sessionId, seq).
+struct CachedTranscriptBlockRow {
+    QString sessionId;
+    quint64 seq = 0;
+    QString kind; // "Message" | "ToolCall" | "ToolResult" | "Request" | "Content" | "Other"
+    QString role; // Message: "Assistant" | "User" | "System"
+    QString text;
+    QString callId;
+    QString toolName;
+    QString argsSummary;
+    bool ok = false;
+    QString summary;
+    quint32 requestId = 0;
+    QString hostKind;
+    QString contentKind;
+    qint64 updatedAtMs = 0;
+};
+
 class DaemonCacheStore : public QObject {
 public:
     explicit DaemonCacheStore(const QString& dbPath = QString(), QObject* parent = nullptr);
@@ -69,6 +88,9 @@ public:
 
     bool upsertSession(const CachedSessionRow& row);
     [[nodiscard]] QList<CachedSessionRow> sessions() const;
+    // Remove a session row (L4 delta prune: a `removed` id or a session that left the queried
+    // scope). Best-effort; a missing row is not an error.
+    bool deleteSession(const QString& sessionId);
 
     bool appendSessionLog(const CachedLogRow& row);
     [[nodiscard]] QList<CachedLogRow> sessionLog(const QString& sessionId, quint64 afterSeq = 0,
@@ -85,6 +107,14 @@ public:
 
     bool upsertProfile(const CachedProfileRow& row);
     [[nodiscard]] QList<CachedProfileRow> profiles() const;
+
+    // Durable transcript blocks (schema v2 render-from-cache). upsert is idempotent per (session,
+    // seq); transcriptBlocks reads in seq order past `afterSeq`; clearTranscript wipes a session's
+    // blocks for a re-baseline (epoch change / Reset).
+    bool upsertTranscriptBlock(const CachedTranscriptBlockRow& row);
+    [[nodiscard]] QList<CachedTranscriptBlockRow> transcriptBlocks(const QString& sessionId,
+                                                                   quint64 afterSeq = 0) const;
+    bool clearTranscript(const QString& sessionId);
 
     // Generic typed metadata stored in daemon_cache_meta (schema version, etc).
     bool setMeta(const QString& key, const QString& value);
