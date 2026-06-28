@@ -4,7 +4,9 @@
 
 #include <QByteArray>
 #include <QList>
+#include <QMap>
 #include <QString>
+#include <QStringList>
 
 namespace daemonapp::daemon {
 
@@ -94,6 +96,32 @@ struct DecodedProfileSpec {
     bool hasFallbackCredentialRef = false;
     QString fallbackCredentialRef;
     QList<DecodedBoundAccount> boundAccounts;
+};
+
+// --- Profile distribution + version history (PRO-7 / PRO-8) --------------------------------------
+// One bundled skill inside a profile distribution (SkillBundle). `files` is path -> UTF-8 content.
+struct DecodedSkillBundle {
+    QString name;
+    QString category; // empty == none
+    QMap<QString, QString> files;
+};
+
+// A portable profile distribution (ProfileExport -> Distribution; ProfileImport consumes one).
+struct DecodedDistribution {
+    quint32 wireVersion = 0;
+    DecodedProfileSpec profile;
+    QList<DecodedSkillBundle> skills;
+    QString source; // empty == none
+};
+
+// One entry of a profile's content-addressed revision log (ProfileHistory -> Revisions).
+struct DecodedRevision {
+    quint64 seq = 0;
+    bool hasParent = false;
+    quint64 parent = 0;
+    QString author; // "operator" or an agent id
+    QString reason;
+    quint64 tsMs = 0;
 };
 
 // The agent-event arms a turn produces (daemon-protocol AgentEvent). Carried inside a
@@ -343,6 +371,7 @@ struct DecodedWireFrame {
     bool hasError = false; // End closed with an error
     quint64 epoch = 0;     // Reset (L2)
     quint64 headSeq = 0;   // Reset (L2)
+    QStringList features;  // Hello: the server's advertised capability strings (mux/stream/...)
 };
 
 // One coalesced durable transcript block (Journal -> journal-record payload Block). The re-baseline
@@ -446,6 +475,9 @@ enum class ApiResponseKind {
     Tree,
     Unit,
     UnitEvents,
+    Profile,
+    Distribution,
+    Revisions,
     Ok,
     Credentials,
     Models,
@@ -536,6 +568,18 @@ public:
                                                               const QString& newId);
     // Fetch a profile's full spec (ProfileGet -> Profile(opt)). PRO-3 editor hydration.
     [[nodiscard]] static QByteArray encodeProfileGetRequest(const QString& id);
+
+    // --- Profile distribution + history (PRO-7 / PRO-8) --------------------------------------
+    [[nodiscard]] static QByteArray encodeProfileExportRequest(const QString& id);
+    [[nodiscard]] static QByteArray encodeProfileImportRequest(const DecodedDistribution& dist,
+                                                               const QString& newId = QString());
+    [[nodiscard]] static QByteArray encodeProfileHistoryRequest(const QString& id);
+    [[nodiscard]] static QByteArray encodeProfileAtRequest(const QString& id, quint64 seq);
+    [[nodiscard]] static QByteArray encodeProfileRevertRequest(const QString& id, quint64 seq);
+    // Decode a Distribution response (ProfileExport).
+    static bool decodeDistribution(const QByteArray& responseCbor, DecodedDistribution* out);
+    // Decode a Revisions response (ProfileHistory) into the revision list, newest last.
+    static bool decodeRevisions(const QByteArray& responseCbor, QList<DecodedRevision>* out);
 
     // --- Local model track (Phase 2) requests ------------------------------------------------
     // Engine/sort args are friendly wire strings: engine "llama"|"mistral_rs" (default "llama"),

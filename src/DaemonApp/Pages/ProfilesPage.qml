@@ -10,6 +10,23 @@ Item {
     id: root
 
     property string selectedId: Profiles.defaultProfileId
+    // Transient export/import/revert feedback (PRO-7 / PRO-8).
+    property string notice: ""
+
+    // Surface profile export/import/revert results as a transient toast; jump to a freshly
+    // imported profile.
+    Connections {
+        target: Profiles
+        function onExportSaved(fileUrl) { root.notice = qsTr("Exported profile"); noticeClear.restart(); }
+        function onImported(newId) {
+            root.selectedId = newId;
+            root.notice = qsTr("Imported %1").arg(newId);
+            noticeClear.restart();
+        }
+        function onReverted(id) { root.notice = qsTr("Reverted %1").arg(id); noticeClear.restart(); }
+        function onProfileOpFailed(message) { root.notice = message; noticeClear.restart(); }
+    }
+    Timer { id: noticeClear; interval: 5000; onTriggered: root.notice = "" }
 
     PageHeader {
         id: header
@@ -141,6 +158,27 @@ Item {
                 Layout.fillWidth: true
                 model: [qsTr("Empty profile")].concat(Profiles.profileNames())
             }
+        }
+    }
+
+    // Transient feedback toast (export saved / imported / reverted / failures).
+    Rectangle {
+        visible: root.notice !== ""
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottomMargin: 16
+        radius: 8
+        color: Theme.surface
+        border.color: Theme.border
+        implicitWidth: noticeText.implicitWidth + 24
+        implicitHeight: noticeText.implicitHeight + 16
+        Text {
+            id: noticeText
+            anchors.centerIn: parent
+            text: root.notice
+            color: Theme.text
+            font.family: FontIcons.display
+            font.pixelSize: 12
         }
     }
 }

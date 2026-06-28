@@ -98,6 +98,14 @@ void LocalDaemonLauncher::ensureRunning(const QString& socketPath) {
     QProcessEnvironment penv = QProcessEnvironment::systemEnvironment();
     penv.insert(QStringLiteral("DAEMON_API_SOCKET"), socketPath);
     penv.insert(QStringLiteral("DAEMON_DATA_DIR"), dataDir);
+    // Run the managed daemon durable (SQLite backend). The store path derives from DAEMON_DATA_DIR,
+    // so it lives in the app data dir above. Durability is required for the daemon to be coherent
+    // with its "persistent by default" lifetime: it binds the revision log (profile/skill
+    // versioning) and the file-backed credential/profile stores, so API keys, agents, and history
+    // survive a daemon restart rather than vanishing with the in-memory default.
+    if (!penv.contains(QStringLiteral("DAEMON_STORE"))) {
+        penv.insert(QStringLiteral("DAEMON_STORE"), QStringLiteral("sqlite"));
+    }
 
     auto* proc = new QProcess(this);
     proc->setProgram(binary);

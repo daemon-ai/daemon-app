@@ -97,12 +97,36 @@ public:
     // Fetch a profile's full spec (ProfileGet); on success caches it + fires profileSpecLoaded.
     void getProfile(const QString& id);
 
+    // PRO-7: export a profile (ProfileExport -> Distribution); distributionExported carries the raw
+    // response bytes (the portable artifact) + the decoded form. Import a distribution
+    // (ProfileImport -> ProfileId); on success re-lists + imported() fires.
+    void exportProfile(const QString& id);
+    void importProfile(const DecodedDistribution& dist, const QString& newId = QString());
+    // PRO-8: load a profile's revision history (ProfileHistory -> Revisions); revert to a revision
+    // (ProfileRevert -> Ok), then re-get + re-list.
+    void fetchProfileHistory(const QString& id);
+    void revertProfile(const QString& id, quint64 seq);
+    // Whether the connected daemon advertised the `versioning` capability in its Hello (valid once
+    // handshaked; capabilitiesChanged fires when it becomes known).
+    [[nodiscard]] bool daemonSupportsVersioning() const;
+
 signals:
     void profilesRefreshed();
     void refreshFailed(const QString& message);
     void operationFailed(const QString& message);
     // A ProfileGet completed and cachedSpec(id) is now populated.
     void profileSpecLoaded(const QString& id);
+    // PRO-7/8 results.
+    void distributionExported(const QString& id, const QByteArray& responseBytes,
+                              const DecodedDistribution& dist);
+    void imported(const QString& newId);
+    void historyLoaded(const QString& id, const QList<DecodedRevision>& revisions);
+    // The daemon hosts no revision log (Unsupported) - versioning is a capability gap, not an
+    // error.
+    void historyUnavailable(const QString& id, const QString& message);
+    void reverted(const QString& id);
+    // The Hello handshake completed; daemonSupportsVersioning() is now valid.
+    void capabilitiesChanged();
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
@@ -115,6 +139,10 @@ private:
     static constexpr auto kUpdateCorrelation = "repo/profile-update";
     static constexpr auto kCloneCorrelation = "repo/profile-clone";
     static constexpr auto kGetPrefix = "repo/profile-get/";
+    static constexpr auto kExportPrefix = "repo/profile-export/";
+    static constexpr auto kImportCorrelation = "repo/profile-import";
+    static constexpr auto kHistoryPrefix = "repo/profile-history/";
+    static constexpr auto kRevertPrefix = "repo/profile-revert/";
 
     QList<DecodedProfileInfo> m_profiles;
     QHash<QString, DecodedProfileSpec> m_specs;

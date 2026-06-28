@@ -133,10 +133,13 @@ void NodeApiClient::onFrame(const QByteArray& frameCbor) {
     switch (frame.kind) {
     case WireFrameKind::Hello:
         m_handshake = Handshake::Ready;
-        // The daemon advertises both capabilities in this wire version; decodeWireFrame does not
-        // surface the feature list, so record the known set.
-        m_features = QStringList{QStringLiteral("mux"), QStringLiteral("stream")};
+        // Record the server's advertised capabilities (mux/stream always; versioning only on a
+        // durable node). Fall back to the always-on envelope set if an older daemon sends none.
+        m_features = frame.features.isEmpty()
+                         ? QStringList{QStringLiteral("mux"), QStringLiteral("stream")}
+                         : frame.features;
         flushOutbox();
+        emit handshakeReady();
         break;
     case WireFrameKind::Reply: {
         const auto it = m_pending.find(frame.id);

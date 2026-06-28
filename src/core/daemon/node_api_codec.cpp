@@ -723,33 +723,45 @@ bool encodeRequest(const api_request_r& request, QByteArray* out) {
 // Encode a ProfileCreate (update=false) or ProfileUpdate (update=true) carrying a full
 // profile_spec. All string buffers are held locally for the duration of the encode (zcbor
 // references them).
-QByteArray encodeProfileMutation(bool update, const DecodedProfileSpec& s) {
+// Scratch buffers a populated profile_spec borrows (the zcbor_string fields point into these), so
+// the caller must keep this alive until encodeRequest runs.
+struct ProfileSpecScratch {
+    QByteArray id, model, prompt, baseUrl, credRef, fbCredRef;
+    QList<QByteArray> toolBufs, baTi, baCr;
+};
+
+// Populate a generated profile_spec from a DecodedProfileSpec (shared by ProfileCreate/Update and
+// by ProfileImport's embedded Distribution.profile).
+void fillProfileSpec(profile_spec& ps, const DecodedProfileSpec& s, ProfileSpecScratch& sc) {
     const auto setZ = [](zcbor_string& z, const QByteArray& b) {
         z.value = reinterpret_cast<const uint8_t*>(b.constData());
         z.len = static_cast<size_t>(b.size());
     };
-    const QByteArray id = s.id.toUtf8();
-    const QByteArray model = s.model.toUtf8();
-    const QByteArray prompt = s.systemPrompt.toUtf8();
-    const QByteArray baseUrl = s.baseUrl.toUtf8();
-    const QByteArray credRef = s.credentialRef.toUtf8();
-    const QByteArray fbCredRef = s.fallbackCredentialRef.toUtf8();
-    QList<QByteArray> toolBufs;
+    sc.id = s.id.toUtf8();
+    sc.model = s.model.toUtf8();
+    sc.prompt = s.systemPrompt.toUtf8();
+    sc.baseUrl = s.baseUrl.toUtf8();
+    sc.credRef = s.credentialRef.toUtf8();
+    sc.fbCredRef = s.fallbackCredentialRef.toUtf8();
+    sc.toolBufs.clear();
     for (const QString& t : s.toolAllowlist) {
-        toolBufs.append(t.toUtf8());
+        sc.toolBufs.append(t.toUtf8());
     }
-    QList<QByteArray> baTi;
-    QList<QByteArray> baCr;
+    sc.baTi.clear();
+    sc.baCr.clear();
     for (const DecodedBoundAccount& b : s.boundAccounts) {
-        baTi.append(b.transportInstance.toUtf8());
-        baCr.append(b.credentialRef.toUtf8());
+        sc.baTi.append(b.transportInstance.toUtf8());
+        sc.baCr.append(b.credentialRef.toUtf8());
     }
-
-    api_request_r request{};
-    request.api_request_choice = update ? api_request_r::api_request_request_profile_update_m_c
-                                        : api_request_r::api_request_request_profile_create_m_c;
-    profile_spec& ps = update ? request.api_request_request_profile_update_m.ProfileUpdate_spec
-                              : request.api_request_request_profile_create_m.ProfileCreate_spec;
+    const QByteArray& id = sc.id;
+    const QByteArray& model = sc.model;
+    const QByteArray& prompt = sc.prompt;
+    const QByteArray& baseUrl = sc.baseUrl;
+    const QByteArray& credRef = sc.credRef;
+    const QByteArray& fbCredRef = sc.fbCredRef;
+    const QList<QByteArray>& toolBufs = sc.toolBufs;
+    const QList<QByteArray>& baTi = sc.baTi;
+    const QList<QByteArray>& baCr = sc.baCr;
 
     setZ(ps.profile_spec_id, id);
     ps.profile_spec_provider.provider_selector_choice =
@@ -854,7 +866,16 @@ QByteArray encodeProfileMutation(bool update, const DecodedProfileSpec& s) {
         setZ(ps.profile_spec_bound_accounts_bound_account_m[i].bound_account_credential_ref,
              baCr[static_cast<int>(i)]);
     }
+}
 
+QByteArray encodeProfileMutation(bool update, const DecodedProfileSpec& s) {
+    api_request_r request{};
+    request.api_request_choice = update ? api_request_r::api_request_request_profile_update_m_c
+                                        : api_request_r::api_request_request_profile_create_m_c;
+    profile_spec& ps = update ? request.api_request_request_profile_update_m.ProfileUpdate_spec
+                              : request.api_request_request_profile_create_m.ProfileCreate_spec;
+    ProfileSpecScratch sc;
+    fillProfileSpec(ps, s, sc);
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -1128,6 +1149,125 @@ QByteArray NodeApiCodec::encodeProfileGetRequest(const QString& id) {
     request_profile_get& get = request.api_request_request_profile_get_m;
     get.ProfileGet_id.value = reinterpret_cast<const uint8_t*>(idUtf8.constData());
     get.ProfileGet_id.len = static_cast<size_t>(idUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeProfileExportRequest(const QString& id) {
+    const QByteArray idUtf8 = id.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_profile_export_m_c;
+    request.api_request_request_profile_export_m.ProfileExport_id.value =
+        reinterpret_cast<const uint8_t*>(idUtf8.constData());
+    request.api_request_request_profile_export_m.ProfileExport_id.len =
+        static_cast<size_t>(idUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeProfileHistoryRequest(const QString& id) {
+    const QByteArray idUtf8 = id.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_profile_history_m_c;
+    request.api_request_request_profile_history_m.ProfileHistory_id.value =
+        reinterpret_cast<const uint8_t*>(idUtf8.constData());
+    request.api_request_request_profile_history_m.ProfileHistory_id.len =
+        static_cast<size_t>(idUtf8.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeProfileAtRequest(const QString& id, quint64 seq) {
+    const QByteArray idUtf8 = id.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_profile_at_m_c;
+    request.api_request_request_profile_at_m.ProfileAt_id.value =
+        reinterpret_cast<const uint8_t*>(idUtf8.constData());
+    request.api_request_request_profile_at_m.ProfileAt_id.len = static_cast<size_t>(idUtf8.size());
+    request.api_request_request_profile_at_m.ProfileAt_seq = static_cast<uint32_t>(seq);
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeProfileRevertRequest(const QString& id, quint64 seq) {
+    const QByteArray idUtf8 = id.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_profile_revert_m_c;
+    request.api_request_request_profile_revert_m.ProfileRevert_id.value =
+        reinterpret_cast<const uint8_t*>(idUtf8.constData());
+    request.api_request_request_profile_revert_m.ProfileRevert_id.len =
+        static_cast<size_t>(idUtf8.size());
+    request.api_request_request_profile_revert_m.ProfileRevert_seq = static_cast<uint32_t>(seq);
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeProfileImportRequest(const DecodedDistribution& dist,
+                                                    const QString& newId) {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_profile_import_m_c;
+    request_profile_import& imp = request.api_request_request_profile_import_m;
+    distribution& d = imp.ProfileImport_dist;
+    d.distribution_wire_version = dist.wireVersion;
+    // The embedded profile spec rides the shared filler (scratch must outlive encodeRequest).
+    ProfileSpecScratch specScratch;
+    fillProfileSpec(d.distribution_profile, dist.profile, specScratch);
+    // head_seq + source are optional; omit them (a fresh import does not pin a parent).
+    d.distribution_head_seq_present = false;
+    d.distribution_source_present = false;
+    // Skills: name + optional category + the path->content (tstr) files map.
+    const auto setZ = [](zcbor_string& z, const QByteArray& b) {
+        z.value = reinterpret_cast<const uint8_t*>(b.constData());
+        z.len = static_cast<size_t>(b.size());
+    };
+    // Hold every borrowed buffer alive until encodeRequest below (reserve so the per-skill inner
+    // lists are never moved while we hold references into them).
+    QList<QByteArray> skillNames;
+    QList<QByteArray> skillCats;
+    QList<QList<QByteArray>> fileKeys; // per-skill
+    QList<QList<QByteArray>> fileVals;
+    const size_t sn = qMin<size_t>(static_cast<size_t>(dist.skills.size()), 64);
+    skillNames.reserve(static_cast<qsizetype>(sn));
+    skillCats.reserve(static_cast<qsizetype>(sn));
+    fileKeys.reserve(static_cast<qsizetype>(sn));
+    fileVals.reserve(static_cast<qsizetype>(sn));
+    d.distribution_skills_skill_bundle_m_count = sn;
+    for (size_t i = 0; i < sn; ++i) {
+        const DecodedSkillBundle& src = dist.skills.at(static_cast<int>(i));
+        skill_bundle& sb = d.distribution_skills_skill_bundle_m[i];
+        skillNames.append(src.name.toUtf8());
+        setZ(sb.skill_bundle_name, skillNames.last());
+        if (!src.category.isEmpty()) {
+            sb.skill_bundle_category_choice = skill_bundle::skill_bundle_category_tstr_c;
+            skillCats.append(src.category.toUtf8());
+            setZ(sb.skill_bundle_category_tstr, skillCats.last());
+        } else {
+            skillCats.append(QByteArray());
+            sb.skill_bundle_category_choice = skill_bundle::skill_bundle_category_null_m_c;
+        }
+        fileKeys.append(QList<QByteArray>{});
+        fileVals.append(QList<QByteArray>{});
+        QList<QByteArray>& keys = fileKeys[static_cast<qsizetype>(i)];
+        QList<QByteArray>& vals = fileVals[static_cast<qsizetype>(i)];
+        const size_t fn = qMin<size_t>(static_cast<size_t>(src.files.size()), 64);
+        keys.reserve(static_cast<qsizetype>(fn));
+        vals.reserve(static_cast<qsizetype>(fn));
+        sb.files_tstrtstr_count = fn;
+        size_t fi = 0;
+        for (auto it = src.files.constBegin(); it != src.files.constEnd() && fi < fn; ++it, ++fi) {
+            keys.append(it.key().toUtf8());
+            vals.append(it.value().toUtf8());
+            setZ(sb.files_tstrtstr[fi].skill_bundle_files_tstrtstr_key, keys.last());
+            setZ(sb.files_tstrtstr[fi].files_tstrtstr, vals.last());
+        }
+    }
+    const QByteArray newIdUtf8 = newId.toUtf8();
+    imp.ProfileImport_new_id_present = !newId.isEmpty();
+    if (!newId.isEmpty()) {
+        imp.ProfileImport_new_id.ProfileImport_new_id_choice =
+            ProfileImport_new_id_r::ProfileImport_new_id_tstr_c;
+        setZ(imp.ProfileImport_new_id.ProfileImport_new_id_tstr, newIdUtf8);
+    }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -1583,6 +1723,31 @@ bool NodeApiCodec::decodeWireFrame(const QByteArray& frameCbor, DecodedWireFrame
     const quint64 innerFields = arg;
     if (tag == "Hello") {
         out->kind = WireFrameKind::Hello;
+        // Inner map is {wire_version, features}. Surface the capability list so the client can gate
+        // optional surfaces (e.g. versioning). Parse by key; the only non-array value
+        // (wire_version) is a uint whose head cborReadHead consumes whole.
+        for (quint64 field = 0; field < innerFields; ++field) {
+            QByteArray hkey;
+            if (!cborReadText(p, n, i, &hkey)) {
+                break;
+            }
+            if (hkey == "features") {
+                quint8 fmaj = 0;
+                quint64 farg = 0;
+                if (!cborReadHead(p, n, i, fmaj, farg) || fmaj != 4) {
+                    break; // expected an array
+                }
+                for (quint64 k = 0; k < farg; ++k) {
+                    QByteArray feat;
+                    if (!cborReadText(p, n, i, &feat)) {
+                        break;
+                    }
+                    out->features.append(QString::fromUtf8(feat));
+                }
+            } else if (!cborReadHead(p, n, i, major, arg)) {
+                break; // wire_version (uint) or another scalar
+            }
+        }
         return true;
     }
     // Every other frame leads with "id" (declaration order). Read it.
@@ -1672,6 +1837,12 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         return ApiResponseKind::ModelCurrent;
     case api_response_r::api_response_response_profiles_m_c:
         return ApiResponseKind::Profiles;
+    case api_response_r::api_response_response_profile_m_c:
+        return ApiResponseKind::Profile;
+    case api_response_r::api_response_response_distribution_m_c:
+        return ApiResponseKind::Distribution;
+    case api_response_r::api_response_response_revisions_m_c:
+        return ApiResponseKind::Revisions;
     case api_response_r::api_response_response_drained_m_c:
         return ApiResponseKind::Drained;
     case api_response_r::api_response_response_approvals_m_c:
@@ -2190,6 +2361,70 @@ bool NodeApiCodec::decodeProfileId(const QByteArray& responseCbor, QString* outI
         return false;
     }
     *outId = fromZcbor(response->api_response_response_profile_id_m.response_profile_id_ProfileId);
+    return true;
+}
+
+bool NodeApiCodec::decodeDistribution(const QByteArray& responseCbor, DecodedDistribution* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_distribution_m_c) {
+        return false;
+    }
+    const distribution& d =
+        response->api_response_response_distribution_m.response_distribution_Distribution;
+    out->wireVersion = d.distribution_wire_version;
+    out->profile = decodeProfileSpecStruct(d.distribution_profile);
+    out->source =
+        (d.distribution_source_present && d.distribution_source.distribution_source_choice ==
+                                              distribution_source_r::distribution_source_tstr_c)
+            ? fromZcbor(d.distribution_source.distribution_source_tstr)
+            : QString();
+    out->skills.clear();
+    for (size_t i = 0; i < d.distribution_skills_skill_bundle_m_count; ++i) {
+        const skill_bundle& sb = d.distribution_skills_skill_bundle_m[i];
+        DecodedSkillBundle b;
+        b.name = fromZcbor(sb.skill_bundle_name);
+        if (sb.skill_bundle_category_choice == skill_bundle::skill_bundle_category_tstr_c) {
+            b.category = fromZcbor(sb.skill_bundle_category_tstr);
+        }
+        for (size_t f = 0; f < sb.files_tstrtstr_count; ++f) {
+            b.files.insert(fromZcbor(sb.files_tstrtstr[f].skill_bundle_files_tstrtstr_key),
+                           fromZcbor(sb.files_tstrtstr[f].files_tstrtstr));
+        }
+        out->skills.append(b);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeRevisions(const QByteArray& responseCbor, QList<DecodedRevision>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_revisions_m_c) {
+        return false;
+    }
+    const response_revisions& rr = response->api_response_response_revisions_m;
+    out->clear();
+    for (size_t i = 0; i < rr.response_revisions_Revisions_revision_m_count; ++i) {
+        const revision& r = rr.response_revisions_Revisions_revision_m[i];
+        DecodedRevision d;
+        d.seq = r.revision_seq;
+        d.hasParent = r.revision_parent_choice == revision::revision_parent_uint_c;
+        if (d.hasParent) {
+            d.parent = r.revision_parent_uint;
+        }
+        d.author = r.revision_author.author_choice == author_r::author_agent_m_c
+                       ? fromZcbor(r.revision_author.author_agent_m.author_agent_agent)
+                       : QStringLiteral("operator");
+        d.reason = fromZcbor(r.revision_reason);
+        d.tsMs = r.revision_ts_ms;
+        out->append(d);
+    }
     return true;
 }
 

@@ -51,9 +51,17 @@ public:
         return m_features.contains(QStringLiteral("stream"));
     }
 
+    // Whether the server advertised `feature` in its Hello (valid once handshaked). Used by seams
+    // to gate optional surfaces (e.g. "versioning") before issuing a request that would 404.
+    [[nodiscard]] bool hasFeature(const QString& feature) const {
+        return m_features.contains(feature);
+    }
+
 signals:
     void responseReady(const QString& correlationId, const QByteArray& responseCbor);
     void failed(const QString& correlationId, const QString& message);
+    // The Hello handshake completed; server capabilities (hasFeature) are now valid.
+    void handshakeReady();
     // Stream lifecycle (openStream): one chunk, a close (clean or error), and a re-baseline signal.
     void streamItem(quint64 id, const QByteArray& responseCbor);
     void streamEnded(quint64 id, bool error, const QString& message);

@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>
 
@@ -17,6 +18,9 @@ class IProfileStore : public QObject {
     Q_OBJECT
     Q_PROPERTY(QObject* profiles READ profiles CONSTANT)
     Q_PROPERTY(QString defaultProfileId READ defaultProfileId NOTIFY changed)
+    // PRO-8: whether the connected daemon hosts a revision log (versioning needs a durable daemon).
+    // Lets the UI hide the History/Revert affordances when versioning is unavailable.
+    Q_PROPERTY(bool historyAvailable READ historyAvailable NOTIFY historyAvailableChanged)
 
 public:
     using QObject::QObject;
@@ -43,8 +47,38 @@ public:
     Q_INVOKABLE virtual void remove(const QString& id) = 0;
     Q_INVOKABLE virtual void setDefault(const QString& id) = 0;
 
+    // PRO-7: export a profile to (import a profile distribution from) a user-chosen file. The
+    // artifact is the portable Distribution (opaque CBOR). Default impls are no-ops so the mock /
+    // non-daemon seams need not implement them; the daemon seam wires ProfileExport/Import.
+    Q_INVOKABLE virtual void exportProfileToFile(const QString& id, const QUrl& fileUrl) {
+        Q_UNUSED(id)
+        Q_UNUSED(fileUrl)
+    }
+    Q_INVOKABLE virtual void importProfileFromFile(const QUrl& fileUrl,
+                                                   const QString& newId = QString()) {
+        Q_UNUSED(fileUrl)
+        Q_UNUSED(newId)
+    }
+    // PRO-8: a profile's revision history (ProfileHistory) projected into a VariantListModel (rows:
+    // seq, parent, author, reason, ts), refreshed by requestHistory(id); revert rolls forward.
+    [[nodiscard]] Q_INVOKABLE virtual QObject* history() const { return nullptr; }
+    // Whether the daemon hosts versioning. Default false: seams without a revision log (the mock,
+    // a non-durable daemon) have no history, so the UI hides the panel.
+    [[nodiscard]] virtual bool historyAvailable() const { return false; }
+    Q_INVOKABLE virtual void requestHistory(const QString& id) { Q_UNUSED(id) }
+    Q_INVOKABLE virtual void revertProfile(const QString& id, double seq) {
+        Q_UNUSED(id)
+        Q_UNUSED(seq)
+    }
+
 signals:
     void changed();
+    void exportSaved(const QString& fileUrl);
+    void imported(const QString& newId);
+    void historyChanged(const QString& id);
+    void historyAvailableChanged();
+    void reverted(const QString& id);
+    void profileOpFailed(const QString& message);
 };
 
 } // namespace profiles

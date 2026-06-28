@@ -157,13 +157,17 @@ target_link_libraries(tst_daemon_fs_service
 add_test(NAME tst_daemon_fs_service COMMAND tst_daemon_fs_service)
 set_tests_properties(tst_daemon_fs_service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_daemon_profile_store: client-side id-derivation (slug) for ProfileCreate/Clone; encode +
-# daemon acceptance are covered by verify-codec fixtures + the system-tests.
+# tst_daemon_profile_store: client-side id-derivation (slug) for ProfileCreate/Clone; the PRO-7/8
+# distribution + revisions codec round-trips; and the DaemonProfileStore export->file->import +
+# history/revert flows over the WireMuxServer fixture. End-to-end daemon acceptance: system-tests.
 qt_add_executable(tst_daemon_profile_store tst_daemon_profile_store.cpp)
 target_link_libraries(tst_daemon_profile_store
     PRIVATE
         Qt6::Test
+        Qt6::Network
         daemon-app::daemon_client
+        daemon-app::daemon_codec
+        daemon-app::uimodels
 )
 add_test(NAME tst_daemon_profile_store COMMAND tst_daemon_profile_store)
 set_tests_properties(tst_daemon_profile_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

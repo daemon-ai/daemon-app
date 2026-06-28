@@ -504,7 +504,14 @@ ProfileRepository::ProfileRepository(NodeApiClient* client, DaemonCacheStore* ca
         connect(this->client(), &NodeApiClient::responseReady, this,
                 &ProfileRepository::handleResponse);
         connect(this->client(), &NodeApiClient::failed, this, &ProfileRepository::handleFailure);
+        // Forward the handshake's capability set so the store can gate versioning proactively.
+        connect(this->client(), &NodeApiClient::handshakeReady, this,
+                &ProfileRepository::capabilitiesChanged);
     }
+}
+
+bool ProfileRepository::daemonSupportsVersioning() const {
+    return client() != nullptr && client()->hasFeature(QStringLiteral("versioning"));
 }
 
 bool ProfileRepository::upsertCachedProfile(const CachedProfileRow& row) {
@@ -622,6 +629,42 @@ void ProfileRepository::getProfile(const QString& id) {
                           QLatin1String(kGetPrefix) + id);
 }
 
+void ProfileRepository::exportProfile(const QString& id) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProfileExportRequest(id),
+                          QLatin1String(kExportPrefix) + id);
+}
+
+void ProfileRepository::importProfile(const DecodedDistribution& dist, const QString& newId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProfileImportRequest(dist, newId),
+                          QLatin1String(kImportCorrelation));
+}
+
+void ProfileRepository::fetchProfileHistory(const QString& id) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProfileHistoryRequest(id),
+                          QLatin1String(kHistoryPrefix) + id);
+}
+
+void ProfileRepository::revertProfile(const QString& id, quint64 seq) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProfileRevertRequest(id, seq),
+                          QLatin1String(kRevertPrefix) + id);
+}
+
 void ProfileRepository::handleResponse(const QString& correlationId,
                                        const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kProfilesCorrelation)) {
@@ -672,6 +715,65 @@ void ProfileRepository::handleResponse(const QString& correlationId,
         }
         return;
     }
+    if (correlationId.startsWith(QLatin1String(kExportPrefix))) {
+        const QString id = correlationId.mid(int(qstrlen(kExportPrefix)));
+        DecodedDistribution dist;
+        if (!NodeApiCodec::decodeDistribution(responseCbor, &dist)) {
+            emit operationFailed(QStringLiteral("Failed to decode Distribution"));
+            return;
+        }
+        // Hand the store the raw bytes (the portable artifact) + the decoded form.
+        emit distributionExported(id, responseCbor, dist);
+        return;
+    }
+    if (correlationId == QLatin1String(kImportCorrelation)) {
+        QString newId;
+        if (!NodeApiCodec::decodeProfileId(responseCbor, &newId)) {
+            DecodedApiError err;
+            emit operationFailed(NodeApiCodec::decodeError(responseCbor, &err)
+                                     ? err.message
+                                     : QStringLiteral("Profile import failed"));
+            return;
+        }
+        refreshProfiles();
+        emit imported(newId);
+        return;
+    }
+    if (correlationId.startsWith(QLatin1String(kHistoryPrefix))) {
+        const QString id = correlationId.mid(int(qstrlen(kHistoryPrefix)));
+        // A daemon with no revision log answers Unsupported("versioning not available"); that is a
+        // capability gap, not a decode failure - surface it as historyUnavailable so the UI can
+        // hide the panel honestly rather than toast a misleading parse error.
+        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+            DecodedApiError err;
+            emit historyUnavailable(id, NodeApiCodec::decodeError(responseCbor, &err)
+                                            ? err.message
+                                            : QStringLiteral("Version history unavailable"));
+            return;
+        }
+        QList<DecodedRevision> revs;
+        if (!NodeApiCodec::decodeRevisions(responseCbor, &revs)) {
+            emit operationFailed(QStringLiteral("Failed to decode Revisions"));
+            return;
+        }
+        emit historyLoaded(id, revs);
+        return;
+    }
+    if (correlationId.startsWith(QLatin1String(kRevertPrefix))) {
+        const QString id = correlationId.mid(int(qstrlen(kRevertPrefix)));
+        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+            DecodedApiError err;
+            emit operationFailed(NodeApiCodec::decodeError(responseCbor, &err)
+                                     ? err.message
+                                     : QStringLiteral("Profile revert failed"));
+            return;
+        }
+        // Rolled forward: refresh the spec (re-get) + the list, then notify.
+        getProfile(id);
+        refreshProfiles();
+        emit reverted(id);
+        return;
+    }
     if (correlationId == QLatin1String(kSelectCorrelation) ||
         correlationId == QLatin1String(kDeleteCorrelation) ||
         correlationId == QLatin1String(kUpdateCorrelation) ||
@@ -701,7 +803,11 @@ void ProfileRepository::handleFailure(const QString& correlationId, const QStrin
                correlationId == QLatin1String(kUpdateCorrelation) ||
                correlationId == QLatin1String(kCreateCorrelation) ||
                correlationId == QLatin1String(kCloneCorrelation) ||
-               correlationId.startsWith(QLatin1String(kGetPrefix))) {
+               correlationId == QLatin1String(kImportCorrelation) ||
+               correlationId.startsWith(QLatin1String(kGetPrefix)) ||
+               correlationId.startsWith(QLatin1String(kExportPrefix)) ||
+               correlationId.startsWith(QLatin1String(kHistoryPrefix)) ||
+               correlationId.startsWith(QLatin1String(kRevertPrefix))) {
         emit operationFailed(message);
     }
 }

@@ -1,8 +1,11 @@
 #pragma once
 
+#include "daemon/node_api_codec.h"
 #include "profiles/iprofile_store.h"
 
+#include <QHash>
 #include <QString>
+#include <QUrl>
 
 namespace uimodels {
 class VariantListModel;
@@ -40,6 +43,14 @@ public:
     void remove(const QString& id) override;     // ProfileDelete (PRO-4)
     void setDefault(const QString& id) override; // ProfileSelect (PRO-5)
 
+    // PRO-7 export/import + PRO-8 history/revert.
+    void exportProfileToFile(const QString& id, const QUrl& fileUrl) override;
+    void importProfileFromFile(const QUrl& fileUrl, const QString& newId) override;
+    [[nodiscard]] QObject* history() const override;
+    [[nodiscard]] bool historyAvailable() const override { return m_historyAvailable; }
+    void requestHistory(const QString& id) override;
+    void revertProfile(const QString& id, double seq) override;
+
 private:
     void rebuild();
     // On a fresh list, fetch each profile's full spec so the editor can show real fields.
@@ -47,7 +58,13 @@ private:
 
     daemonapp::daemon::ProfileRepository* m_repo = nullptr;
     uimodels::VariantListModel* m_profiles = nullptr;
+    uimodels::VariantListModel* m_history = nullptr; // revisions of the last requestHistory(id)
     QString m_defaultId;
+    QString m_historyId;                   // the profile m_history currently holds
+    QHash<QString, QUrl> m_pendingExports; // id -> file url awaiting distributionExported
+    // Whether the daemon hosts a revision log. Optimistic-true until a ProfileHistory answers
+    // Unsupported (no revision log) - or, once wired, set proactively from the Hello capability.
+    bool m_historyAvailable = true;
 };
 
 } // namespace profiles
