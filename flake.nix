@@ -2,7 +2,7 @@
   description = "daemon-app - Qt 6 QML/C++ development environment, build, and vendored dependencies";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
 
     # --- Content renderer dependencies (all platforms; wired when the
