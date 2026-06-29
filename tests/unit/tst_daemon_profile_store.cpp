@@ -102,8 +102,8 @@ QByteArray revisionsResponse() {
     r0.revision_ts_ms = 100;
     revision& r1 = rr.response_revisions_Revisions_revision_m[1];
     r1.revision_seq = 2;
-    r1.revision_parent_choice = revision::revision_parent_uint_c;
-    r1.revision_parent_uint = 1;
+    r1.revision_parent_choice = revision::revision_parent_uint64_m_c;
+    r1.revision_parent_uint64_m = 1;
     r1.revision_content_hash.content_hash_uint_count = 1;
     r1.revision_content_hash.content_hash_uint[0] = 0xAA;
     r1.revision_author.author_choice = author_r::author_agent_m_c;

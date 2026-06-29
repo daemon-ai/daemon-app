@@ -332,14 +332,14 @@ void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out) {
         out->contextLength = m.model_descriptor_context_length_uint;
     }
     if (m.model_descriptor_input_price_micros_per_mtok_choice ==
-        model_descriptor::model_descriptor_input_price_micros_per_mtok_uint_c) {
+        model_descriptor::model_descriptor_input_price_micros_per_mtok_uint64_m_c) {
         out->hasInputPrice = true;
-        out->inputPriceMicrosPerMtok = m.model_descriptor_input_price_micros_per_mtok_uint;
+        out->inputPriceMicrosPerMtok = m.model_descriptor_input_price_micros_per_mtok_uint64_m;
     }
     if (m.model_descriptor_output_price_micros_per_mtok_choice ==
-        model_descriptor::model_descriptor_output_price_micros_per_mtok_uint_c) {
+        model_descriptor::model_descriptor_output_price_micros_per_mtok_uint64_m_c) {
         out->hasOutputPrice = true;
-        out->outputPriceMicrosPerMtok = m.model_descriptor_output_price_micros_per_mtok_uint;
+        out->outputPriceMicrosPerMtok = m.model_descriptor_output_price_micros_per_mtok_uint64_m;
     }
     out->local = m.model_descriptor_local;
 }
@@ -379,13 +379,13 @@ DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps) {
             out.toolAllowlist << fromZcbor(ps.tool_allowlist_tstr_l_tstr[i]);
         }
     }
-    if (ps.profile_spec_budget.budget_tokens_choice == budget::budget_tokens_uint_c) {
+    if (ps.profile_spec_budget.budget_tokens_choice == budget::budget_tokens_uint64_m_c) {
         out.hasBudgetTokens = true;
-        out.budgetTokens = ps.profile_spec_budget.budget_tokens_uint;
+        out.budgetTokens = ps.profile_spec_budget.budget_tokens_uint64_m;
     }
-    if (ps.profile_spec_budget.budget_wall_ms_choice == budget::budget_wall_ms_uint_c) {
+    if (ps.profile_spec_budget.budget_wall_ms_choice == budget::budget_wall_ms_uint64_m_c) {
         out.hasBudgetWallMs = true;
-        out.budgetWallMs = ps.profile_spec_budget.budget_wall_ms_uint;
+        out.budgetWallMs = ps.profile_spec_budget.budget_wall_ms_uint64_m;
     }
     const engine_tunables& tn = ps.profile_spec_tunables;
     if (tn.engine_tunables_model_retry_attempts_choice ==
@@ -494,9 +494,9 @@ DecodedAgentEvent decodeAgentEvent(const agent_event_r& ev) {
         const context_status& ctx = ev.agent_event_context_m.Context_status;
         out.contextUsed = ctx.context_status_used_tokens;
         if (ctx.context_status_max_tokens_choice ==
-            context_status::context_status_max_tokens_uint_c) {
+            context_status::context_status_max_tokens_uint64_m_c) {
             out.hasContextMax = true;
-            out.contextMax = ctx.context_status_max_tokens_uint;
+            out.contextMax = ctx.context_status_max_tokens_uint64_m;
         }
         break;
     }
@@ -793,14 +793,14 @@ void fillProfileSpec(profile_spec& ps, const DecodedProfileSpec& s, ProfileSpecS
         ps.profile_spec_tool_allowlist_choice = profile_spec::profile_spec_tool_allowlist_null_m_c;
     }
     if (s.hasBudgetTokens) {
-        ps.profile_spec_budget.budget_tokens_choice = budget::budget_tokens_uint_c;
-        ps.profile_spec_budget.budget_tokens_uint = s.budgetTokens;
+        ps.profile_spec_budget.budget_tokens_choice = budget::budget_tokens_uint64_m_c;
+        ps.profile_spec_budget.budget_tokens_uint64_m = s.budgetTokens;
     } else {
         ps.profile_spec_budget.budget_tokens_choice = budget::budget_tokens_null_m_c;
     }
     if (s.hasBudgetWallMs) {
-        ps.profile_spec_budget.budget_wall_ms_choice = budget::budget_wall_ms_uint_c;
-        ps.profile_spec_budget.budget_wall_ms_uint = s.budgetWallMs;
+        ps.profile_spec_budget.budget_wall_ms_choice = budget::budget_wall_ms_uint64_m_c;
+        ps.profile_spec_budget.budget_wall_ms_uint64_m = s.budgetWallMs;
     } else {
         ps.profile_spec_budget.budget_wall_ms_choice = budget::budget_wall_ms_null_m_c;
     }
@@ -915,8 +915,9 @@ QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 si
     q.session_query_since_rev_present = hasSinceRev;
     if (hasSinceRev) {
         q.session_query_since_rev.session_query_since_rev_choice =
-            session_query_since_rev_r::session_query_since_rev_uint_c;
-        q.session_query_since_rev.session_query_since_rev_uint = static_cast<uint32_t>(sinceRev);
+            session_query_since_rev_r::session_query_since_rev_uint64_m_c;
+        q.session_query_since_rev.session_query_since_rev_uint64_m =
+            static_cast<uint64_t>(sinceRev);
     }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
@@ -1382,28 +1383,30 @@ QByteArray NodeApiCodec::encodeModelRecommendRequest(const QString& repo, const 
     const QByteArray revUtf8 = revision.toUtf8();
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_model_recommend_m_c;
-    request_model_recommend& r = request.api_request_request_model_recommend_m;
-    r.ModelRecommend_repo.value = reinterpret_cast<const uint8_t*>(repoUtf8.constData());
-    r.ModelRecommend_repo.len = static_cast<size_t>(repoUtf8.size());
+    model_recommend_args& r =
+        request.api_request_request_model_recommend_m.request_model_recommend_ModelRecommend;
+    r.model_recommend_args_repo.value = reinterpret_cast<const uint8_t*>(repoUtf8.constData());
+    r.model_recommend_args_repo.len = static_cast<size_t>(repoUtf8.size());
     if (revision.isEmpty()) {
-        r.ModelRecommend_revision_choice =
-            request_model_recommend::ModelRecommend_revision_null_m_c;
+        r.model_recommend_args_revision_choice =
+            model_recommend_args::model_recommend_args_revision_null_m_c;
     } else {
-        r.ModelRecommend_revision_choice = request_model_recommend::ModelRecommend_revision_tstr_c;
-        r.ModelRecommend_revision_tstr.value =
+        r.model_recommend_args_revision_choice =
+            model_recommend_args::model_recommend_args_revision_tstr_c;
+        r.model_recommend_args_revision_tstr.value =
             reinterpret_cast<const uint8_t*>(revUtf8.constData());
-        r.ModelRecommend_revision_tstr.len = static_cast<size_t>(revUtf8.size());
+        r.model_recommend_args_revision_tstr.len = static_cast<size_t>(revUtf8.size());
     }
-    r.ModelRecommend_engine.model_engine_choice =
-        static_cast<decltype(r.ModelRecommend_engine.model_engine_choice)>(
+    r.model_recommend_args_engine.model_engine_choice =
+        static_cast<decltype(r.model_recommend_args_engine.model_engine_choice)>(
             modelEngineChoice(engine));
     if (hasBudget) {
-        r.ModelRecommend_budget_bytes_choice =
-            request_model_recommend::ModelRecommend_budget_bytes_uint_c;
-        r.ModelRecommend_budget_bytes_uint = static_cast<uint32_t>(budgetBytes);
+        r.model_recommend_args_budget_bytes_choice =
+            model_recommend_args::model_recommend_args_budget_bytes_uint64_m_c;
+        r.model_recommend_args_budget_bytes_uint64_m = static_cast<uint64_t>(budgetBytes);
     } else {
-        r.ModelRecommend_budget_bytes_choice =
-            request_model_recommend::ModelRecommend_budget_bytes_null_m_c;
+        r.model_recommend_args_budget_bytes_choice =
+            model_recommend_args::model_recommend_args_budget_bytes_null_m_c;
     }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
@@ -2190,12 +2193,12 @@ bool NodeApiCodec::decodeJournal(const QByteArray& responseCbor, QList<DecodedJo
         *headCursor = page.journal_page_view_head_cursor;
     }
     const bool sealed = page.journal_page_view_sealed_after_choice ==
-                        journal_page_view::journal_page_view_sealed_after_uint_c;
+                        journal_page_view::journal_page_view_sealed_after_uint64_m_c;
     if (hasSealedAfter != nullptr) {
         *hasSealedAfter = sealed;
     }
     if (sealedAfter != nullptr) {
-        *sealedAfter = sealed ? page.journal_page_view_sealed_after_uint : 0;
+        *sealedAfter = sealed ? page.journal_page_view_sealed_after_uint64_m : 0;
     }
     return true;
 }
@@ -2423,9 +2426,9 @@ bool NodeApiCodec::decodeRevisions(const QByteArray& responseCbor, QList<Decoded
         const revision& r = rr.response_revisions_Revisions_revision_m[i];
         DecodedRevision d;
         d.seq = r.revision_seq;
-        d.hasParent = r.revision_parent_choice == revision::revision_parent_uint_c;
+        d.hasParent = r.revision_parent_choice == revision::revision_parent_uint64_m_c;
         if (d.hasParent) {
-            d.parent = r.revision_parent_uint;
+            d.parent = r.revision_parent_uint64_m;
         }
         d.author = r.revision_author.author_choice == author_r::author_agent_m_c
                        ? fromZcbor(r.revision_author.author_agent_m.author_agent_agent)
@@ -2459,9 +2462,10 @@ bool NodeApiCodec::decodeModelSearch(const QByteArray& responseCbor, QList<Decod
         }
         hit.downloads = h.search_hit_downloads;
         hit.likes = h.search_hit_likes;
-        if (h.search_hit_num_parameters_choice == search_hit::search_hit_num_parameters_uint_c) {
+        if (h.search_hit_num_parameters_choice ==
+            search_hit::search_hit_num_parameters_uint64_m_c) {
             hit.hasNumParameters = true;
-            hit.numParameters = h.search_hit_num_parameters_uint;
+            hit.numParameters = h.search_hit_num_parameters_uint64_m;
         }
         if (h.search_hit_pipeline_tag_choice == search_hit::search_hit_pipeline_tag_tstr_c) {
             hit.pipelineTag = fromZcbor(h.search_hit_pipeline_tag_tstr);
@@ -2623,9 +2627,9 @@ bool NodeApiCodec::decodeModelRecommend(const QByteArray& responseCbor,
     }
     out->quant = fromZcbor(r.quant_recommendation_quant);
     if (r.quant_recommendation_size_bytes_choice ==
-        quant_recommendation::quant_recommendation_size_bytes_uint_c) {
+        quant_recommendation::quant_recommendation_size_bytes_uint64_m_c) {
         out->hasSizeBytes = true;
-        out->sizeBytes = r.quant_recommendation_size_bytes_uint;
+        out->sizeBytes = r.quant_recommendation_size_bytes_uint64_m;
     }
     out->budgetBytes = r.quant_recommendation_budget_bytes;
     out->fits = r.quant_recommendation_fits;
@@ -2638,9 +2642,9 @@ bool NodeApiCodec::decodeModelRecommend(const QByteArray& responseCbor,
             cand.file = fromZcbor(c.quant_candidate_file_tstr);
         }
         if (c.quant_candidate_size_bytes_choice ==
-            quant_candidate::quant_candidate_size_bytes_uint_c) {
+            quant_candidate::quant_candidate_size_bytes_uint64_m_c) {
             cand.hasSizeBytes = true;
-            cand.sizeBytes = c.quant_candidate_size_bytes_uint;
+            cand.sizeBytes = c.quant_candidate_size_bytes_uint64_m;
         }
         cand.fits = c.quant_candidate_fits;
         out->candidates.append(cand);
@@ -2790,31 +2794,31 @@ QByteArray NodeApiCodec::encodeFsWriteRequest(const QString& rootId, const QStri
                                               bool force) {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_fs_write_m_c;
-    request_fs_write& w = request.api_request_request_fs_write_m;
+    fs_write_args& w = request.api_request_request_fs_write_m.request_fs_write_FsWrite;
     QByteArray rootScratch;
-    setFsRootId(rootId, w.FsWrite_root, rootScratch);
+    setFsRootId(rootId, w.fs_write_args_root, rootScratch);
     const QByteArray pathU = path.toUtf8();
-    w.FsWrite_path.value = reinterpret_cast<const uint8_t*>(pathU.constData());
-    w.FsWrite_path.len = static_cast<size_t>(pathU.size());
+    w.fs_write_args_path.value = reinterpret_cast<const uint8_t*>(pathU.constData());
+    w.fs_write_args_path.len = static_cast<size_t>(pathU.size());
     // Content is a CBOR bstr now (no array cap), so arbitrary file sizes round-trip.
-    w.FsWrite_bytes.value = reinterpret_cast<const uint8_t*>(bytes.constData());
-    w.FsWrite_bytes.len = static_cast<size_t>(bytes.size());
+    w.fs_write_args_bytes.value = reinterpret_cast<const uint8_t*>(bytes.constData());
+    w.fs_write_args_bytes.len = static_cast<size_t>(bytes.size());
     // Optional optimistic-concurrency precondition: parse the opaque "mtime:size" etag.
     const QStringList rev = baseRevision.split(QLatin1Char(':'));
-    w.FsWrite_base_revision_present = rev.size() == 2;
+    w.fs_write_args_base_revision_present = rev.size() == 2;
     if (rev.size() == 2) {
-        w.FsWrite_base_revision.FsWrite_base_revision_choice =
-            FsWrite_base_revision_r::FsWrite_base_revision_fs_revision_m_c;
+        w.fs_write_args_base_revision.fs_write_args_base_revision_choice =
+            fs_write_args_base_revision_r::fs_write_args_base_revision_fs_revision_m_c;
         // mtime_ms/size are u64 (ms epoch / file length); parse as 64-bit so a real etag is not
         // truncated.
-        w.FsWrite_base_revision.FsWrite_base_revision_fs_revision_m.fs_revision_mtime_ms =
-            rev[0].toULongLong();
-        w.FsWrite_base_revision.FsWrite_base_revision_fs_revision_m.fs_revision_size =
+        w.fs_write_args_base_revision.fs_write_args_base_revision_fs_revision_m
+            .fs_revision_mtime_ms = rev[0].toULongLong();
+        w.fs_write_args_base_revision.fs_write_args_base_revision_fs_revision_m.fs_revision_size =
             rev[1].toULongLong();
     }
-    w.FsWrite_force_present = force;
+    w.fs_write_args_force_present = force;
     if (force) {
-        w.FsWrite_force.FsWrite_force = true;
+        w.fs_write_args_force.fs_write_args_force = true;
     }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
@@ -2824,14 +2828,16 @@ QByteArray NodeApiCodec::encodeFsWatchPollRequest(const QString& rootId, const Q
                                                   quint64 afterSeq, quint32 max) {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_fs_watch_poll_m_c;
-    request_fs_watch_poll& w = request.api_request_request_fs_watch_poll_m;
+    fs_watch_after_args& w =
+        request.api_request_request_fs_watch_poll_m.request_fs_watch_poll_FsWatchPoll;
     QByteArray rootScratch;
-    setFsRootId(rootId, w.FsWatchPoll_root, rootScratch);
+    setFsRootId(rootId, w.fs_watch_after_args_root, rootScratch);
     const QByteArray dirU = dir.toUtf8();
-    w.FsWatchPoll_dir.value = reinterpret_cast<const uint8_t*>(dirU.constData());
-    w.FsWatchPoll_dir.len = static_cast<size_t>(dirU.size());
-    w.FsWatchPoll_after_seq = static_cast<uint32_t>(afterSeq);
-    w.FsWatchPoll_max = max;
+    w.fs_watch_after_args_dir.value = reinterpret_cast<const uint8_t*>(dirU.constData());
+    w.fs_watch_after_args_dir.len = static_cast<size_t>(dirU.size());
+    // after_seq is a u64 cursor; the regenerated member is uint64_t, so assign without truncating.
+    w.fs_watch_after_args_after_seq = afterSeq;
+    w.fs_watch_after_args_max = max;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }

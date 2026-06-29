@@ -52,7 +52,7 @@ struct blob_ref_mime_r {
 
 struct blob_ref {
 	struct content_hash blob_ref_hash;
-	uint32_t blob_ref_size;
+	uint64_t blob_ref_size;
 	struct blob_ref_name_r blob_ref_name;
 	bool blob_ref_name_present;
 	struct blob_ref_mime_r blob_ref_mime;
@@ -72,17 +72,17 @@ struct user_msg {
 
 struct agent_command_start_turn {
 	struct user_msg StartTurn_input;
-	uint32_t StartTurn_request_id;
+	uint64_t StartTurn_request_id;
 };
 
 struct agent_command_steer {
 	struct zcbor_string Steer_text;
-	uint32_t Steer_request_id;
+	uint64_t Steer_request_id;
 };
 
 struct agent_command_observe {
 	struct user_msg Observe_input;
-	uint32_t Observe_request_id;
+	uint64_t Observe_request_id;
 };
 
 struct agent_command_interrupt {
@@ -96,19 +96,19 @@ struct agent_command_interrupt {
 };
 
 struct agent_command_snapshot {
-	uint32_t Snapshot_request_id;
+	uint64_t Snapshot_request_id;
 };
 
 struct rewind_anchor_user_turn {
-	uint32_t UserTurn_ordinal;
+	uint64_t UserTurn_ordinal;
 };
 
 struct rewind_anchor_reply_after {
-	uint32_t ReplyAfter_ordinal;
+	uint64_t ReplyAfter_ordinal;
 };
 
 struct rewind_anchor_cursor {
-	uint32_t Cursor_seq;
+	uint64_t Cursor_seq;
 };
 
 struct rewind_anchor_r {
@@ -126,7 +126,7 @@ struct rewind_anchor_r {
 
 struct agent_command_rewind_to {
 	struct rewind_anchor_r RewindTo_anchor;
-	uint32_t RewindTo_request_id;
+	uint64_t RewindTo_request_id;
 };
 
 struct agent_command_r {
@@ -270,7 +270,7 @@ struct host_response_body_t_r {
 };
 
 struct host_response {
-	uint32_t host_response_request_id;
+	uint64_t host_response_request_id;
 	struct host_response_body_t_r host_response_body;
 };
 
@@ -303,13 +303,13 @@ struct request_unit_outbound {
 
 struct request_session_history {
 	struct zcbor_string SessionHistory_session;
-	uint32_t SessionHistory_after_cursor;
+	uint64_t SessionHistory_after_cursor;
 	uint32_t SessionHistory_max;
 };
 
 struct request_subscribe {
 	struct zcbor_string Subscribe_session;
-	uint32_t Subscribe_after_seq;
+	uint64_t Subscribe_after_seq;
 	uint32_t Subscribe_max;
 };
 
@@ -324,7 +324,7 @@ struct EventsSince_wait_ms_r {
 };
 
 struct request_events_since {
-	uint32_t EventsSince_cursor;
+	uint64_t EventsSince_cursor;
 	struct EventsSince_wait_ms_r EventsSince_wait_ms;
 	bool EventsSince_wait_ms_present;
 };
@@ -355,16 +355,20 @@ struct request_handover {
 	struct delivery_target Handover_target;
 };
 
+struct record_meta_args {
+	struct zcbor_string record_meta_args_session;
+	struct origin record_meta_args_origin;
+	struct zcbor_string record_meta_args_kind;
+	struct zcbor_string record_meta_args_body;
+};
+
 struct request_record_meta {
-	struct zcbor_string RecordMeta_session;
-	struct origin RecordMeta_origin;
-	struct zcbor_string RecordMeta_kind;
-	struct zcbor_string RecordMeta_body;
+	struct record_meta_args request_record_meta_RecordMeta;
 };
 
 struct request_unit_history {
 	struct zcbor_string UnitHistory_unit;
-	uint32_t UnitHistory_after_cursor;
+	uint64_t UnitHistory_after_cursor;
 	uint32_t UnitHistory_max;
 };
 
@@ -540,17 +544,17 @@ struct request_profile_get {
 
 struct budget {
 	union {
-		uint32_t budget_tokens_uint;
+		uint64_t budget_tokens_uint64_m;
 	};
 	enum {
-		budget_tokens_uint_c,
+		budget_tokens_uint64_m_c,
 		budget_tokens_null_m_c,
 	} budget_tokens_choice;
 	union {
-		uint32_t budget_wall_ms_uint;
+		uint64_t budget_wall_ms_uint64_m;
 	};
 	enum {
-		budget_wall_ms_uint_c,
+		budget_wall_ms_uint64_m_c,
 		budget_wall_ms_null_m_c,
 	} budget_wall_ms_choice;
 };
@@ -695,10 +699,10 @@ struct skill_bundle {
 
 struct distribution_head_seq_r {
 	union {
-		uint32_t distribution_head_seq_uint;
+		uint64_t distribution_head_seq_uint64_m;
 	};
 	enum {
-		distribution_head_seq_uint_c,
+		distribution_head_seq_uint64_m_c,
 		distribution_head_seq_null_m_c,
 	} distribution_head_seq_choice;
 };
@@ -746,12 +750,12 @@ struct request_profile_history {
 
 struct request_profile_at {
 	struct zcbor_string ProfileAt_id;
-	uint32_t ProfileAt_seq;
+	uint64_t ProfileAt_seq;
 };
 
 struct request_profile_revert {
 	struct zcbor_string ProfileRevert_id;
-	uint32_t ProfileRevert_seq;
+	uint64_t ProfileRevert_seq;
 };
 
 struct request_skill_history {
@@ -760,12 +764,12 @@ struct request_skill_history {
 
 struct request_skill_at {
 	struct zcbor_string SkillAt_name;
-	uint32_t SkillAt_seq;
+	uint64_t SkillAt_seq;
 };
 
 struct request_skill_revert {
 	struct zcbor_string SkillRevert_name;
-	uint32_t SkillRevert_seq;
+	uint64_t SkillRevert_seq;
 };
 
 struct CuratorList_profile_r {
@@ -949,15 +953,15 @@ struct request_model_download {
 };
 
 struct request_model_cancel {
-	uint32_t ModelCancel_id;
+	uint64_t ModelCancel_id;
 };
 
 struct request_model_pause {
-	uint32_t ModelPause_id;
+	uint64_t ModelPause_id;
 };
 
 struct request_model_resume {
-	uint32_t ModelResume_id;
+	uint64_t ModelResume_id;
 };
 
 struct request_model_delete {
@@ -975,42 +979,50 @@ struct request_model_activate {
 	} ModelActivate_profile_choice;
 };
 
+struct model_recommend_args {
+	struct zcbor_string model_recommend_args_repo;
+	union {
+		struct zcbor_string model_recommend_args_revision_tstr;
+	};
+	enum {
+		model_recommend_args_revision_tstr_c,
+		model_recommend_args_revision_null_m_c,
+	} model_recommend_args_revision_choice;
+	struct model_engine_r model_recommend_args_engine;
+	union {
+		uint64_t model_recommend_args_budget_bytes_uint64_m;
+	};
+	enum {
+		model_recommend_args_budget_bytes_uint64_m_c,
+		model_recommend_args_budget_bytes_null_m_c,
+	} model_recommend_args_budget_bytes_choice;
+};
+
 struct request_model_recommend {
-	struct zcbor_string ModelRecommend_repo;
+	struct model_recommend_args request_model_recommend_ModelRecommend;
+};
+
+struct model_quantize_args {
+	struct zcbor_string model_quantize_args_repo;
 	union {
-		struct zcbor_string ModelRecommend_revision_tstr;
+		struct zcbor_string model_quantize_args_revision_tstr;
 	};
 	enum {
-		ModelRecommend_revision_tstr_c,
-		ModelRecommend_revision_null_m_c,
-	} ModelRecommend_revision_choice;
-	struct model_engine_r ModelRecommend_engine;
+		model_quantize_args_revision_tstr_c,
+		model_quantize_args_revision_null_m_c,
+	} model_quantize_args_revision_choice;
+	struct zcbor_string model_quantize_args_target_quant;
 	union {
-		uint32_t ModelRecommend_budget_bytes_uint;
+		struct zcbor_string model_quantize_args_source_file_tstr;
 	};
 	enum {
-		ModelRecommend_budget_bytes_uint_c,
-		ModelRecommend_budget_bytes_null_m_c,
-	} ModelRecommend_budget_bytes_choice;
+		model_quantize_args_source_file_tstr_c,
+		model_quantize_args_source_file_null_m_c,
+	} model_quantize_args_source_file_choice;
 };
 
 struct request_model_quantize {
-	struct zcbor_string ModelQuantize_repo;
-	union {
-		struct zcbor_string ModelQuantize_revision_tstr;
-	};
-	enum {
-		ModelQuantize_revision_tstr_c,
-		ModelQuantize_revision_null_m_c,
-	} ModelQuantize_revision_choice;
-	struct zcbor_string ModelQuantize_target_quant;
-	union {
-		struct zcbor_string ModelQuantize_source_file_tstr;
-	};
-	enum {
-		ModelQuantize_source_file_tstr_c,
-		ModelQuantize_source_file_null_m_c,
-	} ModelQuantize_source_file_choice;
+	struct model_quantize_args request_model_quantize_ModelQuantize;
 };
 
 struct request_model_inspect {
@@ -1148,10 +1160,10 @@ struct session_query_limit {
 
 struct session_query_since_rev_r {
 	union {
-		uint32_t session_query_since_rev_uint;
+		uint64_t session_query_since_rev_uint64_m;
 	};
 	enum {
-		session_query_since_rev_uint_c,
+		session_query_since_rev_uint64_m_c,
 		session_query_since_rev_null_m_c,
 	} session_query_since_rev_choice;
 };
@@ -1783,10 +1795,10 @@ struct presence_mobile {
 
 struct presence_idle_since_r {
 	union {
-		uint32_t presence_idle_since_uint;
+		uint64_t presence_idle_since_uint64_m;
 	};
 	enum {
-		presence_idle_since_uint_c,
+		presence_idle_since_uint64_m_c,
 		presence_idle_since_null_m_c,
 	} presence_idle_since_choice;
 };
@@ -2004,22 +2016,26 @@ struct participant_r {
 	} participant_choice;
 };
 
-struct ConvSend_from_r {
+struct conv_send_args_from_r {
 	union {
-		struct participant_r ConvSend_from_participant_m;
+		struct participant_r conv_send_args_from_participant_m;
 	};
 	enum {
-		ConvSend_from_participant_m_c,
-		ConvSend_from_null_m_c,
-	} ConvSend_from_choice;
+		conv_send_args_from_participant_m_c,
+		conv_send_args_from_null_m_c,
+	} conv_send_args_from_choice;
+};
+
+struct conv_send_args {
+	struct zcbor_string conv_send_args_transport;
+	struct zcbor_string conv_send_args_conv;
+	struct conv_send_args_from_r conv_send_args_from;
+	bool conv_send_args_from_present;
+	struct user_msg conv_send_args_message;
 };
 
 struct request_conv_send {
-	struct zcbor_string ConvSend_transport;
-	struct zcbor_string ConvSend_conv;
-	struct ConvSend_from_r ConvSend_from;
-	bool ConvSend_from_present;
-	struct user_msg ConvSend_message;
+	struct conv_send_args request_conv_send_ConvSend;
 };
 
 struct ConvSetTopic_topic_r {
@@ -2078,75 +2094,91 @@ struct request_conv_delete {
 	struct zcbor_string ConvDelete_conv;
 };
 
-struct ConvHistory_after_cursor {
-	uint32_t ConvHistory_after_cursor;
+struct conv_history_args_after_cursor {
+	uint64_t conv_history_args_after_cursor;
 };
 
-struct ConvHistory_max {
-	uint32_t ConvHistory_max;
+struct conv_history_args_max {
+	uint32_t conv_history_args_max;
+};
+
+struct conv_history_args {
+	struct zcbor_string conv_history_args_transport;
+	struct zcbor_string conv_history_args_conv;
+	struct conv_history_args_after_cursor conv_history_args_after_cursor;
+	bool conv_history_args_after_cursor_present;
+	struct conv_history_args_max conv_history_args_max;
+	bool conv_history_args_max_present;
 };
 
 struct request_conv_history {
-	struct zcbor_string ConvHistory_transport;
-	struct zcbor_string ConvHistory_conv;
-	struct ConvHistory_after_cursor ConvHistory_after_cursor;
-	bool ConvHistory_after_cursor_present;
-	struct ConvHistory_max ConvHistory_max;
-	bool ConvHistory_max_present;
+	struct conv_history_args request_conv_history_ConvHistory;
 };
 
-struct MemberInvite_message_r {
+struct member_invite_args_message_r {
 	union {
-		struct zcbor_string MemberInvite_message_tstr;
+		struct zcbor_string member_invite_args_message_tstr;
 	};
 	enum {
-		MemberInvite_message_tstr_c,
-		MemberInvite_message_null_m_c,
-	} MemberInvite_message_choice;
+		member_invite_args_message_tstr_c,
+		member_invite_args_message_null_m_c,
+	} member_invite_args_message_choice;
+};
+
+struct member_invite_args {
+	struct zcbor_string member_invite_args_transport;
+	struct zcbor_string member_invite_args_conv;
+	struct participant_r member_invite_args_who;
+	struct member_invite_args_message_r member_invite_args_message;
+	bool member_invite_args_message_present;
 };
 
 struct request_member_invite {
-	struct zcbor_string MemberInvite_transport;
-	struct zcbor_string MemberInvite_conv;
-	struct participant_r MemberInvite_who;
-	struct MemberInvite_message_r MemberInvite_message;
-	bool MemberInvite_message_present;
+	struct member_invite_args request_member_invite_MemberInvite;
 };
 
-struct MemberRemove_reason_r {
+struct member_remove_args_reason_r {
 	union {
-		struct zcbor_string MemberRemove_reason_tstr;
+		struct zcbor_string member_remove_args_reason_tstr;
 	};
 	enum {
-		MemberRemove_reason_tstr_c,
-		MemberRemove_reason_null_m_c,
-	} MemberRemove_reason_choice;
+		member_remove_args_reason_tstr_c,
+		member_remove_args_reason_null_m_c,
+	} member_remove_args_reason_choice;
+};
+
+struct member_remove_args {
+	struct zcbor_string member_remove_args_transport;
+	struct zcbor_string member_remove_args_conv;
+	struct participant_r member_remove_args_who;
+	struct member_remove_args_reason_r member_remove_args_reason;
+	bool member_remove_args_reason_present;
 };
 
 struct request_member_remove {
-	struct zcbor_string MemberRemove_transport;
-	struct zcbor_string MemberRemove_conv;
-	struct participant_r MemberRemove_who;
-	struct MemberRemove_reason_r MemberRemove_reason;
-	bool MemberRemove_reason_present;
+	struct member_remove_args request_member_remove_MemberRemove;
 };
 
-struct MemberBan_reason_r {
+struct member_ban_args_reason_r {
 	union {
-		struct zcbor_string MemberBan_reason_tstr;
+		struct zcbor_string member_ban_args_reason_tstr;
 	};
 	enum {
-		MemberBan_reason_tstr_c,
-		MemberBan_reason_null_m_c,
-	} MemberBan_reason_choice;
+		member_ban_args_reason_tstr_c,
+		member_ban_args_reason_null_m_c,
+	} member_ban_args_reason_choice;
+};
+
+struct member_ban_args {
+	struct zcbor_string member_ban_args_transport;
+	struct zcbor_string member_ban_args_conv;
+	struct participant_r member_ban_args_who;
+	struct member_ban_args_reason_r member_ban_args_reason;
+	bool member_ban_args_reason_present;
 };
 
 struct request_member_ban {
-	struct zcbor_string MemberBan_transport;
-	struct zcbor_string MemberBan_conv;
-	struct participant_r MemberBan_who;
-	struct MemberBan_reason_r MemberBan_reason;
-	bool MemberBan_reason_present;
+	struct member_ban_args request_member_ban_MemberBan;
 };
 
 struct member_role_r {
@@ -2159,11 +2191,15 @@ struct member_role_r {
 	} member_role_choice;
 };
 
+struct member_set_role_args {
+	struct zcbor_string member_set_role_args_transport;
+	struct zcbor_string member_set_role_args_conv;
+	struct participant_r member_set_role_args_who;
+	struct member_role_r member_set_role_args_role;
+};
+
 struct request_member_set_role {
-	struct zcbor_string MemberSetRole_transport;
-	struct zcbor_string MemberSetRole_conv;
-	struct participant_r MemberSetRole_who;
-	struct member_role_r MemberSetRole_role;
+	struct member_set_role_args request_member_set_role_MemberSetRole;
 };
 
 struct request_contact_get_profile {
@@ -2246,7 +2282,7 @@ struct request_fs_stat {
 };
 
 struct FsRead_max_bytes {
-	uint32_t FsRead_max_bytes;
+	uint64_t FsRead_max_bytes;
 };
 
 struct request_fs_read {
@@ -2261,28 +2297,32 @@ struct fs_revision {
 	uint64_t fs_revision_size;
 };
 
-struct FsWrite_base_revision_r {
+struct fs_write_args_base_revision_r {
 	union {
-		struct fs_revision FsWrite_base_revision_fs_revision_m;
+		struct fs_revision fs_write_args_base_revision_fs_revision_m;
 	};
 	enum {
-		FsWrite_base_revision_fs_revision_m_c,
-		FsWrite_base_revision_null_m_c,
-	} FsWrite_base_revision_choice;
+		fs_write_args_base_revision_fs_revision_m_c,
+		fs_write_args_base_revision_null_m_c,
+	} fs_write_args_base_revision_choice;
 };
 
-struct FsWrite_force {
-	bool FsWrite_force;
+struct fs_write_args_force {
+	bool fs_write_args_force;
+};
+
+struct fs_write_args {
+	struct fs_root_id_t_r fs_write_args_root;
+	struct zcbor_string fs_write_args_path;
+	struct zcbor_string fs_write_args_bytes;
+	struct fs_write_args_base_revision_r fs_write_args_base_revision;
+	bool fs_write_args_base_revision_present;
+	struct fs_write_args_force fs_write_args_force;
+	bool fs_write_args_force_present;
 };
 
 struct request_fs_write {
-	struct fs_root_id_t_r FsWrite_root;
-	struct zcbor_string FsWrite_path;
-	struct zcbor_string FsWrite_bytes;
-	struct FsWrite_base_revision_r FsWrite_base_revision;
-	bool FsWrite_base_revision_present;
-	struct FsWrite_force FsWrite_force;
-	bool FsWrite_force_present;
+	struct fs_write_args request_fs_write_FsWrite;
 };
 
 struct fs_search_query_regex {
@@ -2318,11 +2358,15 @@ struct request_fs_search {
 	struct fs_search_query FsSearch_query;
 };
 
+struct fs_watch_after_args {
+	struct fs_root_id_t_r fs_watch_after_args_root;
+	struct zcbor_string fs_watch_after_args_dir;
+	uint64_t fs_watch_after_args_after_seq;
+	uint32_t fs_watch_after_args_max;
+};
+
 struct request_fs_watch_poll {
-	struct fs_root_id_t_r FsWatchPoll_root;
-	struct zcbor_string FsWatchPoll_dir;
-	uint32_t FsWatchPoll_after_seq;
-	uint32_t FsWatchPoll_max;
+	struct fs_watch_after_args request_fs_watch_poll_FsWatchPoll;
 };
 
 struct request_blob_put {
@@ -2330,8 +2374,8 @@ struct request_blob_put {
 };
 
 struct byte_range {
-	uint32_t byte_range_offset;
-	uint32_t byte_range_len;
+	uint64_t byte_range_offset;
+	uint64_t byte_range_len;
 };
 
 struct BlobGet_range_r {
@@ -2354,28 +2398,32 @@ struct request_blob_stat {
 	struct content_hash BlobStat_hash;
 };
 
-struct FsWriteFromBlob_base_revision_r {
+struct fs_write_from_blob_args_base_revision_r {
 	union {
-		struct fs_revision FsWriteFromBlob_base_revision_fs_revision_m;
+		struct fs_revision fs_write_from_blob_args_base_revision_fs_revision_m;
 	};
 	enum {
-		FsWriteFromBlob_base_revision_fs_revision_m_c,
-		FsWriteFromBlob_base_revision_null_m_c,
-	} FsWriteFromBlob_base_revision_choice;
+		fs_write_from_blob_args_base_revision_fs_revision_m_c,
+		fs_write_from_blob_args_base_revision_null_m_c,
+	} fs_write_from_blob_args_base_revision_choice;
 };
 
-struct FsWriteFromBlob_force {
-	bool FsWriteFromBlob_force;
+struct fs_write_from_blob_args_force {
+	bool fs_write_from_blob_args_force;
+};
+
+struct fs_write_from_blob_args {
+	struct fs_root_id_t_r fs_write_from_blob_args_root;
+	struct zcbor_string fs_write_from_blob_args_path;
+	struct content_hash fs_write_from_blob_args_hash;
+	struct fs_write_from_blob_args_base_revision_r fs_write_from_blob_args_base_revision;
+	bool fs_write_from_blob_args_base_revision_present;
+	struct fs_write_from_blob_args_force fs_write_from_blob_args_force;
+	bool fs_write_from_blob_args_force_present;
 };
 
 struct request_fs_write_from_blob {
-	struct fs_root_id_t_r FsWriteFromBlob_root;
-	struct zcbor_string FsWriteFromBlob_path;
-	struct content_hash FsWriteFromBlob_hash;
-	struct FsWriteFromBlob_base_revision_r FsWriteFromBlob_base_revision;
-	bool FsWriteFromBlob_base_revision_present;
-	struct FsWriteFromBlob_force FsWriteFromBlob_force;
-	bool FsWriteFromBlob_force_present;
+	struct fs_write_from_blob_args request_fs_write_from_blob_FsWriteFromBlob;
 };
 
 struct api_request_r {
@@ -2699,22 +2747,22 @@ struct turn_trigger_r {
 };
 
 struct agent_event_turn_started {
-	uint32_t TurnStarted_seq;
+	uint64_t TurnStarted_seq;
 	struct turn_trigger_r TurnStarted_trigger;
 };
 
 struct agent_event_text_delta {
-	uint32_t TextDelta_seq;
+	uint64_t TextDelta_seq;
 	struct zcbor_string TextDelta_text;
 };
 
 struct agent_event_reasoning_delta {
-	uint32_t ReasoningDelta_seq;
+	uint64_t ReasoningDelta_seq;
 	struct zcbor_string ReasoningDelta_text;
 };
 
 struct agent_event_content_delta {
-	uint32_t ContentDelta_seq;
+	uint64_t ContentDelta_seq;
 	struct zcbor_string ContentDelta_kind;
 	struct zcbor_string ContentDelta_body;
 };
@@ -2743,7 +2791,7 @@ struct tool_call_view {
 };
 
 struct agent_event_tool_started {
-	uint32_t ToolStarted_seq;
+	uint64_t ToolStarted_seq;
 	struct tool_call_view ToolStarted_call;
 };
 
@@ -2766,39 +2814,39 @@ struct tool_result_view {
 };
 
 struct agent_event_tool_finished {
-	uint32_t ToolFinished_seq;
+	uint64_t ToolFinished_seq;
 	struct tool_result_view ToolFinished_result;
 };
 
 struct usage_delta {
-	uint32_t usage_delta_input_tokens;
-	uint32_t usage_delta_output_tokens;
+	uint64_t usage_delta_input_tokens;
+	uint64_t usage_delta_output_tokens;
 	uint32_t usage_delta_api_calls;
-	uint32_t usage_delta_cache_read_tokens;
-	uint32_t usage_delta_cache_write_tokens;
-	uint32_t usage_delta_reasoning_tokens;
-	uint32_t usage_delta_cost_micros;
+	uint64_t usage_delta_cache_read_tokens;
+	uint64_t usage_delta_cache_write_tokens;
+	uint64_t usage_delta_reasoning_tokens;
+	uint64_t usage_delta_cost_micros;
 };
 
 struct agent_event_usage {
-	uint32_t Usage_seq;
+	uint64_t Usage_seq;
 	struct usage_delta Usage_delta;
 };
 
 struct context_status {
-	uint32_t context_status_used_tokens;
+	uint64_t context_status_used_tokens;
 	union {
-		uint32_t context_status_max_tokens_uint;
+		uint64_t context_status_max_tokens_uint64_m;
 	};
 	enum {
-		context_status_max_tokens_uint_c,
+		context_status_max_tokens_uint64_m_c,
 		context_status_max_tokens_null_m_c,
 	} context_status_max_tokens_choice;
 	union {
-		uint32_t context_status_budget_tokens_uint;
+		uint64_t context_status_budget_tokens_uint64_m;
 	};
 	enum {
-		context_status_budget_tokens_uint_c,
+		context_status_budget_tokens_uint64_m_c,
 		context_status_budget_tokens_null_m_c,
 	} context_status_budget_tokens_choice;
 	bool context_status_compacted;
@@ -2806,36 +2854,36 @@ struct context_status {
 };
 
 struct agent_event_context {
-	uint32_t Context_seq;
+	uint64_t Context_seq;
 	struct context_status Context_status;
 };
 
 struct rate_limit_snapshot {
 	union {
-		uint32_t rate_limit_snapshot_remaining_uint;
+		uint64_t rate_limit_snapshot_remaining_uint64_m;
 	};
 	enum {
-		rate_limit_snapshot_remaining_uint_c,
+		rate_limit_snapshot_remaining_uint64_m_c,
 		rate_limit_snapshot_remaining_null_m_c,
 	} rate_limit_snapshot_remaining_choice;
 	union {
-		uint32_t rate_limit_snapshot_limit_uint;
+		uint64_t rate_limit_snapshot_limit_uint64_m;
 	};
 	enum {
-		rate_limit_snapshot_limit_uint_c,
+		rate_limit_snapshot_limit_uint64_m_c,
 		rate_limit_snapshot_limit_null_m_c,
 	} rate_limit_snapshot_limit_choice;
 	union {
-		uint32_t rate_limit_snapshot_reset_ms_uint;
+		uint64_t rate_limit_snapshot_reset_ms_uint64_m;
 	};
 	enum {
-		rate_limit_snapshot_reset_ms_uint_c,
+		rate_limit_snapshot_reset_ms_uint64_m_c,
 		rate_limit_snapshot_reset_ms_null_m_c,
 	} rate_limit_snapshot_reset_ms_choice;
 };
 
 struct agent_event_rate_limit {
-	uint32_t RateLimit_seq;
+	uint64_t RateLimit_seq;
 	struct rate_limit_snapshot RateLimit_snapshot;
 };
 
@@ -2863,18 +2911,18 @@ struct turn_summary {
 };
 
 struct agent_event_turn_finished {
-	uint32_t TurnFinished_seq;
+	uint64_t TurnFinished_seq;
 	struct turn_summary TurnFinished_summary;
 };
 
 struct agent_event_error {
-	uint32_t Error_seq;
+	uint64_t Error_seq;
 	struct zcbor_string Error_failure;
 };
 
 struct agent_event_steered {
-	uint32_t Steered_seq;
-	uint32_t Steered_request_id;
+	uint64_t Steered_seq;
+	uint64_t Steered_request_id;
 	bool Steered_accepted;
 };
 
@@ -2886,7 +2934,7 @@ struct conv_turn_view {
 };
 
 struct conv_view {
-	uint32_t conv_view_epoch;
+	uint64_t conv_view_epoch;
 	struct conv_turn_view conv_view_turns_conv_turn_view_m[64];
 	size_t conv_view_turns_conv_turn_view_m_count;
 	struct zcbor_string conv_view_waiting_for_tstr[64];
@@ -2894,16 +2942,16 @@ struct conv_view {
 };
 
 struct agent_event_snapshot {
-	uint32_t Snapshot_seq;
-	uint32_t Snapshot_request_id;
+	uint64_t Snapshot_seq;
+	uint64_t Snapshot_request_id;
 	struct conv_view Snapshot_view;
 };
 
 struct agent_event_rewound {
-	uint32_t Rewound_seq;
-	uint32_t Rewound_request_id;
-	uint32_t Rewound_to_cursor;
-	uint32_t Rewound_epoch;
+	uint64_t Rewound_seq;
+	uint64_t Rewound_request_id;
+	uint64_t Rewound_to_cursor;
+	uint64_t Rewound_epoch;
 };
 
 struct agent_event_r {
@@ -2990,7 +3038,7 @@ struct host_request_kind_t_r {
 };
 
 struct host_request {
-	uint32_t host_request_request_id;
+	uint64_t host_request_request_id;
 	struct host_request_kind_t_r host_request_kind;
 };
 
@@ -3038,10 +3086,10 @@ struct response_health {
 };
 
 struct stats_report {
-	uint32_t stats_report_pending_jobs;
-	uint32_t stats_report_pending_wakes;
-	uint32_t stats_report_sessions;
-	uint32_t stats_report_active;
+	uint64_t stats_report_pending_jobs;
+	uint64_t stats_report_pending_wakes;
+	uint64_t stats_report_sessions;
+	uint64_t stats_report_active;
 	struct usage_delta stats_report_usage;
 };
 
@@ -3051,12 +3099,12 @@ struct response_stats {
 
 struct telemetry_dump {
 	struct usage_delta telemetry_dump_usage;
-	uint32_t telemetry_dump_events;
+	uint64_t telemetry_dump_events;
 	bool telemetry_dump_healthy;
-	uint32_t telemetry_dump_pending_jobs;
-	uint32_t telemetry_dump_pending_wakes;
-	uint32_t telemetry_dump_sessions;
-	uint32_t telemetry_dump_active;
+	uint64_t telemetry_dump_pending_jobs;
+	uint64_t telemetry_dump_pending_wakes;
+	uint64_t telemetry_dump_sessions;
+	uint64_t telemetry_dump_active;
 };
 
 struct response_telemetry {
@@ -3106,10 +3154,10 @@ struct session_info_title_r {
 
 struct session_info_last_activity_ms_r {
 	union {
-		uint32_t session_info_last_activity_ms_uint;
+		uint64_t session_info_last_activity_ms_uint64_m;
 	};
 	enum {
-		session_info_last_activity_ms_uint_c,
+		session_info_last_activity_ms_uint64_m_c,
 		session_info_last_activity_ms_null_m_c,
 	} session_info_last_activity_ms_choice;
 };
@@ -3330,11 +3378,11 @@ struct response_unit {
 };
 
 struct manage_event_view_started {
-	uint32_t Started_seq;
+	uint64_t Started_seq;
 };
 
 struct manage_event_view_progress {
-	uint32_t Progress_seq;
+	uint64_t Progress_seq;
 	union {
 		struct zcbor_string Progress_text_tstr;
 	};
@@ -3345,12 +3393,12 @@ struct manage_event_view_progress {
 };
 
 struct manage_event_view_usage {
-	uint32_t Usage_seq;
+	uint64_t Usage_seq;
 	struct usage_delta Usage_delta;
 };
 
 struct manage_event_view_finished {
-	uint32_t Finished_seq;
+	uint64_t Finished_seq;
 	struct zcbor_string Finished_end_reason;
 	union {
 		struct zcbor_string Finished_summary_tstr;
@@ -3362,7 +3410,7 @@ struct manage_event_view_finished {
 };
 
 struct manage_event_view_error {
-	uint32_t Error_seq;
+	uint64_t Error_seq;
 	struct zcbor_string Error_message;
 };
 
@@ -3374,7 +3422,7 @@ struct subagent_phase_r {
 };
 
 struct manage_event_view_subagent {
-	uint32_t Subagent_seq;
+	uint64_t Subagent_seq;
 	struct zcbor_string Subagent_child;
 	struct session_role_r Subagent_role;
 	struct subagent_phase_r Subagent_phase;
@@ -3459,7 +3507,7 @@ struct transcript_block_tool_result {
 };
 
 struct transcript_block_request {
-	uint32_t Request_request_id;
+	uint64_t Request_request_id;
 	struct host_request_kind_t_r Request_kind;
 };
 
@@ -3501,13 +3549,13 @@ struct journal_record_payload_t_r {
 };
 
 struct journal_record {
-	uint32_t journal_record_cursor;
-	uint32_t journal_record_segment;
-	uint32_t journal_record_seq;
-	uint32_t journal_record_epoch;
-	uint32_t journal_record_trace;
+	uint64_t journal_record_cursor;
+	uint64_t journal_record_segment;
+	uint64_t journal_record_seq;
+	uint64_t journal_record_epoch;
+	uint64_t journal_record_trace;
 	struct zcbor_string journal_record_kind;
-	uint32_t journal_record_timestamp_ms;
+	uint64_t journal_record_timestamp_ms;
 	bool journal_record_verified;
 	struct journal_record_payload_t_r journal_record_payload;
 };
@@ -3515,13 +3563,13 @@ struct journal_record {
 struct journal_page_view {
 	struct journal_record journal_page_view_entries_journal_record_m[64];
 	size_t journal_page_view_entries_journal_record_m_count;
-	uint32_t journal_page_view_next_cursor;
-	uint32_t journal_page_view_head_cursor;
+	uint64_t journal_page_view_next_cursor;
+	uint64_t journal_page_view_head_cursor;
 	union {
-		uint32_t journal_page_view_sealed_after_uint;
+		uint64_t journal_page_view_sealed_after_uint64_m;
 	};
 	enum {
-		journal_page_view_sealed_after_uint_c,
+		journal_page_view_sealed_after_uint64_m_c,
 		journal_page_view_sealed_after_null_m_c,
 	} journal_page_view_sealed_after_choice;
 };
@@ -3583,7 +3631,7 @@ struct session_payload_r {
 };
 
 struct session_log_entry {
-	uint32_t session_log_entry_seq;
+	uint64_t session_log_entry_seq;
 	struct direction_r session_log_entry_direction;
 	struct origin session_log_entry_origin;
 	struct disposition_r session_log_entry_disposition;
@@ -3593,9 +3641,9 @@ struct session_log_entry {
 struct log_page_view {
 	struct session_log_entry log_page_view_entries_session_log_entry_m[64];
 	size_t log_page_view_entries_session_log_entry_m_count;
-	uint32_t log_page_view_next_seq;
-	uint32_t log_page_view_head_seq;
-	uint32_t log_page_view_epoch;
+	uint64_t log_page_view_next_seq;
+	uint64_t log_page_view_head_seq;
+	uint64_t log_page_view_epoch;
 };
 
 struct response_log_page {
@@ -3604,21 +3652,21 @@ struct response_log_page {
 
 struct node_event_session_advanced {
 	struct zcbor_string SessionAdvanced_session;
-	uint32_t SessionAdvanced_epoch;
-	uint32_t SessionAdvanced_head_seq;
+	uint64_t SessionAdvanced_epoch;
+	uint64_t SessionAdvanced_head_seq;
 };
 
 struct node_event_session_meta_changed {
 	struct zcbor_string SessionMetaChanged_session;
-	uint32_t SessionMetaChanged_rev;
+	uint64_t SessionMetaChanged_rev;
 };
 
 struct node_event_roster_changed {
-	uint32_t RosterChanged_rev;
+	uint64_t RosterChanged_rev;
 };
 
 struct node_event_fleet_changed {
-	uint32_t FleetChanged_rev;
+	uint64_t FleetChanged_rev;
 };
 
 struct node_event_approval_pending {
@@ -3627,7 +3675,7 @@ struct node_event_approval_pending {
 };
 
 struct node_event_download_progress {
-	uint32_t DownloadProgress_id;
+	uint64_t DownloadProgress_id;
 	uint32_t DownloadProgress_pct;
 	struct zcbor_string DownloadProgress_state;
 };
@@ -3660,8 +3708,8 @@ struct node_event_r {
 struct events_page {
 	struct node_event_r events_page_events_node_event_m[64];
 	size_t events_page_events_node_event_m_count;
-	uint32_t events_page_next_cursor;
-	uint32_t events_page_head_cursor;
+	uint64_t events_page_next_cursor;
+	uint64_t events_page_head_cursor;
 };
 
 struct response_events_page {
@@ -3697,13 +3745,13 @@ struct search_hit {
 		search_hit_author_tstr_c,
 		search_hit_author_null_m_c,
 	} search_hit_author_choice;
-	uint32_t search_hit_downloads;
-	uint32_t search_hit_likes;
+	uint64_t search_hit_downloads;
+	uint64_t search_hit_likes;
 	union {
-		uint32_t search_hit_num_parameters_uint;
+		uint64_t search_hit_num_parameters_uint64_m;
 	};
 	enum {
-		search_hit_num_parameters_uint_c,
+		search_hit_num_parameters_uint64_m_c,
 		search_hit_num_parameters_null_m_c,
 	} search_hit_num_parameters_choice;
 	union {
@@ -3737,7 +3785,7 @@ struct response_model_search {
 
 struct model_file {
 	struct zcbor_string model_file_path;
-	uint32_t model_file_size_bytes;
+	uint64_t model_file_size_bytes;
 	union {
 		struct zcbor_string model_file_quant_tstr;
 	};
@@ -3755,7 +3803,7 @@ struct response_model_files {
 };
 
 struct response_model_download_started {
-	uint32_t response_model_download_started_ModelDownloadStarted;
+	uint64_t response_model_download_started_ModelDownloadStarted;
 };
 
 struct download_state_r {
@@ -3770,11 +3818,11 @@ struct download_state_r {
 };
 
 struct download_status {
-	uint32_t download_status_id;
+	uint64_t download_status_id;
 	struct model_ref download_status_model;
 	struct download_state_r download_status_state;
-	uint32_t download_status_downloaded_bytes;
-	uint32_t download_status_total_bytes;
+	uint64_t download_status_downloaded_bytes;
+	uint64_t download_status_total_bytes;
 	uint32_t download_status_files_done;
 	uint32_t download_status_files_total;
 	union {
@@ -3826,7 +3874,7 @@ struct installed_model {
 	struct model_ref installed_model_model;
 	struct zcbor_string installed_model_display_name;
 	struct zcbor_string installed_model_local_path;
-	uint32_t installed_model_size_bytes;
+	uint64_t installed_model_size_bytes;
 	union {
 		struct zcbor_string installed_model_quant_tstr;
 	};
@@ -3834,7 +3882,7 @@ struct installed_model {
 		installed_model_quant_tstr_c,
 		installed_model_quant_null_m_c,
 	} installed_model_quant_choice;
-	uint32_t installed_model_installed_at_ms;
+	uint64_t installed_model_installed_at_ms;
 	struct installed_model_arch_r installed_model_arch;
 	bool installed_model_arch_present;
 	struct installed_model_context_length_r installed_model_context_length;
@@ -3858,10 +3906,10 @@ struct quant_candidate {
 		quant_candidate_file_null_m_c,
 	} quant_candidate_file_choice;
 	union {
-		uint32_t quant_candidate_size_bytes_uint;
+		uint64_t quant_candidate_size_bytes_uint64_m;
 	};
 	enum {
-		quant_candidate_size_bytes_uint_c,
+		quant_candidate_size_bytes_uint64_m_c,
 		quant_candidate_size_bytes_null_m_c,
 	} quant_candidate_size_bytes_choice;
 	bool quant_candidate_fits;
@@ -3879,13 +3927,13 @@ struct quant_recommendation {
 	} quant_recommendation_file_choice;
 	struct zcbor_string quant_recommendation_quant;
 	union {
-		uint32_t quant_recommendation_size_bytes_uint;
+		uint64_t quant_recommendation_size_bytes_uint64_m;
 	};
 	enum {
-		quant_recommendation_size_bytes_uint_c,
+		quant_recommendation_size_bytes_uint64_m_c,
 		quant_recommendation_size_bytes_null_m_c,
 	} quant_recommendation_size_bytes_choice;
-	uint32_t quant_recommendation_budget_bytes;
+	uint64_t quant_recommendation_budget_bytes;
 	bool quant_recommendation_fits;
 	struct zcbor_string quant_recommendation_reason;
 	struct quant_candidate quant_recommendation_candidates_quant_candidate_m[64];
@@ -3897,7 +3945,7 @@ struct response_model_recommend {
 };
 
 struct response_model_quantize_started {
-	uint32_t response_model_quantize_started_ModelQuantizeStarted;
+	uint64_t response_model_quantize_started_ModelQuantizeStarted;
 };
 
 struct quantize_state_r {
@@ -3911,7 +3959,7 @@ struct quantize_state_r {
 };
 
 struct quantize_status {
-	uint32_t quantize_status_id;
+	uint64_t quantize_status_id;
 	struct zcbor_string quantize_status_repo;
 	struct zcbor_string quantize_status_source_file;
 	struct zcbor_string quantize_status_target_quant;
@@ -3988,13 +4036,13 @@ struct gguf_info {
 		gguf_info_quantization_version_null_m_c,
 	} gguf_info_quantization_version_choice;
 	union {
-		uint32_t gguf_info_parameter_count_uint;
+		uint64_t gguf_info_parameter_count_uint64_m;
 	};
 	enum {
-		gguf_info_parameter_count_uint_c,
+		gguf_info_parameter_count_uint64_m_c,
 		gguf_info_parameter_count_null_m_c,
 	} gguf_info_parameter_count_choice;
-	uint32_t gguf_info_size_bytes;
+	uint64_t gguf_info_size_bytes;
 };
 
 struct response_model_inspect {
@@ -4047,17 +4095,17 @@ struct model_descriptor {
 		model_descriptor_context_length_null_m_c,
 	} model_descriptor_context_length_choice;
 	union {
-		uint32_t model_descriptor_input_price_micros_per_mtok_uint;
+		uint64_t model_descriptor_input_price_micros_per_mtok_uint64_m;
 	};
 	enum {
-		model_descriptor_input_price_micros_per_mtok_uint_c,
+		model_descriptor_input_price_micros_per_mtok_uint64_m_c,
 		model_descriptor_input_price_micros_per_mtok_null_m_c,
 	} model_descriptor_input_price_micros_per_mtok_choice;
 	union {
-		uint32_t model_descriptor_output_price_micros_per_mtok_uint;
+		uint64_t model_descriptor_output_price_micros_per_mtok_uint64_m;
 	};
 	enum {
-		model_descriptor_output_price_micros_per_mtok_uint_c,
+		model_descriptor_output_price_micros_per_mtok_uint64_m_c,
 		model_descriptor_output_price_micros_per_mtok_null_m_c,
 	} model_descriptor_output_price_micros_per_mtok_choice;
 	bool model_descriptor_local;
@@ -4101,18 +4149,18 @@ struct author_r {
 };
 
 struct revision {
-	uint32_t revision_seq;
+	uint64_t revision_seq;
 	union {
-		uint32_t revision_parent_uint;
+		uint64_t revision_parent_uint64_m;
 	};
 	enum {
-		revision_parent_uint_c,
+		revision_parent_uint64_m_c,
 		revision_parent_null_m_c,
 	} revision_parent_choice;
 	struct content_hash revision_content_hash;
 	struct author_r revision_author;
 	struct zcbor_string revision_reason;
-	uint32_t revision_ts_ms;
+	uint64_t revision_ts_ms;
 };
 
 struct response_revisions {
@@ -4144,29 +4192,29 @@ struct skill_usage {
 	struct skill_creator_r skill_usage_created_by;
 	struct skill_state_r skill_usage_state;
 	bool skill_usage_pinned;
-	uint32_t skill_usage_use_count;
-	uint32_t skill_usage_view_count;
-	uint32_t skill_usage_patch_count;
-	uint32_t skill_usage_created_at_ms;
+	uint64_t skill_usage_use_count;
+	uint64_t skill_usage_view_count;
+	uint64_t skill_usage_patch_count;
+	uint64_t skill_usage_created_at_ms;
 	union {
-		uint32_t skill_usage_last_used_ms_uint;
+		uint64_t skill_usage_last_used_ms_uint64_m;
 	};
 	enum {
-		skill_usage_last_used_ms_uint_c,
+		skill_usage_last_used_ms_uint64_m_c,
 		skill_usage_last_used_ms_null_m_c,
 	} skill_usage_last_used_ms_choice;
 	union {
-		uint32_t skill_usage_last_viewed_ms_uint;
+		uint64_t skill_usage_last_viewed_ms_uint64_m;
 	};
 	enum {
-		skill_usage_last_viewed_ms_uint_c,
+		skill_usage_last_viewed_ms_uint64_m_c,
 		skill_usage_last_viewed_ms_null_m_c,
 	} skill_usage_last_viewed_ms_choice;
 	union {
-		uint32_t skill_usage_last_patched_ms_uint;
+		uint64_t skill_usage_last_patched_ms_uint64_m;
 	};
 	enum {
-		skill_usage_last_patched_ms_uint_c,
+		skill_usage_last_patched_ms_uint64_m_c,
 		skill_usage_last_patched_ms_null_m_c,
 	} skill_usage_last_patched_ms_choice;
 };
@@ -4211,7 +4259,7 @@ struct auth_begin_response {
 	struct zcbor_string auth_begin_response_flow_id;
 	struct zcbor_string auth_begin_response_authorization_url;
 	struct zcbor_string auth_begin_response_redirect_uri;
-	uint32_t auth_begin_response_expires_at;
+	uint64_t auth_begin_response_expires_at;
 	struct auth_flow_kind_r auth_begin_response_flow_kind;
 };
 
@@ -4251,20 +4299,20 @@ struct response_auth_providers {
 
 struct checkpoint_info_turn_ordinal_r {
 	union {
-		uint32_t checkpoint_info_turn_ordinal_uint;
+		uint64_t checkpoint_info_turn_ordinal_uint64_m;
 	};
 	enum {
-		checkpoint_info_turn_ordinal_uint_c,
+		checkpoint_info_turn_ordinal_uint64_m_c,
 		checkpoint_info_turn_ordinal_null_m_c,
 	} checkpoint_info_turn_ordinal_choice;
 };
 
 struct checkpoint_info_cursor_r {
 	union {
-		uint32_t checkpoint_info_cursor_uint;
+		uint64_t checkpoint_info_cursor_uint64_m;
 	};
 	enum {
-		checkpoint_info_cursor_uint_c,
+		checkpoint_info_cursor_uint64_m_c,
 		checkpoint_info_cursor_null_m_c,
 	} checkpoint_info_cursor_choice;
 };
@@ -4273,7 +4321,7 @@ struct checkpoint_info {
 	struct zcbor_string checkpoint_info_id;
 	struct zcbor_string checkpoint_info_session;
 	struct zcbor_string checkpoint_info_tool;
-	uint32_t checkpoint_info_created_unix;
+	uint64_t checkpoint_info_created_unix;
 	struct checkpoint_info_turn_ordinal_r checkpoint_info_turn_ordinal;
 	bool checkpoint_info_turn_ordinal_present;
 	struct checkpoint_info_cursor_r checkpoint_info_cursor;
@@ -4305,7 +4353,7 @@ struct session_page {
 	size_t session_page_sessions_session_info_m_count;
 	struct session_page_next_cursor_r session_page_next_cursor;
 	bool session_page_next_cursor_present;
-	uint32_t session_page_rev;
+	uint64_t session_page_rev;
 	struct session_page_removed_r session_page_removed;
 	bool session_page_removed_present;
 };
@@ -4469,10 +4517,10 @@ struct response_config {
 
 struct cron_job_next_fire_unix_r {
 	union {
-		uint32_t cron_job_next_fire_unix_uint;
+		uint64_t cron_job_next_fire_unix_uint64_m;
 	};
 	enum {
-		cron_job_next_fire_unix_uint_c,
+		cron_job_next_fire_unix_uint64_m_c,
 		cron_job_next_fire_unix_null_m_c,
 	} cron_job_next_fire_unix_choice;
 };
@@ -4483,10 +4531,10 @@ struct cron_job_paused {
 
 struct cron_job_last_run_unix_r {
 	union {
-		uint32_t cron_job_last_run_unix_uint;
+		uint64_t cron_job_last_run_unix_uint64_m;
 	};
 	enum {
-		cron_job_last_run_unix_uint_c,
+		cron_job_last_run_unix_uint64_m_c,
 		cron_job_last_run_unix_null_m_c,
 	} cron_job_last_run_unix_choice;
 };
@@ -4553,10 +4601,10 @@ struct cron_run_detail_r {
 
 struct cron_run_finished_unix_r {
 	union {
-		uint32_t cron_run_finished_unix_uint;
+		uint64_t cron_run_finished_unix_uint64_m;
 	};
 	enum {
-		cron_run_finished_unix_uint_c,
+		cron_run_finished_unix_uint64_m_c,
 		cron_run_finished_unix_null_m_c,
 	} cron_run_finished_unix_choice;
 };
@@ -4583,7 +4631,7 @@ struct cron_run_trigger {
 };
 
 struct cron_run {
-	uint32_t cron_run_started_unix;
+	uint64_t cron_run_started_unix;
 	bool cron_run_ok;
 	struct cron_run_detail_r cron_run_detail;
 	bool cron_run_detail_present;
@@ -5105,8 +5153,8 @@ struct fs_change {
 struct fs_watch_page_view {
 	struct fs_change fs_watch_page_view_events_fs_change_m[64];
 	size_t fs_watch_page_view_events_fs_change_m_count;
-	uint32_t fs_watch_page_view_next_seq;
-	uint32_t fs_watch_page_view_head_seq;
+	uint64_t fs_watch_page_view_next_seq;
+	uint64_t fs_watch_page_view_head_seq;
 	bool fs_watch_page_view_reset;
 };
 
@@ -5123,7 +5171,7 @@ struct response_blob_get {
 };
 
 struct blob_stat {
-	uint32_t blob_stat_size;
+	uint64_t blob_stat_size;
 	bool blob_stat_present;
 };
 
