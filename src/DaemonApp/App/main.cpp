@@ -394,6 +394,20 @@ int main(int argc, char* argv[]) {
         return out.isEmpty() ? 2 : 0;
     }
 
+    // Headless channels self-check (Phase 6a: EIO-1/3/8): connect, refresh the transport adapters +
+    // instances and enumerate conversations, emitting "adapters=N instances=M" so the E2E harness
+    // can assert TransportAdapters + TransportInstances + ConvList crossed the socket. Gated on
+    // DAEMON_APP_CHANNELS_PROBE.
+    const QByteArray channelsProbe = qgetenv("DAEMON_APP_CHANNELS_PROBE");
+    if (!channelsProbe.isEmpty()) {
+        const QByteArray waitMs = qgetenv("DAEMON_APP_WAIT_READY");
+        const int timeoutMs = waitMs.toInt() > 0 ? waitMs.toInt() : 30000;
+        const QString out = application.runHeadlessChannels(timeoutMs);
+        std::fprintf(stdout, "DAEMON_APP_CHANNELS %s\n", out.toUtf8().constData());
+        std::fflush(stdout);
+        return out.isEmpty() ? 2 : 0;
+    }
+
     // Headless connectivity self-check for the cross-repo E2E harness: block until the daemon-mode
     // auto-connect Health round-trip resolves (or times out), emit a stable sentinel on stdout, and
     // exit deterministically. Keeps the harness from racing the async connect.

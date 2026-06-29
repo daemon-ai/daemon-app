@@ -7,6 +7,7 @@
 #include <QMap>
 #include <QString>
 #include <QStringList>
+#include <QVariantMap>
 
 namespace daemonapp::daemon {
 
@@ -122,6 +123,37 @@ struct DecodedRevision {
     QString author; // "operator" or an agent id
     QString reason;
     quint64 tsMs = 0;
+};
+
+// --- Channels / Events-IO read surface (story 04: EIO-1/3/8/9)
+// ------------------------------------ One self-describing transport adapter family
+// (TransportAdapters -> Adapters). Backs the "Add channel" picker; the account-setup schema is
+// omitted here (connect/EIO-2 is deferred).
+struct DecodedAdapterInfo {
+    QString family;           // "matrix" | "room" | "http" | "a2a"
+    QString displayName;      // "Matrix" | "Rooms (internal)"
+    QVariantMap capabilities; // rooms/directMessages/presence/roomEnumeration/fileTransfer/
+                              // interactiveAuth -> bool
+};
+
+// One configured transport instance/account + its live status (TransportInstances ->
+// TransportInstances). The Pidgin-style status dot binds to `connection`/`presence` (EIO-9).
+struct DecodedTransportInstance {
+    QString transport;                              // instance-qualified id (e.g. matrix/@bot:hs)
+    QString family;                                 // adapter family
+    QString displayName;                            // human label (e.g. @user:hs)
+    QString connection = QStringLiteral("offline"); // offline|connecting|connected|error
+    QString presence = QStringLiteral("unknown");   // unknown|offline|available|idle|away|busy
+    QString boundProfile;                           // empty == unbound
+};
+
+// One live conversation/room within a transport (ConvList -> Conversations; EIO-8).
+struct DecodedConversation {
+    QString transport;
+    QString id;
+    QString kind; // unset|dm|groupdm|channel|thread
+    QString title;
+    QString topic;
 };
 
 // The agent-event arms a turn produces (daemon-protocol AgentEvent). Carried inside a
@@ -410,7 +442,6 @@ struct DecodedNodeEvent {
         SessionAdvanced,
         SessionMetaChanged,
         RosterChanged,
-        FleetChanged,
         ApprovalPending,
         DownloadProgress,
         ResyncNeeded
@@ -418,7 +449,7 @@ struct DecodedNodeEvent {
     QString session;        // SessionAdvanced / SessionMetaChanged / ApprovalPending
     quint64 epoch = 0;      // SessionAdvanced
     quint64 headSeq = 0;    // SessionAdvanced
-    quint64 rev = 0;        // SessionMetaChanged / RosterChanged / FleetChanged
+    quint64 rev = 0;        // SessionMetaChanged / RosterChanged
     QString requestId;      // ApprovalPending
     quint64 downloadId = 0; // DownloadProgress
     quint32 pct = 0;        // DownloadProgress
@@ -476,6 +507,9 @@ enum class ApiResponseKind {
     Tree,
     Unit,
     UnitEvents,
+    Adapters,
+    TransportInstances,
+    Conversations,
     Profile,
     Distribution,
     Revisions,
@@ -698,6 +732,16 @@ public:
     // Decode a Unit response (Some/None). Sets *found=false on the null arm (unknown unit).
     static bool decodeUnit(const QByteArray& responseCbor, DecodedUnitNode* out, bool* found);
     static bool decodeFleetReport(const QByteArray& responseCbor, DecodedFleetReport* out);
+
+    // --- Channels / Events-IO read surface (story 04: EIO-1/3/8/9) ---------------------------
+    [[nodiscard]] static QByteArray encodeTransportAdaptersRequest();
+    [[nodiscard]] static QByteArray encodeTransportInstancesRequest();
+    [[nodiscard]] static QByteArray encodeConvListRequest(const QString& transport);
+    static bool decodeAdapters(const QByteArray& responseCbor, QList<DecodedAdapterInfo>* out);
+    static bool decodeTransportInstances(const QByteArray& responseCbor,
+                                         QList<DecodedTransportInstance>* out);
+    static bool decodeConversations(const QByteArray& responseCbor,
+                                    QList<DecodedConversation>* out);
 
     // --- Multiplexed socket envelope (wire L0; daemon-sync-protocol-spec.md §2) ---
     // The envelope is hand-coded (not zcbor-generated): it wraps the already-encoded request bytes

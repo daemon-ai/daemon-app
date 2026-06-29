@@ -61,6 +61,7 @@ namespace daemonapp::daemon {
 
 class ApprovalRepository;
 class FleetRepository;
+class TransportRepository;
 class CheckpointRepository;
 class CredentialRepository;
 class DaemonCacheStore;
@@ -114,7 +115,8 @@ struct AppServiceGraph {
     CredentialRepository* credentialRepository = nullptr;
     ApprovalRepository* approvalRepository = nullptr;
     CheckpointRepository* checkpointRepository = nullptr;
-    FleetRepository* fleetRepository = nullptr; // PRO-9/10; non-null only in Daemon mode
+    FleetRepository* fleetRepository = nullptr;         // PRO-9/10; non-null only in Daemon mode
+    TransportRepository* transportRepository = nullptr; // Channels (EIO-1/3/8/9); Daemon mode only
     // The node-wide event feed consumer (L3): owns the single EventsSince stream + routes
     // notifications. Non-null only in Daemon mode.
     SubscriptionManager* subscriptions = nullptr;

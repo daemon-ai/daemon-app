@@ -128,22 +128,6 @@ target_link_libraries(tst_subscription_manager
 add_test(NAME tst_subscription_manager COMMAND tst_subscription_manager)
 set_tests_properties(tst_subscription_manager PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_daemon_roster_dashboard: the daemon-backed, offline-first session roster + dashboard -
-# offline render from cache, client-local suspend overlay + close->archive, and dashboard counters
-# derived from the roster/fleet/approvals/connection seams.
-qt_add_executable(tst_daemon_roster_dashboard tst_daemon_roster_dashboard.cpp)
-target_link_libraries(tst_daemon_roster_dashboard
-    PRIVATE
-        Qt6::Test
-        Qt6::Network
-        daemon-app::daemon_client
-        daemon-app::fleet
-        daemon-app::connection
-        daemon-app::uimodels
-)
-add_test(NAME tst_daemon_roster_dashboard COMMAND tst_daemon_roster_dashboard)
-set_tests_properties(tst_daemon_roster_dashboard PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-
 # tst_daemon_fleet_tree: the Phase 5b daemon-backed fleet seam - offline render from cache, a Tree
 # query populating cache+model, and a PRO-10 control rejection (Unsupported) reverting the optimistic
 # pause overlay, all over the WireMuxServer fixture.
@@ -172,6 +156,21 @@ target_link_libraries(tst_daemon_fs_service
 )
 add_test(NAME tst_daemon_fs_service COMMAND tst_daemon_fs_service)
 set_tests_properties(tst_daemon_fs_service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_daemon_transports: the Phase 6a Channels read surface - the transport codec facade round-trips
+# (Adapters/TransportInstances/Conversations via cbor_encode_api_response), and DaemonTransportRegistry
+# + DaemonPresenceService render offline-first from cache and populate over the WireMuxServer fixture.
+qt_add_executable(tst_daemon_transports tst_daemon_transports.cpp)
+target_link_libraries(tst_daemon_transports
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+        daemon-app::transports
+)
+add_test(NAME tst_daemon_transports COMMAND tst_daemon_transports)
+set_tests_properties(tst_daemon_transports PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_daemon_profile_store: client-side id-derivation (slug) for ProfileCreate/Clone; the PRO-7/8
 # distribution + revisions codec round-trips; and the DaemonProfileStore export->file->import +

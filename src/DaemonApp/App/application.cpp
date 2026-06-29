@@ -383,6 +383,48 @@ QString Application::runHeadlessFleet(int timeoutMs) {
     return QStringLiteral("units=%1").arg(units);
 }
 
+QString Application::runHeadlessChannels(int timeoutMs) {
+    using daemonapp::daemon::TransportRepository;
+    driveFirstRunConnect();
+    if (!awaitConnectionReady(timeoutMs)) {
+        return {};
+    }
+    settle(600);
+    TransportRepository* repo = m_services.transportRepository;
+    if (repo == nullptr) {
+        return {};
+    }
+    int adapters = -1;
+    {
+        QEventLoop loop;
+        const auto c = connect(repo, &TransportRepository::adaptersRefreshed, this, [&] {
+            adapters = static_cast<int>(repo->adapters().size());
+            loop.quit();
+        });
+        QTimer::singleShot(qMax(2000, timeoutMs / 3), &loop, &QEventLoop::quit);
+        repo->refreshAdapters();
+        loop.exec();
+        disconnect(c);
+    }
+    int instances = -1;
+    {
+        QEventLoop loop;
+        const auto c = connect(repo, &TransportRepository::instancesRefreshed, this, [&] {
+            instances = static_cast<int>(repo->cachedInstances().size());
+            loop.quit();
+        });
+        QTimer::singleShot(qMax(2000, timeoutMs / 3), &loop, &QEventLoop::quit);
+        repo->refreshInstances();
+        loop.exec();
+        disconnect(c);
+    }
+    // EIO-8: exercise the ConvList crossing (a fresh daemon may have no rooms; the proxy records
+    // the frame either way).
+    repo->refreshConversations(QStringLiteral("probe"));
+    settle(300);
+    return QStringLiteral("adapters=%1 instances=%2").arg(adapters).arg(instances);
+}
+
 QString Application::runHeadlessFs(int timeoutMs) {
     driveFirstRunConnect();
     if (!awaitConnectionReady(timeoutMs)) {

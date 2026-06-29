@@ -88,6 +88,7 @@ ApplicationWindow {
         case "approvals": Nav.open("approvals"); break;
         case "routing": Nav.open("routing"); break;
         case "cron": Nav.open("cron"); break;
+        case "channels": Nav.open("channels"); break;
         case "files": root.toggleExplorer(); break;
         case "help": commandPalette.open(); break;
         case "title": if (root.activeSessionPane) root.activeSessionPane.renameActive(); break;

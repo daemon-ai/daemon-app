@@ -33,9 +33,21 @@ public:
     //   transport (QString), family (QString), displayName (QString), boundProfile (QString).
     [[nodiscard]] Q_INVOKABLE virtual QVariantList instances() const = 0;
 
+    // Live conversations/rooms for a transport (EIO-8). Each entry is a map:
+    //   transport, id, kind, title, topic. `conversations()` returns the last-known (cached) set;
+    //   `refreshConversations()` triggers a live enumeration (ConvList) and fires
+    //   conversationsChanged when it lands. Default no-ops so the mock + non-daemon seams need not
+    //   implement them.
+    [[nodiscard]] Q_INVOKABLE virtual QVariantList conversations(const QString& transport) const {
+        Q_UNUSED(transport)
+        return {};
+    }
+    Q_INVOKABLE virtual void refreshConversations(const QString& transport) { Q_UNUSED(transport) }
+
 signals:
     void adaptersChanged();
     void instancesChanged();
+    void conversationsChanged(const QString& transport);
 };
 
 } // namespace transports

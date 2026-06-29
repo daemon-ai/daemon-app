@@ -13,7 +13,6 @@ class NodeApiClient;
 class SessionRepository;
 class ApprovalRepository;
 class ModelRepository;
-class FleetRepository;
 class DaemonCacheStore;
 struct DecodedNodeEvent;
 
@@ -38,7 +37,7 @@ class SubscriptionManager : public QObject {
 public:
     SubscriptionManager(NodeApiClient* nodeApi, SessionRepository* sessions,
                         ApprovalRepository* approvals, ModelRepository* models,
-                        FleetRepository* fleet, DaemonCacheStore* cache, QObject* parent = nullptr);
+                        DaemonCacheStore* cache, QObject* parent = nullptr);
 
     // Open (or re-open) the single node-wide feed from the tracked cursor. Idempotent; call on
     // connect-ready. A re-open after a drop resumes from the last applied cursor (the retained ring
@@ -67,13 +66,11 @@ private:
     void onStreamEnded(quint64 id, bool error, const QString& message);
     void applyEvent(const DecodedNodeEvent& event);
     void scheduleRosterRefetch();
-    void scheduleFleetRefetch();
 
     NodeApiClient* m_nodeApi = nullptr;
     SessionRepository* m_sessions = nullptr;
     ApprovalRepository* m_approvals = nullptr;
     ModelRepository* m_models = nullptr;
-    FleetRepository* m_fleet = nullptr;
     DaemonCacheStore* m_cache = nullptr;
 
     quint64 m_feedStreamId = 0; // the open EventsSince stream id (0 = none)
@@ -82,11 +79,8 @@ private:
     QHash<QString, QPointer<QObject>> m_focus; // sessionId -> focused turn engine
     QTimer m_rosterDebounce;                   // coalesce roster refetches under event bursts
     bool m_rosterDirty = false;
-    QTimer m_fleetDebounce; // coalesce fleet (Tree) refetches under spawn bursts
-    bool m_fleetDirty = false;
 
     static constexpr int kRosterDebounceMs = 300;
-    static constexpr int kFleetDebounceMs = 300;
 };
 
 } // namespace daemonapp::daemon

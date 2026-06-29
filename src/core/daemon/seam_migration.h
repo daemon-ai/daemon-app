@@ -58,12 +58,10 @@ inline constexpr SeamMigrationTarget kTargets[] = {
      "control is meaningful only on orchestrator units - engine leaves return Unsupported).",
      SeamMigrationStatus::DaemonAligned},
     {"ISessionRoster + IDashboard + IApprovalsInbox", "SessionsQuery / Tree / ApprovalsPending",
-     "LANDED: DaemonApprovalsInbox (PRO-11); DaemonSessionRoster projects the offline-first cache "
-     "+ "
-     "DaemonDashboard derives counters from the live roster/fleet/approvals (+ healthy from the "
-     "connection). Session suspend/resume/close stay client-local (no lifecycle wire op); tokens/"
-     "rewindable/tokensToday + the live activity feed are degraded follow-ups.",
-     SeamMigrationStatus::DaemonAligned},
+     "IApprovalsInbox LANDED (DaemonApprovalsInbox); roster + dashboard still MockOnly (the "
+     "offline-first DaemonSessionRoster/DaemonDashboard are a follow-up over the live "
+     "roster/fleet/approvals).",
+     SeamMigrationStatus::MockOnly},
     {"IDaemonConfig", "ProfileApi / SessionOverlay / node capabilities / ISettingsStore",
      kConfigMigration, SeamMigrationStatus::MockOnly},
     {"IFsService", "FsRoots / FsList / FsRead / FsWrite / FsWatchPoll",
@@ -71,6 +69,14 @@ inline constexpr SeamMigrationTarget kTargets[] = {
      "NodeApiCodec facade, with DaemonCacheStore (daemon_fs_entries) as the offline fallback and a "
      "FsWatchPoll cursor loop (reset -> re-list). Wired in daemon mode; mock keeps "
      "LocalDiskFsService.",
+     SeamMigrationStatus::DaemonAligned},
+    {"ITransportRegistry + IPresenceService", "TransportAdapters / TransportInstances / ConvList",
+     "LANDED (Phase 6a, story 04): DaemonTransportRegistry projects the node's TransportAdapters "
+     "(the 'Add channel' picker) + the offline-first daemon_transport_instances cache; "
+     "DaemonPresenceService derives the EIO-9 status dots from the same instances (connection is "
+     "coarse + poll/refresh today - real live presence is a deferred backend follow-up). ConvList "
+     "(EIO-8) enumerates live rooms per account. Read-only: connect (EIO-2)/disconnect (EIO-7) "
+     "deferred.",
      SeamMigrationStatus::DaemonAligned},
 };
 

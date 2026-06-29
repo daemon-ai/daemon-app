@@ -540,6 +540,10 @@ Rectangle {
             onTriggered: Nav.open("approvals")
         }
         Kit.MenuItem {
+            text: qsTr("Channels")
+            onTriggered: Nav.open("channels")
+        }
+        Kit.MenuItem {
             text: qsTr("Routing")
             onTriggered: Nav.open("routing")
         }

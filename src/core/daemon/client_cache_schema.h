@@ -4,6 +4,8 @@
 
 namespace daemonapp::daemon::cache {
 
+// v5 (Phase 6a): adds daemon_transport_instances + daemon_conversations (offline-first Channels
+// read surface - configured accounts + their live conversations render with no connection).
 // v4 (Phase 5b): adds daemon_fleet_units (offline-first fleet/subagent tree). The cache is
 // non-authoritative, so the bump just drops + rebuilds (the daemon re-baselines it).
 // v3 (Phase 4 closeout): retired the dead daemon_session_log + transient daemon_approvals tables
@@ -11,7 +13,7 @@ namespace daemonapp::daemon::cache {
 // became live (offline-first read).
 // v2 (L3): added daemon_transcript_blocks (render-from-cache transcript) + per-session resync
 // cursors.
-inline constexpr int kSchemaVersion = 4;
+inline constexpr int kSchemaVersion = 5;
 
 inline constexpr const char* kCreateMetaSql = R"sql(
 CREATE TABLE IF NOT EXISTS daemon_cache_meta (
@@ -82,6 +84,33 @@ CREATE TABLE IF NOT EXISTS daemon_fleet_units (
   session_id TEXT,
   work TEXT,
   updated_at_ms INTEGER NOT NULL
+);
+)sql";
+
+// v5: the offline-first Channels read surface. One row per configured transport instance (account)
+// with its last-known connection/presence, and one row per enumerated conversation, so the channels
+// surface renders accounts + rooms with no daemon connection (the daemon re-baselines on connect).
+inline constexpr const char* kCreateTransportInstancesSql = R"sql(
+CREATE TABLE IF NOT EXISTS daemon_transport_instances (
+  transport TEXT PRIMARY KEY,
+  family TEXT NOT NULL,
+  display_name TEXT,
+  connection TEXT NOT NULL DEFAULT 'offline',
+  presence TEXT NOT NULL DEFAULT 'unknown',
+  bound_profile TEXT,
+  updated_at_ms INTEGER NOT NULL
+);
+)sql";
+
+inline constexpr const char* kCreateConversationsSql = R"sql(
+CREATE TABLE IF NOT EXISTS daemon_conversations (
+  transport TEXT NOT NULL,
+  conv_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  title TEXT,
+  topic TEXT,
+  updated_at_ms INTEGER NOT NULL,
+  PRIMARY KEY (transport, conv_id)
 );
 )sql";
 

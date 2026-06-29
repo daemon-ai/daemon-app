@@ -103,6 +103,7 @@ Rectangle {
             "approvals": [TabModel.Approvals, qsTr("Approvals")],
             "routing":   [TabModel.Routing,   qsTr("Routing")],
             "cron":      [TabModel.Cron,      qsTr("Scheduled jobs")],
+            "channels":  [TabModel.Channels,  qsTr("Channels")],
         };
         const entry = map[pageId];
         if (!entry)
@@ -266,6 +267,7 @@ Rectangle {
                     case TabModel.Approvals:  return approvalsComp;
                     case TabModel.Routing:    return routingComp;
                     case TabModel.Cron:       return cronComp;
+                    case TabModel.Channels:   return channelsComp;
                     case TabModel.Memory:     return memoryComp;
                     case TabModel.Profile:    return agentProfileComp;
                     case TabModel.File:       return fileComp;
@@ -384,6 +386,7 @@ Rectangle {
     Component { id: approvalsComp; ApprovalsPage {} }
     Component { id: routingComp;   RoutingPage {} }
     Component { id: cronComp;      CronPage {} }
+    Component { id: channelsComp;  ChannelsPage {} }
     Component { id: memoryComp;    MemoryPage {} }
     Component { id: agentProfileComp; AgentProfilePage {} }
     Component { id: fileComp;      FilePage {} }

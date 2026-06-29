@@ -268,8 +268,6 @@ QString sessionStateName(int choice) {
     switch (choice) {
     case session_state_r::session_state_Active_tstr_c:
         return QStringLiteral("Active");
-    case session_state_r::session_state_suspended_m_c:
-        return QStringLiteral("Suspended");
     case session_state_r::session_state_Ready_tstr_c:
         return QStringLiteral("Ready");
     case session_state_r::session_state_Completed_tstr_c:
@@ -1829,6 +1827,12 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         return ApiResponseKind::Unit;
     case api_response_r::api_response_response_unit_events_m_c:
         return ApiResponseKind::UnitEvents;
+    case api_response_r::api_response_response_adapters_m_c:
+        return ApiResponseKind::Adapters;
+    case api_response_r::api_response_response_transport_instances_m_c:
+        return ApiResponseKind::TransportInstances;
+    case api_response_r::api_response_response_conversations_m_c:
+        return ApiResponseKind::Conversations;
     case api_response_r::api_response_response_ok_m_c:
         return ApiResponseKind::Ok;
     case api_response_r::api_response_response_credentials_m_c:
@@ -2112,10 +2116,6 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
         case node_event_r::node_event_roster_changed_m_c:
             decoded.kind = DecodedNodeEvent::Kind::RosterChanged;
             decoded.rev = ev.node_event_roster_changed_m.RosterChanged_rev;
-            break;
-        case node_event_r::node_event_fleet_changed_m_c:
-            decoded.kind = DecodedNodeEvent::Kind::FleetChanged;
-            decoded.rev = ev.node_event_fleet_changed_m.FleetChanged_rev;
             break;
         case node_event_r::node_event_approval_pending_m_c: {
             const node_event_approval_pending& m = ev.node_event_approval_pending_m;
@@ -3151,6 +3151,189 @@ bool NodeApiCodec::decodeFleetReport(const QByteArray& responseCbor, DecodedFlee
     out->children.clear();
     for (size_t i = 0; i < fr.fleet_report_children_unit_id_m_count; ++i) {
         out->children << fromZcbor(fr.fleet_report_children_unit_id_m[i]);
+    }
+    return true;
+}
+
+// --- Channels / Events-IO read surface (story 04: EIO-1/3/8/9) -----------------------------------
+
+namespace {
+
+QString connectionStateName(const connection_state_r& c) {
+    switch (c.connection_state_choice) {
+    case connection_state_r::connection_state_Connecting_tstr_c:
+        return QStringLiteral("connecting");
+    case connection_state_r::connection_state_Connected_tstr_c:
+        return QStringLiteral("connected");
+    case connection_state_r::connection_state_Error_tstr_c:
+        return QStringLiteral("error");
+    case connection_state_r::connection_state_Offline_tstr_c:
+    default:
+        return QStringLiteral("offline");
+    }
+}
+
+QString presenceStateName(const presence_state_r& p) {
+    switch (p.presence_state_choice) {
+    case presence_state_r::presence_state_Offline_tstr_c:
+        return QStringLiteral("offline");
+    case presence_state_r::presence_state_Available_tstr_c:
+        return QStringLiteral("available");
+    case presence_state_r::presence_state_Idle_tstr_c:
+        return QStringLiteral("idle");
+    case presence_state_r::presence_state_Away_tstr_c:
+        return QStringLiteral("away");
+    case presence_state_r::presence_state_Busy_tstr_c:
+        return QStringLiteral("busy");
+    case presence_state_r::presence_state_Unknown_tstr_c:
+    default:
+        return QStringLiteral("unknown");
+    }
+}
+
+QString conversationTypeName(const conversation_type_r& t) {
+    switch (t.conversation_type_choice) {
+    case conversation_type_r::conversation_type_Dm_tstr_c:
+        return QStringLiteral("dm");
+    case conversation_type_r::conversation_type_GroupDm_tstr_c:
+        return QStringLiteral("groupdm");
+    case conversation_type_r::conversation_type_Channel_tstr_c:
+        return QStringLiteral("channel");
+    case conversation_type_r::conversation_type_Thread_tstr_c:
+        return QStringLiteral("thread");
+    case conversation_type_r::conversation_type_Unset_tstr_c:
+    default:
+        return QStringLiteral("unset");
+    }
+}
+
+} // namespace
+
+QByteArray NodeApiCodec::encodeTransportAdaptersRequest() {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_transport_adapters_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeTransportInstancesRequest() {
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_transport_instances_m_c;
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeConvListRequest(const QString& transport) {
+    const QByteArray t = transport.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_conv_list_m_c;
+    request.api_request_request_conv_list_m.ConvList_transport.value =
+        reinterpret_cast<const uint8_t*>(t.constData());
+    request.api_request_request_conv_list_m.ConvList_transport.len = static_cast<size_t>(t.size());
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+bool NodeApiCodec::decodeAdapters(const QByteArray& responseCbor, QList<DecodedAdapterInfo>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_adapters_m_c) {
+        return false;
+    }
+    const response_adapters& ra = response->api_response_response_adapters_m;
+    out->clear();
+    for (size_t i = 0; i < ra.response_adapters_Adapters_adapter_info_m_count; ++i) {
+        const adapter_info& a = ra.response_adapters_Adapters_adapter_info_m[i];
+        DecodedAdapterInfo d;
+        d.family = fromZcbor(a.adapter_info_family);
+        d.displayName = fromZcbor(a.adapter_info_display_name);
+        const adapter_capabilities& c = a.adapter_info_capabilities;
+        d.capabilities[QStringLiteral("rooms")] = c.adapter_capabilities_rooms;
+        d.capabilities[QStringLiteral("directMessages")] = c.adapter_capabilities_direct_messages;
+        d.capabilities[QStringLiteral("presence")] = c.adapter_capabilities_presence;
+        d.capabilities[QStringLiteral("roomEnumeration")] = c.adapter_capabilities_room_enumeration;
+        d.capabilities[QStringLiteral("fileTransfer")] = c.adapter_capabilities_file_transfer;
+        d.capabilities[QStringLiteral("interactiveAuth")] = c.adapter_capabilities_interactive_auth;
+        out->append(d);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeTransportInstances(const QByteArray& responseCbor,
+                                            QList<DecodedTransportInstance>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice !=
+            api_response_r::api_response_response_transport_instances_m_c) {
+        return false;
+    }
+    const response_transport_instances& ri = response->api_response_response_transport_instances_m;
+    out->clear();
+    for (size_t i = 0;
+         i < ri.response_transport_instances_TransportInstances_transport_instance_info_m_count;
+         ++i) {
+        const transport_instance_info& t =
+            ri.response_transport_instances_TransportInstances_transport_instance_info_m[i];
+        DecodedTransportInstance d;
+        d.transport = fromZcbor(t.transport_instance_info_transport);
+        d.family = fromZcbor(t.transport_instance_info_family);
+        d.displayName = fromZcbor(t.transport_instance_info_display_name);
+        if (t.transport_instance_info_connection_present) {
+            d.connection = connectionStateName(
+                t.transport_instance_info_connection.transport_instance_info_connection);
+        }
+        if (t.transport_instance_info_presence_present) {
+            d.presence = presenceStateName(
+                t.transport_instance_info_presence.transport_instance_info_presence);
+        }
+        if (t.transport_instance_info_bound_profile_present &&
+            t.transport_instance_info_bound_profile.transport_instance_info_bound_profile_choice ==
+                transport_instance_info_bound_profile_r::
+                    transport_instance_info_bound_profile_profile_ref_m_c) {
+            d.boundProfile = fromZcbor(t.transport_instance_info_bound_profile
+                                           .transport_instance_info_bound_profile_profile_ref_m);
+        }
+        out->append(d);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeConversations(const QByteArray& responseCbor,
+                                       QList<DecodedConversation>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    auto response = std::make_unique<api_response_r>();
+    if (!decodeResponse(responseCbor, response.get()) ||
+        response->api_response_choice != api_response_r::api_response_response_conversations_m_c) {
+        return false;
+    }
+    const response_conversations& rc = response->api_response_response_conversations_m;
+    out->clear();
+    for (size_t i = 0; i < rc.response_conversations_Conversations_conversation_info_m_count; ++i) {
+        const conversation_info& cv =
+            rc.response_conversations_Conversations_conversation_info_m[i];
+        DecodedConversation d;
+        d.transport = fromZcbor(cv.conversation_info_transport);
+        d.id = fromZcbor(cv.conversation_info_id);
+        d.kind = conversationTypeName(cv.conversation_info_kind);
+        if (cv.conversation_info_title_present &&
+            cv.conversation_info_title.conversation_info_title_choice ==
+                conversation_info_title_r::conversation_info_title_tstr_c) {
+            d.title = fromZcbor(cv.conversation_info_title.conversation_info_title_tstr);
+        }
+        if (cv.conversation_info_topic_present &&
+            cv.conversation_info_topic.conversation_info_topic_choice ==
+                conversation_info_topic_r::conversation_info_topic_tstr_c) {
+            d.topic = fromZcbor(cv.conversation_info_topic.conversation_info_topic_tstr);
+        }
+        out->append(d);
     }
     return true;
 }

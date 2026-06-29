@@ -159,6 +159,12 @@ public:
     // failure.
     [[nodiscard]] QString runHeadlessFleet(int timeoutMs);
 
+    // Headless E2E hook (Phase 6a Channels): connect, refresh the transport adapters + instances
+    // and enumerate conversations, so TransportAdapters/TransportInstances/ConvList cross the
+    // socket. Returns "adapters=N instances=M" (counts after the queries). Empty on connect
+    // failure.
+    [[nodiscard]] QString runHeadlessChannels(int timeoutMs);
+
     // Headless E2E hook (CHA-4 / CHA-5 HITL): connect, drive one real turn that parks on a host
     // gate (the scripted provider's tool call), auto-resolve the gate per `decision`
     // ("approve"|"deny"|"choice"|"input:<text>"), and return the streamed assistant text. Proves

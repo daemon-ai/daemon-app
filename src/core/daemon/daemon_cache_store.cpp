@@ -78,7 +78,8 @@ bool DaemonCacheStore::createDataTables() {
     // drops them so a stale v2 DB is cleaned on the version bump.
     return execSql(cache::kCreateSessionsSql) && execSql(cache::kCreateSyncCursorsSql) &&
            execSql(cache::kCreateProfilesSql) && execSql(cache::kCreateFsEntriesSql) &&
-           execSql(cache::kCreateTranscriptBlocksSql) && execSql(cache::kCreateFleetUnitsSql);
+           execSql(cache::kCreateTranscriptBlocksSql) && execSql(cache::kCreateFleetUnitsSql) &&
+           execSql(cache::kCreateTransportInstancesSql) && execSql(cache::kCreateConversationsSql);
 }
 
 bool DaemonCacheStore::dropDataTables() {
@@ -89,7 +90,9 @@ bool DaemonCacheStore::dropDataTables() {
            execSql("DROP TABLE IF EXISTS daemon_approvals") &&
            execSql("DROP TABLE IF EXISTS daemon_fs_entries") &&
            execSql("DROP TABLE IF EXISTS daemon_transcript_blocks") &&
-           execSql("DROP TABLE IF EXISTS daemon_fleet_units");
+           execSql("DROP TABLE IF EXISTS daemon_fleet_units") &&
+           execSql("DROP TABLE IF EXISTS daemon_transport_instances") &&
+           execSql("DROP TABLE IF EXISTS daemon_conversations");
 }
 
 int DaemonCacheStore::schemaVersion() const {
@@ -384,6 +387,119 @@ bool DaemonCacheStore::deleteFleetUnit(const QString& unitId) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral("DELETE FROM daemon_fleet_units WHERE unit_id=?"));
     q.addBindValue(unitId);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+bool DaemonCacheStore::upsertTransportInstance(const CachedTransportInstanceRow& row) {
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral(
+        "INSERT INTO daemon_transport_instances(transport,family,display_name,connection,presence,"
+        "bound_profile,updated_at_ms) VALUES(?,?,?,?,?,?,?) "
+        "ON CONFLICT(transport) DO UPDATE SET family=excluded.family,"
+        "display_name=excluded.display_name,connection=excluded.connection,"
+        "presence=excluded.presence,bound_profile=excluded.bound_profile,"
+        "updated_at_ms=excluded.updated_at_ms"));
+    q.addBindValue(row.transport);
+    q.addBindValue(row.family);
+    q.addBindValue(row.displayName);
+    q.addBindValue(row.connection);
+    q.addBindValue(row.presence);
+    q.addBindValue(row.boundProfile);
+    q.addBindValue(row.updatedAtMs);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+QList<CachedTransportInstanceRow> DaemonCacheStore::transportInstances() const {
+    QList<CachedTransportInstanceRow> rows;
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    if (!q.exec(QStringLiteral(
+            "SELECT transport,family,display_name,connection,presence,bound_profile,updated_at_ms "
+            "FROM daemon_transport_instances ORDER BY family ASC, display_name ASC"))) {
+        setLastError(q.lastError().text());
+        return rows;
+    }
+    while (q.next()) {
+        CachedTransportInstanceRow row;
+        row.transport = q.value(0).toString();
+        row.family = q.value(1).toString();
+        row.displayName = q.value(2).toString();
+        row.connection = q.value(3).toString();
+        row.presence = q.value(4).toString();
+        row.boundProfile = q.value(5).toString();
+        row.updatedAtMs = q.value(6).toLongLong();
+        rows.append(row);
+    }
+    return rows;
+}
+
+bool DaemonCacheStore::deleteTransportInstance(const QString& transport) {
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral("DELETE FROM daemon_transport_instances WHERE transport=?"));
+    q.addBindValue(transport);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+bool DaemonCacheStore::upsertConversation(const CachedConversationRow& row) {
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral(
+        "INSERT INTO daemon_conversations(transport,conv_id,kind,title,topic,updated_at_ms) "
+        "VALUES(?,?,?,?,?,?) "
+        "ON CONFLICT(transport,conv_id) DO UPDATE SET kind=excluded.kind,title=excluded.title,"
+        "topic=excluded.topic,updated_at_ms=excluded.updated_at_ms"));
+    q.addBindValue(row.transport);
+    q.addBindValue(row.convId);
+    q.addBindValue(row.kind);
+    q.addBindValue(row.title);
+    q.addBindValue(row.topic);
+    q.addBindValue(row.updatedAtMs);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+QList<CachedConversationRow> DaemonCacheStore::conversations(const QString& transport) const {
+    QList<CachedConversationRow> rows;
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral(
+        "SELECT transport,conv_id,kind,title,topic,updated_at_ms FROM daemon_conversations "
+        "WHERE transport=? ORDER BY title ASC, conv_id ASC"));
+    q.addBindValue(transport);
+    if (!q.exec()) {
+        setLastError(q.lastError().text());
+        return rows;
+    }
+    while (q.next()) {
+        CachedConversationRow row;
+        row.transport = q.value(0).toString();
+        row.convId = q.value(1).toString();
+        row.kind = q.value(2).toString();
+        row.title = q.value(3).toString();
+        row.topic = q.value(4).toString();
+        row.updatedAtMs = q.value(5).toLongLong();
+        rows.append(row);
+    }
+    return rows;
+}
+
+bool DaemonCacheStore::deleteConversation(const QString& transport, const QString& convId) {
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QStringLiteral("DELETE FROM daemon_conversations WHERE transport=? AND conv_id=?"));
+    q.addBindValue(transport);
+    q.addBindValue(convId);
     if (!q.exec()) {
         setLastError(q.lastError().text());
         return false;

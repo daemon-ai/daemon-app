@@ -986,4 +986,131 @@ void FleetRepository::handleFailure(const QString& correlationId, const QString&
     }
 }
 
+TransportRepository::TransportRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                         QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &TransportRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &TransportRepository::handleFailure);
+    }
+}
+
+QList<CachedTransportInstanceRow> TransportRepository::cachedInstances() const {
+    return cache() != nullptr ? cache()->transportInstances() : QList<CachedTransportInstanceRow>{};
+}
+
+QList<CachedConversationRow>
+TransportRepository::cachedConversations(const QString& transport) const {
+    return cache() != nullptr ? cache()->conversations(transport) : QList<CachedConversationRow>{};
+}
+
+void TransportRepository::refreshAdapters() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeTransportAdaptersRequest(),
+                          QLatin1String(kAdaptersCorrelation));
+}
+
+void TransportRepository::refreshInstances() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeTransportInstancesRequest(),
+                          QLatin1String(kInstancesCorrelation));
+}
+
+void TransportRepository::refreshConversations(const QString& transport) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeConvListRequest(transport),
+                          QLatin1String(kConvPrefix) + transport);
+}
+
+void TransportRepository::handleResponse(const QString& correlationId,
+                                         const QByteArray& responseCbor) {
+    if (correlationId == QLatin1String(kAdaptersCorrelation)) {
+        if (!NodeApiCodec::decodeAdapters(responseCbor, &m_adapters)) {
+            emit operationFailed(QStringLiteral("Failed to decode Adapters response"));
+            return;
+        }
+        emit adaptersRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kInstancesCorrelation)) {
+        QList<DecodedTransportInstance> live;
+        if (!NodeApiCodec::decodeTransportInstances(responseCbor, &live)) {
+            emit operationFailed(QStringLiteral("Failed to decode TransportInstances response"));
+            return;
+        }
+        if (cache() != nullptr) {
+            const qint64 now = QDateTime::currentMSecsSinceEpoch();
+            QSet<QString> keep;
+            for (const DecodedTransportInstance& i : live) {
+                CachedTransportInstanceRow row;
+                row.transport = i.transport;
+                row.family = i.family;
+                row.displayName = i.displayName;
+                row.connection = i.connection;
+                row.presence = i.presence;
+                row.boundProfile = i.boundProfile;
+                row.updatedAtMs = now;
+                cache()->upsertTransportInstance(row);
+                keep.insert(i.transport);
+            }
+            // Prune accounts the live list no longer reports (disconnected/removed).
+            for (const CachedTransportInstanceRow& existing : cache()->transportInstances()) {
+                if (!keep.contains(existing.transport)) {
+                    cache()->deleteTransportInstance(existing.transport);
+                }
+            }
+        }
+        emit instancesRefreshed();
+        return;
+    }
+    if (correlationId.startsWith(QLatin1String(kConvPrefix))) {
+        const QString transport = correlationId.mid(int(qstrlen(kConvPrefix)));
+        QList<DecodedConversation> live;
+        if (!NodeApiCodec::decodeConversations(responseCbor, &live)) {
+            emit operationFailed(QStringLiteral("Failed to decode Conversations response"));
+            return;
+        }
+        if (cache() != nullptr) {
+            const qint64 now = QDateTime::currentMSecsSinceEpoch();
+            QSet<QString> keep;
+            for (const DecodedConversation& c : live) {
+                CachedConversationRow row;
+                row.transport = transport; // key by the requested transport for consistent pruning
+                row.convId = c.id;
+                row.kind = c.kind;
+                row.title = c.title;
+                row.topic = c.topic;
+                row.updatedAtMs = now;
+                cache()->upsertConversation(row);
+                keep.insert(c.id);
+            }
+            for (const CachedConversationRow& existing : cache()->conversations(transport)) {
+                if (!keep.contains(existing.convId)) {
+                    cache()->deleteConversation(transport, existing.convId);
+                }
+            }
+        }
+        emit conversationsRefreshed(transport);
+        return;
+    }
+}
+
+void TransportRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kAdaptersCorrelation) ||
+        correlationId == QLatin1String(kInstancesCorrelation) ||
+        correlationId.startsWith(QLatin1String(kConvPrefix))) {
+        emit operationFailed(message);
+    }
+}
+
 } // namespace daemonapp::daemon

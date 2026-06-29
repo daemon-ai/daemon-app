@@ -43,6 +43,7 @@ qt_add_qml_module(da_pages
         CuratorRow.qml
         DashboardPage.qml
         FleetPage.qml
+        ChannelsPage.qml
         SessionsPage.qml
         ApprovalsPage.qml
         RoutingPage.qml

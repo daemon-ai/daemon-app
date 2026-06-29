@@ -49,6 +49,9 @@ public:
         // Profile (ProfileSpec) editor. Opening the same agent re-activates its tab.
         Memory = 12,
         Profile = 13,
+        // Channels / Events-IO account manager (story 04): transport adapters,
+        // configured accounts with status dots, and live per-account rooms.
+        Channels = 14,
     };
     Q_ENUM(Kind)
 

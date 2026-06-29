@@ -214,16 +214,6 @@ inline QByteArray neRosterChanged(quint64 rev) {
     return b;
 }
 
-inline QByteArray neFleetChanged(quint64 rev) {
-    QByteArray b;
-    b.append(static_cast<char>(0xA1));
-    cborText(b, "FleetChanged");
-    b.append(static_cast<char>(0xA1));
-    cborText(b, "rev");
-    cborUint(b, rev);
-    return b;
-}
-
 inline QByteArray neSessionMetaChanged(const char* session, quint64 rev) {
     QByteArray b;
     b.append(static_cast<char>(0xA1));

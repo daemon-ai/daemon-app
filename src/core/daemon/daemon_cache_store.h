@@ -66,6 +66,27 @@ struct CachedFleetUnitRow {
     qint64 updatedAtMs = 0;
 };
 
+// One offline-first transport instance/account row (daemon_transport_instances; Phase 6a).
+struct CachedTransportInstanceRow {
+    QString transport; // pk (instance-qualified id)
+    QString family;
+    QString displayName;
+    QString connection = QStringLiteral("offline");
+    QString presence = QStringLiteral("unknown");
+    QString boundProfile;
+    qint64 updatedAtMs = 0;
+};
+
+// One offline-first conversation row (daemon_conversations; Phase 6a).
+struct CachedConversationRow {
+    QString transport;
+    QString convId;
+    QString kind;
+    QString title;
+    QString topic;
+    qint64 updatedAtMs = 0;
+};
+
 // One coalesced durable transcript block (schema v2; render-from-cache). Mirrors
 // DecodedTranscriptBlock (journal) / the live coalesced shape, keyed by (sessionId, seq).
 struct CachedTranscriptBlockRow {
@@ -119,6 +140,15 @@ public:
     bool upsertFleetUnit(const CachedFleetUnitRow& row);
     [[nodiscard]] QList<CachedFleetUnitRow> fleetUnits() const;
     bool deleteFleetUnit(const QString& unitId);
+
+    // Offline-first Channels read surface (Phase 6a). Instances are accounts (ORDER BY family,
+    // display_name); conversations are scoped per transport.
+    bool upsertTransportInstance(const CachedTransportInstanceRow& row);
+    [[nodiscard]] QList<CachedTransportInstanceRow> transportInstances() const;
+    bool deleteTransportInstance(const QString& transport);
+    bool upsertConversation(const CachedConversationRow& row);
+    [[nodiscard]] QList<CachedConversationRow> conversations(const QString& transport) const;
+    bool deleteConversation(const QString& transport, const QString& convId);
 
     // Durable transcript blocks (schema v2 render-from-cache). upsert is idempotent per (session,
     // seq); transcriptBlocks reads in seq order past `afterSeq`; clearTranscript wipes a session's

@@ -362,6 +362,41 @@ private:
     static constexpr auto kControlCorrelation = "repo/unit-control";
 };
 
+// Channels / Events-IO read surface (Phase 6a, story 04). Projects the node's transport adapter
+// registry (TransportAdapters), configured accounts + live status (TransportInstances; EIO-9), and
+// live per-account conversations (ConvList; EIO-8). Instances + conversations are cached for the
+// offline-first read; adapters are connect-only (the "Add channel" picker needs a live daemon).
+class TransportRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    TransportRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    [[nodiscard]] QList<DecodedAdapterInfo> adapters() const { return m_adapters; }
+    [[nodiscard]] QList<CachedTransportInstanceRow> cachedInstances() const;
+    [[nodiscard]] QList<CachedConversationRow> cachedConversations(const QString& transport) const;
+
+    void refreshAdapters();
+    void refreshInstances();
+    void refreshConversations(const QString& transport);
+
+signals:
+    void adaptersRefreshed();
+    void instancesRefreshed();
+    void conversationsRefreshed(const QString& transport);
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    QList<DecodedAdapterInfo> m_adapters; // in-memory (connect-only); not cached
+
+    static constexpr auto kAdaptersCorrelation = "repo/transport-adapters";
+    static constexpr auto kInstancesCorrelation = "repo/transport-instances";
+    static constexpr auto kConvPrefix = "repo/conv-list/";
+};
+
 // Not part of the first daemon slice: kept as a cache/NodeApi-aware stub until checkpoint
 // timelines are modeled in the daemon-api codec subset.
 class CheckpointRepository : public RepositoryBase {

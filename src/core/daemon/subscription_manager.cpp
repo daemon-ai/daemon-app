@@ -12,24 +12,15 @@ namespace daemonapp::daemon {
 
 SubscriptionManager::SubscriptionManager(NodeApiClient* nodeApi, SessionRepository* sessions,
                                          ApprovalRepository* approvals, ModelRepository* models,
-                                         FleetRepository* fleet, DaemonCacheStore* cache,
-                                         QObject* parent)
+                                         DaemonCacheStore* cache, QObject* parent)
     : QObject(parent), m_nodeApi(nodeApi), m_sessions(sessions), m_approvals(approvals),
-      m_models(models), m_fleet(fleet), m_cache(cache) {
+      m_models(models), m_cache(cache) {
     m_rosterDebounce.setSingleShot(true);
     m_rosterDebounce.setInterval(kRosterDebounceMs);
     connect(&m_rosterDebounce, &QTimer::timeout, this, [this] {
         if (m_rosterDirty && m_sessions != nullptr) {
             m_rosterDirty = false;
             m_sessions->refreshSessions();
-        }
-    });
-    m_fleetDebounce.setSingleShot(true);
-    m_fleetDebounce.setInterval(kFleetDebounceMs);
-    connect(&m_fleetDebounce, &QTimer::timeout, this, [this] {
-        if (m_fleetDirty && m_fleet != nullptr) {
-            m_fleetDirty = false;
-            m_fleet->refreshTree();
         }
     });
     if (m_nodeApi != nullptr) {
@@ -115,11 +106,6 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
         // Debounced so a burst of meta changes is one refetch, not N.
         scheduleRosterRefetch();
         break;
-    case DecodedNodeEvent::Kind::FleetChanged:
-        // The subagent tree changed (spawn/state/finish); refetch Tree so an open FleetPage updates
-        // live. Debounced so a spawn burst is one refetch.
-        scheduleFleetRefetch();
-        break;
     case DecodedNodeEvent::Kind::ApprovalPending:
         // Badge the inbox without a connect-ready storm; the repository fetches the detail.
         if (m_approvals != nullptr) {
@@ -152,9 +138,6 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
         if (m_approvals != nullptr) {
             m_approvals->refreshPending();
         }
-        if (m_fleet != nullptr) {
-            m_fleet->refreshTree(); // re-baseline the fleet too after a feed gap
-        }
         emit resyncNeeded();
         break;
     case DecodedNodeEvent::Kind::Unknown:
@@ -166,13 +149,6 @@ void SubscriptionManager::scheduleRosterRefetch() {
     m_rosterDirty = true;
     if (!m_rosterDebounce.isActive()) {
         m_rosterDebounce.start();
-    }
-}
-
-void SubscriptionManager::scheduleFleetRefetch() {
-    m_fleetDirty = true;
-    if (!m_fleetDebounce.isActive()) {
-        m_fleetDebounce.start();
     }
 }
 
