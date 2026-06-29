@@ -31,7 +31,12 @@ add_library(da_daemon_client STATIC
     node_api_client.h
     node_api_client.cpp
     node_api_codec.h
-    node_api_codec.cpp
+    node_api_codec/internal.h
+    node_api_codec/mappers.cpp
+    node_api_codec/encode_requests.cpp
+    node_api_codec/wire_l0.cpp
+    node_api_codec/decode_responses.cpp
+    node_api_codec/fs_fleet_channels.cpp
     local_daemon_launcher.h
     local_daemon_launcher.cpp
     daemon_connection_service.h
