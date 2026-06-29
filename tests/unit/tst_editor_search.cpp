@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 // Wiring test for EditorController's in-transcript find engine. The match
 // geometry itself is covered by tst_transcript_search (the shared
 // be::TranscriptSearchController); this only proves the controller exposes a

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "core/agent_block.h"
 #include "core/agent_ingest.h"
 #include "core/block_height_index.h"

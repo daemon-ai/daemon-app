@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "cache_test_support.h"
 #include "config/mock_daemon_config.h"
 

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "app/transcript_log.h"
 #include "core/document_store.h"
 #include "daemonnet/seed_transcripts.h"

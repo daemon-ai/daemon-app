@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 // tst_transcript_search: the search-feature feasibility spike. Proves the shared
 // be::TranscriptSearchController collects matches over a be::DocumentStore in
 // document order with correct (blockIndex, charStart, charLen) offsets, honours

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #pragma once
 
 // Header-only last-known on-disk cache for the daemon-config-domain mocks

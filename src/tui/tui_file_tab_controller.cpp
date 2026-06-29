@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "tui_file_tab_controller.h"
 
 #include "app/code_editor_controller.h"

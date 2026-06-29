@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #pragma once
 
 // A small, dependency-free readline/emacs-style line-editing layer for the TUI

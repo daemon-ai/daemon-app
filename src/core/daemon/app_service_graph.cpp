@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "daemon/app_service_graph.h"
 
 #include "accounts/mock_accounts_service.h"

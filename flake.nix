@@ -2,7 +2,7 @@
   description = "daemon-app - Qt 6 QML/C++ development environment, build, and vendored dependencies";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     flake-utils.url = "github:numtide/flake-utils";
 
     # --- Content renderer dependencies (all platforms; wired when the
@@ -247,6 +247,7 @@
             gitleaks # secret scanning
             typos # source spell-checker
             nodejs # provides npx for jscpd duplicate detection (not packaged in nixpkgs)
+            just # task runner: the justfile recipes (lint / build / qmllint)
           ] ++ qtPackages ++ tuiDeps ++ [ qmltermwidget-qt6 ];
 
           shellHook = ''

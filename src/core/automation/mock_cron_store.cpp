@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "automation/mock_cron_store.h"
 
 #include "appcache/json_cache.h"

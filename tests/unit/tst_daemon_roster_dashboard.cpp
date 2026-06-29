@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "connection/iconnection_service.h"
 #include "daemon/cached_session_store.h"
 #include "daemon/daemon_cache_store.h"

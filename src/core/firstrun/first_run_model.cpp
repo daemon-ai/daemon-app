@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "firstrun/first_run_model.h"
 
 #include "connection/iconnection_service.h"

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "session/mock_checkpoint_timeline.h"
 #include "session/mock_session_settings.h"
 #include "uimodels/variant_list_model.h"

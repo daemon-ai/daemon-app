@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "daemon/daemon_transport_registry.h"
 
 #include "daemon/daemon_cache_store.h"

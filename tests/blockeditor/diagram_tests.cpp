@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "diagram/engine/diagram_engine.h"
 #include "diagram/geometry/path_mesh.h"
 #include "diagram/layout/layered_layout.h"

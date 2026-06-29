@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #pragma once
 
 // A controllable multiplexed daemon stand-in for daemon-app socket tests. It speaks the wire L0

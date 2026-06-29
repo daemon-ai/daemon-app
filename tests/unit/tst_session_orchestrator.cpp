@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "persistence/in_memory_session_store.h"
 #include "session_controller.h"
 #include "session_orchestrator.h"

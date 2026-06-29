@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 // Anchors the da_domain static library and registers the value types with the
 // Qt metatype system so they can cross queued connections / be used in QVariant.
 

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "daemon/local_daemon_launcher.h"
 
 #include "settings/isettings_store.h"

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "memory/mock_memory_service.h"
 #include "memory_graph_model.h"
 #include "memory_list_model.h"

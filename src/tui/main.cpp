@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "i18n/localization.h"
 #include "mouse_terminal.h"
 #include "root_widget.h"

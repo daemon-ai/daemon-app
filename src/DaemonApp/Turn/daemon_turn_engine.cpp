@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "daemon_turn_engine.h"
 
 #include "daemon/client_cache_schema.h"

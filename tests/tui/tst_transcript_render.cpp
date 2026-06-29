@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 // Unit tests for the TUI's TranscriptLayout - the terminal analog of the GUI's
 // QML block delegates. They feed seed-style agent markdown through be::DocumentStore
 // (the shared parse engine) into TranscriptLayout::build and assert the produced

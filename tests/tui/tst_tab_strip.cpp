@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 // Render + interaction tests for the TUI TabStripView (the terminal analog of the
 // QML TabBar). They drive a real TabStripView bound to the shared TabModel inside
 // an off-screen Tui terminal, then assert the painted frame (tab titles + the "+"

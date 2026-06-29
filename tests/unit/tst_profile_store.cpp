@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "cache_test_support.h"
 #include "profiles/mock_profile_store.h"
 #include "uimodels/variant_list_model.h"

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 #include "daemonnet/mock_daemonnet.h"
 
 #include "daemonnet/seed_transcripts.h"

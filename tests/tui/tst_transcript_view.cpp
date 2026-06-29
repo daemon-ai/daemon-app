@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jarrad Hope
+
 // Focus / keyboard tests for the TUI TranscriptView widget (as opposed to the
 // pure TranscriptLayout in tst_transcript_render). They drive a real
 // TranscriptView, holding an awaiting-approval / clarify block (so it is in
