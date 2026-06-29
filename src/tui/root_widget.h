@@ -267,6 +267,60 @@ private:
     void closeTranscriptSearch();
     void updateSearchCounter();
 
+    // --- wireViews decomposition (root_widget_wiring.cpp) --------------------
+    // wireViews is a thin orchestrator calling these per-concern binders IN ORDER;
+    // each owns one cohesive set of connect() wires. Plain helpers (not slots).
+    void wireModelBindings();      // adapters + list view model
+    void wirePageLiveRefresh();    // re-render an active hub page on seam churn
+    void wireSearchBox();          // type-ahead session-list filter
+    void wireSidebarTree();        // sidebar selection + collapse/expand
+    void wireSessionList();        // row open + per-row session actions
+    void wireTranscriptControls(); // approval/clarify/rewind from the transcript
+    void wireComposer();           // composer <-> session controller + completion
+    // Dispatch a slash/palette command id from the composer to its handler.
+    void handleComposerCommand(const QString& command);
+    void wireStatusFooter();     // footer + streaming chrome models
+    void wireInitialSelection(); // launch selection (first sidebar row + tab)
+    // Open a session list row into a preview (pinned=false) or pinned tab.
+    void openRow(int row, bool pinned);
+
+    // --- wireSession decomposition (root_widget_wiring.cpp) ------------------
+    void wireSessionStreaming(TabSession* session);   // turn-engine lifecycle/stream
+    void wireSessionPersistence(TabSession* session); // controller/host -> persist
+    void wireSessionStatus(TabSession* session);      // todos + subagents strips
+    void wireSessionSearch(TabSession* session);      // in-transcript find sync
+
+    // --- keyEvent decomposition (root_widget_input.cpp) ----------------------
+    // Each returns true iff it consumed the event (and called event->accept()).
+    bool handleTabShortcuts(Tui::ZKeyEvent* event);          // Ctrl+T/W/F
+    bool handleSidebarAgentShortcuts(Tui::ZKeyEvent* event); // p/m on a fleet row
+    bool handleTabNavigation(Tui::ZKeyEvent* event);         // Ctrl+Tab, Alt+1..9
+    bool handleExplorerToggle(Tui::ZKeyEvent* event);        // Ctrl+E bubble
+    bool handleEscapeQuit(Tui::ZKeyEvent* event);            // bare Esc -> quit
+
+    // --- handleMouse decomposition (root_widget_input.cpp) -------------------
+    // The pane a primary-button press lands in, in routing priority order.
+    enum class ClickPane { None, Sidebar, List, Search, Transcript, Queue, Attachments, Composer };
+    // True iff terminal point termPos is inside w; writes the widget-local point.
+    [[nodiscard]] bool hitTest(Tui::ZWidget* w, QPoint termPos, QPoint& local) const;
+    // The first pane (in priority order) the press hits, with its local point.
+    ClickPane paneAt(QPoint termPos, QPoint& local);
+    void routeWheel(MouseTerminal::MouseAction action, QPoint termPos);
+    void routeClick(QPoint termPos, Qt::KeyboardModifiers modifiers);
+
+    // --- activateTab decomposition (root_widget_tabs.cpp) --------------------
+    void activateTranscriptTab(int tabId);
+    void activateFileTab(int tabId);
+    void activatePageTab(int row);
+
+    // --- overlay/theme helpers (root_widget_pages.cpp) -----------------------
+    // Build the checkpoint overlay's display strings + parallel id list from the
+    // raw checkpoint rows (kept a member so tr() uses the RootWidget context).
+    void buildCheckpointDisplay(const QList<QVariantMap>& rows, QStringList& display,
+                                QStringList& ids) const;
+    // Repaint every theme-sampling view after a live theme switch.
+    void repaintForTheme();
+
     // Shared GUI/TUI service graph (store, connection, fs, memory, nav, first-run, config,
     // models, accounts, profiles, fleet, automation, session facades). Read members via
     // m_services.* instead of mirroring them as duplicate pointers; only TUI-local widgets and

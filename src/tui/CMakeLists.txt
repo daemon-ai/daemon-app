@@ -112,6 +112,14 @@ qt_add_executable(daemon-tui
     mouse_terminal.cpp
     root_widget.h
     root_widget.cpp
+    root_widget_detail.h
+    root_widget_detail.cpp
+    root_widget_wiring.cpp
+    root_widget_input.cpp
+    root_widget_tabs.cpp
+    root_widget_pages.cpp
+    root_widget_strips.cpp
+    root_widget_headless.cpp
     submit_input_box.h
     submit_input_box.cpp
     search_input_box.h
