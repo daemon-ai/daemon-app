@@ -9,6 +9,7 @@
 #include "domain/tag.h"
 #include "domain/unit_node.h"
 
+#include <QHash>
 #include <QList>
 #include <QSet>
 #include <QVariantMap>
@@ -77,13 +78,48 @@ private:
     // The set of session ids bound to `lensKey` by an edge of `edgeKind` (Over / Participant).
     [[nodiscard]] QSet<QString> sessionsBoundBy(const QString& edgeKind,
                                                 const QString& lensKey) const;
+    // True when `s` belongs to `scope` (the per-session keep predicate of sessionsInScope);
+    // `lensIds` is the precomputed ByTransport/ByPeer edge fold.
+    [[nodiscard]] bool sessionMatchesScope(const domain::Session& s, const domain::ListScope& scope,
+                                           const QSet<QString>& lensIds) const;
+
     void buildSeed();
+    // The four sections of the typed seed (in build order), each owning its builder lambda.
+    void seedTagsAndParticipants();
+    void seedUnits();
+    void seedSessions();
+    void seedGraph();
+
     void buildTransportsTree();
     void buildRoutingSeed();
+
     // Re-derive the routing graph nodes/edges (origins, destinations, inbound/outbound edges with
     // provenance + SinkKind, account->agent edges) from the routing state; called after mutations.
     void rebuildRoutingGraph();
+    // The three routing-graph sections (rebuilt after the "rt:" clear).
+    void addPinnedInbound();
+    void addBoundInbound();
+    void addOutbound();
+    // Append a node/edge to the raw graph (the shared builders for rebuildRoutingGraph).
+    void appendRoutingNode(const QString& id, const QString& kind, const QString& label,
+                           QVariantMap extra = {});
+    void appendRoutingEdge(const QString& id, const QString& src, const QString& dst,
+                           const QString& kind, QVariantMap extra = {});
+    // session -> transport (`over`) and session -> place (`inPlace`) edge folds.
+    void collectOverPlace(QHash<QString, QString>& overOf, QHash<QString, QString>& placeOf) const;
+
     void computeProjections();
+    // The node index + the four QML-boundary projections derived from the seed/graph.
+    [[nodiscard]] QHash<QString, QVariantMap> nodesById() const;
+    void projectFleet();
+    void projectSessions();
+    void projectChannels(const QHash<QString, QVariantMap>& byId);
+    void projectByPeer(const QHash<QString, QVariantMap>& byId);
+
+    // Non-pin profile precedence inputs for resolve(): the first matching rule + the account
+    // baseline for a transport.
+    [[nodiscard]] const BindingRule* matchingRule(const domain::Origin& origin) const;
+    [[nodiscard]] domain::ProfileRef accountProfileFor(const domain::TransportId& transport) const;
 
     // Typed seed (the single source; copied by the session store).
     QList<domain::UnitNode> m_units;
