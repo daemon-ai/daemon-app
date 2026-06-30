@@ -157,6 +157,15 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     m_key->setEchoMode(Tui::ZInputBox::Password);
     m_key->setVisible(false);
     layout->addWidget(m_key);
+
+    // SASL login: username + masked password, shown only in the auth phase.
+    m_username = new Tui::ZInputBox(QString(), this);
+    m_username->setVisible(false);
+    layout->addWidget(m_username);
+    m_password = new Tui::ZInputBox(QString(), this);
+    m_password->setEchoMode(Tui::ZInputBox::Password);
+    m_password->setVisible(false);
+    layout->addWidget(m_password);
     layout->addSpacing(1);
 
     m_status = new Tui::ZLabel(QString(), this);
@@ -199,6 +208,10 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     connect(m_primary, &Tui::ZButton::clicked, this, [this] {
         if (m_model->phase() == QStringLiteral("inference")) {
             commitInference();
+        } else if (m_model->phase() == QStringLiteral("auth")) {
+            // Submit SASL credentials; the password is read from the field only and never logged.
+            m_model->submitLogin(m_username->text(), m_password->text());
+            m_password->setText(QString());
         } else if (m_connection != nullptr) {
             // Persist the choice so the next boot reuses it (parity with the GUI
             // picker writing AppSettings.setLastConnection before connecting).
@@ -221,6 +234,8 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     // Readiness gates the inference Finish button; re-sync when it flips.
     connect(m_model, &firstrun::FirstRunModel::inferenceReadyChanged, this,
             &FirstRunDialog::syncToPhase);
+    // An auth error (wrong password) updates in place while the phase stays "auth".
+    connect(m_model, &firstrun::FirstRunModel::errorChanged, this, &FirstRunDialog::syncToPhase);
 
     applyMode(m_mode);
     syncToPhase();
@@ -253,11 +268,32 @@ void FirstRunDialog::applyMode(const QString& mode) {
 
 void FirstRunDialog::syncToPhase() {
     const QString p = m_model->phase();
+    // Default: the SASL login fields are hidden outside the auth phase.
+    if (m_username != nullptr) {
+        m_username->setVisible(p == QStringLiteral("auth"));
+    }
+    if (m_password != nullptr) {
+        m_password->setVisible(p == QStringLiteral("auth"));
+    }
     if (p == QStringLiteral("connecting")) {
         m_status->setText(tr("Connecting..."));
         m_primary->setText(tr("Connect"));
         m_primary->setEnabled(false);
         m_target->setEnabled(false);
+    } else if (p == QStringLiteral("auth")) {
+        // The node requires credentials: show username/password, hide the transport fields.
+        m_status->setText(m_model->error().isEmpty() ? tr("Sign in to continue.")
+                                                     : m_model->error());
+        m_primary->setText(tr("Sign in"));
+        m_primary->setEnabled(true);
+        m_target->setEnabled(false);
+        if (m_token != nullptr) {
+            m_token->setVisible(false);
+        }
+        if (m_key != nullptr) {
+            m_key->setVisible(false);
+        }
+        m_username->setFocus();
     } else if (p == QStringLiteral("inference")) {
         m_status->setText(tr("Connected. Paste a provider API key (optional), then Finish."));
         m_primary->setText(tr("Finish"));

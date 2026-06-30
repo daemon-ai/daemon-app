@@ -94,7 +94,9 @@ private:
     Tui::ZLabel* m_status = nullptr;
     Tui::ZInputBox* m_target = nullptr;
     Tui::ZInputBox* m_token = nullptr;
-    Tui::ZInputBox* m_key = nullptr; // provider API key (inference phase)
+    Tui::ZInputBox* m_key = nullptr;      // provider API key (inference phase)
+    Tui::ZInputBox* m_username = nullptr; // SASL username (auth phase)
+    Tui::ZInputBox* m_password = nullptr; // SASL password (auth phase; masked)
     Tui::ZButton* m_localBtn = nullptr;
     Tui::ZButton* m_remoteBtn = nullptr;
     Tui::ZButton* m_testBtn = nullptr;

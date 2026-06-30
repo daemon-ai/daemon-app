@@ -45,6 +45,28 @@ public:
     }
     void remove(const QString&) override {}
 };
+
+// A connection seam that models an auth-required node: connectTo() drives straight to the
+// "authenticating" state + authRequired(), and login() succeeds only for the password "good".
+class FakeAuthConnection : public connection::IConnectionService {
+public:
+    using IConnectionService::IConnectionService;
+    void connectTo(const QString&, const QString&, const QString&) override {
+        setState(QStringLiteral("authenticating"));
+        emit authRequired();
+    }
+    void disconnect() override { setState(QStringLiteral("offline")); }
+    void testConnection(const QString&, const QString&, const QString&) override {}
+    void login(const QString&, const QString& password) override {
+        if (password == QStringLiteral("good")) {
+            emit authenticated();
+            setState(QStringLiteral("ready"));
+        } else {
+            emit authFailed(QStringLiteral("bad password"));
+            setState(QStringLiteral("authenticating"));
+        }
+    }
+};
 } // namespace
 
 // Guards the shared onboarding gate: a fresh install starts at connect, a good
@@ -142,6 +164,56 @@ private slots:
         conn.connectTo(QStringLiteral("remote"), QStringLiteral("https://example.invalid"));
         QVERIFY(QTest::qWaitFor(
             [&] { return m.phase() == QStringLiteral("connect") && !m.error().isEmpty(); }, 3000));
+    }
+
+    // An auth-required node drives the gate to the `auth` phase, and the shell never mounts
+    // pre-auth: active() stays true throughout connecting/authenticating and only clears at done.
+    void authRequiredShowsLoginAndGatesShell() {
+        QtSettingsStore settings;
+        FakeAuthConnection conn;
+        FakeModelCatalog catalog;
+        FirstRunModel m(&settings, &conn, &catalog);
+        m.begin();
+        QVERIFY(m.active());
+
+        conn.connectTo(QStringLiteral("remote"), QStringLiteral("node.example:8443"), QString());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("auth"); }, 3000));
+        QVERIFY(m.active()); // shell still gated - no surface mounted pre-auth
+        QVERIFY(m.error().isEmpty());
+    }
+
+    // Wrong password keeps the auth phase with the error; the gate never advances / mounts.
+    void wrongPasswordStaysInAuth() {
+        QtSettingsStore settings;
+        FakeAuthConnection conn;
+        FakeModelCatalog catalog;
+        FirstRunModel m(&settings, &conn, &catalog);
+        m.begin();
+        conn.connectTo(QStringLiteral("remote"), QStringLiteral("node.example:8443"), QString());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("auth"); }, 3000));
+
+        m.submitLogin(QStringLiteral("user"), QStringLiteral("WRONG"));
+        QVERIFY(QTest::qWaitFor(
+            [&] {
+                return m.phase() == QStringLiteral("auth") &&
+                       m.error() == QStringLiteral("bad password");
+            },
+            3000));
+        QVERIFY(m.active());
+    }
+
+    // Correct password authenticates and advances to the inference gate.
+    void correctPasswordAdvancesToInference() {
+        QtSettingsStore settings;
+        FakeAuthConnection conn;
+        FakeModelCatalog catalog;
+        FirstRunModel m(&settings, &conn, &catalog);
+        m.begin();
+        conn.connectTo(QStringLiteral("remote"), QStringLiteral("node.example:8443"), QString());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("auth"); }, 3000));
+
+        m.submitLogin(QStringLiteral("user"), QStringLiteral("good"));
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
     }
 
     void returningUserBootsToDone() {

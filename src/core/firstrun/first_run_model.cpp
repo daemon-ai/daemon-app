@@ -17,6 +17,22 @@ FirstRunModel::FirstRunModel(settings::ISettingsStore* settings,
     if (m_connection != nullptr) {
         connect(m_connection, &connection::IConnectionService::stateChanged, this,
                 &FirstRunModel::onConnectionStateChanged);
+        // The node requires interactive credentials: surface the login form (no error yet).
+        connect(m_connection, &connection::IConnectionService::authRequired, this, [this] {
+            if (m_phase != QStringLiteral("done") && m_phase != QStringLiteral("inference")) {
+                setError(QString());
+                setPhase(QStringLiteral("auth"));
+            }
+        });
+        // A login attempt failed (wrong password / disabled): stay on the form with the reason.
+        connect(m_connection, &connection::IConnectionService::authFailed, this,
+                [this](const QString& reason) {
+                    if (m_phase != QStringLiteral("done") &&
+                        m_phase != QStringLiteral("inference")) {
+                        setError(reason);
+                        setPhase(QStringLiteral("auth"));
+                    }
+                });
     }
     if (m_modelCatalog != nullptr) {
         connect(m_modelCatalog, &models::IModelCatalog::currentChanged, this,
@@ -44,6 +60,10 @@ void FirstRunModel::onConnectionStateChanged() {
     if (s == QStringLiteral("checking") || s == QStringLiteral("connecting")) {
         setError(QString());
         setPhase(QStringLiteral("connecting"));
+    } else if (s == QStringLiteral("authenticating")) {
+        // The node needs credentials: show the login form. Don't clear m_error here - a wrong
+        // password set it via authFailed and it must stay visible.
+        setPhase(QStringLiteral("auth"));
     } else if (s == QStringLiteral("ready")) {
         setError(QString());
         // CON-1: the connection succeeded, so persist setupComplete now - the next launch
@@ -86,6 +106,13 @@ void FirstRunModel::completeInference() {
         return;
     }
     finish();
+}
+
+void FirstRunModel::submitLogin(const QString& username, const QString& password) {
+    if (m_connection != nullptr) {
+        setError(QString());
+        m_connection->login(username, password);
+    }
 }
 
 void FirstRunModel::skip() {

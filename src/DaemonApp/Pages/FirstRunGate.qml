@@ -47,7 +47,9 @@ Rectangle {
                 Text {
                     text: root.phase === "inference"
                           ? qsTr("Almost there - confirm an inference model.")
-                          : qsTr("Connect to a daemon node to get started.")
+                          : root.phase === "auth"
+                            ? qsTr("Sign in to the node to continue.")
+                            : qsTr("Connect to a daemon node to get started.")
                     font.family: FontIcons.display; font.pixelSize: 13; color: Theme.textMuted
                     Layout.fillWidth: true; wrapMode: Text.WordWrap
                 }
@@ -82,6 +84,46 @@ Rectangle {
                     }
                 }
                 Item { Layout.preferredHeight: 8 }
+            }
+
+            // --- Phase: auth (SASL login form) ---
+            ColumnLayout {
+                visible: root.phase === "auth"
+                Layout.fillWidth: true
+                spacing: 10
+
+                SectionLabel { text: qsTr("Sign in") }
+                Kit.TextField {
+                    id: usernameField
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("Username")
+                }
+                Kit.TextField {
+                    id: passwordField
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("Password")
+                    echoMode: TextInput.Password
+                    onAccepted: if (signInButton.enabled) signInButton.clicked()
+                }
+                Text {
+                    visible: FirstRun && FirstRun.error.length > 0
+                    text: FirstRun ? FirstRun.error : ""
+                    font.family: FontIcons.display; font.pixelSize: 12; color: Theme.danger
+                    Layout.fillWidth: true; wrapMode: Text.WordWrap
+                }
+                Kit.TextButton {
+                    id: signInButton
+                    text: (Connection && Connection.state === "connecting")
+                          ? qsTr("Signing in…") : qsTr("Sign in")
+                    accentFilled: true
+                    // Password is bound to the field only; never persisted, never logged.
+                    enabled: usernameField.text.length > 0 && passwordField.text.length > 0
+                             && !(Connection && Connection.state === "connecting")
+                    onClicked: {
+                        FirstRun.submitLogin(usernameField.text, passwordField.text);
+                        passwordField.text = "";
+                    }
+                }
             }
 
             // --- Phase: inference gate (provider key + model pick) ---

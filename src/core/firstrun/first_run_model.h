@@ -24,6 +24,8 @@ namespace firstrun {
 //   connect  -> the connection picker (choose embedded[disabled]/local/remote)
 //   connecting -> a full-screen splash while the chosen target comes up (first
 //                 boot only); returns to `connect` on failure
+//   auth     -> the login form when the node requires SASL credentials (between
+//               connecting and inference); a wrong password keeps this phase + error
 //   inference -> the inference/catalog gate (a default model must be reachable)
 //   done     -> setup complete; the shell is shown and never gated again
 //
@@ -57,6 +59,9 @@ public:
     // The inference gate's "Continue" - records that an inference model is ready
     // and advances to done (persisting setupComplete).
     Q_INVOKABLE void completeInference();
+    // Submit interactive credentials while in the `auth` phase (routes to the connection seam's
+    // login()). On success the connection reaches ready and the gate advances to inference.
+    Q_INVOKABLE void submitLogin(const QString& username, const QString& password);
     // Skip onboarding (dev / "I'll set this up later"): marks setup complete.
     Q_INVOKABLE void skip();
     // Re-run onboarding from settings (used by a "reset setup" affordance).

@@ -218,7 +218,9 @@
           # MicroTeX (LaTeX math renderer) links tinyxml2 via pkg-config.
           # qmltermwidget-qt6 ships the embedded-terminal QML plugin;
           # wrapQtAppsHook adds its lib/qml to the wrapped app's import path.
-          buildInputs = qtPackages ++ [ pkgs.tinyxml-2 qmltermwidget-qt6 ];
+          # qtkeychain backs the OS-keychain server-token store (auth6); the build
+          # falls back to a QSettings token store when it is absent.
+          buildInputs = qtPackages ++ [ pkgs.tinyxml-2 pkgs.qt6Packages.qtkeychain qmltermwidget-qt6 ];
 
           cmakeFlags = depFlags ++ [ "-DDAEMON_APP_VERSION_STR=${versionStr}" ];
         };
@@ -266,6 +268,7 @@
             typos # source spell-checker
             nodejs # provides npx for jscpd duplicate detection (not packaged in nixpkgs)
             just # task runner: the justfile recipes (lint / build / qmllint)
+            qt6Packages.qtkeychain # OS keychain for the server-token store (auth6)
           ] ++ qtPackages ++ tuiDeps ++ [ qmltermwidget-qt6 ];
 
           shellHook = ''

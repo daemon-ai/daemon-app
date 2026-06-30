@@ -86,19 +86,21 @@ public:
     // the connection target so multiple nodes don't share a token. This stores the SERVER token
     // (never the password). The default impl persists to QSettings; a keychain-backed store may
     // override the raw value() path. Empty target / token are treated as "no token".
-    [[nodiscard]] Q_INVOKABLE QString connectionToken(const QString& target) const {
+    // virtual so a keychain-backed store (QtSettingsStore) can prefer the OS keychain and fall back
+    // to these QSettings implementations.
+    [[nodiscard]] Q_INVOKABLE virtual QString connectionToken(const QString& target) const {
         if (target.isEmpty()) {
             return {};
         }
         return value(tokenKey(target)).toString();
     }
-    Q_INVOKABLE void setConnectionToken(const QString& target, const QString& token) {
+    Q_INVOKABLE virtual void setConnectionToken(const QString& target, const QString& token) {
         if (target.isEmpty()) {
             return;
         }
         setValue(tokenKey(target), token);
     }
-    Q_INVOKABLE void clearConnectionToken(const QString& target) {
+    Q_INVOKABLE virtual void clearConnectionToken(const QString& target) {
         if (!target.isEmpty()) {
             setValue(tokenKey(target), QString());
         }

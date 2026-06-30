@@ -18,3 +18,14 @@ target_link_libraries(da_settings_store
     PRIVATE
         daemon-app::warnings
 )
+
+# Optional OS keychain for the server-token store (auth6). When Qt Keychain is present the token
+# persists in the platform secret store; otherwise QtSettingsStore falls back to QSettings.
+find_package(Qt6Keychain QUIET)
+if(Qt6Keychain_FOUND)
+    target_link_libraries(da_settings_store PRIVATE Qt6Keychain::Qt6Keychain)
+    target_compile_definitions(da_settings_store PRIVATE DAEMON_APP_HAVE_KEYCHAIN)
+    message(STATUS "daemon-app: server-token store uses Qt Keychain")
+else()
+    message(STATUS "daemon-app: Qt Keychain not found; server-token store uses QSettings fallback")
+endif()

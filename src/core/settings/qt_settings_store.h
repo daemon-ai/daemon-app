@@ -21,7 +21,18 @@ public:
     [[nodiscard]] QVariant value(const QString& key, const QVariant& fallback = {}) const override;
     void setValue(const QString& key, const QVariant& value) override;
 
+    // Server-token storage prefers the OS keychain (Qt Keychain) when built with it and a keyring
+    // is usable at runtime; otherwise it transparently falls back to the QSettings base
+    // implementation. The password is never stored here - only the SERVER-issued session token.
+    [[nodiscard]] QString connectionToken(const QString& target) const override;
+    void setConnectionToken(const QString& target, const QString& token) override;
+    void clearConnectionToken(const QString& target) override;
+
 private:
+    // Whether to attempt the OS keychain. False when built without Qt Keychain, in QStandardPaths
+    // test mode, or when DAEMON_APP_NO_KEYCHAIN is set (keeps headless tests on the QSettings
+    // path).
+    [[nodiscard]] static bool keychainEnabled();
     // The settings schema version: bump ONLY when a key is renamed/retyped/removed (not on every
     // app release). `migrate()` runs an ordered, forward-only ladder up to this on construction.
     // Independent of the app version (app 0.4.1 may still be on settings schema 2).

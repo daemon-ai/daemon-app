@@ -51,6 +51,30 @@ private slots:
         QCOMPARE(s.lastConnectionTarget(), QStringLiteral("https://node.example"));
     }
 
+    // Per-target server-token storage (auth6): tokens are keyed by target so multiple nodes don't
+    // collide; clearing one (logout) leaves the others intact. In test mode the keychain is
+    // bypassed so this exercises the QSettings fallback path deterministically.
+    void perTargetTokenRoundTripAndClear() {
+        QtSettingsStore s;
+        const QString a = QStringLiteral("node-a:8443");
+        const QString b = QStringLiteral("node-b:8443");
+        QVERIFY(s.connectionToken(a).isEmpty());
+
+        s.setConnectionToken(a, QStringLiteral("token-A"));
+        s.setConnectionToken(b, QStringLiteral("token-B"));
+        QCOMPARE(s.connectionToken(a), QStringLiteral("token-A"));
+        QCOMPARE(s.connectionToken(b), QStringLiteral("token-B"));
+
+        // Logout for A clears only A's token.
+        s.clearConnectionToken(a);
+        QVERIFY(s.connectionToken(a).isEmpty());
+        QCOMPARE(s.connectionToken(b), QStringLiteral("token-B"));
+
+        // An empty target is a no-op (never stores a token under a blank key).
+        s.setConnectionToken(QString(), QStringLiteral("x"));
+        QVERIFY(s.connectionToken(QString()).isEmpty());
+    }
+
     void emitsChangeAndDeduplicates() {
         QtSettingsStore s;
         s.setValue(QStringLiteral("k"), 1);
