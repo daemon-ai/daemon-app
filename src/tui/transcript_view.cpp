@@ -133,6 +133,43 @@ void TranscriptView::rebuild() {
     update();
 }
 
+bool TranscriptView::splitHighlightSpan(const Span& span, const QString& query, bool activeBlock,
+                                        RenderLine& out) const {
+    int from = 0;
+    int at = static_cast<int>(span.text.indexOf(query, from, Qt::CaseInsensitive));
+    if (at < 0) {
+        out.push_back(span);
+        return false;
+    }
+    const int qlen = static_cast<int>(query.size());
+    const Tui::ZColor matchBg = tpal::selectionBg();
+    const Tui::ZColor activeBg = tpal::accent();
+    const Tui::ZColor activeFg = tpal::bg();
+    while (at >= 0) {
+        if (at > from) {
+            out.push_back(Span{span.text.mid(from, at - from), span.fg, span.bg, span.attr});
+        }
+        Span hit;
+        hit.text = span.text.mid(at, qlen);
+        hit.attr = span.attr;
+        if (activeBlock) {
+            hit.fg = activeFg;
+            hit.bg = activeBg;
+            hit.attr |= Tui::ZTextAttribute::Bold;
+        } else {
+            hit.fg = span.fg;
+            hit.bg = matchBg;
+        }
+        out.push_back(hit);
+        from = at + qlen;
+        at = static_cast<int>(span.text.indexOf(query, from, Qt::CaseInsensitive));
+    }
+    if (from < span.text.size()) {
+        out.push_back(Span{span.text.mid(from), span.fg, span.bg, span.attr});
+    }
+    return true;
+}
+
 void TranscriptView::applySearchHighlight() {
     if (m_search == nullptr) {
         return;
@@ -142,45 +179,14 @@ void TranscriptView::applySearchHighlight() {
         return;
     }
     const int activeBlock = m_search->currentBlockIndex();
-    const int qlen = static_cast<int>(query.size());
-    const Tui::ZColor matchBg = tpal::selectionBg();
-    const Tui::ZColor activeBg = tpal::accent();
-    const Tui::ZColor activeFg = tpal::bg();
 
     for (int li = 0; li < m_lines.size(); ++li) {
         const bool isActiveBlock = li < m_lineBlock.size() && m_lineBlock.at(li) == activeBlock;
         RenderLine rebuilt;
         bool changed = false;
         for (const Span& span : m_lines.at(li)) {
-            int from = 0;
-            int at = static_cast<int>(span.text.indexOf(query, from, Qt::CaseInsensitive));
-            if (at < 0) {
-                rebuilt.push_back(span);
-                continue;
-            }
-            changed = true;
-            while (at >= 0) {
-                if (at > from) {
-                    rebuilt.push_back(
-                        Span{span.text.mid(from, at - from), span.fg, span.bg, span.attr});
-                }
-                Span hit;
-                hit.text = span.text.mid(at, qlen);
-                hit.attr = span.attr;
-                if (isActiveBlock) {
-                    hit.fg = activeFg;
-                    hit.bg = activeBg;
-                    hit.attr |= Tui::ZTextAttribute::Bold;
-                } else {
-                    hit.fg = span.fg;
-                    hit.bg = matchBg;
-                }
-                rebuilt.push_back(hit);
-                from = at + qlen;
-                at = static_cast<int>(span.text.indexOf(query, from, Qt::CaseInsensitive));
-            }
-            if (from < span.text.size()) {
-                rebuilt.push_back(Span{span.text.mid(from), span.fg, span.bg, span.attr});
+            if (splitHighlightSpan(span, query, isActiveBlock, rebuilt)) {
+                changed = true;
             }
         }
         if (changed) {
@@ -378,6 +384,67 @@ void TranscriptView::resizeEvent(Tui::ZResizeEvent* event) {
     rebuild();
 }
 
+void TranscriptView::paintContentRows(Tui::ZPainter* painter, int height, int contentWidth) const {
+    const int lineCount = static_cast<int>(m_lines.size());
+    for (int row = 0; row < height; ++row) {
+        const int idx = m_scrollTop + row;
+        if (idx < 0 || idx >= lineCount) {
+            continue;
+        }
+        int x = 0;
+        for (const Span& s : m_lines.at(idx)) {
+            if (x >= contentWidth) {
+                break;
+            }
+            const int len = static_cast<int>(s.text.size());
+            QString text = s.text;
+            if (x + len > contentWidth) {
+                text = text.left(contentWidth - x);
+            }
+            if (!text.isEmpty()) {
+                if (s.attr != Tui::ZTextAttributes{}) {
+                    painter->writeWithAttributes(x, row, text, s.fg, s.bg, s.attr);
+                } else {
+                    painter->writeWithColors(x, row, text, s.fg, s.bg);
+                }
+            }
+            x += len;
+        }
+    }
+}
+
+void TranscriptView::paintRewindMarker(Tui::ZPainter* painter, int height, int contentWidth,
+                                       const Tui::ZColor& bg) const {
+    // Mark the selected anchor row with an accent caret and a right-aligned key
+    // hint so the mode and its actions are discoverable.
+    if (!rewindActive() || m_rewindIndex < 0 || m_rewindIndex >= m_anchors.size()) {
+        return;
+    }
+    const int screenRow = m_anchors.at(m_rewindIndex).line - m_scrollTop;
+    if (screenRow < 0 || screenRow >= height) {
+        return;
+    }
+    painter->writeWithColors(0, screenRow, QStringLiteral("\u25b6"), tpal::accent(), bg);
+    const QString hint = tr("Enter restore  e edit  Esc cancel");
+    const int hx = contentWidth - static_cast<int>(hint.size()) - 1;
+    if (hx > 0) {
+        painter->writeWithColors(hx, screenRow, hint, tpal::accent(), bg);
+    }
+}
+
+void TranscriptView::paintScrollIndicator(Tui::ZPainter* painter, int height, int width,
+                                          int lineCount, const Tui::ZColor& bg) const {
+    const int thumbLen = qMax(1, (height * height) / lineCount);
+    const int thumbTop = qBound(0, (m_scrollTop * height) / lineCount, height - thumbLen);
+    const int xCol = width - 1;
+    for (int row = 0; row < height; ++row) {
+        const bool onThumb = row >= thumbTop && row < thumbTop + thumbLen;
+        painter->writeWithColors(xCol, row,
+                                 onThumb ? QStringLiteral("\u2503") : QStringLiteral("\u2502"),
+                                 onThumb ? tpal::accent() : tpal::muted(), bg);
+    }
+}
+
 void TranscriptView::paintEvent(Tui::ZPaintEvent* event) {
     Tui::ZPainter* p = event->painter();
     const Tui::ZColor pageFg = tpal::fg();
@@ -391,62 +458,14 @@ void TranscriptView::paintEvent(Tui::ZPaintEvent* event) {
     // Reserve the last column for the scroll indicator when it is shown.
     const int contentW = scrollable ? qMax(1, w - 1) : w;
 
-    for (int row = 0; row < h; ++row) {
-        const int idx = m_scrollTop + row;
-        if (idx < 0 || idx >= lineCount) {
-            continue;
-        }
-        int x = 0;
-        for (const Span& s : m_lines.at(idx)) {
-            if (x >= contentW) {
-                break;
-            }
-            const int len = static_cast<int>(s.text.size());
-            QString text = s.text;
-            if (x + len > contentW) {
-                text = text.left(contentW - x);
-            }
-            if (!text.isEmpty()) {
-                if (s.attr != Tui::ZTextAttributes{}) {
-                    p->writeWithAttributes(x, row, text, s.fg, s.bg, s.attr);
-                } else {
-                    p->writeWithColors(x, row, text, s.fg, s.bg);
-                }
-            }
-            x += len;
-        }
-    }
-
-    // Rewind picker: mark the selected anchor row with an accent caret and a
-    // right-aligned key hint so the mode and its actions are discoverable.
-    if (rewindActive() && m_rewindIndex >= 0 && m_rewindIndex < m_anchors.size()) {
-        const int screenRow = m_anchors.at(m_rewindIndex).line - m_scrollTop;
-        if (screenRow >= 0 && screenRow < h) {
-            p->writeWithColors(0, screenRow, QStringLiteral("\u25b6"), tpal::accent(), pageBg);
-            const QString hint = tr("Enter restore  e edit  Esc cancel");
-            const int hx = contentW - static_cast<int>(hint.size()) - 1;
-            if (hx > 0) {
-                p->writeWithColors(hx, screenRow, hint, tpal::accent(), pageBg);
-            }
-        }
-    }
-
+    paintContentRows(p, h, contentW);
+    paintRewindMarker(p, h, contentW, pageBg);
     if (scrollable && h > 0) {
-        const int total = lineCount;
-        int thumbLen = qMax(1, (h * h) / total);
-        int thumbTop = (m_scrollTop * h) / total;
-        thumbTop = qBound(0, thumbTop, h - thumbLen);
-        const int xCol = w - 1;
-        for (int row = 0; row < h; ++row) {
-            const bool onThumb = row >= thumbTop && row < thumbTop + thumbLen;
-            p->writeWithColors(xCol, row,
-                               onThumb ? QStringLiteral("\u2503") : QStringLiteral("\u2502"),
-                               onThumb ? tpal::accent() : tpal::muted(), pageBg);
-        }
+        paintScrollIndicator(p, h, w, lineCount, pageBg);
     }
 }
 
-void TranscriptView::keyEvent(Tui::ZKeyEvent* event) {
+bool TranscriptView::handleRewindKey(Tui::ZKeyEvent* event) {
     // Rewind picker: a selection mode over the prior user-message anchors, entered
     // with 'r' (when no interactive block owns the keys). Up/Down (or k/j) walk the
     // anchors, Enter restores (re-run with the same text), 'e' edits (seed the
@@ -459,42 +478,47 @@ void TranscriptView::keyEvent(Tui::ZKeyEvent* event) {
             if (key == Qt::Key_Up || (event->text() == QStringLiteral("k"))) {
                 moveRewind(-1);
                 event->accept();
-                return;
+                return true;
             }
             if (key == Qt::Key_Down || (event->text() == QStringLiteral("j"))) {
                 moveRewind(1);
                 event->accept();
-                return;
+                return true;
             }
             if (key == Qt::Key_Enter || key == Qt::Key_Return) {
                 const Anchor a = m_anchors.at(m_rewindIndex);
                 exitRewind();
                 emit rewindRestoreRequested(a.messageId);
                 event->accept();
-                return;
+                return true;
             }
             if (event->text() == QStringLiteral("e")) {
                 const Anchor a = m_anchors.at(m_rewindIndex);
                 exitRewind();
                 emit rewindEditRequested(a.messageId, a.text);
                 event->accept();
-                return;
+                return true;
             }
             if (key == Qt::Key_Escape) {
                 exitRewind();
                 event->accept();
-                return;
+                return true;
             }
         }
         // Any other key leaves the picker and falls through to normal handling.
         exitRewind();
-    } else if (event->modifiers() == Qt::NoModifier && event->text() == QStringLiteral("r") &&
-               !interactive() && !m_anchors.isEmpty()) {
+        return false;
+    }
+    if (event->modifiers() == Qt::NoModifier && event->text() == QStringLiteral("r") &&
+        !interactive() && !m_anchors.isEmpty()) {
         enterRewind();
         event->accept();
-        return;
+        return true;
     }
+    return false;
+}
 
+bool TranscriptView::handleInteractiveKey(Tui::ZKeyEvent* event) {
     // Interactive mode: while an awaiting-approval / unanswered-clarify block is
     // present its controls own the cursor. Arrow keys walk the controls (Up/Left
     // back, Down/Right forward), Space toggles a choice, Enter activates a button /
@@ -502,94 +526,117 @@ void TranscriptView::keyEvent(Tui::ZKeyEvent* event) {
     // End still scroll. Tab/Shift+Tab are deliberately NOT consumed here: they bubble
     // to the focus container so the block never traps focus (the app-wide rule -
     // Tab moves between panes, arrows move within). Esc still bubbles too.
-    if (interactive()) {
-        const int key = event->key();
-        const Qt::KeyboardModifiers mods = event->modifiers();
-        const Control& active = m_controls.at(qBound(0, m_activeControl, m_controls.size() - 1));
-        const bool onFreeform = active.kind == Control::Kind::Freeform;
-
-        if (mods == Qt::NoModifier) {
-            if (key == Qt::Key_Up || key == Qt::Key_Left) {
-                moveControl(-1);
-                event->accept();
-                return;
-            }
-            if (key == Qt::Key_Down || key == Qt::Key_Right) {
-                moveControl(1);
-                event->accept();
-                return;
-            }
-            if (key == Qt::Key_Enter || key == Qt::Key_Return) {
-                activateControl();
-                event->accept();
-                return;
-            }
-            if (key == Qt::Key_Space && !onFreeform) {
-                toggleChoice();
-                event->accept();
-                return;
-            }
-        }
-        if (onFreeform && mods == Qt::NoModifier) {
-            if (key == Qt::Key_Backspace) {
-                QString text = m_draft.freeform.value(active.questionId);
-                text.chop(1);
-                m_draft.freeform.insert(active.questionId, text);
-                rebuild();
-                event->accept();
-                return;
-            }
-        }
-        if (onFreeform && !event->text().isEmpty() &&
-            (mods == Qt::NoModifier || mods == Qt::ShiftModifier)) {
-            const QString t = event->text();
-            // Ignore control chars (Enter handled above).
-            if (t.at(0).isPrint()) {
-                m_draft.freeform.insert(active.questionId,
-                                        m_draft.freeform.value(active.questionId) + t);
-                rebuild();
-                event->accept();
-                return;
-            }
-        }
-        // Fall through to the scroll keys below (PageUp/Down/Home/End) and Esc.
+    if (!interactive()) {
+        return false;
     }
+    const int key = event->key();
+    const Qt::KeyboardModifiers mods = event->modifiers();
+    const Control& active = m_controls.at(qBound(0, m_activeControl, m_controls.size() - 1));
+    const bool onFreeform = active.kind == Control::Kind::Freeform;
 
-    if (event->modifiers() == Qt::NoModifier) {
-        const int key = event->key();
-        const int page = qMax(1, visibleRows() - 1);
-        bool handled = true;
-        switch (key) {
-        case Qt::Key_Up:
-            m_scrollTop -= 1;
-            break;
-        case Qt::Key_Down:
-            m_scrollTop += 1;
-            break;
-        case Qt::Key_PageUp:
-            m_scrollTop -= page;
-            break;
-        case Qt::Key_PageDown:
-            m_scrollTop += page;
-            break;
-        case Qt::Key_Home:
-            m_scrollTop = 0;
-            break;
-        case Qt::Key_End:
-            m_scrollTop = maxScrollTop();
-            break;
-        default:
-            handled = false;
-            break;
-        }
-        if (handled) {
-            clampScrollTop();
-            // Pin to the bottom only when the user scrolled all the way down.
-            m_stickToBottom = atBottom();
-            update();
+    if (mods == Qt::NoModifier) {
+        if (key == Qt::Key_Up || key == Qt::Key_Left) {
+            moveControl(-1);
             event->accept();
-            return;
+            return true;
         }
+        if (key == Qt::Key_Down || key == Qt::Key_Right) {
+            moveControl(1);
+            event->accept();
+            return true;
+        }
+        if (key == Qt::Key_Enter || key == Qt::Key_Return) {
+            activateControl();
+            event->accept();
+            return true;
+        }
+        if (key == Qt::Key_Space && !onFreeform) {
+            toggleChoice();
+            event->accept();
+            return true;
+        }
+    }
+    if (onFreeform && handleFreeformKey(event, active)) {
+        return true;
+    }
+    // Fall through to the scroll keys (PageUp/Down/Home/End) and Esc.
+    return false;
+}
+
+bool TranscriptView::handleFreeformKey(Tui::ZKeyEvent* event, const Control& active) {
+    const Qt::KeyboardModifiers mods = event->modifiers();
+    if (mods == Qt::NoModifier && event->key() == Qt::Key_Backspace) {
+        QString text = m_draft.freeform.value(active.questionId);
+        text.chop(1);
+        m_draft.freeform.insert(active.questionId, text);
+        rebuild();
+        event->accept();
+        return true;
+    }
+    if (!event->text().isEmpty() && (mods == Qt::NoModifier || mods == Qt::ShiftModifier)) {
+        const QString t = event->text();
+        // Ignore control chars (Enter handled by the caller).
+        if (t.at(0).isPrint()) {
+            m_draft.freeform.insert(active.questionId,
+                                    m_draft.freeform.value(active.questionId) + t);
+            rebuild();
+            event->accept();
+            return true;
+        }
+    }
+    return false;
+}
+
+bool TranscriptView::handleScrollKey(Tui::ZKeyEvent* event) {
+    if (event->modifiers() != Qt::NoModifier) {
+        return false;
+    }
+    const int key = event->key();
+    const int page = qMax(1, visibleRows() - 1);
+    bool handled = true;
+    switch (key) {
+    case Qt::Key_Up:
+        m_scrollTop -= 1;
+        break;
+    case Qt::Key_Down:
+        m_scrollTop += 1;
+        break;
+    case Qt::Key_PageUp:
+        m_scrollTop -= page;
+        break;
+    case Qt::Key_PageDown:
+        m_scrollTop += page;
+        break;
+    case Qt::Key_Home:
+        m_scrollTop = 0;
+        break;
+    case Qt::Key_End:
+        m_scrollTop = maxScrollTop();
+        break;
+    default:
+        handled = false;
+        break;
+    }
+    if (!handled) {
+        return false;
+    }
+    clampScrollTop();
+    // Pin to the bottom only when the user scrolled all the way down.
+    m_stickToBottom = atBottom();
+    update();
+    event->accept();
+    return true;
+}
+
+void TranscriptView::keyEvent(Tui::ZKeyEvent* event) {
+    if (handleRewindKey(event)) {
+        return;
+    }
+    if (handleInteractiveKey(event)) {
+        return;
+    }
+    if (handleScrollKey(event)) {
+        return;
     }
     // Everything else (notably Esc) bubbles up unhandled.
     Tui::ZWidget::keyEvent(event);

@@ -89,6 +89,28 @@ private:
     // when a search is active). Splits affected spans so the matched substring
     // gets a highlight background; the active match's block is emphasised more.
     void applySearchHighlight();
+    // Append `span` to `out`, splitting out each case-insensitive occurrence of
+    // `query` into its own highlighted span (active-block hits get the accent
+    // wash, others the selection background). Returns true if any match was found.
+    bool splitHighlightSpan(const Span& span, const QString& query, bool activeBlock,
+                            RenderLine& out) const;
+
+    // keyEvent phases, each returning true when it fully handled the key (so the
+    // caller stops). They run in order: rewind picker, interactive controls, then
+    // scroll keys; an unhandled key bubbles to ZWidget::keyEvent.
+    bool handleRewindKey(Tui::ZKeyEvent* event);
+    bool handleInteractiveKey(Tui::ZKeyEvent* event);
+    // Backspace / printable-text editing of the focused freeform field.
+    bool handleFreeformKey(Tui::ZKeyEvent* event, const Control& active);
+    bool handleScrollKey(Tui::ZKeyEvent* event);
+
+    // paintEvent phases: the scrolled content rows, the rewind-picker caret/hint,
+    // and the right-edge scroll indicator.
+    void paintContentRows(Tui::ZPainter* painter, int height, int contentWidth) const;
+    void paintRewindMarker(Tui::ZPainter* painter, int height, int contentWidth,
+                           const Tui::ZColor& bg) const;
+    void paintScrollIndicator(Tui::ZPainter* painter, int height, int width, int lineCount,
+                              const Tui::ZColor& bg) const;
 
     // Interactive helpers (active only when m_controls is non-empty).
     bool interactive() const { return !m_controls.isEmpty(); }

@@ -370,6 +370,23 @@ void emitReasoning(QVector<RenderLine>& dst, const be::BlockRecord& b, int width
     addBlank(dst);
 }
 
+// Web/file search hits: bold accent title, muted url, prose snippet per hit.
+void emitSearchResults(QVector<RenderLine>& body, const QVariantList& hits, int inner) {
+    for (const QVariant& hv : hits) {
+        const QVariantMap hit = hv.toMap();
+        Style title;
+        title.fg = tpal::accent();
+        title.attr |= ZTextAttribute::Bold;
+        emitProse(body, hit.value(QStringLiteral("title")).toString(), inner, title);
+        Style url;
+        url.fg = tpal::muted();
+        emitMono(body, hit.value(QStringLiteral("url")).toString(), inner, url);
+        Style snip;
+        snip.fg = tpal::fg();
+        emitProse(body, hit.value(QStringLiteral("snippet")).toString(), inner, snip);
+    }
+}
+
 void emitToolBody(QVector<RenderLine>& body, const QVariantMap& view, int inner) {
     const QString detail = view.value(QStringLiteral("detailKind")).toString();
     if (detail == QStringLiteral("ansi-stream") || detail == QStringLiteral("pty")) {
@@ -388,20 +405,7 @@ void emitToolBody(QVector<RenderLine>& body, const QVariantMap& view, int inner)
         return;
     }
     if (detail == QStringLiteral("search-results")) {
-        const QVariantList hits = view.value(QStringLiteral("hits")).toList();
-        for (const QVariant& hv : hits) {
-            const QVariantMap hit = hv.toMap();
-            Style title;
-            title.fg = tpal::accent();
-            title.attr |= ZTextAttribute::Bold;
-            emitProse(body, hit.value(QStringLiteral("title")).toString(), inner, title);
-            Style url;
-            url.fg = tpal::muted();
-            emitMono(body, hit.value(QStringLiteral("url")).toString(), inner, url);
-            Style snip;
-            snip.fg = tpal::fg();
-            emitProse(body, hit.value(QStringLiteral("snippet")).toString(), inner, snip);
-        }
+        emitSearchResults(body, view.value(QStringLiteral("hits")).toList(), inner);
         return;
     }
     if (detail == QStringLiteral("image") || detail == QStringLiteral("generated-image")) {
@@ -471,34 +475,45 @@ Style controlStyle(bool active, const ZColor& toneFg) {
     return s;
 }
 
-void emitToolCall(QVector<RenderLine>& dst, QVector<Control>& controls, const be::BlockRecord& b,
-                  int width, const AnswerDraft& draft, int activeControl, int& controlSeq) {
-    const QVariantMap view = be::buildToolView(b.metadata);
-    const int inner = qMax(1, width - 2);
+// The per-build inputs threaded to every block emitter: the content width plus
+// the interactive-answer state. `controlSeq` is the running global control
+// counter and persists across blocks, so BuildCtx is passed by reference.
+struct BuildCtx {
+    int width;
+    const AnswerDraft& draft;
+    int activeControl;
+    int controlSeq = 0;
+};
+
+// State for the interactive-control emitters of one tool card: the in-progress
+// draft, the focused control index, the running counter, the inner content width,
+// the call/request ids stamped onto every emitted control, and the (body-row,
+// control) pairs the caller maps to absolute dst rows after framing.
+struct ControlBuilder {
+    const AnswerDraft& draft;
+    int activeControl;
+    int& controlSeq;
+    int inner;
+    QString callId;
+    QString requestId;
+    QVector<QPair<int, Control>>& pending;
+
+    void add(int bodyRow, Control c) {
+        c.callId = callId;
+        c.requestId = requestId;
+        pending.push_back({bodyRow, c});
+    }
+};
+
+// Tool-card header row: <status glyph> <tone glyph> <bold title> [dim subtitle]
+// [dim duration].
+RenderLine toolHeader(const QVariantMap& view, const ZColor& statusColor) {
     const QString status = view.value(QStringLiteral("status")).toString();
     const QString tone = view.value(QStringLiteral("tone")).toString();
     const QString title = view.value(QStringLiteral("title")).toString();
     const QString subtitle = view.value(QStringLiteral("subtitle")).toString();
     const QString duration = view.value(QStringLiteral("durationLabel")).toString();
-    const bool awaitingApproval = view.value(QStringLiteral("awaitingApproval")).toBool();
-    const QString variant = view.value(QStringLiteral("variant")).toString();
-    const QString callId = view.value(QStringLiteral("callId")).toString();
-    const QString requestId = view.value(QStringLiteral("requestId")).toString();
-    const bool answered = view.value(QStringLiteral("answered")).toBool();
 
-    ZColor barColor = tpal::toneColor(tone);
-    ZColor statusColor = tpal::statusOk();
-    if (status == QStringLiteral("running")) {
-        statusColor = tpal::statusRunning();
-        barColor = tpal::statusRunning();
-    } else if (status == QStringLiteral("error")) {
-        statusColor = tpal::statusError();
-        barColor = tpal::statusError();
-    }
-
-    QVector<RenderLine> body;
-
-    // Header: <status glyph> <tone glyph> <bold title>  <dim subtitle>  <dim duration>
     Style st;
     st.fg = statusColor;
     Style tn;
@@ -521,163 +536,215 @@ void emitToolCall(QVector<RenderLine>& dst, QVector<Control>& controls, const be
     if (!duration.isEmpty()) {
         header.push_back(mkSpan(QStringLiteral("  ") + duration, dim));
     }
-    body.push_back(header);
+    return header;
+}
 
+// Awaiting-approval controls: a warn command line + Approve / Deny / [Allow
+// permanently] buttons painted on one row.
+void emitApprovalBar(QVector<RenderLine>& body, const be::BlockRecord& b, const QVariantMap& view,
+                     ControlBuilder& cb) {
+    Style warn;
+    warn.fg = tpal::warn();
+    warn.attr |= ZTextAttribute::Bold;
+    QString cmd = view.value(QStringLiteral("approvalCommand")).toString();
+    if (cmd.isEmpty()) {
+        cmd = view.value(QStringLiteral("subtitle")).toString();
+    }
+    emitMono(body, QObject::tr("\u26a0 Approve: ") + cmd, cb.inner, warn);
+
+    const bool allowPermanent = b.metadata.value(QStringLiteral("allowPermanent")).toBool();
+    Style sp;
+    RenderLine row;
+    const int rowIdx = static_cast<int>(body.size());
+    const auto button = [&](const QString& label, Control::Kind kind, const ZColor& toneFg) {
+        const int gi = cb.controlSeq++;
+        row.push_back(mkSpan(QStringLiteral(" "), sp));
+        row.push_back(mkSpan(QStringLiteral(" ") + label + QStringLiteral(" "),
+                             controlStyle(gi == cb.activeControl, toneFg)));
+        Control c;
+        c.kind = kind;
+        cb.add(rowIdx, c);
+    };
+    button(QObject::tr("Approve"), Control::Kind::Approve, tpal::statusOk());
+    button(QObject::tr("Deny"), Control::Kind::Deny, tpal::statusError());
+    if (allowPermanent) {
+        button(QObject::tr("Allow permanently"), Control::Kind::Permanent, tpal::warn());
+    }
+    body.push_back(row);
+}
+
+// The radio/checkbox rows for one clarify question (one control per choice).
+void emitClarifyChoices(QVector<RenderLine>& body, const QVariantMap& q, const QString& qid,
+                        ControlBuilder& cb) {
+    const QStringList choices = q.value(QStringLiteral("choices")).toStringList();
+    const bool multi = q.value(QStringLiteral("multiSelect")).toBool();
+    const QStringList sel = cb.draft.selected.value(qid);
+    for (int ci = 0; ci < choices.size(); ++ci) {
+        const QString& label = choices.at(ci);
+        const bool on = sel.contains(label);
+        const QString box = multi ? (on ? QStringLiteral("[x] ") : QStringLiteral("[ ] "))
+                                  : (on ? QStringLiteral("(o) ") : QStringLiteral("( ) "));
+        const int gi = cb.controlSeq++;
+        const Style s = controlStyle(gi == cb.activeControl, on ? tpal::accent() : tpal::fg());
+        const int rowIdx = static_cast<int>(body.size());
+        body.push_back(RenderLine{mkSpan(QStringLiteral("  ") + box + label, s)});
+        Control c;
+        c.kind = Control::Kind::Choice;
+        c.questionId = qid;
+        c.choiceIndex = ci;
+        c.multi = multi;
+        c.choiceLabel = label;
+        cb.add(rowIdx, c);
+    }
+}
+
+// The freeform reply field for one clarify question: a live caret when focused,
+// the typed text otherwise, or an italic placeholder when empty and unfocused.
+void emitClarifyFreeform(QVector<RenderLine>& body, const QString& qid, bool choicesEmpty,
+                         ControlBuilder& cb) {
+    const QString typed = cb.draft.freeform.value(qid);
+    const int gi = cb.controlSeq++;
+    const bool active = gi == cb.activeControl;
+    Style s = controlStyle(active, tpal::fg());
+    const int rowIdx = static_cast<int>(body.size());
+    if (typed.isEmpty() && !active) {
+        Style ph;
+        ph.fg = tpal::muted();
+        ph.attr |= ZTextAttribute::Italic;
+        const QString placeholder =
+            choicesEmpty ? QObject::tr("Type a reply\u2026") : QObject::tr("Or type a reply\u2026");
+        body.push_back(RenderLine{mkSpan(QStringLiteral("  \u203a "), s), mkSpan(placeholder, ph)});
+    } else {
+        const QString text = typed + (active ? QStringLiteral("\u2588") : QString());
+        body.push_back(RenderLine{mkSpan(QStringLiteral("  \u203a ") + text, s)});
+    }
+    Control c;
+    c.kind = Control::Kind::Freeform;
+    c.questionId = qid;
+    cb.add(rowIdx, c);
+}
+
+// One clarify question: bold prompt, optional multi-select hint, choices, and an
+// optional freeform field.
+void emitClarifyQuestion(QVector<RenderLine>& body, const QVariantMap& q, int qi,
+                         ControlBuilder& cb) {
+    const QString qid = clarifyQuestionId(q, qi);
+    const QStringList choices = q.value(QStringLiteral("choices")).toStringList();
+    const bool multi = q.value(QStringLiteral("multiSelect")).toBool();
+    const QVariant af = q.value(QStringLiteral("allowFreeform"));
+    const bool allowFreeform = af.isValid() ? af.toBool() : choices.isEmpty();
+
+    Style prompt;
+    prompt.fg = tpal::fg();
+    prompt.attr |= ZTextAttribute::Bold;
+    emitProse(body, q.value(QStringLiteral("prompt")).toString(), cb.inner, prompt);
+    if (multi) {
+        Style hint;
+        hint.fg = tpal::muted();
+        hint.attr |= ZTextAttribute::Italic;
+        body.push_back(RenderLine{mkSpan(QObject::tr("  (select all that apply)"), hint)});
+    }
+
+    emitClarifyChoices(body, q, qid, cb);
+    if (allowFreeform) {
+        emitClarifyFreeform(body, qid, choices.isEmpty(), cb);
+    }
+}
+
+// The unanswered clarify form: every question followed by a Submit button.
+void emitClarifyForm(QVector<RenderLine>& body, const be::BlockRecord& b, ControlBuilder& cb) {
+    const QVariantList questions = clarifyQuestions(b.metadata);
+    for (int qi = 0; qi < questions.size(); ++qi) {
+        emitClarifyQuestion(body, questions.at(qi).toMap(), qi, cb);
+    }
+
+    const int gi = cb.controlSeq++;
+    Style sp;
+    const int rowIdx = static_cast<int>(body.size());
+    RenderLine row{mkSpan(QStringLiteral("  "), sp),
+                   mkSpan(QStringLiteral(" ") + QObject::tr("Submit") + QStringLiteral(" "),
+                          controlStyle(gi == cb.activeControl, tpal::statusOk()))};
+    body.push_back(row);
+    Control c;
+    c.kind = Control::Kind::Submit;
+    cb.add(rowIdx, c);
+}
+
+// The resolved clarify summary: one checkmark row per answered question.
+void emitClarifyResolved(QVector<RenderLine>& body, const be::BlockRecord& b) {
+    const QVariantList questions = clarifyQuestions(b.metadata);
+    const QVariantMap answers = b.metadata.value(QStringLiteral("answers")).toMap();
+    for (int qi = 0; qi < questions.size(); ++qi) {
+        const QVariantMap q = questions.at(qi).toMap();
+        const QString qid = clarifyQuestionId(q, qi);
+        const QVariant val = answers.value(qid);
+        if (!val.isValid()) {
+            continue;
+        }
+        const QString shown = val.typeId() == QMetaType::QVariantList
+                                  ? val.toStringList().join(QStringLiteral(", "))
+                                  : val.toString();
+        if (shown.isEmpty()) {
+            continue;
+        }
+        Style ok;
+        ok.fg = tpal::statusOk();
+        Style promptStyle;
+        promptStyle.fg = tpal::muted();
+        Style val2;
+        val2.fg = tpal::fg();
+        val2.attr |= ZTextAttribute::Bold;
+        body.push_back(RenderLine{
+            mkSpan(QStringLiteral("\u2713 "), ok),
+            mkSpan(q.value(QStringLiteral("prompt")).toString() + QStringLiteral(": "),
+                   promptStyle),
+            mkSpan(shown, val2),
+        });
+    }
+}
+
+void emitToolCall(QVector<RenderLine>& dst, QVector<Control>& controls, const be::BlockRecord& b,
+                  BuildCtx& ctx) {
+    const QVariantMap view = be::buildToolView(b.metadata);
+    const int inner = qMax(1, ctx.width - 2);
+    const QString status = view.value(QStringLiteral("status")).toString();
+    const QString tone = view.value(QStringLiteral("tone")).toString();
+    const bool awaitingApproval = view.value(QStringLiteral("awaitingApproval")).toBool();
+    const QString variant = view.value(QStringLiteral("variant")).toString();
+    const bool answered = view.value(QStringLiteral("answered")).toBool();
+
+    ZColor barColor = tpal::toneColor(tone);
+    ZColor statusColor = tpal::statusOk();
+    if (status == QStringLiteral("running")) {
+        statusColor = tpal::statusRunning();
+        barColor = tpal::statusRunning();
+    } else if (status == QStringLiteral("error")) {
+        statusColor = tpal::statusError();
+        barColor = tpal::statusError();
+    }
+
+    QVector<RenderLine> body;
+    body.push_back(toolHeader(view, statusColor));
     emitToolBody(body, view, inner);
 
     // Pending interactive controls, recorded as (body-row, partially-filled
     // Control). After emitCard maps body rows to absolute dst rows we patch each
     // control's `line` and append it to the output controls list.
     QVector<QPair<int, Control>> pending;
-    const auto addControl = [&](int bodyRow, Control c) {
-        c.callId = callId;
-        c.requestId = requestId;
-        pending.push_back({bodyRow, c});
-    };
+    ControlBuilder cb{ctx.draft,
+                      ctx.activeControl,
+                      ctx.controlSeq,
+                      inner,
+                      view.value(QStringLiteral("callId")).toString(),
+                      view.value(QStringLiteral("requestId")).toString(),
+                      pending};
 
     if (awaitingApproval) {
-        Style warn;
-        warn.fg = tpal::warn();
-        warn.attr |= ZTextAttribute::Bold;
-        QString cmd = view.value(QStringLiteral("approvalCommand")).toString();
-        if (cmd.isEmpty()) {
-            cmd = subtitle;
-        }
-        emitMono(body, QObject::tr("\u26a0 Approve: ") + cmd, inner, warn);
-
-        const bool allowPermanent = b.metadata.value(QStringLiteral("allowPermanent")).toBool();
-        Style sp;
-        RenderLine row;
-        const int rowIdx = static_cast<int>(body.size());
-        const auto button = [&](const QString& label, Control::Kind kind, const ZColor& toneFg) {
-            const int gi = controlSeq++;
-            row.push_back(mkSpan(QStringLiteral(" "), sp));
-            row.push_back(mkSpan(QStringLiteral(" ") + label + QStringLiteral(" "),
-                                 controlStyle(gi == activeControl, toneFg)));
-            Control c;
-            c.kind = kind;
-            addControl(rowIdx, c);
-        };
-        button(QObject::tr("Approve"), Control::Kind::Approve, tpal::statusOk());
-        button(QObject::tr("Deny"), Control::Kind::Deny, tpal::statusError());
-        if (allowPermanent) {
-            button(QObject::tr("Allow permanently"), Control::Kind::Permanent, tpal::warn());
-        }
-        body.push_back(row);
+        emitApprovalBar(body, b, view, cb);
     } else if (variant == QStringLiteral("clarify") && !answered) {
-        const QVariantList questions = clarifyQuestions(b.metadata);
-        for (int qi = 0; qi < questions.size(); ++qi) {
-            const QVariantMap q = questions.at(qi).toMap();
-            const QString qid = clarifyQuestionId(q, qi);
-            const QStringList choices = q.value(QStringLiteral("choices")).toStringList();
-            const bool multi = q.value(QStringLiteral("multiSelect")).toBool();
-            const QVariant af = q.value(QStringLiteral("allowFreeform"));
-            const bool allowFreeform = af.isValid() ? af.toBool() : choices.isEmpty();
-
-            Style prompt;
-            prompt.fg = tpal::fg();
-            prompt.attr |= ZTextAttribute::Bold;
-            emitProse(body, q.value(QStringLiteral("prompt")).toString(), inner, prompt);
-            if (multi) {
-                Style hint;
-                hint.fg = tpal::muted();
-                hint.attr |= ZTextAttribute::Italic;
-                body.push_back(RenderLine{mkSpan(QObject::tr("  (select all that apply)"), hint)});
-            }
-
-            const QStringList sel = draft.selected.value(qid);
-            for (int ci = 0; ci < choices.size(); ++ci) {
-                const QString& label = choices.at(ci);
-                const bool on = sel.contains(label);
-                const QString box = multi ? (on ? QStringLiteral("[x] ") : QStringLiteral("[ ] "))
-                                          : (on ? QStringLiteral("(o) ") : QStringLiteral("( ) "));
-                const int gi = controlSeq++;
-                const Style s = controlStyle(gi == activeControl, on ? tpal::accent() : tpal::fg());
-                const int rowIdx = static_cast<int>(body.size());
-                body.push_back(RenderLine{mkSpan(QStringLiteral("  ") + box + label, s)});
-                Control c;
-                c.kind = Control::Kind::Choice;
-                c.questionId = qid;
-                c.choiceIndex = ci;
-                c.multi = multi;
-                c.choiceLabel = label;
-                addControl(rowIdx, c);
-            }
-
-            if (allowFreeform) {
-                const QString typed = draft.freeform.value(qid);
-                const int gi = controlSeq++;
-                const bool active = gi == activeControl;
-                Style s = controlStyle(active, tpal::fg());
-                QString text;
-                if (typed.isEmpty() && !active) {
-                    Style ph;
-                    ph.fg = tpal::muted();
-                    ph.attr |= ZTextAttribute::Italic;
-                    const QString placeholder = choices.isEmpty()
-                                                    ? QObject::tr("Type a reply\u2026")
-                                                    : QObject::tr("Or type a reply\u2026");
-                    const int rowIdx = static_cast<int>(body.size());
-                    body.push_back(RenderLine{mkSpan(QStringLiteral("  \u203a "), s),
-                                              mkSpan(placeholder, ph)});
-                    Control c;
-                    c.kind = Control::Kind::Freeform;
-                    c.questionId = qid;
-                    addControl(rowIdx, c);
-                } else {
-                    text = typed + (active ? QStringLiteral("\u2588") : QString());
-                    const int rowIdx = static_cast<int>(body.size());
-                    body.push_back(RenderLine{mkSpan(QStringLiteral("  \u203a ") + text, s)});
-                    Control c;
-                    c.kind = Control::Kind::Freeform;
-                    c.questionId = qid;
-                    addControl(rowIdx, c);
-                }
-            }
-        }
-
-        // Submit button.
-        const int gi = controlSeq++;
-        Style sp;
-        const int rowIdx = static_cast<int>(body.size());
-        RenderLine row{mkSpan(QStringLiteral("  "), sp),
-                       mkSpan(QStringLiteral(" ") + QObject::tr("Submit") + QStringLiteral(" "),
-                              controlStyle(gi == activeControl, tpal::statusOk()))};
-        body.push_back(row);
-        Control c;
-        c.kind = Control::Kind::Submit;
-        addControl(rowIdx, c);
+        emitClarifyForm(body, b, cb);
     } else if (variant == QStringLiteral("clarify") && answered) {
-        // Resolved summary: one ✓ row per answered question.
-        const QVariantList questions = clarifyQuestions(b.metadata);
-        const QVariantMap answers = b.metadata.value(QStringLiteral("answers")).toMap();
-        for (int qi = 0; qi < questions.size(); ++qi) {
-            const QVariantMap q = questions.at(qi).toMap();
-            const QString qid = clarifyQuestionId(q, qi);
-            const QVariant val = answers.value(qid);
-            if (!val.isValid()) {
-                continue;
-            }
-            const QString shown = val.typeId() == QMetaType::QVariantList
-                                      ? val.toStringList().join(QStringLiteral(", "))
-                                      : val.toString();
-            if (shown.isEmpty()) {
-                continue;
-            }
-            Style ok;
-            ok.fg = tpal::statusOk();
-            Style promptStyle;
-            promptStyle.fg = tpal::muted();
-            Style val2;
-            val2.fg = tpal::fg();
-            val2.attr |= ZTextAttribute::Bold;
-            body.push_back(RenderLine{
-                mkSpan(QStringLiteral("\u2713 "), ok),
-                mkSpan(q.value(QStringLiteral("prompt")).toString() + QStringLiteral(": "),
-                       promptStyle),
-                mkSpan(shown, val2),
-            });
-        }
+        emitClarifyResolved(body, b);
     }
 
     const int dstStart = static_cast<int>(dst.size());
@@ -817,6 +884,124 @@ void emitParagraph(QVector<RenderLine>& dst, const be::BlockRecord& b, int width
     emitProse(dst, b.markdown(), width, base);
 }
 
+// The concatenated markdown of every (non-tombstoned) block tagged with
+// `messageId`, used to seed an anchor for restore / edit-composer prefill.
+QString messageTextFor(const be::DocumentStore& doc, const QString& id) {
+    QStringList parts;
+    for (const be::BlockRecord& mb : doc.blocks()) {
+        if (!mb.tombstoned && mb.messageId == id) {
+            parts << mb.markdown();
+        }
+    }
+    return parts.join(QStringLiteral("\n\n"));
+}
+
+// Carries the message/paragraph transition state across the block loop so headers,
+// turn gaps, and paragraph margins land exactly where the GUI puts them.
+struct FlowState {
+    QString prevMessageId;
+    be::MessageRole prevRole = be::MessageRole::None;
+    be::BlockType prevType = be::BlockType::Unknown;
+    bool first = true;
+
+    // Emit the inter-block separators before block `b`: a message banner (and
+    // rewind anchor for user messages) when entering a new message, or a blank
+    // row between consecutive paragraphs of one message. Advances the state.
+    void emitSeparators(LayoutResult& result, const be::DocumentStore& doc,
+                        const be::BlockRecord& b, int width) {
+        const bool msgChanged = (b.messageId != prevMessageId) || (b.role != prevRole);
+        if (b.role != be::MessageRole::None && msgChanged && !b.messageId.isEmpty()) {
+            emitMessageHeader(result.lines, b.role, first, width);
+            // A user message header is a rewind anchor: record its banner row,
+            // routing id, and own text for restore / edit prefill.
+            if (b.role == be::MessageRole::User) {
+                result.anchors.push_back(Anchor{static_cast<int>(result.lines.size()) - 1,
+                                                b.messageId, messageTextFor(doc, b.messageId)});
+            }
+        } else if (!msgChanged && b.type == be::BlockType::Paragraph &&
+                   prevType == be::BlockType::Paragraph) {
+            // Consecutive paragraphs in one message render with a blank row between
+            // them (mirrors the GUI's paragraph margins), so a multiline composer
+            // message keeps the blank lines the user typed (markdown collapses each
+            // run of blank lines into a single paragraph break).
+            addBlank(result.lines);
+        }
+        prevMessageId = b.messageId;
+        prevRole = b.role;
+        prevType = b.type;
+        first = false;
+    }
+};
+
+// Render one document block's rows (and any interactive controls) per its type,
+// the TUI analog of the GUI's QML block-delegate switch.
+void emitBlock(QVector<RenderLine>& out, QVector<Control>& controls, const be::BlockRecord& b,
+               BuildCtx& ctx) {
+    const int W = ctx.width;
+    switch (b.type) {
+    case be::BlockType::Reasoning:
+        emitReasoning(out, b, W);
+        break;
+    case be::BlockType::ToolCall:
+        emitToolCall(out, controls, b, ctx);
+        break;
+    case be::BlockType::Content:
+        emitContent(out, b, W);
+        break;
+    case be::BlockType::CodeFence:
+        emitCodeFence(out, b, W);
+        break;
+    case be::BlockType::Heading: {
+        Style s;
+        s.fg = tpal::accent();
+        s.attr |= ZTextAttribute::Bold;
+        emitProse(out, headingText(b), W, s);
+        break;
+    }
+    case be::BlockType::BulletListItem:
+    case be::BlockType::OrderedListItem:
+    case be::BlockType::TaskListItem:
+        emitList(out, b, W);
+        break;
+    case be::BlockType::Quote:
+        emitQuote(out, b, W);
+        break;
+    case be::BlockType::Table:
+        emitTable(out, b, W);
+        break;
+    case be::BlockType::HorizontalRule: {
+        Style s;
+        s.fg = tpal::muted();
+        out.push_back(RenderLine{mkSpan(QString(W, QChar(0x2500)), s)});
+        break;
+    }
+    case be::BlockType::Image: {
+        Style s;
+        s.fg = tpal::muted();
+        emitMono(out, QObject::tr("[image] ") + b.markdown().trimmed(), W, s);
+        break;
+    }
+    case be::BlockType::Math: {
+        Style s;
+        s.fg = tpal::muted();
+        emitMono(out, QObject::tr("[math] ") + be::fencedBodyOf(b.markdown()).trimmed(), W, s);
+        break;
+    }
+    case be::BlockType::Paragraph:
+        emitParagraph(out, b, W);
+        break;
+    default: {
+        const QString raw = b.markdown().trimmed();
+        if (!raw.isEmpty()) {
+            Style s;
+            s.fg = tpal::muted();
+            emitMono(out, raw, W, s);
+        }
+        break;
+    }
+    }
+}
+
 } // namespace
 
 QVariantMap collectClarifyAnswers(const QVariantMap& toolMetadata, const AnswerDraft& draft) {
@@ -859,27 +1044,9 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore& doc, int width,
     LayoutResult result;
     QVector<RenderLine>& out = result.lines;
     QVector<Control>& controls = result.controls;
-    QVector<Anchor>& anchors = result.anchors;
-    int controlSeq = 0;
-    const int W = qMax(20, width);
+    BuildCtx ctx{qMax(20, width), draft, activeControl, 0};
 
-    // The concatenated text of every (non-tombstoned) block tagged with messageId,
-    // used to seed an anchor for restore / edit-composer prefill.
-    const auto messageText = [&](const QString& id) {
-        QStringList parts;
-        for (const be::BlockRecord& mb : doc.blocks()) {
-            if (!mb.tombstoned && mb.messageId == id) {
-                parts << mb.markdown();
-            }
-        }
-        return parts.join(QStringLiteral("\n\n"));
-    };
-
-    QString prevMessageId;
-    be::MessageRole prevRole = be::MessageRole::None;
-    be::BlockType prevType = be::BlockType::Unknown;
-    bool first = true;
-
+    FlowState fs;
     const QVector<be::BlockRecord>& blocks = doc.blocks();
     result.blockFirstLine.fill(-1, blocks.size());
     // Tag every emitted row with its source block as we go (cheap parallel append).
@@ -894,95 +1061,13 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore& doc, int width,
             continue;
         }
 
-        // Draw a message banner when entering a new user/assistant message.
-        const bool msgChanged = (b.messageId != prevMessageId) || (b.role != prevRole);
-        if (b.role != be::MessageRole::None && msgChanged && !b.messageId.isEmpty()) {
-            emitMessageHeader(out, b.role, first, W);
-            // A user message header is a rewind anchor: record its banner row,
-            // routing id, and own text for restore / edit prefill.
-            if (b.role == be::MessageRole::User) {
-                anchors.push_back(Anchor{static_cast<int>(out.size()) - 1, b.messageId,
-                                         messageText(b.messageId)});
-            }
-        } else if (!msgChanged && b.type == be::BlockType::Paragraph &&
-                   prevType == be::BlockType::Paragraph) {
-            // Consecutive paragraphs in one message render with a blank row between
-            // them (mirrors the GUI's paragraph margins), so a multiline composer
-            // message keeps the blank lines the user typed (markdown collapses each
-            // run of blank lines into a single paragraph break).
-            addBlank(out);
-        }
-        prevMessageId = b.messageId;
-        prevRole = b.role;
-        prevType = b.type;
-        first = false;
+        fs.emitSeparators(result, doc, b, ctx.width);
 
         // First render row attributable to this block's body (after any header /
         // turn-gap emitted above) - the anchor a find match scrolls to.
         result.blockFirstLine[bi] = static_cast<int>(out.size());
 
-        switch (b.type) {
-        case be::BlockType::Reasoning:
-            emitReasoning(out, b, W);
-            break;
-        case be::BlockType::ToolCall:
-            emitToolCall(out, controls, b, W, draft, activeControl, controlSeq);
-            break;
-        case be::BlockType::Content:
-            emitContent(out, b, W);
-            break;
-        case be::BlockType::CodeFence:
-            emitCodeFence(out, b, W);
-            break;
-        case be::BlockType::Heading: {
-            Style s;
-            s.fg = tpal::accent();
-            s.attr |= ZTextAttribute::Bold;
-            emitProse(out, headingText(b), W, s);
-            break;
-        }
-        case be::BlockType::BulletListItem:
-        case be::BlockType::OrderedListItem:
-        case be::BlockType::TaskListItem:
-            emitList(out, b, W);
-            break;
-        case be::BlockType::Quote:
-            emitQuote(out, b, W);
-            break;
-        case be::BlockType::Table:
-            emitTable(out, b, W);
-            break;
-        case be::BlockType::HorizontalRule: {
-            Style s;
-            s.fg = tpal::muted();
-            out.push_back(RenderLine{mkSpan(QString(W, QChar(0x2500)), s)});
-            break;
-        }
-        case be::BlockType::Image: {
-            Style s;
-            s.fg = tpal::muted();
-            emitMono(out, QObject::tr("[image] ") + b.markdown().trimmed(), W, s);
-            break;
-        }
-        case be::BlockType::Math: {
-            Style s;
-            s.fg = tpal::muted();
-            emitMono(out, QObject::tr("[math] ") + be::fencedBodyOf(b.markdown()).trimmed(), W, s);
-            break;
-        }
-        case be::BlockType::Paragraph:
-            emitParagraph(out, b, W);
-            break;
-        default: {
-            const QString raw = b.markdown().trimmed();
-            if (!raw.isEmpty()) {
-                Style s;
-                s.fg = tpal::muted();
-                emitMono(out, raw, W, s);
-            }
-            break;
-        }
-        }
+        emitBlock(out, controls, b, ctx);
 
         tagLines(bi);
     }
