@@ -13,6 +13,7 @@
 #include "core/selection.h"
 #include "core/transcript_search.h"
 
+#include <optional>
 #include <QColor>
 #include <QObject>
 #include <QSizeF>
@@ -282,6 +283,25 @@ private:
         QVector<QVector<TableCellProjection>> grid;
     };
     const TableCellMap* tableCellMap(qulonglong blockId) const;
+    // Resolve one flattened table cell (header = rowIndex 0, body = rowIndex-1),
+    // or nullptr if the block is not a (cached) table or the indices are out of
+    // range. Folds the shared bounds-check prologue of the two table invokables.
+    const TableCellProjection* tableCell(qulonglong blockId, int rowIndex, int col) const;
+
+    // A BlockRecord paired with its live projection - the common prologue of
+    // every selection invokable. nullopt mirrors the old `if (!block) return;`.
+    struct RowProjection {
+        const be::BlockRecord* block;
+        be::BlockProjection projection;
+
+        // Build a document selection point at (row, offset). When isRaw the
+        // offset is a raw markdown offset (visual derived via rawToVisual);
+        // otherwise it is a visual offset (raw derived via visualToRaw). The
+        // clamp matches the per-site qBound and is a no-op for the range-based
+        // callers, whose offsets are already in bounds.
+        be::DocPos docPos(qsizetype row, qsizetype offset, bool isRaw) const;
+    };
+    std::optional<RowProjection> projectRow(qsizetype row) const;
 
     void resetModel();
     void rebuildHeightIndex();
@@ -290,6 +310,19 @@ private:
     void afterStructuralRewind();
     void performSplit(qulonglong blockId, int rawOffset, bool trimBoundary);
     void applyListIndent(qulonglong blockId, int deltaUnits);
+    // Append `text` (trimmed; no-op when empty) as a fresh message block of the
+    // given role, then reset/reflow/persist. Single source for appendUserMessage
+    // and appendSystemMessage.
+    void appendMessage(be::MessageRole role, const QString& text);
+    // Structural-command tails shared by the block-mutating invokables. push
+    // records the store transition from `before`; commitStructuralReset is the
+    // no-caret shape (push + drop selection + reset + flush); commitCaretEdit
+    // additionally parks the active caret at (caretBlock, caretCursor), emits the
+    // id/offset changes, and requests editor focus there.
+    void pushStructuralSnapshot(QVector<be::BlockRecord>&& before);
+    void commitStructuralReset(QVector<be::BlockRecord>&& before);
+    void commitCaretEdit(QVector<be::BlockRecord>&& before, be::BlockId caretBlock,
+                         int caretCursor);
     void scheduleFlush();
     void clearActiveSelection();
     void syncActiveBlockAfterUndo();
