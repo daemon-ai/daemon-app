@@ -18,7 +18,7 @@ ColumnLayout {
     SettingRow {
         label: qsTr("Version")
         Text {
-            text: Status ? Status.appVersion : "v0.1.0"
+            text: Status ? Status.appVersion : ""
             font.family: FontIcons.mono; font.pixelSize: 13; color: Theme.textMuted
         }
     }

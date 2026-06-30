@@ -2,7 +2,7 @@
   "updates": {
     "daemon-app": {
       "open-source": {
-        "latest-version": "0.1.0",
+        "latest-version": "0.0.1",
         "release-notes": "Initial scaffold.",
         "download-url": "",
         "changelog-url": ""

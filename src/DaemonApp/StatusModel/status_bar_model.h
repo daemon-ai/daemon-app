@@ -161,7 +161,7 @@ private:
     double m_usdCost = 0.0;
     int m_rateRemaining = 0;
     int m_rateLimit = 0;
-    QString m_appVersion = QStringLiteral("v0.1.0");
+    QString m_appVersion;
 
     // Gateway dropdown content (placeholder, seeded in the constructor to match the
     // values the QML GatewayMenu previously hardcoded).

@@ -7,6 +7,9 @@ qt_add_executable(daemon-app
     application.cpp
 )
 
+# main.cpp includes the generated daemon_app_version.h; depend on the target that refreshes it.
+add_dependencies(daemon-app daemon_app_version_header)
+
 qt_add_qml_module(daemon-app
     URI DaemonApp.App
     VERSION 1.0
@@ -21,6 +24,7 @@ target_link_libraries(daemon-app
         Qt6::Quick
         Qt6::QuickControls2
         daemon-app::warnings
+        daemon-app::version
         # Core services
         daemon-app::i18n
         daemon-app::persistence

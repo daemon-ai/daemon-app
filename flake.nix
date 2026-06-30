@@ -65,7 +65,7 @@
   };
 
   outputs =
-    { nixpkgs, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, ... }:
+    { self, nixpkgs, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, ... }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -89,6 +89,21 @@
           inherit system;
           overlays = [ ccacheOverlay ];
         };
+
+        # Version: the SemVer base lives in `./VERSION` (the single source CMake reads via
+        # file(STRINGS) into project(VERSION)). The build-metadata id is derived from the flake
+        # source revision (no `.git` in the sandbox), retaining the off-tag / dirty marker like
+        # phosphor: `g<rev>` clean, `g<rev>.dirty` dirty, else a narHash fallback. Passed to CMake as
+        # -DDAEMON_APP_VERSION_STR so daemon_app_version.h bakes in the exact revision.
+        baseVersion = pkgs.lib.strings.trim (builtins.readFile ./VERSION);
+        buildId =
+          if self ? shortRev then
+            "g${self.shortRev}"
+          else if self ? dirtyShortRev then
+            "g${pkgs.lib.removeSuffix "-dirty" self.dirtyShortRev}.dirty"
+          else
+            "nar${builtins.substring 0 8 (pkgs.lib.removePrefix "sha256-" (self.narHash or "sha256-unknown"))}";
+        versionStr = "${baseVersion}+${buildId}";
 
         qtPackages = with pkgs.qt6; [
           qtbase          # Core, Gui, Widgets, Network, Sql
@@ -180,7 +195,7 @@
 
         daemon-app = pkgs.ccacheStdenv.mkDerivation {
           pname = "daemon-app";
-          version = "0.1.0";
+          version = baseVersion;
           src = ./.;
 
           nativeBuildInputs = with pkgs; [
@@ -205,7 +220,7 @@
           # wrapQtAppsHook adds its lib/qml to the wrapped app's import path.
           buildInputs = qtPackages ++ [ pkgs.tinyxml-2 qmltermwidget-qt6 ];
 
-          cmakeFlags = depFlags;
+          cmakeFlags = depFlags ++ [ "-DDAEMON_APP_VERSION_STR=${versionStr}" ];
         };
 
         # The experimental Tui Widgets TUI frontend (daemon-tui executable),
@@ -214,7 +229,10 @@
         daemon-tui = daemon-app.overrideAttrs (old: {
           pname = "daemon-tui";
           buildInputs = old.buildInputs ++ tuiDeps;
-          cmakeFlags = depFlags ++ [ "-DDAEMON_APP_TUI=ON" ];
+          cmakeFlags = depFlags ++ [
+            "-DDAEMON_APP_TUI=ON"
+            "-DDAEMON_APP_VERSION_STR=${versionStr}"
+          ];
         });
       in
       {

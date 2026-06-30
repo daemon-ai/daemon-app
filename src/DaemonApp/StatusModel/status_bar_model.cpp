@@ -4,10 +4,18 @@
 #include "status_bar_model.h"
 
 #include <cmath>
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QVariantMap>
 
 StatusBarModel::StatusBarModel(QObject* parent) : QObject(parent) {
+    // The app version is the single build string set on the QCoreApplication by each frontend's
+    // main() (from the generated daemon_app_version.h). Displayed with a leading "v" in the chrome.
+    const QString version = QCoreApplication::applicationVersion();
+    if (!version.isEmpty()) {
+        m_appVersion = QStringLiteral("v") + version;
+    }
+
     // Empty by default: the connection/daemon adapter owns live gateway facts.
     // Mock/demo providers may still set these through the public setters.
     m_gatewayConnectionText = tr("No daemon connection");

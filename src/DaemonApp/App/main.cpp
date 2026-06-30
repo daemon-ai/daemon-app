@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "application.h"
+#include "daemon_app_version.h"
 #include "i18n/localization.h"
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
@@ -191,6 +192,7 @@ int main(int argc, char* argv[]) {
     AppBase app(argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("daemon-app"));
     QCoreApplication::setOrganizationName(QStringLiteral("daemon-app"));
+    QCoreApplication::setApplicationVersion(QStringLiteral(DAEMON_APP_VERSION_STR));
 
     // Pin the Controls style to Basic: our kit (DaemonApp.Controls) restyles
     // controls via theme tokens, so we want the least-opinionated base style

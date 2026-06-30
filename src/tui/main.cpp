@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
+#include "daemon_app_version.h"
 #include "i18n/localization.h"
 #include "mouse_terminal.h"
 #include "root_widget.h"
@@ -320,6 +321,7 @@ int main(int argc, char* argv[]) {
     QCoreApplication app(argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("daemon-tui"));
     QCoreApplication::setOrganizationName(QStringLiteral("daemon-app"));
+    QCoreApplication::setApplicationVersion(QStringLiteral(DAEMON_APP_VERSION_STR));
 
     // Honor the theme the GUI persisted (shared QSettings file) before any widget
     // builds its palette. The TUI's app name differs (daemon-tui), so the lookup

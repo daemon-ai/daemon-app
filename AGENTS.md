@@ -24,3 +24,17 @@ Never bypass the pre-commit hook (no `git commit --no-verify`).
   file-wide or with a bare `// NOLINT`.
 - Do NOT hand-edit `src/core/daemon/codec/generated` or `.../vendor`; regenerate from the
   superproject (`just update-codec`).
+
+## Versioning
+
+`VERSION` (repo root, clean SemVer) is the source of truth: CMake reads it live into
+`project(VERSION ...)`, and `cmake/Version.cmake` generates `daemon_app_version.h` with a
+git-enriched string (`X.Y.Z+<n>.g<hash>[.dirty]`; the Nix flake injects `-DDAEMON_APP_VERSION_STR`,
+dev builds use `git describe`). Both frontends' `main()` call
+`QCoreApplication::setApplicationVersion()`; the status bar and About page read it back. Do NOT
+hand-edit the generated header or hardcode a version anywhere; `packaging/UPDATES.json` is a derived
+mirror.
+
+Bump in the monorepo with `just set-version daemon-app X.Y.Z` (writes `VERSION` and syncs
+`UPDATES.json`); standalone, edit `VERSION` (CMake picks it up) and `UPDATES.json`. `just
+check-version` validates the SemVer.

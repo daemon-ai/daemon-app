@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.21)
 
+# Single source of truth for the SemVer base: the top-level VERSION file (no leading "v"). The
+# git-enriched build string is derived in cmake/Version.cmake (Nix passes DAEMON_APP_VERSION_STR;
+# dev builds use `git describe`).
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" DAEMON_APP_BASE_VERSION LIMIT_COUNT 1)
+string(STRIP "${DAEMON_APP_BASE_VERSION}" DAEMON_APP_BASE_VERSION)
+
 project(daemon-app
-    VERSION 0.1.0
+    VERSION ${DAEMON_APP_BASE_VERSION}
     DESCRIPTION "AI agent chat application (Qt 6 QML/C++)"
     LANGUAGES CXX
 )
@@ -50,6 +56,9 @@ include(CompilerWarnings)
 # Third-party dependencies are vendored by the flake and consumed here
 # (md4qt + earcut for the BlockEditor renderer; QWindowKit etc. on desktop).
 include(Dependencies)
+
+# Generate the git-enriched version header (daemon-app::version) consumed by the frontends' main().
+include(Version)
 
 add_subdirectory(src)
 

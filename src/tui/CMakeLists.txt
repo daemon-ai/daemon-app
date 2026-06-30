@@ -174,6 +174,9 @@ qt_add_executable(daemon-tui
     line_editor.cpp
 )
 
+# main.cpp includes the generated daemon_app_version.h; depend on the target that refreshes it.
+add_dependencies(daemon-tui daemon_app_version_header)
+
 set_target_properties(daemon-tui PROPERTIES AUTOMOC ON)
 
 # Vendored Tui Widgets private headers (ZListView_p.h + its ZWidget_p.h/ListNode_p.h
@@ -226,6 +229,7 @@ target_link_libraries(daemon-tui
         # Memory-inspection seam (seeded mock) + shared view-models.
         daemon-app::memory
         daemon-app::warnings
+        daemon-app::version
 )
 
 include(GNUInstallDirs)
