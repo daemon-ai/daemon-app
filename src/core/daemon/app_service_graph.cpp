@@ -23,6 +23,7 @@
 #include "daemon/daemon_transport.h"
 #include "daemon/daemon_transport_registry.h"
 #include "daemon/node_api_client.h"
+#include "daemon/principal_model.h"
 #include "daemon/repositories.h"
 #include "daemon/subscription_manager.h"
 #include "daemonnet/mock_daemonnet.h"
@@ -101,6 +102,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // SetSessionMode); checkpoints is mock in both.
     graph.checkpoints = new session::MockCheckpointTimeline(owner);
     graph.cache = new DaemonCacheStore(QString(), owner);
+    // The WhoAmI / principal model (advisory capability gating). Always present; populated from
+    // AuthOk in daemon mode and cleared on disconnect.
+    graph.principal = new PrincipalModel(owner);
     auto* daemonConnection = qobject_cast<DaemonConnectionService*>(graph.connection);
     if (daemonConnection != nullptr) {
         // Reuse the connection seam's transport + client so repositories share the single
@@ -166,6 +170,24 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // "Reconnecting..." status) and the heartbeat re-affirming ready, which must not trigger a
         // re-refresh storm; a genuine reconnect (connecting -> ready) does re-sync once, as
         // desired.
+        // Bind the WhoAmI principal from AuthOk and namespace the cache per user BEFORE the ready
+        // refresh storm below, so a user switch never surfaces the prior user's cached rows. AuthOk
+        // precedes "ready" (Health is answered only after auth), so the ordering holds.
+        QObject::connect(
+            graph.nodeApi, &NodeApiClient::authenticated, graph.principal,
+            [principal = graph.principal, cache = graph.cache](const DecodedPrincipalView& view) {
+                principal->setPrincipal(view);
+                cache->setUserNamespace(view.userId);
+            });
+        // Clear the principal when the connection drops to offline (logout / unreachable), so
+        // capability-gated surfaces re-gate closed.
+        QObject::connect(graph.connection, &connection::IConnectionService::stateChanged,
+                         graph.principal, [principal = graph.principal, conn = graph.connection] {
+                             if (conn->state() == QStringLiteral("offline")) {
+                                 principal->clear();
+                             }
+                         });
+
         auto wasReady = std::make_shared<bool>(false);
         QObject::connect(
             graph.connection, &connection::IConnectionService::stateChanged, graph.sessions,

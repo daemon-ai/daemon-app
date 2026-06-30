@@ -35,6 +35,9 @@ CommandRegistry::CommandRegistry(QObject* parent) : QAbstractListModel(parent) {
          tr("Intent \u2192 model rules"), QString()},
         {QStringLiteral("cron"), tr("Open scheduled jobs"), tr("Navigation"),
          tr("Cron-style scheduled jobs"), QString()},
+        // Admin-only (auth6): hidden unless the principal holds access_admin.
+        {QStringLiteral("access"), tr("Open users & access"), tr("Navigation"),
+         tr("Manage users, roles + sessions"), QString(), QStringLiteral("access_admin")},
         {QStringLiteral("theme"), tr("Cycle theme"), tr("Appearance"),
          tr("Light / Dark / Sepia / Midnight"), QStringLiteral("F8")},
         {QStringLiteral("model"), tr("Choose model\u2026"), tr("Composer"),
@@ -111,12 +114,31 @@ void CommandRegistry::search(const QString& query) {
     emit countChanged();
 }
 
+bool CommandRegistry::capabilityAllows(const Command& c) const {
+    if (c.requiresCapability.isEmpty()) {
+        return true; // ungated
+    }
+    // Fail-closed: a gated entry is hidden until a provider explicitly grants the capability.
+    return m_capabilityProvider && m_capabilityProvider(c.requiresCapability);
+}
+
+void CommandRegistry::setCapabilityProvider(std::function<bool(const QString&)> provider) {
+    m_capabilityProvider = std::move(provider);
+    beginResetModel();
+    applyFilter(m_query);
+    endResetModel();
+    emit countChanged();
+}
+
 void CommandRegistry::applyFilter(const QString& query) {
     m_query = query;
     const QString q = query.trimmed().toLower();
     m_filtered.clear();
     for (int i = 0; i < m_all.size(); ++i) {
         const Command& c = m_all.at(i);
+        if (!capabilityAllows(c)) {
+            continue; // hidden: principal lacks the required capability
+        }
         if (q.isEmpty()) {
             m_filtered.append(i);
             continue;

@@ -99,6 +99,17 @@ target_link_libraries(tst_wire_mux
 add_test(NAME tst_wire_mux COMMAND tst_wire_mux)
 set_tests_properties(tst_wire_mux PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_principal_model: the WhoAmI / principal model that drives advisory capability gating -
+# fail-closed defaults, admin vs viewer capability grants (a Viewer sees no admin page), and clear.
+qt_add_executable(tst_principal_model tst_principal_model.cpp)
+target_link_libraries(tst_principal_model
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+)
+add_test(NAME tst_principal_model COMMAND tst_principal_model)
+set_tests_properties(tst_principal_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_node_api_auth: the client SASL layer - SCRAM-SHA-256 against the RFC 7677 worked example
 # (client-first/final proof + server-final v= verification), PLAIN/EXTERNAL single-step shapes, and
 # the mechanism selection policy. Pure (no socket): verifiable without the server (Auth 3).

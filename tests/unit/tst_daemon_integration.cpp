@@ -172,6 +172,52 @@ private slots:
         QVERIFY(cache.cursor(QStringLiteral("schema_version")).isEmpty());
     }
 
+    // Per-user cache namespacing (auth6): switching the user namespace points the cache at a
+    // distinct db file, so one user can never read another user's cached roster/sessions.
+    void perUserCacheNamespacingIsolatesRows() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("daemon_cache.db")));
+        QVERIFY(cache.isOpen());
+        const QString basePath = cache.databasePath();
+
+        // User A's roster.
+        cache.setUserNamespace(QStringLiteral("user-A-opaque-id"));
+        const QString pathA = cache.databasePath();
+        QVERIFY(pathA != basePath); // a distinct, per-user db file
+        daemonapp::daemon::CachedSessionRow a;
+        a.sessionId = QStringLiteral("a-secret-session");
+        a.title = QStringLiteral("A only");
+        a.state = QStringLiteral("Active");
+        a.updatedAtMs = 1;
+        QVERIFY(cache.isOpen());
+        QVERIFY(cache.upsertSession(a));
+        QCOMPARE(cache.sessions().size(), 1);
+
+        // Switch to user B: a different db file, and none of A's rows are visible.
+        cache.setUserNamespace(QStringLiteral("user-B-opaque-id"));
+        const QString pathB = cache.databasePath();
+        QVERIFY(pathB != pathA);
+        QVERIFY(cache.sessions().isEmpty()); // no cross-user leak
+        daemonapp::daemon::CachedSessionRow b;
+        b.sessionId = QStringLiteral("b-session");
+        b.state = QStringLiteral("Active");
+        b.updatedAtMs = 2;
+        QVERIFY(cache.upsertSession(b));
+        QCOMPARE(cache.sessions().size(), 1);
+        QCOMPARE(cache.sessions().first().sessionId, QStringLiteral("b-session"));
+
+        // Back to A: A's row is still there (its own db), B's is not.
+        cache.setUserNamespace(QStringLiteral("user-A-opaque-id"));
+        QCOMPARE(cache.databasePath(), pathA);
+        QCOMPARE(cache.sessions().size(), 1);
+        QCOMPARE(cache.sessions().first().sessionId, QStringLiteral("a-secret-session"));
+
+        // Empty namespace resets to the shared/default db (pre-auth / local-trust).
+        cache.setUserNamespace(QString());
+        QCOMPARE(cache.databasePath(), basePath);
+    }
+
     void cacheStoresAndReadsProfiles() {
         QTemporaryDir dir;
         QVERIFY(dir.isValid());

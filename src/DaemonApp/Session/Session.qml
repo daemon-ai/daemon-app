@@ -107,7 +107,13 @@ Rectangle {
             "routing":   [TabModel.Routing,   qsTr("Routing")],
             "cron":      [TabModel.Cron,      qsTr("Scheduled jobs")],
             "channels":  [TabModel.Channels,  qsTr("Channels")],
+            "access":    [TabModel.UsersAccess, qsTr("Users & Access")],
         };
+        // Capability gate (auth6): the Users & Access admin page never mounts unless the
+        // authenticated principal holds access_admin. The node also enforces this server-side.
+        if (pageId === "access" && !(typeof Principal !== "undefined"
+                                     && Principal && Principal.hasCapability("access_admin")))
+            return;
         const entry = map[pageId];
         if (!entry)
             return;
@@ -266,6 +272,7 @@ Rectangle {
                     case TabModel.Profiles:   return profilesComp;
                     case TabModel.Fleet:      return fleetComp;
                     case TabModel.Sessions:   return sessionsComp;
+                    case TabModel.UsersAccess: return usersAccessComp;
                     case TabModel.Dashboard:  return dashboardComp;
                     case TabModel.Approvals:  return approvalsComp;
                     case TabModel.Routing:    return routingComp;
@@ -385,6 +392,7 @@ Rectangle {
     Component { id: profilesComp;  ProfilesPage {} }
     Component { id: fleetComp;     FleetPage {} }
     Component { id: sessionsComp;  SessionsPage {} }
+    Component { id: usersAccessComp; UsersAccessPage {} }
     Component { id: dashboardComp; DashboardPage {} }
     Component { id: approvalsComp; ApprovalsPage {} }
     Component { id: routingComp;   RoutingPage {} }

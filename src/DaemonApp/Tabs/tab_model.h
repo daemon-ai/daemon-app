@@ -55,6 +55,10 @@ public:
         // Channels / Events-IO account manager (story 04): transport adapters,
         // configured accounts with status dots, and live per-account rooms.
         Channels = 14,
+        // Users & Access admin page (auth6): WhoAmI + user/role administration.
+        // Gated on the access_admin capability; the user-CRUD data path is pending
+        // the node access-admin API (Auth 5).
+        UsersAccess = 15,
     };
     Q_ENUM(Kind)
 

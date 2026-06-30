@@ -53,6 +53,7 @@ qt_add_qml_module(da_pages
         CronJobDialog.qml
         FirstRunGate.qml
         FilePage.qml
+        UsersAccessPage.qml
 )
 add_library(daemon-app::pages ALIAS da_pages)
 

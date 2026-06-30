@@ -5,6 +5,7 @@
 
 #include "daemon/client_cache_schema.h"
 
+#include <QCryptographicHash>
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
@@ -17,8 +18,23 @@
 namespace daemonapp::daemon {
 
 DaemonCacheStore::DaemonCacheStore(const QString& dbPath, QObject* parent)
-    : QObject(parent), m_dbPath(dbPath.isEmpty() ? defaultDatabasePath() : dbPath),
+    : QObject(parent), m_basePath(dbPath.isEmpty() ? defaultDatabasePath() : dbPath),
       m_connectionName(QStringLiteral("daemon-cache-%1").arg(reinterpret_cast<quintptr>(this))) {
+    openAt(m_basePath);
+}
+
+void DaemonCacheStore::openAt(const QString& path) {
+    // Drop any existing connection so we can rebind the same connection name to the new file.
+    {
+        QSqlDatabase existing = QSqlDatabase::database(m_connectionName, false);
+        if (existing.isValid()) {
+            existing.close();
+        }
+    }
+    if (QSqlDatabase::contains(m_connectionName)) {
+        QSqlDatabase::removeDatabase(m_connectionName);
+    }
+    m_dbPath = path;
     QDir().mkpath(QFileInfo(m_dbPath).absolutePath());
     QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), m_connectionName);
     db.setDatabaseName(m_dbPath);
@@ -31,6 +47,24 @@ DaemonCacheStore::DaemonCacheStore(const QString& dbPath, QObject* parent)
         // reports the store as unusable rather than half-initialized.
         db.close();
     }
+}
+
+QString DaemonCacheStore::namespacedPath(const QString& userKey) const {
+    if (userKey.isEmpty()) {
+        return m_basePath; // shared/default db (pre-auth / local-trust)
+    }
+    const QByteArray h =
+        QCryptographicHash::hash(userKey.toUtf8(), QCryptographicHash::Sha256).toHex().left(16);
+    const QFileInfo base(m_basePath);
+    return base.dir().filePath(QStringLiteral("daemon_cache-%1.db").arg(QString::fromLatin1(h)));
+}
+
+void DaemonCacheStore::setUserNamespace(const QString& userKey) {
+    const QString target = namespacedPath(userKey);
+    if (target == m_dbPath && isOpen()) {
+        return; // already on this namespace
+    }
+    openAt(target);
 }
 
 DaemonCacheStore::~DaemonCacheStore() {

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <functional>
 #include <QAbstractListModel>
 #include <QString>
 #include <QVector>
@@ -31,6 +32,10 @@ public:
         QString group;
         QString hint;
         QString shortcut;
+        // Advisory capability gate: when non-empty, the entry is hidden unless the capability
+        // provider grants this (snake_case) capability. Used to hide admin/ownership surfaces from
+        // principals that lack them (the node still enforces server-side).
+        QString requiresCapability;
     };
 
     enum Roles {
@@ -59,14 +64,21 @@ public:
     // The currently visible entries, in order (used by the TUI to build its list).
     [[nodiscard]] QVector<Command> visibleCommands() const;
 
+    // Set the capability predicate that gates capability-tagged entries (e.g. the Users & Access
+    // admin page). Until set, gated entries are hidden (fail-closed). Re-applies the current
+    // filter.
+    void setCapabilityProvider(std::function<bool(const QString&)> provider);
+
 signals:
     void commandTriggered(const QString& id);
     void countChanged();
 
 private:
     void applyFilter(const QString& query);
+    [[nodiscard]] bool capabilityAllows(const Command& c) const;
 
     QVector<Command> m_all;
     QVector<int> m_filtered; // visible row -> index into m_all
     QString m_query;
+    std::function<bool(const QString&)> m_capabilityProvider;
 };

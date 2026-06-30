@@ -92,6 +92,12 @@ ApplicationWindow {
         case "routing": Nav.open("routing"); break;
         case "cron": Nav.open("cron"); break;
         case "channels": Nav.open("channels"); break;
+        // Admin-only (auth6): only route when the principal holds access_admin (the page host
+        // also hard-gates the mount, and the node enforces server-side).
+        case "access":
+            if (typeof Principal !== "undefined" && Principal && Principal.hasCapability("access_admin"))
+                Nav.open("access");
+            break;
         case "files": root.toggleExplorer(); break;
         case "help": commandPalette.open(); break;
         case "title": if (root.activeSessionPane) root.activeSessionPane.renameActive(); break;

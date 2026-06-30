@@ -15,6 +15,7 @@
 #include "daemon/daemon_connection_service.h"
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
+#include "daemon/principal_model.h"
 #include "daemon/repositories.h"
 #include "daemonnet/idaemonnet.h"
 #include "firstrun/first_run_model.h"
@@ -125,6 +126,22 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // Connection seam: the first-run gate + Connection settings drive it; the
     // footer reads its liveness via the StatusBarModel mirror wired above.
     engine.rootContext()->setContextProperty(QStringLiteral("Connection"), m_services.connection);
+
+    // Authenticated principal (WhoAmI): advisory capability gating of admin/ownership surfaces.
+    // The node still enforces every capability server-side; this only hides/shows UI.
+    engine.rootContext()->setContextProperty(QStringLiteral("Principal"), m_services.principal);
+
+    // Hide capability-gated command-palette entries (e.g. Users & Access) from principals that lack
+    // them, and re-filter whenever the principal changes (login/logout/role change).
+    if (m_services.principal != nullptr) {
+        auto* principal = m_services.principal;
+        auto applyCaps = [this, principal] {
+            m_commands->setCapabilityProvider(
+                [principal](const QString& cap) { return principal->hasCapability(cap); });
+        };
+        applyCaps();
+        connect(principal, &daemonapp::daemon::PrincipalModel::changed, m_commands, applyCaps);
+    }
 
     // App-level page navigation: Main.qml mounts the active manager/settings page
     // as an overlay bound to Nav.page.

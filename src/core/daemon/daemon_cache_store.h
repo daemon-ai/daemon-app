@@ -118,6 +118,13 @@ public:
     [[nodiscard]] bool isOpen() const;
     [[nodiscard]] QString lastError() const { return m_lastError; }
 
+    // Switch the cache to a per-user namespace so switching users cannot surface the prior user's
+    // cached roster/sessions/transcripts. `userKey` is the authenticated principal's opaque user_id
+    // (hashed into the filename); empty resets to the shared/default db (pre-auth / local-trust).
+    // Reopening is cheap and safe: the cache is non-authoritative and re-baselines from the daemon
+    // on the next ready. No-op if the resulting path is already open.
+    void setUserNamespace(const QString& userKey);
+
     // Persisted schema version, read from daemon_cache_meta (0 if absent/unopened).
     [[nodiscard]] int schemaVersion() const;
 
@@ -170,6 +177,10 @@ public:
 
 private:
     [[nodiscard]] static QString defaultDatabasePath();
+    // The per-user db path derived from the base path + a hashed userKey (base path when empty).
+    [[nodiscard]] QString namespacedPath(const QString& userKey) const;
+    // (Re)open the SQLite connection at `path` and (re)create the schema. Replaces any open db.
+    void openAt(const QString& path);
     // Create the meta table, reconcile the persisted schema version (rebuilding the
     // non-authoritative cache on a version mismatch), then create the data tables.
     bool ensureSchema();
@@ -179,6 +190,7 @@ private:
     void setLastError(const QString& message) const;
 
     QString m_dbPath;
+    QString m_basePath; // the shared/default path; per-user paths derive from its directory
     QString m_connectionName;
     mutable QString m_lastError;
 };

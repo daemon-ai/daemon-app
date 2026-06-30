@@ -70,6 +70,7 @@ class CredentialRepository;
 class DaemonCacheStore;
 class ModelRepository;
 class NodeApiClient;
+class PrincipalModel;
 class ProfileRepository;
 class SessionRepository;
 class SubscriptionManager;
@@ -112,6 +113,9 @@ struct AppServiceGraph {
     session::ICheckpointTimeline* checkpoints = nullptr;
     DaemonCacheStore* cache = nullptr;
     NodeApiClient* nodeApi = nullptr;
+    // The authenticated principal (WhoAmI) for advisory capability gating. Always constructed
+    // (unauthenticated by default); populated from AuthOk in Daemon mode.
+    PrincipalModel* principal = nullptr;
     SessionRepository* sessions = nullptr;
     ProfileRepository* profileRepository = nullptr;
     ModelRepository* models = nullptr;
