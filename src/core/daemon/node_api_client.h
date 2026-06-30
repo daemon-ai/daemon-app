@@ -4,7 +4,10 @@
 #pragma once
 
 #include "daemon/daemon_transport.h"
+#include "daemon/node_api_auth.h"
+#include "daemon/node_api_codec.h"
 
+#include <memory>
 #include <QByteArray>
 #include <QHash>
 #include <QObject>
@@ -30,9 +33,29 @@ class NodeApiClient : public QObject {
     Q_OBJECT
 
 public:
+    // Credentials the handshake uses when the server advertises auth_mechanisms. A non-empty
+    // `resumeToken` takes the AuthResume fast-path; otherwise username/password drive SCRAM (or
+    // PLAIN over TLS). `tlsActive`/`hasClientCert` are set by the connection service from the
+    // transport so the client can gate PLAIN/EXTERNAL without introspecting the socket.
+    struct AuthCredentials {
+        QString username;
+        QString password;
+        QString resumeToken;
+        bool tlsActive = false;
+        bool hasClientCert = false;
+    };
+
     explicit NodeApiClient(DaemonTransport* transport, QObject* parent = nullptr);
 
     [[nodiscard]] DaemonTransport* transport() const { return m_transport; }
+
+    // Set the credentials the next handshake authenticates with. Safe to call before connect; the
+    // password is held only in memory and never logged.
+    void setAuthCredentials(const AuthCredentials& creds) { m_creds = creds; }
+    void clearAuthCredentials() { m_creds = AuthCredentials{}; }
+
+    [[nodiscard]] bool isAuthenticated() const { return m_handshake == Handshake::Ready; }
+    [[nodiscard]] const DecodedPrincipalView& principal() const { return m_principal; }
 
     // Queue one one-shot ApiRequest. The response is delivered as raw ApiResponse CBOR via
     // responseReady, tagged with the same correlationId.
@@ -65,13 +88,20 @@ signals:
     void failed(const QString& correlationId, const QString& message);
     // The Hello handshake completed; server capabilities (hasFeature) are now valid.
     void handshakeReady();
+    // SASL authentication succeeded (AuthOk): the connection is bound to `principal`.
+    void authenticated(const daemonapp::daemon::DecodedPrincipalView& principal);
+    // The server issued an opaque session token on AuthOk (store it, never the password).
+    void tokenIssued(const QString& token);
+    // Authentication failed (AuthError, server-signature mismatch, or no usable mechanism). The
+    // reason is coarse by design; the connection stays unauthenticated/disconnected.
+    void authFailed(const QString& reason);
     // Stream lifecycle (openStream): one chunk, a close (clean or error), and a re-baseline signal.
     void streamItem(quint64 id, const QByteArray& responseCbor);
     void streamEnded(quint64 id, bool error, const QString& message);
     void streamReset(quint64 id, quint64 epoch, quint64 headSeq);
 
 private:
-    enum class Handshake { Disconnected, Handshaking, Ready };
+    enum class Handshake { Disconnected, Handshaking, Authenticating, Ready };
 
     struct Pending {
         QString correlationId;
@@ -86,7 +116,11 @@ private:
     // Begin the Hello handshake if not already connecting/ready (sends Hello ahead of any queued
     // frame).
     void ensureHandshake();
-    // Flush frames buffered during the handshake once the server's Hello arrives.
+    // After the server Hello with non-empty auth_mechanisms: pick the AuthResume / SASL path and
+    // send the first auth frame (or fail closed if no usable mechanism). Holds the outbox.
+    void beginAuthentication(const QStringList& serverMechanisms);
+    // Flush frames buffered during the handshake once the connection is Ready (post-AuthOk, or
+    // immediately on an unauthenticated/local-trust node).
     void flushOutbox();
     // Fail every outstanding exchange (one-shots via failed, streams via streamEnded) and reset to
     // Disconnected so the next send re-handshakes. Idempotent.
@@ -100,10 +134,15 @@ private:
     Handshake m_handshake = Handshake::Disconnected;
     quint64 m_nextId = 1;
     QHash<quint64, Pending> m_pending; // id -> outstanding exchange
-    QList<QByteArray> m_outbox;        // wrapped frames awaiting the Hello ack
+    QList<QByteArray> m_outbox;        // wrapped frames awaiting the Hello/AuthOk ack
     QStringList m_features;            // server capabilities from the Hello ack
     int m_timeoutMs = kDefaultTimeoutMs;
     QTimer m_timeoutTimer; // periodic scan that fails one-shots past their deadline
+
+    // v2 auth state.
+    AuthCredentials m_creds;
+    std::unique_ptr<SaslMechanism> m_mechanism; // active SASL exchange (null on resume / unauth)
+    DecodedPrincipalView m_principal;           // bound principal once authenticated
 };
 
 } // namespace daemonapp::daemon

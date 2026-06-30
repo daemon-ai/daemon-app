@@ -11,6 +11,7 @@ namespace daemonapp::daemon {
 
 NodeApiClient::NodeApiClient(DaemonTransport* transport, QObject* parent)
     : QObject(parent), m_transport(transport) {
+    qRegisterMetaType<daemonapp::daemon::DecodedPrincipalView>();
     connect(&m_timeoutTimer, &QTimer::timeout, this, [this] {
         const qint64 now = QDateTime::currentMSecsSinceEpoch();
         QList<quint64> expired;
@@ -115,6 +116,30 @@ void NodeApiClient::ensureHandshake() {
     m_transport->sendFrame(NodeApiCodec::encodeHelloFrame());
 }
 
+void NodeApiClient::beginAuthentication(const QStringList& serverMechanisms) {
+    if (m_transport == nullptr) {
+        return;
+    }
+    // Reconnect fast-path: present a previously issued token instead of a full mechanism exchange.
+    if (!m_creds.resumeToken.isEmpty()) {
+        m_mechanism.reset();
+        m_transport->sendFrame(NodeApiCodec::encodeAuthResumeFrame(m_creds.resumeToken));
+        return;
+    }
+    m_mechanism = chooseSaslMechanism(serverMechanisms, m_creds.username, m_creds.password,
+                                      m_creds.tlsActive, m_creds.hasClientCert);
+    if (!m_mechanism) {
+        // No usable mechanism (no credentials / PLAIN refused without TLS): fail closed. The UI
+        // surfaces the login form. No frames are sent, and the outbox is dropped (nothing leaks
+        // pre-auth).
+        emit authFailed(QStringLiteral("authentication required"));
+        failAll(QStringLiteral("authentication required"));
+        return;
+    }
+    m_transport->sendFrame(NodeApiCodec::encodeAuthStartFrame(m_mechanism->mechanismName(),
+                                                              m_mechanism->initialResponse()));
+}
+
 void NodeApiClient::flushOutbox() {
     if (m_transport == nullptr) {
         return;
@@ -135,15 +160,63 @@ void NodeApiClient::onFrame(const QByteArray& frameCbor) {
     }
     switch (frame.kind) {
     case WireFrameKind::Hello:
-        m_handshake = Handshake::Ready;
         // Record the server's advertised capabilities (mux/stream always; versioning only on a
         // durable node). Fall back to the always-on envelope set if an older daemon sends none.
         m_features = frame.features.isEmpty()
                          ? QStringList{QStringLiteral("mux"), QStringLiteral("stream")}
                          : frame.features;
+        if (frame.authMechanisms.isEmpty()) {
+            // Unauthenticated / local-trust node: proceed exactly as the pre-auth client did.
+            m_handshake = Handshake::Ready;
+            flushOutbox();
+            emit handshakeReady();
+        } else {
+            // The node requires SASL auth: hold the outbox until AuthOk.
+            m_handshake = Handshake::Authenticating;
+            beginAuthentication(frame.authMechanisms);
+        }
+        break;
+    case WireFrameKind::AuthChallenge: {
+        if (m_handshake != Handshake::Authenticating || !m_mechanism) {
+            // A challenge with no active mechanism (e.g. we sent AuthResume) is a protocol error.
+            failAll(QStringLiteral("unexpected authentication challenge"));
+            break;
+        }
+        const SaslStep stepResult = m_mechanism->step(frame.authData);
+        switch (stepResult.kind) {
+        case SaslStep::Kind::Respond:
+            if (m_transport != nullptr) {
+                m_transport->sendFrame(NodeApiCodec::encodeAuthStepFrame(stepResult.response));
+            }
+            break;
+        case SaslStep::Kind::Complete:
+            // server-final verified; send nothing and await AuthOk (per the frozen framing).
+            break;
+        case SaslStep::Kind::Failed:
+            emit authFailed(QStringLiteral("authentication failed"));
+            failAll(QStringLiteral("authentication failed"));
+            break;
+        }
+        break;
+    }
+    case WireFrameKind::AuthOk:
+        m_handshake = Handshake::Ready;
+        m_mechanism.reset();
+        m_principal = frame.principal;
+        emit authenticated(m_principal);
+        if (!frame.authToken.isEmpty()) {
+            emit tokenIssued(frame.authToken);
+        }
         flushOutbox();
         emit handshakeReady();
         break;
+    case WireFrameKind::AuthError: {
+        const QString reason =
+            frame.authReason.isEmpty() ? QStringLiteral("authentication failed") : frame.authReason;
+        emit authFailed(reason);
+        failAll(reason);
+        break;
+    }
     case WireFrameKind::Reply: {
         const auto it = m_pending.find(frame.id);
         if (it != m_pending.end() && !it.value().stream) {
@@ -193,6 +266,8 @@ void NodeApiClient::failAll(const QString& message) {
     m_handshake = Handshake::Disconnected;
     m_features.clear();
     m_outbox.clear();
+    m_mechanism.reset();
+    m_principal = DecodedPrincipalView{};
     const QHash<quint64, Pending> pending = m_pending;
     m_pending.clear();
     for (auto it = pending.constBegin(); it != pending.constEnd(); ++it) {

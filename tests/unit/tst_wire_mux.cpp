@@ -108,6 +108,127 @@ private slots:
         QCOMPARE(ends.at(0).at(1).toBool(), false); // clean close
     }
 
+    // A node that advertises SCRAM-SHA-256 must authenticate before any Call escapes: the queued
+    // request stays buffered until AuthOk, then flushes exactly once. Drives the real SCRAM client
+    // against the fixture's real SCRAM server (a dynamic round trip with a random client nonce).
+    void scramAuthGatesOutboxThenFlushes() {
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+        const QString path = tmp.filePath(QStringLiteral("mux-scram.sock"));
+        WireMuxServer fake;
+        fake.setReplyPayload(okResponse());
+        fake.setAuthMechanisms({QStringLiteral("SCRAM-SHA-256")});
+        fake.setCredentials("user", "pencil");
+        QVERIFY2(fake.start(path), "fixture must listen");
+
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        NodeApiClient::AuthCredentials creds;
+        creds.username = QStringLiteral("user");
+        creds.password = QStringLiteral("pencil");
+        client.setAuthCredentials(creds);
+
+        QSignalSpy authed(&client, &NodeApiClient::authenticated);
+        QSignalSpy tokens(&client, &NodeApiClient::tokenIssued);
+        QSignalSpy responses(&client, &NodeApiClient::responseReady);
+
+        // Queue a Call up front: it must NOT reach the server until authentication completes.
+        client.sendRequest(NodeApiCodec::encodeHealthRequest(), QStringLiteral("c1"));
+
+        QTRY_COMPARE_WITH_TIMEOUT(authed.count(), 1, 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(responses.count(), 1, 3000);
+        QCOMPARE(responses.at(0).at(0).toString(), QStringLiteral("c1"));
+        QCOMPARE(fake.callsBeforeAuthOk(), 0); // outbox gate held until AuthOk
+        QCOMPARE(fake.authOkCount(), 1);
+        QCOMPARE(tokens.count(), 1);
+        QCOMPARE(tokens.at(0).at(0).toString(), QStringLiteral("session-token-xyz"));
+        QVERIFY(client.isAuthenticated());
+        QCOMPARE(client.principal().username, QStringLiteral("user"));
+        QVERIFY(client.principal().hasCapability(QStringLiteral("session_write")));
+    }
+
+    // Wrong password: the SCRAM proof fails server-side -> AuthError. The client surfaces
+    // authFailed, stays unauthenticated, and no request escapes.
+    void wrongPasswordFailsClosed() {
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+        const QString path = tmp.filePath(QStringLiteral("mux-badpw.sock"));
+        WireMuxServer fake;
+        fake.setReplyPayload(okResponse());
+        fake.setAuthMechanisms({QStringLiteral("SCRAM-SHA-256")});
+        fake.setCredentials("user", "pencil");
+        QVERIFY2(fake.start(path), "fixture must listen");
+
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        NodeApiClient::AuthCredentials creds;
+        creds.username = QStringLiteral("user");
+        creds.password = QStringLiteral("WRONG");
+        client.setAuthCredentials(creds);
+
+        QSignalSpy failedAuth(&client, &NodeApiClient::authFailed);
+        QSignalSpy responses(&client, &NodeApiClient::responseReady);
+        client.sendRequest(NodeApiCodec::encodeHealthRequest(), QStringLiteral("c1"));
+
+        QTRY_COMPARE_WITH_TIMEOUT(failedAuth.count(), 1, 3000);
+        QCOMPARE(responses.count(), 0);
+        QCOMPARE(fake.callsBeforeAuthOk(), 0);
+        QVERIFY(!client.isAuthenticated());
+    }
+
+    // No credentials for an auth-required node: the client fails closed (no frames) and surfaces a
+    // generic "authentication required" so the UI shows the login form.
+    void noCredentialsRequiresLogin() {
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+        const QString path = tmp.filePath(QStringLiteral("mux-nocreds.sock"));
+        WireMuxServer fake;
+        fake.setAuthMechanisms({QStringLiteral("SCRAM-SHA-256")});
+        QVERIFY2(fake.start(path), "fixture must listen");
+
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+
+        QSignalSpy failedAuth(&client, &NodeApiClient::authFailed);
+        client.sendRequest(NodeApiCodec::encodeHealthRequest(), QStringLiteral("c1"));
+
+        QTRY_COMPARE_WITH_TIMEOUT(failedAuth.count(), 1, 3000);
+        QCOMPARE(failedAuth.at(0).at(0).toString(), QStringLiteral("authentication required"));
+        QCOMPARE(fake.authStartCount(), 0); // never even started a mechanism
+        QVERIFY(!client.isAuthenticated());
+    }
+
+    // AuthResume fast-path: a stored token authenticates without a mechanism exchange.
+    void authResumeReconnects() {
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+        const QString path = tmp.filePath(QStringLiteral("mux-resume.sock"));
+        WireMuxServer fake;
+        fake.setReplyPayload(okResponse());
+        fake.setAuthMechanisms({QStringLiteral("SCRAM-SHA-256")});
+        fake.setExpectedResumeToken("session-token-xyz");
+        QVERIFY2(fake.start(path), "fixture must listen");
+
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        NodeApiClient::AuthCredentials creds;
+        creds.resumeToken = QStringLiteral("session-token-xyz");
+        client.setAuthCredentials(creds);
+
+        QSignalSpy authed(&client, &NodeApiClient::authenticated);
+        QSignalSpy responses(&client, &NodeApiClient::responseReady);
+        client.sendRequest(NodeApiCodec::encodeHealthRequest(), QStringLiteral("c1"));
+
+        QTRY_COMPARE_WITH_TIMEOUT(authed.count(), 1, 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(responses.count(), 1, 3000);
+        QCOMPARE(fake.authStartCount(), 0); // resume skips the mechanism exchange
+        QCOMPARE(fake.callsBeforeAuthOk(), 0);
+    }
+
     // Cancel tears the stream down: the server acks with End and the client surfaces streamEnded.
     void cancelClosesStream() {
         QTemporaryDir tmp;

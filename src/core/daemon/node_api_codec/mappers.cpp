@@ -267,6 +267,74 @@ bool cborReadText(const uchar* p, qsizetype n, qsizetype& i, QByteArray* out) {
     return true;
 }
 
+void cborAppendTextLen(QByteArray& b, const QByteArray& s) {
+    b.append(static_cast<char>(0x60)); // placeholder major-3 head; rewritten below
+    // Emit the major-3 (text) head with the right argument width, then the bytes.
+    b.chop(1);
+    const auto len = static_cast<quint64>(s.size());
+    if (len < 24) {
+        b.append(static_cast<char>(0x60 | static_cast<char>(len)));
+    } else if (len <= 0xFF) {
+        b.append(static_cast<char>(0x78));
+        b.append(static_cast<char>(len));
+    } else if (len <= 0xFFFF) {
+        b.append(static_cast<char>(0x79));
+        b.append(static_cast<char>((len >> 8) & 0xFF));
+        b.append(static_cast<char>(len & 0xFF));
+    } else {
+        b.append(static_cast<char>(0x7A));
+        for (int sft = 24; sft >= 0; sft -= 8) {
+            b.append(static_cast<char>((len >> sft) & 0xFF));
+        }
+    }
+    b.append(s);
+}
+
+void cborAppendBytesAsUintArray(QByteArray& b, const QByteArray& bytes) {
+    const auto len = static_cast<quint64>(bytes.size());
+    // Array (major 4) head.
+    if (len < 24) {
+        b.append(static_cast<char>(0x80 | static_cast<char>(len)));
+    } else if (len <= 0xFF) {
+        b.append(static_cast<char>(0x98));
+        b.append(static_cast<char>(len));
+    } else if (len <= 0xFFFF) {
+        b.append(static_cast<char>(0x99));
+        b.append(static_cast<char>((len >> 8) & 0xFF));
+        b.append(static_cast<char>(len & 0xFF));
+    } else {
+        b.append(static_cast<char>(0x9A));
+        for (int sft = 24; sft >= 0; sft -= 8) {
+            b.append(static_cast<char>((len >> sft) & 0xFF));
+        }
+    }
+    for (const char c : bytes) {
+        cborAppendUint(b, static_cast<quint8>(c));
+    }
+}
+
+bool cborReadBytesFromUintArray(const uchar* p, qsizetype n, qsizetype& i, QByteArray* out) {
+    quint8 major = 0;
+    quint64 arg = 0;
+    if (!cborReadHead(p, n, i, major, arg) || major != 4) {
+        return false; // expected a CBOR array
+    }
+    QByteArray bytes;
+    bytes.reserve(static_cast<qsizetype>(arg));
+    for (quint64 k = 0; k < arg; ++k) {
+        quint8 emaj = 0;
+        quint64 earg = 0;
+        if (!cborReadHead(p, n, i, emaj, earg) || emaj != 0 || earg > 0xFF) {
+            return false; // each element must be a uint 0..255
+        }
+        bytes.append(static_cast<char>(static_cast<quint8>(earg)));
+    }
+    if (out != nullptr) {
+        *out = bytes;
+    }
+    return true;
+}
+
 QString sessionStateName(int choice) {
     switch (choice) {
     case session_state_r::session_state_Active_tstr_c:

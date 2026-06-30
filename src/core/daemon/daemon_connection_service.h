@@ -40,6 +40,8 @@ public:
     void disconnect() override;
     void testConnection(const QString& mode, const QString& target,
                         const QString& token = QString()) override;
+    void login(const QString& username, const QString& password) override;
+    void logout() override;
 
     [[nodiscard]] DaemonTransport* transport() const { return m_transport.get(); }
     [[nodiscard]] NodeApiClient* client() const { return m_client.get(); }
@@ -68,6 +70,13 @@ private:
     void onReprobeTick();
     // True iff a reconnect episode is currently in progress.
     [[nodiscard]] bool reconnecting() const { return m_reconnectDeadline.isActive(); }
+    // Configure the transport for the current config.mode/target and load the AuthResume token; set
+    // the client credentials before the first send. Returns false if the target is unusable.
+    bool configureTransport();
+    // Parse a "host:port" remote target. Returns false on a malformed target.
+    static bool parseHostPort(const QString& target, QString* host, quint16* port);
+    // Build the TLS policy from the conn/tls/* settings keys (fail-closed defaults).
+    [[nodiscard]] TlsConfig tlsConfigFromSettings() const;
 
     std::unique_ptr<DaemonTransport> m_transport;
     std::unique_ptr<NodeApiClient> m_client;
@@ -77,6 +86,12 @@ private:
     QTimer m_reprobe;           // attach-only backoff Health reprobe while reconnecting
     QTimer m_reconnectDeadline; // single-shot episode budget -> offline
     int m_backoffMs = kReprobeMinMs;
+
+    // Auth state. m_authBlocked suppresses the auto-reconnect loop while a node is waiting on
+    // interactive credentials (otherwise the failed Health probe would spin reconnecting). The
+    // session token (server-issued on AuthOk) drives the AuthResume reconnect fast-path.
+    bool m_authBlocked = false;
+    QString m_sessionToken;
 };
 
 } // namespace daemonapp::daemon

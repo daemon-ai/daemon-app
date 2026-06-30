@@ -51,20 +51,59 @@ DaemonConnectionService::DaemonConnectionService(QObject* parent,
             [this](const QString& correlationId, const QString&) {
                 // The Health request itself failed (transport drop / timeout): the connection is
                 // suspect, so kick the reconnect episode (initial-connect failures retry too).
-                if (correlationId == QLatin1String(kHealthCorrelation)) {
+                // BUT not while a node is waiting on interactive credentials - reconnecting there
+                // would just re-fail auth in a loop; the login UI drives the retry instead.
+                if (correlationId == QLatin1String(kHealthCorrelation) && !m_authBlocked) {
                     enterReconnecting();
                 }
             });
+    // SASL relays: the client owns the exchange; we map its outcome onto the connection state.
+    connect(m_client.get(), &NodeApiClient::tokenIssued, this, [this](const QString& token) {
+        // Persist the SERVER-issued token (never the password), keyed per target, and keep it in
+        // memory so a transport drop reconnects via AuthResume.
+        m_sessionToken = token;
+        m_client->setAuthCredentials([this] {
+            NodeApiClient::AuthCredentials c;
+            c.resumeToken = m_sessionToken;
+            c.tlsActive = m_transport->tlsActive();
+            c.hasClientCert = m_transport->clientCertConfigured();
+            return c;
+        }());
+        if (m_settings != nullptr && !m_config.target.isEmpty()) {
+            m_settings->setConnectionToken(m_config.target, token);
+        }
+    });
+    connect(m_client.get(), &NodeApiClient::authenticated, this, [this] { emit authenticated(); });
+    connect(m_client.get(), &NodeApiClient::authFailed, this, [this](const QString& reason) {
+        // The node needs (different) credentials. Stop the liveness machinery, surface the login
+        // form, and stay out of the reconnect loop until the user submits new credentials.
+        m_authBlocked = true;
+        m_heartbeat.stop();
+        m_reprobe.stop();
+        m_reconnectDeadline.stop();
+        const bool needCreds = reason == QStringLiteral("authentication required");
+        // A stale stored token that the server rejected must not wedge future logins.
+        if (!needCreds && m_settings != nullptr && !m_config.target.isEmpty()) {
+            m_settings->clearConnectionToken(m_config.target);
+        }
+        m_sessionToken.clear();
+        setStatusMessage(needCreds ? QString() : reason);
+        setState(QStringLiteral("authenticating"));
+        emit authRequired();
+        if (!needCreds) {
+            emit authFailed(reason);
+        }
+    });
     // A transport-level drop (peer disconnect / socket error) while live is the primary liveness
     // signal: self-correct out of stale "ready" immediately rather than waiting for the next
     // request.
     connect(m_transport.get(), &DaemonTransport::disconnected, this, [this] {
-        if (ready() || state() == QStringLiteral("connecting")) {
+        if (!m_authBlocked && (ready() || state() == QStringLiteral("connecting"))) {
             enterReconnecting();
         }
     });
     connect(m_transport.get(), &DaemonTransport::failed, this, [this](const QString&) {
-        if (ready() || state() == QStringLiteral("connecting")) {
+        if (!m_authBlocked && (ready() || state() == QStringLiteral("connecting"))) {
             enterReconnecting();
         }
     });
@@ -130,36 +169,129 @@ void DaemonConnectionService::onReprobeTick() {
     m_reprobe.start(m_backoffMs);
 }
 
+bool DaemonConnectionService::parseHostPort(const QString& target, QString* host, quint16* port) {
+    // Remote target syntax is "host:port" (decision 4). Tolerate an optional scheme prefix so a
+    // pasted URL still parses, but the canonical form is bare host:port.
+    QString t = target.trimmed();
+    const qsizetype scheme = t.indexOf(QStringLiteral("://"));
+    if (scheme >= 0) {
+        t = t.mid(scheme + 3);
+    }
+    const qsizetype colon = t.lastIndexOf(QLatin1Char(':'));
+    if (colon <= 0 || colon == t.size() - 1) {
+        return false;
+    }
+    bool ok = false;
+    const uint p = t.mid(colon + 1).toUInt(&ok);
+    if (!ok || p == 0 || p > 0xFFFF) {
+        return false;
+    }
+    *host = t.left(colon);
+    *port = static_cast<quint16>(p);
+    return true;
+}
+
+TlsConfig DaemonConnectionService::tlsConfigFromSettings() const {
+    TlsConfig tls;
+    if (m_settings == nullptr) {
+        return tls;
+    }
+    tls.caFile = m_settings->value(QStringLiteral("conn/tls/caFile")).toString();
+    tls.pinnedSha256 = m_settings->value(QStringLiteral("conn/tls/pinnedSha256")).toString();
+    tls.clientCertFile = m_settings->value(QStringLiteral("conn/tls/clientCertFile")).toString();
+    tls.clientKeyFile = m_settings->value(QStringLiteral("conn/tls/clientKeyFile")).toString();
+    tls.insecureSkipVerify =
+        m_settings->value(QStringLiteral("conn/tls/insecureSkipVerify"), false).toBool();
+    return tls;
+}
+
+bool DaemonConnectionService::configureTransport() {
+    if (m_config.target.isEmpty()) {
+        return false;
+    }
+    if (m_config.mode == QStringLiteral("remote")) {
+        QString host;
+        quint16 port = 0;
+        if (!parseHostPort(m_config.target, &host, &port)) {
+            return false;
+        }
+        m_transport->setTcpTarget(host, port, tlsConfigFromSettings());
+    } else if (m_config.mode == QStringLiteral("local")) {
+        m_transport->setSocketPath(m_config.target);
+    } else {
+        return false;
+    }
+    // Seed credentials: an explicit/stored token takes the AuthResume fast-path; username/password
+    // arrive later via login() for interactive SCRAM.
+    NodeApiClient::AuthCredentials creds;
+    creds.tlsActive = m_transport->tlsActive();
+    creds.hasClientCert = m_transport->clientCertConfigured();
+    if (!m_sessionToken.isEmpty()) {
+        creds.resumeToken = m_sessionToken;
+    } else if (m_settings != nullptr) {
+        creds.resumeToken = m_settings->connectionToken(m_config.target);
+        m_sessionToken = creds.resumeToken;
+    }
+    m_client->setAuthCredentials(creds);
+    return true;
+}
+
 void DaemonConnectionService::connectTo(const QString& mode, const QString& target,
                                         const QString& token) {
-    Q_UNUSED(token)
     m_config.mode = mode;
     m_config.target = target;
+    if (!token.isEmpty()) {
+        m_sessionToken = token; // an explicit token from the picker drives AuthResume
+    }
+    m_authBlocked = false;
     emit configChanged();
 
-    if (mode != QStringLiteral("local")) {
-        setState(QStringLiteral("needs setup"));
-        return;
-    }
-    if (target.isEmpty()) {
+    if (!configureTransport()) {
         setState(QStringLiteral("needs setup"));
         return;
     }
 
-    m_transport->setSocketPath(target);
     setStatusMessage(QString());
     setState(QStringLiteral("connecting"));
 
     // Managed local daemon (CON-1b): ensure a daemon is running before attaching. ensureRunning is
     // probe-first, so an already-running daemon is reused rather than duplicated; on success it
     // signals back and we send the Health probe. Liveness is resolved by the Health response
-    // handler wired in the constructor.
-    if (m_launcher != nullptr && m_settings != nullptr && m_settings->managedLocalDaemon()) {
+    // handler wired in the constructor. (Remote nodes are never auto-spawned.)
+    if (mode == QStringLiteral("local") && m_launcher != nullptr && m_settings != nullptr &&
+        m_settings->managedLocalDaemon()) {
         m_launcher->ensureRunning(target);
         return;
     }
 
     sendHealthProbe();
+}
+
+void DaemonConnectionService::login(const QString& username, const QString& password) {
+    // Interactive credentials for a node in the "authenticating" state. Use SCRAM (not a stale
+    // token), so clear any resume token and re-handshake on a fresh connection.
+    m_authBlocked = false;
+    m_sessionToken.clear();
+    NodeApiClient::AuthCredentials creds;
+    creds.username = username;
+    creds.password = password;
+    creds.tlsActive = m_transport->tlsActive();
+    creds.hasClientCert = m_transport->clientCertConfigured();
+    m_client->setAuthCredentials(creds);
+    // Drop the prior (unauthenticated) connection so the next send re-handshakes from Hello.
+    m_transport->close();
+    setStatusMessage(QString());
+    setState(QStringLiteral("connecting"));
+    sendHealthProbe();
+}
+
+void DaemonConnectionService::logout() {
+    if (m_settings != nullptr && !m_config.target.isEmpty()) {
+        m_settings->clearConnectionToken(m_config.target);
+    }
+    m_sessionToken.clear();
+    m_client->clearAuthCredentials();
+    disconnect();
 }
 
 void DaemonConnectionService::disconnect() {
@@ -175,9 +307,23 @@ void DaemonConnectionService::testConnection(const QString& mode, const QString&
                                              const QString& token) {
     Q_UNUSED(token)
     setTesting(true);
-    const bool ok = mode == QStringLiteral("local") && !target.isEmpty();
-    emit testResult(ok, ok ? QStringLiteral("Unix socket target accepted")
-                           : QStringLiteral("Only local Unix-socket targets are supported"));
+    bool ok = false;
+    QString message;
+    if (mode == QStringLiteral("local")) {
+        ok = !target.isEmpty();
+        message = ok ? QStringLiteral("Unix socket target accepted")
+                     : QStringLiteral("Enter a local socket path");
+    } else if (mode == QStringLiteral("remote")) {
+        QString host;
+        quint16 port = 0;
+        ok = parseHostPort(target, &host, &port);
+        // Shape-only: a full reachability/TLS probe needs the server (verified end-to-end later).
+        message = ok ? QStringLiteral("Remote target accepted (host:port, TLS)")
+                     : QStringLiteral("Use host:port for a remote TLS node");
+    } else {
+        message = QStringLiteral("Unsupported transport");
+    }
+    emit testResult(ok, message);
     setTesting(false);
 }
 

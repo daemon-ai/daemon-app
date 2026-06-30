@@ -17,7 +17,9 @@ namespace connection {
 // HTTP JSON) replaces it later by emitting the same state transitions and
 // decoding the wire once. UI never sees the codec.
 //
-// state: "checking" | "connecting" | "ready" | "offline" | "needs setup".
+// state: "checking" | "connecting" | "authenticating" | "ready" | "offline" | "needs setup".
+// "authenticating" means the node requires SASL credentials the client does not yet have (or a
+// login attempt failed); the first-run/login UI collects them and calls login().
 class IConnectionService : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString state READ state NOTIFY stateChanged)
@@ -50,6 +52,14 @@ public:
     // Probe a candidate target without committing; result via testResult.
     Q_INVOKABLE virtual void testConnection(const QString& mode, const QString& target,
                                             const QString& token = QString()) = 0;
+    // Submit interactive credentials for a node that requires authentication (state
+    // "authenticating"). Default no-op so mock/embedded seams need not implement it.
+    Q_INVOKABLE virtual void login(const QString& username, const QString& password) {
+        Q_UNUSED(username)
+        Q_UNUSED(password)
+    }
+    // Clear the persisted session token for the active/last target (logout). Default no-op.
+    Q_INVOKABLE virtual void logout() {}
 
 signals:
     void stateChanged();
@@ -57,6 +67,12 @@ signals:
     void testingChanged();
     // Probe outcome (Test connection button): ok + a human message.
     void testResult(bool ok, const QString& message);
+    // The connected node requires interactive credentials we don't have (show the login form).
+    void authRequired();
+    // A login attempt failed (wrong password / disabled account). `reason` is coarse by design.
+    void authFailed(const QString& reason);
+    // SASL authentication succeeded; the bound principal is now available downstream.
+    void authenticated();
 
 protected:
     void setState(const QString& s) {

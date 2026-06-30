@@ -30,6 +30,8 @@ add_library(da_daemon_client STATIC
     daemon_transport.cpp
     node_api_client.h
     node_api_client.cpp
+    node_api_auth.h
+    node_api_auth.cpp
     node_api_codec.h
     node_api_codec/internal.h
     node_api_codec/mappers.cpp

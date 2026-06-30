@@ -63,8 +63,18 @@ DecodedTranscriptBlock decodeTranscriptBlock(const transcript_block_r& block);
 // --- L0 wire-envelope CBOR primitives (hand-coded; see wire_l0.cpp) ------------------------------
 void cborAppendUint(QByteArray& b, quint64 v);
 void cborAppendText(QByteArray& b, const char* s);
+// Append an arbitrary-length CBOR text string (the short cborAppendText only handles <24 bytes;
+// usernames / tokens / mechanism names can be longer).
+void cborAppendTextLen(QByteArray& b, const QByteArray& s);
+// Append `bytes` as a CBOR array of uints (major 4, one uint per byte). The frozen contract models
+// the SASL byte payloads (AuthStart.initial / AuthStep.data) as Rust `Vec<u8>` WITHOUT serde_bytes,
+// so they are `[* uint]` on the wire, NOT a bstr.
+void cborAppendBytesAsUintArray(QByteArray& b, const QByteArray& bytes);
 bool cborReadHead(const uchar* p, qsizetype n, qsizetype& i, quint8& major, quint64& arg);
 bool cborReadText(const uchar* p, qsizetype n, qsizetype& i, QByteArray* out);
+// Read a CBOR array of uints (major 4) into `out` as raw bytes (the inverse of
+// cborAppendBytesAsUintArray; each element must be a 0..255 uint). Used to read AuthChallenge.data.
+bool cborReadBytesFromUintArray(const uchar* p, qsizetype n, qsizetype& i, QByteArray* out);
 
 // --- encode/decode core --------------------------------------------------------------------------
 bool encodeRequest(const api_request_r& request, QByteArray* out);

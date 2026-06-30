@@ -59,6 +59,38 @@ QByteArray NodeApiCodec::encodeCancelFrame(quint64 id) {
     return b;
 }
 
+QByteArray NodeApiCodec::encodeAuthStartFrame(const QString& mechanism, const QByteArray& initial) {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1)); // map(1)
+    cborAppendText(b, "AuthStart");
+    b.append(static_cast<char>(0xA2)); // map(2): mechanism, initial
+    cborAppendText(b, "mechanism");
+    cborAppendTextLen(b, mechanism.toUtf8());
+    cborAppendText(b, "initial");
+    cborAppendBytesAsUintArray(b, initial); // `[* uint]`, NOT a bstr (frozen contract)
+    return b;
+}
+
+QByteArray NodeApiCodec::encodeAuthStepFrame(const QByteArray& data) {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1)); // map(1)
+    cborAppendText(b, "AuthStep");
+    b.append(static_cast<char>(0xA1)); // map(1): data
+    cborAppendText(b, "data");
+    cborAppendBytesAsUintArray(b, data);
+    return b;
+}
+
+QByteArray NodeApiCodec::encodeAuthResumeFrame(const QString& token) {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1)); // map(1)
+    cborAppendText(b, "AuthResume");
+    b.append(static_cast<char>(0xA1)); // map(1): token
+    cborAppendText(b, "token");
+    cborAppendTextLen(b, token.toUtf8());
+    return b;
+}
+
 bool NodeApiCodec::decodeWireFrame(const QByteArray& frameCbor, DecodedWireFrame* out) {
     if (out == nullptr) {
         return false;
@@ -90,21 +122,89 @@ bool NodeApiCodec::decodeWireFrame(const QByteArray& frameCbor, DecodedWireFrame
             if (!cborReadText(p, n, i, &hkey)) {
                 break;
             }
-            if (hkey == "features") {
+            if (hkey == "features" || hkey == "auth_mechanisms") {
                 quint8 fmaj = 0;
                 quint64 farg = 0;
                 if (!cborReadHead(p, n, i, fmaj, farg) || fmaj != 4) {
                     break; // expected an array
                 }
+                QStringList& sink = (hkey == "features") ? out->features : out->authMechanisms;
                 for (quint64 k = 0; k < farg; ++k) {
-                    QByteArray feat;
-                    if (!cborReadText(p, n, i, &feat)) {
+                    QByteArray item;
+                    if (!cborReadText(p, n, i, &item)) {
                         break;
                     }
-                    out->features.append(QString::fromUtf8(feat));
+                    sink.append(QString::fromUtf8(item));
                 }
             } else if (!cborReadHead(p, n, i, major, arg)) {
                 break; // wire_version (uint) or another scalar
+            }
+        }
+        return true;
+    }
+    // The auth (SASL) frames do not carry an `id`; handle them before the id-leading frames below.
+    if (tag == "AuthChallenge") {
+        out->kind = WireFrameKind::AuthChallenge;
+        QByteArray key;
+        return cborReadText(p, n, i, &key) && key == "data" &&
+               cborReadBytesFromUintArray(p, n, i, &out->authData);
+    }
+    if (tag == "AuthError") {
+        out->kind = WireFrameKind::AuthError;
+        QByteArray key;
+        QByteArray reason;
+        if (!cborReadText(p, n, i, &key) || key != "reason" || !cborReadText(p, n, i, &reason)) {
+            return false;
+        }
+        out->authReason = QString::fromUtf8(reason);
+        return true;
+    }
+    if (tag == "AuthOk") {
+        out->kind = WireFrameKind::AuthOk;
+        QByteArray key;
+        QByteArray token;
+        if (!cborReadText(p, n, i, &key) || key != "token" || !cborReadText(p, n, i, &token)) {
+            return false;
+        }
+        out->authToken = QString::fromUtf8(token);
+        if (!cborReadText(p, n, i, &key) || key != "principal") {
+            return false;
+        }
+        // principal-view: a map of {user_id, username, roles, capabilities}; parse by key.
+        quint8 pmaj = 0;
+        quint64 pfields = 0;
+        if (!cborReadHead(p, n, i, pmaj, pfields) || pmaj != 5) {
+            return false;
+        }
+        for (quint64 f = 0; f < pfields; ++f) {
+            QByteArray pkey;
+            if (!cborReadText(p, n, i, &pkey)) {
+                return false;
+            }
+            if (pkey == "user_id" || pkey == "username") {
+                QByteArray val;
+                if (!cborReadText(p, n, i, &val)) {
+                    return false;
+                }
+                (pkey == "user_id" ? out->principal.userId : out->principal.username) =
+                    QString::fromUtf8(val);
+            } else if (pkey == "roles" || pkey == "capabilities") {
+                quint8 amaj = 0;
+                quint64 alen = 0;
+                if (!cborReadHead(p, n, i, amaj, alen) || amaj != 4) {
+                    return false;
+                }
+                QStringList& sink =
+                    (pkey == "roles") ? out->principal.roles : out->principal.capabilities;
+                for (quint64 k = 0; k < alen; ++k) {
+                    QByteArray item;
+                    if (!cborReadText(p, n, i, &item)) {
+                        return false;
+                    }
+                    sink.append(QString::fromUtf8(item));
+                }
+            } else if (!cborReadHead(p, n, i, major, arg)) {
+                return false; // unknown scalar field (forward-compat): consume its head
             }
         }
         return true;

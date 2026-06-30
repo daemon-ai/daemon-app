@@ -502,6 +502,15 @@ bool NodeApiCodec::decodeError(const QByteArray& responseCbor, DecodedApiError* 
         out->kind = QStringLiteral("Conflict");
         out->message = fromZcbor(err.api_error_conflict_m.api_error_conflict_Conflict);
         break;
+    case api_error_r::api_error_unauthenticated_m_c:
+        out->kind = QStringLiteral("Unauthenticated");
+        out->message =
+            fromZcbor(err.api_error_unauthenticated_m.api_error_unauthenticated_Unauthenticated);
+        break;
+    case api_error_r::api_error_forbidden_m_c:
+        out->kind = QStringLiteral("Forbidden");
+        out->message = fromZcbor(err.api_error_forbidden_m.api_error_forbidden_Forbidden);
+        break;
     default:
         out->kind = QStringLiteral("Other");
         out->message = fromZcbor(err.api_error_other_m.api_error_other_Other);

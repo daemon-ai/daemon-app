@@ -99,6 +99,31 @@ target_link_libraries(tst_wire_mux
 add_test(NAME tst_wire_mux COMMAND tst_wire_mux)
 set_tests_properties(tst_wire_mux PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_node_api_auth: the client SASL layer - SCRAM-SHA-256 against the RFC 7677 worked example
+# (client-first/final proof + server-final v= verification), PLAIN/EXTERNAL single-step shapes, and
+# the mechanism selection policy. Pure (no socket): verifiable without the server (Auth 3).
+qt_add_executable(tst_node_api_auth tst_node_api_auth.cpp)
+target_link_libraries(tst_node_api_auth
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+)
+add_test(NAME tst_node_api_auth COMMAND tst_node_api_auth)
+set_tests_properties(tst_node_api_auth PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_tls_transport: the TLS/TCP transport - fail-closed cert verification (an untrusted self-signed
+# cert aborts the handshake), and the explicitly-configured trust paths (SHA-256 pin / insecure
+# skip) connecting + round-tripping an encrypted frame against a QSslServer.
+qt_add_executable(tst_tls_transport tst_tls_transport.cpp)
+target_link_libraries(tst_tls_transport
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+)
+add_test(NAME tst_tls_transport COMMAND tst_tls_transport)
+set_tests_properties(tst_tls_transport PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_sync_resync: the L2 client resync - the DaemonTurnEngine on a push Subscribe stream tracks the
 # session-activation epoch and re-baselines from the durable journal on a generation change (epoch
 # bump / Reset), and suspends+reopens on a transport drop, driven against the WireMuxServer fixture.

@@ -8,6 +8,7 @@
 #include <QByteArray>
 #include <QList>
 #include <QMap>
+#include <QMetaType>
 #include <QString>
 #include <QStringList>
 #include <QVariantMap>
@@ -50,7 +51,8 @@ struct DecodedModelDescriptor {
 
 // A decoded error envelope (ApiResponse::Error): the variant kind + its human-readable message.
 struct DecodedApiError {
-    QString kind; // "UnknownSession" | "Unsupported" | "Conflict" | "Other"
+    QString kind; // "UnknownSession" | "Unsupported" | "Conflict" | "Unauthenticated" |
+                  // "Forbidden" | "Other"
     QString message;
 };
 
@@ -387,6 +389,21 @@ struct DecodedFsSearchPage {
     bool hasMore = false;
 };
 
+// The authenticated principal surfaced on AuthOk (wire mirror of daemon_auth::Principal; see
+// `principal-view` in the contract). Advisory, for client-side UI gating only - the node enforces
+// every capability server-side, so a client must never trust this in lieu of the server's checks.
+struct DecodedPrincipalView {
+    QString userId;
+    QString username;
+    QStringList roles;        // snake_case role names, e.g. "operator"
+    QStringList capabilities; // snake_case capability names, e.g. "session_write"
+
+    [[nodiscard]] bool isAuthenticated() const { return !userId.isEmpty() || !username.isEmpty(); }
+    [[nodiscard]] bool hasCapability(const QString& cap) const {
+        return capabilities.contains(cap);
+    }
+};
+
 // A decoded server->client multiplexed frame (wire L0; daemon-sync-protocol-spec.md §2). The
 // `payload` is the raw inner ApiResponse CBOR for Reply/Item (fed straight to the existing
 // decoders); it is empty for the control frames.
@@ -397,6 +414,9 @@ enum class WireFrameKind {
     Item,
     End,
     Reset,
+    AuthChallenge,
+    AuthOk,
+    AuthError,
 };
 
 struct DecodedWireFrame {
@@ -407,6 +427,12 @@ struct DecodedWireFrame {
     quint64 epoch = 0;     // Reset (L2)
     quint64 headSeq = 0;   // Reset (L2)
     QStringList features;  // Hello: the server's advertised capability strings (mux/stream/...)
+    // v2 auth (SASL) fields.
+    QStringList authMechanisms;     // Hello: the server's offered SASL mechanisms (empty => unauth)
+    QByteArray authData;            // AuthChallenge: opaque mechanism bytes (wire `[* uint]`)
+    QString authToken;              // AuthOk: the opaque server-issued session token
+    DecodedPrincipalView principal; // AuthOk: the authenticated principal (advisory)
+    QString authReason;             // AuthError: a short, non-revealing failure reason
 };
 
 // One coalesced durable transcript block (Journal -> journal-record payload Block). The re-baseline
@@ -750,10 +776,20 @@ public:
     // The envelope is hand-coded (not zcbor-generated): it wraps the already-encoded request bytes
     // and slices the response bytes back out, so the generated codec stays scoped to
     // api-request/api-response. Canonical CBOR (definite-length maps; "id" before "req"/"res").
-    // The wire version this client speaks (negotiated by the Hello handshake).
-    static constexpr quint32 kWireVersion = 1;
+    // The wire version this client speaks (negotiated by the Hello handshake). v2 adds the
+    // SASL-style authentication exchange (AuthStart/AuthStep/AuthResume -> AuthChallenge/AuthOk/
+    // AuthError) and the server Hello's auth_mechanisms list.
+    static constexpr quint32 kWireVersion = 2;
     // The client->server Hello opening the multiplexed/streaming session.
     [[nodiscard]] static QByteArray encodeHelloFrame();
+    // Begin a SASL exchange with `mechanism`, carrying its initial client response (may be empty).
+    // The auth byte payload encodes as a CBOR array of uints (`[* uint]`), per the frozen contract.
+    [[nodiscard]] static QByteArray encodeAuthStartFrame(const QString& mechanism,
+                                                         const QByteArray& initial);
+    // A subsequent client response in a multi-step mechanism (answers a prior AuthChallenge).
+    [[nodiscard]] static QByteArray encodeAuthStepFrame(const QByteArray& data);
+    // Re-authenticate by presenting a previously issued opaque session token (reconnect fast-path).
+    [[nodiscard]] static QByteArray encodeAuthResumeFrame(const QString& token);
     // Wrap an already-encoded ApiRequest as a one-shot Call with correlation `id`.
     [[nodiscard]] static QByteArray encodeCallFrame(quint64 id, const QByteArray& requestCbor);
     // Wrap an already-encoded streaming ApiRequest (e.g. Subscribe) as an Open with stream `id`.
@@ -851,3 +887,5 @@ public:
 };
 
 } // namespace daemonapp::daemon
+
+Q_DECLARE_METATYPE(daemonapp::daemon::DecodedPrincipalView)

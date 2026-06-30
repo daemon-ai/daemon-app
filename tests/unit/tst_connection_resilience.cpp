@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
+#include "connection/iconnection_service.h"
 #include "daemon/daemon_connection_service.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/local_daemon_launcher.h"
@@ -98,6 +99,72 @@ private slots:
 
     // (The mid-turn-drop / resume behaviour moved to tst_sync_resync, which drives the L2 push
     // subscription the turn engine now uses instead of the old 120ms Subscribe poll.)
+
+    // Auth: a node that requires SASL drives the service to "authenticating" (no credentials yet),
+    // and a subsequent login() with the right password reaches "ready". The shell never mounts
+    // pre-auth because ready() stays false until AuthOk lands.
+    void authRequiredThenLoginReachesReady() {
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+        const QString path = tmp.filePath(QStringLiteral("auth.sock"));
+        WireMuxServer fake;
+        fake.setReplyPayload(healthResponse());
+        fake.setAuthMechanisms({QStringLiteral("SCRAM-SHA-256")});
+        fake.setCredentials("user", "pencil");
+        QVERIFY2(fake.start(path), "fixture must listen");
+
+        DaemonConnectionService svc; // attach-only (no settings)
+        QSignalSpy authReq(&svc, &connection::IConnectionService::authRequired);
+        QSignalSpy authedOk(&svc, &connection::IConnectionService::authenticated);
+
+        svc.connectTo(QStringLiteral("local"), path);
+        // No credentials: the service surfaces the login form and never goes ready.
+        QVERIFY(
+            QTest::qWaitFor([&] { return svc.state() == QLatin1String("authenticating"); }, 5000));
+        QVERIFY(authReq.count() >= 1);
+        QVERIFY(!svc.ready());
+
+        // Correct password -> SCRAM -> AuthOk -> Health -> ready.
+        svc.login(QStringLiteral("user"), QStringLiteral("pencil"));
+        QVERIFY(QTest::qWaitFor([&] { return svc.ready(); }, 5000));
+        QVERIFY(authedOk.count() >= 1);
+        QCOMPARE(svc.client()->principal().username, QStringLiteral("user"));
+    }
+
+    // Wrong password stays disconnected with an error, and the password is NEVER written to any log
+    // (qDebug/qInfo/qWarning) nor to the surfaced status message.
+    void wrongPasswordStaysDisconnectedAndNeverLogsSecret() {
+        static QStringList captured;
+        captured.clear();
+        QtMessageHandler prev = qInstallMessageHandler(
+            [](QtMsgType, const QMessageLogContext&, const QString& msg) { captured.append(msg); });
+
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+        const QString path = tmp.filePath(QStringLiteral("authbad.sock"));
+        WireMuxServer fake;
+        fake.setReplyPayload(healthResponse());
+        fake.setAuthMechanisms({QStringLiteral("SCRAM-SHA-256")});
+        fake.setCredentials("user", "pencil");
+        QVERIFY2(fake.start(path), "fixture must listen");
+
+        DaemonConnectionService svc;
+        QSignalSpy failedAuth(&svc, &connection::IConnectionService::authFailed);
+        svc.connectTo(QStringLiteral("local"), path);
+        QVERIFY(
+            QTest::qWaitFor([&] { return svc.state() == QLatin1String("authenticating"); }, 5000));
+
+        const QString secret = QStringLiteral("hunter2-secret-pw");
+        svc.login(QStringLiteral("user"), secret);
+        QVERIFY(QTest::qWaitFor([&] { return failedAuth.count() >= 1; }, 5000));
+        QVERIFY(!svc.ready());
+
+        qInstallMessageHandler(prev);
+        for (const QString& line : captured) {
+            QVERIFY2(!line.contains(secret), qPrintable("secret leaked to log: " + line));
+        }
+        QVERIFY2(!svc.statusMessage().contains(secret), "secret leaked to status message");
+    }
 
     // WP3: the restart budget caps re-spawns within its window (pure logic, no spawning): the first
     // kMax spawns are allowed, the next is refused, and a spawn aging out of the window frees a

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <QCryptographicHash>
 #include <QObject>
 #include <QString>
 #include <QVariant>
@@ -81,6 +82,28 @@ public:
         setValue(QStringLiteral("conn/daemonBinaryPath"), path);
     }
 
+    // Per-target server-issued session token (AuthResume reconnect fast-path). Keyed by a hash of
+    // the connection target so multiple nodes don't share a token. This stores the SERVER token
+    // (never the password). The default impl persists to QSettings; a keychain-backed store may
+    // override the raw value() path. Empty target / token are treated as "no token".
+    [[nodiscard]] Q_INVOKABLE QString connectionToken(const QString& target) const {
+        if (target.isEmpty()) {
+            return {};
+        }
+        return value(tokenKey(target)).toString();
+    }
+    Q_INVOKABLE void setConnectionToken(const QString& target, const QString& token) {
+        if (target.isEmpty()) {
+            return;
+        }
+        setValue(tokenKey(target), token);
+    }
+    Q_INVOKABLE void clearConnectionToken(const QString& target) {
+        if (!target.isEmpty()) {
+            setValue(tokenKey(target), QString());
+        }
+    }
+
     // The local socket path to auto-open, resolving the test/CI override first.
     // `DAEMON_APP_SOCKET` lets the end-to-end harness point a headless GUI/TUI at an isolated
     // per-test socket without seeding QSettings; it wins over the persisted `conn/target`, which in
@@ -100,6 +123,15 @@ signals:
     // property bindings (setupComplete) refresh without naming the key.
     void changed(const QString& key);
     void changedAny();
+
+private:
+    // Stable per-target token key (hashed so arbitrary socket paths / host:port are filesystem- and
+    // ini-safe). Not security: tokens are stored verbatim; the hash only namespaces the key.
+    [[nodiscard]] static QString tokenKey(const QString& target) {
+        const QByteArray h =
+            QCryptographicHash::hash(target.toUtf8(), QCryptographicHash::Sha256).toHex();
+        return QStringLiteral("conn/tokens/") + QString::fromLatin1(h.left(16));
+    }
 };
 
 } // namespace settings
