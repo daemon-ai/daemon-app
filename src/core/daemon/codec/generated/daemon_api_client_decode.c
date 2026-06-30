@@ -361,6 +361,15 @@ static bool decode_repeated_fs_write_from_blob_args_base_revision(zcbor_state_t 
 static bool decode_repeated_fs_write_from_blob_args_force(zcbor_state_t *state, struct fs_write_from_blob_args_force *result);
 static bool decode_fs_write_from_blob_args(zcbor_state_t *state, struct fs_write_from_blob_args *result);
 static bool decode_request_fs_write_from_blob(zcbor_state_t *state, struct request_fs_write_from_blob *result);
+static bool decode_request_user_create(zcbor_state_t *state, struct request_user_create *result);
+static bool decode_request_user_disable(zcbor_state_t *state, struct request_user_disable *result);
+static bool decode_request_user_set_roles(zcbor_state_t *state, struct request_user_set_roles *result);
+static bool decode_request_user_set_password(zcbor_state_t *state, struct request_user_set_password *result);
+static bool decode_request_session_revoke(zcbor_state_t *state, struct request_session_revoke *result);
+static bool decode_request_resource_grant_create(zcbor_state_t *state, struct request_resource_grant_create *result);
+static bool decode_repeated_ResourceGrantList_user_id(zcbor_state_t *state, struct ResourceGrantList_user_id_r *result);
+static bool decode_request_resource_grant_list(zcbor_state_t *state, struct request_resource_grant_list *result);
+static bool decode_request_resource_grant_revoke(zcbor_state_t *state, struct request_resource_grant_revoke *result);
 static bool decode_response_routed(zcbor_state_t *state, struct response_routed *result);
 static bool decode_completion_source_process(zcbor_state_t *state, struct completion_source_process *result);
 static bool decode_completion_source_delegation(zcbor_state_t *state, struct completion_source_delegation *result);
@@ -670,6 +679,13 @@ static bool decode_response_blob_put(zcbor_state_t *state, struct response_blob_
 static bool decode_response_blob_get(zcbor_state_t *state, struct response_blob_get *result);
 static bool decode_blob_stat(zcbor_state_t *state, struct blob_stat *result);
 static bool decode_response_blob_stat(zcbor_state_t *state, struct response_blob_stat *result);
+static bool decode_access_user(zcbor_state_t *state, struct access_user *result);
+static bool decode_response_access_user(zcbor_state_t *state, struct response_access_user *result);
+static bool decode_response_access_users(zcbor_state_t *state, struct response_access_users *result);
+static bool decode_role_info(zcbor_state_t *state, struct role_info *result);
+static bool decode_response_access_roles(zcbor_state_t *state, struct response_access_roles *result);
+static bool decode_principal_view(zcbor_state_t *state, struct principal_view *result);
+static bool decode_response_who_am_i(zcbor_state_t *state, struct response_who_am_i *result);
 static bool decode_api_response(zcbor_state_t *state, struct api_response_r *result);
 static bool decode_api_request(zcbor_state_t *state, struct api_request_r *result);
 
@@ -6234,6 +6250,169 @@ static bool decode_request_fs_write_from_blob(
 	return res;
 }
 
+static bool decode_request_user_create(
+		zcbor_state_t *state, struct request_user_create *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"UserCreate", tmp_str.len = sizeof("UserCreate") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"username", tmp_str.len = sizeof("username") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).UserCreate_username))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"password", tmp_str.len = sizeof("password") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).UserCreate_password))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"roles", tmp_str.len = sizeof("roles") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).UserCreate_roles_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).UserCreate_roles_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		zcbor_tstr_decode(state, (*&(*result).UserCreate_roles_tstr));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_user_disable(
+		zcbor_state_t *state, struct request_user_disable *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"UserDisable", tmp_str.len = sizeof("UserDisable") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"user_id", tmp_str.len = sizeof("user_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).UserDisable_user_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"disabled", tmp_str.len = sizeof("disabled") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).UserDisable_disabled))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_user_set_roles(
+		zcbor_state_t *state, struct request_user_set_roles *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"UserSetRoles", tmp_str.len = sizeof("UserSetRoles") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"user_id", tmp_str.len = sizeof("user_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).UserSetRoles_user_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"roles", tmp_str.len = sizeof("roles") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).UserSetRoles_roles_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).UserSetRoles_roles_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		zcbor_tstr_decode(state, (*&(*result).UserSetRoles_roles_tstr));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_user_set_password(
+		zcbor_state_t *state, struct request_user_set_password *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"UserSetPassword", tmp_str.len = sizeof("UserSetPassword") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"user_id", tmp_str.len = sizeof("user_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).UserSetPassword_user_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"password", tmp_str.len = sizeof("password") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).UserSetPassword_password))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_session_revoke(
+		zcbor_state_t *state, struct request_session_revoke *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"SessionRevoke", tmp_str.len = sizeof("SessionRevoke") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"user_id", tmp_str.len = sizeof("user_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).SessionRevoke_user_id))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_resource_grant_create(
+		zcbor_state_t *state, struct request_resource_grant_create *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ResourceGrantCreate", tmp_str.len = sizeof("ResourceGrantCreate") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"user_id", tmp_str.len = sizeof("user_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).ResourceGrantCreate_user_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"resource_kind", tmp_str.len = sizeof("resource_kind") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).ResourceGrantCreate_resource_kind))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"resource_id", tmp_str.len = sizeof("resource_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).ResourceGrantCreate_resource_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"capability", tmp_str.len = sizeof("capability") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).ResourceGrantCreate_capability))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_ResourceGrantList_user_id(
+		zcbor_state_t *state, struct ResourceGrantList_user_id_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"user_id", tmp_str.len = sizeof("user_id") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).ResourceGrantList_user_id_tstr)))) && (((*result).ResourceGrantList_user_id_choice = ResourceGrantList_user_id_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).ResourceGrantList_user_id_choice = ResourceGrantList_user_id_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_resource_grant_list(
+		zcbor_state_t *state, struct request_resource_grant_list *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ResourceGrantList", tmp_str.len = sizeof("ResourceGrantList") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && ((zcbor_present_decode(&((*result).ResourceGrantList_user_id_present), (zcbor_decoder_t *)decode_repeated_ResourceGrantList_user_id, state, (&(*result).ResourceGrantList_user_id))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_ResourceGrantList_user_id(state, (&(*result).ResourceGrantList_user_id));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_resource_grant_revoke(
+		zcbor_state_t *state, struct request_resource_grant_revoke *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ResourceGrantRevoke", tmp_str.len = sizeof("ResourceGrantRevoke") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).ResourceGrantRevoke_id))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_response_routed(
 		zcbor_state_t *state, struct response_routed *result)
 {
@@ -11730,6 +11909,149 @@ static bool decode_response_blob_stat(
 	return res;
 }
 
+static bool decode_access_user(
+		zcbor_state_t *state, struct access_user *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"user_id", tmp_str.len = sizeof("user_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).access_user_user_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"username", tmp_str.len = sizeof("username") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).access_user_username))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"disabled", tmp_str.len = sizeof("disabled") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).access_user_disabled))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"created_at", tmp_str.len = sizeof("created_at") - 1, &tmp_str)))))
+	&& (zcbor_int32_decode(state, (&(*result).access_user_created_at))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"roles", tmp_str.len = sizeof("roles") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).access_user_roles_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).access_user_roles_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		zcbor_tstr_decode(state, (*&(*result).access_user_roles_tstr));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_access_user(
+		zcbor_state_t *state, struct response_access_user *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AccessUser", tmp_str.len = sizeof("AccessUser") - 1, &tmp_str)))))
+	&& (decode_access_user(state, (&(*result).response_access_user_AccessUser))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_access_users(
+		zcbor_state_t *state, struct response_access_users *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AccessUsers", tmp_str.len = sizeof("AccessUsers") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).response_access_users_AccessUsers_access_user_m_count, (zcbor_decoder_t *)decode_access_user, state, (*&(*result).response_access_users_AccessUsers_access_user_m), sizeof(struct access_user))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_access_user(state, (*&(*result).response_access_users_AccessUsers_access_user_m));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_role_info(
+		zcbor_state_t *state, struct role_info *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"role", tmp_str.len = sizeof("role") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).role_info_role))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"capabilities", tmp_str.len = sizeof("capabilities") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).role_info_capabilities_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).role_info_capabilities_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		zcbor_tstr_decode(state, (*&(*result).role_info_capabilities_tstr));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_access_roles(
+		zcbor_state_t *state, struct response_access_roles *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AccessRoles", tmp_str.len = sizeof("AccessRoles") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).response_access_roles_AccessRoles_role_info_m_count, (zcbor_decoder_t *)decode_role_info, state, (*&(*result).response_access_roles_AccessRoles_role_info_m), sizeof(struct role_info))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_role_info(state, (*&(*result).response_access_roles_AccessRoles_role_info_m));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_principal_view(
+		zcbor_state_t *state, struct principal_view *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"user_id", tmp_str.len = sizeof("user_id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).principal_view_user_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"username", tmp_str.len = sizeof("username") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).principal_view_username))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"roles", tmp_str.len = sizeof("roles") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).principal_view_roles_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).principal_view_roles_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"capabilities", tmp_str.len = sizeof("capabilities") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).principal_view_capabilities_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).principal_view_capabilities_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		zcbor_tstr_decode(state, (*&(*result).principal_view_roles_tstr));
+		zcbor_tstr_decode(state, (*&(*result).principal_view_capabilities_tstr));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_who_am_i(
+		zcbor_state_t *state, struct response_who_am_i *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"WhoAmI", tmp_str.len = sizeof("WhoAmI") - 1, &tmp_str)))))
+	&& (decode_principal_view(state, (&(*result).response_who_am_i_WhoAmI))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_api_response(
 		zcbor_state_t *state, struct api_response_r *result)
 {
@@ -11815,7 +12137,11 @@ static bool decode_api_response(
 	|| (zcbor_union_elem_code(state) && (((decode_response_fs_watch(state, (&(*result).api_response_response_fs_watch_m)))) && (((*result).api_response_choice = api_response_response_fs_watch_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_blob_put(state, (&(*result).api_response_response_blob_put_m)))) && (((*result).api_response_choice = api_response_response_blob_put_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_blob_get(state, (&(*result).api_response_response_blob_get_m)))) && (((*result).api_response_choice = api_response_response_blob_get_m_c), true)))
-	|| (zcbor_union_elem_code(state) && (((decode_response_blob_stat(state, (&(*result).api_response_response_blob_stat_m)))) && (((*result).api_response_choice = api_response_response_blob_stat_m_c), true)))), zcbor_union_end_code(state), int_res))));
+	|| (zcbor_union_elem_code(state) && (((decode_response_blob_stat(state, (&(*result).api_response_response_blob_stat_m)))) && (((*result).api_response_choice = api_response_response_blob_stat_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_access_user(state, (&(*result).api_response_response_access_user_m)))) && (((*result).api_response_choice = api_response_response_access_user_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_access_users(state, (&(*result).api_response_response_access_users_m)))) && (((*result).api_response_choice = api_response_response_access_users_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_access_roles(state, (&(*result).api_response_response_access_roles_m)))) && (((*result).api_response_choice = api_response_response_access_roles_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_who_am_i(state, (&(*result).api_response_response_who_am_i_m)))) && (((*result).api_response_choice = api_response_response_who_am_i_m_c), true)))), zcbor_union_end_code(state), int_res))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -11975,7 +12301,18 @@ static bool decode_api_request(
 	|| (zcbor_union_elem_code(state) && (((decode_request_blob_put(state, (&(*result).api_request_request_blob_put_m)))) && (((*result).api_request_choice = api_request_request_blob_put_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_blob_get(state, (&(*result).api_request_request_blob_get_m)))) && (((*result).api_request_choice = api_request_request_blob_get_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_blob_stat(state, (&(*result).api_request_request_blob_stat_m)))) && (((*result).api_request_choice = api_request_request_blob_stat_m_c), true)))
-	|| (zcbor_union_elem_code(state) && (((decode_request_fs_write_from_blob(state, (&(*result).api_request_request_fs_write_from_blob_m)))) && (((*result).api_request_choice = api_request_request_fs_write_from_blob_m_c), true)))), zcbor_union_end_code(state), int_res))));
+	|| (zcbor_union_elem_code(state) && (((decode_request_fs_write_from_blob(state, (&(*result).api_request_request_fs_write_from_blob_m)))) && (((*result).api_request_choice = api_request_request_fs_write_from_blob_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_user_create(state, (&(*result).api_request_request_user_create_m)))) && (((*result).api_request_choice = api_request_request_user_create_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"UserList", tmp_str.len = sizeof("UserList") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_user_list_m_c), true)))
+	|| (((decode_request_user_disable(state, (&(*result).api_request_request_user_disable_m)))) && (((*result).api_request_choice = api_request_request_user_disable_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((decode_request_user_set_roles(state, (&(*result).api_request_request_user_set_roles_m)))) && (((*result).api_request_choice = api_request_request_user_set_roles_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_user_set_password(state, (&(*result).api_request_request_user_set_password_m)))) && (((*result).api_request_choice = api_request_request_user_set_password_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"RoleList", tmp_str.len = sizeof("RoleList") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_role_list_m_c), true)))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"WhoAmI", tmp_str.len = sizeof("WhoAmI") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_who_am_i_m_c), true))
+	|| (((decode_request_session_revoke(state, (&(*result).api_request_request_session_revoke_m)))) && (((*result).api_request_choice = api_request_request_session_revoke_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((decode_request_resource_grant_create(state, (&(*result).api_request_request_resource_grant_create_m)))) && (((*result).api_request_choice = api_request_request_resource_grant_create_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_resource_grant_list(state, (&(*result).api_request_request_resource_grant_list_m)))) && (((*result).api_request_choice = api_request_request_resource_grant_list_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_resource_grant_revoke(state, (&(*result).api_request_request_resource_grant_revoke_m)))) && (((*result).api_request_choice = api_request_request_resource_grant_revoke_m_c), true)))), zcbor_union_end_code(state), int_res))));
 
 	log_result(state, res, __func__);
 	return res;

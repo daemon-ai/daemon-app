@@ -2426,6 +2426,59 @@ struct request_fs_write_from_blob {
 	struct fs_write_from_blob_args request_fs_write_from_blob_FsWriteFromBlob;
 };
 
+struct request_user_create {
+	struct zcbor_string UserCreate_username;
+	struct zcbor_string UserCreate_password;
+	struct zcbor_string UserCreate_roles_tstr[64];
+	size_t UserCreate_roles_tstr_count;
+};
+
+struct request_user_disable {
+	struct zcbor_string UserDisable_user_id;
+	bool UserDisable_disabled;
+};
+
+struct request_user_set_roles {
+	struct zcbor_string UserSetRoles_user_id;
+	struct zcbor_string UserSetRoles_roles_tstr[64];
+	size_t UserSetRoles_roles_tstr_count;
+};
+
+struct request_user_set_password {
+	struct zcbor_string UserSetPassword_user_id;
+	struct zcbor_string UserSetPassword_password;
+};
+
+struct request_session_revoke {
+	struct zcbor_string SessionRevoke_user_id;
+};
+
+struct request_resource_grant_create {
+	struct zcbor_string ResourceGrantCreate_user_id;
+	struct zcbor_string ResourceGrantCreate_resource_kind;
+	struct zcbor_string ResourceGrantCreate_resource_id;
+	struct zcbor_string ResourceGrantCreate_capability;
+};
+
+struct ResourceGrantList_user_id_r {
+	union {
+		struct zcbor_string ResourceGrantList_user_id_tstr;
+	};
+	enum {
+		ResourceGrantList_user_id_tstr_c,
+		ResourceGrantList_user_id_null_m_c,
+	} ResourceGrantList_user_id_choice;
+};
+
+struct request_resource_grant_list {
+	struct ResourceGrantList_user_id_r ResourceGrantList_user_id;
+	bool ResourceGrantList_user_id_present;
+};
+
+struct request_resource_grant_revoke {
+	struct zcbor_string ResourceGrantRevoke_id;
+};
+
 struct api_request_r {
 	union {
 		struct request_submit api_request_request_submit_m;
@@ -2549,6 +2602,14 @@ struct api_request_r {
 		struct request_blob_get api_request_request_blob_get_m;
 		struct request_blob_stat api_request_request_blob_stat_m;
 		struct request_fs_write_from_blob api_request_request_fs_write_from_blob_m;
+		struct request_user_create api_request_request_user_create_m;
+		struct request_user_disable api_request_request_user_disable_m;
+		struct request_user_set_roles api_request_request_user_set_roles_m;
+		struct request_user_set_password api_request_request_user_set_password_m;
+		struct request_session_revoke api_request_request_session_revoke_m;
+		struct request_resource_grant_create api_request_request_resource_grant_create_m;
+		struct request_resource_grant_list api_request_request_resource_grant_list_m;
+		struct request_resource_grant_revoke api_request_request_resource_grant_revoke_m;
 	};
 	enum {
 		api_request_request_submit_m_c,
@@ -2699,6 +2760,17 @@ struct api_request_r {
 		api_request_request_blob_get_m_c,
 		api_request_request_blob_stat_m_c,
 		api_request_request_fs_write_from_blob_m_c,
+		api_request_request_user_create_m_c,
+		api_request_request_user_list_m_c,
+		api_request_request_user_disable_m_c,
+		api_request_request_user_set_roles_m_c,
+		api_request_request_user_set_password_m_c,
+		api_request_request_role_list_m_c,
+		api_request_request_who_am_i_m_c,
+		api_request_request_session_revoke_m_c,
+		api_request_request_resource_grant_create_m_c,
+		api_request_request_resource_grant_list_m_c,
+		api_request_request_resource_grant_revoke_m_c,
 	} api_request_choice;
 };
 
@@ -5191,6 +5263,48 @@ struct response_blob_stat {
 	struct blob_stat response_blob_stat_BlobStat;
 };
 
+struct access_user {
+	struct zcbor_string access_user_user_id;
+	struct zcbor_string access_user_username;
+	bool access_user_disabled;
+	int32_t access_user_created_at;
+	struct zcbor_string access_user_roles_tstr[64];
+	size_t access_user_roles_tstr_count;
+};
+
+struct response_access_user {
+	struct access_user response_access_user_AccessUser;
+};
+
+struct response_access_users {
+	struct access_user response_access_users_AccessUsers_access_user_m[64];
+	size_t response_access_users_AccessUsers_access_user_m_count;
+};
+
+struct role_info {
+	struct zcbor_string role_info_role;
+	struct zcbor_string role_info_capabilities_tstr[64];
+	size_t role_info_capabilities_tstr_count;
+};
+
+struct response_access_roles {
+	struct role_info response_access_roles_AccessRoles_role_info_m[64];
+	size_t response_access_roles_AccessRoles_role_info_m_count;
+};
+
+struct principal_view {
+	struct zcbor_string principal_view_user_id;
+	struct zcbor_string principal_view_username;
+	struct zcbor_string principal_view_roles_tstr[64];
+	size_t principal_view_roles_tstr_count;
+	struct zcbor_string principal_view_capabilities_tstr[64];
+	size_t principal_view_capabilities_tstr_count;
+};
+
+struct response_who_am_i {
+	struct principal_view response_who_am_i_WhoAmI;
+};
+
 struct api_response_r {
 	union {
 		struct response_routed api_response_response_routed_m;
@@ -5271,6 +5385,10 @@ struct api_response_r {
 		struct response_blob_put api_response_response_blob_put_m;
 		struct response_blob_get api_response_response_blob_get_m;
 		struct response_blob_stat api_response_response_blob_stat_m;
+		struct response_access_user api_response_response_access_user_m;
+		struct response_access_users api_response_response_access_users_m;
+		struct response_access_roles api_response_response_access_roles_m;
+		struct response_who_am_i api_response_response_who_am_i_m;
 	};
 	enum {
 		api_response_response_ok_m_c,
@@ -5352,6 +5470,10 @@ struct api_response_r {
 		api_response_response_blob_put_m_c,
 		api_response_response_blob_get_m_c,
 		api_response_response_blob_stat_m_c,
+		api_response_response_access_user_m_c,
+		api_response_response_access_users_m_c,
+		api_response_response_access_roles_m_c,
+		api_response_response_who_am_i_m_c,
 	} api_response_choice;
 };
 
