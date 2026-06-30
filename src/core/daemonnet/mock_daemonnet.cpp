@@ -175,42 +175,41 @@ QSet<QString> MockDaemonNet::sessionsBoundBy(const QString& edgeKind,
     return ids;
 }
 
+bool MockDaemonNet::sessionMatchesScope(const domain::Session& s, const domain::ListScope& scope,
+                                        const QSet<QString>& lensIds) const {
+    using domain::NodeType;
+    switch (scope.type) {
+    case NodeType::AllSessions:
+        return !s.isArchived;
+    case NodeType::Archived:
+        return s.isArchived;
+    case NodeType::Unit:
+        return !s.isArchived && isInSubtree(s.unitId, scope.unitId);
+    case NodeType::Tag:
+        return !s.isArchived && s.tagIds.contains(scope.tagId);
+    case NodeType::ByTransport:
+    case NodeType::ByPeer:
+        return lensIds.contains(s.sessionId.toString());
+    case NodeType::FleetSeparator:
+    case NodeType::TagSeparator:
+    case NodeType::TransportSeparator:
+    case NodeType::Transport:
+        return false; // headers / transport-tree rows carry no session list
+    }
+    return false;
+}
+
 QList<domain::Session> MockDaemonNet::sessionsInScope(const domain::ListScope& scope) const {
     using domain::NodeType;
-    QList<domain::Session> out;
     QSet<QString> lensIds;
     if (scope.type == NodeType::ByTransport) {
         lensIds = sessionsBoundBy(QStringLiteral("over"), scope.lensKey);
     } else if (scope.type == NodeType::ByPeer) {
         lensIds = sessionsBoundBy(QStringLiteral("participant"), scope.lensKey);
     }
+    QList<domain::Session> out;
     for (const Session& s : m_sessions) {
-        bool keep = false;
-        switch (scope.type) {
-        case NodeType::AllSessions:
-            keep = !s.isArchived;
-            break;
-        case NodeType::Archived:
-            keep = s.isArchived;
-            break;
-        case NodeType::Unit:
-            keep = !s.isArchived && isInSubtree(s.unitId, scope.unitId);
-            break;
-        case NodeType::Tag:
-            keep = !s.isArchived && s.tagIds.contains(scope.tagId);
-            break;
-        case NodeType::ByTransport:
-        case NodeType::ByPeer:
-            keep = lensIds.contains(s.sessionId.toString());
-            break;
-        case NodeType::FleetSeparator:
-        case NodeType::TagSeparator:
-        case NodeType::TransportSeparator:
-        case NodeType::Transport:
-            keep = false; // headers / transport-tree rows carry no session list
-            break;
-        }
-        if (keep) {
+        if (sessionMatchesScope(s, scope, lensIds)) {
             out.push_back(s);
         }
     }
@@ -231,8 +230,16 @@ QString MockDaemonNet::content(const domain::SessionId& id) const {
 }
 
 void MockDaemonNet::buildSeed() {
-    const QDateTime now = QDateTime::currentDateTime();
+    seedTagsAndParticipants();
+    seedUnits();
+    seedSessions();
+    seedGraph();
+    buildTransportsTree();
+    buildRoutingSeed();
+    rebuildRoutingGraph();
+}
 
+void MockDaemonNet::seedTagsAndParticipants() {
     // --- Tags (client-local cross-cutting labels) ---
     m_tags = {
         {1, QStringLiteral("ideas"), QStringLiteral("#2383e2")},
@@ -248,7 +255,9 @@ void MockDaemonNet::buildSeed() {
         {QStringLiteral("user"), tr("User"), QStringLiteral("available"), QStringLiteral("#3fb950"),
          false},
     };
+}
 
+void MockDaemonNet::seedUnits() {
     // --- Units: the fleet-of-fleets (a lone Engine root, nested orchestrators, a Host) ---
     static const QHash<QString, QString> kUnitProfiles = {
         {QStringLiteral("n-scratch"), QStringLiteral("prof-1")},
@@ -292,6 +301,10 @@ void MockDaemonNet::buildSeed() {
     mkUnit("n-worker", "n-deep", "Worker A", UnitKind::Engine, UnitState::Running,
            "Running checks");
     mkUnit("n-ops", "n-acme", "Ops Host", UnitKind::Host, UnitState::Running, "");
+}
+
+void MockDaemonNet::seedSessions() {
+    const QDateTime now = QDateTime::currentDateTime();
 
     // --- Sessions: hung off units at multiple depths (+ the renderer-demo transcripts) ---
     const auto sess = [&](const char* sid, const char* unit, const QList<int>& tagIds,
@@ -357,7 +370,9 @@ void MockDaemonNet::buildSeed() {
     sess("s-http-dashboard", "n-build", {}, false, Lifecycle::Live,
          QStringLiteral("Dashboard query"),
          QStringLiteral("Inbound `GET /status` from the `dashboard` API key.\n"));
+}
 
+void MockDaemonNet::seedGraph() {
     // --- Raw graph (agents + sessions + transports/peers/rooms + edges) for
     // channels/byPeer/patch-bay ---
     const auto node = [&](const QString& id, const QString& kind, const QString& label,
@@ -465,10 +480,6 @@ void MockDaemonNet::buildSeed() {
          QStringLiteral("over"));
     edge(QStringLiteral("o-http"), QStringLiteral("s-http-dashboard"), QStringLiteral("http"),
          QStringLiteral("over"));
-
-    buildTransportsTree();
-    buildRoutingSeed();
-    rebuildRoutingGraph();
 }
 
 void MockDaemonNet::buildTransportsTree() {
@@ -556,20 +567,25 @@ QList<TransportTreeRow> MockDaemonNet::transportsTree() const {
 }
 
 void MockDaemonNet::computeProjections() {
-    const QString kEdgeKind = QStringLiteral("edgeKind");
-    const QString kSource = QStringLiteral("source");
-    const QString kTarget = QStringLiteral("target");
-    const QString kId = QStringLiteral("id");
-    const QString kLabel = QStringLiteral("label");
-    const QString kKind = QStringLiteral("kind");
+    const QHash<QString, QVariantMap> byId = nodesById();
+    projectFleet();
+    projectSessions();
+    projectChannels(byId);
+    projectByPeer(byId);
+}
 
+QHash<QString, QVariantMap> MockDaemonNet::nodesById() const {
     QHash<QString, QVariantMap> byId;
     byId.reserve(m_nodes.size());
     for (const QVariantMap& n : m_nodes) {
-        byId.insert(n.value(kId).toString(), n);
+        byId.insert(n.value(QStringLiteral("id")).toString(), n);
     }
+    return byId;
+}
 
+void MockDaemonNet::projectFleet() {
     // --- fleet: delegation spanning tree (pre-order DFS over typed units) ---
+    const QString kId = QStringLiteral("id");
     QHash<QString, QStringList> children;
     QSet<QString> delegated;
     for (const UnitNode& u : m_units) {
@@ -603,7 +619,9 @@ void MockDaemonNet::computeProjections() {
         }
     }
     m_fleetModel->setRows(fleetRows);
+}
 
+void MockDaemonNet::projectSessions() {
     // --- sessions roster (from typed sessions) ---
     // Per-session token usage (deterministic; drives the dashboard's live "tokens today" total).
     // Kept explicit rather than content-derived so the figures read like real usage and closing any
@@ -619,7 +637,7 @@ void MockDaemonNet::computeProjections() {
     QList<QVariantMap> sessionRows;
     for (const Session& c : m_sessions) {
         QVariantMap row;
-        row[kId] = c.sessionId.toString();
+        row[QStringLiteral("id")] = c.sessionId.toString();
         row[QStringLiteral("title")] = c.title;
         row[QStringLiteral("profile")] = c.boundProfile.toString();
         row[QStringLiteral("state")] = sessionStateStr(c.state);
@@ -630,8 +648,15 @@ void MockDaemonNet::computeProjections() {
         sessionRows.append(row);
     }
     m_sessionsModel->setRows(sessionRows);
+}
 
+void MockDaemonNet::projectChannels(const QHash<QString, QVariantMap>& byId) {
     // --- channels (transport sessions grouped via Over/InPlace/Participant edges) ---
+    const QString kEdgeKind = QStringLiteral("edgeKind");
+    const QString kSource = QStringLiteral("source");
+    const QString kTarget = QStringLiteral("target");
+    const QString kLabel = QStringLiteral("label");
+    const QString kKind = QStringLiteral("kind");
     QHash<QString, QString> overOf;
     QHash<QString, QString> placeOf;
     QHash<QString, QStringList> partsOf;
@@ -668,7 +693,7 @@ void MockDaemonNet::computeProjections() {
                                                              : QStringLiteral("dm");
         }
         QVariantMap row;
-        row[kId] = sid;
+        row[QStringLiteral("id")] = sid;
         row[QStringLiteral("transport")] = byId.value(transportId).value(kLabel);
         row[QStringLiteral("peer")] = peerLabel;
         row[QStringLiteral("scope")] = scope;
@@ -678,8 +703,14 @@ void MockDaemonNet::computeProjections() {
         channelRows.append(row);
     }
     m_channelsModel->setRows(channelRows);
+}
 
+void MockDaemonNet::projectByPeer(const QHash<QString, QVariantMap>& byId) {
     // --- byPeer (conversations grouped by remote Peer participant) ---
+    const QString kEdgeKind = QStringLiteral("edgeKind");
+    const QString kTarget = QStringLiteral("target");
+    const QString kLabel = QStringLiteral("label");
+    const QString kKind = QStringLiteral("kind");
     QHash<QString, int> peerCounts;
     for (const QVariantMap& e : m_edges) {
         if (e.value(kEdgeKind).toString() != QStringLiteral("participant")) {
@@ -694,7 +725,7 @@ void MockDaemonNet::computeProjections() {
     for (auto it = peerCounts.constBegin(); it != peerCounts.constEnd(); ++it) {
         const QVariantMap p = byId.value(it.key());
         QVariantMap row;
-        row[kId] = it.key();
+        row[QStringLiteral("id")] = it.key();
         row[QStringLiteral("peer")] = p.value(kLabel);
         row[QStringLiteral("kind")] = p.value(QStringLiteral("nature"), QStringLiteral("unknown"));
         row[QStringLiteral("count")] = it.value();
@@ -848,11 +879,8 @@ MockDaemonNet::deliveryTargets(const domain::SessionId& session) const {
     return m_delivery.value(session.toString());
 }
 
-QList<RoomBinding> MockDaemonNet::transportRooms(const domain::TransportId& transport) const {
-    // Derive bindable rooms/chats from the graph: places (channel/room) a session is `inPlace` of
-    // while bound `over` this transport. pinnedSession = that session when a pin targets it.
-    QHash<QString, QString> overOf;  // session -> transport
-    QHash<QString, QString> placeOf; // session -> place id
+void MockDaemonNet::collectOverPlace(QHash<QString, QString>& overOf,
+                                     QHash<QString, QString>& placeOf) const {
     for (const QVariantMap& e : m_edges) {
         const QString kind = e.value(QStringLiteral("edgeKind")).toString();
         const QString src = e.value(QStringLiteral("source")).toString();
@@ -863,6 +891,14 @@ QList<RoomBinding> MockDaemonNet::transportRooms(const domain::TransportId& tran
             placeOf.insert(src, dst);
         }
     }
+}
+
+QList<RoomBinding> MockDaemonNet::transportRooms(const domain::TransportId& transport) const {
+    // Derive bindable rooms/chats from the graph: places (channel/room) a session is `inPlace` of
+    // while bound `over` this transport. pinnedSession = that session when a pin targets it.
+    QHash<QString, QString> overOf;  // session -> transport
+    QHash<QString, QString> placeOf; // session -> place id
+    collectOverPlace(overOf, placeOf);
     QHash<QString, QString> labelOf;
     for (const QVariantMap& n : m_nodes) {
         labelOf.insert(n.value(QStringLiteral("id")).toString(),
@@ -894,26 +930,32 @@ QList<RoomBinding> MockDaemonNet::transportRooms(const domain::TransportId& tran
     return out;
 }
 
+const BindingRule* MockDaemonNet::matchingRule(const Origin& origin) const {
+    for (const BindingRule& b : m_rules) {
+        if (transportMatches(b.transportPattern, origin.transport) &&
+            scopeMatches(b.scopeGlob, origin.scope)) {
+            return &b;
+        }
+    }
+    return nullptr;
+}
+
+domain::ProfileRef MockDaemonNet::accountProfileFor(const domain::TransportId& transport) const {
+    for (const AccountAgent& a : m_accountAgents) {
+        if (a.transport == transport) {
+            return a.profile;
+        }
+    }
+    return {};
+}
+
 Resolution MockDaemonNet::resolve(const Origin& origin) const {
     Resolution r;
     const QString key = originKey(origin);
 
     // The non-pin profile precedence (rule override > account-bound > default) + which rung.
-    const BindingRule* rule = nullptr;
-    for (const BindingRule& b : m_rules) {
-        if (transportMatches(b.transportPattern, origin.transport) &&
-            scopeMatches(b.scopeGlob, origin.scope)) {
-            rule = &b;
-            break;
-        }
-    }
-    domain::ProfileRef accountProfile;
-    for (const AccountAgent& a : m_accountAgents) {
-        if (a.transport == origin.transport) {
-            accountProfile = a.profile;
-            break;
-        }
-    }
+    const BindingRule* rule = matchingRule(origin);
+    domain::ProfileRef accountProfile = accountProfileFor(origin.transport);
     const auto precedenceProfile = [&](DecidedBy& decided) -> domain::ProfileRef {
         if (rule && !rule->profile.isEmpty()) {
             decided = DecidedBy::Rule;
@@ -963,69 +1005,52 @@ Resolution MockDaemonNet::resolve(const Origin& origin) const {
     return r;
 }
 
-void MockDaemonNet::rebuildRoutingGraph() {
-    // Drop any prior routing additions (id prefix "rt:") so mutations don't accumulate duplicates.
-    m_nodes.removeIf([](const QVariantMap& n) {
-        return n.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("rt:"));
-    });
-    m_edges.removeIf([](const QVariantMap& e) {
-        return e.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("rt:"));
-    });
+void MockDaemonNet::appendRoutingNode(const QString& id, const QString& kind, const QString& label,
+                                      QVariantMap extra) {
+    QVariantMap n = std::move(extra);
+    n[QStringLiteral("id")] = id;
+    n[QStringLiteral("kind")] = kind;
+    n[QStringLiteral("label")] = label;
+    m_nodes.append(n);
+}
 
-    const auto addNode = [&](const QString& id, const QString& kind, const QString& label,
-                             QVariantMap extra = {}) {
-        QVariantMap n = std::move(extra);
-        n[QStringLiteral("id")] = id;
-        n[QStringLiteral("kind")] = kind;
-        n[QStringLiteral("label")] = label;
-        m_nodes.append(n);
-    };
-    const auto addEdge = [&](const QString& id, const QString& src, const QString& dst,
-                             const QString& kind, QVariantMap extra = {}) {
-        QVariantMap e = std::move(extra);
-        e[QStringLiteral("id")] = id;
-        e[QStringLiteral("source")] = src;
-        e[QStringLiteral("target")] = dst;
-        e[QStringLiteral("edgeKind")] = kind;
-        m_edges.append(e);
-    };
+void MockDaemonNet::appendRoutingEdge(const QString& id, const QString& src, const QString& dst,
+                                      const QString& kind, QVariantMap extra) {
+    QVariantMap e = std::move(extra);
+    e[QStringLiteral("id")] = id;
+    e[QStringLiteral("source")] = src;
+    e[QStringLiteral("target")] = dst;
+    e[QStringLiteral("edgeKind")] = kind;
+    m_edges.append(e);
+}
 
-    QSet<QString> pinnedKeys;
-
+void MockDaemonNet::addPinnedInbound() {
     // Inbound: pinned origin -> session (provenance pinned).
     for (const RoutingPin& p : m_pins) {
         const QString key = originKey(p.origin);
-        pinnedKeys.insert(key);
         const QString oid = QStringLiteral("rt:o:") + key;
         QVariantMap ox;
         ox[QStringLiteral("transport")] = p.origin.transport.toString();
         // The pinnable origin key (so the topology's drag-to-pin maps a dragged origin node back to
         // a key the routing controller can pin).
         ox[QStringLiteral("originKey")] = key;
-        addNode(oid, QStringLiteral("origin"),
-                p.origin.transport.toString() + QStringLiteral(" · ") +
-                    (p.origin.scope.kind == OriginScopeKind::Dm ? p.origin.scope.user
-                                                                : p.origin.scope.chat),
-                ox);
+        appendRoutingNode(oid, QStringLiteral("origin"),
+                          p.origin.transport.toString() + QStringLiteral(" · ") +
+                              (p.origin.scope.kind == OriginScopeKind::Dm ? p.origin.scope.user
+                                                                          : p.origin.scope.chat),
+                          ox);
         QVariantMap ex;
         ex[QStringLiteral("provenance")] = QStringLiteral("pinned");
-        addEdge(QStringLiteral("rt:in:") + key, oid, p.session.toString(),
-                QStringLiteral("inbound"), ex);
+        appendRoutingEdge(QStringLiteral("rt:in:") + key, oid, p.session.toString(),
+                          QStringLiteral("inbound"), ex);
     }
+}
 
+void MockDaemonNet::addBoundInbound() {
     // Inbound: every other session bound `over` a transport (provenance bound|derived).
     QHash<QString, QString> overOf;
     QHash<QString, QString> placeOf;
-    for (const QVariantMap& e : m_edges) {
-        const QString kind = e.value(QStringLiteral("edgeKind")).toString();
-        if (kind == QStringLiteral("over")) {
-            overOf.insert(e.value(QStringLiteral("source")).toString(),
-                          e.value(QStringLiteral("target")).toString());
-        } else if (kind == QStringLiteral("inPlace")) {
-            placeOf.insert(e.value(QStringLiteral("source")).toString(),
-                           e.value(QStringLiteral("target")).toString());
-        }
-    }
+    collectOverPlace(overOf, placeOf);
     QSet<QString> accountTransports;
     for (const AccountAgent& a : m_accountAgents) {
         accountTransports.insert(a.transport.toString());
@@ -1046,30 +1071,48 @@ void MockDaemonNet::rebuildRoutingGraph() {
             continue;
         }
         const QString oid = QStringLiteral("rt:o:") + synthKey;
-        addNode(oid, QStringLiteral("origin"), transport, {});
+        appendRoutingNode(oid, QStringLiteral("origin"), transport, {});
         QVariantMap ex;
         ex[QStringLiteral("provenance")] = accountTransports.contains(transport)
                                                ? QStringLiteral("bound")
                                                : QStringLiteral("derived");
-        addEdge(QStringLiteral("rt:in:") + synthKey, oid, session, QStringLiteral("inbound"), ex);
+        appendRoutingEdge(QStringLiteral("rt:in:") + synthKey, oid, session,
+                          QStringLiteral("inbound"), ex);
     }
+}
 
+void MockDaemonNet::addOutbound() {
     // Outbound: session -> destination (SinkKind), one node per (transport,route).
     for (auto it = m_delivery.constBegin(); it != m_delivery.constEnd(); ++it) {
         const QString& session = it.key();
         for (const domain::DeliveryTarget& t : it.value()) {
             const QString did = QStringLiteral("rt:d:") + t.transport.toString() +
                                 QLatin1Char('/') + t.route.toString();
-            addNode(did, QStringLiteral("destination"),
-                    t.transport.toString() + QStringLiteral(" · ") + t.route.toString(), {});
+            appendRoutingNode(did, QStringLiteral("destination"),
+                              t.transport.toString() + QStringLiteral(" · ") + t.route.toString(),
+                              {});
             QVariantMap ex;
             ex[QStringLiteral("sinkKind")] = t.kind == domain::SinkKind::Primary
                                                  ? QStringLiteral("primary")
                                                  : QStringLiteral("spectator");
-            addEdge(QStringLiteral("rt:out:") + session + QLatin1Char('/') + did, session, did,
-                    QStringLiteral("outbound"), ex);
+            appendRoutingEdge(QStringLiteral("rt:out:") + session + QLatin1Char('/') + did, session,
+                              did, QStringLiteral("outbound"), ex);
         }
     }
+}
+
+void MockDaemonNet::rebuildRoutingGraph() {
+    // Drop any prior routing additions (id prefix "rt:") so mutations don't accumulate duplicates.
+    m_nodes.removeIf([](const QVariantMap& n) {
+        return n.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("rt:"));
+    });
+    m_edges.removeIf([](const QVariantMap& e) {
+        return e.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("rt:"));
+    });
+
+    addPinnedInbound();
+    addBoundInbound();
+    addOutbound();
 }
 
 void MockDaemonNet::bindChat(const Origin& origin, const domain::SessionId& session,
