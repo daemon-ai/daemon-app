@@ -46,6 +46,8 @@ add_library(be_core STATIC
     core/coordinate_map.h
     core/document_store.cpp
     core/document_store.h
+    core/document_store_detail.cpp
+    core/document_store_detail.h
     core/image_url.h
     core/inline_projector.cpp
     core/inline_projector.h

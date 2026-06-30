@@ -4,360 +4,13 @@
 #include "core/document_store.h"
 
 #include "core/agent_block.h"
-#include "core/markdown_table.h"
+#include "core/document_store_detail.h"
 
 #include <QRegularExpression>
 
 namespace be {
 
-namespace {
-
-// Retype a freshly built code-fence record whose info string names an agent
-// block kind ("tool"/"reasoning"/"content") into the matching typed block and
-// hydrate its metadata from the fenced JSON body. This is the markdown -> typed
-// step of the round-trip; the inverse (typed -> markdown) lives in
-// serializeAgentBlock, kept in sync by appendTypedBlock/updateBlockMetadata.
-void applyAgentBlockFromFence(BlockRecord& record, const QString& info) {
-    const BlockType type = agentBlockTypeForFence(info);
-    if (type == BlockType::Unknown) {
-        return;
-    }
-    record.type = type;
-    const QVariantMap meta = parseAgentBlockMetadata(fencedBodyOf(record.markdown()));
-    for (auto it = meta.constBegin(); it != meta.constEnd(); ++it) {
-        record.metadata.insert(it.key(), it.value());
-    }
-}
-
-bool isListType(BlockType type) {
-    return type == BlockType::BulletListItem || type == BlockType::OrderedListItem ||
-           type == BlockType::TaskListItem;
-}
-
-const QRegularExpression& headingRe() {
-    static const QRegularExpression re(QStringLiteral("^(#{1,6})\\s+"));
-    return re;
-}
-
-const QRegularExpression& taskRe() {
-    static const QRegularExpression re(QStringLiteral("^(\\s*)[-*+]\\s+\\[[ xX]\\]\\s+"));
-    return re;
-}
-
-const QRegularExpression& bulletRe() {
-    static const QRegularExpression re(QStringLiteral("^(\\s*)[-*+]\\s+"));
-    return re;
-}
-
-const QRegularExpression& orderedRe() {
-    static const QRegularExpression re(QStringLiteral("^(\\s*)\\d+[.)]\\s+"));
-    return re;
-}
-
-QString firstLineOf(const QString& content) {
-    const qsizetype newline = content.indexOf(QLatin1Char('\n'));
-    return newline < 0 ? content : content.left(newline);
-}
-
-// GitHub-style heading slug: lowercase, drop characters other than letters,
-// digits, space and hyphen, then turn runs of spaces into single hyphens.
-// "## Foo Bar!" -> "foo-bar", matching the "#foo-bar" fragment a TOC links to.
-QString headingSlug(const QString& headingText) {
-    QString slug;
-    slug.reserve(headingText.size());
-    for (const QChar c : headingText) {
-        if (c.isLetterOrNumber()) {
-            slug += c.toLower();
-        } else if (c == QLatin1Char('-') || c == QLatin1Char('_')) {
-            slug += c;
-        } else if (c.isSpace()) {
-            slug += QLatin1Char(' ');
-        }
-        // All other punctuation is dropped.
-    }
-    slug = slug.simplified(); // collapse internal whitespace, trim ends
-    slug.replace(QLatin1Char(' '), QLatin1Char('-'));
-    return slug;
-}
-
-// Language token after a leading ``` / ~~~ fence on the first line, or empty.
-QString fenceLanguageOf(const QString& content) {
-    const QString line = firstLineOf(content).trimmed();
-    if (!line.startsWith(QStringLiteral("```")) && !line.startsWith(QStringLiteral("~~~"))) {
-        return {};
-    }
-    const QString rest = line.mid(3).trimmed();
-    const qsizetype sp = rest.indexOf(QLatin1Char(' '));
-    return sp < 0 ? rest : rest.left(sp);
-}
-
-// Store image attributes (url/alt/title/link) from a single-line standalone
-// image block into `metadata`, mirroring how fenceLanguage is captured.
-void applyImageMetadata(QVariantMap& metadata, const QString& content) {
-    ImageBlockInfo info;
-    if (!parseImageBlock(content, &info)) {
-        return;
-    }
-    metadata.insert(QStringLiteral("imageUrl"), info.url);
-    metadata.insert(QStringLiteral("imageAlt"), info.alt);
-    metadata.insert(QStringLiteral("imageTitle"), info.title);
-    metadata.insert(QStringLiteral("imageLink"), info.link);
-    metadata.insert(QStringLiteral("imageWidth"), info.width);
-    metadata.insert(QStringLiteral("imageHeight"), info.height);
-}
-
-// Length (in UTF-16 code units) of the leading block marker for a list item,
-// including indentation and trailing whitespace. Returns 0 when absent.
-qsizetype leadingMarkerLength(const QString& content, BlockType type) {
-    const QString line = firstLineOf(content);
-    const QRegularExpression* re = nullptr;
-    switch (type) {
-    case BlockType::TaskListItem:
-        re = &taskRe();
-        break;
-    case BlockType::OrderedListItem:
-        re = &orderedRe();
-        break;
-    case BlockType::BulletListItem:
-        re = &bulletRe();
-        break;
-    default:
-        return 0;
-    }
-
-    const QRegularExpressionMatch match = re->match(line);
-    return match.hasMatch() ? match.capturedLength(0) : 0;
-}
-
-// Strip a leading block-level marker (list bullet/number/checkbox or heading
-// hashes) so the inline text can be concatenated onto another block.
-QString strippedLineText(const QString& content, BlockType type) {
-    if (isListType(type)) {
-        return content.mid(leadingMarkerLength(content, type));
-    }
-    if (type == BlockType::Heading) {
-        const QRegularExpressionMatch match = headingRe().match(content);
-        if (match.hasMatch()) {
-            return content.mid(match.capturedLength(0));
-        }
-    }
-    return content;
-}
-
-// Produce the marker a freshly continued list item should carry. Bullets are
-// copied verbatim, tasks reset to unchecked, ordered numbers are normalized by
-// reserialize() so the literal number here is a placeholder.
-QString continuationMarker(const QString& content, BlockType type) {
-    const qsizetype len = leadingMarkerLength(content, type);
-    QString marker = content.left(len);
-    if (type == BlockType::TaskListItem) {
-        static const QRegularExpression checkbox(QStringLiteral("\\[[ xX]\\]"));
-        marker.replace(checkbox, QStringLiteral("[ ]"));
-    }
-    return marker;
-}
-
-QByteArray separatorBetween(const BlockRecord& prev, const BlockRecord& cur) {
-    if (isListType(prev.type) && isListType(cur.type)) {
-        return QByteArrayLiteral("\n");
-    }
-    return QByteArrayLiteral("\n\n");
-}
-
-// Offset (UTF-16) of the start of the last block-group in `buffer`, where a
-// block-group boundary is a blank line that is NOT inside a fenced code block.
-// Everything before this offset is structurally settled and safe to commit;
-// everything at/after it stays volatile. Computed by a raw line scan because
-// md4qt reports a fenced code block's start *after* its opening fence, so parsed
-// positions cannot be used to locate (and preserve) the fence marker.
-qsizetype fenceSafeLastBoundary(const QString& buffer) {
-    bool inFence = false;
-    bool afterBlank = false;
-    qsizetype groupStart = 0;
-    qsizetype lineStart = 0;
-    const qsizetype n = buffer.size();
-
-    for (qsizetype i = 0; i <= n; ++i) {
-        if (i != n && buffer[i] != QLatin1Char('\n')) {
-            continue;
-        }
-
-        const QStringView line = QStringView(buffer).mid(lineStart, i - lineStart);
-        const QStringView trimmed = line.trimmed();
-        const bool isFenceMarker =
-            trimmed.startsWith(QLatin1String("```")) || trimmed.startsWith(QLatin1String("~~~"));
-
-        if (isFenceMarker) {
-            if (!inFence && afterBlank) {
-                groupStart = lineStart;
-                afterBlank = false;
-            }
-            inFence = !inFence;
-        } else if (!inFence && trimmed.isEmpty()) {
-            afterBlank = true;
-        } else if (!inFence) {
-            if (afterBlank) {
-                groupStart = lineStart;
-                afterBlank = false;
-            }
-        }
-
-        lineStart = i + 1;
-    }
-
-    return groupStart;
-}
-
-QString withOrderedNumber(const QString& content, int number) {
-    static const QRegularExpression re(QStringLiteral("^(\\s*)(\\d+)([.)])"));
-    const QRegularExpressionMatch match = re.match(content);
-    if (!match.hasMatch()) {
-        return content;
-    }
-    QString result = content;
-    result.replace(match.capturedStart(2), match.capturedLength(2), QString::number(number));
-    return result;
-}
-
-// True when `line` (after trimming) opens or closes a fenced code block.
-bool isFenceMarkerLine(QStringView line) {
-    const QStringView trimmed = line.trimmed();
-    return trimmed.startsWith(QLatin1String("```")) || trimmed.startsWith(QLatin1String("~~~"));
-}
-
-// Raw text of `line` in `text` (without its trailing newline), or an empty view
-// when out of range.
-QStringView lineViewAt(const CoordinateMap& map, const QString& text, qsizetype line) {
-    if (line < 0 || line >= map.lineCount()) {
-        return {};
-    }
-    const qsizetype start = map.lineColumnToUtf16(line, 0);
-    qsizetype end = text.indexOf(QLatin1Char('\n'), start);
-    if (end < 0) {
-        end = text.size();
-    }
-    return QStringView(text).mid(start, end - start);
-}
-
-// UTF-16 offset just past the last (non-newline) character of `line`.
-qsizetype lineEndUtf16(const CoordinateMap& map, const QString& text, qsizetype line) {
-    const qsizetype start = map.lineColumnToUtf16(line, 0);
-    const qsizetype nl = text.indexOf(QLatin1Char('\n'), start);
-    return nl < 0 ? text.size() : nl;
-}
-
-// md4qt reports a fenced code block's span as the body *between* the delimiters
-// (the opening fence line and its info string are consumed into Code::syntax()),
-// so a plain slice drops the ``` / ~~~ markers and the block can no longer
-// round-trip. Recover the full fenced span from md4qt's authoritative delimiter
-// positions (ParsedBlock::fenceStartLine/fenceEndLine, lifted from
-// Code::startDelim()/endDelim()): the open is that whole line (column 0, so any
-// leading indentation is kept) and the close is the end of the closing fence
-// line. An unterminated fence (open with no close, e.g. mid-stream) has no end
-// delimiter and runs to the end of `text` so the open ``` is preserved.
-//
-// Only when md4qt gives no usable open position (degenerate/streamed parse) do we
-// fall back to a raw line scan: anchor on the nearest fence marker at/before the
-// reported body start, take the first marker after it as the close, and when the
-// anchor itself is the closing fence (empty-body) re-find the open before it.
-// Returns false when no fence span can be recovered at all.
-bool fenceSpanUtf16(const CoordinateMap& map, const QString& text, const ParsedBlock& pb,
-                    qsizetype& startUtf16, qsizetype& endUtf16) {
-    const qsizetype lineCount = map.lineCount();
-    if (lineCount <= 0) {
-        return false;
-    }
-
-    // Preferred path: md4qt's exact delimiter line positions.
-    if (pb.fenceStartLine >= 0 && pb.fenceStartLine < lineCount) {
-        startUtf16 = map.lineColumnToUtf16(pb.fenceStartLine, 0);
-        endUtf16 = (pb.fenceEndLine >= 0 && pb.fenceEndLine < lineCount)
-                       ? lineEndUtf16(map, text, pb.fenceEndLine)
-                       : text.size();
-        return true;
-    }
-
-    // Fallback: raw line scan when delimiter positions are unavailable.
-    qsizetype openLine = -1;
-    for (qsizetype l = qMin(pb.startLine, lineCount - 1); l >= 0; --l) {
-        if (isFenceMarkerLine(lineViewAt(map, text, l))) {
-            openLine = l;
-            break;
-        }
-    }
-    if (openLine < 0) {
-        return false;
-    }
-
-    qsizetype closeLine = -1;
-    for (qsizetype l = openLine + 1; l < lineCount; ++l) {
-        if (isFenceMarkerLine(lineViewAt(map, text, l))) {
-            closeLine = l;
-            break;
-        }
-    }
-
-    if (closeLine < 0) {
-        // No marker after `openLine`: the anchor was the closing fence of an
-        // empty-body block. Re-find the real opening fence before it.
-        for (qsizetype l = openLine - 1; l >= 0; --l) {
-            if (isFenceMarkerLine(lineViewAt(map, text, l))) {
-                closeLine = openLine;
-                openLine = l;
-                break;
-            }
-        }
-    }
-
-    startUtf16 = map.lineColumnToUtf16(openLine, 0);
-    // A terminated fence ends at its closing marker; an unterminated one runs to
-    // the end of the buffer so the open ``` is preserved.
-    endUtf16 = closeLine >= 0 ? lineEndUtf16(map, text, closeLine) : text.size();
-    return true;
-}
-
-// Slice a parsed block's raw text out of `text` via `map`, trimming trailing
-// newlines. For list items the leading indentation is normalized to `pb.indent`
-// spaces so the stored markdown's leading whitespace always matches the block's
-// indent depth (and reclassifies consistently when edited). Code fences are
-// expanded to include their ``` / ~~~ delimiters (see fenceSpanUtf16).
-QString sliceBlockContent(const CoordinateMap& map, const QString& text, const ParsedBlock& pb) {
-    qsizetype startUtf16 = map.lineColumnToUtf16(pb.startLine, pb.startColumn);
-    qsizetype endUtf16 = map.lineColumnToUtf16(pb.endLine, pb.endColumn) + 1;
-    // Only fenced code needs delimiter recovery; indented code blocks have no
-    // ``` / ~~~ lines and slice straight from md4qt's body span.
-    if (pb.fenced) {
-        fenceSpanUtf16(map, text, pb, startUtf16, endUtf16);
-    }
-    QString content = text.mid(startUtf16, qMax<qsizetype>(0, endUtf16 - startUtf16));
-    while (content.endsWith(QLatin1Char('\n'))) {
-        content.chop(1);
-    }
-    if (isListType(pb.type)) {
-        qsizetype lead = 0;
-        while (lead < content.size() && content.at(lead) == QLatin1Char(' ')) {
-            ++lead;
-        }
-        content = content.mid(lead);
-        if (pb.indent > 0) {
-            content.prepend(QString(pb.indent, QLatin1Char(' ')));
-        }
-    }
-    return content;
-}
-
-int orderedNumberOf(const QString& content, int fallback) {
-    static const QRegularExpression re(QStringLiteral("^\\s*(\\d+)[.)]"));
-    const QRegularExpressionMatch match = re.match(content);
-    if (!match.hasMatch()) {
-        return fallback;
-    }
-    bool ok = false;
-    const int value = match.captured(1).toInt(&ok);
-    return ok ? value : fallback;
-}
-
-} // namespace
+using namespace be::docstore;
 
 void DocumentStore::loadMarkdown(const QString& markdown) {
     loadFromParse(markdown);
@@ -432,10 +85,8 @@ QVector<BlockRecord> DocumentStore::recordsFromParse(const QString& markdown) co
 
             const QString content = sliceBlockContent(input, text, pb);
             if (pb.fenced) {
-                qsizetype fenceStart = 0;
-                qsizetype fenceEnd = 0;
-                if (fenceSpanUtf16(input, text, pb, fenceStart, fenceEnd)) {
-                    fenceConsumedThrough = fenceEnd;
+                if (const std::optional<FenceSpan> span = fenceSpanUtf16(input, text, pb)) {
+                    fenceConsumedThrough = span->end;
                 }
             }
 
@@ -444,30 +95,9 @@ QVector<BlockRecord> DocumentStore::recordsFromParse(const QString& markdown) co
                 continue;
             }
 
-            BlockRecord record;
+            BlockRecord record = recordFromParsedBlock(pb, content);
             record.role = currentRole;
             record.messageId = currentMessageId;
-            record.type = pb.type;
-            record.headingLevel = pb.headingLevel;
-            record.indent = pb.indent;
-            record.markdownUtf8 = content.toUtf8();
-            if (pb.type == BlockType::CodeFence && !pb.info.isEmpty()) {
-                record.metadata.insert(QStringLiteral("fenceLanguage"), pb.info);
-                applyAgentBlockFromFence(record, pb.info);
-            }
-            if (pb.type == BlockType::Image) {
-                record.metadata.insert(QStringLiteral("imageUrl"), pb.imageUrl);
-                record.metadata.insert(QStringLiteral("imageAlt"), pb.imageAlt);
-                record.metadata.insert(QStringLiteral("imageTitle"), pb.imageTitle);
-                record.metadata.insert(QStringLiteral("imageLink"), pb.imageLink);
-                record.metadata.insert(QStringLiteral("imageWidth"), pb.imageWidth);
-                record.metadata.insert(QStringLiteral("imageHeight"), pb.imageHeight);
-            }
-            record.revision = 1;
-            record.parseRevision = 1;
-            record.renderRevision = 1;
-            record.heightHint = pb.type == BlockType::Heading ? 42.0f : 28.0f;
-            record.dirtyPersistence = true;
             records.push_back(record);
         }
     } else if (!markdown.trimmed().isEmpty()) {
@@ -479,6 +109,33 @@ QVector<BlockRecord> DocumentStore::recordsFromParse(const QString& markdown) co
     }
 
     return records;
+}
+
+BlockRecord DocumentStore::recordFromParsedBlock(const ParsedBlock& pb,
+                                                 const QString& content) const {
+    BlockRecord record;
+    record.type = pb.type;
+    record.headingLevel = pb.headingLevel;
+    record.indent = pb.indent;
+    record.markdownUtf8 = content.toUtf8();
+    if (pb.type == BlockType::CodeFence && !pb.info.isEmpty()) {
+        record.metadata.insert(QStringLiteral("fenceLanguage"), pb.info);
+        applyAgentBlockFromFence(record, pb.info);
+    }
+    if (pb.type == BlockType::Image) {
+        record.metadata.insert(QStringLiteral("imageUrl"), pb.imageUrl);
+        record.metadata.insert(QStringLiteral("imageAlt"), pb.imageAlt);
+        record.metadata.insert(QStringLiteral("imageTitle"), pb.imageTitle);
+        record.metadata.insert(QStringLiteral("imageLink"), pb.imageLink);
+        record.metadata.insert(QStringLiteral("imageWidth"), pb.imageWidth);
+        record.metadata.insert(QStringLiteral("imageHeight"), pb.imageHeight);
+    }
+    record.revision = 1;
+    record.parseRevision = 1;
+    record.renderRevision = 1;
+    record.heightHint = pb.type == BlockType::Heading ? 42.0f : 28.0f;
+    record.dirtyPersistence = true;
+    return record;
 }
 
 BlockRecord DocumentStore::makeClassifiedRecord(const QString& content) const {
@@ -625,48 +282,9 @@ bool DocumentStore::splitBlock(BlockId id, qsizetype utf16Offset, BlockId* resul
     const MessageRole splitRole = block->role;
     const QString splitMessageId = block->messageId;
 
-    // Code fence: Enter inserts a literal newline so multi-line code editing is
-    // unaffected. The exception is "Enter Enter" at the end of a closed fence: the
-    // first Enter opens a trailing blank line, and a second Enter on that blank
-    // line (when the last content line is a valid closing fence) exits the block by
-    // splitting off a new empty paragraph below it.
     if (type == BlockType::CodeFence) {
-        const bool atEnd = offset == content.size();
-        if (atEnd && content.endsWith(QLatin1Char('\n'))) {
-            QString fenceBody = content;
-            fenceBody.chop(1);
-            const QString lastLine = fenceBody.mid(fenceBody.lastIndexOf(QLatin1Char('\n')) + 1);
-            if (isFenceMarkerLine(lastLine)) {
-                setBlockContent(*block, fenceBody);
-
-                BlockRecord paragraph;
-                paragraph.id = allocateId();
-                paragraph.role = splitRole;
-                paragraph.messageId = splitMessageId;
-                setBlockContent(paragraph, QString());
-                m_blocks.insert(row + 1, paragraph);
-                reserialize();
-                if (resultBlock) {
-                    *resultBlock = paragraph.id;
-                }
-                if (resultCursor) {
-                    *resultCursor = 0;
-                }
-                return true;
-            }
-        }
-
-        QString updated = content;
-        updated.insert(offset, QLatin1Char('\n'));
-        setBlockContent(*block, updated);
-        reserialize();
-        if (resultBlock) {
-            *resultBlock = id;
-        }
-        if (resultCursor) {
-            *resultCursor = offset + 1;
-        }
-        return true;
+        return splitCodeFenceBlock(*block, row, offset, content, splitRole, splitMessageId,
+                                   resultBlock, resultCursor);
     }
 
     QString beforeContent;
@@ -694,33 +312,93 @@ bool DocumentStore::splitBlock(BlockId id, qsizetype utf16Offset, BlockId* resul
         beforeContent = marker + body.left(bodyOffset);
         afterContent = continuationMarker(content, type) + body.mid(bodyOffset);
     } else {
-        // Headings, paragraphs, quotes: plain split. The trailing half loses any
-        // leading marker, so it reclassifies (e.g. heading tail becomes paragraph).
-        beforeContent = content.left(offset);
-        afterContent = content.mid(offset);
+        splitPlainHalves(content, offset, trimBoundary, beforeContent, afterContent);
+    }
 
-        // Paragraph break: the just-typed blank line or trailing double-space that
-        // triggered the split is boundary whitespace, not content. Drop it so the
-        // two blocks are clean (e.g. "foo\n"/"foo  " -> "foo" + ""). Internal soft
-        // breaks survive because a block never holds a blank line.
-        if (trimBoundary) {
-            while (!beforeContent.isEmpty() && beforeContent.back().isSpace()) {
-                beforeContent.chop(1);
+    return finalizeSplit(*block, row, beforeContent, afterContent, splitRole, splitMessageId,
+                         resultBlock, resultCursor);
+}
+
+bool DocumentStore::splitCodeFenceBlock(BlockRecord& block, qsizetype row, qsizetype offset,
+                                        const QString& content, MessageRole role,
+                                        const QString& messageId, BlockId* resultBlock,
+                                        qsizetype* resultCursor) {
+    // Code fence: Enter inserts a literal newline so multi-line code editing is
+    // unaffected. The exception is "Enter Enter" at the end of a closed fence: the
+    // first Enter opens a trailing blank line, and a second Enter on that blank
+    // line (when the last content line is a valid closing fence) exits the block by
+    // splitting off a new empty paragraph below it.
+    const bool atEnd = offset == content.size();
+    if (atEnd && content.endsWith(QLatin1Char('\n'))) {
+        QString fenceBody = content;
+        fenceBody.chop(1);
+        const QString lastLine = fenceBody.mid(fenceBody.lastIndexOf(QLatin1Char('\n')) + 1);
+        if (isFenceMarkerLine(lastLine)) {
+            setBlockContent(block, fenceBody);
+
+            BlockRecord paragraph;
+            paragraph.id = allocateId();
+            paragraph.role = role;
+            paragraph.messageId = messageId;
+            setBlockContent(paragraph, QString());
+            m_blocks.insert(row + 1, paragraph);
+            reserialize();
+            if (resultBlock) {
+                *resultBlock = paragraph.id;
             }
-            qsizetype lead = 0;
-            while (lead < afterContent.size() && afterContent.at(lead).isSpace()) {
-                ++lead;
+            if (resultCursor) {
+                *resultCursor = 0;
             }
-            afterContent = afterContent.mid(lead);
+            return true;
         }
     }
 
-    setBlockContent(*block, beforeContent);
+    QString updated = content;
+    updated.insert(offset, QLatin1Char('\n'));
+    setBlockContent(block, updated);
+    reserialize();
+    if (resultBlock) {
+        *resultBlock = block.id;
+    }
+    if (resultCursor) {
+        *resultCursor = offset + 1;
+    }
+    return true;
+}
+
+void DocumentStore::splitPlainHalves(const QString& content, qsizetype offset, bool trimBoundary,
+                                     QString& beforeContent, QString& afterContent) const {
+    // Headings, paragraphs, quotes: plain split. The trailing half loses any
+    // leading marker, so it reclassifies (e.g. heading tail becomes paragraph).
+    beforeContent = content.left(offset);
+    afterContent = content.mid(offset);
+
+    // Paragraph break: the just-typed blank line or trailing double-space that
+    // triggered the split is boundary whitespace, not content. Drop it so the two
+    // blocks are clean (e.g. "foo\n"/"foo  " -> "foo" + ""). Internal soft breaks
+    // survive because a block never holds a blank line.
+    if (trimBoundary) {
+        while (!beforeContent.isEmpty() && beforeContent.back().isSpace()) {
+            beforeContent.chop(1);
+        }
+        qsizetype lead = 0;
+        while (lead < afterContent.size() && afterContent.at(lead).isSpace()) {
+            ++lead;
+        }
+        afterContent = afterContent.mid(lead);
+    }
+}
+
+bool DocumentStore::finalizeSplit(BlockRecord& block, qsizetype row, const QString& beforeContent,
+                                  const QString& afterContent, MessageRole role,
+                                  const QString& messageId, BlockId* resultBlock,
+                                  qsizetype* resultCursor) {
+    setBlockContent(block, beforeContent);
 
     BlockRecord inserted;
     inserted.id = allocateId();
-    inserted.role = splitRole;
-    inserted.messageId = splitMessageId;
+    inserted.role = role;
+    inserted.messageId = messageId;
     setBlockContent(inserted, afterContent);
     m_blocks.insert(row + 1, inserted);
     reserialize();
@@ -975,23 +653,20 @@ BlockChangeSet DocumentStore::streamAppend(const QString& text) {
 }
 
 BlockChangeSet DocumentStore::reparseWindow() {
-    // Cap on the raw tail buffer; bounds per-token cost when a single construct
-    // (e.g. a long paragraph or list with no blank line) grows without a boundary.
-    static constexpr qsizetype kMaxWindowBytes = 1 << 16;
+    const QVector<NewBlock> news = buildStreamBlocks(m_windowBuffer);
+    const BlockChangeSet cs = reconcileStreamRows(news);
+    commitSettledBlocks(news.size());
+    rebuildRowIndex();
+    return cs;
+}
 
-    const ParsedMarkdown parsed = m_parser.parse(m_windowBuffer);
+QVector<DocumentStore::NewBlock>
+DocumentStore::buildStreamBlocks(const QString& windowBuffer) const {
+    const ParsedMarkdown parsed = m_parser.parse(windowBuffer);
 
     CoordinateMap windowMap;
-    windowMap.rebuild(m_windowBuffer);
+    windowMap.rebuild(windowBuffer);
     const QString& text = windowMap.text();
-
-    struct NewBlock {
-        BlockType type = BlockType::Paragraph;
-        quint16 headingLevel = 0;
-        quint16 indent = 0;
-        QByteArray content;
-        QString info; // fence info string, so an agent fence retypes mid-stream
-    };
 
     QVector<NewBlock> news;
     if (!parsed.blocks.isEmpty()) {
@@ -1000,8 +675,8 @@ BlockChangeSet DocumentStore::reparseWindow() {
             const QString content = sliceBlockContent(windowMap, text, pb);
             news.push_back({pb.type, pb.headingLevel, pb.indent, content.toUtf8(), pb.info});
         }
-    } else if (!m_windowBuffer.trimmed().isEmpty()) {
-        QString content = m_windowBuffer;
+    } else if (!windowBuffer.trimmed().isEmpty()) {
+        QString content = windowBuffer;
         while (content.endsWith(QLatin1Char('\n'))) {
             content.chop(1);
         }
@@ -1011,7 +686,10 @@ BlockChangeSet DocumentStore::reparseWindow() {
         const QString info = type == BlockType::CodeFence ? fenceLanguageOf(content) : QString();
         news.push_back({type, level, indent, content.toUtf8(), info});
     }
+    return news;
+}
 
+BlockChangeSet DocumentStore::reconcileStreamRows(const QVector<NewBlock>& news) {
     const qsizetype base = m_streamFirstRow;
     const qsizetype oldCount = m_blocks.size() - base;
     const qsizetype newCount = news.size();
@@ -1072,6 +750,13 @@ BlockChangeSet DocumentStore::reparseWindow() {
         cs.removedCount = oldCount - newCount;
         m_blocks.remove(base + newCount, oldCount - newCount);
     }
+    return cs;
+}
+
+void DocumentStore::commitSettledBlocks(qsizetype newCount) {
+    // Cap on the raw tail buffer; bounds per-token cost when a single construct
+    // (e.g. a long paragraph or list with no blank line) grows without a boundary.
+    static constexpr qsizetype kMaxWindowBytes = 1 << 16;
 
     // Commit settled blocks: only the trailing block-group (everything after the
     // last blank line outside a fence) stays volatile; the rest leave the window.
@@ -1087,7 +772,7 @@ BlockChangeSet DocumentStore::reparseWindow() {
             volatileCount = 1;
         }
         const qsizetype commitCount = qMax<qsizetype>(0, newCount - volatileCount);
-        m_streamFirstRow = base + commitCount;
+        m_streamFirstRow = m_streamFirstRow + commitCount;
         m_windowBuffer = volatileText;
     }
 
@@ -1098,9 +783,6 @@ BlockChangeSet DocumentStore::reparseWindow() {
         m_streamFirstRow = m_blocks.size();
         m_windowBuffer.clear();
     }
-
-    rebuildRowIndex();
-    return cs;
 }
 
 void DocumentStore::endStream() {
@@ -1295,6 +977,15 @@ void DocumentStore::restore(const QVector<BlockRecord>& blocks) {
 }
 
 void DocumentStore::reserialize() {
+    renumberOrderedLists();
+    const QByteArray joined = joinBlocksToBuffer();
+    m_pieceTable.setOriginal(joined);
+    m_coordinateMap.rebuild(joined);
+    rebuildRowIndex();
+    m_serializeDirty = false;
+}
+
+void DocumentStore::renumberOrderedLists() {
     // Normalize ordered-list numbering, tracking an independent counter per
     // nesting depth. Returning to a shallower depth drops deeper counters (so
     // re-entering a level restarts it), a bullet/task item resets the ordered
@@ -1324,7 +1015,9 @@ void DocumentStore::reserialize() {
             orderedCounters[depth] = 0;
         }
     }
+}
 
+QByteArray DocumentStore::joinBlocksToBuffer() {
     QByteArray joined;
     MessageRole prevRole = MessageRole::None;
     QString prevMessageId;
@@ -1353,11 +1046,7 @@ void DocumentStore::reserialize() {
     if (!m_blocks.isEmpty()) {
         joined += '\n';
     }
-
-    m_pieceTable.setOriginal(joined);
-    m_coordinateMap.rebuild(joined);
-    rebuildRowIndex();
-    m_serializeDirty = false;
+    return joined;
 }
 
 void DocumentStore::ensureSerialized() const {
@@ -1419,46 +1108,16 @@ BlockType DocumentStore::classifyContent(const QString& content, quint16* headin
         return BlockType::Heading;
     }
 
-    const QRegularExpressionMatch task = taskRe().match(line);
-    if (task.hasMatch()) {
+    quint16 listIndent = 0;
+    const BlockType listType = classifyListItem(line, &listIndent);
+    if (listType != BlockType::Unknown) {
         if (indent) {
-            *indent = static_cast<quint16>(task.capturedLength(1));
+            *indent = listIndent;
         }
-        return BlockType::TaskListItem;
+        return listType;
     }
 
-    const QRegularExpressionMatch ordered = orderedRe().match(line);
-    if (ordered.hasMatch()) {
-        if (indent) {
-            *indent = static_cast<quint16>(ordered.capturedLength(1));
-        }
-        return BlockType::OrderedListItem;
-    }
-
-    const QRegularExpressionMatch bullet = bulletRe().match(line);
-    if (bullet.hasMatch()) {
-        if (indent) {
-            *indent = static_cast<quint16>(bullet.capturedLength(1));
-        }
-        return BlockType::BulletListItem;
-    }
-
-    if (parseImageBlock(content, nullptr)) {
-        return BlockType::Image;
-    }
-    if (looksLikeTable(content)) {
-        return BlockType::Table;
-    }
-    if (line.startsWith(QStringLiteral("```"))) {
-        return BlockType::CodeFence;
-    }
-    if (line.startsWith(QStringLiteral("{{")) || line.startsWith(QStringLiteral(":::"))) {
-        return BlockType::Custom;
-    }
-    if (line.startsWith(QLatin1Char('>'))) {
-        return BlockType::Quote;
-    }
-    return BlockType::Paragraph;
+    return classifyBlockShape(content, line);
 }
 
 } // namespace be
