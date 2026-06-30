@@ -639,6 +639,8 @@ static bool encode_response_action_menu(zcbor_state_t *state, const struct respo
 static bool encode_api_error_unknown_session(zcbor_state_t *state, const struct api_error_unknown_session *input);
 static bool encode_api_error_unsupported(zcbor_state_t *state, const struct api_error_unsupported *input);
 static bool encode_api_error_conflict(zcbor_state_t *state, const struct api_error_conflict *input);
+static bool encode_api_error_unauthenticated(zcbor_state_t *state, const struct api_error_unauthenticated *input);
+static bool encode_api_error_forbidden(zcbor_state_t *state, const struct api_error_forbidden *input);
 static bool encode_api_error_other(zcbor_state_t *state, const struct api_error_other *input);
 static bool encode_api_error(zcbor_state_t *state, const struct api_error_r *input);
 static bool encode_response_error(zcbor_state_t *state, const struct response_error *input);
@@ -10198,6 +10200,32 @@ static bool encode_api_error_conflict(
 	return res;
 }
 
+static bool encode_api_error_unauthenticated(
+		zcbor_state_t *state, const struct api_error_unauthenticated *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Unauthenticated", tmp_str.len = sizeof("Unauthenticated") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).api_error_unauthenticated_Unauthenticated))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_api_error_forbidden(
+		zcbor_state_t *state, const struct api_error_forbidden *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Forbidden", tmp_str.len = sizeof("Forbidden") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).api_error_forbidden_Forbidden))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_api_error_other(
 		zcbor_state_t *state, const struct api_error_other *input)
 {
@@ -10219,8 +10247,10 @@ static bool encode_api_error(
 	bool res = (((((*input).api_error_choice == api_error_unknown_session_m_c) ? ((encode_api_error_unknown_session(state, (&(*input).api_error_unknown_session_m))))
 	: (((*input).api_error_choice == api_error_unsupported_m_c) ? ((encode_api_error_unsupported(state, (&(*input).api_error_unsupported_m))))
 	: (((*input).api_error_choice == api_error_conflict_m_c) ? ((encode_api_error_conflict(state, (&(*input).api_error_conflict_m))))
+	: (((*input).api_error_choice == api_error_unauthenticated_m_c) ? ((encode_api_error_unauthenticated(state, (&(*input).api_error_unauthenticated_m))))
+	: (((*input).api_error_choice == api_error_forbidden_m_c) ? ((encode_api_error_forbidden(state, (&(*input).api_error_forbidden_m))))
 	: (((*input).api_error_choice == api_error_other_m_c) ? ((encode_api_error_other(state, (&(*input).api_error_other_m))))
-	: false))))));
+	: false))))))));
 
 	log_result(state, res, __func__);
 	return res;

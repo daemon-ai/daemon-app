@@ -4999,6 +4999,14 @@ struct api_error_conflict {
 	struct zcbor_string api_error_conflict_Conflict;
 };
 
+struct api_error_unauthenticated {
+	struct zcbor_string api_error_unauthenticated_Unauthenticated;
+};
+
+struct api_error_forbidden {
+	struct zcbor_string api_error_forbidden_Forbidden;
+};
+
 struct api_error_other {
 	struct zcbor_string api_error_other_Other;
 };
@@ -5008,12 +5016,16 @@ struct api_error_r {
 		struct api_error_unknown_session api_error_unknown_session_m;
 		struct api_error_unsupported api_error_unsupported_m;
 		struct api_error_conflict api_error_conflict_m;
+		struct api_error_unauthenticated api_error_unauthenticated_m;
+		struct api_error_forbidden api_error_forbidden_m;
 		struct api_error_other api_error_other_m;
 	};
 	enum {
 		api_error_unknown_session_m_c,
 		api_error_unsupported_m_c,
 		api_error_conflict_m_c,
+		api_error_unauthenticated_m_c,
+		api_error_forbidden_m_c,
 		api_error_other_m_c,
 	} api_error_choice;
 };
