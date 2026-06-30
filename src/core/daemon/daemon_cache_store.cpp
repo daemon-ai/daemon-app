@@ -5,6 +5,7 @@
 
 #include "daemon/client_cache_schema.h"
 
+#include <QDebug>
 #include <QDir>
 #include <QFileInfo>
 #include <QSqlDatabase>
@@ -62,9 +63,16 @@ bool DaemonCacheStore::ensureSchema() {
     }
     const QString stored = meta(QStringLiteral("schema_version"));
     if (!stored.isEmpty() && stored.toInt() != cache::kSchemaVersion) {
-        // daemon_cache.db is a non-authoritative last-known cache; the daemon is the
-        // source of truth, so a schema bump just drops and rebuilds the data tables
-        // rather than running per-version migrations.
+        // daemon_cache.db is a non-authoritative last-known cache; the daemon is the source of
+        // truth, so a schema bump just drops and rebuilds the data tables rather than running
+        // per-version migrations. The trigger is purely the internal `cache::kSchemaVersion`
+        // integer (hand-bumped when the cache DDL changes) — it is intentionally decoupled from the
+        // app release version and the wire/server version (a wire mismatch fails the handshake; the
+        // cache re-baselines from the daemon on reconnect). Log the wipe so schema churn is
+        // visible.
+        qInfo() << "daemon-cache: schema_version" << stored << "->" << cache::kSchemaVersion
+                << "- dropping and rebuilding the (non-authoritative) cache; it re-baselines from "
+                   "the daemon on reconnect";
         if (!dropDataTables()) {
             return false;
         }
