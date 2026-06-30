@@ -92,10 +92,59 @@ public:
     void setMathMeasurer(MathMeasurer measurer) { m_mathMeasurer = std::move(measurer); }
 
 private:
+    // Block-level prefix (heading hashes / list / task marker) hidden when not
+    // revealing markdown; returns the offset where inline content begins.
+    qsizetype applyBlockPrefix(const BlockRecord& block, BlockProjection& projection,
+                               const QString& raw) const;
+    // Scan [contentStart, contentEnd) of `raw`, emitting inline spans. When
+    // revealAll is set every char is plain text (raw markdown shown verbatim).
+    void projectInlineSpans(const QString& raw, qsizetype contentStart, qsizetype contentEnd,
+                            bool revealAll, qreal contentWidth, BlockProjection& projection) const;
+    // Try each inline-construct matcher at `i`; returns the index just past the
+    // consumed span, or -1 when nothing matched (the char is emitted as plain).
+    qsizetype matchInline(const QString& raw, qsizetype i, qsizetype contentEnd, qreal contentWidth,
+                          BlockProjection& projection) const;
+    // Inline matchers: each returns the consumed-through index or -1 (no match).
+    qsizetype matchInlineImage(const QString& raw, qsizetype i, qsizetype contentEnd,
+                               qreal contentWidth, BlockProjection& projection) const;
+    qsizetype matchInlineLink(const QString& raw, qsizetype i, qsizetype contentEnd,
+                              BlockProjection& projection) const;
+    qsizetype matchAutolink(const QString& raw, qsizetype i, qsizetype contentEnd,
+                            BlockProjection& projection) const;
+    qsizetype matchInlineMath(const QString& raw, qsizetype i, qsizetype contentEnd,
+                              BlockProjection& projection) const;
+    qsizetype matchEmphasisRun(const QString& raw, qsizetype i, qsizetype contentEnd,
+                               const QString& delimiter, SpanKind kind, quint8 linkStyle,
+                               BlockProjection& projection) const;
+    qsizetype matchInlineCode(const QString& raw, qsizetype i, qsizetype contentEnd,
+                              BlockProjection& projection) const;
+    // Back-fill rawToVisual gaps and interpolate the visualToRaw map.
+    void finalizeOffsetMaps(BlockProjection& projection, const QString& raw) const;
+
     QString makeDisplayMarkup(const BlockRecord& block, const BlockProjection& projection) const;
+    // Render one span to display HTML (delegates the non-trivial kinds below).
+    QString renderSpan(const InlineSpan& span, const QString& text) const;
+    QString renderCodeSpan(const QString& text) const;
+    QString renderLinkSpan(const InlineSpan& span, QString text) const;
+    QString renderImageSpan(const InlineSpan& span) const;
+    QString renderMathSpan(const InlineSpan& span) const;
+    // Wrap the assembled inline HTML in any block-level styling (heading/fence).
+    QString wrapBlockMarkup(const BlockRecord& block, const QString& escaped) const;
+
     QString stripInlineMarkup(const QString& raw, qsizetype start, qsizetype end) const;
+    // stripInlineMarkup sub-matchers: each appends to `out`, returns next `k` or -1.
+    qsizetype stripImage(const QString& raw, qsizetype k, qsizetype end, QString& out) const;
+    qsizetype stripLink(const QString& raw, qsizetype k, qsizetype end, QString& out) const;
+    qsizetype stripEmphasisRun(const QString& raw, qsizetype k, qsizetype end,
+                               const QString& delimiter, QString& out) const;
+    qsizetype stripCodeRun(const QString& raw, qsizetype k, qsizetype end, QString& out) const;
+
     void appendVisual(BlockProjection& projection, const QString& raw, qsizetype rawIndex,
                       qsizetype length, SpanKind kind) const;
+    // Push a single-placeholder span (image/math) and map its whole raw range
+    // onto that one visual position; shared by appendImage/appendMath.
+    void appendPlaceholderSpan(BlockProjection& projection, InlineSpan span, qsizetype rawStart,
+                               qsizetype rawEnd) const;
     void appendImage(BlockProjection& projection, qsizetype rawStart, qsizetype rawEnd,
                      const QString& url, qreal width = 0, qreal height = 0) const;
     void appendMath(BlockProjection& projection, qsizetype rawStart, qsizetype rawEnd,

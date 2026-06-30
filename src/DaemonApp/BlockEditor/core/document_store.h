@@ -137,11 +137,43 @@ private:
     void loadFromParse(const QString& markdown);
     // Parse arbitrary markdown into a sequence of unowned (id == 0) block records.
     QVector<BlockRecord> recordsFromParse(const QString& markdown) const;
+    // Build one unowned (id == 0, role/messageId unset) record from a parsed block.
+    BlockRecord recordFromParsedBlock(const ParsedBlock& pb, const QString& content) const;
     // Build one unowned (id == 0) block record, typed from its first line.
     BlockRecord makeClassifiedRecord(const QString& content) const;
+
+    // splitBlock helpers (see splitBlock). Each finalizes the store and reports the
+    // resulting caret block/offset via the out-params.
+    bool splitCodeFenceBlock(BlockRecord& block, qsizetype row, qsizetype offset,
+                             const QString& content, MessageRole role, const QString& messageId,
+                             BlockId* resultBlock, qsizetype* resultCursor);
+    void splitPlainHalves(const QString& content, qsizetype offset, bool trimBoundary,
+                          QString& beforeContent, QString& afterContent) const;
+    bool finalizeSplit(BlockRecord& block, qsizetype row, const QString& beforeContent,
+                       const QString& afterContent, MessageRole role, const QString& messageId,
+                       BlockId* resultBlock, qsizetype* resultCursor);
+
     void reserialize();
+    // reserialize sub-steps: normalize ordered-list numbering in place, then build
+    // the joined buffer (recording each block's source span).
+    void renumberOrderedLists();
+    QByteArray joinBlocksToBuffer();
     void ensureSerialized() const;
+
+    // A block parsed out of the open streaming window, before it gains an id/role.
+    struct NewBlock {
+        BlockType type = BlockType::Paragraph;
+        quint16 headingLevel = 0;
+        quint16 indent = 0;
+        QByteArray content;
+        QString info; // fence info string, so an agent fence retypes mid-stream
+    };
     BlockChangeSet reparseWindow();
+    // reparseWindow sub-steps.
+    QVector<NewBlock> buildStreamBlocks(const QString& windowBuffer) const;
+    BlockChangeSet reconcileStreamRows(const QVector<NewBlock>& news);
+    void commitSettledBlocks(qsizetype newCount);
+
     void rebuildRowIndex();
     // Indent (in spaces) of the list item immediately above `row`, or -1 when the
     // previous row is not a list item (i.e. `row` starts a list run).
