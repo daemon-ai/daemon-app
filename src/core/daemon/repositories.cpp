@@ -5,7 +5,10 @@
 
 #include "daemon/node_api_codec.h"
 
+#include <algorithm>
+#include <array>
 #include <QDateTime>
+#include <QHash>
 #include <QSet>
 #include <QStringList>
 #include <QTimer>
@@ -57,49 +60,65 @@ void SessionRepository::refreshSessions() {
 void SessionRepository::handleResponse(const QString& correlationId,
                                        const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kSessionsCorrelation)) {
-        QList<CachedSessionRow> rows;
-        quint64 rev = 0;
-        QStringList removed;
-        if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, nullptr, &rev, &removed)) {
-            emit refreshFailed(QStringLiteral("Failed to decode SessionPage response"));
-            return;
-        }
-        const qint64 now = QDateTime::currentMSecsSinceEpoch();
-        // L4: a full page replaces the roster; a delta merges. A delta whose returned rev went
-        // *backwards* from what we asked for is a daemon-reset fallback (the server returned a full
-        // page because our since_rev was unservable) -> treat it as a replace too.
-        const bool fallbackFull = m_sentRosterDelta && rev < m_sentRosterSinceRev;
-        const bool replace = !m_sentRosterDelta || fallbackFull;
-        if (replace && cache() != nullptr) {
-            // Prune any cached session the full page no longer lists (closes the "removed sessions
-            // never purged" gap on a cold/fallback resync).
-            QSet<QString> keep;
-            for (const CachedSessionRow& row : rows) {
-                keep.insert(row.sessionId);
-            }
-            for (const CachedSessionRow& existing : cache()->sessions()) {
-                if (!keep.contains(existing.sessionId)) {
-                    cache()->deleteSession(existing.sessionId);
-                }
-            }
-        }
-        for (CachedSessionRow& row : rows) {
-            row.updatedAtMs = now;
-            upsertCachedSession(row);
-        }
-        // L4 delta prune: drop sessions the server reported removed (hard-removed or left the
-        // scope).
-        if (!replace && cache() != nullptr) {
-            for (const QString& id : removed) {
-                cache()->deleteSession(id);
-            }
-        }
-        if (cache() != nullptr) {
-            // Persist the roster revision so the next refresh resumes as a delta.
-            cache()->setCursor(QLatin1String(kRosterRevScope), QString::number(rev), now);
-        }
-        emit sessionsRefreshed();
+        applySessionPage(responseCbor);
+    }
+}
+
+void SessionRepository::applySessionPage(const QByteArray& responseCbor) {
+    QList<CachedSessionRow> rows;
+    quint64 rev = 0;
+    QStringList removed;
+    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, nullptr, &rev, &removed)) {
+        emit refreshFailed(QStringLiteral("Failed to decode SessionPage response"));
         return;
+    }
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    // L4: a full page replaces the roster; a delta merges. A delta whose returned rev went
+    // *backwards* from what we asked for is a daemon-reset fallback (the server returned a full
+    // page because our since_rev was unservable) -> treat it as a replace too.
+    const bool fallbackFull = m_sentRosterDelta && rev < m_sentRosterSinceRev;
+    const bool replace = !m_sentRosterDelta || fallbackFull;
+    if (replace) {
+        // Prune any cached session the full page no longer lists (closes the "removed sessions
+        // never purged" gap on a cold/fallback resync).
+        pruneSessionsMissingFrom(rows);
+    }
+    for (CachedSessionRow& row : rows) {
+        row.updatedAtMs = now;
+        upsertCachedSession(row);
+    }
+    if (!replace) {
+        // L4 delta prune: drop sessions the server reported removed (hard-removed or left scope).
+        pruneRemovedSessions(removed);
+    }
+    if (cache() != nullptr) {
+        // Persist the roster revision so the next refresh resumes as a delta.
+        cache()->setCursor(QLatin1String(kRosterRevScope), QString::number(rev), now);
+    }
+    emit sessionsRefreshed();
+}
+
+void SessionRepository::pruneSessionsMissingFrom(const QList<CachedSessionRow>& rows) {
+    if (cache() == nullptr) {
+        return;
+    }
+    QSet<QString> keep;
+    for (const CachedSessionRow& row : rows) {
+        keep.insert(row.sessionId);
+    }
+    for (const CachedSessionRow& existing : cache()->sessions()) {
+        if (!keep.contains(existing.sessionId)) {
+            cache()->deleteSession(existing.sessionId);
+        }
+    }
+}
+
+void SessionRepository::pruneRemovedSessions(const QList<QString>& removed) {
+    if (cache() == nullptr) {
+        return;
+    }
+    for (const QString& id : removed) {
+        cache()->deleteSession(id);
     }
 }
 
@@ -175,10 +194,14 @@ void CredentialRepository::handleResponse(const QString& correlationId,
     }
 }
 
+bool CredentialRepository::isOwnCorrelation(const QString& correlationId) {
+    const std::array keys = {kListCorrelation, kSetCorrelation, kRemoveCorrelation};
+    return std::ranges::any_of(
+        keys, [&](const char* key) { return correlationId == QLatin1String(key); });
+}
+
 void CredentialRepository::handleFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == QLatin1String(kListCorrelation) ||
-        correlationId == QLatin1String(kSetCorrelation) ||
-        correlationId == QLatin1String(kRemoveCorrelation)) {
+    if (isOwnCorrelation(correlationId)) {
         emit operationFailed(message);
     }
 }
@@ -358,132 +381,147 @@ void ModelRepository::applyDownloadProgress(quint64 id, quint32 pct, const QStri
 }
 
 void ModelRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
-    if (correlationId == QLatin1String(kModelsCorrelation)) {
-        if (!NodeApiCodec::decodeModels(responseCbor, &m_models)) {
-            emit operationFailed(QStringLiteral("Failed to decode Models response"));
-            return;
-        }
-        emit modelsRefreshed();
+    using Handler = void (ModelRepository::*)(const QByteArray&);
+    static const QHash<QString, Handler> kHandlers = {
+        {QString::fromLatin1(kModelsCorrelation), &ModelRepository::handleModelsResponse},
+        {QString::fromLatin1(kCurrentCorrelation), &ModelRepository::handleModelCurrentResponse},
+        {QString::fromLatin1(kSetModelCorrelation),
+         &ModelRepository::handleSetSessionModelResponse},
+        {QString::fromLatin1(kSearchCorrelation), &ModelRepository::handleModelSearchResponse},
+        {QString::fromLatin1(kFilesCorrelation), &ModelRepository::handleModelFilesResponse},
+        {QString::fromLatin1(kRecommendCorrelation),
+         &ModelRepository::handleModelRecommendResponse},
+        {QString::fromLatin1(kDownloadCorrelation), &ModelRepository::handleModelDownloadResponse},
+        {QString::fromLatin1(kDownloadsCorrelation),
+         &ModelRepository::handleModelDownloadsResponse},
+        {QString::fromLatin1(kCatalogCorrelation), &ModelRepository::handleModelCatalogResponse},
+        {QString::fromLatin1(kDeleteCorrelation), &ModelRepository::handleModelDeleteResponse},
+        {QString::fromLatin1(kActivateCorrelation), &ModelRepository::handleModelActivateResponse},
+        {QString::fromLatin1(kLifecycleCorrelation),
+         &ModelRepository::handleModelLifecycleResponse},
+    };
+    const auto it = kHandlers.constFind(correlationId);
+    if (it != kHandlers.constEnd()) {
+        (this->*it.value())(responseCbor);
+    }
+}
+
+void ModelRepository::emitOperationError(const QByteArray& responseCbor, const QString& fallback) {
+    DecodedApiError err;
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error &&
+        NodeApiCodec::decodeError(responseCbor, &err)) {
+        emit operationFailed(err.message);
+    } else {
+        emit operationFailed(fallback);
+    }
+}
+
+void ModelRepository::handleModelsResponse(const QByteArray& responseCbor) {
+    if (!NodeApiCodec::decodeModels(responseCbor, &m_models)) {
+        emit operationFailed(QStringLiteral("Failed to decode Models response"));
         return;
     }
-    if (correlationId == QLatin1String(kCurrentCorrelation)) {
-        if (!NodeApiCodec::decodeModelCurrent(responseCbor, &m_current, &m_hasCurrent)) {
-            emit operationFailed(QStringLiteral("Failed to decode ModelCurrent response"));
-            return;
-        }
-        emit currentRefreshed();
+    emit modelsRefreshed();
+}
+
+void ModelRepository::handleModelCurrentResponse(const QByteArray& responseCbor) {
+    if (!NodeApiCodec::decodeModelCurrent(responseCbor, &m_current, &m_hasCurrent)) {
+        emit operationFailed(QStringLiteral("Failed to decode ModelCurrent response"));
         return;
     }
-    if (correlationId == QLatin1String(kSetModelCorrelation)) {
-        const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
-        if (kind == ApiResponseKind::Ok) {
-            emit modelSet();
-            return;
-        }
-        DecodedApiError err;
-        if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
-            emit operationFailed(err.message);
-        } else {
-            emit operationFailed(QStringLiteral("Set-model operation failed"));
-        }
+    emit currentRefreshed();
+}
+
+void ModelRepository::handleSetSessionModelResponse(const QByteArray& responseCbor) {
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
+        emit modelSet();
         return;
     }
-    if (correlationId == QLatin1String(kSearchCorrelation)) {
-        if (!NodeApiCodec::decodeModelSearch(responseCbor, &m_searchHits)) {
-            emit operationFailed(QStringLiteral("Failed to decode ModelSearch response"));
-            return;
-        }
-        emit searchHitsChanged();
+    emitOperationError(responseCbor, QStringLiteral("Set-model operation failed"));
+}
+
+void ModelRepository::handleModelSearchResponse(const QByteArray& responseCbor) {
+    if (!NodeApiCodec::decodeModelSearch(responseCbor, &m_searchHits)) {
+        emit operationFailed(QStringLiteral("Failed to decode ModelSearch response"));
         return;
     }
-    if (correlationId == QLatin1String(kFilesCorrelation)) {
-        if (!NodeApiCodec::decodeModelFiles(responseCbor, &m_files)) {
-            emit operationFailed(QStringLiteral("Failed to decode ModelFiles response"));
-            return;
-        }
-        m_filesRepo = m_pendingFilesRepo;
-        emit filesLoaded(m_filesRepo);
+    emit searchHitsChanged();
+}
+
+void ModelRepository::handleModelFilesResponse(const QByteArray& responseCbor) {
+    if (!NodeApiCodec::decodeModelFiles(responseCbor, &m_files)) {
+        emit operationFailed(QStringLiteral("Failed to decode ModelFiles response"));
         return;
     }
-    if (correlationId == QLatin1String(kRecommendCorrelation)) {
-        if (!NodeApiCodec::decodeModelRecommend(responseCbor, &m_recommendation)) {
-            emit operationFailed(QStringLiteral("Failed to decode ModelRecommend response"));
-            return;
-        }
-        m_hasRecommendation = true;
-        emit recommendLoaded(m_pendingRecommendRepo);
+    m_filesRepo = m_pendingFilesRepo;
+    emit filesLoaded(m_filesRepo);
+}
+
+void ModelRepository::handleModelRecommendResponse(const QByteArray& responseCbor) {
+    if (!NodeApiCodec::decodeModelRecommend(responseCbor, &m_recommendation)) {
+        emit operationFailed(QStringLiteral("Failed to decode ModelRecommend response"));
         return;
     }
-    if (correlationId == QLatin1String(kDownloadCorrelation)) {
-        quint64 id = 0;
-        if (NodeApiCodec::decodeModelDownloadStarted(responseCbor, &id)) {
-            emit downloadStarted(id);
-            refreshDownloads(); // fetch the initial snapshot; live progress arrives via the L3 feed
-            return;
-        }
-        DecodedApiError err;
-        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error &&
-            NodeApiCodec::decodeError(responseCbor, &err)) {
-            emit operationFailed(err.message);
-        } else {
-            emit operationFailed(QStringLiteral("Download could not be started"));
-        }
+    m_hasRecommendation = true;
+    emit recommendLoaded(m_pendingRecommendRepo);
+}
+
+void ModelRepository::handleModelDownloadResponse(const QByteArray& responseCbor) {
+    quint64 id = 0;
+    if (NodeApiCodec::decodeModelDownloadStarted(responseCbor, &id)) {
+        emit downloadStarted(id);
+        refreshDownloads(); // fetch the initial snapshot; live progress arrives via the L3 feed
         return;
     }
-    if (correlationId == QLatin1String(kDownloadsCorrelation)) {
-        if (!NodeApiCodec::decodeModelDownloads(responseCbor, &m_downloads)) {
-            emit operationFailed(QStringLiteral("Failed to decode ModelDownloads response"));
-            return;
-        }
-        // Refresh the catalog once for each job that newly reaches Completed.
-        bool newlyCompleted = false;
-        for (const DecodedDownloadStatus& s : m_downloads) {
-            if (s.state == QStringLiteral("Completed") && !m_completedDownloads.contains(s.id)) {
-                m_completedDownloads.insert(s.id);
-                newlyCompleted = true;
-            }
-        }
-        emit downloadsChanged();
-        if (newlyCompleted) {
-            refreshCatalog();
-        }
+    emitOperationError(responseCbor, QStringLiteral("Download could not be started"));
+}
+
+void ModelRepository::handleModelDownloadsResponse(const QByteArray& responseCbor) {
+    if (!NodeApiCodec::decodeModelDownloads(responseCbor, &m_downloads)) {
+        emit operationFailed(QStringLiteral("Failed to decode ModelDownloads response"));
         return;
     }
-    if (correlationId == QLatin1String(kCatalogCorrelation)) {
-        if (!NodeApiCodec::decodeModelCatalog(responseCbor, &m_installed)) {
-            emit operationFailed(QStringLiteral("Failed to decode ModelCatalog response"));
-            return;
+    // Refresh the catalog once for each job that newly reaches Completed.
+    bool newlyCompleted = false;
+    for (const DecodedDownloadStatus& s : m_downloads) {
+        if (s.state == QStringLiteral("Completed") && !m_completedDownloads.contains(s.id)) {
+            m_completedDownloads.insert(s.id);
+            newlyCompleted = true;
         }
-        emit catalogChanged();
+    }
+    emit downloadsChanged();
+    if (newlyCompleted) {
+        refreshCatalog();
+    }
+}
+
+void ModelRepository::handleModelCatalogResponse(const QByteArray& responseCbor) {
+    if (!NodeApiCodec::decodeModelCatalog(responseCbor, &m_installed)) {
+        emit operationFailed(QStringLiteral("Failed to decode ModelCatalog response"));
         return;
     }
-    if (correlationId == QLatin1String(kDeleteCorrelation)) {
-        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
-            refreshCatalog();
-            return;
-        }
-        emit operationFailed(QStringLiteral("Delete failed"));
+    emit catalogChanged();
+}
+
+void ModelRepository::handleModelDeleteResponse(const QByteArray& responseCbor) {
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
+        refreshCatalog();
         return;
     }
-    if (correlationId == QLatin1String(kActivateCorrelation)) {
-        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
-            emit modelActivated();
-            return;
-        }
-        DecodedApiError err;
-        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error &&
-            NodeApiCodec::decodeError(responseCbor, &err)) {
-            emit operationFailed(err.message);
-        } else {
-            emit operationFailed(QStringLiteral("Activate failed"));
-        }
+    emit operationFailed(QStringLiteral("Delete failed"));
+}
+
+void ModelRepository::handleModelActivateResponse(const QByteArray& responseCbor) {
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
+        emit modelActivated();
         return;
     }
-    if (correlationId == QLatin1String(kLifecycleCorrelation)) {
-        // Cancel/Pause/Resume Ok (or Error) -> re-poll so the new state surfaces.
-        refreshDownloads();
-        return;
-    }
+    emitOperationError(responseCbor, QStringLiteral("Activate failed"));
+}
+
+void ModelRepository::handleModelLifecycleResponse(const QByteArray& /*responseCbor*/) {
+    // Cancel/Pause/Resume Ok (or Error) -> re-poll so the new state surfaces.
+    refreshDownloads();
 }
 
 void ModelRepository::handleFailure(const QString& correlationId, const QString& message) {
@@ -670,147 +708,209 @@ void ProfileRepository::revertProfile(const QString& id, quint64 seq) {
 
 void ProfileRepository::handleResponse(const QString& correlationId,
                                        const QByteArray& responseCbor) {
-    if (correlationId == QLatin1String(kProfilesCorrelation)) {
-        if (!NodeApiCodec::decodeProfiles(responseCbor, &m_profiles)) {
-            emit refreshFailed(QStringLiteral("Failed to decode Profiles response"));
-            return;
-        }
-        // Offline-first prune: drop any cached profile the live list no longer carries (a deleted
-        // agent) so the cache mirrors truth. Surviving rows keep their spec_cbor; the per-profile
-        // ProfileGet that the store kicks next refreshes each row's spec + active flag.
-        if (cache() != nullptr) {
-            QSet<QString> keep;
-            for (const DecodedProfileInfo& p : m_profiles) {
-                keep.insert(p.id);
-            }
-            for (const CachedProfileRow& row : cachedProfiles()) {
-                if (!keep.contains(row.profileRef)) {
-                    cache()->deleteProfile(row.profileRef);
-                }
-            }
-        }
-        emit profilesRefreshed();
+    if (dispatchExactResponse(correlationId, responseCbor)) {
         return;
     }
-    if (correlationId.startsWith(QLatin1String(kGetPrefix))) {
-        const QString id = correlationId.mid(int(qstrlen(kGetPrefix)));
-        DecodedProfileSpec spec;
-        bool found = false;
-        if (NodeApiCodec::decodeProfile(responseCbor, &spec, &found) && found) {
-            m_specs.insert(id, spec);
-            // Offline-first: persist the full profile (raw ProfileGet bytes + the active flag from
-            // the list) so the Profiles UI renders this agent from cache on a later offline start.
-            if (cache() != nullptr) {
-                CachedProfileRow row;
-                row.profileRef = id;
-                row.displayName = id;
-                row.specCbor = responseCbor;
-                for (const DecodedProfileInfo& p : m_profiles) {
-                    if (p.id == id) {
-                        row.active = p.isActive;
-                        break;
-                    }
-                }
-                row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
-                upsertCachedProfile(row);
-            }
-            emit profileSpecLoaded(id);
+    dispatchPrefixedResponse(correlationId, responseCbor);
+}
+
+bool ProfileRepository::dispatchExactResponse(const QString& correlationId,
+                                              const QByteArray& responseCbor) {
+    using Handler = void (ProfileRepository::*)(const QByteArray&);
+    static const QHash<QString, Handler> kHandlers = {
+        {QString::fromLatin1(kProfilesCorrelation), &ProfileRepository::handleProfilesResponse},
+        {QString::fromLatin1(kImportCorrelation), &ProfileRepository::handleProfileImportResponse},
+        // Select/Delete/Update/Create/Clone all share the "re-list on success" mutation handler.
+        {QString::fromLatin1(kSelectCorrelation),
+         &ProfileRepository::handleProfileMutationResponse},
+        {QString::fromLatin1(kDeleteCorrelation),
+         &ProfileRepository::handleProfileMutationResponse},
+        {QString::fromLatin1(kUpdateCorrelation),
+         &ProfileRepository::handleProfileMutationResponse},
+        {QString::fromLatin1(kCreateCorrelation),
+         &ProfileRepository::handleProfileMutationResponse},
+        {QString::fromLatin1(kCloneCorrelation), &ProfileRepository::handleProfileMutationResponse},
+    };
+    const auto it = kHandlers.constFind(correlationId);
+    if (it == kHandlers.constEnd()) {
+        return false;
+    }
+    (this->*it.value())(responseCbor);
+    return true;
+}
+
+void ProfileRepository::dispatchPrefixedResponse(const QString& correlationId,
+                                                 const QByteArray& responseCbor) {
+    struct PrefixRoute {
+        const char* prefix;
+        void (ProfileRepository::*handler)(const QString&, const QByteArray&);
+    };
+    static const std::array<PrefixRoute, 4> kRoutes = {{
+        {kGetPrefix, &ProfileRepository::handleProfileGetResponse},
+        {kExportPrefix, &ProfileRepository::handleProfileExportResponse},
+        {kHistoryPrefix, &ProfileRepository::handleProfileHistoryResponse},
+        {kRevertPrefix, &ProfileRepository::handleProfileRevertResponse},
+    }};
+    for (const PrefixRoute& route : kRoutes) {
+        if (correlationId.startsWith(QLatin1String(route.prefix))) {
+            (this->*route.handler)(correlationId.mid(int(qstrlen(route.prefix))), responseCbor);
+            return;
         }
+    }
+}
+
+void ProfileRepository::handleProfilesResponse(const QByteArray& responseCbor) {
+    if (!NodeApiCodec::decodeProfiles(responseCbor, &m_profiles)) {
+        emit refreshFailed(QStringLiteral("Failed to decode Profiles response"));
         return;
     }
-    if (correlationId.startsWith(QLatin1String(kExportPrefix))) {
-        const QString id = correlationId.mid(int(qstrlen(kExportPrefix)));
-        DecodedDistribution dist;
-        if (!NodeApiCodec::decodeDistribution(responseCbor, &dist)) {
-            emit operationFailed(QStringLiteral("Failed to decode Distribution"));
-            return;
-        }
-        // Hand the store the raw bytes (the portable artifact) + the decoded form.
-        emit distributionExported(id, responseCbor, dist);
+    // Offline-first prune: drop any cached profile the live list no longer carries (a deleted
+    // agent) so the cache mirrors truth. Surviving rows keep their spec_cbor; the per-profile
+    // ProfileGet that the store kicks next refreshes each row's spec + active flag.
+    pruneStaleProfiles();
+    emit profilesRefreshed();
+}
+
+void ProfileRepository::pruneStaleProfiles() {
+    if (cache() == nullptr) {
         return;
     }
-    if (correlationId == QLatin1String(kImportCorrelation)) {
-        QString newId;
-        if (!NodeApiCodec::decodeProfileId(responseCbor, &newId)) {
-            DecodedApiError err;
-            emit operationFailed(NodeApiCodec::decodeError(responseCbor, &err)
-                                     ? err.message
-                                     : QStringLiteral("Profile import failed"));
-            return;
+    QSet<QString> keep;
+    for (const DecodedProfileInfo& p : m_profiles) {
+        keep.insert(p.id);
+    }
+    for (const CachedProfileRow& row : cachedProfiles()) {
+        if (!keep.contains(row.profileRef)) {
+            cache()->deleteProfile(row.profileRef);
         }
-        refreshProfiles();
-        emit imported(newId);
+    }
+}
+
+void ProfileRepository::handleProfileGetResponse(const QString& id,
+                                                 const QByteArray& responseCbor) {
+    DecodedProfileSpec spec;
+    bool found = false;
+    if (!(NodeApiCodec::decodeProfile(responseCbor, &spec, &found) && found)) {
         return;
     }
-    if (correlationId.startsWith(QLatin1String(kHistoryPrefix))) {
-        const QString id = correlationId.mid(int(qstrlen(kHistoryPrefix)));
-        // A daemon with no revision log answers Unsupported("versioning not available"); that is a
-        // capability gap, not a decode failure - surface it as historyUnavailable so the UI can
-        // hide the panel honestly rather than toast a misleading parse error.
-        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
-            DecodedApiError err;
-            emit historyUnavailable(id, NodeApiCodec::decodeError(responseCbor, &err)
-                                            ? err.message
-                                            : QStringLiteral("Version history unavailable"));
-            return;
-        }
-        QList<DecodedRevision> revs;
-        if (!NodeApiCodec::decodeRevisions(responseCbor, &revs)) {
-            emit operationFailed(QStringLiteral("Failed to decode Revisions"));
-            return;
-        }
-        emit historyLoaded(id, revs);
+    m_specs.insert(id, spec);
+    // Offline-first: persist the full profile (raw ProfileGet bytes + the active flag from the
+    // list) so the Profiles UI renders this agent from cache on a later offline start.
+    persistFetchedProfile(id, responseCbor);
+    emit profileSpecLoaded(id);
+}
+
+void ProfileRepository::persistFetchedProfile(const QString& id, const QByteArray& responseCbor) {
+    if (cache() == nullptr) {
         return;
     }
-    if (correlationId.startsWith(QLatin1String(kRevertPrefix))) {
-        const QString id = correlationId.mid(int(qstrlen(kRevertPrefix)));
-        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
-            DecodedApiError err;
-            emit operationFailed(NodeApiCodec::decodeError(responseCbor, &err)
-                                     ? err.message
-                                     : QStringLiteral("Profile revert failed"));
-            return;
+    CachedProfileRow row;
+    row.profileRef = id;
+    row.displayName = id;
+    row.specCbor = responseCbor;
+    for (const DecodedProfileInfo& p : m_profiles) {
+        if (p.id == id) {
+            row.active = p.isActive;
+            break;
         }
-        // Rolled forward: refresh the spec (re-get) + the list, then notify.
-        getProfile(id);
-        refreshProfiles();
-        emit reverted(id);
+    }
+    row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
+    upsertCachedProfile(row);
+}
+
+void ProfileRepository::handleProfileExportResponse(const QString& id,
+                                                    const QByteArray& responseCbor) {
+    DecodedDistribution dist;
+    if (!NodeApiCodec::decodeDistribution(responseCbor, &dist)) {
+        emit operationFailed(QStringLiteral("Failed to decode Distribution"));
         return;
     }
-    if (correlationId == QLatin1String(kSelectCorrelation) ||
-        correlationId == QLatin1String(kDeleteCorrelation) ||
-        correlationId == QLatin1String(kUpdateCorrelation) ||
-        correlationId == QLatin1String(kCreateCorrelation) ||
-        correlationId == QLatin1String(kCloneCorrelation)) {
-        // Create/Clone answer with ProfileId (ApiResponseKind::Unknown here); Select/Delete/Update
-        // answer with Ok. Any non-error response means the membership/active changed - re-list.
-        if (NodeApiCodec::responseKind(responseCbor) != ApiResponseKind::Error) {
-            refreshProfiles();
-            return;
-        }
+    // Hand the store the raw bytes (the portable artifact) + the decoded form.
+    emit distributionExported(id, responseCbor, dist);
+}
+
+void ProfileRepository::handleProfileImportResponse(const QByteArray& responseCbor) {
+    QString newId;
+    if (!NodeApiCodec::decodeProfileId(responseCbor, &newId)) {
         DecodedApiError err;
-        if (NodeApiCodec::decodeError(responseCbor, &err)) {
-            emit operationFailed(err.message);
-        } else {
-            emit operationFailed(QStringLiteral("Profile operation failed"));
-        }
+        emit operationFailed(NodeApiCodec::decodeError(responseCbor, &err)
+                                 ? err.message
+                                 : QStringLiteral("Profile import failed"));
         return;
     }
+    refreshProfiles();
+    emit imported(newId);
+}
+
+void ProfileRepository::handleProfileHistoryResponse(const QString& id,
+                                                     const QByteArray& responseCbor) {
+    // A daemon with no revision log answers Unsupported("versioning not available"); that is a
+    // capability gap, not a decode failure - surface it as historyUnavailable so the UI can hide
+    // the panel honestly rather than toast a misleading parse error.
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+        DecodedApiError err;
+        emit historyUnavailable(id, NodeApiCodec::decodeError(responseCbor, &err)
+                                        ? err.message
+                                        : QStringLiteral("Version history unavailable"));
+        return;
+    }
+    QList<DecodedRevision> revs;
+    if (!NodeApiCodec::decodeRevisions(responseCbor, &revs)) {
+        emit operationFailed(QStringLiteral("Failed to decode Revisions"));
+        return;
+    }
+    emit historyLoaded(id, revs);
+}
+
+void ProfileRepository::handleProfileRevertResponse(const QString& id,
+                                                    const QByteArray& responseCbor) {
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+        DecodedApiError err;
+        emit operationFailed(NodeApiCodec::decodeError(responseCbor, &err)
+                                 ? err.message
+                                 : QStringLiteral("Profile revert failed"));
+        return;
+    }
+    // Rolled forward: refresh the spec (re-get) + the list, then notify.
+    getProfile(id);
+    refreshProfiles();
+    emit reverted(id);
+}
+
+void ProfileRepository::handleProfileMutationResponse(const QByteArray& responseCbor) {
+    // Create/Clone answer with ProfileId (ApiResponseKind::Unknown here); Select/Delete/Update
+    // answer with Ok. Any non-error response means the membership/active changed - re-list.
+    if (NodeApiCodec::responseKind(responseCbor) != ApiResponseKind::Error) {
+        refreshProfiles();
+        return;
+    }
+    DecodedApiError err;
+    if (NodeApiCodec::decodeError(responseCbor, &err)) {
+        emit operationFailed(err.message);
+    } else {
+        emit operationFailed(QStringLiteral("Profile operation failed"));
+    }
+}
+
+bool ProfileRepository::isProfileOperation(const QString& correlationId) {
+    const std::array exact = {kSelectCorrelation, kDeleteCorrelation, kUpdateCorrelation,
+                              kCreateCorrelation, kCloneCorrelation,  kImportCorrelation};
+    if (std::ranges::any_of(exact,
+                            [&](const char* key) { return correlationId == QLatin1String(key); })) {
+        return true;
+    }
+    const std::array prefixes = {kGetPrefix, kExportPrefix, kHistoryPrefix, kRevertPrefix};
+    return std::ranges::any_of(prefixes, [&](const char* prefix) {
+        return correlationId.startsWith(QLatin1String(prefix));
+    });
 }
 
 void ProfileRepository::handleFailure(const QString& correlationId, const QString& message) {
     if (correlationId == QLatin1String(kProfilesCorrelation)) {
         emit refreshFailed(message);
-    } else if (correlationId == QLatin1String(kSelectCorrelation) ||
-               correlationId == QLatin1String(kDeleteCorrelation) ||
-               correlationId == QLatin1String(kUpdateCorrelation) ||
-               correlationId == QLatin1String(kCreateCorrelation) ||
-               correlationId == QLatin1String(kCloneCorrelation) ||
-               correlationId == QLatin1String(kImportCorrelation) ||
-               correlationId.startsWith(QLatin1String(kGetPrefix)) ||
-               correlationId.startsWith(QLatin1String(kExportPrefix)) ||
-               correlationId.startsWith(QLatin1String(kHistoryPrefix)) ||
-               correlationId.startsWith(QLatin1String(kRevertPrefix))) {
+        return;
+    }
+    if (isProfileOperation(correlationId)) {
         emit operationFailed(message);
     }
 }
@@ -930,54 +1030,66 @@ void FleetRepository::scale(const QString& unitId, quint32 n) {
 
 void FleetRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kTreeCorrelation)) {
-        QList<DecodedUnitNode> flat;
-        if (!NodeApiCodec::decodeTreeReport(responseCbor, &flat)) {
-            emit refreshFailed(QStringLiteral("Failed to decode Tree response"));
-            return;
-        }
-        if (cache() != nullptr) {
-            const qint64 now = QDateTime::currentMSecsSinceEpoch();
-            QSet<QString> keep;
-            int ordinal = 0;
-            for (const DecodedUnitNode& n : flat) {
-                CachedFleetUnitRow row;
-                row.unitId = n.id;
-                row.parentId = n.parentId;
-                row.depth = n.depth;
-                row.ordinal = ordinal++;
-                row.name = n.title.isEmpty() ? n.id : n.title;
-                row.kind = n.kind;
-                row.state = n.state;
-                row.role = n.role;
-                row.profileRef = n.profileRef;
-                row.sessionId = n.sessionId;
-                row.work = n.work;
-                row.updatedAtMs = now;
-                cache()->upsertFleetUnit(row);
-                keep.insert(n.id);
-            }
-            // Prune units the live tree no longer lists (finished/removed subagents).
-            for (const CachedFleetUnitRow& existing : cache()->fleetUnits()) {
-                if (!keep.contains(existing.unitId)) {
-                    cache()->deleteFleetUnit(existing.unitId);
-                }
-            }
-        }
-        emit treeRefreshed();
+        handleTreeResponse(responseCbor);
         return;
     }
     if (correlationId == QLatin1String(kControlCorrelation)) {
-        // Pause/Resume/Scale answer Ok (re-fetch the tree) or an ApiError (e.g. Unsupported on an
-        // engine-leaf unit -> surface it, do not silently swallow).
-        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
-            DecodedApiError err;
-            NodeApiCodec::decodeError(responseCbor, &err);
-            emit controlFailed(err.message.isEmpty() ? QStringLiteral("Unit control failed")
-                                                     : err.message);
-        } else {
-            refreshTree();
-        }
+        handleUnitControlResponse(responseCbor);
+    }
+}
+
+void FleetRepository::handleTreeResponse(const QByteArray& responseCbor) {
+    QList<DecodedUnitNode> flat;
+    if (!NodeApiCodec::decodeTreeReport(responseCbor, &flat)) {
+        emit refreshFailed(QStringLiteral("Failed to decode Tree response"));
         return;
+    }
+    syncFleetUnits(flat);
+    emit treeRefreshed();
+}
+
+void FleetRepository::syncFleetUnits(const QList<DecodedUnitNode>& flat) {
+    if (cache() == nullptr) {
+        return;
+    }
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    QSet<QString> keep;
+    int ordinal = 0;
+    for (const DecodedUnitNode& n : flat) {
+        CachedFleetUnitRow row;
+        row.unitId = n.id;
+        row.parentId = n.parentId;
+        row.depth = n.depth;
+        row.ordinal = ordinal++;
+        row.name = n.title.isEmpty() ? n.id : n.title;
+        row.kind = n.kind;
+        row.state = n.state;
+        row.role = n.role;
+        row.profileRef = n.profileRef;
+        row.sessionId = n.sessionId;
+        row.work = n.work;
+        row.updatedAtMs = now;
+        cache()->upsertFleetUnit(row);
+        keep.insert(n.id);
+    }
+    // Prune units the live tree no longer lists (finished/removed subagents).
+    for (const CachedFleetUnitRow& existing : cache()->fleetUnits()) {
+        if (!keep.contains(existing.unitId)) {
+            cache()->deleteFleetUnit(existing.unitId);
+        }
+    }
+}
+
+void FleetRepository::handleUnitControlResponse(const QByteArray& responseCbor) {
+    // Pause/Resume/Scale answer Ok (re-fetch the tree) or an ApiError (e.g. Unsupported on an
+    // engine-leaf unit -> surface it, do not silently swallow).
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+        DecodedApiError err;
+        NodeApiCodec::decodeError(responseCbor, &err);
+        emit controlFailed(err.message.isEmpty() ? QStringLiteral("Unit control failed")
+                                                 : err.message);
+    } else {
+        refreshTree();
     }
 }
 
@@ -1038,80 +1150,107 @@ void TransportRepository::refreshConversations(const QString& transport) {
 void TransportRepository::handleResponse(const QString& correlationId,
                                          const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kAdaptersCorrelation)) {
-        if (!NodeApiCodec::decodeAdapters(responseCbor, &m_adapters)) {
-            emit operationFailed(QStringLiteral("Failed to decode Adapters response"));
-            return;
-        }
-        emit adaptersRefreshed();
+        handleAdaptersResponse(responseCbor);
         return;
     }
     if (correlationId == QLatin1String(kInstancesCorrelation)) {
-        QList<DecodedTransportInstance> live;
-        if (!NodeApiCodec::decodeTransportInstances(responseCbor, &live)) {
-            emit operationFailed(QStringLiteral("Failed to decode TransportInstances response"));
-            return;
-        }
-        if (cache() != nullptr) {
-            const qint64 now = QDateTime::currentMSecsSinceEpoch();
-            QSet<QString> keep;
-            for (const DecodedTransportInstance& i : live) {
-                CachedTransportInstanceRow row;
-                row.transport = i.transport;
-                row.family = i.family;
-                row.displayName = i.displayName;
-                row.connection = i.connection;
-                row.presence = i.presence;
-                row.boundProfile = i.boundProfile;
-                row.updatedAtMs = now;
-                cache()->upsertTransportInstance(row);
-                keep.insert(i.transport);
-            }
-            // Prune accounts the live list no longer reports (disconnected/removed).
-            for (const CachedTransportInstanceRow& existing : cache()->transportInstances()) {
-                if (!keep.contains(existing.transport)) {
-                    cache()->deleteTransportInstance(existing.transport);
-                }
-            }
-        }
-        emit instancesRefreshed();
+        handleInstancesResponse(responseCbor);
         return;
     }
     if (correlationId.startsWith(QLatin1String(kConvPrefix))) {
-        const QString transport = correlationId.mid(int(qstrlen(kConvPrefix)));
-        QList<DecodedConversation> live;
-        if (!NodeApiCodec::decodeConversations(responseCbor, &live)) {
-            emit operationFailed(QStringLiteral("Failed to decode Conversations response"));
-            return;
-        }
-        if (cache() != nullptr) {
-            const qint64 now = QDateTime::currentMSecsSinceEpoch();
-            QSet<QString> keep;
-            for (const DecodedConversation& c : live) {
-                CachedConversationRow row;
-                row.transport = transport; // key by the requested transport for consistent pruning
-                row.convId = c.id;
-                row.kind = c.kind;
-                row.title = c.title;
-                row.topic = c.topic;
-                row.updatedAtMs = now;
-                cache()->upsertConversation(row);
-                keep.insert(c.id);
-            }
-            for (const CachedConversationRow& existing : cache()->conversations(transport)) {
-                if (!keep.contains(existing.convId)) {
-                    cache()->deleteConversation(transport, existing.convId);
-                }
-            }
-        }
-        emit conversationsRefreshed(transport);
-        return;
+        handleConversationsResponse(correlationId.mid(int(qstrlen(kConvPrefix))), responseCbor);
     }
 }
 
+void TransportRepository::handleAdaptersResponse(const QByteArray& responseCbor) {
+    if (!NodeApiCodec::decodeAdapters(responseCbor, &m_adapters)) {
+        emit operationFailed(QStringLiteral("Failed to decode Adapters response"));
+        return;
+    }
+    emit adaptersRefreshed();
+}
+
+void TransportRepository::handleInstancesResponse(const QByteArray& responseCbor) {
+    QList<DecodedTransportInstance> live;
+    if (!NodeApiCodec::decodeTransportInstances(responseCbor, &live)) {
+        emit operationFailed(QStringLiteral("Failed to decode TransportInstances response"));
+        return;
+    }
+    syncTransportInstances(live);
+    emit instancesRefreshed();
+}
+
+void TransportRepository::syncTransportInstances(const QList<DecodedTransportInstance>& live) {
+    if (cache() == nullptr) {
+        return;
+    }
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    QSet<QString> keep;
+    for (const DecodedTransportInstance& i : live) {
+        CachedTransportInstanceRow row;
+        row.transport = i.transport;
+        row.family = i.family;
+        row.displayName = i.displayName;
+        row.connection = i.connection;
+        row.presence = i.presence;
+        row.boundProfile = i.boundProfile;
+        row.updatedAtMs = now;
+        cache()->upsertTransportInstance(row);
+        keep.insert(i.transport);
+    }
+    // Prune accounts the live list no longer reports (disconnected/removed).
+    for (const CachedTransportInstanceRow& existing : cache()->transportInstances()) {
+        if (!keep.contains(existing.transport)) {
+            cache()->deleteTransportInstance(existing.transport);
+        }
+    }
+}
+
+void TransportRepository::handleConversationsResponse(const QString& transport,
+                                                      const QByteArray& responseCbor) {
+    QList<DecodedConversation> live;
+    if (!NodeApiCodec::decodeConversations(responseCbor, &live)) {
+        emit operationFailed(QStringLiteral("Failed to decode Conversations response"));
+        return;
+    }
+    syncConversations(transport, live);
+    emit conversationsRefreshed(transport);
+}
+
+void TransportRepository::syncConversations(const QString& transport,
+                                            const QList<DecodedConversation>& live) {
+    if (cache() == nullptr) {
+        return;
+    }
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    QSet<QString> keep;
+    for (const DecodedConversation& c : live) {
+        CachedConversationRow row;
+        row.transport = transport; // key by the requested transport for consistent pruning
+        row.convId = c.id;
+        row.kind = c.kind;
+        row.title = c.title;
+        row.topic = c.topic;
+        row.updatedAtMs = now;
+        cache()->upsertConversation(row);
+        keep.insert(c.id);
+    }
+    for (const CachedConversationRow& existing : cache()->conversations(transport)) {
+        if (!keep.contains(existing.convId)) {
+            cache()->deleteConversation(transport, existing.convId);
+        }
+    }
+}
+
+bool TransportRepository::isOwnCorrelation(const QString& correlationId) {
+    const std::array keys = {kAdaptersCorrelation, kInstancesCorrelation};
+    return std::ranges::any_of(
+               keys, [&](const char* key) { return correlationId == QLatin1String(key); }) ||
+           correlationId.startsWith(QLatin1String(kConvPrefix));
+}
+
 void TransportRepository::handleFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == QLatin1String(kAdaptersCorrelation) ||
-        correlationId == QLatin1String(kInstancesCorrelation) ||
-        correlationId.startsWith(QLatin1String(kConvPrefix))) {
+    if (isOwnCorrelation(correlationId)) {
         emit operationFailed(message);
     }
 }

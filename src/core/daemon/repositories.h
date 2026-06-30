@@ -53,6 +53,12 @@ private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
 
+    // SessionPage handling, split out of handleResponse so the dispatcher stays flat and the
+    // replace/delta cache reconciliation is not nested four deep.
+    void applySessionPage(const QByteArray& responseCbor);
+    void pruneSessionsMissingFrom(const QList<CachedSessionRow>& rows);
+    void pruneRemovedSessions(const QList<QString>& removed);
+
     static constexpr auto kSessionsCorrelation = "repo/sessions-query";
     static constexpr auto kRosterRevScope = "roster-rev"; // L4 persisted roster revision
 
@@ -135,6 +141,22 @@ private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
 
+    // handleResponse fans out via an exact-match table + a prefix-route loop; each correlation's
+    // body lives in its own handler so the dispatcher (and the per-branch decode/cache nesting)
+    // stays small.
+    bool dispatchExactResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void dispatchPrefixedResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleProfilesResponse(const QByteArray& responseCbor);
+    void handleProfileImportResponse(const QByteArray& responseCbor);
+    void handleProfileMutationResponse(const QByteArray& responseCbor);
+    void handleProfileGetResponse(const QString& id, const QByteArray& responseCbor);
+    void handleProfileExportResponse(const QString& id, const QByteArray& responseCbor);
+    void handleProfileHistoryResponse(const QString& id, const QByteArray& responseCbor);
+    void handleProfileRevertResponse(const QString& id, const QByteArray& responseCbor);
+    void persistFetchedProfile(const QString& id, const QByteArray& responseCbor);
+    void pruneStaleProfiles();
+    [[nodiscard]] static bool isProfileOperation(const QString& correlationId);
+
     static constexpr auto kProfilesCorrelation = "repo/profile-list";
     static constexpr auto kSelectCorrelation = "repo/profile-select";
     static constexpr auto kDeleteCorrelation = "repo/profile-delete";
@@ -176,6 +198,8 @@ signals:
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
+
+    [[nodiscard]] static bool isOwnCorrelation(const QString& correlationId);
 
     static constexpr auto kListCorrelation = "repo/credential-list";
     static constexpr auto kSetCorrelation = "repo/credential-set";
@@ -266,6 +290,24 @@ signals:
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
+
+    // One handler per correlation; handleResponse routes to them through a member-function-pointer
+    // table so the dispatcher itself carries no branch complexity.
+    void handleModelsResponse(const QByteArray& responseCbor);
+    void handleModelCurrentResponse(const QByteArray& responseCbor);
+    void handleSetSessionModelResponse(const QByteArray& responseCbor);
+    void handleModelSearchResponse(const QByteArray& responseCbor);
+    void handleModelFilesResponse(const QByteArray& responseCbor);
+    void handleModelRecommendResponse(const QByteArray& responseCbor);
+    void handleModelDownloadResponse(const QByteArray& responseCbor);
+    void handleModelDownloadsResponse(const QByteArray& responseCbor);
+    void handleModelCatalogResponse(const QByteArray& responseCbor);
+    void handleModelDeleteResponse(const QByteArray& responseCbor);
+    void handleModelActivateResponse(const QByteArray& responseCbor);
+    void handleModelLifecycleResponse(const QByteArray& responseCbor);
+    // Shared "ApiError -> message, else fallback" failure tail used by the set/download/activate
+    // handlers.
+    void emitOperationError(const QByteArray& responseCbor, const QString& fallback);
 
     static constexpr auto kModelsCorrelation = "repo/models";
     static constexpr auto kCurrentCorrelation = "repo/model-current";
@@ -361,6 +403,10 @@ private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
 
+    void handleTreeResponse(const QByteArray& responseCbor);
+    void handleUnitControlResponse(const QByteArray& responseCbor);
+    void syncFleetUnits(const QList<DecodedUnitNode>& flat);
+
     static constexpr auto kTreeCorrelation = "repo/tree";
     static constexpr auto kControlCorrelation = "repo/unit-control";
 };
@@ -392,6 +438,13 @@ signals:
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
+
+    void handleAdaptersResponse(const QByteArray& responseCbor);
+    void handleInstancesResponse(const QByteArray& responseCbor);
+    void handleConversationsResponse(const QString& transport, const QByteArray& responseCbor);
+    void syncTransportInstances(const QList<DecodedTransportInstance>& live);
+    void syncConversations(const QString& transport, const QList<DecodedConversation>& live);
+    [[nodiscard]] static bool isOwnCorrelation(const QString& correlationId);
 
     QList<DecodedAdapterInfo> m_adapters; // in-memory (connect-only); not cached
 
