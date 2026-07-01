@@ -1589,6 +1589,7 @@ static bool decode_provider_selector(
 
 	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"mock", tmp_str.len = sizeof("mock") - 1, &tmp_str))))) && (((*result).provider_selector_choice = provider_selector_mock_tstr_c), true))
 	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"genai", tmp_str.len = sizeof("genai") - 1, &tmp_str))))) && (((*result).provider_selector_choice = provider_selector_genai_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"daemon_api", tmp_str.len = sizeof("daemon_api") - 1, &tmp_str))))) && (((*result).provider_selector_choice = provider_selector_daemon_api_tstr_c), true))
 	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"llama_cpp", tmp_str.len = sizeof("llama_cpp") - 1, &tmp_str))))) && (((*result).provider_selector_choice = provider_selector_llama_cpp_tstr_c), true))
 	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"mistral_rs", tmp_str.len = sizeof("mistral_rs") - 1, &tmp_str))))) && (((*result).provider_selector_choice = provider_selector_mistral_rs_tstr_c), true))), zcbor_union_end_code(state), int_res))));
 

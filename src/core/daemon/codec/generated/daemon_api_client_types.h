@@ -389,6 +389,7 @@ struct provider_selector_r {
 	enum {
 		provider_selector_mock_tstr_c,
 		provider_selector_genai_tstr_c,
+		provider_selector_daemon_api_tstr_c,
 		provider_selector_llama_cpp_tstr_c,
 		provider_selector_mistral_rs_tstr_c,
 	} provider_selector_choice;
