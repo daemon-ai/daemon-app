@@ -18,27 +18,41 @@ Item {
     property string profileId: ""
     // Working copy fields.
     property string wModel: ""
+    // wProvider is the ProviderSelector wire string saved on the profile ("genai" | "daemon_api" |
+    // "llama_cpp" | "mistral_rs" | "mock"); wProviderId is the ProviderCatalog descriptor id the
+    // picker/discovery keys on ("anthropic" | "openai" | "daemon_cloud" | "llama_cpp" | ...). All
+    // genai cloud vendors share the "genai" selector and are disambiguated by the id.
     property string wProvider: ""
+    property string wProviderId: ""
     property string wBaseUrl: ""
     property var wSkills: []
     property var wTools: []
 
-    // The REAL model providers offered by the picker, sourced from the store's single-source list.
-    // Mock is deliberately absent there: it is never a default or a user choice, reachable only under
-    // DAEMON_APP_SERVICE_MODE=mock. `cloud` marks providers that take an optional Base URL.
-    readonly property var providerChoices: Profiles.pickerProviders()
-    // The index of wProvider within the real-provider list, or -1 for an unlisted value (e.g. a
-    // Mock-valued profile under the mock flag): -1 means "render the non-selectable caption".
+    // The providers the node offers (ProviderCatalog), fetched over the wire. Mock is never listed;
+    // `cloud` marks providers that take a Base URL; `wireSelector` is what the profile persists.
+    readonly property var providerChoices: ProviderCatalog ? ProviderCatalog.providers() : []
+    // The index of wProviderId within the provider list, or -1 for an unlisted value (e.g. a
+    // Mock-valued profile): -1 means "render the non-selectable caption".
     readonly property int providerIndex: {
         for (var i = 0; i < providerChoices.length; ++i)
-            if (providerChoices[i].id === root.wProvider) return i;
+            if (providerChoices[i].id === root.wProviderId) return i;
         return -1;
     }
     readonly property bool providerIsCloud: providerIndex >= 0 && providerChoices[providerIndex].cloud
 
-    // The default base URL to pre-fill for a cloud provider (empty = use the node/provider default).
-    function _defaultBaseFor(providerId) {
-        return providerId === "daemon_api" ? "https://api.daemon.ai/api/v1" : "";
+    // Best-effort resolve of a saved (wireSelector, model) back to a ProviderCatalog descriptor id:
+    // a unique selector match wins; for genai's shared selector, prefer the vendor whose id prefixes
+    // the model id, else the first match. Empty when nothing matches (e.g. a Mock-valued profile).
+    function _inferProviderId(selector, model) {
+        if (selector.length === 0) return "";
+        var matches = [];
+        for (var i = 0; i < providerChoices.length; ++i)
+            if (providerChoices[i].wireSelector === selector) matches.push(providerChoices[i]);
+        if (matches.length === 0) return "";
+        if (matches.length === 1) return matches[0].id;
+        for (var j = 0; j < matches.length; ++j)
+            if (model.length > 0 && model.indexOf(matches[j].id) === 0) return matches[j].id;
+        return matches[0].id;
     }
     // PRO-8 revision history model (null in mock mode, which has no daemon revision log).
     readonly property var historyModel: Profiles.history()
@@ -52,13 +66,18 @@ Item {
     function load() {
         const p = profileId.length > 0 ? Profiles.profile(profileId) : ({});
         nameField.text = p.name !== undefined ? p.name : "";
-        // Preserve whatever provider the profile has (incl. an unlisted "mock" under the mock flag);
-        // never coerce it here - the caption renders it and save() writes it back verbatim.
+        // Preserve whatever provider the profile has (incl. an unlisted "mock"); never coerce it -
+        // the caption renders it and save() writes wProvider (the selector) back verbatim.
         wProvider = p.provider !== undefined ? p.provider : "";
         wBaseUrl = p.baseUrl !== undefined ? p.baseUrl : "";
+        wModel = p.model !== undefined ? p.model : "";
+        wProviderId = _inferProviderId(wProvider, wModel);
         providerCombo.syncFromModel();
         baseUrlField.text = wBaseUrl;
-        wModel = p.model !== undefined ? p.model : "";
+        // Ask the node for this provider's models (using the profile's stored credential) so the
+        // model dropdown lists real, selectable models; the reactive refresh repopulates on arrival.
+        if (ProviderCatalog && wProviderId.length > 0)
+            ProviderCatalog.refreshModels(wProviderId, profileId, "");
         modelCombo.reload();
         descField.text = p.description !== undefined ? p.description : "";
         promptArea.text = p.systemPrompt !== undefined ? p.systemPrompt : "";
@@ -154,11 +173,22 @@ Item {
                 // so no real provider is shown as selected (the caption below explains it).
                 function syncFromModel() { currentIndex = root.providerIndex; }
                 onActivated: {
-                    root.wProvider = root.providerChoices[currentIndex].id;
-                    // Pre-fill the cloud default when switching to a cloud provider with no base set.
-                    if (root.providerChoices[currentIndex].cloud && baseUrlField.text.length === 0)
-                        baseUrlField.text = root._defaultBaseFor(root.wProvider);
+                    var row = root.providerChoices[currentIndex];
+                    root.wProviderId = row.id;
+                    // The profile persists the ProviderSelector (row.wireSelector), NOT the id: all
+                    // genai vendors share "genai" and are disambiguated by id at discovery time.
+                    root.wProvider = row.wireSelector;
+                    // Switching provider invalidates the current model (selection-only).
+                    root.wModel = "";
+                    // Pre-fill the provider's default base URL (e.g. Daemon Cloud) for a cloud
+                    // provider with no base set; the node/provider default otherwise.
+                    if (row.cloud && baseUrlField.text.length === 0)
+                        baseUrlField.text = row.defaultBaseUrl !== undefined ? row.defaultBaseUrl : "";
                     root.wBaseUrl = baseUrlField.text;
+                    // Fetch this provider's models (stored credential for an existing profile); the
+                    // reactive refresh repopulates the dropdown when they arrive.
+                    if (ProviderCatalog)
+                        ProviderCatalog.refreshModels(root.wProviderId, root.profileId, "");
                     modelCombo.reload();
                 }
             }
@@ -182,26 +212,55 @@ Item {
                 onEditingFinished: root.wBaseUrl = text
             }
 
-            // Model is chosen from the installed models (shared catalog), filtered by provider.
+            // Model is chosen (selection-only) from the node's per-provider list (ProviderModels for
+            // cloud; installed + "Discover More Models" for local). Never free-text.
             Kit.Dropdown {
                 id: modelCombo
                 Layout.fillWidth: true
-                // Recompute the provider-filtered id list and reselect wModel (kept selectable even
-                // if the filter omits it, so an existing value never silently drops).
-                function ids() {
-                    var list = ModelCatalog.installedIdsForProvider(root.wProvider);
-                    if (root.wModel.length > 0 && list.indexOf(root.wModel) < 0)
-                        list = [root.wModel].concat(list);
-                    return list;
+                // The offered-model rows for the selected provider ({id, name, kind}); the trailing
+                // discover row (local) opens the download flow instead of selecting a model. An
+                // existing wModel absent from the list is kept selectable so it never silently drops.
+                property var rows: []
+                function rebuildRows() {
+                    var out = (ProviderCatalog && root.wProviderId.length > 0)
+                              ? ProviderCatalog.offeredModels(root.wProviderId).slice() : [];
+                    var present = root.wModel.length === 0;
+                    for (var i = 0; i < out.length; ++i)
+                        if (out[i].id === root.wModel) present = true;
+                    if (!present)
+                        out.unshift({ "id": root.wModel, "name": root.wModel, "kind": "model" });
+                    rows = out;
                 }
                 function reload() {
-                    model = ids();
+                    rebuildRows();
+                    model = rows.map(function(m) { return m.name; });
                     syncFromModel();
                 }
                 function syncFromModel() {
-                    currentIndex = Math.max(0, model.indexOf(root.wModel));
+                    currentIndex = 0;
+                    for (var i = 0; i < rows.length; ++i)
+                        if (rows[i].id === root.wModel) { currentIndex = i; break; }
                 }
-                onActivated: root.wModel = model[currentIndex]
+                onActivated: {
+                    var row = rows[currentIndex];
+                    if (row === undefined) return;
+                    if (row.kind === "discover") {
+                        // Local "Discover More Models": route to the Models hub download flow; a
+                        // finished download re-offers the new model (offeredModelsChanged).
+                        if (Nav) Nav.open("models", "discover");
+                        syncFromModel(); // don't leave the discover row selected
+                        return;
+                    }
+                    root.wModel = row.id;
+                }
+            }
+            // Repopulate the model dropdown when the node answers ProviderModels (or a local download
+            // finishes) for the currently-selected provider.
+            Connections {
+                target: ProviderCatalog
+                function onOfferedModelsChanged(providerId) {
+                    if (providerId === root.wProviderId) modelCombo.reload();
+                }
             }
 
             // --- Credential (profile-scoped) ------------------------------

@@ -48,6 +48,8 @@ add_library(da_daemon_client STATIC
     daemon_accounts_service.cpp
     daemon_model_catalog.h
     daemon_model_catalog.cpp
+    daemon_provider_catalog.h
+    daemon_provider_catalog.cpp
     daemon_profile_store.h
     daemon_profile_store.cpp
     daemon_session_settings.h

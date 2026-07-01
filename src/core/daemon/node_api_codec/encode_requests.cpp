@@ -192,6 +192,41 @@ QByteArray NodeApiCodec::encodeSetSessionModelRequest(const QString& sessionId,
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
+QByteArray NodeApiCodec::encodeProviderCatalogRequest() {
+    return encodeSimple(api_request_r::api_request_request_provider_catalog_m_c);
+}
+
+QByteArray NodeApiCodec::encodeProviderModelsRequest(const QString& provider,
+                                                     const QString& credentialRef,
+                                                     const QString& transientKey) {
+    const QByteArray providerUtf8 = provider.toUtf8();
+    const QByteArray credRefUtf8 = credentialRef.toUtf8();
+    const QByteArray keyUtf8 = transientKey.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_provider_models_m_c, [&](api_request_r& request) {
+            request_provider_models& pm = request.api_request_request_provider_models_m;
+            setZcbor(pm.ProviderModels_provider, providerUtf8);
+            if (credentialRef.isEmpty()) {
+                pm.ProviderModels_credential_ref_present = false;
+            } else {
+                pm.ProviderModels_credential_ref_present = true;
+                pm.ProviderModels_credential_ref.ProviderModels_credential_ref_choice =
+                    ProviderModels_credential_ref_r::ProviderModels_credential_ref_tstr_c;
+                setZcbor(pm.ProviderModels_credential_ref.ProviderModels_credential_ref_tstr,
+                         credRefUtf8);
+            }
+            if (transientKey.isEmpty()) {
+                pm.ProviderModels_transient_key_present = false;
+            } else {
+                pm.ProviderModels_transient_key_present = true;
+                pm.ProviderModels_transient_key.ProviderModels_transient_key_choice =
+                    ProviderModels_transient_key_r::ProviderModels_transient_key_tstr_c;
+                setZcbor(pm.ProviderModels_transient_key.ProviderModels_transient_key_tstr,
+                         keyUtf8);
+            }
+        });
+}
+
 QByteArray NodeApiCodec::encodeProfileListRequest() {
     return encodeSimple(api_request_r::api_request_request_profile_list_m_c);
 }

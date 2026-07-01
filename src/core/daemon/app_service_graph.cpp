@@ -19,6 +19,7 @@
 #include "daemon/daemon_model_catalog.h"
 #include "daemon/daemon_presence_service.h"
 #include "daemon/daemon_profile_store.h"
+#include "daemon/daemon_provider_catalog.h"
 #include "daemon/daemon_session_settings.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/daemon_transport_registry.h"
@@ -35,6 +36,7 @@
 #include "fs/local_disk_fs_service.h"
 #include "memory/mock_memory_service.h"
 #include "models/mock_model_catalog.h"
+#include "models/mock_provider_catalog.h"
 #include "nav/nav_controller.h"
 #include "persistence/in_memory_session_store.h"
 #include "profiles/mock_profile_store.h"
@@ -117,6 +119,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.sessions = new SessionRepository(graph.nodeApi, graph.cache, owner);
     graph.profileRepository = new ProfileRepository(graph.nodeApi, graph.cache, owner);
     graph.models = new ModelRepository(graph.nodeApi, graph.cache, owner);
+    graph.providerRepository = new ProviderRepository(graph.nodeApi, graph.cache, owner);
     graph.approvalRepository = new ApprovalRepository(graph.nodeApi, graph.cache, owner);
     graph.checkpointRepository = new CheckpointRepository(graph.nodeApi, graph.cache, owner);
     graph.credentialRepository = new CredentialRepository(graph.nodeApi, graph.cache, owner);
@@ -130,6 +133,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.accounts = new accounts::DaemonAccountsService(graph.credentialRepository,
                                                              graph.profileRepository, owner);
         graph.modelCatalog = new models::DaemonModelCatalog(graph.models, owner);
+        // Node-driven provider/model discovery (ProviderCatalog/ProviderModels), sharing the model
+        // catalog for the local [installed]+Discover compose.
+        graph.providerCatalog =
+            new DaemonProviderCatalog(graph.providerRepository, graph.modelCatalog, owner);
         graph.profiles = new profiles::DaemonProfileStore(graph.profileRepository, owner);
         // Per-session approval mode (CHA-4): the setter sends SetSessionMode to the node.
         graph.sessionSettings = new DaemonSessionSettings(graph.nodeApi, owner);
@@ -193,9 +200,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             graph.connection, &connection::IConnectionService::stateChanged, graph.sessions,
             [conn = graph.connection, sessions = graph.sessions, profiles = graph.profileRepository,
              credentials = graph.credentialRepository, models = graph.models,
-             approvals = graph.approvalRepository, subscriptions = graph.subscriptions,
-             fs = graph.fs, fleet = graph.fleetRepository, transports = graph.transportRepository,
-             wasReady] {
+             providers = graph.providerRepository, approvals = graph.approvalRepository,
+             subscriptions = graph.subscriptions, fs = graph.fs, fleet = graph.fleetRepository,
+             transports = graph.transportRepository, wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
                     // Initial baseline once per (re)connect; the EventsSince feed then keeps the
@@ -206,6 +213,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     credentials->refreshList();
                     models->refreshModels();
                     models->refreshCurrent();
+                    providers->refreshProviders(); // node-driven provider/model discovery
                     approvals->refreshPending();
                     fs->listRoots();      // populate the daemon-backed file roots
                     fleet->refreshTree(); // PRO-9: baseline the subagent tree
@@ -235,6 +243,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // source.
         graph.store = new persistence::InMemorySessionStore(graph.daemonNet, owner);
         graph.modelCatalog = new models::MockModelCatalog(owner);
+        graph.providerCatalog = new models::MockProviderCatalog(graph.modelCatalog, owner);
         graph.accounts = new accounts::MockAccountsService(owner);
         graph.profiles = new profiles::MockProfileStore(owner);
         graph.sessionSettings = new session::MockSessionSettings(owner);
@@ -242,7 +251,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // Built last so it binds the resolved modelCatalog (daemon-backed or mock) for the inference
     // readiness gate (CON-7).
     graph.firstRun =
-        new firstrun::FirstRunModel(graph.settings, graph.connection, graph.modelCatalog, owner);
+        new firstrun::FirstRunModel(graph.settings, graph.connection, graph.modelCatalog,
+                                    graph.profiles, graph.accounts, graph.providerCatalog, owner);
     return graph;
 }
 

@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
+#include "accounts/mock_accounts_service.h"
 #include "connection/mock_connection_service.h"
 #include "firstrun/first_run_model.h"
 #include "models/imodel_catalog.h"
+#include "models/mock_provider_catalog.h"
+#include "profiles/mock_profile_store.h"
 #include "settings/qt_settings_store.h"
 
 #include <QSignalSpy>
@@ -214,6 +217,39 @@ private slots:
 
         m.submitLogin(QStringLiteral("user"), QStringLiteral("good"));
         QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
+    }
+
+    // Guided inference: applyInferenceChoice persists a working profile (the descriptor's
+    // ProviderSelector + base URL + the chosen model), makes it default, and finishes - zero env.
+    void guidedInferencePersistsProfile() {
+        QTemporaryFile socketStandIn;
+        QVERIFY(socketStandIn.open());
+        QtSettingsStore settings;
+        MockConnectionService conn;
+        FakeModelCatalog catalog;
+        profiles::MockProfileStore profileStore;
+        accounts::MockAccountsService accountsSvc;
+        models::MockProviderCatalog providerCatalog;
+        FirstRunModel m(&settings, &conn, &catalog, &profileStore, &accountsSvc, &providerCatalog);
+        m.begin();
+        conn.connectTo(QStringLiteral("local"), socketStandIn.fileName());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
+
+        QSignalSpy finished(&m, &FirstRunModel::finished);
+        // Daemon Cloud (keyless) with a chosen model: persists + finishes with no env.
+        m.applyInferenceChoice(QStringLiteral("daemon_cloud"),
+                               QStringLiteral("anthropic/claude-3.5-sonnet"), QString());
+        QCOMPARE(m.phase(), QStringLiteral("done"));
+        QCOMPARE(finished.count(), 1);
+
+        const QString def = profileStore.defaultProfileId();
+        QVERIFY(!def.isEmpty());
+        const QVariantMap p = profileStore.profile(def);
+        // Daemon Cloud maps to the daemon_api ProviderSelector + its base URL; the model is the
+        // node-offered id, persisted verbatim.
+        QCOMPARE(p.value(QStringLiteral("provider")).toString(), QStringLiteral("daemon_api"));
+        QCOMPARE(p.value(QStringLiteral("model")).toString(),
+                 QStringLiteral("anthropic/claude-3.5-sonnet"));
     }
 
     void returningUserBootsToDone() {

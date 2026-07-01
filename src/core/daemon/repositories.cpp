@@ -206,6 +206,72 @@ void CredentialRepository::handleFailure(const QString& correlationId, const QSt
     }
 }
 
+// --- ProviderRepository (provider/model discovery) ------------------------------------------
+
+ProviderRepository::ProviderRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                       QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &ProviderRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &ProviderRepository::handleFailure);
+    }
+}
+
+void ProviderRepository::refreshProviders() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeProviderCatalogRequest(),
+                          QLatin1String(kCatalogCorrelation));
+}
+
+void ProviderRepository::refreshProviderModels(const QString& provider,
+                                               const QString& credentialRef,
+                                               const QString& transientKey) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    if (provider.isEmpty()) {
+        return;
+    }
+    // Tag the correlation with the provider id so the response handler knows which list to fill.
+    client()->sendRequest(
+        NodeApiCodec::encodeProviderModelsRequest(provider, credentialRef, transientKey),
+        QString::fromLatin1(kModelsPrefix) + provider);
+}
+
+void ProviderRepository::handleResponse(const QString& correlationId,
+                                        const QByteArray& responseCbor) {
+    if (correlationId == QLatin1String(kCatalogCorrelation)) {
+        if (!NodeApiCodec::decodeProviderCatalog(responseCbor, &m_providers)) {
+            emit operationFailed(QStringLiteral("Failed to decode ProviderCatalog response"));
+            return;
+        }
+        emit providersRefreshed();
+        return;
+    }
+    if (correlationId.startsWith(QLatin1String(kModelsPrefix))) {
+        const QString provider = correlationId.mid(int(qstrlen(kModelsPrefix)));
+        QList<DecodedModelDescriptor> models;
+        if (!NodeApiCodec::decodeProviderModels(responseCbor, &models)) {
+            emit operationFailed(QStringLiteral("Failed to decode ProviderModels response"));
+            return;
+        }
+        m_models.insert(provider, models);
+        emit providerModelsRefreshed(provider);
+    }
+}
+
+void ProviderRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kCatalogCorrelation) ||
+        correlationId.startsWith(QLatin1String(kModelsPrefix))) {
+        emit operationFailed(message);
+    }
+}
+
 // --- ModelRepository (CON-6) ----------------------------------------------------------------
 
 ModelRepository::ModelRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)

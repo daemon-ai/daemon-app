@@ -3,17 +3,23 @@
 
 #include "firstrun/first_run_model.h"
 
+#include "accounts/iaccounts_service.h"
 #include "connection/iconnection_service.h"
 #include "models/imodel_catalog.h"
+#include "models/iprovider_catalog.h"
+#include "profiles/iprofile_store.h"
 #include "settings/isettings_store.h"
 
 namespace firstrun {
 
 FirstRunModel::FirstRunModel(settings::ISettingsStore* settings,
                              connection::IConnectionService* connection,
-                             models::IModelCatalog* modelCatalog, QObject* parent)
-    : QObject(parent), m_settings(settings), m_connection(connection),
-      m_modelCatalog(modelCatalog) {
+                             models::IModelCatalog* modelCatalog,
+                             profiles::IProfileStore* profileStore,
+                             accounts::IAccountsService* accounts,
+                             models::IProviderCatalog* providerCatalog, QObject* parent)
+    : QObject(parent), m_settings(settings), m_connection(connection), m_modelCatalog(modelCatalog),
+      m_profiles(profileStore), m_accounts(accounts), m_providerCatalog(providerCatalog) {
     if (m_connection != nullptr) {
         connect(m_connection, &connection::IConnectionService::stateChanged, this,
                 &FirstRunModel::onConnectionStateChanged);
@@ -105,6 +111,45 @@ void FirstRunModel::completeInference() {
     if (!m_inferenceReady) {
         return;
     }
+    finish();
+}
+
+void FirstRunModel::applyInferenceChoice(const QString& providerId, const QString& model,
+                                         const QString& key) {
+    // No profile store wired (mock/standalone): just finish, preserving the permissive path.
+    if (m_profiles == nullptr || providerId.isEmpty()) {
+        finish();
+        return;
+    }
+    // Resolve the ProviderSelector + base URL the profile should persist from the descriptor (the
+    // picker keys on the descriptor id; genai vendors share the "genai" selector).
+    QString wireSelector = QStringLiteral("daemon_api");
+    QString baseUrl;
+    if (m_providerCatalog != nullptr) {
+        const QVariantMap d = m_providerCatalog->descriptorFor(providerId);
+        if (!d.isEmpty()) {
+            wireSelector = d.value(QStringLiteral("wireSelector")).toString();
+            baseUrl = d.value(QStringLiteral("defaultBaseUrl")).toString();
+        }
+    }
+    // Configure the existing default profile when the node already has one (Track 1 boots an
+    // unconfigured default); otherwise create a fresh one.
+    QString profileId = m_profiles->defaultProfileId();
+    if (profileId.isEmpty()) {
+        profileId = m_profiles->createProfile(QStringLiteral("default"));
+    }
+    QVariantMap fields;
+    fields[QStringLiteral("provider")] = wireSelector;
+    fields[QStringLiteral("model")] = model;
+    fields[QStringLiteral("baseUrl")] = baseUrl;
+    m_profiles->updateProfile(profileId, fields);
+    // Profile-scoped credential for a key-requiring provider (the node defaults the profile's
+    // credential_ref to its id when unset, so the key lands where inference looks it up).
+    if (!key.isEmpty() && m_accounts != nullptr) {
+        m_accounts->addApiKeyForProfile(profileId, providerId, QString(), key, QString());
+    }
+    m_profiles->setDefault(profileId); // the session binds the default profile
+    setInferenceReady(true);
     finish();
 }
 

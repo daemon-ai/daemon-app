@@ -170,12 +170,18 @@ QString DaemonProfileStore::createProfile(const QString& name) {
     const QString id = slugId(name);
     daemonapp::daemon::DecodedProfileSpec spec;
     spec.id = id;
-    // Seed provider/model from the active profile so the new profile is usable out of the box
-    // (the daemon defaults provider=Mock/model="" otherwise, which can't run a real turn).
+    // New-profile default = Daemon Cloud (daemon_api selector + its base URL): a usable, keyless
+    // provider out of the box rather than the daemon's Mock/empty default. Seed from the active
+    // profile instead when one exists (clone-like continuity).
+    spec.provider = QStringLiteral("daemon_api");
+    spec.hasBaseUrl = true;
+    spec.baseUrl = QStringLiteral("https://api.daemon.ai/api/v1");
     for (const daemonapp::daemon::DecodedProfileInfo& p : m_repo->profiles()) {
         if (p.isActive) {
             spec.provider = p.provider;
             spec.model = p.model;
+            spec.hasBaseUrl = false;
+            spec.baseUrl.clear();
             break;
         }
     }

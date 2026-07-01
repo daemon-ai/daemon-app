@@ -18,5 +18,7 @@ target_link_libraries(da_firstrun
         daemon-app::settings_store
         daemon-app::connection
         daemon-app::models
+        daemon-app::profiles
+        daemon-app::accounts
         daemon-app::warnings
 )

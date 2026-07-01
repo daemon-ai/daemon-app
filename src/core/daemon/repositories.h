@@ -338,6 +338,48 @@ private:
     QSet<quint64> m_completedDownloads; // ids already seen Completed (debounces catalog refresh)
 };
 
+// Provider/model discovery slice: `ProviderCatalog` enumerates the providers the node offers
+// (local engines + every genai cloud vendor + Daemon Cloud), and `ProviderModels{provider,
+// credential_ref?, transient_key?}` lists one provider's models. Both are kept in memory; the
+// DaemonProviderCatalog seam projects them into provider/model rows. `provider` is the
+// ProviderDescriptor.id STRING (not a ProviderSelector): genai vendors share one selector and are
+// disambiguated by id.
+class ProviderRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    ProviderRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    [[nodiscard]] const QList<DecodedProviderDescriptor>& providers() const { return m_providers; }
+    // The last-fetched models for `provider` (empty until a ProviderModels for it resolves).
+    [[nodiscard]] QList<DecodedModelDescriptor> modelsFor(const QString& provider) const {
+        return m_models.value(provider);
+    }
+
+    // Issue a ProviderCatalog; on success providersRefreshed() fires with providers() populated.
+    void refreshProviders();
+    // Issue a ProviderModels for `provider` (the descriptor id). Pass `transientKey` to list a
+    // key-requiring provider before a credential exists (first-run); `credentialRef` (the profile
+    // id) for an existing profile. On success providerModelsRefreshed(provider) fires.
+    void refreshProviderModels(const QString& provider, const QString& credentialRef = QString(),
+                               const QString& transientKey = QString());
+
+signals:
+    void providersRefreshed();
+    void providerModelsRefreshed(const QString& provider);
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kCatalogCorrelation = "repo/provider-catalog";
+    static constexpr auto kModelsPrefix = "repo/provider-models/";
+
+    QList<DecodedProviderDescriptor> m_providers;
+    QHash<QString, QList<DecodedModelDescriptor>> m_models; // provider id -> its offered models
+};
+
 // (FsRepository removed in Phase 4: DaemonFsService talks to NodeApiClient + the codec directly and
 // uses DaemonCacheStore::{upsertFsEntry,fsEntries} for the daemon_fs_entries offline cache, so the
 // pass-through repository layer was redundant.)

@@ -3,10 +3,11 @@
 
 #include "tui_dialogs.h"
 
-#include "accounts/iaccounts_service.h"
-#include "models/imodel_catalog.h"
+#include "models/iprovider_catalog.h"
 
+#include <QAbstractItemModel>
 #include <Tui/ZHBoxLayout.h>
+#include <Tui/ZListView.h>
 #include <Tui/ZVBoxLayout.h>
 #include <Tui/ZWindow.h>
 
@@ -115,11 +116,10 @@ ConfirmDialog::ConfirmDialog(const QString& title, const QString& message, Tui::
 FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
                                connection::IConnectionService* connection,
                                settings::ISettingsStore* settings,
-                               accounts::IAccountsService* accounts,
-                               models::IModelCatalog* modelCatalog, const QString& defaultTarget,
-                               Tui::ZWidget* parent)
+                               models::IProviderCatalog* providerCatalog,
+                               const QString& defaultTarget, Tui::ZWidget* parent)
     : Tui::ZDialog(parent), m_model(model), m_connection(connection), m_settings(settings),
-      m_accounts(accounts), m_modelCatalog(modelCatalog) {
+      m_providerCatalog(providerCatalog) {
     setOptions(Tui::ZWindow::DeleteOnClose);
     setWindowTitle(tr("Setup Required"));
     setContentsMargins({2, 1, 2, 1});
@@ -152,11 +152,31 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     m_token->setEchoMode(Tui::ZInputBox::Password);
     layout->addWidget(m_token);
 
-    // Provider API key: only shown in the inference phase (onboarding CON-4). Masked.
+    // Provider picker (inference phase): the node's ProviderCatalog, selection-only.
+    m_providerLabel = new Tui::ZLabel(tr("Provider"), this);
+    m_providerLabel->setVisible(false);
+    layout->addWidget(m_providerLabel);
+    m_providerList = new Tui::ZListView(this);
+    m_providerList->setVisible(false);
+    layout->addWidget(m_providerList);
+
+    // Provider API key: shown only for a key-requiring provider (Daemon Cloud lists keyless).
     m_key = new Tui::ZInputBox(QString(), this);
     m_key->setEchoMode(Tui::ZInputBox::Password);
     m_key->setVisible(false);
     layout->addWidget(m_key);
+    m_listModelsBtn = new Tui::ZButton(tr("List models"), this);
+    m_listModelsBtn->setVisible(false);
+    layout->addWidget(m_listModelsBtn);
+
+    // Model picker (inference phase): the selected provider's models; local providers end with a
+    // "Discover More Models" row that opens the download flow.
+    m_modelLabel = new Tui::ZLabel(tr("Model"), this);
+    m_modelLabel->setVisible(false);
+    layout->addWidget(m_modelLabel);
+    m_modelList = new Tui::ZListView(this);
+    m_modelList->setVisible(false);
+    layout->addWidget(m_modelList);
 
     // SASL login: username + masked password, shown only in the auth phase.
     m_username = new Tui::ZInputBox(QString(), this);
@@ -237,10 +257,128 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     // An auth error (wrong password) updates in place while the phase stays "auth".
     connect(m_model, &firstrun::FirstRunModel::errorChanged, this, &FirstRunDialog::syncToPhase);
 
+    // Provider -> model wiring (node-driven, selection-only).
+    connect(m_providerList, &Tui::ZListView::enterPressed, this, &FirstRunDialog::selectProvider);
+    connect(m_modelList, &Tui::ZListView::enterPressed, this, &FirstRunDialog::selectModel);
+    connect(m_listModelsBtn, &Tui::ZButton::clicked, this, [this] {
+        if (m_providerCatalog != nullptr && !m_providerId.isEmpty()) {
+            m_providerCatalog->refreshModels(m_providerId, QString(), m_key->text());
+        }
+    });
+    if (m_providerCatalog != nullptr) {
+        connect(m_providerCatalog, &models::IProviderCatalog::providersChanged, this,
+                &FirstRunDialog::rebuildProviderList);
+        connect(m_providerCatalog, &models::IProviderCatalog::offeredModelsChanged, this,
+                [this](const QString& providerId) {
+                    if (providerId == m_providerId) {
+                        rebuildModelList();
+                    }
+                });
+    }
+
     applyMode(m_mode);
+    rebuildProviderList();
     syncToPhase();
     m_target->setFocus();
-    setGeometry(QRect(0, 0, 66, 16));
+    setGeometry(QRect(0, 0, 66, 20));
+}
+
+QVariantMap FirstRunDialog::currentProviderDescriptor() const {
+    if (m_providerCatalog == nullptr || m_providerId.isEmpty()) {
+        return {};
+    }
+    return m_providerCatalog->descriptorFor(m_providerId);
+}
+
+void FirstRunDialog::rebuildProviderList() {
+    if (m_providerCatalog == nullptr || m_providerList == nullptr) {
+        return;
+    }
+    m_providerRows = m_providerCatalog->providers();
+    QStringList names;
+    for (const QVariant& v : m_providerRows) {
+        names << v.toMap().value(QStringLiteral("name")).toString();
+    }
+    m_providerList->setItems(names);
+    // Default the selection to Daemon Cloud (the new-profile default) on first populate.
+    if (m_providerId.isEmpty() && !m_providerRows.isEmpty()) {
+        int pick = 0;
+        for (int i = 0; i < m_providerRows.size(); ++i) {
+            const QVariantMap m = m_providerRows.at(i).toMap();
+            if (m.value(QStringLiteral("id")).toString() == QStringLiteral("daemon_cloud") ||
+                m.value(QStringLiteral("kind")).toString() == QStringLiteral("daemon_cloud")) {
+                pick = i;
+                break;
+            }
+        }
+        selectProvider(pick);
+    }
+}
+
+void FirstRunDialog::selectProvider(int row) {
+    if (row < 0 || row >= m_providerRows.size()) {
+        return;
+    }
+    if (m_providerList->model() != nullptr) {
+        m_providerList->setCurrentIndex(m_providerList->model()->index(row, 0));
+    }
+    m_providerId = m_providerRows.at(row).toMap().value(QStringLiteral("id")).toString();
+    m_selectedModel.clear();
+    if (m_providerCatalog != nullptr) {
+        // Transient key while listing (no profile yet); Daemon Cloud/local ignore it.
+        m_providerCatalog->refreshModels(m_providerId, QString(), m_key->text());
+    }
+    rebuildModelList();
+    refreshInferenceControls();
+}
+
+void FirstRunDialog::rebuildModelList() {
+    if (m_providerCatalog == nullptr || m_modelList == nullptr) {
+        return;
+    }
+    m_modelRows = m_providerCatalog->offeredModels(m_providerId);
+    QStringList names;
+    for (const QVariant& v : m_modelRows) {
+        const QVariantMap m = v.toMap();
+        const bool discover =
+            m.value(QStringLiteral("kind")).toString() == QStringLiteral("discover");
+        names << (discover ? QStringLiteral("+ ") : QString()) +
+                     m.value(QStringLiteral("name")).toString();
+    }
+    m_modelList->setItems(names);
+    refreshInferenceControls();
+}
+
+void FirstRunDialog::selectModel(int row) {
+    if (row < 0 || row >= m_modelRows.size()) {
+        return;
+    }
+    if (m_modelList->model() != nullptr) {
+        m_modelList->setCurrentIndex(m_modelList->model()->index(row, 0));
+    }
+    const QVariantMap m = m_modelRows.at(row).toMap();
+    if (m.value(QStringLiteral("kind")).toString() == QStringLiteral("discover")) {
+        // Local "Discover More Models": hand off to the host's download flow.
+        emit modelDiscoverRequested();
+        return;
+    }
+    m_selectedModel = m.value(QStringLiteral("id")).toString();
+    refreshInferenceControls();
+}
+
+void FirstRunDialog::refreshInferenceControls() {
+    const QVariantMap desc = currentProviderDescriptor();
+    const bool requiresKey = desc.value(QStringLiteral("requiresKey")).toBool();
+    if (m_key != nullptr) {
+        m_key->setVisible(m_model->phase() == QStringLiteral("inference") && requiresKey);
+    }
+    if (m_listModelsBtn != nullptr) {
+        m_listModelsBtn->setVisible(m_model->phase() == QStringLiteral("inference") && requiresKey);
+    }
+    if (m_primary != nullptr && m_model->phase() == QStringLiteral("inference")) {
+        const bool keyOk = !requiresKey || !m_key->text().isEmpty();
+        m_primary->setEnabled(!m_providerId.isEmpty() && !m_selectedModel.isEmpty() && keyOk);
+    }
 }
 
 void FirstRunDialog::applyMode(const QString& mode) {
@@ -268,12 +406,26 @@ void FirstRunDialog::applyMode(const QString& mode) {
 
 void FirstRunDialog::syncToPhase() {
     const QString p = m_model->phase();
+    const bool inference = p == QStringLiteral("inference");
     // Default: the SASL login fields are hidden outside the auth phase.
     if (m_username != nullptr) {
         m_username->setVisible(p == QStringLiteral("auth"));
     }
     if (m_password != nullptr) {
         m_password->setVisible(p == QStringLiteral("auth"));
+    }
+    // Provider/model pickers live in the inference phase only.
+    if (m_providerLabel != nullptr) {
+        m_providerLabel->setVisible(inference);
+    }
+    if (m_providerList != nullptr) {
+        m_providerList->setVisible(inference);
+    }
+    if (m_modelLabel != nullptr) {
+        m_modelLabel->setVisible(inference);
+    }
+    if (m_modelList != nullptr) {
+        m_modelList->setVisible(inference);
     }
     if (p == QStringLiteral("connecting")) {
         m_status->setText(tr("Connecting..."));
@@ -295,17 +447,14 @@ void FirstRunDialog::syncToPhase() {
         }
         m_username->setFocus();
     } else if (p == QStringLiteral("inference")) {
-        m_status->setText(tr("Connected. Paste a provider API key (optional), then Finish."));
+        m_status->setText(tr("Pick a provider and a model, then Finish."));
         m_primary->setText(tr("Finish"));
-        // CON-7: Finish is enabled once a usable model is reachable.
-        m_primary->setEnabled(m_model->inferenceReady());
         m_target->setEnabled(false);
         if (m_token != nullptr) {
             m_token->setVisible(false);
         }
-        if (m_key != nullptr) {
-            m_key->setVisible(true);
-        }
+        // The key field + Finish enablement track the selected provider/model.
+        refreshInferenceControls();
     } else { // connect
         m_status->setText(m_model->error().isEmpty() ? QString() : m_model->error());
         m_primary->setText(tr("Connect"));
@@ -318,17 +467,13 @@ void FirstRunDialog::syncToPhase() {
 }
 
 void FirstRunDialog::commitInference() {
-    // Store the typed provider key (if any) on the active profile, then pick the first discovered
-    // model so a usable model is current; completeInference is gated on inferenceReady.
-    if (m_accounts != nullptr && m_key != nullptr && !m_key->text().isEmpty()) {
-        m_accounts->addApiKey(QStringLiteral("anthropic"), QString(), m_key->text(), QString());
+    // Persist a working profile for the chosen provider + model (ProviderSelector + base URL from
+    // the descriptor) + a profile-scoped key + make it default, then finish. No hardcoded provider:
+    // the id/model/key come from the node-driven selection. FirstRunModel owns the persistence so
+    // the GUI + TUI share one path.
+    const QString key = m_key != nullptr ? m_key->text() : QString();
+    m_model->applyInferenceChoice(m_providerId, m_selectedModel, key);
+    if (m_key != nullptr) {
         m_key->setText(QString());
     }
-    if (m_modelCatalog != nullptr) {
-        const QStringList ids = m_modelCatalog->installedIds();
-        if (!ids.isEmpty()) {
-            m_modelCatalog->activate(ids.first());
-        }
-    }
-    m_model->completeInference();
 }

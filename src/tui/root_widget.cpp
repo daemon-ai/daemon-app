@@ -260,9 +260,12 @@ void RootWidget::terminalChanged() {
     // First-run gate (parity with the GUI): on first launch, raise the lighter
     // "Setup Required" modal over the shell until setup completes.
     if (m_services.firstRun != nullptr && m_services.firstRun->active()) {
-        auto* gate = new FirstRunDialog(
-            m_services.firstRun, m_services.connection, m_services.settings, m_services.accounts,
-            m_services.modelCatalog, m_services.settings->resolvedConnectionTarget(), this);
+        auto* gate = new FirstRunDialog(m_services.firstRun, m_services.connection,
+                                        m_services.settings, m_services.providerCatalog,
+                                        m_services.settings->resolvedConnectionTarget(), this);
+        // Local "Discover More Models" in the gate opens the shared model-download flow.
+        connect(gate, &FirstRunDialog::modelDiscoverRequested, this,
+                &RootWidget::openModelDownload);
         gate->setFocus();
     }
 }

@@ -40,6 +40,8 @@ struct DecodedCredentialInfo {
 struct DecodedModelDescriptor {
     QString id;
     QString provider; // ProviderSelector wire string: "mock" | "genai" | "llama_cpp" | "mistral_rs"
+    bool hasDisplayName = false;
+    QString displayName; // optional human label; falls back to `id` when absent
     bool hasContextLength = false;
     quint32 contextLength = 0;
     bool hasInputPrice = false;
@@ -47,6 +49,23 @@ struct DecodedModelDescriptor {
     bool hasOutputPrice = false;
     quint64 outputPriceMicrosPerMtok = 0;
     bool local = false;
+};
+
+// One provider the node offers (ProviderCatalog -> [ProviderDescriptor]). `id` is the discovery
+// key (e.g. "anthropic", "openai", "daemon_cloud", "llama_cpp") - NOT a ProviderSelector: all cloud
+// genai vendors share ProviderSelector::GenAi and are disambiguated by this id. `wireSelector` is
+// the ProviderSelector the persisted profile uses; `defaultBaseUrl` (when present) pre-fills the
+// profile base URL so the app never hardcodes an endpoint.
+struct DecodedProviderDescriptor {
+    QString id;
+    QString displayName;
+    QString kind; // "local" | "cloud" | "daemon_cloud"
+    QString
+        wireSelector; // ProviderSelector wire string: "genai" | "daemon_api" | "llama_cpp" | ...
+    bool requiresKey = false;
+    bool supportsModelDiscovery = false;
+    bool hasDefaultBaseUrl = false;
+    QString defaultBaseUrl;
 };
 
 // A decoded error envelope (ApiResponse::Error): the variant kind + its human-readable message.
@@ -546,6 +565,8 @@ enum class ApiResponseKind {
     Credentials,
     Models,
     ModelCurrent,
+    ProviderCatalog,
+    ProviderModels,
     Profiles,
     Drained,
     Approvals,
@@ -617,6 +638,15 @@ public:
     [[nodiscard]] static QByteArray
     encodeSetSessionModelRequest(const QString& sessionId, const QString& model,
                                  const QString& provider = QString());
+    // Enumerate the providers the node offers (ProviderCatalog -> [ProviderDescriptor]). Zero-arg.
+    [[nodiscard]] static QByteArray encodeProviderCatalogRequest();
+    // Discover a provider's models (ProviderModels{provider, credential_ref?, transient_key?} ->
+    // [ModelDescriptor]). `provider` is the ProviderDescriptor.id string. Pass `transientKey` when
+    // listing a key-requiring provider before a credential is stored (first-run); pass
+    // `credentialRef` (the profile id) for an existing profile's stored key. Both empty = keyless.
+    [[nodiscard]] static QByteArray encodeProviderModelsRequest(const QString& provider,
+                                                                const QString& credentialRef = {},
+                                                                const QString& transientKey = {});
     // List profiles (ProfileList -> Profiles) so the client can find the active default profile.
     [[nodiscard]] static QByteArray encodeProfileListRequest();
     // Switch the node's active profile (ProfileSelect -> Ok). New sessions bind to it (PRO-5).
@@ -842,6 +872,12 @@ public:
                                   QList<DecodedCredentialInfo>* out);
     // Decode a Models response into the discoverable model list.
     static bool decodeModels(const QByteArray& responseCbor, QList<DecodedModelDescriptor>* out);
+    // Decode a ProviderCatalog response into the offered-provider list.
+    static bool decodeProviderCatalog(const QByteArray& responseCbor,
+                                      QList<DecodedProviderDescriptor>* out);
+    // Decode a ProviderModels response into a provider's model list (same shape as Models).
+    static bool decodeProviderModels(const QByteArray& responseCbor,
+                                     QList<DecodedModelDescriptor>* out);
     // Decode a ModelCurrent response. Sets *hasModel=false when the daemon resolves no model
     // (null).
     static bool decodeModelCurrent(const QByteArray& responseCbor, DecodedModelDescriptor* out,

@@ -27,6 +27,7 @@
 #include "i18n/localization.h"
 #include "memory/imemory_service.h"
 #include "models/imodel_catalog.h"
+#include "models/iprovider_catalog.h"
 #include "nav/nav_controller.h"
 #include "persistence/isession_store.h"
 #include "platform/iplatform_services.h"
@@ -165,6 +166,11 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // Model catalog facade (mock) backing the Models hub.
     engine.rootContext()->setContextProperty(QStringLiteral("ModelCatalog"),
                                              m_services.modelCatalog);
+
+    // Provider/model discovery facade: node-driven provider list (ProviderCatalog) + per-provider
+    // model list (ProviderModels) backing the ProfileEditor + first-run provider->model pickers.
+    engine.rootContext()->setContextProperty(QStringLiteral("ProviderCatalog"),
+                                             m_services.providerCatalog);
 
     // Accounts/auth facade (mock) backing the Accounts manager + wizard.
     engine.rootContext()->setContextProperty(QStringLiteral("Accounts"), m_services.accounts);

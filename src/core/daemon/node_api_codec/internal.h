@@ -42,6 +42,7 @@ QString lifecycleName(int choice);
 QString roleName(int choice);
 QString providerName(int choice);
 int providerChoice(const QString& provider);
+QString providerKindName(int choice);
 QString contextEngineName(int choice);
 QString memoryProviderName(int choice);
 QString endReasonName(int choice);
@@ -54,6 +55,7 @@ QString hostRequestKindName(const host_request_kind_t_r& kind);
 // --- struct projection mappers (Qt-side) ---------------------------------------------------------
 DecodedUnitNode decodeUnitNodeStruct(const unit_node& n);
 void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out);
+void fillProviderDescriptor(const provider_descriptor& p, DecodedProviderDescriptor* out);
 DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps);
 DecodedAgentEvent decodeAgentEvent(const agent_event_r& ev);
 void fillModelRef(const model_ref& m, QString* repo, QString* file, QString* engine);

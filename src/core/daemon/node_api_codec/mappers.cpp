@@ -399,6 +399,13 @@ int providerChoice(const QString& provider) {
 void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out) {
     out->id = fromZcbor(m.model_descriptor_id);
     out->provider = providerName(m.model_descriptor_provider.provider_selector_choice);
+    if (m.model_descriptor_display_name_present &&
+        m.model_descriptor_display_name.model_descriptor_display_name_choice ==
+            model_descriptor_display_name_r::model_descriptor_display_name_tstr_c) {
+        out->hasDisplayName = true;
+        out->displayName =
+            fromZcbor(m.model_descriptor_display_name.model_descriptor_display_name_tstr);
+    }
     if (m.model_descriptor_context_length_choice ==
         model_descriptor::model_descriptor_context_length_uint_c) {
         out->hasContextLength = true;
@@ -415,6 +422,33 @@ void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out) {
         out->outputPriceMicrosPerMtok = m.model_descriptor_output_price_micros_per_mtok_uint64_m;
     }
     out->local = m.model_descriptor_local;
+}
+
+// ProviderKind wire string (serde rename_all = snake_case): local | cloud | daemon_cloud.
+QString providerKindName(int choice) {
+    switch (choice) {
+    case provider_kind_wire_r::provider_kind_wire_cloud_tstr_c:
+        return QStringLiteral("cloud");
+    case provider_kind_wire_r::provider_kind_wire_daemon_cloud_tstr_c:
+        return QStringLiteral("daemon_cloud");
+    case provider_kind_wire_r::provider_kind_wire_local_tstr_c:
+    default:
+        return QStringLiteral("local");
+    }
+}
+
+void fillProviderDescriptor(const provider_descriptor& p, DecodedProviderDescriptor* out) {
+    out->id = fromZcbor(p.provider_descriptor_id);
+    out->displayName = fromZcbor(p.provider_descriptor_display_name);
+    out->kind = providerKindName(p.provider_descriptor_kind.provider_kind_wire_choice);
+    out->wireSelector = providerName(p.provider_descriptor_wire_selector.provider_selector_choice);
+    out->requiresKey = p.provider_descriptor_requires_key;
+    out->supportsModelDiscovery = p.provider_descriptor_supports_model_discovery;
+    if (p.provider_descriptor_default_base_url_choice ==
+        provider_descriptor::provider_descriptor_default_base_url_tstr_c) {
+        out->hasDefaultBaseUrl = true;
+        out->defaultBaseUrl = fromZcbor(p.provider_descriptor_default_base_url_tstr);
+    }
 }
 
 QString contextEngineName(int choice) {

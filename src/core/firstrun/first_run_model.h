@@ -14,6 +14,13 @@ class IConnectionService;
 }
 namespace models {
 class IModelCatalog;
+class IProviderCatalog;
+} // namespace models
+namespace profiles {
+class IProfileStore;
+}
+namespace accounts {
+class IAccountsService;
 }
 
 namespace firstrun {
@@ -44,9 +51,14 @@ class FirstRunModel : public QObject {
 public:
     // `modelCatalog` (optional) drives inference readiness (CON-7): the inference gate's Finish is
     // enabled once a usable model is reachable (a current model resolves). Null keeps the gate
-    // permissive (the mock/standalone path).
+    // permissive (the mock/standalone path). `profiles`/`accounts`/`providers` (optional) let the
+    // guided inference step persist a working profile (ProfileCreate/Update + profile-scoped key +
+    // make default); null leaves applyInferenceChoice a no-op that just finishes.
     FirstRunModel(settings::ISettingsStore* settings, connection::IConnectionService* connection,
-                  models::IModelCatalog* modelCatalog = nullptr, QObject* parent = nullptr);
+                  models::IModelCatalog* modelCatalog = nullptr,
+                  profiles::IProfileStore* profileStore = nullptr,
+                  accounts::IAccountsService* accounts = nullptr,
+                  models::IProviderCatalog* providerCatalog = nullptr, QObject* parent = nullptr);
 
     [[nodiscard]] QString phase() const { return m_phase; }
     [[nodiscard]] bool active() const { return m_phase != QStringLiteral("done"); }
@@ -59,6 +71,12 @@ public:
     // The inference gate's "Continue" - records that an inference model is ready
     // and advances to done (persisting setupComplete).
     Q_INVOKABLE void completeInference();
+    // Guided inference commit: persist a working profile for the chosen `providerId` + `model`
+    // (ProfileCreate/Update with the descriptor's ProviderSelector + base URL), store the entered
+    // `key` profile-scoped when non-empty, make the profile default, then finish. `providerId` is
+    // the ProviderCatalog descriptor id. A no-op that just finishes when no profile store is wired.
+    Q_INVOKABLE void applyInferenceChoice(const QString& providerId, const QString& model,
+                                          const QString& key);
     // Submit interactive credentials while in the `auth` phase (routes to the connection seam's
     // login()). On success the connection reaches ready and the gate advances to inference.
     Q_INVOKABLE void submitLogin(const QString& username, const QString& password);
@@ -86,6 +104,9 @@ private:
     settings::ISettingsStore* m_settings = nullptr;
     connection::IConnectionService* m_connection = nullptr;
     models::IModelCatalog* m_modelCatalog = nullptr;
+    profiles::IProfileStore* m_profiles = nullptr;
+    accounts::IAccountsService* m_accounts = nullptr;
+    models::IProviderCatalog* m_providerCatalog = nullptr;
     QString m_phase = QStringLiteral("connect");
     QString m_error;
     bool m_inferenceReady = false;

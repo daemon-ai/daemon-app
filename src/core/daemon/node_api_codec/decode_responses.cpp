@@ -47,6 +47,10 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         {api_response_r::api_response_response_credentials_m_c, ApiResponseKind::Credentials},
         {api_response_r::api_response_response_models_m_c, ApiResponseKind::Models},
         {api_response_r::api_response_response_model_current_m_c, ApiResponseKind::ModelCurrent},
+        {api_response_r::api_response_response_provider_catalog_m_c,
+         ApiResponseKind::ProviderCatalog},
+        {api_response_r::api_response_response_provider_models_m_c,
+         ApiResponseKind::ProviderModels},
         {api_response_r::api_response_response_profiles_m_c, ApiResponseKind::Profiles},
         {api_response_r::api_response_response_profile_m_c, ApiResponseKind::Profile},
         {api_response_r::api_response_response_distribution_m_c, ApiResponseKind::Distribution},
@@ -452,6 +456,51 @@ bool NodeApiCodec::decodeModels(const QByteArray& responseCbor,
     for (size_t i = 0; i < models.response_models_Models_model_descriptor_m_count; ++i) {
         DecodedModelDescriptor descriptor;
         fillDescriptor(models.response_models_Models_model_descriptor_m[i], &descriptor);
+        out->append(descriptor);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeProviderCatalog(const QByteArray& responseCbor,
+                                         QList<DecodedProviderDescriptor>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_provider_catalog_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_provider_catalog& catalog = response->api_response_response_provider_catalog_m;
+    out->clear();
+    for (size_t i = 0;
+         i < catalog.response_provider_catalog_ProviderCatalog_provider_descriptor_m_count; ++i) {
+        DecodedProviderDescriptor descriptor;
+        fillProviderDescriptor(
+            catalog.response_provider_catalog_ProviderCatalog_provider_descriptor_m[i],
+            &descriptor);
+        out->append(descriptor);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeProviderModels(const QByteArray& responseCbor,
+                                        QList<DecodedModelDescriptor>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_provider_models_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_provider_models& models = response->api_response_response_provider_models_m;
+    out->clear();
+    for (size_t i = 0; i < models.response_provider_models_ProviderModels_model_descriptor_m_count;
+         ++i) {
+        DecodedModelDescriptor descriptor;
+        fillDescriptor(models.response_provider_models_ProviderModels_model_descriptor_m[i],
+                       &descriptor);
         out->append(descriptor);
     }
     return true;

@@ -11,12 +11,10 @@
 #include <Tui/ZDialog.h>
 #include <Tui/ZInputBox.h>
 #include <Tui/ZLabel.h>
+#include <Tui/ZListView.h>
 
-namespace accounts {
-class IAccountsService;
-}
 namespace models {
-class IModelCatalog;
+class IProviderCatalog;
 }
 
 // A small modal "Quit daemon-app?" confirmation. ZDialog auto-centers, handles
@@ -72,9 +70,12 @@ class FirstRunDialog : public Tui::ZDialog {
 
 public:
     FirstRunDialog(firstrun::FirstRunModel* model, connection::IConnectionService* connection,
-                   settings::ISettingsStore* settings, accounts::IAccountsService* accounts,
-                   models::IModelCatalog* modelCatalog, const QString& defaultTarget,
-                   Tui::ZWidget* parent);
+                   settings::ISettingsStore* settings, models::IProviderCatalog* providerCatalog,
+                   const QString& defaultTarget, Tui::ZWidget* parent);
+
+signals:
+    // The user picked the local "Discover More Models" row; the host opens the download flow.
+    void modelDiscoverRequested();
 
 private:
     void syncToPhase();
@@ -82,25 +83,40 @@ private:
     // placeholder/seed and show the token field only for "remote" (parity with the
     // GUI ConnectionPicker's mode cards).
     void applyMode(const QString& mode);
-    // The inference step's commit: store the typed provider key (if any), pick the first discovered
-    // model, then complete (gated on inferenceReady). Mirrors the GUI inference step minimally.
+    // The inference step's commit: persist a working profile for the chosen provider + model
+    // (ProviderSelector + base URL) + profile-scoped key + make default, then finish.
     void commitInference();
+    // Node-driven provider->model wiring (inference phase).
+    void rebuildProviderList();
+    void selectProvider(int row);
+    void rebuildModelList();
+    void selectModel(int row);
+    void refreshInferenceControls();
+    [[nodiscard]] QVariantMap currentProviderDescriptor() const;
 
     firstrun::FirstRunModel* m_model = nullptr;
     connection::IConnectionService* m_connection = nullptr;
     settings::ISettingsStore* m_settings = nullptr;
-    accounts::IAccountsService* m_accounts = nullptr;
-    models::IModelCatalog* m_modelCatalog = nullptr;
+    models::IProviderCatalog* m_providerCatalog = nullptr;
     Tui::ZLabel* m_status = nullptr;
     Tui::ZInputBox* m_target = nullptr;
     Tui::ZInputBox* m_token = nullptr;
     Tui::ZInputBox* m_key = nullptr;      // provider API key (inference phase)
     Tui::ZInputBox* m_username = nullptr; // SASL username (auth phase)
     Tui::ZInputBox* m_password = nullptr; // SASL password (auth phase; masked)
+    Tui::ZLabel* m_providerLabel = nullptr;
+    Tui::ZListView* m_providerList = nullptr; // provider picker (inference phase)
+    Tui::ZLabel* m_modelLabel = nullptr;
+    Tui::ZListView* m_modelList = nullptr;   // per-provider model picker (inference phase)
+    Tui::ZButton* m_listModelsBtn = nullptr; // re-list a key-requiring provider's models
     Tui::ZButton* m_localBtn = nullptr;
     Tui::ZButton* m_remoteBtn = nullptr;
     Tui::ZButton* m_testBtn = nullptr;
     Tui::ZLabel* m_testResult = nullptr;
     Tui::ZButton* m_primary = nullptr; // Connect / Finish
     QString m_mode = QStringLiteral("local");
+    QString m_providerId;        // selected ProviderCatalog descriptor id
+    QString m_selectedModel;     // selected model id (selection-only)
+    QVariantList m_providerRows; // cached providers() rows for row->id mapping
+    QVariantList m_modelRows;    // cached offeredModels() rows for row->id mapping
 };

@@ -38,7 +38,8 @@ class IMemoryService;
 }
 namespace models {
 class IModelCatalog;
-}
+class IProviderCatalog;
+} // namespace models
 namespace nav {
 class NavController;
 }
@@ -69,6 +70,7 @@ class CheckpointRepository;
 class CredentialRepository;
 class DaemonCacheStore;
 class ModelRepository;
+class ProviderRepository;
 class NodeApiClient;
 class PrincipalModel;
 class ProfileRepository;
@@ -98,6 +100,7 @@ struct AppServiceGraph {
     nav::NavController* nav = nullptr;
     firstrun::FirstRunModel* firstRun = nullptr;
     models::IModelCatalog* modelCatalog = nullptr;
+    models::IProviderCatalog* providerCatalog = nullptr;
     accounts::IAccountsService* accounts = nullptr;
     profiles::IProfileStore* profiles = nullptr;
     fleet::ISessionRoster* roster = nullptr;
@@ -119,6 +122,7 @@ struct AppServiceGraph {
     SessionRepository* sessions = nullptr;
     ProfileRepository* profileRepository = nullptr;
     ModelRepository* models = nullptr;
+    ProviderRepository* providerRepository = nullptr;
     CredentialRepository* credentialRepository = nullptr;
     ApprovalRepository* approvalRepository = nullptr;
     CheckpointRepository* checkpointRepository = nullptr;

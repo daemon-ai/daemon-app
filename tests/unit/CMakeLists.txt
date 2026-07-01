@@ -295,9 +295,28 @@ target_link_libraries(tst_first_run_model
         daemon-app::connection
         daemon-app::settings_store
         daemon-app::models
+        daemon-app::profiles
+        daemon-app::accounts
 )
 add_test(NAME tst_first_run_model COMMAND tst_first_run_model)
 set_tests_properties(tst_first_run_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_provider_catalog: the node-driven provider/model discovery seams - the codec facade
+# round-trips ProviderCatalog / ProviderModels (id-string provider dimension + wire_selector +
+# default_base_url + model display_name), the shared local-compose helper + MockProviderCatalog
+# shape (Mock excluded), and DaemonProviderCatalog over the WireMuxServer fixture.
+qt_add_executable(tst_provider_catalog tst_provider_catalog.cpp)
+target_link_libraries(tst_provider_catalog
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+        daemon-app::models
+        daemon-app::uimodels
+)
+add_test(NAME tst_provider_catalog COMMAND tst_provider_catalog)
+set_tests_properties(tst_provider_catalog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_local_daemon_launcher: the managed local-daemon launcher (CON-1b) - binary discovery
 # precedence (explicit override resolves/rejects) and the liveness probe against a real QLocalServer
