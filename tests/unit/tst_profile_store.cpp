@@ -28,6 +28,24 @@ private slots:
         QVERIFY(!s.availableTools().isEmpty());
     }
 
+    // C2 (locked refinement): the ProfileEditor provider picker offers ONLY real providers - Mock
+    // is never a default or a user-selectable option (it is reachable only under the mock service
+    // flag).
+    void pickerProvidersExcludeMock() {
+        MockProfileStore s;
+        const QVariantList picks = s.pickerProviders();
+        QCOMPARE(picks.size(), 4);
+        QStringList ids;
+        for (const QVariant& v : picks) {
+            ids << v.toMap().value(QStringLiteral("id")).toString();
+        }
+        QVERIFY(ids.contains(QStringLiteral("daemon_api")));
+        QVERIFY(ids.contains(QStringLiteral("genai")));
+        QVERIFY(ids.contains(QStringLiteral("llama_cpp")));
+        QVERIFY(ids.contains(QStringLiteral("mistral_rs")));
+        QVERIFY(!ids.contains(QStringLiteral("mock")));
+    }
+
     void profileNamesMirrorsProfiles() {
         MockProfileStore s;
         const QStringList names = s.profileNames();

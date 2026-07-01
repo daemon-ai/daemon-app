@@ -211,6 +211,15 @@ void DaemonProfileStore::updateProfile(const QString& id, const QVariantMap& fie
     }
     // Overlay the editor's spec-mapped fields. name/description/skills have no ProfileSpec home
     // (a profile's id is its name; skills are curator-managed), so they are intentionally ignored.
+    if (fields.contains(QStringLiteral("provider"))) {
+        spec.provider = fields.value(QStringLiteral("provider")).toString();
+    }
+    if (fields.contains(QStringLiteral("baseUrl"))) {
+        const QString base = fields.value(QStringLiteral("baseUrl")).toString();
+        // Empty base URL = no override = the provider/node default (Option::None on the wire).
+        spec.hasBaseUrl = !base.isEmpty();
+        spec.baseUrl = base;
+    }
     if (fields.contains(QStringLiteral("model"))) {
         spec.model = fields.value(QStringLiteral("model")).toString();
     }

@@ -49,7 +49,9 @@ QQC.Popup {
                     Layout.fillWidth: true
                     implicitHeight: 30
                     radius: 5
-                    color: entry.name === SessionSettings.profile ? Theme.hover : "transparent"
+                    // Store the profile id (not the display name) so the session->turn binding is a
+                    // strict pass-through; the row still shows the human name.
+                    color: entry.id === SessionSettings.profile ? Theme.hover : "transparent"
                     RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: 8
@@ -60,12 +62,12 @@ QQC.Popup {
                             Layout.fillWidth: true
                         }
                         Text {
-                            visible: entry.name === SessionSettings.profile
+                            visible: entry.id === SessionSettings.profile
                             text: FontIcons.check
                             font.family: FontIcons.faSolid; font.pixelSize: 10; color: Theme.accent
                         }
                     }
-                    TapHandler { onTapped: SessionSettings.setProfile(entry.name) }
+                    TapHandler { onTapped: SessionSettings.setProfile(entry.id) }
                 }
             }
         }

@@ -369,6 +369,8 @@ QString providerName(int choice) {
     switch (choice) {
     case provider_selector_r::provider_selector_genai_tstr_c:
         return QStringLiteral("genai");
+    case provider_selector_r::provider_selector_daemon_api_tstr_c:
+        return QStringLiteral("daemon_api");
     case provider_selector_r::provider_selector_llama_cpp_tstr_c:
         return QStringLiteral("llama_cpp");
     case provider_selector_r::provider_selector_mistral_rs_tstr_c:
@@ -381,6 +383,9 @@ QString providerName(int choice) {
 int providerChoice(const QString& provider) {
     if (provider == QStringLiteral("genai")) {
         return provider_selector_r::provider_selector_genai_tstr_c;
+    }
+    if (provider == QStringLiteral("daemon_api")) {
+        return provider_selector_r::provider_selector_daemon_api_tstr_c;
     }
     if (provider == QStringLiteral("llama_cpp")) {
         return provider_selector_r::provider_selector_llama_cpp_tstr_c;
@@ -845,13 +850,11 @@ void fillProfileSpec(profile_spec& ps, const DecodedProfileSpec& s, ProfileSpecS
     const QList<QByteArray>& boundCredRefs = sc.boundCredRefs;
 
     setZ(ps.profile_spec_id, id);
+    // Single source of truth for the wire mapping (incl. daemon_api); unknown strings fall through
+    // to the mock choice inside providerChoice().
     ps.profile_spec_provider.provider_selector_choice =
-        s.provider == QStringLiteral("genai") ? provider_selector_r::provider_selector_genai_tstr_c
-        : s.provider == QStringLiteral("llama_cpp")
-            ? provider_selector_r::provider_selector_llama_cpp_tstr_c
-        : s.provider == QStringLiteral("mistral_rs")
-            ? provider_selector_r::provider_selector_mistral_rs_tstr_c
-            : provider_selector_r::provider_selector_mock_tstr_c;
+        static_cast<decltype(ps.profile_spec_provider.provider_selector_choice)>(
+            providerChoice(s.provider));
     setZ(ps.profile_spec_model, model);
     if (s.hasBaseUrl) {
         ps.profile_spec_base_url_choice = profile_spec::profile_spec_base_url_tstr_c;

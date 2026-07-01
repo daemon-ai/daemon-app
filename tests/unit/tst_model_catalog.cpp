@@ -3,6 +3,7 @@
 
 #include "cache_test_support.h"
 #include "models/mock_model_catalog.h"
+#include "models/provider_filter.h"
 #include "uimodels/variant_list_model.h"
 
 #include <QSignalSpy>
@@ -21,6 +22,43 @@ class TestModelCatalog : public QObject {
 
 private slots:
     void init() { resetMockCache(); }
+
+    // C2: the provider filter helper matches installed rows by ProviderSelector kind, normalizing
+    // the local "llama" engine tag to its "llama_cpp" selector; an empty/unmatched provider yields
+    // an empty list (the catalog method then falls back to all ids).
+    void filterHelperMatchesByProviderKind() {
+        const auto row = [](const QString& id, const QString& provider) {
+            return QVariantMap{{QStringLiteral("id"), id}, {QStringLiteral("provider"), provider}};
+        };
+        const QList<QVariantMap> rows = {
+            row(QStringLiteral("m-llama"), QStringLiteral("llama")), // local engine tag
+            row(QStringLiteral("m-mistral"), QStringLiteral("mistral_rs")),
+            row(QStringLiteral("m-genai"), QStringLiteral("genai")),
+            row(QStringLiteral("m-daemon"), QStringLiteral("daemon_api")),
+        };
+        QCOMPARE(models::filterInstalledIdsByProvider(rows, QStringLiteral("llama_cpp")),
+                 QStringList{QStringLiteral("m-llama")});
+        QCOMPARE(models::filterInstalledIdsByProvider(rows, QStringLiteral("mistral_rs")),
+                 QStringList{QStringLiteral("m-mistral")});
+        QCOMPARE(models::filterInstalledIdsByProvider(rows, QStringLiteral("genai")),
+                 QStringList{QStringLiteral("m-genai")});
+        QCOMPARE(models::filterInstalledIdsByProvider(rows, QStringLiteral("daemon_api")),
+                 QStringList{QStringLiteral("m-daemon")});
+        QVERIFY(models::filterInstalledIdsByProvider(rows, QString()).isEmpty());
+        QVERIFY(models::filterInstalledIdsByProvider(rows, QStringLiteral("nope")).isEmpty());
+    }
+
+    // The catalog method falls back to ALL installed ids when the provider matches nothing
+    // installed (the mock tags rows with vendor names, and remote providers have no local rows), so
+    // the model combo is never wrongly empty.
+    void installedIdsForProviderFallsBackToAll() {
+        MockModelCatalog c;
+        const QStringList all = c.installedIds();
+        QVERIFY(!all.isEmpty());
+        QCOMPARE(c.installedIdsForProvider(QStringLiteral("daemon_api")),
+                 all);                                       // no daemon_api rows
+        QCOMPARE(c.installedIdsForProvider(QString()), all); // empty provider
+    }
 
     void searchFiltersByQueryAndSize() {
         MockModelCatalog c;

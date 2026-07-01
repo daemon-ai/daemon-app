@@ -16,8 +16,12 @@ Kit.Dialog {
     readonly property var providers: Accounts.availableProviders()
     property var provider: providers.length > 0 ? providers[0] : ({})
     property string method: "apikey"
+    // When non-empty, the key is stored under THIS profile id (ProfileEditor's per-profile
+    // credential row) rather than the node's active profile.
+    property string targetProfile: ""
 
     function openFresh() {
+        root.targetProfile = "";
         providerBox.currentIndex = 0;
         root.provider = root.providers.length > 0 ? root.providers[0] : ({});
         root._syncMethod();
@@ -25,6 +29,12 @@ Kit.Dialog {
         labelField.text = "";
         baseUrlField.text = "";
         root.open();
+    }
+
+    // Open the wizard scoped to a specific profile (profile-scoped credential).
+    function openForProfile(profileId) {
+        openFresh();
+        root.targetProfile = profileId;
     }
 
     function _syncMethod() {
@@ -44,6 +54,9 @@ Kit.Dialog {
     onAccepted: {
         if (root.method === "oauth") {
             Accounts.beginOAuth(root.provider.id);
+        } else if (root.targetProfile.length > 0) {
+            Accounts.addApiKeyForProfile(root.targetProfile, root.provider.id, labelField.text,
+                                         keyField.text, baseUrlField.text);
         } else {
             Accounts.addApiKey(root.provider.id, labelField.text, keyField.text,
                                baseUrlField.text);

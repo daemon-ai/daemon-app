@@ -76,6 +76,37 @@ void DaemonAccountsService::addApiKey(const QString& provider, const QString& la
     m_credentials->setCredential(profile, key);
 }
 
+void DaemonAccountsService::addApiKeyForProfile(const QString& profileId, const QString& provider,
+                                                const QString& label, const QString& key,
+                                                const QString& baseUrl) {
+    Q_UNUSED(baseUrl)
+    if (m_credentials == nullptr || profileId.isEmpty() || key.isEmpty()) {
+        return;
+    }
+    // Store the credential under the edited profile (not the active one), so an inactive agent's
+    // key is set where inference will look it up. Leaving the profile's credential_ref empty means
+    // the node defaults it to the profile id.
+    m_meta.insert(profileId, Meta{provider, label.isEmpty() ? provider : label});
+    m_credentials->setCredential(profileId, key);
+}
+
+QVariantMap DaemonAccountsService::credentialFor(const QString& profileId) const {
+    if (m_credentials == nullptr || profileId.isEmpty()) {
+        return {};
+    }
+    for (const daemonapp::daemon::DecodedCredentialInfo& ci : m_credentials->credentials()) {
+        if (ci.profile == profileId) {
+            QVariantMap m;
+            m[QStringLiteral("present")] = ci.present;
+            m[QStringLiteral("hint")] = ci.hint;
+            return m;
+        }
+    }
+    QVariantMap m;
+    m[QStringLiteral("present")] = false;
+    return m;
+}
+
 void DaemonAccountsService::beginOAuth(const QString& provider) {
     // Interactive provider OAuth (CON-5) is not part of this phase.
     emit oauthFailed(provider, tr("OAuth sign-in is not available yet; add an API key instead."));
@@ -121,6 +152,8 @@ void DaemonAccountsService::rebuildAccounts() {
                               ci.hint));
     }
     m_accounts->setRows(rows);
+    // Let profile-scoped credential-status bindings (ProfileEditor) re-query credentialFor().
+    emit credentialsChanged();
 }
 
 } // namespace accounts

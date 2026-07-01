@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QString>
 #include <QVariantList>
+#include <QVariantMap>
 
 namespace accounts {
 
@@ -34,6 +35,24 @@ public:
     Q_INVOKABLE virtual void addApiKey(const QString& provider, const QString& label,
                                        const QString& key, const QString& baseUrl = {}) = 0;
 
+    // Profile-scoped API key: store the credential under `profileId` (not the active profile), for
+    // the ProfileEditor's per-profile credential row. Default routes to the active-profile
+    // addApiKey so seams without profile-scoped storage still work; the daemon seam overrides it
+    // with a CredentialSet on `profileId`.
+    Q_INVOKABLE virtual void addApiKeyForProfile(const QString& profileId, const QString& provider,
+                                                 const QString& label, const QString& key,
+                                                 const QString& baseUrl = {}) {
+        Q_UNUSED(profileId)
+        addApiKey(provider, label, key, baseUrl);
+    }
+
+    // The credential state for `profileId` as {present: bool, hint: string}, read from the redacted
+    // CredentialList. Default = unknown/absent (empty map); the daemon seam overrides it.
+    [[nodiscard]] Q_INVOKABLE virtual QVariantMap credentialFor(const QString& profileId) const {
+        Q_UNUSED(profileId)
+        return {};
+    }
+
     // Begin a simulated OAuth flow; resolves asynchronously to a connected account
     // (oauthCompleted) or an error (oauthFailed).
     Q_INVOKABLE virtual void beginOAuth(const QString& provider) = 0;
@@ -52,6 +71,9 @@ signals:
     void busyChanged();
     void oauthCompleted(const QString& accountId);
     void oauthFailed(const QString& provider, const QString& reason);
+    // The credential set changed (a CredentialList refresh landed / a key was set/removed), so
+    // profile-scoped credential status bindings (ProfileEditor) can re-query credentialFor().
+    void credentialsChanged();
 };
 
 } // namespace accounts

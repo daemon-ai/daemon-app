@@ -52,6 +52,27 @@ public:
     [[nodiscard]] Q_INVOKABLE virtual QVariantList availableSkills() const = 0;
     [[nodiscard]] Q_INVOKABLE virtual QVariantList availableTools() const = 0;
 
+    // The REAL model providers the ProfileEditor picker offers (rows: id = ProviderSelector wire
+    // string, name = display label, cloud = takes an optional base URL). Mock is deliberately
+    // excluded: it is never a default or a user choice (reachable only under
+    // DAEMON_APP_SERVICE_MODE=mock), so it must never appear here. Concrete + shared by every store
+    // so the invariant holds in one place.
+    [[nodiscard]] Q_INVOKABLE QVariantList pickerProviders() const {
+        const auto mk = [](const QString& id, const QString& name, bool cloud) {
+            QVariantMap m;
+            m[QStringLiteral("id")] = id;
+            m[QStringLiteral("name")] = name;
+            m[QStringLiteral("cloud")] = cloud;
+            return QVariant(m);
+        };
+        return {
+            mk(QStringLiteral("daemon_api"), QStringLiteral("Daemon API"), true),
+            mk(QStringLiteral("genai"), QStringLiteral("genai"), true),
+            mk(QStringLiteral("llama_cpp"), QStringLiteral("Llama.cpp"), false),
+            mk(QStringLiteral("mistral_rs"), QStringLiteral("Mistral.rs"), false),
+        };
+    }
+
     Q_INVOKABLE virtual QString createProfile(const QString& name) = 0;
     // Clone an existing profile under a new id (a copy, not a live link); returns the new id.
     Q_INVOKABLE virtual QString cloneProfile(const QString& source, const QString& newId) = 0;

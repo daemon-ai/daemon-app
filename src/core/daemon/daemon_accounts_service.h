@@ -41,6 +41,10 @@ public:
 
     void addApiKey(const QString& provider, const QString& label, const QString& key,
                    const QString& baseUrl = {}) override;
+    void addApiKeyForProfile(const QString& profileId, const QString& provider,
+                             const QString& label, const QString& key,
+                             const QString& baseUrl = {}) override;
+    [[nodiscard]] QVariantMap credentialFor(const QString& profileId) const override;
     void beginOAuth(const QString& provider) override;
     void rename(const QString& accountId, const QString& label) override;
     void reauth(const QString& accountId) override;

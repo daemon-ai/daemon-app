@@ -179,8 +179,21 @@ void RootWidget::openSessionSettingsOverlay() {
     closeBtn->setDefault(true);
     buttons->addWidget(closeBtn);
 
-    const auto sync = [ss, profileBtn, effortBtn, fastBtn, verboseBtn] {
-        profileBtn->setText(tr("Profile: %1").arg(ss->profile()));
+    // The per-session profile stores the profile ID (parity with the GUI popover, so session->turn
+    // is a strict pass-through); display the human name for that id.
+    auto* profileModel = qobject_cast<uimodels::VariantListModel*>(m_services.profiles->profiles());
+    const auto nameForId = [profileModel](const QString& id) {
+        if (profileModel != nullptr) {
+            for (const QVariantMap& row : profileModel->rows()) {
+                if (row.value(QStringLiteral("id")).toString() == id) {
+                    return row.value(QStringLiteral("name")).toString();
+                }
+            }
+        }
+        return id;
+    };
+    const auto sync = [ss, profileBtn, effortBtn, fastBtn, verboseBtn, nameForId] {
+        profileBtn->setText(tr("Profile: %1").arg(nameForId(ss->profile())));
         effortBtn->setText(tr("Effort:  %1").arg(ss->effort()));
         fastBtn->setText(tr("Fast:    %1").arg(ss->fast() ? tr("on") : tr("off")));
         verboseBtn->setText(tr("Verbose: %1").arg(ss->verbose() ? tr("on") : tr("off")));
@@ -195,12 +208,20 @@ void RootWidget::openSessionSettingsOverlay() {
         }
         sync();
     });
-    connect(profileBtn, &Tui::ZButton::clicked, dlg, [this, ss, sync] {
-        const QStringList names = m_services.profiles->profileNames();
-        if (!names.isEmpty()) {
-            const int idx = static_cast<int>(qMax<qsizetype>(0, names.indexOf(ss->profile())));
-            ss->setProfile(names.at((idx + 1) % static_cast<int>(names.size())));
+    connect(profileBtn, &Tui::ZButton::clicked, dlg, [ss, sync, profileModel] {
+        if (profileModel == nullptr || profileModel->rows().isEmpty()) {
+            return;
         }
+        const QList<QVariantMap> rows = profileModel->rows();
+        int idx = -1;
+        for (int i = 0; i < rows.size(); ++i) {
+            if (rows.at(i).value(QStringLiteral("id")).toString() == ss->profile()) {
+                idx = i;
+                break;
+            }
+        }
+        // Cycle to the next profile by ID (idx == -1 -> the first entry).
+        ss->setProfile(rows.at((idx + 1) % rows.size()).value(QStringLiteral("id")).toString());
         sync();
     });
     connect(fastBtn, &Tui::ZButton::clicked, dlg, [ss, sync] {

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
+#include "daemon/daemon_accounts_service.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_profile_store.h"
 #include "daemon/daemon_transport.h"
@@ -125,6 +126,37 @@ QByteArray okResponse() {
     QByteArray b;
     cborText(b, "Ok");
     return b;
+}
+
+QString zToQString(const zcbor_string& z) {
+    return QString::fromUtf8(reinterpret_cast<const char*>(z.value), static_cast<int>(z.len));
+}
+
+void setZstr(zcbor_string& z, const QByteArray& b) {
+    z.value = reinterpret_cast<const uint8_t*>(b.constData());
+    z.len = static_cast<size_t>(b.size());
+}
+
+// A CredentialList response: profile "work" has a key (present + hint), "other" does not. Built via
+// the generated encoder so the CBOR shape matches the decoder exactly.
+QByteArray credentialsResponse() {
+    const QByteArray p0 = QByteArrayLiteral("work");
+    const QByteArray h0 = QByteArrayLiteral("sk-live-...abcd");
+    const QByteArray p1 = QByteArrayLiteral("other");
+    const QByteArray h1 = QByteArrayLiteral("");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_credentials_m_c;
+    response_credentials& rc = resp->api_response_response_credentials_m;
+    rc.response_credentials_Credentials_credential_info_m_count = 2;
+    credential_info& c0 = rc.response_credentials_Credentials_credential_info_m[0];
+    setZstr(c0.credential_info_profile, p0);
+    c0.credential_info_present = true;
+    setZstr(c0.credential_info_hint, h0);
+    credential_info& c1 = rc.response_credentials_Credentials_credential_info_m[1];
+    setZstr(c1.credential_info_profile, p1);
+    c1.credential_info_present = false;
+    setZstr(c1.credential_info_hint, h1);
+    return encodeResponse(*resp);
 }
 
 // {"Error":{"Unsupported":"no versioning"}} - the no-revision-log daemon's answer. (The message is
@@ -360,6 +392,132 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(store.historyAvailable(), 3000);
         auto* hist = qobject_cast<uimodels::VariantListModel*>(store.history());
         QCOMPARE(hist->count(), 2);
+    }
+
+    // C2 gap #6a: a daemon_api profile round-trips provider + base_url through ProfileUpdate
+    // (encode) and ProfileGet (decode). Guards the three app-mapper sites that the codec regen did
+    // NOT touch.
+    void daemonApiProviderRoundTrips() {
+        daemonapp::daemon::DecodedProfileSpec spec;
+        spec.id = QStringLiteral("work");
+        spec.provider = QStringLiteral("daemon_api");
+        spec.model = QStringLiteral("anthropic/claude-sonnet-4-5");
+        spec.hasBaseUrl = true;
+        spec.baseUrl = QStringLiteral("https://api.daemon.ai/api/v1");
+
+        // Encode direction: ProfileUpdate carries the daemon_api choice + base_url tstr.
+        const QByteArray req = NodeApiCodec::encodeProfileUpdateRequest(spec);
+        QVERIFY(!req.isEmpty());
+        auto reqStruct = std::make_unique<api_request_r>();
+        size_t consumed = 0;
+        QCOMPARE(cbor_decode_api_request(reinterpret_cast<const uint8_t*>(req.constData()),
+                                         static_cast<size_t>(req.size()), reqStruct.get(),
+                                         &consumed),
+                 ZCBOR_SUCCESS);
+        QCOMPARE(reqStruct->api_request_choice,
+                 api_request_r::api_request_request_profile_update_m_c);
+        const profile_spec& ps = reqStruct->api_request_request_profile_update_m.ProfileUpdate_spec;
+        QCOMPARE(ps.profile_spec_provider.provider_selector_choice,
+                 provider_selector_r::provider_selector_daemon_api_tstr_c);
+        QCOMPARE(ps.profile_spec_base_url_choice, profile_spec::profile_spec_base_url_tstr_c);
+        QCOMPARE(zToQString(ps.profile_spec_base_url_tstr), spec.baseUrl);
+
+        // Decode direction: a Profile(ProfileGet) response with that spec decodes daemon_api back.
+        auto resp = std::make_unique<api_response_r>();
+        resp->api_response_choice = api_response_r::api_response_response_profile_m_c;
+        resp->api_response_response_profile_m.response_profile_Profile_choice =
+            response_profile::response_profile_Profile_profile_spec_m_c;
+        resp->api_response_response_profile_m.response_profile_Profile_profile_spec_m = ps;
+        const QByteArray respBytes = encodeResponse(*resp);
+        QVERIFY(!respBytes.isEmpty());
+        daemonapp::daemon::DecodedProfileSpec out;
+        bool found = false;
+        QVERIFY(NodeApiCodec::decodeProfile(respBytes, &out, &found));
+        QVERIFY(found);
+        QCOMPARE(out.provider, QStringLiteral("daemon_api"));
+        QVERIFY(out.hasBaseUrl);
+        QCOMPARE(out.baseUrl, spec.baseUrl);
+
+        // Empty base URL => no override on the wire (Option::None), i.e. the node/provider default.
+        daemonapp::daemon::DecodedProfileSpec noBase = spec;
+        noBase.hasBaseUrl = false;
+        noBase.baseUrl.clear();
+        const QByteArray req2 = NodeApiCodec::encodeProfileUpdateRequest(noBase);
+        auto reqStruct2 = std::make_unique<api_request_r>();
+        QCOMPARE(cbor_decode_api_request(reinterpret_cast<const uint8_t*>(req2.constData()),
+                                         static_cast<size_t>(req2.size()), reqStruct2.get(),
+                                         &consumed),
+                 ZCBOR_SUCCESS);
+        QCOMPARE(reqStruct2->api_request_request_profile_update_m.ProfileUpdate_spec
+                     .profile_spec_base_url_choice,
+                 profile_spec::profile_spec_base_url_null_m_c);
+    }
+
+    // Regression: the mock provider still decodes as "mock" (not swallowed by the new daemon_api
+    // arm)
+    // - so a Mock-valued profile keeps round-tripping and the editor can render it read-only.
+    void mockProviderStillDecodesAsMock() {
+        daemonapp::daemon::DecodedProfileSpec spec;
+        spec.id = QStringLiteral("m");
+        spec.provider = QStringLiteral("mock");
+        spec.model = QStringLiteral("mock-model");
+        const QByteArray req = NodeApiCodec::encodeProfileUpdateRequest(spec);
+        QVERIFY(!req.isEmpty());
+        auto reqStruct = std::make_unique<api_request_r>();
+        size_t consumed = 0;
+        QCOMPARE(cbor_decode_api_request(reinterpret_cast<const uint8_t*>(req.constData()),
+                                         static_cast<size_t>(req.size()), reqStruct.get(),
+                                         &consumed),
+                 ZCBOR_SUCCESS);
+        const profile_spec& ps = reqStruct->api_request_request_profile_update_m.ProfileUpdate_spec;
+        QCOMPARE(ps.profile_spec_provider.provider_selector_choice,
+                 provider_selector_r::provider_selector_mock_tstr_c);
+
+        auto resp = std::make_unique<api_response_r>();
+        resp->api_response_choice = api_response_r::api_response_response_profile_m_c;
+        resp->api_response_response_profile_m.response_profile_Profile_choice =
+            response_profile::response_profile_Profile_profile_spec_m_c;
+        resp->api_response_response_profile_m.response_profile_Profile_profile_spec_m = ps;
+        daemonapp::daemon::DecodedProfileSpec out;
+        bool found = false;
+        QVERIFY(NodeApiCodec::decodeProfile(encodeResponse(*resp), &out, &found));
+        QCOMPARE(out.provider, QStringLiteral("mock"));
+    }
+
+    // C2: the DaemonAccountsService projects the redacted CredentialList into profile-scoped
+    // status, and a profile-scoped key set is guarded/routed (no request for an empty key).
+    void credentialForReflectsCredentialList() {
+        const QString sock = m_tmp.filePath(QStringLiteral("cred.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplyPayload(credentialsResponse());
+        DaemonTransportFixture tx(sock);
+        daemonapp::daemon::CredentialRepository creds(&tx.client, nullptr);
+        daemonapp::daemon::ProfileRepository profs(&tx.client, nullptr);
+        accounts::DaemonAccountsService acct(&creds, &profs);
+
+        QSignalSpy changed(&acct, &accounts::IAccountsService::credentialsChanged);
+        creds.refreshList();
+        QTRY_VERIFY_WITH_TIMEOUT(changed.count() >= 1, 3000);
+
+        const QVariantMap work = acct.credentialFor(QStringLiteral("work"));
+        QVERIFY(work.value(QStringLiteral("present")).toBool());
+        QVERIFY(work.value(QStringLiteral("hint")).toString().contains(QStringLiteral("abcd")));
+        QVERIFY(
+            !acct.credentialFor(QStringLiteral("other")).value(QStringLiteral("present")).toBool());
+        QVERIFY(!acct.credentialFor(QStringLiteral("missing"))
+                     .value(QStringLiteral("present"))
+                     .toBool());
+
+        // An empty key is a guarded no-op (no CredentialSet issued); a real key issues a request
+        // scoped to the target profile (setCredential(profileId, key)).
+        const int before = fake.requestCount();
+        acct.addApiKeyForProfile(QStringLiteral("work"), QStringLiteral("daemon_api"), QString(),
+                                 QString());
+        QCOMPARE(fake.requestCount(), before);
+        acct.addApiKeyForProfile(QStringLiteral("work"), QStringLiteral("daemon_api"), QString(),
+                                 QStringLiteral("sk-new-key"));
+        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > before, 3000);
     }
 
     // C: decodeWireFrame surfaces the server's advertised Hello feature list (incl. versioning).

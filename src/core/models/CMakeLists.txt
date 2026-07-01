@@ -2,6 +2,7 @@
 # simulates HF search + ticking download progress over the shared VariantListModel.
 add_library(da_models STATIC
     imodel_catalog.h
+    provider_filter.h
     mock_model_catalog.h
     mock_model_catalog.cpp
 )

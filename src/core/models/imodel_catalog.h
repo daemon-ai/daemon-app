@@ -3,14 +3,13 @@
 
 #pragma once
 
+#include "models/provider_filter.h"
+#include "uimodels/variant_list_model.h"
+
 #include <QObject>
 #include <QString>
 #include <QStringList>
 #include <QVariantMap>
-
-namespace uimodels {
-class VariantListModel;
-}
 
 namespace models {
 
@@ -50,6 +49,19 @@ public:
     // The ids of the installed models, for QML dropdowns (profile model, routing
     // targets, ...) that need a plain string list rather than the row model.
     [[nodiscard]] Q_INVOKABLE virtual QStringList installedIds() const = 0;
+
+    // The installed model ids served by `provider` (a ProviderSelector wire string), for the
+    // profile editor's provider-filtered model combo. Falls back to ALL installed ids when the
+    // provider is empty or matches nothing installed (remote providers like daemon_api/genai often
+    // have no local catalog rows, and the mock tags rows with vendor names), so the combo is never
+    // wrongly empty.
+    [[nodiscard]] Q_INVOKABLE QStringList installedIdsForProvider(const QString& provider) const {
+        auto* model = qobject_cast<uimodels::VariantListModel*>(installed());
+        const QStringList filtered = model != nullptr
+                                         ? filterInstalledIdsByProvider(model->rows(), provider)
+                                         : QStringList{};
+        return filtered.isEmpty() ? installedIds() : filtered;
+    }
 
     // Providers are static-ish metadata (id, name, kind, configured) returned as a
     // list of maps for the Providers tab.
