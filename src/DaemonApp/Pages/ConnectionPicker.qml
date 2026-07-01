@@ -22,10 +22,22 @@ ColumnLayout {
     property string mode: Connection ? Connection.mode : "local"
     property string testMessage: ""
     property bool testOk: false
+    // Local sub-choice: let the app manage (spawn) a node, or attach to a socket you run yourself.
+    // Bound to the persisted managedLocalDaemon preference (defaults on).
+    property bool managed: (typeof AppSettings !== "undefined") ? AppSettings.managedLocalDaemon : true
 
     function _placeholder() {
-        return root.mode === "remote" ? qsTr("https://node.example:8080")
-                                      : qsTr("/run/daemon/daemon.sock");
+        if (root.mode === "remote")
+            return qsTr("https://node.example:8080");
+        return (typeof AppSettings !== "undefined") ? AppSettings.defaultManagedSocketPath()
+                                                     : qsTr("/path/to/daemon.sock");
+    }
+    // The socket/URL Connect and Test actually use: an app-managed local connection uses the
+    // default managed socket (no path shown); everything else uses the target field.
+    function _effectiveTarget() {
+        if (root.mode === "local" && root.managed && typeof AppSettings !== "undefined")
+            return AppSettings.defaultManagedSocketPath();
+        return targetField.text;
     }
 
     Connections {
@@ -80,12 +92,58 @@ ColumnLayout {
         }
     }
 
-    SectionLabel { text: qsTr("Target"); visible: root.mode !== "embedded" }
+    // Local: choose app-managed (spawn + manage a node) vs attach to a socket you run yourself.
+    SectionLabel { text: qsTr("Local daemon"); visible: root.mode === "local" }
+    RowLayout {
+        visible: root.mode === "local"
+        Layout.fillWidth: true
+        spacing: 10
+        Repeater {
+            model: [
+                { key: true,  title: qsTr("App-managed"), desc: qsTr("Start and manage a node for me (recommended)") },
+                { key: false, title: qsTr("Attach"),      desc: qsTr("Connect to a daemon socket I run myself") },
+            ]
+            delegate: Rectangle {
+                id: subCard
+                required property var modelData
+                Layout.fillWidth: true
+                Layout.preferredHeight: 62
+                radius: 10
+                readonly property bool isSel: root.managed === subCard.modelData.key
+                color: isSel ? Theme.hover : Theme.surface
+                border.width: isSel ? 2 : 1
+                border.color: isSel ? Theme.accent : Theme.border
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 3
+                    Text {
+                        text: subCard.modelData.title
+                        font.family: FontIcons.display; font.pixelSize: 13
+                        font.weight: Font.DemiBold; color: Theme.text
+                    }
+                    Text {
+                        text: subCard.modelData.desc
+                        font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+                        wrapMode: Text.WordWrap; Layout.fillWidth: true
+                    }
+                }
+                TapHandler { onTapped: { root.managed = subCard.modelData.key; root.testMessage = ""; } }
+            }
+        }
+    }
+
+    // Target: a remote URL, or (attach-only) the socket path of a daemon you run yourself. Hidden
+    // for an app-managed local connection - the app picks a user-writable socket automatically.
+    SectionLabel {
+        text: root.mode === "remote" ? qsTr("Target") : qsTr("Socket path")
+        visible: root.mode === "remote" || (root.mode === "local" && !root.managed)
+    }
 
     Kit.TextField {
         id: targetField
         Layout.fillWidth: true
-        visible: root.mode !== "embedded"
+        visible: root.mode === "remote" || (root.mode === "local" && !root.managed)
         placeholderText: root._placeholder()
         // Two-way with the connection seam: seed from the active target and follow
         // external changes (connect/disconnect) while the user isn't editing, but
@@ -121,9 +179,9 @@ ColumnLayout {
 
         Kit.TextButton {
             text: Connection && Connection.testing ? qsTr("Testing...") : qsTr("Test connection")
-            enabled: root.mode !== "embedded" && targetField.text.length > 0
+            enabled: root.mode !== "embedded" && root._effectiveTarget().length > 0
                      && !(Connection && Connection.testing)
-            onClicked: Connection.testConnection(root.mode, targetField.text, tokenField.text)
+            onClicked: Connection.testConnection(root.mode, root._effectiveTarget(), tokenField.text)
         }
 
         Item { Layout.fillWidth: true }
@@ -132,11 +190,17 @@ ColumnLayout {
             visible: root.showConnect
             text: qsTr("Connect")
             accentFilled: true
-            enabled: root.mode !== "embedded" && targetField.text.length > 0
+            enabled: root.mode !== "embedded"
+                     && (root.mode === "local" && root.managed ? true : targetField.text.length > 0)
             onClicked: {
-                AppSettings.setLastConnection(root.mode, targetField.text);
-                Connection.connectTo(root.mode, targetField.text, tokenField.text);
-                root.connectRequested(root.mode, targetField.text, tokenField.text);
+                // Persist the managed/attach choice: App-managed spawns a node; Attach is
+                // probe-only (connectTo skips the launcher when managedLocalDaemon is false).
+                if (root.mode === "local" && typeof AppSettings !== "undefined")
+                    AppSettings.managedLocalDaemon = root.managed;
+                var t = root._effectiveTarget();
+                AppSettings.setLastConnection(root.mode, t);
+                Connection.connectTo(root.mode, t, tokenField.text);
+                root.connectRequested(root.mode, t, tokenField.text);
             }
         }
     }

@@ -144,6 +144,18 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     modes->addWidget(m_remoteBtn);
     layout->addSpacing(1);
 
+    // Local sub-choice: App-managed (the app spawns + manages a node) vs Attach (connect to a
+    // socket you run yourself). Toggles the persisted managedLocalDaemon preference; hidden for
+    // remote and outside the connect phase.
+    m_managedBtn = new Tui::ZButton(QString(), this);
+    layout->addWidget(m_managedBtn);
+    connect(m_managedBtn, &Tui::ZButton::clicked, this, [this] {
+        if (m_settings != nullptr) {
+            m_settings->setManagedLocalDaemon(!m_settings->managedLocalDaemon());
+        }
+        applyMode(m_mode); // refresh label + target visibility
+    });
+
     m_target = new Tui::ZInputBox(defaultTarget, this);
     layout->addWidget(m_target);
 
@@ -233,12 +245,18 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
             m_model->submitLogin(m_username->text(), m_password->text());
             m_password->setText(QString());
         } else if (m_connection != nullptr) {
-            // Persist the choice so the next boot reuses it (parity with the GUI
-            // picker writing AppSettings.setLastConnection before connecting).
+            // App-managed local uses the default user-writable managed socket (no path shown) so
+            // the launcher spawns a node; remote/attach use the target field. Persist the choice
+            // (parity with the GUI picker writing AppSettings.setLastConnection before connecting).
+            const bool managed = m_settings != nullptr && m_settings->managedLocalDaemon();
+            const QString target =
+                (m_mode == QStringLiteral("local") && managed && m_settings != nullptr)
+                    ? m_settings->defaultManagedSocketPath()
+                    : m_target->text();
             if (m_settings != nullptr) {
-                m_settings->setLastConnection(m_mode, m_target->text());
+                m_settings->setLastConnection(m_mode, target);
             }
-            m_connection->connectTo(m_mode, m_target->text(), m_token->text());
+            m_connection->connectTo(m_mode, target, m_token->text());
         }
     });
     connect(skip, &Tui::ZButton::clicked, this, [this] { m_model->skip(); });
@@ -395,9 +413,23 @@ void FirstRunDialog::applyMode(const QString& mode) {
     if (m_token != nullptr) {
         m_token->setVisible(remote);
     }
-    if (m_target != nullptr && m_target->text().isEmpty()) {
-        m_target->setText(remote ? QStringLiteral("https://node.example:8080")
-                                 : QStringLiteral("/run/daemon/daemon.sock"));
+    const bool managed = m_settings != nullptr && m_settings->managedLocalDaemon();
+    if (m_managedBtn != nullptr) {
+        m_managedBtn->setVisible(!remote);
+        m_managedBtn->setText(managed ? tr("Local: App-managed (press to Attach instead)")
+                                      : tr("Local: Attach to socket (press for App-managed)"));
+    }
+    if (m_target != nullptr) {
+        // App-managed local hides the socket field (the app picks a user-writable socket); remote
+        // and attach show it. Seed a representative value when empty (never the root-owned
+        // /run/daemon.sock the managed daemon could not bind).
+        m_target->setVisible(remote || !managed);
+        if (m_target->text().isEmpty()) {
+            m_target->setText(
+                remote
+                    ? QStringLiteral("https://node.example:8080")
+                    : (m_settings != nullptr ? m_settings->resolvedConnectionTarget() : QString()));
+        }
     }
     if (m_testResult != nullptr) {
         m_testResult->setText(QString());
@@ -407,6 +439,14 @@ void FirstRunDialog::applyMode(const QString& mode) {
 void FirstRunDialog::syncToPhase() {
     const QString p = m_model->phase();
     const bool inference = p == QStringLiteral("inference");
+    // The local App-managed/Attach toggle only applies while choosing a transport (connect phase).
+    if (m_managedBtn != nullptr) {
+        const bool managed = m_settings != nullptr && m_settings->managedLocalDaemon();
+        m_managedBtn->setVisible(p == QStringLiteral("connect") &&
+                                 m_mode == QStringLiteral("local"));
+        m_managedBtn->setText(managed ? tr("Local: App-managed (press to Attach instead)")
+                                      : tr("Local: Attach to socket (press for App-managed)"));
+    }
     // Default: the SASL login fields are hidden outside the auth phase.
     if (m_username != nullptr) {
         m_username->setVisible(p == QStringLiteral("auth"));

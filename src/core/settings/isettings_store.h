@@ -4,7 +4,9 @@
 #pragma once
 
 #include <QCryptographicHash>
+#include <QDir>
 #include <QObject>
+#include <QStandardPaths>
 #include <QString>
 #include <QVariant>
 
@@ -106,18 +108,42 @@ public:
         }
     }
 
+    // The default user-writable socket for an app-managed local daemon. Cross-platform via
+    // QStandardPaths: RuntimeLocation (Linux -> $XDG_RUNTIME_DIR; macOS -> the per-user temp dir),
+    // falling back to TempLocation then AppDataLocation. Kept short (leaf `daemon/daemon.sock`) to
+    // stay under the Unix `sun_path` limit (~104 macOS / ~108 Linux). This is a Unix-only flow
+    // (QLocalSocket is named pipes on Windows and the daemon binds a Unix socket), so a filesystem
+    // path is the right shape here.
+    [[nodiscard]] Q_INVOKABLE QString defaultManagedSocketPath() const {
+        QString base = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+        if (base.isEmpty()) {
+            base = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+        }
+        if (base.isEmpty()) {
+            base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        }
+        if (base.isEmpty()) {
+            base = QStringLiteral("/tmp");
+        }
+        return QDir(base).filePath(QStringLiteral("daemon/daemon.sock"));
+    }
+
     // The local socket path to auto-open, resolving the test/CI override first.
     // `DAEMON_APP_SOCKET` lets the end-to-end harness point a headless GUI/TUI at an isolated
     // per-test socket without seeding QSettings; it wins over the persisted `conn/target`, which in
-    // turn wins over the built-in default.
+    // turn wins over the app-managed default (a user-writable path, NOT the root-owned
+    // `/run/daemon.sock` a non-root managed daemon could never bind).
     [[nodiscard]] Q_INVOKABLE QString
-    resolvedConnectionTarget(const QString& fallback = QStringLiteral("/run/daemon.sock")) const {
+    resolvedConnectionTarget(const QString& fallback = QString()) const {
         const QString override = qEnvironmentVariable("DAEMON_APP_SOCKET");
         if (!override.isEmpty()) {
             return override;
         }
         const QString saved = lastConnectionTarget();
-        return saved.isEmpty() ? fallback : saved;
+        if (!saved.isEmpty()) {
+            return saved;
+        }
+        return fallback.isEmpty() ? defaultManagedSocketPath() : fallback;
     }
 
 signals:

@@ -111,6 +111,7 @@ private:
     Tui::ZButton* m_listModelsBtn = nullptr; // re-list a key-requiring provider's models
     Tui::ZButton* m_localBtn = nullptr;
     Tui::ZButton* m_remoteBtn = nullptr;
+    Tui::ZButton* m_managedBtn = nullptr; // local: App-managed (spawn) vs Attach (existing socket)
     Tui::ZButton* m_testBtn = nullptr;
     Tui::ZLabel* m_testResult = nullptr;
     Tui::ZButton* m_primary = nullptr; // Connect / Finish

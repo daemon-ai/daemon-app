@@ -97,6 +97,13 @@ void LocalDaemonLauncher::ensureRunning(const QString& socketPath) {
     const QString dataDir = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
                                 .filePath(QStringLiteral("daemon"));
     QDir().mkpath(dataDir);
+    // The managed socket may live under a runtime dir whose leaf we own (e.g.
+    // $XDG_RUNTIME_DIR/daemon/); create its parent so the spawned daemon can bind it. The node
+    // also creates this, but doing it here keeps the client side self-sufficient.
+    const QString socketDir = QFileInfo(socketPath).path();
+    if (!socketDir.isEmpty()) {
+        QDir().mkpath(socketDir);
+    }
 
     QProcessEnvironment penv = QProcessEnvironment::systemEnvironment();
     penv.insert(QStringLiteral("DAEMON_API_SOCKET"), socketPath);
