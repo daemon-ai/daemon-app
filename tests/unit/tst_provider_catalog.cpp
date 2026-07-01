@@ -44,7 +44,7 @@ QByteArray encodeResponse(const api_response_r& resp) {
     return out;
 }
 
-// A ProviderCatalog response with Daemon Cloud (daemon_cloud/daemon_api, keyless, base URL),
+// A ProviderCatalog response with Daemon Cloud (daemon_cloud/daemon_api, requires_key, base URL),
 // Anthropic (cloud/genai, requires_key), and Llama.cpp (local/llama_cpp). The buffers must outlive
 // the encode call, so they live in this scope until encodeResponse returns.
 QByteArray providerCatalogResponse() {
@@ -64,7 +64,7 @@ QByteArray providerCatalogResponse() {
         provider_kind_wire_r::provider_kind_wire_daemon_cloud_tstr_c;
     d0.provider_descriptor_wire_selector.provider_selector_choice =
         provider_selector_r::provider_selector_daemon_api_tstr_c;
-    d0.provider_descriptor_requires_key = false;
+    d0.provider_descriptor_requires_key = true;
     d0.provider_descriptor_supports_model_discovery = true;
     d0.provider_descriptor_default_base_url_choice =
         provider_descriptor::provider_descriptor_default_base_url_tstr_c;
@@ -162,7 +162,7 @@ private slots:
         QCOMPARE(out.at(0).id, QStringLiteral("daemon_cloud"));
         QCOMPARE(out.at(0).kind, QStringLiteral("daemon_cloud"));
         QCOMPARE(out.at(0).wireSelector, QStringLiteral("daemon_api"));
-        QVERIFY(!out.at(0).requiresKey);
+        QVERIFY(out.at(0).requiresKey);
         QVERIFY(out.at(0).hasDefaultBaseUrl);
         QCOMPARE(out.at(0).defaultBaseUrl, QStringLiteral("https://api.daemon.ai/api/v1"));
         // Anthropic: a genai-selector cloud vendor disambiguated by its id, requires a key.

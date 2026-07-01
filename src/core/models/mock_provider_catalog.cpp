@@ -51,8 +51,10 @@ QVariantList MockProviderCatalog::providers() const {
     // Daemon Cloud first (the new-profile default), then a couple of genai cloud vendors, then the
     // local engines. Mock is deliberately absent.
     return {
+        // Daemon Cloud lists models keyless (see refreshModels), but running turns needs a Bearer
+        // key, so requiresKey is true to match the corrected node semantics.
         providerRow(QStringLiteral("daemon_cloud"), QStringLiteral("Daemon Cloud"),
-                    QStringLiteral("daemon_cloud"), QStringLiteral("daemon_api"), false,
+                    QStringLiteral("daemon_cloud"), QStringLiteral("daemon_api"), true,
                     QStringLiteral("https://api.daemon.ai/api/v1")),
         providerRow(QStringLiteral("anthropic"), QStringLiteral("Anthropic"),
                     QStringLiteral("cloud"), QStringLiteral("genai"), true, QString()),

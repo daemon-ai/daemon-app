@@ -236,7 +236,8 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
 
         QSignalSpy finished(&m, &FirstRunModel::finished);
-        // Daemon Cloud (keyless) with a chosen model: persists + finishes with no env.
+        // Model layer is permissive: an empty key still persists + finishes (requiresKey only
+        // drives the QML key-collection UX), so Daemon Cloud with a chosen model finishes here.
         m.applyInferenceChoice(QStringLiteral("daemon_cloud"),
                                QStringLiteral("anthropic/claude-3.5-sonnet"), QString());
         QCOMPARE(m.phase(), QStringLiteral("done"));
