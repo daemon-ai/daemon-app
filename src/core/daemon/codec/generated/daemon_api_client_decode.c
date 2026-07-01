@@ -161,6 +161,9 @@ static bool decode_model_quantize_args(zcbor_state_t *state, struct model_quanti
 static bool decode_request_model_quantize(zcbor_state_t *state, struct request_model_quantize *result);
 static bool decode_request_model_inspect(zcbor_state_t *state, struct request_model_inspect *result);
 static bool decode_request_model_current(zcbor_state_t *state, struct request_model_current *result);
+static bool decode_repeated_ProviderModels_credential_ref(zcbor_state_t *state, struct ProviderModels_credential_ref_r *result);
+static bool decode_repeated_ProviderModels_transient_key(zcbor_state_t *state, struct ProviderModels_transient_key_r *result);
+static bool decode_request_provider_models(zcbor_state_t *state, struct request_provider_models *result);
 static bool decode_repeated_params_tstrtstr(zcbor_state_t *state, struct params_tstrtstr *result);
 static bool decode_auth_bind_request(zcbor_state_t *state, struct auth_bind_request *result);
 static bool decode_repeated_auth_begin_request_bind(zcbor_state_t *state, struct auth_begin_request_bind_r *result);
@@ -530,9 +533,14 @@ static bool decode_response_profiles(zcbor_state_t *state, struct response_profi
 static bool decode_response_profile(zcbor_state_t *state, struct response_profile *result);
 static bool decode_credential_info(zcbor_state_t *state, struct credential_info *result);
 static bool decode_response_credentials(zcbor_state_t *state, struct response_credentials *result);
+static bool decode_repeated_model_descriptor_display_name(zcbor_state_t *state, struct model_descriptor_display_name_r *result);
 static bool decode_model_descriptor(zcbor_state_t *state, struct model_descriptor *result);
 static bool decode_response_models(zcbor_state_t *state, struct response_models *result);
 static bool decode_response_model_current(zcbor_state_t *state, struct response_model_current *result);
+static bool decode_provider_kind_wire(zcbor_state_t *state, struct provider_kind_wire_r *result);
+static bool decode_provider_descriptor(zcbor_state_t *state, struct provider_descriptor *result);
+static bool decode_response_provider_catalog(zcbor_state_t *state, struct response_provider_catalog *result);
+static bool decode_response_provider_models(zcbor_state_t *state, struct response_provider_models *result);
 static bool decode_response_distribution(zcbor_state_t *state, struct response_distribution *result);
 static bool decode_response_profile_id(zcbor_state_t *state, struct response_profile_id *result);
 static bool decode_author_agent(zcbor_state_t *state, struct author_agent *result);
@@ -2938,6 +2946,60 @@ static bool decode_request_model_current(
 	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"profile", tmp_str.len = sizeof("profile") - 1, &tmp_str)))))
 	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).ModelCurrent_profile_tstr)))) && (((*result).ModelCurrent_profile_choice = ModelCurrent_profile_tstr_c), true))
 	|| (((zcbor_nil_expect(state, NULL))) && (((*result).ModelCurrent_profile_choice = ModelCurrent_profile_null_m_c), true))), zcbor_union_end_code(state), int_res)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_ProviderModels_credential_ref(
+		zcbor_state_t *state, struct ProviderModels_credential_ref_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"credential_ref", tmp_str.len = sizeof("credential_ref") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).ProviderModels_credential_ref_tstr)))) && (((*result).ProviderModels_credential_ref_choice = ProviderModels_credential_ref_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).ProviderModels_credential_ref_choice = ProviderModels_credential_ref_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_ProviderModels_transient_key(
+		zcbor_state_t *state, struct ProviderModels_transient_key_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"transient_key", tmp_str.len = sizeof("transient_key") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).ProviderModels_transient_key_tstr)))) && (((*result).ProviderModels_transient_key_choice = ProviderModels_transient_key_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).ProviderModels_transient_key_choice = ProviderModels_transient_key_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_provider_models(
+		zcbor_state_t *state, struct request_provider_models *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ProviderModels", tmp_str.len = sizeof("ProviderModels") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"provider", tmp_str.len = sizeof("provider") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).ProviderModels_provider))))
+	&& zcbor_present_decode(&((*result).ProviderModels_credential_ref_present), (zcbor_decoder_t *)decode_repeated_ProviderModels_credential_ref, state, (&(*result).ProviderModels_credential_ref))
+	&& zcbor_present_decode(&((*result).ProviderModels_transient_key_present), (zcbor_decoder_t *)decode_repeated_ProviderModels_transient_key, state, (&(*result).ProviderModels_transient_key))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_ProviderModels_credential_ref(state, (&(*result).ProviderModels_credential_ref));
+		decode_repeated_ProviderModels_transient_key(state, (&(*result).ProviderModels_transient_key));
+	}
 
 	log_result(state, res, __func__);
 	return res;
@@ -9292,6 +9354,21 @@ static bool decode_response_credentials(
 	return res;
 }
 
+static bool decode_repeated_model_descriptor_display_name(
+		zcbor_state_t *state, struct model_descriptor_display_name_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"display_name", tmp_str.len = sizeof("display_name") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).model_descriptor_display_name_tstr)))) && (((*result).model_descriptor_display_name_choice = model_descriptor_display_name_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).model_descriptor_display_name_choice = model_descriptor_display_name_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_model_descriptor(
 		zcbor_state_t *state, struct model_descriptor *result)
 {
@@ -9303,6 +9380,7 @@ static bool decode_model_descriptor(
 	&& (zcbor_tstr_decode(state, (&(*result).model_descriptor_id))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"provider", tmp_str.len = sizeof("provider") - 1, &tmp_str)))))
 	&& (decode_provider_selector(state, (&(*result).model_descriptor_provider))))
+	&& zcbor_present_decode(&((*result).model_descriptor_display_name_present), (zcbor_decoder_t *)decode_repeated_model_descriptor_display_name, state, (&(*result).model_descriptor_display_name))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"context_length", tmp_str.len = sizeof("context_length") - 1, &tmp_str)))))
 	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_uint32_decode(state, (&(*result).model_descriptor_context_length_uint)))) && (((*result).model_descriptor_context_length_choice = model_descriptor_context_length_uint_c), true))
 	|| (((zcbor_nil_expect(state, NULL))) && (((*result).model_descriptor_context_length_choice = model_descriptor_context_length_null_m_c), true))), zcbor_union_end_code(state), int_res)))
@@ -9314,6 +9392,13 @@ static bool decode_model_descriptor(
 	|| (zcbor_union_elem_code(state) && (((zcbor_nil_expect(state, NULL))) && (((*result).model_descriptor_output_price_micros_per_mtok_choice = model_descriptor_output_price_micros_per_mtok_null_m_c), true)))), zcbor_union_end_code(state), int_res)))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"local", tmp_str.len = sizeof("local") - 1, &tmp_str)))))
 	&& (zcbor_bool_decode(state, (&(*result).model_descriptor_local))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_model_descriptor_display_name(state, (&(*result).model_descriptor_display_name));
+	}
 
 	log_result(state, res, __func__);
 	return res;
@@ -9349,6 +9434,88 @@ static bool decode_response_model_current(
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ModelCurrent", tmp_str.len = sizeof("ModelCurrent") - 1, &tmp_str)))))
 	&& (zcbor_union_start_code(state) && (int_res = ((((decode_model_descriptor(state, (&(*result).response_model_current_ModelCurrent_model_descriptor_m)))) && (((*result).response_model_current_ModelCurrent_choice = response_model_current_ModelCurrent_model_descriptor_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((zcbor_nil_expect(state, NULL))) && (((*result).response_model_current_ModelCurrent_choice = response_model_current_ModelCurrent_null_m_c), true)))), zcbor_union_end_code(state), int_res)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_provider_kind_wire(
+		zcbor_state_t *state, struct provider_kind_wire_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"local", tmp_str.len = sizeof("local") - 1, &tmp_str))))) && (((*result).provider_kind_wire_choice = provider_kind_wire_local_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"cloud", tmp_str.len = sizeof("cloud") - 1, &tmp_str))))) && (((*result).provider_kind_wire_choice = provider_kind_wire_cloud_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"daemon_cloud", tmp_str.len = sizeof("daemon_cloud") - 1, &tmp_str))))) && (((*result).provider_kind_wire_choice = provider_kind_wire_daemon_cloud_tstr_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_provider_descriptor(
+		zcbor_state_t *state, struct provider_descriptor *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).provider_descriptor_id))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"display_name", tmp_str.len = sizeof("display_name") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).provider_descriptor_display_name))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"kind", tmp_str.len = sizeof("kind") - 1, &tmp_str)))))
+	&& (decode_provider_kind_wire(state, (&(*result).provider_descriptor_kind))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"wire_selector", tmp_str.len = sizeof("wire_selector") - 1, &tmp_str)))))
+	&& (decode_provider_selector(state, (&(*result).provider_descriptor_wire_selector))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"requires_key", tmp_str.len = sizeof("requires_key") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).provider_descriptor_requires_key))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"supports_model_discovery", tmp_str.len = sizeof("supports_model_discovery") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).provider_descriptor_supports_model_discovery))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"default_base_url", tmp_str.len = sizeof("default_base_url") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).provider_descriptor_default_base_url_tstr)))) && (((*result).provider_descriptor_default_base_url_choice = provider_descriptor_default_base_url_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).provider_descriptor_default_base_url_choice = provider_descriptor_default_base_url_null_m_c), true))), zcbor_union_end_code(state), int_res)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_provider_catalog(
+		zcbor_state_t *state, struct response_provider_catalog *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ProviderCatalog", tmp_str.len = sizeof("ProviderCatalog") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).response_provider_catalog_ProviderCatalog_provider_descriptor_m_count, (zcbor_decoder_t *)decode_provider_descriptor, state, (*&(*result).response_provider_catalog_ProviderCatalog_provider_descriptor_m), sizeof(struct provider_descriptor))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_provider_descriptor(state, (*&(*result).response_provider_catalog_ProviderCatalog_provider_descriptor_m));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_provider_models(
+		zcbor_state_t *state, struct response_provider_models *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ProviderModels", tmp_str.len = sizeof("ProviderModels") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).response_provider_models_ProviderModels_model_descriptor_m_count, (zcbor_decoder_t *)decode_model_descriptor, state, (*&(*result).response_provider_models_ProviderModels_model_descriptor_m), sizeof(struct model_descriptor))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_model_descriptor(state, (*&(*result).response_provider_models_ProviderModels_model_descriptor_m));
+	}
 
 	log_result(state, res, __func__);
 	return res;
@@ -12092,6 +12259,8 @@ static bool decode_api_response(
 	|| (zcbor_union_elem_code(state) && (((decode_response_credentials(state, (&(*result).api_response_response_credentials_m)))) && (((*result).api_response_choice = api_response_response_credentials_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_models(state, (&(*result).api_response_response_models_m)))) && (((*result).api_response_choice = api_response_response_models_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_model_current(state, (&(*result).api_response_response_model_current_m)))) && (((*result).api_response_choice = api_response_response_model_current_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_provider_catalog(state, (&(*result).api_response_response_provider_catalog_m)))) && (((*result).api_response_choice = api_response_response_provider_catalog_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_provider_models(state, (&(*result).api_response_response_provider_models_m)))) && (((*result).api_response_choice = api_response_response_provider_models_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_distribution(state, (&(*result).api_response_response_distribution_m)))) && (((*result).api_response_choice = api_response_response_distribution_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_profile_id(state, (&(*result).api_response_response_profile_id_m)))) && (((*result).api_response_choice = api_response_response_profile_id_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_revisions(state, (&(*result).api_response_response_revisions_m)))) && (((*result).api_response_choice = api_response_response_revisions_m_c), true)))
@@ -12227,6 +12396,8 @@ static bool decode_api_request(
 	|| (((decode_request_model_inspect(state, (&(*result).api_request_request_model_inspect_m)))) && (((*result).api_request_choice = api_request_request_model_inspect_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Models", tmp_str.len = sizeof("Models") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_models_m_c), true)))
 	|| (((decode_request_model_current(state, (&(*result).api_request_request_model_current_m)))) && (((*result).api_request_choice = api_request_request_model_current_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ProviderCatalog", tmp_str.len = sizeof("ProviderCatalog") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_provider_catalog_m_c), true)))
+	|| (((decode_request_provider_models(state, (&(*result).api_request_request_provider_models_m)))) && (((*result).api_request_choice = api_request_request_provider_models_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((decode_request_auth_begin(state, (&(*result).api_request_request_auth_begin_m)))) && (((*result).api_request_choice = api_request_request_auth_begin_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_auth_complete(state, (&(*result).api_request_request_auth_complete_m)))) && (((*result).api_request_choice = api_request_request_auth_complete_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_auth_cancel(state, (&(*result).api_request_request_auth_cancel_m)))) && (((*result).api_request_choice = api_request_request_auth_cancel_m_c), true)))

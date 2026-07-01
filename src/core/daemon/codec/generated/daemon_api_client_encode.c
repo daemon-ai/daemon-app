@@ -161,6 +161,9 @@ static bool encode_model_quantize_args(zcbor_state_t *state, const struct model_
 static bool encode_request_model_quantize(zcbor_state_t *state, const struct request_model_quantize *input);
 static bool encode_request_model_inspect(zcbor_state_t *state, const struct request_model_inspect *input);
 static bool encode_request_model_current(zcbor_state_t *state, const struct request_model_current *input);
+static bool encode_repeated_ProviderModels_credential_ref(zcbor_state_t *state, const struct ProviderModels_credential_ref_r *input);
+static bool encode_repeated_ProviderModels_transient_key(zcbor_state_t *state, const struct ProviderModels_transient_key_r *input);
+static bool encode_request_provider_models(zcbor_state_t *state, const struct request_provider_models *input);
 static bool encode_repeated_params_tstrtstr(zcbor_state_t *state, const struct params_tstrtstr *input);
 static bool encode_auth_bind_request(zcbor_state_t *state, const struct auth_bind_request *input);
 static bool encode_repeated_auth_begin_request_bind(zcbor_state_t *state, const struct auth_begin_request_bind_r *input);
@@ -530,9 +533,14 @@ static bool encode_response_profiles(zcbor_state_t *state, const struct response
 static bool encode_response_profile(zcbor_state_t *state, const struct response_profile *input);
 static bool encode_credential_info(zcbor_state_t *state, const struct credential_info *input);
 static bool encode_response_credentials(zcbor_state_t *state, const struct response_credentials *input);
+static bool encode_repeated_model_descriptor_display_name(zcbor_state_t *state, const struct model_descriptor_display_name_r *input);
 static bool encode_model_descriptor(zcbor_state_t *state, const struct model_descriptor *input);
 static bool encode_response_models(zcbor_state_t *state, const struct response_models *input);
 static bool encode_response_model_current(zcbor_state_t *state, const struct response_model_current *input);
+static bool encode_provider_kind_wire(zcbor_state_t *state, const struct provider_kind_wire_r *input);
+static bool encode_provider_descriptor(zcbor_state_t *state, const struct provider_descriptor *input);
+static bool encode_response_provider_catalog(zcbor_state_t *state, const struct response_provider_catalog *input);
+static bool encode_response_provider_models(zcbor_state_t *state, const struct response_provider_models *input);
 static bool encode_response_distribution(zcbor_state_t *state, const struct response_distribution *input);
 static bool encode_response_profile_id(zcbor_state_t *state, const struct response_profile_id *input);
 static bool encode_author_agent(zcbor_state_t *state, const struct author_agent *input);
@@ -2798,6 +2806,52 @@ static bool encode_request_model_current(
 	&& (((*input).ModelCurrent_profile_choice == ModelCurrent_profile_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).ModelCurrent_profile_tstr))))
 	: (((*input).ModelCurrent_profile_choice == ModelCurrent_profile_null_m_c) ? ((zcbor_nil_put(state, NULL)))
 	: false)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_ProviderModels_credential_ref(
+		zcbor_state_t *state, const struct ProviderModels_credential_ref_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"credential_ref", tmp_str.len = sizeof("credential_ref") - 1, &tmp_str)))))
+	&& (((*input).ProviderModels_credential_ref_choice == ProviderModels_credential_ref_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).ProviderModels_credential_ref_tstr))))
+	: (((*input).ProviderModels_credential_ref_choice == ProviderModels_credential_ref_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_ProviderModels_transient_key(
+		zcbor_state_t *state, const struct ProviderModels_transient_key_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"transient_key", tmp_str.len = sizeof("transient_key") - 1, &tmp_str)))))
+	&& (((*input).ProviderModels_transient_key_choice == ProviderModels_transient_key_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).ProviderModels_transient_key_tstr))))
+	: (((*input).ProviderModels_transient_key_choice == ProviderModels_transient_key_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_provider_models(
+		zcbor_state_t *state, const struct request_provider_models *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ProviderModels", tmp_str.len = sizeof("ProviderModels") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 3) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"provider", tmp_str.len = sizeof("provider") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).ProviderModels_provider))))
+	&& (!(*input).ProviderModels_credential_ref_present || encode_repeated_ProviderModels_credential_ref(state, (&(*input).ProviderModels_credential_ref)))
+	&& (!(*input).ProviderModels_transient_key_present || encode_repeated_ProviderModels_transient_key(state, (&(*input).ProviderModels_transient_key)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 3)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -8556,16 +8610,32 @@ static bool encode_response_credentials(
 	return res;
 }
 
+static bool encode_repeated_model_descriptor_display_name(
+		zcbor_state_t *state, const struct model_descriptor_display_name_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"display_name", tmp_str.len = sizeof("display_name") - 1, &tmp_str)))))
+	&& (((*input).model_descriptor_display_name_choice == model_descriptor_display_name_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).model_descriptor_display_name_tstr))))
+	: (((*input).model_descriptor_display_name_choice == model_descriptor_display_name_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_model_descriptor(
 		zcbor_state_t *state, const struct model_descriptor *input)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((zcbor_map_start_encode(state, 6) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	bool res = (((zcbor_map_start_encode(state, 7) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).model_descriptor_id))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"provider", tmp_str.len = sizeof("provider") - 1, &tmp_str)))))
 	&& (encode_provider_selector(state, (&(*input).model_descriptor_provider))))
+	&& (!(*input).model_descriptor_display_name_present || encode_repeated_model_descriptor_display_name(state, (&(*input).model_descriptor_display_name)))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"context_length", tmp_str.len = sizeof("context_length") - 1, &tmp_str)))))
 	&& (((*input).model_descriptor_context_length_choice == model_descriptor_context_length_uint_c) ? ((zcbor_uint32_encode(state, (&(*input).model_descriptor_context_length_uint))))
 	: (((*input).model_descriptor_context_length_choice == model_descriptor_context_length_null_m_c) ? ((zcbor_nil_put(state, NULL)))
@@ -8579,7 +8649,7 @@ static bool encode_model_descriptor(
 	: (((*input).model_descriptor_output_price_micros_per_mtok_choice == model_descriptor_output_price_micros_per_mtok_null_m_c) ? ((zcbor_nil_put(state, NULL)))
 	: false)))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"local", tmp_str.len = sizeof("local") - 1, &tmp_str)))))
-	&& (zcbor_bool_encode(state, (&(*input).model_descriptor_local))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 6))));
+	&& (zcbor_bool_encode(state, (&(*input).model_descriptor_local))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 7))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -8608,6 +8678,74 @@ static bool encode_response_model_current(
 	&& (((*input).response_model_current_ModelCurrent_choice == response_model_current_ModelCurrent_model_descriptor_m_c) ? ((encode_model_descriptor(state, (&(*input).response_model_current_ModelCurrent_model_descriptor_m))))
 	: (((*input).response_model_current_ModelCurrent_choice == response_model_current_ModelCurrent_null_m_c) ? ((zcbor_nil_put(state, NULL)))
 	: false)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_provider_kind_wire(
+		zcbor_state_t *state, const struct provider_kind_wire_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((((*input).provider_kind_wire_choice == provider_kind_wire_local_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"local", tmp_str.len = sizeof("local") - 1, &tmp_str)))))
+	: (((*input).provider_kind_wire_choice == provider_kind_wire_cloud_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"cloud", tmp_str.len = sizeof("cloud") - 1, &tmp_str)))))
+	: (((*input).provider_kind_wire_choice == provider_kind_wire_daemon_cloud_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"daemon_cloud", tmp_str.len = sizeof("daemon_cloud") - 1, &tmp_str)))))
+	: false)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_provider_descriptor(
+		zcbor_state_t *state, const struct provider_descriptor *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 7) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).provider_descriptor_id))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"display_name", tmp_str.len = sizeof("display_name") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).provider_descriptor_display_name))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"kind", tmp_str.len = sizeof("kind") - 1, &tmp_str)))))
+	&& (encode_provider_kind_wire(state, (&(*input).provider_descriptor_kind))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"wire_selector", tmp_str.len = sizeof("wire_selector") - 1, &tmp_str)))))
+	&& (encode_provider_selector(state, (&(*input).provider_descriptor_wire_selector))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"requires_key", tmp_str.len = sizeof("requires_key") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).provider_descriptor_requires_key))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"supports_model_discovery", tmp_str.len = sizeof("supports_model_discovery") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).provider_descriptor_supports_model_discovery))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"default_base_url", tmp_str.len = sizeof("default_base_url") - 1, &tmp_str)))))
+	&& (((*input).provider_descriptor_default_base_url_choice == provider_descriptor_default_base_url_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).provider_descriptor_default_base_url_tstr))))
+	: (((*input).provider_descriptor_default_base_url_choice == provider_descriptor_default_base_url_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 7))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_response_provider_catalog(
+		zcbor_state_t *state, const struct response_provider_catalog *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ProviderCatalog", tmp_str.len = sizeof("ProviderCatalog") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 64) && ((zcbor_multi_encode_minmax(0, 64, &(*input).response_provider_catalog_ProviderCatalog_provider_descriptor_m_count, (zcbor_encoder_t *)encode_provider_descriptor, state, (*&(*input).response_provider_catalog_ProviderCatalog_provider_descriptor_m), sizeof(struct provider_descriptor))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 64)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_response_provider_models(
+		zcbor_state_t *state, const struct response_provider_models *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ProviderModels", tmp_str.len = sizeof("ProviderModels") - 1, &tmp_str)))))
+	&& (zcbor_list_start_encode(state, 64) && ((zcbor_multi_encode_minmax(0, 64, &(*input).response_provider_models_ProviderModels_model_descriptor_m_count, (zcbor_encoder_t *)encode_model_descriptor, state, (*&(*input).response_provider_models_ProviderModels_model_descriptor_m), sizeof(struct model_descriptor))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 64)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -10956,6 +11094,8 @@ static bool encode_api_response(
 	: (((*input).api_response_choice == api_response_response_credentials_m_c) ? ((encode_response_credentials(state, (&(*input).api_response_response_credentials_m))))
 	: (((*input).api_response_choice == api_response_response_models_m_c) ? ((encode_response_models(state, (&(*input).api_response_response_models_m))))
 	: (((*input).api_response_choice == api_response_response_model_current_m_c) ? ((encode_response_model_current(state, (&(*input).api_response_response_model_current_m))))
+	: (((*input).api_response_choice == api_response_response_provider_catalog_m_c) ? ((encode_response_provider_catalog(state, (&(*input).api_response_response_provider_catalog_m))))
+	: (((*input).api_response_choice == api_response_response_provider_models_m_c) ? ((encode_response_provider_models(state, (&(*input).api_response_response_provider_models_m))))
 	: (((*input).api_response_choice == api_response_response_distribution_m_c) ? ((encode_response_distribution(state, (&(*input).api_response_response_distribution_m))))
 	: (((*input).api_response_choice == api_response_response_profile_id_m_c) ? ((encode_response_profile_id(state, (&(*input).api_response_response_profile_id_m))))
 	: (((*input).api_response_choice == api_response_response_revisions_m_c) ? ((encode_response_revisions(state, (&(*input).api_response_response_revisions_m))))
@@ -11007,7 +11147,7 @@ static bool encode_api_response(
 	: (((*input).api_response_choice == api_response_response_access_users_m_c) ? ((encode_response_access_users(state, (&(*input).api_response_response_access_users_m))))
 	: (((*input).api_response_choice == api_response_response_access_roles_m_c) ? ((encode_response_access_roles(state, (&(*input).api_response_response_access_roles_m))))
 	: (((*input).api_response_choice == api_response_response_who_am_i_m_c) ? ((encode_response_who_am_i(state, (&(*input).api_response_response_who_am_i_m))))
-	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -11091,6 +11231,8 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_model_inspect_m_c) ? ((encode_request_model_inspect(state, (&(*input).api_request_request_model_inspect_m))))
 	: (((*input).api_request_choice == api_request_request_models_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Models", tmp_str.len = sizeof("Models") - 1, &tmp_str)))))
 	: (((*input).api_request_choice == api_request_request_model_current_m_c) ? ((encode_request_model_current(state, (&(*input).api_request_request_model_current_m))))
+	: (((*input).api_request_choice == api_request_request_provider_catalog_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ProviderCatalog", tmp_str.len = sizeof("ProviderCatalog") - 1, &tmp_str)))))
+	: (((*input).api_request_choice == api_request_request_provider_models_m_c) ? ((encode_request_provider_models(state, (&(*input).api_request_request_provider_models_m))))
 	: (((*input).api_request_choice == api_request_request_auth_begin_m_c) ? ((encode_request_auth_begin(state, (&(*input).api_request_request_auth_begin_m))))
 	: (((*input).api_request_choice == api_request_request_auth_complete_m_c) ? ((encode_request_auth_complete(state, (&(*input).api_request_request_auth_complete_m))))
 	: (((*input).api_request_choice == api_request_request_auth_cancel_m_c) ? ((encode_request_auth_cancel(state, (&(*input).api_request_request_auth_cancel_m))))
@@ -11178,7 +11320,7 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_resource_grant_create_m_c) ? ((encode_request_resource_grant_create(state, (&(*input).api_request_request_resource_grant_create_m))))
 	: (((*input).api_request_choice == api_request_request_resource_grant_list_m_c) ? ((encode_request_resource_grant_list(state, (&(*input).api_request_request_resource_grant_list_m))))
 	: (((*input).api_request_choice == api_request_request_resource_grant_revoke_m_c) ? ((encode_request_resource_grant_revoke(state, (&(*input).api_request_request_resource_grant_revoke_m))))
-	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;

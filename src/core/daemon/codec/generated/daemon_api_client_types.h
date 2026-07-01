@@ -1040,6 +1040,34 @@ struct request_model_current {
 	} ModelCurrent_profile_choice;
 };
 
+struct ProviderModels_credential_ref_r {
+	union {
+		struct zcbor_string ProviderModels_credential_ref_tstr;
+	};
+	enum {
+		ProviderModels_credential_ref_tstr_c,
+		ProviderModels_credential_ref_null_m_c,
+	} ProviderModels_credential_ref_choice;
+};
+
+struct ProviderModels_transient_key_r {
+	union {
+		struct zcbor_string ProviderModels_transient_key_tstr;
+	};
+	enum {
+		ProviderModels_transient_key_tstr_c,
+		ProviderModels_transient_key_null_m_c,
+	} ProviderModels_transient_key_choice;
+};
+
+struct request_provider_models {
+	struct zcbor_string ProviderModels_provider;
+	struct ProviderModels_credential_ref_r ProviderModels_credential_ref;
+	bool ProviderModels_credential_ref_present;
+	struct ProviderModels_transient_key_r ProviderModels_transient_key;
+	bool ProviderModels_transient_key_present;
+};
+
 struct params_tstrtstr {
 	struct zcbor_string auth_begin_request_params_tstrtstr_key;
 	struct zcbor_string params_tstrtstr;
@@ -2541,6 +2569,7 @@ struct api_request_r {
 		struct request_model_quantize api_request_request_model_quantize_m;
 		struct request_model_inspect api_request_request_model_inspect_m;
 		struct request_model_current api_request_request_model_current_m;
+		struct request_provider_models api_request_request_provider_models_m;
 		struct request_auth_begin api_request_request_auth_begin_m;
 		struct request_auth_complete api_request_request_auth_complete_m;
 		struct request_auth_cancel api_request_request_auth_cancel_m;
@@ -2685,6 +2714,8 @@ struct api_request_r {
 		api_request_request_model_inspect_m_c,
 		api_request_request_models_m_c,
 		api_request_request_model_current_m_c,
+		api_request_request_provider_catalog_m_c,
+		api_request_request_provider_models_m_c,
 		api_request_request_auth_begin_m_c,
 		api_request_request_auth_complete_m_c,
 		api_request_request_auth_cancel_m_c,
@@ -4157,9 +4188,21 @@ struct response_credentials {
 	size_t response_credentials_Credentials_credential_info_m_count;
 };
 
+struct model_descriptor_display_name_r {
+	union {
+		struct zcbor_string model_descriptor_display_name_tstr;
+	};
+	enum {
+		model_descriptor_display_name_tstr_c,
+		model_descriptor_display_name_null_m_c,
+	} model_descriptor_display_name_choice;
+};
+
 struct model_descriptor {
 	struct zcbor_string model_descriptor_id;
 	struct provider_selector_r model_descriptor_provider;
+	struct model_descriptor_display_name_r model_descriptor_display_name;
+	bool model_descriptor_display_name_present;
 	union {
 		uint32_t model_descriptor_context_length_uint;
 	};
@@ -4197,6 +4240,40 @@ struct response_model_current {
 		response_model_current_ModelCurrent_model_descriptor_m_c,
 		response_model_current_ModelCurrent_null_m_c,
 	} response_model_current_ModelCurrent_choice;
+};
+
+struct provider_kind_wire_r {
+	enum {
+		provider_kind_wire_local_tstr_c,
+		provider_kind_wire_cloud_tstr_c,
+		provider_kind_wire_daemon_cloud_tstr_c,
+	} provider_kind_wire_choice;
+};
+
+struct provider_descriptor {
+	struct zcbor_string provider_descriptor_id;
+	struct zcbor_string provider_descriptor_display_name;
+	struct provider_kind_wire_r provider_descriptor_kind;
+	struct provider_selector_r provider_descriptor_wire_selector;
+	bool provider_descriptor_requires_key;
+	bool provider_descriptor_supports_model_discovery;
+	union {
+		struct zcbor_string provider_descriptor_default_base_url_tstr;
+	};
+	enum {
+		provider_descriptor_default_base_url_tstr_c,
+		provider_descriptor_default_base_url_null_m_c,
+	} provider_descriptor_default_base_url_choice;
+};
+
+struct response_provider_catalog {
+	struct provider_descriptor response_provider_catalog_ProviderCatalog_provider_descriptor_m[64];
+	size_t response_provider_catalog_ProviderCatalog_provider_descriptor_m_count;
+};
+
+struct response_provider_models {
+	struct model_descriptor response_provider_models_ProviderModels_model_descriptor_m[64];
+	size_t response_provider_models_ProviderModels_model_descriptor_m_count;
 };
 
 struct response_distribution {
@@ -5339,6 +5416,8 @@ struct api_response_r {
 		struct response_credentials api_response_response_credentials_m;
 		struct response_models api_response_response_models_m;
 		struct response_model_current api_response_response_model_current_m;
+		struct response_provider_catalog api_response_response_provider_catalog_m;
+		struct response_provider_models api_response_response_provider_models_m;
 		struct response_distribution api_response_response_distribution_m;
 		struct response_profile_id api_response_response_profile_id_m;
 		struct response_revisions api_response_response_revisions_m;
@@ -5424,6 +5503,8 @@ struct api_response_r {
 		api_response_response_credentials_m_c,
 		api_response_response_models_m_c,
 		api_response_response_model_current_m_c,
+		api_response_response_provider_catalog_m_c,
+		api_response_response_provider_models_m_c,
 		api_response_response_distribution_m_c,
 		api_response_response_profile_id_m_c,
 		api_response_response_revisions_m_c,
