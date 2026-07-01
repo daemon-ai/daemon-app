@@ -20,6 +20,7 @@ public:
     [[nodiscard]] QString defaultProfileId() const override { return m_defaultId; }
 
     [[nodiscard]] QVariantMap profile(const QString& id) const override;
+    [[nodiscard]] QString resolveProfileRef(const QString& selector) const override;
     [[nodiscard]] QStringList profileNames() const override;
     [[nodiscard]] QVariantList availableSkills() const override;
     [[nodiscard]] QVariantList availableTools() const override;

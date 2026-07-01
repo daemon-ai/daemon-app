@@ -136,6 +136,23 @@ QVariantMap DaemonProfileStore::profile(const QString& id) const {
     return row >= 0 ? m_profiles->at(row) : QVariantMap{};
 }
 
+QString DaemonProfileStore::resolveProfileRef(const QString& selector) const {
+    if (selector.isEmpty()) {
+        return {};
+    }
+    // Daemon profiles are id-keyed (id IS the name), so a valid selector is normally already the
+    // id; still match by name defensively in case a display name ever diverges from the id.
+    if (m_profiles->indexOfId(selector) >= 0) {
+        return selector;
+    }
+    for (const QVariantMap& row : m_profiles->rows()) {
+        if (row.value(QStringLiteral("name")).toString() == selector) {
+            return row.value(QStringLiteral("id")).toString();
+        }
+    }
+    return selector; // unresolved: forward verbatim (residual)
+}
+
 QStringList DaemonProfileStore::profileNames() const {
     QStringList out;
     if (m_repo != nullptr) {

@@ -73,6 +73,35 @@ private slots:
         }
     }
 
+    // Live agent enablement #1: the code default is Daemon (unset env), and DAEMON_APP_SERVICE_MODE
+    // =mock is the documented escape hatch. The offscreen suite is unaffected because tests pass
+    // the mode explicitly; this only pins the resolver + the mock construction under the flag.
+    void serviceModeDefaultsToDaemonAndMockEscapeHatch() {
+        qunsetenv("DAEMON_APP_SERVICE_MODE");
+        QCOMPARE(daemonapp::daemon::serviceModeFromEnvironment(),
+                 daemonapp::daemon::ServiceMode::Daemon);
+
+        qputenv("DAEMON_APP_SERVICE_MODE", "mock");
+        QCOMPARE(daemonapp::daemon::serviceModeFromEnvironment(),
+                 daemonapp::daemon::ServiceMode::Mock);
+        qputenv("DAEMON_APP_SERVICE_MODE", "MoCk"); // case-insensitive
+        QCOMPARE(daemonapp::daemon::serviceModeFromEnvironment(),
+                 daemonapp::daemon::ServiceMode::Mock);
+        qputenv("DAEMON_APP_SERVICE_MODE", "daemon"); // explicit daemon still honored
+        QCOMPARE(daemonapp::daemon::serviceModeFromEnvironment(),
+                 daemonapp::daemon::ServiceMode::Daemon);
+        qunsetenv("DAEMON_APP_SERVICE_MODE");
+
+        // The mock escape hatch still yields the mock connection seam (and thus the mock turn
+        // simulator via the app graph's DaemonConnectionService gate).
+        QObject owner;
+        const auto graph =
+            daemonapp::daemon::createAppServiceGraph(daemonapp::daemon::ServiceMode::Mock, &owner);
+        QVERIFY(qobject_cast<connection::MockConnectionService*>(graph.connection) != nullptr);
+        QVERIFY(qobject_cast<daemonapp::daemon::DaemonConnectionService*>(graph.connection) ==
+                nullptr);
+    }
+
     void daemonGraphSwapsConnectionOnlyForNow() {
         QObject owner;
         const auto graph = daemonapp::daemon::createAppServiceGraph(

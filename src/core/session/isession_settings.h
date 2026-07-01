@@ -37,6 +37,13 @@ public:
 
     [[nodiscard]] virtual QString profile() const = 0;
     virtual void setProfile(const QString& profile) = 0;
+    // The profile override for a specific session id (not the active one). The turn wiring reads
+    // this so each orchestrator binds its OWN tab's profile without mutating the shared active
+    // sessionId. Default: the active profile iff `id` is the active session, else empty (= node's
+    // active profile); the mock overrides it with a per-session lookup.
+    [[nodiscard]] virtual QString profileFor(const QString& id) const {
+        return id == sessionId() ? profile() : QString();
+    }
     [[nodiscard]] virtual QString effort() const = 0;
     virtual void setEffort(const QString& effort) = 0;
     [[nodiscard]] virtual bool fast() const = 0;

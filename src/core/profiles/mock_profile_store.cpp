@@ -125,6 +125,21 @@ QVariantMap MockProfileStore::profile(const QString& id) const {
     return row >= 0 ? m_profiles->at(row) : QVariantMap{};
 }
 
+QString MockProfileStore::resolveProfileRef(const QString& selector) const {
+    if (selector.isEmpty()) {
+        return {};
+    }
+    if (m_profiles->indexOfId(selector) >= 0) {
+        return selector; // already a canonical id
+    }
+    for (const QVariantMap& row : m_profiles->rows()) {
+        if (row.value(QStringLiteral("name")).toString() == selector) {
+            return row.value(QStringLiteral("id")).toString();
+        }
+    }
+    return selector; // unresolved: forward verbatim (residual)
+}
+
 QStringList MockProfileStore::profileNames() const {
     QStringList out;
     for (const QVariantMap& row : m_profiles->rows()) {

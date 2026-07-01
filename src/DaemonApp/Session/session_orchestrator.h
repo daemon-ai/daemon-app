@@ -14,6 +14,13 @@
 #include <QTimer>
 #include <QtQml/qqmlregistration.h>
 
+namespace session {
+class ISessionSettings;
+}
+namespace profiles {
+class IProfileStore;
+}
+
 // The submit pipeline, extracted from Session.qml (the per-front-end glue at
 // lines 331-357) so both the QML GUI and the TUI drive submit -> turn identically.
 // It owns the TurnController (the assistant-turn FSM) and a TodoListModel (the
@@ -34,6 +41,15 @@ class SessionOrchestrator : public QObject {
     // default mock simulator is used, so unit/offscreen coverage works with no wiring.
     Q_PROPERTY(
         ITurnEngineFactory* turnEngines READ turnEngines WRITE setTurnEngines NOTIFY turnChanged)
+    // The per-session override seam (profile/effort/...) and the profile store, injected by the app
+    // graph so the orchestrator can bind THIS session's profile onto the turn (#6b). Typed QObject*
+    // (assigned from the `SessionSettings` / `Profiles` QML context properties, or set in C++ by
+    // the TUI) and qobject_cast internally, mirroring the `turnEngines` injection. Both are
+    // optional: a null seam simply leaves the turn on the node's active profile.
+    Q_PROPERTY(QObject* sessionSettings READ sessionSettings WRITE setSessionSettings NOTIFY
+                   sessionSettingsChanged)
+    Q_PROPERTY(
+        QObject* profileStore READ profileStore WRITE setProfileStore NOTIFY profileStoreChanged)
     Q_PROPERTY(TodoListModel* todos READ todos CONSTANT)
     Q_PROPERTY(SubagentModel* subagents READ subagents CONSTANT)
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
@@ -47,6 +63,11 @@ public:
     [[nodiscard]] ITurnEngine* turn() const { return m_turn; }
     [[nodiscard]] ITurnEngineFactory* turnEngines() const { return m_turnEngines; }
     void setTurnEngines(ITurnEngineFactory* factory);
+
+    [[nodiscard]] QObject* sessionSettings() const;
+    void setSessionSettings(QObject* settings);
+    [[nodiscard]] QObject* profileStore() const;
+    void setProfileStore(QObject* store);
     [[nodiscard]] TodoListModel* todos() const { return m_todos; }
     [[nodiscard]] SubagentModel* subagents() const { return m_subagents; }
     [[nodiscard]] bool busy() const;
@@ -78,6 +99,8 @@ signals:
     void sessionChanged();
     void turnChanged();
     void busyChanged();
+    void sessionSettingsChanged();
+    void profileStoreChanged();
     // A non-shared slash command the front end must perform (e.g. open settings,
     // toggle distraction-free).
     void commandRequested(const QString& command);
@@ -98,10 +121,18 @@ private:
     // Ensure the bound session has an id before a turn, minting a client id when the daemon owns
     // creation (CachedSessionStore::newSession returns empty), then bind it to the engine.
     void ensureSessionBound();
+    // Push THIS session's profile onto the turn engine (#6b): read the per-session override for the
+    // bound session id (never the shared active id), resolve the display name to the canonical
+    // profile id the node resolves, and setProfile() it. Empty stays empty (= node active profile).
+    // The single choke point invoked from bind, submit()/rerun(), and the settings changed()
+    // signal.
+    void syncTurnProfile();
 
     SessionController* m_session = nullptr;
     ITurnEngine* m_turn = nullptr;
     ITurnEngineFactory* m_turnEngines = nullptr;
+    session::ISessionSettings* m_settings = nullptr;
+    profiles::IProfileStore* m_profileStore = nullptr;
     TodoListModel* m_todos = nullptr;
     SubagentModel* m_subagents = nullptr;
     // Clears simulator todos a short beat after the turn settles (replaces the QML

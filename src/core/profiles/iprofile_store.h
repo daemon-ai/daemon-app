@@ -34,6 +34,16 @@ public:
 
     [[nodiscard]] Q_INVOKABLE virtual QVariantMap profile(const QString& id) const = 0;
 
+    // Resolve a profile selector to the canonical profile id the node resolves (the ref used by
+    // ProfileCreate/ProfileGet and Submit.profile). The session-settings UI stores a display name;
+    // the turn wiring calls this so the value that reaches the wire is an id, not a label. An empty
+    // selector stays empty (= the node's active profile); an already-valid id passes through; an
+    // unresolved selector is forwarded verbatim as a residual. Default: pass-through (stores that
+    // do not distinguish id/name are unaffected).
+    [[nodiscard]] Q_INVOKABLE virtual QString resolveProfileRef(const QString& selector) const {
+        return selector;
+    }
+
     // The profile display names, for QML dropdowns (e.g. the cron job profile
     // picker) that want a plain string list rather than the row model.
     [[nodiscard]] Q_INVOKABLE virtual QStringList profileNames() const = 0;

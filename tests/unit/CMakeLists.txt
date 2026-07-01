@@ -593,6 +593,8 @@ target_link_libraries(tst_session_orchestrator
         Qt6::Quick
         daemon-app::session_view
         daemon-app::turn
+        daemon-app::session
+        daemon-app::profiles
         daemon-app::persistence
         daemon-app::domain
 )

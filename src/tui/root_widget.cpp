@@ -123,6 +123,10 @@ RootWidget::RootWidget()
     // creates a per-tab TabSession on demand and binds the views to the active one.
     m_tabModel = new TabModel(this);
     m_tabSessions = std::make_unique<TabSessionManager>(m_services.store, m_tabModel);
+    // The per-session profile drives the turn (#6b): give every orchestrator the shared override
+    // seam + profile store (both modes), matching the GUI TranscriptPage bindings.
+    m_tabSessions->setSessionSettings(m_services.sessionSettings);
+    m_tabSessions->setProfileStore(m_services.profiles);
     // In daemon mode every session's orchestrator drives a real Submit + Subscribe turn; in mock
     // mode it keeps its default canned simulator. Detect daemon mode the same way the service graph
     // does (the connection seam is the DaemonConnectionService).

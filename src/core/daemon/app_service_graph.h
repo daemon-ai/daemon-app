@@ -131,14 +131,15 @@ struct AppServiceGraph {
 
 // Resolve the service mode from the DAEMON_APP_SERVICE_MODE environment variable
 // ("daemon" / "mock", case-insensitive). Anything else (including unset) returns the fallback,
-// which keeps Mock as the default until a caller explicitly opts in.
+// which is now Daemon: a plain launch is daemon-backed (live agent enablement #1).
 //
-// Phase 4 DECISION (default mode): keep the code default `Mock` and let the packaged bundle force
-// `DAEMON_APP_SERVICE_MODE=daemon` (flake.nix). This keeps bare dev runs + the offscreen ctests
-// hermetic (no live daemon) while shipped installs are daemon-backed; flipping the code default
-// would require the 3 `tests/tui/CMakeLists.txt` offscreen tests to set `=mock` explicitly, for no
-// real gain. Not flipped.
-ServiceMode serviceModeFromEnvironment(ServiceMode fallback = ServiceMode::Mock);
+// DEFAULT (live agent enablement #1): the code default is `Daemon`. `DAEMON_APP_SERVICE_MODE=mock`
+// is the documented offline/test escape hatch (mock connection + canned turn simulator, no live
+// daemon); `=daemon` is honored but redundant. Mock is never a default and never a GUI-selectable
+// provider - it is reachable only under this flag. The offscreen ctests are unaffected: no test
+// resolves the mode from the environment, and the ones that build the graph pass ServiceMode
+// explicitly (tst_app_service_graph).
+ServiceMode serviceModeFromEnvironment(ServiceMode fallback = ServiceMode::Daemon);
 
 // Shared service factory for GUI and TUI. The current Mock mode preserves existing behavior; Daemon
 // mode swaps in daemon-backed services as they land, starting with the connection seam.

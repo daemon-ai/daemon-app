@@ -20,6 +20,13 @@ public:
 
     [[nodiscard]] QString profile() const override { return entry().profile; }
     void setProfile(const QString& profile) override;
+    // Per-session lookup (no side effects): read the override for `id` directly from the map
+    // without switching the active session, so a background tab's turn wiring never clobbers the
+    // focused session's overrides. Empty when `id` has no stored override (= node's active
+    // profile).
+    [[nodiscard]] QString profileFor(const QString& id) const override {
+        return m_bySession.value(id).profile;
+    }
     [[nodiscard]] QString effort() const override { return entry().effort; }
     void setEffort(const QString& effort) override;
     [[nodiscard]] bool fast() const override { return entry().fast; }
@@ -36,7 +43,10 @@ protected:
     // The per-session override set. Defaults use the unified off/low/medium/
     // high effort vocabulary (matches the composer's default reasoning effort).
     struct Settings {
-        QString profile = QStringLiteral("General Assistant");
+        // Empty = no per-session override, i.e. the node's active profile drives the turn. A
+        // profile is bound only once the user explicitly picks one in the session-settings
+        // popover/overlay.
+        QString profile;
         QString effort = QStringLiteral("medium");
         bool fast = false;
         bool verbose = false;

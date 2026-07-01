@@ -3,6 +3,8 @@
 
 #include "session_orchestrator.h"
 
+#include "profiles/iprofile_store.h"
+#include "session/isession_settings.h"
 #include "session_controller.h"
 #include "turn_controller.h"
 
@@ -51,8 +53,67 @@ void SessionOrchestrator::setTurnEngines(ITurnEngineFactory* factory) {
     if (m_session != nullptr) {
         m_turn->setSessionId(m_session->currentId());
     }
+    // A freshly-swapped engine (e.g. the daemon engine replacing the mock simulator) must carry the
+    // bound session's profile from the first turn.
+    syncTurnProfile();
     emit turnChanged();
     emit busyChanged();
+}
+
+QObject* SessionOrchestrator::sessionSettings() const {
+    return m_settings;
+}
+
+void SessionOrchestrator::setSessionSettings(QObject* settings) {
+    auto* typed = qobject_cast<session::ISessionSettings*>(settings);
+    if (m_settings == typed) {
+        return;
+    }
+    if (m_settings != nullptr) {
+        disconnect(m_settings, nullptr, this, nullptr);
+    }
+    m_settings = typed;
+    if (m_settings != nullptr) {
+        // A per-session override changed: re-bind, but only when the shared settings object is
+        // currently pointed at THIS orchestrator's session (the popover/overlay set its sessionId
+        // to the focused chat before editing). Guarding on the active id keeps a change to another
+        // tab's overrides from touching this engine and avoids any cross-tab churn. profileFor()
+        // below still reads our own id, so the bind is correct regardless.
+        connect(m_settings, &session::ISessionSettings::changed, this, [this] {
+            if (m_session != nullptr && m_settings != nullptr &&
+                m_settings->sessionId() == m_session->currentId()) {
+                syncTurnProfile();
+            }
+        });
+    }
+    syncTurnProfile();
+    emit sessionSettingsChanged();
+}
+
+QObject* SessionOrchestrator::profileStore() const {
+    return m_profileStore;
+}
+
+void SessionOrchestrator::setProfileStore(QObject* store) {
+    auto* typed = qobject_cast<profiles::IProfileStore*>(store);
+    if (m_profileStore == typed) {
+        return;
+    }
+    m_profileStore = typed;
+    syncTurnProfile();
+    emit profileStoreChanged();
+}
+
+void SessionOrchestrator::syncTurnProfile() {
+    if (m_turn == nullptr || m_settings == nullptr || m_session == nullptr) {
+        return;
+    }
+    // Read the override for our OWN session (never the shared active id), then resolve the stored
+    // display name to the canonical profile id the node resolves (empty stays empty = node active).
+    const QString selection = m_settings->profileFor(m_session->currentId());
+    const QString profileId =
+        m_profileStore != nullptr ? m_profileStore->resolveProfileRef(selection) : selection;
+    m_turn->setProfile(profileId);
 }
 
 void SessionOrchestrator::setSession(SessionController* session) {
@@ -63,6 +124,7 @@ void SessionOrchestrator::setSession(SessionController* session) {
     if (m_turn != nullptr && m_session != nullptr) {
         m_turn->setSessionId(m_session->currentId());
     }
+    syncTurnProfile();
     emit sessionChanged();
 }
 
@@ -78,6 +140,9 @@ void SessionOrchestrator::ensureSessionBound() {
     if (m_turn != nullptr) {
         m_turn->setSessionId(m_session->currentId());
     }
+    // The session id may have just been minted (daemon lazy-create), so re-read this session's
+    // profile now that the engine is bound to the final id.
+    syncTurnProfile();
 }
 
 bool SessionOrchestrator::busy() const {

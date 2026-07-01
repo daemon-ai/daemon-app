@@ -85,6 +85,10 @@ Rectangle {
         session: controller
         // Daemon Submit/Subscribe engine vs mock simulator, chosen by the app graph.
         turnEngines: TurnEngines
+        // Per-session profile drives the turn (#6b): the orchestrator reads THIS session's profile
+        // override and resolves it (via Profiles) to the id the node resolves for Submit.profile.
+        sessionSettings: SessionSettings
+        profileStore: Profiles
         // Route the orchestrator's front-end commands. Session-scoped ones act
         // on this tab's composer/session/status here; window-level ones (help,
         // title, save) bubble up via commandForwarded.

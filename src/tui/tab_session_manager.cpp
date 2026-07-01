@@ -3,6 +3,8 @@
 
 #include "tab_session_manager.h"
 
+#include "profiles/iprofile_store.h"
+#include "session/isession_settings.h"
 #include "session_controller.h"
 #include "session_orchestrator.h"
 #include "tab_model.h"
@@ -49,6 +51,10 @@ TabSession* TabSessionManager::ensureSession(int tabId,
     s->orchestrator = new SessionOrchestrator();
     s->orchestrator->setSession(s->controller);
     s->orchestrator->setTurnEngines(m_turnEngines); // daemon engine vs mock; no-op when null
+    // Per-session profile drives the turn (#6b): inject the shared override seam + profile store so
+    // this tab's orchestrator binds its own session's profile (parity with the GUI TranscriptPage).
+    s->orchestrator->setSessionSettings(m_sessionSettings);
+    s->orchestrator->setProfileStore(m_profileStore);
     s->turn = s->orchestrator->turn();
     s->host = new InteractiveTurnHost(&s->doc, &s->ingest);
     m_sessions.insert(tabId, s);

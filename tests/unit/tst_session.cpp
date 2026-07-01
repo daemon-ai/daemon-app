@@ -69,9 +69,10 @@ private slots:
         s.setProfile(QStringLiteral("Coder"));
 
         s.setSessionId(QStringLiteral("s-2"));
-        // A fresh session starts at the defaults, not chat 1's overrides.
+        // A fresh session starts at the defaults, not chat 1's overrides. The default profile is
+        // empty (= the node's active profile drives the turn until the user picks one).
         QCOMPARE(s.effort(), QStringLiteral("medium"));
-        QCOMPARE(s.profile(), QStringLiteral("General Assistant"));
+        QVERIFY(s.profile().isEmpty());
         s.setEffort(QStringLiteral("low"));
 
         // Switching back restores chat 1's overrides.

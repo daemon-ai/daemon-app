@@ -22,6 +22,8 @@ target_link_libraries(da_session_view
         Qt6::Quick
         daemon-app::domain
         daemon-app::persistence
+        daemon-app::session
+        daemon-app::profiles
         daemon-app::theme
         daemon-app::controls
         daemon-app::settings

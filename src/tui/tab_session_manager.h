@@ -18,6 +18,12 @@ class SessionOrchestrator;
 class TabModel;
 class ITurnEngine;
 class ITurnEngineFactory;
+namespace session {
+class ISessionSettings;
+}
+namespace profiles {
+class IProfileStore;
+}
 
 // Per-transcript-tab backend state. Each transcript tab owns an independent
 // controller / orchestrator (turn) / document / ingest / mock host, so a tab that
@@ -47,6 +53,13 @@ public:
     // simulator). Set once at startup; null keeps the orchestrator's default mock simulator.
     void setTurnEngines(ITurnEngineFactory* factory) { m_turnEngines = factory; }
 
+    // The shared per-session override seam + profile store, injected into every session's
+    // orchestrator so the focused chat's profile drives the turn (#6b), mirroring the GUI's
+    // `sessionSettings`/`profileStore` bindings. Set once at startup; null leaves the turn on the
+    // node's active profile.
+    void setSessionSettings(session::ISessionSettings* settings) { m_sessionSettings = settings; }
+    void setProfileStore(profiles::IProfileStore* store) { m_profileStore = store; }
+
     [[nodiscard]] TabSession* ensureSession(int tabId,
                                             const std::function<void(TabSession*)>& wire);
     void rebindSession(int tabId, const QString& sessionId,
@@ -58,5 +71,7 @@ private:
     QObject* m_store = nullptr;
     TabModel* m_tabs = nullptr;
     ITurnEngineFactory* m_turnEngines = nullptr;
+    session::ISessionSettings* m_sessionSettings = nullptr;
+    profiles::IProfileStore* m_profileStore = nullptr;
     QHash<int, TabSession*> m_sessions;
 };
