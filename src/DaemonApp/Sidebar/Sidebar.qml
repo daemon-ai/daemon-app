@@ -606,79 +606,11 @@ Rectangle {
         }
     }
 
-    // "+ New agent" form (A7): the SAME node-driven provider/model/key picker the onboarding wizard
-    // uses (AgentInferencePicker) — real ProviderCatalog vendors + selection-only ProviderModels, no
-    // hardcoded provider string and no free-text model. On accept it runs the SAME node-authoritative
-    // create path: ProfileCreate (a new named agent) -> configure provider/model/base-url (+ optional
-    // key + persona) -> make it the active default -> a blank node SessionCreate under it + auto-select
-    // (App.openNewAgentChat -> createNew -> node SessionCreate; the tab opens event-driven).
-    QQC.Dialog {
+    // "+ New agent" (A7 + foreign engines): the Kit-themed create-agent dialog — Name + engine
+    // picker (daemon-core / ACP catalog entries) + the shared AgentInferencePicker for the native
+    // engine. Extracted to NewAgentDialog.qml; this file only instantiates it.
+    NewAgentDialog {
         id: newAgentDialog
-        title: qsTr("New agent")
-        modal: true
-        anchors.centerIn: QQC.Overlay.overlay
-        width: 420
-        standardButtons: QQC.Dialog.Ok | QQC.Dialog.Cancel
-
-        function openForm() {
-            nameField.text = "";
-            personaField.text = "";
-            nameField.forceActiveFocus();
-            open();
-        }
-
-        onAccepted: {
-            var name = nameField.text.trim();
-            if (name.length === 0 || !agentPicker.inferenceComplete)
-                return;
-            var id = Profiles.createProfile(name);
-            if (!id || id.length === 0)
-                return;
-            var fields = {};
-            var desc = (ProviderCatalog && agentPicker.providerId.length > 0)
-                       ? ProviderCatalog.descriptorFor(agentPicker.providerId) : ({});
-            // Persist the ProviderSelector wire string + base URL from the node descriptor (never a
-            // hardcoded provider); the model is the picker's selection (never free text).
-            if (desc && desc.wireSelector)
-                fields.provider = desc.wireSelector;
-            if (agentPicker.model.length > 0)
-                fields.model = agentPicker.model;
-            if (desc && desc.defaultBaseUrl && desc.defaultBaseUrl.length > 0)
-                fields.baseUrl = desc.defaultBaseUrl;
-            if (personaField.text.trim().length > 0)
-                fields.systemPrompt = personaField.text.trim();
-            Profiles.updateProfile(id, fields);
-            // Profile-scoped credential for a key-requiring provider (stored under the new agent).
-            if (agentPicker.key.length > 0 && typeof Accounts !== "undefined" && Accounts)
-                Accounts.addApiKeyForProfile(id, agentPicker.providerId, "", agentPicker.key, "");
-            // Same create path as the wizard: make the new agent active, then a blank node
-            // SessionCreate under it opens + auto-selects a transcript (event-driven, node-minted id).
-            Profiles.setDefault(id);
-            if (typeof App !== "undefined" && App)
-                App.openNewAgentChat();
-        }
-
-        contentItem: Column {
-            spacing: 8
-
-            QQC.Label { text: qsTr("Name"); color: Theme.sidebarText }
-            QQC.TextField {
-                id: nameField
-                width: parent.width
-                placeholderText: qsTr("agent name")
-            }
-            // The shared node-driven provider/model/key picker (A7).
-            AgentInferencePicker {
-                id: agentPicker
-                width: parent.width
-            }
-            QQC.Label { text: qsTr("Persona (optional)"); color: Theme.sidebarText }
-            QQC.TextField {
-                id: personaField
-                width: parent.width
-                placeholderText: qsTr("system prompt")
-            }
-        }
     }
 
     Connections {

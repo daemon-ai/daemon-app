@@ -7,14 +7,21 @@
 #include "firstrun/first_run_model.h"
 #include "settings/isettings_store.h"
 
+#include <QStringList>
 #include <Tui/ZButton.h>
 #include <Tui/ZDialog.h>
 #include <Tui/ZInputBox.h>
 #include <Tui/ZLabel.h>
 #include <Tui/ZListView.h>
 
+namespace daemonapp::daemon {
+class AcpRepository;
+}
 namespace models {
 class IProviderCatalog;
+}
+namespace profiles {
+class IProfileStore;
 }
 
 // A small modal "Quit daemon-app?" confirmation. ZDialog auto-centers, handles
@@ -59,6 +66,33 @@ public:
 
 signals:
     void confirmed();
+};
+
+// The TUI "+ New agent" stub (foreign engines; wire v23): a Name field + a minimal ENGINE list —
+// "daemon-core" (the native engine, default) plus every ACP catalog name (no badges) — committing
+// through the SAME IProfileStore create path the GUI dialog uses: native -> createProfile(name)
+// (provider/model then configured via the Profile page), foreign -> createAcpProfile(name, agent)
+// carrying engine=Acp{agent} (a catalog NAME; recipes stay node-side), then setDefault.
+class NewAgentDialog : public Tui::ZDialog {
+    Q_OBJECT
+
+public:
+    NewAgentDialog(profiles::IProfileStore* profiles, daemonapp::daemon::AcpRepository* acp,
+                   Tui::ZWidget* parent);
+
+signals:
+    // A ProfileCreate was issued under `profileId` (the row appears when the repo re-lists).
+    void created(const QString& profileId);
+
+private:
+    void rebuildEngines();
+    void commit();
+
+    profiles::IProfileStore* m_profiles = nullptr;
+    daemonapp::daemon::AcpRepository* m_acp = nullptr;
+    Tui::ZInputBox* m_name = nullptr;
+    Tui::ZListView* m_engines = nullptr; // row 0 = daemon-core; rows 1.. = m_agents[row-1]
+    QStringList m_agents;                // ACP catalog names backing rows 1..
 };
 
 // The TUI first-run gate: a lighter "Setup Required" modal mirroring the GUI's
