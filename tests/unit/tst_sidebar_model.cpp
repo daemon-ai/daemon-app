@@ -9,33 +9,55 @@
 
 #include <QSignalSpy>
 #include <QtTest>
+#include <utility>
 
 using daemonnet::MockDaemonNet;
 using persistence::InMemorySessionStore;
 
 namespace {
-// A minimal IProfileStore exposing two fixed agent rows (a configured one and an unconfigured
-// placeholder), to drive the Fleet membership section deterministically.
+QVariantMap agentRow(const QString& id, const QString& name, const QString& provider,
+                     const QString& model, bool isDefault) {
+    QVariantMap m;
+    m[QStringLiteral("id")] = id;
+    m[QStringLiteral("name")] = name;
+    m[QStringLiteral("provider")] = provider;
+    m[QStringLiteral("model")] = model;
+    m[QStringLiteral("isDefault")] = isDefault;
+    return m;
+}
+
+// A configured agent + an unconfigured placeholder: drives the provider/model sublabel cases.
+QList<QVariantMap> twoAgentRows() {
+    return {agentRow(QStringLiteral("anthropic"), QStringLiteral("anthropic"),
+                     QStringLiteral("genai"), QStringLiteral("claude-opus-4-8"), true),
+            agentRow(QStringLiteral("default"), QStringLiteral("default"),
+                     QStringLiteral("daemon_api"), QString(), false)};
+}
+
+// A roster mirroring MockDaemonNet's unit->profile binding (its seeded sessions carry
+// boundProfile prof-1/2/3), so agent rows resolve real ByProfile session leaves from the store.
+// prof-3 deliberately owns no non-archived session (a leaf agent, not foldable).
+QList<QVariantMap> rosterRows() {
+    return {agentRow(QStringLiteral("prof-1"), QStringLiteral("General Assistant"),
+                     QStringLiteral("genai"), QStringLiteral("llama-3.1-8b-instruct"), true),
+            agentRow(QStringLiteral("prof-2"), QStringLiteral("Coder"), QStringLiteral("llama_cpp"),
+                     QStringLiteral("qwen2.5-coder-32b"), false),
+            agentRow(QStringLiteral("prof-3"), QStringLiteral("Researcher"),
+                     QStringLiteral("genai"), QStringLiteral("mixtral-8x7b"), false)};
+}
+
+// A minimal IProfileStore over fixed agent rows, to drive the Fleet membership section
+// deterministically (the FLEET body renders node root -> one agent row per profile).
 class FakeProfileStore : public profiles::IProfileStore {
 public:
-    FakeProfileStore() : m_model(new uimodels::VariantListModel(this)) {
-        QVariantMap configured;
-        configured[QStringLiteral("id")] = QStringLiteral("anthropic");
-        configured[QStringLiteral("name")] = QStringLiteral("anthropic");
-        configured[QStringLiteral("provider")] = QStringLiteral("genai");
-        configured[QStringLiteral("model")] = QStringLiteral("claude-opus-4-8");
-        configured[QStringLiteral("isDefault")] = true;
-        m_model->upsert(configured);
-        QVariantMap bare;
-        bare[QStringLiteral("id")] = QStringLiteral("default");
-        bare[QStringLiteral("name")] = QStringLiteral("default");
-        bare[QStringLiteral("provider")] = QStringLiteral("daemon_api");
-        bare[QStringLiteral("model")] = QString();
-        bare[QStringLiteral("isDefault")] = false;
-        m_model->upsert(bare);
+    explicit FakeProfileStore(const QList<QVariantMap>& rows, QString defaultId,
+                              QObject* parent = nullptr)
+        : profiles::IProfileStore(parent), m_model(new uimodels::VariantListModel(this)),
+          m_default(std::move(defaultId)) {
+        m_model->setRows(rows);
     }
     [[nodiscard]] QObject* profiles() const override { return m_model; }
-    [[nodiscard]] QString defaultProfileId() const override { return QStringLiteral("anthropic"); }
+    [[nodiscard]] QString defaultProfileId() const override { return m_default; }
     [[nodiscard]] QVariantMap profile(const QString& id) const override {
         const int row = m_model->indexOfId(id);
         return row >= 0 ? m_model->at(row) : QVariantMap{};
@@ -51,11 +73,13 @@ public:
 
 private:
     uimodels::VariantListModel* m_model = nullptr;
+    QString m_default;
 };
 } // namespace
 
-// Exercises the flattened agent-tree sidebar model: recursive flattening to
-// arbitrary depth, the per-row tree roles, expand/collapse, and scope selection.
+// Exercises the sidebar model: the Fleet MEMBERSHIP view (node/connection root -> agent rows ==
+// profiles -> per-agent session leaves; daemon-supervision-spec §0), its expand/collapse and
+// identity-based selection, the collapsible section headers, and the co-equal Integrations tree.
 class TestSidebarModel : public QObject {
     Q_OBJECT
 
@@ -74,85 +98,163 @@ private:
         return m.data(m.index(row, 0), role).value<T>();
     }
 
+    // An agent's non-archived session count, straight from the store's ByProfile scope (the same
+    // query the model issues), so expectations track the seed instead of magic numbers.
+    static int agentSessions(const InMemorySessionStore& store, const QString& profileId) {
+        return store.sessionCount({domain::NodeType::Agent, -1, domain::UnitId(), profileId});
+    }
+
 private slots:
-    // The whole fleet-of-fleets is flattened with correct depths; nesting is
-    // unbounded (worker sits three levels under its root).
-    void flattensTreeWithDepths() {
-        InMemorySessionStore store;
+    // The Fleet membership view is a fixed-shape tree: the node/connection ROOT at depth 0, one
+    // agent row per profile at depth 1, and each agent's session leaves at depth 2.
+    void fleetMembershipFlattensWithDepths() {
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
 
-        const int acme = findRow(model, QStringLiteral("Acme Platform"));
-        const int build = findRow(model, QStringLiteral("Build Fleet"));
+        const int root = findRow(model, QStringLiteral("Local node"));
+        const int assistant = findRow(model, QStringLiteral("General Assistant"));
         const int coder = findRow(model, QStringLiteral("Coder"));
-        const int worker = findRow(model, QStringLiteral("Worker A"));
-        QVERIFY(acme >= 0 && build >= 0 && coder >= 0 && worker >= 0);
+        const int leaf = findRow(model, QStringLiteral("Implement endpoint"));
+        QVERIFY(root >= 0 && assistant >= 0 && coder >= 0 && leaf >= 0);
 
-        QCOMPARE(roleAt<int>(model, acme, SidebarModel::DepthRole), 0);
-        QCOMPARE(roleAt<int>(model, build, SidebarModel::DepthRole), 1);
-        QCOMPARE(roleAt<int>(model, coder, SidebarModel::DepthRole), 2);
-        QCOMPARE(roleAt<int>(model, worker, SidebarModel::DepthRole), 3);
+        QCOMPARE(roleAt<int>(model, root, SidebarModel::DepthRole), 0);
+        QCOMPARE(roleAt<int>(model, assistant, SidebarModel::DepthRole), 1);
+        QCOMPARE(roleAt<int>(model, coder, SidebarModel::DepthRole), 1);
+        QCOMPARE(roleAt<int>(model, leaf, SidebarModel::DepthRole), 2);
+        // Root before agents, agents before their own leaves (store order preserved).
+        QVERIFY(root < assistant && assistant < coder && coder < leaf);
     }
 
-    // Tree roles are cosmetic-kind + structural flags; orchestrators carry
-    // children, leaves do not.
-    void exposesTreeRoles() {
-        InMemorySessionStore store;
+    // Membership rows carry the §0 roles: the root is a FleetNode counting its agents; an agent
+    // row is NodeType::Agent bound to its profile id, counting (and folding) its sessions; an
+    // agent with no sessions is a plain leaf; a session leaf carries profile + session ids.
+    void exposesFleetMembershipRoles() {
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
 
-        const int acme = findRow(model, QStringLiteral("Acme Platform"));
+        const int root = findRow(model, QStringLiteral("Local node"));
+        QCOMPARE(roleAt<int>(model, root, SidebarModel::NodeTypeRole), 10); // FleetNode
+        QVERIFY(roleAt<bool>(model, root, SidebarModel::HasChildrenRole));
+        QCOMPARE(roleAt<int>(model, root, SidebarModel::CountRole), 3); // the roster's agents
+
         const int coder = findRow(model, QStringLiteral("Coder"));
+        QCOMPARE(roleAt<int>(model, coder, SidebarModel::NodeTypeRole), 11); // Agent
+        QCOMPARE(roleAt<QString>(model, coder, SidebarModel::ProfileRole),
+                 QStringLiteral("prof-2"));
+        QVERIFY(roleAt<bool>(model, coder, SidebarModel::HasChildrenRole));
+        QVERIFY(agentSessions(store, QStringLiteral("prof-2")) > 0);
+        QCOMPARE(roleAt<int>(model, coder, SidebarModel::CountRole),
+                 agentSessions(store, QStringLiteral("prof-2")));
 
-        // kind 2 == Orchestrator, kind 0 == Engine; nodeType 4 == Node.
-        QCOMPARE(roleAt<int>(model, acme, SidebarModel::KindRole), 2);
-        QCOMPARE(roleAt<int>(model, acme, SidebarModel::NodeTypeRole), 4);
-        QVERIFY(roleAt<bool>(model, acme, SidebarModel::HasChildrenRole));
-        QCOMPARE(roleAt<QString>(model, acme, SidebarModel::UnitIdRole), QStringLiteral("n-acme"));
+        // prof-3 owns no non-archived session: a leaf row, nothing to fold.
+        const int researcher = findRow(model, QStringLiteral("Researcher"));
+        QCOMPARE(agentSessions(store, QStringLiteral("prof-3")), 0);
+        QVERIFY(!roleAt<bool>(model, researcher, SidebarModel::HasChildrenRole));
 
-        QCOMPARE(roleAt<int>(model, coder, SidebarModel::KindRole), 0);
-        QVERIFY(!roleAt<bool>(model, coder, SidebarModel::HasChildrenRole));
+        const int leaf = findRow(model, QStringLiteral("Implement endpoint"));
+        QCOMPARE(roleAt<int>(model, leaf, SidebarModel::NodeTypeRole), 12); // AgentSession
+        QCOMPARE(roleAt<QString>(model, leaf, SidebarModel::ProfileRole), QStringLiteral("prof-2"));
+        QCOMPARE(roleAt<QString>(model, leaf, SidebarModel::SessionIdRole),
+                 QStringLiteral("s-coder-impl"));
     }
 
-    // Collapsing a node hides its whole subtree; expanding restores it.
-    void toggleExpandHidesAndRestoresSubtree() {
-        InMemorySessionStore store;
+    // Collapsing an agent hides exactly its session leaves; collapsing the node root hides the
+    // whole membership body (agents included); expanding restores both.
+    void toggleExpandFoldsAgentAndRoot() {
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
 
         const int before = model.rowCount();
-        const int build = findRow(model, QStringLiteral("Build Fleet"));
-        QVERIFY(build >= 0);
-        QVERIFY(roleAt<bool>(model, build, SidebarModel::ExpandedRole));
+        const int coder = findRow(model, QStringLiteral("Coder"));
+        QVERIFY(roleAt<bool>(model, coder, SidebarModel::ExpandedRole));
 
-        model.toggleExpand(build);
-        // Build's subtree (coder, review, deep, worker) is gone.
-        QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
-        QVERIFY(findRow(model, QStringLiteral("Worker A")) < 0);
-        QCOMPARE(model.rowCount(), before - 4);
-        QVERIFY(!roleAt<bool>(model, findRow(model, QStringLiteral("Build Fleet")),
+        model.toggleExpand(coder);
+        QVERIFY(findRow(model, QStringLiteral("Implement endpoint")) < 0);
+        QCOMPARE(model.rowCount(), before - agentSessions(store, QStringLiteral("prof-2")));
+        QVERIFY(!roleAt<bool>(model, findRow(model, QStringLiteral("Coder")),
                               SidebarModel::ExpandedRole));
 
-        model.toggleExpand(findRow(model, QStringLiteral("Build Fleet")));
-        QVERIFY(findRow(model, QStringLiteral("Coder")) >= 0);
+        model.toggleExpand(findRow(model, QStringLiteral("Coder")));
+        QCOMPARE(model.rowCount(), before);
+        QVERIFY(findRow(model, QStringLiteral("Implement endpoint")) >= 0);
+
+        // The node root folds the whole membership (all agents + leaves), root row stays.
+        model.toggleExpand(findRow(model, QStringLiteral("Local node")));
+        QVERIFY(findRow(model, QStringLiteral("Local node")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
+        QVERIFY(findRow(model, QStringLiteral("Implement endpoint")) < 0);
+        model.toggleExpand(findRow(model, QStringLiteral("Local node")));
         QCOMPARE(model.rowCount(), before);
     }
 
-    // Activating a node row selects its subtree scope (nodeType Node, the
-    // agent id carried through).
-    void activateEmitsNodeScope() {
-        InMemorySessionStore store;
+    // Activating the node root scopes the list to ALL of this node's sessions.
+    void activateNodeRootScopesAllSessions() {
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
 
         QSignalSpy spy(&model, &SidebarModel::scopeSelected);
-        const int acme = findRow(model, QStringLiteral("Acme Platform"));
-        model.activate(acme);
+        const int root = findRow(model, QStringLiteral("Local node"));
+        model.activate(root);
 
         QCOMPARE(spy.count(), 1);
         const QList<QVariant> args = spy.takeFirst();
-        QCOMPARE(args.at(0).toInt(), 4); // NodeType::Unit
-        QCOMPARE(args.at(2).toString(), QStringLiteral("n-acme"));
+        QCOMPARE(args.at(0).toInt(), 0); // NodeType::AllSessions
+        QVERIFY(args.at(2).toString().isEmpty());
+        QVERIFY(roleAt<bool>(model, root, SidebarModel::CurrentRole));
+    }
+
+    // Activating an agent row scopes the session list to its profile (ByProfile; the profile id
+    // rides the string slot as the lens key).
+    void activateAgentScopesByProfile() {
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
+        SidebarModel model;
+        model.setStore(&store);
+        model.setProfiles(&profiles);
+
+        QSignalSpy spy(&model, &SidebarModel::scopeSelected);
+        model.activate(findRow(model, QStringLiteral("Coder")));
+
+        QCOMPARE(spy.count(), 1);
+        const QList<QVariant> args = spy.takeFirst();
+        QCOMPARE(args.at(0).toInt(), 11); // NodeType::Agent
+        QCOMPARE(args.at(2).toString(), QStringLiteral("prof-2"));
+    }
+
+    // Activating a session leaf under an agent opens its transcript (sessionActivated), not a
+    // list scope — the same contract as an Integrations session leaf.
+    void activateAgentSessionLeafOpensTranscript() {
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
+        SidebarModel model;
+        model.setStore(&store);
+        model.setProfiles(&profiles);
+
+        QSignalSpy opened(&model, &SidebarModel::sessionActivated);
+        QSignalSpy scoped(&model, &SidebarModel::scopeSelected);
+        model.activate(findRow(model, QStringLiteral("Implement endpoint")));
+
+        QCOMPARE(opened.count(), 1);
+        QCOMPARE(opened.takeFirst().at(0).toString(), QStringLiteral("s-coder-impl"));
+        QCOMPARE(scoped.count(), 0);
     }
 
     // Separator rows (Fleet / Tags headers) are not selectable and emit nothing.
@@ -170,47 +272,51 @@ private slots:
         QCOMPARE(spy.count(), 0);
     }
 
-    // The highlight is identity-based: it follows the node across a model reset
-    // rather than sticking to a row index. Collapsing a node that does NOT
-    // contain the selection rebuilds the list but must leave Coder highlighted.
+    // The highlight is identity-based: it follows the agent across a model reset rather than
+    // sticking to a row index. Folding a SIBLING agent rebuilds the list but must leave the
+    // selected agent highlighted.
     void currentRoleTracksIdentityAcrossRebuild() {
-        InMemorySessionStore store;
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
 
-        const int coder = findRow(model, QStringLiteral("Coder"));
-        model.activate(coder);
-        QVERIFY(roleAt<bool>(model, coder, SidebarModel::CurrentRole));
+        model.activate(findRow(model, QStringLiteral("Coder")));
 
-        // Deep Fleet is a sibling branch under Build, not an ancestor of Coder,
-        // so collapsing it triggers a full rebuild without hiding Coder.
-        model.toggleExpand(findRow(model, QStringLiteral("Deep Fleet")));
-        QVERIFY(findRow(model, QStringLiteral("Worker A")) < 0); // the rebuild happened
+        // General Assistant is a sibling agent; folding it triggers a full rebuild without
+        // hiding Coder ("Scratch ideas" is one of its leaves — its absence proves the rebuild).
+        model.toggleExpand(findRow(model, QStringLiteral("General Assistant")));
+        QVERIFY(findRow(model, QStringLiteral("Scratch ideas")) < 0);
         const int coderAfter = findRow(model, QStringLiteral("Coder"));
         QVERIFY(coderAfter >= 0);
         QVERIFY(roleAt<bool>(model, coderAfter, SidebarModel::CurrentRole));
         QCOMPARE(model.currentRow(), coderAfter);
     }
 
-    // Collapsing an ancestor of the selection lifts the selection up to the
-    // collapsed node (VSCode behavior) and re-emits its scope.
-    void collapsingAncestorMovesSelectionUp() {
-        InMemorySessionStore store;
+    // Folding the agent that contains the selected session leaf hides it (currentRow -1, no
+    // silent reassignment); re-expanding restores the SAME leaf as current — the selection is
+    // stored by identity, never by row index.
+    void selectionIdentitySurvivesFoldAndUnfold() {
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
 
-        const int worker = findRow(model, QStringLiteral("Worker A"));
-        model.activate(worker);
+        model.activate(findRow(model, QStringLiteral("Implement endpoint")));
 
-        QSignalSpy spy(&model, &SidebarModel::scopeSelected);
-        const int build = findRow(model, QStringLiteral("Build Fleet"));
-        model.toggleExpand(build); // hides Worker A's branch
+        model.toggleExpand(findRow(model, QStringLiteral("Coder")));
+        QVERIFY(findRow(model, QStringLiteral("Implement endpoint")) < 0);
+        QCOMPARE(model.currentRow(), -1); // hidden, not reassigned
 
-        QVERIFY(findRow(model, QStringLiteral("Worker A")) < 0);
-        const int buildAfter = findRow(model, QStringLiteral("Build Fleet"));
-        QVERIFY(roleAt<bool>(model, buildAfter, SidebarModel::CurrentRole));
-        QCOMPARE(spy.count(), 1);
-        QCOMPARE(spy.takeFirst().at(2).toString(), QStringLiteral("n-build"));
+        model.toggleExpand(findRow(model, QStringLiteral("Coder")));
+        const int leaf = findRow(model, QStringLiteral("Implement endpoint"));
+        QVERIFY(leaf >= 0);
+        QVERIFY(roleAt<bool>(model, leaf, SidebarModel::CurrentRole));
+        QCOMPARE(model.currentRow(), leaf);
     }
 
     // Up/Down move the selection between adjacent selectable rows, skipping
@@ -236,77 +342,100 @@ private slots:
         QCOMPARE(spy.takeFirst().at(0).toInt(), 0); // NodeType::AllSessions
     }
 
-    // Right expands a collapsed node then descends; Left collapses then climbs.
+    // Left collapses the node root in place; Right re-expands it, then descends to its first
+    // agent; Left on an expanded agent folds it while the selection stays put.
     void arrowKeysExpandCollapseAndTraverse() {
-        InMemorySessionStore store;
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
 
-        const int build = findRow(model, QStringLiteral("Build Fleet"));
-        model.activate(build);
+        model.activate(findRow(model, QStringLiteral("Local node")));
 
-        model.collapseCurrent(); // collapse Build (selection stays)
-        QVERIFY(!roleAt<bool>(model, findRow(model, QStringLiteral("Build Fleet")),
+        model.collapseCurrent(); // collapse the root (selection stays)
+        QVERIFY(!roleAt<bool>(model, findRow(model, QStringLiteral("Local node")),
                               SidebarModel::ExpandedRole));
         QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
 
-        model.expandCurrent(); // re-expand Build
-        QVERIFY(roleAt<bool>(model, findRow(model, QStringLiteral("Build Fleet")),
+        model.expandCurrent(); // re-expand the root
+        QVERIFY(roleAt<bool>(model, findRow(model, QStringLiteral("Local node")),
                              SidebarModel::ExpandedRole));
 
-        model.expandCurrent(); // already expanded -> step to first child
-        QCOMPARE(model.currentRow(), findRow(model, QStringLiteral("Coder")));
+        model.expandCurrent(); // already expanded -> step to the first agent
+        QCOMPARE(model.currentRow(), findRow(model, QStringLiteral("General Assistant")));
 
-        model.collapseCurrent(); // leaf -> climb to parent (Build)
-        QCOMPARE(model.currentRow(), findRow(model, QStringLiteral("Build Fleet")));
+        model.activate(findRow(model, QStringLiteral("Coder")));
+        model.collapseCurrent(); // fold the agent in place
+        const int coder = findRow(model, QStringLiteral("Coder"));
+        QVERIFY(!roleAt<bool>(model, coder, SidebarModel::ExpandedRole));
+        QCOMPARE(model.currentRow(), coder);
     }
 
-    // Collapse-all hides every subtree (roots remain); expand-all restores them.
+    // Collapse-all folds the whole membership (root included: agents + leaves hidden, the root
+    // row remains); expand-all restores it. anyExpanded drives the header's toggle.
     void expandAllAndCollapseAllToggleWholeTree() {
-        InMemorySessionStore store;
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
 
         QVERIFY(model.anyExpanded());
+        QVERIFY(findRow(model, QStringLiteral("Implement endpoint")) >= 0);
 
         model.collapseAll();
         QVERIFY(!model.anyExpanded());
+        QVERIFY(findRow(model, QStringLiteral("Local node")) >= 0); // the root stays
         QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
-        QVERIFY(findRow(model, QStringLiteral("Build Fleet")) < 0);
-        QVERIFY(findRow(model, QStringLiteral("Acme Platform")) >= 0); // root stays
+        QVERIFY(findRow(model, QStringLiteral("Implement endpoint")) < 0);
 
         model.expandAll();
         QVERIFY(model.anyExpanded());
-        QVERIFY(findRow(model, QStringLiteral("Worker A")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("Coder")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("Implement endpoint")) >= 0);
     }
 
-    // collapseAll while a deep node is selected lifts the highlight to its root.
-    void collapseAllLiftsSelectionToRoot() {
-        InMemorySessionStore store;
+    // collapseAll while an agent is selected keeps the selection identity: the row is hidden
+    // (inside the folded root), and expandAll surfaces the SAME agent as current again.
+    void collapseAllKeepsSelectionIdentity() {
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
 
-        model.activate(findRow(model, QStringLiteral("Worker A")));
+        model.activate(findRow(model, QStringLiteral("Coder")));
         model.collapseAll();
+        QCOMPARE(model.currentRow(), -1); // hidden under the folded root
 
-        const int acme = findRow(model, QStringLiteral("Acme Platform"));
-        QVERIFY(roleAt<bool>(model, acme, SidebarModel::CurrentRole));
+        model.expandAll();
+        const int coder = findRow(model, QStringLiteral("Coder"));
+        QVERIFY(coder >= 0);
+        QVERIFY(roleAt<bool>(model, coder, SidebarModel::CurrentRole));
     }
 
-    // Creating a root node adds a top-level row and selects it.
-    void createRootNodeAddsAndSelects() {
-        InMemorySessionStore store;
+    // The Fleet "+" mints an AGENT (a profile) through the create-agent flow: it requests the
+    // form and adds NO client-side row (the agent appears via the post-create profile re-list).
+    void createRootUnitRequestsAgentCreation() {
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
 
-        QSignalSpy spy(&model, &SidebarModel::scopeSelected);
+        QSignalSpy requested(&model, &SidebarModel::createAgentRequested);
+        QSignalSpy scoped(&model, &SidebarModel::scopeSelected);
+        const int before = model.rowCount();
         model.createRootUnit();
 
-        const int created = findRow(model, QStringLiteral("New fleet"));
-        QVERIFY(created >= 0);
-        QCOMPARE(roleAt<int>(model, created, SidebarModel::DepthRole), 0);
-        QVERIFY(roleAt<bool>(model, created, SidebarModel::CurrentRole));
-        QCOMPARE(spy.takeLast().at(0).toInt(), 4); // NodeType::Unit
+        QCOMPARE(requested.count(), 1);
+        QCOMPARE(model.rowCount(), before); // nothing is client-minted
+        QCOMPARE(scoped.count(), 0);        // the selection is untouched
     }
 
     // Creating a tag adds a tag row and selects it.
@@ -461,7 +590,7 @@ private slots:
     // (empty model) shows just its provider — no dangling separator.
     void agentRowsCarryProviderModelSecondaryLabel() {
         InMemorySessionStore store;
-        FakeProfileStore profiles;
+        FakeProfileStore profiles(twoAgentRows(), QStringLiteral("anthropic"));
         SidebarModel model;
         model.setStore(&store);
         model.setProfiles(&profiles);
@@ -480,19 +609,23 @@ private slots:
 
     // --- Collapsible section headers (Fleet / Tags / Integrations) ----------
 
-    // Folding the Fleet header hides its whole unit body while the header stays,
-    // and its ExpandedRole flips; other sections are untouched.
+    // Folding the Fleet header hides its whole membership body (node root + agents + leaves)
+    // while the header stays, and its ExpandedRole flips; other sections are untouched.
     void fleetSectionHeaderCollapses() {
-        InMemorySessionStore store;
+        MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
 
         const int fleet = findRow(model, QStringLiteral("Fleet"));
         QVERIFY(fleet >= 0);
         QVERIFY(roleAt<bool>(model, fleet, SidebarModel::IsSeparatorRole));
         QVERIFY(roleAt<bool>(model, fleet, SidebarModel::HasChildrenRole));
         QVERIFY(roleAt<bool>(model, fleet, SidebarModel::ExpandedRole));
-        QVERIFY(findRow(model, QStringLiteral("Acme Platform")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("Local node")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("Coder")) >= 0);
 
         model.toggleExpand(fleet);
 
@@ -500,7 +633,7 @@ private slots:
         const int fleetAfter = findRow(model, QStringLiteral("Fleet"));
         QVERIFY(fleetAfter >= 0);
         QVERIFY(!roleAt<bool>(model, fleetAfter, SidebarModel::ExpandedRole));
-        QVERIFY(findRow(model, QStringLiteral("Acme Platform")) < 0);
+        QVERIFY(findRow(model, QStringLiteral("Local node")) < 0);
         QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
         // Other sections remain.
         QVERIFY(findRow(model, QStringLiteral("Tags")) >= 0);
@@ -508,7 +641,7 @@ private slots:
 
         // Re-expand restores the body.
         model.toggleExpand(findRow(model, QStringLiteral("Fleet")));
-        QVERIFY(findRow(model, QStringLiteral("Acme Platform")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("Local node")) >= 0);
     }
 
     // The Tags section folds independently of Fleet.
@@ -525,8 +658,8 @@ private slots:
         model.toggleExpand(findRow(model, QStringLiteral("Tags")));
         QVERIFY(findRow(model, firstTag) < 0);
         QVERIFY(findRow(model, QStringLiteral("Tags")) >= 0);
-        // Fleet is unaffected.
-        QVERIFY(findRow(model, QStringLiteral("Acme Platform")) >= 0);
+        // Fleet is unaffected: its node root row is still rendered.
+        QVERIFY(findRow(model, QStringLiteral("Local node")) >= 0);
     }
 
     // The Integrations section folds its whole transport tree.
@@ -590,10 +723,12 @@ private slots:
     // Fleet and Integrations expand/collapse-all are independent: one must not
     // clobber the other's fold state (they share m_collapsed across id namespaces).
     void fleetAndIntegrationsExpandAllAreIndependent() {
-        InMemorySessionStore store;
         MockDaemonNet net;
+        InMemorySessionStore store(&net);
+        FakeProfileStore profiles(rosterRows(), QStringLiteral("prof-1"));
         SidebarModel model;
         model.setStore(&store);
+        model.setProfiles(&profiles);
         model.setDaemonNet(&net);
 
         // Fold one transport account by hand.
@@ -604,11 +739,11 @@ private slots:
         model.expandAll();
         QVERIFY(findRow(model, QStringLiteral("Channels")) < 0);
 
-        // Conversely, collapse a fleet unit then Integrations expand-all keeps it folded.
-        model.toggleExpand(findRow(model, QStringLiteral("Build Fleet")));
-        QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
+        // Conversely, fold an agent, then Integrations expand-all keeps it folded.
+        model.toggleExpand(findRow(model, QStringLiteral("Coder")));
+        QVERIFY(findRow(model, QStringLiteral("Implement endpoint")) < 0);
         model.expandAllTransports();
-        QVERIFY(findRow(model, QStringLiteral("Coder")) < 0);
+        QVERIFY(findRow(model, QStringLiteral("Implement endpoint")) < 0);
     }
 };
 
