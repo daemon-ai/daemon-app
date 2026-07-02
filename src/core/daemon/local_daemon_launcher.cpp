@@ -18,6 +18,7 @@
 #include <QTimer>
 
 #ifdef Q_OS_UNIX
+#include <cerrno>
 #include <csignal>
 #include <sys/types.h>
 #endif
@@ -28,6 +29,7 @@ namespace {
 constexpr int kSpawnReadyTimeoutMs = 10000;
 constexpr int kPollIntervalMs = 100;
 constexpr auto kDaemonBinaryName = "daemon";
+constexpr auto kPidFileName = "daemon.pid";
 
 [[nodiscard]] bool isExecutableFile(const QString& path) {
     const QFileInfo info(path);
@@ -37,6 +39,47 @@ constexpr auto kDaemonBinaryName = "daemon";
 
 LocalDaemonLauncher::LocalDaemonLauncher(settings::ISettingsStore* settings, QObject* parent)
     : QObject(parent), m_settings(settings) {}
+
+QString LocalDaemonLauncher::pidFilePath(const QString& socketPath) {
+    return QFileInfo(socketPath).dir().filePath(QLatin1String(kPidFileName));
+}
+
+bool LocalDaemonLauncher::isProcessAlive(qint64 pid) {
+    if (pid <= 1) {
+        return false; // never probe pid 0/1 or garbage (a corrupt pidfile must stay inert)
+    }
+#ifdef Q_OS_UNIX
+    // EPERM means the pid exists but is not ours - still alive.
+    return ::kill(static_cast<pid_t>(pid), 0) == 0 || errno == EPERM;
+#else
+    return false; // the managed local-daemon flow is Unix-only
+#endif
+}
+
+qint64 LocalDaemonLauncher::readManagedPid(const QString& socketPath) {
+    const QString path = pidFilePath(socketPath);
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return 0;
+    }
+    bool ok = false;
+    const qint64 pid = file.readAll().trimmed().toLongLong(&ok);
+    file.close();
+    if (ok && isProcessAlive(pid)) {
+        return pid;
+    }
+    // Unreadable or dead: the pidfile is stale debris; clean it so later reads stay cheap.
+    QFile::remove(path);
+    return 0;
+}
+
+void LocalDaemonLauncher::writeManagedPid(const QString& socketPath, qint64 pid) {
+    QFile file(pidFilePath(socketPath));
+    if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        file.write(QByteArray::number(pid));
+        file.write("\n");
+    }
+}
 
 QString LocalDaemonLauncher::discoverDaemonBinary(const QString& override) {
     // 1. Explicit override (the daemonBinaryPath setting): if set it must resolve, with no fallback
@@ -156,15 +199,37 @@ void LocalDaemonLauncher::ensureRunning(const QString& socketPath) {
     }
     m_pid = pid;
     m_managed = true;
+    // Record the spawn in the socket-side pidfile so any LATER app instance can manage this
+    // daemon (shutdown-on-exit, version-gate replacement) - m_pid alone dies with this process.
+    writeManagedPid(socketPath, pid);
 
     // Poll for readiness inside the event loop so the UI's "connecting" state stays responsive.
+    startPoll(Phase::WaitReady);
+}
+
+void LocalDaemonLauncher::startPoll(Phase phase) {
+    m_phase = phase;
     m_pollElapsedMs = 0;
     if (m_pollTimer == nullptr) {
         m_pollTimer = new QTimer(this);
         m_pollTimer->setInterval(kPollIntervalMs);
-        connect(m_pollTimer, &QTimer::timeout, this, &LocalDaemonLauncher::pollUntilReady);
+        connect(m_pollTimer, &QTimer::timeout, this, &LocalDaemonLauncher::pollTick);
     }
     m_pollTimer->start();
+}
+
+void LocalDaemonLauncher::pollTick() {
+    switch (m_phase) {
+    case Phase::WaitReady:
+        pollUntilReady();
+        break;
+    case Phase::WaitGone:
+        pollUntilGone();
+        break;
+    case Phase::Idle:
+        m_pollTimer->stop();
+        break;
+    }
 }
 
 bool LocalDaemonLauncher::evaluateRestartBudget(QList<qint64>& history, qint64 nowMs,
@@ -203,27 +268,79 @@ void LocalDaemonLauncher::pollUntilReady() {
             }
         }
         // #endregion
+        m_phase = Phase::Idle;
         m_pollTimer->stop();
         emit ready(true);
         return;
     }
     m_pollElapsedMs += kPollIntervalMs;
     if (m_pollElapsedMs >= kSpawnReadyTimeoutMs) {
+        m_phase = Phase::Idle;
         m_pollTimer->stop();
         emit failed(tr("The local daemon did not become ready in time."));
     }
 }
 
-void LocalDaemonLauncher::shutdownIfManaged() {
-    if (!m_managed || m_pid <= 0) {
+void LocalDaemonLauncher::pollUntilGone() {
+    if (!isProcessAlive(m_terminatedPid)) {
+        // The stale daemon exited; its pidfile is spent. ensureRunning now probes a dead socket
+        // and spawns the CURRENT binary (whose bind clears the leftover socket file).
+        QFile::remove(pidFilePath(m_socketPath));
+        m_terminatedPid = 0;
+        m_phase = Phase::Idle;
+        m_pollTimer->stop();
+        ensureRunning(m_socketPath);
         return;
     }
+    m_pollElapsedMs += kPollIntervalMs;
+    if (m_pollElapsedMs >= kSpawnReadyTimeoutMs) {
+        m_phase = Phase::Idle;
+        m_pollTimer->stop();
+        emit failed(tr("The incompatible local daemon (pid %1) did not shut down in time.")
+                        .arg(m_terminatedPid));
+        m_terminatedPid = 0;
+    }
+}
+
+void LocalDaemonLauncher::replaceStaleDaemon(const QString& socketPath) {
+    m_socketPath = socketPath;
+    m_managed = false;
+    const qint64 pid = readManagedPid(socketPath);
+    if (pid <= 0) {
+        // No app instance ever recorded this daemon (pre-pidfile spawn, or a foreign daemon the
+        // app only attached to). Killing by name/pattern is forbidden - tell the user which
+        // socket is stale instead.
+        emit failed(tr("An incompatible daemon is serving %1, and no pidfile records its "
+                       "process. Stop it manually and reconnect.")
+                        .arg(socketPath));
+        return;
+    }
+#ifdef Q_OS_UNIX
+    // SIGTERM lets the stale daemon shut its resident services down cleanly.
+    ::kill(static_cast<pid_t>(pid), SIGTERM);
+#endif
+    m_terminatedPid = pid;
+    startPoll(Phase::WaitGone);
+}
+
+void LocalDaemonLauncher::shutdownIfManaged() {
     if (m_settings == nullptr || !m_settings->managedDaemonShutdownOnExit()) {
         return; // persistent by default: leave the managed daemon running
     }
+    if (m_socketPath.isEmpty()) {
+        return; // this run never targeted a managed socket
+    }
+    // The pidfile (not m_pid) identifies the managed daemon, so a daemon spawned by a PREVIOUS
+    // app instance is covered too; an attached foreign daemon has no pidfile and is never
+    // touched.
+    const qint64 pid = readManagedPid(m_socketPath);
+    if (pid <= 0) {
+        return;
+    }
 #ifdef Q_OS_UNIX
     // SIGTERM lets the daemon shut its resident services down cleanly and remove its socket.
-    ::kill(static_cast<pid_t>(m_pid), SIGTERM);
+    ::kill(static_cast<pid_t>(pid), SIGTERM);
+    QFile::remove(pidFilePath(m_socketPath));
 #endif
     m_managed = false;
     m_pid = 0;

@@ -11,6 +11,7 @@
 
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_auth.h"
+#include "daemon/node_api_codec.h"
 
 #include <QByteArray>
 #include <QHash>
@@ -235,8 +236,18 @@ inline ClientFrame parseClientFrame(const QByteArray& f) {
     return out;
 }
 
+// The feature set a CURRENT daemon advertises: the envelope features plus its api contract
+// version ("api/<N>"), which the client's connect gate checks. Fixture tests that need a stale
+// daemon override the list via WireMuxServer::setHelloFeatures.
+inline QStringList currentHelloFeatures() {
+    return {QStringLiteral("mux"), QStringLiteral("stream"),
+            QStringLiteral("api/") +
+                QString::number(daemonapp::daemon::NodeApiCodec::kDaemonApiVersion)};
+}
+
 // Server Hello (v2). The S2C Hello always carries auth_mechanisms (empty => unauthenticated node).
-inline QByteArray buildHello(const QStringList& authMechanisms = {}) {
+inline QByteArray buildHello(const QStringList& authMechanisms = {},
+                             const QStringList& features = currentHelloFeatures()) {
     QByteArray b;
     b.append(static_cast<char>(0xA1));
     cborText(b, "Hello");
@@ -244,9 +255,10 @@ inline QByteArray buildHello(const QStringList& authMechanisms = {}) {
     cborText(b, "wire_version");
     cborUint(b, 2);
     cborText(b, "features");
-    b.append(static_cast<char>(0x82));
-    cborText(b, "mux");
-    cborText(b, "stream");
+    b.append(static_cast<char>(0x80 | static_cast<char>(features.size())));
+    for (const QString& f : features) {
+        cborTextLen(b, f.toUtf8());
+    }
     cborText(b, "auth_mechanisms");
     b.append(static_cast<char>(0x80 | static_cast<char>(authMechanisms.size())));
     for (const QString& m : authMechanisms) {
@@ -477,6 +489,11 @@ public:
     [[nodiscard]] int openCount() const { return m_openCount; } // Open frames seen
     [[nodiscard]] quint64 lastOpenId() const { return m_lastOpenId; }
 
+    // Advertise these capability strings in the Hello instead of a current daemon's set - the
+    // stale-daemon stand-in for the client's api-version connect gate (e.g. {"mux","stream"} for
+    // a pre-advertisement daemon, or {"mux","stream","api/22"} for an older contract).
+    void setHelloFeatures(const QStringList& features) { m_helloFeatures = features; }
+
     // --- v2 SASL auth config -------------------------------------------------------------------
     // Advertise these SASL mechanisms in the Hello (empty => unauthenticated node, the default).
     void setAuthMechanisms(const QStringList& mechs) { m_authMechanisms = mechs; }
@@ -620,7 +637,7 @@ private:
             case ClientFrame::Hello:
                 ++m_helloCount;
                 if (!m_hang) {
-                    writeFrame(conn, buildHello(m_authMechanisms));
+                    writeFrame(conn, buildHello(m_authMechanisms, m_helloFeatures));
                 }
                 break;
             case ClientFrame::AuthStart:
@@ -681,6 +698,7 @@ private:
     QLocalSocket* m_streamConn = nullptr;
     quint64 m_lastOpenId = 0;
     QByteArray m_payload;
+    QStringList m_helloFeatures = currentHelloFeatures();
     bool m_hang = false;
     int m_requestCount = 0;
     int m_helloCount = 0;

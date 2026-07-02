@@ -824,6 +824,14 @@ public:
     // SASL-style authentication exchange (AuthStart/AuthStep/AuthResume -> AuthChallenge/AuthOk/
     // AuthError) and the server Hello's auth_mechanisms list.
     static constexpr quint32 kWireVersion = 2;
+    // The daemon-api CONTRACT version this client implements (daemon-node
+    // `daemon_common::WireVersion::CURRENT` at the time this hand-rolled codec and the vendored
+    // `codec/generated` were last regenerated) - distinct from kWireVersion (the envelope). This
+    // is the ONLY app-side copy: bump it together with `just update-codec` whenever the node
+    // contract version moves. The server advertises its own version as the "api/<N>" Hello
+    // feature; the connection service compares the two at connect and replaces (app-managed) or
+    // refuses (attach) a mismatched daemon instead of silently serving stale wire shapes.
+    static constexpr quint32 kDaemonApiVersion = 23;
     // The client->server Hello opening the multiplexed/streaming session.
     [[nodiscard]] static QByteArray encodeHelloFrame();
     // Begin a SASL exchange with `mechanism`, carrying its initial client response (may be empty).

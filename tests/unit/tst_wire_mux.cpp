@@ -54,6 +54,41 @@ private slots:
         QVERIFY(client.streamingAvailable());
     }
 
+    // The client surfaces the daemon's "api/<N>" Hello feature as its API contract version - the
+    // input to the connection service's version gate. A daemon without the advertisement (an old
+    // build) reports 0.
+    void helloSurfacesDaemonApiVersion() {
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+
+        // A current daemon (the fixture default) advertises the client's own contract version.
+        const QString path = tmp.filePath(QStringLiteral("mux-api.sock"));
+        WireMuxServer fake;
+        fake.setReplyPayload(okResponse());
+        QVERIFY2(fake.start(path), "fixture must listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        QSignalSpy handshakes(&client, &NodeApiClient::handshakeReady);
+        client.sendRequest(NodeApiCodec::encodeHealthRequest(), QStringLiteral("c1"));
+        QTRY_COMPARE_WITH_TIMEOUT(handshakes.count(), 1, 3000);
+        QCOMPARE(client.daemonApiVersion(), NodeApiCodec::kDaemonApiVersion);
+
+        // A pre-advertisement daemon (features without "api/<N>") reports 0.
+        const QString oldPath = tmp.filePath(QStringLiteral("mux-api-old.sock"));
+        WireMuxServer oldFake;
+        oldFake.setReplyPayload(okResponse());
+        oldFake.setHelloFeatures({QStringLiteral("mux"), QStringLiteral("stream")});
+        QVERIFY2(oldFake.start(oldPath), "fixture must listen");
+        DaemonTransport oldTransport;
+        oldTransport.setSocketPath(oldPath);
+        NodeApiClient oldClient(&oldTransport);
+        QSignalSpy oldHandshakes(&oldClient, &NodeApiClient::handshakeReady);
+        oldClient.sendRequest(NodeApiCodec::encodeHealthRequest(), QStringLiteral("c1"));
+        QTRY_COMPARE_WITH_TIMEOUT(oldHandshakes.count(), 1, 3000);
+        QCOMPARE(oldClient.daemonApiVersion(), quint32(0));
+    }
+
     // Two concurrent one-shot Calls are correlated independently by id (no head-of-line blocking of
     // one behind the other).
     void concurrentCallsAreCorrelated() {

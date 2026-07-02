@@ -55,6 +55,21 @@ NodeApiClient::NodeApiClient(DaemonTransport* transport, QObject* parent)
     }
 }
 
+quint32 NodeApiClient::daemonApiVersion() const {
+    const QLatin1String prefix("api/");
+    for (const QString& feature : m_features) {
+        if (!feature.startsWith(prefix)) {
+            continue;
+        }
+        bool ok = false;
+        const uint version = feature.mid(prefix.size()).toUInt(&ok);
+        if (ok) {
+            return version;
+        }
+    }
+    return 0;
+}
+
 void NodeApiClient::sendRequest(const QByteArray& requestCbor, const QString& correlationId) {
     enqueue(requestCbor, correlationId, /*stream=*/false);
 }
