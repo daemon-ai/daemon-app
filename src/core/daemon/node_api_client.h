@@ -83,6 +83,11 @@ public:
         return m_features.contains(feature);
     }
 
+    // The daemon-api CONTRACT version the server advertised via its "api/<N>" Hello feature
+    // (valid once handshaked). 0 when absent - a daemon that predates the advertisement; the
+    // connection service's version gate treats that as incompatible.
+    [[nodiscard]] quint32 daemonApiVersion() const;
+
 signals:
     void responseReady(const QString& correlationId, const QByteArray& responseCbor);
     void failed(const QString& correlationId, const QString& message);

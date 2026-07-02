@@ -52,11 +52,18 @@ DaemonConnectionService::DaemonConnectionService(QObject* parent,
                 // The Health request itself failed (transport drop / timeout): the connection is
                 // suspect, so kick the reconnect episode (initial-connect failures retry too).
                 // BUT not while a node is waiting on interactive credentials - reconnecting there
-                // would just re-fail auth in a loop; the login UI drives the retry instead.
-                if (correlationId == QLatin1String(kHealthCorrelation) && !m_authBlocked) {
+                // would just re-fail auth in a loop; the login UI drives the retry instead. And
+                // not while the version gate holds the line - reconnecting would just re-attach
+                // to the same incompatible daemon.
+                if (correlationId == QLatin1String(kHealthCorrelation) && !m_authBlocked &&
+                    !m_versionHold) {
                     enterReconnecting();
                 }
             });
+    // The version gate runs on every completed handshake, before any response can mark the
+    // connection ready: a stale daemon is replaced (managed) or refused (attach), never served.
+    connect(m_client.get(), &NodeApiClient::handshakeReady, this,
+            [this] { enforceApiVersionGate(); });
     // SASL relays: the client owns the exchange; we map its outcome onto the connection state.
     connect(m_client.get(), &NodeApiClient::tokenIssued, this, [this](const QString& token) {
         // Persist the SERVER-issued token (never the password), keyed per target, and keep it in
@@ -98,12 +105,14 @@ DaemonConnectionService::DaemonConnectionService(QObject* parent,
     // signal: self-correct out of stale "ready" immediately rather than waiting for the next
     // request.
     connect(m_transport.get(), &DaemonTransport::disconnected, this, [this] {
-        if (!m_authBlocked && (ready() || state() == QStringLiteral("connecting"))) {
+        if (!m_authBlocked && !m_versionHold &&
+            (ready() || state() == QStringLiteral("connecting"))) {
             enterReconnecting();
         }
     });
     connect(m_transport.get(), &DaemonTransport::failed, this, [this](const QString&) {
-        if (!m_authBlocked && (ready() || state() == QStringLiteral("connecting"))) {
+        if (!m_authBlocked && !m_versionHold &&
+            (ready() || state() == QStringLiteral("connecting"))) {
             enterReconnecting();
         }
     });
@@ -111,7 +120,10 @@ DaemonConnectionService::DaemonConnectionService(QObject* parent,
     if (m_settings != nullptr) {
         m_launcher = new LocalDaemonLauncher(m_settings, this);
         connect(m_launcher, &LocalDaemonLauncher::ready, this, [this](bool /*managed*/) {
-            // The daemon is reachable (spawned or already running); confirm liveness over the wire.
+            // The daemon is reachable (spawned, replaced, or already running); confirm liveness
+            // over the wire. A version-gate replacement is complete here, so lift its hold - the
+            // fresh handshake below re-runs the gate against the new daemon.
+            m_versionHold = false;
             sendHealthProbe();
         });
         connect(m_launcher, &LocalDaemonLauncher::failed, this, [this](const QString& message) {
@@ -123,6 +135,46 @@ DaemonConnectionService::DaemonConnectionService(QObject* parent,
 
 void DaemonConnectionService::sendHealthProbe() {
     m_client->sendRequest(NodeApiCodec::encodeHealthRequest(), QLatin1String(kHealthCorrelation));
+}
+
+void DaemonConnectionService::enforceApiVersionGate() {
+    const quint32 daemonApi = m_client->daemonApiVersion();
+    if (daemonApi == NodeApiCodec::kDaemonApiVersion) {
+        m_versionHold = false;
+        return;
+    }
+    // Contract mismatch (0 = the daemon predates the "api/<N>" advertisement): this daemon's
+    // wire shapes cannot be trusted, so never let the connection reach "ready" (the day-old
+    // stale-daemon incident). Stop the liveness machinery and hold the reconnect paths BEFORE
+    // closing - the close fails the in-flight Health, which must not re-enter the loop; closing
+    // also drops any not-yet-delivered Reply, so no response can leak through the gate.
+    m_heartbeat.stop();
+    m_reprobe.stop();
+    m_reconnectDeadline.stop();
+    m_versionHold = true;
+    m_transport->close();
+
+    const QString daemonLabel = daemonApi == 0 ? tr("unknown") : QString::number(daemonApi);
+    const bool managed = m_config.mode == QStringLiteral("local") && m_launcher != nullptr &&
+                         m_settings != nullptr && m_settings->managedLocalDaemon();
+    if (managed && !m_versionRespawnAttempted) {
+        // App-managed socket (the launcher spawned this daemon, or would spawn one): replace the
+        // stale daemon with the current binary. Bounded to ONE attempt per connect - if the
+        // replacement still mismatches, that is a real error surfaced below, not a retry loop.
+        m_versionRespawnAttempted = true;
+        setStatusMessage(tr("Replacing an incompatible local daemon (api %1, need %2)...")
+                             .arg(daemonLabel)
+                             .arg(NodeApiCodec::kDaemonApiVersion));
+        setState(QStringLiteral("connecting"));
+        m_launcher->replaceStaleDaemon(m_config.target);
+        return;
+    }
+    // Attach (user-supplied socket / remote node / respawn already spent): fail the connect
+    // explicitly - a silent attach to an incompatible daemon is exactly the incident this gates.
+    setStatusMessage(tr("Incompatible daemon (api %1, need %2).")
+                         .arg(daemonLabel)
+                         .arg(NodeApiCodec::kDaemonApiVersion));
+    setState(QStringLiteral("offline"));
 }
 
 void DaemonConnectionService::markReady() {
@@ -244,6 +296,10 @@ void DaemonConnectionService::connectTo(const QString& mode, const QString& targ
         m_sessionToken = token; // an explicit token from the picker drives AuthResume
     }
     m_authBlocked = false;
+    // A user-initiated connect gets a fresh version-gate budget (new target, or a deliberate
+    // retry after the stale daemon was dealt with).
+    m_versionHold = false;
+    m_versionRespawnAttempted = false;
     emit configChanged();
 
     if (!configureTransport()) {
@@ -271,6 +327,7 @@ void DaemonConnectionService::login(const QString& username, const QString& pass
     // Interactive credentials for a node in the "authenticating" state. Use SCRAM (not a stale
     // token), so clear any resume token and re-handshake on a fresh connection.
     m_authBlocked = false;
+    m_versionHold = false;
     m_sessionToken.clear();
     NodeApiClient::AuthCredentials creds;
     creds.username = username;

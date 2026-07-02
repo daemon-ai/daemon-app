@@ -60,6 +60,12 @@ private:
     static constexpr int kReconnectBudgetMs = 120000; // give up -> offline after 2 min
 
     void sendHealthProbe();
+    // The version gate, run on every completed Hello handshake: compare the daemon's advertised
+    // "api/<N>" contract version against NodeApiCodec::kDaemonApiVersion. On mismatch (a missing
+    // advertisement counts) never serve the connection: an app-managed daemon is terminated via
+    // its pidfile and respawned as the current binary (once per connect), an attached daemon
+    // surfaces an explicit "incompatible daemon" error.
+    void enforceApiVersionGate();
     // The connection became live: ready state, clear status, reset backoff, (re)start the
     // heartbeat.
     void markReady();
@@ -92,6 +98,14 @@ private:
     // session token (server-issued on AuthOk) drives the AuthResume reconnect fast-path.
     bool m_authBlocked = false;
     QString m_sessionToken;
+
+    // Version-gate state. m_versionHold suppresses the auto-reconnect paths after the gate
+    // dropped a connection to an incompatible daemon (reconnecting would just re-attach to it);
+    // it clears on the next user connect/login or once the launcher reports the replacement
+    // daemon ready. m_versionRespawnAttempted bounds the managed terminate-and-respawn to ONCE
+    // per connectTo (a respawned daemon that still mismatches is a real error, not a loop).
+    bool m_versionHold = false;
+    bool m_versionRespawnAttempted = false;
 };
 
 } // namespace daemonapp::daemon

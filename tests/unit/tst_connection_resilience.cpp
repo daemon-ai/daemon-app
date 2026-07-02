@@ -7,8 +7,11 @@
 #include "daemon/local_daemon_launcher.h"
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
+#include "settings/isettings_store.h"
 #include "wire_mux_fixture.h" // shared multiplexed daemon stand-in (wire L0 envelope)
 
+#include <QFile>
+#include <QProcess>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest/QtTest>
@@ -28,6 +31,30 @@ QByteArray healthResponse() {
     return {"\xA1\x66Health\xA2\x66"
             "all_ok\xF5\x68services\x80",
             27};
+}
+
+// A memory-only ISettingsStore so the managed-daemon paths (managedLocalDaemon defaults ON) run
+// without touching the user's real QSettings.
+class MemorySettingsStore : public settings::ISettingsStore {
+public:
+    using settings::ISettingsStore::ISettingsStore;
+    [[nodiscard]] QVariant value(const QString& key, const QVariant& fallback = {}) const override {
+        return m_values.value(key, fallback);
+    }
+    void setValue(const QString& key, const QVariant& value) override {
+        m_values.insert(key, value);
+        emit changed(key);
+        emit changedAny();
+    }
+
+private:
+    QHash<QString, QVariant> m_values;
+};
+
+// The Hello features of a stale daemon speaking an older api contract than this client.
+QStringList staleDaemonFeatures() {
+    return {QStringLiteral("mux"), QStringLiteral("stream"),
+            QStringLiteral("api/") + QString::number(NodeApiCodec::kDaemonApiVersion - 1)};
 }
 
 } // namespace
@@ -164,6 +191,108 @@ private slots:
             QVERIFY2(!line.contains(secret), qPrintable("secret leaked to log: " + line));
         }
         QVERIFY2(!svc.statusMessage().contains(secret), "secret leaked to status message");
+    }
+
+    // Version gate, attach mode: a daemon advertising an older api contract (or none at all) is
+    // refused with an explicit user-visible error and the service never reaches "ready" - the
+    // silent stale-attach incident this gate exists for.
+    void attachRefusesIncompatibleDaemon() {
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+
+        // Older contract ("api/<N-1>").
+        const QString stalePath = tmp.filePath(QStringLiteral("stale.sock"));
+        WireMuxServer stale;
+        stale.setReplyPayload(healthResponse());
+        stale.setHelloFeatures(staleDaemonFeatures());
+        QVERIFY2(stale.start(stalePath), "fixture must listen");
+
+        DaemonConnectionService svc; // attach-only (no settings -> no launcher)
+        svc.connectTo(QStringLiteral("local"), stalePath);
+        QVERIFY(QTest::qWaitFor([&] { return svc.state() == QLatin1String("offline"); }, 5000));
+        QVERIFY2(svc.statusMessage().contains(QStringLiteral("Incompatible daemon")),
+                 qPrintable("unexpected status: " + svc.statusMessage()));
+        QVERIFY(!svc.ready());
+        // The buffered Health Reply must never flip the service to ready after the gate closed
+        // the connection.
+        QTest::qWait(250);
+        QVERIFY(!svc.ready());
+
+        // No advertisement at all (a pre-"api/<N>" daemon) counts as a mismatch too.
+        const QString oldPath = tmp.filePath(QStringLiteral("preapi.sock"));
+        WireMuxServer old;
+        old.setReplyPayload(healthResponse());
+        old.setHelloFeatures({QStringLiteral("mux"), QStringLiteral("stream")});
+        QVERIFY2(old.start(oldPath), "fixture must listen");
+
+        DaemonConnectionService svc2;
+        svc2.connectTo(QStringLiteral("local"), oldPath);
+        QVERIFY(QTest::qWaitFor([&] { return svc2.state() == QLatin1String("offline"); }, 5000));
+        QVERIFY(svc2.statusMessage().contains(QStringLiteral("Incompatible daemon")));
+        QVERIFY(svc2.statusMessage().contains(QStringLiteral("unknown")));
+        QVERIFY(!svc2.ready());
+    }
+
+    // Version gate, managed mode, no pidfile: an incompatible daemon on the managed socket that no
+    // app instance recorded (pre-pidfile spawn) is never killed blindly - the user gets a clear
+    // error naming the stale socket.
+    void managedIncompatibleWithoutPidfileSurfacesError() {
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+        const QString path = tmp.filePath(QStringLiteral("managed.sock"));
+        WireMuxServer fake;
+        fake.setReplyPayload(healthResponse());
+        fake.setHelloFeatures(staleDaemonFeatures());
+        QVERIFY2(fake.start(path), "fixture must listen");
+
+        MemorySettingsStore settings;
+        DaemonConnectionService svc(nullptr, &settings); // managedLocalDaemon defaults ON
+        svc.connectTo(QStringLiteral("local"), path);
+
+        QVERIFY(QTest::qWaitFor([&] { return svc.state() == QLatin1String("offline"); }, 5000));
+        QVERIFY2(svc.statusMessage().contains(QStringLiteral("no pidfile")),
+                 qPrintable("unexpected status: " + svc.statusMessage()));
+        QVERIFY(svc.statusMessage().contains(path)); // the user learns WHICH socket is stale
+        QVERIFY(!svc.ready());
+    }
+
+    // Version gate, managed mode, pidfile present: the recorded stale daemon is SIGTERMed via its
+    // pidfile (spawned by "a previous app instance" - here a stand-in process), and the respawn is
+    // bounded to ONCE: the fixture keeps serving the old contract after the kill, so the second
+    // mismatch must land on the explicit error instead of a terminate/respawn loop.
+    void managedReplacesViaPidfileAndBoundsRespawn() {
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+        const QString path = tmp.filePath(QStringLiteral("managed2.sock"));
+        WireMuxServer fake;
+        fake.setReplyPayload(healthResponse());
+        fake.setHelloFeatures(staleDaemonFeatures());
+        QVERIFY2(fake.start(path), "fixture must listen");
+
+        // The "stale daemon" process the pidfile records (the fixture serves its socket).
+        QProcess staleDaemon;
+        staleDaemon.start(QStringLiteral("sleep"), {QStringLiteral("300")});
+        QVERIFY2(staleDaemon.waitForStarted(5000), "sleep helper must start");
+        const qint64 stalePid = staleDaemon.processId();
+        {
+            QFile pidfile(LocalDaemonLauncher::pidFilePath(path));
+            QVERIFY(pidfile.open(QIODevice::WriteOnly));
+            pidfile.write(QByteArray::number(stalePid));
+        }
+
+        MemorySettingsStore settings;
+        DaemonConnectionService svc(nullptr, &settings);
+        svc.connectTo(QStringLiteral("local"), path);
+
+        // The gate terminates the recorded pid (never by name/pattern - exactly this pid).
+        QVERIFY(QTest::qWaitFor([&] { return staleDaemon.state() == QProcess::NotRunning; }, 5000));
+        // The launcher re-attaches to the still-incompatible fixture; the once-only budget turns
+        // the second mismatch into the explicit attach error, not another kill/respawn round.
+        QVERIFY(QTest::qWaitFor([&] { return svc.state() == QLatin1String("offline"); }, 10000));
+        QVERIFY2(svc.statusMessage().contains(QStringLiteral("Incompatible daemon")),
+                 qPrintable("unexpected status: " + svc.statusMessage()));
+        QVERIFY(!svc.ready());
+        QVERIFY(!QFile::exists(LocalDaemonLauncher::pidFilePath(path))); // spent pidfile cleaned
     }
 
     // WP3: the restart budget caps re-spawns within its window (pure logic, no spawning): the first
