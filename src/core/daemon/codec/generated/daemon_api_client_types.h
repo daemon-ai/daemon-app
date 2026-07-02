@@ -638,6 +638,28 @@ struct bound_account {
 	struct zcbor_string bound_account_credential_ref;
 };
 
+struct engine_acp_agent {
+	struct zcbor_string engine_acp_agent_agent;
+};
+
+struct engine_acp {
+	struct engine_acp_agent engine_acp_Acp;
+};
+
+struct engine_selector_r {
+	union {
+		struct engine_acp engine_selector_engine_acp_m;
+	};
+	enum {
+		engine_selector_Core_tstr_c,
+		engine_selector_engine_acp_m_c,
+	} engine_selector_choice;
+};
+
+struct profile_spec_engine {
+	struct engine_selector_r profile_spec_engine;
+};
+
 struct profile_spec {
 	struct zcbor_string profile_spec_id;
 	struct provider_selector_r profile_spec_provider;
@@ -680,6 +702,8 @@ struct profile_spec {
 	} profile_spec_fallback_credential_ref_choice;
 	struct bound_account profile_spec_bound_accounts_bound_account_m[64];
 	size_t profile_spec_bound_accounts_bound_account_m_count;
+	struct profile_spec_engine profile_spec_engine;
+	bool profile_spec_engine_present;
 };
 
 struct request_profile_create {

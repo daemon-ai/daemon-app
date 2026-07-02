@@ -63,6 +63,7 @@ class ITransportRegistry;
 
 namespace daemonapp::daemon {
 
+class AcpRepository;
 class ApprovalRepository;
 class FleetRepository;
 class TransportRepository;
@@ -128,6 +129,9 @@ struct AppServiceGraph {
     CheckpointRepository* checkpointRepository = nullptr;
     FleetRepository* fleetRepository = nullptr;         // PRO-9/10; non-null only in Daemon mode
     TransportRepository* transportRepository = nullptr; // Channels (EIO-1/3/8/9); Daemon mode only
+    // The ACP agent catalog (foreign engines; wire v23): backs the new-agent dialog's engine
+    // picker. Constructed with the other repositories (inert without a connection).
+    AcpRepository* acp = nullptr;
     // The node-wide event feed consumer (L3): owns the single EventsSince stream + routes
     // notifications. Non-null only in Daemon mode.
     SubscriptionManager* subscriptions = nullptr;

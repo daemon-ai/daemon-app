@@ -21,6 +21,9 @@ QQC.Dialog {
     property bool showCancel: true
     // Tints the primary button with the danger token (delete / clear / reset).
     property bool destructive: false
+    // Opt-in validity gate for the primary action (default true keeps existing consumers
+    // unchanged): bind to a form-completeness expression to grey out OK until it holds.
+    property bool acceptEnabled: true
 
     modal: true
     // Center over the window overlay by default.
@@ -90,6 +93,7 @@ QQC.Dialog {
             TextButton {
                 text: root.acceptText
                 accentFilled: true
+                enabled: root.acceptEnabled
                 fillColor: root.destructive ? Theme.danger : Theme.accent
                 onClicked: root.accept()
             }

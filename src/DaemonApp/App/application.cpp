@@ -243,6 +243,10 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     engine.rootContext()->setContextProperty(QStringLiteral("ProviderCatalog"),
                                              m_services.providerCatalog);
 
+    // ACP agent catalog (foreign engines; wire v23): backs the new-agent dialog's engine picker.
+    // Null in mock mode — QML guards with `typeof AcpAgents !== "undefined" && AcpAgents`.
+    engine.rootContext()->setContextProperty(QStringLiteral("AcpAgents"), m_services.acp);
+
     // Accounts/auth facade (mock) backing the Accounts manager + wizard.
     engine.rootContext()->setContextProperty(QStringLiteral("Accounts"), m_services.accounts);
 

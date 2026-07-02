@@ -6,6 +6,7 @@ qt_add_qml_module(da_sidebar
         sidebar_model.h
         sidebar_model.cpp
     QML_FILES
+        NewAgentDialog.qml
         Sidebar.qml
 )
 add_library(daemon-app::sidebar ALIAS da_sidebar)

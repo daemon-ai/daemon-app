@@ -241,6 +241,10 @@ QByteArray NodeApiCodec::encodeProviderCatalogRequest() {
     return encodeSimple(api_request_r::api_request_request_provider_catalog_m_c);
 }
 
+QByteArray NodeApiCodec::encodeAcpCatalogRequest() {
+    return encodeSimple(api_request_r::api_request_request_acp_catalog_m_c);
+}
+
 QByteArray NodeApiCodec::encodeProviderModelsRequest(const QString& provider,
                                                      const QString& credentialRef,
                                                      const QString& transientKey) {

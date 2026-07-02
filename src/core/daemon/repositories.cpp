@@ -1553,4 +1553,54 @@ void TransportRepository::handleFailure(const QString& correlationId, const QStr
     }
 }
 
+// --- AcpRepository (foreign engines; wire v23) ------------------------------------------------
+
+AcpRepository::AcpRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &AcpRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &AcpRepository::handleFailure);
+    }
+}
+
+QVariantList AcpRepository::agents() const {
+    QVariantList rows;
+    for (const DecodedAcpAgentEntry& e : m_entries) {
+        QVariantMap row;
+        row[QStringLiteral("name")] = e.name;
+        row[QStringLiteral("source")] = e.source;
+        row[QStringLiteral("installed")] = e.installed;
+        row[QStringLiteral("version")] = e.version;
+        rows.append(row);
+    }
+    return rows;
+}
+
+void AcpRepository::refreshCatalog() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeAcpCatalogRequest(),
+                          QLatin1String(kCatalogCorrelation));
+}
+
+void AcpRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
+    if (correlationId != QLatin1String(kCatalogCorrelation)) {
+        return;
+    }
+    if (!NodeApiCodec::decodeAcpCatalog(responseCbor, &m_entries)) {
+        emit operationFailed(QStringLiteral("Failed to decode AcpCatalog response"));
+        return;
+    }
+    emit catalogRefreshed();
+}
+
+void AcpRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kCatalogCorrelation)) {
+        emit operationFailed(message);
+    }
+}
+
 } // namespace daemonapp::daemon

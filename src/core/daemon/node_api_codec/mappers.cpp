@@ -533,6 +533,16 @@ DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps) {
             DecodedBoundAccount{fromZcbor(account.bound_account_transport_instance),
                                 fromZcbor(account.bound_account_credential_ref)});
     }
+    // The engine selector (wire v23): absent on pre-engine encodings -> the "Core" default the
+    // struct already carries, so a legacy spec round-trips unchanged.
+    if (ps.profile_spec_engine_present) {
+        const engine_selector_r& engine = ps.profile_spec_engine.profile_spec_engine;
+        if (engine.engine_selector_choice == engine_selector_r::engine_selector_engine_acp_m_c) {
+            out.engineKind = QStringLiteral("Acp");
+            out.engineAcpAgent = fromZcbor(
+                engine.engine_selector_engine_acp_m.engine_acp_Acp.engine_acp_agent_agent);
+        }
+    }
     return out;
 }
 
@@ -983,6 +993,18 @@ void fillProfileSpec(profile_spec& ps, const DecodedProfileSpec& s, ProfileSpecS
              boundTransports[static_cast<int>(i)]);
         setZ(ps.profile_spec_bound_accounts_bound_account_m[i].bound_account_credential_ref,
              boundCredRefs[static_cast<int>(i)]);
+    }
+    // The engine selector (wire v23): always emitted explicitly (matching the Rust side, which
+    // has no skip_serializing_if), "Core" unless the spec binds a foreign ACP agent BY NAME.
+    sc.engineAgent = s.engineAcpAgent.toUtf8();
+    ps.profile_spec_engine_present = true;
+    engine_selector_r& engine = ps.profile_spec_engine.profile_spec_engine;
+    if (s.engineKind == QStringLiteral("Acp")) {
+        engine.engine_selector_choice = engine_selector_r::engine_selector_engine_acp_m_c;
+        setZ(engine.engine_selector_engine_acp_m.engine_acp_Acp.engine_acp_agent_agent,
+             sc.engineAgent);
+    } else {
+        engine.engine_selector_choice = engine_selector_r::engine_selector_Core_tstr_c;
     }
 }
 

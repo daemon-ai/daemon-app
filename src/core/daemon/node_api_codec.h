@@ -97,6 +97,11 @@ struct DecodedProfileSpec {
     QString id;
     QString provider = QStringLiteral("genai"); // "mock"|"genai"|"llama_cpp"|"mistral_rs"
     QString model;
+    // Which execution engine the profile's sessions run on (wire v23 engine-selector): "Core"
+    // (the native daemon-core engine, the default) or "Acp" (a foreign ACP agent referenced from
+    // the node's catalog BY NAME via engineAcpAgent — recipes never travel in profiles).
+    QString engineKind = QStringLiteral("Core"); // "Core" | "Acp"
+    QString engineAcpAgent;                      // the catalog name; only meaningful when "Acp"
     bool hasBaseUrl = false;
     QString baseUrl;
     QString systemPrompt;
@@ -121,6 +126,18 @@ struct DecodedProfileSpec {
     bool hasFallbackCredentialRef = false;
     QString fallbackCredentialRef;
     QList<DecodedBoundAccount> boundAccounts;
+};
+
+// --- ACP agent catalog (foreign engines; wire v23 dialog surface)
+// --------------------------------- One catalog row (AcpCatalog -> [AcpAgentEntry]): a
+// known/registered foreign ACP agent. The new-agent dialog's engine picker renders these; a profile
+// references an entry BY NAME ONLY (the launch recipe stays node-side, so it is deliberately NOT
+// decoded here — no client surface needs it and nothing client-side may ever re-send one).
+struct DecodedAcpAgentEntry {
+    QString name;
+    QString source = QStringLiteral("Builtin"); // "Builtin" | "Manual" | "Endpoint"
+    bool installed = false;
+    QString version; // ACP protocol version reported at initialize; empty = unprobed
 };
 
 // --- Profile distribution + version history (PRO-7 / PRO-8) --------------------------------------
@@ -585,6 +602,7 @@ enum class ApiResponseKind {
     ModelDownloads,
     ModelCatalog,
     ModelRecommend,
+    AcpCatalog,
 };
 
 // Thin C++ facade over the zcbor-generated NodeApi codec (codec/generated). The generated C is
@@ -680,6 +698,14 @@ public:
                                                               const QString& newId);
     // Fetch a profile's full spec (ProfileGet -> Profile(opt)). PRO-3 editor hydration.
     [[nodiscard]] static QByteArray encodeProfileGetRequest(const QString& id);
+
+    // --- ACP agent catalog (foreign engines) --------------------------------------------------
+    // List the node's ACP agent catalog (AcpCatalog -> [AcpAgentEntry]): manual registrations +
+    // the last discovery scan. Zero-arg; the engine picker renders the rows.
+    [[nodiscard]] static QByteArray encodeAcpCatalogRequest();
+    // Decode an AcpCatalog response into catalog rows (name/source/installed/version only — the
+    // launch recipe deliberately stays node-side).
+    static bool decodeAcpCatalog(const QByteArray& responseCbor, QList<DecodedAcpAgentEntry>* out);
 
     // --- Profile distribution + history (PRO-7 / PRO-8) --------------------------------------
     [[nodiscard]] static QByteArray encodeProfileExportRequest(const QString& id);
