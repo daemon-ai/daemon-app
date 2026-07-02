@@ -139,6 +139,14 @@ Rectangle {
         function onContentChanged() { root._resolveTitle(); }
     }
 
+    // Re-resolve on every store change too: the node auto-titles a session from its first user
+    // message and the roster refetch lands that title in the cache WITHOUT a content change, so
+    // the tab chip would otherwise keep its stale "Session" fallback.
+    Connections {
+        target: SessionStore
+        function onChanged() { root._resolveTitle(); }
+    }
+
     // Feed the shared footer status model from this tab's live turn while it is
     // the active tab. usage/context/rateLimit events ride the same stream the
     // transcript ingests; StatusBarModel filters them by type.
@@ -243,7 +251,16 @@ Rectangle {
             Connections {
                 target: controller
                 function onSessionChanged() { transcript.load(controller.content); }
-                function onContentChanged() { transcript.load(controller.content); }
+                function onContentChanged() {
+                    // While THIS tab's turn streams, the live document is authoritative and a
+                    // store-driven reload would cancel the stream and replace it with the cache
+                    // projection (the daemon roster refetch emits changed() mid-turn once the
+                    // user's Command echo lands in the block cache). Session switches above
+                    // still reload (and cancel) unconditionally.
+                    if (orchestrator.turn && orchestrator.turn.active)
+                        return;
+                    transcript.load(controller.content);
+                }
             }
         }
 
