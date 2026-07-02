@@ -443,11 +443,12 @@ Rectangle {
                                  ? Theme.sidebarSelectedText : Theme.sidebarText
                         }
 
-                        // Inline session title for a transport leaf ("#secops > triage"),
-                        // a muted secondary label that elides before the main label.
+                        // Muted secondary label that elides before the main label: a transport
+                        // leaf's inline session title ("#secops > triage") or a Fleet agent's
+                        // provider/model configuration ("genai · claude-opus-4-8").
                         QQC.Label {
                             id: subLabelText
-                            visible: del.isTransport && del.subLabel !== ""
+                            visible: (del.isTransport || del.isAgent) && del.subLabel !== ""
                             anchors.right: stateDot.left
                             anchors.rightMargin: 8
                             anchors.verticalCenter: parent.verticalCenter

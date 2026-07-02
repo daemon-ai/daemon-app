@@ -213,6 +213,23 @@ private slots:
         QCOMPARE(store.createProfile(QStringLiteral("  --  ")), QStringLiteral("profile"));
     }
 
+    // W2: the wizard's named create — one full-spec ProfileCreate — returns the slugged id
+    // synchronously (the row itself appears on the post-create re-list).
+    void createWithSpecSlugsAndReturnsTheId() {
+        daemonapp::daemon::DaemonTransport transport;
+        NodeApiClient client(&transport);
+        ProfileRepository repo(&client, nullptr);
+        DaemonProfileStore store(&repo);
+
+        QVariantMap fields;
+        fields[QStringLiteral("provider")] = QStringLiteral("genai");
+        fields[QStringLiteral("model")] = QStringLiteral("claude-opus-4-8");
+        QCOMPARE(store.createProfileWithSpec(QStringLiteral("Anthropic"), fields),
+                 QStringLiteral("anthropic"));
+        QCOMPARE(store.createProfileWithSpec(QStringLiteral("My Work Agent"), fields),
+                 QStringLiteral("my-work-agent"));
+    }
+
     void cloneSlugsTheNewId() {
         daemonapp::daemon::DaemonTransport transport;
         NodeApiClient client(&transport);

@@ -87,7 +87,8 @@ public:
         // Integrations-section rows (NodeType::Transport):
         TxKindRole,   // "account" | "convGroup" | "conversation" | "job" | "caller"
         ConvTypeRole, // conversation type: "channel"|"groupdm"|"dm"|"thread" (else "")
-        SubLabelRole, // inline session title / "(N agents)" (else "")
+        SubLabelRole, // secondary label: a transport leaf's inline session title, or a Fleet
+                      // agent row's "provider · model" configuration (else "")
         PresenceRole, // account rows: PresencePrimitive ("available"/... ; else "")
     };
 
@@ -190,7 +191,7 @@ private:
         QString txNode;     // transport tree node id (expand/collapse + selection identity)
         QString txKind;     // account|convGroup|conversation|job|caller
         QString convType;   // conversation type (else "")
-        QString sublabel;   // inline session title / "(N agents)" (else "")
+        QString sublabel;   // transport: inline session title; agent: "provider · model" (else "")
         QString presence;   // account presence (else "")
         QString scopeKey;   // ByTransport/ByPeer key when the row has no session leaf
         int scopeType = -1; // domain::NodeType to emit for scopeKey (-1 = none)

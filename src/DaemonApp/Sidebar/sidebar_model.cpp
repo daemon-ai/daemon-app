@@ -204,6 +204,16 @@ void SidebarModel::appendFleetMembership() {
         agent.expanded = isExpanded(agent.expandKey);
         agent.hasChildren = !sess.isEmpty();
         agent.count = static_cast<int>(sess.size());
+        // Secondary label "provider · model" from the profile row, so the row reflects the
+        // agent's ACTUAL configuration, not just its name (an unconfigured agent shows only its
+        // provider — no dangling separator).
+        const QString provider = a.value(QStringLiteral("provider")).toString();
+        const QString model = a.value(QStringLiteral("model")).toString();
+        agent.sublabel = provider;
+        if (!model.isEmpty()) {
+            agent.sublabel =
+                provider.isEmpty() ? model : provider + QStringLiteral(" \u00b7 ") + model;
+        }
         m_rows.push_back(agent);
         ++agentCount;
 

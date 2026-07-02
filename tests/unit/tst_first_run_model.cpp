@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "accounts/mock_accounts_service.h"
+#include "cache_test_support.h"
 #include "connection/mock_connection_service.h"
 #include "firstrun/first_run_model.h"
 #include "models/imodel_catalog.h"
@@ -82,8 +83,20 @@ private slots:
     void initTestCase() { QStandardPaths::setTestModeEnabled(true); }
 
     void init() {
+        // Each case starts from the pristine mock seeds (the profile mock persists mutations to
+        // its AppData cache) and an un-completed setup.
+        resetMockCache();
         QtSettingsStore s;
         s.setSetupComplete(false);
+    }
+
+    // The A2 wizard gate is node-authoritative: it only runs while the ACTIVE profile is
+    // unconfigured (empty model), which is exactly the node-seeded placeholder state. Blank the
+    // mock's active profile so the gate opens like on a fresh node.
+    static void makeActiveProfileUnconfigured(profiles::MockProfileStore& store) {
+        QVariantMap fields;
+        fields[QStringLiteral("model")] = QString();
+        store.updateProfile(store.defaultProfileId(), fields);
     }
 
     void freshInstallStartsAtConnect() {
@@ -114,9 +127,10 @@ private slots:
         QVERIFY(settings.setupComplete());
     }
 
-    // CON-1: the connection succeeding (state -> ready) persists setupComplete immediately, before
-    // the (placeholder) inference step, so the next launch auto-connects even if the user leaves.
-    void connectionSuccessPersistsSetupComplete() {
+    // A2 (node-authoritative gate): a live connection alone is NOT "setup complete" — persisting
+    // it on ready would let a quit mid-wizard skip the wizard forever on the next launch. Only
+    // finishing (or skipping) the inference step marks setup complete.
+    void connectionSuccessDoesNotPersistSetupComplete() {
         QTemporaryFile socketStandIn;
         QVERIFY(socketStandIn.open());
         QtSettingsStore settings;
@@ -127,7 +141,9 @@ private slots:
 
         conn.connectTo(QStringLiteral("local"), socketStandIn.fileName());
         QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
-        // Persisted on connection success, without needing the explicit completeInference().
+        // Still gated: only the finished/skipped inference step persists setupComplete.
+        QVERIFY(!settings.setupComplete());
+        m.completeInference(); // no catalog wired -> permissive readiness
         QVERIFY(settings.setupComplete());
     }
 
@@ -228,6 +244,7 @@ private slots:
         MockConnectionService conn;
         FakeModelCatalog catalog;
         profiles::MockProfileStore profileStore;
+        makeActiveProfileUnconfigured(profileStore); // fresh-node state: the A2 gate must open
         accounts::MockAccountsService accountsSvc;
         models::MockProviderCatalog providerCatalog;
         FirstRunModel m(&settings, &conn, &catalog, &profileStore, &accountsSvc, &providerCatalog);
@@ -250,6 +267,76 @@ private slots:
         // node-offered id, persisted verbatim.
         QCOMPARE(p.value(QStringLiteral("provider")).toString(), QStringLiteral("daemon_api"));
         QCOMPARE(p.value(QStringLiteral("model")).toString(),
+                 QStringLiteral("anthropic/claude-3.5-sonnet"));
+    }
+
+    // W2: a chosen agent NAME mints a fresh named profile (one full-spec create), makes it the
+    // default, and deletes the seeded placeholder — the wizard names the agent instead of leaving
+    // the node's placeholder id. finished() fires exactly once.
+    void guidedInferenceWithNameCreatesNamedAgentAndDropsPlaceholder() {
+        QTemporaryFile socketStandIn;
+        QVERIFY(socketStandIn.open());
+        QtSettingsStore settings;
+        MockConnectionService conn;
+        FakeModelCatalog catalog;
+        profiles::MockProfileStore profileStore;
+        makeActiveProfileUnconfigured(profileStore); // fresh-node state: the A2 gate must open
+        accounts::MockAccountsService accountsSvc;
+        models::MockProviderCatalog providerCatalog;
+        FirstRunModel m(&settings, &conn, &catalog, &profileStore, &accountsSvc, &providerCatalog);
+        m.begin();
+        conn.connectTo(QStringLiteral("local"), socketStandIn.fileName());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
+
+        const QString placeholder = profileStore.defaultProfileId();
+        QVERIFY(!placeholder.isEmpty());
+
+        QSignalSpy finished(&m, &FirstRunModel::finished);
+        m.applyInferenceChoice(QStringLiteral("daemon_cloud"),
+                               QStringLiteral("anthropic/claude-3.5-sonnet"), QString(),
+                               QStringLiteral("anthropic"));
+        QCOMPARE(m.phase(), QStringLiteral("done"));
+        QCOMPARE(finished.count(), 1);
+
+        // The default is a NEW profile named by the wizard, carrying the chosen spec.
+        const QString def = profileStore.defaultProfileId();
+        QVERIFY(!def.isEmpty());
+        QVERIFY(def != placeholder);
+        const QVariantMap p = profileStore.profile(def);
+        QCOMPARE(p.value(QStringLiteral("name")).toString(), QStringLiteral("anthropic"));
+        QCOMPARE(p.value(QStringLiteral("provider")).toString(), QStringLiteral("daemon_api"));
+        QCOMPARE(p.value(QStringLiteral("model")).toString(),
+                 QStringLiteral("anthropic/claude-3.5-sonnet"));
+        // The seeded placeholder is gone (no ghost agent in the Fleet).
+        QVERIFY(profileStore.profile(placeholder).isEmpty());
+    }
+
+    // W2: a chosen name EQUAL to the placeholder id configures it in place (no create/delete),
+    // exactly like the nameless (TUI) path.
+    void guidedInferenceWithPlaceholderNameUpdatesInPlace() {
+        QTemporaryFile socketStandIn;
+        QVERIFY(socketStandIn.open());
+        QtSettingsStore settings;
+        MockConnectionService conn;
+        FakeModelCatalog catalog;
+        profiles::MockProfileStore profileStore;
+        makeActiveProfileUnconfigured(profileStore); // fresh-node state: the A2 gate must open
+        accounts::MockAccountsService accountsSvc;
+        models::MockProviderCatalog providerCatalog;
+        FirstRunModel m(&settings, &conn, &catalog, &profileStore, &accountsSvc, &providerCatalog);
+        m.begin();
+        conn.connectTo(QStringLiteral("local"), socketStandIn.fileName());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
+
+        const QString placeholder = profileStore.defaultProfileId();
+        const int rowsBefore = profileStore.profileNames().size();
+        m.applyInferenceChoice(QStringLiteral("daemon_cloud"),
+                               QStringLiteral("anthropic/claude-3.5-sonnet"), QString(),
+                               placeholder);
+        QCOMPARE(m.phase(), QStringLiteral("done"));
+        QCOMPARE(profileStore.defaultProfileId(), placeholder);
+        QCOMPARE(profileStore.profileNames().size(), rowsBefore);
+        QCOMPARE(profileStore.profile(placeholder).value(QStringLiteral("model")).toString(),
                  QStringLiteral("anthropic/claude-3.5-sonnet"));
     }
 

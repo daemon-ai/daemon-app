@@ -10,6 +10,7 @@
 #include "profiles/iprofile_store.h"
 #include "settings/isettings_store.h"
 
+#include <memory>
 #include <QDateTime>
 #include <QFile>
 
@@ -203,12 +204,31 @@ void FirstRunModel::completeInference() {
 }
 
 void FirstRunModel::applyInferenceChoice(const QString& providerId, const QString& model,
-                                         const QString& key) {
+                                         const QString& key, const QString& name) {
     // No profile store wired (mock/standalone): just finish, preserving the permissive path.
     if (m_profiles == nullptr || providerId.isEmpty()) {
         finish();
         return;
     }
+    if (m_applying) {
+        return; // an apply continuation is already in flight (double-committed Finish)
+    }
+    m_applying = true;
+    // The user has decided: close the auto-gate so a post-apply reflection that satisfies
+    // evaluateWizardGate cannot race this flow into a second finish().
+    m_gating = false;
+    // Refetch-then-apply: request a fresh ProfileList reflection and apply on its arrival. The
+    // pre-apply defaultProfileId() snapshot can be stale (the reflection race that used to
+    // blind-create a "default" profile here); the node's CURRENT state is the only valid input.
+    const QString trimmedName = name.trimmed();
+    runOnNextProfilesChanged([this, providerId, model, key, trimmedName] {
+        applyReflectedInferenceChoice(providerId, model, key, trimmedName);
+    });
+    m_profiles->refresh();
+}
+
+void FirstRunModel::applyReflectedInferenceChoice(const QString& providerId, const QString& model,
+                                                  const QString& key, const QString& name) {
     // Resolve the ProviderSelector + base URL the profile should persist from the descriptor (the
     // picker keys on the descriptor id; genai vendors share the "genai" selector).
     QString wireSelector = QStringLiteral("daemon_api");
@@ -220,9 +240,8 @@ void FirstRunModel::applyInferenceChoice(const QString& providerId, const QStrin
             baseUrl = d.value(QStringLiteral("defaultBaseUrl")).toString();
         }
     }
-    // Configure the existing default profile when the node already has one (Track 1 boots an
-    // unconfigured default); otherwise create a fresh one.
-    QString profileId = m_profiles->defaultProfileId();
+    // The node-seeded placeholder, read off the FRESH reflection that triggered this continuation.
+    const QString profileId = m_profiles->defaultProfileId();
     // #region agent log
     {
         QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
@@ -238,22 +257,91 @@ void FirstRunModel::applyInferenceChoice(const QString& providerId, const QStrin
                     .toUtf8());
     }
     // #endregion
-    if (profileId.isEmpty()) {
-        profileId = m_profiles->createProfile(QStringLiteral("default"));
-    }
     QVariantMap fields;
     fields[QStringLiteral("provider")] = wireSelector;
     fields[QStringLiteral("model")] = model;
     fields[QStringLiteral("baseUrl")] = baseUrl;
-    m_profiles->updateProfile(profileId, fields);
-    // Profile-scoped credential for a key-requiring provider (the node defaults the profile's
-    // credential_ref to its id when unset, so the key lands where inference looks it up).
-    if (!key.isEmpty() && m_accounts != nullptr) {
-        m_accounts->addApiKeyForProfile(profileId, providerId, QString(), key, QString());
+
+    if (name.isEmpty() || name == profileId) {
+        // Configure the node-seeded placeholder in place (also the TUI path, which offers no Name
+        // field). It is already the active default — the wizard only runs when the ACTIVE profile
+        // is unconfigured — so no ProfileSelect is needed. A node that reflects no profiles at
+        // all hosts no profile management: nothing to configure (and nothing is blind-created).
+        if (!profileId.isEmpty()) {
+            m_profiles->updateProfile(profileId, fields);
+            // Profile-scoped credential for a key-requiring provider (the node defaults the
+            // profile's credential_ref to its id when unset, so the key lands where inference
+            // looks it up).
+            if (!key.isEmpty() && m_accounts != nullptr) {
+                m_accounts->addApiKeyForProfile(profileId, providerId, QString(), key, QString());
+            }
+        }
+        setInferenceReady(true);
+        finish();
+        return;
     }
-    m_profiles->setDefault(profileId); // the session binds the default profile
-    setInferenceReady(true);
-    finish();
+
+    // Named agent: ONE full-spec ProfileCreate under the chosen name. The follow-up select/delete
+    // are sequenced on the node's reflections — the node dispatches pipelined Calls concurrently,
+    // so firing ProfileSelect before the create is reflected could race it.
+    const QString newId = m_profiles->createProfileWithSpec(name, fields);
+    if (newId.isEmpty()) {
+        finish(); // store without a live repo: nothing further to sequence
+        return;
+    }
+    whenProfilesReflect(
+        [this, newId] { return !m_profiles->profile(newId).isEmpty(); },
+        [this, providerId, key, newId, profileId] {
+            if (!key.isEmpty() && m_accounts != nullptr) {
+                m_accounts->addApiKeyForProfile(newId, providerId, QString(), key, QString());
+            }
+            m_profiles->setDefault(newId); // ProfileSelect: the session binds the default profile
+            if (!profileId.isEmpty() && profileId != newId) {
+                // Drop the seeded placeholder. No sessions exist pre-wizard, so no bound_profile
+                // reference can break.
+                m_profiles->remove(profileId);
+            }
+            // Finish only once the node reflects the NEW active default: the first chat issued on
+            // finished() binds the node's active profile, so this ordering is what makes the new
+            // agent (not the deleted placeholder) own the first session.
+            whenProfilesReflect([this, newId] { return m_profiles->defaultProfileId() == newId; },
+                                [this] {
+                                    setInferenceReady(true);
+                                    finish();
+                                });
+        });
+}
+
+void FirstRunModel::runOnNextProfilesChanged(const std::function<void()>& then) {
+    connect(
+        m_profiles, &profiles::IProfileStore::changed, this,
+        [this, then] {
+            if (m_phase == QStringLiteral("inference")) {
+                then();
+            } // else: Skip/restart left the wizard first — abandon the continuation
+        },
+        static_cast<Qt::ConnectionType>(Qt::AutoConnection | Qt::SingleShotConnection));
+}
+
+void FirstRunModel::whenProfilesReflect(const std::function<bool()>& reflected,
+                                        const std::function<void()>& then) {
+    if (reflected()) {
+        then(); // synchronous stores reflect mutations immediately
+        return;
+    }
+    auto conn = std::make_shared<QMetaObject::Connection>();
+    *conn =
+        connect(m_profiles, &profiles::IProfileStore::changed, this, [this, conn, reflected, then] {
+            if (m_phase != QStringLiteral("inference")) {
+                QObject::disconnect(*conn); // Skip/restart: abandon the continuation
+                return;
+            }
+            if (!reflected()) {
+                return; // not this reflection; keep waiting
+            }
+            QObject::disconnect(*conn);
+            then();
+        });
 }
 
 void FirstRunModel::logKeyValidation(const QString& provider, bool requiresKey, int modelCount,
@@ -293,6 +381,7 @@ void FirstRunModel::restart() {
         m_settings->setSetupComplete(false);
     }
     setInferenceReady(false);
+    m_applying = false; // any in-flight apply continuation is abandoned (phase leaves inference)
     begin();
 }
 
@@ -311,6 +400,12 @@ void FirstRunModel::finish() {
     // #endregion
     // Committing to done closes the connect-ready node gate so a late reflection cannot re-fire it.
     m_gating = false;
+    m_applying = false;
+    // Emit-once: an in-flight apply continuation and a user Skip may both reach here; only the
+    // first completion counts (a second finished() would open a second first-chat).
+    if (m_phase == QStringLiteral("done")) {
+        return;
+    }
     if (m_settings != nullptr) {
         m_settings->setSetupComplete(true);
     }
