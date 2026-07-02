@@ -89,7 +89,18 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     // inference readiness.
     // The unified mock DaemonNet (the single source the fleet/roster mocks now project from, plus
     // the future lenses + patch-bay); construct it before the surfaces that derive from it.
-    graph.daemonNet = new daemonnet::MockDaemonNet(owner);
+    //
+    // Its transportsTree() is also the sidebar's INTEGRATIONS source, and that demo tree is
+    // truthful only for the mock UI. Daemon mode has no live DaemonNet projection yet — the
+    // planned replacement of this seam is a DaemonDaemonNet projected from TransportRepository
+    // (TransportAdapters/Instances + ConvList) — so until it lands, Daemon mode seeds the tree
+    // empty (no Integrations section) rather than passing mock channels off as live ones.
+    // DAEMON_APP_MOCK_INTEGRATIONS opts back into the demo tree for development, mirroring the
+    // DAEMON_APP_EDITOR_DEMO gate.
+    const bool demoTransports =
+        mode != ServiceMode::Daemon || qEnvironmentVariableIsSet("DAEMON_APP_MOCK_INTEGRATIONS");
+    graph.daemonNet = new daemonnet::MockDaemonNet(
+        demoTransports ? daemonnet::TransportsSeed::Demo : daemonnet::TransportsSeed::Empty, owner);
     graph.roster = new fleet::MockSessionRoster(graph.daemonNet, owner);
     graph.fleetTree = new fleet::MockFleetTree(graph.daemonNet, owner);
     graph.approvals = new fleet::MockApprovalsInbox(owner);
@@ -253,7 +264,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                              "profiles, approvals(ApprovalsPending/Decide), "
                              "sessionSettings(SetSessionMode), fs(fs_*), fleetTree(Tree), "
                              "transports/presence(TransportAdapters/Instances+ConvList); "
-                             "still mock: daemonConfig, memory, daemonNet, roster/dashboard, "
+                             "still mock: daemonConfig, memory, daemonNet (Integrations seeded "
+                             "empty unless DAEMON_APP_MOCK_INTEGRATIONS), roster/dashboard, "
                              "routing/cron, checkpoints.";
     } else {
         // Mock mode: a non-persisted in-memory store re-seeded fresh from the unified DaemonNet
