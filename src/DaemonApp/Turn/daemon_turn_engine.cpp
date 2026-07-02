@@ -154,9 +154,11 @@ void DaemonTurnEngine::start(const QString& prompt) {
         setTurnState(QStringLiteral("error"));
         return;
     }
-    m_cursor = 0;
-    m_epoch = 0;
-    m_epochKnown = false;
+    // Resume from the applied watermark (primed by setSessionId / advanced by prior turns), never
+    // from 0: re-subscribing from 0 would replay the whole session log into the open document
+    // (duplicate user echoes + assistant text) and a replayed old TurnFinished would end this
+    // fresh turn early. A stale watermark/epoch is covered by the reset detection in
+    // applyLogPage (epoch bump / head_seq < cursor -> journal re-baseline).
     m_subscribeStreamId = 0;
     m_finished = false;
     m_parked = false;
@@ -411,8 +413,29 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
             parkOnRequest(entry);
             return;
         }
+        if (entry.payloadKind == DecodedLogEntry::PayloadKind::Command) {
+            // The node's echo of an inbound user command (StartTurn/Steer): render the user's
+            // message node-authoritatively — the same log entry every other observer sees — and
+            // persist it as a durable Message block so a reload/cold start replays it from cache.
+            if (entry.direction == QStringLiteral("Inbound") && !entry.commandText.isEmpty()) {
+                emit eventsEmitted(QVariantList{
+                    QVariantMap{{QStringLiteral("type"), QStringLiteral("userMessage")},
+                                {QStringLiteral("text"), entry.commandText}}});
+                if (m_cache != nullptr && !m_sessionId.isEmpty()) {
+                    daemonapp::daemon::CachedTranscriptBlockRow b;
+                    b.sessionId = m_sessionId;
+                    b.seq = entry.seq;
+                    b.kind = QStringLiteral("Message");
+                    b.role = QStringLiteral("User");
+                    b.text = entry.commandText;
+                    b.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
+                    m_cache->upsertTranscriptBlock(b);
+                }
+            }
+            continue;
+        }
         if (entry.payloadKind != DecodedLogEntry::PayloadKind::Event) {
-            continue; // skip the inbound user command echo, meta, etc.
+            continue; // meta / host-response frames carry no transcript content
         }
         if (entry.event.kind == AgentEventKind::Error) {
             setErrorText(entry.event.text);

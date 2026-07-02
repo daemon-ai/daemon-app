@@ -27,6 +27,8 @@ namespace be {
 //   { type: "toolFinished",  callId, status?, durationMs?,
 //                            detailKind?, <detail fields> } -> patch ToolCall by callId
 //   { type: "content",       kind, body }                 -> append Content
+//   { type: "userMessage",   text }                       -> append a User-roled message
+//                            (the node's Command echo of the user's StartTurn/Steer text)
 //
 // Each ingest() returns the BlockChangeSets to apply to a model, in order, so a
 // controller can drive incremental view updates; tests inspect the store directly.

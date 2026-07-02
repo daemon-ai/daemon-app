@@ -112,6 +112,7 @@ private slots:
     void messageMarkerRoundTripIsStable();
     void beginMessageTagsTypedAndStreamBlocks();
     void ingestOpensAssistantMessage();
+    void ingestUserMessageAppendsUserBlock();
     void editUserMessageTruncatesAndRetags();
     void rewindToMessageReturnsTextAndTruncates();
     void regenerateFromMessageKeepsUserTurn();
@@ -2175,6 +2176,59 @@ void CoreTests::ingestOpensAssistantMessage() {
     ingest.ingest(textEvent);
     ingest.finish();
     QVERIFY(store.blockAt(store.blockCount() - 1)->messageId != firstId);
+}
+
+void CoreTests::ingestUserMessageAppendsUserBlock() {
+    be::DocumentStore store;
+    be::TranscriptIngest ingest(&store);
+
+    // The node's Command echo (an inbound StartTurn on the session log) arrives as a
+    // `userMessage` event: it appends a User-roled message and never opens an assistant turn.
+    QVariantMap userEvent;
+    userEvent.insert(QStringLiteral("type"), QStringLiteral("userMessage"));
+    userEvent.insert(QStringLiteral("text"), QStringLiteral("What is the plan?"));
+    const QVector<be::BlockChangeSet> sets = ingest.ingest(userEvent);
+
+    QCOMPARE(store.blockCount(), qsizetype(1));
+    QCOMPARE(store.blockAt(0)->role, be::MessageRole::User);
+    const QString userId = store.blockAt(0)->messageId;
+    QVERIFY(!userId.isEmpty());
+    // The change-set reports the append so a bound model updates incrementally.
+    QVERIFY(!sets.isEmpty());
+    QCOMPARE(sets.last().structuralRow, qsizetype(0));
+    QCOMPARE(sets.last().insertedCount, qsizetype(1));
+
+    // The assistant reply that follows opens its OWN message (not glued to the user turn).
+    QVariantMap textEvent;
+    textEvent.insert(QStringLiteral("type"), QStringLiteral("text"));
+    textEvent.insert(QStringLiteral("text"), QStringLiteral("Here is the plan.\n"));
+    ingest.ingest(textEvent);
+    ingest.finish();
+    QVERIFY(store.blockCount() >= 2);
+    const be::BlockRecord* reply = store.blockAt(store.blockCount() - 1);
+    QCOMPARE(reply->role, be::MessageRole::Assistant);
+    QVERIFY(reply->messageId != userId);
+
+    // A mid-turn echo (a Steer) settles the open assistant stream, lands as a user message,
+    // and the next assistant content opens a fresh assistant message after it.
+    ingest.ingest(textEvent);
+    QVariantMap steerEvent;
+    steerEvent.insert(QStringLiteral("type"), QStringLiteral("userMessage"));
+    steerEvent.insert(QStringLiteral("text"), QStringLiteral("Focus on step two."));
+    ingest.ingest(steerEvent);
+    const be::BlockRecord* steer = store.blockAt(store.blockCount() - 1);
+    QCOMPARE(steer->role, be::MessageRole::User);
+    ingest.ingest(textEvent);
+    ingest.finish();
+    QCOMPARE(store.blockAt(store.blockCount() - 1)->role, be::MessageRole::Assistant);
+
+    // An empty echo is a no-op (no phantom user rows).
+    const qsizetype before = store.blockCount();
+    QVariantMap emptyEvent;
+    emptyEvent.insert(QStringLiteral("type"), QStringLiteral("userMessage"));
+    emptyEvent.insert(QStringLiteral("text"), QStringLiteral("   "));
+    ingest.ingest(emptyEvent);
+    QCOMPARE(store.blockCount(), before);
 }
 
 void CoreTests::editUserMessageTruncatesAndRetags() {

@@ -55,6 +55,26 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap& event) {
         return out;
     }
 
+    // The node's echo of the user's own message (an inbound StartTurn/Steer Command on the
+    // session log): settle any open assistant run first, then append a roled user message via
+    // the same primitive the transcript-log applier uses, so the block carries a real message
+    // id/boundary marker (edit/retry affordances work). The next assistant content re-opens a
+    // fresh assistant message. Must not run through ensureTurn (that opens an Assistant role).
+    if (type == QStringLiteral("userMessage")) {
+        const QString text = stringField(event, QStringLiteral("text")).trimmed();
+        if (text.isEmpty()) {
+            return out;
+        }
+        out += finish();
+        const qsizetype before = m_store->blockCount();
+        m_store->appendMessageBlocks(MessageRole::User, text);
+        BlockChangeSet appended;
+        appended.structuralRow = before;
+        appended.insertedCount = m_store->blockCount() - before;
+        out.push_back(appended);
+        return out;
+    }
+
     // Any content-producing event opens the assistant message if one is not
     // already open, so the blocks below group under a single assistant turn.
     ensureTurn();

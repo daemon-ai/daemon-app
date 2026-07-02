@@ -256,9 +256,20 @@ bool NodeApiCodec::decodeLogPageEntries(const QByteArray& responseCbor, QList<De
             decodeHostRequest(payload.session_payload_request_m.session_payload_request_Request,
                               &decoded);
             break;
-        case session_payload_r::session_payload_command_m_c:
+        case session_payload_r::session_payload_command_m_c: {
             decoded.payloadKind = DecodedLogEntry::PayloadKind::Command;
+            // Extract the user-visible text of the conversational command arms so the transcript
+            // can render the node's echo of the user's message (StartTurn) / steer note (Steer).
+            const agent_command_r& cmd =
+                payload.session_payload_command_m.session_payload_command_Command;
+            if (cmd.agent_command_choice == agent_command_r::agent_command_start_turn_m_c) {
+                decoded.commandText =
+                    fromZcbor(cmd.agent_command_start_turn_m.StartTurn_input.user_msg_text);
+            } else if (cmd.agent_command_choice == agent_command_r::agent_command_steer_m_c) {
+                decoded.commandText = fromZcbor(cmd.agent_command_steer_m.Steer_text);
+            }
             break;
+        }
         case session_payload_r::session_payload_response_m_c:
             decoded.payloadKind = DecodedLogEntry::PayloadKind::Response;
             break;

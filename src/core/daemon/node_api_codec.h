@@ -216,8 +216,9 @@ struct DecodedAgentEvent {
 };
 
 // One decoded session-log entry (Subscribe -> LogPage). The transcript engine consumes the
-// `event` when payloadKind == Event; other payload kinds (Command echoes, Meta, etc.) are surfaced
-// so callers can advance the cursor without rendering them.
+// `event` when payloadKind == Event and renders inbound Command echoes (the node records the
+// user's StartTurn/Steer on the merged log before the engine replies) as user Message blocks;
+// Meta/Response entries are surfaced so callers can advance the cursor without rendering them.
 struct DecodedLogEntry {
     quint64 seq = 0;
     QString direction;   // Inbound | Outbound
@@ -232,6 +233,9 @@ struct DecodedLogEntry {
         Meta
     } payloadKind = PayloadKind::None;
     DecodedAgentEvent event; // valid when payloadKind == Event
+    // Valid when payloadKind == Command: the user-visible text of a StartTurn (input.text) or
+    // Steer (text) command echo. Empty for the non-conversational arms (Interrupt/Snapshot/...).
+    QString commandText;
     // Valid when payloadKind == Request (a parked HostRequest the turn is blocked on, HITL).
     quint32 hostRequestId = 0;
     QString hostKind; // "Approval" | "Input" | "Choice" | "Delegate" | "Spawn"
