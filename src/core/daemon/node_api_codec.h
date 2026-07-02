@@ -562,6 +562,7 @@ enum class ApiResponseKind {
     Distribution,
     Revisions,
     Ok,
+    SessionCreated,
     Credentials,
     Models,
     ModelCurrent,
@@ -595,9 +596,12 @@ public:
     [[nodiscard]] static QByteArray encodeHealthRequest();
     // SessionsQuery at the daemon's default scope. `hasSinceRev` adds the L4 `since_rev` delta read
     // (the server then returns only sessions changed past `sinceRev` + a `removed` list); absent =
-    // a full page (back-compat / cold cache).
-    [[nodiscard]] static QByteArray encodeSessionsQueryRequest(bool hasSinceRev = false,
-                                                               quint64 sinceRev = 0);
+    // a full page (back-compat / cold cache). A non-empty `byProfile` sets the query scope to
+    // `SessionScope::ByProfile(byProfile)` (the per-agent view; the id already exists in the CDDL
+    // session-scope union, so this is encoder-only — no contract change).
+    [[nodiscard]] static QByteArray
+    encodeSessionsQueryRequest(bool hasSinceRev = false, quint64 sinceRev = 0,
+                               const QString& byProfile = QString());
     // Subscribe to a session's merged log from afterSeq (exclusive), up to max entries.
     [[nodiscard]] static QByteArray encodeSubscribeRequest(const QString& sessionId,
                                                            quint64 afterSeq, quint32 max);
@@ -621,6 +625,16 @@ public:
     // Drain a session's outbound queue (Poll -> Drained). Mainly a harness/diagnostic path; the
     // client renders from Subscribe (non-destructive) instead. max == 0 means "no limit".
     [[nodiscard]] static QByteArray encodePollRequest(const QString& sessionId, quint32 max = 0);
+
+    // Node-authoritative session creation (WireVersion v23): create a blank, profile-bound, UN-RUN
+    // session on the node (SessionCreate{session?, profile?} -> SessionCreated{session}). An empty
+    // `sessionId` lets the node MINT the id (the node-authority path — nothing is client-minted);
+    // an empty `profile` binds the node's active default. The client then updates + auto-selects
+    // from the SessionCreated reply / the RosterChanged event.
+    [[nodiscard]] static QByteArray encodeSessionCreateRequest(const QString& sessionId = QString(),
+                                                               const QString& profile = QString());
+    // Decode a SessionCreated response into the node-minted/accepted session id.
+    static bool decodeSessionCreated(const QByteArray& responseCbor, QString* outId);
 
     // Onboarding (CON-4 / CON-6): credentials + model discovery/selection.
     // Store a provider secret under `profile` (CredentialSet -> Ok). The secret never returns.

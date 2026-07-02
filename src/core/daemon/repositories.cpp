@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <QDateTime>
+#include <QFile>
 #include <QHash>
 #include <QSet>
 #include <QStringList>
@@ -57,11 +58,131 @@ void SessionRepository::refreshSessions() {
         QLatin1String(kSessionsCorrelation));
 }
 
+void SessionRepository::refreshSessionsByProfile(const QString& profileId) {
+    if (client() == nullptr) {
+        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    if (profileId.isEmpty()) {
+        return;
+    }
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(
+                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"AGENT-SESSIONS\","
+                               "\"location\":\"repositories.cpp:refreshSessionsByProfile\","
+                               "\"message\":\"ByProfile SessionsQuery issued\",\"data\":{"
+                               "\"profile\":\"%1\"},\"timestamp\":%2}\n")
+                    .arg(profileId)
+                    .arg(QDateTime::currentMSecsSinceEpoch())
+                    .toUtf8());
+    }
+    // #endregion
+    client()->sendRequest(
+        NodeApiCodec::encodeSessionsQueryRequest(/*hasSinceRev=*/false, /*sinceRev=*/0, profileId),
+        QLatin1String(kByProfileCorrelation));
+}
+
+void SessionRepository::createSession(const QString& profileId) {
+    if (client() == nullptr) {
+        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    m_pendingCreateProfile = profileId;
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(
+                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"SESSION-CREATE\","
+                               "\"location\":\"repositories.cpp:createSession\",\"message\":"
+                               "\"client issued node SessionCreate\",\"data\":{"
+                               "\"profile\":\"%1\"},\"timestamp\":%2}\n")
+                    .arg(profileId)
+                    .arg(QDateTime::currentMSecsSinceEpoch())
+                    .toUtf8());
+    }
+    // #endregion
+    // Node-authority: send no session id so the node MINTS it; bind the chosen profile (empty = the
+    // node's active default).
+    client()->sendRequest(NodeApiCodec::encodeSessionCreateRequest(QString(), profileId),
+                          QLatin1String(kCreateCorrelation));
+}
+
 void SessionRepository::handleResponse(const QString& correlationId,
                                        const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kSessionsCorrelation)) {
         applySessionPage(responseCbor);
+    } else if (correlationId == QLatin1String(kByProfileCorrelation)) {
+        applyByProfilePage(responseCbor);
+    } else if (correlationId == QLatin1String(kCreateCorrelation)) {
+        applySessionCreated(responseCbor);
     }
+}
+
+void SessionRepository::applySessionCreated(const QByteArray& responseCbor) {
+    QString sessionId;
+    if (!NodeApiCodec::decodeSessionCreated(responseCbor, &sessionId)) {
+        DecodedApiError err;
+        const QString msg = NodeApiCodec::decodeError(responseCbor, &err)
+                                ? err.message
+                                : QStringLiteral("SessionCreate failed");
+        emit refreshFailed(msg);
+        return;
+    }
+    const QString profileId = m_pendingCreateProfile;
+    m_pendingCreateProfile.clear();
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(
+                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"SESSION-CREATE\","
+                               "\"location\":\"repositories.cpp:applySessionCreated\","
+                               "\"message\":\"node minted session\",\"data\":{"
+                               "\"session\":\"%1\",\"profile\":\"%2\"},\"timestamp\":%3}\n")
+                    .arg(sessionId, profileId)
+                    .arg(QDateTime::currentMSecsSinceEpoch())
+                    .toUtf8());
+    }
+    // #endregion
+    // The node also emits RosterChanged (subscription_manager refetches roster+tree); this signal
+    // is the event-driven hook the orchestrator/sidebar auto-select on. The new row surfaces via
+    // the roster refetch.
+    emit sessionCreated(sessionId, profileId);
+}
+
+void SessionRepository::applyByProfilePage(const QByteArray& responseCbor) {
+    QList<CachedSessionRow> rows;
+    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, nullptr, nullptr, nullptr)) {
+        emit refreshFailed(QStringLiteral("Failed to decode ByProfile SessionPage response"));
+        return;
+    }
+    // Additive merge (no prune): a scoped subset must not clobber the shared roster cache. The
+    // rows carry bound_profile, so the client-side ByProfile filter (CachedSessionStore) projects
+    // them under their agent.
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    for (CachedSessionRow& row : rows) {
+        row.updatedAtMs = now;
+        upsertCachedSession(row);
+    }
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(
+                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"AGENT-SESSIONS\","
+                               "\"location\":\"repositories.cpp:applyByProfilePage\","
+                               "\"message\":\"ByProfile SessionPage merged\",\"data\":{"
+                               "\"count\":%1},\"timestamp\":%2}\n")
+                    .arg(rows.size())
+                    .arg(QDateTime::currentMSecsSinceEpoch())
+                    .toUtf8());
+    }
+    // #endregion
+    emit sessionsRefreshed();
 }
 
 void SessionRepository::applySessionPage(const QByteArray& responseCbor) {
@@ -123,7 +244,8 @@ void SessionRepository::pruneRemovedSessions(const QList<QString>& removed) {
 }
 
 void SessionRepository::handleFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == QLatin1String(kSessionsCorrelation)) {
+    if (correlationId == QLatin1String(kSessionsCorrelation) ||
+        correlationId == QLatin1String(kByProfileCorrelation)) {
         emit refreshFailed(message);
     }
 }
@@ -223,6 +345,18 @@ void ProviderRepository::refreshProviders() {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(
+                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"PH1\",\"location\":"
+                               "\"repositories.cpp:refreshProviders\",\"message\":\"send "
+                               "ProviderCatalog request\",\"data\":{},\"timestamp\":%1}\n")
+                    .arg(QDateTime::currentMSecsSinceEpoch())
+                    .toUtf8());
+    }
+    // #endregion
     client()->sendRequest(NodeApiCodec::encodeProviderCatalogRequest(),
                           QLatin1String(kCatalogCorrelation));
 }
@@ -246,7 +380,24 @@ void ProviderRepository::refreshProviderModels(const QString& provider,
 void ProviderRepository::handleResponse(const QString& correlationId,
                                         const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kCatalogCorrelation)) {
-        if (!NodeApiCodec::decodeProviderCatalog(responseCbor, &m_providers)) {
+        const bool decoded = NodeApiCodec::decodeProviderCatalog(responseCbor, &m_providers);
+        // #region agent log
+        {
+            QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+            if (dbg.open(QIODevice::Append | QIODevice::Text))
+                dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"PH1\","
+                                         "\"location\":\"repositories.cpp:handleResponse\","
+                                         "\"message\":\"ProviderCatalog response\",\"data\":{"
+                                         "\"decoded\":%1,\"count\":%2,\"bytes\":%3},"
+                                         "\"timestamp\":%4}\n")
+                              .arg(decoded ? "true" : "false")
+                              .arg(m_providers.size())
+                              .arg(responseCbor.size())
+                              .arg(QDateTime::currentMSecsSinceEpoch())
+                              .toUtf8());
+        }
+        // #endregion
+        if (!decoded) {
             emit operationFailed(QStringLiteral("Failed to decode ProviderCatalog response"));
             return;
         }
@@ -705,6 +856,19 @@ void ProfileRepository::createProfile(const DecodedProfileSpec& spec) {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"AGENT-CREATE\","
+                                     "\"location\":\"repositories.cpp:createProfile\",\"message\":"
+                                     "\"ProfileCreate issued\",\"data\":{\"profile\":\"%1\","
+                                     "\"provider\":\"%2\",\"model\":\"%3\"},\"timestamp\":%4}\n")
+                          .arg(spec.id, spec.provider, spec.model)
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
     client()->sendRequest(NodeApiCodec::encodeProfileCreateRequest(spec),
                           QLatin1String(kCreateCorrelation));
 }
@@ -834,6 +998,20 @@ void ProfileRepository::handleProfilesResponse(const QByteArray& responseCbor) {
     // agent) so the cache mirrors truth. Surviving rows keep their spec_cbor; the per-profile
     // ProfileGet that the store kicks next refreshes each row's spec + active flag.
     pruneStaleProfiles();
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(
+                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"PROFILE-REFLECT\","
+                               "\"location\":\"repositories.cpp:handleProfilesResponse\","
+                               "\"message\":\"client reflected node ProfileList\",\"data\":{"
+                               "\"applied\":%1},\"timestamp\":%2}\n")
+                    .arg(profiles().size())
+                    .arg(QDateTime::currentMSecsSinceEpoch())
+                    .toUtf8());
+    }
+    // #endregion
     emit profilesRefreshed();
 }
 
@@ -1059,11 +1237,24 @@ QList<CachedFleetUnitRow> FleetRepository::cachedUnits() const {
     return cache() != nullptr ? cache()->fleetUnits() : QList<CachedFleetUnitRow>{};
 }
 
-void FleetRepository::refreshTree() {
+void FleetRepository::refreshTree(const QString& source) {
     if (client() == nullptr) {
         emit refreshFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"FLEET-REFRESH\","
+                                     "\"location\":\"repositories.cpp:refreshTree\",\"message\":"
+                                     "\"Tree query triggered\",\"data\":{\"source\":\"%1\"},"
+                                     "\"timestamp\":%2}\n")
+                          .arg(source)
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
     client()->sendRequest(NodeApiCodec::encodeTreeRequest(), QLatin1String(kTreeCorrelation));
 }
 
@@ -1111,6 +1302,20 @@ void FleetRepository::handleTreeResponse(const QByteArray& responseCbor) {
         return;
     }
     syncFleetUnits(flat);
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(
+                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"FLEET-REFRESH\","
+                               "\"location\":\"repositories.cpp:handleTreeResponse\",\"message\":"
+                               "\"Tree response applied\",\"data\":{\"unitCount\":%1},"
+                               "\"timestamp\":%2}\n")
+                    .arg(flat.size())
+                    .arg(QDateTime::currentMSecsSinceEpoch())
+                    .toUtf8());
+    }
+    // #endregion
     emit treeRefreshed();
 }
 
@@ -1155,7 +1360,7 @@ void FleetRepository::handleUnitControlResponse(const QByteArray& responseCbor) 
         emit controlFailed(err.message.isEmpty() ? QStringLiteral("Unit control failed")
                                                  : err.message);
     } else {
-        refreshTree();
+        refreshTree(QStringLiteral("control"));
     }
 }
 

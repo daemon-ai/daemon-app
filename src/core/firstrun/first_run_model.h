@@ -80,6 +80,11 @@ public:
     // Submit interactive credentials while in the `auth` phase (routes to the connection seam's
     // login()). On success the connection reaches ready and the gate advances to inference.
     Q_INVOKABLE void submitLogin(const QString& username, const QString& password);
+    // Record a key-validation attempt + its gate outcome for the wizard's blocking key check
+    // (FIX 4). The gate itself is evaluated in QML (driven off the providerModelsRefreshed signal);
+    // this is the shared instrumentation seam so both pass and block outcomes are captured.
+    Q_INVOKABLE void logKeyValidation(const QString& provider, bool requiresKey, int modelCount,
+                                      bool pass) const;
     // Skip onboarding (dev / "I'll set this up later"): marks setup complete.
     Q_INVOKABLE void skip();
     // Re-run onboarding from settings (used by a "reset setup" affordance).
@@ -100,6 +105,13 @@ private:
     // catalog is wired the gate stays permissive (ready) so the mock/standalone path is unblocked.
     void refreshInferenceReady();
     void finish();
+    // Node-authoritative wizard gate (A2): on connect-ready decide whether to run the wizard by the
+    // NODE, not the client `setupComplete` hint — run it iff the node's active profile is NOT
+    // configured (empty model). Re-evaluated as the reflected ProfileList / ModelCurrent land.
+    void evaluateWizardGate();
+    // Whether the node's active default profile already has a model configured (reflected from the
+    // profile store). False when nothing is reflected yet or no active default exists.
+    [[nodiscard]] bool activeModelConfigured() const;
 
     settings::ISettingsStore* m_settings = nullptr;
     connection::IConnectionService* m_connection = nullptr;
@@ -110,6 +122,9 @@ private:
     QString m_phase = QStringLiteral("connect");
     QString m_error;
     bool m_inferenceReady = false;
+    // True while the connect-ready node gate is still deciding (waiting for the ProfileList /
+    // ModelCurrent reflection). Cleared once we commit to `done` (configured) or the user finishes.
+    bool m_gating = false;
 };
 
 } // namespace firstrun

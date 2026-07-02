@@ -19,36 +19,17 @@ Rectangle {
 
     readonly property string phase: FirstRun ? FirstRun.phase : "connect"
 
-    // Guided inference selection state (provider -> key -> model). `providerId` is the
-    // ProviderCatalog descriptor id; `model` is the selection-only model id the profile persists.
-    property string providerId: ""
-    property string model: ""
-    readonly property var providerRows: ProviderCatalog ? ProviderCatalog.providers() : []
-    readonly property var providerDescriptor: (ProviderCatalog && providerId.length > 0)
-                                              ? ProviderCatalog.descriptorFor(providerId) : ({})
-    readonly property bool providerRequiresKey: providerDescriptor
-                                                && providerDescriptor.requiresKey === true
-    // Ready to finish once a provider and a concrete model are chosen, and any required key is set.
-    readonly property bool inferenceComplete: providerId.length > 0 && model.length > 0
-                                              && (!providerRequiresKey || keyField.text.length > 0)
-
-    // Pick the default provider (Daemon Cloud) once the provider list arrives, and fetch its models.
-    function _seedProvider() {
-        if (providerId.length > 0 || providerRows.length === 0)
-            return;
-        var pick = providerRows[0];
-        for (var i = 0; i < providerRows.length; ++i)
-            if (providerRows[i].id === "daemon_cloud" || providerRows[i].kind === "daemon_cloud") {
-                pick = providerRows[i]; break;
-            }
-        root.selectProvider(pick.id);
-    }
-    function selectProvider(id) {
-        root.providerId = id;
-        root.model = "";
-        if (ProviderCatalog)
-            ProviderCatalog.refreshModels(id, "", keyField.text); // transient key (no profile yet)
-    }
+    // A7: the guided inference selection (provider -> key -> model) is now the SHARED
+    // AgentInferencePicker, so the wizard and "+ New agent" use one node-driven picker. These read
+    // the picker's live selection (or defaults before the inference step mounts the picker).
+    readonly property string providerId: inferencePicker.item ? inferencePicker.item.providerId : ""
+    readonly property string model: inferencePicker.item ? inferencePicker.item.model : ""
+    readonly property bool inferenceComplete: inferencePicker.item
+                                              && inferencePicker.item.inferenceComplete
+    readonly property bool providerRequiresKey: inferencePicker.item
+                                                && inferencePicker.item.providerRequiresKey
+    readonly property bool keyValidated: inferencePicker.item && inferencePicker.item.keyValidated
+    readonly property string pickerKey: inferencePicker.item ? inferencePicker.item.key : ""
 
     // Centered onboarding card.
     Rectangle {
@@ -157,93 +138,17 @@ Rectangle {
                 }
             }
 
-            // --- Phase: inference gate (provider -> key -> model, selection-only) ---
-            ColumnLayout {
-                visible: root.phase === "inference"
+            // --- Phase: inference gate (the SHARED provider -> key -> model picker, A7) ---
+            Loader {
+                id: inferencePicker
                 Layout.fillWidth: true
-                spacing: 10
-
-                // Seed Daemon Cloud + fetch its models once the node's provider list arrives.
-                Component.onCompleted: root._seedProvider()
-                Connections {
-                    target: ProviderCatalog
-                    function onProvidersChanged() { root._seedProvider(); }
-                }
-
-                SectionLabel { text: qsTr("Provider") }
-                Kit.Dropdown {
-                    id: providerBox
-                    Layout.fillWidth: true
-                    model: root.providerRows.map(function(p) { return p.name; })
-                    function syncFromModel() {
-                        for (var i = 0; i < root.providerRows.length; ++i)
-                            if (root.providerRows[i].id === root.providerId) { currentIndex = i; return; }
-                    }
-                    onActivated: root.selectProvider(root.providerRows[currentIndex].id)
-                }
-
-                // API key: only for a key-requiring provider (Daemon Cloud lists keyless). Editing
-                // it re-lists the provider's models with the entered key as a transient credential.
-                Kit.TextField {
-                    id: keyField
-                    Layout.fillWidth: true
-                    visible: root.providerRequiresKey
-                    placeholderText: qsTr("Paste API key")
-                    echoMode: TextInput.Password
-                    onEditingFinished: if (ProviderCatalog && root.providerId.length > 0)
-                                           ProviderCatalog.refreshModels(root.providerId, "", text);
-                }
-
-                SectionLabel { text: qsTr("Model") }
-                Text {
-                    visible: modelList.count === 0
-                    text: root.providerRequiresKey && keyField.text.length === 0
-                          ? qsTr("Enter your API key to list models.")
-                          : qsTr("Discovering models…")
-                    font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
-                    Layout.fillWidth: true; wrapMode: Text.WordWrap
-                }
-                ListView {
-                    id: modelList
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min(contentHeight, 132)
-                    clip: true
-                    // The node's per-provider offered models (selection-only); a local provider ends
-                    // with a "Discover More Models" row that opens the download flow.
-                    property var rows: (ProviderCatalog && root.providerId.length > 0)
-                                       ? ProviderCatalog.offeredModels(root.providerId) : []
-                    model: rows
-                    Connections {
-                        target: ProviderCatalog
-                        function onOfferedModelsChanged(pid) {
-                            if (pid === root.providerId)
-                                modelList.rows = ProviderCatalog.offeredModels(root.providerId);
-                        }
-                    }
-                    delegate: Rectangle {
-                        required property var modelData
-                        width: ListView.view ? ListView.view.width : 0
-                        height: 30
-                        radius: 6
-                        color: modelData.id === root.model ? Theme.hover : "transparent"
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.left: parent.left
-                            anchors.leftMargin: 8
-                            text: modelData.kind === "discover"
-                                  ? "+ " + modelData.name : modelData.name
-                            font.family: FontIcons.display; font.pixelSize: 12
-                            color: modelData.kind === "discover" ? Theme.accent : Theme.text
-                        }
-                        TapHandler {
-                            onTapped: {
-                                if (modelData.kind === "discover") {
-                                    if (Nav) Nav.open("models", "discover");
-                                } else {
-                                    root.model = modelData.id;
-                                }
-                            }
-                        }
+                active: root.phase === "inference"
+                visible: active
+                sourceComponent: AgentInferencePicker {
+                    // FIX 4: the wizard logs the authenticated-LIST key-validation outcome.
+                    onKeyValidationResolved: function(provider, requiresKey, count, pass) {
+                        if (FirstRun)
+                            FirstRun.logKeyValidation(provider, requiresKey, count, pass);
                     }
                 }
             }
@@ -261,12 +166,14 @@ Rectangle {
                     visible: root.phase === "inference"
                     text: qsTr("Finish setup")
                     accentFilled: true
-                    // Enabled once a provider + concrete model are chosen (and any required key set).
+                    // Enabled once a provider + concrete model are chosen and, for a key-required
+                    // vendor, the key has been PROVEN to authenticate (FIX 4) - not merely typed.
                     enabled: root.inferenceComplete
+                             && (!root.providerRequiresKey || root.keyValidated)
                     // Persist a working profile (ProviderSelector + model + base URL) + profile-scoped
                     // key + make default, then finish - zero env required.
                     onClicked: FirstRun.applyInferenceChoice(root.providerId, root.model,
-                                                             keyField.text)
+                                                             root.pickerKey)
                 }
             }
         }

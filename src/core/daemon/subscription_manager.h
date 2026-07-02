@@ -16,6 +16,8 @@ class NodeApiClient;
 class SessionRepository;
 class ApprovalRepository;
 class ModelRepository;
+class FleetRepository;
+class ProfileRepository;
 class DaemonCacheStore;
 struct DecodedNodeEvent;
 
@@ -25,6 +27,9 @@ struct DecodedNodeEvent;
 // focus* without polling and without the connect-ready full-refetch storm:
 //
 //   - RosterChanged / SessionMetaChanged -> a debounced SessionRepository::refreshSessions()
+//                                           (+ FleetRepository::refreshTree(), since a fleet unit
+//                                           IS a durable session: a session created lazily on first
+//                                           Submit must also repopulate the projected tree - FIX 2)
 //   - ApprovalPending                    -> ApprovalRepository::refreshPending() (the inbox badge)
 //   - DownloadProgress                   -> ModelRepository (retires the 600ms poll; see
 //   p3-downloads)
@@ -40,7 +45,8 @@ class SubscriptionManager : public QObject {
 public:
     SubscriptionManager(NodeApiClient* nodeApi, SessionRepository* sessions,
                         ApprovalRepository* approvals, ModelRepository* models,
-                        DaemonCacheStore* cache, QObject* parent = nullptr);
+                        DaemonCacheStore* cache, FleetRepository* fleet = nullptr,
+                        ProfileRepository* profiles = nullptr, QObject* parent = nullptr);
 
     // Open (or re-open) the single node-wide feed from the tracked cursor. Idempotent; call on
     // connect-ready. A re-open after a drop resumes from the last applied cursor (the retained ring
@@ -74,6 +80,8 @@ private:
     SessionRepository* m_sessions = nullptr;
     ApprovalRepository* m_approvals = nullptr;
     ModelRepository* m_models = nullptr;
+    FleetRepository* m_fleet = nullptr;
+    ProfileRepository* m_profiles = nullptr;
     DaemonCacheStore* m_cache = nullptr;
 
     quint64 m_feedStreamId = 0; // the open EventsSince stream id (0 = none)

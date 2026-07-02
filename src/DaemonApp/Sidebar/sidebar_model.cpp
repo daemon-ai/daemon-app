@@ -5,18 +5,33 @@
 
 #include "daemonnet/idaemonnet.h"
 #include "domain/ids.h"
+#include "domain/session.h"
 #include "domain/unit_node.h"
 #include "persistence/isession_store.h"
+#include "profiles/iprofile_store.h"
+#include "uimodels/variant_list_model.h"
 
 #include <algorithm>
+#include <QDateTime>
+#include <QFile>
 #include <QHash>
 
 using daemonnet::TransportTreeRow;
 using domain::ListScope;
 using domain::NodeType;
 using domain::UnitId;
-using domain::UnitKind;
 using domain::UnitNode;
+
+namespace {
+// Fleet membership expand-state keys (a disjoint id namespace from unit/transport ids, so they
+// share m_collapsed safely). Prefixed with a control char no real id carries.
+QString nodeRootKey() {
+    return QStringLiteral("\x01node-root");
+}
+QString agentExpandKey(const QString& profileId) {
+    return QStringLiteral("\x01agent:") + profileId;
+}
+} // namespace
 
 SidebarModel::SidebarModel(QObject* parent) : QAbstractListModel(parent) {}
 
@@ -60,6 +75,51 @@ void SidebarModel::setDaemonNet(QObject* net) {
     rebuild();
 }
 
+QObject* SidebarModel::profiles() const {
+    return m_profiles;
+}
+
+void SidebarModel::setProfiles(QObject* profiles) {
+    auto* store = qobject_cast<profiles::IProfileStore*>(profiles);
+    if (m_profiles == store) {
+        return;
+    }
+    if (m_profiles) {
+        m_profiles->disconnect(this);
+    }
+    m_profiles = store;
+    if (m_profiles) {
+        // The profile list changed (create/update/delete/select/re-list): the FLEET agents change,
+        // so rebuild. This is the single-client post-mutation re-list (A2) — no node event needed.
+        connect(m_profiles, &profiles::IProfileStore::changed, this, &SidebarModel::rebuild);
+    }
+    emit profilesChanged();
+    rebuild();
+}
+
+QString SidebarModel::nodeLabel() const {
+    return m_nodeLabel;
+}
+
+void SidebarModel::setNodeLabel(const QString& label) {
+    if (m_nodeLabel == label) {
+        return;
+    }
+    m_nodeLabel = label;
+    emit nodeLabelChanged();
+    rebuild();
+}
+
+QList<QVariantMap> SidebarModel::agentRows() const {
+    if (m_profiles == nullptr) {
+        return {};
+    }
+    // Agents == profiles (§0). The profile store publishes them as a VariantListModel
+    // (rows: id, name, model, provider, isDefault); project those rows directly.
+    auto* model = qobject_cast<uimodels::VariantListModel*>(m_profiles->profiles());
+    return model != nullptr ? model->rows() : QList<QVariantMap>{};
+}
+
 bool SidebarModel::isExpanded(const QString& id) const {
     return !m_collapsed.contains(id);
 }
@@ -84,30 +144,115 @@ void SidebarModel::pushSectionHeader(const QString& label, NodeType type,
     m_rows.push_back(r);
 }
 
-void SidebarModel::appendUnitRows(const UnitNode& node, int depth) {
-    const QList<UnitNode> children = m_store->unitChildren(node.id);
-    const bool expanded = isExpanded(node.id.toString());
+void SidebarModel::appendFleetMembership() {
+    // The client-side node/connection ROOT (§0): represents this client's ffi/socket link to the
+    // (local) node — NOT an in-tree unit. Remote/daisy-chained nodes would be additional roots
+    // later; nothing here precludes that (we just render one root today).
+    const QString rootLabel = m_nodeLabel.isEmpty() ? tr("Local node") : m_nodeLabel;
+    const QList<QVariantMap> agents = agentRows();
 
-    Row r;
-    r.label = node.name;
-    r.count = m_store->sessionCount({NodeType::Unit, -1, node.id, {}});
-    r.type = NodeType::Unit;
-    r.unitId = node.id.toString();
-    r.selectable = true;
-    r.depth = depth;
-    r.hasChildren = !children.isEmpty();
-    r.expanded = expanded;
-    r.kind = static_cast<int>(node.kind);
-    r.state = static_cast<int>(node.state);
-    r.profile = node.profile.toString();
-    r.session = node.session.toString();
-    m_rows.push_back(r);
+    Row root;
+    root.label = rootLabel;
+    root.type = NodeType::FleetNode;
+    root.selectable = true;
+    root.depth = 0;
+    root.expandKey = nodeRootKey();
+    root.expanded = isExpanded(root.expandKey);
+    root.hasChildren = !agents.isEmpty();
+    root.count = static_cast<int>(agents.size());
+    m_rows.push_back(root);
 
-    // Uniformly recursive: descend into any expanded unit, to any depth. No
-    // branching on kind, no level cap.
-    if (r.hasChildren && expanded) {
-        for (const UnitNode& child : children) {
-            appendUnitRows(child, depth + 1);
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(
+                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"FLEET-ROOT\","
+                               "\"location\":\"sidebar_model.cpp:appendFleetMembership\","
+                               "\"message\":\"node root row built\",\"data\":{\"label\":\"%1\","
+                               "\"agents\":%2},\"timestamp\":%3}\n")
+                    .arg(rootLabel)
+                    .arg(agents.size())
+                    .arg(QDateTime::currentMSecsSinceEpoch())
+                    .toUtf8());
+    }
+    // #endregion
+
+    if (!root.expanded) {
+        return; // node root collapsed: agents hidden
+    }
+
+    int agentCount = 0;
+    for (const QVariantMap& a : agents) {
+        const QString id = a.value(QStringLiteral("id")).toString();
+        if (id.isEmpty()) {
+            continue;
+        }
+        const QString name = a.value(QStringLiteral("name")).toString();
+        // An agent's sessions come from the store filtered by SessionScope::ByProfile (client-side
+        // over the cached roster; the authoritative wire query is issued on selection, A3).
+        const QList<domain::Session> sess =
+            m_store != nullptr ? m_store->sessions({NodeType::Agent, -1, UnitId(), id})
+                               : QList<domain::Session>{};
+        Row agent;
+        agent.label = name.isEmpty() ? id : name;
+        agent.type = NodeType::Agent;
+        agent.selectable = true;
+        agent.depth = 1;
+        agent.profile = id;
+        agent.expandKey = agentExpandKey(id);
+        agent.expanded = isExpanded(agent.expandKey);
+        agent.hasChildren = !sess.isEmpty();
+        agent.count = static_cast<int>(sess.size());
+        m_rows.push_back(agent);
+        ++agentCount;
+
+        if (!agent.expanded) {
+            continue;
+        }
+        for (const domain::Session& s : sess) {
+            Row leaf;
+            leaf.label = s.title.isEmpty() ? tr("(untitled)") : s.title;
+            leaf.type = NodeType::AgentSession;
+            leaf.selectable = true;
+            leaf.depth = 2;
+            leaf.profile = id;
+            leaf.session = s.sessionId.toString();
+            m_rows.push_back(leaf);
+        }
+    }
+
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"AGENT-LIST\","
+                                     "\"location\":\"sidebar_model.cpp:appendFleetMembership\","
+                                     "\"message\":\"agent rows built from ProfileList\",\"data\":{"
+                                     "\"agents\":%1},\"timestamp\":%2}\n")
+                          .arg(agentCount)
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
+}
+
+void SidebarModel::collectFleetExpandKeys(QSet<QString>& out) const {
+    const QList<QVariantMap> agents = agentRows();
+    if (agents.isEmpty()) {
+        return;
+    }
+    out.insert(nodeRootKey());
+    for (const QVariantMap& a : agents) {
+        const QString id = a.value(QStringLiteral("id")).toString();
+        if (id.isEmpty()) {
+            continue;
+        }
+        // Only agents that actually have sessions are foldable.
+        const int n =
+            m_store != nullptr ? m_store->sessionCount({NodeType::Agent, -1, UnitId(), id}) : 0;
+        if (n > 0) {
+            out.insert(agentExpandKey(id));
         }
     }
 }
@@ -195,11 +340,10 @@ void SidebarModel::rebuild() {
 
         pushSectionHeader(tr("Fleet"), NodeType::FleetSeparator, QStringLiteral("fleet"));
         if (isSectionExpanded(QStringLiteral("fleet"))) {
-            // Top-level roots have an empty parent; each may be a lone unit or the
-            // head of an arbitrarily deep fleet.
-            for (const UnitNode& root : m_store->unitChildren(UnitId())) {
-                appendUnitRows(root, 0);
-            }
+            // §0 membership view: node(client connection root) -> agents(profiles) -> sessions
+            // (ByProfile). NOT the node's in-partition tree()/unitChildren() (that feeds the
+            // in-transcript SubagentModel drill-down, left untouched).
+            appendFleetMembership();
         }
     }
     // The co-equal events-IO axis: an "Integrations" header + the capability-driven
@@ -288,6 +432,12 @@ bool SidebarModel::rowIsCurrent(const Row& r) const {
         return m_selType == NodeType::Tag && r.tagId == m_selTag;
     case NodeType::Transport:
         return m_selType == NodeType::Transport && r.txNode == m_selTxNode;
+    case NodeType::FleetNode:
+        return m_selType == NodeType::FleetNode;
+    case NodeType::Agent:
+        return m_selType == NodeType::Agent && r.profile == m_selAgent;
+    case NodeType::AgentSession:
+        return m_selType == NodeType::AgentSession && r.session == m_selSession;
     default:
         return m_selType == r.type;
     }
@@ -377,6 +527,8 @@ void SidebarModel::setSelectionFromRow(int row) {
     m_selTag = r.tagId;
     m_selUnit = r.unitId;
     m_selTxNode = r.txNode;
+    m_selAgent = (r.type == NodeType::Agent) ? r.profile : QString();
+    m_selSession = (r.type == NodeType::AgentSession) ? r.session : QString();
     if (r.type == NodeType::Transport) {
         // A session leaf opens its transcript directly; a scope-bearing group
         // (account / Dm peer) regroups the list; everything else just highlights.
@@ -385,6 +537,18 @@ void SidebarModel::setSelectionFromRow(int row) {
         } else if (r.scopeType >= 0 && !r.scopeKey.isEmpty()) {
             emit scopeSelected(r.scopeType, -1, r.scopeKey);
         }
+    } else if (r.type == NodeType::AgentSession) {
+        // A session leaf under an agent opens its transcript (like an Integrations session leaf).
+        if (!r.session.isEmpty()) {
+            emit sessionActivated(r.session);
+        }
+    } else if (r.type == NodeType::Agent) {
+        // Selecting an agent scopes the session list to SessionScope::ByProfile(profileId): the
+        // per-agent view (A3). `profile` rides the string slot as the lens/profile key.
+        emit scopeSelected(static_cast<int>(NodeType::Agent), -1, r.profile);
+    } else if (r.type == NodeType::FleetNode) {
+        // The node root scopes to all of this node's sessions (its whole membership).
+        emit scopeSelected(static_cast<int>(NodeType::AllSessions), -1, QString());
     } else {
         emit scopeSelected(static_cast<int>(r.type), r.tagId, r.unitId);
     }
@@ -468,6 +632,17 @@ void SidebarModel::toggleExpand(int row) {
         rebuild();
         return;
     }
+    // Fleet membership rows (node root / agent) fold by their expand key (a disjoint id namespace).
+    if ((r.type == NodeType::FleetNode || r.type == NodeType::Agent) && r.hasChildren &&
+        !r.expandKey.isEmpty()) {
+        if (isExpanded(r.expandKey)) {
+            m_collapsed.insert(r.expandKey);
+        } else {
+            m_collapsed.remove(r.expandKey);
+        }
+        rebuild();
+        return;
+    }
     if ((r.type != NodeType::Unit && r.type != NodeType::Transport) || !r.hasChildren) {
         return;
     }
@@ -529,8 +704,9 @@ void SidebarModel::collapseCurrent() {
         return;
     }
     const Row& r = m_rows.at(cur);
-    if ((r.type == NodeType::Unit || r.type == NodeType::Transport) && r.hasChildren &&
-        r.expanded) {
+    if ((r.type == NodeType::Unit || r.type == NodeType::Transport ||
+         r.type == NodeType::FleetNode || r.type == NodeType::Agent) &&
+        r.hasChildren && r.expanded) {
         toggleExpand(cur); // collapse; selection stays on this row
         return;
     }
@@ -546,7 +722,9 @@ void SidebarModel::expandCurrent() {
         return;
     }
     const Row& r = m_rows.at(cur);
-    if ((r.type != NodeType::Unit && r.type != NodeType::Transport) || !r.hasChildren) {
+    if ((r.type != NodeType::Unit && r.type != NodeType::Transport &&
+         r.type != NodeType::FleetNode && r.type != NodeType::Agent) ||
+        !r.hasChildren) {
         return;
     }
     if (!r.expanded) {
@@ -568,22 +746,11 @@ void SidebarModel::activateCurrent() {
     }
 }
 
-void SidebarModel::collectExpandableIds(const QString& parentId, QSet<QString>& out) const {
-    if (!m_store) {
-        return;
-    }
-    for (const UnitNode& n : m_store->unitChildren(UnitId(parentId))) {
-        const QList<UnitNode> kids = m_store->unitChildren(n.id);
-        if (!kids.isEmpty()) {
-            out.insert(n.id.toString());
-        }
-        collectExpandableIds(n.id.toString(), out);
-    }
-}
-
 bool SidebarModel::anyExpanded() const {
+    // The Fleet header's expand-all/collapse-all now folds the membership rows (node root +
+    // agents), not the node's unit tree.
     QSet<QString> expandable;
-    collectExpandableIds(QString(), expandable);
+    collectFleetExpandKeys(expandable);
     return std::ranges::any_of(expandable, [this](const QString& id) { return isExpanded(id); });
 }
 
@@ -624,10 +791,10 @@ void SidebarModel::collapseAllTransports() {
 }
 
 void SidebarModel::expandAll() {
-    // Unit-scoped: only un-collapse fleet unit ids, leaving any collapsed transport
-    // nodes (a disjoint id namespace sharing m_collapsed) untouched.
+    // Fleet membership-scoped: un-collapse the node root + agent keys, leaving any collapsed
+    // transport nodes (a disjoint id namespace sharing m_collapsed) untouched.
     QSet<QString> expandable;
-    collectExpandableIds(QString(), expandable);
+    collectFleetExpandKeys(expandable);
     for (const QString& id : expandable) {
         m_collapsed.remove(id);
     }
@@ -636,41 +803,20 @@ void SidebarModel::expandAll() {
 
 void SidebarModel::collapseAll() {
     QSet<QString> expandable;
-    collectExpandableIds(QString(), expandable);
+    collectFleetExpandKeys(expandable);
     // Union (not replace) so transport-node collapse state survives.
     for (const QString& id : expandable) {
         m_collapsed.insert(id);
-    }
-
-    // If the selection is now hidden (a collapsed unit's descendant), lift it to
-    // its top-level root ancestor so a row stays highlighted.
-    if (m_selType == NodeType::Unit && m_store) {
-        QString cur = m_selUnit;
-        QString root = cur;
-        for (int guard = 0; !cur.isEmpty() && guard <= 4096; ++guard) {
-            root = cur;
-            cur = m_store->unit(UnitId(cur)).parentId.toString();
-        }
-        if (root != m_selUnit) {
-            m_selUnit = root;
-            emit scopeSelected(static_cast<int>(NodeType::Unit), -1, root);
-        }
     }
     rebuild();
 }
 
 void SidebarModel::createRootUnit() {
-    if (!m_store) {
-        return;
-    }
-    // A new top-level unit. Kind is cosmetic; default to Orchestrator so it reads
-    // as a fresh fleet/workspace. changed() -> rebuild() runs first.
-    const QString id = m_store->createUnit(UnitId(), UnitKind::Orchestrator).toString();
-    m_selType = NodeType::Unit;
-    m_selTag = -1;
-    m_selUnit = id;
-    emit scopeSelected(static_cast<int>(NodeType::Unit), -1, id);
-    emitCurrentChanged();
+    // A2: the Fleet "+" mints a new AGENT (a profile), not a bare chat. The shell opens a small
+    // agent form (provider/model/optional key) and calls ProfileRepository::createProfile(spec);
+    // on success the post-mutation profile re-list makes the agent appear under the node root (no
+    // node event needed — single client). A separate affordance opens a session on an agent.
+    emit createAgentRequested();
 }
 
 void SidebarModel::createTag() {

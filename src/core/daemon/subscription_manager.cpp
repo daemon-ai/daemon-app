@@ -15,15 +15,22 @@ namespace daemonapp::daemon {
 
 SubscriptionManager::SubscriptionManager(NodeApiClient* nodeApi, SessionRepository* sessions,
                                          ApprovalRepository* approvals, ModelRepository* models,
-                                         DaemonCacheStore* cache, QObject* parent)
+                                         DaemonCacheStore* cache, FleetRepository* fleet,
+                                         ProfileRepository* profiles, QObject* parent)
     : QObject(parent), m_nodeApi(nodeApi), m_sessions(sessions), m_approvals(approvals),
-      m_models(models), m_cache(cache) {
+      m_models(models), m_fleet(fleet), m_profiles(profiles), m_cache(cache) {
     m_rosterDebounce.setSingleShot(true);
     m_rosterDebounce.setInterval(kRosterDebounceMs);
     connect(&m_rosterDebounce, &QTimer::timeout, this, [this] {
         if (m_rosterDirty && m_sessions != nullptr) {
             m_rosterDirty = false;
             m_sessions->refreshSessions();
+            // A fleet unit IS a durable session, so the same roster delta that adds a
+            // lazily-created session must re-query the tree for it to appear (FIX 2). Debounced
+            // with the roster.
+            if (m_fleet != nullptr) {
+                m_fleet->refreshTree(QStringLiteral("subscription"));
+            }
         }
     });
     if (m_nodeApi != nullptr) {
@@ -130,19 +137,31 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
             m_models->applyDownloadProgress(event.downloadId, event.pct, event.state);
         }
         break;
-    case DecodedNodeEvent::Kind::ResyncNeeded:
-        // The feed cursor aged out of the retained ring; re-baseline the awareness surfaces. The
-        // page carrying this event sets next_cursor to the feed head, so the stream continues from
-        // there after this refetch.
-        m_rosterDirty = true;
-        if (m_sessions != nullptr) {
-            m_sessions->refreshSessions();
+    case DecodedNodeEvent::Kind::ResyncNeeded: {
+        // Branch on the resync `scope` (the node stamps "all" today; "profiles" is the profile-only
+        // re-baseline). "all"/"profiles" also re-fetch the reflected ProfileList, so profiles ride
+        // the general resync mechanism (no dedicated ProfilesChanged event). "all" keeps the broad
+        // roster/fleet/approvals re-baseline.
+        const bool all = event.scope.isEmpty() || event.scope == QStringLiteral("all");
+        const bool profiles = all || event.scope == QStringLiteral("profiles");
+        if (all) {
+            m_rosterDirty = true;
+            if (m_sessions != nullptr) {
+                m_sessions->refreshSessions();
+            }
+            if (m_fleet != nullptr) {
+                m_fleet->refreshTree(QStringLiteral("subscription"));
+            }
+            if (m_approvals != nullptr) {
+                m_approvals->refreshPending();
+            }
         }
-        if (m_approvals != nullptr) {
-            m_approvals->refreshPending();
+        if (profiles && m_profiles != nullptr) {
+            m_profiles->refreshProfiles();
         }
         emit resyncNeeded();
         break;
+    }
     case DecodedNodeEvent::Kind::Unknown:
         break;
     }

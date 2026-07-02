@@ -44,6 +44,8 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
          ApiResponseKind::TransportInstances},
         {api_response_r::api_response_response_conversations_m_c, ApiResponseKind::Conversations},
         {api_response_r::api_response_response_ok_m_c, ApiResponseKind::Ok},
+        {api_response_r::api_response_response_session_created_m_c,
+         ApiResponseKind::SessionCreated},
         {api_response_r::api_response_response_credentials_m_c, ApiResponseKind::Credentials},
         {api_response_r::api_response_response_models_m_c, ApiResponseKind::Models},
         {api_response_r::api_response_response_model_current_m_c, ApiResponseKind::ModelCurrent},
@@ -609,6 +611,19 @@ bool NodeApiCodec::decodeProfile(const QByteArray& responseCbor, DecodedProfileS
     } else {
         *found = false;
     }
+    return true;
+}
+
+bool NodeApiCodec::decodeSessionCreated(const QByteArray& responseCbor, QString* outId) {
+    if (outId == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_session_created_m_c);
+    if (!response) {
+        return false;
+    }
+    *outId = fromZcbor(response->api_response_response_session_created_m.SessionCreated_session);
     return true;
 }
 

@@ -135,6 +135,19 @@ ApplicationWindow {
         function onPaneCommandForwarded(command) { root.routeCommand(command); }
     }
 
+    // Open a fresh chat when the app asks: first-run completion (P0-B) and "+ New agent" (P0-C)
+    // both funnel through App.openChatRequested so a newly-connected user lands in a working
+    // transcript. Node-authority: createNew() issues a node SessionCreate (nothing client-minted);
+    // the pinned tab opens event-driven when the SessionCreated reply lands. `profileId` is advisory
+    // (logged app-side); the node binds its active default.
+    Connections {
+        target: App
+        function onOpenChatRequested(profileId) {
+            if (root.activeSessionPane)
+                root.activeSessionPane.createNew();
+        }
+    }
+
     CommandPalette {
         id: commandPalette
     }
@@ -252,6 +265,8 @@ ApplicationWindow {
                     root.activeSessionId = sessionId;
                     sessionExpanded.open(sessionId);
                 }
+                // "+ New agent/node" opens a fresh chat via the shared open-a-chat path.
+                onNewChatRequested: App.openNewAgentChat()
             }
 
             SessionsList {
@@ -365,6 +380,13 @@ ApplicationWindow {
                         root.activeSessionId = sessionId;
                         sidebarDrawerCompact.close();
                         compactStack.push(sessionPage);
+                    }
+                    // "+ New agent/node" opens a fresh chat via the shared open-a-chat path.
+                    onNewChatRequested: {
+                        sidebarDrawerCompact.close();
+                        if (!root.activeSessionPane)
+                            compactStack.push(sessionPage);
+                        App.openNewAgentChat();
                     }
                 }
             }

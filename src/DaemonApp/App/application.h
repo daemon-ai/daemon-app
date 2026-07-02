@@ -92,6 +92,11 @@ public:
     // Bound in QML to the active turn's awaitingInput signal.
     Q_INVOKABLE bool notifyGate(const QString& title, const QString& body);
 
+    // "+ New agent/node" (Sidebar Fleet header): open a fresh chat bound to the default profile.
+    // Logs the invocation and re-emits openChatRequested so the shell's tab host opens the
+    // transcript through the same path the wizard-finish first chat uses.
+    Q_INVOKABLE void openNewAgentChat();
+
     // Guarded render-harness hook: open an app-level page (and optional section)
     // via the shared Nav seam. Used only by DAEMON_APP_RENDER_PAGE before the
     // offscreen screenshot pass; no effect on a normal run.
@@ -175,6 +180,13 @@ public:
     [[nodiscard]] QString runHeadlessHitl(const QString& prompt, const QString& decision,
                                           int timeoutMs);
 
+signals:
+    // Ask the shell (Main.qml) to open a new transcript tab and land the user in it. `profileId`
+    // is the resolved default profile the fresh chat runs under (advisory: the turn also falls back
+    // to the node's active profile). Emitted on first-run completion (P0-B) and "+ New agent"
+    // (P0-C) so both funnel through one open-a-chat path in the tab host.
+    void openChatRequested(const QString& profileId);
+
 protected:
     // Close-to-tray: when a tray is installed, intercept the root window's close
     // (X) event and hide instead of quitting.
@@ -191,6 +203,14 @@ private:
     // otherwise). Called from the destructor so every exit path - normal quit and the early-return
     // headless harness modes - cleans up a managed daemon when the user opted in.
     void shutdownManagedDaemon() const;
+
+    // First-run completion (FirstRunModel::finished): open the first chat so a freshly-onboarded
+    // user lands in a working transcript. Resolves the default profile, logs, and emits
+    // openChatRequested.
+    void openFirstChat();
+    // Shared open-a-chat body for both entry points: resolve the default profile id, append one
+    // NDJSON debug line under `hypothesisId`/`location`, and emit openChatRequested(profileId).
+    void emitOpenChat(const QString& hypothesisId, const QString& location);
 
     // Run the event loop for `ms` (a bounded settle so queued NodeApi requests + their responses
     // flush before a headless harness exits). Used only by the headless onboarding hook.

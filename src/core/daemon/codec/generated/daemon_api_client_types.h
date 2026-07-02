@@ -283,6 +283,33 @@ struct request_assign {
 	struct zcbor_string Assign_session;
 };
 
+struct SessionCreate_session_r {
+	union {
+		struct zcbor_string SessionCreate_session_session_id_m;
+	};
+	enum {
+		SessionCreate_session_session_id_m_c,
+		SessionCreate_session_null_m_c,
+	} SessionCreate_session_choice;
+};
+
+struct SessionCreate_profile_r {
+	union {
+		struct zcbor_string SessionCreate_profile_profile_ref_m;
+	};
+	enum {
+		SessionCreate_profile_profile_ref_m_c,
+		SessionCreate_profile_null_m_c,
+	} SessionCreate_profile_choice;
+};
+
+struct request_session_create {
+	struct SessionCreate_session_r SessionCreate_session;
+	bool SessionCreate_session_present;
+	struct SessionCreate_profile_r SessionCreate_profile;
+	bool SessionCreate_profile_present;
+};
+
 struct request_cancel {
 	struct zcbor_string Cancel_session;
 };
@@ -2515,6 +2542,7 @@ struct api_request_r {
 		struct request_poll api_request_request_poll_m;
 		struct request_respond api_request_request_respond_m;
 		struct request_assign api_request_request_assign_m;
+		struct request_session_create api_request_request_session_create_m;
 		struct request_cancel api_request_request_cancel_m;
 		struct request_unit api_request_request_unit_m;
 		struct request_unit_events api_request_request_unit_events_m;
@@ -2651,6 +2679,7 @@ struct api_request_r {
 		api_request_request_telemetry_m_c,
 		api_request_request_sessions_m_c,
 		api_request_request_assign_m_c,
+		api_request_request_session_create_m_c,
 		api_request_request_cancel_m_c,
 		api_request_request_fleet_m_c,
 		api_request_request_tree_m_c,
@@ -2808,6 +2837,10 @@ struct api_request_r {
 
 struct response_routed {
 	struct zcbor_string Routed_session;
+};
+
+struct response_session_created {
+	struct zcbor_string SessionCreated_session;
 };
 
 struct completion_source_process {
@@ -5386,6 +5419,7 @@ struct response_who_am_i {
 struct api_response_r {
 	union {
 		struct response_routed api_response_response_routed_m;
+		struct response_session_created api_response_response_session_created_m;
 		struct response_drained api_response_response_drained_m;
 		struct response_health api_response_response_health_m;
 		struct response_stats api_response_response_stats_m;
@@ -5473,6 +5507,7 @@ struct api_response_r {
 	enum {
 		api_response_response_ok_m_c,
 		api_response_response_routed_m_c,
+		api_response_response_session_created_m_c,
 		api_response_response_drained_m_c,
 		api_response_response_health_m_c,
 		api_response_response_stats_m_c,

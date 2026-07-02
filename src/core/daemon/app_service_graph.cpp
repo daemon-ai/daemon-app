@@ -48,7 +48,9 @@
 
 #include <memory>
 #include <QByteArray>
+#include <QDateTime>
 #include <QDebug>
+#include <QFile>
 #include <QString>
 #include <QtGlobal>
 
@@ -143,24 +145,25 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // PRO-11: pending-approvals inbox backed by the ApprovalRepository (ApprovalsPending poll
         // on ready + ApprovalDecide), replacing the mock fleet inbox.
         graph.approvals = new DaemonApprovalsInbox(graph.approvalRepository, owner);
+        // Daemon-backed, offline-first fleet/subagent tree (PRO-9/10): replace the mock fleet tree
+        // with one projected from the cached Tree query. The mock built above is parented to
+        // `owner`; drop it for the daemon one. Built before the subscription feed so the feed can
+        // re-query the tree on a roster delta (a fleet unit IS a durable session - FIX 2).
+        graph.fleetRepository = new FleetRepository(graph.nodeApi, graph.cache, owner);
+        delete graph.fleetTree;
+        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, owner);
         // L3 node-wide event feed (daemon-sync-protocol §5): one EventsSince stream that routes
-        // out-of-focus changes (roster/meta -> debounced roster refetch, approvals -> badge,
-        // downloads -> models, session-advanced -> focused-engine nudge, resync -> baseline) so the
-        // client stops polling and stops full-refetching on every change.
-        graph.subscriptions =
-            new SubscriptionManager(graph.nodeApi, graph.sessions, graph.approvalRepository,
-                                    graph.models, graph.cache, owner);
+        // out-of-focus changes (roster/meta -> debounced roster refetch + tree re-query, approvals
+        // -> badge, downloads -> models, session-advanced -> focused-engine nudge, resync ->
+        // baseline) so the client stops polling and stops full-refetching on every change.
+        graph.subscriptions = new SubscriptionManager(
+            graph.nodeApi, graph.sessions, graph.approvalRepository, graph.models, graph.cache,
+            graph.fleetRepository, graph.profileRepository, owner);
         // Daemon-backed filesystem: replace the dev local-disk seam over the NodeApi fs_* ops - the
         // only path that reaches a remote/embedded host's workspace. The common LocalDiskFsService
         // built above is parented to `owner`; drop it for the daemon one.
         delete graph.fs;
         graph.fs = new fs::DaemonFsService(graph.nodeApi, graph.cache, owner);
-        // Daemon-backed, offline-first fleet/subagent tree (PRO-9/10): replace the mock fleet tree
-        // with one projected from the cached Tree query. The mock built above is parented to
-        // `owner`; drop it for the daemon one.
-        graph.fleetRepository = new FleetRepository(graph.nodeApi, graph.cache, owner);
-        delete graph.fleetTree;
-        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, owner);
         // Daemon-backed, offline-first Channels read surface (story 04: EIO-1/3/8/9): replace the
         // inert mock transport registry + presence with ones projected from the node's
         // TransportAdapters / TransportInstances (+ ConvList per account). The mocks above are
@@ -210,13 +213,29 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // change.
                     sessions->refreshSessions();
                     profiles->refreshProfiles();
+                    // #region agent log
+                    {
+                        QFile dbg(
+                            QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+                        if (dbg.open(QIODevice::Append | QIODevice::Text))
+                            dbg.write(
+                                QStringLiteral(
+                                    "{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"PROFILE-"
+                                    "REFLECT\","
+                                    "\"location\":\"app_service_graph.cpp:connect-ready\","
+                                    "\"message\":\"connect-ready refreshProfiles issued\",\"data\":"
+                                    "{},\"timestamp\":%1}\n")
+                                    .arg(QDateTime::currentMSecsSinceEpoch())
+                                    .toUtf8());
+                    }
+                    // #endregion
                     credentials->refreshList();
                     models->refreshModels();
                     models->refreshCurrent();
                     providers->refreshProviders(); // node-driven provider/model discovery
                     approvals->refreshPending();
-                    fs->listRoots();      // populate the daemon-backed file roots
-                    fleet->refreshTree(); // PRO-9: baseline the subagent tree
+                    fs->listRoots(); // populate the daemon-backed file roots
+                    fleet->refreshTree(QStringLiteral("baseline")); // PRO-9: baseline the tree
                     // Channels: the adapter picker + configured accounts/status dots (EIO-1/3/9).
                     transports->refreshAdapters();
                     transports->refreshInstances();

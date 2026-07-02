@@ -39,9 +39,14 @@ Rectangle {
 
     // A throwaway controller used solely to create new sessions in the
     // shared store; each TranscriptPage owns its own controller for display.
+    // Node-authority: createSession() no longer returns a client-minted id — the node mints it and
+    // `created(sessionId)` fires when the SessionCreated reply lands, so the tab opens event-driven.
     SessionController {
         id: creator
         store: SessionStore
+        onCreated: function(sessionId) {
+            tabModel.openTranscriptPinned(sessionId, root._titleFor(sessionId));
+        }
     }
 
     TabModel {
@@ -85,10 +90,10 @@ Rectangle {
         else
             tabModel.previewFile(rootId, path, title);
     }
-    // Create a brand-new session and open it in a pinned tab.
+    // Create a brand-new session under the node's active default agent. Node-authority: the node
+    // mints the session and creator.onCreated opens the pinned tab (no synchronous client id).
     function createNew() {
-        const id = creator.createSession("");
-        tabModel.openTranscriptPinned(id, _titleFor(id));
+        creator.createSession("");
     }
     // Open an app-level manager/settings page as a singleton tab (the GUI's
     // replacement for the old Nav modal overlay). Mirrors the TUI's

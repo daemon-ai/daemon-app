@@ -14,13 +14,27 @@ QByteArray NodeApiCodec::encodeHealthRequest() {
     return encodeSimple(api_request_r::api_request_request_health_m_c);
 }
 
-QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 sinceRev) {
+QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 sinceRev,
+                                                    const QString& byProfile) {
+    // `byProfile` must outlive the encode: zcbor holds a pointer into its UTF-8 bytes.
+    const QByteArray profileUtf8 = byProfile.toUtf8();
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_sessions_query_m_c;
-    // Leave scope/after/limit absent: an empty session-query map asks the daemon for its default
-    // (TopLevel) scope, first page. `since_rev` (when set) makes it an L4 delta read.
+    // Leave after/limit absent: an empty session-query map asks the daemon for its default
+    // (TopLevel) scope, first page. `since_rev` (when set) makes it an L4 delta read. A non-empty
+    // `byProfile` sets scope = ByProfile(id) — the per-agent view (encoder-only; the arm is already
+    // in the CDDL session-scope union).
     request.api_request_request_sessions_query_m = request_sessions_query{};
     session_query& q = request.api_request_request_sessions_query_m.SessionsQuery_query;
+    q.session_query_scope_present = !byProfile.isEmpty();
+    if (!byProfile.isEmpty()) {
+        session_scope_r& scope = q.session_query_scope.session_query_scope;
+        scope.session_scope_choice = session_scope_r::session_scope_by_profile_m_c;
+        scope.session_scope_by_profile_m.session_scope_by_profile_ByProfile.value =
+            reinterpret_cast<const uint8_t*>(profileUtf8.constData());
+        scope.session_scope_by_profile_m.session_scope_by_profile_ByProfile.len =
+            static_cast<size_t>(profileUtf8.size());
+    }
     q.session_query_since_rev_present = hasSinceRev;
     if (hasSinceRev) {
         q.session_query_since_rev.session_query_since_rev_choice =
@@ -118,6 +132,37 @@ QByteArray NodeApiCodec::encodePollRequest(const QString& sessionId, quint32 max
     poll.Poll_max = max;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeSessionCreateRequest(const QString& sessionId,
+                                                    const QString& profile) {
+    // Both fields outlive the encode: zcbor holds pointers into their UTF-8 bytes.
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray profileUtf8 = profile.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_session_create_m_c, [&](api_request_r& request) {
+            request_session_create& create = request.api_request_request_session_create_m;
+            // Absent `session` => the node MINTS the id (node-authority; nothing client-minted).
+            if (sessionId.isEmpty()) {
+                create.SessionCreate_session_present = false;
+            } else {
+                create.SessionCreate_session_present = true;
+                create.SessionCreate_session.SessionCreate_session_choice =
+                    SessionCreate_session_r::SessionCreate_session_session_id_m_c;
+                setZcbor(create.SessionCreate_session.SessionCreate_session_session_id_m,
+                         sessionUtf8);
+            }
+            // Absent `profile` => the node binds its active default.
+            if (profile.isEmpty()) {
+                create.SessionCreate_profile_present = false;
+            } else {
+                create.SessionCreate_profile_present = true;
+                create.SessionCreate_profile.SessionCreate_profile_choice =
+                    SessionCreate_profile_r::SessionCreate_profile_profile_ref_m_c;
+                setZcbor(create.SessionCreate_profile.SessionCreate_profile_profile_ref_m,
+                         profileUtf8);
+            }
+        });
 }
 
 QByteArray NodeApiCodec::encodeCredentialSetRequest(const QString& profile, const QString& secret) {

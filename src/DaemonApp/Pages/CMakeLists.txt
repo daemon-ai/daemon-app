@@ -20,6 +20,7 @@ qt_add_qml_module(da_pages
         AppearanceSection.qml
         AboutSection.qml
         ConnectionPicker.qml
+        AgentInferencePicker.qml
         ConnectionSection.qml
         NotificationsSection.qml
         ModelSettingsSection.qml

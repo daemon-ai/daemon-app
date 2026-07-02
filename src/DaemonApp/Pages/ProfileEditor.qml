@@ -40,9 +40,31 @@ Item {
     }
     readonly property bool providerIsCloud: providerIndex >= 0 && providerChoices[providerIndex].cloud
 
+    // Map a (possibly namespaced) model id to its genai vendor descriptor id, mirroring genai's
+    // AdapterKind::from_model heuristics (FIX 5). A self-identifying model is stored bare (e.g.
+    // "claude-opus-4-6"); a non-self-identifying one is namespaced ("groq::llama-3.1-70b"). The
+    // vendor id is the genai adapter's lowercase name, which is exactly the ProviderCatalog id for a
+    // genai vendor. Returns "" when the model doesn't clearly self-identify.
+    function _vendorIdForModel(model) {
+        if (model.length === 0) return "";
+        // Namespaced ids carry the vendor as the "<vendor>::" prefix.
+        var sep = model.indexOf("::");
+        if (sep > 0) return model.substring(0, sep);
+        // Bare model name: prefix heuristics (see genai AdapterKind::from_model).
+        function sw(p) { return model.indexOf(p) === 0; }
+        if (sw("o3") || sw("o4") || sw("o1") || sw("chatgpt") || sw("codex")
+                || (sw("gpt") && !sw("gpt-oss")) || sw("text-embedding")) return "openai";
+        if (sw("gemini")) return "gemini";
+        if (sw("claude")) return "anthropic";
+        if (sw("grok")) return "xai";
+        if (sw("command") || sw("embed-")) return "cohere";
+        if (sw("deepseek-")) return "deepseek";
+        return "";
+    }
     // Best-effort resolve of a saved (wireSelector, model) back to a ProviderCatalog descriptor id:
-    // a unique selector match wins; for genai's shared selector, prefer the vendor whose id prefixes
-    // the model id, else the first match. Empty when nothing matches (e.g. a Mock-valued profile).
+    // a unique selector match wins; for genai's shared selector, resolve the vendor from the model
+    // id (so a claude-* model reads as Anthropic, not the first genai vendor), falling back to the
+    // first match only when the model can't be classified. Empty when nothing matches (a Mock spec).
     function _inferProviderId(selector, model) {
         if (selector.length === 0) return "";
         var matches = [];
@@ -50,8 +72,10 @@ Item {
             if (providerChoices[i].wireSelector === selector) matches.push(providerChoices[i]);
         if (matches.length === 0) return "";
         if (matches.length === 1) return matches[0].id;
-        for (var j = 0; j < matches.length; ++j)
-            if (model.length > 0 && model.indexOf(matches[j].id) === 0) return matches[j].id;
+        var vendorId = _vendorIdForModel(model);
+        if (vendorId.length > 0)
+            for (var j = 0; j < matches.length; ++j)
+                if (matches[j].id === vendorId) return matches[j].id;
         return matches[0].id;
     }
     // PRO-8 revision history model (null in mock mode, which has no daemon revision log).

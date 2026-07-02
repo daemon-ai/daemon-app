@@ -119,6 +119,8 @@ QtObject {
     readonly property string fa_thumbtack: "\uf08d"    // pin
     readonly property string fa_lock: "\uf023"         // sudo
     readonly property string fa_key: "\uf084"          // secret / api key
+    readonly property string fa_eye: "\uf06e"          // reveal a masked field
+    readonly property string fa_eye_slash: "\uf070"    // hide a revealed field
     readonly property string fa_triangle_exclamation: "\uf071" // destructive confirm
     readonly property string fa_circle_nodes: "\uf4c9" // subagents / delegation
 

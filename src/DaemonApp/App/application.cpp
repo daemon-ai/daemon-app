@@ -45,8 +45,10 @@
 #include <core/formula.h>
 #include <latex.h>
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QEvent>
 #include <QEventLoop>
+#include <QFile>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -80,6 +82,19 @@ Application::Application(QObject* parent)
     // time (MICROTEX_RES_DIR). Done here so the "math" image provider can parse
     // formulas as soon as the scene requests them.
     tex::LaTeX::init(std::string(MICROTEX_RES_DIR));
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"SEGV\","
+                                     "\"location\":\"application.cpp:ctor\",\"message\":\"microtex "
+                                     "LaTeX::init done\",\"data\":{\"resDir\":\"%1\"},"
+                                     "\"timestamp\":%2}\n")
+                          .arg(QString::fromUtf8(MICROTEX_RES_DIR))
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
 
     // Pin the base font size MicroTeX draws with (its QFonts are cached on first
     // use, so this must happen before the first parse and never change). The
@@ -91,7 +106,58 @@ Application::Application(QObject* parent)
 
 Application::~Application() {
     shutdownManagedDaemon();
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"SEGV\","
+                                     "\"location\":\"application.cpp:~Application\",\"message\":"
+                                     "\"before tex::LaTeX::release()\",\"data\":{},"
+                                     "\"timestamp\":%1}\n")
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
     tex::LaTeX::release();
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"SEGV\","
+                                     "\"location\":\"application.cpp:~Application\",\"message\":"
+                                     "\"after tex::LaTeX::release()\",\"data\":{},"
+                                     "\"timestamp\":%1}\n")
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
+}
+
+void Application::emitOpenChat(const QString& hypothesisId, const QString& location) {
+    const QString profileId =
+        m_services.profiles != nullptr ? m_services.profiles->defaultProfileId() : QString();
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"%1\","
+                                     "\"location\":\"%2\",\"message\":\"open a chat "
+                                     "bound to the default profile\",\"data\":{\"profileId\":"
+                                     "\"%3\"},\"timestamp\":%4}\n")
+                          .arg(hypothesisId, location, profileId)
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
+    emit openChatRequested(profileId);
+}
+
+void Application::openFirstChat() {
+    emitOpenChat(QStringLiteral("FIRST-CHAT"), QStringLiteral("application.cpp:openFirstChat"));
+}
+
+void Application::openNewAgentChat() {
+    emitOpenChat(QStringLiteral("NEW-AGENT"), QStringLiteral("application.cpp:openNewAgentChat"));
 }
 
 void Application::shutdownManagedDaemon() const {
@@ -151,6 +217,11 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // First-run / onboarding gate: Main.qml mounts it over the shell until setup
     // completes. Compute the initial phase from persisted setupComplete now.
     engine.rootContext()->setContextProperty(QStringLiteral("FirstRun"), m_services.firstRun);
+    // P0-B: when onboarding finishes (the wizard's final step configured + set the default
+    // profile), open the first chat so the user lands in a working transcript instead of an empty
+    // shell. The shell (Main.qml) handles openChatRequested by opening a transcript tab.
+    connect(m_services.firstRun, &firstrun::FirstRunModel::finished, this,
+            &Application::openFirstChat);
     m_services.firstRun->begin();
 
     // Daemon-authoritative config facade (mock) backing the settings sections.

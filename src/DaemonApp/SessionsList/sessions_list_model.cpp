@@ -65,13 +65,22 @@ void SessionsListModel::setScope(int nodeType, int tagId, const QString& unitId)
     // lens key (transport-instance / peer id) rather than a unit id; everything else
     // treats it as the unit id.
     const auto type = static_cast<NodeType>(nodeType);
-    const bool isLens = (type == NodeType::ByTransport || type == NodeType::ByPeer);
+    // The lens/agent scopes carry a key (transport-instance / peer / profile id) in the string slot
+    // rather than a unit id; everything else treats it as the unit id.
+    const bool isLens =
+        (type == NodeType::ByTransport || type == NodeType::ByPeer || type == NodeType::Agent);
     m_scope = {type, tagId, isLens ? UnitId() : UnitId(unitId), isLens ? unitId : QString()};
     // A new scope is a fresh list of sessions; drop the old selection so a stale
     // id doesn't linger as a phantom highlight.
     if (!m_currentId.isEmpty()) {
         m_currentId.clear();
         emit selectionChanged(QString());
+    }
+    // Agent scope (Fleet membership): ask the store for the authoritative per-agent view
+    // (SessionScope::ByProfile). The store merges the node's rows into the cache and emits
+    // changed(), which re-drives reload() — so the list shows the node-authoritative sessions.
+    if (type == NodeType::Agent && m_store != nullptr && !unitId.isEmpty()) {
+        m_store->refreshSessionsForProfile(unitId);
     }
     reload();
     emit scopeChanged();
@@ -143,6 +152,9 @@ QString SessionsListModel::computeScopeTitle() const {
             }
         }
         return tr("Tag");
+    case NodeType::Agent:
+        // Fleet membership: an agent == its profile; title the list by the profile id.
+        return m_scope.lensKey.isEmpty() ? tr("Agent") : m_scope.lensKey;
     case NodeType::ByTransport:
     case NodeType::ByPeer:
         // The lens scopes (roadmap P2) are not surfaced by the sidebar yet; title by their key.
@@ -151,6 +163,8 @@ QString SessionsListModel::computeScopeTitle() const {
     case NodeType::TagSeparator:
     case NodeType::TransportSeparator:
     case NodeType::Transport:
+    case NodeType::FleetNode:
+    case NodeType::AgentSession:
         break;
     }
     return tr("Sessions");

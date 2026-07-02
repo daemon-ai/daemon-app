@@ -20,6 +20,10 @@ namespace daemonnet {
 class IDaemonNet;
 }
 
+namespace profiles {
+class IProfileStore;
+}
+
 namespace domain {
 struct UnitNode;
 }
@@ -45,6 +49,14 @@ class SidebarModel : public QAbstractListModel {
     // user-facing name for the transport-adapter tree). Bound from QML to the shared `DaemonNet`
     // context property. Null => no Integrations section is shown.
     Q_PROPERTY(QObject* daemonNet READ daemonNet WRITE setDaemonNet NOTIFY daemonNetChanged)
+    // The profile store (agents == profiles; daemon-supervision-spec §0). The FLEET section renders
+    // one agent row per ProfileInfo from here (NOT from the node's tree()). Bound from QML to the
+    // shared `Profiles` context property. Null => the node root shows with no agents.
+    Q_PROPERTY(QObject* profiles READ profiles WRITE setProfiles NOTIFY profilesChanged)
+    // The label for the Fleet's node/connection ROOT row — the client-side representation of this
+    // client's link to the (local) node. Bound from QML to the connection target/name. Defaults to
+    // a generic local-node label.
+    Q_PROPERTY(QString nodeLabel READ nodeLabel WRITE setNodeLabel NOTIFY nodeLabelChanged)
     // True when at least one unit-with-children is currently expanded; drives the
     // Fleet header's collapse-all/expand-all toggle. Refreshed on rebuild.
     Q_PROPERTY(bool anyExpanded READ anyExpanded NOTIFY treeChanged)
@@ -87,6 +99,12 @@ public:
     [[nodiscard]] QObject* daemonNet() const;
     void setDaemonNet(QObject* net);
 
+    [[nodiscard]] QObject* profiles() const;
+    void setProfiles(QObject* profiles);
+
+    [[nodiscard]] QString nodeLabel() const;
+    void setNodeLabel(const QString& label);
+
     [[nodiscard]] bool anyExpanded() const;
     [[nodiscard]] bool anyTransportExpanded() const;
 
@@ -118,7 +136,9 @@ public:
     Q_INVOKABLE void expandAllTransports();
     Q_INVOKABLE void collapseAllTransports();
 
-    // Mutations via the store; both select the freshly-created row.
+    // Fleet "+": request the create-AGENT flow (agents == profiles). QML opens a small agent form
+    // and calls ProfileRepository::createProfile(spec) (A2). Renamed intent from the earlier
+    // "new chat" so the "+" mints an agent, not a bare session.
     Q_INVOKABLE void createRootUnit();
     Q_INVOKABLE void createTag();
 
@@ -129,6 +149,8 @@ public:
 signals:
     void storeChanged();
     void daemonNetChanged();
+    void profilesChanged();
+    void nodeLabelChanged();
     void treeChanged();
     // nodeType is a domain::NodeType; `tagId` is the tag id (Tag scope); `unitId`
     // is the supervision unit id (Unit scope). For the DaemonNet lens scopes
@@ -137,6 +159,15 @@ signals:
     // An Integrations-section session leaf was activated: open its transcript directly
     // (the shared session leaf, cross-linked to the Fleet tree).
     void sessionActivated(const QString& sessionId);
+    // "+ New agent/node" (Fleet header): the user decision is that this opens a working chat, not
+    // an inert tree unit. The shell routes it to the same open-a-chat path the wizard-finish first
+    // chat uses (a fresh transcript bound to the default profile; the session is minted on the
+    // first Submit).
+    void newChatRequested();
+    // Fleet "+" (A2): the user wants to create a new AGENT (a profile). The shell opens a small
+    // agent form (provider/model/key) and calls ProfileRepository::createProfile(spec). Distinct
+    // from newChatRequested (which opens a session bound to an existing agent).
+    void createAgentRequested();
 
 private:
     struct Row {
@@ -167,10 +198,21 @@ private:
         // whole section folds under its header (else ""). These headers carry
         // hasChildren = true + expanded so GUI/TUI reuse the disclosure plumbing.
         QString sectionKey;
+        // Expand/collapse key for the Fleet membership rows (node root / agent), a disjoint id
+        // namespace from unit/transport ids so they share m_collapsed safely (else "").
+        QString expandKey;
     };
 
     void rebuild();
-    void appendUnitRows(const domain::UnitNode& node, int depth);
+    // Build the FLEET membership view (daemon-supervision-spec §0): the node/connection ROOT row,
+    // then one agent row per profile, then each expanded agent's sessions (ByProfile). Sourced from
+    // the profile store + the session store, NOT from the node's tree()/unitChildren().
+    void appendFleetMembership();
+    // The agent rows (id/name/model) projected from the bound profile store, or empty when none.
+    [[nodiscard]] QList<QVariantMap> agentRows() const;
+    // Collect the Fleet membership expand keys currently foldable (the node root + agents that have
+    // sessions), for the header's expand-all/collapse-all + anyExpanded.
+    void collectFleetExpandKeys(QSet<QString>& out) const;
     void appendTransportRows();
     // Push a collapsible section header (Fleet/Tags/Integrations); `sectionKey` keys
     // its fold state in m_sectionCollapsed.
@@ -187,13 +229,13 @@ private:
     [[nodiscard]] int parentRow(int row) const;
     // True when the current selection is `rootId` or a descendant of it.
     [[nodiscard]] bool selectionInSubtree(const QString& rootId) const;
-    // Collect ids of every unit that currently has children (any depth).
-    void collectExpandableIds(const QString& parentId, QSet<QString>& out) const;
     // Collect the ids of every foldable transport node (accounts + conversation groups).
     void collectTransportExpandableIds(QSet<QString>& out) const;
 
     persistence::ISessionStore* m_store = nullptr;
     daemonnet::IDaemonNet* m_net = nullptr;
+    profiles::IProfileStore* m_profiles = nullptr;
+    QString m_nodeLabel;
     QList<Row> m_rows;
     // Units are expanded by default; only explicitly-collapsed ids live here, so
     // the whole fleet tree is visible on first load (and toggling collapses).
@@ -207,4 +249,7 @@ private:
     int m_selTag = -1;
     QString m_selUnit;
     QString m_selTxNode; // selected Integrations-section node id (identity-stable)
+    QString m_selAgent;  // selected agent row (profile id), when m_selType == Agent
+    QString
+        m_selSession; // selected agent-session leaf (session id), when m_selType == AgentSession
 };

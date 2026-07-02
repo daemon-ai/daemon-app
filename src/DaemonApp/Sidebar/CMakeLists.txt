@@ -15,6 +15,8 @@ target_link_libraries(da_sidebar
         Qt6::Quick
         daemon-app::domain
         daemon-app::persistence
+        daemon-app::profiles
+        daemon-app::uimodels
         daemon-app::theme
         daemon-app::controls
         daemon-app::presentation

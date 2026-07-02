@@ -87,6 +87,11 @@ CachedSessionStore::CachedSessionStore(DaemonCacheStore* cache, SessionRepositor
     if (m_sessions != nullptr) {
         connect(m_sessions, &SessionRepository::sessionsRefreshed, this,
                 &CachedSessionStore::reload);
+        // Node-authoritative create: relay the repo's SessionCreated up as the store-level signal
+        // so the controller/sidebar open + auto-select the node-minted id (never a client-minted
+        // one).
+        connect(m_sessions, &SessionRepository::sessionCreated, this,
+                &CachedSessionStore::sessionCreated);
     }
     reload();
 }
@@ -106,6 +111,11 @@ bool CachedSessionStore::matchesScope(const CachedSessionRow& row, const domain:
         return row.archived;
     case domain::NodeType::AllSessions:
         return !row.archived;
+    case domain::NodeType::Agent:
+        // Fleet membership (daemon-supervision-spec §0): an agent's sessions are those bound to its
+        // profile. Mirrors the node's SessionScope::ByProfile filter (bound_profile == p, not
+        // archived); `lensKey` carries the profile id.
+        return !row.archived && !scope.lensKey.isEmpty() && row.profileRef == scope.lensKey;
     default:
         // Daemon sessions are flat in the first slice: no unit-tree or tag scoping yet.
         return false;
@@ -288,5 +298,19 @@ void CachedSessionStore::setPinned(const domain::SessionId& id, bool pinned) {
 }
 
 void CachedSessionStore::moveSession(const domain::SessionId&, int) {}
+
+void CachedSessionStore::refreshSessionsForProfile(const QString& profileId) {
+    if (m_sessions != nullptr && !profileId.isEmpty()) {
+        m_sessions->refreshSessionsByProfile(profileId);
+    }
+}
+
+void CachedSessionStore::requestNewSession(const QString& profileId) {
+    // Daemon-owned lifecycle: the node CREATES the session and mints the id. The repo's
+    // sessionCreated (relayed as ISessionStore::sessionCreated) carries the node-provided id.
+    if (m_sessions != nullptr) {
+        m_sessions->createSession(profileId);
+    }
+}
 
 } // namespace daemonapp::daemon

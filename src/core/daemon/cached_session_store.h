@@ -53,6 +53,14 @@ public:
     void setPinned(const domain::SessionId& id, bool pinned) override;
     void moveSession(const domain::SessionId& id, int delta) override;
 
+    // Fetch the agent's sessions from the node (SessionScope::ByProfile) via the repository, then
+    // emit changed() when they land — drives the per-agent (Fleet membership) session view.
+    void refreshSessionsForProfile(const QString& profileId) override;
+
+    // Node-authoritative create: forward to the repository's SessionCreate op (nothing is minted
+    // client-side). The repo's sessionCreated is relayed as ISessionStore::sessionCreated.
+    void requestNewSession(const QString& profileId) override;
+
 private:
     void reload();
     [[nodiscard]] static bool matchesScope(const CachedSessionRow& row,

@@ -29,6 +29,13 @@ enum class NodeType {
     Transport,          // 9: a row of the capability-driven Integrations tree (account/convGroup/
                         //    conversation/job/caller; the row's transport-kind + convType +
                         //    sessionId are carried in dedicated roles)
+    // Fleet MEMBERSHIP view (daemon-supervision-spec §0): the client-composed
+    // node -> agents(profiles) -> sessions layer, distinct from the node's in-partition tree().
+    FleetNode, // 10: the client-side connection/node ROOT row (label = connection target). Not a
+               //     unit in the node's tree(); represents this client's ffi/socket link.
+    Agent,     // 11: an agent row == a ProfileInfo (agent IS its profile). Selecting it scopes the
+               //     session list to SessionScope::ByProfile(profileId); `lensKey` carries the id.
+    AgentSession // 12: a session leaf under an agent (opens its transcript on activate).
 };
 
 // What the session list is currently filtered to (the sidebar selection). For

@@ -118,8 +118,9 @@ private:
     // (Re)connect the orchestrator's internal handlers (busy, subagent rows, todo clear) to the
     // current engine. Called on construction and whenever the engine is swapped via the factory.
     void wireTurn();
-    // Ensure the bound session has an id before a turn, minting a client id when the daemon owns
-    // creation (CachedSessionStore::newSession returns empty), then bind it to the engine.
+    // Bind the current (node-created) session id onto the turn engine before a turn.
+    // Node-authority: sessions come only from the node, so this no longer mints — the composer is
+    // gated on an already-bound id.
     void ensureSessionBound();
     // Push THIS session's profile onto the turn engine (#6b): read the per-session override for the
     // bound session id (never the shared active id), resolve the display name to the canonical

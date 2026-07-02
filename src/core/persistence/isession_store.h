@@ -69,6 +69,27 @@ public:
     // Reorder within the store (delta < 0 moves earlier / up, > 0 later / down).
     virtual void moveSession(const domain::SessionId& id, int delta) = 0;
 
+    // Ask the backend to (re)fetch the sessions bound to `profileId` — the per-agent view
+    // (SessionScope::ByProfile, Fleet membership; daemon-supervision-spec §0). Default no-op: the
+    // in-memory/mock store is already fully local; only the daemon cache issues a wire query and
+    // then emits changed() when the rows land. Callers use it to drive an agent-scoped session list
+    // from the authoritative node view.
+    virtual void refreshSessionsForProfile(const QString& /*profileId*/) {}
+
+    // Node-authoritative session creation: ask the backend to CREATE a blank session bound to
+    // `profileId` (empty = the node's active default agent). NOTHING is client-minted — the daemon
+    // store sends a `SessionCreate` op and the node MINTS the id, replying `SessionCreated` +
+    // emitting `RosterChanged`; the store then emits [`sessionCreated`] with the node-provided id
+    // so the caller opens/selects it event-driven. Default: the in-memory/mock store mints locally
+    // (`newSession`) and emits `sessionCreated` synchronously, so offscreen/mock coverage is
+    // unaffected.
+    Q_INVOKABLE virtual void requestNewSession(const QString& profileId = QString()) {
+        const domain::SessionId id = newSession(domain::UnitId(profileId));
+        if (!id.isEmpty()) {
+            emit sessionCreated(id.toString(), profileId);
+        }
+    }
+
     // Create a tree unit under `parentId` (empty = a new top-level root) and
     // return its new id. `kind` is cosmetic. Mirrors a future control-plane
     // "spawn unit" call.
@@ -113,6 +134,10 @@ public:
 
 signals:
     void changed();
+    // A node-authoritative session was created (node-minted or, for the mock, local): `sessionId`
+    // is the authoritative id, `profileId` the agent it was bound under (echoed from the request).
+    // Callers open + auto-select this id (the node-authority replacement for a client-minted id).
+    void sessionCreated(const QString& sessionId, const QString& profileId);
 };
 
 } // namespace persistence

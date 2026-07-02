@@ -44,10 +44,26 @@ public:
 
     // Issue a SessionsQuery; on success the cache is updated and sessionsRefreshed() fires.
     void refreshSessions();
+    // Issue a SessionsQuery scoped to `SessionScope::ByProfile(profileId)` — the per-agent view
+    // (Fleet membership, daemon-supervision-spec §0). The returned rows are merged into the cache
+    // ADDITIVELY (no prune), so an agent-scoped fetch augments the roster without clobbering it;
+    // sessionsRefreshed() fires so the sidebar/list re-project. Encoder-only (the ByProfile arm is
+    // already in the CDDL); no contract change.
+    void refreshSessionsByProfile(const QString& profileId);
+
+    // Node-authoritative session creation (WireVersion v23): ask the node to create a blank,
+    // profile-bound, UN-RUN session (SessionCreate{profile}). The node MINTS the id and replies
+    // SessionCreated{session} + emits RosterChanged; on the reply, sessionCreated(sessionId,
+    // profileId) fires so the caller can update + auto-select event-driven. `profileId` empty =
+    // the node's active default. Nothing is client-minted.
+    void createSession(const QString& profileId = QString());
 
 signals:
     void sessionsRefreshed();
     void refreshFailed(const QString& message);
+    // A node SessionCreate resolved: `sessionId` is the node-minted id, `profileId` the profile it
+    // was bound under (echoed from the request so the auto-select path knows the agent).
+    void sessionCreated(const QString& sessionId, const QString& profileId);
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
@@ -56,11 +72,22 @@ private:
     // SessionPage handling, split out of handleResponse so the dispatcher stays flat and the
     // replace/delta cache reconciliation is not nested four deep.
     void applySessionPage(const QByteArray& responseCbor);
+    // ByProfile page handling: decode + additive upsert (no prune), then emit sessionsRefreshed().
+    void applyByProfilePage(const QByteArray& responseCbor);
     void pruneSessionsMissingFrom(const QList<CachedSessionRow>& rows);
     void pruneRemovedSessions(const QList<QString>& removed);
 
+    // SessionCreated handling: node-authoritative create reply -> emit sessionCreated.
+    void applySessionCreated(const QByteArray& responseCbor);
+
     static constexpr auto kSessionsCorrelation = "repo/sessions-query";
+    static constexpr auto kByProfileCorrelation = "repo/sessions-by-profile";
+    static constexpr auto kCreateCorrelation = "repo/session-create";
     static constexpr auto kRosterRevScope = "roster-rev"; // L4 persisted roster revision
+
+    // The profile the in-flight SessionCreate carried, echoed on sessionCreated so the caller's
+    // auto-select knows which agent the new session belongs to.
+    QString m_pendingCreateProfile;
 
     // L4: the since_rev the in-flight SessionsQuery carried (0 = a full request), so the response
     // handler knows whether to merge a delta or replace the roster (and detects a daemon-reset
@@ -431,7 +458,9 @@ public:
 
     [[nodiscard]] QList<CachedFleetUnitRow> cachedUnits() const;
 
-    void refreshTree();
+    // `source` labels why the tree is being re-queried (baseline/control/subscription/request); it
+    // is used only for debug instrumentation (FIX 2).
+    void refreshTree(const QString& source = QStringLiteral("request"));
     void pause(const QString& unitId);
     void resume(const QString& unitId);
     void scale(const QString& unitId, quint32 n);

@@ -33,7 +33,11 @@ public:
 
     Q_INVOKABLE void open(const QString& sessionId);
     Q_INVOKABLE void appendUserText(const QString& text);
-    // Create a session owned by the given agent node (empty = unassigned); returns its SessionId.
+    // Node-authoritative session creation: ask the store's backend to CREATE a session bound to
+    // `agentId` (the profile ref; empty = the node's active default). Nothing is client-minted —
+    // the node mints the id and the store's sessionCreated drives open() + the `created` signal.
+    // Returns the id ONLY for a synchronous backend (the in-memory/mock store); the daemon path
+    // returns empty and delivers the id via `created`.
     Q_INVOKABLE QString createSession(const QString& agentId = QString());
     // Persist an in-place edit of the open session from the Transcript.
     // Adopts the markdown locally first so the store's changed() -> refresh()
@@ -52,11 +56,22 @@ signals:
     // Transcript reloads. Distinct from contentChanged so the user's own edits do
     // not trigger a reload.
     void sessionChanged();
+    // A createSession() this controller initiated resolved to the node-minted `sessionId` — the
+    // event-driven hook the shell opens/pins the transcript tab on (node-authority: the id comes
+    // from the node, never a client mint).
+    void created(const QString& sessionId);
 
 private:
     void refresh();
+    // Bound to the store's sessionCreated: when THIS controller initiated the create, adopt the
+    // node-minted id (open + emit created). Other controllers ignore it (m_pendingCreate == false).
+    void onStoreSessionCreated(const QString& sessionId, const QString& profileId);
 
     persistence::ISessionStore* m_store = nullptr;
     QString m_currentId;
     QString m_content;
+    // Set while a createSession() this controller issued is awaiting the store's sessionCreated.
+    bool m_pendingCreate = false;
+    // The last node-minted id (returned synchronously for the mock store's in-line create).
+    QString m_lastCreatedId;
 };

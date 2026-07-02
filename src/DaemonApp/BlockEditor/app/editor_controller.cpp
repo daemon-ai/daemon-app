@@ -10,6 +10,8 @@
 #include "core/math_url.h"
 
 #include <QClipboard>
+#include <QDateTime>
+#include <QFile>
 #include <QGuiApplication>
 #include <QMimeData>
 #include <QRegularExpression>
@@ -90,7 +92,12 @@ EditorController::EditorController(QObject* parent)
     m_search.setDocument(&m_store);
     connect(this, &EditorController::documentChanged, this, [this] { m_search.refresh(); });
 
-    loadMarkdown(sampleDocument());
+    // Production sessions start empty; the demo/sample document is only seeded when explicitly
+    // requested for a demo/dev run. Seeding it unconditionally leaked the sample markdown into a
+    // fresh, client-minted session whose empty transcript load was deduped away (FIX 1).
+    if (qEnvironmentVariableIsSet("DAEMON_APP_EDITOR_DEMO")) {
+        loadMarkdown(sampleDocument());
+    }
 }
 
 BlockModel* EditorController::blockModel() {
@@ -216,6 +223,22 @@ void EditorController::loadTranscript(QObject* store, const QString& sessionId) 
         QMetaObject::invokeMethod(store, "content", Q_RETURN_ARG(QString, markdown),
                                   Q_ARG(QString, sessionId));
     }
+
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(
+                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"TRANSCRIPT-LOAD\","
+                               "\"location\":\"editor_controller.cpp:loadTranscript\","
+                               "\"message\":\"loadTranscript runs\",\"data\":{\"boundSession\":"
+                               "\"%1\",\"empty\":%2},\"timestamp\":%3}\n")
+                    .arg(sessionId)
+                    .arg(markdown.isEmpty() ? "true" : "false")
+                    .arg(QDateTime::currentMSecsSinceEpoch())
+                    .toUtf8());
+    }
+    // #endregion
 
     // Rebuild the document from the decomposed entry sequence (the P4 render path),
     // then mirror loadMarkdown's read-first post-load (no block activation, re-anchor

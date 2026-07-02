@@ -30,7 +30,10 @@ Rectangle {
     // The shared turn-lifecycle FSM, injected by the host (owned by the
     // SessionOrchestrator). The transcript is a pure consumer: it reads
     // active/turnState/elapsedMs/errorText and feeds eventsEmitted into the editor.
-    property TurnController turn: null
+    // Typed as the abstract ITurnEngine seam (not the concrete mock TurnController)
+    // so either engine assigns: the mock simulator in mock mode, or the live
+    // DaemonTurnEngine in daemon mode (both are ITurnEngine subclasses).
+    property ITurnEngine turn: null
 
     // True while a simulated assistant turn is running. The composer binds this
     // to drive queue-while-busy and the Stop affordance; a real gateway would
@@ -46,6 +49,11 @@ Rectangle {
     // The markdown currently loaded, so redundant reloads (e.g. open() fires both
     // contentChanged and sessionChanged) don't reset the model twice.
     property string _loadedMarkdown
+    // The session id the transcript was last loaded for. A session bind/change must always
+    // (re)load from the store even when the markdown blob is unchanged: a fresh, client-minted
+    // session has "" content, and deduping on markdown alone would skip loadTranscript and leave a
+    // prior/demo document on screen (FIX 1).
+    property string _loadedSessionId: ""
 
     // Emitted (debounced) when the user edits a block, carrying the full markdown.
     signal edited(string markdown)
@@ -81,13 +89,17 @@ Rectangle {
     // read-first (no auto-focus) so a session switch never drops a cursor
     // into the first block or arms a focus callLater that the next reset races.
     function load(md) {
-        if (md === _loadedMarkdown)
+        // Always reload on a session bind/change (even for identical/empty markdown); only the
+        // same-session content path dedups, so a new empty session still clears the prior document.
+        var sessionChanged = root.sessionId !== _loadedSessionId
+        if (!sessionChanged && md === _loadedMarkdown)
             return
         // Abort any in-flight simulated turn so its scheduled events can't land
         // in the freshly-loaded session.
         if (turn)
             turn.cancel()
         _loadedMarkdown = md
+        _loadedSessionId = root.sessionId
         // Drive the document from the session's SessionLogEntry sequence (decomposed
         // from its stored markdown) rather than the markdown blob (roadmap P4).
         editor.loadTranscript(SessionStore, root.sessionId)

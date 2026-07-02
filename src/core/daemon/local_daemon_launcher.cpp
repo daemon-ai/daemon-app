@@ -8,6 +8,7 @@
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QIODevice>
 #include <QLocalSocket>
@@ -106,13 +107,19 @@ void LocalDaemonLauncher::ensureRunning(const QString& socketPath) {
     }
 
     QProcessEnvironment penv = QProcessEnvironment::systemEnvironment();
-    penv.insert(QStringLiteral("DAEMON_API_SOCKET"), socketPath);
+    // The node reads its api-socket path from DAEMON_SOCKET_PATH (figment: `DAEMON_` + the
+    // `socket_path` config key). DAEMON_API_SOCKET is NOT a config key, so the node silently
+    // ignored it and bound its default $TMPDIR/daemon-api.sock while we polled `socketPath` -> "did
+    // not become ready". Set the name the node actually reads.
+    penv.insert(QStringLiteral("DAEMON_SOCKET_PATH"), socketPath);
     penv.insert(QStringLiteral("DAEMON_DATA_DIR"), dataDir);
-    // Run the managed daemon durable (SQLite backend). The store path derives from DAEMON_DATA_DIR,
-    // so it lives in the app data dir above. Durability is required for the daemon to be coherent
-    // with its "persistent by default" lifetime: it binds the revision log (profile/skill
-    // versioning) and the file-backed credential/profile stores, so API keys, agents, and history
-    // survive a daemon restart rather than vanishing with the in-memory default.
+    // Run the managed daemon durable (SQLite backend). With DAEMON_STORE_PATH left unset the node
+    // defaults the sqlite database to `<data_dir>/daemon-store.sqlite` (DAEMON_DATA_DIR, set
+    // above), so it lives alongside the other durable stores rather than in $TMPDIR (which a reboot
+    // / tmp reaper would wipe). Durability is required for the daemon to be coherent with its
+    // "persistent by default" lifetime: it binds the revision log (profile/skill versioning) and
+    // the file-backed credential/profile stores, so API keys, agents, and history survive a daemon
+    // restart rather than vanishing with the in-memory default.
     if (!penv.contains(QStringLiteral("DAEMON_STORE"))) {
         penv.insert(QStringLiteral("DAEMON_STORE"), QStringLiteral("sqlite"));
     }
@@ -124,6 +131,22 @@ void LocalDaemonLauncher::ensureRunning(const QString& socketPath) {
     proc->setStandardOutputFile(logPath, QIODevice::Append);
     proc->setStandardErrorFile(logPath, QIODevice::Append);
 
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text)) {
+            dbg.write(
+                QStringLiteral(
+                    "{\"sessionId\":\"96b7ad\",\"runId\":\"post-fix\",\"hypothesisId\":\"H1\","
+                    "\"location\":\"local_daemon_launcher.cpp:ensureRunning\","
+                    "\"message\":\"spawn managed daemon\",\"data\":{\"socket\":\"%1\","
+                    "\"env\":\"DAEMON_SOCKET_PATH\"},\"timestamp\":%2}\n")
+                    .arg(socketPath)
+                    .arg(QDateTime::currentMSecsSinceEpoch())
+                    .toUtf8());
+        }
+    }
+    // #endregion
     qint64 pid = 0;
     const bool started = proc->startDetached(&pid);
     proc->deleteLater();
@@ -164,6 +187,22 @@ bool LocalDaemonLauncher::restartBudgetAvailable() {
 
 void LocalDaemonLauncher::pollUntilReady() {
     if (isDaemonListening(m_socketPath, 50)) {
+        // #region agent log
+        {
+            QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+            if (dbg.open(QIODevice::Append | QIODevice::Text)) {
+                dbg.write(
+                    QStringLiteral(
+                        "{\"sessionId\":\"96b7ad\",\"runId\":\"post-fix\",\"hypothesisId\":\"H1\","
+                        "\"location\":\"local_daemon_launcher.cpp:pollUntilReady\","
+                        "\"message\":\"managed daemon READY on polled socket\","
+                        "\"data\":{\"socket\":\"%1\"},\"timestamp\":%2}\n")
+                        .arg(m_socketPath)
+                        .arg(QDateTime::currentMSecsSinceEpoch())
+                        .toUtf8());
+            }
+        }
+        // #endregion
         m_pollTimer->stop();
         emit ready(true);
         return;

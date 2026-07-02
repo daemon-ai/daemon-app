@@ -8,7 +8,8 @@
 #include "session_controller.h"
 #include "turn_controller.h"
 
-#include <QUuid>
+#include <QDateTime>
+#include <QFile>
 
 SessionOrchestrator::SessionOrchestrator(QObject* parent)
     : QObject(parent), m_turn(new TurnController(this)), m_todos(new TodoListModel(this)),
@@ -49,6 +50,19 @@ void SessionOrchestrator::setTurnEngines(ITurnEngineFactory* factory) {
         m_turn->deleteLater();
     }
     m_turn = factory->create(this);
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"TURN-BIND\","
+                                     "\"location\":\"session_orchestrator.cpp:setTurnEngines\","
+                                     "\"message\":\"turn engine installed from factory\",\"data\":"
+                                     "{\"engine\":\"%1\"},\"timestamp\":%2}\n")
+                          .arg(QString::fromUtf8(m_turn->metaObject()->className()))
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
     wireTurn();
     if (m_session != nullptr) {
         m_turn->setSessionId(m_session->currentId());
@@ -132,16 +146,13 @@ void SessionOrchestrator::ensureSessionBound() {
     if (m_session == nullptr) {
         return;
     }
-    if (m_session->currentId().isEmpty()) {
-        // Daemon mode: the node creates the session lazily on Submit, so the client mints the id.
-        // (Mock mode already opened a session id when the tab was created.)
-        m_session->open(QStringLiteral("s-") + QUuid::createUuid().toString(QUuid::WithoutBraces));
-    }
+    // Node-authority: sessions come ONLY from the node (SessionCreate -> SessionCreated), so the
+    // composer is gated on an already-bound node id (SessionController::hasSession). There is no
+    // client mint here anymore; a still-empty id means there is no session to submit to (the gate
+    // should have prevented this), so just bind what we have.
     if (m_turn != nullptr) {
         m_turn->setSessionId(m_session->currentId());
     }
-    // The session id may have just been minted (daemon lazy-create), so re-read this session's
-    // profile now that the engine is bound to the final id.
     syncTurnProfile();
 }
 

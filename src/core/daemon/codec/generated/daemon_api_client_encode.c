@@ -62,6 +62,9 @@ static bool encode_host_response_body_t(zcbor_state_t *state, const struct host_
 static bool encode_host_response(zcbor_state_t *state, const struct host_response *input);
 static bool encode_request_respond(zcbor_state_t *state, const struct request_respond *input);
 static bool encode_request_assign(zcbor_state_t *state, const struct request_assign *input);
+static bool encode_repeated_SessionCreate_session(zcbor_state_t *state, const struct SessionCreate_session_r *input);
+static bool encode_repeated_SessionCreate_profile(zcbor_state_t *state, const struct SessionCreate_profile_r *input);
+static bool encode_request_session_create(zcbor_state_t *state, const struct request_session_create *input);
 static bool encode_request_cancel(zcbor_state_t *state, const struct request_cancel *input);
 static bool encode_request_unit(zcbor_state_t *state, const struct request_unit *input);
 static bool encode_request_unit_events(zcbor_state_t *state, const struct request_unit_events *input);
@@ -374,6 +377,7 @@ static bool encode_repeated_ResourceGrantList_user_id(zcbor_state_t *state, cons
 static bool encode_request_resource_grant_list(zcbor_state_t *state, const struct request_resource_grant_list *input);
 static bool encode_request_resource_grant_revoke(zcbor_state_t *state, const struct request_resource_grant_revoke *input);
 static bool encode_response_routed(zcbor_state_t *state, const struct response_routed *input);
+static bool encode_response_session_created(zcbor_state_t *state, const struct response_session_created *input);
 static bool encode_completion_source_process(zcbor_state_t *state, const struct completion_source_process *input);
 static bool encode_completion_source_delegation(zcbor_state_t *state, const struct completion_source_delegation *input);
 static bool encode_completion_source(zcbor_state_t *state, const struct completion_source_r *input);
@@ -1244,6 +1248,50 @@ static bool encode_request_assign(
 	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Assign", tmp_str.len = sizeof("Assign") - 1, &tmp_str)))))
 	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).Assign_session))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_SessionCreate_session(
+		zcbor_state_t *state, const struct SessionCreate_session_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
+	&& (((*input).SessionCreate_session_choice == SessionCreate_session_session_id_m_c) ? ((zcbor_tstr_encode(state, (&(*input).SessionCreate_session_session_id_m))))
+	: (((*input).SessionCreate_session_choice == SessionCreate_session_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_SessionCreate_profile(
+		zcbor_state_t *state, const struct SessionCreate_profile_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"profile", tmp_str.len = sizeof("profile") - 1, &tmp_str)))))
+	&& (((*input).SessionCreate_profile_choice == SessionCreate_profile_profile_ref_m_c) ? ((zcbor_tstr_encode(state, (&(*input).SessionCreate_profile_profile_ref_m))))
+	: (((*input).SessionCreate_profile_choice == SessionCreate_profile_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_session_create(
+		zcbor_state_t *state, const struct request_session_create *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"SessionCreate", tmp_str.len = sizeof("SessionCreate") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 2) && (((!(*input).SessionCreate_session_present || encode_repeated_SessionCreate_session(state, (&(*input).SessionCreate_session)))
+	&& (!(*input).SessionCreate_profile_present || encode_repeated_SessionCreate_profile(state, (&(*input).SessionCreate_profile)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -5964,6 +6012,20 @@ static bool encode_response_routed(
 	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Routed", tmp_str.len = sizeof("Routed") - 1, &tmp_str)))))
 	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).Routed_session))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_response_session_created(
+		zcbor_state_t *state, const struct response_session_created *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"SessionCreated", tmp_str.len = sizeof("SessionCreated") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).SessionCreated_session))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -11064,6 +11126,7 @@ static bool encode_api_response(
 
 	bool res = (((((*input).api_response_choice == api_response_response_ok_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Ok", tmp_str.len = sizeof("Ok") - 1, &tmp_str)))))
 	: (((*input).api_response_choice == api_response_response_routed_m_c) ? ((encode_response_routed(state, (&(*input).api_response_response_routed_m))))
+	: (((*input).api_response_choice == api_response_response_session_created_m_c) ? ((encode_response_session_created(state, (&(*input).api_response_response_session_created_m))))
 	: (((*input).api_response_choice == api_response_response_drained_m_c) ? ((encode_response_drained(state, (&(*input).api_response_response_drained_m))))
 	: (((*input).api_response_choice == api_response_response_health_m_c) ? ((encode_response_health(state, (&(*input).api_response_response_health_m))))
 	: (((*input).api_response_choice == api_response_response_stats_m_c) ? ((encode_response_stats(state, (&(*input).api_response_response_stats_m))))
@@ -11147,7 +11210,7 @@ static bool encode_api_response(
 	: (((*input).api_response_choice == api_response_response_access_users_m_c) ? ((encode_response_access_users(state, (&(*input).api_response_response_access_users_m))))
 	: (((*input).api_response_choice == api_response_response_access_roles_m_c) ? ((encode_response_access_roles(state, (&(*input).api_response_response_access_roles_m))))
 	: (((*input).api_response_choice == api_response_response_who_am_i_m_c) ? ((encode_response_who_am_i(state, (&(*input).api_response_response_who_am_i_m))))
-	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+	: false))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -11168,6 +11231,7 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_telemetry_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Telemetry", tmp_str.len = sizeof("Telemetry") - 1, &tmp_str)))))
 	: (((*input).api_request_choice == api_request_request_sessions_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Sessions", tmp_str.len = sizeof("Sessions") - 1, &tmp_str)))))
 	: (((*input).api_request_choice == api_request_request_assign_m_c) ? ((encode_request_assign(state, (&(*input).api_request_request_assign_m))))
+	: (((*input).api_request_choice == api_request_request_session_create_m_c) ? ((encode_request_session_create(state, (&(*input).api_request_request_session_create_m))))
 	: (((*input).api_request_choice == api_request_request_cancel_m_c) ? ((encode_request_cancel(state, (&(*input).api_request_request_cancel_m))))
 	: (((*input).api_request_choice == api_request_request_fleet_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Fleet", tmp_str.len = sizeof("Fleet") - 1, &tmp_str)))))
 	: (((*input).api_request_choice == api_request_request_tree_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Tree", tmp_str.len = sizeof("Tree") - 1, &tmp_str)))))
@@ -11320,7 +11384,7 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_resource_grant_create_m_c) ? ((encode_request_resource_grant_create(state, (&(*input).api_request_request_resource_grant_create_m))))
 	: (((*input).api_request_choice == api_request_request_resource_grant_list_m_c) ? ((encode_request_resource_grant_list(state, (&(*input).api_request_request_resource_grant_list_m))))
 	: (((*input).api_request_choice == api_request_request_resource_grant_revoke_m_c) ? ((encode_request_resource_grant_revoke(state, (&(*input).api_request_request_resource_grant_revoke_m))))
-	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+	: false))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;

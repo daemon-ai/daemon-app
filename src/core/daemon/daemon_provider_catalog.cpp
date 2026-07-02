@@ -8,6 +8,9 @@
 #include "models/provider_model_compose.h"
 #include "uimodels/variant_list_model.h"
 
+#include <QDateTime>
+#include <QFile>
+
 namespace daemonapp::daemon {
 
 namespace {
@@ -68,6 +71,20 @@ QVariantList DaemonProviderCatalog::providers() const {
         }
         out.append(providerRow(d));
     }
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"PH1d\","
+                                     "\"location\":\"daemon_provider_catalog.cpp:providers\","
+                                     "\"message\":\"providers() -> QML\",\"data\":{\"rows\":%1,"
+                                     "\"raw\":%2},\"timestamp\":%3}\n")
+                          .arg(out.size())
+                          .arg(m_providers != nullptr ? m_providers->providers().size() : -1)
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
     return out;
 }
 

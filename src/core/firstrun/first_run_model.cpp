@@ -10,6 +10,9 @@
 #include "profiles/iprofile_store.h"
 #include "settings/isettings_store.h"
 
+#include <QDateTime>
+#include <QFile>
+
 namespace firstrun {
 
 FirstRunModel::FirstRunModel(settings::ISettingsStore* settings,
@@ -43,12 +46,36 @@ FirstRunModel::FirstRunModel(settings::ISettingsStore* settings,
     if (m_modelCatalog != nullptr) {
         connect(m_modelCatalog, &models::IModelCatalog::currentChanged, this,
                 &FirstRunModel::refreshInferenceReady);
+        // A2: a ModelCurrent reflection may resolve the node gate (node already configured ->
+        // skip).
+        connect(m_modelCatalog, &models::IModelCatalog::currentChanged, this,
+                &FirstRunModel::evaluateWizardGate);
+    }
+    // A2: the reflected ProfileList (the node's active default + its model) is the authoritative
+    // gate input; re-evaluate whenever it changes while we are still gating.
+    if (m_profiles != nullptr) {
+        connect(m_profiles, &profiles::IProfileStore::changed, this,
+                &FirstRunModel::evaluateWizardGate);
     }
     refreshInferenceReady();
 }
 
 void FirstRunModel::begin() {
-    if (m_settings != nullptr && m_settings->setupComplete()) {
+    const bool complete = (m_settings != nullptr && m_settings->setupComplete());
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"H-B\","
+                                     "\"location\":\"first_run_model.cpp:begin\",\"message\":"
+                                     "\"begin() gate\",\"data\":{\"setupComplete\":%1},"
+                                     "\"timestamp\":%2}\n")
+                          .arg(complete ? "true" : "false")
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
+    if (complete) {
         setPhase(QStringLiteral("done"));
         return;
     }
@@ -72,14 +99,30 @@ void FirstRunModel::onConnectionStateChanged() {
         setPhase(QStringLiteral("auth"));
     } else if (s == QStringLiteral("ready")) {
         setError(QString());
-        // CON-1: the connection succeeded, so persist setupComplete now - the next launch
-        // auto-connects even if the user leaves before finishing the (placeholder) inference step.
-        // finish() remains idempotent for the explicit "Finish"/"Skip" completion.
-        if (m_settings != nullptr) {
-            m_settings->setSetupComplete(true);
+        // A live connection alone is NOT "setup complete": the user still has to pick a
+        // provider/model in the inference step. Persisting setupComplete here would let a quit
+        // mid-wizard skip the wizard forever on the next launch. Only finish() (a finished or
+        // explicitly skipped inference step) marks setup complete.
+        // #region agent log
+        {
+            QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+            if (dbg.open(QIODevice::Append | QIODevice::Text))
+                dbg.write(
+                    QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"H-A\","
+                                   "\"location\":\"first_run_model.cpp:onConnectionStateChanged\","
+                                   "\"message\":\"connection ready -> inference (no premature "
+                                   "setupComplete)\",\"data\":{},\"timestamp\":%1}\n")
+                        .arg(QDateTime::currentMSecsSinceEpoch())
+                        .toUtf8());
         }
+        // #endregion
         refreshInferenceReady();
-        setPhase(QStringLiteral("inference"));
+        // A2: gate on the NODE, not solely the client setupComplete hint. Run the wizard iff the
+        // node's active profile is not configured (empty model); if it is already configured, skip
+        // straight to done. `m_gating` keeps this reactive to the ProfileList/ModelCurrent
+        // reflection.
+        m_gating = true;
+        evaluateWizardGate();
     } else if (s == QStringLiteral("offline")) {
         // Prefer a specific, actionable reason from the connection seam (e.g. the daemon binary
         // could not be found for managed local spawn) over the generic fallback.
@@ -87,6 +130,51 @@ void FirstRunModel::onConnectionStateChanged() {
         setError(detail.isEmpty() ? tr("Could not reach the node. Check the target and try again.")
                                   : detail);
         setPhase(QStringLiteral("connect"));
+    }
+}
+
+bool FirstRunModel::activeModelConfigured() const {
+    if (m_profiles == nullptr) {
+        return false;
+    }
+    const QString id = m_profiles->defaultProfileId();
+    if (id.isEmpty()) {
+        return false;
+    }
+    const QVariantMap p = m_profiles->profile(id);
+    return !p.value(QStringLiteral("model")).toString().isEmpty();
+}
+
+void FirstRunModel::evaluateWizardGate() {
+    // Only decides while the connect-ready gate is open (not once we are done or the user is past
+    // it). Called on ready and whenever the reflected ProfileList / ModelCurrent changes.
+    if (!m_gating) {
+        return;
+    }
+    const bool configured = activeModelConfigured();
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"WIZARD-GATE\","
+                                     "\"location\":\"first_run_model.cpp:evaluateWizardGate\","
+                                     "\"message\":\"node-authoritative wizard gate\",\"data\":{"
+                                     "\"activeModelEmpty\":%1,\"decision\":\"%2\"},"
+                                     "\"timestamp\":%3}\n")
+                          .arg(configured ? "false" : "true")
+                          .arg(configured ? "skip-wizard" : "run-wizard")
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
+    if (configured) {
+        // The node already has a configured active agent: skip the inference wizard entirely.
+        m_gating = false;
+        finish();
+    } else {
+        // Not configured (or not yet reflected): show the inference step. Stay gating so a late
+        // reflection that reveals the node IS configured can still auto-skip.
+        setPhase(QStringLiteral("inference"));
     }
 }
 
@@ -135,6 +223,21 @@ void FirstRunModel::applyInferenceChoice(const QString& providerId, const QStrin
     // Configure the existing default profile when the node already has one (Track 1 boots an
     // unconfigured default); otherwise create a fresh one.
     QString profileId = m_profiles->defaultProfileId();
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(
+                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"APPLY-INFER\","
+                               "\"location\":\"first_run_model.cpp:applyInferenceChoice\","
+                               "\"message\":\"wizard persist inputs\",\"data\":{"
+                               "\"providerId\":\"%1\",\"model\":\"%2\",\"wireSelector\":\"%3\","
+                               "\"defaultBefore\":\"%4\"},\"timestamp\":%5}\n")
+                    .arg(providerId, model, wireSelector, profileId)
+                    .arg(QDateTime::currentMSecsSinceEpoch())
+                    .toUtf8());
+    }
+    // #endregion
     if (profileId.isEmpty()) {
         profileId = m_profiles->createProfile(QStringLiteral("default"));
     }
@@ -151,6 +254,27 @@ void FirstRunModel::applyInferenceChoice(const QString& providerId, const QStrin
     m_profiles->setDefault(profileId); // the session binds the default profile
     setInferenceReady(true);
     finish();
+}
+
+void FirstRunModel::logKeyValidation(const QString& provider, bool requiresKey, int modelCount,
+                                     bool pass) const {
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"KEY-VALIDATE\","
+                                     "\"location\":\"first_run_model.cpp:logKeyValidation\","
+                                     "\"message\":\"authenticated ProviderModels gate\",\"data\":{"
+                                     "\"provider\":\"%1\",\"requiresKey\":%2,\"modelCount\":%3,"
+                                     "\"gate\":\"%4\"},\"timestamp\":%5}\n")
+                          .arg(provider)
+                          .arg(requiresKey ? "true" : "false")
+                          .arg(modelCount)
+                          .arg(pass ? "pass" : "block")
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
 }
 
 void FirstRunModel::submitLogin(const QString& username, const QString& password) {
@@ -173,6 +297,20 @@ void FirstRunModel::restart() {
 }
 
 void FirstRunModel::finish() {
+    // #region agent log
+    {
+        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
+        if (dbg.open(QIODevice::Append | QIODevice::Text))
+            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"H-A\","
+                                     "\"location\":\"first_run_model.cpp:finish\",\"message\":"
+                                     "\"finish() -> setupComplete=true\",\"data\":{},"
+                                     "\"timestamp\":%1}\n")
+                          .arg(QDateTime::currentMSecsSinceEpoch())
+                          .toUtf8());
+    }
+    // #endregion
+    // Committing to done closes the connect-ready node gate so a late reflection cannot re-fire it.
+    m_gating = false;
     if (m_settings != nullptr) {
         m_settings->setSetupComplete(true);
     }

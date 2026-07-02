@@ -208,12 +208,20 @@ bool InMemorySessionStore::matchesScope(const Session& c, const ListScope& scope
         return !c.isArchived && isInSubtree(c.unitId, scope.unitId);
     case NodeType::Tag:
         return !c.isArchived && c.tagIds.contains(scope.tagId);
+    case NodeType::Agent:
+        // Fleet membership (§0): an agent's sessions are those bound to its profile (`lensKey`).
+        return !c.isArchived && !scope.lensKey.isEmpty() &&
+               c.boundProfile.toString() == scope.lensKey;
     case NodeType::ByTransport:
     case NodeType::ByPeer:
     case NodeType::FleetSeparator:
     case NodeType::TagSeparator:
+    case NodeType::TransportSeparator:
+    case NodeType::Transport:
+    case NodeType::FleetNode:
+    case NodeType::AgentSession:
         // Transport/peer grouping needs the DaemonNet's edges (IDaemonNet::sessionsInScope), which
-        // the flat store has no data for; separators are never matchable. None match here.
+        // the flat store has no data for; separators + structural rows are never matchable.
         return false;
     }
     return false;

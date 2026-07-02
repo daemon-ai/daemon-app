@@ -7,6 +7,7 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 import DaemonApp.Presentation
+import DaemonApp.Pages
 
 // Left column: the agent supervision tree. A flattened, uniformly recursive
 // tree (VSCode-explorer style) - any node can contain any node to any depth.
@@ -24,6 +25,9 @@ Rectangle {
     signal scopeSelected(int nodeType, int id, string nodeId)
     // An Integrations-section session leaf was activated - open its transcript.
     signal sessionActivated(string sessionId)
+    // "+ New agent/node" (Fleet header) - open a fresh chat (routed by the shell to the same
+    // open-a-chat path the first-run completion uses).
+    signal newChatRequested()
     signal settingsRequested()
 
     // The category decision (which NodeType/Kind/State maps to which icon/tone)
@@ -87,6 +91,13 @@ Rectangle {
         id: sidebarModel
         store: SessionStore
         daemonNet: DaemonNet
+        // Agents == profiles (§0): the FLEET section renders one agent row per ProfileInfo.
+        profiles: Profiles
+        // The node/connection ROOT label: the connection target for a remote node, else a generic
+        // local-node label (the cheap existing node identity; no node-info contract change).
+        nodeLabel: (typeof Connection !== "undefined" && Connection && Connection.target
+                    && Connection.mode !== "local")
+                   ? Connection.target : qsTr("Local node")
     }
 
     ColumnLayout {
@@ -176,8 +187,13 @@ Rectangle {
                     readonly property bool isTag: nodeType === 5
                     readonly property bool isNode: nodeType === 4
                     readonly property bool isTransport: nodeType === 9
-                    // Transport account/convGroup rows are expandable like fleet units.
-                    readonly property bool isTwistable: (isNode || isTransport) && hasChildren
+                    // Fleet membership rows (§0): node/connection root (10), agent (11), session (12).
+                    readonly property bool isFleetNode: nodeType === 10
+                    readonly property bool isAgent: nodeType === 11
+                    readonly property bool isAgentSession: nodeType === 12
+                    // Transport account/convGroup + fleet node/agent rows are expandable.
+                    readonly property bool isTwistable: (isNode || isTransport || isFleetNode
+                                                         || isAgent) && hasChildren
                     // Row hover stays stable even when the cursor is over the
                     // twistie (which has its own hover-enabled hit area).
                     readonly property bool hovered: rowMouse.containsMouse || twMouse.containsMouse
@@ -264,7 +280,7 @@ Rectangle {
                             icon: FontIcons.fa_plus
                             iconPointSize: 12
                             iconColor: Theme.addButton
-                            tooltipText: del.nodeType === 2 ? qsTr("New root node") : qsTr("New tag")
+                            tooltipText: del.nodeType === 2 ? qsTr("New agent") : qsTr("New tag")
                             onClicked: del.nodeType === 2 ? sidebarModel.createRootUnit()
                                                           : sidebarModel.createTag()
                         }
@@ -386,6 +402,9 @@ Rectangle {
                                 visible: !del.isTag
                                 glyph: del.isNode ? root.kindIcon(del.kind)
                                      : del.isTransport ? root.transportIcon(del.txKind, del.convType)
+                                     : del.isFleetNode ? FontIcons.fa_server
+                                     : del.isAgent ? FontIcons.fa_robot
+                                     : del.isAgentSession ? FontIcons.fa_comments
                                                        : root.iconFor(del.nodeType)
                                 font.pointSize: 12 + Theme.pointSizeOffset
                                 color: del.isSelected || del.hovered
@@ -481,7 +500,7 @@ Rectangle {
                             // Right-click an agent (a profile-backed unit) for its
                             // per-agent Profile + Memory surfaces.
                             if (mouse.button === Qt.RightButton) {
-                                if (del.isNode && del.profile.length > 0)
+                                if ((del.isNode || del.isAgent) && del.profile.length > 0)
                                     agentMenu.openFor(del.profile, del.label);
                                 return;
                             }
@@ -570,6 +589,13 @@ Rectangle {
             popup();
         }
 
+        // SEPARATE "new session" affordance (distinct from the Fleet "+" which mints an agent):
+        // open a fresh chat under this agent. The session binds to the agent's profile.
+        Kit.MenuItem {
+            text: qsTr("New chat")
+            onTriggered: root.newChatRequested()
+        }
+        Kit.MenuSeparator {}
         Kit.MenuItem {
             text: qsTr("Profile settings")
             onTriggered: Nav.openAgent("profile", agentMenu.targetProfile, agentMenu.targetTitle)
@@ -580,6 +606,81 @@ Rectangle {
         }
     }
 
+    // "+ New agent" form (A7): the SAME node-driven provider/model/key picker the onboarding wizard
+    // uses (AgentInferencePicker) — real ProviderCatalog vendors + selection-only ProviderModels, no
+    // hardcoded provider string and no free-text model. On accept it runs the SAME node-authoritative
+    // create path: ProfileCreate (a new named agent) -> configure provider/model/base-url (+ optional
+    // key + persona) -> make it the active default -> a blank node SessionCreate under it + auto-select
+    // (App.openNewAgentChat -> createNew -> node SessionCreate; the tab opens event-driven).
+    QQC.Dialog {
+        id: newAgentDialog
+        title: qsTr("New agent")
+        modal: true
+        anchors.centerIn: QQC.Overlay.overlay
+        width: 420
+        standardButtons: QQC.Dialog.Ok | QQC.Dialog.Cancel
+
+        function openForm() {
+            nameField.text = "";
+            personaField.text = "";
+            nameField.forceActiveFocus();
+            open();
+        }
+
+        onAccepted: {
+            var name = nameField.text.trim();
+            if (name.length === 0 || !agentPicker.inferenceComplete)
+                return;
+            var id = Profiles.createProfile(name);
+            if (!id || id.length === 0)
+                return;
+            var fields = {};
+            var desc = (ProviderCatalog && agentPicker.providerId.length > 0)
+                       ? ProviderCatalog.descriptorFor(agentPicker.providerId) : ({});
+            // Persist the ProviderSelector wire string + base URL from the node descriptor (never a
+            // hardcoded provider); the model is the picker's selection (never free text).
+            if (desc && desc.wireSelector)
+                fields.provider = desc.wireSelector;
+            if (agentPicker.model.length > 0)
+                fields.model = agentPicker.model;
+            if (desc && desc.defaultBaseUrl && desc.defaultBaseUrl.length > 0)
+                fields.baseUrl = desc.defaultBaseUrl;
+            if (personaField.text.trim().length > 0)
+                fields.systemPrompt = personaField.text.trim();
+            Profiles.updateProfile(id, fields);
+            // Profile-scoped credential for a key-requiring provider (stored under the new agent).
+            if (agentPicker.key.length > 0 && typeof Accounts !== "undefined" && Accounts)
+                Accounts.addApiKeyForProfile(id, agentPicker.providerId, "", agentPicker.key, "");
+            // Same create path as the wizard: make the new agent active, then a blank node
+            // SessionCreate under it opens + auto-selects a transcript (event-driven, node-minted id).
+            Profiles.setDefault(id);
+            if (typeof App !== "undefined" && App)
+                App.openNewAgentChat();
+        }
+
+        contentItem: Column {
+            spacing: 8
+
+            QQC.Label { text: qsTr("Name"); color: Theme.sidebarText }
+            QQC.TextField {
+                id: nameField
+                width: parent.width
+                placeholderText: qsTr("agent name")
+            }
+            // The shared node-driven provider/model/key picker (A7).
+            AgentInferencePicker {
+                id: agentPicker
+                width: parent.width
+            }
+            QQC.Label { text: qsTr("Persona (optional)"); color: Theme.sidebarText }
+            QQC.TextField {
+                id: personaField
+                width: parent.width
+                placeholderText: qsTr("system prompt")
+            }
+        }
+    }
+
     Connections {
         target: sidebarModel
         function onScopeSelected(nodeType, id, nodeId) {
@@ -587,6 +688,12 @@ Rectangle {
         }
         function onSessionActivated(sessionId) {
             root.sessionActivated(sessionId);
+        }
+        function onNewChatRequested() {
+            root.newChatRequested();
+        }
+        function onCreateAgentRequested() {
+            newAgentDialog.openForm();
         }
     }
 
