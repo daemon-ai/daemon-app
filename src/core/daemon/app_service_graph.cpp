@@ -125,6 +125,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.approvalRepository = new ApprovalRepository(graph.nodeApi, graph.cache, owner);
     graph.checkpointRepository = new CheckpointRepository(graph.nodeApi, graph.cache, owner);
     graph.credentialRepository = new CredentialRepository(graph.nodeApi, graph.cache, owner);
+    // The ACP agent catalog (foreign engines): backs the new-agent dialog's engine picker.
+    graph.acp = new AcpRepository(graph.nodeApi, graph.cache, owner);
 
     if (daemonConnection != nullptr) {
         // Daemon mode reads sessions through the cache projection rather than the local sqlite
@@ -205,7 +207,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
              credentials = graph.credentialRepository, models = graph.models,
              providers = graph.providerRepository, approvals = graph.approvalRepository,
              subscriptions = graph.subscriptions, fs = graph.fs, fleet = graph.fleetRepository,
-             transports = graph.transportRepository, wasReady] {
+             transports = graph.transportRepository, acp = graph.acp, wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
                     // Initial baseline once per (re)connect; the EventsSince feed then keeps the
@@ -239,6 +241,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // Channels: the adapter picker + configured accounts/status dots (EIO-1/3/9).
                     transports->refreshAdapters();
                     transports->refreshInstances();
+                    // Foreign engines: the ACP catalog for the new-agent dialog's engine picker.
+                    acp->refreshCatalog();
                     subscriptions->start();
                 } else if (!nowReady && *wasReady) {
                     subscriptions->stop();

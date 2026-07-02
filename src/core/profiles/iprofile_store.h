@@ -74,6 +74,16 @@ public:
     }
 
     Q_INVOKABLE virtual QString createProfile(const QString& name) = 0;
+    // Foreign-engine create (wire v23): a named ProfileCreate carrying `engine = Acp{agent}`,
+    // where `agent` is an ACP catalog NAME — launch recipes stay node-side (operator-managed), so
+    // the client only ever sends the reference. No provider/model/key applies to a foreign agent;
+    // the node validates that the agent exists in its catalog and is installed. Returns the new
+    // profile id, or "" when this seam cannot create foreign agents (the mock default).
+    Q_INVOKABLE virtual QString createAcpProfile(const QString& name, const QString& agent) {
+        Q_UNUSED(name)
+        Q_UNUSED(agent)
+        return {};
+    }
     // Clone an existing profile under a new id (a copy, not a live link); returns the new id.
     Q_INVOKABLE virtual QString cloneProfile(const QString& source, const QString& newId) = 0;
     // Patch a profile with the given fields (only present keys are updated).

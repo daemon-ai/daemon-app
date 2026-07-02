@@ -12,6 +12,7 @@
 #include <QObject>
 #include <QSet>
 #include <QString>
+#include <QVariant>
 
 class QTimer;
 
@@ -529,6 +530,37 @@ private:
 class CheckpointRepository : public RepositoryBase {
 public:
     using RepositoryBase::RepositoryBase;
+};
+
+// --- ACP agent catalog (foreign engines; wire v23) -------------------------------------------
+// The node's ACP agent catalog (AcpCatalog: durable manual registrations + the last discovery
+// scan), kept in memory for the new-agent dialog's engine picker. Read-only: registration /
+// removal stay operator ops (no recipe ever travels through the client); a profile references an
+// entry BY NAME via the ProfileSpec engine selector.
+class AcpRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    AcpRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    [[nodiscard]] const QList<DecodedAcpAgentEntry>& entries() const { return m_entries; }
+    // QML-consumable rows for the engine picker: {name, source, installed, version}.
+    [[nodiscard]] Q_INVOKABLE QVariantList agents() const;
+
+    // Issue an AcpCatalog; on success catalogRefreshed() fires with entries() populated.
+    Q_INVOKABLE void refreshCatalog();
+
+signals:
+    void catalogRefreshed();
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kCatalogCorrelation = "repo/acp-catalog";
+
+    QList<DecodedAcpAgentEntry> m_entries;
 };
 
 } // namespace daemonapp::daemon

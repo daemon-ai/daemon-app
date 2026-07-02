@@ -189,6 +189,24 @@ QString DaemonProfileStore::createProfile(const QString& name) {
     return id; // the row appears after the repo re-lists; ProfilesPage selects this id
 }
 
+QString DaemonProfileStore::createAcpProfile(const QString& name, const QString& agent) {
+    if (m_repo == nullptr || agent.isEmpty()) {
+        return {};
+    }
+    const QString id = slugId(name);
+    daemonapp::daemon::DecodedProfileSpec spec;
+    spec.id = id;
+    // A foreign (ACP) engine: the profile references the catalog entry BY NAME ONLY (the launch
+    // recipe stays node-side, operator-managed). No provider/model applies — the node bypasses
+    // the inference path entirely for foreign engines, so the spec's provider stays the inert
+    // default rather than a fabricated cloud binding.
+    spec.provider = QStringLiteral("mock");
+    spec.engineKind = QStringLiteral("Acp");
+    spec.engineAcpAgent = agent;
+    m_repo->createProfile(spec);
+    return id; // the row appears after the repo re-lists (same flow as createProfile)
+}
+
 QString DaemonProfileStore::cloneProfile(const QString& source, const QString& newId) {
     if (m_repo == nullptr || newId.isEmpty()) {
         return {};
@@ -325,9 +343,15 @@ void DaemonProfileStore::rebuild() {
             row[QStringLiteral("memoryProvider")] = spec.memoryProvider;
             row[QStringLiteral("credentialRef")] =
                 spec.hasCredentialRef ? spec.credentialRef : QString();
+            // Foreign-engine binding (wire v23): "Core" for native profiles; "Acp" + the catalog
+            // agent name for foreign ones (so the UI can label/hide inference-only affordances).
+            row[QStringLiteral("engine")] = spec.engineKind;
+            row[QStringLiteral("acpAgent")] = spec.engineAcpAgent;
         } else {
             row[QStringLiteral("systemPrompt")] = QString();
             row[QStringLiteral("tools")] = QStringList{};
+            row[QStringLiteral("engine")] = QStringLiteral("Core");
+            row[QStringLiteral("acpAgent")] = QString();
         }
         // No ProfileSpec home: presentation-only / curator-managed.
         row[QStringLiteral("description")] = QString();

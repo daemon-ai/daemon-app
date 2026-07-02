@@ -41,9 +41,10 @@ public:
     [[nodiscard]] QVariantList availableSkills() const override { return {}; }
     [[nodiscard]] QVariantList availableTools() const override { return {}; }
 
-    QString createProfile(const QString& name) override;                        // ProfileCreate
-    QString cloneProfile(const QString& source, const QString& newId) override; // ProfileClone
-    void updateProfile(const QString& id, const QVariantMap& fields) override;  // ProfileUpdate
+    QString createProfile(const QString& name) override;                          // ProfileCreate
+    QString createAcpProfile(const QString& name, const QString& agent) override; // engine=Acp
+    QString cloneProfile(const QString& source, const QString& newId) override;   // ProfileClone
+    void updateProfile(const QString& id, const QVariantMap& fields) override;    // ProfileUpdate
     void remove(const QString& id) override;     // ProfileDelete (PRO-4)
     void setDefault(const QString& id) override; // ProfileSelect (PRO-5)
 
