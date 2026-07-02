@@ -74,12 +74,30 @@ public:
     }
 
     Q_INVOKABLE virtual QString createProfile(const QString& name) = 0;
+    // Create a profile under `name` with an explicit initial spec (`fields` as in updateProfile:
+    // provider/model/baseUrl/...). Default: compose create + update (fine for synchronous
+    // stores); the daemon store overrides with a SINGLE full-spec ProfileCreate so the two ops
+    // cannot race node-side. Returns the new id.
+    Q_INVOKABLE virtual QString createProfileWithSpec(const QString& name,
+                                                      const QVariantMap& fields) {
+        const QString id = createProfile(name);
+        if (!id.isEmpty() && !fields.isEmpty()) {
+            updateProfile(id, fields);
+        }
+        return id;
+    }
     // Clone an existing profile under a new id (a copy, not a live link); returns the new id.
     Q_INVOKABLE virtual QString cloneProfile(const QString& source, const QString& newId) = 0;
     // Patch a profile with the given fields (only present keys are updated).
     Q_INVOKABLE virtual void updateProfile(const QString& id, const QVariantMap& fields) = 0;
     Q_INVOKABLE virtual void remove(const QString& id) = 0;
     Q_INVOKABLE virtual void setDefault(const QString& id) = 0;
+
+    // Ask the seam to re-fetch its authoritative state; `changed()` fires when the fresh state
+    // is reflected. Default: an in-memory store's state is already current — re-announce it
+    // synchronously. The daemon store overrides with a ProfileList round-trip, so callers can
+    // sequence work on a FRESH node reflection instead of a possibly-stale snapshot.
+    Q_INVOKABLE virtual void refresh() { emit changed(); }
 
     // PRO-7: export a profile to (import a profile distribution from) a user-chosen file. The
     // artifact is the portable Distribution (opaque CBOR). Default impls are no-ops so the mock /

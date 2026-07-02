@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <functional>
 #include <QObject>
 #include <QString>
 
@@ -72,11 +73,18 @@ public:
     // and advances to done (persisting setupComplete).
     Q_INVOKABLE void completeInference();
     // Guided inference commit: persist a working profile for the chosen `providerId` + `model`
-    // (ProfileCreate/Update with the descriptor's ProviderSelector + base URL), store the entered
-    // `key` profile-scoped when non-empty, make the profile default, then finish. `providerId` is
-    // the ProviderCatalog descriptor id. A no-op that just finishes when no profile store is wired.
+    // (the descriptor's ProviderSelector + base URL), store the entered `key` profile-scoped when
+    // non-empty, then finish. `providerId` is the ProviderCatalog descriptor id. `name` is the
+    // agent's chosen NAME (the profile id the node keys it by): empty or equal to the seeded
+    // placeholder id configures the placeholder in place (ProfileUpdate — the TUI path); anything
+    // else mints a named agent (one full-spec ProfileCreate -> ProfileSelect -> ProfileDelete of
+    // the placeholder). The apply is a refetch-then-apply continuation: it acts on a FRESH
+    // ProfileList reflection, never a possibly-stale defaultProfileId() snapshot, and the named
+    // path finishes only once the node reflects the new active default so the first chat's
+    // SessionCreate binds the NEW agent. A no-op that just finishes when no profile store is
+    // wired.
     Q_INVOKABLE void applyInferenceChoice(const QString& providerId, const QString& model,
-                                          const QString& key);
+                                          const QString& key, const QString& name = QString());
     // Submit interactive credentials while in the `auth` phase (routes to the connection seam's
     // login()). On success the connection reaches ready and the gate advances to inference.
     Q_INVOKABLE void submitLogin(const QString& username, const QString& password);
@@ -109,6 +117,17 @@ private:
     // NODE, not the client `setupComplete` hint — run it iff the node's active profile is NOT
     // configured (empty model). Re-evaluated as the reflected ProfileList / ModelCurrent land.
     void evaluateWizardGate();
+    // The apply body, run on a fresh ProfileList reflection (see applyInferenceChoice).
+    void applyReflectedInferenceChoice(const QString& providerId, const QString& model,
+                                       const QString& key, const QString& name);
+    // Run `then` on the NEXT profile-store changed() (single-shot) — the refetch continuation.
+    void runOnNextProfilesChanged(const std::function<void()>& then);
+    // Run `then` as soon as `reflected` holds over the profile store: immediately when it already
+    // does (synchronous stores), else on each changed() until it does (the daemon re-lists after
+    // every mutation). Both helpers abandon the continuation if the wizard leaves the inference
+    // phase first (Skip/restart), so a stale apply can never fire post-done.
+    void whenProfilesReflect(const std::function<bool()>& reflected,
+                             const std::function<void()>& then);
     // Whether the node's active default profile already has a model configured (reflected from the
     // profile store). False when nothing is reflected yet or no active default exists.
     [[nodiscard]] bool activeModelConfigured() const;
@@ -125,6 +144,9 @@ private:
     // True while the connect-ready node gate is still deciding (waiting for the ProfileList /
     // ModelCurrent reflection). Cleared once we commit to `done` (configured) or the user finishes.
     bool m_gating = false;
+    // True while an applyInferenceChoice continuation is in flight, so a double-committed Finish
+    // cannot start a second apply chain. Cleared by finish().
+    bool m_applying = false;
 };
 
 } // namespace firstrun

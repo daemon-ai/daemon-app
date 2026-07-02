@@ -3,13 +3,56 @@
 
 #include "daemonnet/mock_daemonnet.h"
 #include "persistence/in_memory_session_store.h"
+#include "profiles/iprofile_store.h"
 #include "sidebar_model.h"
+#include "uimodels/variant_list_model.h"
 
 #include <QSignalSpy>
 #include <QtTest>
 
 using daemonnet::MockDaemonNet;
 using persistence::InMemorySessionStore;
+
+namespace {
+// A minimal IProfileStore exposing two fixed agent rows (a configured one and an unconfigured
+// placeholder), to drive the Fleet membership section deterministically.
+class FakeProfileStore : public profiles::IProfileStore {
+public:
+    FakeProfileStore() : m_model(new uimodels::VariantListModel(this)) {
+        QVariantMap configured;
+        configured[QStringLiteral("id")] = QStringLiteral("anthropic");
+        configured[QStringLiteral("name")] = QStringLiteral("anthropic");
+        configured[QStringLiteral("provider")] = QStringLiteral("genai");
+        configured[QStringLiteral("model")] = QStringLiteral("claude-opus-4-8");
+        configured[QStringLiteral("isDefault")] = true;
+        m_model->upsert(configured);
+        QVariantMap bare;
+        bare[QStringLiteral("id")] = QStringLiteral("default");
+        bare[QStringLiteral("name")] = QStringLiteral("default");
+        bare[QStringLiteral("provider")] = QStringLiteral("daemon_api");
+        bare[QStringLiteral("model")] = QString();
+        bare[QStringLiteral("isDefault")] = false;
+        m_model->upsert(bare);
+    }
+    [[nodiscard]] QObject* profiles() const override { return m_model; }
+    [[nodiscard]] QString defaultProfileId() const override { return QStringLiteral("anthropic"); }
+    [[nodiscard]] QVariantMap profile(const QString& id) const override {
+        const int row = m_model->indexOfId(id);
+        return row >= 0 ? m_model->at(row) : QVariantMap{};
+    }
+    [[nodiscard]] QStringList profileNames() const override { return {}; }
+    [[nodiscard]] QVariantList availableSkills() const override { return {}; }
+    [[nodiscard]] QVariantList availableTools() const override { return {}; }
+    QString createProfile(const QString&) override { return {}; }
+    QString cloneProfile(const QString&, const QString&) override { return {}; }
+    void updateProfile(const QString&, const QVariantMap&) override {}
+    void remove(const QString&) override {}
+    void setDefault(const QString&) override {}
+
+private:
+    uimodels::VariantListModel* m_model = nullptr;
+};
+} // namespace
 
 // Exercises the flattened agent-tree sidebar model: recursive flattening to
 // arbitrary depth, the per-row tree roles, expand/collapse, and scope selection.
@@ -389,6 +432,30 @@ private slots:
         QVERIFY(findRow(model, QStringLiteral("#secops")) < 0);
         // A sibling account is untouched.
         QVERIFY(findRow(model, QStringLiteral("internal (rooms)")) >= 0);
+    }
+
+    // --- Fleet membership (agents == profiles) -------------------------------
+
+    // W2 (2b): agent rows carry a "provider · model" secondary label from the profile row
+    // fields, so the Fleet shows each agent's actual configuration; an unconfigured agent
+    // (empty model) shows just its provider — no dangling separator.
+    void agentRowsCarryProviderModelSecondaryLabel() {
+        InMemorySessionStore store;
+        FakeProfileStore profiles;
+        SidebarModel model;
+        model.setStore(&store);
+        model.setProfiles(&profiles);
+
+        const int configured = findRow(model, QStringLiteral("anthropic"));
+        QVERIFY(configured >= 0);
+        QCOMPARE(roleAt<int>(model, configured, SidebarModel::NodeTypeRole), 11); // Agent
+        QCOMPARE(roleAt<QString>(model, configured, SidebarModel::SubLabelRole),
+                 QStringLiteral("genai \u00b7 claude-opus-4-8"));
+
+        const int bare = findRow(model, QStringLiteral("default"));
+        QVERIFY(bare >= 0);
+        QCOMPARE(roleAt<QString>(model, bare, SidebarModel::SubLabelRole),
+                 QStringLiteral("daemon_api"));
     }
 
     // --- Collapsible section headers (Fleet / Tags / Integrations) ----------

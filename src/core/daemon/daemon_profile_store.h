@@ -41,11 +41,15 @@ public:
     [[nodiscard]] QVariantList availableSkills() const override { return {}; }
     [[nodiscard]] QVariantList availableTools() const override { return {}; }
 
-    QString createProfile(const QString& name) override;                        // ProfileCreate
+    QString createProfile(const QString& name) override; // ProfileCreate
+    // One ProfileCreate carrying the wizard's full spec (provider/model/baseUrl), so no
+    // follow-up ProfileUpdate can race the create on the node's concurrent per-Call dispatch.
+    QString createProfileWithSpec(const QString& name, const QVariantMap& fields) override;
     QString cloneProfile(const QString& source, const QString& newId) override; // ProfileClone
     void updateProfile(const QString& id, const QVariantMap& fields) override;  // ProfileUpdate
     void remove(const QString& id) override;     // ProfileDelete (PRO-4)
     void setDefault(const QString& id) override; // ProfileSelect (PRO-5)
+    void refresh() override;                     // ProfileList (changed() on the reflection)
 
     // PRO-7 export/import + PRO-8 history/revert.
     void exportProfileToFile(const QString& id, const QUrl& fileUrl) override;

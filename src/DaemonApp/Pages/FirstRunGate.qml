@@ -31,6 +31,22 @@ Rectangle {
     readonly property bool keyValidated: inferencePicker.item && inferencePicker.item.keyValidated
     readonly property string pickerKey: inferencePicker.item ? inferencePicker.item.key : ""
 
+    // The chosen provider's catalog label (e.g. "Anthropic"), the seed for the agent-name
+    // prefill. Falls back to the descriptor id when the catalog has no display name.
+    readonly property string providerLabel: {
+        if (root.providerId.length === 0 || typeof ProviderCatalog === "undefined"
+            || !ProviderCatalog)
+            return "";
+        var d = ProviderCatalog.descriptorFor(root.providerId);
+        return (d && d.name) ? d.name : root.providerId;
+    }
+    // Re-seed the name from the provider label (lowercased) whenever the provider changes, until
+    // the user takes ownership of the field by editing it.
+    onProviderLabelChanged: {
+        if (!agentNameField.userEdited)
+            agentNameField.text = root.providerLabel.toLowerCase();
+    }
+
     // Centered onboarding card.
     Rectangle {
         anchors.centerIn: parent
@@ -138,6 +154,26 @@ Rectangle {
                 }
             }
 
+            // --- Phase: inference gate: the agent's NAME + the SHARED picker (A7) -------------
+            // The name is the profile id the node keys the agent by (there is no separate
+            // display-name field on the wire): prefilled from the chosen provider's label,
+            // editable, required. The wizard mints a NAMED agent instead of leaving the node's
+            // seeded placeholder id in the Fleet.
+            ColumnLayout {
+                visible: root.phase === "inference"
+                Layout.fillWidth: true
+                spacing: 10
+                SectionLabel { text: qsTr("Agent name") }
+                Kit.TextField {
+                    id: agentNameField
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("agent name")
+                    // Once the user edits the name it is theirs; provider changes stop re-seeding.
+                    property bool userEdited: false
+                    onTextEdited: userEdited = true
+                }
+            }
+
             // --- Phase: inference gate (the SHARED provider -> key -> model picker, A7) ---
             Loader {
                 id: inferencePicker
@@ -166,14 +202,18 @@ Rectangle {
                     visible: root.phase === "inference"
                     text: qsTr("Finish setup")
                     accentFilled: true
-                    // Enabled once a provider + concrete model are chosen and, for a key-required
-                    // vendor, the key has been PROVEN to authenticate (FIX 4) - not merely typed.
+                    // Enabled once the agent has a non-empty name, a provider + concrete model
+                    // are chosen and, for a key-required vendor, the key has been PROVEN to
+                    // authenticate (FIX 4) - not merely typed.
                     enabled: root.inferenceComplete
                              && (!root.providerRequiresKey || root.keyValidated)
-                    // Persist a working profile (ProviderSelector + model + base URL) + profile-scoped
-                    // key + make default, then finish - zero env required.
+                             && agentNameField.text.trim().length > 0
+                    // Persist a working profile (ProviderSelector + model + base URL) under the
+                    // chosen agent name + profile-scoped key + make default, then finish - zero
+                    // env required.
                     onClicked: FirstRun.applyInferenceChoice(root.providerId, root.model,
-                                                             root.pickerKey)
+                                                             root.pickerKey,
+                                                             agentNameField.text.trim())
                 }
             }
         }

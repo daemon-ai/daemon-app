@@ -32,6 +32,32 @@ QString slugId(const QString& name) {
     return slug.isEmpty() ? QStringLiteral("profile") : slug;
 }
 
+// Overlay the editor's spec-mapped fields onto `spec` (shared by update + full-spec create).
+// name/description/skills have no ProfileSpec home (a profile's id is its name; skills are
+// curator-managed), so they are intentionally ignored.
+void applySpecFields(daemonapp::daemon::DecodedProfileSpec& spec, const QVariantMap& fields) {
+    if (fields.contains(QStringLiteral("provider"))) {
+        spec.provider = fields.value(QStringLiteral("provider")).toString();
+    }
+    if (fields.contains(QStringLiteral("baseUrl"))) {
+        const QString base = fields.value(QStringLiteral("baseUrl")).toString();
+        // Empty base URL = no override = the provider/node default (Option::None on the wire).
+        spec.hasBaseUrl = !base.isEmpty();
+        spec.baseUrl = base;
+    }
+    if (fields.contains(QStringLiteral("model"))) {
+        spec.model = fields.value(QStringLiteral("model")).toString();
+    }
+    if (fields.contains(QStringLiteral("systemPrompt"))) {
+        spec.systemPrompt = fields.value(QStringLiteral("systemPrompt")).toString();
+    }
+    if (fields.contains(QStringLiteral("tools"))) {
+        const QStringList tools = fields.value(QStringLiteral("tools")).toStringList();
+        spec.hasToolAllowlist = true; // an explicit (possibly empty) allowlist
+        spec.toolAllowlist = tools;
+    }
+}
+
 } // namespace
 
 DaemonProfileStore::DaemonProfileStore(daemonapp::daemon::ProfileRepository* repo, QObject* parent)
@@ -189,6 +215,20 @@ QString DaemonProfileStore::createProfile(const QString& name) {
     return id; // the row appears after the repo re-lists; ProfilesPage selects this id
 }
 
+QString DaemonProfileStore::createProfileWithSpec(const QString& name, const QVariantMap& fields) {
+    if (m_repo == nullptr) {
+        return {};
+    }
+    // The whole point over createProfile + updateProfile: ONE ProfileCreate carries the caller's
+    // spec, so the node (which dispatches pipelined Calls concurrently) cannot observe a create
+    // racing its own follow-up update.
+    daemonapp::daemon::DecodedProfileSpec spec;
+    spec.id = slugId(name);
+    applySpecFields(spec, fields);
+    m_repo->createProfile(spec);
+    return spec.id; // the row appears after the repo re-lists
+}
+
 QString DaemonProfileStore::cloneProfile(const QString& source, const QString& newId) {
     if (m_repo == nullptr || newId.isEmpty()) {
         return {};
@@ -215,28 +255,7 @@ void DaemonProfileStore::updateProfile(const QString& id, const QVariantMap& fie
             }
         }
     }
-    // Overlay the editor's spec-mapped fields. name/description/skills have no ProfileSpec home
-    // (a profile's id is its name; skills are curator-managed), so they are intentionally ignored.
-    if (fields.contains(QStringLiteral("provider"))) {
-        spec.provider = fields.value(QStringLiteral("provider")).toString();
-    }
-    if (fields.contains(QStringLiteral("baseUrl"))) {
-        const QString base = fields.value(QStringLiteral("baseUrl")).toString();
-        // Empty base URL = no override = the provider/node default (Option::None on the wire).
-        spec.hasBaseUrl = !base.isEmpty();
-        spec.baseUrl = base;
-    }
-    if (fields.contains(QStringLiteral("model"))) {
-        spec.model = fields.value(QStringLiteral("model")).toString();
-    }
-    if (fields.contains(QStringLiteral("systemPrompt"))) {
-        spec.systemPrompt = fields.value(QStringLiteral("systemPrompt")).toString();
-    }
-    if (fields.contains(QStringLiteral("tools"))) {
-        const QStringList tools = fields.value(QStringLiteral("tools")).toStringList();
-        spec.hasToolAllowlist = true; // an explicit (possibly empty) allowlist
-        spec.toolAllowlist = tools;
-    }
+    applySpecFields(spec, fields);
     m_repo->updateProfile(spec);
 }
 
@@ -250,6 +269,16 @@ void DaemonProfileStore::setDefault(const QString& id) {
     if (m_repo != nullptr) {
         m_repo->selectProfile(id);
     }
+}
+
+void DaemonProfileStore::refresh() {
+    if (m_repo == nullptr) {
+        emit changed(); // nothing to fetch; the (empty) state is already current
+        return;
+    }
+    // Fresh ProfileList; the reflected response rebuilds the rows and emits changed(), so a
+    // caller sequencing on changed() acts on the node's CURRENT state, never a stale snapshot.
+    m_repo->refreshProfiles();
 }
 
 void DaemonProfileStore::exportProfileToFile(const QString& id, const QUrl& fileUrl) {
