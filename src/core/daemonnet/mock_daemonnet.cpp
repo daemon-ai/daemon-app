@@ -81,12 +81,14 @@ QString lifecycleStr(Lifecycle l) {
 
 } // namespace
 
-MockDaemonNet::MockDaemonNet(QObject* parent)
+MockDaemonNet::MockDaemonNet(QObject* parent) : MockDaemonNet(TransportsSeed::Demo, parent) {}
+
+MockDaemonNet::MockDaemonNet(TransportsSeed transports, QObject* parent)
     : IDaemonNet(parent), m_fleetModel(new uimodels::VariantListModel(this)),
       m_sessionsModel(new uimodels::VariantListModel(this)),
       m_channelsModel(new uimodels::VariantListModel(this)),
       m_byPeerModel(new uimodels::VariantListModel(this)) {
-    buildSeed();
+    buildSeed(transports);
     computeProjections();
 }
 
@@ -229,12 +231,17 @@ QString MockDaemonNet::content(const domain::SessionId& id) const {
     return sessionDetail(id).content;
 }
 
-void MockDaemonNet::buildSeed() {
+void MockDaemonNet::buildSeed(TransportsSeed transports) {
     seedTagsAndParticipants();
     seedUnits();
     seedSessions();
     seedGraph();
-    buildTransportsTree();
+    // TransportsSeed::Empty leaves `m_transports` empty (no Integrations section) without
+    // touching the rest of the seed — the routing seed/graph derive from nodes/edges, not from
+    // the transports tree, so they are unaffected by the selector.
+    if (transports == TransportsSeed::Demo) {
+        buildTransportsTree();
+    }
     buildRoutingSeed();
     rebuildRoutingGraph();
 }

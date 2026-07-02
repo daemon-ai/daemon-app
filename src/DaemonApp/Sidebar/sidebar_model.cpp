@@ -359,6 +359,9 @@ void SidebarModel::appendTransportRows() {
     }
     const QList<TransportTreeRow> tree = m_net->transportsTree();
     if (tree.isEmpty()) {
+        // No transports, no section (header included). This is the deliberate empty state of
+        // ServiceMode::Daemon, whose graph seeds the DaemonNet transports tree empty until the
+        // live projection replaces the mock seam (see createAppServiceGraph).
         return;
     }
 

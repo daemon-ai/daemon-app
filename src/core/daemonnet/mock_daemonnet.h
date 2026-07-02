@@ -20,6 +20,13 @@ class VariantListModel;
 
 namespace daemonnet {
 
+// Which events-IO seed the mock carries: the demo transports tree (`transportsTree()`, the
+// sidebar's INTEGRATIONS source) or none. The composition root picks per service mode — Demo for
+// the mock UI, Empty for ServiceMode::Daemon, where the demo tree would masquerade as live
+// integrations (see createAppServiceGraph). Only the transports tree is affected; the rest of the
+// seed (units/sessions/tags/graph/routing) is identical either way.
+enum class TransportsSeed { Demo, Empty };
+
 // Inert mock DaemonNet: one unified, typed seed is the single source for the whole mock UI. It
 // builds the fleet-of-fleets supervision units, the sessions (each with content + tags + owning
 // unit + its authoritative `sessionId`), the tags, and the transport combos (matrix DM / internal
@@ -32,6 +39,9 @@ class MockDaemonNet : public IDaemonNet {
 
 public:
     explicit MockDaemonNet(QObject* parent = nullptr);
+    // Seed-selecting constructor; the default one delegates with TransportsSeed::Demo, so plain
+    // construction (mock mode, tests) is unchanged.
+    explicit MockDaemonNet(TransportsSeed transports, QObject* parent = nullptr);
 
     [[nodiscard]] QObject* fleet() const override;
     [[nodiscard]] QObject* sessions() const override;
@@ -83,7 +93,7 @@ private:
     [[nodiscard]] bool sessionMatchesScope(const domain::Session& s, const domain::ListScope& scope,
                                            const QSet<QString>& lensIds) const;
 
-    void buildSeed();
+    void buildSeed(TransportsSeed transports);
     // The four sections of the typed seed (in build order), each owning its builder lambda.
     void seedTagsAndParticipants();
     void seedUnits();

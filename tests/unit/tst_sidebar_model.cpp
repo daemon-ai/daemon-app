@@ -372,6 +372,26 @@ private slots:
         QCOMPARE(opened.count(), 0);
     }
 
+    // Daemon-mode honesty (W3, plan 2d): a DaemonNet whose transports tree seeds empty (what the
+    // daemon service graph constructs until the live projection lands) renders NO Integrations
+    // section at all — no header, no rows, nothing foldable — while the co-equal sections render
+    // as usual.
+    void emptyTransportsTreeRendersNoIntegrationsSection() {
+        InMemorySessionStore store;
+        MockDaemonNet net(daemonnet::TransportsSeed::Empty);
+        SidebarModel model;
+        model.setStore(&store);
+        model.setDaemonNet(&net);
+
+        QVERIFY(findRow(model, QStringLiteral("Integrations")) < 0);
+        QVERIFY(findRow(model, QStringLiteral("matrix /@bot:hs.org")) < 0);
+        QVERIFY(findRow(model, QStringLiteral("cron")) < 0);
+        QVERIFY(!model.anyTransportExpanded());
+        // Fleet/Tags are unaffected.
+        QVERIFY(findRow(model, QStringLiteral("Fleet")) >= 0);
+        QVERIFY(findRow(model, QStringLiteral("Tags")) >= 0);
+    }
+
     // Collapsing a transport account hides its whole conversation subtree.
     void transportAccountCollapses() {
         InMemorySessionStore store;
