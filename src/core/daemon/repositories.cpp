@@ -125,6 +125,9 @@ void SessionRepository::handleResponse(const QString& correlationId,
 void SessionRepository::applySessionCreated(const QByteArray& responseCbor) {
     QString sessionId;
     if (!NodeApiCodec::decodeSessionCreated(responseCbor, &sessionId)) {
+        // A failed create must not vanish silently: surface the node's ApiError (or a generic
+        // message) through the repo's error signal and drop the dead pending-create state.
+        m_pendingCreateProfile.clear();
         DecodedApiError err;
         const QString msg = NodeApiCodec::decodeError(responseCbor, &err)
                                 ? err.message
@@ -148,10 +151,27 @@ void SessionRepository::applySessionCreated(const QByteArray& responseCbor) {
                     .toUtf8());
     }
     // #endregion
+    // Upsert a minimal cached row NOW so the All Sessions list / Fleet leaves show the new
+    // session immediately instead of waiting on the debounced RosterChanged refetch (whose
+    // full-replace form would otherwise be the first time the row exists client-side). The
+    // authoritative row (node-bound default profile, state, role) lands via the immediate
+    // refetch below; the node's title is seeded later by the first message.
+    CachedSessionRow row;
+    row.sessionId = sessionId;
+    // A blank node-created session is un-run: "Ready" is its wire state (and the schema's
+    // daemon_sessions.state is NOT NULL, so the placeholder must carry one).
+    row.state = QStringLiteral("Ready");
+    row.profileRef = profileId; // empty when the node bound its active default
+    row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
+    upsertCachedSession(row);
+    emit sessionsRefreshed(); // drives CachedSessionStore::reload() -> changed() -> UI rebuild
     // The node also emits RosterChanged (subscription_manager refetches roster+tree); this signal
-    // is the event-driven hook the orchestrator/sidebar auto-select on. The new row surfaces via
-    // the roster refetch.
+    // is the event-driven hook the orchestrator/sidebar auto-select on.
     emit sessionCreated(sessionId, profileId);
+    // Immediate (non-debounced) authoritative refetch. Request ordering makes this race-free: the
+    // node registered the session and bumped the roster rev before replying SessionCreated, so
+    // this SessionsQuery always includes the new row (a full replace cannot prune it).
+    refreshSessions();
 }
 
 void SessionRepository::applyByProfilePage(const QByteArray& responseCbor) {
@@ -244,6 +264,13 @@ void SessionRepository::pruneRemovedSessions(const QList<QString>& removed) {
 }
 
 void SessionRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kCreateCorrelation)) {
+        // A transport-level create failure (timeout / dropped socket): the pending create is
+        // dead — clear its state and surface the error instead of vanishing silently.
+        m_pendingCreateProfile.clear();
+        emit refreshFailed(message);
+        return;
+    }
     if (correlationId == QLatin1String(kSessionsCorrelation) ||
         correlationId == QLatin1String(kByProfileCorrelation)) {
         emit refreshFailed(message);

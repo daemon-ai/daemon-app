@@ -11,12 +11,118 @@
 #include "daemon/repositories.h"
 #include "daemon/seam_migration.h"
 #include "persistence/in_memory_session_store.h"
+#include "wire_mux_fixture.h"
 
 #include <array>
 #include <QCoreApplication>
 #include <QDir>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest/QtTest>
+
+namespace {
+
+// One session-log-entry map: {"seq", "direction", "origin", "disposition", "payload"} with a
+// Command payload (zcbor decodes canonical member order, so the key order mirrors the CDDL).
+void appendCommandEntry(QByteArray& b, quint64 seq, const char* direction, const char* disposition,
+                        const QByteArray& commandBody) {
+    using daemonapp::test::cborText;
+    using daemonapp::test::cborUint;
+    b.append(static_cast<char>(0xA5)); // map(5): the session-log-entry
+    cborText(b, "seq");
+    cborUint(b, seq);
+    cborText(b, "direction");
+    cborText(b, direction);
+    cborText(b, "origin");
+    b.append(static_cast<char>(0xA2)); // map(2): {"transport", "scope"}
+    cborText(b, "transport");
+    cborText(b, "api");
+    cborText(b, "scope");
+    cborText(b, "Internal");
+    cborText(b, "disposition");
+    cborText(b, disposition);
+    cborText(b, "payload");
+    b.append(static_cast<char>(0xA1)); // map(1): {"Command": agent-command}
+    cborText(b, "Command");
+    b.append(commandBody);
+}
+
+// A LogPage carrying the node's inbound command echoes: a StartTurn (the user's message), a
+// Steer (a mid-turn user note), and an Interrupt (no user text).
+QByteArray commandEchoLogPage() {
+    using daemonapp::test::cborText;
+    using daemonapp::test::cborUint;
+
+    QByteArray startTurn; // {"StartTurn": {"input": {"text": ...}, "request_id": 1}}
+    startTurn.append(static_cast<char>(0xA1));
+    cborText(startTurn, "StartTurn");
+    startTurn.append(static_cast<char>(0xA2));
+    cborText(startTurn, "input");
+    startTurn.append(static_cast<char>(0xA1)); // user-msg without the optional attachments
+    cborText(startTurn, "text");
+    cborText(startTurn, "hello node");
+    cborText(startTurn, "request_id");
+    cborUint(startTurn, 1);
+
+    QByteArray steer; // {"Steer": {"text": ..., "request_id": 2}}
+    steer.append(static_cast<char>(0xA1));
+    cborText(steer, "Steer");
+    steer.append(static_cast<char>(0xA2));
+    cborText(steer, "text");
+    cborText(steer, "go left");
+    cborText(steer, "request_id");
+    cborUint(steer, 2);
+
+    QByteArray interrupt; // {"Interrupt": {"reason": null}}
+    interrupt.append(static_cast<char>(0xA1));
+    cborText(interrupt, "Interrupt");
+    interrupt.append(static_cast<char>(0xA1));
+    cborText(interrupt, "reason");
+    interrupt.append(static_cast<char>(0xF6));
+
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "LogPage");
+    b.append(static_cast<char>(0xA4)); // {"entries", "next_seq", "head_seq", "epoch"}
+    cborText(b, "entries");
+    b.append(static_cast<char>(0x83)); // array(3)
+    appendCommandEntry(b, 1, "Inbound", "Context", startTurn);
+    appendCommandEntry(b, 2, "Inbound", "Context", steer);
+    appendCommandEntry(b, 3, "Inbound", "Transport", interrupt);
+    cborText(b, "next_seq");
+    cborUint(b, 4);
+    cborText(b, "head_seq");
+    cborUint(b, 3);
+    cborText(b, "epoch");
+    cborUint(b, 0);
+    return b;
+}
+
+// {"SessionCreated": {"session": <id>}}
+QByteArray sessionCreatedResponse(const char* sessionId) {
+    using daemonapp::test::cborText;
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "SessionCreated");
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "session");
+    cborText(b, sessionId);
+    return b;
+}
+
+// {"Error": {"Other": <message>}}
+QByteArray errorOtherResponse(const char* message) {
+    using daemonapp::test::cborText;
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "Error");
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "Other");
+    cborText(b, message);
+    return b;
+}
+
+} // namespace
 
 class DaemonIntegrationTests : public QObject {
     Q_OBJECT
@@ -299,6 +405,112 @@ private slots:
         QCOMPARE(headSeq, static_cast<quint64>(5));
         QCOMPARE(daemonapp::daemon::NodeApiCodec::responseKind(response),
                  daemonapp::daemon::ApiResponseKind::LogPage);
+    }
+
+    // The node records the user's inbound commands on the merged log; the decoder must surface
+    // the conversational text (StartTurn input / Steer text) so the transcript can render the
+    // user's message from the node's echo (bug fix 1a: no optimistic client fabrication).
+    void codecDecodesCommandEchoText() {
+        using daemonapp::daemon::DecodedLogEntry;
+        QList<DecodedLogEntry> entries;
+        quint64 nextSeq = 0;
+        quint64 headSeq = 0;
+        quint64 epoch = 99;
+        QVERIFY(daemonapp::daemon::NodeApiCodec::decodeLogPageEntries(
+            commandEchoLogPage(), &entries, &nextSeq, &headSeq, &epoch));
+        QCOMPARE(entries.size(), 3);
+
+        QCOMPARE(entries.at(0).payloadKind, DecodedLogEntry::PayloadKind::Command);
+        QCOMPARE(entries.at(0).direction, QStringLiteral("Inbound"));
+        QCOMPARE(entries.at(0).seq, static_cast<quint64>(1));
+        QCOMPARE(entries.at(0).commandText, QStringLiteral("hello node"));
+
+        QCOMPARE(entries.at(1).payloadKind, DecodedLogEntry::PayloadKind::Command);
+        QCOMPARE(entries.at(1).commandText, QStringLiteral("go left"));
+
+        // Non-conversational arms carry no user text.
+        QCOMPARE(entries.at(2).payloadKind, DecodedLogEntry::PayloadKind::Command);
+        QVERIFY(entries.at(2).commandText.isEmpty());
+
+        QCOMPARE(nextSeq, static_cast<quint64>(4));
+        QCOMPARE(headSeq, static_cast<quint64>(3));
+        QCOMPARE(epoch, static_cast<quint64>(0));
+    }
+
+    // Bug fix 1b: a SessionCreated reply upserts a minimal cached row immediately (the All
+    // Sessions list must not wait on the debounced roster refetch), emits sessionCreated for the
+    // auto-select path, and issues an immediate non-debounced SessionsQuery for the full row.
+    void sessionCreateUpsertsCacheAndRefreshes() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("create.sock"));
+        daemonapp::test::WireMuxServer fake;
+        fake.setReplyPayload(sessionCreatedResponse("s-node-1"));
+        QVERIFY2(fake.start(path), "listen");
+
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        daemonapp::daemon::NodeApiClient client(&transport);
+        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("cache.db")));
+        daemonapp::daemon::SessionRepository sessions(&client, &cache);
+
+        QSignalSpy created(&sessions, &daemonapp::daemon::SessionRepository::sessionCreated);
+        QSignalSpy refreshed(&sessions, &daemonapp::daemon::SessionRepository::sessionsRefreshed);
+        QVERIFY(created.isValid());
+        QVERIFY(refreshed.isValid());
+
+        sessions.createSession(QStringLiteral("agent-x"));
+        QTRY_COMPARE_WITH_TIMEOUT(created.count(), 1, 3000);
+        QCOMPARE(created.at(0).at(0).toString(), QStringLiteral("s-node-1"));
+        QCOMPARE(created.at(0).at(1).toString(), QStringLiteral("agent-x"));
+
+        // The minimal row is in the cache before any roster refetch resolves, and the store-level
+        // refresh signal fired so the UI reprojects now.
+        QCOMPARE(cache.sessions().size(), 1);
+        QCOMPARE(cache.sessions().first().sessionId, QStringLiteral("s-node-1"));
+        QCOMPARE(cache.sessions().first().profileRef, QStringLiteral("agent-x"));
+        QCOMPARE(cache.sessions().first().state, QStringLiteral("Ready"));
+        QVERIFY(cache.sessions().first().title.isEmpty());
+        QVERIFY(refreshed.count() >= 1);
+
+        // The immediate authoritative refetch went out (Call #2, no debounce). Its canned reply
+        // is not a SessionPage here; only the dispatch is under test.
+        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() >= 2, 3000);
+    }
+
+    // Bug fix 1b (failure surfacing): a failed create must not vanish silently — both the node's
+    // ApiError reply and a transport-level failure surface through refreshFailed.
+    void sessionCreateErrorSurfaces() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("create-err.sock"));
+        daemonapp::test::WireMuxServer fake;
+        fake.setReplyPayload(errorOtherResponse("no such profile"));
+        QVERIFY2(fake.start(path), "listen");
+
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        daemonapp::daemon::NodeApiClient client(&transport);
+        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("cache-err.db")));
+        daemonapp::daemon::SessionRepository sessions(&client, &cache);
+
+        QSignalSpy created(&sessions, &daemonapp::daemon::SessionRepository::sessionCreated);
+        QSignalSpy failed(&sessions, &daemonapp::daemon::SessionRepository::refreshFailed);
+        sessions.createSession(QStringLiteral("ghost"));
+        QTRY_COMPARE_WITH_TIMEOUT(failed.count(), 1, 3000);
+        QCOMPARE(failed.at(0).at(0).toString(), QStringLiteral("no such profile"));
+        QCOMPARE(created.count(), 0);
+        QVERIFY(cache.sessions().isEmpty());
+
+        // Transport-level failure (no listener at all) routes through handleFailure's new
+        // create-correlation arm rather than being dropped.
+        daemonapp::daemon::DaemonTransport deadTransport;
+        deadTransport.setSocketPath(dir.filePath(QStringLiteral("absent.sock")));
+        daemonapp::daemon::NodeApiClient deadClient(&deadTransport);
+        daemonapp::daemon::SessionRepository deadSessions(&deadClient, &cache);
+        QSignalSpy deadFailed(&deadSessions, &daemonapp::daemon::SessionRepository::refreshFailed);
+        deadSessions.createSession(QString());
+        QTRY_COMPARE_WITH_TIMEOUT(deadFailed.count(), 1, 3000);
     }
 };
 
