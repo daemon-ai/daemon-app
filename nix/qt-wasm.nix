@@ -425,6 +425,14 @@ let
       perl
     ];
 
+    # A post-link `wasm-opt -Oz` re-run (binaryen from the emscripten pin) was
+    # evaluated and dropped: emcc already runs wasm-opt -Oz at link, and a
+    # second pass with emcc 4.0.8's default feature set converges to -17 KB
+    # raw / -9 KB brotli (~0.1%). The only way to shrink further (-1.5 MB raw)
+    # is letting binaryen emit tail-call + GC call_ref encodings, which raises
+    # the artifact's browser feature floor for a -12 KB brotli delta - not a
+    # trade a "low-risk" pipeline should make. Keep the single link-time pass.
+
     dontUseCmakeConfigure = true;
 
     configurePhase = ''
@@ -455,6 +463,22 @@ let
         -DDAEMON_APP_VERSION_STR=${versionStr}
       cd build
       runHook postConfigure
+    '';
+
+    # Precompressed siblings for every shipped artifact so any real webserver
+    # (nginx gzip_static/brotli_static, caddy precompressed) can serve them;
+    # the network cost of a deploy is the .br column. brotli/gzip come from
+    # the MAIN nixpkgs pin - they only transform the output, not the build.
+    # The python serve-wasm helper ignores them and serves the raw files,
+    # which is fine for dev.
+    postInstall = ''
+      for f in "$out"/share/daemon-app/wasm/*; do
+        case "$f" in
+          *.br | *.gz) continue ;;
+        esac
+        ${pkgs.brotli}/bin/brotli -q 11 -k "$f"
+        ${pkgs.gzip}/bin/gzip -9 -k "$f"
+      done
     '';
   };
 
