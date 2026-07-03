@@ -112,7 +112,35 @@ set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 # so turn it off for this vendored subtree and restore it afterwards.
 set(_da_prev_qmlls_ini "${QT_QML_GENERATE_QMLLS_INI}")
 set(QT_QML_GENERATE_QMLLS_INI OFF)
-add_subdirectory("${_ksyntax_dir}" "${CMAKE_BINARY_DIR}/_deps/ksyntaxhighlighting")
+if(DAEMON_APP_WASM)
+    # The host rcc compresses QRC payloads with zstd by default, but the wasm
+    # Qt6Core is built without the zstd feature, so the registrar's
+    # qResourceFeatureZstd() is undefined at link. Qt's own resource pipeline
+    # passes --no-zstd when QT_FEATURE_zstd is off; the framework's
+    # data/CMakeLists.txt invokes Qt6::rcc manually and does not. Point the
+    # imported rcc at a wrapper forcing --no-zstd for every caller (Qt's own
+    # calls then pass it twice, which rcc accepts).
+    get_target_property(_da_rcc_real Qt6::rcc IMPORTED_LOCATION)
+    if(NOT _da_rcc_real)
+        get_target_property(_da_rcc_real Qt6::rcc IMPORTED_LOCATION_RELEASE)
+    endif()
+    set(_da_rcc_wrapper "${CMAKE_BINARY_DIR}/rcc-no-zstd.sh")
+    file(WRITE "${_da_rcc_wrapper}" "#!/bin/sh\nexec \"${_da_rcc_real}\" --no-zstd \"$@\"\n")
+    file(CHMOD "${_da_rcc_wrapper}" PERMISSIONS
+        OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    set_target_properties(Qt6::rcc PROPERTIES
+        IMPORTED_LOCATION "${_da_rcc_wrapper}"
+        IMPORTED_LOCATION_RELEASE "${_da_rcc_wrapper}")
+
+    # The framework's CLI tool + example executables are useless browser
+    # payload, and ECM's KDECompilerSettings gives every executable
+    # -Wl,--enable-new-dtags (an ELF-only flag wasm-ld rejects). EXCLUDE_FROM_ALL
+    # keeps only what the app links - the static lib + QML plugin - in the
+    # build; both are static archives, which never see the linker flag.
+    add_subdirectory("${_ksyntax_dir}" "${CMAKE_BINARY_DIR}/_deps/ksyntaxhighlighting" EXCLUDE_FROM_ALL)
+else()
+    add_subdirectory("${_ksyntax_dir}" "${CMAKE_BINARY_DIR}/_deps/ksyntaxhighlighting")
+endif()
 set(QT_QML_GENERATE_QMLLS_INI "${_da_prev_qmlls_ini}")
 unset(BUILD_TESTING CACHE)
 
