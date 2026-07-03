@@ -168,3 +168,43 @@ add_test(NAME daemon_tui_offscreen_distraction
         DAEMON_TUI_KEYS=focus-composer,t:/distraction,enter,t:/distraction,enter
         $<TARGET_FILE:daemon-tui>
 )
+
+# tst_hub_channels: the Channels hub page (Wave 1) - seeded transport-registry /
+# presence seams land in the page markdown (accounts + states + rooms + adapter
+# picker), absent seams degrade to an explicit note, and the "channels" manager
+# route opens the TabModel::Channels tab. Compiles the TuiPageHub dispatcher, so
+# it pulls in every per-page builder TU plus their seam libraries.
+qt_add_executable(tui_hub_channels_tests
+    tst_hub_channels.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/tui_page_hub.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_settings.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_models.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_accounts.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_profiles.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_memory.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_ops.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_channels.cpp
+)
+set_target_properties(tui_hub_channels_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_hub_channels_tests PRIVATE ${CMAKE_SOURCE_DIR}/src/tui)
+target_link_libraries(tui_hub_channels_tests
+    PRIVATE
+        Qt6::Test
+        PkgConfig::TUIWIDGETS
+        # TabModel + the memory view-models the hub builders bind (also exposes
+        # the Tabs/Memory include dirs).
+        daemon-app::tui_viewmodels
+        daemon-app::config
+        daemon-app::connection
+        daemon-app::settings_store
+        daemon-app::models
+        daemon-app::accounts
+        daemon-app::profiles
+        daemon-app::fleet
+        daemon-app::automation
+        daemon-app::memory
+        daemon-app::transports
+        daemon-app::uimodels
+)
+add_test(NAME tui_hub_channels_tests COMMAND tui_hub_channels_tests)
+set_tests_properties(tui_hub_channels_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
