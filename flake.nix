@@ -231,6 +231,13 @@
           buildInputs = qtPackages ++ [ pkgs.tinyxml-2 pkgs.qt6Packages.qtkeychain qmltermwidget-qt6 ];
 
           cmakeFlags = depFlags ++ [ "-DDAEMON_APP_VERSION_STR=${versionStr}" ];
+
+          # The default fixup only runs `strip --strip-debug` over bin/, which
+          # leaves the CMake Release binaries carrying full symbol tables
+          # (~15 MB on daemon-app). Full-strip them; daemon-tui inherits this
+          # via overrideAttrs. If symbolized crash reports are ever needed,
+          # switch to RelWithDebInfo + separateDebugInfo instead.
+          stripAllList = [ "bin" ];
         };
 
         # The experimental Tui Widgets TUI frontend (daemon-tui executable),
