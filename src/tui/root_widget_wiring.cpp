@@ -93,6 +93,16 @@ void RootWidget::wireModelBindings() {
     // model (no display-role adapter): it reads title/snippet/timestamp/agent/tags
     // directly and renders multi-line cards.
     m_listView->setModel(m_list);
+
+    // Re-resolve every open transcript tab's title on store change: the node
+    // auto-titles a session from its first user message and the roster refetch
+    // lands that title in the cache WITHOUT a content change, so the tab chip
+    // would otherwise keep its stale "New session" fallback (GUI parity:
+    // SessionStore.changed() -> _resolveTitle() in TranscriptPage.qml). The
+    // mid-turn reload guard lives in refreshTranscript(); titles are safe to
+    // refresh any time.
+    connect(m_services.store, &persistence::ISessionStore::changed, this,
+            [this] { rwdetail::refreshTranscriptTabTitles(m_tabModel, m_services.store); });
 }
 
 void RootWidget::wirePageLiveRefresh() {

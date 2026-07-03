@@ -90,6 +90,30 @@ target_link_libraries(tui_tab_strip_tests
 add_test(NAME tui_tab_strip_tests COMMAND tui_tab_strip_tests)
 set_tests_properties(tui_tab_strip_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_tab_title_refresh: the stale-tab-title fix - a session-store changed()
+# (e.g. the node's auto-title landing via the roster refetch, with no content
+# change) re-resolves every open transcript tab's title through
+# rwdetail::refreshTranscriptTabTitles, leaving page tabs untouched.
+qt_add_executable(tui_tab_title_refresh_tests
+    tst_tab_title_refresh.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/root_widget_detail.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs/tab_model.cpp
+)
+set_target_properties(tui_tab_title_refresh_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_tab_title_refresh_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/tui
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs
+)
+target_link_libraries(tui_tab_title_refresh_tests
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        daemon-app::domain
+        daemon-app::persistence
+)
+add_test(NAME tui_tab_title_refresh_tests COMMAND tui_tab_title_refresh_tests)
+set_tests_properties(tui_tab_title_refresh_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 add_test(NAME daemon_tui_offscreen_startup
     COMMAND ${CMAKE_COMMAND} -E env
         DAEMON_TUI_OFFSCREEN=100x30

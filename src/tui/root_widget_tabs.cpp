@@ -72,22 +72,16 @@ void RootWidget::previewSessionTab(const QString& sessionId) {
     if (m_tabModel == nullptr) {
         return;
     }
-    QString title = m_services.store->title(sessionId);
-    if (title.isEmpty()) {
-        title = rwdetail::titleForContent(m_services.store->content(sessionId));
-    }
-    m_tabModel->previewTranscript(sessionId, title);
+    m_tabModel->previewTranscript(sessionId,
+                                  rwdetail::resolveSessionTabTitle(m_services.store, sessionId));
 }
 
 void RootWidget::openSessionPinnedTab(const QString& sessionId) {
     if (m_tabModel == nullptr) {
         return;
     }
-    QString title = m_services.store->title(sessionId);
-    if (title.isEmpty()) {
-        title = rwdetail::titleForContent(m_services.store->content(sessionId));
-    }
-    m_tabModel->openTranscriptPinned(sessionId, title);
+    m_tabModel->openTranscriptPinned(sessionId,
+                                     rwdetail::resolveSessionTabTitle(m_services.store, sessionId));
 }
 
 void RootWidget::newTranscriptTab() {
