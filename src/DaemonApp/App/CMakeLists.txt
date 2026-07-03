@@ -159,10 +159,11 @@ if(DAEMON_APP_WASM)
     # files into one directly servable directory instead.
     #
     # The html shell is the branded in-repo page (wasm/daemon-app.html): dark
-    # theme-token chrome, byte progress, and a styled error panel. It shadows
-    # the default wasm_shell page Qt generates into the build dir at target
-    # finalization (which stays there, unused, alongside its qtlogo.svg -
-    # neither is installed, and the branded page references no logo).
+    # theme-token chrome, byte progress, a WebGL probe that falls back to the
+    # software scenegraph, and a styled error panel. It shadows the default
+    # wasm_shell page Qt generates into the build dir at target finalization
+    # (which stays there, unused, alongside its qtlogo.svg - neither is
+    # installed, and the branded page references no logo).
     install(FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/wasm/daemon-app.html"
         "$<TARGET_FILE_DIR:daemon-app>/daemon-app.js"

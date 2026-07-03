@@ -194,6 +194,29 @@ main.cpp), falling back to the platform sans.
         // probe) - keep it a plain literal.
         const environment = {};
 
+        // --- renderer probe ----------------------------------------------
+        // Qt Quick defaults to the OpenGL(WebGL) RHI backend and aborts when
+        // the browser yields no WebGL context (LibreWolf ships
+        // webgl.disabled=true). Probe first and fall back to the software
+        // scenegraph, which this build carries; GPU rendering stays the
+        // default wherever a context exists. An explicit QT_QUICK_BACKEND
+        // from the seam above wins over the probe.
+        const webglContext = (() => {
+          for (const kind of ['webgl2', 'webgl']) {
+            try {
+              if (document.createElement('canvas').getContext(kind) !== null)
+                return kind;
+            } catch (error) { /* a throwing probe means no usable context */ }
+          }
+          return null;
+        })();
+        let renderer = webglContext ?? 'software (no WebGL context)';
+        if ('QT_QUICK_BACKEND' in environment) {
+          renderer = `${environment.QT_QUICK_BACKEND} (environment override)`;
+        } else if (webglContext === null) {
+          environment.QT_QUICK_BACKEND = 'software';
+        }
+        shellLog(`renderer=${renderer}`);
 
         // --- module fetch with byte progress -------------------------------
         // qtloader exposes no fetch-progress hooks, but its qt.module seam
