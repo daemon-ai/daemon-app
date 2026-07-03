@@ -5,6 +5,13 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
 
+    # Emscripten pin for the Qt-for-WebAssembly outputs ONLY (see
+    # nix/qt-wasm.nix). Qt 6.11 documents emscripten 4.0.7 as its supported
+    # toolchain; the primary pin ships 5.0.7 (an unsupported major jump) and
+    # nixpkgs never carried 4.0.7 - this rev holds the closest match, 4.0.8.
+    # The desktop outputs never touch this input.
+    nixpkgs-emscripten.url = "github:NixOS/nixpkgs/e6f23dc08d3624daab7094b701aa3954923c6bbb";
+
     # --- Content renderer dependencies (all platforms; wired when the
     #     markdown/diagram renderer module lands) ---
     md4qt = {
@@ -65,7 +72,7 @@
   };
 
   outputs =
-    { self, nixpkgs, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, ... }:
+    { self, nixpkgs, nixpkgs-emscripten, flake-utils, md4qt, earcut, ksyntaxhighlighting, microtex, posixsignalmanager, tuiwidgets, qwindowkit, qsimpleupdater, qautostart, qxtglobalshortcut, qmltermwidget, ... }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -237,6 +244,7 @@
             "-DDAEMON_APP_VERSION_STR=${versionStr}"
           ];
         });
+
       in
       {
         packages.default = daemon-app;
