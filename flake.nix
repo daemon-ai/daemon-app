@@ -274,9 +274,9 @@
         packages.qtdeclarative-wasm = qtWasmStack.qtdeclarative;
         packages.qtsvg-wasm = qtWasmStack.qtsvg;
         packages.qtwebsockets-wasm = qtWasmStack.qtwebsockets;
-        # The daemon-app wasm build. NOT expected to fully compile yet: the
-        # platform/transport gating branches own the source changes; on this
-        # branch the CMake configure resolving against the wasm Qt is the bar.
+        # The daemon-app browser build: the emscripten artifact set
+        # (html/js/wasm/data + qtloader.js) under share/daemon-app/wasm,
+        # served as-is by apps.serve-wasm below.
         packages.wasm = qtWasmStack.app;
 
         # Proves the wasm stack end-to-end without the app: a static Qt Quick

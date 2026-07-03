@@ -325,9 +325,9 @@ let
   };
 
   # --- daemon-app for wasm --------------------------------------------------
-  # EXPECTED to fail to fully compile until the platform/transport gating
-  # branches land their source changes; the bar on this branch is that CMake
-  # configure succeeds against the wasm Qt (find_package + vendored deps).
+  # The full browser build: compiles the app against the wasm Qt stack and
+  # installs the emscripten artifact set (html/js/wasm/data + qtloader.js)
+  # under share/daemon-app/wasm, ready to serve as-is (see apps.serve-wasm).
   # Desktop-only inputs are deliberately absent: no qmltermwidget (its QML dir
   # flag would drag the desktop plugin build in), no qtkeychain (the token
   # store falls back to QSettings), no TUI stack, no wrapQtAppsHook.
