@@ -43,6 +43,7 @@
 #include "turn_engine_factory.h"
 
 #include <core/formula.h>
+#include <cstdio>
 #include <latex.h>
 #include <QCoreApplication>
 #include <QDateTime>
@@ -321,10 +322,49 @@ void Application::driveFirstRunConnect() const {
     if (m_services.firstRun == nullptr || !m_services.firstRun->active()) {
         return; // returning users already auto-connected in completeWiring
     }
+#ifdef Q_OS_WASM
+    // The browser's only transport is the WebSocket mux; drive the resolved remote-ws target
+    // (the `?ws=` page override or the page-origin `/ws` default) instead of a local socket.
+    const QString mode = QStringLiteral("remote-ws");
+#else
+    const QString mode = QStringLiteral("local");
+#endif
     const QString target = m_services.settings->resolvedConnectionTarget();
-    m_services.settings->setLastConnection(QStringLiteral("local"), target);
-    m_services.connection->connectTo(QStringLiteral("local"), target);
+    m_services.settings->setLastConnection(mode, target);
+    m_services.connection->connectTo(mode, target);
 }
+
+#ifdef Q_OS_WASM
+void Application::announceConnectionReady(int timeoutMs) const {
+    auto* conn = m_services.connection;
+    const auto announce = [](bool ok) {
+        std::fprintf(stdout, "DAEMON_APP_READY %s\n", ok ? "ok" : "timeout");
+        std::fflush(stdout);
+    };
+    if (conn->ready()) {
+        announce(true);
+        return;
+    }
+    // The timer doubles as the connection context: resolving either way tears the other arm
+    // down (stop + deleteLater kills the pending timeout; deleting the timer disconnects the
+    // state watcher), so the sentinel prints exactly once.
+    auto* timeout = new QTimer(conn);
+    timeout->setSingleShot(true);
+    connect(conn, &connection::IConnectionService::stateChanged, timeout,
+            [conn, timeout, announce] {
+                if (conn->ready()) {
+                    timeout->stop();
+                    timeout->deleteLater();
+                    announce(true);
+                }
+            });
+    connect(timeout, &QTimer::timeout, conn, [timeout, announce] {
+        timeout->deleteLater();
+        announce(false);
+    });
+    timeout->start(timeoutMs);
+}
+#endif
 
 void Application::settle(int ms) const {
     QEventLoop loop;
