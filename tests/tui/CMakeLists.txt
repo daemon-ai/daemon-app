@@ -115,6 +115,37 @@ target_link_libraries(tui_parity_tests
 add_test(NAME tui_parity_tests COMMAND tui_parity_tests)
 set_tests_properties(tui_parity_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tui_access_gating_tests: the auth6 capability gates in the TUI (Wave 1) - the
+# palette's "access" entry is hidden fail-closed until the wired principal
+# grants access_admin (re-hiding on logout), and TuiPageHub::openManagerPage
+# consumes but never mounts the UsersAccess page without the capability. Links
+# the real page-hub dispatcher + builders so it exercises the shipped gate.
+qt_add_executable(tui_access_gating_tests
+    tst_tui_access_gating.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/tui_page_hub.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_settings.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_models.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_accounts.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_profiles.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_memory.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_ops.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_users_access.cpp
+)
+set_target_properties(tui_access_gating_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_access_gating_tests PRIVATE ${CMAKE_SOURCE_DIR}/src/tui)
+target_link_libraries(tui_access_gating_tests
+    PRIVATE
+        Qt6::Test
+        PkgConfig::TUIWIDGETS
+        # TabModel + CommandRegistry + the memory view-models, shared with the GUI.
+        daemon-app::tui_viewmodels
+        # PrincipalModel (WhoAmI) + the seam interface libs the hub builders bind.
+        daemon-app::daemon_client
+        daemon-app::uimodels
+)
+add_test(NAME tui_access_gating_tests COMMAND tui_access_gating_tests)
+set_tests_properties(tui_access_gating_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_tab_title_refresh: the stale-tab-title fix - a session-store changed()
 # (e.g. the node's auto-title landing via the roster refetch, with no content
 # change) re-resolves every open transcript tab's title through
