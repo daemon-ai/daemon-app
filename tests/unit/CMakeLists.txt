@@ -48,6 +48,19 @@ target_link_libraries(tst_settings_store
 add_test(NAME tst_settings_store COMMAND tst_settings_store)
 set_tests_properties(tst_settings_store PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_ws_default: the browser connection-target derivation (settings/ws_default) - `?ws=` query
+# override precedence, ws-shape gating of the saved target, and the single-origin
+# `ws(s)://<host[:port]>/ws` page-origin default. Pure logic, so it runs on desktop even though
+# only the wasm build calls it.
+qt_add_executable(tst_ws_default tst_ws_default.cpp)
+target_link_libraries(tst_ws_default
+    PRIVATE
+        Qt6::Test
+        daemon-app::settings_store
+)
+add_test(NAME tst_ws_default COMMAND tst_ws_default)
+set_tests_properties(tst_ws_default PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_connection_service: the mock connection seam's liveness state machine
 # (checking -> connecting -> ready / offline), the Test-connection probe, and
 # disconnect, all driven on QTimers.

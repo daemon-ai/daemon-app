@@ -10,6 +10,11 @@
 #include <QString>
 #include <QVariant>
 
+#ifdef Q_OS_WASM
+#include "settings/wasm_page_origin.h"
+#include "settings/ws_default.h"
+#endif
+
 namespace settings {
 
 // Shared client-local preference store seam. App preferences (theme target,
@@ -48,7 +53,14 @@ public:
     void setSetupComplete(bool on) { setValue(QStringLiteral("app/setupComplete"), on); }
 
     [[nodiscard]] Q_INVOKABLE QString lastConnectionMode() const {
-        return value(QStringLiteral("conn/mode"), QStringLiteral("local")).toString();
+#ifdef Q_OS_WASM
+        // The browser's one usable transport is the WebSocket mux, so an unconfigured store
+        // defaults there (the picker preselects that card); see resolvedConnectionTarget().
+        const QString fallbackMode = QStringLiteral("remote-ws");
+#else
+        const QString fallbackMode = QStringLiteral("local");
+#endif
+        return value(QStringLiteral("conn/mode"), fallbackMode).toString();
     }
     [[nodiscard]] Q_INVOKABLE QString lastConnectionTarget() const {
         return value(QStringLiteral("conn/target"), QString()).toString();
@@ -128,13 +140,24 @@ public:
         return QDir(base).filePath(QStringLiteral("daemon/daemon.sock"));
     }
 
-    // The local socket path to auto-open, resolving the test/CI override first.
+    // The connection target to auto-open / prefill, resolving the test/CI override first.
     // `DAEMON_APP_SOCKET` lets the end-to-end harness point a headless GUI/TUI at an isolated
     // per-test socket without seeding QSettings; it wins over the persisted `conn/target`, which in
     // turn wins over the app-managed default (a user-writable path, NOT the root-owned
-    // `/run/daemon.sock` a non-root managed daemon could never bind).
+    // `/run/daemon.sock` a non-root managed daemon could never bind). The browser build resolves a
+    // remote-ws URL instead - see the Q_OS_WASM block and settings/ws_default.h.
     [[nodiscard]] Q_INVOKABLE QString
     resolvedConnectionTarget(const QString& fallback = QString()) const {
+#ifdef Q_OS_WASM
+        // Browser: sockets don't exist, so resolve the remote-ws target instead - the `?ws=`
+        // page-query override, else the ws-shaped saved target, else the page-origin `/ws`
+        // default (a single-origin daemon serves this bundle and the mux WebSocket on one
+        // listener). Empty only on a non-http(s) page; fall through to the desktop chain then.
+        const QString wsDefault = deriveWsDefault(wasmPageUrl(), lastConnectionTarget());
+        if (!wsDefault.isEmpty()) {
+            return wsDefault;
+        }
+#endif
         const QString override = qEnvironmentVariable("DAEMON_APP_SOCKET");
         if (!override.isEmpty()) {
             return override;

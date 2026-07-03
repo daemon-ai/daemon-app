@@ -9,13 +9,19 @@
 
 namespace connection {
 
-// The active connection target. `mode` is "embedded" | "local" | "remote"
-// (matching the audit's three transports; embedded is gated until full-node FFI
-// lands). `target` is a socket path (local) or URL (remote). `token` is an
-// optional bearer for remote. This is the shape the picker writes and the
-// settings store persists.
+// The active connection target. `mode` is "embedded" | "local" | "remote" |
+// "remote-ws" (embedded is gated until full-node FFI lands). `target` is a
+// socket path (local) or URL (remote/remote-ws). `token` is an optional bearer
+// for remote. This is the shape the picker writes and the settings store
+// persists.
 struct ConnectionConfig {
+#ifdef Q_OS_WASM
+    // The browser build has exactly one usable transport - the WebSocket mux - so the picker's
+    // initial selection (bound to this default via IConnectionService::mode) starts there.
+    QString mode = QStringLiteral("remote-ws");
+#else
     QString mode = QStringLiteral("local");
+#endif
     QString target;
     QString token;
 
