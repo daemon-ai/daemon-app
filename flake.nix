@@ -112,15 +112,24 @@
             "nar${builtins.substring 0 8 (pkgs.lib.removePrefix "sha256-" (self.narHash or "sha256-unknown"))}";
         versionStr = "${baseVersion}+${buildId}";
 
-        qtPackages = with pkgs.qt6; [
+        # Qt modules, tiered by which closure actually needs them: everything in
+        # a package's buildInputs is re-exported by wrapQtAppsHook into the
+        # wrapped binary's plugin/QML search paths, so it ships in that
+        # package's runtime closure. Keep each tier minimal.
+        qtGuiPackages = with pkgs.qt6; [
           qtbase          # Core, Gui, Widgets, Network, Sql
           qtdeclarative   # Qml, Quick, QuickControls2, QuickTest
-          qttools
           qtshadertools
           qtsvg
           qtwebsockets    # WebSocket daemon transport (browser/wasm carrier, tested natively)
-          qt5compat       # Core5Compat - required by the Qt6 build of Tui Widgets
         ];
+        # TUI-only runtime addition: the Qt6 build of Tui Widgets links Core5Compat.
+        qtTuiPackages = with pkgs.qt6; [ qt5compat ];
+        # The devShell further carries qttools (lupdate/lrelease for the
+        # translation targets, Linguist, Qt Designer libs). The packages
+        # instead pin Qt6LinguistTools_DIR in depFlags, keeping qttools'
+        # libs out of the runtime closures.
+        qtShellPackages = qtGuiPackages ++ qtTuiPackages ++ [ pkgs.qt6.qttools ];
 
         # --- Tui Widgets stack (Meson) -----------------------------------------
         # Built as plain Nix derivations that emit pkg-config files; the daemon-app
@@ -199,6 +208,12 @@
           "-DQAUTOSTART_SOURCE_DIR=${qautostart}"
           "-DQXTGLOBALSHORTCUT_SOURCE_DIR=${qxtglobalshortcut}"
           "-DQMLTERMWIDGET_QML_DIR=${qmltermwidgetQmlDir}"
+          # Host Linguist tools (lupdate/lrelease for qt_add_translations),
+          # pinned directly rather than listing qttools as an input: the qtbase
+          # env hook folds every qttools input's plugin dir into the wrapped
+          # app's QT_PLUGIN_PATH, dragging the Designer/Assistant libs into the
+          # runtime closure for tools that only ever run at build time.
+          "-DQt6LinguistTools_DIR=${pkgs.qt6.qttools}/lib/cmake/Qt6LinguistTools"
         ];
 
         daemon-app = pkgs.ccacheStdenv.mkDerivation {
@@ -218,9 +233,9 @@
             kdePackages.extra-cmake-modules
             perl
             qt6.wrapQtAppsHook
-            # Linguist tools (lupdate/lrelease) for qt_add_translations: needed
-            # on the host at build time to compile i18n/*.ts -> embedded .qm.
-            qt6.qttools
+            # qttools (lupdate/lrelease for qt_add_translations) is deliberately
+            # NOT an input; CMake gets it via the Qt6LinguistTools_DIR pin in
+            # depFlags (see the comment there).
           ];
 
           # MicroTeX (LaTeX math renderer) links tinyxml2 via pkg-config.
@@ -228,7 +243,7 @@
           # wrapQtAppsHook adds its lib/qml to the wrapped app's import path.
           # qtkeychain backs the OS-keychain server-token store (auth6); the build
           # falls back to a QSettings token store when it is absent.
-          buildInputs = qtPackages ++ [ pkgs.tinyxml-2 pkgs.qt6Packages.qtkeychain qmltermwidget-qt6 ];
+          buildInputs = qtGuiPackages ++ [ pkgs.tinyxml-2 pkgs.qt6Packages.qtkeychain qmltermwidget-qt6 ];
 
           cmakeFlags = depFlags ++ [ "-DDAEMON_APP_VERSION_STR=${versionStr}" ];
 
@@ -245,7 +260,7 @@
         # dependency stack.
         daemon-tui = daemon-app.overrideAttrs (old: {
           pname = "daemon-tui";
-          buildInputs = old.buildInputs ++ tuiDeps;
+          buildInputs = old.buildInputs ++ qtTuiPackages ++ tuiDeps;
           cmakeFlags = depFlags ++ [
             "-DDAEMON_APP_TUI=ON"
             "-DDAEMON_APP_VERSION_STR=${versionStr}"
@@ -335,13 +350,13 @@
             nodejs # provides npx for jscpd duplicate detection (not packaged in nixpkgs)
             just # task runner: the justfile recipes (lint / build / qmllint)
             qt6Packages.qtkeychain # OS keychain for the server-token store (auth6)
-          ] ++ qtPackages ++ tuiDeps ++ [ qmltermwidget-qt6 ];
+          ] ++ qtShellPackages ++ tuiDeps ++ [ qmltermwidget-qt6 ];
 
           shellHook = ''
-            export QT_PLUGIN_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtPluginPrefix qtPackages}:$QT_PLUGIN_PATH"
-            export QML_IMPORT_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtQmlPrefix qtPackages}:${qmltermwidgetQmlDir}:$QML_IMPORT_PATH"
+            export QT_PLUGIN_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtPluginPrefix qtShellPackages}:$QT_PLUGIN_PATH"
+            export QML_IMPORT_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtQmlPrefix qtShellPackages}:${qmltermwidgetQmlDir}:$QML_IMPORT_PATH"
             export QML2_IMPORT_PATH="$QML_IMPORT_PATH:$QML2_IMPORT_PATH"
-            export CMAKE_PREFIX_PATH="${pkgs.lib.makeSearchPath "lib/cmake" qtPackages}:$CMAKE_PREFIX_PATH"
+            export CMAKE_PREFIX_PATH="${pkgs.lib.makeSearchPath "lib/cmake" qtShellPackages}:$CMAKE_PREFIX_PATH"
             export MD4QT_SOURCE_DIR="${md4qt}"
             export EARCUT_SOURCE_DIR="${earcut}"
             export KSYNTAXHIGHLIGHTING_SOURCE_DIR="${ksyntaxhighlighting}"
