@@ -28,6 +28,7 @@ target_include_directories(da_daemon_codec PUBLIC
 add_library(da_daemon_client STATIC
     daemon_transport.h
     daemon_transport.cpp
+    daemon_transport_stream.cpp
     node_api_client.h
     node_api_client.cpp
     node_api_auth.h
@@ -107,6 +108,9 @@ target_link_libraries(da_daemon_client
         daemon-app::nav
         daemon-app::firstrun
     PRIVATE
+        # The WebSocket mux carrier (daemon_transport.cpp); private because no public header
+        # exposes QtWebSockets types.
+        Qt6::WebSockets
         daemon-app::daemon_codec
         daemon-app::warnings
 )
