@@ -90,6 +90,31 @@ target_link_libraries(tui_tab_strip_tests
 add_test(NAME tui_tab_strip_tests COMMAND tui_tab_strip_tests)
 set_tests_properties(tui_tab_strip_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tui_parity_tests: the GUI<->TUI parity guardrail. Every TabModel::Kind and
+# every CommandRegistry id must have a TUI route (declared in
+# src/tui/tui_parity_routes.cpp beside the dispatchers) or an explicit,
+# reasoned accepted-divergence entry inside the test. Qt-Core-only sources, so
+# it runs headless with the rest of the suite.
+qt_add_executable(tui_parity_tests
+    tui_parity_tests.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/tui_parity_routes.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs/tab_model.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Command/command_registry.cpp
+)
+set_target_properties(tui_parity_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_parity_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/tui
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Command
+)
+target_link_libraries(tui_parity_tests
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+)
+add_test(NAME tui_parity_tests COMMAND tui_parity_tests)
+set_tests_properties(tui_parity_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_tab_title_refresh: the stale-tab-title fix - a session-store changed()
 # (e.g. the node's auto-title landing via the roster refetch, with no content
 # change) re-resolves every open transcript tab's title through

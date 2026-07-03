@@ -26,6 +26,8 @@ using hubdetail::rowsOfModel;
 TuiPageHub::TuiPageHub(Dependencies deps) : m_deps(deps) {}
 
 QString TuiPageHub::pageMarkdownForKind(int kind, const QString& profileRef) const {
+    // Parity: a kind added here must also land in tuiroutes::routedKinds()
+    // (tui_parity_routes.cpp) - tests/tui/tui_parity_tests.cpp enforces it.
     const int sel = m_pageSel.value(kind, 0);
     switch (kind) {
     case TabModel::Settings:
@@ -58,6 +60,8 @@ QString TuiPageHub::pageMarkdownForKind(int kind, const QString& profileRef) con
 }
 
 bool TuiPageHub::openManagerPage(const QString& id) const {
+    // Parity: an id added here must also land in tuiroutes::handledCommands()
+    // (tui_parity_routes.cpp) - tests/tui/tui_parity_tests.cpp enforces it.
     const QHash<QString, QPair<int, QString>> kPageRoutes = {
         {QStringLiteral("settings"), {TabModel::Settings, tr("Settings")}},
         {QStringLiteral("dashboard"), {TabModel::Dashboard, tr("Dashboard")}},

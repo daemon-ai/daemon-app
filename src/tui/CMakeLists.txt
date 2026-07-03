@@ -134,6 +134,11 @@ qt_add_executable(daemon-tui
     dialogs/first_run_dialog.cpp
     tui_page_hub.h
     tui_page_hub.cpp
+    # Hand-maintained parity coverage declaration (enforced by
+    # tests/tui/tui_parity_tests.cpp): the TabModel kinds + command ids the TUI
+    # routes. Keep in sync with the dispatchers when adding routes.
+    tui_parity_routes.h
+    tui_parity_routes.cpp
     # Per-page hub projections (one TU per Wave-1 ownership area; the dispatch
     # switch stays in tui_page_hub.cpp).
     pages/hub_detail.h

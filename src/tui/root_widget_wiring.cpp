@@ -326,6 +326,9 @@ void RootWidget::wireTranscriptControls() {
 }
 
 void RootWidget::handleComposerCommand(const QString& command) {
+    // Parity: a command id added here must also land in
+    // tuiroutes::handledCommands() (tui_parity_routes.cpp) -
+    // tests/tui/tui_parity_tests.cpp enforces it.
     if (openManagerPage(command)) {
         return; // a "/settings" / "/models" / ... page route
     }
