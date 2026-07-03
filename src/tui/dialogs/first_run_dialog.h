@@ -45,7 +45,8 @@ private:
     // GUI ConnectionPicker's mode cards).
     void applyMode(const QString& mode);
     // The inference step's commit: persist a working profile for the chosen provider + model
-    // (ProviderSelector + base URL) + profile-scoped key + make default, then finish.
+    // (ProviderSelector + base URL) + profile-scoped key + make default under the chosen agent
+    // NAME (empty / placeholder-equal configures the placeholder in place), then finish.
     void commitInference();
     // Node-driven provider->model wiring (inference phase).
     void rebuildProviderList();
@@ -53,6 +54,9 @@ private:
     void rebuildModelList();
     void selectModel(int row);
     void refreshInferenceControls();
+    // Prefill the agent name from the chosen provider's catalog label (lowercased), exactly like
+    // the GUI wizard seeds agentNameField; stops once the user edits the field.
+    void seedAgentName();
     [[nodiscard]] QVariantMap currentProviderDescriptor() const;
 
     firstrun::FirstRunModel* m_model = nullptr;
@@ -62,14 +66,17 @@ private:
     Tui::ZLabel* m_status = nullptr;
     Tui::ZInputBox* m_target = nullptr;
     Tui::ZInputBox* m_token = nullptr;
-    Tui::ZInputBox* m_key = nullptr;      // provider API key (inference phase)
-    Tui::ZInputBox* m_username = nullptr; // SASL username (auth phase)
-    Tui::ZInputBox* m_password = nullptr; // SASL password (auth phase; masked)
+    Tui::ZInputBox* m_key = nullptr;       // provider API key (inference phase)
+    Tui::ZInputBox* m_username = nullptr;  // SASL username (auth phase)
+    Tui::ZInputBox* m_password = nullptr;  // SASL password (auth phase; masked)
+    Tui::ZLabel* m_nameLabel = nullptr;    // "Agent name" (inference phase)
+    Tui::ZInputBox* m_agentName = nullptr; // agent name = the profile id the node keys it by
     Tui::ZLabel* m_providerLabel = nullptr;
     Tui::ZListView* m_providerList = nullptr; // provider picker (inference phase)
     Tui::ZLabel* m_modelLabel = nullptr;
     Tui::ZListView* m_modelList = nullptr;   // per-provider model picker (inference phase)
     Tui::ZButton* m_listModelsBtn = nullptr; // re-list a key-requiring provider's models
+    Tui::ZLabel* m_keyGateMsg = nullptr;     // the shared key gate's blocking reason (FIX 4)
     Tui::ZButton* m_localBtn = nullptr;
     Tui::ZButton* m_remoteBtn = nullptr;
     Tui::ZButton* m_managedBtn = nullptr; // local: App-managed (spawn) vs Attach (existing socket)
@@ -81,4 +88,8 @@ private:
     QString m_selectedModel;     // selected model id (selection-only)
     QVariantList m_providerRows; // cached providers() rows for row->id mapping
     QVariantList m_modelRows;    // cached offeredModels() rows for row->id mapping
+    // Once the user edits the agent name it is theirs; provider changes stop re-seeding (the
+    // guard suppresses the programmatic seed's own textChanged).
+    bool m_agentNameEdited = false;
+    bool m_seedingName = false;
 };

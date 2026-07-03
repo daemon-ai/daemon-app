@@ -18,8 +18,13 @@ import DaemonApp.Controls as Kit
 //   - Daemon Kit theming throughout.
 //
 // Consumers read `providerId` / `model` / `key` and gate their commit on `inferenceComplete`
-// (+ `keyValidated` for a key-required vendor). `descriptorFor(providerId)` on ProviderCatalog
-// yields the ProviderSelector + base URL the persisted profile needs.
+// (+ FirstRun.keyGatePassed for a key-required vendor). `descriptorFor(providerId)` on
+// ProviderCatalog yields the ProviderSelector + base URL the persisted profile needs.
+//
+// FIX 4 (hoisted): the blocking key-validation gate is evaluated by the SHARED FirstRunModel,
+// not here - the picker only reports its live provider/key selection
+// (FirstRun.setInferenceSelection) and renders the model's keyGateMessage, so the GUI wizard and
+// the TUI dialog consume one gate implementation.
 ColumnLayout {
     id: picker
     spacing: 10
@@ -32,10 +37,6 @@ ColumnLayout {
     property alias key: keyField.text
     // Whether the API key field is unmasked (masked by default; the eye toggle flips it).
     property bool revealKey: false
-    // Whether the entered key has been PROVEN to authenticate (a non-empty authenticated
-    // ProviderModels listing). Reset whenever the provider or key changes.
-    property bool keyValidated: false
-    property string keyValidateMessage: ""
     // Prefer Daemon Cloud as the initial provider (keyless, works out of the box).
     property bool preferDaemonCloud: true
 
@@ -50,9 +51,12 @@ ColumnLayout {
     readonly property bool inferenceComplete: providerId.length > 0 && model.length > 0
                                               && (!providerRequiresKey || keyField.text.length > 0)
 
-    // Emitted after a key-required vendor's authenticated model LIST resolves, so a consumer can log
-    // / react to the validation outcome (the wizard funnels this into FirstRun.logKeyValidation).
-    signal keyValidationResolved(string provider, bool requiresKey, int count, bool pass)
+    // Report the live provider/key selection to the shared key gate (re-arms it: a proven key
+    // must re-prove via the next authenticated LIST after any change).
+    function _reportSelection() {
+        if (typeof FirstRun !== "undefined" && FirstRun)
+            FirstRun.setInferenceSelection(picker.providerId, keyField.text);
+    }
 
     function _seedProvider() {
         if (providerId.length > 0 || providerRows.length === 0)
@@ -72,8 +76,7 @@ ColumnLayout {
         picker.providerId = id;
         picker.model = "";
         picker.revealKey = false;
-        picker.keyValidated = false;
-        picker.keyValidateMessage = "";
+        picker._reportSelection();
         if (ProviderCatalog)
             ProviderCatalog.refreshModels(id, "", keyField.text); // transient key (no profile yet)
     }
@@ -114,7 +117,7 @@ ColumnLayout {
             Layout.fillWidth: true
             placeholderText: qsTr("Paste API key")
             echoMode: picker.revealKey ? TextInput.Normal : TextInput.Password
-            onTextEdited: { picker.keyValidated = false; picker.keyValidateMessage = ""; }
+            onTextEdited: picker._reportSelection() // every keystroke re-arms the shared key gate
             onEditingFinished: if (ProviderCatalog && picker.providerId.length > 0)
                                    ProviderCatalog.refreshModels(picker.providerId, "", text);
         }
@@ -126,9 +129,10 @@ ColumnLayout {
         }
     }
 
+    // The shared key gate's blocking reason (empty until an authenticated LIST fails).
     Text {
-        visible: picker.providerRequiresKey && picker.keyValidateMessage.length > 0
-        text: picker.keyValidateMessage
+        visible: picker.providerRequiresKey && text.length > 0
+        text: (typeof FirstRun !== "undefined" && FirstRun) ? FirstRun.keyGateMessage : ""
         font.family: FontIcons.display; font.pixelSize: 12; color: Theme.danger
         Layout.fillWidth: true; wrapMode: Text.WordWrap
     }
@@ -157,24 +161,16 @@ ColumnLayout {
                     return;
                 var rows = ProviderCatalog.offeredModels(picker.providerId);
                 modelList.rows = rows;
-                // For a key-required vendor the LIST is authenticated, so a non-empty result proves
-                // the entered key works. Gate on it and surface a clear message otherwise.
-                if (picker.providerRequiresKey && keyField.text.length > 0) {
-                    var count = rows.length;
-                    picker.keyValidated = count > 0;
-                    var vendor = (picker.providerDescriptor
-                                  && picker.providerDescriptor.name !== undefined)
-                                 ? picker.providerDescriptor.name : picker.providerId;
-                    picker.keyValidateMessage = picker.keyValidated
-                        ? "" : qsTr("Couldn't verify this API key with %1 — check it and try again.").arg(vendor);
-                    picker.keyValidationResolved(picker.providerId, true, count, picker.keyValidated);
-                    if (picker.model.length > 0) {
-                        var still = false;
-                        for (var i = 0; i < rows.length; ++i)
-                            if (rows[i].id === picker.model) { still = true; break; }
-                        if (!still)
-                            picker.model = "";
-                    }
+                // The key gate itself (FIX 4) is resolved by FirstRunModel off this same signal;
+                // here only drop a stale model selection the re-listed (authenticated) rows no
+                // longer offer.
+                if (picker.providerRequiresKey && keyField.text.length > 0
+                    && picker.model.length > 0) {
+                    var still = false;
+                    for (var i = 0; i < rows.length; ++i)
+                        if (rows[i].id === picker.model) { still = true; break; }
+                    if (!still)
+                        picker.model = "";
                 }
             }
         }

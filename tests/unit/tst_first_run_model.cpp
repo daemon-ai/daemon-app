@@ -6,6 +6,7 @@
 #include "connection/mock_connection_service.h"
 #include "firstrun/first_run_model.h"
 #include "models/imodel_catalog.h"
+#include "models/iprovider_catalog.h"
 #include "models/mock_provider_catalog.h"
 #include "profiles/mock_profile_store.h"
 #include "settings/qt_settings_store.h"
@@ -69,6 +70,50 @@ public:
             emit authFailed(QStringLiteral("bad password"));
             setState(QStringLiteral("authenticating"));
         }
+    }
+};
+
+// A controllable provider catalog for the FIX 4 key-gate tests: the test sets the descriptors and
+// decides how many models each provider's (authenticated) LIST resolves with —
+// resolveModels(id, n) is "a ProviderModels reply landed", the seam the gate is driven off.
+class FakeProviderCatalog : public models::IProviderCatalog {
+public:
+    QVariantList descriptors;
+    QHash<QString, QVariantList> offered;
+
+    static QVariantMap descriptor(const QString& id, const QString& name, bool requiresKey) {
+        QVariantMap d;
+        d[QStringLiteral("id")] = id;
+        d[QStringLiteral("name")] = name;
+        d[QStringLiteral("requiresKey")] = requiresKey;
+        return d;
+    }
+    [[nodiscard]] QVariantList providers() const override { return descriptors; }
+    [[nodiscard]] QVariantMap descriptorFor(const QString& providerId) const override {
+        for (const QVariant& v : descriptors) {
+            const QVariantMap d = v.toMap();
+            if (d.value(QStringLiteral("id")).toString() == providerId) {
+                return d;
+            }
+        }
+        return {};
+    }
+    void refreshModels(const QString& providerId, const QString& = QString(),
+                       const QString& = QString()) override {
+        emit offeredModelsChanged(providerId);
+    }
+    [[nodiscard]] QVariantList offeredModels(const QString& providerId) const override {
+        return offered.value(providerId);
+    }
+    void resolveModels(const QString& providerId, int count) {
+        QVariantList rows;
+        for (int i = 0; i < count; ++i) {
+            QVariantMap row;
+            row[QStringLiteral("id")] = QStringLiteral("m-%1").arg(i);
+            rows.append(row);
+        }
+        offered.insert(providerId, rows);
+        emit offeredModelsChanged(providerId);
     }
 };
 } // namespace
@@ -329,7 +374,7 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
 
         const QString placeholder = profileStore.defaultProfileId();
-        const int rowsBefore = profileStore.profileNames().size();
+        const qsizetype rowsBefore = profileStore.profileNames().size();
         m.applyInferenceChoice(QStringLiteral("daemon_cloud"),
                                QStringLiteral("anthropic/claude-3.5-sonnet"), QString(),
                                placeholder);
@@ -338,6 +383,90 @@ private slots:
         QCOMPARE(profileStore.profileNames().size(), rowsBefore);
         QCOMPARE(profileStore.profile(placeholder).value(QStringLiteral("model")).toString(),
                  QStringLiteral("anthropic/claude-3.5-sonnet"));
+    }
+
+    // FIX 4 (hoisted key gate): permissive when no provider catalog is wired, before any
+    // selection is reported, and for a keyless provider - the gate only ever blocks a
+    // key-requiring selection.
+    void keyGatePermissiveByDefaultAndForKeylessProviders() {
+        QtSettingsStore settings;
+        MockConnectionService conn;
+        FirstRunModel bare(&settings, &conn); // no catalog: the mock/standalone path stays open
+        QVERIFY(bare.keyGatePassed());
+
+        FakeProviderCatalog catalog;
+        catalog.descriptors = {FakeProviderCatalog::descriptor(QStringLiteral("llama_cpp"),
+                                                               QStringLiteral("Llama"), false)};
+        FirstRunModel m(&settings, &conn, nullptr, nullptr, nullptr, &catalog);
+        QVERIFY(m.keyGatePassed()); // nothing reported yet
+        m.setInferenceSelection(QStringLiteral("llama_cpp"), QString());
+        QVERIFY(m.keyGatePassed()); // keyless provider never blocks
+        catalog.resolveModels(QStringLiteral("llama_cpp"), 0);
+        QVERIFY(m.keyGatePassed()); // even an empty local listing is not a key failure
+        QVERIFY(m.keyGateMessage().isEmpty());
+    }
+
+    // FIX 4: a key-requiring provider blocks Finish until the entered key is PROVEN by a
+    // non-empty authenticated LIST; an empty LIST blocks with an actionable vendor message; a
+    // corrected key clears the message and passes on the next resolution.
+    void keyGateBlocksThenPassesOnAuthenticatedList() {
+        QtSettingsStore settings;
+        MockConnectionService conn;
+        FakeProviderCatalog catalog;
+        catalog.descriptors = {
+            FakeProviderCatalog::descriptor(QStringLiteral("acme"), QStringLiteral("Acme"), true)};
+        FirstRunModel m(&settings, &conn, nullptr, nullptr, nullptr, &catalog);
+        QSignalSpy gateChanged(&m, &FirstRunModel::keyGateChanged);
+
+        m.setInferenceSelection(QStringLiteral("acme"), QString());
+        QVERIFY(!m.keyGatePassed()); // requires a key; none entered
+        catalog.resolveModels(QStringLiteral("acme"), 3);
+        QVERIFY(!m.keyGatePassed()); // a keyless listing proves nothing
+        QVERIFY(m.keyGateMessage().isEmpty());
+
+        m.setInferenceSelection(QStringLiteral("acme"), QStringLiteral("sk-bad"));
+        QVERIFY(!m.keyGatePassed());                      // typed but not yet proven
+        catalog.resolveModels(QStringLiteral("acme"), 0); // authenticated LIST came back empty
+        QVERIFY(!m.keyGatePassed());
+        QVERIFY(m.keyGateMessage().contains(QStringLiteral("Acme")));
+
+        m.setInferenceSelection(QStringLiteral("acme"), QStringLiteral("sk-good"));
+        QVERIFY(m.keyGateMessage().isEmpty()); // editing the key clears the stale reason
+        catalog.resolveModels(QStringLiteral("acme"), 2);
+        QVERIFY(m.keyGatePassed());
+        QVERIFY(m.keyGateMessage().isEmpty());
+        QVERIFY(gateChanged.count() >= 5); // every re-arm + every resolution notifies bindings
+    }
+
+    // FIX 4: the gate re-arms on ANY selection report (provider switch, key edit, even a
+    // same-value re-selection) - a previously proven key must re-prove - and resolutions for a
+    // provider other than the reported one are ignored.
+    void keyGateRearmsOnSelectionChange() {
+        QtSettingsStore settings;
+        MockConnectionService conn;
+        FakeProviderCatalog catalog;
+        catalog.descriptors = {
+            FakeProviderCatalog::descriptor(QStringLiteral("acme"), QStringLiteral("Acme"), true),
+            FakeProviderCatalog::descriptor(QStringLiteral("beta"), QStringLiteral("Beta"), true)};
+        FirstRunModel m(&settings, &conn, nullptr, nullptr, nullptr, &catalog);
+
+        m.setInferenceSelection(QStringLiteral("acme"), QStringLiteral("sk-1"));
+        catalog.resolveModels(QStringLiteral("acme"), 1);
+        QVERIFY(m.keyGatePassed());
+
+        // Re-selecting the same provider re-arms (the QML picker reset on every activation).
+        m.setInferenceSelection(QStringLiteral("acme"), QStringLiteral("sk-1"));
+        QVERIFY(!m.keyGatePassed());
+        catalog.resolveModels(QStringLiteral("acme"), 1);
+        QVERIFY(m.keyGatePassed());
+
+        // Switching provider re-arms; another provider's resolution must not satisfy it.
+        m.setInferenceSelection(QStringLiteral("beta"), QStringLiteral("sk-2"));
+        QVERIFY(!m.keyGatePassed());
+        catalog.resolveModels(QStringLiteral("acme"), 5);
+        QVERIFY(!m.keyGatePassed());
+        catalog.resolveModels(QStringLiteral("beta"), 1);
+        QVERIFY(m.keyGatePassed());
     }
 
     void returningUserBootsToDone() {
