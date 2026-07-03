@@ -8,6 +8,7 @@
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
+#include "daemon/principal_model.h"           // capability provider for the command palette
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "dialogs/first_run_dialog.h"
 #include "display_role_adapter.h"
@@ -115,6 +116,19 @@ RootWidget::RootWidget()
     // The shared command-palette catalog (same class the GUI binds as `Commands`).
     m_commands = new CommandRegistry(this);
 
+    // Hide capability-gated command-palette entries (e.g. Users & Access) from principals that lack
+    // them, and re-filter whenever the principal changes (login/logout/role change). Identical to
+    // the GUI wiring in Application::registerContext; fail-closed until a principal authenticates.
+    if (m_services.principal != nullptr) {
+        auto* principal = m_services.principal;
+        auto applyCaps = [this, principal] {
+            m_commands->setCapabilityProvider(
+                [principal](const QString& cap) { return principal->hasCapability(cap); });
+        };
+        applyCaps();
+        connect(principal, &daemonapp::daemon::PrincipalModel::changed, m_commands, applyCaps);
+    }
+
     // Transcript exporter for the list "export" action + /save.
     m_exporter = new TranscriptExporter(this);
     m_overlays = std::make_unique<TuiOverlayHost>(this);
@@ -210,6 +224,7 @@ RootWidget::RootWidget()
         m_memTimeline,
         m_memGraph,
         m_services.settings,
+        m_services.principal,
     });
 
     // Wire the app-level navigation seam (constructed-but-unused until now): an

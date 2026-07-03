@@ -24,8 +24,9 @@ QSet<int> routedKinds() {
         TabModel::Cron,
         TabModel::Memory,
         TabModel::Profile,
+        TabModel::UsersAccess,
         // NOT routed (exempted in tui_parity_tests.cpp until Wave 1):
-        // Channels, UsersAccess.
+        // Channels.
     };
 }
 
@@ -43,6 +44,9 @@ QSet<QString> handledCommands() {
         QStringLiteral("approvals"),
         QStringLiteral("routing"),
         QStringLiteral("cron"),
+        // Capability-gated (auth6): routes to the Users & Access page only when
+        // the principal holds access_admin (TuiPageHub::openManagerPage).
+        QStringLiteral("access"),
         // Window/session actions (RootWidget::handleComposerCommand).
         QStringLiteral("new"),
         QStringLiteral("model"),
@@ -65,8 +69,7 @@ QSet<QString> handledCommands() {
         // NOT claimed as handled despite explicit handleComposerCommand
         // branches - exempted with reasons in tui_parity_tests.cpp:
         // "usage" (deliberate no-op: live in the footer in both shells) and
-        // "compress" (simulated placeholder in both frontends). "access" has
-        // no TUI branch at all (Wave 1).
+        // "compress" (simulated placeholder in both frontends).
     };
 }
 

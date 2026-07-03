@@ -11,6 +11,7 @@
 #include "accounts/iaccounts_service.h"
 #include "automation/icron_store.h"
 #include "automation/irouting_store.h"
+#include "daemon/principal_model.h"
 #include "fleet/iapprovals_inbox.h"
 #include "fleet/ifleet_tree.h"
 #include "fleet/isession_roster.h"
@@ -54,6 +55,8 @@ QString TuiPageHub::pageMarkdownForKind(int kind, const QString& profileRef) con
         return buildMemoryMarkdown();
     case TabModel::Profile:
         return buildProfileMarkdown(profileRef);
+    case TabModel::UsersAccess:
+        return buildUsersAccessMarkdown();
     default:
         return {};
     }
@@ -73,10 +76,21 @@ bool TuiPageHub::openManagerPage(const QString& id) const {
         {QStringLiteral("approvals"), {TabModel::Approvals, tr("Approvals")}},
         {QStringLiteral("routing"), {TabModel::Routing, tr("Routing")}},
         {QStringLiteral("cron"), {TabModel::Cron, tr("Scheduled jobs")}},
+        {QStringLiteral("access"), {TabModel::UsersAccess, tr("Users & Access")}},
     };
     const auto route = kPageRoutes.constFind(id);
     if (route == kPageRoutes.constEnd()) {
         return false;
+    }
+    // Capability gate (auth6, GUI parity with Main.qml/Session.qml): the Users &
+    // Access admin page never mounts unless the authenticated principal holds
+    // access_admin; the command is still consumed (fail-closed no-op). The palette
+    // already hides the gated entry; this also covers the raw "/access" funnel.
+    // The node enforces access server-side regardless.
+    if (route->first == TabModel::UsersAccess &&
+        (m_deps.principal == nullptr ||
+         !m_deps.principal->hasCapability(QStringLiteral("access_admin")))) {
+        return true;
     }
     if (m_deps.tabModel != nullptr) {
         m_deps.tabModel->openPage(route->first, route->second);
