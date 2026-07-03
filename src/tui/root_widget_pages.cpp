@@ -7,6 +7,7 @@
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
+#include "dialogs/profile_editor_dialog.h"
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
@@ -322,6 +323,30 @@ void RootWidget::openModelDownload() {
         return;
     }
     m_overlays->openModelDownload(m_services.modelCatalog, [this] { refreshActivePage(); });
+}
+
+void RootWidget::openProfileEditor(const QString& profileId) {
+    if (m_services.profiles == nullptr || profileId.isEmpty()) {
+        return;
+    }
+    auto* dlg =
+        new ProfileEditorDialog(m_services.profiles, m_services.providerCatalog, profileId, this);
+    // The editor's local "Discover More Models" row routes to the shared
+    // download flow (the GUI editor's Nav.open("models","discover") analog).
+    connect(dlg, &ProfileEditorDialog::modelDiscoverRequested, this,
+            &RootWidget::openModelDownload);
+    // Repaint the underlying page immediately on save (the row-model churn
+    // refresh also covers the async daemon reflection).
+    connect(dlg, &ProfileEditorDialog::saved, this, [this](const QString&) {
+        refreshActivePage();
+        refreshPageIfActive(TabModel::Profile);
+    });
+    // Tui does not restore focus for us: hand it back to the page view.
+    connect(dlg, &QObject::destroyed, this, [this] {
+        if (m_active == nullptr && m_transcript != nullptr) {
+            m_transcript->setFocus();
+        }
+    });
 }
 
 void RootWidget::openCommandPalette() {

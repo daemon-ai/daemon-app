@@ -17,8 +17,8 @@ QString TuiPageHub::buildProfilesMarkdown(int sel) const {
     QString md;
     md += tr("# Profiles\n\n");
     md += tr("Agent profiles, shared with the GUI. **j/k** move · **Enter** "
-             "set default · **x** delete. Use the GUI editor for model / "
-             "prompt / skills.\n\n");
+             "set default · **e** edit (provider / model / prompt / skills / "
+             "tools) · **n** clone · **a** new agent · **x** delete.\n\n");
 
     if (model != nullptr) {
         const auto rows = model->rows();
@@ -60,7 +60,9 @@ QString TuiPageHub::buildProfileMarkdown(const QString& profileRef) const {
     };
 
     md += tr("# Profile - %1\n\n").arg(val(QStringLiteral("name"), profileRef));
-    md += tr("Agent == profile. Memory lives in this agent's bank (`%1`).\n\n").arg(profileRef);
+    md += tr("Agent == profile. Memory lives in this agent's bank (`%1`). "
+             "Press **e** to edit this profile.\n\n")
+              .arg(profileRef);
 
     md += tr("## Engine\n\n");
     md += tr("- Provider: **%1**\n").arg(val(QStringLiteral("provider"), QStringLiteral("-")));

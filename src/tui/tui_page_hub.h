@@ -86,6 +86,9 @@ public:
     [[nodiscard]] bool openManagerPage(const QString& id) const;
     [[nodiscard]] int activePageKind(bool transcriptActive) const;
     [[nodiscard]] QList<QVariantMap> pageActionRows(int kind) const;
+    // The highlighted row for `kind` (unclamped; callers bound it against their
+    // rows) - used by root-level overlay hooks like the profile editor ('e').
+    [[nodiscard]] int pageSelection(int kind) const { return m_pageSel.value(kind, 0); }
 
     void clampSelection(int kind);
     void moveSelection(int kind, int delta);

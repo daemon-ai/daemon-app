@@ -399,6 +399,17 @@ void RootWidget::routeClick(QPoint termPos, Qt::KeyboardModifiers modifiers) {
 bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
     const int kind = activePageKind();
     if (kind < 0 || m_pageHub == nullptr) {
+        // The per-agent Profile tab is not an interactive hub (no action rows),
+        // but 'e' on it opens the profile editor for the bound agent.
+        if (m_active == nullptr && m_tabModel != nullptr && m_pageHub != nullptr &&
+            event->modifiers() == Qt::NoModifier && event->text() == QStringLiteral("e")) {
+            const int idx = m_tabModel->currentIndex();
+            if (idx >= 0 && m_tabModel->kindAt(idx) == TabModel::Profile) {
+                openProfileEditor(m_tabModel->agentRefAt(idx));
+                event->accept();
+                return true;
+            }
+        }
         return false;
     }
     if (m_pageHub->handlePageActionKey(kind, event)) {
@@ -411,6 +422,28 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         openModelDownload();
         event->accept();
         return true;
+    }
+    if (kind == TabModel::Profiles && event->modifiers() == Qt::NoModifier) {
+        // 'e' opens the interactive profile editor for the selected row.
+        if (event->text() == QStringLiteral("e")) {
+            const QList<QVariantMap> rows = pageActionRows(kind);
+            if (!rows.isEmpty()) {
+                const int sel =
+                    qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
+                openProfileEditor(rows.at(sel).value(QStringLiteral("id")).toString());
+            }
+            event->accept();
+            return true;
+        }
+        // 'a' mints a NEW agent (name + engine list: daemon-core / ACP catalog)
+        // over the shared create path - the sidebar shortcut, reachable from
+        // the Profiles page too (engine choice is create-time).
+        if (event->text() == QStringLiteral("a") && m_services.profiles != nullptr) {
+            auto* dialog = new NewAgentDialog(m_services.profiles, m_services.acp, this);
+            dialog->setVisible(true);
+            event->accept();
+            return true;
+        }
     }
     return false;
 }
