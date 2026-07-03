@@ -290,6 +290,25 @@
           meta.description = "Run the daemon-app Qt Quick application";
         };
 
+        # Serve the browser build over plain HTTP for a local smoke test
+        # (`nix run .#serve-wasm`, then open http://localhost:8000/daemon-app.html).
+        # The wasm stack is single-threaded, so no COOP/COEP headers are needed
+        # and python's stock http.server suffices.
+        apps.serve-wasm = {
+          type = "app";
+          program = "${pkgs.writeShellApplication {
+            name = "serve-wasm";
+            runtimeInputs = [ pkgs.python3 ];
+            text = ''
+              port="''${1:-8000}"
+              echo "Serving daemon-app (wasm) at http://localhost:$port/daemon-app.html"
+              exec python3 -m http.server "$port" --bind 127.0.0.1 \
+                --directory ${qtWasmStack.app}/share/daemon-app/wasm
+            '';
+          }}/bin/serve-wasm";
+          meta.description = "Serve the daemon-app WebAssembly build on localhost";
+        };
+
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             cmake

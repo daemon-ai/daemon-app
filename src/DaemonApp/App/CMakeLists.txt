@@ -135,11 +135,26 @@ if(NOT DAEMON_APP_MOBILE AND NOT DAEMON_APP_WASM)
     target_link_libraries(daemon-app PRIVATE Qt6::Widgets)
 endif()
 
-# Install the single self-contained binary. wrapQtAppsHook (flake) wraps it with
-# an isolated Qt environment, so it runs independently of the host's Qt.
 include(GNUInstallDirs)
-install(TARGETS daemon-app
-    BUNDLE DESTINATION .
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+if(DAEMON_APP_WASM)
+    # The browser deliverable is the emscripten artifact set qtloader.js boots
+    # (.html shell, .js runtime, .wasm module, .data MEMFS preload). Installing
+    # the TARGET would ship only the .js shim, so install the set as plain
+    # files into one directly servable directory instead.
+    install(FILES
+        "$<TARGET_FILE_DIR:daemon-app>/daemon-app.html"
+        "$<TARGET_FILE_DIR:daemon-app>/daemon-app.js"
+        "$<TARGET_FILE_DIR:daemon-app>/daemon-app.wasm"
+        "$<TARGET_FILE_DIR:daemon-app>/daemon-app.data"
+        "$<TARGET_FILE_DIR:daemon-app>/qtloader.js"
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/daemon-app/wasm
+    )
+else()
+    # Install the single self-contained binary. wrapQtAppsHook (flake) wraps it
+    # with an isolated Qt environment, so it runs independently of the host's Qt.
+    install(TARGETS daemon-app
+        BUNDLE DESTINATION .
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+endif()
