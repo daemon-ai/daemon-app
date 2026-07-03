@@ -29,12 +29,18 @@ target_link_libraries(da_settings_store
 )
 
 # Optional OS keychain for the server-token store (auth6). When Qt Keychain is present the token
-# persists in the platform secret store; otherwise QtSettingsStore falls back to QSettings.
-find_package(Qt6Keychain QUIET)
+# persists in the platform secret store; otherwise QtSettingsStore falls back to QSettings. The
+# static build never even looks: qtkeychain is a shared-Qt library (and would drag a DBus-linked
+# libsecret floor into the portable binary), so the QSettings fallback is the deliberate choice.
+if(DAEMON_APP_STATIC)
+    message(STATUS "daemon-app: static build; server-token store uses QSettings fallback")
+else()
+    find_package(Qt6Keychain QUIET)
+endif()
 if(Qt6Keychain_FOUND)
     target_link_libraries(da_settings_store PRIVATE Qt6Keychain::Qt6Keychain)
     target_compile_definitions(da_settings_store PRIVATE DAEMON_APP_HAVE_KEYCHAIN)
     message(STATUS "daemon-app: server-token store uses Qt Keychain")
-else()
+elseif(NOT DAEMON_APP_STATIC)
     message(STATUS "daemon-app: Qt Keychain not found; server-token store uses QSettings fallback")
 endif()
