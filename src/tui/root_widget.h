@@ -137,6 +137,11 @@ public:
     // setup is complete, so it is safe to call before awaitConnectionReady.
     void driveFirstRunConnect() const;
 
+    // Headless E2E hook (mirrors Application::settleFirstRunGate): after ready, drain the A2
+    // first-run node gate - the ProfileList/ModelCurrent reflections that auto-complete setup on
+    // an already-configured node arrive one round-trip after ready. Bounded by `ms`.
+    void settleFirstRunGate(int ms) const;
+
     // Headless E2E hook (mirrors Application::runHeadlessOnboarding): connect, add the API key,
     // pick the first discovered model, and finish - pumping the event loop so the credential/model
     // requests round-trip. Returns true iff the connection reached ready.

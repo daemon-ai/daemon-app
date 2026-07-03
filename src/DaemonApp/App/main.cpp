@@ -431,6 +431,12 @@ int main(int argc, char* argv[]) {
         application.announceConnectionReady(timeoutMs);
 #else
         const bool ready = application.awaitConnectionReady(timeoutMs);
+        if (ready) {
+            // Drain the A2 node gate before exiting: on an already-configured node the wizard
+            // auto-completes one reflection after ready, and the harness asserts the persisted
+            // setupComplete that finish() writes.
+            application.settleFirstRunGate(2500);
+        }
         std::fprintf(stdout, "DAEMON_APP_READY %s\n", ready ? "ok" : "timeout");
         std::fflush(stdout);
         return ready ? 0 : 2;

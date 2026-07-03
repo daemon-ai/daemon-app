@@ -159,6 +159,12 @@ bool maybeRenderOffscreen() {
         // managed local daemon on, spawns the daemon if needed) so the harness can assert it.
         root.driveFirstRunConnect();
         const bool ready = root.awaitConnectionReady(timeoutMs);
+        if (ready) {
+            // Drain the A2 node gate before the sentinel: on a configured node the wizard
+            // auto-completes one reflection after ready, persisting setupComplete (asserted by
+            // the first-run spawn scenarios).
+            root.settleFirstRunGate(2500);
+        }
         std::fprintf(stdout, "DAEMON_APP_READY %s\n", ready ? "ok" : "timeout");
         std::fflush(stdout);
     }

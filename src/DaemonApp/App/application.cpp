@@ -284,6 +284,23 @@ void Application::driveFirstRunConnect() const {
     m_services.connection->connectTo(mode, target);
 }
 
+void Application::settleFirstRunGate(int ms) const {
+    firstrun::FirstRunModel* firstRun = m_services.firstRun;
+    if (firstRun == nullptr || firstRun->phase() == QStringLiteral("done")) {
+        return;
+    }
+    QEventLoop loop;
+    const auto conn =
+        connect(firstRun, &firstrun::FirstRunModel::phaseChanged, &loop, [firstRun, &loop] {
+            if (firstRun->phase() == QStringLiteral("done")) {
+                loop.quit();
+            }
+        });
+    QTimer::singleShot(ms, &loop, &QEventLoop::quit);
+    loop.exec();
+    disconnect(conn);
+}
+
 #ifdef Q_OS_WASM
 void Application::announceConnectionReady(int timeoutMs) const {
     auto* conn = m_services.connection;

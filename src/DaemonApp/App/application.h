@@ -114,6 +114,13 @@ public:
     // the onboarding connect path without QML click sim.
     void driveFirstRunConnect() const;
 
+    // Headless E2E hook: after a successful awaitConnectionReady, drain the first-run node gate
+    // (A2): the ProfileList/ModelCurrent reflections that decide "already configured -> skip the
+    // wizard" arrive one round-trip after ready, so a harness that exits at ready would race
+    // FirstRunModel::finish() and the setupComplete persist. Pumps the loop until the first-run
+    // phase reaches "done" or `ms` elapses (bounded; an unconfigured node parks on "inference").
+    void settleFirstRunGate(int ms) const;
+
 #ifdef Q_OS_WASM
     // Browser variant of the DAEMON_APP_WAIT_READY probe: awaitConnectionReady's nested
     // QEventLoop would abort on wasm (no asyncify), so observe the connection state machine

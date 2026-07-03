@@ -129,6 +129,23 @@ void RootWidget::driveFirstRunConnect() const {
     m_services.connection->connectTo(QStringLiteral("local"), target);
 }
 
+void RootWidget::settleFirstRunGate(int ms) const {
+    firstrun::FirstRunModel* firstRun = m_services.firstRun;
+    if (firstRun == nullptr || firstRun->phase() == QStringLiteral("done")) {
+        return;
+    }
+    QEventLoop loop;
+    const auto conn =
+        connect(firstRun, &firstrun::FirstRunModel::phaseChanged, &loop, [firstRun, &loop] {
+            if (firstRun->phase() == QStringLiteral("done")) {
+                loop.quit();
+            }
+        });
+    QTimer::singleShot(ms, &loop, &QEventLoop::quit);
+    loop.exec();
+    disconnect(conn);
+}
+
 QString RootWidget::runHeadlessChat(const QString& prompt, int timeoutMs) const {
     const auto settle = [](int ms) {
         QEventLoop loop;
