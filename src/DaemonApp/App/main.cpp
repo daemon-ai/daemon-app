@@ -5,7 +5,8 @@
 #include "daemon_app_version.h"
 #include "i18n/localization.h"
 
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS) || defined(Q_OS_WASM)
+// No QtWidgets on mobile or in the browser: pure Qt Quick on QGuiApplication.
 #include <QGuiApplication>
 using AppBase = QGuiApplication;
 #else
