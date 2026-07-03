@@ -115,6 +115,51 @@ target_link_libraries(tui_parity_tests
 add_test(NAME tui_parity_tests COMMAND tui_parity_tests)
 set_tests_properties(tui_parity_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_settings_page: the interactive Settings page - j/k + Space/Enter drive the
+# TuiPageHub rows (asserting the ISettingsStore / IDaemonConfig seams reflect the
+# edits), and the TuiSettingsEditor dialog flows (PaletteDialog list pick +
+# TextPromptDialog) run in an off-screen Tui terminal against fake/mock seams.
+# Compiles the hub dispatcher, so every pages/hub_*.cpp TU and its seam libs are
+# in the target (the dispatcher references all the builders).
+qt_add_executable(tui_settings_page_tests
+    tst_settings_page.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/tui_page_hub.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_settings.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_models.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_accounts.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_profiles.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_memory.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/pages/hub_ops.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/settings_editor.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/tui_palette.cpp
+)
+set_target_properties(tui_settings_page_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_settings_page_tests PRIVATE ${CMAKE_SOURCE_DIR}/src/tui)
+target_link_libraries(tui_settings_page_tests
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        PkgConfig::TUIWIDGETS
+        daemon-app::theme_core
+        daemon-app::i18n
+        daemon-app::config
+        daemon-app::settings_store
+        daemon-app::connection
+        daemon-app::models
+        daemon-app::accounts
+        daemon-app::profiles
+        daemon-app::fleet
+        daemon-app::automation
+        daemon-app::memory
+        daemon-app::uimodels
+        daemon-app::daemon_client
+        daemon-app::tui_viewmodels
+)
+add_test(NAME tui_settings_page_tests COMMAND tui_settings_page_tests)
+set_tests_properties(tui_settings_page_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_tab_title_refresh: the stale-tab-title fix - a session-store changed()
 # (e.g. the node's auto-title landing via the roster refetch, with no content
 # change) re-resolves every open transcript tab's title through
@@ -166,5 +211,16 @@ add_test(NAME daemon_tui_offscreen_distraction
     COMMAND ${CMAKE_COMMAND} -E env
         DAEMON_TUI_OFFSCREEN=120x36
         DAEMON_TUI_KEYS=focus-composer,t:/distraction,enter,t:/distraction,enter
+        $<TARGET_FILE:daemon-tui>
+)
+
+# Settings-page editing smoke test through the full shell: open via /settings,
+# walk down to a notification toggle (row 3), Space-flip it twice (so the run
+# ends in the original persisted state, like the distraction test), then walk
+# back up and open + cancel the theme picker.
+add_test(NAME daemon_tui_offscreen_settings_edit
+    COMMAND ${CMAKE_COMMAND} -E env
+        DAEMON_TUI_OFFSCREEN=120x36
+        DAEMON_TUI_KEYS=focus-composer,t:/settings,enter,t:j,t:j,t:j,space,space,t:k,t:k,t:k,enter,esc
         $<TARGET_FILE:daemon-tui>
 )
