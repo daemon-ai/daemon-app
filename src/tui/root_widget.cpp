@@ -210,6 +210,8 @@ RootWidget::RootWidget()
         m_memTimeline,
         m_memGraph,
         m_services.settings,
+        m_services.transportRegistry,
+        m_services.presence,
     });
 
     // Wire the app-level navigation seam (constructed-but-unused until now): an

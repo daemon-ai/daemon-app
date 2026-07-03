@@ -50,6 +50,10 @@ class IProfileStore;
 namespace settings {
 class ISettingsStore;
 }
+namespace transports {
+class IPresenceService;
+class ITransportRegistry;
+} // namespace transports
 
 class TabModel;
 
@@ -77,6 +81,8 @@ public:
         memoryui::MemoryTimelineModel* memTimeline = nullptr;
         memoryui::MemoryGraphModel* memGraph = nullptr;
         settings::ISettingsStore* settings = nullptr;
+        transports::ITransportRegistry* transportRegistry = nullptr;
+        transports::IPresenceService* presence = nullptr;
     };
 
     explicit TuiPageHub(Dependencies deps);
@@ -104,6 +110,7 @@ private:
     [[nodiscard]] QString buildCronMarkdown(int sel = -1) const;
     [[nodiscard]] QString buildMemoryMarkdown() const;
     [[nodiscard]] QString buildProfileMarkdown(const QString& profileRef) const;
+    [[nodiscard]] QString buildChannelsMarkdown() const;
 
     Dependencies m_deps;
     QHash<int, int> m_pageSel;

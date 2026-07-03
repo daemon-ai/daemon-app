@@ -148,6 +148,7 @@ qt_add_executable(daemon-tui
     pages/hub_profiles.cpp
     pages/hub_memory.cpp
     pages/hub_ops.cpp
+    pages/hub_channels.cpp
     tui_file_tab_controller.h
     tui_file_tab_controller.cpp
     tui_shell_layout.h
@@ -236,6 +237,8 @@ target_link_libraries(daemon-tui
         daemon-app::profiles
         daemon-app::fleet
         daemon-app::automation
+        # The Channels hub page projects the transport-registry + presence seams.
+        daemon-app::transports
         daemon-app::session
         daemon-app::daemon_client
         # The GUI's parse/ingest/view-model engine. It links Qt Gui/Sql + md4qt at

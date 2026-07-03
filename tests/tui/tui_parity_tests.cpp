@@ -31,9 +31,6 @@ namespace {
 // Accepted TabModel::Kind divergences: kinds the TUI does not render yet.
 QHash<int, QString> exemptKinds() {
     return {
-        {TabModel::Channels,
-         QStringLiteral("Channels / Events-IO manager is GUI-only; the Wave 1 "
-                        "Channels-page workstream adds the TUI page and removes this")},
         {TabModel::UsersAccess,
          QStringLiteral("Users & Access admin page is GUI-only; the Wave 1 "
                         "Users&Access workstream adds the TUI page and removes this")},

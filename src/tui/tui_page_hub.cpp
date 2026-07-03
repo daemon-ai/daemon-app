@@ -54,6 +54,8 @@ QString TuiPageHub::pageMarkdownForKind(int kind, const QString& profileRef) con
         return buildMemoryMarkdown();
     case TabModel::Profile:
         return buildProfileMarkdown(profileRef);
+    case TabModel::Channels:
+        return buildChannelsMarkdown();
     default:
         return {};
     }
@@ -73,6 +75,7 @@ bool TuiPageHub::openManagerPage(const QString& id) const {
         {QStringLiteral("approvals"), {TabModel::Approvals, tr("Approvals")}},
         {QStringLiteral("routing"), {TabModel::Routing, tr("Routing")}},
         {QStringLiteral("cron"), {TabModel::Cron, tr("Scheduled jobs")}},
+        {QStringLiteral("channels"), {TabModel::Channels, tr("Channels")}},
     };
     const auto route = kPageRoutes.constFind(id);
     if (route == kPageRoutes.constEnd()) {
