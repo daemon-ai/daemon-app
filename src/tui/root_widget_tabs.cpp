@@ -207,6 +207,9 @@ void RootWidget::activatePageTab(int row) {
         m_transcript->setSearch(nullptr);
         m_transcript->setDocument(&m_pageDoc);
         m_transcript->reload();
+        // Pages are documents, not chat logs: open at the title, not pinned to
+        // the bottom (which hides the top rows of a page taller than the view).
+        m_transcript->scrollBlockIntoView(0);
         // Focus the transcript so the interactive hubs' j/k + action keys (which
         // bubble up past the read-only page view) reach the root handler.
         if (activePageKind() >= 0) {
