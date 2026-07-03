@@ -157,15 +157,18 @@ if(DAEMON_APP_WASM)
     # (.html shell, .js runtime, .wasm module, .data MEMFS preload). Installing
     # the TARGET would ship only the .js shim, so install the set as plain
     # files into one directly servable directory instead.
+    #
+    # The html shell is the branded in-repo page (wasm/daemon-app.html): dark
+    # theme-token chrome, byte progress, and a styled error panel. It shadows
+    # the default wasm_shell page Qt generates into the build dir at target
+    # finalization (which stays there, unused, alongside its qtlogo.svg -
+    # neither is installed, and the branded page references no logo).
     install(FILES
-        "$<TARGET_FILE_DIR:daemon-app>/daemon-app.html"
+        "${CMAKE_CURRENT_SOURCE_DIR}/wasm/daemon-app.html"
         "$<TARGET_FILE_DIR:daemon-app>/daemon-app.js"
         "$<TARGET_FILE_DIR:daemon-app>/daemon-app.wasm"
         "$<TARGET_FILE_DIR:daemon-app>/daemon-app.data"
         "$<TARGET_FILE_DIR:daemon-app>/qtloader.js"
-        # The loading-spinner logo the html shell references; without it every
-        # page load 404s on /qtlogo.svg and the spinner shows a broken image.
-        "$<TARGET_FILE_DIR:daemon-app>/qtlogo.svg"
         DESTINATION ${CMAKE_INSTALL_DATADIR}/daemon-app/wasm
     )
 else()
