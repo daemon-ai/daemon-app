@@ -25,6 +25,21 @@ target_include_directories(da_daemon_codec PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/codec/generated"
 )
 
+# Platform-conditional TUs: Qt-for-wasm lacks the `localserver`, `ssl`, and `process` features,
+# so the browser build swaps the Unix/TLS stream carriers and the QProcess-based launcher for
+# fail-closed stubs (the WebSocket carrier in daemon_transport.cpp is the only wasm transport).
+if(DAEMON_APP_WASM)
+    set(DA_DAEMON_PLATFORM_SOURCES
+        daemon_transport_stream_wasm.cpp
+        local_daemon_launcher_wasm.cpp
+    )
+else()
+    set(DA_DAEMON_PLATFORM_SOURCES
+        daemon_transport_stream.cpp
+        local_daemon_launcher.cpp
+    )
+endif()
+
 add_library(da_daemon_client STATIC
     daemon_transport.h
     daemon_transport.cpp
@@ -41,8 +56,10 @@ add_library(da_daemon_client STATIC
     node_api_codec/wire_l0.cpp
     node_api_codec/decode_responses.cpp
     node_api_codec/fs_fleet_channels.cpp
+    local_daemon_launcher.h
     daemon_connection_service.h
     daemon_connection_service.cpp
+    ${DA_DAEMON_PLATFORM_SOURCES}
     daemon_accounts_service.h
     daemon_accounts_service.cpp
     daemon_model_catalog.h
@@ -80,13 +97,6 @@ add_library(da_daemon_client STATIC
 )
 add_library(daemon-app::daemon_client ALIAS da_daemon_client)
 
-if(NOT DAEMON_APP_WASM)
-    target_sources(da_daemon_client PRIVATE
-        local_daemon_launcher.h
-        local_daemon_launcher.cpp
-    )
-endif()
-
 set_target_properties(da_daemon_client PROPERTIES AUTOMOC ON)
 
 target_include_directories(da_daemon_client PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
@@ -96,7 +106,6 @@ target_link_libraries(da_daemon_client
         Qt6::Core
         Qt6::Network
         Qt6::Sql
-        Qt6::WebSockets
         daemon-app::connection
         daemon-app::persistence
         daemon-app::settings_store
@@ -114,6 +123,9 @@ target_link_libraries(da_daemon_client
         daemon-app::nav
         daemon-app::firstrun
     PRIVATE
+        # The WebSocket mux carrier (daemon_transport.cpp); private because no public header
+        # exposes QtWebSockets types.
+        Qt6::WebSockets
         daemon-app::daemon_codec
         daemon-app::warnings
 )

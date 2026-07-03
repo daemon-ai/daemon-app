@@ -3,18 +3,14 @@
 
 #pragma once
 
-#include <QColor>
-#include <QList>
-#include <QObject>
-#include <QString>
-#include <QtGlobal>
-
-#ifndef Q_OS_WASM
 #include <KSyntaxHighlighting/AbstractHighlighter>
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/State>
 #include <KSyntaxHighlighting/Theme>
-#endif
+#include <QColor>
+#include <QList>
+#include <QObject>
+#include <QString>
 
 namespace editor {
 
@@ -36,12 +32,7 @@ struct FormatRun {
 // edits invalidate from the first changed line forward. Highlighting is served
 // for the requested viewport and continues past it only until the lexer state
 // stabilizes. The QML line model consumes runs(line) to colour text.
-class CodeHighlighter : public QObject
-#ifndef Q_OS_WASM
-    ,
-                        public KSyntaxHighlighting::AbstractHighlighter
-#endif
-{
+class CodeHighlighter : public QObject, public KSyntaxHighlighting::AbstractHighlighter {
     Q_OBJECT
 
 public:
@@ -64,10 +55,8 @@ signals:
     void highlightingChanged(int firstLine, int lastLine);
 
 protected:
-#ifndef Q_OS_WASM
     void applyFormat(int offset, int length, const KSyntaxHighlighting::Format& format) override;
     void applyFolding(int offset, int length, KSyntaxHighlighting::FoldingRegion region) override;
-#endif
 
 private slots:
     void onLineChanged(int line);
@@ -82,16 +71,12 @@ private:
     void highlightTo(int target);
 
     TextDocument* m_doc = nullptr;
-#ifndef Q_OS_WASM
     KSyntaxHighlighting::Theme m_theme;
-#endif
     bool m_dark = false;
 
-#ifndef Q_OS_WASM
     QList<KSyntaxHighlighting::State> m_endState; // end state per line
-#endif
-    QList<QList<FormatRun>> m_runs; // format runs per line
-    QList<bool> m_foldStart;        // a fold region begins on this line
+    QList<QList<FormatRun>> m_runs;               // format runs per line
+    QList<bool> m_foldStart;                      // a fold region begins on this line
     // Watermark, mirroring KateBuffer::m_lineHighlighted: lines [0, m_firstInvalid)
     // are highlighted-and-valid; edits drop it back to the changed line.
     int m_firstInvalid = 0;

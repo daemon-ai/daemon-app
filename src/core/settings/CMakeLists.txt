@@ -5,8 +5,17 @@ add_library(da_settings_store STATIC
     isettings_store.h
     qt_settings_store.h
     qt_settings_store.cpp
+    ws_default.h
+    ws_default.cpp
 )
 add_library(daemon-app::settings_store ALIAS da_settings_store)
+
+# Browser-only page-origin reader (window.location via emscripten::val): feeds
+# deriveWsDefault() so the picker prefills the remote-ws target on wasm. The pure
+# derivation above stays in the all-platform list so desktop unit tests cover it.
+if(DAEMON_APP_WASM)
+    target_sources(da_settings_store PRIVATE wasm_page_origin.h wasm_page_origin.cpp)
+endif()
 
 set_target_properties(da_settings_store PROPERTIES AUTOMOC ON)
 

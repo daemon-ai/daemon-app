@@ -1,0 +1,323 @@
+<!--
+SPDX-FileCopyrightText: 2026 Jarrad Hope
+SPDX-License-Identifier: MPL-2.0
+
+Branded loader shell for the daemon-app browser build, installed in place of
+the default wasm_shell.html Qt generates at target finalization (see the
+EMSCRIPTEN install(FILES) list in ../CMakeLists.txt).
+
+Contracts this page keeps:
+  * qtloader.js qtLoad(): entryFunction / containerElements / onLoaded /
+    onExit / qt.environment (reaches the C++ runtime env because the build
+    exports emscripten ENV; see QT_WASM_EXTRA_EXPORTED_METHODS) and
+    qt.module, the documented bring-your-own-module seam this page uses to
+    stream the .wasm fetch with byte progress.
+  * The #qtspinner / #qtstatus / #screen element ids and their inline
+    display toggling, which the wasm-smoke CDP harnesses key on: the loading
+    overlay (#qtspinner) hides only when the app is up, and #qtstatus text
+    matches /exit|error/i when it is not.
+
+Colors are the Dark-column tokens of src/core/theme/theme_palette.cpp so the
+page reads as app chrome instead of flashing white: background #191919,
+raised surface #202020, border #3a3a3a, text #d6d6d6, muted #868686, danger
+#f06a6a, and the dark themes' blue emphasis #5b94f5 (iconColor). The font
+stack leads with Inter, the app's bundled UI font (see loadBundledFonts in
+main.cpp), falling back to the platform sans.
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <!--Visual viewport at device size: scale 1, so CSS pixels map 1:1 onto
+        Qt device independent pixels (kept from the default Qt shell). -->
+    <meta name="viewport" content="width=device-width, height=device-height, user-scalable=0"/>
+    <title>daemon</title>
+    <!--No favicon is shipped; the data: href stops the browser's automatic
+        /favicon.ico request from 404-ing every load. -->
+    <link rel="icon" href="data:,">
+    <style>
+      :root {
+        /* Dark theme tokens (src/core/theme/theme_palette.cpp). */
+        --background: #191919;
+        --surface-raised: #202020;
+        --border: #3a3a3a;
+        --text: #d6d6d6;
+        --text-muted: #868686;
+        --danger: #f06a6a;
+        --emphasis: #5b94f5;
+      }
+      html, body {
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+        height: 100%;
+        background: var(--background);
+      }
+      #screen { width: 100%; height: 100%; }
+      #qtspinner {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background: var(--background);
+        color: var(--text);
+        font-family: Inter, InterVariable, system-ui, "Segoe UI", sans-serif;
+      }
+      .wordmark {
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        color: var(--text);
+        user-select: none;
+      }
+      .bar {
+        width: 260px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--border);
+        overflow: hidden;
+      }
+      .bar-fill {
+        display: block;
+        width: 0;
+        height: 100%;
+        border-radius: 2px;
+        background: var(--emphasis);
+        transition: width 120ms linear;
+      }
+      .bar-fill.indeterminate {
+        width: 40%;
+        animation: bar-slide 1.2s ease-in-out infinite;
+      }
+      @keyframes bar-slide {
+        0%   { transform: translateX(-100%); }
+        100% { transform: translateX(350%); }
+      }
+      #qtstatus {
+        font-size: 12px;
+        color: var(--text-muted);
+        min-height: 1em;
+      }
+      #qterror {
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+        width: min(560px, calc(100vw - 48px));
+        padding: 18px 20px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface-raised);
+        text-align: left;
+      }
+      .error-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--danger);
+      }
+      .error-detail {
+        margin: 0;
+        max-height: 40vh;
+        overflow: auto;
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--text);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .error-hint {
+        margin: 0;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      noscript { font-size: 13px; color: var(--text-muted); }
+    </style>
+  </head>
+  <body onload="init()">
+    <div id="qtspinner">
+      <div class="wordmark">daemon</div>
+      <div class="bar" id="qtbar"><span class="bar-fill" id="qtbarfill"></span></div>
+      <div id="qtstatus" role="status" aria-live="polite"></div>
+      <div id="qterror">
+        <div class="error-title" id="qterrortitle"></div>
+        <pre class="error-detail" id="qterrordetail"></pre>
+        <p class="error-hint">Reload the page to try again.</p>
+      </div>
+      <noscript>JavaScript is disabled. daemon needs JavaScript to run.</noscript>
+    </div>
+    <div id="screen"></div>
+
+    <script type="text/javascript">
+      async function init() {
+        const overlay = document.querySelector('#qtspinner');
+        const screen = document.querySelector('#screen');
+        const status = document.querySelector('#qtstatus');
+        const bar = document.querySelector('#qtbar');
+        const barFill = document.querySelector('#qtbarfill');
+        const errorCard = document.querySelector('#qterror');
+
+        const shellLog = (line) => console.info(`daemon shell: ${line}`);
+        const setStatusText = (text) => { status.textContent = text; };
+        // fraction in [0,1] drives a determinate bar; null = indeterminate.
+        const setProgress = (fraction) => {
+          if (fraction === null) {
+            barFill.classList.add('indeterminate');
+            barFill.style.width = '';
+          } else {
+            barFill.classList.remove('indeterminate');
+            barFill.style.width = `${Math.min(100, Math.round(fraction * 100))}%`;
+          }
+        };
+        // The styled failure state: swap the progress bar for the error card
+        // inside the (re-shown) overlay. statusText lands in the hidden
+        // #qtstatus so harnesses keep a machine-readable failure line.
+        const showError = (statusText, title, detail) => {
+          setStatusText(statusText);
+          status.style.display = 'none';
+          bar.style.display = 'none';
+          document.querySelector('#qterrortitle').textContent = title;
+          const detailPre = document.querySelector('#qterrordetail');
+          detailPre.textContent = detail ?? '';
+          detailPre.style.display = detail ? '' : 'none';
+          errorCard.style.display = 'flex';
+          screen.style.display = 'none';
+          overlay.style.display = 'flex';
+        };
+
+        // --- environment seam ------------------------------------------
+        // Entries reach the C++ runtime env via qtloader's qt.environment.
+        // Test harnesses inject variables by editing this object in a served
+        // copy of the page (e.g. DAEMON_APP_WAIT_READY for the readiness
+        // probe) - keep it a plain literal.
+        const environment = {};
+
+        // --- renderer probe ----------------------------------------------
+        // Qt Quick defaults to the OpenGL(WebGL) RHI backend and aborts when
+        // the browser yields no WebGL context (LibreWolf ships
+        // webgl.disabled=true). Probe first and fall back to the software
+        // scenegraph, which this build carries; GPU rendering stays the
+        // default wherever a context exists. An explicit QT_QUICK_BACKEND
+        // from the seam above wins over the probe.
+        const webglContext = (() => {
+          for (const kind of ['webgl2', 'webgl']) {
+            try {
+              if (document.createElement('canvas').getContext(kind) !== null)
+                return kind;
+            } catch (error) { /* a throwing probe means no usable context */ }
+          }
+          return null;
+        })();
+        let renderer = webglContext ?? 'software (no WebGL context)';
+        if ('QT_QUICK_BACKEND' in environment) {
+          renderer = `${environment.QT_QUICK_BACKEND} (environment override)`;
+        } else if (webglContext === null) {
+          environment.QT_QUICK_BACKEND = 'software';
+        }
+        shellLog(`renderer=${renderer}`);
+
+        // --- module fetch with byte progress -------------------------------
+        // qtloader exposes no fetch-progress hooks, but its qt.module seam
+        // accepts a Promise<WebAssembly.Module>; fetching the .wasm here
+        // makes the dominant download observable. On a Content-Encoding'd
+        // response (the precompressed .br/.gz siblings) Content-Length counts
+        // encoded bytes while the reader yields decoded ones, so the bar goes
+        // indeterminate and only the byte counter advances.
+        const formatMb = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
+        const fetchModule = async () => {
+          const response = await fetch('daemon-app.wasm');
+          if (!response.ok)
+            throw new Error(`daemon-app.wasm: HTTP ${response.status}`);
+          if (!response.body)
+            return WebAssembly.compile(await response.arrayBuffer());
+          const encoding = response.headers.get('content-encoding') ?? '';
+          const total = (encoding === '' || encoding === 'identity')
+            ? Number(response.headers.get('content-length') ?? 0) : 0;
+          const reader = response.body.getReader();
+          const chunks = [];
+          let received = 0;
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done)
+              break;
+            chunks.push(value);
+            received += value.byteLength;
+            setProgress(total > 0 ? received / total : null);
+            setStatusText(total > 0
+              ? `downloading ${formatMb(received)} / ${formatMb(total)}`
+              : `downloading ${formatMb(received)}`);
+          }
+          setProgress(null);
+          setStatusText('starting…');
+          const bytes = new Uint8Array(received);
+          let offset = 0;
+          for (const chunk of chunks) {
+            bytes.set(chunk, offset);
+            offset += chunk.byteLength;
+          }
+          return WebAssembly.compile(bytes);
+        };
+
+        // Emscripten aborts with an empty message on this non-ASSERTIONS
+        // build, but Qt logs the real reason via console.error just before
+        // (e.g. "Failed to initialize graphics backend for OpenGL."). Tee
+        // console.error into a short tail so the error panel can show it;
+        // every line still reaches the real console (the smoke harnesses
+        // grep the console, and pass-through keeps that intact).
+        const stderrTail = [];
+        const consoleError = console.error.bind(console);
+        console.error = (...args) => {
+          consoleError(...args);
+          stderrTail.push(args.map(String).join(' '));
+          if (stderrTail.length > 8)
+            stderrTail.shift();
+        };
+
+        try {
+          setProgress(null);
+          setStatusText('loading…');
+          await qtLoad({
+            // emscripten's status hook: the .data MEMFS preload reports its
+            // own download progress here while the module starts up.
+            setStatus: (text) => { if (text) setStatusText(text); },
+            qt: {
+              environment,
+              module: fetchModule(),
+              onLoaded: () => {
+                overlay.style.display = 'none';
+                screen.style.display = 'block';
+              },
+              onExit: (exitData) => {
+                if (exitData.crashed) {
+                  const reason = exitData.text || stderrTail.join('\n')
+                      || 'unknown reason';
+                  shellLog(`application crashed: ${reason}`);
+                  showError(`error: ${reason}`,
+                            'The app stopped unexpectedly.', reason);
+                } else {
+                  // Capitalized to match the boot smoke's fatal pattern, so a
+                  // premature clean exit fails the smoke instead of timing out.
+                  const code = exitData.code ?? 'unknown';
+                  shellLog(`Application exit (code ${code})`);
+                  showError(`Application exit (code ${code})`,
+                            `The app exited (code ${code}).`, exitData.text);
+                }
+              },
+              entryFunction: window.daemon_app_entry,
+              containerElements: [screen],
+            },
+          });
+        } catch (e) {
+          console.error(e);
+          console.error(e.stack);
+          showError(`error: ${e?.message ?? e}`,
+                    'The app failed to load.', e?.message ?? String(e));
+        }
+      }
+    </script>
+    <script src="daemon-app.js"></script>
+    <script type="text/javascript" src="qtloader.js"></script>
+  </body>
+</html>

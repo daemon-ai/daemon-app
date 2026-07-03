@@ -14,7 +14,9 @@ target_link_libraries(da_platform
     PRIVATE daemon-app::warnings
 )
 
-if(DAEMON_APP_MOBILE)
+# Mobile and the browser (wasm) get the no-op services; the desktop tray
+# implementation (QtWidgets) is excluded from those builds entirely.
+if(DAEMON_APP_MOBILE OR DAEMON_APP_WASM)
     target_sources(da_platform PRIVATE
         mobile/noop_platform_services.h
     )

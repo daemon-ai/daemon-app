@@ -5,31 +5,25 @@
 
 #include "engine/text_document.h"
 
-#ifndef Q_OS_WASM
 #include <KSyntaxHighlighting/FoldingRegion>
 #include <KSyntaxHighlighting/Format>
 #include <KSyntaxHighlighting/Repository>
-#endif
 
 namespace editor {
 namespace {
 
-#ifndef Q_OS_WASM
 // One shared repository for the whole app (definitions/themes are loaded from
 // the baked-in Qt resources via QRC_SYNTAX).
 KSyntaxHighlighting::Repository& sharedRepository() {
     static KSyntaxHighlighting::Repository repo;
     return repo;
 }
-#endif
 
 } // namespace
 
 CodeHighlighter::CodeHighlighter(TextDocument* doc, QObject* parent) : QObject(parent), m_doc(doc) {
-#ifndef Q_OS_WASM
     m_theme = sharedRepository().defaultTheme(KSyntaxHighlighting::Repository::LightTheme);
     setTheme(m_theme);
-#endif
     if (m_doc) {
         connect(m_doc, &TextDocument::lineChanged, this, &CodeHighlighter::onLineChanged);
         connect(m_doc, &TextDocument::linesReset, this, &CodeHighlighter::onLinesReset);
@@ -38,57 +32,35 @@ CodeHighlighter::CodeHighlighter(TextDocument* doc, QObject* parent) : QObject(p
 }
 
 QString CodeHighlighter::definitionName() const {
-#ifdef Q_OS_WASM
-    return {};
-#else
     return definition().name();
-#endif
 }
 
 void CodeHighlighter::setLanguageForFile(const QString& fileName) {
-#ifdef Q_OS_WASM
-    Q_UNUSED(fileName)
-    invalidateFrom(0);
-#else
     const auto def = sharedRepository().definitionForFileName(fileName);
     setDefinition(def.isValid() ? def
                                 : sharedRepository().definitionForName(QStringLiteral("None")));
     invalidateFrom(0);
-#endif
 }
 
 void CodeHighlighter::setLanguageName(const QString& name) {
-#ifdef Q_OS_WASM
-    Q_UNUSED(name)
-    invalidateFrom(0);
-#else
     const auto def = sharedRepository().definitionForName(name);
     if (def.isValid())
         setDefinition(def);
     invalidateFrom(0);
-#endif
 }
 
 void CodeHighlighter::setDarkTheme(bool dark) {
     if (m_dark == dark)
         return;
     m_dark = dark;
-#ifndef Q_OS_WASM
     m_theme = sharedRepository().defaultTheme(dark ? KSyntaxHighlighting::Repository::DarkTheme
                                                    : KSyntaxHighlighting::Repository::LightTheme);
     setTheme(m_theme);
-#endif
     invalidateFrom(0);
 }
 
 void CodeHighlighter::ensureCacheSize() {
     const int n = m_doc ? m_doc->lineCount() : 0;
-#ifdef Q_OS_WASM
-    if (m_runs.size() == n)
-        return;
-    m_runs.resize(n);
-    m_foldStart.resize(n);
-#else
     if (m_endState.size() == n)
         return;
     if (m_endState.size() > n) {
@@ -102,7 +74,6 @@ void CodeHighlighter::ensureCacheSize() {
             m_foldStart.push_back(false);
         }
     }
-#endif
 }
 
 void CodeHighlighter::invalidateFrom(int line) {
@@ -121,13 +92,6 @@ void CodeHighlighter::onLinesReset() {
 }
 
 void CodeHighlighter::highlightTo(int target) {
-#ifdef Q_OS_WASM
-    Q_UNUSED(target)
-    ensureCacheSize();
-    if (m_doc != nullptr) {
-        m_firstInvalid = m_doc->lineCount();
-    }
-#else
     // KateBuffer::doHighlight: highlight the contiguous gap from the watermark up
     // to `target`, carrying the previous line's lexer state forward, and advance
     // the watermark. Bounded to `target` only - never a whole-document sweep.
@@ -155,7 +119,6 @@ void CodeHighlighter::highlightTo(int target) {
     }
     m_firstInvalid = l; // watermark: lines [0, m_firstInvalid) are valid
     emit highlightingChanged(changedFirst, l - 1);
-#endif
 }
 
 void CodeHighlighter::ensureHighlighted(int lastLine) {
@@ -178,7 +141,6 @@ bool CodeHighlighter::foldingStartsAt(int line) const {
     return line >= 0 && line < m_foldStart.size() && m_foldStart[line];
 }
 
-#ifndef Q_OS_WASM
 void CodeHighlighter::applyFormat(int offset, int length,
                                   const KSyntaxHighlighting::Format& format) {
     if (length <= 0)
@@ -199,6 +161,5 @@ void CodeHighlighter::applyFolding(int offset, int length,
     if (region.type() == KSyntaxHighlighting::FoldingRegion::Begin)
         m_curFold = true;
 }
-#endif
 
 } // namespace editor

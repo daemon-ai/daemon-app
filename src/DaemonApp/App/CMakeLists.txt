@@ -95,56 +95,89 @@ target_link_libraries(daemon-app
         da_pagesplugin
         da_memory_viewsplugin
         da_statusbarplugin
+        # KSyntaxHighlighting C++ engine. Linking it here builds the framework as a
+        # dependency, records its shared lib on the executable rpath, and ensures
+        # the QML plugin (kquicksyntaxhighlightingplugin) is built alongside.
+        KF6SyntaxHighlighting
         # MicroTeX: application.cpp calls tex::LaTeX::init()/release() at startup.
         LaTeX
 )
 
-if(NOT DAEMON_APP_WASM)
-    target_link_libraries(daemon-app
-        PRIVATE
-            # KSyntaxHighlighting C++ engine. Linking it here builds the framework as a
-            # dependency, records its shared lib on the executable rpath, and ensures
-            # the QML plugin (kquicksyntaxhighlightingplugin) is built alongside.
-            KF6SyntaxHighlighting
-    )
-endif()
-
 # The runtime resource dir (fonts + XML) MicroTeX's tex::LaTeX::init() reads.
-if(NOT DAEMON_APP_WASM)
+# Desktop/mobile read it straight from the (Nix store) source tree. The browser
+# cannot read host paths, so the wasm link packs the directory into the
+# emscripten .data preload bundle and init() reads it back from the same
+# fixed MEMFS mount point.
+if(DAEMON_APP_WASM)
+    # Size flags already evaluated and NOT carried, for the record:
+    #  * --closure 1 halves the JS glue but breaks qtloader.js at boot
+    #    (TypeError on 'asyncifyEnabled': the loader pokes Module properties
+    #    that closure renames away).
+    #  * -sEVAL_CTORS=1 bails at the first environment-reading import
+    #    (environ_sizes_get) and saved <1 KB.
+    target_link_options(daemon-app
+        PRIVATE "SHELL:--preload-file ${MICROTEX_RES_DIR}@/microtex-res"
+    )
+    target_compile_definitions(daemon-app
+        PRIVATE MICROTEX_RES_DIR="/microtex-res"
+    )
+else()
     target_compile_definitions(daemon-app
         PRIVATE MICROTEX_RES_DIR="${MICROTEX_RES_DIR}"
     )
 endif()
 
+# qtloader's `qt.environment` copies entries into emscripten's ENV at preRun, but only when
+# the ENV runtime object is exported from the module (qtloader throws otherwise, naming this
+# exact property). Export it so DAEMON_APP_* env-gated behavior (service-mode override, the
+# headless probes like DAEMON_APP_WAIT_READY) is reachable in the browser. Qt folds the value
+# into the emscripten EXPORTED_RUNTIME_METHODS link option; the installed artifact set is
+# unchanged, so the install(FILES ...) block below needs no adjustment.
+if(DAEMON_APP_WASM)
+    set_target_properties(daemon-app PROPERTIES QT_WASM_EXTRA_EXPORTED_METHODS "ENV")
+endif()
+
 # Build dependency on the KSyntaxHighlighting QML plugin so its module is emitted
 # under QT_QML_OUTPUT_DIRECTORY before we run; main.cpp adds that dir to the
 # engine import path via DAEMON_APP_BUILD_QML_DIR.
-if(NOT DAEMON_APP_WASM)
-    add_dependencies(daemon-app kquicksyntaxhighlightingplugin)
-    target_compile_definitions(daemon-app
-        PRIVATE DAEMON_APP_BUILD_QML_DIR="${CMAKE_BINARY_DIR}/qml"
-    )
-endif()
+add_dependencies(daemon-app kquicksyntaxhighlightingplugin)
+target_compile_definitions(daemon-app
+    PRIVATE DAEMON_APP_BUILD_QML_DIR="${CMAKE_BINARY_DIR}/qml"
+)
 
-# On desktop the QApplication base lives in QtWidgets (for the tray).
-if(NOT DAEMON_APP_MOBILE)
+# On desktop the QApplication base lives in QtWidgets (for the tray). Mobile
+# and the browser build run QGuiApplication (see main.cpp) and never link it.
+if(NOT DAEMON_APP_MOBILE AND NOT DAEMON_APP_WASM)
     target_link_libraries(daemon-app PRIVATE Qt6::Widgets)
 endif()
 
-# Install the single self-contained binary. wrapQtAppsHook (flake) wraps it with
-# an isolated Qt environment, so it runs independently of the host's Qt.
 include(GNUInstallDirs)
-install(TARGETS daemon-app
-    BUNDLE DESTINATION .
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
 if(DAEMON_APP_WASM)
+    # The browser deliverable is the emscripten artifact set qtloader.js boots
+    # (.html shell, .js runtime, .wasm module, .data MEMFS preload). Installing
+    # the TARGET would ship only the .js shim, so install the set as plain
+    # files into one directly servable directory instead.
+    #
+    # The html shell is the branded in-repo page (wasm/daemon-app.html): dark
+    # theme-token chrome, byte progress, a WebGL probe that falls back to the
+    # software scenegraph, and a styled error panel. It shadows the default
+    # wasm_shell page Qt generates into the build dir at target finalization
+    # (which stays there, unused, alongside its qtlogo.svg - neither is
+    # installed, and the branded page references no logo).
     install(FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/wasm/daemon-app.html"
+        "$<TARGET_FILE_DIR:daemon-app>/daemon-app.js"
         "$<TARGET_FILE_DIR:daemon-app>/daemon-app.wasm"
-        "$<TARGET_FILE_DIR:daemon-app>/daemon-app.html"
         "$<TARGET_FILE_DIR:daemon-app>/daemon-app.data"
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
-        OPTIONAL
+        "$<TARGET_FILE_DIR:daemon-app>/qtloader.js"
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/daemon-app/wasm
+    )
+else()
+    # Install the single self-contained binary. wrapQtAppsHook (flake) wraps it
+    # with an isolated Qt environment, so it runs independently of the host's Qt.
+    install(TARGETS daemon-app
+        BUNDLE DESTINATION .
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 endif()

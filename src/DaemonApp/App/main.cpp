@@ -6,6 +6,7 @@
 #include "i18n/localization.h"
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS) || defined(Q_OS_WASM)
+// No QtWidgets on mobile or in the browser: pure Qt Quick on QGuiApplication.
 #include <QGuiApplication>
 using AppBase = QGuiApplication;
 #else
@@ -419,13 +420,21 @@ int main(int argc, char* argv[]) {
     const QByteArray waitReadyMs = qgetenv("DAEMON_APP_WAIT_READY");
     if (!waitReadyMs.isEmpty()) {
         const int timeoutMs = waitReadyMs.toInt() > 0 ? waitReadyMs.toInt() : 5000;
-        // On first run nothing auto-connects; drive the onboarding "Local" connect (which, with
-        // managed local daemon on, spawns the daemon if needed) so the harness can assert it.
+        // On first run nothing auto-connects; drive the onboarding connect (Local on desktop -
+        // which, with managed local daemon on, spawns the daemon if needed - WebSocket on wasm)
+        // so the harness can assert it.
         application.driveFirstRunConnect();
+#ifdef Q_OS_WASM
+        // No nested QEventLoop on wasm (needs asyncify): watch the state machine from the main
+        // loop, print the sentinel to the browser console, and keep the app running - the CDP
+        // harness reads the console, not an exit code.
+        application.announceConnectionReady(timeoutMs);
+#else
         const bool ready = application.awaitConnectionReady(timeoutMs);
         std::fprintf(stdout, "DAEMON_APP_READY %s\n", ready ? "ok" : "timeout");
         std::fflush(stdout);
         return ready ? 0 : 2;
+#endif
     }
 
     if (maybeRunOffscreenRenderHarness(engine)) {

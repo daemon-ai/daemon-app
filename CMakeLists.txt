@@ -25,13 +25,18 @@ set(QT_QML_GENERATE_QMLLS_INI ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-# Platform flags used to gate native-only code/deps further down the tree.
-if(EMSCRIPTEN OR CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-    set(DAEMON_APP_WASM ON CACHE BOOL "Build daemon-app for Qt WebAssembly" FORCE)
+# Qt for WebAssembly (browser) build. EMSCRIPTEN is set by emscripten's own
+# toolchain file, which Qt's wasm qt.toolchain.cmake chain-loads (see the
+# wasm-release preset). Like DAEMON_APP_MOBILE this is derived, not an option:
+# a desktop configure must never flip it. Source-level gating uses Q_OS_WASM;
+# DAEMON_APP_WASM is the CMake-side mirror for excluding whole files/deps.
+if(EMSCRIPTEN)
+    set(DAEMON_APP_WASM ON)
 else()
-    option(DAEMON_APP_WASM "Build daemon-app for Qt WebAssembly" OFF)
+    set(DAEMON_APP_WASM OFF)
 endif()
 
+# Platform flags used to gate native-only code/deps further down the tree.
 if(ANDROID OR IOS OR DAEMON_APP_WASM)
     set(DAEMON_APP_MOBILE ON)
 else()
@@ -41,6 +46,8 @@ endif()
 # Qt Quick + Controls for the UI; QtWidgets on desktop for the tray.
 # QuickControls2 is needed for QQuickStyle (pinning the app style in main).
 # LinguistTools provides qt_add_translations (lupdate/lrelease + .qm embedding).
+# WebSockets carries the daemon wire mux to browser (wasm) clients and is the
+# natively-testable third transport backend on desktop.
 find_package(Qt6 6.11 REQUIRED COMPONENTS
     Core
     Gui
@@ -56,7 +63,9 @@ find_package(Qt6 6.11 REQUIRED COMPONENTS
     WebSockets
     LinguistTools
 )
-if(NOT DAEMON_APP_MOBILE)
+# QtWidgets exists only for the desktop tray (QSystemTrayIcon): mobile and the
+# browser build run pure Qt Quick on QGuiApplication.
+if(NOT DAEMON_APP_MOBILE AND NOT DAEMON_APP_WASM)
     find_package(Qt6 6.11 REQUIRED COMPONENTS Widgets)
 endif()
 
@@ -67,8 +76,12 @@ qt_standard_project_setup(REQUIRES 6.11)
 # provides the Meson-built Tui Widgets stack via pkg-config. Core5Compat is a
 # transitive requirement of the Qt6 build of Tui Widgets.
 option(DAEMON_APP_TUI "Build the experimental Tui Widgets TUI frontend (daemon-tui)" OFF)
+# Hard-off in the browser: the TUI drives a real terminal (PTY/termios), which
+# cannot exist in the wasm sandbox. The normal variable shadows any cache value
+# for the rest of the configure.
 if(DAEMON_APP_WASM AND DAEMON_APP_TUI)
-    message(FATAL_ERROR "DAEMON_APP_TUI is not supported for WebAssembly builds")
+    message(STATUS "daemon-app: DAEMON_APP_TUI forced OFF for the wasm build")
+    set(DAEMON_APP_TUI OFF)
 endif()
 if(DAEMON_APP_TUI)
     find_package(Qt6 6.11 REQUIRED COMPONENTS Core5Compat)
@@ -97,8 +110,11 @@ add_subdirectory(src)
 include(Translations)
 
 # Tests. Building/running them is opt-in (BUILD_TESTING, default ON) so it can
-# be turned off for lean release builds.
+# be turned off for lean release builds. Never built for the browser: the QTest
+# binaries exercise desktop-only seams (QProcess launchers, local sockets) and
+# there is no ctest runtime in the wasm sandbox (the wasm-release preset also
+# sets BUILD_TESTING=OFF; this guard keeps a preset-less configure consistent).
 include(CTest)
-if(BUILD_TESTING)
+if(BUILD_TESTING AND NOT DAEMON_APP_WASM)
     add_subdirectory(tests)
 endif()

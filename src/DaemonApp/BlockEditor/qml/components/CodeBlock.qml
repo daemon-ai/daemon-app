@@ -3,12 +3,16 @@
 
 import QtQuick
 
+import org.kde.syntaxhighlighting
+
 import DaemonApp.Theme
 
 // Passive render for a (non-mermaid) code fence: a rounded code card whose body
-// uses the app monospace face. Clicking the card opens the block for
-// raw-markdown editing (same as the other structured blocks). Mermaid fences
-// never reach here - they route to MermaidBlock.
+// is syntax-highlighted by the KDE KSyntaxHighlighting QML module. The fence
+// language drives the definition lookup; the app theme selects a light/dark
+// highlighting theme so a theme switch recolors the tokens live. Clicking the
+// card opens the block for raw-markdown editing (same as the other structured
+// blocks). Mermaid fences never reach here - they route to MermaidBlock.
 Item {
     id: root
 
@@ -62,6 +66,18 @@ Item {
                 color: Theme.text
                 font.family: FontIcons.mono
                 font.pixelSize: Theme.bodyFontSize - 1
+
+                SyntaxHighlighter {
+                    id: highlighter
+                    textEdit: codeText
+                    repository: Repository
+                    // definitionForName("") yields the null definition (no
+                    // highlighting), which is the right fallback for a bare fence.
+                    definition: Repository.definitionForName(root.language)
+                    theme: Theme.isDarkMode
+                        ? Repository.defaultTheme(Repository.DarkTheme)
+                        : Repository.defaultTheme(Repository.LightTheme)
+                }
             }
         }
 

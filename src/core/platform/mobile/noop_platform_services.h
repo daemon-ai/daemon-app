@@ -7,7 +7,8 @@
 
 namespace platform {
 
-// Mobile / headless implementation: no tray, no desktop integrations.
+// Mobile / browser (wasm) / headless implementation: no tray, no desktop
+// integrations.
 class NoopPlatformServices : public IPlatformServices {
     Q_OBJECT
 

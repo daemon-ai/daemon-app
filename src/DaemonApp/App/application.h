@@ -107,11 +107,20 @@ public:
     // system-tests harness hard-assert the GUI -> daemon connectivity instead of racing it.
     [[nodiscard]] bool awaitConnectionReady(int timeoutMs) const;
 
-    // Headless E2E hook: drive a first-run "Local" connect programmatically (the equivalent of the
-    // user picking Local + Connect), using the resolved target (honors DAEMON_APP_SOCKET). No-op
-    // once setup is complete, so it is safe to call unconditionally before awaitConnectionReady.
-    // Lets the system-tests harness exercise the onboarding connect path without QML click sim.
+    // Headless E2E hook: drive a first-run connect programmatically (the equivalent of the user
+    // picking Local + Connect; on wasm, WebSocket + Connect), using the resolved target (honors
+    // DAEMON_APP_SOCKET / the `?ws=` page override). No-op once setup is complete, so it is safe
+    // to call unconditionally before awaitConnectionReady. Lets the system-tests harness exercise
+    // the onboarding connect path without QML click sim.
     void driveFirstRunConnect() const;
+
+#ifdef Q_OS_WASM
+    // Browser variant of the DAEMON_APP_WAIT_READY probe: awaitConnectionReady's nested
+    // QEventLoop would abort on wasm (no asyncify), so observe the connection state machine
+    // asynchronously from the running main loop instead and print the same
+    // "DAEMON_APP_READY ok|timeout" sentinel (stdout reaches the browser console) exactly once.
+    void announceConnectionReady(int timeoutMs) const;
+#endif
 
     // Headless E2E hook (CON-4/6/7): drive the full first-run provider+model step without QML
     // clicks - connect, wait until ready, add the API key (CredentialSet on the active profile),
