@@ -84,6 +84,8 @@ let
   # `configure -platform wasm-emscripten -static -release -qt-host-path ...`).
   # Qt's wasm auto-detect forces the static config; thread stays at Qt's wasm
   # default (OFF). Feature trims are conservative:
+  #  * optimize-size ON: Qt's supported size-optimized build (-Os on every
+  #    module; the feature is global, so qtdeclarative/qtsvg/... inherit it).
   #  * dbus OFF: no session bus in a browser, saves a large module.
   #  * sql-sqlite ON + system-sqlite OFF (explicit): the app uses
   #    QSqlDatabase/QSQLITE, so pin the bundled-sqlite driver rather than rely
@@ -119,6 +121,7 @@ let
         -DQT_BUILD_EXAMPLES=OFF \
         -DQT_BUILD_TESTS=OFF \
         -DQT_GENERATE_SBOM=OFF \
+        -DFEATURE_optimize_size=ON \
         -DFEATURE_dbus=OFF \
         -DFEATURE_sql_sqlite=ON \
         -DFEATURE_system_sqlite=OFF
