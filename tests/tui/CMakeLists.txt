@@ -257,6 +257,35 @@ target_link_libraries(tui_tab_title_refresh_tests
 add_test(NAME tui_tab_title_refresh_tests COMMAND tui_tab_title_refresh_tests)
 set_tests_properties(tui_tab_title_refresh_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_profile_editor: the W5 TUI profile editor - drives ProfileEditorDialog
+# (and its text-prompt / multi-line / checklist sub-flows, with real key
+# events) against the mock profile store + mock provider catalog in an
+# off-screen Tui terminal, asserting the store receives EXACTLY the field map
+# the GUI editor's save() writes. tui_dialogs.cpp (TextPromptDialog) drags the
+# AcpRepository declaration, hence daemon_client.
+qt_add_executable(tui_profile_editor_tests
+    tst_profile_editor.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/dialogs/profile_editor_dialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
+)
+set_target_properties(tui_profile_editor_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_profile_editor_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/tui
+    ${CMAKE_SOURCE_DIR}/tests/unit
+)
+target_link_libraries(tui_profile_editor_tests
+    PRIVATE
+        Qt6::Test
+        PkgConfig::TUIWIDGETS
+        daemon-app::profiles
+        daemon-app::models
+        daemon-app::uimodels
+        daemon-app::daemon_client
+)
+add_test(NAME tui_profile_editor_tests COMMAND tui_profile_editor_tests)
+set_tests_properties(tui_profile_editor_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 add_test(NAME daemon_tui_offscreen_startup
     COMMAND ${CMAKE_COMMAND} -E env
         DAEMON_TUI_OFFSCREEN=100x30
@@ -274,6 +303,19 @@ add_test(NAME daemon_tui_offscreen_explorer_theme
     COMMAND ${CMAKE_COMMAND} -E env
         DAEMON_TUI_OFFSCREEN=120x36
         DAEMON_TUI_KEYS=ctrl-e,cycle-theme
+        $<TARGET_FILE:daemon-tui>
+)
+
+# Profiles editor round-trip: open the Profiles hub (/profiles), press 'e' to
+# open the profile editor on the selected row, Esc back out - smoke-proves the
+# real RootWidget wiring (page action key -> editor dialog -> focus restore),
+# on top of the unit-level tui_profile_editor_tests. Mock service mode: the
+# editor only opens on a non-empty profile list (daemon mode offline is empty).
+add_test(NAME daemon_tui_offscreen_profile_editor
+    COMMAND ${CMAKE_COMMAND} -E env
+        DAEMON_APP_SERVICE_MODE=mock
+        DAEMON_TUI_OFFSCREEN=120x36
+        DAEMON_TUI_KEYS=focus-composer,t:/profiles,enter,focus-transcript,t:e,esc
         $<TARGET_FILE:daemon-tui>
 )
 

@@ -211,6 +211,10 @@ private:
     // Accounts page: open the add-account wizard ('a'), the TUI analog of the
     // GUI AddAccountWizard (provider pick -> credentials over the shared seam).
     void openAddAccount();
+    // Open the interactive profile editor ('e' on the Profiles page's selected
+    // row / on a per-agent Profile tab): the GUI ProfileEditor's field set over
+    // the same IProfileStore save path.
+    void openProfileEditor(const QString& profileId);
     // Open the command palette (Ctrl+P): a filterable list of nav / theme / mode /
     // slash actions, backed by the shared CommandRegistry, routed to existing
     // handlers on activation.

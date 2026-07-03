@@ -98,14 +98,16 @@ public:
     [[nodiscard]] bool openManagerPage(const QString& id) const;
     [[nodiscard]] int activePageKind(bool transcriptActive) const;
     [[nodiscard]] QList<QVariantMap> pageActionRows(int kind) const;
+    // The highlighted row index for a hub kind (what the ▸ marker renders;
+    // unclamped - callers bound it against their rows). Used by TuiSettingsEditor
+    // to resolve the row a dialog edit targets and by root-level overlay hooks
+    // like the profile editor ('e').
+    [[nodiscard]] int pageSelection(int kind) const { return m_pageSel.value(kind, 0); }
 
     void clampSelection(int kind);
     void moveSelection(int kind, int delta);
     bool handlePageActionKey(int kind, Tui::ZKeyEvent* event);
 
-    // The highlighted row index for a hub kind (what the ▸ marker renders).
-    // Used by TuiSettingsEditor to resolve the row a dialog edit targets.
-    [[nodiscard]] int pageSelection(int kind) const { return m_pageSel.value(kind, 0); }
     // Persist an edited Settings-row value through the row's seam - the same
     // ISettingsStore / IDaemonConfig call the GUI section makes. Rows whose
     // apply is a RootWidget live path (theme / zen) return false untouched.

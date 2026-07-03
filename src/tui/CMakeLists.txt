@@ -140,6 +140,11 @@ qt_add_executable(daemon-tui
     # workstream's own TU).
     dialogs/add_account_flow.h
     dialogs/add_account_flow.cpp
+    # Interactive profile editor ('e' on the Profiles page / Profile tab), the
+    # profiles workstream's TU: the GUI ProfileEditor field set over the same
+    # IProfileStore save path.
+    dialogs/profile_editor_dialog.h
+    dialogs/profile_editor_dialog.cpp
     tui_page_hub.h
     tui_page_hub.cpp
     # Hand-maintained parity coverage declaration (enforced by

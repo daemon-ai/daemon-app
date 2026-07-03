@@ -130,6 +130,9 @@ void RootWidget::wirePageLiveRefresh() {
     liveRefresh(m_services.modelCatalog->installed(), TabModel::Models);
     liveRefresh(m_services.accounts->accounts(), TabModel::Accounts);
     liveRefresh(m_services.profiles->profiles(), TabModel::Profiles);
+    // The per-agent Profile tab renders the same rows; keep it live too (a
+    // profile edit from either frontend repaints an open agent tab).
+    liveRefresh(m_services.profiles->profiles(), TabModel::Profile);
     liveRefresh(m_services.roster->sessions(), TabModel::Sessions);
     liveRefresh(m_services.fleetTree->nodes(), TabModel::Fleet);
     liveRefresh(m_services.approvals->pending(), TabModel::Approvals);
