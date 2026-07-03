@@ -115,6 +115,37 @@ target_link_libraries(tui_parity_tests
 add_test(NAME tui_parity_tests COMMAND tui_parity_tests)
 set_tests_properties(tui_parity_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_file_finder_dialog: the Ctrl+G fuzzy file-finder overlay (and the Ctrl+O
+# attach picker's kind heuristic). Drives a real FileFinderDialog bound to the
+# shared FileFinderModel, indexing a temp workspace through LocalDiskFsService
+# in an off-screen Tui terminal: type -> fuzzy results -> Enter previews /
+# Shift+Enter pins / Esc dismisses.
+qt_add_executable(tui_file_finder_tests
+    tst_file_finder_dialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/file_finder_dialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/root_widget_detail.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Files/file_finder_model.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs/tab_model.cpp
+)
+set_target_properties(tui_file_finder_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_file_finder_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/tui
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Files
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Tabs
+)
+target_link_libraries(tui_file_finder_tests
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        PkgConfig::TUIWIDGETS
+        daemon-app::fs
+        daemon-app::domain
+        daemon-app::persistence
+)
+add_test(NAME tui_file_finder_tests COMMAND tui_file_finder_tests)
+set_tests_properties(tui_file_finder_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_tab_title_refresh: the stale-tab-title fix - a session-store changed()
 # (e.g. the node's auto-title landing via the roster refetch, with no content
 # change) re-resolves every open transcript tab's title through
@@ -166,5 +197,15 @@ add_test(NAME daemon_tui_offscreen_distraction
     COMMAND ${CMAKE_COMMAND} -E env
         DAEMON_TUI_OFFSCREEN=120x36
         DAEMON_TUI_KEYS=focus-composer,t:/distraction,enter,t:/distraction,enter
+        $<TARGET_FILE:daemon-tui>
+)
+
+# File-finder + attach-picker overlays through the real shell wiring: Ctrl+G
+# opens the "go to file" finder (bubble path), Esc dismisses it; Ctrl+O from
+# the focused composer opens the attach picker, Esc hands focus back.
+add_test(NAME daemon_tui_offscreen_finder_attach
+    COMMAND ${CMAKE_COMMAND} -E env
+        DAEMON_TUI_OFFSCREEN=120x36
+        DAEMON_TUI_KEYS=ctrl-g,esc,focus-composer,ctrl-o,esc
         $<TARGET_FILE:daemon-tui>
 )
