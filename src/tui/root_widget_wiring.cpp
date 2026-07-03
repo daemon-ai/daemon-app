@@ -182,6 +182,13 @@ void RootWidget::wirePageLiveRefresh() {
         connect(m_services.presence, &transports::IPresenceService::presenceChanged, this,
                 [this](const QString&) { refreshPageIfActive(TabModel::Channels); });
     }
+    // The Settings page projects the daemon config + the app-pref store; re-render
+    // it whenever either seam reports a write (an edit made on the page itself, or
+    // any other surface touching the same keys).
+    connect(m_services.daemonConfig, &config::IDaemonConfig::changed, this,
+            [this] { refreshPageIfActive(TabModel::Settings); });
+    connect(m_services.settings, &settings::ISettingsStore::changed, this,
+            [this] { refreshPageIfActive(TabModel::Settings); });
 }
 
 void RootWidget::wireSearchBox() {

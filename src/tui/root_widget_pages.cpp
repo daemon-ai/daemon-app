@@ -126,6 +126,10 @@ void RootWidget::refreshPageIfActive(int kind) {
     m_pageDoc.loadMarkdown(pageMarkdownForKind(kind));
     if (m_transcript != nullptr) {
         m_transcript->reload();
+        // Keep the ▸ selection marker on screen: hub pages taller than the
+        // viewport would otherwise re-render pinned to the bottom while j/k
+        // walk rows scrolled out of view. No-op for marker-less pages.
+        m_transcript->scrollLineWithTextIntoView(QStringLiteral("▸"));
     }
 }
 
@@ -400,13 +404,16 @@ void RootWidget::repaintForTheme() {
 }
 
 void RootWidget::cycleTheme() {
-    using theme::ThemeName;
     // Advance through the four themes in a fixed order.
-    const ThemeName next = nextTheme(tpal::activeTheme());
+    applyTheme(nextTheme(tpal::activeTheme()));
+}
 
-    tpal::setActiveTheme(next);
+void RootWidget::applyTheme(theme::ThemeName name) {
+    using theme::ThemeName;
+
+    tpal::setActiveTheme(name);
     // Recolor stock widgets (window/dialog/lists/inputs) via the palette...
-    setPalette(daemonPalette(next));
+    setPalette(daemonPalette(name));
     // Keep the accent-tinted text caret in sync with the new theme.
     if (terminal() != nullptr) {
         const Tui::ZColor accent = tpal::accent();
@@ -415,11 +422,11 @@ void RootWidget::cycleTheme() {
     repaintForTheme();
     // The editor's syntax colors are baked by KSyntaxHighlighting per the theme;
     // re-pick the light/dark definition theme for every open file controller.
-    const bool dark = next != ThemeName::Light && next != ThemeName::Sepia;
+    const bool dark = name != ThemeName::Light && name != ThemeName::Sepia;
     if (m_fileTabs != nullptr)
         m_fileTabs->setDarkTheme(dark);
 
     // Persist to the GUI-shared key so both front ends honor the same choice.
     QSettings settings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"));
-    settings.setValue(QStringLiteral("ui/theme"), theme::ThemePalette::toString(next));
+    settings.setValue(QStringLiteral("ui/theme"), theme::ThemePalette::toString(name));
 }

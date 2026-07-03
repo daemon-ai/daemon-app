@@ -25,6 +25,7 @@
 #include "session_controller.h"
 #include "session_orchestrator.h"
 #include "sessions_list_model.h"
+#include "settings_editor.h"
 #include "sidebar_model.h"
 #include "status_bar_model.h"
 #include "tab_model.h"
@@ -230,6 +231,22 @@ RootWidget::RootWidget()
         .transportRegistry = m_services.transportRegistry,
         .presence = m_services.presence,
     });
+
+    // Settings-page dialog edits (theme/language pickers, text prompts, zen):
+    // the hub flips plain toggles itself; rows needing a dialog parent or a live
+    // re-apply route here with the RootWidget hooks.
+    m_settingsEditor =
+        std::make_unique<TuiSettingsEditor>(m_pageHub.get(), this,
+                                            TuiSettingsEditor::Hooks{
+                                                [this](theme::ThemeName name) { applyTheme(name); },
+                                                [this] { toggleDistractionFree(); },
+                                                [this] { refreshActivePage(); },
+                                                [this] {
+                                                    if (m_transcript != nullptr) {
+                                                        m_transcript->setFocus();
+                                                    }
+                                                },
+                                            });
 
     // Wire the app-level navigation seam (constructed-but-unused until now): an
     // open() from anywhere (slash, palette, a future cog menu) raises the matching

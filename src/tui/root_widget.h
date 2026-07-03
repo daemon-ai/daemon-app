@@ -40,6 +40,7 @@
 #include "status_bar_view.h"
 #include "submit_input_box.h"
 #include "tab_strip_view.h"
+#include "theme/theme_palette.h"
 #include "transcript_view.h"
 #include "tree_list_view.h"
 #include "tui_dialogs.h"
@@ -102,6 +103,7 @@ class TabModel;
 class TuiFileTabController;
 class TuiOverlayHost;
 class TuiPageHub;
+class TuiSettingsEditor;
 class TabSessionManager;
 
 // Per-transcript-tab backend state. Each transcript tab owns an independent
@@ -172,9 +174,9 @@ private:
     [[nodiscard]] QString pageMarkdownForKind(int kind) const;
 
     // --- Interactive manager-hub pages ---------------------------------------
-    // The kind of the active page tab if it is an interactive manager hub (Models /
-    // Accounts / ... ), or -1 (a transcript tab, the Settings/Dashboard read-only
-    // pages, or no tab). Drives whether page-action keys are live.
+    // The kind of the active page tab if it is an interactive manager hub
+    // (Settings / Models / Accounts / ...), or -1 (a transcript tab, the
+    // read-only Dashboard, or no tab). Drives whether page-action keys are live.
     [[nodiscard]] int activePageKind() const;
     // The actionable rows for an interactive hub kind (the primary list the keys
     // operate on: installed models, accounts, sessions, ...). Empty for read-only.
@@ -217,6 +219,9 @@ private:
     // (stock palette + every custom-painted view), and persist the choice so the
     // GUI and TUI stay in sync.
     void cycleTheme();
+    // Switch to a specific theme (the Settings-page picker path): recolor live
+    // exactly like cycleTheme and persist to the shared ui/theme key.
+    void applyTheme(theme::ThemeName name);
 
     // Live assistant-turn streaming for a given session: route its TurnController's
     // daemon-shaped events through that session's ingest so its document grows real
@@ -427,6 +432,9 @@ private:
 
     // Manager-page projection + keyboard actions for seam-backed hub tabs.
     std::unique_ptr<TuiPageHub> m_pageHub;
+    // Settings-page dialog edits (list picks / text prompts / live re-apply);
+    // in-place toggles stay inside the hub.
+    std::unique_ptr<TuiSettingsEditor> m_settingsEditor;
 
     // Static document backing non-transcript page tabs (e.g. Settings): the
     // transcript view points here while a page tab is active.

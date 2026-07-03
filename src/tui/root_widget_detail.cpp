@@ -68,6 +68,10 @@ void refreshTranscriptTabTitles(TabModel* tabs, const persistence::ISessionStore
 }
 
 QString pageMarkdown(int kind) {
+    // Safety-net fallback only: the composed shell always routes Settings through
+    // TuiPageHub::buildSettingsMarkdown (the interactive, seam-backed page), so
+    // this static help text is reached only when the hub is absent - where the
+    // page really is read-only and the key list below is all there is.
     if (kind == TabModel::Settings) {
         return QObject::tr(
             "# Settings\n\n"
