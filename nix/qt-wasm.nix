@@ -86,14 +86,23 @@ let
   # default (OFF). Feature trims are conservative:
   #  * optimize-size ON: Qt's supported size-optimized build (-Os on every
   #    module; the feature is global, so qtdeclarative/qtsvg/... inherit it).
+  #  * ltcg (LTO) evaluated and dropped: FEATURE_ltcg=ON aborts (Qt's
+  #    __qt_ltcg_detected probe fails under this emscripten), and forcing
+  #    thin-LTO via -flto=thin on Qt + app compile flags built and booted but
+  #    measured -74 KB raw / +27 KB brotli on daemon-app.wasm - noise-level
+  #    raw, strictly worse compressed, so not carried.
   #  * dbus OFF: no session bus in a browser, saves a large module.
   #  * sql-sqlite ON + system-sqlite OFF (explicit): the app uses
   #    QSqlDatabase/QSQLITE, so pin the bundled-sqlite driver rather than rely
   #    on autodetection.
-  # Widgets stays ON: the app's CMake requires Qt6Widgets on non-mobile
-  # platforms (wasm included until the platform-gating branch lands) and the
-  # vendored MicroTeX links Widgets+PrintSupport; trimming it would break
-  # `find_package` during bring-up for little gain.
+  # Widgets stays ON, measured verdict: the shipped binary already contains
+  # ZERO Widgets/PrintSupport code - the app never links Qt6::Widgets on wasm
+  # and vendored MicroTeX's LaTeX library links Qt6::Gui only (its
+  # find_package asks for Widgets+PrintSupport, but solely for the
+  # LaTeXQtSample demo, which is EXCLUDE_FROM_ALL and never built; verified:
+  # no libQt6Widgets.a/libQt6PrintSupport.a on the final link line). Turning
+  # the feature OFF would save 0 shipped bytes and would require shimming the
+  # vendored find_package call just to configure - not worth it.
   qtbaseWasm = pkgs.stdenv.mkDerivation {
     pname = "qtbase-wasm";
     version = qtVersion;
@@ -142,6 +151,7 @@ let
       pname,
       src,
       wasmDeps ? [ ],
+      extraFlags ? [ ],
     }:
     pkgs.stdenv.mkDerivation {
       inherit pname src;
@@ -164,7 +174,8 @@ let
           -DCMAKE_BUILD_TYPE=Release \
           -DQT_BUILD_EXAMPLES=OFF \
           -DQT_BUILD_TESTS=OFF \
-          -DQT_GENERATE_SBOM=OFF
+          -DQT_GENERATE_SBOM=OFF \
+          ${lib.concatStringsSep " " extraFlags}
         cd build
         runHook postConfigure
       '';
@@ -179,6 +190,19 @@ let
     pname = "qtdeclarative-wasm";
     src = pkgs.qt6.qtdeclarative.src;
     wasmDeps = [ qtshadertoolsWasm ];
+    # The app pins QQuickStyle::setStyle("Basic") in main() and imports no
+    # other style, but a static Quick Controls build links EVERY built style
+    # plugin (+ its compiled QML and shader resources) into the executable
+    # because style selection is a runtime decision. Build only Basic: the
+    # other styles were 3.2 MB raw / 1.2 MB brotli of the shipped binary.
+    # (fluentwinui3 follows fusion's condition, so it needs no explicit flag;
+    # macos/windows/ios never build on wasm.)
+    extraFlags = [
+      "-DFEATURE_quickcontrols2_fusion=OFF"
+      "-DFEATURE_quickcontrols2_imagine=OFF"
+      "-DFEATURE_quickcontrols2_material=OFF"
+      "-DFEATURE_quickcontrols2_universal=OFF"
+    ];
   };
 
   qtsvgWasm = mkQtWasmModule {
