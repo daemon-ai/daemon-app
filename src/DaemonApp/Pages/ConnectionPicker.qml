@@ -7,10 +7,10 @@ import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
 // The shared connection chooser, reused by the first-run gate and by
-// Settings -> Connection. Mode cards (embedded[disabled] / local / remote), a
-// target field (socket path or URL), an optional auth token, a Test-connection
-// probe, and Connect. Writes through the Connection seam (mock now) and persists
-// the choice via AppSettings so the next boot reuses it.
+// Settings -> Connection. Mode cards (embedded[disabled] / local / remote /
+// remote-ws), a target field (socket path or URL), an optional auth token, a
+// Test-connection probe, and Connect. Writes through the Connection seam (mock
+// now) and persists the choice via AppSettings so the next boot reuses it.
 ColumnLayout {
     id: root
     spacing: 16
@@ -29,6 +29,8 @@ ColumnLayout {
     function _placeholder() {
         if (root.mode === "remote")
             return qsTr("https://node.example:8080");
+        if (root.mode === "remote-ws")
+            return qsTr("wss://node.example:9443");
         return (typeof AppSettings !== "undefined") ? AppSettings.defaultManagedSocketPath()
                                                      : qsTr("/path/to/daemon.sock");
     }
@@ -53,9 +55,10 @@ ColumnLayout {
 
         Repeater {
             model: [
-                { id: "embedded", title: qsTr("Embedded"), desc: qsTr("In-process node (coming soon)"), enabled: false },
-                { id: "local",    title: qsTr("Local"),    desc: qsTr("Unix socket on this machine"), enabled: true },
-                { id: "remote",   title: qsTr("Remote"),   desc: qsTr("Connect to a node over the network"), enabled: true },
+                { id: "embedded",  title: qsTr("Embedded"),  desc: qsTr("In-process node (coming soon)"), enabled: false },
+                { id: "local",     title: qsTr("Local"),     desc: qsTr("Unix socket on this machine"), enabled: true },
+                { id: "remote",    title: qsTr("Remote"),    desc: qsTr("Connect to a node over the network"), enabled: true },
+                { id: "remote-ws", title: qsTr("WebSocket"), desc: qsTr("Connect to a node over ws:// or wss://"), enabled: true },
             ]
             delegate: Rectangle {
                 id: cardRoot
@@ -133,17 +136,20 @@ ColumnLayout {
         }
     }
 
-    // Target: a remote URL, or (attach-only) the socket path of a daemon you run yourself. Hidden
-    // for an app-managed local connection - the app picks a user-writable socket automatically.
+    // Target: a remote host:port, a WebSocket URL, or (attach-only) the socket path of a daemon
+    // you run yourself. Hidden for an app-managed local connection - the app picks a
+    // user-writable socket automatically.
     SectionLabel {
-        text: root.mode === "remote" ? qsTr("Target") : qsTr("Socket path")
-        visible: root.mode === "remote" || (root.mode === "local" && !root.managed)
+        text: root.mode === "local" ? qsTr("Socket path") : qsTr("Target")
+        visible: root.mode === "remote" || root.mode === "remote-ws"
+                 || (root.mode === "local" && !root.managed)
     }
 
     Kit.TextField {
         id: targetField
         Layout.fillWidth: true
-        visible: root.mode === "remote" || (root.mode === "local" && !root.managed)
+        visible: root.mode === "remote" || root.mode === "remote-ws"
+                 || (root.mode === "local" && !root.managed)
         placeholderText: root._placeholder()
         // Two-way with the connection seam: seed from the active target and follow
         // external changes (connect/disconnect) while the user isn't editing, but
@@ -168,7 +174,7 @@ ColumnLayout {
     Kit.TextField {
         id: tokenField
         Layout.fillWidth: true
-        visible: root.mode === "remote"
+        visible: root.mode === "remote" || root.mode === "remote-ws"
         placeholderText: qsTr("Auth token (optional)")
         echoMode: TextInput.Password
     }

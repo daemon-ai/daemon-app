@@ -4,10 +4,14 @@
 #pragma once
 
 // A controllable multiplexed daemon stand-in for daemon-app socket tests. It speaks the wire L0
-// envelope (daemon-sync-protocol-spec.md §2) over a QLocalServer: it answers `Hello` with `Hello`,
-// each one-shot `Call { id }` with `Reply { id, <configured payload> }`, records `Open { id }`
-// streams for the test to push `Item`/`End` on, and acks `Cancel` with `End`. A "hang" mode accepts
-// frames and never replies (the silent-daemon case). Plain (non-QObject) so it is header-only.
+// envelope (daemon-sync-protocol-spec.md §2): it answers `Hello` with `Hello`, each one-shot
+// `Call { id }` with `Reply { id, <configured payload> }`, records `Open { id }` streams for the
+// test to push `Item`/`End` on, and acks `Cancel` with `End`. A "hang" mode accepts frames and
+// never replies (the silent-daemon case). Plain (non-QObject) so it is header-only.
+//
+// The frame semantics live in the carrier-independent MuxServerCore; WireMuxServer wraps it in
+// the length-framed QLocalServer carrier, and ws_mux_fixture.h adds the message-framed
+// QWebSocketServer carrier (WsMuxServer) over the same core.
 
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_auth.h"
@@ -454,33 +458,15 @@ inline QByteArray buildEventsPage(const QList<QByteArray>& events, quint64 nextC
     return b;
 }
 
-class WireMuxServer {
+// Carrier-independent core of the fake mux daemon: the Hello/auth/Call/Open/Cancel frame
+// semantics, the server-side SCRAM/PLAIN/EXTERNAL verification, the config knobs, and the
+// counters. The carrier wrappers - WireMuxServer below (length-framed QLocalServer) and
+// WsMuxServer in ws_mux_fixture.h (message-framed QWebSocketServer) - only move payload bytes,
+// so both carriers answer identically by construction: exactly the client-visible parity the WS
+// transport must preserve.
+class MuxServerCore {
 public:
-    ~WireMuxServer() { stop(); }
-
-    bool start(const QString& path) {
-        QLocalServer::removeServer(path);
-        m_server = new QLocalServer();
-        QObject::connect(m_server, &QLocalServer::newConnection, m_server,
-                         [this] { onNewConnection(); });
-        return m_server->listen(path);
-    }
-
-    void stop() {
-        for (QLocalSocket* conn : std::as_const(m_conns)) {
-            conn->abort();
-            conn->deleteLater();
-        }
-        m_conns.clear();
-        m_buffers.clear();
-        m_auth.clear();
-        m_streamConn = nullptr;
-        if (m_server != nullptr) {
-            m_server->close();
-            m_server->deleteLater();
-            m_server = nullptr;
-        }
-    }
+    virtual ~MuxServerCore() = default;
 
     void setReplyPayload(const QByteArray& payload) { m_payload = payload; }
     void setHang(bool hang) { m_hang = hang; }
@@ -518,33 +504,25 @@ public:
 
     // Push an Item / close the most recently opened stream (tst_wire_mux drives these).
     void pushItem(const QByteArray& res) {
-        if (m_streamConn != nullptr) {
-            writeFrame(m_streamConn, buildIdRes("Item", m_lastOpenId, res));
+        if (streamPeerActive()) {
+            writeStreamFrame(buildIdRes("Item", m_lastOpenId, res));
         }
     }
     void endStream(bool error) {
-        if (m_streamConn != nullptr) {
-            writeFrame(m_streamConn, buildEnd(m_lastOpenId, error));
+        if (streamPeerActive()) {
+            writeStreamFrame(buildEnd(m_lastOpenId, error));
         }
     }
     // Push a Reset for the most recently opened stream (L2: signals the client to re-baseline).
     void pushReset(quint64 epoch, quint64 headSeq) {
-        if (m_streamConn != nullptr) {
-            writeFrame(m_streamConn, buildReset(m_lastOpenId, epoch, headSeq));
+        if (streamPeerActive()) {
+            writeStreamFrame(buildReset(m_lastOpenId, epoch, headSeq));
         }
     }
 
-private:
-    void onNewConnection() {
-        while (m_server != nullptr && m_server->hasPendingConnections()) {
-            QLocalSocket* conn = m_server->nextPendingConnection();
-            m_conns.append(conn);
-            QObject::connect(conn, &QLocalSocket::readyRead, conn,
-                             [this, conn] { onReadyRead(conn); });
-        }
-    }
-
-    // Per-connection SCRAM server state (carried between AuthStart and AuthStep).
+protected:
+    // Per-connection SCRAM server state (carried between AuthStart and AuthStep). The carrier
+    // keys one per live connection.
     struct AuthCtx {
         bool authed = false;
         QByteArray clientFirstBare;
@@ -553,6 +531,70 @@ private:
         int iter = 4096;
     };
 
+    // Process one client->server payload frame: update the counters/auth state, append the reply
+    // payload frames to `replies` (the carrier writes them back with its own framing), and return
+    // true iff the frame was an Open - the carrier then records that connection as the stream
+    // peer for pushItem/endStream/pushReset.
+    bool processFrame(AuthCtx& ctx, const QByteArray& frame, QList<QByteArray>* replies) {
+        const ClientFrame cf = parseClientFrame(frame);
+        const bool authed = m_authMechanisms.isEmpty() || ctx.authed;
+        switch (cf.kind) {
+        case ClientFrame::Hello:
+            ++m_helloCount;
+            if (!m_hang) {
+                replies->append(buildHello(m_authMechanisms, m_helloFeatures));
+            }
+            break;
+        case ClientFrame::AuthStart:
+            if (!m_hang) {
+                handleAuthStart(ctx, cf, replies);
+            }
+            break;
+        case ClientFrame::AuthStep:
+            if (!m_hang) {
+                handleAuthStep(ctx, cf, replies);
+            }
+            break;
+        case ClientFrame::AuthResume:
+            if (!m_hang) {
+                if (!m_resumeToken.isEmpty() && cf.token == m_resumeToken) {
+                    appendAuthOk(ctx, replies);
+                } else {
+                    replies->append(buildAuthError("invalid token"));
+                }
+            }
+            break;
+        case ClientFrame::Call:
+            ++m_requestCount;
+            if (!authed) {
+                ++m_callsBeforeAuthOk; // a leak: a request escaped pre-AuthOk
+            }
+            if (!m_hang && authed) {
+                replies->append(buildIdRes("Reply", cf.id, m_payload));
+            }
+            break;
+        case ClientFrame::Open:
+            ++m_requestCount;
+            ++m_openCount;
+            if (!authed) {
+                ++m_callsBeforeAuthOk;
+            }
+            m_lastOpenId = cf.id;
+            return true; // the test drives pushItem/endStream on this connection
+        case ClientFrame::Cancel:
+            replies->append(buildEnd(cf.id, false));
+            break;
+        case ClientFrame::Unknown:
+            break;
+        }
+        return false;
+    }
+
+    // Carrier hooks for the test-driven stream pushes (Item/End/Reset to the recorded peer).
+    virtual void writeStreamFrame(const QByteArray& payload) = 0;
+    [[nodiscard]] virtual bool streamPeerActive() const = 0;
+
+private:
     static QByteArray scramAttr(const QByteArray& message, char key) {
         for (const QByteArray& part : message.split(',')) {
             if (part.size() >= 2 && part[0] == key && part[1] == '=') {
@@ -562,16 +604,15 @@ private:
         return {};
     }
 
-    void sendAuthOk(QLocalSocket* conn, AuthCtx& ctx) {
+    void appendAuthOk(AuthCtx& ctx, QList<QByteArray>* replies) {
         ctx.authed = true;
         ++m_authOkCount;
-        writeFrame(conn, buildAuthOk(m_issuedToken, m_principalUserId, m_principalUsername,
-                                     m_principalRoles, m_principalCaps));
+        replies->append(buildAuthOk(m_issuedToken, m_principalUserId, m_principalUsername,
+                                    m_principalRoles, m_principalCaps));
     }
 
-    void handleAuthStart(QLocalSocket* conn, const ClientFrame& cf) {
+    void handleAuthStart(AuthCtx& ctx, const ClientFrame& cf, QList<QByteArray>* replies) {
         ++m_authStartCount;
-        AuthCtx& ctx = m_auth[conn];
         if (cf.mechanism == "SCRAM-SHA-256") {
             const QByteArray initial = cf.data; // "n,,n=user,r=cnonce"
             const QByteArray bare = initial.startsWith("n,,") ? initial.mid(3) : initial;
@@ -582,29 +623,28 @@ private:
             const QByteArray combined = cnonce + "serverNonceXYZ";
             ctx.serverFirst = "r=" + combined + ",s=" + ctx.salt.toBase64() +
                               ",i=" + QByteArray::number(ctx.iter);
-            writeFrame(conn, buildAuthChallenge(ctx.serverFirst));
+            replies->append(buildAuthChallenge(ctx.serverFirst));
         } else if (cf.mechanism == "PLAIN") {
             const QList<QByteArray> parts = cf.data.split('\0'); // "\0user\0pass"
             const bool ok = parts.size() == 3 && parts[1] == m_user && parts[2] == m_password;
             if (ok) {
-                sendAuthOk(conn, ctx);
+                appendAuthOk(ctx, replies);
             } else {
-                writeFrame(conn, buildAuthError("authentication failed"));
+                replies->append(buildAuthError("authentication failed"));
             }
         } else if (cf.mechanism == "EXTERNAL") {
-            sendAuthOk(conn, ctx);
+            appendAuthOk(ctx, replies);
         } else {
-            writeFrame(conn, buildAuthError("unsupported mechanism"));
+            replies->append(buildAuthError("unsupported mechanism"));
         }
     }
 
-    void handleAuthStep(QLocalSocket* conn, const ClientFrame& cf) {
+    void handleAuthStep(AuthCtx& ctx, const ClientFrame& cf, QList<QByteArray>* replies) {
         namespace scram = daemonapp::daemon::scram;
-        AuthCtx& ctx = m_auth[conn];
         const QByteArray clientFinal = cf.data; // "c=biws,r=combined,p=proof"
         const int pIdx = clientFinal.indexOf(",p=");
         if (pIdx < 0) {
-            writeFrame(conn, buildAuthError("authentication failed"));
+            replies->append(buildAuthError("authentication failed"));
             return;
         }
         const QByteArray clientFinalNoProof = clientFinal.left(pIdx);
@@ -617,85 +657,16 @@ private:
         const QByteArray clientSig = scram::hmacSha256(storedKey, authMessage);
         const QByteArray expectedProof = scram::xorBytes(clientKey, clientSig).toBase64();
         if (expectedProof != providedProof) {
-            writeFrame(conn, buildAuthError("authentication failed")); // wrong password
+            replies->append(buildAuthError("authentication failed")); // wrong password
             return;
         }
         const QByteArray serverKey = scram::hmacSha256(salted, "Server Key");
         const QByteArray serverSig = scram::hmacSha256(serverKey, authMessage);
         // server-final as the LAST AuthChallenge, then AuthOk back-to-back (the frozen framing).
-        writeFrame(conn, buildAuthChallenge("v=" + serverSig.toBase64()));
-        sendAuthOk(conn, ctx);
+        replies->append(buildAuthChallenge("v=" + serverSig.toBase64()));
+        appendAuthOk(ctx, replies);
     }
 
-    void onReadyRead(QLocalSocket* conn) {
-        m_buffers[conn].append(conn->readAll());
-        QByteArray frame;
-        while (daemonapp::daemon::DaemonTransport::tryTakeFrame(m_buffers[conn], &frame)) {
-            const ClientFrame cf = parseClientFrame(frame);
-            const bool authed = m_authMechanisms.isEmpty() || m_auth[conn].authed;
-            switch (cf.kind) {
-            case ClientFrame::Hello:
-                ++m_helloCount;
-                if (!m_hang) {
-                    writeFrame(conn, buildHello(m_authMechanisms, m_helloFeatures));
-                }
-                break;
-            case ClientFrame::AuthStart:
-                if (!m_hang) {
-                    handleAuthStart(conn, cf);
-                }
-                break;
-            case ClientFrame::AuthStep:
-                if (!m_hang) {
-                    handleAuthStep(conn, cf);
-                }
-                break;
-            case ClientFrame::AuthResume:
-                if (!m_hang) {
-                    if (!m_resumeToken.isEmpty() && cf.token == m_resumeToken) {
-                        sendAuthOk(conn, m_auth[conn]);
-                    } else {
-                        writeFrame(conn, buildAuthError("invalid token"));
-                    }
-                }
-                break;
-            case ClientFrame::Call:
-                ++m_requestCount;
-                if (!authed) {
-                    ++m_callsBeforeAuthOk; // a leak: a request escaped pre-AuthOk
-                }
-                if (!m_hang && authed) {
-                    writeFrame(conn, buildIdRes("Reply", cf.id, m_payload));
-                }
-                break;
-            case ClientFrame::Open:
-                ++m_requestCount;
-                ++m_openCount;
-                if (!authed) {
-                    ++m_callsBeforeAuthOk;
-                }
-                m_streamConn = conn;
-                m_lastOpenId = cf.id;
-                break; // the test drives pushItem/endStream
-            case ClientFrame::Cancel:
-                writeFrame(conn, buildEnd(cf.id, false));
-                break;
-            case ClientFrame::Unknown:
-                break;
-            }
-        }
-    }
-
-    static void writeFrame(QLocalSocket* conn, const QByteArray& payload) {
-        conn->write(daemonapp::daemon::DaemonTransport::framePayload(payload));
-        conn->flush();
-    }
-
-    QLocalServer* m_server = nullptr;
-    QList<QLocalSocket*> m_conns;
-    QHash<QLocalSocket*, QByteArray> m_buffers;
-    QHash<QLocalSocket*, AuthCtx> m_auth;
-    QLocalSocket* m_streamConn = nullptr;
     quint64 m_lastOpenId = 0;
     QByteArray m_payload;
     QStringList m_helloFeatures = currentHelloFeatures();
@@ -717,6 +688,75 @@ private:
     int m_authStartCount = 0;
     int m_authOkCount = 0;
     int m_callsBeforeAuthOk = 0;
+};
+
+// The QLocalServer carrier: the daemon-host Unix-socket wire shape, a big-endian u32 length
+// prefix framing each payload (DaemonTransport::framePayload/tryTakeFrame).
+class WireMuxServer : public MuxServerCore {
+public:
+    ~WireMuxServer() override { stop(); }
+
+    bool start(const QString& path) {
+        QLocalServer::removeServer(path);
+        m_server = new QLocalServer();
+        QObject::connect(m_server, &QLocalServer::newConnection, m_server,
+                         [this] { onNewConnection(); });
+        return m_server->listen(path);
+    }
+
+    void stop() {
+        for (QLocalSocket* conn : std::as_const(m_conns)) {
+            conn->abort();
+            conn->deleteLater();
+        }
+        m_conns.clear();
+        m_buffers.clear();
+        m_auth.clear();
+        m_streamConn = nullptr;
+        if (m_server != nullptr) {
+            m_server->close();
+            m_server->deleteLater();
+            m_server = nullptr;
+        }
+    }
+
+private:
+    void onNewConnection() {
+        while (m_server != nullptr && m_server->hasPendingConnections()) {
+            QLocalSocket* conn = m_server->nextPendingConnection();
+            m_conns.append(conn);
+            QObject::connect(conn, &QLocalSocket::readyRead, conn,
+                             [this, conn] { onReadyRead(conn); });
+        }
+    }
+
+    void onReadyRead(QLocalSocket* conn) {
+        m_buffers[conn].append(conn->readAll());
+        QByteArray frame;
+        while (daemonapp::daemon::DaemonTransport::tryTakeFrame(m_buffers[conn], &frame)) {
+            QList<QByteArray> replies;
+            if (processFrame(m_auth[conn], frame, &replies)) {
+                m_streamConn = conn;
+            }
+            for (const QByteArray& payload : replies) {
+                writeFrame(conn, payload);
+            }
+        }
+    }
+
+    void writeStreamFrame(const QByteArray& payload) override { writeFrame(m_streamConn, payload); }
+    [[nodiscard]] bool streamPeerActive() const override { return m_streamConn != nullptr; }
+
+    static void writeFrame(QLocalSocket* conn, const QByteArray& payload) {
+        conn->write(daemonapp::daemon::DaemonTransport::framePayload(payload));
+        conn->flush();
+    }
+
+    QLocalServer* m_server = nullptr;
+    QList<QLocalSocket*> m_conns;
+    QHash<QLocalSocket*, QByteArray> m_buffers;
+    QHash<QLocalSocket*, AuthCtx> m_auth;
+    QLocalSocket* m_streamConn = nullptr;
 };
 
 } // namespace daemonapp::test

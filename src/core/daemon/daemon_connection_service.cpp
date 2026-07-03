@@ -221,6 +221,19 @@ void DaemonConnectionService::onReprobeTick() {
     m_reprobe.start(m_backoffMs);
 }
 
+QUrl DaemonConnectionService::parseWsUrl(const QString& target) {
+    // Remote-ws target syntax is a FULL URL (ws://host:port or wss://host[:port][/path]) - unlike
+    // "remote", where the bare host:port implies the one TLS carrier, the scheme here decides
+    // plaintext vs TLS, so it must be explicit.
+    QUrl url(target.trimmed(), QUrl::StrictMode);
+    const bool wsScheme =
+        url.scheme() == QLatin1String("ws") || url.scheme() == QLatin1String("wss");
+    if (!url.isValid() || !wsScheme || url.host().isEmpty()) {
+        return {};
+    }
+    return url;
+}
+
 bool DaemonConnectionService::parseHostPort(const QString& target, QString* host, quint16* port) {
     // Remote target syntax is "host:port" (decision 4). Tolerate an optional scheme prefix so a
     // pasted URL still parses, but the canonical form is bare host:port.
@@ -268,6 +281,12 @@ bool DaemonConnectionService::configureTransport() {
             return false;
         }
         m_transport->setTcpTarget(host, port, tlsConfigFromSettings());
+    } else if (m_config.mode == QStringLiteral("remote-ws")) {
+        const QUrl url = parseWsUrl(m_config.target);
+        if (!url.isValid()) {
+            return false;
+        }
+        m_transport->setWsTarget(url);
     } else if (m_config.mode == QStringLiteral("local")) {
         m_transport->setSocketPath(m_config.target);
     } else {
@@ -301,6 +320,17 @@ void DaemonConnectionService::connectTo(const QString& mode, const QString& targ
     m_versionHold = false;
     m_versionRespawnAttempted = false;
     emit configChanged();
+
+#ifdef Q_OS_WASM
+    // A browser build has exactly one usable transport: the WebSocket mux ("remote-ws"). Unix
+    // sockets, raw TLS TCP, and managed spawn do not exist on wasm - refuse anything else up
+    // front instead of failing deep inside a stubbed carrier.
+    if (mode != QStringLiteral("remote-ws")) {
+        setStatusMessage(tr("Only WebSocket connections (ws:// or wss://) work in a browser."));
+        setState(QStringLiteral("needs setup"));
+        return;
+    }
+#endif
 
     if (!configureTransport()) {
         setState(QStringLiteral("needs setup"));
@@ -366,6 +396,16 @@ void DaemonConnectionService::testConnection(const QString& mode, const QString&
     setTesting(true);
     bool ok = false;
     QString message;
+#ifdef Q_OS_WASM
+    // Mirror connectTo()'s wasm gate so Test tells the same truth Connect would.
+    if (mode != QStringLiteral("remote-ws")) {
+        emit testResult(false,
+                        QStringLiteral("Only WebSocket connections (ws:// or wss://) work in a "
+                                       "browser"));
+        setTesting(false);
+        return;
+    }
+#endif
     if (mode == QStringLiteral("local")) {
         ok = !target.isEmpty();
         message = ok ? QStringLiteral("Unix socket target accepted")
@@ -377,6 +417,11 @@ void DaemonConnectionService::testConnection(const QString& mode, const QString&
         // Shape-only: a full reachability/TLS probe needs the server (verified end-to-end later).
         message = ok ? QStringLiteral("Remote target accepted (host:port, TLS)")
                      : QStringLiteral("Use host:port for a remote TLS node");
+    } else if (mode == QStringLiteral("remote-ws")) {
+        ok = parseWsUrl(target).isValid();
+        // Shape-only, like "remote": reachability is proven by the Health probe on Connect.
+        message = ok ? QStringLiteral("WebSocket target accepted (ws:// or wss://)")
+                     : QStringLiteral("Use ws://host:port or wss://host[:port][/path]");
     } else {
         message = QStringLiteral("Unsupported transport");
     }

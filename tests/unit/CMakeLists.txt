@@ -135,6 +135,21 @@ target_link_libraries(tst_tls_transport
 add_test(NAME tst_tls_transport COMMAND tst_tls_transport)
 set_tests_properties(tst_tls_transport PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_ws_transport: the WebSocket transport (the browser/wasm carrier, tested natively) - the
+# daemon-mux subprotocol handshake, one-binary-message-per-frame Call/stream round-trips, SCRAM
+# over WS, WS-vs-Unix behavioral parity over the shared MuxServerCore fixture, and the connection
+# service's remote-ws mode (URL validation, connect-to-ready, per-target token persistence).
+qt_add_executable(tst_ws_transport tst_ws_transport.cpp)
+target_link_libraries(tst_ws_transport
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        Qt6::WebSockets
+        daemon-app::daemon_client
+)
+add_test(NAME tst_ws_transport COMMAND tst_ws_transport)
+set_tests_properties(tst_ws_transport PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_sync_resync: the L2 client resync - the DaemonTurnEngine on a push Subscribe stream tracks the
 # session-activation epoch and re-baselines from the durable journal on a generation change (epoch
 # bump / Reset), and suspends+reopens on a transport drop, driven against the WireMuxServer fixture.
