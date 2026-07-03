@@ -128,8 +128,21 @@ qt_add_executable(daemon-tui
     tree_list_view.cpp
     tui_dialogs.h
     tui_dialogs.cpp
+    # First-run gate dialog (split out of tui_dialogs.cpp so the first-run
+    # workstream owns one focused TU).
+    dialogs/first_run_dialog.h
+    dialogs/first_run_dialog.cpp
     tui_page_hub.h
     tui_page_hub.cpp
+    # Per-page hub projections (one TU per Wave-1 ownership area; the dispatch
+    # switch stays in tui_page_hub.cpp).
+    pages/hub_detail.h
+    pages/hub_settings.cpp
+    pages/hub_models.cpp
+    pages/hub_accounts.cpp
+    pages/hub_profiles.cpp
+    pages/hub_memory.cpp
+    pages/hub_ops.cpp
     tui_file_tab_controller.h
     tui_file_tab_controller.cpp
     tui_shell_layout.h
@@ -184,7 +197,10 @@ set_target_properties(daemon-tui PROPERTIES AUTOMOC ON)
 # before the installed headers so `<Tui/ZListView_p.h>` resolves here; the public
 # `<Tui/*.h>` they include still come from the installed package. Used only by
 # root_widget.cpp to read ZListView's private scroll offset.
+# The TUI root itself is also on the include path so the nested TUs (pages/,
+# dialogs/) include the shell headers by basename, matching the flat files.
 target_include_directories(daemon-tui PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/vendor"
 )
 
