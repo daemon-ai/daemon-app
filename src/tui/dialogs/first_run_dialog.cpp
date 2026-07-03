@@ -62,22 +62,41 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     m_token->setEchoMode(Tui::ZInputBox::Password);
     layout->addWidget(m_token);
 
+    // Agent name (inference phase): the profile id the node keys the agent by, prefilled from
+    // the chosen provider's label until the user edits it - parity with the GUI wizard's
+    // agentNameField. The name mints a NAMED agent instead of leaving the node's placeholder id.
+    m_nameLabel = new Tui::ZLabel(tr("Agent name"), this);
+    m_nameLabel->setVisible(false);
+    layout->addWidget(m_nameLabel);
+    m_agentName = new Tui::ZInputBox(QString(), this);
+    m_agentName->setObjectName(QStringLiteral("firstRunAgentName"));
+    m_agentName->setVisible(false);
+    layout->addWidget(m_agentName);
+
     // Provider picker (inference phase): the node's ProviderCatalog, selection-only.
     m_providerLabel = new Tui::ZLabel(tr("Provider"), this);
     m_providerLabel->setVisible(false);
     layout->addWidget(m_providerLabel);
     m_providerList = new Tui::ZListView(this);
+    m_providerList->setObjectName(QStringLiteral("firstRunProviderList"));
     m_providerList->setVisible(false);
     layout->addWidget(m_providerList);
 
     // Provider API key: shown only for a key-requiring provider (Daemon Cloud lists keyless).
     m_key = new Tui::ZInputBox(QString(), this);
+    m_key->setObjectName(QStringLiteral("firstRunKey"));
     m_key->setEchoMode(Tui::ZInputBox::Password);
     m_key->setVisible(false);
     layout->addWidget(m_key);
     m_listModelsBtn = new Tui::ZButton(tr("List models"), this);
     m_listModelsBtn->setVisible(false);
     layout->addWidget(m_listModelsBtn);
+    // The shared key gate's blocking reason (FIX 4) - the TUI render of the GUI picker's
+    // key-validation message line; Finish stays blocked while it shows.
+    m_keyGateMsg = new Tui::ZLabel(QString(), this);
+    m_keyGateMsg->setObjectName(QStringLiteral("firstRunKeyGateMsg"));
+    m_keyGateMsg->setVisible(false);
+    layout->addWidget(m_keyGateMsg);
 
     // Model picker (inference phase): the selected provider's models; local providers end with a
     // "Discover More Models" row that opens the download flow.
@@ -85,6 +104,7 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     m_modelLabel->setVisible(false);
     layout->addWidget(m_modelLabel);
     m_modelList = new Tui::ZListView(this);
+    m_modelList->setObjectName(QStringLiteral("firstRunModelList"));
     m_modelList->setVisible(false);
     layout->addWidget(m_modelList);
 
@@ -111,6 +131,7 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     buttons->addStretch();
 
     m_primary = new Tui::ZButton(tr("Connect"), this);
+    m_primary->setObjectName(QStringLiteral("firstRunPrimary"));
     m_primary->setDefault(true);
     buttons->addWidget(m_primary);
 
@@ -172,6 +193,21 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
             &FirstRunDialog::syncToPhase);
     // An auth error (wrong password) updates in place while the phase stays "auth".
     connect(m_model, &firstrun::FirstRunModel::errorChanged, this, &FirstRunDialog::syncToPhase);
+    // The shared key gate (FIX 4) resolved or re-armed: update Finish + the reason line.
+    connect(m_model, &firstrun::FirstRunModel::keyGateChanged, this,
+            &FirstRunDialog::refreshInferenceControls);
+    // Every key edit re-arms the shared gate with the fresh selection (the entered key must
+    // re-prove via the next authenticated LIST), exactly like the GUI picker's onTextEdited.
+    connect(m_key, &Tui::ZInputBox::textChanged, this,
+            [this](const QString& text) { m_model->setInferenceSelection(m_providerId, text); });
+    // The user took ownership of the agent name: provider changes stop re-seeding it. The
+    // programmatic seed itself is guarded out; Finish enablement tracks the name either way.
+    connect(m_agentName, &Tui::ZInputBox::textChanged, this, [this] {
+        if (!m_seedingName) {
+            m_agentNameEdited = true;
+        }
+        refreshInferenceControls();
+    });
 
     // Provider -> model wiring (node-driven, selection-only).
     connect(m_providerList, &Tui::ZListView::enterPressed, this, &FirstRunDialog::selectProvider);
@@ -196,7 +232,9 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     rebuildProviderList();
     syncToPhase();
     m_target->setFocus();
-    setGeometry(QRect(0, 0, 66, 20));
+    // Tall enough for the inference phase's agent-name row + key-gate reason line while still
+    // fitting a classic 80x24 terminal.
+    setGeometry(QRect(0, 0, 66, 23));
 }
 
 QVariantMap FirstRunDialog::currentProviderDescriptor() const {
@@ -240,12 +278,31 @@ void FirstRunDialog::selectProvider(int row) {
     }
     m_providerId = m_providerRows.at(row).toMap().value(QStringLiteral("id")).toString();
     m_selectedModel.clear();
+    // Re-arm the shared key gate with the fresh selection (FIX 4) and re-seed the agent name
+    // from the provider's label, both before the refresh so its resolution lands on this state.
+    m_model->setInferenceSelection(m_providerId, m_key != nullptr ? m_key->text() : QString());
+    seedAgentName();
     if (m_providerCatalog != nullptr) {
         // Transient key while listing (no profile yet); Daemon Cloud/local ignore it.
         m_providerCatalog->refreshModels(m_providerId, QString(), m_key->text());
     }
     rebuildModelList();
     refreshInferenceControls();
+}
+
+void FirstRunDialog::seedAgentName() {
+    // Prefill from the chosen provider's catalog label, lowercased (fallback: the descriptor id)
+    // - the same seed the GUI wizard derives from providerLabel - until the user edits the name.
+    if (m_agentName == nullptr || m_agentNameEdited) {
+        return;
+    }
+    QString label = currentProviderDescriptor().value(QStringLiteral("name")).toString();
+    if (label.isEmpty()) {
+        label = m_providerId;
+    }
+    m_seedingName = true;
+    m_agentName->setText(label.toLower());
+    m_seedingName = false;
 }
 
 void FirstRunDialog::rebuildModelList() {
@@ -283,17 +340,30 @@ void FirstRunDialog::selectModel(int row) {
 }
 
 void FirstRunDialog::refreshInferenceControls() {
+    const bool inference = m_model->phase() == QStringLiteral("inference");
     const QVariantMap desc = currentProviderDescriptor();
     const bool requiresKey = desc.value(QStringLiteral("requiresKey")).toBool();
     if (m_key != nullptr) {
-        m_key->setVisible(m_model->phase() == QStringLiteral("inference") && requiresKey);
+        m_key->setVisible(inference && requiresKey);
     }
     if (m_listModelsBtn != nullptr) {
-        m_listModelsBtn->setVisible(m_model->phase() == QStringLiteral("inference") && requiresKey);
+        m_listModelsBtn->setVisible(inference && requiresKey);
     }
-    if (m_primary != nullptr && m_model->phase() == QStringLiteral("inference")) {
+    // The shared key gate's blocking reason (empty until an authenticated LIST fails), rendered
+    // like the GUI picker's message line.
+    if (m_keyGateMsg != nullptr) {
+        const QString reason = m_model->keyGateMessage();
+        m_keyGateMsg->setText(reason);
+        m_keyGateMsg->setVisible(inference && requiresKey && !reason.isEmpty());
+    }
+    if (m_primary != nullptr && inference) {
+        // Finish parity with the GUI wizard: a non-empty agent name, a provider + concrete
+        // model, an entered key where required, AND the shared key gate (FIX 4) - the key must
+        // be PROVEN by an authenticated listing, not merely typed.
         const bool keyOk = !requiresKey || !m_key->text().isEmpty();
-        m_primary->setEnabled(!m_providerId.isEmpty() && !m_selectedModel.isEmpty() && keyOk);
+        const bool nameOk = m_agentName != nullptr && !m_agentName->text().trimmed().isEmpty();
+        m_primary->setEnabled(!m_providerId.isEmpty() && !m_selectedModel.isEmpty() && keyOk &&
+                              nameOk && m_model->keyGatePassed());
     }
 }
 
@@ -352,7 +422,13 @@ void FirstRunDialog::syncToPhase() {
     if (m_password != nullptr) {
         m_password->setVisible(p == QStringLiteral("auth"));
     }
-    // Provider/model pickers live in the inference phase only.
+    // The agent name + provider/model pickers live in the inference phase only.
+    if (m_nameLabel != nullptr) {
+        m_nameLabel->setVisible(inference);
+    }
+    if (m_agentName != nullptr) {
+        m_agentName->setVisible(inference);
+    }
     if (m_providerLabel != nullptr) {
         m_providerLabel->setVisible(inference);
     }
@@ -364,6 +440,9 @@ void FirstRunDialog::syncToPhase() {
     }
     if (m_modelList != nullptr) {
         m_modelList->setVisible(inference);
+    }
+    if (m_keyGateMsg != nullptr && !inference) {
+        m_keyGateMsg->setVisible(false); // refreshInferenceControls re-shows it when blocking
     }
     if (p == QStringLiteral("connecting")) {
         m_status->setText(tr("Connecting..."));
@@ -406,11 +485,14 @@ void FirstRunDialog::syncToPhase() {
 
 void FirstRunDialog::commitInference() {
     // Persist a working profile for the chosen provider + model (ProviderSelector + base URL from
-    // the descriptor) + a profile-scoped key + make it default, then finish. No hardcoded provider:
-    // the id/model/key come from the node-driven selection. FirstRunModel owns the persistence so
-    // the GUI + TUI share one path.
+    // the descriptor) + a profile-scoped key + make it default under the chosen agent NAME, then
+    // finish. No hardcoded provider: the id/model/key come from the node-driven selection.
+    // FirstRunModel owns the persistence so the GUI + TUI share one path: a name that is empty or
+    // equal to the seeded placeholder id configures the placeholder in place; anything else mints
+    // a named agent (same semantics as the GUI wizard).
     const QString key = m_key != nullptr ? m_key->text() : QString();
-    m_model->applyInferenceChoice(m_providerId, m_selectedModel, key);
+    const QString name = m_agentName != nullptr ? m_agentName->text().trimmed() : QString();
+    m_model->applyInferenceChoice(m_providerId, m_selectedModel, key, name);
     if (m_key != nullptr) {
         m_key->setText(QString());
     }

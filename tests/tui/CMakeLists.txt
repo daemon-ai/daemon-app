@@ -115,6 +115,34 @@ target_link_libraries(tui_parity_tests
 add_test(NAME tui_parity_tests COMMAND tui_parity_tests)
 set_tests_properties(tui_parity_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_first_run_dialog: the TUI first-run gate's W3 parity - the inference phase's agent-name
+# input (prefilled from the chosen provider's label until the user edits it, passed to
+# applyInferenceChoice so a NAMED agent is minted) and the hoisted key-validation gate (FIX 4):
+# Finish blocked with the shared FirstRunModel's visible reason line until the entered key is
+# proven by a non-empty authenticated listing. Drives a real FirstRunDialog off-screen.
+qt_add_executable(tui_first_run_dialog_tests
+    tst_first_run_dialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/dialogs/first_run_dialog.cpp
+)
+set_target_properties(tui_first_run_dialog_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_first_run_dialog_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/tui
+    ${CMAKE_SOURCE_DIR}/tests/unit   # cache_test_support.h (the mock-cache reset helper)
+)
+target_link_libraries(tui_first_run_dialog_tests
+    PRIVATE
+        Qt6::Test
+        PkgConfig::TUIWIDGETS
+        daemon-app::firstrun
+        daemon-app::connection
+        daemon-app::settings_store
+        daemon-app::models
+        daemon-app::profiles
+        daemon-app::accounts
+)
+add_test(NAME tui_first_run_dialog_tests COMMAND tui_first_run_dialog_tests)
+set_tests_properties(tui_first_run_dialog_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_tab_title_refresh: the stale-tab-title fix - a session-store changed()
 # (e.g. the node's auto-title landing via the roster refetch, with no content
 # change) re-resolves every open transcript tab's title through
