@@ -267,9 +267,10 @@ void SubmitInputBox::keyEvent(Tui::ZKeyEvent* event) {
         event->accept();
         return;
     }
-    // (4) Ctrl+O: add a (mock) attachment, mirroring the GUI's "+" attachment menu.
-    // Tui Widgets delivers Ctrl+letter as a char event (key()==Key_unknown, letter
-    // in text()), so match the letter rather than Qt::Key_O.
+    // (4) Ctrl+O: open the workspace attachment picker, mirroring the GUI's "+"
+    // attachment menu (Files). Tui Widgets delivers Ctrl+letter as a char event
+    // (key()==Key_unknown, letter in text()), so match the letter rather than
+    // Qt::Key_O.
     if ((event->modifiers() & Qt::ControlModifier) &&
         (event->key() == Qt::Key_O ||
          event->text().compare(QStringLiteral("o"), Qt::CaseInsensitive) == 0)) {

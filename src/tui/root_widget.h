@@ -69,8 +69,9 @@ namespace fs {
 class IFsService;
 }
 namespace files {
+class FileFinderModel;
 class FsExplorerModel;
-}
+} // namespace files
 namespace participants {
 class ParticipantsModel;
 }
@@ -219,6 +220,14 @@ private:
     // slash actions, backed by the shared CommandRegistry, routed to existing
     // handlers on activation.
     void openCommandPalette();
+    // Open the fuzzy "go to file" finder (Ctrl+G) over the shared
+    // FileFinderModel; Enter previews the chosen file tab, Shift+Enter pins it
+    // (the GUI explorer's single- vs double-click mapped to keys).
+    void openFileFinder();
+    // Open the composer's workspace attachment picker (Ctrl+O): the same finder
+    // overlay; the picked root-relative path becomes an attachment chip (the
+    // GUI's "+" menu -> Files flow over FilePicker).
+    void openAttachmentPicker();
     // Advance Light -> Dark -> Sepia -> Midnight, recolor the whole shell live
     // (stock palette + every custom-painted view), and persist the choice so the
     // GUI and TUI stay in sync.
@@ -315,6 +324,7 @@ private:
     bool handleTabShortcuts(Tui::ZKeyEvent* event);          // Ctrl+T/W/F
     bool handleSidebarAgentShortcuts(Tui::ZKeyEvent* event); // p/m on a fleet row
     bool handleTabNavigation(Tui::ZKeyEvent* event);         // Ctrl+Tab, Alt+1..9
+    bool handleFinderShortcut(Tui::ZKeyEvent* event);        // Ctrl+G bubble
     bool handleExplorerToggle(Tui::ZKeyEvent* event);        // Ctrl+E bubble
     bool handleEscapeQuit(Tui::ZKeyEvent* event);            // bare Esc -> quit
 
@@ -398,6 +408,9 @@ private:
     // same shared C++ view-models the GUI binds.
     files::FsExplorerModel* m_fileTree = nullptr;
     FileTreeView* m_fileTreeView = nullptr;
+    // Fuzzy workspace file index (the GUI FileFinder's model, shared verbatim);
+    // one instance backs both the Ctrl+G finder and the Ctrl+O attach picker.
+    files::FileFinderModel* m_fileFinder = nullptr;
     // Right-sidebar Participants section (above the Explorer, toggled as one column).
     participants::ParticipantsModel* m_participants = nullptr;
     Tui::ZWidget* m_rightColumn = nullptr;

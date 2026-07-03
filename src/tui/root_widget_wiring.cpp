@@ -596,14 +596,12 @@ void RootWidget::wireComposer() {
         }
     });
 
-    // Attachment chips bind to the shared session; Ctrl+O on the composer adds a
-    // canned attachment (mock-parity with the GUI's "+" menu / drag-drop).
+    // Attachment chips bind to the shared session; Ctrl+O on the composer opens
+    // the workspace attach picker (the GUI's "+" menu -> Files flow, served by
+    // the same Fs seam as FilePicker.qml). The picked file lands as a chip via
+    // the same ComposerSessionController::addAttachment the GUI calls.
     m_attachments->setController(m_composerSession);
-    connect(m_composer, &SubmitInputBox::attachRequested, m_composerSession, [this] {
-        const int n = m_composerSession->attachments()->count();
-        m_composerSession->addAttachment(QStringLiteral("attachment-%1.txt").arg(n + 1),
-                                         QStringLiteral("file"));
-    });
+    connect(m_composer, &SubmitInputBox::attachRequested, this, &RootWidget::openAttachmentPicker);
 
     // Esc on an empty composer hands focus back to the session list, where a
     // further Esc bubbles up to the quit prompt (context-sensitive Esc, level 2).

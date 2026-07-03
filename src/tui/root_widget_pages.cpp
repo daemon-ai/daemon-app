@@ -405,6 +405,45 @@ void RootWidget::openCommandPalette() {
     m_overlays->openCommandPalette(m_commands, callbacks);
 }
 
+void RootWidget::openFileFinder() {
+    if (m_overlays == nullptr || m_fileFinder == nullptr || m_tabModel == nullptr) {
+        return;
+    }
+    m_overlays->openFileFinder(m_fileFinder,
+                               [this](const QString& rootId, const QString& path, bool pinned) {
+                                   // Enter -> preview (transient, VSCode-style), Shift+Enter ->
+                                   // pinned: the explorer's single- vs double-click semantics on
+                                   // keys. An empty title lets TabModel derive the basename, like
+                                   // Session.qml openFile.
+                                   if (pinned) {
+                                       m_tabModel->openFilePinned(rootId, path, QString());
+                                   } else {
+                                       m_tabModel->previewFile(rootId, path, QString());
+                                   }
+                               });
+}
+
+void RootWidget::openAttachmentPicker() {
+    if (m_overlays == nullptr || m_fileFinder == nullptr) {
+        return;
+    }
+    m_overlays->openAttachPicker(
+        m_fileFinder,
+        [this](const QString& /*rootId*/, const QString& path) {
+            // GUI parity (Composer.qml workspaceFilePicker.onPicked): the chip
+            // carries the root-relative path; buildRefs() renders it as a
+            // @file:/@image: ref on submit. Kind via the GUI's drop heuristic.
+            m_composerSession->addAttachment(path, rwdetail::attachmentKindForName(path));
+        },
+        [this] {
+            // The picker was invoked from the composer; return focus there on
+            // both accept and cancel.
+            if (m_composer != nullptr) {
+                m_composer->setFocus();
+            }
+        });
+}
+
 void RootWidget::repaintForTheme() {
     // The session list and transcript bake tpal::* colors into cached span
     // lists at build time, so a bare update() would repaint stale colors: rebuild

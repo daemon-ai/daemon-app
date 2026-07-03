@@ -41,4 +41,10 @@ void refreshTranscriptTabTitles(TabModel* tabs, const persistence::ISessionStore
 // The static markdown shown for a (non-transcript) page tab.
 QString pageMarkdown(int kind);
 
+// The attachment kind for a picked workspace file: "image" for image
+// extensions, else "file" - the same heuristic the GUI composer's drag-drop
+// applies (Composer.qml DropArea). Folders are not pickable through the
+// finder-backed picker, so "folder" never originates here.
+QString attachmentKindForName(const QString& name);
+
 } // namespace rwdetail

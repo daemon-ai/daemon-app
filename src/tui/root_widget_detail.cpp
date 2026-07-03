@@ -10,6 +10,7 @@
 #include <QLatin1Char>
 #include <QObject>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QStandardPaths>
 #include <QStringList>
 
@@ -93,6 +94,14 @@ QString pageMarkdown(int kind) {
             "composer\n");
     }
     return {};
+}
+
+QString attachmentKindForName(const QString& name) {
+    // Keep in sync with the GUI's drop-path detection (Composer.qml DropArea:
+    // /\.(png|jpe?g|gif|webp|bmp|svg)$/ over the lowercased name).
+    static const QRegularExpression kImageSuffix(QStringLiteral("\\.(png|jpe?g|gif|webp|bmp|svg)$"),
+                                                 QRegularExpression::CaseInsensitiveOption);
+    return kImageSuffix.match(name).hasMatch() ? QStringLiteral("image") : QStringLiteral("file");
 }
 
 } // namespace rwdetail

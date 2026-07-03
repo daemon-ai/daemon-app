@@ -10,8 +10,9 @@
 #include <Tui/ZListView.h>
 
 // A one-line filter input that drives a sibling result list: Up/Down move the
-// list selection, Enter activates, Esc cancels; everything else edits the text.
-// (The list never takes focus, so typing always lands in the filter.)
+// list selection, Enter activates (Shift+Enter activates the alternate way),
+// Esc cancels; everything else edits the text. (The list never takes focus, so
+// typing always lands in the filter.)
 class PaletteInput : public Tui::ZInputBox {
     Q_OBJECT
 
@@ -22,6 +23,8 @@ signals:
     void moveUp();
     void moveDown();
     void accepted();
+    // Shift+Enter: the alternate accept (e.g. the file finder's pinned open).
+    void acceptedAlt();
     void canceled();
 
 protected:

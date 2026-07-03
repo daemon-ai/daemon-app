@@ -205,6 +205,10 @@ bool maybeRenderOffscreen() {
                 // Toggle the file Explorer (text-matched on the key-bubble path
                 // in RootWidget::keyEvent), so emulate the char event.
                 Tui::ZTest::sendText(&terminal, QStringLiteral("e"), Qt::ControlModifier);
+            } else if (name == "ctrl-g") {
+                // Open the fuzzy file finder (text-matched on the key-bubble
+                // path in RootWidget::keyEvent, like ctrl-e).
+                Tui::ZTest::sendText(&terminal, QStringLiteral("g"), Qt::ControlModifier);
             } else if (name == "ctrl-o") {
                 Tui::ZTest::sendKey(&terminal, Qt::Key_O, Qt::ControlModifier);
             } else if (name == "ctrl-t") {
