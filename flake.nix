@@ -325,6 +325,10 @@
             gersemi # CMake formatter
             gitleaks # secret scanning
             typos # source spell-checker
+            # --- release-feed tooling (scripts/release-manifest.sh + sync-updates-json.sh) ---
+            minisign # Ed25519 manifest signing/verification (packaging/UPDATES.md)
+            jq # manifest.json assembly + UPDATES.json mirror sync
+            shellcheck # lint for scripts/*.sh
             nodejs # provides npx for jscpd duplicate detection (not packaged in nixpkgs)
             just # task runner: the justfile recipes (lint / build / qmllint)
             qt6Packages.qtkeychain # OS keychain for the server-token store (auth6)
