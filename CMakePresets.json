@@ -48,11 +48,23 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "wasm-release",
+      "displayName": "WebAssembly (Release)",
+      "inherits": "base",
+      "toolchainFile": "$env{DAEMON_APP_QT_WASM}/lib/cmake/Qt6/qt.toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "OFF",
+        "DAEMON_APP_TUI": "OFF"
+      }
     }
   ],
   "buildPresets": [
     { "name": "desktop-debug", "configurePreset": "desktop-debug" },
-    { "name": "desktop-release", "configurePreset": "desktop-release" }
+    { "name": "desktop-release", "configurePreset": "desktop-release" },
+    { "name": "wasm-release", "configurePreset": "wasm-release" }
   ],
   "testPresets": [
     {
