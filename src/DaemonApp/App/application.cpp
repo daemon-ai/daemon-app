@@ -47,6 +47,7 @@
 #include <latex.h>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDir>
 #include <QEvent>
 #include <QEventLoop>
 #include <QFile>
@@ -57,6 +58,33 @@
 #include <QString>
 #include <QTimer>
 #include <QUuid>
+#include <string>
+
+namespace {
+// MicroTeX's fonts/XML ship with the app (share/daemon-app/microtex-res, see
+// App/CMakeLists.txt) so the installed binary carries no reference to the
+// build-time source tree. Resolution order: explicit env override, then the
+// installed copies relative to the binary (prefix and flat portable layouts),
+// then the compile-time MICROTEX_RES_DIR - the build-tree fallback for dev
+// runs. The browser build skips the probing: there MICROTEX_RES_DIR is the
+// fixed MEMFS mount the emscripten preload bundle fills.
+std::string microtexResDir() {
+#ifndef Q_OS_WASM
+    const QString envOverride = qEnvironmentVariable("DAEMON_APP_MICROTEX_RES");
+    if (!envOverride.isEmpty()) {
+        return envOverride.toStdString();
+    }
+    const QString appDir = QCoreApplication::applicationDirPath();
+    for (const QString& candidate : {appDir + QStringLiteral("/../share/daemon-app/microtex-res"),
+                                     appDir + QStringLiteral("/microtex-res")}) {
+        if (QDir(candidate).exists()) {
+            return QDir::cleanPath(candidate).toStdString();
+        }
+    }
+#endif
+    return MICROTEX_RES_DIR;
+}
+} // namespace
 
 Application::Application(QObject* parent)
     : QObject(parent), m_services(daemonapp::daemon::createAppServiceGraph(
@@ -79,10 +107,10 @@ Application::Application(QObject* parent)
         m_turnEngines = new MockTurnEngineFactory(this);
     }
 
-    // MicroTeX loads its fonts/XML resources once; the path is baked in at build
-    // time (MICROTEX_RES_DIR). Done here so the "math" image provider can parse
-    // formulas as soon as the scene requests them.
-    tex::LaTeX::init(std::string(MICROTEX_RES_DIR));
+    // MicroTeX loads its fonts/XML resources once, from the directory resolved
+    // at startup (see microtexResDir above). Done here so the "math" image
+    // provider can parse formulas as soon as the scene requests them.
+    tex::LaTeX::init(microtexResDir());
 
     // Pin the base font size MicroTeX draws with (its QFonts are cached on first
     // use, so this must happen before the first parse and never change). The

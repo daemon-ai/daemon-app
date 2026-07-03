@@ -104,10 +104,13 @@ target_link_libraries(daemon-app
 )
 
 # The runtime resource dir (fonts + XML) MicroTeX's tex::LaTeX::init() reads.
-# Desktop/mobile read it straight from the (Nix store) source tree. The browser
-# cannot read host paths, so the wasm link packs the directory into the
-# emscripten .data preload bundle and init() reads it back from the same
-# fixed MEMFS mount point.
+# Desktop/mobile resolve it at runtime (application.cpp): the installed
+# share/daemon-app/microtex-res copy (install rule below) wins over the baked
+# build-time path, which stays only for dev runs out of the build tree -
+# shipping the bake would drag the whole MicroTeX source tree into the Nix
+# runtime closure. The browser cannot read host paths, so the wasm link packs
+# the directory into the emscripten .data preload bundle and init() reads it
+# back from the same fixed MEMFS mount point.
 if(DAEMON_APP_WASM)
     # Size flags already evaluated and NOT carried, for the record:
     #  * --closure 1 halves the JS glue but breaks qtloader.js at boot
@@ -122,8 +125,14 @@ if(DAEMON_APP_WASM)
         PRIVATE MICROTEX_RES_DIR="/microtex-res"
     )
 else()
+    # Desktop bakes a BUILD-TREE copy as the last-resort fallback (dev runs
+    # straight out of the build dir, where nothing is installed). Deliberately
+    # not the source res dir itself: under Nix that is a store path, and a
+    # store path baked into the binary chains the whole MicroTeX source tree
+    # into the runtime closure of the installed app.
+    file(COPY "${MICROTEX_RES_DIR}" DESTINATION "${CMAKE_BINARY_DIR}/microtex")
     target_compile_definitions(daemon-app
-        PRIVATE MICROTEX_RES_DIR="${MICROTEX_RES_DIR}"
+        PRIVATE MICROTEX_RES_DIR="${CMAKE_BINARY_DIR}/microtex/res"
     )
 endif()
 
@@ -179,5 +188,10 @@ else()
         BUNDLE DESTINATION .
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+    # Ship MicroTeX's runtime resources next to the binary, where the startup
+    # probe (application.cpp microtexResDir) finds them app-dir-relative.
+    install(DIRECTORY "${MICROTEX_RES_DIR}/"
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/daemon-app/microtex-res
     )
 endif()
