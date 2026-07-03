@@ -245,6 +245,17 @@
           ];
         });
 
+        # --- Qt for WebAssembly ---------------------------------------------
+        # Cross-compiled Qt target stack (emscripten 4.0.8 from the dedicated
+        # pin) + the wasm app build + smoke check + dev shell. Everything
+        # lives in nix/qt-wasm.nix to keep this file readable; only the wasm
+        # outputs below evaluate it, so the desktop outputs stay unchanged.
+        qtWasmStack = import ./nix/qt-wasm.nix {
+          inherit pkgs versionStr baseVersion;
+          pkgsEmscripten = import nixpkgs-emscripten { inherit system; };
+          appSrc = ./.;
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+        };
       in
       {
         packages.default = daemon-app;
@@ -252,6 +263,26 @@
         # Exposed for debugging the Meson dependency stack in isolation.
         packages.tuiwidgets = tuiwidgets-qt6;
         packages.posixsignalmanager = posixsignalmanager-qt6;
+
+        # Qt-for-WebAssembly toolchain (nix/qt-wasm.nix). `qt-wasm` is the
+        # joined target stack a consumer points QT_HOST_PATH-style tooling at
+        # (bin/qt-cmake + lib/cmake/Qt6/qt.toolchain.cmake); the per-module
+        # packages are exposed for debugging individual build layers.
+        packages.qt-wasm = qtWasmStack.qtWasm;
+        packages.qtbase-wasm = qtWasmStack.qtbase;
+        packages.qtshadertools-wasm = qtWasmStack.qtshadertools;
+        packages.qtdeclarative-wasm = qtWasmStack.qtdeclarative;
+        packages.qtsvg-wasm = qtWasmStack.qtsvg;
+        packages.qtwebsockets-wasm = qtWasmStack.qtwebsockets;
+        # The daemon-app wasm build. NOT expected to fully compile yet: the
+        # platform/transport gating branches own the source changes; on this
+        # branch the CMake configure resolving against the wasm Qt is the bar.
+        packages.wasm = qtWasmStack.app;
+
+        # Proves the wasm stack end-to-end without the app: a static Qt Quick
+        # hello-world through the joined prefix's qt-cmake, asserting the
+        # .wasm/.js/.html artifact set.
+        checks.qt-wasm-smoke = qtWasmStack.smoke;
 
         apps.default = {
           type = "app";
@@ -296,6 +327,11 @@
             export QMLTERMWIDGET_QML_DIR="${qmltermwidgetQmlDir}"
           '';
         };
+
+        # Wasm cross-development: emscripten + the wasm Qt stack + host tools.
+        # Exports DAEMON_APP_QT_WASM for the CMake preset (sibling branch)
+        # that consumes $env{DAEMON_APP_QT_WASM}/lib/cmake/Qt6/qt.toolchain.cmake.
+        devShells.wasm = qtWasmStack.devShell;
       }
     );
 }
