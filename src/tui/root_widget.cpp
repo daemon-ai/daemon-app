@@ -11,6 +11,7 @@
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "dialogs/first_run_dialog.h"
 #include "display_role_adapter.h"
+#include "file_finder_model.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
 #include "memory/imemory_service.h"
@@ -165,6 +166,11 @@ RootWidget::RootWidget()
 
     m_fileTree = new files::FsExplorerModel(this);
     m_fileTree->setService(m_services.fs);
+    // The fuzzy finder index over the same fs seam (the model FileFinder.qml
+    // instantiates). setService kicks the initial workspace walk, matching the
+    // GUI's always-instantiated finder; Ctrl+G and Ctrl+O reuse one index.
+    m_fileFinder = new files::FileFinderModel(this);
+    m_fileFinder->setService(m_services.fs);
     m_fileTabs = std::make_unique<TuiFileTabController>(m_services.fs, m_tabModel, this);
 
     // The right sidebar's Participants section: the same shared model the GUI binds.

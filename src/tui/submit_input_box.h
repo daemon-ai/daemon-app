@@ -41,7 +41,8 @@ signals:
     // Up/Down at the first/last line with the caret idle: walk the shared history.
     void historyPrevious();
     void historyNext();
-    // Ctrl+O: add a (mock) attachment, mirroring the GUI's attachment menu.
+    // Ctrl+O: open the workspace attachment picker, mirroring the GUI's "+"
+    // attachment menu (Files).
     void attachRequested();
 
 protected:

@@ -91,6 +91,9 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event) {
     if (handlePageActionKey(event)) {
         return;
     }
+    if (handleFinderShortcut(event)) {
+        return;
+    }
     if (handleExplorerToggle(event)) {
         return;
     }
@@ -186,6 +189,25 @@ bool RootWidget::handleTabNavigation(Tui::ZKeyEvent* event) {
             event->accept();
             return true;
         }
+    }
+    return false;
+}
+
+bool RootWidget::handleFinderShortcut(Tui::ZKeyEvent* event) {
+    // Ctrl+G, when it bubbles up unconsumed, opens the fuzzy "go to file"
+    // finder. Bubble-path (not an ApplicationShortcut) for the same reason as
+    // Ctrl+E: the composer's reverse-i-search consumes Ctrl+G as its readline
+    // abort while active, and must keep winning. Ctrl+P (the binding the GUI
+    // explorer advertises) is the TUI command palette, so the finder takes the
+    // adjacent "go to" chord. Tui delivers Ctrl+letter as a char event, so
+    // match the text as well as the key.
+    const bool finderKey = (event->modifiers() & Qt::ControlModifier) &&
+                           (event->key() == Qt::Key_G ||
+                            event->text().compare(QStringLiteral("g"), Qt::CaseInsensitive) == 0);
+    if (finderKey) {
+        openFileFinder();
+        event->accept();
+        return true;
     }
     return false;
 }
