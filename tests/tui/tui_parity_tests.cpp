@@ -34,18 +34,12 @@ QHash<int, QString> exemptKinds() {
         {TabModel::Channels,
          QStringLiteral("Channels / Events-IO manager is GUI-only; the Wave 1 "
                         "Channels-page workstream adds the TUI page and removes this")},
-        {TabModel::UsersAccess,
-         QStringLiteral("Users & Access admin page is GUI-only; the Wave 1 "
-                        "Users&Access workstream adds the TUI page and removes this")},
     };
 }
 
 // Accepted command-id divergences: registry ids without a (real) TUI route.
 QHash<QString, QString> exemptCommands() {
     return {
-        {QStringLiteral("access"),
-         QStringLiteral("opens the Users & Access admin page (TUI page lands in "
-                        "Wave 1 together with the UsersAccess tab kind)")},
         {QStringLiteral("usage"),
          QStringLiteral("permanent: usage/context is live in the status-bar "
                         "footer in BOTH shells; the command is a deliberate no-op")},

@@ -148,6 +148,7 @@ qt_add_executable(daemon-tui
     pages/hub_profiles.cpp
     pages/hub_memory.cpp
     pages/hub_ops.cpp
+    pages/hub_users_access.cpp
     tui_file_tab_controller.h
     tui_file_tab_controller.cpp
     tui_shell_layout.h

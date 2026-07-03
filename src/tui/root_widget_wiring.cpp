@@ -6,6 +6,7 @@
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
+#include "daemon/principal_model.h"           // live refresh of the Users & Access page
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
@@ -143,6 +144,12 @@ void RootWidget::wirePageLiveRefresh() {
     liveRefresh(m_memGraph, TabModel::Memory);
     connect(m_memStats, &memoryui::MemoryStatsModel::changed, this,
             [this] { refreshPageIfActive(TabModel::Memory); });
+    // The Users & Access page is a read-only projection of the principal (WhoAmI);
+    // re-render it on login/logout/role change so the panel tracks the session.
+    if (m_services.principal != nullptr) {
+        connect(m_services.principal, &daemonapp::daemon::PrincipalModel::changed, this,
+                [this] { refreshPageIfActive(TabModel::UsersAccess); });
+    }
 }
 
 void RootWidget::wireSearchBox() {

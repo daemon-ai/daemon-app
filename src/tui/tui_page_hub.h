@@ -23,6 +23,9 @@ class IDaemonConfig;
 namespace connection {
 class IConnectionService;
 }
+namespace daemonapp::daemon {
+class PrincipalModel;
+}
 namespace daemonnet {
 class IDaemonNet;
 }
@@ -77,6 +80,9 @@ public:
         memoryui::MemoryTimelineModel* memTimeline = nullptr;
         memoryui::MemoryGraphModel* memGraph = nullptr;
         settings::ISettingsStore* settings = nullptr;
+        // The authenticated principal (WhoAmI): gates the Users & Access route and
+        // backs its page projection. Advisory only - the node enforces server-side.
+        daemonapp::daemon::PrincipalModel* principal = nullptr;
     };
 
     explicit TuiPageHub(Dependencies deps);
@@ -104,6 +110,7 @@ private:
     [[nodiscard]] QString buildCronMarkdown(int sel = -1) const;
     [[nodiscard]] QString buildMemoryMarkdown() const;
     [[nodiscard]] QString buildProfileMarkdown(const QString& profileRef) const;
+    [[nodiscard]] QString buildUsersAccessMarkdown() const;
 
     Dependencies m_deps;
     QHash<int, int> m_pageSel;
