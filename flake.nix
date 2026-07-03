@@ -111,6 +111,7 @@
           qttools
           qtshadertools
           qtsvg
+          qtwebsockets    # WebSocket daemon transport (browser/wasm carrier, tested natively)
           qt5compat       # Core5Compat - required by the Qt6 build of Tui Widgets
         ];
 

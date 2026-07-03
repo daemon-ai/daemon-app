@@ -35,7 +35,9 @@ endif()
 # Qt Quick + Controls for the UI; QtWidgets on desktop for the tray.
 # QuickControls2 is needed for QQuickStyle (pinning the app style in main).
 # LinguistTools provides qt_add_translations (lupdate/lrelease + .qm embedding).
-find_package(Qt6 6.11 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Network Sql LinguistTools)
+# WebSockets carries the daemon wire mux to browser (wasm) clients and is the
+# natively-testable third transport backend on desktop.
+find_package(Qt6 6.11 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Network Sql WebSockets LinguistTools)
 if(NOT DAEMON_APP_MOBILE)
     find_package(Qt6 6.11 REQUIRED COMPONENTS Widgets)
 endif()
