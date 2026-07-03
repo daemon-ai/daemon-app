@@ -57,15 +57,15 @@ ColumnLayout {
     function _seedProvider() {
         if (providerId.length > 0 || providerRows.length === 0)
             return;
+        // Seed the preferred default: Daemon Cloud (keyless listing) or the first LOCAL engine
+        // (llama.cpp — first-run wants zero-key local inference). Falls back to row 0.
+        var wantKind = preferDaemonCloud ? "daemon_cloud" : "local";
         var pick = providerRows[0];
-        if (preferDaemonCloud) {
-            for (var i = 0; i < providerRows.length; ++i)
-                if (providerRows[i].id === "daemon_cloud"
-                    || providerRows[i].kind === "daemon_cloud") {
-                    pick = providerRows[i];
-                    break;
-                }
-        }
+        for (var i = 0; i < providerRows.length; ++i)
+            if (providerRows[i].id === wantKind || providerRows[i].kind === wantKind) {
+                pick = providerRows[i];
+                break;
+            }
         picker.selectProvider(pick.id);
     }
     function selectProvider(id) {
@@ -77,16 +77,33 @@ ColumnLayout {
         if (ProviderCatalog)
             ProviderCatalog.refreshModels(id, "", keyField.text); // transient key (no profile yet)
     }
+    // The catalog kind ("local" | "remote") of the SELECTED provider's row, "" before seeding.
+    function currentProviderKind() {
+        for (var i = 0; i < providerRows.length; ++i)
+            if (providerRows[i].id === providerId)
+                return providerRows[i].kind;
+        return "";
+    }
+    // Keep the visible dropdown in lockstep with the SELECTED provider for every programmatic
+    // change (seeding, external writes): the key field / model rows follow providerId, so a
+    // desynced ComboBox shows one provider while the form drives another.
+    onProviderIdChanged: {
+        providerBox.syncFromModel();
+        modelList.refreshRows();
+    }
 
     Component.onCompleted: {
         picker.providerRows = ProviderCatalog ? ProviderCatalog.providers() : [];
         picker._seedProvider();
+        providerBox.syncFromModel();
     }
     Connections {
         target: ProviderCatalog
         function onProvidersChanged() {
             picker.providerRows = ProviderCatalog ? ProviderCatalog.providers() : [];
             picker._seedProvider();
+            // The rebuilt dropdown model reset currentIndex; re-point it at the selection.
+            providerBox.syncFromModel();
         }
     }
 
@@ -147,8 +164,14 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: Math.min(contentHeight, 132)
         clip: true
-        property var rows: (ProviderCatalog && picker.providerId.length > 0)
-                           ? ProviderCatalog.offeredModels(picker.providerId) : []
+        // Rebuilt explicitly (never a broken binding): on provider change (picker
+        // onProviderIdChanged) and whenever the catalog re-offers this provider's models.
+        property var rows: []
+        function refreshRows() {
+            rows = (ProviderCatalog && picker.providerId.length > 0)
+                   ? ProviderCatalog.offeredModels(picker.providerId) : [];
+        }
+        Component.onCompleted: refreshRows()
         model: rows
         Connections {
             target: ProviderCatalog
@@ -195,12 +218,65 @@ ColumnLayout {
             TapHandler {
                 onTapped: {
                     if (modelData.kind === "discover") {
-                        if (typeof Nav !== "undefined" && Nav) Nav.open("models", "discover");
+                        // In-place discovery: a dialog in the window overlay, so it works above
+                        // the first-run gate AND from the "+ New agent" dialog (a Nav.open would
+                        // land underneath the wizard overlay).
+                        discoverDialog.openDialog();
                     } else {
                         picker.model = modelData.id;
                     }
                 }
             }
+        }
+    }
+
+    // Active downloads stay visible here after the discover dialog closes (compact single-line
+    // rows, terminal rows hidden); tapping a row reopens the dialog, where the full queue
+    // (pause/retry/cancel/use) lives. Self-hides when nothing is downloading.
+    DownloadsPanel {
+        Layout.fillWidth: true
+        compact: true
+        activeOnly: true
+        onOpenRequested: discoverDialog.openDialog()
+    }
+
+    // Wizard convenience: when a download finishes while a LOCAL provider is selected and no
+    // model is picked yet, auto-select the freshly installed model — the wizard's Finish enables
+    // without another click. (The provider catalog re-offers local models on the same signal, so
+    // the matching row appears in the list independently of this.) Only ids the provider actually
+    // OFFERS are eligible: a finished download may be a non-offerable companion artifact (e.g. a
+    // vision-projector "mmproj" file), which must never become the chat model.
+    Connections {
+        target: ModelCatalog
+        function onDownloadFinished(modelId) {
+            if (picker.model.length > 0 || picker.currentProviderKind() !== "local")
+                return;
+            var offered = ProviderCatalog
+                          ? ProviderCatalog.offeredModels(picker.providerId) : [];
+            for (var i = 0; i < offered.length; ++i)
+                if (offered[i].id === modelId) {
+                    picker.model = modelId;
+                    return;
+                }
+        }
+    }
+
+    // Model-operation failures surfaced by the catalog facade (downloads / activation): without
+    // this, an HF network error makes the flow look silently dead.
+    Text {
+        visible: typeof ModelCatalog !== "undefined" && ModelCatalog
+                 && ModelCatalog.lastError.length > 0
+        text: (typeof ModelCatalog !== "undefined" && ModelCatalog) ? ModelCatalog.lastError : ""
+        font.family: FontIcons.display; font.pixelSize: 11; color: Theme.danger
+        Layout.fillWidth: true; wrapMode: Text.WordWrap
+    }
+
+    DiscoverDialog {
+        id: discoverDialog
+        // "Use this model" on a finished download: select it here (same catalog id space as the
+        // offered-model rows); the dialog closes itself.
+        onUseModelRequested: function(modelId) {
+            picker.model = modelId;
         }
     }
 }

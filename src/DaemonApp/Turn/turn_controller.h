@@ -36,6 +36,8 @@ public:
     [[nodiscard]] int elapsedMs() const override { return m_elapsedMs; }
     [[nodiscard]] QString errorText() const override { return m_errorText; }
     [[nodiscard]] bool paused() const override { return m_paused; }
+    // The simulator seeds canned status-stack todos per turn (pre-backend UI coverage).
+    [[nodiscard]] bool simulatesStatusFeeds() const override { return true; }
 
     void start(const QString& prompt) override;
     void cancel() override;

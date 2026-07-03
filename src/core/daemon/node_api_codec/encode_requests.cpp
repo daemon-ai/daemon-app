@@ -15,15 +15,18 @@ QByteArray NodeApiCodec::encodeHealthRequest() {
 }
 
 QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 sinceRev,
-                                                    const QString& byProfile) {
-    // `byProfile` must outlive the encode: zcbor holds a pointer into its UTF-8 bytes.
+                                                    const QString& byProfile,
+                                                    const QString& after) {
+    // `byProfile`/`after` must outlive the encode: zcbor holds pointers into their UTF-8 bytes.
     const QByteArray profileUtf8 = byProfile.toUtf8();
+    const QByteArray afterUtf8 = after.toUtf8();
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_sessions_query_m_c;
-    // Leave after/limit absent: an empty session-query map asks the daemon for its default
-    // (TopLevel) scope, first page. `since_rev` (when set) makes it an L4 delta read. A non-empty
-    // `byProfile` sets scope = ByProfile(id) — the per-agent view (encoder-only; the arm is already
-    // in the CDDL session-scope union).
+    // Leave limit absent: an empty session-query map asks the daemon for its default (TopLevel)
+    // scope, first page. `since_rev` (when set) makes it an L4 delta read. A non-empty `byProfile`
+    // sets scope = ByProfile(id) — the per-agent view (encoder-only; the arm is already in the
+    // CDDL session-scope union). `after` (when set) resumes past the previous page's next_cursor
+    // (the wire v24 roster page loop).
     request.api_request_request_sessions_query_m = request_sessions_query{};
     session_query& q = request.api_request_request_sessions_query_m.SessionsQuery_query;
     q.session_query_scope_present = !byProfile.isEmpty();
@@ -34,6 +37,15 @@ QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 si
             reinterpret_cast<const uint8_t*>(profileUtf8.constData());
         scope.session_scope_by_profile_m.session_scope_by_profile_ByProfile.len =
             static_cast<size_t>(profileUtf8.size());
+    }
+    q.session_query_after_present = !after.isEmpty();
+    if (!after.isEmpty()) {
+        q.session_query_after.session_query_after_choice =
+            session_query_after_r::session_query_after_session_id_m_c;
+        q.session_query_after.session_query_after_session_id_m.value =
+            reinterpret_cast<const uint8_t*>(afterUtf8.constData());
+        q.session_query_after.session_query_after_session_id_m.len =
+            static_cast<size_t>(afterUtf8.size());
     }
     q.session_query_since_rev_present = hasSinceRev;
     if (hasSinceRev) {
@@ -189,8 +201,17 @@ QByteArray NodeApiCodec::encodeCredentialRemoveRequest(const QString& profile) {
         });
 }
 
-QByteArray NodeApiCodec::encodeModelsRequest() {
-    return encodeSimple(api_request_r::api_request_request_models_m_c);
+QByteArray NodeApiCodec::encodeModelsRequest(const QString& after) {
+    const QByteArray afterUtf8 = after.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_models_m_c, [&](api_request_r& request) {
+            request_models& m = request.api_request_request_models_m;
+            m.Models_after_present = !after.isEmpty();
+            if (!after.isEmpty()) {
+                m.Models_after.Models_after_choice = Models_after_r::Models_after_tstr_c;
+                setZcbor(m.Models_after.Models_after_tstr, afterUtf8);
+            }
+        });
 }
 
 QByteArray NodeApiCodec::encodeModelCurrentRequest(const QString& profile) {
@@ -247,10 +268,12 @@ QByteArray NodeApiCodec::encodeAcpCatalogRequest() {
 
 QByteArray NodeApiCodec::encodeProviderModelsRequest(const QString& provider,
                                                      const QString& credentialRef,
-                                                     const QString& transientKey) {
+                                                     const QString& transientKey,
+                                                     const QString& after) {
     const QByteArray providerUtf8 = provider.toUtf8();
     const QByteArray credRefUtf8 = credentialRef.toUtf8();
     const QByteArray keyUtf8 = transientKey.toUtf8();
+    const QByteArray afterUtf8 = after.toUtf8();
     return encodeWithFill(
         api_request_r::api_request_request_provider_models_m_c, [&](api_request_r& request) {
             request_provider_models& pm = request.api_request_request_provider_models_m;
@@ -272,6 +295,12 @@ QByteArray NodeApiCodec::encodeProviderModelsRequest(const QString& provider,
                     ProviderModels_transient_key_r::ProviderModels_transient_key_tstr_c;
                 setZcbor(pm.ProviderModels_transient_key.ProviderModels_transient_key_tstr,
                          keyUtf8);
+            }
+            pm.ProviderModels_after_present = !after.isEmpty();
+            if (!after.isEmpty()) {
+                pm.ProviderModels_after.ProviderModels_after_choice =
+                    ProviderModels_after_r::ProviderModels_after_tstr_c;
+                setZcbor(pm.ProviderModels_after.ProviderModels_after_tstr, afterUtf8);
             }
         });
 }
@@ -331,11 +360,19 @@ QByteArray NodeApiCodec::encodeProfileExportRequest(const QString& id) {
         });
 }
 
-QByteArray NodeApiCodec::encodeProfileHistoryRequest(const QString& id) {
+QByteArray NodeApiCodec::encodeProfileHistoryRequest(const QString& id, const QString& after) {
     const QByteArray idUtf8 = id.toUtf8();
+    const QByteArray afterUtf8 = after.toUtf8();
     return encodeWithFill(
         api_request_r::api_request_request_profile_history_m_c, [&](api_request_r& request) {
-            setZcbor(request.api_request_request_profile_history_m.ProfileHistory_id, idUtf8);
+            request_profile_history& h = request.api_request_request_profile_history_m;
+            setZcbor(h.ProfileHistory_id, idUtf8);
+            h.ProfileHistory_after_present = !after.isEmpty();
+            if (!after.isEmpty()) {
+                h.ProfileHistory_after.ProfileHistory_after_choice =
+                    ProfileHistory_after_r::ProfileHistory_after_tstr_c;
+                setZcbor(h.ProfileHistory_after.ProfileHistory_after_tstr, afterUtf8);
+            }
         });
 }
 
@@ -494,9 +531,10 @@ QByteArray NodeApiCodec::encodeRespondInputRequest(const QString& sessionId, qui
 }
 
 QByteArray NodeApiCodec::encodeModelFilesRequest(const QString& repo, const QString& engine,
-                                                 const QString& revision) {
+                                                 const QString& revision, const QString& after) {
     const QByteArray repoUtf8 = repo.toUtf8();
     const QByteArray revUtf8 = revision.toUtf8();
+    const QByteArray afterUtf8 = after.toUtf8();
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_model_files_m_c;
     request_model_files& f = request.api_request_request_model_files_m;
@@ -511,6 +549,11 @@ QByteArray NodeApiCodec::encodeModelFilesRequest(const QString& repo, const QStr
     }
     f.ModelFiles_engine.model_engine_choice =
         static_cast<decltype(f.ModelFiles_engine.model_engine_choice)>(modelEngineChoice(engine));
+    f.ModelFiles_after_present = !after.isEmpty();
+    if (!after.isEmpty()) {
+        f.ModelFiles_after.ModelFiles_after_choice = ModelFiles_after_r::ModelFiles_after_tstr_c;
+        setZcbor(f.ModelFiles_after.ModelFiles_after_tstr, afterUtf8);
+    }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -599,8 +642,10 @@ QByteArray NodeApiCodec::encodeSetSessionModeRequest(const QString& sessionId,
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
 
-QByteArray NodeApiCodec::encodeApprovalsPendingRequest(const QString& sessionId) {
+QByteArray NodeApiCodec::encodeApprovalsPendingRequest(const QString& sessionId,
+                                                       const QString& after) {
     const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray afterUtf8 = after.toUtf8();
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_approvals_pending_m_c;
     request_approvals_pending& pending = request.api_request_request_approvals_pending_m;
@@ -614,6 +659,12 @@ QByteArray NodeApiCodec::encodeApprovalsPendingRequest(const QString& sessionId)
             reinterpret_cast<const uint8_t*>(sessionUtf8.constData());
         pending.ApprovalsPending_session.ApprovalsPending_session_session_id_m.len =
             static_cast<size_t>(sessionUtf8.size());
+    }
+    pending.ApprovalsPending_after_present = !after.isEmpty();
+    if (!after.isEmpty()) {
+        pending.ApprovalsPending_after.ApprovalsPending_after_choice =
+            ApprovalsPending_after_r::ApprovalsPending_after_tstr_c;
+        setZcbor(pending.ApprovalsPending_after.ApprovalsPending_after_tstr, afterUtf8);
     }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
@@ -762,7 +813,8 @@ QByteArray NodeApiCodec::encodeCommandInvokeRequest(const QString& name, const Q
 QByteArray NodeApiCodec::encodeModelCancelRequest(quint64 id) {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_model_cancel_m_c;
-    request.api_request_request_model_cancel_m.ModelCancel_id = static_cast<uint32_t>(id);
+    // The contract download-id is uint64; never narrow it (a >4G job id must round-trip).
+    request.api_request_request_model_cancel_m.ModelCancel_id = id;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -770,7 +822,7 @@ QByteArray NodeApiCodec::encodeModelCancelRequest(quint64 id) {
 QByteArray NodeApiCodec::encodeModelPauseRequest(quint64 id) {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_model_pause_m_c;
-    request.api_request_request_model_pause_m.ModelPause_id = static_cast<uint32_t>(id);
+    request.api_request_request_model_pause_m.ModelPause_id = id;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -778,7 +830,7 @@ QByteArray NodeApiCodec::encodeModelPauseRequest(quint64 id) {
 QByteArray NodeApiCodec::encodeModelResumeRequest(quint64 id) {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_model_resume_m_c;
-    request.api_request_request_model_resume_m.ModelResume_id = static_cast<uint32_t>(id);
+    request.api_request_request_model_resume_m.ModelResume_id = id;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }

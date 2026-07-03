@@ -6,6 +6,7 @@
 #include "daemon/daemon_cache_store.h"
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
+#include "daemon/page_loop.h"
 
 #include <QHash>
 #include <QList>
@@ -95,6 +96,15 @@ private:
     // fallback when the returned rev went backwards).
     bool m_sentRosterDelta = false;
     quint64 m_sentRosterSinceRev = 0;
+
+    // Roster page loops (the shared PageLoop accumulator): a full refresh accumulates rows across
+    // next_cursor pages and runs the replace + prune ONCE over the whole set (pruning against a
+    // single page would drop every session beyond it). Delta reads stay single-page. ByProfile
+    // loops too, but merges per page (additive, so incremental application is safe — its loop
+    // carries only the runaway guard); it needs the profile id to re-issue the continuation.
+    PageLoop<CachedSessionRow> m_rosterLoop;
+    PageLoop<CachedSessionRow> m_byProfileLoop; // guard-only (pages merge incrementally)
+    QString m_byProfileId;
 };
 
 class ProfileRepository : public RepositoryBase {
@@ -199,6 +209,9 @@ private:
 
     QList<DecodedProfileInfo> m_profiles;
     QHash<QString, DecodedProfileSpec> m_specs;
+    // Per-profile history page loop (wire v25): accumulate revisions across `after` pages, then
+    // emit historyLoaded ONCE with the full history.
+    QHash<QString, PageLoop<DecodedRevision>> m_historyLoops;
 };
 
 // Onboarding credential slice (CON-4): a `CredentialList` keeps a redacted view in memory (no
@@ -269,9 +282,15 @@ public:
     [[nodiscard]] const QList<DecodedDownloadStatus>& downloads() const { return m_downloads; }
     [[nodiscard]] const QList<DecodedInstalledModel>& installed() const { return m_installed; }
 
-    // Step 1: search HF repos (ModelSearch); on success searchHitsChanged() fires.
+    // Step 1: search HF repos (ModelSearch); on success searchHitsChanged() fires with the fresh
+    // first page. `has_more` from the response drives searchHasMore()/searchMore().
     void search(const QString& text, const QString& engine = QStringLiteral("llama"),
                 const QString& sort = QStringLiteral("trending"));
+    // Whether the last search page reported another page available.
+    [[nodiscard]] bool searchHasMore() const { return m_searchHasMore; }
+    // Fetch the NEXT page of the current search and APPEND its hits to searchHits();
+    // searchHitsChanged() fires with the accumulated set. No-op when !searchHasMore().
+    void searchMore();
     // Step 2: list a repo's loadable files (ModelFiles); on success filesLoaded(repo) fires.
     void requestFiles(const QString& repo, const QString& engine = QStringLiteral("llama"));
     // The hardware-aware quant recommendation for a repo; on success recommendLoaded(repo) fires.
@@ -288,8 +307,10 @@ public:
     void refreshDownloads();
     // Apply one L3 DownloadProgress notification (from the SubscriptionManager): patch the matching
     // job row in place (insert if new), emit downloadsChanged(), and refresh the catalog when a job
-    // newly reaches Completed. Replaces the retired 600ms poll.
-    void applyDownloadProgress(quint64 id, quint32 pct, const QString& state);
+    // newly reaches Completed. Replaces the retired 600ms poll. `downloadedBytes`/`totalBytes` are
+    // the event's real byte counters (wire v26); a zero total keeps any previously-known total.
+    void applyDownloadProgress(quint64 id, const QString& state, quint64 downloadedBytes,
+                               quint64 totalBytes);
     // Refresh the installed catalog (ModelCatalog); on success catalogChanged() fires.
     void refreshCatalog();
     // Delete an installed model (ModelDelete); on Ok the catalog is re-fetched.
@@ -353,11 +374,25 @@ private:
     QList<DecodedModelDescriptor> m_models;
     DecodedModelDescriptor m_current;
     bool m_hasCurrent = false;
+    // Page loops (wire v25): models() and files() accumulate across `after` pages and their
+    // refreshed/loaded signals fire ONCE with the complete listing.
+    PageLoop<DecodedModelDescriptor> m_modelsLoop;
+    PageLoop<DecodedModelFile> m_filesLoop;
 
     QList<DecodedSearchHit> m_searchHits;
+    // Search paging state: the query the next page re-issues verbatim, the 0-based page the last
+    // response answered, whether the node reported another page, and whether the in-flight
+    // request should APPEND (searchMore) rather than replace (a fresh search).
+    QString m_searchText;
+    QString m_searchEngine = QStringLiteral("llama");
+    QString m_searchSort = QStringLiteral("trending");
+    quint32 m_searchPage = 0;
+    bool m_searchHasMore = false;
+    bool m_searchAppending = false;
     QList<DecodedModelFile> m_files;
     QString m_filesRepo;
     QString m_pendingFilesRepo;
+    QString m_pendingFilesEngine; // re-issued verbatim on the files page loop's continuations
     DecodedQuantRecommendation m_recommendation;
     bool m_hasRecommendation = false;
     QString m_pendingRecommendRepo;
@@ -406,6 +441,14 @@ private:
 
     QList<DecodedProviderDescriptor> m_providers;
     QHash<QString, QList<DecodedModelDescriptor>> m_models; // provider id -> its offered models
+    // Per-provider ProviderModels page loop (wire v25) + the credentials the continuation pages
+    // re-issue verbatim; providerModelsRefreshed fires ONCE with the complete listing.
+    struct ProviderModelsLoop {
+        PageLoop<DecodedModelDescriptor> loop;
+        QString credentialRef;
+        QString transientKey;
+    };
+    QHash<QString, ProviderModelsLoop> m_modelsLoops;
 };
 
 // (FsRepository removed in Phase 4: DaemonFsService talks to NodeApiClient + the codec directly and
@@ -445,6 +488,9 @@ private:
 
     QList<DecodedApprovalInfo> m_pending;
     QString m_lastSession; // the session scope of the last refresh, re-used after a decide
+    // Pending page loop (wire v25): accumulate across `after` pages, then swap pending() and emit
+    // pendingRefreshed ONCE.
+    PageLoop<DecodedApprovalInfo> m_pendingLoop;
 };
 
 // The agent fleet / subagent tree (PRO-9/10): refreshTree() issues a Tree query, decode() flattens
@@ -481,6 +527,11 @@ private:
 
     static constexpr auto kTreeCorrelation = "repo/tree";
     static constexpr auto kControlCorrelation = "repo/unit-control";
+
+    // Tree page loop (wire v25): accumulate raw nodes across `after` pages (`root` rides every
+    // page; the first one fixes it), then flatten + sync ONCE over the whole union.
+    PageLoop<DecodedUnitNode> m_treeLoop;
+    QString m_treeRoot;
 };
 
 // Channels / Events-IO read surface (Phase 6a, story 04). Projects the node's transport adapter
@@ -519,6 +570,10 @@ private:
     [[nodiscard]] static bool isOwnCorrelation(const QString& correlationId);
 
     QList<DecodedAdapterInfo> m_adapters; // in-memory (connect-only); not cached
+    // Per-transport conversations page loop (wire v25): accumulate across `after` pages, then
+    // sync (replace + prune) ONCE over the whole listing — pruning against a single page would
+    // drop every conversation beyond it.
+    QHash<QString, PageLoop<DecodedConversation>> m_convLoops;
 
     static constexpr auto kAdaptersCorrelation = "repo/transport-adapters";
     static constexpr auto kInstancesCorrelation = "repo/transport-instances";

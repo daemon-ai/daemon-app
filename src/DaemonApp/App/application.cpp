@@ -42,8 +42,10 @@
 #include "transports/itransport_registry.h"
 #include "turn_engine_factory.h"
 
+#ifndef Q_OS_WASM
 #include <core/formula.h>
 #include <latex.h>
+#endif
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QEvent>
@@ -78,23 +80,11 @@ Application::Application(QObject* parent)
         m_turnEngines = new MockTurnEngineFactory(this);
     }
 
+#ifndef Q_OS_WASM
     // MicroTeX loads its fonts/XML resources once; the path is baked in at build
     // time (MICROTEX_RES_DIR). Done here so the "math" image provider can parse
     // formulas as soon as the scene requests them.
     tex::LaTeX::init(std::string(MICROTEX_RES_DIR));
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"SEGV\","
-                                     "\"location\":\"application.cpp:ctor\",\"message\":\"microtex "
-                                     "LaTeX::init done\",\"data\":{\"resDir\":\"%1\"},"
-                                     "\"timestamp\":%2}\n")
-                          .arg(QString::fromUtf8(MICROTEX_RES_DIR))
-                          .arg(QDateTime::currentMSecsSinceEpoch())
-                          .toUtf8());
-    }
-    // #endregion
 
     // Pin the base font size MicroTeX draws with (its QFonts are cached on first
     // use, so this must happen before the first parse and never change). The
@@ -102,62 +92,28 @@ Application::Application(QObject* parent)
     // which overflows Qt's FreeType raster on HiDPI and drops every glyph; see
     // be::app::kMathBaseFontPt for the full rationale and the matching render.
     tex::Formula::setDPITarget(72.f * be::app::kMathBaseFontPt);
+#endif
 }
 
 Application::~Application() {
     shutdownManagedDaemon();
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"SEGV\","
-                                     "\"location\":\"application.cpp:~Application\",\"message\":"
-                                     "\"before tex::LaTeX::release()\",\"data\":{},"
-                                     "\"timestamp\":%1}\n")
-                          .arg(QDateTime::currentMSecsSinceEpoch())
-                          .toUtf8());
-    }
-    // #endregion
+#ifndef Q_OS_WASM
     tex::LaTeX::release();
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"SEGV\","
-                                     "\"location\":\"application.cpp:~Application\",\"message\":"
-                                     "\"after tex::LaTeX::release()\",\"data\":{},"
-                                     "\"timestamp\":%1}\n")
-                          .arg(QDateTime::currentMSecsSinceEpoch())
-                          .toUtf8());
-    }
-    // #endregion
+#endif
 }
 
-void Application::emitOpenChat(const QString& hypothesisId, const QString& location) {
+void Application::emitOpenChat() {
     const QString profileId =
         m_services.profiles != nullptr ? m_services.profiles->defaultProfileId() : QString();
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"%1\","
-                                     "\"location\":\"%2\",\"message\":\"open a chat "
-                                     "bound to the default profile\",\"data\":{\"profileId\":"
-                                     "\"%3\"},\"timestamp\":%4}\n")
-                          .arg(hypothesisId, location, profileId)
-                          .arg(QDateTime::currentMSecsSinceEpoch())
-                          .toUtf8());
-    }
-    // #endregion
     emit openChatRequested(profileId);
 }
 
 void Application::openFirstChat() {
-    emitOpenChat(QStringLiteral("FIRST-CHAT"), QStringLiteral("application.cpp:openFirstChat"));
+    emitOpenChat();
 }
 
 void Application::openNewAgentChat() {
-    emitOpenChat(QStringLiteral("NEW-AGENT"), QStringLiteral("application.cpp:openNewAgentChat"));
+    emitOpenChat();
 }
 
 void Application::shutdownManagedDaemon() const {
@@ -322,8 +278,13 @@ void Application::driveFirstRunConnect() const {
         return; // returning users already auto-connected in completeWiring
     }
     const QString target = m_services.settings->resolvedConnectionTarget();
+#ifdef Q_OS_WASM
+    m_services.settings->setLastConnection(QStringLiteral("remote"), target);
+    m_services.connection->connectTo(QStringLiteral("remote"), target);
+#else
     m_services.settings->setLastConnection(QStringLiteral("local"), target);
     m_services.connection->connectTo(QStringLiteral("local"), target);
+#endif
 }
 
 void Application::settle(int ms) const {

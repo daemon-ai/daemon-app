@@ -8,6 +8,7 @@
 
 #include <QHash>
 #include <QList>
+#include <QVariantList>
 #include <QVariantMap>
 
 class QTimer;
@@ -43,8 +44,18 @@ public:
     void pauseDownload(const QString& jobId) override;
     void resumeDownload(const QString& jobId) override;
     void cancelDownload(const QString& jobId) override;
+    // Trivial mapping: the mock's "repo" IS the catalog model id it installs under.
+    [[nodiscard]] QString installedIdFor(const QString& repo, const QString& file) const override;
+    // Drops a TERMINAL download row (the mock already auto-removes completed rows).
+    void dismissDownload(const QString& jobId) override;
     void activate(const QString& modelId) override;
     void remove(const QString& modelId) override;
+
+    // TEST-ONLY deterministic seeding (tst_downloads_panel): replace the download rows verbatim
+    // (each element a full row map) and freeze the simulation — the tick timer stops and job
+    // bookkeeping is dropped, so seeded states (queued/downloading/paused/done/failed/cancelled)
+    // never mutate underneath a test. The app itself never calls this.
+    Q_INVOKABLE void seedDownloadRows(const QVariantList& rows);
 
 private:
     void tick();

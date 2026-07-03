@@ -176,6 +176,7 @@ struct ClientFrame {
     QByteArray mechanism; // AuthStart
     QByteArray data;      // AuthStart.initial / AuthStep.data (raw bytes)
     QByteArray token;     // AuthResume
+    QByteArray payload;   // Call/Open: the wrapped ApiRequest bytes (the "req" value)
 };
 
 inline ClientFrame parseClientFrame(const QByteArray& f) {
@@ -232,6 +233,16 @@ inline ClientFrame parseClientFrame(const QByteArray& f) {
         out.kind = ClientFrame::Open;
     } else if (tag == "Cancel") {
         out.kind = ClientFrame::Cancel;
+    }
+    // Capture the wrapped ApiRequest bytes: the "req" value is the frame's final element, so the
+    // remainder of the buffer is exactly the encoded request (lets tests assert what was sent,
+    // e.g. that a page-loop continuation carried the `after` cursor).
+    if (out.kind == ClientFrame::Call || out.kind == ClientFrame::Open) {
+        QByteArray reqKey;
+        qsizetype j = i;
+        if (cborText(p, n, j, &reqKey) && reqKey == "req") {
+            out.payload = QByteArray(reinterpret_cast<const char*>(p + j), n - j);
+        }
     }
     return out;
 }
@@ -411,17 +422,29 @@ inline QByteArray neSessionAdvanced(const char* session, quint64 epoch, quint64 
     return b;
 }
 
-inline QByteArray neDownloadProgress(quint64 id, quint64 pct, const char* state) {
+inline QByteArray neDownloadProgress(quint64 id, quint64 pct, const char* state,
+                                     quint64 downloadedBytes, quint64 totalBytes) {
     QByteArray b;
     b.append(static_cast<char>(0xA1));
     cborText(b, "DownloadProgress");
-    b.append(static_cast<char>(0xA3));
+    b.append(static_cast<char>(0xA5));
     cborText(b, "id");
     cborUint(b, id);
     cborText(b, "pct");
     cborUint(b, pct);
     cborText(b, "state");
     cborText(b, state);
+    cborText(b, "downloaded_bytes");
+    cborUint(b, downloadedBytes);
+    cborText(b, "total_bytes");
+    cborUint(b, totalBytes);
+    return b;
+}
+
+// v26: the payload-free catalog-changed pointer (a bare externally-tagged unit variant).
+inline QByteArray neCatalogChanged() {
+    QByteArray b;
+    cborText(b, "CatalogChanged");
     return b;
 }
 
@@ -483,11 +506,16 @@ public:
     }
 
     void setReplyPayload(const QByteArray& payload) { m_payload = payload; }
+    // Serve these payloads one per Call in order (page-loop tests), then fall back to the fixed
+    // reply payload once exhausted.
+    void setReplySequence(const QList<QByteArray>& payloads) { m_replySeq = payloads; }
     void setHang(bool hang) { m_hang = hang; }
     [[nodiscard]] int requestCount() const { return m_requestCount; } // Call + Open frames
     [[nodiscard]] int helloCount() const { return m_helloCount; }
     [[nodiscard]] int openCount() const { return m_openCount; } // Open frames seen
     [[nodiscard]] quint64 lastOpenId() const { return m_lastOpenId; }
+    // The wrapped ApiRequest bytes of every Call/Open received, in arrival order.
+    [[nodiscard]] QList<QByteArray> callPayloads() const { return m_callPayloads; }
 
     // Advertise these capability strings in the Hello instead of a current daemon's set - the
     // stale-daemon stand-in for the client's api-version connect gate (e.g. {"mux","stream"} for
@@ -661,16 +689,18 @@ private:
                 break;
             case ClientFrame::Call:
                 ++m_requestCount;
+                m_callPayloads.append(cf.payload);
                 if (!authed) {
                     ++m_callsBeforeAuthOk; // a leak: a request escaped pre-AuthOk
                 }
                 if (!m_hang && authed) {
-                    writeFrame(conn, buildIdRes("Reply", cf.id, m_payload));
+                    writeFrame(conn, buildIdRes("Reply", cf.id, nextReplyPayload()));
                 }
                 break;
             case ClientFrame::Open:
                 ++m_requestCount;
                 ++m_openCount;
+                m_callPayloads.append(cf.payload);
                 if (!authed) {
                     ++m_callsBeforeAuthOk;
                 }
@@ -691,6 +721,10 @@ private:
         conn->flush();
     }
 
+    QByteArray nextReplyPayload() {
+        return m_replySeq.isEmpty() ? m_payload : m_replySeq.takeFirst();
+    }
+
     QLocalServer* m_server = nullptr;
     QList<QLocalSocket*> m_conns;
     QHash<QLocalSocket*, QByteArray> m_buffers;
@@ -698,6 +732,8 @@ private:
     QLocalSocket* m_streamConn = nullptr;
     quint64 m_lastOpenId = 0;
     QByteArray m_payload;
+    QList<QByteArray> m_replySeq;
+    QList<QByteArray> m_callPayloads;
     QStringList m_helloFeatures = currentHelloFeatures();
     bool m_hang = false;
     int m_requestCount = 0;

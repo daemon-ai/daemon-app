@@ -60,6 +60,21 @@ Item {
                                 font.family: FontIcons.display; font.pixelSize: 10
                                 font.bold: true; color: Theme.accent
                             }
+                            // A vision-projector (mmproj) companion: kept for inventory /
+                            // removal, but it is never a chat model.
+                            Text {
+                                visible: entry.projector === true
+                                text: qsTr("PROJECTOR")
+                                font.family: FontIcons.display; font.pixelSize: 10
+                                font.bold: true; color: Theme.textMuted
+                            }
+                            // A text model with a paired projector loads vision-capable.
+                            Text {
+                                visible: entry.projector !== true && !!entry.mmprojPath
+                                text: qsTr("VISION")
+                                font.family: FontIcons.display; font.pixelSize: 10
+                                font.bold: true; color: Theme.accent
+                            }
                         }
                         Text {
                             // Local models show quant + on-disk size; cloud models show provider.
@@ -76,6 +91,9 @@ Item {
                     }
 
                     Kit.TextButton {
+                        // Projector companions are not activatable: the node would reject them
+                        // ("X is a vision projector (mmproj), not a chat model").
+                        visible: entry.projector !== true
                         text: entry.active ? qsTr("Active") : qsTr("Activate")
                         enabled: !entry.active
                         onClicked: ModelCatalog.activate(entry.id)

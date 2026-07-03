@@ -205,12 +205,12 @@ private:
     void shutdownManagedDaemon() const;
 
     // First-run completion (FirstRunModel::finished): open the first chat so a freshly-onboarded
-    // user lands in a working transcript. Resolves the default profile, logs, and emits
+    // user lands in a working transcript. Resolves the default profile and emits
     // openChatRequested.
     void openFirstChat();
-    // Shared open-a-chat body for both entry points: resolve the default profile id, append one
-    // NDJSON debug line under `hypothesisId`/`location`, and emit openChatRequested(profileId).
-    void emitOpenChat(const QString& hypothesisId, const QString& location);
+    // Shared open-a-chat body for both entry points: resolve the default profile id and emit
+    // openChatRequested(profileId).
+    void emitOpenChat();
 
     // Run the event loop for `ms` (a bounded settle so queued NodeApi requests + their responses
     // flush before a headless harness exits). Used only by the headless onboarding hook.

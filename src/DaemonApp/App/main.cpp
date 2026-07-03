@@ -5,7 +5,7 @@
 #include "daemon_app_version.h"
 #include "i18n/localization.h"
 
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS) || defined(Q_OS_WASM)
 #include <QGuiApplication>
 using AppBase = QGuiApplication;
 #else

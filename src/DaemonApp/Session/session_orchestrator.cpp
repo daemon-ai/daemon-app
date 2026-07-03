@@ -28,11 +28,25 @@ SessionOrchestrator::SessionOrchestrator(QObject* parent)
 void SessionOrchestrator::wireTurn() {
     // busy mirrors the turn's active state.
     connect(m_turn, &ITurnEngine::activeChanged, this, &SessionOrchestrator::busyChanged);
-    // Live subagent rows ride the same event stream the transcript/status bar consume; the model
-    // upserts the subagent.* events and ignores the rest.
-    connect(m_turn, &ITurnEngine::eventsEmitted, this,
-            [this](const QVariantList& events) { m_subagents->applyEvents(events); });
+    // Live subagent rows and todo updates ride the same event stream the transcript/status bar
+    // consume; the models pick their own event types and ignore the rest.
+    connect(m_turn, &ITurnEngine::eventsEmitted, this, [this](const QVariantList& events) {
+        m_subagents->applyEvents(events);
+        applyTodoEvents(events);
+    });
     connect(m_turn, &ITurnEngine::turnFinished, this, [this] { m_todoClearTimer.start(); });
+}
+
+void SessionOrchestrator::applyTodoEvents(const QVariantList& events) {
+    // The daemon engine surfaces the agent's `todo` tool detail as a `todoUpdate` event carrying
+    // the full current list ({text, done} rows); each update replaces the status stack's todos.
+    for (const QVariant& v : events) {
+        const QVariantMap event = v.toMap();
+        if (event.value(QStringLiteral("type")).toString() != QStringLiteral("todoUpdate")) {
+            continue;
+        }
+        m_todos->setTodos(event.value(QStringLiteral("items")).toList());
+    }
 }
 
 void SessionOrchestrator::setTurnEngines(ITurnEngineFactory* factory) {
@@ -50,19 +64,6 @@ void SessionOrchestrator::setTurnEngines(ITurnEngineFactory* factory) {
         m_turn->deleteLater();
     }
     m_turn = factory->create(this);
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"TURN-BIND\","
-                                     "\"location\":\"session_orchestrator.cpp:setTurnEngines\","
-                                     "\"message\":\"turn engine installed from factory\",\"data\":"
-                                     "{\"engine\":\"%1\"},\"timestamp\":%2}\n")
-                          .arg(QString::fromUtf8(m_turn->metaObject()->className()))
-                          .arg(QDateTime::currentMSecsSinceEpoch())
-                          .toUtf8());
-    }
-    // #endregion
     wireTurn();
     if (m_session != nullptr) {
         m_turn->setSessionId(m_session->currentId());
@@ -168,7 +169,7 @@ void SessionOrchestrator::submit(const QString& text, const QString& refs) {
     // A fresh turn pre-empts a pending clear of the previous turn's todos.
     m_todoClearTimer.stop();
     m_turn->start(text);
-    populateSimulatorTodos();
+    beginTurnStatusFeeds();
 }
 
 void SessionOrchestrator::rerun(const QString& text) {
@@ -182,7 +183,7 @@ void SessionOrchestrator::rerun(const QString& text) {
     }
     m_todoClearTimer.stop();
     m_turn->start(text);
-    populateSimulatorTodos();
+    beginTurnStatusFeeds();
 }
 
 void SessionOrchestrator::steer(const QString& text) {
@@ -231,13 +232,20 @@ void SessionOrchestrator::invokeCommand(const QString& command) {
     emit commandRequested(command);
 }
 
-void SessionOrchestrator::populateSimulatorTodos() {
+void SessionOrchestrator::beginTurnStatusFeeds() {
     // Drop any settled subagent rows from the previous turn so the status stack
     // starts clean; this turn's subagent.* events repopulate it.
     m_subagents->clear();
+    // Only the mock simulator fabricates todos; the daemon engine's arrive as real `todo` tool
+    // detail (`todoUpdate` events) on the stream — never a canned client-side plan.
+    if (m_turn != nullptr && m_turn->simulatesStatusFeeds()) {
+        populateSimulatorTodos();
+    }
+}
 
-    // Simulator content: no real todo backend exists yet, so a canned plan stands
-    // in for the turn and is cleared shortly after completion.
+void SessionOrchestrator::populateSimulatorTodos() {
+    // Simulator content: a canned plan stands in for the turn (pre-backend UI coverage) and is
+    // cleared shortly after completion.
     m_todos->setTodos(QVariantList{
         QVariantMap{{QStringLiteral("text"), tr("Inspect the project")},
                     {QStringLiteral("done"), true}},

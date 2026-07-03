@@ -48,11 +48,24 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "wasm-release",
+      "displayName": "WebAssembly (Release)",
+      "inherits": "base",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/wasm-emscripten.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "OFF",
+        "DAEMON_APP_TUI": "OFF",
+        "DAEMON_APP_WASM": "ON"
+      }
     }
   ],
   "buildPresets": [
     { "name": "desktop-debug", "configurePreset": "desktop-debug" },
-    { "name": "desktop-release", "configurePreset": "desktop-release" }
+    { "name": "desktop-release", "configurePreset": "desktop-release" },
+    { "name": "wasm-release", "configurePreset": "wasm-release" }
   ],
   "testPresets": [
     {

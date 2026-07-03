@@ -183,7 +183,9 @@ QVariant SessionsListModel::data(const QModelIndex& index, int role) const {
     case IdRole:
         return c.sessionId.toString();
     case TitleRole:
-        return c.title;
+        // Same fallback as the Fleet tree leaf: a fresh SessionCreate-minted session has no
+        // title until the first message seeds one node-side — never show a blank row.
+        return c.title.isEmpty() ? tr("(untitled)") : c.title;
     case SnippetRole:
         return snippetOf(c);
     case ModifiedRole:

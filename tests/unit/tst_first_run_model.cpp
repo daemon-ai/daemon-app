@@ -43,6 +43,10 @@ public:
     void pauseDownload(const QString&) override {}
     void resumeDownload(const QString&) override {}
     void cancelDownload(const QString&) override {}
+    [[nodiscard]] QString installedIdFor(const QString&, const QString&) const override {
+        return {};
+    }
+    void dismissDownload(const QString&) override {}
     void activate(const QString& id) override {
         current = id;
         emit currentChanged();

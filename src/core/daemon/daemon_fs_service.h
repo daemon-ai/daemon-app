@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "daemon/page_loop.h"
 #include "fs/ifs_service.h"
 
 #include <QByteArray>
@@ -50,6 +51,17 @@ private:
         QString rootId;
         QString path; // file path (read/stat/write) or dir (list) or watch key (watch)
         QString query;
+        // Page-loop state (responses are bounded at NodeApiCodec::kWirePageMax): Op::List runs
+        // the shared PageLoop accumulator across the `after`-cursor loop so `listed` keeps its
+        // "one signal = complete dir" contract; Op::Search accumulates hits across `page`
+        // re-issues, emitting a full snapshot per page (the model's replace semantics).
+        daemonapp::daemon::PageLoop<FsEntry> list; // Op::List: entries gathered so far + guard
+        QList<FsSearchHit> hits;                   // Op::Search: hits gathered so far
+        quint32 page = 0;           // Op::Search: zero-based page index of this request
+        quint32 budget = 0;         // Op::Search: total-hit budget (maxResults, else 200)
+        quint32 maxResults = 0;     // Op::Search: the request's maxResults (re-issued verbatim)
+        bool regex = false;         // Op::Search: re-issue parameter
+        bool caseSensitive = false; // Op::Search: re-issue parameter
     };
     struct WatchEntry {
         QString rootId;
@@ -72,6 +84,9 @@ private:
     QHash<QString, WatchEntry> m_watches; // key -> cursor + poll timer
 
     static constexpr int kWatchPollMs = 1500;
+    // Default total-hit budget for a search with no explicit maxResults (the node's historical
+    // single-shot default, now gathered across pages of kWirePageMax).
+    static constexpr quint32 kDefaultSearchBudget = 200;
 };
 
 } // namespace fs

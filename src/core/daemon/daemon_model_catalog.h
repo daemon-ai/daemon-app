@@ -5,14 +5,18 @@
 
 #include "models/imodel_catalog.h"
 
+#include <QSet>
 #include <QString>
 
 namespace uimodels {
 class VariantListModel;
 }
 namespace daemonapp::daemon {
+class CredentialRepository;
 class ModelRepository;
-}
+class ProfileRepository;
+class ProviderRepository;
+} // namespace daemonapp::daemon
 
 namespace models {
 
@@ -30,7 +34,13 @@ class DaemonModelCatalog : public IModelCatalog {
     Q_OBJECT
 
 public:
-    DaemonModelCatalog(daemonapp::daemon::ModelRepository* models, QObject* parent = nullptr);
+    // `providers`/`credentials`/`profiles` (optional) back the Providers tab with the node's real
+    // ProviderCatalog + credential presence; null falls back to an empty provider list.
+    explicit DaemonModelCatalog(daemonapp::daemon::ModelRepository* models,
+                                daemonapp::daemon::ProviderRepository* providers = nullptr,
+                                daemonapp::daemon::CredentialRepository* credentials = nullptr,
+                                daemonapp::daemon::ProfileRepository* profiles = nullptr,
+                                QObject* parent = nullptr);
 
     [[nodiscard]] QObject* discover() const override;
     [[nodiscard]] QObject* files() const override;
@@ -43,6 +53,8 @@ public:
     [[nodiscard]] QVariantList providers() const override;
 
     void search(const QString& query, const QString& sizeFilter = {}) override;
+    [[nodiscard]] bool searchHasMore() const override;
+    void searchMore() override;
     void repoFiles(const QString& repo) override;
     void recommend(const QString& repo) override;
     [[nodiscard]] QVariantMap recommendation() const override;
@@ -52,23 +64,43 @@ public:
     void pauseDownload(const QString& jobId) override;
     void resumeDownload(const QString& jobId) override;
     void cancelDownload(const QString& jobId) override;
+    // Matches the repository's DECODED installed models by download source (repo + file, with a
+    // repo-only fallback for file-less jobs whose row name is the repo itself).
+    [[nodiscard]] QString installedIdFor(const QString& repo, const QString& file) const override;
+    // Only a terminal-state row is dismissible; the id joins a client-side hidden set that
+    // rebuildDownloads() filters on every downloadsChanged rebuild.
+    void dismissDownload(const QString& jobId) override;
     void activate(const QString& modelId) override;
+    void activateForProfile(const QString& modelId, const QString& profileId) override;
     void remove(const QString& modelId) override;
+
+    // True when `id` names a locally-installed model (vs a cloud descriptor) — authoritative from
+    // the repository's decoded installed set (not the projected rows).
+    [[nodiscard]] bool isLocalInstalled(const QString& id) const override;
 
 private:
     void rebuildDiscover();
     void rebuildFiles();
     void rebuildDownloads();
     void rebuildInstalled();
-    // True when `id` names a locally-installed model (vs a cloud descriptor).
-    [[nodiscard]] bool isLocalInstalled(const QString& id) const;
+    // Shared activate body: optional explicit profile ("" = the node's default local profile).
+    void activateImpl(const QString& modelId, const QString& profileId);
 
     daemonapp::daemon::ModelRepository* m_models = nullptr;
+    daemonapp::daemon::ProviderRepository* m_providers = nullptr;
+    daemonapp::daemon::CredentialRepository* m_credentials = nullptr;
+    daemonapp::daemon::ProfileRepository* m_profiles = nullptr;
     uimodels::VariantListModel* m_discover = nullptr;
     uimodels::VariantListModel* m_files = nullptr;
     uimodels::VariantListModel* m_downloads = nullptr;
     uimodels::VariantListModel* m_installed = nullptr;
     QString m_pickedId; // the user's explicit selection, overrides the daemon's resolved current
+    // The locally-installed ids of the previous rebuild, so a rebuild that observes the set GROW
+    // emits downloadFinished(id) (the signal that un-stales the provider picker's offered models).
+    QSet<QString> m_knownInstalled;
+    // Dismissed (terminal) download job ids, hidden from downloads() rebuilds. Client-side only:
+    // the node retains its job history forever and the wire has no clear op.
+    QSet<QString> m_dismissedDownloads;
 };
 
 } // namespace models

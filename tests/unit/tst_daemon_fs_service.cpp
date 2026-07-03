@@ -49,24 +49,41 @@ QByteArray fsRootsResp() {
     return b;
 }
 
-// {"FsList": [ {"name":"a.txt","path":"a.txt","kind":"file","size":5,"mtime_ms":9} ]}
-QByteArray fsListResp() {
-    QByteArray b;
-    mapHdr(b, 1);
-    cborText(b, "FsList");
-    arrHdr(b, 1);
+void fsEntry(QByteArray& b, const char* name) {
     mapHdr(b, 5);
     cborText(b, "name");
-    cborText(b, "a.txt");
+    cborText(b, name);
     cborText(b, "path");
-    cborText(b, "a.txt");
+    cborText(b, name); // root-relative path == name for a flat listing
     cborText(b, "kind");
     cborText(b, "file");
     cborText(b, "size");
     cborUint(b, 5);
     cborText(b, "mtime_ms");
     cborUint(b, 9);
+}
+
+// One fs_list page (the uniform WirePage, wire v25): {"FsList": {"items":[...], ?"next":
+// <cursor>}}.
+QByteArray fsListPageResp(const QList<QByteArray>& names, const char* next = nullptr) {
+    QByteArray b;
+    mapHdr(b, 1);
+    cborText(b, "FsList");
+    mapHdr(b, next != nullptr ? 2 : 1);
+    cborText(b, "items");
+    arrHdr(b, static_cast<int>(names.size()));
+    for (const QByteArray& n : names) {
+        fsEntry(b, n.constData());
+    }
+    if (next != nullptr) {
+        cborText(b, "next");
+        cborText(b, next);
+    }
     return b;
+}
+
+QByteArray fsListResp() {
+    return fsListPageResp({QByteArrayLiteral("a.txt")});
 }
 
 // {"FsRead": {"bytes":<bstr "hello">,"revision":{"mtime_ms":9,"size":5}}}
@@ -174,6 +191,118 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(wrote.count(), 1, 3000);
         QVERIFY(wrote.at(0).at(2).toBool());                            // ok
         QCOMPARE(wrote.at(0).at(3).toString(), QStringLiteral("11:5")); // revision
+    }
+
+    // Wire v24 page loop: a listing spanning two pages is fetched to completion — the second
+    // request carries the first page's `next` as its `after` cursor — and the consumer still
+    // sees exactly ONE listed() with the full directory (FsExplorerModel's contract).
+    void listPagesToOneCompleteSignal() {
+        const QString path = sock(QStringLiteral("fsp.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(path), "listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(db(QStringLiteral("fsp.db")));
+        DaemonFsService svc(&client, &cache);
+
+        fake.setReplySequence(
+            {fsListPageResp({QByteArrayLiteral("a.txt"), QByteArrayLiteral("b.txt")}, "b.txt"),
+             fsListPageResp({QByteArrayLiteral("c.txt")})});
+        QSignalSpy listed(&svc, &fs::IFsService::listed);
+        svc.open(QStringLiteral("workspace"), QString());
+        QTRY_COMPARE_WITH_TIMEOUT(listed.count(), 1, 3000);
+        QTest::qWait(100); // settle: a page-loop bug would emit again / issue extra requests
+        QCOMPARE(listed.count(), 1);
+
+        // One complete signal, all three entries, page order preserved.
+        const auto entries = qvariant_cast<QList<fs::FsEntry>>(listed.at(0).at(2));
+        QCOMPARE(entries.size(), 3);
+        QCOMPARE(entries.at(0).name, QStringLiteral("a.txt"));
+        QCOMPARE(entries.at(1).name, QStringLiteral("b.txt"));
+        QCOMPARE(entries.at(2).name, QStringLiteral("c.txt"));
+
+        // The continuation request carried the cursor: its bytes are exactly the codec's encoding
+        // of the same FsList with after = "b.txt".
+        const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.size(), 2);
+        QCOMPARE(calls.at(0), daemonapp::daemon::NodeApiCodec::encodeFsListRequest(
+                                  QStringLiteral("workspace"), QString()));
+        QCOMPARE(calls.at(1),
+                 daemonapp::daemon::NodeApiCodec::encodeFsListRequest(
+                     QStringLiteral("workspace"), QString(), false, QStringLiteral("b.txt")));
+
+        // All pages were mirrored into the offline cache.
+        QCOMPARE(cache.fsEntries(QStringLiteral("workspace")).size(), 3);
+    }
+
+    // A defective server that echoes a NON-ADVANCING cursor (`next` == the `after` the client just
+    // sent) must not spin the page loop: the client stops after the one wasted retry, serves what
+    // accumulated in a single listed(), and issues no further request. (The node-side `paginate`
+    // proves it never echoes the cursor; this guards the client against any future server bug.)
+    void nonAdvancingCursorStopsTheLoop() {
+        const QString path = sock(QStringLiteral("fsc.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(path), "listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(db(QStringLiteral("fsc.db")));
+        DaemonFsService svc(&client, &cache);
+
+        // Every reply claims more pages remain at the SAME cursor; an unguarded loop would
+        // re-issue after="b.txt" forever (the fixed payload keeps serving it past the sequence).
+        const QByteArray echoing =
+            fsListPageResp({QByteArrayLiteral("a.txt"), QByteArrayLiteral("b.txt")}, "b.txt");
+        fake.setReplyPayload(echoing);
+        QSignalSpy listed(&svc, &fs::IFsService::listed);
+        svc.open(QStringLiteral("workspace"), QString());
+        QTRY_COMPARE_WITH_TIMEOUT(listed.count(), 1, 3000);
+        QTest::qWait(150); // settle: a spinning loop would keep issuing requests
+        QCOMPARE(listed.count(), 1);
+        // Page 1 (cursor recorded) + exactly one continuation (cursor did not advance -> stop).
+        QCOMPARE(fake.requestCount(), 2);
+        const auto entries = qvariant_cast<QList<fs::FsEntry>>(listed.at(0).at(2));
+        QCOMPARE(entries.size(), 4); // both pages' items are served rather than dropped
+    }
+
+    // stat() reuses the fs_list page decode but stays a single-shot: one statResult, no loop.
+    void statStaysSingleShot() {
+        const QString path = sock(QStringLiteral("fss.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(path), "listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(db(QStringLiteral("fss.db")));
+        DaemonFsService svc(&client, &cache);
+
+        // Even a page claiming `next` must not make stat loop (single-shot by contract).
+        fake.setReplyPayload(fsListPageResp({QByteArrayLiteral("a.txt")}, "a.txt"));
+        QSignalSpy statSpy(&svc, &fs::IFsService::statResult);
+        svc.stat(QStringLiteral("workspace"), QStringLiteral("a.txt"));
+        QTRY_COMPARE_WITH_TIMEOUT(statSpy.count(), 1, 3000);
+        QVERIFY(statSpy.at(0).at(3).toBool()); // ok
+        const auto entry = qvariant_cast<fs::FsEntry>(statSpy.at(0).at(2));
+        QCOMPARE(entry.name, QStringLiteral("a.txt"));
+        QTest::qWait(100); // settle: a looping stat would issue a second request
+        QCOMPARE(fake.requestCount(), 1);
+    }
+
+    // decodeFsList surfaces the page's resume cursor: set when `next` is present, cleared on the
+    // last page (and the null arm decodes as "no more pages" too).
+    void decodeFsListSurfacesNextCursor() {
+        using daemonapp::daemon::NodeApiCodec;
+        QList<daemonapp::daemon::DecodedFsEntry> entries;
+        QString next;
+        QVERIFY(NodeApiCodec::decodeFsList(fsListPageResp({QByteArrayLiteral("a.txt")}, "a.txt"),
+                                           &entries, &next));
+        QCOMPARE(entries.size(), 1);
+        QCOMPARE(next, QStringLiteral("a.txt"));
+
+        QVERIFY(NodeApiCodec::decodeFsList(fsListPageResp({QByteArrayLiteral("a.txt")}), &entries,
+                                           &next));
+        QVERIFY(next.isEmpty());
     }
 
     // The lossless watch path: a page with reset=true forces a changed() so the consumer re-lists.

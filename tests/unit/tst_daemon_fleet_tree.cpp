@@ -76,6 +76,26 @@ QByteArray treeResp() {
     return b;
 }
 
+// One tree page (wire v25): {"Tree": {"root": "u1", "nodes": [<one node>], ?"next": <cursor>}}.
+// `root` rides every page; a set `next` chains the node pages.
+QByteArray treePageResp(const char* nodeId, const char* kind, const QList<const char*>& children,
+                        const char* next = nullptr) {
+    QByteArray b;
+    mapHdr(b, 1);
+    cborText(b, "Tree");
+    mapHdr(b, next != nullptr ? 3 : 2);
+    cborText(b, "root");
+    cborText(b, "u1");
+    cborText(b, "nodes");
+    arrHdr(b, 1);
+    unitNode(b, nodeId, kind, children);
+    if (next != nullptr) {
+        cborText(b, "next");
+        cborText(b, next);
+    }
+    return b;
+}
+
 // {"Error": {"Unsupported": "engine leaf"}}
 QByteArray unsupportedResp() {
     QByteArray b;
@@ -162,6 +182,44 @@ private slots:
         auto* m = model(tree);
         QCOMPARE(m->count(), 2);
         QCOMPARE(m->at(0).value(QStringLiteral("id")).toString(), QStringLiteral("u1"));
+    }
+
+    // Wire v25 page loop: a tree served in two node pages accumulates into ONE treeRefreshed with
+    // the full reassembled structure (root from the first page; the child arrives on page two),
+    // and the continuation request carries the `after` cursor.
+    void treePagesReassembleAcrossTheCursorLoop() {
+        const QString sock = m_tmp.filePath(QStringLiteral("fleet-pg.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplySequence(
+            {treePageResp("u1", "Orchestrator", {"u2"}, "u1"), treePageResp("u2", "Engine", {})});
+        DaemonTransport transport;
+        transport.setSocketPath(sock);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("fleet-pg.db")));
+        FleetRepository repo(&client, &cache);
+        DaemonFleetTree tree(&repo);
+
+        QSignalSpy refreshed(&repo, &FleetRepository::treeRefreshed);
+        repo.refreshTree();
+        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
+        QTest::qWait(100); // settle: a page-loop bug would emit again / issue extra requests
+        QCOMPARE(refreshed.count(), 1);
+
+        // The whole (two-page) tree reassembled: root at depth 0, the page-two child under it.
+        QCOMPARE(cache.fleetUnits().size(), 2);
+        auto* m = model(tree);
+        QCOMPARE(m->count(), 2);
+        QCOMPARE(m->at(0).value(QStringLiteral("id")).toString(), QStringLiteral("u1"));
+        QCOMPARE(m->at(1).value(QStringLiteral("id")).toString(), QStringLiteral("u2"));
+        QCOMPARE(m->at(1).value(QStringLiteral("depth")).toInt(), 1);
+
+        // The continuation request carried the cursor: byte-identical to encodeTreeRequest("u1").
+        const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.size(), 2);
+        QCOMPARE(calls.at(0), daemonapp::daemon::NodeApiCodec::encodeTreeRequest());
+        QCOMPARE(calls.at(1),
+                 daemonapp::daemon::NodeApiCodec::encodeTreeRequest(QStringLiteral("u1")));
     }
 
     // PRO-10: pausing an engine leaf is Unsupported -> controlRejected fires + the optimistic

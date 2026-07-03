@@ -181,6 +181,62 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(engine.nudges, 1, 3000);
     }
 
+    // A CatalogChanged notification (wire v26) triggers a ModelCatalog refetch — the push path
+    // that makes a finished download appear without any client polling.
+    void catalogChangedRefetchesModelCatalog() {
+        const QString path = sock(QStringLiteral("catalog.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(path), "listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(dbPath(QStringLiteral("cc.db")));
+        SessionRepository sessions(&client, &cache);
+        ApprovalRepository approvals(&client, &cache);
+        ModelRepository models(&client, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
+
+        mgr.start();
+        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
+        const int callsBefore = fake.requestCount();
+
+        fake.pushItem(
+            daemonapp::test::buildEventsPage({daemonapp::test::neCatalogChanged()}, 1, 1));
+        // The routed refreshCatalog() issues a ModelCatalog one-shot Call.
+        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 3000);
+    }
+
+    // A DownloadProgress notification (wire v26) patches the job row with the REAL byte counters
+    // carried on the event (no derived math).
+    void downloadProgressAppliesByteCounters() {
+        const QString path = sock(QStringLiteral("dlprog.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(path), "listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(dbPath(QStringLiteral("dp.db")));
+        SessionRepository sessions(&client, &cache);
+        ApprovalRepository approvals(&client, &cache);
+        ModelRepository models(&client, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
+        QSignalSpy downloads(&models, &ModelRepository::downloadsChanged);
+
+        mgr.start();
+        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
+
+        fake.pushItem(daemonapp::test::buildEventsPage(
+            {daemonapp::test::neDownloadProgress(9, 50, "Downloading", 46'000'000, 92'000'000)}, 1,
+            1));
+        QTRY_COMPARE_WITH_TIMEOUT(downloads.count(), 1, 3000);
+        QCOMPARE(models.downloads().size(), 1);
+        const auto& s = models.downloads().first();
+        QCOMPARE(s.id, quint64(9));
+        QCOMPARE(s.state, QStringLiteral("Downloading"));
+        QCOMPARE(s.downloadedBytes, quint64(46'000'000));
+        QCOMPARE(s.totalBytes, quint64(92'000'000));
+    }
+
     // ResyncNeeded re-baselines (emits the resyncNeeded signal after kicking the refetch).
     void resyncNeededReBaselines() {
         const QString path = sock(QStringLiteral("resync.sock"));
@@ -204,9 +260,10 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(resync.count(), 1, 3000);
     }
 
-    // The durable render-from-cache transcript: persisted blocks project into the content()
-    // markdown, and re-reading after a "refocus" (a fresh store over the same db) still renders
-    // them.
+    // The durable render-from-cache transcript: persisted blocks project into the CANONICAL
+    // msg-fence transcript markdown (the ```msg boundary markers the live ingest produces, so a
+    // reload renders the same chat bubbles — never a "**Role:**" digest), and re-reading after a
+    // "refocus" (a fresh store over the same db) still renders them.
     void transcriptBlocksRenderFromCache() {
         const QString db = dbPath(QStringLiteral("transcript.db"));
         {
@@ -231,7 +288,14 @@ private slots:
             const QString md = store.content(domain::SessionId(QStringLiteral("s1")));
             QVERIFY2(md.contains(QStringLiteral("hello there")), qPrintable(md));
             QVERIFY2(md.contains(QStringLiteral("general kenobi")), qPrintable(md));
-            QVERIFY2(md.contains(QStringLiteral("**Assistant:**")), qPrintable(md));
+            // Canonical msg-fence boundaries with the persisted roles, not a lossy digest.
+            QVERIFY2(
+                md.contains(QStringLiteral("```msg\n{\"id\":\"cache-1\",\"role\":\"user\"}\n```")),
+                qPrintable(md));
+            QVERIFY2(md.contains(QStringLiteral(
+                         "```msg\n{\"id\":\"cache-2\",\"role\":\"assistant\"}\n```")),
+                     qPrintable(md));
+            QVERIFY2(!md.contains(QStringLiteral("**Assistant:**")), qPrintable(md));
         }
         // Refocus / cold start: a new store over the same persisted db renders from disk.
         {
@@ -240,6 +304,105 @@ private slots:
             const QString md = store.content(domain::SessionId(QStringLiteral("s1")));
             QVERIFY2(md.contains(QStringLiteral("general kenobi")), qPrintable(md));
         }
+    }
+
+    // The `todo` tool's blocks are the status stack's feed, not transcript content: the cache
+    // projection skips its ToolCall AND the matching ToolResult (mirrors the live suppression),
+    // while other tools render as canonical ```tool fences (result folded in as status; a
+    // resultless call stays "running") inside the assistant bubble.
+    void todoToolBlocksAreSkippedInProjection() {
+        DaemonCacheStore cache(dbPath(QStringLiteral("todo-skip.db")));
+        QVERIFY(cache.isOpen());
+        CachedTranscriptBlockRow todoCall;
+        todoCall.sessionId = QStringLiteral("s1");
+        todoCall.seq = 1;
+        todoCall.kind = QStringLiteral("ToolCall");
+        todoCall.callId = QStringLiteral("c1");
+        todoCall.toolName = QStringLiteral("todo");
+        todoCall.argsSummary = QStringLiteral("3 items");
+        QVERIFY(cache.upsertTranscriptBlock(todoCall));
+        CachedTranscriptBlockRow todoResult;
+        todoResult.sessionId = QStringLiteral("s1");
+        todoResult.seq = 2;
+        todoResult.kind = QStringLiteral("ToolResult");
+        todoResult.callId = QStringLiteral("c1");
+        todoResult.ok = true;
+        todoResult.summary = QStringLiteral("todo: 1/3 complete");
+        QVERIFY(cache.upsertTranscriptBlock(todoResult));
+        CachedTranscriptBlockRow shellCall;
+        shellCall.sessionId = QStringLiteral("s1");
+        shellCall.seq = 3;
+        shellCall.kind = QStringLiteral("ToolCall");
+        shellCall.callId = QStringLiteral("c2");
+        shellCall.toolName = QStringLiteral("terminal");
+        shellCall.argsSummary = QStringLiteral("ls");
+        QVERIFY(cache.upsertTranscriptBlock(shellCall));
+        CachedTranscriptBlockRow shellResult;
+        shellResult.sessionId = QStringLiteral("s1");
+        shellResult.seq = 4;
+        shellResult.kind = QStringLiteral("ToolResult");
+        shellResult.callId = QStringLiteral("c2");
+        shellResult.ok = true;
+        QVERIFY(cache.upsertTranscriptBlock(shellResult));
+        CachedTranscriptBlockRow openCall;
+        openCall.sessionId = QStringLiteral("s1");
+        openCall.seq = 5;
+        openCall.kind = QStringLiteral("ToolCall");
+        openCall.callId = QStringLiteral("c3");
+        openCall.toolName = QStringLiteral("compile");
+        openCall.argsSummary = QStringLiteral("ninja");
+        QVERIFY(cache.upsertTranscriptBlock(openCall));
+
+        CachedSessionStore store(&cache, nullptr);
+        const QString md = store.content(domain::SessionId(QStringLiteral("s1")));
+        QVERIFY2(!md.contains(QStringLiteral("todo")), qPrintable(md));
+        // The finished tool: one ```tool fence with the result folded in as status=ok.
+        QVERIFY2(md.contains(QStringLiteral(
+                     "```tool\n{\"argsSummary\":\"ls\",\"callId\":\"c2\",\"name\":\"terminal\","
+                     "\"status\":\"ok\"}\n```")),
+                 qPrintable(md));
+        // The resultless tool projects as still running.
+        QVERIFY2(md.contains(QStringLiteral("\"name\":\"compile\",\"status\":\"running\"")),
+                 qPrintable(md));
+    }
+
+    // Reasoning disclosures persist as cache blocks and project as canonical ```reasoning
+    // fences inside the assistant bubble — nothing in the transcript drops on a reload. The
+    // final assistant message continues the same bubble (one msg marker), matching the live
+    // single-assistant-turn grouping.
+    void reasoningBlocksSurviveReload() {
+        DaemonCacheStore cache(dbPath(QStringLiteral("reasoning.db")));
+        QVERIFY(cache.isOpen());
+        CachedTranscriptBlockRow user;
+        user.sessionId = QStringLiteral("s1");
+        user.seq = 1;
+        user.kind = QStringLiteral("Message");
+        user.role = QStringLiteral("User");
+        user.text = QStringLiteral("why?");
+        QVERIFY(cache.upsertTranscriptBlock(user));
+        CachedTranscriptBlockRow reasoning;
+        reasoning.sessionId = QStringLiteral("s1");
+        reasoning.seq = 2;
+        reasoning.kind = QStringLiteral("Reasoning");
+        reasoning.text = QStringLiteral("Think first, then answer.");
+        QVERIFY(cache.upsertTranscriptBlock(reasoning));
+        CachedTranscriptBlockRow asst;
+        asst.sessionId = QStringLiteral("s1");
+        asst.seq = 3;
+        asst.kind = QStringLiteral("Message");
+        asst.role = QStringLiteral("Assistant");
+        asst.text = QStringLiteral("because"); // continues the reasoning-opened bubble
+        QVERIFY(cache.upsertTranscriptBlock(asst));
+
+        CachedSessionStore store(&cache, nullptr);
+        const QString md = store.content(domain::SessionId(QStringLiteral("s1")));
+        QVERIFY2(md.contains(QStringLiteral("```reasoning\n{\"body\":\"Think first, then answer.\","
+                                            "\"status\":\"complete\"}\n```")),
+                 qPrintable(md));
+        QVERIFY2(md.contains(QStringLiteral("because")), qPrintable(md));
+        // One assistant marker: the disclosure opened the bubble, the message continued it.
+        QCOMPARE(md.count(QStringLiteral("\"role\":\"assistant\"")), 1);
+        QCOMPARE(md.count(QStringLiteral("\"role\":\"user\"")), 1);
     }
 
     // L4: the first (cold) refresh is a full page that seeds the cache + persists the roster rev; a

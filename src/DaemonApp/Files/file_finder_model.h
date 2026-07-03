@@ -70,6 +70,7 @@ signals:
 private slots:
     void onListed(const QString& rootId, const QString& dir, const QList<fs::FsEntry>& entries);
     void onRootsChanged(const QList<fs::FsRoot>& roots);
+    void onError(const QString& rootId, const QString& path, const QString& message);
 
 private:
     struct File {

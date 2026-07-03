@@ -224,22 +224,6 @@ void EditorController::loadTranscript(QObject* store, const QString& sessionId) 
                                   Q_ARG(QString, sessionId));
     }
 
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(
-                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"TRANSCRIPT-LOAD\","
-                               "\"location\":\"editor_controller.cpp:loadTranscript\","
-                               "\"message\":\"loadTranscript runs\",\"data\":{\"boundSession\":"
-                               "\"%1\",\"empty\":%2},\"timestamp\":%3}\n")
-                    .arg(sessionId)
-                    .arg(markdown.isEmpty() ? "true" : "false")
-                    .arg(QDateTime::currentMSecsSinceEpoch())
-                    .toUtf8());
-    }
-    // #endregion
-
     // Rebuild the document from the decomposed entry sequence (the P4 render path),
     // then mirror loadMarkdown's read-first post-load (no block activation, re-anchor
     // search; loadTranscript is a session-switch/reload path, not an edit).

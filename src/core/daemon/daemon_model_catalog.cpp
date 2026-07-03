@@ -8,6 +8,8 @@
 #include "uimodels/variant_list_model.h"
 
 #include <algorithm>
+#include <QHash>
+#include <QSet>
 
 namespace models {
 
@@ -38,10 +40,39 @@ QString downloadStateToken(const QString& wire) {
     }
     return QStringLiteral("downloading");
 }
+
+// Whether a normalized state token names a settled job (dismissible; no longer progressing).
+bool isTerminalStateToken(const QString& token) {
+    return token == QStringLiteral("done") || token == QStringLiteral("failed") ||
+           token == QStringLiteral("cancelled");
+}
+
+// Whether a filename carries the vision-projector (mmproj) marker ("mm-proj" normalizes).
+bool isMmprojName(const QString& name) {
+    const QString norm =
+        name.toLower().replace(QStringLiteral("mm-proj"), QStringLiteral("mmproj"));
+    return norm.contains(QStringLiteral("mmproj")) || norm.contains(QStringLiteral("projector"));
+}
+
+// Whether an installed record is a vision-projector artifact: the authoritative `arch == clip`
+// GGUF metadata, or the mmproj filename hint on the repo file / on-disk name. Mirrors the node's
+// classification so the UI badges exactly what the node refuses to activate.
+bool isProjectorRecord(const DecodedInstalledModel& m) {
+    if (m.arch.compare(QStringLiteral("clip"), Qt::CaseInsensitive) == 0) {
+        return true;
+    }
+    const QString localName = m.localPath.section(QLatin1Char('/'), -1);
+    return isMmprojName(m.file) || isMmprojName(localName);
+}
 } // namespace
 
-DaemonModelCatalog::DaemonModelCatalog(ModelRepository* models, QObject* parent)
-    : IModelCatalog(parent), m_models(models), m_discover(new uimodels::VariantListModel(this)),
+DaemonModelCatalog::DaemonModelCatalog(ModelRepository* models,
+                                       daemonapp::daemon::ProviderRepository* providers,
+                                       daemonapp::daemon::CredentialRepository* credentials,
+                                       daemonapp::daemon::ProfileRepository* profiles,
+                                       QObject* parent)
+    : IModelCatalog(parent), m_models(models), m_providers(providers), m_credentials(credentials),
+      m_profiles(profiles), m_discover(new uimodels::VariantListModel(this)),
       m_files(new uimodels::VariantListModel(this)),
       m_downloads(new uimodels::VariantListModel(this)),
       m_installed(new uimodels::VariantListModel(this)) {
@@ -60,8 +91,10 @@ DaemonModelCatalog::DaemonModelCatalog(ModelRepository* models, QObject* parent)
             m_models->refreshCatalog();
             emit currentChanged();
         });
-        connect(m_models, &ModelRepository::searchHitsChanged, this,
-                &DaemonModelCatalog::rebuildDiscover);
+        connect(m_models, &ModelRepository::searchHitsChanged, this, [this] {
+            rebuildDiscover();
+            emit searchHasMoreChanged();
+        });
         connect(m_models, &ModelRepository::filesLoaded, this, [this](const QString& repo) {
             rebuildFiles();
             emit filesChanged(repo);
@@ -72,10 +105,21 @@ DaemonModelCatalog::DaemonModelCatalog(ModelRepository* models, QObject* parent)
         });
         connect(m_models, &ModelRepository::downloadsChanged, this,
                 &DaemonModelCatalog::rebuildDownloads);
+        // Bridge the job-accepted signal so QML (quant picker / discover dialog) reacts without
+        // reaching into the repository layer.
+        connect(m_models, &ModelRepository::downloadStarted, this,
+                [this](quint64 id) { emit downloadStarted(QString::number(id)); });
+        // Surface model-op failures (HF network errors, gated repos, failed activations...) on the
+        // facade so the Models pages + wizard render them instead of failing silently.
+        connect(m_models, &ModelRepository::operationFailed, this,
+                [this](const QString& message) { setLastError(message); });
         // Seed the cloud catalog + installed set + current selection on construction.
         m_models->refreshModels();
         m_models->refreshCatalog();
         m_models->refreshCurrent();
+        // And the download-job snapshot: the daemon outlives the GUI, so a job started by a
+        // previous app instance must render immediately, not only on the next progress event.
+        m_models->refreshDownloads();
     }
 }
 
@@ -128,21 +172,43 @@ QStringList DaemonModelCatalog::installedIds() const {
 }
 
 QVariantList DaemonModelCatalog::providers() const {
-    const auto mkp = [](const QString& id, const QString& name, const QString& kind) {
+    // The node's real ProviderCatalog (never a hardcoded list). `configured` approximates
+    // credential presence: a keyless provider is usable as-is; a key-requiring one is "configured"
+    // when some profile bound to its wire selector has a stored credential. (Genai vendors share
+    // one selector, so a key stored for any genai vendor marks them all — the redacted
+    // CredentialList carries no vendor dimension to be more precise with.)
+    QVariantList out;
+    if (m_providers == nullptr) {
+        return out;
+    }
+    // The wire selectors that hold a credential, resolved profile -> provider via the reflected
+    // ProfileList + the redacted CredentialList.
+    QSet<QString> credentialedSelectors;
+    if (m_credentials != nullptr && m_profiles != nullptr) {
+        QHash<QString, QString> profileSelector; // profile id -> provider wire selector
+        for (const daemonapp::daemon::DecodedProfileInfo& p : m_profiles->profiles()) {
+            profileSelector.insert(p.id, p.provider);
+        }
+        for (const daemonapp::daemon::DecodedCredentialInfo& c : m_credentials->credentials()) {
+            if (c.present && profileSelector.contains(c.profile)) {
+                credentialedSelectors.insert(profileSelector.value(c.profile));
+            }
+        }
+    }
+    for (const daemonapp::daemon::DecodedProviderDescriptor& d : m_providers->providers()) {
+        if (d.id == QStringLiteral("mock") || d.wireSelector == QStringLiteral("mock")) {
+            continue; // never offer Mock (matches the provider-picker seam)
+        }
         QVariantMap m;
-        m[QStringLiteral("id")] = id;
-        m[QStringLiteral("name")] = name;
-        m[QStringLiteral("kind")] = kind; // "local" | "remote"
-        m[QStringLiteral("configured")] = false;
-        return QVariant(m);
-    };
-    return {
-        mkp(QStringLiteral("huggingface"), QStringLiteral("Hugging Face"), QStringLiteral("local")),
-        mkp(QStringLiteral("anthropic"), QStringLiteral("Anthropic"), QStringLiteral("remote")),
-        mkp(QStringLiteral("openai"), QStringLiteral("OpenAI"), QStringLiteral("remote")),
-        mkp(QStringLiteral("openrouter"), QStringLiteral("OpenRouter"), QStringLiteral("remote")),
-        mkp(QStringLiteral("google"), QStringLiteral("Google"), QStringLiteral("remote")),
-    };
+        m[QStringLiteral("id")] = d.id;
+        m[QStringLiteral("name")] = d.displayName.isEmpty() ? d.id : d.displayName;
+        m[QStringLiteral("kind")] =
+            d.kind == QStringLiteral("local") ? QStringLiteral("local") : QStringLiteral("remote");
+        m[QStringLiteral("configured")] =
+            !d.requiresKey || credentialedSelectors.contains(d.wireSelector);
+        out.append(QVariant(m));
+    }
+    return out;
 }
 
 void DaemonModelCatalog::search(const QString& query, const QString& sizeFilter) {
@@ -150,14 +216,28 @@ void DaemonModelCatalog::search(const QString& query, const QString& sizeFilter)
     if (m_models == nullptr) {
         return;
     }
+    setLastError({});
     // Local-track discovery is repo search; an empty query still asks for trending repos.
     m_models->search(query);
+}
+
+bool DaemonModelCatalog::searchHasMore() const {
+    return m_models != nullptr && m_models->searchHasMore();
+}
+
+void DaemonModelCatalog::searchMore() {
+    if (m_models == nullptr) {
+        return;
+    }
+    setLastError({});
+    m_models->searchMore();
 }
 
 void DaemonModelCatalog::repoFiles(const QString& repo) {
     if (m_models == nullptr || repo.isEmpty()) {
         return;
     }
+    setLastError({});
     m_files->setRows({});
     m_models->requestFiles(repo);
     m_models->recommend(repo); // auto-detect the budget node-side
@@ -192,6 +272,7 @@ void DaemonModelCatalog::download(const QString& modelId) {
 void DaemonModelCatalog::downloadFile(const QString& repo, const QString& file,
                                       const QString& engine) {
     if (m_models != nullptr && !repo.isEmpty() && !file.isEmpty()) {
+        setLastError({});
         m_models->download(repo, file, engine);
     }
 }
@@ -212,13 +293,62 @@ void DaemonModelCatalog::cancelDownload(const QString& jobId) {
     }
 }
 
+QString DaemonModelCatalog::installedIdFor(const QString& repo, const QString& file) const {
+    if (m_models == nullptr || repo.isEmpty()) {
+        return {};
+    }
+    // Exact source match first (several quants of one repo may be installed side by side)...
+    for (const DecodedInstalledModel& m : m_models->installed()) {
+        if (m.repo == repo && m.file == file) {
+            return m.id;
+        }
+    }
+    // ...then a repo-only fallback: a file-less download row names itself after the repo, so its
+    // "file" argument never matches the installed row's real file.
+    for (const DecodedInstalledModel& m : m_models->installed()) {
+        if (m.repo == repo) {
+            return m.id;
+        }
+    }
+    return {};
+}
+
+void DaemonModelCatalog::dismissDownload(const QString& jobId) {
+    if (m_models == nullptr || m_dismissedDownloads.contains(jobId)) {
+        return;
+    }
+    const quint64 id = jobId.toULongLong();
+    for (const DecodedDownloadStatus& s : m_models->downloads()) {
+        if (s.id != id) {
+            continue;
+        }
+        // Only a settled job may be hidden; an active row keeps rendering (pause/cancel it
+        // instead), so live progress can never silently disappear.
+        if (isTerminalStateToken(downloadStateToken(s.state))) {
+            m_dismissedDownloads.insert(jobId);
+            rebuildDownloads();
+        }
+        return;
+    }
+}
+
 void DaemonModelCatalog::activate(const QString& modelId) {
+    activateImpl(modelId, QString());
+}
+
+void DaemonModelCatalog::activateForProfile(const QString& modelId, const QString& profileId) {
+    activateImpl(modelId, profileId);
+}
+
+void DaemonModelCatalog::activateImpl(const QString& modelId, const QString& profileId) {
     if (m_pickedId == modelId && (m_models == nullptr || !isLocalInstalled(modelId))) {
         return;
     }
     m_pickedId = modelId;
     if (m_models != nullptr && isLocalInstalled(modelId)) {
-        m_models->activate(modelId); // ModelActivate -> the node loads this model by default
+        // ModelActivate -> the node loads this model, bound to the EXPLICIT profile when given
+        // (the node otherwise defaults to its launch profile name).
+        m_models->activate(modelId, profileId);
     }
     rebuildInstalled();
     emit currentChanged();
@@ -279,8 +409,13 @@ void DaemonModelCatalog::rebuildFiles() {
         row[QStringLiteral("sizeBytes")] = static_cast<double>(f.sizeBytes);
         row[QStringLiteral("sizeLabel")] = formatBytes(f.sizeBytes);
         row[QStringLiteral("isSplit")] = f.isSplit;
-        const bool recommended = (!recFile.isEmpty() && f.path == recFile) ||
-                                 (recFile.isEmpty() && !recQuant.isEmpty() && f.quant == recQuant);
+        // Projector companions stay listed + downloadable (the picker badges them), but the
+        // "Recommended" targeting must never land on one (the node's recommend already skips
+        // them; this guards a stale/older recommendation too).
+        row[QStringLiteral("isMmproj")] = f.isMmproj;
+        const bool recommended =
+            !f.isMmproj && ((!recFile.isEmpty() && f.path == recFile) ||
+                            (recFile.isEmpty() && !recQuant.isEmpty() && f.quant == recQuant));
         row[QStringLiteral("recommended")] = recommended;
         rows.append(row);
     }
@@ -293,6 +428,9 @@ void DaemonModelCatalog::rebuildDownloads() {
     }
     QList<QVariantMap> rows;
     for (const DecodedDownloadStatus& s : m_models->downloads()) {
+        if (m_dismissedDownloads.contains(QString::number(s.id))) {
+            continue; // dismissed terminal rows stay hidden across every rebuild
+        }
         QVariantMap row;
         row[QStringLiteral("id")] = QString::number(s.id);
         row[QStringLiteral("modelId")] = s.modelFile.isEmpty() ? s.modelRepo : s.modelFile;
@@ -306,6 +444,9 @@ void DaemonModelCatalog::rebuildDownloads() {
         row[QStringLiteral("state")] = downloadStateToken(s.state);
         row[QStringLiteral("sizeLabel")] = formatBytes(s.totalBytes);
         row[QStringLiteral("downloadedLabel")] = formatBytes(s.downloadedBytes);
+        // Multi-file jobs (split GGUF sets): the panel shows "file x/y" when filesTotal > 1.
+        row[QStringLiteral("filesDone")] = static_cast<int>(s.filesDone);
+        row[QStringLiteral("filesTotal")] = static_cast<int>(s.filesTotal);
         row[QStringLiteral("error")] = s.error;
         rows.append(row);
     }
@@ -316,6 +457,16 @@ void DaemonModelCatalog::rebuildInstalled() {
     if (m_models == nullptr) {
         return;
     }
+    // Detect growth of the locally-installed set: each newly-observed id is a finished download
+    // (or the first reflection of one), announced as downloadFinished so the provider catalog
+    // re-offers local models and pickers un-stale without re-selecting the provider.
+    QSet<QString> localIds;
+    for (const DecodedInstalledModel& m : m_models->installed()) {
+        localIds.insert(m.id);
+    }
+    const QSet<QString> newlyInstalled = localIds - m_knownInstalled;
+    m_knownInstalled = localIds;
+
     const QString current = currentModelId();
     QList<QVariantMap> rows;
     // Local installed models first (they carry a quant + on-disk size).
@@ -336,6 +487,11 @@ void DaemonModelCatalog::rebuildInstalled() {
         row[QStringLiteral("local")] = true;
         row[QStringLiteral("installed")] = true;
         row[QStringLiteral("active")] = (m.id == current);
+        // Vision-projector companions: badged, never activatable, excluded from chat offers
+        // (provider_model_compose filters on this key). Text models with a paired projector
+        // carry its path so the installed list can show a "Vision" marker.
+        row[QStringLiteral("projector")] = isProjectorRecord(m);
+        row[QStringLiteral("mmprojPath")] = m.mmprojPath;
         rows.append(row);
     }
     // Cloud descriptors join as ready-to-use (no download): the composer picker binds these too.
@@ -354,6 +510,10 @@ void DaemonModelCatalog::rebuildInstalled() {
         rows.append(row);
     }
     m_installed->setRows(rows);
+    // After the rows are live, so a downloadFinished consumer reading installed() sees the model.
+    for (const QString& id : newlyInstalled) {
+        emit downloadFinished(id);
+    }
 }
 
 } // namespace models

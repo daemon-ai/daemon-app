@@ -5,22 +5,29 @@
 
 #include "core/math_url.h"
 
+#ifdef Q_OS_WASM
+#include <QSize>
+#else
 #include <exception>
 #include <latex.h>
 #include <platform/qt/graphic_qt.h>
+#endif
 #include <QGuiApplication>
 #include <QHash>
 #include <QMutex>
 #include <QPainter>
 #include <QScreen>
 #include <QtMath>
+#ifndef Q_OS_WASM
 #include <render.h>
 #include <utils/utf.h>
+#endif
 
 namespace be::app {
 
 namespace {
 
+#ifndef Q_OS_WASM
 // MicroTeX's parser uses non-reentrant global macro/symbol state, so every parse
 // (rasterizing on the pixmap thread, measuring on the GUI thread) serializes on
 // this one lock.
@@ -40,6 +47,7 @@ qreal renderScale() {
     }
     return qBound(1.0, dpr > 0.0 ? dpr : 1.0, 3.0);
 }
+#endif
 
 } // namespace
 
@@ -52,6 +60,13 @@ MathImageProvider::MathImageProvider() : QQuickImageProvider(QQuickImageProvider
 QImage MathImageProvider::requestImage(const QString& id, QSize* size, const QSize& requestedSize) {
     Q_UNUSED(requestedSize);
 
+#ifdef Q_OS_WASM
+    Q_UNUSED(id)
+    if (size != nullptr) {
+        *size = QSize();
+    }
+    return {};
+#else
     QMutexLocker locker(&microtexMutex());
 
     if (const QImage* cached = m_cache.object(id)) {
@@ -78,10 +93,18 @@ QImage MathImageProvider::requestImage(const QString& id, QSize* size, const QSi
         *size = image.size() / image.devicePixelRatio();
     }
     return image;
+#endif
 }
 
 QImage MathImageProvider::renderLatex(const QString& latex, bool displayMode, int fontPx,
                                       quint32 colorArgb) {
+#ifdef Q_OS_WASM
+    Q_UNUSED(latex)
+    Q_UNUSED(displayMode)
+    Q_UNUSED(fontPx)
+    Q_UNUSED(colorArgb)
+    return {};
+#else
     Q_UNUSED(displayMode);
 
     try {
@@ -132,6 +155,7 @@ QImage MathImageProvider::renderLatex(const QString& latex, bool displayMode, in
     } catch (const std::exception&) {
         return {};
     }
+#endif
 }
 
 QImage MathImageProvider::errorImage() const {
@@ -141,6 +165,11 @@ QImage MathImageProvider::errorImage() const {
 QSizeF measureMathLogicalSize(const QString& latex, bool display, int fontPx) {
     Q_UNUSED(display);
 
+#ifdef Q_OS_WASM
+    Q_UNUSED(latex)
+    Q_UNUSED(fontPx)
+    return {};
+#else
     // Projection re-runs on every edit, so memoize the (cheap but non-trivial)
     // parse. display is part of the key for symmetry with the image id even
     // though the size is currently display-independent.
@@ -175,6 +204,7 @@ QSizeF measureMathLogicalSize(const QString& latex, bool display, int fontPx) {
     }
     cache.insert(key, result);
     return result;
+#endif
 }
 
 } // namespace be::app

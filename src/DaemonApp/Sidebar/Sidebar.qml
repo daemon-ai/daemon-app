@@ -444,11 +444,11 @@ Rectangle {
                         }
 
                         // Muted secondary label that elides before the main label: a transport
-                        // leaf's inline session title ("#secops > triage") or a Fleet agent's
-                        // provider/model configuration ("genai · claude-opus-4-8").
+                        // leaf's inline session title ("#secops > triage"). Fleet agent rows
+                        // carry no sublabel — provider/model detail lives in Settings > Profiles.
                         QQC.Label {
                             id: subLabelText
-                            visible: (del.isTransport || del.isAgent) && del.subLabel !== ""
+                            visible: del.isTransport && del.subLabel !== ""
                             anchors.right: stateDot.left
                             anchors.rightMargin: 8
                             anchors.verticalCenter: parent.verticalCenter

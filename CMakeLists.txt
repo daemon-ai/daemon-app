@@ -25,8 +25,14 @@ set(QT_QML_GENERATE_QMLLS_INI ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-# Platform flag used to gate desktop-only code/deps further down the tree.
-if(ANDROID OR IOS)
+# Platform flags used to gate native-only code/deps further down the tree.
+if(EMSCRIPTEN OR CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    set(DAEMON_APP_WASM ON CACHE BOOL "Build daemon-app for Qt WebAssembly" FORCE)
+else()
+    option(DAEMON_APP_WASM "Build daemon-app for Qt WebAssembly" OFF)
+endif()
+
+if(ANDROID OR IOS OR DAEMON_APP_WASM)
     set(DAEMON_APP_MOBILE ON)
 else()
     set(DAEMON_APP_MOBILE OFF)
@@ -35,7 +41,21 @@ endif()
 # Qt Quick + Controls for the UI; QtWidgets on desktop for the tray.
 # QuickControls2 is needed for QQuickStyle (pinning the app style in main).
 # LinguistTools provides qt_add_translations (lupdate/lrelease + .qm embedding).
-find_package(Qt6 6.11 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Network Sql LinguistTools)
+find_package(Qt6 6.11 REQUIRED COMPONENTS
+    Core
+    Gui
+    Qml
+    QmlModels
+    Quick
+    QuickControls2
+    QuickDialogs2
+    QuickDialogs2QuickImpl
+    QuickLayouts
+    Network
+    Sql
+    WebSockets
+    LinguistTools
+)
 if(NOT DAEMON_APP_MOBILE)
     find_package(Qt6 6.11 REQUIRED COMPONENTS Widgets)
 endif()
@@ -47,6 +67,9 @@ qt_standard_project_setup(REQUIRES 6.11)
 # provides the Meson-built Tui Widgets stack via pkg-config. Core5Compat is a
 # transitive requirement of the Qt6 build of Tui Widgets.
 option(DAEMON_APP_TUI "Build the experimental Tui Widgets TUI frontend (daemon-tui)" OFF)
+if(DAEMON_APP_WASM AND DAEMON_APP_TUI)
+    message(FATAL_ERROR "DAEMON_APP_TUI is not supported for WebAssembly builds")
+endif()
 if(DAEMON_APP_TUI)
     find_package(Qt6 6.11 REQUIRED COMPONENTS Core5Compat)
 endif()

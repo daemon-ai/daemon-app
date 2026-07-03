@@ -120,6 +120,9 @@ private:
     // The apply body, run on a fresh ProfileList reflection (see applyInferenceChoice).
     void applyReflectedInferenceChoice(const QString& providerId, const QString& model,
                                        const QString& key, const QString& name);
+    // ModelActivate a LOCALLY INSTALLED `model` for the explicit `profileId` (no-op for cloud
+    // models / no catalog): the profile spec alone does not make the local provider load it.
+    void activateLocalModel(const QString& model, const QString& profileId);
     // Run `then` on the NEXT profile-store changed() (single-shot) — the refetch continuation.
     void runOnNextProfilesChanged(const std::function<void()>& then);
     // Run `then` as soon as `reflected` holds over the profile store: immediately when it already

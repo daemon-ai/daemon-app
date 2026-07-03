@@ -41,6 +41,7 @@ void FileFinderModel::setService(QObject* service) {
     if (m_service) {
         connect(m_service, &fs::IFsService::listed, this, &FileFinderModel::onListed);
         connect(m_service, &fs::IFsService::rootsChanged, this, &FileFinderModel::onRootsChanged);
+        connect(m_service, &fs::IFsService::error, this, &FileFinderModel::onError);
         m_service->listRoots();
     }
 }
@@ -98,9 +99,17 @@ void FileFinderModel::onRootsChanged(const QList<fs::FsRoot>& roots) {
         m_indexing = true;
         emit indexingChanged();
     }
-    for (const fs::FsRoot& r : roots)
-        enqueueDir(r.id, QString());
-    if (roots.isEmpty()) {
+    for (const fs::FsRoot& r : roots) {
+        // Index only project-scoped roots (the workspace + session sandboxes). A host BROWSE
+        // root ("host:<id>", e.g. the user's whole home directory) exists for on-demand
+        // discovery in the explorer; recursively crawling it here would walk the entire home
+        // over the wire (thousands of FsList pages) and saturate the node + GUI thread while
+        // the app looks idle. (Pre-pagination that crawl always aborted on the first >64-entry
+        // directory, masking it.)
+        if (!r.id.startsWith(QStringLiteral("host:")))
+            enqueueDir(r.id, QString());
+    }
+    if (m_dirQueue.isEmpty() && m_inFlight == 0) {
         m_indexing = false;
         emit indexingChanged();
     }
@@ -134,6 +143,18 @@ void FileFinderModel::pump() {
         emit indexingChanged();
         rerank();
     }
+}
+
+void FileFinderModel::onError(const QString& rootId, const QString& path, const QString& message) {
+    // A failed listing of a directory the walk owns (an unreadable dir, or a paged listing that
+    // died mid-chain) must release its in-flight slot, or kMaxConcurrent such failures wedge the
+    // whole index walk with the spinner stuck on.
+    Q_UNUSED(message);
+    if (!m_pendingDirs.remove(recentKey(rootId, path)))
+        return;
+    if (m_inFlight > 0)
+        --m_inFlight;
+    pump();
 }
 
 void FileFinderModel::onListed(const QString& rootId, const QString& dir,

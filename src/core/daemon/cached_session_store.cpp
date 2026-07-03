@@ -7,6 +7,10 @@
 
 #include <algorithm>
 #include <QDateTime>
+#include <QHash>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSet>
 
 namespace daemonapp::daemon {
 namespace {
@@ -229,23 +233,92 @@ int CachedSessionStore::createTag(const QString&, const QString&) {
 // --- SessionId-keyed implementations (canonical; daemon-owned mutations stay inert) ---
 QString CachedSessionStore::content(const domain::SessionId& id) const {
     // L3 render-from-cache: project the durable coalesced transcript blocks (schema v2) into the
-    // markdown the transcript view renders, so a refocus / cold start shows the conversation from
-    // disk while the turn engine fetches only a short delta past the persisted watermark.
+    // CANONICAL msg-fence transcript markdown (the same ```msg boundary markers the live ingest
+    // produces), so a refocus / cold start / roster-driven reload round-trips into the same chat
+    // bubbles as the live document — never a lossy "**Role:** text" digest the BlockEditor parses
+    // as plain paragraphs.
     if (m_cache == nullptr || id.isEmpty()) {
         return {};
     }
-    QString out;
     const QList<CachedTranscriptBlockRow> blocks = m_cache->transcriptBlocks(id.toString());
+
+    // Pre-pass: the `todo` tool's blocks are the composer status stack's feed, not transcript
+    // content (mirrors the turn engine's live suppression) — collect its call ids so results
+    // skip too. Every other ToolResult is folded into its ToolCall's fence (ok/error status),
+    // matching the live document's single patched tool card.
+    QSet<QString> todoCalls;
+    QHash<QString, const CachedTranscriptBlockRow*> resultByCall;
+    for (const CachedTranscriptBlockRow& b : blocks) {
+        if (b.kind == QStringLiteral("ToolCall") && b.toolName == QStringLiteral("todo")) {
+            todoCalls.insert(b.callId);
+        } else if (b.kind == QStringLiteral("ToolResult") && !resultByCall.contains(b.callId)) {
+            resultByCall.insert(b.callId, &b);
+        }
+    }
+
+    QString out;
+    // The open ```msg group's role ("" = none). Reasoning/tool rows open (or continue) an
+    // assistant group; the turn's final assistant Message row continues such a group (matching
+    // the live single-assistant-turn grouping), while any other Message row starts a fresh
+    // bubble.
+    QString openRole;
+    bool openedByAgentBlock = false;
+    const auto openMessage = [&out, &openRole](const QString& role, quint64 seq) {
+        openRole = role;
+        // The marker shape serializeMessageMarker emits ({"id","role"}, sorted keys); ids are
+        // seq-derived so a re-projection is byte-stable.
+        out += QStringLiteral("```msg\n{\"id\":\"cache-%1\",\"role\":\"%2\"}\n```\n\n")
+                   .arg(seq)
+                   .arg(role);
+    };
+    const auto openAssistantFor = [&openMessage, &openRole, &openedByAgentBlock](quint64 seq) {
+        if (openRole != QStringLiteral("assistant")) {
+            openMessage(QStringLiteral("assistant"), seq);
+            openedByAgentBlock = true;
+        }
+    };
+    // A typed agent block's canonical fenced form (```reasoning / ```tool with a compact JSON
+    // metadata body) — the exact shape the live ingest serializes, so the reload re-parses into
+    // the same cards.
+    const auto appendFence = [&out](const QString& info, const QJsonObject& meta) {
+        out +=
+            QStringLiteral("```%1\n%2\n```\n\n")
+                .arg(info, QString::fromUtf8(QJsonDocument(meta).toJson(QJsonDocument::Compact)));
+    };
     for (const CachedTranscriptBlockRow& b : blocks) {
         if (b.kind == QStringLiteral("Message")) {
-            const QString who = b.role.isEmpty() ? QStringLiteral("Assistant") : b.role;
-            out += QStringLiteral("**%1:** %2\n\n").arg(who, b.text);
+            const QString role =
+                (b.role.isEmpty() ? QStringLiteral("Assistant") : b.role).toLower();
+            const bool continuesAgentTurn =
+                openedByAgentBlock && role == QStringLiteral("assistant") && openRole == role;
+            if (!continuesAgentTurn) {
+                openMessage(role, b.seq);
+            }
+            openedByAgentBlock = false;
+            out += b.text;
+            out += QStringLiteral("\n\n");
+        } else if (b.kind == QStringLiteral("Reasoning")) {
+            openAssistantFor(b.seq);
+            appendFence(QStringLiteral("reasoning"),
+                        QJsonObject{{QStringLiteral("status"), QStringLiteral("complete")},
+                                    {QStringLiteral("body"), b.text}});
         } else if (b.kind == QStringLiteral("ToolCall")) {
-            out += QStringLiteral("`%1(%2)`\n\n").arg(b.toolName, b.argsSummary);
-        } else if (b.kind == QStringLiteral("ToolResult")) {
-            const QString prefix = b.ok ? QString() : QStringLiteral("[failed] ");
-            out += QStringLiteral("> %1%2\n\n").arg(prefix, b.summary);
+            if (todoCalls.contains(b.callId)) {
+                continue;
+            }
+            openAssistantFor(b.seq);
+            const CachedTranscriptBlockRow* result = resultByCall.value(b.callId, nullptr);
+            const QString status = result == nullptr ? QStringLiteral("running")
+                                   : result->ok      ? QStringLiteral("ok")
+                                                     : QStringLiteral("error");
+            appendFence(QStringLiteral("tool"),
+                        QJsonObject{{QStringLiteral("callId"), b.callId},
+                                    {QStringLiteral("name"), b.toolName},
+                                    {QStringLiteral("argsSummary"), b.argsSummary},
+                                    {QStringLiteral("status"), status}});
         }
+        // ToolResult rows carry no standalone rendering: folded into their call's fence above
+        // (todo results are dropped with their call).
     }
     return out.trimmed();
 }

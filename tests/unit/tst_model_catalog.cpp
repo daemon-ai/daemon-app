@@ -78,6 +78,43 @@ private slots:
         }
     }
 
+    // Download rows carry the daemon-row render keys (repo/error/sizeLabel/downloadedLabel) plus
+    // a brief queued state, and the shared helpers behave: an active row refuses dismissal, and
+    // installedIdFor resolves iff installed (the mock "repo" IS the catalog model id).
+    void downloadRowParityAndHelpers() {
+        MockModelCatalog c;
+        const QString modelId = QStringLiteral("mistral-7b-instruct");
+        QCOMPARE(c.installedIdFor(modelId, QString()), QString()); // not installed yet
+
+        c.download(modelId);
+        auto* downloads = asModel(c.downloads());
+        QCOMPARE(downloads->count(), 1);
+        const QVariantMap row = downloads->at(0);
+        QCOMPARE(row.value(QStringLiteral("state")).toString(), QStringLiteral("queued"));
+        QCOMPARE(row.value(QStringLiteral("repo")).toString(), modelId);
+        QVERIFY(row.contains(QStringLiteral("error")));
+        QVERIFY(!row.value(QStringLiteral("sizeLabel")).toString().isEmpty());
+        QVERIFY(!row.value(QStringLiteral("downloadedLabel")).toString().isEmpty());
+
+        // Active (queued/downloading) rows refuse dismissal.
+        const QString jobId = row.value(QStringLiteral("id")).toString();
+        c.dismissDownload(jobId);
+        QCOMPARE(downloads->count(), 1);
+
+        // The first tick flips the brief queued phase to downloading.
+        QVERIFY(QTest::qWaitFor(
+            [&] {
+                return downloads->count() == 1 &&
+                       downloads->at(0).value(QStringLiteral("state")).toString() ==
+                           QStringLiteral("downloading");
+            },
+            3000));
+
+        QSignalSpy done(&c, &models::IModelCatalog::downloadFinished);
+        QVERIFY(QTest::qWaitFor([&] { return done.count() == 1; }, 8000));
+        QCOMPARE(c.installedIdFor(modelId, QStringLiteral("any.gguf")), modelId);
+    }
+
     void downloadTicksToInstalled() {
         MockModelCatalog c;
         auto* installed = asModel(c.installed());

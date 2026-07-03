@@ -53,6 +53,8 @@ void SessionRepository::refreshSessions() {
         }
     }
     m_sentRosterDelta = m_sentRosterSinceRev > 0;
+    // A fresh refresh restarts the page loop: drop anything a superseded loop accumulated.
+    m_rosterLoop.reset();
     client()->sendRequest(
         NodeApiCodec::encodeSessionsQueryRequest(m_sentRosterDelta, m_sentRosterSinceRev),
         QLatin1String(kSessionsCorrelation));
@@ -66,20 +68,8 @@ void SessionRepository::refreshSessionsByProfile(const QString& profileId) {
     if (profileId.isEmpty()) {
         return;
     }
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(
-                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"AGENT-SESSIONS\","
-                               "\"location\":\"repositories.cpp:refreshSessionsByProfile\","
-                               "\"message\":\"ByProfile SessionsQuery issued\",\"data\":{"
-                               "\"profile\":\"%1\"},\"timestamp\":%2}\n")
-                    .arg(profileId)
-                    .arg(QDateTime::currentMSecsSinceEpoch())
-                    .toUtf8());
-    }
-    // #endregion
+    m_byProfileId = profileId;
+    m_byProfileLoop.reset();
     client()->sendRequest(
         NodeApiCodec::encodeSessionsQueryRequest(/*hasSinceRev=*/false, /*sinceRev=*/0, profileId),
         QLatin1String(kByProfileCorrelation));
@@ -91,20 +81,6 @@ void SessionRepository::createSession(const QString& profileId) {
         return;
     }
     m_pendingCreateProfile = profileId;
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(
-                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"SESSION-CREATE\","
-                               "\"location\":\"repositories.cpp:createSession\",\"message\":"
-                               "\"client issued node SessionCreate\",\"data\":{"
-                               "\"profile\":\"%1\"},\"timestamp\":%2}\n")
-                    .arg(profileId)
-                    .arg(QDateTime::currentMSecsSinceEpoch())
-                    .toUtf8());
-    }
-    // #endregion
     // Node-authority: send no session id so the node MINTS it; bind the chosen profile (empty = the
     // node's active default).
     client()->sendRequest(NodeApiCodec::encodeSessionCreateRequest(QString(), profileId),
@@ -137,20 +113,6 @@ void SessionRepository::applySessionCreated(const QByteArray& responseCbor) {
     }
     const QString profileId = m_pendingCreateProfile;
     m_pendingCreateProfile.clear();
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(
-                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"SESSION-CREATE\","
-                               "\"location\":\"repositories.cpp:applySessionCreated\","
-                               "\"message\":\"node minted session\",\"data\":{"
-                               "\"session\":\"%1\",\"profile\":\"%2\"},\"timestamp\":%3}\n")
-                    .arg(sessionId, profileId)
-                    .arg(QDateTime::currentMSecsSinceEpoch())
-                    .toUtf8());
-    }
-    // #endregion
     // Upsert a minimal cached row NOW so the All Sessions list / Fleet leaves show the new
     // session immediately instead of waiting on the debounced RosterChanged refetch (whose
     // full-replace form would otherwise be the first time the row exists client-side). The
@@ -176,40 +138,38 @@ void SessionRepository::applySessionCreated(const QByteArray& responseCbor) {
 
 void SessionRepository::applyByProfilePage(const QByteArray& responseCbor) {
     QList<CachedSessionRow> rows;
-    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, nullptr, nullptr, nullptr)) {
+    QString nextCursor;
+    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor, nullptr, nullptr)) {
         emit refreshFailed(QStringLiteral("Failed to decode ByProfile SessionPage response"));
         return;
     }
     // Additive merge (no prune): a scoped subset must not clobber the shared roster cache. The
     // rows carry bound_profile, so the client-side ByProfile filter (CachedSessionStore) projects
-    // them under their agent.
+    // them under their agent. Because it never prunes, each page can merge incrementally; the
+    // page loop below just keeps fetching until next_cursor clears (guard-only PageLoop use).
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     for (CachedSessionRow& row : rows) {
         row.updatedAtMs = now;
         upsertCachedSession(row);
     }
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(
-                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"AGENT-SESSIONS\","
-                               "\"location\":\"repositories.cpp:applyByProfilePage\","
-                               "\"message\":\"ByProfile SessionPage merged\",\"data\":{"
-                               "\"count\":%1},\"timestamp\":%2}\n")
-                    .arg(rows.size())
-                    .arg(QDateTime::currentMSecsSinceEpoch())
-                    .toUtf8());
+    if (!nextCursor.isEmpty() && !m_byProfileId.isEmpty() && m_byProfileLoop.guard(nextCursor) &&
+        client() != nullptr) {
+        client()->sendRequest(NodeApiCodec::encodeSessionsQueryRequest(
+                                  /*hasSinceRev=*/false, /*sinceRev=*/0, m_byProfileId, nextCursor),
+                              QLatin1String(kByProfileCorrelation));
+    } else {
+        m_byProfileLoop.reset();
     }
-    // #endregion
     emit sessionsRefreshed();
 }
 
 void SessionRepository::applySessionPage(const QByteArray& responseCbor) {
     QList<CachedSessionRow> rows;
+    QString nextCursor;
     quint64 rev = 0;
     QStringList removed;
-    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, nullptr, &rev, &removed)) {
+    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor, &rev, &removed)) {
+        m_rosterLoop.reset();
         emit refreshFailed(QStringLiteral("Failed to decode SessionPage response"));
         return;
     }
@@ -219,9 +179,27 @@ void SessionRepository::applySessionPage(const QByteArray& responseCbor) {
     // page because our since_rev was unservable) -> treat it as a replace too.
     const bool fallbackFull = m_sentRosterDelta && rev < m_sentRosterSinceRev;
     const bool replace = !m_sentRosterDelta || fallbackFull;
+    if (replace && !nextCursor.isEmpty() && m_rosterLoop.guard(nextCursor) && client() != nullptr) {
+        // Page loop (full reads only): accumulate and query the next page; the replace + prune
+        // below must see the WHOLE roster, or every session past page one would be dropped.
+        // The continuation of a full read is itself a full read (no since_rev — a delta fallback
+        // has already resolved to full pages). Delta reads stay single-page: their persisted rev
+        // catches the tail up on the next refresh.
+        m_rosterLoop.items.append(rows);
+        m_sentRosterDelta = false;
+        client()->sendRequest(
+            NodeApiCodec::encodeSessionsQueryRequest(false, 0, QString(), nextCursor),
+            QLatin1String(kSessionsCorrelation));
+        return;
+    }
     if (replace) {
-        // Prune any cached session the full page no longer lists (closes the "removed sessions
-        // never purged" gap on a cold/fallback resync).
+        // The final page: run the merge over everything the loop accumulated.
+        rows = m_rosterLoop.items + rows;
+    }
+    m_rosterLoop.reset();
+    if (replace) {
+        // Prune any cached session the full listing no longer contains (closes the "removed
+        // sessions never purged" gap on a cold/fallback resync).
         pruneSessionsMissingFrom(rows);
     }
     for (CachedSessionRow& row : rows) {
@@ -273,6 +251,9 @@ void SessionRepository::handleFailure(const QString& correlationId, const QStrin
     }
     if (correlationId == QLatin1String(kSessionsCorrelation) ||
         correlationId == QLatin1String(kByProfileCorrelation)) {
+        // A dead page loop must not leak its partial accumulation into the next refresh.
+        m_rosterLoop.reset();
+        m_byProfileLoop.reset();
         emit refreshFailed(message);
     }
 }
@@ -372,18 +353,6 @@ void ProviderRepository::refreshProviders() {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(
-                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"PH1\",\"location\":"
-                               "\"repositories.cpp:refreshProviders\",\"message\":\"send "
-                               "ProviderCatalog request\",\"data\":{},\"timestamp\":%1}\n")
-                    .arg(QDateTime::currentMSecsSinceEpoch())
-                    .toUtf8());
-    }
-    // #endregion
     client()->sendRequest(NodeApiCodec::encodeProviderCatalogRequest(),
                           QLatin1String(kCatalogCorrelation));
 }
@@ -398,6 +367,12 @@ void ProviderRepository::refreshProviderModels(const QString& provider,
     if (provider.isEmpty()) {
         return;
     }
+    // A fresh refresh restarts the provider's page loop; the continuations re-issue the same
+    // credentials verbatim (the loop state keeps them).
+    ProviderModelsLoop& state = m_modelsLoops[provider];
+    state.loop.reset();
+    state.credentialRef = credentialRef;
+    state.transientKey = transientKey;
     // Tag the correlation with the provider id so the response handler knows which list to fill.
     client()->sendRequest(
         NodeApiCodec::encodeProviderModelsRequest(provider, credentialRef, transientKey),
@@ -408,22 +383,6 @@ void ProviderRepository::handleResponse(const QString& correlationId,
                                         const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kCatalogCorrelation)) {
         const bool decoded = NodeApiCodec::decodeProviderCatalog(responseCbor, &m_providers);
-        // #region agent log
-        {
-            QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-            if (dbg.open(QIODevice::Append | QIODevice::Text))
-                dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"PH1\","
-                                         "\"location\":\"repositories.cpp:handleResponse\","
-                                         "\"message\":\"ProviderCatalog response\",\"data\":{"
-                                         "\"decoded\":%1,\"count\":%2,\"bytes\":%3},"
-                                         "\"timestamp\":%4}\n")
-                              .arg(decoded ? "true" : "false")
-                              .arg(m_providers.size())
-                              .arg(responseCbor.size())
-                              .arg(QDateTime::currentMSecsSinceEpoch())
-                              .toUtf8());
-        }
-        // #endregion
         if (!decoded) {
             emit operationFailed(QStringLiteral("Failed to decode ProviderCatalog response"));
             return;
@@ -434,11 +393,24 @@ void ProviderRepository::handleResponse(const QString& correlationId,
     if (correlationId.startsWith(QLatin1String(kModelsPrefix))) {
         const QString provider = correlationId.mid(int(qstrlen(kModelsPrefix)));
         QList<DecodedModelDescriptor> models;
-        if (!NodeApiCodec::decodeProviderModels(responseCbor, &models)) {
+        QString next;
+        if (!NodeApiCodec::decodeProviderModels(responseCbor, &models, &next)) {
+            m_modelsLoops.remove(provider);
             emit operationFailed(QStringLiteral("Failed to decode ProviderModels response"));
             return;
         }
-        m_models.insert(provider, models);
+        // Page loop: accumulate and re-issue with the cursor until it clears, then publish the
+        // complete listing ONCE (the discovery consumers replace on the signal).
+        ProviderModelsLoop& state = m_modelsLoops[provider];
+        state.loop.items.append(models);
+        if (!next.isEmpty() && state.loop.guard(next) && client() != nullptr) {
+            client()->sendRequest(NodeApiCodec::encodeProviderModelsRequest(
+                                      provider, state.credentialRef, state.transientKey, next),
+                                  QString::fromLatin1(kModelsPrefix) + provider);
+            return;
+        }
+        m_models.insert(provider, state.loop.items);
+        m_modelsLoops.remove(provider);
         emit providerModelsRefreshed(provider);
     }
 }
@@ -446,6 +418,10 @@ void ProviderRepository::handleResponse(const QString& correlationId,
 void ProviderRepository::handleFailure(const QString& correlationId, const QString& message) {
     if (correlationId == QLatin1String(kCatalogCorrelation) ||
         correlationId.startsWith(QLatin1String(kModelsPrefix))) {
+        if (correlationId.startsWith(QLatin1String(kModelsPrefix))) {
+            // A dead page loop must not leak its partial accumulation into the next refresh.
+            m_modelsLoops.remove(correlationId.mid(int(qstrlen(kModelsPrefix))));
+        }
         emit operationFailed(message);
     }
 }
@@ -466,6 +442,8 @@ void ModelRepository::refreshModels() {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
+    // A fresh refresh restarts the page loop: drop anything a superseded loop accumulated.
+    m_modelsLoop.reset();
     client()->sendRequest(NodeApiCodec::encodeModelsRequest(), QLatin1String(kModelsCorrelation));
 }
 
@@ -493,7 +471,26 @@ void ModelRepository::search(const QString& text, const QString& engine, const Q
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
+    // A fresh search restarts paging: page 0 replaces the hit list; searchMore() appends.
+    m_searchText = text;
+    m_searchEngine = engine;
+    m_searchSort = sort;
+    m_searchAppending = false;
     client()->sendRequest(NodeApiCodec::encodeModelSearchRequest(text, engine, sort),
+                          QLatin1String(kSearchCorrelation));
+}
+
+void ModelRepository::searchMore() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    if (!m_searchHasMore || m_searchAppending) {
+        return; // no further page, or a continuation is already in flight
+    }
+    m_searchAppending = true;
+    client()->sendRequest(NodeApiCodec::encodeModelSearchRequest(m_searchText, m_searchEngine,
+                                                                 m_searchSort, m_searchPage + 1),
                           QLatin1String(kSearchCorrelation));
 }
 
@@ -503,6 +500,9 @@ void ModelRepository::requestFiles(const QString& repo, const QString& engine) {
         return;
     }
     m_pendingFilesRepo = repo;
+    m_pendingFilesEngine = engine;
+    // A fresh request restarts the page loop: drop anything a superseded loop accumulated.
+    m_filesLoop.reset();
     client()->sendRequest(NodeApiCodec::encodeModelFilesRequest(repo, engine),
                           QLatin1String(kFilesCorrelation));
 }
@@ -592,16 +592,18 @@ void ModelRepository::resumeDownload(quint64 id) {
                           QLatin1String(kLifecycleCorrelation));
 }
 
-void ModelRepository::applyDownloadProgress(quint64 id, quint32 pct, const QString& state) {
+void ModelRepository::applyDownloadProgress(quint64 id, const QString& state,
+                                            quint64 downloadedBytes, quint64 totalBytes) {
     // Patch the matching job row in place (or insert a fresh one), so the Downloads view tracks
-    // progress from the push feed instead of a poll. We only carry (id, pct, state) here; derive
-    // downloaded_bytes from pct when a total is known so the existing progress bar keeps working.
+    // progress from the push feed instead of a poll. The event carries the REAL byte counters
+    // (wire v26); a zero total (Hub reported no sizes) keeps any previously-known total.
     bool found = false;
     for (DecodedDownloadStatus& s : m_downloads) {
         if (s.id == id) {
             s.state = state;
-            if (s.totalBytes > 0) {
-                s.downloadedBytes = (s.totalBytes * pct) / 100;
+            s.downloadedBytes = downloadedBytes;
+            if (totalBytes > 0) {
+                s.totalBytes = totalBytes;
             }
             found = true;
             break;
@@ -611,6 +613,8 @@ void ModelRepository::applyDownloadProgress(quint64 id, quint32 pct, const QStri
         DecodedDownloadStatus s;
         s.id = id;
         s.state = state;
+        s.downloadedBytes = downloadedBytes;
+        s.totalBytes = totalBytes;
         m_downloads.append(s);
     }
     bool newlyCompleted = false;
@@ -619,6 +623,13 @@ void ModelRepository::applyDownloadProgress(quint64 id, quint32 pct, const QStri
         newlyCompleted = true;
     }
     emit downloadsChanged();
+    // The event carries only id/state/bytes: a fresh insert (a job started by another client
+    // instance) lacks repo/file/name, and file-completion counts (files x/y) go stale on the
+    // in-place patch — refetch the authoritative row set on those transitions (event-driven, no
+    // polling; the placeholder row above keeps progress visible until the reply lands).
+    if (!found || newlyCompleted) {
+        refreshDownloads();
+    }
     if (newlyCompleted) {
         refreshCatalog();
     }
@@ -661,10 +672,23 @@ void ModelRepository::emitOperationError(const QByteArray& responseCbor, const Q
 }
 
 void ModelRepository::handleModelsResponse(const QByteArray& responseCbor) {
-    if (!NodeApiCodec::decodeModels(responseCbor, &m_models)) {
+    QList<DecodedModelDescriptor> models;
+    QString next;
+    if (!NodeApiCodec::decodeModels(responseCbor, &models, &next)) {
+        m_modelsLoop.reset();
         emit operationFailed(QStringLiteral("Failed to decode Models response"));
         return;
     }
+    // Page loop: accumulate and re-issue with the cursor until it clears, then publish the
+    // complete catalog ONCE (the picker consumers replace on modelsRefreshed).
+    m_modelsLoop.items.append(models);
+    if (!next.isEmpty() && m_modelsLoop.guard(next) && client() != nullptr) {
+        client()->sendRequest(NodeApiCodec::encodeModelsRequest(next),
+                              QLatin1String(kModelsCorrelation));
+        return;
+    }
+    m_models = m_modelsLoop.items;
+    m_modelsLoop.reset();
     emit modelsRefreshed();
 }
 
@@ -685,18 +709,44 @@ void ModelRepository::handleSetSessionModelResponse(const QByteArray& responseCb
 }
 
 void ModelRepository::handleModelSearchResponse(const QByteArray& responseCbor) {
-    if (!NodeApiCodec::decodeModelSearch(responseCbor, &m_searchHits)) {
+    QList<DecodedSearchHit> hits;
+    bool hasMore = false;
+    quint32 page = 0;
+    if (!NodeApiCodec::decodeModelSearch(responseCbor, &hits, &hasMore, &page)) {
+        m_searchAppending = false;
         emit operationFailed(QStringLiteral("Failed to decode ModelSearch response"));
         return;
     }
+    if (m_searchAppending) {
+        m_searchHits.append(hits); // a searchMore() continuation accumulates
+    } else {
+        m_searchHits = hits;
+    }
+    m_searchAppending = false;
+    m_searchPage = page;
+    m_searchHasMore = hasMore;
     emit searchHitsChanged();
 }
 
 void ModelRepository::handleModelFilesResponse(const QByteArray& responseCbor) {
-    if (!NodeApiCodec::decodeModelFiles(responseCbor, &m_files)) {
+    QList<DecodedModelFile> files;
+    QString next;
+    if (!NodeApiCodec::decodeModelFiles(responseCbor, &files, &next)) {
+        m_filesLoop.reset();
         emit operationFailed(QStringLiteral("Failed to decode ModelFiles response"));
         return;
     }
+    // Page loop: accumulate and re-issue with the cursor until it clears, then publish the repo's
+    // complete file list ONCE (the quant picker replaces on filesLoaded).
+    m_filesLoop.items.append(files);
+    if (!next.isEmpty() && m_filesLoop.guard(next) && client() != nullptr) {
+        client()->sendRequest(NodeApiCodec::encodeModelFilesRequest(
+                                  m_pendingFilesRepo, m_pendingFilesEngine, QString(), next),
+                              QLatin1String(kFilesCorrelation));
+        return;
+    }
+    m_files = m_filesLoop.items;
+    m_filesLoop.reset();
     m_filesRepo = m_pendingFilesRepo;
     emit filesLoaded(m_filesRepo);
 }
@@ -778,6 +828,14 @@ void ModelRepository::handleFailure(const QString& correlationId, const QString&
         QString::fromLatin1(kActivateCorrelation), QString::fromLatin1(kLifecycleCorrelation),
     };
     if (kOurs.contains(correlationId)) {
+        // A dead page loop must not leak its partial accumulation into the next refresh.
+        if (correlationId == QLatin1String(kModelsCorrelation)) {
+            m_modelsLoop.reset();
+        } else if (correlationId == QLatin1String(kFilesCorrelation)) {
+            m_filesLoop.reset();
+        } else if (correlationId == QLatin1String(kSearchCorrelation)) {
+            m_searchAppending = false; // a dead continuation must not make the next reply append
+        }
         emit operationFailed(message);
     }
 }
@@ -883,19 +941,6 @@ void ProfileRepository::createProfile(const DecodedProfileSpec& spec) {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"AGENT-CREATE\","
-                                     "\"location\":\"repositories.cpp:createProfile\",\"message\":"
-                                     "\"ProfileCreate issued\",\"data\":{\"profile\":\"%1\","
-                                     "\"provider\":\"%2\",\"model\":\"%3\"},\"timestamp\":%4}\n")
-                          .arg(spec.id, spec.provider, spec.model)
-                          .arg(QDateTime::currentMSecsSinceEpoch())
-                          .toUtf8());
-    }
-    // #endregion
     client()->sendRequest(NodeApiCodec::encodeProfileCreateRequest(spec),
                           QLatin1String(kCreateCorrelation));
 }
@@ -950,6 +995,8 @@ void ProfileRepository::fetchProfileHistory(const QString& id) {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
+    // A fresh fetch restarts the page loop: drop anything a superseded loop accumulated.
+    m_historyLoops[id].reset();
     client()->sendRequest(NodeApiCodec::encodeProfileHistoryRequest(id),
                           QLatin1String(kHistoryPrefix) + id);
 }
@@ -1025,20 +1072,6 @@ void ProfileRepository::handleProfilesResponse(const QByteArray& responseCbor) {
     // agent) so the cache mirrors truth. Surviving rows keep their spec_cbor; the per-profile
     // ProfileGet that the store kicks next refreshes each row's spec + active flag.
     pruneStaleProfiles();
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(
-                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"PROFILE-REFLECT\","
-                               "\"location\":\"repositories.cpp:handleProfilesResponse\","
-                               "\"message\":\"client reflected node ProfileList\",\"data\":{"
-                               "\"applied\":%1},\"timestamp\":%2}\n")
-                    .arg(profiles().size())
-                    .arg(QDateTime::currentMSecsSinceEpoch())
-                    .toUtf8());
-    }
-    // #endregion
     emit profilesRefreshed();
 }
 
@@ -1119,6 +1152,7 @@ void ProfileRepository::handleProfileHistoryResponse(const QString& id,
     // capability gap, not a decode failure - surface it as historyUnavailable so the UI can hide
     // the panel honestly rather than toast a misleading parse error.
     if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+        m_historyLoops.remove(id);
         DecodedApiError err;
         emit historyUnavailable(id, NodeApiCodec::decodeError(responseCbor, &err)
                                         ? err.message
@@ -1126,11 +1160,24 @@ void ProfileRepository::handleProfileHistoryResponse(const QString& id,
         return;
     }
     QList<DecodedRevision> revs;
-    if (!NodeApiCodec::decodeRevisions(responseCbor, &revs)) {
+    QString next;
+    if (!NodeApiCodec::decodeRevisions(responseCbor, &revs, &next)) {
+        m_historyLoops.remove(id);
         emit operationFailed(QStringLiteral("Failed to decode Revisions"));
         return;
     }
-    emit historyLoaded(id, revs);
+    // Page loop: accumulate and re-issue with the cursor until it clears, then emit the full
+    // history ONCE (the panel replaces on historyLoaded).
+    PageLoop<DecodedRevision>& loop = m_historyLoops[id];
+    loop.items.append(revs);
+    if (!next.isEmpty() && loop.guard(next) && client() != nullptr) {
+        client()->sendRequest(NodeApiCodec::encodeProfileHistoryRequest(id, next),
+                              QLatin1String(kHistoryPrefix) + id);
+        return;
+    }
+    const QList<DecodedRevision> history = loop.items;
+    m_historyLoops.remove(id);
+    emit historyLoaded(id, history);
 }
 
 void ProfileRepository::handleProfileRevertResponse(const QString& id,
@@ -1182,6 +1229,10 @@ void ProfileRepository::handleFailure(const QString& correlationId, const QStrin
         return;
     }
     if (isProfileOperation(correlationId)) {
+        // A dead history page loop must not leak its partial accumulation into the next fetch.
+        if (correlationId.startsWith(QLatin1String(kHistoryPrefix))) {
+            m_historyLoops.remove(correlationId.mid(int(qstrlen(kHistoryPrefix))));
+        }
         emit operationFailed(message);
     }
 }
@@ -1202,6 +1253,8 @@ void ApprovalRepository::refreshPending(const QString& sessionId) {
         return;
     }
     m_lastSession = sessionId;
+    // A fresh refresh restarts the page loop: drop anything a superseded loop accumulated.
+    m_pendingLoop.reset();
     client()->sendRequest(NodeApiCodec::encodeApprovalsPendingRequest(sessionId),
                           QLatin1String(kPendingCorrelation));
 }
@@ -1218,10 +1271,23 @@ void ApprovalRepository::decide(const QString& sessionId, const QString& request
 void ApprovalRepository::handleResponse(const QString& correlationId,
                                         const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kPendingCorrelation)) {
-        if (!NodeApiCodec::decodeApprovals(responseCbor, &m_pending)) {
+        QList<DecodedApprovalInfo> pending;
+        QString next;
+        if (!NodeApiCodec::decodeApprovals(responseCbor, &pending, &next)) {
+            m_pendingLoop.reset();
             emit operationFailed(QStringLiteral("Failed to decode Approvals response"));
             return;
         }
+        // Page loop: accumulate and re-issue with the cursor until it clears, then swap the
+        // complete inbox in ONCE (the badge/list replace on pendingRefreshed).
+        m_pendingLoop.items.append(pending);
+        if (!next.isEmpty() && m_pendingLoop.guard(next) && client() != nullptr) {
+            client()->sendRequest(NodeApiCodec::encodeApprovalsPendingRequest(m_lastSession, next),
+                                  QLatin1String(kPendingCorrelation));
+            return;
+        }
+        m_pending = m_pendingLoop.items;
+        m_pendingLoop.reset();
         emit pendingRefreshed();
         return;
     }
@@ -1245,6 +1311,8 @@ void ApprovalRepository::handleResponse(const QString& correlationId,
 void ApprovalRepository::handleFailure(const QString& correlationId, const QString& message) {
     if (correlationId == QLatin1String(kPendingCorrelation) ||
         correlationId == QLatin1String(kDecideCorrelation)) {
+        // A dead page loop must not leak its partial accumulation into the next refresh.
+        m_pendingLoop.reset();
         emit operationFailed(message);
     }
 }
@@ -1269,19 +1337,9 @@ void FleetRepository::refreshTree(const QString& source) {
         emit refreshFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"FLEET-REFRESH\","
-                                     "\"location\":\"repositories.cpp:refreshTree\",\"message\":"
-                                     "\"Tree query triggered\",\"data\":{\"source\":\"%1\"},"
-                                     "\"timestamp\":%2}\n")
-                          .arg(source)
-                          .arg(QDateTime::currentMSecsSinceEpoch())
-                          .toUtf8());
-    }
-    // #endregion
+    // A fresh refresh restarts the page loop: drop anything a superseded loop accumulated.
+    m_treeLoop.reset();
+    m_treeRoot.clear();
     client()->sendRequest(NodeApiCodec::encodeTreeRequest(), QLatin1String(kTreeCorrelation));
 }
 
@@ -1323,26 +1381,32 @@ void FleetRepository::handleResponse(const QString& correlationId, const QByteAr
 }
 
 void FleetRepository::handleTreeResponse(const QByteArray& responseCbor) {
-    QList<DecodedUnitNode> flat;
-    if (!NodeApiCodec::decodeTreeReport(responseCbor, &flat)) {
+    QList<DecodedUnitNode> nodes;
+    QString root;
+    QString next;
+    if (!NodeApiCodec::decodeTreeReport(responseCbor, &nodes, &root, &next)) {
+        m_treeLoop.reset();
+        m_treeRoot.clear();
         emit refreshFailed(QStringLiteral("Failed to decode Tree response"));
         return;
     }
-    syncFleetUnits(flat);
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(
-                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"FLEET-REFRESH\","
-                               "\"location\":\"repositories.cpp:handleTreeResponse\",\"message\":"
-                               "\"Tree response applied\",\"data\":{\"unitCount\":%1},"
-                               "\"timestamp\":%2}\n")
-                    .arg(flat.size())
-                    .arg(QDateTime::currentMSecsSinceEpoch())
-                    .toUtf8());
+    // Page loop: accumulate the raw nodes and re-issue with the cursor until it clears (`root`
+    // rides every page; the first page fixes it), then flatten + sync ONCE over the whole union —
+    // the id-linked DFS needs every node, and pruning against one page would drop the rest.
+    if (m_treeLoop.pages == 0) {
+        m_treeRoot = root;
     }
-    // #endregion
+    m_treeLoop.items.append(nodes);
+    if (!next.isEmpty() && m_treeLoop.guard(next) && client() != nullptr) {
+        client()->sendRequest(NodeApiCodec::encodeTreeRequest(next),
+                              QLatin1String(kTreeCorrelation));
+        return;
+    }
+    const QList<DecodedUnitNode> flat =
+        NodeApiCodec::flattenTreeNodes(m_treeLoop.items, m_treeRoot);
+    m_treeLoop.reset();
+    m_treeRoot.clear();
+    syncFleetUnits(flat);
     emit treeRefreshed();
 }
 
@@ -1393,6 +1457,9 @@ void FleetRepository::handleUnitControlResponse(const QByteArray& responseCbor) 
 
 void FleetRepository::handleFailure(const QString& correlationId, const QString& message) {
     if (correlationId == QLatin1String(kTreeCorrelation)) {
+        // A dead page loop must not leak its partial accumulation into the next refresh.
+        m_treeLoop.reset();
+        m_treeRoot.clear();
         emit refreshFailed(message);
     } else if (correlationId == QLatin1String(kControlCorrelation)) {
         emit controlFailed(message);
@@ -1441,6 +1508,8 @@ void TransportRepository::refreshConversations(const QString& transport) {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
+    // A fresh refresh restarts the transport's page loop.
+    m_convLoops[transport].reset();
     client()->sendRequest(NodeApiCodec::encodeConvListRequest(transport),
                           QLatin1String(kConvPrefix) + transport);
 }
@@ -1507,11 +1576,24 @@ void TransportRepository::syncTransportInstances(const QList<DecodedTransportIns
 void TransportRepository::handleConversationsResponse(const QString& transport,
                                                       const QByteArray& responseCbor) {
     QList<DecodedConversation> live;
-    if (!NodeApiCodec::decodeConversations(responseCbor, &live)) {
+    QString next;
+    if (!NodeApiCodec::decodeConversations(responseCbor, &live, &next)) {
+        m_convLoops.remove(transport);
         emit operationFailed(QStringLiteral("Failed to decode Conversations response"));
         return;
     }
-    syncConversations(transport, live);
+    // Page loop: accumulate and re-issue with the cursor until it clears, then sync (replace +
+    // prune) ONCE over the transport's whole listing, like today's single-shot path did.
+    PageLoop<DecodedConversation>& loop = m_convLoops[transport];
+    loop.items.append(live);
+    if (!next.isEmpty() && loop.guard(next) && client() != nullptr) {
+        client()->sendRequest(NodeApiCodec::encodeConvListRequest(transport, next),
+                              QLatin1String(kConvPrefix) + transport);
+        return;
+    }
+    const QList<DecodedConversation> all = loop.items;
+    m_convLoops.remove(transport);
+    syncConversations(transport, all);
     emit conversationsRefreshed(transport);
 }
 
@@ -1549,6 +1631,10 @@ bool TransportRepository::isOwnCorrelation(const QString& correlationId) {
 
 void TransportRepository::handleFailure(const QString& correlationId, const QString& message) {
     if (isOwnCorrelation(correlationId)) {
+        // A dead conversations page loop must not leak its partial accumulation.
+        if (correlationId.startsWith(QLatin1String(kConvPrefix))) {
+            m_convLoops.remove(correlationId.mid(int(qstrlen(kConvPrefix))));
+        }
         emit operationFailed(message);
     }
 }

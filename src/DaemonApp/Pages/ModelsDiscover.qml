@@ -33,6 +33,16 @@ ColumnLayout {
         }
     }
 
+    // Operation failures (HF network errors, gated repos) surfaced inline: without this a failed
+    // search just looks like an empty, dead page.
+    Text {
+        Layout.fillWidth: true
+        visible: ModelCatalog.lastError.length > 0
+        text: ModelCatalog.lastError
+        font.family: FontIcons.display; font.pixelSize: 12; color: Theme.danger
+        wrapMode: Text.WordWrap
+    }
+
     Text {
         Layout.fillWidth: true
         visible: ModelCatalog.discover.count === 0
@@ -111,6 +121,14 @@ ColumnLayout {
                 }
             }
         }
+    }
+
+    // Paged search (the node reports has_more): append the next page on demand.
+    Kit.TextButton {
+        visible: ModelCatalog.searchHasMore
+        text: qsTr("Load more")
+        Layout.alignment: Qt.AlignHCenter
+        onClicked: ModelCatalog.searchMore()
     }
 
     QuantPickerPopup {

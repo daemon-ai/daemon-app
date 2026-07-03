@@ -345,8 +345,13 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
             decoded.downloadId = m.DownloadProgress_id;
             decoded.pct = m.DownloadProgress_pct;
             decoded.state = fromZcbor(m.DownloadProgress_state);
+            decoded.downloadedBytes = m.DownloadProgress_downloaded_bytes;
+            decoded.totalBytes = m.DownloadProgress_total_bytes;
             break;
         }
+        case node_event_r::node_event_catalog_changed_m_c:
+            decoded.kind = DecodedNodeEvent::Kind::CatalogChanged;
+            break;
         case node_event_r::node_event_resync_needed_m_c:
             decoded.kind = DecodedNodeEvent::Kind::ResyncNeeded;
             decoded.scope = fromZcbor(ev.node_event_resync_needed_m.ResyncNeeded_scope);
@@ -455,8 +460,8 @@ bool NodeApiCodec::decodeCredentials(const QByteArray& responseCbor,
     return true;
 }
 
-bool NodeApiCodec::decodeModels(const QByteArray& responseCbor,
-                                QList<DecodedModelDescriptor>* out) {
+bool NodeApiCodec::decodeModels(const QByteArray& responseCbor, QList<DecodedModelDescriptor>* out,
+                                QString* next) {
     if (out == nullptr) {
         return false;
     }
@@ -465,12 +470,19 @@ bool NodeApiCodec::decodeModels(const QByteArray& responseCbor,
     if (!response) {
         return false;
     }
-    const response_models& models = response->api_response_response_models_m;
+    const model_page& page = response->api_response_response_models_m.response_models_Models;
     out->clear();
-    for (size_t i = 0; i < models.response_models_Models_model_descriptor_m_count; ++i) {
+    for (size_t i = 0; i < page.model_page_items_model_descriptor_m_count; ++i) {
         DecodedModelDescriptor descriptor;
-        fillDescriptor(models.response_models_Models_model_descriptor_m[i], &descriptor);
+        fillDescriptor(page.model_page_items_model_descriptor_m[i], &descriptor);
         out->append(descriptor);
+    }
+    if (next != nullptr) {
+        // The resume cursor (wire v25): present + non-null => more pages remain.
+        const bool hasNext =
+            page.model_page_next_present && page.model_page_next.model_page_next_choice ==
+                                                model_page_next_r::model_page_next_tstr_c;
+        *next = hasNext ? fromZcbor(page.model_page_next.model_page_next_tstr) : QString();
     }
     return true;
 }
@@ -499,7 +511,7 @@ bool NodeApiCodec::decodeProviderCatalog(const QByteArray& responseCbor,
 }
 
 bool NodeApiCodec::decodeProviderModels(const QByteArray& responseCbor,
-                                        QList<DecodedModelDescriptor>* out) {
+                                        QList<DecodedModelDescriptor>* out, QString* next) {
     if (out == nullptr) {
         return false;
     }
@@ -508,14 +520,20 @@ bool NodeApiCodec::decodeProviderModels(const QByteArray& responseCbor,
     if (!response) {
         return false;
     }
-    const response_provider_models& models = response->api_response_response_provider_models_m;
+    const model_page& page =
+        response->api_response_response_provider_models_m.response_provider_models_ProviderModels;
     out->clear();
-    for (size_t i = 0; i < models.response_provider_models_ProviderModels_model_descriptor_m_count;
-         ++i) {
+    for (size_t i = 0; i < page.model_page_items_model_descriptor_m_count; ++i) {
         DecodedModelDescriptor descriptor;
-        fillDescriptor(models.response_provider_models_ProviderModels_model_descriptor_m[i],
-                       &descriptor);
+        fillDescriptor(page.model_page_items_model_descriptor_m[i], &descriptor);
         out->append(descriptor);
+    }
+    if (next != nullptr) {
+        // The resume cursor (wire v25): present + non-null => more pages remain.
+        const bool hasNext =
+            page.model_page_next_present && page.model_page_next.model_page_next_choice ==
+                                                model_page_next_r::model_page_next_tstr_c;
+        *next = hasNext ? fromZcbor(page.model_page_next.model_page_next_tstr) : QString();
     }
     return true;
 }
@@ -687,7 +705,8 @@ bool NodeApiCodec::decodeDistribution(const QByteArray& responseCbor, DecodedDis
     return true;
 }
 
-bool NodeApiCodec::decodeRevisions(const QByteArray& responseCbor, QList<DecodedRevision>* out) {
+bool NodeApiCodec::decodeRevisions(const QByteArray& responseCbor, QList<DecodedRevision>* out,
+                                   QString* next) {
     if (out == nullptr) {
         return false;
     }
@@ -696,10 +715,11 @@ bool NodeApiCodec::decodeRevisions(const QByteArray& responseCbor, QList<Decoded
     if (!response) {
         return false;
     }
-    const response_revisions& rr = response->api_response_response_revisions_m;
+    const revision_page& page =
+        response->api_response_response_revisions_m.response_revisions_Revisions;
     out->clear();
-    for (size_t i = 0; i < rr.response_revisions_Revisions_revision_m_count; ++i) {
-        const revision& r = rr.response_revisions_Revisions_revision_m[i];
+    for (size_t i = 0; i < page.revision_page_items_revision_m_count; ++i) {
+        const revision& r = page.revision_page_items_revision_m[i];
         DecodedRevision d;
         d.seq = r.revision_seq;
         d.hasParent = r.revision_parent_choice == revision::revision_parent_uint64_m_c;
@@ -712,6 +732,13 @@ bool NodeApiCodec::decodeRevisions(const QByteArray& responseCbor, QList<Decoded
         d.reason = fromZcbor(r.revision_reason);
         d.tsMs = r.revision_ts_ms;
         out->append(d);
+    }
+    if (next != nullptr) {
+        // The resume cursor (wire v25): present + non-null => more pages remain.
+        const bool hasNext =
+            page.revision_page_next_present && page.revision_page_next.revision_page_next_choice ==
+                                                   revision_page_next_r::revision_page_next_tstr_c;
+        *next = hasNext ? fromZcbor(page.revision_page_next.revision_page_next_tstr) : QString();
     }
     return true;
 }
@@ -762,7 +789,8 @@ bool NodeApiCodec::decodeModelSearch(const QByteArray& responseCbor, QList<Decod
     return true;
 }
 
-bool NodeApiCodec::decodeModelFiles(const QByteArray& responseCbor, QList<DecodedModelFile>* out) {
+bool NodeApiCodec::decodeModelFiles(const QByteArray& responseCbor, QList<DecodedModelFile>* out,
+                                    QString* next) {
     if (out == nullptr) {
         return false;
     }
@@ -771,10 +799,11 @@ bool NodeApiCodec::decodeModelFiles(const QByteArray& responseCbor, QList<Decode
     if (!response) {
         return false;
     }
-    const response_model_files& files = response->api_response_response_model_files_m;
+    const model_file_page& page =
+        response->api_response_response_model_files_m.response_model_files_ModelFiles;
     out->clear();
-    for (size_t i = 0; i < files.response_model_files_ModelFiles_model_file_m_count; ++i) {
-        const model_file& f = files.response_model_files_ModelFiles_model_file_m[i];
+    for (size_t i = 0; i < page.model_file_page_items_model_file_m_count; ++i) {
+        const model_file& f = page.model_file_page_items_model_file_m[i];
         DecodedModelFile file;
         file.path = fromZcbor(f.model_file_path);
         file.sizeBytes = f.model_file_size_bytes;
@@ -783,7 +812,16 @@ bool NodeApiCodec::decodeModelFiles(const QByteArray& responseCbor, QList<Decode
         }
         file.isSplit = f.model_file_is_split;
         file.isFirstShard = f.model_file_is_first_shard;
+        file.isMmproj = f.model_file_is_mmproj;
         out->append(file);
+    }
+    if (next != nullptr) {
+        // The resume cursor (wire v25): present + non-null => more pages remain.
+        const bool hasNext = page.model_file_page_next_present &&
+                             page.model_file_page_next.model_file_page_next_choice ==
+                                 model_file_page_next_r::model_file_page_next_tstr_c;
+        *next =
+            hasNext ? fromZcbor(page.model_file_page_next.model_file_page_next_tstr) : QString();
     }
     return true;
 }
@@ -874,6 +912,12 @@ bool NodeApiCodec::decodeModelCatalog(const QByteArray& responseCbor,
                 installed_model_file_type_r::installed_model_file_type_tstr_c) {
             model.fileType = fromZcbor(m.installed_model_file_type.installed_model_file_type_tstr);
         }
+        if (m.installed_model_mmproj_path_present &&
+            m.installed_model_mmproj_path.installed_model_mmproj_path_choice ==
+                installed_model_mmproj_path_r::installed_model_mmproj_path_tstr_c) {
+            model.mmprojPath =
+                fromZcbor(m.installed_model_mmproj_path.installed_model_mmproj_path_tstr);
+        }
         out->append(model);
     }
     return true;
@@ -925,8 +969,8 @@ bool NodeApiCodec::decodeModelRecommend(const QByteArray& responseCbor,
     return true;
 }
 
-bool NodeApiCodec::decodeApprovals(const QByteArray& responseCbor,
-                                   QList<DecodedApprovalInfo>* out) {
+bool NodeApiCodec::decodeApprovals(const QByteArray& responseCbor, QList<DecodedApprovalInfo>* out,
+                                   QString* next) {
     if (out == nullptr) {
         return false;
     }
@@ -935,10 +979,11 @@ bool NodeApiCodec::decodeApprovals(const QByteArray& responseCbor,
     if (!response) {
         return false;
     }
-    const response_approvals& approvals = response->api_response_response_approvals_m;
+    const approval_page& page =
+        response->api_response_response_approvals_m.response_approvals_Approvals;
     out->clear();
-    for (size_t i = 0; i < approvals.response_approvals_Approvals_approval_info_m_count; ++i) {
-        const approval_info& info = approvals.response_approvals_Approvals_approval_info_m[i];
+    for (size_t i = 0; i < page.approval_page_items_approval_info_m_count; ++i) {
+        const approval_info& info = page.approval_page_items_approval_info_m[i];
         DecodedApprovalInfo entry;
         entry.session = fromZcbor(info.approval_info_session);
         entry.requestId = fromZcbor(info.approval_info_request_id);
@@ -950,6 +995,13 @@ bool NodeApiCodec::decodeApprovals(const QByteArray& responseCbor,
             entry.path = fromZcbor(info.approval_info_path.approval_info_path_tstr);
         }
         out->append(entry);
+    }
+    if (next != nullptr) {
+        // The resume cursor (wire v25): present + non-null => more pages remain.
+        const bool hasNext =
+            page.approval_page_next_present && page.approval_page_next.approval_page_next_choice ==
+                                                   approval_page_next_r::approval_page_next_tstr_c;
+        *next = hasNext ? fromZcbor(page.approval_page_next.approval_page_next_tstr) : QString();
     }
     return true;
 }

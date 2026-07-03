@@ -111,20 +111,6 @@ void SessionController::onStoreSessionCreated(const QString& sessionId,
     }
     m_pendingCreate = false;
     m_lastCreatedId = sessionId;
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(
-                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"AUTO-SELECT\","
-                               "\"location\":\"session_controller.cpp:onStoreSessionCreated\","
-                               "\"message\":\"adopt node-minted session\",\"data\":{"
-                               "\"session\":\"%1\"},\"timestamp\":%2}\n")
-                    .arg(sessionId)
-                    .arg(QDateTime::currentMSecsSinceEpoch())
-                    .toUtf8());
-    }
-    // #endregion
     open(sessionId);
     emit created(sessionId);
 }

@@ -35,6 +35,9 @@ public:
     void cancel() override { m_active = false; }
     void resume() override {}
 
+    // Test seam: replay a daemon-shaped event batch through the engine's stream signal.
+    void emitEvents(const QVariantList& events) { emit eventsEmitted(events); }
+
     QString boundProfile;
 
 private:
@@ -69,6 +72,8 @@ private slots:
     void init() { resetMockCache(); }
 
     void submitStartsTurnAndPopulatesTodos() {
+        // The default engine is the mock simulator (simulatesStatusFeeds), so submit seeds the
+        // canned 3-row plan.
         SessionOrchestrator orch;
         QVERIFY(!orch.busy());
         QCOMPARE(orch.todos()->count(), 0);
@@ -77,11 +82,66 @@ private slots:
 
         QVERIFY(orch.busy());
         QVERIFY(orch.turn()->active());
+        QVERIFY(orch.turn()->simulatesStatusFeeds());
         QCOMPARE(orch.todos()->count(), 3);
 
         orch.cancel();
         QVERIFY(!orch.busy());
         QVERIFY(!orch.turn()->active());
+    }
+
+    // A non-simulator engine (the daemon engine's seam: simulatesStatusFeeds == false) must NOT
+    // get canned todos on submit — its todos arrive only as real `todoUpdate` stream events.
+    void daemonEngineSubmitSeedsNoCannedTodos() {
+        SessionOrchestrator orch;
+        RecordingTurnEngineFactory factory;
+        orch.setTurnEngines(&factory);
+        QVERIFY(factory.last != nullptr);
+        QVERIFY(!orch.turn()->simulatesStatusFeeds());
+
+        orch.submit(QStringLiteral("hi"), QString());
+
+        QCOMPARE(orch.todos()->count(), 0);
+        orch.cancel();
+    }
+
+    // A `todoUpdate` event on the turn stream (the daemon engine's projection of the agent's
+    // `todo` tool detail) replaces the status-stack todos with the FULL list — any N items,
+    // contents and done flags intact; unrelated events are ignored.
+    void todoUpdateEventPopulatesTodos() {
+        SessionOrchestrator orch;
+        RecordingTurnEngineFactory factory;
+        orch.setTurnEngines(&factory);
+        QVERIFY(factory.last != nullptr);
+
+        constexpr int kItems = 7; // deliberately != the simulator's canned 3
+        QVariantList items;
+        for (int i = 0; i < kItems; ++i) {
+            items.push_back(QVariantMap{{QStringLiteral("text"), QStringLiteral("task %1").arg(i)},
+                                        {QStringLiteral("done"), i % 2 == 0}});
+        }
+        factory.last->emitEvents(QVariantList{
+            QVariantMap{{QStringLiteral("type"), QStringLiteral("text")},
+                        {QStringLiteral("text"), QStringLiteral("hi")}},
+            QVariantMap{{QStringLiteral("type"), QStringLiteral("todoUpdate")},
+                        {QStringLiteral("items"), items}},
+        });
+
+        QCOMPARE(orch.todos()->count(), kItems);
+        for (int i = 0; i < kItems; ++i) {
+            QCOMPARE(orch.todos()->textAt(i), QStringLiteral("task %1").arg(i));
+            QCOMPARE(orch.todos()->doneAt(i), i % 2 == 0);
+        }
+
+        // The next update replaces the whole list (the tool returns the full current state).
+        factory.last->emitEvents(QVariantList{QVariantMap{
+            {QStringLiteral("type"), QStringLiteral("todoUpdate")},
+            {QStringLiteral("items"),
+             QVariantList{QVariantMap{{QStringLiteral("text"), QStringLiteral("Apply it")},
+                                      {QStringLiteral("done"), true}}}}}});
+        QCOMPARE(orch.todos()->count(), 1);
+        QCOMPARE(orch.todos()->textAt(0), QStringLiteral("Apply it"));
+        QVERIFY(orch.todos()->doneAt(0));
     }
 
     void submitAppendsUserTextToSession() {

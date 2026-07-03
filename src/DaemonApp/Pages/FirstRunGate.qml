@@ -181,6 +181,10 @@ Rectangle {
                 active: root.phase === "inference"
                 visible: active
                 sourceComponent: AgentInferencePicker {
+                    // First-run defaults to LOCAL inference (llama.cpp): keyless, works out of
+                    // the box after a model download — the "+ New agent" dialog keeps the
+                    // Daemon Cloud preference.
+                    preferDaemonCloud: false
                     // FIX 4: the wizard logs the authenticated-LIST key-validation outcome.
                     onKeyValidationResolved: function(provider, requiresKey, count, pass) {
                         if (FirstRun)

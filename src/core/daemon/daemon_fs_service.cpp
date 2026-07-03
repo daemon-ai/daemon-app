@@ -95,9 +95,14 @@ void DaemonFsService::search(const QString& rootId, const QString& query, const 
     const bool regex = opts.value(QStringLiteral("regex")).toBool();
     const bool caseSensitive = opts.value(QStringLiteral("caseSensitive")).toBool();
     const quint32 maxResults = opts.value(QStringLiteral("maxResults")).toUInt();
+    Pending ctx{Op::Search, rootId, {}, query};
+    ctx.budget = maxResults > 0 ? maxResults : kDefaultSearchBudget;
+    ctx.maxResults = maxResults;
+    ctx.regex = regex;
+    ctx.caseSensitive = caseSensitive;
     m_client->sendRequest(
         NodeApiCodec::encodeFsSearchRequest(rootId, query, regex, caseSensitive, maxResults),
-        track({Op::Search, rootId, {}, query}));
+        track(ctx));
 }
 
 void DaemonFsService::watch(const QString& rootId, const QString& dir) {
@@ -184,11 +189,18 @@ void DaemonFsService::onResponse(const QString& correlationId, const QByteArray&
     }
     case Op::List: {
         QList<daemonapp::daemon::DecodedFsEntry> decoded;
-        if (!NodeApiCodec::decodeFsList(responseCbor, &decoded)) {
-            emit error(ctx.rootId, ctx.path, QStringLiteral("Failed to decode FsList"));
+        QString next;
+        if (!NodeApiCodec::decodeFsList(responseCbor, &decoded, &next)) {
+            // A decode miss here is usually the node's ApiError arm (e.g. read_dir ENOENT);
+            // surface its real message instead of a generic decode failure.
+            daemonapp::daemon::DecodedApiError err;
+            const QString msg = NodeApiCodec::decodeError(responseCbor, &err)
+                                    ? err.message
+                                    : QStringLiteral("Failed to decode FsList");
+            emit error(ctx.rootId, ctx.path, msg);
             return;
         }
-        QList<FsEntry> entries;
+        Pending cont = ctx; // the PageLoop state carries across pages (implicitly shared QList)
         for (const auto& e : decoded) {
             FsEntry entry;
             entry.name = e.name;
@@ -198,10 +210,18 @@ void DaemonFsService::onResponse(const QString& correlationId, const QByteArray&
             entry.ignored = e.ignored;
             entry.size = static_cast<qint64>(e.size);
             entry.mtimeMs = static_cast<qint64>(e.mtimeMs);
-            entries.append(entry);
+            cont.list.items.append(entry);
         }
-        cacheEntries(ctx.rootId, entries);
-        emit listed(ctx.rootId, ctx.path, entries);
+        // Page loop: a non-empty `next` means more entries remain; keep accumulating so `listed`
+        // keeps its "one signal = the complete directory" contract for FsExplorerModel. The
+        // shared guard stops a pathological chain and serves what accumulated.
+        if (!next.isEmpty() && cont.list.guard(next)) {
+            m_client->sendRequest(
+                NodeApiCodec::encodeFsListRequest(ctx.rootId, ctx.path, false, next), track(cont));
+            return;
+        }
+        cacheEntries(ctx.rootId, cont.list.items);
+        emit listed(ctx.rootId, ctx.path, cont.list.items);
         break;
     }
     case Op::Stat: {
@@ -224,7 +244,12 @@ void DaemonFsService::onResponse(const QString& correlationId, const QByteArray&
     case Op::Read: {
         daemonapp::daemon::DecodedFsContent content;
         if (!NodeApiCodec::decodeFsRead(responseCbor, &content)) {
-            emit error(ctx.rootId, ctx.path, QStringLiteral("Failed to decode FsRead"));
+            // Usually the node's ApiError arm; surface its real message (see Op::Write).
+            daemonapp::daemon::DecodedApiError err;
+            const QString msg = NodeApiCodec::decodeError(responseCbor, &err)
+                                    ? err.message
+                                    : QStringLiteral("Failed to decode FsRead");
+            emit error(ctx.rootId, ctx.path, msg);
             return;
         }
         const bool binary = content.bytes.contains('\0');
@@ -249,10 +274,15 @@ void DaemonFsService::onResponse(const QString& correlationId, const QByteArray&
     case Op::Search: {
         daemonapp::daemon::DecodedFsSearchPage page;
         if (!NodeApiCodec::decodeFsSearch(responseCbor, &page)) {
-            emit error(ctx.rootId, QString(), QStringLiteral("Failed to decode FsSearch"));
+            // Usually the node's ApiError arm; surface its real message (see Op::Write).
+            daemonapp::daemon::DecodedApiError err;
+            const QString msg = NodeApiCodec::decodeError(responseCbor, &err)
+                                    ? err.message
+                                    : QStringLiteral("Failed to decode FsSearch");
+            emit error(ctx.rootId, QString(), msg);
             return;
         }
-        QList<FsSearchHit> hits;
+        QList<FsSearchHit> hits = ctx.hits; // accumulated across pages (implicitly shared)
         for (const auto& h : page.hits) {
             FsSearchHit hit;
             hit.path = h.path;
@@ -261,7 +291,20 @@ void DaemonFsService::onResponse(const QString& correlationId, const QByteArray&
             hit.preview = h.preview;
             hits.append(hit);
         }
-        emit searchResults(ctx.rootId, ctx.query, hits, !page.hasMore);
+        // Wire v24: pages are bounded at kWirePageMax, so gather up to the total budget across
+        // `page` re-issues. Each page emits the FULL accumulated snapshot (SearchResultsModel
+        // replaces on every signal), with complete=false while more pages are being fetched.
+        const bool wantMore = page.hasMore && std::cmp_less(hits.size(), ctx.budget);
+        emit searchResults(ctx.rootId, ctx.query, hits, !wantMore);
+        if (wantMore) {
+            Pending cont = ctx;
+            cont.hits = hits;
+            cont.page = ctx.page + 1;
+            m_client->sendRequest(NodeApiCodec::encodeFsSearchRequest(ctx.rootId, ctx.query,
+                                                                      ctx.regex, ctx.caseSensitive,
+                                                                      ctx.maxResults, cont.page),
+                                  track(cont));
+        }
         break;
     }
     case Op::WatchPoll: {

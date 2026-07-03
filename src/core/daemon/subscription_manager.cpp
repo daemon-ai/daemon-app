@@ -133,8 +133,19 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
         break;
     case DecodedNodeEvent::Kind::DownloadProgress:
         // Patch the download row in place from the feed payload (replaces the retired 600ms poll).
+        // v26: the event carries real byte counters, so the row renders exact progress.
         if (m_models != nullptr) {
-            m_models->applyDownloadProgress(event.downloadId, event.pct, event.state);
+            m_models->applyDownloadProgress(event.downloadId, event.state, event.downloadedBytes,
+                                            event.totalBytes);
+        }
+        break;
+    case DecodedNodeEvent::Kind::CatalogChanged:
+        // The installed-model registry changed (a finished download was cataloged / a model was
+        // deleted): refetch the catalog. The refresh cascades through the model facade
+        // (rebuildInstalled -> downloadFinished on growth) into the provider picker's offered
+        // models, so a completed download becomes selectable without any client polling.
+        if (m_models != nullptr) {
+            m_models->refreshCatalog();
         }
         break;
     case DecodedNodeEvent::Kind::ResyncNeeded: {
@@ -154,6 +165,12 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
             }
             if (m_approvals != nullptr) {
                 m_approvals->refreshPending();
+            }
+            if (m_models != nullptr) {
+                // The gap may have swallowed DownloadProgress / CatalogChanged events: re-baseline
+                // the model state those events would have patched.
+                m_models->refreshCatalog();
+                m_models->refreshDownloads();
             }
         }
         if (profiles && m_profiles != nullptr) {

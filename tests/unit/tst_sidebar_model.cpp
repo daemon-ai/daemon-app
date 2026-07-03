@@ -26,7 +26,7 @@ QVariantMap agentRow(const QString& id, const QString& name, const QString& prov
     return m;
 }
 
-// A configured agent + an unconfigured placeholder: drives the provider/model sublabel cases.
+// A configured agent + an unconfigured placeholder: drives the agent-row role cases.
 QList<QVariantMap> twoAgentRows() {
     return {agentRow(QStringLiteral("anthropic"), QStringLiteral("anthropic"),
                      QStringLiteral("genai"), QStringLiteral("claude-opus-4-8"), true),
@@ -585,10 +585,10 @@ private slots:
 
     // --- Fleet membership (agents == profiles) -------------------------------
 
-    // W2 (2b): agent rows carry a "provider · model" secondary label from the profile row
-    // fields, so the Fleet shows each agent's actual configuration; an unconfigured agent
-    // (empty model) shows just its provider — no dangling separator.
-    void agentRowsCarryProviderModelSecondaryLabel() {
+    // Agent rows carry NO secondary label: provider/model configuration crowds the agent name
+    // in the tree (it lives in Settings > Profiles); the sublabel role stays reserved for
+    // transport leaves.
+    void agentRowsCarryNoSecondaryLabel() {
         InMemorySessionStore store;
         FakeProfileStore profiles(twoAgentRows(), QStringLiteral("anthropic"));
         SidebarModel model;
@@ -598,13 +598,11 @@ private slots:
         const int configured = findRow(model, QStringLiteral("anthropic"));
         QVERIFY(configured >= 0);
         QCOMPARE(roleAt<int>(model, configured, SidebarModel::NodeTypeRole), 11); // Agent
-        QCOMPARE(roleAt<QString>(model, configured, SidebarModel::SubLabelRole),
-                 QStringLiteral("genai \u00b7 claude-opus-4-8"));
+        QVERIFY(roleAt<QString>(model, configured, SidebarModel::SubLabelRole).isEmpty());
 
         const int bare = findRow(model, QStringLiteral("default"));
         QVERIFY(bare >= 0);
-        QCOMPARE(roleAt<QString>(model, bare, SidebarModel::SubLabelRole),
-                 QStringLiteral("daemon_api"));
+        QVERIFY(roleAt<QString>(model, bare, SidebarModel::SubLabelRole).isEmpty());
     }
 
     // --- Collapsible section headers (Fleet / Tags / Integrations) ----------

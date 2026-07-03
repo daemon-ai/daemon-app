@@ -47,11 +47,13 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap& event) {
     }
 
     // Status-only events (token usage, context-window fill, rate-limit windows,
-    // and subagent/delegation progress) carry no transcript content: the status
-    // bar and subagent model consume them off the same stream. Ignore them here
-    // so they neither open an assistant turn nor create blocks.
+    // subagent/delegation progress, and todo-list updates) carry no transcript
+    // content: the status bar, subagent model, and composer todo stack consume
+    // them off the same stream. Ignore them here so they neither open an
+    // assistant turn nor create blocks.
     if (type == QStringLiteral("usage") || type == QStringLiteral("context") ||
-        type == QStringLiteral("rateLimit") || type.startsWith(QStringLiteral("subagent"))) {
+        type == QStringLiteral("rateLimit") || type == QStringLiteral("todoUpdate") ||
+        type.startsWith(QStringLiteral("subagent"))) {
         return out;
     }
 

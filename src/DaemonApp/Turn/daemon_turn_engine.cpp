@@ -11,6 +11,9 @@
 
 #include <algorithm>
 #include <QDateTime>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QVariantList>
 #include <QVariantMap>
 
@@ -64,6 +67,25 @@ QVariantMap toIngestEvent(const DecodedAgentEvent& event) {
     default:
         return {};
     }
+}
+
+// Project the `todo` tool's structured detail (JSON [{id, content, status}], the node's
+// ToolDetail{kind:"todo"} body) into the status stack's {text, done} rows. `done` folds the
+// terminal states (completed/cancelled); a malformed body yields an empty list (clears the stack).
+QVariantList todoItemsFromDetail(const QByteArray& body) {
+    QVariantList items;
+    const QJsonDocument doc = QJsonDocument::fromJson(body);
+    const QJsonArray list = doc.array();
+    items.reserve(list.size());
+    for (const auto& v : list) {
+        const QJsonObject o = v.toObject();
+        const QString status = o.value(QStringLiteral("status")).toString();
+        items.push_back(
+            QVariantMap{{QStringLiteral("text"), o.value(QStringLiteral("content")).toString()},
+                        {QStringLiteral("done"), status == QStringLiteral("completed") ||
+                                                     status == QStringLiteral("cancelled")}});
+    }
+    return items;
 }
 
 } // namespace
@@ -122,6 +144,9 @@ void DaemonTurnEngine::setSessionId(const QString& sessionId) {
     m_cursor = 0;
     m_epoch = 0;
     m_epochKnown = false;
+    // Any in-flight journal page loop belongs to the previous session; drop its accumulation.
+    m_journalAcc.clear();
+    m_journalPages = 0;
     if (m_cache != nullptr && !sessionId.isEmpty()) {
         const QString w = m_cache->cursor(dcache::sessionWatermarkScope(sessionId));
         const QString e = m_cache->cursor(dcache::sessionEpochScope(sessionId));
@@ -165,6 +190,9 @@ void DaemonTurnEngine::start(const QString& prompt) {
     m_pendingRequestId = 0;
     m_pendingKind.clear();
     m_pendingOptions.clear();
+    m_todoCallIds.clear();
+    m_reasoningSeq = 0;
+    m_reasoningText.clear();
     m_resumeAttempts = 0;
     m_resumeBackoffMs = kResumeMinMs;
     m_startedAt = QDateTime::currentMSecsSinceEpoch();
@@ -440,6 +468,43 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
         if (entry.event.kind == AgentEventKind::Error) {
             setErrorText(entry.event.text);
         }
+        // Reasoning persistence: deltas accumulate into one durable Reasoning block per run
+        // (mirroring the live ingest's coalescing into a single disclosure card); any CONTENT
+        // event settles the open run, so a reload renders the same reasoning blocks in order.
+        // Status-only events (Usage/Context) interleave mid-disclosure and must not split it —
+        // the same rule the live ingest applies.
+        if (entry.event.kind == AgentEventKind::ReasoningDelta) {
+            if (m_reasoningSeq == 0) {
+                m_reasoningSeq = entry.seq;
+            }
+            m_reasoningText += entry.event.text;
+        } else if (entry.event.kind == AgentEventKind::TextDelta ||
+                   entry.event.kind == AgentEventKind::ToolStarted ||
+                   entry.event.kind == AgentEventKind::ToolFinished ||
+                   entry.event.kind == AgentEventKind::TurnFinished ||
+                   entry.event.kind == AgentEventKind::Error) {
+            settleReasoningBlock();
+        }
+        // The `todo` tool is the status stack's structured feed, not transcript content: suppress
+        // its inline tool blocks (never rendered, never cached) and surface the finished result's
+        // detail as a `todoUpdate` the orchestrator applies to the TodoListModel.
+        if (entry.event.kind == AgentEventKind::ToolStarted &&
+            entry.event.toolName == QStringLiteral("todo")) {
+            m_todoCallIds.insert(entry.event.callId);
+            continue;
+        }
+        if (entry.event.kind == AgentEventKind::ToolFinished) {
+            const bool startedAsTodo = m_todoCallIds.remove(entry.event.callId);
+            if (entry.event.detailKind == QStringLiteral("todo")) {
+                emit eventsEmitted(QVariantList{QVariantMap{
+                    {QStringLiteral("type"), QStringLiteral("todoUpdate")},
+                    {QStringLiteral("items"), todoItemsFromDetail(entry.event.detailBody)}}});
+                continue;
+            }
+            if (startedAsTodo) {
+                continue; // a failed todo call (no detail): suppressed, list left as-is
+            }
+        }
         const QVariantMap mapped = toIngestEvent(entry.event);
         if (!mapped.isEmpty()) {
             if (mapped.value(QStringLiteral("type")).toString() == QStringLiteral("text")) {
@@ -492,6 +557,9 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
             return;
         }
     }
+    // A page boundary mid-reasoning: checkpoint the accumulated text so a crash/refocus renders
+    // what has streamed so far (the run stays open for the next page's deltas).
+    checkpointReasoningBlock();
     persistWatermark();
 }
 
@@ -504,6 +572,10 @@ void DaemonTurnEngine::rebaselineFromJournal() {
     }
     m_resumeTimer.stop();
     setTurnState(QStringLiteral("stalled"));
+    // A fresh re-baseline restarts the page loop from cursor 0: drop anything a superseded loop
+    // accumulated so the eventual replay reflects exactly one generation.
+    m_journalAcc.clear();
+    m_journalPages = 0;
     if (m_client != nullptr) {
         m_client->sendRequest(
             NodeApiCodec::encodeSessionHistoryRequest(m_sessionId, 0, kSubscribeMax),
@@ -539,25 +611,59 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
     }
 
     if (correlationId == journalCorrelation()) {
+        // One page of the re-baseline read (wire v24: SessionHistory pages are bounded at
+        // kWirePageMax records). Accumulate, and keep paging while the durable head lies past
+        // this page's cursor; the replay below runs exactly once over the full set.
+        QList<daemonapp::daemon::DecodedJournalRecord> pageRecords;
+        quint64 nextCursor = 0;
+        quint64 headCursor = 0;
+        const bool decoded =
+            NodeApiCodec::decodeJournal(responseCbor, &pageRecords, &nextCursor, &headCursor);
+        if (decoded) {
+            m_journalAcc.append(pageRecords);
+        }
+        const bool morePages = decoded && !pageRecords.isEmpty() && nextCursor < headCursor;
+        if (morePages && m_journalPages < kMaxJournalPages && m_client != nullptr) {
+            ++m_journalPages;
+            m_client->sendRequest(
+                NodeApiCodec::encodeSessionHistoryRequest(m_sessionId, nextCursor, kSubscribeMax),
+                journalCorrelation());
+            return;
+        }
+        const QList<daemonapp::daemon::DecodedJournalRecord> records = std::move(m_journalAcc);
+        m_journalAcc = {};
+        m_journalPages = 0;
         // Re-baseline replay: render the durable conversation (coalesced blocks), re-surface an
         // unanswered parked Request, then finish - the interrupted turn ended with the reset.
-        QList<daemonapp::daemon::DecodedJournalRecord> records;
-        NodeApiCodec::decodeJournal(responseCbor, &records);
         emit eventsEmitted(
             QVariantList{QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}}});
         // L3: the journal is the authoritative coalesced transcript — rebuild the durable cache
         // from it so a subsequent refocus/cold-start renders from disk. Wipe the stale generation
-        // first.
+        // first (this drops locally-persisted Reasoning blocks too: the node's journal does not
+        // retain disclosures, and stale-generation seqs cannot be trusted against the new log).
         if (m_cache != nullptr && !m_sessionId.isEmpty()) {
             m_cache->clearTranscript(m_sessionId);
         }
+        m_reasoningSeq = 0;
+        m_reasoningText.clear();
         bool parked = false;
+        QSet<QString> replayTodoCalls;
         for (const daemonapp::daemon::DecodedJournalRecord& rec : records) {
             if (!rec.isBlock) {
                 continue;
             }
             using Kind = daemonapp::daemon::DecodedTranscriptBlock::Kind;
             const auto& b = rec.block;
+            // The `todo` tool's blocks are the status stack's feed, not transcript content: skip
+            // them in the durable rebuild + replay (a replayed turn is over, the stack stays
+            // empty; the live path surfaces them as todoUpdate).
+            if (b.kind == Kind::ToolCall && b.toolName == QStringLiteral("todo")) {
+                replayTodoCalls.insert(b.callId);
+                continue;
+            }
+            if (b.kind == Kind::ToolResult && replayTodoCalls.contains(b.callId)) {
+                continue;
+            }
             if (m_cache != nullptr && !m_sessionId.isEmpty()) {
                 daemonapp::daemon::CachedTranscriptBlockRow row;
                 row.sessionId = m_sessionId;
@@ -668,6 +774,25 @@ void DaemonTurnEngine::persistWatermark() {
     m_cache->setCursor(dcache::sessionEpochScope(m_sessionId), QString::number(m_epoch), now);
 }
 
+void DaemonTurnEngine::checkpointReasoningBlock() {
+    if (m_reasoningSeq == 0 || m_cache == nullptr || m_sessionId.isEmpty()) {
+        return;
+    }
+    daemonapp::daemon::CachedTranscriptBlockRow b;
+    b.sessionId = m_sessionId;
+    b.seq = m_reasoningSeq; // upsert key: re-checkpointing the same run is idempotent
+    b.kind = QStringLiteral("Reasoning");
+    b.text = m_reasoningText;
+    b.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
+    m_cache->upsertTranscriptBlock(b);
+}
+
+void DaemonTurnEngine::settleReasoningBlock() {
+    checkpointReasoningBlock();
+    m_reasoningSeq = 0;
+    m_reasoningText.clear();
+}
+
 void DaemonTurnEngine::finishTurn(const QString& errorText) {
     if (m_finished && !m_active) {
         return;
@@ -680,6 +805,7 @@ void DaemonTurnEngine::finishTurn(const QString& errorText) {
     m_elapsedTimer.stop();
     m_deadlineTimer.stop();
     m_finished = true;
+    settleReasoningBlock(); // a turn ending mid-disclosure still persists what streamed
     persistWatermark();
     if (!errorText.isEmpty()) {
         setErrorText(errorText);

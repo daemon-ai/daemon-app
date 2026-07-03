@@ -82,9 +82,11 @@ endif()
 # C++ target KF6SyntaxHighlighting and the QML plugin kquicksyntaxhighlightingplugin.
 # ---------------------------------------------------------------------------
 _daemon_app_resolve_dir(_ksyntax_dir KSYNTAXHIGHLIGHTING_SOURCE_DIR)
-if(NOT EXISTS "${_ksyntax_dir}/CMakeLists.txt")
+if(DAEMON_APP_WASM)
+    message(STATUS "Dependencies: skipping KSyntaxHighlighting for WebAssembly")
+elseif(NOT EXISTS "${_ksyntax_dir}/CMakeLists.txt")
     message(FATAL_ERROR "KSYNTAXHIGHLIGHTING_SOURCE_DIR must point to a KSyntaxHighlighting source tree (got '${_ksyntax_dir}')")
-endif()
+else()
 
 # GUI components carry the formats/themes the highlighter applies. Bundle the
 # syntax + theme definitions into the library as Qt resources (QRC_SYNTAX) and
@@ -115,6 +117,7 @@ set(QT_QML_GENERATE_QMLLS_INI OFF)
 add_subdirectory("${_ksyntax_dir}" "${CMAKE_BINARY_DIR}/_deps/ksyntaxhighlighting")
 set(QT_QML_GENERATE_QMLLS_INI "${_da_prev_qmlls_ini}")
 unset(BUILD_TESTING CACHE)
+endif()
 
 # ---------------------------------------------------------------------------
 # MicroTeX - LaTeX math renderer with a Qt/QPainter backend. Built from the
@@ -123,9 +126,12 @@ unset(BUILD_TESTING CACHE)
 # `tex::Graphics2D_qt` class the MathImageProvider paints through.
 # ---------------------------------------------------------------------------
 _daemon_app_resolve_dir(_microtex_dir MICROTEX_SOURCE_DIR)
-if(NOT EXISTS "${_microtex_dir}/CMakeLists.txt")
+if(DAEMON_APP_WASM)
+    message(STATUS "Dependencies: skipping MicroTeX for WebAssembly")
+    add_library(LaTeX INTERFACE)
+elseif(NOT EXISTS "${_microtex_dir}/CMakeLists.txt")
     message(FATAL_ERROR "MICROTEX_SOURCE_DIR must point to a MicroTeX source tree (got '${_microtex_dir}')")
-endif()
+else()
 
 # Build the Qt backend (graphic_qt.cpp -> tex::Graphics2D_qt). These options are
 # read with if() BEFORE option() runs in MicroTeX's CMakeLists, so a FORCEd cache
@@ -158,6 +164,7 @@ endif()
 # Resources (fonts + XML) MicroTeX's tex::LaTeX::init() reads at runtime. The
 # read-only Nix store path is fine; init only reads from it.
 set(MICROTEX_RES_DIR "${_microtex_dir}/res" CACHE INTERNAL "MicroTeX runtime resource dir")
+endif()
 
 # ---------------------------------------------------------------------------
 # Desktop-only dependencies

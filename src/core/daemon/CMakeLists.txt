@@ -33,6 +33,7 @@ add_library(da_daemon_client STATIC
     node_api_auth.h
     node_api_auth.cpp
     principal_model.h
+    page_loop.h
     node_api_codec.h
     node_api_codec/internal.h
     node_api_codec/mappers.cpp
@@ -40,8 +41,6 @@ add_library(da_daemon_client STATIC
     node_api_codec/wire_l0.cpp
     node_api_codec/decode_responses.cpp
     node_api_codec/fs_fleet_channels.cpp
-    local_daemon_launcher.h
-    local_daemon_launcher.cpp
     daemon_connection_service.h
     daemon_connection_service.cpp
     daemon_accounts_service.h
@@ -81,6 +80,13 @@ add_library(da_daemon_client STATIC
 )
 add_library(daemon-app::daemon_client ALIAS da_daemon_client)
 
+if(NOT DAEMON_APP_WASM)
+    target_sources(da_daemon_client PRIVATE
+        local_daemon_launcher.h
+        local_daemon_launcher.cpp
+    )
+endif()
+
 set_target_properties(da_daemon_client PROPERTIES AUTOMOC ON)
 
 target_include_directories(da_daemon_client PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
@@ -90,6 +96,7 @@ target_link_libraries(da_daemon_client
         Qt6::Core
         Qt6::Network
         Qt6::Sql
+        Qt6::WebSockets
         daemon-app::connection
         daemon-app::persistence
         daemon-app::settings_store

@@ -95,26 +95,36 @@ target_link_libraries(daemon-app
         da_pagesplugin
         da_memory_viewsplugin
         da_statusbarplugin
-        # KSyntaxHighlighting C++ engine. Linking it here builds the framework as a
-        # dependency, records its shared lib on the executable rpath, and ensures
-        # the QML plugin (kquicksyntaxhighlightingplugin) is built alongside.
-        KF6SyntaxHighlighting
         # MicroTeX: application.cpp calls tex::LaTeX::init()/release() at startup.
         LaTeX
 )
 
+if(NOT DAEMON_APP_WASM)
+    target_link_libraries(daemon-app
+        PRIVATE
+            # KSyntaxHighlighting C++ engine. Linking it here builds the framework as a
+            # dependency, records its shared lib on the executable rpath, and ensures
+            # the QML plugin (kquicksyntaxhighlightingplugin) is built alongside.
+            KF6SyntaxHighlighting
+    )
+endif()
+
 # The runtime resource dir (fonts + XML) MicroTeX's tex::LaTeX::init() reads.
-target_compile_definitions(daemon-app
-    PRIVATE MICROTEX_RES_DIR="${MICROTEX_RES_DIR}"
-)
+if(NOT DAEMON_APP_WASM)
+    target_compile_definitions(daemon-app
+        PRIVATE MICROTEX_RES_DIR="${MICROTEX_RES_DIR}"
+    )
+endif()
 
 # Build dependency on the KSyntaxHighlighting QML plugin so its module is emitted
 # under QT_QML_OUTPUT_DIRECTORY before we run; main.cpp adds that dir to the
 # engine import path via DAEMON_APP_BUILD_QML_DIR.
-add_dependencies(daemon-app kquicksyntaxhighlightingplugin)
-target_compile_definitions(daemon-app
-    PRIVATE DAEMON_APP_BUILD_QML_DIR="${CMAKE_BINARY_DIR}/qml"
-)
+if(NOT DAEMON_APP_WASM)
+    add_dependencies(daemon-app kquicksyntaxhighlightingplugin)
+    target_compile_definitions(daemon-app
+        PRIVATE DAEMON_APP_BUILD_QML_DIR="${CMAKE_BINARY_DIR}/qml"
+    )
+endif()
 
 # On desktop the QApplication base lives in QtWidgets (for the tray).
 if(NOT DAEMON_APP_MOBILE)
@@ -129,3 +139,12 @@ install(TARGETS daemon-app
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+if(DAEMON_APP_WASM)
+    install(FILES
+        "$<TARGET_FILE_DIR:daemon-app>/daemon-app.wasm"
+        "$<TARGET_FILE_DIR:daemon-app>/daemon-app.html"
+        "$<TARGET_FILE_DIR:daemon-app>/daemon-app.data"
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        OPTIONAL
+    )
+endif()

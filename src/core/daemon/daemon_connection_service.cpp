@@ -7,6 +7,7 @@
 #include "settings/isettings_store.h"
 
 #include <algorithm>
+#include <QUrl>
 
 namespace daemonapp::daemon {
 
@@ -117,6 +118,7 @@ DaemonConnectionService::DaemonConnectionService(QObject* parent,
         }
     });
 
+#ifndef Q_OS_WASM
     if (m_settings != nullptr) {
         m_launcher = new LocalDaemonLauncher(m_settings, this);
         connect(m_launcher, &LocalDaemonLauncher::ready, this, [this](bool /*managed*/) {
@@ -131,6 +133,7 @@ DaemonConnectionService::DaemonConnectionService(QObject* parent,
             setState(QStringLiteral("offline"));
         });
     }
+#endif
 }
 
 void DaemonConnectionService::sendHealthProbe() {
@@ -155,9 +158,14 @@ void DaemonConnectionService::enforceApiVersionGate() {
     m_transport->close();
 
     const QString daemonLabel = daemonApi == 0 ? tr("unknown") : QString::number(daemonApi);
+#ifndef Q_OS_WASM
     const bool managed = m_config.mode == QStringLiteral("local") && m_launcher != nullptr &&
                          m_settings != nullptr && m_settings->managedLocalDaemon();
+#else
+    const bool managed = false;
+#endif
     if (managed && !m_versionRespawnAttempted) {
+#ifndef Q_OS_WASM
         // App-managed socket (the launcher spawned this daemon, or would spawn one): replace the
         // stale daemon with the current binary. Bounded to ONE attempt per connect - if the
         // replacement still mismatches, that is a real error surfaced below, not a retry loop.
@@ -168,6 +176,7 @@ void DaemonConnectionService::enforceApiVersionGate() {
         setState(QStringLiteral("connecting"));
         m_launcher->replaceStaleDaemon(m_config.target);
         return;
+#endif
     }
     // Attach (user-supplied socket / remote node / respawn already spent): fail the connect
     // explicitly - a silent attach to an incompatible daemon is exactly the incident this gates.
@@ -200,12 +209,14 @@ void DaemonConnectionService::enterReconnecting() {
     setState(QStringLiteral("connecting"));
     m_reconnectDeadline.start(); // hard episode budget -> offline if recovery never lands
 
+#ifndef Q_OS_WASM
     if (m_launcher != nullptr && m_settings != nullptr && m_settings->managedLocalDaemon()) {
         // Managed: delegate retry to the launcher (probe-first re-spawn within its restart budget +
         // its own readiness poll); its ready -> sendHealthProbe wiring closes the loop.
         m_launcher->ensureRunning(m_config.target);
         return;
     }
+#endif
     // Attach-only / remote: drive a backoff Health reprobe ourselves (the transport reconnects
     // lazily under the send).
     m_backoffMs = kReprobeMinMs;
@@ -262,6 +273,11 @@ bool DaemonConnectionService::configureTransport() {
         return false;
     }
     if (m_config.mode == QStringLiteral("remote")) {
+        if (m_config.target.startsWith(QStringLiteral("ws://")) ||
+            m_config.target.startsWith(QStringLiteral("wss://"))) {
+            m_transport->setWebSocketUrl(QUrl(m_config.target));
+            return true;
+        }
         QString host;
         quint16 port = 0;
         if (!parseHostPort(m_config.target, &host, &port)) {
@@ -314,11 +330,13 @@ void DaemonConnectionService::connectTo(const QString& mode, const QString& targ
     // probe-first, so an already-running daemon is reused rather than duplicated; on success it
     // signals back and we send the Health probe. Liveness is resolved by the Health response
     // handler wired in the constructor. (Remote nodes are never auto-spawned.)
+#ifndef Q_OS_WASM
     if (mode == QStringLiteral("local") && m_launcher != nullptr && m_settings != nullptr &&
         m_settings->managedLocalDaemon()) {
         m_launcher->ensureRunning(target);
         return;
     }
+#endif
 
     sendHealthProbe();
 }
@@ -371,12 +389,18 @@ void DaemonConnectionService::testConnection(const QString& mode, const QString&
         message = ok ? QStringLiteral("Unix socket target accepted")
                      : QStringLiteral("Enter a local socket path");
     } else if (mode == QStringLiteral("remote")) {
-        QString host;
-        quint16 port = 0;
-        ok = parseHostPort(target, &host, &port);
+        if (target.startsWith(QStringLiteral("ws://")) ||
+            target.startsWith(QStringLiteral("wss://"))) {
+            const QUrl url(target);
+            ok = url.isValid() && !url.host().isEmpty();
+        } else {
+            QString host;
+            quint16 port = 0;
+            ok = parseHostPort(target, &host, &port);
+        }
         // Shape-only: a full reachability/TLS probe needs the server (verified end-to-end later).
-        message = ok ? QStringLiteral("Remote target accepted (host:port, TLS)")
-                     : QStringLiteral("Use host:port for a remote TLS node");
+        message = ok ? QStringLiteral("Remote target accepted (host:port TLS or ws(s) URL)")
+                     : QStringLiteral("Use host:port or ws(s):// URL for a remote node");
     } else {
         message = QStringLiteral("Unsupported transport");
     }
@@ -385,9 +409,11 @@ void DaemonConnectionService::testConnection(const QString& mode, const QString&
 }
 
 void DaemonConnectionService::shutdownManagedDaemon() {
+#ifndef Q_OS_WASM
     if (m_launcher != nullptr) {
         m_launcher->shutdownIfManaged();
     }
+#endif
 }
 
 } // namespace daemonapp::daemon

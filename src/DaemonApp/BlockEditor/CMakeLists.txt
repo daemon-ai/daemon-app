@@ -138,9 +138,11 @@ add_library(daemon-app::blockeditor ALIAS da_blockeditor)
 target_include_directories(da_blockeditor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(da_blockeditor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
 
-# CodeBlock.qml imports the external org.kde.syntaxhighlighting module; point
-# qmllint at the build-tree dir where KSyntaxHighlighting emits its QML plugin.
-set_property(TARGET da_blockeditor APPEND PROPERTY QT_QML_IMPORT_PATH "${CMAKE_BINARY_DIR}/qml")
+# Native builds still compile the external org.kde.syntaxhighlighting module; point qmllint at the
+# build-tree dir where KSyntaxHighlighting emits its QML plugin. Wasm uses plain code rendering.
+if(NOT DAEMON_APP_WASM)
+    set_property(TARGET da_blockeditor APPEND PROPERTY QT_QML_IMPORT_PATH "${CMAKE_BINARY_DIR}/qml")
+endif()
 target_link_libraries(da_blockeditor
     PRIVATE
         Qt6::Quick

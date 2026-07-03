@@ -162,27 +162,10 @@ void SidebarModel::appendFleetMembership() {
     root.count = static_cast<int>(agents.size());
     m_rows.push_back(root);
 
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(
-                QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"FLEET-ROOT\","
-                               "\"location\":\"sidebar_model.cpp:appendFleetMembership\","
-                               "\"message\":\"node root row built\",\"data\":{\"label\":\"%1\","
-                               "\"agents\":%2},\"timestamp\":%3}\n")
-                    .arg(rootLabel)
-                    .arg(agents.size())
-                    .arg(QDateTime::currentMSecsSinceEpoch())
-                    .toUtf8());
-    }
-    // #endregion
-
     if (!root.expanded) {
         return; // node root collapsed: agents hidden
     }
 
-    int agentCount = 0;
     for (const QVariantMap& a : agents) {
         const QString id = a.value(QStringLiteral("id")).toString();
         if (id.isEmpty()) {
@@ -204,18 +187,9 @@ void SidebarModel::appendFleetMembership() {
         agent.expanded = isExpanded(agent.expandKey);
         agent.hasChildren = !sess.isEmpty();
         agent.count = static_cast<int>(sess.size());
-        // Secondary label "provider · model" from the profile row, so the row reflects the
-        // agent's ACTUAL configuration, not just its name (an unconfigured agent shows only its
-        // provider — no dangling separator).
-        const QString provider = a.value(QStringLiteral("provider")).toString();
-        const QString model = a.value(QStringLiteral("model")).toString();
-        agent.sublabel = provider;
-        if (!model.isEmpty()) {
-            agent.sublabel =
-                provider.isEmpty() ? model : provider + QStringLiteral(" \u00b7 ") + model;
-        }
+        // No secondary label: provider/model configuration crowds the agent name in the tree;
+        // that detail lives in Settings > Profiles.
         m_rows.push_back(agent);
-        ++agentCount;
 
         if (!agent.expanded) {
             continue;
@@ -231,20 +205,6 @@ void SidebarModel::appendFleetMembership() {
             m_rows.push_back(leaf);
         }
     }
-
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text))
-            dbg.write(QStringLiteral("{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"AGENT-LIST\","
-                                     "\"location\":\"sidebar_model.cpp:appendFleetMembership\","
-                                     "\"message\":\"agent rows built from ProfileList\",\"data\":{"
-                                     "\"agents\":%1},\"timestamp\":%2}\n")
-                          .arg(agentCount)
-                          .arg(QDateTime::currentMSecsSinceEpoch())
-                          .toUtf8());
-    }
-    // #endregion
 }
 
 void SidebarModel::collectFleetExpandKeys(QSet<QString>& out) const {

@@ -174,22 +174,6 @@ void LocalDaemonLauncher::ensureRunning(const QString& socketPath) {
     proc->setStandardOutputFile(logPath, QIODevice::Append);
     proc->setStandardErrorFile(logPath, QIODevice::Append);
 
-    // #region agent log
-    {
-        QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-        if (dbg.open(QIODevice::Append | QIODevice::Text)) {
-            dbg.write(
-                QStringLiteral(
-                    "{\"sessionId\":\"96b7ad\",\"runId\":\"post-fix\",\"hypothesisId\":\"H1\","
-                    "\"location\":\"local_daemon_launcher.cpp:ensureRunning\","
-                    "\"message\":\"spawn managed daemon\",\"data\":{\"socket\":\"%1\","
-                    "\"env\":\"DAEMON_SOCKET_PATH\"},\"timestamp\":%2}\n")
-                    .arg(socketPath)
-                    .arg(QDateTime::currentMSecsSinceEpoch())
-                    .toUtf8());
-        }
-    }
-    // #endregion
     qint64 pid = 0;
     const bool started = proc->startDetached(&pid);
     proc->deleteLater();
@@ -252,22 +236,6 @@ bool LocalDaemonLauncher::restartBudgetAvailable() {
 
 void LocalDaemonLauncher::pollUntilReady() {
     if (isDaemonListening(m_socketPath, 50)) {
-        // #region agent log
-        {
-            QFile dbg(QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-            if (dbg.open(QIODevice::Append | QIODevice::Text)) {
-                dbg.write(
-                    QStringLiteral(
-                        "{\"sessionId\":\"96b7ad\",\"runId\":\"post-fix\",\"hypothesisId\":\"H1\","
-                        "\"location\":\"local_daemon_launcher.cpp:pollUntilReady\","
-                        "\"message\":\"managed daemon READY on polled socket\","
-                        "\"data\":{\"socket\":\"%1\"},\"timestamp\":%2}\n")
-                        .arg(m_socketPath)
-                        .arg(QDateTime::currentMSecsSinceEpoch())
-                        .toUtf8());
-            }
-        }
-        // #endregion
         m_phase = Phase::Idle;
         m_pollTimer->stop();
         emit ready(true);

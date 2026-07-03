@@ -587,6 +587,13 @@ DecodedAgentEvent decodeAgentEvent(const agent_event_r& ev) {
         out.callId = fromZcbor(call.tool_call_view_call_id);
         out.toolName = fromZcbor(call.tool_call_view_name);
         out.toolArgs = fromZcbor(call.tool_call_view_args_summary);
+        if (call.tool_call_view_detail_present &&
+            call.tool_call_view_detail.tool_call_view_detail_choice ==
+                tool_call_view_detail_r::tool_call_view_detail_tool_detail_m_c) {
+            const tool_detail& d = call.tool_call_view_detail.tool_call_view_detail_tool_detail_m;
+            out.detailKind = fromZcbor(d.tool_detail_kind);
+            out.detailBody = bytesFromZcbor(d.tool_detail_body);
+        }
         break;
     }
     case agent_event_r::agent_event_tool_finished_m_c: {
@@ -595,6 +602,14 @@ DecodedAgentEvent decodeAgentEvent(const agent_event_r& ev) {
         const tool_result_view& result = ev.agent_event_tool_finished_m.ToolFinished_result;
         out.callId = fromZcbor(result.tool_result_view_call_id);
         out.toolOk = result.tool_result_view_ok;
+        if (result.tool_result_view_detail_present &&
+            result.tool_result_view_detail.tool_result_view_detail_choice ==
+                tool_result_view_detail_r::tool_result_view_detail_tool_detail_m_c) {
+            const tool_detail& d =
+                result.tool_result_view_detail.tool_result_view_detail_tool_detail_m;
+            out.detailKind = fromZcbor(d.tool_detail_kind);
+            out.detailBody = bytesFromZcbor(d.tool_detail_body);
+        }
         break;
     }
     case agent_event_r::agent_event_usage_m_c: {

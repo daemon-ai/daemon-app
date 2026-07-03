@@ -18,7 +18,7 @@ QByteArray NodeApiCodec::encodeFsRootsRequest() {
 }
 
 QByteArray NodeApiCodec::encodeFsListRequest(const QString& rootId, const QString& dir,
-                                             bool showIgnored) {
+                                             bool showIgnored, const QString& after) {
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_fs_list_m_c;
     request_fs_list& l = request.api_request_request_fs_list_m;
@@ -30,6 +30,15 @@ QByteArray NodeApiCodec::encodeFsListRequest(const QString& rootId, const QStrin
     l.FsList_show_ignored_present = showIgnored;
     if (showIgnored) {
         l.FsList_show_ignored.FsList_show_ignored = true;
+    }
+    // The resume cursor (wire v24): the previous page's `next`; omitted on the first page.
+    const QByteArray afterU = after.toUtf8();
+    l.FsList_after_present = !after.isEmpty();
+    if (!after.isEmpty()) {
+        l.FsList_after.FsList_after_choice = FsList_after_r::FsList_after_tstr_c;
+        l.FsList_after.FsList_after_tstr.value =
+            reinterpret_cast<const uint8_t*>(afterU.constData());
+        l.FsList_after.FsList_after_tstr.len = static_cast<size_t>(afterU.size());
     }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
@@ -160,7 +169,8 @@ bool NodeApiCodec::decodeFsRoots(const QByteArray& responseCbor, QList<DecodedFs
     return true;
 }
 
-bool NodeApiCodec::decodeFsList(const QByteArray& responseCbor, QList<DecodedFsEntry>* out) {
+bool NodeApiCodec::decodeFsList(const QByteArray& responseCbor, QList<DecodedFsEntry>* out,
+                                QString* next) {
     if (out == nullptr) {
         return false;
     }
@@ -169,10 +179,10 @@ bool NodeApiCodec::decodeFsList(const QByteArray& responseCbor, QList<DecodedFsE
     if (!response) {
         return false;
     }
-    const response_fs_list& page = response->api_response_response_fs_list_m;
+    const fs_list_page& page = response->api_response_response_fs_list_m.response_fs_list_FsList;
     out->clear();
-    for (size_t i = 0; i < page.response_fs_list_FsList_fs_entry_m_count; ++i) {
-        const fs_entry& e = page.response_fs_list_FsList_fs_entry_m[i];
+    for (size_t i = 0; i < page.fs_list_page_items_fs_entry_m_count; ++i) {
+        const fs_entry& e = page.fs_list_page_items_fs_entry_m[i];
         DecodedFsEntry row;
         row.name = fromZcbor(e.fs_entry_name);
         row.path = fromZcbor(e.fs_entry_path);
@@ -181,6 +191,13 @@ bool NodeApiCodec::decodeFsList(const QByteArray& responseCbor, QList<DecodedFsE
         row.mtimeMs = e.fs_entry_mtime_ms;
         row.ignored = e.fs_entry_ignored_present && e.fs_entry_ignored.fs_entry_ignored;
         out->append(row);
+    }
+    if (next != nullptr) {
+        // The resume cursor: present + non-null => more pages remain; empty => last page.
+        const bool hasNext =
+            page.fs_list_page_next_present && page.fs_list_page_next.fs_list_page_next_choice ==
+                                                  fs_list_page_next_r::fs_list_page_next_tstr_c;
+        *next = hasNext ? fromZcbor(page.fs_list_page_next.fs_list_page_next_tstr) : QString();
     }
     return true;
 }
@@ -270,8 +287,16 @@ bool NodeApiCodec::decodeFsSearch(const QByteArray& responseCbor, DecodedFsSearc
 
 // --- Fleet / subagent tree (Phase 5b) ------------------------------------------------------------
 
-QByteArray NodeApiCodec::encodeTreeRequest() {
-    return encodeSimple(api_request_r::api_request_request_tree_m_c);
+QByteArray NodeApiCodec::encodeTreeRequest(const QString& after) {
+    const QByteArray afterUtf8 = after.toUtf8();
+    return encodeWithFill(api_request_r::api_request_request_tree_m_c, [&](api_request_r& request) {
+        request_tree& t = request.api_request_request_tree_m;
+        t.Tree_after_present = !after.isEmpty();
+        if (!after.isEmpty()) {
+            t.Tree_after.Tree_after_choice = Tree_after_r::Tree_after_tstr_c;
+            setZcbor(t.Tree_after.Tree_after_tstr, afterUtf8);
+        }
+    });
 }
 
 QByteArray NodeApiCodec::encodeFleetRequest() {
@@ -321,7 +346,7 @@ QByteArray NodeApiCodec::encodeScaleRequest(const QString& unitId, quint32 n) {
 }
 
 bool NodeApiCodec::decodeTreeReport(const QByteArray& responseCbor, QList<DecodedUnitNode>* outFlat,
-                                    QString* outRoot) {
+                                    QString* outRoot, QString* next) {
     if (outFlat == nullptr) {
         return false;
     }
@@ -332,19 +357,33 @@ bool NodeApiCodec::decodeTreeReport(const QByteArray& responseCbor, QList<Decode
     }
     const tree_report& tr = response->api_response_response_tree_m.response_tree_Tree;
     outFlat->clear();
-    QHash<QString, DecodedUnitNode> byId;
     for (size_t i = 0; i < tr.tree_report_nodes_unit_node_m_count; ++i) {
-        DecodedUnitNode n = decodeUnitNodeStruct(tr.tree_report_nodes_unit_node_m[i]);
-        byId.insert(n.id, n);
+        outFlat->append(decodeUnitNodeStruct(tr.tree_report_nodes_unit_node_m[i]));
     }
-    const QString root = tr.tree_report_root_choice == tree_report::tree_report_root_unit_id_m_c
-                             ? fromZcbor(tr.tree_report_root_unit_id_m)
-                             : QString();
     if (outRoot != nullptr) {
-        *outRoot = root;
+        *outRoot = tr.tree_report_root_choice == tree_report::tree_report_root_unit_id_m_c
+                       ? fromZcbor(tr.tree_report_root_unit_id_m)
+                       : QString();
     }
+    if (next != nullptr) {
+        // The resume cursor (wire v25): present + non-null => more node pages remain.
+        const bool hasNext =
+            tr.tree_report_next_present && tr.tree_report_next.tree_report_next_choice ==
+                                               tree_report_next_r::tree_report_next_tstr_c;
+        *next = hasNext ? fromZcbor(tr.tree_report_next.tree_report_next_tstr) : QString();
+    }
+    return true;
+}
+
+QList<DecodedUnitNode> NodeApiCodec::flattenTreeNodes(const QList<DecodedUnitNode>& nodes,
+                                                      const QString& root) {
+    QList<DecodedUnitNode> flat;
     if (root.isEmpty()) {
-        return true; // an empty tree (no root) is a valid, common (fresh-daemon) result
+        return flat; // an empty tree (no root) is a valid, common (fresh-daemon) result
+    }
+    QHash<QString, DecodedUnitNode> byId;
+    for (const DecodedUnitNode& n : nodes) {
+        byId.insert(n.id, n);
     }
     // Pre-order DFS from the root, assigning depth + parent; a visited set guards against cycles.
     struct Frame {
@@ -364,13 +403,13 @@ bool NodeApiCodec::decodeTreeReport(const QByteArray& responseCbor, QList<Decode
         DecodedUnitNode node = byId.value(f.id);
         node.depth = f.depth;
         node.parentId = f.parent;
-        outFlat->append(node);
+        flat.append(node);
         // Push children in reverse so they pop (LIFO) in their listed order.
         for (qsizetype k = node.children.size() - 1; k >= 0; --k) {
             stack.append({node.children.at(k), f.id, f.depth + 1});
         }
     }
-    return true;
+    return flat;
 }
 
 bool NodeApiCodec::decodeUnit(const QByteArray& responseCbor, DecodedUnitNode* out, bool* found) {
@@ -469,11 +508,18 @@ QByteArray NodeApiCodec::encodeTransportInstancesRequest() {
     return encodeSimple(api_request_r::api_request_request_transport_instances_m_c);
 }
 
-QByteArray NodeApiCodec::encodeConvListRequest(const QString& transport) {
+QByteArray NodeApiCodec::encodeConvListRequest(const QString& transport, const QString& after) {
     const QByteArray t = transport.toUtf8();
+    const QByteArray afterUtf8 = after.toUtf8();
     return encodeWithFill(
         api_request_r::api_request_request_conv_list_m_c, [&](api_request_r& request) {
-            setZcbor(request.api_request_request_conv_list_m.ConvList_transport, t);
+            request_conv_list& l = request.api_request_request_conv_list_m;
+            setZcbor(l.ConvList_transport, t);
+            l.ConvList_after_present = !after.isEmpty();
+            if (!after.isEmpty()) {
+                l.ConvList_after.ConvList_after_choice = ConvList_after_r::ConvList_after_tstr_c;
+                setZcbor(l.ConvList_after.ConvList_after_tstr, afterUtf8);
+            }
         });
 }
 
@@ -547,7 +593,7 @@ bool NodeApiCodec::decodeTransportInstances(const QByteArray& responseCbor,
 }
 
 bool NodeApiCodec::decodeConversations(const QByteArray& responseCbor,
-                                       QList<DecodedConversation>* out) {
+                                       QList<DecodedConversation>* out, QString* next) {
     if (out == nullptr) {
         return false;
     }
@@ -556,11 +602,11 @@ bool NodeApiCodec::decodeConversations(const QByteArray& responseCbor,
     if (!response) {
         return false;
     }
-    const response_conversations& rc = response->api_response_response_conversations_m;
+    const conv_page& page =
+        response->api_response_response_conversations_m.response_conversations_Conversations;
     out->clear();
-    for (size_t i = 0; i < rc.response_conversations_Conversations_conversation_info_m_count; ++i) {
-        const conversation_info& cv =
-            rc.response_conversations_Conversations_conversation_info_m[i];
+    for (size_t i = 0; i < page.conv_page_items_conversation_info_m_count; ++i) {
+        const conversation_info& cv = page.conv_page_items_conversation_info_m[i];
         DecodedConversation d;
         d.transport = fromZcbor(cv.conversation_info_transport);
         d.id = fromZcbor(cv.conversation_info_id);
@@ -576,6 +622,13 @@ bool NodeApiCodec::decodeConversations(const QByteArray& responseCbor,
             d.topic = fromZcbor(cv.conversation_info_topic.conversation_info_topic_tstr);
         }
         out->append(d);
+    }
+    if (next != nullptr) {
+        // The resume cursor (wire v25): present + non-null => more pages remain.
+        const bool hasNext =
+            page.conv_page_next_present &&
+            page.conv_page_next.conv_page_next_choice == conv_page_next_r::conv_page_next_tstr_c;
+        *next = hasNext ? fromZcbor(page.conv_page_next.conv_page_next_tstr) : QString();
     }
     return true;
 }

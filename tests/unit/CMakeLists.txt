@@ -193,6 +193,19 @@ target_link_libraries(tst_daemon_fs_service
 add_test(NAME tst_daemon_fs_service COMMAND tst_daemon_fs_service)
 set_tests_properties(tst_daemon_fs_service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_file_finder_model: the Ctrl+P index walk - host browse roots are never crawled (the
+# whole-home FsList storm guard) and a failed directory listing frees its in-flight slot instead
+# of wedging the walk.
+qt_add_executable(tst_file_finder_model tst_file_finder_model.cpp)
+target_link_libraries(tst_file_finder_model
+    PRIVATE
+        Qt6::Test
+        daemon-app::files
+        daemon-app::fs
+)
+add_test(NAME tst_file_finder_model COMMAND tst_file_finder_model)
+set_tests_properties(tst_file_finder_model PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_daemon_transports: the Phase 6a Channels read surface - the transport codec facade round-trips
 # (Adapters/TransportInstances/Conversations via cbor_encode_api_response), and DaemonTransportRegistry
 # + DaemonPresenceService render offline-first from cache and populate over the WireMuxServer fixture.
@@ -317,6 +330,23 @@ target_link_libraries(tst_provider_catalog
 )
 add_test(NAME tst_provider_catalog COMMAND tst_provider_catalog)
 set_tests_properties(tst_provider_catalog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_daemon_model_catalog: the daemon-backed model-catalog facade - uint64 download-id encoding
+# (no truncation through the generated codec), search paging accumulation (has_more/searchMore),
+# the downloadStarted/downloadFinished signal bridge incl. installed-set growth detection,
+# operationFailed -> lastError surfacing, and the real-data Providers projection.
+qt_add_executable(tst_daemon_model_catalog tst_daemon_model_catalog.cpp)
+target_link_libraries(tst_daemon_model_catalog
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+        daemon-app::models
+        daemon-app::uimodels
+)
+add_test(NAME tst_daemon_model_catalog COMMAND tst_daemon_model_catalog)
+set_tests_properties(tst_daemon_model_catalog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_local_daemon_launcher: the managed local-daemon launcher (CON-1b) - binary discovery
 # precedence (explicit override resolves/rejects) and the liveness probe against a real QLocalServer

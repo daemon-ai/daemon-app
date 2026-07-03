@@ -147,7 +147,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // Provider credentials + model discovery are daemon-backed in this mode (CON-4 / CON-6).
         graph.accounts = new accounts::DaemonAccountsService(graph.credentialRepository,
                                                              graph.profileRepository, owner);
-        graph.modelCatalog = new models::DaemonModelCatalog(graph.models, owner);
+        // Provider + credential + profile repositories back the Providers tab with the node's
+        // real ProviderCatalog and credential presence (no hardcoded provider fiction).
+        graph.modelCatalog = new models::DaemonModelCatalog(graph.models, graph.providerRepository,
+                                                            graph.credentialRepository,
+                                                            graph.profileRepository, owner);
         // Node-driven provider/model discovery (ProviderCatalog/ProviderModels), sharing the model
         // catalog for the local [installed]+Discover compose.
         graph.providerCatalog =
@@ -187,6 +191,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             new transports::DaemonTransportRegistry(graph.transportRepository, owner);
         delete graph.presence;
         graph.presence = new transports::DaemonPresenceService(graph.transportRepository, owner);
+        // Rebuild the (still mock) dashboard over the FINAL seam pointers: the replacements above
+        // deleted the mock fleet tree and swapped the approvals inbox, so the dashboard built at
+        // the top would keep observing a dangling fleet tree — a confirmed use-after-free (SIGSEGV
+        // in MockDashboard::runningAgents() when the Dashboard page opens).
+        delete graph.dashboard;
+        graph.dashboard =
+            new fleet::MockDashboard(graph.roster, graph.fleetTree, graph.approvals, owner);
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end. Fire only on the
         // transition INTO ready: stateChanged also fires for statusMessage churn (e.g. the
@@ -226,22 +237,6 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // change.
                     sessions->refreshSessions();
                     profiles->refreshProfiles();
-                    // #region agent log
-                    {
-                        QFile dbg(
-                            QStringLiteral("/home/j/experiments/daemon/.cursor/debug-96b7ad.log"));
-                        if (dbg.open(QIODevice::Append | QIODevice::Text))
-                            dbg.write(
-                                QStringLiteral(
-                                    "{\"sessionId\":\"96b7ad\",\"hypothesisId\":\"PROFILE-"
-                                    "REFLECT\","
-                                    "\"location\":\"app_service_graph.cpp:connect-ready\","
-                                    "\"message\":\"connect-ready refreshProfiles issued\",\"data\":"
-                                    "{},\"timestamp\":%1}\n")
-                                    .arg(QDateTime::currentMSecsSinceEpoch())
-                                    .toUtf8());
-                    }
-                    // #endregion
                     credentials->refreshList();
                     models->refreshModels();
                     models->refreshCurrent();

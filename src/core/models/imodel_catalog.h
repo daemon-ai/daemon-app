@@ -6,6 +6,7 @@
 #include "models/provider_filter.h"
 #include "uimodels/variant_list_model.h"
 
+#include <algorithm>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -33,6 +34,13 @@ class IModelCatalog : public QObject {
     Q_PROPERTY(QObject* installed READ installed CONSTANT)
     // The currently-active default model id ("" if none).
     Q_PROPERTY(QString currentModelId READ currentModelId NOTIFY currentChanged)
+    // The most recent model-operation failure (HF network error, gated repo, failed activate...),
+    // "" when none. The Models pages + the wizard discover dialog render it inline; a new
+    // user-initiated operation clears it.
+    Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
+    // Whether another Discover search page is likely available (the last search page came back
+    // full); searchMore() appends it.
+    Q_PROPERTY(bool searchHasMore READ searchHasMore NOTIFY searchHasMoreChanged)
 
 public:
     using QObject::QObject;
@@ -67,9 +75,30 @@ public:
     // list of maps for the Providers tab.
     [[nodiscard]] Q_INVOKABLE virtual QVariantList providers() const = 0;
 
+    [[nodiscard]] QString lastError() const { return m_lastError; }
+
+    // Whether `id` names a LOCALLY installed model (vs a ready-to-use cloud descriptor) — the ids
+    // ModelActivate accepts. Default: scan the installed() rows for `id` with `local == true`.
+    [[nodiscard]] Q_INVOKABLE virtual bool isLocalInstalled(const QString& id) const {
+        auto* model = qobject_cast<uimodels::VariantListModel*>(installed());
+        if (model == nullptr) {
+            return false;
+        }
+        const QList<QVariantMap> rows = model->rows();
+        return std::any_of(rows.cbegin(), rows.cend(), [&id](const QVariantMap& row) {
+            return row.value(QStringLiteral("id")).toString() == id &&
+                   row.value(QStringLiteral("local")).toBool();
+        });
+    }
+
     // Re-run discovery; results land in discover(). `sizeFilter` is "" (any) or a
     // params bucket like "<=8B" / ">8B".
     Q_INVOKABLE virtual void search(const QString& query, const QString& sizeFilter = {}) = 0;
+
+    [[nodiscard]] virtual bool searchHasMore() const { return false; }
+    // Fetch + APPEND the next Discover page for the current query (no-op when searchHasMore is
+    // false or the backing catalog does not page).
+    Q_INVOKABLE virtual void searchMore() {}
 
     // Local-track step 2: load a repo's loadable files (grouped quant rows) into files() and
     // request a hardware-aware recommendation. filesChanged(repo) / recommendChanged(repo) fire.
@@ -90,18 +119,55 @@ public:
     Q_INVOKABLE virtual void resumeDownload(const QString& jobId) = 0;
     Q_INVOKABLE virtual void cancelDownload(const QString& jobId) = 0;
 
+    // Resolve the installed CATALOG id for a completed download. Download rows carry the source
+    // repo + file (NOT the hashed catalog id that offered-model rows / activate / downloadFinished
+    // use), so the downloads UI maps a done row through this before selecting it. "" when nothing
+    // installed matches.
+    [[nodiscard]] Q_INVOKABLE virtual QString installedIdFor(const QString& repo,
+                                                             const QString& file) const = 0;
+    // Hide a TERMINAL download row (done/failed/cancelled) client-side. The node keeps finished
+    // jobs forever and the wire has no clear-history op, so dismissal is a per-session view
+    // filter; an ACTIVE row cannot be dismissed (pause or cancel it instead).
+    Q_INVOKABLE virtual void dismissDownload(const QString& jobId) = 0;
+
     // Make an installed model the active default / remove it.
     Q_INVOKABLE virtual void activate(const QString& modelId) = 0;
     Q_INVOKABLE virtual void remove(const QString& modelId) = 0;
 
+    // Activate an installed model for an EXPLICIT profile id (the wizard / profile-editor apply
+    // path): the node's ModelActivate defaults to the launch profile name otherwise, which is not
+    // necessarily the profile the user just configured. Default: same as activate() (the mock has
+    // one global selection).
+    Q_INVOKABLE virtual void activateForProfile(const QString& modelId, const QString& profileId) {
+        Q_UNUSED(profileId)
+        activate(modelId);
+    }
+
 signals:
     void currentChanged();
+    // A download job was accepted and is now running (jobId as shown in downloads()).
+    void downloadStarted(const QString& jobId);
     // Emitted when a download finishes (modelId now installed).
     void downloadFinished(const QString& modelId);
     // The files() surface now holds `repo`'s quant rows.
     void filesChanged(const QString& repo);
     // A recommendation for `repo` is now available via recommendation().
     void recommendChanged(const QString& repo);
+    void lastErrorChanged();
+    void searchHasMoreChanged();
+
+protected:
+    // Record (or clear, with "") the surfaced model-operation failure; emits lastErrorChanged.
+    void setLastError(const QString& message) {
+        if (m_lastError == message) {
+            return;
+        }
+        m_lastError = message;
+        emit lastErrorChanged();
+    }
+
+private:
+    QString m_lastError;
 };
 
 } // namespace models

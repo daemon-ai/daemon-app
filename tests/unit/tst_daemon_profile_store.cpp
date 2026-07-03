@@ -92,16 +92,17 @@ QByteArray revisionsResponse() {
     };
     auto resp = std::make_unique<api_response_r>();
     resp->api_response_choice = api_response_r::api_response_response_revisions_m_c;
-    response_revisions& rr = resp->api_response_response_revisions_m;
-    rr.response_revisions_Revisions_revision_m_count = 2;
-    revision& r0 = rr.response_revisions_Revisions_revision_m[0];
+    revision_page& rr = resp->api_response_response_revisions_m.response_revisions_Revisions;
+    rr.revision_page_items_revision_m_count = 2;
+    rr.revision_page_next_present = false; // the last (only) page
+    revision& r0 = rr.revision_page_items_revision_m[0];
     r0.revision_seq = 1;
     r0.revision_parent_choice = revision::revision_parent_null_m_c;
     r0.revision_content_hash.content_hash_uint_count = 0;
     r0.revision_author.author_choice = author_r::author_operator_tstr_c;
     setZ(r0.revision_reason, reason0);
     r0.revision_ts_ms = 100;
-    revision& r1 = rr.response_revisions_Revisions_revision_m[1];
+    revision& r1 = rr.revision_page_items_revision_m[1];
     r1.revision_seq = 2;
     r1.revision_parent_choice = revision::revision_parent_uint64_m_c;
     r1.revision_parent_uint64_m = 1;

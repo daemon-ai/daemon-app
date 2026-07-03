@@ -30,7 +30,22 @@ QString titleForContent(const QString& markdown) {
     if (trimmed.isEmpty()) {
         return QObject::tr("New session");
     }
-    QString first = trimmed.section(QLatin1Char('\n'), 0, 0);
+    // First prose line: skip fenced blocks entirely (```msg boundary markers / ```tool cards in
+    // the canonical transcript markdown are metadata, not a usable title).
+    QString first;
+    bool inFence = false;
+    for (const QString& line : trimmed.split(QLatin1Char('\n'))) {
+        const QString probe = line.trimmed();
+        if (probe.startsWith(QStringLiteral("```"))) {
+            inFence = !inFence;
+            continue;
+        }
+        if (inFence || probe.isEmpty()) {
+            continue;
+        }
+        first = probe;
+        break;
+    }
     while (first.startsWith(QLatin1Char('#'))) {
         first.remove(0, 1);
     }

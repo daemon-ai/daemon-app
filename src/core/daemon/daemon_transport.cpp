@@ -6,18 +6,24 @@
 #include <QCryptographicHash>
 #include <QDebug>
 #include <QFile>
+#ifndef Q_OS_WASM
 #include <QLocalSocket>
 #include <QSslCertificate>
 #include <QSslConfiguration>
 #include <QSslKey>
 #include <QSslSocket>
+#endif
 #include <QtEndian>
+#include <QUrl>
+#include <QWebSocket>
+#include <QWebSocketProtocol>
 
 namespace daemonapp::daemon {
 
 namespace {
 
 // Best-effort load of a PEM private key, trying the common algorithms (we don't know it a priori).
+#ifndef Q_OS_WASM
 QSslKey loadPrivateKey(const QString& path) {
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly)) {
@@ -32,6 +38,7 @@ QSslKey loadPrivateKey(const QString& path) {
     }
     return {};
 }
+#endif
 
 } // namespace
 
@@ -79,18 +86,41 @@ void DaemonTransport::setTcpTarget(const QString& host, quint16 port, const TlsC
     close();
 }
 
+void DaemonTransport::setWebSocketUrl(const QUrl& url) {
+    m_mode = Mode::WebSocket;
+    m_webSocketUrl = url;
+    close();
+}
+
+bool DaemonTransport::tlsActive() const {
+    if (m_mode == Mode::Tcp) {
+        return true;
+    }
+    return m_mode == Mode::WebSocket && m_webSocketUrl.scheme() == QStringLiteral("wss");
+}
+
 bool DaemonTransport::isConnected() const {
+#ifndef Q_OS_WASM
     if (m_mode == Mode::Unix) {
         return m_local != nullptr && m_local->state() == QLocalSocket::ConnectedState;
     }
+#endif
+    if (m_mode == Mode::WebSocket) {
+        return m_webSocket != nullptr && m_webSocket->state() == QAbstractSocket::ConnectedState;
+    }
+#ifndef Q_OS_WASM
     return m_ssl != nullptr && m_ssl->state() == QAbstractSocket::ConnectedState &&
            m_ssl->isEncrypted();
+#else
+    return false;
+#endif
 }
 
 void DaemonTransport::ensureSocket() {
-    if (m_io != nullptr) {
+    if (m_io != nullptr || m_webSocket != nullptr) {
         return;
     }
+#ifndef Q_OS_WASM
     if (m_mode == Mode::Unix) {
         m_local = new QLocalSocket(this);
         m_io = m_local;
@@ -105,6 +135,22 @@ void DaemonTransport::ensureSocket() {
         connect(m_local, &QLocalSocket::disconnected, this, [this] { emit disconnected(); });
         return;
     }
+#endif
+    if (m_mode == Mode::WebSocket) {
+        m_webSocket = new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this);
+        connect(m_webSocket, &QWebSocket::connected, this, &DaemonTransport::onReady);
+        connect(m_webSocket, &QWebSocket::binaryMessageReceived, this,
+                &DaemonTransport::handleBinaryMessage);
+        connect(m_webSocket, &QWebSocket::errorOccurred, this,
+                [this](QAbstractSocket::SocketError) {
+                    const QString message = m_webSocket->errorString();
+                    close();
+                    emit failed(message);
+                });
+        connect(m_webSocket, &QWebSocket::disconnected, this, [this] { emit disconnected(); });
+        return;
+    }
+#ifndef Q_OS_WASM
     // TCP + TLS.
     m_ssl = new QSslSocket(this);
     m_io = m_ssl;
@@ -160,17 +206,23 @@ void DaemonTransport::ensureSocket() {
         // Otherwise do NOT ignore: QSslSocket aborts the handshake and errorOccurred follows.
         Q_UNUSED(errors)
     });
+#endif
 }
 
 void DaemonTransport::open() {
     if (m_mode == Mode::Unix) {
         openUnix();
-    } else {
+    } else if (m_mode == Mode::Tcp) {
         openTcp();
+    } else {
+        openWebSocket();
     }
 }
 
 void DaemonTransport::openUnix() {
+#ifdef Q_OS_WASM
+    emit failed(QStringLiteral("Unix sockets are not supported in the browser build"));
+#else
     if (m_socketPath.isEmpty()) {
         emit failed(QStringLiteral("No daemon socket path configured"));
         return;
@@ -180,9 +232,13 @@ void DaemonTransport::openUnix() {
         m_buffer.clear();
         m_local->connectToServer(m_socketPath);
     }
+#endif
 }
 
 void DaemonTransport::openTcp() {
+#ifdef Q_OS_WASM
+    emit failed(QStringLiteral("TLS TCP sockets are not supported in the browser build"));
+#else
     if (m_host.isEmpty() || m_port == 0) {
         emit failed(QStringLiteral("No daemon TCP target configured"));
         return;
@@ -192,6 +248,19 @@ void DaemonTransport::openTcp() {
         m_buffer.clear();
         m_ssl->connectToHostEncrypted(m_host, m_port);
     }
+#endif
+}
+
+void DaemonTransport::openWebSocket() {
+    if (!m_webSocketUrl.isValid() || m_webSocketUrl.host().isEmpty()) {
+        emit failed(QStringLiteral("No daemon WebSocket URL configured"));
+        return;
+    }
+    ensureSocket();
+    if (m_webSocket->state() == QAbstractSocket::UnconnectedState) {
+        m_buffer.clear();
+        m_webSocket->open(m_webSocketUrl);
+    }
 }
 
 void DaemonTransport::onReady() {
@@ -200,6 +269,7 @@ void DaemonTransport::onReady() {
 }
 
 void DaemonTransport::resetSocket() {
+#ifndef Q_OS_WASM
     if (m_local != nullptr) {
         m_local->abort();
         m_local->deleteLater();
@@ -209,6 +279,12 @@ void DaemonTransport::resetSocket() {
         m_ssl->abort();
         m_ssl->deleteLater();
         m_ssl = nullptr;
+    }
+#endif
+    if (m_webSocket != nullptr) {
+        m_webSocket->abort();
+        m_webSocket->deleteLater();
+        m_webSocket = nullptr;
     }
     m_io = nullptr;
 }
@@ -220,40 +296,60 @@ void DaemonTransport::close() {
 }
 
 void DaemonTransport::flushOutbox() {
-    if (m_io == nullptr) {
+    if (m_io == nullptr && m_webSocket == nullptr) {
         return;
     }
     const QList<QByteArray> pending = m_outbox;
     m_outbox.clear();
     for (const QByteArray& frame : pending) {
-        m_io->write(framePayload(frame));
+        if (m_webSocket != nullptr) {
+            m_webSocket->sendBinaryMessage(framePayload(frame));
+        } else {
+            m_io->write(framePayload(frame));
+        }
     }
     flushSocket();
 }
 
 void DaemonTransport::flushSocket() {
+#ifndef Q_OS_WASM
     if (m_local != nullptr) {
         m_local->flush();
     } else if (m_ssl != nullptr) {
         m_ssl->flush();
     }
+#endif
 }
 
 void DaemonTransport::sendFrame(const QByteArray& cborPayload) {
     const bool noTarget = (m_mode == Mode::Unix && m_socketPath.isEmpty()) ||
-                          (m_mode == Mode::Tcp && (m_host.isEmpty() || m_port == 0));
+                          (m_mode == Mode::Tcp && (m_host.isEmpty() || m_port == 0)) ||
+                          (m_mode == Mode::WebSocket &&
+                           (!m_webSocketUrl.isValid() || m_webSocketUrl.host().isEmpty()));
     if (noTarget) {
         emit failed(QStringLiteral("No daemon target configured"));
         return;
     }
     ensureSocket();
     if (isConnected()) {
-        m_io->write(framePayload(cborPayload));
+        if (m_webSocket != nullptr) {
+            m_webSocket->sendBinaryMessage(framePayload(cborPayload));
+        } else {
+            m_io->write(framePayload(cborPayload));
+        }
         flushSocket();
     } else {
         // Buffer until the socket is usable; flushOutbox() drains it on connected/encrypted.
         m_outbox.append(cborPayload);
         open();
+    }
+}
+
+void DaemonTransport::handleBinaryMessage(const QByteArray& message) {
+    m_buffer.append(message);
+    QByteArray payload;
+    while (tryTakeFrame(m_buffer, &payload)) {
+        emit frameReceived(payload);
     }
 }
 

@@ -7,6 +7,7 @@
 #include "daemonnet/idaemonnet.h"
 #include "domain/session.h"
 #include "domain/sidebar_node.h"
+#include "fleet/idashboard.h"
 #include "persistence/isession_store.h"
 
 #include <QtTest/QtTest>
@@ -115,6 +116,21 @@ private slots:
         QVERIFY(graph.cache != nullptr);
         QVERIFY(graph.fs != nullptr);
         QVERIFY(graph.store != nullptr);
+    }
+
+    // Regression: the daemon-mode seam replacements delete the mock fleet tree the dashboard was
+    // built over; the dashboard must be rebuilt over the final pointers or its counters read
+    // deleted memory (SIGSEGV in MockDashboard::runningAgents() when the Dashboard page opened).
+    void daemonGraphDashboardObservesDaemonSeams() {
+        QObject owner;
+        const auto graph = daemonapp::daemon::createAppServiceGraph(
+            daemonapp::daemon::ServiceMode::Daemon, &owner);
+
+        QVERIFY(graph.dashboard != nullptr);
+        // Reads through roster + fleet tree + approvals; crashes on a dangling seam pointer.
+        QVERIFY(graph.dashboard->runningAgents() >= 0);
+        QVERIFY(graph.dashboard->activeSessions() >= 0);
+        QVERIFY(graph.dashboard->pendingApprovals() >= 0);
     }
 
     // W3 (plan 2d): Daemon mode must not pass the mock transports tree off as live Integrations.

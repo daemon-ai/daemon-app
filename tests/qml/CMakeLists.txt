@@ -82,3 +82,34 @@ add_test(NAME tst_tabs COMMAND tst_tabs)
 set_tests_properties(tst_tabs PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
 )
+
+# tst_downloads_panel: QtQuickTest over the REAL DownloadsPanel (DaemonApp.Pages), driven by a
+# MockModelCatalog injected as the app-global ModelCatalog context property. Guards the
+# rows-render / self-hide / activeOnly-terminal behaviors, the multi-file "file x/y" label, and
+# the "Use this model" installedIdFor resolution. The Pages module is static, so its plugin (and
+# its transitive backing libs) link explicitly, like the GUI executable does.
+qt_add_executable(tst_downloads_panel tst_downloads_panel_main.cpp)
+target_link_libraries(tst_downloads_panel
+    PRIVATE
+        Qt6::QuickTest
+        Qt6::Qml
+        Qt6::Quick
+        Qt6::QuickControls2
+        daemon-app::models
+        da_theme
+        da_themeplugin
+        da_controls
+        da_controlsplugin
+        da_pages
+        da_pagesplugin
+)
+target_compile_definitions(tst_downloads_panel
+    PRIVATE
+        QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/downloads_panel"
+        TEST_QML_IMPORT_PATH="$ENV{QML2_IMPORT_PATH}"
+)
+
+add_test(NAME tst_downloads_panel COMMAND tst_downloads_panel)
+set_tests_properties(tst_downloads_panel PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+)

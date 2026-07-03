@@ -19,6 +19,7 @@ qt_add_qml_module(da_controls
         EditMenu.qml
         Dialog.qml
         TreeRow.qml
+        ProgressBar.qml
 )
 add_library(daemon-app::controls ALIAS da_controls)
 

@@ -94,16 +94,19 @@ QByteArray instancesResponse() {
     return encodeResponse(*resp);
 }
 
-// {"Conversations":[ ConversationInfo{ channel, "General" } ]}
+// {"Conversations": conv-page{ items: [ ConversationInfo{ channel, "General" } ] }} — the
+// uniform WirePage envelope (wire v25), last page (no `next`).
 QByteArray conversationsResponse() {
     const QByteArray t = QByteArrayLiteral("matrix/@bot:hs");
     const QByteArray id = QByteArrayLiteral("!room:hs");
     const QByteArray title = QByteArrayLiteral("General");
     auto resp = std::make_unique<api_response_r>();
     resp->api_response_choice = api_response_r::api_response_response_conversations_m_c;
-    response_conversations& rc = resp->api_response_response_conversations_m;
-    rc.response_conversations_Conversations_conversation_info_m_count = 1;
-    conversation_info& cv = rc.response_conversations_Conversations_conversation_info_m[0];
+    conv_page& rc =
+        resp->api_response_response_conversations_m.response_conversations_Conversations;
+    rc.conv_page_items_conversation_info_m_count = 1;
+    rc.conv_page_next_present = false;
+    conversation_info& cv = rc.conv_page_items_conversation_info_m[0];
     setZ(cv.conversation_info_transport, t);
     setZ(cv.conversation_info_id, id);
     cv.conversation_info_kind.conversation_type_choice =
@@ -115,6 +118,32 @@ QByteArray conversationsResponse() {
     cv.conversation_info_topic_present = false;
     cv.conversation_info_description_present = false;
     cv.conversation_info_members_present = false;
+    return encodeResponse(*resp);
+}
+
+// One conv-page with a single minimal conversation (channel `id`, untitled) and an optional
+// `next` cursor — the two-page loop fixture.
+QByteArray conversationsPageResponse(const QByteArray& id, const QByteArray& next = {}) {
+    const QByteArray t = QByteArrayLiteral("matrix/@bot:hs");
+    auto resp = std::make_unique<api_response_r>();
+    resp->api_response_choice = api_response_r::api_response_response_conversations_m_c;
+    conv_page& rc =
+        resp->api_response_response_conversations_m.response_conversations_Conversations;
+    rc.conv_page_items_conversation_info_m_count = 1;
+    conversation_info& cv = rc.conv_page_items_conversation_info_m[0];
+    setZ(cv.conversation_info_transport, t);
+    setZ(cv.conversation_info_id, id);
+    cv.conversation_info_kind.conversation_type_choice =
+        conversation_type_r::conversation_type_Channel_tstr_c;
+    cv.conversation_info_title_present = false;
+    cv.conversation_info_topic_present = false;
+    cv.conversation_info_description_present = false;
+    cv.conversation_info_members_present = false;
+    rc.conv_page_next_present = !next.isEmpty();
+    if (!next.isEmpty()) {
+        rc.conv_page_next.conv_page_next_choice = conv_page_next_r::conv_page_next_tstr_c;
+        setZ(rc.conv_page_next.conv_page_next_tstr, next);
+    }
     return encodeResponse(*resp);
 }
 
@@ -224,6 +253,40 @@ private slots:
         QCOMPARE(rooms.size(), 1);
         QCOMPARE(rooms.at(0).toMap().value(QStringLiteral("title")).toString(),
                  QStringLiteral("General"));
+    }
+
+    // Wire v25 page loop: a conversations listing served in two pages accumulates into ONE
+    // conversationsRefreshed (with both rows cached), and the continuation request carries the
+    // `after` cursor.
+    void conversationsPageAcrossTheCursorLoop() {
+        const QString sock = m_tmp.filePath(QStringLiteral("ch-pg.sock"));
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplySequence(
+            {conversationsPageResponse(QByteArrayLiteral("!a:hs"), QByteArrayLiteral("!a:hs")),
+             conversationsPageResponse(QByteArrayLiteral("!b:hs"))});
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("ch-pg.db")));
+        TransportRepository repo(&tx.client, &cache);
+
+        QSignalSpy convs(&repo, &TransportRepository::conversationsRefreshed);
+        repo.refreshConversations(t);
+        QTRY_COMPARE_WITH_TIMEOUT(convs.count(), 1, 3000);
+        QTest::qWait(100); // settle: a page-loop bug would emit again / issue extra requests
+        QCOMPARE(convs.count(), 1);
+
+        // Both pages landed in ONE sync (replace + prune over the whole listing).
+        const auto cached = cache.conversations(t);
+        QCOMPARE(cached.size(), 2);
+        QCOMPARE(cached.at(0).convId, QStringLiteral("!a:hs"));
+        QCOMPARE(cached.at(1).convId, QStringLiteral("!b:hs"));
+
+        // The continuation carried the cursor: byte-identical to the codec's own encoding.
+        const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.size(), 2);
+        QCOMPARE(calls.at(0), NodeApiCodec::encodeConvListRequest(t));
+        QCOMPARE(calls.at(1), NodeApiCodec::encodeConvListRequest(t, QStringLiteral("!a:hs")));
     }
 };
 

@@ -87,8 +87,7 @@ public:
         // Integrations-section rows (NodeType::Transport):
         TxKindRole,   // "account" | "convGroup" | "conversation" | "job" | "caller"
         ConvTypeRole, // conversation type: "channel"|"groupdm"|"dm"|"thread" (else "")
-        SubLabelRole, // secondary label: a transport leaf's inline session title, or a Fleet
-                      // agent row's "provider · model" configuration (else "")
+        SubLabelRole, // secondary label: a transport leaf's inline session title (else "")
         PresenceRole, // account rows: PresencePrimitive ("available"/... ; else "")
     };
 

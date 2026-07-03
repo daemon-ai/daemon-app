@@ -314,6 +314,21 @@ struct request_cancel {
 	struct zcbor_string Cancel_session;
 };
 
+struct Tree_after_r {
+	union {
+		struct zcbor_string Tree_after_tstr;
+	};
+	enum {
+		Tree_after_tstr_c,
+		Tree_after_null_m_c,
+	} Tree_after_choice;
+};
+
+struct request_tree {
+	struct Tree_after_r Tree_after;
+	bool Tree_after_present;
+};
+
 struct request_unit {
 	struct zcbor_string Unit_unit;
 };
@@ -360,8 +375,20 @@ struct request_delivery_targets {
 	struct zcbor_string DeliveryTargets_session;
 };
 
+struct DeliverySessions_after_r {
+	union {
+		struct zcbor_string DeliverySessions_after_tstr;
+	};
+	enum {
+		DeliverySessions_after_tstr_c,
+		DeliverySessions_after_null_m_c,
+	} DeliverySessions_after_choice;
+};
+
 struct request_delivery_sessions {
 	struct zcbor_string DeliverySessions_transport;
+	struct DeliverySessions_after_r DeliverySessions_after;
+	bool DeliverySessions_after_present;
 };
 
 struct sink_kind_r {
@@ -555,9 +582,21 @@ struct ApprovalsPending_session_r {
 	} ApprovalsPending_session_choice;
 };
 
+struct ApprovalsPending_after_r {
+	union {
+		struct zcbor_string ApprovalsPending_after_tstr;
+	};
+	enum {
+		ApprovalsPending_after_tstr_c,
+		ApprovalsPending_after_null_m_c,
+	} ApprovalsPending_after_choice;
+};
+
 struct request_approvals_pending {
 	struct ApprovalsPending_session_r ApprovalsPending_session;
 	bool ApprovalsPending_session_present;
+	struct ApprovalsPending_after_r ApprovalsPending_after;
+	bool ApprovalsPending_after_present;
 };
 
 struct request_approval_decide {
@@ -796,8 +835,20 @@ struct request_profile_import {
 	bool ProfileImport_new_id_present;
 };
 
+struct ProfileHistory_after_r {
+	union {
+		struct zcbor_string ProfileHistory_after_tstr;
+	};
+	enum {
+		ProfileHistory_after_tstr_c,
+		ProfileHistory_after_null_m_c,
+	} ProfileHistory_after_choice;
+};
+
 struct request_profile_history {
 	struct zcbor_string ProfileHistory_id;
+	struct ProfileHistory_after_r ProfileHistory_after;
+	bool ProfileHistory_after_present;
 };
 
 struct request_profile_at {
@@ -810,8 +861,20 @@ struct request_profile_revert {
 	uint64_t ProfileRevert_seq;
 };
 
+struct SkillHistory_after_r {
+	union {
+		struct zcbor_string SkillHistory_after_tstr;
+	};
+	enum {
+		SkillHistory_after_tstr_c,
+		SkillHistory_after_null_m_c,
+	} SkillHistory_after_choice;
+};
+
 struct request_skill_history {
 	struct zcbor_string SkillHistory_name;
+	struct SkillHistory_after_r SkillHistory_after;
+	bool SkillHistory_after_present;
 };
 
 struct request_skill_at {
@@ -956,6 +1019,16 @@ struct request_model_search {
 	struct search_query ModelSearch_query;
 };
 
+struct ModelFiles_after_r {
+	union {
+		struct zcbor_string ModelFiles_after_tstr;
+	};
+	enum {
+		ModelFiles_after_tstr_c,
+		ModelFiles_after_null_m_c,
+	} ModelFiles_after_choice;
+};
+
 struct request_model_files {
 	struct zcbor_string ModelFiles_repo;
 	union {
@@ -966,6 +1039,8 @@ struct request_model_files {
 		ModelFiles_revision_null_m_c,
 	} ModelFiles_revision_choice;
 	struct model_engine_r ModelFiles_engine;
+	struct ModelFiles_after_r ModelFiles_after;
+	bool ModelFiles_after_present;
 };
 
 struct model_source_hf {
@@ -1081,6 +1156,21 @@ struct request_model_inspect {
 	struct zcbor_string ModelInspect_id;
 };
 
+struct Models_after_r {
+	union {
+		struct zcbor_string Models_after_tstr;
+	};
+	enum {
+		Models_after_tstr_c,
+		Models_after_null_m_c,
+	} Models_after_choice;
+};
+
+struct request_models {
+	struct Models_after_r Models_after;
+	bool Models_after_present;
+};
+
 struct request_model_current {
 	union {
 		struct zcbor_string ModelCurrent_profile_tstr;
@@ -1111,12 +1201,24 @@ struct ProviderModels_transient_key_r {
 	} ProviderModels_transient_key_choice;
 };
 
+struct ProviderModels_after_r {
+	union {
+		struct zcbor_string ProviderModels_after_tstr;
+	};
+	enum {
+		ProviderModels_after_tstr_c,
+		ProviderModels_after_null_m_c,
+	} ProviderModels_after_choice;
+};
+
 struct request_provider_models {
 	struct zcbor_string ProviderModels_provider;
 	struct ProviderModels_credential_ref_r ProviderModels_credential_ref;
 	bool ProviderModels_credential_ref_present;
 	struct ProviderModels_transient_key_r ProviderModels_transient_key;
 	bool ProviderModels_transient_key_present;
+	struct ProviderModels_after_r ProviderModels_after;
+	bool ProviderModels_after_present;
 };
 
 struct params_tstrtstr {
@@ -1188,9 +1290,21 @@ struct CheckpointList_session_r {
 	} CheckpointList_session_choice;
 };
 
+struct CheckpointList_after_r {
+	union {
+		struct zcbor_string CheckpointList_after_tstr;
+	};
+	enum {
+		CheckpointList_after_tstr_c,
+		CheckpointList_after_null_m_c,
+	} CheckpointList_after_choice;
+};
+
 struct request_checkpoint_list {
 	struct CheckpointList_session_r CheckpointList_session;
 	bool CheckpointList_session_present;
+	struct CheckpointList_after_r CheckpointList_after;
+	bool CheckpointList_after_present;
 };
 
 struct request_checkpoint_rewind {
@@ -1744,6 +1858,21 @@ struct request_cron_dismiss_suggestion {
 	struct zcbor_string CronDismissSuggestion_id;
 };
 
+struct RoutingListChats_after_r {
+	union {
+		struct zcbor_string RoutingListChats_after_tstr;
+	};
+	enum {
+		RoutingListChats_after_tstr_c,
+		RoutingListChats_after_null_m_c,
+	} RoutingListChats_after_choice;
+};
+
+struct request_routing_list_chats {
+	struct RoutingListChats_after_r RoutingListChats_after;
+	bool RoutingListChats_after_present;
+};
+
 struct request_routing_get {
 	struct origin RoutingGet_origin;
 };
@@ -1805,12 +1934,36 @@ struct request_routing_unbind_chat {
 	struct origin RoutingUnbindChat_origin;
 };
 
+struct TransportRooms_after_r {
+	union {
+		struct zcbor_string TransportRooms_after_tstr;
+	};
+	enum {
+		TransportRooms_after_tstr_c,
+		TransportRooms_after_null_m_c,
+	} TransportRooms_after_choice;
+};
+
 struct request_transport_rooms {
 	struct zcbor_string TransportRooms_transport;
+	struct TransportRooms_after_r TransportRooms_after;
+	bool TransportRooms_after_present;
+};
+
+struct ConvList_after_r {
+	union {
+		struct zcbor_string ConvList_after_tstr;
+	};
+	enum {
+		ConvList_after_tstr_c,
+		ConvList_after_null_m_c,
+	} ConvList_after_choice;
 };
 
 struct request_conv_list {
 	struct zcbor_string ConvList_transport;
+	struct ConvList_after_r ConvList_after;
+	bool ConvList_after_present;
 };
 
 struct request_conv_get {
@@ -2349,11 +2502,23 @@ struct FsList_show_ignored {
 	bool FsList_show_ignored;
 };
 
+struct FsList_after_r {
+	union {
+		struct zcbor_string FsList_after_tstr;
+	};
+	enum {
+		FsList_after_tstr_c,
+		FsList_after_null_m_c,
+	} FsList_after_choice;
+};
+
 struct request_fs_list {
 	struct fs_root_id_t_r FsList_root;
 	struct zcbor_string FsList_dir;
 	struct FsList_show_ignored FsList_show_ignored;
 	bool FsList_show_ignored_present;
+	struct FsList_after_r FsList_after;
+	bool FsList_after_present;
 };
 
 struct request_fs_stat {
@@ -2568,6 +2733,7 @@ struct api_request_r {
 		struct request_assign api_request_request_assign_m;
 		struct request_session_create api_request_request_session_create_m;
 		struct request_cancel api_request_request_cancel_m;
+		struct request_tree api_request_request_tree_m;
 		struct request_unit api_request_request_unit_m;
 		struct request_unit_events api_request_request_unit_events_m;
 		struct request_unit_outbound api_request_request_unit_outbound_m;
@@ -2620,6 +2786,7 @@ struct api_request_r {
 		struct request_model_recommend api_request_request_model_recommend_m;
 		struct request_model_quantize api_request_request_model_quantize_m;
 		struct request_model_inspect api_request_request_model_inspect_m;
+		struct request_models api_request_request_models_m;
 		struct request_model_current api_request_request_model_current_m;
 		struct request_provider_models api_request_request_provider_models_m;
 		struct request_auth_begin api_request_request_auth_begin_m;
@@ -2648,6 +2815,7 @@ struct api_request_r {
 		struct request_cron_pause api_request_request_cron_pause_m;
 		struct request_cron_accept_suggestion api_request_request_cron_accept_suggestion_m;
 		struct request_cron_dismiss_suggestion api_request_request_cron_dismiss_suggestion_m;
+		struct request_routing_list_chats api_request_request_routing_list_chats_m;
 		struct request_routing_get api_request_request_routing_get_m;
 		struct request_routing_set api_request_request_routing_set_m;
 		struct request_routing_bind_chat api_request_request_routing_bind_chat_m;
@@ -2777,7 +2945,6 @@ struct api_request_r {
 		api_request_request_checkpoint_rewind_m_c,
 		api_request_request_sessions_query_m_c,
 		api_request_request_session_get_m_c,
-		api_request_request_sessions_by_profile_m_c,
 		api_request_request_session_search_m_c,
 		api_request_request_session_update_meta_m_c,
 		api_request_request_rewind_m_c,
@@ -3410,9 +3577,25 @@ struct approval_info {
 	bool approval_info_path_present;
 };
 
+struct approval_page_next_r {
+	union {
+		struct zcbor_string approval_page_next_tstr;
+	};
+	enum {
+		approval_page_next_tstr_c,
+		approval_page_next_null_m_c,
+	} approval_page_next_choice;
+};
+
+struct approval_page {
+	struct approval_info approval_page_items_approval_info_m[64];
+	size_t approval_page_items_approval_info_m_count;
+	struct approval_page_next_r approval_page_next;
+	bool approval_page_next_present;
+};
+
 struct response_approvals {
-	struct approval_info response_approvals_Approvals_approval_info_m[64];
-	size_t response_approvals_Approvals_approval_info_m_count;
+	struct approval_page response_approvals_Approvals;
 };
 
 struct fleet_report {
@@ -3512,6 +3695,16 @@ struct unit_node {
 	bool unit_node_role_present;
 };
 
+struct tree_report_next_r {
+	union {
+		struct zcbor_string tree_report_next_tstr;
+	};
+	enum {
+		tree_report_next_tstr_c,
+		tree_report_next_null_m_c,
+	} tree_report_next_choice;
+};
+
 struct tree_report {
 	union {
 		struct zcbor_string tree_report_root_unit_id_m;
@@ -3522,6 +3715,8 @@ struct tree_report {
 	} tree_report_root_choice;
 	struct unit_node tree_report_nodes_unit_node_m[64];
 	size_t tree_report_nodes_unit_node_m_count;
+	struct tree_report_next_r tree_report_next;
+	bool tree_report_next_present;
 };
 
 struct response_tree {
@@ -3839,6 +4034,8 @@ struct node_event_download_progress {
 	uint64_t DownloadProgress_id;
 	uint32_t DownloadProgress_pct;
 	struct zcbor_string DownloadProgress_state;
+	uint64_t DownloadProgress_downloaded_bytes;
+	uint64_t DownloadProgress_total_bytes;
 };
 
 struct node_event_resync_needed {
@@ -3862,6 +4059,7 @@ struct node_event_r {
 		node_event_fleet_changed_m_c,
 		node_event_approval_pending_m_c,
 		node_event_download_progress_m_c,
+		node_event_catalog_changed_m_c,
 		node_event_resync_needed_m_c,
 	} node_event_choice;
 };
@@ -3882,9 +4080,25 @@ struct response_delivery_targets {
 	size_t response_delivery_targets_DeliveryTargets_delivery_target_m_count;
 };
 
+struct delivery_session_page_next_r {
+	union {
+		struct zcbor_string delivery_session_page_next_tstr;
+	};
+	enum {
+		delivery_session_page_next_tstr_c,
+		delivery_session_page_next_null_m_c,
+	} delivery_session_page_next_choice;
+};
+
+struct delivery_session_page {
+	struct zcbor_string delivery_session_page_items_session_id_m[64];
+	size_t delivery_session_page_items_session_id_m_count;
+	struct delivery_session_page_next_r delivery_session_page_next;
+	bool delivery_session_page_next_present;
+};
+
 struct response_delivery_sessions {
-	struct zcbor_string response_delivery_sessions_DeliverySessions_session_id_m[64];
-	size_t response_delivery_sessions_DeliverySessions_session_id_m_count;
+	struct delivery_session_page response_delivery_sessions_DeliverySessions;
 };
 
 struct response_verifying_key {
@@ -3956,11 +4170,28 @@ struct model_file {
 	} model_file_quant_choice;
 	bool model_file_is_split;
 	bool model_file_is_first_shard;
+	bool model_file_is_mmproj;
+};
+
+struct model_file_page_next_r {
+	union {
+		struct zcbor_string model_file_page_next_tstr;
+	};
+	enum {
+		model_file_page_next_tstr_c,
+		model_file_page_next_null_m_c,
+	} model_file_page_next_choice;
+};
+
+struct model_file_page {
+	struct model_file model_file_page_items_model_file_m[64];
+	size_t model_file_page_items_model_file_m_count;
+	struct model_file_page_next_r model_file_page_next;
+	bool model_file_page_next_present;
 };
 
 struct response_model_files {
-	struct model_file response_model_files_ModelFiles_model_file_m[64];
-	size_t response_model_files_ModelFiles_model_file_m_count;
+	struct model_file_page response_model_files_ModelFiles;
 };
 
 struct response_model_download_started {
@@ -4030,6 +4261,16 @@ struct installed_model_file_type_r {
 	} installed_model_file_type_choice;
 };
 
+struct installed_model_mmproj_path_r {
+	union {
+		struct zcbor_string installed_model_mmproj_path_tstr;
+	};
+	enum {
+		installed_model_mmproj_path_tstr_c,
+		installed_model_mmproj_path_null_m_c,
+	} installed_model_mmproj_path_choice;
+};
+
 struct installed_model {
 	struct zcbor_string installed_model_id;
 	struct model_ref installed_model_model;
@@ -4050,6 +4291,8 @@ struct installed_model {
 	bool installed_model_context_length_present;
 	struct installed_model_file_type_r installed_model_file_type;
 	bool installed_model_file_type_present;
+	struct installed_model_mmproj_path_r installed_model_mmproj_path;
+	bool installed_model_mmproj_path_present;
 };
 
 struct response_model_catalog {
@@ -4284,9 +4527,25 @@ struct model_descriptor {
 	bool model_descriptor_local;
 };
 
+struct model_page_next_r {
+	union {
+		struct zcbor_string model_page_next_tstr;
+	};
+	enum {
+		model_page_next_tstr_c,
+		model_page_next_null_m_c,
+	} model_page_next_choice;
+};
+
+struct model_page {
+	struct model_descriptor model_page_items_model_descriptor_m[64];
+	size_t model_page_items_model_descriptor_m_count;
+	struct model_page_next_r model_page_next;
+	bool model_page_next_present;
+};
+
 struct response_models {
-	struct model_descriptor response_models_Models_model_descriptor_m[64];
-	size_t response_models_Models_model_descriptor_m_count;
+	struct model_page response_models_Models;
 };
 
 struct response_model_current {
@@ -4329,8 +4588,7 @@ struct response_provider_catalog {
 };
 
 struct response_provider_models {
-	struct model_descriptor response_provider_models_ProviderModels_model_descriptor_m[64];
-	size_t response_provider_models_ProviderModels_model_descriptor_m_count;
+	struct model_page response_provider_models_ProviderModels;
 };
 
 struct response_distribution {
@@ -4370,9 +4628,25 @@ struct revision {
 	uint64_t revision_ts_ms;
 };
 
+struct revision_page_next_r {
+	union {
+		struct zcbor_string revision_page_next_tstr;
+	};
+	enum {
+		revision_page_next_tstr_c,
+		revision_page_next_null_m_c,
+	} revision_page_next_choice;
+};
+
+struct revision_page {
+	struct revision revision_page_items_revision_m[64];
+	size_t revision_page_items_revision_m_count;
+	struct revision_page_next_r revision_page_next;
+	bool revision_page_next_present;
+};
+
 struct response_revisions {
-	struct revision response_revisions_Revisions_revision_m[64];
-	size_t response_revisions_Revisions_revision_m_count;
+	struct revision_page response_revisions_Revisions;
 };
 
 struct response_skill_bundle {
@@ -4535,9 +4809,25 @@ struct checkpoint_info {
 	bool checkpoint_info_cursor_present;
 };
 
+struct checkpoint_page_next_r {
+	union {
+		struct zcbor_string checkpoint_page_next_tstr;
+	};
+	enum {
+		checkpoint_page_next_tstr_c,
+		checkpoint_page_next_null_m_c,
+	} checkpoint_page_next_choice;
+};
+
+struct checkpoint_page {
+	struct checkpoint_info checkpoint_page_items_checkpoint_info_m[64];
+	size_t checkpoint_page_items_checkpoint_info_m_count;
+	struct checkpoint_page_next_r checkpoint_page_next;
+	bool checkpoint_page_next_present;
+};
+
 struct response_checkpoints {
-	struct checkpoint_info response_checkpoints_Checkpoints_checkpoint_info_m[64];
-	size_t response_checkpoints_Checkpoints_checkpoint_info_m_count;
+	struct checkpoint_page response_checkpoints_Checkpoints;
 };
 
 struct session_page_next_cursor_r {
@@ -4625,17 +4915,6 @@ struct response_session_detail {
 		response_session_detail_SessionDetail_session_detail_m_c,
 		response_session_detail_SessionDetail_null_m_c,
 	} response_session_detail_SessionDetail_choice;
-};
-
-struct SessionsByProfile_profile_l {
-	struct zcbor_string SessionsByProfile_profile_l_profile;
-	struct session_info profile_l_sessions_session_info_m[64];
-	size_t profile_l_sessions_session_info_m_count;
-};
-
-struct response_sessions_by_profile {
-	struct SessionsByProfile_profile_l SessionsByProfile_profile_l[64];
-	size_t SessionsByProfile_profile_l_count;
 };
 
 struct session_search_hit {
@@ -4893,9 +5172,25 @@ struct response_cron_suggestions {
 	size_t response_cron_suggestions_CronSuggestions_cron_suggestion_m_count;
 };
 
+struct chat_route_page_next_r {
+	union {
+		struct zcbor_string chat_route_page_next_tstr;
+	};
+	enum {
+		chat_route_page_next_tstr_c,
+		chat_route_page_next_null_m_c,
+	} chat_route_page_next_choice;
+};
+
+struct chat_route_page {
+	struct chat_route chat_route_page_items_chat_route_m[64];
+	size_t chat_route_page_items_chat_route_m_count;
+	struct chat_route_page_next_r chat_route_page_next;
+	bool chat_route_page_next_present;
+};
+
 struct response_chat_routes {
-	struct chat_route response_chat_routes_ChatRoutes_chat_route_m[64];
-	size_t response_chat_routes_ChatRoutes_chat_route_m_count;
+	struct chat_route_page response_chat_routes_ChatRoutes;
 };
 
 struct response_chat_route {
@@ -4937,9 +5232,25 @@ struct room_info {
 	bool room_info_session_present;
 };
 
+struct room_page_next_r {
+	union {
+		struct zcbor_string room_page_next_tstr;
+	};
+	enum {
+		room_page_next_tstr_c,
+		room_page_next_null_m_c,
+	} room_page_next_choice;
+};
+
+struct room_page {
+	struct room_info room_page_items_room_info_m[64];
+	size_t room_page_items_room_info_m_count;
+	struct room_page_next_r room_page_next;
+	bool room_page_next_present;
+};
+
 struct response_rooms {
-	struct room_info response_rooms_Rooms_room_info_m[64];
-	size_t response_rooms_Rooms_room_info_m_count;
+	struct room_page response_rooms_Rooms;
 };
 
 struct adapter_capabilities {
@@ -5142,9 +5453,25 @@ struct conversation_info {
 	bool conversation_info_members_present;
 };
 
+struct conv_page_next_r {
+	union {
+		struct zcbor_string conv_page_next_tstr;
+	};
+	enum {
+		conv_page_next_tstr_c,
+		conv_page_next_null_m_c,
+	} conv_page_next_choice;
+};
+
+struct conv_page {
+	struct conversation_info conv_page_items_conversation_info_m[64];
+	size_t conv_page_items_conversation_info_m_count;
+	struct conv_page_next_r conv_page_next;
+	bool conv_page_next_present;
+};
+
 struct response_conversations {
-	struct conversation_info response_conversations_Conversations_conversation_info_m[64];
-	size_t response_conversations_Conversations_conversation_info_m_count;
+	struct conv_page response_conversations_Conversations;
 };
 
 struct response_conversation {
@@ -5294,9 +5621,25 @@ struct fs_entry {
 	bool fs_entry_ignored_present;
 };
 
+struct fs_list_page_next_r {
+	union {
+		struct zcbor_string fs_list_page_next_tstr;
+	};
+	enum {
+		fs_list_page_next_tstr_c,
+		fs_list_page_next_null_m_c,
+	} fs_list_page_next_choice;
+};
+
+struct fs_list_page {
+	struct fs_entry fs_list_page_items_fs_entry_m[64];
+	size_t fs_list_page_items_fs_entry_m_count;
+	struct fs_list_page_next_r fs_list_page_next;
+	bool fs_list_page_next_present;
+};
+
 struct response_fs_list {
-	struct fs_entry response_fs_list_FsList_fs_entry_m[64];
-	size_t response_fs_list_FsList_fs_entry_m_count;
+	struct fs_list_page response_fs_list_FsList;
 };
 
 struct response_fs_stat {
@@ -5488,7 +5831,6 @@ struct api_response_r {
 		struct response_checkpoints api_response_response_checkpoints_m;
 		struct response_session_page api_response_response_session_page_m;
 		struct response_session_detail api_response_response_session_detail_m;
-		struct response_sessions_by_profile api_response_response_sessions_by_profile_m;
 		struct response_session_search api_response_response_session_search_m;
 		struct response_acp_catalog api_response_response_acp_catalog_m;
 		struct response_providers api_response_response_providers_m;
@@ -5576,7 +5918,6 @@ struct api_response_r {
 		api_response_response_checkpoints_m_c,
 		api_response_response_session_page_m_c,
 		api_response_response_session_detail_m_c,
-		api_response_response_sessions_by_profile_m_c,
 		api_response_response_session_search_m_c,
 		api_response_response_acp_catalog_m_c,
 		api_response_response_providers_m_c,

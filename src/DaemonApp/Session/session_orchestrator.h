@@ -114,7 +114,13 @@ signals:
     void undoRequested();
 
 private:
+    // Reset the status stack for a fresh turn: clear settled subagent rows and, for the mock
+    // simulator only (ITurnEngine::simulatesStatusFeeds), seed the canned todo plan. The daemon
+    // engine's todos arrive as `todoUpdate` events (real `todo` tool detail) via applyTodoEvents.
+    void beginTurnStatusFeeds();
     void populateSimulatorTodos();
+    // Pick `todoUpdate` events off the turn stream and replace the status-stack todos.
+    void applyTodoEvents(const QVariantList& events);
     // (Re)connect the orchestrator's internal handlers (busy, subagent rows, todo clear) to the
     // current engine. Called on construction and whenever the engine is swapped via the factory.
     void wireTurn();

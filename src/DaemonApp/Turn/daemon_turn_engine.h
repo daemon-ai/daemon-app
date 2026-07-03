@@ -3,9 +3,12 @@
 
 #pragma once
 
+#include "daemon/node_api_codec.h"
 #include "i_turn_engine.h"
 
 #include <QByteArray>
+#include <QList>
+#include <QSet>
 #include <QString>
 #include <QStringList>
 #include <QTimer>
@@ -92,6 +95,12 @@ private:
     // Persist the applied (epoch, watermark) for this session so a refocus/cold-start resumes the
     // subscribe + journal reads past it instead of from 0. No-op without a cache.
     void persistWatermark();
+    // Reasoning persistence (L3): deltas accumulate into one durable Reasoning block per run
+    // (keyed by the first delta's seq, mirroring the live ingest's coalescing). checkpoint()
+    // upserts the accumulated text (page boundary durability); settle() upserts and closes the
+    // run (the next delta starts a new block).
+    void checkpointReasoningBlock();
+    void settleReasoningBlock();
 
     void setActive(bool active);
     void setTurnState(const QString& state);
@@ -119,6 +128,17 @@ private:
     quint32 m_pendingRequestId = 0;
     QString m_pendingKind; // "Approval" | "Input" | "Choice"
     QStringList m_pendingOptions;
+    // Call ids of in-flight `todo` tool calls (status-stack feed): their ToolStarted was
+    // suppressed, so the matching ToolFinished is suppressed too (and carries the todoUpdate).
+    QSet<QString> m_todoCallIds;
+    // The open reasoning run: first delta's seq (0 = none) + accumulated disclosure text.
+    quint64 m_reasoningSeq = 0;
+    QString m_reasoningText;
+    // The re-baseline journal read accumulates across pages (wire v24: each SessionHistory page
+    // is bounded at kWirePageMax records); the replay runs exactly once over the full set. Reset
+    // whenever a new rebaseline starts (or the bound session changes).
+    QList<daemonapp::daemon::DecodedJournalRecord> m_journalAcc;
+    int m_journalPages = 0;
     QString m_turnState = QStringLiteral("idle");
     int m_elapsedMs = 0;
     QString m_errorText;
@@ -131,7 +151,11 @@ private:
     int m_resumeAttempts = 0;             // consecutive drops since the last good page
 
     static constexpr int kDeadlineMs = 180000; // 3 min safety cap
-    static constexpr quint32 kSubscribeMax = 256;
+    // Per-page read size for Subscribe/SessionHistory: the wire page bound (a larger request is
+    // clamped by the node anyway; the client codec cannot decode past it).
+    static constexpr quint32 kSubscribeMax = daemonapp::daemon::NodeApiCodec::kWirePageMax;
+    // Runaway guard for the journal re-baseline page loop (64k records at 64/page).
+    static constexpr int kMaxJournalPages = 1024;
     // Turn resume: a mid-turn stream drop (the socket dropped, daemon alive) is transient - reopen
     // the stream from m_cursor with backoff instead of killing the turn. A generation change is a
     // different case (re-baseline, not reopen).

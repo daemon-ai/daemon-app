@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QStandardPaths>
 #include <QString>
+#include <QtGlobal>
 #include <QVariant>
 
 namespace settings {
@@ -48,7 +49,11 @@ public:
     void setSetupComplete(bool on) { setValue(QStringLiteral("app/setupComplete"), on); }
 
     [[nodiscard]] Q_INVOKABLE QString lastConnectionMode() const {
+#ifdef Q_OS_WASM
+        return value(QStringLiteral("conn/mode"), QStringLiteral("remote")).toString();
+#else
         return value(QStringLiteral("conn/mode"), QStringLiteral("local")).toString();
+#endif
     }
     [[nodiscard]] Q_INVOKABLE QString lastConnectionTarget() const {
         return value(QStringLiteral("conn/target"), QString()).toString();
@@ -61,7 +66,11 @@ public:
     // Managed local daemon (CON-1b): when no daemon answers on the local target, the client may
     // discover + spawn one itself. On by default so first-run "Local" works without a terminal.
     [[nodiscard]] bool managedLocalDaemon() const {
+#ifdef Q_OS_WASM
+        return false;
+#else
         return value(QStringLiteral("conn/managedLocalDaemon"), true).toBool();
+#endif
     }
     void setManagedLocalDaemon(bool on) { setValue(QStringLiteral("conn/managedLocalDaemon"), on); }
 
@@ -135,6 +144,17 @@ public:
     // `/run/daemon.sock` a non-root managed daemon could never bind).
     [[nodiscard]] Q_INVOKABLE QString
     resolvedConnectionTarget(const QString& fallback = QString()) const {
+#ifdef Q_OS_WASM
+        const QString remoteOverride = qEnvironmentVariable("DAEMON_APP_REMOTE_URL");
+        if (!remoteOverride.isEmpty()) {
+            return remoteOverride;
+        }
+        const QString savedRemote = lastConnectionTarget();
+        if (!savedRemote.isEmpty()) {
+            return savedRemote;
+        }
+        return fallback.isEmpty() ? QStringLiteral("ws://localhost:8787/api/ws") : fallback;
+#else
         const QString override = qEnvironmentVariable("DAEMON_APP_SOCKET");
         if (!override.isEmpty()) {
             return override;
@@ -144,6 +164,7 @@ public:
             return saved;
         }
         return fallback.isEmpty() ? defaultManagedSocketPath() : fallback;
+#endif
     }
 
 signals:

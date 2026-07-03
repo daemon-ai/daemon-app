@@ -132,6 +132,12 @@ Item {
             "skills": wSkills,
             "tools": wTools,
         });
+        // A LOCALLY INSTALLED model additionally needs ModelActivate bound to THIS profile —
+        // the spec update alone records the name, but the node's local provider loads the active
+        // selection (same seam the first-run wizard uses).
+        if (typeof ModelCatalog !== "undefined" && ModelCatalog && root.wModel.length > 0
+            && ModelCatalog.isLocalInstalled(root.wModel))
+            ModelCatalog.activateForProfile(root.wModel, root.profileId);
     }
 
     // Empty state.

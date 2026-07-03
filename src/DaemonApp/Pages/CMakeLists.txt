@@ -33,7 +33,9 @@ qt_add_qml_module(da_pages
         ArchivedSection.qml
         ModelsPage.qml
         ModelsDiscover.qml
+        DiscoverDialog.qml
         QuantPickerPopup.qml
+        DownloadsPanel.qml
         ModelsDownloads.qml
         ModelsInstalled.qml
         ModelsProviders.qml

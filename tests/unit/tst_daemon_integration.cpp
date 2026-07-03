@@ -122,6 +122,34 @@ QByteArray errorOtherResponse(const char* message) {
     return b;
 }
 
+// {"SessionPage": {"sessions":[{"session":<id>,"state":"Active"}...], ?"next_cursor":<id>,
+//  "rev":N}} — keys in CDDL order (the generated decoder reads sequentially).
+QByteArray sessionPageResponse(const QList<QByteArray>& ids, const char* nextCursor, quint64 rev) {
+    using daemonapp::test::cborText;
+    using daemonapp::test::cborTextLen;
+    using daemonapp::test::cborUint;
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "SessionPage");
+    b.append(static_cast<char>(nextCursor != nullptr ? 0xA3 : 0xA2));
+    cborText(b, "sessions");
+    b.append(static_cast<char>(0x80 | static_cast<char>(ids.size())));
+    for (const QByteArray& id : ids) {
+        b.append(static_cast<char>(0xA2));
+        cborText(b, "session");
+        cborTextLen(b, id);
+        cborText(b, "state");
+        cborText(b, "Active");
+    }
+    if (nextCursor != nullptr) {
+        cborText(b, "next_cursor");
+        cborText(b, nextCursor);
+    }
+    cborText(b, "rev");
+    cborUint(b, rev);
+    return b;
+}
+
 } // namespace
 
 class DaemonIntegrationTests : public QObject {
@@ -511,6 +539,53 @@ private slots:
         QSignalSpy deadFailed(&deadSessions, &daemonapp::daemon::SessionRepository::refreshFailed);
         deadSessions.createSession(QString());
         QTRY_COMPARE_WITH_TIMEOUT(deadFailed.count(), 1, 3000);
+    }
+
+    // Wire v24 roster page loop: a full refresh follows next_cursor to completion, the
+    // continuation query carries `after`, and the replace + prune runs ONCE over the whole
+    // accumulated set — a stale cached session is gone at the end, both pages' rows are present,
+    // and sessionsRefreshed fires exactly once.
+    void sessionsFullRefreshPagesToCompletion() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("roster.sock"));
+        daemonapp::test::WireMuxServer fake;
+        fake.setReplySequence({sessionPageResponse({QByteArrayLiteral("s1")}, "s1", 7),
+                               sessionPageResponse({QByteArrayLiteral("s2")}, nullptr, 7)});
+        QVERIFY2(fake.start(path), "listen");
+
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        daemonapp::daemon::NodeApiClient client(&transport);
+        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("roster.db")));
+        // A stale cached row the full listing no longer contains: the loop's final replace must
+        // prune it (pruning per page would also have dropped s2 between the pages).
+        daemonapp::daemon::CachedSessionRow stale;
+        stale.sessionId = QStringLiteral("stale-1");
+        stale.state = QStringLiteral("Active");
+        stale.updatedAtMs = 1;
+        QVERIFY(cache.upsertSession(stale));
+
+        daemonapp::daemon::SessionRepository sessions(&client, &cache);
+        QSignalSpy refreshed(&sessions, &daemonapp::daemon::SessionRepository::sessionsRefreshed);
+        sessions.refreshSessions();
+        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
+        QTest::qWait(100); // settle: a per-page emit or a runaway loop would fire again
+        QCOMPARE(refreshed.count(), 1);
+
+        // The merged roster holds both pages' rows; the stale row was pruned.
+        QStringList ids;
+        for (const auto& row : cache.sessions()) {
+            ids << row.sessionId;
+        }
+        ids.sort();
+        QCOMPARE(ids, (QStringList{QStringLiteral("s1"), QStringLiteral("s2")}));
+
+        // The continuation query carried the first page's next_cursor as `after`.
+        const QList<QByteArray> calls = fake.callPayloads();
+        QCOMPARE(calls.size(), 2);
+        QCOMPARE(calls.at(1), daemonapp::daemon::NodeApiCodec::encodeSessionsQueryRequest(
+                                  false, 0, QString(), QStringLiteral("s1")));
     }
 };
 

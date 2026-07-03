@@ -96,16 +96,19 @@ QByteArray providerCatalogResponse() {
     return encodeResponse(*resp);
 }
 
-// A ProviderModels response with two genai-selector cloud models (one carrying a display_name).
+// A ProviderModels page (wire v25 model-page) with two genai-selector cloud models (one carrying
+// a display_name), on the last page (no `next`).
 QByteArray providerModelsResponse() {
     const QByteArray id0 = "claude-3-5-sonnet-latest", name0 = "Claude 3.5 Sonnet";
     const QByteArray id1 = "claude-3-opus-latest";
     auto resp = std::make_unique<api_response_r>();
     resp->api_response_choice = api_response_r::api_response_response_provider_models_m_c;
-    response_provider_models& pm = resp->api_response_response_provider_models_m;
-    pm.response_provider_models_ProviderModels_model_descriptor_m_count = 2;
+    model_page& pm =
+        resp->api_response_response_provider_models_m.response_provider_models_ProviderModels;
+    pm.model_page_items_model_descriptor_m_count = 2;
+    pm.model_page_next_present = false;
 
-    model_descriptor& m0 = pm.response_provider_models_ProviderModels_model_descriptor_m[0];
+    model_descriptor& m0 = pm.model_page_items_model_descriptor_m[0];
     setZ(m0.model_descriptor_id, id0);
     m0.model_descriptor_provider.provider_selector_choice =
         provider_selector_r::provider_selector_genai_tstr_c;
@@ -121,7 +124,7 @@ QByteArray providerModelsResponse() {
         model_descriptor::model_descriptor_output_price_micros_per_mtok_null_m_c;
     m0.model_descriptor_local = false;
 
-    model_descriptor& m1 = pm.response_provider_models_ProviderModels_model_descriptor_m[1];
+    model_descriptor& m1 = pm.model_page_items_model_descriptor_m[1];
     setZ(m1.model_descriptor_id, id1);
     m1.model_descriptor_provider.provider_selector_choice =
         provider_selector_r::provider_selector_genai_tstr_c;
@@ -222,6 +225,43 @@ private slots:
         QVERIFY(out.at(0).toMap().value(QStringLiteral("local")).toBool());
         QCOMPARE(out.at(1).toMap().value(QStringLiteral("kind")).toString(),
                  QStringLiteral("discover"));
+    }
+
+    // A vision-projector companion (mmproj artifact, `projector: true`) is NEVER offered as a
+    // chat model; rows without the marker key (all pre-marker callers) keep composing as before.
+    void localComposeExcludesProjectorRows() {
+        QList<QVariantMap> rows;
+        QVariantMap chat; // no `projector` key at all — the pre-marker row shape
+        chat[QStringLiteral("id")] = QStringLiteral("llama-3-8b.gguf");
+        chat[QStringLiteral("name")] = QStringLiteral("Llama 3 8B");
+        chat[QStringLiteral("provider")] = QStringLiteral("llama");
+        rows.append(chat);
+        QVariantMap projector; // the node's marker on an installed mmproj companion
+        projector[QStringLiteral("id")] = QStringLiteral("mmproj-llama-3-8b.gguf");
+        projector[QStringLiteral("name")] = QStringLiteral("Llama 3 8B (projector)");
+        projector[QStringLiteral("provider")] = QStringLiteral("llama");
+        projector[QStringLiteral("projector")] = true;
+        rows.append(projector);
+        QVariantMap marked; // an explicit false marker stays offerable
+        marked[QStringLiteral("id")] = QStringLiteral("llama-3-70b.gguf");
+        marked[QStringLiteral("name")] = QStringLiteral("Llama 3 70B");
+        marked[QStringLiteral("provider")] = QStringLiteral("llama");
+        marked[QStringLiteral("projector")] = false;
+        rows.append(marked);
+
+        const QVariantList out = models::composeLocalOfferedModels(
+            rows, QStringLiteral("llama_cpp"), QStringLiteral("llama_cpp"));
+        QCOMPARE(out.size(), 3); // both chat models + the discover row; no projector
+        QCOMPARE(out.at(0).toMap().value(QStringLiteral("id")).toString(),
+                 QStringLiteral("llama-3-8b.gguf"));
+        QCOMPARE(out.at(1).toMap().value(QStringLiteral("id")).toString(),
+                 QStringLiteral("llama-3-70b.gguf"));
+        QCOMPARE(out.at(2).toMap().value(QStringLiteral("kind")).toString(),
+                 QStringLiteral("discover"));
+        for (const QVariant& v : out) {
+            QVERIFY(v.toMap().value(QStringLiteral("id")).toString() !=
+                    QStringLiteral("mmproj-llama-3-8b.gguf"));
+        }
     }
 
     // The mock provider catalog never offers Mock, defaults include Daemon Cloud, and a cloud

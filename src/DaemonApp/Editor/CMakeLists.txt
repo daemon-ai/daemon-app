@@ -20,11 +20,13 @@ target_link_libraries(de_core
     PUBLIC
         Qt6::Core
         Qt6::Gui
-        KF6SyntaxHighlighting
     PRIVATE
         daemon-app::warnings
         daemon-app::numeric
 )
+if(NOT DAEMON_APP_WASM)
+    target_link_libraries(de_core PUBLIC KF6SyntaxHighlighting)
+endif()
 
 # --- da_editor: QML module (controller + line model + the view) -------------
 qt_add_qml_module(da_editor

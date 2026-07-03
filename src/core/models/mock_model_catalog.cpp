@@ -246,13 +246,25 @@ void MockModelCatalog::download(const QString& modelId) {
     }
     const QString jobId = QStringLiteral("job-%1").arg(m_nextJob++);
     QVariantMap entry = catalogEntry(modelId);
+    const auto sizeBytes = static_cast<quint64>(entry.value(QStringLiteral("sizeGiB")).toDouble() *
+                                                1024.0 * 1024.0 * 1024.0);
     QVariantMap job;
     job[QStringLiteral("id")] = jobId;
     job[QStringLiteral("modelId")] = modelId;
     job[QStringLiteral("name")] = entry.value(QStringLiteral("name"));
     job[QStringLiteral("sizeGiB")] = entry.value(QStringLiteral("sizeGiB"));
+    // Daemon-row render parity: DownloadsPanel reads these keys on every row.
+    job[QStringLiteral("repo")] = modelId; // the mock "repo" IS the catalog model id
+    job[QStringLiteral("error")] = QString();
+    job[QStringLiteral("sizeLabel")] = formatBytes(sizeBytes);
+    job[QStringLiteral("downloadedLabel")] = formatBytes(0);
     job[QStringLiteral("progress")] = 0.0;
-    job[QStringLiteral("state")] = QStringLiteral("downloading");
+    // The mock's synthetic jobs are single-file; the panel's "file x/y" label stays hidden.
+    job[QStringLiteral("filesDone")] = 0;
+    job[QStringLiteral("filesTotal")] = 1;
+    // A brief queued phase (the first tick flips it to downloading), matching the daemon's
+    // state ladder so consumers render identically in mock mode.
+    job[QStringLiteral("state")] = QStringLiteral("queued");
     m_downloads->upsert(job);
     m_jobProgress[jobId] = 0.0;
     m_jobPaused[jobId] = false;
@@ -260,6 +272,7 @@ void MockModelCatalog::download(const QString& modelId) {
     if (!m_timer->isActive()) {
         m_timer->start();
     }
+    emit downloadStarted(jobId);
 }
 
 void MockModelCatalog::pauseDownload(const QString& jobId) {
@@ -298,6 +311,24 @@ void MockModelCatalog::cancelDownload(const QString& jobId) {
     m_downloads->removeById(jobId);
 }
 
+QString MockModelCatalog::installedIdFor(const QString& repo, const QString& file) const {
+    Q_UNUSED(file) // the mock keys installs by model id, and its "repo" IS that id
+    return m_installed->indexOfId(repo) >= 0 ? repo : QString();
+}
+
+void MockModelCatalog::dismissDownload(const QString& jobId) {
+    const int row = m_downloads->indexOfId(jobId);
+    if (row < 0) {
+        return;
+    }
+    const QString state = m_downloads->at(row).value(QStringLiteral("state")).toString();
+    // Terminal rows only — an active mock job keeps rendering (pause or cancel it instead).
+    if (state == QStringLiteral("done") || state == QStringLiteral("failed") ||
+        state == QStringLiteral("cancelled")) {
+        m_downloads->removeById(jobId);
+    }
+}
+
 void MockModelCatalog::tick() {
     QStringList finished;
     for (auto it = m_jobProgress.begin(); it != m_jobProgress.end(); ++it) {
@@ -312,6 +343,9 @@ void MockModelCatalog::tick() {
             j[QStringLiteral("progress")] = it.value();
             j[QStringLiteral("state")] =
                 it.value() >= 1.0 ? QStringLiteral("done") : QStringLiteral("downloading");
+            j[QStringLiteral("downloadedLabel")] = formatBytes(
+                static_cast<quint64>(it.value() * j.value(QStringLiteral("sizeGiB")).toDouble() *
+                                     1024.0 * 1024.0 * 1024.0));
             m_downloads->upsert(j);
         }
         if (it.value() >= 1.0) {
@@ -339,6 +373,19 @@ void MockModelCatalog::tick() {
     if (m_jobProgress.isEmpty()) {
         m_timer->stop();
     }
+}
+
+void MockModelCatalog::seedDownloadRows(const QVariantList& rows) {
+    m_timer->stop();
+    m_jobProgress.clear();
+    m_jobPaused.clear();
+    m_jobModel.clear();
+    QList<QVariantMap> out;
+    out.reserve(rows.size());
+    for (const QVariant& v : rows) {
+        out.append(v.toMap());
+    }
+    m_downloads->setRows(out);
 }
 
 void MockModelCatalog::activate(const QString& modelId) {

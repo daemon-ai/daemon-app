@@ -39,6 +39,10 @@ public:
     [[nodiscard]] virtual int elapsedMs() const = 0;
     [[nodiscard]] virtual QString errorText() const = 0;
     [[nodiscard]] virtual bool paused() const { return false; }
+    // Whether this engine fabricates composer status-stack content (the canned todo plan) for
+    // UI coverage. Only the mock simulator does; the daemon engine's status feeds are driven by
+    // real `todo` tool detail payloads on the event stream (`todoUpdate` events).
+    [[nodiscard]] virtual bool simulatesStatusFeeds() const { return false; }
 
     // Bind the engine to a session id before starting a turn. The simulator ignores it; the daemon
     // engine needs it for Submit/Subscribe. Front ends call this when the active session changes.

@@ -221,6 +221,8 @@ struct DecodedAgentEvent {
     QString callId;             // ToolStarted / ToolFinished tool call id (CHA-3)
     QString toolArgs;           // ToolStarted args summary (CHA-3)
     bool toolOk = false;        // ToolFinished result ok (CHA-3)
+    QString detailKind;         // ToolStarted / ToolFinished structured detail kind (e.g. "todo")
+    QByteArray detailBody;      // ToolStarted / ToolFinished structured detail payload (JSON)
     quint32 inputTokens = 0;    // Usage delta (CHA-3)
     quint32 outputTokens = 0;   // Usage delta (CHA-3)
     quint32 costMicros = 0;     // Usage delta (CHA-3)
@@ -313,6 +315,9 @@ struct DecodedModelFile {
     QString quant; // parsed GGUF quant label (e.g. "Q4_K_M"); empty for non-quantized artifacts
     bool isSplit = false;
     bool isFirstShard = false;
+    // Wire v27: a vision-projector (mmproj) companion — listed + downloadable, badged by the
+    // picker, never a chat model (recommendation skips it node-side).
+    bool isMmproj = false;
 };
 
 // A point-in-time download job snapshot (ModelDownloads -> [DownloadStatus]). The repo poll loop
@@ -345,6 +350,9 @@ struct DecodedInstalledModel {
     bool hasContextLength = false;
     quint32 contextLength = 0;
     QString fileType;
+    // Wire v27: the on-disk path of the paired vision-projector (mmproj) companion; empty for
+    // text-only models and for projector records themselves.
+    QString mmprojPath;
 };
 
 // One ranked quant candidate inside a recommendation (so the picker can show the full ladder).
@@ -513,17 +521,20 @@ struct DecodedNodeEvent {
         RosterChanged,
         ApprovalPending,
         DownloadProgress,
+        CatalogChanged,
         ResyncNeeded
     } kind = Kind::Unknown;
-    QString session;        // SessionAdvanced / SessionMetaChanged / ApprovalPending
-    quint64 epoch = 0;      // SessionAdvanced
-    quint64 headSeq = 0;    // SessionAdvanced
-    quint64 rev = 0;        // SessionMetaChanged / RosterChanged
-    QString requestId;      // ApprovalPending
-    quint64 downloadId = 0; // DownloadProgress
-    quint32 pct = 0;        // DownloadProgress
-    QString state;          // DownloadProgress
-    QString scope;          // ResyncNeeded
+    QString session;             // SessionAdvanced / SessionMetaChanged / ApprovalPending
+    quint64 epoch = 0;           // SessionAdvanced
+    quint64 headSeq = 0;         // SessionAdvanced
+    quint64 rev = 0;             // SessionMetaChanged / RosterChanged
+    QString requestId;           // ApprovalPending
+    quint64 downloadId = 0;      // DownloadProgress
+    quint32 pct = 0;             // DownloadProgress
+    QString state;               // DownloadProgress
+    quint64 downloadedBytes = 0; // DownloadProgress (wire v26: real byte counters)
+    quint64 totalBytes = 0;      // DownloadProgress (0 = unknown total)
+    QString scope;               // ResyncNeeded
 };
 
 // A decoded page of the node-wide event feed (EventsSince -> EventsPage). `nextCursor` advances the
@@ -621,9 +632,12 @@ public:
     // a full page (back-compat / cold cache). A non-empty `byProfile` sets the query scope to
     // `SessionScope::ByProfile(byProfile)` (the per-agent view; the id already exists in the CDDL
     // session-scope union, so this is encoder-only — no contract change).
-    [[nodiscard]] static QByteArray
-    encodeSessionsQueryRequest(bool hasSinceRev = false, quint64 sinceRev = 0,
-                               const QString& byProfile = QString());
+    // `after` (when non-empty) resumes past the previous page's next_cursor (the roster page
+    // loop; wire v24 bounds every page at kWirePageMax).
+    [[nodiscard]] static QByteArray encodeSessionsQueryRequest(bool hasSinceRev = false,
+                                                               quint64 sinceRev = 0,
+                                                               const QString& byProfile = QString(),
+                                                               const QString& after = QString());
     // Subscribe to a session's merged log from afterSeq (exclusive), up to max entries.
     [[nodiscard]] static QByteArray encodeSubscribeRequest(const QString& sessionId,
                                                            quint64 afterSeq, quint32 max);
@@ -666,8 +680,9 @@ public:
     [[nodiscard]] static QByteArray encodeCredentialListRequest();
     // Remove the secret stored under `profile` (CredentialRemove -> Ok).
     [[nodiscard]] static QByteArray encodeCredentialRemoveRequest(const QString& profile);
-    // Discover models (Models -> Models([ModelDescriptor])).
-    [[nodiscard]] static QByteArray encodeModelsRequest();
+    // Discover models (Models -> Models(model-page)). `after` (wire v25) resumes past the
+    // previous page's `next` cursor (empty = first page).
+    [[nodiscard]] static QByteArray encodeModelsRequest(const QString& after = QString());
     // The current model for `profile` (empty = the active default profile) -> ModelCurrent(opt).
     [[nodiscard]] static QByteArray encodeModelCurrentRequest(const QString& profile = QString());
     // Set the model (and optionally re-bind the provider) for a live session -> Ok.
@@ -676,13 +691,15 @@ public:
                                  const QString& provider = QString());
     // Enumerate the providers the node offers (ProviderCatalog -> [ProviderDescriptor]). Zero-arg.
     [[nodiscard]] static QByteArray encodeProviderCatalogRequest();
-    // Discover a provider's models (ProviderModels{provider, credential_ref?, transient_key?} ->
-    // [ModelDescriptor]). `provider` is the ProviderDescriptor.id string. Pass `transientKey` when
-    // listing a key-requiring provider before a credential is stored (first-run); pass
+    // Discover a provider's models (ProviderModels{provider, credential_ref?, transient_key?,
+    // after?} -> model-page). `provider` is the ProviderDescriptor.id string. Pass `transientKey`
+    // when listing a key-requiring provider before a credential is stored (first-run); pass
     // `credentialRef` (the profile id) for an existing profile's stored key. Both empty = keyless.
+    // `after` (wire v25) resumes past the previous page's `next` cursor (empty = first page).
     [[nodiscard]] static QByteArray encodeProviderModelsRequest(const QString& provider,
                                                                 const QString& credentialRef = {},
-                                                                const QString& transientKey = {});
+                                                                const QString& transientKey = {},
+                                                                const QString& after = {});
     // List profiles (ProfileList -> Profiles) so the client can find the active default profile.
     [[nodiscard]] static QByteArray encodeProfileListRequest();
     // Switch the node's active profile (ProfileSelect -> Ok). New sessions bind to it (PRO-5).
@@ -711,13 +728,18 @@ public:
     [[nodiscard]] static QByteArray encodeProfileExportRequest(const QString& id);
     [[nodiscard]] static QByteArray encodeProfileImportRequest(const DecodedDistribution& dist,
                                                                const QString& newId = QString());
-    [[nodiscard]] static QByteArray encodeProfileHistoryRequest(const QString& id);
+    // `after` (wire v25) resumes past the previous page's `next` cursor (the stringified seq of
+    // the last served revision; empty = first page).
+    [[nodiscard]] static QByteArray encodeProfileHistoryRequest(const QString& id,
+                                                                const QString& after = QString());
     [[nodiscard]] static QByteArray encodeProfileAtRequest(const QString& id, quint64 seq);
     [[nodiscard]] static QByteArray encodeProfileRevertRequest(const QString& id, quint64 seq);
     // Decode a Distribution response (ProfileExport).
     static bool decodeDistribution(const QByteArray& responseCbor, DecodedDistribution* out);
-    // Decode a Revisions response (ProfileHistory) into the revision list, newest last.
-    static bool decodeRevisions(const QByteArray& responseCbor, QList<DecodedRevision>* out);
+    // Decode a Revisions page (ProfileHistory) into the revision list, newest last. `*next` (when
+    // non-null) gets the resume cursor (cleared on the last page).
+    static bool decodeRevisions(const QByteArray& responseCbor, QList<DecodedRevision>* out,
+                                QString* next = nullptr);
 
     // --- Local model track (Phase 2) requests ------------------------------------------------
     // Engine/sort args are friendly wire strings: engine "llama"|"mistral_rs" (default "llama"),
@@ -727,10 +749,11 @@ public:
     encodeModelSearchRequest(const QString& text, const QString& engine = QStringLiteral("llama"),
                              const QString& sort = QStringLiteral("trending"), quint32 page = 0,
                              quint32 limit = 25);
-    // Step 2: list a repo's loadable files (ModelFiles -> [ModelFile]). Empty revision = main.
+    // Step 2: list a repo's loadable files (ModelFiles -> model-file-page). Empty revision =
+    // main. `after` (wire v25) resumes past the previous page's `next` cursor.
     [[nodiscard]] static QByteArray
     encodeModelFilesRequest(const QString& repo, const QString& engine = QStringLiteral("llama"),
-                            const QString& revision = QString());
+                            const QString& revision = QString(), const QString& after = QString());
     // The hardware-aware quant recommendation for a repo (ModelRecommend -> QuantRecommendation).
     // hasBudget=false auto-detects VRAM/RAM node-side.
     [[nodiscard]] static QByteArray encodeModelRecommendRequest(
@@ -771,9 +794,11 @@ public:
     // Set a session's approval mode (CHA-4): "ask" | "accept_edits" | "auto_allow" | "deny".
     [[nodiscard]] static QByteArray encodeSetSessionModeRequest(const QString& sessionId,
                                                                 const QString& mode);
-    // List pending approvals (PRO-11). Empty session = across all sessions.
+    // List pending approvals (PRO-11). Empty session = across all sessions. `after` (wire v25)
+    // resumes past the previous page's `next` cursor (empty = first page).
     [[nodiscard]] static QByteArray
-    encodeApprovalsPendingRequest(const QString& sessionId = QString());
+    encodeApprovalsPendingRequest(const QString& sessionId = QString(),
+                                  const QString& after = QString());
 
     // --- CHA-6 interrupt / steer ---
     [[nodiscard]] static QByteArray encodeSubmitInterruptRequest(const QString& sessionId,
@@ -793,8 +818,10 @@ public:
     // --- Filesystem surface (Phase 4) --------------------------------------------------------
     // `rootId` is the opaque client string ("workspace" | "host:<id>" | "session:<id>").
     [[nodiscard]] static QByteArray encodeFsRootsRequest();
+    // `after` (wire v24) resumes past the previous page's `next` cursor (empty = first page).
     [[nodiscard]] static QByteArray encodeFsListRequest(const QString& rootId, const QString& dir,
-                                                        bool showIgnored = false);
+                                                        bool showIgnored = false,
+                                                        const QString& after = QString());
     [[nodiscard]] static QByteArray encodeFsReadRequest(const QString& rootId, const QString& path,
                                                         quint64 maxBytes = 0);
     // `baseRevision` is the opaque "mtime:size" etag (empty = unconditional write); `force`
@@ -812,7 +839,10 @@ public:
                                                           quint32 maxResults = 0, quint32 page = 0);
 
     static bool decodeFsRoots(const QByteArray& responseCbor, QList<DecodedFsRoot>* out);
-    static bool decodeFsList(const QByteArray& responseCbor, QList<DecodedFsEntry>* out);
+    // Decode one fs_list page (the uniform WirePage over fs-entry): the items plus the resume
+    // cursor (`*next` is cleared on the last page). Pass a null `next` for single-shot uses.
+    static bool decodeFsList(const QByteArray& responseCbor, QList<DecodedFsEntry>* out,
+                             QString* next = nullptr);
     static bool decodeFsRead(const QByteArray& responseCbor, DecodedFsContent* out);
     // FsWrite returns the new revision as the opaque "mtime:size" etag.
     static bool decodeFsWrite(const QByteArray& responseCbor, QString* revision);
@@ -820,7 +850,9 @@ public:
     static bool decodeFsSearch(const QByteArray& responseCbor, DecodedFsSearchPage* out);
 
     // --- Fleet / subagent tree (Phase 5b: PRO-9 view + PRO-10 control) -----------------------
-    [[nodiscard]] static QByteArray encodeTreeRequest();
+    // `after` (wire v25) resumes past the previous TreeReport's `next` cursor (empty = first
+    // page); `root` rides every page.
+    [[nodiscard]] static QByteArray encodeTreeRequest(const QString& after = QString());
     [[nodiscard]] static QByteArray encodeFleetRequest();
     [[nodiscard]] static QByteArray encodeUnitRequest(const QString& unitId);
     [[nodiscard]] static QByteArray encodeUnitEventsRequest(const QString& unitId, quint32 max);
@@ -828,10 +860,16 @@ public:
     [[nodiscard]] static QByteArray encodeResumeRequest(const QString& unitId);
     [[nodiscard]] static QByteArray encodeScaleRequest(const QString& unitId, quint32 n);
 
-    // Decode a Tree response, flattening root + nodes into a pre-order list with depth set (empty
-    // when the tree has no root). `outRoot` (optional) gets the root unit id.
+    // Decode a Tree page (wire v25: `nodes` arrives in unit-id cursor pages) into the RAW node
+    // list (no flatten — the caller accumulates pages and calls flattenTreeNodes at the end).
+    // `outRoot` (optional) gets the root unit id (rides every page); `*next` (when non-null) gets
+    // the resume cursor (cleared on the last page).
     static bool decodeTreeReport(const QByteArray& responseCbor, QList<DecodedUnitNode>* outFlat,
-                                 QString* outRoot = nullptr);
+                                 QString* outRoot = nullptr, QString* next = nullptr);
+    // Flatten an accumulated (multi-page) node union into the pre-order list with depth/parent
+    // set (empty when `root` is empty — a fresh daemon's valid empty tree).
+    static QList<DecodedUnitNode> flattenTreeNodes(const QList<DecodedUnitNode>& nodes,
+                                                   const QString& root);
     // Decode a Unit response (Some/None). Sets *found=false on the null arm (unknown unit).
     static bool decodeUnit(const QByteArray& responseCbor, DecodedUnitNode* out, bool* found);
     static bool decodeFleetReport(const QByteArray& responseCbor, DecodedFleetReport* out);
@@ -839,12 +877,16 @@ public:
     // --- Channels / Events-IO read surface (story 04: EIO-1/3/8/9) ---------------------------
     [[nodiscard]] static QByteArray encodeTransportAdaptersRequest();
     [[nodiscard]] static QByteArray encodeTransportInstancesRequest();
-    [[nodiscard]] static QByteArray encodeConvListRequest(const QString& transport);
+    // `after` (wire v25) resumes past the previous page's `next` cursor (empty = first page).
+    [[nodiscard]] static QByteArray encodeConvListRequest(const QString& transport,
+                                                          const QString& after = QString());
     static bool decodeAdapters(const QByteArray& responseCbor, QList<DecodedAdapterInfo>* out);
     static bool decodeTransportInstances(const QByteArray& responseCbor,
                                          QList<DecodedTransportInstance>* out);
-    static bool decodeConversations(const QByteArray& responseCbor,
-                                    QList<DecodedConversation>* out);
+    // Decode one conv-page (wire v25). `*next` (when non-null) gets the resume cursor (cleared on
+    // the last page).
+    static bool decodeConversations(const QByteArray& responseCbor, QList<DecodedConversation>* out,
+                                    QString* next = nullptr);
 
     // --- Multiplexed socket envelope (wire L0; daemon-sync-protocol-spec.md §2) ---
     // The envelope is hand-coded (not zcbor-generated): it wraps the already-encoded request bytes
@@ -861,7 +903,11 @@ public:
     // contract version moves. The server advertises its own version as the "api/<N>" Hello
     // feature; the connection service compares the two at connect and replaces (app-managed) or
     // refuses (attach) a mismatched daemon instead of silently serving stale wire shapes.
-    static constexpr quint32 kDaemonApiVersion = 23;
+    static constexpr quint32 kDaemonApiVersion = 27;
+    // The wire page bound (daemon-api WIRE_PAGE_MAX): a paged response carries at most this many
+    // array elements per page — the generated codec decodes into fixed 64-element buffers — so
+    // clients loop on the page cursors instead of ever asking for more per response.
+    static constexpr quint32 kWirePageMax = 64;
     // The client->server Hello opening the multiplexed/streaming session.
     [[nodiscard]] static QByteArray encodeHelloFrame();
     // Begin a SASL exchange with `mechanism`, carrying its initial client response (may be empty).
@@ -922,14 +968,17 @@ public:
     // Decode a Credentials response into redacted entries.
     static bool decodeCredentials(const QByteArray& responseCbor,
                                   QList<DecodedCredentialInfo>* out);
-    // Decode a Models response into the discoverable model list.
-    static bool decodeModels(const QByteArray& responseCbor, QList<DecodedModelDescriptor>* out);
+    // Decode one Models page (wire v25 model-page) into the discoverable model list. `*next`
+    // (when non-null) gets the resume cursor (cleared on the last page).
+    static bool decodeModels(const QByteArray& responseCbor, QList<DecodedModelDescriptor>* out,
+                             QString* next = nullptr);
     // Decode a ProviderCatalog response into the offered-provider list.
     static bool decodeProviderCatalog(const QByteArray& responseCbor,
                                       QList<DecodedProviderDescriptor>* out);
-    // Decode a ProviderModels response into a provider's model list (same shape as Models).
+    // Decode one ProviderModels page (same model-page shape as Models). `*next` (when non-null)
+    // gets the resume cursor (cleared on the last page).
     static bool decodeProviderModels(const QByteArray& responseCbor,
-                                     QList<DecodedModelDescriptor>* out);
+                                     QList<DecodedModelDescriptor>* out, QString* next = nullptr);
     // Decode a ModelCurrent response. Sets *hasModel=false when the daemon resolves no model
     // (null).
     static bool decodeModelCurrent(const QByteArray& responseCbor, DecodedModelDescriptor* out,
@@ -950,8 +999,10 @@ public:
     // Decode a ModelSearch response (SearchPage) into repo hits. `hasMore`/`page` advance paging.
     static bool decodeModelSearch(const QByteArray& responseCbor, QList<DecodedSearchHit>* out,
                                   bool* hasMore = nullptr, quint32* page = nullptr);
-    // Decode a ModelFiles response into the repo's loadable files.
-    static bool decodeModelFiles(const QByteArray& responseCbor, QList<DecodedModelFile>* out);
+    // Decode one ModelFiles page (wire v25 model-file-page) into the repo's loadable files.
+    // `*next` (when non-null) gets the resume cursor (cleared on the last page).
+    static bool decodeModelFiles(const QByteArray& responseCbor, QList<DecodedModelFile>* out,
+                                 QString* next = nullptr);
     // Decode a ModelDownloadStarted response into the new download job id.
     static bool decodeModelDownloadStarted(const QByteArray& responseCbor, quint64* outId);
     // Decode a ModelDownloads response into the in-flight/finished job snapshots.
@@ -963,8 +1014,10 @@ public:
     // Decode a ModelRecommend response into the hardware-aware quant recommendation.
     static bool decodeModelRecommend(const QByteArray& responseCbor,
                                      DecodedQuantRecommendation* out);
-    // Decode an Approvals response (PRO-11) into pending entries.
-    static bool decodeApprovals(const QByteArray& responseCbor, QList<DecodedApprovalInfo>* out);
+    // Decode one Approvals page (PRO-11; wire v25 approval-page) into pending entries. `*next`
+    // (when non-null) gets the resume cursor (cleared on the last page).
+    static bool decodeApprovals(const QByteArray& responseCbor, QList<DecodedApprovalInfo>* out,
+                                QString* next = nullptr);
     // Decode a Commands response (CHA-7) into the slash-command catalog.
     static bool decodeCommands(const QByteArray& responseCbor, QList<DecodedCommandSpec>* out);
     // Decode a CommandOutput response (CHA-7) into its text.

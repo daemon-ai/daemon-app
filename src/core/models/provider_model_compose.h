@@ -23,6 +23,12 @@ namespace models {
                                                             const QString& wireSelector) {
     QVariantList out;
     for (const QVariantMap& row : installedRows) {
+        // Vision-projector companions (mmproj artifacts) pair with a chat model but are never
+        // chat models themselves; the node marks them `projector: true` (key absent on rows
+        // predating the marker, which toBool() treats as false — i.e. offerable).
+        if (row.value(QStringLiteral("projector")).toBool()) {
+            continue;
+        }
         QString kind = row.value(QStringLiteral("provider")).toString();
         if (kind == QStringLiteral("llama")) {
             kind = QStringLiteral("llama_cpp"); // local llama.cpp engine -> its selector

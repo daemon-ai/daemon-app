@@ -167,6 +167,14 @@ Kit.Dialog {
                                     font.family: FontIcons.display; font.pixelSize: 9; font.bold: true
                                     color: Theme.accent
                                 }
+                                // Vision-projector (mmproj) companion: downloadable, but it is
+                                // loaded ALONGSIDE text weights — never pick it as the chat model.
+                                Text {
+                                    visible: entry.isMmproj === true
+                                    text: qsTr("PROJECTOR")
+                                    font.family: FontIcons.display; font.pixelSize: 9; font.bold: true
+                                    color: Theme.textMuted
+                                }
                             }
                             Text {
                                 text: entry.path + "  \u00b7  " + entry.sizeLabel

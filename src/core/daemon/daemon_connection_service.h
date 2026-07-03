@@ -5,7 +5,12 @@
 
 #include "connection/iconnection_service.h"
 #include "daemon/daemon_transport.h"
+
+#include <QtGlobal>
+
+#ifndef Q_OS_WASM
 #include "daemon/local_daemon_launcher.h"
+#endif
 #include "daemon/node_api_client.h"
 
 #include <memory>
@@ -16,6 +21,10 @@ class ISettingsStore;
 }
 
 namespace daemonapp::daemon {
+
+#ifdef Q_OS_WASM
+class LocalDaemonLauncher;
+#endif
 
 // Real connection seam for daemon-backed mode.
 //
@@ -87,7 +96,9 @@ private:
     std::unique_ptr<DaemonTransport> m_transport;
     std::unique_ptr<NodeApiClient> m_client;
     settings::ISettingsStore* m_settings = nullptr;
+#ifndef Q_OS_WASM
     LocalDaemonLauncher* m_launcher = nullptr;
+#endif
     QTimer m_heartbeat;         // periodic Health while ready
     QTimer m_reprobe;           // attach-only backoff Health reprobe while reconnecting
     QTimer m_reconnectDeadline; // single-shot episode budget -> offline
