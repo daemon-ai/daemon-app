@@ -221,6 +221,19 @@ void DaemonConnectionService::onReprobeTick() {
     m_reprobe.start(m_backoffMs);
 }
 
+QUrl DaemonConnectionService::parseWsUrl(const QString& target) {
+    // Remote-ws target syntax is a FULL URL (ws://host:port or wss://host[:port][/path]) - unlike
+    // "remote", where the bare host:port implies the one TLS carrier, the scheme here decides
+    // plaintext vs TLS, so it must be explicit.
+    QUrl url(target.trimmed(), QUrl::StrictMode);
+    const bool wsScheme =
+        url.scheme() == QLatin1String("ws") || url.scheme() == QLatin1String("wss");
+    if (!url.isValid() || !wsScheme || url.host().isEmpty()) {
+        return {};
+    }
+    return url;
+}
+
 bool DaemonConnectionService::parseHostPort(const QString& target, QString* host, quint16* port) {
     // Remote target syntax is "host:port" (decision 4). Tolerate an optional scheme prefix so a
     // pasted URL still parses, but the canonical form is bare host:port.
@@ -268,6 +281,12 @@ bool DaemonConnectionService::configureTransport() {
             return false;
         }
         m_transport->setTcpTarget(host, port, tlsConfigFromSettings());
+    } else if (m_config.mode == QStringLiteral("remote-ws")) {
+        const QUrl url = parseWsUrl(m_config.target);
+        if (!url.isValid()) {
+            return false;
+        }
+        m_transport->setWsTarget(url);
     } else if (m_config.mode == QStringLiteral("local")) {
         m_transport->setSocketPath(m_config.target);
     } else {
@@ -377,6 +396,11 @@ void DaemonConnectionService::testConnection(const QString& mode, const QString&
         // Shape-only: a full reachability/TLS probe needs the server (verified end-to-end later).
         message = ok ? QStringLiteral("Remote target accepted (host:port, TLS)")
                      : QStringLiteral("Use host:port for a remote TLS node");
+    } else if (mode == QStringLiteral("remote-ws")) {
+        ok = parseWsUrl(target).isValid();
+        // Shape-only, like "remote": reachability is proven by the Health probe on Connect.
+        message = ok ? QStringLiteral("WebSocket target accepted (ws:// or wss://)")
+                     : QStringLiteral("Use ws://host:port or wss://host[:port][/path]");
     } else {
         message = QStringLiteral("Unsupported transport");
     }
