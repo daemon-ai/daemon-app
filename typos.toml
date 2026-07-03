@@ -9,8 +9,10 @@
 [files]
 extend-exclude = [
   # Vendored third-party / generated code and build output - not ours to spell-check.
-  "src/core/daemon/codec/generated/**",
-  "src/core/daemon/codec/vendor/**",
+  # `**/`-prefixed so they also match when the superproject's submodule-bump gate walks this
+  # tree as `daemon-app/src/...` (typos matches nested-config globs relative to its CWD).
+  "**/src/core/daemon/codec/generated/**",
+  "**/src/core/daemon/codec/vendor/**",
   "**/build*/**",
   "**/result-*/**",
   "*.lock",
