@@ -186,6 +186,8 @@ qt_add_executable(daemon-tui
     completion_view.cpp
     palette_dialog.h
     palette_dialog.cpp
+    file_finder_dialog.h
+    file_finder_dialog.cpp
     interactive_turn_host.h
     interactive_turn_host.cpp
     line_editor.h

@@ -11,6 +11,10 @@
 
 class CommandRegistry;
 class ComposerSessionController;
+class FileFinderDialog;
+namespace files {
+class FileFinderModel;
+}
 namespace models {
 class IModelCatalog;
 }
@@ -41,6 +45,18 @@ public:
     // invoked after a download starts so the caller can refresh the page.
     void openModelDownload(models::IModelCatalog* catalog, const std::function<void()>& onChange);
     void openCommandPalette(CommandRegistry* commands, const CommandCallbacks& callbacks);
+    // Ctrl+G "go to file": fuzzy finder over the shared FileFinderModel. Enter
+    // reports pinned=false (preview tab), Shift+Enter pinned=true.
+    void openFileFinder(files::FileFinderModel* model,
+                        const std::function<void(const QString& rootId, const QString& path,
+                                                 bool pinned)>& onChosen);
+    // Ctrl+O composer attach: the same finder styled as a workspace file picker
+    // (the TUI analog of the GUI's FilePicker). `restoreFocus` runs after a pick
+    // AND after a cancel, so the composer regains focus either way.
+    void openAttachPicker(
+        files::FileFinderModel* model,
+        const std::function<void(const QString& rootId, const QString& path)>& onPicked,
+        const std::function<void()>& restoreFocus);
     [[nodiscard]] class QuitDialog* quitDialog() const { return m_quitDialog; }
 
 private:
@@ -50,4 +66,6 @@ private:
     PaletteDialog* m_modelDiscover = nullptr;
     PaletteDialog* m_quantPicker = nullptr;
     PaletteDialog* m_commandPalette = nullptr;
+    FileFinderDialog* m_fileFinder = nullptr;
+    FileFinderDialog* m_attachPicker = nullptr;
 };

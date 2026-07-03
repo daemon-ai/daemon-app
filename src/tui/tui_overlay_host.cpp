@@ -5,6 +5,7 @@
 
 #include "command_registry.h"
 #include "composer_session_controller.h"
+#include "file_finder_dialog.h"
 #include "models/imodel_catalog.h"
 #include "tui_dialogs.h"
 #include "uimodels/variant_list_model.h"
@@ -139,6 +140,53 @@ void TuiOverlayHost::openModelDownload(models::IModelCatalog* catalog,
     }
     m_modelDiscover->setItems(items);
     m_modelDiscover->openCentered();
+}
+
+void TuiOverlayHost::openFileFinder(
+    files::FileFinderModel* model,
+    const std::function<void(const QString& rootId, const QString& path, bool pinned)>& onChosen) {
+    if (model == nullptr) {
+        return;
+    }
+    if (m_fileFinder == nullptr) {
+        // Enter previews / Shift+Enter pins: the keyboard mapping of the GUI
+        // explorer's single-click (preview) vs double-click (pinned) semantics.
+        m_fileFinder = new FileFinderDialog(
+            tr("Go to file"), tr("Enter opens a preview · Shift+Enter pins · Esc closes"), model,
+            m_parent);
+        connect(m_fileFinder, &FileFinderDialog::chosen, this, onChosen);
+    }
+    m_fileFinder->openCentered();
+}
+
+void TuiOverlayHost::openAttachPicker(
+    files::FileFinderModel* model,
+    const std::function<void(const QString& rootId, const QString& path)>& onPicked,
+    const std::function<void()>& restoreFocus) {
+    if (model == nullptr) {
+        return;
+    }
+    if (m_attachPicker == nullptr) {
+        m_attachPicker = new FileFinderDialog(tr("Attach file"),
+                                              tr("Enter attaches the selected file · Esc cancels"),
+                                              model, m_parent);
+        connect(
+            m_attachPicker, &FileFinderDialog::chosen, this,
+            [onPicked, restoreFocus](const QString& rootId, const QString& path, bool /*pinned*/) {
+                if (onPicked) {
+                    onPicked(rootId, path);
+                }
+                if (restoreFocus) {
+                    restoreFocus();
+                }
+            });
+        connect(m_attachPicker, &FileFinderDialog::dismissed, this, [restoreFocus] {
+            if (restoreFocus) {
+                restoreFocus();
+            }
+        });
+    }
+    m_attachPicker->openCentered();
 }
 
 void TuiOverlayHost::openCommandPalette(CommandRegistry* commands,
