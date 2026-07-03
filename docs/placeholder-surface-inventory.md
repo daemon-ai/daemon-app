@@ -13,6 +13,11 @@ or deferred UI honest until daemon-backed implementations land.
 - **Promote to backlog** public APIs that are useful but cannot work until a
   daemon adapter exposes more data.
 
+See also the GUI/TUI parity matrix + accepted-divergence register in
+[feature-coverage-audit.md](feature-coverage-audit.md) (post-Wave 1 state); the
+guardrail test `tests/tui/tui_parity_tests.cpp` enforces the route/exemption
+bookkeeping mechanically.
+
 ## Current Surfaces
 
 - `src/DaemonApp/StatusBar/StatusBar.qml`: Command Center, Agents, and Cron now
@@ -34,6 +39,16 @@ or deferred UI honest until daemon-backed implementations land.
 - `src/DaemonApp/Turn/turn_controller.*` and
   `src/DaemonApp/Session/session_orchestrator.*`: Scripted turns and status-stack
   todos are simulator-backed UI coverage, not daemon output.
+- `/compress`: compaction is a simulated placeholder in BOTH frontends (daemon
+  backlog item, not a UI gap); exempted with that reason in
+  `tests/tui/tui_parity_tests.cpp`.
+- Channels page (GUI `ChannelsPage.qml`, TUI `pages/hub_channels.cpp`):
+  read-only in both shells this slice - the GUI Connect button is disabled and
+  the TUI mirrors it. Reachable via Nav only (no registry/completion id yet;
+  add one in a single change for both shells).
+- Users & Access page (GUI, TUI `pages/hub_users_access.cpp`): read-only
+  WhoAmI projection in both shells pending the node access-admin API (Auth 5);
+  the `access_admin` capability gate fails closed in both.
 
 ## Backlog
 

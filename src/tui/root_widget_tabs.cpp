@@ -72,22 +72,16 @@ void RootWidget::previewSessionTab(const QString& sessionId) {
     if (m_tabModel == nullptr) {
         return;
     }
-    QString title = m_services.store->title(sessionId);
-    if (title.isEmpty()) {
-        title = rwdetail::titleForContent(m_services.store->content(sessionId));
-    }
-    m_tabModel->previewTranscript(sessionId, title);
+    m_tabModel->previewTranscript(sessionId,
+                                  rwdetail::resolveSessionTabTitle(m_services.store, sessionId));
 }
 
 void RootWidget::openSessionPinnedTab(const QString& sessionId) {
     if (m_tabModel == nullptr) {
         return;
     }
-    QString title = m_services.store->title(sessionId);
-    if (title.isEmpty()) {
-        title = rwdetail::titleForContent(m_services.store->content(sessionId));
-    }
-    m_tabModel->openTranscriptPinned(sessionId, title);
+    m_tabModel->openTranscriptPinned(sessionId,
+                                     rwdetail::resolveSessionTabTitle(m_services.store, sessionId));
 }
 
 void RootWidget::newTranscriptTab() {
@@ -213,6 +207,9 @@ void RootWidget::activatePageTab(int row) {
         m_transcript->setSearch(nullptr);
         m_transcript->setDocument(&m_pageDoc);
         m_transcript->reload();
+        // Pages are documents, not chat logs: open at the title, not pinned to
+        // the bottom (which hides the top rows of a page taller than the view).
+        m_transcript->scrollBlockIntoView(0);
         // Focus the transcript so the interactive hubs' j/k + action keys (which
         // bubble up past the read-only page view) reach the root handler.
         if (activePageKind() >= 0) {
@@ -279,4 +276,37 @@ void RootWidget::toggleExplorer() {
     // the explorer's open/closed state survives a restart (and stays in sync when
     // both shells share an org/app QSettings scope).
     QSettings().setValue(QStringLiteral("ui/showFileExplorer"), show);
+}
+
+void RootWidget::toggleDistractionFree() {
+    setDistractionFree(!m_distractionFree);
+}
+
+void RootWidget::setDistractionFree(bool on) {
+    if (m_distractionFree == on) {
+        return;
+    }
+    m_distractionFree = on;
+    // Zen mode hides the navigation chrome - the sidebar, the session-list
+    // column (search + list) and the whole right Participants/Explorer column -
+    // leaving the tab strip, transcript, composer and status footer (the pane
+    // set the GUI hides on UiSettings.distractionFree in Main.qml). Hiding the
+    // COLUMNS preserves the explorer's own open/closed state for when zen ends.
+    if (m_sidebarView != nullptr) {
+        m_sidebarView->setVisible(!on);
+    }
+    if (m_listColumn != nullptr) {
+        m_listColumn->setVisible(!on);
+    }
+    if (m_rightColumn != nullptr) {
+        m_rightColumn->setVisible(!on);
+    }
+    if (on && m_composer != nullptr) {
+        // The hidden sidebar/list may hold focus (palette entry path); the
+        // composer is the natural zen focus, and its Esc exits the mode.
+        m_composer->setFocus();
+    }
+    // Persist like toggleExplorer's "ui/showFileExplorer" so zen survives a
+    // restart (the GUI persists its UiSettings.distractionFree equivalently).
+    QSettings().setValue(QStringLiteral("ui/distractionFree"), on);
 }

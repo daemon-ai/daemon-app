@@ -6,6 +6,7 @@
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
+#include "daemon/principal_model.h"           // live refresh of the Users & Access page
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
@@ -29,6 +30,8 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
+#include "transports/ipresence_service.h"
+#include "transports/itransport_registry.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
 #include "tui_page_hub.h"
@@ -93,6 +96,16 @@ void RootWidget::wireModelBindings() {
     // model (no display-role adapter): it reads title/snippet/timestamp/agent/tags
     // directly and renders multi-line cards.
     m_listView->setModel(m_list);
+
+    // Re-resolve every open transcript tab's title on store change: the node
+    // auto-titles a session from its first user message and the roster refetch
+    // lands that title in the cache WITHOUT a content change, so the tab chip
+    // would otherwise keep its stale "New session" fallback (GUI parity:
+    // SessionStore.changed() -> _resolveTitle() in TranscriptPage.qml). The
+    // mid-turn reload guard lives in refreshTranscript(); titles are safe to
+    // refresh any time.
+    connect(m_services.store, &persistence::ISessionStore::changed, this,
+            [this] { rwdetail::refreshTranscriptTabTitles(m_tabModel, m_services.store); });
 }
 
 void RootWidget::wirePageLiveRefresh() {
@@ -117,6 +130,9 @@ void RootWidget::wirePageLiveRefresh() {
     liveRefresh(m_services.modelCatalog->installed(), TabModel::Models);
     liveRefresh(m_services.accounts->accounts(), TabModel::Accounts);
     liveRefresh(m_services.profiles->profiles(), TabModel::Profiles);
+    // The per-agent Profile tab renders the same rows; keep it live too (a
+    // profile edit from either frontend repaints an open agent tab).
+    liveRefresh(m_services.profiles->profiles(), TabModel::Profile);
     liveRefresh(m_services.roster->sessions(), TabModel::Sessions);
     liveRefresh(m_services.fleetTree->nodes(), TabModel::Fleet);
     liveRefresh(m_services.approvals->pending(), TabModel::Approvals);
@@ -133,6 +149,49 @@ void RootWidget::wirePageLiveRefresh() {
     liveRefresh(m_memGraph, TabModel::Memory);
     connect(m_memStats, &memoryui::MemoryStatsModel::changed, this,
             [this] { refreshPageIfActive(TabModel::Memory); });
+    // The Users & Access page is a read-only projection of the principal (WhoAmI);
+    // re-render it on login/logout/role change so the panel tracks the session.
+    if (m_services.principal != nullptr) {
+        connect(m_services.principal, &daemonapp::daemon::PrincipalModel::changed, this,
+                [this] { refreshPageIfActive(TabModel::UsersAccess); });
+    }
+    // The Channels page projects the transports seams, which are plain signal
+    // emitters (no row models): re-render the open page when the adapter list,
+    // the configured accounts, an account's rooms or a connection state change
+    // (GUI parity: ChannelsPage.qml's Connections re-read on the same signals).
+    if (m_services.transportRegistry != nullptr) {
+        auto* reg = m_services.transportRegistry;
+        connect(reg, &transports::ITransportRegistry::adaptersChanged, this,
+                [this] { refreshPageIfActive(TabModel::Channels); });
+        connect(reg, &transports::ITransportRegistry::instancesChanged, this,
+                [this] { refreshPageIfActive(TabModel::Channels); });
+        connect(reg, &transports::ITransportRegistry::conversationsChanged, this,
+                [this](const QString&) { refreshPageIfActive(TabModel::Channels); });
+        // The GUI fetches an account's live ConvList when its row is expanded;
+        // the TUI page renders every account expanded, so mirror that fetch by
+        // refreshing each account's rooms whenever the Channels tab becomes
+        // current (the conversationsChanged wire above repaints when it lands).
+        connect(m_tabModel, &TabModel::currentTabChanged, this, [this, reg](int tabId) {
+            const int row = m_tabModel->indexOfTabId(tabId);
+            if (row < 0 || m_tabModel->kindAt(row) != TabModel::Channels) {
+                return;
+            }
+            for (const QVariant& v : reg->instances()) {
+                reg->refreshConversations(v.toMap().value(QStringLiteral("transport")).toString());
+            }
+        });
+    }
+    if (m_services.presence != nullptr) {
+        connect(m_services.presence, &transports::IPresenceService::presenceChanged, this,
+                [this](const QString&) { refreshPageIfActive(TabModel::Channels); });
+    }
+    // The Settings page projects the daemon config + the app-pref store; re-render
+    // it whenever either seam reports a write (an edit made on the page itself, or
+    // any other surface touching the same keys).
+    connect(m_services.daemonConfig, &config::IDaemonConfig::changed, this,
+            [this] { refreshPageIfActive(TabModel::Settings); });
+    connect(m_services.settings, &settings::ISettingsStore::changed, this,
+            [this] { refreshPageIfActive(TabModel::Settings); });
 }
 
 void RootWidget::wireSearchBox() {
@@ -316,6 +375,9 @@ void RootWidget::wireTranscriptControls() {
 }
 
 void RootWidget::handleComposerCommand(const QString& command) {
+    // Parity: a command id added here must also land in
+    // tuiroutes::handledCommands() (tui_parity_routes.cpp) -
+    // tests/tui/tui_parity_tests.cpp enforces it.
     if (openManagerPage(command)) {
         return; // a "/settings" / "/models" / ... page route
     }
@@ -334,6 +396,12 @@ void RootWidget::handleComposerCommand(const QString& command) {
     }
     if (command == QStringLiteral("theme")) {
         cycleTheme();
+        return;
+    }
+    if (command == QStringLiteral("distraction")) {
+        // Zen mode (GUI: UiSettings.distractionFree = true in onCommandRequested);
+        // the TUI toggles, and a bare Esc exits (the registry's "Esc to exit").
+        toggleDistractionFree();
         return;
     }
     if (command == QStringLiteral("reasoning")) {
@@ -528,18 +596,21 @@ void RootWidget::wireComposer() {
         }
     });
 
-    // Attachment chips bind to the shared session; Ctrl+O on the composer adds a
-    // canned attachment (mock-parity with the GUI's "+" menu / drag-drop).
+    // Attachment chips bind to the shared session; Ctrl+O on the composer opens
+    // the workspace attach picker (the GUI's "+" menu -> Files flow, served by
+    // the same Fs seam as FilePicker.qml). The picked file lands as a chip via
+    // the same ComposerSessionController::addAttachment the GUI calls.
     m_attachments->setController(m_composerSession);
-    connect(m_composer, &SubmitInputBox::attachRequested, m_composerSession, [this] {
-        const int n = m_composerSession->attachments()->count();
-        m_composerSession->addAttachment(QStringLiteral("attachment-%1.txt").arg(n + 1),
-                                         QStringLiteral("file"));
-    });
+    connect(m_composer, &SubmitInputBox::attachRequested, this, &RootWidget::openAttachmentPicker);
 
     // Esc on an empty composer hands focus back to the session list, where a
     // further Esc bubbles up to the quit prompt (context-sensitive Esc, level 2).
+    // In distraction-free mode the list is hidden, so Esc exits zen instead.
     connect(m_composer, &SubmitInputBox::leaveRequested, this, [this] {
+        if (m_distractionFree) {
+            setDistractionFree(false);
+            return;
+        }
         if (m_listView != nullptr) {
             m_listView->setFocus();
         }

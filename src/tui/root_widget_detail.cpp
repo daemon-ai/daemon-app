@@ -3,12 +3,14 @@
 
 #include "root_widget_detail.h"
 
+#include "persistence/isession_store.h"
 #include "tab_model.h"
 
 #include <cstdio>
 #include <QLatin1Char>
 #include <QObject>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QStandardPaths>
 #include <QStringList>
 
@@ -56,7 +58,36 @@ QString titleForContent(const QString& markdown) {
     return first.left(24);
 }
 
+QString resolveSessionTabTitle(const persistence::ISessionStore* store, const QString& sessionId) {
+    QString title = store->title(sessionId);
+    if (title.isEmpty()) {
+        title = titleForContent(store->content(sessionId));
+    }
+    return title;
+}
+
+void refreshTranscriptTabTitles(TabModel* tabs, const persistence::ISessionStore* store) {
+    if (tabs == nullptr || store == nullptr) {
+        return;
+    }
+    for (int row = 0; row < tabs->count(); ++row) {
+        if (tabs->kindAt(row) != TabModel::Transcript) {
+            continue;
+        }
+        const QString sessionId = tabs->sessionIdAt(row);
+        if (sessionId.isEmpty()) {
+            continue;
+        }
+        // setTitle no-ops (no dataChanged) when the title is already current.
+        tabs->setTitle(row, resolveSessionTabTitle(store, sessionId));
+    }
+}
+
 QString pageMarkdown(int kind) {
+    // Safety-net fallback only: the composed shell always routes Settings through
+    // TuiPageHub::buildSettingsMarkdown (the interactive, seam-backed page), so
+    // this static help text is reached only when the hub is absent - where the
+    // page really is read-only and the key list below is all there is.
     if (kind == TabModel::Settings) {
         return QObject::tr(
             "# Settings\n\n"
@@ -78,6 +109,14 @@ QString pageMarkdown(int kind) {
             "composer\n");
     }
     return {};
+}
+
+QString attachmentKindForName(const QString& name) {
+    // Keep in sync with the GUI's drop-path detection (Composer.qml DropArea:
+    // /\.(png|jpe?g|gif|webp|bmp|svg)$/ over the lowercased name).
+    static const QRegularExpression kImageSuffix(QStringLiteral("\\.(png|jpe?g|gif|webp|bmp|svg)$"),
+                                                 QRegularExpression::CaseInsensitiveOption);
+    return kImageSuffix.match(name).hasMatch() ? QStringLiteral("image") : QStringLiteral("file");
 }
 
 } // namespace rwdetail

@@ -8,8 +8,11 @@
 #include "command_registry.h"
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
+#include "daemon/principal_model.h"           // capability provider for the command palette
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
+#include "dialogs/first_run_dialog.h"
 #include "display_role_adapter.h"
+#include "file_finder_model.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
 #include "memory/imemory_service.h"
@@ -23,6 +26,7 @@
 #include "session_controller.h"
 #include "session_orchestrator.h"
 #include "sessions_list_model.h"
+#include "settings_editor.h"
 #include "sidebar_model.h"
 #include "status_bar_model.h"
 #include "tab_model.h"
@@ -114,6 +118,19 @@ RootWidget::RootWidget()
     // The shared command-palette catalog (same class the GUI binds as `Commands`).
     m_commands = new CommandRegistry(this);
 
+    // Hide capability-gated command-palette entries (e.g. Users & Access) from principals that lack
+    // them, and re-filter whenever the principal changes (login/logout/role change). Identical to
+    // the GUI wiring in Application::registerContext; fail-closed until a principal authenticates.
+    if (m_services.principal != nullptr) {
+        auto* principal = m_services.principal;
+        auto applyCaps = [this, principal] {
+            m_commands->setCapabilityProvider(
+                [principal](const QString& cap) { return principal->hasCapability(cap); });
+        };
+        applyCaps();
+        connect(principal, &daemonapp::daemon::PrincipalModel::changed, m_commands, applyCaps);
+    }
+
     // Transcript exporter for the list "export" action + /save.
     m_exporter = new TranscriptExporter(this);
     m_overlays = std::make_unique<TuiOverlayHost>(this);
@@ -164,6 +181,11 @@ RootWidget::RootWidget()
 
     m_fileTree = new files::FsExplorerModel(this);
     m_fileTree->setService(m_services.fs);
+    // The fuzzy finder index over the same fs seam (the model FileFinder.qml
+    // instantiates). setService kicks the initial workspace walk, matching the
+    // GUI's always-instantiated finder; Ctrl+G and Ctrl+O reuse one index.
+    m_fileFinder = new files::FileFinderModel(this);
+    m_fileFinder->setService(m_services.fs);
     m_fileTabs = std::make_unique<TuiFileTabController>(m_services.fs, m_tabModel, this);
 
     // The right sidebar's Participants section: the same shared model the GUI binds.
@@ -189,27 +211,48 @@ RootWidget::RootWidget()
     m_memTimeline->setService(m_services.memory);
     m_memGraph->setService(m_services.memory);
 
+    // Designated initializers (declaration order enforced at compile time), so a
+    // future Dependencies append can never silently misalign a positional list.
     m_pageHub = std::make_unique<TuiPageHub>(TuiPageHub::Dependencies{
-        m_tabModel,
-        m_services.daemonConfig,
-        m_services.connection,
-        m_services.modelCatalog,
-        m_services.accounts,
-        m_services.profiles,
-        m_services.roster,
-        m_services.fleetTree,
-        m_services.approvals,
-        m_services.dashboard,
-        m_services.routing,
-        m_services.cron,
-        m_services.daemonNet,
-        m_services.memory,
-        m_memList,
-        m_memStats,
-        m_memTimeline,
-        m_memGraph,
-        m_services.settings,
+        .tabModel = m_tabModel,
+        .daemonConfig = m_services.daemonConfig,
+        .connection = m_services.connection,
+        .modelCatalog = m_services.modelCatalog,
+        .accounts = m_services.accounts,
+        .profiles = m_services.profiles,
+        .roster = m_services.roster,
+        .fleetTree = m_services.fleetTree,
+        .approvals = m_services.approvals,
+        .dashboard = m_services.dashboard,
+        .routing = m_services.routing,
+        .cron = m_services.cron,
+        .daemonNet = m_services.daemonNet,
+        .memory = m_services.memory,
+        .memList = m_memList,
+        .memStats = m_memStats,
+        .memTimeline = m_memTimeline,
+        .memGraph = m_memGraph,
+        .settings = m_services.settings,
+        .principal = m_services.principal,
+        .transportRegistry = m_services.transportRegistry,
+        .presence = m_services.presence,
     });
+
+    // Settings-page dialog edits (theme/language pickers, text prompts, zen):
+    // the hub flips plain toggles itself; rows needing a dialog parent or a live
+    // re-apply route here with the RootWidget hooks.
+    m_settingsEditor =
+        std::make_unique<TuiSettingsEditor>(m_pageHub.get(), this,
+                                            TuiSettingsEditor::Hooks{
+                                                [this](theme::ThemeName name) { applyTheme(name); },
+                                                [this] { toggleDistractionFree(); },
+                                                [this] { refreshActivePage(); },
+                                                [this] {
+                                                    if (m_transcript != nullptr) {
+                                                        m_transcript->setFocus();
+                                                    }
+                                                },
+                                            });
 
     // Wire the app-level navigation seam (constructed-but-unused until now): an
     // open() from anywhere (slash, palette, a future cog menu) raises the matching
@@ -332,6 +375,7 @@ void RootWidget::buildUi() {
                               m_fileTree, m_participants, &m_pageDoc);
     m_window = shell.window;
     m_sidebarView = shell.sidebarView;
+    m_listColumn = shell.listColumn;
     m_search = shell.search;
     m_listView = shell.listView;
     m_tabStrip = shell.tabStrip;
@@ -386,6 +430,11 @@ void RootWidget::buildUi() {
         m_fileTreeView->setVisible(showExplorer);
         if (m_participantsView != nullptr)
             m_participantsView->setVisible(showExplorer);
+    }
+    // Restore distraction-free mode the same way (the GUI restores its persisted
+    // UiSettings.distractionFree at startup too).
+    if (QSettings().value(QStringLiteral("ui/distractionFree"), false).toBool()) {
+        setDistractionFree(true);
     }
     connect(m_fileTreeView, &FileTreeView::fileChosen, this,
             [this](const QString& rootId, const QString& path, bool pinned) {

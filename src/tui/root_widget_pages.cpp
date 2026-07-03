@@ -7,6 +7,8 @@
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
+#include "dialogs/add_account_flow.h"
+#include "dialogs/profile_editor_dialog.h"
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
@@ -125,6 +127,10 @@ void RootWidget::refreshPageIfActive(int kind) {
     m_pageDoc.loadMarkdown(pageMarkdownForKind(kind));
     if (m_transcript != nullptr) {
         m_transcript->reload();
+        // Keep the ▸ selection marker on screen: hub pages taller than the
+        // viewport would otherwise re-render pinned to the bottom while j/k
+        // walk rows scrolled out of view. No-op for marker-less pages.
+        m_transcript->scrollLineWithTextIntoView(QStringLiteral("▸"));
     }
 }
 
@@ -324,6 +330,45 @@ void RootWidget::openModelDownload() {
     m_overlays->openModelDownload(m_services.modelCatalog, [this] { refreshActivePage(); });
 }
 
+void RootWidget::openAddAccount() {
+    if (m_addAccounts == nullptr) {
+        m_addAccounts = new AddAccountFlow(m_services.accounts, this);
+        connect(m_addAccounts, &AddAccountFlow::changed, this, [this] { refreshActivePage(); });
+        // When the wizard's dialogs go away, return focus to the page doc so
+        // j/k + action keys keep working without a click.
+        connect(m_addAccounts, &AddAccountFlow::finished, this, [this] {
+            if (m_transcript != nullptr && activePageKind() >= 0) {
+                m_transcript->setFocus();
+            }
+        });
+    }
+    m_addAccounts->open();
+}
+
+void RootWidget::openProfileEditor(const QString& profileId) {
+    if (m_services.profiles == nullptr || profileId.isEmpty()) {
+        return;
+    }
+    auto* dlg =
+        new ProfileEditorDialog(m_services.profiles, m_services.providerCatalog, profileId, this);
+    // The editor's local "Discover More Models" row routes to the shared
+    // download flow (the GUI editor's Nav.open("models","discover") analog).
+    connect(dlg, &ProfileEditorDialog::modelDiscoverRequested, this,
+            &RootWidget::openModelDownload);
+    // Repaint the underlying page immediately on save (the row-model churn
+    // refresh also covers the async daemon reflection).
+    connect(dlg, &ProfileEditorDialog::saved, this, [this](const QString&) {
+        refreshActivePage();
+        refreshPageIfActive(TabModel::Profile);
+    });
+    // Tui does not restore focus for us: hand it back to the page view.
+    connect(dlg, &QObject::destroyed, this, [this] {
+        if (m_active == nullptr && m_transcript != nullptr) {
+            m_transcript->setFocus();
+        }
+    });
+}
+
 void RootWidget::openCommandPalette() {
     if (m_overlays == nullptr) {
         return;
@@ -346,6 +391,9 @@ void RootWidget::openCommandPalette() {
             m_composerSession->toggleFastMode();
         } else if (id == QStringLiteral("verbose")) {
             m_composerSession->toggleVerbose();
+        } else if (id == QStringLiteral("distraction")) {
+            // Window-level like theme: works with a page tab active too.
+            toggleDistractionFree();
         } else if (m_active != nullptr) {
             m_composerSession->invokeCommand(id);
         }
@@ -355,6 +403,45 @@ void RootWidget::openCommandPalette() {
             m_composer->setFocus();
     };
     m_overlays->openCommandPalette(m_commands, callbacks);
+}
+
+void RootWidget::openFileFinder() {
+    if (m_overlays == nullptr || m_fileFinder == nullptr || m_tabModel == nullptr) {
+        return;
+    }
+    m_overlays->openFileFinder(m_fileFinder,
+                               [this](const QString& rootId, const QString& path, bool pinned) {
+                                   // Enter -> preview (transient, VSCode-style), Shift+Enter ->
+                                   // pinned: the explorer's single- vs double-click semantics on
+                                   // keys. An empty title lets TabModel derive the basename, like
+                                   // Session.qml openFile.
+                                   if (pinned) {
+                                       m_tabModel->openFilePinned(rootId, path, QString());
+                                   } else {
+                                       m_tabModel->previewFile(rootId, path, QString());
+                                   }
+                               });
+}
+
+void RootWidget::openAttachmentPicker() {
+    if (m_overlays == nullptr || m_fileFinder == nullptr) {
+        return;
+    }
+    m_overlays->openAttachPicker(
+        m_fileFinder,
+        [this](const QString& /*rootId*/, const QString& path) {
+            // GUI parity (Composer.qml workspaceFilePicker.onPicked): the chip
+            // carries the root-relative path; buildRefs() renders it as a
+            // @file:/@image: ref on submit. Kind via the GUI's drop heuristic.
+            m_composerSession->addAttachment(path, rwdetail::attachmentKindForName(path));
+        },
+        [this] {
+            // The picker was invoked from the composer; return focus there on
+            // both accept and cancel.
+            if (m_composer != nullptr) {
+                m_composer->setFocus();
+            }
+        });
 }
 
 void RootWidget::repaintForTheme() {
@@ -381,13 +468,16 @@ void RootWidget::repaintForTheme() {
 }
 
 void RootWidget::cycleTheme() {
-    using theme::ThemeName;
     // Advance through the four themes in a fixed order.
-    const ThemeName next = nextTheme(tpal::activeTheme());
+    applyTheme(nextTheme(tpal::activeTheme()));
+}
 
-    tpal::setActiveTheme(next);
+void RootWidget::applyTheme(theme::ThemeName name) {
+    using theme::ThemeName;
+
+    tpal::setActiveTheme(name);
     // Recolor stock widgets (window/dialog/lists/inputs) via the palette...
-    setPalette(daemonPalette(next));
+    setPalette(daemonPalette(name));
     // Keep the accent-tinted text caret in sync with the new theme.
     if (terminal() != nullptr) {
         const Tui::ZColor accent = tpal::accent();
@@ -396,11 +486,11 @@ void RootWidget::cycleTheme() {
     repaintForTheme();
     // The editor's syntax colors are baked by KSyntaxHighlighting per the theme;
     // re-pick the light/dark definition theme for every open file controller.
-    const bool dark = next != ThemeName::Light && next != ThemeName::Sepia;
+    const bool dark = name != ThemeName::Light && name != ThemeName::Sepia;
     if (m_fileTabs != nullptr)
         m_fileTabs->setDarkTheme(dark);
 
     // Persist to the GUI-shared key so both front ends honor the same choice.
     QSettings settings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"));
-    settings.setValue(QStringLiteral("ui/theme"), theme::ThemePalette::toString(next));
+    settings.setValue(QStringLiteral("ui/theme"), theme::ThemePalette::toString(name));
 }

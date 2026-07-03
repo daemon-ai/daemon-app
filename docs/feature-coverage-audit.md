@@ -2,6 +2,88 @@
 
 Status: historical pre-integration snapshot. Several Category A items have since
 landed in `daemon-app`; treat this as backlog/context, not exact current state.
+For the CURRENT GUI/TUI parity state see the next section (Wave 1, 2026-07); the
+hermes comparison below it is unchanged history.
+
+## GUI/TUI parity state (post-Wave 1)
+
+The Wave 1 parity remediation closed every TabModel kind and every real command
+route in the TUI. The guardrail test `tests/tui/tui_parity_tests.cpp` enforces
+the state below: it fails when a TabModel kind or CommandRegistry id gains a GUI
+route without a TUI route (or vice versa), and equally when a stale exemption
+lingers after the gap closes.
+
+### Parity policy
+
+- Logic lives in shared C++ models under `src/core/` + `src/DaemonApp/` -
+  "build the model once, render twice". A feature is complete only when both
+  renderers (QML GUI, Tui Widgets TUI) bind the same model.
+- Every new `TabModel::Kind`, every new `CommandRegistry` entry and every
+  first-run phase ships with BOTH renderers, or with an explicit, reasoned
+  exemption in `tests/tui/tui_parity_tests.cpp`. The parity test is the
+  mechanical register of accepted divergences; this document is the narrative
+  one.
+
+### Parity matrix (TabModel kinds / major surfaces)
+
+| Surface | GUI | TUI | Notes |
+| --- | --- | --- | --- |
+| Transcript / chat loop | yes | yes | shared ingest + view models |
+| File editor tabs | yes | yes | preview/pin semantics shared |
+| Settings | yes | yes (interactive) | seam-backed rows editable in both; see divergences |
+| Models | yes | yes | picker, discover -> quant download in both |
+| Accounts | yes | yes | add-account wizard ('a'), re-auth pending guard mirrored |
+| Profiles | yes | yes | profile editor ('e'), clone, new agent ('a') |
+| Profile (per-agent tab) | yes | yes | editable via 'e' in both |
+| Fleet / Sessions / Dashboard | yes | yes | read-only projections |
+| Approvals | yes | yes | approve/deny keys |
+| Routing / Cron | yes | yes | text projections of the same stores |
+| Memory | yes | yes | list/stats/timeline shared; graph is adjacency text in TUI |
+| Channels | yes | yes | read-only in BOTH this slice (GUI Connect disabled) |
+| Users & Access | yes | yes | read-only in BOTH pending the node access-admin API (Auth 5); capability-gated (`access_admin`) fail-closed in both |
+| First-run gate | yes | yes | one FirstRunModel: key-validation gate + agent naming shared |
+| Command palette | yes | yes | one CommandRegistry, capability-filtered in both |
+| File finder / attachments | yes | yes | TUI Ctrl+G finder + Ctrl+O attach picker over the shared FileFinderModel |
+
+### Accepted-divergence register
+
+Rendering-medium divergences (permanent, inherent to a terminal):
+
+- Force-directed graph views (memory graph, routing topology) render as
+  adjacency/text projections in the TUI.
+- Image / math / mermaid rich rendering: TUI shows text placeholders
+  (terminal-graphics protocols are out of scope).
+- Embedded terminal panel, drag-drop attachments, OS tray, native file dialogs:
+  N/A in a terminal shell (the finder-backed pickers replace the dialogs).
+
+Command exemptions (the only two left in `tui_parity_tests.cpp`):
+
+- `usage` - deliberate no-op in both shells: usage/context is live in both
+  status-bar footers.
+- `compress` - compaction is a simulated placeholder in BOTH frontends (daemon
+  backlog item, not a UI gap).
+
+Per-surface divergences (accepted this wave):
+
+- Accounts: the TUI wizard has no label prompt step - an empty label defaults
+  to the provider name, exactly like leaving the GUI field blank. The
+  OAuth-failure reason dialog is a small TUI-only addition. Account rename
+  stays GUI-inline-only.
+- Profiles: the engine field is read-only in the editor in BOTH shells (a
+  create-time choice; picked via New Agent). PRO-7 export/import and PRO-8
+  history/revert remain GUI-only (file pickers / revision panel). Per-profile
+  credential set-key routes through the shared accounts flow.
+- Settings: GUI-rendering-only prefs are not mirrored in the TUI (font
+  family/size, center text, raw markdown, pane toggles, user rail).
+  Test-notification and re-run-first-run actions are deferred. The
+  ConnectionPicker connect flow stays first-run/GUI. Archived chats and
+  About/updates are unchanged per the placeholder-surface-inventory policy.
+- Channels: read-only in both shells this slice (the GUI Connect button is
+  disabled too). Reachable only via Nav in both shells - there is no registry
+  id yet. Follow-up: add a shared registry/completion id in ONE change so both
+  shells gain the palette/slash route together.
+- Users & Access: read-only projection of the authenticated principal (WhoAmI)
+  pending the node access-admin API (Auth 5); mirrors the GUI page.
 
 This audit compares the daemon-app GUI (Qt/QML) and TUI (Tui Widgets) against the
 reference product, hermes-agent's desktop (Electron + React) and TUI (Ink), to decide
@@ -127,7 +209,9 @@ Port the following Category-A items, at GUI/TUI parity where it makes sense:
 Explicitly excluded from this pass:
 
 - Branch / fork at a message (and therefore the `/branch` slash command).
-- Reachable settings / help entry point in the TUI.
+- Reachable settings / help entry point in the TUI. (Since closed by Wave 1:
+  the TUI Settings page is reachable via /settings and interactive - see the
+  parity matrix above.)
 
 ## Seam notes
 

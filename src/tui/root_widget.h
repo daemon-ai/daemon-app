@@ -40,6 +40,7 @@
 #include "status_bar_view.h"
 #include "submit_input_box.h"
 #include "tab_strip_view.h"
+#include "theme/theme_palette.h"
 #include "transcript_view.h"
 #include "tree_list_view.h"
 #include "tui_dialogs.h"
@@ -68,8 +69,9 @@ namespace fs {
 class IFsService;
 }
 namespace files {
+class FileFinderModel;
 class FsExplorerModel;
-}
+} // namespace files
 namespace participants {
 class ParticipantsModel;
 }
@@ -86,6 +88,7 @@ class MemoryTimelineModel;
 class MemoryGraphModel;
 } // namespace memoryui
 
+class AddAccountFlow;
 class SidebarModel;
 class SessionsListModel;
 class SessionController;
@@ -101,6 +104,7 @@ class TabModel;
 class TuiFileTabController;
 class TuiOverlayHost;
 class TuiPageHub;
+class TuiSettingsEditor;
 class TabSessionManager;
 
 // Per-transcript-tab backend state. Each transcript tab owns an independent
@@ -171,9 +175,9 @@ private:
     [[nodiscard]] QString pageMarkdownForKind(int kind) const;
 
     // --- Interactive manager-hub pages ---------------------------------------
-    // The kind of the active page tab if it is an interactive manager hub (Models /
-    // Accounts / ... ), or -1 (a transcript tab, the Settings/Dashboard read-only
-    // pages, or no tab). Drives whether page-action keys are live.
+    // The kind of the active page tab if it is an interactive manager hub
+    // (Settings / Models / Accounts / ...), or -1 (a transcript tab, the
+    // read-only Dashboard, or no tab). Drives whether page-action keys are live.
     [[nodiscard]] int activePageKind() const;
     // The actionable rows for an interactive hub kind (the primary list the keys
     // operate on: installed models, accounts, sessions, ...). Empty for read-only.
@@ -205,14 +209,32 @@ private:
     void openModelPicker();
     // Local model track: open the discover -> quant download flow ('d' on the Models page).
     void openModelDownload();
+    // Accounts page: open the add-account wizard ('a'), the TUI analog of the
+    // GUI AddAccountWizard (provider pick -> credentials over the shared seam).
+    void openAddAccount();
+    // Open the interactive profile editor ('e' on the Profiles page's selected
+    // row / on a per-agent Profile tab): the GUI ProfileEditor's field set over
+    // the same IProfileStore save path.
+    void openProfileEditor(const QString& profileId);
     // Open the command palette (Ctrl+P): a filterable list of nav / theme / mode /
     // slash actions, backed by the shared CommandRegistry, routed to existing
     // handlers on activation.
     void openCommandPalette();
+    // Open the fuzzy "go to file" finder (Ctrl+G) over the shared
+    // FileFinderModel; Enter previews the chosen file tab, Shift+Enter pins it
+    // (the GUI explorer's single- vs double-click mapped to keys).
+    void openFileFinder();
+    // Open the composer's workspace attachment picker (Ctrl+O): the same finder
+    // overlay; the picked root-relative path becomes an attachment chip (the
+    // GUI's "+" menu -> Files flow over FilePicker).
+    void openAttachmentPicker();
     // Advance Light -> Dark -> Sepia -> Midnight, recolor the whole shell live
     // (stock palette + every custom-painted view), and persist the choice so the
     // GUI and TUI stay in sync.
     void cycleTheme();
+    // Switch to a specific theme (the Settings-page picker path): recolor live
+    // exactly like cycleTheme and persist to the shared ui/theme key.
+    void applyTheme(theme::ThemeName name);
 
     // Live assistant-turn streaming for a given session: route its TurnController's
     // daemon-shaped events through that session's ingest so its document grows real
@@ -249,6 +271,13 @@ private:
     // Toggle the right-side file Explorer column (Ctrl+E / palette "files"), and
     // persist the choice to the shared "ui/showFileExplorer" setting.
     void toggleExplorer();
+    // Distraction-free ("zen") mode: hide the sidebar, the session-list column
+    // (search box + list) and the right Participants/Explorer column, leaving
+    // the tab strip + transcript + composer + status footer. Routed from the
+    // "distraction" command (slash + palette); a bare Esc exits. The GUI analog
+    // is UiSettings.distractionFree (TranscriptPage onCommandRequested).
+    void toggleDistractionFree();
+    void setDistractionFree(bool on);
     // Make the tab with `tabId` the active one: bind the views to its session (or
     // to the static page document for page tabs) and refresh.
     void activateTab(int tabId);
@@ -295,6 +324,7 @@ private:
     bool handleTabShortcuts(Tui::ZKeyEvent* event);          // Ctrl+T/W/F
     bool handleSidebarAgentShortcuts(Tui::ZKeyEvent* event); // p/m on a fleet row
     bool handleTabNavigation(Tui::ZKeyEvent* event);         // Ctrl+Tab, Alt+1..9
+    bool handleFinderShortcut(Tui::ZKeyEvent* event);        // Ctrl+G bubble
     bool handleExplorerToggle(Tui::ZKeyEvent* event);        // Ctrl+E bubble
     bool handleEscapeQuit(Tui::ZKeyEvent* event);            // bare Esc -> quit
 
@@ -347,9 +377,14 @@ private:
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;
     Tui::ZWindow* m_window = nullptr;
     TreeListView* m_sidebarView = nullptr;
+    // The middle column wrapping the search box + session list; hidden as one
+    // unit by distraction-free mode.
+    Tui::ZWidget* m_listColumn = nullptr;
     // One-line search field above the session list (filters via setSearch).
     SearchInputBox* m_search = nullptr;
     SessionListView* m_listView = nullptr;
+    // Distraction-free ("zen") mode state (see setDistractionFree).
+    bool m_distractionFree = false;
     TranscriptView* m_transcript = nullptr;
     // In-transcript find bar (one-line field + match counter), inserted between the
     // tab strip and the transcript; hidden until Ctrl+F / /find. m_searchActive
@@ -373,6 +408,9 @@ private:
     // same shared C++ view-models the GUI binds.
     files::FsExplorerModel* m_fileTree = nullptr;
     FileTreeView* m_fileTreeView = nullptr;
+    // Fuzzy workspace file index (the GUI FileFinder's model, shared verbatim);
+    // one instance backs both the Ctrl+G finder and the Ctrl+O attach picker.
+    files::FileFinderModel* m_fileFinder = nullptr;
     // Right-sidebar Participants section (above the Explorer, toggled as one column).
     participants::ParticipantsModel* m_participants = nullptr;
     Tui::ZWidget* m_rightColumn = nullptr;
@@ -393,6 +431,8 @@ private:
 
     // Filterable overlays and modal host (quit/model picker/command palette).
     std::unique_ptr<TuiOverlayHost> m_overlays;
+    // Accounts add-wizard flow (lazily created; parented to this widget).
+    AddAccountFlow* m_addAccounts = nullptr;
     CommandRegistry* m_commands = nullptr;
     // Transcript exporter for the /save + list "export" action (writes JSON).
     TranscriptExporter* m_exporter = nullptr;
@@ -409,6 +449,9 @@ private:
 
     // Manager-page projection + keyboard actions for seam-backed hub tabs.
     std::unique_ptr<TuiPageHub> m_pageHub;
+    // Settings-page dialog edits (list picks / text prompts / live re-apply);
+    // in-place toggles stay inside the hub.
+    std::unique_ptr<TuiSettingsEditor> m_settingsEditor;
 
     // Static document backing non-transcript page tabs (e.g. Settings): the
     // transcript view points here while a page tab is active.

@@ -10,8 +10,9 @@
 #include <Tui/ZListView.h>
 
 // A one-line filter input that drives a sibling result list: Up/Down move the
-// list selection, Enter activates, Esc cancels; everything else edits the text.
-// (The list never takes focus, so typing always lands in the filter.)
+// list selection, Enter activates (Shift+Enter activates the alternate way),
+// Esc cancels; everything else edits the text. (The list never takes focus, so
+// typing always lands in the filter.)
 class PaletteInput : public Tui::ZInputBox {
     Q_OBJECT
 
@@ -22,6 +23,8 @@ signals:
     void moveUp();
     void moveDown();
     void accepted();
+    // Shift+Enter: the alternate accept (e.g. the file finder's pinned open).
+    void acceptedAlt();
     void canceled();
 
 protected:
@@ -31,7 +34,8 @@ protected:
 // A reusable, centered, filterable overlay: a filter field above a scrollable
 // result list. Backs both the TUI model picker and the command palette. The owner
 // supplies entries {id,title,hint}; activation (Enter / list enterPressed) emits
-// activated(id) and hides the dialog. Esc hides without activating.
+// activated(id) and hides the dialog. Esc hides without activating and emits
+// canceled(), so a multi-step flow can abort cleanly.
 class PaletteDialog : public Tui::ZDialog {
     Q_OBJECT
 
@@ -51,6 +55,8 @@ public:
 
 signals:
     void activated(const QString& id);
+    // Esc closed the palette without a pick.
+    void canceled();
 
 private:
     void rebuild();       // apply the filter text -> visible list rows

@@ -41,6 +41,12 @@ public:
     // jump holds. No-op for an out-of-range / non-rendered (tombstoned) block.
     void scrollBlockIntoView(int blockIndex);
 
+    // Scroll so the first rendered row containing `needle` is visible (unpinning
+    // stick-to-bottom); no-op when absent. The interactive hub pages use it to
+    // keep the ▸ selection marker on screen while j/k walk a page taller than
+    // the viewport.
+    void scrollLineWithTextIntoView(const QString& needle);
+
     // Rebuild the cached render lines from the document at the current width and
     // repaint. Keeps the view pinned to the bottom while streaming (re-pins on
     // every reload unless the user has scrolled up).

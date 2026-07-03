@@ -22,6 +22,7 @@
 #include "session_controller.h"
 #include "session_orchestrator.h"
 #include "sessions_list_model.h"
+#include "settings_editor.h"
 #include "sidebar_model.h"
 #include "status_bar_model.h"
 #include "tab_model.h"
@@ -89,6 +90,9 @@ void RootWidget::keyEvent(Tui::ZKeyEvent* event) {
     // that bubble up to the root (the transcript shows the page doc but only
     // consumes its scroll keys) drive the page's seam via j/k + action keys.
     if (handlePageActionKey(event)) {
+        return;
+    }
+    if (handleFinderShortcut(event)) {
         return;
     }
     if (handleExplorerToggle(event)) {
@@ -190,6 +194,25 @@ bool RootWidget::handleTabNavigation(Tui::ZKeyEvent* event) {
     return false;
 }
 
+bool RootWidget::handleFinderShortcut(Tui::ZKeyEvent* event) {
+    // Ctrl+G, when it bubbles up unconsumed, opens the fuzzy "go to file"
+    // finder. Bubble-path (not an ApplicationShortcut) for the same reason as
+    // Ctrl+E: the composer's reverse-i-search consumes Ctrl+G as its readline
+    // abort while active, and must keep winning. Ctrl+P (the binding the GUI
+    // explorer advertises) is the TUI command palette, so the finder takes the
+    // adjacent "go to" chord. Tui delivers Ctrl+letter as a char event, so
+    // match the text as well as the key.
+    const bool finderKey = (event->modifiers() & Qt::ControlModifier) &&
+                           (event->key() == Qt::Key_G ||
+                            event->text().compare(QStringLiteral("g"), Qt::CaseInsensitive) == 0);
+    if (finderKey) {
+        openFileFinder();
+        event->accept();
+        return true;
+    }
+    return false;
+}
+
 bool RootWidget::handleExplorerToggle(Tui::ZKeyEvent* event) {
     // Ctrl+E, when it bubbles up unconsumed (i.e. the composer/list did not claim
     // it for end-of-line / export), toggles the file Explorer. Tui delivers
@@ -212,7 +235,13 @@ bool RootWidget::handleEscapeQuit(Tui::ZKeyEvent* event) {
     // opens the quit confirmation. The composer consumes Esc itself; the quit
     // dialog consumes it while open, so this only fires from the panes.
     if (event->key() == Qt::Key_Escape && event->modifiers() == Qt::NoModifier) {
-        promptQuit();
+        // Distraction-free mode consumes the bare Esc first ("Esc to exit");
+        // the quit prompt stays one further Esc away.
+        if (m_distractionFree) {
+            setDistractionFree(false);
+        } else {
+            promptQuit();
+        }
         event->accept();
         return true;
     }
@@ -251,11 +280,15 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
 void RootWidget::routeWheel(MouseTerminal::MouseAction action, QPoint termPos) {
     using MA = MouseTerminal::MouseAction;
     QPoint local;
-    const auto hit = [&](Tui::ZWidget* w) { return hitTest(w, termPos, local); };
+    // Visibility-guarded like paneAt: a wheel never scrolls a pane hidden by
+    // distraction-free mode / a File tab.
+    const auto hit = [&](Tui::ZWidget* w) {
+        return w != nullptr && w->isVisible() && hitTest(w, termPos, local);
+    };
     const int delta = (action == MA::WheelUp) ? -3 : 3;
-    if (m_editorView != nullptr && m_editorView->isVisible() && hit(m_editorView)) {
+    if (hit(m_editorView)) {
         m_editorView->scrollByLines(delta);
-    } else if (m_fileTreeView != nullptr && m_fileTreeView->isVisible() && hit(m_fileTreeView)) {
+    } else if (hit(m_fileTreeView)) {
         m_fileTreeView->scrollByLines(delta);
     } else if (hit(m_transcript)) {
         m_transcript->scrollByLines(delta);
@@ -269,7 +302,11 @@ void RootWidget::routeWheel(MouseTerminal::MouseAction action, QPoint termPos) {
 RootWidget::ClickPane RootWidget::paneAt(QPoint termPos, QPoint& local) {
     // Primary-button press: the first pane (in priority order) under the cursor.
     // The queue / attachments strips are only hit when they have non-zero height.
-    const auto hit = [&](Tui::ZWidget* w) { return hitTest(w, termPos, local); };
+    // The left panes are visibility-guarded so a click never routes to a column
+    // hidden by distraction-free mode (the reflowed transcript owns that area).
+    const auto hit = [&](Tui::ZWidget* w) {
+        return w != nullptr && w->isVisible() && hitTest(w, termPos, local);
+    };
     if (hit(m_sidebarView)) {
         return ClickPane::Sidebar;
     }
@@ -385,10 +422,27 @@ void RootWidget::routeClick(QPoint termPos, Qt::KeyboardModifiers modifiers) {
 bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
     const int kind = activePageKind();
     if (kind < 0 || m_pageHub == nullptr) {
+        // The per-agent Profile tab is not an interactive hub (no action rows),
+        // but 'e' on it opens the profile editor for the bound agent.
+        if (m_active == nullptr && m_tabModel != nullptr && m_pageHub != nullptr &&
+            event->modifiers() == Qt::NoModifier && event->text() == QStringLiteral("e")) {
+            const int idx = m_tabModel->currentIndex();
+            if (idx >= 0 && m_tabModel->kindAt(idx) == TabModel::Profile) {
+                openProfileEditor(m_tabModel->agentRefAt(idx));
+                event->accept();
+                return true;
+            }
+        }
         return false;
     }
     if (m_pageHub->handlePageActionKey(kind, event)) {
         refreshActivePage();
+        return true;
+    }
+    // Settings rows the hub declined (choice/text/zen): open the matching
+    // picker / prompt / live toggle via the settings editor.
+    if (kind == TabModel::Settings && m_settingsEditor != nullptr &&
+        m_settingsEditor->handleKey(event)) {
         return true;
     }
     // Local model track: 'd' on the Models page opens the discover -> quant download flow.
@@ -397,6 +451,36 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         openModelDownload();
         event->accept();
         return true;
+    }
+    // Accounts: 'a' opens the add-account wizard (provider pick -> credentials),
+    // the GUI "Add account" button analog.
+    if (kind == TabModel::Accounts && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("a")) {
+        openAddAccount();
+        event->accept();
+        return true;
+    }
+    if (kind == TabModel::Profiles && event->modifiers() == Qt::NoModifier) {
+        // 'e' opens the interactive profile editor for the selected row.
+        if (event->text() == QStringLiteral("e")) {
+            const QList<QVariantMap> rows = pageActionRows(kind);
+            if (!rows.isEmpty()) {
+                const int sel =
+                    qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
+                openProfileEditor(rows.at(sel).value(QStringLiteral("id")).toString());
+            }
+            event->accept();
+            return true;
+        }
+        // 'a' mints a NEW agent (name + engine list: daemon-core / ACP catalog)
+        // over the shared create path - the sidebar shortcut, reachable from
+        // the Profiles page too (engine choice is create-time).
+        if (event->text() == QStringLiteral("a") && m_services.profiles != nullptr) {
+            auto* dialog = new NewAgentDialog(m_services.profiles, m_services.acp, this);
+            dialog->setVisible(true);
+            event->accept();
+            return true;
+        }
     }
     return false;
 }

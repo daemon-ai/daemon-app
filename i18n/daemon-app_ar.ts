@@ -80,6 +80,41 @@
     </message>
 </context>
 <context>
+    <name>AddAccountFlow</name>
+    <message>
+        <source>Sign in (OAuth)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add account — pick a provider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Authentication</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — API key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AddAccountWizard</name>
     <message>
         <source>Add account</source>
@@ -150,6 +185,37 @@
     </message>
     <message>
         <source>Re-run first-run setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AgentInferencePicker</name>
+    <message>
+        <source>Provider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste API key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide API key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show API key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter your API key to list models.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discovering models…</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -365,6 +431,41 @@
     </message>
 </context>
 <context>
+    <name>ChannelsPage</name>
+    <message>
+        <source>Channels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No channels connected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No rooms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect to a daemon to see available channel types.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ChatSettingsSection</name>
     <message>
         <source>Behaviour</source>
@@ -564,6 +665,14 @@
     </message>
     <message>
         <source>Cron-style scheduled jobs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open users &amp; access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage users, roles + sessions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -859,7 +968,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>/run/daemon/daemon.sock</source>
+        <source>/path/to/daemon.sock</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -891,7 +1000,31 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Local daemon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>App-managed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start and manage a node for me (recommended)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect to a daemon socket I run myself</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Socket path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -923,6 +1056,18 @@
     </message>
     <message>
         <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local daemon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -997,6 +1142,75 @@
     </message>
     <message>
         <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>DaemonTurnEngine</name>
+    <message>
+        <source>The turn timed out waiting for the agent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No session is bound for this turn.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The connection to the agent was lost.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to read the agent&apos;s response stream.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The turn ended: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The agent could not start the turn.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The agent rejected the response.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The session was reset; recovered from history.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1088,6 +1302,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Search in files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide explorer</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1108,6 +1326,20 @@
     <message>
         <source>Go to file…</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FileFinderDialog</name>
+    <message numerus="yes">
+        <source>Indexing… (%n file(s))</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -1178,6 +1410,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Agent name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>List models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Test</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1202,11 +1450,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Local: App-managed (press to Attach instead)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local: Attach to socket (press for App-managed)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Connecting...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Connected. A default model will be used.</source>
+        <source>Sign in to continue.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sign in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a provider and a model, then Finish.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1225,6 +1489,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sign in to the node to continue.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Connect to a daemon node to get started.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1233,11 +1501,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Connected. A default model will be used for inference.</source>
+        <source>Sign in</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>You can browse and install more models later from the Models hub.</source>
+        <source>Username</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Signing in…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>agent name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1255,11 +1539,19 @@
         <source>Could not reach the node. Check the target and try again.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FleetPage</name>
     <message>
         <source>Fleet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1272,6 +1564,18 @@
     </message>
     <message>
         <source>%1 · %2 · depth %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No active subagents</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1299,6 +1603,13 @@
     </message>
 </context>
 <context>
+    <name>GraphView</name>
+    <message>
+        <source>No graph data</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ImageBlock</name>
     <message>
         <source>Loading image…</source>
@@ -1321,6 +1632,33 @@
 
 Thanks — proceeding with: %1
 </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1656,6 +1994,17 @@ Thanks — proceeding with: %1
     </message>
 </context>
 <context>
+    <name>MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ModelPickerOverlay</name>
     <message>
         <source>Filter models…</source>
@@ -1708,19 +2057,23 @@ Thanks — proceeding with: %1
 <context>
     <name>ModelsDiscover</name>
     <message>
-        <source>Search models (name or provider)</source>
+        <source>Search Hugging Face repos (e.g. SmolLM2)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Any size</source>
+        <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Installed</source>
+        <source>Search for a model repo to browse its quantizations.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Download</source>
+        <source>by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quantizations</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1802,6 +2155,65 @@ Start one from the Discover tab.</source>
     </message>
 </context>
 <context>
+    <name>NewAgentDialog</name>
+    <message>
+        <source>New agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Persona (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>system prompt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Engine (Enter to pick):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>NotificationsSection</name>
     <message>
         <source>Desktop notifications</source>
@@ -1858,11 +2270,43 @@ Start one from the Discover tab.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Export profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete profile</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Current provider: %1 (test provider — not selectable)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credential: connected%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credential: none — add a key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1882,7 +2326,51 @@ Start one from the Discover tab.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Revert</source>
+        <source>History</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Version history needs a durable daemon.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No revisions yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>#%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>agent %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revert to this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile distributions (*.dist)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1891,7 +2379,133 @@ Start one from the Discover tab.</source>
     </message>
 </context>
 <context>
+    <name>ProfileEditorDialog</name>
+    <message>
+        <source>Edit profile — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter on a row edits it · Save commits · Esc discards</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Engine: ACP agent · %1 (set at create time)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Engine: daemon-core (native)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(pick a model)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (test provider — not selectable)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(pick a provider)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Base URL (empty = provider default)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Short description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>download</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter inserts a newline · Tab reaches the buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProfileToggleListDialog</name>
+    <message>
+        <source>Enter / Space toggles · Esc done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ProfilesPage</name>
+    <message>
+        <source>Exported profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reverted %1</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Profiles</source>
         <translation type="unfinished"></translation>
@@ -1902,6 +2516,14 @@ Start one from the Discover tab.</source>
     </message>
     <message>
         <source>New profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile id (e.g. work)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Empty profile</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2132,6 +2754,53 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>QuantPickerPopup</name>
+    <message>
+        <source>Choose a quantization</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recommended: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>fits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download recommended</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Available files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide advanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>RECOMMENDED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>QueuePanel</name>
     <message>
         <source>Queued (%1)</source>
@@ -2316,25 +2985,111 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>RouteDialog</name>
+    <message>
+        <source>Edit route</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add route</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Currently: → %1 as %2 · decided by %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(inherit)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Currently: unrouted (deterministic)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Origin (where it comes from)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Session (the conversation)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save route</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>RoutingPage</name>
     <message>
         <source>Routing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Intent → model rules</source>
+        <source>Routes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>+ Add rule</source>
+        <source>+ Add route</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>New rule</source>
+        <source>(inherit)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>fallback</source>
+        <source>Edit route</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delivery · </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delivery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a route to see where its replies go</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No delivery targets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PRIMARY</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make primary</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RoutingTopology</name>
+    <message>
+        <source>— pinned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>·· derived</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- - spectator</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2437,6 +3192,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Channels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Memory</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2523,6 +3286,26 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
     <message>
         <source>Reasoning effort</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Approval mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2860,11 +3643,15 @@ This only affects the app appearance, not your data.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>New root node</source>
+        <source>Local node</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>New tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New agent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2904,11 +3691,19 @@ This only affects the app appearance, not your data.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Channels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Routing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Scheduled jobs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New chat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2936,6 +3731,18 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>Tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Integrations</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2991,6 +3798,10 @@ This only affects the app appearance, not your data.</source>
     </message>
     <message>
         <source>Approval mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle terminal</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3372,6 +4183,30 @@ Thanks — proceeding with: %1
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Download model — pick a repo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a quantization</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter opens a preview · Shift+Enter pins · Esc closes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Attach file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter attaches the selected file · Esc cancels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Commands</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3419,13 +4254,15 @@ Thanks — proceeding with: %1
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source># Models
-
-</source>
+        <source>Users &amp; Access</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes.
+        <source>Channels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source># Models
 
 </source>
         <translation type="unfinished"></translation>
@@ -3443,11 +4280,6 @@ Thanks — proceeding with: %1
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- %1**%2** (%3, %4 GiB)%5
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source> — **active**</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3458,12 +4290,35 @@ Thanks — proceeding with: %1
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- %1 — %2 · %3 GiB · %4%5
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
+
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source> (installed)</source>
+        <source>- %1**%2** (%3)%4
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>## Downloads
+
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- %1 — %2%  · %3
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>_Press **d** to search repos and download a model._
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- %1 — %2 · ↓ %3
+</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3635,7 +4490,13 @@ _No agent selected._
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Agent == profile. Memory lives in this agent&apos;s bank (`%1`).
+        <source>Agent profiles, shared with the GUI. **j/k** move · **Enter** set default · **e** edit (provider / model / prompt / skills / tools) · **n** clone · **a** new agent · **x** delete.
+
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent == profile. Memory lives in this agent&apos;s bank (`%1`). Press **e** to edit this profile.
 
 </source>
         <translation type="unfinished"></translation>
@@ -3829,12 +4690,6 @@ _No agent selected._
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Agent profiles, shared with the GUI. **j/k** move · **Enter** set default · **x** delete. Use the GUI editor for model / prompt / skills.
-
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source> (default)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3861,7 +4716,7 @@ _No agent selected._
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Connected provider accounts, shared with the GUI. **j/k** move · **R**/**Enter** re-auth · **x** remove. Use the GUI wizard to add accounts.
+        <source>Connected provider accounts, shared with the GUI. **j/k** move · **a** add account · **R**/**Enter** re-auth · **x** remove.
 
 </source>
         <translation type="unfinished"></translation>
@@ -3911,179 +4766,302 @@ _No agent selected._
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>_(not set)_</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>applies live; restart to retranslate the whole chrome</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Distraction-free (hide chrome)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Notify when a turn needs my input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Notify when a turn finishes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fast mode (lower latency)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stream responses</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send on Enter (Shift+Enter for newline)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show token counts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default system prompt for new chats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Safety</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Approval policy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filesystem access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow network access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Memory &amp; Context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max context tokens</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-compact when context is full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Persist memory across sessions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workspace root</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Respect .gitignore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable voice transcription</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transcription model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Log level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send anonymous telemetry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable experimental tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source># Settings
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The settings page, shared with the GUI. Edit values in the GUI; the TUI reflects the same daemon-config + app prefs. **F8** cycles the theme.
+        <source>Shared with the GUI — both front ends edit the same daemon config and app prefs. **j/k** select a row · **Space/Enter** toggles · **Enter** opens a picker/editor · **F8** cycles the theme.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- State: **%1** · %2 · `%3` — _reconnect via the GUI picker or the first-run gate_
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- Active default: `%1` — _change or install in the Models page (`/models`)_
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source># Users &amp; Access
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>## Connection
+        <source>## Signed in as
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- State: **%1**
+        <source>- **%1**
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- Mode: %1
+        <source>- User id: `%1`
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- Target: `%1`
+        <source>- **Not authenticated**
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- Roles: %1
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- Capabilities: %1
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>## Model
+        <source>## Users &amp; roles
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- Default: `%1`
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Reasoning effort: %1
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Fast mode: %1
+        <source>User administration is not available yet.
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>## Chat
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source># Channels
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- Stream responses: %1
+        <source>_Channels are unavailable: the transports seam is not wired in this mode._
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- Send on Enter: %1
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Show token counts: %1
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>## Safety
+        <source>## Accounts
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- Approval policy: %1
+        <source>_No channels connected._
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- Filesystem access: %1
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3 · %4
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- Allow network: %1
+        <source>  - _No rooms._
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  - %1 · %2
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>## Add channel
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>## Memory &amp; Context
-
+        <source>_Connect to a daemon to see available channel types._
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>- Max context tokens: %1
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Auto-compact: %1
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Persist memory: %1
-
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>## Workspace
-
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Root: `%1`
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Respect .gitignore: %1
-
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>## Voice
-
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Enabled: %1
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Transcription model: %1
-
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>## Advanced
-
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Log level: %1
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Telemetry: %1
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>- Experimental tools: %1
+        <source>- **%1** (`%2`)
 </source>
         <translation type="unfinished"></translation>
     </message>
@@ -4096,6 +5074,53 @@ _No agent selected._
     </message>
     <message>
         <source>The build failed while completing this turn.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UsersAccessPage</name>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Signed in as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not authenticated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>User id: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roles: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Capabilities: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Users &amp; roles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>User administration is not available yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add user</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4130,9 +5155,92 @@ _No agent selected._
     </message>
 </context>
 <context>
+    <name>accounts::DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>daemonnet::MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>firstrun::FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>participants::ParticipantsModel</name>
+    <message>
+        <source>Participants</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

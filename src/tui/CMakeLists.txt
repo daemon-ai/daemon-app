@@ -128,8 +128,41 @@ qt_add_executable(daemon-tui
     tree_list_view.cpp
     tui_dialogs.h
     tui_dialogs.cpp
+    # Settings-page dialog edits (list picks / text prompts / live re-apply),
+    # owned by the settings workstream next to pages/hub_settings.cpp.
+    settings_editor.h
+    settings_editor.cpp
+    # First-run gate dialog (split out of tui_dialogs.cpp so the first-run
+    # workstream owns one focused TU).
+    dialogs/first_run_dialog.h
+    dialogs/first_run_dialog.cpp
+    # Accounts add-wizard flow ('a' on the Accounts page; the accounts
+    # workstream's own TU).
+    dialogs/add_account_flow.h
+    dialogs/add_account_flow.cpp
+    # Interactive profile editor ('e' on the Profiles page / Profile tab), the
+    # profiles workstream's TU: the GUI ProfileEditor field set over the same
+    # IProfileStore save path.
+    dialogs/profile_editor_dialog.h
+    dialogs/profile_editor_dialog.cpp
     tui_page_hub.h
     tui_page_hub.cpp
+    # Hand-maintained parity coverage declaration (enforced by
+    # tests/tui/tui_parity_tests.cpp): the TabModel kinds + command ids the TUI
+    # routes. Keep in sync with the dispatchers when adding routes.
+    tui_parity_routes.h
+    tui_parity_routes.cpp
+    # Per-page hub projections (one TU per Wave-1 ownership area; the dispatch
+    # switch stays in tui_page_hub.cpp).
+    pages/hub_detail.h
+    pages/hub_settings.cpp
+    pages/hub_models.cpp
+    pages/hub_accounts.cpp
+    pages/hub_profiles.cpp
+    pages/hub_memory.cpp
+    pages/hub_ops.cpp
+    pages/hub_users_access.cpp
+    pages/hub_channels.cpp
     tui_file_tab_controller.h
     tui_file_tab_controller.cpp
     tui_shell_layout.h
@@ -168,6 +201,8 @@ qt_add_executable(daemon-tui
     completion_view.cpp
     palette_dialog.h
     palette_dialog.cpp
+    file_finder_dialog.h
+    file_finder_dialog.cpp
     interactive_turn_host.h
     interactive_turn_host.cpp
     line_editor.h
@@ -184,7 +219,10 @@ set_target_properties(daemon-tui PROPERTIES AUTOMOC ON)
 # before the installed headers so `<Tui/ZListView_p.h>` resolves here; the public
 # `<Tui/*.h>` they include still come from the installed package. Used only by
 # root_widget.cpp to read ZListView's private scroll offset.
+# The TUI root itself is also on the include path so the nested TUs (pages/,
+# dialogs/) include the shell headers by basename, matching the flat files.
 target_include_directories(daemon-tui PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/vendor"
 )
 
@@ -215,6 +253,8 @@ target_link_libraries(daemon-tui
         daemon-app::profiles
         daemon-app::fleet
         daemon-app::automation
+        # The Channels hub page projects the transport-registry + presence seams.
+        daemon-app::transports
         daemon-app::session
         daemon-app::daemon_client
         # The GUI's parse/ingest/view-model engine. It links Qt Gui/Sql + md4qt at

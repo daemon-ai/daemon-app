@@ -1,0 +1,52 @@
+# `typos` allowlist (the pre-commit spell gate). These are false positives on intentional/valid
+# spellings that surface when their files are staged; none are actual typos.
+#
+# Kept in sync with the superproject `../.typos.toml` (same pattern as daemon-node's typos.toml):
+# `typos` applies the *nearest* config to each file, so a standalone daemon-app checkout is
+# governed by this file (not the superproject's). The superproject's submodule-bump gate
+# spell-checks the whole daemon-app tree, so this must cover the same terms.
+
+[files]
+extend-exclude = [
+  # Vendored third-party / generated code and build output - not ours to spell-check.
+  "src/core/daemon/codec/generated/**",
+  "src/core/daemon/codec/vendor/**",
+  "**/build*/**",
+  "**/result-*/**",
+  "*.lock",
+  # Intentional mangled text for pseudo-localization testing.
+  "**/pseudolocalize.py",
+]
+
+# Domain terms / library names / valid spelling variants / short identifier fragments that typos
+# misreads as errors (each verified a false positive in this codebase).
+[default.extend-words]
+invokable = "invokable"     # Qt's Q_INVOKABLE macro
+cose = "cose"               # COSE: CBOR Object Signing and Encryption
+tpe = "tpe"                 # common `type` placeholder identifier
+unparseable = "unparseable" # accepted variant of "unparsable"
+clonable = "clonable"       # accepted variant of "cloneable"
+togglable = "togglable"     # accepted variant of "toggleable"
+lod = "lod"                 # LOD: level-of-detail (e.g. m_lodTier)
+muc = "muc"                 # MUC: XMPP multi-user chat
+arange = "arange"           # numpy np.arange in skill examples
+canva = "canva"             # Canva (product name)
+# Short fragments typos extracts from larger identifiers/words/fixtures (PNGs, MorAlekss, ...).
+nd = "nd"
+ot = "ot"
+pn = "pn"
+ba = "ba"
+thm = "thm"
+thi = "thi"
+dout = "dout"
+mis = "mis"
+assum = "assum"
+slee = "slee"
+selec = "selec"
+hel = "hel"
+mor = "mor"
+alikes = "alikes"
+
+[default.extend-identifiers]
+ratatui = "ratatui"         # the Rust TUI crate
+Ratatui = "Ratatui"

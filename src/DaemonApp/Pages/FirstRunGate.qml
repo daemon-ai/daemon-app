@@ -26,9 +26,6 @@ Rectangle {
     readonly property string model: inferencePicker.item ? inferencePicker.item.model : ""
     readonly property bool inferenceComplete: inferencePicker.item
                                               && inferencePicker.item.inferenceComplete
-    readonly property bool providerRequiresKey: inferencePicker.item
-                                                && inferencePicker.item.providerRequiresKey
-    readonly property bool keyValidated: inferencePicker.item && inferencePicker.item.keyValidated
     readonly property string pickerKey: inferencePicker.item ? inferencePicker.item.key : ""
 
     // The chosen provider's catalog label (e.g. "Anthropic"), the seed for the agent-name
@@ -175,6 +172,8 @@ Rectangle {
             }
 
             // --- Phase: inference gate (the SHARED provider -> key -> model picker, A7) ---
+            // FIX 4: the picker reports its provider/key selection to FirstRun, which evaluates
+            // (and logs) the blocking key-validation gate shared with the TUI.
             Loader {
                 id: inferencePicker
                 Layout.fillWidth: true
@@ -183,13 +182,9 @@ Rectangle {
                 sourceComponent: AgentInferencePicker {
                     // First-run defaults to LOCAL inference (llama.cpp): keyless, works out of
                     // the box after a model download — the "+ New agent" dialog keeps the
-                    // Daemon Cloud preference.
+                    // Daemon Cloud preference. The FIX 4 key-validation logging moved into
+                    // FirstRunModel (setInferenceSelection), shared with the TUI.
                     preferDaemonCloud: false
-                    // FIX 4: the wizard logs the authenticated-LIST key-validation outcome.
-                    onKeyValidationResolved: function(provider, requiresKey, count, pass) {
-                        if (FirstRun)
-                            FirstRun.logKeyValidation(provider, requiresKey, count, pass);
-                    }
                 }
             }
 
@@ -208,9 +203,10 @@ Rectangle {
                     accentFilled: true
                     // Enabled once the agent has a non-empty name, a provider + concrete model
                     // are chosen and, for a key-required vendor, the key has been PROVEN to
-                    // authenticate (FIX 4) - not merely typed.
+                    // authenticate - not merely typed. The key gate (FIX 4) is evaluated by the
+                    // shared FirstRunModel, so GUI and TUI block on one implementation.
                     enabled: root.inferenceComplete
-                             && (!root.providerRequiresKey || root.keyValidated)
+                             && (FirstRun ? FirstRun.keyGatePassed : true)
                              && agentNameField.text.trim().length > 0
                     // Persist a working profile (ProviderSelector + model + base URL) under the
                     // chosen agent name + profile-scoped key + make default, then finish - zero

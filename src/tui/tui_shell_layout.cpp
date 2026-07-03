@@ -53,24 +53,24 @@ TuiShellWidgets TuiShellLayout::build(Tui::ZRoot* root, Tui::ZTerminal* terminal
     w.sidebarView->setSizePolicyV(Tui::SizePolicy::Expanding);
     columns->addWidget(w.sidebarView);
 
-    auto* listCol = new Tui::ZWidget(w.window);
-    listCol->setMinimumSize(34, 3);
-    listCol->setSizePolicyH(Tui::SizePolicy::Preferred);
-    listCol->setSizePolicyV(Tui::SizePolicy::Expanding);
+    w.listColumn = new Tui::ZWidget(w.window);
+    w.listColumn->setMinimumSize(34, 3);
+    w.listColumn->setSizePolicyH(Tui::SizePolicy::Preferred);
+    w.listColumn->setSizePolicyV(Tui::SizePolicy::Expanding);
     auto* listColLayout = new Tui::ZVBoxLayout();
-    listCol->setLayout(listColLayout);
+    w.listColumn->setLayout(listColLayout);
 
-    w.search = new SearchInputBox(listCol);
+    w.search = new SearchInputBox(w.listColumn);
     w.search->setText(QString());
     w.search->setMaximumSize(Tui::tuiMaxSize, 1);
     w.search->setFocusPolicy(Tui::NoFocus);
     listColLayout->addWidget(w.search);
 
-    w.listView = new SessionListView(listCol);
+    w.listView = new SessionListView(w.listColumn);
     w.listView->setMinimumSize(34, 3);
     w.listView->setSizePolicyV(Tui::SizePolicy::Expanding);
     listColLayout->addWidget(w.listView);
-    columns->addWidget(listCol);
+    columns->addWidget(w.listColumn);
 
     auto* right = new Tui::ZWidget(w.window);
     right->setSizePolicyH(Tui::SizePolicy::Expanding);

@@ -48,13 +48,21 @@ class FirstRunModel : public QObject {
     // Whether a usable model is reachable; the inference gate blocks until true.
     Q_PROPERTY(bool inferenceReady READ inferenceReady WRITE setInferenceReady NOTIFY
                    inferenceReadyChanged)
+    // The wizard's blocking key check (FIX 4), shared by BOTH front ends: passes unless the
+    // reported provider selection requires an API key whose entered value has not (yet) been
+    // PROVEN by a non-empty authenticated ProviderModels listing. keyGateMessage carries the
+    // actionable blocking reason after a failed validation (empty otherwise).
+    Q_PROPERTY(bool keyGatePassed READ keyGatePassed NOTIFY keyGateChanged)
+    Q_PROPERTY(QString keyGateMessage READ keyGateMessage NOTIFY keyGateChanged)
 
 public:
     // `modelCatalog` (optional) drives inference readiness (CON-7): the inference gate's Finish is
     // enabled once a usable model is reachable (a current model resolves). Null keeps the gate
     // permissive (the mock/standalone path). `profiles`/`accounts`/`providers` (optional) let the
     // guided inference step persist a working profile (ProfileCreate/Update + profile-scoped key +
-    // make default); null leaves applyInferenceChoice a no-op that just finishes.
+    // make default); null leaves applyInferenceChoice a no-op that just finishes. `providerCatalog`
+    // additionally drives the shared key-validation gate (FIX 4, keyGatePassed); null keeps that
+    // gate permissive too.
     FirstRunModel(settings::ISettingsStore* settings, connection::IConnectionService* connection,
                   models::IModelCatalog* modelCatalog = nullptr,
                   profiles::IProfileStore* profileStore = nullptr,
@@ -66,6 +74,8 @@ public:
     [[nodiscard]] QString error() const { return m_error; }
     [[nodiscard]] bool inferenceReady() const { return m_inferenceReady; }
     void setInferenceReady(bool ready);
+    [[nodiscard]] bool keyGatePassed() const;
+    [[nodiscard]] QString keyGateMessage() const { return m_keyGateMessage; }
 
     // Compute the initial phase from persisted setupComplete. Call once at boot.
     Q_INVOKABLE void begin();
@@ -88,9 +98,17 @@ public:
     // Submit interactive credentials while in the `auth` phase (routes to the connection seam's
     // login()). On success the connection reaches ready and the gate advances to inference.
     Q_INVOKABLE void submitLogin(const QString& username, const QString& password);
+    // Report the wizard's LIVE provider/key selection for the key gate (FIX 4). Call on every
+    // provider (re)selection and every key edit: each report unconditionally re-arms the gate (a
+    // proven key must re-prove after any change), mirroring the QML picker semantics this hoists.
+    // The next offeredModelsChanged for `providerId` with a non-empty `key` on a key-requiring
+    // provider resolves it: a non-empty authenticated listing passes, an empty one blocks with an
+    // actionable keyGateMessage. The key is held transiently only; never persisted or logged.
+    Q_INVOKABLE void setInferenceSelection(const QString& providerId, const QString& key);
     // Record a key-validation attempt + its gate outcome for the wizard's blocking key check
-    // (FIX 4). The gate itself is evaluated in QML (driven off the providerModelsRefreshed signal);
-    // this is the shared instrumentation seam so both pass and block outcomes are captured.
+    // (FIX 4). The gate itself is evaluated by this model (resolveKeyGate, driven off the provider
+    // catalog's offeredModelsChanged signal); this is the shared instrumentation seam so both pass
+    // and block outcomes are captured.
     Q_INVOKABLE void logKeyValidation(const QString& provider, bool requiresKey, int modelCount,
                                       bool pass) const;
     // Skip onboarding (dev / "I'll set this up later"): marks setup complete.
@@ -102,6 +120,8 @@ signals:
     void phaseChanged();
     void errorChanged();
     void inferenceReadyChanged();
+    // The key gate re-armed or resolved (keyGatePassed / keyGateMessage may have changed).
+    void keyGateChanged();
     // Fired once when onboarding finishes, so the shell can mount.
     void finished();
 
@@ -134,6 +154,10 @@ private:
     // Whether the node's active default profile already has a model configured (reflected from the
     // profile store). False when nothing is reflected yet or no active default exists.
     [[nodiscard]] bool activeModelConfigured() const;
+    // A provider LIST resolved (offeredModelsChanged): for the selected key-requiring provider
+    // with an entered key the listing is authenticated, so its outcome proves or blocks the key
+    // gate (FIX 4) and is logged through logKeyValidation.
+    void resolveKeyGate(const QString& providerId);
 
     settings::ISettingsStore* m_settings = nullptr;
     connection::IConnectionService* m_connection = nullptr;
@@ -150,6 +174,14 @@ private:
     // True while an applyInferenceChoice continuation is in flight, so a double-committed Finish
     // cannot start a second apply chain. Cleared by finish().
     bool m_applying = false;
+    // The key gate's reported selection (FIX 4). The key lives here transiently, like the QML
+    // key field it mirrors: consumed for the authenticated LIST only, never persisted or logged.
+    QString m_gateProviderId;
+    QString m_gateKey;
+    // Whether the reported key has been proven by a non-empty authenticated listing since the
+    // last re-arm; the blocking reason after a failed validation.
+    bool m_keyProven = false;
+    QString m_keyGateMessage;
 };
 
 } // namespace firstrun

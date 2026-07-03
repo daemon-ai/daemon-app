@@ -23,7 +23,11 @@ void PaletteInput::keyEvent(Tui::ZKeyEvent* event) {
         return;
     }
     if (key == Qt::Key_Enter || key == Qt::Key_Return || event->text() == QStringLiteral("\r")) {
-        emit accepted();
+        if (event->modifiers() & Qt::ShiftModifier) {
+            emit acceptedAlt();
+        } else {
+            emit accepted();
+        }
         event->accept();
         return;
     }
@@ -53,7 +57,13 @@ PaletteDialog::PaletteDialog(const QString& title, Tui::ZWidget* parent) : Tui::
     connect(m_filter, &PaletteInput::moveDown, this, [this] { step(1); });
     connect(m_filter, &PaletteInput::accepted, this,
             [this] { activateRow(m_list->currentIndex().row()); });
-    connect(m_filter, &PaletteInput::canceled, this, [this] { setVisible(false); });
+    // The palette has no alternate accept: Shift+Enter activates like Enter.
+    connect(m_filter, &PaletteInput::acceptedAlt, this,
+            [this] { activateRow(m_list->currentIndex().row()); });
+    connect(m_filter, &PaletteInput::canceled, this, [this] {
+        setVisible(false);
+        emit canceled();
+    });
     // Mouse / Enter on the list itself: `selected` is the visible row.
     connect(m_list, &Tui::ZListView::enterPressed, this,
             [this](int selected) { activateRow(selected); });
