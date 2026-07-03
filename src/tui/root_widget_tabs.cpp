@@ -274,3 +274,36 @@ void RootWidget::toggleExplorer() {
     // both shells share an org/app QSettings scope).
     QSettings().setValue(QStringLiteral("ui/showFileExplorer"), show);
 }
+
+void RootWidget::toggleDistractionFree() {
+    setDistractionFree(!m_distractionFree);
+}
+
+void RootWidget::setDistractionFree(bool on) {
+    if (m_distractionFree == on) {
+        return;
+    }
+    m_distractionFree = on;
+    // Zen mode hides the navigation chrome - the sidebar, the session-list
+    // column (search + list) and the whole right Participants/Explorer column -
+    // leaving the tab strip, transcript, composer and status footer (the pane
+    // set the GUI hides on UiSettings.distractionFree in Main.qml). Hiding the
+    // COLUMNS preserves the explorer's own open/closed state for when zen ends.
+    if (m_sidebarView != nullptr) {
+        m_sidebarView->setVisible(!on);
+    }
+    if (m_listColumn != nullptr) {
+        m_listColumn->setVisible(!on);
+    }
+    if (m_rightColumn != nullptr) {
+        m_rightColumn->setVisible(!on);
+    }
+    if (on && m_composer != nullptr) {
+        // The hidden sidebar/list may hold focus (palette entry path); the
+        // composer is the natural zen focus, and its Esc exits the mode.
+        m_composer->setFocus();
+    }
+    // Persist like toggleExplorer's "ui/showFileExplorer" so zen survives a
+    // restart (the GUI persists its UiSettings.distractionFree equivalently).
+    QSettings().setValue(QStringLiteral("ui/distractionFree"), on);
+}

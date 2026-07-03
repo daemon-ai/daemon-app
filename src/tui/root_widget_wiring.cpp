@@ -346,6 +346,12 @@ void RootWidget::handleComposerCommand(const QString& command) {
         cycleTheme();
         return;
     }
+    if (command == QStringLiteral("distraction")) {
+        // Zen mode (GUI: UiSettings.distractionFree = true in onCommandRequested);
+        // the TUI toggles, and a bare Esc exits (the registry's "Esc to exit").
+        toggleDistractionFree();
+        return;
+    }
     if (command == QStringLiteral("reasoning")) {
         m_composerSession->cycleReasoningEffort();
         return;
@@ -549,7 +555,12 @@ void RootWidget::wireComposer() {
 
     // Esc on an empty composer hands focus back to the session list, where a
     // further Esc bubbles up to the quit prompt (context-sensitive Esc, level 2).
+    // In distraction-free mode the list is hidden, so Esc exits zen instead.
     connect(m_composer, &SubmitInputBox::leaveRequested, this, [this] {
+        if (m_distractionFree) {
+            setDistractionFree(false);
+            return;
+        }
         if (m_listView != nullptr) {
             m_listView->setFocus();
         }

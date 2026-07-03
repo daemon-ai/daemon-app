@@ -40,6 +40,10 @@ class TreeListView;
 struct TuiShellWidgets {
     Tui::ZWindow* window = nullptr;
     TreeListView* sidebarView = nullptr;
+    // The middle column wrapping the search box + session list. Exposed so
+    // distraction-free mode can hide the pair as one unit (mirroring how the
+    // right column toggles), without disturbing either child's own state.
+    Tui::ZWidget* listColumn = nullptr;
     SearchInputBox* search = nullptr;
     SessionListView* listView = nullptr;
     TabStripView* tabStrip = nullptr;

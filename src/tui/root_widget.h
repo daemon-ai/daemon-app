@@ -249,6 +249,13 @@ private:
     // Toggle the right-side file Explorer column (Ctrl+E / palette "files"), and
     // persist the choice to the shared "ui/showFileExplorer" setting.
     void toggleExplorer();
+    // Distraction-free ("zen") mode: hide the sidebar, the session-list column
+    // (search box + list) and the right Participants/Explorer column, leaving
+    // the tab strip + transcript + composer + status footer. Routed from the
+    // "distraction" command (slash + palette); a bare Esc exits. The GUI analog
+    // is UiSettings.distractionFree (TranscriptPage onCommandRequested).
+    void toggleDistractionFree();
+    void setDistractionFree(bool on);
     // Make the tab with `tabId` the active one: bind the views to its session (or
     // to the static page document for page tabs) and refresh.
     void activateTab(int tabId);
@@ -347,9 +354,14 @@ private:
     DisplayRoleAdapter* m_sidebarAdapter = nullptr;
     Tui::ZWindow* m_window = nullptr;
     TreeListView* m_sidebarView = nullptr;
+    // The middle column wrapping the search box + session list; hidden as one
+    // unit by distraction-free mode.
+    Tui::ZWidget* m_listColumn = nullptr;
     // One-line search field above the session list (filters via setSearch).
     SearchInputBox* m_search = nullptr;
     SessionListView* m_listView = nullptr;
+    // Distraction-free ("zen") mode state (see setDistractionFree).
+    bool m_distractionFree = false;
     TranscriptView* m_transcript = nullptr;
     // In-transcript find bar (one-line field + match counter), inserted between the
     // tab strip and the transcript; hidden until Ctrl+F / /find. m_searchActive

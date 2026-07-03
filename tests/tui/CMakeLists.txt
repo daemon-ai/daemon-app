@@ -133,3 +133,13 @@ add_test(NAME daemon_tui_offscreen_explorer_theme
         DAEMON_TUI_KEYS=ctrl-e,cycle-theme
         $<TARGET_FILE:daemon-tui>
 )
+
+# Zen mode round-trip: /distraction (typed + completion accept) hides the
+# sidebar / session-list / right columns, a second toggle restores them - so
+# the test ends in the original persisted state.
+add_test(NAME daemon_tui_offscreen_distraction
+    COMMAND ${CMAKE_COMMAND} -E env
+        DAEMON_TUI_OFFSCREEN=120x36
+        DAEMON_TUI_KEYS=focus-composer,t:/distraction,enter,t:/distraction,enter
+        $<TARGET_FILE:daemon-tui>
+)

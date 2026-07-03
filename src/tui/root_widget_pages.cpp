@@ -346,6 +346,9 @@ void RootWidget::openCommandPalette() {
             m_composerSession->toggleFastMode();
         } else if (id == QStringLiteral("verbose")) {
             m_composerSession->toggleVerbose();
+        } else if (id == QStringLiteral("distraction")) {
+            // Window-level like theme: works with a page tab active too.
+            toggleDistractionFree();
         } else if (m_active != nullptr) {
             m_composerSession->invokeCommand(id);
         }

@@ -333,6 +333,7 @@ void RootWidget::buildUi() {
                               m_fileTree, m_participants, &m_pageDoc);
     m_window = shell.window;
     m_sidebarView = shell.sidebarView;
+    m_listColumn = shell.listColumn;
     m_search = shell.search;
     m_listView = shell.listView;
     m_tabStrip = shell.tabStrip;
@@ -387,6 +388,11 @@ void RootWidget::buildUi() {
         m_fileTreeView->setVisible(showExplorer);
         if (m_participantsView != nullptr)
             m_participantsView->setVisible(showExplorer);
+    }
+    // Restore distraction-free mode the same way (the GUI restores its persisted
+    // UiSettings.distractionFree at startup too).
+    if (QSettings().value(QStringLiteral("ui/distractionFree"), false).toBool()) {
+        setDistractionFree(true);
     }
     connect(m_fileTreeView, &FileTreeView::fileChosen, this,
             [this](const QString& rootId, const QString& path, bool pinned) {

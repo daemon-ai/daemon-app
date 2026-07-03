@@ -212,7 +212,13 @@ bool RootWidget::handleEscapeQuit(Tui::ZKeyEvent* event) {
     // opens the quit confirmation. The composer consumes Esc itself; the quit
     // dialog consumes it while open, so this only fires from the panes.
     if (event->key() == Qt::Key_Escape && event->modifiers() == Qt::NoModifier) {
-        promptQuit();
+        // Distraction-free mode consumes the bare Esc first ("Esc to exit");
+        // the quit prompt stays one further Esc away.
+        if (m_distractionFree) {
+            setDistractionFree(false);
+        } else {
+            promptQuit();
+        }
         event->accept();
         return true;
     }
@@ -251,11 +257,15 @@ void RootWidget::handleMouse(QPoint termPos, MouseTerminal::MouseAction action, 
 void RootWidget::routeWheel(MouseTerminal::MouseAction action, QPoint termPos) {
     using MA = MouseTerminal::MouseAction;
     QPoint local;
-    const auto hit = [&](Tui::ZWidget* w) { return hitTest(w, termPos, local); };
+    // Visibility-guarded like paneAt: a wheel never scrolls a pane hidden by
+    // distraction-free mode / a File tab.
+    const auto hit = [&](Tui::ZWidget* w) {
+        return w != nullptr && w->isVisible() && hitTest(w, termPos, local);
+    };
     const int delta = (action == MA::WheelUp) ? -3 : 3;
-    if (m_editorView != nullptr && m_editorView->isVisible() && hit(m_editorView)) {
+    if (hit(m_editorView)) {
         m_editorView->scrollByLines(delta);
-    } else if (m_fileTreeView != nullptr && m_fileTreeView->isVisible() && hit(m_fileTreeView)) {
+    } else if (hit(m_fileTreeView)) {
         m_fileTreeView->scrollByLines(delta);
     } else if (hit(m_transcript)) {
         m_transcript->scrollByLines(delta);
@@ -269,7 +279,11 @@ void RootWidget::routeWheel(MouseTerminal::MouseAction action, QPoint termPos) {
 RootWidget::ClickPane RootWidget::paneAt(QPoint termPos, QPoint& local) {
     // Primary-button press: the first pane (in priority order) under the cursor.
     // The queue / attachments strips are only hit when they have non-zero height.
-    const auto hit = [&](Tui::ZWidget* w) { return hitTest(w, termPos, local); };
+    // The left panes are visibility-guarded so a click never routes to a column
+    // hidden by distraction-free mode (the reflowed transcript owns that area).
+    const auto hit = [&](Tui::ZWidget* w) {
+        return w != nullptr && w->isVisible() && hitTest(w, termPos, local);
+    };
     if (hit(m_sidebarView)) {
         return ClickPane::Sidebar;
     }
