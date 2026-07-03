@@ -30,6 +30,8 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
+#include "transports/ipresence_service.h"
+#include "transports/itransport_registry.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
 #include "tui_page_hub.h"
@@ -149,6 +151,36 @@ void RootWidget::wirePageLiveRefresh() {
     if (m_services.principal != nullptr) {
         connect(m_services.principal, &daemonapp::daemon::PrincipalModel::changed, this,
                 [this] { refreshPageIfActive(TabModel::UsersAccess); });
+    }
+    // The Channels page projects the transports seams, which are plain signal
+    // emitters (no row models): re-render the open page when the adapter list,
+    // the configured accounts, an account's rooms or a connection state change
+    // (GUI parity: ChannelsPage.qml's Connections re-read on the same signals).
+    if (m_services.transportRegistry != nullptr) {
+        auto* reg = m_services.transportRegistry;
+        connect(reg, &transports::ITransportRegistry::adaptersChanged, this,
+                [this] { refreshPageIfActive(TabModel::Channels); });
+        connect(reg, &transports::ITransportRegistry::instancesChanged, this,
+                [this] { refreshPageIfActive(TabModel::Channels); });
+        connect(reg, &transports::ITransportRegistry::conversationsChanged, this,
+                [this](const QString&) { refreshPageIfActive(TabModel::Channels); });
+        // The GUI fetches an account's live ConvList when its row is expanded;
+        // the TUI page renders every account expanded, so mirror that fetch by
+        // refreshing each account's rooms whenever the Channels tab becomes
+        // current (the conversationsChanged wire above repaints when it lands).
+        connect(m_tabModel, &TabModel::currentTabChanged, this, [this, reg](int tabId) {
+            const int row = m_tabModel->indexOfTabId(tabId);
+            if (row < 0 || m_tabModel->kindAt(row) != TabModel::Channels) {
+                return;
+            }
+            for (const QVariant& v : reg->instances()) {
+                reg->refreshConversations(v.toMap().value(QStringLiteral("transport")).toString());
+            }
+        });
+    }
+    if (m_services.presence != nullptr) {
+        connect(m_services.presence, &transports::IPresenceService::presenceChanged, this,
+                [this](const QString&) { refreshPageIfActive(TabModel::Channels); });
     }
 }
 

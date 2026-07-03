@@ -25,8 +25,7 @@ QSet<int> routedKinds() {
         TabModel::Memory,
         TabModel::Profile,
         TabModel::UsersAccess,
-        // NOT routed (exempted in tui_parity_tests.cpp until Wave 1):
-        // Channels.
+        TabModel::Channels,
     };
 }
 

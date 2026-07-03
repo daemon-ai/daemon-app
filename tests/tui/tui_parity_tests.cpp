@@ -29,12 +29,9 @@
 namespace {
 
 // Accepted TabModel::Kind divergences: kinds the TUI does not render yet.
+// Empty since Wave 1: every TabModel kind has a TUI renderer.
 QHash<int, QString> exemptKinds() {
-    return {
-        {TabModel::Channels,
-         QStringLiteral("Channels / Events-IO manager is GUI-only; the Wave 1 "
-                        "Channels-page workstream adds the TUI page and removes this")},
-    };
+    return {};
 }
 
 // Accepted command-id divergences: registry ids without a (real) TUI route.

@@ -53,6 +53,10 @@ class IProfileStore;
 namespace settings {
 class ISettingsStore;
 }
+namespace transports {
+class IPresenceService;
+class ITransportRegistry;
+} // namespace transports
 
 class TabModel;
 
@@ -83,6 +87,8 @@ public:
         // The authenticated principal (WhoAmI): gates the Users & Access route and
         // backs its page projection. Advisory only - the node enforces server-side.
         daemonapp::daemon::PrincipalModel* principal = nullptr;
+        transports::ITransportRegistry* transportRegistry = nullptr;
+        transports::IPresenceService* presence = nullptr;
     };
 
     explicit TuiPageHub(Dependencies deps);
@@ -111,6 +117,7 @@ private:
     [[nodiscard]] QString buildMemoryMarkdown() const;
     [[nodiscard]] QString buildProfileMarkdown(const QString& profileRef) const;
     [[nodiscard]] QString buildUsersAccessMarkdown() const;
+    [[nodiscard]] QString buildChannelsMarkdown() const;
 
     Dependencies m_deps;
     QHash<int, int> m_pageSel;

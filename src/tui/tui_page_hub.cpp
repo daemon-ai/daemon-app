@@ -57,6 +57,8 @@ QString TuiPageHub::pageMarkdownForKind(int kind, const QString& profileRef) con
         return buildProfileMarkdown(profileRef);
     case TabModel::UsersAccess:
         return buildUsersAccessMarkdown();
+    case TabModel::Channels:
+        return buildChannelsMarkdown();
     default:
         return {};
     }
@@ -77,6 +79,7 @@ bool TuiPageHub::openManagerPage(const QString& id) const {
         {QStringLiteral("routing"), {TabModel::Routing, tr("Routing")}},
         {QStringLiteral("cron"), {TabModel::Cron, tr("Scheduled jobs")}},
         {QStringLiteral("access"), {TabModel::UsersAccess, tr("Users & Access")}},
+        {QStringLiteral("channels"), {TabModel::Channels, tr("Channels")}},
     };
     const auto route = kPageRoutes.constFind(id);
     if (route == kPageRoutes.constEnd()) {

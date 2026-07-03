@@ -204,27 +204,31 @@ RootWidget::RootWidget()
     m_memTimeline->setService(m_services.memory);
     m_memGraph->setService(m_services.memory);
 
+    // Designated initializers (declaration order enforced at compile time), so a
+    // future Dependencies append can never silently misalign a positional list.
     m_pageHub = std::make_unique<TuiPageHub>(TuiPageHub::Dependencies{
-        m_tabModel,
-        m_services.daemonConfig,
-        m_services.connection,
-        m_services.modelCatalog,
-        m_services.accounts,
-        m_services.profiles,
-        m_services.roster,
-        m_services.fleetTree,
-        m_services.approvals,
-        m_services.dashboard,
-        m_services.routing,
-        m_services.cron,
-        m_services.daemonNet,
-        m_services.memory,
-        m_memList,
-        m_memStats,
-        m_memTimeline,
-        m_memGraph,
-        m_services.settings,
-        m_services.principal,
+        .tabModel = m_tabModel,
+        .daemonConfig = m_services.daemonConfig,
+        .connection = m_services.connection,
+        .modelCatalog = m_services.modelCatalog,
+        .accounts = m_services.accounts,
+        .profiles = m_services.profiles,
+        .roster = m_services.roster,
+        .fleetTree = m_services.fleetTree,
+        .approvals = m_services.approvals,
+        .dashboard = m_services.dashboard,
+        .routing = m_services.routing,
+        .cron = m_services.cron,
+        .daemonNet = m_services.daemonNet,
+        .memory = m_services.memory,
+        .memList = m_memList,
+        .memStats = m_memStats,
+        .memTimeline = m_memTimeline,
+        .memGraph = m_memGraph,
+        .settings = m_services.settings,
+        .principal = m_services.principal,
+        .transportRegistry = m_services.transportRegistry,
+        .presence = m_services.presence,
     });
 
     // Wire the app-level navigation seam (constructed-but-unused until now): an
