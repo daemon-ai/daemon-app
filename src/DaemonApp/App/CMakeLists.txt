@@ -147,6 +147,9 @@ if(DAEMON_APP_WASM)
         "$<TARGET_FILE_DIR:daemon-app>/daemon-app.wasm"
         "$<TARGET_FILE_DIR:daemon-app>/daemon-app.data"
         "$<TARGET_FILE_DIR:daemon-app>/qtloader.js"
+        # The loading-spinner logo the html shell references; without it every
+        # page load 404s on /qtlogo.svg and the spinner shows a broken image.
+        "$<TARGET_FILE_DIR:daemon-app>/qtlogo.svg"
         DESTINATION ${CMAKE_INSTALL_DATADIR}/daemon-app/wasm
     )
 else()
