@@ -121,6 +121,16 @@ else()
     )
 endif()
 
+# qtloader's `qt.environment` copies entries into emscripten's ENV at preRun, but only when
+# the ENV runtime object is exported from the module (qtloader throws otherwise, naming this
+# exact property). Export it so DAEMON_APP_* env-gated behavior (service-mode override, the
+# headless probes like DAEMON_APP_WAIT_READY) is reachable in the browser. Qt folds the value
+# into the emscripten EXPORTED_RUNTIME_METHODS link option; the installed artifact set is
+# unchanged, so the install(FILES ...) block below needs no adjustment.
+if(DAEMON_APP_WASM)
+    set_target_properties(daemon-app PROPERTIES QT_WASM_EXTRA_EXPORTED_METHODS "ENV")
+endif()
+
 # Build dependency on the KSyntaxHighlighting QML plugin so its module is emitted
 # under QT_QML_OUTPUT_DIRECTORY before we run; main.cpp adds that dir to the
 # engine import path via DAEMON_APP_BUILD_QML_DIR.
