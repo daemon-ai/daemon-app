@@ -84,14 +84,25 @@ let
   # `configure -platform wasm-emscripten -static -release -qt-host-path ...`).
   # Qt's wasm auto-detect forces the static config; thread stays at Qt's wasm
   # default (OFF). Feature trims are conservative:
+  #  * optimize-size ON: Qt's supported size-optimized build (-Os on every
+  #    module; the feature is global, so qtdeclarative/qtsvg/... inherit it).
+  #  * ltcg (LTO) evaluated and dropped: FEATURE_ltcg=ON aborts (Qt's
+  #    __qt_ltcg_detected probe fails under this emscripten), and forcing
+  #    thin-LTO via -flto=thin on Qt + app compile flags built and booted but
+  #    measured -74 KB raw / +27 KB brotli on daemon-app.wasm - noise-level
+  #    raw, strictly worse compressed, so not carried.
   #  * dbus OFF: no session bus in a browser, saves a large module.
   #  * sql-sqlite ON + system-sqlite OFF (explicit): the app uses
   #    QSqlDatabase/QSQLITE, so pin the bundled-sqlite driver rather than rely
   #    on autodetection.
-  # Widgets stays ON: the app's CMake requires Qt6Widgets on non-mobile
-  # platforms (wasm included until the platform-gating branch lands) and the
-  # vendored MicroTeX links Widgets+PrintSupport; trimming it would break
-  # `find_package` during bring-up for little gain.
+  # Widgets stays ON, measured verdict: the shipped binary already contains
+  # ZERO Widgets/PrintSupport code - the app never links Qt6::Widgets on wasm
+  # and vendored MicroTeX's LaTeX library links Qt6::Gui only (its
+  # find_package asks for Widgets+PrintSupport, but solely for the
+  # LaTeXQtSample demo, which is EXCLUDE_FROM_ALL and never built; verified:
+  # no libQt6Widgets.a/libQt6PrintSupport.a on the final link line). Turning
+  # the feature OFF would save 0 shipped bytes and would require shimming the
+  # vendored find_package call just to configure - not worth it.
   qtbaseWasm = pkgs.stdenv.mkDerivation {
     pname = "qtbase-wasm";
     version = qtVersion;
@@ -119,6 +130,7 @@ let
         -DQT_BUILD_EXAMPLES=OFF \
         -DQT_BUILD_TESTS=OFF \
         -DQT_GENERATE_SBOM=OFF \
+        -DFEATURE_optimize_size=ON \
         -DFEATURE_dbus=OFF \
         -DFEATURE_sql_sqlite=ON \
         -DFEATURE_system_sqlite=OFF
@@ -139,6 +151,7 @@ let
       pname,
       src,
       wasmDeps ? [ ],
+      extraFlags ? [ ],
     }:
     pkgs.stdenv.mkDerivation {
       inherit pname src;
@@ -161,7 +174,8 @@ let
           -DCMAKE_BUILD_TYPE=Release \
           -DQT_BUILD_EXAMPLES=OFF \
           -DQT_BUILD_TESTS=OFF \
-          -DQT_GENERATE_SBOM=OFF
+          -DQT_GENERATE_SBOM=OFF \
+          ${lib.concatStringsSep " " extraFlags}
         cd build
         runHook postConfigure
       '';
@@ -176,6 +190,19 @@ let
     pname = "qtdeclarative-wasm";
     src = pkgs.qt6.qtdeclarative.src;
     wasmDeps = [ qtshadertoolsWasm ];
+    # The app pins QQuickStyle::setStyle("Basic") in main() and imports no
+    # other style, but a static Quick Controls build links EVERY built style
+    # plugin (+ its compiled QML and shader resources) into the executable
+    # because style selection is a runtime decision. Build only Basic: the
+    # other styles were 3.2 MB raw / 1.2 MB brotli of the shipped binary.
+    # (fluentwinui3 follows fusion's condition, so it needs no explicit flag;
+    # macos/windows/ios never build on wasm.)
+    extraFlags = [
+      "-DFEATURE_quickcontrols2_fusion=OFF"
+      "-DFEATURE_quickcontrols2_imagine=OFF"
+      "-DFEATURE_quickcontrols2_material=OFF"
+      "-DFEATURE_quickcontrols2_universal=OFF"
+    ];
   };
 
   qtsvgWasm = mkQtWasmModule {
@@ -398,6 +425,14 @@ let
       perl
     ];
 
+    # A post-link `wasm-opt -Oz` re-run (binaryen from the emscripten pin) was
+    # evaluated and dropped: emcc already runs wasm-opt -Oz at link, and a
+    # second pass with emcc 4.0.8's default feature set converges to -17 KB
+    # raw / -9 KB brotli (~0.1%). The only way to shrink further (-1.5 MB raw)
+    # is letting binaryen emit tail-call + GC call_ref encodings, which raises
+    # the artifact's browser feature floor for a -12 KB brotli delta - not a
+    # trade a "low-risk" pipeline should make. Keep the single link-time pass.
+
     dontUseCmakeConfigure = true;
 
     configurePhase = ''
@@ -413,7 +448,9 @@ let
       # wasm-emscripten config - everything links into the executable.
       ${qtWasmJoined}/bin/qt-cmake -S . -B build -G Ninja \
         -DCMAKE_INSTALL_PREFIX="$out" \
-        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_BUILD_TYPE=MinSizeRel \
+        "-DCMAKE_C_FLAGS_MINSIZEREL=-Oz -DNDEBUG" \
+        "-DCMAKE_CXX_FLAGS_MINSIZEREL=-Oz -DNDEBUG" \
         "-DCMAKE_CXX_FLAGS=-isystem ${tinyxml2Wasm}/include" \
         "-DCMAKE_EXE_LINKER_FLAGS=-L${tinyxml2Wasm}/lib" \
         -DBUILD_SHARED_LIBS=OFF \
@@ -426,6 +463,22 @@ let
         -DDAEMON_APP_VERSION_STR=${versionStr}
       cd build
       runHook postConfigure
+    '';
+
+    # Precompressed siblings for every shipped artifact so any real webserver
+    # (nginx gzip_static/brotli_static, caddy precompressed) can serve them;
+    # the network cost of a deploy is the .br column. brotli/gzip come from
+    # the MAIN nixpkgs pin - they only transform the output, not the build.
+    # The python serve-wasm helper ignores them and serves the raw files,
+    # which is fine for dev.
+    postInstall = ''
+      for f in "$out"/share/daemon-app/wasm/*; do
+        case "$f" in
+          *.br | *.gz) continue ;;
+        esac
+        ${pkgs.brotli}/bin/brotli -q 11 -k "$f"
+        ${pkgs.gzip}/bin/gzip -9 -k "$f"
+      done
     '';
   };
 

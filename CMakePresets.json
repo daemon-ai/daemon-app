@@ -55,7 +55,9 @@
       "inherits": "base",
       "toolchainFile": "$env{DAEMON_APP_QT_WASM}/lib/cmake/Qt6/qt.toolchain.cmake",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_BUILD_TYPE": "MinSizeRel",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Oz -DNDEBUG",
+        "CMAKE_CXX_FLAGS_MINSIZEREL": "-Oz -DNDEBUG",
         "BUILD_TESTING": "OFF",
         "DAEMON_APP_TUI": "OFF",
         "BUILD_SHARED_LIBS": "OFF",
