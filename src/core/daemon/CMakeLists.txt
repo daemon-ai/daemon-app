@@ -25,10 +25,24 @@ target_include_directories(da_daemon_codec PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/codec/generated"
 )
 
+# Platform-conditional TUs: Qt-for-wasm lacks the `localserver`, `ssl`, and `process` features,
+# so the browser build swaps the Unix/TLS stream carriers and the QProcess-based launcher for
+# fail-closed stubs (the WebSocket carrier in daemon_transport.cpp is the only wasm transport).
+if(EMSCRIPTEN)
+    set(DA_DAEMON_PLATFORM_SOURCES
+        daemon_transport_stream_wasm.cpp
+        local_daemon_launcher_wasm.cpp
+    )
+else()
+    set(DA_DAEMON_PLATFORM_SOURCES
+        daemon_transport_stream.cpp
+        local_daemon_launcher.cpp
+    )
+endif()
+
 add_library(da_daemon_client STATIC
     daemon_transport.h
     daemon_transport.cpp
-    daemon_transport_stream.cpp
     node_api_client.h
     node_api_client.cpp
     node_api_auth.h
@@ -42,9 +56,9 @@ add_library(da_daemon_client STATIC
     node_api_codec/decode_responses.cpp
     node_api_codec/fs_fleet_channels.cpp
     local_daemon_launcher.h
-    local_daemon_launcher.cpp
     daemon_connection_service.h
     daemon_connection_service.cpp
+    ${DA_DAEMON_PLATFORM_SOURCES}
     daemon_accounts_service.h
     daemon_accounts_service.cpp
     daemon_model_catalog.h

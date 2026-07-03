@@ -321,6 +321,17 @@ void DaemonConnectionService::connectTo(const QString& mode, const QString& targ
     m_versionRespawnAttempted = false;
     emit configChanged();
 
+#ifdef Q_OS_WASM
+    // A browser build has exactly one usable transport: the WebSocket mux ("remote-ws"). Unix
+    // sockets, raw TLS TCP, and managed spawn do not exist on wasm - refuse anything else up
+    // front instead of failing deep inside a stubbed carrier.
+    if (mode != QStringLiteral("remote-ws")) {
+        setStatusMessage(tr("Only WebSocket connections (ws:// or wss://) work in a browser."));
+        setState(QStringLiteral("needs setup"));
+        return;
+    }
+#endif
+
     if (!configureTransport()) {
         setState(QStringLiteral("needs setup"));
         return;
@@ -385,6 +396,16 @@ void DaemonConnectionService::testConnection(const QString& mode, const QString&
     setTesting(true);
     bool ok = false;
     QString message;
+#ifdef Q_OS_WASM
+    // Mirror connectTo()'s wasm gate so Test tells the same truth Connect would.
+    if (mode != QStringLiteral("remote-ws")) {
+        emit testResult(false,
+                        QStringLiteral("Only WebSocket connections (ws:// or wss://) work in a "
+                                       "browser"));
+        setTesting(false);
+        return;
+    }
+#endif
     if (mode == QStringLiteral("local")) {
         ok = !target.isEmpty();
         message = ok ? QStringLiteral("Unix socket target accepted")
