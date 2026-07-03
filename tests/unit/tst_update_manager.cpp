@@ -58,7 +58,7 @@ void UpdateManagerTests::capabilityRoundTrip() {
     // Q_ENUM registration: the meta-object round-trips the enumerator names too.
     const QMetaEnum meta = QMetaEnum::fromType<Capability>();
     QCOMPARE(meta.keyCount(), 4);
-    QCOMPARE(QString::fromLatin1(meta.valueToKey(static_cast<int>(Capability::SelfApply))),
+    QCOMPARE(QString::fromLatin1(meta.valueToKey(static_cast<quint64>(Capability::SelfApply))),
              QStringLiteral("SelfApply"));
 }
 

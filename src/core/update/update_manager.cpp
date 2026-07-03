@@ -32,8 +32,9 @@ QUrl UpdateManager::feedUrl() const {
 }
 
 QString UpdateManager::capabilityToString(Capability capability) {
+    // valueToKey(int) is QT_CORE_REMOVED_SINCE(6,9); only the quint64 overload is visible.
     return QString::fromLatin1(
-        QMetaEnum::fromType<Capability>().valueToKey(static_cast<int>(capability)));
+        QMetaEnum::fromType<Capability>().valueToKey(static_cast<quint64>(capability)));
 }
 
 UpdateManager::Capability UpdateManager::capabilityFromString(const QString& name) {
