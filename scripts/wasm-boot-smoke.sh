@@ -12,6 +12,12 @@
 # lands at $SMOKE_SHOT (default /tmp/size-smoke.png), the console log next to
 # it as .log. CHROMIUM overrides the browser binary (some hosts wrap chromium
 # in firejail, which cannot run headless here). Exit 0 = booted.
+#
+# The default run also asserts the shell's WebGL probe chose the GL path
+# (chromium always has one, via swiftshader at worst), so a regression into
+# the software fallback fails the smoke. Override with
+# SMOKE_EXPECT_RENDERER=software when driving a deliberately WebGL-less
+# browser, or SMOKE_EXPECT_RENDERER="" to skip the assertion.
 set -euo pipefail
 
 dir="${1:-}"
@@ -22,5 +28,12 @@ fi
 port="${2:-8901}"
 shot="${SMOKE_SHOT:-/tmp/size-smoke.png}"
 
+expect_args=()
+expect="${SMOKE_EXPECT_RENDERER-webgl}"
+if [ -n "$expect" ]; then
+  expect_args=(--expect-renderer "$expect")
+fi
+
 exec python3 "$(dirname "$0")/wasm-boot-smoke.py" "$dir" \
-  --port "$port" --shot "$shot" --timeout "${SMOKE_TIMEOUT:-90}"
+  --port "$port" --shot "$shot" --timeout "${SMOKE_TIMEOUT:-90}" \
+  "${expect_args[@]}"

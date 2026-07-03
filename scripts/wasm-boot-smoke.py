@@ -36,6 +36,10 @@ FATAL_RE = re.compile(
     r"failed to asynchronously prepare wasm|Application exit"
 )
 BOOT_MARKER = "AppServiceGraph"
+# The branded shell logs its WebGL-probe verdict before qtLoad; the smoke
+# records it and can assert it (--expect-renderer), so a silent fall-through
+# to the software scenegraph cannot masquerade as a healthy GL boot.
+RENDERER_RE = re.compile(r"daemon shell: renderer=(.+)")
 
 
 # --- Minimal WebSocket client (RFC 6455, client side) ----------------------
@@ -160,6 +164,12 @@ def main():
     ap.add_argument("--shot", default="/tmp/size-smoke.png")
     ap.add_argument("--timeout", type=float, default=90)
     ap.add_argument("--chromium", default=os.environ.get("CHROMIUM", "chromium"))
+    ap.add_argument(
+        "--expect-renderer",
+        default=None,
+        help="fail unless the shell's renderer log starts with this "
+        "(e.g. 'webgl' matches webgl2/webgl, 'software' the fallback)",
+    )
     args = ap.parse_args()
 
     log_path = args.shot.rsplit(".", 1)[0] + ".log"
@@ -208,12 +218,15 @@ def main():
             "Page.navigate", {"url": f"http://127.0.0.1:{args.port}/daemon-app.html"}
         )
 
-        booted = fatal = None
+        booted = fatal = renderer = None
         for event in cdp.drain(args.timeout):
             text = console_text(event)
             if not text:
                 continue
             print(text, file=log, flush=True)
+            renderer_match = RENDERER_RE.search(text)
+            if renderer_match:
+                renderer = renderer_match.group(1)
             if FATAL_RE.search(text):
                 fatal = text
                 break
@@ -231,6 +244,15 @@ def main():
                 file=sys.stderr,
             )
             return 1
+        if args.expect_renderer is not None and not (renderer or "").startswith(
+            args.expect_renderer
+        ):
+            print(
+                f"boot-smoke: renderer mismatch: expected {args.expect_renderer}*, "
+                f"shell chose {renderer!r} (log: {log_path})",
+                file=sys.stderr,
+            )
+            return 1
 
         # Give the first frame a moment to paint, then screenshot.
         for event in cdp.drain(3):
@@ -240,7 +262,10 @@ def main():
         shot = cdp.call("Page.captureScreenshot", {"format": "png"}, timeout=30)
         with open(args.shot, "wb") as f:
             f.write(base64.b64decode(shot["data"]))
-        print(f"boot-smoke: OK (marker seen; log: {log_path}, shot: {args.shot})")
+        print(
+            f"boot-smoke: OK (marker seen; renderer: {renderer}; "
+            f"log: {log_path}, shot: {args.shot})"
+        )
         return 0
     finally:
         proc.terminate()
