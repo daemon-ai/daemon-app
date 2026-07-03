@@ -86,6 +86,7 @@ class MemoryTimelineModel;
 class MemoryGraphModel;
 } // namespace memoryui
 
+class AddAccountFlow;
 class SidebarModel;
 class SessionsListModel;
 class SessionController;
@@ -205,6 +206,9 @@ private:
     void openModelPicker();
     // Local model track: open the discover -> quant download flow ('d' on the Models page).
     void openModelDownload();
+    // Accounts page: open the add-account wizard ('a'), the TUI analog of the
+    // GUI AddAccountWizard (provider pick -> credentials over the shared seam).
+    void openAddAccount();
     // Open the command palette (Ctrl+P): a filterable list of nav / theme / mode /
     // slash actions, backed by the shared CommandRegistry, routed to existing
     // handlers on activation.
@@ -405,6 +409,8 @@ private:
 
     // Filterable overlays and modal host (quit/model picker/command palette).
     std::unique_ptr<TuiOverlayHost> m_overlays;
+    // Accounts add-wizard flow (lazily created; parented to this widget).
+    AddAccountFlow* m_addAccounts = nullptr;
     CommandRegistry* m_commands = nullptr;
     // Transcript exporter for the /save + list "export" action (writes JSON).
     TranscriptExporter* m_exporter = nullptr;

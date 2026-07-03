@@ -7,6 +7,7 @@
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
+#include "dialogs/add_account_flow.h"
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
@@ -322,6 +323,21 @@ void RootWidget::openModelDownload() {
         return;
     }
     m_overlays->openModelDownload(m_services.modelCatalog, [this] { refreshActivePage(); });
+}
+
+void RootWidget::openAddAccount() {
+    if (m_addAccounts == nullptr) {
+        m_addAccounts = new AddAccountFlow(m_services.accounts, this);
+        connect(m_addAccounts, &AddAccountFlow::changed, this, [this] { refreshActivePage(); });
+        // When the wizard's dialogs go away, return focus to the page doc so
+        // j/k + action keys keep working without a click.
+        connect(m_addAccounts, &AddAccountFlow::finished, this, [this] {
+            if (m_transcript != nullptr && activePageKind() >= 0) {
+                m_transcript->setFocus();
+            }
+        });
+    }
+    m_addAccounts->open();
 }
 
 void RootWidget::openCommandPalette() {

@@ -412,5 +412,13 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         event->accept();
         return true;
     }
+    // Accounts: 'a' opens the add-account wizard (provider pick -> credentials),
+    // the GUI "Add account" button analog.
+    if (kind == TabModel::Accounts && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("a")) {
+        openAddAccount();
+        event->accept();
+        return true;
+    }
     return false;
 }
