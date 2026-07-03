@@ -91,8 +91,22 @@ public:
     void moveSelection(int kind, int delta);
     bool handlePageActionKey(int kind, Tui::ZKeyEvent* event);
 
+    // The highlighted row index for a hub kind (what the ▸ marker renders).
+    // Used by TuiSettingsEditor to resolve the row a dialog edit targets.
+    [[nodiscard]] int pageSelection(int kind) const { return m_pageSel.value(kind, 0); }
+    // Persist an edited Settings-row value through the row's seam - the same
+    // ISettingsStore / IDaemonConfig call the GUI section makes. Rows whose
+    // apply is a RootWidget live path (theme / zen) return false untouched.
+    bool applySettingsValue(const QVariantMap& row, const QVariant& value) const;
+
 private:
-    [[nodiscard]] QString buildSettingsMarkdown() const;
+    // The editable Settings rows (hub_settings.cpp): one QVariantMap per row
+    // with id/label/type/seam/value/options - the schema the markdown builder,
+    // the key handler and TuiSettingsEditor share.
+    [[nodiscard]] QList<QVariantMap> settingsActionRows() const;
+    // Space/Enter on a toggle row: flip in place via applySettingsValue.
+    bool applySettingsToggle(const QVariantMap& row, bool activate) const;
+    [[nodiscard]] QString buildSettingsMarkdown(int sel = -1) const;
     [[nodiscard]] QString buildModelsMarkdown(int sel = -1) const;
     [[nodiscard]] QString buildAccountsMarkdown(int sel = -1) const;
     [[nodiscard]] QString buildProfilesMarkdown(int sel = -1) const;

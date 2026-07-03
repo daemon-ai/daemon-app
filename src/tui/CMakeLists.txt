@@ -128,6 +128,10 @@ qt_add_executable(daemon-tui
     tree_list_view.cpp
     tui_dialogs.h
     tui_dialogs.cpp
+    # Settings-page dialog edits (list picks / text prompts / live re-apply),
+    # owned by the settings workstream next to pages/hub_settings.cpp.
+    settings_editor.h
+    settings_editor.cpp
     # First-run gate dialog (split out of tui_dialogs.cpp so the first-run
     # workstream owns one focused TU).
     dialogs/first_run_dialog.h

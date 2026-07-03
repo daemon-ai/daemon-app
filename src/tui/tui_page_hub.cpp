@@ -31,7 +31,7 @@ QString TuiPageHub::pageMarkdownForKind(int kind, const QString& profileRef) con
     const int sel = m_pageSel.value(kind, 0);
     switch (kind) {
     case TabModel::Settings:
-        return buildSettingsMarkdown();
+        return buildSettingsMarkdown(sel);
     case TabModel::Models:
         return buildModelsMarkdown(sel);
     case TabModel::Accounts:
@@ -93,6 +93,7 @@ int TuiPageHub::activePageKind(bool transcriptActive) const {
         return -1;
     }
     switch (m_deps.tabModel->kindAt(idx)) {
+    case TabModel::Settings:
     case TabModel::Models:
     case TabModel::Accounts:
     case TabModel::Profiles:
@@ -109,6 +110,8 @@ int TuiPageHub::activePageKind(bool transcriptActive) const {
 
 QList<QVariantMap> TuiPageHub::pageActionRows(int kind) const {
     switch (kind) {
+    case TabModel::Settings:
+        return settingsActionRows();
     case TabModel::Models:
         return rowsOfModel(m_deps.modelCatalog->installed());
     case TabModel::Accounts:
@@ -176,6 +179,11 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
     bool acted = false;
 
     switch (kind) {
+    case TabModel::Settings:
+        // Toggles flip in place; choice/text/zen rows decline so RootWidget's
+        // TuiSettingsEditor opens the matching dialog / live path.
+        acted = applySettingsToggle(row, enter || key == Qt::Key_Space);
+        break;
     case TabModel::Models:
         if (enter) {
             m_deps.modelCatalog->activate(id);

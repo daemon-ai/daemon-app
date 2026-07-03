@@ -22,6 +22,7 @@
 #include "session_controller.h"
 #include "session_orchestrator.h"
 #include "sessions_list_model.h"
+#include "settings_editor.h"
 #include "sidebar_model.h"
 #include "status_bar_model.h"
 #include "tab_model.h"
@@ -403,6 +404,12 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
     }
     if (m_pageHub->handlePageActionKey(kind, event)) {
         refreshActivePage();
+        return true;
+    }
+    // Settings rows the hub declined (choice/text/zen): open the matching
+    // picker / prompt / live toggle via the settings editor.
+    if (kind == TabModel::Settings && m_settingsEditor != nullptr &&
+        m_settingsEditor->handleKey(event)) {
         return true;
     }
     // Local model track: 'd' on the Models page opens the discover -> quant download flow.

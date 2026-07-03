@@ -54,6 +54,28 @@ void TranscriptView::scrollBlockIntoView(int blockIndex) {
     update();
 }
 
+void TranscriptView::scrollLineWithTextIntoView(const QString& needle) {
+    for (int i = 0; i < m_lines.size(); ++i) {
+        QString text;
+        for (const Span& span : m_lines.at(i)) {
+            text += span.text;
+        }
+        if (!text.contains(needle)) {
+            continue;
+        }
+        const int rows = visibleRows();
+        if (i < m_scrollTop) {
+            m_scrollTop = i;
+        } else if (rows > 0 && i >= m_scrollTop + rows) {
+            m_scrollTop = i - rows + 1;
+        }
+        m_stickToBottom = false;
+        clampScrollTop();
+        update();
+        return;
+    }
+}
+
 void TranscriptView::scrollByLines(int delta) {
     m_scrollTop += delta;
     clampScrollTop();
