@@ -79,6 +79,41 @@
     </message>
 </context>
 <context>
+    <name>AddAccountFlow</name>
+    <message>
+        <source>Sign in (OAuth)</source>
+        <translation>«Śìĝñ ìñ (ÓÀúŧĥ)  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>«ÀÞÌ ķéý  þéñ»</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>«ÓĶ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>«Śìĝñ-ìñ ƒàìļéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Add account — pick a provider</source>
+        <translation>«Àðð àççóúñŧ — þìçķ à þŕóṽìðéŕ  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Authentication</source>
+        <translation>«Àúŧĥéñŧìçàŧìóñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>%1 — API key</source>
+        <translation>«%1 — ÀÞÌ ķéý  þéñ»</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>«Ɓàśé ÚŔĻ (é.ĝ. ĥŧŧþś://…)  þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>AddAccountWizard</name>
     <message>
         <source>Add account</source>
@@ -150,6 +185,37 @@
     <message>
         <source>Re-run first-run setup</source>
         <translation>«Ŕé-ŕúñ ƒìŕśŧ-ŕúñ śéŧúþ  þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>AgentInferencePicker</name>
+    <message>
+        <source>Provider</source>
+        <translation>«Þŕóṽìðéŕ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Paste API key</source>
+        <translation>«Þàśŧé ÀÞÌ ķéý  þéñ»</translation>
+    </message>
+    <message>
+        <source>Hide API key</source>
+        <translation>«Ĥìðé ÀÞÌ ķéý  þéñ»</translation>
+    </message>
+    <message>
+        <source>Show API key</source>
+        <translation>«Śĥóẅ ÀÞÌ ķéý  þéñ»</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>«Ḿóðéļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Enter your API key to list models.</source>
+        <translation>«Éñŧéŕ ýóúŕ ÀÞÌ ķéý ŧó ļìśŧ ḿóðéļś.  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Discovering models…</source>
+        <translation>«Ðìśçóṽéŕìñĝ ḿóðéļś…  þéñ þéñ»</translation>
     </message>
 </context>
 <context>
@@ -364,6 +430,41 @@
     </message>
 </context>
 <context>
+    <name>ChannelsPage</name>
+    <message>
+        <source>Channels</source>
+        <translation>«Çĥàññéļś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>«Àççóúñŧś  þéñ»</translation>
+    </message>
+    <message>
+        <source>No channels connected.</source>
+        <translation>«Ñó çĥàññéļś çóññéçŧéð.  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>«%1 · %2  þéñ»</translation>
+    </message>
+    <message>
+        <source>No rooms.</source>
+        <translation>«Ñó ŕóóḿś.  þéñ»</translation>
+    </message>
+    <message>
+        <source>Add channel</source>
+        <translation>«Àðð çĥàññéļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon to see available channel types.</source>
+        <translation>«Çóññéçŧ ŧó à ðàéḿóñ ŧó śéé àṽàìļàƀļé çĥàññéļ ŧýþéś.  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>«Çóññéçŧ  þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>ChatSettingsSection</name>
     <message>
         <source>Behaviour</source>
@@ -564,6 +665,14 @@
     <message>
         <source>Cron-style scheduled jobs</source>
         <translation>«Çŕóñ-śŧýļé śçĥéðúļéð ĵóƀś  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Open users &amp; access</source>
+        <translation>«Óþéñ úśéŕś &amp; àççéśś  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Manage users, roles + sessions</source>
+        <translation>«Ḿàñàĝé úśéŕś, ŕóļéś + śéśśìóñś  þéñ þéñ þéñ þéñ»</translation>
     </message>
     <message>
         <source>Cycle theme</source>
@@ -864,8 +973,8 @@
         <translation>«ĥŧŧþś://ñóðé.éxàḿþļé:8080  þéñ þéñ þéñ»</translation>
     </message>
     <message>
-        <source>/run/daemon/daemon.sock</source>
-        <translation>«/ŕúñ/ðàéḿóñ/ðàéḿóñ.śóçķ  þéñ þéñ þéñ»</translation>
+        <source>/path/to/daemon.sock</source>
+        <translation>«/þàŧĥ/ŧó/ðàéḿóñ.śóçķ  þéñ þéñ»</translation>
     </message>
     <message>
         <source>Transport</source>
@@ -896,8 +1005,32 @@
         <translation>«Çóññéçŧ ŧó à ñóðé óṽéŕ ŧĥé ñéŧẅóŕķ  þéñ þéñ þéñ þéñ»</translation>
     </message>
     <message>
+        <source>Local daemon</source>
+        <translation>«Ļóçàļ ðàéḿóñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>App-managed</source>
+        <translation>«Àþþ-ḿàñàĝéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Start and manage a node for me (recommended)</source>
+        <translation>«Śŧàŕŧ àñð ḿàñàĝé à ñóðé ƒóŕ ḿé (ŕéçóḿḿéñðéð)  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>«Àŧŧàçĥ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon socket I run myself</source>
+        <translation>«Çóññéçŧ ŧó à ðàéḿóñ śóçķéŧ Ì ŕúñ ḿýśéļƒ  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
         <source>Target</source>
         <translation>«Ŧàŕĝéŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Socket path</source>
+        <translation>«Śóçķéŧ þàŧĥ  þéñ»</translation>
     </message>
     <message>
         <source>Auth token (optional)</source>
@@ -929,6 +1062,18 @@
     <message>
         <source>Disconnect</source>
         <translation>«Ðìśçóññéçŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Local daemon</source>
+        <translation>«Ļóçàļ ðàéḿóñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation>«Śŧàŕŧ à ļóçàļ ðàéḿóñ àúŧóḿàŧìçàļļý  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
+        <translation>«Śŧóþ ŧĥé ḿàñàĝéð ðàéḿóñ ẅĥéñ Ì çļóśé ŧĥé àþþ  þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
 </context>
 <context>
@@ -1003,6 +1148,75 @@
     <message>
         <source>Edit</source>
         <translation>«Éðìŧ  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation>«ÓÀúŧĥ śìĝñ-ìñ ìś ñóŧ àṽàìļàƀļé ýéŧ; àðð àñ ÀÞÌ ķéý ìñśŧéàð.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation>«Çóúļð ñóŧ ŕéàçĥ ŧĥé ðàéḿóñ. Çĥéçķ ìŧ ìś ŕúññìñĝ àñð ŧŕý àĝàìñ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation>«Ŧĥé ðàéḿóñ ŕéþóŕŧéð ìŧ ìś ñóŧ ĥéàļŧĥý.  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>«úñķñóẅñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation>«Ŕéþļàçìñĝ àñ ìñçóḿþàŧìƀļé ļóçàļ ðàéḿóñ (àþì %1, ñééð %2)...  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation>«Ìñçóḿþàŧìƀļé ðàéḿóñ (àþì %1, ñééð %2).  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation>«Ŕéçóññéçŧìñĝ...  þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonTurnEngine</name>
+    <message>
+        <source>The turn timed out waiting for the agent.</source>
+        <translation>«Ŧĥé ŧúŕñ ŧìḿéð óúŧ ẅàìŧìñĝ ƒóŕ ŧĥé àĝéñŧ.  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>No session is bound for this turn.</source>
+        <translation>«Ñó śéśśìóñ ìś ƀóúñð ƒóŕ ŧĥìś ŧúŕñ.  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The connection to the agent was lost.</source>
+        <translation>«Ŧĥé çóññéçŧìóñ ŧó ŧĥé àĝéñŧ ẅàś ļóśŧ.  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Failed to read the agent's response stream.</source>
+        <translation>«Ƒàìļéð ŧó ŕéàð ŧĥé àĝéñŧ'ś ŕéśþóñśé śŧŕéàḿ.  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The turn ended: %1</source>
+        <translation>«Ŧĥé ŧúŕñ éñðéð: %1  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The agent could not start the turn.</source>
+        <translation>«Ŧĥé àĝéñŧ çóúļð ñóŧ śŧàŕŧ ŧĥé ŧúŕñ.  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The agent rejected the response.</source>
+        <translation>«Ŧĥé àĝéñŧ ŕéĵéçŧéð ŧĥé ŕéśþóñśé.  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The session was reset; recovered from history.</source>
+        <translation>«Ŧĥé śéśśìóñ ẅàś ŕéśéŧ; ŕéçóṽéŕéð ƒŕóḿ ĥìśŧóŕý.  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
 </context>
 <context>
@@ -1093,6 +1307,10 @@
         <translation>«Ĝó ŧó ƒìļé (Çŧŕļ+Þ)  þéñ þéñ»</translation>
     </message>
     <message>
+        <source>Search in files</source>
+        <translation>«Śéàŕçĥ ìñ ƒìļéś  þéñ þéñ»</translation>
+    </message>
+    <message>
         <source>Hide explorer</source>
         <translation>«Ĥìðé éxþļóŕéŕ  þéñ»</translation>
     </message>
@@ -1113,6 +1331,20 @@
     <message>
         <source>Go to file…</source>
         <translation>«Ĝó ŧó ƒìļé…  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>FileFinderDialog</name>
+    <message numerus="yes">
+        <source>Indexing… (%n file(s))</source>
+        <translation>
+            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
+            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
+            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
+            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
+            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
+            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -1183,6 +1415,22 @@
         <translation>«Ŕéḿóŧé  þéñ»</translation>
     </message>
     <message>
+        <source>Agent name</source>
+        <translation>«Àĝéñŧ ñàḿé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>«Þŕóṽìðéŕ  þéñ»</translation>
+    </message>
+    <message>
+        <source>List models</source>
+        <translation>«Ļìśŧ ḿóðéļś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>«Ḿóðéļ  þéñ»</translation>
+    </message>
+    <message>
         <source>Test</source>
         <translation>«Ŧéśŧ  þéñ»</translation>
     </message>
@@ -1207,12 +1455,28 @@
         <translation>«Ƒàìļéð —  þéñ» </translation>
     </message>
     <message>
+        <source>Local: App-managed (press to Attach instead)</source>
+        <translation>«Ļóçàļ: Àþþ-ḿàñàĝéð (þŕéśś ŧó Àŧŧàçĥ ìñśŧéàð)  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Local: Attach to socket (press for App-managed)</source>
+        <translation>«Ļóçàļ: Àŧŧàçĥ ŧó śóçķéŧ (þŕéśś ƒóŕ Àþþ-ḿàñàĝéð)  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
         <source>Connecting...</source>
         <translation>«Çóññéçŧìñĝ...  þéñ»</translation>
     </message>
     <message>
-        <source>Connected. A default model will be used.</source>
-        <translation>«Çóññéçŧéð. À ðéƒàúļŧ ḿóðéļ ẅìļļ ƀé úśéð.  þéñ þéñ þéñ þéñ þéñ»</translation>
+        <source>Sign in to continue.</source>
+        <translation>«Śìĝñ ìñ ŧó çóñŧìñúé.  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Sign in</source>
+        <translation>«Śìĝñ ìñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Pick a provider and a model, then Finish.</source>
+        <translation>«Þìçķ à þŕóṽìðéŕ àñð à ḿóðéļ, ŧĥéñ Ƒìñìśĥ.  þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
     <message>
         <source>Finish</source>
@@ -1230,6 +1494,10 @@
         <translation>«Àļḿóśŧ ŧĥéŕé - çóñƒìŕḿ àñ ìñƒéŕéñçé ḿóðéļ.  þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
     <message>
+        <source>Sign in to the node to continue.</source>
+        <translation>«Śìĝñ ìñ ŧó ŧĥé ñóðé ŧó çóñŧìñúé.  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
         <source>Connect to a daemon node to get started.</source>
         <translation>«Çóññéçŧ ŧó à ðàéḿóñ ñóðé ŧó ĝéŧ śŧàŕŧéð.  þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
@@ -1238,12 +1506,28 @@
         <translation>«Çóññéçŧìñĝ ŧó %1...  þéñ þéñ»</translation>
     </message>
     <message>
-        <source>Connected. A default model will be used for inference.</source>
-        <translation>«Çóññéçŧéð. À ðéƒàúļŧ ḿóðéļ ẅìļļ ƀé úśéð ƒóŕ ìñƒéŕéñçé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+        <source>Sign in</source>
+        <translation>«Śìĝñ ìñ  þéñ»</translation>
     </message>
     <message>
-        <source>You can browse and install more models later from the Models hub.</source>
-        <translation>«Ýóú çàñ ƀŕóẅśé àñð ìñśŧàļļ ḿóŕé ḿóðéļś ļàŧéŕ ƒŕóḿ ŧĥé Ḿóðéļś ĥúƀ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+        <source>Username</source>
+        <translation>«Úśéŕñàḿé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>«Þàśśẅóŕð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Signing in…</source>
+        <translation>«Śìĝñìñĝ ìñ…  þéñ»</translation>
+    </message>
+    <message>
+        <source>Agent name</source>
+        <translation>«Àĝéñŧ ñàḿé  þéñ»</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation>«àĝéñŧ ñàḿé  þéñ»</translation>
     </message>
     <message>
         <source>Skip for now</source>
@@ -1260,12 +1544,20 @@
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>«Çóúļð ñóŧ ŕéàçĥ ŧĥé ñóðé. Çĥéçķ ŧĥé ŧàŕĝéŧ àñð ŧŕý àĝàìñ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
+    <message>
+        <source>Couldn't verify this API key with %1 — check it and try again.</source>
+        <translation>«Çóúļðñ'ŧ ṽéŕìƒý ŧĥìś ÀÞÌ ķéý ẅìŧĥ %1 — çĥéçķ ìŧ àñð ŧŕý àĝàìñ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
 </context>
 <context>
     <name>FleetPage</name>
     <message>
         <source>Fleet</source>
         <translation>«Ƒļééŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>«Ŕéƒŕéśĥ  þéñ»</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -1278,6 +1570,18 @@
     <message>
         <source>%1 · %2 · depth %3</source>
         <translation>«%1 · %2 · ðéþŧĥ %3  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Workers</source>
+        <translation>«Ẅóŕķéŕś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Scale to %1</source>
+        <translation>«Śçàļé ŧó %1  þéñ»</translation>
+    </message>
+    <message>
+        <source>No active subagents</source>
+        <translation>«Ñó àçŧìṽé śúƀàĝéñŧś  þéñ þéñ»</translation>
     </message>
 </context>
 <context>
@@ -1301,6 +1605,13 @@
     <message>
         <source>offline</source>
         <translation>«óƒƒļìñé  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>GraphView</name>
+    <message>
+        <source>No graph data</source>
+        <translation>«Ñó ĝŕàþĥ ðàŧà  þéñ»</translation>
     </message>
 </context>
 <context>
@@ -1330,6 +1641,33 @@ Thanks — proceeding with: %1
 
 «Ŧĥàñķś — þŕóçééðìñĝ ẅìŧĥ: %1  þéñ þéñ þéñ»
 </translation>
+    </message>
+</context>
+<context>
+    <name>LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation>«Çóúļð ñóŧ ƒìñð à ļóçàļ ðàéḿóñ ƀìñàŕý. Śéŧ ìŧś þàŧĥ ìñ Śéŧŧìñĝś, óŕ çóññéçŧ ŧó à ŕéḿóŧé ðàéḿóñ ìñśŧéàð.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation>«Ŧĥé ļóçàļ ðàéḿóñ ķééþś çŕàśĥìñĝ (ŕéśŧàŕŧéð ŧóó ḿàñý ŧìḿéś). Çĥéçķ ìŧś ļóĝ àñð ýóúŕ çóñƒìĝúŕàŧìóñ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation>«Ƒàìļéð ŧó śŧàŕŧ ŧĥé ļóçàļ ðàéḿóñ (%1).  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation>«Ŧĥé ļóçàļ ðàéḿóñ ðìð ñóŧ ƀéçóḿé ŕéàðý ìñ ŧìḿé.  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation>«Ŧĥé ìñçóḿþàŧìƀļé ļóçàļ ðàéḿóñ (þìð %1) ðìð ñóŧ śĥúŧ ðóẅñ ìñ ŧìḿé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
+        <translation>«Àñ ìñçóḿþàŧìƀļé ðàéḿóñ ìś śéŕṽìñĝ %1, àñð ñó þìðƒìļé ŕéçóŕðś ìŧś þŕóçéśś. Śŧóþ ìŧ ḿàñúàļļý àñð ŕéçóññéçŧ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
 </context>
 <context>
@@ -1664,6 +2002,17 @@ Thanks — proceeding with: %1
     </message>
 </context>
 <context>
+    <name>MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation>«Àĝéñŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation>«Úśéŕ  þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>ModelPickerOverlay</name>
     <message>
         <source>Filter models…</source>
@@ -1716,20 +2065,24 @@ Thanks — proceeding with: %1
 <context>
     <name>ModelsDiscover</name>
     <message>
-        <source>Search models (name or provider)</source>
-        <translation>«Śéàŕçĥ ḿóðéļś (ñàḿé óŕ þŕóṽìðéŕ)  þéñ þéñ þéñ þéñ»</translation>
+        <source>Search Hugging Face repos (e.g. SmolLM2)</source>
+        <translation>«Śéàŕçĥ Ĥúĝĝìñĝ Ƒàçé ŕéþóś (é.ĝ. ŚḿóļĻḾ2)  þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
     <message>
-        <source>Any size</source>
-        <translation>«Àñý śìžé  þéñ»</translation>
+        <source>Search</source>
+        <translation>«Śéàŕçĥ  þéñ»</translation>
     </message>
     <message>
-        <source>Installed</source>
-        <translation>«Ìñśŧàļļéð  þéñ»</translation>
+        <source>Search for a model repo to browse its quantizations.</source>
+        <translation>«Śéàŕçĥ ƒóŕ à ḿóðéļ ŕéþó ŧó ƀŕóẅśé ìŧś qúàñŧìžàŧìóñś.  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>«Ðóẅñļóàð  þéñ»</translation>
+        <source>by %1</source>
+        <translation>«ƀý %1  þéñ»</translation>
+    </message>
+    <message>
+        <source>Quantizations</source>
+        <translation>«Qúàñŧìžàŧìóñś  þéñ»</translation>
     </message>
 </context>
 <context>
@@ -1811,6 +2164,65 @@ Start one from the Discover tab.</source>
     </message>
 </context>
 <context>
+    <name>NewAgentDialog</name>
+    <message>
+        <source>New agent</source>
+        <translation>«Ñéẅ àĝéñŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>«Çŕéàŧé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>«Ñàḿé  þéñ»</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation>«àĝéñŧ ñàḿé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>«Éñĝìñé  þéñ»</translation>
+    </message>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>«ðàéḿóñ-çóŕé (ñàŧìṽé)  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>«ìñśŧàļļéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>«ñóŧ ìñśŧàļļéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Persona (optional)</source>
+        <translation>«Þéŕśóñà (óþŧìóñàļ)  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>system prompt</source>
+        <translation>«śýśŧéḿ þŕóḿþŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon's ACP catalog — no provider, model, or key to configure.</source>
+        <translation>«Ŧĥìś àĝéñŧ ŕúñś à ƒóŕéìĝñ ÀÇÞ éñĝìñé. Ìŧś ļàúñçĥ ŕéçìþé ìś ḿàñàĝéð ƀý ŧĥé ðàéḿóñ'ś ÀÇÞ çàŧàļóĝ — ñó þŕóṽìðéŕ, ḿóðéļ, óŕ ķéý ŧó çóñƒìĝúŕé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>«Ñàḿé:  þéñ»</translation>
+    </message>
+    <message>
+        <source>Engine (Enter to pick):</source>
+        <translation>«Éñĝìñé (Éñŧéŕ ŧó þìçķ):  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>«Çàñçéļ  þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>NotificationsSection</name>
     <message>
         <source>Desktop notifications</source>
@@ -1867,12 +2279,44 @@ Start one from the Discover tab.</source>
         <translation>«Ḿàķé ðéƒàúļŧ  þéñ»</translation>
     </message>
     <message>
+        <source>Export profile</source>
+        <translation>«Éxþóŕŧ þŕóƒìļé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Import profile</source>
+        <translation>«Ìḿþóŕŧ þŕóƒìļé  þéñ»</translation>
+    </message>
+    <message>
         <source>Delete profile</source>
         <translation>«Ðéļéŧé þŕóƒìļé  þéñ»</translation>
     </message>
     <message>
         <source>Name</source>
         <translation>«Ñàḿé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>«Þŕóṽìðéŕ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Current provider: %1 (test provider — not selectable)</source>
+        <translation>«Çúŕŕéñŧ þŕóṽìðéŕ: %1 (ŧéśŧ þŕóṽìðéŕ — ñóŧ śéļéçŧàƀļé)  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
+        <translation>«Ɓàśé ÚŔĻ (óþŧìóñàļ, é.ĝ. ĥŧŧþś://àþì.ðàéḿóñ.àì/àþì/ṽ1)  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Credential: connected%1</source>
+        <translation>«Çŕéðéñŧìàļ: çóññéçŧéð%1  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Credential: none — add a key</source>
+        <translation>«Çŕéðéñŧìàļ: ñóñé — àðð à ķéý  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Set key</source>
+        <translation>«Śéŧ ķéý  þéñ»</translation>
     </message>
     <message>
         <source>Short description</source>
@@ -1891,8 +2335,52 @@ Start one from the Discover tab.</source>
         <translation>«Ŧóóļś  þéñ»</translation>
     </message>
     <message>
-        <source>Revert</source>
-        <translation>«Ŕéṽéŕŧ  þéñ»</translation>
+        <source>History</source>
+        <translation>«Ĥìśŧóŕý  þéñ»</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>«Ĥìðé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>«Śĥóẅ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Version history needs a durable daemon.</source>
+        <translation>«Ṽéŕśìóñ ĥìśŧóŕý ñééðś à ðúŕàƀļé ðàéḿóñ.  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>No revisions yet.</source>
+        <translation>«Ñó ŕéṽìśìóñś ýéŧ.  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>#%1</source>
+        <translation>«#%1  þéñ»</translation>
+    </message>
+    <message>
+        <source>operator</source>
+        <translation>«óþéŕàŧóŕ  þéñ»</translation>
+    </message>
+    <message>
+        <source>agent %1</source>
+        <translation>«àĝéñŧ %1  þéñ»</translation>
+    </message>
+    <message>
+        <source>Revert to this</source>
+        <translation>«Ŕéṽéŕŧ ŧó ŧĥìś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Discard changes</source>
+        <translation>«Ðìśçàŕð çĥàñĝéś  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Profile distributions (*.dist)</source>
+        <translation>«Þŕóƒìļé ðìśŧŕìƀúŧìóñś (*.ðìśŧ)  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>«Àļļ ƒìļéś (*)  þéñ»</translation>
     </message>
     <message>
         <source>Save</source>
@@ -1900,7 +2388,133 @@ Start one from the Discover tab.</source>
     </message>
 </context>
 <context>
+    <name>ProfileEditorDialog</name>
+    <message>
+        <source>Edit profile — %1</source>
+        <translation>«Éðìŧ þŕóƒìļé — %1  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Enter on a row edits it · Save commits · Esc discards</source>
+        <translation>«Éñŧéŕ óñ à ŕóẅ éðìŧś ìŧ · Śàṽé çóḿḿìŧś · Éśç ðìśçàŕðś  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>«Śàṽé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>«Çàñçéļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>«Ñàḿé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Engine: ACP agent · %1 (set at create time)</source>
+        <translation>«Éñĝìñé: ÀÇÞ àĝéñŧ · %1 (śéŧ àŧ çŕéàŧé ŧìḿé)  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Engine: daemon-core (native)</source>
+        <translation>«Éñĝìñé: ðàéḿóñ-çóŕé (ñàŧìṽé)  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>«Þŕóṽìðéŕ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>«Ɓàśé ÚŔĻ  þéñ»</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>«(þŕóṽìðéŕ ðéƒàúļŧ)  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>«Ḿóðéļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>(pick a model)</source>
+        <translation>«(þìçķ à ḿóðéļ)  þéñ»</translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>«Ðéśçŕìþŧìóñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>«Śýśŧéḿ þŕóḿþŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>«Śķìļļś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>«Ŧóóļś  þéñ»</translation>
+    </message>
+    <message>
+        <source>%1 (test provider — not selectable)</source>
+        <translation>«%1 (ŧéśŧ þŕóṽìðéŕ — ñóŧ śéļéçŧàƀļé)  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>(pick a provider)</source>
+        <translation>«(þìçķ à þŕóṽìðéŕ)  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Profile name</source>
+        <translation>«Þŕóƒìļé ñàḿé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Base URL (empty = provider default)</source>
+        <translation>«Ɓàśé ÚŔĻ (éḿþŧý = þŕóṽìðéŕ ðéƒàúļŧ)  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Short description</source>
+        <translation>«Śĥóŕŧ ðéśçŕìþŧìóñ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>download</source>
+        <translation>«ðóẅñļóàð  þéñ»</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>«çúŕŕéñŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Enter inserts a newline · Tab reaches the buttons</source>
+        <translation>«Éñŧéŕ ìñśéŕŧś à ñéẅļìñé · Ŧàƀ ŕéàçĥéś ŧĥé ƀúŧŧóñś  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>«ÓĶ  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileToggleListDialog</name>
+    <message>
+        <source>Enter / Space toggles · Esc done</source>
+        <translation>«Éñŧéŕ / Śþàçé ŧóĝĝļéś · Éśç ðóñé  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>«Ðóñé  þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>ProfilesPage</name>
+    <message>
+        <source>Exported profile</source>
+        <translation>«Éxþóŕŧéð þŕóƒìļé  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Imported %1</source>
+        <translation>«Ìḿþóŕŧéð %1  þéñ»</translation>
+    </message>
+    <message>
+        <source>Reverted %1</source>
+        <translation>«Ŕéṽéŕŧéð %1  þéñ»</translation>
+    </message>
     <message>
         <source>Profiles</source>
         <translation>«Þŕóƒìļéś  þéñ»</translation>
@@ -1912,6 +2526,14 @@ Start one from the Discover tab.</source>
     <message>
         <source>New profile</source>
         <translation>«Ñéẅ þŕóƒìļé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Profile id (e.g. work)</source>
+        <translation>«Þŕóƒìļé ìð (é.ĝ. ẅóŕķ)  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Empty profile</source>
+        <translation>«Éḿþŧý þŕóƒìļé  þéñ»</translation>
     </message>
 </context>
 <context>
@@ -2154,6 +2776,53 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>QuantPickerPopup</name>
+    <message>
+        <source>Choose a quantization</source>
+        <translation>«Çĥóóśé à qúàñŧìžàŧìóñ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Recommended: %1</source>
+        <translation>«Ŕéçóḿḿéñðéð: %1  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>fits</source>
+        <translation>«ƒìŧś  þéñ»</translation>
+    </message>
+    <message>
+        <source>tight</source>
+        <translation>«ŧìĝĥŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Download recommended</source>
+        <translation>«Ðóẅñļóàð ŕéçóḿḿéñðéð  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Available files</source>
+        <translation>«Àṽàìļàƀļé ƒìļéś  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Hide advanced</source>
+        <translation>«Ĥìðé àðṽàñçéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>«Àðṽàñçéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>RECOMMENDED</source>
+        <translation>«ŔÉÇÓḾḾÉÑÐÉÐ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>«Ðóẅñļóàð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>«Çļóśé  þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>QueuePanel</name>
     <message>
         <source>Queued (%1)</source>
@@ -2338,26 +3007,112 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>RouteDialog</name>
+    <message>
+        <source>Edit route</source>
+        <translation>«Éðìŧ ŕóúŧé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Add route</source>
+        <translation>«Àðð ŕóúŧé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Currently: → %1 as %2 · decided by %3</source>
+        <translation>«Çúŕŕéñŧļý: → %1 àś %2 · ðéçìðéð ƀý %3  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>(inherit)</source>
+        <translation>«(ìñĥéŕìŧ)  þéñ»</translation>
+    </message>
+    <message>
+        <source>Currently: unrouted (deterministic)</source>
+        <translation>«Çúŕŕéñŧļý: úñŕóúŧéð (ðéŧéŕḿìñìśŧìç)  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Origin (where it comes from)</source>
+        <translation>«Óŕìĝìñ (ẅĥéŕé ìŧ çóḿéś ƒŕóḿ)  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Session (the conversation)</source>
+        <translation>«Śéśśìóñ (ŧĥé çóñṽéŕśàŧìóñ)  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>«Àĝéñŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>«Çàñçéļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Save route</source>
+        <translation>«Śàṽé ŕóúŧé  þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>RoutingPage</name>
     <message>
         <source>Routing</source>
         <translation>«Ŕóúŧìñĝ  þéñ»</translation>
     </message>
     <message>
-        <source>Intent → model rules</source>
-        <translation>«Ìñŧéñŧ → ḿóðéļ ŕúļéś  þéñ þéñ»</translation>
+        <source>Routes</source>
+        <translation>«Ŕóúŧéś  þéñ»</translation>
     </message>
     <message>
-        <source>+ Add rule</source>
-        <translation>«+ Àðð ŕúļé  þéñ»</translation>
+        <source>+ Add route</source>
+        <translation>«+ Àðð ŕóúŧé  þéñ»</translation>
     </message>
     <message>
-        <source>New rule</source>
-        <translation>«Ñéẅ ŕúļé  þéñ»</translation>
+        <source>(inherit)</source>
+        <translation>«(ìñĥéŕìŧ)  þéñ»</translation>
     </message>
     <message>
-        <source>fallback</source>
-        <translation>«ƒàļļƀàçķ  þéñ»</translation>
+        <source>Edit route</source>
+        <translation>«Éðìŧ ŕóúŧé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>«Úñþìñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Delivery · </source>
+        <translation>«Ðéļìṽéŕý ·  þéñ» </translation>
+    </message>
+    <message>
+        <source>Delivery</source>
+        <translation>«Ðéļìṽéŕý  þéñ»</translation>
+    </message>
+    <message>
+        <source>Select a route to see where its replies go</source>
+        <translation>«Śéļéçŧ à ŕóúŧé ŧó śéé ẅĥéŕé ìŧś ŕéþļìéś ĝó  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>No delivery targets</source>
+        <translation>«Ñó ðéļìṽéŕý ŧàŕĝéŧś  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>PRIMARY</source>
+        <translation>«ÞŔÌḾÀŔÝ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Make primary</source>
+        <translation>«Ḿàķé þŕìḿàŕý  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingTopology</name>
+    <message>
+        <source>— pinned</source>
+        <translation>«— þìññéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>·· derived</source>
+        <translation>«·· ðéŕìṽéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>- - spectator</source>
+        <translation>«- - śþéçŧàŧóŕ  þéñ»</translation>
     </message>
 </context>
 <context>
@@ -2459,6 +3214,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>«Śçĥéðúļéð ĵóƀś  þéñ»</translation>
     </message>
     <message>
+        <source>Channels</source>
+        <translation>«Çĥàññéļś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>«Úśéŕś &amp; Àççéśś  þéñ»</translation>
+    </message>
+    <message>
         <source>Memory</source>
         <translation>«Ḿéḿóŕý  þéñ»</translation>
     </message>
@@ -2546,6 +3309,26 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Reasoning effort</source>
         <translation>«Ŕéàśóñìñĝ éƒƒóŕŧ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Approval mode</source>
+        <translation>«Àþþŕóṽàļ ḿóðé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>«Éðìŧś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>«Àúŧó  þéñ»</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>«Ðéñý  þéñ»</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>«Àśķ  þéñ»</translation>
     </message>
     <message>
         <source>Fast mode</source>
@@ -2883,12 +3666,16 @@ This only affects the app appearance, not your data.</source>
         <translation>«Śéŧŧìñĝś  þéñ»</translation>
     </message>
     <message>
-        <source>New root node</source>
-        <translation>«Ñéẅ ŕóóŧ ñóðé  þéñ»</translation>
+        <source>Local node</source>
+        <translation>«Ļóçàļ ñóðé  þéñ»</translation>
     </message>
     <message>
         <source>New tag</source>
         <translation>«Ñéẅ ŧàĝ  þéñ»</translation>
+    </message>
+    <message>
+        <source>New agent</source>
+        <translation>«Ñéẅ àĝéñŧ  þéñ»</translation>
     </message>
     <message>
         <source>Collapse all</source>
@@ -2927,12 +3714,20 @@ This only affects the app appearance, not your data.</source>
         <translation>«Àþþŕóṽàļś  þéñ»</translation>
     </message>
     <message>
+        <source>Channels</source>
+        <translation>«Çĥàññéļś  þéñ»</translation>
+    </message>
+    <message>
         <source>Routing</source>
         <translation>«Ŕóúŧìñĝ  þéñ»</translation>
     </message>
     <message>
         <source>Scheduled jobs</source>
         <translation>«Śçĥéðúļéð ĵóƀś  þéñ»</translation>
+    </message>
+    <message>
+        <source>New chat</source>
+        <translation>«Ñéẅ çĥàŧ  þéñ»</translation>
     </message>
     <message>
         <source>Profile settings</source>
@@ -2960,6 +3755,18 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Tags</source>
         <translation>«Ŧàĝś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Local node</source>
+        <translation>«Ļóçàļ ñóðé  þéñ»</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>«(úñŧìŧļéð)  þéñ»</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>«Ìñŧéĝŕàŧìóñś  þéñ»</translation>
     </message>
     <message>
         <source>New tag</source>
@@ -3015,6 +3822,10 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Approval mode</source>
         <translation>«Àþþŕóṽàļ ḿóðé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Toggle terminal</source>
+        <translation>«Ŧóĝĝļé ŧéŕḿìñàļ  þéñ þéñ»</translation>
     </message>
     <message>
         <source>Terminal</source>
@@ -3399,6 +4210,30 @@ Thanks — proceeding with: %1
         <translation>«Ḿóðéļ  þéñ»</translation>
     </message>
     <message>
+        <source>Download model — pick a repo</source>
+        <translation>«Ðóẅñļóàð ḿóðéļ — þìçķ à ŕéþó  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Choose a quantization</source>
+        <translation>«Çĥóóśé à qúàñŧìžàŧìóñ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Go to file</source>
+        <translation>«Ĝó ŧó ƒìļé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Enter opens a preview · Shift+Enter pins · Esc closes</source>
+        <translation>«Éñŧéŕ óþéñś à þŕéṽìéẅ · Śĥìƒŧ+Éñŧéŕ þìñś · Éśç çļóśéś  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Attach file</source>
+        <translation>«Àŧŧàçĥ ƒìļé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Enter attaches the selected file · Esc cancels</source>
+        <translation>«Éñŧéŕ àŧŧàçĥéś ŧĥé śéļéçŧéð ƒìļé · Éśç çàñçéļś  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
         <source>Commands</source>
         <translation>«Çóḿḿàñðś  þéñ»</translation>
     </message>
@@ -3446,18 +4281,18 @@ Thanks — proceeding with: %1
         <translation>«Śçĥéðúļéð ĵóƀś  þéñ»</translation>
     </message>
     <message>
+        <source>Users &amp; Access</source>
+        <translation>«Úśéŕś &amp; Àççéśś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>«Çĥàññéļś  þéñ»</translation>
+    </message>
+    <message>
         <source># Models
 
 </source>
         <translation>«# Ḿóðéļś  þéñ»
-
-</translation>
-    </message>
-    <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes.
-
-</source>
-        <translation>«Ìñśŧàļļéð ḿóðéļś, śĥàŕéð ẅìŧĥ ŧĥé ĜÚÌ. **ĵ/ķ** ḿóṽé · **Éñŧéŕ** àçŧìṽàŧéś · **x** ŕéḿóṽéś.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
 
 </translation>
     </message>
@@ -3478,12 +4313,6 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>- %1**%2** (%3, %4 GiB)%5
-</source>
-        <translation>«- %1**%2** (%3, %4 ĜìƁ)%5  þéñ þéñ þéñ»
-</translation>
-    </message>
-    <message>
         <source> — **active**</source>
         <translation> «— **àçŧìṽé**  þéñ»</translation>
     </message>
@@ -3496,14 +4325,44 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>- %1 — %2 · %3 GiB · %4%5
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
+
 </source>
-        <translation>«- %1 — %2 · %3 ĜìƁ · %4%5  þéñ þéñ þéñ»
+        <translation>«Ìñśŧàļļéð ḿóðéļś, śĥàŕéð ẅìŧĥ ŧĥé ĜÚÌ. **ĵ/ķ** ḿóṽé · **Éñŧéŕ** àçŧìṽàŧéś · **x** ŕéḿóṽéś · **ð** ðóẅñļóàð à ḿóðéļ (ŕéþó → qúàñŧ).  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
+
 </translation>
     </message>
     <message>
-        <source> (installed)</source>
-        <translation> «(ìñśŧàļļéð)  þéñ»</translation>
+        <source>- %1**%2** (%3)%4
+</source>
+        <translation>«- %1**%2** (%3)%4  þéñ þéñ»
+</translation>
+    </message>
+    <message>
+        <source>## Downloads
+
+</source>
+        <translation>«## Ðóẅñļóàðś  þéñ»
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%  · %3
+</source>
+        <translation>«- %1 — %2%  · %3  þéñ þéñ»
+</translation>
+    </message>
+    <message>
+        <source>_Press **d** to search repos and download a model._
+</source>
+        <translation>«_Þŕéśś **ð** ŧó śéàŕçĥ ŕéþóś àñð ðóẅñļóàð à ḿóðéļ._  þéñ þéñ þéñ þéñ þéñ þéñ»
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2 · ↓ %3
+</source>
+        <translation>«- %1 — %2 · ↓ %3  þéñ þéñ»
+</translation>
     </message>
     <message>
         <source>
@@ -3718,10 +4577,18 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
 </translation>
     </message>
     <message>
-        <source>Agent == profile. Memory lives in this agent's bank (`%1`).
+        <source>Agent profiles, shared with the GUI. **j/k** move · **Enter** set default · **e** edit (provider / model / prompt / skills / tools) · **n** clone · **a** new agent · **x** delete.
 
 </source>
-        <translation>«Àĝéñŧ == þŕóƒìļé. Ḿéḿóŕý ļìṽéś ìñ ŧĥìś àĝéñŧ'ś ƀàñķ (`%1`).  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
+        <translation>«Àĝéñŧ þŕóƒìļéś, śĥàŕéð ẅìŧĥ ŧĥé ĜÚÌ. **ĵ/ķ** ḿóṽé · **Éñŧéŕ** śéŧ ðéƒàúļŧ · **é** éðìŧ (þŕóṽìðéŕ / ḿóðéļ / þŕóḿþŧ / śķìļļś / ŧóóļś) · **ñ** çļóñé · **à** ñéẅ àĝéñŧ · **x** ðéļéŧé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
+
+</translation>
+    </message>
+    <message>
+        <source>Agent == profile. Memory lives in this agent's bank (`%1`). Press **e** to edit this profile.
+
+</source>
+        <translation>«Àĝéñŧ == þŕóƒìļé. Ḿéḿóŕý ļìṽéś ìñ ŧĥìś àĝéñŧ'ś ƀàñķ (`%1`). Þŕéśś **é** ŧó éðìŧ ŧĥìś þŕóƒìļé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
 
 </translation>
     </message>
@@ -3962,14 +4829,6 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
 </translation>
     </message>
     <message>
-        <source>Agent profiles, shared with the GUI. **j/k** move · **Enter** set default · **x** delete. Use the GUI editor for model / prompt / skills.
-
-</source>
-        <translation>«Àĝéñŧ þŕóƒìļéś, śĥàŕéð ẅìŧĥ ŧĥé ĜÚÌ. **ĵ/ķ** ḿóṽé · **Éñŧéŕ** śéŧ ðéƒàúļŧ · **x** ðéļéŧé. Úśé ŧĥé ĜÚÌ éðìŧóŕ ƒóŕ ḿóðéļ / þŕóḿþŧ / śķìļļś.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
-
-</translation>
-    </message>
-    <message>
         <source> (default)</source>
         <translation> «(ðéƒàúļŧ)  þéñ»</translation>
     </message>
@@ -4002,10 +4861,10 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
 </translation>
     </message>
     <message>
-        <source>Connected provider accounts, shared with the GUI. **j/k** move · **R**/**Enter** re-auth · **x** remove. Use the GUI wizard to add accounts.
+        <source>Connected provider accounts, shared with the GUI. **j/k** move · **a** add account · **R**/**Enter** re-auth · **x** remove.
 
 </source>
-        <translation>«Çóññéçŧéð þŕóṽìðéŕ àççóúñŧś, śĥàŕéð ẅìŧĥ ŧĥé ĜÚÌ. **ĵ/ķ** ḿóṽé · **Ŕ**/**Éñŧéŕ** ŕé-àúŧĥ · **x** ŕéḿóṽé. Úśé ŧĥé ĜÚÌ ẅìžàŕð ŧó àðð àççóúñŧś.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
+        <translation>«Çóññéçŧéð þŕóṽìðéŕ àççóúñŧś, śĥàŕéð ẅìŧĥ ŧĥé ĜÚÌ. **ĵ/ķ** ḿóṽé · **à** àðð àççóúñŧ · **Ŕ**/**Éñŧéŕ** ŕé-àúŧĥ · **x** ŕéḿóṽé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
 
 </translation>
     </message>
@@ -4062,6 +4921,158 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
         <translation>«óƒƒ  þéñ»</translation>
     </message>
     <message>
+        <source>_(not set)_</source>
+        <translation>«_(ñóŧ śéŧ)_  þéñ»</translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation>«Àþþéàŕàñçé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>«Ŧĥéḿé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>«Ļàñĝúàĝé  þéñ»</translation>
+    </message>
+    <message>
+        <source>applies live; restart to retranslate the whole chrome</source>
+        <translation>«àþþļìéś ļìṽé; ŕéśŧàŕŧ ŧó ŕéŧŕàñśļàŧé ŧĥé ẅĥóļé çĥŕóḿé  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Distraction-free (hide chrome)</source>
+        <translation>«Ðìśŧŕàçŧìóñ-ƒŕéé (ĥìðé çĥŕóḿé)  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation>«Ñóŧìƒìçàŧìóñś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Notify when a turn needs my input</source>
+        <translation>«Ñóŧìƒý ẅĥéñ à ŧúŕñ ñééðś ḿý ìñþúŧ  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Notify when a turn finishes</source>
+        <translation>«Ñóŧìƒý ẅĥéñ à ŧúŕñ ƒìñìśĥéś  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>«Çóññéçŧìóñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation>«Śŧàŕŧ à ļóçàļ ðàéḿóñ àúŧóḿàŧìçàļļý  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
+        <translation>«Śŧóþ ŧĥé ḿàñàĝéð ðàéḿóñ ẅĥéñ Ì çļóśé ŧĥé àþþ  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>«Ḿóðéļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>«Ŕéàśóñìñĝ éƒƒóŕŧ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Fast mode (lower latency)</source>
+        <translation>«Ƒàśŧ ḿóðé (ļóẅéŕ ļàŧéñçý)  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>«Çĥàŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Stream responses</source>
+        <translation>«Śŧŕéàḿ ŕéśþóñśéś  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Send on Enter (Shift+Enter for newline)</source>
+        <translation>«Śéñð óñ Éñŧéŕ (Śĥìƒŧ+Éñŧéŕ ƒóŕ ñéẅļìñé)  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Show token counts</source>
+        <translation>«Śĥóẅ ŧóķéñ çóúñŧś  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Default system prompt for new chats</source>
+        <translation>«Ðéƒàúļŧ śýśŧéḿ þŕóḿþŧ ƒóŕ ñéẅ çĥàŧś  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Safety</source>
+        <translation>«Śàƒéŧý  þéñ»</translation>
+    </message>
+    <message>
+        <source>Approval policy</source>
+        <translation>«Àþþŕóṽàļ þóļìçý  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Filesystem access</source>
+        <translation>«Ƒìļéśýśŧéḿ àççéśś  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Allow network access</source>
+        <translation>«Àļļóẅ ñéŧẅóŕķ àççéśś  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Memory &amp; Context</source>
+        <translation>«Ḿéḿóŕý &amp; Çóñŧéxŧ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Max context tokens</source>
+        <translation>«Ḿàx çóñŧéxŧ ŧóķéñś  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Auto-compact when context is full</source>
+        <translation>«Àúŧó-çóḿþàçŧ ẅĥéñ çóñŧéxŧ ìś ƒúļļ  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Persist memory across sessions</source>
+        <translation>«Þéŕśìśŧ ḿéḿóŕý àçŕóśś śéśśìóñś  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Workspace</source>
+        <translation>«Ẅóŕķśþàçé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Workspace root</source>
+        <translation>«Ẅóŕķśþàçé ŕóóŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Respect .gitignore</source>
+        <translation>«Ŕéśþéçŧ .ĝìŧìĝñóŕé  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation>«Ṽóìçé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Enable voice transcription</source>
+        <translation>«Éñàƀļé ṽóìçé ŧŕàñśçŕìþŧìóñ  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Transcription model</source>
+        <translation>«Ŧŕàñśçŕìþŧìóñ ḿóðéļ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>«Àðṽàñçéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Log level</source>
+        <translation>«Ļóĝ ļéṽéļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Send anonymous telemetry</source>
+        <translation>«Śéñð àñóñýḿóúś ŧéļéḿéŧŕý  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Enable experimental tools</source>
+        <translation>«Éñàƀļé éxþéŕìḿéñŧàļ ŧóóļś  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
         <source># Settings
 
 </source>
@@ -4070,221 +5081,179 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
 </translation>
     </message>
     <message>
-        <source>The settings page, shared with the GUI. Edit values in the GUI; the TUI reflects the same daemon-config + app prefs. **F8** cycles the theme.
+        <source>Shared with the GUI — both front ends edit the same daemon config and app prefs. **j/k** select a row · **Space/Enter** toggles · **Enter** opens a picker/editor · **F8** cycles the theme.
+</source>
+        <translation>«Śĥàŕéð ẅìŧĥ ŧĥé ĜÚÌ — ƀóŧĥ ƒŕóñŧ éñðś éðìŧ ŧĥé śàḿé ðàéḿóñ çóñƒìĝ àñð àþþ þŕéƒś. **ĵ/ķ** śéļéçŧ à ŕóẅ · **Śþàçé/Éñŧéŕ** ŧóĝĝļéś · **Éñŧéŕ** óþéñś à þìçķéŕ/éðìŧóŕ · **Ƒ8** çýçļéś ŧĥé ŧĥéḿé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
+</translation>
+    </message>
+    <message>
+        <source>- State: **%1** · %2 · `%3` — _reconnect via the GUI picker or the first-run gate_
+</source>
+        <translation>«- Śŧàŧé: **%1** · %2 · `%3` — _ŕéçóññéçŧ ṽìà ŧĥé ĜÚÌ þìçķéŕ óŕ ŧĥé ƒìŕśŧ-ŕúñ ĝàŧé_  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
+</translation>
+    </message>
+    <message>
+        <source>- Active default: `%1` — _change or install in the Models page (`/models`)_
+</source>
+        <translation>«- Àçŧìṽé ðéƒàúļŧ: `%1` — _çĥàñĝé óŕ ìñśŧàļļ ìñ ŧĥé Ḿóðéļś þàĝé (`/ḿóðéļś`)_  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
+</translation>
+    </message>
+    <message>
+        <source># Users &amp; Access
 
 </source>
-        <translation>«Ŧĥé śéŧŧìñĝś þàĝé, śĥàŕéð ẅìŧĥ ŧĥé ĜÚÌ. Éðìŧ ṽàļúéś ìñ ŧĥé ĜÚÌ; ŧĥé ŦÚÌ ŕéƒļéçŧś ŧĥé śàḿé ðàéḿóñ-çóñƒìĝ + àþþ þŕéƒś. **Ƒ8** çýçļéś ŧĥé ŧĥéḿé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
+        <translation>«# Úśéŕś &amp; Àççéśś  þéñ þéñ»
 
 </translation>
     </message>
     <message>
-        <source>## Connection
+        <source>## Signed in as
 
 </source>
-        <translation>«## Çóññéçŧìóñ  þéñ»
-
-</translation>
-    </message>
-    <message>
-        <source>- State: **%1**
-</source>
-        <translation>«- Śŧàŧé: **%1**  þéñ þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Mode: %1
-</source>
-        <translation>«- Ḿóðé: %1  þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Target: `%1`
-
-</source>
-        <translation>«- Ŧàŕĝéŧ: `%1`  þéñ»
+        <translation>«## Śìĝñéð ìñ àś  þéñ þéñ»
 
 </translation>
     </message>
     <message>
-        <source>## Model
+        <source>- **%1**
+</source>
+        <translation>«- **%1**  þéñ»
+</translation>
+    </message>
+    <message>
+        <source>- User id: `%1`
+</source>
+        <translation>«- Úśéŕ ìð: `%1`  þéñ þéñ»
+</translation>
+    </message>
+    <message>
+        <source>- **Not authenticated**
+</source>
+        <translation>«- **Ñóŧ àúŧĥéñŧìçàŧéð**  þéñ þéñ þéñ»
+</translation>
+    </message>
+    <message>
+        <source>- Roles: %1
+</source>
+        <translation>«- Ŕóļéś: %1  þéñ»
+</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>«(ñóñé)  þéñ»</translation>
+    </message>
+    <message>
+        <source>- Capabilities: %1
 
 </source>
-        <translation>«## Ḿóðéļ  þéñ»
+        <translation>«- Çàþàƀìļìŧìéś: %1  þéñ þéñ»
 
 </translation>
     </message>
     <message>
-        <source>- Default: `%1`
-</source>
-        <translation>«- Ðéƒàúļŧ: `%1`  þéñ þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Reasoning effort: %1
-</source>
-        <translation>«- Ŕéàśóñìñĝ éƒƒóŕŧ: %1  þéñ þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Fast mode: %1
+        <source>## Users &amp; roles
 
 </source>
-        <translation>«- Ƒàśŧ ḿóðé: %1  þéñ þéñ»
+        <translation>«## Úśéŕś &amp; ŕóļéś  þéñ þéñ»
 
 </translation>
     </message>
     <message>
-        <source>## Chat
+        <source>User administration is not available yet.
 
 </source>
-        <translation>«## Çĥàŧ  þéñ»
-
-</translation>
-    </message>
-    <message>
-        <source>- Stream responses: %1
-</source>
-        <translation>«- Śŧŕéàḿ ŕéśþóñśéś: %1  þéñ þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Send on Enter: %1
-</source>
-        <translation>«- Śéñð óñ Éñŧéŕ: %1  þéñ þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Show token counts: %1
-
-</source>
-        <translation>«- Śĥóẅ ŧóķéñ çóúñŧś: %1  þéñ þéñ þéñ»
+        <translation>«Úśéŕ àðḿìñìśŧŕàŧìóñ ìś ñóŧ àṽàìļàƀļé ýéŧ.  þéñ þéñ þéñ þéñ þéñ»
 
 </translation>
     </message>
     <message>
-        <source>## Safety
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.
+</source>
+        <translation>«Ļìśŧìñĝ, çŕéàŧìñĝ, ðìśàƀļìñĝ úśéŕś àñð àśśìĝñìñĝ ŕóļéś ŕéqúìŕéś ŧĥé ñóðé àççéśś-àðḿìñ ÀÞÌ, ẅĥìçĥ ìś śŧìļļ ƀéìñĝ ƀúìļŧ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
+</translation>
+    </message>
+    <message>
+        <source># Channels
 
 </source>
-        <translation>«## Śàƒéŧý  þéñ»
+        <translation>«# Çĥàññéļś  þéñ»
 
 </translation>
     </message>
     <message>
-        <source>- Approval policy: %1
+        <source>_Channels are unavailable: the transports seam is not wired in this mode._
 </source>
-        <translation>«- Àþþŕóṽàļ þóļìçý: %1  þéñ þéñ»
+        <translation>«_Çĥàññéļś àŕé úñàṽàìļàƀļé: ŧĥé ŧŕàñśþóŕŧś śéàḿ ìś ñóŧ ẅìŕéð ìñ ŧĥìś ḿóðé._  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
 </translation>
     </message>
     <message>
-        <source>- Filesystem access: %1
-</source>
-        <translation>«- Ƒìļéśýśŧéḿ àççéśś: %1  þéñ þéñ þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Allow network: %1
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
 
 </source>
-        <translation>«- Àļļóẅ ñéŧẅóŕķ: %1  þéñ þéñ»
+        <translation>«Éṽéñŧś-ÌÓ ŧŕàñśþóŕŧ àççóúñŧś àñð ŧĥéìŕ ļìṽé ŕóóḿś, śĥàŕéð ẅìŧĥ ŧĥé ĜÚÌ. Ŕéàð-óñļý ìñ ƀóŧĥ śĥéļļś ŧĥìś śļìçé - çóññéçŧìñĝ ìś ðéƒéŕŕéð (ÉÌÓ-2).  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
 
 </translation>
     </message>
     <message>
-        <source>## Memory &amp; Context
+        <source>## Accounts
 
 </source>
-        <translation>«## Ḿéḿóŕý &amp; Çóñŧéxŧ  þéñ þéñ»
-
-</translation>
-    </message>
-    <message>
-        <source>- Max context tokens: %1
-</source>
-        <translation>«- Ḿàx çóñŧéxŧ ŧóķéñś: %1  þéñ þéñ þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Auto-compact: %1
-</source>
-        <translation>«- Àúŧó-çóḿþàçŧ: %1  þéñ þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Persist memory: %1
-
-</source>
-        <translation>«- Þéŕśìśŧ ḿéḿóŕý: %1  þéñ þéñ»
+        <translation>«## Àççóúñŧś  þéñ»
 
 </translation>
     </message>
     <message>
-        <source>## Workspace
+        <source>_No channels connected._
+</source>
+        <translation>«_Ñó çĥàññéļś çóññéçŧéð._  þéñ þéñ þéñ»
+</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>«%1 · %2  þéñ»</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3 · %4
+</source>
+        <translation>«- %1 **%2** — %3 · %4  þéñ þéñ»
+</translation>
+    </message>
+    <message>
+        <source>  - _No rooms._
+</source>
+        <translation>  «- _Ñó ŕóóḿś._  þéñ»
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  «- %1  þéñ»
+</translation>
+    </message>
+    <message>
+        <source>  - %1 · %2
+</source>
+        <translation>  «- %1 · %2  þéñ»
+</translation>
+    </message>
+    <message>
+        <source>## Add channel
 
 </source>
-        <translation>«## Ẅóŕķśþàçé  þéñ»
+        <translation>«## Àðð çĥàññéļ  þéñ»
 
 </translation>
     </message>
     <message>
-        <source>- Root: `%1`
+        <source>_Connect to a daemon to see available channel types._
 </source>
-        <translation>«- Ŕóóŧ: `%1`  þéñ»
+        <translation>«_Çóññéçŧ ŧó à ðàéḿóñ ŧó śéé àṽàìļàƀļé çĥàññéļ ŧýþéś._  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»
 </translation>
     </message>
     <message>
-        <source>- Respect .gitignore: %1
-
+        <source>- **%1** (`%2`)
 </source>
-        <translation>«- Ŕéśþéçŧ .ĝìŧìĝñóŕé: %1  þéñ þéñ þéñ»
-
-</translation>
-    </message>
-    <message>
-        <source>## Voice
-
-</source>
-        <translation>«## Ṽóìçé  þéñ»
-
-</translation>
-    </message>
-    <message>
-        <source>- Enabled: %1
-</source>
-        <translation>«- Éñàƀļéð: %1  þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Transcription model: %1
-
-</source>
-        <translation>«- Ŧŕàñśçŕìþŧìóñ ḿóðéļ: %1  þéñ þéñ þéñ»
-
-</translation>
-    </message>
-    <message>
-        <source>## Advanced
-
-</source>
-        <translation>«## Àðṽàñçéð  þéñ»
-
-</translation>
-    </message>
-    <message>
-        <source>- Log level: %1
-</source>
-        <translation>«- Ļóĝ ļéṽéļ: %1  þéñ þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Telemetry: %1
-</source>
-        <translation>«- Ŧéļéḿéŧŕý: %1  þéñ þéñ»
-</translation>
-    </message>
-    <message>
-        <source>- Experimental tools: %1
-</source>
-        <translation>«- Éxþéŕìḿéñŧàļ ŧóóļś: %1  þéñ þéñ þéñ»
+        <translation>«- **%1** (`%2`)  þéñ þéñ»
 </translation>
     </message>
 </context>
@@ -4297,6 +5266,53 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
     <message>
         <source>The build failed while completing this turn.</source>
         <translation>«Ŧĥé ƀúìļð ƒàìļéð ẅĥìļé çóḿþļéŧìñĝ ŧĥìś ŧúŕñ.  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>UsersAccessPage</name>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>«Úśéŕś &amp; Àççéśś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Signed in as</source>
+        <translation>«Śìĝñéð ìñ àś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Not authenticated</source>
+        <translation>«Ñóŧ àúŧĥéñŧìçàŧéð  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>User id: %1</source>
+        <translation>«Úśéŕ ìð: %1  þéñ»</translation>
+    </message>
+    <message>
+        <source>Roles: %1</source>
+        <translation>«Ŕóļéś: %1  þéñ»</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>«(ñóñé)  þéñ»</translation>
+    </message>
+    <message>
+        <source>Capabilities: %1</source>
+        <translation>«Çàþàƀìļìŧìéś: %1  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Users &amp; roles</source>
+        <translation>«Úśéŕś &amp; ŕóļéś  þéñ»</translation>
+    </message>
+    <message>
+        <source>User administration is not available yet.</source>
+        <translation>«Úśéŕ àðḿìñìśŧŕàŧìóñ ìś ñóŧ àṽàìļàƀļé ýéŧ.  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.</source>
+        <translation>«Ļìśŧìñĝ, çŕéàŧìñĝ, ðìśàƀļìñĝ úśéŕś àñð àśśìĝñìñĝ ŕóļéś ŕéqúìŕéś ŧĥé ñóðé àççéśś-àðḿìñ ÀÞÌ, ẅĥìçĥ ìś śŧìļļ ƀéìñĝ ƀúìļŧ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Add user</source>
+        <translation>«Àðð úśéŕ  þéñ»</translation>
     </message>
 </context>
 <context>
@@ -4330,10 +5346,93 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
     </message>
 </context>
 <context>
+    <name>accounts::DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation>«ÓÀúŧĥ śìĝñ-ìñ ìś ñóŧ àṽàìļàƀļé ýéŧ; àðð àñ ÀÞÌ ķéý ìñśŧéàð.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation>«Çóúļð ñóŧ ŕéàçĥ ŧĥé ðàéḿóñ. Çĥéçķ ìŧ ìś ŕúññìñĝ àñð ŧŕý àĝàìñ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation>«Ŧĥé ðàéḿóñ ŕéþóŕŧéð ìŧ ìś ñóŧ ĥéàļŧĥý.  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>«úñķñóẅñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation>«Ŕéþļàçìñĝ àñ ìñçóḿþàŧìƀļé ļóçàļ ðàéḿóñ (àþì %1, ñééð %2)...  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation>«Ìñçóḿþàŧìƀļé ðàéḿóñ (àþì %1, ñééð %2).  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation>«Ŕéçóññéçŧìñĝ...  þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation>«Çóúļð ñóŧ ƒìñð à ļóçàļ ðàéḿóñ ƀìñàŕý. Śéŧ ìŧś þàŧĥ ìñ Śéŧŧìñĝś, óŕ çóññéçŧ ŧó à ŕéḿóŧé ðàéḿóñ ìñśŧéàð.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation>«Ŧĥé ļóçàļ ðàéḿóñ ķééþś çŕàśĥìñĝ (ŕéśŧàŕŧéð ŧóó ḿàñý ŧìḿéś). Çĥéçķ ìŧś ļóĝ àñð ýóúŕ çóñƒìĝúŕàŧìóñ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation>«Ƒàìļéð ŧó śŧàŕŧ ŧĥé ļóçàļ ðàéḿóñ (%1).  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation>«Ŧĥé ļóçàļ ðàéḿóñ ðìð ñóŧ ƀéçóḿé ŕéàðý ìñ ŧìḿé.  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation>«Ŧĥé ìñçóḿþàŧìƀļé ļóçàļ ðàéḿóñ (þìð %1) ðìð ñóŧ śĥúŧ ðóẅñ ìñ ŧìḿé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
+        <translation>«Àñ ìñçóḿþàŧìƀļé ðàéḿóñ ìś śéŕṽìñĝ %1, àñð ñó þìðƒìļé ŕéçóŕðś ìŧś þŕóçéśś. Śŧóþ ìŧ ḿàñúàļļý àñð ŕéçóññéçŧ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>daemonnet::MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation>«Àĝéñŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation>«Úśéŕ  þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>firstrun::FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>«Çóúļð ñóŧ ŕéàçĥ ŧĥé ñóðé. Çĥéçķ ŧĥé ŧàŕĝéŧ àñð ŧŕý àĝàìñ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Couldn't verify this API key with %1 — check it and try again.</source>
+        <translation>«Çóúļðñ'ŧ ṽéŕìƒý ŧĥìś ÀÞÌ ķéý ẅìŧĥ %1 — çĥéçķ ìŧ àñð ŧŕý àĝàìñ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>participants::ParticipantsModel</name>
+    <message>
+        <source>Participants</source>
+        <translation>«Þàŕŧìçìþàñŧś  þéñ»</translation>
     </message>
 </context>
 </TS>
