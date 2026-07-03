@@ -187,7 +187,12 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
         break;
     case TabModel::Accounts:
         if (enter || text == QStringLiteral("R")) {
-            m_deps.accounts->reauth(id);
+            // GUI parity (AccountsPage.qml): the Reconnect affordance is
+            // disabled while the handshake is pending; swallow the key without
+            // re-driving the seam.
+            if (row.value(QStringLiteral("status")).toString() != QLatin1String("pending")) {
+                m_deps.accounts->reauth(id);
+            }
             acted = true;
         } else if (text == QStringLiteral("x")) {
             m_deps.accounts->remove(id);
