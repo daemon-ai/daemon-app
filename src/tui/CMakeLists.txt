@@ -132,6 +132,10 @@ qt_add_executable(daemon-tui
     # workstream owns one focused TU).
     dialogs/first_run_dialog.h
     dialogs/first_run_dialog.cpp
+    # Accounts add-wizard flow ('a' on the Accounts page; the accounts
+    # workstream's own TU).
+    dialogs/add_account_flow.h
+    dialogs/add_account_flow.cpp
     tui_page_hub.h
     tui_page_hub.cpp
     # Hand-maintained parity coverage declaration (enforced by

@@ -149,6 +149,35 @@ target_link_libraries(tui_access_gating_tests
 add_test(NAME tui_access_gating_tests COMMAND tui_access_gating_tests)
 set_tests_properties(tui_access_gating_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_accounts_wizard: the TUI add-account wizard against the mock accounts
+# service in an off-screen terminal - provider pick -> (auth-method pick) ->
+# masked key entry (-> base URL) -> the connected account row appears; the
+# OAuth branch kicks the simulated handshake (pending -> connected); Esc aborts
+# without mutation. Compiles the flow + the palette/dialog widgets it drives;
+# tui_dialogs.cpp drags the NewAgentDialog deps (profiles + daemon_client).
+qt_add_executable(tui_accounts_wizard_tests
+    tst_accounts_wizard.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/dialogs/add_account_flow.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
+)
+set_target_properties(tui_accounts_wizard_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_accounts_wizard_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/tui
+    ${CMAKE_SOURCE_DIR}/tests/unit
+)
+target_link_libraries(tui_accounts_wizard_tests
+    PRIVATE
+        Qt6::Test
+        PkgConfig::TUIWIDGETS
+        daemon-app::accounts
+        daemon-app::uimodels
+        daemon-app::profiles
+        daemon-app::daemon_client
+)
+add_test(NAME tui_accounts_wizard_tests COMMAND tui_accounts_wizard_tests)
+set_tests_properties(tui_accounts_wizard_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_tab_title_refresh: the stale-tab-title fix - a session-store changed()
 # (e.g. the node's auto-title landing via the roster refetch, with no content
 # change) re-resolves every open transcript tab's title through

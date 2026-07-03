@@ -16,8 +16,7 @@ QString TuiPageHub::buildAccountsMarkdown(int sel) const {
     QString md;
     md += tr("# Accounts\n\n");
     md += tr("Connected provider accounts, shared with the GUI. **j/k** move · "
-             "**R**/**Enter** re-auth · **x** remove. Use the GUI wizard to add "
-             "accounts.\n\n");
+             "**a** add account · **R**/**Enter** re-auth · **x** remove.\n\n");
 
     md += tr("## Connected\n\n");
     if (model == nullptr || model->count() == 0) {
