@@ -58,6 +58,15 @@ FirstRunModel::FirstRunModel(settings::ISettingsStore* settings,
         connect(m_profiles, &profiles::IProfileStore::changed, this,
                 &FirstRunModel::evaluateWizardGate);
     }
+    if (m_providerCatalog != nullptr) {
+        // FIX 4: the key gate resolves off the provider catalog's (authenticated) model listings.
+        connect(m_providerCatalog, &models::IProviderCatalog::offeredModelsChanged, this,
+                &FirstRunModel::resolveKeyGate);
+        // requiresKey is read live off the descriptor, so a provider-catalog change can flip the
+        // gate without a listing; re-notify bindings.
+        connect(m_providerCatalog, &models::IProviderCatalog::providersChanged, this,
+                &FirstRunModel::keyGateChanged);
+    }
     refreshInferenceReady();
 }
 
@@ -342,6 +351,56 @@ void FirstRunModel::whenProfilesReflect(const std::function<bool()>& reflected,
             QObject::disconnect(*conn);
             then();
         });
+}
+
+bool FirstRunModel::keyGatePassed() const {
+    // Mirrors the QML gate this hoists (`!providerRequiresKey || keyValidated`): pass unless the
+    // reported provider requires a key that has not been proven since the last re-arm. No catalog
+    // wired / nothing reported yet stays permissive, so the mock/standalone path is never trapped
+    // (the front ends' completeness gates still require a provider + model + entered key).
+    if (m_providerCatalog == nullptr || m_gateProviderId.isEmpty()) {
+        return true;
+    }
+    const bool requiresKey = m_providerCatalog->descriptorFor(m_gateProviderId)
+                                 .value(QStringLiteral("requiresKey"))
+                                 .toBool();
+    return !requiresKey || m_keyProven;
+}
+
+void FirstRunModel::setInferenceSelection(const QString& providerId, const QString& key) {
+    // Unconditional re-arm - even a same-value re-report resets the proven bit, exactly like the
+    // QML picker this hoists (every provider (re)selection and every keystroke reset
+    // keyValidated); the next authenticated LIST re-proves it.
+    m_gateProviderId = providerId;
+    m_gateKey = key;
+    m_keyProven = false;
+    m_keyGateMessage.clear();
+    emit keyGateChanged();
+}
+
+void FirstRunModel::resolveKeyGate(const QString& providerId) {
+    if (m_providerCatalog == nullptr || providerId.isEmpty() || providerId != m_gateProviderId) {
+        return; // not the reported selection's listing
+    }
+    const QVariantMap descriptor = m_providerCatalog->descriptorFor(providerId);
+    if (!descriptor.value(QStringLiteral("requiresKey")).toBool() || m_gateKey.isEmpty()) {
+        return; // keyless provider / no key entered yet: nothing to prove
+    }
+    // The LIST was authenticated with the entered key, so a non-empty result proves it (FIX 4).
+    const int count = static_cast<int>(m_providerCatalog->offeredModels(providerId).size());
+    m_keyProven = count > 0;
+    const QString name = descriptor.value(QStringLiteral("name")).toString();
+    const QString vendor = name.isEmpty() ? providerId : name;
+    m_keyGateMessage =
+        m_keyProven
+            ? QString()
+            : tr("Couldn't verify this API key with %1 — check it and try again.").arg(vendor);
+    // The shared instrumentation seam, scoped to the wizard like the QML funnel it replaces (the
+    // wizard's picker only existed during the inference phase).
+    if (m_phase == QStringLiteral("inference")) {
+        logKeyValidation(providerId, true, count, m_keyProven);
+    }
+    emit keyGateChanged();
 }
 
 void FirstRunModel::logKeyValidation(const QString& provider, bool requiresKey, int modelCount,
