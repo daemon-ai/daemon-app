@@ -28,7 +28,7 @@ target_include_directories(da_daemon_codec PUBLIC
 # Platform-conditional TUs: Qt-for-wasm lacks the `localserver`, `ssl`, and `process` features,
 # so the browser build swaps the Unix/TLS stream carriers and the QProcess-based launcher for
 # fail-closed stubs (the WebSocket carrier in daemon_transport.cpp is the only wasm transport).
-if(EMSCRIPTEN)
+if(DAEMON_APP_WASM)
     set(DA_DAEMON_PLATFORM_SOURCES
         daemon_transport_stream_wasm.cpp
         local_daemon_launcher_wasm.cpp
