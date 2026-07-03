@@ -448,6 +448,14 @@ let
       ++ [ emscripten ];
 
     shellHook = ''
+      # The host qttools package drags in nixpkgs' qtbase setup hook, which
+      # exports QT_ADDITIONAL_PACKAGES_PREFIX_PATH = the whole host
+      # CMAKE_PREFIX_PATH. Qt's wasm qt.toolchain.cmake folds that variable
+      # into CMAKE_FIND_ROOT_PATH, so the cross configure would resolve HOST
+      # desktop libraries (e.g. libglvnd's libEGL.so) and feed them to
+      # wasm-ld. The joined wasm prefix already carries every Qt module, so
+      # the variable is not needed here at all - scrub it.
+      unset QT_ADDITIONAL_PACKAGES_PREFIX_PATH
       export DAEMON_APP_QT_WASM=${qtWasmJoined}
       export QT_HOST_PATH=${qtHost}
       export EMSDK=${emsdkRoot}
@@ -457,8 +465,17 @@ let
         cp -r --no-preserve=mode ${emscripten}/share/emscripten/cache "$EM_CACHE"
         chmod -R u+w "$EM_CACHE"
       fi
-      export PKG_CONFIG_PATH="${tinyxml2Wasm}/lib/pkgconfig''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+      # Exact, not appended: the shell's host Qt tools (qttools -> qtbase)
+      # surface desktop .pc files (libglvnd's egl among them), and Qt6Gui's
+      # FindEGL would otherwise hand the host libEGL.so to wasm-ld. Pinning
+      # to the wasm tinyxml2 mirrors the sandboxed app derivation exactly.
+      export PKG_CONFIG_PATH="${tinyxml2Wasm}/lib/pkgconfig"
       export ECM_DIR="${ecmDir}"
+      # Consumed by the wasm-release preset so a devShell configure carries
+      # the same tinyxml2 injection + native indexer as the app derivation.
+      export DAEMON_APP_WASM_CXX_FLAGS="-isystem ${tinyxml2Wasm}/include"
+      export DAEMON_APP_WASM_LINKER_FLAGS="-L${tinyxml2Wasm}/lib"
+      export DAEMON_APP_KATE_INDEXER="${ksyntaxIndexerHost}/bin/katehighlightingindexer"
       export MD4QT_SOURCE_DIR="${depSources.md4qt}"
       export EARCUT_SOURCE_DIR="${depSources.earcut}"
       export KSYNTAXHIGHLIGHTING_SOURCE_DIR="${depSources.ksyntaxhighlighting}"

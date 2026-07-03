@@ -57,7 +57,13 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "BUILD_TESTING": "OFF",
-        "DAEMON_APP_TUI": "OFF"
+        "DAEMON_APP_TUI": "OFF",
+        "BUILD_SHARED_LIBS": "OFF",
+        "CMAKE_CXX_FLAGS": "$env{DAEMON_APP_WASM_CXX_FLAGS}",
+        "CMAKE_EXE_LINKER_FLAGS": "$env{DAEMON_APP_WASM_LINKER_FLAGS}",
+        "ECM_DIR": "$env{ECM_DIR}",
+        "KF_IGNORE_PLATFORM_CHECK": "ON",
+        "KATEHIGHLIGHTINGINDEXER_EXECUTABLE": "$env{DAEMON_APP_KATE_INDEXER}"
       }
     }
   ],
