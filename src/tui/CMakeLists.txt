@@ -243,6 +243,9 @@ target_link_libraries(daemon-tui
         daemon-app::domain
         daemon-app::persistence
         daemon-app::settings_store
+        # Release-feed / update scaffold: capability-dial surface only, no UI
+        # wiring yet (packaging/UPDATES.md).
+        daemon-app::update
         daemon-app::connection
         daemon-app::nav
         daemon-app::firstrun

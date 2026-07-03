@@ -61,6 +61,19 @@ target_link_libraries(tst_ws_default
 add_test(NAME tst_ws_default COMMAND tst_ws_default)
 set_tests_properties(tst_ws_default PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_update_manager: the release-feed scaffold (src/core/update) - the package-time
+# capability dial defaults to None, the manifest capability vocabulary round-trips
+# (unknown input fails closed to None), and the descoped check/download/apply stubs
+# emit not-implemented errors instead of doing anything.
+qt_add_executable(tst_update_manager tst_update_manager.cpp)
+target_link_libraries(tst_update_manager
+    PRIVATE
+        Qt6::Test
+        daemon-app::update
+)
+add_test(NAME tst_update_manager COMMAND tst_update_manager)
+set_tests_properties(tst_update_manager PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_connection_service: the mock connection seam's liveness state machine
 # (checking -> connecting -> ready / offline), the Test-connection probe, and
 # disconnect, all driven on QTimers.
