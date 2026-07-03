@@ -30,7 +30,11 @@ server=$!
 trap 'kill "$server" 2>/dev/null || true' EXIT
 sleep 1
 
+# --enable-unsafe-swiftshader: force software WebGL so the check does not
+# depend on host GPU state (a wedged GPU process leaves the page stuck on
+# "Loading..." with no console output and the screenshot fires early).
 "$chromium_bin" --headless=new --enable-logging=stderr --virtual-time-budget=60000 \
+  --enable-unsafe-swiftshader \
   --window-size=1400,900 --screenshot="$shot" \
   "http://127.0.0.1:$port/daemon-app.html" >"$log" 2>&1 || true
 
@@ -44,9 +48,14 @@ if grep -E "RuntimeError|CompileError|LinkError|Aborted\(|failed to asynchronous
   fail=1
 fi
 
-# Positive signal: the app's QML engine warning channel stays silent on success,
-# but Qt always logs the wasm platform init; require SOME console activity from
-# the page plus a screenshot that is not a single flat color.
+# Positive signal: the app logs its service-graph banner early in main();
+# requiring it catches "stuck on the loader spinner" states that produce a
+# technically-non-blank screenshot.
+if ! grep -q "AppServiceGraph" "$log"; then
+  echo "boot-smoke: app boot marker (AppServiceGraph console line) missing" >&2
+  fail=1
+fi
+
 if [ ! -s "$shot" ]; then
   echo "boot-smoke: no screenshot produced" >&2
   fail=1
