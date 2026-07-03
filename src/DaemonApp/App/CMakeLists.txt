@@ -104,9 +104,22 @@ target_link_libraries(daemon-app
 )
 
 # The runtime resource dir (fonts + XML) MicroTeX's tex::LaTeX::init() reads.
-target_compile_definitions(daemon-app
-    PRIVATE MICROTEX_RES_DIR="${MICROTEX_RES_DIR}"
-)
+# Desktop/mobile read it straight from the (Nix store) source tree. The browser
+# cannot read host paths, so the wasm link packs the directory into the
+# emscripten .data preload bundle and init() reads it back from the same
+# fixed MEMFS mount point.
+if(DAEMON_APP_WASM)
+    target_link_options(daemon-app
+        PRIVATE "SHELL:--preload-file ${MICROTEX_RES_DIR}@/microtex-res"
+    )
+    target_compile_definitions(daemon-app
+        PRIVATE MICROTEX_RES_DIR="/microtex-res"
+    )
+else()
+    target_compile_definitions(daemon-app
+        PRIVATE MICROTEX_RES_DIR="${MICROTEX_RES_DIR}"
+    )
+endif()
 
 # Build dependency on the KSyntaxHighlighting QML plugin so its module is emitted
 # under QT_QML_OUTPUT_DIRECTORY before we run; main.cpp adds that dir to the
@@ -116,8 +129,9 @@ target_compile_definitions(daemon-app
     PRIVATE DAEMON_APP_BUILD_QML_DIR="${CMAKE_BINARY_DIR}/qml"
 )
 
-# On desktop the QApplication base lives in QtWidgets (for the tray).
-if(NOT DAEMON_APP_MOBILE)
+# On desktop the QApplication base lives in QtWidgets (for the tray). Mobile
+# and the browser build run QGuiApplication (see main.cpp) and never link it.
+if(NOT DAEMON_APP_MOBILE AND NOT DAEMON_APP_WASM)
     target_link_libraries(daemon-app PRIVATE Qt6::Widgets)
 endif()
 

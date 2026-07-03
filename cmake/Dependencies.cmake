@@ -168,7 +168,9 @@ set(MICROTEX_RES_DIR "${_microtex_dir}/res" CACHE INTERNAL "MicroTeX runtime res
 # pull them in. Flip DAEMON_APP_DESKTOP_DEPS=ON when wiring src/platform.
 # ---------------------------------------------------------------------------
 option(DAEMON_APP_DESKTOP_DEPS "Build the desktop-only third-party deps (QWindowKit, updater, autostart, shortcut)" OFF)
-if(NOT DAEMON_APP_MOBILE AND DAEMON_APP_DESKTOP_DEPS)
+# Hard-off on mobile AND in the browser: native window chrome, updater,
+# autostart and global shortcuts are all desktop-OS integrations.
+if(NOT DAEMON_APP_MOBILE AND NOT DAEMON_APP_WASM AND DAEMON_APP_DESKTOP_DEPS)
     # QWindowKit - frameless window / native chrome (Quick module only)
     _daemon_app_resolve_dir(_qwk_dir QWINDOWKIT_SOURCE_DIR)
     if(NOT EXISTS "${_qwk_dir}/CMakeLists.txt")

@@ -12,7 +12,11 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QStandardPaths>
+
+// The wasm Qt build is single-threaded; decodes run pooled only off-wasm.
+#ifndef Q_OS_WASM
 #include <QThreadPool>
+#endif
 
 namespace be::app {
 
@@ -115,11 +119,19 @@ void ImageCache::decodeAsync(const QUrl& url, const QByteArray& data, const QSiz
         return;
     }
 
+#ifdef Q_OS_WASM
+    // Single-threaded wasm Qt: decode in place on the GUI thread, same
+    // finish()/ready() flow as the pooled path minus the thread hop. Consumers
+    // already handle synchronous delivery (request() resolves cache hits by
+    // emitting ready() inline).
+    finish(url, decodeCapped(data, requested));
+#else
     QThreadPool::globalInstance()->start([this, url, data, requested]() {
         const QImage image = decodeCapped(data, requested);
         QMetaObject::invokeMethod(
             this, [this, url, image]() { finish(url, image); }, Qt::QueuedConnection);
     });
+#endif
 }
 
 void ImageCache::finish(const QUrl& url, const QImage& image) {

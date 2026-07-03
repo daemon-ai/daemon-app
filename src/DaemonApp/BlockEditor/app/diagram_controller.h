@@ -10,15 +10,21 @@
 #include <QColor>
 #include <QObject>
 #include <QString>
-#include <QThread>
 #include <QTimer>
 #include <QtQmlIntegration/qqmlintegration.h>
+
+// The wasm Qt build is single-threaded; the worker thread exists only off-wasm.
+#ifndef Q_OS_WASM
+#include <QThread>
+#endif
 
 namespace be::app {
 
 // Owns the diagram source/theme inputs and produces an immutable RenderSnapshot.
 // The build runs on a worker thread (latest-wins); results are published back to
-// the GUI thread. DiagramItem reads the published snapshot in updatePaintNode.
+// the GUI thread. On wasm (single-threaded Qt) the engine instead runs in place
+// on the GUI thread through the same buildRequested -> publish flow.
+// DiagramItem reads the published snapshot in updatePaintNode.
 class DiagramController : public QObject {
     Q_OBJECT
     QML_ELEMENT
@@ -90,7 +96,9 @@ private:
     be::diagram::RenderSnapshotPtr m_snapshot;
     QTimer m_debounce;
 
+#ifndef Q_OS_WASM
     QThread m_worker;
+#endif
     std::atomic<quint64> m_requestId{0};
 };
 
