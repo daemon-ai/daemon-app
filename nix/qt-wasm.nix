@@ -413,7 +413,9 @@ let
       # wasm-emscripten config - everything links into the executable.
       ${qtWasmJoined}/bin/qt-cmake -S . -B build -G Ninja \
         -DCMAKE_INSTALL_PREFIX="$out" \
-        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_BUILD_TYPE=MinSizeRel \
+        "-DCMAKE_C_FLAGS_MINSIZEREL=-Oz -DNDEBUG" \
+        "-DCMAKE_CXX_FLAGS_MINSIZEREL=-Oz -DNDEBUG" \
         "-DCMAKE_CXX_FLAGS=-isystem ${tinyxml2Wasm}/include" \
         "-DCMAKE_EXE_LINKER_FLAGS=-L${tinyxml2Wasm}/lib" \
         -DBUILD_SHARED_LIBS=OFF \

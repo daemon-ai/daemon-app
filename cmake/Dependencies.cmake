@@ -128,9 +128,16 @@ if(DAEMON_APP_WASM)
     file(WRITE "${_da_rcc_wrapper}" "#!/bin/sh\nexec \"${_da_rcc_real}\" --no-zstd \"$@\"\n")
     file(CHMOD "${_da_rcc_wrapper}" PERMISSIONS
         OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    # Every per-config location must point at the wrapper: Qt's
+    # AdditionalTargetInfo file defines RELWITHDEBINFO/MINSIZEREL aliases, and
+    # the generator resolves Qt6::rcc against the active CMAKE_BUILD_TYPE's
+    # config before falling back to the plain IMPORTED_LOCATION.
     set_target_properties(Qt6::rcc PROPERTIES
         IMPORTED_LOCATION "${_da_rcc_wrapper}"
-        IMPORTED_LOCATION_RELEASE "${_da_rcc_wrapper}")
+        IMPORTED_LOCATION_RELEASE "${_da_rcc_wrapper}"
+        IMPORTED_LOCATION_RELWITHDEBINFO "${_da_rcc_wrapper}"
+        IMPORTED_LOCATION_MINSIZEREL "${_da_rcc_wrapper}"
+        IMPORTED_LOCATION_DEBUG "${_da_rcc_wrapper}")
 
     # The framework's CLI tool + example executables are useless browser
     # payload, and ECM's KDECompilerSettings gives every executable

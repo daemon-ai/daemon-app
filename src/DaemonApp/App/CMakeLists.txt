@@ -109,6 +109,12 @@ target_link_libraries(daemon-app
 # emscripten .data preload bundle and init() reads it back from the same
 # fixed MEMFS mount point.
 if(DAEMON_APP_WASM)
+    # Size flags already evaluated and NOT carried, for the record:
+    #  * --closure 1 halves the JS glue but breaks qtloader.js at boot
+    #    (TypeError on 'asyncifyEnabled': the loader pokes Module properties
+    #    that closure renames away).
+    #  * -sEVAL_CTORS=1 bails at the first environment-reading import
+    #    (environ_sizes_get) and saved <1 KB.
     target_link_options(daemon-app
         PRIVATE "SHELL:--preload-file ${MICROTEX_RES_DIR}@/microtex-res"
     )
