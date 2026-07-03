@@ -9,6 +9,7 @@ namespace be::app {
 
 namespace {
 
+#ifndef Q_OS_WASM
 // Worker object that runs the (pure) engine off the GUI thread. Lives on the
 // controller's worker thread; results are delivered via a queued signal.
 class DiagramWorker : public QObject {
@@ -27,6 +28,7 @@ public:
 signals:
     void produced(be::diagram::RenderSnapshotPtr _t1, quint64 _t2);
 };
+#endif // !Q_OS_WASM
 
 } // namespace
 
@@ -38,6 +40,17 @@ DiagramController::DiagramController(QObject* parent) : QObject(parent) {
     m_debounce.setInterval(0);
     connect(&m_debounce, &QTimer::timeout, this, &DiagramController::startBuild);
 
+#ifdef Q_OS_WASM
+    // Single-threaded wasm Qt: run the (pure) engine in place on the GUI
+    // thread. Same buildRequested -> publish flow as the worker path, so the
+    // debounce coalescing and the latest-wins publish contract are identical.
+    connect(this, &DiagramController::buildRequested, this,
+            [this](const QString& source, const be::diagram::Style& style, qreal maxWidth,
+                   quint64 requestId) {
+                be::diagram::DiagramEngine engine;
+                publish(engine.buildSnapshot(source, style, maxWidth, requestId), requestId);
+            });
+#else
     auto* worker = new DiagramWorker;
     worker->moveToThread(&m_worker);
     connect(&m_worker, &QThread::finished, worker, &QObject::deleteLater);
@@ -47,11 +60,14 @@ DiagramController::DiagramController(QObject* parent) : QObject(parent) {
                 publish(std::move(snapshot), requestId);
             });
     m_worker.start();
+#endif
 }
 
 DiagramController::~DiagramController() {
+#ifndef Q_OS_WASM
     m_worker.quit();
     m_worker.wait();
+#endif
 }
 
 void DiagramController::setSource(const QString& source) {
