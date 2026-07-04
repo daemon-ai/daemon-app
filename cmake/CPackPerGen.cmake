@@ -7,32 +7,45 @@
 # in cmake/Packaging.cmake.
 #
 # Dependency policy (DEB Depends / RPM Requires): hand-written system floor.
-# dpkg-shlibdeps / rpm's AutoReq cannot run on NixOS (no dpkg/rpm database,
-# and the v1 payload is Nix-linked so automatic scans would emit /nix/store
-# requirements no target distro satisfies). The floor below is derived from
-# `ldd bin/.daemon-app-wrapped` + `readelf -d` on the packaged ELFs
-# (daemon-app, libKF6SyntaxHighlighting, kquicksyntaxhighlightingplugin):
+# dpkg-shlibdeps / rpm's AutoReq cannot run on NixOS (no dpkg/rpm database),
+# and the packaged payload resolves everything else statically. The floor
+# below is exactly the static binary's DT_NEEDED set (the allowlist
+# checks.portable-boot-smoke and checks.artifact-sanity pin - nix/portable.nix
+# documents each entry's rationale):
 #
-#   ldd/NEEDED evidence                 -> Debian            / Fedora
-#   libc/libm/libpthread/libdl/librt    -> libc6             / glibc
-#   libstdc++.so.6                      -> libstdc++6        / libstdc++
+#   NEEDED evidence                     -> Debian            / Fedora
+#   libc/libm/libdl/librt/libresolv     -> libc6             / glibc
 #   libgcc_s.so.1                       -> libgcc-s1         / libgcc
-#   libGLX/libOpenGL/libEGL (libglvnd)  -> libglx0 libopengl0 libegl1 libgl1
+#   libGLX/libOpenGL/libEGL (libglvnd)  -> libgl1 libglx0 libopengl0 libegl1
 #                                          / libglvnd-glx libglvnd-opengl libglvnd-egl
-#   libX11/libXext/libXau/libXdmcp      -> libx11-6 libxext6 libxau6 libxdmcp6
-#                                          / libX11 libXext libXau libXdmcp
+#   libX11 / libX11-xcb                 -> libx11-6 libx11-xcb1 / libX11 libX11-xcb
 #   libxcb.so.1                         -> libxcb1           / libxcb
+#   libxcb-{icccm,image,keysyms,        -> libxcb-icccm4 libxcb-image0
+#            render-util,cursor,util}       libxcb-keysyms1 libxcb-render-util0
+#                                           libxcb-cursor0 libxcb-util1
+#                                          / xcb-util-wm xcb-util-image
+#                                            xcb-util-keysyms xcb-util-renderutil
+#                                            xcb-util-cursor xcb-util
+#   libxcb-{randr,render,shape,shm,     -> libxcb-randr0 libxcb-render0
+#            sync,xfixes,xkb,glx}           libxcb-shape0 libxcb-shm0
+#                                           libxcb-sync1 libxcb-xfixes0
+#                                           libxcb-xkb1 libxcb-glx0
+#                                          / libxcb (one package on Fedora)
 #   libxkbcommon(+x11)                  -> libxkbcommon0 libxkbcommon-x11-0
 #                                          / libxkbcommon libxkbcommon-x11
+#   libwayland-{client,cursor,egl}      -> libwayland-client0 libwayland-cursor0
+#                                           libwayland-egl1
+#                                          / libwayland-client libwayland-cursor
+#                                            libwayland-egl
 #   libfontconfig/libfreetype           -> libfontconfig1 libfreetype6
 #                                          / fontconfig freetype
-#   libdbus-1.so.3                      -> libdbus-1-3       / dbus-libs
-#   libglib-2.0/gobject/gio             -> libglib2.0-0      / glib2
-#   libz.so.1                           -> zlib1g            / zlib(-ng compat)
 #
-# Qt/KF6/tinyxml2/qtkeychain/openssl/icu and the rest of the ldd closure are
-# payload we bundle (static-qt workstream), not system dependencies. Version
-# floors are intentionally omitted; scripts/glibc-floor.sh gates the glibc
+# libstdc++/libgcc are linked statically into daemon-app; libstdc++6 stays a
+# Depends only as the floor for optional co-packaged node binaries (the
+# superproject additionally ships its own libstdc++/libgomp copies in lib/
+# for exactly that payload). dbus and openssl are runtime-dlopen'd and
+# degrade gracefully, so they are NOT dependencies. Version floors are
+# intentionally omitted; scripts/glibc-floor.sh gates the glibc
 # symbol-version ceiling instead.
 
 if(CPACK_GENERATOR STREQUAL "DEB")
@@ -41,11 +54,11 @@ if(CPACK_GENERATOR STREQUAL "DEB")
     # /usr/local/bin and the desktop assets into /usr/share.
     set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/daemon")
     set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
-    # No dpkg database on NixOS (and the v1 payload is Nix-linked): Depends
-    # are hand-written above instead of dpkg-shlibdeps output.
+    # No dpkg database on NixOS: Depends are hand-written above (the static
+    # payload's exact DT_NEEDED floor) instead of dpkg-shlibdeps output.
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS
-        "libc6, libstdc++6, libgcc-s1, libgl1, libglx0, libopengl0, libegl1, libx11-6, libxext6, libxau6, libxdmcp6, libxcb1, libxkbcommon0, libxkbcommon-x11-0, libfontconfig1, libfreetype6, libdbus-1-3, libglib2.0-0, zlib1g"
+        "libc6, libstdc++6, libgcc-s1, libgl1, libglx0, libopengl0, libegl1, libx11-6, libx11-xcb1, libxcb1, libxcb-cursor0, libxcb-icccm4, libxcb-image0, libxcb-keysyms1, libxcb-randr0, libxcb-render0, libxcb-render-util0, libxcb-shape0, libxcb-shm0, libxcb-sync1, libxcb-util1, libxcb-xfixes0, libxcb-xkb1, libxcb-glx0, libxkbcommon0, libxkbcommon-x11-0, libwayland-client0, libwayland-cursor0, libwayland-egl1, libfontconfig1, libfreetype6"
     )
     set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
     set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
@@ -64,7 +77,7 @@ if(CPACK_GENERATOR STREQUAL "RPM")
     # store sonames; Requires are hand-written above.
     set(CPACK_RPM_PACKAGE_AUTOREQPROV OFF)
     set(CPACK_RPM_PACKAGE_REQUIRES
-        "glibc, libstdc++, libgcc, libglvnd-glx, libglvnd-opengl, libglvnd-egl, libX11, libXext, libXau, libXdmcp, libxcb, libxkbcommon, libxkbcommon-x11, fontconfig, freetype, dbus-libs, glib2, zlib"
+        "glibc, libstdc++, libgcc, libglvnd-glx, libglvnd-opengl, libglvnd-egl, libX11, libX11-xcb, libxcb, xcb-util, xcb-util-cursor, xcb-util-image, xcb-util-keysyms, xcb-util-renderutil, xcb-util-wm, libxkbcommon, libxkbcommon-x11, libwayland-client, libwayland-cursor, libwayland-egl, fontconfig, freetype"
     )
     set(CPACK_RPM_PACKAGE_LICENSE "MPL-2.0")
     set(CPACK_RPM_PACKAGE_GROUP "Development/Tools")
@@ -75,11 +88,11 @@ if(CPACK_GENERATOR STREQUAL "RPM")
     set(CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE
         "${CPACK_DAEMON_APP_LINUX_DIR}/prerm"
     )
-    # The payload references /nix/store on purpose (v1 caveat in
-    # Packaging.cmake); keep rpmbuild's buildroot policy scripts from
-    # rejecting or rewriting it. _tmppath/_dbpath default to /var/tmp and
-    # /var/lib/rpm, which do not exist in the Nix build sandbox - point both
-    # into rpmbuild's own working tree.
+    # The staged binaries carry $ORIGIN rpaths (the portable payload
+    # rewrite); rpmbuild's check-rpaths policy script rejects any rpath it
+    # does not recognize, so silence it. _tmppath/_dbpath default to /var/tmp
+    # and /var/lib/rpm, which do not exist in the Nix build sandbox - point
+    # both into rpmbuild's own working tree.
     set(CPACK_RPM_SPEC_MORE_DEFINE
         "%define __brp_check_rpaths %{nil}
 %define _tmppath %{_topdir}/tmp

@@ -561,5 +561,18 @@ in
     tarball
     bootSmoke
     fhsSmoke
+    # The packaging outputs (flake mkLinuxArtifacts + artifact-sanity) reuse
+    # the portable contract pieces: the DT_NEEDED allowlist, the sandbox boot
+    # library path, and the store prefixes to scrub from shipped binaries.
+    allowedNeeded
+    bootLibPath
     ;
+  scrubPrefixes = [
+    (toString qtbaseStatic)
+    (toString qtshadertoolsStatic)
+    (toString qtdeclarativeStatic)
+    (toString qtsvgStatic)
+    (toString qtwebsocketsStatic)
+    (toString tinyxml2Static)
+  ];
 }

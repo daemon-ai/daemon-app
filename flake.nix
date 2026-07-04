@@ -305,28 +305,31 @@
         };
 
         # --- Linux packaging artifacts (CPack: DEB / RPM / AppImage) --------
-        # CAVEAT (v1 scaffolding): these package the DYNAMIC-Qt app as linked
-        # by the Nix toolchain - interpreter + RUNPATH point into /nix/store,
-        # so the artifacts only run where those store paths exist (the build
-        # sandbox / NixOS). The sibling static-qt workstream swaps in the
-        # portable payload later; what is load-bearing now is the CPack
-        # skeleton, assets, install rules, per-generator config, and the
-        # artifact checks below. See cmake/Packaging.cmake.
+        # The packaged payload is the STATIC-Qt app (portableStack.app): the
+        # same build the portable tarball ships, packaged through the CPack
+        # skeleton with the pre-build rewrite (cmake/PackagePortablePayload
+        # .cmake) patching every staged ELF for the generic-distro floor -
+        # generic /lib64 loader, $ORIGIN rpaths, store-prefix scrub, vendored
+        # KSyntaxHighlighting side-payload pruned (the static binary compiles
+        # it in). See cmake/Packaging.cmake + cmake/CPackPerGen.cmake for the
+        # per-generator config and the hand-written system-floor Depends.
         appimageTooling = import ./nix/appimagetool.nix { inherit pkgs; };
         # CPack's AppImage generator needs CMake >= 4.2 (pinned nixpkgs ships
         # 4.1.2); nix/cmake-appimage.nix overrides the nixpkgs cmake with the
         # 4.2.7 source.
         cmake42 = import ./nix/cmake-appimage.nix { inherit pkgs; };
 
-        # Build the app once with the packaging knobs, then run cpack per
-        # generator from the same build tree. `bundledFrom` is the shape the
-        # superproject fills in a later workstream: prebuilt sibling binaries
-        # ({ daemon; daemon-infer; daemon-cli; } store paths) installed next
-        # to bin/daemon-app (LocalDaemonLauncher discovers them there). Left
-        # empty here, so these artifacts package the app alone.
+        # Build the STATIC app once with the packaging knobs, then run cpack
+        # per generator from the same build tree. `bundledFrom` is the shape
+        # the superproject fills: prebuilt sibling binaries ({ daemon;
+        # daemon-infer; daemon-cli; } store paths) installed next to
+        # bin/daemon-app (LocalDaemonLauncher discovers them there) plus
+        # `libs` (runtime .so list for lib/, e.g. the libstdc++/libgomp pair
+        # daemon-infer needs). Left empty here, so these artifacts package
+        # the app alone.
         mkLinuxArtifacts =
           { bundledFrom ? { } }:
-          daemon-app.overrideAttrs (old: {
+          portableStack.app.overrideAttrs (old: {
             pname = "daemon-linux-artifacts";
 
             # cmake42 must own the `cmake`/`cpack` names on PATH; drop the
@@ -343,7 +346,8 @@
               ) old.nativeBuildInputs
               ++ [
                 appimageTooling.appimagetool # cpack -G AppImage packs through it
-                pkgs.patchelf # AppImage generator rewrites non-$ORIGIN RPATHs
+                pkgs.patchelf # payload rewrite + AppImage RPATH handling
+                pkgs.removeReferencesTo # store-prefix scrub in the payload rewrite
                 pkgs.file
                 pkgs.rpm # cpack -G RPM shells out to rpmbuild
                 # (cpack -G DEB needs no dpkg: it writes the .deb natively)
@@ -370,12 +374,20 @@
               # find_package(ECM) without the ECM setup hook (see
               # nativeBuildInputs note above).
               "-DECM_DIR=${pkgs.kdePackages.extra-cmake-modules}/share/ECM/cmake"
+              # Staged-payload rewrite for the generic-distro floor
+              # (cmake/PackagePortablePayload.cmake): generic loader, $ORIGIN
+              # rpaths, KSyntaxHighlighting side-payload prune, store-prefix
+              # scrub of the static binary.
+              "-DDAEMON_APP_PACKAGE_PORTABLE=ON"
+              "-DDAEMON_APP_SCRUB_PREFIXES=${pkgs.lib.concatStringsSep ";" portableStack.scrubPrefixes}"
             ]
             ++ pkgs.lib.optional (bundledFrom ? daemon) "-DDAEMON_APP_BUNDLED_DAEMON=${bundledFrom.daemon}"
             ++ pkgs.lib.optional (bundledFrom ? daemon-infer)
               "-DDAEMON_APP_BUNDLED_DAEMON_INFER=${bundledFrom.daemon-infer}"
             ++ pkgs.lib.optional (bundledFrom ? daemon-cli)
-              "-DDAEMON_APP_BUNDLED_DAEMON_CLI=${bundledFrom.daemon-cli}";
+              "-DDAEMON_APP_BUNDLED_DAEMON_CLI=${bundledFrom.daemon-cli}"
+            ++ pkgs.lib.optional (bundledFrom ? libs)
+              "-DDAEMON_APP_BUNDLED_LIBS=${pkgs.lib.concatStringsSep ";" bundledFrom.libs}";
 
             # The output is the artifact set, not an installed app tree:
             # nothing to wrap, and fixup must not patchelf/strip the finished
@@ -514,9 +526,13 @@
           '';
 
         # Sanity gate over all three artifacts: metadata + payload layout
-        # assertions, desktop/metainfo validation, an AppImage payload
-        # extract + offscreen boot probe (DAEMON_APP_WAIT_READY contract from
-        # src/DaemonApp/App/main.cpp), and the glibc symbol-version floor.
+        # assertions, the portable ELF contract on the packaged binary
+        # (generic loader, $ORIGIN rpath, DT_NEEDED within the system floor -
+        # same allowlist as checks.portable-boot-smoke), desktop/metainfo
+        # validation, an AppImage payload extract + offscreen boot probe
+        # (DAEMON_APP_WAIT_READY contract from src/DaemonApp/App/main.cpp;
+        # booted through the store glibc's loader since the sandbox has no
+        # /lib64), and the glibc symbol-version floor.
         artifactSanity =
           pkgs.runCommand "daemon-artifact-sanity"
             {
@@ -524,21 +540,12 @@
                 dpkg # dpkg-deb --info/--contents/-x
                 rpm # rpm -qpl, rpm2cpio
                 cpio
-                binutils # readelf (glibc floor)
+                binutils # readelf (ELF contract + glibc floor)
+                patchelf # interpreter/rpath asserts
                 desktop-file-utils
                 appstream # appstreamcli validate
                 squashfsTools # unsquashfs (AppImage payload extraction)
               ];
-              # The Nix-linked payload resolves its libraries through
-              # /nix/store RUNPATHs; keeping the app package as an input
-              # pulls that closure into this check's sandbox (the store
-              # references inside the compressed artifacts are invisible to
-              # the nix scanner).
-              appClosure = daemon-app;
-              # The boot probe drives the GUI payload, so the GUI Qt tier is
-              # the right plugin/QML search set (post split of qtPackages).
-              qtPluginPath = pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtPluginPrefix qtGuiPackages;
-              qtQmlPath = "${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtQmlPrefix qtGuiPackages}:${qmltermwidgetQmlDir}";
             }
             ''
               set -euo pipefail
@@ -552,14 +559,23 @@
               dpkg-deb --contents "$deb" > deb-contents.txt
               for path in \
                 ./opt/daemon/bin/daemon-app \
-                ./opt/daemon/lib/libKF6SyntaxHighlighting.so.6 \
                 ./opt/daemon/share/applications/daemon-app.desktop \
                 ./opt/daemon/share/metainfo/io.daemon.app.metainfo.xml \
                 ./opt/daemon/share/icons/hicolor/256x256/apps/daemon-app.png \
                 ./opt/daemon/share/icons/hicolor/scalable/apps/daemon-app.svg \
+                ./opt/daemon/share/daemon-app/microtex-res/RES_README \
                 ./opt/daemon/share/doc/daemon-app/LICENSE \
                 ./opt/daemon/share/doc/daemon-app/THIRD-PARTY-NOTICES.md; do
                 grep -qF " $path" deb-contents.txt || { echo "missing in deb: $path" >&2; exit 1; }
+              done
+              # The static payload compiles KSyntaxHighlighting in; its
+              # vendored side-payload (headers, CLI, static archives, QML
+              # scaffolding) must have been pruned at staging.
+              for stray in libKF6SyntaxHighlighting ksyntaxhighlighter6 include/KF6 '\.a$'; do
+                if grep -E "$stray" deb-contents.txt; then
+                  echo "deb payload carries pruned KSyntaxHighlighting cruft: $stray" >&2
+                  exit 1
+                fi
               done
               # Everything must relocate under /opt/daemon: a store path here
               # means an install rule bypassed the relative-dir staging (the
@@ -576,6 +592,28 @@
               appstreamcli validate --no-net \
                 deb-root/opt/daemon/share/metainfo/io.daemon.app.metainfo.xml
 
+              echo "=== DEB payload: portable ELF contract ==="
+              bin=deb-root/opt/daemon/bin/daemon-app
+              interp=$(patchelf --print-interpreter "$bin")
+              echo "interpreter: $interp"
+              [ "$interp" = "/lib64/ld-linux-x86-64.so.2" ] || { echo "FAIL: packaged binary keeps a non-generic interpreter" >&2; exit 1; }
+              rpath=$(patchelf --print-rpath "$bin")
+              echo "rpath: $rpath"
+              [ "$rpath" = '$ORIGIN:$ORIGIN/../lib' ] || { echo "FAIL: unexpected rpath '$rpath'" >&2; exit 1; }
+              readelf -d "$bin" | awk '/NEEDED/ { gsub(/[][]/, "", $5); print $5 }' > needed.txt
+              fail=0
+              while read -r so; do
+                case " ${pkgs.lib.concatStringsSep " " portableStack.allowedNeeded} " in
+                  *" $so "*) ;;
+                  *) echo "FAIL: DT_NEEDED '$so' outside the packaged system floor" >&2; fail=1 ;;
+                esac
+              done < needed.txt
+              [ "$fail" = 0 ] || exit 1
+              if grep -q 'libstdc++' needed.txt; then
+                echo "FAIL: libstdc++ leaked into the packaged binary's DT_NEEDED" >&2
+                exit 1
+              fi
+
               echo "=== RPM: metadata + contents ==="
               rpmfile=$(ls ${linuxArtifacts}/*.rpm)
               # --dbpath: no /var/lib/rpm in the sandbox
@@ -585,12 +623,15 @@
               rpmq -qpl "$rpmfile" > rpm-list.txt
               for path in \
                 /opt/daemon/bin/daemon-app \
-                /opt/daemon/lib/libKF6SyntaxHighlighting.so.6 \
                 /opt/daemon/share/applications/daemon-app.desktop \
                 /opt/daemon/share/metainfo/io.daemon.app.metainfo.xml \
                 /opt/daemon/share/icons/hicolor/256x256/apps/daemon-app.png; do
                 grep -qxF "$path" rpm-list.txt || { echo "missing in rpm: $path" >&2; exit 1; }
               done
+              if grep -Eq "libKF6SyntaxHighlighting|ksyntaxhighlighter6|include/KF6|\.a$" rpm-list.txt; then
+                echo "rpm payload carries pruned KSyntaxHighlighting cruft" >&2
+                exit 1
+              fi
               if grep -q "nix/store" rpm-list.txt; then
                 echo "rpm payload contains /nix/store paths" >&2
                 exit 1
@@ -624,27 +665,25 @@
               test -e squashfs-root/daemon-app.desktop
               test -f squashfs-root/usr/share/metainfo/io.daemon.app.metainfo.xml
 
-              echo "=== AppImage: offscreen boot probe ==="
+              echo "=== AppImage: offscreen boot probe (static payload) ==="
               export HOME="$PWD/home" && mkdir -p "$HOME"
               export XDG_RUNTIME_DIR="$PWD/xdg" && mkdir -m 0700 -p "$XDG_RUNTIME_DIR"
               export QT_QPA_PLATFORM=offscreen
-              # v1 payload runs against the sandbox's Qt store paths: plugins
-              # and QML come from the build inputs, first-party QML modules
-              # are linked into the binary, and the KSyntaxHighlighting QML
-              # module ships inside the artifact (usr/lib/qt-6/qml).
-              export QT_PLUGIN_PATH="$qtPluginPath"
-              # Both KDEInstallDirs QML layouts (lib/qml, lib/qt-6/qml);
-              # nonexistent entries are ignored.
-              export QML2_IMPORT_PATH="$qtQmlPath:$PWD/squashfs-root/usr/lib/qml:$PWD/squashfs-root/usr/lib/qt-6/qml"
+              export QT_QUICK_BACKEND=software
               # Mock service mode: the WAIT_READY probe drives a first-run
               # "local" connect, which the mock accepts iff the target file
               # exists - no daemon binary needed (none is bundled here).
               export DAEMON_APP_SERVICE_MODE=mock
               export DAEMON_APP_SOCKET="$PWD/mock-daemon.sock" && touch "$DAEMON_APP_SOCKET"
-              export DAEMON_APP_WAIT_READY=8000
-              # AppRun's `#!/usr/bin/env bash` shebang cannot resolve in the
-              # sandbox; invoke through bash.
-              bash squashfs-root/AppRun | tee boot.txt
+              export DAEMON_APP_WAIT_READY=20000
+              # The payload binary is fully self-contained (static Qt: no
+              # QT_PLUGIN_PATH / QML import path needed) but its generic
+              # /lib64 interpreter does not exist in the build sandbox, so
+              # boot it through the store glibc's loader with the portable
+              # smoke's library path - exactly what portable-boot-smoke does.
+              ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 \
+                --library-path "${portableStack.bootLibPath}" \
+                squashfs-root/usr/bin/daemon-app | tee boot.txt
               grep -q "DAEMON_APP_READY ok" boot.txt
 
               echo "=== glibc floor over all extracted payloads ==="
@@ -660,7 +699,7 @@
         packages.tuiwidgets = tuiwidgets-qt6;
         packages.posixsignalmanager = posixsignalmanager-qt6;
 
-        # Linux packaging artifacts (v1 scaffolding; see mkLinuxArtifacts).
+        # Linux packaging artifacts (static-Qt payload; see mkLinuxArtifacts).
         # `artifacts` carries all three; the per-format outputs are views of
         # the same build.
         packages.artifacts = linuxArtifacts;

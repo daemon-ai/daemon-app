@@ -3,20 +3,20 @@
 #
 # Desktop packaging: freedesktop assets, the macOS bundle payload + Qt deploy
 # script, bundled sibling binaries, and CPack (Linux: DEB / RPM / AppImage;
-# macOS: DragNDrop .dmg; NSIS is a stub for the Windows workstream).
+# Windows: NSIS over the MinGW cross build; macOS: DragNDrop .dmg).
 #
-# CAVEAT (v1 scaffolding): the payload packaged today is the DYNAMIC-Qt app as
-# linked by the Nix toolchain - its interpreter and RUNPATH point into
-# /nix/store, so the artifacts only run on hosts with the matching store paths
-# (build sandbox, NixOS). The sibling static-qt workstream swaps in a portable
-# payload later; what must be correct here is the packaging skeleton: assets,
-# install rules, per-generator config (cmake/CPackPerGen.cmake), and the
-# artifact sanity checks (flake checks.artifact-sanity).
+# The Linux packages carry the STATIC-Qt payload: the flake's artifact
+# outputs configure the DAEMON_APP_STATIC build with
+# DAEMON_APP_PACKAGE_PORTABLE=ON, and the staged tree is rewritten for the
+# generic-distro floor before each generator wraps it (generic /lib64
+# loader, $ORIGIN rpaths, side-payload prune, store-prefix scrub - see
+# cmake/PackagePortablePayload.cmake). checks.artifact-sanity gates the
+# result.
 #
 # The macOS (APPLE) side is CODE-ONLY so far: written and lint-checked on
-# Linux, never yet configured or packaged on a mac. Anything it stages runs
-# through the same v1 caveat, plus its own unvalidated list - see
-# packaging/macos/README.md before trusting a produced .dmg.
+# Linux, never yet configured or packaged on a mac. It still stages the
+# Nix-linked dynamic build; see packaging/macos/README.md before trusting a
+# produced .dmg.
 
 include_guard(GLOBAL)
 
@@ -40,6 +40,15 @@ set(DAEMON_APP_BUNDLED_DAEMON_CLI
     ""
     CACHE FILEPATH
     "Absolute path to a prebuilt daemon-cli binary to bundle as bin/daemon-cli"
+)
+# Runtime libraries the bundled binaries need beyond the documented system
+# floor (e.g. daemon-infer links libstdc++/libgomp from the nix gcc, whose
+# GLIBCXX may be newer than the target distro's) - staged into lib/, resolved
+# via the $ORIGIN/../lib rpath the packaging pre-build script writes.
+set(DAEMON_APP_BUNDLED_LIBS
+    ""
+    CACHE STRING
+    "Semicolon list of prebuilt shared libraries to bundle into lib/"
 )
 
 # Desktop-only: the wasm bundle installs its own artifact set and the mobile
@@ -87,6 +96,17 @@ if(DAEMON_APP_BUNDLED_DAEMON_CLI)
         PROGRAMS "${DAEMON_APP_BUNDLED_DAEMON_CLI}"
         DESTINATION "${_da_colocated_bin_dir}"
         RENAME daemon-cli
+    )
+endif()
+if(DAEMON_APP_BUNDLED_LIBS)
+    if(APPLE)
+        set(_da_bundled_lib_dir "${_da_bundle_contents}/Frameworks")
+    else()
+        set(_da_bundled_lib_dir "${CMAKE_INSTALL_LIBDIR}")
+    endif()
+    install(
+        PROGRAMS ${DAEMON_APP_BUNDLED_LIBS}
+        DESTINATION "${_da_bundled_lib_dir}"
     )
 endif()
 
@@ -168,9 +188,8 @@ if(APPLE)
     # PlugIns/, Resources/qml/ + bundle qt.conf), rewriting install names.
     # Generated at configure time, executed at install time - so both
     # `cmake --install` and CPack's DragNDrop staging pass through it.
-    # APPLE-only on purpose: the Linux artifacts deliberately ship no deploy
-    # step (v1 packages the Nix-linked payload as-is) and the wasm install
-    # set is self-contained.
+    # APPLE-only on purpose: the Linux artifacts need no deploy step (the
+    # static payload is self-contained) and the wasm install set likewise.
     qt_generate_deploy_qml_app_script(
         TARGET daemon-app
         OUTPUT_SCRIPT _da_macos_deploy_script
@@ -281,6 +300,31 @@ set(DAEMON_APP_APPIMAGE_RUNTIME
     "Prebuilt AppImage type2 runtime for cpack -G AppImage (injected by the flake)"
 )
 set(CPACK_DAEMON_APP_APPIMAGE_RUNTIME "${DAEMON_APP_APPIMAGE_RUNTIME}")
+
+# --- Portable payload rewrite (Linux packages over the static-Qt build) ------
+# The flake's packaging outputs configure the static-Qt app with
+# DAEMON_APP_PACKAGE_PORTABLE=ON: after cpack stages the install tree, the
+# pre-build script prunes the vendored KSyntaxHighlighting side-payload and
+# rewrites every staged ELF for the generic-distro floor (generic /lib64
+# loader, $ORIGIN rpaths, store-prefix scrub) - the packaged twin of what
+# nix/portable.nix does to the portable tarball layout. OFF for developer
+# configures: `cpack` from a dev tree keeps packaging the build as-is.
+option(
+    DAEMON_APP_PACKAGE_PORTABLE
+    "Rewrite the staged CPack payload for a generic distro root (patchelf + prune; flake packaging outputs only)"
+    OFF
+)
+set(DAEMON_APP_SCRUB_PREFIXES
+    ""
+    CACHE STRING
+    "Semicolon list of store prefixes remove-references-to scrubs from the staged daemon-app binary"
+)
+if(DAEMON_APP_PACKAGE_PORTABLE)
+    set(CPACK_PRE_BUILD_SCRIPTS
+        "${CMAKE_SOURCE_DIR}/cmake/PackagePortablePayload.cmake"
+    )
+    set(CPACK_DAEMON_APP_SCRUB_PREFIXES "${DAEMON_APP_SCRUB_PREFIXES}")
+endif()
 
 set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_SOURCE_DIR}/cmake/CPackPerGen.cmake")
 
