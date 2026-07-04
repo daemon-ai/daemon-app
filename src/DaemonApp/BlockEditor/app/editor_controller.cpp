@@ -19,6 +19,12 @@
 #include <QVariantMap>
 #include <util/numeric.h>
 
+// On wasm the async Clipboard API needs a secure context; the bridge adds the insecure-context
+// execCommand fallback. Off wasm the desktop QClipboard path is used and the bridge is not linked.
+#ifdef __EMSCRIPTEN__
+#include "platform/wasm_file_bridge.h"
+#endif
+
 namespace be::app {
 
 namespace {
@@ -472,14 +478,31 @@ QString EditorController::messageText(const QString& messageId) const {
     return parts.join(QStringLiteral("\n\n"));
 }
 
-void EditorController::copyMessageToClipboard(const QString& messageId) const {
+bool EditorController::copyText(const QString& text) {
+#ifdef __EMSCRIPTEN__
+    // The desktop QClipboard path silently no-ops in an insecure browser context (no
+    // navigator.clipboard); route through the bridge, which adds the execCommand fallback and
+    // reports total failure so we can toast instead of dropping the copy silently.
+    const bool ok = platform::writeClipboardText(text);
+    if (!ok) {
+        emit clipboardUnavailable();
+    }
+    return ok;
+#else
+    if (QClipboard* clipboard = QGuiApplication::clipboard()) {
+        clipboard->setText(text);
+        return true;
+    }
+    return false;
+#endif
+}
+
+void EditorController::copyMessageToClipboard(const QString& messageId) {
     const QString text = messageText(messageId);
     if (text.isEmpty()) {
         return;
     }
-    if (QClipboard* clipboard = QGuiApplication::clipboard()) {
-        clipboard->setText(text);
-    }
+    copyText(text);
 }
 
 void EditorController::notifyInlineEditOpen() {
@@ -1097,14 +1120,12 @@ QString EditorController::copySelectionMarkdown() const {
     return {};
 }
 
-void EditorController::copySelectionToClipboard() const {
+void EditorController::copySelectionToClipboard() {
     const QString markdown = copySelectionMarkdown();
     if (markdown.isEmpty()) {
         return;
     }
-    if (QClipboard* clipboard = QGuiApplication::clipboard()) {
-        clipboard->setText(markdown);
-    }
+    copyText(markdown);
 }
 
 void EditorController::reportBlockHeight(qulonglong blockId, qreal height) {

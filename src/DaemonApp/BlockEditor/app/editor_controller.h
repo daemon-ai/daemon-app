@@ -154,7 +154,14 @@ public:
     // The combined markdown of every block in `messageId` (for a footer copy /
     // an edit composer's initial text), and a clipboard helper for it.
     Q_INVOKABLE QString messageText(const QString& messageId) const;
-    Q_INVOKABLE void copyMessageToClipboard(const QString& messageId) const;
+    Q_INVOKABLE void copyMessageToClipboard(const QString& messageId);
+    // Write `text` to the clipboard, returning whether any path succeeded. Desktop uses
+    // QClipboard::setText (unchanged behavior). On wasm it routes through the bridge's
+    // Clipboard-API/execCommand fallback and, if every path fails, emits clipboardUnavailable() so
+    // the view can surface a toast rather than silently no-op. QML copy buttons that don't go
+    // through copyMessageToClipboard/copySelectionToClipboard (e.g. a tool block's copy) can call
+    // this directly.
+    Q_INVOKABLE bool copyText(const QString& text);
     // Notify the host that an inline message editor opened. The transcript view
     // escapes stick-to-bottom in response so the growing edit composer is not
     // yanked to the bottom (mirrors Hermes' beginEditHold -> stopScroll).
@@ -207,7 +214,7 @@ public:
                                           int inCellVisualOffset) const;
     Q_INVOKABLE QVariantMap tableCellSelectionSpan(qulonglong blockId, int rowIndex, int col) const;
     Q_INVOKABLE QString copySelectionMarkdown() const;
-    Q_INVOKABLE void copySelectionToClipboard() const;
+    Q_INVOKABLE void copySelectionToClipboard();
     Q_INVOKABLE void reportBlockHeight(qulonglong blockId, qreal height);
     Q_INVOKABLE int rowAtContentY(qreal y) const;
     // Resolve an in-document anchor fragment (e.g. "#table-of-contents") to the
@@ -256,6 +263,10 @@ signals:
     void regenerateRequested(const QString& messageId);
     // An inline message editor opened; the transcript escapes stick-to-bottom.
     void inlineEditOpened();
+    // Every clipboard write path failed (only reachable on wasm in an insecure context where
+    // navigator.clipboard is absent and document.execCommand('copy') is refused). The view surfaces
+    // a one-time toast in response; desktop never emits this.
+    void clipboardUnavailable();
     void paletteChanged();
     void bodyFontChanged();
     // Emitted after any change to the document content (load/edit/stream) so a
