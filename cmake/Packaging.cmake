@@ -110,6 +110,49 @@ if(DAEMON_APP_BUNDLED_LIBS)
     )
 endif()
 
+# Co-located node binary relocatability backstop (APPLE, bundled build only).
+# The nix-built Rust node binaries carry an absolute /nix/store install name
+# for libiconv (the nix libiconv, not the system one), which dangles on any mac
+# without a nix store - the daemon would fail to load. libiconv is a macOS
+# system library resolved from the dyld shared cache at /usr/lib, so repoint the
+# store reference there. Any OTHER residual /nix/store reference has no system
+# mapping and is flagged loudly (it would need bundling). install_name_tool
+# voids the ad-hoc signature, so re-sign each edited binary. Runs after the
+# install(PROGRAMS) copies above.
+if(APPLE AND (DAEMON_APP_BUNDLED_DAEMON OR DAEMON_APP_BUNDLED_DAEMON_INFER OR DAEMON_APP_BUNDLED_DAEMON_CLI))
+    install(CODE [==[
+        set(_da_macos "${CMAKE_INSTALL_PREFIX}/daemon-app.app/Contents/MacOS")
+        foreach(_da_nb daemon daemon-infer daemon-cli)
+            set(_da_p "${_da_macos}/${_da_nb}")
+            if(NOT EXISTS "${_da_p}")
+                continue()
+            endif()
+            execute_process(COMMAND chmod u+w "${_da_p}")
+            execute_process(COMMAND otool -L "${_da_p}"
+                OUTPUT_VARIABLE _da_o OUTPUT_STRIP_TRAILING_WHITESPACE)
+            string(REPLACE "\n" ";" _da_lines "${_da_o}")
+            set(_da_changed FALSE)
+            foreach(_da_line IN LISTS _da_lines)
+                string(REGEX MATCH "/nix/store/[^ ]+[.]dylib" _da_ref "${_da_line}")
+                if(_da_ref)
+                    get_filename_component(_da_b "${_da_ref}" NAME)
+                    if(_da_b MATCHES "^libiconv")
+                        message(STATUS "daemon-app: repointing ${_da_nb} ${_da_ref} -> /usr/lib/${_da_b}")
+                        execute_process(COMMAND install_name_tool -change
+                            "${_da_ref}" "/usr/lib/${_da_b}" "${_da_p}")
+                        set(_da_changed TRUE)
+                    else()
+                        message(WARNING "daemon-app: ${_da_nb} keeps store reference ${_da_ref} with no system-lib mapping (will dangle off-nix)")
+                    endif()
+                endif()
+            endforeach()
+            if(_da_changed)
+                execute_process(COMMAND codesign --force --sign - "${_da_p}")
+            endif()
+        endforeach()
+    ]==])
+endif()
+
 # License + third-party notices ship with every package. EXISTS-guarded: the
 # notices file lands on a sibling branch and must not break a lean checkout.
 foreach(_da_doc LICENSE THIRD-PARTY-NOTICES.md)
@@ -328,17 +371,17 @@ if(APPLE)
     # is the flake's -D flag (nix/flake.nix depFlags) pointing at the plugin's
     # qml prefix; a bare dev configure without it skips deployment.
     if(DEFINED QMLTERMWIDGET_QML_DIR AND EXISTS "${QMLTERMWIDGET_QML_DIR}/QMLTermWidget")
-        install(
-            DIRECTORY "${QMLTERMWIDGET_QML_DIR}/QMLTermWidget"
-            DESTINATION "${_da_bundle_contents}/Resources/qml"
-            USE_SOURCE_PERMISSIONS
-        )
+        install(DIRECTORY "${QMLTERMWIDGET_QML_DIR}/QMLTermWidget"
+                DESTINATION "${_da_bundle_contents}/Resources/qml")
         install(CODE [==[
             set(_da_app "${CMAKE_INSTALL_PREFIX}/daemon-app.app")
             set(_da_qtw "${_da_app}/Contents/Resources/qml/QMLTermWidget")
+            # The module is copied from the read-only nix store; install_name_tool
+            # writes a sibling temp file, so the DIRECTORY (not just the dylib) must
+            # be writable.
+            execute_process(COMMAND chmod -R u+w "${_da_qtw}")
             file(GLOB _da_qtw_dylibs "${_da_qtw}/*.dylib")
             foreach(_da_lib IN LISTS _da_qtw_dylibs)
-                execute_process(COMMAND chmod u+w "${_da_lib}")
                 execute_process(COMMAND otool -L "${_da_lib}"
                     OUTPUT_VARIABLE _da_o OUTPUT_STRIP_TRAILING_WHITESPACE)
                 string(REPLACE "\n" ";" _da_lines "${_da_o}")
