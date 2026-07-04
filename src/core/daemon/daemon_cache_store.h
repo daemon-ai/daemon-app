@@ -9,6 +9,8 @@
 #include <QObject>
 #include <QString>
 
+QT_FORWARD_DECLARE_CLASS(QSqlQuery)
+
 namespace daemonapp::daemon {
 
 struct CachedSessionRow {
@@ -175,18 +177,44 @@ public:
     bool setMeta(const QString& key, const QString& value);
     [[nodiscard]] QString meta(const QString& key) const;
 
+    // Wipe every cached row (drop + recreate the data tables) for the "Clear local data" action;
+    // the cache re-baselines from the daemon on the next ready. Returns true on success. Consumed
+    // by Application::clearLocalData() (W4). TODO(W2): implement the drop/recreate + sibling-file
+    // cleanup.
+    bool clearAll();
+
+    // Approximate total cached row count across the data tables, for the boot cache-rows sentinel
+    // (kSentinelCacheRowsPrefix). Cheap/best-effort; exact accuracy is not required. TODO: return
+    // the real aggregate count (W2 populates it; Stream B's sentinel consumes it).
+    [[nodiscard]] int approxRowCount() const;
+
 private:
     [[nodiscard]] static QString defaultDatabasePath();
     // The per-user db path derived from the base path + a hashed userKey (base path when empty).
     [[nodiscard]] QString namespacedPath(const QString& userKey) const;
-    // (Re)open the SQLite connection at `path` and (re)create the schema. Replaces any open db.
+    // (Re)open the SQLite connection at `path` and (re)create the schema. Replaces any open db. On
+    // an open/integrity/schema failure the (torn/corrupt) file is discarded and rebuilt fresh - the
+    // cache is non-authoritative, so the daemon re-baselines it on reconnect.
     void openAt(const QString& path);
+    // Add + open the QSQLITE connection at m_dbPath, gate it on PRAGMA integrity_check, then build
+    // the schema. Returns false (leaving the connection closed) on any of those failing.
+    bool openConnection();
+    // Close + remove the QSQLITE connection bound to m_connectionName, if any.
+    void dropConnection();
+    // Quick yes/no verdict from PRAGMA integrity_check(1) on the current connection (torn-write /
+    // corruption gate; IDBFS can persist an interrupted db/journal pair).
+    [[nodiscard]] bool integrityCheckOk() const;
+    // Delete a db file and its SQLite sidecars (-journal / -wal / -shm).
+    static void removeDatabaseFiles(const QString& path);
     // Create the meta table, reconcile the persisted schema version (rebuilding the
     // non-authoritative cache on a version mismatch), then create the data tables.
     bool ensureSchema();
     bool createDataTables();
     bool dropDataTables();
     bool execSql(const char* sql);
+    // Run a prepared mutating query. On success arms the debounced IDBFS write-back (no-op off
+    // wasm) so the change reaches IndexedDB; on failure records lastError().
+    bool execWrite(QSqlQuery& query);
     void setLastError(const QString& message) const;
 
     QString m_dbPath;

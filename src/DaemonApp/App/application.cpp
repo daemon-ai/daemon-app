@@ -12,6 +12,7 @@
 #include "command_registry.h"
 #include "config/idaemon_config.h"
 #include "connection/iconnection_service.h"
+#include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_connection_service.h"
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
@@ -32,6 +33,7 @@
 #include "persistence/isession_store.h"
 #include "platform/iplatform_services.h"
 #include "platform/platform_services_factory.h"
+#include "platform/wasm_contracts.h"
 #include "profiles/iprofile_store.h"
 #include "session/icheckpoint_timeline.h"
 #include "session/isession_settings.h"
@@ -45,8 +47,10 @@
 #include <core/formula.h>
 #include <cstdio>
 #include <latex.h>
+#include <memory>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDir>
 #include <QEvent>
 #include <QEventLoop>
 #include <QFile>
@@ -54,9 +58,15 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QSettings>
+#include <QStandardPaths>
 #include <QString>
 #include <QTimer>
 #include <QUuid>
+
+#ifdef Q_OS_WASM
+#include <emscripten.h>
+#endif
 
 Application::Application(QObject* parent)
     : QObject(parent), m_services(daemonapp::daemon::createAppServiceGraph(
@@ -301,6 +311,28 @@ void Application::settleFirstRunGate(int ms) const {
     disconnect(conn);
 }
 
+void Application::installAutomationLoginHook(const QString& userPass) const {
+    auto* conn = m_services.connection;
+    if (conn == nullptr || userPass.isEmpty()) {
+        return;
+    }
+    // "user:pass" — split on the first colon so a password may itself contain colons.
+    const qsizetype sep = userPass.indexOf(QLatin1Char(':'));
+    const QString user = sep >= 0 ? userPass.left(sep) : userPass;
+    const QString pass = sep >= 0 ? userPass.mid(sep + 1) : QString();
+    // Fire login() the first time the node asks for interactive credentials. A shared one-shot
+    // guard prevents re-driving login on a later authenticating transition (a wrong-password retry
+    // must not loop). The lambda is owned by the connection object, so it lives as long as it does.
+    auto fired = std::make_shared<bool>(false);
+    connect(conn, &connection::IConnectionService::stateChanged, conn, [conn, user, pass, fired] {
+        if (*fired || conn->state() != QStringLiteral("authenticating")) {
+            return;
+        }
+        *fired = true;
+        conn->login(user, pass);
+    });
+}
+
 #ifdef Q_OS_WASM
 void Application::announceConnectionReady(int timeoutMs) const {
     auto* conn = m_services.connection;
@@ -330,6 +362,57 @@ void Application::announceConnectionReady(int timeoutMs) const {
         announce(false);
     });
     timeout->start(timeoutMs);
+}
+
+void Application::announceReloadSentinels() const {
+    // (1) Cache rows at boot, BEFORE any network fetch: a non-zero count proves the IDBFS-backed
+    // SQLite cache survived the reload. Read synchronously here (Stream A populates approxRowCount
+    // over IDBFS; a 0 on a first/empty boot is still a valid sentinel line for the harness).
+    if (m_services.cache != nullptr) {
+        std::fprintf(stdout, "%s%d\n", platform::kSentinelCacheRowsPrefix,
+                     m_services.cache->approxRowCount());
+        std::fflush(stdout);
+    }
+
+    // (2) Auth outcome: resumed (AuthOk via a persisted token, no SCRAM challenge) vs scram (a
+    // fresh interactive login). Printed once on the first AuthOk; the connection service reports
+    // which path it took. Wired before the async handshake completes, so it is never missed.
+    if (auto* daemonConn =
+            qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection)) {
+        connect(
+            daemonConn, &daemonapp::daemon::DaemonConnectionService::authOutcome, daemonConn,
+            [](bool resumed) {
+                std::fprintf(stdout, "%s\n",
+                             resumed ? platform::kSentinelAuthResumed
+                                     : platform::kSentinelAuthScram);
+                std::fflush(stdout);
+            },
+            Qt::SingleShotConnection);
+    }
+
+    // (3) First-run gate completion, async (a nested QEventLoop is forbidden on single-threaded
+    // wasm): print once the phase reaches "done"; if it is already done at boot, print now. A
+    // shared guard keeps it to exactly one line even if the phase toggles.
+    firstrun::FirstRunModel* firstRun = m_services.firstRun;
+    if (firstRun == nullptr) {
+        return;
+    }
+    const auto emitFirstRunDone = [] {
+        std::fprintf(stdout, "%s\n", platform::kSentinelFirstRunDone);
+        std::fflush(stdout);
+    };
+    if (firstRun->phase() == QStringLiteral("done")) {
+        emitFirstRunDone();
+        return;
+    }
+    auto printed = std::make_shared<bool>(false);
+    connect(firstRun, &firstrun::FirstRunModel::phaseChanged, firstRun,
+            [firstRun, printed, emitFirstRunDone] {
+                if (!*printed && firstRun->phase() == QStringLiteral("done")) {
+                    *printed = true;
+                    emitFirstRunDone();
+                }
+            });
 }
 #endif
 
@@ -838,6 +921,60 @@ void Application::completeWiring(QQmlApplicationEngine& engine) {
         m_services.connection->connectTo(m_services.settings->lastConnectionMode(),
                                          m_services.settings->resolvedConnectionTarget());
     }
+}
+
+void Application::clearLocalData() const {
+    // "Forget this device": wipe every client-local trace of the node, but never touch the node's
+    // own server-side data. Ordered so nothing races a live connection.
+
+    // 1. Drop the active connection first (stops the reconnect/backoff loop and any in-flight
+    //    writes to the caches we are about to clear).
+    if (m_services.connection != nullptr) {
+        // Best-effort keychain/settings token clear for the active target (desktop keychain path);
+        // the wholesale QSettings clear below also removes the settings-fallback tokens.
+        m_services.connection->logout();
+        m_services.connection->disconnect();
+    }
+
+    // 2. Wipe the shared preference store (conn/*, app/setupComplete, ui/*, conn/tokens/*). Both
+    //    QtSettingsStore and UiSettings bind this same ("daemon-app","daemon-app") scope, so one
+    //    clear() covers connection prefs, the first-run flag, and every UI preference.
+    QSettings settings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"));
+    settings.clear();
+    settings.sync();
+
+    // 3. Empty the offline-first SQLite cache (roster / transcripts / fs / fleet / channels) and
+    //    delete any other user-namespaced cache files on this device.
+    if (m_services.cache != nullptr) {
+        m_services.cache->clearAll();
+    }
+
+    // 4. Drop the on-disk images cache (QNetworkDiskCache dir under CacheLocation/images).
+    const QString cacheBase = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    if (!cacheBase.isEmpty()) {
+        QDir(QDir(cacheBase).filePath(QStringLiteral("images"))).removeRecursively();
+    }
+
+#ifdef Q_OS_WASM
+    // 5a. Browser: force a final write-back of the emptied IDBFS mount, then hard-reload into a
+    //     clean first-run state (settings are gone, so setupComplete reads false and the gate
+    //     shows).
+    // clang-format off
+    EM_ASM({
+        if (typeof FS !== 'undefined' && FS.syncfs) {
+            FS.syncfs(false, function() { location.reload(); });
+        } else {
+            location.reload();
+        }
+    });
+    // clang-format on
+#else
+    // 5b. Desktop/mobile: return to the first-run gate in place (no process restart). FirstRun
+    //     .restart() flips setupComplete back off and re-enters the onboarding phase.
+    if (m_services.firstRun != nullptr) {
+        m_services.firstRun->restart();
+    }
+#endif
 }
 
 bool Application::notifyGate(const QString& title, const QString& body) {

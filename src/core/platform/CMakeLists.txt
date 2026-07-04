@@ -2,6 +2,18 @@ add_library(da_platform STATIC
     iplatform_services.h
     platform_services_factory.h
     platform_services_factory.cpp
+    # Browser-persistence contract surface (Browser Persistence Polish wave). Headers are
+    # all-platform; the .cpp bodies are compiled on every platform (unlike wasm_page_origin.cpp,
+    # which is wasm-only) so the all-platform call sites link a definition everywhere — the bodies
+    # are no-ops off wasm and stubs on wasm. Pre-registered once here so no downstream stream needs
+    # to touch this source list. See wasm_contracts.h for the pinned string contracts.
+    wasm_contracts.h
+    wasm_persistence.h
+    wasm_persistence.cpp
+    wasm_online.h
+    wasm_online.cpp
+    wasm_file_bridge.h
+    wasm_file_bridge.cpp
 )
 add_library(daemon-app::platform ALIAS da_platform)
 

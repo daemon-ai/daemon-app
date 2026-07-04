@@ -157,3 +157,9 @@ target_link_libraries(da_blockeditor
         # the MathImageProvider to rasterize formulas into QImages.
         LaTeX
 )
+
+# The wasm clipboard fallback (EditorController::copyText -> platform::writeClipboardText) is
+# compiled only on the browser build, so the platform layer is linked there and nowhere else.
+if(DAEMON_APP_WASM)
+    target_link_libraries(da_blockeditor PRIVATE daemon-app::platform)
+endif()

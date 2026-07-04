@@ -1029,12 +1029,23 @@ Item {
                     event.accepted = true
                 } else if ((commandModifier && event.key === Qt.Key_V)
                            || (shiftModifier && event.key === Qt.Key_Insert)) {
-                    // Intercept paste before native TextEdit insertion: parse the
-                    // clipboard markdown into blocks instead of dumping it all into
-                    // this one block. selectionStart === selectionEnd === cursorPosition
-                    // when there is no selection, so this also replaces a selection.
-                    editorController.pasteFromClipboard(Number(blockId), activeEditor.selectionStart, activeEditor.selectionEnd)
-                    event.accepted = true
+                    if (Qt.platform.os === "wasm") {
+                        // On wasm the clipboard payload is only readable synchronously inside the
+                        // browser paste event Qt processes itself; reading QClipboard from this
+                        // keydown intercept sees an empty mime bag (the async Clipboard API needs a
+                        // secure context + a gesture). So DON'T accept the key: let the native
+                        // TextEdit paste run — the pasted text lands in the active block and the
+                        // model picks it up via onTextChanged. This trades the desktop block-
+                        // splitting-on-paste for a plain in-block insert on wasm.
+                        event.accepted = false
+                    } else {
+                        // Intercept paste before native TextEdit insertion: parse the
+                        // clipboard markdown into blocks instead of dumping it all into
+                        // this one block. selectionStart === selectionEnd === cursorPosition
+                        // when there is no selection, so this also replaces a selection.
+                        editorController.pasteFromClipboard(Number(blockId), activeEditor.selectionStart, activeEditor.selectionEnd)
+                        event.accepted = true
+                    }
                 }
                 }
             }

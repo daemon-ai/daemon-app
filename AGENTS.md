@@ -75,6 +75,41 @@ dropdowns, menus, dialogs, tooltips, scrollbars, progress bars, ...).
 (`clang-tools` ships `clang-tidy` but not `run-clang-tidy`; drive it per-TU with `xargs` as above.)
 Never bypass the pre-commit hook (no `git commit --no-verify`).
 
+## WebAssembly (browser) build — extra gates & persistence model
+
+For any change that touches the wasm surface (`src/core/platform/wasm_*`, the wasm shell
+`src/DaemonApp/App/wasm/daemon-app.html`, IDBFS/settings persistence, browser file/clipboard
+flows, or the `#wasm` flake), run these from the superproject in addition to the desktop gate:
+
+- `just build-wasm`   — `nix build ./daemon-app#wasm` (static browser artifacts under
+  `result-app-wasm/share/daemon-app/wasm`; must link `-lidbfs.js` for the durable cache).
+- `just wasm-smoke`   — serves the bundle and drives headless chromium over CDP; asserts the boot
+  marker and the WebGL2 renderer verdict (`renderer=webgl2`). The browser comes from the
+  `#wasm` devShell's bundled chromium (the host chromium is often a firejail wrapper that aborts
+  under `--headless`).
+- `just e2e-web`      — reload-survival browser e2e (`scripts/wasm-boot-smoke.py --scenario reload`):
+  boots a debug daemon serving a patched bundle copy, drives first-load → `Page.reload`, and
+  asserts the pinned console sentinels survive. `--mode base` proves the reload + origin-storage
+  substrate with no daemon; `--mode strict` adds the full sentinel assertions
+  (`DAEMON_APP_AUTH resumed`, `DAEMON_APP_CACHE rows=<n>`, `DAEMON_APP_FIRSTRUN done`). Strict's
+  first-load `cache rows>0` check needs the node to already hold session data.
+
+**Browser persistence model.** The wasm build has no OS keychain and no shared filesystem with the
+node; client-local state lives in origin storage:
+
+- **`localStorage`** backs Qt's default wasm `QSettings` (`WebLocalStorageFormat`, ~5 MiB/origin):
+  connection prefs (`conn/*`), `app/setupComplete`, `ui/*` prefs, and the per-target session
+  resume token (`conn/tokens/<sha256(target)[:16]>`, plaintext — see
+  `docs/browser-token-persistence.md`). `QtSettingsStore` + `UiSettings` `sync()` on every write
+  plus a `beforeunload`/`pagehide` flush.
+- **IndexedDB (via IDBFS)** backs the SQLite cache (`daemon_cache*.db` under `AppDataLocation`):
+  the shell mounts the AppData dir as IDBFS in a `preRun` hook and preloads it before `main()`;
+  writes are flushed back with a debounced `FS.syncfs`. The cache is non-authoritative — a torn
+  write is recovered by dropping and recreating the db (`PRAGMA integrity_check`).
+- **Escape hatch:** append **`?clear=1`** to the shell URL to wipe the origin's IndexedDB + reset
+  `localStorage` before `qtLoad`, then reload — for when the app itself can't boot. The in-app
+  **Settings → Advanced → Clear local data** action performs the same full wipe from a running app.
+
 ## Conventions
 
 - Formatting is enforced by `.clang-format`; static checks by `.clang-tidy` — don't loosen either

@@ -29,6 +29,15 @@ public:
     // Write `text` to a local-file URL (or plain path). Returns false on failure.
     Q_INVOKABLE bool writeFile(const QUrl& fileUrl, const QString& text) const;
 
+    // Browser (wasm) export: serialize the session to JSON and hand the bytes to the wasm file
+    // bridge, which triggers a real browser download (Blob + <a download>). There is no shared
+    // filesystem with the node on wasm, so the QtQuick.Dialogs FileDialog + writeFile() path (which
+    // lands in the Emscripten sandbox the user can't see) is skipped in favor of this. No-op off
+    // wasm — the desktop/TUI keep using writeFile()/exportToPath(). `suggestedName` is the download
+    // filename (e.g. "<title-or-id>.json").
+    Q_INVOKABLE void exportToBrowser(QObject* store, const QString& sessionId,
+                                     const QString& suggestedName) const;
+
     // Convenience for non-QML callers (the TUI): build + write in one step.
     bool exportToPath(persistence::ISessionStore* store, const QString& sessionId,
                       const QString& filePath) const;

@@ -350,7 +350,16 @@
         # Wasm cross-development: emscripten + the wasm Qt stack + host tools.
         # Exports DAEMON_APP_QT_WASM for the wasm-release CMake preset, which
         # consumes $env{DAEMON_APP_QT_WASM}/lib/cmake/Qt6/qt.toolchain.cmake.
-        devShells.wasm = qtWasmStack.devShell;
+        #
+        # Plus a hermetic headless chromium for the wasm boot smoke and the
+        # reload-survival e2e (scripts/wasm-boot-smoke.py honours $CHROMIUM / a
+        # `chromium` on PATH). The host chromium is frequently a firejail wrapper
+        # that aborts under --headless, so both `just wasm-smoke` / `just e2e-web`
+        # take their browser from here. overrideAttrs keeps the shell's
+        # emscripten/Qt-wasm shellHook intact (an `inputsFrom` splice would drop it).
+        devShells.wasm = qtWasmStack.devShell.overrideAttrs (old: {
+          nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.chromium ];
+        });
       }
     );
 }

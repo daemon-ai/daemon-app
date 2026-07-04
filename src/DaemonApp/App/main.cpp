@@ -420,6 +420,14 @@ int main(int argc, char* argv[]) {
     const QByteArray waitReadyMs = qgetenv("DAEMON_APP_WAIT_READY");
     if (!waitReadyMs.isEmpty()) {
         const int timeoutMs = waitReadyMs.toInt() > 0 ? waitReadyMs.toInt() : 5000;
+        // Guarded automation login hook (only honored under WAIT_READY, per wasm_contracts.h):
+        // DAEMON_APP_LOGIN=user:pass drives a fresh SCRAM login once the node asks for credentials,
+        // so the reload-survival harness can complete auth without QML input. Installed before the
+        // connect so the authenticating transition is caught.
+        const QByteArray loginEnv = qgetenv("DAEMON_APP_LOGIN");
+        if (!loginEnv.isEmpty()) {
+            application.installAutomationLoginHook(QString::fromUtf8(loginEnv));
+        }
         // On first run nothing auto-connects; drive the onboarding connect (Local on desktop -
         // which, with managed local daemon on, spawns the daemon if needed - WebSocket on wasm)
         // so the harness can assert it.
@@ -429,6 +437,9 @@ int main(int argc, char* argv[]) {
         // loop, print the sentinel to the browser console, and keep the app running - the CDP
         // harness reads the console, not an exit code.
         application.announceConnectionReady(timeoutMs);
+        // Reload-survival sentinels for the CDP harness: cache rows at boot, auth outcome
+        // (resumed|scram), and first-run completion. All async - no nested loop.
+        application.announceReloadSentinels();
 #else
         const bool ready = application.awaitConnectionReady(timeoutMs);
         if (ready) {

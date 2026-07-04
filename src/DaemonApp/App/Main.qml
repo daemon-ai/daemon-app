@@ -3,7 +3,9 @@
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import DaemonApp.Theme
+import DaemonApp.Controls as Kit
 import DaemonApp.Settings
 import DaemonApp.Sidebar
 import DaemonApp.SessionsList
@@ -232,6 +234,96 @@ ApplicationWindow {
         id: shell
         anchors.fill: parent
         sourceComponent: LayoutState.isCompact ? compactShell : expandedShell
+    }
+
+    // Global reconnect banner (W5): a thin strip pinned to the top of the shell whenever a live
+    // connection is recovering from a drop (reconnecting / re-authenticating) or gave up. Bound to
+    // Connection.state; collapses to nothing when ready so it stays out of the way. The first-run
+    // gate (z: 200) covers it during onboarding, so it only surfaces post-setup. The recovery
+    // behavior itself lives in the C++ connection service (backoff reprobe + browser online-event
+    // wake-up); this is presentation only.
+    Rectangle {
+        id: reconnectBanner
+        z: 150
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: visible ? 34 : 0
+        visible: reconnectBanner.showBanner
+        color: Theme.surfaceRaised
+        clip: true
+
+        // Show while a previously-live connection is recovering or has given up: a reconnect
+        // episode (state "connecting" with a status message - the initial connect clears it), a
+        // drop that needs re-auth, or an offline state that carries a failure reason. Ready /
+        // first connect / user-initiated offline stay silent.
+        readonly property bool showBanner: {
+            if (!Connection)
+                return false;
+            const s = Connection.state;
+            if (s === "connecting")
+                return Connection.statusMessage.length > 0;
+            if (s === "authenticating")
+                return true;
+            if (s === "offline")
+                return Connection.statusMessage.length > 0;
+            return false;
+        }
+        readonly property bool failed: Connection && Connection.state === "offline"
+
+        // Seconds since the banner appeared, reset on each show, so the user sees the outage isn't
+        // stalled silently.
+        property int elapsedSec: 0
+        onVisibleChanged: elapsedSec = 0
+        Timer {
+            running: reconnectBanner.visible
+            interval: 1000
+            repeat: true
+            onTriggered: reconnectBanner.elapsedSec += 1
+        }
+
+        // Bottom hairline so the strip reads as chrome over the shell.
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: Theme.border
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Theme.spacing
+            anchors.rightMargin: Theme.spacing
+            spacing: Theme.spacing
+
+            Rectangle {
+                implicitWidth: 8
+                implicitHeight: 8
+                radius: 4
+                Layout.alignment: Qt.AlignVCenter
+                color: reconnectBanner.failed ? Theme.danger : Theme.warning
+            }
+            Label {
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                color: Theme.text
+                font.pixelSize: 13
+                text: {
+                    const base = (Connection && Connection.statusMessage.length)
+                        ? Connection.statusMessage
+                        : qsTr("Connection lost");
+                    return reconnectBanner.elapsedSec > 0
+                        ? qsTr("%1 (%2s)").arg(base).arg(reconnectBanner.elapsedSec)
+                        : base;
+                }
+            }
+            Kit.TextButton {
+                text: qsTr("Reconnect now")
+                onClicked: if (Connection)
+                    Connection.connectTo(Connection.mode, Connection.target)
+            }
+        }
     }
 
     // --- Expanded (>= 900dp): the original three-pane desktop SplitView -------

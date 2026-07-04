@@ -10,6 +10,13 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+// The browser download path pulls the wasm file bridge only on wasm, so the desktop/TUI export
+// libraries stay free of the platform layer (and its QtWidgets tray dependency). exportToBrowser
+// is a no-op off wasm; the desktop/TUI never call it (QML gates it on Qt.platform.os === "wasm").
+#ifdef __EMSCRIPTEN__
+#include "platform/wasm_file_bridge.h"
+#endif
+
 QString TranscriptExporter::toJson(QObject* store, const QString& sessionId) const {
     auto* s = qobject_cast<persistence::ISessionStore*>(store);
     if (s == nullptr) {
@@ -33,6 +40,19 @@ bool TranscriptExporter::writeFile(const QUrl& fileUrl, const QString& text) con
     const bool ok = file.write(bytes) == bytes.size();
     file.close();
     return ok;
+}
+
+void TranscriptExporter::exportToBrowser([[maybe_unused]] QObject* store,
+                                         [[maybe_unused]] const QString& sessionId,
+                                         [[maybe_unused]] const QString& suggestedName) const {
+#ifdef __EMSCRIPTEN__
+    const QString json = toJson(store, sessionId);
+    if (json.isEmpty()) {
+        return;
+    }
+    const QString name = suggestedName.isEmpty() ? QStringLiteral("session.json") : suggestedName;
+    platform::saveFileContent(json.toUtf8(), name);
+#endif
 }
 
 bool TranscriptExporter::exportToPath(persistence::ISessionStore* store, const QString& sessionId,

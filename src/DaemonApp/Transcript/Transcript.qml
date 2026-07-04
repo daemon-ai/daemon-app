@@ -148,10 +148,18 @@ Rectangle {
                 rawSyncTimer.restart()
         }
 
+        // Every clipboard write path failed (only reachable on wasm in an insecure context where
+        // navigator.clipboard is absent and execCommand('copy') is refused). Surface a toast so a
+        // copy never fails silently.
+        onClipboardUnavailable: clipboardToast.show(
+            qsTr("Couldn't access the clipboard. Copy needs a secure (https) page."))
+
         // Open the shared lightbox when a block (image / generated image) asks
         // to preview an image.
         onImagePreviewRequested: (url, alt) => lightbox.show(url, alt)
     }
+
+    Kit.Toast { id: clipboardToast }
 
     // --- In-transcript find -------------------------------------------------
     // Whether the find bar is showing, and the block row of the active match
