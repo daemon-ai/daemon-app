@@ -103,15 +103,11 @@ identical to the Linux `bin/` layout — no wrapper scripts.
 
 ### v1 payload caveats (same class as the Linux artifacts)
 
-- **MicroTeX resources**: the binary on this branch still reads the baked
-  compile-time `MICROTEX_RES_DIR` (a /nix/store path on the *build* machine).
-  The bundle ships `Contents/Resources/microtex-res`, but the runtime probe
-  that prefers it lands with the `pkg/size-wins` branch.
-  **TODO(after pkg/size-wins):** add an
-  `applicationDirPath()/../Resources/microtex-res` candidate to
-  `microtexResDir()` in `src/DaemonApp/App/application.cpp` (mirroring the
-  CMake-side TODO in `cmake/Packaging.cmake`). Until then, math rendering
-  only works on machines that hold the builder's store path.
+- **MicroTeX resources**: the bundle ships `Contents/Resources/microtex-res`,
+  and `microtexResDir()` in `src/DaemonApp/App/application.cpp` probes
+  `applicationDirPath()/../Resources/microtex-res` at startup (after the env
+  override and the shared-prefix layouts), so math rendering resolves the
+  bundled copy on any machine.
 - **QMLTermWidget** (embedded terminal) is provided at runtime via the nix
   wrapper's import path on Linux; nothing deploys it into the bundle. The
   terminal panel will fail to load from a DMG install until the portable
@@ -233,8 +229,8 @@ this DMG plugs into that design unchanged.
 
 ## Follow-ups tracked here
 
-- [ ] `microtexResDir()` bundle probe after `pkg/size-wins` merges (TODO in
-      `cmake/Packaging.cmake`).
+- [x] `microtexResDir()` bundle probe (`../Resources/microtex-res` candidate
+      in `application.cpp`, landed at integration).
 - [ ] `entitlements.plist` authored + committed after the first signing run.
 - [ ] Retina `.icns` (`iconutil` on a mac; replace the `png2icns` bonus
       output).

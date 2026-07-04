@@ -155,15 +155,9 @@ endif()
 # the bundle payload and bolts the Qt deployment onto the install.
 if(APPLE)
     # MicroTeX's runtime resources (fonts + XML), staged where bundle
-    # resources belong. NOTE: on this branch the binary still reads the baked
-    # compile-time MICROTEX_RES_DIR (a Nix store path on the build machine);
-    # the runtime probing (env override -> app-dir-relative candidates) lands
-    # with pkg/size-wins.
-    # TODO(after pkg/size-wins): extend application.cpp's microtexResDir()
-    # with an applicationDirPath()/../Resources/microtex-res candidate so this
-    # bundle copy wins over the baked build path. Tracked in
-    # packaging/macos/README.md; not done here because that branch rewrites
-    # the exact same application.cpp lines (merge hygiene).
+    # resources belong. application.cpp's microtexResDir() probes
+    # applicationDirPath()/../Resources/microtex-res (among the other
+    # layouts), so this bundle copy wins over the baked build path.
     install(
         DIRECTORY "${MICROTEX_RES_DIR}/"
         DESTINATION "${_da_bundle_contents}/Resources/microtex-res"

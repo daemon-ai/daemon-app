@@ -64,10 +64,11 @@ namespace {
 // MicroTeX's fonts/XML ship with the app (share/daemon-app/microtex-res, see
 // App/CMakeLists.txt) so the installed binary carries no reference to the
 // build-time source tree. Resolution order: explicit env override, then the
-// installed copies relative to the binary (prefix and flat portable layouts),
-// then the compile-time MICROTEX_RES_DIR - the build-tree fallback for dev
-// runs. The browser build skips the probing: there MICROTEX_RES_DIR is the
-// fixed MEMFS mount the emscripten preload bundle fills.
+// installed copies relative to the binary (prefix, flat portable, and macOS
+// bundle layouts), then the compile-time MICROTEX_RES_DIR - the build-tree
+// fallback for dev runs. The browser build skips the probing: there
+// MICROTEX_RES_DIR is the fixed MEMFS mount the emscripten preload bundle
+// fills.
 std::string microtexResDir() {
 #ifndef Q_OS_WASM
     const QString envOverride = qEnvironmentVariable("DAEMON_APP_MICROTEX_RES");
@@ -76,7 +77,8 @@ std::string microtexResDir() {
     }
     const QString appDir = QCoreApplication::applicationDirPath();
     for (const QString& candidate : {appDir + QStringLiteral("/../share/daemon-app/microtex-res"),
-                                     appDir + QStringLiteral("/microtex-res")}) {
+                                     appDir + QStringLiteral("/microtex-res"),
+                                     appDir + QStringLiteral("/../Resources/microtex-res")}) {
         if (QDir(candidate).exists()) {
             return QDir::cleanPath(candidate).toStdString();
         }
