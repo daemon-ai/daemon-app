@@ -8,6 +8,8 @@
 #   - packaging/windows/daemon-app.ico           (multi-size, icotool)
 #   - packaging/macos/daemon-app.icns            (bonus; real macOS assets land
 #                                                 with the macOS workstream)
+#   - packaging/android/res/mipmap-*/ic_launcher.png (Android launcher
+#     densities; referenced by packaging/android/AndroidManifest.xml)
 #
 # The rasters are committed so packages never rasterize at build time. Tools
 # come from the flake-pinned nixpkgs (librsvg / icoutils / libicns); there are
@@ -41,3 +43,16 @@ echo "wrote packaging/windows/daemon-app.ico"
 run png2icns "$repo/packaging/macos/daemon-app.icns" \
   "$here"/daemon-app-{16,32,128,256,512}.png
 echo "wrote packaging/macos/daemon-app.icns"
+
+# Android launcher mipmaps: one ic_launcher.png per density bucket (the
+# framework picks by display density; 48dp baseline x the bucket scale).
+declare -A android_densities=(
+  [mdpi]=48 [hdpi]=72 [xhdpi]=96 [xxhdpi]=144 [xxxhdpi]=192
+)
+for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+  s=${android_densities[$d]}
+  mkdir -p "$repo/packaging/android/res/mipmap-$d"
+  run rsvg-convert -w "$s" -h "$s" \
+    -o "$repo/packaging/android/res/mipmap-$d/ic_launcher.png" "$svg"
+  echo "wrote packaging/android/res/mipmap-$d/ic_launcher.png"
+done

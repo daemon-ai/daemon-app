@@ -45,6 +45,7 @@ path = [
     "packaging/linux/icons/*.png",
     "packaging/windows/daemon-app.ico",
     "packaging/macos/daemon-app.icns",
+    "packaging/android/res/mipmap-*/ic_launcher.png",
 ]
 SPDX-FileCopyrightText = "2026 Jarrad Hope"
 SPDX-License-Identifier = "MPL-2.0"
