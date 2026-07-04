@@ -1,25 +1,41 @@
 # macOS packaging — build / sign / notarize runbook
 
-> **UNVALIDATED — CODE-ONLY WORKSTREAM.** Everything in this directory and the
-> `if(APPLE)` branches it drives was authored and lint-/eval-checked on a
-> Linux host. **No part of it has ever executed on macOS.** Specifically
-> untested:
+> **VALIDATED (ad-hoc / unsigned lane) on aarch64-darwin.** The pure-nix
+> `nix build .#macos-dmg` path builds a working, ad-hoc-signed DMG on an
+> Apple-Silicon mac (macOS 26, Xcode 26.5, Nix 2.34). The bundle launches
+> headless through the `DAEMON_APP_WAIT_READY` contract (mock mode), and the
+> superproject `package-dmg` output co-locates the Rust node binaries next to
+> the app on `LocalDaemonLauncher`'s discovery path. What is proven vs. still
+> open:
 >
-> - the CMake configure on darwin (Qt 6.11 from nixpkgs, vendored deps,
->   `qmltermwidget` qmake build);
-> - the `MACOSX_BUNDLE` build + generated `Info.plist`;
-> - the Qt deploy script run (`qt_generate_deploy_qml_app_script` →
->   `macdeployqt`), including whether the project-built QML modules
->   (`org.kde.syntaxhighlighting`) get deployed into the bundle;
-> - `cpack -G DragNDrop` (and whether `hdiutil` is reachable inside the
->   darwin nix build sandbox at all — see [Build](#build));
-> - every signing / notarization / stapling step below;
-> - the `.icns` (generated on Linux by `packaging/linux/icons/regen.sh` via
->   `png2icns`: 16/32/128/256/512 px, **no retina `@2x` variants, no
->   1024 px** — regenerate with `iconutil` on a mac for release quality).
+> **Proven on darwin**
+> - CMake configure + `MACOSX_BUNDLE` build + generated `Info.plist` (Qt 6.11
+>   from nixpkgs, the vendored deps, and the `qmltermwidget` qmake build).
+> - The Qt deploy script (`qt_generate_deploy_qml_app_script` → `macdeployqt`)
+>   and `cpack -G DragNDrop`. `hdiutil` **does** run inside the nix build
+>   sandbox on this host (sandboxing is disabled for the daemon build user;
+>   the flake appends `/usr/bin:/usr/sbin` to PATH for the packaging step).
+> - `org.kde.syntaxhighlighting` deploys correctly (`libKF6SyntaxHighlighting`
+>   in `Frameworks/`, `libkquicksyntaxhighlightingplugin` in `PlugIns/`).
+> - The offscreen QPA plugin and the `QMLTermWidget` module are deployed into
+>   the bundle with their store refs rewritten (see the two caveats below).
+> - `codesign --verify --deep --strict` passes on the (ad-hoc) sealed bundle,
+>   including the co-located Rust binaries (each carries the arm64 linker's
+>   own ad-hoc signature).
+> - Co-location: `daemon` / `daemon-cli` / `daemon-infer` ship in
+>   `Contents/MacOS/`, are arm64, executable, and run standalone (`--version`),
+>   with no dangling `/nix/store` load commands (see the libiconv note under
+>   "Payload notes"). `LocalDaemonLauncher::discoverDaemonBinary` probes
+>   `applicationDirPath()/daemon`, i.e. exactly where they land.
+> - Retina `.icns` regenerated with `iconutil` (16/32/128/256/512 + `@2x` +
+>   1024, rasterized from the scalable SVG source).
 >
-> Treat the first darwin run as a validation pass of this document, and fix
-> the code where reality disagrees.
+> **Still open (untested)**
+> - Every **Developer ID** signing / notarization / stapling step below (the
+>   ad-hoc `codesign --sign -` path is what is validated; a real identity,
+>   `notarytool`, and `stapler` have not been exercised).
+> - `entitlements.plist` (not authored yet — needed at first real signing).
+> - DMG Finder background/layout polish.
 
 ## Prerequisites
 
@@ -51,12 +67,26 @@ nix build .#macos-dmg
 
 `packages.macos-dmg` exists only on the darwin systems
 (`aarch64-darwin` / `x86_64-darwin`). It configures the app with relative
-install dirs + the packaging flags and runs `cpack -G DragNDrop`.
+install dirs + the packaging flags and runs `cpack -G DragNDrop`. The darwin
+artifact derivation also sets `CCACHE_DISABLE=1` (the base stdenv is
+`ccacheStdenv`, whose wrapper wants a `/var/cache/ccache` that a fresh mac
+lacks) and appends `/usr/bin:/usr/sbin` to PATH in the install phase so the
+deploy script and DragNDrop generator find `hdiutil` / `codesign` / `SetFile`.
 
-**Known risk:** CPack's DragNDrop generator shells out to `hdiutil`
-(`/usr/bin/hdiutil`), which the darwin nix *build sandbox* may not expose.
-If the sandboxed build fails there, fall back to the manual flow (the
-devShell runs unsandboxed):
+**For the shippable product, build the superproject DMG** — it injects the
+Rust node binaries next to the app so managed local-daemon spawn works:
+
+```sh
+# in the superproject (daemon), on a mac:
+just package-dmg
+# == nix build '.?submodules=1#package-dmg' --accept-flake-config
+# -> result-package-dmg/daemon-<version>-macos-<arch>.dmg
+```
+
+**`hdiutil` in the sandbox:** on this build host `hdiutil` runs fine inside
+the nix build (the daemon build user has sandboxing disabled, and the flake
+puts the system bindirs on PATH for the packaging step). On a host where the
+sandbox blocks `/usr/bin`, fall back to the manual unsandboxed flow:
 
 ```sh
 nix develop
@@ -86,12 +116,18 @@ daemon-<version>-macos-<arch>.dmg        # UDZO, volume name "Daemon"
         │   ├── daemon                   # DAEMON_APP_BUNDLED_DAEMON (if set)
         │   ├── daemon-infer             # DAEMON_APP_BUNDLED_DAEMON_INFER (if set)
         │   └── daemon-cli               # DAEMON_APP_BUNDLED_DAEMON_CLI (if set)
-        ├── Frameworks/                  # Qt frameworks (deploy script)
+        ├── Frameworks/                  # Qt frameworks + vendored dylibs
+        │                                #   (incl. libKF6SyntaxHighlighting)
         ├── PlugIns/                     # Qt plugins (+ QML plugin dylibs)
+        │   └── platforms/
+        │       ├── libqcocoa.dylib      # deploy script (the build QPA)
+        │       └── libqoffscreen.dylib  # backstop-deployed (headless boot)
         └── Resources/
-            ├── daemon-app.icns
+            ├── daemon-app.icns          # retina iconset (iconutil)
             ├── qt.conf                  # written by the deploy script
             ├── qml/                     # deployed QML imports
+            │   ├── org/kde/…            # org.kde.syntaxhighlighting (deploy)
+            │   └── QMLTermWidget/        # backstop-deployed (embedded terminal)
             ├── microtex-res/            # MicroTeX fonts + XML (see caveat)
             ├── LICENSE
             └── THIRD-PARTY-NOTICES.md
@@ -99,23 +135,66 @@ daemon-<version>-macos-<arch>.dmg        # UDZO, volume name "Daemon"
 
 `LocalDaemonLauncher` discovers the sibling binaries co-located with the app
 executable (`QCoreApplication::applicationDirPath()` == `Contents/MacOS`),
-identical to the Linux `bin/` layout — no wrapper scripts.
+identical to the Linux `bin/` layout — no wrapper scripts. The superproject
+`package-dmg` fills these via the `DAEMON_APP_BUNDLED_*` cache vars (daemon +
+daemon-cli + the llama-enabled daemon-infer, matching the Linux bundle).
 
-### v1 payload caveats (same class as the Linux artifacts)
+**Co-location + signing order (ad-hoc lane):** the `install(PROGRAMS …)` rules
+that copy the Rust binaries into `Contents/MacOS` are registered *before* the
+deploy script and the backstop, so at install time the binaries are in place
+before `macdeployqt` / the backstop re-seal the outer bundle. Each Rust binary
+keeps the arm64 linker's own ad-hoc signature (nested Mach-Os are not sealed by
+the outer signature — they are validated independently), so
+`codesign --verify --deep --strict` passes on the finished bundle. For the
+notarized lane this order still holds, but each nested binary must additionally
+be **hardened-runtime + Developer ID** signed *before* the outer seal — see
+[Codesigning](#codesigning).
+
+### Relocatability backstop — why the deploy step is not enough
+
+nixpkgs builds Qt/KF6 with `CMAKE_INSTALL_NAME_DIR=$out/lib`, so the app
+executable and the project-built plugins carry **absolute `/nix/store` install
+names** for their directly-linked vendored dylibs. `macdeployqt` copies those
+dylibs into `Frameworks/` and rewrites the *plugin's* reference, but it leaves
+the **consumer's** own load command pointing at the dead store path — which
+dangles the moment the `.app` leaves the store for the DMG, so the app aborts
+at launch with a dyld "Library not loaded". `cmake/Packaging.cmake` runs a
+post-deploy backstop (`install(CODE …)`, after `install(SCRIPT deploy)`) that
+`otool -L`s the finished Mach-Os and `install_name_tool -change`s any residual
+`/nix/store/…` reference to a bundle-relative path (`@rpath/…` for the exe,
+`@loader_path/…/Frameworks/…` for the plugins), drops store `LC_RPATH`s so no
+`@rpath` can fall back to the store Qt, then re-`codesign --sign -` the edited
+files and re-seal the bundle. The same pattern deploys the offscreen plugin and
+the QMLTermWidget module (below); it generalizes to any directly-linked
+vendored dylib.
+
+### Payload notes (validated on darwin)
 
 - **MicroTeX resources**: the bundle ships `Contents/Resources/microtex-res`,
   and `microtexResDir()` in `src/DaemonApp/App/application.cpp` probes
   `applicationDirPath()/../Resources/microtex-res` at startup (after the env
   override and the shared-prefix layouts), so math rendering resolves the
-  bundled copy on any machine.
-- **QMLTermWidget** (embedded terminal) is provided at runtime via the nix
-  wrapper's import path on Linux; nothing deploys it into the bundle. The
-  terminal panel will fail to load from a DMG install until the portable
-  payload workstream covers it.
-- The Qt deploy script should pick up the project-built
-  `org.kde.syntaxhighlighting` QML module; **verify** the transcript code
-  blocks highlight from a DMG install, and check `Resources/qml/org/kde/…`
-  exists in the deployed bundle.
+  bundled copy on any machine. **Confirmed present** in the DMG.
+- **Offscreen QPA plugin**: `macdeployqt` deploys only the build's QPA
+  (`libqcocoa`), which needs a window server. The backstop additionally copies
+  `libqoffscreen.dylib` into `Contents/PlugIns/platforms/` (Qt refs rewritten
+  to `@loader_path/../../Frameworks/…`) so `QT_QPA_PLATFORM=offscreen` — the
+  headless boot contract, and any display-less launch — works from the bundle.
+  Pointing `QT_QPA_PLATFORM_PLUGIN_PATH` at the store Qt instead loads a second
+  Qt binary set (two `QtCore`) and crashes, hence the in-bundle deploy.
+- **QMLTermWidget** (embedded terminal): supplied via the wrapper's QML import
+  path on Linux; `macdeployqt` does not discover it. **This is not cosmetic** —
+  `Main.qml` imports it unconditionally (`Session` → `TerminalPanel` →
+  `import QMLTermWidget`), so with the module absent `QQmlApplicationEngine`
+  fails to load the *root* component and the `.app` does not launch **at all**
+  (GUI or headless). The backstop therefore deploys the module under
+  `Resources/qml/QMLTermWidget/` (plugin dylib refs rewritten to
+  `@loader_path/../../../Frameworks/…`). Terminal functionality itself is
+  otherwise the same as on Linux.
+- **`org.kde.syntaxhighlighting`**: **answered — it deploys.** The deploy
+  script pulls `libKF6SyntaxHighlighting.6.dylib` into `Frameworks/` and
+  `libkquicksyntaxhighlightingplugin.dylib` into `PlugIns/`, and
+  `Resources/qml/org/kde/…` exists in the bundle.
 
 ## Codesigning
 
@@ -210,13 +289,41 @@ stapler validate daemon-*-macos-*.dmg
 xattr -p com.apple.quarantine daemon-app.app 2>/dev/null || echo "no quarantine"
 ```
 
-Also boot the headless contract the other platforms gate on:
+Also boot the headless `DAEMON_APP_WAIT_READY` contract the other platforms
+gate on, from the mounted/installed bundle, in both service modes. The offscreen
+plugin (above) makes this work without a display; the marker on stdout is
+`DAEMON_APP_READY ok`.
 
 ```sh
+APP=daemon-app.app/Contents/MacOS/daemon-app
+
+# Mock mode: no daemon needed — the WAIT_READY probe drives a first-run "local"
+# connect the mock accepts once the socket file exists.
 DAEMON_APP_SERVICE_MODE=mock DAEMON_APP_SOCKET=/tmp/mock.sock \
-DAEMON_APP_WAIT_READY=8000 QT_QPA_PLATFORM=offscreen \
-  daemon-app.app/Contents/MacOS/daemon-app   # expect "DAEMON_APP_READY ok"
+DAEMON_APP_WAIT_READY=20000 QT_QPA_PLATFORM=offscreen \
+  sh -c 'touch "$DAEMON_APP_SOCKET"; "'"$APP"'"'   # expect "DAEMON_APP_READY ok"
+
+# Daemon mode against the BUNDLED node: LocalDaemonLauncher discovers
+# Contents/MacOS/daemon next to the app and spawns it.
+DAEMON_APP_SERVICE_MODE=daemon DAEMON_APP_WAIT_READY=30000 \
+QT_QPA_PLATFORM=offscreen "$APP"                    # interactive login only, see note
 ```
+
+> **Headless daemon-mode caveat (macOS).** The daemon-mode connect reads the
+> saved connection token from the OS keychain
+> (`QtSettingsStore::connectionToken` → qtkeychain →
+> `configureTransport`), which spins a nested event loop until the Security
+> framework answers. In a **headless SSH session** with a locked/inaccessible
+> login keychain, the app's own keychain-access prompt can never be answered,
+> so this call blocks and the daemon-mode probe hangs *before* the daemon is
+> spawned. This is an environment limitation, **not** a co-location or
+> packaging defect — mock mode (which reads no token) boots headless fine, the
+> co-located binaries run standalone, and the discovery path is
+> `applicationDirPath()/daemon`. On an interactive login (unlocked keychain, or
+> once the first keychain-access prompt is approved) daemon mode spawns and
+> connects to the co-located daemon normally. To exercise daemon mode over SSH,
+> unlock the login keychain first (`security unlock-keychain`) and grant the
+> app keychain access, or run from a logged-in GUI session.
 
 ## Updates
 
@@ -231,10 +338,16 @@ this DMG plugs into that design unchanged.
 
 - [x] `microtexResDir()` bundle probe (`../Resources/microtex-res` candidate
       in `application.cpp`, landed at integration).
+- [x] Retina `.icns` (`iconutil`, 16/32/128/256/512 + `@2x` + 1024 from the
+      SVG source) — replaces the `png2icns` bonus output.
+- [x] Offscreen QPA plugin deployed into the bundle (headless boot works).
+- [x] `QMLTermWidget` module deployed into the bundle (the app now launches
+      from a DMG install; it was a hard boot blocker, not a dead-panel caveat).
 - [ ] `entitlements.plist` authored + committed after the first signing run.
-- [ ] Retina `.icns` (`iconutil` on a mac; replace the `png2icns` bonus
-      output).
 - [ ] DMG Finder layout: `dmg-background.png` + `.DS_Store` setup script
       (commented hooks in `cmake/CPackPerGen.cmake`).
-- [ ] QMLTermWidget + portable (non-Nix-linked) payload — static-qt
-      workstream.
+- [ ] Developer ID signing + notarization + stapling (only the ad-hoc lane is
+      validated so far).
+- [ ] Non-Nix-linked (static-Qt) macOS payload — removes the dynamic-Qt
+      `/nix/store` frameworks and the library-validation entitlement; the app +
+      node executables already have zero dangling store refs.
