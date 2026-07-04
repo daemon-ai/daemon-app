@@ -33,6 +33,7 @@
 #include "persistence/isession_store.h"
 #include "platform/iplatform_services.h"
 #include "platform/platform_services_factory.h"
+#include "platform/wasm_contracts.h"
 #include "profiles/iprofile_store.h"
 #include "session/icheckpoint_timeline.h"
 #include "session/isession_settings.h"
@@ -46,6 +47,7 @@
 #include <core/formula.h>
 #include <cstdio>
 #include <latex.h>
+#include <memory>
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
@@ -309,6 +311,28 @@ void Application::settleFirstRunGate(int ms) const {
     disconnect(conn);
 }
 
+void Application::installAutomationLoginHook(const QString& userPass) const {
+    auto* conn = m_services.connection;
+    if (conn == nullptr || userPass.isEmpty()) {
+        return;
+    }
+    // "user:pass" — split on the first colon so a password may itself contain colons.
+    const qsizetype sep = userPass.indexOf(QLatin1Char(':'));
+    const QString user = sep >= 0 ? userPass.left(sep) : userPass;
+    const QString pass = sep >= 0 ? userPass.mid(sep + 1) : QString();
+    // Fire login() the first time the node asks for interactive credentials. A shared one-shot
+    // guard prevents re-driving login on a later authenticating transition (a wrong-password retry
+    // must not loop). The lambda is owned by the connection object, so it lives as long as it does.
+    auto fired = std::make_shared<bool>(false);
+    connect(conn, &connection::IConnectionService::stateChanged, conn, [conn, user, pass, fired] {
+        if (*fired || conn->state() != QStringLiteral("authenticating")) {
+            return;
+        }
+        *fired = true;
+        conn->login(user, pass);
+    });
+}
+
 #ifdef Q_OS_WASM
 void Application::announceConnectionReady(int timeoutMs) const {
     auto* conn = m_services.connection;
@@ -338,6 +362,57 @@ void Application::announceConnectionReady(int timeoutMs) const {
         announce(false);
     });
     timeout->start(timeoutMs);
+}
+
+void Application::announceReloadSentinels() const {
+    // (1) Cache rows at boot, BEFORE any network fetch: a non-zero count proves the IDBFS-backed
+    // SQLite cache survived the reload. Read synchronously here (Stream A populates approxRowCount
+    // over IDBFS; a 0 on a first/empty boot is still a valid sentinel line for the harness).
+    if (m_services.cache != nullptr) {
+        std::fprintf(stdout, "%s%d\n", platform::kSentinelCacheRowsPrefix,
+                     m_services.cache->approxRowCount());
+        std::fflush(stdout);
+    }
+
+    // (2) Auth outcome: resumed (AuthOk via a persisted token, no SCRAM challenge) vs scram (a
+    // fresh interactive login). Printed once on the first AuthOk; the connection service reports
+    // which path it took. Wired before the async handshake completes, so it is never missed.
+    if (auto* daemonConn =
+            qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection)) {
+        connect(
+            daemonConn, &daemonapp::daemon::DaemonConnectionService::authOutcome, daemonConn,
+            [](bool resumed) {
+                std::fprintf(stdout, "%s\n",
+                             resumed ? platform::kSentinelAuthResumed
+                                     : platform::kSentinelAuthScram);
+                std::fflush(stdout);
+            },
+            Qt::SingleShotConnection);
+    }
+
+    // (3) First-run gate completion, async (a nested QEventLoop is forbidden on single-threaded
+    // wasm): print once the phase reaches "done"; if it is already done at boot, print now. A
+    // shared guard keeps it to exactly one line even if the phase toggles.
+    firstrun::FirstRunModel* firstRun = m_services.firstRun;
+    if (firstRun == nullptr) {
+        return;
+    }
+    const auto emitFirstRunDone = [] {
+        std::fprintf(stdout, "%s\n", platform::kSentinelFirstRunDone);
+        std::fflush(stdout);
+    };
+    if (firstRun->phase() == QStringLiteral("done")) {
+        emitFirstRunDone();
+        return;
+    }
+    auto printed = std::make_shared<bool>(false);
+    connect(firstRun, &firstrun::FirstRunModel::phaseChanged, firstRun,
+            [firstRun, printed, emitFirstRunDone] {
+                if (!*printed && firstRun->phase() == QStringLiteral("done")) {
+                    *printed = true;
+                    emitFirstRunDone();
+                }
+            });
 }
 #endif
 

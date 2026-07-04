@@ -4,7 +4,9 @@
 #include "daemon/daemon_connection_service.h"
 
 #include "daemon/node_api_codec.h"
+#include "platform/wasm_online.h"
 #include "settings/isettings_store.h"
+#include "settings/ws_default.h"
 
 #include <algorithm>
 
@@ -80,7 +82,12 @@ DaemonConnectionService::DaemonConnectionService(QObject* parent,
             m_settings->setConnectionToken(m_config.target, token);
         }
     });
-    connect(m_client.get(), &NodeApiClient::authenticated, this, [this] { emit authenticated(); });
+    connect(m_client.get(), &NodeApiClient::authenticated, this, [this] {
+        emit authenticated();
+        // Report how AuthOk was reached (resume token vs fresh SCRAM) for the reload-survival auth
+        // sentinel. m_resumeAttempt was latched when the handshake credentials were seeded.
+        emit authOutcome(m_resumeAttempt);
+    });
     connect(m_client.get(), &NodeApiClient::authFailed, this, [this](const QString& reason) {
         // The node needs (different) credentials. Stop the liveness machinery, surface the login
         // form, and stay out of the reconnect loop until the user submits new credentials.
@@ -131,6 +138,28 @@ DaemonConnectionService::DaemonConnectionService(QObject* parent,
             setState(QStringLiteral("offline"));
         });
     }
+
+    // Browser wake-up (wasm only; no-op elsewhere): when the browser reports connectivity
+    // returned, skip the current backoff wait and probe immediately so a dropped session recovers
+    // promptly instead of idling until the next reprobe tick.
+    platform::installOnlineCallback([this] { onNetworkOnline(); });
+}
+
+void DaemonConnectionService::onNetworkOnline() {
+    // The browser `online` event only fires on wasm, where the sole transport is remote-ws (attach
+    // only; no launcher). Ignore it while auth/version-gated or already live, and when there is no
+    // target to reach.
+    if (m_authBlocked || m_versionHold || ready() || m_config.target.isEmpty()) {
+        return;
+    }
+    if (!reconnecting()) {
+        enterReconnecting();
+    }
+    // Collapse the backoff and probe now rather than waiting out the pending reprobe interval.
+    m_reprobe.stop();
+    m_backoffMs = kReprobeMinMs;
+    sendHealthProbe();
+    m_reprobe.start(m_backoffMs);
 }
 
 void DaemonConnectionService::sendHealthProbe() {
@@ -303,6 +332,9 @@ bool DaemonConnectionService::configureTransport() {
         creds.resumeToken = m_settings->connectionToken(m_config.target);
         m_sessionToken = creds.resumeToken;
     }
+    // Latch whether this handshake presents a resume token: AuthOk from here is a silent resume
+    // (no SCRAM challenge); a fresh login() clears this so its AuthOk classifies as scram.
+    m_resumeAttempt = !creds.resumeToken.isEmpty();
     m_client->setAuthCredentials(creds);
     return true;
 }
@@ -310,7 +342,11 @@ bool DaemonConnectionService::configureTransport() {
 void DaemonConnectionService::connectTo(const QString& mode, const QString& target,
                                         const QString& token) {
     m_config.mode = mode;
-    m_config.target = target;
+    // Canonicalize the ws:// / wss:// target so the per-target resume-token key is byte-stable
+    // across a reload (a raw picker target and a page-origin-derived one now key the same token);
+    // non-ws targets pass through unchanged.
+    m_config.target =
+        mode == QStringLiteral("remote-ws") ? settings::normalizeWsTarget(target) : target;
     if (!token.isEmpty()) {
         m_sessionToken = token; // an explicit token from the picker drives AuthResume
     }
@@ -358,6 +394,7 @@ void DaemonConnectionService::login(const QString& username, const QString& pass
     // token), so clear any resume token and re-handshake on a fresh connection.
     m_authBlocked = false;
     m_versionHold = false;
+    m_resumeAttempt = false; // a fresh SCRAM login: AuthOk here classifies as scram, not resumed
     m_sessionToken.clear();
     NodeApiClient::AuthCredentials creds;
     creds.username = username;

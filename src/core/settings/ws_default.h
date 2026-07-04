@@ -23,7 +23,17 @@ namespace settings {
 //
 // Returns empty when nothing applies (non-http(s) page with no override), letting the caller
 // fall through to its platform fallback. Accepted override/saved shapes mirror
-// DaemonConnectionService::parseWsUrl: a FULL ws:// or wss:// URL with a host.
+// DaemonConnectionService::parseWsUrl: a FULL ws:// or wss:// URL with a host. The result is run
+// through normalizeWsTarget() so a derived target is already canonical.
 [[nodiscard]] QString deriveWsDefault(const QUrl& pageUrl, const QString& savedTarget = {});
+
+// Canonicalize a ws:// / wss:// connection target so the per-target resume-token key
+// (SHA256(target)[:16]) is byte-stable across a page reload: lowercase the scheme and host, drop
+// a redundant default port (ws -> 80, wss -> 443), and strip trailing slashes from the path
+// ("ws://h/" -> "ws://h", "ws://h/ws/" -> "ws://h/ws"). Applied both when the target is persisted
+// (at login) and when it is resolved (on a fresh load), so both sides hash identically. A target
+// that is not ws-shaped (a socket path, host:port, empty) is returned trimmed and otherwise
+// unchanged, so this is safe to call on any target.
+[[nodiscard]] QString normalizeWsTarget(const QString& target);
 
 } // namespace settings

@@ -127,12 +127,29 @@ public:
     // phase reaches "done" or `ms` elapses (bounded; an unconfigured node parks on "inference").
     void settleFirstRunGate(int ms) const;
 
+    // Guarded automation login hook for the reload-survival harness: parse `userPass` ("user:pass")
+    // and drive DaemonConnectionService::login() ONCE when the connection first reaches the
+    // "authenticating" state, so a fresh SASL SCRAM handshake completes without QML input. Only
+    // wired by main() under DAEMON_APP_WAIT_READY (guarded, out of production paths).
+    // Cross-platform (inert unless the node actually asks for credentials).
+    void installAutomationLoginHook(const QString& userPass) const;
+
 #ifdef Q_OS_WASM
     // Browser variant of the DAEMON_APP_WAIT_READY probe: awaitConnectionReady's nested
     // QEventLoop would abort on wasm (no asyncify), so observe the connection state machine
     // asynchronously from the running main loop instead and print the same
     // "DAEMON_APP_READY ok|timeout" sentinel (stdout reaches the browser console) exactly once.
     void announceConnectionReady(int timeoutMs) const;
+
+    // Browser reload-survival sentinels (W3/W6), printed to stdout (the browser console) for the
+    // CDP harness. Wired alongside announceConnectionReady in the WAIT_READY path, all async (no
+    // nested QEventLoop - forbidden on single-threaded wasm):
+    //   - DAEMON_APP_CACHE rows=<n>      cached row count at boot, before any network fetch (proves
+    //                                    the IDBFS-backed SQLite cache survived a reload);
+    //   - DAEMON_APP_AUTH resumed|scram  silent re-auth via a persisted token vs a fresh SCRAM
+    //   login;
+    //   - DAEMON_APP_FIRSTRUN done       the first-run gate reached its done phase.
+    void announceReloadSentinels() const;
 #endif
 
     // Headless E2E hook (CON-4/6/7): drive the full first-run provider+model step without QML
