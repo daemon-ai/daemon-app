@@ -2,7 +2,9 @@
   description = "daemon-app - Qt 6 QML/C++ development environment, build, and vendored dependencies";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # logos-co fork of nixos-unstable carrying the MinGW Qt cross fixes the
+    # Windows (mingw) outputs need (same Qt 6.11.1 as upstream unstable).
+    nixpkgs.url = "github:logos-co/nixpkgs/mingw-integration";
     flake-utils.url = "github:numtide/flake-utils";
 
     # Emscripten pin for the Qt-for-WebAssembly outputs ONLY (see
