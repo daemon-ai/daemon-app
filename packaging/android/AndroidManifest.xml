@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<!--
+SPDX-FileCopyrightText: 2026 Jarrad Hope
+SPDX-License-Identifier: MPL-2.0
+
+daemon-app Android manifest, overlaid onto Qt's package template by
+androiddeployqt (QT_ANDROID_PACKAGE_SOURCE_DIR; see nix/android.nix and
+src/DaemonApp/App/CMakeLists.txt). The `%%INSERT_*%%` markers are filled by
+androiddeployqt from the deployment settings: version code/name from the
+VERSION-derived target properties, permissions/features from the Qt modules
+the app links (QtNetwork contributes android.permission.INTERNET - the whole
+point of this thin remote/WebSocket client).
+
+Deliberate deltas from Qt's stock template:
+ * package id io.daemon.app (the AppStream/product id used everywhere else).
+ * android:extractNativeLibs="true": the installer unpacks lib/arm64-v8a so
+   the APK zip can keep the .so entries compressed - the gradle-less
+   assembly (nix/android.nix) then needs no 16 KB page-alignment dance.
+ * no androidx FileProvider <provider> block: the androidx.core runtime jar
+   only exists in the Gradle/Maven path, and the provider only backs Qt's
+   share-to-other-apps / open-in intents, which this client does not use.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="io.daemon.app"
+    android:installLocation="auto"
+    android:versionCode="-- %%INSERT_VERSION_CODE%% --"
+    android:versionName="-- %%INSERT_VERSION_NAME%% --">
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="35" />
+    <!-- %%INSERT_PERMISSIONS -->
+    <!-- %%INSERT_FEATURES -->
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:smallScreens="true" />
+    <application
+        android:name="org.qtproject.qt.android.bindings.QtApplication"
+        android:hardwareAccelerated="true"
+        android:label="Daemon"
+        android:icon="@mipmap/ic_launcher"
+        android:extractNativeLibs="true"
+        android:enableOnBackInvokedCallback="false"
+        android:allowBackup="true"
+        android:fullBackupOnly="false">
+        <activity
+            android:name="org.qtproject.qt.android.bindings.QtActivity"
+            android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
+            android:label="Daemon"
+            android:launchMode="singleTop"
+            android:screenOrientation="unspecified"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="-- %%INSERT_APP_LIB_NAME%% --" />
+
+            <meta-data
+                android:name="android.app.arguments"
+                android:value="-- %%INSERT_APP_ARGUMENTS%% --" />
+        </activity>
+    </application>
+</manifest>

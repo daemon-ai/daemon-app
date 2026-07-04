@@ -15,9 +15,9 @@ namespace connection {
 // for remote. This is the shape the picker writes and the settings store
 // persists.
 struct ConnectionConfig {
-#ifdef Q_OS_WASM
-    // The browser build has exactly one usable transport - the WebSocket mux - so the picker's
-    // initial selection (bound to this default via IConnectionService::mode) starts there.
+#if defined(Q_OS_WASM) || defined(Q_OS_ANDROID)
+    // The browser and Android builds have exactly one usable transport - the WebSocket mux -
+    // so the picker's initial selection (bound via IConnectionService::mode) starts there.
     QString mode = QStringLiteral("remote-ws");
 #else
     QString mode = QStringLiteral("local");

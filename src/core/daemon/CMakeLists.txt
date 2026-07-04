@@ -28,7 +28,10 @@ target_include_directories(da_daemon_codec PUBLIC
 # Platform-conditional TUs: Qt-for-wasm lacks the `localserver`, `ssl`, and `process` features,
 # so the browser build swaps the Unix/TLS stream carriers and the QProcess-based launcher for
 # fail-closed stubs (the WebSocket carrier in daemon_transport.cpp is the only wasm transport).
-if(DAEMON_APP_WASM)
+# Android shares the stubs and the WebSocket-only posture: the flake's android Qt builds without
+# the ssl feature (no bundled OpenSSL, packaging/android/README.md), and an APK cannot spawn or
+# probe a local daemon anyway - it is a thin remote client exactly like the browser.
+if(DAEMON_APP_WASM OR ANDROID)
     set(DA_DAEMON_PLATFORM_SOURCES
         daemon_transport_stream_wasm.cpp
         local_daemon_launcher_wasm.cpp

@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+SPDX-FileCopyrightText: 2026 Jarrad Hope
+SPDX-License-Identifier: MPL-2.0
+
+Byte-for-byte copy of Qt's package-template libs.xml (qtbase
+src/android/templates/res/values/libs.xml). Shipped in our package source
+dir so androiddeployqt's template overlay replaces the READ-ONLY copy it
+stages from the nix-store Qt prefix with this writable one - the deployment
+tool then fills the %%INSERT_*%% markers in place (QtLoader reads these
+resource arrays to dlopen the bundled Qt libs). Do not hand-edit the marker
+lines.
+-->
+<resources>
+    <!-- DO NOT EDIT THIS: This file is populated automatically by the deployment tool. -->
+
+    <array name="bundled_libs">
+        <!-- %%INSERT_EXTRA_LIBS%% -->
+    </array>
+
+    <array name="qt_libs">
+        <!-- %%INSERT_QT_LIBS%% -->
+    </array>
+
+    <array name="load_local_libs">
+        <!-- %%INSERT_LOCAL_LIBS%% -->
+    </array>
+
+    <string name="use_local_qt_libs"><!-- %%USE_LOCAL_QT_LIBS%% --></string>
+    <string name="bundle_local_qt_libs"><!-- %%BUNDLE_LOCAL_QT_LIBS%% --></string>
+    <string name="system_libs_prefix"><!-- %%SYSTEM_LIBS_PREFIX%% --></string>
+</resources>
