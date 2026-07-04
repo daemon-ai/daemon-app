@@ -100,6 +100,24 @@ QStringList ThemePalette::allNames() {
             QStringLiteral("Midnight")};
 }
 
+QString ThemePalette::displayName(const QString& name) {
+    if (name == QStringLiteral("Dark")) {
+        return tr("Dark", "theme name");
+    }
+    if (name == QStringLiteral("Sepia")) {
+        return tr("Sepia", "theme name");
+    }
+    if (name == QStringLiteral("Midnight")) {
+        return tr("Midnight", "theme name");
+    }
+    return tr("Light", "theme name");
+}
+
+QStringList ThemePalette::allDisplayNames() {
+    return {tr("Light", "theme name"), tr("Dark", "theme name"), tr("Sepia", "theme name"),
+            tr("Midnight", "theme name")};
+}
+
 ThemeName ThemePalette::fromString(const QString& name) {
     if (name == QStringLiteral("Dark")) {
         return ThemeName::Dark;

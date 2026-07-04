@@ -7,6 +7,7 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Settings
 import DaemonApp.StatusModel
+import DaemonApp.Presentation
 
 // Footer status bar: a thin full-width chrome
 // strip with a left cluster (Command Center / Gateway / Agents / Cron) and a
@@ -69,7 +70,7 @@ Rectangle {
             glyph: model.gatewayOffline || model.gatewayDegraded
                 ? FontIcons.fa_circle_exclamation : FontIcons.fa_signal
             label: qsTr("Gateway")
-            detail: model.gatewayState
+            detail: DisplayPresenter.enumLabel("connection", model.gatewayState)
             tone: model.gatewayTone
             active: gatewayMenu.opened
             onClicked: gatewayMenu.opened ? gatewayMenu.close() : gatewayMenu.open()
@@ -188,7 +189,7 @@ Rectangle {
             glyph: model.gatewayOffline || model.gatewayDegraded
                 ? FontIcons.fa_circle_exclamation : FontIcons.fa_signal
             label: qsTr("Gateway")
-            detail: model.gatewayState
+            detail: DisplayPresenter.enumLabel("connection", model.gatewayState)
             tone: model.gatewayTone
             active: gatewayMenuCompact.opened
             onClicked: gatewayMenuCompact.opened ? gatewayMenuCompact.close() : gatewayMenuCompact.open()

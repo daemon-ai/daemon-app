@@ -191,7 +191,7 @@ void LocalDiskFsService::open(const QString& rootId, const QString& dir) {
     const QString abs = resolve(rootId, dir);
     if (abs.isEmpty()) {
         QMetaObject::invokeMethod(
-            this, [this, rootId, dir] { emit error(rootId, dir, QStringLiteral("invalid path")); },
+            this, [this, rootId, dir] { emit error(rootId, dir, tr("invalid path")); },
             Qt::QueuedConnection);
         return;
     }
@@ -249,7 +249,7 @@ void LocalDiskFsService::read(const QString& rootId, const QString& path) {
     QFile f(abs);
     if (!f.open(QIODevice::ReadOnly)) {
         QMetaObject::invokeMethod(
-            this, [this, rootId, path] { emit error(rootId, path, QStringLiteral("cannot open")); },
+            this, [this, rootId, path] { emit error(rootId, path, tr("cannot open")); },
             Qt::QueuedConnection);
         return;
     }
@@ -273,7 +273,7 @@ void LocalDiskFsService::write(const QString& rootId, const QString& path, const
         QMetaObject::invokeMethod(
             this,
             [this, rootId, path] {
-                emit writeResult(rootId, path, false, QString(), QStringLiteral("invalid path"));
+                emit writeResult(rootId, path, false, QString(), tr("invalid path"));
             },
             Qt::QueuedConnection);
         return;
@@ -287,7 +287,7 @@ void LocalDiskFsService::write(const QString& rootId, const QString& path, const
                 this,
                 [this, rootId, path] {
                     emit writeResult(rootId, path, false, QString(),
-                                     QStringLiteral("stale: file changed on disk"));
+                                     tr("stale: file changed on disk"));
                 },
                 Qt::QueuedConnection);
             return;
@@ -298,7 +298,7 @@ void LocalDiskFsService::write(const QString& rootId, const QString& path, const
         QMetaObject::invokeMethod(
             this,
             [this, rootId, path] {
-                emit writeResult(rootId, path, false, QString(), QStringLiteral("write failed"));
+                emit writeResult(rootId, path, false, QString(), tr("write failed"));
             },
             Qt::QueuedConnection);
         return;

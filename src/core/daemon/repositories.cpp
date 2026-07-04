@@ -107,7 +107,7 @@ void SessionRepository::applySessionCreated(const QByteArray& responseCbor) {
         DecodedApiError err;
         const QString msg = NodeApiCodec::decodeError(responseCbor, &err)
                                 ? err.message
-                                : QStringLiteral("SessionCreate failed");
+                                : tr("SessionCreate failed");
         emit refreshFailed(msg);
         return;
     }
@@ -318,7 +318,7 @@ void CredentialRepository::handleResponse(const QString& correlationId,
         if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
             emit operationFailed(err.message);
         } else {
-            emit operationFailed(QStringLiteral("Credential operation failed"));
+            emit operationFailed(tr("Credential operation failed"));
         }
         return;
     }
@@ -705,7 +705,7 @@ void ModelRepository::handleSetSessionModelResponse(const QByteArray& responseCb
         emit modelSet();
         return;
     }
-    emitOperationError(responseCbor, QStringLiteral("Set-model operation failed"));
+    emitOperationError(responseCbor, tr("Set-model operation failed"));
 }
 
 void ModelRepository::handleModelSearchResponse(const QByteArray& responseCbor) {
@@ -767,7 +767,7 @@ void ModelRepository::handleModelDownloadResponse(const QByteArray& responseCbor
         refreshDownloads(); // fetch the initial snapshot; live progress arrives via the L3 feed
         return;
     }
-    emitOperationError(responseCbor, QStringLiteral("Download could not be started"));
+    emitOperationError(responseCbor, tr("Download could not be started"));
 }
 
 void ModelRepository::handleModelDownloadsResponse(const QByteArray& responseCbor) {
@@ -802,7 +802,7 @@ void ModelRepository::handleModelDeleteResponse(const QByteArray& responseCbor) 
         refreshCatalog();
         return;
     }
-    emit operationFailed(QStringLiteral("Delete failed"));
+    emit operationFailed(tr("Delete failed"));
 }
 
 void ModelRepository::handleModelActivateResponse(const QByteArray& responseCbor) {
@@ -810,7 +810,7 @@ void ModelRepository::handleModelActivateResponse(const QByteArray& responseCbor
         emit modelActivated();
         return;
     }
-    emitOperationError(responseCbor, QStringLiteral("Activate failed"));
+    emitOperationError(responseCbor, tr("Activate failed"));
 }
 
 void ModelRepository::handleModelLifecycleResponse(const QByteArray& /*responseCbor*/) {
@@ -1139,7 +1139,7 @@ void ProfileRepository::handleProfileImportResponse(const QByteArray& responseCb
         DecodedApiError err;
         emit operationFailed(NodeApiCodec::decodeError(responseCbor, &err)
                                  ? err.message
-                                 : QStringLiteral("Profile import failed"));
+                                 : tr("Profile import failed"));
         return;
     }
     refreshProfiles();
@@ -1156,7 +1156,7 @@ void ProfileRepository::handleProfileHistoryResponse(const QString& id,
         DecodedApiError err;
         emit historyUnavailable(id, NodeApiCodec::decodeError(responseCbor, &err)
                                         ? err.message
-                                        : QStringLiteral("Version history unavailable"));
+                                        : tr("Version history unavailable"));
         return;
     }
     QList<DecodedRevision> revs;
@@ -1186,7 +1186,7 @@ void ProfileRepository::handleProfileRevertResponse(const QString& id,
         DecodedApiError err;
         emit operationFailed(NodeApiCodec::decodeError(responseCbor, &err)
                                  ? err.message
-                                 : QStringLiteral("Profile revert failed"));
+                                 : tr("Profile revert failed"));
         return;
     }
     // Rolled forward: refresh the spec (re-get) + the list, then notify.
@@ -1206,7 +1206,7 @@ void ProfileRepository::handleProfileMutationResponse(const QByteArray& response
     if (NodeApiCodec::decodeError(responseCbor, &err)) {
         emit operationFailed(err.message);
     } else {
-        emit operationFailed(QStringLiteral("Profile operation failed"));
+        emit operationFailed(tr("Profile operation failed"));
     }
 }
 
@@ -1302,7 +1302,7 @@ void ApprovalRepository::handleResponse(const QString& correlationId,
         if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
             emit operationFailed(err.message);
         } else {
-            emit operationFailed(QStringLiteral("Approval decision failed"));
+            emit operationFailed(tr("Approval decision failed"));
         }
         return;
     }
@@ -1448,8 +1448,7 @@ void FleetRepository::handleUnitControlResponse(const QByteArray& responseCbor) 
     if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
         DecodedApiError err;
         NodeApiCodec::decodeError(responseCbor, &err);
-        emit controlFailed(err.message.isEmpty() ? QStringLiteral("Unit control failed")
-                                                 : err.message);
+        emit controlFailed(err.message.isEmpty() ? tr("Unit control failed") : err.message);
     } else {
         refreshTree(QStringLiteral("control"));
     }

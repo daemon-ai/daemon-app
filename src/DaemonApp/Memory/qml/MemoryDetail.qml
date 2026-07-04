@@ -6,6 +6,7 @@ import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.Presentation
 
 // Detail drawer for a single memory: content, trust strip, lifecycle, weights and
 // provenance. `entry` is the QVariantMap from MemoryListModel.entryAt(row).
@@ -82,21 +83,25 @@ Rectangle {
             Section { text: qsTr("Trust") }
             KV {
                 k: qsTr("veracity")
-                v: root.field("veracity")
+                v: DisplayPresenter.enumLabel("memory.veracity", root.field("veracity"))
                 tone: root.field("contaminated", false) ? Theme.warning : Theme.statusOk
             }
             KV { k: qsTr("trust tier"); v: root.field("trustTier") }
             KV { k: qsTr("trust weight"); v: root.num("trustWeight") }
 
             Section { text: qsTr("Lifecycle") }
-            KV { k: qsTr("tier"); v: root.field("tier") + " · L" + root.field("tierLevel", 1) }
+            KV {
+                k: qsTr("tier")
+                v: DisplayPresenter.enumLabel("memory.tier", root.field("tier")) + qsTr(" · L")
+                   + root.field("tierLevel", 1)
+            }
             KV {
                 k: qsTr("degradation")
                 v: root.field("degradation", "-")
             }
             KV {
                 k: qsTr("status")
-                v: root.field("status")
+                v: DisplayPresenter.enumLabel("memory.status", root.field("status"))
                 tone: root.field("status") === "active" ? Theme.text : Theme.danger
             }
             KV { k: qsTr("valid until"); v: root.field("validUntil", "-") }

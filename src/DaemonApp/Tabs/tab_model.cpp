@@ -91,7 +91,7 @@ int TabModel::openTranscript(const QString& sessionId, const QString& title) {
     Tab tab;
     tab.id = m_nextId++;
     tab.kind = Transcript;
-    tab.title = title.isEmpty() ? QStringLiteral("Session") : title;
+    tab.title = title.isEmpty() ? tr("Session") : title;
     tab.sessionId = sessionId;
     tab.closable = true;
     tab.preview = false;
@@ -125,7 +125,7 @@ int TabModel::previewTranscript(const QString& sessionId, const QString& title) 
         tab.rootId.clear();
         tab.path.clear();
         tab.dirty = false;
-        tab.title = title.isEmpty() ? QStringLiteral("Session") : title;
+        tab.title = title.isEmpty() ? tr("Session") : title;
         const QModelIndex idx = index(previewRow, 0);
         emit dataChanged(idx, idx,
                          {KindRole, TitleRole, Qt::DisplayRole, SessionIdRole, FilePathRole,
@@ -148,7 +148,7 @@ int TabModel::previewTranscript(const QString& sessionId, const QString& title) 
     Tab tab;
     tab.id = m_nextId++;
     tab.kind = Transcript;
-    tab.title = title.isEmpty() ? QStringLiteral("Session") : title;
+    tab.title = title.isEmpty() ? tr("Session") : title;
     tab.sessionId = sessionId;
     tab.closable = true;
     tab.preview = true;
@@ -189,7 +189,7 @@ int TabModel::openPage(int kind, const QString& title) {
     Tab tab;
     tab.id = m_nextId++;
     tab.kind = kind;
-    tab.title = title.isEmpty() ? QStringLiteral("Page") : title;
+    tab.title = title.isEmpty() ? tr("Page") : title;
     tab.sessionId.clear();
     tab.closable = true;
     m_tabs.append(tab);
@@ -217,7 +217,7 @@ int TabModel::openAgentTab(int kind, const QString& profile, const QString& titl
     Tab tab;
     tab.id = m_nextId++;
     tab.kind = kind;
-    tab.title = title.isEmpty() ? QStringLiteral("Agent") : title;
+    tab.title = title.isEmpty() ? tr("Agent") : title;
     tab.sessionId.clear();
     tab.closable = true;
     tab.profile = profile;

@@ -82,7 +82,7 @@ Item {
                                 var parts = [];
                                 if (entry.quant) parts.push(entry.quant);
                                 if (entry.sizeLabel) parts.push(entry.sizeLabel);
-                                else if (entry.sizeGiB > 0) parts.push(entry.sizeGiB.toFixed(1) + " GiB");
+                                else if (entry.sizeGiB > 0) parts.push(entry.sizeGiB.toFixed(1) + qsTr(" GiB"));
                                 if (entry.provider) parts.push(entry.provider);
                                 return parts.join("  \u00b7  ");
                             }

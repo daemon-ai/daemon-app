@@ -438,30 +438,28 @@ void DaemonConnectionService::testConnection(const QString& mode, const QString&
     // Mirror connectTo()'s wasm/android gate so Test tells the same truth Connect would.
     if (mode != QStringLiteral("remote-ws")) {
         emit testResult(false,
-                        QStringLiteral("Only WebSocket connections (ws:// or wss://) work on "
-                                       "this device"));
+                        tr("Only WebSocket connections (ws:// or wss://) work on this device"));
         setTesting(false);
         return;
     }
 #endif
     if (mode == QStringLiteral("local")) {
         ok = !target.isEmpty();
-        message = ok ? QStringLiteral("Unix socket target accepted")
-                     : QStringLiteral("Enter a local socket path");
+        message = ok ? tr("Unix socket target accepted") : tr("Enter a local socket path");
     } else if (mode == QStringLiteral("remote")) {
         QString host;
         quint16 port = 0;
         ok = parseHostPort(target, &host, &port);
         // Shape-only: a full reachability/TLS probe needs the server (verified end-to-end later).
-        message = ok ? QStringLiteral("Remote target accepted (host:port, TLS)")
-                     : QStringLiteral("Use host:port for a remote TLS node");
+        message = ok ? tr("Remote target accepted (host:port, TLS)")
+                     : tr("Use host:port for a remote TLS node");
     } else if (mode == QStringLiteral("remote-ws")) {
         ok = parseWsUrl(target).isValid();
         // Shape-only, like "remote": reachability is proven by the Health probe on Connect.
-        message = ok ? QStringLiteral("WebSocket target accepted (ws:// or wss://)")
-                     : QStringLiteral("Use ws://host:port or wss://host[:port][/path]");
+        message = ok ? tr("WebSocket target accepted (ws:// or wss://)")
+                     : tr("Use ws://host:port or wss://host[:port][/path]");
     } else {
-        message = QStringLiteral("Unsupported transport");
+        message = tr("Unsupported transport");
     }
     emit testResult(ok, message);
     setTesting(false);

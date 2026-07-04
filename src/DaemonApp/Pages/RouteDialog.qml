@@ -44,7 +44,7 @@ Kit.Dialog {
         }
         sessionCombo.model = sl;
 
-        agentCombo.model = ["(inherit)"].concat(Profiles.profileNames());
+        agentCombo.model = [qsTr("(inherit)")].concat(Profiles.profileNames());
     }
 
     function openFor(entry) {

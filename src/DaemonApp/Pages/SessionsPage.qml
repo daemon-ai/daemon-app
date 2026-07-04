@@ -98,7 +98,7 @@ Item {
                             }
                             Text {
                                 text: entry.profile + " · " + entry.lastActivity + " · "
-                                      + entry.tokens + " tok"
+                                      + entry.tokens + qsTr(" tok")
                                 font.family: FontIcons.mono; font.pixelSize: 11
                                 color: Theme.textMuted
                             }

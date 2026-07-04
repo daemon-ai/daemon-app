@@ -69,10 +69,13 @@ ColumnLayout {
             Kit.Dropdown {
                 id: categoryCombo
                 Layout.preferredWidth: 90
-                model: ["Sans", "Serif", "Mono"]
+                // Stored value stays the canonical Sans/Serif/Mono identifier; the
+                // dropdown shows a translatable label for each.
+                readonly property var categoryValues: ["Sans", "Serif", "Mono"]
+                model: [qsTr("Sans"), qsTr("Serif"), qsTr("Mono")]
                 Component.onCompleted: currentIndex =
-                    Math.max(0, model.indexOf(UiSettings.fontCategory))
-                onActivated: UiSettings.fontCategory = model[currentIndex]
+                    Math.max(0, categoryValues.indexOf(UiSettings.fontCategory))
+                onActivated: UiSettings.fontCategory = categoryValues[currentIndex]
             }
             // Specific face within the active category.
             Kit.Dropdown {

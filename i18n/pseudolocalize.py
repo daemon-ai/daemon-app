@@ -11,13 +11,18 @@ or hard-coded (untranslated) strings, truncation, and bidi issues obvious:
   * Qt placeholders (%1, %n, %L1) and the leading/trailing whitespace that the
     TUI relies on for alignment are preserved verbatim.
 
-The pseudolocale carries no real translations, so `lupdate` skips it. Instead
-derive it from a catalog that `update_translations` *does* refresh (the `ar`
-seed), so new strings always reach the pseudolocale:
+The pseudolocale is the only committed catalog (en_US is the source language, so
+it has no .ts). `update_translations` (lupdate) refreshes daemon-app_pseudo.ts
+in place, adding new source strings; then re-run this script to (re)fill every
+<translation> from its <source>:
 
-    python3 i18n/pseudolocalize.py i18n/daemon-app_ar.ts i18n/daemon-app_pseudo.ts
+    cmake --build <build-dir> --target update_translations
+    python3 i18n/pseudolocalize.py i18n/daemon-app_pseudo.ts
 
-A single argument pseudolocalizes a file in place.
+Translations are always derived from the clean <source> text (never from an
+existing translation), so re-running is idempotent. The header keeps a
+sourcelanguage/language so lupdate treats the file as a real target; a two-arg
+form (src dst) is also accepted.
 """
 
 from __future__ import annotations
@@ -70,10 +75,12 @@ def pseudo(source: str) -> str:
 def main(src: str, dst: str) -> int:
     tree = ET.parse(src)
     root = tree.getroot()
-    # Drop the target language so `lupdate` skips this file on the next
-    # `update_translations` run (which would otherwise clobber the generated
-    # pseudo translations). lrelease still compiles it to a .qm.
-    root.attrib.pop("language", None)
+    # Keep the file a valid lupdate target: en_US is the source language, and a
+    # (Latin, LTR) target language so lupdate refreshes it and lrelease compiles
+    # it. Translations below are derived from <source>, so lupdate merging in new
+    # unfinished entries never loses generated content.
+    root.set("sourcelanguage", "en_US")
+    root.set("language", "en")
     filled = 0
     for message in root.iter("message"):
         source = message.find("source")

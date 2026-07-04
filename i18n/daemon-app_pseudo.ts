@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<TS version="2.1">
+<TS version="2.1" language="en" sourcelanguage="en_US">
 <context>
     <name>AboutSection</name>
     <message>
@@ -186,6 +186,30 @@
         <source>Re-run first-run setup</source>
         <translation>«Ŕé-ŕúñ ƒìŕśŧ-ŕúñ śéŧúþ  þéñ þéñ»</translation>
     </message>
+    <message>
+        <source>Local data</source>
+        <translation>«Ļóçàļ ðàŧà  þéñ»</translation>
+    </message>
+    <message>
+        <source>Clear local data…</source>
+        <translation>«Çļéàŕ ļóçàļ ðàŧà…  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Clear local data?</source>
+        <translation>«Çļéàŕ ļóçàļ ðàŧà?  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>«Çļéàŕ  þéñ»</translation>
+    </message>
+    <message>
+        <source>This erases everything stored on this device: your connection settings and saved sign-in, appearance preferences, and the local cache of sessions and files. It does NOT delete anything on the node itself.
+
+You'll return to first-run setup.</source>
+        <translation>«Ŧĥìś éŕàśéś éṽéŕýŧĥìñĝ śŧóŕéð óñ ŧĥìś ðéṽìçé: ýóúŕ çóññéçŧìóñ śéŧŧìñĝś àñð śàṽéð śìĝñ-ìñ, àþþéàŕàñçé þŕéƒéŕéñçéś, àñð ŧĥé ļóçàļ çàçĥé óƒ śéśśìóñś àñð ƒìļéś. Ìŧ ðóéś ÑÓŦ ðéļéŧé àñýŧĥìñĝ óñ ŧĥé ñóðé ìŧśéļƒ.
+
+Ýóú'ļļ ŕéŧúŕñ ŧó ƒìŕśŧ-ŕúñ śéŧúþ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
 </context>
 <context>
     <name>AgentInferencePicker</name>
@@ -259,6 +283,10 @@
     <message>
         <source>base url</source>
         <translation>«ƀàśé úŕļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>«(þŕóṽìðéŕ ðéƒàúļŧ)  þéñ þéñ»</translation>
     </message>
     <message>
         <source>context engine</source>
@@ -340,6 +368,18 @@
         <translation>«Ŧýþéƒàçé úśéð ƒóŕ ŧĥé ŧŕàñśçŕìþŧ / éðìŧóŕ ŧéxŧ.  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
     <message>
+        <source>Sans</source>
+        <translation>«Śàñś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Serif</source>
+        <translation>«Śéŕìƒ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Mono</source>
+        <translation>«Ḿóñó  þéñ»</translation>
+    </message>
+    <message>
         <source>Font size</source>
         <translation>«Ƒóñŧ śìžé  þéñ»</translation>
     </message>
@@ -374,6 +414,13 @@
     <message>
         <source>User message rail</source>
         <translation>«Úśéŕ ḿéśśàĝé ŕàìļ  þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>ApprovalRepository</name>
+    <message>
+        <source>Approval decision failed</source>
+        <translation>«Àþþŕóṽàļ ðéçìśìóñ ƒàìļéð  þéñ þéñ þéñ»</translation>
     </message>
 </context>
 <context>
@@ -504,6 +551,10 @@
     <message>
         <source>Manual checkpoint</source>
         <translation>«Ḿàñúàļ çĥéçķþóìñŧ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> «ŧóķ  þéñ»</translation>
     </message>
     <message>
         <source>current</source>
@@ -872,6 +923,21 @@
         <source> Ctrl+Enter steer</source>
         <translation> «Çŧŕļ+Éñŧéŕ śŧééŕ  þéñ þéñ»</translation>
     </message>
+    <message>
+        <source>r:</source>
+        <comment>reasoning-effort badge prefix</comment>
+        <translation>«ŕ:  þéñ»</translation>
+    </message>
+    <message>
+        <source>fast</source>
+        <comment>composer mode badge</comment>
+        <translation>«ƒàśŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>verbose</source>
+        <comment>composer mode badge</comment>
+        <translation>«ṽéŕƀóśé  þéñ»</translation>
+    </message>
 </context>
 <context>
     <name>ComposerControls</name>
@@ -956,6 +1022,29 @@
     </message>
 </context>
 <context>
+    <name>ComposerUploadController</name>
+    <message>
+        <source>Not connected to a workspace.</source>
+        <translation>«Ñóŧ çóññéçŧéð ŧó à ẅóŕķśþàçé.  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>"%1" is too large to upload (max 25 MB).</source>
+        <translation>«"%1" ìś ŧóó ļàŕĝé ŧó úþļóàð (ḿàx 25 ḾƁ).  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Uploading %1…</source>
+        <translation>«Úþļóàðìñĝ %1…  þéñ»</translation>
+    </message>
+    <message>
+        <source>No writable workspace to upload into.</source>
+        <translation>«Ñó ẅŕìŧàƀļé ẅóŕķśþàçé ŧó úþļóàð ìñŧó.  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Upload failed.</source>
+        <translation>«Úþļóàð ƒàìļéð.  þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>ConfirmDialog</name>
     <message>
         <source>Yes</source>
@@ -971,6 +1060,10 @@
     <message>
         <source>https://node.example:8080</source>
         <translation>«ĥŧŧþś://ñóðé.éxàḿþļé:8080  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>wss://node.example:9443</source>
+        <translation>«ẅśś://ñóðé.éxàḿþļé:9443  þéñ þéñ þéñ»</translation>
     </message>
     <message>
         <source>/path/to/daemon.sock</source>
@@ -1003,6 +1096,14 @@
     <message>
         <source>Connect to a node over the network</source>
         <translation>«Çóññéçŧ ŧó à ñóðé óṽéŕ ŧĥé ñéŧẅóŕķ  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>WebSocket</source>
+        <translation>«ẄéƀŚóçķéŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Connect to a node over ws:// or wss://</source>
+        <translation>«Çóññéçŧ ŧó à ñóðé óṽéŕ ẅś:// óŕ ẅśś://  þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
     <message>
         <source>Local daemon</source>
@@ -1064,6 +1165,10 @@
         <translation>«Ðìśçóññéçŧ  þéñ»</translation>
     </message>
     <message>
+        <source>Sign out</source>
+        <translation>«Śìĝñ óúŧ  þéñ»</translation>
+    </message>
+    <message>
         <source>Local daemon</source>
         <translation>«Ļóçàļ ðàéḿóñ  þéñ»</translation>
     </message>
@@ -1074,6 +1179,13 @@
     <message>
         <source>Stop the managed daemon when I close the app</source>
         <translation>«Śŧóþ ŧĥé ḿàñàĝéð ðàéḿóñ ẅĥéñ Ì çļóśé ŧĥé àþþ  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>CredentialRepository</name>
+    <message>
+        <source>Credential operation failed</source>
+        <translation>«Çŕéðéñŧìàļ óþéŕàŧìóñ ƒàìļéð  þéñ þéñ þéñ»</translation>
     </message>
 </context>
 <context>
@@ -1183,6 +1295,53 @@
         <source>Reconnecting...</source>
         <translation>«Ŕéçóññéçŧìñĝ...  þéñ þéñ»</translation>
     </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device.</source>
+        <translation>«Óñļý ẄéƀŚóçķéŧ çóññéçŧìóñś (ẅś:// óŕ ẅśś://) ẅóŕķ óñ ŧĥìś ðéṽìçé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device</source>
+        <translation>«Óñļý ẄéƀŚóçķéŧ çóññéçŧìóñś (ẅś:// óŕ ẅśś://) ẅóŕķ óñ ŧĥìś ðéṽìçé  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Unix socket target accepted</source>
+        <translation>«Úñìx śóçķéŧ ŧàŕĝéŧ àççéþŧéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Enter a local socket path</source>
+        <translation>«Éñŧéŕ à ļóçàļ śóçķéŧ þàŧĥ  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Remote target accepted (host:port, TLS)</source>
+        <translation>«Ŕéḿóŧé ŧàŕĝéŧ àççéþŧéð (ĥóśŧ:þóŕŧ, ŦĻŚ)  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Use host:port for a remote TLS node</source>
+        <translation>«Úśé ĥóśŧ:þóŕŧ ƒóŕ à ŕéḿóŧé ŦĻŚ ñóðé  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>WebSocket target accepted (ws:// or wss://)</source>
+        <translation>«ẄéƀŚóçķéŧ ŧàŕĝéŧ àççéþŧéð (ẅś:// óŕ ẅśś://)  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Use ws://host:port or wss://host[:port][/path]</source>
+        <translation>«Úśé ẅś://ĥóśŧ:þóŕŧ óŕ ẅśś://ĥóśŧ[:þóŕŧ][/þàŧĥ]  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Unsupported transport</source>
+        <translation>«Úñśúþþóŕŧéð ŧŕàñśþóŕŧ  þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonTransport</name>
+    <message>
+        <source>No daemon WebSocket target configured</source>
+        <translation>«Ñó ðàéḿóñ ẄéƀŚóçķéŧ ŧàŕĝéŧ çóñƒìĝúŕéð  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>No daemon target configured</source>
+        <translation>«Ñó ðàéḿóñ ŧàŕĝéŧ çóñƒìĝúŕéð  þéñ þéñ þéñ»</translation>
+    </message>
 </context>
 <context>
     <name>DaemonTurnEngine</name>
@@ -1270,6 +1429,303 @@
     </message>
 </context>
 <context>
+    <name>DiscoverDialog</name>
+    <message>
+        <source>Discover models</source>
+        <translation>«Ðìśçóṽéŕ ḿóðéļś  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Search Hugging Face repos (e.g. SmolLM2)</source>
+        <translation>«Śéàŕçĥ Ĥúĝĝìñĝ Ƒàçé ŕéþóś (é.ĝ. ŚḿóļĻḾ2)  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>«Śéàŕçĥ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Searching…</source>
+        <translation>«Śéàŕçĥìñĝ…  þéñ»</translation>
+    </message>
+    <message>
+        <source>by %1</source>
+        <translation>«ƀý %1  þéñ»</translation>
+    </message>
+    <message>
+        <source>Quantizations</source>
+        <translation>«Qúàñŧìžàŧìóñś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation>«Ðóẅñļóàðś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Load more</source>
+        <translation>«Ļóàð ḿóŕé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>«Çļóśé  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>DisplayPresenter</name>
+    <message>
+        <source>checking</source>
+        <comment>connection state</comment>
+        <translation>«çĥéçķìñĝ  þéñ»</translation>
+    </message>
+    <message>
+        <source>connecting</source>
+        <comment>connection state</comment>
+        <translation>«çóññéçŧìñĝ  þéñ»</translation>
+    </message>
+    <message>
+        <source>authenticating</source>
+        <comment>connection state</comment>
+        <translation>«àúŧĥéñŧìçàŧìñĝ  þéñ»</translation>
+    </message>
+    <message>
+        <source>ready</source>
+        <comment>connection state</comment>
+        <translation>«ŕéàðý  þéñ»</translation>
+    </message>
+    <message>
+        <source>offline</source>
+        <comment>connection state</comment>
+        <translation>«óƒƒļìñé  þéñ»</translation>
+    </message>
+    <message>
+        <source>needs setup</source>
+        <comment>connection state</comment>
+        <translation>«ñééðś śéŧúþ  þéñ»</translation>
+    </message>
+    <message>
+        <source>working</source>
+        <comment>memory tier</comment>
+        <translation>«ẅóŕķìñĝ  þéñ»</translation>
+    </message>
+    <message>
+        <source>episodic</source>
+        <comment>memory tier</comment>
+        <translation>«éþìśóðìç  þéñ»</translation>
+    </message>
+    <message>
+        <source>scratchpad</source>
+        <comment>memory tier</comment>
+        <translation>«śçŕàŧçĥþàð  þéñ»</translation>
+    </message>
+    <message>
+        <source>stated</source>
+        <comment>memory veracity</comment>
+        <translation>«śŧàŧéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>inferred</source>
+        <comment>memory veracity</comment>
+        <translation>«ìñƒéŕŕéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>tool</source>
+        <comment>memory veracity</comment>
+        <translation>«ŧóóļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>imported</source>
+        <comment>memory veracity</comment>
+        <translation>«ìḿþóŕŧéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <comment>memory veracity</comment>
+        <translation>«úñķñóẅñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>active</source>
+        <comment>memory status</comment>
+        <translation>«àçŧìṽé  þéñ»</translation>
+    </message>
+    <message>
+        <source>expired</source>
+        <comment>memory status</comment>
+        <translation>«éxþìŕéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>superseded</source>
+        <comment>memory status</comment>
+        <translation>«śúþéŕśéðéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>hot</source>
+        <comment>memory degradation</comment>
+        <translation>«ĥóŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>warm</source>
+        <comment>memory degradation</comment>
+        <translation>«ẅàŕḿ  þéñ»</translation>
+    </message>
+    <message>
+        <source>cold</source>
+        <comment>memory degradation</comment>
+        <translation>«çóļð  þéñ»</translation>
+    </message>
+    <message>
+        <source>memory</source>
+        <comment>memory node kind</comment>
+        <translation>«ḿéḿóŕý  þéñ»</translation>
+    </message>
+    <message>
+        <source>entity</source>
+        <comment>memory node kind</comment>
+        <translation>«éñŧìŧý  þéñ»</translation>
+    </message>
+    <message>
+        <source>fact</source>
+        <comment>memory node kind</comment>
+        <translation>«ƒàçŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>gist</source>
+        <comment>memory node kind</comment>
+        <translation>«ĝìśŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>conflict</source>
+        <comment>memory node kind</comment>
+        <translation>«çóñƒļìçŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>added</source>
+        <comment>memory event kind</comment>
+        <translation>«àððéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>updated</source>
+        <comment>memory event kind</comment>
+        <translation>«úþðàŧéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>recalled</source>
+        <comment>memory event kind</comment>
+        <translation>«ŕéçàļļéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>invalidated</source>
+        <comment>memory event kind</comment>
+        <translation>«ìñṽàļìðàŧéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>consolidated</source>
+        <comment>memory event kind</comment>
+        <translation>«çóñśóļìðàŧéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>snapshot</source>
+        <comment>memory event kind</comment>
+        <translation>«śñàþśĥóŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>high</source>
+        <comment>approval risk</comment>
+        <translation>«ĥìĝĥ  þéñ»</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <comment>approval risk</comment>
+        <translation>«ḿéðìúḿ  þéñ»</translation>
+    </message>
+    <message>
+        <source>low</source>
+        <comment>approval risk</comment>
+        <translation>«ļóẅ  þéñ»</translation>
+    </message>
+    <message>
+        <source>queued</source>
+        <comment>download state</comment>
+        <translation>«qúéúéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>paused</source>
+        <comment>download state</comment>
+        <translation>«þàúśéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>downloading</source>
+        <comment>download state</comment>
+        <translation>«ðóẅñļóàðìñĝ  þéñ»</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <comment>download state</comment>
+        <translation>«ðóñé  þéñ»</translation>
+    </message>
+    <message>
+        <source>failed</source>
+        <comment>download state</comment>
+        <translation>«ƒàìļéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>cancelled</source>
+        <comment>download state</comment>
+        <translation>«çàñçéļļéð  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>DownloadsPanel</name>
+    <message>
+        <source>Queued</source>
+        <translation>«Qúéúéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Downloading</source>
+        <translation>«Ðóẅñļóàðìñĝ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Paused</source>
+        <translation>«Þàúśéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>«Ðóñé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>«Ƒàìļéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation>«Çàñçéļļéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>«Ŕéśúḿé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>«Þàúśé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>«Çàñçéļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>«Ŕéŧŕý  þéñ»</translation>
+    </message>
+    <message>
+        <source>Use this model</source>
+        <translation>«Úśé ŧĥìś ḿóðéļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>«Ðìśḿìśś  þéñ»</translation>
+    </message>
+    <message>
+        <source>file %1/%2</source>
+        <translation>«ƒìļé %1/%2  þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>EditMenu</name>
     <message>
         <source>Cut</source>
@@ -1322,10 +1778,6 @@
         <translation>
             <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
             <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
-            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
-            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
-            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
-            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
         </translation>
     </message>
     <message>
@@ -1338,10 +1790,6 @@
     <message numerus="yes">
         <source>Indexing… (%n file(s))</source>
         <translation>
-            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
-            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
-            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
-            <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
             <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
             <numerusform>«Ìñðéxìñĝ… (%n ƒìļé(ś))  þéñ þéñ»</numerusform>
         </translation>
@@ -1461,6 +1909,11 @@
     <message>
         <source>Local: Attach to socket (press for App-managed)</source>
         <translation>«Ļóçàļ: Àŧŧàçĥ ŧó śóçķéŧ (þŕéśś ƒóŕ Àþþ-ḿàñàĝéð)  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>https://node.example:8080</source>
+        <comment>example remote connection target</comment>
+        <translation>«ĥŧŧþś://ñóðé.éxàḿþļé:8080  þéñ þéñ þéñ»</translation>
     </message>
     <message>
         <source>Connecting...</source>
@@ -1585,6 +2038,25 @@
     </message>
 </context>
 <context>
+    <name>FleetRepository</name>
+    <message>
+        <source>Unit control failed</source>
+        <translation>«Úñìŧ çóñŧŕóļ ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>FontStyleButton</name>
+    <message>
+        <source>Sans</source>
+        <translation>«Śàñś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Ag</source>
+        <comment>font specimen sample</comment>
+        <translation>«Àĝ  þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>GatewayMenu</name>
     <message>
         <source>Gateway</source>
@@ -1669,12 +2141,51 @@ Thanks — proceeding with: %1
         <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
         <translation>«Àñ ìñçóḿþàŧìƀļé ðàéḿóñ ìś śéŕṽìñĝ %1, àñð ñó þìðƒìļé ŕéçóŕðś ìŧś þŕóçéśś. Śŧóþ ìŧ ḿàñúàļļý àñð ŕéçóññéçŧ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
+    <message>
+        <source>A browser cannot start a local daemon. Connect to a WebSocket node instead.</source>
+        <translation>«À ƀŕóẅśéŕ çàññóŧ śŧàŕŧ à ļóçàļ ðàéḿóñ. Çóññéçŧ ŧó à ẄéƀŚóçķéŧ ñóðé ìñśŧéàð.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>A browser cannot manage a local daemon. Connect to a WebSocket node instead.</source>
+        <translation>«À ƀŕóẅśéŕ çàññóŧ ḿàñàĝé à ļóçàļ ðàéḿóñ. Çóññéçŧ ŧó à ẄéƀŚóçķéŧ ñóðé ìñśŧéàð.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>LocalDiskFsService</name>
+    <message>
+        <source>invalid path</source>
+        <translation>«ìñṽàļìð þàŧĥ  þéñ»</translation>
+    </message>
+    <message>
+        <source>cannot open</source>
+        <translation>«çàññóŧ óþéñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>stale: file changed on disk</source>
+        <translation>«śŧàļé: ƒìļé çĥàñĝéð óñ ðìśķ  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>write failed</source>
+        <translation>«ẅŕìŧé ƒàìļéð  þéñ»</translation>
+    </message>
 </context>
 <context>
     <name>Main</name>
     <message>
         <source>Daemon</source>
         <translation>«Ðàéḿóñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Connection lost</source>
+        <translation>«Çóññéçŧìóñ ļóśŧ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>%1 (%2s)</source>
+        <translation>«%1 (%2ś)  þéñ»</translation>
+    </message>
+    <message>
+        <source>Reconnect now</source>
+        <translation>«Ŕéçóññéçŧ ñóẅ  þéñ»</translation>
     </message>
 </context>
 <context>
@@ -1709,6 +2220,10 @@ Thanks — proceeding with: %1
     <message>
         <source>tier</source>
         <translation>«ŧìéŕ  þéñ»</translation>
+    </message>
+    <message>
+        <source> · L</source>
+        <translation> «· Ļ  þéñ»</translation>
     </message>
     <message>
         <source>degradation</source>
@@ -1802,19 +2317,11 @@ Thanks — proceeding with: %1
         <translation>
             <numerusform>«%n ñóðé(ś)  þéñ»</numerusform>
             <numerusform>«%n ñóðé(ś)  þéñ»</numerusform>
-            <numerusform>«%n ñóðé(ś)  þéñ»</numerusform>
-            <numerusform>«%n ñóðé(ś)  þéñ»</numerusform>
-            <numerusform>«%n ñóðé(ś)  þéñ»</numerusform>
-            <numerusform>«%n ñóðé(ś)  þéñ»</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n edge(s)</source>
         <translation>
-            <numerusform>«%n éðĝé(ś)  þéñ»</numerusform>
-            <numerusform>«%n éðĝé(ś)  þéñ»</numerusform>
-            <numerusform>«%n éðĝé(ś)  þéñ»</numerusform>
-            <numerusform>«%n éðĝé(ś)  þéñ»</numerusform>
             <numerusform>«%n éðĝé(ś)  þéñ»</numerusform>
             <numerusform>«%n éðĝé(ś)  þéñ»</numerusform>
         </translation>
@@ -1826,6 +2333,10 @@ Thanks — proceeding with: %1
     <message>
         <source>No graph data for this scope</source>
         <translation>«Ñó ĝŕàþĥ ðàŧà ƒóŕ ŧĥìś śçóþé  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source> · degree </source>
+        <translation> «· ðéĝŕéé  þéñ» </translation>
     </message>
     <message>
         <source>Expand</source>
@@ -1842,6 +2353,58 @@ Thanks — proceeding with: %1
 </context>
 <context>
     <name>MemoryList</name>
+    <message>
+        <source>All tiers</source>
+        <translation>«Àļļ ŧìéŕś  þéñ»</translation>
+    </message>
+    <message>
+        <source>working</source>
+        <translation>«ẅóŕķìñĝ  þéñ»</translation>
+    </message>
+    <message>
+        <source>episodic</source>
+        <translation>«éþìśóðìç  þéñ»</translation>
+    </message>
+    <message>
+        <source>scratchpad</source>
+        <translation>«śçŕàŧçĥþàð  þéñ»</translation>
+    </message>
+    <message>
+        <source>All trust</source>
+        <translation>«Àļļ ŧŕúśŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>stated</source>
+        <translation>«śŧàŧéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>inferred</source>
+        <translation>«ìñƒéŕŕéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>tool</source>
+        <translation>«ŧóóļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>imported</source>
+        <translation>«ìḿþóŕŧéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>«úñķñóẅñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>recent</source>
+        <translation>«ŕéçéñŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>importance</source>
+        <translation>«ìḿþóŕŧàñçé  þéñ»</translation>
+    </message>
+    <message>
+        <source>recall</source>
+        <translation>«ŕéçàļļ  þéñ»</translation>
+    </message>
     <message>
         <source>Search memories...</source>
         <translation>«Śéàŕçĥ ḿéḿóŕìéś...  þéñ þéñ»</translation>
@@ -2015,6 +2578,26 @@ Thanks — proceeding with: %1
 <context>
     <name>ModelPickerOverlay</name>
     <message>
+        <source>Off</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>«Óƒƒ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>«Ļóẅ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Med</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>«Ḿéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Hig</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>«Ĥìĝ  þéñ»</translation>
+    </message>
+    <message>
         <source>Filter models…</source>
         <translation>«Ƒìļŧéŕ ḿóðéļś…  þéñ»</translation>
     </message>
@@ -2029,6 +2612,25 @@ Thanks — proceeding with: %1
     <message>
         <source>Verbose</source>
         <translation>«Ṽéŕƀóśé  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>ModelRepository</name>
+    <message>
+        <source>Set-model operation failed</source>
+        <translation>«Śéŧ-ḿóðéļ óþéŕàŧìóñ ƒàìļéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Download could not be started</source>
+        <translation>«Ðóẅñļóàð çóúļð ñóŧ ƀé śŧàŕŧéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Delete failed</source>
+        <translation>«Ðéļéŧé ƒàìļéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Activate failed</source>
+        <translation>«Àçŧìṽàŧé ƒàìļéð  þéñ þéñ»</translation>
     </message>
 </context>
 <context>
@@ -2084,6 +2686,10 @@ Thanks — proceeding with: %1
         <source>Quantizations</source>
         <translation>«Qúàñŧìžàŧìóñś  þéñ»</translation>
     </message>
+    <message>
+        <source>Load more</source>
+        <translation>«Ļóàð ḿóŕé  þéñ»</translation>
+    </message>
 </context>
 <context>
     <name>ModelsDownloads</name>
@@ -2103,6 +2709,18 @@ Start one from the Discover tab.</source>
     <message>
         <source>ACTIVE</source>
         <translation>«ÀÇŦÌṼÉ  þéñ»</translation>
+    </message>
+    <message>
+        <source>PROJECTOR</source>
+        <translation>«ÞŔÓĴÉÇŦÓŔ  þéñ»</translation>
+    </message>
+    <message>
+        <source>VISION</source>
+        <translation>«ṼÌŚÌÓÑ  þéñ»</translation>
+    </message>
+    <message>
+        <source> GiB</source>
+        <translation> «ĜìƁ  þéñ»</translation>
     </message>
     <message>
         <source>Active</source>
@@ -2190,6 +2808,10 @@ Start one from the Discover tab.</source>
         <translation>«ðàéḿóñ-çóŕé (ñàŧìṽé)  þéñ þéñ»</translation>
     </message>
     <message>
+        <source>  ·  ACP %1</source>
+        <translation>  «·  ÀÇÞ %1  þéñ»</translation>
+    </message>
+    <message>
         <source>installed</source>
         <translation>«ìñśŧàļļéð  þéñ»</translation>
     </message>
@@ -2220,6 +2842,33 @@ Start one from the Discover tab.</source>
     <message>
         <source>Cancel</source>
         <translation>«Çàñçéļ  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>NodeApiClient</name>
+    <message>
+        <source>request timed out</source>
+        <translation>«ŕéqúéśŧ ŧìḿéð óúŧ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>daemon connection closed</source>
+        <translation>«ðàéḿóñ çóññéçŧìóñ çļóśéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>authentication required</source>
+        <translation>«àúŧĥéñŧìçàŧìóñ ŕéqúìŕéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>authentication failed</source>
+        <translation>«àúŧĥéñŧìçàŧìóñ ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>stream ended in error</source>
+        <translation>«śŧŕéàḿ éñðéð ìñ éŕŕóŕ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>the request failed</source>
+        <translation>«ŧĥé ŕéqúéśŧ ƒàìļéð  þéñ þéñ»</translation>
     </message>
 </context>
 <context>
@@ -2491,6 +3140,25 @@ Start one from the Discover tab.</source>
     </message>
 </context>
 <context>
+    <name>ProfileRepository</name>
+    <message>
+        <source>Profile import failed</source>
+        <translation>«Þŕóƒìļé ìḿþóŕŧ ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Version history unavailable</source>
+        <translation>«Ṽéŕśìóñ ĥìśŧóŕý úñàṽàìļàƀļé  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Profile revert failed</source>
+        <translation>«Þŕóƒìļé ŕéṽéŕŧ ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Profile operation failed</source>
+        <translation>«Þŕóƒìļé óþéŕàŧìóñ ƒàìļéð  þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>ProfileToggleListDialog</name>
     <message>
         <source>Enter / Space toggles · Esc done</source>
@@ -2551,6 +3219,11 @@ Start one from the Discover tab.</source>
         <translation>«Śŧàŕŧ à ñéẅ śéśśìóñ  þéñ þéñ»</translation>
     </message>
     <message>
+        <source>Command</source>
+        <comment>completion group</comment>
+        <translation>«Çóḿḿàñð  þéñ»</translation>
+    </message>
+    <message>
         <source>Open theme &amp; settings</source>
         <translation>«Óþéñ ŧĥéḿé &amp; śéŧŧìñĝś  þéñ þéñ»</translation>
     </message>
@@ -2607,6 +3280,11 @@ Start one from the Discover tab.</source>
         <translation>«Óþéñ śéŧŧìñĝś  þéñ»</translation>
     </message>
     <message>
+        <source>Go to</source>
+        <comment>completion group</comment>
+        <translation>«Ĝó ŧó  þéñ»</translation>
+    </message>
+    <message>
         <source>Open the dashboard</source>
         <translation>«Óþéñ ŧĥé ðàśĥƀóàŕð  þéñ þéñ»</translation>
     </message>
@@ -2645,6 +3323,11 @@ Start one from the Discover tab.</source>
     <message>
         <source>Project readme</source>
         <translation>«Þŕóĵéçŧ ŕéàðḿé  þéñ»</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <comment>completion group</comment>
+        <translation>«Ƒìļé  þéñ»</translation>
     </message>
     <message>
         <source>Composer component</source>
@@ -2774,6 +3457,64 @@ A generic, non-transcript page hosted by the same tab strip.
         <comment>@info</comment>
         <translation>«Úþðàŧìñĝ śýñŧàx ðéƒìñìŧìóñ ƒóŕ '%1' ŧó ṽéŕśìóñ %2…  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
+    <message>
+        <source>System default</source>
+        <comment>language picker</comment>
+        <translation>«Śýśŧéḿ ðéƒàúļŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Pseudolocale (i18n test)</source>
+        <comment>language picker</comment>
+        <translation>«Þśéúðóļóçàļé (ì18ñ ŧéśŧ)  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Unsupported or empty diagram</source>
+        <translation>«Úñśúþþóŕŧéð óŕ éḿþŧý ðìàĝŕàḿ  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Unsupported diagram: %1</source>
+        <translation>«Úñśúþþóŕŧéð ðìàĝŕàḿ: %1  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Parse error</source>
+        <translation>«Þàŕśé éŕŕóŕ  þéñ»</translation>
+    </message>
+    <message>
+        <source>No nodes found</source>
+        <translation>«Ñó ñóðéś ƒóúñð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Answered</source>
+        <translation>«Àñśẅéŕéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Needs your input</source>
+        <translation>«Ñééðś ýóúŕ ìñþúŧ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Working</source>
+        <translation>«Ẅóŕķìñĝ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Running %1</source>
+        <translation>«Ŕúññìñĝ %1  þéñ»</translation>
+    </message>
+    <message>
+        <source>Tool failed</source>
+        <translation>«Ŧóóļ ƒàìļéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Tool</source>
+        <translation>«Ŧóóļ  þéñ»</translation>
+    </message>
+    <message>
+        <source>image load failed</source>
+        <translation>«ìḿàĝé ļóàð ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Daemon</source>
+        <translation>«Ðàéḿóñ  þéñ»</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
@@ -2812,6 +3553,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>RECOMMENDED</source>
         <translation>«ŔÉÇÓḾḾÉÑÐÉÐ  þéñ»</translation>
+    </message>
+    <message>
+        <source>PROJECTOR</source>
+        <translation>«ÞŔÓĴÉÇŦÓŔ  þéñ»</translation>
     </message>
     <message>
         <source>Download</source>
@@ -2910,6 +3655,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>«Ñéẅ śéśśìóñ  þéñ»</translation>
     </message>
     <message>
+        <source>daemon</source>
+        <translation>«ðàéḿóñ  þéñ»</translation>
+    </message>
+    <message>
         <source>The turn finished.</source>
         <translation>«Ŧĥé ŧúŕñ ƒìñìśĥéð.  þéñ þéñ»</translation>
     </message>
@@ -2996,6 +3745,16 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Restore</source>
         <translation>«Ŕéśŧóŕé  þéñ»</translation>
+    </message>
+    <message>
+        <source> 0/0 </source>
+        <comment>search match counter (no matches)</comment>
+        <translation> «0/0  þéñ» </translation>
+    </message>
+    <message>
+        <source> %1/%2 </source>
+        <comment>search match counter (current/total)</comment>
+        <translation> «%1/%2  þéñ» </translation>
     </message>
     <message>
         <source>Tasks:  </source>
@@ -3297,7 +4056,30 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>SessionRepository</name>
+    <message>
+        <source>SessionCreate failed</source>
+        <translation>«ŚéśśìóñÇŕéàŧé ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>SessionSettingsPopover</name>
+    <message>
+        <source>Off</source>
+        <translation>«Óƒƒ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <translation>«Ļóẅ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>«Ḿéðìúḿ  þéñ»</translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation>«Ĥìĝĥ  þéñ»</translation>
+    </message>
     <message>
         <source>Session settings</source>
         <translation>«Śéśśìóñ śéŧŧìñĝś  þéñ þéñ»</translation>
@@ -3410,10 +4192,6 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>
             <numerusform>«%n śéśśìóñ(ś)  þéñ»</numerusform>
             <numerusform>«%n śéśśìóñ(ś)  þéñ»</numerusform>
-            <numerusform>«%n śéśśìóñ(ś)  þéñ»</numerusform>
-            <numerusform>«%n śéśśìóñ(ś)  þéñ»</numerusform>
-            <numerusform>«%n śéśśìóñ(ś)  þéñ»</numerusform>
-            <numerusform>«%n śéśśìóñ(ś)  þéñ»</numerusform>
         </translation>
     </message>
     <message>
@@ -3455,6 +4233,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <source>Sessions</source>
         <translation>«Śéśśìóñś  þéñ»</translation>
     </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>«(úñŧìŧļéð)  þéñ»</translation>
+    </message>
 </context>
 <context>
     <name>SessionsPage</name>
@@ -3469,6 +4251,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>DURABLE</source>
         <translation>«ÐÚŔÀƁĻÉ  þéñ»</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> «ŧóķ  þéñ»</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -3855,19 +4641,11 @@ This only affects the app appearance, not your data.</source>
         <translation>
             <numerusform>«%n ƒàìļéð  þéñ»</numerusform>
             <numerusform>«%n ƒàìļéð  þéñ»</numerusform>
-            <numerusform>«%n ƒàìļéð  þéñ»</numerusform>
-            <numerusform>«%n ƒàìļéð  þéñ»</numerusform>
-            <numerusform>«%n ƒàìļéð  þéñ»</numerusform>
-            <numerusform>«%n ƒàìļéð  þéñ»</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n running</source>
         <translation>
-            <numerusform>«%n ŕúññìñĝ  þéñ»</numerusform>
-            <numerusform>«%n ŕúññìñĝ  þéñ»</numerusform>
-            <numerusform>«%n ŕúññìñĝ  þéñ»</numerusform>
-            <numerusform>«%n ŕúññìñĝ  þéñ»</numerusform>
             <numerusform>«%n ŕúññìñĝ  þéñ»</numerusform>
             <numerusform>«%n ŕúññìñĝ  þéñ»</numerusform>
         </translation>
@@ -4030,6 +4808,32 @@ This only affects the app appearance, not your data.</source>
     </message>
 </context>
 <context>
+    <name>TabModel</name>
+    <message>
+        <source>Session</source>
+        <translation>«Śéśśìóñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Page</source>
+        <translation>«Þàĝé  þéñ»</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>«Àĝéñŧ  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPanelStub</name>
+    <message>
+        <source>The terminal is not available in this build</source>
+        <translation>«Ŧĥé ŧéŕḿìñàļ ìś ñóŧ àṽàìļàƀļé ìñ ŧĥìś ƀúìļð  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>«Çļóśé  þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>TextPromptDialog</name>
     <message>
         <source>OK</source>
@@ -4038,6 +4842,29 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Cancel</source>
         <translation>«Çàñçéļ  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>ThemePalette</name>
+    <message>
+        <source>Dark</source>
+        <comment>theme name</comment>
+        <translation>«Ðàŕķ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <comment>theme name</comment>
+        <translation>«Śéþìà  þéñ»</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <comment>theme name</comment>
+        <translation>«Ḿìðñìĝĥŧ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <comment>theme name</comment>
+        <translation>«Ļìĝĥŧ  þéñ»</translation>
     </message>
 </context>
 <context>
@@ -4075,6 +4902,10 @@ This only affects the app appearance, not your data.</source>
 </context>
 <context>
     <name>Transcript</name>
+    <message>
+        <source>Couldn't access the clipboard. Copy needs a secure (https) page.</source>
+        <translation>«Çóúļðñ'ŧ àççéśś ŧĥé çļìþƀóàŕð. Çóþý ñééðś à śéçúŕé (ĥŧŧþś) þàĝé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
     <message>
         <source>
 
@@ -5353,6 +6184,20 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ApprovalRepository</name>
+    <message>
+        <source>Approval decision failed</source>
+        <translation>«Àþþŕóṽàļ ðéçìśìóñ ƒàìļéð  þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CredentialRepository</name>
+    <message>
+        <source>Credential operation failed</source>
+        <translation>«Çŕéðéñŧìàļ óþéŕàŧìóñ ƒàìļéð  þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::DaemonConnectionService</name>
     <message>
         <source>Could not reach the daemon. Check it is running and try again.</source>
@@ -5377,6 +6222,60 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
     <message>
         <source>Reconnecting...</source>
         <translation>«Ŕéçóññéçŧìñĝ...  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device.</source>
+        <translation>«Óñļý ẄéƀŚóçķéŧ çóññéçŧìóñś (ẅś:// óŕ ẅśś://) ẅóŕķ óñ ŧĥìś ðéṽìçé.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device</source>
+        <translation>«Óñļý ẄéƀŚóçķéŧ çóññéçŧìóñś (ẅś:// óŕ ẅśś://) ẅóŕķ óñ ŧĥìś ðéṽìçé  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Unix socket target accepted</source>
+        <translation>«Úñìx śóçķéŧ ŧàŕĝéŧ àççéþŧéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Enter a local socket path</source>
+        <translation>«Éñŧéŕ à ļóçàļ śóçķéŧ þàŧĥ  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Remote target accepted (host:port, TLS)</source>
+        <translation>«Ŕéḿóŧé ŧàŕĝéŧ àççéþŧéð (ĥóśŧ:þóŕŧ, ŦĻŚ)  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Use host:port for a remote TLS node</source>
+        <translation>«Úśé ĥóśŧ:þóŕŧ ƒóŕ à ŕéḿóŧé ŦĻŚ ñóðé  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>WebSocket target accepted (ws:// or wss://)</source>
+        <translation>«ẄéƀŚóçķéŧ ŧàŕĝéŧ àççéþŧéð (ẅś:// óŕ ẅśś://)  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Use ws://host:port or wss://host[:port][/path]</source>
+        <translation>«Úśé ẅś://ĥóśŧ:þóŕŧ óŕ ẅśś://ĥóśŧ[:þóŕŧ][/þàŧĥ]  þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Unsupported transport</source>
+        <translation>«Úñśúþþóŕŧéð ŧŕàñśþóŕŧ  þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonTransport</name>
+    <message>
+        <source>No daemon WebSocket target configured</source>
+        <translation>«Ñó ðàéḿóñ ẄéƀŚóçķéŧ ŧàŕĝéŧ çóñƒìĝúŕéð  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>No daemon target configured</source>
+        <translation>«Ñó ðàéḿóñ ŧàŕĝéŧ çóñƒìĝúŕéð  þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FleetRepository</name>
+    <message>
+        <source>Unit control failed</source>
+        <translation>«Úñìŧ çóñŧŕóļ ƒàìļéð  þéñ þéñ»</translation>
     </message>
 </context>
 <context>
@@ -5407,6 +6306,78 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::ModelRepository</name>
+    <message>
+        <source>Set-model operation failed</source>
+        <translation>«Śéŧ-ḿóðéļ óþéŕàŧìóñ ƒàìļéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Download could not be started</source>
+        <translation>«Ðóẅñļóàð çóúļð ñóŧ ƀé śŧàŕŧéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Delete failed</source>
+        <translation>«Ðéļéŧé ƒàìļéð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Activate failed</source>
+        <translation>«Àçŧìṽàŧé ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::NodeApiClient</name>
+    <message>
+        <source>request timed out</source>
+        <translation>«ŕéqúéśŧ ŧìḿéð óúŧ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>daemon connection closed</source>
+        <translation>«ðàéḿóñ çóññéçŧìóñ çļóśéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>authentication required</source>
+        <translation>«àúŧĥéñŧìçàŧìóñ ŕéqúìŕéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>authentication failed</source>
+        <translation>«àúŧĥéñŧìçàŧìóñ ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>stream ended in error</source>
+        <translation>«śŧŕéàḿ éñðéð ìñ éŕŕóŕ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>the request failed</source>
+        <translation>«ŧĥé ŕéqúéśŧ ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Profile import failed</source>
+        <translation>«Þŕóƒìļé ìḿþóŕŧ ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Version history unavailable</source>
+        <translation>«Ṽéŕśìóñ ĥìśŧóŕý úñàṽàìļàƀļé  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Profile revert failed</source>
+        <translation>«Þŕóƒìļé ŕéṽéŕŧ ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Profile operation failed</source>
+        <translation>«Þŕóƒìļé óþéŕàŧìóñ ƒàìļéð  þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>SessionCreate failed</source>
+        <translation>«ŚéśśìóñÇŕéàŧé ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>daemonnet::MockDaemonNet</name>
     <message>
         <source>Agent</source>
@@ -5426,6 +6397,25 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
     <message>
         <source>Couldn't verify this API key with %1 — check it and try again.</source>
         <translation>«Çóúļðñ'ŧ ṽéŕìƒý ŧĥìś ÀÞÌ ķéý ẅìŧĥ %1 — çĥéçķ ìŧ àñð ŧŕý àĝàìñ.  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>fs::LocalDiskFsService</name>
+    <message>
+        <source>invalid path</source>
+        <translation>«ìñṽàļìð þàŧĥ  þéñ»</translation>
+    </message>
+    <message>
+        <source>cannot open</source>
+        <translation>«çàññóŧ óþéñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>stale: file changed on disk</source>
+        <translation>«śŧàļé: ƒìļé çĥàñĝéð óñ ðìśķ  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>write failed</source>
+        <translation>«ẅŕìŧé ƒàìļéð  þéñ»</translation>
     </message>
 </context>
 <context>

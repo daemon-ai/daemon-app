@@ -6,6 +6,7 @@ import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.Presentation
 
 // Memories sub-tab: a filter toolbar over a selectable memory list, with a detail
 // drawer on the right. Backed by MemoryListModel (shared with the TUI list view).
@@ -20,9 +21,14 @@ Item {
         onCountChanged: if (root.currentRow >= memModel.count) root.currentRow = -1
     }
 
+    // Filter values are the canonical tokens sent to the model; the parallel
+    // *Labels arrays hold the translatable text shown in the dropdowns.
     readonly property var tierOptions: ["All tiers", "working", "episodic", "scratchpad"]
+    readonly property var tierLabels: [qsTr("All tiers"), qsTr("working"), qsTr("episodic"), qsTr("scratchpad")]
     readonly property var veracityOptions: ["All trust", "stated", "inferred", "tool", "imported", "unknown"]
+    readonly property var veracityLabels: [qsTr("All trust"), qsTr("stated"), qsTr("inferred"), qsTr("tool"), qsTr("imported"), qsTr("unknown")]
     readonly property var sortOptions: ["recent", "importance", "recall"]
+    readonly property var sortLabels: [qsTr("recent"), qsTr("importance"), qsTr("recall")]
 
     ColumnLayout {
         anchors.fill: parent
@@ -47,19 +53,19 @@ Item {
             }
             Kit.Dropdown {
                 id: tierPick
-                model: root.tierOptions
+                model: root.tierLabels
                 Layout.preferredWidth: 130
                 onActivated: memModel.setFilter("tier", currentIndex <= 0 ? "" : root.tierOptions[currentIndex])
             }
             Kit.Dropdown {
                 id: veracityPick
-                model: root.veracityOptions
+                model: root.veracityLabels
                 Layout.preferredWidth: 130
                 onActivated: memModel.setFilter("veracity", currentIndex <= 0 ? "" : root.veracityOptions[currentIndex])
             }
             Kit.Dropdown {
                 id: sortPick
-                model: root.sortOptions
+                model: root.sortLabels
                 Layout.preferredWidth: 120
                 onActivated: memModel.sort = root.sortOptions[currentIndex]
             }
@@ -126,20 +132,23 @@ Item {
                             }
                             RowLayout {
                                 spacing: 6
-                                MemoryBadge { text: memRow.tier; tone: Theme.accent }
                                 MemoryBadge {
-                                    text: memRow.veracity
+                                    text: DisplayPresenter.enumLabel("memory.tier", memRow.tier)
+                                    tone: Theme.accent
+                                }
+                                MemoryBadge {
+                                    text: DisplayPresenter.enumLabel("memory.veracity", memRow.veracity)
                                     tone: memRow.contaminated ? Theme.warning : Theme.statusOk
                                 }
                                 MemoryBadge { text: memRow.source; tone: Theme.textMuted }
                                 MemoryBadge {
                                     visible: memRow.degradation.length > 0
-                                    text: memRow.degradation
+                                    text: DisplayPresenter.enumLabel("memory.degradation", memRow.degradation)
                                     tone: Theme.textMuted
                                 }
                                 MemoryBadge {
                                     visible: memRow.status !== "active"
-                                    text: memRow.status
+                                    text: DisplayPresenter.enumLabel("memory.status", memRow.status)
                                     tone: Theme.danger
                                 }
                                 Item { Layout.fillWidth: true }

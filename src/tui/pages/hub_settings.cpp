@@ -81,7 +81,7 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
                                     tr("Theme"), QStringLiteral("choice"), QStringLiteral("theme"),
                                     theme::ThemePalette::toString(tpal::activeTheme()));
         theme.insert(QStringLiteral("options"), theme::ThemePalette::allNames());
-        theme.insert(QStringLiteral("optionLabels"), theme::ThemePalette::allNames());
+        theme.insert(QStringLiteral("optionLabels"), theme::ThemePalette::allDisplayNames());
         rows << theme;
     }
     if (m_deps.settings != nullptr) {

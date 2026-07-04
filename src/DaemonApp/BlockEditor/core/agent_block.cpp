@@ -5,6 +5,7 @@
 
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QObject>
 #include <QStringList>
 #include <util/numeric.h>
 
@@ -230,14 +231,14 @@ QVariantMap buildToolView(const QVariantMap& metadata) {
     QString title;
     if (variant == QStringLiteral("clarify")) {
         title = metadata.value(QStringLiteral("answered")).toBool()
-                    ? QStringLiteral("Answered")
-                    : QStringLiteral("Needs your input");
+                    ? QObject::tr("Answered")
+                    : QObject::tr("Needs your input");
     } else if (status == QStringLiteral("running")) {
-        title = name.isEmpty() ? QStringLiteral("Working") : QStringLiteral("Running %1").arg(name);
+        title = name.isEmpty() ? QObject::tr("Working") : QObject::tr("Running %1").arg(name);
     } else if (status == QStringLiteral("error")) {
-        title = name.isEmpty() ? QStringLiteral("Tool failed") : name;
+        title = name.isEmpty() ? QObject::tr("Tool failed") : name;
     } else {
-        title = name.isEmpty() ? QStringLiteral("Tool") : name;
+        title = name.isEmpty() ? QObject::tr("Tool") : name;
     }
 
     view.insert(QStringLiteral("name"), name);

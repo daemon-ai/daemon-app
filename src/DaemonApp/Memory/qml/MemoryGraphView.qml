@@ -6,6 +6,7 @@ import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.Presentation
 
 // Graph sub-tab (GUI-only): a 2D node-link render of the shared MemoryGraphModel.
 // Nodes are a Repeater positioned from the model's normalized layout; edges are
@@ -243,8 +244,10 @@ Item {
                         Layout.fillWidth: true
                     }
                     Text {
-                        text: (inspector.node.kind !== undefined ? inspector.node.kind : "")
-                              + " · degree " + (inspector.node.degree !== undefined ? inspector.node.degree : 0)
+                        text: (inspector.node.kind !== undefined
+                                   ? DisplayPresenter.enumLabel("memory.nodeKind", inspector.node.kind)
+                                   : "")
+                              + qsTr(" · degree ") + (inspector.node.degree !== undefined ? inspector.node.degree : 0)
                         font.family: FontIcons.mono
                         font.pixelSize: 10
                         color: Theme.textMuted

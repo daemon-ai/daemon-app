@@ -169,7 +169,7 @@ Kit.Dialog {
                               ? qsTr("daemon-core (native)")
                               : engineRow.acp.name
                                 + (engineRow.acp.version && engineRow.acp.version.length > 0
-                                   ? "  ·  ACP " + engineRow.acp.version : "")
+                                   ? qsTr("  ·  ACP %1").arg(engineRow.acp.version) : "")
                         font.family: FontIcons.display
                         font.pixelSize: 12
                         color: (engineRow.isNative || engineRow.isInstalled) ? Theme.text

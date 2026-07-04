@@ -10,6 +10,7 @@
 #include "memory_list_model.h"
 #include "memory_stats_model.h"
 #include "memory_timeline_model.h"
+#include "presentation/display_presenter.h"
 #include "tui_page_hub.h"
 
 QString TuiPageHub::buildMemoryMarkdown() const {
@@ -57,11 +58,15 @@ QString TuiPageHub::buildMemoryMarkdown() const {
             md += tr("_No memories in scope._\n\n");
         for (int i = 0; i < n; ++i) {
             const QVariantMap e = m_deps.memList->entryAt(i);
-            md += tr("- **%1** _(%2 · %3 · imp %4)_\n")
-                      .arg(e.value(QStringLiteral("content")).toString(),
-                           e.value(QStringLiteral("tier")).toString(),
-                           e.value(QStringLiteral("veracity")).toString())
-                      .arg(e.value(QStringLiteral("importance")).toDouble(), 0, 'f', 2);
+            md +=
+                tr("- **%1** _(%2 · %3 · imp %4)_\n")
+                    .arg(e.value(QStringLiteral("content")).toString(),
+                         DisplayPresenter::enumLabelFor(QStringLiteral("memory.tier"),
+                                                        e.value(QStringLiteral("tier")).toString()),
+                         DisplayPresenter::enumLabelFor(
+                             QStringLiteral("memory.veracity"),
+                             e.value(QStringLiteral("veracity")).toString()))
+                    .arg(e.value(QStringLiteral("importance")).toDouble(), 0, 'f', 2);
         }
         md += QStringLiteral("\n");
     }

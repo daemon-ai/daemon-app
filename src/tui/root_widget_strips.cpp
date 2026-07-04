@@ -111,10 +111,11 @@ void RootWidget::updateSearchCounter() {
     if (s.query().isEmpty()) {
         m_searchCounter->setText(QString());
     } else if (s.matchCount() == 0) {
-        m_searchCounter->setText(QStringLiteral(" 0/0 "));
+        m_searchCounter->setText(tr(" 0/0 ", "search match counter (no matches)"));
     } else {
-        m_searchCounter->setText(
-            QStringLiteral(" %1/%2 ").arg(s.currentMatch() + 1).arg(s.matchCount()));
+        m_searchCounter->setText(tr(" %1/%2 ", "search match counter (current/total)")
+                                     .arg(s.currentMatch() + 1)
+                                     .arg(s.matchCount()));
     }
 }
 

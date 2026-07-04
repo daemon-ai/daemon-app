@@ -6,6 +6,7 @@ import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.Presentation
 
 // Timeline sub-tab: memory/recall/consolidation events grouped by day or session.
 // Backed by MemoryTimelineModel (flattened header + event rows), shared with the
@@ -98,7 +99,7 @@ Item {
                             Text {
                                 id: kindText
                                 anchors.centerIn: parent
-                                text: eventKind
+                                text: DisplayPresenter.enumLabel("memory.eventKind", eventKind)
                                 font.family: FontIcons.mono
                                 font.pixelSize: 9
                                 color: eventKind === "invalidated" ? Theme.danger : Theme.accent

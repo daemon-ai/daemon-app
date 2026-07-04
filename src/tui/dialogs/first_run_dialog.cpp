@@ -395,7 +395,7 @@ void FirstRunDialog::applyMode(const QString& mode) {
         if (m_target->text().isEmpty()) {
             m_target->setText(
                 remote
-                    ? QStringLiteral("https://node.example:8080")
+                    ? tr("https://node.example:8080", "example remote connection target")
                     : (m_settings != nullptr ? m_settings->resolvedConnectionTarget() : QString()));
         }
     }

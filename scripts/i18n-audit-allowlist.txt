@@ -1,0 +1,10 @@
+# i18n-audit allowlist
+#
+# Legitimate exceptions for scripts/i18n-audit.py: user-facing-looking property
+# assignments whose raw string literal is intentionally NOT wrapped in qsTr().
+#
+# Format (one per line):
+#   <relative-path>              skip the whole file
+#   <relative-path>|"<literal>"  skip one exact literal in that file (quotes included)
+#
+# Keep this list small and justified; prefer wrapping the string in qsTr().

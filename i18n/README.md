@@ -20,18 +20,23 @@ once.
 
 ## Locales
 
-- `en` - source language (English); no `.ts` file.
+- `en_US` - source language (American English). The strings live in the
+  `qsTr()`/`tr()` literals, so there is intentionally **no** `daemon-app_en*.ts`;
+  `lupdate -source-language en_US` records the base for translators. Write new UI
+  copy in US English (e.g. "color", not "colour").
 - `pseudo` - generated pseudolocale used to validate i18n coverage, layout, and
   truncation. Every string is accented, padded, and wrapped in guillemets, so
   any plain-ASCII text on screen has escaped translation. Backs `tst_localization`.
-- `ar` - Arabic, a seed right-to-left locale for translators to fill (RTL
-  mirroring is driven by the locale, independent of how complete it is).
+  This is the only committed catalog until a real language is added.
 
-Add a locale by listing its code in `DAEMON_APP_LOCALES`
-([`cmake/Translations.cmake`](../cmake/Translations.cmake)) and in
-`i18n::availableLocales()`
+No real translations ship yet. Layout direction is derived from the chosen
+locale, so adding an RTL language (ar, he, fa, ...) mirrors the UI automatically.
+
+Add a language by dropping in `daemon-app_<code>.ts`, listing `<code>` in
+`DAEMON_APP_LOCALES` ([`cmake/Translations.cmake`](../cmake/Translations.cmake))
+and in `i18n::availableLocales()`
 ([`src/core/i18n/localization.cpp`](../src/core/i18n/localization.cpp)), then
-running the update step below.
+running the update step below and translating the entries.
 
 ## Workflow
 
@@ -41,11 +46,13 @@ Refresh the `.ts` files after changing or adding strings (run in `nix develop`):
 cmake --build <build-dir> --target update_translations
 ```
 
-This re-extracts from the whole `src` tree. Translate the new entries in Qt
-Linguist (or any editor), then rebuild - `lrelease` runs automatically and the
-updated `.qm` files are re-embedded.
+This re-extracts from the whole `src` tree into every listed catalog (currently
+just the pseudolocale, plus any real `daemon-app_<code>.ts` you add). Translate
+new entries for real languages in Qt Linguist (or any editor), then rebuild -
+`lrelease` runs automatically and the updated `.qm` files are re-embedded.
 
-Regenerate the pseudolocale after an update (it is mechanical, not hand-edited):
+Regenerate the pseudolocale after an update (it is mechanical, not hand-edited);
+it refills every entry from its `<source>`, so the run is idempotent:
 
 ```
 python3 i18n/pseudolocalize.py i18n/daemon-app_pseudo.ts

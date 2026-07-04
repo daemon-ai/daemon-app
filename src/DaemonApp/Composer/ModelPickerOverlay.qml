@@ -23,6 +23,18 @@ QQC.Popup {
     // Live filter query (label/id/provider substring, case-insensitive).
     property string query: ""
 
+    // Abbreviated, translatable labels for the reasoning-effort segments; the
+    // stored value stays the canonical off/low/medium/high token.
+    function effortSegLabel(v) {
+        switch (v) {
+        case "off": return qsTr("Off", "reasoning effort (abbreviated)");
+        case "low": return qsTr("Low", "reasoning effort (abbreviated)");
+        case "medium": return qsTr("Med", "reasoning effort (abbreviated)");
+        case "high": return qsTr("Hig", "reasoning effort (abbreviated)");
+        }
+        return v;
+    }
+
     // Open upward, right-aligned to the pill that anchors us.
     y: -implicitHeight - 6
     x: parent ? parent.width - width : 0
@@ -211,7 +223,7 @@ QQC.Popup {
                         QQC.Label {
                             id: segLabel
                             anchors.centerIn: parent
-                            text: modelData.charAt(0).toUpperCase() + modelData.slice(1, 3)
+                            text: root.effortSegLabel(modelData)
                             font.family: FontIcons.display
                             font.pixelSize: 10
                             color: parent.active ? Theme.background : Theme.text

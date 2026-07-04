@@ -20,6 +20,7 @@
 #include "transcript_view.h"
 #include "tree_list_view.h"
 
+#include <QObject>
 #include <Tui/ZCommon.h>
 #include <Tui/ZHBoxLayout.h>
 #include <Tui/ZLabel.h>
@@ -36,7 +37,7 @@ TuiShellWidgets TuiShellLayout::build(Tui::ZRoot* root, Tui::ZTerminal* terminal
                                       be::DocumentStore* pageDoc) {
     TuiShellWidgets w;
 
-    w.window = new Tui::ZWindow(QStringLiteral("Daemon"), root);
+    w.window = new Tui::ZWindow(QObject::tr("Daemon"), root);
     w.window->setOptions({});
     w.window->setFocusMode(Tui::FocusContainerMode::Cycle);
     w.window->setGeometry(geometry);

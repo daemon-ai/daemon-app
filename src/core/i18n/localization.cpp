@@ -6,6 +6,7 @@
 #include <QCoreApplication>
 #include <QLibraryInfo>
 #include <QLocale>
+#include <QObject>
 #include <QTranslator>
 
 namespace i18n {
@@ -31,12 +32,15 @@ bool isSourceLanguage(const QString& code, const QString& lang) {
 } // namespace
 
 QList<LocaleOption> availableLocales() {
+    // Meta options (system default / pseudolocale) localize to the current UI
+    // language; a concrete language would keep its own-name (endonym) so users can
+    // find their language regardless of the active UI language. en_US is the
+    // source language (shown as "English"); no real translations ship yet, so the
+    // list is source + the pseudolocale QA catalog until one is added.
     return {
-        {QStringLiteral("system"), QStringLiteral("System default")},
+        {QStringLiteral("system"), QObject::tr("System default", "language picker")},
         {QStringLiteral("en"), QStringLiteral("English")},
-        {QStringLiteral("ar"),
-         QStringLiteral("\u0627\u0644\u0639\u0631\u0628\u064a\u0629 (Arabic)")},
-        {QStringLiteral("pseudo"), QStringLiteral("Pseudolocale (i18n test)")},
+        {QStringLiteral("pseudo"), QObject::tr("Pseudolocale (i18n test)", "language picker")},
     };
 }
 
@@ -54,12 +58,12 @@ Qt::LayoutDirection applyLocale(const QString& code) {
     const QString name = resolveLocaleName(code);
     const QString lang = name.left(2);
 
-    // App catalog (embedded under ":/i18n"). The synthetic "pseudo" locale and
-    // the explicit "ar" seed load by exact file; a system/explicit real locale
-    // uses QLocale fallback (e.g. ar_EG -> ar).
+    // App catalog (embedded under ":/i18n"). The synthetic "pseudo" locale loads
+    // by exact file; a system/explicit real locale uses QLocale fallback (e.g.
+    // fr_CA -> fr). The source language installs no catalog (source text shows).
     auto* appTranslator = new QTranslator;
     bool appLoaded = false;
-    if (code == QLatin1String("pseudo") || code == QLatin1String("ar")) {
+    if (code == QLatin1String("pseudo")) {
         appLoaded =
             appTranslator->load(QStringLiteral("daemon-app_") + code, QStringLiteral(":/i18n"));
     } else if (!isSourceLanguage(code, lang)) {
@@ -86,13 +90,14 @@ Qt::LayoutDirection applyLocale(const QString& code) {
         }
     }
 
-    if (code == QLatin1String("ar")) {
-        return Qt::RightToLeft;
+    // Layout direction follows the locale itself, so a future RTL language (ar,
+    // he, fa, ...) mirrors the UI automatically. The source language and the
+    // (Latin) pseudolocale are always left-to-right.
+    if (isSourceLanguage(code, lang) || code == QLatin1String("pseudo")) {
+        return Qt::LeftToRight;
     }
-    if (code.isEmpty() || code == QLatin1String("system")) {
-        return QLocale(name).textDirection();
-    }
-    return Qt::LeftToRight;
+    // System or an explicit real locale: use that locale's own direction.
+    return QLocale(name).textDirection();
 }
 
 } // namespace i18n

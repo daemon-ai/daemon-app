@@ -73,7 +73,7 @@ QQC.Popup {
                             elide: Text.ElideRight; Layout.fillWidth: true
                         }
                         Text {
-                            text: entry.time + " · " + entry.tokens + " tok"
+                            text: entry.time + " · " + entry.tokens + qsTr(" tok")
                             font.family: FontIcons.mono; font.pixelSize: 10; color: Theme.textMuted
                         }
                     }

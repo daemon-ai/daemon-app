@@ -125,13 +125,13 @@ QVector<Span> ComposerChrome::buildSpans() const {
         QStringList badges;
         const QString effort = m_session->reasoningEffort();
         if (effort != QStringLiteral("off")) {
-            badges << (QStringLiteral("r:") + effort.left(1));
+            badges << (tr("r:", "reasoning-effort badge prefix") + effort.left(1));
         }
         if (m_session->fastMode()) {
-            badges << QStringLiteral("fast");
+            badges << tr("fast", "composer mode badge");
         }
         if (m_session->verbose()) {
-            badges << QStringLiteral("verbose");
+            badges << tr("verbose", "composer mode badge");
         }
         if (!badges.isEmpty()) {
             spans << mkSpan(QStringLiteral("  ["), tpal::faint());

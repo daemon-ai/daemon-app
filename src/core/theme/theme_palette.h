@@ -4,6 +4,7 @@
 #pragma once
 
 #include <QColor>
+#include <QCoreApplication>
 #include <QObject>
 #include <qqmlintegration.h>
 #include <QString>
@@ -85,9 +86,16 @@ enum class Token {
 
 // Static core, callable from non-QML C++ (the TUI) without a QML engine.
 class ThemePalette {
+    Q_DECLARE_TR_FUNCTIONS(ThemePalette)
+
 public:
     [[nodiscard]] static bool isKnown(const QString& name);
+    // Canonical theme identifiers (stored in settings, used as color-lookup keys).
     [[nodiscard]] static QStringList allNames();
+    // Translatable display labels for the theme names, parallel to allNames();
+    // shared by the GUI theme menu and the TUI settings so both localize alike.
+    [[nodiscard]] static QString displayName(const QString& name);
+    [[nodiscard]] static QStringList allDisplayNames();
     // Unknown names resolve to Light (matches the GUI/UiSettings default).
     [[nodiscard]] static ThemeName fromString(const QString& name);
     [[nodiscard]] static QString toString(ThemeName name);

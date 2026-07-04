@@ -6,6 +6,7 @@ import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
+import DaemonApp.Presentation
 
 // Approvals inbox: pending tool-execution requests with a risk badge and
 // approve / deny actions.
@@ -72,7 +73,7 @@ Item {
                             implicitHeight: rk.implicitHeight + 4
                             Text {
                                 id: rk; anchors.centerIn: parent
-                                text: entry.risk
+                                text: DisplayPresenter.enumLabel("approval.risk", entry.risk)
                                 font.family: FontIcons.display; font.pixelSize: 9
                                 color: entry.risk === "high" ? Theme.background : Theme.textMuted
                             }

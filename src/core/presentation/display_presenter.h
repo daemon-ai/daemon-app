@@ -44,8 +44,19 @@ public:
     // domain::UnitState -> semantic tone.
     Q_INVOKABLE [[nodiscard]] StateTone agentStateTone(int state) const;
 
+    // Human-readable, translatable label for a backend enum code that the models
+    // otherwise expose verbatim (e.g. a connection state or a memory tier). This
+    // is the single source of truth for that mapping so the GUI (via this QML
+    // singleton) and the TUI (via the static core) localize identically. Unknown
+    // codes fall back to the raw code, so vocabulary the node adds later still
+    // renders. `family` selects the vocabulary: "connection", "memory.tier",
+    // "memory.veracity", "memory.status", "memory.degradation", "memory.nodeKind",
+    // "memory.eventKind", "approval.risk", "download.state".
+    Q_INVOKABLE [[nodiscard]] QString enumLabel(const QString& family, const QString& code) const;
+
     // Static cores: callable from non-QML C++ (the TUI) without an instance.
     [[nodiscard]] static QString scopeIconKeyFor(int nodeType);
     [[nodiscard]] static QString agentKindIconKeyFor(int kind);
     [[nodiscard]] static StateTone agentStateToneFor(int state);
+    [[nodiscard]] static QString enumLabelFor(const QString& family, const QString& code);
 };

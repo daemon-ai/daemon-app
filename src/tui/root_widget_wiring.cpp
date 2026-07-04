@@ -678,7 +678,7 @@ void RootWidget::wireSessionStreaming(TabSession* s) {
                 m_services.settings->value(QStringLiteral("notify/turnDone"), false).toBool()) {
                 const QString convTitle = s->controller->hasSession()
                                               ? m_services.store->title(s->sessionId)
-                                              : QStringLiteral("daemon");
+                                              : tr("daemon");
                 rwdetail::emitDesktopNotification(convTitle, tr("The turn finished."));
             }
         }
@@ -709,13 +709,13 @@ void RootWidget::wireSessionStreaming(TabSession* s) {
         }
         const QString convTitle = (m_active != nullptr && m_active->controller->hasSession())
                                       ? m_services.store->title(m_active->sessionId)
-                                      : QStringLiteral("daemon");
+                                      : tr("daemon");
         rwdetail::emitDesktopNotification(convTitle, tr("The turn needs your %1.").arg(what));
     });
     // Clear the title alert once the turn settles.
     connect(s->turn, &ITurnEngine::turnFinished, this, [this, s] {
         if (s == m_active && terminal() != nullptr) {
-            terminal()->setTitle(QStringLiteral("daemon"));
+            terminal()->setTitle(tr("daemon"));
         }
     });
     // The turn paused for a masked host input (sudo password / secret). Raise a

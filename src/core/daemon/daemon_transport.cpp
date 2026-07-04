@@ -134,7 +134,7 @@ void DaemonTransport::open() {
 
 void DaemonTransport::openWs() {
     if (!hasTarget()) {
-        emit failed(QStringLiteral("No daemon WebSocket target configured"));
+        emit failed(tr("No daemon WebSocket target configured"));
         return;
     }
     ensureSocket();
@@ -197,7 +197,7 @@ void DaemonTransport::flushSocket() {
 
 void DaemonTransport::sendFrame(const QByteArray& cborPayload) {
     if (!hasTarget()) {
-        emit failed(QStringLiteral("No daemon target configured"));
+        emit failed(tr("No daemon target configured"));
         return;
     }
     ensureSocket();

@@ -6,10 +6,12 @@
 # src/tui/main.cpp). The same catalog backs both frontends so shared C++ view
 # model strings are translated once.
 
-# Locales shipped with the app. English is the source language, so it has no
-# .ts file; "pseudo" is a generated pseudolocale used to validate i18n coverage
-# and layout, and "ar" is a seed right-to-left locale for translators to fill.
-set(DAEMON_APP_LOCALES pseudo ar)
+# Locales shipped with the app. en_US is the source language (see the
+# -source-language lupdate option below), so it has no .ts file - the strings
+# live in the qsTr()/tr() literals. "pseudo" is the generated pseudolocale used
+# to validate i18n coverage and layout; it is the only committed catalog until a
+# real translation is added (drop in daemon-app_<code>.ts + list <code> here).
+set(DAEMON_APP_LOCALES pseudo)
 
 # Source files lupdate scans for qsTr()/tr(). Globbed across the whole tree so
 # new strings are picked up on the next `update_translations` run; vendored and
@@ -43,5 +45,5 @@ qt_add_translations(
     # We keep plural forms in the per-locale catalogs; no separate native
     # plurals-only file is needed.
     NO_GENERATE_PLURALS_TS_FILE
-    LUPDATE_OPTIONS -no-obsolete -locations none
+    LUPDATE_OPTIONS -no-obsolete -locations none -source-language en_US
 )

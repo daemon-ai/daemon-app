@@ -3,6 +3,7 @@
 
 #include "status_bar_view.h"
 
+#include "presentation/display_presenter.h"
 #include "status_bar_model.h"
 #include "tui_palette.h"
 
@@ -87,7 +88,9 @@ QVector<Span> StatusBarView::buildLeft() const {
     const bool alert = m_model->gatewayOffline() || m_model->gatewayDegraded();
     const Tui::ZColor gw = tpal::gatewayToneColor(tone);
     spans << mkSpan(tpal::gatewayGlyph(alert) + tr(" Gateway "), gw)
-          << mkSpan(m_model->gatewayState(), gw);
+          << mkSpan(DisplayPresenter::enumLabelFor(QStringLiteral("connection"),
+                                                   m_model->gatewayState()),
+                    gw);
 
     spans << mkSpan(separator(), tpal::muted());
 

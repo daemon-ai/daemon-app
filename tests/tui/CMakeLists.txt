@@ -150,6 +150,8 @@ target_link_libraries(tui_access_gating_tests
         # The interactive hub_settings.cpp binds theme + language seams.
         daemon-app::theme_core
         daemon-app::i18n
+        # hub_memory.cpp localizes tier/veracity via DisplayPresenter.
+        daemon-app::presentation
 )
 add_test(NAME tui_access_gating_tests COMMAND tui_access_gating_tests)
 set_tests_properties(tui_access_gating_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -229,6 +231,8 @@ target_link_libraries(tui_settings_page_tests
         # hub_users_access.cpp / hub_channels.cpp (compiled with the dispatcher)
         # bind PrincipalModel (daemon_client, above) + the transports seams.
         daemon-app::transports
+        # hub_memory.cpp localizes tier/veracity via DisplayPresenter.
+        daemon-app::presentation
 )
 add_test(NAME tui_settings_page_tests COMMAND tui_settings_page_tests)
 set_tests_properties(tui_settings_page_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -432,6 +436,8 @@ target_link_libraries(tui_hub_channels_tests
         # The interactive hub_settings.cpp binds theme + language seams.
         daemon-app::theme_core
         daemon-app::i18n
+        # hub_memory.cpp localizes tier/veracity via DisplayPresenter.
+        daemon-app::presentation
 )
 add_test(NAME tui_hub_channels_tests COMMAND tui_hub_channels_tests)
 set_tests_properties(tui_hub_channels_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

@@ -130,7 +130,7 @@ Item {
             KV {
                 visible: root.profile.length > 0
                 k: qsTr("base url")
-                v: root.field("baseUrl", "(provider default)")
+                v: root.field("baseUrl", qsTr("(provider default)"))
             }
             KV {
                 visible: root.profile.length > 0

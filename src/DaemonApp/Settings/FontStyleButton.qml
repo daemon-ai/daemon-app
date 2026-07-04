@@ -13,7 +13,7 @@ Column {
     id: root
 
     property string category: "Sans"
-    property string label: "Sans"
+    property string label: qsTr("Sans")
     property string previewFamily: ""
     property var fonts: []
     property int currentIndex: 0
@@ -43,7 +43,7 @@ Column {
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Ag"
+                    text: qsTr("Ag", "font specimen sample")
                     font.family: root.previewFamily
                     font.pixelSize: 28
                     font.weight: Font.Medium

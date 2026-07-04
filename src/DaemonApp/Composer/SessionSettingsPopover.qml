@@ -13,6 +13,18 @@ import DaemonApp.Controls as Kit
 QQC.Popup {
     id: root
 
+    // Translatable label for a reasoning-effort segment; the stored value stays
+    // the canonical off/low/medium/high token.
+    function effortLabel(v) {
+        switch (v) {
+        case "off": return qsTr("Off");
+        case "low": return qsTr("Low");
+        case "medium": return qsTr("Medium");
+        case "high": return qsTr("High");
+        }
+        return v;
+    }
+
     implicitWidth: 300
     padding: 12
     // Open upward, right-aligned to the trigger button so the panel grows leftward
@@ -85,9 +97,9 @@ QQC.Popup {
                 delegate: Kit.TextButton {
                     required property var modelData
                     Layout.fillWidth: true
-                    // Stored value is the canonical off/low/medium/high; show it
-                    // capitalized to match the rest of the UI.
-                    text: modelData.charAt(0).toUpperCase() + modelData.slice(1)
+                    // Stored value is the canonical off/low/medium/high; show a
+                    // translatable capitalized label to match the rest of the UI.
+                    text: root.effortLabel(modelData)
                     accentFilled: SessionSettings.effort === modelData
                     onClicked: SessionSettings.setEffort(modelData)
                 }

@@ -3,6 +3,7 @@
 
 #include "diagram/parser/flowchart_parser.h"
 
+#include <QObject>
 #include <QRegularExpression>
 #include <QStringList>
 #include <util/numeric.h>
@@ -386,7 +387,7 @@ DiagramModel parseFlowchart(const QString& source) {
 
     model.valid = !model.nodes.isEmpty();
     if (!model.valid) {
-        model.error = QStringLiteral("No nodes found");
+        model.error = QObject::tr("No nodes found");
     }
     return model;
 }

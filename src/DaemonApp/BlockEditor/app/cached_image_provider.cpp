@@ -42,7 +42,7 @@ public:
     }
 
     [[nodiscard]] QString errorString() const override {
-        return m_image.isNull() ? QStringLiteral("image load failed") : QString();
+        return m_image.isNull() ? QObject::tr("image load failed") : QString();
     }
 
 private:

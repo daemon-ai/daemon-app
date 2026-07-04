@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <QObject>
 
 namespace be::diagram {
 
@@ -115,15 +116,15 @@ RenderSnapshotPtr DiagramEngine::buildSnapshot(const QString& source, const Styl
     const QString family = detectFamily(source);
     if (family != QStringLiteral("flowchart")) {
         snap->hasError = true;
-        snap->errorText = family.isEmpty() ? QStringLiteral("Unsupported or empty diagram")
-                                           : QStringLiteral("Unsupported diagram: %1").arg(family);
+        snap->errorText = family.isEmpty() ? QObject::tr("Unsupported or empty diagram")
+                                           : QObject::tr("Unsupported diagram: %1").arg(family);
         return snap;
     }
 
     DiagramModel model = buildModel(source, style, maxWidth);
     if (!model.valid) {
         snap->hasError = true;
-        snap->errorText = model.error.isEmpty() ? QStringLiteral("Parse error") : model.error;
+        snap->errorText = model.error.isEmpty() ? QObject::tr("Parse error") : model.error;
         return snap;
     }
 

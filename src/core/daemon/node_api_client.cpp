@@ -28,7 +28,7 @@ NodeApiClient::NodeApiClient(DaemonTransport* transport, QObject* parent)
         for (const quint64 id : expired) {
             const Pending p = m_pending.take(id);
             anyOneShot = anyOneShot && !m_pending.isEmpty();
-            emit failed(p.correlationId, QStringLiteral("request timed out"));
+            emit failed(p.correlationId, tr("request timed out"));
         }
         // Stop scanning once no one-shot remains.
         bool remaining = false;
@@ -51,7 +51,7 @@ NodeApiClient::NodeApiClient(DaemonTransport* transport, QObject* parent)
         // An unexpected close (daemon exit / peer disconnect) must not leave exchanges stuck; treat
         // it as a failure that resets the handshake so the next send reconnects.
         connect(m_transport, &DaemonTransport::disconnected, this,
-                [this] { failAll(QStringLiteral("daemon connection closed")); });
+                [this] { failAll(tr("daemon connection closed")); });
     }
 }
 
@@ -147,8 +147,8 @@ void NodeApiClient::beginAuthentication(const QStringList& serverMechanisms) {
         // No usable mechanism (no credentials / PLAIN refused without TLS): fail closed. The UI
         // surfaces the login form. No frames are sent, and the outbox is dropped (nothing leaks
         // pre-auth).
-        emit authFailed(QStringLiteral("authentication required"));
-        failAll(QStringLiteral("authentication required"));
+        emit authFailed(tr("authentication required"));
+        failAll(tr("authentication required"));
         return;
     }
     m_transport->sendFrame(NodeApiCodec::encodeAuthStartFrame(m_mechanism->mechanismName(),
@@ -208,8 +208,8 @@ void NodeApiClient::onFrame(const QByteArray& frameCbor) {
             // server-final verified; send nothing and await AuthOk (per the frozen framing).
             break;
         case SaslStep::Kind::Failed:
-            emit authFailed(QStringLiteral("authentication failed"));
-            failAll(QStringLiteral("authentication failed"));
+            emit authFailed(tr("authentication failed"));
+            failAll(tr("authentication failed"));
             break;
         }
         break;
@@ -227,7 +227,7 @@ void NodeApiClient::onFrame(const QByteArray& frameCbor) {
         break;
     case WireFrameKind::AuthError: {
         const QString reason =
-            frame.authReason.isEmpty() ? QStringLiteral("authentication failed") : frame.authReason;
+            frame.authReason.isEmpty() ? tr("authentication failed") : frame.authReason;
         emit authFailed(reason);
         failAll(reason);
         break;
@@ -256,10 +256,9 @@ void NodeApiClient::onFrame(const QByteArray& frameCbor) {
             m_pending.erase(it);
             if (stream) {
                 emit streamEnded(frame.id, frame.hasError,
-                                 frame.hasError ? QStringLiteral("stream ended in error")
-                                                : QString());
+                                 frame.hasError ? tr("stream ended in error") : QString());
             } else if (frame.hasError) {
-                emit failed(correlationId, QStringLiteral("the request failed"));
+                emit failed(correlationId, tr("the request failed"));
             }
         }
         break;
