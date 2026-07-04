@@ -129,6 +129,11 @@ void UiSettings::load() {
 
 void UiSettings::store(const QString& key, const QVariant& value) {
     m_settings.setValue(QStringLiteral("ui/") + key, value);
+    // Every setter funnels through here, so this single sync() is the choke point that makes UI
+    // prefs durable the instant they change. It matters most on wasm (WebLocalStorageFormat): a tab
+    // close can kill the page before QSettings' auto-sync timer fires, silently dropping the last
+    // toggle. Mirrors QtSettingsStore, which already syncs after every write.
+    m_settings.sync();
 }
 
 int* UiSettings::indexForCategory(const QString& category) {

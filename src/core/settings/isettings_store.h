@@ -5,11 +5,13 @@
 
 #include <QCryptographicHash>
 #include <QDir>
+#include <QMap>
 #include <QObject>
 #include <QStandardPaths>
 #include <QString>
 #include <QtGlobal>
 #include <QVariant>
+#include <QVariantMap>
 
 #ifdef Q_OS_WASM
 #include "settings/wasm_page_origin.h"
@@ -47,6 +49,15 @@ public:
                                                      const QVariant& fallback = {}) const = 0;
     Q_INVOKABLE virtual void setValue(const QString& key, const QVariant& value) = 0;
 
+    // Write several keys as one batch. The default loops setValue (so every store keeps working);
+    // the QSettings-backed store overrides it to write-all-then-sync-once, collapsing what would be
+    // N backend flushes into one. changed()/changedAny() still fire per changed key either way.
+    Q_INVOKABLE virtual void setValues(const QVariantMap& values) {
+        for (auto it = values.constBegin(); it != values.constEnd(); ++it) {
+            setValue(it.key(), it.value());
+        }
+    }
+
     // Named convenience over the raw keys (so QML/TUI never hardcode key strings).
     [[nodiscard]] bool setupComplete() const {
         return value(QStringLiteral("app/setupComplete"), false).toBool();
@@ -67,8 +78,10 @@ public:
         return value(QStringLiteral("conn/target"), QString()).toString();
     }
     Q_INVOKABLE void setLastConnection(const QString& mode, const QString& target) {
-        setValue(QStringLiteral("conn/mode"), mode);
-        setValue(QStringLiteral("conn/target"), target);
+        // One batched write+sync (vs a setValue per key): mode and target always change together at
+        // login, so a single backend flush keeps the persisted pair consistent and halves the sync
+        // traffic on the connect path.
+        setValues({{QStringLiteral("conn/mode"), mode}, {QStringLiteral("conn/target"), target}});
     }
 
     // Managed local daemon (CON-1b): when no daemon answers on the local target, the client may

@@ -7,6 +7,8 @@
 #include <QCryptographicHash>
 #include <QDebug>
 #include <QStandardPaths>
+#include <QStringList>
+#include <utility>
 
 #ifdef DAEMON_APP_HAVE_KEYCHAIN
 #include <QEventLoop>
@@ -90,6 +92,25 @@ void QtSettingsStore::setValue(const QString& key, const QVariant& value) {
     m_settings.setValue(key, value);
     m_settings.sync();
     emit changed(key);
+    emit changedAny();
+}
+
+void QtSettingsStore::setValues(const QVariantMap& values) {
+    QStringList changedKeys;
+    for (auto it = values.constBegin(); it != values.constEnd(); ++it) {
+        if (m_settings.value(it.key()) == it.value()) {
+            continue;
+        }
+        m_settings.setValue(it.key(), it.value());
+        changedKeys << it.key();
+    }
+    if (changedKeys.isEmpty()) {
+        return;
+    }
+    m_settings.sync(); // one flush for the whole batch
+    for (const QString& key : std::as_const(changedKeys)) {
+        emit changed(key);
+    }
     emit changedAny();
 }
 
