@@ -332,6 +332,19 @@
           depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
         };
 
+        # --- Qt for iOS simulator (arm64, static) -----------------------------
+        # aarch64-darwin only: the iPhoneSimulator SDK lives in Xcode, not in
+        # nixpkgs, so unlike the android stack this cannot be a pure derivation.
+        # nix/ios.nix pins the Qt/tinyxml2 sources + host tools and exposes an
+        # impure `qt-ios-builder` script (system Xcode via xcrun) plus the
+        # devShell the app cross-configures in. Lazily forced only by the
+        # darwin-gated outputs below, so the Linux package set is untouched.
+        qtIosStack = import ./nix/ios.nix {
+          inherit pkgs versionStr baseVersion;
+          appSrc = ./.;
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+        };
+
         # --- Linux packaging artifacts (CPack: DEB / RPM / AppImage) --------
         # The packaged payload is the STATIC-Qt app (portableStack.app): the
         # same build the portable tarball ships, packaged through the CPack
@@ -852,6 +865,17 @@
         packages.qtwebsockets-android = qtAndroidStack.qtwebsockets;
         packages.android-staged = qtAndroidStack.app;
 
+        # iOS simulator (aarch64-darwin only, elided on Linux via the null
+        # dynamic attr name - same pattern as macos-dmg). `qt-ios-builder` is
+        # the impure Qt-for-iOS-simulator build script (run it on the mac:
+        # `nix run .#qt-ios-builder`); `qt-ios-host` is the host-tools prefix
+        # exposed for debugging. The Qt libs themselves cannot be a nix package
+        # (impure Xcode SDK), so there is no qtbase-ios/qt-ios output.
+        packages.${if pkgs.stdenv.hostPlatform.isDarwin then "qt-ios-builder" else null} =
+          qtIosStack.qtIosBuilder;
+        packages.${if pkgs.stdenv.hostPlatform.isDarwin then "qt-ios-host" else null} =
+          qtIosStack.qtHost;
+
         # Proves the wasm stack end-to-end without the app: a static Qt Quick
         # hello-world through the joined prefix's qt-cmake, asserting the
         # .wasm/.js/.html artifact set.
@@ -985,6 +1009,12 @@
         # tools + the stock androiddeployqt Gradle path (network allowed
         # outside the sandbox); see scripts/build-apk-gradle.sh.
         devShells.android = qtAndroidStack.devShell;
+
+        # iOS cross-development (aarch64-darwin only): nix cmake/ninja + host
+        # Qt tools + the vendored-dep wiring, with DAEMON_APP_QT_IOS pointing
+        # at the qt-ios-builder output prefix. Elided on Linux (null attr).
+        devShells.${if pkgs.stdenv.hostPlatform.isDarwin then "ios" else null} =
+          qtIosStack.devShell;
       }
     );
 }
