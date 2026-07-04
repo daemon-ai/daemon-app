@@ -1,0 +1,35 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Jarrad Hope
+# SPDX-License-Identifier: MPL-2.0
+#
+# Shared DEB prerm / RPM %preun body: drop the symlinks postinst planted in
+# /usr/local/bin and /usr/share (only when they still point into /opt/daemon,
+# so a user-replaced file is left alone).
+set -e
+
+opt=/opt/daemon
+
+remove_if_ours() {
+    # $1: symlink path. Remove it only if it resolves into the product tree.
+    case "$(readlink "$1" 2>/dev/null || true)" in
+        "$opt"/*) rm -f "$1" ;;
+    esac
+}
+
+for tool in daemon-app daemon daemon-cli; do
+    remove_if_ours "/usr/local/bin/$tool"
+done
+
+remove_if_ours /usr/share/applications/daemon-app.desktop
+remove_if_ours /usr/share/metainfo/io.daemon.app.metainfo.xml
+for dir in "$opt"/share/icons/hicolor/*/apps; do
+    size=$(basename "$(dirname "$dir")")
+    for icon in "$dir"/*; do
+        remove_if_ours "/usr/share/icons/hicolor/$size/apps/$(basename "$icon")"
+    done
+done
+
+command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q /usr/share/applications || true
+command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -q /usr/share/icons/hicolor || true
+
+exit 0

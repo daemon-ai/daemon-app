@@ -43,6 +43,18 @@ else()
     set(DAEMON_APP_MOBILE OFF)
 endif()
 
+# Portable static-Qt desktop build (the flake's `portable` package): the GUI is
+# linked against a statically built Qt, so everything that assumes a shared-Qt
+# runtime drops out - the qmake-built QMLTermWidget shared plugin is replaced by
+# the same TerminalPanelStub the browser uses, and the optional qtkeychain
+# integration is skipped (the token store falls back to QSettings). Desktop
+# only: the wasm build has its own (derived, not optional) gating above.
+option(DAEMON_APP_STATIC "Portable static-Qt desktop build (terminal stub, QSettings token store)" OFF)
+if(DAEMON_APP_WASM AND DAEMON_APP_STATIC)
+    message(STATUS "daemon-app: DAEMON_APP_STATIC forced OFF for the wasm build (wasm gating applies)")
+    set(DAEMON_APP_STATIC OFF)
+endif()
+
 # Qt Quick + Controls for the UI; QtWidgets on desktop for the tray.
 # QuickControls2 is needed for QQuickStyle (pinning the app style in main).
 # LinguistTools provides qt_add_translations (lupdate/lrelease + .qm embedding).
@@ -83,6 +95,13 @@ if(DAEMON_APP_WASM AND DAEMON_APP_TUI)
     message(STATUS "daemon-app: DAEMON_APP_TUI forced OFF for the wasm build")
     set(DAEMON_APP_TUI OFF)
 endif()
+# The static gate covers the GUI only: daemon-tui stays a dynamic build (its
+# Meson-built Tui Widgets stack is shared-Qt), so the combination is refused
+# rather than half-supported.
+if(DAEMON_APP_STATIC AND DAEMON_APP_TUI)
+    message(STATUS "daemon-app: DAEMON_APP_TUI forced OFF for the static build (GUI only)")
+    set(DAEMON_APP_TUI OFF)
+endif()
 if(DAEMON_APP_TUI)
     find_package(Qt6 6.11 REQUIRED COMPONENTS Core5Compat)
 endif()
@@ -118,3 +137,8 @@ include(CTest)
 if(BUILD_TESTING AND NOT DAEMON_APP_WASM)
     add_subdirectory(tests)
 endif()
+
+# Desktop packaging: freedesktop assets (Linux) / bundle payload + Qt deploy
+# (macOS), bundled sibling binaries, CPack (DEB / RPM / AppImage / DragNDrop).
+# No-op for wasm/mobile configures.
+include(Packaging)

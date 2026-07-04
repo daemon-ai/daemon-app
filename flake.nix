@@ -2,7 +2,9 @@
   description = "daemon-app - Qt 6 QML/C++ development environment, build, and vendored dependencies";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # logos-co fork of nixos-unstable carrying the MinGW Qt cross fixes the
+    # Windows (mingw) outputs need (same Qt 6.11.1 as upstream unstable).
+    nixpkgs.url = "github:logos-co/nixpkgs/mingw-integration";
     flake-utils.url = "github:numtide/flake-utils";
 
     # Emscripten pin for the Qt-for-WebAssembly outputs ONLY (see
@@ -112,15 +114,24 @@
             "nar${builtins.substring 0 8 (pkgs.lib.removePrefix "sha256-" (self.narHash or "sha256-unknown"))}";
         versionStr = "${baseVersion}+${buildId}";
 
-        qtPackages = with pkgs.qt6; [
+        # Qt modules, tiered by which closure actually needs them: everything in
+        # a package's buildInputs is re-exported by wrapQtAppsHook into the
+        # wrapped binary's plugin/QML search paths, so it ships in that
+        # package's runtime closure. Keep each tier minimal.
+        qtGuiPackages = with pkgs.qt6; [
           qtbase          # Core, Gui, Widgets, Network, Sql
           qtdeclarative   # Qml, Quick, QuickControls2, QuickTest
-          qttools
           qtshadertools
           qtsvg
           qtwebsockets    # WebSocket daemon transport (browser/wasm carrier, tested natively)
-          qt5compat       # Core5Compat - required by the Qt6 build of Tui Widgets
         ];
+        # TUI-only runtime addition: the Qt6 build of Tui Widgets links Core5Compat.
+        qtTuiPackages = with pkgs.qt6; [ qt5compat ];
+        # The devShell further carries qttools (lupdate/lrelease for the
+        # translation targets, Linguist, Qt Designer libs). The packages
+        # instead pin Qt6LinguistTools_DIR in depFlags, keeping qttools'
+        # libs out of the runtime closures.
+        qtShellPackages = qtGuiPackages ++ qtTuiPackages ++ [ pkgs.qt6.qttools ];
 
         # --- Tui Widgets stack (Meson) -----------------------------------------
         # Built as plain Nix derivations that emit pkg-config files; the daemon-app
@@ -199,6 +210,12 @@
           "-DQAUTOSTART_SOURCE_DIR=${qautostart}"
           "-DQXTGLOBALSHORTCUT_SOURCE_DIR=${qxtglobalshortcut}"
           "-DQMLTERMWIDGET_QML_DIR=${qmltermwidgetQmlDir}"
+          # Host Linguist tools (lupdate/lrelease for qt_add_translations),
+          # pinned directly rather than listing qttools as an input: the qtbase
+          # env hook folds every qttools input's plugin dir into the wrapped
+          # app's QT_PLUGIN_PATH, dragging the Designer/Assistant libs into the
+          # runtime closure for tools that only ever run at build time.
+          "-DQt6LinguistTools_DIR=${pkgs.qt6.qttools}/lib/cmake/Qt6LinguistTools"
         ];
 
         daemon-app = pkgs.ccacheStdenv.mkDerivation {
@@ -218,9 +235,9 @@
             kdePackages.extra-cmake-modules
             perl
             qt6.wrapQtAppsHook
-            # Linguist tools (lupdate/lrelease) for qt_add_translations: needed
-            # on the host at build time to compile i18n/*.ts -> embedded .qm.
-            qt6.qttools
+            # qttools (lupdate/lrelease for qt_add_translations) is deliberately
+            # NOT an input; CMake gets it via the Qt6LinguistTools_DIR pin in
+            # depFlags (see the comment there).
           ];
 
           # MicroTeX (LaTeX math renderer) links tinyxml2 via pkg-config.
@@ -228,9 +245,16 @@
           # wrapQtAppsHook adds its lib/qml to the wrapped app's import path.
           # qtkeychain backs the OS-keychain server-token store (auth6); the build
           # falls back to a QSettings token store when it is absent.
-          buildInputs = qtPackages ++ [ pkgs.tinyxml-2 pkgs.qt6Packages.qtkeychain qmltermwidget-qt6 ];
+          buildInputs = qtGuiPackages ++ [ pkgs.tinyxml-2 pkgs.qt6Packages.qtkeychain qmltermwidget-qt6 ];
 
           cmakeFlags = depFlags ++ [ "-DDAEMON_APP_VERSION_STR=${versionStr}" ];
+
+          # The default fixup only runs `strip --strip-debug` over bin/, which
+          # leaves the CMake Release binaries carrying full symbol tables
+          # (~15 MB on daemon-app). Full-strip them; daemon-tui inherits this
+          # via overrideAttrs. If symbolized crash reports are ever needed,
+          # switch to RelWithDebInfo + separateDebugInfo instead.
+          stripAllList = [ "bin" ];
         };
 
         # The experimental Tui Widgets TUI frontend (daemon-tui executable),
@@ -238,7 +262,7 @@
         # dependency stack.
         daemon-tui = daemon-app.overrideAttrs (old: {
           pname = "daemon-tui";
-          buildInputs = old.buildInputs ++ tuiDeps;
+          buildInputs = old.buildInputs ++ qtTuiPackages ++ tuiDeps;
           cmakeFlags = depFlags ++ [
             "-DDAEMON_APP_TUI=ON"
             "-DDAEMON_APP_VERSION_STR=${versionStr}"
@@ -256,6 +280,456 @@
           appSrc = ./.;
           depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
         };
+
+        # --- Portable Linux desktop (static Qt) ------------------------------
+        # The statically-linked-Qt GUI build + its patchelf'd/stripped
+        # portable layout, tarball, and boot smoke (nix/portable.nix). Shares
+        # the qt-from-source builder with the wasm stack; only these outputs
+        # evaluate it, so the dynamic desktop outputs stay unchanged.
+        portableStack = import ./nix/portable.nix {
+          inherit pkgs versionStr baseVersion;
+          appSrc = ./.;
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+        };
+
+        # --- Windows desktop (MinGW cross, static Qt) -------------------------
+        # The x86_64-w64-mingw32 cross stack (pkgsCross.mingwW64 from the
+        # logos-co fork) + the statically-linked daemon-app.exe, its portable
+        # layout, the CPack NSIS installer, the PE sanity check, and the
+        # best-effort wine smoke (nix/windows.nix). Only these outputs
+        # evaluate it, so the native desktop outputs stay unchanged.
+        windowsStack = import ./nix/windows.nix {
+          inherit pkgs versionStr baseVersion;
+          appSrc = ./.;
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+        };
+
+        # --- Linux packaging artifacts (CPack: DEB / RPM / AppImage) --------
+        # The packaged payload is the STATIC-Qt app (portableStack.app): the
+        # same build the portable tarball ships, packaged through the CPack
+        # skeleton with the pre-build rewrite (cmake/PackagePortablePayload
+        # .cmake) patching every staged ELF for the generic-distro floor -
+        # generic /lib64 loader, $ORIGIN rpaths, store-prefix scrub, vendored
+        # KSyntaxHighlighting side-payload pruned (the static binary compiles
+        # it in). See cmake/Packaging.cmake + cmake/CPackPerGen.cmake for the
+        # per-generator config and the hand-written system-floor Depends.
+        appimageTooling = import ./nix/appimagetool.nix { inherit pkgs; };
+        # CPack's AppImage generator needs CMake >= 4.2 (pinned nixpkgs ships
+        # 4.1.2); nix/cmake-appimage.nix overrides the nixpkgs cmake with the
+        # 4.2.7 source.
+        cmake42 = import ./nix/cmake-appimage.nix { inherit pkgs; };
+
+        # Build the STATIC app once with the packaging knobs, then run cpack
+        # per generator from the same build tree. `bundledFrom` is the shape
+        # the superproject fills: prebuilt sibling binaries ({ daemon;
+        # daemon-infer; daemon-cli; } store paths) installed next to
+        # bin/daemon-app (LocalDaemonLauncher discovers them there) plus
+        # `libs` (runtime .so list for lib/, e.g. the libstdc++/libgomp pair
+        # daemon-infer needs). Left empty here, so these artifacts package
+        # the app alone.
+        mkLinuxArtifacts =
+          { bundledFrom ? { } }:
+          portableStack.app.overrideAttrs (old: {
+            pname = "daemon-linux-artifacts";
+
+            # cmake42 must own the `cmake`/`cpack` names on PATH; drop the
+            # pinned cmake from the inherited tool list instead of trusting
+            # ordering. extra-cmake-modules is dropped too: its setup hook
+            # appends absolute -DKDE_INSTALL_*=$out/... flags AFTER ours,
+            # which would make the vendored KSyntaxHighlighting bypass the
+            # relative-dir staging below (leaking store paths into the
+            # packages); ECM_DIR in cmakeFlags replaces it for find_package.
+            nativeBuildInputs =
+              [ cmake42 ]
+              ++ builtins.filter (
+                p: !(builtins.elem (p.pname or "") [ "cmake" "extra-cmake-modules" ])
+              ) old.nativeBuildInputs
+              ++ [
+                appimageTooling.appimagetool # cpack -G AppImage packs through it
+                pkgs.patchelf # payload rewrite + AppImage RPATH handling
+                pkgs.removeReferencesTo # store-prefix scrub in the payload rewrite
+                pkgs.file
+                pkgs.rpm # cpack -G RPM shells out to rpmbuild
+                # (cpack -G DEB needs no dpkg: it writes the .deb natively)
+              ];
+
+            cmakeFlags = old.cmakeFlags ++ [
+              # The nix cmake hook injects absolute store-path GNUInstallDirs
+              # (-DCMAKE_INSTALL_BINDIR=$out/bin ...). Packages must stage
+              # relative dirs under CPACK_PACKAGING_INSTALL_PREFIX instead,
+              # so pin them back (later -D wins).
+              "-DCMAKE_INSTALL_BINDIR=bin"
+              "-DCMAKE_INSTALL_SBINDIR=sbin"
+              "-DCMAKE_INSTALL_LIBDIR=lib"
+              "-DCMAKE_INSTALL_LIBEXECDIR=libexec"
+              "-DCMAKE_INSTALL_INCLUDEDIR=include"
+              "-DCMAKE_INSTALL_DATADIR=share"
+              "-DCMAKE_INSTALL_MANDIR=share/man"
+              "-DCMAKE_INSTALL_INFODIR=share/info"
+              "-DCMAKE_INSTALL_DOCDIR=share/doc/daemon-app"
+              "-DCMAKE_INSTALL_LOCALEDIR=share/locale"
+              # Pinned type2 runtime -> CPACK_APPIMAGE_RUNTIME_FILE (no
+              # network at package time).
+              "-DDAEMON_APP_APPIMAGE_RUNTIME=${appimageTooling.runtimeFile}"
+              # find_package(ECM) without the ECM setup hook (see
+              # nativeBuildInputs note above).
+              "-DECM_DIR=${pkgs.kdePackages.extra-cmake-modules}/share/ECM/cmake"
+              # Staged-payload rewrite for the generic-distro floor
+              # (cmake/PackagePortablePayload.cmake): generic loader, $ORIGIN
+              # rpaths, KSyntaxHighlighting side-payload prune, store-prefix
+              # scrub of the static binary.
+              "-DDAEMON_APP_PACKAGE_PORTABLE=ON"
+              "-DDAEMON_APP_SCRUB_PREFIXES=${pkgs.lib.concatStringsSep ";" portableStack.scrubPrefixes}"
+            ]
+            ++ pkgs.lib.optional (bundledFrom ? daemon) "-DDAEMON_APP_BUNDLED_DAEMON=${bundledFrom.daemon}"
+            ++ pkgs.lib.optional (bundledFrom ? daemon-infer)
+              "-DDAEMON_APP_BUNDLED_DAEMON_INFER=${bundledFrom.daemon-infer}"
+            ++ pkgs.lib.optional (bundledFrom ? daemon-cli)
+              "-DDAEMON_APP_BUNDLED_DAEMON_CLI=${bundledFrom.daemon-cli}"
+            ++ pkgs.lib.optional (bundledFrom ? libs)
+              "-DDAEMON_APP_BUNDLED_LIBS=${pkgs.lib.concatStringsSep ";" bundledFrom.libs}";
+
+            # The output is the artifact set, not an installed app tree:
+            # nothing to wrap, and fixup must not patchelf/strip the finished
+            # packages (it would rewrite the AppImage's embedded runtime ELF).
+            dontWrapQtApps = true;
+            dontFixup = true;
+            installPhase = ''
+              runHook preInstall
+
+              # rpmbuild resolves %_topdir & friends under $HOME.
+              export HOME="$TMPDIR"
+
+              run_cpack() {
+                echo "=== cpack -G $1 ==="
+                cpack -G "$1" || {
+                  echo "--- cpack $1 failed; dumping logs ---" >&2
+                  find _CPack_Packages -name '*.log' -o -name '*.err' | while read -r f; do
+                    echo "--- $f ---" >&2
+                    tail -n 100 "$f" >&2
+                  done
+                  exit 1
+                }
+              }
+              run_cpack DEB
+              run_cpack RPM
+              run_cpack AppImage
+
+              mkdir -p "$out"
+              # One artifact of each format must exist (deb naming uses
+              # underscores - DEB-DEFAULT - so match on suffix only; ls fails
+              # on an unmatched glob).
+              for pattern in '*.deb' '*.rpm' '*.AppImage'; do
+                ls ./$pattern > /dev/null || {
+                  echo "missing artifact: $pattern" >&2
+                  exit 1
+                }
+              done
+              cp -v ./*.deb ./*.rpm ./*.AppImage ./*.sha256 "$out"/
+              # zsyncmake control file (appimagetool emits it next to the
+              # staged AppImage when zsync update info is embedded).
+              find _CPack_Packages -name '*.zsync' -exec cp -v {} "$out"/ \; || true
+
+              runHook postInstall
+            '';
+          });
+
+        linuxArtifacts = mkLinuxArtifacts { };
+
+        # --- macOS packaging artifact (CPack DragNDrop -> .dmg) -------------
+        # Darwin mirror of mkLinuxArtifacts: same build with the packaging
+        # knobs, then cpack -G DragNDrop from the build tree (the bundle,
+        # Info.plist, Qt deploy script, and DMG config all live in
+        # cmake/Packaging.cmake + cmake/CPackPerGen.cmake). Same `bundledFrom`
+        # contract: prebuilt sibling binaries land in Contents/MacOS next to
+        # the app executable.
+        #
+        # CODE-ONLY (authored + eval-checked on a Linux host, never yet run
+        # on darwin): see packaging/macos/README.md for the unvalidated list.
+        # Known risk called out there: cpack's DragNDrop generator shells out
+        # to hdiutil, which the darwin nix build sandbox may not expose - if
+        # the sandboxed build fails on that, use the manual `nix develop`
+        # cmake/cpack flow from the runbook (or `--option sandbox false`).
+        mkDarwinArtifacts =
+          { bundledFrom ? { } }:
+          daemon-app.overrideAttrs (old: {
+            pname = "daemon-macos-artifacts";
+
+            # Same ECM setup-hook eviction as mkLinuxArtifacts: its absolute
+            # -DKDE_INSTALL_* flags would bypass the relative-dir staging and
+            # leak store paths into the DMG; ECM_DIR replaces find_package.
+            nativeBuildInputs = builtins.filter (
+              p: (p.pname or "") != "extra-cmake-modules"
+            ) old.nativeBuildInputs;
+
+            cmakeFlags = old.cmakeFlags ++ [
+              # Pin the nix cmake hook's absolute store-path GNUInstallDirs
+              # back to relative dirs (later -D wins), mirroring
+              # mkLinuxArtifacts: everything cpack stages must sit under the
+              # DMG root, not under $out.
+              "-DCMAKE_INSTALL_BINDIR=bin"
+              "-DCMAKE_INSTALL_SBINDIR=sbin"
+              "-DCMAKE_INSTALL_LIBDIR=lib"
+              "-DCMAKE_INSTALL_LIBEXECDIR=libexec"
+              "-DCMAKE_INSTALL_INCLUDEDIR=include"
+              "-DCMAKE_INSTALL_DATADIR=share"
+              "-DCMAKE_INSTALL_MANDIR=share/man"
+              "-DCMAKE_INSTALL_INFODIR=share/info"
+              "-DCMAKE_INSTALL_DOCDIR=share/doc/daemon-app"
+              "-DCMAKE_INSTALL_LOCALEDIR=share/locale"
+              "-DECM_DIR=${pkgs.kdePackages.extra-cmake-modules}/share/ECM/cmake"
+            ]
+            ++ pkgs.lib.optional (bundledFrom ? daemon) "-DDAEMON_APP_BUNDLED_DAEMON=${bundledFrom.daemon}"
+            ++ pkgs.lib.optional (bundledFrom ? daemon-infer)
+              "-DDAEMON_APP_BUNDLED_DAEMON_INFER=${bundledFrom.daemon-infer}"
+            ++ pkgs.lib.optional (bundledFrom ? daemon-cli)
+              "-DDAEMON_APP_BUNDLED_DAEMON_CLI=${bundledFrom.daemon-cli}";
+
+            # The output is the .dmg artifact set: nothing to wrap, and fixup
+            # must not strip the deployed bundle (macdeployqt ad-hoc-signs
+            # after rewriting install names; stripping breaks the seal).
+            dontWrapQtApps = true;
+            dontFixup = true;
+            installPhase = ''
+              runHook preInstall
+
+              echo "=== cpack -G DragNDrop ==="
+              cpack -G DragNDrop || {
+                echo "--- cpack DragNDrop failed; dumping logs ---" >&2
+                find _CPack_Packages -name '*.log' -o -name '*.err' | while read -r f; do
+                  echo "--- $f ---" >&2
+                  tail -n 100 "$f" >&2
+                done
+                exit 1
+              }
+
+              mkdir -p "$out"
+              ls ./*.dmg > /dev/null || {
+                echo "missing artifact: *.dmg" >&2
+                exit 1
+              }
+              cp -v ./*.dmg ./*.sha256 "$out"/
+
+              runHook postInstall
+            '';
+          });
+
+        darwinArtifacts = mkDarwinArtifacts { };
+
+        # Single-format views of the artifact set (`nix build .#deb` etc.).
+        selectArtifact =
+          name: glob:
+          pkgs.runCommand "daemon-${name}" { } ''
+            mkdir -p "$out"
+            cp -v ${linuxArtifacts}/${glob} "$out"/
+            cp -v ${linuxArtifacts}/${glob}.sha256 "$out"/ 2>/dev/null || true
+          '';
+
+        # Sanity gate over all three artifacts: metadata + payload layout
+        # assertions, the portable ELF contract + CLOSURE COMPLETENESS on
+        # every shipped ELF (each DT_NEEDED must resolve in-payload through
+        # the $ORIGIN rpaths or sit on the excludelist-derived system floor -
+        # same allowlist as checks.portable-boot-smoke; the class of loader
+        # failure this kills: a user-reported libxcb-cursor.so.0 crash from
+        # an AppImage whose binary still dynamically linked the xcb-util
+        # family that no distro guarantees), desktop/metainfo validation, an
+        # AppImage payload extract + offscreen boot probe
+        # (DAEMON_APP_WAIT_READY contract from src/DaemonApp/App/main.cpp;
+        # booted through the store glibc's loader since the sandbox has no
+        # /lib64), and the glibc symbol-version floor.
+        artifactSanity =
+          pkgs.runCommand "daemon-artifact-sanity"
+            {
+              nativeBuildInputs = with pkgs; [
+                dpkg # dpkg-deb --info/--contents/-x
+                rpm # rpm -qpl, rpm2cpio
+                cpio
+                binutils # readelf (ELF contract + glibc floor)
+                patchelf # interpreter/rpath asserts
+                desktop-file-utils
+                appstream # appstreamcli validate
+                squashfsTools # unsquashfs (AppImage payload extraction)
+              ];
+            }
+            ''
+              set -euo pipefail
+              mkdir work && cd work
+
+              # Closure-completeness gate over one extracted payload root:
+              # every ELF under bin/ or shipped as lib/*.so* must (a) carry
+              # the portable rpath contract the pre-build script writes
+              # (bin: generic /lib64 loader + $ORIGIN:$ORIGIN/../lib; lib:
+              # $ORIGIN), and (b) have every DT_NEEDED soname either present
+              # in-payload (resolvable through those rpaths) or on the
+              # explicit system floor below. daemon-app additionally must
+              # not re-grow a libstdc++ dependency (-static-libstdc++).
+              floor="${pkgs.lib.concatStringsSep " " portableStack.allowedNeeded}"
+              check_payload_closure() {
+                label="$1"; root="$2"
+                echo "--- closure completeness: $label ---"
+                shipped=$(find "$root" -name '*.so*' -type f -exec basename {} \; | sort -u)
+                fail=0
+                while IFS= read -r -d "" f; do
+                  [ "$(head -c4 "$f" | od -An -tx1 | tr -d ' ')" = "7f454c46" ] || continue
+                  case "$f" in
+                    */bin/*)
+                      [ "$(patchelf --print-interpreter "$f")" = "/lib64/ld-linux-x86-64.so.2" ] \
+                        || { echo "FAIL($label): $f keeps a non-generic interpreter" >&2; fail=1; }
+                      [ "$(patchelf --print-rpath "$f")" = '$ORIGIN:$ORIGIN/../lib' ] \
+                        || { echo "FAIL($label): $f has unexpected rpath" >&2; fail=1; }
+                      ;;
+                    *)
+                      [ "$(patchelf --print-rpath "$f")" = '$ORIGIN' ] \
+                        || { echo "FAIL($label): $f has unexpected rpath" >&2; fail=1; }
+                      ;;
+                  esac
+                  readelf -d "$f" | awk '/NEEDED/ { gsub(/[][]/, "", $5); print $5 }' > needed-one.txt
+                  while read -r so; do
+                    if printf '%s\n' "$shipped" | grep -qxF "$so"; then continue; fi
+                    case " $floor " in
+                      *" $so "*) ;;
+                      *)
+                        echo "FAIL($label): $f needs '$so' - neither shipped in-payload nor on the system floor" >&2
+                        fail=1
+                        ;;
+                    esac
+                  done < needed-one.txt
+                  if [ "$(basename "$f")" = "daemon-app" ] && grep -q 'libstdc++' needed-one.txt; then
+                    echo "FAIL($label): libstdc++ leaked into daemon-app's DT_NEEDED" >&2
+                    fail=1
+                  fi
+                done < <(find "$root" \( -path '*/bin/*' -o -name '*.so*' \) -type f -print0)
+                [ "$fail" = 0 ] || exit 1
+                echo "closure OK: $label"
+              }
+
+              echo "=== DEB: metadata + contents ==="
+              deb=$(ls ${linuxArtifacts}/*.deb)
+              dpkg-deb --info "$deb" | tee deb-info.txt
+              grep -q "Package: daemon" deb-info.txt
+              grep -q "Version: ${baseVersion}" deb-info.txt
+              dpkg-deb --contents "$deb" > deb-contents.txt
+              for path in \
+                ./opt/daemon/bin/daemon-app \
+                ./opt/daemon/share/applications/daemon-app.desktop \
+                ./opt/daemon/share/metainfo/io.daemon.app.metainfo.xml \
+                ./opt/daemon/share/icons/hicolor/256x256/apps/daemon-app.png \
+                ./opt/daemon/share/icons/hicolor/scalable/apps/daemon-app.svg \
+                ./opt/daemon/share/daemon-app/microtex-res/RES_README \
+                ./opt/daemon/share/doc/daemon-app/LICENSE \
+                ./opt/daemon/share/doc/daemon-app/THIRD-PARTY-NOTICES.md; do
+                grep -qF " $path" deb-contents.txt || { echo "missing in deb: $path" >&2; exit 1; }
+              done
+              # The static payload compiles KSyntaxHighlighting in; its
+              # vendored side-payload (headers, CLI, static archives, QML
+              # scaffolding) must have been pruned at staging.
+              for stray in libKF6SyntaxHighlighting ksyntaxhighlighter6 include/KF6 '\.a$'; do
+                if grep -E "$stray" deb-contents.txt; then
+                  echo "deb payload carries pruned KSyntaxHighlighting cruft: $stray" >&2
+                  exit 1
+                fi
+              done
+              # Everything must relocate under /opt/daemon: a store path here
+              # means an install rule bypassed the relative-dir staging (the
+              # ECM setup-hook leak this build guards against).
+              if grep -q "nix/store" deb-contents.txt; then
+                echo "deb payload contains /nix/store paths" >&2
+                exit 1
+              fi
+              dpkg-deb --ctrl-tarfile "$deb" | tar -t > deb-control.txt
+              grep -q "postinst" deb-control.txt
+              grep -q "prerm" deb-control.txt
+              dpkg-deb -x "$deb" deb-root
+              desktop-file-validate deb-root/opt/daemon/share/applications/daemon-app.desktop
+              appstreamcli validate --no-net \
+                deb-root/opt/daemon/share/metainfo/io.daemon.app.metainfo.xml
+
+              echo "=== DEB payload: portable ELF contract + closure ==="
+              bin=deb-root/opt/daemon/bin/daemon-app
+              echo "interpreter: $(patchelf --print-interpreter "$bin")"
+              echo "rpath: $(patchelf --print-rpath "$bin")"
+              readelf -d "$bin" | awk '/NEEDED/ { gsub(/[][]/, "", $5); print "NEEDED " $5 }'
+              check_payload_closure deb deb-root/opt/daemon
+
+              echo "=== RPM: metadata + contents ==="
+              rpmfile=$(ls ${linuxArtifacts}/*.rpm)
+              # --dbpath: no /var/lib/rpm in the sandbox
+              rpmq() { rpm --dbpath "$PWD/rpmdb" --nosignature "$@"; }
+              rpmq -qpi "$rpmfile" | tee rpm-info.txt
+              grep -q "^Name *: daemon" rpm-info.txt
+              rpmq -qpl "$rpmfile" > rpm-list.txt
+              for path in \
+                /opt/daemon/bin/daemon-app \
+                /opt/daemon/share/applications/daemon-app.desktop \
+                /opt/daemon/share/metainfo/io.daemon.app.metainfo.xml \
+                /opt/daemon/share/icons/hicolor/256x256/apps/daemon-app.png; do
+                grep -qxF "$path" rpm-list.txt || { echo "missing in rpm: $path" >&2; exit 1; }
+              done
+              if grep -Eq "libKF6SyntaxHighlighting|ksyntaxhighlighter6|include/KF6|\.a$" rpm-list.txt; then
+                echo "rpm payload carries pruned KSyntaxHighlighting cruft" >&2
+                exit 1
+              fi
+              if grep -q "nix/store" rpm-list.txt; then
+                echo "rpm payload contains /nix/store paths" >&2
+                exit 1
+              fi
+              rpmq -qp --scripts "$rpmfile" | grep -q "/usr/local/bin"
+              mkdir rpm-root && (cd rpm-root && rpm2cpio "$rpmfile" | cpio -idm --quiet)
+              check_payload_closure rpm rpm-root/opt/daemon
+
+              echo "=== AppImage: extract + layout ==="
+              appimage=$(ls ${linuxArtifacts}/*.AppImage)
+              # Host binfmt_misc registrations (e.g. NixOS appimage-run) leak
+              # into the build sandbox and intercept executing the AppImage
+              # (even `--appimage-extract`), so unpack the squashfs payload at
+              # the embedded runtime's byte size instead. The type2 magic
+              # ("AI\x02" at ELF offset 8) plus the squashfs superblock
+              # sitting exactly at the pinned runtime's size also pin the
+              # embedded runtime's provenance (appimagetool patches
+              # update-info/digest sections into it, so a full byte compare
+              # is not possible).
+              runtime_size=$(stat -c%s ${appimageTooling.runtimeFile})
+              [ "$(dd if="$appimage" bs=1 skip=8 count=3 status=none | od -An -tx1)" = " 41 49 02" ] || {
+                echo "not a type2 AppImage (missing AI magic)" >&2
+                exit 1
+              }
+              [ "$(dd if="$appimage" bs=1 skip="$runtime_size" count=4 status=none)" = "hsqs" ] || {
+                echo "squashfs payload not at pinned runtime offset $runtime_size" >&2
+                exit 1
+              }
+              unsquashfs -q -d squashfs-root -o "$runtime_size" "$appimage"
+              test -x squashfs-root/AppRun
+              test -f squashfs-root/usr/bin/daemon-app
+              test -e squashfs-root/daemon-app.desktop
+              test -f squashfs-root/usr/share/metainfo/io.daemon.app.metainfo.xml
+              check_payload_closure appimage squashfs-root/usr
+
+              echo "=== AppImage: offscreen boot probe (static payload) ==="
+              export HOME="$PWD/home" && mkdir -p "$HOME"
+              export XDG_RUNTIME_DIR="$PWD/xdg" && mkdir -m 0700 -p "$XDG_RUNTIME_DIR"
+              export QT_QPA_PLATFORM=offscreen
+              export QT_QUICK_BACKEND=software
+              # Mock service mode: the WAIT_READY probe drives a first-run
+              # "local" connect, which the mock accepts iff the target file
+              # exists - no daemon binary needed (none is bundled here).
+              export DAEMON_APP_SERVICE_MODE=mock
+              export DAEMON_APP_SOCKET="$PWD/mock-daemon.sock" && touch "$DAEMON_APP_SOCKET"
+              export DAEMON_APP_WAIT_READY=20000
+              # The payload binary is fully self-contained (static Qt: no
+              # QT_PLUGIN_PATH / QML import path needed) but its generic
+              # /lib64 interpreter does not exist in the build sandbox, so
+              # boot it through the store glibc's loader with the portable
+              # smoke's library path - exactly what portable-boot-smoke does.
+              ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 \
+                --library-path "${portableStack.bootLibPath}" \
+                squashfs-root/usr/bin/daemon-app | tee boot.txt
+              grep -q "DAEMON_APP_READY ok" boot.txt
+
+              echo "=== glibc floor over all extracted payloads ==="
+              bash ${./scripts/glibc-floor.sh} deb-root rpm-root squashfs-root
+
+              touch "$out"
+            '';
       in
       {
         packages.default = daemon-app;
@@ -263,6 +737,26 @@
         # Exposed for debugging the Meson dependency stack in isolation.
         packages.tuiwidgets = tuiwidgets-qt6;
         packages.posixsignalmanager = posixsignalmanager-qt6;
+
+        # Linux packaging artifacts (static-Qt payload; see mkLinuxArtifacts).
+        # `artifacts` carries all three; the per-format outputs are views of
+        # the same build.
+        packages.artifacts = linuxArtifacts;
+        packages.appimage = selectArtifact "appimage" "*.AppImage";
+        packages.deb = selectArtifact "deb" "*.deb";
+        packages.rpm = selectArtifact "rpm" "*.rpm";
+        # macOS DMG, exposed on the darwin systems only (best-effort: eval
+        # only, never built - no darwin host in this repo's loop yet). The
+        # null dynamic attr name elides the attribute entirely on Linux, so
+        # the Linux package set is byte-identical and this dotted packages.*
+        # block needs no restructuring into a single literal (which is what
+        # lib.optionalAttrs merging would force, and what the sibling
+        # packaging branches also append to).
+        packages.${if pkgs.stdenv.hostPlatform.isDarwin then "macos-dmg" else null} =
+          darwinArtifacts;
+        # Exposed for debugging the packaging toolchain in isolation.
+        packages.appimagetool = appimageTooling.appimagetool;
+        packages.cmake-appimage = cmake42;
 
         # Qt-for-WebAssembly toolchain (nix/qt-wasm.nix). `qt-wasm` is the
         # joined target stack a consumer points QT_HOST_PATH-style tooling at
@@ -279,10 +773,46 @@
         # served as-is by apps.serve-wasm below.
         packages.wasm = qtWasmStack.app;
 
+        # Portable Linux desktop: the static-Qt GUI in a distributable layout
+        # (bin/daemon-app patchelf'd to the generic /lib64 loader + stripped,
+        # share/daemon-app/microtex-res, THIRD-PARTY-NOTICES) and the .tar.zst
+        # of exactly that tree. `qt-linux-static` exposes the joined Qt prefix
+        # for debugging the stack in isolation (per-module outputs live in
+        # nix/portable.nix).
+        packages.portable = portableStack.portable;
+        packages.portable-tarball = portableStack.tarball;
+        packages.qt-linux-static = portableStack.qtStatic;
+
+        # Windows desktop (MinGW cross, static Qt): the portable layout
+        # (bin/daemon-app.exe + share/daemon-app/microtex-res + notices) and
+        # the CPack NSIS installer. `qt-mingw-static` exposes the joined Qt
+        # prefix for debugging the stack in isolation.
+        packages.windows-portable = windowsStack.portable;
+        packages.nsis = windowsStack.nsis;
+        packages.qt-mingw-static = windowsStack.qtMingw;
+
         # Proves the wasm stack end-to-end without the app: a static Qt Quick
         # hello-world through the joined prefix's qt-cmake, asserting the
         # .wasm/.js/.html artifact set.
         checks.qt-wasm-smoke = qtWasmStack.smoke;
+
+        # Portable contract check (sandbox-safe half): ELF loader/rpath/
+        # DT_NEEDED-floor asserts, the glibc-floor readout, and an offscreen
+        # DAEMON_APP_WAIT_READY boot through the store loader. The FHS-root
+        # boot (needs user namespaces, so it cannot run in the build sandbox)
+        # is apps.portable-smoke below.
+        checks.portable-boot-smoke = portableStack.bootSmoke;
+
+        # Packaging artifact gate: DEB/RPM metadata + payload assertions,
+        # desktop/metainfo validation, AppImage payload extract + offscreen
+        # boot, glibc symbol-version floor (scripts/glibc-floor.sh).
+        checks.artifact-sanity = artifactSanity;
+
+        # Windows artifact gate: PE32+ magic + GUI subsystem, the DLL import
+        # floor (Windows inbox DLLs only), the embedded icon resource, and
+        # NSIS installer existence/size. Wine is deliberately NOT part of
+        # this check - the boot smoke is apps.windows-smoke below.
+        checks.windows-sanity = windowsStack.sanity;
 
         apps.default = {
           type = "app";
@@ -309,6 +839,26 @@
           meta.description = "Serve the daemon-app WebAssembly build on localhost";
         };
 
+        # Boot the portable binary inside a buildFHSEnv simulating a generic
+        # distro root (real /lib64 loader + X/GL floor, no Nix store deps) -
+        # the interactive half of the portable smoke that the build sandbox
+        # cannot run (buildFHSEnv needs user namespaces).
+        apps.portable-smoke = {
+          type = "app";
+          program = "${portableStack.fhsSmoke}/bin/portable-smoke";
+          meta.description = "Boot the portable (static Qt) build in a generic FHS root";
+        };
+
+        # Best-effort wine smoke for the Windows build: offscreen WAIT_READY
+        # boot of daemon-app.exe + a silent NSIS install into a scratch
+        # prefix. Wine is emulation, not Windows: failures here are recorded,
+        # not gating (`nix run .#windows-smoke`).
+        apps.windows-smoke = {
+          type = "app";
+          program = "${windowsStack.smoke}/bin/windows-smoke";
+          meta.description = "Boot the Windows (MinGW) build + NSIS installer under wine";
+        };
+
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             cmake
@@ -325,16 +875,20 @@
             gersemi # CMake formatter
             gitleaks # secret scanning
             typos # source spell-checker
+            # --- release-feed tooling (scripts/release-manifest.sh + sync-updates-json.sh) ---
+            minisign # Ed25519 manifest signing/verification (packaging/UPDATES.md)
+            jq # manifest.json assembly + UPDATES.json mirror sync
+            shellcheck-minimal # lint for scripts/*.sh (doc-free: avoids pandoc/haddock build chain)
             nodejs # provides npx for jscpd duplicate detection (not packaged in nixpkgs)
             just # task runner: the justfile recipes (lint / build / qmllint)
             qt6Packages.qtkeychain # OS keychain for the server-token store (auth6)
-          ] ++ qtPackages ++ tuiDeps ++ [ qmltermwidget-qt6 ];
+          ] ++ qtShellPackages ++ tuiDeps ++ [ qmltermwidget-qt6 ];
 
           shellHook = ''
-            export QT_PLUGIN_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtPluginPrefix qtPackages}:$QT_PLUGIN_PATH"
-            export QML_IMPORT_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtQmlPrefix qtPackages}:${qmltermwidgetQmlDir}:$QML_IMPORT_PATH"
+            export QT_PLUGIN_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtPluginPrefix qtShellPackages}:$QT_PLUGIN_PATH"
+            export QML_IMPORT_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtQmlPrefix qtShellPackages}:${qmltermwidgetQmlDir}:$QML_IMPORT_PATH"
             export QML2_IMPORT_PATH="$QML_IMPORT_PATH:$QML2_IMPORT_PATH"
-            export CMAKE_PREFIX_PATH="${pkgs.lib.makeSearchPath "lib/cmake" qtPackages}:$CMAKE_PREFIX_PATH"
+            export CMAKE_PREFIX_PATH="${pkgs.lib.makeSearchPath "lib/cmake" qtShellPackages}:$CMAKE_PREFIX_PATH"
             export MD4QT_SOURCE_DIR="${md4qt}"
             export EARCUT_SOURCE_DIR="${earcut}"
             export KSYNTAXHIGHLIGHTING_SOURCE_DIR="${ksyntaxhighlighting}"

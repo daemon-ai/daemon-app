@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 Jarrad Hope
+# SPDX-License-Identifier: MPL-2.0
+[Desktop Entry]
+Type=Application
+Name=Daemon
+GenericName=AI Agent Chat
+Comment=AI agent chat application
+Exec=daemon-app
+Icon=daemon-app
+Terminal=false
+Categories=Development;Utility;
+# Qt derives WM_CLASS from the application/binary name; both are "daemon-app"
+# (QCoreApplication::setApplicationName in src/DaemonApp/App/main.cpp).
+StartupWMClass=daemon-app
+StartupNotify=true

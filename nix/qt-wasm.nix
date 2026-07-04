@@ -4,10 +4,15 @@
 # Qt-for-WebAssembly cross toolchain + the daemon-app wasm build.
 #
 # nixpkgs ships no prebuilt Qt-for-wasm, so the target stack is cross-compiled
-# from source here: the SAME qt6 6.x sources as the host Qt (Qt requires the
+# from source: the SAME qt6 6.x sources as the host Qt (Qt requires the
 # host tools' version to match the target version), configured for
 # `-platform wasm-emscripten` - static, Release, single-threaded (Qt's default
 # for wasm; threaded wasm needs COOP/COEP headers and is a bring-up risk).
+# The build recipe itself (qtbase manual configure + per-module qt-cmake) is
+# the shared qt-from-source.nix builder; this file supplies the wasm flavor's
+# parameters (emscripten toolchain env, host tools, feature matrix) and must
+# keep handing it values that reproduce the pre-extraction derivations
+# unchanged (verified via drv hashes).
 #
 # Emscripten comes from a dedicated nixpkgs pin (`nixpkgs-emscripten`): Qt 6.11
 # documents emscripten 4.0.7 as its supported toolchain, the primary nixpkgs
@@ -79,9 +84,13 @@ let
     export PYTHON=${pkgsEmscripten.python3}/bin/python3
   '';
 
-  # --- qtbase for wasm ------------------------------------------------------
-  # Configured with plain CMake (the documented equivalents of
-  # `configure -platform wasm-emscripten -static -release -qt-host-path ...`).
+  # --- The wasm Qt stack via the shared builder -----------------------------
+  # qt-from-source.nix owns the build recipe (qtbase manual configure, modules
+  # through qtbase's qt-cmake + QT_ADDITIONAL_PACKAGES_PREFIX_PATH); this
+  # flavor contributes the emscripten toolchain env + the wasm feature matrix.
+  #
+  # qtbase: the documented CMake equivalents of
+  # `configure -platform wasm-emscripten -static -release -qt-host-path ...`.
   # Qt's wasm auto-detect forces the static config; thread stays at Qt's wasm
   # default (OFF). Feature trims are conservative:
   #  * optimize-size ON: Qt's supported size-optimized build (-Os on every
@@ -103,93 +112,36 @@ let
   # no libQt6Widgets.a/libQt6PrintSupport.a on the final link line). Turning
   # the feature OFF would save 0 shipped bytes and would require shimming the
   # vendored find_package call just to configure - not worth it.
-  qtbaseWasm = pkgs.stdenv.mkDerivation {
-    pname = "qtbase-wasm";
-    version = qtVersion;
-    src = pkgs.qt6.qtbase.src; # pristine upstream tarball (nixpkgs' desktop patches don't apply to wasm)
-
-    nativeBuildInputs = with pkgs; [
-      cmake
-      ninja
+  qtFromSource = import ./qt-from-source.nix { inherit pkgs; } {
+    flavor = "wasm";
+    buildEnv = emBuildEnv;
+    # Pristine upstream tarball (the builder's default): nixpkgs' desktop
+    # patches don't apply to wasm.
+    qtbaseFlags = [
+      "-DQT_QMAKE_TARGET_MKSPEC=wasm-emscripten"
+      "-DCMAKE_TOOLCHAIN_FILE=${emToolchain}"
+      "-DQT_HOST_PATH=${qtHost}"
+      "-DQT_BUILD_EXAMPLES=OFF"
+      "-DQT_BUILD_TESTS=OFF"
+      "-DQT_GENERATE_SBOM=OFF"
+      "-DFEATURE_optimize_size=ON"
+      "-DFEATURE_dbus=OFF"
+      "-DFEATURE_sql_sqlite=ON"
+      "-DFEATURE_system_sqlite=OFF"
     ];
-
-    # The cmake hook would inject -DCMAKE_C_COMPILER=$CC (host gcc) and Nix
-    # install-dir flags, both of which fight the emscripten toolchain file;
-    # configure manually instead. ninja's hook still drives build + install.
-    dontUseCmakeConfigure = true;
-
-    configurePhase = ''
-      runHook preConfigure
-      ${emBuildEnv}
-      cmake -S . -B build -G Ninja \
-        -DCMAKE_INSTALL_PREFIX="$out" \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DQT_QMAKE_TARGET_MKSPEC=wasm-emscripten \
-        -DCMAKE_TOOLCHAIN_FILE=${emToolchain} \
-        -DQT_HOST_PATH=${qtHost} \
-        -DQT_BUILD_EXAMPLES=OFF \
-        -DQT_BUILD_TESTS=OFF \
-        -DQT_GENERATE_SBOM=OFF \
-        -DFEATURE_optimize_size=ON \
-        -DFEATURE_dbus=OFF \
-        -DFEATURE_sql_sqlite=ON \
-        -DFEATURE_system_sqlite=OFF
-      cd build
-      runHook postConfigure
-    '';
   };
+  inherit (qtFromSource) mkQtModule;
+  qtbaseWasm = qtFromSource.qtbase;
 
-  # --- Qt modules on top of qtbase-wasm ------------------------------------
-  # Each module configures through the wasm qtbase's qt-cmake (which exports
-  # the generated qt.toolchain.cmake: emscripten chainload + QT_HOST_PATH).
-  # Sibling wasm modules live in separate store prefixes, so they are handed
-  # to the toolchain via QT_ADDITIONAL_PACKAGES_PREFIX_PATH, Qt's supported
-  # mechanism for extra module prefixes under cross-compilation (it folds them
-  # into both CMAKE_PREFIX_PATH and CMAKE_FIND_ROOT_PATH).
-  mkQtWasmModule =
-    {
-      pname,
-      src,
-      wasmDeps ? [ ],
-      extraFlags ? [ ],
-    }:
-    pkgs.stdenv.mkDerivation {
-      inherit pname src;
-      version = qtVersion;
-
-      nativeBuildInputs = with pkgs; [
-        cmake
-        ninja
-        python3 # qtdeclarative's qml configure requires a host Python
-      ];
-
-      dontUseCmakeConfigure = true;
-
-      configurePhase = ''
-        runHook preConfigure
-        ${emBuildEnv}
-        export QT_ADDITIONAL_PACKAGES_PREFIX_PATH="${lib.concatStringsSep ":" (map toString wasmDeps)}"
-        ${qtbaseWasm}/bin/qt-cmake -S . -B build -G Ninja \
-          -DCMAKE_INSTALL_PREFIX="$out" \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DQT_BUILD_EXAMPLES=OFF \
-          -DQT_BUILD_TESTS=OFF \
-          -DQT_GENERATE_SBOM=OFF \
-          ${lib.concatStringsSep " " extraFlags}
-        cd build
-        runHook postConfigure
-      '';
-    };
-
-  qtshadertoolsWasm = mkQtWasmModule {
-    pname = "qtshadertools-wasm";
+  qtshadertoolsWasm = mkQtModule {
+    name = "qtshadertools";
     src = pkgs.qt6.qtshadertools.src;
   };
 
-  qtdeclarativeWasm = mkQtWasmModule {
-    pname = "qtdeclarative-wasm";
+  qtdeclarativeWasm = mkQtModule {
+    name = "qtdeclarative";
     src = pkgs.qt6.qtdeclarative.src;
-    wasmDeps = [ qtshadertoolsWasm ];
+    qtDeps = [ qtshadertoolsWasm ];
     # The app pins QQuickStyle::setStyle("Basic") in main() and imports no
     # other style, but a static Quick Controls build links EVERY built style
     # plugin (+ its compiled QML and shader resources) into the executable
@@ -205,16 +157,16 @@ let
     ];
   };
 
-  qtsvgWasm = mkQtWasmModule {
-    pname = "qtsvg-wasm";
+  qtsvgWasm = mkQtModule {
+    name = "qtsvg";
     src = pkgs.qt6.qtsvg.src;
   };
 
-  qtwebsocketsWasm = mkQtWasmModule {
-    pname = "qtwebsockets-wasm";
+  qtwebsocketsWasm = mkQtModule {
+    name = "qtwebsockets";
     src = pkgs.qt6.qtwebsockets.src;
     # qtwebsockets ships a QML plugin; Quick pulls shadertools transitively.
-    wasmDeps = [
+    qtDeps = [
       qtdeclarativeWasm
       qtshadertoolsWasm
     ];

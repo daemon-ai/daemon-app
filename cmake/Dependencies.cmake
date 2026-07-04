@@ -112,9 +112,13 @@ set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 # so turn it off for this vendored subtree and restore it afterwards.
 set(_da_prev_qmlls_ini "${QT_QML_GENERATE_QMLLS_INI}")
 set(QT_QML_GENERATE_QMLLS_INI OFF)
-if(DAEMON_APP_WASM)
-    # The host rcc compresses QRC payloads with zstd by default, but the wasm
-    # Qt6Core is built without the zstd feature, so the registrar's
+# Cross static builds (wasm, mingw) share the rcc/zstd mismatch: rcc is a
+# HOST tool (QT_HOST_PATH, zstd ON in nixpkgs' qtbase) while the TARGET
+# Qt6Core is built with FEATURE_zstd=OFF. The native linux-static build runs
+# its own zstd-less rcc and never hits this.
+if(DAEMON_APP_WASM OR (DAEMON_APP_STATIC AND CMAKE_CROSSCOMPILING))
+    # The host rcc compresses QRC payloads with zstd by default, but this
+    # config's Qt6Core is built without the zstd feature, so the registrar's
     # qResourceFeatureZstd() is undefined at link. Qt's own resource pipeline
     # passes --no-zstd when QT_FEATURE_zstd is off; the framework's
     # data/CMakeLists.txt invokes Qt6::rcc manually and does not. Point the
@@ -139,11 +143,12 @@ if(DAEMON_APP_WASM)
         IMPORTED_LOCATION_MINSIZEREL "${_da_rcc_wrapper}"
         IMPORTED_LOCATION_DEBUG "${_da_rcc_wrapper}")
 
-    # The framework's CLI tool + example executables are useless browser
-    # payload, and ECM's KDECompilerSettings gives every executable
-    # -Wl,--enable-new-dtags (an ELF-only flag wasm-ld rejects). EXCLUDE_FROM_ALL
-    # keeps only what the app links - the static lib + QML plugin - in the
-    # build; both are static archives, which never see the linker flag.
+    # The framework's CLI tool + example executables are useless payload on
+    # these single-binary configs (and would pollute the NSIS install tree on
+    # the mingw build); on wasm ECM's KDECompilerSettings additionally gives
+    # every executable -Wl,--enable-new-dtags (an ELF-only flag wasm-ld
+    # rejects). EXCLUDE_FROM_ALL keeps only what the app links - the static
+    # lib + QML plugin - in the build; both are static archives.
     add_subdirectory("${_ksyntax_dir}" "${CMAKE_BINARY_DIR}/_deps/ksyntaxhighlighting" EXCLUDE_FROM_ALL)
 else()
     add_subdirectory("${_ksyntax_dir}" "${CMAKE_BINARY_DIR}/_deps/ksyntaxhighlighting")

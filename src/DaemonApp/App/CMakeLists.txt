@@ -10,6 +10,30 @@ qt_add_executable(daemon-app
 # main.cpp includes the generated daemon_app_version.h; depend on the target that refreshes it.
 add_dependencies(daemon-app daemon_app_version_header)
 
+# --- macOS bundle ------------------------------------------------------------
+# Desktop macOS builds a proper .app bundle: Finder/Dock integration,
+# codesigning, notarization, and the CPack DragNDrop (.dmg) packaging all
+# require one. iOS is APPLE too but bundles through the mobile toolchain,
+# hence the DAEMON_APP_MOBILE guard. Set here (not in cmake/Packaging.cmake)
+# so the property lands before Qt's deferred target finalization runs at this
+# directory's scope end - the finalizer reads MACOSX_BUNDLE for bundle rpath
+# handling. Bundle payload staging and the DMG live in cmake/Packaging.cmake.
+if(APPLE AND NOT DAEMON_APP_MOBILE)
+    # Build-time copy into <bundle>/Contents/Resources, so the build-tree
+    # bundle carries the icon too; installs stage the same file.
+    set(_da_macos_icns "${CMAKE_SOURCE_DIR}/packaging/macos/daemon-app.icns")
+    set_source_files_properties("${_da_macos_icns}"
+        PROPERTIES MACOSX_PACKAGE_LOCATION Resources
+    )
+    target_sources(daemon-app PRIVATE "${_da_macos_icns}")
+    # Info.plist template: CFBundleIdentifier io.daemon.app (the AppStream
+    # id), version fields from @PROJECT_VERSION@ (see the template header).
+    set_target_properties(daemon-app PROPERTIES
+        MACOSX_BUNDLE ON
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/packaging/macos/Info.plist.in"
+    )
+endif()
+
 qt_add_qml_module(daemon-app
     URI DaemonApp.App
     VERSION 1.0
@@ -32,6 +56,9 @@ target_link_libraries(daemon-app
         daemon-app::command
         daemon-app::export
         daemon-app::settings_store
+        # Release-feed / update scaffold: capability-dial surface only, no UI
+        # wiring yet (packaging/UPDATES.md).
+        daemon-app::update
         daemon-app::connection
         daemon-app::fs
         daemon-app::memory
@@ -104,10 +131,13 @@ target_link_libraries(daemon-app
 )
 
 # The runtime resource dir (fonts + XML) MicroTeX's tex::LaTeX::init() reads.
-# Desktop/mobile read it straight from the (Nix store) source tree. The browser
-# cannot read host paths, so the wasm link packs the directory into the
-# emscripten .data preload bundle and init() reads it back from the same
-# fixed MEMFS mount point.
+# Desktop/mobile resolve it at runtime (application.cpp): the installed
+# share/daemon-app/microtex-res copy (install rule below) wins over the baked
+# build-time path, which stays only for dev runs out of the build tree -
+# shipping the bake would drag the whole MicroTeX source tree into the Nix
+# runtime closure. The browser cannot read host paths, so the wasm link packs
+# the directory into the emscripten .data preload bundle and init() reads it
+# back from the same fixed MEMFS mount point.
 if(DAEMON_APP_WASM)
     # Size flags already evaluated and NOT carried, for the record:
     #  * --closure 1 halves the JS glue but breaks qtloader.js at boot
@@ -127,8 +157,14 @@ if(DAEMON_APP_WASM)
         PRIVATE MICROTEX_RES_DIR="/microtex-res"
     )
 else()
+    # Desktop bakes a BUILD-TREE copy as the last-resort fallback (dev runs
+    # straight out of the build dir, where nothing is installed). Deliberately
+    # not the source res dir itself: under Nix that is a store path, and a
+    # store path baked into the binary chains the whole MicroTeX source tree
+    # into the runtime closure of the installed app.
+    file(COPY "${MICROTEX_RES_DIR}" DESTINATION "${CMAKE_BINARY_DIR}/microtex")
     target_compile_definitions(daemon-app
-        PRIVATE MICROTEX_RES_DIR="${MICROTEX_RES_DIR}"
+        PRIVATE MICROTEX_RES_DIR="${CMAKE_BINARY_DIR}/microtex/res"
     )
 endif()
 
@@ -165,6 +201,30 @@ if(NOT DAEMON_APP_MOBILE AND NOT DAEMON_APP_WASM)
     target_link_libraries(daemon-app PRIVATE Qt6::Widgets)
 endif()
 
+# --- Windows executable polish ----------------------------------------------
+if(WIN32)
+    # GUI subsystem: no console window flashes up on launch. The headless
+    # probes' stdout sentinel contract (DAEMON_APP_WAIT_READY prints
+    # "DAEMON_APP_READY ok", see main.cpp) is unaffected in practice: every
+    # consumer (wine smoke, E2E harnesses) runs the exe with stdout
+    # REDIRECTED to a pipe/file, and a GUI-subsystem process inherits and
+    # writes such handles fine - only an interactive console loses the text,
+    # which is not a supported flow.
+    set_target_properties(daemon-app PROPERTIES WIN32_EXECUTABLE TRUE)
+
+    # Embedded icon + VERSIONINFO resource, compiled in via windres
+    # (CMAKE_RC_COMPILER from the MinGW toolchain). The numeric version
+    # fields derive from the top-level VERSION file through project(VERSION).
+    enable_language(RC)
+    set(DAEMON_APP_RC_ICON "${CMAKE_SOURCE_DIR}/packaging/windows/daemon-app.ico")
+    configure_file(
+        "${CMAKE_SOURCE_DIR}/packaging/windows/daemon-app.rc.in"
+        "${CMAKE_BINARY_DIR}/packaging/daemon-app.rc"
+        @ONLY
+    )
+    target_sources(daemon-app PRIVATE "${CMAKE_BINARY_DIR}/packaging/daemon-app.rc")
+endif()
+
 include(GNUInstallDirs)
 if(DAEMON_APP_WASM)
     # The browser deliverable is the emscripten artifact set qtloader.js boots
@@ -193,5 +253,13 @@ else()
         BUNDLE DESTINATION .
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+    # Ship MicroTeX's runtime resources next to the binary, where the startup
+    # probe (application.cpp microtexResDir) finds them app-dir-relative.
+    # Unconditional across desktop platforms (the windows branch carried a
+    # WIN32-only copy of this rule while the size-wins runtime probe was
+    # pending; the trains have merged).
+    install(DIRECTORY "${MICROTEX_RES_DIR}/"
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/daemon-app/microtex-res
     )
 endif()
