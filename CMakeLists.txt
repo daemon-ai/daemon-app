@@ -137,3 +137,7 @@ include(CTest)
 if(BUILD_TESTING AND NOT DAEMON_APP_WASM)
     add_subdirectory(tests)
 endif()
+
+# Desktop packaging: freedesktop assets, bundled sibling binaries, CPack
+# (DEB / RPM / AppImage). No-op for wasm/mobile configures.
+include(Packaging)

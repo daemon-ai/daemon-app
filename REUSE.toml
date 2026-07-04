@@ -38,6 +38,17 @@ path = [
 SPDX-FileCopyrightText = "2026 Jarrad Hope"
 SPDX-License-Identifier = "MPL-2.0"
 
+# --- First-party icon rasters: generated from packaging/linux/icons/daemon-app.svg
+#     by packaging/linux/icons/regen.sh (binary, cannot carry headers). ---
+[[annotations]]
+path = [
+    "packaging/linux/icons/*.png",
+    "packaging/windows/daemon-app.ico",
+    "packaging/macos/daemon-app.icns",
+]
+SPDX-FileCopyrightText = "2026 Jarrad Hope"
+SPDX-License-Identifier = "MPL-2.0"
+
 # --- Generated codec: zcbor output from the first-party daemon-api CDDL contract.
 #     Drift-checked against `nix run .#update-codec`, so headers are declared here
 #     rather than written into the files. ---

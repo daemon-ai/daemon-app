@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 Jarrad Hope
+SPDX-License-Identifier: MPL-2.0
+
+Placeholder app icon: flat two-color, rounded-square surface with a stylized
+lowercase "d" (bowl + ascender stem). Colors are the app's own theme tokens:
+surface #191919 (dark background), glyph #2383e2 (light-theme accent) - see
+src/core/theme/theme_palette.cpp. Regenerate the raster set with
+packaging/linux/icons/regen.sh after editing.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="96" fill="#191919"/>
+  <g fill="none" stroke="#2383e2" stroke-width="44">
+    <circle cx="232" cy="312" r="88"/>
+    <path d="M320 120v258" stroke-linecap="round"/>
+  </g>
+</svg>
