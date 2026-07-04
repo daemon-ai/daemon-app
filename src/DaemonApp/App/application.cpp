@@ -365,13 +365,33 @@ void Application::announceConnectionReady(int timeoutMs) const {
 }
 
 void Application::announceReloadSentinels() const {
-    // (1) Cache rows at boot, BEFORE any network fetch: a non-zero count proves the IDBFS-backed
-    // SQLite cache survived the reload. Read synchronously here (Stream A populates approxRowCount
-    // over IDBFS; a 0 on a first/empty boot is still a valid sentinel line for the harness).
+    // (1) Cache rows at boot. This read is on the PRE-AUTH default cache namespace, which is empty
+    // by design (the durable rows live in the per-user db that AuthOk opens - see (1b)); a 0 here
+    // on a fresh boot is a valid sentinel line for the harness (it proves the emitter path is
+    // wired).
     if (m_services.cache != nullptr) {
         std::fprintf(stdout, "%s%d\n", platform::kSentinelCacheRowsPrefix,
                      m_services.cache->approxRowCount());
         std::fflush(stdout);
+    }
+
+    // (1b) Re-emit the cache-row count once the per-user namespace is active, BEFORE the on-ready
+    // refreshSessions() re-fetch. The per-user db is opened by AuthOk (cache->setUserNamespace in
+    // app_service_graph.cpp, which fires on NodeApiClient::authenticated and precedes "ready"); on
+    // a resume that db is the IDBFS-preloaded copy, so this reading is a true PRE-FETCH proof that
+    // the SQLite cache survived the reload (the reload-survival harness asserts rows>0 on load 2
+    // here, not on the boot line above). This connect is registered after the graph's own
+    // `authenticated` handler, so Qt runs it after setUserNamespace has switched the namespace.
+    if (m_services.nodeApi != nullptr && m_services.cache != nullptr) {
+        auto* cache = m_services.cache;
+        connect(
+            m_services.nodeApi, &daemonapp::daemon::NodeApiClient::authenticated, cache,
+            [cache] {
+                std::fprintf(stdout, "%s%d\n", platform::kSentinelCacheRowsPrefix,
+                             cache->approxRowCount());
+                std::fflush(stdout);
+            },
+            Qt::SingleShotConnection);
     }
 
     // (2) Auth outcome: resumed (AuthOk via a persisted token, no SCRAM challenge) vs scram (a

@@ -12,9 +12,12 @@
 #   #   base mode - no daemon, proves the reload + browser-storage substrate
 #   python3 scripts/wasm-boot-smoke.py --scenario reload --mode base <dir>
 #   #   strict mode - self-boots the daemon serving a patched bundle copy and
-#   #   asserts the full re-auth / warm-cache / first-run-survival sentinel chain
+#   #   asserts the full re-auth / warm-cache / first-run-survival sentinel chain.
+#   #   --seed-session warms node-side state (via --daemon-cli-bin) before load 1
+#   #   so the cache survives to load2 with rows>0.
 #   python3 scripts/wasm-boot-smoke.py --scenario reload --mode strict \
-#       --daemon-bin <daemon> --wasm-dir <wasm-bundle> --login user:pass
+#       --daemon-bin <daemon> --wasm-dir <wasm-bundle> --login user:pass \
+#       --seed-session --daemon-cli-bin <daemon-cli>
 #   #   or point at an already-running daemon origin instead of self-booting
 #   python3 scripts/wasm-boot-smoke.py --scenario reload --mode strict \
 #       --url http://127.0.0.1:PORT --login user:pass
@@ -382,6 +385,34 @@ def start_daemon(daemon_bin, web_root, addr, login):
     return proc, tmp
 
 
+def seed_session(cli_bin, sock, session_id="e2e-seed"):
+    """Create durable node-side session activity BEFORE the first browser load so
+    the client's initial roster sync writes rows into the SQLite cache - which the
+    debounced FS.syncfs then persists to IDBFS, so the reload's pre-fetch cache
+    count (load2) is a non-vacuous >0. daemon-cli speaks the node's local admin api
+    socket (no SCRAM). `assign` creates+wakes a durable session (a daemon_sessions
+    roster row); the mock-provider `submit` turn additionally seeds conversation/
+    transcript rows (best-effort - the roster row alone satisfies the assertion)."""
+    base = [cli_bin, "--socket", sock]
+    subprocess.run(
+        base + ["assign", session_id],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        timeout=30,
+    )
+    try:
+        subprocess.run(
+            base + ["submit", session_id, "hello"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=30,
+        )
+    except (subprocess.SubprocessError, OSError):
+        pass  # the durable session from `assign` already gives the roster a row
+
+
 def stop_daemon(proc):
     if proc is None:
         return
@@ -454,6 +485,20 @@ def run_reload(args, log, log_path):
                     file=sys.stderr,
                 )
                 return 1
+            # Seed node-side session activity before load 1 so the first sync warms
+            # the client cache (and thence IDBFS) - makes load2's pre-fetch >0 real.
+            if args.seed_session:
+                if not args.daemon_cli_bin:
+                    print(
+                        "reload/strict --seed-session needs --daemon-cli-bin",
+                        file=sys.stderr,
+                    )
+                    return 2
+                try:
+                    seed_session(args.daemon_cli_bin, os.path.join(daemon_tmp, "d.sock"))
+                except (subprocess.SubprocessError, OSError) as exc:
+                    print(f"reload: seed-session failed: {exc}", file=sys.stderr)
+                    return 1
             origin = f"http://{addr}"
         else:
             if not args.dir:
@@ -494,14 +539,15 @@ def run_reload(args, log, log_path):
                     file=sys.stderr,
                 )
                 return 1
+            rows1 = 0
             if strict:
+                # The load1 cache sentinel is emitted at boot, BEFORE the first
+                # roster sync (a nested wait is forbidden on single-threaded wasm),
+                # so on a first-ever load the freshly-created cache is legitimately
+                # empty (rows=0). Persistence is proven by load2's pre-fetch count
+                # (>0 = synced rows survived via IDBFS), which --seed-session makes
+                # non-vacuous. Record load1's count for the report; don't assert >0.
                 rows1 = int(CACHE_ROWS_RE.search(found["cache"]).group(1))
-                if rows1 <= 0:
-                    print(
-                        f"reload: first-load cache rows not positive ({rows1})",
-                        file=sys.stderr,
-                    )
-                    return 1
 
             # Seed a browser-storage marker: localStorage is the backend QSettings
             # rides on wasm, so its survival across the reload is the same
@@ -512,7 +558,15 @@ def run_reload(args, log, log_path):
             )
 
             # ---- reload in the same profile ----
-            for _ in cdp.drain(1.0):  # flush late first-load lines
+            # Give the roster -> cache -> IDBFS pipeline time to land before reload.
+            # On connect-ready the client runs refreshSessions() (near-instant), but
+            # the cache write-back is a debounced FS.syncfs (kIdbfsSyncDebounceMs=3s
+            # in src/core/platform/wasm_persistence.cpp). Reloading too soon tears the
+            # page down before that syncfs completes, so load2 would preload an empty
+            # IDBFS. In strict mode wait out the debounce (+ margin) so the seeded
+            # roster is durably in IndexedDB; base only needs the localStorage marker.
+            settle_s = 7.0 if strict else 1.0
+            for _ in cdp.drain(settle_s):  # flush late first-load lines; let syncfs land
                 pass
             cdp.events.clear()
             cdp.call("Page.reload", {})
@@ -522,7 +576,17 @@ def run_reload(args, log, log_path):
                 load2 = [
                     ("ready", lambda t: SENTINEL_READY_OK in t),
                     ("resumed", lambda t: SENTINEL_AUTH_RESUMED in t),
-                    ("cache", lambda t: CACHE_ROWS_RE.search(t) is not None),
+                    # Require a POSITIVE cache count: the app emits two cache lines - a
+                    # boot line on the empty pre-auth default namespace (always 0) and a
+                    # post-auth line on the per-user db, which on a resume is the
+                    # IDBFS-preloaded copy. Matching the >0 line (not merely "present")
+                    # pins the assertion to the pre-fetch per-user reading that proves
+                    # the SQLite cache survived the reload.
+                    (
+                        "cache",
+                        lambda t: (m := CACHE_ROWS_RE.search(t)) is not None
+                        and int(m.group(1)) > 0,
+                    ),
                 ]
             else:
                 load2 = [("boot", lambda t: BOOT_MARKER in t)]
@@ -652,6 +716,17 @@ def main():
     ap.add_argument("--daemon-bin", default=None, help="reload/strict: debug daemon binary to self-boot")
     ap.add_argument("--wasm-dir", default=None, help="reload/strict: bundle to patch + serve via the daemon")
     ap.add_argument("--login", default="e2e:e2e-passphrase", help="reload/strict: user:pass for admin seed + login hook")
+    ap.add_argument(
+        "--seed-session",
+        action="store_true",
+        help="reload/strict: create a durable node session via daemon-cli before "
+        "load 1 (warms the client cache -> IDBFS so load2's pre-fetch count is >0)",
+    )
+    ap.add_argument(
+        "--daemon-cli-bin",
+        default=None,
+        help="reload/strict: daemon-cli binary used by --seed-session",
+    )
     ap.add_argument("--port", type=int, default=0, help="listen port (0 = ephemeral; boot defaults to 8901)")
     ap.add_argument("--shot", default="/tmp/size-smoke.png")
     ap.add_argument("--timeout", type=float, default=90)
