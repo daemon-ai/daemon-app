@@ -127,5 +127,9 @@ target_link_libraries(da_daemon_client
         # exposes QtWebSockets types.
         Qt6::WebSockets
         daemon-app::daemon_codec
+        # Browser-persistence seams: DaemonCacheStore calls platform::scheduleIdbfsSync() /
+        # installUnloadFlush() (no-ops off wasm). Private - no public daemon_client header exposes
+        # platform types.
+        daemon-app::platform
         daemon-app::warnings
 )

@@ -4,15 +4,18 @@
 #include "daemon/daemon_cache_store.h"
 
 #include "daemon/client_cache_schema.h"
+#include "platform/wasm_persistence.h"
 
 #include <QCryptographicHash>
 #include <QDebug>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStandardPaths>
+#include <QStringList>
 #include <QVariant>
 
 namespace daemonapp::daemon {
@@ -21,10 +24,56 @@ DaemonCacheStore::DaemonCacheStore(const QString& dbPath, QObject* parent)
     : QObject(parent), m_basePath(dbPath.isEmpty() ? defaultDatabasePath() : dbPath),
       m_connectionName(QStringLiteral("daemon-cache-%1").arg(reinterpret_cast<quintptr>(this))) {
     openAt(m_basePath);
+    // Register the browser unload/visibility write-back once (no-op off wasm): the debounced
+    // FS.syncfs could otherwise lose the last cache mutations when the tab is backgrounded/closed.
+    platform::installUnloadFlush();
 }
 
 void DaemonCacheStore::openAt(const QString& path) {
-    // Drop any existing connection so we can rebind the same connection name to the new file.
+    dropConnection();
+    m_dbPath = path;
+    QDir().mkpath(QFileInfo(m_dbPath).absolutePath());
+    if (openConnection()) {
+        return;
+    }
+    // The db failed to open, flunked the integrity gate, or its schema could not be built. On wasm
+    // IDBFS snapshots each file independently, so an interrupted syncfs can persist a torn
+    // db/journal pair; on any platform a crash mid-write can corrupt the file. The cache is
+    // non-authoritative (the daemon re-baselines it on reconnect), so recovery is simply: discard
+    // the file(s) and start fresh. This branch is only reached on failure, so it is harmless on a
+    // healthy db.
+    qWarning() << "daemon-cache: unusable database at" << m_dbPath << "(" << m_lastError
+               << "); discarding and rebuilding - the non-authoritative cache re-baselines from "
+                  "the daemon on reconnect";
+    dropConnection();
+    removeDatabaseFiles(m_dbPath);
+    if (!openConnection()) {
+        qWarning() << "daemon-cache: rebuild after reset still failed:" << m_lastError;
+    }
+}
+
+bool DaemonCacheStore::openConnection() {
+    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), m_connectionName);
+    db.setDatabaseName(m_dbPath);
+    if (!db.open()) {
+        setLastError(db.lastError().text());
+        return false;
+    }
+    if (!integrityCheckOk()) {
+        setLastError(QStringLiteral("PRAGMA integrity_check failed"));
+        db.close();
+        return false;
+    }
+    if (!ensureSchema()) {
+        // m_lastError already carries the failing statement's error; close so isOpen() reports the
+        // store as unusable rather than half-initialized.
+        db.close();
+        return false;
+    }
+    return true;
+}
+
+void DaemonCacheStore::dropConnection() {
     {
         QSqlDatabase existing = QSqlDatabase::database(m_connectionName, false);
         if (existing.isValid()) {
@@ -34,18 +83,27 @@ void DaemonCacheStore::openAt(const QString& path) {
     if (QSqlDatabase::contains(m_connectionName)) {
         QSqlDatabase::removeDatabase(m_connectionName);
     }
-    m_dbPath = path;
-    QDir().mkpath(QFileInfo(m_dbPath).absolutePath());
-    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), m_connectionName);
-    db.setDatabaseName(m_dbPath);
-    if (!db.open()) {
-        setLastError(db.lastError().text());
-        return;
+}
+
+bool DaemonCacheStore::integrityCheckOk() const {
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    // integrity_check(1): stop after the first problem - we only need a yes/no verdict on the boot
+    // path, not a full scan of a large cache. A healthy db returns a single "ok" row.
+    if (!q.exec(QStringLiteral("PRAGMA integrity_check(1)"))) {
+        return false;
     }
-    if (!ensureSchema()) {
-        // m_lastError already carries the failing statement's error; close so isOpen()
-        // reports the store as unusable rather than half-initialized.
-        db.close();
+    if (!q.next()) {
+        return false;
+    }
+    return q.value(0).toString().compare(QStringLiteral("ok"), Qt::CaseInsensitive) == 0;
+}
+
+void DaemonCacheStore::removeDatabaseFiles(const QString& path) {
+    // Remove the db and any SQLite sidecars (rollback journal / WAL / shared-memory) so a torn set
+    // cannot resurrect the corruption on the next open.
+    QFile::remove(path);
+    for (const char* suffix : {"-journal", "-wal", "-shm"}) {
+        QFile::remove(path + QString::fromLatin1(suffix));
     }
 }
 
@@ -150,11 +208,7 @@ bool DaemonCacheStore::setMeta(const QString& key, const QString& value) {
                              "ON CONFLICT(key) DO UPDATE SET value=excluded.value"));
     q.addBindValue(key);
     q.addBindValue(value);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 QString DaemonCacheStore::meta(const QString& key) const {
@@ -169,15 +223,51 @@ QString DaemonCacheStore::meta(const QString& key) const {
 }
 
 bool DaemonCacheStore::clearAll() {
-    // TODO(W2): drop + recreate the data tables and delete the namespaced sibling files so "Clear
-    // local data" leaves an empty (but valid) cache that re-baselines from the daemon.
-    return true;
+    // Empty the currently-open db (drop + recreate the data tables + restamp schema_version) so it
+    // stays a valid, empty cache that re-baselines from the daemon on the next ready.
+    bool ok = true;
+    if (isOpen()) {
+        ok = dropDataTables() && createDataTables() &&
+             setMeta(QStringLiteral("schema_version"), QString::number(cache::kSchemaVersion));
+    }
+    // Then delete every sibling cache file for OTHER user namespaces (daemon_cache*.db* in the same
+    // directory) so "Clear local data" leaves no prior user's roster/transcripts on the device. The
+    // current db and its sidecars are kept: it is open and already emptied above.
+    const QDir dir = QFileInfo(m_dbPath).dir();
+    const QStringList siblings = dir.entryList(
+        {QStringLiteral("daemon_cache*.db"), QStringLiteral("daemon_cache*.db-*")}, QDir::Files);
+    for (const QString& name : siblings) {
+        const QString abs = dir.absoluteFilePath(name);
+        if (abs == m_dbPath || abs.startsWith(m_dbPath)) {
+            continue; // the open, freshly-emptied db (+ its -journal / -wal / -shm sidecars)
+        }
+        QFile::remove(abs);
+    }
+    // Best-effort write-back of the emptied mount (no-op off wasm).
+    platform::scheduleIdbfsSync();
+    return ok;
 }
 
 int DaemonCacheStore::approxRowCount() const {
-    // TODO(W2): return the aggregate row count across the data tables (feeds the boot cache-rows
-    // sentinel). Stubbed to 0 until the real count lands.
-    return 0;
+    if (!isOpen()) {
+        return 0;
+    }
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    // One round-trip sum across the cached data tables (daemon_cache_meta is bookkeeping,
+    // excluded). Best-effort: any error yields 0. Feeds the boot cache-rows sentinel, which proves
+    // the IDBFS mount survived a reload with content before any network fetch.
+    if (!q.exec(QStringLiteral("SELECT (SELECT COUNT(*) FROM daemon_sessions)"
+                               " + (SELECT COUNT(*) FROM daemon_sync_cursors)"
+                               " + (SELECT COUNT(*) FROM daemon_profiles)"
+                               " + (SELECT COUNT(*) FROM daemon_fs_entries)"
+                               " + (SELECT COUNT(*) FROM daemon_transcript_blocks)"
+                               " + (SELECT COUNT(*) FROM daemon_fleet_units)"
+                               " + (SELECT COUNT(*) FROM daemon_transport_instances)"
+                               " + (SELECT COUNT(*) FROM daemon_conversations)"))) {
+        setLastError(q.lastError().text());
+        return 0;
+    }
+    return q.next() ? q.value(0).toInt() : 0;
 }
 
 bool DaemonCacheStore::execSql(const char* sql) {
@@ -186,6 +276,17 @@ bool DaemonCacheStore::execSql(const char* sql) {
         setLastError(q.lastError().text());
         return false;
     }
+    return true;
+}
+
+bool DaemonCacheStore::execWrite(QSqlQuery& query) {
+    if (!query.exec()) {
+        setLastError(query.lastError().text());
+        return false;
+    }
+    // A successful mutation dirties the on-disk db; on wasm this arms the debounced FS.syncfs that
+    // writes the IDBFS mount back to IndexedDB (no-op off wasm). Coalesced, so per-write is cheap.
+    platform::scheduleIdbfsSync();
     return true;
 }
 
@@ -214,11 +315,7 @@ bool DaemonCacheStore::upsertSession(const CachedSessionRow& row) {
     q.addBindValue(row.pinned ? 1 : 0);
     q.addBindValue(row.archived ? 1 : 0);
     q.addBindValue(row.updatedAtMs);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 QList<CachedSessionRow> DaemonCacheStore::sessions() const {
@@ -251,11 +348,7 @@ bool DaemonCacheStore::deleteSession(const QString& sessionId) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral("DELETE FROM daemon_sessions WHERE session_id=?"));
     q.addBindValue(sessionId);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 bool DaemonCacheStore::setCursor(const QString& scope, const QString& cursor, qint64 updatedAtMs) {
@@ -267,11 +360,7 @@ bool DaemonCacheStore::setCursor(const QString& scope, const QString& cursor, qi
     q.addBindValue(scope);
     q.addBindValue(cursor);
     q.addBindValue(updatedAtMs);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 QString DaemonCacheStore::cursor(const QString& scope) const {
@@ -301,11 +390,7 @@ bool DaemonCacheStore::upsertFsEntry(const CachedFsEntryRow& row) {
     q.addBindValue(row.mtimeMs);
     q.addBindValue(row.revisionCbor);
     q.addBindValue(row.updatedAtMs);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 QList<CachedFsEntryRow> DaemonCacheStore::fsEntries(const QString& rootId) const {
@@ -345,11 +430,7 @@ bool DaemonCacheStore::upsertProfile(const CachedProfileRow& row) {
     q.addBindValue(row.specCbor);
     q.addBindValue(row.active ? 1 : 0);
     q.addBindValue(row.updatedAtMs);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 QList<CachedProfileRow> DaemonCacheStore::profiles() const {
@@ -377,11 +458,7 @@ bool DaemonCacheStore::deleteProfile(const QString& profileRef) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral("DELETE FROM daemon_profiles WHERE profile_ref=?"));
     q.addBindValue(profileRef);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 bool DaemonCacheStore::upsertFleetUnit(const CachedFleetUnitRow& row) {
@@ -405,11 +482,7 @@ bool DaemonCacheStore::upsertFleetUnit(const CachedFleetUnitRow& row) {
     q.addBindValue(row.sessionId);
     q.addBindValue(row.work);
     q.addBindValue(row.updatedAtMs);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 QList<CachedFleetUnitRow> DaemonCacheStore::fleetUnits() const {
@@ -444,11 +517,7 @@ bool DaemonCacheStore::deleteFleetUnit(const QString& unitId) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral("DELETE FROM daemon_fleet_units WHERE unit_id=?"));
     q.addBindValue(unitId);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 bool DaemonCacheStore::upsertTransportInstance(const CachedTransportInstanceRow& row) {
@@ -467,11 +536,7 @@ bool DaemonCacheStore::upsertTransportInstance(const CachedTransportInstanceRow&
     q.addBindValue(row.presence);
     q.addBindValue(row.boundProfile);
     q.addBindValue(row.updatedAtMs);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 QList<CachedTransportInstanceRow> DaemonCacheStore::transportInstances() const {
@@ -501,11 +566,7 @@ bool DaemonCacheStore::deleteTransportInstance(const QString& transport) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral("DELETE FROM daemon_transport_instances WHERE transport=?"));
     q.addBindValue(transport);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 bool DaemonCacheStore::upsertConversation(const CachedConversationRow& row) {
@@ -521,11 +582,7 @@ bool DaemonCacheStore::upsertConversation(const CachedConversationRow& row) {
     q.addBindValue(row.title);
     q.addBindValue(row.topic);
     q.addBindValue(row.updatedAtMs);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 QList<CachedConversationRow> DaemonCacheStore::conversations(const QString& transport) const {
@@ -557,11 +614,7 @@ bool DaemonCacheStore::deleteConversation(const QString& transport, const QStrin
     q.prepare(QStringLiteral("DELETE FROM daemon_conversations WHERE transport=? AND conv_id=?"));
     q.addBindValue(transport);
     q.addBindValue(convId);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 bool DaemonCacheStore::upsertTranscriptBlock(const CachedTranscriptBlockRow& row) {
@@ -589,11 +642,7 @@ bool DaemonCacheStore::upsertTranscriptBlock(const CachedTranscriptBlockRow& row
     q.addBindValue(row.hostKind);
     q.addBindValue(row.contentKind);
     q.addBindValue(row.updatedAtMs);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 QList<CachedTranscriptBlockRow> DaemonCacheStore::transcriptBlocks(const QString& sessionId,
@@ -635,11 +684,7 @@ bool DaemonCacheStore::clearTranscript(const QString& sessionId) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     q.prepare(QStringLiteral("DELETE FROM daemon_transcript_blocks WHERE session_id=?"));
     q.addBindValue(sessionId);
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
+    return execWrite(q);
 }
 
 QHash<QString, QString> DaemonCacheStore::latestTranscriptSnippets() const {

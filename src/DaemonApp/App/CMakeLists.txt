@@ -117,6 +117,11 @@ if(DAEMON_APP_WASM)
     #    (environ_sizes_get) and saved <1 KB.
     target_link_options(daemon-app
         PRIVATE "SHELL:--preload-file ${MICROTEX_RES_DIR}@/microtex-res"
+        # IDBFS backend (Browser Persistence Polish / W2): the shell's preRun mounts the AppData dir
+        # (daemon_cache*.db) as IDBFS and FS.syncfs(true)s it from IndexedDB before main() runs, so
+        # DaemonCacheStore opens the persisted db with no C++ ordering changes; scheduleIdbfsSync()
+        # writes back. Linking -lidbfs.js pulls the backend into the runtime.
+        PRIVATE "SHELL:-lidbfs.js"
     )
     target_compile_definitions(daemon-app
         PRIVATE MICROTEX_RES_DIR="/microtex-res"
@@ -133,8 +138,17 @@ endif()
 # headless probes like DAEMON_APP_WAIT_READY) is reachable in the browser. Qt folds the value
 # into the emscripten EXPORTED_RUNTIME_METHODS link option; the installed artifact set is
 # unchanged, so the install(FILES ...) block below needs no adjustment.
+# The shell's preRun IDBFS mount (W2) runs OUTSIDE the wasm module (it is defined in
+# daemon-app.html and handed to emscripten via qtLoad's config.preRun), so it reaches the runtime
+# only through the module instance: it calls instance.FS.mount(instance.FS.filesystems.IDBFS, ...)
+# and gates main() on instance.addRunDependency/removeRunDependency around FS.syncfs(true). FS is
+# already in Qt's default exported set; addRunDependency/removeRunDependency are not, so export
+# them here (comma-separated - a ';' list would break the emscripten flag). "ENV" stays for the
+# qt.environment seam. (scheduleIdbfsSync()'s EM_ASM runs inside the module, where FS is already in
+# scope, so it needs no export.)
 if(DAEMON_APP_WASM)
-    set_target_properties(daemon-app PROPERTIES QT_WASM_EXTRA_EXPORTED_METHODS "ENV")
+    set_target_properties(daemon-app PROPERTIES
+        QT_WASM_EXTRA_EXPORTED_METHODS "ENV,addRunDependency,removeRunDependency")
 endif()
 
 # Build dependency on the KSyntaxHighlighting QML plugin so its module is emitted
