@@ -312,6 +312,65 @@ if(APPLE)
     else()
         message(WARNING "daemon-app: Qt6::QOffscreenIntegrationPlugin target not found; offscreen QPA plugin will not be bundled")
     endif()
+
+    # QMLTermWidget (embedded terminal) module deployment. It is a runtime QML
+    # import supplied via the import path on Linux (the nix wrapQtAppsHook adds
+    # qmltermwidget-qt6's lib/qml). macdeployqt does not discover it, so a bundle
+    # omits it - and because Main.qml imports it UNCONDITIONALLY (Session ->
+    # TerminalPanel -> `import QMLTermWidget`), QQmlApplicationEngine fails to
+    # load the ROOT component (rootObjects() empty -> main returns early), so the
+    # .app does not launch AT ALL, GUI or headless - not merely a dead terminal
+    # panel. Deploy the module under Resources/qml (qt.conf's QML import root)
+    # and rewrite its plugin dylib's store Qt references to @loader_path paths
+    # into the bundle Frameworks (Resources/qml/QMLTermWidget -> ../../../
+    # Frameworks), dropping store LC_RPATHs, then ad-hoc sign and re-seal. Same
+    # relocatability backstop as the exe and the offscreen plugin. QMLTERMWIDGET_QML_DIR
+    # is the flake's -D flag (nix/flake.nix depFlags) pointing at the plugin's
+    # qml prefix; a bare dev configure without it skips deployment.
+    if(DEFINED QMLTERMWIDGET_QML_DIR AND EXISTS "${QMLTERMWIDGET_QML_DIR}/QMLTermWidget")
+        install(
+            DIRECTORY "${QMLTERMWIDGET_QML_DIR}/QMLTermWidget"
+            DESTINATION "${_da_bundle_contents}/Resources/qml"
+            USE_SOURCE_PERMISSIONS
+        )
+        install(CODE [==[
+            set(_da_app "${CMAKE_INSTALL_PREFIX}/daemon-app.app")
+            set(_da_qtw "${_da_app}/Contents/Resources/qml/QMLTermWidget")
+            file(GLOB _da_qtw_dylibs "${_da_qtw}/*.dylib")
+            foreach(_da_lib IN LISTS _da_qtw_dylibs)
+                execute_process(COMMAND chmod u+w "${_da_lib}")
+                execute_process(COMMAND otool -L "${_da_lib}"
+                    OUTPUT_VARIABLE _da_o OUTPUT_STRIP_TRAILING_WHITESPACE)
+                string(REPLACE "\n" ";" _da_lines "${_da_o}")
+                foreach(_da_line IN LISTS _da_lines)
+                    string(REGEX MATCH "/nix/store/[^ ]+" _da_ref "${_da_line}")
+                    if(_da_ref)
+                        if(_da_ref MATCHES "[.]framework/")
+                            string(REGEX REPLACE "^.*/([^/]+[.]framework/.*)$"
+                                "@loader_path/../../../Frameworks/\\1" _da_new "${_da_ref}")
+                        else()
+                            get_filename_component(_da_rb "${_da_ref}" NAME)
+                            set(_da_new "@loader_path/../../../Frameworks/${_da_rb}")
+                        endif()
+                        execute_process(COMMAND install_name_tool -change
+                            "${_da_ref}" "${_da_new}" "${_da_lib}")
+                    endif()
+                endforeach()
+                execute_process(COMMAND otool -l "${_da_lib}"
+                    OUTPUT_VARIABLE _da_load OUTPUT_STRIP_TRAILING_WHITESPACE)
+                string(REGEX MATCHALL "path /nix/store/[^ ]+" _da_rpaths "${_da_load}")
+                foreach(_da_rp IN LISTS _da_rpaths)
+                    string(REPLACE "path " "" _da_rp "${_da_rp}")
+                    execute_process(COMMAND install_name_tool -delete_rpath
+                        "${_da_rp}" "${_da_lib}" ERROR_QUIET)
+                endforeach()
+                execute_process(COMMAND codesign --force --sign - "${_da_lib}")
+            endforeach()
+            execute_process(COMMAND codesign --force --sign - "${_da_app}")
+        ]==])
+    else()
+        message(WARNING "daemon-app: QMLTERMWIDGET_QML_DIR unset or module missing; the embedded terminal will be absent and the bundle will fail to launch (Main.qml imports QMLTermWidget unconditionally)")
+    endif()
 endif()
 
 # --- CPack -------------------------------------------------------------------
