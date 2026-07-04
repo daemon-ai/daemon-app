@@ -15,16 +15,23 @@
 #    bundled zlib/libpng/libjpeg/harfbuzz/pcre2/double-conversion, bundled
 #    sqlite (FEATURE_system_sqlite=OFF, same driver pin as wasm), libstdc++/
 #    libgcc (-static-libstdc++ -static-libgcc: the classic portability
-#    failure is a GLIBCXX floor, so don't have one).
-#  * DYNAMIC against the system floor (the-distributor treats these as
+#    failure is a GLIBCXX floor, so don't have one), and the platform
+#    integration LEAVES no distro guarantees on a base install: the
+#    xcb-util family (cursor/icccm/ewmh/image/keysyms/render-util/util -
+#    Qt 6.5+'s xcb plugin hard-requires libxcb-cursor, a real user-hit
+#    AppImage loader failure), libxkbcommon(+x11), and the wayland client
+#    libs (client/cursor/egl, with libffi following wayland-client). See
+#    staticLeaves below; the floor mirrors the AppImage community
+#    excludelist's system-guaranteed set.
+#  * DYNAMIC against the system floor (the distributor treats these as
 #    system-provided): glibc, libGL/libEGL (linking GL dynamically is the
-#    norm even for static Qt - drivers are inherently host-side), the X11/
-#    xcb client stack + libxkbcommon, wayland client libs, and
-#    fontconfig+freetype. fontconfig CANNOT go static cleanly: Qt's feature
-#    graph hard-requires system_freetype with fontconfig (two freetype
-#    copies would fight over the same FT_Face handles), and system font
-#    discovery is the whole point of fontconfig - so both stay dynamic,
-#    documented as floor.
+#    norm even for static Qt - drivers are inherently host-side), libX11/
+#    libX11-xcb and libxcb CORE incl. its own sub-libs (GL drivers must
+#    share the process's libxcb copy), and fontconfig+freetype. fontconfig
+#    CANNOT go static cleanly: Qt's feature graph hard-requires
+#    system_freetype with fontconfig (two freetype copies would fight over
+#    the same FT_Face handles), and system font discovery is the whole
+#    point of fontconfig - so both stay dynamic, documented as floor.
 #  * RUNTIME dlopen (no DT_NEEDED entry, degrade gracefully when absent):
 #    dbus (FEATURE_dbus=ON + dbus_linked=OFF - the tray's StatusNotifier
 #    path on modern desktops speaks DBus; QSystemTrayIcon/notify degrade to
@@ -50,37 +57,154 @@ let
   # feature flags survivable.
   staticStdenv = pkgs.ccacheStdenv;
 
-  # The dynamic platform-integration floor: what the static Qt configure
-  # detects at build time and the portable binary resolves from the host at
-  # runtime. Shared by the Qt build and the app link (the app's configure
-  # re-runs Qt's find_dependency calls for the static plugins' interface
-  # libs).
-  platformLibs = with pkgs; [
-    # X11/xcb client stack (the xcb platform plugin links these dynamically;
-    # libxau/libxdmcp are Requires.private of xcb.pc, so pkg-config insists
-    # on seeing them even for a dynamic link)
-    libxcb
-    libx11
-    libxau
-    libxdmcp
-    libxcb-util
-    libxcb-image
-    libxcb-keysyms
-    libxcb-render-util
-    libxcb-wm
-    libxcb-cursor
-    libxkbcommon
-    # Wayland client stack (the wayland platform plugin)
-    wayland
-    # GL/EGL stubs; the real driver always comes from the host
-    libglvnd
-    # Font discovery + rasterization (see the header: forced-dynamic pair)
-    fontconfig
-    freetype
-    # Headers-only at build for the runtime-dlopen features (no DT_NEEDED)
-    dbus
-    openssl
+  # --- Static platform-integration leaves --------------------------------------
+  # The xcb-util family, xkbcommon, and the wayland client libs are LINKED INTO
+  # the binary: they are the DT_NEEDED entries the AppImage community
+  # excludelist does NOT guarantee on a base system (Qt 6.5+'s xcb platform
+  # hard-requires libxcb-cursor.so.0, which many distros do not install by
+  # default - the exact loader failure a user hit running the AppImage).
+  # Static leaves shrink the binary's dynamic closure to ~the excludelist, so
+  # the packages bundle nothing.
+  #
+  # NOT pkgsStatic (musl): these override the pinned glibc packages to emit
+  # only PIC archives (--with-pic / meson b_staticpic default: they must link
+  # into a PIE executable). Only the .a form changes - same sources, same
+  # versions.
+  mkAutotoolsStatic =
+    p:
+    p.overrideAttrs (old: {
+      pname = old.pname + "-static";
+      # Pin the already-computed src: several upstream expressions derive the
+      # tarball URL from finalAttrs.pname, which the -static rename would
+      # corrupt (wrong URL on any machine that has to actually fetch).
+      src = old.src;
+      configureFlags = (old.configureFlags or [ ]) ++ [
+        "--enable-static"
+        "--disable-shared"
+        "--with-pic"
+      ];
+      dontDisableStatic = true;
+      doCheck = false;
+    });
+  xcbUtilStatic = mkAutotoolsStatic pkgs.libxcb-util;
+  xcbImageStatic = mkAutotoolsStatic pkgs.libxcb-image;
+  xcbKeysymsStatic = mkAutotoolsStatic pkgs.libxcb-keysyms;
+  xcbRenderUtilStatic = mkAutotoolsStatic pkgs.libxcb-render-util;
+  xcbWmStatic = mkAutotoolsStatic pkgs.libxcb-wm;
+  xcbCursorStatic = mkAutotoolsStatic pkgs.libxcb-cursor;
+  # wayland-client marshals requests through libffi; a static wayland-client
+  # would otherwise surface libffi.so as a NEW dynamic dep (not on the
+  # excludelist), so libffi goes static with it. Resolved onto the app link
+  # line via CMAKE_CXX_STANDARD_LIBRARIES (appStatic below): CMake's Wayland
+  # find module records only the wayland archives, not their Requires.private.
+  #
+  # src re-pin: libffi/wayland derive the tarball URL from finalAttrs.pname,
+  # which the -static rename would corrupt through the overrideAttrs
+  # fixpoint; take the original package's already-resolved src instead.
+  libffiStatic = (mkAutotoolsStatic pkgs.libffi).overrideAttrs { src = pkgs.libffi.src; };
+  # STATIC LIBXKBCOMMON TRAP: the library bakes its default XKB data root at
+  # build time. The nixpkgs default is a /nix/store path - useless on target
+  # systems and a store-path leak into the shipped binary - so pin the FHS
+  # locations every target distro provides (XKB_CONFIG_ROOT / XLOCALEDIR env
+  # still override at runtime).
+  xkbcommonStatic = (pkgs.libxkbcommon.override { withWaylandTools = false; }).overrideAttrs (old: {
+    pname = old.pname + "-static";
+    src = old.src;
+    outputs = [
+      "out"
+      "dev"
+    ];
+    # No xkeyboard_config in buildInputs: its optional xkeyboard-config-2
+    # detection would bake that package's /nix/store path into the archives
+    # as an extra include root (dead on target systems and a store-path leak
+    # into the shipped binary). With it absent, only the FHS paths below
+    # remain baked.
+    buildInputs = with pkgs; [
+      libxcb
+      libxml2
+    ];
+    mesonFlags = [
+      "-Ddefault_library=static"
+      "-Dxkb-config-root=/usr/share/X11/xkb"
+      "-Dxkb-config-extra-path=/etc/xkb"
+      "-Dx-locale-root=/usr/share/X11/locale"
+      "-Denable-docs=false"
+      "-Denable-wayland=false"
+    ];
+    doCheck = false;
+  });
+  waylandStatic =
+    (pkgs.wayland.override {
+      withDocumentation = false;
+      withTests = false;
+    }).overrideAttrs
+      (old: {
+        pname = old.pname + "-static";
+        src = pkgs.wayland.src; # see libffiStatic: pname-derived URL
+        outputs = [
+          "out"
+          "dev"
+        ];
+        separateDebugInfo = false;
+        mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Ddefault_library=static" ];
+        buildInputs = [ libffiStatic ];
+        doCheck = false;
+        # Fold libffi's objects into libwayland-client.a: wayland-client.pc
+        # declares libffi only in Requires.private, which CMake find modules
+        # (Qt's FindWayland included) never read - every static consumer
+        # would otherwise die with undefined ffi_* symbols (Qt module tools
+        # link Qt6Gui -> wayland-client without pkg-config's --static
+        # closure). Folding makes the archive self-contained for any
+        # consumer.
+        postFixup = (old.postFixup or "") + ''
+          ar -M <<MRI
+          OPEN $out/lib/libwayland-client.a
+          ADDLIB ${libffiStatic}/lib/libffi.a
+          SAVE
+          END
+          MRI
+          ranlib "$out/lib/libwayland-client.a"
+        '';
+      });
+  staticLeaves = [
+    xcbUtilStatic
+    xcbImageStatic
+    xcbKeysymsStatic
+    xcbRenderUtilStatic
+    xcbWmStatic
+    xcbCursorStatic
+    xkbcommonStatic
+    waylandStatic
+    libffiStatic
   ];
+
+  # The platform-integration floor the static Qt configure detects at build
+  # time. The static leaves above resolve to archives absorbed at app link
+  # time; the rest stays dynamic and the portable binary resolves it from the
+  # host at runtime. Shared by the Qt build and the app link (the app's
+  # configure re-runs Qt's find_dependency calls for the static plugins'
+  # interface libs).
+  platformLibs =
+    staticLeaves
+    ++ (with pkgs; [
+      # X11/xcb CORE stays dynamic on purpose: it is on the AppImage
+      # excludelist, ships with every X-capable distro, and GL drivers must
+      # share the process's libxcb copy. (libxau/libxdmcp are
+      # Requires.private of xcb.pc, so pkg-config insists on seeing them
+      # even for a dynamic link.)
+      libxcb
+      libx11
+      libxau
+      libxdmcp
+      # GL/EGL stubs; the real driver always comes from the host
+      libglvnd
+      # Font discovery + rasterization (see the header: forced-dynamic pair)
+      fontconfig
+      freetype
+      # Headers-only at build for the runtime-dlopen features (no DT_NEEDED)
+      dbus
+      openssl
+    ]);
 
   qtFromSource = import ./qt-from-source.nix { inherit pkgs; } {
     flavor = "linux-static";
@@ -292,8 +416,35 @@ let
     # Portability: no GLIBCXX_x/GCC_x floor in the shipped binary (glibc stays
     # the only versioned dependency; the smoke prints that floor). Array form:
     # the flag pair must survive the cmake hook's whitespace splitting.
+    #
+    # CMAKE_CXX_STANDARD_LIBRARIES appends the static-leaf archives AFTER
+    # every target's recorded link libraries. Two jobs: (1) libffi.a - Qt's
+    # FindWayland records only the wayland archives, never their
+    # Requires.private, so wayland-client's marshalling dependency must be
+    # closed here; (2) archive-order insurance - ld resolves a trailing
+    # archive group left-to-right, so any inter-archive undefined left by the
+    # CMake-recorded order (xcb-cursor -> xcb-render-util/xcb-image, ...)
+    # picks its symbols up here. Redundant archives contribute nothing to a
+    # static link, so over-listing is free.
     preConfigure = ''
       cmakeFlagsArray+=("-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++ -static-libgcc")
+      cmakeFlagsArray+=("-DCMAKE_CXX_STANDARD_LIBRARIES=${
+        lib.concatMapStringsSep " " (a: "${a}") [
+          "${xcbCursorStatic}/lib/libxcb-cursor.a"
+          "${xcbWmStatic}/lib/libxcb-icccm.a"
+          "${xcbWmStatic}/lib/libxcb-ewmh.a"
+          "${xcbImageStatic}/lib/libxcb-image.a"
+          "${xcbKeysymsStatic}/lib/libxcb-keysyms.a"
+          "${xcbRenderUtilStatic}/lib/libxcb-render-util.a"
+          "${xcbUtilStatic}/lib/libxcb-util.a"
+          "${xkbcommonStatic}/lib/libxkbcommon-x11.a"
+          "${xkbcommonStatic}/lib/libxkbcommon.a"
+          "${waylandStatic}/lib/libwayland-cursor.a"
+          "${waylandStatic}/lib/libwayland-egl.a"
+          "${waylandStatic}/lib/libwayland-client.a"
+          "${libffiStatic}/lib/libffi.a"
+        ]
+      }")
     '';
   };
 
@@ -331,7 +482,8 @@ let
       "$out/bin/daemon-app"
 
     for ref in ${qtbaseStatic} ${qtshadertoolsStatic} ${qtdeclarativeStatic} \
-               ${qtsvgStatic} ${qtwebsocketsStatic} ${tinyxml2Static}; do
+               ${qtsvgStatic} ${qtwebsocketsStatic} ${tinyxml2Static} \
+               ${lib.concatStringsSep " " (map toString staticLeaves)}; do
       remove-references-to -t "$ref" "$out/bin/daemon-app"
     done
 
@@ -380,9 +532,15 @@ let
     export DAEMON_APP_WAIT_READY=20000
   '';
 
-  # The allowlisted DT_NEEDED floor (sonames): glibc + GL + the X/wayland
-  # client stack + fontconfig/freetype. Anything new must be argued into
-  # this list (or linked statically) rather than silently shipped.
+  # The allowlisted DT_NEEDED floor (sonames), aligned with the AppImage
+  # community excludelist's system-guaranteed set: glibc + GL vendor stack +
+  # libX11/libxcb CORE (libxcb-*.so sub-libs here ship with the libxcb
+  # package itself on every distro) + fontconfig/freetype. The xcb-util
+  # family, xkbcommon, and the wayland client libs are NOT here on purpose:
+  # they are statically linked into the binary (staticLeaves above) exactly
+  # because no distro guarantees them (libxcb-cursor.so.0 was a real AppImage
+  # loader failure). Anything new must be argued into this list (or linked
+  # statically) rather than silently shipped.
   allowedNeeded = [
     "libc.so.6"
     "libm.so.6"
@@ -398,25 +556,14 @@ let
     "libX11.so.6"
     "libX11-xcb.so.1"
     "libxcb.so.1"
-    "libxcb-cursor.so.0"
-    "libxcb-icccm.so.4"
-    "libxcb-image.so.0"
-    "libxcb-keysyms.so.1"
     "libxcb-randr.so.0"
     "libxcb-render.so.0"
-    "libxcb-render-util.so.0"
     "libxcb-shape.so.0"
     "libxcb-shm.so.0"
     "libxcb-sync.so.1"
-    "libxcb-util.so.1"
     "libxcb-xfixes.so.0"
     "libxcb-xkb.so.1"
     "libxcb-glx.so.0"
-    "libxkbcommon.so.0"
-    "libxkbcommon-x11.so.0"
-    "libwayland-client.so.0"
-    "libwayland-cursor.so.0"
-    "libwayland-egl.so.1"
     "libfontconfig.so.1"
     "libfreetype.so.6"
   ];
@@ -574,5 +721,6 @@ in
     (toString qtsvgStatic)
     (toString qtwebsocketsStatic)
     (toString tinyxml2Static)
-  ];
+  ]
+  ++ map toString staticLeaves;
 }

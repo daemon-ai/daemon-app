@@ -20,25 +20,22 @@
 #                                          / libglvnd-glx libglvnd-opengl libglvnd-egl
 #   libX11 / libX11-xcb                 -> libx11-6 libx11-xcb1 / libX11 libX11-xcb
 #   libxcb.so.1                         -> libxcb1           / libxcb
-#   libxcb-{icccm,image,keysyms,        -> libxcb-icccm4 libxcb-image0
-#            render-util,cursor,util}       libxcb-keysyms1 libxcb-render-util0
-#                                           libxcb-cursor0 libxcb-util1
-#                                          / xcb-util-wm xcb-util-image
-#                                            xcb-util-keysyms xcb-util-renderutil
-#                                            xcb-util-cursor xcb-util
 #   libxcb-{randr,render,shape,shm,     -> libxcb-randr0 libxcb-render0
 #            sync,xfixes,xkb,glx}           libxcb-shape0 libxcb-shm0
 #                                           libxcb-sync1 libxcb-xfixes0
 #                                           libxcb-xkb1 libxcb-glx0
 #                                          / libxcb (one package on Fedora)
-#   libxkbcommon(+x11)                  -> libxkbcommon0 libxkbcommon-x11-0
-#                                          / libxkbcommon libxkbcommon-x11
-#   libwayland-{client,cursor,egl}      -> libwayland-client0 libwayland-cursor0
-#                                           libwayland-egl1
-#                                          / libwayland-client libwayland-cursor
-#                                            libwayland-egl
 #   libfontconfig/libfreetype           -> libfontconfig1 libfreetype6
 #                                          / fontconfig freetype
+#
+# The xcb-util family (cursor/icccm/image/keysyms/render-util/util),
+# xkbcommon(+x11), and the wayland client libs (client/cursor/egl) are
+# STATICALLY LINKED into daemon-app (nix/portable.nix staticLeaves) and are
+# deliberately absent: they are exactly the sonames the AppImage community
+# excludelist does not guarantee on a base system (libxcb-cursor0 is not
+# even packaged everywhere), so depending on them would block installs the
+# binary no longer requires. The libxcb-* entries that REMAIN ship with the
+# core libxcb package on every distro.
 #
 # libstdc++/libgcc are linked statically into daemon-app; libstdc++6 stays a
 # Depends only as the floor for optional co-packaged node binaries (the
@@ -58,7 +55,7 @@ if(CPACK_GENERATOR STREQUAL "DEB")
     # payload's exact DT_NEEDED floor) instead of dpkg-shlibdeps output.
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS
-        "libc6, libstdc++6, libgcc-s1, libgl1, libglx0, libopengl0, libegl1, libx11-6, libx11-xcb1, libxcb1, libxcb-cursor0, libxcb-icccm4, libxcb-image0, libxcb-keysyms1, libxcb-randr0, libxcb-render0, libxcb-render-util0, libxcb-shape0, libxcb-shm0, libxcb-sync1, libxcb-util1, libxcb-xfixes0, libxcb-xkb1, libxcb-glx0, libxkbcommon0, libxkbcommon-x11-0, libwayland-client0, libwayland-cursor0, libwayland-egl1, libfontconfig1, libfreetype6"
+        "libc6, libstdc++6, libgcc-s1, libgl1, libglx0, libopengl0, libegl1, libx11-6, libx11-xcb1, libxcb1, libxcb-randr0, libxcb-render0, libxcb-shape0, libxcb-shm0, libxcb-sync1, libxcb-xfixes0, libxcb-xkb1, libxcb-glx0, libfontconfig1, libfreetype6"
     )
     set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
     set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
@@ -77,7 +74,7 @@ if(CPACK_GENERATOR STREQUAL "RPM")
     # store sonames; Requires are hand-written above.
     set(CPACK_RPM_PACKAGE_AUTOREQPROV OFF)
     set(CPACK_RPM_PACKAGE_REQUIRES
-        "glibc, libstdc++, libgcc, libglvnd-glx, libglvnd-opengl, libglvnd-egl, libX11, libX11-xcb, libxcb, xcb-util, xcb-util-cursor, xcb-util-image, xcb-util-keysyms, xcb-util-renderutil, xcb-util-wm, libxkbcommon, libxkbcommon-x11, libwayland-client, libwayland-cursor, libwayland-egl, fontconfig, freetype"
+        "glibc, libstdc++, libgcc, libglvnd-glx, libglvnd-opengl, libglvnd-egl, libX11, libX11-xcb, libxcb, fontconfig, freetype"
     )
     set(CPACK_RPM_PACKAGE_LICENSE "MPL-2.0")
     set(CPACK_RPM_PACKAGE_GROUP "Development/Tools")

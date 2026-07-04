@@ -526,10 +526,14 @@
           '';
 
         # Sanity gate over all three artifacts: metadata + payload layout
-        # assertions, the portable ELF contract on the packaged binary
-        # (generic loader, $ORIGIN rpath, DT_NEEDED within the system floor -
-        # same allowlist as checks.portable-boot-smoke), desktop/metainfo
-        # validation, an AppImage payload extract + offscreen boot probe
+        # assertions, the portable ELF contract + CLOSURE COMPLETENESS on
+        # every shipped ELF (each DT_NEEDED must resolve in-payload through
+        # the $ORIGIN rpaths or sit on the excludelist-derived system floor -
+        # same allowlist as checks.portable-boot-smoke; the class of loader
+        # failure this kills: a user-reported libxcb-cursor.so.0 crash from
+        # an AppImage whose binary still dynamically linked the xcb-util
+        # family that no distro guarantees), desktop/metainfo validation, an
+        # AppImage payload extract + offscreen boot probe
         # (DAEMON_APP_WAIT_READY contract from src/DaemonApp/App/main.cpp;
         # booted through the store glibc's loader since the sandbox has no
         # /lib64), and the glibc symbol-version floor.
@@ -550,6 +554,54 @@
             ''
               set -euo pipefail
               mkdir work && cd work
+
+              # Closure-completeness gate over one extracted payload root:
+              # every ELF under bin/ or shipped as lib/*.so* must (a) carry
+              # the portable rpath contract the pre-build script writes
+              # (bin: generic /lib64 loader + $ORIGIN:$ORIGIN/../lib; lib:
+              # $ORIGIN), and (b) have every DT_NEEDED soname either present
+              # in-payload (resolvable through those rpaths) or on the
+              # explicit system floor below. daemon-app additionally must
+              # not re-grow a libstdc++ dependency (-static-libstdc++).
+              floor="${pkgs.lib.concatStringsSep " " portableStack.allowedNeeded}"
+              check_payload_closure() {
+                label="$1"; root="$2"
+                echo "--- closure completeness: $label ---"
+                shipped=$(find "$root" -name '*.so*' -type f -exec basename {} \; | sort -u)
+                fail=0
+                while IFS= read -r -d "" f; do
+                  [ "$(head -c4 "$f" | od -An -tx1 | tr -d ' ')" = "7f454c46" ] || continue
+                  case "$f" in
+                    */bin/*)
+                      [ "$(patchelf --print-interpreter "$f")" = "/lib64/ld-linux-x86-64.so.2" ] \
+                        || { echo "FAIL($label): $f keeps a non-generic interpreter" >&2; fail=1; }
+                      [ "$(patchelf --print-rpath "$f")" = '$ORIGIN:$ORIGIN/../lib' ] \
+                        || { echo "FAIL($label): $f has unexpected rpath" >&2; fail=1; }
+                      ;;
+                    *)
+                      [ "$(patchelf --print-rpath "$f")" = '$ORIGIN' ] \
+                        || { echo "FAIL($label): $f has unexpected rpath" >&2; fail=1; }
+                      ;;
+                  esac
+                  readelf -d "$f" | awk '/NEEDED/ { gsub(/[][]/, "", $5); print $5 }' > needed-one.txt
+                  while read -r so; do
+                    if printf '%s\n' "$shipped" | grep -qxF "$so"; then continue; fi
+                    case " $floor " in
+                      *" $so "*) ;;
+                      *)
+                        echo "FAIL($label): $f needs '$so' - neither shipped in-payload nor on the system floor" >&2
+                        fail=1
+                        ;;
+                    esac
+                  done < needed-one.txt
+                  if [ "$(basename "$f")" = "daemon-app" ] && grep -q 'libstdc++' needed-one.txt; then
+                    echo "FAIL($label): libstdc++ leaked into daemon-app's DT_NEEDED" >&2
+                    fail=1
+                  fi
+                done < <(find "$root" \( -path '*/bin/*' -o -name '*.so*' \) -type f -print0)
+                [ "$fail" = 0 ] || exit 1
+                echo "closure OK: $label"
+              }
 
               echo "=== DEB: metadata + contents ==="
               deb=$(ls ${linuxArtifacts}/*.deb)
@@ -592,27 +644,12 @@
               appstreamcli validate --no-net \
                 deb-root/opt/daemon/share/metainfo/io.daemon.app.metainfo.xml
 
-              echo "=== DEB payload: portable ELF contract ==="
+              echo "=== DEB payload: portable ELF contract + closure ==="
               bin=deb-root/opt/daemon/bin/daemon-app
-              interp=$(patchelf --print-interpreter "$bin")
-              echo "interpreter: $interp"
-              [ "$interp" = "/lib64/ld-linux-x86-64.so.2" ] || { echo "FAIL: packaged binary keeps a non-generic interpreter" >&2; exit 1; }
-              rpath=$(patchelf --print-rpath "$bin")
-              echo "rpath: $rpath"
-              [ "$rpath" = '$ORIGIN:$ORIGIN/../lib' ] || { echo "FAIL: unexpected rpath '$rpath'" >&2; exit 1; }
-              readelf -d "$bin" | awk '/NEEDED/ { gsub(/[][]/, "", $5); print $5 }' > needed.txt
-              fail=0
-              while read -r so; do
-                case " ${pkgs.lib.concatStringsSep " " portableStack.allowedNeeded} " in
-                  *" $so "*) ;;
-                  *) echo "FAIL: DT_NEEDED '$so' outside the packaged system floor" >&2; fail=1 ;;
-                esac
-              done < needed.txt
-              [ "$fail" = 0 ] || exit 1
-              if grep -q 'libstdc++' needed.txt; then
-                echo "FAIL: libstdc++ leaked into the packaged binary's DT_NEEDED" >&2
-                exit 1
-              fi
+              echo "interpreter: $(patchelf --print-interpreter "$bin")"
+              echo "rpath: $(patchelf --print-rpath "$bin")"
+              readelf -d "$bin" | awk '/NEEDED/ { gsub(/[][]/, "", $5); print "NEEDED " $5 }'
+              check_payload_closure deb deb-root/opt/daemon
 
               echo "=== RPM: metadata + contents ==="
               rpmfile=$(ls ${linuxArtifacts}/*.rpm)
@@ -638,6 +675,7 @@
               fi
               rpmq -qp --scripts "$rpmfile" | grep -q "/usr/local/bin"
               mkdir rpm-root && (cd rpm-root && rpm2cpio "$rpmfile" | cpio -idm --quiet)
+              check_payload_closure rpm rpm-root/opt/daemon
 
               echo "=== AppImage: extract + layout ==="
               appimage=$(ls ${linuxArtifacts}/*.AppImage)
@@ -664,6 +702,7 @@
               test -f squashfs-root/usr/bin/daemon-app
               test -e squashfs-root/daemon-app.desktop
               test -f squashfs-root/usr/share/metainfo/io.daemon.app.metainfo.xml
+              check_payload_closure appimage squashfs-root/usr
 
               echo "=== AppImage: offscreen boot probe (static payload) ==="
               export HOME="$PWD/home" && mkdir -p "$HOME"
