@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 import QtQuick
+import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Settings
@@ -37,6 +38,42 @@ ColumnLayout {
     Kit.TextButton {
         text: qsTr("Re-run first-run setup")
         onClicked: FirstRun.restart()
+    }
+
+    SectionLabel { text: qsTr("Local data") }
+
+    // Full device wipe (App.clearLocalData): connection prefs, tokens, the first-run flag, every
+    // UI preference, the SQLite cache, and the images cache. Distinct from "Re-run first-run setup"
+    // above, which only clears the setupComplete flag.
+    Kit.TextButton {
+        text: qsTr("Clear local data…")
+        onClicked: clearDataDialog.open()
+    }
+
+    // Non-layout holder: the confirm dialog reparents to the window Overlay at open(), so it must
+    // not be a direct ColumnLayout child (an explicit width on a layout-managed item is flagged).
+    Item {
+        Kit.Dialog {
+            id: clearDataDialog
+            // Explicit width so the wrapping Label content cannot feed implicitWidth back into the
+            // dialog (binding loop) - mirrors SettingsMenu's resetDialog.
+            width: 380
+            title: qsTr("Clear local data?")
+            acceptText: qsTr("Clear")
+            destructive: true
+            onAccepted: App.clearLocalData()
+
+            contentItem: QQC.Label {
+                text: qsTr("This erases everything stored on this device: your connection settings "
+                           + "and saved sign-in, appearance preferences, and the local cache of "
+                           + "sessions and files. It does NOT delete anything on the node itself.\n\n"
+                           + "You'll return to first-run setup.")
+                wrapMode: Text.WordWrap
+                color: Theme.text
+                font.family: FontIcons.display
+                font.pixelSize: 13
+            }
+        }
     }
 
     Item { Layout.fillHeight: true }

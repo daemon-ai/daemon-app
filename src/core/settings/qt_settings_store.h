@@ -20,6 +20,9 @@ public:
 
     [[nodiscard]] QVariant value(const QString& key, const QVariant& fallback = {}) const override;
     void setValue(const QString& key, const QVariant& value) override;
+    // Batched write: apply every changed key, then sync() once (one backend flush for the whole
+    // batch instead of one per key). changed()/changedAny() still fire per changed key.
+    void setValues(const QVariantMap& values) override;
 
     // Server-token storage prefers the OS keychain (Qt Keychain) when built with it and a keyring
     // is usable at runtime; otherwise it transparently falls back to the QSettings base

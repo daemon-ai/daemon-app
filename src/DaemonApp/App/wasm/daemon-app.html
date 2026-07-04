@@ -152,6 +152,34 @@ main.cpp), falling back to the platform sans.
 
     <script type="text/javascript">
       async function init() {
+        // Escape hatch (Browser Persistence Polish / W4): "?clear=1" wipes this origin's client
+        // storage BEFORE the app loads - for when the app itself can't boot. It removes the
+        // IDBFS-backed IndexedDB database(s) (the /home/web_user mount from W2) and localStorage
+        // (QSettings on WebLocalStorageFormat), then strips the param and reloads into a clean
+        // first-run state. location.replace avoids a history entry and re-navigates without the
+        // param, so it cannot loop.
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('clear') === '1') {
+          try { window.localStorage.clear(); } catch (e) { /* storage may be unavailable */ }
+          try {
+            let names = ['/home/web_user']; // the IDBFS mount = its IndexedDB database name
+            if (indexedDB.databases) {
+              const dbs = await indexedDB.databases();
+              names = dbs.map((d) => d.name).filter(Boolean);
+              if (!names.includes('/home/web_user')) names.push('/home/web_user');
+            }
+            await Promise.all(names.map((name) => new Promise((resolve) => {
+              const req = indexedDB.deleteDatabase(name);
+              req.onsuccess = req.onerror = req.onblocked = () => resolve();
+            })));
+          } catch (e) { /* best effort - proceed to reload regardless */ }
+          params.delete('clear');
+          const query = params.toString();
+          window.location.replace(
+              window.location.pathname + (query ? '?' + query : '') + window.location.hash);
+          return;
+        }
+
         const overlay = document.querySelector('#qtspinner');
         const screen = document.querySelector('#screen');
         const status = document.querySelector('#qtstatus');
@@ -282,6 +310,33 @@ main.cpp), falling back to the platform sans.
             // emscripten's status hook: the .data MEMFS preload reports its
             // own download progress here while the module starts up.
             setStatus: (text) => { if (text) setStatusText(text); },
+            // IDBFS persistence (Browser Persistence Polish / W2). qtLoad forwards
+            // config.preRun to emscripten (it pushes its own env/preload hook after
+            // ours), so this runs before main(): mount the home dir - which holds
+            // QStandardPaths::AppDataLocation and thus daemon_cache*.db - as IDBFS and
+            // populate it from IndexedDB. addRunDependency delays main() until the async
+            // FS.syncfs(true) completes, so DaemonCacheStore opens the persisted db with
+            // no C++ ordering changes. The whole /home/web_user tree is mounted (simpler
+            // than the exact AppData subpath, and catches any settings INI fallback too).
+            // FS/addRunDependency/removeRunDependency are exported via
+            // QT_WASM_EXTRA_EXPORTED_METHODS; IDBFS comes from -lidbfs.js.
+            preRun: [(instance) => {
+              const mount = '/home/web_user';
+              try {
+                const FS = instance.FS;
+                try { FS.mkdir(mount); } catch (e) { /* emscripten pre-creates the home dir */ }
+                FS.mount(FS.filesystems.IDBFS, {}, mount);
+                instance.addRunDependency('idbfs-load');
+                FS.syncfs(true, (err) => {
+                  if (err) console.warn('daemon: initial FS.syncfs(true) failed', err);
+                  instance.removeRunDependency('idbfs-load');
+                });
+              } catch (e) {
+                // Non-fatal: fall back to ephemeral MEMFS (the cache just won't persist
+                // this session) rather than blocking boot.
+                console.warn('daemon: IDBFS mount failed; cache will be ephemeral', e);
+              }
+            }],
             qt: {
               environment,
               module: fetchModule(),

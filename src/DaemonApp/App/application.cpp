@@ -12,6 +12,7 @@
 #include "command_registry.h"
 #include "config/idaemon_config.h"
 #include "connection/iconnection_service.h"
+#include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_connection_service.h"
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
@@ -47,6 +48,7 @@
 #include <latex.h>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDir>
 #include <QEvent>
 #include <QEventLoop>
 #include <QFile>
@@ -54,9 +56,15 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QSettings>
+#include <QStandardPaths>
 #include <QString>
 #include <QTimer>
 #include <QUuid>
+
+#ifdef Q_OS_WASM
+#include <emscripten.h>
+#endif
 
 Application::Application(QObject* parent)
     : QObject(parent), m_services(daemonapp::daemon::createAppServiceGraph(
@@ -840,10 +848,58 @@ void Application::completeWiring(QQmlApplicationEngine& engine) {
     }
 }
 
-void Application::clearLocalData() {
-    // TODO(W4): disconnect, clear QSettings("daemon-app","daemon-app") + UiSettings, best-effort
-    // keychain token clear (desktop), DaemonCacheStore::clearAll(), wipe the images cache dir, then
-    // on wasm final FS.syncfs + location.reload() and on desktop return to the first-run gate.
+void Application::clearLocalData() const {
+    // "Forget this device": wipe every client-local trace of the node, but never touch the node's
+    // own server-side data. Ordered so nothing races a live connection.
+
+    // 1. Drop the active connection first (stops the reconnect/backoff loop and any in-flight
+    //    writes to the caches we are about to clear).
+    if (m_services.connection != nullptr) {
+        // Best-effort keychain/settings token clear for the active target (desktop keychain path);
+        // the wholesale QSettings clear below also removes the settings-fallback tokens.
+        m_services.connection->logout();
+        m_services.connection->disconnect();
+    }
+
+    // 2. Wipe the shared preference store (conn/*, app/setupComplete, ui/*, conn/tokens/*). Both
+    //    QtSettingsStore and UiSettings bind this same ("daemon-app","daemon-app") scope, so one
+    //    clear() covers connection prefs, the first-run flag, and every UI preference.
+    QSettings settings(QStringLiteral("daemon-app"), QStringLiteral("daemon-app"));
+    settings.clear();
+    settings.sync();
+
+    // 3. Empty the offline-first SQLite cache (roster / transcripts / fs / fleet / channels) and
+    //    delete any other user-namespaced cache files on this device.
+    if (m_services.cache != nullptr) {
+        m_services.cache->clearAll();
+    }
+
+    // 4. Drop the on-disk images cache (QNetworkDiskCache dir under CacheLocation/images).
+    const QString cacheBase = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    if (!cacheBase.isEmpty()) {
+        QDir(QDir(cacheBase).filePath(QStringLiteral("images"))).removeRecursively();
+    }
+
+#ifdef Q_OS_WASM
+    // 5a. Browser: force a final write-back of the emptied IDBFS mount, then hard-reload into a
+    //     clean first-run state (settings are gone, so setupComplete reads false and the gate
+    //     shows).
+    // clang-format off
+    EM_ASM({
+        if (typeof FS !== 'undefined' && FS.syncfs) {
+            FS.syncfs(false, function() { location.reload(); });
+        } else {
+            location.reload();
+        }
+    });
+    // clang-format on
+#else
+    // 5b. Desktop/mobile: return to the first-run gate in place (no process restart). FirstRun
+    //     .restart() flips setupComplete back off and re-enters the onboarding phase.
+    if (m_services.firstRun != nullptr) {
+        m_services.firstRun->restart();
+    }
+#endif
 }
 
 bool Application::notifyGate(const QString& title, const QString& body) {

@@ -101,8 +101,7 @@ public:
     // (conn/*, ui/*, tokens), the SQLite cache (DaemonCacheStore::clearAll), and the images cache —
     // then return to the first-run gate (desktop) or reload (wasm). Does NOT touch the node's
     // server-side data. Q_INVOKABLE so the QML action can call it after its confirm dialog.
-    // TODO(W4): implement the full wipe + post-wipe restart/reload.
-    Q_INVOKABLE void clearLocalData();
+    Q_INVOKABLE void clearLocalData() const;
 
     // Guarded render-harness hook: open an app-level page (and optional section)
     // via the shared Nav seam. Used only by DAEMON_APP_RENDER_PAGE before the
