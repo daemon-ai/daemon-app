@@ -762,7 +762,7 @@
             # --- release-feed tooling (scripts/release-manifest.sh + sync-updates-json.sh) ---
             minisign # Ed25519 manifest signing/verification (packaging/UPDATES.md)
             jq # manifest.json assembly + UPDATES.json mirror sync
-            shellcheck # lint for scripts/*.sh
+            shellcheck-minimal # lint for scripts/*.sh (doc-free: avoids pandoc/haddock build chain)
             nodejs # provides npx for jscpd duplicate detection (not packaged in nixpkgs)
             just # task runner: the justfile recipes (lint / build / qmllint)
             qt6Packages.qtkeychain # OS keychain for the server-token store (auth6)
