@@ -173,6 +173,49 @@ if(DAEMON_APP_WASM)
     set_target_properties(daemon-app PROPERTIES QT_WASM_EXTRA_EXPORTED_METHODS "ENV")
 endif()
 
+# --- Android package -----------------------------------------------------
+# Qt's target finalization turns these properties into the
+# android-*-deployment-settings.json that androiddeployqt packages from (the
+# flake's `apk` output drives it gradle-lessly; see nix/android.nix and
+# packaging/android/README.md).
+if(ANDROID)
+    # packaging/android carries the AndroidManifest.xml (QtActivity-based,
+    # application id io.daemon.app) + launcher icons; androiddeployqt overlays
+    # it onto Qt's package template.
+    # versionCode: monotonic integer derived from the SemVer base
+    # (major*10000 + minor*100 + patch, e.g. 0.3.7 -> 307); versionName: the
+    # git-enriched build string when the flake provides it, else the base.
+    math(EXPR _da_android_version_code
+        "${PROJECT_VERSION_MAJOR} * 10000 + ${PROJECT_VERSION_MINOR} * 100 + ${PROJECT_VERSION_PATCH}")
+    if(DEFINED DAEMON_APP_VERSION_STR)
+        set(_da_android_version_name "${DAEMON_APP_VERSION_STR}")
+    else()
+        set(_da_android_version_name "${PROJECT_VERSION}")
+    endif()
+    # MicroTeX's res tree rides androiddeployqt's assets mechanism
+    # (QT_ANDROID_EXTRA_PLUGINS: non-.so files of each listed directory land
+    # under assets/<dirname>/). Android assets are not POSIX paths, so
+    # application.cpp extracts assets:/microtex-res to the app data dir on
+    # first boot and points tex::LaTeX::init() there (microtexResDir).
+    file(COPY "${MICROTEX_RES_DIR}/" DESTINATION "${CMAKE_BINARY_DIR}/android-assets/microtex-res")
+    set_target_properties(daemon-app PROPERTIES
+        QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/packaging/android"
+        QT_ANDROID_PACKAGE_NAME "io.daemon.app"
+        QT_ANDROID_VERSION_CODE "${_da_android_version_code}"
+        QT_ANDROID_VERSION_NAME "${_da_android_version_name}"
+        QT_ANDROID_MIN_SDK_VERSION "28"
+        QT_ANDROID_TARGET_SDK_VERSION "35"
+        QT_ANDROID_EXTRA_PLUGINS "${CMAKE_BINARY_DIR}/android-assets/microtex-res"
+    )
+    # The KSyntaxHighlighting QML plugin (org.kde.syntaxhighlighting) is a
+    # SHARED runtime plugin on desktop, resolved via the engine import path.
+    # The android build forces BUILD_SHARED_LIBS=OFF (nix/android.nix), making
+    # it a static archive like our own feature plugins - link it explicitly
+    # and register it via Q_IMPORT_QML_PLUGIN in main.cpp (androiddeployqt
+    # cannot bundle a loose non-Qt QML plugin without gradle-side wiring).
+    target_link_libraries(daemon-app PRIVATE kquicksyntaxhighlightingplugin)
+endif()
+
 # Build dependency on the KSyntaxHighlighting QML plugin so its module is emitted
 # under QT_QML_OUTPUT_DIRECTORY before we run; main.cpp adds that dir to the
 # engine import path via DAEMON_APP_BUILD_QML_DIR.

@@ -52,6 +52,11 @@
 #include <QEventLoop>
 #include <QFile>
 #include <QGuiApplication>
+#ifdef Q_OS_ANDROID
+#include <QDirIterator>
+#include <QFileInfo>
+#include <QStandardPaths>
+#endif
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
@@ -61,14 +66,50 @@
 #include <string>
 
 namespace {
+#ifdef Q_OS_ANDROID
+// Android ships the res tree inside the APK (assets/microtex-res, packed via
+// androiddeployqt's assets mechanism - see App/CMakeLists.txt). Assets are
+// not POSIX paths and MicroTeX reads plain files, so extract the tree to the
+// app data dir on first boot (marker: the versioned stamp file, so an app
+// update refreshes the copy) and resolve from there.
+QString androidExtractMicrotexRes() {
+    const QDir dataRoot(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    const QString target = dataRoot.filePath(QStringLiteral("microtex-res"));
+    const QString stampPath =
+        target + QStringLiteral("/.extracted-") + QCoreApplication::applicationVersion();
+    if (QFile::exists(stampPath)) {
+        return target;
+    }
+    QDir(target).removeRecursively(); // stale/partial copy from an older version
+    const QString assetRoot = QStringLiteral("assets:/microtex-res");
+    QDirIterator it(assetRoot, QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        const QString asset = it.next();
+        const QString relative = asset.mid(assetRoot.size() + 1);
+        const QString destination = target + QLatin1Char('/') + relative;
+        QDir().mkpath(QFileInfo(destination).absolutePath());
+        QFile::copy(asset, destination);
+    }
+    QFile stamp(stampPath);
+    if (!stamp.open(QIODevice::WriteOnly)) {
+        qWarning("microtex: could not write extraction stamp %s", qPrintable(stampPath));
+    }
+    return target;
+}
+#endif
+
 // MicroTeX's fonts/XML ship with the app (share/daemon-app/microtex-res, see
 // App/CMakeLists.txt) so the installed binary carries no reference to the
 // build-time source tree. Resolution order: explicit env override, then the
 // installed copies relative to the binary (prefix and flat portable layouts),
 // then the compile-time MICROTEX_RES_DIR - the build-tree fallback for dev
 // runs. The browser build skips the probing: there MICROTEX_RES_DIR is the
-// fixed MEMFS mount the emscripten preload bundle fills.
+// fixed MEMFS mount the emscripten preload bundle fills. Android skips it
+// too: the tree is extracted from the APK's assets on first boot.
 std::string microtexResDir() {
+#ifdef Q_OS_ANDROID
+    return androidExtractMicrotexRes().toStdString();
+#endif
 #ifndef Q_OS_WASM
     const QString envOverride = qEnvironmentVariable("DAEMON_APP_MICROTEX_RES");
     if (!envOverride.isEmpty()) {
