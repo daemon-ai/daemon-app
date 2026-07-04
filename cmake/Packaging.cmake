@@ -245,6 +245,73 @@ if(APPLE)
             endif()
         endif()
     ]==])
+
+    # Offscreen QPA plugin deployment. macdeployqt deploys ONLY the plugin for
+    # the build's current QPA - libqcocoa - so a bundle launched without a
+    # window server (headless CI/SSH, and the DAEMON_APP_WAIT_READY boot
+    # contract the other platforms gate on) has no platform plugin: cocoa needs
+    # a display and aborts. Pointing QT_QPA_PLATFORM_PLUGIN_PATH at the Qt store
+    # copy loads a SECOND Qt binary set (two QtCore) and crashes, so the
+    # offscreen plugin must live INSIDE the bundle next to cocoa, with its Qt
+    # references rewritten to resolve the bundle's own frameworks. Same
+    # relocatability problem as the exe backstop above; here we rewrite every
+    # residual /nix/store reference to an @loader_path path into the bundle's
+    # Frameworks (Contents/PlugIns/platforms -> ../../Frameworks), drop the
+    # plugin's store LC_RPATHs so no @rpath can fall back to the store Qt, then
+    # ad-hoc sign the plugin and re-seal the bundle. The offscreen plugin's
+    # framework deps (QtGui/QtCore/...) are a subset of cocoa's, so macdeployqt
+    # already deployed everything it needs.
+    if(TARGET Qt6::QOffscreenIntegrationPlugin)
+        install(CODE [==[
+            set(_da_off_src "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>")
+            set(_da_app "${CMAKE_INSTALL_PREFIX}/daemon-app.app")
+            set(_da_plugdir "${_da_app}/Contents/PlugIns/platforms")
+            if(EXISTS "${_da_off_src}" AND IS_DIRECTORY "${_da_plugdir}")
+                get_filename_component(_da_off_name "${_da_off_src}" NAME)
+                set(_da_off "${_da_plugdir}/${_da_off_name}")
+                message(STATUS "daemon-app: deploying offscreen QPA plugin ${_da_off_name}")
+                file(COPY "${_da_off_src}" DESTINATION "${_da_plugdir}")
+                execute_process(COMMAND chmod u+w "${_da_off}")
+                # Rewrite each absolute store dependency to a bundle-relative
+                # @loader_path reference (framework tail preserved, plain dylibs
+                # by basename), so dyld never reaches the store Qt.
+                execute_process(COMMAND otool -L "${_da_off}"
+                    OUTPUT_VARIABLE _da_otool OUTPUT_STRIP_TRAILING_WHITESPACE)
+                string(REPLACE "\n" ";" _da_lines "${_da_otool}")
+                foreach(_da_line IN LISTS _da_lines)
+                    string(REGEX MATCH "/nix/store/[^ ]+" _da_ref "${_da_line}")
+                    if(_da_ref)
+                        if(_da_ref MATCHES "[.]framework/")
+                            string(REGEX REPLACE "^.*/([^/]+[.]framework/.*)$"
+                                "@loader_path/../../Frameworks/\\1" _da_new "${_da_ref}")
+                        else()
+                            get_filename_component(_da_rb "${_da_ref}" NAME)
+                            set(_da_new "@loader_path/../../Frameworks/${_da_rb}")
+                        endif()
+                        execute_process(COMMAND install_name_tool -change
+                            "${_da_ref}" "${_da_new}" "${_da_off}")
+                    endif()
+                endforeach()
+                # Drop store LC_RPATHs so a stray @rpath dep can't resolve to the
+                # store Qt binary set.
+                execute_process(COMMAND otool -l "${_da_off}"
+                    OUTPUT_VARIABLE _da_load OUTPUT_STRIP_TRAILING_WHITESPACE)
+                string(REGEX MATCHALL "path /nix/store/[^ ]+" _da_rpaths "${_da_load}")
+                foreach(_da_rp IN LISTS _da_rpaths)
+                    string(REPLACE "path " "" _da_rp "${_da_rp}")
+                    execute_process(COMMAND install_name_tool -delete_rpath
+                        "${_da_rp}" "${_da_off}" ERROR_QUIET)
+                endforeach()
+                execute_process(COMMAND codesign --force --sign - "${_da_off}")
+                # Re-seal the bundle now that PlugIns changed.
+                execute_process(COMMAND codesign --force --sign - "${_da_app}")
+            else()
+                message(WARNING "daemon-app: offscreen plugin or platforms dir missing; headless boot from the bundle will fail")
+            endif()
+        ]==])
+    else()
+        message(WARNING "daemon-app: Qt6::QOffscreenIntegrationPlugin target not found; offscreen QPA plugin will not be bundled")
+    endif()
 endif()
 
 # --- CPack -------------------------------------------------------------------
