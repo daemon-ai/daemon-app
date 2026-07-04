@@ -119,8 +119,17 @@ endif()
 # mapping and is flagged loudly (it would need bundling). install_name_tool
 # voids the ad-hoc signature, so re-sign each edited binary. Runs after the
 # install(PROGRAMS) copies above.
-if(APPLE AND (DAEMON_APP_BUNDLED_DAEMON OR DAEMON_APP_BUNDLED_DAEMON_INFER OR DAEMON_APP_BUNDLED_DAEMON_CLI))
-    install(CODE [==[
+if(
+    APPLE
+    AND (
+        DAEMON_APP_BUNDLED_DAEMON
+        OR DAEMON_APP_BUNDLED_DAEMON_INFER
+        OR DAEMON_APP_BUNDLED_DAEMON_CLI
+    )
+)
+    install(
+        CODE
+            [==[
         set(_da_macos "${CMAKE_INSTALL_PREFIX}/daemon-app.app/Contents/MacOS")
         foreach(_da_nb daemon daemon-infer daemon-cli)
             set(_da_p "${_da_macos}/${_da_nb}")
@@ -150,7 +159,8 @@ if(APPLE AND (DAEMON_APP_BUNDLED_DAEMON OR DAEMON_APP_BUNDLED_DAEMON_INFER OR DA
                 execute_process(COMMAND codesign --force --sign - "${_da_p}")
             endif()
         endforeach()
-    ]==])
+    ]==]
+    )
 endif()
 
 # License + third-party notices ship with every package. EXISTS-guarded: the
@@ -261,7 +271,9 @@ if(APPLE)
     # (@executable_path/../Frameworks), but only when that copy is actually in
     # Frameworks, then re-seal the ad-hoc signature the edit voids. Runs after
     # the deploy script, so it sees the fully deployed bundle.
-    install(CODE [==[
+    install(
+        CODE
+            [==[
         set(_da_app "${CMAKE_INSTALL_PREFIX}/daemon-app.app")
         set(_da_exe "${_da_app}/Contents/MacOS/daemon-app")
         if(EXISTS "${_da_exe}")
@@ -287,7 +299,8 @@ if(APPLE)
                 execute_process(COMMAND codesign --force --sign - "${_da_app}")
             endif()
         endif()
-    ]==])
+    ]==]
+    )
 
     # Offscreen QPA plugin deployment. macdeployqt deploys ONLY the plugin for
     # the build's current QPA - libqcocoa - so a bundle launched without a
@@ -305,7 +318,9 @@ if(APPLE)
     # framework deps (QtGui/QtCore/...) are a subset of cocoa's, so macdeployqt
     # already deployed everything it needs.
     if(TARGET Qt6::QOffscreenIntegrationPlugin)
-        install(CODE [==[
+        install(
+            CODE
+                [==[
             set(_da_off_src "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>")
             set(_da_app "${CMAKE_INSTALL_PREFIX}/daemon-app.app")
             set(_da_plugdir "${_da_app}/Contents/PlugIns/platforms")
@@ -351,9 +366,13 @@ if(APPLE)
             else()
                 message(WARNING "daemon-app: offscreen plugin or platforms dir missing; headless boot from the bundle will fail")
             endif()
-        ]==])
+        ]==]
+        )
     else()
-        message(WARNING "daemon-app: Qt6::QOffscreenIntegrationPlugin target not found; offscreen QPA plugin will not be bundled")
+        message(
+            WARNING
+            "daemon-app: Qt6::QOffscreenIntegrationPlugin target not found; offscreen QPA plugin will not be bundled"
+        )
     endif()
 
     # QMLTermWidget (embedded terminal) module deployment. It is a runtime QML
@@ -370,10 +389,17 @@ if(APPLE)
     # relocatability backstop as the exe and the offscreen plugin. QMLTERMWIDGET_QML_DIR
     # is the flake's -D flag (nix/flake.nix depFlags) pointing at the plugin's
     # qml prefix; a bare dev configure without it skips deployment.
-    if(DEFINED QMLTERMWIDGET_QML_DIR AND EXISTS "${QMLTERMWIDGET_QML_DIR}/QMLTermWidget")
-        install(DIRECTORY "${QMLTERMWIDGET_QML_DIR}/QMLTermWidget"
-                DESTINATION "${_da_bundle_contents}/Resources/qml")
-        install(CODE [==[
+    if(
+        DEFINED QMLTERMWIDGET_QML_DIR
+        AND EXISTS "${QMLTERMWIDGET_QML_DIR}/QMLTermWidget"
+    )
+        install(
+            DIRECTORY "${QMLTERMWIDGET_QML_DIR}/QMLTermWidget"
+            DESTINATION "${_da_bundle_contents}/Resources/qml"
+        )
+        install(
+            CODE
+                [==[
             set(_da_app "${CMAKE_INSTALL_PREFIX}/daemon-app.app")
             set(_da_qtw "${_da_app}/Contents/Resources/qml/QMLTermWidget")
             # The module is copied from the read-only nix store; install_name_tool
@@ -410,9 +436,13 @@ if(APPLE)
                 execute_process(COMMAND codesign --force --sign - "${_da_lib}")
             endforeach()
             execute_process(COMMAND codesign --force --sign - "${_da_app}")
-        ]==])
+        ]==]
+        )
     else()
-        message(WARNING "daemon-app: QMLTERMWIDGET_QML_DIR unset or module missing; the embedded terminal will be absent and the bundle will fail to launch (Main.qml imports QMLTermWidget unconditionally)")
+        message(
+            WARNING
+            "daemon-app: QMLTERMWIDGET_QML_DIR unset or module missing; the embedded terminal will be absent and the bundle will fail to launch (Main.qml imports QMLTermWidget unconditionally)"
+        )
     endif()
 endif()
 
