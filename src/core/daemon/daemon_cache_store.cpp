@@ -168,6 +168,18 @@ QString DaemonCacheStore::meta(const QString& key) const {
     return q.next() ? q.value(0).toString() : QString();
 }
 
+bool DaemonCacheStore::clearAll() {
+    // TODO(W2): drop + recreate the data tables and delete the namespaced sibling files so "Clear
+    // local data" leaves an empty (but valid) cache that re-baselines from the daemon.
+    return true;
+}
+
+int DaemonCacheStore::approxRowCount() const {
+    // TODO(W2): return the aggregate row count across the data tables (feeds the boot cache-rows
+    // sentinel). Stubbed to 0 until the real count lands.
+    return 0;
+}
+
 bool DaemonCacheStore::execSql(const char* sql) {
     QSqlQuery q(QSqlDatabase::database(m_connectionName));
     if (!q.exec(QString::fromUtf8(sql))) {

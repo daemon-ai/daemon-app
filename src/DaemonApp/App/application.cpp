@@ -840,6 +840,12 @@ void Application::completeWiring(QQmlApplicationEngine& engine) {
     }
 }
 
+void Application::clearLocalData() {
+    // TODO(W4): disconnect, clear QSettings("daemon-app","daemon-app") + UiSettings, best-effort
+    // keychain token clear (desktop), DaemonCacheStore::clearAll(), wipe the images cache dir, then
+    // on wasm final FS.syncfs + location.reload() and on desktop return to the first-run gate.
+}
+
 bool Application::notifyGate(const QString& title, const QString& body) {
     if (m_platform == nullptr) {
         return false;
