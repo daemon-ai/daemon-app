@@ -1,13 +1,13 @@
 # The desktop panel embeds the external QMLTermWidget plugin (a native PTY -
-# impossible in the browser sandbox, and a shared qmake-built plugin that
-# cannot ride a static-Qt binary; keeping GPL-2.0 qmltermwidget out of the
-# statically linked artifact is also deliberate, see THIRD-PARTY-NOTICES.md).
-# Those builds compile the placeholder TerminalPanelStub.qml into the SAME
-# module URI instead, aliased to the real file name so the QML type stays
-# `TerminalPanel` and consumers (Session.qml, the status-bar toggle) are
-# platform-blind. Exactly one variant is part of the module per configure; the
-# other is never compiled or linted.
-if(DAEMON_APP_WASM OR DAEMON_APP_STATIC)
+# impossible in the browser sandbox or on mobile, and a shared qmake-built
+# plugin that cannot ride a static-Qt binary; keeping GPL-2.0 qmltermwidget
+# out of the statically linked artifact is also deliberate, see
+# THIRD-PARTY-NOTICES.md). Those builds compile the placeholder
+# TerminalPanelStub.qml into the SAME module URI instead, aliased to the real
+# file name so the QML type stays `TerminalPanel` and consumers (Session.qml,
+# the status-bar toggle) are platform-blind. Exactly one variant is part of
+# the module per configure; the other is never compiled or linted.
+if(DAEMON_APP_WASM OR DAEMON_APP_STATIC OR DAEMON_APP_MOBILE)
     set(_da_terminal_panel TerminalPanelStub.qml)
     # The alias renames the file inside the module; the typename property makes
     # the registered QML type `TerminalPanel` too (without it the qmldir would
@@ -35,7 +35,7 @@ add_library(daemon-app::terminal ALIAS da_terminal)
 # as the QMLTERMWIDGET_QML_DIR env var the devShell exports. Point qmllint at it
 # so `import QMLTermWidget` resolves at build time. The stub never imports it,
 # so the lookup belongs to the dynamic desktop build only.
-if(NOT DAEMON_APP_WASM AND NOT DAEMON_APP_STATIC)
+if(NOT DAEMON_APP_WASM AND NOT DAEMON_APP_STATIC AND NOT DAEMON_APP_MOBILE)
     if(NOT QMLTERMWIDGET_QML_DIR AND DEFINED ENV{QMLTERMWIDGET_QML_DIR})
         set(QMLTERMWIDGET_QML_DIR "$ENV{QMLTERMWIDGET_QML_DIR}")
     endif()

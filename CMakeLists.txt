@@ -129,12 +129,14 @@ add_subdirectory(src)
 include(Translations)
 
 # Tests. Building/running them is opt-in (BUILD_TESTING, default ON) so it can
-# be turned off for lean release builds. Never built for the browser: the QTest
-# binaries exercise desktop-only seams (QProcess launchers, local sockets) and
-# there is no ctest runtime in the wasm sandbox (the wasm-release preset also
-# sets BUILD_TESTING=OFF; this guard keeps a preset-less configure consistent).
+# be turned off for lean release builds. Never built for the browser or mobile:
+# the QTest binaries exercise desktop-only seams (QProcess launchers, local
+# sockets), there is no ctest runtime in the wasm sandbox or on-device, and on
+# Android Qt's target finalization would try to package every test executable
+# as its own APK (the wasm-release preset also sets BUILD_TESTING=OFF; this
+# guard keeps a preset-less configure consistent).
 include(CTest)
-if(BUILD_TESTING AND NOT DAEMON_APP_WASM)
+if(BUILD_TESTING AND NOT DAEMON_APP_MOBILE)
     add_subdirectory(tests)
 endif()
 
