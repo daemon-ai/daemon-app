@@ -278,6 +278,17 @@
           appSrc = ./.;
           depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
         };
+
+        # --- Portable Linux desktop (static Qt) ------------------------------
+        # The statically-linked-Qt GUI build + its patchelf'd/stripped
+        # portable layout, tarball, and boot smoke (nix/portable.nix). Shares
+        # the qt-from-source builder with the wasm stack; only these outputs
+        # evaluate it, so the dynamic desktop outputs stay unchanged.
+        portableStack = import ./nix/portable.nix {
+          inherit pkgs versionStr baseVersion;
+          appSrc = ./.;
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+        };
       in
       {
         packages.default = daemon-app;
@@ -301,10 +312,27 @@
         # served as-is by apps.serve-wasm below.
         packages.wasm = qtWasmStack.app;
 
+        # Portable Linux desktop: the static-Qt GUI in a distributable layout
+        # (bin/daemon-app patchelf'd to the generic /lib64 loader + stripped,
+        # share/daemon-app/microtex-res, THIRD-PARTY-NOTICES) and the .tar.zst
+        # of exactly that tree. `qt-linux-static` exposes the joined Qt prefix
+        # for debugging the stack in isolation (per-module outputs live in
+        # nix/portable.nix).
+        packages.portable = portableStack.portable;
+        packages.portable-tarball = portableStack.tarball;
+        packages.qt-linux-static = portableStack.qtStatic;
+
         # Proves the wasm stack end-to-end without the app: a static Qt Quick
         # hello-world through the joined prefix's qt-cmake, asserting the
         # .wasm/.js/.html artifact set.
         checks.qt-wasm-smoke = qtWasmStack.smoke;
+
+        # Portable contract check (sandbox-safe half): ELF loader/rpath/
+        # DT_NEEDED-floor asserts, the glibc-floor readout, and an offscreen
+        # DAEMON_APP_WAIT_READY boot through the store loader. The FHS-root
+        # boot (needs user namespaces, so it cannot run in the build sandbox)
+        # is apps.portable-smoke below.
+        checks.portable-boot-smoke = portableStack.bootSmoke;
 
         apps.default = {
           type = "app";
@@ -329,6 +357,16 @@
             '';
           }}/bin/serve-wasm";
           meta.description = "Serve the daemon-app WebAssembly build on localhost";
+        };
+
+        # Boot the portable binary inside a buildFHSEnv simulating a generic
+        # distro root (real /lib64 loader + X/GL floor, no Nix store deps) -
+        # the interactive half of the portable smoke that the build sandbox
+        # cannot run (buildFHSEnv needs user namespaces).
+        apps.portable-smoke = {
+          type = "app";
+          program = "${portableStack.fhsSmoke}/bin/portable-smoke";
+          meta.description = "Boot the portable (static Qt) build in a generic FHS root";
         };
 
         devShells.default = pkgs.mkShell {

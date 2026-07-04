@@ -20,10 +20,12 @@ must carry the corresponding attributions and license texts.
 
 | Component | Pinned rev | License (SPDX) | Copyright | Upstream |
 | --- | --- | --- | --- | --- |
+| Qt 6 (qtbase, qtdeclarative, qtshadertools, qtsvg, qtwebsockets, qttools) | nixpkgs (3) | LGPL-3.0-only (3) | The Qt Company Ltd. and contributors | qt.io |
 | md4qt | `345bba2` | MIT | Igor Mironchik | invent.kde.org/libraries/md4qt |
 | earcut.hpp | `64530ea` | ISC | (c) 2015 Mapbox | github.com/mapbox/earcut.hpp |
 | KSyntaxHighlighting | `ccb31f7` | MIT (1) | The KDE community | invent.kde.org/frameworks/syntax-highlighting |
-| MicroTeX | `0e3707f` | MIT | NanoMichael and contributors | github.com/NanoMichael/MicroTeX |
+| MicroTeX | `0e3707f` | MIT | (c) 2020 Nano Michael and contributors | github.com/NanoMichael/MicroTeX |
+| tinyxml2 | nixpkgs | Zlib | (c) Lee Thomason | github.com/leethomason/tinyxml2 |
 | QSimpleUpdater | `6c78600` | MIT | (c) Alex Spataru | github.com/alex-spataru/QSimpleUpdater |
 | QAutoStart | `a27a028` | BSD-3-Clause | (c) Skycoder42 | github.com/Skycoder42/QAutoStart |
 | QWindowKit | `c783b89` | Apache-2.0 | (c) 2023-2025 Stdware Collections; (c) 2021-2023 wangwenx190 (Yuhang Zhao) | github.com/stdware/qwindowkit |
@@ -38,6 +40,15 @@ and theme files it ships carry their own per-file licenses (MIT, LGPL, GPL, and
 others); see the upstream `LICENSES/` directory and each definition's header.
 
 (2) See the **GPL-2.0 obligation** section below.
+
+(3) Qt is used under **LGPL-3.0-only** (Qt is dual-licensed; nothing here uses
+the commercial license, and no GPL-only Qt module is linked). The dynamic
+desktop builds link the shared nixpkgs Qt, which satisfies LGPL §4(d) by
+ordinary dynamic linking (the user can replace the library). The **portable
+static build** links Qt statically and has its own obligations - see the
+**Statically linked portable build (LGPL-3.0)** section below. The wasm and
+portable builds compile the same Qt version from the upstream source tarballs
+pinned by nixpkgs.
 
 ## In-tree vendored / generated code
 
@@ -65,6 +76,51 @@ The SIL Open Font License text is at [`LICENSES/OFL-1.1.txt`](LICENSES/OFL-1.1.t
 OFL requires that the copyright notice and license accompany the font files and
 that the fonts not be sold by themselves; Reserved Font Names must be respected.
 
+## Statically linked portable build (LGPL-3.0)
+
+The `portable` package (`daemon-app-portable-x86_64.tar.zst`) links Qt
+**statically**. Qt's LGPL-3.0 permits this only when the recipient can relink
+the application against a modified Qt (LGPL-3.0 §4(d)(0), via GPLv3 §6's
+"Corresponding Source" mechanism, or §4(d)(1) object-file provision). This
+distribution satisfies that through source availability:
+
+- The complete corresponding source of the application (this repository, MPL-2.0)
+  and the exact Qt configuration that built the artifact (`nix/qt-from-source.nix`
+  + `nix/portable.nix`, pinning the upstream Qt 6 source tarballs) are published
+  alongside every release. Rebuilding the artifact with a modified Qt is
+  `nix build .#portable` after editing that configuration - no proprietary
+  ingredient is required for a relink.
+- This notices file ships inside the portable package
+  (`share/doc/daemon-app/THIRD-PARTY-NOTICES.md`) so the artifact itself
+  documents the obligation and points at the sources.
+- The LGPL-3.0 text is at `LICENSES/LGPL-3.0-only.txt` in the Qt source
+  tarball and at <https://www.gnu.org/licenses/lgpl-3.0.html>.
+
+What the static artifact contains, beyond the dynamic builds' set:
+
+- Qt's **bundled third-party copies** compiled into the binary: pcre2 (BSD-3-Clause),
+  harfbuzz (MIT), libpng (Libpng), libjpeg-turbo (IJG/BSD-3-Clause/Zlib), zlib
+  (Zlib), double-conversion (BSD-3-Clause), sqlite (public domain), md4c (MIT),
+  and the Wayland client protocol definitions (MIT/HPND). Their notices ship in
+  the Qt source tarball's `LICENSES/` directory and the respective
+  `src/3rdparty/*` subtrees.
+- freetype and fontconfig are **not** bundled: the portable binary links the
+  host system's copies dynamically (like glibc, the X11/xcb/wayland client
+  stack, libxkbcommon, and GL/EGL).
+
+The portable build deliberately **excludes** GPL-2.0 qmltermwidget (the
+embedded terminal shows a stub panel instead - the GPL-2.0 obligation below
+does not attach to this artifact) and qtkeychain (the token store falls back
+to QSettings).
+
+## Rust daemon shipped alongside (daemon-node)
+
+Packaged distributions that bundle the Rust daemon next to the clients ship
+`daemon-node`, which is first-party and dual-licensed **MIT OR Apache-2.0**
+((c) 2026 Jarrad Hope; see `LICENSE-MIT` / `LICENSE-APACHE` in the daemon-node
+repository). Its own third-party crate attributions are documented in the
+daemon-node repository (`cargo deny` gates the license set).
+
 ## GPL-2.0 obligation (qmltermwidget)
 
 The embedded-terminal feature links **qmltermwidget**, which is licensed under
@@ -73,7 +129,9 @@ this plugin, the combined binary is effectively subject to GPL-2.0: recipients
 must be offered the complete corresponding source under GPL-2.0 terms, and the
 GPL-2.0 text (<https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>; shipped
 with the qmltermwidget source carried in the build artifact) must accompany the
-distribution.
+distribution. The wasm build and the portable static build do **not** include
+qmltermwidget (both compile the stub terminal panel), so this obligation does
+not attach to those artifacts.
 
 This is compatible with `daemon-app`'s MPL-2.0 licensing because MPL-2.0 §3.3
 permits distributing a Larger Work that combines MPL "Covered Software" with a
