@@ -203,6 +203,48 @@ if(APPLE)
         # DEPLOY_TOOL_OPTIONS -hardened-runtime "-codesign=Developer ID Application: <name> (<team id>)"
     )
     install(SCRIPT "${_da_macos_deploy_script}")
+
+    # macdeployqt relocatability backstop. macdeployqt copies the vendored
+    # KF6SyntaxHighlighting dylib into Contents/Frameworks (reached via the
+    # org.kde.syntaxhighlighting QML plugin's dependency chain) and rewrites the
+    # plugin's reference to it, but it leaves the app executable's OWN load
+    # command pointing at the dylib's absolute install path
+    # (CMAKE_INSTALL_NAME_DIR = the nix-store $out/lib on this build). That path
+    # is not resolvable at deploy time, so it is never rewritten and dangles the
+    # moment the .app is copied out of the store into the DMG - the app then
+    # aborts at launch with a dyld "Library not loaded" for the store path.
+    # Repoint any residual absolute /nix/store reference left in the executable
+    # at the bundled copy through the @rpath entry macdeployqt already added
+    # (@executable_path/../Frameworks), but only when that copy is actually in
+    # Frameworks, then re-seal the ad-hoc signature the edit voids. Runs after
+    # the deploy script, so it sees the fully deployed bundle.
+    install(CODE [==[
+        set(_da_app "${CMAKE_INSTALL_PREFIX}/daemon-app.app")
+        set(_da_exe "${_da_app}/Contents/MacOS/daemon-app")
+        if(EXISTS "${_da_exe}")
+            execute_process(COMMAND otool -L "${_da_exe}"
+                OUTPUT_VARIABLE _da_otool OUTPUT_STRIP_TRAILING_WHITESPACE)
+            string(REPLACE "\n" ";" _da_lines "${_da_otool}")
+            set(_da_relocated FALSE)
+            foreach(_da_line IN LISTS _da_lines)
+                string(REGEX MATCH "/nix/store/[^ ]+[.]dylib" _da_ref "${_da_line}")
+                if(_da_ref)
+                    get_filename_component(_da_base "${_da_ref}" NAME)
+                    if(EXISTS "${_da_app}/Contents/Frameworks/${_da_base}")
+                        message(STATUS "daemon-app: relocating ${_da_ref} -> @rpath/${_da_base}")
+                        execute_process(COMMAND install_name_tool -change
+                            "${_da_ref}" "@rpath/${_da_base}" "${_da_exe}")
+                        set(_da_relocated TRUE)
+                    else()
+                        message(WARNING "daemon-app: leftover store reference ${_da_ref} has no bundled copy in Frameworks")
+                    endif()
+                endif()
+            endforeach()
+            if(_da_relocated)
+                execute_process(COMMAND codesign --force --sign - "${_da_app}")
+            endif()
+        endif()
+    ]==])
 endif()
 
 # --- CPack -------------------------------------------------------------------
