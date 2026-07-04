@@ -16,6 +16,9 @@ Item {
     id: root
 
     property bool composerEnabled: true
+    // Whether the "Folder" attach item is offered. The browser (wasm) path hides it: there is no
+    // sane local-folder semantics in a browser (deferred).
+    property bool foldersEnabled: true
 
     // Attach intents (host wires real pickers later; the composer mocks chips).
     signal requestFiles()
@@ -74,6 +77,7 @@ Item {
             }
             Kit.MenuItem {
                 Layout.fillWidth: true
+                visible: root.foldersEnabled
                 iconText: FontIcons.fa_folder
                 text: qsTr("Folder")
                 onTriggered: { root.requestFolder(); menu.close(); }

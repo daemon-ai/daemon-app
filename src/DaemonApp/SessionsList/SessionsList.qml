@@ -151,9 +151,17 @@ Rectangle {
         defaultSuffix: "json"
 
         function openFor(sessionId) {
-            exportDialog.targetId = sessionId;
             const t = SessionStore.title(sessionId);
-            exportDialog.currentFile = "file:" + (t && t.length > 0 ? t : "session") + ".json";
+            const base = (t && t.length > 0 ? t : "session");
+            if (Qt.platform.os === "wasm") {
+                // No shared filesystem with the node in the browser: skip the sandbox-only
+                // FileDialog and hand the serialized JSON to the wasm bridge, which triggers a
+                // real browser download of "<title-or-id>.json".
+                Exporter.exportToBrowser(SessionStore, sessionId, base + ".json");
+                return;
+            }
+            exportDialog.targetId = sessionId;
+            exportDialog.currentFile = "file:" + base + ".json";
             open();
         }
         onAccepted: {

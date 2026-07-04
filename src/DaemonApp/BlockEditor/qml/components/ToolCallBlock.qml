@@ -180,9 +180,16 @@ Item {
                     TapHandler {
                         onTapped: {
                             const payload = root.subtitle.length > 0 ? root.subtitle : root.ansiText
-                            clip.text = payload
-                            clip.selectAll()
-                            clip.copy()
+                            // Route through the controller so the wasm insecure-context fallback +
+                            // toast apply (desktop still lands the same text on the clipboard). Fall
+                            // back to the off-screen TextEdit only if no controller is wired.
+                            if (root.editorController) {
+                                root.editorController.copyText(payload)
+                            } else {
+                                clip.text = payload
+                                clip.selectAll()
+                                clip.copy()
+                            }
                         }
                     }
                 }
