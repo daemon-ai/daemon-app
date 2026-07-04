@@ -1,0 +1,119 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jarrad Hope
+#
+# CPack per-generator configuration (CPACK_PROJECT_CONFIG_FILE): cpack loads
+# this once per generator with CPACK_GENERATOR set, before staging the
+# install tree. Generator-specific knobs belong here; everything shared sits
+# in cmake/Packaging.cmake.
+#
+# Dependency policy (DEB Depends / RPM Requires): hand-written system floor.
+# dpkg-shlibdeps / rpm's AutoReq cannot run on NixOS (no dpkg/rpm database,
+# and the v1 payload is Nix-linked so automatic scans would emit /nix/store
+# requirements no target distro satisfies). The floor below is derived from
+# `ldd bin/.daemon-app-wrapped` + `readelf -d` on the packaged ELFs
+# (daemon-app, libKF6SyntaxHighlighting, kquicksyntaxhighlightingplugin):
+#
+#   ldd/NEEDED evidence                 -> Debian            / Fedora
+#   libc/libm/libpthread/libdl/librt    -> libc6             / glibc
+#   libstdc++.so.6                      -> libstdc++6        / libstdc++
+#   libgcc_s.so.1                       -> libgcc-s1         / libgcc
+#   libGLX/libOpenGL/libEGL (libglvnd)  -> libglx0 libopengl0 libegl1 libgl1
+#                                          / libglvnd-glx libglvnd-opengl libglvnd-egl
+#   libX11/libXext/libXau/libXdmcp      -> libx11-6 libxext6 libxau6 libxdmcp6
+#                                          / libX11 libXext libXau libXdmcp
+#   libxcb.so.1                         -> libxcb1           / libxcb
+#   libxkbcommon(+x11)                  -> libxkbcommon0 libxkbcommon-x11-0
+#                                          / libxkbcommon libxkbcommon-x11
+#   libfontconfig/libfreetype           -> libfontconfig1 libfreetype6
+#                                          / fontconfig freetype
+#   libdbus-1.so.3                      -> libdbus-1-3       / dbus-libs
+#   libglib-2.0/gobject/gio             -> libglib2.0-0      / glib2
+#   libz.so.1                           -> zlib1g            / zlib(-ng compat)
+#
+# Qt/KF6/tinyxml2/qtkeychain/openssl/icu and the rest of the ldd closure are
+# payload we bundle (static-qt workstream), not system dependencies. Version
+# floors are intentionally omitted; scripts/glibc-floor.sh gates the glibc
+# symbol-version ceiling instead.
+
+if(CPACK_GENERATOR STREQUAL "DEB")
+    # Self-contained product tree under /opt (Filesystem Hierarchy Standard
+    # for add-on packages); postinst symlinks the entry points into
+    # /usr/local/bin and the desktop assets into /usr/share.
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/daemon")
+    set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
+    # No dpkg database on NixOS (and the v1 payload is Nix-linked): Depends
+    # are hand-written above instead of dpkg-shlibdeps output.
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS
+        "libc6, libstdc++6, libgcc-s1, libgl1, libglx0, libopengl0, libegl1, libx11-6, libxext6, libxau6, libxdmcp6, libxcb1, libxkbcommon0, libxkbcommon-x11-0, libfontconfig1, libfreetype6, libdbus-1-3, libglib2.0-0, zlib1g"
+    )
+    set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
+    set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+    set(CPACK_DEBIAN_COMPRESSION_TYPE "xz")
+    set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
+        "${CPACK_DAEMON_APP_LINUX_DIR}/postinst;${CPACK_DAEMON_APP_LINUX_DIR}/prerm"
+    )
+    # Keep the committed scripts' 0755 mode instead of CPack's 0644 rewrite.
+    set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
+endif()
+
+if(CPACK_GENERATOR STREQUAL "RPM")
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/daemon")
+    set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
+    # Mirror of SHLIBDEPS OFF: rpmbuild's find-requires would list the Nix
+    # store sonames; Requires are hand-written above.
+    set(CPACK_RPM_PACKAGE_AUTOREQPROV OFF)
+    set(CPACK_RPM_PACKAGE_REQUIRES
+        "glibc, libstdc++, libgcc, libglvnd-glx, libglvnd-opengl, libglvnd-egl, libX11, libXext, libXau, libXdmcp, libxcb, libxkbcommon, libxkbcommon-x11, fontconfig, freetype, dbus-libs, glib2, zlib"
+    )
+    set(CPACK_RPM_PACKAGE_LICENSE "MPL-2.0")
+    set(CPACK_RPM_PACKAGE_GROUP "Development/Tools")
+    set(CPACK_RPM_PACKAGE_URL "${CPACK_PACKAGE_HOMEPAGE_URL}")
+    set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE
+        "${CPACK_DAEMON_APP_LINUX_DIR}/postinst"
+    )
+    set(CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE
+        "${CPACK_DAEMON_APP_LINUX_DIR}/prerm"
+    )
+    # The payload references /nix/store on purpose (v1 caveat in
+    # Packaging.cmake); keep rpmbuild's buildroot policy scripts from
+    # rejecting or rewriting it. _tmppath/_dbpath default to /var/tmp and
+    # /var/lib/rpm, which do not exist in the Nix build sandbox - point both
+    # into rpmbuild's own working tree.
+    set(CPACK_RPM_SPEC_MORE_DEFINE
+        "%define __brp_check_rpaths %{nil}
+%define _tmppath %{_topdir}/tmp
+%define _dbpath %{_topdir}/rpmdb"
+    )
+endif()
+
+if(CPACK_GENERATOR STREQUAL "AppImage")
+    # Canonical AppDir layout: usr/bin, usr/share/... under the mount point.
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
+    # The generator requires CPACK_PACKAGE_ICON to name an installed icon file
+    # matching the desktop entry's Icon key (basename lookup).
+    set(CPACK_PACKAGE_ICON "daemon-app.png")
+    set(CPACK_APPIMAGE_DESKTOP_FILE "daemon-app.desktop")
+    # Pinned type2 runtime from nix/appimagetool.nix - no network fetch at
+    # package time. Empty means the appimagetool wrapper injects its own
+    # pinned runtime.
+    if(CPACK_DAEMON_APP_APPIMAGE_RUNTIME)
+        set(CPACK_APPIMAGE_RUNTIME_FILE "${CPACK_DAEMON_APP_APPIMAGE_RUNTIME}")
+    endif()
+    # Placeholder update feed: the release pipeline (sibling workstream)
+    # publishes the real .zsync next to the artifact and rewrites this URL.
+    set(CPACK_APPIMAGE_UPDATE_INFORMATION
+        "zsync|https://daemon.io/releases/daemon-latest-linux-x86_64.AppImage.zsync"
+    )
+    # Metainfo is validated by checks.artifact-sanity (appstreamcli); the
+    # sandbox running appimagetool has no appstream, so skip its own check.
+    set(CPACK_APPIMAGE_NO_APPSTREAM ON)
+endif()
+
+if(CPACK_GENERATOR STREQUAL "NSIS")
+    # Stub: the Windows workstream lands the real installer config. Kept here
+    # so a stray `cpack -G NSIS` picks up sane branding.
+    set(CPACK_NSIS_PACKAGE_NAME "Daemon")
+    set(CPACK_NSIS_DISPLAY_NAME "Daemon")
+    set(CPACK_NSIS_MUI_ICON "${CPACK_DAEMON_APP_WINDOWS_DIR}/daemon-app.ico")
+endif()

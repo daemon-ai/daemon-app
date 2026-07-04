@@ -1,0 +1,37 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Jarrad Hope
+# SPDX-License-Identifier: MPL-2.0
+#
+# Shared DEB postinst / RPM %post body. The package installs under /opt/daemon
+# (self-contained product tree: daemon-app plus, when bundled, daemon /
+# daemon-infer / daemon-cli side by side - LocalDaemonLauncher discovers the
+# daemon next to the app executable). This script surfaces it to the system:
+# CLI entry points into /usr/local/bin (plain ln -sf; no update-alternatives -
+# nothing else provides these names) and desktop entry / icons / metainfo into
+# /usr/share so menus and app stores see them.
+set -e
+
+opt=/opt/daemon
+
+for tool in daemon-app daemon daemon-cli; do
+    if [ -x "$opt/bin/$tool" ]; then
+        ln -sf "$opt/bin/$tool" "/usr/local/bin/$tool"
+    fi
+done
+
+mkdir -p /usr/share/applications /usr/share/metainfo
+ln -sf "$opt/share/applications/daemon-app.desktop" /usr/share/applications/daemon-app.desktop
+ln -sf "$opt/share/metainfo/io.daemon.app.metainfo.xml" /usr/share/metainfo/io.daemon.app.metainfo.xml
+for dir in "$opt"/share/icons/hicolor/*/apps; do
+    size=$(basename "$(dirname "$dir")")
+    mkdir -p "/usr/share/icons/hicolor/$size/apps"
+    for icon in "$dir"/*; do
+        ln -sf "$icon" "/usr/share/icons/hicolor/$size/apps/$(basename "$icon")"
+    done
+done
+
+# Refresh caches when the tools exist (not guaranteed on minimal systems).
+command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q /usr/share/applications || true
+command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -q /usr/share/icons/hicolor || true
+
+exit 0

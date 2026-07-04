@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 Jarrad Hope
+SPDX-License-Identifier: MPL-2.0
+
+AppStream metainfo template. @PROJECT_VERSION@ is substituted from the
+top-level VERSION file at configure time (cmake/Packaging.cmake); do not
+hardcode a version here. The single <release> entry is a stub - the release
+pipeline appends real entries (with notes) when tagging.
+-->
+<component type="desktop-application">
+  <id>io.daemon.app</id>
+  <metadata_license>FSFAP</metadata_license>
+  <project_license>MPL-2.0</project_license>
+  <name>Daemon</name>
+  <summary>AI agent chat application</summary>
+  <description>
+    <p>
+      Daemon is an AI agent chat application. The desktop app is a thin client
+      of the daemon node: it renders sessions, transcripts, models, and fleet
+      state served over the daemon wire protocol, and ships alongside the
+      daemon and daemon-infer binaries.
+    </p>
+  </description>
+  <launchable type="desktop-id">daemon-app.desktop</launchable>
+  <developer id="io.daemon">
+    <name>Jarrad Hope</name>
+  </developer>
+  <provides>
+    <binary>daemon-app</binary>
+  </provides>
+  <!-- Placeholder until the public site lands. -->
+  <url type="homepage">https://daemon.io</url>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="@PROJECT_VERSION@" date="@DAEMON_APP_METAINFO_DATE@"/>
+  </releases>
+</component>
