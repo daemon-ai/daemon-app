@@ -530,6 +530,16 @@
             installPhase = ''
               runHook preInstall
 
+              # cpack's DragNDrop generator and the macdeployqt deploy script
+              # shell out to Apple system tools - hdiutil (DMG creation),
+              # codesign (ad-hoc bundle seal), SetFile - that live in /usr/bin
+              # + /usr/sbin, absent from the nix build PATH. This mac's daemon
+              # build user has sandbox disabled and hdiutil was probed to work
+              # there once findable, so append (not prepend, so nix's own
+              # cctools still win) the system bindirs for the packaging step
+              # only; the compile stays hermetic.
+              export PATH="$PATH:/usr/bin:/usr/sbin"
+
               echo "=== cpack -G DragNDrop ==="
               cpack -G DragNDrop || {
                 echo "--- cpack DragNDrop failed; dumping logs ---" >&2
