@@ -2,6 +2,8 @@
   description = "daemon-app - Qt 6 QML/C++ development environment, build, and vendored dependencies";
 
   inputs = {
+    # logos-co fork of nixos-unstable carrying the MinGW Qt cross fixes the
+    # Windows (mingw) outputs need (same Qt 6.11.1 as upstream unstable).
     nixpkgs.url = "github:logos-co/nixpkgs/mingw-integration";
     flake-utils.url = "github:numtide/flake-utils";
 
@@ -285,6 +287,18 @@
         # the qt-from-source builder with the wasm stack; only these outputs
         # evaluate it, so the dynamic desktop outputs stay unchanged.
         portableStack = import ./nix/portable.nix {
+          inherit pkgs versionStr baseVersion;
+          appSrc = ./.;
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+        };
+
+        # --- Windows desktop (MinGW cross, static Qt) -------------------------
+        # The x86_64-w64-mingw32 cross stack (pkgsCross.mingwW64 from the
+        # logos-co fork) + the statically-linked daemon-app.exe, its portable
+        # layout, the CPack NSIS installer, the PE sanity check, and the
+        # best-effort wine smoke (nix/windows.nix). Only these outputs
+        # evaluate it, so the native desktop outputs stay unchanged.
+        windowsStack = import ./nix/windows.nix {
           inherit pkgs versionStr baseVersion;
           appSrc = ./.;
           depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
@@ -691,6 +705,14 @@
         packages.portable-tarball = portableStack.tarball;
         packages.qt-linux-static = portableStack.qtStatic;
 
+        # Windows desktop (MinGW cross, static Qt): the portable layout
+        # (bin/daemon-app.exe + share/daemon-app/microtex-res + notices) and
+        # the CPack NSIS installer. `qt-mingw-static` exposes the joined Qt
+        # prefix for debugging the stack in isolation.
+        packages.windows-portable = windowsStack.portable;
+        packages.nsis = windowsStack.nsis;
+        packages.qt-mingw-static = windowsStack.qtMingw;
+
         # Proves the wasm stack end-to-end without the app: a static Qt Quick
         # hello-world through the joined prefix's qt-cmake, asserting the
         # .wasm/.js/.html artifact set.
@@ -707,6 +729,12 @@
         # desktop/metainfo validation, AppImage payload extract + offscreen
         # boot, glibc symbol-version floor (scripts/glibc-floor.sh).
         checks.artifact-sanity = artifactSanity;
+
+        # Windows artifact gate: PE32+ magic + GUI subsystem, the DLL import
+        # floor (Windows inbox DLLs only), the embedded icon resource, and
+        # NSIS installer existence/size. Wine is deliberately NOT part of
+        # this check - the boot smoke is apps.windows-smoke below.
+        checks.windows-sanity = windowsStack.sanity;
 
         apps.default = {
           type = "app";
@@ -741,6 +769,16 @@
           type = "app";
           program = "${portableStack.fhsSmoke}/bin/portable-smoke";
           meta.description = "Boot the portable (static Qt) build in a generic FHS root";
+        };
+
+        # Best-effort wine smoke for the Windows build: offscreen WAIT_READY
+        # boot of daemon-app.exe + a silent NSIS install into a scratch
+        # prefix. Wine is emulation, not Windows: failures here are recorded,
+        # not gating (`nix run .#windows-smoke`).
+        apps.windows-smoke = {
+          type = "app";
+          program = "${windowsStack.smoke}/bin/windows-smoke";
+          meta.description = "Boot the Windows (MinGW) build + NSIS installer under wine";
         };
 
         devShells.default = pkgs.mkShell {

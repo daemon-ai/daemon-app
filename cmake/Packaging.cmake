@@ -224,6 +224,34 @@ if(APPLE)
     # invalidates the seal.
     set(CPACK_STRIP_FILES FALSE)
     set(CPACK_GENERATOR "DragNDrop")
+elseif(WIN32)
+    set(CPACK_PACKAGE_FILE_NAME "daemon-${PROJECT_VERSION}-win64")
+    # The cross build tree is unstripped; strip at cpack-install.
+    set(CPACK_STRIP_FILES TRUE)
+    # NSIS (the Windows cross build) needs makensis on PATH
+    # (nix/windows.nix provides it).
+    set(CPACK_GENERATOR "NSIS")
+
+    # The NSIS MUI license page renders exactly one file; ship LICENSE and
+    # the third-party notices on it together (both files also install into
+    # share/doc/daemon-app above). Generated at configure so cpack only
+    # reads it.
+    file(READ "${CMAKE_SOURCE_DIR}/LICENSE" _da_nsis_license)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/THIRD-PARTY-NOTICES.md")
+        file(READ "${CMAKE_SOURCE_DIR}/THIRD-PARTY-NOTICES.md" _da_nsis_notices)
+        string(
+            APPEND
+            _da_nsis_license
+            "\n\n================================================================\nTHIRD-PARTY NOTICES\n================================================================\n\n${_da_nsis_notices}"
+        )
+    endif()
+    file(
+        WRITE "${CMAKE_BINARY_DIR}/packaging/nsis-license.txt"
+        "${_da_nsis_license}"
+    )
+    set(CPACK_DAEMON_APP_NSIS_LICENSE
+        "${CMAKE_BINARY_DIR}/packaging/nsis-license.txt"
+    )
 else()
     set(CPACK_PACKAGE_FILE_NAME
         "daemon-${PROJECT_VERSION}-linux-${CMAKE_SYSTEM_PROCESSOR}"

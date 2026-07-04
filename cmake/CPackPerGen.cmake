@@ -142,9 +142,47 @@ if(CPACK_GENERATOR STREQUAL "DragNDrop")
 endif()
 
 if(CPACK_GENERATOR STREQUAL "NSIS")
-    # Stub: the Windows workstream lands the real installer config. Kept here
-    # so a stray `cpack -G NSIS` picks up sane branding.
+    # Per-machine product tree: $PROGRAMFILES64\Daemon (the NSIS stub itself
+    # is a 32-bit exe, so the default $PROGRAMFILES would land in the x86
+    # dir). bin\ holds daemon-app.exe (+ the bundled daemon binaries once the
+    # superproject injects them, same DAEMON_APP_BUNDLED_* contract as the
+    # Linux artifacts).
+    set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "Daemon")
     set(CPACK_NSIS_PACKAGE_NAME "Daemon")
     set(CPACK_NSIS_DISPLAY_NAME "Daemon")
+
+    # Branding: installer/uninstaller icons + the Add/Remove Programs entry
+    # (icon path is relative to the installed tree, backslash-separated).
     set(CPACK_NSIS_MUI_ICON "${CPACK_DAEMON_APP_WINDOWS_DIR}/daemon-app.ico")
+    set(CPACK_NSIS_MUI_UNIICON "${CPACK_DAEMON_APP_WINDOWS_DIR}/daemon-app.ico")
+    set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\daemon-app.exe")
+    set(CPACK_NSIS_URL_INFO_ABOUT "${CPACK_PACKAGE_HOMEPAGE_URL}")
+    set(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
+    set(CPACK_NSIS_MANIFEST_DPI_AWARE ON)
+    set(CPACK_NSIS_COMPRESSOR "/SOLID lzma")
+
+    # License page: LICENSE + THIRD-PARTY-NOTICES concatenated at configure
+    # time (cmake/Packaging.cmake); fall back to the bare LICENSE for a
+    # stray `cpack -G NSIS` against an older configure.
+    if(CPACK_DAEMON_APP_NSIS_LICENSE)
+        set(CPACK_RESOURCE_FILE_LICENSE "${CPACK_DAEMON_APP_NSIS_LICENSE}")
+    endif()
+
+    # Shortcuts: Start Menu entry always; the Desktop icon rides the
+    # installer's "Create Daemon Desktop Icon" checkbox (Install Options
+    # page, off by default). The generated uninstaller removes both, plus
+    # the install tree and the registry entries.
+    set(CPACK_PACKAGE_EXECUTABLES "daemon-app" "Daemon")
+    set(CPACK_CREATE_DESKTOP_LINKS "daemon-app")
+    set(CPACK_NSIS_EXECUTABLES_DIRECTORY "bin")
+
+    # Upgrades: silently run the previous uninstaller first, so stale
+    # payload never survives a version bump (NSIS has no component-level
+    # upgrade tracking of its own).
+    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+
+    # Finish page offers to launch the app (path resolves under
+    # CPACK_NSIS_EXECUTABLES_DIRECTORY).
+    set(CPACK_NSIS_MUI_FINISHPAGE_RUN "daemon-app.exe")
 endif()

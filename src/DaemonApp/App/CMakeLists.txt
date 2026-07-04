@@ -187,6 +187,30 @@ if(NOT DAEMON_APP_MOBILE AND NOT DAEMON_APP_WASM)
     target_link_libraries(daemon-app PRIVATE Qt6::Widgets)
 endif()
 
+# --- Windows executable polish ----------------------------------------------
+if(WIN32)
+    # GUI subsystem: no console window flashes up on launch. The headless
+    # probes' stdout sentinel contract (DAEMON_APP_WAIT_READY prints
+    # "DAEMON_APP_READY ok", see main.cpp) is unaffected in practice: every
+    # consumer (wine smoke, E2E harnesses) runs the exe with stdout
+    # REDIRECTED to a pipe/file, and a GUI-subsystem process inherits and
+    # writes such handles fine - only an interactive console loses the text,
+    # which is not a supported flow.
+    set_target_properties(daemon-app PROPERTIES WIN32_EXECUTABLE TRUE)
+
+    # Embedded icon + VERSIONINFO resource, compiled in via windres
+    # (CMAKE_RC_COMPILER from the MinGW toolchain). The numeric version
+    # fields derive from the top-level VERSION file through project(VERSION).
+    enable_language(RC)
+    set(DAEMON_APP_RC_ICON "${CMAKE_SOURCE_DIR}/packaging/windows/daemon-app.ico")
+    configure_file(
+        "${CMAKE_SOURCE_DIR}/packaging/windows/daemon-app.rc.in"
+        "${CMAKE_BINARY_DIR}/packaging/daemon-app.rc"
+        @ONLY
+    )
+    target_sources(daemon-app PRIVATE "${CMAKE_BINARY_DIR}/packaging/daemon-app.rc")
+endif()
+
 include(GNUInstallDirs)
 if(DAEMON_APP_WASM)
     # The browser deliverable is the emscripten artifact set qtloader.js boots
@@ -218,6 +242,9 @@ else()
     )
     # Ship MicroTeX's runtime resources next to the binary, where the startup
     # probe (application.cpp microtexResDir) finds them app-dir-relative.
+    # Unconditional across desktop platforms (the windows branch carried a
+    # WIN32-only copy of this rule while the size-wins runtime probe was
+    # pending; the trains have merged).
     install(DIRECTORY "${MICROTEX_RES_DIR}/"
         DESTINATION ${CMAKE_INSTALL_DATADIR}/daemon-app/microtex-res
     )
