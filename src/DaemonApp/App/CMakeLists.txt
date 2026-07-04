@@ -299,10 +299,14 @@ else()
     )
     # Ship MicroTeX's runtime resources next to the binary, where the startup
     # probe (application.cpp microtexResDir) finds them app-dir-relative.
-    # Unconditional across desktop platforms (the windows branch carried a
-    # WIN32-only copy of this rule while the size-wins runtime probe was
-    # pending; the trains have merged).
-    install(DIRECTORY "${MICROTEX_RES_DIR}/"
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/daemon-app/microtex-res
-    )
+    # NOT on APPLE: the macOS bundle already stages microtex-res into
+    # Contents/Resources (cmake/Packaging.cmake), which is where the probe
+    # resolves inside a .app; a second copy under share/daemon-app would only
+    # bloat the DragNDrop DMG root. Linux + Windows keep the app-dir-relative
+    # share copy their portable payloads rely on.
+    if(NOT APPLE)
+        install(DIRECTORY "${MICROTEX_RES_DIR}/"
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/daemon-app/microtex-res
+        )
+    endif()
 endif()

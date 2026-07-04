@@ -151,6 +151,17 @@ if(DAEMON_APP_WASM OR ANDROID OR (DAEMON_APP_STATIC AND CMAKE_CROSSCOMPILING))
     # finalization. EXCLUDE_FROM_ALL keeps only what the app links - the static
     # lib + QML plugin - in the build; both are static archives.
     add_subdirectory("${_ksyntax_dir}" "${CMAKE_BINARY_DIR}/_deps/ksyntaxhighlighting" EXCLUDE_FROM_ALL)
+elseif(APPLE)
+    # macOS ships the app as a self-contained .app bundle: macdeployqt copies
+    # the KF6SyntaxHighlighting library and the org.kde.syntaxhighlighting QML
+    # plugin (both of which the app links) into Contents/Frameworks + qml. The
+    # framework's CLI tool, dev headers, CMake package files, and i18n catalogs
+    # are useless payload that would otherwise leak into the DragNDrop DMG root
+    # (the darwin analog of the KSyntaxHighlighting side-payload prune
+    # PackagePortablePayload.cmake performs for the Linux packages). Same
+    # EXCLUDE_FROM_ALL treatment as the single-binary configs above keeps them
+    # out of the install/package tree while the linked lib + plugin still build.
+    add_subdirectory("${_ksyntax_dir}" "${CMAKE_BINARY_DIR}/_deps/ksyntaxhighlighting" EXCLUDE_FROM_ALL)
 else()
     add_subdirectory("${_ksyntax_dir}" "${CMAKE_BINARY_DIR}/_deps/ksyntaxhighlighting")
 endif()
