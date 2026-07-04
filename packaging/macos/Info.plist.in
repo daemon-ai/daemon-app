@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 Jarrad Hope
+SPDX-License-Identifier: MPL-2.0
+
+macOS bundle metadata template, configured at CMake generate time through the
+MACOSX_BUNDLE_INFO_PLIST target property (src/DaemonApp/App/CMakeLists.txt).
+@MACOSX_BUNDLE_EXECUTABLE_NAME@ is defined by CMake itself while configuring
+the plist; @PROJECT_VERSION@ is the VERSION-file SemVer. The CFBundle version
+fields must stay strictly numeric-dotted, so the git-enriched build string
+from cmake/Version.cmake is deliberately NOT used here (it stays in
+daemon_app_version.h / the About page). CFBundleIdentifier mirrors the
+AppStream component id (packaging/linux/io.daemon.app.metainfo.xml.in).
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleIdentifier</key>
+    <string>io.daemon.app</string>
+    <key>CFBundleName</key>
+    <string>Daemon</string>
+    <key>CFBundleDisplayName</key>
+    <string>Daemon</string>
+    <key>CFBundleExecutable</key>
+    <string>@MACOSX_BUNDLE_EXECUTABLE_NAME@</string>
+    <key>CFBundleIconFile</key>
+    <string>daemon-app.icns</string>
+    <key>CFBundleShortVersionString</key>
+    <string>@PROJECT_VERSION@</string>
+    <key>CFBundleVersion</key>
+    <string>@PROJECT_VERSION@</string>
+    <!-- Qt 6.11 supports macOS 13+ (doc.qt.io/qt-6.11/macos.html): refuse to
+         launch below that instead of crashing into missing OS API. -->
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2026 Jarrad Hope. Licensed under the MPL-2.0.</string>
+</dict>
+</plist>

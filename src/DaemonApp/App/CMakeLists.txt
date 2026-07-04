@@ -10,6 +10,30 @@ qt_add_executable(daemon-app
 # main.cpp includes the generated daemon_app_version.h; depend on the target that refreshes it.
 add_dependencies(daemon-app daemon_app_version_header)
 
+# --- macOS bundle ------------------------------------------------------------
+# Desktop macOS builds a proper .app bundle: Finder/Dock integration,
+# codesigning, notarization, and the CPack DragNDrop (.dmg) packaging all
+# require one. iOS is APPLE too but bundles through the mobile toolchain,
+# hence the DAEMON_APP_MOBILE guard. Set here (not in cmake/Packaging.cmake)
+# so the property lands before Qt's deferred target finalization runs at this
+# directory's scope end - the finalizer reads MACOSX_BUNDLE for bundle rpath
+# handling. Bundle payload staging and the DMG live in cmake/Packaging.cmake.
+if(APPLE AND NOT DAEMON_APP_MOBILE)
+    # Build-time copy into <bundle>/Contents/Resources, so the build-tree
+    # bundle carries the icon too; installs stage the same file.
+    set(_da_macos_icns "${CMAKE_SOURCE_DIR}/packaging/macos/daemon-app.icns")
+    set_source_files_properties("${_da_macos_icns}"
+        PROPERTIES MACOSX_PACKAGE_LOCATION Resources
+    )
+    target_sources(daemon-app PRIVATE "${_da_macos_icns}")
+    # Info.plist template: CFBundleIdentifier io.daemon.app (the AppStream
+    # id), version fields from @PROJECT_VERSION@ (see the template header).
+    set_target_properties(daemon-app PROPERTIES
+        MACOSX_BUNDLE ON
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/packaging/macos/Info.plist.in"
+    )
+endif()
+
 qt_add_qml_module(daemon-app
     URI DaemonApp.App
     VERSION 1.0

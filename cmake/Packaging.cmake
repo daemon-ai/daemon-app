@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: MPL-2.0
 # SPDX-FileCopyrightText: 2026 Jarrad Hope
 #
-# Desktop packaging: freedesktop assets, bundled sibling binaries, and CPack
-# (DEB / RPM / AppImage; NSIS is a stub for the Windows workstream).
+# Desktop packaging: freedesktop assets, the macOS bundle payload, bundled
+# sibling binaries, and CPack (DEB / RPM / AppImage; NSIS is a stub for the
+# Windows workstream).
 #
 # CAVEAT (v1 scaffolding): the payload packaged today is the DYNAMIC-Qt app as
 # linked by the Nix toolchain - its interpreter and RUNPATH point into
@@ -11,6 +12,11 @@
 # payload later; what must be correct here is the packaging skeleton: assets,
 # install rules, per-generator config (cmake/CPackPerGen.cmake), and the
 # artifact sanity checks (flake checks.artifact-sanity).
+#
+# The macOS (APPLE) side is CODE-ONLY so far: written and lint-checked on
+# Linux, never yet configured or packaged on a mac. Anything it stages runs
+# through the same v1 caveat, plus its own unvalidated list - see
+# packaging/macos/README.md before trusting a produced .dmg.
 
 include_guard(GLOBAL)
 
@@ -44,24 +50,42 @@ endif()
 
 include(GNUInstallDirs)
 
+# --- Platform payload destinations -------------------------------------------
+# Linux follows GNUInstallDirs (bin/, share/doc/...). macOS routes the same
+# payloads into the app bundle: sibling binaries next to the app executable in
+# Contents/MacOS (LocalDaemonLauncher probes
+# QCoreApplication::applicationDirPath(), which IS Contents/MacOS inside a
+# bundle), docs into Contents/Resources. The literal bundle directory composes
+# with the `install(TARGETS daemon-app BUNDLE DESTINATION .)` rule in
+# src/DaemonApp/App/CMakeLists.txt: the bundle lands at <prefix>/daemon-app.app
+# both under `cmake --install` and in CPack's DragNDrop staging root.
+if(APPLE)
+    set(_da_bundle_contents "daemon-app.app/Contents")
+    set(_da_colocated_bin_dir "${_da_bundle_contents}/MacOS")
+    set(_da_doc_dir "${_da_bundle_contents}/Resources")
+else()
+    set(_da_colocated_bin_dir "${CMAKE_INSTALL_BINDIR}")
+    set(_da_doc_dir "${CMAKE_INSTALL_DATADIR}/doc/daemon-app")
+endif()
+
 if(DAEMON_APP_BUNDLED_DAEMON)
     install(
         PROGRAMS "${DAEMON_APP_BUNDLED_DAEMON}"
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        DESTINATION "${_da_colocated_bin_dir}"
         RENAME daemon
     )
 endif()
 if(DAEMON_APP_BUNDLED_DAEMON_INFER)
     install(
         PROGRAMS "${DAEMON_APP_BUNDLED_DAEMON_INFER}"
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        DESTINATION "${_da_colocated_bin_dir}"
         RENAME daemon-infer
     )
 endif()
 if(DAEMON_APP_BUNDLED_DAEMON_CLI)
     install(
         PROGRAMS "${DAEMON_APP_BUNDLED_DAEMON_CLI}"
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        DESTINATION "${_da_colocated_bin_dir}"
         RENAME daemon-cli
     )
 endif()
@@ -72,7 +96,7 @@ foreach(_da_doc LICENSE THIRD-PARTY-NOTICES.md)
     if(EXISTS "${CMAKE_SOURCE_DIR}/${_da_doc}")
         install(
             FILES "${CMAKE_SOURCE_DIR}/${_da_doc}"
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/daemon-app
+            DESTINATION "${_da_doc_dir}"
         )
     endif()
 endforeach()
@@ -122,6 +146,27 @@ if(UNIX AND NOT APPLE)
     install(
         FILES "${_da_linux_dir}/icons/daemon-app.svg"
         DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
+    )
+endif()
+
+# --- macOS bundle payload ----------------------------------------------------
+# The bundle itself (MACOSX_BUNDLE, Info.plist, .icns) is declared on the
+# target in src/DaemonApp/App/CMakeLists.txt; this block stages the rest of
+# the bundle payload.
+if(APPLE)
+    # MicroTeX's runtime resources (fonts + XML), staged where bundle
+    # resources belong. NOTE: on this branch the binary still reads the baked
+    # compile-time MICROTEX_RES_DIR (a Nix store path on the build machine);
+    # the runtime probing (env override -> app-dir-relative candidates) lands
+    # with pkg/size-wins.
+    # TODO(after pkg/size-wins): extend application.cpp's microtexResDir()
+    # with an applicationDirPath()/../Resources/microtex-res candidate so this
+    # bundle copy wins over the baked build path. Tracked in
+    # packaging/macos/README.md; not done here because that branch rewrites
+    # the exact same application.cpp lines (merge hygiene).
+    install(
+        DIRECTORY "${MICROTEX_RES_DIR}/"
+        DESTINATION "${_da_bundle_contents}/Resources/microtex-res"
     )
 endif()
 
