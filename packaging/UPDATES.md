@@ -28,6 +28,7 @@ Per-artifact targets (settled):
 | DMG `.app` (macOS) | `DownloadAndOpen` first, `SelfApply` later | open-and-instruct v1; in-place `.app` swap needs quarantine/codesign care. |
 | deb / rpm | `Notify` | the distro repo owns package replacement (a repo lands in a later workstream). |
 | portable tar | `Notify` | unpacked location unknown; user manages it. |
+| APK (Android, sideload) | `Notify` | debug-signed sideload artifact; the Play Store owns in-store updates, so the feed only notifies. |
 | WASM / app stores | `None` | the platform (browser cache / store) owns delivery. |
 
 Two dials exist per artifact and they compose:
@@ -97,8 +98,8 @@ Per artifact:
 
 | Field | Type | Meaning |
 |---|---|---|
-| `kind` | enum | `appimage \| deb \| rpm \| nsis \| dmg \| portable-tar`. |
-| `os` | enum | `linux \| windows \| macos`. |
+| `kind` | enum | `appimage \| deb \| rpm \| nsis \| dmg \| portable-tar \| apk`. |
+| `os` | enum | `linux \| windows \| macos \| android`. |
 | `arch` | enum | `x86_64 \| aarch64` (`unknown` if the generator could not parse it — such entries are never auto-selected). |
 | `file` | string | artifact name, resolved **relative to the manifest's own URL** so a feed relocates without rewrites. |
 | `size` | int | exact byte size; cheap pre-gate before hashing. |
@@ -117,6 +118,12 @@ Per artifact:
 - **Who verifies:** the app. The minisign **public key is pinned in the binary
   at compile time** (it will ride the same package-time define mechanism as the
   dial). Feed → verify signature against the pinned key → only then parse.
+  The current release-feed public key (pin this at compile time; the matching
+  secret lives only in the `daemon-ai/daemon` `MINISIGN_SECRET_KEY` CI secret):
+
+  ```
+  RWRXpowS90Fy+TYhRsrBbQNSDvjbtJpqi9T89OGqSNTLkOa5vn62hK0o
+  ```
 - **TOFU is explicitly rejected.** The client never learns a key from the
   network; a manifest that doesn't verify against the compiled-in pin is
   discarded — there is no "trust this new key?" prompt and no first-use grace.

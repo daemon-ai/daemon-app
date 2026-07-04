@@ -18,8 +18,10 @@
 #   scripts/release-manifest.sh --verify <manifest.json> <pubkey-file> [sig-file]
 #
 # Artifact discovery: every regular file in <artifact-dir> whose name matches a
-# known packaging kind (.AppImage/.deb/.rpm/.exe/.dmg/.tar.{gz,xz}) becomes an
-# artifacts[] entry with size + sha256. Sidecars are consumed, never listed:
+# known packaging kind (.AppImage/.deb/.rpm/.exe/.dmg/.apk/.tar.{gz,xz,zst})
+# becomes an artifacts[] entry with size + sha256. A `*-wasm.tar.*` bundle is
+# deliberately skipped (WASM dial = None: the browser owns delivery, so it ships
+# as a release asset but never as a feed entry). Sidecars are consumed, never listed:
 #   <file>.glibc   first line becomes glibcFloor (linux artifacts only)
 #   <file>.zsync   presence records the zsync URL (AppImage delta transport)
 # `file`/`zsync` values are bare names, resolved relative to the manifest's own
@@ -129,12 +131,20 @@ classify() {
   # $1 = filename; prints "kind os capability" or nothing to skip the file.
   local name="${1,,}"
   case "$name" in
+    # WASM bundles are delivered by the platform (browser cache), not the update feed
+    # (UPDATES.md: WASM dial = None). They ride the GitHub release as a downloadable asset but
+    # are deliberately excluded from manifest.json — matched here BEFORE the *.tar.* arms so a
+    # `*-wasm.tar.gz` is skipped rather than misclassified as a portable-tar.
+    *wasm*)            return 0 ;;
     *.appimage)        echo "appimage linux SelfApply" ;;
     *.deb)             echo "deb linux Notify" ;;
     *.rpm)             echo "rpm linux Notify" ;;
     *.exe)             echo "nsis windows SelfApply" ;;
     *.dmg)             echo "dmg macos DownloadAndOpen" ;;
-    *.tar.gz|*.tgz|*.tar.xz)
+    # Android APK: sideloaded/out-of-band (Play Store owns in-store updates), so the feed only
+    # ever notifies. arch comes from arch_of below (unknown when the name carries no arch token).
+    *.apk)             echo "apk android Notify" ;;
+    *.tar.gz|*.tgz|*.tar.xz|*.tar.zst)
       local os=linux
       case "$name" in
         *darwin*|*macos*) os=macos ;;

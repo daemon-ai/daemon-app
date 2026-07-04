@@ -1,6 +1,14 @@
 {
   description = "daemon-app - Qt 6 QML/C++ development environment, build, and vendored dependencies";
 
+  # Pull built closures (incl. the heavy static-Qt stacks) from the daemon-ai Cachix cache
+  # (public pull). CI feeds the cache via cachix-action; humans opt in with --accept-flake-config
+  # (or as a trusted-user). Public pull key only — no secret lives here.
+  nixConfig = {
+    extra-substituters = [ "https://daemon-ai.cachix.org" ];
+    extra-trusted-public-keys = [ "daemon-ai.cachix.org-1:jzeLmFDfgE5dzGT0RXF70IEU/tKsWdDV9LQ5zPGAnQs=" ];
+  };
+
   inputs = {
     # logos-co fork of nixos-unstable carrying the MinGW Qt cross fixes the
     # Windows (mingw) outputs need (same Qt 6.11.1 as upstream unstable).
