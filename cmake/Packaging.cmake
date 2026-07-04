@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: MPL-2.0
 # SPDX-FileCopyrightText: 2026 Jarrad Hope
 #
-# Desktop packaging: freedesktop assets, bundled sibling binaries, and CPack
-# (DEB / RPM / AppImage; NSIS is a stub for the Windows workstream).
+# Desktop packaging: freedesktop assets, the macOS bundle payload + Qt deploy
+# script, bundled sibling binaries, and CPack (Linux: DEB / RPM / AppImage;
+# macOS: DragNDrop .dmg; NSIS is a stub for the Windows workstream).
 #
 # CAVEAT (v1 scaffolding): the payload packaged today is the DYNAMIC-Qt app as
 # linked by the Nix toolchain - its interpreter and RUNPATH point into
@@ -11,6 +12,11 @@
 # payload later; what must be correct here is the packaging skeleton: assets,
 # install rules, per-generator config (cmake/CPackPerGen.cmake), and the
 # artifact sanity checks (flake checks.artifact-sanity).
+#
+# The macOS (APPLE) side is CODE-ONLY so far: written and lint-checked on
+# Linux, never yet configured or packaged on a mac. Anything it stages runs
+# through the same v1 caveat, plus its own unvalidated list - see
+# packaging/macos/README.md before trusting a produced .dmg.
 
 include_guard(GLOBAL)
 
@@ -44,24 +50,42 @@ endif()
 
 include(GNUInstallDirs)
 
+# --- Platform payload destinations -------------------------------------------
+# Linux follows GNUInstallDirs (bin/, share/doc/...). macOS routes the same
+# payloads into the app bundle: sibling binaries next to the app executable in
+# Contents/MacOS (LocalDaemonLauncher probes
+# QCoreApplication::applicationDirPath(), which IS Contents/MacOS inside a
+# bundle), docs into Contents/Resources. The literal bundle directory composes
+# with the `install(TARGETS daemon-app BUNDLE DESTINATION .)` rule in
+# src/DaemonApp/App/CMakeLists.txt: the bundle lands at <prefix>/daemon-app.app
+# both under `cmake --install` and in CPack's DragNDrop staging root.
+if(APPLE)
+    set(_da_bundle_contents "daemon-app.app/Contents")
+    set(_da_colocated_bin_dir "${_da_bundle_contents}/MacOS")
+    set(_da_doc_dir "${_da_bundle_contents}/Resources")
+else()
+    set(_da_colocated_bin_dir "${CMAKE_INSTALL_BINDIR}")
+    set(_da_doc_dir "${CMAKE_INSTALL_DATADIR}/doc/daemon-app")
+endif()
+
 if(DAEMON_APP_BUNDLED_DAEMON)
     install(
         PROGRAMS "${DAEMON_APP_BUNDLED_DAEMON}"
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        DESTINATION "${_da_colocated_bin_dir}"
         RENAME daemon
     )
 endif()
 if(DAEMON_APP_BUNDLED_DAEMON_INFER)
     install(
         PROGRAMS "${DAEMON_APP_BUNDLED_DAEMON_INFER}"
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        DESTINATION "${_da_colocated_bin_dir}"
         RENAME daemon-infer
     )
 endif()
 if(DAEMON_APP_BUNDLED_DAEMON_CLI)
     install(
         PROGRAMS "${DAEMON_APP_BUNDLED_DAEMON_CLI}"
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        DESTINATION "${_da_colocated_bin_dir}"
         RENAME daemon-cli
     )
 endif()
@@ -72,7 +96,7 @@ foreach(_da_doc LICENSE THIRD-PARTY-NOTICES.md)
     if(EXISTS "${CMAKE_SOURCE_DIR}/${_da_doc}")
         install(
             FILES "${CMAKE_SOURCE_DIR}/${_da_doc}"
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/daemon-app
+            DESTINATION "${_da_doc_dir}"
         )
     endif()
 endforeach()
@@ -125,6 +149,49 @@ if(UNIX AND NOT APPLE)
     )
 endif()
 
+# --- macOS bundle payload + Qt deploy ----------------------------------------
+# The bundle itself (MACOSX_BUNDLE, Info.plist, .icns) is declared on the
+# target in src/DaemonApp/App/CMakeLists.txt; this block stages the rest of
+# the bundle payload and bolts the Qt deployment onto the install.
+if(APPLE)
+    # MicroTeX's runtime resources (fonts + XML), staged where bundle
+    # resources belong. NOTE: on this branch the binary still reads the baked
+    # compile-time MICROTEX_RES_DIR (a Nix store path on the build machine);
+    # the runtime probing (env override -> app-dir-relative candidates) lands
+    # with pkg/size-wins.
+    # TODO(after pkg/size-wins): extend application.cpp's microtexResDir()
+    # with an applicationDirPath()/../Resources/microtex-res candidate so this
+    # bundle copy wins over the baked build path. Tracked in
+    # packaging/macos/README.md; not done here because that branch rewrites
+    # the exact same application.cpp lines (merge hygiene).
+    install(
+        DIRECTORY "${MICROTEX_RES_DIR}/"
+        DESTINATION "${_da_bundle_contents}/Resources/microtex-res"
+    )
+
+    # macdeployqt equivalent: bundles the Qt frameworks + plugins and the QML
+    # imports of every module the app uses into the .app (Frameworks/,
+    # PlugIns/, Resources/qml/ + bundle qt.conf), rewriting install names.
+    # Generated at configure time, executed at install time - so both
+    # `cmake --install` and CPack's DragNDrop staging pass through it.
+    # APPLE-only on purpose: the Linux artifacts deliberately ship no deploy
+    # step (v1 packages the Nix-linked payload as-is) and the wasm install
+    # set is self-contained.
+    qt_generate_deploy_qml_app_script(
+        TARGET daemon-app
+        OUTPUT_SCRIPT _da_macos_deploy_script
+        # Signing hook (Qt >= 6.7 forwards DEPLOY_TOOL_OPTIONS to
+        # macdeployqt): uncomment once a Developer ID identity exists on the
+        # build mac. This does NOT cover the bundled daemon/daemon-infer/
+        # daemon-cli - hardened-runtime notarization needs those signed
+        # individually BEFORE the bundle seal; see packaging/macos/README.md
+        # ("Codesigning") for the full inside-out order.
+        #
+        # DEPLOY_TOOL_OPTIONS -hardened-runtime "-codesign=Developer ID Application: <name> (<team id>)"
+    )
+    install(SCRIPT "${_da_macos_deploy_script}")
+endif()
+
 # --- CPack -------------------------------------------------------------------
 # Per-generator specifics (packaging prefix, dependency lists, maintainer
 # scripts, AppImage runtime/update-info) live in cmake/CPackPerGen.cmake,
@@ -144,32 +211,47 @@ set(CPACK_PACKAGE_DESCRIPTION
     "Daemon is an AI agent chat application. The desktop app is a thin client of the daemon node: it renders sessions, transcripts, models, and fleet state served over the daemon wire protocol, and ships alongside the daemon and daemon-infer binaries."
 )
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
-set(CPACK_PACKAGE_FILE_NAME
-    "daemon-${PROJECT_VERSION}-linux-${CMAKE_SYSTEM_PROCESSOR}"
-)
 set(CPACK_PACKAGE_CHECKSUM SHA256)
-# The Nix build tree is unstripped; strip at cpack-install so artifacts do not
-# carry debug info.
-set(CPACK_STRIP_FILES TRUE)
-# Default generators for a bare `cpack`; the flake package outputs pass -G.
-# AppImage additionally needs CMake >= 4.2 + appimagetool (nix/cmake-appimage.nix
-# + nix/appimagetool.nix provide both).
-set(CPACK_GENERATOR "DEB;RPM")
 
-# dpkg is absent at build time (Nix sandbox), so pin the Debian architecture
-# name instead of letting the DEB generator shell out for it.
-if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
-elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "arm64")
+if(APPLE)
+    # CMAKE_SYSTEM_PROCESSOR is arm64 / x86_64 on macOS.
+    set(CPACK_PACKAGE_FILE_NAME
+        "daemon-${PROJECT_VERSION}-macos-${CMAKE_SYSTEM_PROCESSOR}"
+    )
+    # Never re-strip Mach-O payloads at package time: every deployed binary
+    # is at least ad-hoc signed (the linker on arm64, macdeployqt after its
+    # install-name rewrites, codesign in the release flow), and stripping
+    # invalidates the seal.
+    set(CPACK_STRIP_FILES FALSE)
+    set(CPACK_GENERATOR "DragNDrop")
 else()
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
+    set(CPACK_PACKAGE_FILE_NAME
+        "daemon-${PROJECT_VERSION}-linux-${CMAKE_SYSTEM_PROCESSOR}"
+    )
+    # The Nix build tree is unstripped; strip at cpack-install so artifacts
+    # do not carry debug info.
+    set(CPACK_STRIP_FILES TRUE)
+    # Default generators for a bare `cpack`; the flake package outputs pass
+    # -G. AppImage additionally needs CMake >= 4.2 + appimagetool
+    # (nix/cmake-appimage.nix + nix/appimagetool.nix provide both).
+    set(CPACK_GENERATOR "DEB;RPM")
+
+    # dpkg is absent at build time (Nix sandbox), so pin the Debian
+    # architecture name instead of letting the DEB generator shell out for it.
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+        set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+        set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "arm64")
+    else()
+        set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
+    endif()
 endif()
 
 # Stash source-tree locations + the nix-injected AppImage runtime for the
 # per-generator config file (only CPACK_-prefixed variables survive into the
 # serialized CPackConfig cpack reads).
 set(CPACK_DAEMON_APP_LINUX_DIR "${_da_linux_dir}")
+set(CPACK_DAEMON_APP_MACOS_DIR "${CMAKE_SOURCE_DIR}/packaging/macos")
 set(CPACK_DAEMON_APP_WINDOWS_DIR "${CMAKE_SOURCE_DIR}/packaging/windows")
 set(DAEMON_APP_APPIMAGE_RUNTIME
     ""

@@ -110,6 +110,37 @@ if(CPACK_GENERATOR STREQUAL "AppImage")
     set(CPACK_APPIMAGE_NO_APPSTREAM ON)
 endif()
 
+if(CPACK_GENERATOR STREQUAL "DragNDrop")
+    # macOS drag-and-drop .dmg: the staging root carries daemon-app.app (the
+    # BUNDLE DESTINATION "." install) and the generator adds the /Applications
+    # symlink itself. CODE-ONLY so far - this branch has never run on a mac;
+    # see packaging/macos/README.md for the validation debt.
+    set(CPACK_DMG_VOLUME_NAME "Daemon")
+    # UDZO (zlib-compressed, read-only) mounts everywhere and is the
+    # compatibility default; switch to UDBZ (bzip2) only if size ever matters
+    # more than mount speed on older macOS.
+    set(CPACK_DMG_FORMAT "UDZO")
+    # Custom volume icon for the mounted image (hdiutil attaches it via the
+    # generator's SetFile/Rez plumbing).
+    set(CPACK_PACKAGE_ICON "${CPACK_DAEMON_APP_MACOS_DIR}/daemon-app.icns")
+    # Apple deprecated DMG software license agreements, and an SLA-wrapped
+    # image breaks `xcrun stapler staple` on the .dmg - keep the license
+    # inside the bundle (Contents/Resources, staged by Packaging.cmake)
+    # instead of attaching CPACK_RESOURCE_FILE_LICENSE to the image.
+    set(CPACK_DMG_SLA_USE_RESOURCE_FILE_LICENSE OFF)
+    # Finder layout (icon grid positions, window size, backdrop) needs a
+    # committed .DS_Store setup script + background raster, both of which can
+    # only be authored on a mac (Finder/AppleScript). Neither asset exists
+    # yet - packaging/macos/dmg-background.png is intentionally NOT committed;
+    # uncomment when they land:
+    # set(CPACK_DMG_BACKGROUND_IMAGE
+    #     "${CPACK_DAEMON_APP_MACOS_DIR}/dmg-background.png"
+    # )
+    # set(CPACK_DMG_DS_STORE_SETUP_SCRIPT
+    #     "${CPACK_DAEMON_APP_MACOS_DIR}/dmg-ds-store-setup.scpt"
+    # )
+endif()
+
 if(CPACK_GENERATOR STREQUAL "NSIS")
     # Stub: the Windows workstream lands the real installer config. Kept here
     # so a stray `cpack -G NSIS` picks up sane branding.

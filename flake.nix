@@ -410,6 +410,86 @@
 
         linuxArtifacts = mkLinuxArtifacts { };
 
+        # --- macOS packaging artifact (CPack DragNDrop -> .dmg) -------------
+        # Darwin mirror of mkLinuxArtifacts: same build with the packaging
+        # knobs, then cpack -G DragNDrop from the build tree (the bundle,
+        # Info.plist, Qt deploy script, and DMG config all live in
+        # cmake/Packaging.cmake + cmake/CPackPerGen.cmake). Same `bundledFrom`
+        # contract: prebuilt sibling binaries land in Contents/MacOS next to
+        # the app executable.
+        #
+        # CODE-ONLY (authored + eval-checked on a Linux host, never yet run
+        # on darwin): see packaging/macos/README.md for the unvalidated list.
+        # Known risk called out there: cpack's DragNDrop generator shells out
+        # to hdiutil, which the darwin nix build sandbox may not expose - if
+        # the sandboxed build fails on that, use the manual `nix develop`
+        # cmake/cpack flow from the runbook (or `--option sandbox false`).
+        mkDarwinArtifacts =
+          { bundledFrom ? { } }:
+          daemon-app.overrideAttrs (old: {
+            pname = "daemon-macos-artifacts";
+
+            # Same ECM setup-hook eviction as mkLinuxArtifacts: its absolute
+            # -DKDE_INSTALL_* flags would bypass the relative-dir staging and
+            # leak store paths into the DMG; ECM_DIR replaces find_package.
+            nativeBuildInputs = builtins.filter (
+              p: (p.pname or "") != "extra-cmake-modules"
+            ) old.nativeBuildInputs;
+
+            cmakeFlags = old.cmakeFlags ++ [
+              # Pin the nix cmake hook's absolute store-path GNUInstallDirs
+              # back to relative dirs (later -D wins), mirroring
+              # mkLinuxArtifacts: everything cpack stages must sit under the
+              # DMG root, not under $out.
+              "-DCMAKE_INSTALL_BINDIR=bin"
+              "-DCMAKE_INSTALL_SBINDIR=sbin"
+              "-DCMAKE_INSTALL_LIBDIR=lib"
+              "-DCMAKE_INSTALL_LIBEXECDIR=libexec"
+              "-DCMAKE_INSTALL_INCLUDEDIR=include"
+              "-DCMAKE_INSTALL_DATADIR=share"
+              "-DCMAKE_INSTALL_MANDIR=share/man"
+              "-DCMAKE_INSTALL_INFODIR=share/info"
+              "-DCMAKE_INSTALL_DOCDIR=share/doc/daemon-app"
+              "-DCMAKE_INSTALL_LOCALEDIR=share/locale"
+              "-DECM_DIR=${pkgs.kdePackages.extra-cmake-modules}/share/ECM/cmake"
+            ]
+            ++ pkgs.lib.optional (bundledFrom ? daemon) "-DDAEMON_APP_BUNDLED_DAEMON=${bundledFrom.daemon}"
+            ++ pkgs.lib.optional (bundledFrom ? daemon-infer)
+              "-DDAEMON_APP_BUNDLED_DAEMON_INFER=${bundledFrom.daemon-infer}"
+            ++ pkgs.lib.optional (bundledFrom ? daemon-cli)
+              "-DDAEMON_APP_BUNDLED_DAEMON_CLI=${bundledFrom.daemon-cli}";
+
+            # The output is the .dmg artifact set: nothing to wrap, and fixup
+            # must not strip the deployed bundle (macdeployqt ad-hoc-signs
+            # after rewriting install names; stripping breaks the seal).
+            dontWrapQtApps = true;
+            dontFixup = true;
+            installPhase = ''
+              runHook preInstall
+
+              echo "=== cpack -G DragNDrop ==="
+              cpack -G DragNDrop || {
+                echo "--- cpack DragNDrop failed; dumping logs ---" >&2
+                find _CPack_Packages -name '*.log' -o -name '*.err' | while read -r f; do
+                  echo "--- $f ---" >&2
+                  tail -n 100 "$f" >&2
+                done
+                exit 1
+              }
+
+              mkdir -p "$out"
+              ls ./*.dmg > /dev/null || {
+                echo "missing artifact: *.dmg" >&2
+                exit 1
+              }
+              cp -v ./*.dmg ./*.sha256 "$out"/
+
+              runHook postInstall
+            '';
+          });
+
+        darwinArtifacts = mkDarwinArtifacts { };
+
         # Single-format views of the artifact set (`nix build .#deb` etc.).
         selectArtifact =
           name: glob:
@@ -573,6 +653,15 @@
         packages.appimage = selectArtifact "appimage" "*.AppImage";
         packages.deb = selectArtifact "deb" "*.deb";
         packages.rpm = selectArtifact "rpm" "*.rpm";
+        # macOS DMG, exposed on the darwin systems only (best-effort: eval
+        # only, never built - no darwin host in this repo's loop yet). The
+        # null dynamic attr name elides the attribute entirely on Linux, so
+        # the Linux package set is byte-identical and this dotted packages.*
+        # block needs no restructuring into a single literal (which is what
+        # lib.optionalAttrs merging would force, and what the sibling
+        # packaging branches also append to).
+        packages.${if pkgs.stdenv.hostPlatform.isDarwin then "macos-dmg" else null} =
+          darwinArtifacts;
         # Exposed for debugging the packaging toolchain in isolation.
         packages.appimagetool = appimageTooling.appimagetool;
         packages.cmake-appimage = cmake42;

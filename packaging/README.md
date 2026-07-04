@@ -4,7 +4,8 @@ Per-platform packaging skeletons:
 
 - `linux/` - desktop entry, AppImage / Flatpak recipes.
 - `windows/` - NSIS / Inno installer.
-- `macos/` - bundle + dmg.
+- `macos/` - Info.plist template, .icns, and the build/sign/notarize
+  runbook (`macos/README.md`) for the .app bundle + DragNDrop .dmg.
 - `android/` - manifest + Gradle bits.
 - `ios/` - Info.plist + bundle config.
 
