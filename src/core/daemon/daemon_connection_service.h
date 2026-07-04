@@ -55,6 +55,13 @@ public:
     // persistent.
     void shutdownManagedDaemon();
 
+signals:
+    // Emitted alongside authenticated() on every AuthOk, reporting HOW the connection authed:
+    // `resumed` = true when a persisted resume token drove the handshake (AuthResume fast-path, no
+    // SCRAM challenge), false for a fresh interactive login. Drives the reload-survival auth
+    // sentinel (DAEMON_APP_AUTH resumed|scram); not shown in the UI.
+    void authOutcome(bool resumed);
+
 private:
     static constexpr auto kHealthCorrelation = "connection/health";
     // Steady liveness probe while ready; backoff bounds + a hard episode budget while reconnecting.
@@ -101,10 +108,17 @@ private:
     QTimer m_reconnectDeadline; // single-shot episode budget -> offline
     int m_backoffMs = kReprobeMinMs;
 
+    // Browser (wasm) network-wakeup: on the browser `online` event, collapse the reconnect backoff
+    // and probe immediately instead of waiting out the current reprobe interval. No-op off wasm.
+    void onNetworkOnline();
+
     // Auth state. m_authBlocked suppresses the auto-reconnect loop while a node is waiting on
     // interactive credentials (otherwise the failed Health probe would spin reconnecting). The
     // session token (server-issued on AuthOk) drives the AuthResume reconnect fast-path.
+    // m_resumeAttempt records whether the CURRENT handshake presented a resume token, so the
+    // authOutcome signal can classify AuthOk as resumed (token) vs scram (fresh login).
     bool m_authBlocked = false;
+    bool m_resumeAttempt = false;
     QString m_sessionToken;
 
     // Version-gate state. m_versionHold suppresses the auto-reconnect paths after the gate

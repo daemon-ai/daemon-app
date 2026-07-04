@@ -127,5 +127,8 @@ target_link_libraries(da_daemon_client
         # exposes QtWebSockets types.
         Qt6::WebSockets
         daemon-app::daemon_codec
+        # Browser network-wakeup seam (platform::installOnlineCallback, W5): used only inside
+        # daemon_connection_service.cpp, so private. No-op off wasm.
+        daemon-app::platform
         daemon-app::warnings
 )

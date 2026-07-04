@@ -38,6 +38,14 @@ ColumnLayout {
             visible: Connection && Connection.state !== "offline"
             onClicked: Connection.disconnect()
         }
+        // Sign out: clear the persisted resume token for this target and disconnect ("forget this
+        // device's session"). Distinct from Disconnect, which keeps the token so the next connect
+        // re-auths silently. Shown whenever a target is configured.
+        Kit.TextButton {
+            text: qsTr("Sign out")
+            visible: Connection && Connection.target.length > 0
+            onClicked: Connection.logout()
+        }
     }
 
     ConnectionPicker {
