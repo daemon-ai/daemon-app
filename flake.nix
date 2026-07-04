@@ -290,6 +290,26 @@
           depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
         };
 
+        # --- Qt for Android (arm64-v8a) ---------------------------------------
+        # Cross-compiled Qt target stack via the shared qt-from-source builder
+        # + the app cross-build, gradle-less APK assembly, sanity check, and
+        # dev shell (nix/android.nix). The SDK/NDK (androidenv) are unfree, so
+        # they come from a SECOND import of the same nixpkgs scoped to these
+        # outputs only - the default `pkgs` (and with it every non-android
+        # output) stays free.
+        pkgsAndroid = import nixpkgs {
+          inherit system;
+          config = {
+            allowUnfree = true;
+            android_sdk.accept_license = true;
+          };
+        };
+        qtAndroidStack = import ./nix/android.nix {
+          inherit pkgs pkgsAndroid versionStr baseVersion;
+          appSrc = ./.;
+          depSources = { inherit md4qt earcut ksyntaxhighlighting microtex; };
+        };
+
         # --- Linux packaging artifacts (CPack: DEB / RPM / AppImage) --------
         # CAVEAT (v1 scaffolding): these package the DYNAMIC-Qt app as linked
         # by the Nix toolchain - interpreter + RUNPATH point into /nix/store,
@@ -691,6 +711,20 @@
         packages.portable-tarball = portableStack.tarball;
         packages.qt-linux-static = portableStack.qtStatic;
 
+        # Android (arm64-v8a): the debug-signed APK, the joined Qt-for-Android
+        # prefix (bin/qt-cmake + lib/cmake/Qt6/qt.toolchain.cmake), and the
+        # androiddeployqt-staged package tree (nix/android.nix). The APK is a
+        # thin remote/WebSocket client like the wasm build - no daemon is
+        # bundled (packaging/android/README.md).
+        packages.apk = qtAndroidStack.apk;
+        packages.qt-android = qtAndroidStack.qtAndroid;
+        packages.qtbase-android = qtAndroidStack.qtbase;
+        packages.qtshadertools-android = qtAndroidStack.qtshadertools;
+        packages.qtdeclarative-android = qtAndroidStack.qtdeclarative;
+        packages.qtsvg-android = qtAndroidStack.qtsvg;
+        packages.qtwebsockets-android = qtAndroidStack.qtwebsockets;
+        packages.android-staged = qtAndroidStack.app;
+
         # Proves the wasm stack end-to-end without the app: a static Qt Quick
         # hello-world through the joined prefix's qt-cmake, asserting the
         # .wasm/.js/.html artifact set.
@@ -707,6 +741,11 @@
         # desktop/metainfo validation, AppImage payload extract + offscreen
         # boot, glibc symbol-version floor (scripts/glibc-floor.sh).
         checks.artifact-sanity = artifactSanity;
+
+        # APK structural gate: manifest identity (package id, versions, sdk
+        # floor), native lib set, MicroTeX assets, Qt resource bundle,
+        # apksigner verification (nix/android.nix).
+        checks.apk-sanity = qtAndroidStack.apkSanity;
 
         apps.default = {
           type = "app";
@@ -789,6 +828,11 @@
         # Exports DAEMON_APP_QT_WASM for the wasm-release CMake preset, which
         # consumes $env{DAEMON_APP_QT_WASM}/lib/cmake/Qt6/qt.toolchain.cmake.
         devShells.wasm = qtWasmStack.devShell;
+
+        # Android cross-development: SDK/NDK + the android Qt stack + host
+        # tools + the stock androiddeployqt Gradle path (network allowed
+        # outside the sandbox); see scripts/build-apk-gradle.sh.
+        devShells.android = qtAndroidStack.devShell;
       }
     );
 }
