@@ -333,13 +333,9 @@ Item {
                     anchors.fill: parent
                     anchors.margins: 6
                     clip: true
-                    QQC.TextArea {
+                    Kit.TextArea {
                         id: promptArea
-                        wrapMode: TextEdit.Wrap
-                        font.family: FontIcons.display
                         font.pixelSize: 13
-                        color: Theme.text
-                        background: null
                     }
                 }
             }

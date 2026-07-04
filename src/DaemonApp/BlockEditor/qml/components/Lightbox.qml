@@ -36,11 +36,11 @@ Popup {
     height: parent ? parent.height : 0
 
     background: Rectangle {
-        color: Qt.rgba(0, 0, 0, 0.82)
+        color: Theme.scrim
     }
 
     Overlay.modal: Rectangle {
-        color: Qt.rgba(0, 0, 0, 0.55)
+        color: Theme.scrimModal
     }
 
     contentItem: Item {
@@ -97,14 +97,14 @@ Popup {
             width: 32
             height: 32
             radius: Theme.radiusSmall
-            color: closeHover.hovered ? Qt.rgba(1, 1, 1, 0.2) : Qt.rgba(1, 1, 1, 0.1)
+            color: closeHover.hovered ? Theme.scrimControlHover : Theme.scrimControl
 
             Text {
                 anchors.centerIn: parent
                 text: FontIcons.fa_xmark
                 font.family: FontIcons.faSolid
                 font.pixelSize: Theme.bodyFontSize
-                color: "#ffffff"
+                color: Theme.scrimText
             }
 
             HoverHandler { id: closeHover }
@@ -117,7 +117,7 @@ Popup {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottomMargin: Theme.spacingLarge
             text: root.alt
-            color: "#e6e6e6"
+            color: Theme.scrimTextMuted
             font.pixelSize: Theme.captionFontSize
         }
     }

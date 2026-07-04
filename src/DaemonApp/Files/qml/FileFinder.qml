@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import DaemonApp.Theme
@@ -55,7 +55,7 @@ Item {
             clip: true
             model: finder
             currentIndex: 0
-            ScrollBar.vertical: ScrollBar {}
+            ScrollBar.vertical: Kit.ScrollBar {}
 
             function activateCurrent() {
                 if (currentIndex < 0 || currentIndex >= count)

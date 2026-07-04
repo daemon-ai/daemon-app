@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
+import DaemonApp.Controls as Kit
 
 // The command palette (Mod+K): a centered, filterable overlay over the shared
 // CommandRegistry (`Commands` context property). Typing narrows the list via
@@ -45,23 +46,11 @@ QQC.Popup {
     contentItem: ColumnLayout {
         spacing: 0
 
-        QQC.TextField {
+        Kit.TextField {
             id: filter
             Layout.fillWidth: true
             Layout.margins: 8
             placeholderText: qsTr("Type a command\u2026")
-            font.family: FontIcons.display
-            font.pixelSize: 14
-            color: Theme.text
-            selectByMouse: true
-            // No themed edit menu on a transient filter; just suppress Qt's default.
-            QQC.ContextMenu.menu: null
-            background: Rectangle {
-                color: Theme.surfaceRaised
-                border.color: filter.activeFocus ? Theme.accent : Theme.border
-                border.width: 1
-                radius: Theme.radius
-            }
             onTextChanged: if (root.registry) root.registry.search(text)
             Keys.onDownPressed: list.currentIndex = Math.min(list.currentIndex + 1, list.count - 1)
             Keys.onUpPressed: list.currentIndex = Math.max(list.currentIndex - 1, 0)

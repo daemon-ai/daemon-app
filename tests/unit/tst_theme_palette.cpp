@@ -22,6 +22,7 @@ private slots:
     void canonicalHexes_data();
     void canonicalHexes();
     void tokensDifferBetweenThemes();
+    void scrimTokens();
     void unknownTokenIsInvalid();
 };
 
@@ -118,6 +119,33 @@ void ThemePaletteTests::tokensDifferBetweenThemes() {
     QVERIFY(dark != sepia);
     QVERIFY(sepia != midnight);
     QVERIFY(light != midnight);
+}
+
+void ThemePaletteTests::scrimTokens() {
+    // The lightbox scrim family is deliberately theme-constant (a lightbox is a
+    // dark photo-viewing surface in every theme) and translucent where the GUI
+    // composited Qt.rgba() washes before tokenization.
+    for (const auto t :
+         {ThemeName::Light, ThemeName::Dark, ThemeName::Sepia, ThemeName::Midnight}) {
+        const QColor scrim = ThemePalette::color(t, Token::Scrim);
+        QCOMPARE(scrim.name(QColor::HexArgb), QStringLiteral("#d1000000"));
+        QCOMPARE(ThemePalette::color(t, Token::ScrimModal).name(QColor::HexArgb),
+                 QStringLiteral("#8c000000"));
+        QCOMPARE(ThemePalette::color(t, Token::ScrimControl).name(QColor::HexArgb),
+                 QStringLiteral("#1affffff"));
+        QCOMPARE(ThemePalette::color(t, Token::ScrimControlHover).name(QColor::HexArgb),
+                 QStringLiteral("#33ffffff"));
+        QCOMPARE(ThemePalette::color(t, Token::ScrimText).name(), QStringLiteral("#ffffff"));
+        QCOMPARE(ThemePalette::color(t, Token::ScrimTextMuted).name(), QStringLiteral("#e6e6e6"));
+        QCOMPARE(ThemePalette::color(t, Token::ChipBorder).name(), QStringLiteral("#808080"));
+    }
+
+    // The string-keyed (QML) lookups resolve the same values.
+    QVERIFY(ThemePalette::hasToken(QStringLiteral("scrim")));
+    QVERIFY(ThemePalette::hasToken(QStringLiteral("chipBorder")));
+    QCOMPARE(ThemePalette::color(QStringLiteral("Dark"), QStringLiteral("scrimModal"))
+                 .name(QColor::HexArgb),
+             QStringLiteral("#8c000000"));
 }
 
 void ThemePaletteTests::unknownTokenIsInvalid() {

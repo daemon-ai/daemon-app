@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
+import DaemonApp.Controls as Kit
 
 // The composer's model picker - a richer upward overlay than the old ModelPill
 // menu (a la Hermes' model-picker.tsx): a filter field, a provider-grouped model
@@ -43,23 +44,12 @@ QQC.Popup {
         spacing: 0
 
         // --- Filter -------------------------------------------------------
-        QQC.TextField {
+        Kit.TextField {
             id: filterField
             Layout.fillWidth: true
             Layout.margins: 6
             placeholderText: qsTr("Filter models\u2026")
-            font.family: FontIcons.display
             font.pixelSize: 12
-            color: Theme.text
-            selectByMouse: true
-            // No themed edit menu on a transient filter; just suppress Qt's default.
-            QQC.ContextMenu.menu: null
-            background: Rectangle {
-                color: Theme.surfaceRaised
-                border.color: filterField.activeFocus ? Theme.accent : Theme.border
-                border.width: 1
-                radius: Theme.radius
-            }
             onTextChanged: root.query = text
             Keys.onDownPressed: list.incrementCurrentIndex()
             Keys.onUpPressed: list.decrementCurrentIndex()

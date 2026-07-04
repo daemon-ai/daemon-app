@@ -147,10 +147,9 @@ Item {
                                 text: qsTr("Workers")
                                 font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
                             }
-                            QQC.SpinBox {
+                            Kit.SpinBox {
                                 id: scaleSpin
                                 from: 0; to: 16; value: 1
-                                implicitHeight: 26
                             }
                             Kit.IconButton {
                                 icon: FontIcons.fa_layer_group

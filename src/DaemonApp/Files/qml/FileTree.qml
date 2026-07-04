@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls
 
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
@@ -56,7 +56,7 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         keyNavigationEnabled: false
 
-        ScrollBar.vertical: ScrollBar {}
+        ScrollBar.vertical: Kit.ScrollBar {}
 
         Keys.onUpPressed: currentIndex = Math.max(0, currentIndex - 1)
         Keys.onDownPressed: currentIndex = Math.min(count - 1, currentIndex + 1)

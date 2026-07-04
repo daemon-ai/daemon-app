@@ -443,29 +443,8 @@ Rectangle {
                 }
             }
 
-            ScrollBar.vertical: ScrollBar {
+            ScrollBar.vertical: Kit.ScrollBar {
                 id: vScroll
-                policy: ScrollBar.AsNeeded
-                interactive: true
-                width: 10
-
-                contentItem: Rectangle {
-                    implicitWidth: 6
-                    radius: width / 2
-                    color: vScroll.pressed ? Theme.text : Theme.mutedText
-                    opacity: vScroll.active ? 0.6 : 0.0
-                    Behavior on opacity { NumberAnimation { duration: 150 } }
-                }
-
-                background: Rectangle {
-                    implicitWidth: 10
-                    radius: width / 2
-                    color: Theme.surfaceRaised
-                    border.color: Theme.border
-                    border.width: Theme.hairline
-                    opacity: vScroll.active ? 1.0 : 0.0
-                    Behavior on opacity { NumberAnimation { duration: 150 } }
-                }
             }
 
             delegate: BlockDelegate {

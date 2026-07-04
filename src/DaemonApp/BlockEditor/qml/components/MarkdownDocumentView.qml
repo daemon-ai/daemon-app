@@ -8,6 +8,7 @@ import DaemonApp.Theme
 import DaemonApp.Settings
 import DaemonApp.BlockEditor
 import DaemonApp.Editor
+import DaemonApp.Controls as Kit
 
 // Shared markdown document host. Markdown is rendered with the BlockEditor by
 // default everywhere; the global "Show Raw Markdown" setting switches the same
@@ -129,10 +130,7 @@ Rectangle {
         onBlockContentWidthChanged: editor.blockModel.contentWidth = blockContentWidth
         Component.onCompleted: editor.blockModel.contentWidth = blockContentWidth
 
-        ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AsNeeded
-            width: 10
-        }
+        ScrollBar.vertical: Kit.ScrollBar {}
 
         delegate: BlockDelegate {
             width: ListView.view.width

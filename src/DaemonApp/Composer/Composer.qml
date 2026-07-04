@@ -381,30 +381,10 @@ Rectangle {
                         Layout.preferredHeight: Math.min(Math.max(inputArea.implicitHeight, 26), 140)
                         QQC.ScrollBar.horizontal.policy: QQC.ScrollBar.AlwaysOff
 
-                        QQC.TextArea {
+                        Kit.TextArea {
                             id: inputArea
                             placeholderText: qsTr("Send a message...  (Enter to send, Shift+Enter for newline)")
-                            placeholderTextColor: Theme.textMuted
-                            wrapMode: QQC.TextArea.Wrap
-                            color: Theme.text
-                            selectionColor: Theme.searchSelection
-                            selectedTextColor: Theme.text
-                            font.family: FontIcons.display
-                            font.pixelSize: 14
-                            background: null
                             enabled: root.composerEnabled
-
-                            // Themed right-click context menu (suppress Qt's
-                            // default Basic-styled one and open the kit menu).
-                            QQC.ContextMenu.menu: null
-                            TapHandler {
-                                acceptedButtons: Qt.RightButton
-                                onTapped: composerEditMenu.popup()
-                            }
-                            Kit.EditMenu {
-                                id: composerEditMenu
-                                target: inputArea
-                            }
 
                             // Push live edits into the controller (it guards
                             // against echoing the value back), then refresh the

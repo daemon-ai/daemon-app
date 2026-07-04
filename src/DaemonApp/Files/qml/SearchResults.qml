@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import DaemonApp.Theme
@@ -59,7 +59,7 @@ Item {
             Layout.fillHeight: true
             clip: true
             model: results
-            ScrollBar.vertical: ScrollBar {}
+            ScrollBar.vertical: Kit.ScrollBar {}
 
             delegate: Item {
                 id: del

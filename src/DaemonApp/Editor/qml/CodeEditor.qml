@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import org.kde.syntaxhighlighting
@@ -101,27 +101,16 @@ FocusScope {
                 clip: true
                 ScrollBar.vertical: Kit.ScrollBar {}
 
-                TextArea {
+                // Kit.TextArea for the themed colors + edit menu; the code
+                // editor keeps its source-editing overrides (mono font, no
+                // wrap, persistent selection for the context menu).
+                Kit.TextArea {
                     id: textArea
                     width: parent.width
                     wrapMode: TextEdit.NoWrap
-                    background: null
-                    color: Theme.text
-                    selectionColor: Theme.selection
-                    selectedTextColor: Theme.selectionText
                     font.family: root.fontFamily
                     font.pixelSize: root.fontSize
                     persistentSelection: true
-
-                    ContextMenu.menu: null
-                    TapHandler {
-                        acceptedButtons: Qt.RightButton
-                        onTapped: editMenu.popup()
-                    }
-                    Kit.EditMenu {
-                        id: editMenu
-                        target: textArea
-                    }
 
                     onTextChanged: {
                         if (!root._loading && activeFocus && root.controller)

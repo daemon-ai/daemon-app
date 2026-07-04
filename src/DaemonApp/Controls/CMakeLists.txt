@@ -6,6 +6,8 @@ qt_add_qml_module(da_controls
         Glyph.qml
         IconButton.qml
         TextField.qml
+        TextArea.qml
+        SpinBox.qml
         CheckBox.qml
         TextButton.qml
         Tooltip.qml

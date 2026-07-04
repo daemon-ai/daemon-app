@@ -232,6 +232,18 @@ QtObject {
     readonly property color chipSepia: ThemeTokens.colorFor(theme, "chipSepia")
     // Recognizable royal blue for the Midnight swatch.
     readonly property color chipMidnight: ThemeTokens.colorFor(theme, "chipMidnight")
+    // Neutral outline around the light swatch chips.
+    readonly property color chipBorder: ThemeTokens.colorFor(theme, "chipBorder")
+
+    // --- Scrim (image lightbox / dimmed overlays) ----------------------------
+    // A lightbox is a dark photo-viewing surface in every theme, so these are
+    // theme-constant translucent tokens rather than aliases of the surfaces.
+    readonly property color scrim: ThemeTokens.colorFor(theme, "scrim")
+    readonly property color scrimModal: ThemeTokens.colorFor(theme, "scrimModal")
+    readonly property color scrimControl: ThemeTokens.colorFor(theme, "scrimControl")
+    readonly property color scrimControlHover: ThemeTokens.colorFor(theme, "scrimControlHover")
+    readonly property color scrimText: ThemeTokens.colorFor(theme, "scrimText")
+    readonly property color scrimTextMuted: ThemeTokens.colorFor(theme, "scrimTextMuted")
 
     // --- Status bar ------------------------------------
     // A thin chrome strip below the columns. uses the sidebar surface for

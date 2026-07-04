@@ -72,6 +72,13 @@ const QHash<QString, Token>& tokenIndex() {
         {QStringLiteral("chipDark"), Token::ChipDark},
         {QStringLiteral("chipSepia"), Token::ChipSepia},
         {QStringLiteral("chipMidnight"), Token::ChipMidnight},
+        {QStringLiteral("chipBorder"), Token::ChipBorder},
+        {QStringLiteral("scrim"), Token::Scrim},
+        {QStringLiteral("scrimModal"), Token::ScrimModal},
+        {QStringLiteral("scrimControl"), Token::ScrimControl},
+        {QStringLiteral("scrimControlHover"), Token::ScrimControlHover},
+        {QStringLiteral("scrimText"), Token::ScrimText},
+        {QStringLiteral("scrimTextMuted"), Token::ScrimTextMuted},
         {QStringLiteral("statusBarBackground"), Token::StatusBarBackground},
         {QStringLiteral("statusBarText"), Token::StatusBarText},
         {QStringLiteral("statusBarHover"), Token::StatusBarHover},
@@ -222,6 +229,26 @@ QColor ThemePalette::color(ThemeName t, Token token) {
         return QColor::fromString(QLatin1String("#f7cc6f"));
     case Token::ChipMidnight:
         return QColor::fromString(QLatin1String("#0d2f86"));
+    case Token::ChipBorder:
+        // Neutral swatch outline (only drawn on the light chips), same everywhere.
+        return QColor::fromString(QLatin1String("#808080"));
+    case Token::Scrim:
+        // Image-lightbox backdrop: a dark photo-viewing surface in every theme
+        // (deliberately not the theme background - lightboxes read dark).
+        return QColor::fromString(QLatin1String("#d1000000"));
+    case Token::ScrimModal:
+        // The dimmed Overlay.modal wash behind the lightbox.
+        return QColor::fromString(QLatin1String("#8c000000"));
+    case Token::ScrimControl:
+        // Translucent light chrome (close affordance) sitting on the scrim.
+        return QColor::fromString(QLatin1String("#1affffff"));
+    case Token::ScrimControlHover:
+        return QColor::fromString(QLatin1String("#33ffffff"));
+    case Token::ScrimText:
+        // Primary / secondary ink on the scrim (icons, captions).
+        return QColor::fromString(QLatin1String("#ffffff"));
+    case Token::ScrimTextMuted:
+        return QColor::fromString(QLatin1String("#e6e6e6"));
     case Token::StatusBarBackground:
         return pick(t, "#f2f2f2", "#272727", "#efe4c8", "#0a1f57");
     case Token::StatusBarText:
