@@ -122,6 +122,20 @@ Rectangle {
         onAccepted: root.addAttachment(root._baseName(selectedFile), "image")
     }
 
+    // Browser (wasm) attachment upload. On wasm there is no shared filesystem with the node, so a
+    // picked local file is read in the browser, uploaded into the workspace over the Fs seam
+    // (uploads/<utc-timestamp>-<sanitized-name>), and only then attached as a chip pointing at that
+    // workspace path — so node-side turn resolution works exactly as on desktop. Unused on desktop
+    // (the pickers above attach by reference).
+    readonly property bool _isWasm: Qt.platform.os === "wasm"
+    ComposerUploadController {
+        id: uploader
+        fsService: (typeof Fs !== "undefined") ? Fs : null
+        onUploaded: (workspacePath, kind) => root.addAttachment(workspacePath, kind)
+        onFailed: (message) => uploadToast.show(message)
+    }
+    Kit.Toast { id: uploadToast }
+
     // Stack on touch so the finger-sized menu/controls never crowd the input on
     // narrow phone widths; also stack when very narrow or multiline.
     readonly property bool stacked: Theme.touch || root.width < 380 || inputArea.lineCount > 1
@@ -323,6 +337,28 @@ Rectangle {
                     }
                 }
 
+                // Browser upload progress (wasm): a thin in-composer indicator while a picked
+                // local file streams into the workspace, before its chip appears.
+                RowLayout {
+                    Layout.fillWidth: true
+                    visible: uploader.uploading
+                    spacing: 6
+
+                    QQC.BusyIndicator {
+                        running: uploader.uploading
+                        implicitWidth: 16
+                        implicitHeight: 16
+                    }
+                    QQC.Label {
+                        Layout.fillWidth: true
+                        text: uploader.statusText
+                        font.family: FontIcons.display
+                        font.pixelSize: 12
+                        color: Theme.textMuted
+                        elide: Text.ElideRight
+                    }
+                }
+
                 // Attachment chips.
                 Flow {
                     Layout.fillWidth: true
@@ -362,12 +398,17 @@ Rectangle {
                         Layout.column: 0
                         Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
                         composerEnabled: root.composerEnabled
-                        // Real local pickers: the chosen path becomes a @file:/
-                        // @image:/@folder: ref on submit (the actual upload/read
-                        // stays daemon-coupled). URL has no native picker.
-                        onRequestFiles: workspaceFilePicker.open()
+                        // Folder attach has no sane browser semantics; hide it on wasm (deferred).
+                        foldersEnabled: !root._isWasm
+                        // Desktop: workspace pickers / a local image dialog whose path becomes a
+                        // @file:/@image:/@folder: ref (the node shares the filesystem). Browser:
+                        // read the local file and upload it into the workspace first, then attach
+                        // the resulting workspace path.
+                        onRequestFiles: root._isWasm ? uploader.pickAndUpload("", "file")
+                                                     : workspaceFilePicker.open()
                         onRequestFolder: workspaceFolderPicker.open()
-                        onRequestImages: imagePicker.open()
+                        onRequestImages: root._isWasm ? uploader.pickAndUpload("image/*", "image")
+                                                      : imagePicker.open()
                         onInsertText: function(text) { root.insertAtCursor(text); }
                     }
 

@@ -19,3 +19,10 @@ target_link_libraries(da_export
         daemon-app::persistence
         daemon-app::warnings
 )
+
+# The browser download path (exportToBrowser -> platform::saveFileContent) is wasm-only, so the
+# platform layer is linked only there. This keeps the desktop/TUI export library off da_platform
+# (and its QtWidgets tray dependency); off wasm exportToBrowser compiles to an empty stub.
+if(DAEMON_APP_WASM)
+    target_link_libraries(da_export PRIVATE daemon-app::platform)
+endif()

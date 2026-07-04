@@ -749,3 +749,26 @@ target_link_libraries(tst_memory
 )
 add_test(NAME tst_memory COMMAND tst_memory)
 set_tests_properties(tst_memory PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_composer_upload: the browser (wasm) attachment upload-path helper
+# (ComposerUploadController::uploadPathFor) - uploads/<utc-timestamp>-<sanitized-name>: UTC
+# normalization, [A-Za-z0-9._-] sanitization, path basenaming, and the empty-name fallback.
+# Compiles the source directly (only QtCore/QtQml + the platform/fs symbols it references, no QML
+# engine) so the pure helper is covered on the desktop ctest run even though upload is wasm-only.
+qt_add_executable(tst_composer_upload
+    tst_composer_upload.cpp
+    ${CMAKE_SOURCE_DIR}/src/DaemonApp/Composer/composer_upload_controller.cpp
+)
+set_target_properties(tst_composer_upload PROPERTIES AUTOMOC ON)
+target_include_directories(tst_composer_upload
+    PRIVATE "${CMAKE_SOURCE_DIR}/src/DaemonApp/Composer"
+)
+target_link_libraries(tst_composer_upload
+    PRIVATE
+        Qt6::Test
+        Qt6::Qml
+        daemon-app::fs
+        daemon-app::platform
+)
+add_test(NAME tst_composer_upload COMMAND tst_composer_upload)
+set_tests_properties(tst_composer_upload PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
