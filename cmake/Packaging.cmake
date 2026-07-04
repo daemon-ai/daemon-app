@@ -144,17 +144,48 @@ set(CPACK_PACKAGE_DESCRIPTION
     "Daemon is an AI agent chat application. The desktop app is a thin client of the daemon node: it renders sessions, transcripts, models, and fleet state served over the daemon wire protocol, and ships alongside the daemon and daemon-infer binaries."
 )
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
-set(CPACK_PACKAGE_FILE_NAME
-    "daemon-${PROJECT_VERSION}-linux-${CMAKE_SYSTEM_PROCESSOR}"
-)
+if(WIN32)
+    set(CPACK_PACKAGE_FILE_NAME "daemon-${PROJECT_VERSION}-win64")
+else()
+    set(CPACK_PACKAGE_FILE_NAME
+        "daemon-${PROJECT_VERSION}-linux-${CMAKE_SYSTEM_PROCESSOR}"
+    )
+endif()
 set(CPACK_PACKAGE_CHECKSUM SHA256)
 # The Nix build tree is unstripped; strip at cpack-install so artifacts do not
 # carry debug info.
 set(CPACK_STRIP_FILES TRUE)
 # Default generators for a bare `cpack`; the flake package outputs pass -G.
 # AppImage additionally needs CMake >= 4.2 + appimagetool (nix/cmake-appimage.nix
-# + nix/appimagetool.nix provide both).
-set(CPACK_GENERATOR "DEB;RPM")
+# + nix/appimagetool.nix provide both). NSIS (the Windows cross build) needs
+# makensis on PATH (nix/windows.nix provides it).
+if(WIN32)
+    set(CPACK_GENERATOR "NSIS")
+else()
+    set(CPACK_GENERATOR "DEB;RPM")
+endif()
+
+# The NSIS MUI license page renders exactly one file; ship LICENSE and the
+# third-party notices on it together (both files also install into
+# share/doc/daemon-app above). Generated at configure so cpack only reads it.
+if(WIN32)
+    file(READ "${CMAKE_SOURCE_DIR}/LICENSE" _da_nsis_license)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/THIRD-PARTY-NOTICES.md")
+        file(READ "${CMAKE_SOURCE_DIR}/THIRD-PARTY-NOTICES.md" _da_nsis_notices)
+        string(
+            APPEND
+            _da_nsis_license
+            "\n\n================================================================\nTHIRD-PARTY NOTICES\n================================================================\n\n${_da_nsis_notices}"
+        )
+    endif()
+    file(
+        WRITE "${CMAKE_BINARY_DIR}/packaging/nsis-license.txt"
+        "${_da_nsis_license}"
+    )
+    set(CPACK_DAEMON_APP_NSIS_LICENSE
+        "${CMAKE_BINARY_DIR}/packaging/nsis-license.txt"
+    )
+endif()
 
 # dpkg is absent at build time (Nix sandbox), so pin the Debian architecture
 # name instead of letting the DEB generator shell out for it.
