@@ -253,8 +253,7 @@ elseif(WIN32)
     if(EXISTS "${CMAKE_SOURCE_DIR}/THIRD-PARTY-NOTICES.md")
         file(READ "${CMAKE_SOURCE_DIR}/THIRD-PARTY-NOTICES.md" _da_nsis_notices)
         string(
-            APPEND
-            _da_nsis_license
+            APPEND _da_nsis_license
             "\n\n================================================================\nTHIRD-PARTY NOTICES\n================================================================\n\n${_da_nsis_notices}"
         )
     endif()

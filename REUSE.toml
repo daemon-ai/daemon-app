@@ -30,6 +30,8 @@ path = [
     ".qmllint.ini",
     "flake.nix",
     "flake.lock",
+    "typos.toml",
+    "VERSION",
     "LICENSE",
     "README.md",
     "AGENTS.md",
