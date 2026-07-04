@@ -513,6 +513,15 @@
             ++ pkgs.lib.optional (bundledFrom ? daemon-cli)
               "-DDAEMON_APP_BUNDLED_DAEMON_CLI=${bundledFrom.daemon-cli}";
 
+            # The base daemon-app stdenv is pkgs.ccacheStdenv, whose compiler
+            # links hardcode + export CCACHE_DIR=/var/cache/ccache. That cache
+            # dir is provisioned on the Linux CI (programs.ccache, added to the
+            # sandbox) but does not exist on a fresh mac, so every compile
+            # aborts with "ccache: error: Permission denied". The DMG is a
+            # one-shot build with no incremental reuse, so disable ccache and
+            # let the wrapper exec the real clang directly.
+            CCACHE_DISABLE = "1";
+
             # The output is the .dmg artifact set: nothing to wrap, and fixup
             # must not strip the deployed bundle (macdeployqt ad-hoc-signs
             # after rewriting install names; stripping breaks the seal).
