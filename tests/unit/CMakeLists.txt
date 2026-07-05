@@ -74,6 +74,30 @@ target_link_libraries(tst_update_manager
 add_test(NAME tst_update_manager COMMAND tst_update_manager)
 set_tests_properties(tst_update_manager PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_minisign_verifier: the self-contained minisign (Ed25519, prehashed) feed
+# verifier against real fixtures - valid signature, wrong key, tampered manifest,
+# tampered trusted comment, truncated signature, and legacy-algorithm rejection.
+qt_add_executable(tst_minisign_verifier tst_minisign_verifier.cpp)
+target_link_libraries(tst_minisign_verifier
+    PRIVATE
+        Qt6::Test
+        daemon-app::update
+)
+add_test(NAME tst_minisign_verifier COMMAND tst_minisign_verifier)
+set_tests_properties(tst_minisign_verifier PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_update_manifest: the SemVer monotonicity comparator (downgrade-replay guard,
+# prerelease + build-metadata handling) and the schema-1 manifest parse + artifact
+# selection (kind/os/arch, arch=unknown skip, glibcFloor gate).
+qt_add_executable(tst_update_manifest tst_update_manifest.cpp)
+target_link_libraries(tst_update_manifest
+    PRIVATE
+        Qt6::Test
+        daemon-app::update
+)
+add_test(NAME tst_update_manifest COMMAND tst_update_manifest)
+set_tests_properties(tst_update_manifest PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_connection_service: the mock connection seam's liveness state machine
 # (checking -> connecting -> ready / offline), the Test-connection probe, and
 # disconnect, all driven on QTimers.
