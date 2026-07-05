@@ -98,6 +98,20 @@ target_link_libraries(tst_update_manifest
 add_test(NAME tst_update_manifest COMMAND tst_update_manifest)
 set_tests_properties(tst_update_manifest PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_self_apply_appimage: the AppImage self-apply staging/precondition gate
+# (src/core/update/self_apply_appimage) - runningAsAppImage detection, the
+# fail-closed degrade reasons (no $APPIMAGE / missing download / missing helper /
+# un-writable target dir), the happy-path staging (helper copied out of the mount,
+# new image staged same-fs + executable), and the leftover-staging-dir cleanup.
+qt_add_executable(tst_self_apply_appimage tst_self_apply_appimage.cpp)
+target_link_libraries(tst_self_apply_appimage
+    PRIVATE
+        Qt6::Test
+        daemon-app::update
+)
+add_test(NAME tst_self_apply_appimage COMMAND tst_self_apply_appimage)
+set_tests_properties(tst_self_apply_appimage PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_update_self_apply_windows: the Windows NSIS SelfApply arg construction +
 # preconditions (src/core/update/self_apply_windows). Pure logic (testable on
 # Linux): the exact frozen daemon-updater CLI contract and the fail-closed

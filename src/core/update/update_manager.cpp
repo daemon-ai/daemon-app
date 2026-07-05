@@ -7,6 +7,7 @@
 #include "settings/isettings_store.h"
 #include "update/feed_client.h"
 #include "update/minisign_verifier.h"
+#include "update/self_apply_appimage.h"
 #include "update/self_apply_windows.h"
 #include "update/semver.h"
 #include "update/update_downloader.h"
@@ -14,10 +15,12 @@
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDesktopServices>
+#include <QFile>
 #include <QFileInfo>
 #include <QMetaEnum>
 #include <QNetworkAccessManager>
 #include <QSysInfo>
+#include <QTimer>
 
 // Package-time defines (see src/core/update/CMakeLists.txt). The capability dial
 // arrives as a bare enumerator name (compile error on a typo); the rest arrive as
@@ -92,6 +95,55 @@ QString buildArtifactKind() {
     return QStringLiteral(DAEMON_APP_UPDATE_ARTIFACT_KIND);
 }
 
+// E2E harness sentinel (DAEMON_APP_UPDATE_E2E_LOG): append one line so the test
+// can prove the relaunched image ran and observe the flow. Best-effort.
+void writeE2ESentinel(const QString& line) {
+    const QString path = qEnvironmentVariable("DAEMON_APP_UPDATE_E2E_LOG");
+    if (path.isEmpty()) {
+        return;
+    }
+    QFile file(path);
+    if (file.open(QIODevice::Append | QIODevice::Text)) {
+        file.write(line.toUtf8());
+        file.write("\n");
+    }
+}
+
+// Drive the check -> download -> apply flow with no UI, for the AppImage self-apply
+// E2E (nix run .#updater-appimage-e2e). Records a boot sentinel, then reacts to
+// each state: download when offered, apply (self-apply + quit) when ready, and quit
+// on a terminal (UpToDate / Error / notify-only) outcome so the relaunched image
+// terminates on its own. Env-gated: a normal build never calls this.
+void armUpdateE2EAutoDrive(UpdateManager* manager) {
+    const QString base = semver::stripBuildMetadata(manager->currentVersion());
+    writeE2ESentinel(QStringLiteral("E2E boot version=%1").arg(base));
+    QObject::connect(manager, &UpdateManager::stateChanged, manager, [manager, base] {
+        const QString state = manager->stateName();
+        if (state == QStringLiteral("UpdateAvailable")) {
+            if (manager->canDownload()) {
+                manager->download();
+            } else {
+                writeE2ESentinel(
+                    QStringLiteral("E2E notify version=%1").arg(manager->latestVersion()));
+                QTimer::singleShot(300, manager, [] { QCoreApplication::quit(); });
+            }
+        } else if (state == QStringLiteral("ReadyToApply")) {
+            writeE2ESentinel(QStringLiteral("E2E apply version=%1").arg(manager->latestVersion()));
+            manager->apply(); // self-applies (spawn helper + quit) or degrades
+            // Safety net: if apply degraded instead of quitting, still terminate.
+            QTimer::singleShot(15000, manager, [] { QCoreApplication::quit(); });
+        } else if (state == QStringLiteral("UpToDate")) {
+            writeE2ESentinel(QStringLiteral("E2E uptodate version=%1").arg(base));
+            QTimer::singleShot(300, manager, [] { QCoreApplication::quit(); });
+        } else if (state == QStringLiteral("Error")) {
+            writeE2ESentinel(QStringLiteral("E2E error %1").arg(manager->lastError()));
+            QTimer::singleShot(300, manager, [] { QCoreApplication::quit(); });
+        }
+    });
+    // Kick the check off the event loop (skip the armPolling initial delay).
+    QTimer::singleShot(0, manager, [manager] { manager->check(); });
+}
+
 } // namespace
 
 UpdateManager::UpdateManager(QObject* parent)
@@ -115,9 +167,16 @@ void UpdateManager::setSettings(settings::ISettingsStore* settings) {
         m_latestVersion = m_settings->value(kKeyLatest, QString()).toString();
         m_notesUrl = m_settings->value(kKeyNotes, QString()).toString();
     }
-    // Staging hygiene: drop superseded version dirs + stale .part temps.
+    // Staging hygiene: drop superseded version dirs + stale .part temps, plus any
+    // leftover AppImage self-apply staging dirs beside $APPIMAGE from a prior update.
     UpdateDownloader::cleanupStale(semver::stripBuildMetadata(currentVersion()));
+    cleanupAppImageStaging();
     armPolling();
+
+    // Env-gated E2E auto-drive (no UI): a normal build never sets this.
+    if (qEnvironmentVariableIsSet("DAEMON_APP_UPDATE_E2E")) {
+        armUpdateE2EAutoDrive(this);
+    }
 }
 
 QString UpdateManager::currentVersion() const {
@@ -405,15 +464,16 @@ void UpdateManager::apply() {
         fail(QStringLiteral("no verified update is ready to apply"));
         return;
     }
+    const QString kind = m_haveSelected ? m_selected.kind : buildArtifactKind();
+
+    // SelfApply hands a spec to the daemon-updater helper and quits; the helper
+    // waits for us to exit, applies atomically, and relaunches (packaging/
+    // UPDATES.md). Per-platform backends live in their own files. Every
+    // precondition failure degrades to the DownloadAndOpen hand-off below with a
+    // visible reason rather than dead-ending a ready update.
     if (m_effectiveCapability == Capability::SelfApply) {
-        // SelfApply hands a spec to the daemon-updater helper and quits; the
-        // helper waits for us to exit, applies atomically, and relaunches (see
-        // packaging/UPDATES.md). Per-platform backends live in their own files;
-        // a precondition failure degrades to DownloadAndOpen below with a
-        // visible reason rather than dead-ending.
 #ifdef Q_OS_WIN
-        const QString applyKind = m_haveSelected ? m_selected.kind : buildArtifactKind();
-        if (applyKind == QStringLiteral("nsis")) {
+        if (kind == QStringLiteral("nsis")) {
             const win::SelfApplyPlan plan = win::planNsisSelfApply(
                 QCoreApplication::applicationDirPath(), m_downloadedPath, m_selected.sha256,
                 win::selfApplyLogPath(), QCoreApplication::applicationFilePath(),
@@ -431,15 +491,33 @@ void UpdateManager::apply() {
             emit errorOccurred(m_lastError);
         }
 #else
-        // No SelfApply backend compiled for this platform yet: degrade to the
-        // DownloadAndOpen hand-off below (never dead-end a ready update).
-        m_lastError = tr("self-apply is not available on this platform; opening the update");
-        emit errorOccurred(m_lastError);
+        // AppImage: stage the new image next to $APPIMAGE, spawn the detached
+        // helper, and quit so it can swap + relaunch. Non-AppImage Linux kinds
+        // never reach here (their feed rows are Notify, so effectiveCapability
+        // caps at Notify and they cannot even download).
+        if (kind == QStringLiteral("appimage") && runningAsAppImage()) {
+            const AppImageApplyPreparation prep =
+                prepareAppImageApply(m_downloadedPath, m_selected.sha256);
+            if (prep.ok && spawnAppImageHelper(prep, QCoreApplication::applicationPid())) {
+                // The helper now owns the swap; leave ReadyToApply and quit cleanly.
+                QCoreApplication::quit();
+                return;
+            }
+            const QString reason =
+                prep.ok ? QStringLiteral("could not launch the update helper") : prep.reason;
+            m_lastError = tr("self-apply unavailable (%1); opening the download instead").arg(reason);
+            emit errorOccurred(m_lastError);
+        } else {
+            // No SelfApply backend for this artifact/platform: degrade to the
+            // DownloadAndOpen hand-off below (never dead-end a ready update).
+            m_lastError = tr("self-apply is not available for this artifact; opening the update");
+            emit errorOccurred(m_lastError);
+        }
 #endif
     }
+
     // DownloadAndOpen: hand the verified artifact to the OS. Installers open
     // directly; self-contained/package artifacts reveal their directory instead.
-    const QString kind = m_haveSelected ? m_selected.kind : buildArtifactKind();
     const bool openFile = kind == QStringLiteral("nsis") || kind == QStringLiteral("dmg");
     const QUrl target = openFile ? QUrl::fromLocalFile(m_downloadedPath)
                                  : QUrl::fromLocalFile(QFileInfo(m_downloadedPath).absolutePath());
