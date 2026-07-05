@@ -57,7 +57,15 @@ target_link_libraries(
     PRIVATE da_updater_sha256 daemon-app::warnings
 )
 
-install(TARGETS daemon-updater RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+# macOS: the shippable product is the .app, so the helper must live INSIDE it
+# next to daemon-app (Contents/MacOS) — a sibling in <dmg>/bin would be dropped
+# when the user drags only the bundle to /Applications. This mirrors the
+# co-located node binaries in cmake/Packaging.cmake. Elsewhere, GNUInstallDirs.
+if(APPLE)
+    install(TARGETS daemon-updater RUNTIME DESTINATION "daemon-app.app/Contents/MacOS")
+else()
+    install(TARGETS daemon-updater RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 
 # --- native integration tests (Linux) --------------------------------------
 # Driven by a shell script against the built binary: rename-swap (happy + cross
