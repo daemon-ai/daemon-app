@@ -140,6 +140,14 @@ if(BUILD_TESTING AND NOT DAEMON_APP_MOBILE)
     add_subdirectory(tests)
 endif()
 
+# Standalone command-line tools (no Qt). daemon-updater is the self-update apply
+# helper (src/tools/updater), packaged into every desktop artifact. Added here
+# (after include(CTest), like tests/) so its ctest registration is reachable; a
+# headless browser/mobile artifact never self-applies, so it is desktop-only.
+if(NOT DAEMON_APP_MOBILE)
+    add_subdirectory(src/tools/updater)
+endif()
+
 # Desktop packaging: freedesktop assets (Linux) / bundle payload + Qt deploy
 # (macOS), bundled sibling binaries, CPack (DEB / RPM / AppImage / DragNDrop).
 # No-op for wasm/mobile configures.
