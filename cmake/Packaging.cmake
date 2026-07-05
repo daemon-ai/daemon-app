@@ -110,6 +110,12 @@ endif()
 if(DAEMON_APP_BUNDLED_LIBS)
     if(APPLE)
         set(_da_bundled_lib_dir "${_da_bundle_contents}/Frameworks")
+    elseif(WIN32)
+        # Windows: the PE loader resolves a DLL from the directory of the
+        # importing executable (and PATH), never from a sibling lib/. The
+        # bundled worker DLLs (ggml/llama/mtmd + the MinGW runtime) must
+        # therefore land in bin/ beside daemon-infer.exe, not lib/.
+        set(_da_bundled_lib_dir "${_da_colocated_bin_dir}")
     else()
         set(_da_bundled_lib_dir "${CMAKE_INSTALL_LIBDIR}")
     endif()
