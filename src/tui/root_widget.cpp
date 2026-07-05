@@ -41,6 +41,7 @@
 #include "turn_controller.h"
 #include "turn_engine_factory.h"
 #include "uimodels/variant_list_model.h"
+#include "update/update_manager.h"
 
 #include <algorithm>
 #include <array>
@@ -236,6 +237,7 @@ RootWidget::RootWidget()
         .principal = m_services.principal,
         .transportRegistry = m_services.transportRegistry,
         .presence = m_services.presence,
+        .update = m_services.update,
     });
 
     // Settings-page dialog edits (theme/language pickers, text prompts, zen):
@@ -274,6 +276,20 @@ RootWidget::RootWidget()
 
     connect(m_services.connection, &connection::IConnectionService::stateChanged, this,
             [this] { m_status->setGatewayState(m_services.connection->state()); });
+
+    // Surface an available update in the footer (the TUI analog of the GUI banner),
+    // from the same shared UpdateManager + StatusBarModel the GUI uses.
+    if (m_services.update != nullptr) {
+        auto* upd = m_services.update;
+        auto syncUpdate = [this, upd] {
+            const bool offered =
+                upd->stateName() == QStringLiteral("UpdateAvailable") && !upd->dismissed();
+            m_status->setUpdateVersion(offered ? upd->latestVersion() : QString());
+        };
+        connect(upd, &update::UpdateManager::stateChanged, m_status, syncUpdate);
+        syncUpdate();
+    }
+
     m_services.firstRun->begin();
     // Returning users auto-open the saved connection; on first launch the gate's
     // connection picker drives connectTo instead.

@@ -74,6 +74,69 @@ target_link_libraries(tst_update_manager
 add_test(NAME tst_update_manager COMMAND tst_update_manager)
 set_tests_properties(tst_update_manager PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_minisign_verifier: the self-contained minisign (Ed25519, prehashed) feed
+# verifier against real fixtures - valid signature, wrong key, tampered manifest,
+# tampered trusted comment, truncated signature, and legacy-algorithm rejection.
+qt_add_executable(tst_minisign_verifier tst_minisign_verifier.cpp)
+target_link_libraries(tst_minisign_verifier
+    PRIVATE
+        Qt6::Test
+        daemon-app::update
+)
+add_test(NAME tst_minisign_verifier COMMAND tst_minisign_verifier)
+set_tests_properties(tst_minisign_verifier PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_update_manifest: the SemVer monotonicity comparator (downgrade-replay guard,
+# prerelease + build-metadata handling) and the schema-1 manifest parse + artifact
+# selection (kind/os/arch, arch=unknown skip, glibcFloor gate).
+qt_add_executable(tst_update_manifest tst_update_manifest.cpp)
+target_link_libraries(tst_update_manifest
+    PRIVATE
+        Qt6::Test
+        daemon-app::update
+)
+add_test(NAME tst_update_manifest COMMAND tst_update_manifest)
+set_tests_properties(tst_update_manifest PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_self_apply_appimage: the AppImage self-apply staging/precondition gate
+# (src/core/update/self_apply_appimage) - runningAsAppImage detection, the
+# fail-closed degrade reasons (no $APPIMAGE / missing download / missing helper /
+# un-writable target dir), the happy-path staging (helper copied out of the mount,
+# new image staged same-fs + executable), and the leftover-staging-dir cleanup.
+qt_add_executable(tst_self_apply_appimage tst_self_apply_appimage.cpp)
+target_link_libraries(tst_self_apply_appimage
+    PRIVATE
+        Qt6::Test
+        daemon-app::update
+)
+add_test(NAME tst_self_apply_appimage COMMAND tst_self_apply_appimage)
+set_tests_properties(tst_self_apply_appimage PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_update_self_apply_windows: the Windows NSIS SelfApply arg construction +
+# preconditions (src/core/update/self_apply_windows). Pure logic (testable on
+# Linux): the exact frozen daemon-updater CLI contract and the fail-closed
+# preflight (missing helper / staged installer / checksum / relaunch target).
+qt_add_executable(tst_update_self_apply_windows tst_update_self_apply_windows.cpp)
+target_link_libraries(tst_update_self_apply_windows
+    PRIVATE
+        Qt6::Test
+        daemon-app::update
+)
+add_test(NAME tst_update_self_apply_windows COMMAND tst_update_self_apply_windows)
+set_tests_properties(tst_update_self_apply_windows PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_self_apply_macos: the macOS DMG SelfApply guard decision (translocation,
+# read-only volume, unwritable parent, cross-filesystem) + path predicates. Pure
+# logic, so it runs on the Linux CI host even though the swap itself is darwin-only.
+qt_add_executable(tst_self_apply_macos tst_self_apply_macos.cpp)
+target_link_libraries(tst_self_apply_macos
+    PRIVATE
+        Qt6::Test
+        daemon-app::update
+)
+add_test(NAME tst_self_apply_macos COMMAND tst_self_apply_macos)
+set_tests_properties(tst_self_apply_macos PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_connection_service: the mock connection seam's liveness state machine
 # (checking -> connecting -> ready / offline), the Test-connection probe, and
 # disconnect, all driven on QTimers.

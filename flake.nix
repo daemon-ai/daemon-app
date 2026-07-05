@@ -477,6 +477,18 @@
 
         linuxArtifacts = mkLinuxArtifacts { };
 
+        # AppImage SelfApply A->B end-to-end harness (nix/appimage-e2e.nix): a
+        # parameterized test-AppImage builder (test pubkey + arbitrary version,
+        # SelfApply) plus the impure `nix run` runner that drives the real swap.
+        # mkImage is surfaced as a flake output so the runner can build A + B
+        # with a runtime-generated pubkey via getFlake.
+        appimageE2E = import ./nix/appimage-e2e.nix {
+          inherit pkgs self system mkLinuxArtifacts;
+          lib = pkgs.lib;
+          bootLibPath = portableStack.bootLibPath;
+          runtimeFile = appimageTooling.runtimeFile;
+        };
+
         # --- macOS packaging artifact (CPack DragNDrop -> .dmg) -------------
         # Darwin mirror of mkLinuxArtifacts: same build with the packaging
         # knobs, then cpack -G DragNDrop from the build tree (the bundle,
@@ -519,6 +531,13 @@
               "-DCMAKE_INSTALL_DOCDIR=share/doc/daemon-app"
               "-DCMAKE_INSTALL_LOCALEDIR=share/locale"
               "-DECM_DIR=${pkgs.kdePackages.extra-cmake-modules}/share/ECM/cmake"
+              # Auto-updater dials (packaging/UPDATES.md): SelfApply for the DMG —
+              # hdiutil stage + quarantine strip + guards + daemon-updater two-move
+              # swap, validated E2E on the M1 (packaging/macos/README.md).
+              "-DDAEMON_APP_UPDATE_CAPABILITY=SelfApply"
+              "-DDAEMON_APP_UPDATE_FEED_URL=https://github.com/daemon-ai/daemon/releases/latest/download/manifest.json"
+              "-DDAEMON_APP_UPDATE_PUBKEY=RWRXpowS90Fy+TYhRsrBbQNSDvjbtJpqi9T89OGqSNTLkOa5vn62hK0o"
+              "-DDAEMON_APP_UPDATE_ARTIFACT_KIND=dmg"
             ]
             ++ pkgs.lib.optional (bundledFrom ? daemon) "-DDAEMON_APP_BUNDLED_DAEMON=${bundledFrom.daemon}"
             ++ pkgs.lib.optional (bundledFrom ? daemon-infer)
@@ -952,6 +971,23 @@
           program = "${windowsStack.smoke}/bin/windows-smoke";
           meta.description = "Boot the Windows (MinGW) build + NSIS installer under wine";
         };
+
+        # AppImage SelfApply A->B swap E2E (`nix run .#updater-appimage-e2e`):
+        # builds two real AppImages (test pubkey, SelfApply), serves a signed
+        # feed for the newer one on loopback, runs the older one offscreen, and
+        # asserts the daemon-updater helper swapped the on-disk .AppImage +
+        # relaunched the new version. Impure (host nix + loopback), like the
+        # portable/windows smokes; not a flake check.
+        apps.updater-appimage-e2e = {
+          type = "app";
+          program = "${appimageE2E.runner}/bin/updater-appimage-e2e";
+          meta.description = "End-to-end AppImage self-apply A->B swap against a local signed feed";
+        };
+
+        # The parameterized test-AppImage builder, surfaced so the E2E runner can
+        # build A + B with a runtime-generated test pubkey (getFlake + call). Not
+        # a package (it is a function); built on demand by the runner.
+        appimageSelfApplyImage = appimageE2E.mkImage;
 
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [

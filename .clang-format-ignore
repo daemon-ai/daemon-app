@@ -2,3 +2,11 @@
 # superproject codec-drift gate). Never reformat - clang-format must skip these entirely.
 src/core/daemon/codec/generated/*
 src/core/daemon/codec/vendor/*
+
+# Vendored public-domain SHA-256 (Brad Conte) used by the daemon-updater helper:
+# kept byte-verbatim from upstream, so clang-format must skip it too.
+src/tools/updater/vendor/*
+
+# Vendored Monocypher (BLAKE2b + Ed25519 for minisign): upstream source, kept
+# byte-identical - clang-format must skip it entirely.
+src/core/update/vendor/monocypher/*

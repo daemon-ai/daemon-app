@@ -110,10 +110,12 @@ if(CPACK_GENERATOR STREQUAL "AppImage")
     if(CPACK_DAEMON_APP_APPIMAGE_RUNTIME)
         set(CPACK_APPIMAGE_RUNTIME_FILE "${CPACK_DAEMON_APP_APPIMAGE_RUNTIME}")
     endif()
-    # Placeholder update feed: the release pipeline (sibling workstream)
-    # publishes the real .zsync next to the artifact and rewrites this URL.
+    # AppImage delta-update transport: the gh-releases-zsync form points
+    # AppImageUpdate at the latest GitHub release's .zsync control file (the
+    # release pipeline publishes daemon-*x86_64.AppImage.zsync next to the
+    # artifact). Orthogonal to the in-app minisign-verified updater.
     set(CPACK_APPIMAGE_UPDATE_INFORMATION
-        "zsync|https://daemon.io/releases/daemon-latest-linux-x86_64.AppImage.zsync"
+        "gh-releases-zsync|daemon-ai|daemon|latest|daemon-*x86_64.AppImage.zsync"
     )
     # Metainfo is validated by checks.artifact-sanity (appstreamcli); the
     # sandbox running appimagetool has no appstream, so skip its own check.
@@ -152,12 +154,30 @@ if(CPACK_GENERATOR STREQUAL "DragNDrop")
 endif()
 
 if(CPACK_GENERATOR STREQUAL "NSIS")
-    # Per-machine product tree: $PROGRAMFILES64\Daemon (the NSIS stub itself
-    # is a 32-bit exe, so the default $PROGRAMFILES would land in the x86
-    # dir). bin\ holds daemon-app.exe (+ the bundled daemon binaries once the
-    # superproject injects them, same DAEMON_APP_BUNDLED_* contract as the
-    # Linux artifacts).
-    set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
+    # PER-USER product tree: $LOCALAPPDATA\Programs\Daemon (the VS Code / Chrome
+    # "user setup" model). bin\ holds daemon-app.exe (+ the bundled daemon
+    # binaries once the superproject injects them, same DAEMON_APP_BUNDLED_*
+    # contract as the Linux artifacts).
+    #
+    # WHY per-user (decision for todo u3-windows, packaging/UPDATES.md SelfApply):
+    # the auto-updater's SelfApply tier runs this installer silently (/S) from
+    # the detached daemon-updater helper AFTER the app exits. A per-machine
+    # ($PROGRAMFILES64) install requires elevation, so every unattended update
+    # would raise a UAC prompt on a process the user never launched - which
+    # defeats promptless self-apply and can fail outright for standard users.
+    # Per-user installs to a user-writable root with RequestExecutionLevel user
+    # (no elevation ever). No install base has shipped, so there is no
+    # per-machine -> per-user migration to perform.
+    #
+    # The elevation level (RequestExecutionLevel) and the shell context
+    # (SetShellVarContext, which routes the uninstall registry hive to HKCU and
+    # the Start Menu to the per-user profile) are hardcoded to per-machine in
+    # CMake's stock NSIS.template.in with NO CPack variable to override them, so
+    # cmake/Packaging.cmake emits a minimally-patched template onto
+    # CPACK_MODULE_PATH. $LOCALAPPDATA is a user-scoped NSIS constant and is not
+    # architecture-split, so the 32-bit stub / $PROGRAMFILES-vs-64 concern that
+    # forced $PROGRAMFILES64 for a per-machine install does not apply here.
+    set(CPACK_NSIS_INSTALL_ROOT "$LOCALAPPDATA\\Programs")
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "Daemon")
     set(CPACK_NSIS_PACKAGE_NAME "Daemon")
     set(CPACK_NSIS_DISPLAY_NAME "Daemon")

@@ -196,6 +196,118 @@ vendored dylib.
   `libkquicksyntaxhighlightingplugin.dylib` into `PlugIns/`, and
   `Resources/qml/org/kde/…` exists in the bundle.
 
+## Auto-update (DMG SelfApply)
+
+The macOS artifact ships the `SelfApply` capability dial (packaging/UPDATES.md).
+The app never mutates itself — it stages a verified update and hands an atomic
+swap to the in-bundle `daemon-updater` helper, exactly like the AppImage/NSIS
+lanes. Design + helper CLI: [packaging/UPDATES.md](../UPDATES.md) and
+`src/tools/updater/`; the macOS-specific staging + guards live in
+`src/core/update/self_apply_macos.{h,cpp}`.
+
+### Flow
+
+1. `UpdateManager` fetches + minisign-verifies the feed, SemVer-gates, and (on
+   `DownloadAndOpen`+) downloads the `.dmg` into `<AppData>/updates/<version>/`,
+   sha256-gating it before anything touches it.
+2. `apply()` (SelfApply, macOS) calls `update::macos::selfApply()`:
+   - **Guards decide SelfApply vs a DownloadAndOpen fallback BEFORE mutating
+     anything.** It falls back to opening the `.dmg` (with a visible reason in
+     the update banner) when: the app is **translocated** by Gatekeeper (path
+     under `/AppTranslocation/` — the on-disk original is elsewhere, so a swap
+     is ineffective), running from a **read-only volume** (launched straight
+     from the DMG under `/Volumes`), the **application folder is unwritable** by
+     this user, or staging would **cross a filesystem**. The guard verdict and
+     the path predicates are pure and unit-tested on Linux (`tst_self_apply_macos`).
+   - **Staging:** `hdiutil attach -nobrowse -noverify -readonly -plist` the
+     verified dmg, `ditto` the single top-level `.app` into a fresh `0700` dir on
+     the **target bundle's filesystem** (`ditto` preserves symlinks/perms/xattrs
+     so the bundle + its ad-hoc signature survive a plain copy would corrupt),
+     `hdiutil detach` (force-retry), then `xattr -dr com.apple.quarantine`
+     defensively. It verifies the staged bundle superficially
+     (`Contents/MacOS/daemon-app` executable, `Info.plist`
+     `CFBundleShortVersionString` == the manifest version).
+   - **Swap:** spawns the in-bundle helper
+     `Contents/MacOS/daemon-updater --wait-pid <appPid> --mode two-move --staged
+     <staged .app> --target <bundle> --old-aside <same-vol park> --log <log>
+     --relaunch -- <bundle>/Contents/MacOS/daemon-app` (no `--sha256` for a
+     directory — the `0700` staging dir owns bundle integrity) and quits. The
+     helper renames the old bundle aside, renames the staged bundle into place
+     (rollback on failure), and relaunches. It is explicitly safe to spawn the
+     helper from inside the bundle it moves (macOS keeps the running inode alive
+     across the rename).
+3. On the next successful start the app sweeps the parked old bundle + stale
+   staging dirs (`update::macos::cleanupStagingArtifacts`, called from
+   `UpdateManager::setSettings` alongside the shared `cleanupStale`).
+
+### Helper log
+
+The staging root is `<bundle-parent>/.daemon-app-update-<pid>/`; the helper
+writes a deterministic, greppable transcript to
+`<staging-root>/daemon-updater.log` (also mirrored to its stderr). The parked
+old bundle is `<staging-root>/old-bundle.app` until the next start cleans it.
+
+### Gatekeeper reality (ad-hoc lane)
+
+Our bundles are **ad-hoc signed** (`codesign --sign -`), team id nil. After the
+quarantine strip + swap, the relaunched bundle runs locally without a Gatekeeper
+prompt on the machine that performed the update: the swapped-in bundle is not
+quarantined (our own download is not quarantine-flagged, and `ditto` from the
+mounted dmg does not add the attribute), so `LSFileQuarantineEnabled` never
+gates the relaunch. Notarization is **future work** (see Codesigning /
+Notarization below); it only tightens verification and does not change the swap
+mechanics. If a future host policy blocks an ad-hoc relaunch despite the strip,
+the dial degrades cleanly to `DownloadAndOpen`.
+
+### E2E (validated on the M1)
+
+`packaging/macos/e2e-selfapply.sh` runs the whole flow and is the source of
+truth. From the repo root, inside the dev shell:
+
+```sh
+nix develop --command bash packaging/macos/e2e-selfapply.sh
+```
+
+It builds two ad-hoc-signed SelfApply DMGs with a **throwaway** test minisign
+pubkey and versions 0.9.0 (A) + 0.9.1 (B) — the version bump is a throwaway
+`VERSION` edit, restored after each build, never committed — publishes a
+minisign-signed feed for B on loopback, installs A into a user-writable dir, and
+lets the shared, env-gated `DAEMON_APP_UPDATE_E2E` auto-drive in `UpdateManager`
+(the same hook the AppImage/Windows lanes use: check → download → self-apply)
+perform the swap. `DAEMON_APP_UPDATE_E2E_LOG` collects the `E2E boot/apply/
+uptodate version=` sentinels — A boots at 0.9.0 and applies, then the relaunched
+process boots at 0.9.1 and settles UpToDate. It asserts: the target bundle
+`Info.plist` reads 0.9.1, the relaunched process is B (sentinels), the helper log
+shows the two-move swap, the old 0.9.0 bundle was parked aside, the relaunched B
+swept the staging on next start, and no `com.apple.quarantine` remains. The
+confirmed transcript ends `== E2E PASSED ==`.
+
+Non-obvious requirements the script bakes in (learned validating it):
+
+- **`-DQMLTERMWIDGET_QML_DIR=$QMLTERMWIDGET_QML_DIR`** must be passed (the dev
+  shell exports it): without it the QMLTermWidget backstop is skipped and the
+  bundle cannot launch (`Main.qml` imports it unconditionally — see Payload
+  notes).
+- **A fresh build dir per version.** An in-place reconfigure after a `VERSION`
+  bump does not regenerate the bundle `Info.plist`, so B would ship A's version.
+- **Drop the build tree before running the installed bundle.** The binary bakes
+  `DAEMON_APP_BUILD_QML_DIR` at the build tree; a shipped DMG never has it
+  around, but a local build does — leaving it loads a second (store) Qt and the
+  duplicate-Qt classes destabilize the run.
+- **Launch the app with a clean `env -i`.** The dev shell exports Qt/DYLD/QML
+  paths that would load a second (store) Qt beside the bundle's own and abort
+  the app; a real user launch has none of that. The script clears the
+  environment and sets only `PATH=/usr/bin:/bin` (so the app's `QProcess` calls
+  to `hdiutil`/`ditto`/`xattr`/`plutil` resolve) plus the E2E vars.
+
+**Gatekeeper (ad-hoc lane): confirmed working.** The swapped-in bundle relaunched
+cleanly with no Gatekeeper prompt and no `com.apple.quarantine` attribute — our
+programmatic download is not quarantine-flagged and `ditto` from the mounted dmg
+does not add it, so `LSFileQuarantineEnabled` never gates the relaunch on the
+updating machine. Notarization remains future work (Codesigning / Notarization
+below) and only tightens verification; the dial degrades cleanly to
+`DownloadAndOpen` if a future host policy ever refuses an ad-hoc relaunch.
+
 ## Codesigning
 
 Hardened runtime is mandatory for notarization. Two rules dominate:
@@ -327,12 +439,11 @@ QT_QPA_PLATFORM=offscreen "$APP"                    # interactive login only, se
 
 ## Updates
 
-The DMG artifact's update capability is **DownloadAndOpen** (fetch + verify
-the feed, download the new DMG, hand it to the OS; the user completes the
-install) — in-place `.app` swaps need quarantine/codesign care and stay out
-of v1. The capability dial, signed `manifest.json` feed, and rollout design
-land separately on the `pkg/release-feed` branch as `packaging/UPDATES.md`;
-this DMG plugs into that design unchanged.
+The DMG artifact's update capability is **SelfApply** — see
+[Auto-update (DMG SelfApply)](#auto-update-dmg-selfapply) above for the staging,
+guards, helper swap, and Gatekeeper reality. The capability dial, signed
+`manifest.json` feed, verification, and rollout design are documented in
+[packaging/UPDATES.md](../UPDATES.md); this DMG plugs into that design.
 
 ## Follow-ups tracked here
 

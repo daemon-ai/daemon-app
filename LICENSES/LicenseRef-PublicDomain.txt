@@ -1,0 +1,15 @@
+Public Domain
+
+Certain third-party files vendored in this repository were released by their
+authors into the public domain, free of any restrictions. The author requests
+acknowledgement if the code is used, but does not require it. Such code is
+provided free of any liability and without any quality claims by the author.
+
+Files covered by this dedication (with upstream provenance):
+
+  * src/tools/updater/vendor/sha256.c
+    src/tools/updater/vendor/sha256.h
+      SHA-256 implementation by Brad Conte (brad AT bradconte.com),
+      https://github.com/B-Con/crypto-algorithms — released into the public
+      domain. See src/tools/updater/vendor/LICENSE for the verbatim statement
+      and the one-line portability note.

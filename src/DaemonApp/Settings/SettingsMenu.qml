@@ -26,6 +26,10 @@ QQC.Popup {
 
     readonly property int hMargin: 12
 
+    // The updater surfaces its auto-check toggle only on a build that has a feed
+    // (an inert None build compiles no feed URL).
+    readonly property bool hasUpdater: !!Update && String(Update.feedUrl).length > 0
+
     width: 240
     padding: 0
     modal: false
@@ -241,6 +245,21 @@ QQC.Popup {
                 label: qsTr("User message rail")
                 checked: UiSettings.showUserRail
                 onToggled: function(on) { UiSettings.showUserRail = on; }
+            }
+
+            Divider { visible: root.hasUpdater }
+
+            // ----- Updates -----------------------------------------------
+            SectionHeader { text: qsTr("Updates"); visible: root.hasUpdater }
+
+            OptionRow {
+                visible: root.hasUpdater
+                Layout.fillWidth: true
+                Layout.leftMargin: root.hMargin
+                Layout.rightMargin: root.hMargin
+                label: qsTr("Auto-check for updates")
+                checked: !!Update && Update.autoCheck
+                onToggled: function(on) { if (Update) Update.autoCheck = on; }
             }
 
             Divider {}

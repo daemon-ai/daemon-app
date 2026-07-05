@@ -265,6 +265,14 @@ void StatusBarModel::setAppVersion(const QString& version) {
     emit appVersionChanged();
 }
 
+void StatusBarModel::setUpdateVersion(const QString& version) {
+    if (m_updateVersion == version) {
+        return;
+    }
+    m_updateVersion = version;
+    emit updateVersionChanged();
+}
+
 void StatusBarModel::setGatewayConnectionText(const QString& text) {
     if (m_gatewayConnectionText == text) {
         return;

@@ -337,7 +337,11 @@ let
         -DEARCUT_SOURCE_DIR=${depSources.earcut} \
         -DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${depSources.ksyntaxhighlighting} \
         -DMICROTEX_SOURCE_DIR=${depSources.microtex} \
-        -DDAEMON_APP_VERSION_STR=${versionStr}
+        -DDAEMON_APP_VERSION_STR=${versionStr} \
+        -DDAEMON_APP_UPDATE_CAPABILITY=SelfApply \
+        -DDAEMON_APP_UPDATE_FEED_URL=https://github.com/daemon-ai/daemon/releases/latest/download/manifest.json \
+        -DDAEMON_APP_UPDATE_PUBKEY=RWRXpowS90Fy+TYhRsrBbQNSDvjbtJpqi9T89OGqSNTLkOa5vn62hK0o \
+        -DDAEMON_APP_UPDATE_ARTIFACT_KIND=nsis
       cd build
       runHook postConfigure
     '';
@@ -579,6 +583,16 @@ let
   # not fail the workstream - a GUI-subsystem exe still writes the sentinel
   # to a redirected stdout, which is exactly how this harness consumes it.
   #
+  # PER-USER install (todo u3-windows): the installer is per-user
+  # (RequestExecutionLevel user, $LOCALAPPDATA\Programs\Daemon), so this asserts
+  # the DEFAULT install lands under the user's Local AppData (no /D override) -
+  # exactly the promptless location the auto-updater's SelfApply tier relies on.
+  # It also asserts the daemon-updater.exe helper ships in bin\ (SelfApply spawns
+  # it next to the app). A full nsis-silent helper exercise (wait-pid -> /S ->
+  # relaunch) under wine is intentionally NOT attempted here: wine's process and
+  # named-object semantics make the detached wait-pid/relaunch dance flaky, and
+  # real-Windows validation is the runbook step (packaging/windows/UPDATE-VALIDATION.md).
+  #
   # WoW64 wine is required: the NSIS stub is a PE32 i386 executable.
   #
   # `minimal` (not `stable`): the full `stable` closure pulls a large multimedia stack
@@ -593,8 +607,9 @@ let
   # Parameterized hermetic wine harness. Both the child's app-only smoke and the
   # superproject's composed E2E smoke reuse the same prelude (fresh throwaway
   # WINEPREFIX + HOME, gecko/mono + their network fetches disabled via
-  # WINEDLLOVERRIDES, offscreen QPA, and a `wineserver -w` teardown so no
-  # lingering wineserver holds the prefix open before it is removed).
+  # WINEDLLOVERRIDES, offscreen QPA, and a `wineserver -k; wineserver -w`
+  # teardown so no lingering wine process holds the prefix open before it is
+  # removed).
   #
   #   installer : the NSIS installer derivation dir (holds daemon-*-win64.exe);
   #               bound to the shell var `$installerExe` (the resolved .exe).
@@ -621,9 +636,12 @@ let
         # Headless boot: the offscreen QPA plugin is compiled into the exe.
         export QT_QPA_PLATFORM=offscreen
         export QT_QUICK_BACKEND=software
-        # Teardown: settle wineserver before removing the prefix, so nothing holds
-        # the tree open (a dangling wineserver would race the rm and leak the dir).
-        trap 'wineserver -w 2>/dev/null || true; rm -rf "$tmp"' EXIT
+        # Teardown: the body may leave wine processes alive on purpose (the
+        # composed E2E smoke leaves the app-spawned daemon.exe serving its named
+        # pipe), so a bare `wineserver -w` would wait forever. Kill everything in
+        # the prefix first (-k), then wait for the server to exit (-w) so nothing
+        # races the rm and leaks the dir.
+        trap 'wineserver -k 2>/dev/null || true; wineserver -w 2>/dev/null || true; rm -rf "$tmp"' EXIT
 
         installerExe=$(find ${installer} -maxdepth 1 -name 'daemon-*-win64.exe' -print -quit)
         status=0
@@ -661,15 +679,33 @@ let
         status=1
       fi
 
-      echo "== windows-smoke: NSIS silent install (/S) =="
-      if wine "$installerExe" /S "/D=C:\\Program Files\\Daemon" > "$tmp/install.log" 2>&1; then
+      echo "== windows-smoke: NSIS silent PER-USER install (/S, no /D) =="
+      # No /D override: exercise the compiled-in per-user default install root
+      # ($LOCALAPPDATA\Programs\Daemon). Under wine $LOCALAPPDATA maps to
+      # drive_c/users/<user>/AppData/Local, so the tree lands under Programs/Daemon.
+      if wine "$installerExe" /S > "$tmp/install.log" 2>&1; then
         inst_rc=0
       else
         inst_rc=$?
       fi
-      installed="$WINEPREFIX/drive_c/Program Files/Daemon/bin/daemon-app.exe"
-      if [ "$inst_rc" = 0 ] && [ -f "$installed" ]; then
-        echo "windows-smoke: silent install OK ($installed)"
+      # Resolve the per-user install dir by glob (the wine username varies).
+      installDir=$(dirname "$(ls "$WINEPREFIX"/drive_c/users/*/AppData/Local/Programs/Daemon/bin/daemon-app.exe 2>/dev/null | head -n1 || true)" 2>/dev/null || true)
+      installed="$installDir/daemon-app.exe"
+      if [ "$inst_rc" = 0 ] && [ -n "$installDir" ] && [ -f "$installed" ]; then
+        echo "windows-smoke: per-user silent install OK ($installed)"
+        # PROGRAMFILES regression guard: a per-machine install (the old default)
+        # would have landed here and would mean the per-user switch regressed.
+        if [ -f "$WINEPREFIX/drive_c/Program Files/Daemon/bin/daemon-app.exe" ]; then
+          echo "windows-smoke: FAIL install landed in Program Files (per-user switch regressed)"
+          status=1
+        fi
+        # The SelfApply helper must ship next to the app (bin\daemon-updater.exe).
+        if [ -f "$installDir/daemon-updater.exe" ]; then
+          echo "windows-smoke: daemon-updater helper present (SelfApply payload)"
+        else
+          echo "windows-smoke: daemon-updater.exe MISSING from bin\\ (SelfApply cannot spawn the helper)"
+          status=1
+        fi
         if wine "$installed" > "$tmp/installed-boot.log" 2>&1 \
            && grep -q "DAEMON_APP_READY ok" "$tmp/installed-boot.log"; then
           echo "windows-smoke: installed exe boot OK"
@@ -678,7 +714,8 @@ let
           tail -n 10 "$tmp/installed-boot.log" || true
           status=1
         fi
-        uninst=$(find "$WINEPREFIX/drive_c/Program Files/Daemon" -maxdepth 1 -name 'Uninstall*.exe' -print -quit 2>/dev/null || true)
+        instRoot=$(dirname "$installDir")
+        uninst=$(ls "$instRoot/"Uninstall*.exe 2>/dev/null | head -n1 || true)
         if [ -n "$uninst" ]; then
           echo "windows-smoke: uninstaller present ($(basename "$uninst"))"
         else
@@ -686,7 +723,8 @@ let
           status=1
         fi
       else
-        echo "windows-smoke: silent install FAILED under wine (exit $inst_rc) - best-effort"
+        echo "windows-smoke: per-user silent install FAILED under wine (exit $inst_rc) - best-effort"
+        echo "  (expected tree under drive_c/users/*/AppData/Local/Programs/Daemon/bin)"
         tail -n 20 "$tmp/install.log" || true
         status=1
       fi

@@ -56,6 +56,7 @@ void StatusBarView::setModel(StatusBarModel* model) {
         connect(m_model, &StatusBarModel::turnElapsedChanged, this, repaint);
         connect(m_model, &StatusBarModel::sessionElapsedChanged, this, repaint);
         connect(m_model, &StatusBarModel::appVersionChanged, this, repaint);
+        connect(m_model, &StatusBarModel::updateVersionChanged, this, repaint);
         connect(m_model, &StatusBarModel::busyChanged, this, [this] {
             syncSpinner();
             update();
@@ -151,6 +152,15 @@ QVector<Span> StatusBarView::buildRight() const {
     spans << mkSpan(separator(), tpal::muted());
     spans << mkSpan(tpal::sessionGlyph() + QStringLiteral(" ") + m_model->sessionElapsed(),
                     tpal::muted());
+
+    // An available update surfaces as an accented segment (the TUI analog of the
+    // GUI banner); the palette command "Check for updates" acts on it.
+    if (!m_model->updateVersion().isEmpty()) {
+        spans << mkSpan(separator(), tpal::muted());
+        spans << mkSpan(QStringLiteral("\u2913 ") + tr("update v") + m_model->updateVersion(),
+                        tpal::accent());
+    }
+
     spans << mkSpan(separator(), tpal::muted());
     spans << mkSpan(tpal::versionGlyph() + m_model->appVersion(), tpal::muted());
     return spans;

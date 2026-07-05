@@ -45,6 +45,7 @@
 #include "settings/qt_settings_store.h"
 #include "transports/mock_presence_service.h"
 #include "transports/mock_transport_registry.h"
+#include "update/update_manager.h"
 
 #include <memory>
 #include <QByteArray>
@@ -283,6 +284,12 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.firstRun =
         new firstrun::FirstRunModel(graph.settings, graph.connection, graph.modelCatalog,
                                     graph.profiles, graph.accounts, graph.providerCatalog, owner);
+
+    // Release-feed / auto-update surface. Inert unless the package job compiled in a
+    // capability dial; binding the settings store arms poll scheduling + staging
+    // hygiene and persists the ETag / dismissed-version / auto-check bookkeeping.
+    graph.update = new update::UpdateManager(owner);
+    graph.update->setSettings(graph.settings);
     return graph;
 }
 

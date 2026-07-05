@@ -57,6 +57,9 @@ namespace transports {
 class IPresenceService;
 class ITransportRegistry;
 } // namespace transports
+namespace update {
+class UpdateManager;
+}
 
 class TabModel;
 
@@ -89,6 +92,9 @@ public:
         daemonapp::daemon::PrincipalModel* principal = nullptr;
         transports::ITransportRegistry* transportRegistry = nullptr;
         transports::IPresenceService* presence = nullptr;
+        // Release-feed updater: backs the Settings "Updates" auto-check toggle
+        // (gated to builds that actually have a feed).
+        update::UpdateManager* update = nullptr;
     };
 
     explicit TuiPageHub(Dependencies deps);

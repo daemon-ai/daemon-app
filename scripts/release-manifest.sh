@@ -140,7 +140,7 @@ classify() {
     *.deb)             echo "deb linux Notify" ;;
     *.rpm)             echo "rpm linux Notify" ;;
     *.exe)             echo "nsis windows SelfApply" ;;
-    *.dmg)             echo "dmg macos DownloadAndOpen" ;;
+    *.dmg)             echo "dmg macos SelfApply" ;;
     # Android APK: sideloaded/out-of-band (Play Store owns in-store updates), so the feed only
     # ever notifies. arch comes from arch_of below (unknown when the name carries no arch token).
     *.apk)             echo "apk android Notify" ;;

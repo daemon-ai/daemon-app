@@ -10,11 +10,11 @@ using update::UpdateManager;
 using Capability = update::UpdateManager::Capability;
 using State = update::UpdateManager::State;
 
-// Locks the UpdateManager scaffold (packaging/UPDATES.md): the package-time
-// capability dial defaults to None (this test tree sets no dial), the
-// capability vocabulary round-trips with unknown input failing CLOSED to None,
-// and the descoped check/download/apply stubs report not-implemented instead
-// of pretending to work.
+// Locks the UpdateManager surface (packaging/UPDATES.md): the package-time
+// capability dial defaults to None (this test tree sets no dial), the capability
+// vocabulary round-trips with unknown input failing CLOSED to None, and an inert
+// (None) build performs no feed activity - check() is a no-op and the
+// download/apply actions fail closed since nothing may be downloaded.
 class UpdateManagerTests : public QObject {
     Q_OBJECT
 
@@ -22,7 +22,7 @@ private slots:
     void defaults();
     void capabilityRoundTrip();
     void unknownCapabilityFailsClosed();
-    void stubsReportNotImplemented();
+    void inertBuildDoesNothing();
 };
 
 void UpdateManagerTests::defaults() {
@@ -70,26 +70,29 @@ void UpdateManagerTests::unknownCapabilityFailsClosed() {
     QCOMPARE(UpdateManager::capabilityFromString(QString()), Capability::None);
 }
 
-void UpdateManagerTests::stubsReportNotImplemented() {
+void UpdateManagerTests::inertBuildDoesNothing() {
     UpdateManager manager;
     QSignalSpy stateSpy(&manager, &UpdateManager::stateChanged);
     QSignalSpy errorSpy(&manager, &UpdateManager::errorOccurred);
 
+    // None build: check() never touches the network and never leaves Idle.
     manager.check();
-    QCOMPARE(manager.state(), State::Error);
-    QCOMPARE(stateSpy.count(), 1);
-    QCOMPARE(errorSpy.count(), 1);
-    QVERIFY(manager.lastError().contains(QStringLiteral("not implemented")));
-    QVERIFY(errorSpy.last().first().toString().contains(QStringLiteral("check")));
+    QCOMPARE(manager.state(), State::Idle);
+    QCOMPARE(stateSpy.count(), 0);
+    QCOMPARE(errorSpy.count(), 0);
 
-    // download()/apply() are equally honest; the state stays Error (deduped)
-    // while every call still reports its own error.
+    // download()/apply() fail closed: an inert build may not download, and there
+    // is nothing verified to apply.
     manager.download();
+    QCOMPARE(manager.state(), State::Error);
+    QVERIFY(!manager.lastError().isEmpty());
+    QVERIFY(errorSpy.count() >= 1);
+
     manager.apply();
-    QCOMPARE(stateSpy.count(), 1);
-    QCOMPARE(errorSpy.count(), 3);
-    QVERIFY(errorSpy.at(1).first().toString().contains(QStringLiteral("download")));
-    QVERIFY(errorSpy.at(2).first().toString().contains(QStringLiteral("apply")));
+    QVERIFY(errorSpy.count() >= 2);
+
+    // The effective capability never exceeds the compiled ceiling (None here).
+    QCOMPARE(manager.effectiveCapability(), Capability::None);
 }
 
 QTEST_MAIN(UpdateManagerTests)

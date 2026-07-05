@@ -326,6 +326,91 @@ ApplicationWindow {
         }
     }
 
+    // Update banner (U1 Notify / U2 DownloadAndOpen): a thin strip below the
+    // reconnect banner offering an available update, its download progress, and
+    // the release-notes / download / open / dismiss actions per capability. Bound
+    // to the Update context property (the shared C++ UpdateManager); collapses to
+    // nothing on an inert build or when nothing is offered / it was dismissed.
+    Rectangle {
+        id: updateBanner
+        z: 140
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: reconnectBanner.bottom
+        height: visible ? 34 : 0
+        visible: !!Update && !Update.dismissed
+                 && (Update.stateName === "UpdateAvailable"
+                     || Update.stateName === "Downloading"
+                     || Update.stateName === "ReadyToApply")
+        color: Theme.surfaceRaised
+        clip: true
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: Theme.border
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Theme.spacing
+            anchors.rightMargin: Theme.spacing
+            spacing: Theme.spacing
+
+            Rectangle {
+                implicitWidth: 8
+                implicitHeight: 8
+                radius: 4
+                Layout.alignment: Qt.AlignVCenter
+                color: Theme.accent
+            }
+            Label {
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                color: Theme.text
+                font.pixelSize: 13
+                text: {
+                    if (!Update)
+                        return "";
+                    if (Update.stateName === "Downloading")
+                        return qsTr("Downloading update v%1… %2%")
+                            .arg(Update.latestVersion)
+                            .arg(Math.round(Update.downloadProgress * 100));
+                    if (Update.stateName === "ReadyToApply")
+                        return qsTr("Update v%1 is ready to install").arg(Update.latestVersion);
+                    return qsTr("Update available: v%1 → v%2")
+                        .arg(Update.currentVersion)
+                        .arg(Update.latestVersion);
+                }
+            }
+            Kit.TextButton {
+                text: qsTr("Release notes")
+                visible: !!Update && Update.notesUrl.length > 0
+                onClicked: Qt.openUrlExternally(Update.notesUrl)
+            }
+            Kit.TextButton {
+                text: qsTr("Download")
+                visible: !!Update && Update.canDownload
+                onClicked: Update.download()
+            }
+            Kit.TextButton {
+                // Verb comes from the shared view-model: "Install & restart"
+                // for a self-applying build, "Open" for the DownloadAndOpen
+                // hand-off. Keeps GUI/TUI copy in one place (UpdateManager).
+                text: !!Update ? Update.applyActionLabel : qsTr("Open")
+                visible: !!Update && Update.stateName === "ReadyToApply"
+                onClicked: Update.apply()
+            }
+            Kit.TextButton {
+                text: qsTr("Dismiss")
+                visible: !!Update && Update.stateName === "UpdateAvailable"
+                onClicked: Update.dismiss()
+            }
+        }
+    }
+
     // --- Expanded (>= 900dp): the original three-pane desktop SplitView -------
     Component {
         id: expandedShell

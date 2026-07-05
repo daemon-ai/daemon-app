@@ -13,6 +13,8 @@ extend-exclude = [
   # tree as `daemon-app/src/...` (typos matches nested-config globs relative to its CWD).
   "**/src/core/daemon/codec/generated/**",
   "**/src/core/daemon/codec/vendor/**",
+  "**/src/tools/updater/vendor/**",
+  "**/src/core/update/vendor/**",
   "**/build*/**",
   "**/result-*/**",
   "*.lock",
@@ -48,8 +50,13 @@ togglable = "togglable"     # accepted variant of "toggleable"
 lod = "lod"                 # LOD: level-of-detail (e.g. m_lodTier)
 muc = "muc"                 # MUC: XMPP multi-user chat
 secur = "secur"             # Secur32.dll: the Windows SSPI system library
+cpy = "cpy"                 # NSIS StrCpy instruction (per-user NSIS template patch)
 arange = "arange"           # numpy np.arange in skill examples
 canva = "canva"             # Canva (product name)
+# Upstream spellings in vendored Monocypher comments (the pre-commit hook passes
+# staged paths explicitly, which bypasses the vendor extend-exclude above).
+publically = "publically"
+cannonical = "cannonical"
 # Short fragments typos extracts from larger identifiers/words/fixtures (PNGs, MorAlekss, ...).
 nd = "nd"
 ot = "ot"
