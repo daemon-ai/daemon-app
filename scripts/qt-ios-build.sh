@@ -30,6 +30,11 @@ buildroot="${DAEMON_APP_QT_IOS_BUILD:-$HOME/.cache/daemon-app/qt-ios-build}"
 force="${DAEMON_APP_QT_IOS_FORCE:-0}"
 jobs="${DAEMON_APP_QT_IOS_JOBS:-$(sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
 
+# qtdeclarative's qml configure hard-requires a host Python. Under the iOS
+# toolchain CMAKE_FIND_ROOT_PATH_MODE_PROGRAM re-roots find_program into the
+# sysroot, so cmake's FindPython misses the one on PATH; pin it explicitly.
+pybin="$(command -v python3 || true)"
+
 # --- system Xcode (impure) -------------------------------------------------
 # The Qt macx-ios-clang mkspec + QT_APPLE_SDK=iphonesimulator resolve the
 # compiler/sysroot via xcrun; make sure a real Xcode (not the CLT shim) is
@@ -125,6 +130,7 @@ build_module() {
     -DQT_BUILD_EXAMPLES=OFF \
     -DQT_BUILD_TESTS=OFF \
     -DQT_GENERATE_SBOM=OFF \
+    ${pybin:+-DPython_EXECUTABLE="$pybin" -DPython3_EXECUTABLE="$pybin"} \
     "$@"
   cmake --build "$s/build" -j "$jobs"
   cmake --install "$s/build"
