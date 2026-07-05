@@ -31,11 +31,12 @@ class UpdateDownloader;
 // URL, the pinned minisign public key, the artifact kind, and the channel are
 // likewise baked in.
 //
-// Flow (Notify + DownloadAndOpen): fetch manifest.json + .minisig -> verify the
-// signature against the pinned key -> parse schema 1 -> SemVer monotonic gate
-// (offer only version > current) -> select the artifact for this build -> Notify.
-// download() then fetches + sha256-gates the artifact; apply() reveals/opens it
-// (DownloadAndOpen). SelfApply is a later phase (an honest not-implemented error).
+// Flow: fetch manifest.json + .minisig -> verify the signature against the
+// pinned key -> parse schema 1 -> SemVer monotonic gate (offer only version >
+// current) -> select the artifact for this build -> Notify. download() then
+// fetches + sha256-gates the artifact; apply() reveals/opens it
+// (DownloadAndOpen) or hands it to the daemon-updater helper for an atomic
+// in-place swap + relaunch (SelfApply; see self_apply_*.cpp per platform).
 //
 // Both front ends bind this as the `Update` context property / RootWidget member.
 class UpdateManager : public QObject {
@@ -132,7 +133,8 @@ public:
     Q_INVOKABLE void download();
     // Hand the verified artifact to the OS (DownloadAndOpen): open the installer
     // (.exe/.dmg) or reveal the containing directory (AppImage/deb/rpm/tar).
-    // SelfApply is a later phase and reports not-implemented here.
+    // At SelfApply, dispatch the per-platform in-place swap instead
+    // (self_apply_appimage/windows/macos.cpp) and relaunch on success.
     Q_INVOKABLE void apply();
     // Remember the offered version as dismissed so the UI stops nagging for it.
     Q_INVOKABLE void dismiss();

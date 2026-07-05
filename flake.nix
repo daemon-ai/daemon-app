@@ -497,12 +497,11 @@
         # contract: prebuilt sibling binaries land in Contents/MacOS next to
         # the app executable.
         #
-        # CODE-ONLY (authored + eval-checked on a Linux host, never yet run
-        # on darwin): see packaging/macos/README.md for the unvalidated list.
-        # Known risk called out there: cpack's DragNDrop generator shells out
-        # to hdiutil, which the darwin nix build sandbox may not expose - if
-        # the sandboxed build fails on that, use the manual `nix develop`
-        # cmake/cpack flow from the runbook (or `--option sandbox false`).
+        # VALIDATED on an aarch64-darwin (M1) host: the pure `nix build`
+        # path produces a mountable, codesign-clean DMG, and cpack's
+        # DragNDrop hdiutil call works inside the darwin nix build sandbox.
+        # See packaging/macos/README.md for the verification runbook and
+        # the remaining manual steps (hardened-runtime signing, notarization).
         mkDarwinArtifacts =
           { bundledFrom ? { } }:
           daemon-app.overrideAttrs (old: {
