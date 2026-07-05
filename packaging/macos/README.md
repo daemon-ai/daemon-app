@@ -439,12 +439,11 @@ QT_QPA_PLATFORM=offscreen "$APP"                    # interactive login only, se
 
 ## Updates
 
-The DMG artifact's update capability is **DownloadAndOpen** (fetch + verify
-the feed, download the new DMG, hand it to the OS; the user completes the
-install) — in-place `.app` swaps need quarantine/codesign care and stay out
-of v1. The capability dial, signed `manifest.json` feed, and rollout design
-land separately on the `pkg/release-feed` branch as `packaging/UPDATES.md`;
-this DMG plugs into that design unchanged.
+The DMG artifact's update capability is **SelfApply** — see
+[Auto-update (DMG SelfApply)](#auto-update-dmg-selfapply) above for the staging,
+guards, helper swap, and Gatekeeper reality. The capability dial, signed
+`manifest.json` feed, verification, and rollout design are documented in
+[packaging/UPDATES.md](../UPDATES.md); this DMG plugs into that design.
 
 ## Follow-ups tracked here
 
