@@ -145,6 +145,16 @@ QString UpdateManager::capabilityToString(Capability capability) {
         QMetaEnum::fromType<Capability>().valueToKey(static_cast<quint64>(capability)));
 }
 
+QString UpdateManager::stateName() const {
+    return QString::fromLatin1(
+        QMetaEnum::fromType<State>().valueToKey(static_cast<quint64>(m_state)));
+}
+
+bool UpdateManager::canDownload() const {
+    return m_state == State::UpdateAvailable &&
+           m_effectiveCapability >= Capability::DownloadAndOpen && m_haveSelected;
+}
+
 UpdateManager::Capability UpdateManager::capabilityFromString(const QString& name) {
     bool ok = false;
     const int value = QMetaEnum::fromType<Capability>().keyToValue(name.toLatin1(), &ok);
@@ -171,6 +181,13 @@ void UpdateManager::setAutoCheck(bool on) {
         return;
     }
     m_settings->setValue(kKeyAutoCheck, on);
+    // Take effect immediately: (re)arm the daily poll when enabled, stop it when
+    // disabled (manual check() still works regardless).
+    if (on) {
+        armPolling();
+    } else {
+        m_pollTimer.stop();
+    }
     emit autoCheckChanged();
 }
 

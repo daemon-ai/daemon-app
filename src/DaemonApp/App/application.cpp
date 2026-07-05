@@ -315,6 +315,18 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     // banner + settings toggle. Inert (no feed, no UI) unless the package job
     // compiled in a capability dial (packaging/UPDATES.md).
     engine.rootContext()->setContextProperty(QStringLiteral("Update"), m_services.update);
+    // Mirror an available update into the shared footer model so the GUI status
+    // bar (and the TUI, via the same model) surface it from one source.
+    if (m_services.update != nullptr && m_status != nullptr) {
+        auto* upd = m_services.update;
+        auto syncUpdate = [this, upd] {
+            const bool offered =
+                upd->stateName() == QStringLiteral("UpdateAvailable") && !upd->dismissed();
+            m_status->setUpdateVersion(offered ? upd->latestVersion() : QString());
+        };
+        connect(upd, &update::UpdateManager::stateChanged, m_status, syncUpdate);
+        syncUpdate();
+    }
 
     // Notifier seam: QML binds the active turn's awaitingInput signal to
     // App.notifyGate(...) to raise an OS notification when the window is hidden.

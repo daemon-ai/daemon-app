@@ -20,6 +20,7 @@
 #include "theme/theme_palette.h"
 #include "tui_page_hub.h"
 #include "tui_palette.h"
+#include "update/update_manager.h"
 
 #include <QSettings>
 
@@ -135,6 +136,17 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
                         tr("Stop the managed daemon when I close the app"),
                         QStringLiteral("toggle"), QStringLiteral("settings"),
                         m_deps.settings->managedDaemonShutdownOnExit());
+    }
+
+    // Updates - the auto-check toggle (mirrors the GUI SettingsMenu "Updates"
+    // section). Persists the same update/autoCheck key UpdateManager reads. Shown
+    // only on a build that actually has a feed (an inert None build has none).
+    if (m_deps.settings != nullptr && m_deps.update != nullptr &&
+        !m_deps.update->feedUrl().isEmpty()) {
+        rows << makeRow(QStringLiteral("updates"), tr("Updates"),
+                        QStringLiteral("update/autoCheck"), tr("Automatically check for updates"),
+                        QStringLiteral("toggle"), QStringLiteral("settings"),
+                        m_deps.settings->value(QStringLiteral("update/autoCheck"), true).toBool());
     }
 
     if (m_deps.daemonConfig == nullptr) {

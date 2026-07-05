@@ -51,6 +51,12 @@ class UpdateManager : public QObject {
     // override when the build is not inert); empty means "no feed".
     Q_PROPERTY(QUrl feedUrl READ feedUrl CONSTANT)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
+    // The State enumerator name, so QML/TUI compare a string rather than a magic
+    // enum int (e.g. "UpdateAvailable", "Downloading", "ReadyToApply").
+    Q_PROPERTY(QString stateName READ stateName NOTIFY stateChanged)
+    // True when the offered update can be downloaded (effective >= DownloadAndOpen
+    // and an installable artifact was selected). The UI gates its Download action.
+    Q_PROPERTY(bool canDownload READ canDownload NOTIFY stateChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY errorOccurred)
     // The newest offered version (empty unless state is UpdateAvailable/beyond).
     Q_PROPERTY(QString latestVersion READ latestVersion NOTIFY stateChanged)
@@ -97,6 +103,8 @@ public:
     [[nodiscard]] QString currentVersion() const;
     [[nodiscard]] QUrl feedUrl() const;
     [[nodiscard]] State state() const { return m_state; }
+    [[nodiscard]] QString stateName() const;
+    [[nodiscard]] bool canDownload() const;
     [[nodiscard]] QString lastError() const { return m_lastError; }
     [[nodiscard]] QString latestVersion() const { return m_latestVersion; }
     [[nodiscard]] QString notesUrl() const { return m_notesUrl; }

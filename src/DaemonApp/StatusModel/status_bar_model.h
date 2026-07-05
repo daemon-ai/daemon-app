@@ -45,6 +45,10 @@ class StatusBarModel : public QObject {
     Q_PROPERTY(int rateRemaining READ rateRemaining WRITE setRateRemaining NOTIFY rateChanged)
     Q_PROPERTY(int rateLimit READ rateLimit WRITE setRateLimit NOTIFY rateChanged)
     Q_PROPERTY(QString appVersion READ appVersion WRITE setAppVersion NOTIFY appVersionChanged)
+    // The newer version offered by the updater (empty = none). Both footers render
+    // it so the availability shows on the GUI and TUI from one shared source.
+    Q_PROPERTY(
+        QString updateVersion READ updateVersion WRITE setUpdateVersion NOTIFY updateVersionChanged)
 
     // Derived (read-only) gateway helpers.
     Q_PROPERTY(bool gatewayOffline READ gatewayOffline NOTIFY gatewayStateChanged)
@@ -86,6 +90,7 @@ public:
     [[nodiscard]] int rateRemaining() const { return m_rateRemaining; }
     [[nodiscard]] int rateLimit() const { return m_rateLimit; }
     [[nodiscard]] QString appVersion() const { return m_appVersion; }
+    [[nodiscard]] QString updateVersion() const { return m_updateVersion; }
 
     [[nodiscard]] bool gatewayOffline() const;
     [[nodiscard]] bool gatewayDegraded() const;
@@ -116,6 +121,7 @@ public:
     void setRateRemaining(int n);
     void setRateLimit(int n);
     void setAppVersion(const QString& version);
+    void setUpdateVersion(const QString& version);
     void setGatewayConnectionText(const QString& text);
     void setGatewayLog(const QStringList& log);
     void setGatewayPlatforms(const QVariantList& platforms);
@@ -141,6 +147,7 @@ signals:
     void usageChanged();
     void rateChanged();
     void appVersionChanged();
+    void updateVersionChanged();
 
     void agentsDetailChanged();
     void contextChanged();
@@ -162,6 +169,7 @@ private:
     int m_rateRemaining = 0;
     int m_rateLimit = 0;
     QString m_appVersion;
+    QString m_updateVersion;
 
     // Gateway dropdown content (placeholder, seeded in the constructor to match the
     // values the QML GatewayMenu previously hardcoded).
