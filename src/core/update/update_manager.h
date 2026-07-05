@@ -57,6 +57,10 @@ class UpdateManager : public QObject {
     // True when the offered update can be downloaded (effective >= DownloadAndOpen
     // and an installable artifact was selected). The UI gates its Download action.
     Q_PROPERTY(bool canDownload READ canDownload NOTIFY stateChanged)
+    // The verb for the apply action, driven by the effective capability so both
+    // front ends render the same copy: "Install & restart" when the build
+    // self-applies, "Open" for the DownloadAndOpen hand-off.
+    Q_PROPERTY(QString applyActionLabel READ applyActionLabel NOTIFY stateChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY errorOccurred)
     // The newest offered version (empty unless state is UpdateAvailable/beyond).
     Q_PROPERTY(QString latestVersion READ latestVersion NOTIFY stateChanged)
@@ -105,6 +109,7 @@ public:
     [[nodiscard]] State state() const { return m_state; }
     [[nodiscard]] QString stateName() const;
     [[nodiscard]] bool canDownload() const;
+    [[nodiscard]] QString applyActionLabel() const;
     [[nodiscard]] QString lastError() const { return m_lastError; }
     [[nodiscard]] QString latestVersion() const { return m_latestVersion; }
     [[nodiscard]] QString notesUrl() const { return m_notesUrl; }

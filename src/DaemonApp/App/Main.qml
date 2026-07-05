@@ -396,7 +396,10 @@ ApplicationWindow {
                 onClicked: Update.download()
             }
             Kit.TextButton {
-                text: qsTr("Open")
+                // Verb comes from the shared view-model: "Install & restart"
+                // for a self-applying build, "Open" for the DownloadAndOpen
+                // hand-off. Keeps GUI/TUI copy in one place (UpdateManager).
+                text: !!Update ? Update.applyActionLabel : qsTr("Open")
                 visible: !!Update && Update.stateName === "ReadyToApply"
                 onClicked: Update.apply()
             }

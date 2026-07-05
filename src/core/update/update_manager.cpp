@@ -7,9 +7,11 @@
 #include "settings/isettings_store.h"
 #include "update/feed_client.h"
 #include "update/minisign_verifier.h"
+#include "update/self_apply_windows.h"
 #include "update/semver.h"
 #include "update/update_downloader.h"
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QFileInfo>
@@ -153,6 +155,13 @@ QString UpdateManager::stateName() const {
 bool UpdateManager::canDownload() const {
     return m_state == State::UpdateAvailable &&
            m_effectiveCapability >= Capability::DownloadAndOpen && m_haveSelected;
+}
+
+QString UpdateManager::applyActionLabel() const {
+    // Capability-driven copy, shared by both front ends: a self-applying build
+    // replaces itself and relaunches; DownloadAndOpen only hands the file to the
+    // OS, so "Open" is the honest verb there.
+    return m_effectiveCapability == Capability::SelfApply ? tr("Install & restart") : tr("Open");
 }
 
 UpdateManager::Capability UpdateManager::capabilityFromString(const QString& name) {
@@ -397,9 +406,36 @@ void UpdateManager::apply() {
         return;
     }
     if (m_effectiveCapability == Capability::SelfApply) {
-        // In-place self-replacement is a later phase (the daemon-updater helper).
-        fail(QStringLiteral("self-apply is not implemented yet"));
-        return;
+        // SelfApply hands a spec to the daemon-updater helper and quits; the
+        // helper waits for us to exit, applies atomically, and relaunches (see
+        // packaging/UPDATES.md). Per-platform backends live in their own files;
+        // a precondition failure degrades to DownloadAndOpen below with a
+        // visible reason rather than dead-ending.
+#ifdef Q_OS_WIN
+        const QString applyKind = m_haveSelected ? m_selected.kind : buildArtifactKind();
+        if (applyKind == QStringLiteral("nsis")) {
+            const win::SelfApplyPlan plan = win::planNsisSelfApply(
+                QCoreApplication::applicationDirPath(), m_downloadedPath, m_selected.sha256,
+                win::selfApplyLogPath(), QCoreApplication::applicationFilePath(),
+                QCoreApplication::applicationPid());
+            if (plan.ok && win::launchDetached(plan)) {
+                // Quit cleanly so the helper's wait-pid frees and the installer
+                // can run /S against a not-running app.
+                QCoreApplication::quit();
+                return;
+            }
+            // Surface why self-apply could not run, then fall through to open
+            // the installer so the user can complete it manually.
+            m_lastError =
+                tr("self-apply unavailable (%1); opening the installer instead").arg(plan.reason);
+            emit errorOccurred(m_lastError);
+        }
+#else
+        // No SelfApply backend compiled for this platform yet: degrade to the
+        // DownloadAndOpen hand-off below (never dead-end a ready update).
+        m_lastError = tr("self-apply is not available on this platform; opening the update");
+        emit errorOccurred(m_lastError);
+#endif
     }
     // DownloadAndOpen: hand the verified artifact to the OS. Installers open
     // directly; self-contained/package artifacts reveal their directory instead.
