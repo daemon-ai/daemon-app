@@ -134,6 +134,19 @@ let
     ];
 
     shellHook = ''
+      # The nixpkgs darwin stdenv sets SDKROOT/DEVELOPER_DIR/MACOSX_DEPLOYMENT_
+      # TARGET to the in-store (macOS) Apple SDK. An iOS build drives the SYSTEM
+      # Xcode toolchain (xcrun, iphonesimulator SDK); the in-store macOS SDK
+      # makes CMake reject the target ("iphonesimulator is not an iOS SDK").
+      # Unset them so xcrun/xcode-select fall back to the system Xcode selection.
+      unset SDKROOT DEVELOPER_DIR MACOSX_DEPLOYMENT_TARGET
+      # The host qttools drags in nixpkgs' qtbase setup hook, which exports
+      # QT_ADDITIONAL_PACKAGES_PREFIX_PATH = the whole host CMAKE_PREFIX_PATH.
+      # Qt's iOS qt.toolchain.cmake folds that into CMAKE_FIND_ROOT_PATH, so the
+      # app's find_package(Qt6) would resolve the HOST (desktop) Qt instead of
+      # the iOS one. The iOS prefix already carries every module - scrub it
+      # (same fix as the wasm devShell).
+      unset QT_ADDITIONAL_PACKAGES_PREFIX_PATH
       export QT_HOST_PATH="${qtHost}"
       export DAEMON_APP_QT_IOS="''${DAEMON_APP_QT_IOS:-${defaultPrefix}}"
       export ECM_DIR="${ecmDir}"
