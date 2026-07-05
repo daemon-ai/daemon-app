@@ -337,7 +337,11 @@ let
         -DEARCUT_SOURCE_DIR=${depSources.earcut} \
         -DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${depSources.ksyntaxhighlighting} \
         -DMICROTEX_SOURCE_DIR=${depSources.microtex} \
-        -DDAEMON_APP_VERSION_STR=${versionStr}
+        -DDAEMON_APP_VERSION_STR=${versionStr} \
+        -DDAEMON_APP_UPDATE_CAPABILITY=Notify \
+        -DDAEMON_APP_UPDATE_FEED_URL=https://github.com/daemon-ai/daemon/releases/latest/download/manifest.json \
+        -DDAEMON_APP_UPDATE_PUBKEY=RWRXpowS90Fy+TYhRsrBbQNSDvjbtJpqi9T89OGqSNTLkOa5vn62hK0o \
+        -DDAEMON_APP_UPDATE_ARTIFACT_KIND=nsis
       cd build
       runHook postConfigure
     '';

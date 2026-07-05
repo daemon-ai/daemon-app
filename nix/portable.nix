@@ -411,6 +411,16 @@ let
       "-DKSYNTAXHIGHLIGHTING_SOURCE_DIR=${depSources.ksyntaxhighlighting}"
       "-DMICROTEX_SOURCE_DIR=${depSources.microtex}"
       "-DDAEMON_APP_VERSION_STR=${versionStr}"
+      # Auto-updater dials (packaging/UPDATES.md). Notify tier: this one static
+      # binary feeds the AppImage, deb, rpm, and portable tarball, so the
+      # compiled artifact kind is portable-tar and the AppImage case is detected
+      # at runtime ($APPIMAGE). deb/rpm share the binary and report portable-tar;
+      # at Notify that only affects which row is matched (it degrades to a
+      # notify-with-notes when no exact row matches).
+      "-DDAEMON_APP_UPDATE_CAPABILITY=Notify"
+      "-DDAEMON_APP_UPDATE_FEED_URL=https://github.com/daemon-ai/daemon/releases/latest/download/manifest.json"
+      "-DDAEMON_APP_UPDATE_PUBKEY=RWRXpowS90Fy+TYhRsrBbQNSDvjbtJpqi9T89OGqSNTLkOa5vn62hK0o"
+      "-DDAEMON_APP_UPDATE_ARTIFACT_KIND=portable-tar"
     ];
 
     # Portability: no GLIBCXX_x/GCC_x floor in the shipped binary (glibc stays

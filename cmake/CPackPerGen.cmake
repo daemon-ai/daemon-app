@@ -110,10 +110,12 @@ if(CPACK_GENERATOR STREQUAL "AppImage")
     if(CPACK_DAEMON_APP_APPIMAGE_RUNTIME)
         set(CPACK_APPIMAGE_RUNTIME_FILE "${CPACK_DAEMON_APP_APPIMAGE_RUNTIME}")
     endif()
-    # Placeholder update feed: the release pipeline (sibling workstream)
-    # publishes the real .zsync next to the artifact and rewrites this URL.
+    # AppImage delta-update transport: the gh-releases-zsync form points
+    # AppImageUpdate at the latest GitHub release's .zsync control file (the
+    # release pipeline publishes daemon-*x86_64.AppImage.zsync next to the
+    # artifact). Orthogonal to the in-app minisign-verified updater.
     set(CPACK_APPIMAGE_UPDATE_INFORMATION
-        "zsync|https://daemon.io/releases/daemon-latest-linux-x86_64.AppImage.zsync"
+        "gh-releases-zsync|daemon-ai|daemon|latest|daemon-*x86_64.AppImage.zsync"
     )
     # Metainfo is validated by checks.artifact-sanity (appstreamcli); the
     # sandbox running appimagetool has no appstream, so skip its own check.
