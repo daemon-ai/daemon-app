@@ -77,25 +77,34 @@ else()
     set(_da_doc_dir "${CMAKE_INSTALL_DATADIR}/doc/daemon-app")
 endif()
 
+# Windows executables must keep the `.exe` extension: without it the installed tree ships
+# `bin\daemon` (a headless PE Windows won't run by name) and LocalDaemonLauncher's co-located
+# discovery (which probes `daemon.exe` next to the app) can never find it. Preserve the suffix on
+# Windows; other platforms keep the bare name.
+if(WIN32)
+    set(_da_exe_suffix ".exe")
+else()
+    set(_da_exe_suffix "")
+endif()
 if(DAEMON_APP_BUNDLED_DAEMON)
     install(
         PROGRAMS "${DAEMON_APP_BUNDLED_DAEMON}"
         DESTINATION "${_da_colocated_bin_dir}"
-        RENAME daemon
+        RENAME "daemon${_da_exe_suffix}"
     )
 endif()
 if(DAEMON_APP_BUNDLED_DAEMON_INFER)
     install(
         PROGRAMS "${DAEMON_APP_BUNDLED_DAEMON_INFER}"
         DESTINATION "${_da_colocated_bin_dir}"
-        RENAME daemon-infer
+        RENAME "daemon-infer${_da_exe_suffix}"
     )
 endif()
 if(DAEMON_APP_BUNDLED_DAEMON_CLI)
     install(
         PROGRAMS "${DAEMON_APP_BUNDLED_DAEMON_CLI}"
         DESTINATION "${_da_colocated_bin_dir}"
-        RENAME daemon-cli
+        RENAME "daemon-cli${_da_exe_suffix}"
     )
 endif()
 if(DAEMON_APP_BUNDLED_LIBS)
