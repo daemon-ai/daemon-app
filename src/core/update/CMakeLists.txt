@@ -33,6 +33,8 @@ add_library(da_update STATIC
     update_downloader.cpp
     self_apply_appimage.h
     self_apply_appimage.cpp
+    self_apply_macos.h
+    self_apply_macos.cpp
     self_apply_windows.h
     self_apply_windows.cpp
 )

@@ -8,6 +8,7 @@
 #include "update/feed_client.h"
 #include "update/minisign_verifier.h"
 #include "update/self_apply_appimage.h"
+#include "update/self_apply_macos.h"
 #include "update/self_apply_windows.h"
 #include "update/semver.h"
 #include "update/update_downloader.h"
@@ -171,6 +172,11 @@ void UpdateManager::setSettings(settings::ISettingsStore* settings) {
     // leftover AppImage self-apply staging dirs beside $APPIMAGE from a prior update.
     UpdateDownloader::cleanupStale(semver::stripBuildMetadata(currentVersion()));
     cleanupAppImageStaging();
+#ifdef Q_OS_MACOS
+    // Sweep leftover DMG self-apply staging dirs (and the old bundle parked
+    // inside) next to the target bundle from a prior in-place swap.
+    macos::cleanupStagingArtifacts(macos::runningBundlePath());
+#endif
     armPolling();
 
     // Env-gated E2E auto-drive (no UI): a normal build never sets this.
@@ -490,6 +496,23 @@ void UpdateManager::apply() {
                 tr("self-apply unavailable (%1); opening the installer instead").arg(plan.reason);
             emit errorOccurred(m_lastError);
         }
+#elif defined(Q_OS_MACOS)
+        // macOS DMG: hdiutil-stage the .app on the target filesystem, strip
+        // quarantine, and hand a two-move swap to the in-bundle daemon-updater
+        // (guards may refuse an unsafe swap). Anything short of Applied degrades
+        // to the DownloadAndOpen hand-off below (which opens the dmg), so no
+        // double-open here.
+        if (kind == QStringLiteral("dmg")) {
+            const macos::ApplyResult applied = macos::selfApply(m_downloadedPath, m_latestVersion,
+                                                                QCoreApplication::applicationPid());
+            if (applied.outcome == macos::Outcome::Applied) {
+                QCoreApplication::quit();
+                return;
+            }
+            m_lastError = tr("self-apply unavailable (%1); opening the installer instead")
+                              .arg(applied.message);
+            emit errorOccurred(m_lastError);
+        }
 #else
         // AppImage: stage the new image next to $APPIMAGE, spawn the detached
         // helper, and quit so it can swap + relaunch. Non-AppImage Linux kinds
@@ -505,7 +528,8 @@ void UpdateManager::apply() {
             }
             const QString reason =
                 prep.ok ? QStringLiteral("could not launch the update helper") : prep.reason;
-            m_lastError = tr("self-apply unavailable (%1); opening the download instead").arg(reason);
+            m_lastError =
+                tr("self-apply unavailable (%1); opening the download instead").arg(reason);
             emit errorOccurred(m_lastError);
         } else {
             // No SelfApply backend for this artifact/platform: degrade to the

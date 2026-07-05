@@ -12,8 +12,8 @@
 // bundle's filesystem, strips quarantine, then hands a two-move swap spec to the
 // in-bundle daemon-updater helper and lets the caller quit. If the environment
 // is unsafe for an in-place swap (translocated, read-only volume, unwritable
-// application folder, cross-filesystem staging) it falls back to DownloadAndOpen
-// (open the dmg) with a human reason.
+// application folder, cross-filesystem staging) it reports a FellBack reason and
+// the caller degrades to DownloadAndOpen.
 //
 // The whole file compiles on every platform (it only uses Qt + QProcess), but is
 // only ever CALLED behind Q_OS_MACOS from update_manager. The guard decision and
@@ -82,8 +82,8 @@ struct StageResult {
 // The outcome of a SelfApply attempt.
 enum class Outcome : std::uint8_t {
     Applied,  // helper spawned; the caller MUST quit so the swap+relaunch proceeds
-    FellBack, // guard failed; the dmg was opened (DownloadAndOpen); see message
-    Failed,   // staging/spawn error; nothing swapped; see message
+    FellBack, // a guard refused an in-place swap; caller degrades to DownloadAndOpen
+    Failed,   // staging/spawn error; nothing swapped; caller degrades to DownloadAndOpen
 };
 
 struct ApplyResult {
@@ -93,8 +93,9 @@ struct ApplyResult {
 
 // Full SelfApply entry point. Evaluates the guards; on success stages the dmg,
 // spawns the in-bundle daemon-updater (two-move, wait-pid=appPid, relaunch to the
-// new binary) and returns Applied. On a guard failure opens the dmg and returns
-// FellBack. On a staging/spawn error returns Failed.
+// new binary) and returns Applied (caller quits). On a guard failure returns
+// FellBack; on a staging/spawn error returns Failed — in both the caller opens
+// the dmg (DownloadAndOpen) using `message` as the surfaced reason.
 [[nodiscard]] ApplyResult selfApply(const QString& dmgPath, const QString& expectedVersion,
                                     qint64 appPid);
 

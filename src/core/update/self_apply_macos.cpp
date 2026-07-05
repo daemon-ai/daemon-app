@@ -4,13 +4,11 @@
 #include "update/self_apply_macos.h"
 
 #include <QCoreApplication>
-#include <QDesktopServices>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QProcess>
 #include <QStringList>
-#include <QUrl>
 #include <QXmlStreamReader>
 
 #ifdef Q_OS_MACOS
@@ -340,10 +338,10 @@ ApplyResult selfApply(const QString& dmgPath, const QString& expectedVersion, qi
     const QString stagingParent = QFileInfo(targetBundle).absolutePath();
 
     // Decide BEFORE mutating anything: any failed guard degrades to
-    // DownloadAndOpen (open the dmg) with a visible reason.
+    // DownloadAndOpen. The caller opens the dmg on a non-Applied outcome, so we
+    // only report the reason here (no double-open).
     const GuardVerdict verdict = evaluateGuards(probeGuardFacts(targetBundle, stagingParent));
     if (!verdict.selfApply) {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(dmgPath));
         result.outcome = Outcome::FellBack;
         result.message = verdict.reason;
         return result;

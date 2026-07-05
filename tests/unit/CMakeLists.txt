@@ -125,6 +125,18 @@ target_link_libraries(tst_update_self_apply_windows
 add_test(NAME tst_update_self_apply_windows COMMAND tst_update_self_apply_windows)
 set_tests_properties(tst_update_self_apply_windows PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_self_apply_macos: the macOS DMG SelfApply guard decision (translocation,
+# read-only volume, unwritable parent, cross-filesystem) + path predicates. Pure
+# logic, so it runs on the Linux CI host even though the swap itself is darwin-only.
+qt_add_executable(tst_self_apply_macos tst_self_apply_macos.cpp)
+target_link_libraries(tst_self_apply_macos
+    PRIVATE
+        Qt6::Test
+        daemon-app::update
+)
+add_test(NAME tst_self_apply_macos COMMAND tst_self_apply_macos)
+set_tests_properties(tst_self_apply_macos PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_connection_service: the mock connection seam's liveness state machine
 # (checking -> connecting -> ready / offline), the Test-connection probe, and
 # disconnect, all driven on QTimers.
