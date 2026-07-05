@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Jarrad Hope
+# SPDX-License-Identifier: MPL-2.0
+#
+# End-to-end iOS SIMULATOR smoke for daemon-app: configure with the static
+# Qt-for-iOS-simulator (built by `nix run .#qt-ios-builder`), build the .app
+# with xcodebuild (unsigned), then boot it headlessly in the simulator and
+# capture the DAEMON_APP_READY sentinel + a screenshot.
+#
+# Run it from the repo root inside `nix develop .#ios` (which exports
+# DAEMON_APP_QT_IOS, the dep source dirs, ECM_DIR, the host indexer and the
+# tinyxml2 flags). Simulator-only, unsigned (CODE_SIGNING_ALLOWED=NO). See
+# packaging/ios/README.md for the full rationale + prerequisites.
+#
+# Knobs (env):
+#   DAEMON_APP_QT_IOS     Qt-for-iOS-simulator prefix (else the devShell default)
+#   IOS_BUILD_DIR         CMake/Xcode build dir            (default: build-ios)
+#   IOS_DEVICE_TYPE       simctl device type               (default: iPhone 16)
+#   IOS_RUNTIME           simctl runtime id                (default: auto-detect iOS)
+#   IOS_WAIT_READY_MS     DAEMON_APP_WAIT_READY value      (default: 30000)
+#   IOS_SHOT_DIR          screenshot output dir            (default: /tmp/ios-proof)
+#   SKIP_CONFIGURE=1      reuse an existing build dir configuration
+#   SKIP_BUILD=1          reuse an already-built .app
+set -euo pipefail
+
+qt_ios="${DAEMON_APP_QT_IOS:-$HOME/.cache/daemon-app/qt-ios-sim-6.11.1}"
+build_dir="${IOS_BUILD_DIR:-build-ios}"
+device_type="${IOS_DEVICE_TYPE:-iPhone 16}"
+wait_ready_ms="${IOS_WAIT_READY_MS:-30000}"
+shot_dir="${IOS_SHOT_DIR:-/tmp/ios-proof}"
+bundle_id="io.daemon.app"
+
+# Run this inside `nix develop .#ios` (which puts cmake/ninja/pkg-config on PATH
+# and exports the dep dirs + PKG_CONFIG_PATH), but the nixpkgs darwin stdenv
+# also injects a full macOS toolchain env (CC/CXX/LD/AR/... + SDKROOT/
+# DEVELOPER_DIR) that fights the SYSTEM Xcode iOS toolchain: SDKROOT/DEVELOPER_DIR
+# make CMake reject the iphonesimulator SDK, and the nix LD/AR/... make CMake's
+# C-compiler detection pick the wrong tool ("working C compiler: .../ld broken").
+# Scrub the whole toolchain env so xcrun + Qt's iOS toolchain drive Xcode's
+# clang cleanly; keep PATH/PKG_CONFIG_PATH/the dep dirs intact.
+unset SDKROOT DEVELOPER_DIR MACOSX_DEPLOYMENT_TARGET \
+      CC CXX CPP CFLAGS CXXFLAGS CPPFLAGS LDFLAGS \
+      LD AR AS NM RANLIB STRIP OBJCOPY OBJDUMP SIZE STRINGS READELF \
+      DSYMUTIL LIPO INSTALL_NAME_TOOL OTOOL CODESIGN_ALLOCATE \
+      NIX_CC NIX_BINTOOLS NIX_CFLAGS_COMPILE NIX_LDFLAGS \
+      NIX_CC_WRAPPER_TARGET_HOST NIX_BINTOOLS_WRAPPER_TARGET_HOST
+DEVELOPER_DIR="$(/usr/bin/xcode-select -p)"
+export DEVELOPER_DIR
+
+qtcmake="$qt_ios/bin/qt-cmake"
+[ -x "$qtcmake" ] || { echo "FATAL: no qt-cmake at $qtcmake (run: nix run .#qt-ios-builder)" >&2; exit 1; }
+
+echo "== ios-sim-smoke =="
+echo "   qt-ios     : $qt_ios"
+echo "   build dir  : $build_dir"
+echo "   xcode      : $(xcode-select -p)"
+echo "   sim sdk    : $(xcrun --sdk iphonesimulator --show-sdk-version 2>/dev/null || echo '??')"
+
+# --- KSyntaxHighlighting Xcode-new-build-system workaround -----------------
+# The vendored KSyntaxHighlighting generates shared syntax files (html-php.xml,
+# jinja-*) and index.katesyntax via custom commands attached to several targets.
+# Ninja (wasm/android) dedups that; the Xcode "new build system" rejects it
+# ("attached to multiple targets ... none is a common dependency"). Patch a
+# WRITABLE COPY of the vendored source (the flake input stays pristine) to add
+# the missing add_dependencies, and point the configure at the copy.
+patch_ksyntax() {
+  local src="${KSYNTAXHIGHLIGHTING_SOURCE_DIR:?set KSYNTAXHIGHLIGHTING_SOURCE_DIR}"
+  local dst="$1"
+  rm -rf "$dst"; cp -R "$src" "$dst"; chmod -R u+w "$dst"
+  python3 - "$dst/data/CMakeLists.txt" <<'PY'
+import sys
+p = sys.argv[1]
+s = open(p).read()
+# Record every per-syntax generator target + the jinja aggregate target...
+s = s.replace(
+    "    set(gen_defs ${gen_defs} ${CMAKE_CURRENT_BINARY_DIR}/generated/syntax/${targetFile})\nendmacro()",
+    "    set(gen_defs ${gen_defs} ${CMAKE_CURRENT_BINARY_DIR}/generated/syntax/${targetFile})\n    set(gen_syntax_targets ${gen_syntax_targets} ${targetFile})\nendmacro()", 1)
+s = s.replace(
+    "        set(gen_defs ${gen_defs} ${out_xmls})",
+    "        set(gen_defs ${gen_defs} ${out_xmls})\n        set(gen_syntax_targets ${gen_syntax_targets} generate-jinja)", 1)
+# ...and make them common dependencies of the consumers (Xcode new build system).
+anchor1 = "# do we want syntax files bundled in the library?"
+inject1 = ("# iOS/Xcode: give the shared generated syntax files a common dependency target.\n"
+           "if(gen_syntax_targets)\n"
+           "    add_dependencies(katesyntax ${gen_syntax_targets})\n"
+           "    add_dependencies(SyntaxHighlightingData ${gen_syntax_targets})\n"
+           "endif()\n\n")
+s = s.replace(anchor1, inject1 + anchor1, 1)
+# index.katesyntax is generated by katesyntax and consumed by SyntaxHighlightingData
+# via qrc_syntax-data.cpp; the QRC_SYNTAX (bundled) branch omits the dependency
+# that the file-install branch has. Add it unconditionally.
+anchor2 = "# set PIC to allow use in static and shared libs"
+inject2 = "add_dependencies(SyntaxHighlightingData katesyntax)\n\n"
+s = s.replace(anchor2, inject2 + anchor2, 1)
+open(p, "w").write(s)
+PY
+}
+
+# --- configure (Xcode generator) ------------------------------------------
+if [ "${SKIP_CONFIGURE:-0}" != "1" ]; then
+  echo "== configure =="
+  ks_patched="$PWD/$build_dir-ksynhl"
+  patch_ksyntax "$ks_patched"
+  "$qtcmake" -S . -B "$build_dir" -G Xcode \
+    -DCMAKE_XCODE_GENERATE_SCHEME=ON \
+    -DDAEMON_APP_TUI=OFF \
+    -DBUILD_TESTING=OFF \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DECM_DIR="${ECM_DIR:?set ECM_DIR (nix develop .#ios)}" \
+    -DKF_IGNORE_PLATFORM_CHECK=ON \
+    -DKATEHIGHLIGHTINGINDEXER_EXECUTABLE="${DAEMON_APP_KATE_INDEXER:?set DAEMON_APP_KATE_INDEXER}" \
+    -DMD4QT_SOURCE_DIR="${MD4QT_SOURCE_DIR:?}" \
+    -DEARCUT_SOURCE_DIR="${EARCUT_SOURCE_DIR:?}" \
+    -DKSYNTAXHIGHLIGHTING_SOURCE_DIR="$ks_patched" \
+    -DMICROTEX_SOURCE_DIR="${MICROTEX_SOURCE_DIR:?}" \
+    -DCMAKE_CXX_FLAGS="${DAEMON_APP_IOS_CXX_FLAGS:-}" \
+    -DCMAKE_EXE_LINKER_FLAGS="${DAEMON_APP_IOS_LINKER_FLAGS:-}"
+fi
+
+# --- build (xcodebuild, unsigned, simulator) -------------------------------
+if [ "${SKIP_BUILD:-0}" != "1" ]; then
+  echo "== xcodebuild (iphonesimulator, unsigned) =="
+  xcodebuild build \
+    -project "$build_dir/daemon-app.xcodeproj" \
+    -scheme daemon-app \
+    -configuration Release \
+    -sdk iphonesimulator \
+    -destination 'generic/platform=iOS Simulator' \
+    CODE_SIGNING_ALLOWED=NO
+fi
+
+app_path="$(find "$build_dir" -name 'daemon-app.app' -type d | head -1)"
+[ -n "$app_path" ] || { echo "FATAL: daemon-app.app not found under $build_dir" >&2; exit 1; }
+echo "   .app       : $app_path"
+
+# --- simulator boot --------------------------------------------------------
+runtime="${IOS_RUNTIME:-$(xcrun simctl list runtimes 2>/dev/null | awk '/iOS/ {print $NF}' | tail -1)}"
+echo "== simctl (device='$device_type' runtime='$runtime') =="
+
+dev_id="$(xcrun simctl create daemon-app-smoke "$device_type" "$runtime" 2>/dev/null || true)"
+if [ -z "$dev_id" ]; then
+  # Reuse an existing device of this name if create failed (already exists).
+  dev_id="$(xcrun simctl list devices | awk -F '[()]' '/daemon-app-smoke/ {print $2; exit}')"
+fi
+[ -n "$dev_id" ] || { echo "FATAL: could not create/find a simulator device" >&2; exit 1; }
+echo "   device id  : $dev_id"
+
+cleanup() { xcrun simctl shutdown "$dev_id" >/dev/null 2>&1 || true; }
+trap cleanup EXIT
+
+xcrun simctl boot "$dev_id" 2>/dev/null || true
+xcrun simctl bootstatus "$dev_id" -b || true
+xcrun simctl install "$dev_id" "$app_path"
+
+echo "== launch (mock, WAIT_READY=$wait_ready_ms) =="
+mkdir -p "$shot_dir"
+launch_log="$shot_dir/launch.log"
+# Mock service mode: driveFirstRunConnect() connects mode=local to
+# DAEMON_APP_SOCKET; the mock connection is "ready" iff that path exists, so
+# point it at "/" (always present in the sim) - no real node needed. The app
+# prints "DAEMON_APP_READY ok" once the mock connection settles then exits.
+# simctl passes env to the app via the SIMCTL_CHILD_ prefix (not --env).
+set +e
+SIMCTL_CHILD_DAEMON_APP_SERVICE_MODE=mock \
+SIMCTL_CHILD_DAEMON_APP_SOCKET=/ \
+SIMCTL_CHILD_DAEMON_APP_WAIT_READY="$wait_ready_ms" \
+xcrun simctl launch --console-pty --terminate-running-process \
+  "$dev_id" "$bundle_id" 2>&1 | tee "$launch_log"
+set -e
+
+# Relaunch WITHOUT WAIT_READY so the UI stays up (the WAIT_READY run exits after
+# the sentinel), let it render, then screenshot.
+echo "== screenshot launch =="
+SIMCTL_CHILD_DAEMON_APP_SERVICE_MODE=mock \
+SIMCTL_CHILD_DAEMON_APP_SOCKET=/ \
+xcrun simctl launch --terminate-running-process "$dev_id" "$bundle_id" || true
+sleep 8
+shot="$shot_dir/ios-daemon-app.png"
+xcrun simctl io "$dev_id" screenshot "$shot"
+echo "== screenshot: $shot =="
+
+if grep -q "DAEMON_APP_READY ok" "$launch_log"; then
+  echo "RESULT: DAEMON_APP_READY ok  (screenshot: $shot)"
+else
+  echo "RESULT: no 'DAEMON_APP_READY ok' (app launched; see $launch_log + $shot)"
+fi
