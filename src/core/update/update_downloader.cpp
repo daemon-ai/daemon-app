@@ -19,7 +19,7 @@ namespace update {
 
 namespace {
 
-constexpr qint64 kStalePartAgeSecs = 7 * 24 * 60 * 60; // 7 days
+constexpr qint64 kStalePartAgeSecs = 7LL * 24 * 60 * 60; // 7 days
 
 QString updatesRoot() {
     const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);

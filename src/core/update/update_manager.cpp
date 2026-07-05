@@ -58,7 +58,7 @@ UpdateManager::Capability minCapability(UpdateManager::Capability a, UpdateManag
 
 // The build's target OS token, matching the manifest `os` enum.
 QString buildOs() {
-#if defined(Q_OS_ANDROID)
+#ifdef Q_OS_ANDROID
     return QStringLiteral("android");
 #elif defined(Q_OS_MACOS)
     return QStringLiteral("macos");
@@ -73,7 +73,7 @@ QString buildOs() {
 
 // The host CPU arch, mapped to the manifest `arch` enum ("arm64" -> "aarch64").
 QString buildArch() {
-    const QString arch = QSysInfo::currentCpuArchitecture();
+    QString arch = QSysInfo::currentCpuArchitecture();
     if (arch == QStringLiteral("arm64")) {
         return QStringLiteral("aarch64");
     }
@@ -129,10 +129,10 @@ QUrl UpdateManager::resolvedFeedUrl() const {
     if (m_capability != Capability::None) {
         const QString override = qEnvironmentVariable("DAEMON_APP_UPDATE_FEED_URL_OVERRIDE");
         if (!override.isEmpty()) {
-            return QUrl(override);
+            return {override};
         }
     }
-    return QUrl(QStringLiteral(DAEMON_APP_UPDATE_FEED_URL));
+    return {QStringLiteral(DAEMON_APP_UPDATE_FEED_URL)};
 }
 
 QUrl UpdateManager::feedUrl() const {

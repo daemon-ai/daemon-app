@@ -83,7 +83,7 @@ ManifestParseResult parseManifest(const QByteArray& json, const QString& expecte
     }
     const QJsonArray arr = artifacts.toArray();
     m.artifacts.reserve(arr.size());
-    for (const QJsonValue& v : arr) {
+    for (const auto& v : arr) {
         if (v.isObject()) {
             m.artifacts.append(readArtifact(v.toObject()));
         }
