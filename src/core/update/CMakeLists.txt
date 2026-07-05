@@ -31,6 +31,8 @@ add_library(da_update STATIC
     feed_client.cpp
     update_downloader.h
     update_downloader.cpp
+    self_apply_windows.h
+    self_apply_windows.cpp
 )
 add_library(daemon-app::update ALIAS da_update)
 

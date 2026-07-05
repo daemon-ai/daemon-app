@@ -98,6 +98,19 @@ target_link_libraries(tst_update_manifest
 add_test(NAME tst_update_manifest COMMAND tst_update_manifest)
 set_tests_properties(tst_update_manifest PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_update_self_apply_windows: the Windows NSIS SelfApply arg construction +
+# preconditions (src/core/update/self_apply_windows). Pure logic (testable on
+# Linux): the exact frozen daemon-updater CLI contract and the fail-closed
+# preflight (missing helper / staged installer / checksum / relaunch target).
+qt_add_executable(tst_update_self_apply_windows tst_update_self_apply_windows.cpp)
+target_link_libraries(tst_update_self_apply_windows
+    PRIVATE
+        Qt6::Test
+        daemon-app::update
+)
+add_test(NAME tst_update_self_apply_windows COMMAND tst_update_self_apply_windows)
+set_tests_properties(tst_update_self_apply_windows PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_connection_service: the mock connection seam's liveness state machine
 # (checking -> connecting -> ready / offline), the Test-connection probe, and
 # disconnect, all driven on QTimers.
