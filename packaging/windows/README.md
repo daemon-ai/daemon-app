@@ -24,10 +24,22 @@ nix flake check                # includes checks.windows-sanity (PE gate)
 `windows-portable`'s payload) and runs `cpack -G NSIS` with `makensis` from
 nixpkgs on the build host. Installer config lives in
 `cmake/CPackPerGen.cmake` (NSIS branch) + `cmake/Packaging.cmake`:
-`$PROGRAMFILES64\Daemon` install root, Start-Menu shortcut, optional
-Desktop icon (installer checkbox), license page (LICENSE + third-party
-notices), uninstall-before-install on upgrades, uninstaller that removes
-shortcuts + registry entries.
+**per-user** `$LOCALAPPDATA\Programs\Daemon` install root
+(`RequestExecutionLevel user` — no UAC prompt), per-user Start-Menu shortcut,
+optional Desktop icon (installer checkbox), license page (LICENSE +
+third-party notices), uninstall-before-install on upgrades, uninstaller that
+removes shortcuts + the HKCU registry entries.
+
+The per-user model (VS Code / Chrome "user setup") is what makes the
+auto-updater's `SelfApply` tier promptless: the `daemon-updater` helper runs
+the new installer silently (`/S`) after the app exits, with no elevation. CMake's
+stock `NSIS.template.in` hardcodes `RequestExecutionLevel admin` +
+`SetShellVarContext all` (per-machine) with no CPack variable to flip either, so
+`cmake/Packaging.cmake` emits a minimally patched copy of CMake's own template
+onto `CPACK_MODULE_PATH` (four guarded substitutions: elevation level,
+current-user shell context, per-user default dir, HKCU upgrade lookup). Each
+substitution is anchor-checked — a CMake bump that renames a directive fails the
+configure loudly rather than silently shipping a per-machine installer.
 
 The `DAEMON_APP_BUNDLED_DAEMON` / `_DAEMON_INFER` / `_DAEMON_CLI` cache
 vars work here exactly like in the Linux artifacts: the superproject hands
@@ -85,19 +97,32 @@ read-only, so signing is a post-build step by design). Always timestamp
 
 1. `checks.windows-sanity` green (PE32+ GUI-subsystem exe, DLL floor,
    icon resource, installer produced).
-2. Install on a real Windows 10/11 x64 box: installer UI, Start-Menu +
-   optional Desktop shortcut, app boots, uninstall removes everything.
+2. Install on a real Windows 10/11 x64 box: **no UAC prompt** (per-user), the
+   tree lands under `%LOCALAPPDATA%\Programs\Daemon`, per-user Start-Menu +
+   optional Desktop shortcut, app boots, uninstall (from Add/Remove Programs —
+   the HKCU entry) removes everything.
 3. Upgrade path: install an older version, run the new installer
-   (uninstall-before-install must clean the old payload).
+   (uninstall-before-install must clean the old payload from HKCU).
+5. Auto-update SelfApply: follow `UPDATE-VALIDATION.md` end to end.
 4. If signed: `signtool verify /pa daemon-app.exe` + SmartScreen behavior.
 
 ## Updates
 
-NSIS maps onto the `SelfApply` update capability in the
-`packaging/UPDATES.md` design (the release-feed workstream, landing
-separately): the app downloads the new installer and executes it; NSIS
+NSIS maps onto the `SelfApply` update capability (`packaging/UPDATES.md`).
+The compiled dial is `SelfApply` (`nix/windows.nix`); the signed feed's `nsis`
+row also advertises `SelfApply`, so the effective capability is `SelfApply`.
+
+Flow: the app fetches + minisign-verifies the feed, downloads and sha256-gates
+the new installer, then `apply()` locates `bin\daemon-updater.exe` next to the
+app and spawns it fully detached with the frozen helper contract
+(`--mode nsis-silent`), then quits. The helper waits for the app to exit,
+relocates itself out of the install tree, re-verifies the installer's sha256,
+runs it `/S` (per-user, no UAC), and relaunches the app.
 `CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL` keeps the tree clean across
-versions. Until that lands, updates are manual (download + run installer).
+versions. If any precondition fails (helper missing, no staged installer), the
+app degrades to opening the installer for the user (DownloadAndOpen) with a
+visible reason. See **`UPDATE-VALIDATION.md`** for the end-to-end real-Windows
+validation runbook.
 
 ## Known caveats (v1)
 
