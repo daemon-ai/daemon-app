@@ -272,12 +272,15 @@ It builds two ad-hoc-signed SelfApply DMGs with a **throwaway** test minisign
 pubkey and versions 0.9.0 (A) + 0.9.1 (B) — the version bump is a throwaway
 `VERSION` edit, restored after each build, never committed — publishes a
 minisign-signed feed for B on loopback, installs A into a user-writable dir, and
-lets the headless `DAEMON_APP_UPDATE_E2E` auto-flow (check → download →
-self-apply) perform the swap. It asserts: the target bundle `Info.plist` reads
-0.9.1, the relaunched process reports 0.9.1 (a launch-trail sentinel file), the
-helper log shows the two-move swap, the old 0.9.0 bundle was parked aside, the
-relaunched B swept the staging on next start, and no `com.apple.quarantine`
-remains. The confirmed transcript ends `== E2E PASSED ==`.
+lets the shared, env-gated `DAEMON_APP_UPDATE_E2E` auto-drive in `UpdateManager`
+(the same hook the AppImage/Windows lanes use: check → download → self-apply)
+perform the swap. `DAEMON_APP_UPDATE_E2E_LOG` collects the `E2E boot/apply/
+uptodate version=` sentinels — A boots at 0.9.0 and applies, then the relaunched
+process boots at 0.9.1 and settles UpToDate. It asserts: the target bundle
+`Info.plist` reads 0.9.1, the relaunched process is B (sentinels), the helper log
+shows the two-move swap, the old 0.9.0 bundle was parked aside, the relaunched B
+swept the staging on next start, and no `com.apple.quarantine` remains. The
+confirmed transcript ends `== E2E PASSED ==`.
 
 Non-obvious requirements the script bakes in (learned validating it):
 
@@ -291,6 +294,11 @@ Non-obvious requirements the script bakes in (learned validating it):
   `DAEMON_APP_BUILD_QML_DIR` at the build tree; a shipped DMG never has it
   around, but a local build does — leaving it loads a second (store) Qt and the
   duplicate-Qt classes destabilize the run.
+- **Launch the app with a clean `env -i`.** The dev shell exports Qt/DYLD/QML
+  paths that would load a second (store) Qt beside the bundle's own and abort
+  the app; a real user launch has none of that. The script clears the
+  environment and sets only `PATH=/usr/bin:/bin` (so the app's `QProcess` calls
+  to `hdiutil`/`ditto`/`xattr`/`plutil` resolve) plus the E2E vars.
 
 **Gatekeeper (ad-hoc lane): confirmed working.** The swapped-in bundle relaunched
 cleanly with no Gatekeeper prompt and no `com.apple.quarantine` attribute — our

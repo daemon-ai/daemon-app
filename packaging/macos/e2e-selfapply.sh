@@ -10,11 +10,12 @@
 #
 # It builds two ad-hoc-signed SelfApply DMGs with a THROWAWAY test minisign
 # pubkey and versions 0.9.0 (A) + 0.9.1 (B), publishes a minisign-signed feed for
-# B on loopback, installs A into a user-writable dir, runs it headless
-# (DAEMON_APP_UPDATE_E2E auto-flow: check -> download -> self-apply), and asserts
-# the daemon-updater two-move swap + relaunch to B. The version bumps are
-# throwaway VERSION edits, restored after each build; nothing is committed. It
-# NEVER touches the production minisign key.
+# B on loopback, installs A into a user-writable dir, runs it headless (the
+# env-gated DAEMON_APP_UPDATE_E2E auto-drive in UpdateManager, shared with the
+# AppImage/Windows lanes: check -> download -> self-apply), and asserts the
+# daemon-updater two-move swap + relaunch to B. The version bumps are throwaway
+# VERSION edits, restored after each build; nothing is committed. It NEVER
+# touches the production minisign key.
 set -uo pipefail
 
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -22,6 +23,7 @@ W="${E2E_WORK:-$HOME/work/upd-e2e}"
 PORT="${E2E_PORT:-8099}"
 VA=0.9.0
 VB=0.9.1
+
 fail() {
     echo "E2E FAIL: $*" >&2
     exit 1
@@ -35,7 +37,7 @@ ECM="$(dirname "$(find /nix/store -maxdepth 6 \
 [ -n "$ECM" ] && [ -d "$ECM" ] || fail "could not locate extra-cmake-modules (ECM_DIR)"
 
 mkdir -p "$W"
-rm -rf "$W/feed" "$W/Install" "$W/versions.txt" "$W"/*.log "$W/parked-old.txt"
+rm -rf "$W/feed" "$W/Install" "$W"/e2e-*.log "$W/helper.log" "$W/parked-old.txt"
 mkdir -p "$W/feed" "$W/Install"
 
 # --- throwaway test key (generated once, reused) --------------------------
@@ -80,8 +82,10 @@ build_dmg "$VB"
 
 # --- signed feed for B ----------------------------------------------------
 cp "$W/daemon-$VB.dmg" "$W/feed/daemon-$VB.dmg"
-SZ=$(stat -f%z "$W/feed/daemon-$VB.dmg")
-SHA=$(shasum -a 256 "$W/feed/daemon-$VB.dmg" | cut -d' ' -f1)
+# Absolute /usr/bin: inside the dev shell nix coreutils shadow `stat`/`shasum`
+# (GNU `stat -f` means --file-system, not BSD's byte size).
+SZ=$(/usr/bin/stat -f%z "$W/feed/daemon-$VB.dmg")
+SHA=$(/usr/bin/shasum -a 256 "$W/feed/daemon-$VB.dmg" | cut -d' ' -f1)
 cat >"$W/feed/manifest.json" <<JSON
 {"schema":1,"product":"daemon","channel":"stable","version":"$VB","released":"2026-07-05T00:00:00Z","notesUrl":"","artifacts":[{"kind":"dmg","os":"macos","arch":"aarch64","file":"daemon-$VB.dmg","size":$SZ,"sha256":"$SHA","updateCapability":"SelfApply"}]}
 JSON
@@ -114,20 +118,26 @@ CAP=$!
 trap 'kill $SRV $CAP 2>/dev/null' EXIT
 sleep 1
 
-# --- run A headless (auto-flow) -------------------------------------------
-echo "== run A (auto-flow) =="
-DAEMON_APP_SERVICE_MODE=mock QT_QPA_PLATFORM=offscreen \
-    DAEMON_APP_UPDATE_E2E=1 DAEMON_APP_UPDATE_E2E_SENTINEL="$W/versions.txt" \
+# --- run A headless (shared UpdateManager auto-drive) ---------------------
+# DAEMON_APP_UPDATE_E2E arms the in-manager auto-drive; DAEMON_APP_UPDATE_E2E_LOG
+# collects "E2E boot/apply/uptodate version=" sentinels (A's log, then B's after
+# the relaunch inherits the env). Launch with a CLEAN env (env -i): the dev shell
+# exports Qt/DYLD/QML paths that would load a second (store) Qt beside the bundle
+# Qt and SIGABRT the app — a real user launch has none of that. PATH=/usr/bin so
+# the app's QProcess calls to hdiutil/ditto/xattr/plutil resolve.
+echo "== run A (clean env) =="
+/usr/bin/env -i HOME="$HOME" PATH=/usr/bin:/bin \
+    DAEMON_APP_SERVICE_MODE=mock QT_QPA_PLATFORM=offscreen \
+    DAEMON_APP_UPDATE_E2E=1 DAEMON_APP_UPDATE_E2E_LOG="$W/e2e-A.log" \
     DAEMON_APP_UPDATE_FEED_URL_OVERRIDE="http://127.0.0.1:$PORT/manifest.json" \
-    "$APP/Contents/MacOS/daemon-app" >"$W/a.log" 2>&1
+    "$APP/Contents/MacOS/daemon-app" >"$W/a.stdout" 2>&1
 echo "A exited rc=$?"
-grep 'DAEMON_APP_UPDATE' "$W/a.log" || true
+cat "$W/e2e-A.log" 2>/dev/null
 
 echo "== waiting for swap + relaunch to B =="
 for _ in $(seq 1 60); do
     V=$(plutil -extract CFBundleShortVersionString raw "$APP/Contents/Info.plist" 2>/dev/null || echo '?')
-    N=$(wc -l <"$W/versions.txt" 2>/dev/null | tr -d ' ')
-    [ "$V" = "$VB" ] && [ "${N:-0}" -ge 2 ] && break
+    grep -q "E2E uptodate version=$VB" "$W/e2e-A.log" 2>/dev/null && [ "$V" = "$VB" ] && break
     sleep 0.5
 done
 sleep 2
@@ -135,8 +145,8 @@ kill "$CAP" 2>/dev/null
 
 # --- evidence + assertions -----------------------------------------------
 echo "== EVIDENCE =="
-echo "-- launch trail (old build -> relaunched build) --"
-cat "$W/versions.txt" 2>/dev/null
+echo "-- E2E sentinel log (A boot/apply, then relaunched B boot/uptodate) --"
+cat "$W/e2e-A.log" 2>/dev/null
 echo "-- helper log --"
 sed 's/^/    /' "$W/helper.log" 2>/dev/null
 echo "-- parked-old version --"
@@ -147,10 +157,11 @@ TGTV=$(plutil -extract CFBundleShortVersionString raw "$APP/Contents/Info.plist"
 [ "$TGTV" = "$VB" ] || fail "target bundle version is $TGTV, want $VB"
 echo "PASS: swap applied — target bundle Info.plist == $VB"
 
-case "$(tail -1 "$W/versions.txt" 2>/dev/null)" in
-"$VB"*) echo "PASS: relaunched process is B ($VB)" ;;
-*) fail "sentinel last line is not $VB*" ;;
-esac
+grep -q "E2E boot version=$VA" "$W/e2e-A.log" 2>/dev/null || fail "no A-boot sentinel"
+grep -q "E2E apply version=$VB" "$W/e2e-A.log" 2>/dev/null || fail "no apply sentinel"
+grep -q "E2E boot version=$VB" "$W/e2e-A.log" 2>/dev/null || fail "relaunched process did not boot as $VB"
+grep -q "E2E uptodate version=$VB" "$W/e2e-A.log" 2>/dev/null || fail "relaunched $VB did not settle UpToDate"
+echo "PASS: relaunched process is B — booted $VB and settled UpToDate against the feed"
 
 grep -q 'move-staged ok' "$W/helper.log" 2>/dev/null || fail "helper log missing the two-move swap"
 echo "PASS: helper performed the two-move swap"
