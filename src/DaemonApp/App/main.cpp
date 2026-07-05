@@ -447,6 +447,13 @@ int main(int argc, char* argv[]) {
         // (resumed|scram), and first-run completion. All async - no nested loop.
         application.announceReloadSentinels();
 #else
+        // DAEMON_APP_WAIT_CONNECTED (set by the daemon-mode E2E) makes the sentinel assert a
+        // GENUINE app<->daemon connection: awaitConnectionReady already blocks on the connection
+        // seam reaching ready() (a Health round-trip over the local transport / named pipe), and
+        // the flag additionally requires the seam be the real daemon-backed service, so a mock
+        // connection that trivially reports ready cannot satisfy it. Unset (the mock / QML-boot
+        // smokes), the meaning is unchanged.
+        const bool requireConnected = qEnvironmentVariableIsSet("DAEMON_APP_WAIT_CONNECTED");
         const bool ready = application.awaitConnectionReady(timeoutMs);
         if (ready) {
             // Drain the A2 node gate before exiting: on an already-configured node the wizard
@@ -454,9 +461,10 @@ int main(int argc, char* argv[]) {
             // setupComplete that finish() writes.
             application.settleFirstRunGate(2500);
         }
-        std::fprintf(stdout, "DAEMON_APP_READY %s\n", ready ? "ok" : "timeout");
+        const bool ok = ready && (!requireConnected || application.isDaemonBacked());
+        std::fprintf(stdout, "DAEMON_APP_READY %s\n", ok ? "ok" : "timeout");
         std::fflush(stdout);
-        return ready ? 0 : 2;
+        return ok ? 0 : 2;
 #endif
     }
 

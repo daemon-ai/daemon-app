@@ -571,37 +571,81 @@ let
         echo "windows-sanity: OK" | tee -a "$report"
       '';
 
-  # --- apps.windows-smoke --------------------------------------------------------
+  # --- wine smoke harness --------------------------------------------------------
   # Best-effort wine boot (NOT a flake check, wine is not part of any gate):
   # runs the exe offscreen with the DAEMON_APP_WAIT_READY sentinel contract
   # (main.cpp prints "DAEMON_APP_READY ok" and exits 0), then a silent NSIS
   # install into a scratch prefix. Wine failures are reported honestly and do
   # not fail the workstream - a GUI-subsystem exe still writes the sentinel
   # to a redirected stdout, which is exactly how this harness consumes it.
-  wine = pkgs.wineWowPackages.stable;
+  #
+  # WoW64 wine is required: the NSIS stub is a PE32 i386 executable.
+  #
+  # `minimal` (not `stable`): the full `stable` closure pulls a large multimedia stack
+  # (libcamera -> pipewire -> python3Packages.pybind11) whose pybind11 build-time TEST SUITE fails
+  # on the pinned fork nixpkgs, so `stable` cannot even build here. `minimal` drops that entire
+  # optional stack (no gstreamer/pipewire/sane/camera), which is irrelevant to this smoke: a
+  # headless offscreen Qt app + an NSIS silent install + local named pipes only need the core win32
+  # DLLs (kernel32/ntdll/user32/gdi32/advapi32/ws2_32), all present in minimal. Still WoW64, so the
+  # i386 NSIS stub runs.
+  wine = pkgs.wineWowPackages.minimal;
 
-  windowsSmoke = pkgs.writeShellApplication {
+  # Parameterized hermetic wine harness. Both the child's app-only smoke and the
+  # superproject's composed E2E smoke reuse the same prelude (fresh throwaway
+  # WINEPREFIX + HOME, gecko/mono + their network fetches disabled via
+  # WINEDLLOVERRIDES, offscreen QPA, and a `wineserver -w` teardown so no
+  # lingering wineserver holds the prefix open before it is removed).
+  #
+  #   installer : the NSIS installer derivation dir (holds daemon-*-win64.exe);
+  #               bound to the shell var `$installerExe` (the resolved .exe).
+  #   body      : the test steps; runs after the prefix is inited, with `wine`
+  #               on PATH, `$tmp` (scratch), `$WINEPREFIX`, and `$installerExe`
+  #               in scope, and `status` (0) it can set to fail the run.
+  mkWindowsSmoke =
+    {
+      name,
+      installer,
+      body,
+    }:
+    pkgs.writeShellApplication {
+      inherit name;
+      runtimeInputs = [ wine ];
+      text = ''
+        tmp=$(mktemp -d)
+        export HOME="$tmp/home" && mkdir -p "$HOME"
+        export WINEPREFIX="$tmp/prefix"
+        export WINEDEBUG=-all
+        # Kill the gecko/mono install prompts AND their network fetches (no .NET /
+        # embedded-HTML in this app), keeping the harness hermetic + offline.
+        export WINEDLLOVERRIDES="mscoree,mshtml="
+        # Headless boot: the offscreen QPA plugin is compiled into the exe.
+        export QT_QPA_PLATFORM=offscreen
+        export QT_QUICK_BACKEND=software
+        # Teardown: settle wineserver before removing the prefix, so nothing holds
+        # the tree open (a dangling wineserver would race the rm and leak the dir).
+        trap 'wineserver -w 2>/dev/null || true; rm -rf "$tmp"' EXIT
+
+        installerExe=$(find ${installer} -maxdepth 1 -name 'daemon-*-win64.exe' -print -quit)
+        status=0
+
+        echo "== ${name}: wineboot (fresh prefix) =="
+        wineboot --init >/dev/null 2>&1 || true
+
+        ${body}
+
+        exit "$status"
+      '';
+    };
+
+  windowsSmoke = mkWindowsSmoke {
     name = "windows-smoke";
-    runtimeInputs = [ wine ];
-    text = ''
-      tmp=$(mktemp -d)
-      trap 'rm -rf "$tmp"' EXIT
-      export HOME="$tmp/home" && mkdir -p "$HOME"
-      export WINEPREFIX="$tmp/prefix"
-      export WINEDEBUG=-all
-      # Headless boot: the offscreen QPA plugin is compiled into the exe.
-      export QT_QPA_PLATFORM=offscreen
-      export QT_QUICK_BACKEND=software
+    installer = nsisInstaller;
+    body = ''
       export DAEMON_APP_SERVICE_MODE=mock
       export DAEMON_APP_WAIT_READY=30000
       touch "$tmp/daemon-sock-stub"
       # wine maps / as Z:, so hand the mock's existence probe a Z: path.
       export DAEMON_APP_SOCKET="Z:$tmp/daemon-sock-stub"
-
-      status=0
-
-      echo "== windows-smoke: wineboot (fresh prefix) =="
-      wineboot --init >/dev/null 2>&1 || true
 
       echo "== windows-smoke: daemon-app.exe offscreen boot (WAIT_READY) =="
       if wine ${windowsPortable}/bin/daemon-app.exe > "$tmp/boot.log" 2>&1; then
@@ -618,8 +662,7 @@ let
       fi
 
       echo "== windows-smoke: NSIS silent install (/S) =="
-      installer=$(ls ${nsisInstaller}/daemon-*-win64.exe)
-      if wine "$installer" /S "/D=C:\\Program Files\\Daemon" > "$tmp/install.log" 2>&1; then
+      if wine "$installerExe" /S "/D=C:\\Program Files\\Daemon" > "$tmp/install.log" 2>&1; then
         inst_rc=0
       else
         inst_rc=$?
@@ -635,7 +678,7 @@ let
           tail -n 10 "$tmp/installed-boot.log" || true
           status=1
         fi
-        uninst=$(ls "$WINEPREFIX/drive_c/Program Files/Daemon/"Uninstall*.exe 2>/dev/null | head -n1 || true)
+        uninst=$(find "$WINEPREFIX/drive_c/Program Files/Daemon" -maxdepth 1 -name 'Uninstall*.exe' -print -quit 2>/dev/null || true)
         if [ -n "$uninst" ]; then
           echo "windows-smoke: uninstaller present ($(basename "$uninst"))"
         else
@@ -647,8 +690,6 @@ let
         tail -n 20 "$tmp/install.log" || true
         status=1
       fi
-
-      exit "$status"
     '';
   };
 in
@@ -665,5 +706,10 @@ in
   nsis = nsisInstaller;
   sanity = windowsSanity;
   smoke = windowsSmoke;
+  # The parameterized wine harness + the (WoW64) wine derivation, reused by the
+  # superproject's composed E2E smoke so it runs the same hardened prelude over
+  # the bundled installer with the exact same nix-provided wine.
+  mkSmoke = mkWindowsSmoke;
+  inherit wine;
   inherit qtHost mingwToolchain;
 }

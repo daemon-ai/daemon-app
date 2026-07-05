@@ -850,6 +850,10 @@
         packages.windows-portable = windowsStack.portable;
         packages.nsis = windowsStack.nsis;
         packages.qt-mingw-static = windowsStack.qtMingw;
+        # The (WoW64) wine used by apps.windows-smoke, exposed so the superproject's
+        # composed E2E smoke runs the same hermetic prelude over the bundled installer
+        # with the exact same nix-provided wine (fork nixpkgs) rather than a second pin.
+        packages.windows-smoke-wine = windowsStack.wine;
 
         # Android (arm64-v8a): the debug-signed APK, the joined Qt-for-Android
         # prefix (bin/qt-cmake + lib/cmake/Qt6/qt.toolchain.cmake), and the

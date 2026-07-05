@@ -62,6 +62,7 @@ add_library(da_daemon_client STATIC
     node_api_codec/decode_responses.cpp
     node_api_codec/fs_fleet_channels.cpp
     local_daemon_launcher.h
+    windows_pipe_name.h
     daemon_connection_service.h
     daemon_connection_service.cpp
     ${DA_DAEMON_PLATFORM_SOURCES}

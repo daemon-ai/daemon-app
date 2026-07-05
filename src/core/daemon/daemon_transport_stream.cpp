@@ -7,6 +7,7 @@
 // there and daemon_transport_stream_wasm.cpp supplies fail-closed stubs instead.
 
 #include "daemon/daemon_transport.h"
+#include "daemon/windows_pipe_name.h"
 
 #include <QCryptographicHash>
 #include <QDebug>
@@ -130,7 +131,9 @@ void DaemonTransport::openUnix() {
     ensureSocket();
     if (m_local->state() == QLocalSocket::UnconnectedState) {
         m_buffer.clear();
-        m_local->connectToServer(m_socketPath);
+        // On Windows QLocalSocket names are pipes; map the socket path to the daemon's bound pipe
+        // name via the shared contract (localServerName). On Unix this is the path unchanged.
+        m_local->connectToServer(localServerName(m_socketPath));
     }
 }
 

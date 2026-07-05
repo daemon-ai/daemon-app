@@ -329,6 +329,11 @@ void Application::openPageForRenderHarness(const QString& page, const QString& s
     m_services.nav->open(page, section);
 }
 
+bool Application::isDaemonBacked() const {
+    return qobject_cast<daemonapp::daemon::DaemonConnectionService*>(m_services.connection) !=
+           nullptr;
+}
+
 bool Application::awaitConnectionReady(int timeoutMs) const {
     auto* conn = m_services.connection;
     if (conn->ready()) {

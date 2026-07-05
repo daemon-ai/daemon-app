@@ -113,6 +113,12 @@ public:
     // system-tests harness hard-assert the GUI -> daemon connectivity instead of racing it.
     [[nodiscard]] bool awaitConnectionReady(int timeoutMs) const;
 
+    // True iff the connection seam is the real daemon-backed service (ServiceMode::Daemon), not the
+    // in-memory mock. The E2E sets DAEMON_APP_WAIT_CONNECTED so the readiness sentinel asserts a
+    // genuine app<->daemon connection over the local transport rather than a mock that reports
+    // ready without a daemon.
+    [[nodiscard]] bool isDaemonBacked() const;
+
     // Headless E2E hook: drive a first-run connect programmatically (the equivalent of the user
     // picking Local + Connect; on wasm, WebSocket + Connect), using the resolved target (honors
     // DAEMON_APP_SOCKET / the `?ws=` page override). No-op once setup is complete, so it is safe

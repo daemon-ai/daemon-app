@@ -3,6 +3,7 @@
 
 #include "daemon/local_daemon_launcher.h"
 
+#include "daemon/windows_pipe_name.h"
 #include "settings/isettings_store.h"
 
 #include <QCoreApplication>
@@ -28,7 +29,15 @@ namespace daemonapp::daemon {
 namespace {
 constexpr int kSpawnReadyTimeoutMs = 10000;
 constexpr int kPollIntervalMs = 100;
+// The co-located daemon executable name. On Windows the bundled binary is `daemon.exe`, and the
+// applicationDirPath probe (step 3 of discoverDaemonBinary) checks the literal path, so it must
+// carry the extension; QStandardPaths::findExecutable resolves the extension for the PATH fallback
+// on any platform.
+#ifdef Q_OS_WIN
+constexpr auto kDaemonBinaryName = "daemon.exe";
+#else
 constexpr auto kDaemonBinaryName = "daemon";
+#endif
 constexpr auto kPidFileName = "daemon.pid";
 
 [[nodiscard]] bool isExecutableFile(const QString& path) {
@@ -104,7 +113,9 @@ QString LocalDaemonLauncher::discoverDaemonBinary(const QString& override) {
 
 bool LocalDaemonLauncher::isDaemonListening(const QString& socketPath, int timeoutMs) {
     QLocalSocket probe;
-    probe.connectToServer(socketPath);
+    // On Windows QLocalSocket names are pipes; map the socket path to the daemon's bound pipe name
+    // via the shared contract (localServerName). On Unix this is the socket path unchanged.
+    probe.connectToServer(localServerName(socketPath));
     const bool ok = probe.waitForConnected(timeoutMs);
     probe.abort();
     return ok;
