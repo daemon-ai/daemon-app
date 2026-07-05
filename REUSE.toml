@@ -75,6 +75,13 @@ path = ["src/tools/updater/vendor/**"]
 SPDX-FileCopyrightText = "Brad Conte (brad AT bradconte.com)"
 SPDX-License-Identifier = "LicenseRef-PublicDomain"
 
+# --- Vendored Monocypher (BLAKE2b + Ed25519 for minisign verification). Upstream
+#     files carry their own dual-license SPDX id; declared here for completeness. ---
+[[annotations]]
+path = ["src/core/update/vendor/monocypher/**"]
+SPDX-FileCopyrightText = "2017-2019 Loup Vaillant"
+SPDX-License-Identifier = "BSD-2-Clause OR CC0-1.0"
+
 # --- Bundled third-party fonts (shipped as Qt resources). NOT first-party;
 #     see THIRD-PARTY-NOTICES.md. ---
 [[annotations]]
