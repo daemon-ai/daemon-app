@@ -50,6 +50,7 @@ togglable = "togglable"     # accepted variant of "toggleable"
 lod = "lod"                 # LOD: level-of-detail (e.g. m_lodTier)
 muc = "muc"                 # MUC: XMPP multi-user chat
 secur = "secur"             # Secur32.dll: the Windows SSPI system library
+cpy = "cpy"                 # NSIS StrCpy instruction (per-user NSIS template patch)
 arange = "arange"           # numpy np.arange in skill examples
 canva = "canva"             # Canva (product name)
 # Upstream spellings in vendored Monocypher comments (the pre-commit hook passes

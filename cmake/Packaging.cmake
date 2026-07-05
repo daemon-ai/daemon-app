@@ -505,6 +505,66 @@ elseif(WIN32)
     set(CPACK_DAEMON_APP_NSIS_LICENSE
         "${CMAKE_BINARY_DIR}/packaging/nsis-license.txt"
     )
+
+    # --- Per-user NSIS installer (decision: todo u3-windows) -----------------
+    # We install per-user under $LOCALAPPDATA\Programs\Daemon (set in
+    # cmake/CPackPerGen.cmake) so the auto-updater's SelfApply tier can run the
+    # installer silently (/S) from the detached daemon-updater helper without a
+    # UAC prompt (VS Code / Chrome user-setup model). CMake's stock
+    # NSIS.template.in hardcodes `RequestExecutionLevel admin` and
+    # `SetShellVarContext all` (per-machine, HKLM) with NO CPack variable to
+    # flip either, so we emit a MINIMALLY patched copy of CMake's own template
+    # onto CPACK_MODULE_PATH (cpack's FindTemplate searches it for
+    # "NSIS.template.in" before falling back to CMAKE_ROOT). Patching CMake's
+    # live template (rather than vendoring the whole ~1000-line file) keeps this
+    # resilient to unrelated template changes; each substitution is guarded so a
+    # CMake bump that renames a directive fails LOUDLY instead of silently
+    # shipping a per-machine installer.
+    set(_da_nsis_tmpl_src
+        "${CMAKE_ROOT}/Modules/Internal/CPack/NSIS.template.in"
+    )
+    if(NOT EXISTS "${_da_nsis_tmpl_src}")
+        message(FATAL_ERROR
+            "daemon-app: CMake NSIS template not found at '${_da_nsis_tmpl_src}'; "
+            "cannot produce the per-user installer (see cmake/CPackPerGen.cmake)."
+        )
+    endif()
+    file(READ "${_da_nsis_tmpl_src}" _da_nsis_tmpl)
+
+    # Each entry is "search|||replace"; the search MUST be present (else FATAL).
+    # T1  no elevation (promptless self-apply);
+    # T2  current-user shell context -> HKCU uninstall hive + per-user Start Menu
+    #     (4 occurrences across .onInit and un.onInit);
+    # T3  the JustMe default dir uses the per-user root instead of $DOCUMENTS, so
+    #     admin and non-admin users both land in $LOCALAPPDATA\Programs\Daemon;
+    # T4  uninstall-before-install reads the prior install from HKCU (where a
+    #     per-user install records it), matching the current-user context.
+    set(_da_nsis_patches
+        "RequestExecutionLevel admin|||RequestExecutionLevel user"
+        "SetShellVarContext all|||SetShellVarContext current"
+        "StrCpy $INSTDIR \"$DOCUMENTS\\@CPACK_PACKAGE_INSTALL_DIRECTORY@\"|||StrCpy $INSTDIR \"@CPACK_NSIS_INSTALL_ROOT@\\@CPACK_PACKAGE_INSTALL_DIRECTORY@\""
+        "ReadRegStr $0 HKLM \"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\@CPACK_PACKAGE_INSTALL_REGISTRY_KEY@\" \"UninstallString\"|||ReadRegStr $0 HKCU \"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\@CPACK_PACKAGE_INSTALL_REGISTRY_KEY@\" \"UninstallString\""
+        "ReadRegStr $1 HKLM \"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\@CPACK_PACKAGE_INSTALL_REGISTRY_KEY@\" \"DisplayName\"|||ReadRegStr $1 HKCU \"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\@CPACK_PACKAGE_INSTALL_REGISTRY_KEY@\" \"DisplayName\""
+    )
+    foreach(_da_patch IN LISTS _da_nsis_patches)
+        string(REPLACE "|||" ";" _da_pair "${_da_patch}")
+        list(GET _da_pair 0 _da_search)
+        list(GET _da_pair 1 _da_repl)
+        string(FIND "${_da_nsis_tmpl}" "${_da_search}" _da_found)
+        if(_da_found EQUAL -1)
+            message(FATAL_ERROR
+                "daemon-app: per-user NSIS patch anchor not found in CMake's "
+                "NSIS.template.in: '${_da_search}'. The stock template changed; "
+                "review the per-user install patch in cmake/Packaging.cmake."
+            )
+        endif()
+        string(REPLACE "${_da_search}" "${_da_repl}" _da_nsis_tmpl "${_da_nsis_tmpl}")
+    endforeach()
+
+    set(_da_nsis_tmpl_dir "${CMAKE_BINARY_DIR}/cpack-modules")
+    file(WRITE "${_da_nsis_tmpl_dir}/NSIS.template.in" "${_da_nsis_tmpl}")
+    # cpack searches CPACK_MODULE_PATH for NSIS.template.in ahead of CMAKE_ROOT.
+    set(CPACK_MODULE_PATH "${_da_nsis_tmpl_dir}" ${CPACK_MODULE_PATH})
 else()
     set(CPACK_PACKAGE_FILE_NAME
         "daemon-${PROJECT_VERSION}-linux-${CMAKE_SYSTEM_PROCESSOR}"
