@@ -43,6 +43,7 @@
 #include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
 #include "turn_engine_factory.h"
+#include "update/update_manager.h"
 
 #include <core/formula.h>
 #include <cstdio>
@@ -309,6 +310,11 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     engine.rootContext()->setContextProperty(QStringLiteral("SessionSettings"),
                                              m_services.sessionSettings);
     engine.rootContext()->setContextProperty(QStringLiteral("Checkpoints"), m_services.checkpoints);
+
+    // Release-feed / auto-update surface: the shell binds this for the update
+    // banner + settings toggle. Inert (no feed, no UI) unless the package job
+    // compiled in a capability dial (packaging/UPDATES.md).
+    engine.rootContext()->setContextProperty(QStringLiteral("Update"), m_services.update);
 
     // Notifier seam: QML binds the active turn's awaitingInput signal to
     // App.notifyGate(...) to raise an OS notification when the window is hidden.

@@ -60,6 +60,9 @@ namespace transports {
 class IPresenceService;
 class ITransportRegistry;
 } // namespace transports
+namespace update {
+class UpdateManager;
+}
 
 namespace daemonapp::daemon {
 
@@ -115,6 +118,9 @@ struct AppServiceGraph {
     daemonnet::IDaemonNet* daemonNet = nullptr;
     session::ISessionSettings* sessionSettings = nullptr;
     session::ICheckpointTimeline* checkpoints = nullptr;
+    // Release-feed / auto-update surface (packaging/UPDATES.md). Inert unless the
+    // package job compiled in a capability dial; both front ends bind it.
+    update::UpdateManager* update = nullptr;
     DaemonCacheStore* cache = nullptr;
     NodeApiClient* nodeApi = nullptr;
     // The authenticated principal (WhoAmI) for advisory capability gating. Always constructed
