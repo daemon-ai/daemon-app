@@ -1,0 +1,18 @@
+SHA-256 implementation (sha256.c / sha256.h)
+Author: Brad Conte (brad AT bradconte.com)
+Upstream: https://github.com/B-Con/crypto-algorithms
+
+This code is released into the public domain free of any restrictions.
+The author requests acknowledgement if the code is used, but does not
+require it. This code is provided free of any liability and without any
+quality claims by the author.
+
+Local modification: the single `#include <memory.h>` in sha256.c (a legacy,
+non-standard header alias) was changed to the standard `#include <string.h>`
+so the file compiles unchanged under glibc, the mingw-w64 sysroot, and the
+macOS SDK. `memset` — the only symbol used from it — is declared by both.
+
+NOTE: this is a plain integrity hash. Per the upstream README it is NOT a
+side-channel-resistant implementation; it is used here only to re-verify the
+digest of a locally staged, already-authenticated update artifact immediately
+before the atomic swap, which needs collision/preimage integrity, not secrecy.

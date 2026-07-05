@@ -67,6 +67,14 @@ path = ["src/tui/vendor/Tui/**"]
 SPDX-FileCopyrightText = "2020 Martin Hostettler"
 SPDX-License-Identifier = "BSL-1.0"
 
+# --- Vendored public-domain SHA-256 (Brad Conte) used by the daemon-updater
+#     helper. Declared here rather than hand-editing the byte-verbatim upstream
+#     files; see src/tools/updater/vendor/LICENSE and THIRD-PARTY-NOTICES.md. ---
+[[annotations]]
+path = ["src/tools/updater/vendor/**"]
+SPDX-FileCopyrightText = "Brad Conte (brad AT bradconte.com)"
+SPDX-License-Identifier = "LicenseRef-PublicDomain"
+
 # --- Bundled third-party fonts (shipped as Qt resources). NOT first-party;
 #     see THIRD-PARTY-NOTICES.md. ---
 [[annotations]]

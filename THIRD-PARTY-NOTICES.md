@@ -57,6 +57,7 @@ pinned by nixpkgs.
 | `src/core/daemon/codec/vendor/` | Apache-2.0 | (c) 2020 Nordic Semiconductor ASA | zcbor 0.9.1 C runtime; files carry upstream SPDX + copyright headers. |
 | `src/core/daemon/codec/generated/` | Apache-2.0 | (c) 2026 Jarrad Hope | zcbor codegen output from the first-party `daemon-api` CDDL contract; drift-checked, declared via REUSE.toml. |
 | `src/tui/vendor/Tui/` | BSL-1.0 | (c) 2020 Martin Hostettler | Tui Widgets private headers, vendored verbatim; copyright declared via REUSE.toml. |
+| `src/tools/updater/vendor/` | LicenseRef-PublicDomain | Brad Conte (brad AT bradconte.com) | SHA-256 (`sha256.c`/`sha256.h`) from github.com/B-Con/crypto-algorithms, released into the public domain; used by the `daemon-updater` helper to re-verify a staged artifact's digest before the atomic swap. Vendored near-verbatim (one `#include` swapped for the standard `<string.h>` for portability; see `vendor/LICENSE`). Not a side-channel-resistant implementation — used only for local integrity, never for secrecy. |
 
 ## Bundled fonts (assets/fonts/)
 

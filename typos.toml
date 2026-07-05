@@ -13,6 +13,7 @@ extend-exclude = [
   # tree as `daemon-app/src/...` (typos matches nested-config globs relative to its CWD).
   "**/src/core/daemon/codec/generated/**",
   "**/src/core/daemon/codec/vendor/**",
+  "**/src/tools/updater/vendor/**",
   "**/build*/**",
   "**/result-*/**",
   "*.lock",
