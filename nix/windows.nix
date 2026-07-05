@@ -689,7 +689,10 @@ let
         inst_rc=$?
       fi
       # Resolve the per-user install dir by glob (the wine username varies).
-      installDir=$(dirname "$(ls "$WINEPREFIX"/drive_c/users/*/AppData/Local/Programs/Daemon/bin/daemon-app.exe 2>/dev/null | head -n1 || true)" 2>/dev/null || true)
+      installDir=""
+      for f in "$WINEPREFIX"/drive_c/users/*/AppData/Local/Programs/Daemon/bin/daemon-app.exe; do
+        if [ -f "$f" ]; then installDir=$(dirname "$f"); break; fi
+      done
       installed="$installDir/daemon-app.exe"
       if [ "$inst_rc" = 0 ] && [ -n "$installDir" ] && [ -f "$installed" ]; then
         echo "windows-smoke: per-user silent install OK ($installed)"
@@ -715,7 +718,7 @@ let
           status=1
         fi
         instRoot=$(dirname "$installDir")
-        uninst=$(ls "$instRoot/"Uninstall*.exe 2>/dev/null | head -n1 || true)
+        uninst=$(find "$instRoot" -maxdepth 1 -name 'Uninstall*.exe' -print -quit 2>/dev/null || true)
         if [ -n "$uninst" ]; then
           echo "windows-smoke: uninstaller present ($(basename "$uninst"))"
         else
