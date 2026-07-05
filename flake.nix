@@ -531,8 +531,10 @@
               "-DCMAKE_INSTALL_DOCDIR=share/doc/daemon-app"
               "-DCMAKE_INSTALL_LOCALEDIR=share/locale"
               "-DECM_DIR=${pkgs.kdePackages.extra-cmake-modules}/share/ECM/cmake"
-              # Auto-updater dials (packaging/UPDATES.md): Notify tier for the DMG.
-              "-DDAEMON_APP_UPDATE_CAPABILITY=Notify"
+              # Auto-updater dials (packaging/UPDATES.md): SelfApply for the DMG —
+              # hdiutil stage + quarantine strip + guards + daemon-updater two-move
+              # swap, validated E2E on the M1 (packaging/macos/README.md).
+              "-DDAEMON_APP_UPDATE_CAPABILITY=SelfApply"
               "-DDAEMON_APP_UPDATE_FEED_URL=https://github.com/daemon-ai/daemon/releases/latest/download/manifest.json"
               "-DDAEMON_APP_UPDATE_PUBKEY=RWRXpowS90Fy+TYhRsrBbQNSDvjbtJpqi9T89OGqSNTLkOa5vn62hK0o"
               "-DDAEMON_APP_UPDATE_ARTIFACT_KIND=dmg"
