@@ -188,10 +188,10 @@ Q_IMPORT_QML_PLUGIN(DaemonApp_SettingsPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_PagesPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_MemoryPlugin)
 Q_IMPORT_QML_PLUGIN(DaemonApp_StatusBarPlugin)
-#ifdef Q_OS_ANDROID
-// The android build links KSyntaxHighlighting's QML plugin statically
-// (BUILD_SHARED_LIBS=OFF, see App/CMakeLists.txt); on every other platform
-// the module is a shared plugin resolved via the engine import path.
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+// The android and iOS builds link KSyntaxHighlighting's QML plugin statically
+// (BUILD_SHARED_LIBS=OFF / static Qt, see App/CMakeLists.txt); on every other
+// platform the module is a shared plugin resolved via the engine import path.
 Q_IMPORT_QML_PLUGIN(org_kde_syntaxhighlightingPlugin)
 #endif
 

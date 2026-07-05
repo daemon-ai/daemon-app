@@ -112,13 +112,14 @@ set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 # so turn it off for this vendored subtree and restore it afterwards.
 set(_da_prev_qmlls_ini "${QT_QML_GENERATE_QMLLS_INI}")
 set(QT_QML_GENERATE_QMLLS_INI OFF)
-# Cross static builds (wasm, mingw, android) share the rcc/zstd mismatch: rcc
-# is a HOST tool (QT_HOST_PATH, zstd ON in nixpkgs' qtbase) while the TARGET
-# Qt6Core is built with FEATURE_zstd=OFF. The native linux-static build runs
-# its own zstd-less rcc and never hits this.
-if(DAEMON_APP_WASM OR ANDROID OR (DAEMON_APP_STATIC AND CMAKE_CROSSCOMPILING))
+# Cross static builds (wasm, mingw, android, iOS) share the rcc/zstd mismatch:
+# rcc is a HOST tool (QT_HOST_PATH, zstd ON in nixpkgs' qtbase) while the TARGET
+# Qt6Core is built with FEATURE_zstd=OFF (the iOS Qt sets it OFF explicitly, see
+# nix/ios.nix). The native linux-static build runs its own zstd-less rcc and
+# never hits this.
+if(DAEMON_APP_WASM OR ANDROID OR IOS OR (DAEMON_APP_STATIC AND CMAKE_CROSSCOMPILING))
     # The host rcc compresses QRC payloads with zstd by default, but the wasm,
-    # mingw, and android Qt6Core are built without the zstd feature, so the
+    # mingw, android and iOS Qt6Core are built without the zstd feature, so the
     # registrar's qResourceFeatureZstd() is undefined at link. Qt's own
     # resource pipeline passes --no-zstd when QT_FEATURE_zstd is off; the
     # framework's data/CMakeLists.txt invokes Qt6::rcc manually and does not.

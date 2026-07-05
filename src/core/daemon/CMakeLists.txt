@@ -30,8 +30,10 @@ target_include_directories(da_daemon_codec PUBLIC
 # fail-closed stubs (the WebSocket carrier in daemon_transport.cpp is the only wasm transport).
 # Android shares the stubs and the WebSocket-only posture: the flake's android Qt builds without
 # the ssl feature (no bundled OpenSSL, packaging/android/README.md), and an APK cannot spawn or
-# probe a local daemon anyway - it is a thin remote client exactly like the browser.
-if(DAEMON_APP_WASM OR ANDROID)
+# probe a local daemon anyway - it is a thin remote client exactly like the browser. iOS is the
+# same case: the flake's iOS Qt is static with no bundled OpenSSL and no `process` feature, and a
+# sandboxed .app cannot spawn/probe a local daemon - so it too rides the WebSocket-only stubs.
+if(DAEMON_APP_WASM OR ANDROID OR IOS)
     set(DA_DAEMON_PLATFORM_SOURCES
         daemon_transport_stream_wasm.cpp
         local_daemon_launcher_wasm.cpp

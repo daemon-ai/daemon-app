@@ -230,6 +230,45 @@ if(ANDROID)
     target_link_libraries(daemon-app PRIVATE kquicksyntaxhighlightingplugin)
 endif()
 
+# --- iOS bundle ----------------------------------------------------------
+# iOS is APPLE + mobile: Qt's iOS toolchain drives the .app + Info.plist
+# through the Xcode generator, so (unlike the desktop-macOS block above) we do
+# not point MACOSX_BUNDLE_INFO_PLIST at packaging/macos - Qt's default iOS
+# template launches the simulator fine (a custom plist only if it ever blocks
+# launch; see packaging/ios/README.md). Bundle id is the AppStream id
+# io.daemon.app, matching the macOS/Android identity.
+if(IOS)
+    set_target_properties(daemon-app PROPERTIES
+        MACOSX_BUNDLE ON
+        MACOSX_BUNDLE_GUI_IDENTIFIER "io.daemon.app"
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "io.daemon.app"
+    )
+
+    # MicroTeX's res tree ships INSIDE the (flat) .app so microtexResDir()
+    # resolves it app-dir-relative (applicationDirPath()/microtex-res - the
+    # existing candidate already covers the iOS layout). iOS bundles are flat,
+    # so stage each file with a per-file MACOSX_PACKAGE_LOCATION that preserves
+    # the tree under microtex-res/; Xcode copies them as bundle resources.
+    file(GLOB_RECURSE _da_ios_microtex_files RELATIVE "${MICROTEX_RES_DIR}"
+        "${MICROTEX_RES_DIR}/*")
+    foreach(_rel IN LISTS _da_ios_microtex_files)
+        get_filename_component(_reldir "${_rel}" DIRECTORY)
+        if(_reldir STREQUAL "")
+            set(_loc "microtex-res")
+        else()
+            set(_loc "microtex-res/${_reldir}")
+        endif()
+        set_source_files_properties("${MICROTEX_RES_DIR}/${_rel}" PROPERTIES
+            MACOSX_PACKAGE_LOCATION "${_loc}")
+    endforeach()
+    list(TRANSFORM _da_ios_microtex_files PREPEND "${MICROTEX_RES_DIR}/")
+    target_sources(daemon-app PRIVATE ${_da_ios_microtex_files})
+
+    # Static Qt: link the KSyntaxHighlighting QML plugin explicitly and
+    # register it via Q_IMPORT_QML_PLUGIN in main.cpp (same as Android).
+    target_link_libraries(daemon-app PRIVATE kquicksyntaxhighlightingplugin)
+endif()
+
 # Build dependency on the KSyntaxHighlighting QML plugin so its module is emitted
 # under QT_QML_OUTPUT_DIRECTORY before we run; main.cpp adds that dir to the
 # engine import path via DAEMON_APP_BUILD_QML_DIR.

@@ -357,8 +357,8 @@ void DaemonConnectionService::connectTo(const QString& mode, const QString& targ
     m_versionRespawnAttempted = false;
     emit configChanged();
 
-#if defined(Q_OS_WASM) || defined(Q_OS_ANDROID)
-    // The browser and Android builds have exactly one usable transport: the WebSocket mux
+#if defined(Q_OS_WASM) || defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    // The browser, Android and iOS builds have exactly one usable transport: the WebSocket mux
     // ("remote-ws"). Unix sockets, raw TLS TCP, and managed spawn do not exist there (both
     // compile the stubbed stream carriers) - refuse anything else up front instead of failing
     // deep inside a stubbed carrier.
@@ -434,8 +434,8 @@ void DaemonConnectionService::testConnection(const QString& mode, const QString&
     setTesting(true);
     bool ok = false;
     QString message;
-#if defined(Q_OS_WASM) || defined(Q_OS_ANDROID)
-    // Mirror connectTo()'s wasm/android gate so Test tells the same truth Connect would.
+#if defined(Q_OS_WASM) || defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    // Mirror connectTo()'s wasm/android/iOS gate so Test tells the same truth Connect would.
     if (mode != QStringLiteral("remote-ws")) {
         emit testResult(false,
                         tr("Only WebSocket connections (ws:// or wss://) work on this device"));

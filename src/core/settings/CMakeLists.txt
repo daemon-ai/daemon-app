@@ -32,8 +32,12 @@ target_link_libraries(da_settings_store
 # persists in the platform secret store; otherwise QtSettingsStore falls back to QSettings. The
 # static build never even looks: qtkeychain is a shared-Qt library (and would drag a DBus-linked
 # libsecret floor into the portable binary), so the QSettings fallback is the deliberate choice.
-if(DAEMON_APP_STATIC)
-    message(STATUS "daemon-app: static build; server-token store uses QSettings fallback")
+# Mobile (Android/iOS/wasm) is the same: no qtkeychain is built for those targets, and on the
+# static iOS link a stray host qtkeychain would be an ABI mismatch - and a keychain read would
+# spin a headless mock boot on an unanswerable prompt (see packaging/ios/README.md). QSettings
+# fallback it is.
+if(DAEMON_APP_STATIC OR DAEMON_APP_MOBILE)
+    message(STATUS "daemon-app: static/mobile build; server-token store uses QSettings fallback")
 else()
     find_package(Qt6Keychain QUIET)
 endif()
