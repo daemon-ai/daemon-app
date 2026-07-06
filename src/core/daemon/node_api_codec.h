@@ -222,6 +222,7 @@ struct DecodedAgentEvent {
     QString callId;             // ToolStarted / ToolFinished tool call id (CHA-3)
     QString toolArgs;           // ToolStarted args summary (CHA-3)
     bool toolOk = false;        // ToolFinished result ok (CHA-3)
+    QString toolSummary;        // ToolFinished full result content (wire `summary`; D1)
     QString detailKind;         // ToolStarted / ToolFinished structured detail kind (e.g. "todo")
     QByteArray detailBody;      // ToolStarted / ToolFinished structured detail payload (JSON)
     quint32 inputTokens = 0;    // Usage delta (CHA-3)
@@ -503,7 +504,9 @@ struct DecodedTranscriptBlock {
     QString toolName;      // ToolCall tool name
     QString argsSummary;   // ToolCall args summary
     bool ok = false;       // ToolResult ok
-    QString summary;       // ToolResult summary
+    QString summary;       // ToolResult summary (the full result content)
+    QString detailKind;    // ToolResult structured detail kind (D1; empty when absent)
+    QByteArray detailBody; // ToolResult structured detail payload (JSON bytes)
     quint32 requestId = 0; // Request host-request id
     QString hostKind;      // Request: "Approval"|"Input"|"Choice"|"Delegate"|"Spawn"
     QString contentKind;   // Content kind tag

@@ -602,6 +602,7 @@ DecodedAgentEvent decodeAgentEvent(const agent_event_r& ev) {
         const tool_result_view& result = ev.agent_event_tool_finished_m.ToolFinished_result;
         out.callId = fromZcbor(result.tool_result_view_call_id);
         out.toolOk = result.tool_result_view_ok;
+        out.toolSummary = fromZcbor(result.tool_result_view_summary);
         if (result.tool_result_view_detail_present &&
             result.tool_result_view_detail.tool_result_view_detail_choice ==
                 tool_result_view_detail_r::tool_result_view_detail_tool_detail_m_c) {
@@ -819,6 +820,16 @@ DecodedTranscriptBlock decodeTranscriptBlock(const transcript_block_r& block) {
         out.callId = fromZcbor(t.ToolResult_call_id);
         out.ok = t.ToolResult_ok;
         out.summary = fromZcbor(t.ToolResult_summary);
+        // D1: the durable journal retains the tool's typed detail (same shape as the live
+        // ToolFinished view) - carry it so a re-baseline replay renders the same rich card.
+        // (The ToolCall block's detail is just the args echo; deliberately not decoded.)
+        if (t.ToolResult_detail_present &&
+            t.ToolResult_detail.ToolResult_detail_choice ==
+                ToolResult_detail_r::ToolResult_detail_tool_detail_m_c) {
+            const tool_detail& d = t.ToolResult_detail.ToolResult_detail_tool_detail_m;
+            out.detailKind = fromZcbor(d.tool_detail_kind);
+            out.detailBody = bytesFromZcbor(d.tool_detail_body);
+        }
         break;
     }
     case transcript_block_r::transcript_block_request_m_c: {
