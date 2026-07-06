@@ -49,6 +49,11 @@ void DaemonApprovalsInbox::rebuild() {
 
 void DaemonApprovalsInbox::approve(const QString& id) {
     if (m_repository != nullptr) {
+        // The durable ApprovalDecide path carries an optional `allow_permanent` (wire v28), but the
+        // inbox surfaces only approve/deny — there is no "allow permanently" affordance here, so we
+        // never set it (it stays absent = one-shot allow). The inline transcript ToolApprovalBar is
+        // the only surface that exposes "allow permanently" today; wiring the inbox is a follow-up
+        // if that affordance is ever added to the inbox UI.
         m_repository->decide(m_sessionByRequest.value(id), id, /*allow=*/true);
     }
 }

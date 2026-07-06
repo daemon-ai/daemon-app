@@ -175,9 +175,19 @@ private slots:
         QCOMPARE(turn.turnState(), QStringLiteral("idle"));
     }
 
-    // CHA-4 (mock seam): respondApproval() maps onto the approval gate's resume().
-    void approvalPromptResumesViaRespondApproval() {
+    // CHA-4 (mock seam): respondApproval(allow) resumes the gate AND the simulator
+    // emits the gated tool's OWN toolFinished (ok + stdout) — render honesty (#2):
+    // the tool result comes from the engine's event stream, never fabricated by a
+    // front-end answer handler.
+    void approvalAllowSelfEmitsOkToolFinished() {
         TurnController turn;
+        QList<QVariantMap> events;
+        QObject::connect(&turn, &TurnController::eventsEmitted, &turn,
+                         [&events](const QVariantList& batch) {
+                             for (const QVariant& v : batch) {
+                                 events.append(v.toMap());
+                             }
+                         });
         QSignalSpy awaitSpy(&turn, &TurnController::awaitingInput);
         QSignalSpy finished(&turn, &TurnController::turnFinished);
 
@@ -189,6 +199,52 @@ private slots:
         QVERIFY(finished.wait(5000));
         QVERIFY(!turn.active());
         QCOMPARE(turn.turnState(), QStringLiteral("idle"));
+
+        bool sawOkFinish = false;
+        for (const QVariantMap& e : events) {
+            if (e.value(QStringLiteral("type")).toString() == QStringLiteral("toolFinished") &&
+                e.value(QStringLiteral("callId")).toString() == QStringLiteral("sim-approve")) {
+                sawOkFinish =
+                    e.value(QStringLiteral("status")).toString() == QStringLiteral("ok") &&
+                    !e.value(QStringLiteral("stdout")).toString().isEmpty();
+            }
+        }
+        QVERIFY2(sawOkFinish, "the simulator must emit its own ok toolFinished for the gated tool");
+    }
+
+    // respondApproval(deny) emits an error toolFinished for the gated tool (never
+    // a fabricated success) and still settles the turn.
+    void approvalDenyEmitsErrorToolFinished() {
+        TurnController turn;
+        QList<QVariantMap> events;
+        QObject::connect(&turn, &TurnController::eventsEmitted, &turn,
+                         [&events](const QVariantList& batch) {
+                             for (const QVariant& v : batch) {
+                                 events.append(v.toMap());
+                             }
+                         });
+        QSignalSpy awaitSpy(&turn, &TurnController::awaitingInput);
+        QSignalSpy finished(&turn, &TurnController::turnFinished);
+
+        turn.start(QStringLiteral("please approve the command"));
+        QVERIFY(awaitSpy.wait(5000));
+        QVERIFY(turn.paused());
+
+        turn.respondApproval(QStringLiteral("sim-approve"), false);
+        QVERIFY(finished.wait(5000));
+
+        bool sawErrorFinish = false;
+        bool sawOkFinish = false;
+        for (const QVariantMap& e : events) {
+            if (e.value(QStringLiteral("type")).toString() == QStringLiteral("toolFinished") &&
+                e.value(QStringLiteral("callId")).toString() == QStringLiteral("sim-approve")) {
+                const QString status = e.value(QStringLiteral("status")).toString();
+                sawErrorFinish = sawErrorFinish || status == QStringLiteral("error");
+                sawOkFinish = sawOkFinish || status == QStringLiteral("ok");
+            }
+        }
+        QVERIFY(sawErrorFinish);
+        QVERIFY(!sawOkFinish); // a denied tool is never reported as ok
     }
 
     // cancel() stops an in-flight turn and resets to idle without emitting finish.

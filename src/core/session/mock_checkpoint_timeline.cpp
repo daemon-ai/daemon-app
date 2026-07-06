@@ -19,8 +19,9 @@ QVariantMap mk(const QString& id, const QString& label, const QString& time, int
 
 } // namespace
 
-MockCheckpointTimeline::MockCheckpointTimeline(QObject* parent)
-    : ICheckpointTimeline(parent), m_checkpoints(new uimodels::VariantListModel(this)) {
+MockCheckpointTimeline::MockCheckpointTimeline(QObject* parent, bool seedDemo)
+    : ICheckpointTimeline(parent), m_checkpoints(new uimodels::VariantListModel(this)),
+      m_seedDemo(seedDemo) {
     // Seed the initial (default) session so the panel has content before any
     // session id is bound.
     ensureSession(m_sessionId);
@@ -45,7 +46,9 @@ QList<QVariantMap> MockCheckpointTimeline::seedRows() {
 
 void MockCheckpointTimeline::ensureSession(const QString& id) {
     if (!m_rowsBySession.contains(id)) {
-        m_rowsBySession.insert(id, seedRows());
+        // Daemon mode (m_seedDemo=false): a freshly-seen session starts with an empty timeline
+        // rather than fabricated rewind points (no checkpoint wire op exists yet).
+        m_rowsBySession.insert(id, m_seedDemo ? seedRows() : QList<QVariantMap>{});
         m_nextIdBySession.insert(id, 5);
     }
 }

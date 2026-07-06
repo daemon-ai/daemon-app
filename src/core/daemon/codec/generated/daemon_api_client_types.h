@@ -182,9 +182,21 @@ struct origin_scope_t_r {
 	} origin_scope_t_choice;
 };
 
+struct origin_sender_r {
+	union {
+		struct zcbor_string origin_sender_sender_id_m;
+	};
+	enum {
+		origin_sender_sender_id_m_c,
+		origin_sender_null_m_c,
+	} origin_sender_choice;
+};
+
 struct origin {
 	struct zcbor_string origin_transport;
 	struct origin_scope_t_r origin_scope;
+	struct origin_sender_r origin_sender;
+	bool origin_sender_present;
 };
 
 struct Submit_origin_r {
@@ -226,8 +238,14 @@ struct request_poll {
 	uint32_t Poll_max;
 };
 
+struct Approved_allow_permanent {
+	bool Approved_allow_permanent;
+};
+
 struct host_response_body_approved {
-	bool host_response_body_approved_Approved;
+	bool Approved_approved;
+	struct Approved_allow_permanent Approved_allow_permanent;
+	bool Approved_allow_permanent_present;
 };
 
 struct host_response_body_input {
@@ -599,10 +617,16 @@ struct request_approvals_pending {
 	bool ApprovalsPending_after_present;
 };
 
+struct ApprovalDecide_allow_permanent {
+	bool ApprovalDecide_allow_permanent;
+};
+
 struct request_approval_decide {
 	struct zcbor_string ApprovalDecide_session;
 	struct zcbor_string ApprovalDecide_request_id;
 	bool ApprovalDecide_allow;
+	struct ApprovalDecide_allow_permanent ApprovalDecide_allow_permanent;
+	bool ApprovalDecide_allow_permanent_present;
 };
 
 struct request_profile_get {
@@ -775,6 +799,16 @@ struct files_tstrtstr {
 	struct zcbor_string files_tstrtstr;
 };
 
+struct skill_bundle_signature_r {
+	union {
+		struct zcbor_string skill_bundle_signature_tstr;
+	};
+	enum {
+		skill_bundle_signature_tstr_c,
+		skill_bundle_signature_null_m_c,
+	} skill_bundle_signature_choice;
+};
+
 struct skill_bundle {
 	struct zcbor_string skill_bundle_name;
 	union {
@@ -786,6 +820,8 @@ struct skill_bundle {
 	} skill_bundle_category_choice;
 	struct files_tstrtstr files_tstrtstr[64];
 	size_t files_tstrtstr_count;
+	struct skill_bundle_signature_r skill_bundle_signature;
+	bool skill_bundle_signature_present;
 };
 
 struct distribution_head_seq_r {
@@ -1384,6 +1420,10 @@ struct request_session_get {
 struct request_session_search {
 	struct zcbor_string SessionSearch_query;
 	uint32_t SessionSearch_limit;
+};
+
+struct request_session_recap {
+	struct zcbor_string SessionRecap_session;
 };
 
 struct session_meta_patch_title_r {
@@ -2797,6 +2837,7 @@ struct api_request_r {
 		struct request_sessions_query api_request_request_sessions_query_m;
 		struct request_session_get api_request_request_session_get_m;
 		struct request_session_search api_request_request_session_search_m;
+		struct request_session_recap api_request_request_session_recap_m;
 		struct request_session_update_meta api_request_request_session_update_meta_m;
 		struct request_rewind api_request_request_rewind_m;
 		struct request_acp_register api_request_request_acp_register_m;
@@ -2946,6 +2987,7 @@ struct api_request_r {
 		api_request_request_sessions_query_m_c,
 		api_request_request_session_get_m_c,
 		api_request_request_session_search_m_c,
+		api_request_request_session_recap_m_c,
 		api_request_request_session_update_meta_m_c,
 		api_request_request_rewind_m_c,
 		api_request_request_acp_discover_m_c,
@@ -3321,8 +3363,14 @@ struct outbound_event {
 	struct agent_event_r outbound_event_Event;
 };
 
+struct Approval_allow_permanent_offered {
+	bool Approval_allow_permanent_offered;
+};
+
 struct host_request_kind_approval {
 	struct zcbor_string Approval_prompt;
+	struct Approval_allow_permanent_offered Approval_allow_permanent_offered;
+	bool Approval_allow_permanent_offered_present;
 };
 
 struct host_request_kind_input {
@@ -3569,12 +3617,24 @@ struct approval_info_path_r {
 	} approval_info_path_choice;
 };
 
+struct approval_info_fingerprint_r {
+	union {
+		struct zcbor_string approval_info_fingerprint_tstr;
+	};
+	enum {
+		approval_info_fingerprint_tstr_c,
+		approval_info_fingerprint_null_m_c,
+	} approval_info_fingerprint_choice;
+};
+
 struct approval_info {
 	struct zcbor_string approval_info_session;
 	struct zcbor_string approval_info_request_id;
 	struct zcbor_string approval_info_prompt;
 	struct approval_info_path_r approval_info_path;
 	bool approval_info_path_present;
+	struct approval_info_fingerprint_r approval_info_fingerprint;
+	bool approval_info_fingerprint_present;
 };
 
 struct approval_page_next_r {
@@ -4271,6 +4331,16 @@ struct installed_model_mmproj_path_r {
 	} installed_model_mmproj_path_choice;
 };
 
+struct installed_model_sha256_r {
+	union {
+		struct zcbor_string installed_model_sha256_tstr;
+	};
+	enum {
+		installed_model_sha256_tstr_c,
+		installed_model_sha256_null_m_c,
+	} installed_model_sha256_choice;
+};
+
 struct installed_model {
 	struct zcbor_string installed_model_id;
 	struct model_ref installed_model_model;
@@ -4293,6 +4363,8 @@ struct installed_model {
 	bool installed_model_file_type_present;
 	struct installed_model_mmproj_path_r installed_model_mmproj_path;
 	bool installed_model_mmproj_path_present;
+	struct installed_model_sha256_r installed_model_sha256;
+	bool installed_model_sha256_present;
 };
 
 struct response_model_catalog {
@@ -4926,6 +4998,52 @@ struct session_search_hit {
 struct response_session_search {
 	struct session_search_hit response_session_search_SessionSearch_session_search_hit_m[64];
 	size_t response_session_search_SessionSearch_session_search_hit_m_count;
+};
+
+struct top_tools_name_l {
+	struct zcbor_string top_tools_name_l_name;
+	uint32_t top_tools_name_l_count;
+};
+
+struct session_recap {
+	union {
+		struct zcbor_string session_recap_title_tstr;
+	};
+	enum {
+		session_recap_title_tstr_c,
+		session_recap_title_null_m_c,
+	} session_recap_title_choice;
+	uint32_t session_recap_user_turns;
+	uint32_t session_recap_assistant_turns;
+	uint32_t session_recap_tool_results;
+	struct top_tools_name_l top_tools_name_l[64];
+	size_t top_tools_name_l_count;
+	struct zcbor_string session_recap_files_touched_tstr[64];
+	size_t session_recap_files_touched_tstr_count;
+	union {
+		struct zcbor_string session_recap_last_ask_tstr;
+	};
+	enum {
+		session_recap_last_ask_tstr_c,
+		session_recap_last_ask_null_m_c,
+	} session_recap_last_ask_choice;
+	union {
+		struct zcbor_string session_recap_last_reply_tstr;
+	};
+	enum {
+		session_recap_last_reply_tstr_c,
+		session_recap_last_reply_null_m_c,
+	} session_recap_last_reply_choice;
+};
+
+struct response_session_recap {
+	union {
+		struct session_recap response_session_recap_SessionRecap_session_recap_m;
+	};
+	enum {
+		response_session_recap_SessionRecap_session_recap_m_c,
+		response_session_recap_SessionRecap_null_m_c,
+	} response_session_recap_SessionRecap_choice;
 };
 
 struct response_acp_catalog {
@@ -5832,6 +5950,7 @@ struct api_response_r {
 		struct response_session_page api_response_response_session_page_m;
 		struct response_session_detail api_response_response_session_detail_m;
 		struct response_session_search api_response_response_session_search_m;
+		struct response_session_recap api_response_response_session_recap_m;
 		struct response_acp_catalog api_response_response_acp_catalog_m;
 		struct response_providers api_response_response_providers_m;
 		struct response_tools api_response_response_tools_m;
@@ -5919,6 +6038,7 @@ struct api_response_r {
 		api_response_response_session_page_m_c,
 		api_response_response_session_detail_m_c,
 		api_response_response_session_search_m_c,
+		api_response_response_session_recap_m_c,
 		api_response_response_acp_catalog_m_c,
 		api_response_response_providers_m_c,
 		api_response_response_tools_m_c,

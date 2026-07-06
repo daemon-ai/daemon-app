@@ -48,6 +48,10 @@ QVariantMap makeRow(const QString& section, const QString& sectionLabel, const Q
 
 QString rowValueText(const QVariantMap& row) {
     const QString type = row.value(QStringLiteral("type")).toString();
+    if (type == QLatin1String("managed")) {
+        // A read-only, node-owned setting: no app value, shown as non-editable.
+        return TuiPageHub::tr("_node-controlled_");
+    }
     if (type == QLatin1String("toggle")) {
         return row.value(QStringLiteral("value")).toBool() ? TuiPageHub::tr("on")
                                                            : TuiPageHub::tr("off");
@@ -178,6 +182,17 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
         }
         return row;
     };
+    // A node-owned setting shown read-only (no seam, no write): the node enforces
+    // it and the app has no wire setter, so it must not appear editable. Declined
+    // by applySettingsValue/Toggle (empty seam) and by TuiSettingsEditor (unknown
+    // type), mirroring the GUI's disabled + annotated SettingRow.
+    const auto configManaged = [](const QString& section, const QString& sectionLabel,
+                                  const char* key, const QString& label) {
+        QVariantMap row = makeRow(section, sectionLabel, QString::fromLatin1(key), label,
+                                  QStringLiteral("managed"), QString(), QVariant());
+        row.insert(QStringLiteral("note"), TuiPageHub::tr("enforced by the node, not set here"));
+        return row;
+    };
 
     // Model - ModelSettingsSection.qml's inference knobs (IDaemonConfig). The
     // default model itself is read-only context (picked in the Models hub).
@@ -196,13 +211,15 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
     rows << configText(chat, chatLabel, "chat/systemPrompt",
                        tr("Default system prompt for new chats"), false);
 
-    // Safety - SafetySettingsSection.qml (IDaemonConfig).
+    // Safety - SafetySettingsSection.qml. Safety posture is owned + enforced by
+    // the node: approval policy lives in the per-session session settings
+    // (SetSessionMode -> SessionOverlay.approval_mode; see the section context
+    // line), and the filesystem sandbox / network egress have no app-facing wire
+    // setter — so these are shown read-only (node-controlled), never written here.
     const QString safety = QStringLiteral("safety");
     const QString safetyLabel = tr("Safety");
-    rows << configChoice(safety, safetyLabel, "safety/approvalPolicy", tr("Approval policy"));
-    rows << configChoice(safety, safetyLabel, "safety/sandbox", tr("Filesystem access"));
-    rows << configToggle(safety, safetyLabel, "safety/allowNetwork", tr("Allow network access"),
-                         false);
+    rows << configManaged(safety, safetyLabel, "safety/sandbox", tr("Filesystem access"));
+    rows << configManaged(safety, safetyLabel, "safety/allowNetwork", tr("Allow network access"));
 
     // Memory & Context - MemorySettingsSection.qml (IDaemonConfig).
     const QString memory = QStringLiteral("memory");
@@ -294,6 +311,9 @@ QString TuiPageHub::buildSettingsMarkdown(int sel) const {
                 md += tr("- Active default: `%1` — _change or install in the Models page "
                          "(`/models`)_\n")
                           .arg(current.isEmpty() ? QStringLiteral("-") : current);
+            } else if (section == QLatin1String("safety")) {
+                md += tr("- Approval policy is set per session (composer session settings) — "
+                         "_enforced by the node there_\n");
             }
         }
         md += QStringLiteral("- ") + mark(i) + row.value(QStringLiteral("label")).toString() +

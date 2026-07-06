@@ -25,20 +25,12 @@ void InteractiveTurnHost::onApprovalDecided(const QString& callId, const QString
     if (id == 0) {
         return;
     }
-    // Clear the approval gate (shared patch contract).
+    // Clear the approval gate (shared patch contract) and stop. The tool's RESULT
+    // is never fabricated here: in daemon mode the only completion rendered is the
+    // node's real ToolFinished stream event; in mock mode the TurnController emits
+    // its own scripted toolFinished from respondApproval. Both arrive through the
+    // shared turn-event ingest, not from this host.
     m_doc->updateBlockMetadata(id, be::toolApprovalPatch(decision));
-
-    // An approval drives the dangerous tool to a finished ok state, mirroring the
-    // QML mock host (a denial leaves it in the error state toolApprovalPatch set).
-    if (decision == QStringLiteral("approved")) {
-        QVariantMap done;
-        done.insert(QStringLiteral("status"), QStringLiteral("ok"));
-        done.insert(QStringLiteral("durationMs"), 1400);
-        done.insert(QStringLiteral("detailKind"), QStringLiteral("ansi-stream"));
-        done.insert(QStringLiteral("stdout"),
-                    tr("\u001b[32m\u2713\u001b[0m approved \u2014 command finished\n"));
-        m_doc->updateBlockMetadata(id, done);
-    }
     emit documentChanged();
 }
 

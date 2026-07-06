@@ -5,6 +5,7 @@
 
 #include "daemon/daemon_cache_store.h"
 
+#include <optional>
 #include <QByteArray>
 #include <QList>
 #include <QMap>
@@ -260,6 +261,10 @@ struct DecodedLogEntry {
     QString hostKind; // "Approval" | "Input" | "Choice" | "Delegate" | "Spawn"
     QString hostPrompt;
     QStringList hostOptions; // Choice options
+    // Approval only (wire v28): the node offered an "allow permanently" resolution for this gate.
+    // Drives the inline "Allow permanently" affordance's visibility — the app never shows it unless
+    // the node advertised it here.
+    bool hostAllowPermanentOffered = false;
 };
 
 // A pending approval (ApprovalsPending -> Approvals). request_id is a STRING here (the aggregate
@@ -672,6 +677,17 @@ public:
     // Decode a SessionCreated response into the node-minted/accepted session id.
     static bool decodeSessionCreated(const QByteArray& responseCbor, QString* outId);
 
+    // Patch a session's node-owned metadata (SessionUpdateMeta{session, patch} -> Ok). Each
+    // optional is Some(value) = set that field, std::nullopt = leave it untouched (the key is
+    // omitted from the SessionMetaPatch map). The node persists the change, replies Ok, and emits
+    // SessionMetaChanged so the roster re-projects from the authoritative row - the app never
+    // caches-and-mutates the pin/archive/title state locally. (Only the value arm is ever sent;
+    // clearing a title via the wire's `null` arm is not a current UI affordance.)
+    [[nodiscard]] static QByteArray encodeSessionUpdateMetaRequest(const QString& sessionId,
+                                                                   std::optional<bool> pinned,
+                                                                   std::optional<bool> archived,
+                                                                   std::optional<QString> title);
+
     // Onboarding (CON-4 / CON-6): credentials + model discovery/selection.
     // Store a provider secret under `profile` (CredentialSet -> Ok). The secret never returns.
     [[nodiscard]] static QByteArray encodeCredentialSetRequest(const QString& profile,
@@ -780,8 +796,12 @@ public:
 
     // --- HITL (CHA-4 / CHA-5) ---
     // Resolve a parked Approval HostRequest (request_id from the stream) with allow/deny.
+    // `allowPermanent` (wire v28) rides the inline `Approved{ approved, ? allow_permanent }` body:
+    // when true the node adds the approved command's fingerprint to a per-session allow-list. Only
+    // send it for a gate the node marked `allow_permanent_offered`; false leaves the field absent.
     [[nodiscard]] static QByteArray encodeRespondApprovalRequest(const QString& sessionId,
-                                                                 quint32 requestId, bool allow);
+                                                                 quint32 requestId, bool allow,
+                                                                 bool allowPermanent = false);
     // Resolve a parked Input (clarify free-text) HostRequest.
     [[nodiscard]] static QByteArray
     encodeRespondInputRequest(const QString& sessionId, quint32 requestId, const QString& text);
@@ -903,7 +923,7 @@ public:
     // contract version moves. The server advertises its own version as the "api/<N>" Hello
     // feature; the connection service compares the two at connect and replaces (app-managed) or
     // refuses (attach) a mismatched daemon instead of silently serving stale wire shapes.
-    static constexpr quint32 kDaemonApiVersion = 27;
+    static constexpr quint32 kDaemonApiVersion = 28;
     // The wire page bound (daemon-api WIRE_PAGE_MAX): a paged response carries at most this many
     // array elements per page — the generated codec decodes into fixed 64-element buffers — so
     // clients loop on the page cursors instead of ever asking for more per response.

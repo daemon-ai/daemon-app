@@ -149,6 +149,19 @@ target_link_libraries(tst_connection_service
 add_test(NAME tst_connection_service COMMAND tst_connection_service)
 set_tests_properties(tst_connection_service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_approval_wire: the #3 "allow permanently" plumbing (wire v28) - encodeRespondApprovalRequest
+# rides the optional Approved.allow_permanent only for an allow that chose it, decoded back with the
+# vendored codec's public request decoder to assert the on-wire fields.
+qt_add_executable(tst_approval_wire tst_approval_wire.cpp)
+target_link_libraries(tst_approval_wire
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+)
+add_test(NAME tst_approval_wire COMMAND tst_approval_wire)
+set_tests_properties(tst_approval_wire PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_daemon_integration: guards the daemon thin-client scaffolding - Unix-socket
 # frame parsing, durable cache schema expectations, and first-slice ordering.
 qt_add_executable(tst_daemon_integration tst_daemon_integration.cpp)
@@ -282,6 +295,21 @@ target_link_libraries(tst_daemon_fleet_tree
 )
 add_test(NAME tst_daemon_fleet_tree COMMAND tst_daemon_fleet_tree)
 set_tests_properties(tst_daemon_fleet_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_daemon_roster_dashboard: the Phase 5 daemon-backed roster + dashboard seams - offline-first
+# roster projected from the CachedSessionStore, the client-local suspend overlay + close->archive,
+# and the dashboard counters derived from roster/fleet/approvals/connection.
+qt_add_executable(tst_daemon_roster_dashboard tst_daemon_roster_dashboard.cpp)
+target_link_libraries(tst_daemon_roster_dashboard
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::fleet
+        daemon-app::uimodels
+)
+add_test(NAME tst_daemon_roster_dashboard COMMAND tst_daemon_roster_dashboard)
+set_tests_properties(tst_daemon_roster_dashboard PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_daemon_fs_service: the Phase 4 daemon-backed filesystem seam - DaemonFsService over the fs_*
 # codec facade (roots/list/read/write round-trip + the bstr content fix) and the lossless watch path

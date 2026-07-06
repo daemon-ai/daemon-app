@@ -27,21 +27,23 @@ QVariantMap mk(const QString& id, const QString& name, const QString& schedule,
 
 } // namespace
 
-MockCronStore::MockCronStore(QObject* parent)
+MockCronStore::MockCronStore(QObject* parent, bool seedDemo)
     : ICronStore(parent), m_jobs(new uimodels::VariantListModel(this)) {
-    m_jobs->upsert(mk(QStringLiteral("c-1"), QStringLiteral("Morning briefing"),
-                      QStringLiteral("0 8 * * *"), QStringLiteral("Researcher"),
-                      QStringLiteral("Summarize overnight news and my calendar."),
-                      QStringLiteral("tomorrow 08:00"), QStringLiteral("today 08:00"), true));
-    m_jobs->upsert(mk(QStringLiteral("c-2"), QStringLiteral("Nightly repo digest"),
-                      QStringLiteral("0 22 * * 1-5"), QStringLiteral("Coder"),
-                      QStringLiteral("Summarize today's commits and open PRs."),
-                      QStringLiteral("today 22:00"), QStringLiteral("yesterday 22:00"), true));
-    m_jobs->upsert(mk(QStringLiteral("c-3"), QStringLiteral("Weekly cleanup"),
-                      QStringLiteral("0 3 * * 0"), QStringLiteral("General Assistant"),
-                      QStringLiteral("Archive stale sessions."), QStringLiteral("Sun 03:00"),
-                      QStringLiteral("—"), false));
-    m_nextId = 4;
+    if (seedDemo) {
+        m_jobs->upsert(mk(QStringLiteral("c-1"), QStringLiteral("Morning briefing"),
+                          QStringLiteral("0 8 * * *"), QStringLiteral("Researcher"),
+                          QStringLiteral("Summarize overnight news and my calendar."),
+                          QStringLiteral("tomorrow 08:00"), QStringLiteral("today 08:00"), true));
+        m_jobs->upsert(mk(QStringLiteral("c-2"), QStringLiteral("Nightly repo digest"),
+                          QStringLiteral("0 22 * * 1-5"), QStringLiteral("Coder"),
+                          QStringLiteral("Summarize today's commits and open PRs."),
+                          QStringLiteral("today 22:00"), QStringLiteral("yesterday 22:00"), true));
+        m_jobs->upsert(mk(QStringLiteral("c-3"), QStringLiteral("Weekly cleanup"),
+                          QStringLiteral("0 3 * * 0"), QStringLiteral("General Assistant"),
+                          QStringLiteral("Archive stale sessions."), QStringLiteral("Sun 03:00"),
+                          QStringLiteral("—"), false));
+        m_nextId = 4;
+    }
 
     // Restore the last-known snapshot over the seed (no-op on first run).
     const QJsonObject cached = appcache::loadObject(kCacheFile);

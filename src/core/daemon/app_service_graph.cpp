@@ -14,12 +14,14 @@
 #include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/daemon_dashboard.h"
 #include "daemon/daemon_fleet_tree.h"
 #include "daemon/daemon_fs_service.h"
 #include "daemon/daemon_model_catalog.h"
 #include "daemon/daemon_presence_service.h"
 #include "daemon/daemon_profile_store.h"
 #include "daemon/daemon_provider_catalog.h"
+#include "daemon/daemon_session_roster.h"
 #include "daemon/daemon_session_settings.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/daemon_transport_registry.h"
@@ -107,16 +109,23 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.approvals = new fleet::MockApprovalsInbox(owner);
     graph.dashboard =
         new fleet::MockDashboard(graph.roster, graph.fleetTree, graph.approvals, owner);
-    graph.routing = new automation::MockRoutingStore(owner);
-    graph.cron = new automation::MockCronStore(owner);
+    // Routing / cron / checkpoints have NO node wire op yet (the daemon-api codec subset carries
+    // none), so in Daemon mode they must render EMPTY rather than pass their illustrative demo rows
+    // off as node-backed data (render honesty; see seam_migration.h). Mock mode keeps the demo
+    // seed. The IDaemonConfig Phase-4 DECISION is the sibling precedent: node-unsupported seams
+    // stay mock but never masquerade as authority.
+    const bool seedMockDemo = mode != ServiceMode::Daemon;
+    graph.routing = new automation::MockRoutingStore(owner, seedMockDemo);
+    graph.cron = new automation::MockCronStore(owner, seedMockDemo);
     // Transport-adapter seams (daemon-transport-adapter-spec.md): inert mocks until a daemon
     // adapter decodes transport_adapters / transport_instances. The registry advertises the
     // existing adapter families for the "Add channel" picker; presence reports offline/unknown.
     graph.transportRegistry = new transports::MockTransportRegistry(owner);
     graph.presence = new transports::MockPresenceService(owner);
     // sessionSettings is constructed per-mode below (the daemon variant needs nodeApi to send
-    // SetSessionMode); checkpoints is mock in both.
-    graph.checkpoints = new session::MockCheckpointTimeline(owner);
+    // SetSessionMode); checkpoints is mock in both, but empty-seeded in Daemon mode (no checkpoint
+    // wire op yet - the timeline renders empty rather than fabricated rewind points).
+    graph.checkpoints = new session::MockCheckpointTimeline(owner, seedMockDemo);
     graph.cache = new DaemonCacheStore(QString(), owner);
     // The WhoAmI / principal model (advisory capability gating). Always present; populated from
     // AuthOk in daemon mode and cleared on disconnect.
@@ -192,13 +201,18 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             new transports::DaemonTransportRegistry(graph.transportRepository, owner);
         delete graph.presence;
         graph.presence = new transports::DaemonPresenceService(graph.transportRepository, owner);
-        // Rebuild the (still mock) dashboard over the FINAL seam pointers: the replacements above
-        // deleted the mock fleet tree and swapped the approvals inbox, so the dashboard built at
-        // the top would keep observing a dangling fleet tree — a confirmed use-after-free (SIGSEGV
-        // in MockDashboard::runningAgents() when the Dashboard page opens).
+        // Daemon-backed, offline-first session roster + dashboard (replaces the mock pair). The
+        // roster projects the (offline-first) CachedSessionStore; the dashboard derives its
+        // counters from the FINAL seam pointers (DaemonFleetTree + DaemonApprovalsInbox) and its
+        // health from the connection. Delete the mock dashboard FIRST (it observes the mock roster
+        // + the now-swapped fleet tree), then the mock roster, then build the daemon pair over the
+        // final pointers — otherwise the mock dashboard keeps a dangling fleet-tree pointer (a
+        // confirmed use-after-free / SIGSEGV in MockDashboard::runningAgents()).
         delete graph.dashboard;
-        graph.dashboard =
-            new fleet::MockDashboard(graph.roster, graph.fleetTree, graph.approvals, owner);
+        delete graph.roster;
+        graph.roster = new fleet::DaemonSessionRoster(graph.store, owner);
+        graph.dashboard = new fleet::DaemonDashboard(graph.roster, graph.fleetTree, graph.approvals,
+                                                     graph.connection, owner);
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
         // provider/model step and the shell reflect the daemon end-to-end. Fire only on the
         // transition INTO ready: stateChanged also fires for statusMessage churn (e.g. the
@@ -259,14 +273,16 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // Daemon mode is partially live: be explicit so testers/operators don't read it as a fully
         // daemon-backed app. Live now: connection (Health), sessions (SessionsQuery), accounts
         // (CredentialSet/List), modelCatalog (Models/ModelCurrent). Still mock below.
-        qInfo().noquote() << "AppServiceGraph: ServiceMode::Daemon - live seams: connection, "
-                             "sessions(cache), accounts(credentials), modelCatalog(models), "
-                             "profiles, approvals(ApprovalsPending/Decide), "
-                             "sessionSettings(SetSessionMode), fs(fs_*), fleetTree(Tree), "
-                             "transports/presence(TransportAdapters/Instances+ConvList); "
-                             "still mock: daemonConfig, memory, daemonNet (Integrations seeded "
-                             "empty unless DAEMON_APP_MOCK_INTEGRATIONS), roster/dashboard, "
-                             "routing/cron, checkpoints.";
+        qInfo().noquote()
+            << "AppServiceGraph: ServiceMode::Daemon - live seams: connection, "
+               "sessions(cache; pin/archive/title via SessionUpdateMeta), "
+               "accounts(credentials), modelCatalog(models), profiles, "
+               "approvals(ApprovalsPending/Decide), sessionSettings(SetSessionMode), fs(fs_*), "
+               "fleetTree(Tree), roster/dashboard(offline-first over cache/fleet/approvals), "
+               "transports/presence(TransportAdapters/Instances+ConvList); "
+               "still mock: daemonConfig, memory, daemonNet (Integrations seeded empty unless "
+               "DAEMON_APP_MOCK_INTEGRATIONS); node-blocked (NO wire op yet - rendered EMPTY, not "
+               "mock demo data): routing, cron, checkpoints.";
     } else {
         // Mock mode: a non-persisted in-memory store re-seeded fresh from the unified DaemonNet
         // each run (deterministic, always matches the current seed - no stale-db drift). The

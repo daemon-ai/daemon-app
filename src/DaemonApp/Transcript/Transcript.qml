@@ -245,16 +245,15 @@ Rectangle {
         }
 
         function onToolApprovalAnswered(blockId, callId, decision, permanent) {
+            // Forward the decision to the bound turn engine; the gate itself was
+            // already cleared by EditorController via the shared toolApprovalPatch
+            // contract. The tool's RESULT is never fabricated here: in daemon mode
+            // the only completion rendered is the node's real ToolFinished stream
+            // event; the mock engine emits its own scripted toolFinished from
+            // respondApproval. When no turn is live (a gate in a loaded transcript)
+            // there is no result to show — the bar simply clears.
             if (root.turn && root.turn.active) {
-                root.turn.respondApproval(callId, decision === "approved")
-            }
-            if (decision === "approved") {
-                editor.updateTypedBlock(blockId, {
-                    status: "ok",
-                    durationMs: 1400,
-                    detailKind: "ansi-stream",
-                    stdout: "\u001b[32m\u2713\u001b[0m approved — command finished\n"
-                })
+                root.turn.respondApproval(callId, decision === "approved", permanent === true)
             }
         }
 

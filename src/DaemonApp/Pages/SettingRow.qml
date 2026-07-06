@@ -23,7 +23,9 @@ RowLayout {
             text: root.label
             font.family: FontIcons.display
             font.pixelSize: 14
-            color: Theme.text
+            // A disabled row (a node-owned setting shown read-only) mutes its
+            // title so it reads as non-editable, not just as a caption.
+            color: root.enabled ? Theme.text : Theme.textMuted
             Layout.fillWidth: true
         }
         Text {

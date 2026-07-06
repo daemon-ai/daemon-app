@@ -160,9 +160,9 @@ private slots:
                                      {},
                                  });
 
-        QVERIFY(selectRow(hub, QStringLiteral("safety/approvalPolicy")) > 0);
-        QVERIFY(config.value(QStringLiteral("safety/approvalPolicy")).toString() !=
-                QStringLiteral("Always"));
+        QVERIFY(selectRow(hub, QStringLiteral("model/effort")) > 0);
+        QVERIFY(config.value(QStringLiteral("model/effort")).toString() !=
+                QStringLiteral("Thorough"));
 
         // The hub declines Enter on a choice row; the editor opens the picker.
         Tui::ZKeyEvent enter(Qt::Key_Enter, Qt::NoModifier, QString());
@@ -170,16 +170,63 @@ private slots:
         QVERIFY(editor.handleKey(&enter));
         settle();
 
-        // Type to filter the palette to "Always", then Enter commits it.
-        Tui::ZTest::sendText(&terminal, QStringLiteral("Always"), Qt::NoModifier);
+        // Type to filter the palette to "Thorough", then Enter commits it.
+        Tui::ZTest::sendText(&terminal, QStringLiteral("Thorough"), Qt::NoModifier);
         Tui::ZTest::sendKey(&terminal, Qt::Key_Enter, Qt::NoModifier);
         settle();
 
-        QCOMPARE(config.value(QStringLiteral("safety/approvalPolicy")).toString(),
-                 QStringLiteral("Always"));
+        QCOMPARE(config.value(QStringLiteral("model/effort")).toString(),
+                 QStringLiteral("Thorough"));
         QVERIFY(refreshed);
         QVERIFY(hub.pageMarkdownForKind(TabModel::Settings)
-                    .contains(QStringLiteral("Approval policy: **Always**")));
+                    .contains(QStringLiteral("Reasoning effort: **Thorough**")));
+    }
+
+    // Render honesty (#1): safety posture is node-owned. There is no editable
+    // approval-policy row (that lives in the per-session session settings), and
+    // the filesystem/network rows are read-only "managed" rows: selecting one and
+    // pressing Space/Enter neither toggles nor opens an editor, and nothing is
+    // written to the config seam. The page annotates them as node-controlled.
+    void safetyRowsAreReadOnlyNodeControlled() {
+        Tui::ZTerminal terminal{Tui::ZTerminal::OffScreen{90, 28}};
+        Tui::ZRoot root;
+        terminal.setMainWidget(&root);
+
+        FakeSettingsStore store;
+        config::MockDaemonConfig config;
+        TuiPageHub::Dependencies deps{};
+        deps.daemonConfig = &config;
+        deps.settings = &store;
+        TuiPageHub hub(deps);
+        TuiSettingsEditor editor(&hub, &root, TuiSettingsEditor::Hooks{});
+
+        const QList<QVariantMap> rows = hub.pageActionRows(TabModel::Settings);
+        // The cosmetic global approval-policy duplicate is gone.
+        QCOMPARE(rowIndexOf(rows, QStringLiteral("safety/approvalPolicy")), -1);
+        // Sandbox + network survive as non-editable, node-controlled rows.
+        for (const QString& id :
+             {QStringLiteral("safety/sandbox"), QStringLiteral("safety/allowNetwork")}) {
+            const int idx = rowIndexOf(rows, id);
+            QVERIFY(idx >= 0);
+            QCOMPARE(rows.at(idx).value(QStringLiteral("type")).toString(),
+                     QStringLiteral("managed"));
+        }
+
+        // Selecting the sandbox row and pressing Space/Enter is inert: neither the
+        // hub nor the editor claims the key, and no config write happens.
+        QVERIFY(selectRow(hub, QStringLiteral("safety/sandbox")) > 0);
+        Tui::ZKeyEvent space(Qt::Key_Space, Qt::NoModifier, QStringLiteral(" "));
+        QVERIFY(!hub.handlePageActionKey(TabModel::Settings, &space));
+        Tui::ZKeyEvent enter(Qt::Key_Enter, Qt::NoModifier, QString());
+        QVERIFY(!hub.handlePageActionKey(TabModel::Settings, &enter));
+        QVERIFY(!editor.handleKey(&enter));
+        QVERIFY(!config.value(QStringLiteral("safety/sandbox")).isValid());
+
+        // The page reads honestly: node-controlled value + the per-session pointer.
+        const QString md = hub.pageMarkdownForKind(TabModel::Settings);
+        QVERIFY2(md.contains(QStringLiteral("Filesystem access: _node-controlled_")),
+                 qPrintable(md));
+        QVERIFY2(md.contains(QStringLiteral("enforced by the node")), qPrintable(md));
     }
 
     // Enter on a free-text row opens the prompt seeded with the current value;
@@ -319,7 +366,9 @@ private slots:
             QStringLiteral("chat/sendOnEnter"),
             QStringLiteral("chat/showTokenCounts"),
             QStringLiteral("chat/systemPrompt"),
-            QStringLiteral("safety/approvalPolicy"),
+            // Safety posture is node-owned: approval policy lives in the
+            // per-session session settings, and sandbox/network are shown
+            // read-only (managed rows), so no editable safety/approvalPolicy row.
             QStringLiteral("safety/sandbox"),
             QStringLiteral("safety/allowNetwork"),
             QStringLiteral("memory/contextWindow"),

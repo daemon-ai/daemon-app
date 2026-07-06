@@ -6,6 +6,7 @@
 #include "daemon/repositories.h"
 
 #include <algorithm>
+#include <optional>
 #include <QDateTime>
 #include <QHash>
 #include <QJsonDocument>
@@ -96,6 +97,11 @@ CachedSessionStore::CachedSessionStore(DaemonCacheStore* cache, SessionRepositor
         // one).
         connect(m_sessions, &SessionRepository::sessionCreated, this,
                 &CachedSessionStore::sessionCreated);
+        // Relay a rejected/failed SessionUpdateMeta up as the store-level failure signal so the
+        // surface (GUI toast / TUI notification) shows it - a node-owned pin/archive/title write
+        // that the node refused must never look applied.
+        connect(m_sessions, &SessionRepository::metaUpdateFailed, this,
+                &CachedSessionStore::metaUpdateFailed);
     }
     reload();
 }
@@ -340,33 +346,28 @@ domain::SessionId CachedSessionStore::newSession(const domain::UnitId&) {
 
 void CachedSessionStore::setContent(const domain::SessionId&, const QString&) {}
 
+// Pin / archive / title are node-owned domain state. We DO NOT write the cache and reload (that
+// would fork the node's truth and make a rejected change look applied); we send a SessionUpdateMeta
+// intent and let the node's authoritative response drive the roster refetch (SessionRepository ->
+// SessionMetaChanged / Ok refetch -> sessionsRefreshed -> reload -> changed()). A rejected write
+// surfaces via metaUpdateFailed (relayed to the UI), never a silent local mutation.
 void CachedSessionStore::setArchived(const domain::SessionId& id, bool archived) {
-    const int i = indexOfSessionId(id);
-    if (i < 0 || m_cache == nullptr) {
-        return;
-    }
-    CachedSessionRow row = m_snapshot.at(i);
-    row.archived = archived;
-    row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
-    if (m_cache->upsertSession(row)) {
-        reload();
+    if (m_sessions != nullptr && !id.isEmpty()) {
+        m_sessions->updateSessionMeta(id.toString(), std::nullopt, archived, std::nullopt);
     }
 }
 
-void CachedSessionStore::renameSession(const domain::SessionId&, const QString&) {}
+void CachedSessionStore::renameSession(const domain::SessionId& id, const QString& title) {
+    if (m_sessions != nullptr && !id.isEmpty()) {
+        m_sessions->updateSessionMeta(id.toString(), std::nullopt, std::nullopt, title);
+    }
+}
 
 void CachedSessionStore::deleteSession(const domain::SessionId&) {}
 
 void CachedSessionStore::setPinned(const domain::SessionId& id, bool pinned) {
-    const int i = indexOfSessionId(id);
-    if (i < 0 || m_cache == nullptr) {
-        return;
-    }
-    CachedSessionRow row = m_snapshot.at(i);
-    row.pinned = pinned;
-    row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
-    if (m_cache->upsertSession(row)) {
-        reload();
+    if (m_sessions != nullptr && !id.isEmpty()) {
+        m_sessions->updateSessionMeta(id.toString(), pinned, std::nullopt, std::nullopt);
     }
 }
 

@@ -727,11 +727,16 @@ void decodeHostRequest(const host_request& req, DecodedLogEntry* out) {
     out->hostRequestId = req.host_request_request_id;
     const host_request_kind_t_r& kind = req.host_request_kind;
     switch (kind.host_request_kind_t_choice) {
-    case host_request_kind_t_r::host_request_kind_t_host_request_kind_approval_m_c:
+    case host_request_kind_t_r::host_request_kind_t_host_request_kind_approval_m_c: {
         out->hostKind = QStringLiteral("Approval");
-        out->hostPrompt =
-            fromZcbor(kind.host_request_kind_t_host_request_kind_approval_m.Approval_prompt);
+        const host_request_kind_approval& approval =
+            kind.host_request_kind_t_host_request_kind_approval_m;
+        out->hostPrompt = fromZcbor(approval.Approval_prompt);
+        out->hostAllowPermanentOffered =
+            approval.Approval_allow_permanent_offered_present &&
+            approval.Approval_allow_permanent_offered.Approval_allow_permanent_offered;
         break;
+    }
     case host_request_kind_t_r::host_request_kind_t_host_request_kind_input_m_c:
         out->hostKind = QStringLiteral("Input");
         out->hostPrompt =

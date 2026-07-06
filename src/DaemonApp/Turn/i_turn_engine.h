@@ -58,9 +58,14 @@ public:
     // HITL gate resolution (CHA-4 / CHA-5). `requestId` is the gate's call id (the stream
     // HostRequest.request_id rendered as a string). The mock maps these onto its single gate;
     // the daemon engine sends the matching Respond / ApprovalDecide and resumes the Subscribe loop.
-    Q_INVOKABLE virtual void respondApproval(const QString& requestId, bool allow) {
+    // `allowPermanent` (wire v28) carries the operator's "allow permanently" choice to the node so
+    // it can persist a per-session allow for this command; front ends only surface that choice on a
+    // gate the node marked offered. Default false = a one-shot allow.
+    Q_INVOKABLE virtual void respondApproval(const QString& requestId, bool allow,
+                                             bool allowPermanent = false) {
         Q_UNUSED(requestId)
         Q_UNUSED(allow)
+        Q_UNUSED(allowPermanent)
         resume();
     }
     Q_INVOKABLE virtual void respondInput(const QString& requestId, const QString& text) {

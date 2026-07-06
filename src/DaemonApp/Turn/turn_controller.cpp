@@ -210,6 +210,42 @@ void TurnController::resume() {
     scheduleNext();
 }
 
+void TurnController::respondApproval(const QString& requestId, bool allow, bool allowPermanent) {
+    // The simulator holds no durable policy, so "allow permanently" plays out exactly like a
+    // one-shot allow; accepted only to satisfy the ITurnEngine seam (wire v28).
+    Q_UNUSED(allowPermanent)
+    if (!m_active || !m_paused) {
+        return;
+    }
+    // The simulator drives the gated tool's completion itself so no front end
+    // fabricates a result: emit this tool's own toolFinished (the same shape the
+    // daemon streams as a real ToolFinished), then a decision-appropriate text,
+    // then resume() to run the trailing flush that closes the assistant stream.
+    const QString callId = requestId.isEmpty() ? QStringLiteral("sim-approve") : requestId;
+    QVariantMap finished{
+        {QStringLiteral("type"), QStringLiteral("toolFinished")},
+        {QStringLiteral("callId"), callId},
+        {QStringLiteral("durationMs"), 1400},
+        {QStringLiteral("detailKind"), QStringLiteral("ansi-stream")},
+    };
+    if (allow) {
+        finished.insert(QStringLiteral("status"), QStringLiteral("ok"));
+        finished.insert(
+            QStringLiteral("stdout"),
+            QStringLiteral("\u001b[32m\u2713\u001b[0m approved \u2014 command finished\n"));
+    } else {
+        finished.insert(QStringLiteral("status"), QStringLiteral("error"));
+        finished.insert(QStringLiteral("stderr"), QStringLiteral("denied by operator\n"));
+    }
+    const QString followUp = allow
+                                 ? QStringLiteral("\n\nThe command finished after your approval.\n")
+                                 : QStringLiteral("\n\nThe command was denied, so I skipped it.\n");
+    emit eventsEmitted(
+        QVariantList{finished, QVariantMap{{QStringLiteral("type"), QStringLiteral("text")},
+                                           {QStringLiteral("text"), followUp}}});
+    resume();
+}
+
 void TurnController::complete() {
     m_stepTimer.stop();
     m_stallTimer.stop();
@@ -328,8 +364,11 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt) {
 
     if (wantsApproval) {
         // A dangerous tool pauses the live turn for inline approval: emit an
-        // awaiting-approval toolStarted, gate (pause) until resume() fires after
-        // the user answers, then the host drives the tool to ok and we close out.
+        // awaiting-approval toolStarted and gate (pause). respondApproval() then
+        // emits the gated tool's OWN toolFinished (ok/stdout on allow, error on
+        // deny) plus a matching text and resumes — so the simulator produces the
+        // tool RESULT itself and the front ends never fabricate one. The trailing
+        // flush closes the assistant stream after that scripted completion.
         steps.push_back(
             {300,
              QVariantMap{{QStringLiteral("type"), QStringLiteral("toolStarted")},
@@ -342,12 +381,6 @@ QList<TurnController::Step> TurnController::buildScript(const QString& prompt) {
                          {QStringLiteral("approvalCommand"),
                           QStringLiteral("rm -rf build-test && cmake --preset test")}},
              false, QString(), /*gate=*/true});
-        steps.push_back(
-            {250,
-             QVariantMap{{QStringLiteral("type"), QStringLiteral("text")},
-                         {QStringLiteral("text"),
-                          QStringLiteral("\n\nThe command finished after your approval.\n")}},
-             false, QString()});
         steps.push_back({200, QVariantMap{{QStringLiteral("type"), QStringLiteral("flush")}}, false,
                          QString()});
         return steps;

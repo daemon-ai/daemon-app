@@ -177,6 +177,41 @@ QByteArray NodeApiCodec::encodeSessionCreateRequest(const QString& sessionId,
         });
 }
 
+QByteArray NodeApiCodec::encodeSessionUpdateMetaRequest(const QString& sessionId,
+                                                        std::optional<bool> pinned,
+                                                        std::optional<bool> archived,
+                                                        std::optional<QString> title) {
+    // Buffers outlive the encode: zcbor borrows into their bytes across encodeWithFill.
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray titleUtf8 = title.has_value() ? title->toUtf8() : QByteArray();
+    return encodeWithFill(
+        api_request_r::api_request_request_session_update_meta_m_c, [&](api_request_r& request) {
+            request_session_update_meta& meta = request.api_request_request_session_update_meta_m;
+            setZcbor(meta.SessionUpdateMeta_session, sessionUtf8);
+            session_meta_patch& patch = meta.SessionUpdateMeta_patch;
+            // Each optional-and-nullable field: present == the key is in the map; we only ever
+            // send the value arm (never the wire `null` clear arm).
+            patch.session_meta_patch_title_present = title.has_value();
+            if (title.has_value()) {
+                patch.session_meta_patch_title.session_meta_patch_title_choice =
+                    session_meta_patch_title_r::session_meta_patch_title_tstr_c;
+                setZcbor(patch.session_meta_patch_title.session_meta_patch_title_tstr, titleUtf8);
+            }
+            patch.session_meta_patch_pinned_present = pinned.has_value();
+            if (pinned.has_value()) {
+                patch.session_meta_patch_pinned.session_meta_patch_pinned_choice =
+                    session_meta_patch_pinned_r::session_meta_patch_pinned_bool_c;
+                patch.session_meta_patch_pinned.session_meta_patch_pinned_bool = *pinned;
+            }
+            patch.session_meta_patch_archived_present = archived.has_value();
+            if (archived.has_value()) {
+                patch.session_meta_patch_archived.session_meta_patch_archived_choice =
+                    session_meta_patch_archived_r::session_meta_patch_archived_bool_c;
+                patch.session_meta_patch_archived.session_meta_patch_archived_bool = *archived;
+            }
+        });
+}
+
 QByteArray NodeApiCodec::encodeCredentialSetRequest(const QString& profile, const QString& secret) {
     const QByteArray profileUtf8 = profile.toUtf8();
     const QByteArray secretUtf8 = secret.toUtf8();
@@ -498,7 +533,7 @@ void fillRespondShell(api_request_r* request, const QByteArray& sessionUtf8, qui
 } // namespace
 
 QByteArray NodeApiCodec::encodeRespondApprovalRequest(const QString& sessionId, quint32 requestId,
-                                                      bool allow) {
+                                                      bool allow, bool allowPermanent) {
     const QByteArray sessionUtf8 = sessionId.toUtf8();
     api_request_r request{};
     fillRespondShell(&request, sessionUtf8, requestId);
@@ -506,8 +541,14 @@ QByteArray NodeApiCodec::encodeRespondApprovalRequest(const QString& sessionId, 
         request.api_request_request_respond_m.Respond_response.host_response_body;
     body.host_response_body_t_choice =
         host_response_body_t_r::host_response_body_t_host_response_body_approved_m_c;
-    body.host_response_body_t_host_response_body_approved_m.host_response_body_approved_Approved =
-        allow;
+    host_response_body_approved& approved = body.host_response_body_t_host_response_body_approved_m;
+    approved.Approved_approved = allow;
+    // `allow_permanent` is an optional wire field (wire v28): emit it only for an ALLOW that
+    // chose "allow permanently" on an offered gate. A deny is never persisted, and a plain approve
+    // stays byte-identical to the pre-v28 shape (absent == not permanent).
+    const bool permanent = allow && allowPermanent;
+    approved.Approved_allow_permanent_present = permanent;
+    approved.Approved_allow_permanent.Approved_allow_permanent = permanent;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }

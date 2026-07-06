@@ -87,6 +87,24 @@ void SessionRepository::createSession(const QString& profileId) {
                           QLatin1String(kCreateCorrelation));
 }
 
+void SessionRepository::updateSessionMeta(const QString& sessionId, std::optional<bool> pinned,
+                                          std::optional<bool> archived,
+                                          std::optional<QString> title) {
+    if (sessionId.isEmpty() || (!pinned && !archived && !title)) {
+        return; // nothing to patch
+    }
+    if (client() == nullptr) {
+        // Offline / no client: pin/archive/title are node-owned, so there is no local write to
+        // fall back on. Surface it rather than silently swallowing the intent.
+        emit metaUpdateFailed(sessionId, tr("Not connected to a daemon"));
+        return;
+    }
+    m_pendingMetaSession = sessionId;
+    client()->sendRequest(
+        NodeApiCodec::encodeSessionUpdateMetaRequest(sessionId, pinned, archived, std::move(title)),
+        QLatin1String(kUpdateMetaCorrelation));
+}
+
 void SessionRepository::handleResponse(const QString& correlationId,
                                        const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kSessionsCorrelation)) {
@@ -95,7 +113,28 @@ void SessionRepository::handleResponse(const QString& correlationId,
         applyByProfilePage(responseCbor);
     } else if (correlationId == QLatin1String(kCreateCorrelation)) {
         applySessionCreated(responseCbor);
+    } else if (correlationId == QLatin1String(kUpdateMetaCorrelation)) {
+        applyMetaUpdate(responseCbor);
     }
+}
+
+void SessionRepository::applyMetaUpdate(const QByteArray& responseCbor) {
+    const QString sessionId = m_pendingMetaSession;
+    m_pendingMetaSession.clear();
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
+        // Node-authoritative: the row is now updated node-side (and
+        // RosterChanged/SessionMetaChanged will fire). Issue the immediate, non-debounced refetch
+        // so the roster projects the node's stored pin/archive/title without waiting on the feed
+        // debounce - race-free because the node persisted + bumped the roster rev before replying
+        // Ok (mirrors applySessionCreated).
+        refreshSessions();
+        return;
+    }
+    DecodedApiError err;
+    const QString msg = NodeApiCodec::decodeError(responseCbor, &err)
+                            ? err.message
+                            : tr("SessionUpdateMeta failed");
+    emit metaUpdateFailed(sessionId, msg);
 }
 
 void SessionRepository::applySessionCreated(const QByteArray& responseCbor) {
@@ -242,6 +281,14 @@ void SessionRepository::pruneRemovedSessions(const QList<QString>& removed) {
 }
 
 void SessionRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kUpdateMetaCorrelation)) {
+        // A transport-level meta-update failure (timeout / dropped socket): surface it so the
+        // pin/archive/rename is not silently mistaken for applied.
+        const QString sessionId = m_pendingMetaSession;
+        m_pendingMetaSession.clear();
+        emit metaUpdateFailed(sessionId, message);
+        return;
+    }
     if (correlationId == QLatin1String(kCreateCorrelation)) {
         // A transport-level create failure (timeout / dropped socket): the pending create is
         // dead — clear its state and surface the error instead of vanishing silently.
