@@ -14,6 +14,11 @@ QQC.ComboBox {
     font.family: FontIcons.display
     font.pixelSize: 11
 
+    // Disabled reads as muted + non-interactive (mirrors Kit.Switch), so a row
+    // rendered read-only (e.g. a node-owned setting the app can't change) is
+    // unambiguously not editable.
+    opacity: root.enabled ? 1.0 : 0.4
+
     contentItem: Text {
         leftPadding: 6
         rightPadding: root.indicator.width

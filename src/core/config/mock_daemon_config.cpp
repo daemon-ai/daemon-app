@@ -23,10 +23,10 @@ MockDaemonConfig::MockDaemonConfig(QObject* parent) : IDaemonConfig(parent) {
         {QStringLiteral("chat/sendOnEnter"), true},
         {QStringLiteral("chat/showTokenCounts"), true},
         {QStringLiteral("chat/systemPrompt"), QString()},
-        // Safety
-        {QStringLiteral("safety/approvalPolicy"), QStringLiteral("On request")},
-        {QStringLiteral("safety/sandbox"), QStringLiteral("Workspace write")},
-        {QStringLiteral("safety/allowNetwork"), false},
+        // Safety posture (approval policy, filesystem sandbox, network egress) is
+        // owned + enforced by the node, not this mock config — the app renders it
+        // read-only (see SafetySettingsSection.qml / hub_settings.cpp), so no
+        // `safety/*` key is seeded here.
         // Memory & context
         {QStringLiteral("memory/contextWindow"), 128000},
         {QStringLiteral("memory/autoCompact"), true},
@@ -46,12 +46,6 @@ MockDaemonConfig::MockDaemonConfig(QObject* parent) : IDaemonConfig(parent) {
     m_options = {
         {QStringLiteral("model/effort"),
          {QStringLiteral("Fast"), QStringLiteral("Balanced"), QStringLiteral("Thorough")}},
-        {QStringLiteral("safety/approvalPolicy"),
-         {QStringLiteral("Never"), QStringLiteral("On request"), QStringLiteral("On failure"),
-          QStringLiteral("Always")}},
-        {QStringLiteral("safety/sandbox"),
-         {QStringLiteral("Read only"), QStringLiteral("Workspace write"),
-          QStringLiteral("Full access")}},
         {QStringLiteral("voice/model"),
          {QStringLiteral("whisper-tiny"), QStringLiteral("whisper-small"),
           QStringLiteral("whisper-medium")}},
