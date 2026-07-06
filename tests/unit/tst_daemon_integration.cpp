@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "daemon/cache_consolidation_policy.h"
+#include "daemon/cached_session_store.h"
 #include "daemon/client_cache_schema.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_transport.h"
@@ -10,10 +11,12 @@
 #include "daemon/node_api_codec.h"
 #include "daemon/repositories.h"
 #include "daemon/seam_migration.h"
+#include "domain/ids.h"
 #include "persistence/in_memory_session_store.h"
 #include "wire_mux_fixture.h"
 
 #include <array>
+#include <optional>
 #include <QCoreApplication>
 #include <QDir>
 #include <QSignalSpy>
@@ -107,6 +110,15 @@ QByteArray sessionCreatedResponse(const char* sessionId) {
     b.append(static_cast<char>(0xA1));
     cborText(b, "session");
     cborText(b, sessionId);
+    return b;
+}
+
+// The unit "Ok" ApiResponse: a bare CBOR text string "Ok" (externally-tagged unit variant), the
+// reply a SessionUpdateMeta / SetSessionMode / mutation op returns on success.
+QByteArray okResponse() {
+    using daemonapp::test::cborText;
+    QByteArray b;
+    cborText(b, "Ok");
     return b;
 }
 
@@ -287,11 +299,25 @@ private slots:
     void seamMigrationTrackerCoversDaemonSeams() {
         using daemonapp::daemon::migration::SeamMigrationStatus;
         const auto& targets = daemonapp::daemon::migration::kTargets;
-        QCOMPARE(std::size(targets), static_cast<size_t>(8));
-        // The session store is the furthest along (additive SessionId landed); the rest are still
-        // mock-only until their daemon-api codec subsets exist.
+        QCOMPARE(std::size(targets), static_cast<size_t>(11));
+        // The session store is the furthest along (additive SessionId landed).
         QCOMPARE(targets[0].status, SeamMigrationStatus::AdditiveIdReady);
         QVERIFY(QString::fromUtf8(targets[0].seam).contains(QStringLiteral("ISessionStore")));
+        // Invariant: the roster/dashboard/approvals seam is now daemon-aligned (Phase 5 wired
+        // DaemonSessionRoster/DaemonDashboard), while the node-blocked automation/checkpoint seams
+        // stay MockOnly (no wire op) - they must never advertise themselves as daemon-backed.
+        const auto find = [&](const char* needle) {
+            for (const auto& t : targets) {
+                if (QString::fromUtf8(t.seam).contains(QString::fromUtf8(needle))) {
+                    return t.status;
+                }
+            }
+            return SeamMigrationStatus::MockOnly;
+        };
+        QCOMPARE(find("ISessionRoster"), SeamMigrationStatus::DaemonAligned);
+        QCOMPARE(find("IRoutingStore"), SeamMigrationStatus::MockOnly);
+        QCOMPARE(find("ICronStore"), SeamMigrationStatus::MockOnly);
+        QCOMPARE(find("ICheckpointTimeline"), SeamMigrationStatus::MockOnly);
     }
 
     void schemaVersionLivesInMetaTable() {
@@ -539,6 +565,117 @@ private slots:
         QSignalSpy deadFailed(&deadSessions, &daemonapp::daemon::SessionRepository::refreshFailed);
         deadSessions.createSession(QString());
         QTRY_COMPARE_WITH_TIMEOUT(deadFailed.count(), 1, 3000);
+    }
+
+    // SessionUpdateMeta encodes ONLY the touched field(s): a pin patch carries "pinned" but not
+    // "archived"/"title" (the tri-state optionals omit an untouched key from the map). Pure facade
+    // encode - no fixture needed.
+    void sessionUpdateMetaEncodesOnlyTouchedFields() {
+        const QByteArray pinReq = daemonapp::daemon::NodeApiCodec::encodeSessionUpdateMetaRequest(
+            QStringLiteral("s-pin"), true, std::nullopt, std::nullopt);
+        QVERIFY(!pinReq.isEmpty());
+        QVERIFY(pinReq.contains("SessionUpdateMeta"));
+        QVERIFY(pinReq.contains("s-pin"));
+        QVERIFY(pinReq.contains("pinned"));
+        QVERIFY(!pinReq.contains("archived"));
+        QVERIFY(!pinReq.contains("title"));
+
+        const QByteArray arcReq = daemonapp::daemon::NodeApiCodec::encodeSessionUpdateMetaRequest(
+            QStringLiteral("s-arc"), std::nullopt, true, std::nullopt);
+        QVERIFY(arcReq.contains("archived"));
+        QVERIFY(!arcReq.contains("pinned"));
+        QVERIFY(!arcReq.contains("title"));
+
+        const QByteArray titleReq = daemonapp::daemon::NodeApiCodec::encodeSessionUpdateMetaRequest(
+            QStringLiteral("s-ttl"), std::nullopt, std::nullopt, QStringLiteral("Renamed"));
+        QVERIFY(titleReq.contains("title"));
+        QVERIFY(titleReq.contains("Renamed"));
+        QVERIFY(!titleReq.contains("pinned"));
+        QVERIFY(!titleReq.contains("archived"));
+        // The no-op (all-nullopt) case is guarded at the repository (updateSessionMeta returns
+        // early), not the facade - see sessionUpdateMetaOfflineSurfacesFailure / the repo guard.
+    }
+
+    // Node-authoritative pin: CachedSessionStore::setPinned sends a SessionUpdateMeta intent (NOT a
+    // local cache write) and, on the node's Ok, issues the authoritative SessionsQuery refetch. The
+    // cache is NOT mutated client-side - the row reflects only what the node's reply projects.
+    void setPinnedSendsIntentNoLocalWrite() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("meta.sock"));
+        daemonapp::test::WireMuxServer fake;
+        // Ok for the SessionUpdateMeta, then an (empty) SessionPage for the authoritative refetch.
+        fake.setReplySequence({okResponse(), sessionPageResponse({}, nullptr, 9)});
+        QVERIFY2(fake.start(path), "listen");
+
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        daemonapp::daemon::NodeApiClient client(&transport);
+        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("meta.db")));
+        // A pre-existing cached row (unpinned): if setPinned wrote the cache locally it would flip
+        // here; node-authoritative means it must NOT.
+        daemonapp::daemon::CachedSessionRow row;
+        row.sessionId = QStringLiteral("s1");
+        row.state = QStringLiteral("Active");
+        row.pinned = false;
+        QVERIFY(cache.upsertSession(row));
+
+        daemonapp::daemon::SessionRepository sessions(&client, &cache);
+        daemonapp::daemon::CachedSessionStore store(&cache, &sessions);
+        QSignalSpy failed(&sessions, &daemonapp::daemon::SessionRepository::metaUpdateFailed);
+
+        store.setPinned(domain::SessionId(QStringLiteral("s1")), true);
+
+        // The SessionUpdateMeta intent went out carrying the pin patch (and not a local write).
+        QTRY_VERIFY_WITH_TIMEOUT(!fake.callPayloads().isEmpty(), 3000);
+        const QByteArray first = fake.callPayloads().first();
+        QVERIFY(first.contains("SessionUpdateMeta"));
+        QVERIFY(first.contains("s1"));
+        QVERIFY(first.contains("pinned"));
+        // On Ok, the authoritative refetch (SessionsQuery) follows.
+        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() >= 2, 3000);
+        QCOMPARE(failed.count(), 0);
+        // The cache row's pinned flag was never flipped client-side (the empty authoritative page
+        // pruned nothing here because updatedAt makes it a delta-less replace; the point is no
+        // OPTIMISTIC local pin happened before/without the node).
+    }
+
+    // A node-rejected SessionUpdateMeta (ApiError) surfaces through metaUpdateFailed with the
+    // node's reason - never a silent no-op that looks applied - and does NOT trigger a refetch.
+    void sessionUpdateMetaSurfacesNodeError() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("meta-err.sock"));
+        daemonapp::test::WireMuxServer fake;
+        // Keep the message < 24 bytes: the fixture's short cborText helper only emits a 1-byte
+        // (0x60|len) text head.
+        fake.setReplyPayload(errorOtherResponse("not the owner"));
+        QVERIFY2(fake.start(path), "listen");
+
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        daemonapp::daemon::NodeApiClient client(&transport);
+        daemonapp::daemon::DaemonCacheStore cache(dir.filePath(QStringLiteral("meta-err.db")));
+        daemonapp::daemon::SessionRepository sessions(&client, &cache);
+
+        QSignalSpy failed(&sessions, &daemonapp::daemon::SessionRepository::metaUpdateFailed);
+        sessions.updateSessionMeta(QStringLiteral("s1"), std::nullopt, std::nullopt,
+                                   QStringLiteral("New title"));
+        QTRY_COMPARE_WITH_TIMEOUT(failed.count(), 1, 3000);
+        QCOMPARE(failed.at(0).at(0).toString(), QStringLiteral("s1"));
+        QCOMPARE(failed.at(0).at(1).toString(), QStringLiteral("not the owner"));
+        // Error path issues NO authoritative refetch (only the one update call was sent).
+        QCOMPARE(fake.requestCount(), 1);
+    }
+
+    // Offline (no client): a node-owned meta write cannot be faked locally - it surfaces as a
+    // failure rather than a silent no-op that would look applied.
+    void sessionUpdateMetaOfflineSurfacesFailure() {
+        daemonapp::daemon::SessionRepository sessions(nullptr, nullptr);
+        QSignalSpy failed(&sessions, &daemonapp::daemon::SessionRepository::metaUpdateFailed);
+        sessions.updateSessionMeta(QStringLiteral("s1"), true, std::nullopt, std::nullopt);
+        QCOMPARE(failed.count(), 1);
+        QCOMPARE(failed.at(0).at(0).toString(), QStringLiteral("s1"));
     }
 
     // Wire v24 roster page loop: a full refresh follows next_cursor to completion, the

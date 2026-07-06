@@ -5,6 +5,7 @@
 
 #include "daemon/daemon_cache_store.h"
 
+#include <optional>
 #include <QByteArray>
 #include <QList>
 #include <QMap>
@@ -672,6 +673,17 @@ public:
     // Decode a SessionCreated response into the node-minted/accepted session id.
     static bool decodeSessionCreated(const QByteArray& responseCbor, QString* outId);
 
+    // Patch a session's node-owned metadata (SessionUpdateMeta{session, patch} -> Ok). Each
+    // optional is Some(value) = set that field, std::nullopt = leave it untouched (the key is
+    // omitted from the SessionMetaPatch map). The node persists the change, replies Ok, and emits
+    // SessionMetaChanged so the roster re-projects from the authoritative row - the app never
+    // caches-and-mutates the pin/archive/title state locally. (Only the value arm is ever sent;
+    // clearing a title via the wire's `null` arm is not a current UI affordance.)
+    [[nodiscard]] static QByteArray encodeSessionUpdateMetaRequest(const QString& sessionId,
+                                                                   std::optional<bool> pinned,
+                                                                   std::optional<bool> archived,
+                                                                   std::optional<QString> title);
+
     // Onboarding (CON-4 / CON-6): credentials + model discovery/selection.
     // Store a provider secret under `profile` (CredentialSet -> Ok). The secret never returns.
     [[nodiscard]] static QByteArray encodeCredentialSetRequest(const QString& profile,
@@ -903,7 +915,7 @@ public:
     // contract version moves. The server advertises its own version as the "api/<N>" Hello
     // feature; the connection service compares the two at connect and replaces (app-managed) or
     // refuses (attach) a mismatched daemon instead of silently serving stale wire shapes.
-    static constexpr quint32 kDaemonApiVersion = 27;
+    static constexpr quint32 kDaemonApiVersion = 28;
     // The wire page bound (daemon-api WIRE_PAGE_MAX): a paged response carries at most this many
     // array elements per page — the generated codec decodes into fixed 64-element buffers — so
     // clients loop on the page cursors instead of ever asking for more per response.

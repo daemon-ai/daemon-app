@@ -16,7 +16,11 @@ class MockCheckpointTimeline : public ICheckpointTimeline {
     Q_OBJECT
 
 public:
-    explicit MockCheckpointTimeline(QObject* parent = nullptr);
+    // `seedDemo` seeds the illustrative demo checkpoints per session (the mock-mode default).
+    // Daemon mode passes false: checkpoint timelines have NO node wire op yet (CheckpointRepository
+    // is a stub), so each session renders empty rather than fabricated rewind points (render
+    // honesty).
+    explicit MockCheckpointTimeline(QObject* parent = nullptr, bool seedDemo = true);
 
     [[nodiscard]] QObject* checkpoints() const override;
     [[nodiscard]] int count() const override;
@@ -34,6 +38,7 @@ private:
 
     uimodels::VariantListModel* m_checkpoints = nullptr; // the active session's view
     QString m_sessionId;
+    bool m_seedDemo = true; // false in daemon mode: sessions start with an empty timeline
     int m_nextId = 5;
     // Per-session timelines + id counters, swapped in/out of m_checkpoints.
     QHash<QString, QList<QVariantMap>> m_rowsBySession;

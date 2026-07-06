@@ -329,6 +329,16 @@ void RootWidget::wireSessionList() {
             m_services.store->moveSession(id, delta);
         }
     });
+    // Pin/archive/rename are node-owned: the store sends a SessionUpdateMeta intent and the roster
+    // re-projects from the node's reply. A rejected/failed write must not look applied - surface it
+    // through the TUI notification path (GUI parity: the SessionStore.metaUpdateFailed -> Kit.Toast
+    // in Main.qml). The in-memory/mock store never emits this, so this is inert off daemon mode.
+    connect(m_services.store, &persistence::ISessionStore::metaUpdateFailed, this,
+            [](const QString& /*sessionId*/, const QString& message) {
+                rwdetail::emitDesktopNotification(
+                    RootWidget::tr("Session update failed"),
+                    message.isEmpty() ? RootWidget::tr("Couldn't update session") : message);
+            });
 }
 
 void RootWidget::wireTranscriptControls() {

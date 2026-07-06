@@ -2187,6 +2187,42 @@ Thanks — proceeding with: %1
         <source>Reconnect now</source>
         <translation>«Ŕéçóññéçŧ ñóẅ  þéñ»</translation>
     </message>
+    <message>
+        <source>Downloading update v%1… %2%</source>
+        <translation>«Ðóẅñļóàðìñĝ úþðàŧé ṽ%1… %2%  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Update v%1 is ready to install</source>
+        <translation>«Úþðàŧé ṽ%1 ìś ŕéàðý ŧó ìñśŧàļļ  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Update available: v%1 → v%2</source>
+        <translation>«Úþðàŧé àṽàìļàƀļé: ṽ%1 → ṽ%2  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Release notes</source>
+        <translation>«Ŕéļéàśé ñóŧéś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>«Ðóẅñļóàð  þéñ»</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>«Óþéñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>«Ðìśḿìśś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Couldn't update session: %1</source>
+        <translation>«Çóúļðñ'ŧ úþðàŧé śéśśìóñ: %1  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Couldn't update session</source>
+        <translation>«Çóúļðñ'ŧ úþðàŧé śéśśìóñ  þéñ þéñ þéñ»</translation>
+    </message>
 </context>
 <context>
     <name>MathBlock</name>
@@ -3515,6 +3551,26 @@ A generic, non-transcript page hosted by the same tab strip.
         <source>Daemon</source>
         <translation>«Ðàéḿóñ  þéñ»</translation>
     </message>
+    <message>
+        <source>application directory is unknown</source>
+        <translation>«àþþļìçàŧìóñ ðìŕéçŧóŕý ìś úñķñóẅñ  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>update helper (daemon-updater) not found next to the app</source>
+        <translation>«úþðàŧé ĥéļþéŕ (ðàéḿóñ-úþðàŧéŕ) ñóŧ ƒóúñð ñéxŧ ŧó ŧĥé àþþ  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>no staged installer to run</source>
+        <translation>«ñó śŧàĝéð ìñśŧàļļéŕ ŧó ŕúñ  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>missing installer checksum</source>
+        <translation>«ḿìśśìñĝ ìñśŧàļļéŕ çĥéçķśúḿ  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>relaunch target (installed app) is unknown</source>
+        <translation>«ŕéļàúñçĥ ŧàŕĝéŧ (ìñśŧàļļéð àþþ) ìś úñķñóẅñ  þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
@@ -3641,6 +3697,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Rename session</source>
         <translation>«Ŕéñàḿé śéśśìóñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>Session update failed</source>
+        <translation>«Śéśśìóñ úþðàŧé ƒàìļéð  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Couldn't update session</source>
+        <translation>«Çóúļðñ'ŧ úþðàŧé śéśśìóñ  þéñ þéñ þéñ»</translation>
     </message>
     <message>
         <source>Clear session</source>
@@ -4058,6 +4122,14 @@ A generic, non-transcript page hosted by the same tab strip.
 <context>
     <name>SessionRepository</name>
     <message>
+        <source>Not connected to a daemon</source>
+        <translation>«Ñóŧ çóññéçŧéð ŧó à ðàéḿóñ  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>«ŚéśśìóñÚþðàŧéḾéŧà ƒàìļéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
         <source>SessionCreate failed</source>
         <translation>«ŚéśśìóñÇŕéàŧé ƒàìļéð  þéñ þéñ»</translation>
     </message>
@@ -4362,6 +4434,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>User message rail</source>
         <translation>«Úśéŕ ḿéśśàĝé ŕàìļ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>«Úþðàŧéś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Auto-check for updates</source>
+        <translation>«Àúŧó-çĥéçķ ƒóŕ úþðàŧéś  þéñ þéñ»</translation>
     </message>
     <message>
         <source>Move to Trash</source>
@@ -4672,6 +4752,10 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source> tok</source>
         <translation> «ŧóķ  þéñ»</translation>
+    </message>
+    <message>
+        <source>update v</source>
+        <translation>«úþðàŧé ṽ  þéñ»</translation>
     </message>
 </context>
 <context>
@@ -5800,6 +5884,14 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
         <translation>«Śŧóþ ŧĥé ḿàñàĝéð ðàéḿóñ ẅĥéñ Ì çļóśé ŧĥé àþþ  þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
     <message>
+        <source>Updates</source>
+        <translation>«Úþðàŧéś  þéñ»</translation>
+    </message>
+    <message>
+        <source>Automatically check for updates</source>
+        <translation>«Àúŧóḿàŧìçàļļý çĥéçķ ƒóŕ úþðàŧéś  þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>«Ḿóðéļ  þéñ»</translation>
     </message>
@@ -6100,6 +6192,29 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
     </message>
 </context>
 <context>
+    <name>UpdateManager</name>
+    <message>
+        <source>Install &amp; restart</source>
+        <translation>«Ìñśŧàļļ &amp; ŕéśŧàŕŧ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>«Óþéñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the installer instead</source>
+        <translation>«śéļƒ-àþþļý úñàṽàìļàƀļé (%1); óþéñìñĝ ŧĥé ìñśŧàļļéŕ ìñśŧéàð  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the download instead</source>
+        <translation>«śéļƒ-àþþļý úñàṽàìļàƀļé (%1); óþéñìñĝ ŧĥé ðóẅñļóàð ìñśŧéàð  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>self-apply is not available for this artifact; opening the update</source>
+        <translation>«śéļƒ-àþþļý ìś ñóŧ àṽàìļàƀļé ƒóŕ ŧĥìś àŕŧìƒàçŧ; óþéñìñĝ ŧĥé úþðàŧé  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+</context>
+<context>
     <name>UsersAccessPage</name>
     <message>
         <source>Users &amp; Access</source>
@@ -6373,6 +6488,14 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
+        <source>Not connected to a daemon</source>
+        <translation>«Ñóŧ çóññéçŧéð ŧó à ðàéḿóñ  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>«ŚéśśìóñÚþðàŧéḾéŧà ƒàìļéð  þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
         <source>SessionCreate failed</source>
         <translation>«ŚéśśìóñÇŕéàŧé ƒàìļéð  þéñ þéñ»</translation>
     </message>
@@ -6423,6 +6546,29 @@ _Ñó àĝéñŧ śéļéçŧéð._  þéñ þéñ þéñ þéñ»
     <message>
         <source>Participants</source>
         <translation>«Þàŕŧìçìþàñŧś  þéñ»</translation>
+    </message>
+</context>
+<context>
+    <name>update::UpdateManager</name>
+    <message>
+        <source>Install &amp; restart</source>
+        <translation>«Ìñśŧàļļ &amp; ŕéśŧàŕŧ  þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>«Óþéñ  þéñ»</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the installer instead</source>
+        <translation>«śéļƒ-àþþļý úñàṽàìļàƀļé (%1); óþéñìñĝ ŧĥé ìñśŧàļļéŕ ìñśŧéàð  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the download instead</source>
+        <translation>«śéļƒ-àþþļý úñàṽàìļàƀļé (%1); óþéñìñĝ ŧĥé ðóẅñļóàð ìñśŧéàð  þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
+    </message>
+    <message>
+        <source>self-apply is not available for this artifact; opening the update</source>
+        <translation>«śéļƒ-àþþļý ìś ñóŧ àṽàìļàƀļé ƒóŕ ŧĥìś àŕŧìƒàçŧ; óþéñìñĝ ŧĥé úþðàŧé  þéñ þéñ þéñ þéñ þéñ þéñ þéñ þéñ»</translation>
     </message>
 </context>
 </TS>

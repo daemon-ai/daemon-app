@@ -48,6 +48,28 @@ inline constexpr const char* kConfigMigration =
     "migrate "
     "to those typed homes; it is not a NodeApi-config seam.";
 
+// Phase 5 DECISION (node-blocked): routing, cron, and checkpoint timelines have NO NodeApi wire op
+// in the daemon-api codec subset the client speaks - the node does not yet expose them. So they
+// stay MockOnly, BUT in daemon mode they are EMPTY-SEEDED (createAppServiceGraph passes
+// seedDemo=false), rendering an empty/unavailable surface rather than passing the mocks'
+// illustrative demo rows off as node-backed data. Promoting any of them to DaemonAligned requires a
+// daemon-node contract addition (a new ApiRequest + codec regen) - out of the daemon-app track's
+// scope. This mirrors the IDaemonConfig Phase-4 DECISION: a node-unsupported seam stays mock but
+// never masquerades as authority.
+inline constexpr const char* kRoutingMigration =
+    "Node-blocked: no routing/model-selection wire op exists. MockOnly + empty-seeded in daemon "
+    "mode. Promote only when daemon-node exposes a routing ApiRequest.";
+
+inline constexpr const char* kCronMigration =
+    "Node-blocked: no cron/schedule wire op exists. MockOnly + empty-seeded in daemon mode (the "
+    "on-disk cache still restores any user-created local jobs). Promote only when daemon-node "
+    "exposes a cron ApiRequest.";
+
+inline constexpr const char* kCheckpointMigration =
+    "Node-blocked: checkpoint timelines are not modeled in the daemon-api codec subset "
+    "(CheckpointRepository is a stub). MockOnly + empty-seeded in daemon mode. Promote only when "
+    "daemon-node exposes a checkpoint/journal-rewind ApiRequest.";
+
 inline constexpr SeamMigrationTarget kTargets[] = {
     {"ISessionStore", "SessionsQuery / Subscribe / SessionLogEntry", kSessionIdMigration,
      SeamMigrationStatus::AdditiveIdReady},
@@ -61,12 +83,18 @@ inline constexpr SeamMigrationTarget kTargets[] = {
      "control is meaningful only on orchestrator units - engine leaves return Unsupported).",
      SeamMigrationStatus::DaemonAligned},
     {"ISessionRoster + IDashboard + IApprovalsInbox", "SessionsQuery / Tree / ApprovalsPending",
-     "IApprovalsInbox LANDED (DaemonApprovalsInbox); roster + dashboard still MockOnly (the "
-     "offline-first DaemonSessionRoster/DaemonDashboard are a follow-up over the live "
-     "roster/fleet/approvals).",
-     SeamMigrationStatus::MockOnly},
+     "LANDED (Phase 5): DaemonApprovalsInbox + DaemonSessionRoster (offline-first over the "
+     "CachedSessionStore projection) + DaemonDashboard (counters derived from roster/fleet/"
+     "approvals, health from the connection). Wired in daemon mode. Degraded (presentation only, "
+     "not domain re-derivation): suspend/resume is a client-local cosmetic overlay and "
+     "tokens/rewindable are placeholders - no session-lifecycle / per-session-token wire op yet.",
+     SeamMigrationStatus::DaemonAligned},
     {"IDaemonConfig", "ProfileApi / SessionOverlay / node capabilities / ISettingsStore",
      kConfigMigration, SeamMigrationStatus::MockOnly},
+    {"IRoutingStore", kRoutingMigration, kRoutingMigration, SeamMigrationStatus::MockOnly},
+    {"ICronStore", kCronMigration, kCronMigration, SeamMigrationStatus::MockOnly},
+    {"ICheckpointTimeline", kCheckpointMigration, kCheckpointMigration,
+     SeamMigrationStatus::MockOnly},
     {"IFsService", "FsRoots / FsList / FsRead / FsWrite / FsWatchPoll",
      "LANDED (Phase 4): DaemonFsService implements IFsService over the NodeApi fs_* ops + the "
      "NodeApiCodec facade, with DaemonCacheStore (daemon_fs_entries) as the offline fallback and a "

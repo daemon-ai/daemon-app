@@ -283,6 +283,21 @@ target_link_libraries(tst_daemon_fleet_tree
 add_test(NAME tst_daemon_fleet_tree COMMAND tst_daemon_fleet_tree)
 set_tests_properties(tst_daemon_fleet_tree PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_daemon_roster_dashboard: the Phase 5 daemon-backed roster + dashboard seams - offline-first
+# roster projected from the CachedSessionStore, the client-local suspend overlay + close->archive,
+# and the dashboard counters derived from roster/fleet/approvals/connection.
+qt_add_executable(tst_daemon_roster_dashboard tst_daemon_roster_dashboard.cpp)
+target_link_libraries(tst_daemon_roster_dashboard
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::fleet
+        daemon-app::uimodels
+)
+add_test(NAME tst_daemon_roster_dashboard COMMAND tst_daemon_roster_dashboard)
+set_tests_properties(tst_daemon_roster_dashboard PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_daemon_fs_service: the Phase 4 daemon-backed filesystem seam - DaemonFsService over the fs_*
 # codec facade (roots/list/read/write round-trip + the bstr content fix) and the lossless watch path
 # (a reset page forces changed()), driven against the WireMuxServer fixture.

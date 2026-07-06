@@ -138,6 +138,11 @@ signals:
     // is the authoritative id, `profileId` the agent it was bound under (echoed from the request).
     // Callers open + auto-select this id (the node-authority replacement for a client-minted id).
     void sessionCreated(const QString& sessionId, const QString& profileId);
+    // A node-owned metadata write (pin / archive / title) was REJECTED or failed. Daemon-backed
+    // stores relay the node's reason here so the surface shows a failure signal instead of a silent
+    // no-op that looks applied. The in-memory/mock store never emits it (its writes are local and
+    // always succeed).
+    void metaUpdateFailed(const QString& sessionId, const QString& message);
 };
 
 } // namespace persistence

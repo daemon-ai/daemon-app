@@ -12,7 +12,10 @@ class MockRoutingStore : public IRoutingStore {
     Q_OBJECT
 
 public:
-    explicit MockRoutingStore(QObject* parent = nullptr);
+    // `seedDemo` seeds the illustrative demo rules (the mock-mode default). Daemon mode passes
+    // false: routing has NO node wire op yet, so it must render empty rather than fabricated rules
+    // that would imply node-backed routing (render honesty).
+    explicit MockRoutingStore(QObject* parent = nullptr, bool seedDemo = true);
 
     [[nodiscard]] QObject* rules() const override;
     [[nodiscard]] QStringList targets() const override;

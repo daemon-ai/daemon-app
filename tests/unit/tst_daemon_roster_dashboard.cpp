@@ -6,9 +6,13 @@
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_dashboard.h"
 #include "daemon/daemon_session_roster.h"
+#include "daemon/daemon_transport.h"
+#include "daemon/node_api_client.h"
+#include "daemon/repositories.h"
 #include "fleet/mock_approvals_inbox.h"
 #include "fleet/mock_fleet_tree.h"
 #include "uimodels/variant_list_model.h"
+#include "wire_mux_fixture.h"
 
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -44,6 +48,13 @@ CachedSessionRow session(const QString& id, const QString& title, const QString&
 
 uimodels::VariantListModel* model(QObject* m) {
     return qobject_cast<uimodels::VariantListModel*>(m);
+}
+
+// The unit "Ok" ApiResponse (a bare CBOR text string), the reply SessionUpdateMeta returns.
+QByteArray okResponse() {
+    QByteArray b;
+    daemonapp::test::cborText(b, "Ok");
+    return b;
 }
 
 } // namespace
@@ -100,19 +111,41 @@ private slots:
             QStringLiteral("active"));
     }
 
-    // close -> archive -> the row leaves the AllSessions scope (count drops).
-    void closeArchivesAndDrops() {
-        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("r3.db")));
+    // close -> archive is NODE-AUTHORITATIVE (Phase 5): it sends a SessionUpdateMeta{archived:true}
+    // intent through the store's SessionRepository rather than mutating the cache locally. The row
+    // leaves the roster only once the node's authoritative refetch prunes it - never
+    // optimistically.
+    void closeSendsArchiveIntent() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("roster-close.sock"));
+        daemonapp::test::WireMuxServer fake;
+        fake.setReplyPayload(okResponse());
+        QVERIFY2(fake.start(path), "listen");
+
+        DaemonCacheStore cache(dir.filePath(QStringLiteral("r3.db")));
         QVERIFY(cache.upsertSession(
             session(QStringLiteral("s1"), QStringLiteral("Build"), QStringLiteral("Active"))));
         QVERIFY(cache.upsertSession(
             session(QStringLiteral("s2"), QStringLiteral("Two"), QStringLiteral("Active"))));
-        CachedSessionStore store(&cache, nullptr);
+
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        daemonapp::daemon::NodeApiClient client(&transport);
+        daemonapp::daemon::SessionRepository sessions(&client, &cache);
+        CachedSessionStore store(&cache, &sessions);
         DaemonSessionRoster roster(&store);
         QCOMPARE(roster.count(), 2);
+
         roster.close(QStringLiteral("s1"));
-        QCOMPARE(roster.count(), 1);
-        QVERIFY(model(roster.sessions())->indexOfId(QStringLiteral("s1")) < 0);
+
+        // The archive went out as a node intent (SessionUpdateMeta carrying the archived patch for
+        // s1), NOT a local cache write.
+        QTRY_VERIFY_WITH_TIMEOUT(!fake.callPayloads().isEmpty(), 3000);
+        const QByteArray first = fake.callPayloads().first();
+        QVERIFY(first.contains("SessionUpdateMeta"));
+        QVERIFY(first.contains("s1"));
+        QVERIFY(first.contains("archived"));
     }
 
     // Dashboard counters derive from the roster + approvals + connection, and react to changes.
