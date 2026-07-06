@@ -255,6 +255,81 @@ private slots:
                  QStringLiteral("General"));
     }
 
+    // [wave2:app-channels-liveness] B5: applyTransportChanged patches a cached row's
+    // connection/presence IN PLACE, preserving family/displayName/boundProfile, and emits
+    // instancesRefreshed. An unknown transport does NOT invent a partial row (it refetches).
+    void applyTransportChangedPatchesInPlace() {
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("apply.db")));
+        QVERIFY(cache.isOpen());
+        CachedTransportInstanceRow row;
+        row.transport = QStringLiteral("matrix/@bot:hs");
+        row.family = QStringLiteral("matrix");
+        row.displayName = QStringLiteral("@bot:hs");
+        row.connection = QStringLiteral("offline");
+        row.presence = QStringLiteral("unknown");
+        row.boundProfile = QStringLiteral("p1");
+        row.updatedAtMs = 1;
+        QVERIFY(cache.upsertTransportInstance(row));
+
+        DaemonTransport transport; // unconnected
+        NodeApiClient client(&transport);
+        TransportRepository repo(&client, &cache);
+        QSignalSpy refreshed(&repo, &TransportRepository::instancesRefreshed);
+
+        repo.applyTransportChanged(QStringLiteral("matrix/@bot:hs"), QStringLiteral("connected"),
+                                   QStringLiteral("available"), true);
+        QCOMPARE(refreshed.count(), 1);
+        const auto rows = cache.transportInstances();
+        QCOMPARE(rows.size(), 1);
+        QCOMPARE(rows.at(0).connection, QStringLiteral("connected"));
+        QCOMPARE(rows.at(0).presence, QStringLiteral("available"));
+        QCOMPARE(rows.at(0).family, QStringLiteral("matrix"));
+        QCOMPARE(rows.at(0).boundProfile, QStringLiteral("p1"));
+
+        // Absent presence leaves the previous presence untouched (patches connection only).
+        repo.applyTransportChanged(QStringLiteral("matrix/@bot:hs"), QStringLiteral("error"),
+                                   QString(), false);
+        QCOMPARE(cache.transportInstances().at(0).connection, QStringLiteral("error"));
+        QCOMPARE(cache.transportInstances().at(0).presence, QStringLiteral("available"));
+
+        // Unknown transport: no partial row invented (the fallback is a refetch).
+        repo.applyTransportChanged(QStringLiteral("nope"), QStringLiteral("connected"), QString(),
+                                   false);
+        QCOMPARE(cache.transportInstances().size(), 1);
+    }
+
+    // [wave2:app-channels-liveness] B2: the first refresh establishes the baseline (no badges); a
+    // room that appears on a later refresh is badged "new" until marked seen.
+    void newConversationBadgeTracksLaterArrivals() {
+        const QString sock = m_tmp.filePath(QStringLiteral("newconv.sock"));
+        const QString t = QStringLiteral("matrix/@bot:hs");
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        DaemonTransportFixture tx(sock);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("newconv.db")));
+        TransportRepository repo(&tx.client, &cache);
+        QSignalSpy convs(&repo, &TransportRepository::conversationsRefreshed);
+
+        // First refresh: one room -> baseline, nothing badged.
+        fake.setReplyPayload(conversationsPageResponse(QByteArrayLiteral("!a:hs")));
+        repo.refreshConversations(t);
+        QTRY_COMPARE_WITH_TIMEOUT(convs.count(), 1, 3000);
+        QVERIFY(!repo.isNewConversation(t, QStringLiteral("!a:hs")));
+
+        // Second refresh: a new room arrives -> badged new; the pre-existing one is not.
+        fake.setReplySequence(
+            {conversationsPageResponse(QByteArrayLiteral("!a:hs"), QByteArrayLiteral("!a:hs")),
+             conversationsPageResponse(QByteArrayLiteral("!b:hs"))});
+        repo.refreshConversations(t);
+        QTRY_COMPARE_WITH_TIMEOUT(convs.count(), 2, 3000);
+        QVERIFY(repo.isNewConversation(t, QStringLiteral("!b:hs")));
+        QVERIFY(!repo.isNewConversation(t, QStringLiteral("!a:hs")));
+
+        // Viewing clears the badge.
+        repo.markConversationSeen(t, QStringLiteral("!b:hs"));
+        QVERIFY(!repo.isNewConversation(t, QStringLiteral("!b:hs")));
+    }
+
     // Wire v25 page loop: a conversations listing served in two pages accumulates into ONE
     // conversationsRefreshed (with both rows cached), and the continuation request carries the
     // `after` cursor.

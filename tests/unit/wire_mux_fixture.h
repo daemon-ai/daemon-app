@@ -462,6 +462,38 @@ inline QByteArray neResyncNeeded(const char* scope) {
     return b;
 }
 
+// [wave2:app-channels-liveness] F5: fleet supervision changed (rev only).
+inline QByteArray neFleetChanged(quint64 rev) {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "FleetChanged");
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "rev");
+    cborUint(b, rev);
+    return b;
+}
+
+// [wave2:app-channels-liveness] B5: live transport presence. `presence` empty omits the optional
+// presence field (map(2)); non-empty carries it (map(3)). connection/presence are the capitalized
+// wire enum names ("Connected"/"Available"/...).
+inline QByteArray neTransportChanged(const char* transport, const char* connection,
+                                     const char* presence = "") {
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "TransportChanged");
+    const bool hasPresence = presence != nullptr && presence[0] != '\0';
+    b.append(static_cast<char>(0xA0 | (hasPresence ? 3 : 2)));
+    cborText(b, "transport");
+    cborText(b, transport);
+    cborText(b, "connection");
+    cborText(b, connection);
+    if (hasPresence) {
+        cborText(b, "presence");
+        cborText(b, presence);
+    }
+    return b;
+}
+
 // {"EventsPage":{"events":[...],"next_cursor":N,"head_cursor":M}} (events count assumed < 24).
 inline QByteArray buildEventsPage(const QList<QByteArray>& events, quint64 nextCursor,
                                   quint64 headCursor) {
