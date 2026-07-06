@@ -51,6 +51,11 @@ QString modelEngineName(int choice);
 int searchSortChoice(const QString& sort);
 QString downloadStateName(int choice);
 QString hostRequestKindName(const host_request_kind_t_r& kind);
+// [wave2:app-channels-liveness] connection/presence state -> lowercase wire-name (shared by the
+// TransportInstances decode and the TransportChanged node-event decode). Defined in
+// fs_fleet_channels.cpp.
+QString connectionStateName(const connection_state_r& c);
+QString presenceStateName(const presence_state_r& p);
 
 // --- struct projection mappers (Qt-side) ---------------------------------------------------------
 // Scratch buffers a populated wire `origin` borrows (zcbor_string fields point into these); the
