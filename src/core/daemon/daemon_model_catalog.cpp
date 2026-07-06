@@ -14,9 +14,11 @@
 namespace models {
 
 using daemonapp::daemon::DecodedDownloadStatus;
+using daemonapp::daemon::DecodedGgufInfo;
 using daemonapp::daemon::DecodedInstalledModel;
 using daemonapp::daemon::DecodedModelDescriptor;
 using daemonapp::daemon::DecodedModelFile;
+using daemonapp::daemon::DecodedQuantizeStatus;
 using daemonapp::daemon::DecodedSearchHit;
 using daemonapp::daemon::ModelRepository;
 
@@ -75,7 +77,8 @@ DaemonModelCatalog::DaemonModelCatalog(ModelRepository* models,
       m_profiles(profiles), m_discover(new uimodels::VariantListModel(this)),
       m_files(new uimodels::VariantListModel(this)),
       m_downloads(new uimodels::VariantListModel(this)),
-      m_installed(new uimodels::VariantListModel(this)) {
+      m_installed(new uimodels::VariantListModel(this)),
+      m_quantizeJobs(new uimodels::VariantListModel(this)) {
     if (m_models != nullptr) {
         connect(m_models, &ModelRepository::modelsRefreshed, this,
                 &DaemonModelCatalog::rebuildInstalled);
@@ -84,6 +87,14 @@ DaemonModelCatalog::DaemonModelCatalog(ModelRepository* models,
         connect(m_models, &ModelRepository::currentRefreshed, this, [this] {
             rebuildInstalled();
             emit currentChanged();
+            // A6: the ACTIVE local model is the one whose silent absence strands the user —
+            // probe it whenever the current selection resolves (connect-ready / activation),
+            // so a deleted artifact surfaces as an explicit missing state instead of a
+            // first-send failure. Bounded: one ModelInspect per current-refresh, local only.
+            const QString current = currentModelId();
+            if (!current.isEmpty() && isLocalInstalled(current)) {
+                m_models->inspect(current);
+            }
         });
         connect(m_models, &ModelRepository::modelActivated, this, [this] {
             // The node applied the activation; re-resolve current + catalog so the marker moves.
@@ -113,6 +124,29 @@ DaemonModelCatalog::DaemonModelCatalog(ModelRepository* models,
         // facade so the Models pages + wizard render them instead of failing silently.
         connect(m_models, &ModelRepository::operationFailed, this,
                 [this](const QString& message) { setLastError(message); });
+        // A5: quantize jobs mirror the downloads plumbing (rows + accepted signal).
+        connect(m_models, &ModelRepository::quantizesChanged, this,
+                &DaemonModelCatalog::rebuildQuantizes);
+        connect(m_models, &ModelRepository::quantizeStarted, this,
+                [this](quint64 id) { emit quantizeStarted(QString::number(id)); });
+        // A6 ghost probe resolutions: a failed ModelInspect on a cataloged id marks the row
+        // `missing` (an explicit state, never a silent failure); a success clears it.
+        connect(m_models, &ModelRepository::inspected, this,
+                [this](const QString& id, const DecodedGgufInfo& /*info*/) {
+                    if (m_missingIds.remove(id)) {
+                        rebuildInstalled();
+                    }
+                    emit modelVerified(id);
+                });
+        connect(m_models, &ModelRepository::inspectFailed, this,
+                [this](const QString& id, const QString& message) {
+                    if (!m_missingIds.contains(id)) {
+                        m_missingIds.insert(id);
+                        rebuildInstalled();
+                    }
+                    setLastError(tr("Model %1 is missing on disk: %2").arg(id, message));
+                    emit modelMissing(id, message);
+                });
         // Seed the cloud catalog + installed set + current selection on construction.
         m_models->refreshModels();
         m_models->refreshCatalog();
@@ -364,6 +398,56 @@ void DaemonModelCatalog::remove(const QString& modelId) {
     }
 }
 
+QObject* DaemonModelCatalog::quantizeJobs() const {
+    return m_quantizeJobs;
+}
+
+void DaemonModelCatalog::quantizeModel(const QString& repo, const QString& targetQuant,
+                                       const QString& sourceFile) {
+    if (m_models == nullptr || repo.isEmpty() || targetQuant.isEmpty()) {
+        return;
+    }
+    setLastError(QString()); // a fresh user-initiated operation clears the stale banner
+    m_models->quantize(repo, targetQuant, sourceFile);
+}
+
+void DaemonModelCatalog::verifyInstalled(const QString& modelId) {
+    if (m_models == nullptr || modelId.isEmpty() || !isLocalInstalled(modelId)) {
+        return; // cloud descriptors have no on-disk artifact to probe
+    }
+    m_models->inspect(modelId);
+}
+
+void DaemonModelCatalog::rebuildQuantizes() {
+    if (m_models == nullptr) {
+        return;
+    }
+    QList<QVariantMap> rows;
+    for (const DecodedQuantizeStatus& q : m_models->quantizes()) {
+        QVariantMap row;
+        row[QStringLiteral("id")] = QString::number(q.id);
+        row[QStringLiteral("repo")] = q.repo;
+        row[QStringLiteral("name")] =
+            QStringLiteral("%1 \u2192 %2").arg(q.sourceFile, q.targetQuant);
+        row[QStringLiteral("sourceFile")] = q.sourceFile;
+        row[QStringLiteral("targetQuant")] = q.targetQuant;
+        // Reuse the downloads panel's lowercase state tokens so one row idiom renders both.
+        QString state = QStringLiteral("queued");
+        if (q.state == QStringLiteral("Preparing") || q.state == QStringLiteral("Quantizing")) {
+            state = QStringLiteral("downloading");
+        } else if (q.state == QStringLiteral("Completed")) {
+            state = QStringLiteral("done");
+        } else if (q.state == QStringLiteral("Failed")) {
+            state = QStringLiteral("failed");
+        }
+        row[QStringLiteral("state")] = state;
+        row[QStringLiteral("error")] = q.error;
+        row[QStringLiteral("outputPath")] = q.outputPath;
+        rows.append(row);
+    }
+    m_quantizeJobs->setRows(rows);
+}
+
 void DaemonModelCatalog::rebuildDiscover() {
     if (m_models == nullptr) {
         return;
@@ -492,6 +576,10 @@ void DaemonModelCatalog::rebuildInstalled() {
         // carry its path so the installed list can show a "Vision" marker.
         row[QStringLiteral("projector")] = isProjectorRecord(m);
         row[QStringLiteral("mmprojPath")] = m.mmprojPath;
+        // A6 ghost state: the last ModelInspect probe on this id failed — the artifact is
+        // missing/unreadable on disk (the node keeps the record). Lists render the explicit
+        // missing state with a re-download affordance instead of a silent failure.
+        row[QStringLiteral("missing")] = m_missingIds.contains(m.id);
         rows.append(row);
     }
     // Cloud descriptors join as ready-to-use (no download): the composer picker binds these too.

@@ -134,6 +134,27 @@ public:
     Q_INVOKABLE virtual void activate(const QString& modelId) = 0;
     Q_INVOKABLE virtual void remove(const QString& modelId) = 0;
 
+    // --- Local re-quantization (A5 / CON-13) + ghost-model probe (A6 / CON-14) ---------------
+    // Live quantize-job rows ({id, repo, sourceFile, targetQuant, state, error}), mirroring
+    // downloads(). Null when the backing catalog has no quantize capability (the mock).
+    [[nodiscard]] virtual QObject* quantizeJobs() const { return nullptr; }
+    // Start a local re-quantization of an INSTALLED repo toward `targetQuant` (empty
+    // `sourceFile` lets the node pick the best installed source). Progress streams via
+    // quantizeJobs(); on completion the produced model joins installed(). Default: no-op (mock).
+    Q_INVOKABLE virtual void quantizeModel(const QString& repo, const QString& targetQuant,
+                                           const QString& sourceFile = {}) {
+        Q_UNUSED(repo)
+        Q_UNUSED(targetQuant)
+        Q_UNUSED(sourceFile)
+    }
+    // A6 ghost probe: verify an installed model's artifact is still present + readable on disk
+    // (the node keeps catalog records for deleted files). Resolves asynchronously to
+    // modelVerified(id) or modelMissing(id, reason); the daemon impl also marks the installed()
+    // row `missing` so list surfaces render the explicit state. Detection stays behind this one
+    // seam so a future node `on_disk` flag can replace the probe without UI changes. Default:
+    // no-op (mock artifacts are not real files).
+    Q_INVOKABLE virtual void verifyInstalled(const QString& modelId) { Q_UNUSED(modelId) }
+
     // Activate an installed model for an EXPLICIT profile id (the wizard / profile-editor apply
     // path): the node's ModelActivate defaults to the launch profile name otherwise, which is not
     // necessarily the profile the user just configured. Default: same as activate() (the mock has
@@ -149,6 +170,11 @@ signals:
     void downloadStarted(const QString& jobId);
     // Emitted when a download finishes (modelId now installed).
     void downloadFinished(const QString& modelId);
+    // A5: a quantize job was accepted (id as shown in quantizeJobs()).
+    void quantizeStarted(const QString& jobId);
+    // A6: a verifyInstalled probe resolved — the artifact is present+readable / missing.
+    void modelVerified(const QString& modelId);
+    void modelMissing(const QString& modelId, const QString& reason);
     // The files() surface now holds `repo`'s quant rows.
     void filesChanged(const QString& repo);
     // A recommendation for `repo` is now available via recommendation().

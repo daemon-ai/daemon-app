@@ -40,6 +40,13 @@ AuthFlowController::AuthFlowController(IAuthFlowService* service, QObject* paren
                                               QDateTime::currentMSecsSinceEpoch();
                         if (msLeft > 0) {
                             m_ttl->start(static_cast<int>(qMin<qint64>(msLeft, INT_MAX)));
+                        } else {
+                            // Already expired on arrival (clock skew / stale park): fail closed
+                            // immediately rather than awaiting a redirect that cannot complete.
+                            teardownFlow(/*cancelRemote=*/true);
+                            setError(tr("This sign-in link expired — try again."));
+                            setPhase(QStringLiteral("failed"));
+                            return;
                         }
                     }
                     setPhase(QStringLiteral("awaiting_browser"));

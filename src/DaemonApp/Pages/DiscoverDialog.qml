@@ -116,6 +116,22 @@ Kit.Dialog {
                                         color: Theme.textMuted
                                     }
                                 }
+                                // A4 (CON-12): a gated repo needs its license accepted (and
+                                // usually a Hub token) before a pull can succeed — badge it up
+                                // front instead of failing raw at download time.
+                                Rectangle {
+                                    visible: entry.gated === true
+                                    radius: 3; color: "transparent"
+                                    border.width: 1; border.color: Theme.danger
+                                    implicitWidth: gatedText.implicitWidth + 10
+                                    implicitHeight: gatedText.implicitHeight + 4
+                                    Text {
+                                        id: gatedText; anchors.centerIn: parent
+                                        text: qsTr("gated")
+                                        font.family: FontIcons.display; font.pixelSize: 10
+                                        color: Theme.danger
+                                    }
+                                }
                             }
                             Text {
                                 text: (entry.author ? qsTr("by %1").arg(entry.author) + "   " : "")

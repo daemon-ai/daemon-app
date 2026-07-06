@@ -226,6 +226,38 @@ Item {
                             color: Theme.danger
                             wrapMode: Text.WordWrap
                         }
+
+                        // A4 (CON-12) gated-repo guidance: an auth-shaped failure (401/403 /
+                        // gated) gets an actionable path — accept the license on the Hub, add a
+                        // token, then Retry — instead of only the raw error string above.
+                        RowLayout {
+                            readonly property bool gatedFailure: {
+                                if (root.compact || row.entry.state !== "failed"
+                                    || !row.entry.error)
+                                    return false;
+                                var e = row.entry.error.toLowerCase();
+                                return e.indexOf("401") !== -1 || e.indexOf("403") !== -1
+                                       || e.indexOf("gated") !== -1
+                                       || e.indexOf("unauthorized") !== -1
+                                       || e.indexOf("forbidden") !== -1;
+                            }
+                            visible: gatedFailure
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("This repo is gated — accept its license on the Hub "
+                                           + "(and add a token if required), then retry.")
+                                font.family: FontIcons.display; font.pixelSize: 11
+                                color: Theme.textMuted
+                                wrapMode: Text.WordWrap
+                            }
+                            Kit.TextButton {
+                                text: qsTr("Open license page")
+                                onClicked: Qt.openUrlExternally(
+                                               "https://huggingface.co/" + row.entry.repo)
+                            }
+                        }
                     }
                 }
             }

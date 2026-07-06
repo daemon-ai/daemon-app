@@ -120,6 +120,20 @@ public:
         emit offeredModelsChanged(providerId);
     }
 };
+
+// A profile store that can mint foreign (ACP) agents (CON-16), recording the reference it was
+// asked to create — the mock default returns "" (cannot create foreign agents).
+class AcpCapableProfileStore : public profiles::MockProfileStore {
+public:
+    using MockProfileStore::MockProfileStore;
+    QString lastAcpName;
+    QString lastAcpAgent;
+    QString createAcpProfile(const QString& name, const QString& agent) override {
+        lastAcpName = name;
+        lastAcpAgent = agent;
+        return createProfile(name);
+    }
+};
 } // namespace
 
 // Guards the shared onboarding gate: a fresh install starts at connect, a good
@@ -481,6 +495,132 @@ private slots:
         m.begin();
         QCOMPARE(m.phase(), QStringLiteral("done"));
         QVERIFY(!m.active());
+    }
+
+    // --- CON-16: the agent-type step (app-wizard-auth stream) --------------------------------
+
+    // The agent-type step fronts the inference step ONLY when foreign agents were offered; the
+    // native choice continues into the unchanged inference flow.
+    void agentTypeStepOfferedRoutesBeforeInference() {
+        QTemporaryFile socketStandIn;
+        QVERIFY(socketStandIn.open());
+        QtSettingsStore settings;
+        MockConnectionService conn;
+        profiles::MockProfileStore profileStore;
+        makeActiveProfileUnconfigured(profileStore);
+        FirstRunModel m(&settings, &conn, nullptr, &profileStore);
+        m.setAgentTypeOffered(true); // the graph wires this from the ACP catalog reflection
+        m.begin();
+        conn.connectTo(QStringLiteral("local"), socketStandIn.fileName());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("agenttype"); }, 3000));
+
+        // Native: continue into the existing inference step (CON-10..14 unchanged).
+        m.chooseAgentType(QString());
+        QCOMPARE(m.phase(), QStringLiteral("inference"));
+    }
+
+    // An empty catalog keeps zero foreign noise: the wizard routes straight to inference.
+    void agentTypeStepSkippedWhenNotOffered() {
+        QTemporaryFile socketStandIn;
+        QVERIFY(socketStandIn.open());
+        QtSettingsStore settings;
+        MockConnectionService conn;
+        profiles::MockProfileStore profileStore;
+        makeActiveProfileUnconfigured(profileStore);
+        FirstRunModel m(&settings, &conn, nullptr, &profileStore);
+        m.begin();
+        conn.connectTo(QStringLiteral("local"), socketStandIn.fileName());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
+    }
+
+    // A foreign choice commits ONE named ProfileCreate carrying engine=Acp{agent} — no
+    // provider/model/credential frames — makes it the default, drops the seeded placeholder,
+    // and finishes exactly once.
+    void agentTypeForeignChoiceCommitsAcpProfileAndFinishes() {
+        QTemporaryFile socketStandIn;
+        QVERIFY(socketStandIn.open());
+        QtSettingsStore settings;
+        MockConnectionService conn;
+        AcpCapableProfileStore profileStore;
+        makeActiveProfileUnconfigured(profileStore);
+        const QString placeholder = profileStore.defaultProfileId();
+        FirstRunModel m(&settings, &conn, nullptr, &profileStore);
+        m.setAgentTypeOffered(true);
+        m.begin();
+        conn.connectTo(QStringLiteral("local"), socketStandIn.fileName());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("agenttype"); }, 3000));
+
+        QSignalSpy finished(&m, &FirstRunModel::finished);
+        m.applyAcpChoice(QStringLiteral("gem"), QStringLiteral("gemini"));
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("done"); }, 3000));
+        QCOMPARE(finished.count(), 1);
+        QVERIFY(settings.setupComplete());
+        QCOMPARE(profileStore.lastAcpName, QStringLiteral("gem"));
+        QCOMPARE(profileStore.lastAcpAgent, QStringLiteral("gemini"));
+        // The new agent owns the default; the seeded placeholder is gone.
+        const QString def = profileStore.defaultProfileId();
+        QVERIFY(!def.isEmpty());
+        QVERIFY(def != placeholder);
+        QVERIFY(profileStore.profile(placeholder).isEmpty());
+    }
+
+    // --- A7 (CON-7): the finish gate is PROVEN, not assumed ----------------------------------
+
+    // An empty ProviderModels listing through the committed provider keeps the wizard open with
+    // an actionable error; a later successful listing lets the re-committed Finish complete.
+    void finishProbeBlocksOnEmptyListingThenPasses() {
+        QTemporaryFile socketStandIn;
+        QVERIFY(socketStandIn.open());
+        QtSettingsStore settings;
+        MockConnectionService conn;
+        profiles::MockProfileStore profileStore;
+        makeActiveProfileUnconfigured(profileStore);
+        FakeProviderCatalog providerCatalog;
+        providerCatalog.descriptors.append(FakeProviderCatalog::descriptor(
+            QStringLiteral("acme"), QStringLiteral("Acme"), /*requiresKey=*/false));
+        FirstRunModel m(&settings, &conn, nullptr, &profileStore, nullptr, &providerCatalog);
+        m.begin();
+        conn.connectTo(QStringLiteral("local"), socketStandIn.fileName());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
+
+        // The probe's listing resolves EMPTY (the fake echoes its current offered set): the
+        // wizard must stay open with the actionable reason, not silently finish.
+        m.applyInferenceChoice(QStringLiteral("acme"), QStringLiteral("acme-model"), QString());
+        QCOMPARE(m.phase(), QStringLiteral("inference"));
+        QVERIFY(!m.error().isEmpty());
+        QVERIFY(!settings.setupComplete());
+
+        // The provider recovers (a non-empty listing will now resolve): re-commit finishes.
+        providerCatalog.offered.insert(QStringLiteral("acme"),
+                                       providerCatalog.offeredModels(QStringLiteral("acme")));
+        providerCatalog.resolveModels(QStringLiteral("acme"), 2);
+        QSignalSpy finished(&m, &FirstRunModel::finished);
+        m.applyInferenceChoice(QStringLiteral("acme"), QStringLiteral("acme-model"), QString());
+        QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("done"); }, 3000));
+        QCOMPARE(finished.count(), 1);
+        QVERIFY(settings.setupComplete());
+    }
+
+    // --- CON-8 (A7): send-time re-entry ------------------------------------------------------
+
+    // reenterProvider() re-opens the wizard AT the inference step from a live shell without
+    // clearing setupComplete; finishing returns to done and re-persists it.
+    void reenterProviderReopensInferenceStep() {
+        QtSettingsStore settings;
+        settings.setSetupComplete(true);
+        MockConnectionService conn;
+        FirstRunModel m(&settings, &conn);
+        m.begin();
+        QCOMPARE(m.phase(), QStringLiteral("done"));
+
+        m.reenterProvider();
+        QCOMPARE(m.phase(), QStringLiteral("inference"));
+        QVERIFY(m.active());
+        QVERIFY(settings.setupComplete()); // untouched: this is a re-entry, not a reset
+
+        m.completeInference(); // permissive (no catalog wired)
+        QCOMPARE(m.phase(), QStringLiteral("done"));
+        QVERIFY(settings.setupComplete());
     }
 };
 

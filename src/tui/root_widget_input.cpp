@@ -452,6 +452,14 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         event->accept();
         return true;
     }
+    // A5 (CON-13): 'q' on the Models page re-quantizes an installed model (source pick ->
+    // target-quant pick -> ModelQuantize), the GUI installed row's "Re-quantize…" analog.
+    if (kind == TabModel::Models && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("q") && m_overlays != nullptr) {
+        m_overlays->openRequantize(m_services.modelCatalog, [this] { refreshActivePage(); });
+        event->accept();
+        return true;
+    }
     // Accounts: 'a' opens the add-account wizard (provider pick -> credentials),
     // the GUI "Add account" button analog.
     if (kind == TabModel::Accounts && event->modifiers() == Qt::NoModifier &&

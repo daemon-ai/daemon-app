@@ -73,6 +73,12 @@ public:
     void activate(const QString& modelId) override;
     void activateForProfile(const QString& modelId, const QString& profileId) override;
     void remove(const QString& modelId) override;
+    // A5: local re-quantization over ModelQuantize/ModelQuantizes (jobs mirror downloads()).
+    [[nodiscard]] QObject* quantizeJobs() const override;
+    void quantizeModel(const QString& repo, const QString& targetQuant,
+                       const QString& sourceFile = {}) override;
+    // A6: ModelInspect-backed ghost probe; a failed probe marks the installed row `missing`.
+    void verifyInstalled(const QString& modelId) override;
 
     // True when `id` names a locally-installed model (vs a cloud descriptor) — authoritative from
     // the repository's decoded installed set (not the projected rows).
@@ -83,6 +89,7 @@ private:
     void rebuildFiles();
     void rebuildDownloads();
     void rebuildInstalled();
+    void rebuildQuantizes();
     // Shared activate body: optional explicit profile ("" = the node's default local profile).
     void activateImpl(const QString& modelId, const QString& profileId);
 
@@ -101,6 +108,11 @@ private:
     // Dismissed (terminal) download job ids, hidden from downloads() rebuilds. Client-side only:
     // the node retains its job history forever and the wire has no clear op.
     QSet<QString> m_dismissedDownloads;
+    // A5: the quantize-job rows (mirrors m_downloads).
+    uimodels::VariantListModel* m_quantizeJobs = nullptr;
+    // A6: installed ids whose last ModelInspect probe FAILED (ghost artifacts); the rebuild
+    // marks their rows `missing`. Cleared per-id when a later probe succeeds.
+    QSet<QString> m_missingIds;
 };
 
 } // namespace models
