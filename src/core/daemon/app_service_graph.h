@@ -72,6 +72,7 @@ namespace daemonapp::daemon {
 class AcpRepository;
 class ApprovalRepository;
 class AuthRepository;
+class CapsRepository;
 class FleetRepository;
 class TransportRepository;
 class RoutingRepository;
@@ -137,7 +138,9 @@ struct AppServiceGraph {
     CredentialRepository* credentialRepository = nullptr;
     ApprovalRepository* approvalRepository = nullptr;
     CheckpointRepository* checkpointRepository = nullptr;
-    FleetRepository* fleetRepository = nullptr;         // PRO-9/10; non-null only in Daemon mode
+    FleetRepository* fleetRepository = nullptr; // PRO-9/10; non-null only in Daemon mode
+    // [wave2:app-delegation] F7/DEL-7: delegation guardrail ceilings (read-only). Daemon mode only.
+    CapsRepository* capsRepository = nullptr;
     TransportRepository* transportRepository = nullptr; // Channels (EIO-1/3/8/9); Daemon mode only
     RoutingRepository* routingRepository = nullptr;     // Routing pins (B6/ROU); Daemon mode only
     // The ACP agent catalog (foreign engines; wire v23): backs the new-agent dialog's engine

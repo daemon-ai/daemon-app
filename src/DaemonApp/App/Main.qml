@@ -170,6 +170,15 @@ ApplicationWindow {
             if (root.activeSessionPane)
                 root.activeSessionPane.openAgentTab(kind, profileRef, title);
         }
+        // [wave2:app-delegation] F1: drill into a delegated child's transcript (read-only viewer).
+        function onOpenSessionRequested(sessionId, readOnly) {
+            if (!root.activeSessionPane)
+                return;
+            if (readOnly)
+                root.activeSessionPane.openSessionReadOnly(sessionId);
+            else
+                root.activeSessionPane.openSessionPinned(sessionId);
+        }
     }
 
     // First-run / onboarding gate: full-screen over everything until setup

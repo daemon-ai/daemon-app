@@ -635,6 +635,39 @@ private:
     QString m_treeRoot;
 };
 
+// [wave2:app-delegation] F7/DEL-7: the node's delegation guardrail ceilings (Caps -> CapsReport).
+// refresh() issues the payload-free Caps request; on success capsRefreshed() fires with the two
+// ceilings populated. Node-wide, read-only policy (no cache: re-fetched on focus, never stale-
+// rendered as settable) — the app cannot mutate it (no wire write op). Backs the read-only
+// "Delegation limits" rows in Settings -> Safety.
+class CapsRepository : public RepositoryBase {
+    Q_OBJECT
+    Q_PROPERTY(quint32 orchestrateMaxDepth READ orchestrateMaxDepth NOTIFY capsRefreshed)
+    Q_PROPERTY(quint32 orchestrateMaxFanout READ orchestrateMaxFanout NOTIFY capsRefreshed)
+    Q_PROPERTY(bool loaded READ loaded NOTIFY capsRefreshed)
+
+public:
+    explicit CapsRepository(NodeApiClient* client, QObject* parent = nullptr);
+
+    [[nodiscard]] quint32 orchestrateMaxDepth() const { return m_caps.orchestrateMaxDepth; }
+    [[nodiscard]] quint32 orchestrateMaxFanout() const { return m_caps.orchestrateMaxFanout; }
+    [[nodiscard]] bool loaded() const { return m_loaded; }
+
+    Q_INVOKABLE void refresh();
+
+signals:
+    void capsRefreshed();
+    void refreshFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kCapsCorrelation = "repo/caps";
+    DecodedCapsReport m_caps;
+    bool m_loaded = false;
+};
+
 // Channels / Events-IO read surface (Phase 6a, story 04). Projects the node's transport adapter
 // registry (TransportAdapters), configured accounts + live status (TransportInstances; EIO-9), and
 // live per-account conversations (ConvList; EIO-8). Instances + conversations are cached for the

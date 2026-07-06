@@ -9,7 +9,8 @@
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemon/principal_model.h"           // capability provider for the command palette
-#include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
+#include "daemon/repositories.h"  // [wave2:app-delegation] F7/DEL-7: CapsRepository::refresh()
+#include "daemonnet/idaemonnet.h" // complete type for setDaemonNet(QObject*)
 #include "dialogs/first_run_dialog.h"
 #include "display_role_adapter.h"
 #include "file_finder_model.h"
@@ -242,7 +243,13 @@ RootWidget::RootWidget()
         .transportRegistry = m_services.transportRegistry,
         .presence = m_services.presence,
         .update = m_services.update,
+        .caps = m_services.capsRepository, // [wave2:app-delegation] F7/DEL-7
     });
+    // [wave2:app-delegation] F7/DEL-7: fetch the read-only delegation ceilings once so Settings ->
+    // Safety renders the live numbers (node-wide policy; re-fetched, never cached).
+    if (m_services.capsRepository != nullptr) {
+        m_services.capsRepository->refresh();
+    }
 
     // Settings-page dialog edits (theme/language pickers, text prompts, zen):
     // the hub flips plain toggles itself; rows needing a dialog parent or a live

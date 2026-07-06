@@ -191,10 +191,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // `owner`; drop it for the daemon one. Built before the subscription feed so the feed can
         // re-query the tree on a roster delta (a fleet unit IS a durable session - FIX 2).
         graph.fleetRepository = new FleetRepository(graph.nodeApi, graph.cache, owner);
+        // [wave2:app-delegation] F7/DEL-7: read-only delegation guardrail ceilings (node policy).
+        graph.capsRepository = new CapsRepository(graph.nodeApi, owner);
         delete graph.fleetTree;
-        // The profile store rides along for the engine-identity join (C3): fleet rows carry
-        // engine/acpAgent resolved from their profileRef.
-        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, graph.profiles, owner);
+        // [wave2:app-delegation] F3: fleet rows carry engine/lifetime decoded straight off the wire
+        // UnitNode (v29) — no client-side profile-join (the node peer is v29, so the wire answers
+        // directly, per-child, including foreign-engine children under unknown profiles).
+        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, owner);
         // L3 node-wide event feed (daemon-sync-protocol §5): one EventsSince stream that routes
         // out-of-focus changes (roster/meta -> debounced roster refetch + tree re-query, approvals
         // -> badge, downloads -> models, session-advanced -> focused-engine nudge, resync ->

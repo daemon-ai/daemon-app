@@ -24,7 +24,8 @@ class IConnectionService;
 }
 namespace daemonapp::daemon {
 class PrincipalModel;
-}
+class CapsRepository; // [wave2:app-delegation] F7/DEL-7
+} // namespace daemonapp::daemon
 namespace daemonnet {
 class IDaemonNet;
 }
@@ -94,6 +95,9 @@ public:
         // Release-feed updater: backs the Settings "Updates" auto-check toggle
         // (gated to builds that actually have a feed).
         update::UpdateManager* update = nullptr;
+        // [wave2:app-delegation] F7/DEL-7: read-only delegation guardrail ceilings (Settings ->
+        // Safety). Null in mock mode — the rows show "—" then.
+        daemonapp::daemon::CapsRepository* caps = nullptr;
     };
 
     explicit TuiPageHub(Dependencies deps);

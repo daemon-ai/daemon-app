@@ -14,6 +14,7 @@
 
 #include "config/idaemon_config.h"
 #include "connection/iconnection_service.h"
+#include "daemon/repositories.h" // [wave2:app-delegation] F7/DEL-7: CapsRepository
 #include "i18n/localization.h"
 #include "models/imodel_catalog.h"
 #include "settings/isettings_store.h"
@@ -220,6 +221,25 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
     const QString safetyLabel = tr("Safety");
     rows << configManaged(safety, safetyLabel, "safety/sandbox", tr("Filesystem access"));
     rows << configManaged(safety, safetyLabel, "safety/allowNetwork", tr("Allow network access"));
+    // [wave2:app-delegation] F7/DEL-7: the node's delegation guardrail ceilings, read-only (Caps ->
+    // CapsReport). Mirrors the GUI DelegationLimitsSection; shown as node-controlled with the live
+    // value in the trailing note ("—" until the CapsReport lands / in mock mode).
+    {
+        const bool have = m_deps.caps != nullptr && m_deps.caps->loaded();
+        QVariantMap depth = configManaged(safety, safetyLabel, "safety/delegationDepth",
+                                          tr("Max delegation depth"));
+        depth.insert(QStringLiteral("note"),
+                     have ? tr("%1 — enforced by the node").arg(m_deps.caps->orchestrateMaxDepth())
+                          : tr("— — enforced by the node"));
+        rows << depth;
+        QVariantMap fanout = configManaged(safety, safetyLabel, "safety/delegationFanout",
+                                           tr("Max background children"));
+        fanout.insert(QStringLiteral("note"),
+                      have
+                          ? tr("%1 — enforced by the node").arg(m_deps.caps->orchestrateMaxFanout())
+                          : tr("— — enforced by the node"));
+        rows << fanout;
+    }
 
     // Memory & Context - MemorySettingsSection.qml (IDaemonConfig).
     const QString memory = QStringLiteral("memory");

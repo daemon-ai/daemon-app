@@ -64,9 +64,12 @@ Item {
             return err
         return toolData.body ? String(toolData.body) : ""
     }
-    // The clarify variant always shows its interactive panel; otherwise a detail
-    // body appears only when a sub-renderer has a payload to draw.
+    // The clarify variant always shows its interactive panel; the delegation card and a guardrail
+    // decline always show their body; otherwise a detail body appears only when a sub-renderer has
+    // a payload to draw.
     readonly property bool hasDetail: variant === "clarify"
+        || variant === "delegation"
+        || detailKind === "guardrail"
         || !!(detailKind.length > 0
             && (ansiText.length > 0
                 || (toolData && toolData.diff)
@@ -221,8 +224,14 @@ Item {
                 active: root.expanded && root.hasDetail
                 visible: active
                 sourceComponent: {
+                    // [wave2:app-delegation] F7 guardrail decline wins even inside a delegation
+                    // card; F1 delegation card body otherwise.
+                    if (root.detailKind === "guardrail")
+                        return guardrailComponent
                     if (root.variant === "clarify")
                         return clarifyComponent
+                    if (root.variant === "delegation")
+                        return delegationComponent
                     switch (root.detailKind) {
                     case "diff": return diffComponent
                     case "search-results": return searchComponent
@@ -326,6 +335,83 @@ Item {
             toolData: root.toolData
             editorController: root.editorController
             blockId: root.blockId
+        }
+    }
+
+    // [wave2:app-delegation] F1: the delegation-card body. The child's transcript link arrives on
+    // completion (the wire carries no child id at spawn time — honest degrade); the body states so.
+    Component {
+        id: delegationComponent
+        Column {
+            width: detailLoader.width
+            spacing: Theme.smallSpacing
+            Text {
+                width: parent.width
+                text: (root.toolData && root.toolData.body && String(root.toolData.body).length > 0)
+                      ? String(root.toolData.body)
+                      : qsTr("Spawned a subagent to work in the background.")
+                textFormat: Text.PlainText
+                color: Theme.text
+                font.family: FontIcons.mono
+                font.pixelSize: Theme.bodyFontSize - 1
+                wrapMode: Text.Wrap
+            }
+            Text {
+                width: parent.width
+                text: qsTr("Its completion notice will link the child; open its transcript from the Fleet page.")
+                textFormat: Text.PlainText
+                color: Theme.mutedText
+                font.pixelSize: Theme.captionFontSize
+                wrapMode: Text.Wrap
+            }
+        }
+    }
+
+    // [wave2:app-delegation] F7: the amber guardrail-decline chip — an explanatory state, not a
+    // generic tool error. Reads the projected guardrailKind/guardrailLimit/guardrailReason.
+    Component {
+        id: guardrailComponent
+        Row {
+            width: detailLoader.width
+            spacing: Theme.smallSpacing
+            Rectangle {
+                radius: Theme.radiusSmall
+                color: Qt.rgba(Theme.statusWarning.r, Theme.statusWarning.g, Theme.statusWarning.b, 0.14)
+                border.width: Theme.hairline
+                border.color: Theme.statusWarning
+                implicitWidth: chipRow.implicitWidth + Theme.smallSpacing * 2
+                implicitHeight: chipRow.implicitHeight + Theme.smallSpacing
+                Row {
+                    id: chipRow
+                    anchors.centerIn: parent
+                    spacing: Theme.smallSpacing
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: FontIcons.fa_shield_halved
+                        font.family: FontIcons.faSolid
+                        font.pixelSize: Theme.captionFontSize
+                        color: Theme.statusWarning
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: {
+                            const kind = (root.toolData && root.toolData.guardrailKind)
+                                       ? String(root.toolData.guardrailKind) : ""
+                            const limit = (root.toolData && root.toolData.guardrailLimit !== undefined)
+                                        ? root.toolData.guardrailLimit : ""
+                            if (kind === "depth")
+                                return qsTr("Delegation depth limit (%1) reached").arg(limit)
+                            if (kind === "fanout")
+                                return qsTr("Too many background children (%1)").arg(limit)
+                            return (root.toolData && root.toolData.guardrailReason)
+                                   ? String(root.toolData.guardrailReason)
+                                   : qsTr("Delegation guardrail reached")
+                        }
+                        color: Theme.text
+                        font.pixelSize: Theme.captionFontSize
+                    }
+                }
+            }
         }
     }
 }

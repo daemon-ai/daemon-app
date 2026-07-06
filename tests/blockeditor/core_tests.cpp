@@ -100,6 +100,9 @@ private slots:
     void toolViewFlagsAwaitingApproval();
     void projectToolDetailMapsNodeKinds();
     void projectToolDetailFallsBackToText();
+    // [wave2:app-delegation] F1/F7
+    void toolViewDerivesDelegationVariant();
+    void projectToolDetailMapsGuardrail();
     void buildToolViewProjectsRawDetail();
     void buildToolViewPassesThroughFlatKeys();
     void clarifyAnswerRoundTrips();
@@ -1741,6 +1744,61 @@ void CoreTests::toolViewFlagsAwaitingApproval() {
     plain.insert(QStringLiteral("name"), QStringLiteral("terminal"));
     plain.insert(QStringLiteral("status"), QStringLiteral("running"));
     QVERIFY(!be::buildToolView(plain).value(QStringLiteral("awaitingApproval")).toBool());
+}
+
+// [wave2:app-delegation] F1: the orchestrate tool renders as a first-class delegation card
+// (variant "delegation") whose title flips with status, and a guardrail decline reads as
+// "limit reached" rather than a generic failure.
+void CoreTests::toolViewDerivesDelegationVariant() {
+    QVariantMap running;
+    running.insert(QStringLiteral("name"), QStringLiteral("orchestrate"));
+    running.insert(QStringLiteral("status"), QStringLiteral("running"));
+    const QVariantMap rv = be::buildToolView(running);
+    QCOMPARE(rv.value(QStringLiteral("variant")).toString(), QStringLiteral("delegation"));
+    QCOMPARE(rv.value(QStringLiteral("tone")).toString(), QStringLiteral("agent"));
+    QCOMPARE(rv.value(QStringLiteral("title")).toString(), QStringLiteral("Delegating…"));
+
+    QVariantMap done;
+    done.insert(QStringLiteral("name"), QStringLiteral("orchestrate"));
+    done.insert(QStringLiteral("status"), QStringLiteral("finished")); // normalizes to ok
+    QCOMPARE(be::buildToolView(done).value(QStringLiteral("title")).toString(),
+             QStringLiteral("Delegated to a subagent"));
+
+    // A guardrail decline (ok, but the spawn was refused) reads as a limit-reached title.
+    QVariantMap declined;
+    declined.insert(QStringLiteral("name"), QStringLiteral("orchestrate"));
+    declined.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    declined.insert(QStringLiteral("detailKind"), QStringLiteral("guardrail"));
+    declined.insert(QStringLiteral("detailBody"),
+                    QString::fromUtf8(R"({"kind":"fanout","limit":8,"reason":"too many"})"));
+    const QVariantMap dv = be::buildToolView(declined);
+    QCOMPARE(dv.value(QStringLiteral("variant")).toString(), QStringLiteral("delegation"));
+    QCOMPARE(dv.value(QStringLiteral("title")).toString(),
+             QStringLiteral("Delegation limit reached"));
+    QCOMPARE(dv.value(QStringLiteral("detailKind")).toString(), QStringLiteral("guardrail"));
+    QCOMPARE(dv.value(QStringLiteral("guardrailKind")).toString(), QStringLiteral("fanout"));
+    QCOMPARE(dv.value(QStringLiteral("guardrailLimit")).toInt(), 8);
+}
+
+// [wave2:app-delegation] F7: a ToolDetail{kind:"guardrail"} JSON body projects into the amber
+// guardrail-chip renderer keys; a missing reason falls back to the human summary.
+void CoreTests::projectToolDetailMapsGuardrail() {
+    QVariantMap v = be::projectToolDetail(
+        QStringLiteral("guardrail"),
+        QByteArrayLiteral(R"({"kind":"depth","limit":8,"reason":"depth cap reached"})"),
+        QStringLiteral("depth-limit:8"));
+    QCOMPARE(v.value(QStringLiteral("detailKind")).toString(), QStringLiteral("guardrail"));
+    QCOMPARE(v.value(QStringLiteral("guardrailKind")).toString(), QStringLiteral("depth"));
+    QCOMPARE(v.value(QStringLiteral("guardrailLimit")).toInt(), 8);
+    QCOMPARE(v.value(QStringLiteral("guardrailReason")).toString(),
+             QStringLiteral("depth cap reached"));
+
+    // No reason in the body -> fall back to the human summary.
+    v = be::projectToolDetail(QStringLiteral("guardrail"),
+                              QByteArrayLiteral(R"({"kind":"fanout","limit":8})"),
+                              QStringLiteral("fanout-limit:8"));
+    QCOMPARE(v.value(QStringLiteral("guardrailReason")).toString(),
+             QStringLiteral("fanout-limit:8"));
 }
 
 // D1: the node-kind -> renderer-key projection (fs edit -> diff, shell/execute -> ansi-stream +

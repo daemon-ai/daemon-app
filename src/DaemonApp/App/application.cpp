@@ -314,6 +314,9 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     engine.rootContext()->setContextProperty(QStringLiteral("SessionSettings"),
                                              m_services.sessionSettings);
     engine.rootContext()->setContextProperty(QStringLiteral("Checkpoints"), m_services.checkpoints);
+    // [wave2:app-delegation] F7/DEL-7: read-only delegation guardrail ceilings (null in mock mode;
+    // the Settings section binds defensively on `Caps && Caps.loaded`).
+    engine.rootContext()->setContextProperty(QStringLiteral("Caps"), m_services.capsRepository);
 
     // Release-feed / auto-update surface: the shell binds this for the update
     // banner + settings toggle. Inert (no feed, no UI) unless the package job

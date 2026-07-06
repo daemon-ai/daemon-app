@@ -33,6 +33,11 @@ Rectangle {
     property int totalTasks: 0
     property int doneTasks: 0
 
+    // [wave2:app-delegation] F1: a read-only child-transcript drill-in (opened from a delegation
+    // card / Fleet row). The transcript still streams + renders, but the composer is suppressed —
+    // operator steer/cancel stays on the Fleet rows (wave-1), not in the viewer.
+    property bool readOnly: false
+
     // A front-end-only slash command asked to open settings (e.g. "/theme").
     signal openSettingsRequested()
 
@@ -301,6 +306,7 @@ Rectangle {
         Composer {
             id: composer
             Layout.fillWidth: true
+            visible: !root.readOnly
             centerContent: UiSettings.centerText
             busy: transcript.busy
             sessionId: controller.currentId
@@ -314,6 +320,29 @@ Rectangle {
             onSteer: function(text) { orchestrator.steer(text); }
             onCancelRequested: orchestrator.interrupt()
             onCommandInvoked: function(command) { orchestrator.invokeCommand(command); }
+        }
+
+        // [wave2:app-delegation] F1: read-only drill-in footer (in place of the composer). Steering
+        // a child stays on the Fleet rows, not here.
+        Rectangle {
+            Layout.fillWidth: true
+            visible: root.readOnly
+            implicitHeight: readOnlyRow.implicitHeight + 16
+            color: Theme.surface
+            border.color: Theme.border
+            RowLayout {
+                id: readOnlyRow
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 8
+                Kit.Glyph { glyph: FontIcons.fa_eye; color: Theme.textMuted; font.pointSize: 11 }
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTr("Read-only view of a delegated child. Steer or cancel it from the Fleet page.")
+                    font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+                    wrapMode: Text.WordWrap
+                }
+            }
         }
     }
 

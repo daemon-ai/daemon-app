@@ -128,6 +128,32 @@ QString sessionRoleName(int choice) {
     }
 }
 
+// [wave2:app-delegation] F3: wire delegation-lifetime enum -> facade string.
+QString delegationLifetimeName(int choice) {
+    switch (choice) {
+    case delegation_lifetime_r::delegation_lifetime_Persistent_tstr_c:
+        return QStringLiteral("Persistent");
+    case delegation_lifetime_r::delegation_lifetime_Ephemeral_tstr_c:
+        return QStringLiteral("Ephemeral");
+    default:
+        return {};
+    }
+}
+
+// [wave2:app-delegation] F3: decode the v29 engine-selector faithfully (Core | Foreign{agent}).
+// Standalone from the profile-spec engine decode so the app-engines EngineIdentity rename does not
+// collide; `kind` is "Core"/"Foreign", `agent` is the foreign agent name (empty for Core).
+void decodeEngineSelector(const engine_selector_r& sel, QString* kind, QString* agent) {
+    if (sel.engine_selector_choice == engine_selector_r::engine_selector_engine_foreign_m_c) {
+        *kind = QStringLiteral("Foreign");
+        *agent = fromZcbor(
+            sel.engine_selector_engine_foreign_m.engine_foreign_Foreign.engine_foreign_agent_agent);
+    } else {
+        *kind = QStringLiteral("Core");
+        agent->clear();
+    }
+}
+
 // Project a generated unit_node onto the facade struct (children kept as the raw id list; depth is
 // assigned later by the tree flatten).
 DecodedUnitNode decodeUnitNodeStruct(const unit_node& n) {
@@ -160,6 +186,21 @@ DecodedUnitNode decodeUnitNodeStruct(const unit_node& n) {
                                         unit_node_role_r::unit_node_role_session_role_m_c) {
         out.role =
             sessionRoleName(n.unit_node_role.unit_node_role_session_role_m.session_role_choice);
+    }
+    // [wave2:app-delegation] F3: decode the v29 per-child lifetime + engine enrichment. Both are
+    // optional-null on the wire; absent/null leaves the facade fields empty (chip hidden).
+    if (n.unit_node_lifetime_present &&
+        n.unit_node_lifetime.unit_node_lifetime_choice ==
+            unit_node_lifetime_r::unit_node_lifetime_delegation_lifetime_m_c) {
+        out.lifetime =
+            delegationLifetimeName(n.unit_node_lifetime.unit_node_lifetime_delegation_lifetime_m
+                                       .delegation_lifetime_choice);
+    }
+    if (n.unit_node_engine_present &&
+        n.unit_node_engine.unit_node_engine_choice ==
+            unit_node_engine_r::unit_node_engine_engine_selector_m_c) {
+        decodeEngineSelector(n.unit_node_engine.unit_node_engine_engine_selector_m, &out.engineKind,
+                             &out.engineAgent);
     }
     return out;
 }

@@ -278,8 +278,25 @@ bool NodeApiCodec::decodeLogPageEntries(const QByteArray& responseCbor, QList<De
             const agent_command_r& cmd =
                 payload.session_payload_command_m.session_payload_command_Command;
             if (cmd.agent_command_choice == agent_command_r::agent_command_start_turn_m_c) {
-                decoded.commandText =
-                    fromZcbor(cmd.agent_command_start_turn_m.StartTurn_input.user_msg_text);
+                const user_msg& input = cmd.agent_command_start_turn_m.StartTurn_input;
+                decoded.commandText = fromZcbor(input.user_msg_text);
+                // [wave2:app-delegation] F1/F2: decode the delegation completion-notice provenance.
+                // `notice` is always present (possibly null); only a real CompletionNoticeRef
+                // counts.
+                if (input.user_msg_notice_present &&
+                    input.user_msg_notice.user_msg_notice_choice ==
+                        user_msg_notice_r::user_msg_notice_completion_notice_ref_m_c) {
+                    const completion_notice_ref& ref =
+                        input.user_msg_notice.user_msg_notice_completion_notice_ref_m;
+                    decoded.hasNotice = true;
+                    decoded.noticeChild = fromZcbor(ref.completion_notice_ref_child);
+                    if (ref.completion_notice_ref_call_id_present &&
+                        ref.completion_notice_ref_call_id.completion_notice_ref_call_id_choice ==
+                            completion_notice_ref_call_id_r::completion_notice_ref_call_id_tstr_c) {
+                        decoded.noticeCallId = fromZcbor(
+                            ref.completion_notice_ref_call_id.completion_notice_ref_call_id_tstr);
+                    }
+                }
             } else if (cmd.agent_command_choice == agent_command_r::agent_command_steer_m_c) {
                 decoded.commandText = fromZcbor(cmd.agent_command_steer_m.Steer_text);
             }

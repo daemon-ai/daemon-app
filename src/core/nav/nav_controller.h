@@ -41,6 +41,11 @@ public:
     Q_INVOKABLE void openAgent(const QString& kind, const QString& profileRef,
                                const QString& title);
 
+    // [wave2:app-delegation] F1: drill into a session's transcript (a delegated child) as a tab.
+    // `readOnly` opens it as a read-only viewer (no composer) — the delegation-card / Fleet-row
+    // "open child" affordance. Both front ends route openSessionRequested to their transcript host.
+    Q_INVOKABLE void openSession(const QString& sessionId, bool readOnly = false);
+
 signals:
     void changed();
     // Fired on every open() so the TUI can raise/replace its page window even
@@ -49,6 +54,8 @@ signals:
     // Fired on openAgent(): open/raise a per-agent (ProfileRef-keyed) Memory or
     // Profile tab. Both front ends route this to TabModel::openAgentTab.
     void openAgentRequested(const QString& kind, const QString& profileRef, const QString& title);
+    // [wave2:app-delegation] F1: open a (child) session transcript, read-only when requested.
+    void openSessionRequested(const QString& sessionId, bool readOnly);
     void closeRequested();
 
 private:

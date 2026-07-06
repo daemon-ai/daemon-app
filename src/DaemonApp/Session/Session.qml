@@ -80,6 +80,16 @@ Rectangle {
     function openSessionPinned(sessionId) {
         tabModel.openTranscriptPinned(sessionId, _titleFor(sessionId));
     }
+    // [wave2:app-delegation] F1: drill into a delegated child's transcript read-only (no composer).
+    // Opens a pinned tab like a normal session, then flips the active page to read-only once its
+    // Loader has instantiated the TranscriptPage.
+    function openSessionReadOnly(sessionId) {
+        tabModel.openTranscriptPinned(sessionId, _titleFor(sessionId));
+        Qt.callLater(function() {
+            if (root.activePage && "readOnly" in root.activePage)
+                root.activePage.readOnly = true;
+        });
+    }
     // Open a workspace file as an editor tab (File kind). pinned=false is a
     // VSCode-style preview (reused on the next single-click open); pinned=true
     // makes a permanent tab. The File tab loads a FilePage -> CodeEditor.

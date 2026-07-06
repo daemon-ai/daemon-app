@@ -180,15 +180,26 @@ Item {
                             }
                         }
 
-                        // Engine identity (C3/ENG-7): Native core vs the foreign ACP agent the
-                        // unit's profile is bound to (joined by the shared fleet view-model).
+                        // Engine identity (C3/ENG-7 + F3): Native core vs the foreign agent the
+                        // unit runs on, decoded straight off the wire UnitNode (v29). The foreign
+                        // agent name is the chip label; "Foreign" is the fallback kind label.
                         Kit.Chip {
-                            visible: entry.engine !== undefined
-                            text: entry.engine === "Acp" ? (entry.acpAgent || qsTr("Foreign"))
-                                                         : qsTr("Native")
-                            iconGlyph: entry.engine === "Acp" ? FontIcons.fa_robot
-                                                              : FontIcons.fa_microchip
-                            tone: entry.engine === "Acp" ? "accent" : "muted"
+                            visible: entry.engine !== undefined && entry.engine !== ""
+                            text: entry.engine === "Foreign" ? (entry.engineAgent || qsTr("Foreign"))
+                                                             : qsTr("Native")
+                            iconGlyph: entry.engine === "Foreign" ? FontIcons.fa_robot
+                                                                  : FontIcons.fa_microchip
+                            tone: entry.engine === "Foreign" ? "accent" : "muted"
+                        }
+                        // Delegation lifetime (F3): a persistent managed child stays in the tree;
+                        // an ephemeral subagent is reaped after completion.
+                        Kit.Chip {
+                            visible: entry.lifetime !== undefined && entry.lifetime !== ""
+                            text: entry.lifetime === "Ephemeral" ? qsTr("Ephemeral")
+                                                                 : qsTr("Persistent")
+                            iconGlyph: entry.lifetime === "Ephemeral" ? FontIcons.fa_hourglass_half
+                                                                      : FontIcons.fa_thumbtack
+                            tone: "muted"
                         }
                         Text {
                             text: entry.status
@@ -202,6 +213,15 @@ Item {
                             entry.sessionId !== undefined && entry.sessionId !== "" &&
                             (entry.role === "ManagedChild" || entry.role === "EphemeralSubagent" ||
                              (entry.role === "" && entry.depth > 0))
+                        // Drill into the child's transcript, read-only (F1/DEL-1). A child IS a
+                        // session; the viewer reuses the transcript stack with the composer hidden.
+                        Kit.IconButton {
+                            visible: parent.isDelegatedChild
+                            icon: FontIcons.fa_comments
+                            iconPointSize: 10; implicitWidth: 30; implicitHeight: 26
+                            tooltipText: qsTr("Open transcript")
+                            onClicked: Nav.openSession(entry.sessionId, true)
+                        }
                         Kit.IconButton {
                             visible: parent.isDelegatedChild
                             icon: FontIcons.fa_wand_magic_sparkles
