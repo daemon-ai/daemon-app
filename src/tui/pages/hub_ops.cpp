@@ -51,10 +51,11 @@ QString TuiPageHub::buildFleetMarkdown(int sel) const {
             const QVariantMap& n = rows.at(i);
             const int depth = n.value(QStringLiteral("depth")).toInt();
             md += QString(static_cast<qsizetype>(depth) * 2, QLatin1Char(' '));
-            md += tr("- %1%2 — %3 (`%4`)\n")
+            // Engine identity (C3/ENG-7): the same chip the GUI fleet rows render.
+            md += tr("- %1%2 — %3 (`%4`) · %5\n")
                       .arg(mark(i), n.value(QStringLiteral("name")).toString(),
                            n.value(QStringLiteral("status")).toString(),
-                           n.value(QStringLiteral("model")).toString());
+                           n.value(QStringLiteral("model")).toString(), engineToken(n));
         }
     }
     return md;

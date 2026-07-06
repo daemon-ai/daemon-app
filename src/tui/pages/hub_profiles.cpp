@@ -10,6 +10,18 @@
 #include "tui_page_hub.h"
 #include "uimodels/variant_list_model.h"
 
+QString TuiPageHub::engineToken(const QVariantMap& row) {
+    const QString engine = row.value(QStringLiteral("engine")).toString();
+    if (engine.isEmpty()) {
+        return tr("Native"); // rows without the field are core-engine by construction
+    }
+    if (engine == QStringLiteral("Acp")) {
+        const QString agent = row.value(QStringLiteral("acpAgent")).toString();
+        return tr("%1 (ACP)").arg(agent.isEmpty() ? tr("Foreign") : agent);
+    }
+    return tr("Native");
+}
+
 QString TuiPageHub::buildProfilesMarkdown(int sel) const {
     auto* model = qobject_cast<uimodels::VariantListModel*>(m_deps.profiles->profiles());
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
@@ -28,6 +40,9 @@ QString TuiPageHub::buildProfilesMarkdown(int sel) const {
                       .arg(mark(i), p.value(QStringLiteral("name")).toString(),
                            p.value(QStringLiteral("isDefault")).toBool() ? tr(" (default)")
                                                                          : QString());
+            // Engine identity (C3/ENG-7): the same chip the GUI rows render — Native core vs the
+            // foreign ACP agent name.
+            md += tr("- Engine: %1\n").arg(engineToken(p));
             md += tr("- Model: `%1`\n").arg(p.value(QStringLiteral("model")).toString());
             const QString desc = p.value(QStringLiteral("description")).toString();
             if (!desc.isEmpty()) {
@@ -65,6 +80,7 @@ QString TuiPageHub::buildProfileMarkdown(const QString& profileRef) const {
               .arg(profileRef);
 
     md += tr("## Engine\n\n");
+    md += tr("- Engine: %1\n").arg(engineToken(p));
     md += tr("- Provider: **%1**\n").arg(val(QStringLiteral("provider"), QStringLiteral("-")));
     md += tr("- Model: **%1**\n").arg(val(QStringLiteral("model"), QStringLiteral("-")));
     md += tr("- Base URL: %1\n").arg(val(QStringLiteral("baseUrl"), tr("(provider default)")));

@@ -114,6 +114,16 @@ Item {
                             }
                         }
 
+                        // Engine identity (C3/ENG-7): Native core vs the foreign ACP agent the
+                        // unit's profile is bound to (joined by the shared fleet view-model).
+                        Kit.Chip {
+                            visible: entry.engine !== undefined
+                            text: entry.engine === "Acp" ? (entry.acpAgent || qsTr("Foreign"))
+                                                         : qsTr("Native")
+                            iconGlyph: entry.engine === "Acp" ? FontIcons.fa_robot
+                                                              : FontIcons.fa_microchip
+                            tone: entry.engine === "Acp" ? "accent" : "muted"
+                        }
                         Text {
                             text: entry.status
                             font.family: FontIcons.display; font.pixelSize: 11

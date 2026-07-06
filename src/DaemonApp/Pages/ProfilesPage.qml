@@ -95,6 +95,16 @@ Item {
                                     color: Theme.text; elide: Text.ElideRight
                                     Layout.fillWidth: true
                                 }
+                                // Engine identity (C3/ENG-7): Native core vs the foreign ACP
+                                // agent this profile is bound to.
+                                Kit.Chip {
+                                    visible: entry.engine !== undefined
+                                    text: entry.engine === "Acp"
+                                          ? (entry.acpAgent || qsTr("Foreign")) : qsTr("Native")
+                                    iconGlyph: entry.engine === "Acp" ? FontIcons.fa_robot
+                                                                      : FontIcons.fa_microchip
+                                    tone: entry.engine === "Acp" ? "accent" : "muted"
+                                }
                                 Text {
                                     visible: entry.isDefault === true
                                     text: FontIcons.fa_star

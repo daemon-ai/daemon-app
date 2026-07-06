@@ -140,6 +140,10 @@ private:
     [[nodiscard]] QString buildProfileMarkdown(const QString& profileRef) const;
     [[nodiscard]] QString buildUsersAccessMarkdown() const;
     [[nodiscard]] QString buildChannelsMarkdown() const;
+    // Engine-identity token (C3/ENG-7): the TUI projection of the GUI engine chip for a profile /
+    // fleet row carrying engine/acpAgent ("Native" for Core, "<agent> (ACP)" for foreign; empty
+    // when the row has no engine field, e.g. mock rows).
+    [[nodiscard]] static QString engineToken(const QVariantMap& row);
 
     Dependencies m_deps;
     QHash<int, int> m_pageSel;
