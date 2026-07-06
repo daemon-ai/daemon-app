@@ -291,6 +291,32 @@ target_link_libraries(tst_auth_flow
 add_test(NAME tst_auth_flow COMMAND tst_auth_flow)
 set_tests_properties(tst_auth_flow PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# [wave2:app-engines] tst_agent_registry (C1/ENG-3): the foreign-agent registry codec —
+# AgentRegister/AgentRemove/AgentCatalog/AgentDiscover round-trips against the vendored zcbor codec
+# (source=Manual, protocol tag, stdio/endpoint recipe; installed absent), and AgentCatalog decode
+# reading the v29 protocol field.
+qt_add_executable(tst_agent_registry tst_agent_registry.cpp)
+target_link_libraries(tst_agent_registry
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+)
+add_test(NAME tst_agent_registry COMMAND tst_agent_registry)
+set_tests_properties(tst_agent_registry PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# [wave2:app-engines] tst_engine_identity (C3/C4/C5): the shared EngineIdentity facade —
+# session/profile -> engine {engine, agent, protocol, label}; labelFor presentation mapping.
+qt_add_executable(tst_engine_identity tst_engine_identity.cpp)
+target_link_libraries(tst_engine_identity
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+        daemon-app::uimodels
+)
+add_test(NAME tst_engine_identity COMMAND tst_engine_identity)
+set_tests_properties(tst_engine_identity PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_tls_transport: the TLS/TCP transport - fail-closed cert verification (an untrusted self-signed
 # cert aborts the handshake), and the explicitly-configured trust paths (SHA-256 pin / insecure
 # skip) connecting + round-tripping an encrypted frame against a QSslServer.
