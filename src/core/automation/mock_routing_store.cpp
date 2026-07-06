@@ -19,8 +19,12 @@ QVariantMap mk(const QString& id, const QString& intent, const QString& target,
 
 } // namespace
 
-MockRoutingStore::MockRoutingStore(QObject* parent)
+MockRoutingStore::MockRoutingStore(QObject* parent, bool seedDemo)
     : IRoutingStore(parent), m_rules(new uimodels::VariantListModel(this)) {
+    if (!seedDemo) {
+        // Daemon mode: no routing wire op exists, so render empty rather than fabricated rules.
+        return;
+    }
     m_rules->upsert(mk(QStringLiteral("r-1"), QStringLiteral("Code & engineering"),
                        QStringLiteral("qwen2.5-coder-32b"), QStringLiteral("llama-3.1-8b-instruct"),
                        true));

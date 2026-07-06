@@ -411,6 +411,20 @@ ApplicationWindow {
         }
     }
 
+    // Pin / archive / rename are node-owned: SessionStore sends a SessionUpdateMeta intent and the
+    // roster re-projects from the node's authoritative reply. If the node rejects one (e.g. a
+    // non-owner), surface it here instead of leaving a silent no-op that looks applied - the store
+    // never mutates the pin/archive/title locally.
+    Kit.Toast { id: sessionMetaToast }
+    Connections {
+        target: SessionStore
+        function onMetaUpdateFailed(sessionId, message) {
+            sessionMetaToast.show(message.length > 0
+                ? qsTr("Couldn't update session: %1").arg(message)
+                : qsTr("Couldn't update session"));
+        }
+    }
+
     // --- Expanded (>= 900dp): the original three-pane desktop SplitView -------
     Component {
         id: expandedShell

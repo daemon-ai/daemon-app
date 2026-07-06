@@ -8,6 +8,7 @@
 #include "daemon/node_api_codec.h"
 #include "daemon/page_loop.h"
 
+#include <optional>
 #include <QHash>
 #include <QList>
 #include <QObject>
@@ -60,9 +61,22 @@ public:
     // the node's active default. Nothing is client-minted.
     void createSession(const QString& profileId = QString());
 
+    // Node-authoritative session-metadata patch (SessionUpdateMeta{session, patch} -> Ok). Each
+    // optional is Some=set, std::nullopt=leave unchanged. NOTHING is written client-side: on Ok the
+    // node emits SessionMetaChanged (debounced roster refetch) and we ALSO issue an immediate
+    // authoritative refreshSessions() so the pin/archive/title reflects the node's stored row. On
+    // Error/transport failure metaUpdateFailed() fires so a rejected change (e.g. Forbidden for a
+    // non-owner) is surfaced, never silently mistaken for applied.
+    void updateSessionMeta(const QString& sessionId, std::optional<bool> pinned,
+                           std::optional<bool> archived, std::optional<QString> title);
+
 signals:
     void sessionsRefreshed();
     void refreshFailed(const QString& message);
+    // A SessionUpdateMeta was rejected (node ApiError) or failed at the transport. `sessionId`
+    // echoes the target; `message` is the node's reason. The UI surfaces this (GUI toast / TUI
+    // notification) instead of leaving a silent no-op that looks applied.
+    void metaUpdateFailed(const QString& sessionId, const QString& message);
     // A node SessionCreate resolved: `sessionId` is the node-minted id, `profileId` the profile it
     // was bound under (echoed from the request so the auto-select path knows the agent).
     void sessionCreated(const QString& sessionId, const QString& profileId);
@@ -81,15 +95,22 @@ private:
 
     // SessionCreated handling: node-authoritative create reply -> emit sessionCreated.
     void applySessionCreated(const QByteArray& responseCbor);
+    // SessionUpdateMeta reply: Ok -> authoritative refreshSessions(); Error -> metaUpdateFailed.
+    void applyMetaUpdate(const QByteArray& responseCbor);
 
     static constexpr auto kSessionsCorrelation = "repo/sessions-query";
     static constexpr auto kByProfileCorrelation = "repo/sessions-by-profile";
     static constexpr auto kCreateCorrelation = "repo/session-create";
+    static constexpr auto kUpdateMetaCorrelation = "repo/session-update-meta";
     static constexpr auto kRosterRevScope = "roster-rev"; // L4 persisted roster revision
 
     // The profile the in-flight SessionCreate carried, echoed on sessionCreated so the caller's
     // auto-select knows which agent the new session belongs to.
     QString m_pendingCreateProfile;
+
+    // The session id the in-flight SessionUpdateMeta targets, echoed on metaUpdateFailed so the UI
+    // can name the affected row.
+    QString m_pendingMetaSession;
 
     // L4: the since_rev the in-flight SessionsQuery carried (0 = a full request), so the response
     // handler knows whether to merge a delta or replace the roster (and detects a daemon-reset

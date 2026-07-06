@@ -12,7 +12,10 @@ class MockCronStore : public ICronStore {
     Q_OBJECT
 
 public:
-    explicit MockCronStore(QObject* parent = nullptr);
+    // `seedDemo` seeds the illustrative demo jobs (the mock-mode default). Daemon mode passes
+    // false: cron has NO node wire op yet, so it must render empty rather than fabricated jobs that
+    // would imply node-backed scheduling (render honesty). The on-disk cache is still restored.
+    explicit MockCronStore(QObject* parent = nullptr, bool seedDemo = true);
 
     [[nodiscard]] QObject* jobs() const override;
     [[nodiscard]] QVariantMap job(const QString& id) const override;

@@ -177,6 +177,41 @@ QByteArray NodeApiCodec::encodeSessionCreateRequest(const QString& sessionId,
         });
 }
 
+QByteArray NodeApiCodec::encodeSessionUpdateMetaRequest(const QString& sessionId,
+                                                        std::optional<bool> pinned,
+                                                        std::optional<bool> archived,
+                                                        std::optional<QString> title) {
+    // Buffers outlive the encode: zcbor borrows into their bytes across encodeWithFill.
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray titleUtf8 = title.has_value() ? title->toUtf8() : QByteArray();
+    return encodeWithFill(
+        api_request_r::api_request_request_session_update_meta_m_c, [&](api_request_r& request) {
+            request_session_update_meta& meta = request.api_request_request_session_update_meta_m;
+            setZcbor(meta.SessionUpdateMeta_session, sessionUtf8);
+            session_meta_patch& patch = meta.SessionUpdateMeta_patch;
+            // Each optional-and-nullable field: present == the key is in the map; we only ever
+            // send the value arm (never the wire `null` clear arm).
+            patch.session_meta_patch_title_present = title.has_value();
+            if (title.has_value()) {
+                patch.session_meta_patch_title.session_meta_patch_title_choice =
+                    session_meta_patch_title_r::session_meta_patch_title_tstr_c;
+                setZcbor(patch.session_meta_patch_title.session_meta_patch_title_tstr, titleUtf8);
+            }
+            patch.session_meta_patch_pinned_present = pinned.has_value();
+            if (pinned.has_value()) {
+                patch.session_meta_patch_pinned.session_meta_patch_pinned_choice =
+                    session_meta_patch_pinned_r::session_meta_patch_pinned_bool_c;
+                patch.session_meta_patch_pinned.session_meta_patch_pinned_bool = *pinned;
+            }
+            patch.session_meta_patch_archived_present = archived.has_value();
+            if (archived.has_value()) {
+                patch.session_meta_patch_archived.session_meta_patch_archived_choice =
+                    session_meta_patch_archived_r::session_meta_patch_archived_bool_c;
+                patch.session_meta_patch_archived.session_meta_patch_archived_bool = *archived;
+            }
+        });
+}
+
 QByteArray NodeApiCodec::encodeCredentialSetRequest(const QString& profile, const QString& secret) {
     const QByteArray profileUtf8 = profile.toUtf8();
     const QByteArray secretUtf8 = secret.toUtf8();
