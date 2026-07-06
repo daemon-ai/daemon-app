@@ -16,8 +16,11 @@ class TranscriptIngest;
 // Transcript.qml so the inline interactive blocks (clarify / approval) round-trip
 // end-to-end. It operates directly on the shared be::DocumentStore + ingest:
 //
-//   - approval answer  -> updateBlockMetadata(blockId, be::toolApprovalPatch(...));
-//                         an approval also drives the tool to a finished ok state.
+//   - approval answer  -> updateBlockMetadata(blockId, be::toolApprovalPatch(...))
+//                         ONLY (clears the gate). The tool RESULT is never
+//                         fabricated here: it is rendered from the turn engine's
+//                         event stream — the node's real ToolFinished (daemon) or
+//                         the mock TurnController's own scripted toolFinished.
 //   - clarify submit   -> updateBlockMetadata(blockId, be::clarifyAnswerPatch(...))
 //                         then ingests a short "proceeding with ..." follow-up.
 //

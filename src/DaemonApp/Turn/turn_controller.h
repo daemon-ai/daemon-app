@@ -44,6 +44,12 @@ public:
     // Resume a turn paused at an approval gate (a gated step pauses scheduling
     // until the inline approval answer drives this). No-op unless paused.
     void resume() override;
+    // Answer the approval gate: the simulator emits its OWN scripted toolFinished
+    // for the gated tool (ok/stdout on allow, error on deny) and a matching text,
+    // then resumes. Front ends never fabricate the result — they render only this
+    // (mock) or the node's real ToolFinished stream event (daemon). No-op unless
+    // paused at the gate.
+    void respondApproval(const QString& requestId, bool allow) override;
 
 private:
     struct Step {
