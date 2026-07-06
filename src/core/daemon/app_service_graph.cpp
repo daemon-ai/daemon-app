@@ -314,6 +314,14 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.firstRun =
         new firstrun::FirstRunModel(graph.settings, graph.connection, graph.modelCatalog,
                                     graph.profiles, graph.accounts, graph.providerCatalog, owner);
+    // CON-16: the wizard's agent-type step is offered iff the node's ACP catalog reflected any
+    // foreign agent. Wired here (not inside FirstRunModel) because firstrun must stay free of
+    // the daemon layer; the connect-ready storm above refreshes the catalog, so the offer is
+    // usually known by the time the gate decides.
+    QObject::connect(graph.acp, &AcpRepository::catalogRefreshed, graph.firstRun,
+                     [firstRun = graph.firstRun, acp = graph.acp] {
+                         firstRun->setAgentTypeOffered(!acp->entries().isEmpty());
+                     });
 
     // Release-feed / auto-update surface. Inert unless the package job compiled in a
     // capability dial; binding the settings store arms poll scheduling + staging

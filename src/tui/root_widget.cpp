@@ -318,14 +318,33 @@ void RootWidget::terminalChanged() {
 
     // First-run gate (parity with the GUI): on first launch, raise the lighter
     // "Setup Required" modal over the shell until setup completes.
-    if (m_services.firstRun != nullptr && m_services.firstRun->active()) {
-        auto* gate = new FirstRunDialog(m_services.firstRun, m_services.connection,
-                                        m_services.settings, m_services.providerCatalog,
-                                        m_services.settings->resolvedConnectionTarget(), this);
+    const auto raiseFirstRunGate = [this] {
+        auto* gate =
+            new FirstRunDialog(m_services.firstRun, m_services.connection, m_services.settings,
+                               m_services.providerCatalog, m_services.acp,
+                               m_services.settings->resolvedConnectionTarget(), this);
         // Local "Discover More Models" in the gate opens the shared model-download flow.
         connect(gate, &FirstRunDialog::modelDiscoverRequested, this,
                 &RootWidget::openModelDownload);
         gate->setFocus();
+    };
+    if (m_services.firstRun != nullptr && m_services.firstRun->active()) {
+        raiseFirstRunGate();
+    }
+    // CON-8 (A7): a LIVE re-entry into the wizard (reenterProvider from the missing-provider
+    // nudge, or a settings re-run) re-raises the gate over the running shell — the GUI's
+    // FirstRun.active gate-mount analog. The initial raise above covers boot; this covers
+    // done -> active transitions afterwards (the dialog is DeleteOnClose, so each raise is a
+    // fresh instance).
+    if (m_services.firstRun != nullptr) {
+        connect(m_services.firstRun, &firstrun::FirstRunModel::phaseChanged, this,
+                [this, raiseFirstRunGate, wasActive = m_services.firstRun->active()]() mutable {
+                    const bool nowActive = m_services.firstRun->active();
+                    if (nowActive && !wasActive) {
+                        raiseFirstRunGate();
+                    }
+                    wasActive = nowActive;
+                });
     }
 }
 

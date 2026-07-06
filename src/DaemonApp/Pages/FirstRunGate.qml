@@ -27,6 +27,11 @@ Rectangle {
     readonly property bool inferenceComplete: inferencePicker.item
                                               && inferencePicker.item.inferenceComplete
     readonly property string pickerKey: inferencePicker.item ? inferencePicker.item.key : ""
+    // A1 (CON-10): non-empty only on the picker's custom-endpoint path; rides the commit so the
+    // profile persists the user-supplied base URL.
+    readonly property string pickerBaseUrl: (inferencePicker.item
+                                             && inferencePicker.item.customEndpoint)
+                                            ? inferencePicker.item.customBaseUrl : ""
 
     // The chosen provider's catalog label (e.g. "Anthropic"), the seed for the agent-name
     // prefill. Falls back to the descriptor id when the catalog has no display name.
@@ -72,9 +77,11 @@ Rectangle {
                 Text {
                     text: root.phase === "inference"
                           ? qsTr("Almost there - confirm an inference model.")
-                          : root.phase === "auth"
-                            ? qsTr("Sign in to the node to continue.")
-                            : qsTr("Connect to a daemon node to get started.")
+                          : root.phase === "agenttype"
+                            ? qsTr("What kind of agent do you want?")
+                            : root.phase === "auth"
+                              ? qsTr("Sign in to the node to continue.")
+                              : qsTr("Connect to a daemon node to get started.")
                     font.family: FontIcons.display; font.pixelSize: 13; color: Theme.textMuted
                     Layout.fillWidth: true; wrapMode: Text.WordWrap
                 }
@@ -151,6 +158,51 @@ Rectangle {
                 }
             }
 
+            // --- Phase: agenttype (CON-16): the SHARED native-vs-foreign engine picker --------
+            // Shown only when the node offered foreign ACP agents (FirstRun gates the phase).
+            // Native (default, preselected) continues into the inference step; an INSTALLED
+            // foreign agent finishes setup directly — it brings its own model, so the
+            // provider/model/key pages are skipped entirely.
+            ColumnLayout {
+                visible: root.phase === "agenttype"
+                Layout.fillWidth: true
+                spacing: 10
+                SectionLabel { text: qsTr("Agent type") }
+                AgentTypePicker {
+                    id: agentTypePicker
+                    Layout.fillWidth: true
+                    visible: root.phase === "agenttype"
+                    // Fresh catalog + discovery badges each time the step mounts.
+                    onVisibleChanged: if (visible) refresh()
+                }
+                Text {
+                    text: agentTypePicker.nativeEngine
+                          ? qsTr("Runs in the daemon — pick a provider and model next.")
+                          : qsTr("This agent runs a foreign ACP engine — it brings its own "
+                                 + "model, so no provider, model, or key is needed.")
+                    font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
+                    Layout.fillWidth: true; wrapMode: Text.WordWrap
+                }
+                // Foreign agents get their NAME here (the native path names on the inference
+                // step): prefilled from the agent, editable, required.
+                SectionLabel { visible: !agentTypePicker.nativeEngine; text: qsTr("Agent name") }
+                Kit.TextField {
+                    id: acpNameField
+                    visible: !agentTypePicker.nativeEngine
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("agent name")
+                    property bool userEdited: false
+                    onTextEdited: userEdited = true
+                }
+                Connections {
+                    target: agentTypePicker
+                    function onSelected(agent, installed) {
+                        if (!acpNameField.userEdited)
+                            acpNameField.text = agent;
+                    }
+                }
+            }
+
             // --- Phase: inference gate: the agent's NAME + the SHARED picker (A7) -------------
             // The name is the profile id the node keys the agent by (there is no separate
             // display-name field on the wire): prefilled from the chosen provider's label,
@@ -187,6 +239,14 @@ Rectangle {
                     preferDaemonCloud: false
                 }
             }
+            // A7 finish-gate outcome: the capability probe's actionable failure ("Couldn't
+            // reach your model…") keeps the wizard open with the reason visible here.
+            Text {
+                visible: root.phase === "inference" && FirstRun && FirstRun.error.length > 0
+                text: FirstRun ? FirstRun.error : ""
+                font.family: FontIcons.display; font.pixelSize: 12; color: Theme.danger
+                Layout.fillWidth: true; wrapMode: Text.WordWrap
+            }
 
             // --- Footer actions ---
             RowLayout {
@@ -197,6 +257,24 @@ Rectangle {
                     onClicked: FirstRun.skip()
                 }
                 Item { Layout.fillWidth: true }
+                // Agent-type step commit (CON-16): native -> the inference step; an INSTALLED
+                // foreign agent -> Finish (named ProfileCreate with engine=Acp{agent}, no
+                // provider/model/key).
+                Kit.TextButton {
+                    visible: root.phase === "agenttype"
+                    text: agentTypePicker.nativeEngine ? qsTr("Continue") : qsTr("Finish setup")
+                    accentFilled: true
+                    enabled: agentTypePicker.nativeEngine
+                             || (agentTypePicker.engineAgentInstalled
+                                 && acpNameField.text.trim().length > 0)
+                    onClicked: {
+                        if (agentTypePicker.nativeEngine)
+                            FirstRun.chooseAgentType("");
+                        else
+                            FirstRun.applyAcpChoice(acpNameField.text.trim(),
+                                                    agentTypePicker.engineAgent);
+                    }
+                }
                 Kit.TextButton {
                     visible: root.phase === "inference"
                     text: qsTr("Finish setup")
@@ -213,7 +291,8 @@ Rectangle {
                     // env required.
                     onClicked: FirstRun.applyInferenceChoice(root.providerId, root.model,
                                                              root.pickerKey,
-                                                             agentNameField.text.trim())
+                                                             agentNameField.text.trim(),
+                                                             root.pickerBaseUrl)
                 }
             }
         }

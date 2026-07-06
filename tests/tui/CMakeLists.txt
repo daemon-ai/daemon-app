@@ -296,6 +296,7 @@ set_tests_properties(tui_file_finder_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFO
 qt_add_executable(tui_first_run_dialog_tests
     tst_first_run_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/dialogs/first_run_dialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
 )
 set_target_properties(tui_first_run_dialog_tests PROPERTIES AUTOMOC ON)
 target_include_directories(tui_first_run_dialog_tests PRIVATE
@@ -312,6 +313,8 @@ target_link_libraries(tui_first_run_dialog_tests
         daemon-app::models
         daemon-app::profiles
         daemon-app::accounts
+        # AgentTypeView (the agenttype step's shared picker) reads AcpRepository.
+        daemon-app::daemon_client
 )
 add_test(NAME tui_first_run_dialog_tests COMMAND tui_first_run_dialog_tests)
 set_tests_properties(tui_first_run_dialog_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

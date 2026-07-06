@@ -65,16 +65,25 @@ Kit.Dialog {
         if (!agentPicker.inferenceComplete)
             return;
         var fields = {};
-        var desc = (ProviderCatalog && agentPicker.providerId.length > 0)
-                   ? ProviderCatalog.descriptorFor(agentPicker.providerId) : ({});
-        // Persist the ProviderSelector wire string + base URL from the node descriptor (never a
-        // hardcoded provider); the model is the picker's selection (never free text).
-        if (desc && desc.wireSelector)
-            fields.provider = desc.wireSelector;
-        if (agentPicker.model.length > 0)
+        // A1 (CON-10): a custom endpoint pins genai's OpenAI-compatible adapter ("daemon_api")
+        // at the user-supplied base URL with a typed model — there is no catalog descriptor.
+        if (agentPicker.customEndpoint) {
+            fields.provider = "daemon_api";
             fields.model = agentPicker.model;
-        if (desc && desc.defaultBaseUrl && desc.defaultBaseUrl.length > 0)
-            fields.baseUrl = desc.defaultBaseUrl;
+            fields.baseUrl = agentPicker.customBaseUrl.trim();
+        } else {
+            var desc = (ProviderCatalog && agentPicker.providerId.length > 0)
+                       ? ProviderCatalog.descriptorFor(agentPicker.providerId) : ({});
+            // Persist the ProviderSelector wire string + base URL from the node descriptor
+            // (never a hardcoded provider); the model is the picker's selection (never free
+            // text).
+            if (desc && desc.wireSelector)
+                fields.provider = desc.wireSelector;
+            if (agentPicker.model.length > 0)
+                fields.model = agentPicker.model;
+            if (desc && desc.defaultBaseUrl && desc.defaultBaseUrl.length > 0)
+                fields.baseUrl = desc.defaultBaseUrl;
+        }
         if (personaField.text.trim().length > 0)
             fields.systemPrompt = personaField.text.trim();
         // ONE full-spec ProfileCreate (same seam as the wizard): the node dispatches pipelined

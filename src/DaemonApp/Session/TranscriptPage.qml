@@ -264,6 +264,40 @@ Rectangle {
             }
         }
 
+        // CON-8 (A7): the send-time missing-provider nudge. When a turn fails with the node's
+        // "no model provider configured" error, surface an actionable deep link back into the
+        // wizard's provider step (FirstRun.reenterProvider re-opens the gate at `inference`)
+        // instead of leaving a dead chat. The failed message stays in the composer history for
+        // retry after the fix.
+        Rectangle {
+            visible: orchestrator.turn && orchestrator.turn.errorText
+                     && orchestrator.turn.errorText.indexOf("no model provider configured") !== -1
+            Layout.fillWidth: true
+            implicitHeight: nudgeRow.implicitHeight + 16
+            radius: 8
+            color: Theme.surface
+            border.color: Theme.border
+            border.width: 1
+            RowLayout {
+                id: nudgeRow
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 10
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTr("Set up a provider to send your first message.")
+                    font.family: FontIcons.display; font.pixelSize: 12; color: Theme.text
+                    wrapMode: Text.WordWrap
+                }
+                Kit.TextButton {
+                    text: qsTr("Set up provider")
+                    accentFilled: true
+                    onClicked: if (typeof FirstRun !== "undefined" && FirstRun)
+                                   FirstRun.reenterProvider()
+                }
+            }
+        }
+
         Composer {
             id: composer
             Layout.fillWidth: true

@@ -3,6 +3,7 @@
 
 #include "first_run_dialog.h"
 
+#include "agent_type_view.h"
 #include "models/iprovider_catalog.h"
 
 #include <QAbstractItemModel>
@@ -15,7 +16,8 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
                                connection::IConnectionService* connection,
                                settings::ISettingsStore* settings,
                                models::IProviderCatalog* providerCatalog,
-                               const QString& defaultTarget, Tui::ZWidget* parent)
+                               daemonapp::daemon::AcpRepository* acp, const QString& defaultTarget,
+                               Tui::ZWidget* parent)
     : Tui::ZDialog(parent), m_model(model), m_connection(connection), m_settings(settings),
       m_providerCatalog(providerCatalog) {
     setOptions(Tui::ZWindow::DeleteOnClose);
@@ -62,6 +64,16 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     m_token->setEchoMode(Tui::ZInputBox::Password);
     layout->addWidget(m_token);
 
+    // Agent type (agenttype phase, CON-16): the shared native-vs-foreign picker projection.
+    // FirstRunModel gates the phase (offered only when the node reflected foreign agents).
+    m_agentTypeLabel = new Tui::ZLabel(tr("Agent type (Enter to pick):"), this);
+    m_agentTypeLabel->setVisible(false);
+    layout->addWidget(m_agentTypeLabel);
+    m_agentType = new AgentTypeView(acp, this);
+    m_agentType->setObjectName(QStringLiteral("firstRunAgentType"));
+    m_agentType->setVisible(false);
+    layout->addWidget(m_agentType);
+
     // Agent name (inference phase): the profile id the node keys the agent by, prefilled from
     // the chosen provider's label until the user edits it - parity with the GUI wizard's
     // agentNameField. The name mints a NAMED agent instead of leaving the node's placeholder id.
@@ -107,6 +119,23 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     m_modelList->setObjectName(QStringLiteral("firstRunModelList"));
     m_modelList->setVisible(false);
     layout->addWidget(m_modelList);
+
+    // A1 (CON-10): the custom-endpoint fields — base URL + typed model (no wire op can list a
+    // self-hosted server's models). Shown only for the synthetic "Custom endpoint…" row.
+    m_baseUrlLabel = new Tui::ZLabel(tr("Base URL (e.g. https://…)"), this);
+    m_baseUrlLabel->setVisible(false);
+    layout->addWidget(m_baseUrlLabel);
+    m_baseUrl = new Tui::ZInputBox(QString(), this);
+    m_baseUrl->setObjectName(QStringLiteral("firstRunBaseUrl"));
+    m_baseUrl->setVisible(false);
+    layout->addWidget(m_baseUrl);
+    m_customModelLabel = new Tui::ZLabel(tr("Model id"), this);
+    m_customModelLabel->setVisible(false);
+    layout->addWidget(m_customModelLabel);
+    m_customModel = new Tui::ZInputBox(QString(), this);
+    m_customModel->setObjectName(QStringLiteral("firstRunCustomModel"));
+    m_customModel->setVisible(false);
+    layout->addWidget(m_customModel);
 
     // SASL login: username + masked password, shown only in the auth phase.
     m_username = new Tui::ZInputBox(QString(), this);
@@ -157,7 +186,16 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     }
 
     connect(m_primary, &Tui::ZButton::clicked, this, [this] {
-        if (m_model->phase() == QStringLiteral("inference")) {
+        if (m_model->phase() == QStringLiteral("agenttype")) {
+            // Native -> the inference step; an INSTALLED foreign agent -> full commit (the
+            // model's applyAcpChoice; name falls back to the agent name).
+            const QString agent = m_agentType != nullptr ? m_agentType->selectedAgent() : QString();
+            if (agent.isEmpty()) {
+                m_model->chooseAgentType(QString());
+            } else {
+                m_model->applyAcpChoice(agent, agent);
+            }
+        } else if (m_model->phase() == QStringLiteral("inference")) {
             commitInference();
         } else if (m_model->phase() == QStringLiteral("auth")) {
             // Submit SASL credentials; the password is read from the field only and never logged.
@@ -208,6 +246,16 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
         }
         refreshInferenceControls();
     });
+    // Custom-endpoint completeness tracks the base URL + typed model (A1).
+    connect(m_baseUrl, &Tui::ZInputBox::textChanged, this,
+            &FirstRunDialog::refreshInferenceControls);
+    connect(m_customModel, &Tui::ZInputBox::textChanged, this,
+            &FirstRunDialog::refreshInferenceControls);
+
+    // Agent-type selection changes re-gate the primary button (uninstalled foreign rows are
+    // not committable, parity with the GUI picker's unselectable rows).
+    connect(m_agentType, &AgentTypeView::selectionChanged, this, &FirstRunDialog::syncToPhase);
+    connect(m_agentType, &Tui::ZListView::enterPressed, this, [this](int) { syncToPhase(); });
 
     // Provider -> model wiring (node-driven, selection-only).
     connect(m_providerList, &Tui::ZListView::enterPressed, this, &FirstRunDialog::selectProvider);
@@ -237,11 +285,21 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     setGeometry(QRect(0, 0, 66, 23));
 }
 
+namespace {
+// The synthetic custom-endpoint provider row id (A1 / CON-10) — client-side only, never a
+// catalog descriptor; mirrors AgentInferencePicker.qml's kCustomId.
+const QString kCustomProviderId = QStringLiteral("__custom__");
+} // namespace
+
 QVariantMap FirstRunDialog::currentProviderDescriptor() const {
-    if (m_providerCatalog == nullptr || m_providerId.isEmpty()) {
+    if (m_providerCatalog == nullptr || m_providerId.isEmpty() || customSelected()) {
         return {};
     }
     return m_providerCatalog->descriptorFor(m_providerId);
+}
+
+bool FirstRunDialog::customSelected() const {
+    return m_providerId == kCustomProviderId;
 }
 
 void FirstRunDialog::rebuildProviderList() {
@@ -249,6 +307,12 @@ void FirstRunDialog::rebuildProviderList() {
         return;
     }
     m_providerRows = m_providerCatalog->providers();
+    // Vision (CON-10): a "Custom endpoint…" row at the bottom of the provider list.
+    QVariantMap customRow;
+    customRow[QStringLiteral("id")] = kCustomProviderId;
+    customRow[QStringLiteral("name")] = tr("Custom endpoint…");
+    customRow[QStringLiteral("kind")] = QStringLiteral("custom");
+    m_providerRows.append(customRow);
     QStringList names;
     for (const QVariant& v : m_providerRows) {
         names << v.toMap().value(QStringLiteral("name")).toString();
@@ -282,8 +346,9 @@ void FirstRunDialog::selectProvider(int row) {
     // from the provider's label, both before the refresh so its resolution lands on this state.
     m_model->setInferenceSelection(m_providerId, m_key != nullptr ? m_key->text() : QString());
     seedAgentName();
-    if (m_providerCatalog != nullptr) {
-        // Transient key while listing (no profile yet); Daemon Cloud/local ignore it.
+    if (m_providerCatalog != nullptr && !customSelected()) {
+        // Transient key while listing (no profile yet); Daemon Cloud/local ignore it. The
+        // custom endpoint lists nothing: no wire op can enumerate an arbitrary server's models.
         m_providerCatalog->refreshModels(m_providerId, QString(), m_key->text());
     }
     rebuildModelList();
@@ -298,7 +363,7 @@ void FirstRunDialog::seedAgentName() {
     }
     QString label = currentProviderDescriptor().value(QStringLiteral("name")).toString();
     if (label.isEmpty()) {
-        label = m_providerId;
+        label = customSelected() ? tr("custom") : m_providerId;
     }
     m_seedingName = true;
     m_agentName->setText(label.toLower());
@@ -341,13 +406,35 @@ void FirstRunDialog::selectModel(int row) {
 
 void FirstRunDialog::refreshInferenceControls() {
     const bool inference = m_model->phase() == QStringLiteral("inference");
+    const bool custom = customSelected();
     const QVariantMap desc = currentProviderDescriptor();
     const bool requiresKey = desc.value(QStringLiteral("requiresKey")).toBool();
     if (m_key != nullptr) {
-        m_key->setVisible(inference && requiresKey);
+        // The custom endpoint offers an OPTIONAL key (stored profile-scoped like any other).
+        m_key->setVisible(inference && (requiresKey || custom));
     }
     if (m_listModelsBtn != nullptr) {
         m_listModelsBtn->setVisible(inference && requiresKey);
+    }
+    // The custom endpoint swaps the selection-only model list for base-URL + typed-model inputs
+    // (A1: nothing to list; the server names its own models).
+    if (m_modelLabel != nullptr) {
+        m_modelLabel->setVisible(inference && !custom);
+    }
+    if (m_modelList != nullptr) {
+        m_modelList->setVisible(inference && !custom);
+    }
+    if (m_baseUrlLabel != nullptr) {
+        m_baseUrlLabel->setVisible(inference && custom);
+    }
+    if (m_baseUrl != nullptr) {
+        m_baseUrl->setVisible(inference && custom);
+    }
+    if (m_customModelLabel != nullptr) {
+        m_customModelLabel->setVisible(inference && custom);
+    }
+    if (m_customModel != nullptr) {
+        m_customModel->setVisible(inference && custom);
     }
     // The shared key gate's blocking reason (empty until an authenticated LIST fails), rendered
     // like the GUI picker's message line.
@@ -359,11 +446,20 @@ void FirstRunDialog::refreshInferenceControls() {
     if (m_primary != nullptr && inference) {
         // Finish parity with the GUI wizard: a non-empty agent name, a provider + concrete
         // model, an entered key where required, AND the shared key gate (FIX 4) - the key must
-        // be PROVEN by an authenticated listing, not merely typed.
-        const bool keyOk = !requiresKey || !m_key->text().isEmpty();
+        // be PROVEN by an authenticated listing, not merely typed. The custom endpoint needs
+        // its base URL + a typed model instead (the key stays optional; no gate can validate
+        // it without a wire op).
         const bool nameOk = m_agentName != nullptr && !m_agentName->text().trimmed().isEmpty();
-        m_primary->setEnabled(!m_providerId.isEmpty() && !m_selectedModel.isEmpty() && keyOk &&
-                              nameOk && m_model->keyGatePassed());
+        if (custom) {
+            const bool baseOk = m_baseUrl != nullptr && !m_baseUrl->text().trimmed().isEmpty();
+            const bool modelOk =
+                m_customModel != nullptr && !m_customModel->text().trimmed().isEmpty();
+            m_primary->setEnabled(baseOk && modelOk && nameOk);
+        } else {
+            const bool keyOk = !requiresKey || !m_key->text().isEmpty();
+            m_primary->setEnabled(!m_providerId.isEmpty() && !m_selectedModel.isEmpty() && keyOk &&
+                                  nameOk && m_model->keyGatePassed());
+        }
     }
 }
 
@@ -407,6 +503,18 @@ void FirstRunDialog::applyMode(const QString& mode) {
 void FirstRunDialog::syncToPhase() {
     const QString p = m_model->phase();
     const bool inference = p == QStringLiteral("inference");
+    const bool agenttype = p == QStringLiteral("agenttype");
+    // The agent-type picker lives in its own phase (CON-16), fronting the inference step.
+    if (m_agentTypeLabel != nullptr) {
+        m_agentTypeLabel->setVisible(agenttype);
+    }
+    if (m_agentType != nullptr) {
+        const bool wasVisible = m_agentType->isVisible();
+        m_agentType->setVisible(agenttype);
+        if (agenttype && !wasVisible) {
+            m_agentType->refresh(); // fresh catalog + discovery badges on step entry
+        }
+    }
     // The local App-managed/Attach toggle only applies while choosing a transport (connect phase).
     if (m_managedBtn != nullptr) {
         const bool managed = m_settings != nullptr && m_settings->managedLocalDaemon();
@@ -463,8 +571,31 @@ void FirstRunDialog::syncToPhase() {
             m_key->setVisible(false);
         }
         m_username->setFocus();
+    } else if (p == QStringLiteral("agenttype")) {
+        const bool native = m_agentType == nullptr || m_agentType->selectedAgent().isEmpty();
+        m_status->setText(tr("Choose the kind of agent: native picks a model next; a foreign "
+                             "ACP agent brings its own."));
+        m_primary->setText(native ? tr("Continue") : tr("Finish"));
+        m_primary->setEnabled(m_agentType == nullptr || m_agentType->selectionValid());
+        m_target->setEnabled(false);
+        if (m_token != nullptr) {
+            m_token->setVisible(false);
+        }
+        if (m_key != nullptr) {
+            m_key->setVisible(false);
+        }
+        if (m_listModelsBtn != nullptr) {
+            m_listModelsBtn->setVisible(false);
+        }
+        if (m_agentType != nullptr) {
+            m_agentType->setFocus();
+        }
     } else if (p == QStringLiteral("inference")) {
-        m_status->setText(tr("Pick a provider and a model, then Finish."));
+        // The A7 finish probe's actionable failure ("Couldn't reach your model…") replaces the
+        // instruction line until the user fixes the provider and re-commits.
+        m_status->setText(m_model->error().isEmpty()
+                              ? tr("Pick a provider and a model, then Finish.")
+                              : m_model->error());
         m_primary->setText(tr("Finish"));
         m_target->setEnabled(false);
         if (m_token != nullptr) {
@@ -489,10 +620,16 @@ void FirstRunDialog::commitInference() {
     // finish. No hardcoded provider: the id/model/key come from the node-driven selection.
     // FirstRunModel owns the persistence so the GUI + TUI share one path: a name that is empty or
     // equal to the seeded placeholder id configures the placeholder in place; anything else mints
-    // a named agent (same semantics as the GUI wizard).
+    // a named agent (same semantics as the GUI wizard). The custom endpoint (A1) rides the same
+    // path with the typed model + the user base URL.
     const QString key = m_key != nullptr ? m_key->text() : QString();
     const QString name = m_agentName != nullptr ? m_agentName->text().trimmed() : QString();
-    m_model->applyInferenceChoice(m_providerId, m_selectedModel, key, name);
+    const bool custom = customSelected();
+    const QString model =
+        custom && m_customModel != nullptr ? m_customModel->text().trimmed() : m_selectedModel;
+    const QString baseUrl =
+        custom && m_baseUrl != nullptr ? m_baseUrl->text().trimmed() : QString();
+    m_model->applyInferenceChoice(m_providerId, model, key, name, baseUrl);
     if (m_key != nullptr) {
         m_key->setText(QString());
     }

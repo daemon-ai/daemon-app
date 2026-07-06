@@ -11,6 +11,9 @@
 #include "settings/isettings_store.h"
 
 #include <memory>
+#include <QTimer>
+#include <QVariantList>
+#include <QVariantMap>
 
 namespace firstrun {
 
@@ -139,10 +142,31 @@ void FirstRunModel::evaluateWizardGate() {
         m_gating = false;
         finish();
     } else {
-        // Not configured (or not yet reflected): show the inference step. Stay gating so a late
-        // reflection that reveals the node IS configured can still auto-skip.
+        // Not configured (or not yet reflected): show the wizard. The agent-type step (CON-16)
+        // fronts the inference step only when the node offered foreign ACP agents at decision
+        // time — an empty catalog keeps zero foreign noise. Re-evaluations (later reflections)
+        // must not stomp a step the user is already inside; stay gating so a late reflection
+        // that reveals the node IS configured can still auto-skip.
+        if (inCommitPhase()) {
+            return;
+        }
+        setPhase(m_agentTypeOffered ? QStringLiteral("agenttype") : QStringLiteral("inference"));
+    }
+}
+
+void FirstRunModel::setAgentTypeOffered(bool offered) {
+    m_agentTypeOffered = offered;
+}
+
+void FirstRunModel::chooseAgentType(const QString& acpAgent) {
+    if (m_phase != QStringLiteral("agenttype")) {
+        return;
+    }
+    if (acpAgent.isEmpty()) {
+        // Native: continue into the existing inference step (CON-10..14) unchanged.
         setPhase(QStringLiteral("inference"));
     }
+    // Foreign selections commit through applyAcpChoice (the front ends pass the chosen name).
 }
 
 void FirstRunModel::setInferenceReady(bool ready) {
@@ -170,7 +194,8 @@ void FirstRunModel::completeInference() {
 }
 
 void FirstRunModel::applyInferenceChoice(const QString& providerId, const QString& model,
-                                         const QString& key, const QString& name) {
+                                         const QString& key, const QString& name,
+                                         const QString& customBaseUrl) {
     // No profile store wired (mock/standalone): just finish, preserving the permissive path.
     if (m_profiles == nullptr || providerId.isEmpty()) {
         finish();
@@ -187,19 +212,22 @@ void FirstRunModel::applyInferenceChoice(const QString& providerId, const QStrin
     // pre-apply defaultProfileId() snapshot can be stale (the reflection race that used to
     // blind-create a "default" profile here); the node's CURRENT state is the only valid input.
     const QString trimmedName = name.trimmed();
-    runOnNextProfilesChanged([this, providerId, model, key, trimmedName] {
-        applyReflectedInferenceChoice(providerId, model, key, trimmedName);
+    runOnNextProfilesChanged([this, providerId, model, key, trimmedName, customBaseUrl] {
+        applyReflectedInferenceChoice(providerId, model, key, trimmedName, customBaseUrl);
     });
     m_profiles->refresh();
 }
 
 void FirstRunModel::applyReflectedInferenceChoice(const QString& providerId, const QString& model,
-                                                  const QString& key, const QString& name) {
+                                                  const QString& key, const QString& name,
+                                                  const QString& customBaseUrl) {
     // Resolve the ProviderSelector + base URL the profile should persist from the descriptor (the
-    // picker keys on the descriptor id; genai vendors share the "genai" selector).
+    // picker keys on the descriptor id; genai vendors share the "genai" selector). A1: a custom
+    // endpoint carries no descriptor — the profile pins genai's OpenAI-compatible adapter
+    // ("daemon_api") at the USER-supplied base URL instead.
     QString wireSelector = QStringLiteral("daemon_api");
-    QString baseUrl;
-    if (m_providerCatalog != nullptr) {
+    QString baseUrl = customBaseUrl.trimmed();
+    if (baseUrl.isEmpty() && m_providerCatalog != nullptr) {
         const QVariantMap d = m_providerCatalog->descriptorFor(providerId);
         if (!d.isEmpty()) {
             wireSelector = d.value(QStringLiteral("wireSelector")).toString();
@@ -228,8 +256,7 @@ void FirstRunModel::applyReflectedInferenceChoice(const QString& providerId, con
             }
             activateLocalModel(model, profileId);
         }
-        setInferenceReady(true);
-        finish();
+        probeThenFinish(providerId, profileId);
         return;
     }
 
@@ -258,6 +285,117 @@ void FirstRunModel::applyReflectedInferenceChoice(const QString& providerId, con
             // finished() binds the node's active profile, so this ordering is what makes the new
             // agent (not the deleted placeholder) own the first session.
             whenProfilesReflect([this, newId] { return m_profiles->defaultProfileId() == newId; },
+                                [this, providerId, newId] { probeThenFinish(providerId, newId); });
+        });
+}
+
+void FirstRunModel::probeThenFinish(const QString& providerId, const QString& credentialRef) {
+    // A7 (CON-7/CON-15): "done" means PROVEN — one real ProviderModels-class listing through the
+    // committed provider before setSetupComplete. No catalog wired (mock/standalone) or no
+    // catalog-backed provider id (the custom-endpoint path, which no wire op can list yet) stays
+    // permissive: the send-time nudge (reenterProvider) remains the honest failure path there.
+    if (m_providerCatalog == nullptr || providerId.isEmpty() ||
+        m_providerCatalog->descriptorFor(providerId).isEmpty()) {
+        setInferenceReady(true);
+        finish();
+        return;
+    }
+    m_probeProviderId = providerId;
+    if (m_probeTimeout == nullptr) {
+        m_probeTimeout = new QTimer(this);
+        m_probeTimeout->setSingleShot(true);
+        // Generous: a cold cloud listing can be slow; the mock/offscreen path resolves
+        // synchronously and never arms the timer visibly.
+        m_probeTimeout->setInterval(15000);
+        connect(m_probeTimeout, &QTimer::timeout, this, [this] {
+            if (m_probeProviderId.isEmpty()) {
+                return;
+            }
+            QObject::disconnect(m_probeConnection);
+            m_probeProviderId.clear();
+            m_applying = false; // allow a re-committed Finish after the fix
+            setError(tr("Couldn't reach your model — check the provider and try again."));
+        });
+    }
+    QObject::disconnect(m_probeConnection);
+    m_probeConnection = connect(
+        m_providerCatalog, &models::IProviderCatalog::offeredModelsChanged, this,
+        [this](const QString& pid) {
+            if (pid != m_probeProviderId) {
+                return; // another provider's listing, not the probe's
+            }
+            QObject::disconnect(m_probeConnection);
+            m_probeTimeout->stop();
+            m_probeProviderId.clear();
+            // Count only REAL model rows: local providers always append the synthetic
+            // "Discover More Models" affordance, which must never fake-pass the gate.
+            int realModels = 0;
+            const QVariantList rows = m_providerCatalog->offeredModels(pid);
+            for (const QVariant& v : rows) {
+                if (v.toMap().value(QStringLiteral("kind")).toString() !=
+                    QStringLiteral("discover")) {
+                    ++realModels;
+                }
+            }
+            if (realModels > 0) {
+                setError(QString());
+                setInferenceReady(true);
+                finish();
+            } else {
+                m_applying = false; // allow a re-committed Finish after the fix
+                setError(tr("Couldn't reach your model — check the provider and try again."));
+            }
+        });
+    m_probeTimeout->start();
+    // The listing authenticates with the committed profile's stored credential (empty for
+    // keyless providers; local engines resolve from the installed catalog).
+    m_providerCatalog->refreshModels(providerId, credentialRef);
+}
+
+void FirstRunModel::applyAcpChoice(const QString& name, const QString& acpAgent) {
+    // No profile store wired (mock/standalone) or nothing chosen: just finish (permissive path).
+    if (m_profiles == nullptr || acpAgent.isEmpty()) {
+        finish();
+        return;
+    }
+    if (m_applying) {
+        return; // an apply continuation is already in flight (double-committed Finish)
+    }
+    m_applying = true;
+    m_gating = false;
+    // Refetch-then-apply, exactly like the native path: the placeholder id must come off a
+    // FRESH ProfileList reflection, never a stale snapshot.
+    const QString trimmedName = name.trimmed();
+    runOnNextProfilesChanged(
+        [this, trimmedName, acpAgent] { applyReflectedAcpChoice(trimmedName, acpAgent); });
+    m_profiles->refresh();
+}
+
+void FirstRunModel::applyReflectedAcpChoice(const QString& name, const QString& acpAgent) {
+    // The node-seeded placeholder, read off the FRESH reflection that triggered this
+    // continuation.
+    const QString profileId = m_profiles->defaultProfileId();
+    const QString agentName = name.isEmpty() ? acpAgent : name;
+    // ONE named ProfileCreate carrying engine=Acp{agent} — a catalog NAME, never a recipe; no
+    // provider/model/key/credential frames (the foreign agent brings its own model).
+    const QString newId = m_profiles->createAcpProfile(agentName, acpAgent);
+    if (newId.isEmpty()) {
+        finish(); // store without a live repo: nothing further to sequence
+        return;
+    }
+    whenProfilesReflect(
+        [this, newId] { return !m_profiles->profile(newId).isEmpty(); },
+        [this, newId, profileId] {
+            m_profiles->setDefault(newId); // ProfileSelect: sessions bind the default profile
+            if (!profileId.isEmpty() && profileId != newId) {
+                // Drop the seeded placeholder (same rationale as the native named path: no
+                // sessions exist pre-wizard, so no bound_profile reference can break).
+                m_profiles->remove(profileId);
+            }
+            // Finish only once the node reflects the NEW active default, so the first chat's
+            // SessionCreate binds the foreign agent. No inference probe applies: the agent
+            // brings its own model (the node resolves the recipe by name at session open).
+            whenProfilesReflect([this, newId] { return m_profiles->defaultProfileId() == newId; },
                                 [this] {
                                     setInferenceReady(true);
                                     finish();
@@ -279,7 +417,7 @@ void FirstRunModel::runOnNextProfilesChanged(const std::function<void()>& then) 
     connect(
         m_profiles, &profiles::IProfileStore::changed, this,
         [this, then] {
-            if (m_phase == QStringLiteral("inference")) {
+            if (inCommitPhase()) {
                 then();
             } // else: Skip/restart left the wizard first — abandon the continuation
         },
@@ -295,7 +433,7 @@ void FirstRunModel::whenProfilesReflect(const std::function<bool()>& reflected,
     auto conn = std::make_shared<QMetaObject::Connection>();
     *conn =
         connect(m_profiles, &profiles::IProfileStore::changed, this, [this, conn, reflected, then] {
-            if (m_phase != QStringLiteral("inference")) {
+            if (!inCommitPhase()) {
                 QObject::disconnect(*conn); // Skip/restart: abandon the continuation
                 return;
             }
@@ -382,13 +520,37 @@ void FirstRunModel::restart() {
     }
     setInferenceReady(false);
     m_applying = false; // any in-flight apply continuation is abandoned (phase leaves inference)
+    // A dangling finish probe must not resolve into a stale finish() post-restart.
+    m_probeProviderId.clear();
+    QObject::disconnect(m_probeConnection);
+    if (m_probeTimeout != nullptr) {
+        m_probeTimeout->stop();
+    }
     begin();
+}
+
+void FirstRunModel::reenterProvider() {
+    // CON-8: deep-link back into the provider step from a live shell (the send-time "no provider
+    // configured" nudge). setupComplete stays untouched — finishing (or Skip) re-persists it —
+    // and the connection is already up, so the wizard re-opens directly at `inference`.
+    if (m_phase != QStringLiteral("done")) {
+        return; // already inside the wizard
+    }
+    m_applying = false;
+    setError(QString());
+    setPhase(QStringLiteral("inference"));
 }
 
 void FirstRunModel::finish() {
     // Committing to done closes the connect-ready node gate so a late reflection cannot re-fire it.
     m_gating = false;
     m_applying = false;
+    // The probe (when one ran) resolved; drop any dangling listener/timer.
+    m_probeProviderId.clear();
+    QObject::disconnect(m_probeConnection);
+    if (m_probeTimeout != nullptr) {
+        m_probeTimeout->stop();
+    }
     // Emit-once: an in-flight apply continuation and a user Skip may both reach here; only the
     // first completion counts (a second finished() would open a second first-chat).
     if (m_phase == QStringLiteral("done")) {

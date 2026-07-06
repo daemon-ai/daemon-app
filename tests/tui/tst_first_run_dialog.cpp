@@ -140,8 +140,8 @@ private slots:
         Tui::ZTerminal terminal{Tui::ZTerminal::OffScreen{90, 30}};
         Tui::ZWidget root;
         terminal.setMainWidget(&root);
-        auto* dialog =
-            new FirstRunDialog(&model, &conn, &settings, &catalog, QStringLiteral("/tmp/x"), &root);
+        auto* dialog = new FirstRunDialog(&model, &conn, &settings, &catalog, nullptr,
+                                          QStringLiteral("/tmp/x"), &root);
 
         auto* agentName = dialog->findChild<Tui::ZInputBox*>(QStringLiteral("firstRunAgentName"));
         auto* key = dialog->findChild<Tui::ZInputBox*>(QStringLiteral("firstRunKey"));
@@ -234,8 +234,8 @@ private slots:
         Tui::ZTerminal terminal{Tui::ZTerminal::OffScreen{90, 30}};
         Tui::ZWidget root;
         terminal.setMainWidget(&root);
-        auto* dialog =
-            new FirstRunDialog(&model, &conn, &settings, &catalog, QStringLiteral("/tmp/x"), &root);
+        auto* dialog = new FirstRunDialog(&model, &conn, &settings, &catalog, nullptr,
+                                          QStringLiteral("/tmp/x"), &root);
 
         auto* agentName = dialog->findChild<Tui::ZInputBox*>(QStringLiteral("firstRunAgentName"));
         auto* providerList =
