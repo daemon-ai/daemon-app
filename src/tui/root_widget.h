@@ -205,6 +205,9 @@ private:
     // checkpoint/rewind timeline.
     void openSessionSettingsOverlay();
     void openCheckpointsOverlay();
+    // [wave2:app-approvals-safety] D4: list + revoke the active session's remembered exec-approval
+    // fingerprints (opened from the session-settings overlay).
+    void openRememberedApprovalsOverlay();
     // Routes a command/palette/slash id ("settings", "models", ...) to its
     // singleton page tab. Returns false if the id is not a manager page.
     bool openManagerPage(const QString& id);
@@ -360,6 +363,12 @@ private:
     // Fleet 't' (F4/DEL-4): open the operator steer prompt for a delegated-child fleet row
     // (Submit{Steer} mid-turn / Submit{StartTurn} when idle, via ISessionRoster).
     void openFleetSteerPrompt(const QVariantMap& row);
+    // [wave2:app-approvals-safety] D3: Approvals 'D' — open a deny-with-reason prompt for the
+    // selected inbox row; on submit, ApprovalDecide(allow=false, reason) via IApprovalsInbox::deny.
+    void openApprovalDenyReasonPrompt(const QString& id);
+    // [wave2:app-approvals-safety] D3: inline transcript "Deny with reason" — open a prompt and
+    // resolve the parked gate with the operator reason (Respond{Approved{reason}}, wire v29).
+    void openInlineDenyReasonPrompt(const QString& callId);
     void buildCheckpointDisplay(const QList<QVariantMap>& rows, QStringList& display,
                                 QStringList& ids) const;
     // Repaint every theme-sampling view after a live theme switch.

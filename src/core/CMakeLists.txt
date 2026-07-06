@@ -25,4 +25,5 @@ add_subdirectory(fleet)
 add_subdirectory(automation)
 add_subdirectory(session)
 add_subdirectory(transports)
+add_subdirectory(tools) # [wave2:app-approvals-safety] D2 tool inventory seam
 add_subdirectory(daemon)

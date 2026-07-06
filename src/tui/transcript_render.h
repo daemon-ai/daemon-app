@@ -32,7 +32,9 @@ using RenderLine = QVector<Span>;
 // submit button. `line` is the row index in the built `lines` it sits on; the
 // rest carries the routing keys the host needs to drive the answer.
 struct Control {
-    enum class Kind { Approve, Deny, Permanent, Choice, Freeform, Submit };
+    // [wave2:app-approvals-safety] D3: DenyReason opens an operator deny-with-reason prompt (wire
+    // v29 Approved.reason) at the RootWidget level.
+    enum class Kind { Approve, Deny, DenyReason, Permanent, Choice, Freeform, Submit };
 
     int line = -1;
     Kind kind = Kind::Approve;

@@ -181,6 +181,32 @@ target_link_libraries(tst_daemon_approvals_inbox
 add_test(NAME tst_daemon_approvals_inbox COMMAND tst_daemon_approvals_inbox)
 set_tests_properties(tst_daemon_approvals_inbox PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# [wave2:app-approvals-safety] D2: tool inventory (ToolList -> Tools, wire v29) - decodeTools
+# round-trip + the mock facade's display-row contract (enabled/requires/requirementIsCredential).
+qt_add_executable(tst_tool_inventory tst_tool_inventory.cpp)
+target_link_libraries(tst_tool_inventory
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+        daemon-app::tools
+        daemon-app::uimodels
+)
+add_test(NAME tst_tool_inventory COMMAND tst_tool_inventory)
+set_tests_properties(tst_tool_inventory PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# [wave2:app-approvals-safety] D4: remembered-fingerprint management (FingerprintList/Revoke ->
+# Fingerprints, wire v29) - request encode round-trips + decodeFingerprints response round-trip.
+qt_add_executable(tst_fingerprint_manage tst_fingerprint_manage.cpp)
+target_link_libraries(tst_fingerprint_manage
+    PRIVATE
+        Qt6::Test
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+)
+add_test(NAME tst_fingerprint_manage COMMAND tst_fingerprint_manage)
+set_tests_properties(tst_fingerprint_manage PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_checkpoint_repository: durable checkpoints (E4/TOOL-9) - CheckpointList page loop +
 # CheckpointRewind Ok/Error paths over the WireMuxServer fixture, plus the
 # DaemonCheckpointTimeline projection (labels, tokens=-1, newest=current, no manual create).

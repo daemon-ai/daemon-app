@@ -12,6 +12,7 @@
 #include "fleet/idashboard.h"
 #include "fleet/ifleet_tree.h"
 #include "fleet/isession_roster.h"
+#include "tools/itool_inventory.h" // [wave2:app-approvals-safety] D2
 #include "tui_page_hub.h"
 #include "uimodels/variant_list_model.h"
 
@@ -101,19 +102,72 @@ QString TuiPageHub::buildApprovalsMarkdown(int sel) const {
         md += tr("_Inbox zero — no pending approvals._\n");
         return md;
     }
-    md += tr("**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.\n\n");
+    // [wave2:app-approvals-safety] D3: **D** opens a deny-reason prompt (RootWidget-level),
+    // threaded to the model via ApprovalDecide.reason (wire v29).
+    md += tr("**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny · "
+             "**D** deny with reason.\n\n");
     const auto rows = model->rows();
     for (int i = 0; i < rows.size(); ++i) {
         const QVariantMap& a = rows.at(i);
-        md += tr("## %1%2 (%3 risk)\n\n")
-                  .arg(mark(i), a.value(QStringLiteral("tool")).toString(),
-                       a.value(QStringLiteral("risk")).toString());
+        // [wave2:app-approvals-safety] Q4: no risk tier — the wire sends none, so none is shown.
+        md += tr("## %1%2\n\n").arg(mark(i), a.value(QStringLiteral("tool")).toString());
+        // [wave2:app-approvals-safety] C5 origin line: the app-engines stream fills approvalOrigin
+        // at Integration 2; shown only when populated (empty today).
+        const QString origin = a.value(QStringLiteral("approvalOrigin")).toString();
+        if (!origin.isEmpty()) {
+            md += tr("- Requested by: %1\n").arg(origin);
+        }
         md += tr("- Session: %1\n").arg(a.value(QStringLiteral("session")).toString());
-        md += tr("- Command: `%1`\n").arg(a.value(QStringLiteral("command")).toString());
+        // [wave2:app-approvals-safety] D3: render the node's honest prompt faithfully; fall back to
+        // the compact command line when no multi-line prompt is present.
+        const QString prompt = a.value(QStringLiteral("prompt")).toString();
+        md += tr("- Command: `%1`\n")
+                  .arg(prompt.isEmpty() ? a.value(QStringLiteral("command")).toString() : prompt);
+        const QString path = a.value(QStringLiteral("path")).toString();
+        if (!path.isEmpty()) {
+            md += tr("- Path: `%1`\n").arg(path);
+        }
+        // [wave2:app-approvals-safety] D3: fingerprint chip equivalent — the digest the "allow
+        // permanently" scope remembers.
+        const QString shortFp = a.value(QStringLiteral("shortFingerprint")).toString();
+        if (!shortFp.isEmpty()) {
+            md += tr("- Fingerprint: `%1`\n").arg(shortFp);
+        }
         // Wire v28: only fingerprinted approvals can be remembered permanently; surface the offer
         // so the **p** keybind is discoverable per-row (matches the GUI's conditional button).
         if (a.value(QStringLiteral("canAllowPermanent")).toBool()) {
             md += tr("- _Can be allowed permanently (**p**)._\n");
+        }
+        md += QStringLiteral("\n");
+    }
+    return md;
+}
+
+// [wave2:app-approvals-safety] D2: read-only tool inventory (mirrors the GUI Settings -> Tools
+// section). Rendered as a subsection of the TUI Settings page (the TUI folds GUI settings-sections
+// into its one Settings page). No mutation keys — the node owns tool gating; a disabled tool names
+// its requirement.
+QString TuiPageHub::buildToolsMarkdown() const {
+    QString md;
+    md += tr("## Tools\n\n");
+    md += tr("Tools are compiled and gated by the node. This inventory is read-only.\n\n");
+    auto* model = m_deps.tools == nullptr
+                      ? nullptr
+                      : qobject_cast<uimodels::VariantListModel*>(m_deps.tools->tools());
+    if (model == nullptr || model->count() == 0) {
+        md += tr("_No tools reported by the node._\n");
+        return md;
+    }
+    const auto rows = model->rows();
+    for (const QVariantMap& t : rows) {
+        const bool enabled = t.value(QStringLiteral("enabled")).toBool();
+        md += tr("- %1 **%2** — %3")
+                  .arg(enabled ? QStringLiteral("\u2713") : QStringLiteral("\u2717"),
+                       t.value(QStringLiteral("name")).toString(),
+                       t.value(QStringLiteral("description")).toString());
+        const QString reqLabel = t.value(QStringLiteral("requirementLabel")).toString();
+        if (!enabled && !reqLabel.isEmpty()) {
+            md += tr(" _(%1)_").arg(reqLabel);
         }
         md += QStringLiteral("\n");
     }

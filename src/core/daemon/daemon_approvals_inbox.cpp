@@ -42,13 +42,28 @@ void DaemonApprovalsInbox::rebuild() {
         row[QStringLiteral("id")] = info.requestId;
         row[QStringLiteral("session")] = info.session;
         row[QStringLiteral("tool")] = QStringLiteral("approval");
+        // [wave2:app-approvals-safety] D3: carry the node's honest prompt + path + fingerprint so
+        // the row renders structured detail (monospace prompt, fingerprint chip) rather than one
+        // squashed line. `command` stays a compact one-liner for narrow layouts (path or prompt).
         row[QStringLiteral("command")] = info.hasPath ? info.path : info.prompt;
-        // The wire carries no risk classification; surface the request reason and a neutral tier.
-        row[QStringLiteral("risk")] = QStringLiteral("medium");
+        row[QStringLiteral("prompt")] = info.prompt;
+        row[QStringLiteral("path")] = info.hasPath ? info.path : QString();
+        row[QStringLiteral("fingerprint")] = info.fingerprint;
+        constexpr int kHead = 12;
+        row[QStringLiteral("shortFingerprint")] =
+            info.fingerprint.size() > kHead ? info.fingerprint.left(kHead) + QStringLiteral("…")
+                                            : info.fingerprint;
+        // [wave2:app-approvals-safety] Q4: no risk field — the wire carries no risk classification,
+        // so we do not fabricate one (dropped the neutral "medium" placeholder pill).
         row[QStringLiteral("requested")] = info.prompt;
         // Wire v28: offer "allow permanently" only when the node attached a fingerprint it can
         // remember (see DecodedApprovalInfo::hasFingerprint).
         row[QStringLiteral("canAllowPermanent")] = info.hasFingerprint;
+        // [wave2:app-approvals-safety] C5: origin-chip slot fields (empty today — the app-engines
+        // stream populates approvalOriginKind/approvalOrigin at Integration 2; the slot is hidden
+        // while approvalOriginKind is empty). Left here as the stable, tagged contract.
+        row[QStringLiteral("approvalOriginKind")] = QString();
+        row[QStringLiteral("approvalOrigin")] = QString();
         rows.append(row);
     }
     m_pending->setRows(rows);
@@ -64,9 +79,12 @@ void DaemonApprovalsInbox::approve(const QString& id, bool allowPermanent) {
     }
 }
 
-void DaemonApprovalsInbox::deny(const QString& id) {
+void DaemonApprovalsInbox::deny(const QString& id, const QString& reason) {
     if (m_repository != nullptr) {
-        m_repository->decide(m_sessionByRequest.value(id), id, /*allow=*/false);
+        // [wave2:app-approvals-safety] D3: thread the operator deny reason (wire v29) so the node
+        // relays it to the model as the tool-refusal text on the next turn.
+        m_repository->decide(m_sessionByRequest.value(id), id, /*allow=*/false,
+                             /*allowPermanent=*/false, reason);
     }
 }
 

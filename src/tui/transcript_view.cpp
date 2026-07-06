@@ -382,6 +382,11 @@ void TranscriptView::activateControl() {
     case Control::Kind::Deny:
         emit approvalDecided(c.callId, QStringLiteral("denied"), false);
         break;
+    case Control::Kind::DenyReason:
+        // [wave2:app-approvals-safety] D3: the RootWidget opens the reason prompt (widgets can't be
+        // hosted here) and resolves the gate with the operator's reason.
+        emit approvalDenyReasonRequested(c.callId);
+        break;
     case Control::Kind::Permanent:
         emit approvalDecided(c.callId, QStringLiteral("approved"), true);
         break;

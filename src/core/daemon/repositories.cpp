@@ -1561,14 +1561,15 @@ void ApprovalRepository::refreshPending(const QString& sessionId) {
 }
 
 void ApprovalRepository::decide(const QString& sessionId, const QString& requestId, bool allow,
-                                bool allowPermanent) {
+                                bool allowPermanent, const QString& reason) {
     if (client() == nullptr) {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    client()->sendRequest(
-        NodeApiCodec::encodeApprovalDecideRequest(sessionId, requestId, allow, allowPermanent),
-        QLatin1String(kDecideCorrelation));
+    // [wave2:app-approvals-safety] D3: thread the optional deny reason (wire v29) to the encoder.
+    client()->sendRequest(NodeApiCodec::encodeApprovalDecideRequest(sessionId, requestId, allow,
+                                                                    allowPermanent, reason),
+                          QLatin1String(kDecideCorrelation));
 }
 
 void ApprovalRepository::handleResponse(const QString& correlationId,
@@ -2342,6 +2343,118 @@ void AuthRepository::handleFailure(const QString& correlationId, const QString& 
         emit failed(QStringLiteral("complete"), message);
     }
     // kCancelCorrelation: silent (best-effort).
+}
+
+// [wave2:app-approvals-safety] --- ToolRepository (D2 tool inventory) --------------------------
+
+ToolRepository::ToolRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &ToolRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &ToolRepository::handleFailure);
+    }
+}
+
+void ToolRepository::refreshTools() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeToolListRequest(), QLatin1String(kToolsCorrelation));
+}
+
+void ToolRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
+    if (correlationId != QLatin1String(kToolsCorrelation)) {
+        return;
+    }
+    QList<DecodedToolInfo> tools;
+    if (!NodeApiCodec::decodeTools(responseCbor, &tools)) {
+        emit operationFailed(QStringLiteral("Failed to decode Tools response"));
+        return;
+    }
+    m_tools = tools;
+    emit toolsRefreshed();
+}
+
+void ToolRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kToolsCorrelation)) {
+        emit operationFailed(message);
+    }
+}
+
+// [wave2:app-approvals-safety] --- FingerprintRepository (D4 remembered approvals) -------------
+
+FingerprintRepository::FingerprintRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                             QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &FingerprintRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this,
+                &FingerprintRepository::handleFailure);
+    }
+}
+
+void FingerprintRepository::refreshFingerprints(const QString& sessionId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    m_session = sessionId;
+    if (sessionId.isEmpty()) {
+        // No active session to scope to: present an empty allow-list rather than a wire error.
+        m_fingerprints.clear();
+        emit fingerprintsRefreshed();
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeFingerprintListRequest(sessionId),
+                          QLatin1String(kListCorrelation));
+}
+
+void FingerprintRepository::revoke(const QString& sessionId, const QString& fingerprint) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    m_session = sessionId;
+    client()->sendRequest(NodeApiCodec::encodeFingerprintRevokeRequest(sessionId, fingerprint),
+                          QLatin1String(kRevokeCorrelation));
+}
+
+void FingerprintRepository::handleResponse(const QString& correlationId,
+                                           const QByteArray& responseCbor) {
+    if (correlationId == QLatin1String(kListCorrelation)) {
+        QList<DecodedRememberedFingerprint> fps;
+        if (!NodeApiCodec::decodeFingerprints(responseCbor, &fps)) {
+            emit operationFailed(QStringLiteral("Failed to decode Fingerprints response"));
+            return;
+        }
+        m_fingerprints = fps;
+        emit fingerprintsRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kRevokeCorrelation)) {
+        const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+        if (kind == ApiResponseKind::Ok) {
+            refreshFingerprints(m_session); // re-sync the allow-list after a revoke
+            return;
+        }
+        DecodedApiError err;
+        if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(tr("Fingerprint revoke failed"));
+        }
+        return;
+    }
+}
+
+void FingerprintRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kListCorrelation) ||
+        correlationId == QLatin1String(kRevokeCorrelation)) {
+        emit operationFailed(message);
+    }
 }
 
 } // namespace daemonapp::daemon

@@ -4,11 +4,14 @@
 import QtQuick
 
 import DaemonApp.Theme
+import DaemonApp.Controls as Kit
 
 // Pending-approval bar for dangerous tools (Hermes inventory #3): shown inside a
 // ToolCall card while a terminal / execute_code call is awaiting the user's
-// decision. Approve / Deny (and optionally Allow permanently) route back to the
-// host via editorController.answerToolApproval, which clears the gate.
+// decision. Renders the node's honest prompt faithfully (monospace, wrapped) plus
+// Approve / Deny / Deny-with-reason / Allow-permanently, routing back to the host
+// via editorController.answerToolApproval (which clears the gate). Deny-with-reason
+// (wire v29) threads the operator explanation to the model via Approved.reason.
 Item {
     id: root
 
@@ -16,14 +19,22 @@ Item {
     property var editorController: null
     property var blockId: undefined
 
+    // Deny opens an inline reason field; the bar grows to fit.
+    property bool denyReasonOpen: false
+
     readonly property string callId: (toolData && toolData.callId) ? String(toolData.callId) : ""
     readonly property string command: (toolData && toolData.approvalCommand) ? String(toolData.approvalCommand)
                                      : (toolData && toolData.argsSummary) ? String(toolData.argsSummary) : ""
     readonly property bool allowPermanent: !!(toolData && toolData.allowPermanent)
+    // [wave2:app-approvals-safety] C5: origin attribution keys (empty today; the app-engines stream
+    // populates approvalOriginKind = "core"|"foreign" + approvalOrigin at Integration 2).
+    readonly property string originKind: (toolData && toolData.approvalOriginKind) ? String(toolData.approvalOriginKind) : ""
+    readonly property string originLabel: (toolData && toolData.approvalOrigin) ? String(toolData.approvalOrigin) : ""
 
-    function decide(decision, permanent) {
+    function decide(decision, permanent, reason) {
         if (root.editorController && root.blockId !== undefined)
-            root.editorController.answerToolApproval(Number(root.blockId), root.callId, decision, permanent === true)
+            root.editorController.answerToolApproval(Number(root.blockId), root.callId, decision,
+                                                     permanent === true, reason ? reason : "")
     }
 
     implicitHeight: bar.implicitHeight
@@ -46,6 +57,17 @@ Item {
             anchors.margins: Theme.smallSpacing
             spacing: Theme.smallSpacing
 
+            // [wave2:app-approvals-safety] C5 origin-chip insertion point (inline card). Hidden
+            // while approvalOriginKind is empty; the app-engines stream wires its EngineOriginChip
+            // into this Loader at Integration 2. Empty-by-default, stable, tagged.
+            Loader {
+                id: originSlot
+                width: parent.width
+                active: root.originKind.length > 0
+                visible: active
+                sourceComponent: originChipComponent
+            }
+
             Row {
                 width: parent.width
                 spacing: Theme.smallSpacing
@@ -66,6 +88,8 @@ Item {
                 }
             }
 
+            // The node's honest prompt (resolved command / cwd / digest), rendered faithfully as
+            // monospace, wrapped text — never re-derived or squashed to one line.
             Text {
                 visible: root.command.length > 0
                 width: parent.width
@@ -74,6 +98,15 @@ Item {
                 font.family: FontIcons.mono
                 font.pixelSize: Theme.captionFontSize - 1
                 wrapMode: Text.Wrap
+                textFormat: Text.PlainText
+            }
+
+            // Deny-with-reason input (revealed by "Deny with reason…").
+            Kit.TextField {
+                id: reasonField
+                width: parent.width
+                visible: root.denyReasonOpen
+                placeholderText: qsTr("Reason the agent will hear (optional)")
             }
 
             Row {
@@ -108,22 +141,44 @@ Item {
                 }
 
                 ApprovalButton {
+                    visible: !root.denyReasonOpen
                     label: qsTr("Approve")
                     accentColor: Theme.statusOk
                     strong: true
-                    onClicked: root.decide("approved", false)
+                    onClicked: root.decide("approved", false, "")
                 }
                 ApprovalButton {
-                    label: qsTr("Deny")
+                    label: root.denyReasonOpen ? qsTr("Send deny") : qsTr("Deny")
                     accentColor: Theme.danger
-                    onClicked: root.decide("denied", false)
+                    onClicked: {
+                        if (root.denyReasonOpen)
+                            root.decide("denied", false, reasonField.text)
+                        else
+                            root.decide("denied", false, "")
+                    }
                 }
                 ApprovalButton {
-                    visible: root.allowPermanent
+                    visible: !root.denyReasonOpen
+                    label: qsTr("Deny with reason…")
+                    onClicked: { root.denyReasonOpen = true; reasonField.forceActiveFocus() }
+                }
+                ApprovalButton {
+                    visible: root.allowPermanent && !root.denyReasonOpen
                     label: qsTr("Allow permanently")
-                    onClicked: root.decide("approved", true)
+                    onClicked: root.decide("approved", true, "")
                 }
             }
+        }
+    }
+
+    // [wave2:app-approvals-safety] C5: empty-by-default origin chip. The app-engines stream replaces
+    // this component's body with its EngineOriginChip at Integration 2.
+    Component {
+        id: originChipComponent
+        Kit.Chip {
+            tone: "muted"
+            iconGlyph: FontIcons.fa_circle_info
+            text: root.originLabel
         }
     }
 }

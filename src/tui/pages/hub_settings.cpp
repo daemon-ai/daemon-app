@@ -324,5 +324,8 @@ QString TuiPageHub::buildSettingsMarkdown(int sel) const {
         }
         md += QLatin1Char('\n');
     }
+    // [wave2:app-approvals-safety] D2: append the read-only tool inventory as a Settings subsection
+    // (mirrors the GUI's Settings -> Tools section; the TUI has one flat Settings page).
+    md += QStringLiteral("\n") + buildToolsMarkdown();
     return md;
 }

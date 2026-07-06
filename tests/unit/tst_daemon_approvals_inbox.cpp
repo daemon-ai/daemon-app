@@ -89,6 +89,8 @@ struct DecidedWire {
     bool allow = false;
     bool allowPermanentPresent = false;
     bool allowPermanent = false;
+    bool reasonPresent = false; // [wave2:app-approvals-safety] D3
+    QString reason;
 };
 
 DecidedWire decodeDecide(const QByteArray& cbor) {
@@ -111,6 +113,13 @@ DecidedWire decodeDecide(const QByteArray& cbor) {
     d.allow = dec.ApprovalDecide_allow;
     d.allowPermanentPresent = dec.ApprovalDecide_allow_permanent_present;
     d.allowPermanent = dec.ApprovalDecide_allow_permanent.ApprovalDecide_allow_permanent;
+    d.reasonPresent = dec.ApprovalDecide_reason_present;
+    if (d.reasonPresent) {
+        d.reason = QString::fromUtf8(
+            reinterpret_cast<const char*>(
+                dec.ApprovalDecide_reason.ApprovalDecide_reason_tstr.value),
+            static_cast<int>(dec.ApprovalDecide_reason.ApprovalDecide_reason_tstr.len));
+    }
     return d;
 }
 
@@ -130,8 +139,72 @@ private slots:
         QCOMPARE(pending.size(), 2);
         QCOMPARE(pending.at(0).requestId, QStringLiteral("a-1"));
         QVERIFY(pending.at(0).hasFingerprint); // fingerprinted -> offerable
+        // [wave2:app-approvals-safety] D3: the fingerprint hex string is carried for the chip.
+        QCOMPARE(pending.at(0).fingerprint, QStringLiteral("sha256:deadbeef"));
         QCOMPARE(pending.at(1).requestId, QStringLiteral("a-2"));
         QVERIFY(!pending.at(1).hasFingerprint); // no fingerprint -> not offerable
+        QVERIFY(pending.at(1).fingerprint.isEmpty());
+    }
+
+    // [wave2:app-approvals-safety] D3: deny-with-reason threads ApprovalDecide.reason on a deny;
+    // a plain deny leaves it absent.
+    void inboxDenyForwardsReason() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("approvals.sock"));
+        daemonapp::test::WireMuxServer fake;
+        fake.setReplyPayload(approvalsResponse());
+        QVERIFY2(fake.start(path), "listen");
+
+        DaemonCacheStore cache(dir.filePath(QStringLiteral("ai.db")));
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        ApprovalRepository repo(&client, &cache);
+        DaemonApprovalsInbox inbox(&repo);
+
+        repo.refreshPending();
+        auto* rows = qobject_cast<uimodels::VariantListModel*>(inbox.pending());
+        QVERIFY(rows != nullptr);
+        QTRY_COMPARE_WITH_TIMEOUT(rows->count(), 2, 3000);
+
+        inbox.deny(QStringLiteral("a-1"), QStringLiteral("wrong directory"));
+        inbox.deny(QStringLiteral("a-2"), QString()); // plain deny
+
+        QTRY_VERIFY_WITH_TIMEOUT(
+            [&] {
+                int denies = 0;
+                for (const QByteArray& p : fake.callPayloads()) {
+                    const DecidedWire d = decodeDecide(p);
+                    if (d.isDecide && !d.allow) {
+                        ++denies;
+                    }
+                }
+                return denies >= 2;
+            }(),
+            3000);
+
+        DecidedWire d1;
+        DecidedWire d2;
+        for (const QByteArray& p : fake.callPayloads()) {
+            const DecidedWire d = decodeDecide(p);
+            if (!d.isDecide) {
+                continue;
+            }
+            if (d.requestId == QStringLiteral("a-1")) {
+                d1 = d;
+            } else if (d.requestId == QStringLiteral("a-2")) {
+                d2 = d;
+            }
+        }
+        QVERIFY(d1.isDecide);
+        QCOMPARE(d1.allow, false);
+        QVERIFY(d1.reasonPresent);
+        QCOMPARE(d1.reason, QStringLiteral("wrong directory"));
+
+        QVERIFY(d2.isDecide);
+        QCOMPARE(d2.allow, false);
+        QVERIFY(!d2.reasonPresent); // empty reason -> absent
     }
 
     // End-to-end: the inbox projects canAllowPermanent onto rows and forwards allow_permanent on

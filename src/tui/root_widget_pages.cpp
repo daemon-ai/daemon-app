@@ -11,6 +11,7 @@
 #include "dialogs/auth_flow_dialog.h"
 #include "dialogs/profile_editor_dialog.h"
 #include "display_role_adapter.h"
+#include "fleet/iapprovals_inbox.h" // [wave2:app-approvals-safety] D3: deny-with-reason prompt
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
 #include "memory/imemory_service.h"
@@ -181,6 +182,13 @@ void RootWidget::openSessionSettingsOverlay() {
     layout->addWidget(approvalBtn);
     layout->addWidget(fastBtn);
     layout->addWidget(verboseBtn);
+    // [wave2:app-approvals-safety] D4: remembered exec-approval fingerprints for this session
+    // (list + revoke) live in their own overlay, opened from here (parity with the GUI popover's
+    // "Remembered approvals" subsection).
+    auto* rememberedBtn = new Tui::ZButton(tr("Remembered approvals…"), dlg);
+    layout->addWidget(rememberedBtn);
+    connect(rememberedBtn, &Tui::ZButton::clicked, dlg,
+            [this] { openRememberedApprovalsOverlay(); });
     layout->addSpacing(1);
 
     auto* buttons = new Tui::ZHBoxLayout();
@@ -256,8 +264,87 @@ void RootWidget::openSessionSettingsOverlay() {
     });
     connect(closeBtn, &Tui::ZButton::clicked, dlg, &Tui::ZDialog::close);
 
-    dlg->setGeometry(QRect(0, 0, 48, 14));
+    dlg->setGeometry(QRect(0, 0, 48, 16));
     effortBtn->setFocus();
+}
+
+// [wave2:app-approvals-safety] D4: the active session's remembered exec-approval fingerprints —
+// list + revoke (FingerprintList/FingerprintRevoke, wire v29). Mirrors the openCheckpointsOverlay
+// pattern: render the current rows and re-render when the facade announces fresh ones. Provenance
+// is limited to the fingerprint hash (+ label when the node ever fills it) — the node stores only
+// the hash, so no "what/when" is shown.
+void RootWidget::openRememberedApprovalsOverlay() {
+    if (m_active == nullptr || m_services.sessionSettings == nullptr) {
+        return;
+    }
+    session::ISessionSettings* ss = m_services.sessionSettings;
+    ss->setSessionId(m_active->sessionId);
+    ss->refreshFingerprints();
+    auto* model = qobject_cast<uimodels::VariantListModel*>(ss->rememberedFingerprints());
+
+    auto* dlg = new Tui::ZDialog(this);
+    dlg->setOptions(Tui::ZWindow::DeleteOnClose);
+    dlg->setWindowTitle(tr("Remembered approvals"));
+    dlg->setContentsMargins({2, 1, 2, 1});
+    auto* layout = new Tui::ZVBoxLayout();
+    dlg->setLayout(layout);
+
+    layout->addWidget(new Tui::ZLabel(
+        tr("Commands allowed permanently this session · Enter/Revoke drops one · Esc closes"),
+        dlg));
+
+    auto* list = new Tui::ZListView(dlg);
+    auto fps = std::make_shared<QStringList>(); // full fingerprint hex per visible row
+    const auto refreshRows = [ss, list, fps] {
+        auto* m = qobject_cast<uimodels::VariantListModel*>(ss->rememberedFingerprints());
+        const QList<QVariantMap> rows = m != nullptr ? m->rows() : QList<QVariantMap>{};
+        QStringList display;
+        fps->clear();
+        for (const QVariantMap& r : rows) {
+            fps->append(r.value(QStringLiteral("fingerprint")).toString());
+            const QString label = r.value(QStringLiteral("label")).toString();
+            display << (label.isEmpty() ? r.value(QStringLiteral("shortFingerprint")).toString()
+                                        : label);
+        }
+        if (display.isEmpty()) {
+            display << tr("(no remembered approvals)");
+        }
+        list->setItems(display);
+        if (list->model() != nullptr && !rows.isEmpty()) {
+            list->setCurrentIndex(list->model()->index(0, 0));
+        }
+    };
+    refreshRows();
+    if (model != nullptr) {
+        connect(model, &QAbstractItemModel::modelReset, dlg, refreshRows);
+        connect(model, &QAbstractItemModel::rowsInserted, dlg, refreshRows);
+        connect(model, &QAbstractItemModel::rowsRemoved, dlg, refreshRows);
+    }
+    layout->addWidget(list);
+    layout->addSpacing(1);
+
+    auto* buttons = new Tui::ZHBoxLayout();
+    layout->add(buttons);
+    buttons->addStretch();
+    auto* revokeBtn = new Tui::ZButton(tr("Revoke"), dlg);
+    buttons->addWidget(revokeBtn);
+    auto* closeBtn = new Tui::ZButton(tr("Close"), dlg);
+    closeBtn->setDefault(true);
+    buttons->addWidget(closeBtn);
+
+    const auto revokeSelected = [ss, list, fps] {
+        const int row = list->currentIndex().row();
+        if (row < 0 || row >= fps->size()) {
+            return;
+        }
+        ss->revokeFingerprint(fps->at(row));
+    };
+    connect(revokeBtn, &Tui::ZButton::clicked, dlg, revokeSelected);
+    connect(list, &Tui::ZListView::enterPressed, dlg, [revokeSelected](int) { revokeSelected(); });
+    connect(closeBtn, &Tui::ZButton::clicked, dlg, &Tui::ZDialog::close);
+
+    dlg->setGeometry(QRect(0, 0, 60, 14));
+    list->setFocus();
 }
 
 void RootWidget::buildCheckpointDisplay(const QList<QVariantMap>& rows, QStringList& display,
@@ -393,6 +480,39 @@ void RootWidget::openCheckpointsOverlay() {
 
     dlg->setGeometry(QRect(0, 0, 62, qBound(9, m_services.checkpoints->count() + 8, 20)));
     list->setFocus();
+}
+
+void RootWidget::openInlineDenyReasonPrompt(const QString& callId) {
+    if (m_active == nullptr) {
+        return;
+    }
+    // Capture the active session's host + engine by value: a modal prompt could outlive a tab
+    // switch, and the gate belongs to the session that was focused when Deny-with-reason was hit.
+    auto* host = m_active->host;
+    auto* turn = m_active->turn;
+    auto* dlg = new TextPromptDialog(tr("Deny with reason (the agent will hear it)"), QString(),
+                                     /*masked=*/false, this);
+    connect(dlg, &TextPromptDialog::submitted, this, [host, turn, callId](const QString& text) {
+        // Clear the local gate (shared toolApprovalPatch contract) and resolve over the wire; the
+        // reason rides Approved.reason (wire v29) so the node relays it to the model.
+        if (host != nullptr) {
+            host->onApprovalDecided(callId, QStringLiteral("denied"), false);
+        }
+        if (turn != nullptr) {
+            turn->respondApproval(callId, /*allow=*/false, /*allowPermanent=*/false,
+                                  text.trimmed());
+        }
+    });
+}
+
+void RootWidget::openApprovalDenyReasonPrompt(const QString& id) {
+    if (m_services.approvals == nullptr || id.isEmpty()) {
+        return;
+    }
+    auto* dlg = new TextPromptDialog(tr("Deny with reason (the agent will hear it)"), QString(),
+                                     /*masked=*/false, this);
+    connect(dlg, &TextPromptDialog::submitted, this,
+            [this, id](const QString& text) { m_services.approvals->deny(id, text.trimmed()); });
 }
 
 void RootWidget::openFleetSteerPrompt(const QVariantMap& row) {

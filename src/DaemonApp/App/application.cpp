@@ -39,6 +39,7 @@
 #include "session/isession_settings.h"
 #include "settings/isettings_store.h"
 #include "status_bar_model.h"
+#include "tools/itool_inventory.h" // [wave2:app-approvals-safety] D2
 #include "transcript_exporter.h"
 #include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
@@ -293,6 +294,8 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     engine.rootContext()->setContextProperty(QStringLiteral("SessionRoster"), m_services.roster);
     engine.rootContext()->setContextProperty(QStringLiteral("FleetTree"), m_services.fleetTree);
     engine.rootContext()->setContextProperty(QStringLiteral("Approvals"), m_services.approvals);
+    // [wave2:app-approvals-safety] D2: read-only tool inventory (Settings -> Tools).
+    engine.rootContext()->setContextProperty(QStringLiteral("Tools"), m_services.tools);
     engine.rootContext()->setContextProperty(QStringLiteral("Dashboard"), m_services.dashboard);
 
     // Automation facade (mock) backing the cron manager. (The routing manager binds DaemonNet

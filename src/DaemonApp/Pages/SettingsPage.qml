@@ -23,6 +23,8 @@ Item {
         { id: "connection",   label: qsTr("Connection"),     icon: FontIcons.fa_link },
         { id: "model",        label: qsTr("Model"),          icon: FontIcons.fa_brain },
         { id: "chat",         label: qsTr("Chat"),           icon: FontIcons.fa_comments },
+        // [wave2:app-approvals-safety] D2: read-only tool inventory section.
+        { id: "tools",        label: qsTr("Tools"),          icon: FontIcons.fa_wrench },
         { id: "safety",       label: qsTr("Safety"),         icon: FontIcons.fa_circle_exclamation },
         { id: "memory",       label: qsTr("Memory & Context"), icon: FontIcons.fa_brain },
         { id: "workspace",    label: qsTr("Workspace"),      icon: FontIcons.fa_list_ul },
@@ -76,6 +78,7 @@ Item {
                     case "connection": return connectionComp;
                     case "model": return modelComp;
                     case "chat": return chatComp;
+                    case "tools": return toolsComp; // [wave2:app-approvals-safety] D2
                     case "safety": return safetyComp;
                     case "memory": return memoryComp;
                     case "workspace": return workspaceComp;
@@ -107,6 +110,8 @@ Item {
     Component { id: connectionComp;    Padded { ConnectionSection { width: parent.width } } }
     Component { id: modelComp;         Padded { ModelSettingsSection { width: parent.width } } }
     Component { id: chatComp;          Padded { ChatSettingsSection { width: parent.width } } }
+    // [wave2:app-approvals-safety] D2: read-only tool inventory.
+    Component { id: toolsComp;         Padded { ToolsSettingsSection { width: parent.width } } }
     Component { id: safetyComp;        Padded { SafetySettingsSection { width: parent.width } } }
     Component { id: memoryComp;        Padded { MemorySettingsSection { width: parent.width } } }
     Component { id: workspaceComp;     Padded { WorkspaceSection { width: parent.width } } }

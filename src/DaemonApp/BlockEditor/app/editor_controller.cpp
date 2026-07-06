@@ -373,12 +373,14 @@ void EditorController::answerClarify(qulonglong blockId, const QString& requestI
 }
 
 void EditorController::answerToolApproval(qulonglong blockId, const QString& callId,
-                                          const QString& decision, bool permanent) {
+                                          const QString& decision, bool permanent,
+                                          const QString& reason) {
     // Local echo: record the decision so the approval bar clears (shared patch
     // contract with the TUI). A denial flips the tool to an error state; an
     // approval leaves it running for the host to drive to completion.
     updateTypedBlock(blockId, be::toolApprovalPatch(decision));
-    emit toolApprovalAnswered(blockId, callId, decision, permanent);
+    // [wave2:app-approvals-safety] D3: forward the optional deny reason (wire v29) to the host.
+    emit toolApprovalAnswered(blockId, callId, decision, permanent, reason);
 }
 
 void EditorController::appendMessage(be::MessageRole role, const QString& text) {

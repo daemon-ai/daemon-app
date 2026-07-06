@@ -84,6 +84,8 @@ add_library(da_daemon_client STATIC
     daemon_daemonnet.cpp
     daemon_approvals_inbox.h
     daemon_approvals_inbox.cpp
+    daemon_tool_inventory.h
+    daemon_tool_inventory.cpp
     subscription_manager.h
     subscription_manager.cpp
     daemon_fs_service.h
@@ -136,6 +138,7 @@ target_link_libraries(da_daemon_client
         daemon-app::automation
         daemon-app::session
         daemon-app::transports
+        daemon-app::tools # [wave2:app-approvals-safety] D2 tool inventory seam
         daemon-app::daemonnet
         daemon-app::nav
         daemon-app::firstrun

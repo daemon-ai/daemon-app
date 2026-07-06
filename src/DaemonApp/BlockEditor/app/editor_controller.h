@@ -125,8 +125,11 @@ public:
     // single-question clarify uses the single id "q".
     Q_INVOKABLE void answerClarify(qulonglong blockId, const QString& requestId,
                                    const QVariantMap& answers);
+    // [wave2:app-approvals-safety] D3: `reason` (wire v29) carries an operator deny explanation the
+    // node threads to the model; empty on allow / plain deny.
     Q_INVOKABLE void answerToolApproval(qulonglong blockId, const QString& callId,
-                                        const QString& decision, bool permanent = false);
+                                        const QString& decision, bool permanent = false,
+                                        const QString& reason = QString());
 
     // Message/role layer host API. appendUserMessage parses `text` and appends it
     // as a fresh user message (the runtime alternative to the markdown-reload
@@ -254,8 +257,10 @@ signals:
     // A host (Session / agent gateway) connects these to the runtime.
     void imagePreviewRequested(const QString& url, const QString& alt);
     void clarifyAnswered(qulonglong blockId, const QString& requestId, const QVariantMap& answers);
+    // [wave2:app-approvals-safety] D3: trailing `reason` (wire v29) — the operator deny
+    // explanation; empty on allow / plain deny.
     void toolApprovalAnswered(qulonglong blockId, const QString& callId, const QString& decision,
-                              bool permanent);
+                              bool permanent, const QString& reason);
     // The user edited a prior message (the document was truncated to it and the
     // new text re-added), or asked to regenerate the assistant reply for a
     // message. The host (Session) re-runs the assistant turn in response.

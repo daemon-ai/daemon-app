@@ -55,7 +55,10 @@ void MockApprovalsInbox::approve(const QString& id, bool /*allowPermanent*/) {
     // simply resolve the row. The flag is accepted for seam parity with the daemon-backed inbox.
     m_pending->removeById(id);
 }
-void MockApprovalsInbox::deny(const QString& id) {
+void MockApprovalsInbox::deny(const QString& id, const QString& reason) {
+    // [wave2:app-approvals-safety] D3: the mock has no wire; the reason is accepted for seam parity
+    // with the daemon-backed inbox and simply drops the row.
+    Q_UNUSED(reason)
     m_pending->removeById(id);
 }
 

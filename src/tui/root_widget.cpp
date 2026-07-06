@@ -229,6 +229,7 @@ RootWidget::RootWidget()
         .roster = m_services.roster,
         .fleetTree = m_services.fleetTree,
         .approvals = m_services.approvals,
+        .tools = m_services.tools, // [wave2:app-approvals-safety] D2
         .dashboard = m_services.dashboard,
         .cron = m_services.cron,
         .daemonNet = m_services.daemonNet,

@@ -61,11 +61,16 @@ public:
     // `allowPermanent` (wire v28) carries the operator's "allow permanently" choice to the node so
     // it can persist a per-session allow for this command; front ends only surface that choice on a
     // gate the node marked offered. Default false = a one-shot allow.
+    // [wave2:app-approvals-safety] D3: `reason` (wire v29) carries an operator deny explanation the
+    // node threads to the model on the next turn (Approved.reason). Meaningful only on a deny;
+    // default empty = absent. Additive trailing param — existing callers are unchanged.
     Q_INVOKABLE virtual void respondApproval(const QString& requestId, bool allow,
-                                             bool allowPermanent = false) {
+                                             bool allowPermanent = false,
+                                             const QString& reason = QString()) {
         Q_UNUSED(requestId)
         Q_UNUSED(allow)
         Q_UNUSED(allowPermanent)
+        Q_UNUSED(reason)
         resume();
     }
     Q_INVOKABLE virtual void respondInput(const QString& requestId, const QString& text) {
