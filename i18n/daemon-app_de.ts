@@ -1,0 +1,6539 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="de" sourcelanguage="en">
+<context>
+    <name>AboutSection</name>
+    <message>
+        <source>Application</source>
+        <translation>Anwendung</translation>
+    </message>
+    <message>
+        <source>Version</source>
+        <translation>Version</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Verbindung</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>unbekannt</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Updates</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>Nach Updates suchen</translation>
+    </message>
+    <message>
+        <source>Automatic updates are not configured in this build.</source>
+        <translation>Automatische Updates sind in diesem Build nicht konfiguriert.</translation>
+    </message>
+</context>
+<context>
+    <name>AccountsPage</name>
+    <message>
+        <source>Accounts</source>
+        <translation>Konten</translation>
+    </message>
+    <message>
+        <source>Connected accounts</source>
+        <translation>Verbundene Konten</translation>
+    </message>
+    <message>
+        <source>Add account</source>
+        <translation>Konto hinzufügen</translation>
+    </message>
+    <message>
+        <source>No accounts yet. Add one to enable remote providers.</source>
+        <translation>Noch keine Konten. Fügen Sie eines hinzu, um Remote-Anbieter zu aktivieren.</translation>
+    </message>
+    <message>
+        <source>OAuth</source>
+        <translation>OAuth</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API-Schlüssel</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>Verbunden</translation>
+    </message>
+    <message>
+        <source>Connecting…</source>
+        <translation>Verbindung wird hergestellt…</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Fehler</translation>
+    </message>
+    <message>
+        <source>Reconnect / re-authenticate</source>
+        <translation>Neu verbinden / erneut authentifizieren</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Konto entfernen</translation>
+    </message>
+</context>
+<context>
+    <name>AddAccountFlow</name>
+    <message>
+        <source>Sign in (OAuth)</source>
+        <translation>Anmelden (OAuth)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API-Schlüssel</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>Anmeldung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Add account — pick a provider</source>
+        <translation>Konto hinzufügen — Anbieter wählen</translation>
+    </message>
+    <message>
+        <source>Authentication</source>
+        <translation>Authentifizierung</translation>
+    </message>
+    <message>
+        <source>%1 — API key</source>
+        <translation>%1 — API-Schlüssel</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Basis-URL (z. B. https://…)</translation>
+    </message>
+</context>
+<context>
+    <name>AddAccountWizard</name>
+    <message>
+        <source>Add account</source>
+        <translation>Konto hinzufügen</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Verbinden</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Speichern</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Anbieter</translation>
+    </message>
+    <message>
+        <source>Authentication</source>
+        <translation>Authentifizierung</translation>
+    </message>
+    <message>
+        <source>Sign in (OAuth)</source>
+        <translation>Anmelden (OAuth)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API-Schlüssel</translation>
+    </message>
+    <message>
+        <source>Label (optional)</source>
+        <translation>Bezeichnung (optional)</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Basis-URL (z. B. https://…)</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser to complete sign-in…</source>
+        <translation>Warten, bis der Browser die Anmeldung abschließt…</translation>
+    </message>
+    <message>
+        <source>Opens your browser to sign in securely.</source>
+        <translation>Öffnet Ihren Browser zur sicheren Anmeldung.</translation>
+    </message>
+</context>
+<context>
+    <name>AdvancedSection</name>
+    <message>
+        <source>Diagnostics</source>
+        <translation>Diagnose</translation>
+    </message>
+    <message>
+        <source>Log level</source>
+        <translation>Protokollstufe</translation>
+    </message>
+    <message>
+        <source>Send anonymous telemetry</source>
+        <translation>Anonyme Telemetrie senden</translation>
+    </message>
+    <message>
+        <source>Enable experimental tools</source>
+        <translation>Experimentelle Werkzeuge aktivieren</translation>
+    </message>
+    <message>
+        <source>Onboarding</source>
+        <translation>Einführung</translation>
+    </message>
+    <message>
+        <source>Re-run first-run setup</source>
+        <translation>Ersteinrichtung erneut ausführen</translation>
+    </message>
+    <message>
+        <source>Local data</source>
+        <translation>Lokale Daten</translation>
+    </message>
+    <message>
+        <source>Clear local data…</source>
+        <translation>Lokale Daten löschen…</translation>
+    </message>
+    <message>
+        <source>Clear local data?</source>
+        <translation>Lokale Daten löschen?</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Leeren</translation>
+    </message>
+    <message>
+        <source>This erases everything stored on this device: your connection settings and saved sign-in, appearance preferences, and the local cache of sessions and files. It does NOT delete anything on the node itself.
+
+You&apos;ll return to first-run setup.</source>
+        <translation>Dies löscht alles, was auf diesem Gerät gespeichert ist: Ihre Verbindungseinstellungen und gespeicherte Anmeldung, Darstellungseinstellungen und den lokalen Cache von Sitzungen und Dateien. Es löscht NICHTS auf dem Node selbst.
+
+Sie kehren zur Ersteinrichtung zurück.</translation>
+    </message>
+</context>
+<context>
+    <name>AgentInferencePicker</name>
+    <message>
+        <source>Provider</source>
+        <translation>Anbieter</translation>
+    </message>
+    <message>
+        <source>Paste API key</source>
+        <translation>API-Schlüssel einfügen</translation>
+    </message>
+    <message>
+        <source>Hide API key</source>
+        <translation>API-Schlüssel verbergen</translation>
+    </message>
+    <message>
+        <source>Show API key</source>
+        <translation>API-Schlüssel anzeigen</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Modell</translation>
+    </message>
+    <message>
+        <source>Enter your API key to list models.</source>
+        <translation>Geben Sie Ihren API-Schlüssel ein, um Modelle aufzulisten.</translation>
+    </message>
+    <message>
+        <source>Discovering models…</source>
+        <translation>Modelle werden ermittelt…</translation>
+    </message>
+</context>
+<context>
+    <name>AgentProfilePage</name>
+    <message>
+        <source>Profile - %1</source>
+        <translation>Profil – %1</translation>
+    </message>
+    <message>
+        <source>No agent selected.</source>
+        <translation>Kein Agent ausgewählt.</translation>
+    </message>
+    <message>
+        <source>Identity</source>
+        <translation>Identität</translation>
+    </message>
+    <message>
+        <source>profile id</source>
+        <translation>Profil-ID</translation>
+    </message>
+    <message>
+        <source>name</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <source>description</source>
+        <translation>Beschreibung</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Engine</translation>
+    </message>
+    <message>
+        <source>provider</source>
+        <translation>Anbieter</translation>
+    </message>
+    <message>
+        <source>model</source>
+        <translation>Modell</translation>
+    </message>
+    <message>
+        <source>base url</source>
+        <translation>Basis-URL</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>(Anbieter-Standard)</translation>
+    </message>
+    <message>
+        <source>context engine</source>
+        <translation>Kontext-Engine</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Gedächtnis</translation>
+    </message>
+    <message>
+        <source>memory provider</source>
+        <translation>Gedächtnisanbieter</translation>
+    </message>
+    <message>
+        <source>Persona</source>
+        <translation>Persona</translation>
+    </message>
+    <message>
+        <source>Tool allowlist</source>
+        <translation>Werkzeug-Zulassungsliste</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Fähigkeiten</translation>
+    </message>
+    <message>
+        <source>Credentials</source>
+        <translation>Anmeldedaten</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>Anmeldedaten-Referenz</translation>
+    </message>
+    <message>
+        <source> (default)</source>
+        <translation> (Standard)</translation>
+    </message>
+</context>
+<context>
+    <name>AppearanceSection</name>
+    <message>
+        <source>Theme</source>
+        <translation>Design</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>Hell</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>Dunkel</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <translation>Sepia</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <translation>Mitternacht</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Sprache</translation>
+    </message>
+    <message>
+        <source>Language used across the interface. Applied immediately.</source>
+        <translation>Die in der gesamten Oberfläche verwendete Sprache. Wird sofort angewendet.</translation>
+    </message>
+    <message>
+        <source>Editor text</source>
+        <translation>Editortext</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Schriftart</translation>
+    </message>
+    <message>
+        <source>Typeface used for the transcript / editor text.</source>
+        <translation>Schriftart für das Transkript / den Editortext.</translation>
+    </message>
+    <message>
+        <source>Sans</source>
+        <translation>Serifenlos</translation>
+    </message>
+    <message>
+        <source>Serif</source>
+        <translation>Serif</translation>
+    </message>
+    <message>
+        <source>Mono</source>
+        <translation>Mono</translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation>Schriftgröße</translation>
+    </message>
+    <message>
+        <source>Size of the transcript / editor text.</source>
+        <translation>Größe des Transkript- / Editortexts.</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation>Layout</translation>
+    </message>
+    <message>
+        <source>Center text</source>
+        <translation>Text zentrieren</translation>
+    </message>
+    <message>
+        <source>Distraction-free (hide chrome)</source>
+        <translation>Ablenkungsfrei (Bedienelemente ausblenden)</translation>
+    </message>
+    <message>
+        <source>Raw markdown editor</source>
+        <translation>Roher Markdown-Editor</translation>
+    </message>
+    <message>
+        <source>Show Sessions</source>
+        <translation>Sitzungen anzeigen</translation>
+    </message>
+    <message>
+        <source>Show Fleet Tree</source>
+        <translation>Flottenbaum anzeigen</translation>
+    </message>
+    <message>
+        <source>User message rail</source>
+        <translation>Leiste für Benutzernachrichten</translation>
+    </message>
+</context>
+<context>
+    <name>ApprovalRepository</name>
+    <message>
+        <source>Approval decision failed</source>
+        <translation>Freigabeentscheidung fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>ApprovalsPage</name>
+    <message>
+        <source>Approvals</source>
+        <translation>Freigaben</translation>
+    </message>
+    <message>
+        <source>Inbox zero — no pending approvals.</source>
+        <translation>Posteingang leer — keine ausstehenden Freigaben.</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Ablehnen</translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>Freigeben</translation>
+    </message>
+</context>
+<context>
+    <name>ArchivedSection</name>
+    <message>
+        <source>Archived chats</source>
+        <translation>Archivierte Chats</translation>
+    </message>
+    <message>
+        <source>No archived chats.</source>
+        <translation>Keine archivierten Chats.</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>(ohne Titel)</translation>
+    </message>
+    <message>
+        <source>Unarchive</source>
+        <translation>Aus Archiv holen</translation>
+    </message>
+    <message>
+        <source>Delete permanently</source>
+        <translation>Endgültig löschen</translation>
+    </message>
+</context>
+<context>
+    <name>AssistantFooter</name>
+    <message>
+        <source>Copy message</source>
+        <translation>Nachricht kopieren</translation>
+    </message>
+    <message>
+        <source>Regenerate</source>
+        <translation>Neu generieren</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelsPage</name>
+    <message>
+        <source>Channels</source>
+        <translation>Kanäle</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Konten</translation>
+    </message>
+    <message>
+        <source>No channels connected.</source>
+        <translation>Keine Kanäle verbunden.</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>No rooms.</source>
+        <translation>Keine Räume.</translation>
+    </message>
+    <message>
+        <source>Add channel</source>
+        <translation>Kanal hinzufügen</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon to see available channel types.</source>
+        <translation>Mit einem Daemon verbinden, um verfügbare Kanaltypen zu sehen.</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Verbinden</translation>
+    </message>
+</context>
+<context>
+    <name>ChatSettingsSection</name>
+    <message>
+        <source>Behaviour</source>
+        <translation>Verhalten</translation>
+    </message>
+    <message>
+        <source>Stream responses</source>
+        <translation>Antworten streamen</translation>
+    </message>
+    <message>
+        <source>Send on Enter (Shift+Enter for newline)</source>
+        <translation>Mit Enter senden (Umschalt+Enter für Zeilenumbruch)</translation>
+    </message>
+    <message>
+        <source>Show token counts</source>
+        <translation>Token-Anzahl anzeigen</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>System-Prompt</translation>
+    </message>
+    <message>
+        <source>Optional default system prompt for new chats</source>
+        <translation>Optionaler Standard-System-Prompt für neue Chats</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointsPopover</name>
+    <message>
+        <source>Checkpoints</source>
+        <translation>Prüfpunkte</translation>
+    </message>
+    <message>
+        <source>Save here</source>
+        <translation>Hier speichern</translation>
+    </message>
+    <message>
+        <source>Manual checkpoint</source>
+        <translation>Manueller Prüfpunkt</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> Tok</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>aktuell</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Wiederherstellen</translation>
+    </message>
+</context>
+<context>
+    <name>ClarifyBlock</name>
+    <message>
+        <source>The agent needs your input.</source>
+        <translation>Der Agent benötigt Ihre Eingabe.</translation>
+    </message>
+    <message>
+        <source>(skipped)</source>
+        <translation>(übersprungen)</translation>
+    </message>
+    <message>
+        <source>Answer</source>
+        <translation>Antworten</translation>
+    </message>
+    <message>
+        <source>Select all that apply</source>
+        <translation>Alles Zutreffende auswählen</translation>
+    </message>
+    <message>
+        <source>Or type a reply…</source>
+        <translation>Oder eine Antwort eingeben…</translation>
+    </message>
+    <message>
+        <source>Type a reply…</source>
+        <translation>Eine Antwort eingeben…</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>Absenden</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Überspringen</translation>
+    </message>
+</context>
+<context>
+    <name>CommandPalette</name>
+    <message>
+        <source>Type a command…</source>
+        <translation>Einen Befehl eingeben…</translation>
+    </message>
+</context>
+<context>
+    <name>CommandRegistry</name>
+    <message>
+        <source>New session</source>
+        <translation>Neue Sitzung</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Sitzung</translation>
+    </message>
+    <message>
+        <source>Start a fresh chat</source>
+        <translation>Einen neuen Chat starten</translation>
+    </message>
+    <message>
+        <source>Search sessions</source>
+        <translation>Sitzungen durchsuchen</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navigation</translation>
+    </message>
+    <message>
+        <source>Jump to a session</source>
+        <translation>Zu einer Sitzung springen</translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation>Einstellungen öffnen</translation>
+    </message>
+    <message>
+        <source>Toggle file explorer</source>
+        <translation>Datei-Explorer umschalten</translation>
+    </message>
+    <message>
+        <source>Show / hide the workspace file tree</source>
+        <translation>Dateibaum des Arbeitsbereichs ein-/ausblenden</translation>
+    </message>
+    <message>
+        <source>Open dashboard</source>
+        <translation>Dashboard öffnen</translation>
+    </message>
+    <message>
+        <source>Sessions, agents, approvals overview</source>
+        <translation>Übersicht über Sitzungen, Agenten, Freigaben</translation>
+    </message>
+    <message>
+        <source>Open models hub</source>
+        <translation>Modell-Hub öffnen</translation>
+    </message>
+    <message>
+        <source>Discover / download / installed models</source>
+        <translation>Modelle entdecken / herunterladen / installiert</translation>
+    </message>
+    <message>
+        <source>Open accounts</source>
+        <translation>Konten öffnen</translation>
+    </message>
+    <message>
+        <source>Provider sign-in + API keys</source>
+        <translation>Anbieter-Anmeldung + API-Schlüssel</translation>
+    </message>
+    <message>
+        <source>Open profiles</source>
+        <translation>Profile öffnen</translation>
+    </message>
+    <message>
+        <source>Agent profiles + skills/tools</source>
+        <translation>Agentenprofile + Fähigkeiten/Werkzeuge</translation>
+    </message>
+    <message>
+        <source>Open fleet</source>
+        <translation>Flotte öffnen</translation>
+    </message>
+    <message>
+        <source>Orchestrator / worker tree</source>
+        <translation>Orchestrator- / Worker-Baum</translation>
+    </message>
+    <message>
+        <source>Open sessions</source>
+        <translation>Sitzungen öffnen</translation>
+    </message>
+    <message>
+        <source>Durable + live sessions</source>
+        <translation>Dauerhafte + aktive Sitzungen</translation>
+    </message>
+    <message>
+        <source>Open approvals</source>
+        <translation>Freigaben öffnen</translation>
+    </message>
+    <message>
+        <source>Pending tool approvals</source>
+        <translation>Ausstehende Werkzeug-Freigaben</translation>
+    </message>
+    <message>
+        <source>Open routing</source>
+        <translation>Routing öffnen</translation>
+    </message>
+    <message>
+        <source>Intent → model rules</source>
+        <translation>Intent → Modell-Regeln</translation>
+    </message>
+    <message>
+        <source>Open scheduled jobs</source>
+        <translation>Geplante Aufgaben öffnen</translation>
+    </message>
+    <message>
+        <source>Cron-style scheduled jobs</source>
+        <translation>Geplante Aufgaben im Cron-Stil</translation>
+    </message>
+    <message>
+        <source>Open users &amp; access</source>
+        <translation>Benutzer &amp; Zugriff öffnen</translation>
+    </message>
+    <message>
+        <source>Manage users, roles + sessions</source>
+        <translation>Benutzer, Rollen + Sitzungen verwalten</translation>
+    </message>
+    <message>
+        <source>Cycle theme</source>
+        <translation>Design wechseln</translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation>Darstellung</translation>
+    </message>
+    <message>
+        <source>Light / Dark / Sepia / Midnight</source>
+        <translation>Hell / Dunkel / Sepia / Mitternacht</translation>
+    </message>
+    <message>
+        <source>Choose model…</source>
+        <translation>Modell wählen…</translation>
+    </message>
+    <message>
+        <source>Composer</source>
+        <translation>Composer</translation>
+    </message>
+    <message>
+        <source>Pick the active model</source>
+        <translation>Aktives Modell auswählen</translation>
+    </message>
+    <message>
+        <source>Cycle reasoning effort</source>
+        <translation>Denkaufwand wechseln</translation>
+    </message>
+    <message>
+        <source>off / low / medium / high</source>
+        <translation>aus / niedrig / mittel / hoch</translation>
+    </message>
+    <message>
+        <source>Toggle fast mode</source>
+        <translation>Schnellmodus umschalten</translation>
+    </message>
+    <message>
+        <source>Toggle verbose</source>
+        <translation>Ausführlich umschalten</translation>
+    </message>
+    <message>
+        <source>Show usage</source>
+        <translation>Nutzung anzeigen</translation>
+    </message>
+    <message>
+        <source>Tokens + spend this session</source>
+        <translation>Tokens + Ausgaben dieser Sitzung</translation>
+    </message>
+    <message>
+        <source>Compress context</source>
+        <translation>Kontext komprimieren</translation>
+    </message>
+    <message>
+        <source>Summarize + free the window</source>
+        <translation>Zusammenfassen + Fenster freigeben</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>Transkript exportieren</translation>
+    </message>
+    <message>
+        <source>Write the session to JSON</source>
+        <translation>Die Sitzung als JSON speichern</translation>
+    </message>
+    <message>
+        <source>Find in transcript</source>
+        <translation>Im Transkript suchen</translation>
+    </message>
+    <message>
+        <source>Search this session</source>
+        <translation>Diese Sitzung durchsuchen</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Sitzung umbenennen</translation>
+    </message>
+    <message>
+        <source>Retry last message</source>
+        <translation>Letzte Nachricht erneut senden</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Zurückspulen</translation>
+    </message>
+    <message>
+        <source>Edit last message</source>
+        <translation>Letzte Nachricht bearbeiten</translation>
+    </message>
+    <message>
+        <source>Undo last exchange</source>
+        <translation>Letzten Austausch rückgängig machen</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>Sitzung leeren</translation>
+    </message>
+    <message>
+        <source>Remove all messages</source>
+        <translation>Alle Nachrichten entfernen</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>Hilfe</translation>
+    </message>
+    <message>
+        <source>Commands + shortcuts</source>
+        <translation>Befehle + Tastenkürzel</translation>
+    </message>
+    <message>
+        <source>Distraction-free mode</source>
+        <translation>Ablenkungsfreier Modus</translation>
+    </message>
+</context>
+<context>
+    <name>Composer</name>
+    <message>
+        <source>Attach image</source>
+        <translation>Bild anhängen</translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.gif *.webp *.bmp *.svg)</source>
+        <translation>Bilder (*.png *.jpg *.jpeg *.gif *.webp *.bmp *.svg)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Alle Dateien (*)</translation>
+    </message>
+    <message>
+        <source>Editing queued message</source>
+        <translation>Warteschlangennachricht bearbeiten</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Speichern</translation>
+    </message>
+    <message>
+        <source>(reverse-i-search)`</source>
+        <translation>(reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>(failed reverse-i-search)`</source>
+        <translation>(failed reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>&apos;:</source>
+        <translation>&apos;:</translation>
+    </message>
+    <message>
+        <source>Enter accept · Ctrl+R next · Esc cancel</source>
+        <translation>Enter bestätigen · Ctrl+R weiter · Esc abbrechen</translation>
+    </message>
+    <message>
+        <source>Send a message...  (Enter to send, Shift+Enter for newline)</source>
+        <translation>Eine Nachricht senden…  (Enter zum Senden, Umschalt+Enter für Zeilenumbruch)</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerChrome</name>
+    <message>
+        <source>(reverse-i-search)`</source>
+        <translation>(reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>(failed reverse-i-search)`</source>
+        <translation>(failed reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>Enter accept  ·  Ctrl+R next  ·  Esc cancel</source>
+        <translation>Enter bestätigen  ·  Ctrl+R weiter  ·  Esc abbrechen</translation>
+    </message>
+    <message>
+        <source>turn failed</source>
+        <translation>Vorgang fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source> Still thinking… %1s</source>
+        <translation> Denkt noch nach… %1s</translation>
+    </message>
+    <message>
+        <source> Thinking… %1s</source>
+        <translation> Denkt nach… %1s</translation>
+    </message>
+    <message>
+        <source> Esc stop</source>
+        <translation> Esc stoppen</translation>
+    </message>
+    <message>
+        <source> Enter send</source>
+        <translation> Enter senden</translation>
+    </message>
+    <message>
+        <source> Ctrl+Enter steer</source>
+        <translation> Ctrl+Enter steuern</translation>
+    </message>
+    <message>
+        <source>r:</source>
+        <comment>reasoning-effort badge prefix</comment>
+        <translation>r:</translation>
+    </message>
+    <message>
+        <source>fast</source>
+        <comment>composer mode badge</comment>
+        <translation>schnell</translation>
+    </message>
+    <message>
+        <source>verbose</source>
+        <comment>composer mode badge</comment>
+        <translation>ausführlich</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerControls</name>
+    <message>
+        <source>Checkpoints / rewind</source>
+        <translation>Prüfpunkte / Zurückspulen</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>Sitzungseinstellungen</translation>
+    </message>
+    <message>
+        <source>Steer the running turn (Ctrl+Enter)</source>
+        <translation>Den laufenden Vorgang steuern (Ctrl+Enter)</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerMenu</name>
+    <message>
+        <source>Code review</source>
+        <translation>Code-Review</translation>
+    </message>
+    <message>
+        <source>Review the following code for correctness, clarity, and edge cases:
+
+</source>
+        <translation>Prüfe den folgenden Code auf Korrektheit, Klarheit und Randfälle:
+
+</translation>
+    </message>
+    <message>
+        <source>Implementation plan</source>
+        <translation>Implementierungsplan</translation>
+    </message>
+    <message>
+        <source>Draft a step-by-step implementation plan for:
+
+</source>
+        <translation>Entwirf einen schrittweisen Implementierungsplan für:
+
+</translation>
+    </message>
+    <message>
+        <source>Explain this</source>
+        <translation>Dies erklären</translation>
+    </message>
+    <message>
+        <source>Explain what the following does and why:
+
+</source>
+        <translation>Erkläre, was das Folgende tut und warum:
+
+</translation>
+    </message>
+    <message>
+        <source>Attach and more</source>
+        <translation>Anhängen und mehr</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>Anbinden</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>Dateien</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation>Ordner</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation>Bilder</translation>
+    </message>
+    <message>
+        <source>Prompt snippets</source>
+        <translation>Prompt-Bausteine</translation>
+    </message>
+    <message>
+        <source>Type @ to mention</source>
+        <translation>Zum Erwähnen @ eingeben</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerUploadController</name>
+    <message>
+        <source>Not connected to a workspace.</source>
+        <translation>Nicht mit einem Arbeitsbereich verbunden.</translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; is too large to upload (max 25 MB).</source>
+        <translation>„%1“ ist zu groß zum Hochladen (max. 25 MB).</translation>
+    </message>
+    <message>
+        <source>Uploading %1…</source>
+        <translation>%1 wird hochgeladen…</translation>
+    </message>
+    <message>
+        <source>No writable workspace to upload into.</source>
+        <translation>Kein beschreibbarer Arbeitsbereich zum Hochladen.</translation>
+    </message>
+    <message>
+        <source>Upload failed.</source>
+        <translation>Hochladen fehlgeschlagen.</translation>
+    </message>
+</context>
+<context>
+    <name>ConfirmDialog</name>
+    <message>
+        <source>Yes</source>
+        <translation>Ja</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+</context>
+<context>
+    <name>ConnectionPicker</name>
+    <message>
+        <source>https://node.example:8080</source>
+        <translation>https://node.example:8080</translation>
+    </message>
+    <message>
+        <source>wss://node.example:9443</source>
+        <translation>wss://node.example:9443</translation>
+    </message>
+    <message>
+        <source>/path/to/daemon.sock</source>
+        <translation>/path/to/daemon.sock</translation>
+    </message>
+    <message>
+        <source>Transport</source>
+        <translation>Transport</translation>
+    </message>
+    <message>
+        <source>Embedded</source>
+        <translation>Eingebettet</translation>
+    </message>
+    <message>
+        <source>In-process node (coming soon)</source>
+        <translation>In-Process-Node (in Kürze)</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation>Lokal</translation>
+    </message>
+    <message>
+        <source>Unix socket on this machine</source>
+        <translation>Unix-Socket auf diesem Rechner</translation>
+    </message>
+    <message>
+        <source>Remote</source>
+        <translation>Remote</translation>
+    </message>
+    <message>
+        <source>Connect to a node over the network</source>
+        <translation>Über das Netzwerk mit einem Node verbinden</translation>
+    </message>
+    <message>
+        <source>WebSocket</source>
+        <translation>WebSocket</translation>
+    </message>
+    <message>
+        <source>Connect to a node over ws:// or wss://</source>
+        <translation>Über ws:// oder wss:// mit einem Node verbinden</translation>
+    </message>
+    <message>
+        <source>Local daemon</source>
+        <translation>Lokaler Daemon</translation>
+    </message>
+    <message>
+        <source>App-managed</source>
+        <translation>Von der App verwaltet</translation>
+    </message>
+    <message>
+        <source>Start and manage a node for me (recommended)</source>
+        <translation>Einen Node für mich starten und verwalten (empfohlen)</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>Anbinden</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon socket I run myself</source>
+        <translation>Mit einem selbst betriebenen Daemon-Socket verbinden</translation>
+    </message>
+    <message>
+        <source>Socket path</source>
+        <translation>Socket-Pfad</translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation>Ziel</translation>
+    </message>
+    <message>
+        <source>Auth token (optional)</source>
+        <translation>Auth-Token (optional)</translation>
+    </message>
+    <message>
+        <source>Testing...</source>
+        <translation>Wird getestet…</translation>
+    </message>
+    <message>
+        <source>Test connection</source>
+        <translation>Verbindung testen</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Verbinden</translation>
+    </message>
+</context>
+<context>
+    <name>ConnectionSection</name>
+    <message>
+        <source>Status</source>
+        <translation>Status</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>unbekannt</translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation>Trennen</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>Abmelden</translation>
+    </message>
+    <message>
+        <source>Local daemon</source>
+        <translation>Lokaler Daemon</translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation>Einen lokalen Daemon automatisch starten</translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
+        <translation>Den verwalteten Daemon beim Schließen der App stoppen</translation>
+    </message>
+</context>
+<context>
+    <name>CredentialRepository</name>
+    <message>
+        <source>Credential operation failed</source>
+        <translation>Anmeldedaten-Vorgang fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>CronJobDialog</name>
+    <message>
+        <source>Edit job</source>
+        <translation>Aufgabe bearbeiten</translation>
+    </message>
+    <message>
+        <source>New job</source>
+        <translation>Neue Aufgabe</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <source>Job name</source>
+        <translation>Aufgabenname</translation>
+    </message>
+    <message>
+        <source>Schedule (cron)</source>
+        <translation>Zeitplan (cron)</translation>
+    </message>
+    <message>
+        <source>m h dom mon dow  (e.g. 0 8 * * *)</source>
+        <translation>m h dom mon dow  (z. B. 0 8 * * *)</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Profil</translation>
+    </message>
+    <message>
+        <source>Prompt</source>
+        <translation>Prompt</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Speichern</translation>
+    </message>
+</context>
+<context>
+    <name>CronPage</name>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Geplante Aufgaben</translation>
+    </message>
+    <message>
+        <source>Jobs</source>
+        <translation>Aufgaben</translation>
+    </message>
+    <message>
+        <source>+ New job</source>
+        <translation>+ Neue Aufgabe</translation>
+    </message>
+    <message>
+        <source>next </source>
+        <translation>nächster </translation>
+    </message>
+    <message>
+        <source>  ·  last </source>
+        <translation>  ·  letzter </translation>
+    </message>
+    <message>
+        <source>Run now</source>
+        <translation>Jetzt ausführen</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Bearbeiten</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation>OAuth-Anmeldung ist noch nicht verfügbar; fügen Sie stattdessen einen API-Schlüssel hinzu.</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation>Der Daemon konnte nicht erreicht werden. Prüfen Sie, ob er läuft, und versuchen Sie es erneut.</translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation>Der Daemon meldet, dass er nicht funktionsfähig ist.</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>unbekannt</translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation>Ein inkompatibler lokaler Daemon wird ersetzt (API %1, benötigt %2)…</translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation>Inkompatibler Daemon (API %1, benötigt %2).</translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation>Verbindung wird wiederhergestellt…</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device.</source>
+        <translation>Auf diesem Gerät funktionieren nur WebSocket-Verbindungen (ws:// oder wss://).</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device</source>
+        <translation>Auf diesem Gerät funktionieren nur WebSocket-Verbindungen (ws:// oder wss://)</translation>
+    </message>
+    <message>
+        <source>Unix socket target accepted</source>
+        <translation>Unix-Socket-Ziel akzeptiert</translation>
+    </message>
+    <message>
+        <source>Enter a local socket path</source>
+        <translation>Geben Sie einen lokalen Socket-Pfad ein</translation>
+    </message>
+    <message>
+        <source>Remote target accepted (host:port, TLS)</source>
+        <translation>Remote-Ziel akzeptiert (host:port, TLS)</translation>
+    </message>
+    <message>
+        <source>Use host:port for a remote TLS node</source>
+        <translation>Verwenden Sie host:port für einen Remote-TLS-Node</translation>
+    </message>
+    <message>
+        <source>WebSocket target accepted (ws:// or wss://)</source>
+        <translation>WebSocket-Ziel akzeptiert (ws:// oder wss://)</translation>
+    </message>
+    <message>
+        <source>Use ws://host:port or wss://host[:port][/path]</source>
+        <translation>Verwenden Sie ws://host:port oder wss://host[:port][/path]</translation>
+    </message>
+    <message>
+        <source>Unsupported transport</source>
+        <translation>Nicht unterstützter Transport</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonTransport</name>
+    <message>
+        <source>No daemon WebSocket target configured</source>
+        <translation>Kein Daemon-WebSocket-Ziel konfiguriert</translation>
+    </message>
+    <message>
+        <source>No daemon target configured</source>
+        <translation>Kein Daemon-Ziel konfiguriert</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonTurnEngine</name>
+    <message>
+        <source>The turn timed out waiting for the agent.</source>
+        <translation>Der Vorgang hat beim Warten auf den Agenten das Zeitlimit überschritten.</translation>
+    </message>
+    <message>
+        <source>No session is bound for this turn.</source>
+        <translation>Für diesen Vorgang ist keine Sitzung gebunden.</translation>
+    </message>
+    <message>
+        <source>The connection to the agent was lost.</source>
+        <translation>Die Verbindung zum Agenten ging verloren.</translation>
+    </message>
+    <message>
+        <source>Failed to read the agent&apos;s response stream.</source>
+        <translation>Der Antwort-Stream des Agenten konnte nicht gelesen werden.</translation>
+    </message>
+    <message>
+        <source>The turn ended: %1</source>
+        <translation>Der Vorgang endete: %1</translation>
+    </message>
+    <message>
+        <source>The agent could not start the turn.</source>
+        <translation>Der Agent konnte den Vorgang nicht starten.</translation>
+    </message>
+    <message>
+        <source>The agent rejected the response.</source>
+        <translation>Der Agent hat die Antwort abgelehnt.</translation>
+    </message>
+    <message>
+        <source>The session was reset; recovered from history.</source>
+        <translation>Die Sitzung wurde zurückgesetzt; aus dem Verlauf wiederhergestellt.</translation>
+    </message>
+</context>
+<context>
+    <name>DashboardPage</name>
+    <message>
+        <source>Dashboard</source>
+        <translation>Dashboard</translation>
+    </message>
+    <message>
+        <source>Active sessions</source>
+        <translation>Aktive Sitzungen</translation>
+    </message>
+    <message>
+        <source>Running agents</source>
+        <translation>Laufende Agenten</translation>
+    </message>
+    <message>
+        <source>Pending approvals</source>
+        <translation>Ausstehende Freigaben</translation>
+    </message>
+    <message>
+        <source>Tokens today</source>
+        <translation>Tokens heute</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>!</source>
+        <translation>!</translation>
+    </message>
+    <message>
+        <source>Daemon health</source>
+        <translation>Daemon-Zustand</translation>
+    </message>
+    <message>
+        <source>Recent activity</source>
+        <translation>Letzte Aktivität</translation>
+    </message>
+</context>
+<context>
+    <name>Dialog</name>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+</context>
+<context>
+    <name>DiscoverDialog</name>
+    <message>
+        <source>Discover models</source>
+        <translation>Modelle entdecken</translation>
+    </message>
+    <message>
+        <source>Search Hugging Face repos (e.g. SmolLM2)</source>
+        <translation>Hugging-Face-Repos durchsuchen (z. B. SmolLM2)</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Suchen</translation>
+    </message>
+    <message>
+        <source>Searching…</source>
+        <translation>Suche läuft…</translation>
+    </message>
+    <message>
+        <source>by %1</source>
+        <translation>von %1</translation>
+    </message>
+    <message>
+        <source>Quantizations</source>
+        <translation>Quantisierungen</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation>Downloads</translation>
+    </message>
+    <message>
+        <source>Load more</source>
+        <translation>Mehr laden</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Schließen</translation>
+    </message>
+</context>
+<context>
+    <name>DisplayPresenter</name>
+    <message>
+        <source>checking</source>
+        <comment>connection state</comment>
+        <translation>prüft</translation>
+    </message>
+    <message>
+        <source>connecting</source>
+        <comment>connection state</comment>
+        <translation>verbindet</translation>
+    </message>
+    <message>
+        <source>authenticating</source>
+        <comment>connection state</comment>
+        <translation>authentifiziert</translation>
+    </message>
+    <message>
+        <source>ready</source>
+        <comment>connection state</comment>
+        <translation>bereit</translation>
+    </message>
+    <message>
+        <source>offline</source>
+        <comment>connection state</comment>
+        <translation>offline</translation>
+    </message>
+    <message>
+        <source>needs setup</source>
+        <comment>connection state</comment>
+        <translation>Einrichtung nötig</translation>
+    </message>
+    <message>
+        <source>working</source>
+        <comment>memory tier</comment>
+        <translation>arbeitet</translation>
+    </message>
+    <message>
+        <source>episodic</source>
+        <comment>memory tier</comment>
+        <translation>episodisch</translation>
+    </message>
+    <message>
+        <source>scratchpad</source>
+        <comment>memory tier</comment>
+        <translation>Notizblock</translation>
+    </message>
+    <message>
+        <source>stated</source>
+        <comment>memory veracity</comment>
+        <translation>angegeben</translation>
+    </message>
+    <message>
+        <source>inferred</source>
+        <comment>memory veracity</comment>
+        <translation>abgeleitet</translation>
+    </message>
+    <message>
+        <source>tool</source>
+        <comment>memory veracity</comment>
+        <translation>Werkzeug</translation>
+    </message>
+    <message>
+        <source>imported</source>
+        <comment>memory veracity</comment>
+        <translation>importiert</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <comment>memory veracity</comment>
+        <translation>unbekannt</translation>
+    </message>
+    <message>
+        <source>active</source>
+        <comment>memory status</comment>
+        <translation>aktiv</translation>
+    </message>
+    <message>
+        <source>expired</source>
+        <comment>memory status</comment>
+        <translation>abgelaufen</translation>
+    </message>
+    <message>
+        <source>superseded</source>
+        <comment>memory status</comment>
+        <translation>ersetzt</translation>
+    </message>
+    <message>
+        <source>hot</source>
+        <comment>memory degradation</comment>
+        <translation>heiß</translation>
+    </message>
+    <message>
+        <source>warm</source>
+        <comment>memory degradation</comment>
+        <translation>warm</translation>
+    </message>
+    <message>
+        <source>cold</source>
+        <comment>memory degradation</comment>
+        <translation>kalt</translation>
+    </message>
+    <message>
+        <source>memory</source>
+        <comment>memory node kind</comment>
+        <translation>Gedächtnis</translation>
+    </message>
+    <message>
+        <source>entity</source>
+        <comment>memory node kind</comment>
+        <translation>Entität</translation>
+    </message>
+    <message>
+        <source>fact</source>
+        <comment>memory node kind</comment>
+        <translation>Fakt</translation>
+    </message>
+    <message>
+        <source>gist</source>
+        <comment>memory node kind</comment>
+        <translation>Kernaussage</translation>
+    </message>
+    <message>
+        <source>conflict</source>
+        <comment>memory node kind</comment>
+        <translation>Konflikt</translation>
+    </message>
+    <message>
+        <source>added</source>
+        <comment>memory event kind</comment>
+        <translation>hinzugefügt</translation>
+    </message>
+    <message>
+        <source>updated</source>
+        <comment>memory event kind</comment>
+        <translation>aktualisiert</translation>
+    </message>
+    <message>
+        <source>recalled</source>
+        <comment>memory event kind</comment>
+        <translation>abgerufen</translation>
+    </message>
+    <message>
+        <source>invalidated</source>
+        <comment>memory event kind</comment>
+        <translation>ungültig gemacht</translation>
+    </message>
+    <message>
+        <source>consolidated</source>
+        <comment>memory event kind</comment>
+        <translation>konsolidiert</translation>
+    </message>
+    <message>
+        <source>snapshot</source>
+        <comment>memory event kind</comment>
+        <translation>Momentaufnahme</translation>
+    </message>
+    <message>
+        <source>high</source>
+        <comment>approval risk</comment>
+        <translation>hoch</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <comment>approval risk</comment>
+        <translation>mittel</translation>
+    </message>
+    <message>
+        <source>low</source>
+        <comment>approval risk</comment>
+        <translation>niedrig</translation>
+    </message>
+    <message>
+        <source>queued</source>
+        <comment>download state</comment>
+        <translation>in Warteschlange</translation>
+    </message>
+    <message>
+        <source>paused</source>
+        <comment>download state</comment>
+        <translation>pausiert</translation>
+    </message>
+    <message>
+        <source>downloading</source>
+        <comment>download state</comment>
+        <translation>wird heruntergeladen</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <comment>download state</comment>
+        <translation>fertig</translation>
+    </message>
+    <message>
+        <source>failed</source>
+        <comment>download state</comment>
+        <translation>fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>cancelled</source>
+        <comment>download state</comment>
+        <translation>abgebrochen</translation>
+    </message>
+</context>
+<context>
+    <name>DownloadsPanel</name>
+    <message>
+        <source>Queued</source>
+        <translation>In Warteschlange</translation>
+    </message>
+    <message>
+        <source>Downloading</source>
+        <translation>Wird heruntergeladen</translation>
+    </message>
+    <message>
+        <source>Paused</source>
+        <translation>Pausiert</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Fertig</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation>Abgebrochen</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>Fortsetzen</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>Pausieren</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Erneut versuchen</translation>
+    </message>
+    <message>
+        <source>Use this model</source>
+        <translation>Dieses Modell verwenden</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Verwerfen</translation>
+    </message>
+    <message>
+        <source>file %1/%2</source>
+        <translation>Datei %1/%2</translation>
+    </message>
+</context>
+<context>
+    <name>EditMenu</name>
+    <message>
+        <source>Cut</source>
+        <translation>Ausschneiden</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopieren</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>Einfügen</translation>
+    </message>
+    <message>
+        <source>Select All</source>
+        <translation>Alles auswählen</translation>
+    </message>
+</context>
+<context>
+    <name>FileExplorer</name>
+    <message>
+        <source>Explorer</source>
+        <translation>Explorer</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Aktualisieren</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Alle einklappen</translation>
+    </message>
+    <message>
+        <source>Go to file (Ctrl+P)</source>
+        <translation>Zu Datei gehen (Ctrl+P)</translation>
+    </message>
+    <message>
+        <source>Search in files</source>
+        <translation>In Dateien suchen</translation>
+    </message>
+    <message>
+        <source>Hide explorer</source>
+        <translation>Explorer ausblenden</translation>
+    </message>
+</context>
+<context>
+    <name>FileFinder</name>
+    <message numerus="yes">
+        <source>Indexing… (%n file(s))</source>
+        <translation>
+            <numerusform>Indizierung… (%n Datei)</numerusform>
+            <numerusform>Indizierung… (%n Dateien)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Go to file…</source>
+        <translation>Zu Datei gehen…</translation>
+    </message>
+</context>
+<context>
+    <name>FileFinderDialog</name>
+    <message numerus="yes">
+        <source>Indexing… (%n file(s))</source>
+        <translation>
+            <numerusform>Indizierung… (%n Datei)</numerusform>
+            <numerusform>Indizierung… (%n Dateien)</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>FilePage</name>
+    <message>
+        <source>Saving…</source>
+        <translation>Wird gespeichert…</translation>
+    </message>
+    <message>
+        <source>File is too large for editing and was loaded only partially.</source>
+        <translation>Die Datei ist zu groß zum Bearbeiten und wurde nur teilweise geladen.</translation>
+    </message>
+    <message>
+        <source>Save failed.</source>
+        <translation>Speichern fehlgeschlagen.</translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation>Gespeichert</translation>
+    </message>
+    <message>
+        <source>Large file — preview is truncated and editing is disabled.</source>
+        <translation>Große Datei — die Vorschau ist gekürzt und die Bearbeitung ist deaktiviert.</translation>
+    </message>
+    <message>
+        <source>Image preview is not available in the dev build.</source>
+        <translation>Die Bildvorschau ist im Dev-Build nicht verfügbar.</translation>
+    </message>
+    <message>
+        <source>Binary file — not shown.</source>
+        <translation>Binärdatei — nicht angezeigt.</translation>
+    </message>
+</context>
+<context>
+    <name>FilePicker</name>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+</context>
+<context>
+    <name>FileTree</name>
+    <message>
+        <source>Retry</source>
+        <translation>Erneut versuchen</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunDialog</name>
+    <message>
+        <source>Setup Required</source>
+        <translation>Einrichtung erforderlich</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon node to get started. Choose a transport:</source>
+        <translation>Verbinden Sie sich mit einem Daemon-Node, um zu beginnen. Wählen Sie einen Transport:</translation>
+    </message>
+    <message>
+        <source>Embedded</source>
+        <translation>Eingebettet</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation>Lokal</translation>
+    </message>
+    <message>
+        <source>Remote</source>
+        <translation>Remote</translation>
+    </message>
+    <message>
+        <source>Agent name</source>
+        <translation>Agentenname</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Anbieter</translation>
+    </message>
+    <message>
+        <source>List models</source>
+        <translation>Modelle auflisten</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Modell</translation>
+    </message>
+    <message>
+        <source>Test</source>
+        <translation>Testen</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Verbinden</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Überspringen</translation>
+    </message>
+    <message>
+        <source>Testing...</source>
+        <translation>Wird getestet…</translation>
+    </message>
+    <message>
+        <source>OK — </source>
+        <translation>OK — </translation>
+    </message>
+    <message>
+        <source>Failed — </source>
+        <translation>Fehlgeschlagen — </translation>
+    </message>
+    <message>
+        <source>Local: App-managed (press to Attach instead)</source>
+        <translation>Lokal: Von der App verwaltet (drücken, um stattdessen anzubinden)</translation>
+    </message>
+    <message>
+        <source>Local: Attach to socket (press for App-managed)</source>
+        <translation>Lokal: An Socket anbinden (drücken für App-verwaltet)</translation>
+    </message>
+    <message>
+        <source>https://node.example:8080</source>
+        <comment>example remote connection target</comment>
+        <translation>https://node.example:8080</translation>
+    </message>
+    <message>
+        <source>Connecting...</source>
+        <translation>Verbindung wird hergestellt…</translation>
+    </message>
+    <message>
+        <source>Sign in to continue.</source>
+        <translation>Melden Sie sich an, um fortzufahren.</translation>
+    </message>
+    <message>
+        <source>Sign in</source>
+        <translation>Anmelden</translation>
+    </message>
+    <message>
+        <source>Pick a provider and a model, then Finish.</source>
+        <translation>Wählen Sie einen Anbieter und ein Modell und klicken Sie dann auf Fertigstellen.</translation>
+    </message>
+    <message>
+        <source>Finish</source>
+        <translation>Fertigstellen</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunGate</name>
+    <message>
+        <source>Welcome to daemon-app</source>
+        <translation>Willkommen bei daemon-app</translation>
+    </message>
+    <message>
+        <source>Almost there - confirm an inference model.</source>
+        <translation>Fast geschafft – bestätigen Sie ein Inferenzmodell.</translation>
+    </message>
+    <message>
+        <source>Sign in to the node to continue.</source>
+        <translation>Melden Sie sich beim Node an, um fortzufahren.</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon node to get started.</source>
+        <translation>Verbinden Sie sich mit einem Daemon-Node, um zu beginnen.</translation>
+    </message>
+    <message>
+        <source>Connecting to %1...</source>
+        <translation>Verbindung zu %1 wird hergestellt…</translation>
+    </message>
+    <message>
+        <source>Sign in</source>
+        <translation>Anmelden</translation>
+    </message>
+    <message>
+        <source>Username</source>
+        <translation>Benutzername</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>Passwort</translation>
+    </message>
+    <message>
+        <source>Signing in…</source>
+        <translation>Anmeldung läuft…</translation>
+    </message>
+    <message>
+        <source>Agent name</source>
+        <translation>Agentenname</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation>Agentenname</translation>
+    </message>
+    <message>
+        <source>Skip for now</source>
+        <translation>Vorerst überspringen</translation>
+    </message>
+    <message>
+        <source>Finish setup</source>
+        <translation>Einrichtung abschließen</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunModel</name>
+    <message>
+        <source>Could not reach the node. Check the target and try again.</source>
+        <translation>Der Node konnte nicht erreicht werden. Prüfen Sie das Ziel und versuchen Sie es erneut.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation>Dieser API-Schlüssel konnte mit %1 nicht überprüft werden — prüfen Sie ihn und versuchen Sie es erneut.</translation>
+    </message>
+</context>
+<context>
+    <name>FleetPage</name>
+    <message>
+        <source>Fleet</source>
+        <translation>Flotte</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Aktualisieren</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>Fortsetzen</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>Pausieren</translation>
+    </message>
+    <message>
+        <source>%1 · %2 · depth %3</source>
+        <translation>%1 · %2 · Tiefe %3</translation>
+    </message>
+    <message>
+        <source>Workers</source>
+        <translation>Worker</translation>
+    </message>
+    <message>
+        <source>Scale to %1</source>
+        <translation>Auf %1 skalieren</translation>
+    </message>
+    <message>
+        <source>No active subagents</source>
+        <translation>Keine aktiven Subagenten</translation>
+    </message>
+</context>
+<context>
+    <name>FleetRepository</name>
+    <message>
+        <source>Unit control failed</source>
+        <translation>Einheitensteuerung fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>FontStyleButton</name>
+    <message>
+        <source>Sans</source>
+        <translation>Serifenlos</translation>
+    </message>
+    <message>
+        <source>Ag</source>
+        <comment>font specimen sample</comment>
+        <translation>Ag</translation>
+    </message>
+</context>
+<context>
+    <name>GatewayMenu</name>
+    <message>
+        <source>Gateway</source>
+        <translation>Gateway</translation>
+    </message>
+    <message>
+        <source>Open system</source>
+        <translation>System öffnen</translation>
+    </message>
+    <message>
+        <source>View all logs</source>
+        <translation>Alle Protokolle anzeigen</translation>
+    </message>
+    <message>
+        <source>connected</source>
+        <translation>verbunden</translation>
+    </message>
+    <message>
+        <source>offline</source>
+        <translation>offline</translation>
+    </message>
+</context>
+<context>
+    <name>GraphView</name>
+    <message>
+        <source>No graph data</source>
+        <translation>Keine Graphdaten</translation>
+    </message>
+</context>
+<context>
+    <name>ImageBlock</name>
+    <message>
+        <source>Loading image…</source>
+        <translation>Bild wird geladen…</translation>
+    </message>
+    <message>
+        <source>image unavailable</source>
+        <translation>Bild nicht verfügbar</translation>
+    </message>
+</context>
+<context>
+    <name>InteractiveTurnHost</name>
+    <message>
+        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
+</source>
+        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m genehmigt — Befehl abgeschlossen
+</translation>
+    </message>
+    <message>
+        <source>
+
+Thanks — proceeding with: %1
+</source>
+        <translation>
+
+Danke — es geht weiter mit: %1
+</translation>
+    </message>
+</context>
+<context>
+    <name>LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation>Es wurde keine lokale Daemon-Binärdatei gefunden. Legen Sie ihren Pfad in den Einstellungen fest oder verbinden Sie sich stattdessen mit einem Remote-Daemon.</translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation>Der lokale Daemon stürzt immer wieder ab (zu oft neu gestartet). Prüfen Sie sein Protokoll und Ihre Konfiguration.</translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation>Der lokale Daemon konnte nicht gestartet werden (%1).</translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation>Der lokale Daemon wurde nicht rechtzeitig bereit.</translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation>Der inkompatible lokale Daemon (PID %1) wurde nicht rechtzeitig beendet.</translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
+        <translation>Ein inkompatibler Daemon bedient %1, und keine PID-Datei erfasst seinen Prozess. Stoppen Sie ihn manuell und verbinden Sie sich erneut.</translation>
+    </message>
+    <message>
+        <source>A browser cannot start a local daemon. Connect to a WebSocket node instead.</source>
+        <translation>Ein Browser kann keinen lokalen Daemon starten. Verbinden Sie sich stattdessen mit einem WebSocket-Node.</translation>
+    </message>
+    <message>
+        <source>A browser cannot manage a local daemon. Connect to a WebSocket node instead.</source>
+        <translation>Ein Browser kann keinen lokalen Daemon verwalten. Verbinden Sie sich stattdessen mit einem WebSocket-Node.</translation>
+    </message>
+</context>
+<context>
+    <name>LocalDiskFsService</name>
+    <message>
+        <source>invalid path</source>
+        <translation>ungültiger Pfad</translation>
+    </message>
+    <message>
+        <source>cannot open</source>
+        <translation>kann nicht geöffnet werden</translation>
+    </message>
+    <message>
+        <source>stale: file changed on disk</source>
+        <translation>veraltet: Datei auf dem Datenträger geändert</translation>
+    </message>
+    <message>
+        <source>write failed</source>
+        <translation>Schreiben fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>Main</name>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Connection lost</source>
+        <translation>Verbindung verloren</translation>
+    </message>
+    <message>
+        <source>%1 (%2s)</source>
+        <translation>%1 (%2s)</translation>
+    </message>
+    <message>
+        <source>Reconnect now</source>
+        <translation>Jetzt neu verbinden</translation>
+    </message>
+    <message>
+        <source>Downloading update v%1… %2%</source>
+        <translation>Update v%1 wird heruntergeladen… %2 %</translation>
+    </message>
+    <message>
+        <source>Update v%1 is ready to install</source>
+        <translation>Update v%1 kann installiert werden</translation>
+    </message>
+    <message>
+        <source>Update available: v%1 → v%2</source>
+        <translation>Update verfügbar: v%1 → v%2</translation>
+    </message>
+    <message>
+        <source>Release notes</source>
+        <translation>Versionshinweise</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Herunterladen</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Öffnen</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Verwerfen</translation>
+    </message>
+</context>
+<context>
+    <name>MathBlock</name>
+    <message>
+        <source>Math error: </source>
+        <translation>Mathematikfehler: </translation>
+    </message>
+</context>
+<context>
+    <name>MemoryDetail</name>
+    <message>
+        <source>Trust</source>
+        <translation>Vertrauen</translation>
+    </message>
+    <message>
+        <source>veracity</source>
+        <translation>Wahrheitsgehalt</translation>
+    </message>
+    <message>
+        <source>trust tier</source>
+        <translation>Vertrauensebene</translation>
+    </message>
+    <message>
+        <source>trust weight</source>
+        <translation>Vertrauensgewicht</translation>
+    </message>
+    <message>
+        <source>Lifecycle</source>
+        <translation>Lebenszyklus</translation>
+    </message>
+    <message>
+        <source>tier</source>
+        <translation>Ebene</translation>
+    </message>
+    <message>
+        <source> · L</source>
+        <translation> · L</translation>
+    </message>
+    <message>
+        <source>degradation</source>
+        <translation>Abbau</translation>
+    </message>
+    <message>
+        <source>status</source>
+        <translation>Status</translation>
+    </message>
+    <message>
+        <source>valid until</source>
+        <translation>gültig bis</translation>
+    </message>
+    <message>
+        <source>superseded by</source>
+        <translation>ersetzt durch</translation>
+    </message>
+    <message>
+        <source>Weights</source>
+        <translation>Gewichte</translation>
+    </message>
+    <message>
+        <source>importance</source>
+        <translation>Wichtigkeit</translation>
+    </message>
+    <message>
+        <source>degradation w</source>
+        <translation>Abbaugewicht</translation>
+    </message>
+    <message>
+        <source>effective w</source>
+        <translation>effektives Gewicht</translation>
+    </message>
+    <message>
+        <source>Provenance</source>
+        <translation>Herkunft</translation>
+    </message>
+    <message>
+        <source>id</source>
+        <translation>ID</translation>
+    </message>
+    <message>
+        <source>source</source>
+        <translation>Quelle</translation>
+    </message>
+    <message>
+        <source>session</source>
+        <translation>Sitzung</translation>
+    </message>
+    <message>
+        <source>scope</source>
+        <translation>Geltungsbereich</translation>
+    </message>
+    <message>
+        <source>recalls</source>
+        <translation>Abrufe</translation>
+    </message>
+    <message>
+        <source>last recalled</source>
+        <translation>zuletzt abgerufen</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryGraphView</name>
+    <message>
+        <source>Association</source>
+        <translation>Assoziation</translation>
+    </message>
+    <message>
+        <source>Knowledge</source>
+        <translation>Wissen</translation>
+    </message>
+    <message>
+        <source>Constellation</source>
+        <translation>Konstellation</translation>
+    </message>
+    <message>
+        <source>Depth %1</source>
+        <translation>Tiefe %1</translation>
+    </message>
+    <message>
+        <source>Less depth</source>
+        <translation>Weniger Tiefe</translation>
+    </message>
+    <message>
+        <source>More depth</source>
+        <translation>Mehr Tiefe</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n node(s)</source>
+        <translation>
+            <numerusform>%n Knoten</numerusform>
+            <numerusform>%n Knoten</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n edge(s)</source>
+        <translation>
+            <numerusform>%n Kante</numerusform>
+            <numerusform>%n Kanten</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reset view / focus</source>
+        <translation>Ansicht / Fokus zurücksetzen</translation>
+    </message>
+    <message>
+        <source>No graph data for this scope</source>
+        <translation>Keine Graphdaten für diesen Geltungsbereich</translation>
+    </message>
+    <message>
+        <source> · degree </source>
+        <translation> · Grad </translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>Erweitern</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Leeren</translation>
+    </message>
+    <message>
+        <source>Neighbours</source>
+        <translation>Nachbarn</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryList</name>
+    <message>
+        <source>All tiers</source>
+        <translation>Alle Ebenen</translation>
+    </message>
+    <message>
+        <source>working</source>
+        <translation>Arbeit</translation>
+    </message>
+    <message>
+        <source>episodic</source>
+        <translation>episodisch</translation>
+    </message>
+    <message>
+        <source>scratchpad</source>
+        <translation>Notizblock</translation>
+    </message>
+    <message>
+        <source>All trust</source>
+        <translation>Alle Vertrauensstufen</translation>
+    </message>
+    <message>
+        <source>stated</source>
+        <translation>angegeben</translation>
+    </message>
+    <message>
+        <source>inferred</source>
+        <translation>abgeleitet</translation>
+    </message>
+    <message>
+        <source>tool</source>
+        <translation>Werkzeug</translation>
+    </message>
+    <message>
+        <source>imported</source>
+        <translation>importiert</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>unbekannt</translation>
+    </message>
+    <message>
+        <source>recent</source>
+        <translation>neueste</translation>
+    </message>
+    <message>
+        <source>importance</source>
+        <translation>Wichtigkeit</translation>
+    </message>
+    <message>
+        <source>recall</source>
+        <translation>Abruf</translation>
+    </message>
+    <message>
+        <source>Search memories...</source>
+        <translation>Gedächtnis durchsuchen…</translation>
+    </message>
+    <message>
+        <source>imp %1</source>
+        <translation>Wicht. %1</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryOverview</name>
+    <message>
+        <source>Working</source>
+        <translation>Arbeit</translation>
+    </message>
+    <message>
+        <source>Episodic</source>
+        <translation>Episodisch</translation>
+    </message>
+    <message>
+        <source>Scratchpad</source>
+        <translation>Notizblock</translation>
+    </message>
+    <message>
+        <source>Total</source>
+        <translation>Gesamt</translation>
+    </message>
+    <message>
+        <source>Facts</source>
+        <translation>Fakten</translation>
+    </message>
+    <message>
+        <source>Conflicts</source>
+        <translation>Konflikte</translation>
+    </message>
+    <message>
+        <source>By source</source>
+        <translation>Nach Quelle</translation>
+    </message>
+    <message>
+        <source>By veracity</source>
+        <translation>Nach Wahrheitsgehalt</translation>
+    </message>
+    <message>
+        <source>By lifecycle</source>
+        <translation>Nach Lebenszyklus</translation>
+    </message>
+    <message>
+        <source>By scope</source>
+        <translation>Nach Geltungsbereich</translation>
+    </message>
+    <message>
+        <source>By session</source>
+        <translation>Nach Sitzung</translation>
+    </message>
+    <message>
+        <source>Live memory stream</source>
+        <translation>Live-Gedächtnisstrom</translation>
+    </message>
+    <message>
+        <source>Waiting for memory activity...</source>
+        <translation>Warten auf Gedächtnisaktivität…</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryPage</name>
+    <message>
+        <source>Overview</source>
+        <translation>Übersicht</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Erinnerungen</translation>
+    </message>
+    <message>
+        <source>Graph</source>
+        <translation>Graph</translation>
+    </message>
+    <message>
+        <source>Timeline</source>
+        <translation>Zeitleiste</translation>
+    </message>
+    <message>
+        <source>All sessions</source>
+        <translation>Alle Sitzungen</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Gedächtnis</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Sitzung</translation>
+    </message>
+    <message>
+        <source>Global: on</source>
+        <translation>Global: an</translation>
+    </message>
+    <message>
+        <source>Global: off</source>
+        <translation>Global: aus</translation>
+    </message>
+</context>
+<context>
+    <name>MemorySettingsSection</name>
+    <message>
+        <source>Context window</source>
+        <translation>Kontextfenster</translation>
+    </message>
+    <message>
+        <source>Max context tokens</source>
+        <translation>Max. Kontext-Tokens</translation>
+    </message>
+    <message>
+        <source>Auto-compact when context is full</source>
+        <translation>Automatisch komprimieren, wenn der Kontext voll ist</translation>
+    </message>
+    <message>
+        <source>Long-term memory</source>
+        <translation>Langzeitgedächtnis</translation>
+    </message>
+    <message>
+        <source>Persist memory across sessions</source>
+        <translation>Gedächtnis über Sitzungen hinweg behalten</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryTimeline</name>
+    <message>
+        <source>Group by</source>
+        <translation>Gruppieren nach</translation>
+    </message>
+    <message>
+        <source>Day</source>
+        <translation>Tag</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Sitzung</translation>
+    </message>
+</context>
+<context>
+    <name>MermaidBlock</name>
+    <message>
+        <source>Diagram error: %1</source>
+        <translation>Diagrammfehler: %1</translation>
+    </message>
+</context>
+<context>
+    <name>MessageHeader</name>
+    <message>
+        <source>You</source>
+        <translation>Sie</translation>
+    </message>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+</context>
+<context>
+    <name>MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation>Benutzer</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPickerOverlay</name>
+    <message>
+        <source>Off</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Aus</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Niedrig</translation>
+    </message>
+    <message>
+        <source>Med</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Mittel</translation>
+    </message>
+    <message>
+        <source>Hig</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Hoch</translation>
+    </message>
+    <message>
+        <source>Filter models…</source>
+        <translation>Modelle filtern…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>Denken</translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation>Schnell</translation>
+    </message>
+    <message>
+        <source>Verbose</source>
+        <translation>Ausführlich</translation>
+    </message>
+</context>
+<context>
+    <name>ModelRepository</name>
+    <message>
+        <source>Set-model operation failed</source>
+        <translation>Modellauswahl-Vorgang fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Download could not be started</source>
+        <translation>Download konnte nicht gestartet werden</translation>
+    </message>
+    <message>
+        <source>Delete failed</source>
+        <translation>Löschen fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Activate failed</source>
+        <translation>Aktivierung fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>ModelSettingsSection</name>
+    <message>
+        <source>Default model</source>
+        <translation>Standardmodell</translation>
+    </message>
+    <message>
+        <source>Active default</source>
+        <translation>Aktiver Standard</translation>
+    </message>
+    <message>
+        <source>Change or install models in the Models hub.</source>
+        <translation>Ändern oder installieren Sie Modelle im Modell-Hub.</translation>
+    </message>
+    <message>
+        <source>Open Models</source>
+        <translation>Modelle öffnen</translation>
+    </message>
+    <message>
+        <source>Inference</source>
+        <translation>Inferenz</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>Denkaufwand</translation>
+    </message>
+    <message>
+        <source>Fast mode (lower latency)</source>
+        <translation>Schnellmodus (geringere Latenz)</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsDiscover</name>
+    <message>
+        <source>Search Hugging Face repos (e.g. SmolLM2)</source>
+        <translation>Hugging-Face-Repos durchsuchen (z. B. SmolLM2)</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Suchen</translation>
+    </message>
+    <message>
+        <source>Search for a model repo to browse its quantizations.</source>
+        <translation>Suchen Sie nach einem Modell-Repo, um dessen Quantisierungen zu durchsuchen.</translation>
+    </message>
+    <message>
+        <source>by %1</source>
+        <translation>von %1</translation>
+    </message>
+    <message>
+        <source>Quantizations</source>
+        <translation>Quantisierungen</translation>
+    </message>
+    <message>
+        <source>Load more</source>
+        <translation>Mehr laden</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsDownloads</name>
+    <message>
+        <source>No active downloads.
+Start one from the Discover tab.</source>
+        <translation>Keine aktiven Downloads.
+Starten Sie einen über den Tab „Entdecken“.</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsInstalled</name>
+    <message>
+        <source>No models installed yet.</source>
+        <translation>Noch keine Modelle installiert.</translation>
+    </message>
+    <message>
+        <source>ACTIVE</source>
+        <translation>AKTIV</translation>
+    </message>
+    <message>
+        <source>PROJECTOR</source>
+        <translation>PROJEKTOR</translation>
+    </message>
+    <message>
+        <source>VISION</source>
+        <translation>VISION</translation>
+    </message>
+    <message>
+        <source> GiB</source>
+        <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation>Aktiv</translation>
+    </message>
+    <message>
+        <source>Activate</source>
+        <translation>Aktivieren</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsPage</name>
+    <message>
+        <source>Discover</source>
+        <translation>Entdecken</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation>Downloads</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Installiert</translation>
+    </message>
+    <message>
+        <source>Providers</source>
+        <translation>Anbieter</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Modelle</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsProviders</name>
+    <message>
+        <source>Local runtime</source>
+        <translation>Lokale Laufzeit</translation>
+    </message>
+    <message>
+        <source>Remote API</source>
+        <translation>Remote-API</translation>
+    </message>
+    <message>
+        <source>Configured</source>
+        <translation>Konfiguriert</translation>
+    </message>
+    <message>
+        <source>Manage</source>
+        <translation>Verwalten</translation>
+    </message>
+    <message>
+        <source>Configure</source>
+        <translation>Konfigurieren</translation>
+    </message>
+</context>
+<context>
+    <name>NewAgentDialog</name>
+    <message>
+        <source>New agent</source>
+        <translation>Neuer Agent</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Erstellen</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation>Agentenname</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Engine</translation>
+    </message>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (nativ)</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>installiert</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>nicht installiert</translation>
+    </message>
+    <message>
+        <source>Persona (optional)</source>
+        <translation>Persona (optional)</translation>
+    </message>
+    <message>
+        <source>system prompt</source>
+        <translation>System-Prompt</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
+        <translation>Dieser Agent nutzt eine fremde ACP-Engine. Sein Startrezept wird vom ACP-Katalog des Daemons verwaltet — kein Anbieter, Modell oder Schlüssel zu konfigurieren.</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>Name:</translation>
+    </message>
+    <message>
+        <source>Engine (Enter to pick):</source>
+        <translation>Engine (Enter zum Auswählen):</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+</context>
+<context>
+    <name>NodeApiClient</name>
+    <message>
+        <source>request timed out</source>
+        <translation>Zeitüberschreitung der Anfrage</translation>
+    </message>
+    <message>
+        <source>daemon connection closed</source>
+        <translation>Daemon-Verbindung geschlossen</translation>
+    </message>
+    <message>
+        <source>authentication required</source>
+        <translation>Authentifizierung erforderlich</translation>
+    </message>
+    <message>
+        <source>authentication failed</source>
+        <translation>Authentifizierung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>stream ended in error</source>
+        <translation>Stream mit Fehler beendet</translation>
+    </message>
+    <message>
+        <source>the request failed</source>
+        <translation>die Anfrage ist fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>NotificationsSection</name>
+    <message>
+        <source>Desktop notifications</source>
+        <translation>Desktop-Benachrichtigungen</translation>
+    </message>
+    <message>
+        <source>Notify when a turn needs my input</source>
+        <translation>Benachrichtigen, wenn ein Vorgang meine Eingabe benötigt</translation>
+    </message>
+    <message>
+        <source>Notify when a turn finishes</source>
+        <translation>Benachrichtigen, wenn ein Vorgang abgeschlossen ist</translation>
+    </message>
+    <message>
+        <source>Send a test notification</source>
+        <translation>Testbenachrichtigung senden</translation>
+    </message>
+    <message>
+        <source>daemon-app</source>
+        <translation>daemon-app</translation>
+    </message>
+    <message>
+        <source>Notifications are working.</source>
+        <translation>Benachrichtigungen funktionieren.</translation>
+    </message>
+    <message>
+        <source>Notifications only appear while the window is hidden or inactive.</source>
+        <translation>Benachrichtigungen erscheinen nur, während das Fenster ausgeblendet oder inaktiv ist.</translation>
+    </message>
+</context>
+<context>
+    <name>Placeholder</name>
+    <message>
+        <source>Coming soon</source>
+        <translation>In Kürze verfügbar</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileEditor</name>
+    <message>
+        <source>Select or create a profile.</source>
+        <translation>Wählen oder erstellen Sie ein Profil.</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Profil</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Standard</translation>
+    </message>
+    <message>
+        <source>Make default</source>
+        <translation>Als Standard festlegen</translation>
+    </message>
+    <message>
+        <source>Export profile</source>
+        <translation>Profil exportieren</translation>
+    </message>
+    <message>
+        <source>Import profile</source>
+        <translation>Profil importieren</translation>
+    </message>
+    <message>
+        <source>Delete profile</source>
+        <translation>Profil löschen</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Anbieter</translation>
+    </message>
+    <message>
+        <source>Current provider: %1 (test provider — not selectable)</source>
+        <translation>Aktueller Anbieter: %1 (Testanbieter — nicht auswählbar)</translation>
+    </message>
+    <message>
+        <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
+        <translation>Basis-URL (optional, z. B. https://api.daemon.ai/api/v1)</translation>
+    </message>
+    <message>
+        <source>Credential: connected%1</source>
+        <translation>Anmeldedaten: verbunden%1</translation>
+    </message>
+    <message>
+        <source>Credential: none — add a key</source>
+        <translation>Anmeldedaten: keine — Schlüssel hinzufügen</translation>
+    </message>
+    <message>
+        <source>Set key</source>
+        <translation>Schlüssel festlegen</translation>
+    </message>
+    <message>
+        <source>Short description</source>
+        <translation>Kurzbeschreibung</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>System-Prompt</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Fähigkeiten</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>Werkzeuge</translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation>Verlauf</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ausblenden</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Anzeigen</translation>
+    </message>
+    <message>
+        <source>Version history needs a durable daemon.</source>
+        <translation>Der Versionsverlauf benötigt einen dauerhaften Daemon.</translation>
+    </message>
+    <message>
+        <source>No revisions yet.</source>
+        <translation>Noch keine Revisionen.</translation>
+    </message>
+    <message>
+        <source>#%1</source>
+        <translation>#%1</translation>
+    </message>
+    <message>
+        <source>operator</source>
+        <translation>Operator</translation>
+    </message>
+    <message>
+        <source>agent %1</source>
+        <translation>Agent %1</translation>
+    </message>
+    <message>
+        <source>Revert to this</source>
+        <translation>Hierauf zurücksetzen</translation>
+    </message>
+    <message>
+        <source>Discard changes</source>
+        <translation>Änderungen verwerfen</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Speichern</translation>
+    </message>
+    <message>
+        <source>Profile distributions (*.dist)</source>
+        <translation>Profilverteilungen (*.dist)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Alle Dateien (*)</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileEditorDialog</name>
+    <message>
+        <source>Edit profile — %1</source>
+        <translation>Profil bearbeiten — %1</translation>
+    </message>
+    <message>
+        <source>Enter on a row edits it · Save commits · Esc discards</source>
+        <translation>Enter auf einer Zeile bearbeitet sie · Speichern übernimmt · Esc verwirft</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Speichern</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <source>Engine: ACP agent · %1 (set at create time)</source>
+        <translation>Engine: ACP-Agent · %1 (bei der Erstellung festgelegt)</translation>
+    </message>
+    <message>
+        <source>Engine: daemon-core (native)</source>
+        <translation>Engine: daemon-core (nativ)</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Anbieter</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Basis-URL</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>(Anbieter-Standard)</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Modell</translation>
+    </message>
+    <message>
+        <source>(pick a model)</source>
+        <translation>(Modell wählen)</translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>Beschreibung</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>System-Prompt</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Fähigkeiten</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>Werkzeuge</translation>
+    </message>
+    <message>
+        <source>%1 (test provider — not selectable)</source>
+        <translation>%1 (Testanbieter — nicht auswählbar)</translation>
+    </message>
+    <message>
+        <source>(pick a provider)</source>
+        <translation>(Anbieter wählen)</translation>
+    </message>
+    <message>
+        <source>Profile name</source>
+        <translation>Profilname</translation>
+    </message>
+    <message>
+        <source>Base URL (empty = provider default)</source>
+        <translation>Basis-URL (leer = Anbieter-Standard)</translation>
+    </message>
+    <message>
+        <source>Short description</source>
+        <translation>Kurzbeschreibung</translation>
+    </message>
+    <message>
+        <source>download</source>
+        <translation>herunterladen</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>aktuell</translation>
+    </message>
+    <message>
+        <source>Enter inserts a newline · Tab reaches the buttons</source>
+        <translation>Enter fügt einen Zeilenumbruch ein · Tab erreicht die Schaltflächen</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileRepository</name>
+    <message>
+        <source>Profile import failed</source>
+        <translation>Profilimport fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Version history unavailable</source>
+        <translation>Versionsverlauf nicht verfügbar</translation>
+    </message>
+    <message>
+        <source>Profile revert failed</source>
+        <translation>Profil-Zurücksetzung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Profile operation failed</source>
+        <translation>Profilvorgang fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileToggleListDialog</name>
+    <message>
+        <source>Enter / Space toggles · Esc done</source>
+        <translation>Enter / Leertaste schaltet um · Esc fertig</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Fertig</translation>
+    </message>
+</context>
+<context>
+    <name>ProfilesPage</name>
+    <message>
+        <source>Exported profile</source>
+        <translation>Profil exportiert</translation>
+    </message>
+    <message>
+        <source>Imported %1</source>
+        <translation>%1 importiert</translation>
+    </message>
+    <message>
+        <source>Reverted %1</source>
+        <translation>%1 zurückgesetzt</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Profile</translation>
+    </message>
+    <message>
+        <source>+ New profile</source>
+        <translation>+ Neues Profil</translation>
+    </message>
+    <message>
+        <source>New profile</source>
+        <translation>Neues Profil</translation>
+    </message>
+    <message>
+        <source>Profile id (e.g. work)</source>
+        <translation>Profil-ID (z. B. work)</translation>
+    </message>
+    <message>
+        <source>Empty profile</source>
+        <translation>Leeres Profil</translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <source>All syntax definitions are up-to-date.</source>
+        <translation>Alle Syntaxdefinitionen sind aktuell.</translation>
+    </message>
+    <message>
+        <source>Downloading new syntax definition for &apos;%1&apos;…</source>
+        <comment>@info</comment>
+        <translation>Neue Syntaxdefinition für „%1“ wird heruntergeladen…</translation>
+    </message>
+    <message>
+        <source>Updating syntax definition for &apos;%1&apos; to version %2…</source>
+        <comment>@info</comment>
+        <translation>Syntaxdefinition für „%1“ wird auf Version %2 aktualisiert…</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <comment>language picker</comment>
+        <translation>Systemstandard</translation>
+    </message>
+    <message>
+        <source>Show/Hide %1</source>
+        <translation>%1 ein-/ausblenden</translation>
+    </message>
+    <message>
+        <source>Quit</source>
+        <translation>Beenden</translation>
+    </message>
+    <message>
+        <source>application directory is unknown</source>
+        <translation>Anwendungsverzeichnis ist unbekannt</translation>
+    </message>
+    <message>
+        <source>update helper (daemon-updater) not found next to the app</source>
+        <translation>Update-Helfer (daemon-updater) wurde nicht neben der App gefunden</translation>
+    </message>
+    <message>
+        <source>no staged installer to run</source>
+        <translation>kein bereitgestellter Installer zum Ausführen</translation>
+    </message>
+    <message>
+        <source>missing installer checksum</source>
+        <translation>fehlende Installer-Prüfsumme</translation>
+    </message>
+    <message>
+        <source>relaunch target (installed app) is unknown</source>
+        <translation>Neustart-Ziel (installierte App) ist unbekannt</translation>
+    </message>
+    <message>
+        <source>Unsupported or empty diagram</source>
+        <translation>Nicht unterstütztes oder leeres Diagramm</translation>
+    </message>
+    <message>
+        <source>Unsupported diagram: %1</source>
+        <translation>Nicht unterstütztes Diagramm: %1</translation>
+    </message>
+    <message>
+        <source>Parse error</source>
+        <translation>Analysefehler</translation>
+    </message>
+    <message>
+        <source>No nodes found</source>
+        <translation>Keine Knoten gefunden</translation>
+    </message>
+    <message>
+        <source>Answered</source>
+        <translation>Beantwortet</translation>
+    </message>
+    <message>
+        <source>Needs your input</source>
+        <translation>Benötigt Ihre Eingabe</translation>
+    </message>
+    <message>
+        <source>Working</source>
+        <translation>Arbeitet</translation>
+    </message>
+    <message>
+        <source>Running %1</source>
+        <translation>Führt %1 aus</translation>
+    </message>
+    <message>
+        <source>Tool failed</source>
+        <translation>Werkzeug fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Tool</source>
+        <translation>Werkzeug</translation>
+    </message>
+    <message>
+        <source>image load failed</source>
+        <translation>Bild konnte nicht geladen werden</translation>
+    </message>
+    <message>
+        <source>Start a new session</source>
+        <translation>Neue Sitzung starten</translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <comment>completion group</comment>
+        <translation>Befehl</translation>
+    </message>
+    <message>
+        <source>Open theme &amp; settings</source>
+        <translation>Design &amp; Einstellungen öffnen</translation>
+    </message>
+    <message>
+        <source>Toggle distraction-free</source>
+        <translation>Ablenkungsfrei umschalten</translation>
+    </message>
+    <message>
+        <source>Clear the composer</source>
+        <translation>Composer leeren</translation>
+    </message>
+    <message>
+        <source>Rewind &amp; re-run the last message</source>
+        <translation>Zurückspulen &amp; letzte Nachricht erneut ausführen</translation>
+    </message>
+    <message>
+        <source>Rewind &amp; edit the last message</source>
+        <translation>Zurückspulen &amp; letzte Nachricht bearbeiten</translation>
+    </message>
+    <message>
+        <source>Undo the last exchange</source>
+        <translation>Den letzten Austausch rückgängig machen</translation>
+    </message>
+    <message>
+        <source>Choose the active model</source>
+        <translation>Aktives Modell auswählen</translation>
+    </message>
+    <message>
+        <source>Rename this session</source>
+        <translation>Diese Sitzung umbenennen</translation>
+    </message>
+    <message>
+        <source>Export the transcript (JSON)</source>
+        <translation>Transkript exportieren (JSON)</translation>
+    </message>
+    <message>
+        <source>Search this transcript</source>
+        <translation>Dieses Transkript durchsuchen</translation>
+    </message>
+    <message>
+        <source>Show token usage &amp; cost</source>
+        <translation>Token-Nutzung &amp; Kosten anzeigen</translation>
+    </message>
+    <message>
+        <source>Compress the context window</source>
+        <translation>Das Kontextfenster komprimieren</translation>
+    </message>
+    <message>
+        <source>Open the command palette</source>
+        <translation>Befehlspalette öffnen</translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation>Einstellungen öffnen</translation>
+    </message>
+    <message>
+        <source>Go to</source>
+        <comment>completion group</comment>
+        <translation>Gehe zu</translation>
+    </message>
+    <message>
+        <source>Open the dashboard</source>
+        <translation>Dashboard öffnen</translation>
+    </message>
+    <message>
+        <source>Open the models hub</source>
+        <translation>Modell-Hub öffnen</translation>
+    </message>
+    <message>
+        <source>Open accounts</source>
+        <translation>Konten öffnen</translation>
+    </message>
+    <message>
+        <source>Open profiles</source>
+        <translation>Profile öffnen</translation>
+    </message>
+    <message>
+        <source>Open the fleet view</source>
+        <translation>Flottenansicht öffnen</translation>
+    </message>
+    <message>
+        <source>Open the sessions roster</source>
+        <translation>Sitzungsliste öffnen</translation>
+    </message>
+    <message>
+        <source>Open the approvals inbox</source>
+        <translation>Freigaben-Posteingang öffnen</translation>
+    </message>
+    <message>
+        <source>Open the routing matrix</source>
+        <translation>Routing-Matrix öffnen</translation>
+    </message>
+    <message>
+        <source>Open scheduled jobs</source>
+        <translation>Geplante Aufgaben öffnen</translation>
+    </message>
+    <message>
+        <source>Project readme</source>
+        <translation>Projekt-Readme</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <comment>completion group</comment>
+        <translation>Datei</translation>
+    </message>
+    <message>
+        <source>Composer component</source>
+        <translation>Composer-Komponente</translation>
+    </message>
+    <message>
+        <source>Theme tokens</source>
+        <translation>Design-Tokens</translation>
+    </message>
+    <message>
+        <source>New session</source>
+        <translation>Neue Sitzung</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Sitzung</translation>
+    </message>
+    <message>
+        <source># Settings
+
+A generic, non-transcript page hosted by the same tab strip.
+
+- Press **F8** to cycle the theme (Light / Dark / Sepia / Midnight)
+- **Ctrl+T** opens a new transcript tab
+- **Ctrl+W** closes the current tab
+- **Ctrl+Tab** / **Ctrl+Shift+Tab** switch tabs (wrapping)
+- **Alt+1..9** jumps directly to tab N
+- **Tab** cycles panes, including the tab strip; when it is focused, **Left**/**Right** switch tabs, **Enter** pins a preview, **Delete** closes
+- In an interactive block (approval / clarify): **Up**/**Down**/**Left**/**Right** move between controls, **Space** toggles, **Enter** submits, **Tab** leaves to the next pane
+- In the transcript: **r** opens the rewind picker over your prior messages (**Up**/**Down** to choose, **Enter** restores &amp; re-runs, **e** edits in the composer, **Esc** cancels)
+- **/retry**, **/edit**, **/undo** rewind the last message from the composer
+</source>
+        <translation># Einstellungen
+
+Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wird.
+
+- Drücken Sie **F8**, um das Design zu wechseln (Hell / Dunkel / Sepia / Mitternacht)
+- **Ctrl+T** öffnet einen neuen Transkript-Tab
+- **Ctrl+W** schließt den aktuellen Tab
+- **Ctrl+Tab** / **Ctrl+Shift+Tab** wechseln die Tabs (umlaufend)
+- **Alt+1..9** springt direkt zu Tab N
+- **Tab** wechselt zwischen den Bereichen, einschließlich der Tab-Leiste; wenn sie fokussiert ist, wechseln **Links**/**Rechts** die Tabs, **Enter** heftet eine Vorschau an, **Entf** schließt
+- In einem interaktiven Block (Freigabe / Rückfrage): **Hoch**/**Runter**/**Links**/**Rechts** bewegen zwischen den Steuerelementen, **Leertaste** schaltet um, **Enter** sendet, **Tab** wechselt zum nächsten Bereich
+- Im Transkript: **r** öffnet die Zurückspul-Auswahl über Ihre vorherigen Nachrichten (**Hoch**/**Runter** zum Auswählen, **Enter** stellt wieder her &amp; führt erneut aus, **e** bearbeitet im Composer, **Esc** bricht ab)
+- **/retry**, **/edit**, **/undo** spulen die letzte Nachricht aus dem Composer zurück
+</translation>
+    </message>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>YOU</source>
+        <translation>SIE</translation>
+    </message>
+    <message>
+        <source>DAEMON</source>
+        <translation>DAEMON</translation>
+    </message>
+    <message>
+        <source>Reasoning…</source>
+        <translation>Denkt nach…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>Denken</translation>
+    </message>
+    <message>
+        <source>[image: </source>
+        <translation>[Bild: </translation>
+    </message>
+    <message>
+        <source>The agent needs your input.</source>
+        <translation>Der Agent benötigt Ihre Eingabe.</translation>
+    </message>
+    <message>
+        <source>⚠ Approve: </source>
+        <translation>⚠ Freigeben: </translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>Freigeben</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Ablehnen</translation>
+    </message>
+    <message>
+        <source>Allow permanently</source>
+        <translation>Dauerhaft zulassen</translation>
+    </message>
+    <message>
+        <source>Type a reply…</source>
+        <translation>Eine Antwort eingeben…</translation>
+    </message>
+    <message>
+        <source>Or type a reply…</source>
+        <translation>Oder eine Antwort eingeben…</translation>
+    </message>
+    <message>
+        <source>  (select all that apply)</source>
+        <translation>  (alles Zutreffende auswählen)</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>Absenden</translation>
+    </message>
+    <message>
+        <source>code</source>
+        <translation>Code</translation>
+    </message>
+    <message>
+        <source>[image] </source>
+        <translation>[Bild] </translation>
+    </message>
+    <message>
+        <source>[math] </source>
+        <translation>[Mathe] </translation>
+    </message>
+</context>
+<context>
+    <name>QuantPickerPopup</name>
+    <message>
+        <source>Choose a quantization</source>
+        <translation>Eine Quantisierung wählen</translation>
+    </message>
+    <message>
+        <source>Recommended: %1</source>
+        <translation>Empfohlen: %1</translation>
+    </message>
+    <message>
+        <source>fits</source>
+        <translation>passt</translation>
+    </message>
+    <message>
+        <source>tight</source>
+        <translation>knapp</translation>
+    </message>
+    <message>
+        <source>Download recommended</source>
+        <translation>Empfohlenes herunterladen</translation>
+    </message>
+    <message>
+        <source>Available files</source>
+        <translation>Verfügbare Dateien</translation>
+    </message>
+    <message>
+        <source>Hide advanced</source>
+        <translation>Erweitert ausblenden</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>Erweitert</translation>
+    </message>
+    <message>
+        <source>RECOMMENDED</source>
+        <translation>EMPFOHLEN</translation>
+    </message>
+    <message>
+        <source>PROJECTOR</source>
+        <translation>PROJEKTOR</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Herunterladen</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Schließen</translation>
+    </message>
+</context>
+<context>
+    <name>QueuePanel</name>
+    <message>
+        <source>Queued (%1)</source>
+        <translation>In Warteschlange (%1)</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>In Warteschlange</translation>
+    </message>
+    <message>
+        <source>Send next (interrupts)</source>
+        <translation>Als Nächstes senden (unterbricht)</translation>
+    </message>
+    <message>
+        <source>Send now</source>
+        <translation>Jetzt senden</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Bearbeiten</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
+</context>
+<context>
+    <name>QuitDialog</name>
+    <message>
+        <source>Quit</source>
+        <translation>Beenden</translation>
+    </message>
+    <message>
+        <source>Quit daemon-app?</source>
+        <translation>daemon-app beenden?</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+</context>
+<context>
+    <name>ReasoningBlock</name>
+    <message>
+        <source>Reasoning…</source>
+        <translation>Denkt nach…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>Denken</translation>
+    </message>
+</context>
+<context>
+    <name>RootWidget</name>
+    <message>
+        <source>Profile</source>
+        <translation>Profil</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Gedächtnis</translation>
+    </message>
+    <message>
+        <source>Delete session</source>
+        <translation>Sitzung löschen</translation>
+    </message>
+    <message>
+        <source>Permanently delete this session?</source>
+        <translation>Diese Sitzung endgültig löschen?</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Sitzung umbenennen</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>Sitzung leeren</translation>
+    </message>
+    <message>
+        <source>Remove all messages from this session?</source>
+        <translation>Alle Nachrichten aus dieser Sitzung entfernen?</translation>
+    </message>
+    <message>
+        <source>daemon</source>
+        <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>The turn finished.</source>
+        <translation>Der Vorgang ist abgeschlossen.</translation>
+    </message>
+    <message>
+        <source>approval</source>
+        <translation>Freigabe</translation>
+    </message>
+    <message>
+        <source>credential</source>
+        <translation>Anmeldedaten</translation>
+    </message>
+    <message>
+        <source>● daemon — needs %1</source>
+        <translation>● Daemon — benötigt %1</translation>
+    </message>
+    <message>
+        <source>The turn needs your %1.</source>
+        <translation>Der Vorgang benötigt Ihre %1.</translation>
+    </message>
+    <message>
+        <source>Secret required</source>
+        <translation>Geheimnis erforderlich</translation>
+    </message>
+    <message>
+        <source>Password required</source>
+        <translation>Passwort erforderlich</translation>
+    </message>
+    <message>
+        <source>New session</source>
+        <translation>Neue Sitzung</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>Sitzungseinstellungen</translation>
+    </message>
+    <message>
+        <source>Enter / Space on a row cycles or toggles it · Esc closes</source>
+        <translation>Enter / Leertaste auf einer Zeile wechselt oder schaltet sie um · Esc schließt</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Schließen</translation>
+    </message>
+    <message>
+        <source>Profile: %1</source>
+        <translation>Profil: %1</translation>
+    </message>
+    <message>
+        <source>Effort:  %1</source>
+        <translation>Aufwand:     %1</translation>
+    </message>
+    <message>
+        <source>Fast:    %1</source>
+        <translation>Schnell:     %1</translation>
+    </message>
+    <message>
+        <source>on</source>
+        <translation>an</translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation>aus</translation>
+    </message>
+    <message>
+        <source>Verbose: %1</source>
+        <translation>Ausführlich: %1</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2  ·  %3 tok%4</source>
+        <translation>%1  ·  %2  ·  %3 Tok%4</translation>
+    </message>
+    <message>
+        <source>  (current)</source>
+        <translation>  (aktuell)</translation>
+    </message>
+    <message>
+        <source>(no checkpoints)</source>
+        <translation>(keine Prüfpunkte)</translation>
+    </message>
+    <message>
+        <source>Checkpoints</source>
+        <translation>Prüfpunkte</translation>
+    </message>
+    <message>
+        <source>Enter restores the selected checkpoint · Esc closes</source>
+        <translation>Enter stellt den ausgewählten Prüfpunkt wieder her · Esc schließt</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Wiederherstellen</translation>
+    </message>
+    <message>
+        <source> 0/0 </source>
+        <comment>search match counter (no matches)</comment>
+        <translation> 0/0 </translation>
+    </message>
+    <message>
+        <source> %1/%2 </source>
+        <comment>search match counter (current/total)</comment>
+        <translation> %1/%2 </translation>
+    </message>
+    <message>
+        <source>Tasks:  </source>
+        <translation>Aufgaben:  </translation>
+    </message>
+    <message>
+        <source>Subagents:  </source>
+        <translation>Subagenten:  </translation>
+    </message>
+</context>
+<context>
+    <name>RouteDialog</name>
+    <message>
+        <source>Edit route</source>
+        <translation>Route bearbeiten</translation>
+    </message>
+    <message>
+        <source>Add route</source>
+        <translation>Route hinzufügen</translation>
+    </message>
+    <message>
+        <source>(inherit)</source>
+        <translation>(erben)</translation>
+    </message>
+    <message>
+        <source>Currently: → %1 as %2 · decided by %3</source>
+        <translation>Aktuell: → %1 als %2 · entschieden von %3</translation>
+    </message>
+    <message>
+        <source>Currently: unrouted (deterministic)</source>
+        <translation>Aktuell: nicht geroutet (deterministisch)</translation>
+    </message>
+    <message>
+        <source>Origin (where it comes from)</source>
+        <translation>Ursprung (woher es kommt)</translation>
+    </message>
+    <message>
+        <source>Session (the conversation)</source>
+        <translation>Sitzung (die Unterhaltung)</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Save route</source>
+        <translation>Route speichern</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingPage</name>
+    <message>
+        <source>Routing</source>
+        <translation>Routing</translation>
+    </message>
+    <message>
+        <source>Routes</source>
+        <translation>Routen</translation>
+    </message>
+    <message>
+        <source>+ Add route</source>
+        <translation>+ Route hinzufügen</translation>
+    </message>
+    <message>
+        <source>(inherit)</source>
+        <translation>(erben)</translation>
+    </message>
+    <message>
+        <source>Edit route</source>
+        <translation>Route bearbeiten</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>Nicht mehr anheften</translation>
+    </message>
+    <message>
+        <source>Delivery · </source>
+        <translation>Zustellung · </translation>
+    </message>
+    <message>
+        <source>Delivery</source>
+        <translation>Zustellung</translation>
+    </message>
+    <message>
+        <source>Select a route to see where its replies go</source>
+        <translation>Wählen Sie eine Route, um zu sehen, wohin ihre Antworten gehen</translation>
+    </message>
+    <message>
+        <source>No delivery targets</source>
+        <translation>Keine Zustellziele</translation>
+    </message>
+    <message>
+        <source>PRIMARY</source>
+        <translation>PRIMÄR</translation>
+    </message>
+    <message>
+        <source>Make primary</source>
+        <translation>Als primär festlegen</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingTopology</name>
+    <message>
+        <source>— pinned</source>
+        <translation>— angeheftet</translation>
+    </message>
+    <message>
+        <source>·· derived</source>
+        <translation>·· abgeleitet</translation>
+    </message>
+    <message>
+        <source>- - spectator</source>
+        <translation>- - Zuschauer</translation>
+    </message>
+</context>
+<context>
+    <name>SafetySettingsSection</name>
+    <message>
+        <source>Approvals</source>
+        <translation>Freigaben</translation>
+    </message>
+    <message>
+        <source>Approval policy</source>
+        <translation>Freigaberichtlinie</translation>
+    </message>
+    <message>
+        <source>When the agent must ask before running tools.</source>
+        <translation>Wann der Agent fragen muss, bevor er Werkzeuge ausführt.</translation>
+    </message>
+    <message>
+        <source>Sandbox</source>
+        <translation>Sandbox</translation>
+    </message>
+    <message>
+        <source>Filesystem access</source>
+        <translation>Dateisystemzugriff</translation>
+    </message>
+    <message>
+        <source>Allow network access</source>
+        <translation>Netzwerkzugriff erlauben</translation>
+    </message>
+</context>
+<context>
+    <name>SearchInputBox</name>
+    <message>
+        <source>Search sessions</source>
+        <translation>Sitzungen durchsuchen</translation>
+    </message>
+</context>
+<context>
+    <name>SearchResults</name>
+    <message>
+        <source>Search in workspace…</source>
+        <translation>Im Arbeitsbereich suchen…</translation>
+    </message>
+</context>
+<context>
+    <name>SearchResultsList</name>
+    <message>
+        <source>result</source>
+        <translation>Ergebnis</translation>
+    </message>
+</context>
+<context>
+    <name>Session</name>
+    <message>
+        <source>Session</source>
+        <translation>Sitzung</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Datei</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Modelle</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Konten</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Profile</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Flotte</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sitzungen</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>Dashboard</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>Freigaben</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>Routing</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Geplante Aufgaben</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Kanäle</translation>
+    </message>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>Benutzer &amp; Zugriff</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Gedächtnis</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Profil</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation>Zurück</translation>
+    </message>
+    <message>
+        <source>Select a session</source>
+        <translation>Wählen Sie eine Sitzung</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Sitzung umbenennen</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Umbenennen</translation>
+    </message>
+    <message>
+        <source>Session title</source>
+        <translation>Sitzungstitel</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>Transkript exportieren</translation>
+    </message>
+    <message>
+        <source>JSON files (*.json)</source>
+        <translation>JSON-Dateien (*.json)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Alle Dateien (*)</translation>
+    </message>
+</context>
+<context>
+    <name>SessionChrome</name>
+    <message>
+        <source>Still thinking…</source>
+        <translation>Denkt noch nach…</translation>
+    </message>
+    <message>
+        <source>Thinking… %1s</source>
+        <translation>Denkt nach… %1s</translation>
+    </message>
+    <message>
+        <source>Thinking…</source>
+        <translation>Denkt nach…</translation>
+    </message>
+</context>
+<context>
+    <name>SessionOrchestrator</name>
+    <message>
+        <source>(steer) </source>
+        <translation>(steuern) </translation>
+    </message>
+    <message>
+        <source>Inspect the project</source>
+        <translation>Das Projekt untersuchen</translation>
+    </message>
+    <message>
+        <source>Run the checks</source>
+        <translation>Die Prüfungen ausführen</translation>
+    </message>
+    <message>
+        <source>Summarize the result</source>
+        <translation>Das Ergebnis zusammenfassen</translation>
+    </message>
+</context>
+<context>
+    <name>SessionRepository</name>
+    <message>
+        <source>SessionCreate failed</source>
+        <translation>SessionCreate fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>SessionSettingsPopover</name>
+    <message>
+        <source>Off</source>
+        <translation>Aus</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <translation>Niedrig</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>Mittel</translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation>Hoch</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>Sitzungseinstellungen</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Profil</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>Denkaufwand</translation>
+    </message>
+    <message>
+        <source>Approval mode</source>
+        <translation>Freigabemodus</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Bearbeitungen</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Ablehnen</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Fragen</translation>
+    </message>
+    <message>
+        <source>Fast mode</source>
+        <translation>Schnellmodus</translation>
+    </message>
+    <message>
+        <source>Verbose</source>
+        <translation>Ausführlich</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsList</name>
+    <message>
+        <source>Rename…</source>
+        <translation>Umbenennen…</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>Nicht mehr anheften</translation>
+    </message>
+    <message>
+        <source>Pin</source>
+        <translation>Anheften</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>Nach oben</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>Nach unten</translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation>Exportieren…</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Löschen</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Sitzung umbenennen</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Umbenennen</translation>
+    </message>
+    <message>
+        <source>Session title</source>
+        <translation>Sitzungstitel</translation>
+    </message>
+    <message>
+        <source>Delete session</source>
+        <translation>Sitzung löschen</translation>
+    </message>
+    <message>
+        <source>Permanently delete this session? This cannot be undone.</source>
+        <translation>Diese Sitzung endgültig löschen? Dies kann nicht rückgängig gemacht werden.</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>Transkript exportieren</translation>
+    </message>
+    <message>
+        <source>JSON files (*.json)</source>
+        <translation>JSON-Dateien (*.json)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Alle Dateien (*)</translation>
+    </message>
+    <message>
+        <source>Collapse sidebar</source>
+        <translation>Seitenleiste einklappen</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>%n Sitzung</numerusform>
+            <numerusform>%n Sitzungen</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Trash</source>
+        <translation>Papierkorb</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Suchen</translation>
+    </message>
+    <message>
+        <source>Search sessions</source>
+        <translation>Sitzungen durchsuchen</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation>Suche schließen</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsListModel</name>
+    <message>
+        <source>All Sessions</source>
+        <translation>Alle Sitzungen</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Archiviert</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation>Tag</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sitzungen</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>(ohne Titel)</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsPage</name>
+    <message>
+        <source>Sessions</source>
+        <translation>Sitzungen</translation>
+    </message>
+    <message>
+        <source>LIVE</source>
+        <translation>LIVE</translation>
+    </message>
+    <message>
+        <source>DURABLE</source>
+        <translation>DAUERHAFT</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> Tok</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>Fortsetzen</translation>
+    </message>
+    <message>
+        <source>Suspend</source>
+        <translation>Aussetzen</translation>
+    </message>
+    <message>
+        <source>Close session</source>
+        <translation>Sitzung schließen</translation>
+    </message>
+    <message>
+        <source>Session %1 · %2 · %3</source>
+        <translation>Sitzung %1 · %2 · %3</translation>
+    </message>
+    <message>
+        <source>Rewindable — checkpoints available</source>
+        <translation>Zurückspulbar — Prüfpunkte verfügbar</translation>
+    </message>
+    <message>
+        <source>Not rewindable</source>
+        <translation>Nicht zurückspulbar</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsMenu</name>
+    <message>
+        <source>Transcript</source>
+        <translation>Transkript</translation>
+    </message>
+    <message>
+        <source>Search transcript</source>
+        <translation>Transkript durchsuchen</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>Stil</translation>
+    </message>
+    <message>
+        <source>Sans</source>
+        <translation>Serifenlos</translation>
+    </message>
+    <message>
+        <source>Serif</source>
+        <translation>Serif</translation>
+    </message>
+    <message>
+        <source>Mono</source>
+        <translation>Mono</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>Text</translation>
+    </message>
+    <message>
+        <source>Center text</source>
+        <translation>Text zentrieren</translation>
+    </message>
+    <message>
+        <source>Distraction-free</source>
+        <translation>Ablenkungsfrei</translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation>Schriftgröße</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>Design</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>Hell</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>Dunkel</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <translation>Sepia</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <translation>Mitternacht</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>Optionen</translation>
+    </message>
+    <message>
+        <source>Show Sessions</source>
+        <translation>Sitzungen anzeigen</translation>
+    </message>
+    <message>
+        <source>Show Fleet Tree</source>
+        <translation>Flottenbaum anzeigen</translation>
+    </message>
+    <message>
+        <source>Show Raw Markdown</source>
+        <translation>Rohes Markdown anzeigen</translation>
+    </message>
+    <message>
+        <source>User message rail</source>
+        <translation>Leiste für Benutzernachrichten</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Updates</translation>
+    </message>
+    <message>
+        <source>Auto-check for updates</source>
+        <translation>Automatisch nach Updates suchen</translation>
+    </message>
+    <message>
+        <source>Move to Trash</source>
+        <translation>In den Papierkorb verschieben</translation>
+    </message>
+    <message>
+        <source>Reset all settings</source>
+        <translation>Alle Einstellungen zurücksetzen</translation>
+    </message>
+    <message>
+        <source>Reset settings?</source>
+        <translation>Einstellungen zurücksetzen?</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Zurücksetzen</translation>
+    </message>
+    <message>
+        <source>Reset all settings to their defaults?
+This only affects the app appearance, not your data.</source>
+        <translation>Alle Einstellungen auf ihre Standardwerte zurücksetzen?
+Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsPage</name>
+    <message>
+        <source>Appearance</source>
+        <translation>Darstellung</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation>Benachrichtigungen</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Verbindung</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Modell</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Chat</translation>
+    </message>
+    <message>
+        <source>Safety</source>
+        <translation>Sicherheit</translation>
+    </message>
+    <message>
+        <source>Memory &amp; Context</source>
+        <translation>Gedächtnis &amp; Kontext</translation>
+    </message>
+    <message>
+        <source>Workspace</source>
+        <translation>Arbeitsbereich</translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation>Stimme</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>Erweitert</translation>
+    </message>
+    <message>
+        <source>Archived chats</source>
+        <translation>Archivierte Chats</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>Über</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
+    <message>
+        <source>This section is not wired yet</source>
+        <translation>Dieser Bereich ist noch nicht angebunden</translation>
+    </message>
+</context>
+<context>
+    <name>Sidebar</name>
+    <message>
+        <source>Local node</source>
+        <translation>Lokaler Node</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
+    <message>
+        <source>New agent</source>
+        <translation>Neuer Agent</translation>
+    </message>
+    <message>
+        <source>New tag</source>
+        <translation>Neues Tag</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Alle einklappen</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Alle ausklappen</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Konten</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Profile</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Modelle</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>Dashboard</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Flotte</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sitzungen</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>Freigaben</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Kanäle</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>Routing</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Geplante Aufgaben</translation>
+    </message>
+    <message>
+        <source>New chat</source>
+        <translation>Neuer Chat</translation>
+    </message>
+    <message>
+        <source>Profile settings</source>
+        <translation>Profileinstellungen</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Gedächtnis</translation>
+    </message>
+</context>
+<context>
+    <name>SidebarModel</name>
+    <message>
+        <source>Local node</source>
+        <translation>Lokaler Node</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>(ohne Titel)</translation>
+    </message>
+    <message>
+        <source>All Sessions</source>
+        <translation>Alle Sitzungen</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Archiviert</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>Tags</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Flotte</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Integrationen</translation>
+    </message>
+    <message>
+        <source>New tag</source>
+        <translation>Neues Tag</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBar</name>
+    <message>
+        <source>Command Center</source>
+        <translation>Kommandozentrale</translation>
+    </message>
+    <message>
+        <source>Gateway</source>
+        <translation>Gateway</translation>
+    </message>
+    <message>
+        <source>Agents</source>
+        <translation>Agenten</translation>
+    </message>
+    <message>
+        <source>Cron</source>
+        <translation>Cron</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>Dateien</translation>
+    </message>
+    <message>
+        <source>Toggle file explorer (Ctrl+E)</source>
+        <translation>Datei-Explorer umschalten (Ctrl+E)</translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation>Läuft</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> Tok</translation>
+    </message>
+    <message>
+        <source>Session usage · %1 in / %2 out</source>
+        <translation>Sitzungsnutzung · %1 ein / %2 aus</translation>
+    </message>
+    <message>
+        <source>Provider rate limit (remaining / limit)</source>
+        <translation>Anbieter-Ratenlimit (verbleibend / Limit)</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Sitzung</translation>
+    </message>
+    <message>
+        <source>Approval mode</source>
+        <translation>Freigabemodus</translation>
+    </message>
+    <message>
+        <source>Toggle terminal</source>
+        <translation>Terminal umschalten</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>Nach Updates suchen</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation>Mehr</translation>
+    </message>
+    <message>
+        <source>YOLO</source>
+        <translation>YOLO</translation>
+    </message>
+    <message>
+        <source>Terminal</source>
+        <translation>Terminal</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBarModel</name>
+    <message>
+        <source>No daemon connection</source>
+        <translation>Keine Daemon-Verbindung</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n failed</source>
+        <translation>
+            <numerusform>%n fehlgeschlagen</numerusform>
+            <numerusform>%n fehlgeschlagen</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>%n läuft</numerusform>
+            <numerusform>%n laufen</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> Tok</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBarView</name>
+    <message>
+        <source> Gateway </source>
+        <translation> Gateway </translation>
+    </message>
+    <message>
+        <source> Agents </source>
+        <translation> Agenten </translation>
+    </message>
+    <message>
+        <source>idle</source>
+        <translation>inaktiv</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> Tok</translation>
+    </message>
+    <message>
+        <source>update v</source>
+        <translation>Update v</translation>
+    </message>
+</context>
+<context>
+    <name>SubagentList</name>
+    <message>
+        <source>Subagents</source>
+        <translation>Subagenten</translation>
+    </message>
+</context>
+<context>
+    <name>SubmitInputBox</name>
+    <message>
+        <source>Message daemon…  (Enter to send, Shift+Enter newline)</source>
+        <translation>Nachricht an Daemon…  (Enter zum Senden, Umschalt+Enter Zeilenumbruch)</translation>
+    </message>
+</context>
+<context>
+    <name>SyntaxHighlightingCLI</name>
+    <message>
+        <source>Command line syntax highlighter using KSyntaxHighlighting syntax definitions.</source>
+        <translation>Syntaxhervorhebung für die Befehlszeile mit KSyntaxHighlighting-Syntaxdefinitionen.</translation>
+    </message>
+    <message>
+        <source>source</source>
+        <translation>Quelle</translation>
+    </message>
+    <message>
+        <source>The source file to highlight. If absent, read the file from stdin and the --syntax option must be used.</source>
+        <translation>Die hervorzuhebende Quelldatei. Falls nicht angegeben, wird die Datei von stdin gelesen und die Option --syntax muss verwendet werden.</translation>
+    </message>
+    <message>
+        <source>List all available syntax definitions.</source>
+        <translation>Alle verfügbaren Syntaxdefinitionen auflisten.</translation>
+    </message>
+    <message>
+        <source>List all available themes.</source>
+        <translation>Alle verfügbaren Designs auflisten.</translation>
+    </message>
+    <message>
+        <source>Download new/updated syntax definitions.</source>
+        <translation>Neue/aktualisierte Syntaxdefinitionen herunterladen.</translation>
+    </message>
+    <message>
+        <source>File to write HTML output to (default: stdout).</source>
+        <translation>Datei, in die die HTML-Ausgabe geschrieben wird (Standard: stdout).</translation>
+    </message>
+    <message>
+        <source>output</source>
+        <translation>Ausgabe</translation>
+    </message>
+    <message>
+        <source>Highlight using this syntax definition (default: auto-detect based on input file).</source>
+        <translation>Mit dieser Syntaxdefinition hervorheben (Standard: automatische Erkennung anhand der Eingabedatei).</translation>
+    </message>
+    <message>
+        <source>syntax</source>
+        <translation>Syntax</translation>
+    </message>
+    <message>
+        <source>Color theme to use for highlighting.</source>
+        <translation>Für die Hervorhebung zu verwendendes Farbdesign.</translation>
+    </message>
+    <message>
+        <source>theme</source>
+        <translation>Design</translation>
+    </message>
+    <message>
+        <source>Use the specified format instead of html. Must be html, ansi or ansi256.</source>
+        <translation>Das angegebene Format anstelle von html verwenden. Muss html, ansi oder ansi256 sein.</translation>
+    </message>
+    <message>
+        <source>format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>Add information to debug a syntax file. Only works with --output-format=ansi or ansi256. Possible values are format, region, context, stackSize and all.</source>
+        <translation>Informationen zum Debuggen einer Syntaxdatei hinzufügen. Funktioniert nur mit --output-format=ansi oder ansi256. Mögliche Werte sind format, region, context, stackSize und all.</translation>
+    </message>
+    <message>
+        <source>type</source>
+        <translation>Typ</translation>
+    </message>
+    <message>
+        <source>Disable ANSI background for the default color.</source>
+        <translation>ANSI-Hintergrund für die Standardfarbe deaktivieren.</translation>
+    </message>
+    <message>
+        <source>Select background color role from theme.</source>
+        <translation>Hintergrundfarbrolle aus dem Design auswählen.</translation>
+    </message>
+    <message>
+        <source>role</source>
+        <translation>Rolle</translation>
+    </message>
+    <message>
+        <source>For ansi and ansi256 formats, flush the output buffer on each line.</source>
+        <translation>Bei den Formaten ansi und ansi256 den Ausgabepuffer nach jeder Zeile leeren.</translation>
+    </message>
+    <message>
+        <source>Set HTML page&apos;s title
+(default: the filename or &quot;KSyntaxHighlighter&quot; if reading from stdin).</source>
+        <translation>Titel der HTML-Seite festlegen
+(Standard: der Dateiname oder „KSyntaxHighlighter“ beim Lesen von stdin).</translation>
+    </message>
+    <message>
+        <source>title</source>
+        <translation>Titel</translation>
+    </message>
+</context>
+<context>
+    <name>SystemMessage</name>
+    <message>
+        <source>Steering note</source>
+        <translation>Steuerungshinweis</translation>
+    </message>
+</context>
+<context>
+    <name>TabBar</name>
+    <message>
+        <source>Unsaved changes</source>
+        <translation>Ungespeicherte Änderungen</translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation>Tab schließen</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>Neuer Tab</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
+</context>
+<context>
+    <name>TabModel</name>
+    <message>
+        <source>Session</source>
+        <translation>Sitzung</translation>
+    </message>
+    <message>
+        <source>Page</source>
+        <translation>Seite</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPanelStub</name>
+    <message>
+        <source>The terminal is not available in this build</source>
+        <translation>Das Terminal ist in diesem Build nicht verfügbar</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Schließen</translation>
+    </message>
+</context>
+<context>
+    <name>TextPromptDialog</name>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+</context>
+<context>
+    <name>ThemePalette</name>
+    <message>
+        <source>Dark</source>
+        <comment>theme name</comment>
+        <translation>Dunkel</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <comment>theme name</comment>
+        <translation>Sepia</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <comment>theme name</comment>
+        <translation>Mitternacht</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <comment>theme name</comment>
+        <translation>Hell</translation>
+    </message>
+</context>
+<context>
+    <name>TodoList</name>
+    <message>
+        <source>Tasks</source>
+        <translation>Aufgaben</translation>
+    </message>
+</context>
+<context>
+    <name>ToolApprovalBar</name>
+    <message>
+        <source>Approve this action?</source>
+        <translation>Diese Aktion freigeben?</translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>Freigeben</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Ablehnen</translation>
+    </message>
+    <message>
+        <source>Allow permanently</source>
+        <translation>Dauerhaft zulassen</translation>
+    </message>
+</context>
+<context>
+    <name>ToolCallBlock</name>
+    <message>
+        <source>Tool</source>
+        <translation>Werkzeug</translation>
+    </message>
+</context>
+<context>
+    <name>Transcript</name>
+    <message>
+        <source>Couldn&apos;t access the clipboard. Copy needs a secure (https) page.</source>
+        <translation>Auf die Zwischenablage konnte nicht zugegriffen werden. Kopieren erfordert eine sichere (https-)Seite.</translation>
+    </message>
+    <message>
+        <source>
+
+Thanks — proceeding with: %1
+</source>
+        <translation>
+
+Danke — es geht weiter mit: %1
+</translation>
+    </message>
+    <message>
+        <source>Start the session</source>
+        <translation>Die Sitzung starten</translation>
+    </message>
+    <message>
+        <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
+        <translation>Senden Sie unten eine Nachricht, um zu beginnen. Das Schlussfolgern des Agenten, Werkzeugaufrufe und Antworten werden hier gestreamt.</translation>
+    </message>
+    <message>
+        <source>Find in transcript</source>
+        <translation>Im Transkript suchen</translation>
+    </message>
+    <message>
+        <source>0/0</source>
+        <translation>0/0</translation>
+    </message>
+    <message>
+        <source>Previous match (Shift+Enter)</source>
+        <translation>Vorheriger Treffer (Umschalt+Enter)</translation>
+    </message>
+    <message>
+        <source>Next match (Enter)</source>
+        <translation>Nächster Treffer (Enter)</translation>
+    </message>
+    <message>
+        <source>Close (Esc)</source>
+        <translation>Schließen (Esc)</translation>
+    </message>
+</context>
+<context>
+    <name>TranscriptPage</name>
+    <message>
+        <source>Session</source>
+        <translation>Sitzung</translation>
+    </message>
+    <message>
+        <source>The turn finished.</source>
+        <translation>Der Vorgang ist abgeschlossen.</translation>
+    </message>
+    <message>
+        <source>needs your approval</source>
+        <translation>benötigt Ihre Freigabe</translation>
+    </message>
+    <message>
+        <source>needs a credential</source>
+        <translation>benötigt Anmeldedaten</translation>
+    </message>
+    <message>
+        <source>The turn %1.</source>
+        <translation>Der Vorgang %1.</translation>
+    </message>
+    <message>
+        <source>Select a session</source>
+        <translation>Wählen Sie eine Sitzung</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>Sitzung leeren</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Leeren</translation>
+    </message>
+    <message>
+        <source>Remove all messages from this session? This cannot be undone.</source>
+        <translation>Alle Nachrichten aus dieser Sitzung entfernen? Dies kann nicht rückgängig gemacht werden.</translation>
+    </message>
+    <message>
+        <source>Secret required</source>
+        <translation>Geheimnis erforderlich</translation>
+    </message>
+    <message>
+        <source>Password required</source>
+        <translation>Passwort erforderlich</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>Absenden</translation>
+    </message>
+    <message>
+        <source>Paste secret…</source>
+        <translation>Geheimnis einfügen…</translation>
+    </message>
+    <message>
+        <source>Password…</source>
+        <translation>Passwort…</translation>
+    </message>
+    <message>
+        <source>Never stored - forwarded to the host for this step only.</source>
+        <translation>Wird nie gespeichert – nur für diesen Schritt an den Host weitergeleitet.</translation>
+    </message>
+    <message>
+        <source>Exit distraction-free (Esc)</source>
+        <translation>Ablenkungsfrei beenden (Esc)</translation>
+    </message>
+</context>
+<context>
+    <name>TranscriptView</name>
+    <message>
+        <source>Enter restore  e edit  Esc cancel</source>
+        <translation>Enter wiederherstellen  e bearbeiten  Esc abbrechen</translation>
+    </message>
+</context>
+<context>
+    <name>TuiFileTabController</name>
+    <message>
+        <source>Binary file - not editable</source>
+        <translation>Binärdatei – nicht bearbeitbar</translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation>Gespeichert</translation>
+    </message>
+    <message>
+        <source>Save failed</source>
+        <translation>Speichern fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>TuiOverlayHost</name>
+    <message>
+        <source>Model</source>
+        <translation>Modell</translation>
+    </message>
+    <message>
+        <source>Download model — pick a repo</source>
+        <translation>Modell herunterladen — Repo wählen</translation>
+    </message>
+    <message>
+        <source>Choose a quantization</source>
+        <translation>Eine Quantisierung wählen</translation>
+    </message>
+    <message>
+        <source>Go to file</source>
+        <translation>Zu Datei gehen</translation>
+    </message>
+    <message>
+        <source>Enter opens a preview · Shift+Enter pins · Esc closes</source>
+        <translation>Enter öffnet eine Vorschau · Umschalt+Enter heftet an · Esc schließt</translation>
+    </message>
+    <message>
+        <source>Attach file</source>
+        <translation>Datei anhängen</translation>
+    </message>
+    <message>
+        <source>Enter attaches the selected file · Esc cancels</source>
+        <translation>Enter hängt die ausgewählte Datei an · Esc bricht ab</translation>
+    </message>
+    <message>
+        <source>Commands</source>
+        <translation>Befehle</translation>
+    </message>
+</context>
+<context>
+    <name>TuiPageHub</name>
+    <message>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>Dashboard</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Modelle</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Konten</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Profile</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Flotte</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sitzungen</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>Freigaben</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>Routing</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Geplante Aufgaben</translation>
+    </message>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>Benutzer &amp; Zugriff</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Kanäle</translation>
+    </message>
+    <message>
+        <source>on</source>
+        <translation>an</translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation>aus</translation>
+    </message>
+    <message>
+        <source>_(not set)_</source>
+        <translation>_(nicht gesetzt)_</translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation>Darstellung</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>Design</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Sprache</translation>
+    </message>
+    <message>
+        <source>applies live; restart to retranslate the whole chrome</source>
+        <translation>wird sofort angewendet; für die Neuübersetzung der gesamten Oberfläche neu starten</translation>
+    </message>
+    <message>
+        <source>Distraction-free (hide chrome)</source>
+        <translation>Ablenkungsfrei (Bedienelemente ausblenden)</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation>Benachrichtigungen</translation>
+    </message>
+    <message>
+        <source>Notify when a turn needs my input</source>
+        <translation>Benachrichtigen, wenn ein Vorgang meine Eingabe benötigt</translation>
+    </message>
+    <message>
+        <source>Notify when a turn finishes</source>
+        <translation>Benachrichtigen, wenn ein Vorgang abgeschlossen ist</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Verbindung</translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation>Einen lokalen Daemon automatisch starten</translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
+        <translation>Den verwalteten Daemon beim Schließen der App stoppen</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Updates</translation>
+    </message>
+    <message>
+        <source>Automatically check for updates</source>
+        <translation>Automatisch nach Updates suchen</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Modell</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>Denkaufwand</translation>
+    </message>
+    <message>
+        <source>Fast mode (lower latency)</source>
+        <translation>Schnellmodus (geringere Latenz)</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Chat</translation>
+    </message>
+    <message>
+        <source>Stream responses</source>
+        <translation>Antworten streamen</translation>
+    </message>
+    <message>
+        <source>Send on Enter (Shift+Enter for newline)</source>
+        <translation>Mit Enter senden (Umschalt+Enter für Zeilenumbruch)</translation>
+    </message>
+    <message>
+        <source>Show token counts</source>
+        <translation>Token-Anzahl anzeigen</translation>
+    </message>
+    <message>
+        <source>Default system prompt for new chats</source>
+        <translation>Standard-System-Prompt für neue Chats</translation>
+    </message>
+    <message>
+        <source>Safety</source>
+        <translation>Sicherheit</translation>
+    </message>
+    <message>
+        <source>Approval policy</source>
+        <translation>Freigaberichtlinie</translation>
+    </message>
+    <message>
+        <source>Filesystem access</source>
+        <translation>Dateisystemzugriff</translation>
+    </message>
+    <message>
+        <source>Allow network access</source>
+        <translation>Netzwerkzugriff erlauben</translation>
+    </message>
+    <message>
+        <source>Memory &amp; Context</source>
+        <translation>Gedächtnis &amp; Kontext</translation>
+    </message>
+    <message>
+        <source>Max context tokens</source>
+        <translation>Max. Kontext-Tokens</translation>
+    </message>
+    <message>
+        <source>Auto-compact when context is full</source>
+        <translation>Automatisch komprimieren, wenn der Kontext voll ist</translation>
+    </message>
+    <message>
+        <source>Persist memory across sessions</source>
+        <translation>Gedächtnis über Sitzungen hinweg behalten</translation>
+    </message>
+    <message>
+        <source>Workspace</source>
+        <translation>Arbeitsbereich</translation>
+    </message>
+    <message>
+        <source>Workspace root</source>
+        <translation>Arbeitsbereich-Stammverzeichnis</translation>
+    </message>
+    <message>
+        <source>Respect .gitignore</source>
+        <translation>.gitignore beachten</translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation>Stimme</translation>
+    </message>
+    <message>
+        <source>Enable voice transcription</source>
+        <translation>Sprachtranskription aktivieren</translation>
+    </message>
+    <message>
+        <source>Transcription model</source>
+        <translation>Transkriptionsmodell</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>Erweitert</translation>
+    </message>
+    <message>
+        <source>Log level</source>
+        <translation>Protokollstufe</translation>
+    </message>
+    <message>
+        <source>Send anonymous telemetry</source>
+        <translation>Anonyme Telemetrie senden</translation>
+    </message>
+    <message>
+        <source>Enable experimental tools</source>
+        <translation>Experimentelle Werkzeuge aktivieren</translation>
+    </message>
+    <message>
+        <source># Settings
+
+</source>
+        <translation># Einstellungen
+
+</translation>
+    </message>
+    <message>
+        <source>Shared with the GUI — both front ends edit the same daemon config and app prefs. **j/k** select a row · **Space/Enter** toggles · **Enter** opens a picker/editor · **F8** cycles the theme.
+</source>
+        <translation>Wird mit der GUI geteilt — beide Frontends bearbeiten dieselbe Daemon-Konfiguration und App-Einstellungen. **j/k** wählt eine Zeile · **Space/Enter** schaltet um · **Enter** öffnet eine Auswahl/einen Editor · **F8** wechselt das Design.
+</translation>
+    </message>
+    <message>
+        <source>- State: **%1** · %2 · `%3` — _reconnect via the GUI picker or the first-run gate_
+</source>
+        <translation>- Status: **%1** · %2 · `%3` — _neu verbinden über die GUI-Auswahl oder die Ersteinrichtung_
+</translation>
+    </message>
+    <message>
+        <source>- Active default: `%1` — _change or install in the Models page (`/models`)_
+</source>
+        <translation>- Aktiver Standard: `%1` — _ändern oder installieren auf der Modelle-Seite (`/models`)_
+</translation>
+    </message>
+    <message>
+        <source># Models
+
+</source>
+        <translation># Modelle
+
+</translation>
+    </message>
+    <message>
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
+
+</source>
+        <translation>Installierte Modelle, mit der GUI geteilt. **j/k** bewegen · **Enter** aktiviert · **x** entfernt · **d** ein Modell herunterladen (Repo → Quant).
+
+</translation>
+    </message>
+    <message>
+        <source>## Installed
+
+</source>
+        <translation>## Installiert
+
+</translation>
+    </message>
+    <message>
+        <source>_None installed._
+
+</source>
+        <translation>_Keine installiert._
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4
+</source>
+        <translation>- %1**%2** (%3)%4
+</translation>
+    </message>
+    <message>
+        <source> — **active**</source>
+        <translation> — **aktiv**</translation>
+    </message>
+    <message>
+        <source>## Downloads
+
+</source>
+        <translation>## Downloads
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%  · %3
+</source>
+        <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Discover
+
+</source>
+        <translation>## Entdecken
+
+</translation>
+    </message>
+    <message>
+        <source>_Press **d** to search repos and download a model._
+</source>
+        <translation>_Drücken Sie **d**, um Repos zu durchsuchen und ein Modell herunterzuladen._
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2 · ↓ %3
+</source>
+        <translation>- %1 — %2 · ↓ %3
+</translation>
+    </message>
+    <message>
+        <source>
+## Providers
+
+</source>
+        <translation>
+## Anbieter
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 (%2)%3
+</source>
+        <translation>- %1 (%2)%3
+</translation>
+    </message>
+    <message>
+        <source> — configured</source>
+        <translation> — konfiguriert</translation>
+    </message>
+    <message>
+        <source># Accounts
+
+</source>
+        <translation># Konten
+
+</translation>
+    </message>
+    <message>
+        <source>Connected provider accounts, shared with the GUI. **j/k** move · **a** add account · **R**/**Enter** re-auth · **x** remove.
+
+</source>
+        <translation>Verbundene Anbieterkonten, mit der GUI geteilt. **j/k** bewegen · **a** Konto hinzufügen · **R**/**Enter** erneut authentifizieren · **x** entfernen.
+
+</translation>
+    </message>
+    <message>
+        <source>## Connected
+
+</source>
+        <translation>## Verbunden
+
+</translation>
+    </message>
+    <message>
+        <source>_No accounts._
+
+</source>
+        <translation>_Keine Konten._
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** — %3 (%4) · %5
+</source>
+        <translation>- %1**%2** — %3 (%4) · %5
+</translation>
+    </message>
+    <message>
+        <source>OAuth</source>
+        <translation>OAuth</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API-Schlüssel</translation>
+    </message>
+    <message>
+        <source>## Available providers
+
+</source>
+        <translation>## Verfügbare Anbieter
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 (%2)
+</source>
+        <translation>- %1 (%2)
+</translation>
+    </message>
+    <message>
+        <source># Profiles
+
+</source>
+        <translation># Profile
+
+</translation>
+    </message>
+    <message>
+        <source>Agent profiles, shared with the GUI. **j/k** move · **Enter** set default · **e** edit (provider / model / prompt / skills / tools) · **n** clone · **a** new agent · **x** delete.
+
+</source>
+        <translation>Agentenprofile, mit der GUI geteilt. **j/k** bewegen · **Enter** als Standard festlegen · **e** bearbeiten (Anbieter / Modell / Prompt / Fähigkeiten / Werkzeuge) · **n** klonen · **a** neuer Agent · **x** löschen.
+
+</translation>
+    </message>
+    <message>
+        <source>## %1%2%3
+
+</source>
+        <translation>## %1%2%3
+
+</translation>
+    </message>
+    <message>
+        <source> (default)</source>
+        <translation> (Standard)</translation>
+    </message>
+    <message>
+        <source>- Model: `%1`
+</source>
+        <translation>- Modell: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Skills: %1
+</source>
+        <translation>- Fähigkeiten: %1
+</translation>
+    </message>
+    <message>
+        <source>- Tools: %1
+
+</source>
+        <translation>- Werkzeuge: %1
+
+</translation>
+    </message>
+    <message>
+        <source># Profile
+
+_No agent selected._
+</source>
+        <translation># Profil
+
+_Kein Agent ausgewählt._
+</translation>
+    </message>
+    <message>
+        <source># Profile - %1
+
+</source>
+        <translation># Profil – %1
+
+</translation>
+    </message>
+    <message>
+        <source>Agent == profile. Memory lives in this agent&apos;s bank (`%1`). Press **e** to edit this profile.
+
+</source>
+        <translation>Agent == Profil. Das Gedächtnis liegt in der Bank dieses Agenten (`%1`). Drücken Sie **e**, um dieses Profil zu bearbeiten.
+
+</translation>
+    </message>
+    <message>
+        <source>## Engine
+
+</source>
+        <translation>## Engine
+
+</translation>
+    </message>
+    <message>
+        <source>- Provider: **%1**
+</source>
+        <translation>- Anbieter: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Model: **%1**
+</source>
+        <translation>- Modell: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Base URL: %1
+</source>
+        <translation>- Basis-URL: %1
+</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>(Anbieter-Standard)</translation>
+    </message>
+    <message>
+        <source>- Context engine: %1
+
+</source>
+        <translation>- Kontext-Engine: %1
+
+</translation>
+    </message>
+    <message>
+        <source>## Memory
+
+</source>
+        <translation>## Gedächtnis
+
+</translation>
+    </message>
+    <message>
+        <source>- Memory provider: **%1**
+
+</source>
+        <translation>- Gedächtnisanbieter: **%1**
+
+</translation>
+    </message>
+    <message>
+        <source>## Persona
+
+</source>
+        <translation>## Persona
+
+</translation>
+    </message>
+    <message>
+        <source>_none_
+
+</source>
+        <translation>_keine_
+
+</translation>
+    </message>
+    <message>
+        <source>Tool allowlist</source>
+        <translation>Werkzeug-Zulassungsliste</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Fähigkeiten</translation>
+    </message>
+    <message>
+        <source># Memory - %1
+
+</source>
+        <translation># Gedächtnis – %1
+
+</translation>
+    </message>
+    <message>
+        <source>agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>Mnemosyne memory for the active scope, shared with the GUI. The knowledge graph renders as a node-link diagram in the GUI; here it is an adjacency listing.
+
+</source>
+        <translation>Mnemosyne-Gedächtnis für den aktiven Geltungsbereich, mit der GUI geteilt. Der Wissensgraph wird in der GUI als Knoten-Kanten-Diagramm dargestellt; hier ist er eine Adjazenzliste.
+
+</translation>
+    </message>
+    <message>
+        <source>## Overview
+
+</source>
+        <translation>## Übersicht
+
+</translation>
+    </message>
+    <message>
+        <source>- Working: **%1** · Episodic: **%2** · Scratchpad: **%3**
+</source>
+        <translation>- Arbeit: **%1** · Episodisch: **%2** · Notizblock: **%3**
+</translation>
+    </message>
+    <message>
+        <source>- Facts: **%1** · Conflicts: **%2**
+
+</source>
+        <translation>- Fakten: **%1** · Konflikte: **%2**
+
+</translation>
+    </message>
+    <message>
+        <source>By source</source>
+        <translation>Nach Quelle</translation>
+    </message>
+    <message>
+        <source>By veracity</source>
+        <translation>Nach Wahrheitsgehalt</translation>
+    </message>
+    <message>
+        <source>By lifecycle</source>
+        <translation>Nach Lebenszyklus</translation>
+    </message>
+    <message>
+        <source>## Memories
+
+</source>
+        <translation>## Erinnerungen
+
+</translation>
+    </message>
+    <message>
+        <source>_No memories in scope._
+
+</source>
+        <translation>_Keine Erinnerungen im Geltungsbereich._
+
+</translation>
+    </message>
+    <message>
+        <source>- **%1** _(%2 · %3 · imp %4)_
+</source>
+        <translation>- **%1** _(%2 · %3 · Wicht. %4)_
+</translation>
+    </message>
+    <message>
+        <source>## Graph adjacency
+
+</source>
+        <translation>## Graph-Adjazenz
+
+</translation>
+    </message>
+    <message>
+        <source>_No edges in scope._
+
+</source>
+        <translation>_Keine Kanten im Geltungsbereich._
+
+</translation>
+    </message>
+    <message>
+        <source>## Timeline
+
+</source>
+        <translation>## Zeitleiste
+
+</translation>
+    </message>
+    <message>
+        <source># Dashboard
+
+</source>
+        <translation># Dashboard
+
+</translation>
+    </message>
+    <message>
+        <source>- Active sessions: **%1**
+</source>
+        <translation>- Aktive Sitzungen: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Running agents: **%1**
+</source>
+        <translation>- Laufende Agenten: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Pending approvals: **%1**
+</source>
+        <translation>- Ausstehende Freigaben: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Tokens today: **%1**
+</source>
+        <translation>- Tokens heute: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Daemon health: **%1**
+
+</source>
+        <translation>- Daemon-Zustand: **%1**
+
+</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>degraded</source>
+        <translation>beeinträchtigt</translation>
+    </message>
+    <message>
+        <source>## Recent activity
+
+</source>
+        <translation>## Letzte Aktivität
+
+</translation>
+    </message>
+    <message>
+        <source>- _%1_ — %2
+</source>
+        <translation>- _%1_ — %2
+</translation>
+    </message>
+    <message>
+        <source># Fleet
+
+</source>
+        <translation># Flotte
+
+</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+
+</source>
+        <translation>Orchestrator-/Worker-Baum, mit der GUI geteilt. **j/k** bewegen · **Space/Enter** pausieren/fortsetzen.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`)
+</source>
+        <translation>- %1%2 — %3 (`%4`)
+</translation>
+    </message>
+    <message>
+        <source># Sessions
+
+</source>
+        <translation># Sitzungen
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
+
+</source>
+        <translation>**j/k** bewegen · **s** aussetzen · **R**/**Enter** fortsetzen · **x** schließen.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** — %3 · %4 · %5 · %6 tok
+</source>
+        <translation>- %1**%2** — %3 · %4 · %5 · %6 Tok
+</translation>
+    </message>
+    <message>
+        <source># Approvals
+
+</source>
+        <translation># Freigaben
+
+</translation>
+    </message>
+    <message>
+        <source>_Inbox zero — no pending approvals._
+</source>
+        <translation>_Posteingang leer — keine ausstehenden Freigaben._
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
+
+</source>
+        <translation>**j/k** bewegen · **a**/**Enter** freigeben · **d** ablehnen.
+
+</translation>
+    </message>
+    <message>
+        <source>## %1%2 (%3 risk)
+
+</source>
+        <translation>## %1%2 (%3 Risiko)
+
+</translation>
+    </message>
+    <message>
+        <source>- Session: %1
+</source>
+        <translation>- Sitzung: %1
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+
+</source>
+        <translation>- Befehl: `%1`
+
+</translation>
+    </message>
+    <message>
+        <source># Routing
+
+</source>
+        <translation># Routing
+
+</translation>
+    </message>
+    <message>
+        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
+
+</source>
+        <translation>Intent → Modell-Regeln, mit der GUI geteilt. **j/k** bewegen · **Space/Enter** umschalten · **x** löschen.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** → `%3` (fallback `%4`)%5
+</source>
+        <translation>- %1**%2** → `%3` (Fallback `%4`)%5
+</translation>
+    </message>
+    <message>
+        <source> — _disabled_</source>
+        <translation> — _deaktiviert_</translation>
+    </message>
+    <message>
+        <source># Scheduled jobs
+
+</source>
+        <translation># Geplante Aufgaben
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **Space/Enter** enable/disable · **t** run now · **x** delete.
+
+</source>
+        <translation>**j/k** bewegen · **Space/Enter** aktivieren/deaktivieren · **t** jetzt ausführen · **x** löschen.
+
+</translation>
+    </message>
+    <message>
+        <source> (disabled)</source>
+        <translation> (deaktiviert)</translation>
+    </message>
+    <message>
+        <source>- Schedule: `%1`
+</source>
+        <translation>- Zeitplan: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Profile: %1
+</source>
+        <translation>- Profil: %1
+</translation>
+    </message>
+    <message>
+        <source>- Next: %1 · Last: %2
+
+</source>
+        <translation>- Nächste: %1 · Letzte: %2
+
+</translation>
+    </message>
+    <message>
+        <source># Users &amp; Access
+
+</source>
+        <translation># Benutzer &amp; Zugriff
+
+</translation>
+    </message>
+    <message>
+        <source>## Signed in as
+
+</source>
+        <translation>## Angemeldet als
+
+</translation>
+    </message>
+    <message>
+        <source>- **%1**
+</source>
+        <translation>- **%1**
+</translation>
+    </message>
+    <message>
+        <source>- User id: `%1`
+</source>
+        <translation>- Benutzer-ID: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- **Not authenticated**
+</source>
+        <translation>- **Nicht authentifiziert**
+</translation>
+    </message>
+    <message>
+        <source>- Roles: %1
+</source>
+        <translation>- Rollen: %1
+</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>(keine)</translation>
+    </message>
+    <message>
+        <source>- Capabilities: %1
+
+</source>
+        <translation>- Berechtigungen: %1
+
+</translation>
+    </message>
+    <message>
+        <source>## Users &amp; roles
+
+</source>
+        <translation>## Benutzer &amp; Rollen
+
+</translation>
+    </message>
+    <message>
+        <source>User administration is not available yet.
+
+</source>
+        <translation>Die Benutzerverwaltung ist noch nicht verfügbar.
+
+</translation>
+    </message>
+    <message>
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.
+</source>
+        <translation>Das Auflisten, Erstellen und Deaktivieren von Benutzern sowie das Zuweisen von Rollen erfordert die Node-Access-Admin-API, die noch entwickelt wird.
+</translation>
+    </message>
+    <message>
+        <source># Channels
+
+</source>
+        <translation># Kanäle
+
+</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the transports seam is not wired in this mode._
+</source>
+        <translation>_Kanäle sind nicht verfügbar: die Transport-Schnittstelle ist in diesem Modus nicht angebunden._
+</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+
+</source>
+        <translation>Events-IO-Transportkonten und ihre Live-Räume, mit der GUI geteilt. In beiden Shells in diesem Abschnitt schreibgeschützt – das Verbinden ist zurückgestellt (EIO-2).
+
+</translation>
+    </message>
+    <message>
+        <source>## Accounts
+
+</source>
+        <translation>## Konten
+
+</translation>
+    </message>
+    <message>
+        <source>_No channels connected._
+</source>
+        <translation>_Keine Kanäle verbunden._
+</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3 · %4
+</source>
+        <translation>- %1 **%2** — %3 · %4
+</translation>
+    </message>
+    <message>
+        <source>  - _No rooms._
+</source>
+        <translation>  - _Keine Räume._
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - %1 · %2
+</source>
+        <translation>  - %1 · %2
+</translation>
+    </message>
+    <message>
+        <source>## Add channel
+
+</source>
+        <translation>## Kanal hinzufügen
+
+</translation>
+    </message>
+    <message>
+        <source>_Connect to a daemon to see available channel types._
+</source>
+        <translation>_Mit einem Daemon verbinden, um verfügbare Kanaltypen zu sehen._
+</translation>
+    </message>
+    <message>
+        <source>- **%1** (`%2`)
+</source>
+        <translation>- **%1** (`%2`)
+</translation>
+    </message>
+</context>
+<context>
+    <name>TurnController</name>
+    <message>
+        <source>The agent hit an error completing this turn.</source>
+        <translation>Beim Abschließen dieses Vorgangs ist beim Agenten ein Fehler aufgetreten.</translation>
+    </message>
+    <message>
+        <source>The build failed while completing this turn.</source>
+        <translation>Der Build ist beim Abschließen dieses Vorgangs fehlgeschlagen.</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateManager</name>
+    <message>
+        <source>Install &amp; restart</source>
+        <translation>Installieren &amp; neu starten</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Öffnen</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the installer instead</source>
+        <translation>Selbstanwendung nicht verfügbar (%1); der Installer wird stattdessen geöffnet</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the download instead</source>
+        <translation>Selbstanwendung nicht verfügbar (%1); der Download wird stattdessen geöffnet</translation>
+    </message>
+    <message>
+        <source>self-apply is not available for this artifact; opening the update</source>
+        <translation>Selbstanwendung ist für dieses Artefakt nicht verfügbar; das Update wird geöffnet</translation>
+    </message>
+</context>
+<context>
+    <name>UsersAccessPage</name>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>Benutzer &amp; Zugriff</translation>
+    </message>
+    <message>
+        <source>Signed in as</source>
+        <translation>Angemeldet als</translation>
+    </message>
+    <message>
+        <source>Not authenticated</source>
+        <translation>Nicht authentifiziert</translation>
+    </message>
+    <message>
+        <source>User id: %1</source>
+        <translation>Benutzer-ID: %1</translation>
+    </message>
+    <message>
+        <source>Roles: %1</source>
+        <translation>Rollen: %1</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>(keine)</translation>
+    </message>
+    <message>
+        <source>Capabilities: %1</source>
+        <translation>Berechtigungen: %1</translation>
+    </message>
+    <message>
+        <source>Users &amp; roles</source>
+        <translation>Benutzer &amp; Rollen</translation>
+    </message>
+    <message>
+        <source>User administration is not available yet.</source>
+        <translation>Die Benutzerverwaltung ist noch nicht verfügbar.</translation>
+    </message>
+    <message>
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.</source>
+        <translation>Das Auflisten, Erstellen und Deaktivieren von Benutzern sowie das Zuweisen von Rollen erfordert die Node-Access-Admin-API, die noch entwickelt wird.</translation>
+    </message>
+    <message>
+        <source>Add user</source>
+        <translation>Benutzer hinzufügen</translation>
+    </message>
+</context>
+<context>
+    <name>VoiceSection</name>
+    <message>
+        <source>Voice input</source>
+        <translation>Spracheingabe</translation>
+    </message>
+    <message>
+        <source>Enable voice transcription</source>
+        <translation>Sprachtranskription aktivieren</translation>
+    </message>
+    <message>
+        <source>Transcription model</source>
+        <translation>Transkriptionsmodell</translation>
+    </message>
+</context>
+<context>
+    <name>WorkspaceSection</name>
+    <message>
+        <source>Workspace root</source>
+        <translation>Arbeitsbereich-Stammverzeichnis</translation>
+    </message>
+    <message>
+        <source>Path the agent operates in</source>
+        <translation>Pfad, in dem der Agent arbeitet</translation>
+    </message>
+    <message>
+        <source>Respect .gitignore</source>
+        <translation>.gitignore beachten</translation>
+    </message>
+</context>
+<context>
+    <name>accounts::DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation>OAuth-Anmeldung ist noch nicht verfügbar; fügen Sie stattdessen einen API-Schlüssel hinzu.</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ApprovalRepository</name>
+    <message>
+        <source>Approval decision failed</source>
+        <translation>Freigabeentscheidung fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CredentialRepository</name>
+    <message>
+        <source>Credential operation failed</source>
+        <translation>Anmeldedaten-Vorgang fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation>Der Daemon konnte nicht erreicht werden. Prüfen Sie, ob er läuft, und versuchen Sie es erneut.</translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation>Der Daemon meldet, dass er nicht funktionsfähig ist.</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>unbekannt</translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation>Ein inkompatibler lokaler Daemon wird ersetzt (API %1, benötigt %2)…</translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation>Inkompatibler Daemon (API %1, benötigt %2).</translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation>Verbindung wird wiederhergestellt…</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device.</source>
+        <translation>Auf diesem Gerät funktionieren nur WebSocket-Verbindungen (ws:// oder wss://).</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device</source>
+        <translation>Auf diesem Gerät funktionieren nur WebSocket-Verbindungen (ws:// oder wss://)</translation>
+    </message>
+    <message>
+        <source>Unix socket target accepted</source>
+        <translation>Unix-Socket-Ziel akzeptiert</translation>
+    </message>
+    <message>
+        <source>Enter a local socket path</source>
+        <translation>Geben Sie einen lokalen Socket-Pfad ein</translation>
+    </message>
+    <message>
+        <source>Remote target accepted (host:port, TLS)</source>
+        <translation>Remote-Ziel akzeptiert (host:port, TLS)</translation>
+    </message>
+    <message>
+        <source>Use host:port for a remote TLS node</source>
+        <translation>Verwenden Sie host:port für einen Remote-TLS-Node</translation>
+    </message>
+    <message>
+        <source>WebSocket target accepted (ws:// or wss://)</source>
+        <translation>WebSocket-Ziel akzeptiert (ws:// oder wss://)</translation>
+    </message>
+    <message>
+        <source>Use ws://host:port or wss://host[:port][/path]</source>
+        <translation>Verwenden Sie ws://host:port oder wss://host[:port][/path]</translation>
+    </message>
+    <message>
+        <source>Unsupported transport</source>
+        <translation>Nicht unterstützter Transport</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonTransport</name>
+    <message>
+        <source>No daemon WebSocket target configured</source>
+        <translation>Kein Daemon-WebSocket-Ziel konfiguriert</translation>
+    </message>
+    <message>
+        <source>No daemon target configured</source>
+        <translation>Kein Daemon-Ziel konfiguriert</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FleetRepository</name>
+    <message>
+        <source>Unit control failed</source>
+        <translation>Einheitensteuerung fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation>Es wurde keine lokale Daemon-Binärdatei gefunden. Legen Sie ihren Pfad in den Einstellungen fest oder verbinden Sie sich stattdessen mit einem Remote-Daemon.</translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation>Der lokale Daemon stürzt immer wieder ab (zu oft neu gestartet). Prüfen Sie sein Protokoll und Ihre Konfiguration.</translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation>Der lokale Daemon konnte nicht gestartet werden (%1).</translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation>Der lokale Daemon wurde nicht rechtzeitig bereit.</translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation>Der inkompatible lokale Daemon (PID %1) wurde nicht rechtzeitig beendet.</translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
+        <translation>Ein inkompatibler Daemon bedient %1, und keine PID-Datei erfasst seinen Prozess. Stoppen Sie ihn manuell und verbinden Sie sich erneut.</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ModelRepository</name>
+    <message>
+        <source>Set-model operation failed</source>
+        <translation>Modellauswahl-Vorgang fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Download could not be started</source>
+        <translation>Download konnte nicht gestartet werden</translation>
+    </message>
+    <message>
+        <source>Delete failed</source>
+        <translation>Löschen fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Activate failed</source>
+        <translation>Aktivierung fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::NodeApiClient</name>
+    <message>
+        <source>request timed out</source>
+        <translation>Zeitüberschreitung der Anfrage</translation>
+    </message>
+    <message>
+        <source>daemon connection closed</source>
+        <translation>Daemon-Verbindung geschlossen</translation>
+    </message>
+    <message>
+        <source>authentication required</source>
+        <translation>Authentifizierung erforderlich</translation>
+    </message>
+    <message>
+        <source>authentication failed</source>
+        <translation>Authentifizierung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>stream ended in error</source>
+        <translation>Stream mit Fehler beendet</translation>
+    </message>
+    <message>
+        <source>the request failed</source>
+        <translation>die Anfrage ist fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Profile import failed</source>
+        <translation>Profilimport fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Version history unavailable</source>
+        <translation>Versionsverlauf nicht verfügbar</translation>
+    </message>
+    <message>
+        <source>Profile revert failed</source>
+        <translation>Profil-Zurücksetzung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Profile operation failed</source>
+        <translation>Profilvorgang fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>SessionCreate failed</source>
+        <translation>SessionCreate fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>daemonnet::MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation>Benutzer</translation>
+    </message>
+</context>
+<context>
+    <name>firstrun::FirstRunModel</name>
+    <message>
+        <source>Could not reach the node. Check the target and try again.</source>
+        <translation>Der Node konnte nicht erreicht werden. Prüfen Sie das Ziel und versuchen Sie es erneut.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation>Dieser API-Schlüssel konnte mit %1 nicht überprüft werden — prüfen Sie ihn und versuchen Sie es erneut.</translation>
+    </message>
+</context>
+<context>
+    <name>fs::LocalDiskFsService</name>
+    <message>
+        <source>invalid path</source>
+        <translation>ungültiger Pfad</translation>
+    </message>
+    <message>
+        <source>cannot open</source>
+        <translation>kann nicht geöffnet werden</translation>
+    </message>
+    <message>
+        <source>stale: file changed on disk</source>
+        <translation>veraltet: Datei auf dem Datenträger geändert</translation>
+    </message>
+    <message>
+        <source>write failed</source>
+        <translation>Schreiben fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>participants::ParticipantsModel</name>
+    <message>
+        <source>Participants</source>
+        <translation>Teilnehmer</translation>
+    </message>
+</context>
+<context>
+    <name>update::UpdateManager</name>
+    <message>
+        <source>Install &amp; restart</source>
+        <translation>Installieren &amp; neu starten</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Öffnen</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the installer instead</source>
+        <translation>Selbstanwendung nicht verfügbar (%1); der Installer wird stattdessen geöffnet</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the download instead</source>
+        <translation>Selbstanwendung nicht verfügbar (%1); der Download wird stattdessen geöffnet</translation>
+    </message>
+    <message>
+        <source>self-apply is not available for this artifact; opening the update</source>
+        <translation>Selbstanwendung ist für dieses Artefakt nicht verfügbar; das Update wird geöffnet</translation>
+    </message>
+</context>
+</TS>

@@ -12,8 +12,18 @@ if(Python3_Interpreter_FOUND)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/i18n-audit.py
                 --root ${CMAKE_SOURCE_DIR}/src
                 --allowlist ${CMAKE_SOURCE_DIR}/scripts/i18n-audit-allowlist.txt)
+
+    # i18n completeness + cross-locale parity gate: every shipped catalog must be
+    # fully translated (no type="unfinished", non-empty, placeholders + edge
+    # whitespace preserved) and all catalogs must carry an identical (context,
+    # source) message set. Runs the source .ts files directly (no build artifact).
+    file(GLOB DAEMON_APP_TS_CATALOGS "${CMAKE_SOURCE_DIR}/i18n/daemon-app_*.ts")
+    add_test(
+        NAME i18n_translations
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/i18n/check_translations.py
+                ${DAEMON_APP_TS_CATALOGS})
 else()
-    message(STATUS "daemon-app: Python3 not found; skipping the i18n_audit test")
+    message(STATUS "daemon-app: Python3 not found; skipping the i18n_audit + i18n_translations tests")
 endif()
 
 # TUI transcript-render tests need TuiWidgets (pkg-config), only present when the

@@ -70,10 +70,36 @@ dropdowns, menus, dialogs, tooltips, scrollbars, progress bars, ...).
 - clang-format: `git ls-files 'src/*.cpp' 'src/*.h' 'tests/*.cpp' 'tests/*.h' | xargs clang-format --dry-run --Werror`
 - clang-tidy:   `git ls-files 'src/*.cpp' | xargs -P"$(nproc)" -n1 clang-tidy -p build --quiet`
 - qmllint:      `cmake --build build --target all_qmllint`
-- Tests:        `QT_QPA_PLATFORM=offscreen ctest --test-dir build --output-on-failure`
+- Tests:        `QT_QPA_PLATFORM=offscreen ctest --test-dir build --output-on-failure` (includes the `i18n_audit` + `i18n_translations` gates)
+- i18n drift:   `bash scripts/i18n-drift.sh` — regenerates catalogs with `lupdate` and fails if any `i18n/daemon-app_*.ts` changed (source strings were added/reworded/removed without refreshing the catalogs)
 
 (`clang-tools` ships `clang-tidy` but not `run-clang-tidy`; drive it per-TU with `xargs` as above.)
 Never bypass the pre-commit hook (no `git commit --no-verify`).
+
+## i18n policy — a string change touches all 12 catalogs
+
+Every user-facing string is translated into all 12 shipped locales
+(`i18n/daemon-app_<code>.ts`; see `i18n/README.md`). Whenever you **add, edit, or
+remove** a `qsTr()` / `tr()` / `QObject::tr()` string, that is a translation
+change, not just a code change:
+
+1. Run `cmake --build build --target update_translations` to re-extract the
+   catalogs. `scripts/i18n-drift.sh` enforces this — a stale catalog fails the gate.
+2. Then **re-evaluate and update all 12 catalogs in the same change** — do not
+   just refill the new `type="unfinished"` entries. Because the source text is
+   the message key, rewording a source string resets *that* message to
+   `unfinished` in every catalog (translate it), but a meaning change under
+   unchanged wording is invisible to the mechanical gates — so review the
+   sibling strings in each catalog and correct any now-stale translation.
+   Likewise, changing one locale's wording for a shared concept is a prompt to
+   align the other 11 for consistency.
+3. `i18n/check_translations.py` (the `i18n_translations` ctest) then confirms all
+   12 catalogs are complete and share an identical `(context, source)` set.
+
+The two gates catch mechanical desync (missing/empty entries, cross-catalog
+parity, source-vs-catalog drift); step 2 is the human/subagent judgment they
+cannot automate. Do not ship a string change that leaves the 12 catalogs
+semantically inconsistent.
 
 ## WebAssembly (browser) build — extra gates & persistence model
 
