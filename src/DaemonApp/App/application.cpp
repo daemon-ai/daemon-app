@@ -7,6 +7,7 @@
 #include "app/cached_image_provider.h"
 #include "app/image_cache.h"
 #include "app/math_image_provider.h"
+#include "auth/auth_flow_controller.h"
 #include "automation/icron_store.h"
 #include "automation/irouting_store.h"
 #include "command_registry.h"
@@ -281,6 +282,10 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
 
     // Accounts/auth facade (mock) backing the Accounts manager + wizard.
     engine.rootContext()->setContextProperty(QStringLiteral("Accounts"), m_services.accounts);
+
+    // Interactive-auth flow view-model (begin -> browser -> complete; AuthFlowSheet).
+    engine.rootContext()->setContextProperty(QStringLiteral("AuthFlow"),
+                                             m_services.authFlowController);
 
     // Profiles/agents facade (mock) backing the profile editor + curator.
     engine.rootContext()->setContextProperty(QStringLiteral("Profiles"), m_services.profiles);

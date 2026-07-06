@@ -893,4 +893,133 @@ QByteArray NodeApiCodec::encodeSessionSearchRequest(const QString& query, quint3
         });
 }
 
+// --- app-wizard-auth stream encoders (appended as one block; sibling streams append after) ------
+
+QByteArray NodeApiCodec::encodeAuthProvidersRequest() {
+    return encodeSimple(api_request_r::api_request_request_auth_providers_m_c);
+}
+
+QByteArray NodeApiCodec::encodeAuthBeginRequest(const QString& family, const QVariantMap& params,
+                                                const QString& redirectUri,
+                                                const QString& bindProfile,
+                                                const QString& bindCredentialRef) {
+    const QByteArray familyUtf8 = family.toUtf8();
+    const QByteArray redirectUtf8 = redirectUri.toUtf8();
+    const QByteArray bindProfileUtf8 = bindProfile.toUtf8();
+    const QByteArray bindCredRefUtf8 = bindCredentialRef.toUtf8();
+    // The params map borrows into these UTF-8 buffers; both lists must outlive the encode.
+    QList<QByteArray> keyBufs;
+    QList<QByteArray> valueBufs;
+    keyBufs.reserve(params.size());
+    valueBufs.reserve(params.size());
+    for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
+        keyBufs.append(it.key().toUtf8());
+        valueBufs.append(it.value().toString().toUtf8());
+    }
+    return encodeWithFill(
+        api_request_r::api_request_request_auth_begin_m_c, [&](api_request_r& request) {
+            auth_begin_request& begin =
+                request.api_request_request_auth_begin_m.request_auth_begin_AuthBegin;
+            setZcbor(begin.auth_begin_request_family, familyUtf8);
+            // Family-specific params ride as a generic string map (the wire keeps the contract
+            // provider-agnostic; the family handler validates node-side). Capped at the generated
+            // buffer bound, same as the profile bound-accounts fill.
+            const size_t count = qMin<size_t>(static_cast<size_t>(keyBufs.size()), 64);
+            begin.params_tstrtstr_count = count;
+            for (size_t i = 0; i < count; ++i) {
+                setZcbor(begin.params_tstrtstr[i].auth_begin_request_params_tstrtstr_key,
+                         keyBufs[static_cast<int>(i)]);
+                setZcbor(begin.params_tstrtstr[i].params_tstrtstr, valueBufs[static_cast<int>(i)]);
+            }
+            setZcbor(begin.auth_begin_request_redirect_uri, redirectUtf8);
+            begin.auth_begin_request_bind_present = !bindProfile.isEmpty();
+            if (!bindProfile.isEmpty()) {
+                begin.auth_begin_request_bind.auth_begin_request_bind_choice =
+                    auth_begin_request_bind_r::auth_begin_request_bind_auth_bind_request_m_c;
+                auth_bind_request& bind =
+                    begin.auth_begin_request_bind.auth_begin_request_bind_auth_bind_request_m;
+                setZcbor(bind.auth_bind_request_profile, bindProfileUtf8);
+                // The transport instance is only known AFTER login (Matrix); always the null arm.
+                bind.auth_bind_request_transport_instance_choice =
+                    auth_bind_request::auth_bind_request_transport_instance_null_m_c;
+                if (bindCredentialRef.isEmpty()) {
+                    bind.auth_bind_request_credential_ref_choice =
+                        auth_bind_request::auth_bind_request_credential_ref_null_m_c;
+                } else {
+                    bind.auth_bind_request_credential_ref_choice =
+                        auth_bind_request::auth_bind_request_credential_ref_tstr_c;
+                    setZcbor(bind.auth_bind_request_credential_ref_tstr, bindCredRefUtf8);
+                }
+            }
+        });
+}
+
+QByteArray NodeApiCodec::encodeAuthCompleteRequest(const QString& flowId, const QString& callback) {
+    const QByteArray flowUtf8 = flowId.toUtf8();
+    const QByteArray callbackUtf8 = callback.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_auth_complete_m_c, [&](api_request_r& request) {
+            auth_complete_request& complete =
+                request.api_request_request_auth_complete_m.request_auth_complete_AuthComplete;
+            setZcbor(complete.auth_complete_request_flow_id, flowUtf8);
+            setZcbor(complete.auth_complete_request_callback, callbackUtf8);
+        });
+}
+
+QByteArray NodeApiCodec::encodeAuthCancelRequest(const QString& flowId) {
+    const QByteArray flowUtf8 = flowId.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_auth_cancel_m_c, [&](api_request_r& request) {
+            setZcbor(request.api_request_request_auth_cancel_m.AuthCancel_flow_id, flowUtf8);
+        });
+}
+
+QByteArray NodeApiCodec::encodeAcpDiscoverRequest() {
+    return encodeSimple(api_request_r::api_request_request_acp_discover_m_c);
+}
+
+QByteArray NodeApiCodec::encodeModelQuantizeRequest(const QString& repo, const QString& targetQuant,
+                                                    const QString& sourceFile,
+                                                    const QString& revision) {
+    const QByteArray repoUtf8 = repo.toUtf8();
+    const QByteArray quantUtf8 = targetQuant.toUtf8();
+    const QByteArray sourceUtf8 = sourceFile.toUtf8();
+    const QByteArray revisionUtf8 = revision.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_model_quantize_m_c, [&](api_request_r& request) {
+            model_quantize_args& args =
+                request.api_request_request_model_quantize_m.request_model_quantize_ModelQuantize;
+            setZcbor(args.model_quantize_args_repo, repoUtf8);
+            if (revision.isEmpty()) {
+                args.model_quantize_args_revision_choice =
+                    model_quantize_args::model_quantize_args_revision_null_m_c;
+            } else {
+                args.model_quantize_args_revision_choice =
+                    model_quantize_args::model_quantize_args_revision_tstr_c;
+                setZcbor(args.model_quantize_args_revision_tstr, revisionUtf8);
+            }
+            setZcbor(args.model_quantize_args_target_quant, quantUtf8);
+            if (sourceFile.isEmpty()) {
+                args.model_quantize_args_source_file_choice =
+                    model_quantize_args::model_quantize_args_source_file_null_m_c;
+            } else {
+                args.model_quantize_args_source_file_choice =
+                    model_quantize_args::model_quantize_args_source_file_tstr_c;
+                setZcbor(args.model_quantize_args_source_file_tstr, sourceUtf8);
+            }
+        });
+}
+
+QByteArray NodeApiCodec::encodeModelQuantizesRequest() {
+    return encodeSimple(api_request_r::api_request_request_model_quantizes_m_c);
+}
+
+QByteArray NodeApiCodec::encodeModelInspectRequest(const QString& id) {
+    const QByteArray idUtf8 = id.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_model_inspect_m_c, [&](api_request_r& request) {
+            setZcbor(request.api_request_request_model_inspect_m.ModelInspect_id, idUtf8);
+        });
+}
+
 } // namespace daemonapp::daemon

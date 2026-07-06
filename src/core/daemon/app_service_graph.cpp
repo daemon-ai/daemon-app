@@ -4,6 +4,8 @@
 #include "daemon/app_service_graph.h"
 
 #include "accounts/mock_accounts_service.h"
+#include "auth/auth_flow_controller.h"
+#include "auth/mock_auth_flow_service.h"
 #include "automation/mock_cron_store.h"
 #include "automation/mock_routing_store.h"
 #include "config/mock_daemon_config.h"
@@ -12,6 +14,7 @@
 #include "daemon/cached_session_store.h"
 #include "daemon/daemon_accounts_service.h"
 #include "daemon/daemon_approvals_inbox.h"
+#include "daemon/daemon_auth_flow_service.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_connection_service.h"
 #include "daemon/daemon_dashboard.h"
@@ -148,6 +151,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.credentialRepository = new CredentialRepository(graph.nodeApi, graph.cache, owner);
     // The ACP agent catalog (foreign engines): backs the new-agent dialog's engine picker.
     graph.acp = new AcpRepository(graph.nodeApi, graph.cache, owner);
+    // Interactive auth (AuthBegin/AuthComplete): the wire seam behind the AuthFlowSheet.
+    graph.authRepository = new AuthRepository(graph.nodeApi, graph.cache, owner);
 
     if (daemonConnection != nullptr) {
         // Daemon mode reads sessions through the cache projection rather than the local sqlite
@@ -157,6 +162,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // Provider credentials + model discovery are daemon-backed in this mode (CON-4 / CON-6).
         graph.accounts = new accounts::DaemonAccountsService(graph.credentialRepository,
                                                              graph.profileRepository, owner);
+        // Interactive auth over the real AuthProviders/AuthBegin/AuthComplete ops.
+        graph.authFlow = new auth::DaemonAuthFlowService(graph.authRepository, owner);
         // Provider + credential + profile repositories back the Providers tab with the node's
         // real ProviderCatalog and credential presence (no hardcoded provider fiction).
         graph.modelCatalog = new models::DaemonModelCatalog(graph.models, graph.providerRepository,
@@ -244,7 +251,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
              credentials = graph.credentialRepository, models = graph.models,
              providers = graph.providerRepository, approvals = graph.approvalRepository,
              subscriptions = graph.subscriptions, fs = graph.fs, fleet = graph.fleetRepository,
-             transports = graph.transportRepository, acp = graph.acp, wasReady] {
+             transports = graph.transportRepository, acp = graph.acp,
+             authRepo = graph.authRepository, wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
                     // Initial baseline once per (re)connect; the EventsSince feed then keeps the
@@ -264,6 +272,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     transports->refreshInstances();
                     // Foreign engines: the ACP catalog for the new-agent dialog's engine picker.
                     acp->refreshCatalog();
+                    // Interactive-auth family discovery (the AuthFlowSheet's provider list).
+                    authRepo->refreshProviders();
                     subscriptions->start();
                 } else if (!nowReady && *wasReady) {
                     subscriptions->stop();
@@ -294,7 +304,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.accounts = new accounts::MockAccountsService(owner);
         graph.profiles = new profiles::MockProfileStore(owner);
         graph.sessionSettings = new session::MockSessionSettings(owner);
+        // Simulated interactive auth (no node): the sheet's state machine still exercises.
+        graph.authFlow = new auth::MockAuthFlowService(owner);
     }
+    // The shared interactive-auth flow view-model over the per-mode seam (GUI + TUI bind it).
+    graph.authFlowController = new auth::AuthFlowController(graph.authFlow, owner);
     // Built last so it binds the resolved modelCatalog (daemon-backed or mock) for the inference
     // readiness gate (CON-7).
     graph.firstRun =
