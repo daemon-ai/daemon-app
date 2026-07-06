@@ -74,16 +74,11 @@ Item {
                             font.family: FontIcons.display; font.pixelSize: 13
                             font.bold: true; color: Theme.text
                         }
-                        // [wave2:app-approvals-safety] C5 origin-chip insertion point (inbox).
-                        // Hidden while approvalOriginKind is empty; the app-engines stream wires its
-                        // EngineOriginChip here at Integration 2 (keys: approvalOriginKind =
-                        // "core"|"foreign", approvalOrigin = display label). Kept empty-by-default.
-                        Loader {
-                            id: originSlotInbox
-                            active: !!(delegate.entry.approvalOriginKind
-                                       && String(delegate.entry.approvalOriginKind).length > 0)
-                            visible: active
-                            sourceComponent: originChipInbox
+                        // [wave2:integration] C5 origin engine chip (inbox). Self-resolves the
+                        // requesting engine from the row's session via the EngineIdentity facade;
+                        // renders nothing for native sessions, so it is safe placed unconditionally.
+                        Kit.EngineOriginChip {
+                            sessionId: delegate.entry.session
                         }
                         Item { Layout.fillWidth: true }
                         Text {
@@ -174,18 +169,6 @@ Item {
                             visible: !delegate.denyReasonOpen
                             onClicked: Approvals.approve(delegate.entry.id, false)
                         }
-                    }
-                }
-
-                // [wave2:app-approvals-safety] C5: empty-by-default origin chip. The app-engines
-                // stream replaces this component's body with its EngineOriginChip at Integration 2.
-                Component {
-                    id: originChipInbox
-                    Kit.Chip {
-                        tone: "muted"
-                        iconGlyph: FontIcons.fa_circle_info
-                        text: delegate.entry.approvalOrigin
-                              ? String(delegate.entry.approvalOrigin) : ""
                     }
                 }
             }

@@ -33,6 +33,10 @@ Item {
     required property bool messageFirst
     required property bool messageLast
     required property var editorController
+
+    // [wave2:integration] C5: the owning transcript's session id (empty in the file-page host),
+    // forwarded to the inline approval bar for foreign-requester attribution.
+    property string sessionId: ""
     // True while an assistant turn is streaming. The footer is suppressed during
     // a turn so it doesn't hop between blocks as the tail grows (each inserted
     // block would otherwise relocate ~40px of footer right at the pinned bottom).
@@ -779,6 +783,7 @@ Item {
                 toolData: root.toolData
                 editorController: root.editorController
                 blockId: root.blockId
+                sessionId: root.sessionId // [wave2:integration] C5
             }
         }
 

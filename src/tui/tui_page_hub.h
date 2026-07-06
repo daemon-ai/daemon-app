@@ -25,6 +25,7 @@ class IConnectionService;
 namespace daemonapp::daemon {
 class PrincipalModel;
 class CapsRepository; // [wave2:app-delegation] F7/DEL-7
+class EngineIdentity; // [wave2:integration] C5 approval origin attribution
 } // namespace daemonapp::daemon
 namespace daemonnet {
 class IDaemonNet;
@@ -102,6 +103,9 @@ public:
         // [wave2:app-delegation] F7/DEL-7: read-only delegation guardrail ceilings (Settings ->
         // Safety). Null in mock mode — the rows show "—" then.
         daemonapp::daemon::CapsRepository* caps = nullptr;
+        // [wave2:integration] C5: the session->engine label facade, used to attribute a foreign
+        // requester on approval rows (parity with the GUI EngineOriginChip).
+        daemonapp::daemon::EngineIdentity* engineIdentity = nullptr;
     };
 
     explicit TuiPageHub(Dependencies deps);

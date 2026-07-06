@@ -6,6 +6,7 @@
 // the dispatch stays in TuiPageHub::pageMarkdownForKind.
 
 #include "automation/icron_store.h"
+#include "daemon/engine_identity.h" // [wave2:integration] C5 approval origin
 #include "daemonnet/idaemonnet.h"
 #include "daemonnet/routing_dtos.h"
 #include "fleet/iapprovals_inbox.h"
@@ -19,14 +20,23 @@
 #include <QCoreApplication>
 
 namespace {
-// [wave2:app-delegation] F3: the TUI projection of the GUI fleet engine + lifetime chips, off the
-// authoritative wire UnitNode fields (engine = "Core"/"Foreign" + engineAgent, lifetime). Local to
-// the fleet row (the shared engineToken() reads the profile-row vocabulary the engines stream
-// owns); integration 2 reconciles both onto the engines stream's EngineIdentity helper.
-QString fleetEngineToken(const QVariantMap& row) {
+// [wave2:integration] F3 + C3/ENG-7: the TUI projection of the GUI fleet engine chip, off the
+// authoritative wire UnitNode fields (engine = "Core"/"Foreign" + engineAgent). The foreign label
+// is single-sourced through the shared EngineIdentity facade (labelFor) so the TUI fleet row, the
+// GUI Fleet chip and every composer/approval surface read identically ("<agent> · ACP" / bare
+// agent when the catalog is cold); native falls back to "Native".
+QString fleetEngineToken(const QVariantMap& row,
+                         const daemonapp::daemon::EngineIdentity* engineIdentity) {
     const QString engine = row.value(QStringLiteral("engine")).toString();
     if (engine == QStringLiteral("Foreign")) {
         const QString agent = row.value(QStringLiteral("engineAgent")).toString();
+        if (engineIdentity != nullptr) {
+            const QString label =
+                engineIdentity->labelFor(engine, agent, engineIdentity->protocolForAgent(agent));
+            if (!label.isEmpty()) {
+                return label;
+            }
+        }
         return agent.isEmpty() ? QCoreApplication::translate("TuiPageHub", "Foreign") : agent;
     }
     return QCoreApplication::translate("TuiPageHub", "Native");
@@ -89,8 +99,8 @@ QString TuiPageHub::buildFleetMarkdown(int sel) const {
             md += tr("- %1%2 — %3 (`%4`) · %5%6\n")
                       .arg(mark(i), n.value(QStringLiteral("name")).toString(),
                            n.value(QStringLiteral("status")).toString(),
-                           n.value(QStringLiteral("model")).toString(), fleetEngineToken(n),
-                           lifetimeSuffix);
+                           n.value(QStringLiteral("model")).toString(),
+                           fleetEngineToken(n, m_deps.engineIdentity), lifetimeSuffix);
         }
     }
     return md;
@@ -144,11 +154,18 @@ QString TuiPageHub::buildApprovalsMarkdown(int sel) const {
         const QVariantMap& a = rows.at(i);
         // [wave2:app-approvals-safety] Q4: no risk tier — the wire sends none, so none is shown.
         md += tr("## %1%2\n\n").arg(mark(i), a.value(QStringLiteral("tool")).toString());
-        // [wave2:app-approvals-safety] C5 origin line: the app-engines stream fills approvalOrigin
-        // at Integration 2; shown only when populated (empty today).
-        const QString origin = a.value(QStringLiteral("approvalOrigin")).toString();
-        if (!origin.isEmpty()) {
-            md += tr("- Requested by: %1\n").arg(origin);
+        // [wave2:integration] C5 origin line: resolve the requesting engine from the row's session
+        // through the shared EngineIdentity facade (parity with the GUI EngineOriginChip). Shown
+        // only for a foreign engine; native sessions add no line.
+        if (m_deps.engineIdentity != nullptr) {
+            const QVariantMap origin = m_deps.engineIdentity->engineForSession(
+                a.value(QStringLiteral("session")).toString());
+            if (origin.value(QStringLiteral("engine")).toString() == QStringLiteral("Foreign")) {
+                const QString label = origin.value(QStringLiteral("label")).toString();
+                if (!label.isEmpty()) {
+                    md += tr("- Requested by: %1\n").arg(label);
+                }
+            }
         }
         md += tr("- Session: %1\n").arg(a.value(QStringLiteral("session")).toString());
         // [wave2:app-approvals-safety] D3: render the node's honest prompt faithfully; fall back to

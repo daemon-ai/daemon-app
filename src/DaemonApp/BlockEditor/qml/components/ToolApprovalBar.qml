@@ -18,6 +18,9 @@ Item {
     property var toolData: ({})
     property var editorController: null
     property var blockId: undefined
+    // [wave2:integration] C5: the owning session id, used by the EngineOriginChip below to
+    // attribute a foreign requester via the EngineIdentity facade.
+    property string sessionId: ""
 
     // Deny opens an inline reason field; the bar grows to fit.
     property bool denyReasonOpen: false
@@ -26,10 +29,6 @@ Item {
     readonly property string command: (toolData && toolData.approvalCommand) ? String(toolData.approvalCommand)
                                      : (toolData && toolData.argsSummary) ? String(toolData.argsSummary) : ""
     readonly property bool allowPermanent: !!(toolData && toolData.allowPermanent)
-    // [wave2:app-approvals-safety] C5: origin attribution keys (empty today; the app-engines stream
-    // populates approvalOriginKind = "core"|"foreign" + approvalOrigin at Integration 2).
-    readonly property string originKind: (toolData && toolData.approvalOriginKind) ? String(toolData.approvalOriginKind) : ""
-    readonly property string originLabel: (toolData && toolData.approvalOrigin) ? String(toolData.approvalOrigin) : ""
 
     function decide(decision, permanent, reason) {
         if (root.editorController && root.blockId !== undefined)
@@ -57,15 +56,11 @@ Item {
             anchors.margins: Theme.smallSpacing
             spacing: Theme.smallSpacing
 
-            // [wave2:app-approvals-safety] C5 origin-chip insertion point (inline card). Hidden
-            // while approvalOriginKind is empty; the app-engines stream wires its EngineOriginChip
-            // into this Loader at Integration 2. Empty-by-default, stable, tagged.
-            Loader {
-                id: originSlot
-                width: parent.width
-                active: root.originKind.length > 0
-                visible: active
-                sourceComponent: originChipComponent
+            // [wave2:integration] C5: origin engine chip (ENG-6). Self-resolves the requesting
+            // engine from the session via the EngineIdentity facade and renders nothing for native
+            // sessions, so it is safe to place unconditionally in the inline approval bar.
+            Kit.EngineOriginChip {
+                sessionId: root.sessionId
             }
 
             Row {
@@ -168,17 +163,6 @@ Item {
                     onClicked: root.decide("approved", true, "")
                 }
             }
-        }
-    }
-
-    // [wave2:app-approvals-safety] C5: empty-by-default origin chip. The app-engines stream replaces
-    // this component's body with its EngineOriginChip at Integration 2.
-    Component {
-        id: originChipComponent
-        Kit.Chip {
-            tone: "muted"
-            iconGlyph: FontIcons.fa_circle_info
-            text: root.originLabel
         }
     }
 }

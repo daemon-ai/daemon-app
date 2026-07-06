@@ -460,6 +460,9 @@ Rectangle {
             delegate: BlockDelegate {
                 width: ListView.view.width
                 editorController: editor
+                // [wave2:integration] C5: the transcript's session, threaded to the inline
+                // approval bar so its EngineOriginChip can attribute a foreign requester.
+                sessionId: root.sessionId
                 turnRunning: root.busy
                 editingMessageId: editorView.editingMessageId
                 // Emphasise the block holding the active find match.

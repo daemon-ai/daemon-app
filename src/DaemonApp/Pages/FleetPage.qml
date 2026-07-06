@@ -181,12 +181,16 @@ Item {
                         }
 
                         // Engine identity (C3/ENG-7 + F3): Native core vs the foreign agent the
-                        // unit runs on, decoded straight off the wire UnitNode (v29). The foreign
-                        // agent name is the chip label; "Foreign" is the fallback kind label.
+                        // unit runs on, decoded straight off the wire UnitNode (v29). The label is
+                        // single-sourced through the shared EngineIdentity facade so the Fleet chip,
+                        // the composer/session chips and the approval origin chip all read identically
+                        // ("<agent> · ACP" / "· stream-json" / bare agent when the catalog is cold).
                         Kit.Chip {
                             visible: entry.engine !== undefined && entry.engine !== ""
-                            text: entry.engine === "Foreign" ? (entry.engineAgent || qsTr("Foreign"))
-                                                             : qsTr("Native")
+                            text: entry.engine === "Foreign"
+                                  ? EngineIdentity.labelFor(entry.engine, entry.engineAgent || "",
+                                                            EngineIdentity.protocolForAgent(entry.engineAgent || ""))
+                                  : qsTr("Native")
                             iconGlyph: entry.engine === "Foreign" ? FontIcons.fa_robot
                                                                   : FontIcons.fa_microchip
                             tone: entry.engine === "Foreign" ? "accent" : "muted"

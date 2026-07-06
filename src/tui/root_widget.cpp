@@ -244,7 +244,8 @@ RootWidget::RootWidget()
         .transportRegistry = m_services.transportRegistry,
         .presence = m_services.presence,
         .update = m_services.update,
-        .caps = m_services.capsRepository, // [wave2:app-delegation] F7/DEL-7
+        .caps = m_services.capsRepository,           // [wave2:app-delegation] F7/DEL-7
+        .engineIdentity = m_services.engineIdentity, // [wave2:integration] C5
     });
     // [wave2:app-delegation] F7/DEL-7: fetch the read-only delegation ceilings once so Settings ->
     // Safety renders the live numbers (node-wide policy; re-fetched, never cached).

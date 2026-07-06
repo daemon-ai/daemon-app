@@ -17,6 +17,9 @@ Item {
     property var toolData: ({})
     property var editorController: null
     property var blockId: undefined
+    // [wave2:integration] C5: the owning session id, forwarded to the approval bar so its
+    // EngineOriginChip resolves the requesting engine via the EngineIdentity facade.
+    property string sessionId: ""
 
     readonly property string title: (toolData && toolData.title) ? toolData.title : qsTr("Tool")
     readonly property string subtitle: (toolData && toolData.subtitle) ? toolData.subtitle : ""
@@ -335,6 +338,7 @@ Item {
             toolData: root.toolData
             editorController: root.editorController
             blockId: root.blockId
+            sessionId: root.sessionId // [wave2:integration] C5
         }
     }
 
