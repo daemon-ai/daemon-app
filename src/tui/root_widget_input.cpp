@@ -476,6 +476,16 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         event->accept();
         return true;
     }
+    // [wave2:app-channels-liveness] B1: Channels 'c' connects an account via the same shared
+    // interactive-auth launcher (family pick -> params -> begin), the GUI "Connect" button analog.
+    // On success the shared service graph refetches instances + rooms, so the account appears with
+    // its live status.
+    if (kind == TabModel::Channels && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("c")) {
+        openAuthFlow();
+        event->accept();
+        return true;
+    }
     // Fleet: 't' opens the steer prompt for the selected delegated child (F4/DEL-4) — a
     // RootWidget-level overlay because TuiPageHub cannot host dialogs.
     if (kind == TabModel::Fleet && event->modifiers() == Qt::NoModifier &&
