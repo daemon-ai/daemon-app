@@ -42,7 +42,7 @@ QString EngineIdentity::labelFor(const QString& engine, const QString& agent,
     if (engine != QStringLiteral("Foreign")) {
         return {}; // native / unknown: no chip text
     }
-    const QString name = agent.isEmpty() ? tr("Foreign") : agent;
+    QString name = agent.isEmpty() ? tr("Foreign") : agent;
     if (protocol == QStringLiteral("StreamJson")) {
         return tr("%1 · stream-json").arg(name);
     }

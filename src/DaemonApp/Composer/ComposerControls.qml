@@ -80,13 +80,15 @@ RowLayout {
         id: engineChip
         Layout.alignment: Qt.AlignVCenter
         readonly property var info: root.sessionEngineInfo()
+        // "Foreign" is the wire engineKind value; kept off the text bindings so the i18n audit
+        // doesn't read it as a user-facing string (mirrors ProfilesPage/FleetPage).
+        readonly property bool foreign: info.engine === "Foreign"
         visible: info.engine !== ""
-        text: info.engine === "Foreign" ? (info.label || info.agent || qsTr("Foreign"))
-                                        : qsTr("Native")
-        iconGlyph: info.engine === "Foreign" ? FontIcons.fa_robot : FontIcons.fa_microchip
-        tone: info.engine === "Foreign" ? "accent" : "muted"
+        text: foreign ? (info.label || info.agent || qsTr("Foreign")) : qsTr("Native")
+        iconGlyph: foreign ? FontIcons.fa_robot : FontIcons.fa_microchip
+        tone: foreign ? "accent" : "muted"
         // C4 honesty: name why inference affordances are absent for a foreign engine.
-        tooltipText: info.engine === "Foreign"
+        tooltipText: foreign
                      ? qsTr("Foreign engine — model, reasoning and rewind are managed by the agent")
                      : qsTr("Engine")
     }

@@ -257,7 +257,7 @@ void RegisterAgentDialog::commit() {
                 m_env->text().split(QChar::fromLatin1(','), Qt::SkipEmptyParts);
             for (const QString& raw : pairs) {
                 const QString pair = raw.trimmed();
-                const int eq = pair.indexOf(QChar::fromLatin1('='));
+                const qsizetype eq = pair.indexOf(QChar::fromLatin1('='));
                 if (eq <= 0) {
                     continue;
                 }
