@@ -21,6 +21,7 @@ qt_add_qml_module(da_pages
         AboutSection.qml
         ConnectionPicker.qml
         AgentInferencePicker.qml
+        AgentTypePicker.qml
         ConnectionSection.qml
         NotificationsSection.qml
         ModelSettingsSection.qml
@@ -41,6 +42,7 @@ qt_add_qml_module(da_pages
         ModelsProviders.qml
         AccountsPage.qml
         AddAccountWizard.qml
+        AuthFlowSheet.qml
         ProfilesPage.qml
         ProfileEditor.qml
         CuratorRow.qml

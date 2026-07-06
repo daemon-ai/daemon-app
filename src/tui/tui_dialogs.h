@@ -20,6 +20,8 @@ namespace profiles {
 class IProfileStore;
 }
 
+class AgentTypeView;
+
 // A small modal "Quit daemon-app?" confirmation. ZDialog auto-centers, handles
 // Esc -> reject(), and routes Enter to the default button; we add Quit/Cancel and
 // surface the confirmed choice via quitConfirmed().
@@ -64,11 +66,14 @@ signals:
     void confirmed();
 };
 
-// The TUI "+ New agent" stub (foreign engines; wire v23): a Name field + a minimal ENGINE list —
-// "daemon-core" (the native engine, default) plus every ACP catalog name (no badges) — committing
-// through the SAME IProfileStore create path the GUI dialog uses: native -> createProfile(name)
-// (provider/model then configured via the Profile page), foreign -> createAcpProfile(name, agent)
-// carrying engine=Acp{agent} (a catalog NAME; recipes stay node-side), then setDefault.
+// The TUI "+ New agent" dialog (foreign engines; wire v23): a Name field + the SHARED
+// AgentTypeView engine list — "daemon-core" (the native engine, default) plus every ACP catalog
+// entry with installed markers (the same AcpRepository rows the GUI AgentTypePicker renders) —
+// committing through the SAME IProfileStore create path the GUI dialog uses: native ->
+// createProfile(name) (provider/model then configured via the Profile page), foreign ->
+// createAcpProfile(name, agent) carrying engine=Acp{agent} (a catalog NAME; recipes stay
+// node-side), then setDefault. An uninstalled foreign row is not committable (parity with the
+// GUI's unselectable rows).
 class NewAgentDialog : public Tui::ZDialog {
     Q_OBJECT
 
@@ -81,12 +86,9 @@ signals:
     void created(const QString& profileId);
 
 private:
-    void rebuildEngines();
     void commit();
 
     profiles::IProfileStore* m_profiles = nullptr;
-    daemonapp::daemon::AcpRepository* m_acp = nullptr;
     Tui::ZInputBox* m_name = nullptr;
-    Tui::ZListView* m_engines = nullptr; // row 0 = daemon-core; rows 1.. = m_agents[row-1]
-    QStringList m_agents;                // ACP catalog names backing rows 1..
+    AgentTypeView* m_engines = nullptr; // the shared native+ACP picker projection
 };

@@ -185,6 +185,7 @@ qt_add_executable(tui_accounts_wizard_tests
     ${CMAKE_SOURCE_DIR}/src/tui/dialogs/add_account_flow.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
 )
 set_target_properties(tui_accounts_wizard_tests PROPERTIES AUTOMOC ON)
 target_include_directories(tui_accounts_wizard_tests PRIVATE
@@ -223,6 +224,7 @@ qt_add_executable(tui_settings_page_tests
     ${CMAKE_SOURCE_DIR}/src/tui/settings_editor.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_palette.cpp
 )
 set_target_properties(tui_settings_page_tests PROPERTIES AUTOMOC ON)
@@ -294,6 +296,7 @@ set_tests_properties(tui_file_finder_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFO
 qt_add_executable(tui_first_run_dialog_tests
     tst_first_run_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/dialogs/first_run_dialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
 )
 set_target_properties(tui_first_run_dialog_tests PROPERTIES AUTOMOC ON)
 target_include_directories(tui_first_run_dialog_tests PRIVATE
@@ -310,6 +313,8 @@ target_link_libraries(tui_first_run_dialog_tests
         daemon-app::models
         daemon-app::profiles
         daemon-app::accounts
+        # AgentTypeView (the agenttype step's shared picker) reads AcpRepository.
+        daemon-app::daemon_client
 )
 add_test(NAME tui_first_run_dialog_tests COMMAND tui_first_run_dialog_tests)
 set_tests_properties(tui_first_run_dialog_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -349,6 +354,7 @@ qt_add_executable(tui_profile_editor_tests
     ${CMAKE_SOURCE_DIR}/src/tui/dialogs/profile_editor_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
 )
 set_target_properties(tui_profile_editor_tests PROPERTIES AUTOMOC ON)
 target_include_directories(tui_profile_editor_tests PRIVATE

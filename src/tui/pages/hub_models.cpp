@@ -15,7 +15,8 @@ QString TuiPageHub::buildModelsMarkdown(int sel) const {
     QString md;
     md += tr("# Models\n\n");
     md += tr("Installed models, shared with the GUI. **j/k** move · **Enter** "
-             "activates · **x** removes · **d** download a model (repo \u2192 quant).\n\n");
+             "activates · **x** removes · **d** download a model (repo \u2192 quant) · "
+             "**q** re-quantize an installed model.\n\n");
 
     md += tr("## Installed\n\n");
     const auto installed = hubdetail::rowsOfModel(m_deps.modelCatalog->installed());
@@ -30,10 +31,16 @@ QString TuiPageHub::buildModelsMarkdown(int sel) const {
                     ? m.value(QStringLiteral("provider")).toString()
                     : (m.value(QStringLiteral("quant")).toString() + QStringLiteral(", ") +
                        m.value(QStringLiteral("sizeLabel")).toString());
-            md += tr("- %1**%2** (%3)%4\n")
+            // A6 (CON-14): the artifact vanished from disk — an explicit missing marker with
+            // the re-download hint (parity with the GUI installed row's missing state).
+            const QString missing = m.value(QStringLiteral("missing")).toBool()
+                                        ? tr(" — **missing on disk** (re-download from Discover)")
+                                        : QString();
+            md += tr("- %1**%2** (%3)%4%5\n")
                       .arg(mark(i), m.value(QStringLiteral("name")).toString(), detail,
                            m.value(QStringLiteral("active")).toBool() ? tr(" — **active**")
-                                                                      : QString());
+                                                                      : QString(),
+                           missing);
         }
         md += QLatin1Char('\n');
     }
@@ -48,6 +55,21 @@ QString TuiPageHub::buildModelsMarkdown(int sel) const {
                       .arg(m.value(QStringLiteral("name")).toString())
                       .arg(pct)
                       .arg(m.value(QStringLiteral("state")).toString());
+        }
+        md += QLatin1Char('\n');
+    }
+
+    // A5 (CON-13): local re-quantization jobs (queued/running/done/failed), mirroring the
+    // downloads section; the produced model joins Installed when the node catalogs it.
+    const auto quantJobs = hubdetail::rowsOfModel(m_deps.modelCatalog->quantizeJobs());
+    if (!quantJobs.isEmpty()) {
+        md += tr("## Quantize jobs\n\n");
+        for (const QVariantMap& m : quantJobs) {
+            const QString error = m.value(QStringLiteral("error")).toString();
+            md += tr("- %1 — %2%3\n")
+                      .arg(m.value(QStringLiteral("name")).toString(),
+                           m.value(QStringLiteral("state")).toString(),
+                           error.isEmpty() ? QString() : (QStringLiteral(" \u00b7 ") + error));
         }
         md += QLatin1Char('\n');
     }

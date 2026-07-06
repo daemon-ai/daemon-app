@@ -73,6 +73,15 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         {api_response_r::api_response_response_model_recommend_m_c,
          ApiResponseKind::ModelRecommend},
         {api_response_r::api_response_response_acp_catalog_m_c, ApiResponseKind::AcpCatalog},
+        // app-wizard-auth stream additions (appended).
+        {api_response_r::api_response_response_auth_providers_m_c, ApiResponseKind::AuthProviders},
+        {api_response_r::api_response_response_auth_begun_m_c, ApiResponseKind::AuthBegun},
+        {api_response_r::api_response_response_auth_completed_m_c, ApiResponseKind::AuthCompleted},
+        {api_response_r::api_response_response_model_quantize_started_m_c,
+         ApiResponseKind::ModelQuantizeStarted},
+        {api_response_r::api_response_response_model_quantizes_m_c,
+         ApiResponseKind::ModelQuantizes},
+        {api_response_r::api_response_response_model_inspect_m_c, ApiResponseKind::ModelInspect},
     });
     for (const auto& entry : kKindMap) {
         if (response->api_response_choice == entry.choice) {
@@ -1113,6 +1122,196 @@ bool NodeApiCodec::decodeAcpCatalog(const QByteArray& responseCbor,
         // state; no client surface renders or re-sends them (profiles bind BY NAME only).
         out->append(entry);
     }
+    return true;
+}
+
+// --- app-wizard-auth stream decoders (appended as one block; sibling streams append after) ------
+
+namespace {
+// The wire auth-flow-kind as its Rust variant name (the client treats it as an opaque label).
+QString authFlowKindName(const auth_flow_kind_r& kind) {
+    switch (kind.auth_flow_kind_choice) {
+    case auth_flow_kind_r::auth_flow_kind_OAuth2Pkce_tstr_c:
+        return QStringLiteral("OAuth2Pkce");
+    case auth_flow_kind_r::auth_flow_kind_MatrixSso_tstr_c:
+    default:
+        return QStringLiteral("MatrixSso");
+    }
+}
+} // namespace
+
+bool NodeApiCodec::decodeAuthProviders(const QByteArray& responseCbor,
+                                       QList<DecodedAuthProviderInfo>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_auth_providers_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_auth_providers& providers = response->api_response_response_auth_providers_m;
+    out->clear();
+    for (size_t i = 0;
+         i < providers.response_auth_providers_AuthProviders_auth_provider_info_m_count; ++i) {
+        const auth_provider_info& row =
+            providers.response_auth_providers_AuthProviders_auth_provider_info_m[i];
+        DecodedAuthProviderInfo info;
+        info.family = fromZcbor(row.auth_provider_info_family);
+        info.flowKind = authFlowKindName(row.auth_provider_info_flow_kind);
+        info.displayName = fromZcbor(row.auth_provider_info_display_name);
+        for (size_t j = 0; j < row.auth_provider_info_params_schema_auth_param_field_m_count; ++j) {
+            const auth_param_field& field =
+                row.auth_provider_info_params_schema_auth_param_field_m[j];
+            info.paramsSchema.append(DecodedAuthParamField{fromZcbor(field.auth_param_field_key),
+                                                           fromZcbor(field.auth_param_field_label),
+                                                           field.auth_param_field_required});
+        }
+        out->append(info);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeAuthBegun(const QByteArray& responseCbor, DecodedAuthBeginResponse* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_auth_begun_m_c);
+    if (!response) {
+        return false;
+    }
+    const auth_begin_response& begun =
+        response->api_response_response_auth_begun_m.response_auth_begun_AuthBegun;
+    out->flowId = fromZcbor(begun.auth_begin_response_flow_id);
+    out->authorizationUrl = fromZcbor(begun.auth_begin_response_authorization_url);
+    out->redirectUri = fromZcbor(begun.auth_begin_response_redirect_uri);
+    out->expiresAt = begun.auth_begin_response_expires_at;
+    out->flowKind = authFlowKindName(begun.auth_begin_response_flow_kind);
+    return true;
+}
+
+bool NodeApiCodec::decodeAuthCompleted(const QByteArray& responseCbor,
+                                       DecodedAuthCompleteResponse* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_auth_completed_m_c);
+    if (!response) {
+        return false;
+    }
+    const auth_complete_response& completed =
+        response->api_response_response_auth_completed_m.response_auth_completed_AuthCompleted;
+    out->credentialRef = fromZcbor(completed.auth_complete_response_credential_ref);
+    out->accountLabel = fromZcbor(completed.auth_complete_response_account_label);
+    out->transportInstance = fromZcbor(completed.auth_complete_response_transport_instance);
+    out->hasBoundProfile = completed.auth_complete_response_bound_profile_choice ==
+                           auth_complete_response::auth_complete_response_bound_profile_tstr_c;
+    if (out->hasBoundProfile) {
+        out->boundProfile = fromZcbor(completed.auth_complete_response_bound_profile_tstr);
+    } else {
+        out->boundProfile.clear();
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeModelQuantizeStarted(const QByteArray& responseCbor, quint64* outId) {
+    if (outId == nullptr) {
+        return false;
+    }
+    const auto response = decodeChecked(
+        responseCbor, api_response_r::api_response_response_model_quantize_started_m_c);
+    if (!response) {
+        return false;
+    }
+    *outId = response->api_response_response_model_quantize_started_m
+                 .response_model_quantize_started_ModelQuantizeStarted;
+    return true;
+}
+
+bool NodeApiCodec::decodeModelQuantizes(const QByteArray& responseCbor,
+                                        QList<DecodedQuantizeStatus>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_model_quantizes_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_model_quantizes& jobs = response->api_response_response_model_quantizes_m;
+    out->clear();
+    for (size_t i = 0; i < jobs.response_model_quantizes_ModelQuantizes_quantize_status_m_count;
+         ++i) {
+        const quantize_status& row =
+            jobs.response_model_quantizes_ModelQuantizes_quantize_status_m[i];
+        DecodedQuantizeStatus job;
+        job.id = row.quantize_status_id;
+        job.repo = fromZcbor(row.quantize_status_repo);
+        job.sourceFile = fromZcbor(row.quantize_status_source_file);
+        job.targetQuant = fromZcbor(row.quantize_status_target_quant);
+        switch (row.quantize_status_state.quantize_state_choice) {
+        case quantize_state_r::quantize_state_Preparing_tstr_c:
+            job.state = QStringLiteral("Preparing");
+            break;
+        case quantize_state_r::quantize_state_Quantizing_tstr_c:
+            job.state = QStringLiteral("Quantizing");
+            break;
+        case quantize_state_r::quantize_state_Completed_tstr_c:
+            job.state = QStringLiteral("Completed");
+            break;
+        case quantize_state_r::quantize_state_Failed_tstr_c:
+            job.state = QStringLiteral("Failed");
+            break;
+        case quantize_state_r::quantize_state_Queued_tstr_c:
+        default:
+            job.state = QStringLiteral("Queued");
+            break;
+        }
+        if (row.quantize_status_output_path_choice ==
+            quantize_status::quantize_status_output_path_tstr_c) {
+            job.outputPath = fromZcbor(row.quantize_status_output_path_tstr);
+        }
+        if (row.quantize_status_model_id_choice ==
+            quantize_status::quantize_status_model_id_model_id_m_c) {
+            job.modelId = fromZcbor(row.quantize_status_model_id_model_id_m);
+        }
+        if (row.quantize_status_error_choice == quantize_status::quantize_status_error_tstr_c) {
+            job.error = fromZcbor(row.quantize_status_error_tstr);
+        }
+        out->append(job);
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeModelInspect(const QByteArray& responseCbor, DecodedGgufInfo* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_model_inspect_m_c);
+    if (!response) {
+        return false;
+    }
+    const gguf_info& info =
+        response->api_response_response_model_inspect_m.response_model_inspect_ModelInspect;
+    *out = DecodedGgufInfo{};
+    if (info.gguf_info_architecture_choice == gguf_info::gguf_info_architecture_tstr_c) {
+        out->architecture = fromZcbor(info.gguf_info_architecture_tstr);
+    }
+    if (info.gguf_info_name_choice == gguf_info::gguf_info_name_tstr_c) {
+        out->name = fromZcbor(info.gguf_info_name_tstr);
+    }
+    if (info.gguf_info_file_type_choice == gguf_info::gguf_info_file_type_tstr_c) {
+        out->fileType = fromZcbor(info.gguf_info_file_type_tstr);
+    }
+    out->hasContextLength =
+        info.gguf_info_context_length_choice == gguf_info::gguf_info_context_length_uint_c;
+    if (out->hasContextLength) {
+        out->contextLength = info.gguf_info_context_length_uint;
+    }
+    out->sizeBytes = info.gguf_info_size_bytes;
     return true;
 }
 

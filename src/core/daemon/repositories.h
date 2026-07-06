@@ -344,6 +344,22 @@ public:
     void pauseDownload(quint64 id);
     void resumeDownload(quint64 id);
 
+    // --- Local re-quantization (A5) + ghost probe (A6); app-wizard-auth stream ---------------
+    [[nodiscard]] const QList<DecodedQuantizeStatus>& quantizes() const { return m_quantizes; }
+    // Start a quantize job for `repo` toward `targetQuant` (ModelQuantize). Empty `sourceFile`
+    // lets the node pick the best installed source. On success quantizeStarted(id) fires and the
+    // jobs poll loop begins refreshing quantizes() until every job settles.
+    void quantize(const QString& repo, const QString& targetQuant,
+                  const QString& sourceFile = QString());
+    // Poll all quantize jobs (ModelQuantizes); on success quantizesChanged() fires. A job newly
+    // reaching Completed refreshes the installed catalog (the produced model is cataloged).
+    void refreshQuantizes();
+    // A6 ghost probe: ModelInspect on a CATALOGED id. Success -> inspected(id, info) (the
+    // artifact is present + readable); an Error reply -> inspectFailed(id, message) — the ghost
+    // signal (the registry keeps records for deleted files). Detection stays behind this one seam
+    // so a future node `on_disk` flag replaces the probe without UI changes.
+    void inspect(const QString& id);
+
 signals:
     void modelsRefreshed();
     void currentRefreshed();
@@ -356,6 +372,11 @@ signals:
     void catalogChanged();
     void downloadStarted(quint64 id);
     void modelActivated();
+    // app-wizard-auth stream additions (A5/A6).
+    void quantizesChanged();
+    void quantizeStarted(quint64 id);
+    void inspected(const QString& id, const daemonapp::daemon::DecodedGgufInfo& info);
+    void inspectFailed(const QString& id, const QString& message);
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
@@ -379,6 +400,10 @@ private:
     // handlers.
     void emitOperationError(const QByteArray& responseCbor, const QString& fallback);
 
+    // One handler per new correlation (app-wizard-auth stream, A5/A6).
+    void handleModelQuantizeResponse(const QByteArray& responseCbor);
+    void handleModelQuantizesResponse(const QByteArray& responseCbor);
+
     static constexpr auto kModelsCorrelation = "repo/models";
     static constexpr auto kCurrentCorrelation = "repo/model-current";
     static constexpr auto kSetModelCorrelation = "repo/set-session-model";
@@ -391,6 +416,10 @@ private:
     static constexpr auto kDeleteCorrelation = "repo/model-delete";
     static constexpr auto kActivateCorrelation = "repo/model-activate";
     static constexpr auto kLifecycleCorrelation = "repo/model-lifecycle";
+    // app-wizard-auth stream correlations (A5/A6). Inspect is prefixed (the id rides the tail).
+    static constexpr auto kQuantizeCorrelation = "repo/model-quantize";
+    static constexpr auto kQuantizesCorrelation = "repo/model-quantizes";
+    static constexpr auto kInspectPrefix = "repo/model-inspect/";
 
     QList<DecodedModelDescriptor> m_models;
     DecodedModelDescriptor m_current;
@@ -420,6 +449,11 @@ private:
     QList<DecodedDownloadStatus> m_downloads;
     QList<DecodedInstalledModel> m_installed;
     QSet<quint64> m_completedDownloads; // ids already seen Completed (debounces catalog refresh)
+    // app-wizard-auth stream state (A5): the quantize job snapshots + the settle poll timer +
+    // the ids already seen Completed (debounces the catalog refresh, mirroring downloads).
+    QList<DecodedQuantizeStatus> m_quantizes;
+    QTimer* m_quantizePoll = nullptr;
+    QSet<quint64> m_completedQuantizes;
 };
 
 // Provider/model discovery slice: `ProviderCatalog` enumerates the providers the node offers
@@ -628,6 +662,11 @@ public:
 
     // Issue an AcpCatalog; on success catalogRefreshed() fires with entries() populated.
     Q_INVOKABLE void refreshCatalog();
+    // Ask the node for a FRESH discovery scan (AcpDiscover: PATH/endpoint probe merged with the
+    // durable catalog; the response reuses the AcpCatalog shape). Same catalogRefreshed() signal —
+    // consumers (the engine picker) re-read agents() with fresh installed badges. Neutral verb:
+    // the wire op name stays inside this repository + the codec (rename isolation).
+    Q_INVOKABLE void discover();
 
 signals:
     void catalogRefreshed();
@@ -638,8 +677,61 @@ private:
     void handleFailure(const QString& correlationId, const QString& message);
 
     static constexpr auto kCatalogCorrelation = "repo/acp-catalog";
+    static constexpr auto kDiscoverCorrelation = "repo/acp-discover";
 
     QList<DecodedAcpAgentEntry> m_entries;
+};
+
+// --- Interactive auth (begin -> browser -> complete; app-wizard-auth stream) ---------------------
+// The wire seam for the generic interactive-auth contract (daemon-interactive-auth-spec.md):
+// AuthProviders discovers the families, AuthBegin parks a flow + returns the authorization URL,
+// AuthComplete relays the captured redirect, AuthCancel drops a flow early. Stateless beyond the
+// provider list — the flow state machine lives in auth::AuthFlowController; the wire op names live
+// ONLY here + in NodeApiCodec (rename isolation).
+class AuthRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    AuthRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    [[nodiscard]] const QList<DecodedAuthProviderInfo>& providers() const { return m_providers; }
+
+    // Issue an AuthProviders; on success providersRefreshed() fires with providers() populated.
+    void refreshProviders();
+    // Begin a flow for `family` with the family-specific `params` map against the CLIENT-owned
+    // `redirectUri`. Non-empty `bindProfile` binds the resulting account to that profile
+    // node-side. On success begun() fires with the flow handle; on Error/transport failure
+    // failed("begin", ...) fires.
+    void begin(const QString& family, const QVariantMap& params, const QString& redirectUri,
+               const QString& bindProfile = QString());
+    // Finish `flowId` from the captured redirect (`callback`: full URL or query string). On
+    // success completed() fires; the flow is consumed node-side either way.
+    void complete(const QString& flowId, const QString& callback);
+    // Drop a pending flow (user cancelled / TTL abandoned). Fire-and-forget: Ok and errors are
+    // both terminal for an already-abandoned flow, so no signal is emitted.
+    void cancel(const QString& flowId);
+
+signals:
+    void providersRefreshed();
+    void begun(const daemonapp::daemon::DecodedAuthBeginResponse& response);
+    void completed(const daemonapp::daemon::DecodedAuthCompleteResponse& response);
+    // `phase` is "providers" | "begin" | "complete"; `message` is the node's reason (an ApiError
+    // message when one decodes, else a transport/decode fallback).
+    void failed(const QString& phase, const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+    // Decode an Error reply into its message (fallback otherwise) and emit failed(phase, ...).
+    void emitPhaseError(const QString& phase, const QByteArray& responseCbor,
+                        const QString& fallback);
+
+    static constexpr auto kProvidersCorrelation = "repo/auth-providers";
+    static constexpr auto kBeginCorrelation = "repo/auth-begin";
+    static constexpr auto kCompleteCorrelation = "repo/auth-complete";
+    static constexpr auto kCancelCorrelation = "repo/auth-cancel";
+
+    QList<DecodedAuthProviderInfo> m_providers;
 };
 
 } // namespace daemonapp::daemon

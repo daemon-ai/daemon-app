@@ -29,9 +29,11 @@ ColumnLayout {
     id: picker
     spacing: 10
 
-    // The ProviderCatalog descriptor id (e.g. "anthropic"/"openai"/"daemon_cloud"/"llama_cpp").
+    // The ProviderCatalog descriptor id (e.g. "anthropic"/"openai"/"daemon_cloud"/"llama_cpp"),
+    // or the synthetic kCustomId for the self-hosted endpoint row (A1 / CON-10).
     property string providerId: ""
-    // The selection-only model id the profile persists (chosen from ProviderModels).
+    // The selection-only model id the profile persists (chosen from ProviderModels; free text
+    // for the custom endpoint, whose models no wire op can enumerate).
     property string model: ""
     // The entered API key (transient; a key-requiring vendor authenticates its LIST with it).
     property alias key: keyField.text
@@ -40,16 +42,37 @@ ColumnLayout {
     // Prefer Daemon Cloud as the initial provider (keyless, works out of the box).
     property bool preferDaemonCloud: true
 
+    // A1 (CON-10): the synthetic "Custom endpoint…" row id + its state. The row is client-side
+    // only (never a catalog descriptor): the profile persists provider="daemon_api" (genai's
+    // OpenAI-compatible adapter pinned at the base URL) + the user base URL + typed model.
+    readonly property string kCustomId: "__custom__"
+    readonly property bool customEndpoint: providerId === kCustomId
+    property alias customBaseUrl: baseUrlField.text
+
     // NOT a reactive binding: ProviderCatalog.providers() is a plain Q_INVOKABLE and the node's
-    // catalog arrives asynchronously, so it is re-read explicitly on providersChanged.
-    property var providerRows: ProviderCatalog ? ProviderCatalog.providers() : []
-    readonly property var providerDescriptor: (ProviderCatalog && providerId.length > 0)
+    // catalog arrives asynchronously, so it is re-read explicitly on providersChanged. The
+    // custom-endpoint row is appended client-side after the node rows.
+    property var providerRows: picker._composeRows()
+    readonly property var providerDescriptor: (ProviderCatalog && providerId.length > 0
+                                               && !customEndpoint)
                                               ? ProviderCatalog.descriptorFor(providerId) : ({})
     readonly property bool providerRequiresKey: providerDescriptor
                                                 && providerDescriptor.requiresKey === true
-    // A provider + a concrete model are chosen, and any required key is at least entered.
-    readonly property bool inferenceComplete: providerId.length > 0 && model.length > 0
-                                              && (!providerRequiresKey || keyField.text.length > 0)
+    // A provider + a concrete model are chosen, and any required key is at least entered. The
+    // custom endpoint needs its base URL + a typed model (the key stays optional there).
+    readonly property bool inferenceComplete: customEndpoint
+                                              ? (baseUrlField.text.trim().length > 0
+                                                 && model.length > 0)
+                                              : (providerId.length > 0 && model.length > 0
+                                                 && (!providerRequiresKey
+                                                     || keyField.text.length > 0))
+
+    function _composeRows() {
+        var rows = ProviderCatalog ? ProviderCatalog.providers() : [];
+        // Vision (CON-10): a "Custom endpoint…" row at the bottom of the provider list.
+        return rows.concat([{ id: picker.kCustomId, name: qsTr("Custom endpoint…"),
+                              kind: "custom", requiresKey: false }]);
+    }
 
     // Report the live provider/key selection to the shared key gate (re-arms it: a proven key
     // must re-prove via the next authenticated LIST after any change).
@@ -77,7 +100,9 @@ ColumnLayout {
         picker.model = "";
         picker.revealKey = false;
         picker._reportSelection();
-        if (ProviderCatalog)
+        // The custom endpoint has nothing to list: no wire op can enumerate an arbitrary
+        // OpenAI-compatible server's models (the model is typed instead).
+        if (ProviderCatalog && id !== picker.kCustomId)
             ProviderCatalog.refreshModels(id, "", keyField.text); // transient key (no profile yet)
     }
     // The catalog kind ("local" | "remote") of the SELECTED provider's row, "" before seeding.
@@ -96,14 +121,14 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
-        picker.providerRows = ProviderCatalog ? ProviderCatalog.providers() : [];
+        picker.providerRows = picker._composeRows();
         picker._seedProvider();
         providerBox.syncFromModel();
     }
     Connections {
         target: ProviderCatalog
         function onProvidersChanged() {
-            picker.providerRows = ProviderCatalog ? ProviderCatalog.providers() : [];
+            picker.providerRows = picker._composeRows();
             picker._seedProvider();
             // The rebuilt dropdown model reset currentIndex; re-point it at the selection.
             providerBox.syncFromModel();
@@ -122,20 +147,52 @@ ColumnLayout {
         onActivated: picker.selectProvider(picker.providerRows[currentIndex].id)
     }
 
-    // API key: only for a key-requiring provider (Daemon Cloud lists keyless). Editing it re-lists
-    // the provider's models with the entered key as a transient credential. A reveal toggle lets the
-    // user verify the pasted key; masked by default.
+    // A1 (CON-10): the custom endpoint's base URL + typed model. No wire op can enumerate a
+    // self-hosted server's models or probe it pre-commit, so the fields are honest about that:
+    // the first message verifies the endpoint, and a failure deep-links back here (CON-8).
+    ColumnLayout {
+        visible: picker.customEndpoint
+        Layout.fillWidth: true
+        spacing: 8
+        SectionLabel { text: qsTr("Base URL") }
+        Kit.TextField {
+            id: baseUrlField
+            Layout.fillWidth: true
+            placeholderText: qsTr("Base URL (e.g. https://…)")
+        }
+        SectionLabel { text: qsTr("Model id") }
+        Kit.TextField {
+            id: customModelField
+            Layout.fillWidth: true
+            placeholderText: qsTr("model id (as your server names it)")
+            // The typed model IS the selection on the custom path (nothing to list).
+            onTextEdited: picker.model = text.trim()
+        }
+        Text {
+            text: qsTr("The endpoint is used as-is — your first message verifies it, and a "
+                       + "failure will guide you back here.")
+            font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+            Layout.fillWidth: true; wrapMode: Text.WordWrap
+        }
+    }
+
+    // API key: for a key-requiring provider (Daemon Cloud lists keyless), or optional on the
+    // custom endpoint. Editing it re-lists the provider's models with the entered key as a
+    // transient credential (catalog providers only). A reveal toggle lets the user verify the
+    // pasted key; masked by default.
     RowLayout {
         Layout.fillWidth: true
-        visible: picker.providerRequiresKey
+        visible: picker.providerRequiresKey || picker.customEndpoint
         spacing: 6
         Kit.TextField {
             id: keyField
             Layout.fillWidth: true
-            placeholderText: qsTr("Paste API key")
+            placeholderText: picker.customEndpoint ? qsTr("API key (optional)")
+                                                   : qsTr("Paste API key")
             echoMode: picker.revealKey ? TextInput.Normal : TextInput.Password
             onTextEdited: picker._reportSelection() // every keystroke re-arms the shared key gate
-            onEditingFinished: if (ProviderCatalog && picker.providerId.length > 0)
+            onEditingFinished: if (ProviderCatalog && picker.providerId.length > 0
+                                   && !picker.customEndpoint)
                                    ProviderCatalog.refreshModels(picker.providerId, "", text);
         }
         Kit.IconButton {
@@ -154,9 +211,9 @@ ColumnLayout {
         Layout.fillWidth: true; wrapMode: Text.WordWrap
     }
 
-    SectionLabel { text: qsTr("Model") }
+    SectionLabel { visible: !picker.customEndpoint; text: qsTr("Model") }
     Text {
-        visible: modelList.count === 0
+        visible: !picker.customEndpoint && modelList.count === 0
         text: picker.providerRequiresKey && keyField.text.length === 0
               ? qsTr("Enter your API key to list models.")
               : qsTr("Discovering models…")
@@ -165,8 +222,9 @@ ColumnLayout {
     }
     ListView {
         id: modelList
+        visible: !picker.customEndpoint
         Layout.fillWidth: true
-        Layout.preferredHeight: Math.min(contentHeight, 132)
+        Layout.preferredHeight: picker.customEndpoint ? 0 : Math.min(contentHeight, 132)
         clip: true
         // Rebuilt explicitly (never a broken binding): on provider change (picker
         // onProviderIdChanged) and whenever the catalog re-offers this provider's models.

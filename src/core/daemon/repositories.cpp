@@ -701,10 +701,31 @@ void ModelRepository::handleResponse(const QString& correlationId, const QByteAr
         {QString::fromLatin1(kActivateCorrelation), &ModelRepository::handleModelActivateResponse},
         {QString::fromLatin1(kLifecycleCorrelation),
          &ModelRepository::handleModelLifecycleResponse},
+        {QString::fromLatin1(kQuantizeCorrelation), &ModelRepository::handleModelQuantizeResponse},
+        {QString::fromLatin1(kQuantizesCorrelation),
+         &ModelRepository::handleModelQuantizesResponse},
     };
     const auto it = kHandlers.constFind(correlationId);
     if (it != kHandlers.constEnd()) {
         (this->*it.value())(responseCbor);
+        return;
+    }
+    // A6 ghost probe: the inspected id rides the correlation tail (prefix route).
+    if (correlationId.startsWith(QLatin1String(kInspectPrefix))) {
+        const QString id = correlationId.mid(QLatin1String(kInspectPrefix).size());
+        DecodedGgufInfo info;
+        if (NodeApiCodec::decodeModelInspect(responseCbor, &info)) {
+            emit inspected(id, info);
+            return;
+        }
+        // An Error reply on a cataloged id IS the ghost signal (missing/unreadable artifact).
+        DecodedApiError err;
+        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error &&
+            NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit inspectFailed(id, err.message);
+        } else {
+            emit inspectFailed(id, tr("Model inspection failed"));
+        }
     }
 }
 
@@ -865,7 +886,89 @@ void ModelRepository::handleModelLifecycleResponse(const QByteArray& /*responseC
     refreshDownloads();
 }
 
+// --- Local re-quantization (A5) + ghost probe (A6); app-wizard-auth stream ----------------------
+
+void ModelRepository::quantize(const QString& repo, const QString& targetQuant,
+                               const QString& sourceFile) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelQuantizeRequest(repo, targetQuant, sourceFile),
+                          QLatin1String(kQuantizeCorrelation));
+}
+
+void ModelRepository::refreshQuantizes() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelQuantizesRequest(),
+                          QLatin1String(kQuantizesCorrelation));
+}
+
+void ModelRepository::inspect(const QString& id) {
+    if (client() == nullptr) {
+        emit inspectFailed(id, QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeModelInspectRequest(id),
+                          QLatin1String(kInspectPrefix) + id);
+}
+
+void ModelRepository::handleModelQuantizeResponse(const QByteArray& responseCbor) {
+    quint64 id = 0;
+    if (!NodeApiCodec::decodeModelQuantizeStarted(responseCbor, &id)) {
+        emitOperationError(responseCbor, tr("Quantize failed to start"));
+        return;
+    }
+    emit quantizeStarted(id);
+    refreshQuantizes(); // seed the jobs view; the poll loop keeps it live until settle
+}
+
+void ModelRepository::handleModelQuantizesResponse(const QByteArray& responseCbor) {
+    if (!NodeApiCodec::decodeModelQuantizes(responseCbor, &m_quantizes)) {
+        emit operationFailed(QStringLiteral("Failed to decode ModelQuantizes response"));
+        return;
+    }
+    bool active = false;
+    bool newlyCompleted = false;
+    for (const DecodedQuantizeStatus& job : m_quantizes) {
+        if (job.state == QStringLiteral("Queued") || job.state == QStringLiteral("Preparing") ||
+            job.state == QStringLiteral("Quantizing")) {
+            active = true;
+        } else if (job.state == QStringLiteral("Completed") &&
+                   !m_completedQuantizes.contains(job.id)) {
+            m_completedQuantizes.insert(job.id);
+            newlyCompleted = true;
+        }
+    }
+    emit quantizesChanged();
+    if (newlyCompleted) {
+        refreshCatalog(); // the produced model was cataloged; surface it
+    }
+    // Quantize jobs have no L3 push event (unlike DownloadProgress), so a modest poll runs while
+    // any job is active and stops on settle — the same shape the retired downloads poll had.
+    if (active) {
+        if (m_quantizePoll == nullptr) {
+            m_quantizePoll = new QTimer(this);
+            m_quantizePoll->setInterval(1000);
+            connect(m_quantizePoll, &QTimer::timeout, this, &ModelRepository::refreshQuantizes);
+        }
+        if (!m_quantizePoll->isActive()) {
+            m_quantizePoll->start();
+        }
+    } else if (m_quantizePoll != nullptr) {
+        m_quantizePoll->stop();
+    }
+}
+
 void ModelRepository::handleFailure(const QString& correlationId, const QString& message) {
+    // A6: a transport-dead inspect must surface per-id (the probe caller keys on it).
+    if (correlationId.startsWith(QLatin1String(kInspectPrefix))) {
+        emit inspectFailed(correlationId.mid(QLatin1String(kInspectPrefix).size()), message);
+        return;
+    }
     static const QSet<QString> kOurs = {
         QString::fromLatin1(kModelsCorrelation),   QString::fromLatin1(kCurrentCorrelation),
         QString::fromLatin1(kSetModelCorrelation), QString::fromLatin1(kSearchCorrelation),
@@ -873,6 +976,7 @@ void ModelRepository::handleFailure(const QString& correlationId, const QString&
         QString::fromLatin1(kDownloadCorrelation), QString::fromLatin1(kDownloadsCorrelation),
         QString::fromLatin1(kCatalogCorrelation),  QString::fromLatin1(kDeleteCorrelation),
         QString::fromLatin1(kActivateCorrelation), QString::fromLatin1(kLifecycleCorrelation),
+        QString::fromLatin1(kQuantizeCorrelation), QString::fromLatin1(kQuantizesCorrelation),
     };
     if (kOurs.contains(correlationId)) {
         // A dead page loop must not leak its partial accumulation into the next refresh.
@@ -882,6 +986,9 @@ void ModelRepository::handleFailure(const QString& correlationId, const QString&
             m_filesLoop.reset();
         } else if (correlationId == QLatin1String(kSearchCorrelation)) {
             m_searchAppending = false; // a dead continuation must not make the next reply append
+        } else if (correlationId == QLatin1String(kQuantizesCorrelation) &&
+                   m_quantizePoll != nullptr) {
+            m_quantizePoll->stop(); // a dead transport must not keep the settle poll hammering
         }
         emit operationFailed(message);
     }
@@ -1720,8 +1827,20 @@ void AcpRepository::refreshCatalog() {
                           QLatin1String(kCatalogCorrelation));
 }
 
+void AcpRepository::discover() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    // The discovery reply reuses the AcpCatalog response shape (fresh scan merged with the
+    // durable catalog), so it routes through the same decode + catalogRefreshed path.
+    client()->sendRequest(NodeApiCodec::encodeAcpDiscoverRequest(),
+                          QLatin1String(kDiscoverCorrelation));
+}
+
 void AcpRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
-    if (correlationId != QLatin1String(kCatalogCorrelation)) {
+    if (correlationId != QLatin1String(kCatalogCorrelation) &&
+        correlationId != QLatin1String(kDiscoverCorrelation)) {
         return;
     }
     if (!NodeApiCodec::decodeAcpCatalog(responseCbor, &m_entries)) {
@@ -1732,9 +1851,114 @@ void AcpRepository::handleResponse(const QString& correlationId, const QByteArra
 }
 
 void AcpRepository::handleFailure(const QString& correlationId, const QString& message) {
-    if (correlationId == QLatin1String(kCatalogCorrelation)) {
+    if (correlationId == QLatin1String(kCatalogCorrelation) ||
+        correlationId == QLatin1String(kDiscoverCorrelation)) {
         emit operationFailed(message);
     }
+}
+
+// --- Interactive auth (app-wizard-auth stream) ---------------------------------------------------
+
+AuthRepository::AuthRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &AuthRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &AuthRepository::handleFailure);
+    }
+}
+
+void AuthRepository::refreshProviders() {
+    if (client() == nullptr) {
+        emit failed(QStringLiteral("providers"), QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeAuthProvidersRequest(),
+                          QLatin1String(kProvidersCorrelation));
+}
+
+void AuthRepository::begin(const QString& family, const QVariantMap& params,
+                           const QString& redirectUri, const QString& bindProfile) {
+    if (client() == nullptr) {
+        emit failed(QStringLiteral("begin"), QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(
+        NodeApiCodec::encodeAuthBeginRequest(family, params, redirectUri, bindProfile),
+        QLatin1String(kBeginCorrelation));
+}
+
+void AuthRepository::complete(const QString& flowId, const QString& callback) {
+    if (client() == nullptr) {
+        emit failed(QStringLiteral("complete"), QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeAuthCompleteRequest(flowId, callback),
+                          QLatin1String(kCompleteCorrelation));
+}
+
+void AuthRepository::cancel(const QString& flowId) {
+    if (client() == nullptr || flowId.isEmpty()) {
+        return; // nothing to drop; cancel is best-effort by design
+    }
+    client()->sendRequest(NodeApiCodec::encodeAuthCancelRequest(flowId),
+                          QLatin1String(kCancelCorrelation));
+}
+
+void AuthRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
+    if (correlationId == QLatin1String(kProvidersCorrelation)) {
+        if (!NodeApiCodec::decodeAuthProviders(responseCbor, &m_providers)) {
+            emitPhaseError(QStringLiteral("providers"), responseCbor,
+                           tr("Failed to read the sign-in provider list"));
+            return;
+        }
+        emit providersRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kBeginCorrelation)) {
+        DecodedAuthBeginResponse response;
+        if (!NodeApiCodec::decodeAuthBegun(responseCbor, &response)) {
+            emitPhaseError(QStringLiteral("begin"), responseCbor,
+                           tr("The sign-in flow could not be started"));
+            return;
+        }
+        emit begun(response);
+        return;
+    }
+    if (correlationId == QLatin1String(kCompleteCorrelation)) {
+        DecodedAuthCompleteResponse response;
+        if (!NodeApiCodec::decodeAuthCompleted(responseCbor, &response)) {
+            emitPhaseError(QStringLiteral("complete"), responseCbor,
+                           tr("The sign-in could not be completed"));
+            return;
+        }
+        emit completed(response);
+        return;
+    }
+    // kCancelCorrelation: fire-and-forget (Ok and errors are both terminal for an abandoned
+    // flow).
+}
+
+void AuthRepository::emitPhaseError(const QString& phase, const QByteArray& responseCbor,
+                                    const QString& fallback) {
+    DecodedApiError err;
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error &&
+        NodeApiCodec::decodeError(responseCbor, &err)) {
+        emit failed(phase, err.message);
+    } else {
+        emit failed(phase, fallback);
+    }
+}
+
+void AuthRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kProvidersCorrelation)) {
+        emit failed(QStringLiteral("providers"), message);
+    } else if (correlationId == QLatin1String(kBeginCorrelation)) {
+        emit failed(QStringLiteral("begin"), message);
+    } else if (correlationId == QLatin1String(kCompleteCorrelation)) {
+        emit failed(QStringLiteral("complete"), message);
+    }
+    // kCancelCorrelation: silent (best-effort).
 }
 
 } // namespace daemonapp::daemon

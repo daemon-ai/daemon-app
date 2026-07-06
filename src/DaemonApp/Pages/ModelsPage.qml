@@ -65,6 +65,17 @@ Item {
 
     Component { id: discoverComp;  ModelsDiscover {} }
     Component { id: downloadsComp; ModelsDownloads {} }
-    Component { id: installedComp; ModelsInstalled {} }
+    Component {
+        id: installedComp
+        // A5 (CON-13): "Re-quantize…" on an installed row opens the shared quant picker in
+        // requantize mode (its actions drive ModelQuantize instead of downloads).
+        ModelsInstalled {
+            onRequantizeRequested: function(repo, sourceFile) {
+                requantPicker.openForRequantize(repo, sourceFile);
+            }
+        }
+    }
     Component { id: providersComp; ModelsProviders {} }
+
+    QuantPickerPopup { id: requantPicker }
 }

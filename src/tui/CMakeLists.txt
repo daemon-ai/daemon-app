@@ -128,6 +128,10 @@ qt_add_executable(daemon-tui
     tree_list_view.cpp
     tui_dialogs.h
     tui_dialogs.cpp
+    # The shared native-vs-ACP engine picker projection (installed markers), consumed by the
+    # "+ New agent" dialog and the first-run wizard's agent-type step (app-wizard-auth stream).
+    agent_type_view.h
+    agent_type_view.cpp
     # Settings-page dialog edits (list picks / text prompts / live re-apply),
     # owned by the settings workstream next to pages/hub_settings.cpp.
     settings_editor.h
@@ -140,6 +144,10 @@ qt_add_executable(daemon-tui
     # workstream's own TU).
     dialogs/add_account_flow.h
     dialogs/add_account_flow.cpp
+    # Interactive sign-in flow ('o' on the Accounts page): the TUI AuthFlowSheet analog over
+    # the shared AuthFlowController (app-wizard-auth stream's own TU).
+    dialogs/auth_flow_dialog.h
+    dialogs/auth_flow_dialog.cpp
     # Interactive profile editor ('e' on the Profiles page / Profile tab), the
     # profiles workstream's TU: the GUI ProfileEditor field set over the same
     # IProfileStore save path.
@@ -253,6 +261,7 @@ target_link_libraries(daemon-tui
         daemon-app::uimodels
         daemon-app::models
         daemon-app::accounts
+        daemon-app::auth
         daemon-app::profiles
         daemon-app::fleet
         daemon-app::automation

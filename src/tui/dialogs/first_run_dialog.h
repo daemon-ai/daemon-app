@@ -19,20 +19,29 @@
 namespace models {
 class IProviderCatalog;
 }
+namespace daemonapp::daemon {
+class AcpRepository;
+}
+class AgentTypeView;
 
 // The TUI first-run gate: a lighter "Setup Required" modal mirroring the GUI's
 // FirstRunGate. A target field + Connect drives the shared connection seam; the
-// FirstRunModel advances connect -> connecting -> inference, and Finish completes
-// setup. Reuses the same shared FirstRunModel the GUI binds. Lives in its own
-// dialogs/ TU (split out of tui_dialogs.cpp) so the first-run workstream owns
-// one focused file; the small generic dialogs stay in tui_dialogs.{h,cpp}.
+// FirstRunModel advances connect -> connecting -> [agenttype ->] inference, and
+// Finish completes setup. Reuses the same shared FirstRunModel the GUI binds.
+// The agenttype step (CON-16) mounts the shared AgentTypeView (native + ACP
+// catalog with installed markers): native continues into inference; an
+// INSTALLED foreign agent finishes directly (engine=Acp{agent}; no
+// provider/model/key). Lives in its own dialogs/ TU (split out of
+// tui_dialogs.cpp) so the first-run workstream owns one focused file; the
+// small generic dialogs stay in tui_dialogs.{h,cpp}.
 class FirstRunDialog : public Tui::ZDialog {
     Q_OBJECT
 
 public:
     FirstRunDialog(firstrun::FirstRunModel* model, connection::IConnectionService* connection,
                    settings::ISettingsStore* settings, models::IProviderCatalog* providerCatalog,
-                   const QString& defaultTarget, Tui::ZWidget* parent);
+                   daemonapp::daemon::AcpRepository* acp, const QString& defaultTarget,
+                   Tui::ZWidget* parent);
 
 signals:
     // The user picked the local "Discover More Models" row; the host opens the download flow.
@@ -58,6 +67,8 @@ private:
     // the GUI wizard seeds agentNameField; stops once the user edits the field.
     void seedAgentName();
     [[nodiscard]] QVariantMap currentProviderDescriptor() const;
+    // Whether the synthetic custom-endpoint provider row is selected (A1 / CON-10).
+    [[nodiscard]] bool customSelected() const;
 
     firstrun::FirstRunModel* m_model = nullptr;
     connection::IConnectionService* m_connection = nullptr;
@@ -66,15 +77,23 @@ private:
     Tui::ZLabel* m_status = nullptr;
     Tui::ZInputBox* m_target = nullptr;
     Tui::ZInputBox* m_token = nullptr;
-    Tui::ZInputBox* m_key = nullptr;       // provider API key (inference phase)
-    Tui::ZInputBox* m_username = nullptr;  // SASL username (auth phase)
-    Tui::ZInputBox* m_password = nullptr;  // SASL password (auth phase; masked)
-    Tui::ZLabel* m_nameLabel = nullptr;    // "Agent name" (inference phase)
-    Tui::ZInputBox* m_agentName = nullptr; // agent name = the profile id the node keys it by
+    Tui::ZInputBox* m_key = nullptr;         // provider API key (inference phase)
+    Tui::ZInputBox* m_username = nullptr;    // SASL username (auth phase)
+    Tui::ZInputBox* m_password = nullptr;    // SASL password (auth phase; masked)
+    Tui::ZLabel* m_nameLabel = nullptr;      // "Agent name" (inference phase)
+    Tui::ZInputBox* m_agentName = nullptr;   // agent name = the profile id the node keys it by
+    Tui::ZLabel* m_agentTypeLabel = nullptr; // "Agent type" (agenttype phase, CON-16)
+    AgentTypeView* m_agentType = nullptr;    // the shared native+ACP picker projection
     Tui::ZLabel* m_providerLabel = nullptr;
     Tui::ZListView* m_providerList = nullptr; // provider picker (inference phase)
     Tui::ZLabel* m_modelLabel = nullptr;
-    Tui::ZListView* m_modelList = nullptr;   // per-provider model picker (inference phase)
+    Tui::ZListView* m_modelList = nullptr; // per-provider model picker (inference phase)
+    // A1 (CON-10): the custom-endpoint row's fields (base URL + typed model), shown only when
+    // the synthetic "Custom endpoint…" provider row is selected.
+    Tui::ZLabel* m_baseUrlLabel = nullptr;
+    Tui::ZInputBox* m_baseUrl = nullptr;
+    Tui::ZLabel* m_customModelLabel = nullptr;
+    Tui::ZInputBox* m_customModel = nullptr;
     Tui::ZButton* m_listModelsBtn = nullptr; // re-list a key-requiring provider's models
     Tui::ZLabel* m_keyGateMsg = nullptr;     // the shared key gate's blocking reason (FIX 4)
     Tui::ZButton* m_localBtn = nullptr;

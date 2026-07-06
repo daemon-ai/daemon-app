@@ -17,12 +17,30 @@ Kit.Dialog {
     property string repo: ""
     property var rec: ({})
     property bool advanced: false
+    // A5 (CON-13) re-quantization mode: the same picker, but each action starts a LOCAL
+    // ModelQuantize job toward the row's quant (from `sourceFile`) instead of a download.
+    property bool requantize: false
+    property string sourceFile: ""
 
-    title: qsTr("Choose a quantization")
+    title: root.requantize ? qsTr("Choose a target quantization") : qsTr("Choose a quantization")
     width: 520
     footer: null
 
     function openFor(repoId) {
+        root.requantize = false;
+        root.sourceFile = "";
+        root._openImpl(repoId);
+    }
+
+    // A5: open scoped to an INSTALLED model (`source` = its on-disk artifact file) so the
+    // picked quant drives ModelCatalog.quantizeModel(repo, quant, source).
+    function openForRequantize(repoId, source) {
+        root.requantize = true;
+        root.sourceFile = source || "";
+        root._openImpl(repoId);
+    }
+
+    function _openImpl(repoId) {
         root.repo = repoId;
         root.rec = ({});
         root.advanced = false;
@@ -97,13 +115,29 @@ Kit.Dialog {
                         font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
                         wrapMode: Text.WordWrap
                     }
+                    // A4 (CON-12) disk preflight: state the size requirement BEFORE the pull
+                    // starts. Size-estimate only — the wire carries no free-disk figure yet;
+                    // when a `disk_free` lands on the contract, append "· N free" here.
+                    Text {
+                        Layout.fillWidth: true
+                        visible: !!root.rec.sizeLabel
+                        text: qsTr("Needs about %1 of disk space.")
+                              .arg(root.rec.sizeLabel ? root.rec.sizeLabel : "")
+                        font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+                        wrapMode: Text.WordWrap
+                    }
                 }
                 Kit.TextButton {
-                    text: qsTr("Download recommended")
+                    text: root.requantize ? qsTr("Quantize to recommended")
+                                          : qsTr("Download recommended")
                     accentFilled: true
-                    enabled: !!root.rec.file
+                    enabled: root.requantize ? !!root.rec.quant : !!root.rec.file
                     onClicked: {
-                        ModelCatalog.downloadFile(root.repo, root.rec.file);
+                        if (root.requantize)
+                            ModelCatalog.quantizeModel(root.repo, root.rec.quant,
+                                                       root.sourceFile);
+                        else
+                            ModelCatalog.downloadFile(root.repo, root.rec.file);
                         root.close();
                     }
                 }
@@ -184,9 +218,17 @@ Kit.Dialog {
                             }
                         }
                         Kit.TextButton {
-                            text: qsTr("Download")
+                            text: root.requantize ? qsTr("Quantize") : qsTr("Download")
+                            // A quantize job targets a QUANT LABEL (never a projector row);
+                            // downloads target the file path.
+                            enabled: !root.requantize
+                                     || (!!entry.quant && entry.isMmproj !== true)
                             onClicked: {
-                                ModelCatalog.downloadFile(root.repo, entry.path);
+                                if (root.requantize)
+                                    ModelCatalog.quantizeModel(root.repo, entry.quant,
+                                                               root.sourceFile);
+                                else
+                                    ModelCatalog.downloadFile(root.repo, entry.path);
                                 root.close();
                             }
                         }

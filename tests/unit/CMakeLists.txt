@@ -243,6 +243,22 @@ target_link_libraries(tst_node_api_auth
 add_test(NAME tst_node_api_auth COMMAND tst_node_api_auth)
 set_tests_properties(tst_node_api_auth PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_auth_flow (app-wizard-auth stream): the interactive-auth stack — codec round-trips for the
+# AuthProviders/AuthBegin/AuthComplete/AuthCancel + AcpDiscover + ModelQuantize(s)/ModelInspect
+# op families against the vendored zcbor codec, and the shared AuthFlowController state machine
+# (begin -> awaiting_browser -> complete; failures; cancel; TTL) over the mock seam. useSink=false
+# throughout: offscreen tests never bind ports.
+qt_add_executable(tst_auth_flow tst_auth_flow.cpp)
+target_link_libraries(tst_auth_flow
+    PRIVATE
+        Qt6::Test
+        daemon-app::auth
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+)
+add_test(NAME tst_auth_flow COMMAND tst_auth_flow)
+set_tests_properties(tst_auth_flow PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_tls_transport: the TLS/TCP transport - fail-closed cert verification (an untrusted self-signed
 # cert aborts the handshake), and the explicitly-configured trust paths (SHA-256 pin / insecure
 # skip) connecting + round-tripping an encrypted frame against a QSslServer.

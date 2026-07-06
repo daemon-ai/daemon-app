@@ -44,6 +44,10 @@ public:
     // quant file from that repo (recommended row starred), kicking ModelDownload. `onChange` is
     // invoked after a download starts so the caller can refresh the page.
     void openModelDownload(models::IModelCatalog* catalog, const std::function<void()>& onChange);
+    // A5 (CON-13) re-quantization: pick an installed LOCAL model, then a target quant from its
+    // repo's ladder, kicking ModelQuantize ("q" on the Models page — the TUI analog of the GUI
+    // installed row's "Re-quantize…"). `onChange` runs after a job starts.
+    void openRequantize(models::IModelCatalog* catalog, const std::function<void()>& onChange);
     void openCommandPalette(CommandRegistry* commands, const CommandCallbacks& callbacks);
     // Ctrl+G "go to file": fuzzy finder over the shared FileFinderModel. Enter
     // reports pinned=false (preview tab), Shift+Enter pinned=true.
@@ -65,6 +69,8 @@ private:
     PaletteDialog* m_modelPicker = nullptr;
     PaletteDialog* m_modelDiscover = nullptr;
     PaletteDialog* m_quantPicker = nullptr;
+    PaletteDialog* m_requantSource = nullptr; // A5: installed-model pick
+    PaletteDialog* m_requantTarget = nullptr; // A5: target-quant pick
     PaletteDialog* m_commandPalette = nullptr;
     FileFinderDialog* m_fileFinder = nullptr;
     FileFinderDialog* m_attachPicker = nullptr;

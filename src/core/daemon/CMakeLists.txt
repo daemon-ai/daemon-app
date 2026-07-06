@@ -68,6 +68,8 @@ add_library(da_daemon_client STATIC
     ${DA_DAEMON_PLATFORM_SOURCES}
     daemon_accounts_service.h
     daemon_accounts_service.cpp
+    daemon_auth_flow_service.h
+    daemon_auth_flow_service.cpp
     daemon_model_catalog.h
     daemon_model_catalog.cpp
     daemon_provider_catalog.h
@@ -124,6 +126,7 @@ target_link_libraries(da_daemon_client
         daemon-app::memory
         daemon-app::models
         daemon-app::accounts
+        daemon-app::auth
         daemon-app::profiles
         daemon-app::fleet
         daemon-app::automation

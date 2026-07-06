@@ -33,10 +33,11 @@ Item {
             delegate: Rectangle {
                 required property var entry
                 width: ListView.view.width
-                height: 64
+                height: entry.missing === true ? 84 : 64
                 radius: 8
                 color: Theme.surface
-                border.color: entry.active ? Theme.accent : Theme.border
+                border.color: entry.missing === true ? Theme.danger
+                                                     : (entry.active ? Theme.accent : Theme.border)
                 border.width: entry.active ? 2 : 1
 
                 RowLayout {
@@ -88,14 +89,42 @@ Item {
                             }
                             font.family: FontIcons.mono; font.pixelSize: 11; color: Theme.textMuted
                         }
+                        // A6 (CON-14): the cataloged artifact is gone from disk — an explicit
+                        // missing state (the node keeps the record; a silent fallback would
+                        // strand the profile pointing at nothing).
+                        Text {
+                            visible: entry.missing === true
+                            text: qsTr("Model missing — the file was moved or deleted.")
+                            font.family: FontIcons.display; font.pixelSize: 11
+                            color: Theme.danger
+                            Layout.fillWidth: true; elide: Text.ElideRight
+                        }
                     }
 
+                    // A6: re-acquire the artifact from its source repo/file (the record keeps
+                    // both), restoring the profile's model without touching its spec.
+                    Kit.TextButton {
+                        visible: entry.missing === true && !!entry.repo && !!entry.file
+                        text: qsTr("Re-download")
+                        accentFilled: true
+                        onClicked: ModelCatalog.downloadFile(entry.repo, entry.file)
+                    }
+                    // A5 (CON-13): re-quantize an installed LOCAL model (switch the size/quality
+                    // trade-off after the fact); opens the shared quant picker scoped to the
+                    // repo, whose Download action is re-pointed at ModelQuantize by the host
+                    // page (ModelsPage's requantize mode).
+                    Kit.TextButton {
+                        visible: entry.local === true && entry.projector !== true
+                                 && entry.missing !== true && !!entry.repo
+                        text: qsTr("Re-quantize…")
+                        onClicked: root.requantizeRequested(entry.repo, entry.file)
+                    }
                     Kit.TextButton {
                         // Projector companions are not activatable: the node would reject them
                         // ("X is a vision projector (mmproj), not a chat model").
                         visible: entry.projector !== true
                         text: entry.active ? qsTr("Active") : qsTr("Activate")
-                        enabled: !entry.active
+                        enabled: !entry.active && entry.missing !== true
                         onClicked: ModelCatalog.activate(entry.id)
                     }
                     Kit.IconButton {
@@ -108,4 +137,8 @@ Item {
             }
         }
     }
+
+    // A5: the host page opens the re-quantization picker for `repo` (sourceFile preselects the
+    // installed artifact the job should shrink).
+    signal requantizeRequested(string repo, string sourceFile)
 }

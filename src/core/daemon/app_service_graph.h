@@ -8,6 +8,10 @@
 namespace accounts {
 class IAccountsService;
 }
+namespace auth {
+class AuthFlowController;
+class IAuthFlowService;
+} // namespace auth
 namespace automation {
 class ICronStore;
 class IRoutingStore;
@@ -68,6 +72,7 @@ namespace daemonapp::daemon {
 
 class AcpRepository;
 class ApprovalRepository;
+class AuthRepository;
 class FleetRepository;
 class TransportRepository;
 class CheckpointRepository;
@@ -138,6 +143,12 @@ struct AppServiceGraph {
     // The ACP agent catalog (foreign engines; wire v23): backs the new-agent dialog's engine
     // picker. Constructed with the other repositories (inert without a connection).
     AcpRepository* acp = nullptr;
+    // Interactive auth (app-wizard-auth stream): the AuthBegin/AuthComplete wire seam (Daemon
+    // mode only), the seam interface (daemon adapter or mock), and the shared flow view-model
+    // both front ends bind (the GUI AuthFlowSheet / TUI auth panel).
+    AuthRepository* authRepository = nullptr;
+    auth::IAuthFlowService* authFlow = nullptr;
+    auth::AuthFlowController* authFlowController = nullptr;
     // The node-wide event feed consumer (L3): owns the single EventsSince stream + routes
     // notifications. Non-null only in Daemon mode.
     SubscriptionManager* subscriptions = nullptr;

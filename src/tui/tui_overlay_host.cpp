@@ -133,13 +133,95 @@ void TuiOverlayHost::openModelDownload(models::IModelCatalog* catalog,
     QVector<PaletteDialog::Item> items;
     if (disc != nullptr) {
         for (const QVariantMap& r : disc->rows()) {
-            items.push_back({r.value(QStringLiteral("repo")).toString(),
-                             r.value(QStringLiteral("name")).toString(),
-                             r.value(QStringLiteral("params")).toString()});
+            // A4 (CON-12): mark gated repos up front (license/token needed before a pull),
+            // parity with the GUI discover badge.
+            const bool gated = r.value(QStringLiteral("gated")).toBool();
+            items.push_back(
+                {r.value(QStringLiteral("repo")).toString(),
+                 r.value(QStringLiteral("name")).toString() + (gated ? tr("  [gated]") : QString()),
+                 r.value(QStringLiteral("params")).toString()});
         }
     }
     m_modelDiscover->setItems(items);
     m_modelDiscover->openCentered();
+}
+
+void TuiOverlayHost::openRequantize(models::IModelCatalog* catalog,
+                                    const std::function<void()>& onChange) {
+    if (catalog == nullptr) {
+        return;
+    }
+    if (m_requantSource == nullptr) {
+        m_requantSource =
+            new PaletteDialog(tr("Re-quantize \u2014 pick an installed model"), m_parent);
+    }
+    if (m_requantTarget == nullptr) {
+        m_requantTarget = new PaletteDialog(tr("Choose a target quantization"), m_parent);
+    }
+    // Step 1: installed LOCAL models (projectors are never quantize sources). The item id
+    // carries "repo\nfile" so step 2 can scope both without a lookup.
+    QVector<PaletteDialog::Item> sources;
+    auto* installed = qobject_cast<uimodels::VariantListModel*>(catalog->installed());
+    if (installed != nullptr) {
+        for (const QVariantMap& m : installed->rows()) {
+            if (!m.value(QStringLiteral("local")).toBool() ||
+                m.value(QStringLiteral("projector")).toBool() ||
+                m.value(QStringLiteral("repo")).toString().isEmpty()) {
+                continue;
+            }
+            sources.push_back({m.value(QStringLiteral("repo")).toString() + QLatin1Char('\n') +
+                                   m.value(QStringLiteral("file")).toString(),
+                               m.value(QStringLiteral("name")).toString(),
+                               m.value(QStringLiteral("quant")).toString()});
+        }
+    }
+    disconnect(m_requantSource, &PaletteDialog::activated, this, nullptr);
+    connect(m_requantSource, &PaletteDialog::activated, this,
+            [this, catalog, onChange](const QString& sourceId) {
+                const QStringList parts = sourceId.split(QLatin1Char('\n'));
+                const QString repo = parts.value(0);
+                const QString sourceFile = parts.value(1);
+                // Step 2: the repo's quant ladder (ModelFiles); single-shot on filesChanged, same
+                // shape as the download flow's quant palette.
+                catalog->repoFiles(repo);
+                disconnect(m_requantTarget, &PaletteDialog::activated, this, nullptr);
+                connect(m_requantTarget, &PaletteDialog::activated, this,
+                        [catalog, repo, sourceFile, onChange](const QString& quant) {
+                            catalog->quantizeModel(repo, quant, sourceFile);
+                            if (onChange) {
+                                onChange();
+                            }
+                        });
+                auto* conn = new QMetaObject::Connection;
+                *conn = connect(
+                    catalog, &models::IModelCatalog::filesChanged, this,
+                    [this, catalog, repo, conn](const QString& loadedRepo) {
+                        if (loadedRepo != repo) {
+                            return;
+                        }
+                        QObject::disconnect(*conn);
+                        delete conn;
+                        QVector<PaletteDialog::Item> items;
+                        auto* files = qobject_cast<uimodels::VariantListModel*>(catalog->files());
+                        if (files != nullptr) {
+                            for (const QVariantMap& f : files->rows()) {
+                                const QString quant = f.value(QStringLiteral("quant")).toString();
+                                // Quantize targets a quant LABEL; skip label-less
+                                // artifacts + projector companions.
+                                if (quant.isEmpty() ||
+                                    f.value(QStringLiteral("isMmproj")).toBool()) {
+                                    continue;
+                                }
+                                items.push_back({quant, quant,
+                                                 f.value(QStringLiteral("sizeLabel")).toString()});
+                            }
+                        }
+                        m_requantTarget->setItems(items);
+                        m_requantTarget->openCentered();
+                    });
+            });
+    m_requantSource->setItems(sources);
+    m_requantSource->openCentered();
 }
 
 void TuiOverlayHost::openFileFinder(

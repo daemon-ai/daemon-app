@@ -11,8 +11,8 @@ import DaemonApp.Pages
 // "+ New agent" (A7 + foreign engines): the Daemon-Kit-themed create-agent dialog, extracted from
 // Sidebar.qml so the sidebar only instantiates it.
 //
-// Structure: a required Name field + an ENGINE picker listing "daemon-core" (the native engine,
-// default) plus every ACP catalog entry (AcpAgents / wire v23) with installed badges.
+// Structure: a required Name field + the SHARED AgentTypePicker (native + ACP catalog with
+// installed badges — the same component the first-run wizard mounts, so they cannot drift).
 //   - daemon-core: embeds the SHARED node-driven AgentInferencePicker (provider -> key -> model;
 //     a FROZEN component) + optional persona, and commits through the SAME node-authoritative
 //     path as before: ProfileCreate -> configure provider/model/base-url (+ key + persona) ->
@@ -28,57 +28,21 @@ Kit.Dialog {
     acceptText: qsTr("Create")
     closePolicy: QQC.Popup.CloseOnEscape
 
-    // The selected engine: "" = daemon-core (native); otherwise the ACP catalog agent name.
-    property string engineAgent: ""
-    // Whether the selected foreign agent is installed (accept-gate half for the foreign path).
-    property bool engineAgentInstalled: false
-    // The ACP catalog rows ({name, source, installed, version}); re-read on catalogRefreshed —
-    // AcpAgents.agents() is a plain Q_INVOKABLE, not a reactive binding (mirrors the picker's
-    // ProviderCatalog handling). Absent facade (mock mode / harnesses) => native only.
-    property var acpRows: []
+    // Mirrors of the shared picker's selection (read by the accept gate + commit).
+    readonly property string engineAgent: enginePicker.engineAgent
+    readonly property bool engineAgentInstalled: enginePicker.engineAgentInstalled
+    readonly property bool nativeEngine: enginePicker.nativeEngine
 
-    readonly property bool nativeEngine: engineAgent.length === 0
     acceptEnabled: nameField.text.trim().length > 0
                    && (nativeEngine ? agentPicker.inferenceComplete
                                     : engineAgentInstalled)
 
-    function refreshAcpRows() {
-        root.acpRows = (typeof AcpAgents !== "undefined" && AcpAgents) ? AcpAgents.agents() : [];
-        if (!root.nativeEngine) {
-            // Re-validate the current selection against the fresh catalog (it may have vanished
-            // or flipped installed-ness).
-            var still = false;
-            for (var i = 0; i < root.acpRows.length; ++i)
-                if (root.acpRows[i].name === root.engineAgent) {
-                    still = true;
-                    root.engineAgentInstalled = root.acpRows[i].installed === true;
-                }
-            if (!still)
-                root.selectEngine("", false);
-        }
-    }
-
-    function selectEngine(agent, installed) {
-        root.engineAgent = agent;
-        root.engineAgentInstalled = installed === true;
-    }
-
     function openForm() {
         nameField.text = "";
         personaField.text = "";
-        root.selectEngine("", false);
-        if (typeof AcpAgents !== "undefined" && AcpAgents)
-            AcpAgents.refreshCatalog(); // fresh installed badges each open
-        root.refreshAcpRows();
+        enginePicker.refresh(); // native default + fresh catalog/discovery badges each open
         nameField.forceActiveFocus();
         open();
-    }
-
-    Connections {
-        target: (typeof AcpAgents !== "undefined" && AcpAgents) ? AcpAgents : null
-        function onCatalogRefreshed() {
-            root.refreshAcpRows();
-        }
     }
 
     onAccepted: {
@@ -101,16 +65,25 @@ Kit.Dialog {
         if (!agentPicker.inferenceComplete)
             return;
         var fields = {};
-        var desc = (ProviderCatalog && agentPicker.providerId.length > 0)
-                   ? ProviderCatalog.descriptorFor(agentPicker.providerId) : ({});
-        // Persist the ProviderSelector wire string + base URL from the node descriptor (never a
-        // hardcoded provider); the model is the picker's selection (never free text).
-        if (desc && desc.wireSelector)
-            fields.provider = desc.wireSelector;
-        if (agentPicker.model.length > 0)
+        // A1 (CON-10): a custom endpoint pins genai's OpenAI-compatible adapter ("daemon_api")
+        // at the user-supplied base URL with a typed model — there is no catalog descriptor.
+        if (agentPicker.customEndpoint) {
+            fields.provider = "daemon_api";
             fields.model = agentPicker.model;
-        if (desc && desc.defaultBaseUrl && desc.defaultBaseUrl.length > 0)
-            fields.baseUrl = desc.defaultBaseUrl;
+            fields.baseUrl = agentPicker.customBaseUrl.trim();
+        } else {
+            var desc = (ProviderCatalog && agentPicker.providerId.length > 0)
+                       ? ProviderCatalog.descriptorFor(agentPicker.providerId) : ({});
+            // Persist the ProviderSelector wire string + base URL from the node descriptor
+            // (never a hardcoded provider); the model is the picker's selection (never free
+            // text).
+            if (desc && desc.wireSelector)
+                fields.provider = desc.wireSelector;
+            if (agentPicker.model.length > 0)
+                fields.model = agentPicker.model;
+            if (desc && desc.defaultBaseUrl && desc.defaultBaseUrl.length > 0)
+                fields.baseUrl = desc.defaultBaseUrl;
+        }
         if (personaField.text.trim().length > 0)
             fields.systemPrompt = personaField.text.trim();
         // ONE full-spec ProfileCreate (same seam as the wizard): the node dispatches pipelined
@@ -139,75 +112,10 @@ Kit.Dialog {
         }
 
         SectionLabel { text: qsTr("Engine") }
-        ListView {
-            id: engineList
+        // The SHARED native-vs-foreign picker (also the wizard's agent-type step).
+        AgentTypePicker {
+            id: enginePicker
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.min(contentHeight, 132)
-            clip: true
-            // Row 0 is always the native engine; catalog rows follow.
-            model: 1 + root.acpRows.length
-            delegate: Rectangle {
-                id: engineRow
-                required property int index
-                readonly property bool isNative: index === 0
-                readonly property var acp: isNative ? ({}) : root.acpRows[index - 1]
-                readonly property bool isInstalled: !isNative && acp.installed === true
-                readonly property bool selected: isNative ? root.nativeEngine
-                                                          : root.engineAgent === acp.name
-                width: ListView.view ? ListView.view.width : 0
-                height: 30
-                radius: 6
-                color: engineRow.selected ? Theme.hover : "transparent"
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 8
-                    spacing: 8
-                    Text {
-                        text: engineRow.isNative
-                              ? qsTr("daemon-core (native)")
-                              : engineRow.acp.name
-                                + (engineRow.acp.version && engineRow.acp.version.length > 0
-                                   ? qsTr("  ·  ACP %1").arg(engineRow.acp.version) : "")
-                        font.family: FontIcons.display
-                        font.pixelSize: 12
-                        color: (engineRow.isNative || engineRow.isInstalled) ? Theme.text
-                                                                             : Theme.textMuted
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
-                    // Installed badge for catalog rows (the native engine is always available).
-                    Rectangle {
-                        visible: !engineRow.isNative
-                        radius: 4
-                        color: "transparent"
-                        border.width: 1
-                        border.color: engineRow.isInstalled ? Theme.stateRunning : Theme.border
-                        implicitWidth: badgeText.implicitWidth + 12
-                        implicitHeight: 18
-                        Text {
-                            id: badgeText
-                            anchors.centerIn: parent
-                            text: engineRow.isInstalled ? qsTr("installed")
-                                                        : qsTr("not installed")
-                            font.family: FontIcons.display
-                            font.pixelSize: 10
-                            color: engineRow.isInstalled ? Theme.stateRunning : Theme.textMuted
-                        }
-                    }
-                }
-                TapHandler {
-                    onTapped: {
-                        // An uninstalled foreign agent stays visible but unselectable (the badge
-                        // explains why); selecting row 0 returns to the native engine.
-                        if (engineRow.isNative)
-                            root.selectEngine("", false);
-                        else if (engineRow.isInstalled)
-                            root.selectEngine(engineRow.acp.name, true);
-                    }
-                }
-            }
         }
 
         // Native engine: the SHARED node-driven provider/model/key picker (A7; FROZEN component)

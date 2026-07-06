@@ -3,6 +3,7 @@
 
 #include "tui_dialogs.h"
 
+#include "agent_type_view.h"
 #include "daemon/repositories.h"
 #include "profiles/iprofile_store.h"
 
@@ -116,7 +117,7 @@ ConfirmDialog::ConfirmDialog(const QString& title, const QString& message, Tui::
 
 NewAgentDialog::NewAgentDialog(profiles::IProfileStore* profiles,
                                daemonapp::daemon::AcpRepository* acp, Tui::ZWidget* parent)
-    : Tui::ZDialog(parent), m_profiles(profiles), m_acp(acp) {
+    : Tui::ZDialog(parent), m_profiles(profiles) {
     setOptions(Tui::ZWindow::DeleteOnClose);
     setWindowTitle(tr("New agent"));
     setContentsMargins({2, 1, 2, 1});
@@ -129,7 +130,8 @@ NewAgentDialog::NewAgentDialog(profiles::IProfileStore* profiles,
     layout->addWidget(m_name);
 
     layout->addWidget(new Tui::ZLabel(tr("Engine (Enter to pick):"), this));
-    m_engines = new Tui::ZListView(this);
+    // The shared native+ACP picker projection (installed markers; same rows as the GUI).
+    m_engines = new AgentTypeView(acp, this);
     layout->addWidget(m_engines);
     layout->addSpacing(1);
 
@@ -145,35 +147,9 @@ NewAgentDialog::NewAgentDialog(profiles::IProfileStore* profiles,
     connect(create, &Tui::ZButton::clicked, this, &NewAgentDialog::commit);
     connect(cancel, &Tui::ZButton::clicked, this, &Tui::ZDialog::reject);
 
-    if (m_acp != nullptr) {
-        // Re-list when the catalog answers (the refresh below), keeping the stub live-updating.
-        connect(m_acp, &daemonapp::daemon::AcpRepository::catalogRefreshed, this,
-                &NewAgentDialog::rebuildEngines);
-        m_acp->refreshCatalog();
-    }
-    rebuildEngines();
+    m_engines->refresh(); // fresh catalog + discovery badges each open
     m_name->setFocus();
     setGeometry(QRect(0, 0, 52, 14));
-}
-
-void NewAgentDialog::rebuildEngines() {
-    if (m_engines == nullptr) {
-        return;
-    }
-    const int keep = m_engines->currentIndex().isValid() ? m_engines->currentIndex().row() : 0;
-    m_agents.clear();
-    QStringList items{tr("daemon-core (native)")};
-    if (m_acp != nullptr) {
-        for (const daemonapp::daemon::DecodedAcpAgentEntry& e : m_acp->entries()) {
-            m_agents << e.name;
-            items << e.name;
-        }
-    }
-    m_engines->setItems(items);
-    if (m_engines->model() != nullptr) {
-        const int row = qBound(0, keep, static_cast<int>(items.size()) - 1);
-        m_engines->setCurrentIndex(m_engines->model()->index(row, 0));
-    }
 }
 
 void NewAgentDialog::commit() {
@@ -181,14 +157,15 @@ void NewAgentDialog::commit() {
     if (name.isEmpty() || m_profiles == nullptr) {
         return;
     }
-    const int row = (m_engines != nullptr && m_engines->currentIndex().isValid())
-                        ? m_engines->currentIndex().row()
-                        : 0;
-    // Row 0 = the native engine (plain create; provider/model configured on the Profile page);
-    // rows 1.. = a foreign ACP agent (the named ProfileCreate carries engine=Acp{agent}).
-    const QString id = row <= 0 || row > m_agents.size()
-                           ? m_profiles->createProfile(name)
-                           : m_profiles->createAcpProfile(name, m_agents.at(row - 1));
+    // Parity with the GUI accept gate: an uninstalled foreign row is not committable.
+    if (m_engines != nullptr && !m_engines->selectionValid()) {
+        return;
+    }
+    const QString agent = m_engines != nullptr ? m_engines->selectedAgent() : QString();
+    // Empty agent = the native engine (plain create; provider/model configured on the Profile
+    // page); otherwise a foreign ACP agent (the named ProfileCreate carries engine=Acp{agent}).
+    const QString id = agent.isEmpty() ? m_profiles->createProfile(name)
+                                       : m_profiles->createAcpProfile(name, agent);
     if (id.isEmpty()) {
         return;
     }

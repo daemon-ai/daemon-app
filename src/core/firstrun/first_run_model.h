@@ -7,6 +7,8 @@
 #include <QObject>
 #include <QString>
 
+class QTimer;
+
 namespace settings {
 class ISettingsStore;
 }
@@ -34,6 +36,11 @@ namespace firstrun {
 //                 boot only); returns to `connect` on failure
 //   auth     -> the login form when the node requires SASL credentials (between
 //               connecting and inference); a wrong password keeps this phase + error
+//   agenttype -> the native-vs-foreign engine step (CON-16), gated ahead of the
+//                inference step and shown only when the node offers foreign ACP
+//                agents (setAgentTypeOffered); native proceeds to `inference`,
+//                a foreign choice commits engine=Acp{agent} and skips
+//                provider/model entirely (the agent brings its own model)
 //   inference -> the inference/catalog gate (a default model must be reachable)
 //   done     -> setup complete; the shell is shown and never gated again
 //
@@ -79,6 +86,24 @@ public:
 
     // Compute the initial phase from persisted setupComplete. Call once at boot.
     Q_INVOKABLE void begin();
+    // Whether the wizard offers the agent-type step (CON-16): true when the node's ACP catalog /
+    // discovery reflected at least one foreign agent. Set from OUTSIDE (the service graph wires
+    // the ACP repository's catalogRefreshed to this; firstrun cannot link the daemon layer). The
+    // step is decided when the connect-ready gate routes into the wizard; a catalog landing
+    // AFTER that decision does not yank an in-progress step (foreign agents stay reachable via
+    // the "+ New agent" dialog).
+    Q_INVOKABLE void setAgentTypeOffered(bool offered);
+    [[nodiscard]] bool agentTypeOffered() const { return m_agentTypeOffered; }
+    // The agent-type step's commit (CON-16). Empty `acpAgent` = the native engine: advance to
+    // the inference step unchanged. Non-empty = a foreign ACP agent: applyAcpChoice(name, agent)
+    // is the full commit (no provider/model/key applies).
+    Q_INVOKABLE void chooseAgentType(const QString& acpAgent);
+    // Foreign-agent commit (CON-16): ONE named ProfileCreate carrying engine=Acp{agent} (the
+    // catalog NAME; recipes stay node-side), sequenced on fresh reflections exactly like the
+    // native named path (create -> reflect -> setDefault -> drop the seeded placeholder ->
+    // reflect default -> finish). No credential/model frames. Empty/blank `name` falls back to
+    // the agent name.
+    Q_INVOKABLE void applyAcpChoice(const QString& name, const QString& acpAgent);
     // The inference gate's "Continue" - records that an inference model is ready
     // and advances to done (persisting setupComplete).
     Q_INVOKABLE void completeInference();
@@ -93,8 +118,17 @@ public:
     // path finishes only once the node reflects the new active default so the first chat's
     // SessionCreate binds the NEW agent. A no-op that just finishes when no profile store is
     // wired.
+    //
+    // A1 (CON-10 custom endpoint): a non-empty `customBaseUrl` marks a self-hosted
+    // OpenAI-compatible endpoint — the profile persists provider="daemon_api" (genai's
+    // OpenAI-compatible adapter pinned at the base URL; NEVER the model-name-inferred GenAi
+    // wire, which would mis-infer e.g. Anthropic framing against a vLLM server) + the
+    // user-supplied base URL + the user-typed model. No catalog descriptor applies, so the
+    // key gate and the A7 probe stay permissive there (no wire op can list an arbitrary
+    // endpoint's models); the send-time nudge (reenterProvider) is the honest failure path.
     Q_INVOKABLE void applyInferenceChoice(const QString& providerId, const QString& model,
-                                          const QString& key, const QString& name = QString());
+                                          const QString& key, const QString& name = QString(),
+                                          const QString& customBaseUrl = QString());
     // Submit interactive credentials while in the `auth` phase (routes to the connection seam's
     // login()). On success the connection reaches ready and the gate advances to inference.
     Q_INVOKABLE void submitLogin(const QString& username, const QString& password);
@@ -115,6 +149,11 @@ public:
     Q_INVOKABLE void skip();
     // Re-run onboarding from settings (used by a "reset setup" affordance).
     Q_INVOKABLE void restart();
+    // CON-8 (A7): re-enter the wizard AT the provider/inference step from a live shell — the
+    // send-time "no provider configured" nudge's deep link. Unlike restart() it neither clears
+    // setupComplete nor re-runs the connect step; finishing (or skipping) re-persists
+    // setupComplete and returns to the shell.
+    Q_INVOKABLE void reenterProvider();
 
 signals:
     void phaseChanged();
@@ -139,7 +178,22 @@ private:
     void evaluateWizardGate();
     // The apply body, run on a fresh ProfileList reflection (see applyInferenceChoice).
     void applyReflectedInferenceChoice(const QString& providerId, const QString& model,
-                                       const QString& key, const QString& name);
+                                       const QString& key, const QString& name,
+                                       const QString& customBaseUrl);
+    // The ACP apply body, run on a fresh ProfileList reflection (see applyAcpChoice).
+    void applyReflectedAcpChoice(const QString& name, const QString& acpAgent);
+    // A7 finish-gate honesty (CON-7/CON-15): before setSetupComplete, prove the committed
+    // provider actually serves models — ONE real ProviderModels-class listing through the
+    // configured credential (`credentialRef` = the committed profile id; local engines count
+    // only real "model" rows, never the synthetic Discover row). Success -> finish(); an empty
+    // listing / timeout keeps the wizard open with an actionable error. No catalog wired stays
+    // permissive (mock/standalone).
+    void probeThenFinish(const QString& providerId, const QString& credentialRef);
+    // Whether the wizard is inside a committable step (the continuation-abandon guard: Skip /
+    // restart leaves these phases, so a stale apply must not fire post-done).
+    [[nodiscard]] bool inCommitPhase() const {
+        return m_phase == QStringLiteral("inference") || m_phase == QStringLiteral("agenttype");
+    }
     // ModelActivate a LOCALLY INSTALLED `model` for the explicit `profileId` (no-op for cloud
     // models / no catalog): the profile spec alone does not make the local provider load it.
     void activateLocalModel(const QString& model, const QString& profileId);
@@ -182,6 +236,12 @@ private:
     // last re-arm; the blocking reason after a failed validation.
     bool m_keyProven = false;
     QString m_keyGateMessage;
+    // CON-16: whether the node offered foreign ACP agents (drives the agenttype step).
+    bool m_agentTypeOffered = false;
+    // A7: the finish probe in flight (provider id being proven; empty = none) + its timeout.
+    QString m_probeProviderId;
+    QTimer* m_probeTimeout = nullptr;
+    QMetaObject::Connection m_probeConnection;
 };
 
 } // namespace firstrun

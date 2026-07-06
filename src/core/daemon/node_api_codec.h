@@ -582,6 +582,69 @@ struct DecodedFleetReport {
     QStringList children;
 };
 
+// --- Interactive auth (AuthProviders / AuthBegin / AuthComplete; app-wizard-auth stream) --------
+// One family the node offers interactive auth for (AuthProviders -> [AuthProviderInfo]). The
+// params schema drives the begin form (e.g. Matrix SSO wants a `homeserver`).
+struct DecodedAuthParamField {
+    QString key;
+    QString label;
+    bool required = false;
+};
+
+struct DecodedAuthProviderInfo {
+    QString family;                            // e.g. "matrix"
+    QString flowKind;                          // "MatrixSso" | "OAuth2Pkce"
+    QString displayName;                       // human label
+    QList<DecodedAuthParamField> paramsSchema; // required/optional begin params
+};
+
+// A parked flow handle (AuthBegin -> AuthBegun). The client opens `authorizationUrl` in a browser
+// and later completes with the captured redirect; `expiresAt` (unix seconds) is the flow TTL.
+struct DecodedAuthBeginResponse {
+    QString flowId;
+    QString authorizationUrl;
+    QString redirectUri;
+    quint64 expiresAt = 0;
+    QString flowKind; // "MatrixSso" | "OAuth2Pkce"
+};
+
+// A finished flow (AuthComplete -> AuthCompleted): where the credential blob landed + the resolved
+// account identity. The client never sees the secret itself.
+struct DecodedAuthCompleteResponse {
+    QString credentialRef;
+    QString accountLabel;
+    QString transportInstance;
+    bool hasBoundProfile = false;
+    QString boundProfile;
+};
+
+// --- Local re-quantization (ModelQuantize/ModelQuantizes; A5) ------------------------------------
+// A point-in-time quantize job snapshot (ModelQuantizes -> [QuantizeStatus]); mirrors
+// DecodedDownloadStatus so the jobs UI renders both with one idiom.
+struct DecodedQuantizeStatus {
+    quint64 id = 0;
+    QString repo;
+    QString sourceFile;
+    QString targetQuant;
+    QString state;      // "Queued"|"Preparing"|"Quantizing"|"Completed"|"Failed"
+    QString outputPath; // set when Completed
+    QString modelId;    // the cataloged id of the produced model, when Completed
+    QString error;      // set when Failed
+};
+
+// --- GGUF introspection (ModelInspect; A6 ghost probe) -------------------------------------------
+// The node-read GGUF metadata for an installed model. The ghost-model probe only needs the call to
+// SUCCEED (an Error reply on a cataloged id means the artifact is unreadable/missing on disk);
+// the metadata itself backs provenance display.
+struct DecodedGgufInfo {
+    QString architecture;
+    QString name;
+    QString fileType;
+    bool hasContextLength = false;
+    quint32 contextLength = 0;
+    quint64 sizeBytes = 0;
+};
+
 enum class ApiResponseKind {
     Unknown,
     Health,
@@ -627,6 +690,13 @@ enum class ApiResponseKind {
     ModelCatalog,
     ModelRecommend,
     AcpCatalog,
+    // app-wizard-auth stream additions (appended; keep ordering append-only for sibling merges).
+    AuthProviders,
+    AuthBegun,
+    AuthCompleted,
+    ModelQuantizeStarted,
+    ModelQuantizes,
+    ModelInspect,
 };
 
 // Thin C++ facade over the zcbor-generated NodeApi codec (codec/generated). The generated C is
@@ -1059,6 +1129,56 @@ public:
     // Decode a SessionSearch response (CHA-8) into hits.
     static bool decodeSessionSearch(const QByteArray& responseCbor,
                                     QList<DecodedSessionSearchHit>* out);
+
+    // --- app-wizard-auth stream (appended as one block for sibling-merge friendliness) --------
+    //
+    // Interactive auth (begin -> browser -> complete; daemon-interactive-auth-spec.md). The op
+    // name strings live ONLY here + in AuthRepository so the announced Acp*/Auth* wire renames
+    // stay mechanical.
+    // Discover which families support interactive auth (AuthProviders -> [AuthProviderInfo]).
+    [[nodiscard]] static QByteArray encodeAuthProvidersRequest();
+    // Begin a flow: the daemon mints an authorization URL against the CLIENT-owned `redirectUri`
+    // and parks the pending flow. `params` is the family-specific string map (Matrix SSO:
+    // {homeserver}). A non-empty `bindProfile` asks the node to bind the resulting account to
+    // that profile on success (`bindCredentialRef` optionally names the CredentialStore key).
+    [[nodiscard]] static QByteArray encodeAuthBeginRequest(const QString& family,
+                                                           const QVariantMap& params,
+                                                           const QString& redirectUri,
+                                                           const QString& bindProfile = QString(),
+                                                           const QString& bindCredentialRef = {});
+    // Finish a flow from the captured redirect (full URL or query string). Single-use flow_id.
+    [[nodiscard]] static QByteArray encodeAuthCompleteRequest(const QString& flowId,
+                                                              const QString& callback);
+    // Drop a pending flow early (user cancelled). Idempotent node-side.
+    [[nodiscard]] static QByteArray encodeAuthCancelRequest(const QString& flowId);
+    static bool decodeAuthProviders(const QByteArray& responseCbor,
+                                    QList<DecodedAuthProviderInfo>* out);
+    static bool decodeAuthBegun(const QByteArray& responseCbor, DecodedAuthBeginResponse* out);
+    static bool decodeAuthCompleted(const QByteArray& responseCbor,
+                                    DecodedAuthCompleteResponse* out);
+
+    // ACP discovery (a fresh PATH/endpoint scan; the response reuses the AcpCatalog shape, so
+    // decodeAcpCatalog reads it). Zero-arg.
+    [[nodiscard]] static QByteArray encodeAcpDiscoverRequest();
+
+    // Local re-quantization (A5): start a quantize job for `repo` toward `targetQuant`
+    // (ModelQuantize -> ModelQuantizeStarted). Empty `sourceFile` lets the node pick the best
+    // installed source; empty `revision` = main.
+    [[nodiscard]] static QByteArray encodeModelQuantizeRequest(const QString& repo,
+                                                               const QString& targetQuant,
+                                                               const QString& sourceFile = {},
+                                                               const QString& revision = {});
+    // Poll all quantize jobs (ModelQuantizes -> [QuantizeStatus]).
+    [[nodiscard]] static QByteArray encodeModelQuantizesRequest();
+    static bool decodeModelQuantizeStarted(const QByteArray& responseCbor, quint64* outId);
+    static bool decodeModelQuantizes(const QByteArray& responseCbor,
+                                     QList<DecodedQuantizeStatus>* out);
+
+    // GGUF introspection (A6 ghost probe): read an installed model's on-disk metadata
+    // (ModelInspect -> GgufInfo). An Error reply for a CATALOGED id is the ghost signal (the
+    // registry keeps records for deleted files).
+    [[nodiscard]] static QByteArray encodeModelInspectRequest(const QString& id);
+    static bool decodeModelInspect(const QByteArray& responseCbor, DecodedGgufInfo* out);
 };
 
 } // namespace daemonapp::daemon
