@@ -159,6 +159,9 @@ signals:
     // An Integrations-section session leaf was activated: open its transcript directly
     // (the shared session leaf, cross-linked to the Fleet tree).
     void sessionActivated(const QString& sessionId);
+    // An UNPINNED external conversation leaf was activated (B4/EIO-8): browse-only — the shell
+    // opens the Channels page (pins stay explicit routing state; no lazy SessionCreate).
+    void conversationActivated(const QString& transport, const QString& conversation);
     // "+ New agent/node" (Fleet header): the user decision is that this opens a working chat, not
     // an inert tree unit. The shell routes it to the same open-a-chat path the wizard-finish first
     // chat uses (a fresh transcript bound to the default profile; the session is minted on the
@@ -194,6 +197,10 @@ private:
         QString presence;   // account presence (else "")
         QString scopeKey;   // ByTransport/ByPeer key when the row has no session leaf
         int scopeType = -1; // domain::NodeType to emit for scopeKey (-1 = none)
+        // Conversation rows (B4): the owning transport instance + conversation id, so an
+        // unpinned leaf's activation can open the Channels page scoped to it.
+        QString txTransport;
+        QString txConversation;
         // Section header rows (Fleet/Tags/Integrations): a stable section id so the
         // whole section folds under its header (else ""). These headers carry
         // hasChildren = true + expanded so GUI/TUI reuse the disclosure plumbing.

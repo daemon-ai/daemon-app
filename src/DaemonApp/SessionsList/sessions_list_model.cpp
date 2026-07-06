@@ -88,6 +88,11 @@ void SessionsListModel::setScope(int nodeType, int tagId, const QString& unitId)
     if (type == NodeType::Archived && m_store != nullptr) {
         m_store->refreshArchivedSessions();
     }
+    // ByTransport scope (B4): membership is node-resolved (SessionScope::ByTransport); fetch on
+    // entry so the account-scoped list projects the node's answer instead of rendering empty.
+    if (type == NodeType::ByTransport && m_store != nullptr && !unitId.isEmpty()) {
+        m_store->refreshSessionsForTransport(unitId);
+    }
     reload();
     emit scopeChanged();
 }

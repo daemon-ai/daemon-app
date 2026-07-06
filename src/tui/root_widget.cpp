@@ -179,6 +179,11 @@ RootWidget::RootWidget()
     // An Integrations-tree session leaf opens its transcript in a pinned tab.
     connect(m_sidebar, &SidebarModel::sessionActivated, this,
             [this](const QString& sessionId) { openSessionPinnedTab(sessionId); });
+    // An UNPINNED external conversation is browse-only (B4): open the Channels page (GUI
+    // parity: Main.qml routes conversationActivated to Nav.open("channels")).
+    connect(
+        m_sidebar, &SidebarModel::conversationActivated, this,
+        [this](const QString&, const QString&) { openManagerPage(QStringLiteral("channels")); });
 
     m_fileTree = new files::FsExplorerModel(this);
     m_fileTree->setService(m_services.fs);

@@ -456,6 +456,11 @@ ApplicationWindow {
                     root.activeSessionId = sessionId;
                     sessionExpanded.open(sessionId);
                 }
+                // An unpinned external conversation is browse-only (B4): open the Channels
+                // page; pinning to an agent stays an explicit RouteDialog act from there.
+                onConversationActivated: function(transport, conversation) {
+                    Nav.open("channels");
+                }
                 // "+ New agent/node" opens a fresh chat via the shared open-a-chat path.
                 onNewChatRequested: App.openNewAgentChat()
             }

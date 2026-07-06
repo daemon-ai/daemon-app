@@ -60,6 +60,12 @@ public:
     // the same reason. Encoder-only (the Archived arm is already in the CDDL).
     void refreshArchivedSessions();
 
+    // Issue a SessionsQuery scoped to `SessionScope::ByTransport(transportId)` (B4/EIO-8): the
+    // sessions routed over one transport instance — the NODE resolves membership (the client
+    // never re-derives it). Rows merge additively; transportSessionsResolved fires ONCE with the
+    // full membership id set so the store can project the ByTransport list scope.
+    void refreshSessionsByTransport(const QString& transportId);
+
     // --- Operator submit (F4/DEL-4, wire-reachable at v28) ------------------------------------
     // Session-addressable Submit ops for ANY session id (delegated children included) — the
     // operator steer/cancel row actions, distinct from the focused tab's DaemonTurnEngine (which
@@ -98,6 +104,8 @@ signals:
     void sessionCreated(const QString& sessionId, const QString& profileId);
     // An operator Submit (startTurn/steer/interrupt) was accepted by the node.
     void submitted(const QString& sessionId);
+    // A ByTransport scope fetch resolved: `sessionIds` is the node-decided membership (B4).
+    void transportSessionsResolved(const QString& transportId, const QSet<QString>& sessionIds);
     // An operator Submit was rejected (node ApiError, e.g. Forbidden for a non-owner) or failed
     // at the transport. Surfaced (toast) instead of silently swallowed.
     void submitFailed(const QString& sessionId, const QString& message);
@@ -113,6 +121,8 @@ private:
     void applyByProfilePage(const QByteArray& responseCbor);
     // Archived page handling (F6): decode + additive upsert (no prune), like ByProfile.
     void applyArchivedPage(const QByteArray& responseCbor);
+    // ByTransport page handling (B4): additive upsert + membership id accumulation.
+    void applyByTransportPage(const QByteArray& responseCbor);
     // Operator Submit reply (F4): non-Error = accepted -> submitted(); Error -> submitFailed().
     void applySubmitReply(const QString& sessionId, const QByteArray& responseCbor);
     void pruneSessionsMissingFrom(const QList<CachedSessionRow>& rows);
@@ -126,6 +136,7 @@ private:
     static constexpr auto kSessionsCorrelation = "repo/sessions-query";
     static constexpr auto kByProfileCorrelation = "repo/sessions-by-profile";
     static constexpr auto kArchivedCorrelation = "repo/sessions-archived";
+    static constexpr auto kByTransportCorrelation = "repo/sessions-by-transport";
     static constexpr auto kCreateCorrelation = "repo/session-create";
     static constexpr auto kUpdateMetaCorrelation = "repo/session-update-meta";
     // Operator Submit correlations carry the target session id (distinct from the turn engine's
@@ -153,9 +164,11 @@ private:
     // loops too, but merges per page (additive, so incremental application is safe — its loop
     // carries only the runaway guard); it needs the profile id to re-issue the continuation.
     PageLoop<CachedSessionRow> m_rosterLoop;
-    PageLoop<CachedSessionRow> m_byProfileLoop; // guard-only (pages merge incrementally)
-    PageLoop<CachedSessionRow> m_archivedLoop;  // guard-only (pages merge incrementally)
+    PageLoop<CachedSessionRow> m_byProfileLoop;   // guard-only (pages merge incrementally)
+    PageLoop<CachedSessionRow> m_archivedLoop;    // guard-only (pages merge incrementally)
+    PageLoop<CachedSessionRow> m_byTransportLoop; // accumulates the membership across pages
     QString m_byProfileId;
+    QString m_byTransportId;
 };
 
 class ProfileRepository : public RepositoryBase {

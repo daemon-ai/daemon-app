@@ -51,6 +51,11 @@ struct TransportTreeRow {
     QString presence; // account rows: PresencePrimitive ("available"/"away"/... ; else "")
     int memberCount = 0; // occupant count badge (0 = none)
     bool hasChildren = false;
+    // Conversation rows (B4): the owning transport instance + the conversation id, so an
+    // UNPINNED leaf's activation can open the Channels page scoped to it (browse-only — pins
+    // stay explicit routing state; no lazy SessionCreate).
+    QString transportId;
+    QString conversationId;
 };
 
 // The DaemonNet seam (daemon-app/docs/multi-protocol-client-surface.md §1): the daemon's network of
@@ -192,6 +197,19 @@ public:
             if (pin.origin.transport.toString() == transport &&
                 pin.origin.scope.kind == domain::OriginScopeKind::Group &&
                 pin.origin.scope.chat == chat) {
+                return pin.session.toString();
+            }
+        }
+        return {};
+    }
+    // The session a (transport, user) DM origin is pinned to ("" when unpinned).
+    [[nodiscard]] Q_INVOKABLE QString pinnedDmSessionFor(const QString& transport,
+                                                         const QString& user) const {
+        const QList<RoutingPin> pins = routes();
+        for (const RoutingPin& pin : pins) {
+            if (pin.origin.transport.toString() == transport &&
+                pin.origin.scope.kind == domain::OriginScopeKind::Dm &&
+                pin.origin.scope.user == user) {
                 return pin.session.toString();
             }
         }

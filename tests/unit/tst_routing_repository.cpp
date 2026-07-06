@@ -318,6 +318,85 @@ private slots:
         // bindingRules() is honestly empty (config-time; no wire read op).
         QVERIFY(net.bindingRules().isEmpty());
     }
+
+    // B4/EIO-8: transportsTree() merges the cached accounts + conversations into the sidebar
+    // Integrations taxonomy (account -> Channels/DMs -> leaves), deduped against the pins — a
+    // pinned conversation IS its session leaf; an unpinned one is a browse-only leaf carrying
+    // the transport+conversation ids for the Channels-page activation.
+    void transportsTreeMergesConversationsAndPins() {
+        const QString sock = m_tmp.filePath(QStringLiteral("rt-tree.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplyPayload(chatRoutesResponse()); // pins: #secops -> s-secops, @bob -> s-bob
+        DaemonTransport transport;
+        transport.setSocketPath(sock);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("rt-tree.db")));
+
+        // Offline-first inputs: one account with two channels + one DM.
+        daemonapp::daemon::CachedTransportInstanceRow acct;
+        acct.transport = QStringLiteral("matrix/@bot:hs.org");
+        acct.family = QStringLiteral("matrix");
+        acct.displayName = QStringLiteral("@bot:hs.org");
+        acct.presence = QStringLiteral("available");
+        QVERIFY(cache.upsertTransportInstance(acct));
+        daemonapp::daemon::CachedConversationRow c1;
+        c1.transport = acct.transport;
+        c1.convId = QStringLiteral("#secops");
+        c1.kind = QStringLiteral("channel");
+        c1.title = QStringLiteral("SecOps");
+        QVERIFY(cache.upsertConversation(c1));
+        daemonapp::daemon::CachedConversationRow c2;
+        c2.transport = acct.transport;
+        c2.convId = QStringLiteral("#dev");
+        c2.kind = QStringLiteral("channel");
+        QVERIFY(cache.upsertConversation(c2));
+        daemonapp::daemon::CachedConversationRow c3;
+        c3.transport = acct.transport;
+        c3.convId = QStringLiteral("@bob:hs.org");
+        c3.kind = QStringLiteral("dm");
+        QVERIFY(cache.upsertConversation(c3));
+
+        daemonapp::daemon::TransportRepository transports(&client, &cache);
+        RoutingRepository routing(&client, &cache);
+        DaemonDaemonNet net(&routing, &transports, nullptr);
+
+        QSignalSpy changed(&net, &daemonnet::IDaemonNet::changed);
+        routing.refreshChats();
+        QTRY_VERIFY_WITH_TIMEOUT(changed.count() >= 1, 3000);
+
+        const auto tree = net.transportsTree();
+        // account + "Channels" group + 2 channels + "DMs" group + 1 dm = 6 rows.
+        QCOMPARE(tree.size(), 6);
+        QCOMPARE(tree.at(0).kind, QStringLiteral("account"));
+        QCOMPARE(tree.at(0).scopeKey, acct.transport); // ByTransport list scope
+        QCOMPARE(tree.at(0).presence, QStringLiteral("available"));
+        QVERIFY(tree.at(0).hasChildren);
+
+        // Pinned channel leaf: ONE row carrying the pinned session (dedup — no duplicate).
+        int secops = -1;
+        int dev = -1;
+        int bob = -1;
+        for (int i = 0; i < tree.size(); ++i) {
+            if (tree.at(i).conversationId == QStringLiteral("#secops")) {
+                secops = i;
+            } else if (tree.at(i).conversationId == QStringLiteral("#dev")) {
+                dev = i;
+            } else if (tree.at(i).conversationId == QStringLiteral("@bob:hs.org")) {
+                bob = i;
+            }
+        }
+        QVERIFY(secops >= 0 && dev >= 0 && bob >= 0);
+        QCOMPARE(tree.at(secops).sessionId, QStringLiteral("s-secops"));
+        QCOMPARE(tree.at(secops).label, QStringLiteral("SecOps"));
+        // Unpinned channel: browse-only leaf (no sessionId) with the activation ids.
+        QVERIFY(tree.at(dev).sessionId.isEmpty());
+        QCOMPARE(tree.at(dev).transportId, acct.transport);
+        QCOMPARE(tree.at(dev).conversationId, QStringLiteral("#dev"));
+        // Pinned DM leaf (dm-scope pin from the fixture).
+        QCOMPARE(tree.at(bob).sessionId, QStringLiteral("s-bob"));
+        QCOMPARE(tree.at(bob).convType, QStringLiteral("dm"));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestRoutingRepository)

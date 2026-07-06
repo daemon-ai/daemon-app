@@ -16,21 +16,24 @@ QByteArray NodeApiCodec::encodeHealthRequest() {
 
 QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 sinceRev,
                                                     const QString& byProfile, const QString& after,
-                                                    bool archivedScope) {
-    // `byProfile`/`after` must outlive the encode: zcbor holds pointers into their UTF-8 bytes.
+                                                    bool archivedScope,
+                                                    const QString& byTransport) {
+    // `byProfile`/`after`/`byTransport` must outlive the encode: zcbor holds pointers into their
+    // UTF-8 bytes.
     const QByteArray profileUtf8 = byProfile.toUtf8();
     const QByteArray afterUtf8 = after.toUtf8();
+    const QByteArray transportUtf8 = byTransport.toUtf8();
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_sessions_query_m_c;
     // Leave limit absent: an empty session-query map asks the daemon for its default (TopLevel)
     // scope, first page. `since_rev` (when set) makes it an L4 delta read. A non-empty `byProfile`
     // sets scope = ByProfile(id) — the per-agent view; `archivedScope` sets scope = Archived
-    // (archived primaries, F6) — both encoder-only (the arms are already in the CDDL session-scope
-    // union). `after` (when set) resumes past the previous page's next_cursor (the wire v24 roster
-    // page loop).
+    // (archived primaries, F6); a non-empty `byTransport` sets scope = ByTransport(id) (B4) — all
+    // encoder-only (the arms are already in the CDDL session-scope union). `after` (when set)
+    // resumes past the previous page's next_cursor (the wire v24 roster page loop).
     request.api_request_request_sessions_query_m = request_sessions_query{};
     session_query& q = request.api_request_request_sessions_query_m.SessionsQuery_query;
-    q.session_query_scope_present = !byProfile.isEmpty() || archivedScope;
+    q.session_query_scope_present = !byProfile.isEmpty() || archivedScope || !byTransport.isEmpty();
     if (!byProfile.isEmpty()) {
         session_scope_r& scope = q.session_query_scope.session_query_scope;
         scope.session_scope_choice = session_scope_r::session_scope_by_profile_m_c;
@@ -41,6 +44,11 @@ QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 si
     } else if (archivedScope) {
         q.session_query_scope.session_query_scope.session_scope_choice =
             session_scope_r::session_scope_Archived_tstr_c;
+    } else if (!byTransport.isEmpty()) {
+        session_scope_r& scope = q.session_query_scope.session_query_scope;
+        scope.session_scope_choice = session_scope_r::session_scope_by_transport_m_c;
+        setZcbor(scope.session_scope_by_transport_m.session_scope_by_transport_ByTransport,
+                 transportUtf8);
     }
     q.session_query_after_present = !after.isEmpty();
     if (!after.isEmpty()) {

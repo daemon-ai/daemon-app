@@ -177,9 +177,77 @@ daemonnet::Resolution DaemonDaemonNet::resolve(const domain::Origin& origin) con
 }
 
 QList<daemonnet::TransportTreeRow> DaemonDaemonNet::transportsTree() const {
-    // B6: inert (empty). The live projection (instances + conversations + pins -> the sidebar
-    // Integrations tree) lands with the roster merge (B4).
-    return daemonnet::MockDaemonNet::transportsTree();
+    // The roster merge (B4/EIO-8): live external conversations appear in the unified sidebar
+    // beside internal sessions — account -> convGroup (Channels/DMs) -> conversation leaves,
+    // following the taxonomy the mock established. Dedup vs pins: a conversation with a
+    // ChatRoute pin renders ONE leaf carrying the pinned sessionId (activation opens the
+    // transcript); an unpinned one is a browse-only leaf (activation opens the Channels page —
+    // pins stay explicit routing state, never a lazy SessionCreate).
+    QList<daemonnet::TransportTreeRow> tree;
+    if (m_transports == nullptr) {
+        return tree;
+    }
+    const QList<CachedTransportInstanceRow> instances = m_transports->cachedInstances();
+    for (const CachedTransportInstanceRow& account : instances) {
+        const QString accountId = QStringLiteral("tx:") + account.transport;
+        const QList<CachedConversationRow> convs =
+            m_transports->cachedConversations(account.transport);
+
+        daemonnet::TransportTreeRow acct;
+        acct.depth = 0;
+        acct.id = accountId;
+        acct.kind = QStringLiteral("account");
+        acct.label = account.displayName.isEmpty() ? account.transport : account.displayName;
+        acct.scopeKey = account.transport; // ByTransport list scope
+        acct.presence = account.presence;
+        acct.hasChildren = !convs.isEmpty();
+        acct.transportId = account.transport;
+        tree.append(acct);
+        if (convs.isEmpty()) {
+            continue;
+        }
+
+        // Split by conversation type: channels/group chats vs 1:1 DMs (the mock's taxonomy).
+        QList<CachedConversationRow> channels;
+        QList<CachedConversationRow> dms;
+        for (const CachedConversationRow& c : convs) {
+            (c.kind == QStringLiteral("dm") ? dms : channels).append(c);
+        }
+        const auto appendGroup = [&](const QString& groupKey, const QString& label,
+                                     const QList<CachedConversationRow>& rows) {
+            if (rows.isEmpty()) {
+                return;
+            }
+            daemonnet::TransportTreeRow group;
+            group.depth = 1;
+            group.id = accountId + QLatin1Char('/') + groupKey;
+            group.parentId = accountId;
+            group.kind = QStringLiteral("convGroup");
+            group.label = label;
+            group.hasChildren = true;
+            group.transportId = account.transport;
+            tree.append(group);
+            for (const CachedConversationRow& c : rows) {
+                daemonnet::TransportTreeRow leaf;
+                leaf.depth = 2;
+                leaf.id = accountId + QStringLiteral("/c/") + c.convId;
+                leaf.parentId = group.id;
+                leaf.kind = QStringLiteral("conversation");
+                leaf.convType = c.kind.isEmpty() ? QStringLiteral("channel") : c.kind;
+                leaf.label = c.title.isEmpty() ? c.convId : c.title;
+                leaf.transportId = account.transport;
+                leaf.conversationId = c.convId;
+                // Pin dedup: a pinned conversation IS its session leaf (one row, no duplicate).
+                leaf.sessionId = c.kind == QStringLiteral("dm")
+                                     ? pinnedDmSessionFor(account.transport, c.convId)
+                                     : pinnedSessionFor(account.transport, c.convId);
+                tree.append(leaf);
+            }
+        };
+        appendGroup(QStringLiteral("ch"), tr("Channels"), channels);
+        appendGroup(QStringLiteral("dm"), tr("DMs"), dms);
+    }
+    return tree;
 }
 
 void DaemonDaemonNet::bindChat(const domain::Origin& origin, const domain::SessionId& session,

@@ -57,6 +57,30 @@ QByteArray okResponse() {
     return b;
 }
 
+// {"SessionPage": {"sessions":[{"session":<id>,"state":"Active"}...], "rev":N}} — keys in CDDL
+// order (the generated decoder reads sequentially).
+QByteArray sessionPageResponse(const QList<QByteArray>& ids, quint64 rev) {
+    using daemonapp::test::cborText;
+    using daemonapp::test::cborTextLen;
+    using daemonapp::test::cborUint;
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "SessionPage");
+    b.append(static_cast<char>(0xA2));
+    cborText(b, "sessions");
+    b.append(static_cast<char>(0x80 | static_cast<char>(ids.size())));
+    for (const QByteArray& id : ids) {
+        b.append(static_cast<char>(0xA2));
+        cborText(b, "session");
+        cborTextLen(b, id);
+        cborText(b, "state");
+        cborText(b, "Active");
+    }
+    cborText(b, "rev");
+    cborUint(b, rev);
+    return b;
+}
+
 } // namespace
 
 // DaemonSessionRoster + DaemonDashboard: offline-first roster from the cache, client-local
@@ -250,6 +274,51 @@ private slots:
         roster.interrupt(QStringLiteral("child-9"));
         QTRY_COMPARE_WITH_TIMEOUT(failed.count(), 1, 3000);
         QCOMPARE(failed.at(0).at(0).toString(), QStringLiteral("not your session"));
+    }
+
+    // B4/EIO-8 ByTransport scope: the fetch goes out as a SessionScope::ByTransport query; the
+    // NODE-resolved membership set backs the scoped list projection (never re-derived locally),
+    // and an unfetched lens honestly projects empty.
+    void byTransportScopeProjectsNodeMembership() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("roster-tx.sock"));
+        daemonapp::test::WireMuxServer fake;
+        fake.setReplyPayload(sessionPageResponse({QByteArrayLiteral("s2")}, 7));
+        QVERIFY2(fake.start(path), "listen");
+
+        DaemonCacheStore cache(dir.filePath(QStringLiteral("r6.db")));
+        QVERIFY(cache.upsertSession(
+            session(QStringLiteral("s1"), QStringLiteral("Local"), QStringLiteral("Active"))));
+        QVERIFY(cache.upsertSession(session(QStringLiteral("s2"), QStringLiteral("Matrix bound"),
+                                            QStringLiteral("Active"))));
+
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        daemonapp::daemon::NodeApiClient client(&transport);
+        daemonapp::daemon::SessionRepository sessions(&client, &cache);
+        CachedSessionStore store(&cache, &sessions);
+
+        // Unfetched lens: honest empty projection (no client-side re-derivation).
+        domain::ListScope scope;
+        scope.type = domain::NodeType::ByTransport;
+        scope.lensKey = QStringLiteral("matrix/@bot:hs.org");
+        QCOMPARE(store.sessions(scope).size(), 0);
+
+        QSignalSpy changed(&store, &persistence::ISessionStore::changed);
+        store.refreshSessionsForTransport(scope.lensKey);
+        QTRY_VERIFY_WITH_TIMEOUT(changed.count() >= 1, 3000);
+
+        // The fetch went out as the canonical ByTransport query.
+        QCOMPARE(fake.callPayloads().first(),
+                 daemonapp::daemon::NodeApiCodec::encodeSessionsQueryRequest(
+                     /*hasSinceRev=*/false, /*sinceRev=*/0, /*byProfile=*/QString(),
+                     /*after=*/QString(), /*archivedScope=*/false, scope.lensKey));
+
+        // The node said: only s2 rides this transport.
+        const QList<domain::Session> scoped = store.sessions(scope);
+        QCOMPARE(scoped.size(), 1);
+        QCOMPARE(scoped.first().sessionId.toString(), QStringLiteral("s2"));
     }
 
     // Dashboard counters derive from the roster + approvals + connection, and react to changes.

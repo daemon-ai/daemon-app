@@ -690,15 +690,17 @@ public:
     // a full page (back-compat / cold cache). A non-empty `byProfile` sets the query scope to
     // `SessionScope::ByProfile(byProfile)` (the per-agent view; the id already exists in the CDDL
     // session-scope union, so this is encoder-only — no contract change). `archivedScope` (F6)
-    // sets scope = `SessionScope::Archived` (archived primaries; mutually exclusive with
-    // `byProfile` — byProfile wins if both are passed).
+    // sets scope = `SessionScope::Archived` (archived primaries). A non-empty `byTransport` (B4)
+    // sets scope = `SessionScope::ByTransport(id)` (the sessions routed over one transport
+    // instance — the node resolves membership; the client never re-derives it). Precedence when
+    // several are passed: byProfile > archived > byTransport.
     // `after` (when non-empty) resumes past the previous page's next_cursor (the roster page
     // loop; wire v24 bounds every page at kWirePageMax).
-    [[nodiscard]] static QByteArray encodeSessionsQueryRequest(bool hasSinceRev = false,
-                                                               quint64 sinceRev = 0,
-                                                               const QString& byProfile = QString(),
-                                                               const QString& after = QString(),
-                                                               bool archivedScope = false);
+    [[nodiscard]] static QByteArray
+    encodeSessionsQueryRequest(bool hasSinceRev = false, quint64 sinceRev = 0,
+                               const QString& byProfile = QString(),
+                               const QString& after = QString(), bool archivedScope = false,
+                               const QString& byTransport = QString());
     // Subscribe to a session's merged log from afterSeq (exclusive), up to max entries.
     [[nodiscard]] static QByteArray encodeSubscribeRequest(const QString& sessionId,
                                                            quint64 afterSeq, quint32 max);

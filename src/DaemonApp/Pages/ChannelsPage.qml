@@ -34,6 +34,17 @@ Item {
         return Theme.iconMuted; // offline / unknown
     }
 
+    // Pin a room to an agent/session (B4/B6): the same RouteDialog the routing manager uses,
+    // driven by a page-local controller over the shared DaemonNet.
+    RoutingManagerController {
+        id: channelsRouting
+        daemonNet: typeof DaemonNet !== "undefined" ? DaemonNet : null
+    }
+    RouteDialog {
+        id: pinDialog
+        controller: channelsRouting
+    }
+
     PageHeader {
         id: header
         anchors.top: parent.top
@@ -201,6 +212,23 @@ Item {
                                         interactive: true
                                         tooltipText: qsTr("Pinned to this session — open the routing manager")
                                         onClicked: Nav.open("routing")
+                                    }
+                                    // Unpinned rooms: pinning is an EXPLICIT act (B4 - no lazy
+                                    // session create) via the shared RouteDialog, preselected to
+                                    // this room's origin (the canonical originKey format from
+                                    // routing_dtos.h: "<transport>|group|<chat>|").
+                                    Kit.Chip {
+                                        visible: roomRow.pinnedSession.length === 0
+                                        text: qsTr("Pin to agent…")
+                                        tone: "muted"
+                                        interactive: true
+                                        tooltipText: qsTr("Route this room's messages to a session")
+                                        onClicked: pinDialog.openFor({
+                                            id: acctRow.modelData.transport + "|group|"
+                                                + roomRow.modelData.id + "|",
+                                            session: "",
+                                            profile: ""
+                                        })
                                     }
                                     Text {
                                         text: modelData.kind

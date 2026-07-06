@@ -88,6 +88,19 @@ void SessionRepository::refreshArchivedSessions() {
         QLatin1String(kArchivedCorrelation));
 }
 
+void SessionRepository::refreshSessionsByTransport(const QString& transportId) {
+    if (client() == nullptr || transportId.isEmpty()) {
+        return;
+    }
+    m_byTransportId = transportId;
+    m_byTransportLoop.reset();
+    client()->sendRequest(
+        NodeApiCodec::encodeSessionsQueryRequest(/*hasSinceRev=*/false, /*sinceRev=*/0,
+                                                 /*byProfile=*/QString(), /*after=*/QString(),
+                                                 /*archivedScope=*/false, transportId),
+        QLatin1String(kByTransportCorrelation));
+}
+
 void SessionRepository::startTurn(const QString& sessionId, const QString& text) {
     if (client() == nullptr || sessionId.isEmpty() || text.isEmpty()) {
         return;
@@ -150,6 +163,8 @@ void SessionRepository::handleResponse(const QString& correlationId,
         applyByProfilePage(responseCbor);
     } else if (correlationId == QLatin1String(kArchivedCorrelation)) {
         applyArchivedPage(responseCbor);
+    } else if (correlationId == QLatin1String(kByTransportCorrelation)) {
+        applyByTransportPage(responseCbor);
     } else if (correlationId == QLatin1String(kCreateCorrelation)) {
         applySessionCreated(responseCbor);
     } else if (correlationId == QLatin1String(kUpdateMetaCorrelation)) {
@@ -283,6 +298,41 @@ void SessionRepository::applyByProfilePage(const QByteArray& responseCbor) {
     emit sessionsRefreshed();
 }
 
+void SessionRepository::applyByTransportPage(const QByteArray& responseCbor) {
+    QList<CachedSessionRow> rows;
+    QString nextCursor;
+    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor, nullptr, nullptr)) {
+        m_byTransportLoop.reset();
+        emit refreshFailed(QStringLiteral("Failed to decode ByTransport SessionPage response"));
+        return;
+    }
+    // Additive merge (no prune) like ByProfile, PLUS membership accumulation: the node decided
+    // which sessions ride this transport, and the store projects the ByTransport list scope from
+    // the resolved id set (the cache row carries no transport column — the set is the scope).
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    for (CachedSessionRow& row : rows) {
+        row.updatedAtMs = now;
+        upsertCachedSession(row);
+    }
+    m_byTransportLoop.items.append(rows);
+    if (!nextCursor.isEmpty() && !m_byTransportId.isEmpty() &&
+        m_byTransportLoop.guard(nextCursor) && client() != nullptr) {
+        client()->sendRequest(
+            NodeApiCodec::encodeSessionsQueryRequest(/*hasSinceRev=*/false, /*sinceRev=*/0,
+                                                     /*byProfile=*/QString(), nextCursor,
+                                                     /*archivedScope=*/false, m_byTransportId),
+            QLatin1String(kByTransportCorrelation));
+        return;
+    }
+    QSet<QString> ids;
+    for (const CachedSessionRow& row : m_byTransportLoop.items) {
+        ids.insert(row.sessionId);
+    }
+    m_byTransportLoop.reset();
+    emit transportSessionsResolved(m_byTransportId, ids);
+    emit sessionsRefreshed();
+}
+
 void SessionRepository::applySessionPage(const QByteArray& responseCbor) {
     QList<CachedSessionRow> rows;
     QString nextCursor;
@@ -391,11 +441,13 @@ void SessionRepository::handleFailure(const QString& correlationId, const QStrin
     }
     if (correlationId == QLatin1String(kSessionsCorrelation) ||
         correlationId == QLatin1String(kByProfileCorrelation) ||
-        correlationId == QLatin1String(kArchivedCorrelation)) {
+        correlationId == QLatin1String(kArchivedCorrelation) ||
+        correlationId == QLatin1String(kByTransportCorrelation)) {
         // A dead page loop must not leak its partial accumulation into the next refresh.
         m_rosterLoop.reset();
         m_byProfileLoop.reset();
         m_archivedLoop.reset();
+        m_byTransportLoop.reset();
         emit refreshFailed(message);
     }
 }
