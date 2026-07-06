@@ -210,7 +210,10 @@ void TurnController::resume() {
     scheduleNext();
 }
 
-void TurnController::respondApproval(const QString& requestId, bool allow) {
+void TurnController::respondApproval(const QString& requestId, bool allow, bool allowPermanent) {
+    // The simulator holds no durable policy, so "allow permanently" plays out exactly like a
+    // one-shot allow; accepted only to satisfy the ITurnEngine seam (wire v28).
+    Q_UNUSED(allowPermanent)
     if (!m_active || !m_paused) {
         return;
     }

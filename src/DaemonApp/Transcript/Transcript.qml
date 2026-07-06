@@ -253,7 +253,7 @@ Rectangle {
             // respondApproval. When no turn is live (a gate in a loaded transcript)
             // there is no result to show — the bar simply clears.
             if (root.turn && root.turn.active) {
-                root.turn.respondApproval(callId, decision === "approved")
+                root.turn.respondApproval(callId, decision === "approved", permanent === true)
             }
         }
 

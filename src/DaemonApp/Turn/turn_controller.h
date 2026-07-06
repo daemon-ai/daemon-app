@@ -48,8 +48,10 @@ public:
     // for the gated tool (ok/stdout on allow, error on deny) and a matching text,
     // then resumes. Front ends never fabricate the result — they render only this
     // (mock) or the node's real ToolFinished stream event (daemon). No-op unless
-    // paused at the gate.
-    void respondApproval(const QString& requestId, bool allow) override;
+    // paused at the gate. `allowPermanent` (wire v28) is accepted for seam parity;
+    // the simulator has no persistent policy, so it plays out the same either way.
+    void respondApproval(const QString& requestId, bool allow,
+                         bool allowPermanent = false) override;
 
 private:
     struct Step {

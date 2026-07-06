@@ -533,7 +533,7 @@ void fillRespondShell(api_request_r* request, const QByteArray& sessionUtf8, qui
 } // namespace
 
 QByteArray NodeApiCodec::encodeRespondApprovalRequest(const QString& sessionId, quint32 requestId,
-                                                      bool allow) {
+                                                      bool allow, bool allowPermanent) {
     const QByteArray sessionUtf8 = sessionId.toUtf8();
     api_request_r request{};
     fillRespondShell(&request, sessionUtf8, requestId);
@@ -541,8 +541,14 @@ QByteArray NodeApiCodec::encodeRespondApprovalRequest(const QString& sessionId, 
         request.api_request_request_respond_m.Respond_response.host_response_body;
     body.host_response_body_t_choice =
         host_response_body_t_r::host_response_body_t_host_response_body_approved_m_c;
-    body.host_response_body_t_host_response_body_approved_m.host_response_body_approved_Approved =
-        allow;
+    host_response_body_approved& approved = body.host_response_body_t_host_response_body_approved_m;
+    approved.Approved_approved = allow;
+    // `allow_permanent` is an optional wire field (wire v28): emit it only for an ALLOW that
+    // chose "allow permanently" on an offered gate. A deny is never persisted, and a plain approve
+    // stays byte-identical to the pre-v28 shape (absent == not permanent).
+    const bool permanent = allow && allowPermanent;
+    approved.Approved_allow_permanent_present = permanent;
+    approved.Approved_allow_permanent.Approved_allow_permanent = permanent;
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }

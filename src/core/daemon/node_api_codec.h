@@ -261,6 +261,10 @@ struct DecodedLogEntry {
     QString hostKind; // "Approval" | "Input" | "Choice" | "Delegate" | "Spawn"
     QString hostPrompt;
     QStringList hostOptions; // Choice options
+    // Approval only (wire v28): the node offered an "allow permanently" resolution for this gate.
+    // Drives the inline "Allow permanently" affordance's visibility — the app never shows it unless
+    // the node advertised it here.
+    bool hostAllowPermanentOffered = false;
 };
 
 // A pending approval (ApprovalsPending -> Approvals). request_id is a STRING here (the aggregate
@@ -792,8 +796,12 @@ public:
 
     // --- HITL (CHA-4 / CHA-5) ---
     // Resolve a parked Approval HostRequest (request_id from the stream) with allow/deny.
+    // `allowPermanent` (wire v28) rides the inline `Approved{ approved, ? allow_permanent }` body:
+    // when true the node adds the approved command's fingerprint to a per-session allow-list. Only
+    // send it for a gate the node marked `allow_permanent_offered`; false leaves the field absent.
     [[nodiscard]] static QByteArray encodeRespondApprovalRequest(const QString& sessionId,
-                                                                 quint32 requestId, bool allow);
+                                                                 quint32 requestId, bool allow,
+                                                                 bool allowPermanent = false);
     // Resolve a parked Input (clarify free-text) HostRequest.
     [[nodiscard]] static QByteArray
     encodeRespondInputRequest(const QString& sessionId, quint32 requestId, const QString& text);

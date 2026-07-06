@@ -355,7 +355,10 @@ void RootWidget::wireTranscriptControls() {
                 // mock engine maps respondApproval onto its scripted resume().
                 m_active->host->onApprovalDecided(callId, decision, permanent);
                 if (m_active->turn != nullptr) {
-                    m_active->turn->respondApproval(callId, decision == QStringLiteral("approved"));
+                    // Forward the operator's "allow permanently" choice (wire v28): the engine
+                    // sends it on the Approved body so the node can persist a per-session allow.
+                    m_active->turn->respondApproval(callId, decision == QStringLiteral("approved"),
+                                                    permanent);
                 }
             });
     connect(m_transcript, &TranscriptView::clarifySubmitted, this,
