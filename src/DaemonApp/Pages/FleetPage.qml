@@ -27,7 +27,73 @@ Item {
             errorClear.restart();
         }
     }
+    // Operator steer/cancel rejections (F4): Submit to a child session the node refused
+    // (Forbidden / unknown session / transport drop) surfaces in the same toast.
+    Connections {
+        target: SessionRoster
+        function onOperationFailed(message) {
+            root.controlError = message;
+            errorClear.restart();
+        }
+    }
     Timer { id: errorClear; interval: 5000; onTriggered: root.controlError = "" }
+
+    // Steer prompt (F4/DEL-4): a small composer that injects operator input into the child
+    // session — Steer nudges a running turn; on an idle child it starts a turn instead.
+    Kit.Dialog {
+        id: steerDialog
+        property string sessionId: ""
+        property bool running: false
+        title: qsTr("Steer this agent")
+        acceptText: qsTr("Send")
+        acceptEnabled: steerInput.text.trim().length > 0
+        onAccepted: {
+            var text = steerInput.text.trim();
+            if (text.length === 0 || steerDialog.sessionId.length === 0)
+                return;
+            if (steerDialog.running)
+                SessionRoster.steer(steerDialog.sessionId, text);
+            else
+                SessionRoster.startTurn(steerDialog.sessionId, text);
+            steerInput.text = "";
+        }
+        onRejected: steerInput.text = ""
+
+        contentItem: ColumnLayout {
+            spacing: 6
+            Rectangle {
+                Layout.preferredWidth: 360
+                Layout.preferredHeight: 80
+                radius: Theme.radius
+                color: Theme.searchBackground
+                border.width: 1
+                border.color: steerInput.activeFocus ? Theme.searchFocusBorder
+                                                     : Theme.searchBorder
+                QQC.ScrollView {
+                    anchors.fill: parent
+                    anchors.margins: 4
+                    Kit.TextArea {
+                        id: steerInput
+                        placeholderText: qsTr("Message to inject…")
+                    }
+                }
+            }
+            Text {
+                Layout.fillWidth: true
+                text: steerDialog.running
+                      ? qsTr("Steers the running turn without interrupting it.")
+                      : qsTr("The agent is idle — this starts a new turn.")
+                font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+                wrapMode: Text.WordWrap
+            }
+        }
+
+        function openFor(sessionId, running) {
+            steerDialog.sessionId = sessionId;
+            steerDialog.running = running;
+            steerDialog.open();
+        }
+    }
 
     PageHeader {
         id: header
@@ -128,6 +194,28 @@ Item {
                             text: entry.status
                             font.family: FontIcons.display; font.pixelSize: 11
                             color: entry.status === "running" ? Theme.accent : Theme.textMuted
+                        }
+                        // Operator steer/cancel (F4/DEL-4): delegated children only (a child IS a
+                        // session; the wire Submit is session-addressable). Roots/primaries keep
+                        // their own composer.
+                        readonly property bool isDelegatedChild:
+                            entry.sessionId !== undefined && entry.sessionId !== "" &&
+                            (entry.role === "ManagedChild" || entry.role === "EphemeralSubagent" ||
+                             (entry.role === "" && entry.depth > 0))
+                        Kit.IconButton {
+                            visible: parent.isDelegatedChild
+                            icon: FontIcons.fa_wand_magic_sparkles
+                            iconPointSize: 11; implicitWidth: 30; implicitHeight: 26
+                            tooltipText: qsTr("Steer…")
+                            onClicked: steerDialog.openFor(entry.sessionId,
+                                                           entry.status === "running")
+                        }
+                        Kit.IconButton {
+                            visible: parent.isDelegatedChild && entry.status === "running"
+                            icon: FontIcons.fa_square
+                            iconPointSize: 10; implicitWidth: 30; implicitHeight: 26
+                            tooltipText: qsTr("Cancel the running turn")
+                            onClicked: SessionRoster.interrupt(entry.sessionId)
                         }
                         Kit.IconButton {
                             icon: entry.status === "paused" ? FontIcons.fa_play : FontIcons.fa_pause

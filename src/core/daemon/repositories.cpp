@@ -75,6 +75,43 @@ void SessionRepository::refreshSessionsByProfile(const QString& profileId) {
         QLatin1String(kByProfileCorrelation));
 }
 
+void SessionRepository::refreshArchivedSessions() {
+    if (client() == nullptr) {
+        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    m_archivedLoop.reset();
+    client()->sendRequest(
+        NodeApiCodec::encodeSessionsQueryRequest(/*hasSinceRev=*/false, /*sinceRev=*/0,
+                                                 /*byProfile=*/QString(), /*after=*/QString(),
+                                                 /*archivedScope=*/true),
+        QLatin1String(kArchivedCorrelation));
+}
+
+void SessionRepository::startTurn(const QString& sessionId, const QString& text) {
+    if (client() == nullptr || sessionId.isEmpty() || text.isEmpty()) {
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeSubmitStartTurnRequest(sessionId, text),
+                          QLatin1String(kSubmitPrefix) + sessionId);
+}
+
+void SessionRepository::steer(const QString& sessionId, const QString& text) {
+    if (client() == nullptr || sessionId.isEmpty() || text.isEmpty()) {
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeSubmitSteerRequest(sessionId, text),
+                          QLatin1String(kSubmitPrefix) + sessionId);
+}
+
+void SessionRepository::interrupt(const QString& sessionId) {
+    if (client() == nullptr || sessionId.isEmpty()) {
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeSubmitInterruptRequest(sessionId),
+                          QLatin1String(kSubmitPrefix) + sessionId);
+}
+
 void SessionRepository::createSession(const QString& profileId) {
     if (client() == nullptr) {
         emit refreshFailed(QStringLiteral("No NodeApi client configured"));
@@ -111,11 +148,55 @@ void SessionRepository::handleResponse(const QString& correlationId,
         applySessionPage(responseCbor);
     } else if (correlationId == QLatin1String(kByProfileCorrelation)) {
         applyByProfilePage(responseCbor);
+    } else if (correlationId == QLatin1String(kArchivedCorrelation)) {
+        applyArchivedPage(responseCbor);
     } else if (correlationId == QLatin1String(kCreateCorrelation)) {
         applySessionCreated(responseCbor);
     } else if (correlationId == QLatin1String(kUpdateMetaCorrelation)) {
         applyMetaUpdate(responseCbor);
+    } else if (correlationId.startsWith(QLatin1String(kSubmitPrefix))) {
+        applySubmitReply(correlationId.mid(int(qstrlen(kSubmitPrefix))), responseCbor);
     }
+}
+
+void SessionRepository::applySubmitReply(const QString& sessionId, const QByteArray& responseCbor) {
+    // Any non-error acknowledgement means the node accepted the command (mirrors the turn
+    // engine's submit handling); only an explicit Error is a rejection.
+    if (NodeApiCodec::responseKind(responseCbor) != ApiResponseKind::Error) {
+        emit submitted(sessionId);
+        return;
+    }
+    DecodedApiError err;
+    const QString msg = NodeApiCodec::decodeError(responseCbor, &err) && !err.message.isEmpty()
+                            ? err.message
+                            : tr("The session rejected the command");
+    emit submitFailed(sessionId, msg);
+}
+
+void SessionRepository::applyArchivedPage(const QByteArray& responseCbor) {
+    QList<CachedSessionRow> rows;
+    QString nextCursor;
+    if (!NodeApiCodec::decodeSessionPage(responseCbor, &rows, &nextCursor, nullptr, nullptr)) {
+        emit refreshFailed(QStringLiteral("Failed to decode Archived SessionPage response"));
+        return;
+    }
+    // Additive merge (no prune), like ByProfile: the archived subset augments the roster cache
+    // (rows arrive with archived=true, so the AllSessions scope keeps filtering them out).
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    for (CachedSessionRow& row : rows) {
+        row.updatedAtMs = now;
+        upsertCachedSession(row);
+    }
+    if (!nextCursor.isEmpty() && m_archivedLoop.guard(nextCursor) && client() != nullptr) {
+        client()->sendRequest(
+            NodeApiCodec::encodeSessionsQueryRequest(/*hasSinceRev=*/false, /*sinceRev=*/0,
+                                                     /*byProfile=*/QString(), nextCursor,
+                                                     /*archivedScope=*/true),
+            QLatin1String(kArchivedCorrelation));
+    } else {
+        m_archivedLoop.reset();
+    }
+    emit sessionsRefreshed();
 }
 
 void SessionRepository::applyMetaUpdate(const QByteArray& responseCbor) {
@@ -265,6 +346,12 @@ void SessionRepository::pruneSessionsMissingFrom(const QList<CachedSessionRow>& 
         keep.insert(row.sessionId);
     }
     for (const CachedSessionRow& existing : cache()->sessions()) {
+        // Archived rows live OUTSIDE the TopLevel scope this full listing answered (the node
+        // filters !archived), so their absence is expected — pruning them would wipe the
+        // archived view (F6) on every roster refresh. They re-sync via refreshArchivedSessions.
+        if (existing.archived) {
+            continue;
+        }
         if (!keep.contains(existing.sessionId)) {
             cache()->deleteSession(existing.sessionId);
         }
@@ -296,11 +383,19 @@ void SessionRepository::handleFailure(const QString& correlationId, const QStrin
         emit refreshFailed(message);
         return;
     }
+    if (correlationId.startsWith(QLatin1String(kSubmitPrefix))) {
+        // A transport-level operator-submit failure: surface it so a steer/cancel is never
+        // silently mistaken for delivered.
+        emit submitFailed(correlationId.mid(int(qstrlen(kSubmitPrefix))), message);
+        return;
+    }
     if (correlationId == QLatin1String(kSessionsCorrelation) ||
-        correlationId == QLatin1String(kByProfileCorrelation)) {
+        correlationId == QLatin1String(kByProfileCorrelation) ||
+        correlationId == QLatin1String(kArchivedCorrelation)) {
         // A dead page loop must not leak its partial accumulation into the next refresh.
         m_rosterLoop.reset();
         m_byProfileLoop.reset();
+        m_archivedLoop.reset();
         emit refreshFailed(message);
     }
 }

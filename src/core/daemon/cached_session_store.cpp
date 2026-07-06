@@ -379,6 +379,14 @@ void CachedSessionStore::refreshSessionsForProfile(const QString& profileId) {
     }
 }
 
+void CachedSessionStore::refreshArchivedSessions() {
+    // F6: the archived scope is fetched on demand (TopLevel excludes it); the repo merges the
+    // rows additively and sessionsRefreshed() drives reload() -> changed().
+    if (m_sessions != nullptr) {
+        m_sessions->refreshArchivedSessions();
+    }
+}
+
 void CachedSessionStore::requestNewSession(const QString& profileId) {
     // Daemon-owned lifecycle: the node CREATES the session and mints the id. The repo's
     // sessionCreated (relayed as ISessionStore::sessionCreated) carries the node-provided id.

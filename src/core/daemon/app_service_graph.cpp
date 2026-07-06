@@ -220,7 +220,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // confirmed use-after-free / SIGSEGV in MockDashboard::runningAgents()).
         delete graph.dashboard;
         delete graph.roster;
-        graph.roster = new fleet::DaemonSessionRoster(graph.store, owner);
+        // The repository rides along for the operator steer/startTurn/interrupt ops (F4) and the
+        // archived-scope refetch (F6).
+        graph.roster = new fleet::DaemonSessionRoster(graph.store, graph.sessions, owner);
         graph.dashboard = new fleet::DaemonDashboard(graph.roster, graph.fleetTree, graph.approvals,
                                                      graph.connection, owner);
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding

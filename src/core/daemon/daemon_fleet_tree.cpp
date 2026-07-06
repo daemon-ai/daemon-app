@@ -79,6 +79,10 @@ void DaemonFleetTree::rebuild() {
         }
         row[QStringLiteral("engine")] = engine;
         row[QStringLiteral("acpAgent")] = acpAgent;
+        // F4: the unit's bound session id + wire role, so delegated-child rows can offer the
+        // operator Steer/Cancel actions (a child IS a session; Submit is session-addressable).
+        row[QStringLiteral("sessionId")] = u.sessionId;
+        row[QStringLiteral("role")] = u.role; // "Primary" | "ManagedChild" | "EphemeralSubagent"
         rows.append(row);
     }
     // Drop paused-overlay entries for units that have left the tree (finished), so the set does not

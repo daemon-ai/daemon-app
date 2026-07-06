@@ -31,6 +31,7 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
+#include "tui_dialogs.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
 #include "tui_page_hub.h"
@@ -391,6 +392,37 @@ void RootWidget::openCheckpointsOverlay() {
 
     dlg->setGeometry(QRect(0, 0, 62, qBound(9, m_services.checkpoints->count() + 8, 20)));
     list->setFocus();
+}
+
+void RootWidget::openFleetSteerPrompt(const QVariantMap& row) {
+    if (m_services.roster == nullptr) {
+        return;
+    }
+    const QString sessionId = row.value(QStringLiteral("sessionId")).toString();
+    const QString role = row.value(QStringLiteral("role")).toString();
+    const bool child = role == QLatin1String("ManagedChild") ||
+                       role == QLatin1String("EphemeralSubagent") ||
+                       (role.isEmpty() && row.value(QStringLiteral("depth")).toInt() > 0);
+    if (sessionId.isEmpty() || !child) {
+        return; // roots/primaries keep their own composer; only children are steerable rows
+    }
+    const bool running = row.value(QStringLiteral("status")).toString() == QLatin1String("running");
+    auto* dlg = new TextPromptDialog(running ? tr("Steer this agent")
+                                             : tr("Steer this agent (idle — starts a turn)"),
+                                     QString(), /*masked=*/false, this);
+    connect(dlg, &TextPromptDialog::submitted, this,
+            [this, sessionId, running](const QString& text) {
+                const QString trimmed = text.trimmed();
+                if (trimmed.isEmpty()) {
+                    return;
+                }
+                // Steer nudges a RUNNING turn; an idle child needs StartTurn instead.
+                if (running) {
+                    m_services.roster->steer(sessionId, trimmed);
+                } else {
+                    m_services.roster->startTurn(sessionId, trimmed);
+                }
+            });
 }
 
 void RootWidget::openModelPicker() {

@@ -460,6 +460,19 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         event->accept();
         return true;
     }
+    // Fleet: 't' opens the steer prompt for the selected delegated child (F4/DEL-4) — a
+    // RootWidget-level overlay because TuiPageHub cannot host dialogs.
+    if (kind == TabModel::Fleet && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("t")) {
+        const QList<QVariantMap> rows = pageActionRows(kind);
+        if (!rows.isEmpty()) {
+            const int sel =
+                qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
+            openFleetSteerPrompt(rows.at(sel));
+        }
+        event->accept();
+        return true;
+    }
     if (kind == TabModel::Profiles && event->modifiers() == Qt::NoModifier) {
         // 'e' opens the interactive profile editor for the selected row.
         if (event->text() == QStringLiteral("e")) {

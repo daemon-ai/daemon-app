@@ -3,6 +3,7 @@
 
 #include "daemon/daemon_session_roster.h"
 
+#include "daemon/repositories.h"
 #include "domain/session.h"
 #include "domain/sidebar_node.h"
 #include "persistence/isession_store.h"
@@ -50,14 +51,26 @@ QString relativeTime(qint64 ms) {
 
 } // namespace
 
-DaemonSessionRoster::DaemonSessionRoster(persistence::ISessionStore* store, QObject* parent)
-    : ISessionRoster(parent), m_store(store), m_sessions(new uimodels::VariantListModel(this)) {
+DaemonSessionRoster::DaemonSessionRoster(persistence::ISessionStore* store,
+                                         daemonapp::daemon::SessionRepository* repo,
+                                         QObject* parent)
+    : ISessionRoster(parent), m_store(store), m_repo(repo),
+      m_sessions(new uimodels::VariantListModel(this)) {
     connect(m_sessions, &uimodels::VariantListModel::countChanged, this, &ISessionRoster::changed);
     if (m_store != nullptr) {
         // Rebuild whenever the cache projection changes (a SessionsQuery refresh, an archive,
         // etc.).
         connect(m_store, &persistence::ISessionStore::changed, this, &DaemonSessionRoster::rebuild);
         rebuild(); // offline-first: render the last-known sessions immediately
+    }
+    if (m_repo != nullptr) {
+        // A rejected operator steer/interrupt (Forbidden, unknown session, transport drop) must
+        // reach the UI toast, never vanish.
+        connect(m_repo, &daemonapp::daemon::SessionRepository::submitFailed, this,
+                [this](const QString& sessionId, const QString& message) {
+                    Q_UNUSED(sessionId)
+                    emit operationFailed(message);
+                });
     }
 }
 
@@ -69,13 +82,32 @@ int DaemonSessionRoster::count() const {
     return m_sessions->count();
 }
 
+void DaemonSessionRoster::setScope(const QString& scope) {
+    const QString normalized =
+        scope == QStringLiteral("archived") ? QStringLiteral("archived") : QStringLiteral("active");
+    if (m_scope == normalized) {
+        return;
+    }
+    m_scope = normalized;
+    if (m_scope == QStringLiteral("archived") && m_store != nullptr) {
+        // The TopLevel roster excludes archived rows: fetch the Archived scope on entry (the
+        // store emits changed() when the rows land -> rebuild()).
+        m_store->refreshArchivedSessions();
+    }
+    emit scopeChanged();
+    rebuild();
+}
+
 void DaemonSessionRoster::rebuild() {
     if (m_store == nullptr) {
         return;
     }
+    domain::ListScope scope;
+    scope.type = m_scope == QStringLiteral("archived") ? domain::NodeType::Archived
+                                                       : domain::NodeType::AllSessions;
     QList<QVariantMap> rows;
     QSet<QString> live;
-    for (const domain::Session& s : m_store->sessions(domain::ListScope{})) {
+    for (const domain::Session& s : m_store->sessions(scope)) {
         const QString id = s.sessionId.toString();
         live.insert(id);
         QVariantMap row;
@@ -112,6 +144,32 @@ void DaemonSessionRoster::close(const QString& id) {
         // Client-local archive (no wire close op): drops the session from the AllSessions scope;
         // setArchived reloads the store -> our rebuild fires via ISessionStore::changed.
         m_store->setArchived(id, true);
+    }
+}
+
+void DaemonSessionRoster::restore(const QString& id) {
+    if (m_store != nullptr) {
+        // Node-authoritative un-archive (SessionUpdateMeta{archived:false} through the store):
+        // the row leaves the Archived scope and rejoins the active roster on the refetch.
+        m_store->setArchived(id, false);
+    }
+}
+
+void DaemonSessionRoster::steer(const QString& sessionId, const QString& text) {
+    if (m_repo != nullptr) {
+        m_repo->steer(sessionId, text);
+    }
+}
+
+void DaemonSessionRoster::startTurn(const QString& sessionId, const QString& text) {
+    if (m_repo != nullptr) {
+        m_repo->startTurn(sessionId, text);
+    }
+}
+
+void DaemonSessionRoster::interrupt(const QString& sessionId) {
+    if (m_repo != nullptr) {
+        m_repo->interrupt(sessionId);
     }
 }
 

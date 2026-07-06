@@ -56,6 +56,9 @@ public:
     // Fetch the agent's sessions from the node (SessionScope::ByProfile) via the repository, then
     // emit changed() when they land — drives the per-agent (Fleet membership) session view.
     void refreshSessionsForProfile(const QString& profileId) override;
+    // Fetch the archived sessions (SessionScope::Archived; F6) via the repository — the archived
+    // scope surfaces call this on entry since the TopLevel roster excludes archived rows.
+    void refreshArchivedSessions() override;
 
     // Node-authoritative create: forward to the repository's SessionCreate op (nothing is minted
     // client-side). The repo's sessionCreated is relayed as ISessionStore::sessionCreated.

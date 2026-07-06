@@ -237,18 +237,28 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
             acted = true;
         }
         break;
-    case TabModel::Sessions:
-        if (text == QStringLiteral("s")) {
+    case TabModel::Sessions: {
+        const bool archived = m_deps.roster->scope() == QStringLiteral("archived");
+        if (text == QStringLiteral("v")) {
+            // F6: flip the Active|Archived scope (mirrors the GUI SessionsPage switcher).
+            m_deps.roster->setScope(archived ? QStringLiteral("active")
+                                             : QStringLiteral("archived"));
+            acted = true;
+        } else if (archived && (text == QStringLiteral("r") || enter)) {
+            m_deps.roster->restore(id);
+            acted = true;
+        } else if (!archived && text == QStringLiteral("s")) {
             m_deps.roster->suspend(id);
             acted = true;
-        } else if (text == QStringLiteral("R") || enter) {
+        } else if (!archived && (text == QStringLiteral("R") || enter)) {
             m_deps.roster->resume(id);
             acted = true;
-        } else if (text == QStringLiteral("x")) {
+        } else if (!archived && text == QStringLiteral("x")) {
             m_deps.roster->close(id);
             acted = true;
         }
         break;
+    }
     case TabModel::Fleet:
         if (key == Qt::Key_Space || enter || text == QStringLiteral("p")) {
             const bool paused =
@@ -259,6 +269,18 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
                 m_deps.fleetTree->pause(id);
             }
             acted = true;
+        } else if (text == QStringLiteral("c")) {
+            // F4: cancel a delegated child's running turn (Submit{Interrupt} to its session).
+            // The steer prompt ('t') is a RootWidget-level overlay (needs a dialog).
+            const QString sessionId = row.value(QStringLiteral("sessionId")).toString();
+            const QString role = row.value(QStringLiteral("role")).toString();
+            const bool child = role == QLatin1String("ManagedChild") ||
+                               role == QLatin1String("EphemeralSubagent") ||
+                               (role.isEmpty() && row.value(QStringLiteral("depth")).toInt() > 0);
+            if (!sessionId.isEmpty() && child) {
+                m_deps.roster->interrupt(sessionId);
+                acted = true;
+            }
         }
         break;
     case TabModel::Approvals:

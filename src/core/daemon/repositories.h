@@ -54,6 +54,22 @@ public:
     // already in the CDDL); no contract change.
     void refreshSessionsByProfile(const QString& profileId);
 
+    // Issue a SessionsQuery scoped to `SessionScope::Archived` (F6/DEL-6): archived primary
+    // sessions, which the TopLevel roster excludes. Merged ADDITIVELY like ByProfile (a scoped
+    // subset must not clobber the roster cache); the full-roster prune spares archived rows for
+    // the same reason. Encoder-only (the Archived arm is already in the CDDL).
+    void refreshArchivedSessions();
+
+    // --- Operator submit (F4/DEL-4, wire-reachable at v28) ------------------------------------
+    // Session-addressable Submit ops for ANY session id (delegated children included) — the
+    // operator steer/cancel row actions, distinct from the focused tab's DaemonTurnEngine (which
+    // owns the active session's full turn lifecycle). The node authorizes per session ownership
+    // (same-owner always passes; cross-owner needs the operator override) — a denial surfaces via
+    // submitFailed, never a silent no-op.
+    void startTurn(const QString& sessionId, const QString& text); // Submit{StartTurn}
+    void steer(const QString& sessionId, const QString& text);     // Submit{Steer}
+    void interrupt(const QString& sessionId);                      // Submit{Interrupt}
+
     // Node-authoritative session creation (WireVersion v23): ask the node to create a blank,
     // profile-bound, UN-RUN session (SessionCreate{profile}). The node MINTS the id and replies
     // SessionCreated{session} + emits RosterChanged; on the reply, sessionCreated(sessionId,
@@ -80,6 +96,11 @@ signals:
     // A node SessionCreate resolved: `sessionId` is the node-minted id, `profileId` the profile it
     // was bound under (echoed from the request so the auto-select path knows the agent).
     void sessionCreated(const QString& sessionId, const QString& profileId);
+    // An operator Submit (startTurn/steer/interrupt) was accepted by the node.
+    void submitted(const QString& sessionId);
+    // An operator Submit was rejected (node ApiError, e.g. Forbidden for a non-owner) or failed
+    // at the transport. Surfaced (toast) instead of silently swallowed.
+    void submitFailed(const QString& sessionId, const QString& message);
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
@@ -90,6 +111,10 @@ private:
     void applySessionPage(const QByteArray& responseCbor);
     // ByProfile page handling: decode + additive upsert (no prune), then emit sessionsRefreshed().
     void applyByProfilePage(const QByteArray& responseCbor);
+    // Archived page handling (F6): decode + additive upsert (no prune), like ByProfile.
+    void applyArchivedPage(const QByteArray& responseCbor);
+    // Operator Submit reply (F4): non-Error = accepted -> submitted(); Error -> submitFailed().
+    void applySubmitReply(const QString& sessionId, const QByteArray& responseCbor);
     void pruneSessionsMissingFrom(const QList<CachedSessionRow>& rows);
     void pruneRemovedSessions(const QList<QString>& removed);
 
@@ -100,8 +125,12 @@ private:
 
     static constexpr auto kSessionsCorrelation = "repo/sessions-query";
     static constexpr auto kByProfileCorrelation = "repo/sessions-by-profile";
+    static constexpr auto kArchivedCorrelation = "repo/sessions-archived";
     static constexpr auto kCreateCorrelation = "repo/session-create";
     static constexpr auto kUpdateMetaCorrelation = "repo/session-update-meta";
+    // Operator Submit correlations carry the target session id (distinct from the turn engine's
+    // "turn/submit/<id>" so replies never cross wires).
+    static constexpr auto kSubmitPrefix = "repo/submit/";
     static constexpr auto kRosterRevScope = "roster-rev"; // L4 persisted roster revision
 
     // The profile the in-flight SessionCreate carried, echoed on sessionCreated so the caller's
@@ -125,6 +154,7 @@ private:
     // carries only the runaway guard); it needs the profile id to re-issue the continuation.
     PageLoop<CachedSessionRow> m_rosterLoop;
     PageLoop<CachedSessionRow> m_byProfileLoop; // guard-only (pages merge incrementally)
+    PageLoop<CachedSessionRow> m_archivedLoop;  // guard-only (pages merge incrementally)
     QString m_byProfileId;
 };
 

@@ -23,9 +23,10 @@ namespace fleet {
 
 // Daemon-backed, offline-first fleet/subagent tree (PRO-9 view + PRO-10 control). Projects the
 // FleetRepository's cached daemon_fleet_units (Tree query) into the IFleetTree VariantListModel
-// rows ({ depth, id, name, kind, status, model, engine, acpAgent }); seeds from the cache in the
-// ctor so the tree renders last-known with no connection, and rebuilds on each treeRefreshed.
-// pause/resume/scale issue the wire control op via the repository.
+// rows ({ depth, id, name, kind, status, model, engine, acpAgent, sessionId, role }); seeds from
+// the cache in the ctor so the tree renders last-known with no connection, and rebuilds on each
+// treeRefreshed. pause/resume/scale issue the wire control op via the repository; the operator
+// Steer/Cancel row actions (F4) go through ISessionRoster with the row's sessionId.
 //
 // Engine identity (C3/ENG-7): each row joins its profileRef against the profile store's rows
 // (engine = "Core" | "Acp", acpAgent = the foreign agent name), so the fleet tree can render the

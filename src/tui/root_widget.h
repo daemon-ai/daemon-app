@@ -353,6 +353,9 @@ private:
     // raw checkpoint rows (kept a member so tr() uses the RootWidget context).
     // Whether the active tab's session runs on a foreign ACP engine (gates rewind - C4/E4).
     [[nodiscard]] bool activeSessionIsForeign() const;
+    // Fleet 't' (F4/DEL-4): open the operator steer prompt for a delegated-child fleet row
+    // (Submit{Steer} mid-turn / Submit{StartTurn} when idle, via ISessionRoster).
+    void openFleetSteerPrompt(const QVariantMap& row);
     void buildCheckpointDisplay(const QList<QVariantMap>& rows, QStringList& display,
                                 QStringList& ids) const;
     // Repaint every theme-sampling view after a live theme switch.

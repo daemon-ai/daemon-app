@@ -15,8 +15,8 @@ QByteArray NodeApiCodec::encodeHealthRequest() {
 }
 
 QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 sinceRev,
-                                                    const QString& byProfile,
-                                                    const QString& after) {
+                                                    const QString& byProfile, const QString& after,
+                                                    bool archivedScope) {
     // `byProfile`/`after` must outlive the encode: zcbor holds pointers into their UTF-8 bytes.
     const QByteArray profileUtf8 = byProfile.toUtf8();
     const QByteArray afterUtf8 = after.toUtf8();
@@ -24,12 +24,13 @@ QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 si
     request.api_request_choice = api_request_r::api_request_request_sessions_query_m_c;
     // Leave limit absent: an empty session-query map asks the daemon for its default (TopLevel)
     // scope, first page. `since_rev` (when set) makes it an L4 delta read. A non-empty `byProfile`
-    // sets scope = ByProfile(id) — the per-agent view (encoder-only; the arm is already in the
-    // CDDL session-scope union). `after` (when set) resumes past the previous page's next_cursor
-    // (the wire v24 roster page loop).
+    // sets scope = ByProfile(id) — the per-agent view; `archivedScope` sets scope = Archived
+    // (archived primaries, F6) — both encoder-only (the arms are already in the CDDL session-scope
+    // union). `after` (when set) resumes past the previous page's next_cursor (the wire v24 roster
+    // page loop).
     request.api_request_request_sessions_query_m = request_sessions_query{};
     session_query& q = request.api_request_request_sessions_query_m.SessionsQuery_query;
-    q.session_query_scope_present = !byProfile.isEmpty();
+    q.session_query_scope_present = !byProfile.isEmpty() || archivedScope;
     if (!byProfile.isEmpty()) {
         session_scope_r& scope = q.session_query_scope.session_query_scope;
         scope.session_scope_choice = session_scope_r::session_scope_by_profile_m_c;
@@ -37,6 +38,9 @@ QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 si
             reinterpret_cast<const uint8_t*>(profileUtf8.constData());
         scope.session_scope_by_profile_m.session_scope_by_profile_ByProfile.len =
             static_cast<size_t>(profileUtf8.size());
+    } else if (archivedScope) {
+        q.session_query_scope.session_query_scope.session_scope_choice =
+            session_scope_r::session_scope_Archived_tstr_c;
     }
     q.session_query_after_present = !after.isEmpty();
     if (!after.isEmpty()) {

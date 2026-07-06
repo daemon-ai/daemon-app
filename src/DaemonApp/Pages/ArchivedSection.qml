@@ -21,6 +21,11 @@ ColumnLayout {
         Component.onCompleted: setScope(1, -1, "")
     }
 
+    // F6: the TopLevel roster excludes archived rows, so entering this section fetches the
+    // SessionScope::Archived listing (no-op on the in-memory store; the daemon store merges
+    // additively and the model re-projects on changed()).
+    Component.onCompleted: SessionStore.refreshArchivedSessions()
+
     RowLayout {
         Layout.fillWidth: true
         SectionLabel { text: qsTr("Archived chats"); Layout.fillWidth: true }

@@ -44,7 +44,7 @@ QString TuiPageHub::buildFleetMarkdown(int sel) const {
     QString md;
     md += tr("# Fleet\n\n");
     md += tr("Orchestrator/worker tree, shared with the GUI. **j/k** move · "
-             "**Space/Enter** pause/resume.\n\n");
+             "**Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.\n\n");
     if (nodes != nullptr) {
         const auto rows = nodes->rows();
         for (int i = 0; i < rows.size(); ++i) {
@@ -64,11 +64,14 @@ QString TuiPageHub::buildFleetMarkdown(int sel) const {
 QString TuiPageHub::buildSessionsMarkdown(int sel) const {
     auto* model = qobject_cast<uimodels::VariantListModel*>(m_deps.roster->sessions());
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
+    const bool archived = m_deps.roster->scope() == QStringLiteral("archived");
 
     QString md;
-    md += tr("# Sessions\n\n");
-    md += tr("**j/k** move · **s** suspend · **R**/**Enter** resume · "
-             "**x** close.\n\n");
+    // The Active|Archived scope switcher (F6/DEL-6), mirroring the GUI SessionsPage toggle.
+    md += archived ? tr("# Sessions — Archived\n\n") : tr("# Sessions\n\n");
+    md += archived ? tr("**j/k** move · **r**/**Enter** restore · **v** back to active.\n\n")
+                   : tr("**j/k** move · **s** suspend · **R**/**Enter** resume · "
+                        "**x** close · **v** archived.\n\n");
     if (model != nullptr) {
         const auto rows = model->rows();
         for (int i = 0; i < rows.size(); ++i) {
@@ -79,6 +82,9 @@ QString TuiPageHub::buildSessionsMarkdown(int sel) const {
                            s.value(QStringLiteral("lifecycle")).toString(),
                            s.value(QStringLiteral("profile")).toString(),
                            s.value(QStringLiteral("tokens")).toString());
+        }
+        if (archived && rows.isEmpty()) {
+            md += tr("_No archived sessions._\n");
         }
     }
     return md;
