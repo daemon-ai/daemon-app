@@ -14,7 +14,7 @@
 #include <Tui/ZListView.h>
 
 namespace daemonapp::daemon {
-class AcpRepository;
+class AgentRepository;
 }
 namespace profiles {
 class IProfileStore;
@@ -66,19 +66,19 @@ signals:
     void confirmed();
 };
 
-// The TUI "+ New agent" dialog (foreign engines; wire v23): a Name field + the SHARED
-// AgentTypeView engine list — "daemon-core" (the native engine, default) plus every ACP catalog
-// entry with installed markers (the same AcpRepository rows the GUI AgentTypePicker renders) —
+// The TUI "+ New agent" dialog (foreign engines; wire v29): a Name field + the SHARED
+// AgentTypeView engine list — "daemon-core" (the native engine, default) plus every foreign catalog
+// entry with installed markers (the same AgentRepository rows the GUI AgentTypePicker renders) —
 // committing through the SAME IProfileStore create path the GUI dialog uses: native ->
 // createProfile(name) (provider/model then configured via the Profile page), foreign ->
-// createAcpProfile(name, agent) carrying engine=Acp{agent} (a catalog NAME; recipes stay
+// createForeignProfile(name, agent) carrying engine=Foreign{agent} (a catalog NAME; recipes stay
 // node-side), then setDefault. An uninstalled foreign row is not committable (parity with the
 // GUI's unselectable rows).
 class NewAgentDialog : public Tui::ZDialog {
     Q_OBJECT
 
 public:
-    NewAgentDialog(profiles::IProfileStore* profiles, daemonapp::daemon::AcpRepository* acp,
+    NewAgentDialog(profiles::IProfileStore* profiles, daemonapp::daemon::AgentRepository* agents,
                    Tui::ZWidget* parent);
 
 signals:

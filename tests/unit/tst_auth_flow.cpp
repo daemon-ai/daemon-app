@@ -217,9 +217,9 @@ private slots:
         QCOMPARE(out.boundProfile, QStringLiteral("agent-1"));
     }
 
-    // --- codec: AcpDiscover + quantize + inspect (the wizard vertical's ops) --------------
-    void acpDiscoverRequestRoundTrips() {
-        const auto request = decodeRequest(NodeApiCodec::encodeAcpDiscoverRequest());
+    // --- codec: AgentDiscover + quantize + inspect (the wizard vertical's ops) --------------
+    void agentDiscoverRequestRoundTrips() {
+        const auto request = decodeRequest(NodeApiCodec::encodeAgentDiscoverRequest());
         QVERIFY(request);
         QCOMPARE(request->api_request_choice,
                  api_request_r::api_request_request_agent_discover_m_c);

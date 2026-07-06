@@ -17,9 +17,9 @@ import DaemonApp.Pages
 //     a FROZEN component) + optional persona, and commits through the SAME node-authoritative
 //     path as before: ProfileCreate -> configure provider/model/base-url (+ key + persona) ->
 //     setDefault -> a blank node SessionCreate under it (App.openNewAgentChat).
-//   - a foreign ACP agent: the inference picker is hidden (no provider/model/key — the launch
-//     recipe is fixed by the node's catalog, referenced BY NAME ONLY), and accept issues the named
-//     ProfileCreate carrying engine=Acp{agent} (Profiles.createAcpProfile).
+//   - a foreign agent: the inference picker is hidden (no provider/model/key — the launch recipe
+//     is fixed by the node's catalog, referenced BY NAME ONLY), and accept issues the named
+//     ProfileCreate carrying engine=Foreign{agent} (Profiles.createForeignProfile).
 // Accept is gated: native -> name + inferenceComplete; foreign -> name + an INSTALLED agent.
 Kit.Dialog {
     id: root
@@ -50,14 +50,14 @@ Kit.Dialog {
         if (name.length === 0)
             return;
         if (!root.nativeEngine) {
-            // Foreign engine: the named ProfileCreate carries engine=Acp{agent} — a catalog NAME,
-            // never a recipe; no provider/model/key applies. Same activate + open flow as native.
+            // Foreign engine: the named ProfileCreate carries engine=Foreign{agent} — a catalog
+            // NAME, never a recipe; no provider/model/key applies. Same activate + open as native.
             if (!root.engineAgentInstalled)
                 return;
-            var acpId = Profiles.createAcpProfile(name, root.engineAgent);
-            if (!acpId || acpId.length === 0)
+            var foreignId = Profiles.createForeignProfile(name, root.engineAgent);
+            if (!foreignId || foreignId.length === 0)
                 return;
-            Profiles.setDefault(acpId);
+            Profiles.setDefault(foreignId);
             if (typeof App !== "undefined" && App)
                 App.openNewAgentChat();
             return;
@@ -134,11 +134,11 @@ Kit.Dialog {
         }
 
         // Foreign engine: no inference to configure — the launch recipe is fixed by the node's
-        // ACP catalog and the profile references it by name only.
+        // agent catalog and the profile references it by name only.
         Text {
             visible: !root.nativeEngine
-            text: qsTr("This agent runs a foreign ACP engine. Its launch recipe is managed by "
-                       + "the daemon's ACP catalog — no provider, model, or key to configure.")
+            text: qsTr("This agent runs a foreign engine. Its launch recipe is managed by the "
+                       + "daemon's agent catalog — no provider, model, or key to configure.")
             font.family: FontIcons.display
             font.pixelSize: 12
             color: Theme.textMuted

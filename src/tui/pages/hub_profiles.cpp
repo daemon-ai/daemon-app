@@ -15,9 +15,11 @@ QString TuiPageHub::engineToken(const QVariantMap& row) {
     if (engine.isEmpty()) {
         return tr("Native"); // rows without the field are core-engine by construction
     }
-    if (engine == QStringLiteral("Acp")) {
+    if (engine == QStringLiteral("Foreign")) {
+        // Mirror the GUI ProfilesPage chip: the foreign agent name (the protocol suffix is only
+        // shown where the catalog is joined - see EngineIdentity / the engine picker).
         const QString agent = row.value(QStringLiteral("acpAgent")).toString();
-        return tr("%1 (ACP)").arg(agent.isEmpty() ? tr("Foreign") : agent);
+        return agent.isEmpty() ? tr("Foreign") : agent;
     }
     return tr("Native");
 }

@@ -258,7 +258,7 @@ Rectangle {
                 }
                 Item { Layout.fillWidth: true }
                 // Agent-type step commit (CON-16): native -> the inference step; an INSTALLED
-                // foreign agent -> Finish (named ProfileCreate with engine=Acp{agent}, no
+                // foreign agent -> Finish (named ProfileCreate with engine=Foreign{agent}, no
                 // provider/model/key).
                 Kit.TextButton {
                     visible: root.phase === "agenttype"
@@ -271,8 +271,8 @@ Rectangle {
                         if (agentTypePicker.nativeEngine)
                             FirstRun.chooseAgentType("");
                         else
-                            FirstRun.applyAcpChoice(acpNameField.text.trim(),
-                                                    agentTypePicker.engineAgent);
+                            FirstRun.applyForeignChoice(acpNameField.text.trim(),
+                                                        agentTypePicker.engineAgent);
                     }
                 }
                 Kit.TextButton {

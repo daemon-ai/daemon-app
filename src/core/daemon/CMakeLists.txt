@@ -84,6 +84,9 @@ add_library(da_daemon_client STATIC
     daemon_daemonnet.cpp
     daemon_approvals_inbox.h
     daemon_approvals_inbox.cpp
+    # [wave2:app-engines] shared engine-identity facade (C3/C4/C5)
+    engine_identity.h
+    engine_identity.cpp
     subscription_manager.h
     subscription_manager.cpp
     daemon_fs_service.h

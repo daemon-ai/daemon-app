@@ -69,7 +69,8 @@ class UpdateManager;
 
 namespace daemonapp::daemon {
 
-class AcpRepository;
+class AgentRepository;
+class EngineIdentity;
 class ApprovalRepository;
 class AuthRepository;
 class FleetRepository;
@@ -140,9 +141,13 @@ struct AppServiceGraph {
     FleetRepository* fleetRepository = nullptr;         // PRO-9/10; non-null only in Daemon mode
     TransportRepository* transportRepository = nullptr; // Channels (EIO-1/3/8/9); Daemon mode only
     RoutingRepository* routingRepository = nullptr;     // Routing pins (B6/ROU); Daemon mode only
-    // The ACP agent catalog (foreign engines; wire v23): backs the new-agent dialog's engine
-    // picker. Constructed with the other repositories (inert without a connection).
-    AcpRepository* acp = nullptr;
+    // The foreign-agent catalog (foreign engines; wire v29): backs the new-agent dialog's engine
+    // picker and the Agents settings surface (register/remove). Constructed with the other
+    // repositories (inert without a connection).
+    AgentRepository* agents = nullptr;
+    // Shared engine-identity presentation facade (C3/C4/C5): session/profile -> engine chip label,
+    // joining the profile engine selector with the catalog protocol. Built in both modes.
+    EngineIdentity* engineIdentity = nullptr;
     // Interactive auth (app-wizard-auth stream): the AuthBegin/AuthComplete wire seam (Daemon
     // mode only), the seam interface (daemon adapter or mock), and the shared flow view-model
     // both front ends bind (the GUI AuthFlowSheet / TUI auth panel).

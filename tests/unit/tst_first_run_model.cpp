@@ -123,14 +123,14 @@ public:
 
 // A profile store that can mint foreign (ACP) agents (CON-16), recording the reference it was
 // asked to create — the mock default returns "" (cannot create foreign agents).
-class AcpCapableProfileStore : public profiles::MockProfileStore {
+class ForeignCapableProfileStore : public profiles::MockProfileStore {
 public:
     using MockProfileStore::MockProfileStore;
-    QString lastAcpName;
-    QString lastAcpAgent;
-    QString createAcpProfile(const QString& name, const QString& agent) override {
-        lastAcpName = name;
-        lastAcpAgent = agent;
+    QString lastForeignName;
+    QString lastForeignAgent;
+    QString createForeignProfile(const QString& name, const QString& agent) override {
+        lastForeignName = name;
+        lastForeignAgent = agent;
         return createProfile(name);
     }
 };
@@ -533,15 +533,15 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("inference"); }, 3000));
     }
 
-    // A foreign choice commits ONE named ProfileCreate carrying engine=Acp{agent} — no
+    // A foreign choice commits ONE named ProfileCreate carrying engine=Foreign{agent} — no
     // provider/model/credential frames — makes it the default, drops the seeded placeholder,
     // and finishes exactly once.
-    void agentTypeForeignChoiceCommitsAcpProfileAndFinishes() {
+    void agentTypeForeignChoiceCommitsForeignProfileAndFinishes() {
         QTemporaryFile socketStandIn;
         QVERIFY(socketStandIn.open());
         QtSettingsStore settings;
         MockConnectionService conn;
-        AcpCapableProfileStore profileStore;
+        ForeignCapableProfileStore profileStore;
         makeActiveProfileUnconfigured(profileStore);
         const QString placeholder = profileStore.defaultProfileId();
         FirstRunModel m(&settings, &conn, nullptr, &profileStore);
@@ -551,12 +551,12 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("agenttype"); }, 3000));
 
         QSignalSpy finished(&m, &FirstRunModel::finished);
-        m.applyAcpChoice(QStringLiteral("gem"), QStringLiteral("gemini"));
+        m.applyForeignChoice(QStringLiteral("gem"), QStringLiteral("gemini"));
         QVERIFY(QTest::qWaitFor([&] { return m.phase() == QStringLiteral("done"); }, 3000));
         QCOMPARE(finished.count(), 1);
         QVERIFY(settings.setupComplete());
-        QCOMPARE(profileStore.lastAcpName, QStringLiteral("gem"));
-        QCOMPARE(profileStore.lastAcpAgent, QStringLiteral("gemini"));
+        QCOMPARE(profileStore.lastForeignName, QStringLiteral("gem"));
+        QCOMPARE(profileStore.lastForeignAgent, QStringLiteral("gemini"));
         // The new agent owns the default; the seeded placeholder is gone.
         const QString def = profileStore.defaultProfileId();
         QVERIFY(!def.isEmpty());

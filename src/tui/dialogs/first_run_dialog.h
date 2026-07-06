@@ -20,7 +20,7 @@ namespace models {
 class IProviderCatalog;
 }
 namespace daemonapp::daemon {
-class AcpRepository;
+class AgentRepository;
 }
 class AgentTypeView;
 
@@ -28,9 +28,9 @@ class AgentTypeView;
 // FirstRunGate. A target field + Connect drives the shared connection seam; the
 // FirstRunModel advances connect -> connecting -> [agenttype ->] inference, and
 // Finish completes setup. Reuses the same shared FirstRunModel the GUI binds.
-// The agenttype step (CON-16) mounts the shared AgentTypeView (native + ACP
+// The agenttype step (CON-16) mounts the shared AgentTypeView (native + foreign
 // catalog with installed markers): native continues into inference; an
-// INSTALLED foreign agent finishes directly (engine=Acp{agent}; no
+// INSTALLED foreign agent finishes directly (engine=Foreign{agent}; no
 // provider/model/key). Lives in its own dialogs/ TU (split out of
 // tui_dialogs.cpp) so the first-run workstream owns one focused file; the
 // small generic dialogs stay in tui_dialogs.{h,cpp}.
@@ -40,7 +40,7 @@ class FirstRunDialog : public Tui::ZDialog {
 public:
     FirstRunDialog(firstrun::FirstRunModel* model, connection::IConnectionService* connection,
                    settings::ISettingsStore* settings, models::IProviderCatalog* providerCatalog,
-                   daemonapp::daemon::AcpRepository* acp, const QString& defaultTarget,
+                   daemonapp::daemon::AgentRepository* agents, const QString& defaultTarget,
                    Tui::ZWidget* parent);
 
 signals:

@@ -14,6 +14,7 @@
 #include "connection/iconnection_service.h"
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/engine_identity.h"
 #include "daemon/node_api_client.h"
 #include "daemon/node_api_codec.h"
 #include "daemon/principal_model.h"
@@ -275,9 +276,13 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     engine.rootContext()->setContextProperty(QStringLiteral("ProviderCatalog"),
                                              m_services.providerCatalog);
 
-    // ACP agent catalog (foreign engines; wire v23): backs the new-agent dialog's engine picker.
-    // Null in mock mode — QML guards with `typeof AcpAgents !== "undefined" && AcpAgents`.
-    engine.rootContext()->setContextProperty(QStringLiteral("AcpAgents"), m_services.acp);
+    // Foreign-agent catalog (foreign engines; wire v29): backs the engine picker + Agents settings.
+    // Null in mock mode — QML guards with `typeof Agents !== "undefined" && Agents`.
+    engine.rootContext()->setContextProperty(QStringLiteral("Agents"), m_services.agents);
+    // Shared engine-identity facade (C3/C4/C5): session/profile -> engine chip label. Consumed by
+    // ComposerControls' engine chip and the approval EngineOriginChip (C5).
+    engine.rootContext()->setContextProperty(QStringLiteral("EngineIdentity"),
+                                             m_services.engineIdentity);
 
     // Accounts/auth facade (mock) backing the Accounts manager + wizard.
     engine.rootContext()->setContextProperty(QStringLiteral("Accounts"), m_services.accounts);

@@ -293,7 +293,7 @@ bool RootWidget::activeSessionIsForeign() const {
         pid = m_services.profiles->defaultProfileId();
     }
     const QVariantMap p = m_services.profiles->profile(pid);
-    return p.value(QStringLiteral("engine")).toString() == QStringLiteral("Acp");
+    return p.value(QStringLiteral("engine")).toString() == QStringLiteral("Foreign");
 }
 
 void RootWidget::openCheckpointsOverlay() {

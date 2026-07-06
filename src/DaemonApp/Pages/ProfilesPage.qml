@@ -95,15 +95,16 @@ Item {
                                     color: Theme.text; elide: Text.ElideRight
                                     Layout.fillWidth: true
                                 }
-                                // Engine identity (C3/ENG-7): Native core vs the foreign ACP
-                                // agent this profile is bound to.
+                                // Engine identity (C3/ENG-7): Native core vs the foreign agent
+                                // this profile is bound to.
                                 Kit.Chip {
-                                    // "Acp" is the wire engineKind value, not display text.
-                                    readonly property bool acp: entry.engine === "Acp"
+                                    // "Foreign" is the wire engineKind value, not display text.
+                                    readonly property bool foreign: entry.engine === "Foreign"
                                     visible: entry.engine !== undefined
-                                    text: acp ? (entry.acpAgent || qsTr("Foreign")) : qsTr("Native")
-                                    iconGlyph: acp ? FontIcons.fa_robot : FontIcons.fa_microchip
-                                    tone: acp ? "accent" : "muted"
+                                    text: foreign ? (entry.acpAgent || qsTr("Foreign"))
+                                                  : qsTr("Native")
+                                    iconGlyph: foreign ? FontIcons.fa_robot : FontIcons.fa_microchip
+                                    tone: foreign ? "accent" : "muted"
                                 }
                                 Text {
                                     visible: entry.isDefault === true

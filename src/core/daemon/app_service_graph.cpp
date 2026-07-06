@@ -29,6 +29,7 @@
 #include "daemon/daemon_session_settings.h"
 #include "daemon/daemon_transport.h"
 #include "daemon/daemon_transport_registry.h"
+#include "daemon/engine_identity.h"
 #include "daemon/node_api_client.h"
 #include "daemon/principal_model.h"
 #include "daemon/repositories.h"
@@ -156,8 +157,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         graph.checkpoints = new DaemonCheckpointTimeline(graph.checkpointRepository, owner);
     }
     graph.credentialRepository = new CredentialRepository(graph.nodeApi, graph.cache, owner);
-    // The ACP agent catalog (foreign engines): backs the new-agent dialog's engine picker.
-    graph.acp = new AcpRepository(graph.nodeApi, graph.cache, owner);
+    // The foreign-agent catalog (foreign engines): backs the engine picker + Agents settings.
+    graph.agents = new AgentRepository(graph.nodeApi, graph.cache, owner);
     // Interactive auth (AuthBegin/AuthComplete): the wire seam behind the AuthFlowSheet.
     graph.authRepository = new AuthRepository(graph.nodeApi, graph.cache, owner);
 
@@ -276,7 +277,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
              providers = graph.providerRepository, approvals = graph.approvalRepository,
              subscriptions = graph.subscriptions, fs = graph.fs, fleet = graph.fleetRepository,
              transports = graph.transportRepository, routing = graph.routingRepository,
-             acp = graph.acp, authRepo = graph.authRepository, wasReady] {
+             agents = graph.agents, authRepo = graph.authRepository, wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
                     // Initial baseline once per (re)connect; the EventsSince feed then keeps the
@@ -297,8 +298,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // Routing: the origin->session pin table (B6/ROU). Per-account rooms follow
                     // the instances refresh (DaemonDaemonNet chains them).
                     routing->refreshChats();
-                    // Foreign engines: the ACP catalog for the new-agent dialog's engine picker.
-                    acp->refreshCatalog();
+                    // Foreign engines: the catalog for the engine picker + Agents settings.
+                    agents->refreshCatalog();
                     // Interactive-auth family discovery (the AuthFlowSheet's provider list).
                     authRepo->refreshProviders();
                     subscriptions->start();
@@ -335,6 +336,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // Simulated interactive auth (no node): the sheet's state machine still exercises.
         graph.authFlow = new auth::MockAuthFlowService(owner);
     }
+    // Shared engine-identity facade (C3/C4/C5): resolves session/profile -> engine chip label,
+    // joining the (per-mode) profile store + session settings with the foreign-agent catalog
+    // (null-tolerant: in mock mode the catalog is inert, so the label degrades to the agent name).
+    graph.engineIdentity =
+        new EngineIdentity(graph.profiles, graph.sessionSettings, graph.agents, owner);
     // The shared interactive-auth flow view-model over the per-mode seam (GUI + TUI bind it).
     graph.authFlowController = new auth::AuthFlowController(graph.authFlow, owner);
     // Built last so it binds the resolved modelCatalog (daemon-backed or mock) for the inference
@@ -342,13 +348,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.firstRun =
         new firstrun::FirstRunModel(graph.settings, graph.connection, graph.modelCatalog,
                                     graph.profiles, graph.accounts, graph.providerCatalog, owner);
-    // CON-16: the wizard's agent-type step is offered iff the node's ACP catalog reflected any
-    // foreign agent. Wired here (not inside FirstRunModel) because firstrun must stay free of
-    // the daemon layer; the connect-ready storm above refreshes the catalog, so the offer is
-    // usually known by the time the gate decides.
-    QObject::connect(graph.acp, &AcpRepository::catalogRefreshed, graph.firstRun,
-                     [firstRun = graph.firstRun, acp = graph.acp] {
-                         firstRun->setAgentTypeOffered(!acp->entries().isEmpty());
+    // CON-16: the wizard's agent-type step is offered iff the node's foreign-agent catalog
+    // reflected any foreign agent. Wired here (not inside FirstRunModel) because firstrun must stay
+    // free of the daemon layer; the connect-ready storm above refreshes the catalog, so the offer
+    // is usually known by the time the gate decides.
+    QObject::connect(graph.agents, &AgentRepository::catalogRefreshed, graph.firstRun,
+                     [firstRun = graph.firstRun, agents = graph.agents] {
+                         firstRun->setAgentTypeOffered(!agents->entries().isEmpty());
                      });
 
     // Release-feed / auto-update surface. Inert unless the package job compiled in a

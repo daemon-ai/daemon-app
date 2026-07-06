@@ -158,15 +158,15 @@ void FirstRunModel::setAgentTypeOffered(bool offered) {
     m_agentTypeOffered = offered;
 }
 
-void FirstRunModel::chooseAgentType(const QString& acpAgent) {
+void FirstRunModel::chooseAgentType(const QString& foreignAgent) {
     if (m_phase != QStringLiteral("agenttype")) {
         return;
     }
-    if (acpAgent.isEmpty()) {
+    if (foreignAgent.isEmpty()) {
         // Native: continue into the existing inference step (CON-10..14) unchanged.
         setPhase(QStringLiteral("inference"));
     }
-    // Foreign selections commit through applyAcpChoice (the front ends pass the chosen name).
+    // Foreign selections commit through applyForeignChoice (the front ends pass the chosen name).
 }
 
 void FirstRunModel::setInferenceReady(bool ready) {
@@ -352,9 +352,9 @@ void FirstRunModel::probeThenFinish(const QString& providerId, const QString& cr
     m_providerCatalog->refreshModels(providerId, credentialRef);
 }
 
-void FirstRunModel::applyAcpChoice(const QString& name, const QString& acpAgent) {
+void FirstRunModel::applyForeignChoice(const QString& name, const QString& foreignAgent) {
     // No profile store wired (mock/standalone) or nothing chosen: just finish (permissive path).
-    if (m_profiles == nullptr || acpAgent.isEmpty()) {
+    if (m_profiles == nullptr || foreignAgent.isEmpty()) {
         finish();
         return;
     }
@@ -366,22 +366,23 @@ void FirstRunModel::applyAcpChoice(const QString& name, const QString& acpAgent)
     // Refetch-then-apply, exactly like the native path: the placeholder id must come off a
     // FRESH ProfileList reflection, never a stale snapshot.
     const QString trimmedName = name.trimmed();
-    runOnNextProfilesChanged(
-        [this, trimmedName, acpAgent] { applyReflectedAcpChoice(trimmedName, acpAgent); });
+    runOnNextProfilesChanged([this, trimmedName, foreignAgent] {
+        applyReflectedForeignChoice(trimmedName, foreignAgent);
+    });
     m_profiles->refresh();
 }
 
-void FirstRunModel::applyReflectedAcpChoice(const QString& name, const QString& acpAgent) {
+void FirstRunModel::applyReflectedForeignChoice(const QString& name, const QString& foreignAgent) {
     // The node-seeded placeholder, read off the FRESH reflection that triggered this
     // continuation.
     const QString profileId = m_profiles->defaultProfileId();
-    const QString agentName = name.isEmpty() ? acpAgent : name;
-    // ONE named ProfileCreate carrying engine=Acp{agent} — a catalog NAME, never a recipe; no
+    const QString agentName = name.isEmpty() ? foreignAgent : name;
+    // ONE named ProfileCreate carrying engine=Foreign{agent} — a catalog NAME, never a recipe; no
     // provider/model/key/credential frames (the foreign agent brings its own model).
-    // agentName is the display name (arg 'name'), acpAgent is the catalog agent id (arg
+    // agentName is the display name (arg 'name'), foreignAgent is the catalog agent id (arg
     // 'agent') — not swapped despite the token similarity the heuristic check flags.
     // NOLINTNEXTLINE(readability-suspicious-call-argument)
-    const QString newId = m_profiles->createAcpProfile(agentName, acpAgent);
+    const QString newId = m_profiles->createForeignProfile(agentName, foreignAgent);
     if (newId.isEmpty()) {
         finish(); // store without a live repo: nothing further to sequence
         return;

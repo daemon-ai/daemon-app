@@ -314,8 +314,8 @@ void ProfileEditorDialog::syncRowLabels() {
     // Engine is a create-time choice (NewAgentDialog) in both frontends;
     // ProfileUpdate carries no engine change, so it renders read-only here.
     m_engineLabel->setText(
-        m_engineKind == QStringLiteral("Acp")
-            ? tr("Engine: ACP agent · %1 (set at create time)").arg(m_engineAgent)
+        m_engineKind == QStringLiteral("Foreign")
+            ? tr("Engine: foreign agent · %1 (set at create time)").arg(m_engineAgent)
             : tr("Engine: daemon-core (native)"));
     m_providerRow->setText(row(tr("Provider"), providerDisplayName()));
     m_baseUrlRow->setText(row(tr("Base URL"), m_wBaseUrl.isEmpty() ? tr("(provider default)")

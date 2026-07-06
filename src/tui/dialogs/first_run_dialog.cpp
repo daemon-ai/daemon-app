@@ -16,8 +16,8 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
                                connection::IConnectionService* connection,
                                settings::ISettingsStore* settings,
                                models::IProviderCatalog* providerCatalog,
-                               daemonapp::daemon::AcpRepository* acp, const QString& defaultTarget,
-                               Tui::ZWidget* parent)
+                               daemonapp::daemon::AgentRepository* agents,
+                               const QString& defaultTarget, Tui::ZWidget* parent)
     : Tui::ZDialog(parent), m_model(model), m_connection(connection), m_settings(settings),
       m_providerCatalog(providerCatalog) {
     setOptions(Tui::ZWindow::DeleteOnClose);
@@ -69,7 +69,7 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     m_agentTypeLabel = new Tui::ZLabel(tr("Agent type (Enter to pick):"), this);
     m_agentTypeLabel->setVisible(false);
     layout->addWidget(m_agentTypeLabel);
-    m_agentType = new AgentTypeView(acp, this);
+    m_agentType = new AgentTypeView(agents, this);
     m_agentType->setObjectName(QStringLiteral("firstRunAgentType"));
     m_agentType->setVisible(false);
     layout->addWidget(m_agentType);
@@ -188,12 +188,12 @@ FirstRunDialog::FirstRunDialog(firstrun::FirstRunModel* model,
     connect(m_primary, &Tui::ZButton::clicked, this, [this] {
         if (m_model->phase() == QStringLiteral("agenttype")) {
             // Native -> the inference step; an INSTALLED foreign agent -> full commit (the
-            // model's applyAcpChoice; name falls back to the agent name).
+            // model's applyForeignChoice; name falls back to the agent name).
             const QString agent = m_agentType != nullptr ? m_agentType->selectedAgent() : QString();
             if (agent.isEmpty()) {
                 m_model->chooseAgentType(QString());
             } else {
-                m_model->applyAcpChoice(agent, agent);
+                m_model->applyForeignChoice(agent, agent);
             }
         } else if (m_model->phase() == QStringLiteral("inference")) {
             commitInference();

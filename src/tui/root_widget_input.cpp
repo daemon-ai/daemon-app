@@ -134,10 +134,10 @@ bool RootWidget::handleSidebarAgentShortcuts(Tui::ZKeyEvent* event) {
     // key bubbles on to the rest of the chain (matching the original fall-through).
     const Qt::KeyboardModifiers mods = event->modifiers();
     // 'a' with the Fleet tree focused mints a NEW agent (the GUI "+ New agent" analog): a minimal
-    // name + engine list (daemon-core + the ACP catalog names) over the shared profile-create path.
+    // name + engine list (daemon-core + the foreign catalog names) over the shared create path.
     if (mods == Qt::NoModifier && m_sidebarView != nullptr && m_sidebarView->focus() &&
         event->text() == QStringLiteral("a") && m_services.profiles != nullptr) {
-        auto* dialog = new NewAgentDialog(m_services.profiles, m_services.acp, this);
+        auto* dialog = new NewAgentDialog(m_services.profiles, m_services.agents, this);
         dialog->setVisible(true);
         event->accept();
         return true;
@@ -505,7 +505,7 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         // over the shared create path - the sidebar shortcut, reachable from
         // the Profiles page too (engine choice is create-time).
         if (event->text() == QStringLiteral("a") && m_services.profiles != nullptr) {
-            auto* dialog = new NewAgentDialog(m_services.profiles, m_services.acp, this);
+            auto* dialog = new NewAgentDialog(m_services.profiles, m_services.agents, this);
             dialog->setVisible(true);
             event->accept();
             return true;

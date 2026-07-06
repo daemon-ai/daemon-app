@@ -2177,23 +2177,24 @@ void TransportRepository::handleFailure(const QString& correlationId, const QStr
     }
 }
 
-// --- AcpRepository (foreign engines; wire v23) ------------------------------------------------
+// --- AgentRepository (foreign engines; wire v29) ----------------------------------------------
 
-AcpRepository::AcpRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
+AgentRepository::AgentRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent)
     : RepositoryBase(client, cache, parent) {
     if (this->client() != nullptr) {
         connect(this->client(), &NodeApiClient::responseReady, this,
-                &AcpRepository::handleResponse);
-        connect(this->client(), &NodeApiClient::failed, this, &AcpRepository::handleFailure);
+                &AgentRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &AgentRepository::handleFailure);
     }
 }
 
-QVariantList AcpRepository::agents() const {
+QVariantList AgentRepository::agents() const {
     QVariantList rows;
-    for (const DecodedAcpAgentEntry& e : m_entries) {
+    for (const DecodedAgentEntry& e : m_entries) {
         QVariantMap row;
         row[QStringLiteral("name")] = e.name;
         row[QStringLiteral("source")] = e.source;
+        row[QStringLiteral("protocol")] = e.protocol;
         row[QStringLiteral("installed")] = e.installed;
         row[QStringLiteral("version")] = e.version;
         rows.append(row);
@@ -2201,41 +2202,94 @@ QVariantList AcpRepository::agents() const {
     return rows;
 }
 
-void AcpRepository::refreshCatalog() {
+void AgentRepository::refreshCatalog() {
     if (client() == nullptr) {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    client()->sendRequest(NodeApiCodec::encodeAcpCatalogRequest(),
+    client()->sendRequest(NodeApiCodec::encodeAgentCatalogRequest(),
                           QLatin1String(kCatalogCorrelation));
 }
 
-void AcpRepository::discover() {
+void AgentRepository::discover() {
     if (client() == nullptr) {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    // The discovery reply reuses the AcpCatalog response shape (fresh scan merged with the
+    // The discovery reply reuses the AgentCatalog response shape (fresh scan merged with the
     // durable catalog), so it routes through the same decode + catalogRefreshed path.
-    client()->sendRequest(NodeApiCodec::encodeAcpDiscoverRequest(),
+    client()->sendRequest(NodeApiCodec::encodeAgentDiscoverRequest(),
                           QLatin1String(kDiscoverCorrelation));
 }
 
-void AcpRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
-    if (correlationId != QLatin1String(kCatalogCorrelation) &&
-        correlationId != QLatin1String(kDiscoverCorrelation)) {
+void AgentRepository::registerAgent(const QVariantMap& form) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    if (!NodeApiCodec::decodeAcpCatalog(responseCbor, &m_entries)) {
-        emit operationFailed(QStringLiteral("Failed to decode AcpCatalog response"));
+    DecodedAgentRecipeInput in;
+    in.name = form.value(QStringLiteral("name")).toString().trimmed();
+    in.protocol = form.value(QStringLiteral("protocol"), QStringLiteral("Acp")).toString();
+    in.program = form.value(QStringLiteral("program")).toString().trimmed();
+    in.args = form.value(QStringLiteral("args")).toStringList();
+    in.env = form.value(QStringLiteral("env")).toMap();
+    in.endpoint = form.value(QStringLiteral("endpoint")).toString().trimmed();
+    // Defensive: the register form already gates on this; the node also validates + re-probes.
+    if (in.name.isEmpty() || (in.program.isEmpty() && in.endpoint.isEmpty())) {
+        emit operationFailed(
+            QStringLiteral("A foreign agent needs a name and a program or endpoint"));
         return;
     }
-    emit catalogRefreshed();
+    client()->sendRequest(NodeApiCodec::encodeAgentRegisterRequest(in),
+                          QLatin1String(kRegisterCorrelation));
 }
 
-void AcpRepository::handleFailure(const QString& correlationId, const QString& message) {
+void AgentRepository::removeAgent(const QString& name) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    m_lastRemovedName = name;
+    client()->sendRequest(NodeApiCodec::encodeAgentRemoveRequest(name),
+                          QLatin1String(kRemoveCorrelation));
+}
+
+void AgentRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kCatalogCorrelation) ||
         correlationId == QLatin1String(kDiscoverCorrelation)) {
+        if (!NodeApiCodec::decodeAgentCatalog(responseCbor, &m_entries)) {
+            emit operationFailed(QStringLiteral("Failed to decode AgentCatalog response"));
+            return;
+        }
+        emit catalogRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kRegisterCorrelation) ||
+        correlationId == QLatin1String(kRemoveCorrelation)) {
+        // Register/remove reply is a bare Ok/Error. On Error surface the node's message (it names
+        // the agent + the reason — e.g. handshake failed / binary not found) for C6.
+        if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+            DecodedApiError err;
+            NodeApiCodec::decodeError(responseCbor, &err);
+            emit operationFailed(err.message);
+            return;
+        }
+        if (correlationId == QLatin1String(kRegisterCorrelation)) {
+            emit agentRegistered();
+        } else {
+            emit agentRemoved(m_lastRemovedName);
+        }
+        // Reflect the node's re-probe: refresh the durable catalog + a fresh discovery scan.
+        refreshCatalog();
+        discover();
+    }
+}
+
+void AgentRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kCatalogCorrelation) ||
+        correlationId == QLatin1String(kDiscoverCorrelation) ||
+        correlationId == QLatin1String(kRegisterCorrelation) ||
+        correlationId == QLatin1String(kRemoveCorrelation)) {
         emit operationFailed(message);
     }
 }

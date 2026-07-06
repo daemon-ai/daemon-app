@@ -229,20 +229,20 @@ QString DaemonProfileStore::createProfileWithSpec(const QString& name, const QVa
     return spec.id; // the row appears after the repo re-lists
 }
 
-QString DaemonProfileStore::createAcpProfile(const QString& name, const QString& agent) {
+QString DaemonProfileStore::createForeignProfile(const QString& name, const QString& agent) {
     if (m_repo == nullptr || agent.isEmpty()) {
         return {};
     }
     const QString id = slugId(name);
     daemonapp::daemon::DecodedProfileSpec spec;
     spec.id = id;
-    // A foreign (ACP) engine: the profile references the catalog entry BY NAME ONLY (the launch
-    // recipe stays node-side, operator-managed). No provider/model applies — the node bypasses
-    // the inference path entirely for foreign engines, so the spec's provider stays the inert
-    // default rather than a fabricated cloud binding.
+    // A foreign engine: the profile references the catalog entry BY NAME ONLY (the launch recipe
+    // stays node-side, operator-managed). No provider/model applies — the node bypasses the
+    // inference path entirely for foreign engines, so the spec's provider stays the inert default
+    // rather than a fabricated cloud binding.
     spec.provider = QStringLiteral("mock");
-    spec.engineKind = QStringLiteral("Acp");
-    spec.engineAcpAgent = agent;
+    spec.engineKind = QStringLiteral("Foreign");
+    spec.engineForeignAgent = agent;
     m_repo->createProfile(spec);
     return id; // the row appears after the repo re-lists (same flow as createProfile)
 }
@@ -372,10 +372,14 @@ void DaemonProfileStore::rebuild() {
             row[QStringLiteral("memoryProvider")] = spec.memoryProvider;
             row[QStringLiteral("credentialRef")] =
                 spec.hasCredentialRef ? spec.credentialRef : QString();
-            // Foreign-engine binding (wire v23): "Core" for native profiles; "Acp" + the catalog
-            // agent name for foreign ones (so the UI can label/hide inference-only affordances).
+            // Foreign-engine binding (wire v29): "Core" for native profiles; "Foreign" + the
+            // catalog agent name for foreign ones (so the UI can label/hide inference-only
+            // affordances). The agent's protocol (ACP vs stream-json) is a catalog-entry property.
+            // NB: the presentation row key stays `acpAgent` (the foreign agent name) — it is the
+            // contract read by app-delegation's fleet mapper (daemon_fleet_tree.cpp), which this
+            // stream must not touch. Only the engine VALUE moves "Acp" -> "Foreign".
             row[QStringLiteral("engine")] = spec.engineKind;
-            row[QStringLiteral("acpAgent")] = spec.engineAcpAgent;
+            row[QStringLiteral("acpAgent")] = spec.engineForeignAgent;
         } else {
             row[QStringLiteral("systemPrompt")] = QString();
             row[QStringLiteral("tools")] = QStringList{};

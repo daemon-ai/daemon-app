@@ -98,11 +98,12 @@ struct DecodedProfileSpec {
     QString id;
     QString provider = QStringLiteral("genai"); // "mock"|"genai"|"llama_cpp"|"mistral_rs"
     QString model;
-    // Which execution engine the profile's sessions run on (wire v23 engine-selector): "Core"
-    // (the native daemon-core engine, the default) or "Acp" (a foreign ACP agent referenced from
-    // the node's catalog BY NAME via engineAcpAgent — recipes never travel in profiles).
-    QString engineKind = QStringLiteral("Core"); // "Core" | "Acp"
-    QString engineAcpAgent;                      // the catalog name; only meaningful when "Acp"
+    // Which execution engine the profile's sessions run on (wire v29 engine-selector): "Core"
+    // (the native daemon-core engine, the default) or "Foreign" (a foreign agent referenced from
+    // the node's catalog BY NAME via engineForeignAgent — recipes never travel in profiles). The
+    // agent's protocol (ACP vs stream-json) is a catalog-entry property, not the engine kind.
+    QString engineKind = QStringLiteral("Core"); // "Core" | "Foreign"
+    QString engineForeignAgent;                  // the catalog name; only meaningful when "Foreign"
     bool hasBaseUrl = false;
     QString baseUrl;
     QString systemPrompt;
@@ -129,16 +130,32 @@ struct DecodedProfileSpec {
     QList<DecodedBoundAccount> boundAccounts;
 };
 
-// --- ACP agent catalog (foreign engines; wire v23 dialog surface)
-// --------------------------------- One catalog row (AcpCatalog -> [AcpAgentEntry]): a
-// known/registered foreign ACP agent. The new-agent dialog's engine picker renders these; a profile
-// references an entry BY NAME ONLY (the launch recipe stays node-side, so it is deliberately NOT
-// decoded here — no client surface needs it and nothing client-side may ever re-send one).
-struct DecodedAcpAgentEntry {
+// --- Foreign-agent catalog (foreign engines; wire v29 dialog + settings surface)
+// --------------------------------- One catalog row (AgentCatalog -> [AgentEntry]): a
+// known/registered foreign agent. The new-agent dialog's engine picker and the Agents settings
+// surface render these; a profile references an entry BY NAME ONLY (the launch recipe stays
+// node-side, so it is deliberately NOT decoded here — no client surface needs it and nothing
+// client-side may ever re-send one).
+struct DecodedAgentEntry {
     QString name;
     QString source = QStringLiteral("Builtin"); // "Builtin" | "Manual" | "Endpoint"
+    QString protocol = QStringLiteral("Acp");   // "Acp" | "StreamJson" (agent's wire protocol)
     bool installed = false;
-    QString version; // ACP protocol version reported at initialize; empty = unprobed
+    QString version; // ACP protocol version reported at initialize; empty = unprobed / stream-json
+};
+
+// Register input (AgentRegister): the operator-supplied launch recipe for a manual foreign agent.
+// The node forces source=Manual and RE-PROBES (a caller-supplied `installed` is never trusted), so
+// this carries only what the operator types: identity + protocol + a stdio recipe
+// (program/args/env) OR a `tcp://` endpoint. An empty program AND endpoint is invalid (the form
+// blocks send).
+struct DecodedAgentRecipeInput {
+    QString name;
+    QString protocol = QStringLiteral("Acp"); // "Acp" | "StreamJson"
+    QString program;                          // stdio: the executable (PATH-resolved node-side)
+    QStringList args;                         // stdio: program arguments
+    QVariantMap env;                          // stdio: extra environment (string -> string)
+    QString endpoint; // OR a tcp:// endpoint (mutually exclusive w/ program)
 };
 
 // --- Routing (B6/ROU: the origin->session pin table; wire v28) -------------------------------
@@ -733,7 +750,7 @@ enum class ApiResponseKind {
     ModelDownloads,
     ModelCatalog,
     ModelRecommend,
-    AcpCatalog,
+    AgentCatalog,
     // app-wizard-auth stream additions (appended; keep ordering append-only for sibling merges).
     AuthProviders,
     AuthBegun,
@@ -864,13 +881,18 @@ public:
     // Fetch a profile's full spec (ProfileGet -> Profile(opt)). PRO-3 editor hydration.
     [[nodiscard]] static QByteArray encodeProfileGetRequest(const QString& id);
 
-    // --- ACP agent catalog (foreign engines) --------------------------------------------------
-    // List the node's ACP agent catalog (AcpCatalog -> [AcpAgentEntry]): manual registrations +
-    // the last discovery scan. Zero-arg; the engine picker renders the rows.
-    [[nodiscard]] static QByteArray encodeAcpCatalogRequest();
-    // Decode an AcpCatalog response into catalog rows (name/source/installed/version only — the
-    // launch recipe deliberately stays node-side).
-    static bool decodeAcpCatalog(const QByteArray& responseCbor, QList<DecodedAcpAgentEntry>* out);
+    // --- Foreign-agent catalog (foreign engines) ----------------------------------------------
+    // List the node's foreign-agent catalog (AgentCatalog -> [AgentEntry]): manual registrations +
+    // the last discovery scan. Zero-arg; the engine picker + Agents settings render the rows.
+    [[nodiscard]] static QByteArray encodeAgentCatalogRequest();
+    // Decode an AgentCatalog response into catalog rows (name/source/protocol/installed/version —
+    // the launch recipe deliberately stays node-side).
+    static bool decodeAgentCatalog(const QByteArray& responseCbor, QList<DecodedAgentEntry>* out);
+    // Register a manual foreign agent (AgentRegister): the node forces source=Manual and re-probes,
+    // so a caller-supplied `installed` is never trusted. Ok/Error reply (responseKind/decodeError).
+    [[nodiscard]] static QByteArray encodeAgentRegisterRequest(const DecodedAgentRecipeInput& in);
+    // Remove a manual foreign agent by catalog name (AgentRemove). Ok/Error reply.
+    [[nodiscard]] static QByteArray encodeAgentRemoveRequest(const QString& name);
 
     // --- Profile distribution + history (PRO-7 / PRO-8) --------------------------------------
     [[nodiscard]] static QByteArray encodeProfileExportRequest(const QString& id);
@@ -1211,9 +1233,9 @@ public:
     static bool decodeAuthCompleted(const QByteArray& responseCbor,
                                     DecodedAuthCompleteResponse* out);
 
-    // ACP discovery (a fresh PATH/endpoint scan; the response reuses the AcpCatalog shape, so
-    // decodeAcpCatalog reads it). Zero-arg.
-    [[nodiscard]] static QByteArray encodeAcpDiscoverRequest();
+    // Foreign-agent discovery (a fresh PATH/endpoint scan; the response reuses the AgentCatalog
+    // shape, so decodeAgentCatalog reads it). Zero-arg.
+    [[nodiscard]] static QByteArray encodeAgentDiscoverRequest();
 
     // Local re-quantization (A5): start a quantize job for `repo` toward `targetQuant`
     // (ModelQuantize -> ModelQuantizeStarted). Empty `sourceFile` lets the node pick the best
