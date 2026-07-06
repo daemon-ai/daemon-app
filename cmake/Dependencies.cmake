@@ -23,7 +23,23 @@ function(add_custom_target _name)
         message(STATUS "Dependencies: reusing existing custom target '${_name}' (vendored ECM subproject duplicate).")
         return()
     endif()
-    _add_custom_target(${ARGV})
+    # Forward to the builtin WITHOUT collapsing the arguments through `${ARGV}`:
+    # a bare `${ARGV}` re-splits every argument on ';', which corrupts any argument
+    # that legitimately contains semicolons. Qt's qmllint wiring
+    # (_qt_internal_target_enable_qmllint) passes the whole command as one quoted
+    # generator expression, `COMMAND "$<IF:${have_files},${cmd},${cmd_dummy}>"`,
+    # whose branches are ';'-joined lists relied upon by COMMAND_EXPAND_LISTS.
+    # Re-splitting tears the "$<IF:...>" apart so CMake emits it literally, and
+    # `all_qmllint` then fails with a shell syntax error. Escape embedded
+    # semicolons per-argument so each argument survives the forward unchanged.
+    set(_fwd_args "")
+    math(EXPR _last_arg "${ARGC} - 1")
+    foreach(_i RANGE 0 ${_last_arg})
+        set(_a "${ARGV${_i}}")
+        string(REPLACE ";" "\\;" _a "${_a}")
+        list(APPEND _fwd_args "${_a}")
+    endforeach()
+    _add_custom_target(${_fwd_args})
 endfunction()
 
 # When clang-format is on the build env, ECM's KDEClangFormat (pulled in by the
