@@ -98,12 +98,12 @@ Item {
                                 // Engine identity (C3/ENG-7): Native core vs the foreign ACP
                                 // agent this profile is bound to.
                                 Kit.Chip {
+                                    // "Acp" is the wire engineKind value, not display text.
+                                    readonly property bool acp: entry.engine === "Acp"
                                     visible: entry.engine !== undefined
-                                    text: entry.engine === "Acp"
-                                          ? (entry.acpAgent || qsTr("Foreign")) : qsTr("Native")
-                                    iconGlyph: entry.engine === "Acp" ? FontIcons.fa_robot
-                                                                      : FontIcons.fa_microchip
-                                    tone: entry.engine === "Acp" ? "accent" : "muted"
+                                    text: acp ? (entry.acpAgent || qsTr("Foreign")) : qsTr("Native")
+                                    iconGlyph: acp ? FontIcons.fa_robot : FontIcons.fa_microchip
+                                    tone: acp ? "accent" : "muted"
                                 }
                                 Text {
                                     visible: entry.isDefault === true
