@@ -238,8 +238,14 @@ struct request_poll {
 	uint32_t Poll_max;
 };
 
+struct Approved_allow_permanent {
+	bool Approved_allow_permanent;
+};
+
 struct host_response_body_approved {
-	bool host_response_body_approved_Approved;
+	bool Approved_approved;
+	struct Approved_allow_permanent Approved_allow_permanent;
+	bool Approved_allow_permanent_present;
 };
 
 struct host_response_body_input {
@@ -611,10 +617,16 @@ struct request_approvals_pending {
 	bool ApprovalsPending_after_present;
 };
 
+struct ApprovalDecide_allow_permanent {
+	bool ApprovalDecide_allow_permanent;
+};
+
 struct request_approval_decide {
 	struct zcbor_string ApprovalDecide_session;
 	struct zcbor_string ApprovalDecide_request_id;
 	bool ApprovalDecide_allow;
+	struct ApprovalDecide_allow_permanent ApprovalDecide_allow_permanent;
+	bool ApprovalDecide_allow_permanent_present;
 };
 
 struct request_profile_get {
@@ -3351,8 +3363,14 @@ struct outbound_event {
 	struct agent_event_r outbound_event_Event;
 };
 
+struct Approval_allow_permanent_offered {
+	bool Approval_allow_permanent_offered;
+};
+
 struct host_request_kind_approval {
 	struct zcbor_string Approval_prompt;
+	struct Approval_allow_permanent_offered Approval_allow_permanent_offered;
+	bool Approval_allow_permanent_offered_present;
 };
 
 struct host_request_kind_input {

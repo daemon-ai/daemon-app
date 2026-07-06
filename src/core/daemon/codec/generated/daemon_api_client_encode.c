@@ -53,6 +53,7 @@ static bool encode_repeated_Submit_profile(zcbor_state_t *state, const struct Su
 static bool encode_request_submit(zcbor_state_t *state, const struct request_submit *input);
 static bool encode_request_submit_routed(zcbor_state_t *state, const struct request_submit_routed *input);
 static bool encode_request_poll(zcbor_state_t *state, const struct request_poll *input);
+static bool encode_repeated_Approved_allow_permanent(zcbor_state_t *state, const struct Approved_allow_permanent *input);
 static bool encode_host_response_body_approved(zcbor_state_t *state, const struct host_response_body_approved *input);
 static bool encode_host_response_body_input(zcbor_state_t *state, const struct host_response_body_input *input);
 static bool encode_host_response_body_chosen(zcbor_state_t *state, const struct host_response_body_chosen *input);
@@ -107,6 +108,7 @@ static bool encode_request_set_session_overlay(zcbor_state_t *state, const struc
 static bool encode_repeated_ApprovalsPending_session(zcbor_state_t *state, const struct ApprovalsPending_session_r *input);
 static bool encode_repeated_ApprovalsPending_after(zcbor_state_t *state, const struct ApprovalsPending_after_r *input);
 static bool encode_request_approvals_pending(zcbor_state_t *state, const struct request_approvals_pending *input);
+static bool encode_repeated_ApprovalDecide_allow_permanent(zcbor_state_t *state, const struct ApprovalDecide_allow_permanent *input);
 static bool encode_request_approval_decide(zcbor_state_t *state, const struct request_approval_decide *input);
 static bool encode_request_profile_get(zcbor_state_t *state, const struct request_profile_get *input);
 static bool encode_budget(zcbor_state_t *state, const struct budget *input);
@@ -435,6 +437,7 @@ static bool encode_agent_event_snapshot(zcbor_state_t *state, const struct agent
 static bool encode_agent_event_rewound(zcbor_state_t *state, const struct agent_event_rewound *input);
 static bool encode_agent_event(zcbor_state_t *state, const struct agent_event_r *input);
 static bool encode_outbound_event(zcbor_state_t *state, const struct outbound_event *input);
+static bool encode_repeated_Approval_allow_permanent_offered(zcbor_state_t *state, const struct Approval_allow_permanent_offered *input);
 static bool encode_host_request_kind_approval(zcbor_state_t *state, const struct host_request_kind_approval *input);
 static bool encode_host_request_kind_input(zcbor_state_t *state, const struct host_request_kind_input *input);
 static bool encode_host_request_kind_choice(zcbor_state_t *state, const struct host_request_kind_choice *input);
@@ -1177,6 +1180,19 @@ static bool encode_request_poll(
 	return res;
 }
 
+static bool encode_repeated_Approved_allow_permanent(
+		zcbor_state_t *state, const struct Approved_allow_permanent *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"allow_permanent", tmp_str.len = sizeof("allow_permanent") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).Approved_allow_permanent)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_host_response_body_approved(
 		zcbor_state_t *state, const struct host_response_body_approved *input)
 {
@@ -1184,7 +1200,9 @@ static bool encode_host_response_body_approved(
 	struct zcbor_string tmp_str;
 
 	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Approved", tmp_str.len = sizeof("Approved") - 1, &tmp_str)))))
-	&& (zcbor_bool_encode(state, (&(*input).host_response_body_approved_Approved))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+	&& (zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"approved", tmp_str.len = sizeof("approved") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).Approved_approved))))
+	&& (!(*input).Approved_allow_permanent_present || encode_repeated_Approved_allow_permanent(state, (&(*input).Approved_allow_permanent)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -1984,6 +2002,19 @@ static bool encode_request_approvals_pending(
 	return res;
 }
 
+static bool encode_repeated_ApprovalDecide_allow_permanent(
+		zcbor_state_t *state, const struct ApprovalDecide_allow_permanent *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"allow_permanent", tmp_str.len = sizeof("allow_permanent") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).ApprovalDecide_allow_permanent)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_request_approval_decide(
 		zcbor_state_t *state, const struct request_approval_decide *input)
 {
@@ -1991,12 +2022,13 @@ static bool encode_request_approval_decide(
 	struct zcbor_string tmp_str;
 
 	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ApprovalDecide", tmp_str.len = sizeof("ApprovalDecide") - 1, &tmp_str)))))
-	&& (zcbor_map_start_encode(state, 3) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 4) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).ApprovalDecide_session))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"request_id", tmp_str.len = sizeof("request_id") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).ApprovalDecide_request_id))))
 	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"allow", tmp_str.len = sizeof("allow") - 1, &tmp_str)))))
-	&& (zcbor_bool_encode(state, (&(*input).ApprovalDecide_allow))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 3)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+	&& (zcbor_bool_encode(state, (&(*input).ApprovalDecide_allow))))
+	&& (!(*input).ApprovalDecide_allow_permanent_present || encode_repeated_ApprovalDecide_allow_permanent(state, (&(*input).ApprovalDecide_allow_permanent)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 4)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -7003,6 +7035,19 @@ static bool encode_outbound_event(
 	return res;
 }
 
+static bool encode_repeated_Approval_allow_permanent_offered(
+		zcbor_state_t *state, const struct Approval_allow_permanent_offered *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"allow_permanent_offered", tmp_str.len = sizeof("allow_permanent_offered") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).Approval_allow_permanent_offered)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_host_request_kind_approval(
 		zcbor_state_t *state, const struct host_request_kind_approval *input)
 {
@@ -7010,8 +7055,9 @@ static bool encode_host_request_kind_approval(
 	struct zcbor_string tmp_str;
 
 	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"Approval", tmp_str.len = sizeof("Approval") - 1, &tmp_str)))))
-	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"prompt", tmp_str.len = sizeof("prompt") - 1, &tmp_str)))))
-	&& (zcbor_tstr_encode(state, (&(*input).Approval_prompt))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+	&& (zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"prompt", tmp_str.len = sizeof("prompt") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).Approval_prompt))))
+	&& (!(*input).Approval_allow_permanent_offered_present || encode_repeated_Approval_allow_permanent_offered(state, (&(*input).Approval_allow_permanent_offered)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;

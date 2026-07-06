@@ -53,6 +53,7 @@ static bool decode_repeated_Submit_profile(zcbor_state_t *state, struct Submit_p
 static bool decode_request_submit(zcbor_state_t *state, struct request_submit *result);
 static bool decode_request_submit_routed(zcbor_state_t *state, struct request_submit_routed *result);
 static bool decode_request_poll(zcbor_state_t *state, struct request_poll *result);
+static bool decode_repeated_Approved_allow_permanent(zcbor_state_t *state, struct Approved_allow_permanent *result);
 static bool decode_host_response_body_approved(zcbor_state_t *state, struct host_response_body_approved *result);
 static bool decode_host_response_body_input(zcbor_state_t *state, struct host_response_body_input *result);
 static bool decode_host_response_body_chosen(zcbor_state_t *state, struct host_response_body_chosen *result);
@@ -107,6 +108,7 @@ static bool decode_request_set_session_overlay(zcbor_state_t *state, struct requ
 static bool decode_repeated_ApprovalsPending_session(zcbor_state_t *state, struct ApprovalsPending_session_r *result);
 static bool decode_repeated_ApprovalsPending_after(zcbor_state_t *state, struct ApprovalsPending_after_r *result);
 static bool decode_request_approvals_pending(zcbor_state_t *state, struct request_approvals_pending *result);
+static bool decode_repeated_ApprovalDecide_allow_permanent(zcbor_state_t *state, struct ApprovalDecide_allow_permanent *result);
 static bool decode_request_approval_decide(zcbor_state_t *state, struct request_approval_decide *result);
 static bool decode_request_profile_get(zcbor_state_t *state, struct request_profile_get *result);
 static bool decode_budget(zcbor_state_t *state, struct budget *result);
@@ -435,6 +437,7 @@ static bool decode_agent_event_snapshot(zcbor_state_t *state, struct agent_event
 static bool decode_agent_event_rewound(zcbor_state_t *state, struct agent_event_rewound *result);
 static bool decode_agent_event(zcbor_state_t *state, struct agent_event_r *result);
 static bool decode_outbound_event(zcbor_state_t *state, struct outbound_event *result);
+static bool decode_repeated_Approval_allow_permanent_offered(zcbor_state_t *state, struct Approval_allow_permanent_offered *result);
 static bool decode_host_request_kind_approval(zcbor_state_t *state, struct host_request_kind_approval *result);
 static bool decode_host_request_kind_input(zcbor_state_t *state, struct host_request_kind_input *result);
 static bool decode_host_request_kind_choice(zcbor_state_t *state, struct host_request_kind_choice *result);
@@ -1221,6 +1224,19 @@ static bool decode_request_poll(
 	return res;
 }
 
+static bool decode_repeated_Approved_allow_permanent(
+		zcbor_state_t *state, struct Approved_allow_permanent *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"allow_permanent", tmp_str.len = sizeof("allow_permanent") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).Approved_allow_permanent)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_host_response_body_approved(
 		zcbor_state_t *state, struct host_response_body_approved *result)
 {
@@ -1228,7 +1244,16 @@ static bool decode_host_response_body_approved(
 	struct zcbor_string tmp_str;
 
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Approved", tmp_str.len = sizeof("Approved") - 1, &tmp_str)))))
-	&& (zcbor_bool_decode(state, (&(*result).host_response_body_approved_Approved))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"approved", tmp_str.len = sizeof("approved") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).Approved_approved))))
+	&& zcbor_present_decode(&((*result).Approved_allow_permanent_present), (zcbor_decoder_t *)decode_repeated_Approved_allow_permanent, state, (&(*result).Approved_allow_permanent))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_Approved_allow_permanent(state, (&(*result).Approved_allow_permanent));
+	}
 
 	log_result(state, res, __func__);
 	return res;
@@ -2090,6 +2115,19 @@ static bool decode_request_approvals_pending(
 	return res;
 }
 
+static bool decode_repeated_ApprovalDecide_allow_permanent(
+		zcbor_state_t *state, struct ApprovalDecide_allow_permanent *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"allow_permanent", tmp_str.len = sizeof("allow_permanent") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).ApprovalDecide_allow_permanent)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_request_approval_decide(
 		zcbor_state_t *state, struct request_approval_decide *result)
 {
@@ -2102,7 +2140,15 @@ static bool decode_request_approval_decide(
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"request_id", tmp_str.len = sizeof("request_id") - 1, &tmp_str)))))
 	&& (zcbor_tstr_decode(state, (&(*result).ApprovalDecide_request_id))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"allow", tmp_str.len = sizeof("allow") - 1, &tmp_str)))))
-	&& (zcbor_bool_decode(state, (&(*result).ApprovalDecide_allow))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& (zcbor_bool_decode(state, (&(*result).ApprovalDecide_allow))))
+	&& zcbor_present_decode(&((*result).ApprovalDecide_allow_permanent_present), (zcbor_decoder_t *)decode_repeated_ApprovalDecide_allow_permanent, state, (&(*result).ApprovalDecide_allow_permanent))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_ApprovalDecide_allow_permanent(state, (&(*result).ApprovalDecide_allow_permanent));
+	}
 
 	log_result(state, res, __func__);
 	return res;
@@ -7634,6 +7680,19 @@ static bool decode_outbound_event(
 	return res;
 }
 
+static bool decode_repeated_Approval_allow_permanent_offered(
+		zcbor_state_t *state, struct Approval_allow_permanent_offered *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"allow_permanent_offered", tmp_str.len = sizeof("allow_permanent_offered") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).Approval_allow_permanent_offered)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_host_request_kind_approval(
 		zcbor_state_t *state, struct host_request_kind_approval *result)
 {
@@ -7642,7 +7701,15 @@ static bool decode_host_request_kind_approval(
 
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Approval", tmp_str.len = sizeof("Approval") - 1, &tmp_str)))))
 	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"prompt", tmp_str.len = sizeof("prompt") - 1, &tmp_str)))))
-	&& (zcbor_tstr_decode(state, (&(*result).Approval_prompt))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& (zcbor_tstr_decode(state, (&(*result).Approval_prompt))))
+	&& zcbor_present_decode(&((*result).Approval_allow_permanent_offered_present), (zcbor_decoder_t *)decode_repeated_Approval_allow_permanent_offered, state, (&(*result).Approval_allow_permanent_offered))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_Approval_allow_permanent_offered(state, (&(*result).Approval_allow_permanent_offered));
+	}
 
 	log_result(state, res, __func__);
 	return res;
