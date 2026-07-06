@@ -95,9 +95,17 @@ Item {
                         Layout.fillWidth: true
                         Item { Layout.fillWidth: true }
                         Kit.TextButton { text: qsTr("Deny"); onClicked: Approvals.deny(entry.id) }
+                        // Wire v28: only shown when the node offered to remember this command
+                        // (entry.canAllowPermanent). Sends allow_permanent so the node adds the
+                        // command's fingerprint to the session allow-list.
+                        Kit.TextButton {
+                            text: qsTr("Allow permanently")
+                            visible: entry.canAllowPermanent === true
+                            onClicked: Approvals.approve(entry.id, true)
+                        }
                         Kit.TextButton {
                             text: qsTr("Approve"); accentFilled: true
-                            onClicked: Approvals.approve(entry.id)
+                            onClicked: Approvals.approve(entry.id, false)
                         }
                     }
                 }

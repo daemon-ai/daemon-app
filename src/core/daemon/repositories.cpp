@@ -1306,13 +1306,15 @@ void ApprovalRepository::refreshPending(const QString& sessionId) {
                           QLatin1String(kPendingCorrelation));
 }
 
-void ApprovalRepository::decide(const QString& sessionId, const QString& requestId, bool allow) {
+void ApprovalRepository::decide(const QString& sessionId, const QString& requestId, bool allow,
+                                bool allowPermanent) {
     if (client() == nullptr) {
         emit operationFailed(QStringLiteral("No NodeApi client configured"));
         return;
     }
-    client()->sendRequest(NodeApiCodec::encodeApprovalDecideRequest(sessionId, requestId, allow),
-                          QLatin1String(kDecideCorrelation));
+    client()->sendRequest(
+        NodeApiCodec::encodeApprovalDecideRequest(sessionId, requestId, allow, allowPermanent),
+        QLatin1String(kDecideCorrelation));
 }
 
 void ApprovalRepository::handleResponse(const QString& correlationId,

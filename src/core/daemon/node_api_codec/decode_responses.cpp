@@ -994,6 +994,9 @@ bool NodeApiCodec::decodeApprovals(const QByteArray& responseCbor, QList<Decoded
             entry.hasPath = true;
             entry.path = fromZcbor(info.approval_info_path.approval_info_path_tstr);
         }
+        // Wire v28: a present fingerprint means the node can remember a permanent decision for this
+        // approval; it is the durable "allow permanently" offer signal (value not needed app-side).
+        entry.hasFingerprint = info.approval_info_fingerprint_present;
         out->append(entry);
     }
     if (next != nullptr) {

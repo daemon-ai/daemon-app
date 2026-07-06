@@ -263,7 +263,13 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
         break;
     case TabModel::Approvals:
         if (text == QStringLiteral("a") || enter) {
-            m_deps.approvals->approve(id);
+            m_deps.approvals->approve(id, /*allowPermanent=*/false);
+            acted = true;
+        } else if (text == QStringLiteral("p") &&
+                   row.value(QStringLiteral("canAllowPermanent")).toBool()) {
+            // Wire v28: "allow permanently" — offered only when the node attached a fingerprint it
+            // can remember (row's canAllowPermanent), matching the GUI ApprovalsPage affordance.
+            m_deps.approvals->approve(id, /*allowPermanent=*/true);
             acted = true;
         } else if (text == QStringLiteral("d")) {
             m_deps.approvals->deny(id);

@@ -17,7 +17,7 @@ public:
     [[nodiscard]] QObject* pending() const override;
     [[nodiscard]] int count() const override;
 
-    void approve(const QString& id) override;
+    void approve(const QString& id, bool allowPermanent = false) override;
     void deny(const QString& id) override;
 
 private:

@@ -6,6 +6,7 @@
 #include "fleet/iapprovals_inbox.h"
 
 #include <QHash>
+#include <QSet>
 #include <QString>
 
 namespace uimodels {
@@ -29,7 +30,7 @@ public:
     [[nodiscard]] QObject* pending() const override;
     [[nodiscard]] int count() const override;
 
-    void approve(const QString& id) override;
+    void approve(const QString& id, bool allowPermanent = false) override;
     void deny(const QString& id) override;
 
 private:
@@ -38,6 +39,10 @@ private:
     ApprovalRepository* m_repository = nullptr;
     uimodels::VariantListModel* m_pending = nullptr;
     QHash<QString, QString> m_sessionByRequest; // request_id -> session (for ApprovalDecide)
+    // request_ids the node can remember permanently (ApprovalInfo carried a fingerprint). An
+    // "allow permanently" is only forwarded for these — belt-and-suspenders with the node, which
+    // degrades a fingerprint-less permanent decision to a single allow.
+    QSet<QString> m_permanentOfferable;
 };
 
 } // namespace daemonapp::daemon
