@@ -30,6 +30,9 @@ static bool decode_repeated_blob_ref_name(zcbor_state_t *state, struct blob_ref_
 static bool decode_repeated_blob_ref_mime(zcbor_state_t *state, struct blob_ref_mime_r *result);
 static bool decode_blob_ref(zcbor_state_t *state, struct blob_ref *result);
 static bool decode_repeated_user_msg_attachments(zcbor_state_t *state, struct user_msg_attachments_r *result);
+static bool decode_repeated_completion_notice_ref_call_id(zcbor_state_t *state, struct completion_notice_ref_call_id_r *result);
+static bool decode_completion_notice_ref(zcbor_state_t *state, struct completion_notice_ref *result);
+static bool decode_repeated_user_msg_notice(zcbor_state_t *state, struct user_msg_notice_r *result);
 static bool decode_user_msg(zcbor_state_t *state, struct user_msg *result);
 static bool decode_agent_command_start_turn(zcbor_state_t *state, struct agent_command_start_turn *result);
 static bool decode_agent_command_steer(zcbor_state_t *state, struct agent_command_steer *result);
@@ -54,6 +57,7 @@ static bool decode_request_submit(zcbor_state_t *state, struct request_submit *r
 static bool decode_request_submit_routed(zcbor_state_t *state, struct request_submit_routed *result);
 static bool decode_request_poll(zcbor_state_t *state, struct request_poll *result);
 static bool decode_repeated_Approved_allow_permanent(zcbor_state_t *state, struct Approved_allow_permanent *result);
+static bool decode_repeated_Approved_reason(zcbor_state_t *state, struct Approved_reason_r *result);
 static bool decode_host_response_body_approved(zcbor_state_t *state, struct host_response_body_approved *result);
 static bool decode_host_response_body_input(zcbor_state_t *state, struct host_response_body_input *result);
 static bool decode_host_response_body_chosen(zcbor_state_t *state, struct host_response_body_chosen *result);
@@ -109,15 +113,18 @@ static bool decode_repeated_ApprovalsPending_session(zcbor_state_t *state, struc
 static bool decode_repeated_ApprovalsPending_after(zcbor_state_t *state, struct ApprovalsPending_after_r *result);
 static bool decode_request_approvals_pending(zcbor_state_t *state, struct request_approvals_pending *result);
 static bool decode_repeated_ApprovalDecide_allow_permanent(zcbor_state_t *state, struct ApprovalDecide_allow_permanent *result);
+static bool decode_repeated_ApprovalDecide_reason(zcbor_state_t *state, struct ApprovalDecide_reason_r *result);
 static bool decode_request_approval_decide(zcbor_state_t *state, struct request_approval_decide *result);
+static bool decode_request_fingerprint_list(zcbor_state_t *state, struct request_fingerprint_list *result);
+static bool decode_request_fingerprint_revoke(zcbor_state_t *state, struct request_fingerprint_revoke *result);
 static bool decode_request_profile_get(zcbor_state_t *state, struct request_profile_get *result);
 static bool decode_budget(zcbor_state_t *state, struct budget *result);
 static bool decode_engine_tunables(zcbor_state_t *state, struct engine_tunables *result);
 static bool decode_context_engine_sel(zcbor_state_t *state, struct context_engine_sel_r *result);
 static bool decode_memory_provider_sel(zcbor_state_t *state, struct memory_provider_sel_r *result);
 static bool decode_bound_account(zcbor_state_t *state, struct bound_account *result);
-static bool decode_engine_acp_agent(zcbor_state_t *state, struct engine_acp_agent *result);
-static bool decode_engine_acp(zcbor_state_t *state, struct engine_acp *result);
+static bool decode_engine_foreign_agent(zcbor_state_t *state, struct engine_foreign_agent *result);
+static bool decode_engine_foreign(zcbor_state_t *state, struct engine_foreign *result);
 static bool decode_engine_selector(zcbor_state_t *state, struct engine_selector_r *result);
 static bool decode_repeated_profile_spec_engine(zcbor_state_t *state, struct profile_spec_engine *result);
 static bool decode_profile_spec(zcbor_state_t *state, struct profile_spec *result);
@@ -217,19 +224,21 @@ static bool decode_request_session_update_meta(zcbor_state_t *state, struct requ
 static bool decode_repeated_rewind_point_restore_workspace(zcbor_state_t *state, struct rewind_point_restore_workspace *result);
 static bool decode_rewind_point(zcbor_state_t *state, struct rewind_point *result);
 static bool decode_request_rewind(zcbor_state_t *state, struct request_rewind *result);
-static bool decode_repeated_acp_recipe_program(zcbor_state_t *state, struct acp_recipe_program_r *result);
-static bool decode_repeated_acp_recipe_args(zcbor_state_t *state, struct acp_recipe_args_r *result);
+static bool decode_repeated_agent_recipe_program(zcbor_state_t *state, struct agent_recipe_program_r *result);
+static bool decode_repeated_agent_recipe_args(zcbor_state_t *state, struct agent_recipe_args_r *result);
 static bool decode_kv_pair(zcbor_state_t *state, struct kv_pair *result);
-static bool decode_repeated_acp_recipe_env(zcbor_state_t *state, struct acp_recipe_env_r *result);
-static bool decode_repeated_acp_recipe_endpoint(zcbor_state_t *state, struct acp_recipe_endpoint_r *result);
-static bool decode_acp_recipe(zcbor_state_t *state, struct acp_recipe *result);
-static bool decode_acp_source(zcbor_state_t *state, struct acp_source_r *result);
-static bool decode_repeated_acp_agent_entry_installed(zcbor_state_t *state, struct acp_agent_entry_installed *result);
-static bool decode_repeated_acp_agent_entry_version(zcbor_state_t *state, struct acp_agent_entry_version_r *result);
-static bool decode_repeated_acp_agent_entry_capabilities(zcbor_state_t *state, struct acp_agent_entry_capabilities_r *result);
-static bool decode_acp_agent_entry(zcbor_state_t *state, struct acp_agent_entry *result);
-static bool decode_request_acp_register(zcbor_state_t *state, struct request_acp_register *result);
-static bool decode_request_acp_remove(zcbor_state_t *state, struct request_acp_remove *result);
+static bool decode_repeated_agent_recipe_env(zcbor_state_t *state, struct agent_recipe_env_r *result);
+static bool decode_repeated_agent_recipe_endpoint(zcbor_state_t *state, struct agent_recipe_endpoint_r *result);
+static bool decode_agent_recipe(zcbor_state_t *state, struct agent_recipe *result);
+static bool decode_agent_source(zcbor_state_t *state, struct agent_source_r *result);
+static bool decode_agent_protocol(zcbor_state_t *state, struct agent_protocol_r *result);
+static bool decode_repeated_agent_entry_protocol(zcbor_state_t *state, struct agent_entry_protocol *result);
+static bool decode_repeated_agent_entry_installed(zcbor_state_t *state, struct agent_entry_installed *result);
+static bool decode_repeated_agent_entry_version(zcbor_state_t *state, struct agent_entry_version_r *result);
+static bool decode_repeated_agent_entry_capabilities(zcbor_state_t *state, struct agent_entry_capabilities_r *result);
+static bool decode_agent_entry(zcbor_state_t *state, struct agent_entry *result);
+static bool decode_request_agent_register(zcbor_state_t *state, struct request_agent_register *result);
+static bool decode_request_agent_remove(zcbor_state_t *state, struct request_agent_remove *result);
 static bool decode_request_skill_get(zcbor_state_t *state, struct request_skill_get *result);
 static bool decode_request_skill_put(zcbor_state_t *state, struct request_skill_put *result);
 static bool decode_repeated_provider_info_base_url(zcbor_state_t *state, struct provider_info_base_url_r *result);
@@ -237,6 +246,7 @@ static bool decode_repeated_provider_info_available(zcbor_state_t *state, struct
 static bool decode_provider_info(zcbor_state_t *state, struct provider_info *result);
 static bool decode_request_provider_register(zcbor_state_t *state, struct request_provider_register *result);
 static bool decode_repeated_tool_info_description(zcbor_state_t *state, struct tool_info_description_r *result);
+static bool decode_repeated_tool_info_requires(zcbor_state_t *state, struct tool_info_requires_r *result);
 static bool decode_tool_info(zcbor_state_t *state, struct tool_info *result);
 static bool decode_request_tool_register(zcbor_state_t *state, struct request_tool_register *result);
 static bool decode_command_invocation(zcbor_state_t *state, struct command_invocation *result);
@@ -477,6 +487,9 @@ static bool decode_approval_info(zcbor_state_t *state, struct approval_info *res
 static bool decode_repeated_approval_page_next(zcbor_state_t *state, struct approval_page_next_r *result);
 static bool decode_approval_page(zcbor_state_t *state, struct approval_page *result);
 static bool decode_response_approvals(zcbor_state_t *state, struct response_approvals *result);
+static bool decode_repeated_remembered_fingerprint_label(zcbor_state_t *state, struct remembered_fingerprint_label_r *result);
+static bool decode_remembered_fingerprint(zcbor_state_t *state, struct remembered_fingerprint *result);
+static bool decode_response_fingerprints(zcbor_state_t *state, struct response_fingerprints *result);
 static bool decode_fleet_report(zcbor_state_t *state, struct fleet_report *result);
 static bool decode_response_fleet(zcbor_state_t *state, struct response_fleet *result);
 static bool decode_unit_kind(zcbor_state_t *state, struct unit_kind_r *result);
@@ -486,6 +499,9 @@ static bool decode_repeated_unit_node_profile(zcbor_state_t *state, struct unit_
 static bool decode_repeated_unit_node_session(zcbor_state_t *state, struct unit_node_session_r *result);
 static bool decode_repeated_unit_node_title(zcbor_state_t *state, struct unit_node_title_r *result);
 static bool decode_repeated_unit_node_role(zcbor_state_t *state, struct unit_node_role_r *result);
+static bool decode_delegation_lifetime(zcbor_state_t *state, struct delegation_lifetime_r *result);
+static bool decode_repeated_unit_node_lifetime(zcbor_state_t *state, struct unit_node_lifetime_r *result);
+static bool decode_repeated_unit_node_engine(zcbor_state_t *state, struct unit_node_engine_r *result);
 static bool decode_unit_node(zcbor_state_t *state, struct unit_node *result);
 static bool decode_repeated_tree_report_next(zcbor_state_t *state, struct tree_report_next_r *result);
 static bool decode_tree_report(zcbor_state_t *state, struct tree_report *result);
@@ -532,6 +548,10 @@ static bool decode_node_event_roster_changed(zcbor_state_t *state, struct node_e
 static bool decode_node_event_fleet_changed(zcbor_state_t *state, struct node_event_fleet_changed *result);
 static bool decode_node_event_approval_pending(zcbor_state_t *state, struct node_event_approval_pending *result);
 static bool decode_node_event_download_progress(zcbor_state_t *state, struct node_event_download_progress *result);
+static bool decode_connection_state(zcbor_state_t *state, struct connection_state_r *result);
+static bool decode_presence_state(zcbor_state_t *state, struct presence_state_r *result);
+static bool decode_repeated_TransportChanged_presence(zcbor_state_t *state, struct TransportChanged_presence *result);
+static bool decode_node_event_transport_changed(zcbor_state_t *state, struct node_event_transport_changed *result);
 static bool decode_node_event_resync_needed(zcbor_state_t *state, struct node_event_resync_needed *result);
 static bool decode_node_event(zcbor_state_t *state, struct node_event_r *result);
 static bool decode_events_page(zcbor_state_t *state, struct events_page *result);
@@ -628,7 +648,7 @@ static bool decode_response_session_search(zcbor_state_t *state, struct response
 static bool decode_repeated_top_tools_name_l(zcbor_state_t *state, struct top_tools_name_l *result);
 static bool decode_session_recap(zcbor_state_t *state, struct session_recap *result);
 static bool decode_response_session_recap(zcbor_state_t *state, struct response_session_recap *result);
-static bool decode_response_acp_catalog(zcbor_state_t *state, struct response_acp_catalog *result);
+static bool decode_response_agent_catalog(zcbor_state_t *state, struct response_agent_catalog *result);
 static bool decode_response_providers(zcbor_state_t *state, struct response_providers *result);
 static bool decode_response_tools(zcbor_state_t *state, struct response_tools *result);
 static bool decode_command_scope(zcbor_state_t *state, struct command_scope_r *result);
@@ -639,6 +659,8 @@ static bool decode_response_commands(zcbor_state_t *state, struct response_comma
 static bool decode_command_output(zcbor_state_t *state, struct command_output *result);
 static bool decode_response_command_output(zcbor_state_t *state, struct response_command_output *result);
 static bool decode_response_config(zcbor_state_t *state, struct response_config *result);
+static bool decode_caps_report(zcbor_state_t *state, struct caps_report *result);
+static bool decode_response_caps(zcbor_state_t *state, struct response_caps *result);
 static bool decode_repeated_cron_job_next_fire_unix(zcbor_state_t *state, struct cron_job_next_fire_unix_r *result);
 static bool decode_repeated_cron_job_paused(zcbor_state_t *state, struct cron_job_paused *result);
 static bool decode_repeated_cron_job_last_run_unix(zcbor_state_t *state, struct cron_job_last_run_unix_r *result);
@@ -675,9 +697,7 @@ static bool decode_adapter_capabilities(zcbor_state_t *state, struct adapter_cap
 static bool decode_repeated_adapter_info_account_schema(zcbor_state_t *state, struct adapter_info_account_schema *result);
 static bool decode_adapter_info(zcbor_state_t *state, struct adapter_info *result);
 static bool decode_response_adapters(zcbor_state_t *state, struct response_adapters *result);
-static bool decode_connection_state(zcbor_state_t *state, struct connection_state_r *result);
 static bool decode_repeated_transport_instance_info_connection(zcbor_state_t *state, struct transport_instance_info_connection *result);
-static bool decode_presence_state(zcbor_state_t *state, struct presence_state_r *result);
 static bool decode_repeated_transport_instance_info_presence(zcbor_state_t *state, struct transport_instance_info_presence *result);
 static bool decode_repeated_transport_instance_info_bound_profile(zcbor_state_t *state, struct transport_instance_info_bound_profile_r *result);
 static bool decode_transport_instance_info(zcbor_state_t *state, struct transport_instance_info *result);
@@ -846,6 +866,57 @@ static bool decode_repeated_user_msg_attachments(
 	return res;
 }
 
+static bool decode_repeated_completion_notice_ref_call_id(
+		zcbor_state_t *state, struct completion_notice_ref_call_id_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"call_id", tmp_str.len = sizeof("call_id") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).completion_notice_ref_call_id_tstr)))) && (((*result).completion_notice_ref_call_id_choice = completion_notice_ref_call_id_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).completion_notice_ref_call_id_choice = completion_notice_ref_call_id_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_completion_notice_ref(
+		zcbor_state_t *state, struct completion_notice_ref *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"child", tmp_str.len = sizeof("child") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).completion_notice_ref_child))))
+	&& zcbor_present_decode(&((*result).completion_notice_ref_call_id_present), (zcbor_decoder_t *)decode_repeated_completion_notice_ref_call_id, state, (&(*result).completion_notice_ref_call_id))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_completion_notice_ref_call_id(state, (&(*result).completion_notice_ref_call_id));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_user_msg_notice(
+		zcbor_state_t *state, struct user_msg_notice_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"notice", tmp_str.len = sizeof("notice") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((decode_completion_notice_ref(state, (&(*result).user_msg_notice_completion_notice_ref_m)))) && (((*result).user_msg_notice_choice = user_msg_notice_completion_notice_ref_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((zcbor_nil_expect(state, NULL))) && (((*result).user_msg_notice_choice = user_msg_notice_null_m_c), true)))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_user_msg(
 		zcbor_state_t *state, struct user_msg *result)
 {
@@ -854,13 +925,15 @@ static bool decode_user_msg(
 
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"text", tmp_str.len = sizeof("text") - 1, &tmp_str)))))
 	&& (zcbor_tstr_decode(state, (&(*result).user_msg_text))))
-	&& zcbor_present_decode(&((*result).user_msg_attachments_present), (zcbor_decoder_t *)decode_repeated_user_msg_attachments, state, (&(*result).user_msg_attachments))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& zcbor_present_decode(&((*result).user_msg_attachments_present), (zcbor_decoder_t *)decode_repeated_user_msg_attachments, state, (&(*result).user_msg_attachments))
+	&& zcbor_present_decode(&((*result).user_msg_notice_present), (zcbor_decoder_t *)decode_repeated_user_msg_notice, state, (&(*result).user_msg_notice))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
 		 * A compiler error here means a bug in zcbor.
 		 */
 		decode_repeated_user_msg_attachments(state, (&(*result).user_msg_attachments));
+		decode_repeated_user_msg_notice(state, (&(*result).user_msg_notice));
 	}
 
 	log_result(state, res, __func__);
@@ -1237,6 +1310,21 @@ static bool decode_repeated_Approved_allow_permanent(
 	return res;
 }
 
+static bool decode_repeated_Approved_reason(
+		zcbor_state_t *state, struct Approved_reason_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"reason", tmp_str.len = sizeof("reason") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).Approved_reason_tstr)))) && (((*result).Approved_reason_choice = Approved_reason_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).Approved_reason_choice = Approved_reason_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_host_response_body_approved(
 		zcbor_state_t *state, struct host_response_body_approved *result)
 {
@@ -1246,13 +1334,15 @@ static bool decode_host_response_body_approved(
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Approved", tmp_str.len = sizeof("Approved") - 1, &tmp_str)))))
 	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"approved", tmp_str.len = sizeof("approved") - 1, &tmp_str)))))
 	&& (zcbor_bool_decode(state, (&(*result).Approved_approved))))
-	&& zcbor_present_decode(&((*result).Approved_allow_permanent_present), (zcbor_decoder_t *)decode_repeated_Approved_allow_permanent, state, (&(*result).Approved_allow_permanent))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& zcbor_present_decode(&((*result).Approved_allow_permanent_present), (zcbor_decoder_t *)decode_repeated_Approved_allow_permanent, state, (&(*result).Approved_allow_permanent))
+	&& zcbor_present_decode(&((*result).Approved_reason_present), (zcbor_decoder_t *)decode_repeated_Approved_reason, state, (&(*result).Approved_reason))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
 		 * A compiler error here means a bug in zcbor.
 		 */
 		decode_repeated_Approved_allow_permanent(state, (&(*result).Approved_allow_permanent));
+		decode_repeated_Approved_reason(state, (&(*result).Approved_reason));
 	}
 
 	log_result(state, res, __func__);
@@ -2128,6 +2218,21 @@ static bool decode_repeated_ApprovalDecide_allow_permanent(
 	return res;
 }
 
+static bool decode_repeated_ApprovalDecide_reason(
+		zcbor_state_t *state, struct ApprovalDecide_reason_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"reason", tmp_str.len = sizeof("reason") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).ApprovalDecide_reason_tstr)))) && (((*result).ApprovalDecide_reason_choice = ApprovalDecide_reason_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).ApprovalDecide_reason_choice = ApprovalDecide_reason_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_request_approval_decide(
 		zcbor_state_t *state, struct request_approval_decide *result)
 {
@@ -2141,14 +2246,46 @@ static bool decode_request_approval_decide(
 	&& (zcbor_tstr_decode(state, (&(*result).ApprovalDecide_request_id))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"allow", tmp_str.len = sizeof("allow") - 1, &tmp_str)))))
 	&& (zcbor_bool_decode(state, (&(*result).ApprovalDecide_allow))))
-	&& zcbor_present_decode(&((*result).ApprovalDecide_allow_permanent_present), (zcbor_decoder_t *)decode_repeated_ApprovalDecide_allow_permanent, state, (&(*result).ApprovalDecide_allow_permanent))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& zcbor_present_decode(&((*result).ApprovalDecide_allow_permanent_present), (zcbor_decoder_t *)decode_repeated_ApprovalDecide_allow_permanent, state, (&(*result).ApprovalDecide_allow_permanent))
+	&& zcbor_present_decode(&((*result).ApprovalDecide_reason_present), (zcbor_decoder_t *)decode_repeated_ApprovalDecide_reason, state, (&(*result).ApprovalDecide_reason))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
 		 * A compiler error here means a bug in zcbor.
 		 */
 		decode_repeated_ApprovalDecide_allow_permanent(state, (&(*result).ApprovalDecide_allow_permanent));
+		decode_repeated_ApprovalDecide_reason(state, (&(*result).ApprovalDecide_reason));
 	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_fingerprint_list(
+		zcbor_state_t *state, struct request_fingerprint_list *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"FingerprintList", tmp_str.len = sizeof("FingerprintList") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).FingerprintList_session))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_request_fingerprint_revoke(
+		zcbor_state_t *state, struct request_fingerprint_revoke *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"FingerprintRevoke", tmp_str.len = sizeof("FingerprintRevoke") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).FingerprintRevoke_session))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"fingerprint", tmp_str.len = sizeof("fingerprint") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).FingerprintRevoke_fingerprint))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -2254,27 +2391,27 @@ static bool decode_bound_account(
 	return res;
 }
 
-static bool decode_engine_acp_agent(
-		zcbor_state_t *state, struct engine_acp_agent *result)
+static bool decode_engine_foreign_agent(
+		zcbor_state_t *state, struct engine_foreign_agent *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"agent", tmp_str.len = sizeof("agent") - 1, &tmp_str)))))
-	&& (zcbor_tstr_decode(state, (&(*result).engine_acp_agent_agent))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& (zcbor_tstr_decode(state, (&(*result).engine_foreign_agent_agent))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;
 }
 
-static bool decode_engine_acp(
-		zcbor_state_t *state, struct engine_acp *result)
+static bool decode_engine_foreign(
+		zcbor_state_t *state, struct engine_foreign *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Acp", tmp_str.len = sizeof("Acp") - 1, &tmp_str)))))
-	&& (decode_engine_acp_agent(state, (&(*result).engine_acp_Acp))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Foreign", tmp_str.len = sizeof("Foreign") - 1, &tmp_str)))))
+	&& (decode_engine_foreign_agent(state, (&(*result).engine_foreign_Foreign))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -2288,7 +2425,7 @@ static bool decode_engine_selector(
 	bool int_res;
 
 	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Core", tmp_str.len = sizeof("Core") - 1, &tmp_str))))) && (((*result).engine_selector_choice = engine_selector_Core_tstr_c), true))
-	|| (((decode_engine_acp(state, (&(*result).engine_selector_engine_acp_m)))) && (((*result).engine_selector_choice = engine_selector_engine_acp_m_c), true))), zcbor_union_end_code(state), int_res))));
+	|| (((decode_engine_foreign(state, (&(*result).engine_selector_engine_foreign_m)))) && (((*result).engine_selector_choice = engine_selector_engine_foreign_m_c), true))), zcbor_union_end_code(state), int_res))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -3958,35 +4095,35 @@ static bool decode_request_rewind(
 	return res;
 }
 
-static bool decode_repeated_acp_recipe_program(
-		zcbor_state_t *state, struct acp_recipe_program_r *result)
+static bool decode_repeated_agent_recipe_program(
+		zcbor_state_t *state, struct agent_recipe_program_r *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 	bool int_res;
 
 	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"program", tmp_str.len = sizeof("program") - 1, &tmp_str)))))
-	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).acp_recipe_program_tstr)))) && (((*result).acp_recipe_program_choice = acp_recipe_program_tstr_c), true))
-	|| (((zcbor_nil_expect(state, NULL))) && (((*result).acp_recipe_program_choice = acp_recipe_program_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).agent_recipe_program_tstr)))) && (((*result).agent_recipe_program_choice = agent_recipe_program_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).agent_recipe_program_choice = agent_recipe_program_null_m_c), true))), zcbor_union_end_code(state), int_res))));
 
 	log_result(state, res, __func__);
 	return res;
 }
 
-static bool decode_repeated_acp_recipe_args(
-		zcbor_state_t *state, struct acp_recipe_args_r *result)
+static bool decode_repeated_agent_recipe_args(
+		zcbor_state_t *state, struct agent_recipe_args_r *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
 	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"args", tmp_str.len = sizeof("args") - 1, &tmp_str)))))
-	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).acp_recipe_args_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).acp_recipe_args_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).agent_recipe_args_tstr_count, (zcbor_decoder_t *)zcbor_tstr_decode, state, (*&(*result).agent_recipe_args_tstr), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
 		 * A compiler error here means a bug in zcbor.
 		 */
-		zcbor_tstr_decode(state, (*&(*result).acp_recipe_args_tstr));
+		zcbor_tstr_decode(state, (*&(*result).agent_recipe_args_tstr));
 	}
 
 	log_result(state, res, __func__);
@@ -4005,180 +4142,209 @@ static bool decode_kv_pair(
 	return res;
 }
 
-static bool decode_repeated_acp_recipe_env(
-		zcbor_state_t *state, struct acp_recipe_env_r *result)
+static bool decode_repeated_agent_recipe_env(
+		zcbor_state_t *state, struct agent_recipe_env_r *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
 	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"env", tmp_str.len = sizeof("env") - 1, &tmp_str)))))
-	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).acp_recipe_env_kv_pair_m_count, (zcbor_decoder_t *)decode_kv_pair, state, (*&(*result).acp_recipe_env_kv_pair_m), sizeof(struct kv_pair))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).agent_recipe_env_kv_pair_m_count, (zcbor_decoder_t *)decode_kv_pair, state, (*&(*result).agent_recipe_env_kv_pair_m), sizeof(struct kv_pair))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
 		 * A compiler error here means a bug in zcbor.
 		 */
-		decode_kv_pair(state, (*&(*result).acp_recipe_env_kv_pair_m));
+		decode_kv_pair(state, (*&(*result).agent_recipe_env_kv_pair_m));
 	}
 
 	log_result(state, res, __func__);
 	return res;
 }
 
-static bool decode_repeated_acp_recipe_endpoint(
-		zcbor_state_t *state, struct acp_recipe_endpoint_r *result)
+static bool decode_repeated_agent_recipe_endpoint(
+		zcbor_state_t *state, struct agent_recipe_endpoint_r *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 	bool int_res;
 
 	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"endpoint", tmp_str.len = sizeof("endpoint") - 1, &tmp_str)))))
-	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).acp_recipe_endpoint_tstr)))) && (((*result).acp_recipe_endpoint_choice = acp_recipe_endpoint_tstr_c), true))
-	|| (((zcbor_nil_expect(state, NULL))) && (((*result).acp_recipe_endpoint_choice = acp_recipe_endpoint_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).agent_recipe_endpoint_tstr)))) && (((*result).agent_recipe_endpoint_choice = agent_recipe_endpoint_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).agent_recipe_endpoint_choice = agent_recipe_endpoint_null_m_c), true))), zcbor_union_end_code(state), int_res))));
 
 	log_result(state, res, __func__);
 	return res;
 }
 
-static bool decode_acp_recipe(
-		zcbor_state_t *state, struct acp_recipe *result)
+static bool decode_agent_recipe(
+		zcbor_state_t *state, struct agent_recipe *result)
 {
 	zcbor_log("%s\r\n", __func__);
 
-	bool res = (((zcbor_map_start_decode(state) && ((zcbor_present_decode(&((*result).acp_recipe_program_present), (zcbor_decoder_t *)decode_repeated_acp_recipe_program, state, (&(*result).acp_recipe_program))
-	&& zcbor_present_decode(&((*result).acp_recipe_args_present), (zcbor_decoder_t *)decode_repeated_acp_recipe_args, state, (&(*result).acp_recipe_args))
-	&& zcbor_present_decode(&((*result).acp_recipe_env_present), (zcbor_decoder_t *)decode_repeated_acp_recipe_env, state, (&(*result).acp_recipe_env))
-	&& zcbor_present_decode(&((*result).acp_recipe_endpoint_present), (zcbor_decoder_t *)decode_repeated_acp_recipe_endpoint, state, (&(*result).acp_recipe_endpoint))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	bool res = (((zcbor_map_start_decode(state) && ((zcbor_present_decode(&((*result).agent_recipe_program_present), (zcbor_decoder_t *)decode_repeated_agent_recipe_program, state, (&(*result).agent_recipe_program))
+	&& zcbor_present_decode(&((*result).agent_recipe_args_present), (zcbor_decoder_t *)decode_repeated_agent_recipe_args, state, (&(*result).agent_recipe_args))
+	&& zcbor_present_decode(&((*result).agent_recipe_env_present), (zcbor_decoder_t *)decode_repeated_agent_recipe_env, state, (&(*result).agent_recipe_env))
+	&& zcbor_present_decode(&((*result).agent_recipe_endpoint_present), (zcbor_decoder_t *)decode_repeated_agent_recipe_endpoint, state, (&(*result).agent_recipe_endpoint))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
 		 * A compiler error here means a bug in zcbor.
 		 */
-		decode_repeated_acp_recipe_program(state, (&(*result).acp_recipe_program));
-		decode_repeated_acp_recipe_args(state, (&(*result).acp_recipe_args));
-		decode_repeated_acp_recipe_env(state, (&(*result).acp_recipe_env));
-		decode_repeated_acp_recipe_endpoint(state, (&(*result).acp_recipe_endpoint));
+		decode_repeated_agent_recipe_program(state, (&(*result).agent_recipe_program));
+		decode_repeated_agent_recipe_args(state, (&(*result).agent_recipe_args));
+		decode_repeated_agent_recipe_env(state, (&(*result).agent_recipe_env));
+		decode_repeated_agent_recipe_endpoint(state, (&(*result).agent_recipe_endpoint));
 	}
 
 	log_result(state, res, __func__);
 	return res;
 }
 
-static bool decode_acp_source(
-		zcbor_state_t *state, struct acp_source_r *result)
+static bool decode_agent_source(
+		zcbor_state_t *state, struct agent_source_r *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 	bool int_res;
 
-	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Builtin", tmp_str.len = sizeof("Builtin") - 1, &tmp_str))))) && (((*result).acp_source_choice = acp_source_Builtin_tstr_c), true))
-	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Manual", tmp_str.len = sizeof("Manual") - 1, &tmp_str))))) && (((*result).acp_source_choice = acp_source_Manual_tstr_c), true))
-	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Endpoint", tmp_str.len = sizeof("Endpoint") - 1, &tmp_str))))) && (((*result).acp_source_choice = acp_source_Endpoint_tstr_c), true))), zcbor_union_end_code(state), int_res))));
+	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Builtin", tmp_str.len = sizeof("Builtin") - 1, &tmp_str))))) && (((*result).agent_source_choice = agent_source_Builtin_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Manual", tmp_str.len = sizeof("Manual") - 1, &tmp_str))))) && (((*result).agent_source_choice = agent_source_Manual_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Endpoint", tmp_str.len = sizeof("Endpoint") - 1, &tmp_str))))) && (((*result).agent_source_choice = agent_source_Endpoint_tstr_c), true))), zcbor_union_end_code(state), int_res))));
 
 	log_result(state, res, __func__);
 	return res;
 }
 
-static bool decode_repeated_acp_agent_entry_installed(
-		zcbor_state_t *state, struct acp_agent_entry_installed *result)
+static bool decode_agent_protocol(
+		zcbor_state_t *state, struct agent_protocol_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Acp", tmp_str.len = sizeof("Acp") - 1, &tmp_str))))) && (((*result).agent_protocol_choice = agent_protocol_Acp_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"StreamJson", tmp_str.len = sizeof("StreamJson") - 1, &tmp_str))))) && (((*result).agent_protocol_choice = agent_protocol_StreamJson_tstr_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_agent_entry_protocol(
+		zcbor_state_t *state, struct agent_entry_protocol *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"protocol", tmp_str.len = sizeof("protocol") - 1, &tmp_str)))))
+	&& (decode_agent_protocol(state, (&(*result).agent_entry_protocol)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_agent_entry_installed(
+		zcbor_state_t *state, struct agent_entry_installed *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
 	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"installed", tmp_str.len = sizeof("installed") - 1, &tmp_str)))))
-	&& (zcbor_bool_decode(state, (&(*result).acp_agent_entry_installed)))));
+	&& (zcbor_bool_decode(state, (&(*result).agent_entry_installed)))));
 
 	log_result(state, res, __func__);
 	return res;
 }
 
-static bool decode_repeated_acp_agent_entry_version(
-		zcbor_state_t *state, struct acp_agent_entry_version_r *result)
+static bool decode_repeated_agent_entry_version(
+		zcbor_state_t *state, struct agent_entry_version_r *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 	bool int_res;
 
 	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"version", tmp_str.len = sizeof("version") - 1, &tmp_str)))))
-	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).acp_agent_entry_version_tstr)))) && (((*result).acp_agent_entry_version_choice = acp_agent_entry_version_tstr_c), true))
-	|| (((zcbor_nil_expect(state, NULL))) && (((*result).acp_agent_entry_version_choice = acp_agent_entry_version_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).agent_entry_version_tstr)))) && (((*result).agent_entry_version_choice = agent_entry_version_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).agent_entry_version_choice = agent_entry_version_null_m_c), true))), zcbor_union_end_code(state), int_res))));
 
 	log_result(state, res, __func__);
 	return res;
 }
 
-static bool decode_repeated_acp_agent_entry_capabilities(
-		zcbor_state_t *state, struct acp_agent_entry_capabilities_r *result)
+static bool decode_repeated_agent_entry_capabilities(
+		zcbor_state_t *state, struct agent_entry_capabilities_r *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
 	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"capabilities", tmp_str.len = sizeof("capabilities") - 1, &tmp_str)))))
-	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).acp_agent_entry_capabilities_kv_pair_m_count, (zcbor_decoder_t *)decode_kv_pair, state, (*&(*result).acp_agent_entry_capabilities_kv_pair_m), sizeof(struct kv_pair))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).agent_entry_capabilities_kv_pair_m_count, (zcbor_decoder_t *)decode_kv_pair, state, (*&(*result).agent_entry_capabilities_kv_pair_m), sizeof(struct kv_pair))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
 		 * A compiler error here means a bug in zcbor.
 		 */
-		decode_kv_pair(state, (*&(*result).acp_agent_entry_capabilities_kv_pair_m));
+		decode_kv_pair(state, (*&(*result).agent_entry_capabilities_kv_pair_m));
 	}
 
 	log_result(state, res, __func__);
 	return res;
 }
 
-static bool decode_acp_agent_entry(
-		zcbor_state_t *state, struct acp_agent_entry *result)
+static bool decode_agent_entry(
+		zcbor_state_t *state, struct agent_entry *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"name", tmp_str.len = sizeof("name") - 1, &tmp_str)))))
-	&& (zcbor_tstr_decode(state, (&(*result).acp_agent_entry_name))))
+	&& (zcbor_tstr_decode(state, (&(*result).agent_entry_name))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"recipe", tmp_str.len = sizeof("recipe") - 1, &tmp_str)))))
-	&& (decode_acp_recipe(state, (&(*result).acp_agent_entry_recipe))))
+	&& (decode_agent_recipe(state, (&(*result).agent_entry_recipe))))
 	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"source", tmp_str.len = sizeof("source") - 1, &tmp_str)))))
-	&& (decode_acp_source(state, (&(*result).acp_agent_entry_source))))
-	&& zcbor_present_decode(&((*result).acp_agent_entry_installed_present), (zcbor_decoder_t *)decode_repeated_acp_agent_entry_installed, state, (&(*result).acp_agent_entry_installed))
-	&& zcbor_present_decode(&((*result).acp_agent_entry_version_present), (zcbor_decoder_t *)decode_repeated_acp_agent_entry_version, state, (&(*result).acp_agent_entry_version))
-	&& zcbor_present_decode(&((*result).acp_agent_entry_capabilities_present), (zcbor_decoder_t *)decode_repeated_acp_agent_entry_capabilities, state, (&(*result).acp_agent_entry_capabilities))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& (decode_agent_source(state, (&(*result).agent_entry_source))))
+	&& zcbor_present_decode(&((*result).agent_entry_protocol_present), (zcbor_decoder_t *)decode_repeated_agent_entry_protocol, state, (&(*result).agent_entry_protocol))
+	&& zcbor_present_decode(&((*result).agent_entry_installed_present), (zcbor_decoder_t *)decode_repeated_agent_entry_installed, state, (&(*result).agent_entry_installed))
+	&& zcbor_present_decode(&((*result).agent_entry_version_present), (zcbor_decoder_t *)decode_repeated_agent_entry_version, state, (&(*result).agent_entry_version))
+	&& zcbor_present_decode(&((*result).agent_entry_capabilities_present), (zcbor_decoder_t *)decode_repeated_agent_entry_capabilities, state, (&(*result).agent_entry_capabilities))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
 		 * A compiler error here means a bug in zcbor.
 		 */
-		decode_repeated_acp_agent_entry_installed(state, (&(*result).acp_agent_entry_installed));
-		decode_repeated_acp_agent_entry_version(state, (&(*result).acp_agent_entry_version));
-		decode_repeated_acp_agent_entry_capabilities(state, (&(*result).acp_agent_entry_capabilities));
+		decode_repeated_agent_entry_protocol(state, (&(*result).agent_entry_protocol));
+		decode_repeated_agent_entry_installed(state, (&(*result).agent_entry_installed));
+		decode_repeated_agent_entry_version(state, (&(*result).agent_entry_version));
+		decode_repeated_agent_entry_capabilities(state, (&(*result).agent_entry_capabilities));
 	}
 
 	log_result(state, res, __func__);
 	return res;
 }
 
-static bool decode_request_acp_register(
-		zcbor_state_t *state, struct request_acp_register *result)
+static bool decode_request_agent_register(
+		zcbor_state_t *state, struct request_agent_register *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AcpRegister", tmp_str.len = sizeof("AcpRegister") - 1, &tmp_str)))))
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AgentRegister", tmp_str.len = sizeof("AgentRegister") - 1, &tmp_str)))))
 	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"entry", tmp_str.len = sizeof("entry") - 1, &tmp_str)))))
-	&& (decode_acp_agent_entry(state, (&(*result).AcpRegister_entry))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& (decode_agent_entry(state, (&(*result).AgentRegister_entry))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;
 }
 
-static bool decode_request_acp_remove(
-		zcbor_state_t *state, struct request_acp_remove *result)
+static bool decode_request_agent_remove(
+		zcbor_state_t *state, struct request_agent_remove *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AcpRemove", tmp_str.len = sizeof("AcpRemove") - 1, &tmp_str)))))
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AgentRemove", tmp_str.len = sizeof("AgentRemove") - 1, &tmp_str)))))
 	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"name", tmp_str.len = sizeof("name") - 1, &tmp_str)))))
-	&& (zcbor_tstr_decode(state, (&(*result).AcpRemove_name))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& (zcbor_tstr_decode(state, (&(*result).AgentRemove_name))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -4292,6 +4458,21 @@ static bool decode_repeated_tool_info_description(
 	return res;
 }
 
+static bool decode_repeated_tool_info_requires(
+		zcbor_state_t *state, struct tool_info_requires_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"requires", tmp_str.len = sizeof("requires") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).tool_info_requires_tstr)))) && (((*result).tool_info_requires_choice = tool_info_requires_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).tool_info_requires_choice = tool_info_requires_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_tool_info(
 		zcbor_state_t *state, struct tool_info *result)
 {
@@ -4300,13 +4481,17 @@ static bool decode_tool_info(
 
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"name", tmp_str.len = sizeof("name") - 1, &tmp_str)))))
 	&& (zcbor_tstr_decode(state, (&(*result).tool_info_name))))
-	&& zcbor_present_decode(&((*result).tool_info_description_present), (zcbor_decoder_t *)decode_repeated_tool_info_description, state, (&(*result).tool_info_description))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& zcbor_present_decode(&((*result).tool_info_description_present), (zcbor_decoder_t *)decode_repeated_tool_info_description, state, (&(*result).tool_info_description))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"enabled", tmp_str.len = sizeof("enabled") - 1, &tmp_str)))))
+	&& (zcbor_bool_decode(state, (&(*result).tool_info_enabled))))
+	&& zcbor_present_decode(&((*result).tool_info_requires_present), (zcbor_decoder_t *)decode_repeated_tool_info_requires, state, (&(*result).tool_info_requires))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
 		 * A compiler error here means a bug in zcbor.
 		 */
 		decode_repeated_tool_info_description(state, (&(*result).tool_info_description));
+		decode_repeated_tool_info_requires(state, (&(*result).tool_info_requires));
 	}
 
 	log_result(state, res, __func__);
@@ -8353,6 +8538,62 @@ static bool decode_response_approvals(
 	return res;
 }
 
+static bool decode_repeated_remembered_fingerprint_label(
+		zcbor_state_t *state, struct remembered_fingerprint_label_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"label", tmp_str.len = sizeof("label") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_decode(state, (&(*result).remembered_fingerprint_label_tstr)))) && (((*result).remembered_fingerprint_label_choice = remembered_fingerprint_label_tstr_c), true))
+	|| (((zcbor_nil_expect(state, NULL))) && (((*result).remembered_fingerprint_label_choice = remembered_fingerprint_label_null_m_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_remembered_fingerprint(
+		zcbor_state_t *state, struct remembered_fingerprint *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"fingerprint", tmp_str.len = sizeof("fingerprint") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).remembered_fingerprint_fingerprint))))
+	&& zcbor_present_decode(&((*result).remembered_fingerprint_label_present), (zcbor_decoder_t *)decode_repeated_remembered_fingerprint_label, state, (&(*result).remembered_fingerprint_label))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_remembered_fingerprint_label(state, (&(*result).remembered_fingerprint_label));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_fingerprints(
+		zcbor_state_t *state, struct response_fingerprints *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Fingerprints", tmp_str.len = sizeof("Fingerprints") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).response_fingerprints_Fingerprints_remembered_fingerprint_m_count, (zcbor_decoder_t *)decode_remembered_fingerprint, state, (*&(*result).response_fingerprints_Fingerprints_remembered_fingerprint_m), sizeof(struct remembered_fingerprint))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_remembered_fingerprint(state, (*&(*result).response_fingerprints_Fingerprints_remembered_fingerprint_m));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_fleet_report(
 		zcbor_state_t *state, struct fleet_report *result)
 {
@@ -8492,6 +8733,50 @@ static bool decode_repeated_unit_node_role(
 	return res;
 }
 
+static bool decode_delegation_lifetime(
+		zcbor_state_t *state, struct delegation_lifetime_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Persistent", tmp_str.len = sizeof("Persistent") - 1, &tmp_str))))) && (((*result).delegation_lifetime_choice = delegation_lifetime_Persistent_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Ephemeral", tmp_str.len = sizeof("Ephemeral") - 1, &tmp_str))))) && (((*result).delegation_lifetime_choice = delegation_lifetime_Ephemeral_tstr_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_unit_node_lifetime(
+		zcbor_state_t *state, struct unit_node_lifetime_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"lifetime", tmp_str.len = sizeof("lifetime") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((decode_delegation_lifetime(state, (&(*result).unit_node_lifetime_delegation_lifetime_m)))) && (((*result).unit_node_lifetime_choice = unit_node_lifetime_delegation_lifetime_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((zcbor_nil_expect(state, NULL))) && (((*result).unit_node_lifetime_choice = unit_node_lifetime_null_m_c), true)))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_unit_node_engine(
+		zcbor_state_t *state, struct unit_node_engine_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"engine", tmp_str.len = sizeof("engine") - 1, &tmp_str)))))
+	&& (zcbor_union_start_code(state) && (int_res = ((((decode_engine_selector(state, (&(*result).unit_node_engine_engine_selector_m)))) && (((*result).unit_node_engine_choice = unit_node_engine_engine_selector_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((zcbor_nil_expect(state, NULL))) && (((*result).unit_node_engine_choice = unit_node_engine_null_m_c), true)))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_unit_node(
 		zcbor_state_t *state, struct unit_node *result)
 {
@@ -8515,7 +8800,9 @@ static bool decode_unit_node(
 	&& zcbor_present_decode(&((*result).unit_node_profile_present), (zcbor_decoder_t *)decode_repeated_unit_node_profile, state, (&(*result).unit_node_profile))
 	&& zcbor_present_decode(&((*result).unit_node_session_present), (zcbor_decoder_t *)decode_repeated_unit_node_session, state, (&(*result).unit_node_session))
 	&& zcbor_present_decode(&((*result).unit_node_title_present), (zcbor_decoder_t *)decode_repeated_unit_node_title, state, (&(*result).unit_node_title))
-	&& zcbor_present_decode(&((*result).unit_node_role_present), (zcbor_decoder_t *)decode_repeated_unit_node_role, state, (&(*result).unit_node_role))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	&& zcbor_present_decode(&((*result).unit_node_role_present), (zcbor_decoder_t *)decode_repeated_unit_node_role, state, (&(*result).unit_node_role))
+	&& zcbor_present_decode(&((*result).unit_node_lifetime_present), (zcbor_decoder_t *)decode_repeated_unit_node_lifetime, state, (&(*result).unit_node_lifetime))
+	&& zcbor_present_decode(&((*result).unit_node_engine_present), (zcbor_decoder_t *)decode_repeated_unit_node_engine, state, (&(*result).unit_node_engine))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
@@ -8526,6 +8813,8 @@ static bool decode_unit_node(
 		decode_repeated_unit_node_session(state, (&(*result).unit_node_session));
 		decode_repeated_unit_node_title(state, (&(*result).unit_node_title));
 		decode_repeated_unit_node_role(state, (&(*result).unit_node_role));
+		decode_repeated_unit_node_lifetime(state, (&(*result).unit_node_lifetime));
+		decode_repeated_unit_node_engine(state, (&(*result).unit_node_engine));
 	}
 
 	log_result(state, res, __func__);
@@ -9302,6 +9591,77 @@ static bool decode_node_event_download_progress(
 	return res;
 }
 
+static bool decode_connection_state(
+		zcbor_state_t *state, struct connection_state_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Offline", tmp_str.len = sizeof("Offline") - 1, &tmp_str))))) && (((*result).connection_state_choice = connection_state_Offline_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Connecting", tmp_str.len = sizeof("Connecting") - 1, &tmp_str))))) && (((*result).connection_state_choice = connection_state_Connecting_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Connected", tmp_str.len = sizeof("Connected") - 1, &tmp_str))))) && (((*result).connection_state_choice = connection_state_Connected_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Error", tmp_str.len = sizeof("Error") - 1, &tmp_str))))) && (((*result).connection_state_choice = connection_state_Error_tstr_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_presence_state(
+		zcbor_state_t *state, struct presence_state_r *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+	bool int_res;
+
+	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Unknown", tmp_str.len = sizeof("Unknown") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Unknown_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Offline", tmp_str.len = sizeof("Offline") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Offline_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Available", tmp_str.len = sizeof("Available") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Available_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Idle", tmp_str.len = sizeof("Idle") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Idle_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Away", tmp_str.len = sizeof("Away") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Away_tstr_c), true))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Busy", tmp_str.len = sizeof("Busy") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Busy_tstr_c), true))), zcbor_union_end_code(state), int_res))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_repeated_TransportChanged_presence(
+		zcbor_state_t *state, struct TransportChanged_presence *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"presence", tmp_str.len = sizeof("presence") - 1, &tmp_str)))))
+	&& (decode_presence_state(state, (&(*result).TransportChanged_presence)))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_node_event_transport_changed(
+		zcbor_state_t *state, struct node_event_transport_changed *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"TransportChanged", tmp_str.len = sizeof("TransportChanged") - 1, &tmp_str)))))
+	&& (zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"transport", tmp_str.len = sizeof("transport") - 1, &tmp_str)))))
+	&& (zcbor_tstr_decode(state, (&(*result).TransportChanged_transport))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"connection", tmp_str.len = sizeof("connection") - 1, &tmp_str)))))
+	&& (decode_connection_state(state, (&(*result).TransportChanged_connection))))
+	&& zcbor_present_decode(&((*result).TransportChanged_presence_present), (zcbor_decoder_t *)decode_repeated_TransportChanged_presence, state, (&(*result).TransportChanged_presence))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	if (false) {
+		/* For testing that the types of the arguments are correct.
+		 * A compiler error here means a bug in zcbor.
+		 */
+		decode_repeated_TransportChanged_presence(state, (&(*result).TransportChanged_presence));
+	}
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_node_event_resync_needed(
 		zcbor_state_t *state, struct node_event_resync_needed *result)
 {
@@ -9330,7 +9690,8 @@ static bool decode_node_event(
 	|| (zcbor_union_elem_code(state) && (((decode_node_event_approval_pending(state, (&(*result).node_event_approval_pending_m)))) && (((*result).node_event_choice = node_event_approval_pending_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_node_event_download_progress(state, (&(*result).node_event_download_progress_m)))) && (((*result).node_event_choice = node_event_download_progress_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"CatalogChanged", tmp_str.len = sizeof("CatalogChanged") - 1, &tmp_str))))) && (((*result).node_event_choice = node_event_catalog_changed_m_c), true)))
-	|| (((decode_node_event_resync_needed(state, (&(*result).node_event_resync_needed_m)))) && (((*result).node_event_choice = node_event_resync_needed_m_c), true))), zcbor_union_end_code(state), int_res))));
+	|| (((decode_node_event_transport_changed(state, (&(*result).node_event_transport_changed_m)))) && (((*result).node_event_choice = node_event_transport_changed_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((decode_node_event_resync_needed(state, (&(*result).node_event_resync_needed_m)))) && (((*result).node_event_choice = node_event_resync_needed_m_c), true)))), zcbor_union_end_code(state), int_res))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -11140,20 +11501,20 @@ static bool decode_response_session_recap(
 	return res;
 }
 
-static bool decode_response_acp_catalog(
-		zcbor_state_t *state, struct response_acp_catalog *result)
+static bool decode_response_agent_catalog(
+		zcbor_state_t *state, struct response_agent_catalog *result)
 {
 	zcbor_log("%s\r\n", __func__);
 	struct zcbor_string tmp_str;
 
-	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AcpCatalog", tmp_str.len = sizeof("AcpCatalog") - 1, &tmp_str)))))
-	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).response_acp_catalog_AcpCatalog_acp_agent_entry_m_count, (zcbor_decoder_t *)decode_acp_agent_entry, state, (*&(*result).response_acp_catalog_AcpCatalog_acp_agent_entry_m), sizeof(struct acp_agent_entry))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AgentCatalog", tmp_str.len = sizeof("AgentCatalog") - 1, &tmp_str)))))
+	&& (zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, 64, &(*result).response_agent_catalog_AgentCatalog_agent_entry_m_count, (zcbor_decoder_t *)decode_agent_entry, state, (*&(*result).response_agent_catalog_AgentCatalog_agent_entry_m), sizeof(struct agent_entry))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	if (false) {
 		/* For testing that the types of the arguments are correct.
 		 * A compiler error here means a bug in zcbor.
 		 */
-		decode_acp_agent_entry(state, (*&(*result).response_acp_catalog_AcpCatalog_acp_agent_entry_m));
+		decode_agent_entry(state, (*&(*result).response_agent_catalog_AgentCatalog_agent_entry_m));
 	}
 
 	log_result(state, res, __func__);
@@ -11343,6 +11704,34 @@ static bool decode_response_config(
 
 	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Config", tmp_str.len = sizeof("Config") - 1, &tmp_str)))))
 	&& (decode_node_config_view(state, (&(*result).response_config_Config))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_caps_report(
+		zcbor_state_t *state, struct caps_report *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"orchestrate_max_depth", tmp_str.len = sizeof("orchestrate_max_depth") - 1, &tmp_str)))))
+	&& (zcbor_uint32_decode(state, (&(*result).caps_report_orchestrate_max_depth))))
+	&& (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"orchestrate_max_fanout", tmp_str.len = sizeof("orchestrate_max_fanout") - 1, &tmp_str)))))
+	&& (zcbor_uint32_decode(state, (&(*result).caps_report_orchestrate_max_fanout))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool decode_response_caps(
+		zcbor_state_t *state, struct response_caps *result)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_decode(state) && (((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Caps", tmp_str.len = sizeof("Caps") - 1, &tmp_str)))))
+	&& (decode_caps_report(state, (&(*result).response_caps_Caps))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -11977,22 +12366,6 @@ static bool decode_response_adapters(
 	return res;
 }
 
-static bool decode_connection_state(
-		zcbor_state_t *state, struct connection_state_r *result)
-{
-	zcbor_log("%s\r\n", __func__);
-	struct zcbor_string tmp_str;
-	bool int_res;
-
-	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Offline", tmp_str.len = sizeof("Offline") - 1, &tmp_str))))) && (((*result).connection_state_choice = connection_state_Offline_tstr_c), true))
-	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Connecting", tmp_str.len = sizeof("Connecting") - 1, &tmp_str))))) && (((*result).connection_state_choice = connection_state_Connecting_tstr_c), true))
-	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Connected", tmp_str.len = sizeof("Connected") - 1, &tmp_str))))) && (((*result).connection_state_choice = connection_state_Connected_tstr_c), true))
-	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Error", tmp_str.len = sizeof("Error") - 1, &tmp_str))))) && (((*result).connection_state_choice = connection_state_Error_tstr_c), true))), zcbor_union_end_code(state), int_res))));
-
-	log_result(state, res, __func__);
-	return res;
-}
-
 static bool decode_repeated_transport_instance_info_connection(
 		zcbor_state_t *state, struct transport_instance_info_connection *result)
 {
@@ -12001,24 +12374,6 @@ static bool decode_repeated_transport_instance_info_connection(
 
 	bool res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"connection", tmp_str.len = sizeof("connection") - 1, &tmp_str)))))
 	&& (decode_connection_state(state, (&(*result).transport_instance_info_connection)))));
-
-	log_result(state, res, __func__);
-	return res;
-}
-
-static bool decode_presence_state(
-		zcbor_state_t *state, struct presence_state_r *result)
-{
-	zcbor_log("%s\r\n", __func__);
-	struct zcbor_string tmp_str;
-	bool int_res;
-
-	bool res = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Unknown", tmp_str.len = sizeof("Unknown") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Unknown_tstr_c), true))
-	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Offline", tmp_str.len = sizeof("Offline") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Offline_tstr_c), true))
-	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Available", tmp_str.len = sizeof("Available") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Available_tstr_c), true))
-	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Idle", tmp_str.len = sizeof("Idle") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Idle_tstr_c), true))
-	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Away", tmp_str.len = sizeof("Away") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Away_tstr_c), true))
-	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Busy", tmp_str.len = sizeof("Busy") - 1, &tmp_str))))) && (((*result).presence_state_choice = presence_state_Busy_tstr_c), true))), zcbor_union_end_code(state), int_res))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -13237,6 +13592,7 @@ static bool decode_api_response(
 	|| (zcbor_union_elem_code(state) && (((decode_response_telemetry(state, (&(*result).api_response_response_telemetry_m)))) && (((*result).api_response_choice = api_response_response_telemetry_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_sessions(state, (&(*result).api_response_response_sessions_m)))) && (((*result).api_response_choice = api_response_response_sessions_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_approvals(state, (&(*result).api_response_response_approvals_m)))) && (((*result).api_response_choice = api_response_response_approvals_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_fingerprints(state, (&(*result).api_response_response_fingerprints_m)))) && (((*result).api_response_choice = api_response_response_fingerprints_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_fleet(state, (&(*result).api_response_response_fleet_m)))) && (((*result).api_response_choice = api_response_response_fleet_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_tree(state, (&(*result).api_response_response_tree_m)))) && (((*result).api_response_choice = api_response_response_tree_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_unit(state, (&(*result).api_response_response_unit_m)))) && (((*result).api_response_choice = api_response_response_unit_m_c), true)))
@@ -13277,12 +13633,13 @@ static bool decode_api_response(
 	|| (zcbor_union_elem_code(state) && (((decode_response_session_detail(state, (&(*result).api_response_response_session_detail_m)))) && (((*result).api_response_choice = api_response_response_session_detail_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_session_search(state, (&(*result).api_response_response_session_search_m)))) && (((*result).api_response_choice = api_response_response_session_search_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_session_recap(state, (&(*result).api_response_response_session_recap_m)))) && (((*result).api_response_choice = api_response_response_session_recap_m_c), true)))
-	|| (zcbor_union_elem_code(state) && (((decode_response_acp_catalog(state, (&(*result).api_response_response_acp_catalog_m)))) && (((*result).api_response_choice = api_response_response_acp_catalog_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_agent_catalog(state, (&(*result).api_response_response_agent_catalog_m)))) && (((*result).api_response_choice = api_response_response_agent_catalog_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_providers(state, (&(*result).api_response_response_providers_m)))) && (((*result).api_response_choice = api_response_response_providers_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_tools(state, (&(*result).api_response_response_tools_m)))) && (((*result).api_response_choice = api_response_response_tools_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_commands(state, (&(*result).api_response_response_commands_m)))) && (((*result).api_response_choice = api_response_response_commands_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_command_output(state, (&(*result).api_response_response_command_output_m)))) && (((*result).api_response_choice = api_response_response_command_output_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_config(state, (&(*result).api_response_response_config_m)))) && (((*result).api_response_choice = api_response_response_config_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_response_caps(state, (&(*result).api_response_response_caps_m)))) && (((*result).api_response_choice = api_response_response_caps_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_cron_jobs(state, (&(*result).api_response_response_cron_jobs_m)))) && (((*result).api_response_choice = api_response_response_cron_jobs_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_cron_id(state, (&(*result).api_response_response_cron_id_m)))) && (((*result).api_response_choice = api_response_response_cron_id_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_response_cron_runs(state, (&(*result).api_response_response_cron_runs_m)))) && (((*result).api_response_choice = api_response_response_cron_runs_m_c), true)))
@@ -13359,6 +13716,8 @@ static bool decode_api_request(
 	|| (zcbor_union_elem_code(state) && (((decode_request_set_session_overlay(state, (&(*result).api_request_request_set_session_overlay_m)))) && (((*result).api_request_choice = api_request_request_set_session_overlay_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_approvals_pending(state, (&(*result).api_request_request_approvals_pending_m)))) && (((*result).api_request_choice = api_request_request_approvals_pending_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_approval_decide(state, (&(*result).api_request_request_approval_decide_m)))) && (((*result).api_request_choice = api_request_request_approval_decide_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_fingerprint_list(state, (&(*result).api_request_request_fingerprint_list_m)))) && (((*result).api_request_choice = api_request_request_fingerprint_list_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((decode_request_fingerprint_revoke(state, (&(*result).api_request_request_fingerprint_revoke_m)))) && (((*result).api_request_choice = api_request_request_fingerprint_revoke_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ProfileList", tmp_str.len = sizeof("ProfileList") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_profile_list_m_c), true)))
 	|| (((decode_request_profile_get(state, (&(*result).api_request_request_profile_get_m)))) && (((*result).api_request_choice = api_request_request_profile_get_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((decode_request_profile_create(state, (&(*result).api_request_request_profile_create_m)))) && (((*result).api_request_choice = api_request_request_profile_create_m_c), true)))
@@ -13413,10 +13772,10 @@ static bool decode_api_request(
 	|| (zcbor_union_elem_code(state) && (((decode_request_session_recap(state, (&(*result).api_request_request_session_recap_m)))) && (((*result).api_request_choice = api_request_request_session_recap_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_session_update_meta(state, (&(*result).api_request_request_session_update_meta_m)))) && (((*result).api_request_choice = api_request_request_session_update_meta_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_rewind(state, (&(*result).api_request_request_rewind_m)))) && (((*result).api_request_choice = api_request_request_rewind_m_c), true)))
-	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AcpDiscover", tmp_str.len = sizeof("AcpDiscover") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_acp_discover_m_c), true)))
-	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AcpCatalog", tmp_str.len = sizeof("AcpCatalog") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_acp_catalog_m_c), true))
-	|| (((decode_request_acp_register(state, (&(*result).api_request_request_acp_register_m)))) && (((*result).api_request_choice = api_request_request_acp_register_m_c), true))
-	|| (zcbor_union_elem_code(state) && (((decode_request_acp_remove(state, (&(*result).api_request_request_acp_remove_m)))) && (((*result).api_request_choice = api_request_request_acp_remove_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AgentDiscover", tmp_str.len = sizeof("AgentDiscover") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_agent_discover_m_c), true)))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"AgentCatalog", tmp_str.len = sizeof("AgentCatalog") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_agent_catalog_m_c), true))
+	|| (((decode_request_agent_register(state, (&(*result).api_request_request_agent_register_m)))) && (((*result).api_request_choice = api_request_request_agent_register_m_c), true))
+	|| (zcbor_union_elem_code(state) && (((decode_request_agent_remove(state, (&(*result).api_request_request_agent_remove_m)))) && (((*result).api_request_choice = api_request_request_agent_remove_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_skill_get(state, (&(*result).api_request_request_skill_get_m)))) && (((*result).api_request_choice = api_request_request_skill_get_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((decode_request_skill_put(state, (&(*result).api_request_request_skill_put_m)))) && (((*result).api_request_choice = api_request_request_skill_put_m_c), true)))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ProviderList", tmp_str.len = sizeof("ProviderList") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_provider_list_m_c), true)))
@@ -13425,7 +13784,8 @@ static bool decode_api_request(
 	|| (((decode_request_tool_register(state, (&(*result).api_request_request_tool_register_m)))) && (((*result).api_request_choice = api_request_request_tool_register_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"CommandList", tmp_str.len = sizeof("CommandList") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_command_list_m_c), true)))
 	|| (((decode_request_command_invoke(state, (&(*result).api_request_request_command_invoke_m)))) && (((*result).api_request_choice = api_request_request_command_invoke_m_c), true))
-	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ConfigGet", tmp_str.len = sizeof("ConfigGet") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_config_get_m_c), true)))
+	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"Caps", tmp_str.len = sizeof("Caps") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_caps_m_c), true)))
+	|| (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"ConfigGet", tmp_str.len = sizeof("ConfigGet") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_config_get_m_c), true))
 	|| (((decode_request_config_set(state, (&(*result).api_request_request_config_set_m)))) && (((*result).api_request_choice = api_request_request_config_set_m_c), true))
 	|| (zcbor_union_elem_code(state) && (((zcbor_tstr_expect(state, ((tmp_str.value = (uint8_t *)"CronList", tmp_str.len = sizeof("CronList") - 1, &tmp_str))))) && (((*result).api_request_choice = api_request_request_cron_list_m_c), true)))
 	|| (((decode_request_cron_create(state, (&(*result).api_request_request_cron_create_m)))) && (((*result).api_request_choice = api_request_request_cron_create_m_c), true))

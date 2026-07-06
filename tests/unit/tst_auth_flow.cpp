@@ -221,7 +221,8 @@ private slots:
     void acpDiscoverRequestRoundTrips() {
         const auto request = decodeRequest(NodeApiCodec::encodeAcpDiscoverRequest());
         QVERIFY(request);
-        QCOMPARE(request->api_request_choice, api_request_r::api_request_request_acp_discover_m_c);
+        QCOMPARE(request->api_request_choice,
+                 api_request_r::api_request_request_agent_discover_m_c);
     }
 
     void modelQuantizeRequestsRoundTrip() {

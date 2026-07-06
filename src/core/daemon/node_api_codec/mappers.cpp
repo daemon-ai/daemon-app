@@ -537,10 +537,11 @@ DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps) {
     // struct already carries, so a legacy spec round-trips unchanged.
     if (ps.profile_spec_engine_present) {
         const engine_selector_r& engine = ps.profile_spec_engine.profile_spec_engine;
-        if (engine.engine_selector_choice == engine_selector_r::engine_selector_engine_acp_m_c) {
+        if (engine.engine_selector_choice ==
+            engine_selector_r::engine_selector_engine_foreign_m_c) {
             out.engineKind = QStringLiteral("Acp");
-            out.engineAcpAgent = fromZcbor(
-                engine.engine_selector_engine_acp_m.engine_acp_Acp.engine_acp_agent_agent);
+            out.engineAcpAgent = fromZcbor(engine.engine_selector_engine_foreign_m
+                                               .engine_foreign_Foreign.engine_foreign_agent_agent);
         }
     }
     return out;
@@ -1031,8 +1032,9 @@ void fillProfileSpec(profile_spec& ps, const DecodedProfileSpec& s, ProfileSpecS
     ps.profile_spec_engine_present = true;
     engine_selector_r& engine = ps.profile_spec_engine.profile_spec_engine;
     if (s.engineKind == QStringLiteral("Acp")) {
-        engine.engine_selector_choice = engine_selector_r::engine_selector_engine_acp_m_c;
-        setZ(engine.engine_selector_engine_acp_m.engine_acp_Acp.engine_acp_agent_agent,
+        engine.engine_selector_choice = engine_selector_r::engine_selector_engine_foreign_m_c;
+        setZ(engine.engine_selector_engine_foreign_m.engine_foreign_Foreign
+                 .engine_foreign_agent_agent,
              sc.engineAgent);
     } else {
         engine.engine_selector_choice = engine_selector_r::engine_selector_Core_tstr_c;

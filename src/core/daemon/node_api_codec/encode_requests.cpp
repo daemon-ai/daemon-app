@@ -310,7 +310,7 @@ QByteArray NodeApiCodec::encodeProviderCatalogRequest() {
 }
 
 QByteArray NodeApiCodec::encodeAcpCatalogRequest() {
-    return encodeSimple(api_request_r::api_request_request_acp_catalog_m_c);
+    return encodeSimple(api_request_r::api_request_request_agent_catalog_m_c);
 }
 
 QByteArray NodeApiCodec::encodeProviderModelsRequest(const QString& provider,
@@ -987,7 +987,7 @@ QByteArray NodeApiCodec::encodeAuthCancelRequest(const QString& flowId) {
 }
 
 QByteArray NodeApiCodec::encodeAcpDiscoverRequest() {
-    return encodeSimple(api_request_r::api_request_request_acp_discover_m_c);
+    return encodeSimple(api_request_r::api_request_request_agent_discover_m_c);
 }
 
 QByteArray NodeApiCodec::encodeModelQuantizeRequest(const QString& repo, const QString& targetQuant,

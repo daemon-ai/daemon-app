@@ -64,10 +64,38 @@ struct user_msg_attachments_r {
 	size_t user_msg_attachments_blob_ref_m_count;
 };
 
+struct completion_notice_ref_call_id_r {
+	union {
+		struct zcbor_string completion_notice_ref_call_id_tstr;
+	};
+	enum {
+		completion_notice_ref_call_id_tstr_c,
+		completion_notice_ref_call_id_null_m_c,
+	} completion_notice_ref_call_id_choice;
+};
+
+struct completion_notice_ref {
+	struct zcbor_string completion_notice_ref_child;
+	struct completion_notice_ref_call_id_r completion_notice_ref_call_id;
+	bool completion_notice_ref_call_id_present;
+};
+
+struct user_msg_notice_r {
+	union {
+		struct completion_notice_ref user_msg_notice_completion_notice_ref_m;
+	};
+	enum {
+		user_msg_notice_completion_notice_ref_m_c,
+		user_msg_notice_null_m_c,
+	} user_msg_notice_choice;
+};
+
 struct user_msg {
 	struct zcbor_string user_msg_text;
 	struct user_msg_attachments_r user_msg_attachments;
 	bool user_msg_attachments_present;
+	struct user_msg_notice_r user_msg_notice;
+	bool user_msg_notice_present;
 };
 
 struct agent_command_start_turn {
@@ -242,10 +270,22 @@ struct Approved_allow_permanent {
 	bool Approved_allow_permanent;
 };
 
+struct Approved_reason_r {
+	union {
+		struct zcbor_string Approved_reason_tstr;
+	};
+	enum {
+		Approved_reason_tstr_c,
+		Approved_reason_null_m_c,
+	} Approved_reason_choice;
+};
+
 struct host_response_body_approved {
 	bool Approved_approved;
 	struct Approved_allow_permanent Approved_allow_permanent;
 	bool Approved_allow_permanent_present;
+	struct Approved_reason_r Approved_reason;
+	bool Approved_reason_present;
 };
 
 struct host_response_body_input {
@@ -621,12 +661,33 @@ struct ApprovalDecide_allow_permanent {
 	bool ApprovalDecide_allow_permanent;
 };
 
+struct ApprovalDecide_reason_r {
+	union {
+		struct zcbor_string ApprovalDecide_reason_tstr;
+	};
+	enum {
+		ApprovalDecide_reason_tstr_c,
+		ApprovalDecide_reason_null_m_c,
+	} ApprovalDecide_reason_choice;
+};
+
 struct request_approval_decide {
 	struct zcbor_string ApprovalDecide_session;
 	struct zcbor_string ApprovalDecide_request_id;
 	bool ApprovalDecide_allow;
 	struct ApprovalDecide_allow_permanent ApprovalDecide_allow_permanent;
 	bool ApprovalDecide_allow_permanent_present;
+	struct ApprovalDecide_reason_r ApprovalDecide_reason;
+	bool ApprovalDecide_reason_present;
+};
+
+struct request_fingerprint_list {
+	struct zcbor_string FingerprintList_session;
+};
+
+struct request_fingerprint_revoke {
+	struct zcbor_string FingerprintRevoke_session;
+	struct zcbor_string FingerprintRevoke_fingerprint;
 };
 
 struct request_profile_get {
@@ -701,21 +762,21 @@ struct bound_account {
 	struct zcbor_string bound_account_credential_ref;
 };
 
-struct engine_acp_agent {
-	struct zcbor_string engine_acp_agent_agent;
+struct engine_foreign_agent {
+	struct zcbor_string engine_foreign_agent_agent;
 };
 
-struct engine_acp {
-	struct engine_acp_agent engine_acp_Acp;
+struct engine_foreign {
+	struct engine_foreign_agent engine_foreign_Foreign;
 };
 
 struct engine_selector_r {
 	union {
-		struct engine_acp engine_selector_engine_acp_m;
+		struct engine_foreign engine_selector_engine_foreign_m;
 	};
 	enum {
 		engine_selector_Core_tstr_c,
-		engine_selector_engine_acp_m_c,
+		engine_selector_engine_foreign_m_c,
 	} engine_selector_choice;
 };
 
@@ -1485,19 +1546,19 @@ struct request_rewind {
 	struct rewind_point Rewind_point;
 };
 
-struct acp_recipe_program_r {
+struct agent_recipe_program_r {
 	union {
-		struct zcbor_string acp_recipe_program_tstr;
+		struct zcbor_string agent_recipe_program_tstr;
 	};
 	enum {
-		acp_recipe_program_tstr_c,
-		acp_recipe_program_null_m_c,
-	} acp_recipe_program_choice;
+		agent_recipe_program_tstr_c,
+		agent_recipe_program_null_m_c,
+	} agent_recipe_program_choice;
 };
 
-struct acp_recipe_args_r {
-	struct zcbor_string acp_recipe_args_tstr[64];
-	size_t acp_recipe_args_tstr_count;
+struct agent_recipe_args_r {
+	struct zcbor_string agent_recipe_args_tstr[64];
+	size_t agent_recipe_args_tstr_count;
 };
 
 struct kv_pair {
@@ -1505,77 +1566,90 @@ struct kv_pair {
 	struct zcbor_string kv_pair_v;
 };
 
-struct acp_recipe_env_r {
-	struct kv_pair acp_recipe_env_kv_pair_m[64];
-	size_t acp_recipe_env_kv_pair_m_count;
+struct agent_recipe_env_r {
+	struct kv_pair agent_recipe_env_kv_pair_m[64];
+	size_t agent_recipe_env_kv_pair_m_count;
 };
 
-struct acp_recipe_endpoint_r {
+struct agent_recipe_endpoint_r {
 	union {
-		struct zcbor_string acp_recipe_endpoint_tstr;
+		struct zcbor_string agent_recipe_endpoint_tstr;
 	};
 	enum {
-		acp_recipe_endpoint_tstr_c,
-		acp_recipe_endpoint_null_m_c,
-	} acp_recipe_endpoint_choice;
+		agent_recipe_endpoint_tstr_c,
+		agent_recipe_endpoint_null_m_c,
+	} agent_recipe_endpoint_choice;
 };
 
-struct acp_recipe {
-	struct acp_recipe_program_r acp_recipe_program;
-	bool acp_recipe_program_present;
-	struct acp_recipe_args_r acp_recipe_args;
-	bool acp_recipe_args_present;
-	struct acp_recipe_env_r acp_recipe_env;
-	bool acp_recipe_env_present;
-	struct acp_recipe_endpoint_r acp_recipe_endpoint;
-	bool acp_recipe_endpoint_present;
+struct agent_recipe {
+	struct agent_recipe_program_r agent_recipe_program;
+	bool agent_recipe_program_present;
+	struct agent_recipe_args_r agent_recipe_args;
+	bool agent_recipe_args_present;
+	struct agent_recipe_env_r agent_recipe_env;
+	bool agent_recipe_env_present;
+	struct agent_recipe_endpoint_r agent_recipe_endpoint;
+	bool agent_recipe_endpoint_present;
 };
 
-struct acp_source_r {
+struct agent_source_r {
 	enum {
-		acp_source_Builtin_tstr_c,
-		acp_source_Manual_tstr_c,
-		acp_source_Endpoint_tstr_c,
-	} acp_source_choice;
+		agent_source_Builtin_tstr_c,
+		agent_source_Manual_tstr_c,
+		agent_source_Endpoint_tstr_c,
+	} agent_source_choice;
 };
 
-struct acp_agent_entry_installed {
-	bool acp_agent_entry_installed;
+struct agent_protocol_r {
+	enum {
+		agent_protocol_Acp_tstr_c,
+		agent_protocol_StreamJson_tstr_c,
+	} agent_protocol_choice;
 };
 
-struct acp_agent_entry_version_r {
+struct agent_entry_protocol {
+	struct agent_protocol_r agent_entry_protocol;
+};
+
+struct agent_entry_installed {
+	bool agent_entry_installed;
+};
+
+struct agent_entry_version_r {
 	union {
-		struct zcbor_string acp_agent_entry_version_tstr;
+		struct zcbor_string agent_entry_version_tstr;
 	};
 	enum {
-		acp_agent_entry_version_tstr_c,
-		acp_agent_entry_version_null_m_c,
-	} acp_agent_entry_version_choice;
+		agent_entry_version_tstr_c,
+		agent_entry_version_null_m_c,
+	} agent_entry_version_choice;
 };
 
-struct acp_agent_entry_capabilities_r {
-	struct kv_pair acp_agent_entry_capabilities_kv_pair_m[64];
-	size_t acp_agent_entry_capabilities_kv_pair_m_count;
+struct agent_entry_capabilities_r {
+	struct kv_pair agent_entry_capabilities_kv_pair_m[64];
+	size_t agent_entry_capabilities_kv_pair_m_count;
 };
 
-struct acp_agent_entry {
-	struct zcbor_string acp_agent_entry_name;
-	struct acp_recipe acp_agent_entry_recipe;
-	struct acp_source_r acp_agent_entry_source;
-	struct acp_agent_entry_installed acp_agent_entry_installed;
-	bool acp_agent_entry_installed_present;
-	struct acp_agent_entry_version_r acp_agent_entry_version;
-	bool acp_agent_entry_version_present;
-	struct acp_agent_entry_capabilities_r acp_agent_entry_capabilities;
-	bool acp_agent_entry_capabilities_present;
+struct agent_entry {
+	struct zcbor_string agent_entry_name;
+	struct agent_recipe agent_entry_recipe;
+	struct agent_source_r agent_entry_source;
+	struct agent_entry_protocol agent_entry_protocol;
+	bool agent_entry_protocol_present;
+	struct agent_entry_installed agent_entry_installed;
+	bool agent_entry_installed_present;
+	struct agent_entry_version_r agent_entry_version;
+	bool agent_entry_version_present;
+	struct agent_entry_capabilities_r agent_entry_capabilities;
+	bool agent_entry_capabilities_present;
 };
 
-struct request_acp_register {
-	struct acp_agent_entry AcpRegister_entry;
+struct request_agent_register {
+	struct agent_entry AgentRegister_entry;
 };
 
-struct request_acp_remove {
-	struct zcbor_string AcpRemove_name;
+struct request_agent_remove {
+	struct zcbor_string AgentRemove_name;
 };
 
 struct request_skill_get {
@@ -1622,10 +1696,23 @@ struct tool_info_description_r {
 	} tool_info_description_choice;
 };
 
+struct tool_info_requires_r {
+	union {
+		struct zcbor_string tool_info_requires_tstr;
+	};
+	enum {
+		tool_info_requires_tstr_c,
+		tool_info_requires_null_m_c,
+	} tool_info_requires_choice;
+};
+
 struct tool_info {
 	struct zcbor_string tool_info_name;
 	struct tool_info_description_r tool_info_description;
 	bool tool_info_description_present;
+	bool tool_info_enabled;
+	struct tool_info_requires_r tool_info_requires;
+	bool tool_info_requires_present;
 };
 
 struct request_tool_register {
@@ -2793,6 +2880,8 @@ struct api_request_r {
 		struct request_set_session_overlay api_request_request_set_session_overlay_m;
 		struct request_approvals_pending api_request_request_approvals_pending_m;
 		struct request_approval_decide api_request_request_approval_decide_m;
+		struct request_fingerprint_list api_request_request_fingerprint_list_m;
+		struct request_fingerprint_revoke api_request_request_fingerprint_revoke_m;
 		struct request_profile_get api_request_request_profile_get_m;
 		struct request_profile_create api_request_request_profile_create_m;
 		struct request_profile_update api_request_request_profile_update_m;
@@ -2840,8 +2929,8 @@ struct api_request_r {
 		struct request_session_recap api_request_request_session_recap_m;
 		struct request_session_update_meta api_request_request_session_update_meta_m;
 		struct request_rewind api_request_request_rewind_m;
-		struct request_acp_register api_request_request_acp_register_m;
-		struct request_acp_remove api_request_request_acp_remove_m;
+		struct request_agent_register api_request_request_agent_register_m;
+		struct request_agent_remove api_request_request_agent_remove_m;
 		struct request_skill_get api_request_request_skill_get_m;
 		struct request_skill_put api_request_request_skill_put_m;
 		struct request_provider_register api_request_request_provider_register_m;
@@ -2936,6 +3025,8 @@ struct api_request_r {
 		api_request_request_set_session_overlay_m_c,
 		api_request_request_approvals_pending_m_c,
 		api_request_request_approval_decide_m_c,
+		api_request_request_fingerprint_list_m_c,
+		api_request_request_fingerprint_revoke_m_c,
 		api_request_request_profile_list_m_c,
 		api_request_request_profile_get_m_c,
 		api_request_request_profile_create_m_c,
@@ -2990,10 +3081,10 @@ struct api_request_r {
 		api_request_request_session_recap_m_c,
 		api_request_request_session_update_meta_m_c,
 		api_request_request_rewind_m_c,
-		api_request_request_acp_discover_m_c,
-		api_request_request_acp_catalog_m_c,
-		api_request_request_acp_register_m_c,
-		api_request_request_acp_remove_m_c,
+		api_request_request_agent_discover_m_c,
+		api_request_request_agent_catalog_m_c,
+		api_request_request_agent_register_m_c,
+		api_request_request_agent_remove_m_c,
 		api_request_request_skill_get_m_c,
 		api_request_request_skill_put_m_c,
 		api_request_request_provider_list_m_c,
@@ -3002,6 +3093,7 @@ struct api_request_r {
 		api_request_request_tool_register_m_c,
 		api_request_request_command_list_m_c,
 		api_request_request_command_invoke_m_c,
+		api_request_request_caps_m_c,
 		api_request_request_config_get_m_c,
 		api_request_request_config_set_m_c,
 		api_request_request_cron_list_m_c,
@@ -3658,6 +3750,27 @@ struct response_approvals {
 	struct approval_page response_approvals_Approvals;
 };
 
+struct remembered_fingerprint_label_r {
+	union {
+		struct zcbor_string remembered_fingerprint_label_tstr;
+	};
+	enum {
+		remembered_fingerprint_label_tstr_c,
+		remembered_fingerprint_label_null_m_c,
+	} remembered_fingerprint_label_choice;
+};
+
+struct remembered_fingerprint {
+	struct zcbor_string remembered_fingerprint_fingerprint;
+	struct remembered_fingerprint_label_r remembered_fingerprint_label;
+	bool remembered_fingerprint_label_present;
+};
+
+struct response_fingerprints {
+	struct remembered_fingerprint response_fingerprints_Fingerprints_remembered_fingerprint_m[64];
+	size_t response_fingerprints_Fingerprints_remembered_fingerprint_m_count;
+};
+
 struct fleet_report {
 	struct zcbor_string fleet_report_children_unit_id_m[64];
 	size_t fleet_report_children_unit_id_m_count;
@@ -3731,6 +3844,33 @@ struct unit_node_role_r {
 	} unit_node_role_choice;
 };
 
+struct delegation_lifetime_r {
+	enum {
+		delegation_lifetime_Persistent_tstr_c,
+		delegation_lifetime_Ephemeral_tstr_c,
+	} delegation_lifetime_choice;
+};
+
+struct unit_node_lifetime_r {
+	union {
+		struct delegation_lifetime_r unit_node_lifetime_delegation_lifetime_m;
+	};
+	enum {
+		unit_node_lifetime_delegation_lifetime_m_c,
+		unit_node_lifetime_null_m_c,
+	} unit_node_lifetime_choice;
+};
+
+struct unit_node_engine_r {
+	union {
+		struct engine_selector_r unit_node_engine_engine_selector_m;
+	};
+	enum {
+		unit_node_engine_engine_selector_m_c,
+		unit_node_engine_null_m_c,
+	} unit_node_engine_choice;
+};
+
 struct unit_node {
 	struct zcbor_string unit_node_id;
 	struct unit_kind_r unit_node_kind;
@@ -3753,6 +3893,10 @@ struct unit_node {
 	bool unit_node_title_present;
 	struct unit_node_role_r unit_node_role;
 	bool unit_node_role_present;
+	struct unit_node_lifetime_r unit_node_lifetime;
+	bool unit_node_lifetime_present;
+	struct unit_node_engine_r unit_node_engine;
+	bool unit_node_engine_present;
 };
 
 struct tree_report_next_r {
@@ -4098,6 +4242,37 @@ struct node_event_download_progress {
 	uint64_t DownloadProgress_total_bytes;
 };
 
+struct connection_state_r {
+	enum {
+		connection_state_Offline_tstr_c,
+		connection_state_Connecting_tstr_c,
+		connection_state_Connected_tstr_c,
+		connection_state_Error_tstr_c,
+	} connection_state_choice;
+};
+
+struct presence_state_r {
+	enum {
+		presence_state_Unknown_tstr_c,
+		presence_state_Offline_tstr_c,
+		presence_state_Available_tstr_c,
+		presence_state_Idle_tstr_c,
+		presence_state_Away_tstr_c,
+		presence_state_Busy_tstr_c,
+	} presence_state_choice;
+};
+
+struct TransportChanged_presence {
+	struct presence_state_r TransportChanged_presence;
+};
+
+struct node_event_transport_changed {
+	struct zcbor_string TransportChanged_transport;
+	struct connection_state_r TransportChanged_connection;
+	struct TransportChanged_presence TransportChanged_presence;
+	bool TransportChanged_presence_present;
+};
+
 struct node_event_resync_needed {
 	struct zcbor_string ResyncNeeded_scope;
 };
@@ -4110,6 +4285,7 @@ struct node_event_r {
 		struct node_event_fleet_changed node_event_fleet_changed_m;
 		struct node_event_approval_pending node_event_approval_pending_m;
 		struct node_event_download_progress node_event_download_progress_m;
+		struct node_event_transport_changed node_event_transport_changed_m;
 		struct node_event_resync_needed node_event_resync_needed_m;
 	};
 	enum {
@@ -4120,6 +4296,7 @@ struct node_event_r {
 		node_event_approval_pending_m_c,
 		node_event_download_progress_m_c,
 		node_event_catalog_changed_m_c,
+		node_event_transport_changed_m_c,
 		node_event_resync_needed_m_c,
 	} node_event_choice;
 };
@@ -5046,9 +5223,9 @@ struct response_session_recap {
 	} response_session_recap_SessionRecap_choice;
 };
 
-struct response_acp_catalog {
-	struct acp_agent_entry response_acp_catalog_AcpCatalog_acp_agent_entry_m[64];
-	size_t response_acp_catalog_AcpCatalog_acp_agent_entry_m_count;
+struct response_agent_catalog {
+	struct agent_entry response_agent_catalog_AgentCatalog_agent_entry_m[64];
+	size_t response_agent_catalog_AgentCatalog_agent_entry_m_count;
 };
 
 struct response_providers {
@@ -5117,6 +5294,15 @@ struct response_command_output {
 
 struct response_config {
 	struct node_config_view response_config_Config;
+};
+
+struct caps_report {
+	uint32_t caps_report_orchestrate_max_depth;
+	uint32_t caps_report_orchestrate_max_fanout;
+};
+
+struct response_caps {
+	struct caps_report response_caps_Caps;
 };
 
 struct cron_job_next_fire_unix_r {
@@ -5397,28 +5583,8 @@ struct response_adapters {
 	size_t response_adapters_Adapters_adapter_info_m_count;
 };
 
-struct connection_state_r {
-	enum {
-		connection_state_Offline_tstr_c,
-		connection_state_Connecting_tstr_c,
-		connection_state_Connected_tstr_c,
-		connection_state_Error_tstr_c,
-	} connection_state_choice;
-};
-
 struct transport_instance_info_connection {
 	struct connection_state_r transport_instance_info_connection;
-};
-
-struct presence_state_r {
-	enum {
-		presence_state_Unknown_tstr_c,
-		presence_state_Offline_tstr_c,
-		presence_state_Available_tstr_c,
-		presence_state_Idle_tstr_c,
-		presence_state_Away_tstr_c,
-		presence_state_Busy_tstr_c,
-	} presence_state_choice;
 };
 
 struct transport_instance_info_presence {
@@ -5911,6 +6077,7 @@ struct api_response_r {
 		struct response_telemetry api_response_response_telemetry_m;
 		struct response_sessions api_response_response_sessions_m;
 		struct response_approvals api_response_response_approvals_m;
+		struct response_fingerprints api_response_response_fingerprints_m;
 		struct response_fleet api_response_response_fleet_m;
 		struct response_tree api_response_response_tree_m;
 		struct response_unit api_response_response_unit_m;
@@ -5951,12 +6118,13 @@ struct api_response_r {
 		struct response_session_detail api_response_response_session_detail_m;
 		struct response_session_search api_response_response_session_search_m;
 		struct response_session_recap api_response_response_session_recap_m;
-		struct response_acp_catalog api_response_response_acp_catalog_m;
+		struct response_agent_catalog api_response_response_agent_catalog_m;
 		struct response_providers api_response_response_providers_m;
 		struct response_tools api_response_response_tools_m;
 		struct response_commands api_response_response_commands_m;
 		struct response_command_output api_response_response_command_output_m;
 		struct response_config api_response_response_config_m;
+		struct response_caps api_response_response_caps_m;
 		struct response_cron_jobs api_response_response_cron_jobs_m;
 		struct response_cron_id api_response_response_cron_id_m;
 		struct response_cron_runs api_response_response_cron_runs_m;
@@ -5999,6 +6167,7 @@ struct api_response_r {
 		api_response_response_telemetry_m_c,
 		api_response_response_sessions_m_c,
 		api_response_response_approvals_m_c,
+		api_response_response_fingerprints_m_c,
 		api_response_response_fleet_m_c,
 		api_response_response_tree_m_c,
 		api_response_response_unit_m_c,
@@ -6039,12 +6208,13 @@ struct api_response_r {
 		api_response_response_session_detail_m_c,
 		api_response_response_session_search_m_c,
 		api_response_response_session_recap_m_c,
-		api_response_response_acp_catalog_m_c,
+		api_response_response_agent_catalog_m_c,
 		api_response_response_providers_m_c,
 		api_response_response_tools_m_c,
 		api_response_response_commands_m_c,
 		api_response_response_command_output_m_c,
 		api_response_response_config_m_c,
+		api_response_response_caps_m_c,
 		api_response_response_cron_jobs_m_c,
 		api_response_response_cron_id_m_c,
 		api_response_response_cron_runs_m_c,

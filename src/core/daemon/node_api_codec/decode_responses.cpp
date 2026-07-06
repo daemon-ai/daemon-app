@@ -72,7 +72,7 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         {api_response_r::api_response_response_model_catalog_m_c, ApiResponseKind::ModelCatalog},
         {api_response_r::api_response_response_model_recommend_m_c,
          ApiResponseKind::ModelRecommend},
-        {api_response_r::api_response_response_acp_catalog_m_c, ApiResponseKind::AcpCatalog},
+        {api_response_r::api_response_response_agent_catalog_m_c, ApiResponseKind::AcpCatalog},
         // app-wizard-auth stream additions (appended).
         {api_response_r::api_response_response_auth_providers_m_c, ApiResponseKind::AuthProviders},
         {api_response_r::api_response_response_auth_begun_m_c, ApiResponseKind::AuthBegun},
@@ -1094,34 +1094,34 @@ bool NodeApiCodec::decodeAcpCatalog(const QByteArray& responseCbor,
         return false;
     }
     const auto response =
-        decodeChecked(responseCbor, api_response_r::api_response_response_acp_catalog_m_c);
+        decodeChecked(responseCbor, api_response_r::api_response_response_agent_catalog_m_c);
     if (!response) {
         return false;
     }
-    const response_acp_catalog& catalog = response->api_response_response_acp_catalog_m;
+    const response_agent_catalog& catalog = response->api_response_response_agent_catalog_m;
     out->clear();
-    for (size_t i = 0; i < catalog.response_acp_catalog_AcpCatalog_acp_agent_entry_m_count; ++i) {
-        const acp_agent_entry& row = catalog.response_acp_catalog_AcpCatalog_acp_agent_entry_m[i];
+    for (size_t i = 0; i < catalog.response_agent_catalog_AgentCatalog_agent_entry_m_count; ++i) {
+        const agent_entry& row = catalog.response_agent_catalog_AgentCatalog_agent_entry_m[i];
         DecodedAcpAgentEntry entry;
-        entry.name = fromZcbor(row.acp_agent_entry_name);
-        switch (row.acp_agent_entry_source.acp_source_choice) {
-        case acp_source_r::acp_source_Manual_tstr_c:
+        entry.name = fromZcbor(row.agent_entry_name);
+        switch (row.agent_entry_source.agent_source_choice) {
+        case agent_source_r::agent_source_Manual_tstr_c:
             entry.source = QStringLiteral("Manual");
             break;
-        case acp_source_r::acp_source_Endpoint_tstr_c:
+        case agent_source_r::agent_source_Endpoint_tstr_c:
             entry.source = QStringLiteral("Endpoint");
             break;
         default:
             entry.source = QStringLiteral("Builtin");
             break;
         }
-        if (row.acp_agent_entry_installed_present) {
-            entry.installed = row.acp_agent_entry_installed.acp_agent_entry_installed;
+        if (row.agent_entry_installed_present) {
+            entry.installed = row.agent_entry_installed.agent_entry_installed;
         }
-        if (row.acp_agent_entry_version_present &&
-            row.acp_agent_entry_version.acp_agent_entry_version_choice ==
-                acp_agent_entry_version_r::acp_agent_entry_version_tstr_c) {
-            entry.version = fromZcbor(row.acp_agent_entry_version.acp_agent_entry_version_tstr);
+        if (row.agent_entry_version_present &&
+            row.agent_entry_version.agent_entry_version_choice ==
+                agent_entry_version_r::agent_entry_version_tstr_c) {
+            entry.version = fromZcbor(row.agent_entry_version.agent_entry_version_tstr);
         }
         // The launch recipe is deliberately NOT decoded: recipes are node-side, operator-managed
         // state; no client surface renders or re-sends them (profiles bind BY NAME only).
