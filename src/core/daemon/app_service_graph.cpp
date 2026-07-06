@@ -27,6 +27,7 @@
 #include "daemon/daemon_provider_catalog.h"
 #include "daemon/daemon_session_roster.h"
 #include "daemon/daemon_session_settings.h"
+#include "daemon/daemon_tool_inventory.h" // [wave2:app-approvals-safety] D2
 #include "daemon/daemon_transport.h"
 #include "daemon/daemon_transport_registry.h"
 #include "daemon/engine_identity.h"
@@ -50,6 +51,7 @@
 #include "session/mock_checkpoint_timeline.h"
 #include "session/mock_session_settings.h"
 #include "settings/qt_settings_store.h"
+#include "tools/mock_tool_inventory.h" // [wave2:app-approvals-safety] D2
 #include "transports/mock_presence_service.h"
 #include "transports/mock_transport_registry.h"
 #include "update/update_manager.h"
@@ -112,6 +114,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.roster = new fleet::MockSessionRoster(graph.daemonNet, owner);
     graph.fleetTree = new fleet::MockFleetTree(graph.daemonNet, owner);
     graph.approvals = new fleet::MockApprovalsInbox(owner);
+    // [wave2:app-approvals-safety] D2: tool inventory starts as the canned mock; the daemon branch
+    // below REPLACES it with the repo-backed DaemonToolInventory (ToolList).
+    graph.tools = new tools::MockToolInventory(owner);
     graph.dashboard =
         new fleet::MockDashboard(graph.roster, graph.fleetTree, graph.approvals, owner);
     // Cron has NO node wire op yet (the daemon-api codec subset carries none), so in Daemon mode
@@ -148,6 +153,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.models = new ModelRepository(graph.nodeApi, graph.cache, owner);
     graph.providerRepository = new ProviderRepository(graph.nodeApi, graph.cache, owner);
     graph.approvalRepository = new ApprovalRepository(graph.nodeApi, graph.cache, owner);
+    // [wave2:app-approvals-safety] D2/D4: tool inventory + per-session fingerprint repositories
+    // (inert without a connection; only projected into facades in the daemon branch below).
+    graph.toolRepository = new ToolRepository(graph.nodeApi, graph.cache, owner);
+    graph.fingerprintRepository = new FingerprintRepository(graph.nodeApi, graph.cache, owner);
     graph.checkpointRepository = new CheckpointRepository(graph.nodeApi, graph.cache, owner);
     if (daemonConnection != nullptr) {
         // Durable checkpoints (E4/TOOL-9): replace the (empty-seeded) mock timeline with the
@@ -183,10 +192,18 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
             new DaemonProviderCatalog(graph.providerRepository, graph.modelCatalog, owner);
         graph.profiles = new profiles::DaemonProfileStore(graph.profileRepository, owner);
         // Per-session approval mode (CHA-4): the setter sends SetSessionMode to the node.
-        graph.sessionSettings = new DaemonSessionSettings(graph.nodeApi, owner);
+        // [wave2:app-approvals-safety] D4: also backs the per-session remembered-fingerprint list
+        // (FingerprintList/Revoke) via the FingerprintRepository.
+        graph.sessionSettings =
+            new DaemonSessionSettings(graph.nodeApi, graph.fingerprintRepository, owner);
         // PRO-11: pending-approvals inbox backed by the ApprovalRepository (ApprovalsPending poll
         // on ready + ApprovalDecide), replacing the mock fleet inbox.
         graph.approvals = new DaemonApprovalsInbox(graph.approvalRepository, owner);
+        // [wave2:app-approvals-safety] D2: replace the canned tool inventory with the repo-backed
+        // one over ToolList. The mock built above is parented to `owner`; drop it for the daemon
+        // one.
+        delete graph.tools;
+        graph.tools = new DaemonToolInventory(graph.toolRepository, owner);
         // Daemon-backed, offline-first fleet/subagent tree (PRO-9/10): replace the mock fleet tree
         // with one projected from the cached Tree query. The mock built above is parented to
         // `owner`; drop it for the daemon one. Built before the subscription feed so the feed can
@@ -285,7 +302,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
              providers = graph.providerRepository, approvals = graph.approvalRepository,
              subscriptions = graph.subscriptions, fs = graph.fs, fleet = graph.fleetRepository,
              transports = graph.transportRepository, routing = graph.routingRepository,
-             agents = graph.agents, authRepo = graph.authRepository, wasReady] {
+             agents = graph.agents, authRepo = graph.authRepository,
+             toolRepo = graph.toolRepository, // [wave2:app-approvals-safety] D2
+             wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
                     // Initial baseline once per (re)connect; the EventsSince feed then keeps the
@@ -298,7 +317,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     models->refreshCurrent();
                     providers->refreshProviders(); // node-driven provider/model discovery
                     approvals->refreshPending();
-                    fs->listRoots(); // populate the daemon-backed file roots
+                    toolRepo->refreshTools(); // [wave2:app-approvals-safety] D2 tool inventory
+                    fs->listRoots();          // populate the daemon-backed file roots
                     fleet->refreshTree(QStringLiteral("baseline")); // PRO-9: baseline the tree
                     // Channels: the adapter picker + configured accounts/status dots (EIO-1/3/9).
                     transports->refreshAdapters();

@@ -352,6 +352,31 @@ struct DecodedApprovalInfo {
     // this is true, mirroring the node, which honors durable permanence solely for a verified
     // fingerprint (a permanent decision on a fingerprint-less approval degrades to a single allow).
     bool hasFingerprint = false;
+    // [wave2:app-approvals-safety] D3: the fingerprint hex string itself (ApprovalInfo.fingerprint,
+    // wire v28) — lowercase-hex sha256 of the resolved (exec-surface, abs-binary, argv, env-delta,
+    // cwd) tuple. Display/correlation only (a chip in the structured prompt); empty when absent.
+    QString fingerprint;
+};
+
+// [wave2:app-approvals-safety] D2: one entry of the node-wide tool inventory (ToolList -> Tools,
+// wire v29). `enabled` is whether the tool is compiled/keyed and advertised; `requires` names the
+// unmet prerequisite (e.g. a credential token, a build feature, an MCP server) when disabled, empty
+// otherwise. Display/inventory only — the node owns tool gating; there is no client toggle op at
+// v29 (ToolRegister is a register verb, Unsupported).
+struct DecodedToolInfo {
+    QString name;
+    QString description;
+    bool enabled = false;
+    QString requires_; // trailing underscore: `requires` is a reserved identifier in some contexts
+};
+
+// [wave2:app-approvals-safety] D4: one remembered exec-approval fingerprint on a session's
+// per-session allow-list (FingerprintList -> Fingerprints, wire v29). `fingerprint` is the hex
+// digest; `label` is an optional human summary (always empty today — the node stores only the
+// hash), reserved so future provenance needs no wire bump.
+struct DecodedRememberedFingerprint {
+    QString fingerprint;
+    QString label;
 };
 
 // A slash command (CommandList -> Commands). CHA-7.
@@ -989,9 +1014,13 @@ public:
     // `allowPermanent` (wire v28) rides the inline `Approved{ approved, ? allow_permanent }` body:
     // when true the node adds the approved command's fingerprint to a per-session allow-list. Only
     // send it for a gate the node marked `allow_permanent_offered`; false leaves the field absent.
+    // [wave2:app-approvals-safety] D3: `reason` (wire v29) rides `Approved.reason` — an operator
+    // deny explanation threaded to the model on the next turn. Emitted only when non-empty (and
+    // meaningful only on a deny); a plain allow/deny stays byte-identical to the pre-v29 shape.
     [[nodiscard]] static QByteArray encodeRespondApprovalRequest(const QString& sessionId,
                                                                  quint32 requestId, bool allow,
-                                                                 bool allowPermanent = false);
+                                                                 bool allowPermanent = false,
+                                                                 const QString& reason = QString());
     // Resolve a parked Input (clarify free-text) HostRequest.
     [[nodiscard]] static QByteArray
     encodeRespondInputRequest(const QString& sessionId, quint32 requestId, const QString& text);
@@ -1003,10 +1032,13 @@ public:
     // the node adds the approved command's fingerprint to a per-session allow-list. Only send it
     // for an approval the node marked as fingerprinted (DecodedApprovalInfo::hasFingerprint); false
     // leaves it absent.
-    [[nodiscard]] static QByteArray encodeApprovalDecideRequest(const QString& sessionId,
-                                                                const QString& requestId,
-                                                                bool allow,
-                                                                bool allowPermanent = false);
+    // [wave2:app-approvals-safety] D3: `reason` (wire v29) rides the optional
+    // `ApprovalDecide.reason` — the operator deny explanation the node threads into the model's
+    // next turn as the tool refusal text. Emitted only when non-empty (meaningful on a deny);
+    // pre-v29 shape otherwise.
+    [[nodiscard]] static QByteArray
+    encodeApprovalDecideRequest(const QString& sessionId, const QString& requestId, bool allow,
+                                bool allowPermanent = false, const QString& reason = QString());
     // Set a session's approval mode (CHA-4): "ask" | "accept_edits" | "auto_allow" | "deny".
     [[nodiscard]] static QByteArray encodeSetSessionModeRequest(const QString& sessionId,
                                                                 const QString& mode);
@@ -1015,6 +1047,14 @@ public:
     [[nodiscard]] static QByteArray
     encodeApprovalsPendingRequest(const QString& sessionId = QString(),
                                   const QString& after = QString());
+
+    // [wave2:app-approvals-safety] D2 tool inventory + D4 fingerprint management (wire v29).
+    // ToolList is node-wide (no session arg). FingerprintList/Revoke are per-session (the node's
+    // allow-list is per-session); revoke names the exact fingerprint hex to drop.
+    [[nodiscard]] static QByteArray encodeToolListRequest();
+    [[nodiscard]] static QByteArray encodeFingerprintListRequest(const QString& sessionId);
+    [[nodiscard]] static QByteArray encodeFingerprintRevokeRequest(const QString& sessionId,
+                                                                   const QString& fingerprint);
 
     // --- CHA-6 interrupt / steer ---
     [[nodiscard]] static QByteArray encodeSubmitInterruptRequest(const QString& sessionId,
@@ -1238,6 +1278,11 @@ public:
     // (when non-null) gets the resume cursor (cleared on the last page).
     static bool decodeApprovals(const QByteArray& responseCbor, QList<DecodedApprovalInfo>* out,
                                 QString* next = nullptr);
+    // [wave2:app-approvals-safety] D2/D4 (wire v29): decode a Tools response into the node-wide
+    // tool inventory, and a Fingerprints response into a session's remembered allow-list.
+    static bool decodeTools(const QByteArray& responseCbor, QList<DecodedToolInfo>* out);
+    static bool decodeFingerprints(const QByteArray& responseCbor,
+                                   QList<DecodedRememberedFingerprint>* out);
     // Decode a Commands response (CHA-7) into the slash-command catalog.
     static bool decodeCommands(const QByteArray& responseCbor, QList<DecodedCommandSpec>* out);
     // Decode a CommandOutput response (CHA-7) into its text.

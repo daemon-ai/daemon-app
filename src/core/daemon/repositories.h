@@ -572,8 +572,10 @@ public:
     // fires. `allowPermanent` (wire v28) is only meaningful for an allow of a fingerprinted
     // approval (see DecodedApprovalInfo::hasFingerprint); it rides the optional ApprovalDecide
     // field.
+    // [wave2:app-approvals-safety] D3: `reason` (wire v29) rides ApprovalDecide.reason on a deny —
+    // the operator explanation the node threads into the model's next turn. Empty = absent.
     void decide(const QString& sessionId, const QString& requestId, bool allow,
-                bool allowPermanent = false);
+                bool allowPermanent = false, const QString& reason = QString());
 
 signals:
     void pendingRefreshed();
@@ -935,6 +937,67 @@ private:
     // refreshed signals fire ONCE with the complete listing.
     PageLoop<DecodedChatRoute> m_routesLoop;
     QHash<QString, PageLoop<DecodedRoomInfo>> m_roomsLoops;
+};
+
+// [wave2:app-approvals-safety] D2: node-wide tool inventory (ToolList -> Tools, wire v29).
+// refreshTools() issues a ToolList; on success toolsRefreshed() fires with tools() populated.
+// Read-only: the node owns tool gating (there is no enable/disable op at v29). Not cached — a live
+// inventory, like ApprovalRepository.
+class ToolRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    ToolRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    [[nodiscard]] const QList<DecodedToolInfo>& tools() const { return m_tools; }
+
+    void refreshTools();
+
+signals:
+    void toolsRefreshed();
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kToolsCorrelation = "repo/tool-list";
+
+    QList<DecodedToolInfo> m_tools;
+};
+
+// [wave2:app-approvals-safety] D4: per-session remembered exec-approval fingerprints
+// (FingerprintList/FingerprintRevoke, wire v29). refreshFingerprints(session) lists the session's
+// allow-list; revoke(session, fp) drops one and, on Ok, re-lists so the client renders the node's
+// stored state (never an optimistic local drop). Not cached — a live, per-session query.
+class FingerprintRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    FingerprintRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                          QObject* parent = nullptr);
+
+    [[nodiscard]] const QList<DecodedRememberedFingerprint>& fingerprints() const {
+        return m_fingerprints;
+    }
+    [[nodiscard]] QString session() const { return m_session; }
+
+    void refreshFingerprints(const QString& sessionId);
+    void revoke(const QString& sessionId, const QString& fingerprint);
+
+signals:
+    void fingerprintsRefreshed();
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kListCorrelation = "repo/fingerprint-list";
+    static constexpr auto kRevokeCorrelation = "repo/fingerprint-revoke";
+
+    QList<DecodedRememberedFingerprint> m_fingerprints;
+    QString m_session; // the session scope of the last list, re-used after a revoke
 };
 
 } // namespace daemonapp::daemon

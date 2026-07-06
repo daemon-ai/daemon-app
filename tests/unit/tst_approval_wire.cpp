@@ -144,6 +144,64 @@ private slots:
         QCOMPARE(decide.ApprovalDecide_allow, false);
         QVERIFY(!decide.ApprovalDecide_allow_permanent_present);
     }
+
+    // --- [wave2:app-approvals-safety] D3: deny-with-reason (wire v29) ---
+
+    // A deny with a reason rides ApprovalDecide.reason (durable inbox path).
+    void decideDenyReasonSetsWireField() {
+        const QByteArray cbor = NodeApiCodec::encodeApprovalDecideRequest(
+            QStringLiteral("s1"), QStringLiteral("req-1"), /*allow=*/false,
+            /*allowPermanent=*/false, QStringLiteral("not this path"));
+        QVERIFY(!cbor.isEmpty());
+        request_approval_decide decide{};
+        QVERIFY(decodeApprovalDecide(cbor, &decide));
+        QCOMPARE(decide.ApprovalDecide_allow, false);
+        QVERIFY(decide.ApprovalDecide_reason_present);
+        const QByteArray reason(
+            reinterpret_cast<const char*>(
+                decide.ApprovalDecide_reason.ApprovalDecide_reason_tstr.value),
+            static_cast<int>(decide.ApprovalDecide_reason.ApprovalDecide_reason_tstr.len));
+        QCOMPARE(reason, QByteArray("not this path"));
+    }
+
+    // A deny reason rides the inline Approved.reason too.
+    void respondDenyReasonSetsWireField() {
+        const QByteArray cbor = NodeApiCodec::encodeRespondApprovalRequest(
+            QStringLiteral("s1"), 7, /*allow=*/false, /*allowPermanent=*/false,
+            QStringLiteral("wrong dir"));
+        QVERIFY(!cbor.isEmpty());
+        host_response_body_approved body{};
+        QVERIFY(decodeApprovedBody(cbor, &body));
+        QCOMPARE(body.Approved_approved, false);
+        QVERIFY(body.Approved_reason_present);
+        const QByteArray reason(
+            reinterpret_cast<const char*>(body.Approved_reason.Approved_reason_tstr.value),
+            static_cast<int>(body.Approved_reason.Approved_reason_tstr.len));
+        QCOMPARE(reason, QByteArray("wrong dir"));
+    }
+
+    // An empty reason (and an ALLOW even with a reason) leaves the field absent — no fabricated
+    // reason on the wire, and byte-shape parity with a plain decision.
+    void reasonAbsentWhenEmptyOrAllow() {
+        const QByteArray denyNoReason = NodeApiCodec::encodeApprovalDecideRequest(
+            QStringLiteral("s1"), QStringLiteral("req-1"), /*allow=*/false,
+            /*allowPermanent=*/false, QString());
+        request_approval_decide d1{};
+        QVERIFY(decodeApprovalDecide(denyNoReason, &d1));
+        QVERIFY(!d1.ApprovalDecide_reason_present);
+        // Default overload (no reason arg) is byte-identical.
+        const QByteArray def = NodeApiCodec::encodeApprovalDecideRequest(
+            QStringLiteral("s1"), QStringLiteral("req-1"), /*allow=*/false);
+        QCOMPARE(def, denyNoReason);
+
+        // An allow carrying a reason still omits it (reason is deny-only).
+        const QByteArray allowWithReason = NodeApiCodec::encodeApprovalDecideRequest(
+            QStringLiteral("s1"), QStringLiteral("req-1"), /*allow=*/true, /*allowPermanent=*/false,
+            QStringLiteral("ignored"));
+        request_approval_decide d2{};
+        QVERIFY(decodeApprovalDecide(allowWithReason, &d2));
+        QVERIFY(!d2.ApprovalDecide_reason_present);
+    }
 };
 
 QTEST_GUILESS_MAIN(TestApprovalWire)

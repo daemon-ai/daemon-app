@@ -210,7 +210,8 @@ void TurnController::resume() {
     scheduleNext();
 }
 
-void TurnController::respondApproval(const QString& requestId, bool allow, bool allowPermanent) {
+void TurnController::respondApproval(const QString& requestId, bool allow, bool allowPermanent,
+                                     const QString& reason) {
     // The simulator holds no durable policy, so "allow permanently" plays out exactly like a
     // one-shot allow; accepted only to satisfy the ITurnEngine seam (wire v28).
     Q_UNUSED(allowPermanent)
@@ -235,7 +236,11 @@ void TurnController::respondApproval(const QString& requestId, bool allow, bool 
             QStringLiteral("\u001b[32m\u2713\u001b[0m approved \u2014 command finished\n"));
     } else {
         finished.insert(QStringLiteral("status"), QStringLiteral("error"));
-        finished.insert(QStringLiteral("stderr"), QStringLiteral("denied by operator\n"));
+        // [wave2:app-approvals-safety] D3: reflect the operator's deny reason (wire v29) in the
+        // simulated refusal so the mock mirrors the daemon's reason-threading behavior.
+        finished.insert(QStringLiteral("stderr"),
+                        reason.isEmpty() ? QStringLiteral("denied by operator\n")
+                                         : QStringLiteral("denied by operator: %1\n").arg(reason));
     }
     const QString followUp = allow
                                  ? QStringLiteral("\n\nThe command finished after your approval.\n")

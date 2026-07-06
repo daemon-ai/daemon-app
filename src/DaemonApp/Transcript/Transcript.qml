@@ -244,7 +244,7 @@ Rectangle {
             }
         }
 
-        function onToolApprovalAnswered(blockId, callId, decision, permanent) {
+        function onToolApprovalAnswered(blockId, callId, decision, permanent, reason) {
             // Forward the decision to the bound turn engine; the gate itself was
             // already cleared by EditorController via the shared toolApprovalPatch
             // contract. The tool's RESULT is never fabricated here: in daemon mode
@@ -252,8 +252,11 @@ Rectangle {
             // event; the mock engine emits its own scripted toolFinished from
             // respondApproval. When no turn is live (a gate in a loaded transcript)
             // there is no result to show — the bar simply clears.
+            // [wave2:app-approvals-safety] D3: thread the operator deny reason (wire v29) so the
+            // node relays it to the model on the next turn (Approved.reason).
             if (root.turn && root.turn.active) {
-                root.turn.respondApproval(callId, decision === "approved", permanent === true)
+                root.turn.respondApproval(callId, decision === "approved", permanent === true,
+                                          reason ? reason : "")
             }
         }
 

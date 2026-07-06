@@ -87,6 +87,9 @@ add_library(da_daemon_client STATIC
     # [wave2:app-engines] shared engine-identity facade (C3/C4/C5)
     engine_identity.h
     engine_identity.cpp
+    # [wave2:app-approvals-safety] D2 tool inventory
+    daemon_tool_inventory.h
+    daemon_tool_inventory.cpp
     subscription_manager.h
     subscription_manager.cpp
     daemon_fs_service.h
@@ -139,6 +142,7 @@ target_link_libraries(da_daemon_client
         daemon-app::automation
         daemon-app::session
         daemon-app::transports
+        daemon-app::tools # [wave2:app-approvals-safety] D2 tool inventory seam
         daemon-app::daemonnet
         daemon-app::nav
         daemon-app::firstrun

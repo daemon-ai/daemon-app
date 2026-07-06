@@ -25,6 +25,8 @@ Item {
         // [wave2:app-engines] foreign-agent management (C1)
         { id: "agents",       label: qsTr("Agents"),         icon: FontIcons.fa_robot },
         { id: "chat",         label: qsTr("Chat"),           icon: FontIcons.fa_comments },
+        // [wave2:app-approvals-safety] D2: read-only tool inventory section.
+        { id: "tools",        label: qsTr("Tools"),          icon: FontIcons.fa_wrench },
         { id: "safety",       label: qsTr("Safety"),         icon: FontIcons.fa_circle_exclamation },
         { id: "memory",       label: qsTr("Memory & Context"), icon: FontIcons.fa_brain },
         { id: "workspace",    label: qsTr("Workspace"),      icon: FontIcons.fa_list_ul },
@@ -79,6 +81,7 @@ Item {
                     case "model": return modelComp;
                     case "agents": return agentsComp;
                     case "chat": return chatComp;
+                    case "tools": return toolsComp; // [wave2:app-approvals-safety] D2
                     case "safety": return safetyComp;
                     case "memory": return memoryComp;
                     case "workspace": return workspaceComp;
@@ -111,6 +114,8 @@ Item {
     Component { id: modelComp;         Padded { ModelSettingsSection { width: parent.width } } }
     Component { id: agentsComp;        Padded { AgentsSettingsSection { width: parent.width } } }
     Component { id: chatComp;          Padded { ChatSettingsSection { width: parent.width } } }
+    // [wave2:app-approvals-safety] D2: read-only tool inventory.
+    Component { id: toolsComp;         Padded { ToolsSettingsSection { width: parent.width } } }
     Component { id: safetyComp;        Padded { SafetySettingsSection { width: parent.width } } }
     Component { id: memoryComp;        Padded { MemorySettingsSection { width: parent.width } } }
     Component { id: workspaceComp;     Padded { WorkspaceSection { width: parent.width } } }

@@ -18,6 +18,10 @@ QQC.Popup {
     // Profile override + approval mode still apply (foreign approvals ride the same inbox).
     property bool foreignSession: false
 
+    // [wave2:app-approvals-safety] D4: re-query the active session's remembered exec-approval
+    // fingerprints when the popover opens (no-op on the mock / non-daemon facade).
+    onOpened: if (SessionSettings.refreshFingerprints) SessionSettings.refreshFingerprints()
+
     // Translatable label for a reasoning-effort segment; the stored value stays
     // the canonical off/low/medium/high token.
     function effortLabel(v) {
@@ -145,6 +149,48 @@ QQC.Popup {
                           : qsTr("Ask")
                     accentFilled: SessionSettings.approvalMode === modelData
                     onClicked: SessionSettings.setApprovalMode(modelData)
+                }
+            }
+        }
+
+        // --- Remembered approvals (D4) -----------------------------------
+        // [wave2:app-approvals-safety] The per-session allow-list of exec-approval fingerprints the
+        // user allowed permanently (FingerprintList/Revoke, wire v29). Provenance is limited to the
+        // fingerprint hash (+ a label when the node ever fills it) — the node stores only the hash,
+        // so no "what/when" is fabricated here.
+        Text {
+            text: qsTr("Remembered approvals")
+            font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+        }
+        Text {
+            Layout.fillWidth: true
+            visible: !SessionSettings.rememberedFingerprints
+                     || SessionSettings.rememberedFingerprints.count === 0
+            text: qsTr("No remembered approvals for this session.")
+            font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+            wrapMode: Text.WordWrap
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 4
+            Repeater {
+                model: SessionSettings.rememberedFingerprints
+                delegate: RowLayout {
+                    required property var model
+                    Layout.fillWidth: true
+                    spacing: 6
+                    Kit.Chip {
+                        iconGlyph: FontIcons.fa_lock
+                        tone: "muted"
+                        text: model.label && String(model.label).length > 0
+                              ? model.label : model.shortFingerprint
+                        tooltipText: model.fingerprint
+                    }
+                    Item { Layout.fillWidth: true }
+                    Kit.TextButton {
+                        text: qsTr("Revoke")
+                        onClicked: SessionSettings.revokeFingerprint(model.fingerprint)
+                    }
                 }
             }
         }

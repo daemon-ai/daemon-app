@@ -29,6 +29,7 @@
 #include "tab_model.h"
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
+#include "tools/itool_inventory.h" // [wave2:app-approvals-safety] D2: live-refresh the inventory
 #include "transcript_exporter.h"
 #include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
@@ -136,6 +137,11 @@ void RootWidget::wirePageLiveRefresh() {
     liveRefresh(m_services.roster->sessions(), TabModel::Sessions);
     liveRefresh(m_services.fleetTree->nodes(), TabModel::Fleet);
     liveRefresh(m_services.approvals->pending(), TabModel::Approvals);
+    // [wave2:app-approvals-safety] D2: the tool inventory renders as a Settings subsection; repaint
+    // the Settings page when the ToolList response arrives.
+    if (m_services.tools != nullptr) {
+        liveRefresh(m_services.tools->tools(), TabModel::Settings);
+    }
     // The Routing page projects the DaemonNet pin table (no row model): re-render the open page
     // when the pins / rooms / accounts change (B6/ROU).
     if (m_services.daemonNet != nullptr) {
@@ -366,6 +372,10 @@ void RootWidget::wireTranscriptControls() {
                                                     permanent);
                 }
             });
+    // [wave2:app-approvals-safety] D3: inline "Deny with reason" opens a RootWidget prompt (widgets
+    // cannot be hosted in the transcript render) and resolves the gate with the operator's reason.
+    connect(m_transcript, &TranscriptView::approvalDenyReasonRequested, this,
+            [this](const QString& callId) { openInlineDenyReasonPrompt(callId); });
     connect(m_transcript, &TranscriptView::clarifySubmitted, this,
             [this](const QString& callId, const QString& requestId, const QVariantMap& answers) {
                 if (m_active == nullptr) {

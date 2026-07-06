@@ -322,13 +322,16 @@ void DaemonTurnEngine::sendRespond(const QByteArray& cbor) {
     m_client->sendRequest(cbor, respondCorrelation());
 }
 
-void DaemonTurnEngine::respondApproval(const QString& requestId, bool allow, bool allowPermanent) {
+void DaemonTurnEngine::respondApproval(const QString& requestId, bool allow, bool allowPermanent,
+                                       const QString& reason) {
     if (!m_parked) {
         return;
     }
     const quint32 id = requestId.isEmpty() ? m_pendingRequestId : requestId.toUInt();
     // The encoder emits allow_permanent only for an allow (a deny is never persisted).
-    sendRespond(NodeApiCodec::encodeRespondApprovalRequest(m_sessionId, id, allow, allowPermanent));
+    // [wave2:app-approvals-safety] D3: `reason` rides Approved.reason on a deny (wire v29).
+    sendRespond(
+        NodeApiCodec::encodeRespondApprovalRequest(m_sessionId, id, allow, allowPermanent, reason));
 }
 
 void DaemonTurnEngine::respondInput(const QString& requestId, const QString& text) {

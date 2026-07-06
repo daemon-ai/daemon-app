@@ -526,6 +526,19 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         event->accept();
         return true;
     }
+    // [wave2:app-approvals-safety] D3: Approvals 'D' opens a deny-with-reason prompt — a
+    // RootWidget-level overlay (TuiPageHub cannot host dialogs) that threads the reason to the node
+    // via ApprovalDecide.reason (wire v29). Plain 'd' (no reason) stays in the hub key handler.
+    if (kind == TabModel::Approvals && event->text() == QStringLiteral("D")) {
+        const QList<QVariantMap> rows = pageActionRows(kind);
+        if (!rows.isEmpty()) {
+            const int sel =
+                qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
+            openApprovalDenyReasonPrompt(rows.at(sel).value(QStringLiteral("id")).toString());
+        }
+        event->accept();
+        return true;
+    }
     if (kind == TabModel::Profiles && event->modifiers() == Qt::NoModifier) {
         // 'e' opens the interactive profile editor for the selected row.
         if (event->text() == QStringLiteral("e")) {

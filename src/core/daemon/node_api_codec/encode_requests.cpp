@@ -625,8 +625,10 @@ void fillRespondShell(api_request_r* request, const QByteArray& sessionUtf8, qui
 } // namespace
 
 QByteArray NodeApiCodec::encodeRespondApprovalRequest(const QString& sessionId, quint32 requestId,
-                                                      bool allow, bool allowPermanent) {
+                                                      bool allow, bool allowPermanent,
+                                                      const QString& reason) {
     const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray reasonUtf8 = reason.toUtf8();
     api_request_r request{};
     fillRespondShell(&request, sessionUtf8, requestId);
     host_response_body_t_r& body =
@@ -641,6 +643,14 @@ QByteArray NodeApiCodec::encodeRespondApprovalRequest(const QString& sessionId, 
     const bool permanent = allow && allowPermanent;
     approved.Approved_allow_permanent_present = permanent;
     approved.Approved_allow_permanent.Approved_allow_permanent = permanent;
+    // [wave2:app-approvals-safety] D3: optional deny reason (wire v29) threaded to the model. Only
+    // meaningful on a deny; a plain allow stays byte-identical to the pre-v29 shape (absent).
+    const bool hasReason = !allow && !reasonUtf8.isEmpty();
+    approved.Approved_reason_present = hasReason;
+    if (hasReason) {
+        approved.Approved_reason.Approved_reason_choice = Approved_reason_r::Approved_reason_tstr_c;
+        setZcbor(approved.Approved_reason.Approved_reason_tstr, reasonUtf8);
+    }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
 }
@@ -743,9 +753,10 @@ QByteArray NodeApiCodec::encodeModelRecommendRequest(const QString& repo, const 
 
 QByteArray NodeApiCodec::encodeApprovalDecideRequest(const QString& sessionId,
                                                      const QString& requestId, bool allow,
-                                                     bool allowPermanent) {
+                                                     bool allowPermanent, const QString& reason) {
     const QByteArray sessionUtf8 = sessionId.toUtf8();
     const QByteArray requestIdUtf8 = requestId.toUtf8();
+    const QByteArray reasonUtf8 = reason.toUtf8();
     return encodeWithFill(
         api_request_r::api_request_request_approval_decide_m_c, [&](api_request_r& request) {
             request_approval_decide& decide = request.api_request_request_approval_decide_m;
@@ -758,6 +769,15 @@ QByteArray NodeApiCodec::encodeApprovalDecideRequest(const QString& sessionId,
             const bool permanent = allow && allowPermanent;
             decide.ApprovalDecide_allow_permanent_present = permanent;
             decide.ApprovalDecide_allow_permanent.ApprovalDecide_allow_permanent = permanent;
+            // [wave2:app-approvals-safety] D3: optional deny reason (wire v29). Only meaningful on
+            // a deny; a plain allow leaves it absent (byte-identical to the pre-v29 shape).
+            const bool hasReason = !allow && !reasonUtf8.isEmpty();
+            decide.ApprovalDecide_reason_present = hasReason;
+            if (hasReason) {
+                decide.ApprovalDecide_reason.ApprovalDecide_reason_choice =
+                    ApprovalDecide_reason_r::ApprovalDecide_reason_tstr_c;
+                setZcbor(decide.ApprovalDecide_reason.ApprovalDecide_reason_tstr, reasonUtf8);
+            }
         });
 }
 
@@ -808,6 +828,36 @@ QByteArray NodeApiCodec::encodeApprovalsPendingRequest(const QString& sessionId,
     }
     QByteArray out;
     return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+// [wave2:app-approvals-safety] D2: node-wide tool inventory (ToolList, wire v29). No arguments.
+QByteArray NodeApiCodec::encodeToolListRequest() {
+    return encodeSimple(api_request_r::api_request_request_tool_list_m_c);
+}
+
+// [wave2:app-approvals-safety] D4: list a session's remembered exec-approval fingerprints
+// (FingerprintList, wire v29).
+QByteArray NodeApiCodec::encodeFingerprintListRequest(const QString& sessionId) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_fingerprint_list_m_c, [&](api_request_r& request) {
+            setZcbor(request.api_request_request_fingerprint_list_m.FingerprintList_session,
+                     sessionUtf8);
+        });
+}
+
+// [wave2:app-approvals-safety] D4: revoke one remembered fingerprint from a session's allow-list
+// (FingerprintRevoke, wire v29).
+QByteArray NodeApiCodec::encodeFingerprintRevokeRequest(const QString& sessionId,
+                                                        const QString& fingerprint) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray fingerprintUtf8 = fingerprint.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_fingerprint_revoke_m_c, [&](api_request_r& request) {
+            request_fingerprint_revoke& revoke = request.api_request_request_fingerprint_revoke_m;
+            setZcbor(revoke.FingerprintRevoke_session, sessionUtf8);
+            setZcbor(revoke.FingerprintRevoke_fingerprint, fingerprintUtf8);
+        });
 }
 
 QByteArray NodeApiCodec::encodeModelDownloadRequest(const QString& repo, const QString& file,

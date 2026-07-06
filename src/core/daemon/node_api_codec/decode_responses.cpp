@@ -1046,8 +1046,16 @@ bool NodeApiCodec::decodeApprovals(const QByteArray& responseCbor, QList<Decoded
             entry.path = fromZcbor(info.approval_info_path.approval_info_path_tstr);
         }
         // Wire v28: a present fingerprint means the node can remember a permanent decision for this
-        // approval; it is the durable "allow permanently" offer signal (value not needed app-side).
-        entry.hasFingerprint = info.approval_info_fingerprint_present;
+        // approval; it is the durable "allow permanently" offer signal.
+        entry.hasFingerprint = info.approval_info_fingerprint_present &&
+                               info.approval_info_fingerprint.approval_info_fingerprint_choice ==
+                                   approval_info_fingerprint_r::approval_info_fingerprint_tstr_c;
+        // [wave2:app-approvals-safety] D3: carry the fingerprint hex string for the structured
+        // prompt's fingerprint chip (display/correlation only).
+        if (entry.hasFingerprint) {
+            entry.fingerprint =
+                fromZcbor(info.approval_info_fingerprint.approval_info_fingerprint_tstr);
+        }
         out->append(entry);
     }
     if (next != nullptr) {
@@ -1056,6 +1064,69 @@ bool NodeApiCodec::decodeApprovals(const QByteArray& responseCbor, QList<Decoded
             page.approval_page_next_present && page.approval_page_next.approval_page_next_choice ==
                                                    approval_page_next_r::approval_page_next_tstr_c;
         *next = hasNext ? fromZcbor(page.approval_page_next.approval_page_next_tstr) : QString();
+    }
+    return true;
+}
+
+// [wave2:app-approvals-safety] D2: decode a Tools response (wire v29) into the node-wide inventory.
+bool NodeApiCodec::decodeTools(const QByteArray& responseCbor, QList<DecodedToolInfo>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_tools_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_tools& tools = response->api_response_response_tools_m;
+    out->clear();
+    for (size_t i = 0; i < tools.response_tools_Tools_tool_info_m_count; ++i) {
+        const tool_info& info = tools.response_tools_Tools_tool_info_m[i];
+        DecodedToolInfo entry;
+        entry.name = fromZcbor(info.tool_info_name);
+        if (info.tool_info_description_present &&
+            info.tool_info_description.tool_info_description_choice ==
+                tool_info_description_r::tool_info_description_tstr_c) {
+            entry.description = fromZcbor(info.tool_info_description.tool_info_description_tstr);
+        }
+        entry.enabled = info.tool_info_enabled;
+        if (info.tool_info_requires_present &&
+            info.tool_info_requires.tool_info_requires_choice ==
+                tool_info_requires_r::tool_info_requires_tstr_c) {
+            entry.requires_ = fromZcbor(info.tool_info_requires.tool_info_requires_tstr);
+        }
+        out->append(entry);
+    }
+    return true;
+}
+
+// [wave2:app-approvals-safety] D4: decode a Fingerprints response (wire v29) into a session's
+// remembered allow-list. `label` is always absent today (the node stores only the hash).
+bool NodeApiCodec::decodeFingerprints(const QByteArray& responseCbor,
+                                      QList<DecodedRememberedFingerprint>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_fingerprints_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_fingerprints& fps = response->api_response_response_fingerprints_m;
+    out->clear();
+    for (size_t i = 0; i < fps.response_fingerprints_Fingerprints_remembered_fingerprint_m_count;
+         ++i) {
+        const remembered_fingerprint& fp =
+            fps.response_fingerprints_Fingerprints_remembered_fingerprint_m[i];
+        DecodedRememberedFingerprint entry;
+        entry.fingerprint = fromZcbor(fp.remembered_fingerprint_fingerprint);
+        if (fp.remembered_fingerprint_label_present &&
+            fp.remembered_fingerprint_label.remembered_fingerprint_label_choice ==
+                remembered_fingerprint_label_r::remembered_fingerprint_label_tstr_c) {
+            entry.label =
+                fromZcbor(fp.remembered_fingerprint_label.remembered_fingerprint_label_tstr);
+        }
+        out->append(entry);
     }
     return true;
 }

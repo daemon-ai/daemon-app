@@ -58,8 +58,10 @@ public:
     void resume() override; // bare resume: continues the Subscribe loop if parked
 
     // HITL gate resolution (CHA-4 / CHA-5): send the matching Respond, then resume the loop.
-    void respondApproval(const QString& requestId, bool allow,
-                         bool allowPermanent = false) override;
+    // [wave2:app-approvals-safety] D3: trailing `reason` (wire v29) rides Approved.reason on a
+    // deny.
+    void respondApproval(const QString& requestId, bool allow, bool allowPermanent = false,
+                         const QString& reason = QString()) override;
     void respondInput(const QString& requestId, const QString& text) override;
     void respondChoice(const QString& requestId, int index) override;
     // CHA-6: interrupt / steer a running turn via Submit{Interrupt/Steer}.

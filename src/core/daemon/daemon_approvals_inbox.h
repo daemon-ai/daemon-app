@@ -31,7 +31,7 @@ public:
     [[nodiscard]] int count() const override;
 
     void approve(const QString& id, bool allowPermanent = false) override;
-    void deny(const QString& id) override;
+    void deny(const QString& id, const QString& reason = QString()) override;
 
 private:
     void rebuild();

@@ -29,6 +29,7 @@ qt_add_qml_module(da_pages
         NotificationsSection.qml
         ModelSettingsSection.qml
         ChatSettingsSection.qml
+        ToolsSettingsSection.qml
         SafetySettingsSection.qml
         DelegationLimitsSection.qml  # [wave2:app-delegation] F7/DEL-7
         MemorySettingsSection.qml

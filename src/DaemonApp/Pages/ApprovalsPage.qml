@@ -6,10 +6,12 @@ import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import DaemonApp.Theme
 import DaemonApp.Controls as Kit
-import DaemonApp.Presentation
 
-// Approvals inbox: pending tool-execution requests with a risk badge and
-// approve / deny actions.
+// Approvals inbox: pending tool-execution requests rendered with the node's honest prompt
+// (resolved command / cwd / digest, faithfully — never re-derived), a fingerprint chip where the
+// node offered durable permanence, and approve / deny / deny-with-reason / allow-permanently
+// actions. The row carries no risk classification: the wire sends none, so the app fabricates none
+// (D3/Q4).
 Item {
     id: root
 
@@ -44,69 +46,146 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
 
             delegate: Rectangle {
+                id: delegate
                 required property var entry
+                // Deny opens an inline reason field; the card grows to fit.
+                property bool denyReasonOpen: false
                 width: ListView.view.width
-                height: 92
+                implicitHeight: body.implicitHeight + 24
                 radius: 8
                 color: Theme.surface
-                border.color: entry.risk === "high" ? Theme.danger : Theme.border
-                border.width: entry.risk === "high" ? 2 : 1
+                border.color: Theme.border
+                border.width: 1
 
                 ColumnLayout {
-                    anchors.fill: parent
+                    id: body
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
                     anchors.margins: 12
                     spacing: 6
 
+                    // --- Header: tool + session, plus the C5 origin-chip slot ----------------
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 8
                         Text {
-                            text: entry.tool
+                            text: delegate.entry.tool
                             font.family: FontIcons.display; font.pixelSize: 13
                             font.bold: true; color: Theme.text
                         }
-                        Rectangle {
-                            radius: 3
-                            color: entry.risk === "high" ? Theme.danger
-                                 : entry.risk === "medium" ? Theme.hover : Theme.hover
-                            implicitWidth: rk.implicitWidth + 10
-                            implicitHeight: rk.implicitHeight + 4
-                            Text {
-                                id: rk; anchors.centerIn: parent
-                                text: DisplayPresenter.enumLabel("approval.risk", entry.risk)
-                                font.family: FontIcons.display; font.pixelSize: 9
-                                color: entry.risk === "high" ? Theme.background : Theme.textMuted
-                            }
+                        // [wave2:app-approvals-safety] C5 origin-chip insertion point (inbox).
+                        // Hidden while approvalOriginKind is empty; the app-engines stream wires its
+                        // EngineOriginChip here at Integration 2 (keys: approvalOriginKind =
+                        // "core"|"foreign", approvalOrigin = display label). Kept empty-by-default.
+                        Loader {
+                            id: originSlotInbox
+                            active: !!(delegate.entry.approvalOriginKind
+                                       && String(delegate.entry.approvalOriginKind).length > 0)
+                            visible: active
+                            sourceComponent: originChipInbox
                         }
                         Item { Layout.fillWidth: true }
                         Text {
-                            text: entry.session + " · " + entry.requested
+                            text: delegate.entry.session
                             font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+                            elide: Text.ElideMiddle
+                            Layout.maximumWidth: 220
                         }
                     }
 
+                    // --- Structured prompt: the node's honest text, faithfully (monospace, wrapped)
                     Text {
-                        text: entry.command
+                        Layout.fillWidth: true
+                        text: delegate.entry.prompt && String(delegate.entry.prompt).length > 0
+                              ? delegate.entry.prompt : delegate.entry.command
                         font.family: FontIcons.mono; font.pixelSize: 11; color: Theme.text
-                        Layout.fillWidth: true; elide: Text.ElideRight
+                        wrapMode: Text.Wrap
+                        textFormat: Text.PlainText
                     }
 
+                    // --- Path (when the action targets a file) -------------------------------
                     RowLayout {
                         Layout.fillWidth: true
+                        visible: !!(delegate.entry.path && String(delegate.entry.path).length > 0)
+                        spacing: 6
+                        Text {
+                            text: qsTr("Path")
+                            font.family: FontIcons.display; font.pixelSize: 10; color: Theme.textMuted
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: delegate.entry.path
+                            font.family: FontIcons.mono; font.pixelSize: 11; color: Theme.text
+                            elide: Text.ElideMiddle
+                        }
+                    }
+
+                    // --- Fingerprint chip (durable-permanence scope) -------------------------
+                    Kit.Chip {
+                        visible: !!(delegate.entry.fingerprint
+                                    && String(delegate.entry.fingerprint).length > 0)
+                        iconGlyph: FontIcons.fa_lock
+                        tone: "muted"
+                        text: qsTr("fingerprint %1").arg(delegate.entry.shortFingerprint)
+                        tooltipText: qsTr("Allowing permanently remembers this exact command:\n%1")
+                                     .arg(delegate.entry.fingerprint)
+                    }
+
+                    // --- Deny-with-reason input (revealed by "Deny with reason…") ------------
+                    Kit.TextField {
+                        id: reasonField
+                        Layout.fillWidth: true
+                        visible: delegate.denyReasonOpen
+                        placeholderText: qsTr("Reason the agent will hear (optional)")
+                    }
+
+                    // --- Actions -------------------------------------------------------------
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
                         Item { Layout.fillWidth: true }
-                        Kit.TextButton { text: qsTr("Deny"); onClicked: Approvals.deny(entry.id) }
+                        Kit.TextButton {
+                            text: delegate.denyReasonOpen ? qsTr("Send deny") : qsTr("Deny")
+                            onClicked: {
+                                if (delegate.denyReasonOpen) {
+                                    Approvals.deny(delegate.entry.id, reasonField.text)
+                                } else {
+                                    Approvals.deny(delegate.entry.id, "")
+                                }
+                            }
+                        }
+                        Kit.TextButton {
+                            text: qsTr("Deny with reason…")
+                            visible: !delegate.denyReasonOpen
+                            onClicked: { delegate.denyReasonOpen = true; reasonField.forceActiveFocus() }
+                        }
                         // Wire v28: only shown when the node offered to remember this command
                         // (entry.canAllowPermanent). Sends allow_permanent so the node adds the
                         // command's fingerprint to the session allow-list.
                         Kit.TextButton {
                             text: qsTr("Allow permanently")
-                            visible: entry.canAllowPermanent === true
-                            onClicked: Approvals.approve(entry.id, true)
+                            visible: delegate.entry.canAllowPermanent === true
+                                     && !delegate.denyReasonOpen
+                            onClicked: Approvals.approve(delegate.entry.id, true)
                         }
                         Kit.TextButton {
                             text: qsTr("Approve"); accentFilled: true
-                            onClicked: Approvals.approve(entry.id, false)
+                            visible: !delegate.denyReasonOpen
+                            onClicked: Approvals.approve(delegate.entry.id, false)
                         }
+                    }
+                }
+
+                // [wave2:app-approvals-safety] C5: empty-by-default origin chip. The app-engines
+                // stream replaces this component's body with its EngineOriginChip at Integration 2.
+                Component {
+                    id: originChipInbox
+                    Kit.Chip {
+                        tone: "muted"
+                        iconGlyph: FontIcons.fa_circle_info
+                        text: delegate.entry.approvalOrigin
+                              ? String(delegate.entry.approvalOrigin) : ""
                     }
                 }
             }

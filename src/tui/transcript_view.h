@@ -68,6 +68,9 @@ signals:
     // permanently]). `decision` is "approved" / "denied"; `permanent` is the
     // "allow permanently" variant.
     void approvalDecided(const QString& callId, const QString& decision, bool permanent);
+    // [wave2:app-approvals-safety] D3: the operator chose "Deny with reason" on an inline gate; the
+    // RootWidget opens a reason prompt and threads it via Approved.reason (wire v29).
+    void approvalDenyReasonRequested(const QString& callId);
     // The focused clarify form was submitted (Enter on [Submit] / a freeform
     // field). `answers` is the canonical collected map (be::clarifyAnswerPatch
     // input).

@@ -27,7 +27,9 @@ public:
     [[nodiscard]] virtual int count() const = 0;
 
     Q_INVOKABLE virtual void approve(const QString& id, bool allowPermanent = false) = 0;
-    Q_INVOKABLE virtual void deny(const QString& id) = 0;
+    // [wave2:app-approvals-safety] D3: `reason` (wire v29) rides ApprovalDecide.reason — the
+    // operator deny explanation the node threads to the model. Empty = a plain deny (absent).
+    Q_INVOKABLE virtual void deny(const QString& id, const QString& reason = QString()) = 0;
 
 signals:
     void changed();

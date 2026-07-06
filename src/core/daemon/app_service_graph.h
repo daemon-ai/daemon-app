@@ -59,6 +59,9 @@ class ISessionSettings;
 namespace settings {
 class ISettingsStore;
 }
+namespace tools {
+class IToolInventory; // [wave2:app-approvals-safety] D2
+}
 namespace transports {
 class IPresenceService;
 class ITransportRegistry;
@@ -87,6 +90,8 @@ class PrincipalModel;
 class ProfileRepository;
 class SessionRepository;
 class SubscriptionManager;
+class ToolRepository;        // [wave2:app-approvals-safety] D2
+class FingerprintRepository; // [wave2:app-approvals-safety] D4
 
 enum class ServiceMode {
     Mock,
@@ -117,6 +122,8 @@ struct AppServiceGraph {
     fleet::ISessionRoster* roster = nullptr;
     fleet::IFleetTree* fleetTree = nullptr;
     fleet::IApprovalsInbox* approvals = nullptr;
+    // [wave2:app-approvals-safety] D2: read-only node-wide tool inventory (Settings -> Tools).
+    tools::IToolInventory* tools = nullptr;
     fleet::IDashboard* dashboard = nullptr;
     automation::ICronStore* cron = nullptr;
     transports::ITransportRegistry* transportRegistry = nullptr;
@@ -138,6 +145,10 @@ struct AppServiceGraph {
     ProviderRepository* providerRepository = nullptr;
     CredentialRepository* credentialRepository = nullptr;
     ApprovalRepository* approvalRepository = nullptr;
+    // [wave2:app-approvals-safety] D2/D4: tool inventory + per-session remembered fingerprints
+    // (Daemon mode only; the facades project these).
+    ToolRepository* toolRepository = nullptr;
+    FingerprintRepository* fingerprintRepository = nullptr;
     CheckpointRepository* checkpointRepository = nullptr;
     FleetRepository* fleetRepository = nullptr; // PRO-9/10; non-null only in Daemon mode
     // [wave2:app-delegation] F7/DEL-7: delegation guardrail ceilings (read-only). Daemon mode only.

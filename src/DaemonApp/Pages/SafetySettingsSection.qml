@@ -61,5 +61,19 @@ ColumnLayout {
         }
     }
 
+    // [wave2:app-approvals-safety] D4: remembered exec-approval fingerprints are per-session (the
+    // wire ops are session-scoped), so they are managed from the composer's session settings, not
+    // globally here. Point at their real home rather than duplicate a session-less copy.
+    SectionLabel { text: qsTr("Remembered approvals") }
+
+    Text {
+        Layout.fillWidth: true
+        text: qsTr("Commands you allowed permanently are remembered per session. Review and revoke them from the composer's session settings.")
+        color: Theme.textMuted
+        font.family: FontIcons.display
+        font.pixelSize: 12
+        wrapMode: Text.WordWrap
+    }
+
     Item { Layout.fillHeight: true }
 }

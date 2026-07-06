@@ -50,8 +50,10 @@ public:
     // (mock) or the node's real ToolFinished stream event (daemon). No-op unless
     // paused at the gate. `allowPermanent` (wire v28) is accepted for seam parity;
     // the simulator has no persistent policy, so it plays out the same either way.
-    void respondApproval(const QString& requestId, bool allow,
-                         bool allowPermanent = false) override;
+    // [wave2:app-approvals-safety] D3: trailing `reason` for seam parity (the simulator has no
+    // wire, so it only reflects the reason in its canned deny follow-up text).
+    void respondApproval(const QString& requestId, bool allow, bool allowPermanent = false,
+                         const QString& reason = QString()) override;
 
 private:
     struct Step {

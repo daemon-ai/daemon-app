@@ -27,6 +27,12 @@ class ISessionSettings : public QObject {
     // Default "ask" (interactive). In daemon mode the setter sends SetSessionMode so the node's
     // SessionOverlay.approval_mode tracks it; the mock holds it in memory.
     Q_PROPERTY(QString approvalMode READ approvalMode WRITE setApprovalMode NOTIFY changed)
+    // [wave2:app-approvals-safety] D4: the active session's remembered exec-approval fingerprints
+    // (per-session allow-list, wire v29). A VariantListModel of rows
+    // { fingerprint, shortFingerprint, label } — null when unbacked (mock / non-daemon); QML
+    // guards. The pointer is per-instance-constant (daemon impl builds it once); row changes drive
+    // the view.
+    Q_PROPERTY(QObject* rememberedFingerprints READ rememberedFingerprints CONSTANT)
 
 public:
     using QObject::QObject;
@@ -64,6 +70,15 @@ public:
     [[nodiscard]] Q_INVOKABLE virtual QStringList effortOptions() const = 0;
     // The selectable approval modes for the popover (CHA-4).
     [[nodiscard]] Q_INVOKABLE virtual QStringList approvalModeOptions() const = 0;
+
+    // [wave2:app-approvals-safety] D4: remembered-fingerprint management for the active session.
+    // Default: unbacked (nullptr / no-op) so the mock and non-daemon builds are unchanged; the
+    // DaemonSessionSettings override backs these with a FingerprintRepository.
+    [[nodiscard]] virtual QObject* rememberedFingerprints() const { return nullptr; }
+    // Re-query the active session's allow-list (FingerprintList). Call when the popover opens.
+    Q_INVOKABLE virtual void refreshFingerprints() {}
+    // Revoke one remembered fingerprint (FingerprintRevoke); on Ok the list re-syncs from the node.
+    Q_INVOKABLE virtual void revokeFingerprint(const QString& /*fingerprint*/) {}
 
 signals:
     void changed();

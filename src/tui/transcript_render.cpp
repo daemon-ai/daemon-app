@@ -576,6 +576,9 @@ void emitApprovalBar(QVector<RenderLine>& body, const be::BlockRecord& b, const 
     };
     button(QObject::tr("Approve"), Control::Kind::Approve, tpal::statusOk());
     button(QObject::tr("Deny"), Control::Kind::Deny, tpal::statusError());
+    // [wave2:app-approvals-safety] D3: deny-with-reason (wire v29) — opens an operator reason
+    // prompt.
+    button(QObject::tr("Deny with reason"), Control::Kind::DenyReason, tpal::statusError());
     if (allowPermanent) {
         button(QObject::tr("Allow permanently"), Control::Kind::Permanent, tpal::warn());
     }
