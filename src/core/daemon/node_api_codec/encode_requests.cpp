@@ -650,7 +650,8 @@ QByteArray NodeApiCodec::encodeModelRecommendRequest(const QString& repo, const 
 }
 
 QByteArray NodeApiCodec::encodeApprovalDecideRequest(const QString& sessionId,
-                                                     const QString& requestId, bool allow) {
+                                                     const QString& requestId, bool allow,
+                                                     bool allowPermanent) {
     const QByteArray sessionUtf8 = sessionId.toUtf8();
     const QByteArray requestIdUtf8 = requestId.toUtf8();
     return encodeWithFill(
@@ -659,6 +660,12 @@ QByteArray NodeApiCodec::encodeApprovalDecideRequest(const QString& sessionId,
             setZcbor(decide.ApprovalDecide_session, sessionUtf8);
             setZcbor(decide.ApprovalDecide_request_id, requestIdUtf8);
             decide.ApprovalDecide_allow = allow;
+            // Optional wire v28 field: emit `allow_permanent` only for an ALLOW that chose "allow
+            // permanently". A deny is never persisted, and a plain approve stays byte-identical to
+            // the pre-v28 shape (absent == not permanent).
+            const bool permanent = allow && allowPermanent;
+            decide.ApprovalDecide_allow_permanent_present = permanent;
+            decide.ApprovalDecide_allow_permanent.ApprovalDecide_allow_permanent = permanent;
         });
 }
 

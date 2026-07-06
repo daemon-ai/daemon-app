@@ -492,8 +492,11 @@ public:
     // pendingRefreshed() fires with pending() populated.
     void refreshPending(const QString& sessionId = QString());
     // Resolve a pending approval (ApprovalDecide); on Ok the list is re-fetched and decided()
-    // fires.
-    void decide(const QString& sessionId, const QString& requestId, bool allow);
+    // fires. `allowPermanent` (wire v28) is only meaningful for an allow of a fingerprinted
+    // approval (see DecodedApprovalInfo::hasFingerprint); it rides the optional ApprovalDecide
+    // field.
+    void decide(const QString& sessionId, const QString& requestId, bool allow,
+                bool allowPermanent = false);
 
 signals:
     void pendingRefreshed();

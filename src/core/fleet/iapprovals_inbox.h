@@ -10,7 +10,10 @@ namespace fleet {
 
 // Approvals inbox seam backing the Approvals surface. Pending rows
 // (VariantListModel): id, session, tool, command, risk ("low"/"medium"/"high"),
-// requested (human string). approve/deny resolve a request.
+// requested (human string), canAllowPermanent (bool; the node can remember this approval
+// permanently). approve/deny resolve a request; approve's allowPermanent (wire v28) asks the node
+// to remember the approved command's fingerprint for the session and is only meaningful when the
+// row's canAllowPermanent is true.
 class IApprovalsInbox : public QObject {
     Q_OBJECT
     Q_PROPERTY(QObject* pending READ pending CONSTANT)
@@ -23,7 +26,7 @@ public:
     [[nodiscard]] virtual QObject* pending() const = 0;
     [[nodiscard]] virtual int count() const = 0;
 
-    Q_INVOKABLE virtual void approve(const QString& id) = 0;
+    Q_INVOKABLE virtual void approve(const QString& id, bool allowPermanent = false) = 0;
     Q_INVOKABLE virtual void deny(const QString& id) = 0;
 
 signals:

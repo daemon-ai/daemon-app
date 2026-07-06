@@ -30,10 +30,14 @@ int DaemonApprovalsInbox::count() const {
 
 void DaemonApprovalsInbox::rebuild() {
     m_sessionByRequest.clear();
+    m_permanentOfferable.clear();
     QList<QVariantMap> rows;
     rows.reserve(m_repository->pending().size());
     for (const DecodedApprovalInfo& info : m_repository->pending()) {
         m_sessionByRequest.insert(info.requestId, info.session);
+        if (info.hasFingerprint) {
+            m_permanentOfferable.insert(info.requestId);
+        }
         QVariantMap row;
         row[QStringLiteral("id")] = info.requestId;
         row[QStringLiteral("session")] = info.session;
@@ -42,19 +46,21 @@ void DaemonApprovalsInbox::rebuild() {
         // The wire carries no risk classification; surface the request reason and a neutral tier.
         row[QStringLiteral("risk")] = QStringLiteral("medium");
         row[QStringLiteral("requested")] = info.prompt;
+        // Wire v28: offer "allow permanently" only when the node attached a fingerprint it can
+        // remember (see DecodedApprovalInfo::hasFingerprint).
+        row[QStringLiteral("canAllowPermanent")] = info.hasFingerprint;
         rows.append(row);
     }
     m_pending->setRows(rows);
 }
 
-void DaemonApprovalsInbox::approve(const QString& id) {
+void DaemonApprovalsInbox::approve(const QString& id, bool allowPermanent) {
     if (m_repository != nullptr) {
-        // The durable ApprovalDecide path carries an optional `allow_permanent` (wire v28), but the
-        // inbox surfaces only approve/deny — there is no "allow permanently" affordance here, so we
-        // never set it (it stays absent = one-shot allow). The inline transcript ToolApprovalBar is
-        // the only surface that exposes "allow permanently" today; wiring the inbox is a follow-up
-        // if that affordance is ever added to the inbox UI.
-        m_repository->decide(m_sessionByRequest.value(id), id, /*allow=*/true);
+        // Forward "allow permanently" (wire v28) only for an approval the node offered to remember
+        // (carried a fingerprint); otherwise it stays absent = one-shot allow. The node also
+        // degrades a fingerprint-less permanent decision to a single allow, so this is defensive.
+        const bool permanent = allowPermanent && m_permanentOfferable.contains(id);
+        m_repository->decide(m_sessionByRequest.value(id), id, /*allow=*/true, permanent);
     }
 }
 

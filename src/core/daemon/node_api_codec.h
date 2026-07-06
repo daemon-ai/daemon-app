@@ -275,6 +275,11 @@ struct DecodedApprovalInfo {
     QString prompt;
     bool hasPath = false;
     QString path;
+    // Durable "allow permanently" offer signal (wire v28): the node attaches a command fingerprint
+    // to an approval it can remember permanently. The inbox offers "Allow permanently" only when
+    // this is true, mirroring the node, which honors durable permanence solely for a verified
+    // fingerprint (a permanent decision on a fingerprint-less approval degrades to a single allow).
+    bool hasFingerprint = false;
 };
 
 // A slash command (CommandList -> Commands). CHA-7.
@@ -809,8 +814,14 @@ public:
     [[nodiscard]] static QByteArray encodeRespondChoiceRequest(const QString& sessionId,
                                                                quint32 requestId, quint32 chosen);
     // Decide an inbox approval (PRO-11; request_id is the string id from ApprovalInfo).
-    [[nodiscard]] static QByteArray
-    encodeApprovalDecideRequest(const QString& sessionId, const QString& requestId, bool allow);
+    // `allowPermanent` (wire v28) rides the optional field: when an allow chose "allow permanently"
+    // the node adds the approved command's fingerprint to a per-session allow-list. Only send it
+    // for an approval the node marked as fingerprinted (DecodedApprovalInfo::hasFingerprint); false
+    // leaves it absent.
+    [[nodiscard]] static QByteArray encodeApprovalDecideRequest(const QString& sessionId,
+                                                                const QString& requestId,
+                                                                bool allow,
+                                                                bool allowPermanent = false);
     // Set a session's approval mode (CHA-4): "ask" | "accept_edits" | "auto_allow" | "deny".
     [[nodiscard]] static QByteArray encodeSetSessionModeRequest(const QString& sessionId,
                                                                 const QString& mode);

@@ -150,9 +150,10 @@ target_link_libraries(tst_connection_service
 add_test(NAME tst_connection_service COMMAND tst_connection_service)
 set_tests_properties(tst_connection_service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# tst_approval_wire: the #3 "allow permanently" plumbing (wire v28) - encodeRespondApprovalRequest
-# rides the optional Approved.allow_permanent only for an allow that chose it, decoded back with the
-# vendored codec's public request decoder to assert the on-wire fields.
+# tst_approval_wire: the "allow permanently" plumbing (wire v28) on BOTH approval surfaces -
+# encodeRespondApprovalRequest (inline) and encodeApprovalDecideRequest (durable inbox) ride the
+# optional allow_permanent only for an allow that chose it, decoded back with the vendored codec's
+# public request decoder to assert the on-wire fields.
 qt_add_executable(tst_approval_wire tst_approval_wire.cpp)
 target_link_libraries(tst_approval_wire
     PRIVATE
@@ -162,6 +163,23 @@ target_link_libraries(tst_approval_wire
 )
 add_test(NAME tst_approval_wire COMMAND tst_approval_wire)
 set_tests_properties(tst_approval_wire PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_daemon_approvals_inbox: the durable inbox "allow permanently" path (wire v28) - decodeApprovals
+# surfaces ApprovalInfo.fingerprint as the offer signal (DecodedApprovalInfo::hasFingerprint),
+# DaemonApprovalsInbox projects it onto each row's canAllowPermanent, and approve(id, true) forwards
+# allow_permanent on ApprovalDecide only for a fingerprinted (offerable) row.
+qt_add_executable(tst_daemon_approvals_inbox tst_daemon_approvals_inbox.cpp)
+target_link_libraries(tst_daemon_approvals_inbox
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+        daemon-app::fleet
+        daemon-app::uimodels
+)
+add_test(NAME tst_daemon_approvals_inbox COMMAND tst_daemon_approvals_inbox)
+set_tests_properties(tst_daemon_approvals_inbox PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_daemon_integration: guards the daemon thin-client scaffolding - Unix-socket
 # frame parsing, durable cache schema expectations, and first-slice ordering.

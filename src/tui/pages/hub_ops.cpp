@@ -93,7 +93,7 @@ QString TuiPageHub::buildApprovalsMarkdown(int sel) const {
         md += tr("_Inbox zero — no pending approvals._\n");
         return md;
     }
-    md += tr("**j/k** move · **a**/**Enter** approve · **d** deny.\n\n");
+    md += tr("**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.\n\n");
     const auto rows = model->rows();
     for (int i = 0; i < rows.size(); ++i) {
         const QVariantMap& a = rows.at(i);
@@ -101,7 +101,13 @@ QString TuiPageHub::buildApprovalsMarkdown(int sel) const {
                   .arg(mark(i), a.value(QStringLiteral("tool")).toString(),
                        a.value(QStringLiteral("risk")).toString());
         md += tr("- Session: %1\n").arg(a.value(QStringLiteral("session")).toString());
-        md += tr("- Command: `%1`\n\n").arg(a.value(QStringLiteral("command")).toString());
+        md += tr("- Command: `%1`\n").arg(a.value(QStringLiteral("command")).toString());
+        // Wire v28: only fingerprinted approvals can be remembered permanently; surface the offer
+        // so the **p** keybind is discoverable per-row (matches the GUI's conditional button).
+        if (a.value(QStringLiteral("canAllowPermanent")).toBool()) {
+            md += tr("- _Can be allowed permanently (**p**)._\n");
+        }
+        md += QStringLiteral("\n");
     }
     return md;
 }
