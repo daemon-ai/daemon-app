@@ -653,6 +653,23 @@ public:
     void refreshInstances();
     void refreshConversations(const QString& transport);
 
+    // [wave2:app-channels-liveness] B5: apply a live TransportChanged node-event in place. Patches
+    // the cached row's connection/presence (preserving family/displayName/boundProfile) and emits
+    // instancesRefreshed() so the DaemonPresenceService re-projects and the status dots re-read -
+    // no round-trip. Falls back to refreshInstances() when the transport is not yet cached (a
+    // brand-new account before its first TransportInstances). Mirrors
+    // ModelRepository::applyDownloadProgress.
+    void applyTransportChanged(const QString& transport, const QString& connection,
+                               const QString& presence, bool hasPresence);
+
+    // [wave2:app-channels-liveness] B2: presentation-only "new room" tracking. A conversation id
+    // that appears in a ConvList refresh but was NOT in the transport's prior known set is badged
+    // "new" until the operator views it. Membership itself is the node's (ConvList) - this only
+    // tracks which rooms the operator has already seen. In-memory, per session (no cache/schema
+    // change).
+    [[nodiscard]] bool isNewConversation(const QString& transport, const QString& conv) const;
+    void markConversationSeen(const QString& transport, const QString& conv);
+
 signals:
     void adaptersRefreshed();
     void instancesRefreshed();
@@ -675,6 +692,13 @@ private:
     // sync (replace + prune) ONCE over the whole listing — pruning against a single page would
     // drop every conversation beyond it.
     QHash<QString, PageLoop<DecodedConversation>> m_convLoops;
+    // [wave2:app-channels-liveness] B2 "new room" tracking (presentation-only, in-memory).
+    // m_knownConversations is the per-transport set of ids the operator has already been shown; the
+    // first refresh of a transport in the session establishes it (no badges), so a restart doesn't
+    // badge everything. m_newConversations holds ids that appeared on a LATER refresh and haven't
+    // been viewed.
+    QHash<QString, QSet<QString>> m_knownConversations;
+    QHash<QString, QSet<QString>> m_newConversations;
 
     static constexpr auto kAdaptersCorrelation = "repo/transport-adapters";
     static constexpr auto kInstancesCorrelation = "repo/transport-instances";

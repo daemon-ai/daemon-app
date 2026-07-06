@@ -79,4 +79,18 @@ void DaemonTransportRegistry::refreshConversations(const QString& transport) {
     }
 }
 
+// [wave2:app-channels-liveness] B2: delegate the "new room" affordance to the repository's
+// (presentation-only, in-memory) seen-set tracking.
+bool DaemonTransportRegistry::isNewConversation(const QString& transport,
+                                                const QString& conversation) const {
+    return m_repo != nullptr && m_repo->isNewConversation(transport, conversation);
+}
+
+void DaemonTransportRegistry::markConversationSeen(const QString& transport,
+                                                   const QString& conversation) {
+    if (m_repo != nullptr) {
+        m_repo->markConversationSeen(transport, conversation);
+    }
+}
+
 } // namespace transports

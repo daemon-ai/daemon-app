@@ -212,6 +212,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // TransportAdapters / TransportInstances (+ ConvList per account). The mocks above are
         // parented to `owner`; drop them for the daemon ones.
         graph.transportRepository = new TransportRepository(graph.nodeApi, graph.cache, owner);
+        // [wave2:app-channels-liveness] B5: let the event feed patch live transport presence in
+        // place (the repo is built after the SubscriptionManager, so wire it via the setter).
+        if (graph.subscriptions != nullptr) {
+            graph.subscriptions->setTransportRepository(graph.transportRepository);
+        }
         delete graph.transportRegistry;
         graph.transportRegistry =
             new transports::DaemonTransportRegistry(graph.transportRepository, owner);
@@ -337,6 +342,23 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     }
     // The shared interactive-auth flow view-model over the per-mode seam (GUI + TUI bind it).
     graph.authFlowController = new auth::AuthFlowController(graph.authFlow, owner);
+    // [wave2:app-channels-liveness] B1: land a freshly-connected account in the Channels surface
+    // without a manual refresh. On a successful interactive sign-in, refetch the transport
+    // instances (the new account appears with its live status) and that account's ConvList (its
+    // rooms populate). Lives once in the shared graph so GUI + TUI both benefit through their
+    // existing instancesChanged/conversationsChanged reactivity. Daemon-backed mode only.
+    if (graph.transportRepository != nullptr) {
+        QObject::connect(graph.authFlowController, &auth::AuthFlowController::succeeded,
+                         graph.transportRepository,
+                         [transports = graph.transportRepository](
+                             const QString& /*credentialRef*/, const QString& /*accountLabel*/,
+                             const QString& transportInstance, const QString& /*boundProfile*/) {
+                             transports->refreshInstances();
+                             if (!transportInstance.isEmpty()) {
+                                 transports->refreshConversations(transportInstance);
+                             }
+                         });
+    }
     // Built last so it binds the resolved modelCatalog (daemon-backed or mock) for the inference
     // readiness gate (CON-7).
     graph.firstRun =

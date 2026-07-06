@@ -18,6 +18,7 @@ class ApprovalRepository;
 class ModelRepository;
 class FleetRepository;
 class ProfileRepository;
+class TransportRepository; // [wave2:app-channels-liveness]
 class DaemonCacheStore;
 struct DecodedNodeEvent;
 
@@ -63,6 +64,11 @@ public:
     void registerFocus(const QString& sessionId, QObject* engine);
     void unregisterFocus(const QString& sessionId, QObject* engine = nullptr);
 
+    // [wave2:app-channels-liveness] B5: the transport repository the live TransportChanged event
+    // patches (connection/presence). Wired via a setter because the repo is constructed AFTER this
+    // manager in the service graph. Optional; TransportChanged is ignored when unset.
+    void setTransportRepository(TransportRepository* transports) { m_transports = transports; }
+
     [[nodiscard]] quint64 feedCursor() const { return m_feedCursor; }
 
 signals:
@@ -82,6 +88,7 @@ private:
     ModelRepository* m_models = nullptr;
     FleetRepository* m_fleet = nullptr;
     ProfileRepository* m_profiles = nullptr;
+    TransportRepository* m_transports = nullptr; // [wave2:app-channels-liveness]
     DaemonCacheStore* m_cache = nullptr;
 
     quint64 m_feedStreamId = 0; // the open EventsSince stream id (0 = none)

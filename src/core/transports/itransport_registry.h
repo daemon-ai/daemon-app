@@ -47,6 +47,23 @@ public:
     }
     Q_INVOKABLE virtual void refreshConversations(const QString& transport) { Q_UNUSED(transport) }
 
+    // [wave2:app-channels-liveness] B2: presentation-only "new room" affordance. A conversation
+    // that surfaced (via ConvList) after the operator's baseline for its transport — e.g. an
+    // auto-accepted invite the node joined — reads back true until viewed. Membership itself is the
+    // node's; this only tracks what the operator has already seen. Default no-op/false so the mock
+    // and non-daemon seams need not implement it.
+    [[nodiscard]] Q_INVOKABLE virtual bool isNewConversation(const QString& transport,
+                                                             const QString& conversation) const {
+        Q_UNUSED(transport)
+        Q_UNUSED(conversation)
+        return false;
+    }
+    Q_INVOKABLE virtual void markConversationSeen(const QString& transport,
+                                                  const QString& conversation) {
+        Q_UNUSED(transport)
+        Q_UNUSED(conversation)
+    }
+
 signals:
     void adaptersChanged();
     void instancesChanged();
