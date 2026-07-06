@@ -1017,6 +1017,13 @@
             export QT_PLUGIN_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtPluginPrefix qtShellPackages}:$QT_PLUGIN_PATH"
             export QML_IMPORT_PATH="${pkgs.lib.makeSearchPath pkgs.qt6.qtbase.qtQmlPrefix qtShellPackages}:${qmltermwidgetQmlDir}:$QML_IMPORT_PATH"
             export QML2_IMPORT_PATH="$QML_IMPORT_PATH:$QML2_IMPORT_PATH"
+            # nixpkgs' patched Qt resolves QML modules through NIXPKGS_QT6_QML_IMPORT_PATH ahead of
+            # the standard import paths. A NixOS desktop session (e.g. Plasma) exports it with the
+            # HOST Qt's module dirs, which then shadow this shell's pinned Qt for any dev-built
+            # binary run in here — the GUI dies at QML root load with "module
+            # QtQuick.Controls.Basic version X.Y is not installed". Prefix the pinned dirs, exactly
+            # like the installed app's binary wrapper does for the same variable.
+            export NIXPKGS_QT6_QML_IMPORT_PATH="$QML_IMPORT_PATH:$NIXPKGS_QT6_QML_IMPORT_PATH"
             export CMAKE_PREFIX_PATH="${pkgs.lib.makeSearchPath "lib/cmake" qtShellPackages}:$CMAKE_PREFIX_PATH"
             export MD4QT_SOURCE_DIR="${md4qt}"
             export EARCUT_SOURCE_DIR="${earcut}"
