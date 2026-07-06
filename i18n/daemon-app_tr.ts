@@ -43,6 +43,10 @@
         <translation>Bağlı hesaplar</translation>
     </message>
     <message>
+        <source>Sign in via browser…</source>
+        <translation>Tarayıcı ile oturum aç…</translation>
+    </message>
+    <message>
         <source>Add account</source>
         <translation>Hesap ekle</translation>
     </message>
@@ -215,8 +219,36 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>AgentInferencePicker</name>
     <message>
+        <source>Custom endpoint…</source>
+        <translation>Özel uç nokta…</translation>
+    </message>
+    <message>
         <source>Provider</source>
         <translation>Sağlayıcı</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Temel URL</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Temel URL (ör. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>Model kimliği</translation>
+    </message>
+    <message>
+        <source>model id (as your server names it)</source>
+        <translation>model kimliği (sunucunuzun adlandırdığı gibi)</translation>
+    </message>
+    <message>
+        <source>The endpoint is used as-is — your first message verifies it, and a failure will guide you back here.</source>
+        <translation>Uç nokta olduğu gibi kullanılır — ilk mesajınız onu doğrular ve bir başarısızlık sizi buraya geri yönlendirir.</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>API anahtarı (isteğe bağlı)</translation>
     </message>
     <message>
         <source>Paste API key</source>
@@ -324,6 +356,32 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source> (default)</source>
         <translation> (varsayılan)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypePicker</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (yerel)</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>yüklü</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>yüklü değil</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypeView</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (yerel)</translation>
     </message>
 </context>
 <context>
@@ -439,6 +497,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>Reddet</translation>
     </message>
     <message>
+        <source>Allow permanently</source>
+        <translation>Kalıcı olarak izin ver</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>Onayla</translation>
     </message>
@@ -478,7 +540,178 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Bu oturum açma bağlantısının süresi doldu — yeniden deneyin.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>Bu yapıda oturum açma kullanılamıyor.</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowDialog</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Oturum aç</translation>
+    </message>
+    <message>
+        <source>Open this link in your browser (copy it):</source>
+        <translation>Bu bağlantıyı tarayıcınızda açın (kopyalayın):</translation>
+    </message>
+    <message>
+        <source>Then paste the redirect URL here:</source>
+        <translation>Ardından yönlendirme URL&apos;sini buraya yapıştırın:</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Oturum açmayı tamamla</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>İptal</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Oturum açma hazırlanıyor…</translation>
+    </message>
+    <message>
+        <source>Waiting for your browser to finish… (or paste below)</source>
+        <translation>Tarayıcınızın bitirmesi bekleniyor… (veya aşağıya yapıştırın)</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Oturum açmayı tarayıcınızda tamamlayın, ardından yönlendirme URL&apos;sini aşağıya yapıştırın.</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Oturum açma tamamlanıyor…</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1 olarak oturum açıldı</translation>
+    </message>
+    <message>
+        <source>Sign-in failed: %1</source>
+        <translation>Oturum açma başarısız: %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Oturum açma iptal edildi</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowLauncher</name>
+    <message>
+        <source>Sign in — pick a provider</source>
+        <translation>Oturum aç — bir sağlayıcı seçin</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowSheet</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Oturum aç</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Kapat</translation>
+    </message>
+    <message>
+        <source>No browser sign-in providers are available on this node.</source>
+        <translation>Bu düğümde tarayıcı ile oturum açma sağlayıcısı yok.</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Sağlayıcı</translation>
+    </message>
+    <message>
+        <source>Sign in via browser</source>
+        <translation>Tarayıcı ile oturum aç</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Oturum açma hazırlanıyor…</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Oturum açma tamamlanıyor…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser. Waiting for it to finish…</source>
+        <translation>Oturum açmayı tarayıcınızda tamamlayın. Bitmesi bekleniyor…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Oturum açmayı tarayıcınızda tamamlayın, ardından yönlendirme URL&apos;sini aşağıya yapıştırın.</translation>
+    </message>
+    <message>
+        <source>Copy sign-in link</source>
+        <translation>Oturum açma bağlantısını kopyala</translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>Tarayıcıda aç</translation>
+    </message>
+    <message>
+        <source>Paste the redirect URL</source>
+        <translation>Yönlendirme URL&apos;sini yapıştır</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Oturum açmayı tamamla</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1 olarak oturum açıldı</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Oturum açma iptal edildi</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>Oturum açma başarısız</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Yeniden dene</translation>
+    </message>
+</context>
+<context>
+    <name>AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>Oturum açma sağlayıcı listesi okunamadı</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>Oturum açma akışı başlatılamadı</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>Oturum açma tamamlanamadı</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
+    <message>
+        <source>Remove stored credential?</source>
+        <translation>Saklanan kimlik bilgisi kaldırılsın mı?</translation>
+    </message>
+    <message>
+        <source>Remove credential</source>
+        <translation>Kimlik bilgisini kaldır</translation>
+    </message>
+    <message>
+        <source>Removes the credential stored for profile “%1” (used by %2).</source>
+        <translation>“%1” profili için saklanan kimlik bilgisini kaldırır (%2 tarafından kullanılıyor).</translation>
+    </message>
+    <message>
+        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
+        <translation>Hesabın düğümdeki taşıma oturumu etkilenmez — bir bağlantı kesme/kaldırma işlemi henüz kullanılamıyor.</translation>
+    </message>
     <message>
         <source>Channels</source>
         <translation>Kanallar</translation>
@@ -496,8 +729,32 @@ You&apos;ll return to first-run setup.</source>
         <translation>%1 · %2</translation>
     </message>
     <message>
+        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
+        <translation>Bağlantı kesme henüz kullanılamıyor — düğümde taşıma bağlantısı kesme işlemi yok</translation>
+    </message>
+    <message>
+        <source>Remove the stored credential…</source>
+        <translation>Saklanan kimlik bilgisini kaldır…</translation>
+    </message>
+    <message>
         <source>No rooms.</source>
         <translation>Oda yok.</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned to this session — open the routing manager</source>
+        <translation>Bu oturuma sabitlendi — yönlendirme yöneticisini aç</translation>
+    </message>
+    <message>
+        <source>Pin to agent…</source>
+        <translation>Aracıya sabitle…</translation>
+    </message>
+    <message>
+        <source>Route this room&apos;s messages to a session</source>
+        <translation>Bu odanın mesajlarını bir oturuma yönlendir</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -540,6 +797,28 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Kontrol noktasına geri sarma başarısız oldu</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointTimeline</name>
+    <message>
+        <source>%1 · %2 — rewind is managed by the foreign agent</source>
+        <translation>%1 · %2 — geri sarma yabancı aracı tarafından yönetilir</translation>
+    </message>
+    <message>
+        <source>%1 · %2 (current)</source>
+        <translation>%1 · %2 (geçerli)</translation>
+    </message>
+    <message>
+        <source>%1 · %2 — click to rewind</source>
+        <translation>%1 · %2 — geri sarmak için tıklayın</translation>
+    </message>
+</context>
+<context>
     <name>CheckpointsPopover</name>
     <message>
         <source>Checkpoints</source>
@@ -554,6 +833,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>El ile kontrol noktası</translation>
     </message>
     <message>
+        <source>Rewind is managed by the foreign agent</source>
+        <translation>Geri sarma yabancı aracı tarafından yönetilir</translation>
+    </message>
+    <message>
         <source> tok</source>
         <translation> tok</translation>
     </message>
@@ -564,6 +847,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Restore</source>
         <translation>Geri yükle</translation>
+    </message>
+    <message>
+        <source>No checkpoints yet</source>
+        <translation>Henüz kontrol noktası yok</translation>
     </message>
 </context>
 <context>
@@ -939,9 +1226,86 @@ You&apos;ll return to first-run setup.</source>
         <comment>composer mode badge</comment>
         <translation>ayrıntılı</translation>
     </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Yabancı</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Yerel</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Düzenlemeler</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Otomatik</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Reddet</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Sor</translation>
+    </message>
+    <message>
+        <source>policy:</source>
+        <comment>approval-policy badge prefix</comment>
+        <translation>politika:</translation>
+    </message>
 </context>
 <context>
     <name>ComposerControls</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Yabancı</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Yerel</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Motor</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Düzenlemeler</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Otomatik</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Reddet</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Sor</translation>
+    </message>
+    <message>
+        <source>Approval policy (reflects last set value)</source>
+        <translation>Onay politikası (son ayarlanan değeri yansıtır)</translation>
+    </message>
+    <message>
+        <source>⇄ %1 +%2</source>
+        <translation>⇄ %1 +%2</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned from %1 — open the routing manager</source>
+        <translation>%1 kaynağından sabitlendi — yönlendirme yöneticisini aç</translation>
+    </message>
     <message>
         <source>Checkpoints / rewind</source>
         <translation>Kontrol noktaları / geri sarma</translation>
@@ -1271,6 +1635,17 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Kontrol noktası</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>%1 öncesi</translation>
+    </message>
+</context>
+<context>
     <name>DaemonConnectionService</name>
     <message>
         <source>Could not reach the daemon. Check it is running and try again.</source>
@@ -1331,6 +1706,24 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Unsupported transport</source>
         <translation>Desteklenmeyen taşıma</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Kanallar</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DM&apos;ler</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Model %1 diskte eksik: %2</translation>
     </message>
 </context>
 <context>
@@ -1446,6 +1839,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Searching…</source>
         <translation>Aranıyor…</translation>
+    </message>
+    <message>
+        <source>gated</source>
+        <translation>kısıtlı</translation>
     </message>
     <message>
         <source>by %1</source>
@@ -1725,6 +2122,14 @@ You&apos;ll return to first-run setup.</source>
         <source>file %1/%2</source>
         <translation>dosya %1/%2</translation>
     </message>
+    <message>
+        <source>This repo is gated — accept its license on the Hub (and add a token if required), then retry.</source>
+        <translation>Bu depo kısıtlı — lisansını Hub&apos;da kabul edin (ve gerekirse bir token ekleyin), ardından yeniden deneyin.</translation>
+    </message>
+    <message>
+        <source>Open license page</source>
+        <translation>Lisans sayfasını aç</translation>
+    </message>
 </context>
 <context>
     <name>EditMenu</name>
@@ -1862,6 +2267,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>Uzak</translation>
     </message>
     <message>
+        <source>Agent type (Enter to pick):</source>
+        <translation>Aracı türü (seçmek için Enter):</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Aracı adı</translation>
     </message>
@@ -1876,6 +2285,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model</source>
         <translation>Model</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Temel URL (ör. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>Model kimliği</translation>
     </message>
     <message>
         <source>Test</source>
@@ -1900,6 +2317,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Failed — </source>
         <translation>Başarısız — </translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>Özel uç nokta…</translation>
+    </message>
+    <message>
+        <source>custom</source>
+        <translation>özel</translation>
     </message>
     <message>
         <source>Local: App-managed (press to Attach instead)</source>
@@ -1927,6 +2352,14 @@ You&apos;ll return to first-run setup.</source>
         <translation>Oturum aç</translation>
     </message>
     <message>
+        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
+        <translation>Aracı türünü seçin: yerel sonra bir model seçer; yabancı bir ACP aracısı kendi modelini getirir.</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Devam et</translation>
+    </message>
+    <message>
         <source>Pick a provider and a model, then Finish.</source>
         <translation>Bir sağlayıcı ve bir model seçin, ardından Bitir.</translation>
     </message>
@@ -1944,6 +2377,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Almost there - confirm an inference model.</source>
         <translation>Neredeyse tamam - bir çıkarım modeli onaylayın.</translation>
+    </message>
+    <message>
+        <source>What kind of agent do you want?</source>
+        <translation>Ne tür bir aracı istiyorsunuz?</translation>
     </message>
     <message>
         <source>Sign in to the node to continue.</source>
@@ -1974,6 +2411,18 @@ You&apos;ll return to first-run setup.</source>
         <translation>Oturum açılıyor…</translation>
     </message>
     <message>
+        <source>Agent type</source>
+        <translation>Aracı türü</translation>
+    </message>
+    <message>
+        <source>Runs in the daemon — pick a provider and model next.</source>
+        <translation>Daemon içinde çalışır — sonra bir sağlayıcı ve model seçin.</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
+        <translation>Bu aracı yabancı bir ACP motoru çalıştırır — kendi modelini getirir, bu nedenle sağlayıcı, model veya anahtar gerekmez.</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Aracı adı</translation>
     </message>
@@ -1989,12 +2438,20 @@ You&apos;ll return to first-run setup.</source>
         <source>Finish setup</source>
         <translation>Kurulumu bitir</translation>
     </message>
+    <message>
+        <source>Continue</source>
+        <translation>Devam et</translation>
+    </message>
 </context>
 <context>
     <name>FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>Düğüme ulaşılamadı. Hedefi denetleyin ve yeniden deneyin.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>Modelinize ulaşılamadı — sağlayıcıyı denetleyip yeniden deneyin.</translation>
     </message>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
@@ -2004,12 +2461,48 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>FleetPage</name>
     <message>
+        <source>Steer this agent</source>
+        <translation>Bu aracıyı yönlendir</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Gönder</translation>
+    </message>
+    <message>
+        <source>Message to inject…</source>
+        <translation>Eklenecek mesaj…</translation>
+    </message>
+    <message>
+        <source>Steers the running turn without interrupting it.</source>
+        <translation>Çalışan turu kesmeden yönlendirir.</translation>
+    </message>
+    <message>
+        <source>The agent is idle — this starts a new turn.</source>
+        <translation>Aracı boşta — bu yeni bir tur başlatır.</translation>
+    </message>
+    <message>
         <source>Fleet</source>
         <translation>Filo</translation>
     </message>
     <message>
         <source>Refresh</source>
         <translation>Yenile</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Yabancı</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Yerel</translation>
+    </message>
+    <message>
+        <source>Steer…</source>
+        <translation>Yönlendir…</translation>
+    </message>
+    <message>
+        <source>Cancel the running turn</source>
+        <translation>Çalışan turu iptal et</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -2645,6 +3138,10 @@ Teşekkürler — şununla devam ediliyor: %1
 <context>
     <name>ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Model incelemesi başarısız oldu</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Model ayarlama işlemi başarısız oldu</translation>
     </message>
@@ -2659,6 +3156,10 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Activate failed</source>
         <translation>Etkinleştirme başarısız</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>Niceleme başlatılamadı</translation>
     </message>
 </context>
 <context>
@@ -2727,6 +3228,30 @@ Start one from the Discover tab.</source>
         <translation>Etkin indirme yok.
 Keşfet sekmesinden bir tane başlatın.</translation>
     </message>
+    <message>
+        <source>Quantize jobs</source>
+        <translation>Niceleme işleri</translation>
+    </message>
+    <message>
+        <source>Quantizing %1</source>
+        <translation>%1 niceleniyor</translation>
+    </message>
+    <message>
+        <source>Working…</source>
+        <translation>Çalışıyor…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Tamamlandı</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Başarısız</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>Sırada</translation>
+    </message>
 </context>
 <context>
     <name>ModelsInstalled</name>
@@ -2749,6 +3274,18 @@ Keşfet sekmesinden bir tane başlatın.</translation>
     <message>
         <source> GiB</source>
         <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Model missing — the file was moved or deleted.</source>
+        <translation>Model eksik — dosya taşındı veya silindi.</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>Yeniden indir</translation>
+    </message>
+    <message>
+        <source>Re-quantize…</source>
+        <translation>Yeniden nicele…</translation>
     </message>
     <message>
         <source>Active</source>
@@ -2830,22 +3367,6 @@ Keşfet sekmesinden bir tane başlatın.</translation>
     <message>
         <source>Engine</source>
         <translation>Motor</translation>
-    </message>
-    <message>
-        <source>daemon-core (native)</source>
-        <translation>daemon-core (yerel)</translation>
-    </message>
-    <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>yüklü</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>yüklü değil</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
@@ -3220,6 +3741,14 @@ Keşfet sekmesinden bir tane başlatın.</translation>
         <translation>+ Yeni profil</translation>
     </message>
     <message>
+        <source>Foreign</source>
+        <translation>Yabancı</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Yerel</translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>Yeni profil</translation>
     </message>
@@ -3507,6 +4036,10 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Akıl yürütme</translation>
     </message>
     <message>
+        <source>exit %1</source>
+        <translation>çıkış %1</translation>
+    </message>
+    <message>
         <source>[image: </source>
         <translation>[görsel: </translation>
     </message>
@@ -3558,12 +4091,24 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <source>[math] </source>
         <translation>[matematik] </translation>
     </message>
+    <message>
+        <source>  [installed]</source>
+        <translation>  [yüklü]</translation>
+    </message>
+    <message>
+        <source>  [not installed]</source>
+        <translation>  [yüklü değil]</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
     <message>
         <source>Choose a quantization</source>
         <translation>Bir niceleme seçin</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Bir hedef niceleme seçin</translation>
     </message>
     <message>
         <source>Recommended: %1</source>
@@ -3576,6 +4121,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>tight</source>
         <translation>sıkışık</translation>
+    </message>
+    <message>
+        <source>Needs about %1 of disk space.</source>
+        <translation>Yaklaşık %1 disk alanı gerekir.</translation>
+    </message>
+    <message>
+        <source>Quantize to recommended</source>
+        <translation>Önerilene nicele</translation>
     </message>
     <message>
         <source>Download recommended</source>
@@ -3604,6 +4157,10 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Download</source>
         <translation>İndir</translation>
+    </message>
+    <message>
+        <source>Quantize</source>
+        <translation>Nicele</translation>
     </message>
     <message>
         <source>Close</source>
@@ -3661,6 +4218,21 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Reasoning</source>
         <translation>Akıl yürütme</translation>
+    </message>
+</context>
+<context>
+    <name>RewindConfirmDialog</name>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>Bu kontrol noktasına geri sarılsın mı?</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Geri sar</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Bu, oturumun seçilen noktadan sonraki turlarını atar.</translation>
     </message>
 </context>
 <context>
@@ -3758,6 +4330,10 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Çaba:  %1</translation>
     </message>
     <message>
+        <source>Approval: %1</source>
+        <translation>Onay: %1</translation>
+    </message>
+    <message>
         <source>Fast:    %1</source>
         <translation>Hızlı:    %1</translation>
     </message>
@@ -3774,8 +4350,48 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Ayrıntılı: %1</translation>
     </message>
     <message>
-        <source>%1  ·  %2  ·  %3 tok%4</source>
-        <translation>%1  ·  %2  ·  %3 tok%4</translation>
+        <source>  ·  %1 tok</source>
+        <translation>  ·  %1 tok</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2%3%4</source>
+        <translation>%1  ·  %2%3%4</translation>
+    </message>
+    <message>
+        <source>Rewind is managed by the foreign agent · Esc closes</source>
+        <translation>Geri sarma yabancı aracı tarafından yönetilir · Esc kapatır</translation>
+    </message>
+    <message>
+        <source>Enter rewinds to the selected checkpoint (confirmed) · Esc closes</source>
+        <translation>Enter seçilen kontrol noktasına geri sarar (onaylı) · Esc kapatır</translation>
+    </message>
+    <message>
+        <source>Rewind…</source>
+        <translation>Geri sar…</translation>
+    </message>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>Bu kontrol noktasına geri sarılsın mı?</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Bu, oturumun seçilen noktadan sonraki turlarını atar.</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Geri sar</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>İptal</translation>
+    </message>
+    <message>
+        <source>Steer this agent</source>
+        <translation>Bu aracıyı yönlendir</translation>
+    </message>
+    <message>
+        <source>Steer this agent (idle — starts a turn)</source>
+        <translation>Bu aracıyı yönlendir (boşta — bir tur başlatır)</translation>
     </message>
     <message>
         <source>  (current)</source>
@@ -3788,14 +4404,6 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Checkpoints</source>
         <translation>Kontrol noktaları</translation>
-    </message>
-    <message>
-        <source>Enter restores the selected checkpoint · Esc closes</source>
-        <translation>Enter seçili kontrol noktasını geri yükler · Esc kapatır</translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation>Geri yükle</translation>
     </message>
     <message>
         <source> 0/0 </source>
@@ -3908,6 +4516,13 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Make primary</source>
         <translation>Birincil yap</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Yönlendirme değişikliği başarısız oldu</translation>
     </message>
 </context>
 <context>
@@ -4117,6 +4732,10 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Bir daemon&apos;a bağlı değil</translation>
     </message>
     <message>
+        <source>The session rejected the command</source>
+        <translation>Oturum komutu reddetti</translation>
+    </message>
+    <message>
         <source>SessionUpdateMeta failed</source>
         <translation>SessionUpdateMeta başarısız oldu</translation>
     </message>
@@ -4307,6 +4926,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Oturumlar</translation>
     </message>
     <message>
+        <source>Active</source>
+        <translation>Etkin</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Arşivlenmiş</translation>
+    </message>
+    <message>
         <source>LIVE</source>
         <translation>CANLI</translation>
     </message>
@@ -4317,6 +4944,10 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source> tok</source>
         <translation> tok</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Geri yükle</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -5040,6 +5671,14 @@ Teşekkürler — şununla devam ediliyor: %1
         <translation>Tur %1.</translation>
     </message>
     <message>
+        <source>Set up a provider to send your first message.</source>
+        <translation>İlk mesajınızı göndermek için bir sağlayıcı ayarlayın.</translation>
+    </message>
+    <message>
+        <source>Set up provider</source>
+        <translation>Sağlayıcı ayarla</translation>
+    </message>
+    <message>
         <source>Select a session</source>
         <translation>Bir oturum seçin</translation>
     </message>
@@ -5119,6 +5758,18 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Choose a quantization</source>
         <translation>Bir niceleme seçin</translation>
+    </message>
+    <message>
+        <source>  [gated]</source>
+        <translation>  [kısıtlı]</translation>
+    </message>
+    <message>
+        <source>Re-quantize — pick an installed model</source>
+        <translation>Yeniden nicele — yüklü bir model seçin</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Bir hedef niceleme seçin</translation>
     </message>
     <message>
         <source>Go to file</source>
@@ -5404,14 +6055,6 @@ Teşekkürler — şununla devam ediliyor: %1
 </translation>
     </message>
     <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
-
-</source>
-        <translation>Yüklü modeller, GUI ile paylaşılır. **j/k** taşır · **Enter** etkinleştirir · **x** kaldırır · **d** bir model indirir (depo → nicel.).
-
-</translation>
-    </message>
-    <message>
         <source>## Installed
 
 </source>
@@ -5428,9 +6071,21 @@ Teşekkürler — şununla devam ediliyor: %1
 </translation>
     </message>
     <message>
-        <source>- %1**%2** (%3)%4
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant) · **q** re-quantize an installed model.
+
 </source>
-        <translation>- %1**%2** (%3)%4
+        <translation>Yüklü modeller, GUI ile paylaşılır. **j/k** taşır · **Enter** etkinleştirir · **x** kaldırır · **d** bir model indirir (depo → niceleme) · **q** yüklü bir modeli yeniden niceler.
+
+</translation>
+    </message>
+    <message>
+        <source> — **missing on disk** (re-download from Discover)</source>
+        <translation> — **diskte eksik** (Keşfet&apos;ten yeniden indirin)</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4%5
+</source>
+        <translation>- %1**%2** (%3)%4%5
 </translation>
     </message>
     <message>
@@ -5449,6 +6104,20 @@ Teşekkürler — şununla devam ediliyor: %1
         <source>- %1 — %2%  · %3
 </source>
         <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Quantize jobs
+
+</source>
+        <translation>## Niceleme işleri
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%3
+</source>
+        <translation>- %1 — %2%3
 </translation>
     </message>
     <message>
@@ -5552,6 +6221,18 @@ Teşekkürler — şununla devam ediliyor: %1
 </translation>
     </message>
     <message>
+        <source>Native</source>
+        <translation>Yerel</translation>
+    </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Yabancı</translation>
+    </message>
+    <message>
         <source># Profiles
 
 </source>
@@ -5578,6 +6259,12 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source> (default)</source>
         <translation> (varsayılan)</translation>
+    </message>
+    <message>
+        <source>- Engine: %1
+</source>
+        <translation>- Motor: %1
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -5874,17 +6561,85 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
 
 </source>
-        <translation>Orkestratör/işçi ağacı, GUI ile paylaşılır. **j/k** taşır · **Space/Enter** duraklat/sürdür.
+        <translation>Orkestratör/işçi ağacı, GUI ile paylaşılır. **j/k** taşır · **Space/Enter** duraklat/sürdür · **t** bir çocuğu yönlendir · **c** turunu iptal et.
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`)
+        <source>- %1%2 — %3 (`%4`) · %5
 </source>
-        <translation>- %1%2 — %3 (`%4`)
+        <translation>- %1%2 — %3 (`%4`) · %5
+</translation>
+    </message>
+    <message>
+        <source># Sessions — Archived
+
+</source>
+        <translation># Oturumlar — Arşivlenmiş
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **r**/**Enter** restore · **v** back to active.
+
+</source>
+        <translation>**j/k** taşır · **r**/**Enter** geri yükler · **v** etkine geri döner.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close · **v** archived.
+
+</source>
+        <translation>**j/k** taşır · **s** askıya alır · **R**/**Enter** sürdürür · **x** kapatır · **v** arşivlenmiş.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
+
+</source>
+        <translation>**j/k** taşır · **a**/**Enter** onaylar · **p** kalıcı izin verir · **d** reddeder.
+
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+</source>
+        <translation>- Komut: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- _Can be allowed permanently (**p**)._
+</source>
+        <translation>- _Kalıcı olarak izin verilebilir (**p**)._
+</translation>
+    </message>
+    <message>
+        <source>Chat pins (origin → session), shared with the GUI routing manager. **j/k** move · **x** unbind.
+
+</source>
+        <translation>Sohbet sabitlemeleri (köken → oturum), GUI yönlendirme yöneticisiyle paylaşılır. **j/k** taşır · **x** bağı kaldırır.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2 · %3** ⇄ `%4`%5
+</source>
+        <translation>- %1**%2 · %3** ⇄ `%4`%5
+</translation>
+    </message>
+    <message>
+        <source> (agent `%1`)</source>
+        <translation> (aracı `%1`)</translation>
+    </message>
+    <message>
+        <source>_No chat pins yet — pin a room/DM to a session from the GUI routing manager or a room row._
+</source>
+        <translation>_Henüz sohbet sabitlemesi yok — GUI yönlendirme yöneticisinden veya bir oda satırından bir odayı/DM&apos;yi bir oturuma sabitleyin._
 </translation>
     </message>
     <message>
@@ -5896,17 +6651,15 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
-
-</source>
-        <translation>**j/k** taşır · **s** askıya alır · **R**/**Enter** sürdürür · **x** kapatır.
-
-</translation>
-    </message>
-    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
+</translation>
+    </message>
+    <message>
+        <source>_No archived sessions._
+</source>
+        <translation>_Arşivlenmiş oturum yok._
 </translation>
     </message>
     <message>
@@ -5924,14 +6677,6 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
-
-</source>
-        <translation>**j/k** taşır · **a**/**Enter** onaylar · **d** reddeder.
-
-</translation>
-    </message>
-    <message>
         <source>## %1%2 (%3 risk)
 
 </source>
@@ -5946,38 +6691,12 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>- Command: `%1`
-
-</source>
-        <translation>- Komut: `%1`
-
-</translation>
-    </message>
-    <message>
         <source># Routing
 
 </source>
         <translation># Yönlendirme
 
 </translation>
-    </message>
-    <message>
-        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
-
-</source>
-        <translation>Amaç → model kuralları, GUI ile paylaşılır. **j/k** taşır · **Space/Enter** değiştirir · **x** siler.
-
-</translation>
-    </message>
-    <message>
-        <source>- %1**%2** → `%3` (fallback `%4`)%5
-</source>
-        <translation>- %1**%2** → `%3` (yedek `%4`)%5
-</translation>
-    </message>
-    <message>
-        <source> — _disabled_</source>
-        <translation> — _devre dışı_</translation>
     </message>
     <message>
         <source># Scheduled jobs
@@ -6108,10 +6827,10 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
 
 </source>
-        <translation>Events-IO taşıma hesapları ve canlı odaları, GUI ile paylaşılır. Bu dilimde her iki kabukta da salt okunur - bağlanma ertelendi (EIO-2).
+        <translation>Events-IO taşıma hesapları ve canlı odaları, GUI ile paylaşılır. Bağlanma ertelenmiştir (EIO-2); bağlantıyı kesme/kaldırma için henüz kablo işlemi YOK (B3 - önce düğüm devamı). Saklanan bir kimlik bilgisi Hesaplar sayfasından kaldırılabilir (bağlı profilde &apos;x&apos;).
 
 </translation>
     </message>
@@ -6146,16 +6865,16 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>  - %1
-</source>
-        <translation>  - %1
-</translation>
+        <source>  - %1</source>
+        <translation>  - %1</translation>
     </message>
     <message>
-        <source>  - %1 · %2
-</source>
-        <translation>  - %1 · %2
-</translation>
+        <source>  - %1 · %2</source>
+        <translation>  - %1 · %2</translation>
+    </message>
+    <message>
+        <source> · ⇄ `%1`</source>
+        <translation> · ⇄ `%1`</translation>
     </message>
     <message>
         <source>## Add channel
@@ -6297,6 +7016,17 @@ _Hiçbir aracı seçilmedi._
     </message>
 </context>
 <context>
+    <name>auth::AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Bu oturum açma bağlantısının süresi doldu — yeniden deneyin.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>Bu yapıda oturum açma kullanılamıyor.</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::ApprovalRepository</name>
     <message>
         <source>Approval decision failed</source>
@@ -6304,10 +7034,43 @@ _Hiçbir aracı seçilmedi._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>Oturum açma sağlayıcı listesi okunamadı</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>Oturum açma akışı başlatılamadı</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>Oturum açma tamamlanamadı</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Kontrol noktasına geri sarma başarısız oldu</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
         <translation>Kimlik bilgisi işlemi başarısız oldu</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Kontrol noktası</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>%1 öncesi</translation>
     </message>
 </context>
 <context>
@@ -6374,6 +7137,17 @@ _Hiçbir aracı seçilmedi._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Kanallar</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DM&apos;ler</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -6421,6 +7195,10 @@ _Hiçbir aracı seçilmedi._
 <context>
     <name>daemonapp::daemon::ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Model incelemesi başarısız oldu</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Model ayarlama işlemi başarısız oldu</translation>
     </message>
@@ -6435,6 +7213,10 @@ _Hiçbir aracı seçilmedi._
     <message>
         <source>Activate failed</source>
         <translation>Etkinleştirme başarısız</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>Niceleme başlatılamadı</translation>
     </message>
 </context>
 <context>
@@ -6484,10 +7266,21 @@ _Hiçbir aracı seçilmedi._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Yönlendirme değişikliği başarısız oldu</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>Not connected to a daemon</source>
         <translation>Bir daemon&apos;a bağlı değil</translation>
+    </message>
+    <message>
+        <source>The session rejected the command</source>
+        <translation>Oturum komutu reddetti</translation>
     </message>
     <message>
         <source>SessionUpdateMeta failed</source>
@@ -6516,6 +7309,10 @@ _Hiçbir aracı seçilmedi._
         <translation>Düğüme ulaşılamadı. Hedefi denetleyin ve yeniden deneyin.</translation>
     </message>
     <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>Modelinize ulaşılamadı — sağlayıcıyı denetleyip yeniden deneyin.</translation>
+    </message>
+    <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
         <translation>Bu API anahtarı %1 ile doğrulanamadı — denetleyip yeniden deneyin.</translation>
     </message>
@@ -6537,6 +7334,13 @@ _Hiçbir aracı seçilmedi._
     <message>
         <source>write failed</source>
         <translation>yazma başarısız</translation>
+    </message>
+</context>
+<context>
+    <name>models::DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Model %1 diskte eksik: %2</translation>
     </message>
 </context>
 <context>

@@ -43,6 +43,10 @@
         <translation>Akun tersambung</translation>
     </message>
     <message>
+        <source>Sign in via browser…</source>
+        <translation>Masuk lewat peramban…</translation>
+    </message>
+    <message>
         <source>Add account</source>
         <translation>Tambah akun</translation>
     </message>
@@ -215,8 +219,36 @@ Anda akan kembali ke penyiapan pertama.</translation>
 <context>
     <name>AgentInferencePicker</name>
     <message>
+        <source>Custom endpoint…</source>
+        <translation>Endpoint khusus…</translation>
+    </message>
+    <message>
         <source>Provider</source>
         <translation>Penyedia</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Base URL</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Base URL (mis. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>ID model</translation>
+    </message>
+    <message>
+        <source>model id (as your server names it)</source>
+        <translation>id model (sesuai nama di server Anda)</translation>
+    </message>
+    <message>
+        <source>The endpoint is used as-is — your first message verifies it, and a failure will guide you back here.</source>
+        <translation>Endpoint digunakan apa adanya — pesan pertama Anda memverifikasinya, dan jika gagal Anda akan diarahkan kembali ke sini.</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>Kunci API (opsional)</translation>
     </message>
     <message>
         <source>Paste API key</source>
@@ -324,6 +356,32 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source> (default)</source>
         <translation> (default)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypePicker</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (native)</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>terpasang</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>tidak terpasang</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypeView</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (native)</translation>
     </message>
 </context>
 <context>
@@ -439,6 +497,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>Tolak</translation>
     </message>
     <message>
+        <source>Allow permanently</source>
+        <translation>Izinkan permanen</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>Setujui</translation>
     </message>
@@ -478,7 +540,178 @@ Anda akan kembali ke penyiapan pertama.</translation>
     </message>
 </context>
 <context>
+    <name>AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Tautan masuk ini kedaluwarsa — coba lagi.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>Masuk tidak tersedia di build ini.</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowDialog</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Masuk</translation>
+    </message>
+    <message>
+        <source>Open this link in your browser (copy it):</source>
+        <translation>Buka tautan ini di peramban Anda (salin):</translation>
+    </message>
+    <message>
+        <source>Then paste the redirect URL here:</source>
+        <translation>Lalu tempel URL pengalihan di sini:</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Selesaikan proses masuk</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Batal</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Menyiapkan proses masuk…</translation>
+    </message>
+    <message>
+        <source>Waiting for your browser to finish… (or paste below)</source>
+        <translation>Menunggu peramban Anda selesai… (atau tempel di bawah)</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Selesaikan proses masuk di peramban Anda, lalu tempel URL pengalihan di bawah.</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Menyelesaikan proses masuk…</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Masuk sebagai %1</translation>
+    </message>
+    <message>
+        <source>Sign-in failed: %1</source>
+        <translation>Masuk gagal: %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Masuk dibatalkan</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowLauncher</name>
+    <message>
+        <source>Sign in — pick a provider</source>
+        <translation>Masuk — pilih penyedia</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowSheet</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Masuk</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Tutup</translation>
+    </message>
+    <message>
+        <source>No browser sign-in providers are available on this node.</source>
+        <translation>Tidak ada penyedia masuk lewat peramban yang tersedia di node ini.</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Penyedia</translation>
+    </message>
+    <message>
+        <source>Sign in via browser</source>
+        <translation>Masuk lewat peramban</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Menyiapkan proses masuk…</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Menyelesaikan proses masuk…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser. Waiting for it to finish…</source>
+        <translation>Selesaikan proses masuk di peramban Anda. Menunggu hingga selesai…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Selesaikan proses masuk di peramban Anda, lalu tempel URL pengalihan di bawah.</translation>
+    </message>
+    <message>
+        <source>Copy sign-in link</source>
+        <translation>Salin tautan masuk</translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>Buka di peramban</translation>
+    </message>
+    <message>
+        <source>Paste the redirect URL</source>
+        <translation>Tempel URL pengalihan</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Selesaikan proses masuk</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Masuk sebagai %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Masuk dibatalkan</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>Masuk gagal</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Coba lagi</translation>
+    </message>
+</context>
+<context>
+    <name>AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>Gagal membaca daftar penyedia masuk</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>Alur masuk tidak dapat dimulai</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>Proses masuk tidak dapat diselesaikan</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
+    <message>
+        <source>Remove stored credential?</source>
+        <translation>Hapus kredensial tersimpan?</translation>
+    </message>
+    <message>
+        <source>Remove credential</source>
+        <translation>Hapus kredensial</translation>
+    </message>
+    <message>
+        <source>Removes the credential stored for profile “%1” (used by %2).</source>
+        <translation>Menghapus kredensial yang tersimpan untuk profil “%1” (digunakan oleh %2).</translation>
+    </message>
+    <message>
+        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
+        <translation>Sesi transport akun di node tidak terpengaruh — operasi putus/hapus belum tersedia.</translation>
+    </message>
     <message>
         <source>Channels</source>
         <translation>Saluran</translation>
@@ -496,8 +729,32 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>%1 · %2</translation>
     </message>
     <message>
+        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
+        <translation>Putus koneksi belum tersedia — node tidak memiliki operasi putus transport</translation>
+    </message>
+    <message>
+        <source>Remove the stored credential…</source>
+        <translation>Hapus kredensial tersimpan…</translation>
+    </message>
+    <message>
         <source>No rooms.</source>
         <translation>Tidak ada ruang.</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned to this session — open the routing manager</source>
+        <translation>Disematkan ke sesi ini — buka pengelola perutean</translation>
+    </message>
+    <message>
+        <source>Pin to agent…</source>
+        <translation>Sematkan ke agen…</translation>
+    </message>
+    <message>
+        <source>Route this room&apos;s messages to a session</source>
+        <translation>Rutekan pesan ruang ini ke sesi</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -540,6 +797,28 @@ Anda akan kembali ke penyiapan pertama.</translation>
     </message>
 </context>
 <context>
+    <name>CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Putar balik checkpoint gagal</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointTimeline</name>
+    <message>
+        <source>%1 · %2 — rewind is managed by the foreign agent</source>
+        <translation>%1 · %2 — putar balik dikelola oleh agen asing</translation>
+    </message>
+    <message>
+        <source>%1 · %2 (current)</source>
+        <translation>%1 · %2 (saat ini)</translation>
+    </message>
+    <message>
+        <source>%1 · %2 — click to rewind</source>
+        <translation>%1 · %2 — klik untuk putar balik</translation>
+    </message>
+</context>
+<context>
     <name>CheckpointsPopover</name>
     <message>
         <source>Checkpoints</source>
@@ -554,6 +833,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>Titik simpan manual</translation>
     </message>
     <message>
+        <source>Rewind is managed by the foreign agent</source>
+        <translation>Putar balik dikelola oleh agen asing</translation>
+    </message>
+    <message>
         <source> tok</source>
         <translation> tok</translation>
     </message>
@@ -564,6 +847,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>Restore</source>
         <translation>Pulihkan</translation>
+    </message>
+    <message>
+        <source>No checkpoints yet</source>
+        <translation>Belum ada checkpoint</translation>
     </message>
 </context>
 <context>
@@ -939,9 +1226,86 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <comment>composer mode badge</comment>
         <translation>rinci</translation>
     </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Asing</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Asli</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Suntingan</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Otomatis</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Tolak</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Tanya</translation>
+    </message>
+    <message>
+        <source>policy:</source>
+        <comment>approval-policy badge prefix</comment>
+        <translation>kebijakan:</translation>
+    </message>
 </context>
 <context>
     <name>ComposerControls</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Asing</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Asli</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Mesin</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Suntingan</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Otomatis</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Tolak</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Tanya</translation>
+    </message>
+    <message>
+        <source>Approval policy (reflects last set value)</source>
+        <translation>Kebijakan persetujuan (mencerminkan nilai terakhir yang disetel)</translation>
+    </message>
+    <message>
+        <source>⇄ %1 +%2</source>
+        <translation>⇄ %1 +%2</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned from %1 — open the routing manager</source>
+        <translation>Disematkan dari %1 — buka pengelola perutean</translation>
+    </message>
     <message>
         <source>Checkpoints / rewind</source>
         <translation>Titik simpan / putar balik</translation>
@@ -1271,6 +1635,17 @@ Anda akan kembali ke penyiapan pertama.</translation>
     </message>
 </context>
 <context>
+    <name>DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Checkpoint</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>sebelum %1</translation>
+    </message>
+</context>
+<context>
     <name>DaemonConnectionService</name>
     <message>
         <source>Could not reach the daemon. Check it is running and try again.</source>
@@ -1331,6 +1706,24 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>Unsupported transport</source>
         <translation>Transport tidak didukung</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Saluran</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Model %1 hilang dari disk: %2</translation>
     </message>
 </context>
 <context>
@@ -1446,6 +1839,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>Searching…</source>
         <translation>Mencari…</translation>
+    </message>
+    <message>
+        <source>gated</source>
+        <translation>terbatas</translation>
     </message>
     <message>
         <source>by %1</source>
@@ -1725,6 +2122,14 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <source>file %1/%2</source>
         <translation>berkas %1/%2</translation>
     </message>
+    <message>
+        <source>This repo is gated — accept its license on the Hub (and add a token if required), then retry.</source>
+        <translation>Repo ini terbatas — terima lisensinya di Hub (dan tambahkan token jika diperlukan), lalu coba lagi.</translation>
+    </message>
+    <message>
+        <source>Open license page</source>
+        <translation>Buka halaman lisensi</translation>
+    </message>
 </context>
 <context>
     <name>EditMenu</name>
@@ -1862,6 +2267,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>Jarak jauh</translation>
     </message>
     <message>
+        <source>Agent type (Enter to pick):</source>
+        <translation>Jenis agen (Enter untuk memilih):</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Nama agen</translation>
     </message>
@@ -1876,6 +2285,14 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>Model</source>
         <translation>Model</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Base URL (mis. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>ID model</translation>
     </message>
     <message>
         <source>Test</source>
@@ -1900,6 +2317,14 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>Failed — </source>
         <translation>Gagal — </translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>Endpoint khusus…</translation>
+    </message>
+    <message>
+        <source>custom</source>
+        <translation>khusus</translation>
     </message>
     <message>
         <source>Local: App-managed (press to Attach instead)</source>
@@ -1927,6 +2352,14 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>Masuk</translation>
     </message>
     <message>
+        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
+        <translation>Pilih jenis agen: native memilih model berikutnya; agen ACP asing membawa modelnya sendiri.</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Lanjutkan</translation>
+    </message>
+    <message>
         <source>Pick a provider and a model, then Finish.</source>
         <translation>Pilih penyedia dan model, lalu Selesai.</translation>
     </message>
@@ -1944,6 +2377,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>Almost there - confirm an inference model.</source>
         <translation>Hampir selesai - konfirmasikan model inferensi.</translation>
+    </message>
+    <message>
+        <source>What kind of agent do you want?</source>
+        <translation>Jenis agen apa yang Anda inginkan?</translation>
     </message>
     <message>
         <source>Sign in to the node to continue.</source>
@@ -1974,6 +2411,18 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>Sedang masuk…</translation>
     </message>
     <message>
+        <source>Agent type</source>
+        <translation>Jenis agen</translation>
+    </message>
+    <message>
+        <source>Runs in the daemon — pick a provider and model next.</source>
+        <translation>Berjalan di daemon — pilih penyedia dan model berikutnya.</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
+        <translation>Agen ini menjalankan mesin ACP asing — ia membawa modelnya sendiri, jadi tidak perlu penyedia, model, atau kunci.</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Nama agen</translation>
     </message>
@@ -1989,12 +2438,20 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <source>Finish setup</source>
         <translation>Selesaikan penyiapan</translation>
     </message>
+    <message>
+        <source>Continue</source>
+        <translation>Lanjutkan</translation>
+    </message>
 </context>
 <context>
     <name>FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>Tidak dapat menjangkau node. Periksa target dan coba lagi.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>Tidak dapat menjangkau model Anda — periksa penyedia dan coba lagi.</translation>
     </message>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
@@ -2004,12 +2461,48 @@ Anda akan kembali ke penyiapan pertama.</translation>
 <context>
     <name>FleetPage</name>
     <message>
+        <source>Steer this agent</source>
+        <translation>Arahkan agen ini</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Kirim</translation>
+    </message>
+    <message>
+        <source>Message to inject…</source>
+        <translation>Pesan untuk disisipkan…</translation>
+    </message>
+    <message>
+        <source>Steers the running turn without interrupting it.</source>
+        <translation>Mengarahkan giliran yang sedang berjalan tanpa menghentikannya.</translation>
+    </message>
+    <message>
+        <source>The agent is idle — this starts a new turn.</source>
+        <translation>Agen sedang menganggur — ini memulai giliran baru.</translation>
+    </message>
+    <message>
         <source>Fleet</source>
         <translation>Armada</translation>
     </message>
     <message>
         <source>Refresh</source>
         <translation>Segarkan</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Asing</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Asli</translation>
+    </message>
+    <message>
+        <source>Steer…</source>
+        <translation>Arahkan…</translation>
+    </message>
+    <message>
+        <source>Cancel the running turn</source>
+        <translation>Batalkan giliran yang sedang berjalan</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -2645,6 +3138,10 @@ Terima kasih — melanjutkan dengan: %1
 <context>
     <name>ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Inspeksi model gagal</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Operasi set-model gagal</translation>
     </message>
@@ -2659,6 +3156,10 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Activate failed</source>
         <translation>Aktivasi gagal</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>Kuantisasi gagal dimulai</translation>
     </message>
 </context>
 <context>
@@ -2727,6 +3228,30 @@ Start one from the Discover tab.</source>
         <translation>Tidak ada unduhan aktif.
 Mulai dari tab Temukan.</translation>
     </message>
+    <message>
+        <source>Quantize jobs</source>
+        <translation>Tugas kuantisasi</translation>
+    </message>
+    <message>
+        <source>Quantizing %1</source>
+        <translation>Mengkuantisasi %1</translation>
+    </message>
+    <message>
+        <source>Working…</source>
+        <translation>Bekerja…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Selesai</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Gagal</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>Antre</translation>
+    </message>
 </context>
 <context>
     <name>ModelsInstalled</name>
@@ -2749,6 +3274,18 @@ Mulai dari tab Temukan.</translation>
     <message>
         <source> GiB</source>
         <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Model missing — the file was moved or deleted.</source>
+        <translation>Model hilang — berkas dipindahkan atau dihapus.</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>Unduh ulang</translation>
+    </message>
+    <message>
+        <source>Re-quantize…</source>
+        <translation>Kuantisasi ulang…</translation>
     </message>
     <message>
         <source>Active</source>
@@ -2830,22 +3367,6 @@ Mulai dari tab Temukan.</translation>
     <message>
         <source>Engine</source>
         <translation>Mesin</translation>
-    </message>
-    <message>
-        <source>daemon-core (native)</source>
-        <translation>daemon-core (native)</translation>
-    </message>
-    <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>terpasang</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>tidak terpasang</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
@@ -3220,6 +3741,14 @@ Mulai dari tab Temukan.</translation>
         <translation>+ Profil baru</translation>
     </message>
     <message>
+        <source>Foreign</source>
+        <translation>Asing</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Asli</translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>Profil baru</translation>
     </message>
@@ -3507,6 +4036,10 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Penalaran</translation>
     </message>
     <message>
+        <source>exit %1</source>
+        <translation>keluar %1</translation>
+    </message>
+    <message>
         <source>[image: </source>
         <translation>[gambar: </translation>
     </message>
@@ -3558,12 +4091,24 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <source>[math] </source>
         <translation>[matematika] </translation>
     </message>
+    <message>
+        <source>  [installed]</source>
+        <translation>  [terpasang]</translation>
+    </message>
+    <message>
+        <source>  [not installed]</source>
+        <translation>  [tidak terpasang]</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
     <message>
         <source>Choose a quantization</source>
         <translation>Pilih kuantisasi</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Pilih kuantisasi target</translation>
     </message>
     <message>
         <source>Recommended: %1</source>
@@ -3576,6 +4121,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>tight</source>
         <translation>ketat</translation>
+    </message>
+    <message>
+        <source>Needs about %1 of disk space.</source>
+        <translation>Membutuhkan sekitar %1 ruang disk.</translation>
+    </message>
+    <message>
+        <source>Quantize to recommended</source>
+        <translation>Kuantisasi ke yang direkomendasikan</translation>
     </message>
     <message>
         <source>Download recommended</source>
@@ -3604,6 +4157,10 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Download</source>
         <translation>Unduh</translation>
+    </message>
+    <message>
+        <source>Quantize</source>
+        <translation>Kuantisasi</translation>
     </message>
     <message>
         <source>Close</source>
@@ -3661,6 +4218,21 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Reasoning</source>
         <translation>Penalaran</translation>
+    </message>
+</context>
+<context>
+    <name>RewindConfirmDialog</name>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>Putar balik ke checkpoint ini?</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Putar balik</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Ini membuang giliran sesi setelah titik yang dipilih.</translation>
     </message>
 </context>
 <context>
@@ -3758,6 +4330,10 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Upaya:   %1</translation>
     </message>
     <message>
+        <source>Approval: %1</source>
+        <translation>Persetujuan: %1</translation>
+    </message>
+    <message>
         <source>Fast:    %1</source>
         <translation>Cepat:   %1</translation>
     </message>
@@ -3774,8 +4350,48 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Rinci:   %1</translation>
     </message>
     <message>
-        <source>%1  ·  %2  ·  %3 tok%4</source>
-        <translation>%1  ·  %2  ·  %3 tok%4</translation>
+        <source>  ·  %1 tok</source>
+        <translation>  ·  %1 tok</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2%3%4</source>
+        <translation>%1  ·  %2%3%4</translation>
+    </message>
+    <message>
+        <source>Rewind is managed by the foreign agent · Esc closes</source>
+        <translation>Putar balik dikelola oleh agen asing · Esc menutup</translation>
+    </message>
+    <message>
+        <source>Enter rewinds to the selected checkpoint (confirmed) · Esc closes</source>
+        <translation>Enter memutar balik ke checkpoint terpilih (dikonfirmasi) · Esc menutup</translation>
+    </message>
+    <message>
+        <source>Rewind…</source>
+        <translation>Putar balik…</translation>
+    </message>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>Putar balik ke checkpoint ini?</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Ini membuang giliran sesi setelah titik yang dipilih.</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Putar balik</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Batal</translation>
+    </message>
+    <message>
+        <source>Steer this agent</source>
+        <translation>Arahkan agen ini</translation>
+    </message>
+    <message>
+        <source>Steer this agent (idle — starts a turn)</source>
+        <translation>Arahkan agen ini (menganggur — memulai giliran)</translation>
     </message>
     <message>
         <source>  (current)</source>
@@ -3788,14 +4404,6 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Checkpoints</source>
         <translation>Titik simpan</translation>
-    </message>
-    <message>
-        <source>Enter restores the selected checkpoint · Esc closes</source>
-        <translation>Enter memulihkan titik simpan terpilih · Esc menutup</translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation>Pulihkan</translation>
     </message>
     <message>
         <source> 0/0 </source>
@@ -3908,6 +4516,13 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Make primary</source>
         <translation>Jadikan utama</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Perubahan perutean gagal</translation>
     </message>
 </context>
 <context>
@@ -4117,6 +4732,10 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Tidak tersambung ke daemon</translation>
     </message>
     <message>
+        <source>The session rejected the command</source>
+        <translation>Sesi menolak perintah</translation>
+    </message>
+    <message>
         <source>SessionUpdateMeta failed</source>
         <translation>SessionUpdateMeta gagal</translation>
     </message>
@@ -4307,6 +4926,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Sesi</translation>
     </message>
     <message>
+        <source>Active</source>
+        <translation>Aktif</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Diarsipkan</translation>
+    </message>
+    <message>
         <source>LIVE</source>
         <translation>LANGSUNG</translation>
     </message>
@@ -4317,6 +4944,10 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source> tok</source>
         <translation> tok</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Pulihkan</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -5040,6 +5671,14 @@ Terima kasih — melanjutkan dengan: %1
         <translation>Giliran %1.</translation>
     </message>
     <message>
+        <source>Set up a provider to send your first message.</source>
+        <translation>Siapkan penyedia untuk mengirim pesan pertama Anda.</translation>
+    </message>
+    <message>
+        <source>Set up provider</source>
+        <translation>Siapkan penyedia</translation>
+    </message>
+    <message>
         <source>Select a session</source>
         <translation>Pilih sesi</translation>
     </message>
@@ -5119,6 +5758,18 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Choose a quantization</source>
         <translation>Pilih kuantisasi</translation>
+    </message>
+    <message>
+        <source>  [gated]</source>
+        <translation>  [terbatas]</translation>
+    </message>
+    <message>
+        <source>Re-quantize — pick an installed model</source>
+        <translation>Kuantisasi ulang — pilih model yang terpasang</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Pilih kuantisasi target</translation>
     </message>
     <message>
         <source>Go to file</source>
@@ -5404,14 +6055,6 @@ Terima kasih — melanjutkan dengan: %1
 </translation>
     </message>
     <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
-
-</source>
-        <translation>Model terpasang, dibagikan dengan GUI. **j/k** pindah · **Enter** aktifkan · **x** hapus · **d** unduh model (repo → quant).
-
-</translation>
-    </message>
-    <message>
         <source>## Installed
 
 </source>
@@ -5428,9 +6071,21 @@ Terima kasih — melanjutkan dengan: %1
 </translation>
     </message>
     <message>
-        <source>- %1**%2** (%3)%4
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant) · **q** re-quantize an installed model.
+
 </source>
-        <translation>- %1**%2** (%3)%4
+        <translation>Model terpasang, dibagikan dengan GUI. **j/k** pindah · **Enter** mengaktifkan · **x** menghapus · **d** mengunduh model (repo → quant) · **q** mengkuantisasi ulang model terpasang.
+
+</translation>
+    </message>
+    <message>
+        <source> — **missing on disk** (re-download from Discover)</source>
+        <translation> — **hilang dari disk** (unduh ulang dari Discover)</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4%5
+</source>
+        <translation>- %1**%2** (%3)%4%5
 </translation>
     </message>
     <message>
@@ -5449,6 +6104,20 @@ Terima kasih — melanjutkan dengan: %1
         <source>- %1 — %2%  · %3
 </source>
         <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Quantize jobs
+
+</source>
+        <translation>## Tugas kuantisasi
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%3
+</source>
+        <translation>- %1 — %2%3
 </translation>
     </message>
     <message>
@@ -5552,6 +6221,18 @@ Terima kasih — melanjutkan dengan: %1
 </translation>
     </message>
     <message>
+        <source>Native</source>
+        <translation>Asli</translation>
+    </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Asing</translation>
+    </message>
+    <message>
         <source># Profiles
 
 </source>
@@ -5578,6 +6259,12 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source> (default)</source>
         <translation> (default)</translation>
+    </message>
+    <message>
+        <source>- Engine: %1
+</source>
+        <translation>- Mesin: %1
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -5874,17 +6561,85 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
 
 </source>
-        <translation>Pohon orkestrator/worker, dibagikan dengan GUI. **j/k** pindah · **Space/Enter** jeda/lanjutkan.
+        <translation>Pohon orkestrator/pekerja, dibagikan dengan GUI. **j/k** pindah · **Space/Enter** jeda/lanjutkan · **t** arahkan anak · **c** batalkan gilirannya.
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`)
+        <source>- %1%2 — %3 (`%4`) · %5
 </source>
-        <translation>- %1%2 — %3 (`%4`)
+        <translation>- %1%2 — %3 (`%4`) · %5
+</translation>
+    </message>
+    <message>
+        <source># Sessions — Archived
+
+</source>
+        <translation># Sesi — Diarsipkan
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **r**/**Enter** restore · **v** back to active.
+
+</source>
+        <translation>**j/k** pindah · **r**/**Enter** pulihkan · **v** kembali ke aktif.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close · **v** archived.
+
+</source>
+        <translation>**j/k** pindah · **s** tangguhkan · **R**/**Enter** lanjutkan · **x** tutup · **v** diarsipkan.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
+
+</source>
+        <translation>**j/k** pindah · **a**/**Enter** setujui · **p** izinkan permanen · **d** tolak.
+
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+</source>
+        <translation>- Perintah: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- _Can be allowed permanently (**p**)._
+</source>
+        <translation>- _Dapat diizinkan permanen (**p**)._
+</translation>
+    </message>
+    <message>
+        <source>Chat pins (origin → session), shared with the GUI routing manager. **j/k** move · **x** unbind.
+
+</source>
+        <translation>Sematan obrolan (asal → sesi), dibagikan dengan pengelola perutean GUI. **j/k** pindah · **x** lepas ikatan.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2 · %3** ⇄ `%4`%5
+</source>
+        <translation>- %1**%2 · %3** ⇄ `%4`%5
+</translation>
+    </message>
+    <message>
+        <source> (agent `%1`)</source>
+        <translation> (agen `%1`)</translation>
+    </message>
+    <message>
+        <source>_No chat pins yet — pin a room/DM to a session from the GUI routing manager or a room row._
+</source>
+        <translation>_Belum ada sematan obrolan — sematkan ruang/DM ke sesi dari pengelola perutean GUI atau baris ruang._
 </translation>
     </message>
     <message>
@@ -5896,17 +6651,15 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
-
-</source>
-        <translation>**j/k** pindah · **s** tangguhkan · **R**/**Enter** lanjutkan · **x** tutup.
-
-</translation>
-    </message>
-    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
+</translation>
+    </message>
+    <message>
+        <source>_No archived sessions._
+</source>
+        <translation>_Tidak ada sesi yang diarsipkan._
 </translation>
     </message>
     <message>
@@ -5924,14 +6677,6 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
-
-</source>
-        <translation>**j/k** pindah · **a**/**Enter** setujui · **d** tolak.
-
-</translation>
-    </message>
-    <message>
         <source>## %1%2 (%3 risk)
 
 </source>
@@ -5946,38 +6691,12 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
-        <source>- Command: `%1`
-
-</source>
-        <translation>- Perintah: `%1`
-
-</translation>
-    </message>
-    <message>
         <source># Routing
 
 </source>
         <translation># Perutean
 
 </translation>
-    </message>
-    <message>
-        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
-
-</source>
-        <translation>Aturan intent → model, dibagikan dengan GUI. **j/k** pindah · **Space/Enter** alihkan · **x** hapus.
-
-</translation>
-    </message>
-    <message>
-        <source>- %1**%2** → `%3` (fallback `%4`)%5
-</source>
-        <translation>- %1**%2** → `%3` (fallback `%4`)%5
-</translation>
-    </message>
-    <message>
-        <source> — _disabled_</source>
-        <translation> — _dinonaktifkan_</translation>
     </message>
     <message>
         <source># Scheduled jobs
@@ -6108,10 +6827,10 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
 
 </source>
-        <translation>Akun transport Events-IO dan ruang langsungnya, dibagikan dengan GUI. Hanya-baca di kedua shell pada bagian ini - penyambungan ditangguhkan (EIO-2).
+        <translation>Akun transport Events-IO dan ruang aktifnya, dibagikan dengan GUI. Penyambungan ditangguhkan (EIO-2); putus/hapus belum memiliki operasi wire (B3 - tindak lanjut node-first). Kredensial tersimpan dapat dihapus dari halaman Akun (&apos;x&apos; pada profil terikat).
 
 </translation>
     </message>
@@ -6146,16 +6865,16 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
-        <source>  - %1
-</source>
-        <translation>  - %1
-</translation>
+        <source>  - %1</source>
+        <translation>  - %1</translation>
     </message>
     <message>
-        <source>  - %1 · %2
-</source>
-        <translation>  - %1 · %2
-</translation>
+        <source>  - %1 · %2</source>
+        <translation>  - %1 · %2</translation>
+    </message>
+    <message>
+        <source> · ⇄ `%1`</source>
+        <translation> · ⇄ `%1`</translation>
     </message>
     <message>
         <source>## Add channel
@@ -6297,6 +7016,17 @@ _Tidak ada agen yang dipilih._
     </message>
 </context>
 <context>
+    <name>auth::AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Tautan masuk ini kedaluwarsa — coba lagi.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>Masuk tidak tersedia di build ini.</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::ApprovalRepository</name>
     <message>
         <source>Approval decision failed</source>
@@ -6304,10 +7034,43 @@ _Tidak ada agen yang dipilih._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>Gagal membaca daftar penyedia masuk</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>Alur masuk tidak dapat dimulai</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>Proses masuk tidak dapat diselesaikan</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Putar balik checkpoint gagal</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
         <translation>Operasi kredensial gagal</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Checkpoint</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>sebelum %1</translation>
     </message>
 </context>
 <context>
@@ -6374,6 +7137,17 @@ _Tidak ada agen yang dipilih._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Saluran</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -6421,6 +7195,10 @@ _Tidak ada agen yang dipilih._
 <context>
     <name>daemonapp::daemon::ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Inspeksi model gagal</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Operasi set-model gagal</translation>
     </message>
@@ -6435,6 +7213,10 @@ _Tidak ada agen yang dipilih._
     <message>
         <source>Activate failed</source>
         <translation>Aktivasi gagal</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>Kuantisasi gagal dimulai</translation>
     </message>
 </context>
 <context>
@@ -6484,10 +7266,21 @@ _Tidak ada agen yang dipilih._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Perubahan perutean gagal</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>Not connected to a daemon</source>
         <translation>Tidak tersambung ke daemon</translation>
+    </message>
+    <message>
+        <source>The session rejected the command</source>
+        <translation>Sesi menolak perintah</translation>
     </message>
     <message>
         <source>SessionUpdateMeta failed</source>
@@ -6516,6 +7309,10 @@ _Tidak ada agen yang dipilih._
         <translation>Tidak dapat menjangkau node. Periksa target dan coba lagi.</translation>
     </message>
     <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>Tidak dapat menjangkau model Anda — periksa penyedia dan coba lagi.</translation>
+    </message>
+    <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
         <translation>Tidak dapat memverifikasi kunci API ini dengan %1 — periksa dan coba lagi.</translation>
     </message>
@@ -6537,6 +7334,13 @@ _Tidak ada agen yang dipilih._
     <message>
         <source>write failed</source>
         <translation>penulisan gagal</translation>
+    </message>
+</context>
+<context>
+    <name>models::DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Model %1 hilang dari disk: %2</translation>
     </message>
 </context>
 <context>

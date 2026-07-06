@@ -43,6 +43,10 @@
         <translation>Mga nakakonektang account</translation>
     </message>
     <message>
+        <source>Sign in via browser…</source>
+        <translation>Mag-sign in sa pamamagitan ng browser…</translation>
+    </message>
+    <message>
         <source>Add account</source>
         <translation>Magdagdag ng account</translation>
     </message>
@@ -215,8 +219,36 @@ Babalik ka sa first-run setup.</translation>
 <context>
     <name>AgentInferencePicker</name>
     <message>
+        <source>Custom endpoint…</source>
+        <translation>Custom na endpoint…</translation>
+    </message>
+    <message>
         <source>Provider</source>
         <translation>Provider</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Base URL</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Base URL (hal. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>Model id</translation>
+    </message>
+    <message>
+        <source>model id (as your server names it)</source>
+        <translation>model id (ayon sa pangalan nito sa iyong server)</translation>
+    </message>
+    <message>
+        <source>The endpoint is used as-is — your first message verifies it, and a failure will guide you back here.</source>
+        <translation>Gagamitin ang endpoint nang tulad ng nakalagay — bine-verify ito ng iyong unang mensahe, at kapag nabigo ay ibabalik ka rito.</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>API key (opsyonal)</translation>
     </message>
     <message>
         <source>Paste API key</source>
@@ -324,6 +356,32 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source> (default)</source>
         <translation> (default)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypePicker</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (native)</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>naka-install</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>hindi naka-install</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypeView</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (native)</translation>
     </message>
 </context>
 <context>
@@ -439,6 +497,10 @@ Babalik ka sa first-run setup.</translation>
         <translation>Tanggihan</translation>
     </message>
     <message>
+        <source>Allow permanently</source>
+        <translation>Payagan nang permanente</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>Aprubahan</translation>
     </message>
@@ -478,7 +540,178 @@ Babalik ka sa first-run setup.</translation>
     </message>
 </context>
 <context>
+    <name>AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Nag-expire na ang link ng pag-sign in — subukan muli.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>Hindi available ang pag-sign in sa build na ito.</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowDialog</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Mag-sign in</translation>
+    </message>
+    <message>
+        <source>Open this link in your browser (copy it):</source>
+        <translation>Buksan ang link na ito sa iyong browser (kopyahin ito):</translation>
+    </message>
+    <message>
+        <source>Then paste the redirect URL here:</source>
+        <translation>Pagkatapos, i-paste ang redirect URL dito:</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Kumpletuhin ang pag-sign in</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Inihahanda ang pag-sign in…</translation>
+    </message>
+    <message>
+        <source>Waiting for your browser to finish… (or paste below)</source>
+        <translation>Naghihintay na matapos ang iyong browser… (o i-paste sa ibaba)</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Kumpletuhin ang pag-sign in sa iyong browser, pagkatapos ay i-paste ang redirect URL sa ibaba.</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Tinatapos ang pag-sign in…</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Naka-sign in bilang %1</translation>
+    </message>
+    <message>
+        <source>Sign-in failed: %1</source>
+        <translation>Nabigo ang pag-sign in: %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Kinansela ang pag-sign in</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowLauncher</name>
+    <message>
+        <source>Sign in — pick a provider</source>
+        <translation>Mag-sign in — pumili ng provider</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowSheet</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Mag-sign in</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Isara</translation>
+    </message>
+    <message>
+        <source>No browser sign-in providers are available on this node.</source>
+        <translation>Walang available na browser sign-in provider sa node na ito.</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Provider</translation>
+    </message>
+    <message>
+        <source>Sign in via browser</source>
+        <translation>Mag-sign in sa pamamagitan ng browser</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Inihahanda ang pag-sign in…</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Tinatapos ang pag-sign in…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser. Waiting for it to finish…</source>
+        <translation>Kumpletuhin ang pag-sign in sa iyong browser. Naghihintay na matapos ito…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Kumpletuhin ang pag-sign in sa iyong browser, pagkatapos ay i-paste ang redirect URL sa ibaba.</translation>
+    </message>
+    <message>
+        <source>Copy sign-in link</source>
+        <translation>Kopyahin ang link ng pag-sign in</translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>Buksan sa browser</translation>
+    </message>
+    <message>
+        <source>Paste the redirect URL</source>
+        <translation>I-paste ang redirect URL</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Kumpletuhin ang pag-sign in</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Naka-sign in bilang %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Kinansela ang pag-sign in</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>Nabigo ang pag-sign in</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Ulitin</translation>
+    </message>
+</context>
+<context>
+    <name>AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>Nabigong basahin ang listahan ng sign-in provider</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>Hindi masimulan ang daloy ng pag-sign in</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>Hindi makumpleto ang pag-sign in</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
+    <message>
+        <source>Remove stored credential?</source>
+        <translation>Alisin ang nakaimbak na credential?</translation>
+    </message>
+    <message>
+        <source>Remove credential</source>
+        <translation>Alisin ang credential</translation>
+    </message>
+    <message>
+        <source>Removes the credential stored for profile “%1” (used by %2).</source>
+        <translation>Inaalis ang credential na nakaimbak para sa profile na “%1” (ginagamit ng %2).</translation>
+    </message>
+    <message>
+        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
+        <translation>Hindi apektado ang transport session ng account sa node — hindi pa available ang operasyong disconnect/remove.</translation>
+    </message>
     <message>
         <source>Channels</source>
         <translation>Mga Channel</translation>
@@ -496,8 +729,32 @@ Babalik ka sa first-run setup.</translation>
         <translation>%1 · %2</translation>
     </message>
     <message>
+        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
+        <translation>Hindi pa available ang disconnect — walang operasyong transport disconnect ang node</translation>
+    </message>
+    <message>
+        <source>Remove the stored credential…</source>
+        <translation>Alisin ang nakaimbak na credential…</translation>
+    </message>
+    <message>
         <source>No rooms.</source>
         <translation>Walang room.</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned to this session — open the routing manager</source>
+        <translation>Naka-pin sa session na ito — buksan ang routing manager</translation>
+    </message>
+    <message>
+        <source>Pin to agent…</source>
+        <translation>I-pin sa agent…</translation>
+    </message>
+    <message>
+        <source>Route this room&apos;s messages to a session</source>
+        <translation>I-ruta ang mga mensahe ng room na ito sa isang session</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -540,6 +797,28 @@ Babalik ka sa first-run setup.</translation>
     </message>
 </context>
 <context>
+    <name>CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Nabigo ang pag-rewind ng checkpoint</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointTimeline</name>
+    <message>
+        <source>%1 · %2 — rewind is managed by the foreign agent</source>
+        <translation>%1 · %2 — pinamamahalaan ng foreign agent ang rewind</translation>
+    </message>
+    <message>
+        <source>%1 · %2 (current)</source>
+        <translation>%1 · %2 (kasalukuyan)</translation>
+    </message>
+    <message>
+        <source>%1 · %2 — click to rewind</source>
+        <translation>%1 · %2 — i-click para mag-rewind</translation>
+    </message>
+</context>
+<context>
     <name>CheckpointsPopover</name>
     <message>
         <source>Checkpoints</source>
@@ -554,6 +833,10 @@ Babalik ka sa first-run setup.</translation>
         <translation>Manual na checkpoint</translation>
     </message>
     <message>
+        <source>Rewind is managed by the foreign agent</source>
+        <translation>Pinamamahalaan ng foreign agent ang rewind</translation>
+    </message>
+    <message>
         <source> tok</source>
         <translation> tok</translation>
     </message>
@@ -564,6 +847,10 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>Restore</source>
         <translation>I-restore</translation>
+    </message>
+    <message>
+        <source>No checkpoints yet</source>
+        <translation>Wala pang checkpoint</translation>
     </message>
 </context>
 <context>
@@ -939,9 +1226,86 @@ Babalik ka sa first-run setup.</translation>
         <comment>composer mode badge</comment>
         <translation>verbose</translation>
     </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Foreign</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Native</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Mga Edit</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Tanggihan</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Magtanong</translation>
+    </message>
+    <message>
+        <source>policy:</source>
+        <comment>approval-policy badge prefix</comment>
+        <translation>patakaran:</translation>
+    </message>
 </context>
 <context>
     <name>ComposerControls</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Foreign</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Native</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Engine</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Mga Edit</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Tanggihan</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Magtanong</translation>
+    </message>
+    <message>
+        <source>Approval policy (reflects last set value)</source>
+        <translation>Patakaran sa pag-apruba (ipinapakita ang huling naitakdang halaga)</translation>
+    </message>
+    <message>
+        <source>⇄ %1 +%2</source>
+        <translation>⇄ %1 +%2</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned from %1 — open the routing manager</source>
+        <translation>Naka-pin mula sa %1 — buksan ang routing manager</translation>
+    </message>
     <message>
         <source>Checkpoints / rewind</source>
         <translation>Mga Checkpoint / rewind</translation>
@@ -1271,6 +1635,17 @@ Babalik ka sa first-run setup.</translation>
     </message>
 </context>
 <context>
+    <name>DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Checkpoint</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>bago ang %1</translation>
+    </message>
+</context>
+<context>
     <name>DaemonConnectionService</name>
     <message>
         <source>Could not reach the daemon. Check it is running and try again.</source>
@@ -1331,6 +1706,24 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>Unsupported transport</source>
         <translation>Hindi suportadong transport</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Mga Channel</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DMs</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Nawawala sa disk ang model na %1: %2</translation>
     </message>
 </context>
 <context>
@@ -1446,6 +1839,10 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>Searching…</source>
         <translation>Naghahanap…</translation>
+    </message>
+    <message>
+        <source>gated</source>
+        <translation>naka-gate</translation>
     </message>
     <message>
         <source>by %1</source>
@@ -1725,6 +2122,14 @@ Babalik ka sa first-run setup.</translation>
         <source>file %1/%2</source>
         <translation>file %1/%2</translation>
     </message>
+    <message>
+        <source>This repo is gated — accept its license on the Hub (and add a token if required), then retry.</source>
+        <translation>Naka-gate ang repo na ito — tanggapin ang lisensya nito sa Hub (at magdagdag ng token kung kinakailangan), pagkatapos ay subukan muli.</translation>
+    </message>
+    <message>
+        <source>Open license page</source>
+        <translation>Buksan ang pahina ng lisensya</translation>
+    </message>
 </context>
 <context>
     <name>EditMenu</name>
@@ -1864,6 +2269,10 @@ Babalik ka sa first-run setup.</translation>
         <translation>Remote</translation>
     </message>
     <message>
+        <source>Agent type (Enter to pick):</source>
+        <translation>Uri ng agent (Enter para pumili):</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Pangalan ng agent</translation>
     </message>
@@ -1878,6 +2287,14 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>Model</source>
         <translation>Model</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Base URL (hal. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>Model id</translation>
     </message>
     <message>
         <source>Test</source>
@@ -1902,6 +2319,14 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>Failed — </source>
         <translation>Nabigo — </translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>Custom na endpoint…</translation>
+    </message>
+    <message>
+        <source>custom</source>
+        <translation>custom</translation>
     </message>
     <message>
         <source>Local: App-managed (press to Attach instead)</source>
@@ -1929,6 +2354,14 @@ Babalik ka sa first-run setup.</translation>
         <translation>Mag-sign in</translation>
     </message>
     <message>
+        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
+        <translation>Piliin ang uri ng agent: ang native ay pipili ng model sa susunod; ang foreign ACP agent ay may sariling dala.</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Magpatuloy</translation>
+    </message>
+    <message>
         <source>Pick a provider and a model, then Finish.</source>
         <translation>Pumili ng provider at model, pagkatapos ay Tapusin.</translation>
     </message>
@@ -1946,6 +2379,10 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>Almost there - confirm an inference model.</source>
         <translation>Malapit na - kumpirmahin ang isang inference model.</translation>
+    </message>
+    <message>
+        <source>What kind of agent do you want?</source>
+        <translation>Anong uri ng agent ang gusto mo?</translation>
     </message>
     <message>
         <source>Sign in to the node to continue.</source>
@@ -1976,6 +2413,18 @@ Babalik ka sa first-run setup.</translation>
         <translation>Nagsa-sign in…</translation>
     </message>
     <message>
+        <source>Agent type</source>
+        <translation>Uri ng agent</translation>
+    </message>
+    <message>
+        <source>Runs in the daemon — pick a provider and model next.</source>
+        <translation>Tumatakbo sa daemon — pumili ng provider at model sa susunod.</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
+        <translation>Nagpapatakbo ang agent na ito ng foreign ACP engine — may sarili itong model, kaya hindi na kailangan ng provider, model, o key.</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Pangalan ng agent</translation>
     </message>
@@ -1991,12 +2440,20 @@ Babalik ka sa first-run setup.</translation>
         <source>Finish setup</source>
         <translation>Tapusin ang setup</translation>
     </message>
+    <message>
+        <source>Continue</source>
+        <translation>Magpatuloy</translation>
+    </message>
 </context>
 <context>
     <name>FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>Hindi maabot ang node. Suriin ang target at subukang muli.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>Hindi maabot ang iyong model — suriin ang provider at subukan muli.</translation>
     </message>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
@@ -2006,12 +2463,48 @@ Babalik ka sa first-run setup.</translation>
 <context>
     <name>FleetPage</name>
     <message>
+        <source>Steer this agent</source>
+        <translation>Gabayan ang agent na ito</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ipadala</translation>
+    </message>
+    <message>
+        <source>Message to inject…</source>
+        <translation>Mensaheng iiniekta…</translation>
+    </message>
+    <message>
+        <source>Steers the running turn without interrupting it.</source>
+        <translation>Ginagabayan ang tumatakbong turn nang hindi ito naaabala.</translation>
+    </message>
+    <message>
+        <source>The agent is idle — this starts a new turn.</source>
+        <translation>Idle ang agent — magsisimula ito ng bagong turn.</translation>
+    </message>
+    <message>
         <source>Fleet</source>
         <translation>Fleet</translation>
     </message>
     <message>
         <source>Refresh</source>
         <translation>I-refresh</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Foreign</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Native</translation>
+    </message>
+    <message>
+        <source>Steer…</source>
+        <translation>Gabayan…</translation>
+    </message>
+    <message>
+        <source>Cancel the running turn</source>
+        <translation>Kanselahin ang tumatakbong turn</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -2649,6 +3142,10 @@ Salamat — magpapatuloy sa: %1
 <context>
     <name>ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Nabigo ang inspeksyon ng model</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Nabigo ang set-model operation</translation>
     </message>
@@ -2663,6 +3160,10 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Activate failed</source>
         <translation>Nabigo ang pag-activate</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>Nabigong magsimula ang quantize</translation>
     </message>
 </context>
 <context>
@@ -2731,6 +3232,30 @@ Start one from the Discover tab.</source>
         <translation>Walang aktibong download.
 Magsimula ng isa mula sa Discover tab.</translation>
     </message>
+    <message>
+        <source>Quantize jobs</source>
+        <translation>Mga quantize job</translation>
+    </message>
+    <message>
+        <source>Quantizing %1</source>
+        <translation>Kina-quantize ang %1</translation>
+    </message>
+    <message>
+        <source>Working…</source>
+        <translation>Ginagawa…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Tapos</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Nabigo</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>Naka-queue</translation>
+    </message>
 </context>
 <context>
     <name>ModelsInstalled</name>
@@ -2753,6 +3278,18 @@ Magsimula ng isa mula sa Discover tab.</translation>
     <message>
         <source> GiB</source>
         <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Model missing — the file was moved or deleted.</source>
+        <translation>Nawawala ang model — inilipat o binura ang file.</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>I-download muli</translation>
+    </message>
+    <message>
+        <source>Re-quantize…</source>
+        <translation>I-re-quantize…</translation>
     </message>
     <message>
         <source>Active</source>
@@ -2834,22 +3371,6 @@ Magsimula ng isa mula sa Discover tab.</translation>
     <message>
         <source>Engine</source>
         <translation>Engine</translation>
-    </message>
-    <message>
-        <source>daemon-core (native)</source>
-        <translation>daemon-core (native)</translation>
-    </message>
-    <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>naka-install</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>hindi naka-install</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
@@ -3224,6 +3745,14 @@ Magsimula ng isa mula sa Discover tab.</translation>
         <translation>+ Bagong profile</translation>
     </message>
     <message>
+        <source>Foreign</source>
+        <translation>Foreign</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Native</translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>Bagong profile</translation>
     </message>
@@ -3511,6 +4040,10 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Reasoning</translation>
     </message>
     <message>
+        <source>exit %1</source>
+        <translation>exit %1</translation>
+    </message>
+    <message>
         <source>[image: </source>
         <translation>[image: </translation>
     </message>
@@ -3562,12 +4095,24 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <source>[math] </source>
         <translation>[math] </translation>
     </message>
+    <message>
+        <source>  [installed]</source>
+        <translation>  [naka-install]</translation>
+    </message>
+    <message>
+        <source>  [not installed]</source>
+        <translation>  [hindi naka-install]</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
     <message>
         <source>Choose a quantization</source>
         <translation>Pumili ng quantization</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Pumili ng target na quantization</translation>
     </message>
     <message>
         <source>Recommended: %1</source>
@@ -3580,6 +4125,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>tight</source>
         <translation>masikip</translation>
+    </message>
+    <message>
+        <source>Needs about %1 of disk space.</source>
+        <translation>Nangangailangan ng humigit-kumulang %1 na disk space.</translation>
+    </message>
+    <message>
+        <source>Quantize to recommended</source>
+        <translation>I-quantize sa inirerekomenda</translation>
     </message>
     <message>
         <source>Download recommended</source>
@@ -3608,6 +4161,10 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>Download</source>
         <translation>I-download</translation>
+    </message>
+    <message>
+        <source>Quantize</source>
+        <translation>I-quantize</translation>
     </message>
     <message>
         <source>Close</source>
@@ -3665,6 +4222,21 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>Reasoning</source>
         <translation>Reasoning</translation>
+    </message>
+</context>
+<context>
+    <name>RewindConfirmDialog</name>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>I-rewind sa checkpoint na ito?</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>I-rewind</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Aalisin nito ang mga turn ng session pagkatapos ng napiling punto.</translation>
     </message>
 </context>
 <context>
@@ -3762,6 +4334,10 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Effort:  %1</translation>
     </message>
     <message>
+        <source>Approval: %1</source>
+        <translation>Pag-apruba: %1</translation>
+    </message>
+    <message>
         <source>Fast:    %1</source>
         <translation>Fast:    %1</translation>
     </message>
@@ -3778,8 +4354,48 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Verbose: %1</translation>
     </message>
     <message>
-        <source>%1  ·  %2  ·  %3 tok%4</source>
-        <translation>%1  ·  %2  ·  %3 tok%4</translation>
+        <source>  ·  %1 tok</source>
+        <translation>  ·  %1 tok</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2%3%4</source>
+        <translation>%1  ·  %2%3%4</translation>
+    </message>
+    <message>
+        <source>Rewind is managed by the foreign agent · Esc closes</source>
+        <translation>Pinamamahalaan ng foreign agent ang rewind · Isinasara ng Esc</translation>
+    </message>
+    <message>
+        <source>Enter rewinds to the selected checkpoint (confirmed) · Esc closes</source>
+        <translation>Nire-rewind ng Enter sa napiling checkpoint (kumpirmado) · Isinasara ng Esc</translation>
+    </message>
+    <message>
+        <source>Rewind…</source>
+        <translation>I-rewind…</translation>
+    </message>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>I-rewind sa checkpoint na ito?</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Aalisin nito ang mga turn ng session pagkatapos ng napiling punto.</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>I-rewind</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+    <message>
+        <source>Steer this agent</source>
+        <translation>Gabayan ang agent na ito</translation>
+    </message>
+    <message>
+        <source>Steer this agent (idle — starts a turn)</source>
+        <translation>Gabayan ang agent na ito (idle — nagsisimula ng turn)</translation>
     </message>
     <message>
         <source>  (current)</source>
@@ -3792,14 +4408,6 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>Checkpoints</source>
         <translation>Mga Checkpoint</translation>
-    </message>
-    <message>
-        <source>Enter restores the selected checkpoint · Esc closes</source>
-        <translation>Enter nagre-restore ng piniling checkpoint · Esc nagsasara</translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation>I-restore</translation>
     </message>
     <message>
         <source> 0/0 </source>
@@ -3912,6 +4520,13 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>Make primary</source>
         <translation>Gawing primary</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Nabigo ang pagbabago ng routing</translation>
     </message>
 </context>
 <context>
@@ -4121,6 +4736,10 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Hindi nakakonekta sa isang daemon</translation>
     </message>
     <message>
+        <source>The session rejected the command</source>
+        <translation>Tinanggihan ng session ang command</translation>
+    </message>
+    <message>
         <source>SessionUpdateMeta failed</source>
         <translation>Nabigo ang SessionUpdateMeta</translation>
     </message>
@@ -4312,6 +4931,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Mga Session</translation>
     </message>
     <message>
+        <source>Active</source>
+        <translation>Aktibo</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Naka-archive</translation>
+    </message>
+    <message>
         <source>LIVE</source>
         <translation>LIVE</translation>
     </message>
@@ -4322,6 +4949,10 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source> tok</source>
         <translation> tok</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>I-restore</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -5047,6 +5678,14 @@ Salamat — magpapatuloy sa: %1
         <translation>Ang turn ay %1.</translation>
     </message>
     <message>
+        <source>Set up a provider to send your first message.</source>
+        <translation>Mag-set up ng provider para maipadala ang iyong unang mensahe.</translation>
+    </message>
+    <message>
+        <source>Set up provider</source>
+        <translation>Mag-set up ng provider</translation>
+    </message>
+    <message>
         <source>Select a session</source>
         <translation>Pumili ng session</translation>
     </message>
@@ -5126,6 +5765,18 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Choose a quantization</source>
         <translation>Pumili ng quantization</translation>
+    </message>
+    <message>
+        <source>  [gated]</source>
+        <translation>  [naka-gate]</translation>
+    </message>
+    <message>
+        <source>Re-quantize — pick an installed model</source>
+        <translation>I-re-quantize — pumili ng naka-install na model</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Pumili ng target na quantization</translation>
     </message>
     <message>
         <source>Go to file</source>
@@ -5411,14 +6062,6 @@ Salamat — magpapatuloy sa: %1
 </translation>
     </message>
     <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
-
-</source>
-        <translation>Mga naka-install na model, ibinabahagi sa GUI. **j/k** gumalaw · **Enter** nag-a-activate · **x** nag-aalis · **d** mag-download ng model (repo → quant).
-
-</translation>
-    </message>
-    <message>
         <source>## Installed
 
 </source>
@@ -5435,9 +6078,21 @@ Salamat — magpapatuloy sa: %1
 </translation>
     </message>
     <message>
-        <source>- %1**%2** (%3)%4
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant) · **q** re-quantize an installed model.
+
 </source>
-        <translation>- %1**%2** (%3)%4
+        <translation>Mga naka-install na model, ibinabahagi sa GUI. **j/k** galaw · **Enter** para i-aktibo · **x** para alisin · **d** mag-download ng model (repo → quant) · **q** i-re-quantize ang naka-install na model.
+
+</translation>
+    </message>
+    <message>
+        <source> — **missing on disk** (re-download from Discover)</source>
+        <translation> — **nawawala sa disk** (i-download muli mula sa Discover)</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4%5
+</source>
+        <translation>- %1**%2** (%3)%4%5
 </translation>
     </message>
     <message>
@@ -5456,6 +6111,20 @@ Salamat — magpapatuloy sa: %1
         <source>- %1 — %2%  · %3
 </source>
         <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Quantize jobs
+
+</source>
+        <translation>## Mga quantize job
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%3
+</source>
+        <translation>- %1 — %2%3
 </translation>
     </message>
     <message>
@@ -5559,6 +6228,18 @@ Salamat — magpapatuloy sa: %1
 </translation>
     </message>
     <message>
+        <source>Native</source>
+        <translation>Native</translation>
+    </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Foreign</translation>
+    </message>
+    <message>
         <source># Profiles
 
 </source>
@@ -5585,6 +6266,12 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source> (default)</source>
         <translation> (default)</translation>
+    </message>
+    <message>
+        <source>- Engine: %1
+</source>
+        <translation>- Engine: %1
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -5881,17 +6568,85 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
 
 </source>
-        <translation>Orchestrator/worker tree, ibinabahagi sa GUI. **j/k** gumalaw · **Space/Enter** i-pause/ituloy.
+        <translation>Orchestrator/worker tree, ibinabahagi sa GUI. **j/k** galaw · **Space/Enter** pause/resume · **t** gabayan ang isang child · **c** kanselahin ang turn nito.
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`)
+        <source>- %1%2 — %3 (`%4`) · %5
 </source>
-        <translation>- %1%2 — %3 (`%4`)
+        <translation>- %1%2 — %3 (`%4`) · %5
+</translation>
+    </message>
+    <message>
+        <source># Sessions — Archived
+
+</source>
+        <translation># Mga Session — Naka-archive
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **r**/**Enter** restore · **v** back to active.
+
+</source>
+        <translation>**j/k** galaw · **r**/**Enter** i-restore · **v** balik sa aktibo.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close · **v** archived.
+
+</source>
+        <translation>**j/k** galaw · **s** suspend · **R**/**Enter** resume · **x** isara · **v** naka-archive.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
+
+</source>
+        <translation>**j/k** galaw · **a**/**Enter** aprubahan · **p** payagan nang permanente · **d** tanggihan.
+
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+</source>
+        <translation>- Command: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- _Can be allowed permanently (**p**)._
+</source>
+        <translation>- _Maaaring payagan nang permanente (**p**)._
+</translation>
+    </message>
+    <message>
+        <source>Chat pins (origin → session), shared with the GUI routing manager. **j/k** move · **x** unbind.
+
+</source>
+        <translation>Mga chat pin (origin → session), ibinabahagi sa GUI routing manager. **j/k** galaw · **x** i-unbind.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2 · %3** ⇄ `%4`%5
+</source>
+        <translation>- %1**%2 · %3** ⇄ `%4`%5
+</translation>
+    </message>
+    <message>
+        <source> (agent `%1`)</source>
+        <translation> (agent `%1`)</translation>
+    </message>
+    <message>
+        <source>_No chat pins yet — pin a room/DM to a session from the GUI routing manager or a room row._
+</source>
+        <translation>_Wala pang chat pin — mag-pin ng room/DM sa isang session mula sa GUI routing manager o sa isang row ng room._
 </translation>
     </message>
     <message>
@@ -5903,17 +6658,15 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
-
-</source>
-        <translation>**j/k** gumalaw · **s** i-suspend · **R**/**Enter** ituloy · **x** isara.
-
-</translation>
-    </message>
-    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
+</translation>
+    </message>
+    <message>
+        <source>_No archived sessions._
+</source>
+        <translation>_Walang naka-archive na session._
 </translation>
     </message>
     <message>
@@ -5931,14 +6684,6 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
-
-</source>
-        <translation>**j/k** gumalaw · **a**/**Enter** aprubahan · **d** tanggihan.
-
-</translation>
-    </message>
-    <message>
         <source>## %1%2 (%3 risk)
 
 </source>
@@ -5953,38 +6698,12 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>- Command: `%1`
-
-</source>
-        <translation>- Command: `%1`
-
-</translation>
-    </message>
-    <message>
         <source># Routing
 
 </source>
         <translation># Routing
 
 </translation>
-    </message>
-    <message>
-        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
-
-</source>
-        <translation>Intent → mga panuntunan ng model, ibinabahagi sa GUI. **j/k** gumalaw · **Space/Enter** i-toggle · **x** burahin.
-
-</translation>
-    </message>
-    <message>
-        <source>- %1**%2** → `%3` (fallback `%4`)%5
-</source>
-        <translation>- %1**%2** → `%3` (fallback `%4`)%5
-</translation>
-    </message>
-    <message>
-        <source> — _disabled_</source>
-        <translation> — _naka-disable_</translation>
     </message>
     <message>
         <source># Scheduled jobs
@@ -6115,10 +6834,10 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
 
 </source>
-        <translation>Mga Events-IO transport account at ang kanilang mga live room, ibinabahagi sa GUI. Read-only sa parehong shell sa slice na ito - ipinagpaliban ang pagkonekta (EIO-2).
+        <translation>Mga Events-IO transport account at ang kanilang live rooms, ibinabahagi sa GUI. Ipinagpaliban ang pagkonekta (EIO-2); WALA pang wire op ang disconnect/remove (B3 - node-first follow-up). Maaaring alisin ang nakaimbak na credential mula sa Accounts page (&apos;x&apos; sa naka-bind na profile).
 
 </translation>
     </message>
@@ -6153,16 +6872,16 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>  - %1
-</source>
-        <translation>  - %1
-</translation>
+        <source>  - %1</source>
+        <translation>  - %1</translation>
     </message>
     <message>
-        <source>  - %1 · %2
-</source>
-        <translation>  - %1 · %2
-</translation>
+        <source>  - %1 · %2</source>
+        <translation>  - %1 · %2</translation>
+    </message>
+    <message>
+        <source> · ⇄ `%1`</source>
+        <translation> · ⇄ `%1`</translation>
     </message>
     <message>
         <source>## Add channel
@@ -6304,6 +7023,17 @@ _Walang piniling agent._
     </message>
 </context>
 <context>
+    <name>auth::AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Nag-expire na ang link ng pag-sign in — subukan muli.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>Hindi available ang pag-sign in sa build na ito.</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::ApprovalRepository</name>
     <message>
         <source>Approval decision failed</source>
@@ -6311,10 +7041,43 @@ _Walang piniling agent._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>Nabigong basahin ang listahan ng sign-in provider</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>Hindi masimulan ang daloy ng pag-sign in</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>Hindi makumpleto ang pag-sign in</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Nabigo ang pag-rewind ng checkpoint</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
         <translation>Nabigo ang operasyon sa credential</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Checkpoint</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>bago ang %1</translation>
     </message>
 </context>
 <context>
@@ -6381,6 +7144,17 @@ _Walang piniling agent._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Mga Channel</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DMs</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -6428,6 +7202,10 @@ _Walang piniling agent._
 <context>
     <name>daemonapp::daemon::ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Nabigo ang inspeksyon ng model</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Nabigo ang set-model operation</translation>
     </message>
@@ -6442,6 +7220,10 @@ _Walang piniling agent._
     <message>
         <source>Activate failed</source>
         <translation>Nabigo ang pag-activate</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>Nabigong magsimula ang quantize</translation>
     </message>
 </context>
 <context>
@@ -6491,10 +7273,21 @@ _Walang piniling agent._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Nabigo ang pagbabago ng routing</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>Not connected to a daemon</source>
         <translation>Hindi nakakonekta sa isang daemon</translation>
+    </message>
+    <message>
+        <source>The session rejected the command</source>
+        <translation>Tinanggihan ng session ang command</translation>
     </message>
     <message>
         <source>SessionUpdateMeta failed</source>
@@ -6523,6 +7316,10 @@ _Walang piniling agent._
         <translation>Hindi maabot ang node. Suriin ang target at subukang muli.</translation>
     </message>
     <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>Hindi maabot ang iyong model — suriin ang provider at subukan muli.</translation>
+    </message>
+    <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
         <translation>Hindi ma-verify ang API key na ito sa %1 — suriin ito at subukang muli.</translation>
     </message>
@@ -6544,6 +7341,13 @@ _Walang piniling agent._
     <message>
         <source>write failed</source>
         <translation>nabigo ang pagsulat</translation>
+    </message>
+</context>
+<context>
+    <name>models::DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Nawawala sa disk ang model na %1: %2</translation>
     </message>
 </context>
 <context>

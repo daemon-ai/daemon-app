@@ -43,6 +43,10 @@
         <translation>कनेक्टेड खाते</translation>
     </message>
     <message>
+        <source>Sign in via browser…</source>
+        <translation>ब्राउज़र से साइन इन करें…</translation>
+    </message>
+    <message>
         <source>Add account</source>
         <translation>खाता जोड़ें</translation>
     </message>
@@ -215,8 +219,36 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>AgentInferencePicker</name>
     <message>
+        <source>Custom endpoint…</source>
+        <translation>कस्टम एंडपॉइंट…</translation>
+    </message>
+    <message>
         <source>Provider</source>
         <translation>प्रदाता</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>बेस URL</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>बेस URL (जैसे https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>मॉडल id</translation>
+    </message>
+    <message>
+        <source>model id (as your server names it)</source>
+        <translation>मॉडल id (जैसा आपका सर्वर इसे नाम देता है)</translation>
+    </message>
+    <message>
+        <source>The endpoint is used as-is — your first message verifies it, and a failure will guide you back here.</source>
+        <translation>एंडपॉइंट को ज्यों-का-त्यों उपयोग किया जाता है — आपका पहला संदेश इसे सत्यापित करता है, और विफलता आपको वापस यहाँ मार्गदर्शित करेगी।</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>API कुंजी (वैकल्पिक)</translation>
     </message>
     <message>
         <source>Paste API key</source>
@@ -324,6 +356,32 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source> (default)</source>
         <translation> (डिफ़ॉल्ट)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypePicker</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (नेटिव)</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>इंस्टॉल किया गया</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>इंस्टॉल नहीं किया गया</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypeView</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (नेटिव)</translation>
     </message>
 </context>
 <context>
@@ -439,6 +497,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>अस्वीकार करें</translation>
     </message>
     <message>
+        <source>Allow permanently</source>
+        <translation>स्थायी रूप से अनुमति दें</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>अनुमोदित करें</translation>
     </message>
@@ -478,7 +540,178 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>यह साइन-इन लिंक समाप्त हो गया — फिर से प्रयास करें।</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>इस बिल्ड में साइन-इन उपलब्ध नहीं है।</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowDialog</name>
+    <message>
+        <source>Sign in</source>
+        <translation>साइन इन</translation>
+    </message>
+    <message>
+        <source>Open this link in your browser (copy it):</source>
+        <translation>इस लिंक को अपने ब्राउज़र में खोलें (इसे कॉपी करें):</translation>
+    </message>
+    <message>
+        <source>Then paste the redirect URL here:</source>
+        <translation>फिर रीडायरेक्ट URL यहाँ पेस्ट करें:</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>साइन-इन पूरा करें</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>रद्द करें</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>साइन-इन तैयार किया जा रहा है…</translation>
+    </message>
+    <message>
+        <source>Waiting for your browser to finish… (or paste below)</source>
+        <translation>आपके ब्राउज़र के समाप्त होने की प्रतीक्षा है… (या नीचे पेस्ट करें)</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>अपने ब्राउज़र में साइन-इन पूरा करें, फिर रीडायरेक्ट URL नीचे पेस्ट करें।</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>साइन-इन पूरा किया जा रहा है…</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1 के रूप में साइन इन किया गया</translation>
+    </message>
+    <message>
+        <source>Sign-in failed: %1</source>
+        <translation>साइन-इन विफल: %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>साइन-इन रद्द किया गया</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowLauncher</name>
+    <message>
+        <source>Sign in — pick a provider</source>
+        <translation>साइन इन — एक प्रदाता चुनें</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowSheet</name>
+    <message>
+        <source>Sign in</source>
+        <translation>साइन इन</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>बंद करें</translation>
+    </message>
+    <message>
+        <source>No browser sign-in providers are available on this node.</source>
+        <translation>इस नोड पर कोई ब्राउज़र साइन-इन प्रदाता उपलब्ध नहीं है।</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>प्रदाता</translation>
+    </message>
+    <message>
+        <source>Sign in via browser</source>
+        <translation>ब्राउज़र से साइन इन करें</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>साइन-इन तैयार किया जा रहा है…</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>साइन-इन पूरा किया जा रहा है…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser. Waiting for it to finish…</source>
+        <translation>अपने ब्राउज़र में साइन-इन पूरा करें। इसके समाप्त होने की प्रतीक्षा है…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>अपने ब्राउज़र में साइन-इन पूरा करें, फिर रीडायरेक्ट URL नीचे पेस्ट करें।</translation>
+    </message>
+    <message>
+        <source>Copy sign-in link</source>
+        <translation>साइन-इन लिंक कॉपी करें</translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>ब्राउज़र में खोलें</translation>
+    </message>
+    <message>
+        <source>Paste the redirect URL</source>
+        <translation>रीडायरेक्ट URL पेस्ट करें</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>साइन-इन पूरा करें</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1 के रूप में साइन इन किया गया</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>साइन-इन रद्द किया गया</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>साइन-इन विफल</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>पुनः प्रयास करें</translation>
+    </message>
+</context>
+<context>
+    <name>AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>साइन-इन प्रदाता सूची पढ़ने में विफल</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>साइन-इन प्रवाह प्रारंभ नहीं किया जा सका</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>साइन-इन पूरा नहीं किया जा सका</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
+    <message>
+        <source>Remove stored credential?</source>
+        <translation>संग्रहीत क्रेडेंशियल हटाएँ?</translation>
+    </message>
+    <message>
+        <source>Remove credential</source>
+        <translation>क्रेडेंशियल हटाएँ</translation>
+    </message>
+    <message>
+        <source>Removes the credential stored for profile “%1” (used by %2).</source>
+        <translation>प्रोफ़ाइल “%1” के लिए संग्रहीत क्रेडेंशियल हटाता है (%2 द्वारा उपयोग किया गया)।</translation>
+    </message>
+    <message>
+        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
+        <translation>नोड पर खाते का ट्रांसपोर्ट सत्र प्रभावित नहीं होता — डिस्कनेक्ट/हटाने का ऑपरेशन अभी उपलब्ध नहीं है।</translation>
+    </message>
     <message>
         <source>Channels</source>
         <translation>चैनल</translation>
@@ -496,8 +729,32 @@ You&apos;ll return to first-run setup.</source>
         <translation>%1 · %2</translation>
     </message>
     <message>
+        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
+        <translation>डिस्कनेक्ट अभी उपलब्ध नहीं है — नोड के पास कोई ट्रांसपोर्ट डिस्कनेक्ट ऑपरेशन नहीं है</translation>
+    </message>
+    <message>
+        <source>Remove the stored credential…</source>
+        <translation>संग्रहीत क्रेडेंशियल हटाएँ…</translation>
+    </message>
+    <message>
         <source>No rooms.</source>
         <translation>कोई रूम नहीं।</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned to this session — open the routing manager</source>
+        <translation>इस सत्र से पिन किया गया — रूटिंग प्रबंधक खोलें</translation>
+    </message>
+    <message>
+        <source>Pin to agent…</source>
+        <translation>एजेंट पर पिन करें…</translation>
+    </message>
+    <message>
+        <source>Route this room&apos;s messages to a session</source>
+        <translation>इस कक्ष के संदेशों को एक सत्र पर रूट करें</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -540,6 +797,28 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>चेकपॉइंट रिवाइंड विफल</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointTimeline</name>
+    <message>
+        <source>%1 · %2 — rewind is managed by the foreign agent</source>
+        <translation>%1 · %2 — रिवाइंड विदेशी एजेंट द्वारा प्रबंधित है</translation>
+    </message>
+    <message>
+        <source>%1 · %2 (current)</source>
+        <translation>%1 · %2 (वर्तमान)</translation>
+    </message>
+    <message>
+        <source>%1 · %2 — click to rewind</source>
+        <translation>%1 · %2 — रिवाइंड करने के लिए क्लिक करें</translation>
+    </message>
+</context>
+<context>
     <name>CheckpointsPopover</name>
     <message>
         <source>Checkpoints</source>
@@ -554,6 +833,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>मैनुअल चेकपॉइंट</translation>
     </message>
     <message>
+        <source>Rewind is managed by the foreign agent</source>
+        <translation>रिवाइंड विदेशी एजेंट द्वारा प्रबंधित है</translation>
+    </message>
+    <message>
         <source> tok</source>
         <translation> टोक</translation>
     </message>
@@ -564,6 +847,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Restore</source>
         <translation>पुनर्स्थापित करें</translation>
+    </message>
+    <message>
+        <source>No checkpoints yet</source>
+        <translation>अभी तक कोई चेकपॉइंट नहीं</translation>
     </message>
 </context>
 <context>
@@ -939,9 +1226,86 @@ You&apos;ll return to first-run setup.</source>
         <comment>composer mode badge</comment>
         <translation>विस्तृत</translation>
     </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>विदेशी</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>नेटिव</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>संपादन</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>स्वतः</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>अस्वीकार करें</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>पूछें</translation>
+    </message>
+    <message>
+        <source>policy:</source>
+        <comment>approval-policy badge prefix</comment>
+        <translation>नीति:</translation>
+    </message>
 </context>
 <context>
     <name>ComposerControls</name>
+    <message>
+        <source>Foreign</source>
+        <translation>विदेशी</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>नेटिव</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>इंजन</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>संपादन</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>स्वतः</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>अस्वीकार करें</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>पूछें</translation>
+    </message>
+    <message>
+        <source>Approval policy (reflects last set value)</source>
+        <translation>अनुमोदन नीति (अंतिम सेट मान दर्शाती है)</translation>
+    </message>
+    <message>
+        <source>⇄ %1 +%2</source>
+        <translation>⇄ %1 +%2</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned from %1 — open the routing manager</source>
+        <translation>%1 से पिन किया गया — रूटिंग प्रबंधक खोलें</translation>
+    </message>
     <message>
         <source>Checkpoints / rewind</source>
         <translation>चेकपॉइंट / रिवाइंड</translation>
@@ -1271,6 +1635,17 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>चेकपॉइंट</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>%1 से पहले</translation>
+    </message>
+</context>
+<context>
     <name>DaemonConnectionService</name>
     <message>
         <source>Could not reach the daemon. Check it is running and try again.</source>
@@ -1331,6 +1706,24 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Unsupported transport</source>
         <translation>असमर्थित ट्रांसपोर्ट</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>चैनल</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DMs</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>मॉडल %1 डिस्क पर मौजूद नहीं है: %2</translation>
     </message>
 </context>
 <context>
@@ -1446,6 +1839,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Searching…</source>
         <translation>खोज जारी है…</translation>
+    </message>
+    <message>
+        <source>gated</source>
+        <translation>गेटेड</translation>
     </message>
     <message>
         <source>by %1</source>
@@ -1725,6 +2122,14 @@ You&apos;ll return to first-run setup.</source>
         <source>file %1/%2</source>
         <translation>फ़ाइल %1/%2</translation>
     </message>
+    <message>
+        <source>This repo is gated — accept its license on the Hub (and add a token if required), then retry.</source>
+        <translation>यह रिपॉज़िटरी गेटेड है — Hub पर इसका लाइसेंस स्वीकार करें (और आवश्यक हो तो टोकन जोड़ें), फिर पुनः प्रयास करें।</translation>
+    </message>
+    <message>
+        <source>Open license page</source>
+        <translation>लाइसेंस पृष्ठ खोलें</translation>
+    </message>
 </context>
 <context>
     <name>EditMenu</name>
@@ -1864,6 +2269,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>रिमोट</translation>
     </message>
     <message>
+        <source>Agent type (Enter to pick):</source>
+        <translation>एजेंट प्रकार (चुनने के लिए Enter):</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>एजेंट नाम</translation>
     </message>
@@ -1878,6 +2287,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model</source>
         <translation>मॉडल</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>बेस URL (जैसे https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>मॉडल id</translation>
     </message>
     <message>
         <source>Test</source>
@@ -1902,6 +2319,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Failed — </source>
         <translation>विफल — </translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>कस्टम एंडपॉइंट…</translation>
+    </message>
+    <message>
+        <source>custom</source>
+        <translation>कस्टम</translation>
     </message>
     <message>
         <source>Local: App-managed (press to Attach instead)</source>
@@ -1929,6 +2354,14 @@ You&apos;ll return to first-run setup.</source>
         <translation>साइन इन</translation>
     </message>
     <message>
+        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
+        <translation>एजेंट का प्रकार चुनें: नेटिव आगे एक मॉडल चुनता है; एक विदेशी ACP एजेंट अपना खुद का लाता है।</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>जारी रखें</translation>
+    </message>
+    <message>
         <source>Pick a provider and a model, then Finish.</source>
         <translation>एक प्रदाता और एक मॉडल चुनें, फिर समाप्त करें।</translation>
     </message>
@@ -1946,6 +2379,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Almost there - confirm an inference model.</source>
         <translation>बस थोड़ा और - एक इन्फ़रेंस मॉडल की पुष्टि करें।</translation>
+    </message>
+    <message>
+        <source>What kind of agent do you want?</source>
+        <translation>आप किस प्रकार का एजेंट चाहते हैं?</translation>
     </message>
     <message>
         <source>Sign in to the node to continue.</source>
@@ -1976,6 +2413,18 @@ You&apos;ll return to first-run setup.</source>
         <translation>साइन इन हो रहा है…</translation>
     </message>
     <message>
+        <source>Agent type</source>
+        <translation>एजेंट प्रकार</translation>
+    </message>
+    <message>
+        <source>Runs in the daemon — pick a provider and model next.</source>
+        <translation>डेमॉन में चलता है — आगे एक प्रदाता और मॉडल चुनें।</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
+        <translation>यह एजेंट एक विदेशी ACP इंजन चलाता है — यह अपना खुद का मॉडल लाता है, इसलिए किसी प्रदाता, मॉडल या कुंजी की आवश्यकता नहीं है।</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>एजेंट नाम</translation>
     </message>
@@ -1991,12 +2440,20 @@ You&apos;ll return to first-run setup.</source>
         <source>Finish setup</source>
         <translation>सेटअप समाप्त करें</translation>
     </message>
+    <message>
+        <source>Continue</source>
+        <translation>जारी रखें</translation>
+    </message>
 </context>
 <context>
     <name>FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>नोड तक नहीं पहुँच सका। लक्ष्य जाँचें और फिर से प्रयास करें।</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>आपके मॉडल तक नहीं पहुँच सके — प्रदाता जाँचें और फिर से प्रयास करें।</translation>
     </message>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
@@ -2006,12 +2463,48 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>FleetPage</name>
     <message>
+        <source>Steer this agent</source>
+        <translation>इस एजेंट को दिशा दें</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>भेजें</translation>
+    </message>
+    <message>
+        <source>Message to inject…</source>
+        <translation>इंजेक्ट करने के लिए संदेश…</translation>
+    </message>
+    <message>
+        <source>Steers the running turn without interrupting it.</source>
+        <translation>चल रहे टर्न को बाधित किए बिना उसे दिशा देता है।</translation>
+    </message>
+    <message>
+        <source>The agent is idle — this starts a new turn.</source>
+        <translation>एजेंट निष्क्रिय है — यह एक नया टर्न शुरू करता है।</translation>
+    </message>
+    <message>
         <source>Fleet</source>
         <translation>फ़्लीट</translation>
     </message>
     <message>
         <source>Refresh</source>
         <translation>रिफ़्रेश करें</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>विदेशी</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>नेटिव</translation>
+    </message>
+    <message>
+        <source>Steer…</source>
+        <translation>दिशा दें…</translation>
+    </message>
+    <message>
+        <source>Cancel the running turn</source>
+        <translation>चल रहे टर्न को रद्द करें</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -2649,6 +3142,10 @@ Thanks — proceeding with: %1
 <context>
     <name>ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>मॉडल निरीक्षण विफल</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>सेट-मॉडल संचालन विफल</translation>
     </message>
@@ -2663,6 +3160,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Activate failed</source>
         <translation>सक्रिय करना विफल</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>क्वांटाइज़ प्रारंभ होने में विफल</translation>
     </message>
 </context>
 <context>
@@ -2731,6 +3232,30 @@ Start one from the Discover tab.</source>
         <translation>कोई सक्रिय डाउनलोड नहीं।
 डिस्कवर टैब से एक शुरू करें।</translation>
     </message>
+    <message>
+        <source>Quantize jobs</source>
+        <translation>क्वांटाइज़ जॉब्स</translation>
+    </message>
+    <message>
+        <source>Quantizing %1</source>
+        <translation>%1 को क्वांटाइज़ किया जा रहा है</translation>
+    </message>
+    <message>
+        <source>Working…</source>
+        <translation>कार्य हो रहा है…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>पूर्ण</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>विफल</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>कतार में</translation>
+    </message>
 </context>
 <context>
     <name>ModelsInstalled</name>
@@ -2753,6 +3278,18 @@ Start one from the Discover tab.</source>
     <message>
         <source> GiB</source>
         <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Model missing — the file was moved or deleted.</source>
+        <translation>मॉडल मौजूद नहीं — फ़ाइल स्थानांतरित या हटा दी गई थी।</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>पुनः डाउनलोड करें</translation>
+    </message>
+    <message>
+        <source>Re-quantize…</source>
+        <translation>पुनः क्वांटाइज़ करें…</translation>
     </message>
     <message>
         <source>Active</source>
@@ -2834,22 +3371,6 @@ Start one from the Discover tab.</source>
     <message>
         <source>Engine</source>
         <translation>इंजन</translation>
-    </message>
-    <message>
-        <source>daemon-core (native)</source>
-        <translation>daemon-core (नेटिव)</translation>
-    </message>
-    <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>इंस्टॉल किया गया</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>इंस्टॉल नहीं किया गया</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
@@ -3224,6 +3745,14 @@ Start one from the Discover tab.</source>
         <translation>+ नई प्रोफ़ाइल</translation>
     </message>
     <message>
+        <source>Foreign</source>
+        <translation>विदेशी</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>नेटिव</translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>नई प्रोफ़ाइल</translation>
     </message>
@@ -3511,6 +4040,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>रीज़निंग</translation>
     </message>
     <message>
+        <source>exit %1</source>
+        <translation>एग्ज़िट %1</translation>
+    </message>
+    <message>
         <source>[image: </source>
         <translation>[छवि: </translation>
     </message>
@@ -3562,12 +4095,24 @@ A generic, non-transcript page hosted by the same tab strip.
         <source>[math] </source>
         <translation>[गणित] </translation>
     </message>
+    <message>
+        <source>  [installed]</source>
+        <translation>  [इंस्टॉल किया गया]</translation>
+    </message>
+    <message>
+        <source>  [not installed]</source>
+        <translation>  [इंस्टॉल नहीं किया गया]</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
     <message>
         <source>Choose a quantization</source>
         <translation>एक क्वांटाइज़ेशन चुनें</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>एक लक्ष्य क्वांटाइज़ेशन चुनें</translation>
     </message>
     <message>
         <source>Recommended: %1</source>
@@ -3580,6 +4125,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>tight</source>
         <translation>तंग</translation>
+    </message>
+    <message>
+        <source>Needs about %1 of disk space.</source>
+        <translation>लगभग %1 डिस्क स्थान की आवश्यकता है।</translation>
+    </message>
+    <message>
+        <source>Quantize to recommended</source>
+        <translation>अनुशंसित पर क्वांटाइज़ करें</translation>
     </message>
     <message>
         <source>Download recommended</source>
@@ -3608,6 +4161,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Download</source>
         <translation>डाउनलोड करें</translation>
+    </message>
+    <message>
+        <source>Quantize</source>
+        <translation>क्वांटाइज़ करें</translation>
     </message>
     <message>
         <source>Close</source>
@@ -3665,6 +4222,21 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Reasoning</source>
         <translation>रीज़निंग</translation>
+    </message>
+</context>
+<context>
+    <name>RewindConfirmDialog</name>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>इस चेकपॉइंट पर रिवाइंड करें?</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>रिवाइंड</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>यह चयनित बिंदु के बाद सत्र के टर्न हटा देता है।</translation>
     </message>
 </context>
 <context>
@@ -3762,6 +4334,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>प्रयास:  %1</translation>
     </message>
     <message>
+        <source>Approval: %1</source>
+        <translation>अनुमोदन: %1</translation>
+    </message>
+    <message>
         <source>Fast:    %1</source>
         <translation>तेज़:    %1</translation>
     </message>
@@ -3778,8 +4354,48 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>विस्तृत: %1</translation>
     </message>
     <message>
-        <source>%1  ·  %2  ·  %3 tok%4</source>
-        <translation>%1  ·  %2  ·  %3 टोक%4</translation>
+        <source>  ·  %1 tok</source>
+        <translation>  ·  %1 टोकन</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2%3%4</source>
+        <translation>%1  ·  %2%3%4</translation>
+    </message>
+    <message>
+        <source>Rewind is managed by the foreign agent · Esc closes</source>
+        <translation>रिवाइंड विदेशी एजेंट द्वारा प्रबंधित है · Esc बंद करता है</translation>
+    </message>
+    <message>
+        <source>Enter rewinds to the selected checkpoint (confirmed) · Esc closes</source>
+        <translation>Enter चयनित चेकपॉइंट पर रिवाइंड करता है (पुष्टि की गई) · Esc बंद करता है</translation>
+    </message>
+    <message>
+        <source>Rewind…</source>
+        <translation>रिवाइंड…</translation>
+    </message>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>इस चेकपॉइंट पर रिवाइंड करें?</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>यह चयनित बिंदु के बाद सत्र के टर्न हटा देता है।</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>रिवाइंड</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>रद्द करें</translation>
+    </message>
+    <message>
+        <source>Steer this agent</source>
+        <translation>इस एजेंट को दिशा दें</translation>
+    </message>
+    <message>
+        <source>Steer this agent (idle — starts a turn)</source>
+        <translation>इस एजेंट को दिशा दें (निष्क्रिय — एक टर्न शुरू करता है)</translation>
     </message>
     <message>
         <source>  (current)</source>
@@ -3792,14 +4408,6 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Checkpoints</source>
         <translation>चेकपॉइंट</translation>
-    </message>
-    <message>
-        <source>Enter restores the selected checkpoint · Esc closes</source>
-        <translation>Enter चयनित चेकपॉइंट पुनर्स्थापित करता है · Esc बंद करता है</translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation>पुनर्स्थापित करें</translation>
     </message>
     <message>
         <source> 0/0 </source>
@@ -3912,6 +4520,13 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Make primary</source>
         <translation>प्राथमिक बनाएँ</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>रूटिंग परिवर्तन विफल</translation>
     </message>
 </context>
 <context>
@@ -4121,6 +4736,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>किसी daemon से कनेक्ट नहीं</translation>
     </message>
     <message>
+        <source>The session rejected the command</source>
+        <translation>सत्र ने कमांड अस्वीकार कर दी</translation>
+    </message>
+    <message>
         <source>SessionUpdateMeta failed</source>
         <translation>SessionUpdateMeta विफल</translation>
     </message>
@@ -4312,6 +4931,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>सत्र</translation>
     </message>
     <message>
+        <source>Active</source>
+        <translation>सक्रिय</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>संग्रहीत</translation>
+    </message>
+    <message>
         <source>LIVE</source>
         <translation>लाइव</translation>
     </message>
@@ -4322,6 +4949,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source> tok</source>
         <translation> टोक</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>पुनर्स्थापित करें</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -5047,6 +5678,14 @@ Thanks — proceeding with: %1
         <translation>टर्न %1।</translation>
     </message>
     <message>
+        <source>Set up a provider to send your first message.</source>
+        <translation>अपना पहला संदेश भेजने के लिए एक प्रदाता सेट करें।</translation>
+    </message>
+    <message>
+        <source>Set up provider</source>
+        <translation>प्रदाता सेट करें</translation>
+    </message>
+    <message>
         <source>Select a session</source>
         <translation>एक सत्र चुनें</translation>
     </message>
@@ -5126,6 +5765,18 @@ Thanks — proceeding with: %1
     <message>
         <source>Choose a quantization</source>
         <translation>एक क्वांटाइज़ेशन चुनें</translation>
+    </message>
+    <message>
+        <source>  [gated]</source>
+        <translation>  [गेटेड]</translation>
+    </message>
+    <message>
+        <source>Re-quantize — pick an installed model</source>
+        <translation>पुनः क्वांटाइज़ करें — एक इंस्टॉल किया गया मॉडल चुनें</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>एक लक्ष्य क्वांटाइज़ेशन चुनें</translation>
     </message>
     <message>
         <source>Go to file</source>
@@ -5411,14 +6062,6 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
-
-</source>
-        <translation>इंस्टॉल किए गए मॉडल, GUI के साथ साझा। **j/k** चलें · **Enter** सक्रिय करता है · **x** हटाता है · **d** एक मॉडल डाउनलोड करें (रेपो → क्वांट)।
-
-</translation>
-    </message>
-    <message>
         <source>## Installed
 
 </source>
@@ -5435,9 +6078,21 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>- %1**%2** (%3)%4
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant) · **q** re-quantize an installed model.
+
 </source>
-        <translation>- %1**%2** (%3)%4
+        <translation>इंस्टॉल किए गए मॉडल, GUI के साथ साझा। **j/k** स्थानांतरित करें · **Enter** सक्रिय करता है · **x** हटाता है · **d** एक मॉडल डाउनलोड करें (repo → quant) · **q** एक इंस्टॉल किया गया मॉडल पुनः क्वांटाइज़ करें।
+
+</translation>
+    </message>
+    <message>
+        <source> — **missing on disk** (re-download from Discover)</source>
+        <translation> — **डिस्क पर मौजूद नहीं** (Discover से पुनः डाउनलोड करें)</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4%5
+</source>
+        <translation>- %1**%2** (%3)%4%5
 </translation>
     </message>
     <message>
@@ -5456,6 +6111,20 @@ Thanks — proceeding with: %1
         <source>- %1 — %2%  · %3
 </source>
         <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Quantize jobs
+
+</source>
+        <translation>## क्वांटाइज़ जॉब्स
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%3
+</source>
+        <translation>- %1 — %2%3
 </translation>
     </message>
     <message>
@@ -5559,6 +6228,18 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
+        <source>Native</source>
+        <translation>नेटिव</translation>
+    </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>विदेशी</translation>
+    </message>
+    <message>
         <source># Profiles
 
 </source>
@@ -5585,6 +6266,12 @@ Thanks — proceeding with: %1
     <message>
         <source> (default)</source>
         <translation> (डिफ़ॉल्ट)</translation>
+    </message>
+    <message>
+        <source>- Engine: %1
+</source>
+        <translation>- इंजन: %1
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -5881,17 +6568,85 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
 
 </source>
-        <translation>ऑर्केस्ट्रेटर/वर्कर ट्री, GUI के साथ साझा। **j/k** चलें · **Space/Enter** रोकें/फिर से शुरू करें।
+        <translation>ऑर्केस्ट्रेटर/वर्कर ट्री, GUI के साथ साझा। **j/k** स्थानांतरित करें · **Space/Enter** रोकें/पुनः आरंभ करें · **t** एक चाइल्ड को दिशा दें · **c** इसका टर्न रद्द करें।
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`)
+        <source>- %1%2 — %3 (`%4`) · %5
 </source>
-        <translation>- %1%2 — %3 (`%4`)
+        <translation>- %1%2 — %3 (`%4`) · %5
+</translation>
+    </message>
+    <message>
+        <source># Sessions — Archived
+
+</source>
+        <translation># सत्र — संग्रहीत
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **r**/**Enter** restore · **v** back to active.
+
+</source>
+        <translation>**j/k** स्थानांतरित करें · **r**/**Enter** पुनर्स्थापित करें · **v** सक्रिय पर वापस जाएँ।
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close · **v** archived.
+
+</source>
+        <translation>**j/k** स्थानांतरित करें · **s** निलंबित करें · **R**/**Enter** पुनः आरंभ करें · **x** बंद करें · **v** संग्रहीत।
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
+
+</source>
+        <translation>**j/k** स्थानांतरित करें · **a**/**Enter** अनुमोदित करें · **p** स्थायी रूप से अनुमति दें · **d** अस्वीकार करें।
+
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+</source>
+        <translation>- कमांड: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- _Can be allowed permanently (**p**)._
+</source>
+        <translation>- _स्थायी रूप से अनुमति दी जा सकती है (**p**)।_
+</translation>
+    </message>
+    <message>
+        <source>Chat pins (origin → session), shared with the GUI routing manager. **j/k** move · **x** unbind.
+
+</source>
+        <translation>चैट पिन (मूल → सत्र), GUI रूटिंग प्रबंधक के साथ साझा। **j/k** स्थानांतरित करें · **x** अनबाइंड करें।
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2 · %3** ⇄ `%4`%5
+</source>
+        <translation>- %1**%2 · %3** ⇄ `%4`%5
+</translation>
+    </message>
+    <message>
+        <source> (agent `%1`)</source>
+        <translation> (एजेंट `%1`)</translation>
+    </message>
+    <message>
+        <source>_No chat pins yet — pin a room/DM to a session from the GUI routing manager or a room row._
+</source>
+        <translation>_अभी तक कोई चैट पिन नहीं — GUI रूटिंग प्रबंधक या किसी कक्ष पंक्ति से किसी कक्ष/DM को किसी सत्र पर पिन करें।_
 </translation>
     </message>
     <message>
@@ -5903,17 +6658,15 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
-
-</source>
-        <translation>**j/k** चलें · **s** निलंबित करें · **R**/**Enter** फिर से शुरू करें · **x** बंद करें।
-
-</translation>
-    </message>
-    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 टोक
+</translation>
+    </message>
+    <message>
+        <source>_No archived sessions._
+</source>
+        <translation>_कोई संग्रहीत सत्र नहीं।_
 </translation>
     </message>
     <message>
@@ -5931,14 +6684,6 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
-
-</source>
-        <translation>**j/k** चलें · **a**/**Enter** अनुमोदित करें · **d** अस्वीकार करें।
-
-</translation>
-    </message>
-    <message>
         <source>## %1%2 (%3 risk)
 
 </source>
@@ -5953,38 +6698,12 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
-        <source>- Command: `%1`
-
-</source>
-        <translation>- कमांड: `%1`
-
-</translation>
-    </message>
-    <message>
         <source># Routing
 
 </source>
         <translation># रूटिंग
 
 </translation>
-    </message>
-    <message>
-        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
-
-</source>
-        <translation>इंटेंट → मॉडल नियम, GUI के साथ साझा। **j/k** चलें · **Space/Enter** टॉगल करें · **x** हटाएँ।
-
-</translation>
-    </message>
-    <message>
-        <source>- %1**%2** → `%3` (fallback `%4`)%5
-</source>
-        <translation>- %1**%2** → `%3` (फ़ॉलबैक `%4`)%5
-</translation>
-    </message>
-    <message>
-        <source> — _disabled_</source>
-        <translation> — _अक्षम_</translation>
     </message>
     <message>
         <source># Scheduled jobs
@@ -6115,10 +6834,10 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
 
 </source>
-        <translation>Events-IO ट्रांसपोर्ट खाते और उनके लाइव रूम, GUI के साथ साझा। इस स्लाइस में दोनों शेल में केवल-पढ़ने योग्य - कनेक्ट करना स्थगित है (EIO-2)।
+        <translation>Events-IO ट्रांसपोर्ट खाते और उनके लाइव कक्ष, GUI के साथ साझा। कनेक्ट करना स्थगित है (EIO-2); डिस्कनेक्ट/हटाने के लिए अभी कोई वायर ऑप नहीं है (B3 - node-first फ़ॉलो-अप)। एक संग्रहीत क्रेडेंशियल को Accounts पृष्ठ से हटाया जा सकता है (बाउंड प्रोफ़ाइल पर &apos;x&apos;)।
 
 </translation>
     </message>
@@ -6153,16 +6872,16 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
-        <source>  - %1
-</source>
-        <translation>  - %1
-</translation>
+        <source>  - %1</source>
+        <translation>  - %1</translation>
     </message>
     <message>
-        <source>  - %1 · %2
-</source>
-        <translation>  - %1 · %2
-</translation>
+        <source>  - %1 · %2</source>
+        <translation>  - %1 · %2</translation>
+    </message>
+    <message>
+        <source> · ⇄ `%1`</source>
+        <translation> · ⇄ `%1`</translation>
     </message>
     <message>
         <source>## Add channel
@@ -6304,6 +7023,17 @@ _कोई एजेंट चयनित नहीं।_
     </message>
 </context>
 <context>
+    <name>auth::AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>यह साइन-इन लिंक समाप्त हो गया — फिर से प्रयास करें।</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>इस बिल्ड में साइन-इन उपलब्ध नहीं है।</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::ApprovalRepository</name>
     <message>
         <source>Approval decision failed</source>
@@ -6311,10 +7041,43 @@ _कोई एजेंट चयनित नहीं।_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>साइन-इन प्रदाता सूची पढ़ने में विफल</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>साइन-इन प्रवाह प्रारंभ नहीं किया जा सका</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>साइन-इन पूरा नहीं किया जा सका</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>चेकपॉइंट रिवाइंड विफल</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
         <translation>क्रेडेंशियल संचालन विफल</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>चेकपॉइंट</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>%1 से पहले</translation>
     </message>
 </context>
 <context>
@@ -6381,6 +7144,17 @@ _कोई एजेंट चयनित नहीं।_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>चैनल</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DMs</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -6428,6 +7202,10 @@ _कोई एजेंट चयनित नहीं।_
 <context>
     <name>daemonapp::daemon::ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>मॉडल निरीक्षण विफल</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>सेट-मॉडल संचालन विफल</translation>
     </message>
@@ -6442,6 +7220,10 @@ _कोई एजेंट चयनित नहीं।_
     <message>
         <source>Activate failed</source>
         <translation>सक्रिय करना विफल</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>क्वांटाइज़ प्रारंभ होने में विफल</translation>
     </message>
 </context>
 <context>
@@ -6491,10 +7273,21 @@ _कोई एजेंट चयनित नहीं।_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>रूटिंग परिवर्तन विफल</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>Not connected to a daemon</source>
         <translation>किसी daemon से कनेक्ट नहीं</translation>
+    </message>
+    <message>
+        <source>The session rejected the command</source>
+        <translation>सत्र ने कमांड अस्वीकार कर दी</translation>
     </message>
     <message>
         <source>SessionUpdateMeta failed</source>
@@ -6523,6 +7316,10 @@ _कोई एजेंट चयनित नहीं।_
         <translation>नोड तक नहीं पहुँच सका। लक्ष्य जाँचें और फिर से प्रयास करें।</translation>
     </message>
     <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>आपके मॉडल तक नहीं पहुँच सके — प्रदाता जाँचें और फिर से प्रयास करें।</translation>
+    </message>
+    <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
         <translation>%1 के साथ इस API कुंजी की पुष्टि नहीं हो सकी — इसे जाँचें और फिर से प्रयास करें।</translation>
     </message>
@@ -6544,6 +7341,13 @@ _कोई एजेंट चयनित नहीं।_
     <message>
         <source>write failed</source>
         <translation>लिखना विफल</translation>
+    </message>
+</context>
+<context>
+    <name>models::DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>मॉडल %1 डिस्क पर मौजूद नहीं है: %2</translation>
     </message>
 </context>
 <context>

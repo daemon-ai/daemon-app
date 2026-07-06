@@ -43,6 +43,10 @@
         <translation>接続済みアカウント</translation>
     </message>
     <message>
+        <source>Sign in via browser…</source>
+        <translation>ブラウザでサインイン…</translation>
+    </message>
+    <message>
         <source>Add account</source>
         <translation>アカウントを追加</translation>
     </message>
@@ -215,8 +219,36 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>AgentInferencePicker</name>
     <message>
+        <source>Custom endpoint…</source>
+        <translation>カスタムエンドポイント…</translation>
+    </message>
+    <message>
         <source>Provider</source>
         <translation>プロバイダー</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>ベース URL</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>ベース URL（例: https://…）</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>モデル ID</translation>
+    </message>
+    <message>
+        <source>model id (as your server names it)</source>
+        <translation>モデル ID（サーバーでの名前）</translation>
+    </message>
+    <message>
+        <source>The endpoint is used as-is — your first message verifies it, and a failure will guide you back here.</source>
+        <translation>エンドポイントはそのまま使用されます — 最初のメッセージで検証され、失敗した場合はここに戻ります。</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>API キー（任意）</translation>
     </message>
     <message>
         <source>Paste API key</source>
@@ -324,6 +356,32 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source> (default)</source>
         <translation> （デフォルト）</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypePicker</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core（ネイティブ）</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>インストール済み</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>未インストール</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypeView</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core（ネイティブ）</translation>
     </message>
 </context>
 <context>
@@ -439,6 +497,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>拒否</translation>
     </message>
     <message>
+        <source>Allow permanently</source>
+        <translation>常に許可</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>承認</translation>
     </message>
@@ -478,7 +540,178 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>このサインインリンクは期限切れです — もう一度お試しください。</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>このビルドではサインインを利用できません。</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowDialog</name>
+    <message>
+        <source>Sign in</source>
+        <translation>サインイン</translation>
+    </message>
+    <message>
+        <source>Open this link in your browser (copy it):</source>
+        <translation>このリンクをブラウザで開いてください（コピー）:</translation>
+    </message>
+    <message>
+        <source>Then paste the redirect URL here:</source>
+        <translation>その後、リダイレクト URL をここに貼り付けてください:</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>サインインを完了</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>キャンセル</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>サインインを準備中…</translation>
+    </message>
+    <message>
+        <source>Waiting for your browser to finish… (or paste below)</source>
+        <translation>ブラウザの完了を待機中…（または下に貼り付け）</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>ブラウザでサインインを完了し、リダイレクト URL を下に貼り付けてください。</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>サインインを完了中…</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1 としてサインイン済み</translation>
+    </message>
+    <message>
+        <source>Sign-in failed: %1</source>
+        <translation>サインインに失敗しました: %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>サインインをキャンセルしました</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowLauncher</name>
+    <message>
+        <source>Sign in — pick a provider</source>
+        <translation>サインイン — プロバイダーを選択</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowSheet</name>
+    <message>
+        <source>Sign in</source>
+        <translation>サインイン</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>閉じる</translation>
+    </message>
+    <message>
+        <source>No browser sign-in providers are available on this node.</source>
+        <translation>このノードで利用できるブラウザサインインプロバイダーはありません。</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>プロバイダー</translation>
+    </message>
+    <message>
+        <source>Sign in via browser</source>
+        <translation>ブラウザでサインイン</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>サインインを準備中…</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>サインインを完了中…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser. Waiting for it to finish…</source>
+        <translation>ブラウザでサインインを完了してください。完了を待機中…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>ブラウザでサインインを完了し、リダイレクト URL を下に貼り付けてください。</translation>
+    </message>
+    <message>
+        <source>Copy sign-in link</source>
+        <translation>サインインリンクをコピー</translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>ブラウザで開く</translation>
+    </message>
+    <message>
+        <source>Paste the redirect URL</source>
+        <translation>リダイレクト URL を貼り付け</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>サインインを完了</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1 としてサインイン済み</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>サインインをキャンセルしました</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>サインインに失敗しました</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>再試行</translation>
+    </message>
+</context>
+<context>
+    <name>AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>サインインプロバイダーの一覧を読み込めませんでした</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>サインインフローを開始できませんでした</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>サインインを完了できませんでした</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
+    <message>
+        <source>Remove stored credential?</source>
+        <translation>保存された資格情報を削除しますか？</translation>
+    </message>
+    <message>
+        <source>Remove credential</source>
+        <translation>資格情報を削除</translation>
+    </message>
+    <message>
+        <source>Removes the credential stored for profile “%1” (used by %2).</source>
+        <translation>プロファイル「%1」に保存された資格情報（%2 が使用）を削除します。</translation>
+    </message>
+    <message>
+        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
+        <translation>ノード上のアカウントのトランスポートセッションには影響しません — 切断／削除の操作はまだ利用できません。</translation>
+    </message>
     <message>
         <source>Channels</source>
         <translation>チャンネル</translation>
@@ -496,8 +729,32 @@ You&apos;ll return to first-run setup.</source>
         <translation>%1 · %2</translation>
     </message>
     <message>
+        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
+        <translation>切断はまだ利用できません — ノードにトランスポート切断の操作がありません</translation>
+    </message>
+    <message>
+        <source>Remove the stored credential…</source>
+        <translation>保存された資格情報を削除…</translation>
+    </message>
+    <message>
         <source>No rooms.</source>
         <translation>ルームがありません。</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned to this session — open the routing manager</source>
+        <translation>このセッションにピン留め済み — ルーティングマネージャーを開く</translation>
+    </message>
+    <message>
+        <source>Pin to agent…</source>
+        <translation>エージェントにピン留め…</translation>
+    </message>
+    <message>
+        <source>Route this room&apos;s messages to a session</source>
+        <translation>このルームのメッセージをセッションにルーティング</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -540,6 +797,28 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>チェックポイントの巻き戻しに失敗しました</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointTimeline</name>
+    <message>
+        <source>%1 · %2 — rewind is managed by the foreign agent</source>
+        <translation>%1 · %2 — 巻き戻しは外部エージェントが管理します</translation>
+    </message>
+    <message>
+        <source>%1 · %2 (current)</source>
+        <translation>%1 · %2（現在）</translation>
+    </message>
+    <message>
+        <source>%1 · %2 — click to rewind</source>
+        <translation>%1 · %2 — クリックで巻き戻し</translation>
+    </message>
+</context>
+<context>
     <name>CheckpointsPopover</name>
     <message>
         <source>Checkpoints</source>
@@ -554,6 +833,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>手動チェックポイント</translation>
     </message>
     <message>
+        <source>Rewind is managed by the foreign agent</source>
+        <translation>巻き戻しは外部エージェントが管理します</translation>
+    </message>
+    <message>
         <source> tok</source>
         <translation> トークン</translation>
     </message>
@@ -564,6 +847,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Restore</source>
         <translation>復元</translation>
+    </message>
+    <message>
+        <source>No checkpoints yet</source>
+        <translation>チェックポイントはまだありません</translation>
     </message>
 </context>
 <context>
@@ -939,9 +1226,86 @@ You&apos;ll return to first-run setup.</source>
         <comment>composer mode badge</comment>
         <translation>詳細</translation>
     </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>ネイティブ</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>編集</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>自動</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>拒否</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>確認</translation>
+    </message>
+    <message>
+        <source>policy:</source>
+        <comment>approval-policy badge prefix</comment>
+        <translation>ポリシー:</translation>
+    </message>
 </context>
 <context>
     <name>ComposerControls</name>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>ネイティブ</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>エンジン</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>編集</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>自動</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>拒否</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>確認</translation>
+    </message>
+    <message>
+        <source>Approval policy (reflects last set value)</source>
+        <translation>承認ポリシー（最後に設定した値を反映）</translation>
+    </message>
+    <message>
+        <source>⇄ %1 +%2</source>
+        <translation>⇄ %1 +%2</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned from %1 — open the routing manager</source>
+        <translation>%1 からピン留め済み — ルーティングマネージャーを開く</translation>
+    </message>
     <message>
         <source>Checkpoints / rewind</source>
         <translation>チェックポイント / 巻き戻し</translation>
@@ -1271,6 +1635,17 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>チェックポイント</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>%1 の前</translation>
+    </message>
+</context>
+<context>
     <name>DaemonConnectionService</name>
     <message>
         <source>Could not reach the daemon. Check it is running and try again.</source>
@@ -1331,6 +1706,24 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Unsupported transport</source>
         <translation>サポートされていないトランスポート</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>チャンネル</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>モデル %1 がディスク上に見つかりません: %2</translation>
     </message>
 </context>
 <context>
@@ -1446,6 +1839,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Searching…</source>
         <translation>検索中…</translation>
+    </message>
+    <message>
+        <source>gated</source>
+        <translation>ゲート付き</translation>
     </message>
     <message>
         <source>by %1</source>
@@ -1725,6 +2122,14 @@ You&apos;ll return to first-run setup.</source>
         <source>file %1/%2</source>
         <translation>ファイル %1/%2</translation>
     </message>
+    <message>
+        <source>This repo is gated — accept its license on the Hub (and add a token if required), then retry.</source>
+        <translation>このリポジトリはゲート付きです — Hub でライセンスに同意し（必要ならトークンを追加）、再試行してください。</translation>
+    </message>
+    <message>
+        <source>Open license page</source>
+        <translation>ライセンスページを開く</translation>
+    </message>
 </context>
 <context>
     <name>EditMenu</name>
@@ -1862,6 +2267,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>リモート</translation>
     </message>
     <message>
+        <source>Agent type (Enter to pick):</source>
+        <translation>エージェントの種類（Enter で選択）:</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>エージェント名</translation>
     </message>
@@ -1876,6 +2285,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model</source>
         <translation>モデル</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>ベース URL（例: https://…）</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>モデル ID</translation>
     </message>
     <message>
         <source>Test</source>
@@ -1900,6 +2317,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Failed — </source>
         <translation>失敗 — </translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>カスタムエンドポイント…</translation>
+    </message>
+    <message>
+        <source>custom</source>
+        <translation>カスタム</translation>
     </message>
     <message>
         <source>Local: App-managed (press to Attach instead)</source>
@@ -1927,6 +2352,14 @@ You&apos;ll return to first-run setup.</source>
         <translation>サインイン</translation>
     </message>
     <message>
+        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
+        <translation>エージェントの種類を選択: ネイティブは次にモデルを選び、外部の ACP エージェントは独自のモデルを使用します。</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>続ける</translation>
+    </message>
+    <message>
         <source>Pick a provider and a model, then Finish.</source>
         <translation>プロバイダーとモデルを選択し、「完了」を押してください。</translation>
     </message>
@@ -1944,6 +2377,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Almost there - confirm an inference model.</source>
         <translation>あと少しです - 推論モデルを確認してください。</translation>
+    </message>
+    <message>
+        <source>What kind of agent do you want?</source>
+        <translation>どの種類のエージェントを使いますか？</translation>
     </message>
     <message>
         <source>Sign in to the node to continue.</source>
@@ -1974,6 +2411,18 @@ You&apos;ll return to first-run setup.</source>
         <translation>サインイン中…</translation>
     </message>
     <message>
+        <source>Agent type</source>
+        <translation>エージェントの種類</translation>
+    </message>
+    <message>
+        <source>Runs in the daemon — pick a provider and model next.</source>
+        <translation>デーモン内で実行されます — 次にプロバイダーとモデルを選択してください。</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
+        <translation>このエージェントは外部の ACP エンジンを実行します — 独自のモデルを使用するため、プロバイダー、モデル、キーは不要です。</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>エージェント名</translation>
     </message>
@@ -1989,12 +2438,20 @@ You&apos;ll return to first-run setup.</source>
         <source>Finish setup</source>
         <translation>セットアップを完了</translation>
     </message>
+    <message>
+        <source>Continue</source>
+        <translation>続ける</translation>
+    </message>
 </context>
 <context>
     <name>FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>ノードに到達できませんでした。ターゲットを確認して再試行してください。</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>モデルに接続できませんでした — プロバイダーを確認して再試行してください。</translation>
     </message>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
@@ -2004,12 +2461,48 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>FleetPage</name>
     <message>
+        <source>Steer this agent</source>
+        <translation>このエージェントを誘導</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>送信</translation>
+    </message>
+    <message>
+        <source>Message to inject…</source>
+        <translation>挿入するメッセージ…</translation>
+    </message>
+    <message>
+        <source>Steers the running turn without interrupting it.</source>
+        <translation>実行中のターンを中断せずに誘導します。</translation>
+    </message>
+    <message>
+        <source>The agent is idle — this starts a new turn.</source>
+        <translation>エージェントはアイドル状態です — 新しいターンを開始します。</translation>
+    </message>
+    <message>
         <source>Fleet</source>
         <translation>フリート</translation>
     </message>
     <message>
         <source>Refresh</source>
         <translation>更新</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>ネイティブ</translation>
+    </message>
+    <message>
+        <source>Steer…</source>
+        <translation>誘導…</translation>
+    </message>
+    <message>
+        <source>Cancel the running turn</source>
+        <translation>実行中のターンをキャンセル</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -2645,6 +3138,10 @@ Thanks — proceeding with: %1
 <context>
     <name>ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>モデルの検査に失敗しました</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>モデル設定の操作に失敗しました</translation>
     </message>
@@ -2659,6 +3156,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Activate failed</source>
         <translation>有効化に失敗しました</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>量子化を開始できませんでした</translation>
     </message>
 </context>
 <context>
@@ -2727,6 +3228,30 @@ Start one from the Discover tab.</source>
         <translation>アクティブなダウンロードはありません。
 「発見」タブから開始してください。</translation>
     </message>
+    <message>
+        <source>Quantize jobs</source>
+        <translation>量子化ジョブ</translation>
+    </message>
+    <message>
+        <source>Quantizing %1</source>
+        <translation>%1 を量子化中</translation>
+    </message>
+    <message>
+        <source>Working…</source>
+        <translation>処理中…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>完了</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>失敗</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>キュー待ち</translation>
+    </message>
 </context>
 <context>
     <name>ModelsInstalled</name>
@@ -2749,6 +3274,18 @@ Start one from the Discover tab.</source>
     <message>
         <source> GiB</source>
         <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Model missing — the file was moved or deleted.</source>
+        <translation>モデルが見つかりません — ファイルが移動または削除されました。</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>再ダウンロード</translation>
+    </message>
+    <message>
+        <source>Re-quantize…</source>
+        <translation>再量子化…</translation>
     </message>
     <message>
         <source>Active</source>
@@ -2830,22 +3367,6 @@ Start one from the Discover tab.</source>
     <message>
         <source>Engine</source>
         <translation>エンジン</translation>
-    </message>
-    <message>
-        <source>daemon-core (native)</source>
-        <translation>daemon-core（ネイティブ）</translation>
-    </message>
-    <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>インストール済み</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>未インストール</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
@@ -3220,6 +3741,14 @@ Start one from the Discover tab.</source>
         <translation>+ 新しいプロファイル</translation>
     </message>
     <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>ネイティブ</translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>新しいプロファイル</translation>
     </message>
@@ -3507,6 +4036,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>推論</translation>
     </message>
     <message>
+        <source>exit %1</source>
+        <translation>終了 %1</translation>
+    </message>
+    <message>
         <source>[image: </source>
         <translation>[画像: </translation>
     </message>
@@ -3558,12 +4091,24 @@ A generic, non-transcript page hosted by the same tab strip.
         <source>[math] </source>
         <translation>[数式] </translation>
     </message>
+    <message>
+        <source>  [installed]</source>
+        <translation>  [インストール済み]</translation>
+    </message>
+    <message>
+        <source>  [not installed]</source>
+        <translation>  [未インストール]</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
     <message>
         <source>Choose a quantization</source>
         <translation>量子化を選択</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>対象の量子化を選択</translation>
     </message>
     <message>
         <source>Recommended: %1</source>
@@ -3576,6 +4121,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>tight</source>
         <translation>ぎりぎり</translation>
+    </message>
+    <message>
+        <source>Needs about %1 of disk space.</source>
+        <translation>約 %1 のディスク容量が必要です。</translation>
+    </message>
+    <message>
+        <source>Quantize to recommended</source>
+        <translation>推奨設定で量子化</translation>
     </message>
     <message>
         <source>Download recommended</source>
@@ -3604,6 +4157,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Download</source>
         <translation>ダウンロード</translation>
+    </message>
+    <message>
+        <source>Quantize</source>
+        <translation>量子化</translation>
     </message>
     <message>
         <source>Close</source>
@@ -3661,6 +4218,21 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Reasoning</source>
         <translation>推論</translation>
+    </message>
+</context>
+<context>
+    <name>RewindConfirmDialog</name>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>このチェックポイントに巻き戻しますか？</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>巻き戻し</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>選択した時点以降のセッションのターンが破棄されます。</translation>
     </message>
 </context>
 <context>
@@ -3758,6 +4330,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>エフォート:  %1</translation>
     </message>
     <message>
+        <source>Approval: %1</source>
+        <translation>承認: %1</translation>
+    </message>
+    <message>
         <source>Fast:    %1</source>
         <translation>高速:    %1</translation>
     </message>
@@ -3774,8 +4350,48 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>詳細: %1</translation>
     </message>
     <message>
-        <source>%1  ·  %2  ·  %3 tok%4</source>
-        <translation>%1  ·  %2  ·  %3 トークン%4</translation>
+        <source>  ·  %1 tok</source>
+        <translation>  ·  %1 tok</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2%3%4</source>
+        <translation>%1  ·  %2%3%4</translation>
+    </message>
+    <message>
+        <source>Rewind is managed by the foreign agent · Esc closes</source>
+        <translation>巻き戻しは外部エージェントが管理します · Esc で閉じる</translation>
+    </message>
+    <message>
+        <source>Enter rewinds to the selected checkpoint (confirmed) · Esc closes</source>
+        <translation>Enter で選択したチェックポイントに巻き戻し（確認あり）· Esc で閉じる</translation>
+    </message>
+    <message>
+        <source>Rewind…</source>
+        <translation>巻き戻し…</translation>
+    </message>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>このチェックポイントに巻き戻しますか？</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>選択した時点以降のセッションのターンが破棄されます。</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>巻き戻し</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>キャンセル</translation>
+    </message>
+    <message>
+        <source>Steer this agent</source>
+        <translation>このエージェントを誘導</translation>
+    </message>
+    <message>
+        <source>Steer this agent (idle — starts a turn)</source>
+        <translation>このエージェントを誘導（アイドル — ターンを開始）</translation>
     </message>
     <message>
         <source>  (current)</source>
@@ -3788,14 +4404,6 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Checkpoints</source>
         <translation>チェックポイント</translation>
-    </message>
-    <message>
-        <source>Enter restores the selected checkpoint · Esc closes</source>
-        <translation>Enter で選択したチェックポイントを復元 · Esc で閉じる</translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation>復元</translation>
     </message>
     <message>
         <source> 0/0 </source>
@@ -3908,6 +4516,13 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Make primary</source>
         <translation>プライマリにする</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>ルーティングの変更に失敗しました</translation>
     </message>
 </context>
 <context>
@@ -4117,6 +4732,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>daemon に接続されていません</translation>
     </message>
     <message>
+        <source>The session rejected the command</source>
+        <translation>セッションがコマンドを拒否しました</translation>
+    </message>
+    <message>
         <source>SessionUpdateMeta failed</source>
         <translation>SessionUpdateMeta に失敗しました</translation>
     </message>
@@ -4307,6 +4926,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>セッション</translation>
     </message>
     <message>
+        <source>Active</source>
+        <translation>アクティブ</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>アーカイブ済み</translation>
+    </message>
+    <message>
         <source>LIVE</source>
         <translation>ライブ</translation>
     </message>
@@ -4317,6 +4944,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source> tok</source>
         <translation> トークン</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>復元</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -5040,6 +5671,14 @@ Thanks — proceeding with: %1
         <translation>ターンが %1。</translation>
     </message>
     <message>
+        <source>Set up a provider to send your first message.</source>
+        <translation>最初のメッセージを送信するにはプロバイダーを設定してください。</translation>
+    </message>
+    <message>
+        <source>Set up provider</source>
+        <translation>プロバイダーを設定</translation>
+    </message>
+    <message>
         <source>Select a session</source>
         <translation>セッションを選択</translation>
     </message>
@@ -5119,6 +5758,18 @@ Thanks — proceeding with: %1
     <message>
         <source>Choose a quantization</source>
         <translation>量子化を選択</translation>
+    </message>
+    <message>
+        <source>  [gated]</source>
+        <translation>  [ゲート付き]</translation>
+    </message>
+    <message>
+        <source>Re-quantize — pick an installed model</source>
+        <translation>再量子化 — インストール済みのモデルを選択</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>対象の量子化を選択</translation>
     </message>
     <message>
         <source>Go to file</source>
@@ -5404,14 +6055,6 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
-
-</source>
-        <translation>インストール済みのモデル。GUI と共有。**j/k** で移動 · **Enter** で有効化 · **x** で削除 · **d** でモデルをダウンロード（リポジトリ → 量子化）。
-
-</translation>
-    </message>
-    <message>
         <source>## Installed
 
 </source>
@@ -5428,9 +6071,21 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>- %1**%2** (%3)%4
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant) · **q** re-quantize an installed model.
+
 </source>
-        <translation>- %1**%2** (%3)%4
+        <translation>インストール済みモデル。GUI と共有されます。**j/k** で移動 · **Enter** で有効化 · **x** で削除 · **d** でモデルをダウンロード（リポジトリ → 量子化）· **q** でインストール済みモデルを再量子化。
+
+</translation>
+    </message>
+    <message>
+        <source> — **missing on disk** (re-download from Discover)</source>
+        <translation> — **ディスク上に見つかりません**（Discover から再ダウンロード）</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4%5
+</source>
+        <translation>- %1**%2** (%3)%4%5
 </translation>
     </message>
     <message>
@@ -5449,6 +6104,20 @@ Thanks — proceeding with: %1
         <source>- %1 — %2%  · %3
 </source>
         <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Quantize jobs
+
+</source>
+        <translation>## 量子化ジョブ
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%3
+</source>
+        <translation>- %1 — %2%3
 </translation>
     </message>
     <message>
@@ -5552,6 +6221,18 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
+        <source>Native</source>
+        <translation>ネイティブ</translation>
+    </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
         <source># Profiles
 
 </source>
@@ -5578,6 +6259,12 @@ Thanks — proceeding with: %1
     <message>
         <source> (default)</source>
         <translation> （デフォルト）</translation>
+    </message>
+    <message>
+        <source>- Engine: %1
+</source>
+        <translation>- エンジン: %1
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -5874,17 +6561,85 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
 
 </source>
-        <translation>オーケストレーター/ワーカーツリー。GUI と共有。**j/k** で移動 · **Space/Enter** で一時停止/再開。
+        <translation>オーケストレーター／ワーカーツリー。GUI と共有されます。**j/k** で移動 · **Space/Enter** で一時停止／再開 · **t** で子を誘導 · **c** でそのターンをキャンセル。
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`)
+        <source>- %1%2 — %3 (`%4`) · %5
 </source>
-        <translation>- %1%2 — %3 (`%4`)
+        <translation>- %1%2 — %3 (`%4`) · %5
+</translation>
+    </message>
+    <message>
+        <source># Sessions — Archived
+
+</source>
+        <translation># セッション — アーカイブ済み
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **r**/**Enter** restore · **v** back to active.
+
+</source>
+        <translation>**j/k** で移動 · **r**/**Enter** で復元 · **v** でアクティブに戻る。
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close · **v** archived.
+
+</source>
+        <translation>**j/k** で移動 · **s** で中断 · **R**/**Enter** で再開 · **x** で閉じる · **v** でアーカイブ。
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
+
+</source>
+        <translation>**j/k** で移動 · **a**/**Enter** で承認 · **p** で常に許可 · **d** で拒否。
+
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+</source>
+        <translation>- コマンド: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- _Can be allowed permanently (**p**)._
+</source>
+        <translation>- _常に許可できます（**p**）。_
+</translation>
+    </message>
+    <message>
+        <source>Chat pins (origin → session), shared with the GUI routing manager. **j/k** move · **x** unbind.
+
+</source>
+        <translation>チャットのピン留め（発信元 → セッション）。GUI のルーティングマネージャーと共有されます。**j/k** で移動 · **x** で解除。
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2 · %3** ⇄ `%4`%5
+</source>
+        <translation>- %1**%2 · %3** ⇄ `%4`%5
+</translation>
+    </message>
+    <message>
+        <source> (agent `%1`)</source>
+        <translation> （エージェント `%1`）</translation>
+    </message>
+    <message>
+        <source>_No chat pins yet — pin a room/DM to a session from the GUI routing manager or a room row._
+</source>
+        <translation>_チャットのピン留めはまだありません — GUI のルーティングマネージャーまたはルーム行からルーム／DM をセッションにピン留めしてください。_
 </translation>
     </message>
     <message>
@@ -5896,17 +6651,15 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
-
-</source>
-        <translation>**j/k** で移動 · **s** で一時停止 · **R**/**Enter** で再開 · **x** で閉じる。
-
-</translation>
-    </message>
-    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 トークン
+</translation>
+    </message>
+    <message>
+        <source>_No archived sessions._
+</source>
+        <translation>_アーカイブ済みセッションはありません。_
 </translation>
     </message>
     <message>
@@ -5924,14 +6677,6 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
-
-</source>
-        <translation>**j/k** で移動 · **a**/**Enter** で承認 · **d** で拒否。
-
-</translation>
-    </message>
-    <message>
         <source>## %1%2 (%3 risk)
 
 </source>
@@ -5946,38 +6691,12 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>- Command: `%1`
-
-</source>
-        <translation>- コマンド: `%1`
-
-</translation>
-    </message>
-    <message>
         <source># Routing
 
 </source>
         <translation># ルーティング
 
 </translation>
-    </message>
-    <message>
-        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
-
-</source>
-        <translation>インテント → モデルのルール。GUI と共有。**j/k** で移動 · **Space/Enter** で切り替え · **x** で削除。
-
-</translation>
-    </message>
-    <message>
-        <source>- %1**%2** → `%3` (fallback `%4`)%5
-</source>
-        <translation>- %1**%2** → `%3`（フォールバック `%4`）%5
-</translation>
-    </message>
-    <message>
-        <source> — _disabled_</source>
-        <translation> — _無効_</translation>
     </message>
     <message>
         <source># Scheduled jobs
@@ -6108,10 +6827,10 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
 
 </source>
-        <translation>Events-IO トランスポートのアカウントとそのライブルーム。GUI と共有。このスライスではどちらのシェルでも読み取り専用です - 接続は延期されています（EIO-2）。
+        <translation>Events-IO トランスポートアカウントとそのライブルーム。GUI と共有されます。接続は保留されています（EIO-2）。切断／削除のワイヤ操作はまだありません（B3 - ノード優先のフォローアップ）。保存された資格情報はアカウントページから削除できます（バインドされたプロファイルで「x」）。
 
 </translation>
     </message>
@@ -6146,16 +6865,16 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>  - %1
-</source>
-        <translation>  - %1
-</translation>
+        <source>  - %1</source>
+        <translation>  - %1</translation>
     </message>
     <message>
-        <source>  - %1 · %2
-</source>
-        <translation>  - %1 · %2
-</translation>
+        <source>  - %1 · %2</source>
+        <translation>  - %1 · %2</translation>
+    </message>
+    <message>
+        <source> · ⇄ `%1`</source>
+        <translation> · ⇄ `%1`</translation>
     </message>
     <message>
         <source>## Add channel
@@ -6297,6 +7016,17 @@ _エージェントが選択されていません。_
     </message>
 </context>
 <context>
+    <name>auth::AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>このサインインリンクは期限切れです — もう一度お試しください。</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>このビルドではサインインを利用できません。</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::ApprovalRepository</name>
     <message>
         <source>Approval decision failed</source>
@@ -6304,10 +7034,43 @@ _エージェントが選択されていません。_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>サインインプロバイダーの一覧を読み込めませんでした</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>サインインフローを開始できませんでした</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>サインインを完了できませんでした</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>チェックポイントの巻き戻しに失敗しました</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
         <translation>認証情報の操作に失敗しました</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>チェックポイント</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>%1 の前</translation>
     </message>
 </context>
 <context>
@@ -6374,6 +7137,17 @@ _エージェントが選択されていません。_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>チャンネル</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -6421,6 +7195,10 @@ _エージェントが選択されていません。_
 <context>
     <name>daemonapp::daemon::ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>モデルの検査に失敗しました</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>モデル設定の操作に失敗しました</translation>
     </message>
@@ -6435,6 +7213,10 @@ _エージェントが選択されていません。_
     <message>
         <source>Activate failed</source>
         <translation>有効化に失敗しました</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>量子化を開始できませんでした</translation>
     </message>
 </context>
 <context>
@@ -6484,10 +7266,21 @@ _エージェントが選択されていません。_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>ルーティングの変更に失敗しました</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>Not connected to a daemon</source>
         <translation>daemon に接続されていません</translation>
+    </message>
+    <message>
+        <source>The session rejected the command</source>
+        <translation>セッションがコマンドを拒否しました</translation>
     </message>
     <message>
         <source>SessionUpdateMeta failed</source>
@@ -6516,6 +7309,10 @@ _エージェントが選択されていません。_
         <translation>ノードに到達できませんでした。ターゲットを確認して再試行してください。</translation>
     </message>
     <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>モデルに接続できませんでした — プロバイダーを確認して再試行してください。</translation>
+    </message>
+    <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
         <translation>%1 でこのAPIキーを検証できませんでした — 確認して再試行してください。</translation>
     </message>
@@ -6537,6 +7334,13 @@ _エージェントが選択されていません。_
     <message>
         <source>write failed</source>
         <translation>書き込みに失敗しました</translation>
+    </message>
+</context>
+<context>
+    <name>models::DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>モデル %1 がディスク上に見つかりません: %2</translation>
     </message>
 </context>
 <context>

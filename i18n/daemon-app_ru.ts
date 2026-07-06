@@ -43,6 +43,10 @@
         <translation>Подключённые аккаунты</translation>
     </message>
     <message>
+        <source>Sign in via browser…</source>
+        <translation>Войти через браузер…</translation>
+    </message>
+    <message>
         <source>Add account</source>
         <translation>Добавить аккаунт</translation>
     </message>
@@ -215,8 +219,36 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>AgentInferencePicker</name>
     <message>
+        <source>Custom endpoint…</source>
+        <translation>Свой эндпоинт…</translation>
+    </message>
+    <message>
         <source>Provider</source>
         <translation>Провайдер</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Базовый URL</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Базовый URL (напр. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>Идентификатор модели</translation>
+    </message>
+    <message>
+        <source>model id (as your server names it)</source>
+        <translation>идентификатор модели (как его называет ваш сервер)</translation>
+    </message>
+    <message>
+        <source>The endpoint is used as-is — your first message verifies it, and a failure will guide you back here.</source>
+        <translation>Эндпоинт используется как есть — первое сообщение проверит его, а при ошибке вы вернётесь сюда.</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>Ключ API (необязательно)</translation>
     </message>
     <message>
         <source>Paste API key</source>
@@ -324,6 +356,32 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source> (default)</source>
         <translation> (по умолчанию)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypePicker</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (нативный)</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>установлено</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>не установлено</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypeView</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (нативный)</translation>
     </message>
 </context>
 <context>
@@ -439,6 +497,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>Отклонить</translation>
     </message>
     <message>
+        <source>Allow permanently</source>
+        <translation>Разрешить навсегда</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>Подтвердить</translation>
     </message>
@@ -478,7 +540,178 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Срок действия ссылки для входа истёк — попробуйте снова.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>Вход недоступен в этой сборке.</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowDialog</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Войти</translation>
+    </message>
+    <message>
+        <source>Open this link in your browser (copy it):</source>
+        <translation>Откройте эту ссылку в браузере (скопируйте её):</translation>
+    </message>
+    <message>
+        <source>Then paste the redirect URL here:</source>
+        <translation>Затем вставьте сюда URL перенаправления:</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Завершить вход</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Подготовка входа…</translation>
+    </message>
+    <message>
+        <source>Waiting for your browser to finish… (or paste below)</source>
+        <translation>Ожидание завершения в браузере… (или вставьте ниже)</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Завершите вход в браузере, затем вставьте URL перенаправления ниже.</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Завершение входа…</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Выполнен вход как %1</translation>
+    </message>
+    <message>
+        <source>Sign-in failed: %1</source>
+        <translation>Не удалось войти: %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Вход отменён</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowLauncher</name>
+    <message>
+        <source>Sign in — pick a provider</source>
+        <translation>Вход — выберите провайдера</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowSheet</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Войти</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>No browser sign-in providers are available on this node.</source>
+        <translation>На этом узле нет провайдеров входа через браузер.</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Провайдер</translation>
+    </message>
+    <message>
+        <source>Sign in via browser</source>
+        <translation>Войти через браузер</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Подготовка входа…</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Завершение входа…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser. Waiting for it to finish…</source>
+        <translation>Завершите вход в браузере. Ожидание завершения…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Завершите вход в браузере, затем вставьте URL перенаправления ниже.</translation>
+    </message>
+    <message>
+        <source>Copy sign-in link</source>
+        <translation>Копировать ссылку для входа</translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>Открыть в браузере</translation>
+    </message>
+    <message>
+        <source>Paste the redirect URL</source>
+        <translation>Вставьте URL перенаправления</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Завершить вход</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Выполнен вход как %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Вход отменён</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>Не удалось войти</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Повторить</translation>
+    </message>
+</context>
+<context>
+    <name>AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>Не удалось прочитать список провайдеров входа</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>Не удалось запустить процесс входа</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>Не удалось завершить вход</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
+    <message>
+        <source>Remove stored credential?</source>
+        <translation>Удалить сохранённые учётные данные?</translation>
+    </message>
+    <message>
+        <source>Remove credential</source>
+        <translation>Удалить учётные данные</translation>
+    </message>
+    <message>
+        <source>Removes the credential stored for profile “%1” (used by %2).</source>
+        <translation>Удаляет учётные данные, сохранённые для профиля «%1» (используется %2).</translation>
+    </message>
+    <message>
+        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
+        <translation>Транспортная сессия аккаунта на узле не затрагивается — операция отключения/удаления пока недоступна.</translation>
+    </message>
     <message>
         <source>Channels</source>
         <translation>Каналы</translation>
@@ -496,8 +729,32 @@ You&apos;ll return to first-run setup.</source>
         <translation>%1 · %2</translation>
     </message>
     <message>
+        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
+        <translation>Отключение пока недоступно — на узле нет операции отключения транспорта</translation>
+    </message>
+    <message>
+        <source>Remove the stored credential…</source>
+        <translation>Удалить сохранённые учётные данные…</translation>
+    </message>
+    <message>
         <source>No rooms.</source>
         <translation>Нет комнат.</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned to this session — open the routing manager</source>
+        <translation>Закреплено за этой сессией — открыть менеджер маршрутизации</translation>
+    </message>
+    <message>
+        <source>Pin to agent…</source>
+        <translation>Закрепить за агентом…</translation>
+    </message>
+    <message>
+        <source>Route this room&apos;s messages to a session</source>
+        <translation>Направлять сообщения этой комнаты в сессию</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -540,6 +797,28 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Не удалось откатить к контрольной точке</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointTimeline</name>
+    <message>
+        <source>%1 · %2 — rewind is managed by the foreign agent</source>
+        <translation>%1 · %2 — откат управляется внешним агентом</translation>
+    </message>
+    <message>
+        <source>%1 · %2 (current)</source>
+        <translation>%1 · %2 (текущая)</translation>
+    </message>
+    <message>
+        <source>%1 · %2 — click to rewind</source>
+        <translation>%1 · %2 — нажмите для отката</translation>
+    </message>
+</context>
+<context>
     <name>CheckpointsPopover</name>
     <message>
         <source>Checkpoints</source>
@@ -554,6 +833,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>Ручная контрольная точка</translation>
     </message>
     <message>
+        <source>Rewind is managed by the foreign agent</source>
+        <translation>Откат управляется внешним агентом</translation>
+    </message>
+    <message>
         <source> tok</source>
         <translation> tok</translation>
     </message>
@@ -564,6 +847,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Restore</source>
         <translation>Восстановить</translation>
+    </message>
+    <message>
+        <source>No checkpoints yet</source>
+        <translation>Пока нет контрольных точек</translation>
     </message>
 </context>
 <context>
@@ -939,9 +1226,86 @@ You&apos;ll return to first-run setup.</source>
         <comment>composer mode badge</comment>
         <translation>подробно</translation>
     </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Внешний</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Нативный</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Правки</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Авто</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Отклонить</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Спрашивать</translation>
+    </message>
+    <message>
+        <source>policy:</source>
+        <comment>approval-policy badge prefix</comment>
+        <translation>политика:</translation>
+    </message>
 </context>
 <context>
     <name>ComposerControls</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Внешний</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Нативный</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Движок</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Правки</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Авто</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Отклонить</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Спрашивать</translation>
+    </message>
+    <message>
+        <source>Approval policy (reflects last set value)</source>
+        <translation>Политика подтверждения (отражает последнее заданное значение)</translation>
+    </message>
+    <message>
+        <source>⇄ %1 +%2</source>
+        <translation>⇄ %1 +%2</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned from %1 — open the routing manager</source>
+        <translation>Закреплено из %1 — открыть менеджер маршрутизации</translation>
+    </message>
     <message>
         <source>Checkpoints / rewind</source>
         <translation>Контрольные точки / откат</translation>
@@ -1271,6 +1635,17 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Контрольная точка</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>перед %1</translation>
+    </message>
+</context>
+<context>
     <name>DaemonConnectionService</name>
     <message>
         <source>Could not reach the daemon. Check it is running and try again.</source>
@@ -1331,6 +1706,24 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Unsupported transport</source>
         <translation>Неподдерживаемый транспорт</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Каналы</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>Личные</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Модель %1 отсутствует на диске: %2</translation>
     </message>
 </context>
 <context>
@@ -1446,6 +1839,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Searching…</source>
         <translation>Поиск…</translation>
+    </message>
+    <message>
+        <source>gated</source>
+        <translation>ограничено</translation>
     </message>
     <message>
         <source>by %1</source>
@@ -1725,6 +2122,14 @@ You&apos;ll return to first-run setup.</source>
         <source>file %1/%2</source>
         <translation>файл %1/%2</translation>
     </message>
+    <message>
+        <source>This repo is gated — accept its license on the Hub (and add a token if required), then retry.</source>
+        <translation>Этот репозиторий ограничен — примите его лицензию на Hub (и при необходимости добавьте токен), затем повторите.</translation>
+    </message>
+    <message>
+        <source>Open license page</source>
+        <translation>Открыть страницу лицензии</translation>
+    </message>
 </context>
 <context>
     <name>EditMenu</name>
@@ -1866,6 +2271,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>Удалённый</translation>
     </message>
     <message>
+        <source>Agent type (Enter to pick):</source>
+        <translation>Тип агента (Enter для выбора):</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Имя агента</translation>
     </message>
@@ -1880,6 +2289,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model</source>
         <translation>Модель</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Базовый URL (напр. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>Идентификатор модели</translation>
     </message>
     <message>
         <source>Test</source>
@@ -1904,6 +2321,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Failed — </source>
         <translation>Сбой — </translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>Свой эндпоинт…</translation>
+    </message>
+    <message>
+        <source>custom</source>
+        <translation>свой</translation>
     </message>
     <message>
         <source>Local: App-managed (press to Attach instead)</source>
@@ -1931,6 +2356,14 @@ You&apos;ll return to first-run setup.</source>
         <translation>Войти</translation>
     </message>
     <message>
+        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
+        <translation>Выберите тип агента: нативный далее выбирает модель; внешний ACP-агент использует свою.</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation>
+    </message>
+    <message>
         <source>Pick a provider and a model, then Finish.</source>
         <translation>Выберите провайдера и модель, затем нажмите «Готово».</translation>
     </message>
@@ -1948,6 +2381,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Almost there - confirm an inference model.</source>
         <translation>Почти готово — подтвердите модель для вывода.</translation>
+    </message>
+    <message>
+        <source>What kind of agent do you want?</source>
+        <translation>Какой агент вам нужен?</translation>
     </message>
     <message>
         <source>Sign in to the node to continue.</source>
@@ -1978,6 +2415,18 @@ You&apos;ll return to first-run setup.</source>
         <translation>Вход…</translation>
     </message>
     <message>
+        <source>Agent type</source>
+        <translation>Тип агента</translation>
+    </message>
+    <message>
+        <source>Runs in the daemon — pick a provider and model next.</source>
+        <translation>Работает в демоне — далее выберите провайдера и модель.</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
+        <translation>Этот агент использует внешний движок ACP — он приносит свою модель, поэтому провайдер, модель или ключ не нужны.</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Имя агента</translation>
     </message>
@@ -1993,12 +2442,20 @@ You&apos;ll return to first-run setup.</source>
         <source>Finish setup</source>
         <translation>Завершить настройку</translation>
     </message>
+    <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation>
+    </message>
 </context>
 <context>
     <name>FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>Не удалось связаться с узлом. Проверьте цель и повторите попытку.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>Не удалось связаться с вашей моделью — проверьте провайдера и попробуйте снова.</translation>
     </message>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
@@ -2008,12 +2465,48 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>FleetPage</name>
     <message>
+        <source>Steer this agent</source>
+        <translation>Направить этого агента</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Отправить</translation>
+    </message>
+    <message>
+        <source>Message to inject…</source>
+        <translation>Сообщение для вставки…</translation>
+    </message>
+    <message>
+        <source>Steers the running turn without interrupting it.</source>
+        <translation>Направляет текущий ход, не прерывая его.</translation>
+    </message>
+    <message>
+        <source>The agent is idle — this starts a new turn.</source>
+        <translation>Агент простаивает — это начнёт новый ход.</translation>
+    </message>
+    <message>
         <source>Fleet</source>
         <translation>Флот</translation>
     </message>
     <message>
         <source>Refresh</source>
         <translation>Обновить</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Внешний</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Нативный</translation>
+    </message>
+    <message>
+        <source>Steer…</source>
+        <translation>Направить…</translation>
+    </message>
+    <message>
+        <source>Cancel the running turn</source>
+        <translation>Отменить текущий ход</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -2653,6 +3146,10 @@ Thanks — proceeding with: %1
 <context>
     <name>ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Не удалось проверить модель</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Не удалось задать модель</translation>
     </message>
@@ -2667,6 +3164,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Activate failed</source>
         <translation>Не удалось активировать</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>Не удалось запустить квантование</translation>
     </message>
 </context>
 <context>
@@ -2735,6 +3236,30 @@ Start one from the Discover tab.</source>
         <translation>Нет активных загрузок.
 Начните на вкладке «Найти».</translation>
     </message>
+    <message>
+        <source>Quantize jobs</source>
+        <translation>Задачи квантования</translation>
+    </message>
+    <message>
+        <source>Quantizing %1</source>
+        <translation>Квантование %1</translation>
+    </message>
+    <message>
+        <source>Working…</source>
+        <translation>Выполняется…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Готово</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Ошибка</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>В очереди</translation>
+    </message>
 </context>
 <context>
     <name>ModelsInstalled</name>
@@ -2757,6 +3282,18 @@ Start one from the Discover tab.</source>
     <message>
         <source> GiB</source>
         <translation> ГиБ</translation>
+    </message>
+    <message>
+        <source>Model missing — the file was moved or deleted.</source>
+        <translation>Модель отсутствует — файл был перемещён или удалён.</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>Скачать заново</translation>
+    </message>
+    <message>
+        <source>Re-quantize…</source>
+        <translation>Переквантовать…</translation>
     </message>
     <message>
         <source>Active</source>
@@ -2838,22 +3375,6 @@ Start one from the Discover tab.</source>
     <message>
         <source>Engine</source>
         <translation>Движок</translation>
-    </message>
-    <message>
-        <source>daemon-core (native)</source>
-        <translation>daemon-core (нативный)</translation>
-    </message>
-    <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>установлено</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>не установлено</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
@@ -3228,6 +3749,14 @@ Start one from the Discover tab.</source>
         <translation>+ Новый профиль</translation>
     </message>
     <message>
+        <source>Foreign</source>
+        <translation>Внешний</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Нативный</translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>Новый профиль</translation>
     </message>
@@ -3515,6 +4044,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Рассуждения</translation>
     </message>
     <message>
+        <source>exit %1</source>
+        <translation>выход %1</translation>
+    </message>
+    <message>
         <source>[image: </source>
         <translation>[изображение: </translation>
     </message>
@@ -3566,12 +4099,24 @@ A generic, non-transcript page hosted by the same tab strip.
         <source>[math] </source>
         <translation>[формула] </translation>
     </message>
+    <message>
+        <source>  [installed]</source>
+        <translation>  [установлено]</translation>
+    </message>
+    <message>
+        <source>  [not installed]</source>
+        <translation>  [не установлено]</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
     <message>
         <source>Choose a quantization</source>
         <translation>Выберите квантизацию</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Выберите целевое квантование</translation>
     </message>
     <message>
         <source>Recommended: %1</source>
@@ -3584,6 +4129,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>tight</source>
         <translation>впритык</translation>
+    </message>
+    <message>
+        <source>Needs about %1 of disk space.</source>
+        <translation>Требуется около %1 дискового пространства.</translation>
+    </message>
+    <message>
+        <source>Quantize to recommended</source>
+        <translation>Квантовать до рекомендуемого</translation>
     </message>
     <message>
         <source>Download recommended</source>
@@ -3612,6 +4165,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Download</source>
         <translation>Скачать</translation>
+    </message>
+    <message>
+        <source>Quantize</source>
+        <translation>Квантовать</translation>
     </message>
     <message>
         <source>Close</source>
@@ -3669,6 +4226,21 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Reasoning</source>
         <translation>Рассуждения</translation>
+    </message>
+</context>
+<context>
+    <name>RewindConfirmDialog</name>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>Откатить к этой контрольной точке?</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Откатить</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Это удалит ходы сессии после выбранной точки.</translation>
     </message>
 </context>
 <context>
@@ -3766,6 +4338,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Усилие:  %1</translation>
     </message>
     <message>
+        <source>Approval: %1</source>
+        <translation>Подтверждение: %1</translation>
+    </message>
+    <message>
         <source>Fast:    %1</source>
         <translation>Быстро:    %1</translation>
     </message>
@@ -3782,8 +4358,48 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Подробно: %1</translation>
     </message>
     <message>
-        <source>%1  ·  %2  ·  %3 tok%4</source>
-        <translation>%1  ·  %2  ·  %3 tok%4</translation>
+        <source>  ·  %1 tok</source>
+        <translation>  ·  %1 ток</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2%3%4</source>
+        <translation>%1  ·  %2%3%4</translation>
+    </message>
+    <message>
+        <source>Rewind is managed by the foreign agent · Esc closes</source>
+        <translation>Откат управляется внешним агентом · Esc закрывает</translation>
+    </message>
+    <message>
+        <source>Enter rewinds to the selected checkpoint (confirmed) · Esc closes</source>
+        <translation>Enter откатывает к выбранной контрольной точке (с подтверждением) · Esc закрывает</translation>
+    </message>
+    <message>
+        <source>Rewind…</source>
+        <translation>Откатить…</translation>
+    </message>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>Откатить к этой контрольной точке?</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Это удалит ходы сессии после выбранной точки.</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Откатить</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Steer this agent</source>
+        <translation>Направить этого агента</translation>
+    </message>
+    <message>
+        <source>Steer this agent (idle — starts a turn)</source>
+        <translation>Направить этого агента (простаивает — начнёт ход)</translation>
     </message>
     <message>
         <source>  (current)</source>
@@ -3796,14 +4412,6 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Checkpoints</source>
         <translation>Контрольные точки</translation>
-    </message>
-    <message>
-        <source>Enter restores the selected checkpoint · Esc closes</source>
-        <translation>Enter восстанавливает выбранную контрольную точку · Esc закрывает</translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation>Восстановить</translation>
     </message>
     <message>
         <source> 0/0 </source>
@@ -3916,6 +4524,13 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Make primary</source>
         <translation>Сделать основным</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Не удалось изменить маршрутизацию</translation>
     </message>
 </context>
 <context>
@@ -4125,6 +4740,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Нет подключения к демону</translation>
     </message>
     <message>
+        <source>The session rejected the command</source>
+        <translation>Сессия отклонила команду</translation>
+    </message>
+    <message>
         <source>SessionUpdateMeta failed</source>
         <translation>Не удалось обновить метаданные сессии</translation>
     </message>
@@ -4317,6 +4936,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Сессии</translation>
     </message>
     <message>
+        <source>Active</source>
+        <translation>Активные</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>В архиве</translation>
+    </message>
+    <message>
         <source>LIVE</source>
         <translation>LIVE</translation>
     </message>
@@ -4327,6 +4954,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source> tok</source>
         <translation> tok</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Восстановить</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -5054,6 +5685,14 @@ Thanks — proceeding with: %1
         <translation>Ход %1.</translation>
     </message>
     <message>
+        <source>Set up a provider to send your first message.</source>
+        <translation>Настройте провайдера, чтобы отправить первое сообщение.</translation>
+    </message>
+    <message>
+        <source>Set up provider</source>
+        <translation>Настроить провайдера</translation>
+    </message>
+    <message>
         <source>Select a session</source>
         <translation>Выберите сессию</translation>
     </message>
@@ -5133,6 +5772,18 @@ Thanks — proceeding with: %1
     <message>
         <source>Choose a quantization</source>
         <translation>Выберите квантизацию</translation>
+    </message>
+    <message>
+        <source>  [gated]</source>
+        <translation>  [ограничено]</translation>
+    </message>
+    <message>
+        <source>Re-quantize — pick an installed model</source>
+        <translation>Переквантовать — выберите установленную модель</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Выберите целевое квантование</translation>
     </message>
     <message>
         <source>Go to file</source>
@@ -5418,14 +6069,6 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
-
-</source>
-        <translation>Установленные модели, общие с GUI. **j/k** перемещают · **Enter** активирует · **x** удаляет · **d** скачивает модель (репозиторий → квант).
-
-</translation>
-    </message>
-    <message>
         <source>## Installed
 
 </source>
@@ -5442,9 +6085,21 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>- %1**%2** (%3)%4
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant) · **q** re-quantize an installed model.
+
 </source>
-        <translation>- %1**%2** (%3)%4
+        <translation>Установленные модели, общие с GUI. **j/k** перемещение · **Enter** активирует · **x** удаляет · **d** скачать модель (репозиторий → квант) · **q** переквантовать установленную модель.
+
+</translation>
+    </message>
+    <message>
+        <source> — **missing on disk** (re-download from Discover)</source>
+        <translation> — **отсутствует на диске** (скачать заново из Discover)</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4%5
+</source>
+        <translation>- %1**%2** (%3)%4%5
 </translation>
     </message>
     <message>
@@ -5463,6 +6118,20 @@ Thanks — proceeding with: %1
         <source>- %1 — %2%  · %3
 </source>
         <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Quantize jobs
+
+</source>
+        <translation>## Задачи квантования
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%3
+</source>
+        <translation>- %1 — %2%3
 </translation>
     </message>
     <message>
@@ -5566,6 +6235,18 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
+        <source>Native</source>
+        <translation>Нативный</translation>
+    </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Внешний</translation>
+    </message>
+    <message>
         <source># Profiles
 
 </source>
@@ -5592,6 +6273,12 @@ Thanks — proceeding with: %1
     <message>
         <source> (default)</source>
         <translation> (по умолчанию)</translation>
+    </message>
+    <message>
+        <source>- Engine: %1
+</source>
+        <translation>- Движок: %1
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -5888,17 +6575,85 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
 
 </source>
-        <translation>Дерево оркестратора/воркеров, общее с GUI. **j/k** перемещают · **Space/Enter** пауза/возобновление.
+        <translation>Дерево оркестратора/воркеров, общее с GUI. **j/k** перемещение · **Space/Enter** пауза/возобновить · **t** направить дочерний · **c** отменить его ход.
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`)
+        <source>- %1%2 — %3 (`%4`) · %5
 </source>
-        <translation>- %1%2 — %3 (`%4`)
+        <translation>- %1%2 — %3 (`%4`) · %5
+</translation>
+    </message>
+    <message>
+        <source># Sessions — Archived
+
+</source>
+        <translation># Сессии — архив
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **r**/**Enter** restore · **v** back to active.
+
+</source>
+        <translation>**j/k** перемещение · **r**/**Enter** восстановить · **v** назад к активным.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close · **v** archived.
+
+</source>
+        <translation>**j/k** перемещение · **s** приостановить · **R**/**Enter** возобновить · **x** закрыть · **v** архив.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
+
+</source>
+        <translation>**j/k** перемещение · **a**/**Enter** одобрить · **p** разрешить навсегда · **d** отклонить.
+
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+</source>
+        <translation>- Команда: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- _Can be allowed permanently (**p**)._
+</source>
+        <translation>- _Можно разрешить навсегда (**p**)._
+</translation>
+    </message>
+    <message>
+        <source>Chat pins (origin → session), shared with the GUI routing manager. **j/k** move · **x** unbind.
+
+</source>
+        <translation>Закрепления чатов (источник → сессия), общие с менеджером маршрутизации GUI. **j/k** перемещение · **x** открепить.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2 · %3** ⇄ `%4`%5
+</source>
+        <translation>- %1**%2 · %3** ⇄ `%4`%5
+</translation>
+    </message>
+    <message>
+        <source> (agent `%1`)</source>
+        <translation> (агент `%1`)</translation>
+    </message>
+    <message>
+        <source>_No chat pins yet — pin a room/DM to a session from the GUI routing manager or a room row._
+</source>
+        <translation>_Пока нет закреплений чатов — закрепите комнату/ЛС за сессией из менеджера маршрутизации GUI или из строки комнаты._
 </translation>
     </message>
     <message>
@@ -5910,17 +6665,15 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
-
-</source>
-        <translation>**j/k** перемещают · **s** приостанавливает · **R**/**Enter** возобновляет · **x** закрывает.
-
-</translation>
-    </message>
-    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
+</translation>
+    </message>
+    <message>
+        <source>_No archived sessions._
+</source>
+        <translation>_Нет архивных сессий._
 </translation>
     </message>
     <message>
@@ -5938,14 +6691,6 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
-
-</source>
-        <translation>**j/k** перемещают · **a**/**Enter** подтверждает · **d** отклоняет.
-
-</translation>
-    </message>
-    <message>
         <source>## %1%2 (%3 risk)
 
 </source>
@@ -5960,38 +6705,12 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
-        <source>- Command: `%1`
-
-</source>
-        <translation>- Команда: `%1`
-
-</translation>
-    </message>
-    <message>
         <source># Routing
 
 </source>
         <translation># Маршрутизация
 
 </translation>
-    </message>
-    <message>
-        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
-
-</source>
-        <translation>Правила «намерение → модель», общие с GUI. **j/k** перемещают · **Space/Enter** переключает · **x** удаляет.
-
-</translation>
-    </message>
-    <message>
-        <source>- %1**%2** → `%3` (fallback `%4`)%5
-</source>
-        <translation>- %1**%2** → `%3` (запасной `%4`)%5
-</translation>
-    </message>
-    <message>
-        <source> — _disabled_</source>
-        <translation> — _отключено_</translation>
     </message>
     <message>
         <source># Scheduled jobs
@@ -6122,10 +6841,10 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
 
 </source>
-        <translation>Аккаунты транспорта Events-IO и их активные комнаты, общие с GUI. В этой части оба интерфейса только для чтения — подключение отложено (EIO-2).
+        <translation>Транспортные аккаунты Events-IO и их активные комнаты, общие с GUI. Подключение отложено (EIO-2); операции отключения/удаления по проводу пока НЕТ (B3 — доработка node-first). Сохранённые учётные данные можно удалить на странице «Аккаунты» («x» на привязанном профиле).
 
 </translation>
     </message>
@@ -6160,16 +6879,16 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
-        <source>  - %1
-</source>
-        <translation>  - %1
-</translation>
+        <source>  - %1</source>
+        <translation>  - %1</translation>
     </message>
     <message>
-        <source>  - %1 · %2
-</source>
-        <translation>  - %1 · %2
-</translation>
+        <source>  - %1 · %2</source>
+        <translation>  - %1 · %2</translation>
+    </message>
+    <message>
+        <source> · ⇄ `%1`</source>
+        <translation> · ⇄ `%1`</translation>
     </message>
     <message>
         <source>## Add channel
@@ -6311,6 +7030,17 @@ _Агент не выбран._
     </message>
 </context>
 <context>
+    <name>auth::AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Срок действия ссылки для входа истёк — попробуйте снова.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>Вход недоступен в этой сборке.</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::ApprovalRepository</name>
     <message>
         <source>Approval decision failed</source>
@@ -6318,10 +7048,43 @@ _Агент не выбран._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>Не удалось прочитать список провайдеров входа</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>Не удалось запустить процесс входа</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>Не удалось завершить вход</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Не удалось откатить к контрольной точке</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
         <translation>Не удалось выполнить операцию с учётными данными</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Контрольная точка</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>перед %1</translation>
     </message>
 </context>
 <context>
@@ -6388,6 +7151,17 @@ _Агент не выбран._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Каналы</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>Личные</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -6435,6 +7209,10 @@ _Агент не выбран._
 <context>
     <name>daemonapp::daemon::ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Не удалось проверить модель</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Не удалось задать модель</translation>
     </message>
@@ -6449,6 +7227,10 @@ _Агент не выбран._
     <message>
         <source>Activate failed</source>
         <translation>Не удалось активировать</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>Не удалось запустить квантование</translation>
     </message>
 </context>
 <context>
@@ -6498,10 +7280,21 @@ _Агент не выбран._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Не удалось изменить маршрутизацию</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>Not connected to a daemon</source>
         <translation>Нет подключения к демону</translation>
+    </message>
+    <message>
+        <source>The session rejected the command</source>
+        <translation>Сессия отклонила команду</translation>
     </message>
     <message>
         <source>SessionUpdateMeta failed</source>
@@ -6530,6 +7323,10 @@ _Агент не выбран._
         <translation>Не удалось связаться с узлом. Проверьте цель и повторите попытку.</translation>
     </message>
     <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>Не удалось связаться с вашей моделью — проверьте провайдера и попробуйте снова.</translation>
+    </message>
+    <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
         <translation>Не удалось проверить этот ключ API с %1 — проверьте его и повторите попытку.</translation>
     </message>
@@ -6551,6 +7348,13 @@ _Агент не выбран._
     <message>
         <source>write failed</source>
         <translation>ошибка записи</translation>
+    </message>
+</context>
+<context>
+    <name>models::DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Модель %1 отсутствует на диске: %2</translation>
     </message>
 </context>
 <context>

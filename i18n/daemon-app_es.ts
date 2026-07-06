@@ -43,6 +43,10 @@
         <translation>Cuentas conectadas</translation>
     </message>
     <message>
+        <source>Sign in via browser…</source>
+        <translation>Iniciar sesión en el navegador…</translation>
+    </message>
+    <message>
         <source>Add account</source>
         <translation>Añadir cuenta</translation>
     </message>
@@ -215,8 +219,36 @@ Volverás a la configuración inicial.</translation>
 <context>
     <name>AgentInferencePicker</name>
     <message>
+        <source>Custom endpoint…</source>
+        <translation>Endpoint personalizado…</translation>
+    </message>
+    <message>
         <source>Provider</source>
         <translation>Proveedor</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>URL base</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>URL base (p. ej. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>Id del modelo</translation>
+    </message>
+    <message>
+        <source>model id (as your server names it)</source>
+        <translation>id del modelo (como lo nombra tu servidor)</translation>
+    </message>
+    <message>
+        <source>The endpoint is used as-is — your first message verifies it, and a failure will guide you back here.</source>
+        <translation>El endpoint se usa tal cual: tu primer mensaje lo verifica y, si falla, se te guiará de vuelta aquí.</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>Clave API (opcional)</translation>
     </message>
     <message>
         <source>Paste API key</source>
@@ -324,6 +356,32 @@ Volverás a la configuración inicial.</translation>
     <message>
         <source> (default)</source>
         <translation> (predeterminado)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypePicker</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (nativo)</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>instalado</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>no instalado</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypeView</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (nativo)</translation>
     </message>
 </context>
 <context>
@@ -439,6 +497,10 @@ Volverás a la configuración inicial.</translation>
         <translation>Denegar</translation>
     </message>
     <message>
+        <source>Allow permanently</source>
+        <translation>Permitir permanentemente</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>Aprobar</translation>
     </message>
@@ -478,7 +540,178 @@ Volverás a la configuración inicial.</translation>
     </message>
 </context>
 <context>
+    <name>AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Este enlace de inicio de sesión ha caducado; inténtalo de nuevo.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>El inicio de sesión no está disponible en esta compilación.</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowDialog</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Iniciar sesión</translation>
+    </message>
+    <message>
+        <source>Open this link in your browser (copy it):</source>
+        <translation>Abre este enlace en tu navegador (cópialo):</translation>
+    </message>
+    <message>
+        <source>Then paste the redirect URL here:</source>
+        <translation>Luego pega aquí la URL de redirección:</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Completar inicio de sesión</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Preparando el inicio de sesión…</translation>
+    </message>
+    <message>
+        <source>Waiting for your browser to finish… (or paste below)</source>
+        <translation>Esperando a que tu navegador termine… (o pega abajo)</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Completa el inicio de sesión en tu navegador y luego pega abajo la URL de redirección.</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Finalizando el inicio de sesión…</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Sesión iniciada como %1</translation>
+    </message>
+    <message>
+        <source>Sign-in failed: %1</source>
+        <translation>Error al iniciar sesión: %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Inicio de sesión cancelado</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowLauncher</name>
+    <message>
+        <source>Sign in — pick a provider</source>
+        <translation>Iniciar sesión: elige un proveedor</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowSheet</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Iniciar sesión</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Cerrar</translation>
+    </message>
+    <message>
+        <source>No browser sign-in providers are available on this node.</source>
+        <translation>No hay proveedores de inicio de sesión por navegador disponibles en este nodo.</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Proveedor</translation>
+    </message>
+    <message>
+        <source>Sign in via browser</source>
+        <translation>Iniciar sesión en el navegador</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Preparando el inicio de sesión…</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Finalizando el inicio de sesión…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser. Waiting for it to finish…</source>
+        <translation>Completa el inicio de sesión en tu navegador. Esperando a que termine…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Completa el inicio de sesión en tu navegador y luego pega abajo la URL de redirección.</translation>
+    </message>
+    <message>
+        <source>Copy sign-in link</source>
+        <translation>Copiar enlace de inicio de sesión</translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>Abrir en el navegador</translation>
+    </message>
+    <message>
+        <source>Paste the redirect URL</source>
+        <translation>Pega la URL de redirección</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Completar inicio de sesión</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Sesión iniciada como %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Inicio de sesión cancelado</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>Error al iniciar sesión</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Reintentar</translation>
+    </message>
+</context>
+<context>
+    <name>AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>No se pudo leer la lista de proveedores de inicio de sesión</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>No se pudo iniciar el flujo de inicio de sesión</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>No se pudo completar el inicio de sesión</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
+    <message>
+        <source>Remove stored credential?</source>
+        <translation>¿Eliminar la credencial almacenada?</translation>
+    </message>
+    <message>
+        <source>Remove credential</source>
+        <translation>Eliminar credencial</translation>
+    </message>
+    <message>
+        <source>Removes the credential stored for profile “%1” (used by %2).</source>
+        <translation>Elimina la credencial almacenada para el perfil “%1” (usada por %2).</translation>
+    </message>
+    <message>
+        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
+        <translation>La sesión de transporte de la cuenta en el nodo no se ve afectada: aún no hay disponible una operación de desconexión/eliminación.</translation>
+    </message>
     <message>
         <source>Channels</source>
         <translation>Canales</translation>
@@ -496,8 +729,32 @@ Volverás a la configuración inicial.</translation>
         <translation>%1 · %2</translation>
     </message>
     <message>
+        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
+        <translation>La desconexión aún no está disponible: el nodo no tiene una operación de desconexión de transporte</translation>
+    </message>
+    <message>
+        <source>Remove the stored credential…</source>
+        <translation>Eliminar la credencial almacenada…</translation>
+    </message>
+    <message>
         <source>No rooms.</source>
         <translation>No hay salas.</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned to this session — open the routing manager</source>
+        <translation>Fijado a esta sesión: abre el gestor de enrutamiento</translation>
+    </message>
+    <message>
+        <source>Pin to agent…</source>
+        <translation>Fijar al agente…</translation>
+    </message>
+    <message>
+        <source>Route this room&apos;s messages to a session</source>
+        <translation>Enruta los mensajes de esta sala a una sesión</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -540,6 +797,28 @@ Volverás a la configuración inicial.</translation>
     </message>
 </context>
 <context>
+    <name>CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Error al rebobinar el punto de control</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointTimeline</name>
+    <message>
+        <source>%1 · %2 — rewind is managed by the foreign agent</source>
+        <translation>%1 · %2: el rebobinado lo gestiona el agente externo</translation>
+    </message>
+    <message>
+        <source>%1 · %2 (current)</source>
+        <translation>%1 · %2 (actual)</translation>
+    </message>
+    <message>
+        <source>%1 · %2 — click to rewind</source>
+        <translation>%1 · %2: haz clic para rebobinar</translation>
+    </message>
+</context>
+<context>
     <name>CheckpointsPopover</name>
     <message>
         <source>Checkpoints</source>
@@ -554,6 +833,10 @@ Volverás a la configuración inicial.</translation>
         <translation>Punto de control manual</translation>
     </message>
     <message>
+        <source>Rewind is managed by the foreign agent</source>
+        <translation>El rebobinado lo gestiona el agente externo</translation>
+    </message>
+    <message>
         <source> tok</source>
         <translation> tok</translation>
     </message>
@@ -564,6 +847,10 @@ Volverás a la configuración inicial.</translation>
     <message>
         <source>Restore</source>
         <translation>Restaurar</translation>
+    </message>
+    <message>
+        <source>No checkpoints yet</source>
+        <translation>Aún no hay puntos de control</translation>
     </message>
 </context>
 <context>
@@ -939,9 +1226,86 @@ Volverás a la configuración inicial.</translation>
         <comment>composer mode badge</comment>
         <translation>detallado</translation>
     </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Externo</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Nativo</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Ediciones</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automático</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Denegar</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Preguntar</translation>
+    </message>
+    <message>
+        <source>policy:</source>
+        <comment>approval-policy badge prefix</comment>
+        <translation>política:</translation>
+    </message>
 </context>
 <context>
     <name>ComposerControls</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Externo</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Nativo</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Motor</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Ediciones</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automático</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Denegar</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Preguntar</translation>
+    </message>
+    <message>
+        <source>Approval policy (reflects last set value)</source>
+        <translation>Política de aprobación (refleja el último valor establecido)</translation>
+    </message>
+    <message>
+        <source>⇄ %1 +%2</source>
+        <translation>⇄ %1 +%2</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned from %1 — open the routing manager</source>
+        <translation>Fijado desde %1: abre el gestor de enrutamiento</translation>
+    </message>
     <message>
         <source>Checkpoints / rewind</source>
         <translation>Puntos de control / rebobinar</translation>
@@ -1271,6 +1635,17 @@ Volverás a la configuración inicial.</translation>
     </message>
 </context>
 <context>
+    <name>DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Punto de control</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>antes de %1</translation>
+    </message>
+</context>
+<context>
     <name>DaemonConnectionService</name>
     <message>
         <source>Could not reach the daemon. Check it is running and try again.</source>
@@ -1331,6 +1706,24 @@ Volverás a la configuración inicial.</translation>
     <message>
         <source>Unsupported transport</source>
         <translation>Transporte no compatible</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Canales</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>MD</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Falta el modelo %1 en el disco: %2</translation>
     </message>
 </context>
 <context>
@@ -1446,6 +1839,10 @@ Volverás a la configuración inicial.</translation>
     <message>
         <source>Searching…</source>
         <translation>Buscando…</translation>
+    </message>
+    <message>
+        <source>gated</source>
+        <translation>restringido</translation>
     </message>
     <message>
         <source>by %1</source>
@@ -1725,6 +2122,14 @@ Volverás a la configuración inicial.</translation>
         <source>file %1/%2</source>
         <translation>archivo %1/%2</translation>
     </message>
+    <message>
+        <source>This repo is gated — accept its license on the Hub (and add a token if required), then retry.</source>
+        <translation>Este repositorio está restringido: acepta su licencia en el Hub (y añade un token si es necesario) y vuelve a intentarlo.</translation>
+    </message>
+    <message>
+        <source>Open license page</source>
+        <translation>Abrir página de licencia</translation>
+    </message>
 </context>
 <context>
     <name>EditMenu</name>
@@ -1864,6 +2269,10 @@ Volverás a la configuración inicial.</translation>
         <translation>Remoto</translation>
     </message>
     <message>
+        <source>Agent type (Enter to pick):</source>
+        <translation>Tipo de agente (Enter para elegir):</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Nombre del agente</translation>
     </message>
@@ -1878,6 +2287,14 @@ Volverás a la configuración inicial.</translation>
     <message>
         <source>Model</source>
         <translation>Modelo</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>URL base (p. ej. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>Id del modelo</translation>
     </message>
     <message>
         <source>Test</source>
@@ -1902,6 +2319,14 @@ Volverás a la configuración inicial.</translation>
     <message>
         <source>Failed — </source>
         <translation>Error — </translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>Endpoint personalizado…</translation>
+    </message>
+    <message>
+        <source>custom</source>
+        <translation>personalizado</translation>
     </message>
     <message>
         <source>Local: App-managed (press to Attach instead)</source>
@@ -1929,6 +2354,14 @@ Volverás a la configuración inicial.</translation>
         <translation>Iniciar sesión</translation>
     </message>
     <message>
+        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
+        <translation>Elige el tipo de agente: el nativo elige un modelo a continuación; un agente ACP externo trae el suyo.</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Continuar</translation>
+    </message>
+    <message>
         <source>Pick a provider and a model, then Finish.</source>
         <translation>Elige un proveedor y un modelo, luego pulsa Finalizar.</translation>
     </message>
@@ -1946,6 +2379,10 @@ Volverás a la configuración inicial.</translation>
     <message>
         <source>Almost there - confirm an inference model.</source>
         <translation>Casi listo: confirma un modelo de inferencia.</translation>
+    </message>
+    <message>
+        <source>What kind of agent do you want?</source>
+        <translation>¿Qué tipo de agente quieres?</translation>
     </message>
     <message>
         <source>Sign in to the node to continue.</source>
@@ -1976,6 +2413,18 @@ Volverás a la configuración inicial.</translation>
         <translation>Iniciando sesión…</translation>
     </message>
     <message>
+        <source>Agent type</source>
+        <translation>Tipo de agente</translation>
+    </message>
+    <message>
+        <source>Runs in the daemon — pick a provider and model next.</source>
+        <translation>Se ejecuta en el daemon: elige un proveedor y un modelo a continuación.</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
+        <translation>Este agente ejecuta un motor ACP externo: trae su propio modelo, así que no se necesita proveedor, modelo ni clave.</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Nombre del agente</translation>
     </message>
@@ -1991,12 +2440,20 @@ Volverás a la configuración inicial.</translation>
         <source>Finish setup</source>
         <translation>Finalizar configuración</translation>
     </message>
+    <message>
+        <source>Continue</source>
+        <translation>Continuar</translation>
+    </message>
 </context>
 <context>
     <name>FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>No se pudo contactar con el nodo. Comprueba el destino e inténtalo de nuevo.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>No se pudo contactar con tu modelo: comprueba el proveedor e inténtalo de nuevo.</translation>
     </message>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
@@ -2006,12 +2463,48 @@ Volverás a la configuración inicial.</translation>
 <context>
     <name>FleetPage</name>
     <message>
+        <source>Steer this agent</source>
+        <translation>Dirigir este agente</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Enviar</translation>
+    </message>
+    <message>
+        <source>Message to inject…</source>
+        <translation>Mensaje para inyectar…</translation>
+    </message>
+    <message>
+        <source>Steers the running turn without interrupting it.</source>
+        <translation>Dirige el turno en ejecución sin interrumpirlo.</translation>
+    </message>
+    <message>
+        <source>The agent is idle — this starts a new turn.</source>
+        <translation>El agente está inactivo: esto inicia un nuevo turno.</translation>
+    </message>
+    <message>
         <source>Fleet</source>
         <translation>Flota</translation>
     </message>
     <message>
         <source>Refresh</source>
         <translation>Actualizar</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Externo</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Nativo</translation>
+    </message>
+    <message>
+        <source>Steer…</source>
+        <translation>Dirigir…</translation>
+    </message>
+    <message>
+        <source>Cancel the running turn</source>
+        <translation>Cancelar el turno en ejecución</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -2649,6 +3142,10 @@ Gracias — continuando con: %1
 <context>
     <name>ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Error al inspeccionar el modelo</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Error en la operación de establecer el modelo</translation>
     </message>
@@ -2663,6 +3160,10 @@ Gracias — continuando con: %1
     <message>
         <source>Activate failed</source>
         <translation>Error al activar</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>No se pudo iniciar la cuantización</translation>
     </message>
 </context>
 <context>
@@ -2731,6 +3232,30 @@ Start one from the Discover tab.</source>
         <translation>No hay descargas activas.
 Inicia una desde la pestaña Descubrir.</translation>
     </message>
+    <message>
+        <source>Quantize jobs</source>
+        <translation>Trabajos de cuantización</translation>
+    </message>
+    <message>
+        <source>Quantizing %1</source>
+        <translation>Cuantizando %1</translation>
+    </message>
+    <message>
+        <source>Working…</source>
+        <translation>Trabajando…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Completado</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Fallido</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>En cola</translation>
+    </message>
 </context>
 <context>
     <name>ModelsInstalled</name>
@@ -2753,6 +3278,18 @@ Inicia una desde la pestaña Descubrir.</translation>
     <message>
         <source> GiB</source>
         <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Model missing — the file was moved or deleted.</source>
+        <translation>Falta el modelo: el archivo se movió o se eliminó.</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>Volver a descargar</translation>
+    </message>
+    <message>
+        <source>Re-quantize…</source>
+        <translation>Volver a cuantizar…</translation>
     </message>
     <message>
         <source>Active</source>
@@ -2834,22 +3371,6 @@ Inicia una desde la pestaña Descubrir.</translation>
     <message>
         <source>Engine</source>
         <translation>Motor</translation>
-    </message>
-    <message>
-        <source>daemon-core (native)</source>
-        <translation>daemon-core (nativo)</translation>
-    </message>
-    <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>instalado</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>no instalado</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
@@ -3224,6 +3745,14 @@ Inicia una desde la pestaña Descubrir.</translation>
         <translation>+ Nuevo perfil</translation>
     </message>
     <message>
+        <source>Foreign</source>
+        <translation>Externo</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Nativo</translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>Nuevo perfil</translation>
     </message>
@@ -3511,6 +4040,10 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>Razonamiento</translation>
     </message>
     <message>
+        <source>exit %1</source>
+        <translation>salida %1</translation>
+    </message>
+    <message>
         <source>[image: </source>
         <translation>[imagen: </translation>
     </message>
@@ -3562,12 +4095,24 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <source>[math] </source>
         <translation>[fórmula] </translation>
     </message>
+    <message>
+        <source>  [installed]</source>
+        <translation>  [instalado]</translation>
+    </message>
+    <message>
+        <source>  [not installed]</source>
+        <translation>  [no instalado]</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
     <message>
         <source>Choose a quantization</source>
         <translation>Elige una cuantización</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Elige una cuantización objetivo</translation>
     </message>
     <message>
         <source>Recommended: %1</source>
@@ -3580,6 +4125,14 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
     <message>
         <source>tight</source>
         <translation>justo</translation>
+    </message>
+    <message>
+        <source>Needs about %1 of disk space.</source>
+        <translation>Necesita unos %1 de espacio en disco.</translation>
+    </message>
+    <message>
+        <source>Quantize to recommended</source>
+        <translation>Cuantizar a la recomendada</translation>
     </message>
     <message>
         <source>Download recommended</source>
@@ -3608,6 +4161,10 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
     <message>
         <source>Download</source>
         <translation>Descargar</translation>
+    </message>
+    <message>
+        <source>Quantize</source>
+        <translation>Cuantizar</translation>
     </message>
     <message>
         <source>Close</source>
@@ -3665,6 +4222,21 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
     <message>
         <source>Reasoning</source>
         <translation>Razonamiento</translation>
+    </message>
+</context>
+<context>
+    <name>RewindConfirmDialog</name>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>¿Rebobinar a este punto de control?</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Rebobinar</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Esto descarta los turnos de la sesión posteriores al punto seleccionado.</translation>
     </message>
 </context>
 <context>
@@ -3762,6 +4334,10 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>Esfuerzo:  %1</translation>
     </message>
     <message>
+        <source>Approval: %1</source>
+        <translation>Aprobación: %1</translation>
+    </message>
+    <message>
         <source>Fast:    %1</source>
         <translation>Rápido:    %1</translation>
     </message>
@@ -3778,8 +4354,48 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>Detallado: %1</translation>
     </message>
     <message>
-        <source>%1  ·  %2  ·  %3 tok%4</source>
-        <translation>%1  ·  %2  ·  %3 tok%4</translation>
+        <source>  ·  %1 tok</source>
+        <translation>  ·  %1 tok</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2%3%4</source>
+        <translation>%1  ·  %2%3%4</translation>
+    </message>
+    <message>
+        <source>Rewind is managed by the foreign agent · Esc closes</source>
+        <translation>El rebobinado lo gestiona el agente externo · Esc cierra</translation>
+    </message>
+    <message>
+        <source>Enter rewinds to the selected checkpoint (confirmed) · Esc closes</source>
+        <translation>Enter rebobina al punto de control seleccionado (confirmado) · Esc cierra</translation>
+    </message>
+    <message>
+        <source>Rewind…</source>
+        <translation>Rebobinar…</translation>
+    </message>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>¿Rebobinar a este punto de control?</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Esto descarta los turnos de la sesión posteriores al punto seleccionado.</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Rebobinar</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Steer this agent</source>
+        <translation>Dirigir este agente</translation>
+    </message>
+    <message>
+        <source>Steer this agent (idle — starts a turn)</source>
+        <translation>Dirigir este agente (inactivo: inicia un turno)</translation>
     </message>
     <message>
         <source>  (current)</source>
@@ -3792,14 +4408,6 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
     <message>
         <source>Checkpoints</source>
         <translation>Puntos de control</translation>
-    </message>
-    <message>
-        <source>Enter restores the selected checkpoint · Esc closes</source>
-        <translation>Enter restaura el punto de control seleccionado · Esc cierra</translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation>Restaurar</translation>
     </message>
     <message>
         <source> 0/0 </source>
@@ -3912,6 +4520,13 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
     <message>
         <source>Make primary</source>
         <translation>Establecer como principal</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Error al cambiar el enrutamiento</translation>
     </message>
 </context>
 <context>
@@ -4121,6 +4736,10 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>No conectado a un daemon</translation>
     </message>
     <message>
+        <source>The session rejected the command</source>
+        <translation>La sesión rechazó el comando</translation>
+    </message>
+    <message>
         <source>SessionUpdateMeta failed</source>
         <translation>Error en SessionUpdateMeta</translation>
     </message>
@@ -4312,6 +4931,14 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>Sesiones</translation>
     </message>
     <message>
+        <source>Active</source>
+        <translation>Activo</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Archivadas</translation>
+    </message>
+    <message>
         <source>LIVE</source>
         <translation>EN VIVO</translation>
     </message>
@@ -4322,6 +4949,10 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
     <message>
         <source> tok</source>
         <translation> tok</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Restaurar</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -5047,6 +5678,14 @@ Gracias — continuando con: %1
         <translation>El turno %1.</translation>
     </message>
     <message>
+        <source>Set up a provider to send your first message.</source>
+        <translation>Configura un proveedor para enviar tu primer mensaje.</translation>
+    </message>
+    <message>
+        <source>Set up provider</source>
+        <translation>Configurar proveedor</translation>
+    </message>
+    <message>
         <source>Select a session</source>
         <translation>Selecciona una sesión</translation>
     </message>
@@ -5126,6 +5765,18 @@ Gracias — continuando con: %1
     <message>
         <source>Choose a quantization</source>
         <translation>Elige una cuantización</translation>
+    </message>
+    <message>
+        <source>  [gated]</source>
+        <translation>  [restringido]</translation>
+    </message>
+    <message>
+        <source>Re-quantize — pick an installed model</source>
+        <translation>Volver a cuantizar: elige un modelo instalado</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Elige una cuantización objetivo</translation>
     </message>
     <message>
         <source>Go to file</source>
@@ -5411,14 +6062,6 @@ Gracias — continuando con: %1
 </translation>
     </message>
     <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
-
-</source>
-        <translation>Modelos instalados, compartidos con la GUI. **j/k** mueven · **Enter** activa · **x** elimina · **d** descarga un modelo (repo → cuant.).
-
-</translation>
-    </message>
-    <message>
         <source>## Installed
 
 </source>
@@ -5435,9 +6078,21 @@ Gracias — continuando con: %1
 </translation>
     </message>
     <message>
-        <source>- %1**%2** (%3)%4
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant) · **q** re-quantize an installed model.
+
 </source>
-        <translation>- %1**%2** (%3)%4
+        <translation>Modelos instalados, compartidos con la GUI. **j/k** mueve · **Enter** activa · **x** elimina · **d** descarga un modelo (repo → cuant) · **q** vuelve a cuantizar un modelo instalado.
+
+</translation>
+    </message>
+    <message>
+        <source> — **missing on disk** (re-download from Discover)</source>
+        <translation> — **falta en el disco** (vuelve a descargar desde Descubrir)</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4%5
+</source>
+        <translation>- %1**%2** (%3)%4%5
 </translation>
     </message>
     <message>
@@ -5456,6 +6111,20 @@ Gracias — continuando con: %1
         <source>- %1 — %2%  · %3
 </source>
         <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Quantize jobs
+
+</source>
+        <translation>## Trabajos de cuantización
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%3
+</source>
+        <translation>- %1 — %2%3
 </translation>
     </message>
     <message>
@@ -5559,6 +6228,18 @@ Gracias — continuando con: %1
 </translation>
     </message>
     <message>
+        <source>Native</source>
+        <translation>Nativo</translation>
+    </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Externo</translation>
+    </message>
+    <message>
         <source># Profiles
 
 </source>
@@ -5585,6 +6266,12 @@ Gracias — continuando con: %1
     <message>
         <source> (default)</source>
         <translation> (predeterminado)</translation>
+    </message>
+    <message>
+        <source>- Engine: %1
+</source>
+        <translation>- Motor: %1
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -5881,17 +6568,85 @@ _Ningún agente seleccionado._
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
 
 </source>
-        <translation>Árbol de orquestador/trabajadores, compartido con la GUI. **j/k** mueven · **Espacio/Enter** pausa/reanuda.
+        <translation>Árbol de orquestador/trabajadores, compartido con la GUI. **j/k** mueve · **Space/Enter** pausa/reanuda · **t** dirige un hijo · **c** cancela su turno.
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`)
+        <source>- %1%2 — %3 (`%4`) · %5
 </source>
-        <translation>- %1%2 — %3 (`%4`)
+        <translation>- %1%2 — %3 (`%4`) · %5
+</translation>
+    </message>
+    <message>
+        <source># Sessions — Archived
+
+</source>
+        <translation># Sesiones — Archivadas
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **r**/**Enter** restore · **v** back to active.
+
+</source>
+        <translation>**j/k** mueve · **r**/**Enter** restaura · **v** volver a activas.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close · **v** archived.
+
+</source>
+        <translation>**j/k** mueve · **s** suspende · **R**/**Enter** reanuda · **x** cierra · **v** archivadas.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
+
+</source>
+        <translation>**j/k** mueve · **a**/**Enter** aprueba · **p** permite permanentemente · **d** deniega.
+
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+</source>
+        <translation>- Comando: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- _Can be allowed permanently (**p**)._
+</source>
+        <translation>- _Se puede permitir permanentemente (**p**)._
+</translation>
+    </message>
+    <message>
+        <source>Chat pins (origin → session), shared with the GUI routing manager. **j/k** move · **x** unbind.
+
+</source>
+        <translation>Anclajes de chat (origen → sesión), compartidos con el gestor de enrutamiento de la GUI. **j/k** mueve · **x** desvincula.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2 · %3** ⇄ `%4`%5
+</source>
+        <translation>- %1**%2 · %3** ⇄ `%4`%5
+</translation>
+    </message>
+    <message>
+        <source> (agent `%1`)</source>
+        <translation> (agente `%1`)</translation>
+    </message>
+    <message>
+        <source>_No chat pins yet — pin a room/DM to a session from the GUI routing manager or a room row._
+</source>
+        <translation>_Aún no hay anclajes de chat: ancla una sala/MD a una sesión desde el gestor de enrutamiento de la GUI o desde una fila de sala._
 </translation>
     </message>
     <message>
@@ -5903,17 +6658,15 @@ _Ningún agente seleccionado._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
-
-</source>
-        <translation>**j/k** mueven · **s** suspende · **R**/**Enter** reanuda · **x** cierra.
-
-</translation>
-    </message>
-    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
+</translation>
+    </message>
+    <message>
+        <source>_No archived sessions._
+</source>
+        <translation>_No hay sesiones archivadas._
 </translation>
     </message>
     <message>
@@ -5931,14 +6684,6 @@ _Ningún agente seleccionado._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
-
-</source>
-        <translation>**j/k** mueven · **a**/**Enter** aprueba · **d** deniega.
-
-</translation>
-    </message>
-    <message>
         <source>## %1%2 (%3 risk)
 
 </source>
@@ -5953,38 +6698,12 @@ _Ningún agente seleccionado._
 </translation>
     </message>
     <message>
-        <source>- Command: `%1`
-
-</source>
-        <translation>- Comando: `%1`
-
-</translation>
-    </message>
-    <message>
         <source># Routing
 
 </source>
         <translation># Enrutamiento
 
 </translation>
-    </message>
-    <message>
-        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
-
-</source>
-        <translation>Reglas de intención → modelo, compartidas con la GUI. **j/k** mueven · **Espacio/Enter** alterna · **x** elimina.
-
-</translation>
-    </message>
-    <message>
-        <source>- %1**%2** → `%3` (fallback `%4`)%5
-</source>
-        <translation>- %1**%2** → `%3` (reserva `%4`)%5
-</translation>
-    </message>
-    <message>
-        <source> — _disabled_</source>
-        <translation> — _deshabilitado_</translation>
     </message>
     <message>
         <source># Scheduled jobs
@@ -6115,10 +6834,10 @@ _Ningún agente seleccionado._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
 
 </source>
-        <translation>Cuentas de transporte Events-IO y sus salas en vivo, compartidas con la GUI. De solo lectura en ambos shells en esta fase: la conexión se pospone (EIO-2).
+        <translation>Cuentas de transporte Events-IO y sus salas en vivo, compartidas con la GUI. La conexión está diferida (EIO-2); la desconexión/eliminación aún NO tiene operación de wire (B3 - seguimiento node-first). Una credencial almacenada se puede eliminar desde la página de Cuentas (&apos;x&apos; en el perfil vinculado).
 
 </translation>
     </message>
@@ -6153,16 +6872,16 @@ _Ningún agente seleccionado._
 </translation>
     </message>
     <message>
-        <source>  - %1
-</source>
-        <translation>  - %1
-</translation>
+        <source>  - %1</source>
+        <translation>  - %1</translation>
     </message>
     <message>
-        <source>  - %1 · %2
-</source>
-        <translation>  - %1 · %2
-</translation>
+        <source>  - %1 · %2</source>
+        <translation>  - %1 · %2</translation>
+    </message>
+    <message>
+        <source> · ⇄ `%1`</source>
+        <translation> · ⇄ `%1`</translation>
     </message>
     <message>
         <source>## Add channel
@@ -6304,6 +7023,17 @@ _Ningún agente seleccionado._
     </message>
 </context>
 <context>
+    <name>auth::AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Este enlace de inicio de sesión ha caducado; inténtalo de nuevo.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>El inicio de sesión no está disponible en esta compilación.</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::ApprovalRepository</name>
     <message>
         <source>Approval decision failed</source>
@@ -6311,10 +7041,43 @@ _Ningún agente seleccionado._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>No se pudo leer la lista de proveedores de inicio de sesión</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>No se pudo iniciar el flujo de inicio de sesión</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>No se pudo completar el inicio de sesión</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Error al rebobinar el punto de control</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
         <translation>Error en la operación de credenciales</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Punto de control</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>antes de %1</translation>
     </message>
 </context>
 <context>
@@ -6381,6 +7144,17 @@ _Ningún agente seleccionado._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Canales</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>MD</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -6428,6 +7202,10 @@ _Ningún agente seleccionado._
 <context>
     <name>daemonapp::daemon::ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Error al inspeccionar el modelo</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Error en la operación de establecer el modelo</translation>
     </message>
@@ -6442,6 +7220,10 @@ _Ningún agente seleccionado._
     <message>
         <source>Activate failed</source>
         <translation>Error al activar</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>No se pudo iniciar la cuantización</translation>
     </message>
 </context>
 <context>
@@ -6491,10 +7273,21 @@ _Ningún agente seleccionado._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Error al cambiar el enrutamiento</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>Not connected to a daemon</source>
         <translation>No conectado a un daemon</translation>
+    </message>
+    <message>
+        <source>The session rejected the command</source>
+        <translation>La sesión rechazó el comando</translation>
     </message>
     <message>
         <source>SessionUpdateMeta failed</source>
@@ -6523,6 +7316,10 @@ _Ningún agente seleccionado._
         <translation>No se pudo contactar con el nodo. Comprueba el destino e inténtalo de nuevo.</translation>
     </message>
     <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>No se pudo contactar con tu modelo: comprueba el proveedor e inténtalo de nuevo.</translation>
+    </message>
+    <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
         <translation>No se pudo verificar esta clave de API con %1 — compruébala e inténtalo de nuevo.</translation>
     </message>
@@ -6544,6 +7341,13 @@ _Ningún agente seleccionado._
     <message>
         <source>write failed</source>
         <translation>error de escritura</translation>
+    </message>
+</context>
+<context>
+    <name>models::DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Falta el modelo %1 en el disco: %2</translation>
     </message>
 </context>
 <context>

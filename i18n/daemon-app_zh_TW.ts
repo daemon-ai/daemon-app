@@ -43,6 +43,10 @@
         <translation>已連線的帳戶</translation>
     </message>
     <message>
+        <source>Sign in via browser…</source>
+        <translation>透過瀏覽器登入…</translation>
+    </message>
+    <message>
         <source>Add account</source>
         <translation>新增帳戶</translation>
     </message>
@@ -215,8 +219,36 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>AgentInferencePicker</name>
     <message>
+        <source>Custom endpoint…</source>
+        <translation>自訂端點…</translation>
+    </message>
+    <message>
         <source>Provider</source>
         <translation>供應商</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>基礎網址</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>基礎網址（例如 https://…）</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>模型 ID</translation>
+    </message>
+    <message>
+        <source>model id (as your server names it)</source>
+        <translation>模型 ID（依你的伺服器命名）</translation>
+    </message>
+    <message>
+        <source>The endpoint is used as-is — your first message verifies it, and a failure will guide you back here.</source>
+        <translation>端點會原樣使用——你的第一則訊息會驗證它，若失敗會引導你回到這裡。</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>API 金鑰（選填）</translation>
     </message>
     <message>
         <source>Paste API key</source>
@@ -324,6 +356,32 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source> (default)</source>
         <translation> （預設）</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypePicker</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core（原生）</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>已安裝</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>未安裝</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypeView</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core（原生）</translation>
     </message>
 </context>
 <context>
@@ -439,6 +497,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>拒絕</translation>
     </message>
     <message>
+        <source>Allow permanently</source>
+        <translation>永久允許</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>核准</translation>
     </message>
@@ -478,7 +540,178 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>此登入連結已過期——請重試。</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>此組建不提供登入功能。</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowDialog</name>
+    <message>
+        <source>Sign in</source>
+        <translation>登入</translation>
+    </message>
+    <message>
+        <source>Open this link in your browser (copy it):</source>
+        <translation>在瀏覽器中開啟此連結（請複製）：</translation>
+    </message>
+    <message>
+        <source>Then paste the redirect URL here:</source>
+        <translation>然後將重新導向網址貼到這裡：</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>完成登入</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>正在準備登入…</translation>
+    </message>
+    <message>
+        <source>Waiting for your browser to finish… (or paste below)</source>
+        <translation>正在等待你的瀏覽器完成…（或在下方貼上）</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>在瀏覽器中完成登入，然後將重新導向網址貼到下方。</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>正在完成登入…</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>已以 %1 登入</translation>
+    </message>
+    <message>
+        <source>Sign-in failed: %1</source>
+        <translation>登入失敗：%1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>已取消登入</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowLauncher</name>
+    <message>
+        <source>Sign in — pick a provider</source>
+        <translation>登入——選擇供應商</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowSheet</name>
+    <message>
+        <source>Sign in</source>
+        <translation>登入</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>關閉</translation>
+    </message>
+    <message>
+        <source>No browser sign-in providers are available on this node.</source>
+        <translation>此節點沒有可用的瀏覽器登入供應商。</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>供應商</translation>
+    </message>
+    <message>
+        <source>Sign in via browser</source>
+        <translation>透過瀏覽器登入</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>正在準備登入…</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>正在完成登入…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser. Waiting for it to finish…</source>
+        <translation>在瀏覽器中完成登入。正在等待其完成…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>在瀏覽器中完成登入，然後將重新導向網址貼到下方。</translation>
+    </message>
+    <message>
+        <source>Copy sign-in link</source>
+        <translation>複製登入連結</translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>在瀏覽器中開啟</translation>
+    </message>
+    <message>
+        <source>Paste the redirect URL</source>
+        <translation>貼上重新導向網址</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>完成登入</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>已以 %1 登入</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>已取消登入</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>登入失敗</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>重試</translation>
+    </message>
+</context>
+<context>
+    <name>AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>無法讀取登入供應商清單</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>無法啟動登入流程</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>無法完成登入</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
+    <message>
+        <source>Remove stored credential?</source>
+        <translation>要移除已儲存的憑證嗎？</translation>
+    </message>
+    <message>
+        <source>Remove credential</source>
+        <translation>移除憑證</translation>
+    </message>
+    <message>
+        <source>Removes the credential stored for profile “%1” (used by %2).</source>
+        <translation>移除為設定檔「%1」儲存的憑證（由 %2 使用）。</translation>
+    </message>
+    <message>
+        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
+        <translation>節點上該帳號的傳輸工作階段不受影響——中斷連線／移除操作尚未提供。</translation>
+    </message>
     <message>
         <source>Channels</source>
         <translation>頻道</translation>
@@ -496,8 +729,32 @@ You&apos;ll return to first-run setup.</source>
         <translation>%1 · %2</translation>
     </message>
     <message>
+        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
+        <translation>中斷連線尚未提供——節點沒有傳輸中斷操作</translation>
+    </message>
+    <message>
+        <source>Remove the stored credential…</source>
+        <translation>移除已儲存的憑證…</translation>
+    </message>
+    <message>
         <source>No rooms.</source>
         <translation>沒有聊天室。</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned to this session — open the routing manager</source>
+        <translation>已釘選到此工作階段——開啟路由管理員</translation>
+    </message>
+    <message>
+        <source>Pin to agent…</source>
+        <translation>釘選到代理程式…</translation>
+    </message>
+    <message>
+        <source>Route this room&apos;s messages to a session</source>
+        <translation>將此聊天室的訊息路由到某個工作階段</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -540,6 +797,28 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>檢查點回溯失敗</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointTimeline</name>
+    <message>
+        <source>%1 · %2 — rewind is managed by the foreign agent</source>
+        <translation>%1 · %2 — 回溯由外部代理程式管理</translation>
+    </message>
+    <message>
+        <source>%1 · %2 (current)</source>
+        <translation>%1 · %2（目前）</translation>
+    </message>
+    <message>
+        <source>%1 · %2 — click to rewind</source>
+        <translation>%1 · %2 — 點按以回溯</translation>
+    </message>
+</context>
+<context>
     <name>CheckpointsPopover</name>
     <message>
         <source>Checkpoints</source>
@@ -554,6 +833,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>手動檢查點</translation>
     </message>
     <message>
+        <source>Rewind is managed by the foreign agent</source>
+        <translation>回溯由外部代理程式管理</translation>
+    </message>
+    <message>
         <source> tok</source>
         <translation> tok</translation>
     </message>
@@ -564,6 +847,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Restore</source>
         <translation>還原</translation>
+    </message>
+    <message>
+        <source>No checkpoints yet</source>
+        <translation>尚無檢查點</translation>
     </message>
 </context>
 <context>
@@ -939,9 +1226,86 @@ You&apos;ll return to first-run setup.</source>
         <comment>composer mode badge</comment>
         <translation>詳細</translation>
     </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>原生</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>編輯</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>自動</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>拒絕</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>詢問</translation>
+    </message>
+    <message>
+        <source>policy:</source>
+        <comment>approval-policy badge prefix</comment>
+        <translation>政策：</translation>
+    </message>
 </context>
 <context>
     <name>ComposerControls</name>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>原生</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>引擎</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>編輯</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>自動</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>拒絕</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>詢問</translation>
+    </message>
+    <message>
+        <source>Approval policy (reflects last set value)</source>
+        <translation>核准政策（反映上次設定的值）</translation>
+    </message>
+    <message>
+        <source>⇄ %1 +%2</source>
+        <translation>⇄ %1 +%2</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned from %1 — open the routing manager</source>
+        <translation>從 %1 釘選——開啟路由管理員</translation>
+    </message>
     <message>
         <source>Checkpoints / rewind</source>
         <translation>檢查點／回溯</translation>
@@ -1271,6 +1635,17 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>檢查點</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>在 %1 之前</translation>
+    </message>
+</context>
+<context>
     <name>DaemonConnectionService</name>
     <message>
         <source>Could not reach the daemon. Check it is running and try again.</source>
@@ -1331,6 +1706,24 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Unsupported transport</source>
         <translation>不支援的傳輸方式</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>頻道</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>私訊</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>模型 %1 在磁碟上遺失：%2</translation>
     </message>
 </context>
 <context>
@@ -1446,6 +1839,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Searching…</source>
         <translation>搜尋中…</translation>
+    </message>
+    <message>
+        <source>gated</source>
+        <translation>受限</translation>
     </message>
     <message>
         <source>by %1</source>
@@ -1725,6 +2122,14 @@ You&apos;ll return to first-run setup.</source>
         <source>file %1/%2</source>
         <translation>檔案 %1/%2</translation>
     </message>
+    <message>
+        <source>This repo is gated — accept its license on the Hub (and add a token if required), then retry.</source>
+        <translation>此儲存庫受限——請在 Hub 上接受其授權（必要時新增權杖），然後重試。</translation>
+    </message>
+    <message>
+        <source>Open license page</source>
+        <translation>開啟授權頁面</translation>
+    </message>
 </context>
 <context>
     <name>EditMenu</name>
@@ -1862,6 +2267,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>遠端</translation>
     </message>
     <message>
+        <source>Agent type (Enter to pick):</source>
+        <translation>代理程式類型（按 Enter 選擇）：</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>代理名稱</translation>
     </message>
@@ -1876,6 +2285,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model</source>
         <translation>模型</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>基礎網址（例如 https://…）</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>模型 ID</translation>
     </message>
     <message>
         <source>Test</source>
@@ -1900,6 +2317,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Failed — </source>
         <translation>失敗 — </translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>自訂端點…</translation>
+    </message>
+    <message>
+        <source>custom</source>
+        <translation>自訂</translation>
     </message>
     <message>
         <source>Local: App-managed (press to Attach instead)</source>
@@ -1927,6 +2352,14 @@ You&apos;ll return to first-run setup.</source>
         <translation>登入</translation>
     </message>
     <message>
+        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
+        <translation>選擇代理程式的類型：原生會接著挑選模型；外部 ACP 代理程式則自備模型。</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>繼續</translation>
+    </message>
+    <message>
         <source>Pick a provider and a model, then Finish.</source>
         <translation>挑選供應商與模型，然後完成。</translation>
     </message>
@@ -1944,6 +2377,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Almost there - confirm an inference model.</source>
         <translation>就快完成了 - 請確認推論模型。</translation>
+    </message>
+    <message>
+        <source>What kind of agent do you want?</source>
+        <translation>你想要哪一種代理程式？</translation>
     </message>
     <message>
         <source>Sign in to the node to continue.</source>
@@ -1974,6 +2411,18 @@ You&apos;ll return to first-run setup.</source>
         <translation>登入中…</translation>
     </message>
     <message>
+        <source>Agent type</source>
+        <translation>代理程式類型</translation>
+    </message>
+    <message>
+        <source>Runs in the daemon — pick a provider and model next.</source>
+        <translation>在 daemon 中執行——接著挑選供應商與模型。</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
+        <translation>此代理程式執行外部 ACP 引擎——它自備模型，因此不需要供應商、模型或金鑰。</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>代理名稱</translation>
     </message>
@@ -1989,12 +2438,20 @@ You&apos;ll return to first-run setup.</source>
         <source>Finish setup</source>
         <translation>完成設定</translation>
     </message>
+    <message>
+        <source>Continue</source>
+        <translation>繼續</translation>
+    </message>
 </context>
 <context>
     <name>FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>無法連接節點。請檢查目標後再試一次。</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>無法連上你的模型——請檢查供應商後重試。</translation>
     </message>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
@@ -2004,12 +2461,48 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>FleetPage</name>
     <message>
+        <source>Steer this agent</source>
+        <translation>引導此代理程式</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>傳送</translation>
+    </message>
+    <message>
+        <source>Message to inject…</source>
+        <translation>要注入的訊息…</translation>
+    </message>
+    <message>
+        <source>Steers the running turn without interrupting it.</source>
+        <translation>在不中斷的情況下引導執行中的回合。</translation>
+    </message>
+    <message>
+        <source>The agent is idle — this starts a new turn.</source>
+        <translation>代理程式閒置中——這會開始新的回合。</translation>
+    </message>
+    <message>
         <source>Fleet</source>
         <translation>機群</translation>
     </message>
     <message>
         <source>Refresh</source>
         <translation>重新整理</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>原生</translation>
+    </message>
+    <message>
+        <source>Steer…</source>
+        <translation>引導…</translation>
+    </message>
+    <message>
+        <source>Cancel the running turn</source>
+        <translation>取消執行中的回合</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -2645,6 +3138,10 @@ Thanks — proceeding with: %1
 <context>
     <name>ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>模型檢查失敗</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>設定模型操作失敗</translation>
     </message>
@@ -2659,6 +3156,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Activate failed</source>
         <translation>啟用失敗</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>量化啟動失敗</translation>
     </message>
 </context>
 <context>
@@ -2727,6 +3228,30 @@ Start one from the Discover tab.</source>
         <translation>沒有進行中的下載。
 請從「探索」分頁開始下載。</translation>
     </message>
+    <message>
+        <source>Quantize jobs</source>
+        <translation>量化工作</translation>
+    </message>
+    <message>
+        <source>Quantizing %1</source>
+        <translation>正在量化 %1</translation>
+    </message>
+    <message>
+        <source>Working…</source>
+        <translation>處理中…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>完成</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>失敗</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>已佇列</translation>
+    </message>
 </context>
 <context>
     <name>ModelsInstalled</name>
@@ -2749,6 +3274,18 @@ Start one from the Discover tab.</source>
     <message>
         <source> GiB</source>
         <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Model missing — the file was moved or deleted.</source>
+        <translation>模型遺失——檔案已被移動或刪除。</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>重新下載</translation>
+    </message>
+    <message>
+        <source>Re-quantize…</source>
+        <translation>重新量化…</translation>
     </message>
     <message>
         <source>Active</source>
@@ -2830,22 +3367,6 @@ Start one from the Discover tab.</source>
     <message>
         <source>Engine</source>
         <translation>引擎</translation>
-    </message>
-    <message>
-        <source>daemon-core (native)</source>
-        <translation>daemon-core（原生）</translation>
-    </message>
-    <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>已安裝</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>未安裝</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
@@ -3220,6 +3741,14 @@ Start one from the Discover tab.</source>
         <translation>+ 新增設定檔</translation>
     </message>
     <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>原生</translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>新增設定檔</translation>
     </message>
@@ -3507,6 +4036,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>推理</translation>
     </message>
     <message>
+        <source>exit %1</source>
+        <translation>結束 %1</translation>
+    </message>
+    <message>
         <source>[image: </source>
         <translation>[image: </translation>
     </message>
@@ -3558,12 +4091,24 @@ A generic, non-transcript page hosted by the same tab strip.
         <source>[math] </source>
         <translation>[數學] </translation>
     </message>
+    <message>
+        <source>  [installed]</source>
+        <translation>  [已安裝]</translation>
+    </message>
+    <message>
+        <source>  [not installed]</source>
+        <translation>  [未安裝]</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
     <message>
         <source>Choose a quantization</source>
         <translation>選擇量化版本</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>選擇目標量化</translation>
     </message>
     <message>
         <source>Recommended: %1</source>
@@ -3576,6 +4121,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>tight</source>
         <translation>勉強容納</translation>
+    </message>
+    <message>
+        <source>Needs about %1 of disk space.</source>
+        <translation>約需 %1 的磁碟空間。</translation>
+    </message>
+    <message>
+        <source>Quantize to recommended</source>
+        <translation>量化為建議值</translation>
     </message>
     <message>
         <source>Download recommended</source>
@@ -3604,6 +4157,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Download</source>
         <translation>下載</translation>
+    </message>
+    <message>
+        <source>Quantize</source>
+        <translation>量化</translation>
     </message>
     <message>
         <source>Close</source>
@@ -3661,6 +4218,21 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Reasoning</source>
         <translation>推理</translation>
+    </message>
+</context>
+<context>
+    <name>RewindConfirmDialog</name>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>要回溯到此檢查點嗎？</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>回溯</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>這會捨棄工作階段中所選點之後的回合。</translation>
     </message>
 </context>
 <context>
@@ -3758,6 +4330,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>投入程度：%1</translation>
     </message>
     <message>
+        <source>Approval: %1</source>
+        <translation>核准：%1</translation>
+    </message>
+    <message>
         <source>Fast:    %1</source>
         <translation>快速模式：%1</translation>
     </message>
@@ -3774,8 +4350,48 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>詳細輸出：%1</translation>
     </message>
     <message>
-        <source>%1  ·  %2  ·  %3 tok%4</source>
-        <translation>%1  ·  %2  ·  %3 tok%4</translation>
+        <source>  ·  %1 tok</source>
+        <translation>  ·  %1 個 token</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2%3%4</source>
+        <translation>%1  ·  %2%3%4</translation>
+    </message>
+    <message>
+        <source>Rewind is managed by the foreign agent · Esc closes</source>
+        <translation>回溯由外部代理程式管理 · 按 Esc 關閉</translation>
+    </message>
+    <message>
+        <source>Enter rewinds to the selected checkpoint (confirmed) · Esc closes</source>
+        <translation>按 Enter 回溯到所選檢查點（需確認） · 按 Esc 關閉</translation>
+    </message>
+    <message>
+        <source>Rewind…</source>
+        <translation>回溯…</translation>
+    </message>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>要回溯到此檢查點嗎？</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>這會捨棄工作階段中所選點之後的回合。</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>回溯</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Steer this agent</source>
+        <translation>引導此代理程式</translation>
+    </message>
+    <message>
+        <source>Steer this agent (idle — starts a turn)</source>
+        <translation>引導此代理程式（閒置——會開始一個回合）</translation>
     </message>
     <message>
         <source>  (current)</source>
@@ -3788,14 +4404,6 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Checkpoints</source>
         <translation>檢查點</translation>
-    </message>
-    <message>
-        <source>Enter restores the selected checkpoint · Esc closes</source>
-        <translation>按 Enter 還原所選檢查點 · Esc 關閉</translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation>還原</translation>
     </message>
     <message>
         <source> 0/0 </source>
@@ -3908,6 +4516,13 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Make primary</source>
         <translation>設為主要</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>路由變更失敗</translation>
     </message>
 </context>
 <context>
@@ -4117,6 +4732,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>尚未連線到 daemon</translation>
     </message>
     <message>
+        <source>The session rejected the command</source>
+        <translation>工作階段拒絕了此命令</translation>
+    </message>
+    <message>
         <source>SessionUpdateMeta failed</source>
         <translation>更新工作階段中繼資料失敗</translation>
     </message>
@@ -4307,6 +4926,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>工作階段</translation>
     </message>
     <message>
+        <source>Active</source>
+        <translation>使用中</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>已封存</translation>
+    </message>
+    <message>
         <source>LIVE</source>
         <translation>即時</translation>
     </message>
@@ -4317,6 +4944,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source> tok</source>
         <translation> tok</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>還原</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -5040,6 +5671,14 @@ Thanks — proceeding with: %1
         <translation>回合 %1。</translation>
     </message>
     <message>
+        <source>Set up a provider to send your first message.</source>
+        <translation>設定供應商以傳送你的第一則訊息。</translation>
+    </message>
+    <message>
+        <source>Set up provider</source>
+        <translation>設定供應商</translation>
+    </message>
+    <message>
         <source>Select a session</source>
         <translation>選取工作階段</translation>
     </message>
@@ -5119,6 +5758,18 @@ Thanks — proceeding with: %1
     <message>
         <source>Choose a quantization</source>
         <translation>選擇量化版本</translation>
+    </message>
+    <message>
+        <source>  [gated]</source>
+        <translation>  [受限]</translation>
+    </message>
+    <message>
+        <source>Re-quantize — pick an installed model</source>
+        <translation>重新量化——選擇已安裝的模型</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>選擇目標量化</translation>
     </message>
     <message>
         <source>Go to file</source>
@@ -5404,14 +6055,6 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
-
-</source>
-        <translation>已安裝的模型，與 GUI 共用。**j/k** 移動 · **Enter** 啟用 · **x** 移除 · **d** 下載模型（儲存庫 → 量化版本）。
-
-</translation>
-    </message>
-    <message>
         <source>## Installed
 
 </source>
@@ -5428,9 +6071,21 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>- %1**%2** (%3)%4
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant) · **q** re-quantize an installed model.
+
 </source>
-        <translation>- %1**%2**（%3）%4
+        <translation>已安裝的模型，與 GUI 共用。**j/k** 移動 · **Enter** 啟用 · **x** 移除 · **d** 下載模型（repo → quant） · **q** 重新量化已安裝的模型。
+
+</translation>
+    </message>
+    <message>
+        <source> — **missing on disk** (re-download from Discover)</source>
+        <translation> — **磁碟上遺失**（從探索重新下載）</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4%5
+</source>
+        <translation>- %1**%2**（%3）%4%5
 </translation>
     </message>
     <message>
@@ -5449,6 +6104,20 @@ Thanks — proceeding with: %1
         <source>- %1 — %2%  · %3
 </source>
         <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Quantize jobs
+
+</source>
+        <translation>## 量化工作
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%3
+</source>
+        <translation>- %1 — %2%3
 </translation>
     </message>
     <message>
@@ -5552,6 +6221,18 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
+        <source>Native</source>
+        <translation>原生</translation>
+    </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
         <source># Profiles
 
 </source>
@@ -5578,6 +6259,12 @@ Thanks — proceeding with: %1
     <message>
         <source> (default)</source>
         <translation> （預設）</translation>
+    </message>
+    <message>
+        <source>- Engine: %1
+</source>
+        <translation>- 引擎：%1
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -5874,17 +6561,85 @@ _未選取代理。_
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
 
 </source>
-        <translation>協調器／工作者樹狀圖，與 GUI 共用。**j/k** 移動 · **Space/Enter** 暫停／繼續。
+        <translation>協調器／工作者樹狀圖，與 GUI 共用。**j/k** 移動 · **Space/Enter** 暫停／恢復 · **t** 引導子項 · **c** 取消其回合。
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`)
+        <source>- %1%2 — %3 (`%4`) · %5
 </source>
-        <translation>- %1%2 — %3（`%4`）
+        <translation>- %1%2 — %3（`%4`） · %5
+</translation>
+    </message>
+    <message>
+        <source># Sessions — Archived
+
+</source>
+        <translation># 工作階段 — 已封存
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **r**/**Enter** restore · **v** back to active.
+
+</source>
+        <translation>**j/k** 移動 · **r**/**Enter** 還原 · **v** 返回使用中。
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close · **v** archived.
+
+</source>
+        <translation>**j/k** 移動 · **s** 暫停 · **R**/**Enter** 恢復 · **x** 關閉 · **v** 已封存。
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
+
+</source>
+        <translation>**j/k** 移動 · **a**/**Enter** 核准 · **p** 永久允許 · **d** 拒絕。
+
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+</source>
+        <translation>- 命令：`%1`
+</translation>
+    </message>
+    <message>
+        <source>- _Can be allowed permanently (**p**)._
+</source>
+        <translation>- _可永久允許（**p**）。_
+</translation>
+    </message>
+    <message>
+        <source>Chat pins (origin → session), shared with the GUI routing manager. **j/k** move · **x** unbind.
+
+</source>
+        <translation>聊天釘選（來源 → 工作階段），與 GUI 路由管理員共用。**j/k** 移動 · **x** 解除綁定。
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2 · %3** ⇄ `%4`%5
+</source>
+        <translation>- %1**%2 · %3** ⇄ `%4`%5
+</translation>
+    </message>
+    <message>
+        <source> (agent `%1`)</source>
+        <translation> （代理程式 `%1`）</translation>
+    </message>
+    <message>
+        <source>_No chat pins yet — pin a room/DM to a session from the GUI routing manager or a room row._
+</source>
+        <translation>_尚無聊天釘選——從 GUI 路由管理員或聊天室列將聊天室／私訊釘選到工作階段。_
 </translation>
     </message>
     <message>
@@ -5896,17 +6651,15 @@ _未選取代理。_
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
-
-</source>
-        <translation>**j/k** 移動 · **s** 暫停 · **R**/**Enter** 繼續 · **x** 關閉。
-
-</translation>
-    </message>
-    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
+</translation>
+    </message>
+    <message>
+        <source>_No archived sessions._
+</source>
+        <translation>_沒有已封存的工作階段。_
 </translation>
     </message>
     <message>
@@ -5924,14 +6677,6 @@ _未選取代理。_
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
-
-</source>
-        <translation>**j/k** 移動 · **a**/**Enter** 核准 · **d** 拒絕。
-
-</translation>
-    </message>
-    <message>
         <source>## %1%2 (%3 risk)
 
 </source>
@@ -5946,38 +6691,12 @@ _未選取代理。_
 </translation>
     </message>
     <message>
-        <source>- Command: `%1`
-
-</source>
-        <translation>- 指令：`%1`
-
-</translation>
-    </message>
-    <message>
         <source># Routing
 
 </source>
         <translation># 路由
 
 </translation>
-    </message>
-    <message>
-        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
-
-</source>
-        <translation>意圖 → 模型規則，與 GUI 共用。**j/k** 移動 · **Space/Enter** 切換 · **x** 刪除。
-
-</translation>
-    </message>
-    <message>
-        <source>- %1**%2** → `%3` (fallback `%4`)%5
-</source>
-        <translation>- %1**%2** → `%3`（備援 `%4`）%5
-</translation>
-    </message>
-    <message>
-        <source> — _disabled_</source>
-        <translation> — _已停用_</translation>
     </message>
     <message>
         <source># Scheduled jobs
@@ -6108,10 +6827,10 @@ _未選取代理。_
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
 
 </source>
-        <translation>Events-IO 傳輸帳戶及其即時聊天室，與 GUI 共用。此切片在兩個介面中皆為唯讀 - 連線功能延後實作（EIO-2）。
+        <translation>事件 IO 傳輸帳號及其即時聊天室，與 GUI 共用。連線已延後（EIO-2）；中斷連線／移除尚無 wire 操作（B3 - node-first 後續工作）。已儲存的憑證可從「帳號」頁面移除（在綁定的設定檔上按「x」）。
 
 </translation>
     </message>
@@ -6146,16 +6865,16 @@ _未選取代理。_
 </translation>
     </message>
     <message>
-        <source>  - %1
-</source>
-        <translation>  - %1
-</translation>
+        <source>  - %1</source>
+        <translation>  - %1</translation>
     </message>
     <message>
-        <source>  - %1 · %2
-</source>
-        <translation>  - %1 · %2
-</translation>
+        <source>  - %1 · %2</source>
+        <translation>  - %1 · %2</translation>
+    </message>
+    <message>
+        <source> · ⇄ `%1`</source>
+        <translation> · ⇄ `%1`</translation>
     </message>
     <message>
         <source>## Add channel
@@ -6297,6 +7016,17 @@ _未選取代理。_
     </message>
 </context>
 <context>
+    <name>auth::AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>此登入連結已過期——請重試。</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>此組建不提供登入功能。</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::ApprovalRepository</name>
     <message>
         <source>Approval decision failed</source>
@@ -6304,10 +7034,43 @@ _未選取代理。_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>無法讀取登入供應商清單</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>無法啟動登入流程</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>無法完成登入</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>檢查點回溯失敗</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
         <translation>憑證操作失敗</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>檢查點</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>在 %1 之前</translation>
     </message>
 </context>
 <context>
@@ -6374,6 +7137,17 @@ _未選取代理。_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>頻道</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>私訊</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -6421,6 +7195,10 @@ _未選取代理。_
 <context>
     <name>daemonapp::daemon::ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>模型檢查失敗</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>設定模型操作失敗</translation>
     </message>
@@ -6435,6 +7213,10 @@ _未選取代理。_
     <message>
         <source>Activate failed</source>
         <translation>啟用失敗</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>量化啟動失敗</translation>
     </message>
 </context>
 <context>
@@ -6484,10 +7266,21 @@ _未選取代理。_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>路由變更失敗</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>Not connected to a daemon</source>
         <translation>尚未連線到 daemon</translation>
+    </message>
+    <message>
+        <source>The session rejected the command</source>
+        <translation>工作階段拒絕了此命令</translation>
     </message>
     <message>
         <source>SessionUpdateMeta failed</source>
@@ -6516,6 +7309,10 @@ _未選取代理。_
         <translation>無法連接節點。請檢查目標後再試一次。</translation>
     </message>
     <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>無法連上你的模型——請檢查供應商後重試。</translation>
+    </message>
+    <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
         <translation>無法透過 %1 驗證此 API 金鑰 — 請檢查後再試一次。</translation>
     </message>
@@ -6537,6 +7334,13 @@ _未選取代理。_
     <message>
         <source>write failed</source>
         <translation>寫入失敗</translation>
+    </message>
+</context>
+<context>
+    <name>models::DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>模型 %1 在磁碟上遺失：%2</translation>
     </message>
 </context>
 <context>

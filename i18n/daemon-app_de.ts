@@ -43,6 +43,10 @@
         <translation>Verbundene Konten</translation>
     </message>
     <message>
+        <source>Sign in via browser…</source>
+        <translation>Über Browser anmelden…</translation>
+    </message>
+    <message>
         <source>Add account</source>
         <translation>Konto hinzufügen</translation>
     </message>
@@ -215,8 +219,36 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
 <context>
     <name>AgentInferencePicker</name>
     <message>
+        <source>Custom endpoint…</source>
+        <translation>Benutzerdefinierter Endpunkt…</translation>
+    </message>
+    <message>
         <source>Provider</source>
         <translation>Anbieter</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Basis-URL</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Basis-URL (z. B. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>Modell-ID</translation>
+    </message>
+    <message>
+        <source>model id (as your server names it)</source>
+        <translation>Modell-ID (wie von Ihrem Server benannt)</translation>
+    </message>
+    <message>
+        <source>The endpoint is used as-is — your first message verifies it, and a failure will guide you back here.</source>
+        <translation>Der Endpunkt wird unverändert verwendet – Ihre erste Nachricht überprüft ihn, und bei einem Fehler werden Sie hierher zurückgeführt.</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>API-Schlüssel (optional)</translation>
     </message>
     <message>
         <source>Paste API key</source>
@@ -324,6 +356,32 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source> (default)</source>
         <translation> (Standard)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypePicker</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (nativ)</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>installiert</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>nicht installiert</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypeView</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (nativ)</translation>
     </message>
 </context>
 <context>
@@ -439,6 +497,10 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>Ablehnen</translation>
     </message>
     <message>
+        <source>Allow permanently</source>
+        <translation>Dauerhaft zulassen</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>Freigeben</translation>
     </message>
@@ -478,7 +540,178 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     </message>
 </context>
 <context>
+    <name>AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Dieser Anmeldelink ist abgelaufen – bitte erneut versuchen.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>Die Anmeldung ist in diesem Build nicht verfügbar.</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowDialog</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Anmelden</translation>
+    </message>
+    <message>
+        <source>Open this link in your browser (copy it):</source>
+        <translation>Öffnen Sie diesen Link in Ihrem Browser (kopieren Sie ihn):</translation>
+    </message>
+    <message>
+        <source>Then paste the redirect URL here:</source>
+        <translation>Fügen Sie dann die Weiterleitungs-URL hier ein:</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Anmeldung abschließen</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Anmeldung wird vorbereitet…</translation>
+    </message>
+    <message>
+        <source>Waiting for your browser to finish… (or paste below)</source>
+        <translation>Warten, bis Ihr Browser fertig ist… (oder unten einfügen)</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Schließen Sie die Anmeldung in Ihrem Browser ab und fügen Sie dann die Weiterleitungs-URL unten ein.</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Anmeldung wird abgeschlossen…</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Angemeldet als %1</translation>
+    </message>
+    <message>
+        <source>Sign-in failed: %1</source>
+        <translation>Anmeldung fehlgeschlagen: %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Anmeldung abgebrochen</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowLauncher</name>
+    <message>
+        <source>Sign in — pick a provider</source>
+        <translation>Anmelden – Anbieter auswählen</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowSheet</name>
+    <message>
+        <source>Sign in</source>
+        <translation>Anmelden</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Schließen</translation>
+    </message>
+    <message>
+        <source>No browser sign-in providers are available on this node.</source>
+        <translation>Auf diesem Knoten sind keine Browser-Anmeldeanbieter verfügbar.</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Anbieter</translation>
+    </message>
+    <message>
+        <source>Sign in via browser</source>
+        <translation>Über Browser anmelden</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>Anmeldung wird vorbereitet…</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>Anmeldung wird abgeschlossen…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser. Waiting for it to finish…</source>
+        <translation>Schließen Sie die Anmeldung in Ihrem Browser ab. Warten auf den Abschluss…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>Schließen Sie die Anmeldung in Ihrem Browser ab und fügen Sie dann die Weiterleitungs-URL unten ein.</translation>
+    </message>
+    <message>
+        <source>Copy sign-in link</source>
+        <translation>Anmeldelink kopieren</translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>Im Browser öffnen</translation>
+    </message>
+    <message>
+        <source>Paste the redirect URL</source>
+        <translation>Weiterleitungs-URL einfügen</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>Anmeldung abschließen</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Angemeldet als %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>Anmeldung abgebrochen</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>Anmeldung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Erneut versuchen</translation>
+    </message>
+</context>
+<context>
+    <name>AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>Die Liste der Anmeldeanbieter konnte nicht gelesen werden</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>Der Anmeldevorgang konnte nicht gestartet werden</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>Die Anmeldung konnte nicht abgeschlossen werden</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
+    <message>
+        <source>Remove stored credential?</source>
+        <translation>Gespeicherte Anmeldedaten entfernen?</translation>
+    </message>
+    <message>
+        <source>Remove credential</source>
+        <translation>Anmeldedaten entfernen</translation>
+    </message>
+    <message>
+        <source>Removes the credential stored for profile “%1” (used by %2).</source>
+        <translation>Entfernt die für das Profil „%1“ gespeicherten Anmeldedaten (verwendet von %2).</translation>
+    </message>
+    <message>
+        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
+        <translation>Die Transportsitzung des Kontos auf dem Knoten ist nicht betroffen – ein Trennen/Entfernen ist noch nicht verfügbar.</translation>
+    </message>
     <message>
         <source>Channels</source>
         <translation>Kanäle</translation>
@@ -496,8 +729,32 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>%1 · %2</translation>
     </message>
     <message>
+        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
+        <translation>Trennen ist noch nicht verfügbar – der Knoten hat keinen Transport-Trennvorgang</translation>
+    </message>
+    <message>
+        <source>Remove the stored credential…</source>
+        <translation>Gespeicherte Anmeldedaten entfernen…</translation>
+    </message>
+    <message>
         <source>No rooms.</source>
         <translation>Keine Räume.</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned to this session — open the routing manager</source>
+        <translation>An diese Sitzung angeheftet – Routing-Manager öffnen</translation>
+    </message>
+    <message>
+        <source>Pin to agent…</source>
+        <translation>An Agent anheften…</translation>
+    </message>
+    <message>
+        <source>Route this room&apos;s messages to a session</source>
+        <translation>Nachrichten dieses Raums an eine Sitzung leiten</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -540,6 +797,28 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     </message>
 </context>
 <context>
+    <name>CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Zurückspulen des Checkpoints fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointTimeline</name>
+    <message>
+        <source>%1 · %2 — rewind is managed by the foreign agent</source>
+        <translation>%1 · %2 – Zurückspulen wird vom fremden Agenten verwaltet</translation>
+    </message>
+    <message>
+        <source>%1 · %2 (current)</source>
+        <translation>%1 · %2 (aktuell)</translation>
+    </message>
+    <message>
+        <source>%1 · %2 — click to rewind</source>
+        <translation>%1 · %2 – zum Zurückspulen klicken</translation>
+    </message>
+</context>
+<context>
     <name>CheckpointsPopover</name>
     <message>
         <source>Checkpoints</source>
@@ -554,6 +833,10 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>Manueller Prüfpunkt</translation>
     </message>
     <message>
+        <source>Rewind is managed by the foreign agent</source>
+        <translation>Zurückspulen wird vom fremden Agenten verwaltet</translation>
+    </message>
+    <message>
         <source> tok</source>
         <translation> Tok</translation>
     </message>
@@ -564,6 +847,10 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source>Restore</source>
         <translation>Wiederherstellen</translation>
+    </message>
+    <message>
+        <source>No checkpoints yet</source>
+        <translation>Noch keine Checkpoints</translation>
     </message>
 </context>
 <context>
@@ -939,9 +1226,86 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <comment>composer mode badge</comment>
         <translation>ausführlich</translation>
     </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Fremd</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Nativ</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Bearbeitungen</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Ablehnen</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Fragen</translation>
+    </message>
+    <message>
+        <source>policy:</source>
+        <comment>approval-policy badge prefix</comment>
+        <translation>Richtlinie:</translation>
+    </message>
 </context>
 <context>
     <name>ComposerControls</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Fremd</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Nativ</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Engine</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Bearbeitungen</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Ablehnen</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Fragen</translation>
+    </message>
+    <message>
+        <source>Approval policy (reflects last set value)</source>
+        <translation>Genehmigungsrichtlinie (zeigt zuletzt festgelegten Wert)</translation>
+    </message>
+    <message>
+        <source>⇄ %1 +%2</source>
+        <translation>⇄ %1 +%2</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned from %1 — open the routing manager</source>
+        <translation>Angeheftet von %1 – Routing-Manager öffnen</translation>
+    </message>
     <message>
         <source>Checkpoints / rewind</source>
         <translation>Prüfpunkte / Zurückspulen</translation>
@@ -1271,6 +1635,17 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     </message>
 </context>
 <context>
+    <name>DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Checkpoint</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>vor %1</translation>
+    </message>
+</context>
+<context>
     <name>DaemonConnectionService</name>
     <message>
         <source>Could not reach the daemon. Check it is running and try again.</source>
@@ -1331,6 +1706,24 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source>Unsupported transport</source>
         <translation>Nicht unterstützter Transport</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Kanäle</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DMs</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Modell %1 fehlt auf dem Datenträger: %2</translation>
     </message>
 </context>
 <context>
@@ -1446,6 +1839,10 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source>Searching…</source>
         <translation>Suche läuft…</translation>
+    </message>
+    <message>
+        <source>gated</source>
+        <translation>gesperrt</translation>
     </message>
     <message>
         <source>by %1</source>
@@ -1725,6 +2122,14 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <source>file %1/%2</source>
         <translation>Datei %1/%2</translation>
     </message>
+    <message>
+        <source>This repo is gated — accept its license on the Hub (and add a token if required), then retry.</source>
+        <translation>Dieses Repo ist gesperrt – akzeptieren Sie die Lizenz im Hub (und fügen Sie bei Bedarf ein Token hinzu), dann erneut versuchen.</translation>
+    </message>
+    <message>
+        <source>Open license page</source>
+        <translation>Lizenzseite öffnen</translation>
+    </message>
 </context>
 <context>
     <name>EditMenu</name>
@@ -1864,6 +2269,10 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>Remote</translation>
     </message>
     <message>
+        <source>Agent type (Enter to pick):</source>
+        <translation>Agententyp (Enter zum Auswählen):</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Agentenname</translation>
     </message>
@@ -1878,6 +2287,14 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source>Model</source>
         <translation>Modell</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Basis-URL (z. B. https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>Modell-ID</translation>
     </message>
     <message>
         <source>Test</source>
@@ -1902,6 +2319,14 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source>Failed — </source>
         <translation>Fehlgeschlagen — </translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>Benutzerdefinierter Endpunkt…</translation>
+    </message>
+    <message>
+        <source>custom</source>
+        <translation>benutzerdefiniert</translation>
     </message>
     <message>
         <source>Local: App-managed (press to Attach instead)</source>
@@ -1929,6 +2354,14 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>Anmelden</translation>
     </message>
     <message>
+        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
+        <translation>Wählen Sie die Art des Agenten: Nativ wählt als Nächstes ein Modell; ein fremder ACP-Agent bringt sein eigenes mit.</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Weiter</translation>
+    </message>
+    <message>
         <source>Pick a provider and a model, then Finish.</source>
         <translation>Wählen Sie einen Anbieter und ein Modell und klicken Sie dann auf Fertigstellen.</translation>
     </message>
@@ -1946,6 +2379,10 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source>Almost there - confirm an inference model.</source>
         <translation>Fast geschafft – bestätigen Sie ein Inferenzmodell.</translation>
+    </message>
+    <message>
+        <source>What kind of agent do you want?</source>
+        <translation>Welche Art von Agent möchten Sie?</translation>
     </message>
     <message>
         <source>Sign in to the node to continue.</source>
@@ -1976,6 +2413,18 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>Anmeldung läuft…</translation>
     </message>
     <message>
+        <source>Agent type</source>
+        <translation>Agententyp</translation>
+    </message>
+    <message>
+        <source>Runs in the daemon — pick a provider and model next.</source>
+        <translation>Läuft im Daemon – wählen Sie als Nächstes Anbieter und Modell.</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
+        <translation>Dieser Agent nutzt eine fremde ACP-Engine – er bringt sein eigenes Modell mit, sodass kein Anbieter, Modell oder Schlüssel nötig ist.</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>Agentenname</translation>
     </message>
@@ -1991,12 +2440,20 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <source>Finish setup</source>
         <translation>Einrichtung abschließen</translation>
     </message>
+    <message>
+        <source>Continue</source>
+        <translation>Weiter</translation>
+    </message>
 </context>
 <context>
     <name>FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>Der Node konnte nicht erreicht werden. Prüfen Sie das Ziel und versuchen Sie es erneut.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>Ihr Modell konnte nicht erreicht werden – prüfen Sie den Anbieter und versuchen Sie es erneut.</translation>
     </message>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
@@ -2006,12 +2463,48 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
 <context>
     <name>FleetPage</name>
     <message>
+        <source>Steer this agent</source>
+        <translation>Diesen Agenten steuern</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Senden</translation>
+    </message>
+    <message>
+        <source>Message to inject…</source>
+        <translation>Einzufügende Nachricht…</translation>
+    </message>
+    <message>
+        <source>Steers the running turn without interrupting it.</source>
+        <translation>Steuert den laufenden Durchlauf, ohne ihn zu unterbrechen.</translation>
+    </message>
+    <message>
+        <source>The agent is idle — this starts a new turn.</source>
+        <translation>Der Agent ist inaktiv – dies startet einen neuen Durchlauf.</translation>
+    </message>
+    <message>
         <source>Fleet</source>
         <translation>Flotte</translation>
     </message>
     <message>
         <source>Refresh</source>
         <translation>Aktualisieren</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Fremd</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Nativ</translation>
+    </message>
+    <message>
+        <source>Steer…</source>
+        <translation>Steuern…</translation>
+    </message>
+    <message>
+        <source>Cancel the running turn</source>
+        <translation>Laufenden Durchlauf abbrechen</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -2649,6 +3142,10 @@ Danke — es geht weiter mit: %1
 <context>
     <name>ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Modellprüfung fehlgeschlagen</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Modellauswahl-Vorgang fehlgeschlagen</translation>
     </message>
@@ -2663,6 +3160,10 @@ Danke — es geht weiter mit: %1
     <message>
         <source>Activate failed</source>
         <translation>Aktivierung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>Quantisierung konnte nicht gestartet werden</translation>
     </message>
 </context>
 <context>
@@ -2731,6 +3232,30 @@ Start one from the Discover tab.</source>
         <translation>Keine aktiven Downloads.
 Starten Sie einen über den Tab „Entdecken“.</translation>
     </message>
+    <message>
+        <source>Quantize jobs</source>
+        <translation>Quantisierungsaufträge</translation>
+    </message>
+    <message>
+        <source>Quantizing %1</source>
+        <translation>%1 wird quantisiert</translation>
+    </message>
+    <message>
+        <source>Working…</source>
+        <translation>Wird ausgeführt…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Fertig</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>In Warteschlange</translation>
+    </message>
 </context>
 <context>
     <name>ModelsInstalled</name>
@@ -2753,6 +3278,18 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
     <message>
         <source> GiB</source>
         <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Model missing — the file was moved or deleted.</source>
+        <translation>Modell fehlt – die Datei wurde verschoben oder gelöscht.</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>Erneut herunterladen</translation>
+    </message>
+    <message>
+        <source>Re-quantize…</source>
+        <translation>Erneut quantisieren…</translation>
     </message>
     <message>
         <source>Active</source>
@@ -2834,22 +3371,6 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
     <message>
         <source>Engine</source>
         <translation>Engine</translation>
-    </message>
-    <message>
-        <source>daemon-core (native)</source>
-        <translation>daemon-core (nativ)</translation>
-    </message>
-    <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>installiert</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>nicht installiert</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
@@ -3224,6 +3745,14 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
         <translation>+ Neues Profil</translation>
     </message>
     <message>
+        <source>Foreign</source>
+        <translation>Fremd</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>Nativ</translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>Neues Profil</translation>
     </message>
@@ -3511,6 +4040,10 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Denken</translation>
     </message>
     <message>
+        <source>exit %1</source>
+        <translation>Exit %1</translation>
+    </message>
+    <message>
         <source>[image: </source>
         <translation>[Bild: </translation>
     </message>
@@ -3562,12 +4095,24 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <source>[math] </source>
         <translation>[Mathe] </translation>
     </message>
+    <message>
+        <source>  [installed]</source>
+        <translation>  [installiert]</translation>
+    </message>
+    <message>
+        <source>  [not installed]</source>
+        <translation>  [nicht installiert]</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
     <message>
         <source>Choose a quantization</source>
         <translation>Eine Quantisierung wählen</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Ziel-Quantisierung wählen</translation>
     </message>
     <message>
         <source>Recommended: %1</source>
@@ -3580,6 +4125,14 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>tight</source>
         <translation>knapp</translation>
+    </message>
+    <message>
+        <source>Needs about %1 of disk space.</source>
+        <translation>Benötigt etwa %1 Speicherplatz.</translation>
+    </message>
+    <message>
+        <source>Quantize to recommended</source>
+        <translation>Auf empfohlene quantisieren</translation>
     </message>
     <message>
         <source>Download recommended</source>
@@ -3608,6 +4161,10 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>Download</source>
         <translation>Herunterladen</translation>
+    </message>
+    <message>
+        <source>Quantize</source>
+        <translation>Quantisieren</translation>
     </message>
     <message>
         <source>Close</source>
@@ -3665,6 +4222,21 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>Reasoning</source>
         <translation>Denken</translation>
+    </message>
+</context>
+<context>
+    <name>RewindConfirmDialog</name>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>Zu diesem Checkpoint zurückspulen?</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Zurückspulen</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Dies verwirft die Durchläufe der Sitzung nach dem gewählten Punkt.</translation>
     </message>
 </context>
 <context>
@@ -3762,6 +4334,10 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Aufwand:     %1</translation>
     </message>
     <message>
+        <source>Approval: %1</source>
+        <translation>Genehmigung: %1</translation>
+    </message>
+    <message>
         <source>Fast:    %1</source>
         <translation>Schnell:     %1</translation>
     </message>
@@ -3778,8 +4354,48 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Ausführlich: %1</translation>
     </message>
     <message>
-        <source>%1  ·  %2  ·  %3 tok%4</source>
-        <translation>%1  ·  %2  ·  %3 Tok%4</translation>
+        <source>  ·  %1 tok</source>
+        <translation>  ·  %1 Tok</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2%3%4</source>
+        <translation>%1  ·  %2%3%4</translation>
+    </message>
+    <message>
+        <source>Rewind is managed by the foreign agent · Esc closes</source>
+        <translation>Zurückspulen wird vom fremden Agenten verwaltet · Esc schließt</translation>
+    </message>
+    <message>
+        <source>Enter rewinds to the selected checkpoint (confirmed) · Esc closes</source>
+        <translation>Enter spult zum gewählten Checkpoint zurück (bestätigt) · Esc schließt</translation>
+    </message>
+    <message>
+        <source>Rewind…</source>
+        <translation>Zurückspulen…</translation>
+    </message>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>Zu diesem Checkpoint zurückspulen?</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>Dies verwirft die Durchläufe der Sitzung nach dem gewählten Punkt.</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Zurückspulen</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Steer this agent</source>
+        <translation>Diesen Agenten steuern</translation>
+    </message>
+    <message>
+        <source>Steer this agent (idle — starts a turn)</source>
+        <translation>Diesen Agenten steuern (inaktiv – startet einen Durchlauf)</translation>
     </message>
     <message>
         <source>  (current)</source>
@@ -3792,14 +4408,6 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>Checkpoints</source>
         <translation>Prüfpunkte</translation>
-    </message>
-    <message>
-        <source>Enter restores the selected checkpoint · Esc closes</source>
-        <translation>Enter stellt den ausgewählten Prüfpunkt wieder her · Esc schließt</translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation>Wiederherstellen</translation>
     </message>
     <message>
         <source> 0/0 </source>
@@ -3912,6 +4520,13 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>Make primary</source>
         <translation>Als primär festlegen</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Routing-Änderung fehlgeschlagen</translation>
     </message>
 </context>
 <context>
@@ -4121,6 +4736,10 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Nicht mit einem Daemon verbunden</translation>
     </message>
     <message>
+        <source>The session rejected the command</source>
+        <translation>Die Sitzung hat den Befehl abgelehnt</translation>
+    </message>
+    <message>
         <source>SessionUpdateMeta failed</source>
         <translation>SessionUpdateMeta fehlgeschlagen</translation>
     </message>
@@ -4312,6 +4931,14 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Sitzungen</translation>
     </message>
     <message>
+        <source>Active</source>
+        <translation>Aktiv</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Archiviert</translation>
+    </message>
+    <message>
         <source>LIVE</source>
         <translation>LIVE</translation>
     </message>
@@ -4322,6 +4949,10 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source> tok</source>
         <translation> Tok</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Wiederherstellen</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -5047,6 +5678,14 @@ Danke — es geht weiter mit: %1
         <translation>Der Vorgang %1.</translation>
     </message>
     <message>
+        <source>Set up a provider to send your first message.</source>
+        <translation>Richten Sie einen Anbieter ein, um Ihre erste Nachricht zu senden.</translation>
+    </message>
+    <message>
+        <source>Set up provider</source>
+        <translation>Anbieter einrichten</translation>
+    </message>
+    <message>
         <source>Select a session</source>
         <translation>Wählen Sie eine Sitzung</translation>
     </message>
@@ -5126,6 +5765,18 @@ Danke — es geht weiter mit: %1
     <message>
         <source>Choose a quantization</source>
         <translation>Eine Quantisierung wählen</translation>
+    </message>
+    <message>
+        <source>  [gated]</source>
+        <translation>  [gesperrt]</translation>
+    </message>
+    <message>
+        <source>Re-quantize — pick an installed model</source>
+        <translation>Erneut quantisieren – installiertes Modell auswählen</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>Ziel-Quantisierung wählen</translation>
     </message>
     <message>
         <source>Go to file</source>
@@ -5411,14 +6062,6 @@ Danke — es geht weiter mit: %1
 </translation>
     </message>
     <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
-
-</source>
-        <translation>Installierte Modelle, mit der GUI geteilt. **j/k** bewegen · **Enter** aktiviert · **x** entfernt · **d** ein Modell herunterladen (Repo → Quant).
-
-</translation>
-    </message>
-    <message>
         <source>## Installed
 
 </source>
@@ -5435,9 +6078,21 @@ Danke — es geht weiter mit: %1
 </translation>
     </message>
     <message>
-        <source>- %1**%2** (%3)%4
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant) · **q** re-quantize an installed model.
+
 </source>
-        <translation>- %1**%2** (%3)%4
+        <translation>Installierte Modelle, gemeinsam mit der GUI. **j/k** bewegen · **Enter** aktiviert · **x** entfernt · **d** ein Modell herunterladen (Repo → Quant) · **q** ein installiertes Modell neu quantisieren.
+
+</translation>
+    </message>
+    <message>
+        <source> — **missing on disk** (re-download from Discover)</source>
+        <translation> – **fehlt auf dem Datenträger** (in Entdecken erneut herunterladen)</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4%5
+</source>
+        <translation>- %1**%2** (%3)%4%5
 </translation>
     </message>
     <message>
@@ -5456,6 +6111,20 @@ Danke — es geht weiter mit: %1
         <source>- %1 — %2%  · %3
 </source>
         <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Quantize jobs
+
+</source>
+        <translation>## Quantisierungsaufträge
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%3
+</source>
+        <translation>- %1 – %2%3
 </translation>
     </message>
     <message>
@@ -5559,6 +6228,18 @@ Danke — es geht weiter mit: %1
 </translation>
     </message>
     <message>
+        <source>Native</source>
+        <translation>Nativ</translation>
+    </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Fremd</translation>
+    </message>
+    <message>
         <source># Profiles
 
 </source>
@@ -5585,6 +6266,12 @@ Danke — es geht weiter mit: %1
     <message>
         <source> (default)</source>
         <translation> (Standard)</translation>
+    </message>
+    <message>
+        <source>- Engine: %1
+</source>
+        <translation>- Engine: %1
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -5881,17 +6568,85 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
 
 </source>
-        <translation>Orchestrator-/Worker-Baum, mit der GUI geteilt. **j/k** bewegen · **Space/Enter** pausieren/fortsetzen.
+        <translation>Orchestrator-/Worker-Baum, gemeinsam mit der GUI. **j/k** bewegen · **Leertaste/Enter** pausieren/fortsetzen · **t** ein Kind steuern · **c** dessen Durchlauf abbrechen.
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`)
+        <source>- %1%2 — %3 (`%4`) · %5
 </source>
-        <translation>- %1%2 — %3 (`%4`)
+        <translation>- %1%2 – %3 (`%4`) · %5
+</translation>
+    </message>
+    <message>
+        <source># Sessions — Archived
+
+</source>
+        <translation># Sitzungen – Archiviert
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **r**/**Enter** restore · **v** back to active.
+
+</source>
+        <translation>**j/k** bewegen · **r**/**Enter** wiederherstellen · **v** zurück zu Aktiv.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close · **v** archived.
+
+</source>
+        <translation>**j/k** bewegen · **s** aussetzen · **R**/**Enter** fortsetzen · **x** schließen · **v** archiviert.
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
+
+</source>
+        <translation>**j/k** bewegen · **a**/**Enter** genehmigen · **p** dauerhaft zulassen · **d** ablehnen.
+
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+</source>
+        <translation>- Befehl: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- _Can be allowed permanently (**p**)._
+</source>
+        <translation>- _Kann dauerhaft zugelassen werden (**p**)._
+</translation>
+    </message>
+    <message>
+        <source>Chat pins (origin → session), shared with the GUI routing manager. **j/k** move · **x** unbind.
+
+</source>
+        <translation>Chat-Anheftungen (Ursprung → Sitzung), gemeinsam mit dem GUI-Routing-Manager. **j/k** bewegen · **x** lösen.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2 · %3** ⇄ `%4`%5
+</source>
+        <translation>- %1**%2 · %3** ⇄ `%4`%5
+</translation>
+    </message>
+    <message>
+        <source> (agent `%1`)</source>
+        <translation> (Agent `%1`)</translation>
+    </message>
+    <message>
+        <source>_No chat pins yet — pin a room/DM to a session from the GUI routing manager or a room row._
+</source>
+        <translation>_Noch keine Chat-Anheftungen – heften Sie einen Raum/DM über den GUI-Routing-Manager oder eine Raumzeile an eine Sitzung an._
 </translation>
     </message>
     <message>
@@ -5903,17 +6658,15 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
-
-</source>
-        <translation>**j/k** bewegen · **s** aussetzen · **R**/**Enter** fortsetzen · **x** schließen.
-
-</translation>
-    </message>
-    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 Tok
+</translation>
+    </message>
+    <message>
+        <source>_No archived sessions._
+</source>
+        <translation>_Keine archivierten Sitzungen._
 </translation>
     </message>
     <message>
@@ -5931,14 +6684,6 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
-
-</source>
-        <translation>**j/k** bewegen · **a**/**Enter** freigeben · **d** ablehnen.
-
-</translation>
-    </message>
-    <message>
         <source>## %1%2 (%3 risk)
 
 </source>
@@ -5953,38 +6698,12 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>- Command: `%1`
-
-</source>
-        <translation>- Befehl: `%1`
-
-</translation>
-    </message>
-    <message>
         <source># Routing
 
 </source>
         <translation># Routing
 
 </translation>
-    </message>
-    <message>
-        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
-
-</source>
-        <translation>Intent → Modell-Regeln, mit der GUI geteilt. **j/k** bewegen · **Space/Enter** umschalten · **x** löschen.
-
-</translation>
-    </message>
-    <message>
-        <source>- %1**%2** → `%3` (fallback `%4`)%5
-</source>
-        <translation>- %1**%2** → `%3` (Fallback `%4`)%5
-</translation>
-    </message>
-    <message>
-        <source> — _disabled_</source>
-        <translation> — _deaktiviert_</translation>
     </message>
     <message>
         <source># Scheduled jobs
@@ -6115,10 +6834,10 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
 
 </source>
-        <translation>Events-IO-Transportkonten und ihre Live-Räume, mit der GUI geteilt. In beiden Shells in diesem Abschnitt schreibgeschützt – das Verbinden ist zurückgestellt (EIO-2).
+        <translation>Events-IO-Transportkonten und ihre aktiven Räume, gemeinsam mit der GUI. Das Verbinden ist zurückgestellt (EIO-2); Trennen/Entfernen hat noch keinen Wire-Vorgang (B3 – node-first Folgeaufgabe). Ein gespeichertes Anmeldedatum kann auf der Konten-Seite entfernt werden („x“ beim gebundenen Profil).
 
 </translation>
     </message>
@@ -6153,16 +6872,16 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>  - %1
-</source>
-        <translation>  - %1
-</translation>
+        <source>  - %1</source>
+        <translation>  - %1</translation>
     </message>
     <message>
-        <source>  - %1 · %2
-</source>
-        <translation>  - %1 · %2
-</translation>
+        <source>  - %1 · %2</source>
+        <translation>  - %1 · %2</translation>
+    </message>
+    <message>
+        <source> · ⇄ `%1`</source>
+        <translation> · ⇄ `%1`</translation>
     </message>
     <message>
         <source>## Add channel
@@ -6304,6 +7023,17 @@ _Kein Agent ausgewählt._
     </message>
 </context>
 <context>
+    <name>auth::AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>Dieser Anmeldelink ist abgelaufen – bitte erneut versuchen.</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>Die Anmeldung ist in diesem Build nicht verfügbar.</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::ApprovalRepository</name>
     <message>
         <source>Approval decision failed</source>
@@ -6311,10 +7041,43 @@ _Kein Agent ausgewählt._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>Die Liste der Anmeldeanbieter konnte nicht gelesen werden</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>Der Anmeldevorgang konnte nicht gestartet werden</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>Die Anmeldung konnte nicht abgeschlossen werden</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>Zurückspulen des Checkpoints fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
         <translation>Anmeldedaten-Vorgang fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>Checkpoint</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>vor %1</translation>
     </message>
 </context>
 <context>
@@ -6381,6 +7144,17 @@ _Kein Agent ausgewählt._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>Kanäle</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DMs</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -6428,6 +7202,10 @@ _Kein Agent ausgewählt._
 <context>
     <name>daemonapp::daemon::ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>Modellprüfung fehlgeschlagen</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>Modellauswahl-Vorgang fehlgeschlagen</translation>
     </message>
@@ -6442,6 +7220,10 @@ _Kein Agent ausgewählt._
     <message>
         <source>Activate failed</source>
         <translation>Aktivierung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>Quantisierung konnte nicht gestartet werden</translation>
     </message>
 </context>
 <context>
@@ -6491,10 +7273,21 @@ _Kein Agent ausgewählt._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>Routing-Änderung fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>Not connected to a daemon</source>
         <translation>Nicht mit einem Daemon verbunden</translation>
+    </message>
+    <message>
+        <source>The session rejected the command</source>
+        <translation>Die Sitzung hat den Befehl abgelehnt</translation>
     </message>
     <message>
         <source>SessionUpdateMeta failed</source>
@@ -6523,6 +7316,10 @@ _Kein Agent ausgewählt._
         <translation>Der Node konnte nicht erreicht werden. Prüfen Sie das Ziel und versuchen Sie es erneut.</translation>
     </message>
     <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>Ihr Modell konnte nicht erreicht werden – prüfen Sie den Anbieter und versuchen Sie es erneut.</translation>
+    </message>
+    <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
         <translation>Dieser API-Schlüssel konnte mit %1 nicht überprüft werden — prüfen Sie ihn und versuchen Sie es erneut.</translation>
     </message>
@@ -6544,6 +7341,13 @@ _Kein Agent ausgewählt._
     <message>
         <source>write failed</source>
         <translation>Schreiben fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
+    <name>models::DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>Modell %1 fehlt auf dem Datenträger: %2</translation>
     </message>
 </context>
 <context>

@@ -43,6 +43,10 @@
         <translation>সংযুক্ত অ্যাকাউন্ট</translation>
     </message>
     <message>
+        <source>Sign in via browser…</source>
+        <translation>ব্রাউজারের মাধ্যমে সাইন ইন করুন…</translation>
+    </message>
+    <message>
         <source>Add account</source>
         <translation>অ্যাকাউন্ট যোগ করুন</translation>
     </message>
@@ -215,8 +219,36 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>AgentInferencePicker</name>
     <message>
+        <source>Custom endpoint…</source>
+        <translation>কাস্টম এন্ডপয়েন্ট…</translation>
+    </message>
+    <message>
         <source>Provider</source>
         <translation>প্রদানকারী</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>বেস URL</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>বেস URL (যেমন https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>মডেল আইডি</translation>
+    </message>
+    <message>
+        <source>model id (as your server names it)</source>
+        <translation>মডেল আইডি (আপনার সার্ভার যেভাবে নাম দেয়)</translation>
+    </message>
+    <message>
+        <source>The endpoint is used as-is — your first message verifies it, and a failure will guide you back here.</source>
+        <translation>এন্ডপয়েন্টটি যেমন আছে তেমনই ব্যবহৃত হয় — আপনার প্রথম বার্তা এটি যাচাই করে, এবং ব্যর্থ হলে আপনাকে আবার এখানে ফিরিয়ে আনা হবে।</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>API কী (ঐচ্ছিক)</translation>
     </message>
     <message>
         <source>Paste API key</source>
@@ -324,6 +356,32 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source> (default)</source>
         <translation> (ডিফল্ট)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypePicker</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (নেটিভ)</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>ইনস্টল করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>ইনস্টল করা নেই</translation>
+    </message>
+</context>
+<context>
+    <name>AgentTypeView</name>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (নেটিভ)</translation>
     </message>
 </context>
 <context>
@@ -439,6 +497,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>প্রত্যাখ্যান করুন</translation>
     </message>
     <message>
+        <source>Allow permanently</source>
+        <translation>স্থায়ীভাবে অনুমতি দিন</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>অনুমোদন করুন</translation>
     </message>
@@ -478,7 +540,178 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>এই সাইন-ইন লিঙ্কের মেয়াদ শেষ হয়ে গেছে — আবার চেষ্টা করুন।</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>এই বিল্ডে সাইন-ইন উপলব্ধ নয়।</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowDialog</name>
+    <message>
+        <source>Sign in</source>
+        <translation>সাইন ইন</translation>
+    </message>
+    <message>
+        <source>Open this link in your browser (copy it):</source>
+        <translation>আপনার ব্রাউজারে এই লিঙ্কটি খুলুন (এটি কপি করুন):</translation>
+    </message>
+    <message>
+        <source>Then paste the redirect URL here:</source>
+        <translation>তারপর রিডাইরেক্ট URL এখানে পেস্ট করুন:</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>সাইন-ইন সম্পূর্ণ করুন</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>বাতিল করুন</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>সাইন-ইন প্রস্তুত করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Waiting for your browser to finish… (or paste below)</source>
+        <translation>আপনার ব্রাউজার শেষ করার অপেক্ষা করা হচ্ছে… (বা নিচে পেস্ট করুন)</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>আপনার ব্রাউজারে সাইন-ইন সম্পূর্ণ করুন, তারপর নিচে রিডাইরেক্ট URL পেস্ট করুন।</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>সাইন-ইন সম্পন্ন করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1 হিসেবে সাইন ইন করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Sign-in failed: %1</source>
+        <translation>সাইন-ইন ব্যর্থ হয়েছে: %1</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>সাইন-ইন বাতিল করা হয়েছে</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowLauncher</name>
+    <message>
+        <source>Sign in — pick a provider</source>
+        <translation>সাইন ইন — একটি প্রদানকারী বেছে নিন</translation>
+    </message>
+</context>
+<context>
+    <name>AuthFlowSheet</name>
+    <message>
+        <source>Sign in</source>
+        <translation>সাইন ইন</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>বন্ধ করুন</translation>
+    </message>
+    <message>
+        <source>No browser sign-in providers are available on this node.</source>
+        <translation>এই নোডে কোনো ব্রাউজার সাইন-ইন প্রদানকারী উপলব্ধ নেই।</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>প্রদানকারী</translation>
+    </message>
+    <message>
+        <source>Sign in via browser</source>
+        <translation>ব্রাউজারের মাধ্যমে সাইন ইন করুন</translation>
+    </message>
+    <message>
+        <source>Preparing sign-in…</source>
+        <translation>সাইন-ইন প্রস্তুত করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Finishing sign-in…</source>
+        <translation>সাইন-ইন সম্পন্ন করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser. Waiting for it to finish…</source>
+        <translation>আপনার ব্রাউজারে সাইন-ইন সম্পূর্ণ করুন। এটি শেষ হওয়ার অপেক্ষা করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
+        <translation>আপনার ব্রাউজারে সাইন-ইন সম্পূর্ণ করুন, তারপর নিচে রিডাইরেক্ট URL পেস্ট করুন।</translation>
+    </message>
+    <message>
+        <source>Copy sign-in link</source>
+        <translation>সাইন-ইন লিঙ্ক কপি করুন</translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>ব্রাউজারে খুলুন</translation>
+    </message>
+    <message>
+        <source>Paste the redirect URL</source>
+        <translation>রিডাইরেক্ট URL পেস্ট করুন</translation>
+    </message>
+    <message>
+        <source>Complete sign-in</source>
+        <translation>সাইন-ইন সম্পূর্ণ করুন</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1 হিসেবে সাইন ইন করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Sign-in cancelled</source>
+        <translation>সাইন-ইন বাতিল করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>সাইন-ইন ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>পুনরায় চেষ্টা করুন</translation>
+    </message>
+</context>
+<context>
+    <name>AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>সাইন-ইন প্রদানকারী তালিকা পড়তে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>সাইন-ইন প্রবাহ শুরু করা যায়নি</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>সাইন-ইন সম্পূর্ণ করা যায়নি</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
+    <message>
+        <source>Remove stored credential?</source>
+        <translation>সংরক্ষিত ক্রেডেনশিয়াল সরাবেন?</translation>
+    </message>
+    <message>
+        <source>Remove credential</source>
+        <translation>ক্রেডেনশিয়াল সরান</translation>
+    </message>
+    <message>
+        <source>Removes the credential stored for profile “%1” (used by %2).</source>
+        <translation>প্রোফাইল “%1”-এর জন্য সংরক্ষিত ক্রেডেনশিয়াল সরায় (%2 দ্বারা ব্যবহৃত)।</translation>
+    </message>
+    <message>
+        <source>The account&apos;s transport session on the node is not affected — a disconnect/remove operation is not available yet.</source>
+        <translation>নোডে অ্যাকাউন্টের ট্রান্সপোর্ট সেশন প্রভাবিত হয় না — সংযোগ বিচ্ছিন্ন/সরানোর অপারেশন এখনও উপলব্ধ নয়।</translation>
+    </message>
     <message>
         <source>Channels</source>
         <translation>চ্যানেল</translation>
@@ -496,8 +729,32 @@ You&apos;ll return to first-run setup.</source>
         <translation>%1 · %2</translation>
     </message>
     <message>
+        <source>Disconnect isn&apos;t available yet — the node has no transport disconnect operation</source>
+        <translation>সংযোগ বিচ্ছিন্ন করা এখনও উপলব্ধ নয় — নোডে কোনো ট্রান্সপোর্ট ডিসকানেক্ট অপারেশন নেই</translation>
+    </message>
+    <message>
+        <source>Remove the stored credential…</source>
+        <translation>সংরক্ষিত ক্রেডেনশিয়াল সরান…</translation>
+    </message>
+    <message>
         <source>No rooms.</source>
         <translation>কোনো রুম নেই।</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned to this session — open the routing manager</source>
+        <translation>এই সেশনে পিন করা হয়েছে — রাউটিং ম্যানেজার খুলুন</translation>
+    </message>
+    <message>
+        <source>Pin to agent…</source>
+        <translation>এজেন্টে পিন করুন…</translation>
+    </message>
+    <message>
+        <source>Route this room&apos;s messages to a session</source>
+        <translation>এই রুমের বার্তাগুলি একটি সেশনে রুট করুন</translation>
     </message>
     <message>
         <source>Add channel</source>
@@ -540,6 +797,28 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>চেকপয়েন্ট রিওয়াইন্ড ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointTimeline</name>
+    <message>
+        <source>%1 · %2 — rewind is managed by the foreign agent</source>
+        <translation>%1 · %2 — রিওয়াইন্ড ফরেন এজেন্ট দ্বারা পরিচালিত হয়</translation>
+    </message>
+    <message>
+        <source>%1 · %2 (current)</source>
+        <translation>%1 · %2 (বর্তমান)</translation>
+    </message>
+    <message>
+        <source>%1 · %2 — click to rewind</source>
+        <translation>%1 · %2 — রিওয়াইন্ড করতে ক্লিক করুন</translation>
+    </message>
+</context>
+<context>
     <name>CheckpointsPopover</name>
     <message>
         <source>Checkpoints</source>
@@ -554,6 +833,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>ম্যানুয়াল চেকপয়েন্ট</translation>
     </message>
     <message>
+        <source>Rewind is managed by the foreign agent</source>
+        <translation>রিওয়াইন্ড ফরেন এজেন্ট দ্বারা পরিচালিত হয়</translation>
+    </message>
+    <message>
         <source> tok</source>
         <translation> টোক</translation>
     </message>
@@ -564,6 +847,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Restore</source>
         <translation>পুনরুদ্ধার করুন</translation>
+    </message>
+    <message>
+        <source>No checkpoints yet</source>
+        <translation>এখনও কোনো চেকপয়েন্ট নেই</translation>
     </message>
 </context>
 <context>
@@ -939,9 +1226,86 @@ You&apos;ll return to first-run setup.</source>
         <comment>composer mode badge</comment>
         <translation>ভার্বোস</translation>
     </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>ফরেন</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>নেটিভ</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>সম্পাদনা</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>স্বয়ংক্রিয়</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>প্রত্যাখ্যান করুন</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>জিজ্ঞাসা করুন</translation>
+    </message>
+    <message>
+        <source>policy:</source>
+        <comment>approval-policy badge prefix</comment>
+        <translation>নীতি:</translation>
+    </message>
 </context>
 <context>
     <name>ComposerControls</name>
+    <message>
+        <source>Foreign</source>
+        <translation>ফরেন</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>নেটিভ</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>ইঞ্জিন</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>সম্পাদনা</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>স্বয়ংক্রিয়</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>প্রত্যাখ্যান করুন</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>জিজ্ঞাসা করুন</translation>
+    </message>
+    <message>
+        <source>Approval policy (reflects last set value)</source>
+        <translation>অনুমোদন নীতি (সর্বশেষ সেট করা মান প্রতিফলিত করে)</translation>
+    </message>
+    <message>
+        <source>⇄ %1 +%2</source>
+        <translation>⇄ %1 +%2</translation>
+    </message>
+    <message>
+        <source>⇄ %1</source>
+        <translation>⇄ %1</translation>
+    </message>
+    <message>
+        <source>Pinned from %1 — open the routing manager</source>
+        <translation>%1 থেকে পিন করা হয়েছে — রাউটিং ম্যানেজার খুলুন</translation>
+    </message>
     <message>
         <source>Checkpoints / rewind</source>
         <translation>চেকপয়েন্ট / রিওয়াইন্ড</translation>
@@ -1271,6 +1635,17 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>চেকপয়েন্ট</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>%1-এর আগে</translation>
+    </message>
+</context>
+<context>
     <name>DaemonConnectionService</name>
     <message>
         <source>Could not reach the daemon. Check it is running and try again.</source>
@@ -1331,6 +1706,24 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Unsupported transport</source>
         <translation>অসমর্থিত ট্রান্সপোর্ট</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>চ্যানেল</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>মডেল %1 ডিস্কে অনুপস্থিত: %2</translation>
     </message>
 </context>
 <context>
@@ -1446,6 +1839,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Searching…</source>
         <translation>অনুসন্ধান করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>gated</source>
+        <translation>গেটেড</translation>
     </message>
     <message>
         <source>by %1</source>
@@ -1725,6 +2122,14 @@ You&apos;ll return to first-run setup.</source>
         <source>file %1/%2</source>
         <translation>ফাইল %1/%2</translation>
     </message>
+    <message>
+        <source>This repo is gated — accept its license on the Hub (and add a token if required), then retry.</source>
+        <translation>এই রিপো গেটেড — Hub-এ এর লাইসেন্স গ্রহণ করুন (এবং প্রয়োজনে একটি টোকেন যোগ করুন), তারপর আবার চেষ্টা করুন।</translation>
+    </message>
+    <message>
+        <source>Open license page</source>
+        <translation>লাইসেন্স পৃষ্ঠা খুলুন</translation>
+    </message>
 </context>
 <context>
     <name>EditMenu</name>
@@ -1864,6 +2269,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>রিমোট</translation>
     </message>
     <message>
+        <source>Agent type (Enter to pick):</source>
+        <translation>এজেন্টের ধরন (বেছে নিতে Enter):</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>এজেন্টের নাম</translation>
     </message>
@@ -1878,6 +2287,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Model</source>
         <translation>মডেল</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>বেস URL (যেমন https://…)</translation>
+    </message>
+    <message>
+        <source>Model id</source>
+        <translation>মডেল আইডি</translation>
     </message>
     <message>
         <source>Test</source>
@@ -1902,6 +2319,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Failed — </source>
         <translation>ব্যর্থ — </translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>কাস্টম এন্ডপয়েন্ট…</translation>
+    </message>
+    <message>
+        <source>custom</source>
+        <translation>কাস্টম</translation>
     </message>
     <message>
         <source>Local: App-managed (press to Attach instead)</source>
@@ -1929,6 +2354,14 @@ You&apos;ll return to first-run setup.</source>
         <translation>সাইন ইন</translation>
     </message>
     <message>
+        <source>Choose the kind of agent: native picks a model next; a foreign ACP agent brings its own.</source>
+        <translation>এজেন্টের ধরন বেছে নিন: নেটিভ পরবর্তীতে একটি মডেল বেছে নেয়; একটি ফরেন ACP এজেন্ট নিজের মডেল নিয়ে আসে।</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>চালিয়ে যান</translation>
+    </message>
+    <message>
         <source>Pick a provider and a model, then Finish.</source>
         <translation>একটি প্রদানকারী ও একটি মডেল বেছে নিন, তারপর সমাপ্ত করুন।</translation>
     </message>
@@ -1946,6 +2379,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Almost there - confirm an inference model.</source>
         <translation>প্রায় সম্পন্ন - একটি ইনফারেন্স মডেল নিশ্চিত করুন।</translation>
+    </message>
+    <message>
+        <source>What kind of agent do you want?</source>
+        <translation>আপনি কোন ধরনের এজেন্ট চান?</translation>
     </message>
     <message>
         <source>Sign in to the node to continue.</source>
@@ -1976,6 +2413,18 @@ You&apos;ll return to first-run setup.</source>
         <translation>সাইন ইন করা হচ্ছে…</translation>
     </message>
     <message>
+        <source>Agent type</source>
+        <translation>এজেন্টের ধরন</translation>
+    </message>
+    <message>
+        <source>Runs in the daemon — pick a provider and model next.</source>
+        <translation>ডিমনে চলে — পরবর্তীতে একটি প্রদানকারী ও মডেল বেছে নিন।</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine — it brings its own model, so no provider, model, or key is needed.</source>
+        <translation>এই এজেন্ট একটি ফরেন ACP ইঞ্জিন চালায় — এটি নিজের মডেল নিয়ে আসে, তাই কোনো প্রদানকারী, মডেল বা কী প্রয়োজন নেই।</translation>
+    </message>
+    <message>
         <source>Agent name</source>
         <translation>এজেন্টের নাম</translation>
     </message>
@@ -1991,12 +2440,20 @@ You&apos;ll return to first-run setup.</source>
         <source>Finish setup</source>
         <translation>সেটআপ সমাপ্ত করুন</translation>
     </message>
+    <message>
+        <source>Continue</source>
+        <translation>চালিয়ে যান</translation>
+    </message>
 </context>
 <context>
     <name>FirstRunModel</name>
     <message>
         <source>Could not reach the node. Check the target and try again.</source>
         <translation>নোডে পৌঁছানো যায়নি। লক্ষ্য পরীক্ষা করে আবার চেষ্টা করুন।</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>আপনার মডেলে পৌঁছানো যায়নি — প্রদানকারী পরীক্ষা করে আবার চেষ্টা করুন।</translation>
     </message>
     <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
@@ -2006,12 +2463,48 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>FleetPage</name>
     <message>
+        <source>Steer this agent</source>
+        <translation>এই এজেন্টকে পরিচালনা করুন</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>পাঠান</translation>
+    </message>
+    <message>
+        <source>Message to inject…</source>
+        <translation>ইনজেক্ট করার বার্তা…</translation>
+    </message>
+    <message>
+        <source>Steers the running turn without interrupting it.</source>
+        <translation>চলমান টার্নকে বাধা না দিয়ে পরিচালনা করে।</translation>
+    </message>
+    <message>
+        <source>The agent is idle — this starts a new turn.</source>
+        <translation>এজেন্ট নিষ্ক্রিয় — এটি একটি নতুন টার্ন শুরু করে।</translation>
+    </message>
+    <message>
         <source>Fleet</source>
         <translation>ফ্লিট</translation>
     </message>
     <message>
         <source>Refresh</source>
         <translation>রিফ্রেশ করুন</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>ফরেন</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>নেটিভ</translation>
+    </message>
+    <message>
+        <source>Steer…</source>
+        <translation>পরিচালনা করুন…</translation>
+    </message>
+    <message>
+        <source>Cancel the running turn</source>
+        <translation>চলমান টার্ন বাতিল করুন</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -2649,6 +3142,10 @@ Thanks — proceeding with: %1
 <context>
     <name>ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>মডেল পরিদর্শন ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>সেট-মডেল অপারেশন ব্যর্থ হয়েছে</translation>
     </message>
@@ -2663,6 +3160,10 @@ Thanks — proceeding with: %1
     <message>
         <source>Activate failed</source>
         <translation>সক্রিয় করা ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>কোয়ান্টাইজ শুরু করতে ব্যর্থ হয়েছে</translation>
     </message>
 </context>
 <context>
@@ -2731,6 +3232,30 @@ Start one from the Discover tab.</source>
         <translation>কোনো সক্রিয় ডাউনলোড নেই।
 আবিষ্কার ট্যাব থেকে একটি শুরু করুন।</translation>
     </message>
+    <message>
+        <source>Quantize jobs</source>
+        <translation>কোয়ান্টাইজ জব</translation>
+    </message>
+    <message>
+        <source>Quantizing %1</source>
+        <translation>%1 কোয়ান্টাইজ করা হচ্ছে</translation>
+    </message>
+    <message>
+        <source>Working…</source>
+        <translation>কাজ চলছে…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>সম্পন্ন</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>ব্যর্থ</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>সারিবদ্ধ</translation>
+    </message>
 </context>
 <context>
     <name>ModelsInstalled</name>
@@ -2753,6 +3278,18 @@ Start one from the Discover tab.</source>
     <message>
         <source> GiB</source>
         <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Model missing — the file was moved or deleted.</source>
+        <translation>মডেল অনুপস্থিত — ফাইলটি সরানো বা মুছে ফেলা হয়েছে।</translation>
+    </message>
+    <message>
+        <source>Re-download</source>
+        <translation>পুনরায় ডাউনলোড করুন</translation>
+    </message>
+    <message>
+        <source>Re-quantize…</source>
+        <translation>পুনরায় কোয়ান্টাইজ করুন…</translation>
     </message>
     <message>
         <source>Active</source>
@@ -2834,22 +3371,6 @@ Start one from the Discover tab.</source>
     <message>
         <source>Engine</source>
         <translation>ইঞ্জিন</translation>
-    </message>
-    <message>
-        <source>daemon-core (native)</source>
-        <translation>daemon-core (নেটিভ)</translation>
-    </message>
-    <message>
-        <source>  ·  ACP %1</source>
-        <translation>  ·  ACP %1</translation>
-    </message>
-    <message>
-        <source>installed</source>
-        <translation>ইনস্টল করা হয়েছে</translation>
-    </message>
-    <message>
-        <source>not installed</source>
-        <translation>ইনস্টল করা নেই</translation>
     </message>
     <message>
         <source>Persona (optional)</source>
@@ -3224,6 +3745,14 @@ Start one from the Discover tab.</source>
         <translation>+ নতুন প্রোফাইল</translation>
     </message>
     <message>
+        <source>Foreign</source>
+        <translation>ফরেন</translation>
+    </message>
+    <message>
+        <source>Native</source>
+        <translation>নেটিভ</translation>
+    </message>
+    <message>
         <source>New profile</source>
         <translation>নতুন প্রোফাইল</translation>
     </message>
@@ -3511,6 +4040,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>যুক্তি</translation>
     </message>
     <message>
+        <source>exit %1</source>
+        <translation>প্রস্থান %1</translation>
+    </message>
+    <message>
         <source>[image: </source>
         <translation>[ছবি: </translation>
     </message>
@@ -3562,12 +4095,24 @@ A generic, non-transcript page hosted by the same tab strip.
         <source>[math] </source>
         <translation>[গণিত] </translation>
     </message>
+    <message>
+        <source>  [installed]</source>
+        <translation>  [ইনস্টল করা হয়েছে]</translation>
+    </message>
+    <message>
+        <source>  [not installed]</source>
+        <translation>  [ইনস্টল করা নেই]</translation>
+    </message>
 </context>
 <context>
     <name>QuantPickerPopup</name>
     <message>
         <source>Choose a quantization</source>
         <translation>একটি কোয়ান্টাইজেশন বেছে নিন</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>একটি টার্গেট কোয়ান্টাইজেশন বেছে নিন</translation>
     </message>
     <message>
         <source>Recommended: %1</source>
@@ -3580,6 +4125,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>tight</source>
         <translation>আঁটসাঁট</translation>
+    </message>
+    <message>
+        <source>Needs about %1 of disk space.</source>
+        <translation>প্রায় %1 ডিস্ক স্পেস প্রয়োজন।</translation>
+    </message>
+    <message>
+        <source>Quantize to recommended</source>
+        <translation>প্রস্তাবিততে কোয়ান্টাইজ করুন</translation>
     </message>
     <message>
         <source>Download recommended</source>
@@ -3608,6 +4161,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Download</source>
         <translation>ডাউনলোড</translation>
+    </message>
+    <message>
+        <source>Quantize</source>
+        <translation>কোয়ান্টাইজ</translation>
     </message>
     <message>
         <source>Close</source>
@@ -3665,6 +4222,21 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Reasoning</source>
         <translation>যুক্তি</translation>
+    </message>
+</context>
+<context>
+    <name>RewindConfirmDialog</name>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>এই চেকপয়েন্টে রিওয়াইন্ড করবেন?</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>রিওয়াইন্ড</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>এটি নির্বাচিত পয়েন্টের পরে সেশনের টার্নগুলি বাদ দেয়।</translation>
     </message>
 </context>
 <context>
@@ -3762,6 +4334,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>প্রচেষ্টা:  %1</translation>
     </message>
     <message>
+        <source>Approval: %1</source>
+        <translation>অনুমোদন: %1</translation>
+    </message>
+    <message>
         <source>Fast:    %1</source>
         <translation>দ্রুত:    %1</translation>
     </message>
@@ -3778,8 +4354,48 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>ভার্বোস: %1</translation>
     </message>
     <message>
-        <source>%1  ·  %2  ·  %3 tok%4</source>
-        <translation>%1  ·  %2  ·  %3 টোক%4</translation>
+        <source>  ·  %1 tok</source>
+        <translation>  ·  %1 tok</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2%3%4</source>
+        <translation>%1  ·  %2%3%4</translation>
+    </message>
+    <message>
+        <source>Rewind is managed by the foreign agent · Esc closes</source>
+        <translation>রিওয়াইন্ড ফরেন এজেন্ট দ্বারা পরিচালিত হয় · Esc বন্ধ করে</translation>
+    </message>
+    <message>
+        <source>Enter rewinds to the selected checkpoint (confirmed) · Esc closes</source>
+        <translation>Enter নির্বাচিত চেকপয়েন্টে রিওয়াইন্ড করে (নিশ্চিত) · Esc বন্ধ করে</translation>
+    </message>
+    <message>
+        <source>Rewind…</source>
+        <translation>রিওয়াইন্ড…</translation>
+    </message>
+    <message>
+        <source>Rewind to this checkpoint?</source>
+        <translation>এই চেকপয়েন্টে রিওয়াইন্ড করবেন?</translation>
+    </message>
+    <message>
+        <source>This drops the session&apos;s turns after the selected point.</source>
+        <translation>এটি নির্বাচিত পয়েন্টের পরে সেশনের টার্নগুলি বাদ দেয়।</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>রিওয়াইন্ড</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>বাতিল করুন</translation>
+    </message>
+    <message>
+        <source>Steer this agent</source>
+        <translation>এই এজেন্টকে পরিচালনা করুন</translation>
+    </message>
+    <message>
+        <source>Steer this agent (idle — starts a turn)</source>
+        <translation>এই এজেন্টকে পরিচালনা করুন (নিষ্ক্রিয় — একটি টার্ন শুরু করে)</translation>
     </message>
     <message>
         <source>  (current)</source>
@@ -3792,14 +4408,6 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Checkpoints</source>
         <translation>চেকপয়েন্ট</translation>
-    </message>
-    <message>
-        <source>Enter restores the selected checkpoint · Esc closes</source>
-        <translation>Enter নির্বাচিত চেকপয়েন্ট পুনরুদ্ধার করে · Esc বন্ধ করে</translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation>পুনরুদ্ধার করুন</translation>
     </message>
     <message>
         <source> 0/0 </source>
@@ -3912,6 +4520,13 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Make primary</source>
         <translation>প্রাথমিক করুন</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>রাউটিং পরিবর্তন ব্যর্থ হয়েছে</translation>
     </message>
 </context>
 <context>
@@ -4121,6 +4736,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>কোনো daemon-এর সাথে সংযুক্ত নয়</translation>
     </message>
     <message>
+        <source>The session rejected the command</source>
+        <translation>সেশন কমান্ডটি প্রত্যাখ্যান করেছে</translation>
+    </message>
+    <message>
         <source>SessionUpdateMeta failed</source>
         <translation>SessionUpdateMeta ব্যর্থ হয়েছে</translation>
     </message>
@@ -4312,6 +4931,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>সেশন</translation>
     </message>
     <message>
+        <source>Active</source>
+        <translation>সক্রিয়</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>সংরক্ষণাগারভুক্ত</translation>
+    </message>
+    <message>
         <source>LIVE</source>
         <translation>লাইভ</translation>
     </message>
@@ -4322,6 +4949,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source> tok</source>
         <translation> টোক</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>পুনরুদ্ধার করুন</translation>
     </message>
     <message>
         <source>Resume</source>
@@ -5047,6 +5678,14 @@ Thanks — proceeding with: %1
         <translation>টার্ন %1।</translation>
     </message>
     <message>
+        <source>Set up a provider to send your first message.</source>
+        <translation>আপনার প্রথম বার্তা পাঠাতে একটি প্রদানকারী সেট আপ করুন।</translation>
+    </message>
+    <message>
+        <source>Set up provider</source>
+        <translation>প্রদানকারী সেট আপ করুন</translation>
+    </message>
+    <message>
         <source>Select a session</source>
         <translation>একটি সেশন নির্বাচন করুন</translation>
     </message>
@@ -5126,6 +5765,18 @@ Thanks — proceeding with: %1
     <message>
         <source>Choose a quantization</source>
         <translation>একটি কোয়ান্টাইজেশন বেছে নিন</translation>
+    </message>
+    <message>
+        <source>  [gated]</source>
+        <translation>  [গেটেড]</translation>
+    </message>
+    <message>
+        <source>Re-quantize — pick an installed model</source>
+        <translation>পুনরায় কোয়ান্টাইজ — একটি ইনস্টল করা মডেল বেছে নিন</translation>
+    </message>
+    <message>
+        <source>Choose a target quantization</source>
+        <translation>একটি টার্গেট কোয়ান্টাইজেশন বেছে নিন</translation>
     </message>
     <message>
         <source>Go to file</source>
@@ -5411,14 +6062,6 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
-
-</source>
-        <translation>ইনস্টল করা মডেল, GUI-এর সাথে ভাগ করা। **j/k** সরান · **Enter** সক্রিয় করে · **x** সরায় · **d** একটি মডেল ডাউনলোড করুন (রেপো → কোয়ান্ট)।
-
-</translation>
-    </message>
-    <message>
         <source>## Installed
 
 </source>
@@ -5435,9 +6078,21 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
-        <source>- %1**%2** (%3)%4
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant) · **q** re-quantize an installed model.
+
 </source>
-        <translation>- %1**%2** (%3)%4
+        <translation>GUI-এর সাথে শেয়ার করা ইনস্টল করা মডেল। **j/k** সরান · **Enter** সক্রিয় করে · **x** সরায় · **d** একটি মডেল ডাউনলোড করুন (repo → quant) · **q** একটি ইনস্টল করা মডেল পুনরায় কোয়ান্টাইজ করুন।
+
+</translation>
+    </message>
+    <message>
+        <source> — **missing on disk** (re-download from Discover)</source>
+        <translation> — **ডিস্কে অনুপস্থিত** (Discover থেকে পুনরায় ডাউনলোড করুন)</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4%5
+</source>
+        <translation>- %1**%2** (%3)%4%5
 </translation>
     </message>
     <message>
@@ -5456,6 +6111,20 @@ Thanks — proceeding with: %1
         <source>- %1 — %2%  · %3
 </source>
         <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Quantize jobs
+
+</source>
+        <translation>## কোয়ান্টাইজ জব
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%3
+</source>
+        <translation>- %1 — %2%3
 </translation>
     </message>
     <message>
@@ -5559,6 +6228,18 @@ Thanks — proceeding with: %1
 </translation>
     </message>
     <message>
+        <source>Native</source>
+        <translation>নেটিভ</translation>
+    </message>
+    <message>
+        <source>%1 (ACP)</source>
+        <translation>%1 (ACP)</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>ফরেন</translation>
+    </message>
+    <message>
         <source># Profiles
 
 </source>
@@ -5585,6 +6266,12 @@ Thanks — proceeding with: %1
     <message>
         <source> (default)</source>
         <translation> (ডিফল্ট)</translation>
+    </message>
+    <message>
+        <source>- Engine: %1
+</source>
+        <translation>- ইঞ্জিন: %1
+</translation>
     </message>
     <message>
         <source>- Model: `%1`
@@ -5881,17 +6568,85 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
 
 </source>
-        <translation>অর্কেস্ট্রেটর/ওয়ার্কার ট্রি, GUI-এর সাথে ভাগ করা। **j/k** সরান · **Space/Enter** বিরতি/পুনরায় শুরু।
+        <translation>GUI-এর সাথে শেয়ার করা অর্কেস্ট্রেটর/ওয়ার্কার ট্রি। **j/k** সরান · **Space/Enter** বিরতি/পুনরায় শুরু · **t** একটি চাইল্ড পরিচালনা করুন · **c** এর টার্ন বাতিল করুন।
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`)
+        <source>- %1%2 — %3 (`%4`) · %5
 </source>
-        <translation>- %1%2 — %3 (`%4`)
+        <translation>- %1%2 — %3 (`%4`) · %5
+</translation>
+    </message>
+    <message>
+        <source># Sessions — Archived
+
+</source>
+        <translation># সেশন — সংরক্ষণাগারভুক্ত
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **r**/**Enter** restore · **v** back to active.
+
+</source>
+        <translation>**j/k** সরান · **r**/**Enter** পুনরুদ্ধার · **v** সক্রিয়তে ফিরুন।
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close · **v** archived.
+
+</source>
+        <translation>**j/k** সরান · **s** স্থগিত · **R**/**Enter** পুনরায় শুরু · **x** বন্ধ · **v** সংরক্ষণাগার।
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
+
+</source>
+        <translation>**j/k** সরান · **a**/**Enter** অনুমোদন · **p** স্থায়ীভাবে অনুমতি দিন · **d** প্রত্যাখ্যান।
+
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+</source>
+        <translation>- কমান্ড: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- _Can be allowed permanently (**p**)._
+</source>
+        <translation>- _স্থায়ীভাবে অনুমতি দেওয়া যায় (**p**)।_
+</translation>
+    </message>
+    <message>
+        <source>Chat pins (origin → session), shared with the GUI routing manager. **j/k** move · **x** unbind.
+
+</source>
+        <translation>চ্যাট পিন (মূল → সেশন), GUI রাউটিং ম্যানেজারের সাথে শেয়ার করা। **j/k** সরান · **x** আনবাইন্ড।
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2 · %3** ⇄ `%4`%5
+</source>
+        <translation>- %1**%2 · %3** ⇄ `%4`%5
+</translation>
+    </message>
+    <message>
+        <source> (agent `%1`)</source>
+        <translation> (এজেন্ট `%1`)</translation>
+    </message>
+    <message>
+        <source>_No chat pins yet — pin a room/DM to a session from the GUI routing manager or a room row._
+</source>
+        <translation>_এখনও কোনো চ্যাট পিন নেই — GUI রাউটিং ম্যানেজার বা একটি রুম সারি থেকে একটি রুম/DM একটি সেশনে পিন করুন।_
 </translation>
     </message>
     <message>
@@ -5903,17 +6658,15 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
-
-</source>
-        <translation>**j/k** সরান · **s** স্থগিত · **R**/**Enter** পুনরায় শুরু · **x** বন্ধ।
-
-</translation>
-    </message>
-    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 টোক
+</translation>
+    </message>
+    <message>
+        <source>_No archived sessions._
+</source>
+        <translation>_কোনো সংরক্ষণাগারভুক্ত সেশন নেই।_
 </translation>
     </message>
     <message>
@@ -5931,14 +6684,6 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
-        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
-
-</source>
-        <translation>**j/k** সরান · **a**/**Enter** অনুমোদন · **d** প্রত্যাখ্যান।
-
-</translation>
-    </message>
-    <message>
         <source>## %1%2 (%3 risk)
 
 </source>
@@ -5953,38 +6698,12 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
-        <source>- Command: `%1`
-
-</source>
-        <translation>- কমান্ড: `%1`
-
-</translation>
-    </message>
-    <message>
         <source># Routing
 
 </source>
         <translation># রাউটিং
 
 </translation>
-    </message>
-    <message>
-        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
-
-</source>
-        <translation>ইনটেন্ট → মডেল নিয়ম, GUI-এর সাথে ভাগ করা। **j/k** সরান · **Space/Enter** টগল · **x** মুছুন।
-
-</translation>
-    </message>
-    <message>
-        <source>- %1**%2** → `%3` (fallback `%4`)%5
-</source>
-        <translation>- %1**%2** → `%3` (ফলব্যাক `%4`)%5
-</translation>
-    </message>
-    <message>
-        <source> — _disabled_</source>
-        <translation> — _নিষ্ক্রিয়_</translation>
     </message>
     <message>
         <source># Scheduled jobs
@@ -6115,10 +6834,10 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
 
 </source>
-        <translation>Events-IO ট্রান্সপোর্ট অ্যাকাউন্ট এবং তাদের লাইভ রুম, GUI-এর সাথে ভাগ করা। এই স্লাইসে উভয় শেলে শুধুমাত্র পঠনযোগ্য - সংযোগ স্থগিত করা হয়েছে (EIO-2)।
+        <translation>Events-IO ট্রান্সপোর্ট অ্যাকাউন্ট এবং তাদের লাইভ রুম, GUI-এর সাথে শেয়ার করা। সংযোগ স্থগিত রাখা হয়েছে (EIO-2); disconnect/remove-এর এখনও কোনো ওয়্যার অপ নেই (B3 - node-first follow-up)। একটি সংরক্ষিত ক্রেডেনশিয়াল Accounts পৃষ্ঠা থেকে সরানো যায় (বাউন্ড প্রোফাইলে &apos;x&apos;)।
 
 </translation>
     </message>
@@ -6153,16 +6872,16 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </translation>
     </message>
     <message>
-        <source>  - %1
-</source>
-        <translation>  - %1
-</translation>
+        <source>  - %1</source>
+        <translation>  - %1</translation>
     </message>
     <message>
-        <source>  - %1 · %2
-</source>
-        <translation>  - %1 · %2
-</translation>
+        <source>  - %1 · %2</source>
+        <translation>  - %1 · %2</translation>
+    </message>
+    <message>
+        <source> · ⇄ `%1`</source>
+        <translation> · ⇄ `%1`</translation>
     </message>
     <message>
         <source>## Add channel
@@ -6304,6 +7023,17 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
     </message>
 </context>
 <context>
+    <name>auth::AuthFlowController</name>
+    <message>
+        <source>This sign-in link expired — try again.</source>
+        <translation>এই সাইন-ইন লিঙ্কের মেয়াদ শেষ হয়ে গেছে — আবার চেষ্টা করুন।</translation>
+    </message>
+    <message>
+        <source>Sign-in is not available in this build.</source>
+        <translation>এই বিল্ডে সাইন-ইন উপলব্ধ নয়।</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::ApprovalRepository</name>
     <message>
         <source>Approval decision failed</source>
@@ -6311,10 +7041,43 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::AuthRepository</name>
+    <message>
+        <source>Failed to read the sign-in provider list</source>
+        <translation>সাইন-ইন প্রদানকারী তালিকা পড়তে ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>The sign-in flow could not be started</source>
+        <translation>সাইন-ইন প্রবাহ শুরু করা যায়নি</translation>
+    </message>
+    <message>
+        <source>The sign-in could not be completed</source>
+        <translation>সাইন-ইন সম্পূর্ণ করা যায়নি</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CheckpointRepository</name>
+    <message>
+        <source>Checkpoint rewind failed</source>
+        <translation>চেকপয়েন্ট রিওয়াইন্ড ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CredentialRepository</name>
     <message>
         <source>Credential operation failed</source>
         <translation>ক্রেডেনশিয়াল অপারেশন ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonCheckpointTimeline</name>
+    <message>
+        <source>Checkpoint</source>
+        <translation>চেকপয়েন্ট</translation>
+    </message>
+    <message>
+        <source>before %1</source>
+        <translation>%1-এর আগে</translation>
     </message>
 </context>
 <context>
@@ -6381,6 +7144,17 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::DaemonDaemonNet</name>
+    <message>
+        <source>Channels</source>
+        <translation>চ্যানেল</translation>
+    </message>
+    <message>
+        <source>DMs</source>
+        <translation>DM</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::DaemonTransport</name>
     <message>
         <source>No daemon WebSocket target configured</source>
@@ -6428,6 +7202,10 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 <context>
     <name>daemonapp::daemon::ModelRepository</name>
     <message>
+        <source>Model inspection failed</source>
+        <translation>মডেল পরিদর্শন ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
         <source>Set-model operation failed</source>
         <translation>সেট-মডেল অপারেশন ব্যর্থ হয়েছে</translation>
     </message>
@@ -6442,6 +7220,10 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
     <message>
         <source>Activate failed</source>
         <translation>সক্রিয় করা ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Quantize failed to start</source>
+        <translation>কোয়ান্টাইজ শুরু করতে ব্যর্থ হয়েছে</translation>
     </message>
 </context>
 <context>
@@ -6491,10 +7273,21 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::RoutingRepository</name>
+    <message>
+        <source>Routing change failed</source>
+        <translation>রাউটিং পরিবর্তন ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::SessionRepository</name>
     <message>
         <source>Not connected to a daemon</source>
         <translation>কোনো daemon-এর সাথে সংযুক্ত নয়</translation>
+    </message>
+    <message>
+        <source>The session rejected the command</source>
+        <translation>সেশন কমান্ডটি প্রত্যাখ্যান করেছে</translation>
     </message>
     <message>
         <source>SessionUpdateMeta failed</source>
@@ -6523,6 +7316,10 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
         <translation>নোডে পৌঁছানো যায়নি। লক্ষ্য পরীক্ষা করে আবার চেষ্টা করুন।</translation>
     </message>
     <message>
+        <source>Couldn&apos;t reach your model — check the provider and try again.</source>
+        <translation>আপনার মডেলে পৌঁছানো যায়নি — প্রদানকারী পরীক্ষা করে আবার চেষ্টা করুন।</translation>
+    </message>
+    <message>
         <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
         <translation>%1 দিয়ে এই API কী যাচাই করা যায়নি — এটি পরীক্ষা করে আবার চেষ্টা করুন।</translation>
     </message>
@@ -6544,6 +7341,13 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
     <message>
         <source>write failed</source>
         <translation>লেখা ব্যর্থ হয়েছে</translation>
+    </message>
+</context>
+<context>
+    <name>models::DaemonModelCatalog</name>
+    <message>
+        <source>Model %1 is missing on disk: %2</source>
+        <translation>মডেল %1 ডিস্কে অনুপস্থিত: %2</translation>
     </message>
 </context>
 <context>
