@@ -398,6 +398,15 @@ void emitToolBody(QVector<RenderLine>& body, const QVariantMap& view, int inner)
         if (!err.isEmpty()) {
             emitAnsi(body, err, inner);
         }
+        // D1: a shell/execute detail carries the exit code - a trailing muted line (body-only;
+        // the GUI shows the same code inside the node's own output framing).
+        if (view.contains(QStringLiteral("exitCode"))) {
+            Style dim;
+            dim.fg = tpal::muted();
+            emitMonoLine(body,
+                         QObject::tr("exit %1").arg(view.value(QStringLiteral("exitCode")).toInt()),
+                         inner, dim);
+        }
         return;
     }
     if (detail == QStringLiteral("diff")) {

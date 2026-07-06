@@ -7,6 +7,7 @@
 // styled rows: structural glyphs/titles are present, the persisted fences/JSON are
 // gone, and ANSI/diff spans carry the right semantic colors.
 
+#include "core/agent_block.h"
 #include "core/block_record.h"
 #include "core/document_store.h"
 #include "transcript_render.h"
@@ -63,6 +64,56 @@ QString interactiveMarkdown() {
 )md");
 }
 
+// Raw node-authored tool fences (D1): the full result content in `summary` plus the typed JSON
+// detail in `detailBody`, exactly as the cache cold-start projection emits them. The shared
+// buildToolView projection must light the same sub-renderers the flat form uses. Composed via
+// the canonical serializer: the nested-JSON fence bodies need `\"` escapes, which moc cannot lex
+// inside a raw string literal (it desyncs and drops the Q_OBJECT class below).
+QString rawDetailMarkdown() {
+    const auto fence = [](const QVariantMap& meta) {
+        return QString::fromUtf8(be::serializeAgentBlock(be::BlockType::ToolCall, meta));
+    };
+
+    QVariantMap fs;
+    fs.insert(QStringLiteral("callId"), QStringLiteral("n1"));
+    fs.insert(QStringLiteral("name"), QStringLiteral("fs"));
+    fs.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    fs.insert(QStringLiteral("argsSummary"), QStringLiteral("main.cpp"));
+    fs.insert(QStringLiteral("detailKind"), QStringLiteral("fs"));
+    fs.insert(QStringLiteral("detailBody"),
+              QStringLiteral(R"({"op":"edit","path":"main.cpp","count":1})"));
+    fs.insert(QStringLiteral("summary"),
+              QStringLiteral("--- a/main.cpp\n+++ b/main.cpp\n@@ -1 +1 @@\n-old\n+new\n"));
+
+    QVariantMap shell;
+    shell.insert(QStringLiteral("callId"), QStringLiteral("n2"));
+    shell.insert(QStringLiteral("name"), QStringLiteral("shell"));
+    shell.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    shell.insert(QStringLiteral("argsSummary"), QStringLiteral("ls"));
+    shell.insert(QStringLiteral("detailKind"), QStringLiteral("shell"));
+    shell.insert(QStringLiteral("detailBody"),
+                 QStringLiteral(R"({"command":"ls","exit_code":2,"stdout_len":3,)"
+                                R"("stderr_len":0})"));
+    shell.insert(QStringLiteral("summary"),
+                 QStringLiteral("exit=2\n--- stdout ---\nsrc\n--- stderr ---\n"));
+
+    QVariantMap web;
+    web.insert(QStringLiteral("callId"), QStringLiteral("n3"));
+    web.insert(QStringLiteral("name"), QStringLiteral("web_search"));
+    web.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    web.insert(QStringLiteral("argsSummary"), QStringLiteral("qt docs"));
+    web.insert(QStringLiteral("detailKind"), QStringLiteral("web_search"));
+    web.insert(QStringLiteral("detailBody"),
+               QStringLiteral(R"({"query":"qt","answer":null,"hits":[{"title":"Qt Docs",)"
+                              R"("url":"https://doc.qt.io","snippet":"The official docs",)"
+                              R"("score":0.9}],"provider":"p"})"));
+    web.insert(QStringLiteral("summary"), QStringLiteral("1. Qt Docs"));
+
+    return QStringLiteral("```msg\n{\"id\":\"m1\",\"role\":\"assistant\"}\n```\n\n") + fence(fs) +
+           QStringLiteral("\n\n") + fence(shell) + QStringLiteral("\n\n") + fence(web) +
+           QStringLiteral("\n");
+}
+
 QString flatten(const QVector<RenderLine>& lines) {
     QStringList rows;
     for (const RenderLine& line : lines) {
@@ -99,6 +150,7 @@ private slots:
     void toolHeaderGlyphsAndTitles();
     void ansiOutputCarriesColor();
     void diffLinesCarryColor();
+    void nodeRawDetailProjectsToRenderers();
     void approvalEmitsButtonControls();
     void approvalHidesAllowPermanentWhenNotOffered();
     void clarifyEmitsChoiceAndFreeformControls();
@@ -179,6 +231,38 @@ void TranscriptRenderTests::diffLinesCarryColor() {
                     [](const Span& s) { return s.fg == tpal::diffDel(); }));
     QVERIFY(anySpan(lines, QStringLiteral("@@"),
                     [](const Span& s) { return s.fg == tpal::diffHunk(); }));
+}
+
+// D1: raw node fields (summary + detailKind/detailBody) are projected through the shared view
+// model into the same sub-renderers the flat metadata drives - fs edit as a colored diff, shell
+// output as ansi with a trailing exit line, web_search hits as styled result rows.
+void TranscriptRenderTests::nodeRawDetailProjectsToRenderers() {
+    be::DocumentStore doc;
+    doc.loadMarkdown(rawDetailMarkdown());
+    const QVector<RenderLine> lines = TranscriptLayout::build(doc, 80).lines;
+    const QString text = flatten(lines);
+
+    // fs edit -> the diff renderer, with add/del semantic colors.
+    QVERIFY(anySpan(lines, QStringLiteral("+new"),
+                    [](const Span& s) { return s.fg == tpal::diffAdd(); }));
+    QVERIFY(anySpan(lines, QStringLiteral("-old"),
+                    [](const Span& s) { return s.fg == tpal::diffDel(); }));
+
+    // shell -> the ansi body plus the muted trailing exit line from the typed detail.
+    QVERIFY(text.contains(QStringLiteral("--- stdout ---")));
+    QVERIFY(anySpan(lines, QStringLiteral("exit 2"),
+                    [](const Span& s) { return s.fg == tpal::muted(); }));
+
+    // web_search -> hit rows: accent title, muted url, snippet prose.
+    QVERIFY(anySpan(lines, QStringLiteral("Qt Docs"),
+                    [](const Span& s) { return s.fg == tpal::accent(); }));
+    QVERIFY(anySpan(lines, QStringLiteral("https://doc.qt.io"),
+                    [](const Span& s) { return s.fg == tpal::muted(); }));
+    QVERIFY(text.contains(QStringLiteral("The official docs")));
+
+    // The raw carriers never leak into the render.
+    QVERIFY(!text.contains(QStringLiteral("detailBody")));
+    QVERIFY(!text.contains(QStringLiteral("exit_code")));
 }
 
 void TranscriptRenderTests::approvalEmitsButtonControls() {

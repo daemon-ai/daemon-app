@@ -98,6 +98,10 @@ private slots:
     void toolViewDerivesClarifyVariant();
     void toolViewDerivesImageGenerate();
     void toolViewFlagsAwaitingApproval();
+    void projectToolDetailMapsNodeKinds();
+    void projectToolDetailFallsBackToText();
+    void buildToolViewProjectsRawDetail();
+    void buildToolViewPassesThroughFlatKeys();
     void clarifyAnswerRoundTrips();
     void clarifyMultiQuestionAnswerRoundTrips();
     void approvalAnswerRoundTrips();
@@ -1737,6 +1741,142 @@ void CoreTests::toolViewFlagsAwaitingApproval() {
     plain.insert(QStringLiteral("name"), QStringLiteral("terminal"));
     plain.insert(QStringLiteral("status"), QStringLiteral("running"));
     QVERIFY(!be::buildToolView(plain).value(QStringLiteral("awaitingApproval")).toBool());
+}
+
+// D1: the node-kind -> renderer-key projection (fs edit -> diff, shell/execute -> ansi-stream +
+// exit code, web_search hits -> search-results, browser_screenshot -> file:// image).
+void CoreTests::projectToolDetailMapsNodeKinds() {
+    // fs edit: the full content (prose header + unified diff) routes to the diff renderer.
+    const QString diffText = QStringLiteral(
+        "edited main.cpp: 1 replacement(s)\n\n--- a/main.cpp\n+++ b/main.cpp\n@@ -1 +1 "
+        "@@\n-old\n+new\n");
+    QVariantMap v = be::projectToolDetail(
+        QStringLiteral("fs"),
+        QByteArrayLiteral(R"({"op":"edit","path":"main.cpp","count":1,"strategy":"exact"})"),
+        diffText);
+    QCOMPARE(v.value(QStringLiteral("detailKind")).toString(), QStringLiteral("diff"));
+    QCOMPARE(v.value(QStringLiteral("diff")).toString(), diffText);
+    QCOMPARE(v.value(QStringLiteral("count")).toInt(), 1);
+
+    // fs list: a flat single-directory listing renders as plain text.
+    v = be::projectToolDetail(QStringLiteral("fs"),
+                              QByteArrayLiteral(R"({"op":"list","path":".","count":2})"),
+                              QStringLiteral("src\nREADME.md"));
+    QCOMPARE(v.value(QStringLiteral("detailKind")).toString(), QStringLiteral("text"));
+    QCOMPARE(v.value(QStringLiteral("body")).toString(), QStringLiteral("src\nREADME.md"));
+
+    // shell: the full framed output routes to the ansi renderer, plus the exit code.
+    v = be::projectToolDetail(
+        QStringLiteral("shell"),
+        QByteArrayLiteral(R"({"command":"ls","exit_code":2,"stdout_len":3,"stderr_len":0})"),
+        QStringLiteral("exit=2\n--- stdout ---\nx\n--- stderr ---\n"));
+    QCOMPARE(v.value(QStringLiteral("detailKind")).toString(), QStringLiteral("ansi-stream"));
+    QVERIFY(v.value(QStringLiteral("stdout")).toString().contains(QStringLiteral("stdout")));
+    QCOMPARE(v.value(QStringLiteral("exitCode")).toInt(), 2);
+
+    // web_search: hits become the clickable search-results list.
+    v = be::projectToolDetail(
+        QStringLiteral("web_search"),
+        QByteArrayLiteral(
+            R"({"query":"qt","answer":null,"hits":[{"title":"Qt","url":"https://qt.io",)"
+            R"("snippet":"framework","score":0.9}],"provider":"p"})"),
+        QStringLiteral("rendered"));
+    QCOMPARE(v.value(QStringLiteral("detailKind")).toString(), QStringLiteral("search-results"));
+    const QVariantList hits = v.value(QStringLiteral("hits")).toList();
+    QCOMPARE(hits.size(), 1);
+    QCOMPARE(hits.first().toMap().value(QStringLiteral("url")).toString(),
+             QStringLiteral("https://qt.io"));
+    QCOMPARE(hits.first().toMap().value(QStringLiteral("snippet")).toString(),
+             QStringLiteral("framework"));
+
+    // browser_screenshot: the node-local path becomes a file:// image; the path doubles as the
+    // alt so a failed (remote) load degrades to the path text.
+    v = be::projectToolDetail(QStringLiteral("browser_screenshot"),
+                              QByteArrayLiteral(R"({"path":"/tmp/shot.png"})"),
+                              QStringLiteral("screenshot saved: /tmp/shot.png"));
+    QCOMPARE(v.value(QStringLiteral("detailKind")).toString(), QStringLiteral("image"));
+    QCOMPARE(v.value(QStringLiteral("imageUrl")).toString(),
+             QStringLiteral("file:///tmp/shot.png"));
+    QCOMPARE(v.value(QStringLiteral("imageAlt")).toString(), QStringLiteral("/tmp/shot.png"));
+
+    // web_extract: the body's content field wins over the (shorter) summary.
+    v = be::projectToolDetail(
+        QStringLiteral("web_extract"),
+        QByteArrayLiteral(R"({"url":"https://x","title":"T","content":"page text",)"
+                          R"("provider":"p"})"),
+        QStringLiteral("short"));
+    QCOMPARE(v.value(QStringLiteral("detailKind")).toString(), QStringLiteral("text"));
+    QCOMPARE(v.value(QStringLiteral("body")).toString(), QStringLiteral("page text"));
+}
+
+void CoreTests::projectToolDetailFallsBackToText() {
+    // An unrouted kind (or a failed call with no detail) shows the full content as text.
+    QVariantMap v = be::projectToolDetail(QStringLiteral("metta"),
+                                          QByteArrayLiteral(R"({"request_id":1,"ok":true})"),
+                                          QStringLiteral("op results"));
+    QCOMPARE(v.value(QStringLiteral("detailKind")).toString(), QStringLiteral("text"));
+    QCOMPARE(v.value(QStringLiteral("body")).toString(), QStringLiteral("op results"));
+
+    // A foreign-agent CBOR body is never decoded: the JSON parse fails, the summary still shows.
+    const QByteArray cbor("\xA1\x63key\x63val", 9);
+    v = be::projectToolDetail(QStringLiteral("tool_result"), cbor,
+                              QStringLiteral("foreign output"));
+    QCOMPARE(v.value(QStringLiteral("detailKind")).toString(), QStringLiteral("text"));
+    QCOMPARE(v.value(QStringLiteral("body")).toString(), QStringLiteral("foreign output"));
+
+    // Nothing to show -> an empty map (header-only card, unchanged from today).
+    QVERIFY(be::projectToolDetail(QStringLiteral("fs"), {}, {}).isEmpty());
+    // todo / clarify never project (the status stack / interactive variant own them).
+    QVERIFY(
+        be::projectToolDetail(QStringLiteral("todo"),
+                              QByteArrayLiteral(R"([{"id":"1","content":"x","status":"pending"}])"),
+                              QStringLiteral("x"))
+            .isEmpty());
+    QVERIFY(be::projectToolDetail(QStringLiteral("clarify"),
+                                  QByteArrayLiteral(R"({"question":"?","options":[],)"
+                                                    R"("answer":"a"})"),
+                                  QStringLiteral("a"))
+                .isEmpty());
+}
+
+void CoreTests::buildToolViewProjectsRawDetail() {
+    // Raw node fields (summary + detailKind/detailBody, as the turn engine lands them in block
+    // metadata) are projected by the shared view model; the node vocabulary in detailKind is
+    // replaced by the renderer's.
+    QVariantMap meta;
+    meta.insert(QStringLiteral("name"), QStringLiteral("fs"));
+    meta.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    meta.insert(QStringLiteral("detailKind"), QStringLiteral("fs"));
+    meta.insert(QStringLiteral("detailBody"),
+                QStringLiteral(R"({"op":"edit","path":"x","count":1})"));
+    meta.insert(QStringLiteral("summary"),
+                QStringLiteral("--- a/x\n+++ b/x\n@@ -1 +1 @@\n-a\n+b\n"));
+    const QVariantMap view = be::buildToolView(meta);
+    QCOMPARE(view.value(QStringLiteral("detailKind")).toString(), QStringLiteral("diff"));
+    QCOMPARE(view.value(QStringLiteral("diff")).toString(),
+             meta.value(QStringLiteral("summary")).toString());
+
+    // The same metadata round-trips through the canonical fence (serialize -> parse -> view):
+    // the cold-start reload renders the identical card.
+    const QByteArray fence = be::serializeAgentBlock(be::BlockType::ToolCall, meta);
+    const QVariantMap reparsed =
+        be::parseAgentBlockMetadata(be::fencedBodyOf(QString::fromUtf8(fence)));
+    const QVariantMap reloaded = be::buildToolView(reparsed);
+    QCOMPARE(reloaded.value(QStringLiteral("detailKind")).toString(), QStringLiteral("diff"));
+    QCOMPARE(reloaded.value(QStringLiteral("diff")).toString(),
+             meta.value(QStringLiteral("summary")).toString());
+}
+
+void CoreTests::buildToolViewPassesThroughFlatKeys() {
+    // Simulator / already-projected metadata (flat renderer keys, no raw fields) is untouched.
+    QVariantMap meta;
+    meta.insert(QStringLiteral("name"), QStringLiteral("terminal"));
+    meta.insert(QStringLiteral("status"), QStringLiteral("ok"));
+    meta.insert(QStringLiteral("detailKind"), QStringLiteral("ansi-stream"));
+    meta.insert(QStringLiteral("stdout"), QStringLiteral("PASS\n"));
+    const QVariantMap view = be::buildToolView(meta);
+    QCOMPARE(view.value(QStringLiteral("detailKind")).toString(), QStringLiteral("ansi-stream"));
+    QCOMPARE(view.value(QStringLiteral("stdout")).toString(), QStringLiteral("PASS\n"));
 }
 
 void CoreTests::clarifyAnswerRoundTrips() {

@@ -273,9 +273,12 @@ Item {
         id: imageComponent
         ImageBlock {
             width: detailLoader.width
+            // `alt` doubles as the failure fallback: a screenshot living on a remote node
+            // cannot load here, and ImageBlock's error box then shows the path text (D1/R3).
             imageData: ({
                 url: (root.toolData && root.toolData.imageUrl) ? root.toolData.imageUrl : "",
                 source: (root.toolData && root.toolData.imageUrl) ? root.toolData.imageUrl : "",
+                alt: (root.toolData && root.toolData.imageAlt) ? root.toolData.imageAlt : "",
                 isRemote: true
             })
             editorController: root.editorController

@@ -3,6 +3,7 @@
 
 #include "core/agent_block.h"
 
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QObject>
@@ -198,6 +199,123 @@ QString fencedBodyOf(const QString& markdown) {
     return lines.join(QLatin1Char('\n'));
 }
 
+QVariantMap projectToolDetail(const QString& nodeKind, const QByteArray& bodyJson,
+                              const QString& summary) {
+    QVariantMap out;
+    // Native tool detail bodies are JSON UTF-8 by contract; a foreign-agent CBOR body simply
+    // fails this parse and takes the text default below (decision: never CBOR-decode here).
+    const QJsonObject o = QJsonDocument::fromJson(bodyJson).object();
+
+    // `todo` feeds the composer status stack (intercepted upstream) and `clarify` renders via its
+    // interactive variant driven by host-gate metadata - neither projects a detail body.
+    if (nodeKind == QStringLiteral("todo") || nodeKind == QStringLiteral("clarify")) {
+        return out;
+    }
+
+    if (nodeKind == QStringLiteral("fs")) {
+        if (o.contains(QStringLiteral("count"))) {
+            out.insert(QStringLiteral("count"), o.value(QStringLiteral("count")).toInt());
+        }
+        // An edit's content is "edited <path>: ..." prose followed by the unified diff; the diff
+        // renderer classifies the prose lines as context rows, so the whole content routes there.
+        if (o.value(QStringLiteral("op")).toString() == QStringLiteral("edit") &&
+            !summary.isEmpty()) {
+            out.insert(QStringLiteral("detailKind"), QStringLiteral("diff"));
+            out.insert(QStringLiteral("diff"), summary);
+            return out;
+        }
+        // read / list / grep / glob / write / delete: the full content as plain mono text.
+        if (!summary.isEmpty()) {
+            out.insert(QStringLiteral("detailKind"), QStringLiteral("text"));
+            out.insert(QStringLiteral("body"), summary);
+        }
+        return out;
+    }
+
+    if (nodeKind == QStringLiteral("shell") || nodeKind == QStringLiteral("execute_code")) {
+        if (o.contains(QStringLiteral("exit_code"))) {
+            out.insert(QStringLiteral("exitCode"), o.value(QStringLiteral("exit_code")).toInt());
+        }
+        if (!summary.isEmpty()) {
+            out.insert(QStringLiteral("detailKind"), QStringLiteral("ansi-stream"));
+            out.insert(QStringLiteral("stdout"), summary);
+        }
+        return out;
+    }
+
+    if (nodeKind == QStringLiteral("web_search")) {
+        QVariantList hits;
+        const QJsonArray arr = o.value(QStringLiteral("hits")).toArray();
+        for (const auto& h : arr) {
+            const QJsonObject hit = h.toObject();
+            hits.push_back(QVariantMap{
+                {QStringLiteral("title"), hit.value(QStringLiteral("title")).toString()},
+                {QStringLiteral("url"), hit.value(QStringLiteral("url")).toString()},
+                {QStringLiteral("snippet"), hit.value(QStringLiteral("snippet")).toString()}});
+        }
+        if (!hits.isEmpty()) {
+            out.insert(QStringLiteral("detailKind"), QStringLiteral("search-results"));
+            out.insert(QStringLiteral("hits"), hits);
+            return out;
+        }
+        if (!summary.isEmpty()) {
+            out.insert(QStringLiteral("detailKind"), QStringLiteral("text"));
+            out.insert(QStringLiteral("body"), summary);
+        }
+        return out;
+    }
+
+    if (nodeKind == QStringLiteral("browser_screenshot")) {
+        const QString path = o.value(QStringLiteral("path")).toString();
+        if (!path.isEmpty()) {
+            // The node ships a node-local filesystem path (not bytes/URL): file:// works
+            // co-located; a remote node's image fails to load and ImageBlock's error box shows
+            // the path via imageAlt. A node-served URL is a recorded future wire candidate.
+            out.insert(QStringLiteral("detailKind"), QStringLiteral("image"));
+            out.insert(QStringLiteral("imageUrl"),
+                       path.startsWith(QLatin1Char('/')) ? QStringLiteral("file://") + path : path);
+            out.insert(QStringLiteral("imageAlt"), path);
+            return out;
+        }
+        if (!summary.isEmpty()) {
+            out.insert(QStringLiteral("detailKind"), QStringLiteral("text"));
+            out.insert(QStringLiteral("body"), summary);
+        }
+        return out;
+    }
+
+    // web_extract / browser_extract carry the page content in the body; prefer it over the
+    // (identical or shorter) summary.
+    if (nodeKind == QStringLiteral("web_extract") ||
+        nodeKind == QStringLiteral("browser_extract")) {
+        const QString content = o.value(QStringLiteral("content")).toString();
+        const QString text = content.isEmpty() ? summary : content;
+        if (!text.isEmpty()) {
+            out.insert(QStringLiteral("detailKind"), QStringLiteral("text"));
+            out.insert(QStringLiteral("body"), text);
+        }
+        return out;
+    }
+
+    if (nodeKind == QStringLiteral("vision_analyze")) {
+        const QString analysis = o.value(QStringLiteral("analysis")).toString();
+        const QString text = analysis.isEmpty() ? summary : analysis;
+        if (!text.isEmpty()) {
+            out.insert(QStringLiteral("detailKind"), QStringLiteral("text"));
+            out.insert(QStringLiteral("body"), text);
+        }
+        return out;
+    }
+
+    // Default (skills_list, metta, python-worker kinds, foreign/unknown, or no kind at all): the
+    // full result content as plain mono text - already richer than a one-line row.
+    if (!summary.isEmpty()) {
+        out.insert(QStringLiteral("detailKind"), QStringLiteral("text"));
+        out.insert(QStringLiteral("body"), summary);
+    }
+    return out;
+}
+
 QVariantMap buildToolView(const QVariantMap& metadata) {
     QVariantMap view = metadata;
 
@@ -207,13 +325,32 @@ QVariantMap buildToolView(const QVariantMap& metadata) {
     const QString tone = toneToKey(metadata.value(QStringLiteral("tone")).toString(), name);
     const QString argsSummary = metadata.value(QStringLiteral("argsSummary")).toString();
 
+    QString detailKind = metadata.value(QStringLiteral("detailKind")).toString();
+
+    // D1: a node-authored raw payload rides in `summary` (full result content) + `detailBody`
+    // (typed JSON detail, carried as UTF-8 text through metadata/fences). Project it into the
+    // flat renderer keys here - the one shared seam - overwriting the raw node-vocabulary
+    // detailKind with the renderer's. Metadata without raw fields (the simulator, already-flat
+    // fences) passes through untouched.
+    const QString rawSummary = metadata.value(QStringLiteral("summary")).toString();
+    const QVariant rawBody = metadata.value(QStringLiteral("detailBody"));
+    if (!rawSummary.isEmpty() || rawBody.isValid()) {
+        const QVariantMap projected =
+            projectToolDetail(detailKind, rawBody.toString().toUtf8(), rawSummary);
+        for (auto it = projected.cbegin(); it != projected.cend(); ++it) {
+            view.insert(it.key(), it.value());
+        }
+        if (projected.contains(QStringLiteral("detailKind"))) {
+            detailKind = projected.value(QStringLiteral("detailKind")).toString();
+        }
+    }
+
     // detailKind defaults from the variant: a finished image_generate with a
     // resolved image renders the generated-image frame; clarify routes to its
-    // interactive panel. An explicit detailKind always wins.
-    QString detailKind = metadata.value(QStringLiteral("detailKind")).toString();
+    // interactive panel. An explicit (or projected) detailKind always wins.
     if (detailKind.isEmpty()) {
         if (variant == QStringLiteral("image-generate") &&
-            !metadata.value(QStringLiteral("imageUrl")).toString().isEmpty()) {
+            !view.value(QStringLiteral("imageUrl")).toString().isEmpty()) {
             detailKind = QStringLiteral("generated-image");
         }
     }

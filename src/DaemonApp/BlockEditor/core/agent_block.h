@@ -73,8 +73,22 @@ QString fencedBodyOf(const QString& markdown);
 // Tool-call view model. Mirrors the Hermes ToolView: a status-aware title, a
 // subtitle (argsSummary), a normalized status ("running"/"ok"/"error"), the
 // tone, a human duration label, an optional count, and the detail kind + its
-// decoded payload passed through for the sub-renderer.
+// decoded payload passed through for the sub-renderer. When the metadata
+// carries a node-authored raw payload (`summary` full result content and/or a
+// `detailBody` JSON detail), it is projected into the flat renderer keys via
+// projectToolDetail — the single seam both front ends share (D1).
 QVariantMap buildToolView(const QVariantMap& metadata);
+
+// D1 projection: map a node ToolDetail (kind = the tool's name, body = its
+// typed JSON payload) plus the full result content (`summary`, the wire
+// ToolResult summary) into the flat keys the sub-renderers consume, keyed by a
+// RENDERER detailKind ("diff" / "ansi-stream" / "search-results" / "image" /
+// "text"). Node kinds without a specialized renderer fall to "text" with the
+// full content as `body`; an empty payload yields an empty map (header-only
+// card). Foreign-agent CBOR bodies fail the JSON parse by design and fall to
+// the "text" default — never CBOR-decoded here.
+QVariantMap projectToolDetail(const QString& nodeKind, const QByteArray& bodyJson,
+                              const QString& summary);
 
 // Reasoning view model: status ("running"/"complete"), duration label, and the
 // raw markdown body (the caller projects it for display).
