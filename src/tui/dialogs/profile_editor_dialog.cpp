@@ -317,13 +317,18 @@ void ProfileEditorDialog::syncRowLabels() {
         m_engineKind == QStringLiteral("Foreign")
             ? tr("Engine: foreign agent · %1 (set at create time)").arg(m_engineAgent)
             : tr("Engine: daemon-core (native)"));
+    // C4: a foreign engine hides the inference config (provider/model/base URL) — the agent
+    // resolves its own model; only the read-only engine line + name/prompt/skills/tools remain.
+    const bool foreign = m_engineKind == QStringLiteral("Foreign");
     m_providerRow->setText(row(tr("Provider"), providerDisplayName()));
+    m_providerRow->setVisible(!foreign);
     m_baseUrlRow->setText(row(tr("Base URL"), m_wBaseUrl.isEmpty() ? tr("(provider default)")
                                                                    : elide(m_wBaseUrl, 38)));
-    // Base URL only applies to cloud providers (GUI parity).
-    m_baseUrlRow->setVisible(providerIsCloud());
+    // Base URL only applies to cloud providers (GUI parity), and never to a foreign engine.
+    m_baseUrlRow->setVisible(!foreign && providerIsCloud());
     m_modelRow->setText(
         row(tr("Model"), m_wModel.isEmpty() ? tr("(pick a model)") : elide(m_wModel, 40)));
+    m_modelRow->setVisible(!foreign);
     m_descriptionRow->setText(row(tr("Description"), elide(m_wDescription, 36)));
     m_promptRow->setText(
         row(tr("System prompt"), elide(m_wSystemPrompt.section(QLatin1Char('\n'), 0, 0), 34)));

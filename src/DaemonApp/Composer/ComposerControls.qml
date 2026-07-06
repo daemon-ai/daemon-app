@@ -85,7 +85,10 @@ RowLayout {
                                         : qsTr("Native")
         iconGlyph: info.engine === "Foreign" ? FontIcons.fa_robot : FontIcons.fa_microchip
         tone: info.engine === "Foreign" ? "accent" : "muted"
-        tooltipText: qsTr("Engine")
+        // C4 honesty: name why inference affordances are absent for a foreign engine.
+        tooltipText: info.engine === "Foreign"
+                     ? qsTr("Foreign engine — model, reasoning and rewind are managed by the agent")
+                     : qsTr("Engine")
     }
 
     // Approval-policy chip (E1/TOOL-7): the session's HITL mode at a glance; tap to change (opens
@@ -176,11 +179,17 @@ RowLayout {
             sessionSettingsPopover.open();
         }
 
-        SessionSettingsPopover { id: sessionSettingsPopover }
+        SessionSettingsPopover {
+            id: sessionSettingsPopover
+            foreignSession: root.foreignSession
+        }
     }
 
+    // Model picker: hidden for a foreign session — the foreign agent resolves its own model, so
+    // there is no provider/model for the client to pick (C4). The engine chip explains why.
     ModelPill {
         id: modelPill
+        visible: !root.foreignSession
         Layout.alignment: Qt.AlignVCenter
         enabled: root.composerEnabled
         session: root.session

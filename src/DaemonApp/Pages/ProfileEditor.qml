@@ -27,6 +27,12 @@ Item {
     property string wBaseUrl: ""
     property var wSkills: []
     property var wTools: []
+    // C4: the loaded profile's engine ("Core"|"Foreign") + agent name. A foreign profile hides the
+    // inference config (provider/model/base URL) — the foreign agent resolves its own model, and
+    // the engine binding is a create-time choice (ProfileUpdate carries no engine change).
+    property string wEngine: "Core"
+    property string wForeignAgent: ""
+    readonly property bool foreign: wEngine === "Foreign"
 
     // The providers the node offers (ProviderCatalog), fetched over the wire. Mock is never listed;
     // `cloud` marks providers that take a Base URL; `wireSelector` is what the profile persists.
@@ -95,6 +101,8 @@ Item {
         wProvider = p.provider !== undefined ? p.provider : "";
         wBaseUrl = p.baseUrl !== undefined ? p.baseUrl : "";
         wModel = p.model !== undefined ? p.model : "";
+        wEngine = p.engine !== undefined ? p.engine : "Core";
+        wForeignAgent = p.acpAgent !== undefined ? p.acpAgent : "";
         wProviderId = _inferProviderId(wProvider, wModel);
         providerCombo.syncFromModel();
         baseUrlField.text = wBaseUrl;
@@ -193,10 +201,30 @@ Item {
 
             Kit.TextField { id: nameField; Layout.fillWidth: true; placeholderText: qsTr("Name") }
 
-            // --- Provider -------------------------------------------------
-            SectionLabel { text: qsTr("Provider") }
+            // C4: engine identity is read-only in the editor (a create-time choice). For a foreign
+            // profile the inference config below is hidden — the recipe + model are the agent's.
+            Kit.Chip {
+                visible: root.foreign
+                text: root.wForeignAgent.length > 0 ? root.wForeignAgent : qsTr("Foreign")
+                iconGlyph: FontIcons.fa_robot
+                tone: "accent"
+                tooltipText: qsTr("Foreign engine (set at create time)")
+            }
+            Text {
+                visible: root.foreign
+                Layout.fillWidth: true
+                text: qsTr("This agent runs a foreign engine — its launch recipe and model are "
+                           + "managed by the daemon's agent catalog, so there is no provider, "
+                           + "model, or base URL to configure here.")
+                wrapMode: Text.WordWrap
+                font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
+            }
+
+            // --- Provider (native engines only) ---------------------------
+            SectionLabel { visible: !root.foreign; text: qsTr("Provider") }
             Kit.Dropdown {
                 id: providerCombo
+                visible: !root.foreign
                 Layout.fillWidth: true
                 model: root.providerChoices.map(function(p) { return p.name; })
                 // Reflect root.wProvider into the current index; -1 for an unlisted (e.g. Mock) value
@@ -227,7 +255,7 @@ Item {
             // or silently coercing it to a real provider on save.
             Text {
                 Layout.fillWidth: true
-                visible: root.providerIndex < 0 && root.wProvider.length > 0
+                visible: !root.foreign && root.providerIndex < 0 && root.wProvider.length > 0
                 text: qsTr("Current provider: %1 (test provider — not selectable)").arg(root.wProvider)
                 wrapMode: Text.Wrap
                 font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
@@ -237,15 +265,17 @@ Item {
             Kit.TextField {
                 id: baseUrlField
                 Layout.fillWidth: true
-                visible: root.providerIsCloud
+                visible: !root.foreign && root.providerIsCloud
                 placeholderText: qsTr("Base URL (optional, e.g. https://api.daemon.ai/api/v1)")
                 onEditingFinished: root.wBaseUrl = text
             }
 
             // Model is chosen (selection-only) from the node's per-provider list (ProviderModels for
-            // cloud; installed + "Discover More Models" for local). Never free-text.
+            // cloud; installed + "Discover More Models" for local). Never free-text. Hidden for a
+            // foreign engine (the agent resolves its own model).
             Kit.Dropdown {
                 id: modelCombo
+                visible: !root.foreign
                 Layout.fillWidth: true
                 // The offered-model rows for the selected provider ({id, name, kind}); the trailing
                 // discover row (local) opens the download flow instead of selecting a model. An
