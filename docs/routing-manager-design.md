@@ -1,4 +1,4 @@
-# Routing manager — design (mock-first)
+# Routing manager — design
 
 The routing manager is the client surface for **routing the DaemonNet**: wiring inbound
 **origins** (a transport account + chat scope, an API caller, a host-internal trigger) to
@@ -7,18 +7,24 @@ The routing manager is the client surface for **routing the DaemonNet**: wiring 
 lenses flatten — the "patch-bay" where the wiring is seen and changed.
 
 This document is the source of truth for the surface. Where the older draft
-[user-story 05-routing-manager.md](../../user-stories/05-routing-manager.md) or the shipped
-`RoutingPage` diverge from the grounded model below, this document is correct.
+[user-story 05-routing-manager.md](../../user-stories/05-routing-manager.md) diverges from the
+grounded model below, this document is correct.
 
-> Status: mock-first design. The model is realized client-side in `MockDaemonNet`; a daemon
-> adapter fills the same projections from the wire later. No contract/CDDL changes.
+> Status: **daemon-backed at wire v28 (B6/ROU).** `RoutingManagerController` binds `IDaemonNet`;
+> in daemon mode `DaemonDaemonNet` + `RoutingRepository` serve the pin table over the real
+> `RoutingListChats`/`RoutingBindChat`/`RoutingUnbindChat`/`RoutingSet` + `TransportRooms` ops
+> (mock mode keeps `MockDaemonNet`'s demo seed). The TUI Routing tab renders the same origin-pin
+> surface. Honest residuals: `resolve()` answers from the pin table only (the node exposes no
+> read op for the lower precedence rungs), `bindingRules()` renders empty (config-time, no wire
+> read), and the delivery/handover panel stays inert until the `delivery_targets`/`handover`
+> re-point lands.
 
 ---
 
-## 0. What it is NOT — the stale `RoutingPage`
+## 0. What it is NOT — the retired intent->model `RoutingPage` (DELETED at wire v28)
 
-The shipped [RoutingPage.qml](../src/DaemonApp/Pages/RoutingPage.qml) (backed by
-`automation::MockRoutingStore`) is an **intent -> LLM-model** matrix: rows mapping a free-text
+The pre-B6 `RoutingPage` (backed by `automation::MockRoutingStore`, both now deleted) was an
+**intent -> LLM-model** matrix: rows mapping a free-text
 "intent" (e.g. "Code & engineering") to a target **model** id (+ a fallback model) with an enable
 toggle. Grounding this against `daemon-node` (this session's study):
 
@@ -32,8 +38,10 @@ toggle. Grounding this against `daemon-node` (this session's study):
 - The closest analogue to "intent -> model" is the orchestrator spec's `WorkClass`/
   `WorkClassBinding { profile, model }` — and it is **spec-only**, with zero Rust implementation.
 
-So `RoutingPage` maps to no implemented feature. Its row grammar (source -> target + toggle) is a
-reusable UI pattern, but its content is retired/replaced by this surface.
+So the intent->model page mapped to no implemented feature. Its row grammar (source -> target +
+toggle) was a reusable UI pattern, but its content is retired/replaced by this surface — the
+`IRoutingStore`/`MockRoutingStore` seam and the TUI intent->model tab were deleted when the pin
+table landed (B6, wire v28).
 
 ---
 

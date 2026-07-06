@@ -378,6 +378,8 @@ void SidebarModel::appendTransportRows() {
         r.sublabel = t.sublabel;
         r.presence = t.presence;
         r.scopeKey = t.scopeKey;
+        r.txTransport = t.transportId;
+        r.txConversation = t.conversationId;
         // When a row has no session leaf, selecting it scopes the list: an account
         // groups all sessions over its transport (ByTransport); a 1:1 Dm peer groups
         // by that peer (ByPeer). Channels / convGroups carry no list scope.
@@ -503,12 +505,16 @@ void SidebarModel::setSelectionFromRow(int row) {
     m_selAgent = (r.type == NodeType::Agent) ? r.profile : QString();
     m_selSession = (r.type == NodeType::AgentSession) ? r.session : QString();
     if (r.type == NodeType::Transport) {
-        // A session leaf opens its transcript directly; a scope-bearing group
-        // (account / Dm peer) regroups the list; everything else just highlights.
+        // A session leaf (incl. a PINNED conversation) opens its transcript directly; a
+        // scope-bearing group (account / Dm peer) regroups the list; an UNPINNED external
+        // conversation is browse-only and opens the Channels page (B4 — pins stay explicit
+        // routing state); everything else just highlights.
         if (!r.session.isEmpty()) {
             emit sessionActivated(r.session);
         } else if (r.scopeType >= 0 && !r.scopeKey.isEmpty()) {
             emit scopeSelected(r.scopeType, -1, r.scopeKey);
+        } else if (r.txKind == QStringLiteral("conversation") && !r.txTransport.isEmpty()) {
+            emit conversationActivated(r.txTransport, r.txConversation);
         }
     } else if (r.type == NodeType::AgentSession) {
         // A session leaf under an agent opens its transcript (like an Integrations session leaf).

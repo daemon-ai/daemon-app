@@ -102,6 +102,13 @@ CachedSessionStore::CachedSessionStore(DaemonCacheStore* cache, SessionRepositor
         // that the node refused must never look applied.
         connect(m_sessions, &SessionRepository::metaUpdateFailed, this,
                 &CachedSessionStore::metaUpdateFailed);
+        // B4: record the node-resolved ByTransport membership; reload() re-projects the scoped
+        // list from the fresh set.
+        connect(m_sessions, &SessionRepository::transportSessionsResolved, this,
+                [this](const QString& transportId, const QSet<QString>& ids) {
+                    m_transportSessions.insert(transportId, ids);
+                    reload();
+                });
     }
     reload();
 }
@@ -115,7 +122,8 @@ void CachedSessionStore::reload() {
     emit changed();
 }
 
-bool CachedSessionStore::matchesScope(const CachedSessionRow& row, const domain::ListScope& scope) {
+bool CachedSessionStore::matchesScope(const CachedSessionRow& row,
+                                      const domain::ListScope& scope) const {
     switch (scope.type) {
     case domain::NodeType::Archived:
         return row.archived;
@@ -126,6 +134,11 @@ bool CachedSessionStore::matchesScope(const CachedSessionRow& row, const domain:
         // profile. Mirrors the node's SessionScope::ByProfile filter (bound_profile == p, not
         // archived); `lensKey` carries the profile id.
         return !row.archived && !scope.lensKey.isEmpty() && row.profileRef == scope.lensKey;
+    case domain::NodeType::ByTransport:
+        // B4: membership is NODE-resolved (SessionScope::ByTransport fetch); the client only
+        // projects the reported id set. Before/without a fetch the set is empty -> empty list
+        // (honest), not a client-side re-derivation.
+        return !row.archived && m_transportSessions.value(scope.lensKey).contains(row.sessionId);
     default:
         // Daemon sessions are flat in the first slice: no unit-tree or tag scoping yet.
         return false;
@@ -389,6 +402,21 @@ void CachedSessionStore::moveSession(const domain::SessionId&, int) {}
 void CachedSessionStore::refreshSessionsForProfile(const QString& profileId) {
     if (m_sessions != nullptr && !profileId.isEmpty()) {
         m_sessions->refreshSessionsByProfile(profileId);
+    }
+}
+
+void CachedSessionStore::refreshArchivedSessions() {
+    // F6: the archived scope is fetched on demand (TopLevel excludes it); the repo merges the
+    // rows additively and sessionsRefreshed() drives reload() -> changed().
+    if (m_sessions != nullptr) {
+        m_sessions->refreshArchivedSessions();
+    }
+}
+
+void CachedSessionStore::refreshSessionsForTransport(const QString& transportId) {
+    // B4: the node resolves ByTransport membership; the resolved id set backs matchesScope.
+    if (m_sessions != nullptr && !transportId.isEmpty()) {
+        m_sessions->refreshSessionsByTransport(transportId);
     }
 }
 

@@ -6,7 +6,9 @@
 #include "daemon/daemon_cache_store.h"
 #include "persistence/isession_store.h"
 
+#include <QHash>
 #include <QList>
+#include <QSet>
 
 namespace daemonapp::daemon {
 
@@ -56,6 +58,12 @@ public:
     // Fetch the agent's sessions from the node (SessionScope::ByProfile) via the repository, then
     // emit changed() when they land — drives the per-agent (Fleet membership) session view.
     void refreshSessionsForProfile(const QString& profileId) override;
+    // Fetch the archived sessions (SessionScope::Archived; F6) via the repository — the archived
+    // scope surfaces call this on entry since the TopLevel roster excludes archived rows.
+    void refreshArchivedSessions() override;
+    // Fetch the sessions routed over `transportId` (SessionScope::ByTransport; B4): the node
+    // resolves membership and the resolved id set backs the ByTransport list scope.
+    void refreshSessionsForTransport(const QString& transportId) override;
 
     // Node-authoritative create: forward to the repository's SessionCreate op (nothing is minted
     // client-side). The repo's sessionCreated is relayed as ISessionStore::sessionCreated.
@@ -63,8 +71,8 @@ public:
 
 private:
     void reload();
-    [[nodiscard]] static bool matchesScope(const CachedSessionRow& row,
-                                           const domain::ListScope& scope);
+    [[nodiscard]] bool matchesScope(const CachedSessionRow& row,
+                                    const domain::ListScope& scope) const;
     // Index of the snapshot row with this SessionId, or -1. The bridge from the canonical id to the
     // cache row (and the int shims' resolution target).
     [[nodiscard]] int indexOfSessionId(const domain::SessionId& id) const;
@@ -74,6 +82,10 @@ private:
     // Snapshot of the cache; the list index is the local int id handed to the UI.
     QList<CachedSessionRow> m_snapshot;
     QHash<QString, QString> m_snippets; // sessionId -> latest message text (offline roster preview)
+    // Node-resolved ByTransport membership (B4): transport instance id -> the session ids the
+    // node reported in that scope. The ByTransport list scope projects from this set (the cache
+    // row carries no transport column; the node decides membership — never re-derived here).
+    QHash<QString, QSet<QString>> m_transportSessions;
 };
 
 } // namespace daemonapp::daemon

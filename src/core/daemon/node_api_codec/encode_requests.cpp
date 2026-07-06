@@ -15,21 +15,25 @@ QByteArray NodeApiCodec::encodeHealthRequest() {
 }
 
 QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 sinceRev,
-                                                    const QString& byProfile,
-                                                    const QString& after) {
-    // `byProfile`/`after` must outlive the encode: zcbor holds pointers into their UTF-8 bytes.
+                                                    const QString& byProfile, const QString& after,
+                                                    bool archivedScope,
+                                                    const QString& byTransport) {
+    // `byProfile`/`after`/`byTransport` must outlive the encode: zcbor holds pointers into their
+    // UTF-8 bytes.
     const QByteArray profileUtf8 = byProfile.toUtf8();
     const QByteArray afterUtf8 = after.toUtf8();
+    const QByteArray transportUtf8 = byTransport.toUtf8();
     api_request_r request{};
     request.api_request_choice = api_request_r::api_request_request_sessions_query_m_c;
     // Leave limit absent: an empty session-query map asks the daemon for its default (TopLevel)
     // scope, first page. `since_rev` (when set) makes it an L4 delta read. A non-empty `byProfile`
-    // sets scope = ByProfile(id) — the per-agent view (encoder-only; the arm is already in the
-    // CDDL session-scope union). `after` (when set) resumes past the previous page's next_cursor
-    // (the wire v24 roster page loop).
+    // sets scope = ByProfile(id) — the per-agent view; `archivedScope` sets scope = Archived
+    // (archived primaries, F6); a non-empty `byTransport` sets scope = ByTransport(id) (B4) — all
+    // encoder-only (the arms are already in the CDDL session-scope union). `after` (when set)
+    // resumes past the previous page's next_cursor (the wire v24 roster page loop).
     request.api_request_request_sessions_query_m = request_sessions_query{};
     session_query& q = request.api_request_request_sessions_query_m.SessionsQuery_query;
-    q.session_query_scope_present = !byProfile.isEmpty();
+    q.session_query_scope_present = !byProfile.isEmpty() || archivedScope || !byTransport.isEmpty();
     if (!byProfile.isEmpty()) {
         session_scope_r& scope = q.session_query_scope.session_query_scope;
         scope.session_scope_choice = session_scope_r::session_scope_by_profile_m_c;
@@ -37,6 +41,14 @@ QByteArray NodeApiCodec::encodeSessionsQueryRequest(bool hasSinceRev, quint64 si
             reinterpret_cast<const uint8_t*>(profileUtf8.constData());
         scope.session_scope_by_profile_m.session_scope_by_profile_ByProfile.len =
             static_cast<size_t>(profileUtf8.size());
+    } else if (archivedScope) {
+        q.session_query_scope.session_query_scope.session_scope_choice =
+            session_scope_r::session_scope_Archived_tstr_c;
+    } else if (!byTransport.isEmpty()) {
+        session_scope_r& scope = q.session_query_scope.session_query_scope;
+        scope.session_scope_choice = session_scope_r::session_scope_by_transport_m_c;
+        setZcbor(scope.session_scope_by_transport_m.session_scope_by_transport_ByTransport,
+                 transportUtf8);
     }
     q.session_query_after_present = !after.isEmpty();
     if (!after.isEmpty()) {
@@ -1019,6 +1031,43 @@ QByteArray NodeApiCodec::encodeModelInspectRequest(const QString& id) {
     return encodeWithFill(
         api_request_r::api_request_request_model_inspect_m_c, [&](api_request_r& request) {
             setZcbor(request.api_request_request_model_inspect_m.ModelInspect_id, idUtf8);
+        });
+}
+
+// --- Checkpoints (E4/TOOL-9) ---------------------------------------------------------------------
+
+QByteArray NodeApiCodec::encodeCheckpointListRequest(const QString& sessionId,
+                                                     const QString& after) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray afterUtf8 = after.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_checkpoint_list_m_c;
+    request_checkpoint_list& list = request.api_request_request_checkpoint_list_m;
+    list.CheckpointList_session_present = !sessionId.isEmpty();
+    if (!sessionId.isEmpty()) {
+        list.CheckpointList_session.CheckpointList_session_choice =
+            CheckpointList_session_r::CheckpointList_session_session_id_m_c;
+        setZcbor(list.CheckpointList_session.CheckpointList_session_session_id_m, sessionUtf8);
+    }
+    list.CheckpointList_after_present = !after.isEmpty();
+    if (!after.isEmpty()) {
+        list.CheckpointList_after.CheckpointList_after_choice =
+            CheckpointList_after_r::CheckpointList_after_tstr_c;
+        setZcbor(list.CheckpointList_after.CheckpointList_after_tstr, afterUtf8);
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeCheckpointRewindRequest(const QString& sessionId,
+                                                       const QString& checkpointId) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray idUtf8 = checkpointId.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_checkpoint_rewind_m_c, [&](api_request_r& request) {
+            request_checkpoint_rewind& rewind = request.api_request_request_checkpoint_rewind_m;
+            setZcbor(rewind.CheckpointRewind_session, sessionUtf8);
+            setZcbor(rewind.CheckpointRewind_checkpoint_id, idUtf8);
         });
 }
 

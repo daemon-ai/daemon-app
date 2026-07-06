@@ -54,6 +54,33 @@ set_tests_properties(tst_composer PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
 )
 
+# tst_chip: QtQuickTest over the Kit Chip control. Asserts tone -> text/border
+# tint, icon/close affordance visibility, clicked()/closeRequested() emission,
+# and the non-interactive default. Chip pulls in QtQuick.Controls (Label/
+# ToolTip), so the Basic style must be available offscreen.
+qt_add_executable(tst_chip tst_chip_main.cpp)
+target_link_libraries(tst_chip
+    PRIVATE
+        Qt6::QuickTest
+        Qt6::Qml
+        Qt6::Quick
+        Qt6::QuickControls2
+        da_theme
+        da_themeplugin
+        da_controls
+        da_controlsplugin
+)
+target_compile_definitions(tst_chip
+    PRIVATE
+        QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/controls"
+        TEST_QML_IMPORT_PATH="$ENV{QML2_IMPORT_PATH}"
+)
+
+add_test(NAME tst_chip COMMAND tst_chip)
+set_tests_properties(tst_chip PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+)
+
 # tst_tabs: QtQuickTest over the pane tab strip. Drives a real TabBar + StackLayout
 # off the shared TabModel - add/remove/switch, find-or-create re-activation, the
 # "+"/settings affordances, and click-to-activate. Pulls in Controls/Layouts, so a

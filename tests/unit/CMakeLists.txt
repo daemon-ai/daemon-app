@@ -181,6 +181,38 @@ target_link_libraries(tst_daemon_approvals_inbox
 add_test(NAME tst_daemon_approvals_inbox COMMAND tst_daemon_approvals_inbox)
 set_tests_properties(tst_daemon_approvals_inbox PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_checkpoint_repository: durable checkpoints (E4/TOOL-9) - CheckpointList page loop +
+# CheckpointRewind Ok/Error paths over the WireMuxServer fixture, plus the
+# DaemonCheckpointTimeline projection (labels, tokens=-1, newest=current, no manual create).
+qt_add_executable(tst_checkpoint_repository tst_checkpoint_repository.cpp)
+target_link_libraries(tst_checkpoint_repository
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+        daemon-app::session
+        daemon-app::uimodels
+)
+add_test(NAME tst_checkpoint_repository COMMAND tst_checkpoint_repository)
+set_tests_properties(tst_checkpoint_repository PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_routing_repository: the real routing manager backend (B6/ROU, wire v28) -
+# RoutingListChats/BindChat/UnbindChat + TransportRooms over the WireMuxServer fixture, plus the
+# DaemonDaemonNet IDaemonNet projection (pins, pin-table resolve, QML chip helpers).
+qt_add_executable(tst_routing_repository tst_routing_repository.cpp)
+target_link_libraries(tst_routing_repository
+    PRIVATE
+        Qt6::Test
+        Qt6::Network
+        daemon-app::daemon_client
+        daemon-app::daemon_codec
+        daemon-app::daemonnet
+        daemon-app::uimodels
+)
+add_test(NAME tst_routing_repository COMMAND tst_routing_repository)
+set_tests_properties(tst_routing_repository PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_daemon_integration: guards the daemon thin-client scaffolding - Unix-socket
 # frame parsing, durable cache schema expectations, and first-slice ordering.
 qt_add_executable(tst_daemon_integration tst_daemon_integration.cpp)

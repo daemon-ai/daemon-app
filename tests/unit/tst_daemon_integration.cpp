@@ -303,9 +303,9 @@ private slots:
         // The session store is the furthest along (additive SessionId landed).
         QCOMPARE(targets[0].status, SeamMigrationStatus::AdditiveIdReady);
         QVERIFY(QString::fromUtf8(targets[0].seam).contains(QStringLiteral("ISessionStore")));
-        // Invariant: the roster/dashboard/approvals seam is now daemon-aligned (Phase 5 wired
-        // DaemonSessionRoster/DaemonDashboard), while the node-blocked automation/checkpoint seams
-        // stay MockOnly (no wire op) - they must never advertise themselves as daemon-backed.
+        // Invariant: the roster/dashboard/approvals, checkpoint (E4, wire v28) and routing-pin
+        // (B6, wire v28) seams are daemon-aligned, while the node-blocked cron seam stays
+        // MockOnly (no wire op) - it must never advertise itself as daemon-backed.
         const auto find = [&](const char* needle) {
             for (const auto& t : targets) {
                 if (QString::fromUtf8(t.seam).contains(QString::fromUtf8(needle))) {
@@ -315,9 +315,9 @@ private slots:
             return SeamMigrationStatus::MockOnly;
         };
         QCOMPARE(find("ISessionRoster"), SeamMigrationStatus::DaemonAligned);
-        QCOMPARE(find("IRoutingStore"), SeamMigrationStatus::MockOnly);
+        QCOMPARE(find("IDaemonNet (routing slice)"), SeamMigrationStatus::DaemonAligned);
         QCOMPARE(find("ICronStore"), SeamMigrationStatus::MockOnly);
-        QCOMPARE(find("ICheckpointTimeline"), SeamMigrationStatus::MockOnly);
+        QCOMPARE(find("ICheckpointTimeline"), SeamMigrationStatus::DaemonAligned);
     }
 
     void schemaVersionLivesInMetaTable() {

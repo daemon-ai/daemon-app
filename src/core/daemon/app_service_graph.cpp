@@ -7,7 +7,6 @@
 #include "auth/auth_flow_controller.h"
 #include "auth/mock_auth_flow_service.h"
 #include "automation/mock_cron_store.h"
-#include "automation/mock_routing_store.h"
 #include "config/mock_daemon_config.h"
 #include "connection/iconnection_service.h"
 #include "connection/mock_connection_service.h"
@@ -16,7 +15,9 @@
 #include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_auth_flow_service.h"
 #include "daemon/daemon_cache_store.h"
+#include "daemon/daemon_checkpoint_timeline.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/daemon_daemonnet.h"
 #include "daemon/daemon_dashboard.h"
 #include "daemon/daemon_fleet_tree.h"
 #include "daemon/daemon_fs_service.h"
@@ -112,13 +113,12 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.approvals = new fleet::MockApprovalsInbox(owner);
     graph.dashboard =
         new fleet::MockDashboard(graph.roster, graph.fleetTree, graph.approvals, owner);
-    // Routing / cron / checkpoints have NO node wire op yet (the daemon-api codec subset carries
-    // none), so in Daemon mode they must render EMPTY rather than pass their illustrative demo rows
-    // off as node-backed data (render honesty; see seam_migration.h). Mock mode keeps the demo
-    // seed. The IDaemonConfig Phase-4 DECISION is the sibling precedent: node-unsupported seams
-    // stay mock but never masquerade as authority.
+    // Cron has NO node wire op yet (the daemon-api codec subset carries none), so in Daemon mode
+    // it must render EMPTY rather than pass its illustrative demo rows off as node-backed data
+    // (render honesty; see seam_migration.h). Mock mode keeps the demo seed. (Routing left this
+    // bucket at wire v28: the origin->session pin table is served by DaemonDaemonNet below; the
+    // legacy intent->model IRoutingStore surface is retired.)
     const bool seedMockDemo = mode != ServiceMode::Daemon;
-    graph.routing = new automation::MockRoutingStore(owner, seedMockDemo);
     graph.cron = new automation::MockCronStore(owner, seedMockDemo);
     // Transport-adapter seams (daemon-transport-adapter-spec.md): inert mocks until a daemon
     // adapter decodes transport_adapters / transport_instances. The registry advertises the
@@ -126,8 +126,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.transportRegistry = new transports::MockTransportRegistry(owner);
     graph.presence = new transports::MockPresenceService(owner);
     // sessionSettings is constructed per-mode below (the daemon variant needs nodeApi to send
-    // SetSessionMode); checkpoints is mock in both, but empty-seeded in Daemon mode (no checkpoint
-    // wire op yet - the timeline renders empty rather than fabricated rewind points).
+    // SetSessionMode); checkpoints starts as the mock and is REPLACED in the daemon branch with
+    // the repo-backed DaemonCheckpointTimeline (CheckpointList/CheckpointRewind; E4/TOOL-9).
     graph.checkpoints = new session::MockCheckpointTimeline(owner, seedMockDemo);
     graph.cache = new DaemonCacheStore(QString(), owner);
     // The WhoAmI / principal model (advisory capability gating). Always present; populated from
@@ -148,6 +148,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.providerRepository = new ProviderRepository(graph.nodeApi, graph.cache, owner);
     graph.approvalRepository = new ApprovalRepository(graph.nodeApi, graph.cache, owner);
     graph.checkpointRepository = new CheckpointRepository(graph.nodeApi, graph.cache, owner);
+    if (daemonConnection != nullptr) {
+        // Durable checkpoints (E4/TOOL-9): replace the (empty-seeded) mock timeline with the
+        // repo-backed one over CheckpointList/CheckpointRewind. The mock built above is parented
+        // to `owner`; drop it for the daemon one.
+        delete graph.checkpoints;
+        graph.checkpoints = new DaemonCheckpointTimeline(graph.checkpointRepository, owner);
+    }
     graph.credentialRepository = new CredentialRepository(graph.nodeApi, graph.cache, owner);
     // The ACP agent catalog (foreign engines): backs the new-agent dialog's engine picker.
     graph.acp = new AcpRepository(graph.nodeApi, graph.cache, owner);
@@ -185,7 +192,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // re-query the tree on a roster delta (a fleet unit IS a durable session - FIX 2).
         graph.fleetRepository = new FleetRepository(graph.nodeApi, graph.cache, owner);
         delete graph.fleetTree;
-        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, owner);
+        // The profile store rides along for the engine-identity join (C3): fleet rows carry
+        // engine/acpAgent resolved from their profileRef.
+        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, graph.profiles, owner);
         // L3 node-wide event feed (daemon-sync-protocol §5): one EventsSince stream that routes
         // out-of-focus changes (roster/meta -> debounced roster refetch + tree re-query, approvals
         // -> badge, downloads -> models, session-advanced -> focused-engine nudge, resync ->
@@ -217,7 +226,22 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // confirmed use-after-free / SIGSEGV in MockDashboard::runningAgents()).
         delete graph.dashboard;
         delete graph.roster;
-        graph.roster = new fleet::DaemonSessionRoster(graph.store, owner);
+        // The real routing manager (B6/ROU, wire v28): RoutingRepository speaks
+        // RoutingListChats/BindChat/UnbindChat/Set + TransportRooms; DaemonDaemonNet projects it
+        // (plus the transport instances) through the IDaemonNet seam the RoutingPage/RouteDialog
+        // already bind — replacing the always-demo MockDaemonNet. Swapped here, after every mock
+        // consumer of the old pointer (roster/fleet/dashboard) is gone.
+        // DAEMON_APP_MOCK_INTEGRATIONS keeps the demo MockDaemonNet for development (the same
+        // escape hatch the Integrations tree seed honors above).
+        graph.routingRepository = new RoutingRepository(graph.nodeApi, graph.cache, owner);
+        if (!demoTransports) {
+            delete graph.daemonNet;
+            graph.daemonNet = new DaemonDaemonNet(graph.routingRepository,
+                                                  graph.transportRepository, graph.store, owner);
+        }
+        // The repository rides along for the operator steer/startTurn/interrupt ops (F4) and the
+        // archived-scope refetch (F6).
+        graph.roster = new fleet::DaemonSessionRoster(graph.store, graph.sessions, owner);
         graph.dashboard = new fleet::DaemonDashboard(graph.roster, graph.fleetTree, graph.approvals,
                                                      graph.connection, owner);
         // On connect-ready, populate sessions + profiles + credentials + models so the onboarding
@@ -251,8 +275,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
              credentials = graph.credentialRepository, models = graph.models,
              providers = graph.providerRepository, approvals = graph.approvalRepository,
              subscriptions = graph.subscriptions, fs = graph.fs, fleet = graph.fleetRepository,
-             transports = graph.transportRepository, acp = graph.acp,
-             authRepo = graph.authRepository, wasReady] {
+             transports = graph.transportRepository, routing = graph.routingRepository,
+             acp = graph.acp, authRepo = graph.authRepository, wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
                     // Initial baseline once per (re)connect; the EventsSince feed then keeps the
@@ -270,6 +294,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // Channels: the adapter picker + configured accounts/status dots (EIO-1/3/9).
                     transports->refreshAdapters();
                     transports->refreshInstances();
+                    // Routing: the origin->session pin table (B6/ROU). Per-account rooms follow
+                    // the instances refresh (DaemonDaemonNet chains them).
+                    routing->refreshChats();
                     // Foreign engines: the ACP catalog for the new-agent dialog's engine picker.
                     acp->refreshCatalog();
                     // Interactive-auth family discovery (the AuthFlowSheet's provider list).
@@ -289,10 +316,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                "accounts(credentials), modelCatalog(models), profiles, "
                "approvals(ApprovalsPending/Decide), sessionSettings(SetSessionMode), fs(fs_*), "
                "fleetTree(Tree), roster/dashboard(offline-first over cache/fleet/approvals), "
-               "transports/presence(TransportAdapters/Instances+ConvList); "
-               "still mock: daemonConfig, memory, daemonNet (Integrations seeded empty unless "
-               "DAEMON_APP_MOCK_INTEGRATIONS); node-blocked (NO wire op yet - rendered EMPTY, not "
-               "mock demo data): routing, cron, checkpoints.";
+               "transports/presence(TransportAdapters/Instances+ConvList), "
+               "checkpoints(CheckpointList/Rewind), "
+               "routing(RoutingListChats/BindChat/UnbindChat+TransportRooms via DaemonDaemonNet); "
+               "still mock: daemonConfig, memory; node-blocked (NO wire op yet - rendered EMPTY, "
+               "not mock demo data): cron, daemonNet delivery/handover panel.";
     } else {
         // Mock mode: a non-persisted in-memory store re-seeded fresh from the unified DaemonNet
         // each run (deterministic, always matches the current seed - no stale-db drift). The

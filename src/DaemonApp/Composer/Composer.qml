@@ -225,6 +225,27 @@ Rectangle {
             onDeleteEntry: function(index) { root.deleteEntry(index); }
         }
 
+        // Checkpoint timeline strip (E4/TOOL-9): one dot per durable checkpoint, with a
+        // rewind-confirm on tap. Bound to the visible session (the popover shares the same
+        // facade); self-hides when the session has no checkpoints.
+        CheckpointTimeline {
+            Layout.fillWidth: true
+            foreignSession: controls.foreignSession
+        }
+
+        // The strip + popover render the FOCUSED pane's timeline: bind the shared facade to
+        // this composer's session while it is the visible one (tab switches re-bind).
+        function _bindCheckpoints() {
+            if (root.visible && root.sessionId.length > 0)
+                Checkpoints.sessionId = root.sessionId;
+        }
+        Connections {
+            target: root
+            function onSessionIdChanged() { mainColumn._bindCheckpoints(); }
+            function onVisibleChanged() { mainColumn._bindCheckpoints(); }
+        }
+        Component.onCompleted: _bindCheckpoints()
+
         Rectangle {
             id: surface
             Layout.fillWidth: true

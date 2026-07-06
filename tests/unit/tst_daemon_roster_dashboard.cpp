@@ -57,6 +57,30 @@ QByteArray okResponse() {
     return b;
 }
 
+// {"SessionPage": {"sessions":[{"session":<id>,"state":"Active"}...], "rev":N}} — keys in CDDL
+// order (the generated decoder reads sequentially).
+QByteArray sessionPageResponse(const QList<QByteArray>& ids, quint64 rev) {
+    using daemonapp::test::cborText;
+    using daemonapp::test::cborTextLen;
+    using daemonapp::test::cborUint;
+    QByteArray b;
+    b.append(static_cast<char>(0xA1));
+    cborText(b, "SessionPage");
+    b.append(static_cast<char>(0xA2));
+    cborText(b, "sessions");
+    b.append(static_cast<char>(0x80 | static_cast<char>(ids.size())));
+    for (const QByteArray& id : ids) {
+        b.append(static_cast<char>(0xA2));
+        cborText(b, "session");
+        cborTextLen(b, id);
+        cborText(b, "state");
+        cborText(b, "Active");
+    }
+    cborText(b, "rev");
+    cborUint(b, rev);
+    return b;
+}
+
 } // namespace
 
 // DaemonSessionRoster + DaemonDashboard: offline-first roster from the cache, client-local
@@ -146,6 +170,155 @@ private slots:
         QVERIFY(first.contains("SessionUpdateMeta"));
         QVERIFY(first.contains("s1"));
         QVERIFY(first.contains("archived"));
+    }
+
+    // F6/DEL-6: the Active|Archived scope switcher re-projects the roster (archived rows only,
+    // with the fetch going out as a SessionScope::Archived query), and restore() sends the
+    // SessionUpdateMeta{archived:false} intent.
+    void archivedScopeAndRestore() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("roster-arch.sock"));
+        daemonapp::test::WireMuxServer fake;
+        fake.setReplyPayload(okResponse());
+        QVERIFY2(fake.start(path), "listen");
+
+        DaemonCacheStore cache(dir.filePath(QStringLiteral("r4.db")));
+        QVERIFY(cache.upsertSession(
+            session(QStringLiteral("s1"), QStringLiteral("Live one"), QStringLiteral("Active"))));
+        CachedSessionRow archivedRow =
+            session(QStringLiteral("s2"), QStringLiteral("Old child"), QStringLiteral("Ready"));
+        archivedRow.archived = true;
+        QVERIFY(cache.upsertSession(archivedRow));
+
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        daemonapp::daemon::NodeApiClient client(&transport);
+        daemonapp::daemon::SessionRepository sessions(&client, &cache);
+        CachedSessionStore store(&cache, &sessions);
+        DaemonSessionRoster roster(&store, &sessions);
+
+        // Default (active) scope: the archived row is filtered out.
+        QCOMPARE(roster.count(), 1);
+        QCOMPARE(roster.scope(), QStringLiteral("active"));
+
+        QSignalSpy scoped(&roster, &fleet::ISessionRoster::scopeChanged);
+        roster.setScope(QStringLiteral("archived"));
+        QCOMPARE(scoped.count(), 1);
+        auto* m = model(roster.sessions());
+        QCOMPARE(roster.count(), 1);
+        QCOMPARE(m->at(0).value(QStringLiteral("id")).toString(), QStringLiteral("s2"));
+
+        // Entering the scope fetched the authoritative Archived listing: byte-identical to the
+        // encoder's Archived-scope query.
+        QTRY_VERIFY_WITH_TIMEOUT(!fake.callPayloads().isEmpty(), 3000);
+        QCOMPARE(fake.callPayloads().first(),
+                 daemonapp::daemon::NodeApiCodec::encodeSessionsQueryRequest(
+                     /*hasSinceRev=*/false, /*sinceRev=*/0, /*byProfile=*/QString(),
+                     /*after=*/QString(), /*archivedScope=*/true));
+
+        // Restore goes out as the archived:false meta patch (node-authoritative un-archive).
+        roster.restore(QStringLiteral("s2"));
+        QTRY_VERIFY_WITH_TIMEOUT(fake.callPayloads().size() >= 2, 3000);
+        const QByteArray patch = fake.callPayloads().at(1);
+        QVERIFY(patch.contains("SessionUpdateMeta"));
+        QVERIFY(patch.contains("s2"));
+        QVERIFY(patch.contains("archived"));
+    }
+
+    // F4/DEL-4: the operator steer/startTurn/interrupt row actions submit to the TARGET session
+    // id (byte-identical to the Submit encoders), and a node Error surfaces via operationFailed.
+    void steerStartTurnInterruptSubmitToSession() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("roster-steer.sock"));
+        daemonapp::test::WireMuxServer fake;
+        fake.setReplyPayload(okResponse());
+        QVERIFY2(fake.start(path), "listen");
+
+        DaemonCacheStore cache(dir.filePath(QStringLiteral("r5.db")));
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        daemonapp::daemon::NodeApiClient client(&transport);
+        daemonapp::daemon::SessionRepository sessions(&client, &cache);
+        CachedSessionStore store(&cache, &sessions);
+        DaemonSessionRoster roster(&store, &sessions);
+
+        roster.steer(QStringLiteral("child-1"), QStringLiteral("focus on the tests"));
+        QTRY_VERIFY_WITH_TIMEOUT(fake.callPayloads().size() >= 1, 3000);
+        QCOMPARE(fake.callPayloads().at(0),
+                 daemonapp::daemon::NodeApiCodec::encodeSubmitSteerRequest(
+                     QStringLiteral("child-1"), QStringLiteral("focus on the tests")));
+
+        roster.startTurn(QStringLiteral("child-2"), QStringLiteral("begin the review"));
+        QTRY_VERIFY_WITH_TIMEOUT(fake.callPayloads().size() >= 2, 3000);
+        QCOMPARE(fake.callPayloads().at(1),
+                 daemonapp::daemon::NodeApiCodec::encodeSubmitStartTurnRequest(
+                     QStringLiteral("child-2"), QStringLiteral("begin the review")));
+
+        roster.interrupt(QStringLiteral("child-1"));
+        QTRY_VERIFY_WITH_TIMEOUT(fake.callPayloads().size() >= 3, 3000);
+        QCOMPARE(fake.callPayloads().at(2),
+                 daemonapp::daemon::NodeApiCodec::encodeSubmitInterruptRequest(
+                     QStringLiteral("child-1")));
+
+        // A node rejection (Error) surfaces through the roster's operationFailed - never silent.
+        QByteArray err;
+        err.append(static_cast<char>(0xA1));
+        daemonapp::test::cborText(err, "Error");
+        err.append(static_cast<char>(0xA1));
+        daemonapp::test::cborText(err, "Forbidden");
+        daemonapp::test::cborText(err, "not your session");
+        fake.setReplyPayload(err);
+        QSignalSpy failed(&roster, &fleet::ISessionRoster::operationFailed);
+        roster.interrupt(QStringLiteral("child-9"));
+        QTRY_COMPARE_WITH_TIMEOUT(failed.count(), 1, 3000);
+        QCOMPARE(failed.at(0).at(0).toString(), QStringLiteral("not your session"));
+    }
+
+    // B4/EIO-8 ByTransport scope: the fetch goes out as a SessionScope::ByTransport query; the
+    // NODE-resolved membership set backs the scoped list projection (never re-derived locally),
+    // and an unfetched lens honestly projects empty.
+    void byTransportScopeProjectsNodeMembership() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QStringLiteral("roster-tx.sock"));
+        daemonapp::test::WireMuxServer fake;
+        fake.setReplyPayload(sessionPageResponse({QByteArrayLiteral("s2")}, 7));
+        QVERIFY2(fake.start(path), "listen");
+
+        DaemonCacheStore cache(dir.filePath(QStringLiteral("r6.db")));
+        QVERIFY(cache.upsertSession(
+            session(QStringLiteral("s1"), QStringLiteral("Local"), QStringLiteral("Active"))));
+        QVERIFY(cache.upsertSession(session(QStringLiteral("s2"), QStringLiteral("Matrix bound"),
+                                            QStringLiteral("Active"))));
+
+        daemonapp::daemon::DaemonTransport transport;
+        transport.setSocketPath(path);
+        daemonapp::daemon::NodeApiClient client(&transport);
+        daemonapp::daemon::SessionRepository sessions(&client, &cache);
+        CachedSessionStore store(&cache, &sessions);
+
+        // Unfetched lens: honest empty projection (no client-side re-derivation).
+        domain::ListScope scope;
+        scope.type = domain::NodeType::ByTransport;
+        scope.lensKey = QStringLiteral("matrix/@bot:hs.org");
+        QCOMPARE(store.sessions(scope).size(), 0);
+
+        QSignalSpy changed(&store, &persistence::ISessionStore::changed);
+        store.refreshSessionsForTransport(scope.lensKey);
+        QTRY_VERIFY_WITH_TIMEOUT(changed.count() >= 1, 3000);
+
+        // The fetch went out as the canonical ByTransport query.
+        QCOMPARE(fake.callPayloads().first(),
+                 daemonapp::daemon::NodeApiCodec::encodeSessionsQueryRequest(
+                     /*hasSinceRev=*/false, /*sinceRev=*/0, /*byProfile=*/QString(),
+                     /*after=*/QString(), /*archivedScope=*/false, scope.lensKey));
+
+        // The node said: only s2 rides this transport.
+        const QList<domain::Session> scoped = store.sessions(scope);
+        QCOMPARE(scoped.size(), 1);
+        QCOMPARE(scoped.first().sessionId.toString(), QStringLiteral("s2"));
     }
 
     // Dashboard counters derive from the roster + approvals + connection, and react to changes.

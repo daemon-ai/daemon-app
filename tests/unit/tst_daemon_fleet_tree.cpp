@@ -6,6 +6,7 @@
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_client.h"
 #include "daemon/repositories.h"
+#include "profiles/iprofile_store.h"
 #include "uimodels/variant_list_model.h"
 #include "wire_mux_fixture.h"
 
@@ -110,6 +111,43 @@ QByteArray unsupportedResp() {
 uimodels::VariantListModel* model(DaemonFleetTree& tree) {
     return qobject_cast<uimodels::VariantListModel*>(tree.nodes());
 }
+
+// A minimal profile-store stub for the engine-identity join (C3): fixed rows keyed by id.
+class StubProfileStore : public profiles::IProfileStore {
+public:
+    explicit StubProfileStore(QObject* parent = nullptr)
+        : profiles::IProfileStore(parent), m_model(new uimodels::VariantListModel(this)) {}
+
+    void addProfile(const QString& id, const QString& engine, const QString& acpAgent) {
+        QVariantMap row;
+        row[QStringLiteral("id")] = id;
+        row[QStringLiteral("name")] = id;
+        row[QStringLiteral("engine")] = engine;
+        row[QStringLiteral("acpAgent")] = acpAgent;
+        auto rows = m_model->rows();
+        rows.append(row);
+        m_model->setRows(rows);
+        emit changed();
+    }
+
+    [[nodiscard]] QObject* profiles() const override { return m_model; }
+    [[nodiscard]] QString defaultProfileId() const override { return {}; }
+    [[nodiscard]] QVariantMap profile(const QString& id) const override {
+        const int row = m_model->indexOfId(id);
+        return row >= 0 ? m_model->at(row) : QVariantMap{};
+    }
+    [[nodiscard]] QStringList profileNames() const override { return {}; }
+    [[nodiscard]] QVariantList availableSkills() const override { return {}; }
+    [[nodiscard]] QVariantList availableTools() const override { return {}; }
+    QString createProfile(const QString&) override { return {}; }
+    QString cloneProfile(const QString&, const QString&) override { return {}; }
+    void updateProfile(const QString&, const QVariantMap&) override {}
+    void remove(const QString&) override {}
+    void setDefault(const QString&) override {}
+
+private:
+    uimodels::VariantListModel* m_model = nullptr;
+};
 
 } // namespace
 
@@ -220,6 +258,55 @@ private slots:
         QCOMPARE(calls.at(0), daemonapp::daemon::NodeApiCodec::encodeTreeRequest());
         QCOMPARE(calls.at(1),
                  daemonapp::daemon::NodeApiCodec::encodeTreeRequest(QStringLiteral("u1")));
+    }
+
+    // C3/ENG-7: rows join engine identity from the profile store by profileRef — foreign (Acp)
+    // profiles carry the agent name, unknown/absent profiles degrade to "Core" — and the join
+    // re-runs when the store changes (specs hydrate async).
+    void engineIdentityJoinsFromProfileStore() {
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("fleet-eng.db")));
+        QVERIFY(cache.isOpen());
+        CachedFleetUnitRow root;
+        root.unitId = QStringLiteral("u1");
+        root.depth = 0;
+        root.ordinal = 0;
+        root.name = QStringLiteral("Acme");
+        root.kind = QStringLiteral("Orchestrator");
+        root.state = QStringLiteral("Running");
+        root.profileRef = QStringLiteral("coder");
+        root.updatedAtMs = 1;
+        QVERIFY(cache.upsertFleetUnit(root));
+        CachedFleetUnitRow child;
+        child.unitId = QStringLiteral("u2");
+        child.parentId = QStringLiteral("u1");
+        child.depth = 1;
+        child.ordinal = 1;
+        child.name = QStringLiteral("Gemini");
+        child.kind = QStringLiteral("Engine");
+        child.state = QStringLiteral("Running");
+        child.profileRef = QStringLiteral("gemini");
+        child.updatedAtMs = 1;
+        QVERIFY(cache.upsertFleetUnit(child));
+
+        DaemonTransport transport; // unconnected
+        NodeApiClient client(&transport);
+        FleetRepository repo(&client, &cache);
+        StubProfileStore profiles;
+        profiles.addProfile(QStringLiteral("coder"), QStringLiteral("Core"), QString());
+        DaemonFleetTree tree(&repo, &profiles);
+
+        auto* m = model(tree);
+        QCOMPARE(m->count(), 2);
+        QCOMPARE(m->at(0).value(QStringLiteral("engine")).toString(), QStringLiteral("Core"));
+        // Unknown profile (spec not hydrated yet) degrades to the optimistic Core default.
+        QCOMPARE(m->at(1).value(QStringLiteral("engine")).toString(), QStringLiteral("Core"));
+
+        // The foreign profile's spec lands (store changed) -> the row flips to Acp + agent name.
+        profiles.addProfile(QStringLiteral("gemini"), QStringLiteral("Acp"),
+                            QStringLiteral("gemini-cli"));
+        QCOMPARE(m->at(1).value(QStringLiteral("engine")).toString(), QStringLiteral("Acp"));
+        QCOMPARE(m->at(1).value(QStringLiteral("acpAgent")).toString(),
+                 QStringLiteral("gemini-cli"));
     }
 
     // PRO-10: pausing an engine leaf is Unsupported -> controlRejected fires + the optimistic

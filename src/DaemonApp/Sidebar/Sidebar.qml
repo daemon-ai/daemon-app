@@ -25,6 +25,9 @@ Rectangle {
     signal scopeSelected(int nodeType, int id, string nodeId)
     // An Integrations-section session leaf was activated - open its transcript.
     signal sessionActivated(string sessionId)
+    // An UNPINNED external conversation leaf was activated (B4): browse-only - the shell opens
+    // the Channels page (pin explicitly from there / the routing manager).
+    signal conversationActivated(string transport, string conversation)
     // "+ New agent/node" (Fleet header) - open a fresh chat (routed by the shell to the same
     // open-a-chat path the first-run completion uses).
     signal newChatRequested()
@@ -621,6 +624,9 @@ Rectangle {
         }
         function onSessionActivated(sessionId) {
             root.sessionActivated(sessionId);
+        }
+        function onConversationActivated(transport, conversation) {
+            root.conversationActivated(transport, conversation);
         }
         function onNewChatRequested() {
             root.newChatRequested();

@@ -8,7 +8,6 @@
 #include "accounts/iaccounts_service.h"
 #include "attachment_bar_view.h"
 #include "automation/icron_store.h"
-#include "automation/irouting_store.h"
 #include "code_editor_view.h"
 #include "completion_view.h"
 #include "composer_chrome.h"
@@ -356,6 +355,11 @@ private:
     // --- overlay/theme helpers (root_widget_pages.cpp) -----------------------
     // Build the checkpoint overlay's display strings + parallel id list from the
     // raw checkpoint rows (kept a member so tr() uses the RootWidget context).
+    // Whether the active tab's session runs on a foreign ACP engine (gates rewind - C4/E4).
+    [[nodiscard]] bool activeSessionIsForeign() const;
+    // Fleet 't' (F4/DEL-4): open the operator steer prompt for a delegated-child fleet row
+    // (Submit{Steer} mid-turn / Submit{StartTurn} when idle, via ISessionRoster).
+    void openFleetSteerPrompt(const QVariantMap& row);
     void buildCheckpointDisplay(const QList<QVariantMap>& rows, QStringList& display,
                                 QStringList& ids) const;
     // Repaint every theme-sampling view after a live theme switch.

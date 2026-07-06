@@ -76,6 +76,18 @@ public:
     // from the authoritative node view.
     virtual void refreshSessionsForProfile(const QString& /*profileId*/) {}
 
+    // Ask the backend to (re)fetch the ARCHIVED sessions (SessionScope::Archived; F6/DEL-6) — the
+    // TopLevel roster excludes them, so an archived-scope surface (Settings ArchivedSection, the
+    // Sessions/Fleet Archived toggle) requests this on entry and re-renders on changed(). Default
+    // no-op: the in-memory/mock store already holds its archived rows locally.
+    Q_INVOKABLE virtual void refreshArchivedSessions() {}
+
+    // Ask the backend to (re)fetch the sessions routed over one transport instance
+    // (SessionScope::ByTransport; B4/EIO-8) — the NODE resolves membership; the daemon store
+    // records the id set and projects the ByTransport list scope from it, emitting changed()
+    // when it lands. Default no-op: the in-memory/mock store derives the lens locally.
+    virtual void refreshSessionsForTransport(const QString& /*transportId*/) {}
+
     // Node-authoritative session creation: ask the backend to CREATE a blank session bound to
     // `profileId` (empty = the node's active default agent). NOTHING is client-minted — the daemon
     // store sends a `SessionCreate` op and the node MINTS the id, replying `SessionCreated` +

@@ -43,8 +43,13 @@ bookkeeping mechanically.
   backlog item, not a UI gap); exempted with that reason in
   `tests/tui/tui_parity_tests.cpp`.
 - Channels page (GUI `ChannelsPage.qml`, TUI `pages/hub_channels.cpp`):
-  read-only in both shells this slice - the GUI Connect button is disabled and
-  the TUI mirrors it. Reachable via Nav only (no registry/completion id yet;
+  Connect stays disabled (EIO-2; the wizard/auth stream owns the AuthFlowSheet).
+  Per-account **Disconnect is visible-disabled with the reason** — the wire has
+  NO transport disconnect/remove op (B3; node-first future wire candidate,
+  deliberately NOT in the v29 batch). The partial lever that IS wired:
+  "Remove the stored credential…" (CredentialRemove, confirmed + clearly
+  labeled) on accounts with a bound profile. Room lists + route-pin chips are
+  live (B4/B6). Reachable via Nav only (no registry/completion id yet;
   add one in a single change for both shells).
 - Users & Access page (GUI, TUI `pages/hub_users_access.cpp`): read-only
   WhoAmI projection in both shells pending the node access-admin API (Auth 5);

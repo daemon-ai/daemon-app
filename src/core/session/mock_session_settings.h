@@ -35,6 +35,12 @@ public:
     void setVerbose(bool on) override;
     [[nodiscard]] QString approvalMode() const override { return entry().approvalMode; }
     void setApprovalMode(const QString& mode) override;
+    // Per-session lookup (no side effects), like profileFor: default "ask" for ids with no stored
+    // override.
+    [[nodiscard]] QString approvalModeFor(const QString& id) const override {
+        return m_bySession.contains(id) ? m_bySession.value(id).approvalMode
+                                        : QStringLiteral("ask");
+    }
 
     [[nodiscard]] QStringList effortOptions() const override;
     [[nodiscard]] QStringList approvalModeOptions() const override;

@@ -62,7 +62,6 @@ class IApprovalsInbox;
 class IDashboard;
 } // namespace fleet
 namespace automation {
-class IRoutingStore;
 class ICronStore;
 } // namespace automation
 namespace session {

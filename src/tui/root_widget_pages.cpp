@@ -32,6 +32,7 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
+#include "tui_dialogs.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
 #include "tui_page_hub.h"
@@ -44,6 +45,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdio>
+#include <memory>
 #include <QAbstractItemModel>
 #include <QCoreApplication>
 #include <QDateTime>
@@ -171,10 +173,12 @@ void RootWidget::openSessionSettingsOverlay() {
 
     auto* profileBtn = new Tui::ZButton(QString(), dlg);
     auto* effortBtn = new Tui::ZButton(QString(), dlg);
+    auto* approvalBtn = new Tui::ZButton(QString(), dlg);
     auto* fastBtn = new Tui::ZButton(QString(), dlg);
     auto* verboseBtn = new Tui::ZButton(QString(), dlg);
     layout->addWidget(profileBtn);
     layout->addWidget(effortBtn);
+    layout->addWidget(approvalBtn);
     layout->addWidget(fastBtn);
     layout->addWidget(verboseBtn);
     layout->addSpacing(1);
@@ -199,9 +203,10 @@ void RootWidget::openSessionSettingsOverlay() {
         }
         return id;
     };
-    const auto sync = [ss, profileBtn, effortBtn, fastBtn, verboseBtn, nameForId] {
+    const auto sync = [ss, profileBtn, effortBtn, approvalBtn, fastBtn, verboseBtn, nameForId] {
         profileBtn->setText(tr("Profile: %1").arg(nameForId(ss->profile())));
         effortBtn->setText(tr("Effort:  %1").arg(ss->effort()));
+        approvalBtn->setText(tr("Approval: %1").arg(ss->approvalMode()));
         fastBtn->setText(tr("Fast:    %1").arg(ss->fast() ? tr("on") : tr("off")));
         verboseBtn->setText(tr("Verbose: %1").arg(ss->verbose() ? tr("on") : tr("off")));
     };
@@ -212,6 +217,16 @@ void RootWidget::openSessionSettingsOverlay() {
         if (!opts.isEmpty()) {
             const int idx = static_cast<int>(qMax<qsizetype>(0, opts.indexOf(ss->effort())));
             ss->setEffort(opts.at((idx + 1) % static_cast<int>(opts.size())));
+        }
+        sync();
+    });
+    // Approval mode (E1/TOOL-7, CHA-4): cycle ask -> accept_edits -> auto_allow -> deny; the
+    // daemon seam pushes SetSessionMode so the node parks/auto-resolves accordingly.
+    connect(approvalBtn, &Tui::ZButton::clicked, dlg, [ss, sync] {
+        const QStringList opts = ss->approvalModeOptions();
+        if (!opts.isEmpty()) {
+            const int idx = static_cast<int>(qMax<qsizetype>(0, opts.indexOf(ss->approvalMode())));
+            ss->setApprovalMode(opts.at((idx + 1) % static_cast<int>(opts.size())));
         }
         sync();
     });
@@ -241,7 +256,7 @@ void RootWidget::openSessionSettingsOverlay() {
     });
     connect(closeBtn, &Tui::ZButton::clicked, dlg, &Tui::ZDialog::close);
 
-    dlg->setGeometry(QRect(0, 0, 48, 13));
+    dlg->setGeometry(QRect(0, 0, 48, 14));
     effortBtn->setFocus();
 }
 
@@ -249,10 +264,14 @@ void RootWidget::buildCheckpointDisplay(const QList<QVariantMap>& rows, QStringL
                                         QStringList& ids) const {
     for (const QVariantMap& c : rows) {
         ids << c.value(QStringLiteral("id")).toString();
-        display << tr("%1  ·  %2  ·  %3 tok%4")
+        // tokens < 0 = unknown (the daemon wire carries no token counter): omit the badge.
+        const int tokens = c.value(QStringLiteral("tokens")).toInt();
+        const QString tokenBadge =
+            tokens >= 0 ? tr("  ·  %1 tok").arg(c.value(QStringLiteral("tokens")).toString())
+                        : QString();
+        display << tr("%1  ·  %2%3%4")
                        .arg(c.value(QStringLiteral("label")).toString(),
-                            c.value(QStringLiteral("time")).toString(),
-                            c.value(QStringLiteral("tokens")).toString(),
+                            c.value(QStringLiteral("time")).toString(), tokenBadge,
                             c.value(QStringLiteral("current")).toBool() ? tr("  (current)")
                                                                         : QString());
     }
@@ -261,13 +280,29 @@ void RootWidget::buildCheckpointDisplay(const QList<QVariantMap>& rows, QStringL
     }
 }
 
+// Whether the ACTIVE tab's session runs on a foreign ACP engine (per-session profile override,
+// falling back to the active default profile). Gates rewind affordances: a foreign session's
+// checkpoints are the foreign agent's to manage (C4/E4).
+bool RootWidget::activeSessionIsForeign() const {
+    if (m_active == nullptr || m_services.sessionSettings == nullptr ||
+        m_services.profiles == nullptr) {
+        return false;
+    }
+    QString pid = m_services.sessionSettings->profileFor(m_active->sessionId);
+    if (pid.isEmpty()) {
+        pid = m_services.profiles->defaultProfileId();
+    }
+    const QVariantMap p = m_services.profiles->profile(pid);
+    return p.value(QStringLiteral("engine")).toString() == QStringLiteral("Acp");
+}
+
 void RootWidget::openCheckpointsOverlay() {
     if (m_active == nullptr || m_services.checkpoints == nullptr) {
         return;
     }
     m_services.checkpoints->setSessionId(m_active->sessionId);
     auto* model = qobject_cast<uimodels::VariantListModel*>(m_services.checkpoints->checkpoints());
-    const QList<QVariantMap> rows = model != nullptr ? model->rows() : QList<QVariantMap>{};
+    const bool foreign = activeSessionIsForeign();
 
     auto* dlg = new Tui::ZDialog(this);
     dlg->setOptions(Tui::ZWindow::DeleteOnClose);
@@ -276,42 +311,119 @@ void RootWidget::openCheckpointsOverlay() {
     auto* layout = new Tui::ZVBoxLayout();
     dlg->setLayout(layout);
 
-    auto* hint = new Tui::ZLabel(tr("Enter restores the selected checkpoint · Esc closes"), dlg);
+    auto* hint =
+        new Tui::ZLabel(foreign ? tr("Rewind is managed by the foreign agent · Esc closes")
+                                : tr("Enter rewinds to the selected checkpoint (confirmed) "
+                                     "· Esc closes"),
+                        dlg);
     layout->addWidget(hint);
 
     auto* list = new Tui::ZListView(dlg);
-    QStringList display;
-    QStringList ids;
-    buildCheckpointDisplay(rows, display, ids);
-    list->setItems(display);
-    if (list->model() != nullptr && !rows.isEmpty()) {
-        list->setCurrentIndex(list->model()->index(0, 0));
-    }
+    // The daemon timeline re-fetches async on setSessionId: render the current rows now and
+    // re-render when the facade announces fresh ones while the overlay is open. `ids` lives on
+    // the heap and refreshes with the list so Enter always targets the row it shows.
+    auto ids = std::make_shared<QStringList>();
+    const auto refreshRows = [this, list, ids] {
+        auto* m = qobject_cast<uimodels::VariantListModel*>(m_services.checkpoints->checkpoints());
+        const QList<QVariantMap> rows = m != nullptr ? m->rows() : QList<QVariantMap>{};
+        QStringList display;
+        ids->clear();
+        buildCheckpointDisplay(rows, display, *ids);
+        list->setItems(display);
+        if (list->model() != nullptr && !rows.isEmpty()) {
+            list->setCurrentIndex(list->model()->index(0, 0));
+        }
+    };
+    refreshRows();
+    connect(m_services.checkpoints, &session::ICheckpointTimeline::changed, dlg, refreshRows);
     layout->addWidget(list);
     layout->addSpacing(1);
 
     auto* buttons = new Tui::ZHBoxLayout();
     layout->add(buttons);
     buttons->addStretch();
-    auto* restoreBtn = new Tui::ZButton(tr("Restore"), dlg);
-    buttons->addWidget(restoreBtn);
+    Tui::ZButton* restoreBtn = nullptr;
+    if (!foreign) {
+        restoreBtn = new Tui::ZButton(tr("Rewind…"), dlg);
+        buttons->addWidget(restoreBtn);
+    }
     auto* closeBtn = new Tui::ZButton(tr("Close"), dlg);
     closeBtn->setDefault(true);
     buttons->addWidget(closeBtn);
 
-    const auto doRestore = [this, dlg, list, ids] {
+    // Rewind is destructive (drops the session's turns after the point): confirm before issuing.
+    const auto confirmRestore = [this, dlg, list, ids, foreign] {
         const int row = list->currentIndex().row();
-        if (row >= 0 && row < ids.size()) {
-            m_services.checkpoints->restore(ids.at(row));
+        if (foreign || row < 0 || row >= ids->size()) {
+            return;
         }
-        dlg->close();
+        const QString id = ids->at(row);
+        auto* confirm = new Tui::ZDialog(this);
+        confirm->setOptions(Tui::ZWindow::DeleteOnClose);
+        confirm->setWindowTitle(tr("Rewind to this checkpoint?"));
+        confirm->setContentsMargins({2, 1, 2, 1});
+        auto* confirmLayout = new Tui::ZVBoxLayout();
+        confirm->setLayout(confirmLayout);
+        confirmLayout->addWidget(new Tui::ZLabel(
+            tr("This drops the session's turns after the selected point."), confirm));
+        confirmLayout->addSpacing(1);
+        auto* confirmButtons = new Tui::ZHBoxLayout();
+        confirmLayout->add(confirmButtons);
+        confirmButtons->addStretch();
+        auto* rewindBtn = new Tui::ZButton(tr("Rewind"), confirm);
+        confirmButtons->addWidget(rewindBtn);
+        auto* cancelBtn = new Tui::ZButton(tr("Cancel"), confirm);
+        cancelBtn->setDefault(true);
+        confirmButtons->addWidget(cancelBtn);
+        connect(rewindBtn, &Tui::ZButton::clicked, confirm, [this, confirm, dlg, id] {
+            m_services.checkpoints->restore(id);
+            confirm->close();
+            dlg->close();
+        });
+        connect(cancelBtn, &Tui::ZButton::clicked, confirm, &Tui::ZDialog::close);
+        confirm->setGeometry(QRect(0, 0, 58, 7));
+        cancelBtn->setFocus();
     };
-    connect(restoreBtn, &Tui::ZButton::clicked, dlg, doRestore);
-    connect(list, &Tui::ZListView::enterPressed, dlg, [doRestore](int) { doRestore(); });
+    if (restoreBtn != nullptr) {
+        connect(restoreBtn, &Tui::ZButton::clicked, dlg, confirmRestore);
+        connect(list, &Tui::ZListView::enterPressed, dlg,
+                [confirmRestore](int) { confirmRestore(); });
+    }
     connect(closeBtn, &Tui::ZButton::clicked, dlg, &Tui::ZDialog::close);
 
-    dlg->setGeometry(QRect(0, 0, 62, qBound(9, static_cast<int>(rows.size()) + 8, 20)));
+    dlg->setGeometry(QRect(0, 0, 62, qBound(9, m_services.checkpoints->count() + 8, 20)));
     list->setFocus();
+}
+
+void RootWidget::openFleetSteerPrompt(const QVariantMap& row) {
+    if (m_services.roster == nullptr) {
+        return;
+    }
+    const QString sessionId = row.value(QStringLiteral("sessionId")).toString();
+    const QString role = row.value(QStringLiteral("role")).toString();
+    const bool child = role == QLatin1String("ManagedChild") ||
+                       role == QLatin1String("EphemeralSubagent") ||
+                       (role.isEmpty() && row.value(QStringLiteral("depth")).toInt() > 0);
+    if (sessionId.isEmpty() || !child) {
+        return; // roots/primaries keep their own composer; only children are steerable rows
+    }
+    const bool running = row.value(QStringLiteral("status")).toString() == QLatin1String("running");
+    auto* dlg = new TextPromptDialog(running ? tr("Steer this agent")
+                                             : tr("Steer this agent (idle — starts a turn)"),
+                                     QString(), /*masked=*/false, this);
+    connect(dlg, &TextPromptDialog::submitted, this,
+            [this, sessionId, running](const QString& text) {
+                const QString trimmed = text.trimmed();
+                if (trimmed.isEmpty()) {
+                    return;
+                }
+                // Steer nudges a RUNNING turn; an idle child needs StartTurn instead.
+                if (running) {
+                    m_services.roster->steer(sessionId, trimmed);
+                } else {
+                    m_services.roster->startTurn(sessionId, trimmed);
+                }
+            });
 }
 
 void RootWidget::openModelPicker() {

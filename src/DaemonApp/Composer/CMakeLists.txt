@@ -22,6 +22,8 @@ qt_add_qml_module(da_composer
         SubagentList.qml
         SessionSettingsPopover.qml
         CheckpointsPopover.qml
+        CheckpointTimeline.qml
+        RewindConfirmDialog.qml
 )
 add_library(daemon-app::composer ALIAS da_composer)
 

@@ -38,7 +38,102 @@ RowLayout {
     // Open the model picker overlay (forwarded from the composer for /model + palette).
     function openModelPicker() { modelPill.openOverlay(); }
 
+    // Whether the bound session runs on a foreign ACP engine (gates rewind affordances - C4).
+    readonly property bool foreignSession: engineChip.info.engine === "Acp"
+
+    // Facade reads (profileFor/approvalModeFor) are invokables, so QML cannot track them; bump a
+    // revision on the facades' change signals and reference it from the chip bindings.
+    property int settingsRev: 0
+    Connections {
+        target: SessionSettings
+        function onChanged() { root.settingsRev++; }
+    }
+    Connections {
+        target: Profiles
+        function onChanged() { root.settingsRev++; }
+    }
+    Connections {
+        target: DaemonNet
+        function onChanged() { root.settingsRev++; }
+    }
+
+    // The session's engine identity (C3/ENG-7): the per-session profile override, falling back to
+    // the node's active default profile, joined against the profile store's engine/acpAgent.
+    // Reads settingsRev first so bindings calling this re-evaluate on facade change.
+    function sessionEngineInfo() {
+        var rev = root.settingsRev;
+        if (rev < 0 || !root.session || !root.session.sessionId)
+            return ({ engine: "", agent: "" });
+        var pid = SessionSettings.profileFor(root.session.sessionId);
+        if (!pid || pid.length === 0)
+            pid = Profiles.defaultProfileId;
+        var p = Profiles.profile(pid);
+        if (!p || p.engine === undefined)
+            return ({ engine: "", agent: "" });
+        return ({ engine: p.engine, agent: p.acpAgent || "" });
+    }
+
     spacing: Theme.spacingSmall
+
+    // Engine identity chip (C3/ENG-7): Native core vs the foreign ACP agent driving this session.
+    Kit.Chip {
+        id: engineChip
+        Layout.alignment: Qt.AlignVCenter
+        readonly property var info: root.sessionEngineInfo()
+        visible: info.engine !== ""
+        text: info.engine === "Acp" ? (info.agent || qsTr("Foreign")) : qsTr("Native")
+        iconGlyph: info.engine === "Acp" ? FontIcons.fa_robot : FontIcons.fa_microchip
+        tone: info.engine === "Acp" ? "accent" : "muted"
+        tooltipText: qsTr("Engine")
+    }
+
+    // Approval-policy chip (E1/TOOL-7): the session's HITL mode at a glance; tap to change (opens
+    // the session-settings popover, which mirrors the same value). Reflects the client's last-set
+    // value — v28 wires no per-session mode getter.
+    Kit.Chip {
+        id: policyChip
+        Layout.alignment: Qt.AlignVCenter
+        readonly property string mode: {
+            var rev = root.settingsRev; // re-evaluate on facade change
+            return rev >= 0 && root.session && root.session.sessionId
+                   ? SessionSettings.approvalModeFor(root.session.sessionId) : "";
+        }
+        visible: mode !== ""
+        text: mode === "accept_edits" ? qsTr("Edits")
+              : mode === "auto_allow" ? qsTr("Auto")
+              : mode === "deny" ? qsTr("Deny")
+              : qsTr("Ask")
+        iconGlyph: mode === "deny" ? FontIcons.fa_lock : FontIcons.fa_shield_halved
+        tone: mode === "auto_allow" ? "accent" : mode === "deny" ? "danger" : "muted"
+        interactive: true
+        tooltipText: qsTr("Approval policy (reflects last set value)")
+        onClicked: {
+            if (root.session)
+                SessionSettings.sessionId = root.session.sessionId;
+            sessionSettingsPopover.open();
+        }
+    }
+
+    // Route-pin chip (B6/EIO-12): shows when an external chat origin is pinned to this session
+    // ("⇄ #ops-room"); tap opens the routing manager scoped to the pin table.
+    Kit.Chip {
+        id: routeChip
+        Layout.alignment: Qt.AlignVCenter
+        readonly property var pins: {
+            var rev = root.settingsRev; // re-evaluate on DaemonNet change
+            return rev >= 0 && root.session && root.session.sessionId
+                   ? DaemonNet.pinsForSession(root.session.sessionId) : [];
+        }
+        visible: pins.length > 0
+        text: pins.length > 1 ? qsTr("⇄ %1 +%2").arg(pins[0].label).arg(pins.length - 1)
+                              : pins.length === 1 ? qsTr("⇄ %1").arg(pins[0].label) : ""
+        tone: "accent"
+        interactive: true
+        tooltipText: pins.length > 0
+                     ? qsTr("Pinned from %1 — open the routing manager").arg(pins[0].transport)
+                     : ""
+        onClicked: Nav.open("routing")
+    }
 
     // Checkpoints / rewind timeline for the active session.
     Kit.IconButton {
@@ -57,7 +152,10 @@ RowLayout {
             checkpointsPopover.open();
         }
 
-        CheckpointsPopover { id: checkpointsPopover }
+        CheckpointsPopover {
+            id: checkpointsPopover
+            foreignSession: root.foreignSession
+        }
     }
 
     // Per-session settings (profile / effort / modes override).

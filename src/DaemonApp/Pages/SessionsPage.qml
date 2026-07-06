@@ -8,9 +8,12 @@ import DaemonApp.Theme
 import DaemonApp.Controls as Kit
 
 // Sessions roster: durable/live sessions with state, profile, token usage, and
-// suspend/resume/close actions.
+// suspend/resume/close actions. The Active|Archived scope switcher (F6/DEL-6)
+// swaps the roster to archived sessions with a per-row Restore.
 Item {
     id: root
+
+    readonly property bool archivedScope: SessionRoster.scope === "archived"
 
     PageHeader {
         id: header
@@ -21,8 +24,29 @@ Item {
         icon: FontIcons.fa_comments
     }
 
-    QQC.ScrollView {
+    // Active | Archived scope switcher (F6). Switching to Archived re-fetches the
+    // SessionScope::Archived listing (the TopLevel roster excludes it).
+    RowLayout {
+        id: scopeSwitch
         anchors.top: header.bottom
+        anchors.left: parent.left
+        anchors.leftMargin: 16
+        spacing: 6
+
+        Kit.TextButton {
+            text: qsTr("Active")
+            accentFilled: !root.archivedScope
+            onClicked: SessionRoster.scope = "active"
+        }
+        Kit.TextButton {
+            text: qsTr("Archived")
+            accentFilled: root.archivedScope
+            onClicked: SessionRoster.scope = "archived"
+        }
+    }
+
+    QQC.ScrollView {
+        anchors.top: scopeSwitch.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -109,7 +133,14 @@ Item {
                             font.family: FontIcons.display; font.pixelSize: 11
                             color: entry.state === "active" ? Theme.accent : Theme.textMuted
                         }
+                        // Archived scope: the row's single action is Restore (back to Active).
+                        Kit.TextButton {
+                            visible: root.archivedScope
+                            text: qsTr("Restore")
+                            onClicked: SessionRoster.restore(entry.id)
+                        }
                         Kit.IconButton {
+                            visible: !root.archivedScope
                             icon: entry.state === "suspended" ? FontIcons.fa_play
                                                               : FontIcons.fa_pause
                             iconPointSize: 11; implicitWidth: 30; implicitHeight: 26
@@ -119,6 +150,7 @@ Item {
                                                                   : SessionRoster.suspend(entry.id)
                         }
                         Kit.IconButton {
+                            visible: !root.archivedScope
                             icon: FontIcons.fa_xmark; iconColor: Theme.danger
                             iconPointSize: 12; implicitWidth: 30; implicitHeight: 26
                             tooltipText: qsTr("Close session")

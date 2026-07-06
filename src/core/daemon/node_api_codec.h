@@ -141,6 +141,50 @@ struct DecodedAcpAgentEntry {
     QString version; // ACP protocol version reported at initialize; empty = unprobed
 };
 
+// --- Routing (B6/ROU: the origin->session pin table; wire v28) -------------------------------
+// A wire `origin` (transport instance + scope), flattened to optional fields keyed by
+// `scopeKind` (mirrors domain::Origin; the daemonnet adapter converts).
+struct DecodedOrigin {
+    QString transport;
+    QString scopeKind = QStringLiteral("internal"); // "dm" | "group" | "api" | "internal"
+    QString user;                                   // Dm
+    QString chat;                                   // Group
+    bool hasThread = false;                         // Group: thread present
+    QString thread;                                 // Group (optional)
+    QString apiKey;                                 // Api
+};
+
+// One explicit chat pin (RoutingListChats -> ChatRoutes page items / RoutingGet -> ChatRoute).
+struct DecodedChatRoute {
+    DecodedOrigin origin;
+    QString session;
+    QString profile;   // empty = no agent override
+    QString isolation; // "PerUser" | "PerChat" | "PerThread" | "Shared" | "" (absent)
+};
+
+// One bindable room/chat on a transport instance (TransportRooms -> Rooms page items). The pin
+// picker renders these; `session` (when set) is the room's pinned session.
+struct DecodedRoomInfo {
+    QString transport;
+    QString room;    // the chat handle / room id (the Group scope key)
+    QString name;    // display label (empty = use the room id)
+    QString session; // pinned session id (empty = not pinned)
+};
+
+// --- Checkpoints (E4/TOOL-9) ----------------------------------------------------------------
+// One durable checkpoint (CheckpointList -> Checkpoints page). Node-created on tool events;
+// `turnOrdinal`/`cursorSeq` locate it on the session timeline (optional on the wire).
+struct DecodedCheckpointInfo {
+    QString id;
+    QString session;
+    QString tool; // the tool whose execution the checkpoint precedes
+    quint64 createdUnix = 0;
+    bool hasTurnOrdinal = false;
+    quint64 turnOrdinal = 0;
+    bool hasCursor = false;
+    quint64 cursorSeq = 0;
+};
+
 // --- Profile distribution + version history (PRO-7 / PRO-8) --------------------------------------
 // One bundled skill inside a profile distribution (SkillBundle). `files` is path -> UTF-8 content.
 struct DecodedSkillBundle {
@@ -697,6 +741,11 @@ enum class ApiResponseKind {
     ModelQuantizeStarted,
     ModelQuantizes,
     ModelInspect,
+    // app-client-verticals stream additions (appended, order-stable for sibling merges).
+    Checkpoints,
+    ChatRoutes,
+    ChatRoute,
+    Rooms,
 };
 
 // Thin C++ facade over the zcbor-generated NodeApi codec (codec/generated). The generated C is
@@ -714,13 +763,18 @@ public:
     // (the server then returns only sessions changed past `sinceRev` + a `removed` list); absent =
     // a full page (back-compat / cold cache). A non-empty `byProfile` sets the query scope to
     // `SessionScope::ByProfile(byProfile)` (the per-agent view; the id already exists in the CDDL
-    // session-scope union, so this is encoder-only — no contract change).
+    // session-scope union, so this is encoder-only — no contract change). `archivedScope` (F6)
+    // sets scope = `SessionScope::Archived` (archived primaries). A non-empty `byTransport` (B4)
+    // sets scope = `SessionScope::ByTransport(id)` (the sessions routed over one transport
+    // instance — the node resolves membership; the client never re-derives it). Precedence when
+    // several are passed: byProfile > archived > byTransport.
     // `after` (when non-empty) resumes past the previous page's next_cursor (the roster page
     // loop; wire v24 bounds every page at kWirePageMax).
-    [[nodiscard]] static QByteArray encodeSessionsQueryRequest(bool hasSinceRev = false,
-                                                               quint64 sinceRev = 0,
-                                                               const QString& byProfile = QString(),
-                                                               const QString& after = QString());
+    [[nodiscard]] static QByteArray
+    encodeSessionsQueryRequest(bool hasSinceRev = false, quint64 sinceRev = 0,
+                               const QString& byProfile = QString(),
+                               const QString& after = QString(), bool archivedScope = false,
+                               const QString& byTransport = QString());
     // Subscribe to a session's merged log from afterSeq (exclusive), up to max entries.
     [[nodiscard]] static QByteArray encodeSubscribeRequest(const QString& sessionId,
                                                            quint64 afterSeq, quint32 max);
@@ -1179,6 +1233,47 @@ public:
     // registry keeps records for deleted files).
     [[nodiscard]] static QByteArray encodeModelInspectRequest(const QString& id);
     static bool decodeModelInspect(const QByteArray& responseCbor, DecodedGgufInfo* out);
+
+    // --- Checkpoints (E4/TOOL-9) --------------------------------------------------------------
+    // List a session's durable checkpoints (CheckpointList -> Checkpoints). Empty session = every
+    // session; `after` (wire v25) resumes past the previous page's `next` cursor.
+    [[nodiscard]] static QByteArray
+    encodeCheckpointListRequest(const QString& sessionId = QString(),
+                                const QString& after = QString());
+    // Rewind `sessionId` to `checkpointId` (CheckpointRewind -> Ok). DISTINCT from the turn-level
+    // Rewind/RewindTo ops: this restores the node's durable tool-event checkpoint.
+    [[nodiscard]] static QByteArray encodeCheckpointRewindRequest(const QString& sessionId,
+                                                                  const QString& checkpointId);
+    // Decode one Checkpoints page. `*next` (when non-null) gets the resume cursor (cleared on the
+    // last page).
+    static bool decodeCheckpoints(const QByteArray& responseCbor, QList<DecodedCheckpointInfo>* out,
+                                  QString* next = nullptr);
+
+    // --- Routing (B6/ROU: origin->session pins; wire v28) --------------------------------------
+    // List the explicit chat pins (RoutingListChats -> ChatRoutes). `after` (wire v25) resumes
+    // past the previous page's `next` cursor.
+    [[nodiscard]] static QByteArray encodeRoutingListChatsRequest(const QString& after = QString());
+    // Resolve one origin's pin (RoutingGet -> ChatRoute(opt)).
+    [[nodiscard]] static QByteArray encodeRoutingGetRequest(const DecodedOrigin& origin);
+    // Set a full route (RoutingSet{chat_route} -> Ok): origin -> session (+profile/isolation).
+    [[nodiscard]] static QByteArray encodeRoutingSetRequest(const DecodedChatRoute& route);
+    // Pin an origin to a session (+ optional agent) (RoutingBindChat -> Ok).
+    [[nodiscard]] static QByteArray encodeRoutingBindChatRequest(const DecodedOrigin& origin,
+                                                                 const QString& session,
+                                                                 const QString& profile = {});
+    // Remove an origin's pin (RoutingUnbindChat -> Ok).
+    [[nodiscard]] static QByteArray encodeRoutingUnbindChatRequest(const DecodedOrigin& origin);
+    // List a transport instance's bindable rooms (TransportRooms -> Rooms). `after` resumes.
+    [[nodiscard]] static QByteArray encodeTransportRoomsRequest(const QString& transport,
+                                                                const QString& after = QString());
+    // Decode one ChatRoutes page. `*next` (when non-null) gets the resume cursor.
+    static bool decodeChatRoutes(const QByteArray& responseCbor, QList<DecodedChatRoute>* out,
+                                 QString* next = nullptr);
+    // Decode a ChatRoute response (RoutingGet). Sets *found=false on the null arm (no pin).
+    static bool decodeChatRoute(const QByteArray& responseCbor, DecodedChatRoute* out, bool* found);
+    // Decode one Rooms page. `*next` (when non-null) gets the resume cursor.
+    static bool decodeRooms(const QByteArray& responseCbor, QList<DecodedRoomInfo>* out,
+                            QString* next = nullptr);
 };
 
 } // namespace daemonapp::daemon

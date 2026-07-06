@@ -23,6 +23,7 @@ qt_add_qml_module(da_controls
         TreeRow.qml
         ProgressBar.qml
         Toast.qml
+        Chip.qml
 )
 add_library(daemon-app::controls ALIAS da_controls)
 

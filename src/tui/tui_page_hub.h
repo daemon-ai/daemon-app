@@ -15,7 +15,6 @@ class IAccountsService;
 }
 namespace automation {
 class ICronStore;
-class IRoutingStore;
 } // namespace automation
 namespace config {
 class IDaemonConfig;
@@ -78,8 +77,8 @@ public:
         fleet::IFleetTree* fleetTree = nullptr;
         fleet::IApprovalsInbox* approvals = nullptr;
         fleet::IDashboard* dashboard = nullptr;
-        automation::IRoutingStore* routing = nullptr;
         automation::ICronStore* cron = nullptr;
+        // The Routing page's source (B6/ROU): the origin->session pin table + bindable rooms.
         daemonnet::IDaemonNet* daemonNet = nullptr;
         memory::IMemoryService* memory = nullptr;
         memoryui::MemoryListModel* memList = nullptr;
@@ -140,6 +139,14 @@ private:
     [[nodiscard]] QString buildProfileMarkdown(const QString& profileRef) const;
     [[nodiscard]] QString buildUsersAccessMarkdown() const;
     [[nodiscard]] QString buildChannelsMarkdown() const;
+    // Engine-identity token (C3/ENG-7): the TUI projection of the GUI engine chip for a profile /
+    // fleet row carrying engine/acpAgent ("Native" for Core, "<agent> (ACP)" for foreign; empty
+    // when the row has no engine field, e.g. mock rows).
+    [[nodiscard]] static QString engineToken(const QVariantMap& row);
+    // The Routing page's pin rows (B6/ROU): one QVariantMap per DaemonNet RoutingPin, carrying
+    // the display fields + the flattened origin (so the 'x' unbind can rebuild it). `id` is the
+    // canonical originKey.
+    [[nodiscard]] QList<QVariantMap> routingPinRows() const;
 
     Dependencies m_deps;
     QHash<int, int> m_pageSel;

@@ -34,6 +34,61 @@ Item {
         return Theme.iconMuted; // offline / unknown
     }
 
+    // Pin a room to an agent/session (B4/B6): the same RouteDialog the routing manager uses,
+    // driven by a page-local controller over the shared DaemonNet.
+    RoutingManagerController {
+        id: channelsRouting
+        daemonNet: typeof DaemonNet !== "undefined" ? DaemonNet : null
+    }
+    RouteDialog {
+        id: pinDialog
+        controller: channelsRouting
+    }
+
+    // Remove-credential confirm (B3 partial): the ONLY account-lifecycle lever the wire offers
+    // today. Clearly labeled — it removes the STORED CREDENTIAL for the bound profile
+    // (CredentialRemove); the node's transport session itself has no disconnect/remove op yet.
+    Kit.Dialog {
+        id: removeCredentialDialog
+        property string profileRef: ""
+        property string accountLabel: ""
+        title: qsTr("Remove stored credential?")
+        acceptText: qsTr("Remove credential")
+        destructive: true
+        onAccepted: {
+            if (profileRef.length > 0)
+                Accounts.remove(profileRef);
+            profileRef = "";
+        }
+        onRejected: profileRef = ""
+
+        contentItem: ColumnLayout {
+            spacing: 6
+            Text {
+                Layout.fillWidth: true
+                Layout.maximumWidth: 340
+                text: qsTr("Removes the credential stored for profile “%1” (used by %2).")
+                      .arg(removeCredentialDialog.profileRef)
+                      .arg(removeCredentialDialog.accountLabel)
+                font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
+                wrapMode: Text.WordWrap
+            }
+            Text {
+                Layout.fillWidth: true
+                Layout.maximumWidth: 340
+                text: qsTr("The account's transport session on the node is not affected — a disconnect/remove operation is not available yet.")
+                font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
+                wrapMode: Text.WordWrap
+            }
+        }
+
+        function openFor(profileRef, accountLabel) {
+            removeCredentialDialog.profileRef = profileRef;
+            removeCredentialDialog.accountLabel = accountLabel;
+            removeCredentialDialog.open();
+        }
+    }
+
     PageHeader {
         id: header
         anchors.top: parent.top
@@ -151,6 +206,31 @@ Item {
                                 font.family: FontIcons.display; font.pixelSize: 11
                                 color: acctRow.conn === "connected" ? Theme.accent : Theme.textMuted
                             }
+                            // --- Account lifecycle (B3/EIO-2/EIO-7) -------------------------
+                            // Disconnect is VISIBLE-DISABLED with the reason: the wire has no
+                            // transport disconnect/remove op yet (node-first follow-up;
+                            // placeholder-inventory policy: disabled controls explain an
+                            // unavailable capability).
+                            Kit.IconButton {
+                                enabled: false
+                                icon: FontIcons.fa_circle_xmark
+                                iconPointSize: 12; implicitWidth: 30; implicitHeight: 26
+                                tooltipText: qsTr("Disconnect isn't available yet — the node has no transport disconnect operation")
+                            }
+                            // The PARTIAL remove lever the wire does offer: drop the stored
+                            // credential for the bound profile (confirmed; clearly labeled).
+                            Kit.IconButton {
+                                visible: acctRow.modelData.boundProfile.length > 0
+                                icon: FontIcons.fa_trash
+                                iconColor: Theme.danger
+                                iconPointSize: 12; implicitWidth: 30; implicitHeight: 26
+                                tooltipText: qsTr("Remove the stored credential…")
+                                onClicked: removeCredentialDialog.openFor(
+                                    acctRow.modelData.boundProfile,
+                                    acctRow.modelData.displayName.length > 0
+                                        ? acctRow.modelData.displayName
+                                        : acctRow.modelData.transport)
+                            }
                         }
 
                         // --- Rooms for this account (EIO-8: live ConvList) ------
@@ -167,7 +247,19 @@ Item {
                             Repeater {
                                 model: acctRow.rooms
                                 delegate: RowLayout {
+                                    id: roomRow
                                     required property var modelData
+                                    // The room's routing pin (B6/EIO-12): re-read on pin changes.
+                                    property string pinnedSession:
+                                        DaemonNet.pinnedSessionFor(acctRow.modelData.transport,
+                                                                   modelData.id)
+                                    Connections {
+                                        target: DaemonNet
+                                        function onChanged() {
+                                            roomRow.pinnedSession = DaemonNet.pinnedSessionFor(
+                                                acctRow.modelData.transport, roomRow.modelData.id);
+                                        }
+                                    }
                                     Layout.fillWidth: true
                                     spacing: 8
                                     Text {
@@ -179,6 +271,33 @@ Item {
                                         text: modelData.title.length > 0 ? modelData.title : modelData.id
                                         font.family: FontIcons.display; font.pixelSize: 12
                                         color: Theme.text; elide: Text.ElideRight; Layout.fillWidth: true
+                                    }
+                                    // Route-pin chip: this room's inbound messages route to the
+                                    // pinned session; tap opens the routing manager.
+                                    Kit.Chip {
+                                        visible: roomRow.pinnedSession.length > 0
+                                        text: qsTr("⇄ %1").arg(roomRow.pinnedSession)
+                                        tone: "accent"
+                                        interactive: true
+                                        tooltipText: qsTr("Pinned to this session — open the routing manager")
+                                        onClicked: Nav.open("routing")
+                                    }
+                                    // Unpinned rooms: pinning is an EXPLICIT act (B4 - no lazy
+                                    // session create) via the shared RouteDialog, preselected to
+                                    // this room's origin (the canonical originKey format from
+                                    // routing_dtos.h: "<transport>|group|<chat>|").
+                                    Kit.Chip {
+                                        visible: roomRow.pinnedSession.length === 0
+                                        text: qsTr("Pin to agent…")
+                                        tone: "muted"
+                                        interactive: true
+                                        tooltipText: qsTr("Route this room's messages to a session")
+                                        onClicked: pinDialog.openFor({
+                                            id: acctRow.modelData.transport + "|group|"
+                                                + roomRow.modelData.id + "|",
+                                            session: "",
+                                            profile: ""
+                                        })
                                     }
                                     Text {
                                         text: modelData.kind

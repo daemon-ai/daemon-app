@@ -78,6 +78,10 @@ add_library(da_daemon_client STATIC
     daemon_profile_store.cpp
     daemon_session_settings.h
     daemon_session_settings.cpp
+    daemon_checkpoint_timeline.h
+    daemon_checkpoint_timeline.cpp
+    daemon_daemonnet.h
+    daemon_daemonnet.cpp
     daemon_approvals_inbox.h
     daemon_approvals_inbox.cpp
     subscription_manager.h

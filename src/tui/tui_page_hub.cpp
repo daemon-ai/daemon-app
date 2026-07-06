@@ -10,8 +10,9 @@
 
 #include "accounts/iaccounts_service.h"
 #include "automation/icron_store.h"
-#include "automation/irouting_store.h"
 #include "daemon/principal_model.h"
+#include "daemonnet/idaemonnet.h"
+#include "domain/origin.h"
 #include "fleet/iapprovals_inbox.h"
 #include "fleet/ifleet_tree.h"
 #include "fleet/isession_roster.h"
@@ -142,7 +143,7 @@ QList<QVariantMap> TuiPageHub::pageActionRows(int kind) const {
     case TabModel::Approvals:
         return rowsOfModel(m_deps.approvals->pending());
     case TabModel::Routing:
-        return rowsOfModel(m_deps.routing->rules());
+        return routingPinRows();
     case TabModel::Cron:
         return rowsOfModel(m_deps.cron->jobs());
     default:
@@ -237,18 +238,28 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
             acted = true;
         }
         break;
-    case TabModel::Sessions:
-        if (text == QStringLiteral("s")) {
+    case TabModel::Sessions: {
+        const bool archived = m_deps.roster->scope() == QStringLiteral("archived");
+        if (text == QStringLiteral("v")) {
+            // F6: flip the Active|Archived scope (mirrors the GUI SessionsPage switcher).
+            m_deps.roster->setScope(archived ? QStringLiteral("active")
+                                             : QStringLiteral("archived"));
+            acted = true;
+        } else if (archived && (text == QStringLiteral("r") || enter)) {
+            m_deps.roster->restore(id);
+            acted = true;
+        } else if (!archived && text == QStringLiteral("s")) {
             m_deps.roster->suspend(id);
             acted = true;
-        } else if (text == QStringLiteral("R") || enter) {
+        } else if (!archived && (text == QStringLiteral("R") || enter)) {
             m_deps.roster->resume(id);
             acted = true;
-        } else if (text == QStringLiteral("x")) {
+        } else if (!archived && text == QStringLiteral("x")) {
             m_deps.roster->close(id);
             acted = true;
         }
         break;
+    }
     case TabModel::Fleet:
         if (key == Qt::Key_Space || enter || text == QStringLiteral("p")) {
             const bool paused =
@@ -259,6 +270,18 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
                 m_deps.fleetTree->pause(id);
             }
             acted = true;
+        } else if (text == QStringLiteral("c")) {
+            // F4: cancel a delegated child's running turn (Submit{Interrupt} to its session).
+            // The steer prompt ('t') is a RootWidget-level overlay (needs a dialog).
+            const QString sessionId = row.value(QStringLiteral("sessionId")).toString();
+            const QString role = row.value(QStringLiteral("role")).toString();
+            const bool child = role == QLatin1String("ManagedChild") ||
+                               role == QLatin1String("EphemeralSubagent") ||
+                               (role.isEmpty() && row.value(QStringLiteral("depth")).toInt() > 0);
+            if (!sessionId.isEmpty() && child) {
+                m_deps.roster->interrupt(sessionId);
+                acted = true;
+            }
         }
         break;
     case TabModel::Approvals:
@@ -277,11 +300,27 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
         }
         break;
     case TabModel::Routing:
-        if (key == Qt::Key_Space || enter) {
-            m_deps.routing->setEnabled(id, !row.value(QStringLiteral("enabled")).toBool());
-            acted = true;
-        } else if (text == QStringLiteral("x")) {
-            m_deps.routing->remove(id);
+        if (text == QStringLiteral("x") && m_deps.daemonNet != nullptr) {
+            // Unbind the selected pin (RoutingUnbindChat): rebuild the origin from the row's
+            // flattened fields (routingPinRows packs them exactly for this).
+            domain::Origin origin;
+            origin.transport =
+                domain::TransportId(row.value(QStringLiteral("transport")).toString());
+            const QString scopeKind = row.value(QStringLiteral("scopeKind")).toString();
+            if (scopeKind == QStringLiteral("dm")) {
+                origin.scope.kind = domain::OriginScopeKind::Dm;
+                origin.scope.user = row.value(QStringLiteral("user")).toString();
+            } else if (scopeKind == QStringLiteral("group")) {
+                origin.scope.kind = domain::OriginScopeKind::Group;
+                origin.scope.chat = row.value(QStringLiteral("chat")).toString();
+                origin.scope.thread = row.value(QStringLiteral("thread")).toString();
+            } else if (scopeKind == QStringLiteral("api")) {
+                origin.scope.kind = domain::OriginScopeKind::Api;
+                origin.scope.apiKey = row.value(QStringLiteral("apiKey")).toString();
+            } else {
+                origin.scope.kind = domain::OriginScopeKind::Internal;
+            }
+            m_deps.daemonNet->unbindChat(origin);
             acted = true;
         }
         break;

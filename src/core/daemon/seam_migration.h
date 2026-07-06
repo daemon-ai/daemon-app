@@ -48,27 +48,17 @@ inline constexpr const char* kConfigMigration =
     "migrate "
     "to those typed homes; it is not a NodeApi-config seam.";
 
-// Phase 5 DECISION (node-blocked): routing, cron, and checkpoint timelines have NO NodeApi wire op
-// in the daemon-api codec subset the client speaks - the node does not yet expose them. So they
-// stay MockOnly, BUT in daemon mode they are EMPTY-SEEDED (createAppServiceGraph passes
-// seedDemo=false), rendering an empty/unavailable surface rather than passing the mocks'
-// illustrative demo rows off as node-backed data. Promoting any of them to DaemonAligned requires a
-// daemon-node contract addition (a new ApiRequest + codec regen) - out of the daemon-app track's
-// scope. This mirrors the IDaemonConfig Phase-4 DECISION: a node-unsupported seam stays mock but
-// never masquerades as authority.
-inline constexpr const char* kRoutingMigration =
-    "Node-blocked: no routing/model-selection wire op exists. MockOnly + empty-seeded in daemon "
-    "mode. Promote only when daemon-node exposes a routing ApiRequest.";
-
+// Phase 5 DECISION (node-blocked), REVISED at wire v28: cron still has NO NodeApi wire op in the
+// codec subset the client speaks, so it stays MockOnly + EMPTY-SEEDED in daemon mode
+// (createAppServiceGraph passes seedDemo=false), rendering an empty/unavailable surface rather
+// than passing the mock's illustrative demo rows off as node-backed data. Checkpoints and routing
+// left this bucket when their wire ops landed (CheckpointList/CheckpointRewind, Routing*); see
+// their entries below. The legacy intent->model IRoutingStore seam (never node-backed) was
+// DELETED with the routing landing — the routing surface is the origin->session pin table.
 inline constexpr const char* kCronMigration =
     "Node-blocked: no cron/schedule wire op exists. MockOnly + empty-seeded in daemon mode (the "
     "on-disk cache still restores any user-created local jobs). Promote only when daemon-node "
     "exposes a cron ApiRequest.";
-
-inline constexpr const char* kCheckpointMigration =
-    "Node-blocked: checkpoint timelines are not modeled in the daemon-api codec subset "
-    "(CheckpointRepository is a stub). MockOnly + empty-seeded in daemon mode. Promote only when "
-    "daemon-node exposes a checkpoint/journal-rewind ApiRequest.";
 
 inline constexpr SeamMigrationTarget kTargets[] = {
     {"ISessionStore", "SessionsQuery / Subscribe / SessionLogEntry", kSessionIdMigration,
@@ -91,10 +81,21 @@ inline constexpr SeamMigrationTarget kTargets[] = {
      SeamMigrationStatus::DaemonAligned},
     {"IDaemonConfig", "ProfileApi / SessionOverlay / node capabilities / ISettingsStore",
      kConfigMigration, SeamMigrationStatus::MockOnly},
-    {"IRoutingStore", kRoutingMigration, kRoutingMigration, SeamMigrationStatus::MockOnly},
+    {"IDaemonNet (routing slice)",
+     "RoutingListChats / RoutingBindChat / RoutingUnbindChat / RoutingSet / TransportRooms",
+     "LANDED (B6/ROU, wire v28): RoutingRepository speaks the Routing* pin ops + TransportRooms; "
+     "DaemonDaemonNet projects them through the IDaemonNet seam the RoutingPage/RouteDialog bind. "
+     "Honest residuals: resolve() answers from the pin table only (no read op for the lower "
+     "precedence rungs), bindingRules() is empty (config-time, no wire read), and the "
+     "delivery/handover panel stays inert until the delivery_targets/handover re-point.",
+     SeamMigrationStatus::DaemonAligned},
     {"ICronStore", kCronMigration, kCronMigration, SeamMigrationStatus::MockOnly},
-    {"ICheckpointTimeline", kCheckpointMigration, kCheckpointMigration,
-     SeamMigrationStatus::MockOnly},
+    {"ICheckpointTimeline", "CheckpointList / CheckpointRewind",
+     "LANDED (E4/TOOL-9, wire v28): DaemonCheckpointTimeline projects CheckpointRepository's "
+     "CheckpointList pages into the popover + timeline-strip rows; restore() issues "
+     "CheckpointRewind (UI confirms first). Client-initiated creates stay unsupported (checkpoints "
+     "are node-created on tool events); foreign/ACP sessions hide rewind (C4 honesty).",
+     SeamMigrationStatus::DaemonAligned},
     {"IFsService", "FsRoots / FsList / FsRead / FsWrite / FsWatchPoll",
      "LANDED (Phase 4): DaemonFsService implements IFsService over the NodeApi fs_* ops + the "
      "NodeApiCodec facade, with DaemonCacheStore (daemon_fs_entries) as the offline fallback and a "
