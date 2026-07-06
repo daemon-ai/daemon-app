@@ -5,6 +5,8 @@
 
 #include "composer_session_controller.h"
 #include "i_turn_engine.h"
+#include "profiles/iprofile_store.h"
+#include "session/isession_settings.h"
 #include "tui_palette.h"
 
 #include <QRect>
@@ -56,6 +58,21 @@ void ComposerChrome::setSession(ComposerSessionController* session) {
         connect(m_session, &ComposerSessionController::modesChanged, this, [this] { update(); });
         connect(m_session, &ComposerSessionController::reverseSearchChanged, this,
                 [this] { update(); });
+        connect(m_session, &ComposerSessionController::sessionIdChanged, this,
+                [this] { update(); });
+    }
+    update();
+}
+
+void ComposerChrome::setFacades(session::ISessionSettings* settings,
+                                profiles::IProfileStore* profileStore) {
+    m_settings = settings;
+    m_profiles = profileStore;
+    if (m_settings != nullptr) {
+        connect(m_settings, &session::ISessionSettings::changed, this, [this] { update(); });
+    }
+    if (m_profiles != nullptr) {
+        connect(m_profiles, &profiles::IProfileStore::changed, this, [this] { update(); });
     }
     update();
 }
@@ -138,6 +155,36 @@ QVector<Span> ComposerChrome::buildSpans() const {
             spans << mkSpan(badges.join(QStringLiteral(" ")), tpal::accent());
             spans << mkSpan(QStringLiteral("]"), tpal::faint());
         }
+    }
+    // Engine-identity chip (C3/ENG-7): Native core vs the foreign ACP agent driving this session
+    // (per-session profile override, falling back to the active default profile).
+    if (m_session != nullptr && m_settings != nullptr && m_profiles != nullptr &&
+        !m_session->sessionId().isEmpty()) {
+        QString pid = m_settings->profileFor(m_session->sessionId());
+        if (pid.isEmpty()) {
+            pid = m_profiles->defaultProfileId();
+        }
+        const QVariantMap p = m_profiles->profile(pid);
+        if (!p.isEmpty() && p.contains(QStringLiteral("engine"))) {
+            const bool acp = p.value(QStringLiteral("engine")).toString() == QStringLiteral("Acp");
+            const QString agent = p.value(QStringLiteral("acpAgent")).toString();
+            spans << mkSpan(QStringLiteral("  \u00b7  "), tpal::faint());
+            spans << mkSpan(acp ? tr("%1 (ACP)").arg(agent.isEmpty() ? tr("Foreign") : agent)
+                                : tr("Native"),
+                            acp ? tpal::accent() : tpal::muted());
+        }
+    }
+    // Approval-policy chip (E1/TOOL-7): the session's HITL mode at a glance (F2 changes it).
+    // Reflects the client's last-set value — v28 wires no per-session mode getter.
+    if (m_session != nullptr && m_settings != nullptr && !m_session->sessionId().isEmpty()) {
+        const QString mode = m_settings->approvalModeFor(m_session->sessionId());
+        const QString label = mode == QStringLiteral("accept_edits") ? tr("Edits")
+                              : mode == QStringLiteral("auto_allow") ? tr("Auto")
+                              : mode == QStringLiteral("deny")       ? tr("Deny")
+                                                                     : tr("Ask");
+        spans << mkSpan(QStringLiteral("  \u00b7  "), tpal::faint());
+        spans << mkSpan(tr("policy:", "approval-policy badge prefix") + label,
+                        mode == QStringLiteral("deny") ? tpal::warn() : tpal::muted());
     }
     return spans;
 }

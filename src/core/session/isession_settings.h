@@ -52,6 +52,14 @@ public:
     virtual void setVerbose(bool on) = 0;
     [[nodiscard]] virtual QString approvalMode() const = 0;
     virtual void setApprovalMode(const QString& mode) = 0;
+    // The approval mode for a specific session id (not the active one) — the per-pane policy chip
+    // (E1/TOOL-7) reads this so every visible session renders its own mode without mutating the
+    // shared active sessionId. NOTE: this reflects the client's last-SET value (default "ask");
+    // v28 wires no per-session mode getter, so it is not a node-authoritative read. Default: the
+    // active mode iff `id` is the active session; the mock overrides with a per-session lookup.
+    [[nodiscard]] Q_INVOKABLE virtual QString approvalModeFor(const QString& id) const {
+        return id == sessionId() ? approvalMode() : QStringLiteral("ask");
+    }
 
     [[nodiscard]] Q_INVOKABLE virtual QStringList effortOptions() const = 0;
     // The selectable approval modes for the popover (CHA-4).

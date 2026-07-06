@@ -283,6 +283,21 @@ private slots:
         settings.setProfile(QStringLiteral("Researcher")); // seeded prof-3
         QCOMPARE(factory.last->boundProfile, QStringLiteral("prof-3"));
     }
+
+    // E1/TOOL-7: approvalModeFor(id) is a per-session read with no side effects — it reflects
+    // the mode set for THAT session (default "ask"), regardless of which session is active.
+    void approvalModeForReadsPerSession() {
+        session::MockSessionSettings settings;
+        settings.setSessionId(QStringLiteral("s1"));
+        settings.setApprovalMode(QStringLiteral("auto_allow"));
+        settings.setSessionId(QStringLiteral("s2")); // switch the active session away
+
+        QCOMPARE(settings.approvalModeFor(QStringLiteral("s1")), QStringLiteral("auto_allow"));
+        QCOMPARE(settings.approvalModeFor(QStringLiteral("s2")), QStringLiteral("ask"));
+        // An id never bound still reads the default without materializing state.
+        QCOMPARE(settings.approvalModeFor(QStringLiteral("never-seen")), QStringLiteral("ask"));
+        QCOMPARE(settings.approvalMode(), QStringLiteral("ask")); // active (s2) untouched
+    }
 };
 
 QTEST_GUILESS_MAIN(TestSessionOrchestrator)

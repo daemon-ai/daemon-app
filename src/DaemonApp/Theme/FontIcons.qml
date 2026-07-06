@@ -123,6 +123,7 @@ QtObject {
     readonly property string fa_eye_slash: "\uf070"    // hide a revealed field
     readonly property string fa_triangle_exclamation: "\uf071" // destructive confirm
     readonly property string fa_circle_nodes: "\uf4c9" // subagents / delegation
+    readonly property string fa_shield_halved: "\uf3ed" // approval policy chip
 
     // --- Composer glyphs ----------------------------------------------------
     // Send (primary), stop (filled square), queue (layer group), mention (@),

@@ -635,6 +635,9 @@ void RootWidget::wireStatusFooter() {
     // models; the chrome's turn is (re)bound to the active tab in activateTab().
     m_footer->setModel(m_status);
     m_composerChrome->setSession(m_composerSession);
+    // Engine + approval-policy chips on the idle chrome line (C3/E1 parity with
+    // the GUI ComposerControls chips).
+    m_composerChrome->setFacades(m_services.sessionSettings, m_services.profiles);
 }
 
 void RootWidget::wireInitialSelection() {
