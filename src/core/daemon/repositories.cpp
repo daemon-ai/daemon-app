@@ -1733,6 +1733,10 @@ void FleetRepository::syncFleetUnits(const QList<DecodedUnitNode>& flat) {
         row.profileRef = n.profileRef;
         row.sessionId = n.sessionId;
         row.work = n.work;
+        // [wave2:app-delegation] F3: carry the authoritative wire lifetime/engine into the cache.
+        row.lifetime = n.lifetime;
+        row.engineKind = n.engineKind;
+        row.engineAgent = n.engineAgent;
         row.updatedAtMs = now;
         cache()->upsertFleetUnit(row);
         keep.insert(n.id);
@@ -1765,6 +1769,49 @@ void FleetRepository::handleFailure(const QString& correlationId, const QString&
         emit refreshFailed(message);
     } else if (correlationId == QLatin1String(kControlCorrelation)) {
         emit controlFailed(message);
+    }
+}
+
+// [wave2:app-delegation] F7/DEL-7: the read-only delegation guardrail ceilings.
+CapsRepository::CapsRepository(NodeApiClient* client, QObject* parent)
+    : RepositoryBase(client, nullptr, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &CapsRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &CapsRepository::handleFailure);
+    }
+}
+
+void CapsRepository::refresh() {
+    if (client() == nullptr) {
+        emit refreshFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeCapsRequest(), QLatin1String(kCapsCorrelation));
+}
+
+void CapsRepository::handleResponse(const QString& correlationId, const QByteArray& responseCbor) {
+    if (correlationId != QLatin1String(kCapsCorrelation)) {
+        return;
+    }
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+        DecodedApiError err;
+        NodeApiCodec::decodeError(responseCbor, &err);
+        emit refreshFailed(err.message.isEmpty() ? tr("Failed to read delegation limits")
+                                                 : err.message);
+        return;
+    }
+    if (!NodeApiCodec::decodeCaps(responseCbor, &m_caps)) {
+        emit refreshFailed(tr("Failed to decode delegation limits"));
+        return;
+    }
+    m_loaded = true;
+    emit capsRefreshed();
+}
+
+void CapsRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kCapsCorrelation)) {
+        emit refreshFailed(message);
     }
 }
 

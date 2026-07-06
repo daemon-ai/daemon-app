@@ -25,6 +25,10 @@ QString variantForName(const QString& name) {
     if (key == QStringLiteral("image_generate")) {
         return QStringLiteral("image-generate");
     }
+    // [wave2:app-delegation] F1: the orchestrate tool renders as a first-class delegation card.
+    if (key == QStringLiteral("orchestrate")) {
+        return QStringLiteral("delegation");
+    }
     return QStringLiteral("generic");
 }
 
@@ -40,6 +44,9 @@ QString toneToKey(const QString& tone, const QString& name) {
     }
     if (key == QStringLiteral("image_generate")) {
         return QStringLiteral("image");
+    }
+    if (key == QStringLiteral("orchestrate")) {
+        return QStringLiteral("agent");
     }
     return QStringLiteral("tool");
 }
@@ -212,6 +219,22 @@ QVariantMap projectToolDetail(const QString& nodeKind, const QByteArray& bodyJso
         return out;
     }
 
+    // [wave2:app-delegation] F7: a delegation guardrail decline (orchestrate refused a child-spawn
+    // for max_depth/max_fanout). The node attaches ToolDetail{kind:"guardrail"} with a JSON body
+    // {kind:"depth"|"fanout", limit, reason} alongside the human string in `summary` (ok stays
+    // true). Project it into the amber guardrail-chip renderer keys — an honest, explanatory state,
+    // not a generic tool failure.
+    if (nodeKind == QStringLiteral("guardrail")) {
+        out.insert(QStringLiteral("detailKind"), QStringLiteral("guardrail"));
+        out.insert(QStringLiteral("guardrailKind"), o.value(QStringLiteral("kind")).toString());
+        if (o.contains(QStringLiteral("limit"))) {
+            out.insert(QStringLiteral("guardrailLimit"), o.value(QStringLiteral("limit")).toInt());
+        }
+        const QString reason = o.value(QStringLiteral("reason")).toString();
+        out.insert(QStringLiteral("guardrailReason"), reason.isEmpty() ? summary : reason);
+        return out;
+    }
+
     if (nodeKind == QStringLiteral("fs")) {
         if (o.contains(QStringLiteral("count"))) {
             out.insert(QStringLiteral("count"), o.value(QStringLiteral("count")).toInt());
@@ -366,7 +389,19 @@ QVariantMap buildToolView(const QVariantMap& metadata) {
     // Title flips with status: a present-progressive verb while running, the
     // tool name once settled (mirrors Hermes ToolView's running/done title).
     QString title;
-    if (variant == QStringLiteral("clarify")) {
+    if (variant == QStringLiteral("delegation")) {
+        // [wave2:app-delegation] F1: a first-class delegation card title, not the raw tool name.
+        // A guardrail decline (ok, but the spawn was refused) reads as "limit reached".
+        if (detailKind == QStringLiteral("guardrail")) {
+            title = QObject::tr("Delegation limit reached");
+        } else if (status == QStringLiteral("running")) {
+            title = QObject::tr("Delegating…");
+        } else if (status == QStringLiteral("error")) {
+            title = QObject::tr("Delegation failed");
+        } else {
+            title = QObject::tr("Delegated to a subagent");
+        }
+    } else if (variant == QStringLiteral("clarify")) {
         title = metadata.value(QStringLiteral("answered")).toBool()
                     ? QObject::tr("Answered")
                     : QObject::tr("Needs your input");

@@ -80,6 +80,25 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap& event) {
         return out;
     }
 
+    // [wave2:app-delegation] F1/F2: a delegation completion notice (the node injecting a detached
+    // child's result as a fresh turn) renders as a System message — an honest "↳" delegation line,
+    // not a raw user bubble. Settle any open assistant run first (like userMessage); reuses the
+    // same roled-message primitive so it persists + reloads via the existing System-role path.
+    if (type == QStringLiteral("delegationNotice")) {
+        const QString text = stringField(event, QStringLiteral("text")).trimmed();
+        if (text.isEmpty()) {
+            return out;
+        }
+        out += finish();
+        const qsizetype before = m_store->blockCount();
+        m_store->appendMessageBlocks(MessageRole::System, text);
+        BlockChangeSet appended;
+        appended.structuralRow = before;
+        appended.insertedCount = m_store->blockCount() - before;
+        out.push_back(appended);
+        return out;
+    }
+
     // Any content-producing event opens the assistant message if one is not
     // already open, so the blocks below group under a single assistant turn.
     ensureTurn();

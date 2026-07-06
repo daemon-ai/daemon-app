@@ -6,7 +6,6 @@
 #include "daemon/daemon_transport.h"
 #include "daemon/node_api_client.h"
 #include "daemon/repositories.h"
-#include "profiles/iprofile_store.h"
 #include "uimodels/variant_list_model.h"
 #include "wire_mux_fixture.h"
 
@@ -43,8 +42,19 @@ void zeroUsage(QByteArray& b) {
 }
 
 // A minimal unit-node map (the 6 required keys; optionals omitted). `kind`/state are bare tstrs.
-void unitNode(QByteArray& b, const char* id, const char* kind, const QList<const char*>& children) {
-    mapHdr(b, 6);
+// [wave2:app-delegation] F3: optional `lifetime` ("Persistent"/"Ephemeral") and `foreignAgent`
+// (engine-selector Foreign{agent}) append the v29 enrichment keys in CDDL order (after the required
+// keys) so the decode path is exercised end-to-end.
+void unitNode(QByteArray& b, const char* id, const char* kind, const QList<const char*>& children,
+              const char* lifetime = nullptr, const char* foreignAgent = nullptr) {
+    int keys = 6;
+    if (lifetime != nullptr) {
+        ++keys;
+    }
+    if (foreignAgent != nullptr) {
+        ++keys;
+    }
+    mapHdr(b, keys);
     cborText(b, "id");
     cborText(b, id);
     cborText(b, "kind");
@@ -60,6 +70,18 @@ void unitNode(QByteArray& b, const char* id, const char* kind, const QList<const
     for (const char* c : children) {
         cborText(b, c);
     }
+    if (lifetime != nullptr) {
+        cborText(b, "lifetime");
+        cborText(b, lifetime);
+    }
+    if (foreignAgent != nullptr) {
+        cborText(b, "engine");
+        mapHdr(b, 1);
+        cborText(b, "Foreign");
+        mapHdr(b, 1);
+        cborText(b, "agent");
+        cborText(b, foreignAgent);
+    }
 }
 
 // {"Tree": {"root": "u1", "nodes": [ orchestrator u1 -> child u2, engine u2 ]}}
@@ -74,6 +96,22 @@ QByteArray treeResp() {
     arrHdr(b, 2);
     unitNode(b, "u1", "Orchestrator", {"u2"});
     unitNode(b, "u2", "Engine", {});
+    return b;
+}
+
+// [wave2:app-delegation] F3: a tree whose child carries the v29 lifetime + foreign-engine wire
+// enrichment (root u1 -> child u2, ephemeral, running on a foreign agent "gemini-cli").
+QByteArray treeRespEnriched() {
+    QByteArray b;
+    mapHdr(b, 1);
+    cborText(b, "Tree");
+    mapHdr(b, 2);
+    cborText(b, "root");
+    cborText(b, "u1");
+    cborText(b, "nodes");
+    arrHdr(b, 2);
+    unitNode(b, "u1", "Orchestrator", {"u2"});
+    unitNode(b, "u2", "Engine", {}, "Ephemeral", "gemini-cli");
     return b;
 }
 
@@ -111,43 +149,6 @@ QByteArray unsupportedResp() {
 uimodels::VariantListModel* model(DaemonFleetTree& tree) {
     return qobject_cast<uimodels::VariantListModel*>(tree.nodes());
 }
-
-// A minimal profile-store stub for the engine-identity join (C3): fixed rows keyed by id.
-class StubProfileStore : public profiles::IProfileStore {
-public:
-    explicit StubProfileStore(QObject* parent = nullptr)
-        : profiles::IProfileStore(parent), m_model(new uimodels::VariantListModel(this)) {}
-
-    void addProfile(const QString& id, const QString& engine, const QString& acpAgent) {
-        QVariantMap row;
-        row[QStringLiteral("id")] = id;
-        row[QStringLiteral("name")] = id;
-        row[QStringLiteral("engine")] = engine;
-        row[QStringLiteral("acpAgent")] = acpAgent;
-        auto rows = m_model->rows();
-        rows.append(row);
-        m_model->setRows(rows);
-        emit changed();
-    }
-
-    [[nodiscard]] QObject* profiles() const override { return m_model; }
-    [[nodiscard]] QString defaultProfileId() const override { return {}; }
-    [[nodiscard]] QVariantMap profile(const QString& id) const override {
-        const int row = m_model->indexOfId(id);
-        return row >= 0 ? m_model->at(row) : QVariantMap{};
-    }
-    [[nodiscard]] QStringList profileNames() const override { return {}; }
-    [[nodiscard]] QVariantList availableSkills() const override { return {}; }
-    [[nodiscard]] QVariantList availableTools() const override { return {}; }
-    QString createProfile(const QString&) override { return {}; }
-    QString cloneProfile(const QString&, const QString&) override { return {}; }
-    void updateProfile(const QString&, const QVariantMap&) override {}
-    void remove(const QString&) override {}
-    void setDefault(const QString&) override {}
-
-private:
-    uimodels::VariantListModel* m_model = nullptr;
-};
 
 } // namespace
 
@@ -260,53 +261,44 @@ private slots:
                  daemonapp::daemon::NodeApiCodec::encodeTreeRequest(QStringLiteral("u1")));
     }
 
-    // C3/ENG-7: rows join engine identity from the profile store by profileRef — foreign (Acp)
-    // profiles carry the agent name, unknown/absent profiles degrade to "Core" — and the join
-    // re-runs when the store changes (specs hydrate async).
-    void engineIdentityJoinsFromProfileStore() {
-        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("fleet-eng.db")));
-        QVERIFY(cache.isOpen());
-        CachedFleetUnitRow root;
-        root.unitId = QStringLiteral("u1");
-        root.depth = 0;
-        root.ordinal = 0;
-        root.name = QStringLiteral("Acme");
-        root.kind = QStringLiteral("Orchestrator");
-        root.state = QStringLiteral("Running");
-        root.profileRef = QStringLiteral("coder");
-        root.updatedAtMs = 1;
-        QVERIFY(cache.upsertFleetUnit(root));
-        CachedFleetUnitRow child;
-        child.unitId = QStringLiteral("u2");
-        child.parentId = QStringLiteral("u1");
-        child.depth = 1;
-        child.ordinal = 1;
-        child.name = QStringLiteral("Gemini");
-        child.kind = QStringLiteral("Engine");
-        child.state = QStringLiteral("Running");
-        child.profileRef = QStringLiteral("gemini");
-        child.updatedAtMs = 1;
-        QVERIFY(cache.upsertFleetUnit(child));
-
-        DaemonTransport transport; // unconnected
+    // [wave2:app-delegation] F3: lifetime + engine are decoded straight off the wire UnitNode (v29)
+    // — no client-side profile-join. The child node carries lifetime="Ephemeral" and a foreign
+    // engine ("gemini-cli"); the row surfaces engine="Foreign" + engineAgent + lifetime, the root
+    // (unenriched) leaves them empty.
+    void wireLifetimeAndEngineDecode() {
+        const QString sock = m_tmp.filePath(QStringLiteral("fleet-enr.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(sock), "listen");
+        fake.setReplyPayload(treeRespEnriched());
+        DaemonTransport transport;
+        transport.setSocketPath(sock);
         NodeApiClient client(&transport);
+        DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("fleet-enr.db")));
         FleetRepository repo(&client, &cache);
-        StubProfileStore profiles;
-        profiles.addProfile(QStringLiteral("coder"), QStringLiteral("Core"), QString());
-        DaemonFleetTree tree(&repo, &profiles);
+        DaemonFleetTree tree(&repo);
+
+        QSignalSpy refreshed(&repo, &FleetRepository::treeRefreshed);
+        repo.refreshTree();
+        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
 
         auto* m = model(tree);
         QCOMPARE(m->count(), 2);
-        QCOMPARE(m->at(0).value(QStringLiteral("engine")).toString(), QStringLiteral("Core"));
-        // Unknown profile (spec not hydrated yet) degrades to the optimistic Core default.
-        QCOMPARE(m->at(1).value(QStringLiteral("engine")).toString(), QStringLiteral("Core"));
-
-        // The foreign profile's spec lands (store changed) -> the row flips to Acp + agent name.
-        profiles.addProfile(QStringLiteral("gemini"), QStringLiteral("Acp"),
-                            QStringLiteral("gemini-cli"));
-        QCOMPARE(m->at(1).value(QStringLiteral("engine")).toString(), QStringLiteral("Acp"));
-        QCOMPARE(m->at(1).value(QStringLiteral("acpAgent")).toString(),
+        // Root: no enrichment -> empty engine/lifetime (chip hidden).
+        QCOMPARE(m->at(0).value(QStringLiteral("engine")).toString(), QString());
+        QCOMPARE(m->at(0).value(QStringLiteral("lifetime")).toString(), QString());
+        // Child: foreign engine + ephemeral, decoded from the wire.
+        QCOMPARE(m->at(1).value(QStringLiteral("engine")).toString(), QStringLiteral("Foreign"));
+        QCOMPARE(m->at(1).value(QStringLiteral("engineAgent")).toString(),
                  QStringLiteral("gemini-cli"));
+        QCOMPARE(m->at(1).value(QStringLiteral("lifetime")).toString(),
+                 QStringLiteral("Ephemeral"));
+
+        // The enrichment also survives offline: it round-trips through the v7 cache columns.
+        const QList<CachedFleetUnitRow> cached = cache.fleetUnits();
+        QCOMPARE(cached.size(), 2);
+        QCOMPARE(cached.at(1).engineKind, QStringLiteral("Foreign"));
+        QCOMPARE(cached.at(1).engineAgent, QStringLiteral("gemini-cli"));
+        QCOMPARE(cached.at(1).lifetime, QStringLiteral("Ephemeral"));
     }
 
     // PRO-10: pausing an engine leaf is Unsupported -> controlRejected fires + the optimistic

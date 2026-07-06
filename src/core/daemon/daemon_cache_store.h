@@ -68,6 +68,10 @@ struct CachedFleetUnitRow {
     QString profileRef;
     QString sessionId;
     QString work;
+    // [wave2:app-delegation] v7 (F3): authoritative per-child lifetime + engine (UnitNode v29).
+    QString lifetime;    // "" | "Persistent" | "Ephemeral"
+    QString engineKind;  // "" | "Core" | "Foreign"
+    QString engineAgent; // foreign agent name (only when engineKind == "Foreign")
     qint64 updatedAtMs = 0;
 };
 

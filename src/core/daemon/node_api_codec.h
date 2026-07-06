@@ -327,6 +327,16 @@ struct DecodedLogEntry {
     // Drives the inline "Allow permanently" affordance's visibility — the app never shows it unless
     // the node advertised it here.
     bool hostAllowPermanentOffered = false;
+    // [wave2:app-delegation] F1/F2: delegation completion-notice provenance on a StartTurn Command
+    // (wire v29 user_msg.notice). The node injects a detached child's completion as a fresh user
+    // turn; when `hasNotice` is set, `noticeChild` is the finished child session id and
+    // `noticeCallId` (optional) is the parent orchestrate tool call_id, so the client renders a
+    // linked delegation chip instead of raw "[subagent … completed]" text. NOTE: user_msg.notice is
+    // ALWAYS present on the wire (possibly null) — only a non-null CompletionNoticeRef sets
+    // hasNotice.
+    bool hasNotice = false;
+    QString noticeChild;
+    QString noticeCallId;
 };
 
 // A pending approval (ApprovalsPending -> Approvals). request_id is a STRING here (the aggregate
@@ -635,12 +645,27 @@ struct DecodedUnitNode {
     QString role;     // "Primary" | "ManagedChild" | "EphemeralSubagent" | ""
     QString parentId; // set by decodeTreeReport's flatten ("" = the root)
     int depth = 0;    // set by decodeTreeReport's flatten
+    // [wave2:app-delegation] F3: authoritative per-child enrichment on the wire (v29 UnitNode).
+    // lifetime is the delegation lifetime ("" | "Persistent" | "Ephemeral"); engineKind/engineAgent
+    // decode the wire engine-selector ("" | "Core" | "Foreign" + the foreign agent name) so the
+    // fleet tree renders lifetime + engine chips without an N-side-read profile join.
+    QString lifetime;
+    QString engineKind;  // "" | "Core" | "Foreign"
+    QString engineAgent; // the foreign agent name (only when engineKind == "Foreign")
 };
 
 // The top-level fleet roster (Fleet -> FleetReport): the root unit ids (usage omitted from the
 // facade).
 struct DecodedFleetReport {
     QStringList children;
+};
+
+// [wave2:app-delegation] F7/DEL-7: the node's delegation guardrail ceilings (Caps -> CapsReport).
+// Node-wide policy (keys on nothing session/profile-specific), surfaced read-only — the app cannot
+// set them (no wire write op). Drives the read-only "Delegation limits" rows in Settings -> Safety.
+struct DecodedCapsReport {
+    quint32 orchestrateMaxDepth = 0;
+    quint32 orchestrateMaxFanout = 0;
 };
 
 // --- Interactive auth (AuthProviders / AuthBegin / AuthComplete; app-wizard-auth stream) --------
@@ -1053,6 +1078,10 @@ public:
     // Decode a Unit response (Some/None). Sets *found=false on the null arm (unknown unit).
     static bool decodeUnit(const QByteArray& responseCbor, DecodedUnitNode* out, bool* found);
     static bool decodeFleetReport(const QByteArray& responseCbor, DecodedFleetReport* out);
+
+    // [wave2:app-delegation] F7/DEL-7: the payload-free Caps request + its CapsReport decode.
+    [[nodiscard]] static QByteArray encodeCapsRequest();
+    static bool decodeCaps(const QByteArray& responseCbor, DecodedCapsReport* out);
 
     // --- Channels / Events-IO read surface (story 04: EIO-1/3/8/9) ---------------------------
     [[nodiscard]] static QByteArray encodeTransportAdaptersRequest();

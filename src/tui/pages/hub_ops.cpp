@@ -15,6 +15,34 @@
 #include "tui_page_hub.h"
 #include "uimodels/variant_list_model.h"
 
+#include <QCoreApplication>
+
+namespace {
+// [wave2:app-delegation] F3: the TUI projection of the GUI fleet engine + lifetime chips, off the
+// authoritative wire UnitNode fields (engine = "Core"/"Foreign" + engineAgent, lifetime). Local to
+// the fleet row (the shared engineToken() reads the profile-row vocabulary the engines stream
+// owns); integration 2 reconciles both onto the engines stream's EngineIdentity helper.
+QString fleetEngineToken(const QVariantMap& row) {
+    const QString engine = row.value(QStringLiteral("engine")).toString();
+    if (engine == QStringLiteral("Foreign")) {
+        const QString agent = row.value(QStringLiteral("engineAgent")).toString();
+        return agent.isEmpty() ? QCoreApplication::translate("TuiPageHub", "Foreign") : agent;
+    }
+    return QCoreApplication::translate("TuiPageHub", "Native");
+}
+
+QString fleetLifetimeToken(const QVariantMap& row) {
+    const QString lifetime = row.value(QStringLiteral("lifetime")).toString();
+    if (lifetime == QStringLiteral("Persistent")) {
+        return QCoreApplication::translate("TuiPageHub", "persistent");
+    }
+    if (lifetime == QStringLiteral("Ephemeral")) {
+        return QCoreApplication::translate("TuiPageHub", "ephemeral");
+    }
+    return {};
+}
+} // namespace
+
 QString TuiPageHub::buildDashboardMarkdown() const {
     auto* activity = qobject_cast<uimodels::VariantListModel*>(m_deps.dashboard->activity());
 
@@ -45,18 +73,23 @@ QString TuiPageHub::buildFleetMarkdown(int sel) const {
     QString md;
     md += tr("# Fleet\n\n");
     md += tr("Orchestrator/worker tree, shared with the GUI. **j/k** move · "
-             "**Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.\n\n");
+             "**Space/Enter** pause/resume · **o** open transcript · **t** steer a child · "
+             "**c** cancel its turn.\n\n");
     if (nodes != nullptr) {
         const auto rows = nodes->rows();
         for (int i = 0; i < rows.size(); ++i) {
             const QVariantMap& n = rows.at(i);
             const int depth = n.value(QStringLiteral("depth")).toInt();
             md += QString(static_cast<qsizetype>(depth) * 2, QLatin1Char(' '));
-            // Engine identity (C3/ENG-7): the same chip the GUI fleet rows render.
-            md += tr("- %1%2 — %3 (`%4`) · %5\n")
+            // [wave2:app-delegation] Engine + lifetime chips (C3/F3), off the wire UnitNode fields.
+            const QString lifetime = fleetLifetimeToken(n);
+            const QString lifetimeSuffix =
+                lifetime.isEmpty() ? QString() : QStringLiteral(" · %1").arg(lifetime);
+            md += tr("- %1%2 — %3 (`%4`) · %5%6\n")
                       .arg(mark(i), n.value(QStringLiteral("name")).toString(),
                            n.value(QStringLiteral("status")).toString(),
-                           n.value(QStringLiteral("model")).toString(), engineToken(n));
+                           n.value(QStringLiteral("model")).toString(), fleetEngineToken(n),
+                           lifetimeSuffix);
         }
     }
     return md;

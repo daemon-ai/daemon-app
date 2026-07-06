@@ -31,6 +31,9 @@ ColumnLayout {
         wrapMode: Text.WordWrap
     }
 
+    // [wave2:app-delegation] F7/DEL-7: read-only node delegation guardrail ceilings.
+    DelegationLimitsSection { Layout.fillWidth: true }
+
     SectionLabel { text: qsTr("Sandbox") }
 
     SettingRow {

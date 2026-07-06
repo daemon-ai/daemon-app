@@ -446,6 +446,26 @@ bool NodeApiCodec::decodeFleetReport(const QByteArray& responseCbor, DecodedFlee
     return true;
 }
 
+// [wave2:app-delegation] F7/DEL-7: the node's delegation guardrail ceilings (read-only policy).
+QByteArray NodeApiCodec::encodeCapsRequest() {
+    return encodeSimple(api_request_r::api_request_request_caps_m_c);
+}
+
+bool NodeApiCodec::decodeCaps(const QByteArray& responseCbor, DecodedCapsReport* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_caps_m_c);
+    if (!response) {
+        return false;
+    }
+    const caps_report& c = response->api_response_response_caps_m.response_caps_Caps;
+    out->orchestrateMaxDepth = c.caps_report_orchestrate_max_depth;
+    out->orchestrateMaxFanout = c.caps_report_orchestrate_max_fanout;
+    return true;
+}
+
 // --- Channels / Events-IO read surface (story 04: EIO-1/3/8/9) -----------------------------------
 
 namespace {

@@ -7,6 +7,11 @@
 
 namespace daemonapp::daemon::cache {
 
+// v7 ([wave2:app-delegation]): adds lifetime + engine_kind + engine_agent to daemon_fleet_units
+// (F3: authoritative per-child lifetime/engine chips render offline-first). The cache is
+// non-authoritative, so the bump just drops + rebuilds (the daemon re-baselines it). (F1's
+// completion-notice renders as a durable System Message block via the existing role/text path — no
+// new transcript columns.)
 // v6 (D1): adds detail_kind + detail_body to daemon_transcript_blocks so a tool result's rich
 // detail (diff / search hits / screenshot path / full output in `summary`) survives restart and
 // history scroll-back.
@@ -19,7 +24,7 @@ namespace daemonapp::daemon::cache {
 // became live (offline-first read).
 // v2 (L3): added daemon_transcript_blocks (render-from-cache transcript) + per-session resync
 // cursors.
-inline constexpr int kSchemaVersion = 6;
+inline constexpr int kSchemaVersion = 7;
 
 inline constexpr const char* kCreateMetaSql = R"sql(
 CREATE TABLE IF NOT EXISTS daemon_cache_meta (
@@ -89,6 +94,10 @@ CREATE TABLE IF NOT EXISTS daemon_fleet_units (
   profile_ref TEXT,
   session_id TEXT,
   work TEXT,
+  -- [wave2:app-delegation] v7 (F3): authoritative per-child wire enrichment (UnitNode v29).
+  lifetime TEXT,      -- '' | 'Persistent' | 'Ephemeral'
+  engine_kind TEXT,   -- '' | 'Core' | 'Foreign'
+  engine_agent TEXT,  -- foreign agent name (only when engine_kind == 'Foreign')
   updated_at_ms INTEGER NOT NULL
 );
 )sql";

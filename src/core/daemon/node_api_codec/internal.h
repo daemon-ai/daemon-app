@@ -36,6 +36,9 @@ QString fsChangeKindName(int choice);
 QString unitKindName(int choice);
 QString unitStateName(int choice);
 QString sessionRoleName(int choice);
+// [wave2:app-delegation] F3: UnitNode v29 enrichment decoders.
+QString delegationLifetimeName(int choice);
+void decodeEngineSelector(const engine_selector_r& sel, QString* kind, QString* agent);
 QString fsRootKindName(int choice);
 QString sessionStateName(int choice);
 QString lifecycleName(int choice);

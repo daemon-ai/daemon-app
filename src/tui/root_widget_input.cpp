@@ -499,6 +499,23 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         event->accept();
         return true;
     }
+    // [wave2:app-delegation] Fleet: 'o' drills into the selected child's transcript (F1/DEL-1). The
+    // GUI opens a read-only viewer; the TUI navigates to the child session tab (the story's
+    // explicit reduced form). Enter stays pause/resume; operator steer/cancel stays on 't'/'c'.
+    if (kind == TabModel::Fleet && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("o")) {
+        const QList<QVariantMap> rows = pageActionRows(kind);
+        if (!rows.isEmpty()) {
+            const int sel =
+                qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
+            const QString childSession = rows.at(sel).value(QStringLiteral("sessionId")).toString();
+            if (!childSession.isEmpty()) {
+                openSessionPinnedTab(childSession);
+            }
+        }
+        event->accept();
+        return true;
+    }
     if (kind == TabModel::Profiles && event->modifiers() == Qt::NoModifier) {
         // 'e' opens the interactive profile editor for the selected row.
         if (event->text() == QStringLiteral("e")) {

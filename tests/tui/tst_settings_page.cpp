@@ -371,6 +371,9 @@ private slots:
             // read-only (managed rows), so no editable safety/approvalPolicy row.
             QStringLiteral("safety/sandbox"),
             QStringLiteral("safety/allowNetwork"),
+            // [wave2:app-delegation] F7/DEL-7: read-only node delegation guardrail ceilings.
+            QStringLiteral("safety/delegationDepth"),
+            QStringLiteral("safety/delegationFanout"),
             QStringLiteral("memory/contextWindow"),
             QStringLiteral("memory/autoCompact"),
             QStringLiteral("memory/persistMemory"),

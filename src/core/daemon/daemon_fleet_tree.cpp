@@ -4,7 +4,6 @@
 #include "daemon/daemon_fleet_tree.h"
 
 #include "daemon/repositories.h"
-#include "profiles/iprofile_store.h"
 #include "uimodels/variant_list_model.h"
 
 namespace fleet {
@@ -25,20 +24,13 @@ QString statusFor(const QString& wireState) {
 
 } // namespace
 
-DaemonFleetTree::DaemonFleetTree(daemonapp::daemon::FleetRepository* repo,
-                                 profiles::IProfileStore* profiles, QObject* parent)
-    : IFleetTree(parent), m_repo(repo), m_profiles(profiles),
-      m_nodes(new uimodels::VariantListModel(this)) {
+DaemonFleetTree::DaemonFleetTree(daemonapp::daemon::FleetRepository* repo, QObject* parent)
+    : IFleetTree(parent), m_repo(repo), m_nodes(new uimodels::VariantListModel(this)) {
     if (m_repo != nullptr) {
         connect(m_repo, &daemonapp::daemon::FleetRepository::treeRefreshed, this,
                 &DaemonFleetTree::rebuild);
         connect(m_repo, &daemonapp::daemon::FleetRepository::controlFailed, this,
                 &DaemonFleetTree::onControlRejected);
-        if (m_profiles != nullptr) {
-            // Profile specs hydrate async (ProfileGet per row); re-join engine identity when they
-            // land so rows flip from the optimistic "Core" to the real engine.
-            connect(m_profiles, &profiles::IProfileStore::changed, this, &DaemonFleetTree::rebuild);
-        }
         // Offline-first: render the last-known tree from cache immediately, before any connect.
         rebuild();
     }
@@ -65,20 +57,13 @@ void DaemonFleetTree::rebuild() {
             m_paused.contains(u.unitId) ? QStringLiteral("paused") : statusFor(u.state);
         // No model field on a unit; the bound profile is the closest "what is this running as".
         row[QStringLiteral("model")] = u.profileRef;
-        // Engine identity (C3): join profileRef -> profile store row. Absent store / unknown
-        // profile degrades to "Core" (the optimistic default the profile store itself uses
-        // before its spec hydrates).
-        QString engine = QStringLiteral("Core");
-        QString acpAgent;
-        if (m_profiles != nullptr && !u.profileRef.isEmpty()) {
-            const QVariantMap p = m_profiles->profile(u.profileRef);
-            if (!p.isEmpty()) {
-                engine = p.value(QStringLiteral("engine"), engine).toString();
-                acpAgent = p.value(QStringLiteral("acpAgent")).toString();
-            }
-        }
-        row[QStringLiteral("engine")] = engine;
-        row[QStringLiteral("acpAgent")] = acpAgent;
+        // [wave2:app-delegation] Engine identity (C3/F3): decoded straight off the wire UnitNode
+        // (v29). engine = "Core" | "Foreign" (empty when the node did not enrich the node); the
+        // foreign agent name is the chip label. No client-side profile-join.
+        row[QStringLiteral("engine")] = u.engineKind;
+        row[QStringLiteral("engineAgent")] = u.engineAgent;
+        // [wave2:app-delegation] Delegation lifetime (F3): "Persistent" | "Ephemeral" | "".
+        row[QStringLiteral("lifetime")] = u.lifetime;
         // F4: the unit's bound session id + wire role, so delegated-child rows can offer the
         // operator Steer/Cancel actions (a child IS a session; Submit is session-addressable).
         row[QStringLiteral("sessionId")] = u.sessionId;

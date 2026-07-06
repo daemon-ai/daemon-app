@@ -32,6 +32,13 @@ void NavController::openAgent(const QString& kind, const QString& profileRef,
     emit openAgentRequested(kind, profileRef, title);
 }
 
+void NavController::openSession(const QString& sessionId, bool readOnly) {
+    if (sessionId.isEmpty()) {
+        return;
+    }
+    emit openSessionRequested(sessionId, readOnly);
+}
+
 void NavController::close() {
     if (m_page.isEmpty()) {
         return;

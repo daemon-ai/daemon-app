@@ -477,15 +477,26 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
             // message node-authoritatively — the same log entry every other observer sees — and
             // persist it as a durable Message block so a reload/cold start replays it from cache.
             if (entry.direction == QStringLiteral("Inbound") && !entry.commandText.isEmpty()) {
-                emit eventsEmitted(QVariantList{
-                    QVariantMap{{QStringLiteral("type"), QStringLiteral("userMessage")},
-                                {QStringLiteral("text"), entry.commandText}}});
+                // [wave2:app-delegation] F1/F2: a StartTurn carrying a delegation completion notice
+                // (user_msg.notice) is the node injecting a detached child's result as a fresh
+                // reactive turn — render it as an honest System message (a linked-looking "↳"
+                // delegation line), not a raw user bubble, and persist it with role=System so a
+                // reload renders the same. Ordinary user commands keep the User path.
+                const bool isNotice = entry.hasNotice;
+                const QString role = isNotice ? QStringLiteral("System") : QStringLiteral("User");
+                const QString evType =
+                    isNotice ? QStringLiteral("delegationNotice") : QStringLiteral("userMessage");
+                emit eventsEmitted(
+                    QVariantList{QVariantMap{{QStringLiteral("type"), evType},
+                                             {QStringLiteral("text"), entry.commandText},
+                                             {QStringLiteral("child"), entry.noticeChild},
+                                             {QStringLiteral("callId"), entry.noticeCallId}}});
                 if (m_cache != nullptr && !m_sessionId.isEmpty()) {
                     daemonapp::daemon::CachedTranscriptBlockRow b;
                     b.sessionId = m_sessionId;
                     b.seq = entry.seq;
                     b.kind = QStringLiteral("Message");
-                    b.role = QStringLiteral("User");
+                    b.role = role;
                     b.text = entry.commandText;
                     b.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
                     m_cache->upsertTranscriptBlock(b);
