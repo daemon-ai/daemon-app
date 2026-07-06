@@ -365,6 +365,10 @@ Babalik ka sa first-run setup.</translation>
         <translation>daemon-core (native)</translation>
     </message>
     <message>
+        <source>  ·  stream-json</source>
+        <translation>  ·  stream-json</translation>
+    </message>
+    <message>
         <source>  ·  ACP %1</source>
         <translation>  ·  ACP %1</translation>
     </message>
@@ -382,6 +386,130 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>daemon-core (native)</source>
         <translation>daemon-core (native)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsDialog</name>
+    <message>
+        <source>Foreign agents</source>
+        <translation>Mga foreign agent</translation>
+    </message>
+    <message>
+        <source>Registered + discovered agents:</source>
+        <translation>Mga rehistrado + natuklasang agent:</translation>
+    </message>
+    <message>
+        <source>Register…</source>
+        <translation>Irehistro…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Alisin</translation>
+    </message>
+    <message>
+        <source>Re-scan</source>
+        <translation>Muling i-scan</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Isara</translation>
+    </message>
+    <message>
+        <source>Agent registered.</source>
+        <translation>Nairehistro ang agent.</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>Inalis ang “%1”.</translation>
+    </message>
+    <message>
+        <source>(no foreign agents in the catalog)</source>
+        <translation>(walang foreign agent sa katalogo)</translation>
+    </message>
+    <message>
+        <source>Only manually registered agents can be removed.</source>
+        <translation>Mga manu-manong nairehistrong agent lang ang maaaring alisin.</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>Alisin ang agent</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start
+until it is re-registered.</source>
+        <translation>Alisin ang “%1”? Ang mga profile na gumagamit nito ay hindi magsisimula
+hanggang muli itong mairehistro.</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsSettingsSection</name>
+    <message>
+        <source>Agent registered.</source>
+        <translation>Nairehistro ang agent.</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>Inalis ang “%1”.</translation>
+    </message>
+    <message>
+        <source>Foreign agents</source>
+        <translation>Mga foreign agent</translation>
+    </message>
+    <message>
+        <source>Agents that run a foreign engine (ACP or the Claude Code stream-json bridge). Launch recipes are stored and validated by the daemon — profiles reference an agent by name only.</source>
+        <translation>Mga agent na nagpapatakbo ng foreign engine (ACP o ang stream-json bridge ng Claude Code). Ang mga launch recipe ay iniimbak at bineberpika ng daemon — ang mga profile ay tumutukoy sa agent sa pamamagitan ng pangalan lamang.</translation>
+    </message>
+    <message>
+        <source>Register custom…</source>
+        <translation>Magrehistro ng custom…</translation>
+    </message>
+    <message>
+        <source>Re-scan installed</source>
+        <translation>Muling i-scan ang naka-install</translation>
+    </message>
+    <message>
+        <source>No foreign agents in the catalog yet.</source>
+        <translation>Wala pang foreign agent sa katalogo.</translation>
+    </message>
+    <message>
+        <source>stream-json</source>
+        <translation>stream-json</translation>
+    </message>
+    <message>
+        <source>ACP</source>
+        <translation>ACP</translation>
+    </message>
+    <message>
+        <source>manual</source>
+        <translation>manual</translation>
+    </message>
+    <message>
+        <source>builtin</source>
+        <translation>built-in</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>naka-install</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>hindi naka-install</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Alisin</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>Alisin ang agent</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start until it is re-registered.</source>
+        <translation>Alisin ang “%1”? Ang mga profile na gumagamit nito ay hindi magsisimula hanggang muli itong mairehistro.</translation>
     </message>
 </context>
 <context>
@@ -493,8 +621,34 @@ Babalik ka sa first-run setup.</translation>
         <translation>Inbox zero — walang nakabinbing approval.</translation>
     </message>
     <message>
+        <source>Path</source>
+        <translation>Path</translation>
+    </message>
+    <message>
+        <source>fingerprint %1</source>
+        <translation>fingerprint %1</translation>
+    </message>
+    <message>
+        <source>Allowing permanently remembers this exact command:
+%1</source>
+        <translation>Ang pahintulot nang permanente ay naaalala ang eksaktong utos na ito:
+%1</translation>
+    </message>
+    <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>Dahilan na maririnig ng agent (opsyonal)</translation>
+    </message>
+    <message>
         <source>Deny</source>
         <translation>Tanggihan</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>Ipadala ang deny</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>Deny na may dahilan…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -695,6 +849,17 @@ Babalik ka sa first-run setup.</translation>
     </message>
 </context>
 <context>
+    <name>CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>Nabigo sa pagbasa ng mga limitasyon ng delegasyon</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>Nabigo sa pag-decode ng mga limitasyon ng delegasyon</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
     <message>
         <source>Remove stored credential?</source>
@@ -725,6 +890,10 @@ Babalik ka sa first-run setup.</translation>
         <translation>Walang nakakonektang channel.</translation>
     </message>
     <message>
+        <source>Room invites are handled by the node; newly-joined rooms appear here automatically.</source>
+        <translation>Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong sinalihang room ay lalabas dito nang awtomatiko.</translation>
+    </message>
+    <message>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
@@ -739,6 +908,14 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>No rooms.</source>
         <translation>Walang room.</translation>
+    </message>
+    <message>
+        <source>new</source>
+        <translation>bago</translation>
+    </message>
+    <message>
+        <source>Newly joined room</source>
+        <translation>Bagong sinalihang room</translation>
     </message>
     <message>
         <source>⇄ %1</source>
@@ -767,6 +944,14 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>Connect</source>
         <translation>Kumonekta</translation>
+    </message>
+    <message>
+        <source>Sign in to connect this channel</source>
+        <translation>Mag-sign in upang ikonekta ang channel na ito</translation>
+    </message>
+    <message>
+        <source>This channel type has no browser sign-in.</source>
+        <translation>Ang channel type na ito ay walang browser sign-in.</translation>
     </message>
 </context>
 <context>
@@ -1227,18 +1412,6 @@ Babalik ka sa first-run setup.</translation>
         <translation>verbose</translation>
     </message>
     <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
-    </message>
-    <message>
-        <source>Foreign</source>
-        <translation>Foreign</translation>
-    </message>
-    <message>
-        <source>Native</source>
-        <translation>Native</translation>
-    </message>
-    <message>
         <source>Edits</source>
         <translation>Mga Edit</translation>
     </message>
@@ -1269,6 +1442,10 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>Native</source>
         <translation>Native</translation>
+    </message>
+    <message>
+        <source>Foreign engine — model, reasoning and rewind are managed by the agent</source>
+        <translation>Foreign engine — ang modelo, reasoning at rewind ay pinamamahalaan ng agent</translation>
     </message>
     <message>
         <source>Engine</source>
@@ -1812,6 +1989,33 @@ Babalik ka sa first-run setup.</translation>
     </message>
 </context>
 <context>
+    <name>DelegationLimitsSection</name>
+    <message>
+        <source>Delegation limits</source>
+        <translation>Mga limitasyon ng delegasyon</translation>
+    </message>
+    <message>
+        <source>How deep and how wide an agent may delegate. Enforced by the node; shown here for reference.</source>
+        <translation>Kung gaano kalalim at kalawak ang maaaring i-delegate ng isang agent. Ipinatutupad ng node; ipinapakita rito para sanggunian.</translation>
+    </message>
+    <message>
+        <source>Max delegation depth</source>
+        <translation>Max na lalim ng delegasyon</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>Ipinatutupad ng node — hindi mako-configure mula sa app.</translation>
+    </message>
+    <message>
+        <source>—</source>
+        <translation>—</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>Max na background children</translation>
+    </message>
+</context>
+<context>
     <name>Dialog</name>
     <message>
         <source>OK</source>
@@ -2151,6 +2355,32 @@ Babalik ka sa first-run setup.</translation>
     </message>
 </context>
 <context>
+    <name>EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Foreign</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>EngineOriginChip</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Foreign</translation>
+    </message>
+    <message>
+        <source>Requested by this foreign agent</source>
+        <translation>Hiniling ng foreign agent na ito</translation>
+    </message>
+</context>
+<context>
     <name>FileExplorer</name>
     <message>
         <source>Explorer</source>
@@ -2244,6 +2474,13 @@ Babalik ka sa first-run setup.</translation>
     <message>
         <source>Retry</source>
         <translation>Ulitin</translation>
+    </message>
+</context>
+<context>
+    <name>FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>Nabigo ang pag-revoke ng fingerprint</translation>
     </message>
 </context>
 <context>
@@ -2491,12 +2728,20 @@ Babalik ka sa first-run setup.</translation>
         <translation>I-refresh</translation>
     </message>
     <message>
-        <source>Foreign</source>
-        <translation>Foreign</translation>
-    </message>
-    <message>
         <source>Native</source>
         <translation>Native</translation>
+    </message>
+    <message>
+        <source>Ephemeral</source>
+        <translation>Panandalian</translation>
+    </message>
+    <message>
+        <source>Persistent</source>
+        <translation>Nananatili</translation>
+    </message>
+    <message>
+        <source>Open transcript</source>
+        <translation>Buksan ang transcript</translation>
     </message>
     <message>
         <source>Steer…</source>
@@ -3101,6 +3346,33 @@ Salamat — magpapatuloy sa: %1
     </message>
 </context>
 <context>
+    <name>MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>Basahin at i-edit ang mga file ng workspace</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>Magpatakbo ng shell command (may approval)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>Maghanap sa web</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Kailangan ng Tavily API key</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>Magpatakbo ng totoong browser</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Kailangan ang browser build feature</translation>
+    </message>
+</context>
+<context>
     <name>ModelPickerOverlay</name>
     <message>
         <source>Off</source>
@@ -3381,8 +3653,8 @@ Magsimula ng isa mula sa Discover tab.</translation>
         <translation>system prompt</translation>
     </message>
     <message>
-        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
-        <translation>Nagpapatakbo ang agent na ito ng foreign na ACP engine. Ang launch recipe nito ay pinamamahalaan ng ACP catalog ng daemon — walang provider, model, o key na ico-configure.</translation>
+        <source>This agent runs a foreign engine. Its launch recipe is managed by the daemon&apos;s agent catalog — no provider, model, or key to configure.</source>
+        <translation>Nagpapatakbo ang agent na ito ng foreign engine. Ang launch recipe nito ay pinamamahalaan ng agent catalog ng daemon — walang provider, modelo, o key na iko-configure.</translation>
     </message>
     <message>
         <source>Name:</source>
@@ -3495,6 +3767,18 @@ Magsimula ng isa mula sa Discover tab.</translation>
     <message>
         <source>Name</source>
         <translation>Pangalan</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Foreign</translation>
+    </message>
+    <message>
+        <source>Foreign engine (set at create time)</source>
+        <translation>Foreign engine (itinakda sa paggawa)</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign engine — its launch recipe and model are managed by the daemon&apos;s agent catalog, so there is no provider, model, or base URL to configure here.</source>
+        <translation>Nagpapatakbo ang agent na ito ng foreign engine — ang launch recipe at modelo nito ay pinamamahalaan ng agent catalog ng daemon, kaya walang provider, modelo, o base URL na iko-configure dito.</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -3612,8 +3896,8 @@ Magsimula ng isa mula sa Discover tab.</translation>
         <translation>Pangalan</translation>
     </message>
     <message>
-        <source>Engine: ACP agent · %1 (set at create time)</source>
-        <translation>Engine: ACP agent · %1 (itinakda sa oras ng paggawa)</translation>
+        <source>Engine: foreign agent · %1 (set at create time)</source>
+        <translation>Engine: foreign agent · %1 (itinakda sa paggawa)</translation>
     </message>
     <message>
         <source>Engine: daemon-core (native)</source>
@@ -3829,6 +4113,22 @@ Magsimula ng isa mula sa Discover tab.</translation>
     <message>
         <source>No nodes found</source>
         <translation>Walang nakitang node</translation>
+    </message>
+    <message>
+        <source>Delegation limit reached</source>
+        <translation>Naabot ang limitasyon ng delegasyon</translation>
+    </message>
+    <message>
+        <source>Delegating…</source>
+        <translation>Nagde-delegate…</translation>
+    </message>
+    <message>
+        <source>Delegation failed</source>
+        <translation>Nabigo ang delegasyon</translation>
+    </message>
+    <message>
+        <source>Delegated to a subagent</source>
+        <translation>Idineleg sa isang subagent</translation>
     </message>
     <message>
         <source>Answered</source>
@@ -4064,6 +4364,10 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Tanggihan</translation>
     </message>
     <message>
+        <source>Deny with reason</source>
+        <translation>Deny na may dahilan</translation>
+    </message>
+    <message>
         <source>Allow permanently</source>
         <translation>Payagan nang permanente</translation>
     </message>
@@ -4102,6 +4406,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>  [not installed]</source>
         <translation>  [hindi naka-install]</translation>
+    </message>
+    <message>
+        <source>  [manual]</source>
+        <translation>  [manual]</translation>
+    </message>
+    <message>
+        <source>  [builtin]</source>
+        <translation>  [built-in]</translation>
     </message>
 </context>
 <context>
@@ -4225,6 +4537,101 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     </message>
 </context>
 <context>
+    <name>RegisterAgentDialog</name>
+    <message>
+        <source>Register foreign agent</source>
+        <translation>Irehistro ang foreign agent</translation>
+    </message>
+    <message>
+        <source>Register</source>
+        <translation>Irehistro</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Pangalan</translation>
+    </message>
+    <message>
+        <source>catalog name (e.g. my-claude)</source>
+        <translation>pangalan sa katalogo (hal. my-claude)</translation>
+    </message>
+    <message>
+        <source>Protocol</source>
+        <translation>Protocol</translation>
+    </message>
+    <message>
+        <source>ACP (Agent Client Protocol)</source>
+        <translation>ACP (Agent Client Protocol)</translation>
+    </message>
+    <message>
+        <source>Claude Code (stream-json)</source>
+        <translation>Claude Code (stream-json)</translation>
+    </message>
+    <message>
+        <source>Connect to a TCP endpoint instead of launching a program</source>
+        <translation>Kumonekta sa isang TCP endpoint sa halip na maglunsad ng program</translation>
+    </message>
+    <message>
+        <source>Program</source>
+        <translation>Program</translation>
+    </message>
+    <message>
+        <source>executable (resolved on the daemon&apos;s PATH)</source>
+        <translation>executable (niresolba sa PATH ng daemon)</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated)</source>
+        <translation>Mga argument (pinaghihiwalay ng espasyo)</translation>
+    </message>
+    <message>
+        <source>--flag value</source>
+        <translation>--flag value</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VALUE per line)</source>
+        <translation>Environment (KEY=VALUE bawat linya)</translation>
+    </message>
+    <message>
+        <source>Endpoint</source>
+        <translation>Endpoint</translation>
+    </message>
+    <message>
+        <source>tcp://host:port</source>
+        <translation>tcp://host:port</translation>
+    </message>
+    <message>
+        <source>The daemon probes the recipe on Register (an ACP initialize handshake, or a PATH check for stream-json) — the result appears in the agent list.</source>
+        <translation>Sinusuri ng daemon ang recipe sa Register (isang ACP initialize handshake, o isang PATH check para sa stream-json) — lalabas ang resulta sa listahan ng agent.</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>Pangalan:</translation>
+    </message>
+    <message>
+        <source>Protocol (Enter to pick):</source>
+        <translation>Protocol (Enter para pumili):</translation>
+    </message>
+    <message>
+        <source>Program (blank = use TCP endpoint below):</source>
+        <translation>Program (blangko = gamitin ang TCP endpoint sa ibaba):</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated):</source>
+        <translation>Mga argument (pinaghihiwalay ng espasyo):</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VAL,KEY=VAL):</source>
+        <translation>Environment (KEY=VAL,KEY=VAL):</translation>
+    </message>
+    <message>
+        <source>OR endpoint (tcp://host:port):</source>
+        <translation>O endpoint (tcp://host:port):</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+</context>
+<context>
     <name>RewindConfirmDialog</name>
     <message>
         <source>Rewind to this checkpoint?</source>
@@ -4322,6 +4729,10 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Enter / Space sa isang row para i-cycle o i-toggle ito · Esc para isara</translation>
     </message>
     <message>
+        <source>Remembered approvals…</source>
+        <translation>Mga naalalang approval…</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>Isara</translation>
     </message>
@@ -4352,6 +4763,22 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>Verbose: %1</source>
         <translation>Verbose: %1</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Mga naalalang approval</translation>
+    </message>
+    <message>
+        <source>Commands allowed permanently this session · Enter/Revoke drops one · Esc closes</source>
+        <translation>Mga utos na pinahintulutan nang permanente sa session na ito · Enter/Revoke nag-aalis ng isa · Esc nagsasara</translation>
+    </message>
+    <message>
+        <source>(no remembered approvals)</source>
+        <translation>(walang naalalang approval)</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>I-revoke</translation>
     </message>
     <message>
         <source>  ·  %1 tok</source>
@@ -4388,6 +4815,10 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>Cancel</source>
         <translation>Kanselahin</translation>
+    </message>
+    <message>
+        <source>Deny with reason (the agent will hear it)</source>
+        <translation>Deny na may dahilan (maririnig ito ng agent)</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -4573,6 +5004,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>Allow network access</source>
         <translation>Payagan ang network access</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Mga naalalang approval</translation>
+    </message>
+    <message>
+        <source>Commands you allowed permanently are remembered per session. Review and revoke them from the composer&apos;s session settings.</source>
+        <translation>Ang mga utos na pinahintulutan mo nang permanente ay naaalala bawat session. Suriin at i-revoke ang mga ito mula sa session settings ng composer.</translation>
     </message>
 </context>
 <context>
@@ -4779,6 +5218,10 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Reasoning effort</translation>
     </message>
     <message>
+        <source>Reasoning effort and modes are managed by the foreign agent.</source>
+        <translation>Ang reasoning effort at mga mode ay pinamamahalaan ng foreign agent.</translation>
+    </message>
+    <message>
         <source>Approval mode</source>
         <translation>Approval mode</translation>
     </message>
@@ -4797,6 +5240,18 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>Ask</source>
         <translation>Magtanong</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Mga naalalang approval</translation>
+    </message>
+    <message>
+        <source>No remembered approvals for this session.</source>
+        <translation>Walang naalalang approval para sa session na ito.</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>I-revoke</translation>
     </message>
     <message>
         <source>Fast mode</source>
@@ -5111,8 +5566,16 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
         <translation>Model</translation>
     </message>
     <message>
+        <source>Agents</source>
+        <translation>Mga agent</translation>
+    </message>
+    <message>
         <source>Chat</source>
         <translation>Chat</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>Mga tool</translation>
     </message>
     <message>
         <source>Safety</source>
@@ -5591,12 +6054,24 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
         <translation>Aprubahan ang aksyong ito?</translation>
     </message>
     <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>Dahilan na maririnig ng agent (opsyonal)</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>Aprubahan</translation>
     </message>
     <message>
         <source>Deny</source>
         <translation>Tanggihan</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>Ipadala ang deny</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>Deny na may dahilan…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -5608,6 +6083,53 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     <message>
         <source>Tool</source>
         <translation>Tool</translation>
+    </message>
+    <message>
+        <source>Spawned a subagent to work in the background.</source>
+        <translation>Naglunsad ng subagent para gumana sa background.</translation>
+    </message>
+    <message>
+        <source>Its completion notice will link the child; open its transcript from the Fleet page.</source>
+        <translation>Ita-link ng completion notice nito ang child; buksan ang transcript nito mula sa Fleet page.</translation>
+    </message>
+    <message>
+        <source>Delegation depth limit (%1) reached</source>
+        <translation>Naabot ang limitasyon sa lalim ng delegasyon (%1)</translation>
+    </message>
+    <message>
+        <source>Too many background children (%1)</source>
+        <translation>Masyadong maraming background children (%1)</translation>
+    </message>
+    <message>
+        <source>Delegation guardrail reached</source>
+        <translation>Naabot ang guardrail ng delegasyon</translation>
+    </message>
+</context>
+<context>
+    <name>ToolsSettingsSection</name>
+    <message>
+        <source>Tools</source>
+        <translation>Mga tool</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
+        <translation>Ang mga tool ay kino-compile at kino-kontrol ng node. Ang inventory na ito ay read-only; pinangangalanan ng disabled na tool kung ano ang kailangan nito.</translation>
+    </message>
+    <message>
+        <source>No tools reported by the node.</source>
+        <translation>Walang tool na iniulat ng node.</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Naka-enable</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>Naka-disable</translation>
+    </message>
+    <message>
+        <source>Set up…</source>
+        <translation>I-set up…</translation>
     </message>
 </context>
 <context>
@@ -5684,6 +6206,22 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Set up provider</source>
         <translation>Mag-set up ng provider</translation>
+    </message>
+    <message>
+        <source>The foreign agent “%1” could not run.</source>
+        <translation>Hindi matakbo ang foreign agent na “%1”.</translation>
+    </message>
+    <message>
+        <source>foreign</source>
+        <translation>foreign</translation>
+    </message>
+    <message>
+        <source>Open Agents settings</source>
+        <translation>Buksan ang mga setting ng Agents</translation>
+    </message>
+    <message>
+        <source>Read-only view of a delegated child. Steer or cancel it from the Fleet page.</source>
+        <translation>Read-only na view ng isang delegated child. I-steer o kanselahin ito mula sa Fleet page.</translation>
     </message>
     <message>
         <source>Select a session</source>
@@ -5958,6 +6496,22 @@ Salamat — magpapatuloy sa: %1
         <translation>Kaligtasan</translation>
     </message>
     <message>
+        <source>Max delegation depth</source>
+        <translation>Max na lalim ng delegasyon</translation>
+    </message>
+    <message>
+        <source>%1 — enforced by the node</source>
+        <translation>%1 — ipinatutupad ng node</translation>
+    </message>
+    <message>
+        <source>— — enforced by the node</source>
+        <translation>— — ipinatutupad ng node</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>Max na background children</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- Ang patakaran sa approval ay itinatakda bawat session (mga setting ng session sa composer) — _ipinapatupad doon ng node_
@@ -6230,10 +6784,6 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Native</source>
         <translation>Native</translation>
-    </message>
-    <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -6568,17 +7118,25 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny · **D** deny with reason.
 
 </source>
-        <translation>Orchestrator/worker tree, ibinabahagi sa GUI. **j/k** galaw · **Space/Enter** pause/resume · **t** gabayan ang isang child · **c** kanselahin ang turn nito.
+        <translation>**j/k** ilipat · **a**/**Enter** aprubahan · **p** payagan nang permanente · **d** tanggihan · **D** tanggihan na may dahilan.
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`) · %5
+        <source>## %1%2
+
 </source>
-        <translation>- %1%2 — %3 (`%4`) · %5
+        <translation>## %1%2
+
+</translation>
+    </message>
+    <message>
+        <source>- Requested by: %1
+</source>
+        <translation>- Hiniling ni: %1
 </translation>
     </message>
     <message>
@@ -6602,14 +7160,6 @@ _Walang piniling agent._
 
 </source>
         <translation>**j/k** galaw · **s** suspend · **R**/**Enter** resume · **x** isara · **v** naka-archive.
-
-</translation>
-    </message>
-    <message>
-        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
-
-</source>
-        <translation>**j/k** galaw · **a**/**Enter** aprubahan · **p** payagan nang permanente · **d** tanggihan.
 
 </translation>
     </message>
@@ -6658,6 +7208,28 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
+        <source>persistent</source>
+        <translation>nananatili</translation>
+    </message>
+    <message>
+        <source>ephemeral</source>
+        <translation>panandalian</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
+
+</source>
+        <translation>Puno ng orchestrator/worker, ibinabahagi sa GUI. **j/k** ilipat · **Space/Enter** i-pause/ituloy · **o** buksan ang transcript · **t** i-steer ang child · **c** kanselahin ang turn nito.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`) · %5%6
+</source>
+        <translation>- %1%2 — %3 (`%4`) · %5%6
+</translation>
+    </message>
+    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
@@ -6684,18 +7256,52 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>## %1%2 (%3 risk)
-
-</source>
-        <translation>## %1%2 (%3 na risk)
-
-</translation>
-    </message>
-    <message>
         <source>- Session: %1
 </source>
         <translation>- Session: %1
 </translation>
+    </message>
+    <message>
+        <source>- Path: `%1`
+</source>
+        <translation>- Path: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Fingerprint: `%1`
+</source>
+        <translation>- Fingerprint: `%1`
+</translation>
+    </message>
+    <message>
+        <source>## Tools
+
+</source>
+        <translation>## Mga tool
+
+</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only.
+
+</source>
+        <translation>Ang mga tool ay kino-compile at kino-kontrol ng node. Ang inventory na ito ay read-only.
+
+</translation>
+    </message>
+    <message>
+        <source>_No tools reported by the node._
+</source>
+        <translation>_Walang tool na iniulat ng node._
+</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3</source>
+        <translation>- %1 **%2** — %3</translation>
+    </message>
+    <message>
+        <source> _(%1)_</source>
+        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -6834,10 +7440,10 @@ _Walang piniling agent._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
 
 </source>
-        <translation>Mga Events-IO transport account at ang kanilang live rooms, ibinabahagi sa GUI. Ipinagpaliban ang pagkonekta (EIO-2); WALA pang wire op ang disconnect/remove (B3 - node-first follow-up). Maaaring alisin ang nakaimbak na credential mula sa Accounts page (&apos;x&apos; sa naka-bind na profile).
+        <translation>Mga Events-IO transport account at ang kanilang live rooms, ibinabahagi sa GUI. Pindutin ang &apos;c&apos; para ikonekta ang isang account. Ang disconnect/remove ay WALA pang wire op (B3 - node-first follow-up). Ang naka-imbak na credential ay maaaring alisin mula sa Accounts page (&apos;x&apos; sa bound profile). Ang mga imbitasyon sa room ay hinahawakan ng node; ang mga bagong sinalihang room ay lalabas dito nang awtomatiko.
 
 </translation>
     </message>
@@ -6882,6 +7488,10 @@ _Walang piniling agent._
     <message>
         <source> · ⇄ `%1`</source>
         <translation> · ⇄ `%1`</translation>
+    </message>
+    <message>
+        <source> · ✦ new</source>
+        <translation> · ✦ bago</translation>
     </message>
     <message>
         <source>## Add channel
@@ -7056,6 +7666,17 @@ _Walang piniling agent._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>Nabigo sa pagbasa ng mga limitasyon ng delegasyon</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>Nabigo sa pag-decode ng mga limitasyon ng delegasyon</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -7163,6 +7784,28 @@ _Walang piniling agent._
     <message>
         <source>No daemon target configured</source>
         <translation>Walang naka-configure na daemon target</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Foreign</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>Nabigo ang pag-revoke ng fingerprint</translation>
     </message>
 </context>
 <context>
@@ -7355,6 +7998,56 @@ _Walang piniling agent._
     <message>
         <source>Participants</source>
         <translation>Mga Kalahok</translation>
+    </message>
+</context>
+<context>
+    <name>tools::IToolInventory</name>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Kailangan ng Tavily API key</translation>
+    </message>
+    <message>
+        <source>Needs a Firecrawl API key</source>
+        <translation>Kailangan ng Firecrawl API key</translation>
+    </message>
+    <message>
+        <source>Needs the vision build feature</source>
+        <translation>Kailangan ang vision build feature</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Kailangan ang browser build feature</translation>
+    </message>
+    <message>
+        <source>Needs %1</source>
+        <translation>Kailangan ng %1</translation>
+    </message>
+</context>
+<context>
+    <name>tools::MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>Basahin at i-edit ang mga file ng workspace</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>Magpatakbo ng shell command (may approval)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>Maghanap sa web</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Kailangan ng Tavily API key</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>Magpatakbo ng totoong browser</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Kailangan ang browser build feature</translation>
     </message>
 </context>
 <context>

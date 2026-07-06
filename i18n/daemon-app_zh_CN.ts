@@ -365,6 +365,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>daemon-core（原生）</translation>
     </message>
     <message>
+        <source>  ·  stream-json</source>
+        <translation>  ·  stream-json</translation>
+    </message>
+    <message>
         <source>  ·  ACP %1</source>
         <translation>  ·  ACP %1</translation>
     </message>
@@ -382,6 +386,130 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>daemon-core (native)</source>
         <translation>daemon-core（原生）</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsDialog</name>
+    <message>
+        <source>Foreign agents</source>
+        <translation>外部代理</translation>
+    </message>
+    <message>
+        <source>Registered + discovered agents:</source>
+        <translation>已注册 + 已发现的代理：</translation>
+    </message>
+    <message>
+        <source>Register…</source>
+        <translation>注册…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>移除</translation>
+    </message>
+    <message>
+        <source>Re-scan</source>
+        <translation>重新扫描</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <source>Agent registered.</source>
+        <translation>代理已注册。</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>已移除 “%1”。</translation>
+    </message>
+    <message>
+        <source>(no foreign agents in the catalog)</source>
+        <translation>（目录中没有外部代理）</translation>
+    </message>
+    <message>
+        <source>Only manually registered agents can be removed.</source>
+        <translation>只能移除手动注册的代理。</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>移除代理</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start
+until it is re-registered.</source>
+        <translation>移除 “%1”？使用它的配置在重新注册之前
+将无法启动。</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsSettingsSection</name>
+    <message>
+        <source>Agent registered.</source>
+        <translation>代理已注册。</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>已移除 “%1”。</translation>
+    </message>
+    <message>
+        <source>Foreign agents</source>
+        <translation>外部代理</translation>
+    </message>
+    <message>
+        <source>Agents that run a foreign engine (ACP or the Claude Code stream-json bridge). Launch recipes are stored and validated by the daemon — profiles reference an agent by name only.</source>
+        <translation>运行外部引擎（ACP 或 Claude Code 的 stream-json 桥接）的代理。启动配方由守护进程存储和校验——配置仅通过名称引用代理。</translation>
+    </message>
+    <message>
+        <source>Register custom…</source>
+        <translation>注册自定义…</translation>
+    </message>
+    <message>
+        <source>Re-scan installed</source>
+        <translation>重新扫描已安装</translation>
+    </message>
+    <message>
+        <source>No foreign agents in the catalog yet.</source>
+        <translation>目录中还没有外部代理。</translation>
+    </message>
+    <message>
+        <source>stream-json</source>
+        <translation>stream-json</translation>
+    </message>
+    <message>
+        <source>ACP</source>
+        <translation>ACP</translation>
+    </message>
+    <message>
+        <source>manual</source>
+        <translation>手动</translation>
+    </message>
+    <message>
+        <source>builtin</source>
+        <translation>内置</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>已安装</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>未安装</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>移除</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>移除代理</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start until it is re-registered.</source>
+        <translation>移除 “%1”？使用它的配置在重新注册之前将无法启动。</translation>
     </message>
 </context>
 <context>
@@ -493,8 +621,34 @@ You&apos;ll return to first-run setup.</source>
         <translation>收件箱清空 — 没有待处理的审批。</translation>
     </message>
     <message>
+        <source>Path</source>
+        <translation>路径</translation>
+    </message>
+    <message>
+        <source>fingerprint %1</source>
+        <translation>指纹 %1</translation>
+    </message>
+    <message>
+        <source>Allowing permanently remembers this exact command:
+%1</source>
+        <translation>永久允许会记住这条确切的命令：
+%1</translation>
+    </message>
+    <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>代理将听到的原因（可选）</translation>
+    </message>
+    <message>
         <source>Deny</source>
         <translation>拒绝</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>发送拒绝</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>附理由拒绝…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -695,6 +849,17 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>读取委派限制失败</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>解码委派限制失败</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
     <message>
         <source>Remove stored credential?</source>
@@ -725,6 +890,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>未连接任何频道。</translation>
     </message>
     <message>
+        <source>Room invites are handled by the node; newly-joined rooms appear here automatically.</source>
+        <translation>房间邀请由节点处理；新加入的房间会自动显示在此处。</translation>
+    </message>
+    <message>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
@@ -739,6 +908,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>No rooms.</source>
         <translation>没有房间。</translation>
+    </message>
+    <message>
+        <source>new</source>
+        <translation>新</translation>
+    </message>
+    <message>
+        <source>Newly joined room</source>
+        <translation>新加入的房间</translation>
     </message>
     <message>
         <source>⇄ %1</source>
@@ -767,6 +944,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Connect</source>
         <translation>连接</translation>
+    </message>
+    <message>
+        <source>Sign in to connect this channel</source>
+        <translation>登录以连接此频道</translation>
+    </message>
+    <message>
+        <source>This channel type has no browser sign-in.</source>
+        <translation>此频道类型没有浏览器登录。</translation>
     </message>
 </context>
 <context>
@@ -1227,18 +1412,6 @@ You&apos;ll return to first-run setup.</source>
         <translation>详细</translation>
     </message>
     <message>
-        <source>%1 (ACP)</source>
-        <translation>%1（ACP）</translation>
-    </message>
-    <message>
-        <source>Foreign</source>
-        <translation>外部</translation>
-    </message>
-    <message>
-        <source>Native</source>
-        <translation>原生</translation>
-    </message>
-    <message>
         <source>Edits</source>
         <translation>编辑</translation>
     </message>
@@ -1269,6 +1442,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Native</source>
         <translation>原生</translation>
+    </message>
+    <message>
+        <source>Foreign engine — model, reasoning and rewind are managed by the agent</source>
+        <translation>外部引擎——模型、推理和回退由代理管理</translation>
     </message>
     <message>
         <source>Engine</source>
@@ -1812,6 +1989,33 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>DelegationLimitsSection</name>
+    <message>
+        <source>Delegation limits</source>
+        <translation>委派限制</translation>
+    </message>
+    <message>
+        <source>How deep and how wide an agent may delegate. Enforced by the node; shown here for reference.</source>
+        <translation>代理可委派的深度和广度。由节点强制执行；此处仅供参考。</translation>
+    </message>
+    <message>
+        <source>Max delegation depth</source>
+        <translation>最大委派深度</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>由节点强制执行——无法从应用配置。</translation>
+    </message>
+    <message>
+        <source>—</source>
+        <translation>—</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>最大后台子任务数</translation>
+    </message>
+</context>
+<context>
     <name>Dialog</name>
     <message>
         <source>OK</source>
@@ -2151,6 +2355,32 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>EngineOriginChip</name>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Requested by this foreign agent</source>
+        <translation>由此外部代理请求</translation>
+    </message>
+</context>
+<context>
     <name>FileExplorer</name>
     <message>
         <source>Explorer</source>
@@ -2242,6 +2472,13 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Retry</source>
         <translation>重试</translation>
+    </message>
+</context>
+<context>
+    <name>FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>撤销指纹失败</translation>
     </message>
 </context>
 <context>
@@ -2489,12 +2726,20 @@ You&apos;ll return to first-run setup.</source>
         <translation>刷新</translation>
     </message>
     <message>
-        <source>Foreign</source>
-        <translation>外部</translation>
-    </message>
-    <message>
         <source>Native</source>
         <translation>原生</translation>
+    </message>
+    <message>
+        <source>Ephemeral</source>
+        <translation>临时</translation>
+    </message>
+    <message>
+        <source>Persistent</source>
+        <translation>持久</translation>
+    </message>
+    <message>
+        <source>Open transcript</source>
+        <translation>打开记录</translation>
     </message>
     <message>
         <source>Steer…</source>
@@ -3097,6 +3342,33 @@ Thanks — proceeding with: %1
     </message>
 </context>
 <context>
+    <name>MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>读取和编辑工作区文件</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>运行 shell 命令（需批准）</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>搜索网络</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>需要 Tavily API 密钥</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>驱动真实浏览器</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>需要浏览器构建功能</translation>
+    </message>
+</context>
+<context>
     <name>ModelPickerOverlay</name>
     <message>
         <source>Off</source>
@@ -3377,8 +3649,8 @@ Start one from the Discover tab.</source>
         <translation>系统提示词</translation>
     </message>
     <message>
-        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
-        <translation>此智能体运行外部 ACP 引擎。其启动配方由 daemon 的 ACP 目录管理 — 无需配置提供方、模型或密钥。</translation>
+        <source>This agent runs a foreign engine. Its launch recipe is managed by the daemon&apos;s agent catalog — no provider, model, or key to configure.</source>
+        <translation>此代理运行外部引擎。其启动配方由守护进程的代理目录管理——无需配置提供方、模型或密钥。</translation>
     </message>
     <message>
         <source>Name:</source>
@@ -3491,6 +3763,18 @@ Start one from the Discover tab.</source>
     <message>
         <source>Name</source>
         <translation>名称</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Foreign engine (set at create time)</source>
+        <translation>外部引擎（创建时设定）</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign engine — its launch recipe and model are managed by the daemon&apos;s agent catalog, so there is no provider, model, or base URL to configure here.</source>
+        <translation>此代理运行外部引擎——其启动配方和模型由守护进程的代理目录管理，因此这里没有可配置的提供方、模型或基础 URL。</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -3608,8 +3892,8 @@ Start one from the Discover tab.</source>
         <translation>名称</translation>
     </message>
     <message>
-        <source>Engine: ACP agent · %1 (set at create time)</source>
-        <translation>引擎：ACP 智能体 · %1（创建时设置）</translation>
+        <source>Engine: foreign agent · %1 (set at create time)</source>
+        <translation>引擎：外部代理 · %1（创建时设定）</translation>
     </message>
     <message>
         <source>Engine: daemon-core (native)</source>
@@ -3825,6 +4109,22 @@ Start one from the Discover tab.</source>
     <message>
         <source>No nodes found</source>
         <translation>未找到节点</translation>
+    </message>
+    <message>
+        <source>Delegation limit reached</source>
+        <translation>已达委派上限</translation>
+    </message>
+    <message>
+        <source>Delegating…</source>
+        <translation>正在委派…</translation>
+    </message>
+    <message>
+        <source>Delegation failed</source>
+        <translation>委派失败</translation>
+    </message>
+    <message>
+        <source>Delegated to a subagent</source>
+        <translation>已委派给子代理</translation>
     </message>
     <message>
         <source>Answered</source>
@@ -4060,6 +4360,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>拒绝</translation>
     </message>
     <message>
+        <source>Deny with reason</source>
+        <translation>附理由拒绝</translation>
+    </message>
+    <message>
         <source>Allow permanently</source>
         <translation>永久允许</translation>
     </message>
@@ -4098,6 +4402,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>  [not installed]</source>
         <translation>  [未安装]</translation>
+    </message>
+    <message>
+        <source>  [manual]</source>
+        <translation>  [手动]</translation>
+    </message>
+    <message>
+        <source>  [builtin]</source>
+        <translation>  [内置]</translation>
     </message>
 </context>
 <context>
@@ -4221,6 +4533,101 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>RegisterAgentDialog</name>
+    <message>
+        <source>Register foreign agent</source>
+        <translation>注册外部代理</translation>
+    </message>
+    <message>
+        <source>Register</source>
+        <translation>注册</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>名称</translation>
+    </message>
+    <message>
+        <source>catalog name (e.g. my-claude)</source>
+        <translation>目录名称（例如 my-claude）</translation>
+    </message>
+    <message>
+        <source>Protocol</source>
+        <translation>协议</translation>
+    </message>
+    <message>
+        <source>ACP (Agent Client Protocol)</source>
+        <translation>ACP（Agent Client Protocol）</translation>
+    </message>
+    <message>
+        <source>Claude Code (stream-json)</source>
+        <translation>Claude Code（stream-json）</translation>
+    </message>
+    <message>
+        <source>Connect to a TCP endpoint instead of launching a program</source>
+        <translation>连接到 TCP 端点而不是启动程序</translation>
+    </message>
+    <message>
+        <source>Program</source>
+        <translation>程序</translation>
+    </message>
+    <message>
+        <source>executable (resolved on the daemon&apos;s PATH)</source>
+        <translation>可执行文件（在守护进程的 PATH 上解析）</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated)</source>
+        <translation>参数（空格分隔）</translation>
+    </message>
+    <message>
+        <source>--flag value</source>
+        <translation>--flag value</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VALUE per line)</source>
+        <translation>环境变量（每行 KEY=VALUE）</translation>
+    </message>
+    <message>
+        <source>Endpoint</source>
+        <translation>端点</translation>
+    </message>
+    <message>
+        <source>tcp://host:port</source>
+        <translation>tcp://host:port</translation>
+    </message>
+    <message>
+        <source>The daemon probes the recipe on Register (an ACP initialize handshake, or a PATH check for stream-json) — the result appears in the agent list.</source>
+        <translation>守护进程在注册时探测配方（ACP initialize 握手，或对 stream-json 进行 PATH 检查）——结果会出现在代理列表中。</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>名称：</translation>
+    </message>
+    <message>
+        <source>Protocol (Enter to pick):</source>
+        <translation>协议（回车选择）：</translation>
+    </message>
+    <message>
+        <source>Program (blank = use TCP endpoint below):</source>
+        <translation>程序（留空 = 使用下面的 TCP 端点）：</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated):</source>
+        <translation>参数（空格分隔）：</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VAL,KEY=VAL):</source>
+        <translation>环境变量（KEY=VAL,KEY=VAL）：</translation>
+    </message>
+    <message>
+        <source>OR endpoint (tcp://host:port):</source>
+        <translation>或端点（tcp://host:port）：</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+</context>
+<context>
     <name>RewindConfirmDialog</name>
     <message>
         <source>Rewind to this checkpoint?</source>
@@ -4318,6 +4725,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>在某行按 Enter / Space 循环或切换 · Esc 关闭</translation>
     </message>
     <message>
+        <source>Remembered approvals…</source>
+        <translation>已记住的批准…</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>关闭</translation>
     </message>
@@ -4348,6 +4759,22 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Verbose: %1</source>
         <translation>详细：%1</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>已记住的批准</translation>
+    </message>
+    <message>
+        <source>Commands allowed permanently this session · Enter/Revoke drops one · Esc closes</source>
+        <translation>本会话永久允许的命令 · Enter/撤销 移除一项 · Esc 关闭</translation>
+    </message>
+    <message>
+        <source>(no remembered approvals)</source>
+        <translation>（无已记住的批准）</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>撤销</translation>
     </message>
     <message>
         <source>  ·  %1 tok</source>
@@ -4384,6 +4811,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Cancel</source>
         <translation>取消</translation>
+    </message>
+    <message>
+        <source>Deny with reason (the agent will hear it)</source>
+        <translation>附理由拒绝（代理会听到）</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -4569,6 +5000,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Allow network access</source>
         <translation>允许网络访问</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>已记住的批准</translation>
+    </message>
+    <message>
+        <source>Commands you allowed permanently are remembered per session. Review and revoke them from the composer&apos;s session settings.</source>
+        <translation>你永久允许的命令按会话记住。可在编辑器的会话设置中查看并撤销。</translation>
     </message>
 </context>
 <context>
@@ -4775,6 +5214,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>推理强度</translation>
     </message>
     <message>
+        <source>Reasoning effort and modes are managed by the foreign agent.</source>
+        <translation>推理强度和模式由外部代理管理。</translation>
+    </message>
+    <message>
         <source>Approval mode</source>
         <translation>审批模式</translation>
     </message>
@@ -4793,6 +5236,18 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Ask</source>
         <translation>询问</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>已记住的批准</translation>
+    </message>
+    <message>
+        <source>No remembered approvals for this session.</source>
+        <translation>此会话没有已记住的批准。</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>撤销</translation>
     </message>
     <message>
         <source>Fast mode</source>
@@ -5106,8 +5561,16 @@ This only affects the app appearance, not your data.</source>
         <translation>模型</translation>
     </message>
     <message>
+        <source>Agents</source>
+        <translation>代理</translation>
+    </message>
+    <message>
         <source>Chat</source>
         <translation>聊天</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>工具</translation>
     </message>
     <message>
         <source>Safety</source>
@@ -5584,12 +6047,24 @@ This only affects the app appearance, not your data.</source>
         <translation>批准此操作？</translation>
     </message>
     <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>代理将听到的原因（可选）</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>批准</translation>
     </message>
     <message>
         <source>Deny</source>
         <translation>拒绝</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>发送拒绝</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>附理由拒绝…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -5601,6 +6076,53 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Tool</source>
         <translation>工具</translation>
+    </message>
+    <message>
+        <source>Spawned a subagent to work in the background.</source>
+        <translation>已启动一个子代理在后台工作。</translation>
+    </message>
+    <message>
+        <source>Its completion notice will link the child; open its transcript from the Fleet page.</source>
+        <translation>其完成通知会链接到子任务；可在“舰队”页面打开其记录。</translation>
+    </message>
+    <message>
+        <source>Delegation depth limit (%1) reached</source>
+        <translation>已达委派深度上限 (%1)</translation>
+    </message>
+    <message>
+        <source>Too many background children (%1)</source>
+        <translation>后台子任务过多 (%1)</translation>
+    </message>
+    <message>
+        <source>Delegation guardrail reached</source>
+        <translation>已达委派防护限制</translation>
+    </message>
+</context>
+<context>
+    <name>ToolsSettingsSection</name>
+    <message>
+        <source>Tools</source>
+        <translation>工具</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
+        <translation>工具由节点编译并管控。此清单为只读；被禁用的工具会说明其所需项。</translation>
+    </message>
+    <message>
+        <source>No tools reported by the node.</source>
+        <translation>节点未报告任何工具。</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>已启用</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>已禁用</translation>
+    </message>
+    <message>
+        <source>Set up…</source>
+        <translation>设置…</translation>
     </message>
 </context>
 <context>
@@ -5677,6 +6199,22 @@ Thanks — proceeding with: %1
     <message>
         <source>Set up provider</source>
         <translation>设置提供方</translation>
+    </message>
+    <message>
+        <source>The foreign agent “%1” could not run.</source>
+        <translation>外部代理 “%1” 无法运行。</translation>
+    </message>
+    <message>
+        <source>foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Open Agents settings</source>
+        <translation>打开代理设置</translation>
+    </message>
+    <message>
+        <source>Read-only view of a delegated child. Steer or cancel it from the Fleet page.</source>
+        <translation>已委派子任务的只读视图。可在“舰队”页面对其进行引导或取消。</translation>
     </message>
     <message>
         <source>Select a session</source>
@@ -5951,6 +6489,22 @@ Thanks — proceeding with: %1
         <translation>安全</translation>
     </message>
     <message>
+        <source>Max delegation depth</source>
+        <translation>最大委派深度</translation>
+    </message>
+    <message>
+        <source>%1 — enforced by the node</source>
+        <translation>%1 — 由节点强制执行</translation>
+    </message>
+    <message>
+        <source>— — enforced by the node</source>
+        <translation>— — 由节点强制执行</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>最大后台子任务数</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- 审批策略按会话设定（编写器会话设置）— _由节点在此强制执行_
@@ -6223,10 +6777,6 @@ Thanks — proceeding with: %1
     <message>
         <source>Native</source>
         <translation>原生</translation>
-    </message>
-    <message>
-        <source>%1 (ACP)</source>
-        <translation>%1（ACP）</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -6561,17 +7111,25 @@ _未选择智能体。_
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny · **D** deny with reason.
 
 </source>
-        <translation>与 GUI 共享的编排器/工作进程树。**j/k** 移动 · **Space/Enter** 暂停/恢复 · **t** 引导子进程 · **c** 取消其回合。
+        <translation>**j/k** 移动 · **a**/**Enter** 批准 · **p** 永久允许 · **d** 拒绝 · **D** 附理由拒绝。
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`) · %5
+        <source>## %1%2
+
 </source>
-        <translation>- %1%2 — %3 (`%4`) · %5
+        <translation>## %1%2
+
+</translation>
+    </message>
+    <message>
+        <source>- Requested by: %1
+</source>
+        <translation>- 请求者：%1
 </translation>
     </message>
     <message>
@@ -6595,14 +7153,6 @@ _未选择智能体。_
 
 </source>
         <translation>**j/k** 移动 · **s** 挂起 · **R**/**Enter** 恢复 · **x** 关闭 · **v** 已归档。
-
-</translation>
-    </message>
-    <message>
-        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
-
-</source>
-        <translation>**j/k** 移动 · **a**/**Enter** 批准 · **p** 永久允许 · **d** 拒绝。
 
 </translation>
     </message>
@@ -6651,6 +7201,28 @@ _未选择智能体。_
 </translation>
     </message>
     <message>
+        <source>persistent</source>
+        <translation>持久</translation>
+    </message>
+    <message>
+        <source>ephemeral</source>
+        <translation>临时</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
+
+</source>
+        <translation>编排器/工作者树，与 GUI 共享。**j/k** 移动 · **Space/Enter** 暂停/继续 · **o** 打开记录 · **t** 引导子任务 · **c** 取消其回合。
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`) · %5%6
+</source>
+        <translation>- %1%2 — %3 (`%4`) · %5%6
+</translation>
+    </message>
+    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 词元
@@ -6677,18 +7249,52 @@ _未选择智能体。_
 </translation>
     </message>
     <message>
-        <source>## %1%2 (%3 risk)
-
-</source>
-        <translation>## %1%2（%3 风险）
-
-</translation>
-    </message>
-    <message>
         <source>- Session: %1
 </source>
         <translation>- 会话：%1
 </translation>
+    </message>
+    <message>
+        <source>- Path: `%1`
+</source>
+        <translation>- 路径：`%1`
+</translation>
+    </message>
+    <message>
+        <source>- Fingerprint: `%1`
+</source>
+        <translation>- 指纹：`%1`
+</translation>
+    </message>
+    <message>
+        <source>## Tools
+
+</source>
+        <translation>## 工具
+
+</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only.
+
+</source>
+        <translation>工具由节点编译并管控。此清单为只读。
+
+</translation>
+    </message>
+    <message>
+        <source>_No tools reported by the node._
+</source>
+        <translation>_节点未报告任何工具。_
+</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3</source>
+        <translation>- %1 **%2** — %3</translation>
+    </message>
+    <message>
+        <source> _(%1)_</source>
+        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -6827,10 +7433,10 @@ _未选择智能体。_
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
 
 </source>
-        <translation>与 GUI 共享的 Events-IO 传输账户及其实时房间。连接被推迟（EIO-2）；断开/移除尚无 wire 操作（B3 - 节点优先后续）。可从“账户”页面移除已存储的凭据（在绑定的配置上按 &apos;x&apos;）。
+        <translation>Events-IO 传输账户及其实时房间，与 GUI 共享。按 &apos;c&apos; 连接账户。断开/移除目前还没有对应的协议操作（B3 — 节点侧后续）。已存储的凭据可在“账户”页面移除（在绑定配置上按 &apos;x&apos;）。房间邀请由节点处理；新加入的房间会自动显示在此处。
 
 </translation>
     </message>
@@ -6875,6 +7481,10 @@ _未选择智能体。_
     <message>
         <source> · ⇄ `%1`</source>
         <translation> · ⇄ `%1`</translation>
+    </message>
+    <message>
+        <source> · ✦ new</source>
+        <translation> · ✦ 新</translation>
     </message>
     <message>
         <source>## Add channel
@@ -7049,6 +7659,17 @@ _未选择智能体。_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>读取委派限制失败</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>解码委派限制失败</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -7156,6 +7777,28 @@ _未选择智能体。_
     <message>
         <source>No daemon target configured</source>
         <translation>未配置 daemon 目标</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>撤销指纹失败</translation>
     </message>
 </context>
 <context>
@@ -7348,6 +7991,56 @@ _未选择智能体。_
     <message>
         <source>Participants</source>
         <translation>参与者</translation>
+    </message>
+</context>
+<context>
+    <name>tools::IToolInventory</name>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>需要 Tavily API 密钥</translation>
+    </message>
+    <message>
+        <source>Needs a Firecrawl API key</source>
+        <translation>需要 Firecrawl API 密钥</translation>
+    </message>
+    <message>
+        <source>Needs the vision build feature</source>
+        <translation>需要视觉构建功能</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>需要浏览器构建功能</translation>
+    </message>
+    <message>
+        <source>Needs %1</source>
+        <translation>需要 %1</translation>
+    </message>
+</context>
+<context>
+    <name>tools::MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>读取和编辑工作区文件</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>运行 shell 命令（需批准）</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>搜索网络</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>需要 Tavily API 密钥</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>驱动真实浏览器</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>需要浏览器构建功能</translation>
     </message>
 </context>
 <context>

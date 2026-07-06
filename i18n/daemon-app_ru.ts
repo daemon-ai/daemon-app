@@ -365,6 +365,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>daemon-core (нативный)</translation>
     </message>
     <message>
+        <source>  ·  stream-json</source>
+        <translation>  ·  stream-json</translation>
+    </message>
+    <message>
         <source>  ·  ACP %1</source>
         <translation>  ·  ACP %1</translation>
     </message>
@@ -382,6 +386,130 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>daemon-core (native)</source>
         <translation>daemon-core (нативный)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsDialog</name>
+    <message>
+        <source>Foreign agents</source>
+        <translation>Внешние агенты</translation>
+    </message>
+    <message>
+        <source>Registered + discovered agents:</source>
+        <translation>Зарегистрированные + обнаруженные агенты:</translation>
+    </message>
+    <message>
+        <source>Register…</source>
+        <translation>Зарегистрировать…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Re-scan</source>
+        <translation>Пересканировать</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>Agent registered.</source>
+        <translation>Агент зарегистрирован.</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>«%1» удалён.</translation>
+    </message>
+    <message>
+        <source>(no foreign agents in the catalog)</source>
+        <translation>(в каталоге нет внешних агентов)</translation>
+    </message>
+    <message>
+        <source>Only manually registered agents can be removed.</source>
+        <translation>Удалить можно только вручную зарегистрированных агентов.</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>Удалить агента</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start
+until it is re-registered.</source>
+        <translation>Удалить «%1»? Профили, использующие его, не запустятся,
+пока он не будет зарегистрирован снова.</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsSettingsSection</name>
+    <message>
+        <source>Agent registered.</source>
+        <translation>Агент зарегистрирован.</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>«%1» удалён.</translation>
+    </message>
+    <message>
+        <source>Foreign agents</source>
+        <translation>Внешние агенты</translation>
+    </message>
+    <message>
+        <source>Agents that run a foreign engine (ACP or the Claude Code stream-json bridge). Launch recipes are stored and validated by the daemon — profiles reference an agent by name only.</source>
+        <translation>Агенты, работающие на внешнем движке (ACP или мост stream-json Claude Code). Рецепты запуска хранятся и проверяются демоном — профили ссылаются на агента только по имени.</translation>
+    </message>
+    <message>
+        <source>Register custom…</source>
+        <translation>Зарегистрировать свой…</translation>
+    </message>
+    <message>
+        <source>Re-scan installed</source>
+        <translation>Пересканировать установленные</translation>
+    </message>
+    <message>
+        <source>No foreign agents in the catalog yet.</source>
+        <translation>В каталоге пока нет внешних агентов.</translation>
+    </message>
+    <message>
+        <source>stream-json</source>
+        <translation>stream-json</translation>
+    </message>
+    <message>
+        <source>ACP</source>
+        <translation>ACP</translation>
+    </message>
+    <message>
+        <source>manual</source>
+        <translation>вручную</translation>
+    </message>
+    <message>
+        <source>builtin</source>
+        <translation>встроенный</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>установлен</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>не установлен</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>Удалить агента</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start until it is re-registered.</source>
+        <translation>Удалить «%1»? Профили, использующие его, не запустятся, пока он не будет зарегистрирован снова.</translation>
     </message>
 </context>
 <context>
@@ -493,8 +621,34 @@ You&apos;ll return to first-run setup.</source>
         <translation>Входящие пусты — нет ожидающих подтверждений.</translation>
     </message>
     <message>
+        <source>Path</source>
+        <translation>Путь</translation>
+    </message>
+    <message>
+        <source>fingerprint %1</source>
+        <translation>отпечаток %1</translation>
+    </message>
+    <message>
+        <source>Allowing permanently remembers this exact command:
+%1</source>
+        <translation>Постоянное разрешение запоминает именно эту команду:
+%1</translation>
+    </message>
+    <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>Причина, которую услышит агент (необязательно)</translation>
+    </message>
+    <message>
         <source>Deny</source>
         <translation>Отклонить</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>Отправить отказ</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>Отклонить с причиной…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -695,6 +849,17 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>Не удалось прочитать лимиты делегирования</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>Не удалось декодировать лимиты делегирования</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
     <message>
         <source>Remove stored credential?</source>
@@ -725,6 +890,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>Нет подключённых каналов.</translation>
     </message>
     <message>
+        <source>Room invites are handled by the node; newly-joined rooms appear here automatically.</source>
+        <translation>Приглашения в комнаты обрабатывает узел; недавно присоединённые комнаты появляются здесь автоматически.</translation>
+    </message>
+    <message>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
@@ -739,6 +908,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>No rooms.</source>
         <translation>Нет комнат.</translation>
+    </message>
+    <message>
+        <source>new</source>
+        <translation>новая</translation>
+    </message>
+    <message>
+        <source>Newly joined room</source>
+        <translation>Недавно присоединённая комната</translation>
     </message>
     <message>
         <source>⇄ %1</source>
@@ -767,6 +944,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Connect</source>
         <translation>Подключить</translation>
+    </message>
+    <message>
+        <source>Sign in to connect this channel</source>
+        <translation>Войдите, чтобы подключить этот канал</translation>
+    </message>
+    <message>
+        <source>This channel type has no browser sign-in.</source>
+        <translation>У этого типа канала нет входа через браузер.</translation>
     </message>
 </context>
 <context>
@@ -1227,18 +1412,6 @@ You&apos;ll return to first-run setup.</source>
         <translation>подробно</translation>
     </message>
     <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
-    </message>
-    <message>
-        <source>Foreign</source>
-        <translation>Внешний</translation>
-    </message>
-    <message>
-        <source>Native</source>
-        <translation>Нативный</translation>
-    </message>
-    <message>
         <source>Edits</source>
         <translation>Правки</translation>
     </message>
@@ -1269,6 +1442,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Native</source>
         <translation>Нативный</translation>
+    </message>
+    <message>
+        <source>Foreign engine — model, reasoning and rewind are managed by the agent</source>
+        <translation>Внешний движок — модель, рассуждения и откат управляются агентом</translation>
     </message>
     <message>
         <source>Engine</source>
@@ -1812,6 +1989,33 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>DelegationLimitsSection</name>
+    <message>
+        <source>Delegation limits</source>
+        <translation>Лимиты делегирования</translation>
+    </message>
+    <message>
+        <source>How deep and how wide an agent may delegate. Enforced by the node; shown here for reference.</source>
+        <translation>Насколько глубоко и широко агент может делегировать. Обеспечивается узлом; показано для справки.</translation>
+    </message>
+    <message>
+        <source>Max delegation depth</source>
+        <translation>Макс. глубина делегирования</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>Обеспечивается узлом — нельзя настроить из приложения.</translation>
+    </message>
+    <message>
+        <source>—</source>
+        <translation>—</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>Макс. фоновых потомков</translation>
+    </message>
+</context>
+<context>
     <name>Dialog</name>
     <message>
         <source>OK</source>
@@ -2151,6 +2355,32 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Внешний</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>EngineOriginChip</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Внешний</translation>
+    </message>
+    <message>
+        <source>Requested by this foreign agent</source>
+        <translation>Запрошено этим внешним агентом</translation>
+    </message>
+</context>
+<context>
     <name>FileExplorer</name>
     <message>
         <source>Explorer</source>
@@ -2246,6 +2476,13 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Retry</source>
         <translation>Повторить</translation>
+    </message>
+</context>
+<context>
+    <name>FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>Не удалось отозвать отпечаток</translation>
     </message>
 </context>
 <context>
@@ -2493,12 +2730,20 @@ You&apos;ll return to first-run setup.</source>
         <translation>Обновить</translation>
     </message>
     <message>
-        <source>Foreign</source>
-        <translation>Внешний</translation>
-    </message>
-    <message>
         <source>Native</source>
         <translation>Нативный</translation>
+    </message>
+    <message>
+        <source>Ephemeral</source>
+        <translation>Эфемерный</translation>
+    </message>
+    <message>
+        <source>Persistent</source>
+        <translation>Постоянный</translation>
+    </message>
+    <message>
+        <source>Open transcript</source>
+        <translation>Открыть стенограмму</translation>
     </message>
     <message>
         <source>Steer…</source>
@@ -3105,6 +3350,33 @@ Thanks — proceeding with: %1
     </message>
 </context>
 <context>
+    <name>MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>Чтение и редактирование файлов рабочей области</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>Выполнять команды оболочки (с одобрения)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>Поиск в интернете</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Требуется ключ API Tavily</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>Управлять реальным браузером</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Требуется функция сборки браузера</translation>
+    </message>
+</context>
+<context>
     <name>ModelPickerOverlay</name>
     <message>
         <source>Off</source>
@@ -3385,8 +3657,8 @@ Start one from the Discover tab.</source>
         <translation>системный промпт</translation>
     </message>
     <message>
-        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
-        <translation>Этот агент использует сторонний движок ACP. Его рецепт запуска управляется каталогом ACP демона — провайдер, модель или ключ настраивать не нужно.</translation>
+        <source>This agent runs a foreign engine. Its launch recipe is managed by the daemon&apos;s agent catalog — no provider, model, or key to configure.</source>
+        <translation>Этот агент работает на внешнем движке. Его рецепт запуска управляется каталогом агентов демона — нет провайдера, модели или ключа для настройки.</translation>
     </message>
     <message>
         <source>Name:</source>
@@ -3499,6 +3771,18 @@ Start one from the Discover tab.</source>
     <message>
         <source>Name</source>
         <translation>Имя</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Внешний</translation>
+    </message>
+    <message>
+        <source>Foreign engine (set at create time)</source>
+        <translation>Внешний движок (задаётся при создании)</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign engine — its launch recipe and model are managed by the daemon&apos;s agent catalog, so there is no provider, model, or base URL to configure here.</source>
+        <translation>Этот агент работает на внешнем движке — его рецепт запуска и модель управляются каталогом агентов демона, поэтому здесь нет провайдера, модели или базового URL для настройки.</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -3616,8 +3900,8 @@ Start one from the Discover tab.</source>
         <translation>Имя</translation>
     </message>
     <message>
-        <source>Engine: ACP agent · %1 (set at create time)</source>
-        <translation>Движок: агент ACP · %1 (задаётся при создании)</translation>
+        <source>Engine: foreign agent · %1 (set at create time)</source>
+        <translation>Движок: внешний агент · %1 (задаётся при создании)</translation>
     </message>
     <message>
         <source>Engine: daemon-core (native)</source>
@@ -3833,6 +4117,22 @@ Start one from the Discover tab.</source>
     <message>
         <source>No nodes found</source>
         <translation>Узлы не найдены</translation>
+    </message>
+    <message>
+        <source>Delegation limit reached</source>
+        <translation>Достигнут лимит делегирования</translation>
+    </message>
+    <message>
+        <source>Delegating…</source>
+        <translation>Делегирование…</translation>
+    </message>
+    <message>
+        <source>Delegation failed</source>
+        <translation>Ошибка делегирования</translation>
+    </message>
+    <message>
+        <source>Delegated to a subagent</source>
+        <translation>Делегировано субагенту</translation>
     </message>
     <message>
         <source>Answered</source>
@@ -4068,6 +4368,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Отклонить</translation>
     </message>
     <message>
+        <source>Deny with reason</source>
+        <translation>Отклонить с причиной</translation>
+    </message>
+    <message>
         <source>Allow permanently</source>
         <translation>Разрешить навсегда</translation>
     </message>
@@ -4106,6 +4410,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>  [not installed]</source>
         <translation>  [не установлено]</translation>
+    </message>
+    <message>
+        <source>  [manual]</source>
+        <translation>  [вручную]</translation>
+    </message>
+    <message>
+        <source>  [builtin]</source>
+        <translation>  [встроенный]</translation>
     </message>
 </context>
 <context>
@@ -4229,6 +4541,101 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>RegisterAgentDialog</name>
+    <message>
+        <source>Register foreign agent</source>
+        <translation>Зарегистрировать внешнего агента</translation>
+    </message>
+    <message>
+        <source>Register</source>
+        <translation>Зарегистрировать</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Имя</translation>
+    </message>
+    <message>
+        <source>catalog name (e.g. my-claude)</source>
+        <translation>имя в каталоге (напр. my-claude)</translation>
+    </message>
+    <message>
+        <source>Protocol</source>
+        <translation>Протокол</translation>
+    </message>
+    <message>
+        <source>ACP (Agent Client Protocol)</source>
+        <translation>ACP (Agent Client Protocol)</translation>
+    </message>
+    <message>
+        <source>Claude Code (stream-json)</source>
+        <translation>Claude Code (stream-json)</translation>
+    </message>
+    <message>
+        <source>Connect to a TCP endpoint instead of launching a program</source>
+        <translation>Подключиться к TCP-конечной точке вместо запуска программы</translation>
+    </message>
+    <message>
+        <source>Program</source>
+        <translation>Программа</translation>
+    </message>
+    <message>
+        <source>executable (resolved on the daemon&apos;s PATH)</source>
+        <translation>исполняемый файл (ищется в PATH демона)</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated)</source>
+        <translation>Аргументы (через пробел)</translation>
+    </message>
+    <message>
+        <source>--flag value</source>
+        <translation>--flag value</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VALUE per line)</source>
+        <translation>Окружение (KEY=VALUE в строке)</translation>
+    </message>
+    <message>
+        <source>Endpoint</source>
+        <translation>Конечная точка</translation>
+    </message>
+    <message>
+        <source>tcp://host:port</source>
+        <translation>tcp://host:port</translation>
+    </message>
+    <message>
+        <source>The daemon probes the recipe on Register (an ACP initialize handshake, or a PATH check for stream-json) — the result appears in the agent list.</source>
+        <translation>Демон проверяет рецепт при регистрации (рукопожатие ACP initialize или проверка PATH для stream-json) — результат появится в списке агентов.</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>Имя:</translation>
+    </message>
+    <message>
+        <source>Protocol (Enter to pick):</source>
+        <translation>Протокол (Enter для выбора):</translation>
+    </message>
+    <message>
+        <source>Program (blank = use TCP endpoint below):</source>
+        <translation>Программа (пусто = использовать TCP-конечную точку ниже):</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated):</source>
+        <translation>Аргументы (через пробел):</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VAL,KEY=VAL):</source>
+        <translation>Окружение (KEY=VAL,KEY=VAL):</translation>
+    </message>
+    <message>
+        <source>OR endpoint (tcp://host:port):</source>
+        <translation>ИЛИ конечная точка (tcp://host:port):</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+</context>
+<context>
     <name>RewindConfirmDialog</name>
     <message>
         <source>Rewind to this checkpoint?</source>
@@ -4326,6 +4733,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Enter / Space на строке переключает её · Esc закрывает</translation>
     </message>
     <message>
+        <source>Remembered approvals…</source>
+        <translation>Запомненные разрешения…</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
@@ -4356,6 +4767,22 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Verbose: %1</source>
         <translation>Подробно: %1</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Запомненные разрешения</translation>
+    </message>
+    <message>
+        <source>Commands allowed permanently this session · Enter/Revoke drops one · Esc closes</source>
+        <translation>Команды, разрешённые навсегда в этой сессии · Enter/Отозвать удаляет одну · Esc закрывает</translation>
+    </message>
+    <message>
+        <source>(no remembered approvals)</source>
+        <translation>(нет запомненных разрешений)</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>Отозвать</translation>
     </message>
     <message>
         <source>  ·  %1 tok</source>
@@ -4392,6 +4819,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Deny with reason (the agent will hear it)</source>
+        <translation>Отклонить с причиной (агент её услышит)</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -4577,6 +5008,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Allow network access</source>
         <translation>Разрешить доступ к сети</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Запомненные разрешения</translation>
+    </message>
+    <message>
+        <source>Commands you allowed permanently are remembered per session. Review and revoke them from the composer&apos;s session settings.</source>
+        <translation>Команды, разрешённые вами навсегда, запоминаются для каждой сессии. Просматривайте и отзывайте их в настройках сессии в композере.</translation>
     </message>
 </context>
 <context>
@@ -4783,6 +5222,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Усилие рассуждений</translation>
     </message>
     <message>
+        <source>Reasoning effort and modes are managed by the foreign agent.</source>
+        <translation>Усилие рассуждений и режимы управляются внешним агентом.</translation>
+    </message>
+    <message>
         <source>Approval mode</source>
         <translation>Режим подтверждений</translation>
     </message>
@@ -4801,6 +5244,18 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Ask</source>
         <translation>Спрашивать</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Запомненные разрешения</translation>
+    </message>
+    <message>
+        <source>No remembered approvals for this session.</source>
+        <translation>Для этой сессии нет запомненных разрешений.</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>Отозвать</translation>
     </message>
     <message>
         <source>Fast mode</source>
@@ -5116,8 +5571,16 @@ This only affects the app appearance, not your data.</source>
         <translation>Модель</translation>
     </message>
     <message>
+        <source>Agents</source>
+        <translation>Агенты</translation>
+    </message>
+    <message>
         <source>Chat</source>
         <translation>Чат</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>Инструменты</translation>
     </message>
     <message>
         <source>Safety</source>
@@ -5598,12 +6061,24 @@ This only affects the app appearance, not your data.</source>
         <translation>Подтвердить это действие?</translation>
     </message>
     <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>Причина, которую услышит агент (необязательно)</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>Подтвердить</translation>
     </message>
     <message>
         <source>Deny</source>
         <translation>Отклонить</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>Отправить отказ</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>Отклонить с причиной…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -5615,6 +6090,53 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Tool</source>
         <translation>Инструмент</translation>
+    </message>
+    <message>
+        <source>Spawned a subagent to work in the background.</source>
+        <translation>Запущен субагент для работы в фоне.</translation>
+    </message>
+    <message>
+        <source>Its completion notice will link the child; open its transcript from the Fleet page.</source>
+        <translation>Уведомление о завершении свяжет потомка; откройте его стенограмму на странице «Флот».</translation>
+    </message>
+    <message>
+        <source>Delegation depth limit (%1) reached</source>
+        <translation>Достигнут лимит глубины делегирования (%1)</translation>
+    </message>
+    <message>
+        <source>Too many background children (%1)</source>
+        <translation>Слишком много фоновых потомков (%1)</translation>
+    </message>
+    <message>
+        <source>Delegation guardrail reached</source>
+        <translation>Достигнут защитный предел делегирования</translation>
+    </message>
+</context>
+<context>
+    <name>ToolsSettingsSection</name>
+    <message>
+        <source>Tools</source>
+        <translation>Инструменты</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
+        <translation>Инструменты компилируются и контролируются узлом. Этот перечень только для чтения; отключённый инструмент указывает, что ему нужно.</translation>
+    </message>
+    <message>
+        <source>No tools reported by the node.</source>
+        <translation>Узел не сообщил ни об одном инструменте.</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Включено</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>Отключено</translation>
+    </message>
+    <message>
+        <source>Set up…</source>
+        <translation>Настроить…</translation>
     </message>
 </context>
 <context>
@@ -5691,6 +6213,22 @@ Thanks — proceeding with: %1
     <message>
         <source>Set up provider</source>
         <translation>Настроить провайдера</translation>
+    </message>
+    <message>
+        <source>The foreign agent “%1” could not run.</source>
+        <translation>Внешний агент «%1» не удалось запустить.</translation>
+    </message>
+    <message>
+        <source>foreign</source>
+        <translation>внешний</translation>
+    </message>
+    <message>
+        <source>Open Agents settings</source>
+        <translation>Открыть настройки агентов</translation>
+    </message>
+    <message>
+        <source>Read-only view of a delegated child. Steer or cancel it from the Fleet page.</source>
+        <translation>Стенограмма делегированного потомка только для чтения. Управляйте им или отменяйте на странице «Флот».</translation>
     </message>
     <message>
         <source>Select a session</source>
@@ -5965,6 +6503,22 @@ Thanks — proceeding with: %1
         <translation>Безопасность</translation>
     </message>
     <message>
+        <source>Max delegation depth</source>
+        <translation>Макс. глубина делегирования</translation>
+    </message>
+    <message>
+        <source>%1 — enforced by the node</source>
+        <translation>%1 — обеспечивается узлом</translation>
+    </message>
+    <message>
+        <source>— — enforced by the node</source>
+        <translation>— — обеспечивается узлом</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>Макс. фоновых потомков</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- Политика подтверждений задаётся для каждой сессии (настройки сессии в композере) — _применяется там узлом_
@@ -6237,10 +6791,6 @@ Thanks — proceeding with: %1
     <message>
         <source>Native</source>
         <translation>Нативный</translation>
-    </message>
-    <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -6575,17 +7125,25 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny · **D** deny with reason.
 
 </source>
-        <translation>Дерево оркестратора/воркеров, общее с GUI. **j/k** перемещение · **Space/Enter** пауза/возобновить · **t** направить дочерний · **c** отменить его ход.
+        <translation>**j/k** перемещение · **a**/**Enter** одобрить · **p** разрешить навсегда · **d** отклонить · **D** отклонить с причиной.
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`) · %5
+        <source>## %1%2
+
 </source>
-        <translation>- %1%2 — %3 (`%4`) · %5
+        <translation>## %1%2
+
+</translation>
+    </message>
+    <message>
+        <source>- Requested by: %1
+</source>
+        <translation>- Запросил: %1
 </translation>
     </message>
     <message>
@@ -6609,14 +7167,6 @@ _Агент не выбран._
 
 </source>
         <translation>**j/k** перемещение · **s** приостановить · **R**/**Enter** возобновить · **x** закрыть · **v** архив.
-
-</translation>
-    </message>
-    <message>
-        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
-
-</source>
-        <translation>**j/k** перемещение · **a**/**Enter** одобрить · **p** разрешить навсегда · **d** отклонить.
 
 </translation>
     </message>
@@ -6665,6 +7215,28 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
+        <source>persistent</source>
+        <translation>постоянный</translation>
+    </message>
+    <message>
+        <source>ephemeral</source>
+        <translation>эфемерный</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
+
+</source>
+        <translation>Дерево оркестратора/исполнителей, общее с GUI. **j/k** перемещение · **Space/Enter** пауза/продолжить · **o** открыть стенограмму · **t** управлять потомком · **c** отменить его ход.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`) · %5%6
+</source>
+        <translation>- %1%2 — %3 (`%4`) · %5%6
+</translation>
+    </message>
+    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
@@ -6691,18 +7263,52 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
-        <source>## %1%2 (%3 risk)
-
-</source>
-        <translation>## %1%2 (риск: %3)
-
-</translation>
-    </message>
-    <message>
         <source>- Session: %1
 </source>
         <translation>- Сессия: %1
 </translation>
+    </message>
+    <message>
+        <source>- Path: `%1`
+</source>
+        <translation>- Путь: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Fingerprint: `%1`
+</source>
+        <translation>- Отпечаток: `%1`
+</translation>
+    </message>
+    <message>
+        <source>## Tools
+
+</source>
+        <translation>## Инструменты
+
+</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only.
+
+</source>
+        <translation>Инструменты компилируются и контролируются узлом. Этот перечень только для чтения.
+
+</translation>
+    </message>
+    <message>
+        <source>_No tools reported by the node._
+</source>
+        <translation>_Узел не сообщил ни об одном инструменте._
+</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3</source>
+        <translation>- %1 **%2** — %3</translation>
+    </message>
+    <message>
+        <source> _(%1)_</source>
+        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -6841,10 +7447,10 @@ _Агент не выбран._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
 
 </source>
-        <translation>Транспортные аккаунты Events-IO и их активные комнаты, общие с GUI. Подключение отложено (EIO-2); операции отключения/удаления по проводу пока НЕТ (B3 — доработка node-first). Сохранённые учётные данные можно удалить на странице «Аккаунты» («x» на привязанном профиле).
+        <translation>Учётные записи транспорта Events-IO и их активные комнаты, общие с GUI. Нажмите &apos;c&apos;, чтобы подключить учётную запись. Для отключения/удаления пока НЕТ операции протокола (B3 — доработка на стороне узла). Сохранённые учётные данные можно удалить на странице «Аккаунты» (&apos;x&apos; на привязанном профиле). Приглашения в комнаты обрабатывает узел; недавно присоединённые комнаты появляются здесь автоматически.
 
 </translation>
     </message>
@@ -6889,6 +7495,10 @@ _Агент не выбран._
     <message>
         <source> · ⇄ `%1`</source>
         <translation> · ⇄ `%1`</translation>
+    </message>
+    <message>
+        <source> · ✦ new</source>
+        <translation> · ✦ новая</translation>
     </message>
     <message>
         <source>## Add channel
@@ -7063,6 +7673,17 @@ _Агент не выбран._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>Не удалось прочитать лимиты делегирования</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>Не удалось декодировать лимиты делегирования</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -7170,6 +7791,28 @@ _Агент не выбран._
     <message>
         <source>No daemon target configured</source>
         <translation>Цель демона не настроена</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Внешний</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>Не удалось отозвать отпечаток</translation>
     </message>
 </context>
 <context>
@@ -7362,6 +8005,56 @@ _Агент не выбран._
     <message>
         <source>Participants</source>
         <translation>Участники</translation>
+    </message>
+</context>
+<context>
+    <name>tools::IToolInventory</name>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Требуется ключ API Tavily</translation>
+    </message>
+    <message>
+        <source>Needs a Firecrawl API key</source>
+        <translation>Требуется ключ API Firecrawl</translation>
+    </message>
+    <message>
+        <source>Needs the vision build feature</source>
+        <translation>Требуется функция сборки vision</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Требуется функция сборки браузера</translation>
+    </message>
+    <message>
+        <source>Needs %1</source>
+        <translation>Требуется %1</translation>
+    </message>
+</context>
+<context>
+    <name>tools::MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>Чтение и редактирование файлов рабочей области</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>Выполнять команды оболочки (с одобрения)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>Поиск в интернете</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Требуется ключ API Tavily</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>Управлять реальным браузером</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Требуется функция сборки браузера</translation>
     </message>
 </context>
 <context>

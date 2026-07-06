@@ -187,10 +187,13 @@ Item {
                         // ("<agent> · ACP" / "· stream-json" / bare agent when the catalog is cold).
                         Kit.Chip {
                             visible: entry.engine !== undefined && entry.engine !== ""
-                            text: entry.engine === "Foreign"
-                                  ? EngineIdentity.labelFor(entry.engine, entry.engineAgent || "",
-                                                            EngineIdentity.protocolForAgent(entry.engineAgent || ""))
-                                  : qsTr("Native")
+                            text: {
+                                if (entry.engine !== "Foreign")
+                                    return qsTr("Native")
+                                return EngineIdentity.labelFor(
+                                    entry.engine, entry.engineAgent || "",
+                                    EngineIdentity.protocolForAgent(entry.engineAgent || ""))
+                            }
                             iconGlyph: entry.engine === "Foreign" ? FontIcons.fa_robot
                                                                   : FontIcons.fa_microchip
                             tone: entry.engine === "Foreign" ? "accent" : "muted"

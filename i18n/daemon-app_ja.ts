@@ -365,6 +365,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>daemon-core（ネイティブ）</translation>
     </message>
     <message>
+        <source>  ·  stream-json</source>
+        <translation>  ·  stream-json</translation>
+    </message>
+    <message>
         <source>  ·  ACP %1</source>
         <translation>  ·  ACP %1</translation>
     </message>
@@ -382,6 +386,130 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>daemon-core (native)</source>
         <translation>daemon-core（ネイティブ）</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsDialog</name>
+    <message>
+        <source>Foreign agents</source>
+        <translation>外部エージェント</translation>
+    </message>
+    <message>
+        <source>Registered + discovered agents:</source>
+        <translation>登録済み + 検出済みのエージェント:</translation>
+    </message>
+    <message>
+        <source>Register…</source>
+        <translation>登録…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>削除</translation>
+    </message>
+    <message>
+        <source>Re-scan</source>
+        <translation>再スキャン</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>閉じる</translation>
+    </message>
+    <message>
+        <source>Agent registered.</source>
+        <translation>エージェントを登録しました。</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>「%1」を削除しました。</translation>
+    </message>
+    <message>
+        <source>(no foreign agents in the catalog)</source>
+        <translation>(カタログに外部エージェントがありません)</translation>
+    </message>
+    <message>
+        <source>Only manually registered agents can be removed.</source>
+        <translation>手動で登録したエージェントのみ削除できます。</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>エージェントを削除</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start
+until it is re-registered.</source>
+        <translation>「%1」を削除しますか？ これを使うプロファイルは再登録するまで
+起動できません。</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>キャンセル</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsSettingsSection</name>
+    <message>
+        <source>Agent registered.</source>
+        <translation>エージェントを登録しました。</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>「%1」を削除しました。</translation>
+    </message>
+    <message>
+        <source>Foreign agents</source>
+        <translation>外部エージェント</translation>
+    </message>
+    <message>
+        <source>Agents that run a foreign engine (ACP or the Claude Code stream-json bridge). Launch recipes are stored and validated by the daemon — profiles reference an agent by name only.</source>
+        <translation>外部エンジン（ACP または Claude Code の stream-json ブリッジ）で動作するエージェント。起動レシピはデーモンが保存・検証します。プロファイルは名前だけでエージェントを参照します。</translation>
+    </message>
+    <message>
+        <source>Register custom…</source>
+        <translation>カスタムを登録…</translation>
+    </message>
+    <message>
+        <source>Re-scan installed</source>
+        <translation>インストール済みを再スキャン</translation>
+    </message>
+    <message>
+        <source>No foreign agents in the catalog yet.</source>
+        <translation>カタログにはまだ外部エージェントがありません。</translation>
+    </message>
+    <message>
+        <source>stream-json</source>
+        <translation>stream-json</translation>
+    </message>
+    <message>
+        <source>ACP</source>
+        <translation>ACP</translation>
+    </message>
+    <message>
+        <source>manual</source>
+        <translation>手動</translation>
+    </message>
+    <message>
+        <source>builtin</source>
+        <translation>組み込み</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>インストール済み</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>未インストール</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>削除</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>エージェントを削除</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start until it is re-registered.</source>
+        <translation>「%1」を削除しますか？ これを使うプロファイルは再登録するまで起動できません。</translation>
     </message>
 </context>
 <context>
@@ -493,8 +621,34 @@ You&apos;ll return to first-run setup.</source>
         <translation>受信箱ゼロ — 保留中の承認はありません。</translation>
     </message>
     <message>
+        <source>Path</source>
+        <translation>パス</translation>
+    </message>
+    <message>
+        <source>fingerprint %1</source>
+        <translation>フィンガープリント %1</translation>
+    </message>
+    <message>
+        <source>Allowing permanently remembers this exact command:
+%1</source>
+        <translation>恒久的に許可すると、このコマンドがそのまま記憶されます:
+%1</translation>
+    </message>
+    <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>エージェントに伝わる理由（任意）</translation>
+    </message>
+    <message>
         <source>Deny</source>
         <translation>拒否</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>拒否を送信</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>理由を付けて拒否…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -695,6 +849,17 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>委任の上限の読み取りに失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>委任の上限のデコードに失敗しました</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
     <message>
         <source>Remove stored credential?</source>
@@ -725,6 +890,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>接続されているチャンネルはありません。</translation>
     </message>
     <message>
+        <source>Room invites are handled by the node; newly-joined rooms appear here automatically.</source>
+        <translation>ルームの招待はノードが処理します。新しく参加したルームはここに自動的に表示されます。</translation>
+    </message>
+    <message>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
@@ -739,6 +908,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>No rooms.</source>
         <translation>ルームがありません。</translation>
+    </message>
+    <message>
+        <source>new</source>
+        <translation>新規</translation>
+    </message>
+    <message>
+        <source>Newly joined room</source>
+        <translation>新しく参加したルーム</translation>
     </message>
     <message>
         <source>⇄ %1</source>
@@ -767,6 +944,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Connect</source>
         <translation>接続</translation>
+    </message>
+    <message>
+        <source>Sign in to connect this channel</source>
+        <translation>このチャンネルに接続するにはサインインしてください</translation>
+    </message>
+    <message>
+        <source>This channel type has no browser sign-in.</source>
+        <translation>このチャンネル種別にはブラウザーサインインがありません。</translation>
     </message>
 </context>
 <context>
@@ -1227,18 +1412,6 @@ You&apos;ll return to first-run setup.</source>
         <translation>詳細</translation>
     </message>
     <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
-    </message>
-    <message>
-        <source>Foreign</source>
-        <translation>外部</translation>
-    </message>
-    <message>
-        <source>Native</source>
-        <translation>ネイティブ</translation>
-    </message>
-    <message>
         <source>Edits</source>
         <translation>編集</translation>
     </message>
@@ -1269,6 +1442,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Native</source>
         <translation>ネイティブ</translation>
+    </message>
+    <message>
+        <source>Foreign engine — model, reasoning and rewind are managed by the agent</source>
+        <translation>外部エンジン — モデル・推論・巻き戻しはエージェントが管理します</translation>
     </message>
     <message>
         <source>Engine</source>
@@ -1812,6 +1989,33 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>DelegationLimitsSection</name>
+    <message>
+        <source>Delegation limits</source>
+        <translation>委任の上限</translation>
+    </message>
+    <message>
+        <source>How deep and how wide an agent may delegate. Enforced by the node; shown here for reference.</source>
+        <translation>エージェントが委任できる深さと広さ。ノードが強制します。ここでは参考として表示します。</translation>
+    </message>
+    <message>
+        <source>Max delegation depth</source>
+        <translation>最大委任深度</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>ノードが強制します。アプリからは設定できません。</translation>
+    </message>
+    <message>
+        <source>—</source>
+        <translation>—</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>最大バックグラウンド子数</translation>
+    </message>
+</context>
+<context>
     <name>Dialog</name>
     <message>
         <source>OK</source>
@@ -2151,6 +2355,32 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>EngineOriginChip</name>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Requested by this foreign agent</source>
+        <translation>この外部エージェントが要求</translation>
+    </message>
+</context>
+<context>
     <name>FileExplorer</name>
     <message>
         <source>Explorer</source>
@@ -2242,6 +2472,13 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Retry</source>
         <translation>再試行</translation>
+    </message>
+</context>
+<context>
+    <name>FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>フィンガープリントの取り消しに失敗しました</translation>
     </message>
 </context>
 <context>
@@ -2489,12 +2726,20 @@ You&apos;ll return to first-run setup.</source>
         <translation>更新</translation>
     </message>
     <message>
-        <source>Foreign</source>
-        <translation>外部</translation>
-    </message>
-    <message>
         <source>Native</source>
         <translation>ネイティブ</translation>
+    </message>
+    <message>
+        <source>Ephemeral</source>
+        <translation>一時的</translation>
+    </message>
+    <message>
+        <source>Persistent</source>
+        <translation>永続</translation>
+    </message>
+    <message>
+        <source>Open transcript</source>
+        <translation>トランスクリプトを開く</translation>
     </message>
     <message>
         <source>Steer…</source>
@@ -3097,6 +3342,33 @@ Thanks — proceeding with: %1
     </message>
 </context>
 <context>
+    <name>MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>ワークスペースのファイルを読み書き</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>シェルコマンドを実行（承認制）</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>ウェブを検索</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Tavily の API キーが必要です</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>実際のブラウザーを操作</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>ブラウザービルド機能が必要です</translation>
+    </message>
+</context>
+<context>
     <name>ModelPickerOverlay</name>
     <message>
         <source>Off</source>
@@ -3377,8 +3649,8 @@ Start one from the Discover tab.</source>
         <translation>システムプロンプト</translation>
     </message>
     <message>
-        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
-        <translation>このエージェントは外部の ACP エンジンを実行します。その起動レシピは daemon の ACP カタログで管理されるため、プロバイダー・モデル・キーの設定は不要です。</translation>
+        <source>This agent runs a foreign engine. Its launch recipe is managed by the daemon&apos;s agent catalog — no provider, model, or key to configure.</source>
+        <translation>このエージェントは外部エンジンで動作します。起動レシピはデーモンのエージェントカタログが管理します。設定するプロバイダー・モデル・キーはありません。</translation>
     </message>
     <message>
         <source>Name:</source>
@@ -3491,6 +3763,18 @@ Start one from the Discover tab.</source>
     <message>
         <source>Name</source>
         <translation>名前</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Foreign engine (set at create time)</source>
+        <translation>外部エンジン（作成時に設定）</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign engine — its launch recipe and model are managed by the daemon&apos;s agent catalog, so there is no provider, model, or base URL to configure here.</source>
+        <translation>このエージェントは外部エンジンで動作します。起動レシピとモデルはデーモンのエージェントカタログが管理するため、ここで設定するプロバイダー・モデル・ベース URL はありません。</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -3608,8 +3892,8 @@ Start one from the Discover tab.</source>
         <translation>名前</translation>
     </message>
     <message>
-        <source>Engine: ACP agent · %1 (set at create time)</source>
-        <translation>エンジン: ACP エージェント · %1（作成時に設定）</translation>
+        <source>Engine: foreign agent · %1 (set at create time)</source>
+        <translation>エンジン: 外部エージェント · %1（作成時に設定）</translation>
     </message>
     <message>
         <source>Engine: daemon-core (native)</source>
@@ -3825,6 +4109,22 @@ Start one from the Discover tab.</source>
     <message>
         <source>No nodes found</source>
         <translation>ノードが見つかりません</translation>
+    </message>
+    <message>
+        <source>Delegation limit reached</source>
+        <translation>委任の上限に達しました</translation>
+    </message>
+    <message>
+        <source>Delegating…</source>
+        <translation>委任中…</translation>
+    </message>
+    <message>
+        <source>Delegation failed</source>
+        <translation>委任に失敗しました</translation>
+    </message>
+    <message>
+        <source>Delegated to a subagent</source>
+        <translation>サブエージェントに委任</translation>
     </message>
     <message>
         <source>Answered</source>
@@ -4060,6 +4360,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>拒否</translation>
     </message>
     <message>
+        <source>Deny with reason</source>
+        <translation>理由を付けて拒否</translation>
+    </message>
+    <message>
         <source>Allow permanently</source>
         <translation>永続的に許可</translation>
     </message>
@@ -4098,6 +4402,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>  [not installed]</source>
         <translation>  [未インストール]</translation>
+    </message>
+    <message>
+        <source>  [manual]</source>
+        <translation>  [手動]</translation>
+    </message>
+    <message>
+        <source>  [builtin]</source>
+        <translation>  [組み込み]</translation>
     </message>
 </context>
 <context>
@@ -4221,6 +4533,101 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>RegisterAgentDialog</name>
+    <message>
+        <source>Register foreign agent</source>
+        <translation>外部エージェントを登録</translation>
+    </message>
+    <message>
+        <source>Register</source>
+        <translation>登録</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>名前</translation>
+    </message>
+    <message>
+        <source>catalog name (e.g. my-claude)</source>
+        <translation>カタログ名（例: my-claude）</translation>
+    </message>
+    <message>
+        <source>Protocol</source>
+        <translation>プロトコル</translation>
+    </message>
+    <message>
+        <source>ACP (Agent Client Protocol)</source>
+        <translation>ACP (Agent Client Protocol)</translation>
+    </message>
+    <message>
+        <source>Claude Code (stream-json)</source>
+        <translation>Claude Code (stream-json)</translation>
+    </message>
+    <message>
+        <source>Connect to a TCP endpoint instead of launching a program</source>
+        <translation>プログラムを起動する代わりに TCP エンドポイントへ接続</translation>
+    </message>
+    <message>
+        <source>Program</source>
+        <translation>プログラム</translation>
+    </message>
+    <message>
+        <source>executable (resolved on the daemon&apos;s PATH)</source>
+        <translation>実行ファイル（デーモンの PATH で解決）</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated)</source>
+        <translation>引数（スペース区切り）</translation>
+    </message>
+    <message>
+        <source>--flag value</source>
+        <translation>--flag value</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VALUE per line)</source>
+        <translation>環境変数（1 行に KEY=VALUE）</translation>
+    </message>
+    <message>
+        <source>Endpoint</source>
+        <translation>エンドポイント</translation>
+    </message>
+    <message>
+        <source>tcp://host:port</source>
+        <translation>tcp://host:port</translation>
+    </message>
+    <message>
+        <source>The daemon probes the recipe on Register (an ACP initialize handshake, or a PATH check for stream-json) — the result appears in the agent list.</source>
+        <translation>デーモンは登録時にレシピを検査します（ACP の initialize ハンドシェイク、または stream-json の PATH チェック）。結果はエージェント一覧に表示されます。</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>名前:</translation>
+    </message>
+    <message>
+        <source>Protocol (Enter to pick):</source>
+        <translation>プロトコル（Enter で選択）:</translation>
+    </message>
+    <message>
+        <source>Program (blank = use TCP endpoint below):</source>
+        <translation>プログラム（空欄 = 下の TCP エンドポイントを使用）:</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated):</source>
+        <translation>引数（スペース区切り）:</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VAL,KEY=VAL):</source>
+        <translation>環境変数（KEY=VAL,KEY=VAL）:</translation>
+    </message>
+    <message>
+        <source>OR endpoint (tcp://host:port):</source>
+        <translation>または エンドポイント（tcp://host:port）:</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>キャンセル</translation>
+    </message>
+</context>
+<context>
     <name>RewindConfirmDialog</name>
     <message>
         <source>Rewind to this checkpoint?</source>
@@ -4318,6 +4725,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>行で Enter / Space を押すと切り替え · Esc で閉じる</translation>
     </message>
     <message>
+        <source>Remembered approvals…</source>
+        <translation>記憶した承認…</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>閉じる</translation>
     </message>
@@ -4348,6 +4759,22 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Verbose: %1</source>
         <translation>詳細: %1</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>記憶した承認</translation>
+    </message>
+    <message>
+        <source>Commands allowed permanently this session · Enter/Revoke drops one · Esc closes</source>
+        <translation>このセッションで恒久的に許可したコマンド · Enter/取り消し で 1 件削除 · Esc で閉じる</translation>
+    </message>
+    <message>
+        <source>(no remembered approvals)</source>
+        <translation>(記憶した承認はありません)</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>取り消し</translation>
     </message>
     <message>
         <source>  ·  %1 tok</source>
@@ -4384,6 +4811,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Cancel</source>
         <translation>キャンセル</translation>
+    </message>
+    <message>
+        <source>Deny with reason (the agent will hear it)</source>
+        <translation>理由を付けて拒否（エージェントに伝わります）</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -4569,6 +5000,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Allow network access</source>
         <translation>ネットワークアクセスを許可</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>記憶した承認</translation>
+    </message>
+    <message>
+        <source>Commands you allowed permanently are remembered per session. Review and revoke them from the composer&apos;s session settings.</source>
+        <translation>恒久的に許可したコマンドはセッションごとに記憶されます。コンポーザーのセッション設定で確認・取り消しできます。</translation>
     </message>
 </context>
 <context>
@@ -4775,6 +5214,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>推論エフォート</translation>
     </message>
     <message>
+        <source>Reasoning effort and modes are managed by the foreign agent.</source>
+        <translation>推論の強度とモードは外部エージェントが管理します。</translation>
+    </message>
+    <message>
         <source>Approval mode</source>
         <translation>承認モード</translation>
     </message>
@@ -4793,6 +5236,18 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Ask</source>
         <translation>確認</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>記憶した承認</translation>
+    </message>
+    <message>
+        <source>No remembered approvals for this session.</source>
+        <translation>このセッションに記憶した承認はありません。</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>取り消し</translation>
     </message>
     <message>
         <source>Fast mode</source>
@@ -5106,8 +5561,16 @@ This only affects the app appearance, not your data.</source>
         <translation>モデル</translation>
     </message>
     <message>
+        <source>Agents</source>
+        <translation>エージェント</translation>
+    </message>
+    <message>
         <source>Chat</source>
         <translation>チャット</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>ツール</translation>
     </message>
     <message>
         <source>Safety</source>
@@ -5584,12 +6047,24 @@ This only affects the app appearance, not your data.</source>
         <translation>このアクションを承認しますか？</translation>
     </message>
     <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>エージェントに伝わる理由（任意）</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>承認</translation>
     </message>
     <message>
         <source>Deny</source>
         <translation>拒否</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>拒否を送信</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>理由を付けて拒否…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -5601,6 +6076,53 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Tool</source>
         <translation>ツール</translation>
+    </message>
+    <message>
+        <source>Spawned a subagent to work in the background.</source>
+        <translation>バックグラウンドで作業するサブエージェントを起動しました。</translation>
+    </message>
+    <message>
+        <source>Its completion notice will link the child; open its transcript from the Fleet page.</source>
+        <translation>完了通知が子をリンクします。トランスクリプトは Fleet ページから開けます。</translation>
+    </message>
+    <message>
+        <source>Delegation depth limit (%1) reached</source>
+        <translation>委任の深さの上限 (%1) に達しました</translation>
+    </message>
+    <message>
+        <source>Too many background children (%1)</source>
+        <translation>バックグラウンドの子が多すぎます (%1)</translation>
+    </message>
+    <message>
+        <source>Delegation guardrail reached</source>
+        <translation>委任のガードレールに達しました</translation>
+    </message>
+</context>
+<context>
+    <name>ToolsSettingsSection</name>
+    <message>
+        <source>Tools</source>
+        <translation>ツール</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
+        <translation>ツールはノードがコンパイルし制御します。この一覧は読み取り専用で、無効なツールは必要なものを示します。</translation>
+    </message>
+    <message>
+        <source>No tools reported by the node.</source>
+        <translation>ノードから報告されたツールはありません。</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>有効</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>無効</translation>
+    </message>
+    <message>
+        <source>Set up…</source>
+        <translation>設定…</translation>
     </message>
 </context>
 <context>
@@ -5677,6 +6199,22 @@ Thanks — proceeding with: %1
     <message>
         <source>Set up provider</source>
         <translation>プロバイダーを設定</translation>
+    </message>
+    <message>
+        <source>The foreign agent “%1” could not run.</source>
+        <translation>外部エージェント「%1」を実行できませんでした。</translation>
+    </message>
+    <message>
+        <source>foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>Open Agents settings</source>
+        <translation>エージェント設定を開く</translation>
+    </message>
+    <message>
+        <source>Read-only view of a delegated child. Steer or cancel it from the Fleet page.</source>
+        <translation>委任された子の読み取り専用ビュー。Fleet ページから操作またはキャンセルできます。</translation>
     </message>
     <message>
         <source>Select a session</source>
@@ -5951,6 +6489,22 @@ Thanks — proceeding with: %1
         <translation>安全性</translation>
     </message>
     <message>
+        <source>Max delegation depth</source>
+        <translation>最大委任深度</translation>
+    </message>
+    <message>
+        <source>%1 — enforced by the node</source>
+        <translation>%1 — ノードが強制</translation>
+    </message>
+    <message>
+        <source>— — enforced by the node</source>
+        <translation>— — ノードが強制</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>最大バックグラウンド子数</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- 承認ポリシーはセッションごとに設定されます（コンポーザーのセッション設定）— _そこでノードによって適用されます_
@@ -6223,10 +6777,6 @@ Thanks — proceeding with: %1
     <message>
         <source>Native</source>
         <translation>ネイティブ</translation>
-    </message>
-    <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -6561,17 +7111,25 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny · **D** deny with reason.
 
 </source>
-        <translation>オーケストレーター／ワーカーツリー。GUI と共有されます。**j/k** で移動 · **Space/Enter** で一時停止／再開 · **t** で子を誘導 · **c** でそのターンをキャンセル。
+        <translation>**j/k** 移動 · **a**/**Enter** 承認 · **p** 恒久的に許可 · **d** 拒否 · **D** 理由を付けて拒否。
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`) · %5
+        <source>## %1%2
+
 </source>
-        <translation>- %1%2 — %3 (`%4`) · %5
+        <translation>## %1%2
+
+</translation>
+    </message>
+    <message>
+        <source>- Requested by: %1
+</source>
+        <translation>- 要求者: %1
 </translation>
     </message>
     <message>
@@ -6595,14 +7153,6 @@ _エージェントが選択されていません。_
 
 </source>
         <translation>**j/k** で移動 · **s** で中断 · **R**/**Enter** で再開 · **x** で閉じる · **v** でアーカイブ。
-
-</translation>
-    </message>
-    <message>
-        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
-
-</source>
-        <translation>**j/k** で移動 · **a**/**Enter** で承認 · **p** で常に許可 · **d** で拒否。
 
 </translation>
     </message>
@@ -6651,6 +7201,28 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
+        <source>persistent</source>
+        <translation>永続</translation>
+    </message>
+    <message>
+        <source>ephemeral</source>
+        <translation>一時的</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
+
+</source>
+        <translation>GUI と共有するオーケストレーター/ワーカーツリー。**j/k** 移動 · **Space/Enter** 一時停止/再開 · **o** トランスクリプトを開く · **t** 子を操作 · **c** そのターンを取消。
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`) · %5%6
+</source>
+        <translation>- %1%2 — %3 (`%4`) · %5%6
+</translation>
+    </message>
+    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 トークン
@@ -6677,18 +7249,52 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>## %1%2 (%3 risk)
-
-</source>
-        <translation>## %1%2（リスク %3）
-
-</translation>
-    </message>
-    <message>
         <source>- Session: %1
 </source>
         <translation>- セッション: %1
 </translation>
+    </message>
+    <message>
+        <source>- Path: `%1`
+</source>
+        <translation>- パス: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Fingerprint: `%1`
+</source>
+        <translation>- フィンガープリント: `%1`
+</translation>
+    </message>
+    <message>
+        <source>## Tools
+
+</source>
+        <translation>## ツール
+
+</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only.
+
+</source>
+        <translation>ツールはノードがコンパイルし制御します。この一覧は読み取り専用です。
+
+</translation>
+    </message>
+    <message>
+        <source>_No tools reported by the node._
+</source>
+        <translation>_ノードから報告されたツールはありません。_
+</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3</source>
+        <translation>- %1 **%2** — %3</translation>
+    </message>
+    <message>
+        <source> _(%1)_</source>
+        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -6827,10 +7433,10 @@ _エージェントが選択されていません。_
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
 
 </source>
-        <translation>Events-IO トランスポートアカウントとそのライブルーム。GUI と共有されます。接続は保留されています（EIO-2）。切断／削除のワイヤ操作はまだありません（B3 - ノード優先のフォローアップ）。保存された資格情報はアカウントページから削除できます（バインドされたプロファイルで「x」）。
+        <translation>GUI と共有する Events-IO トランスポートのアカウントとそのライブルーム。&apos;c&apos; を押すとアカウントを接続します。切断/削除に対応するワイヤ操作はまだありません（B3 — ノード側の対応）。保存済みの認証情報は「アカウント」ページで削除できます（バインド済みプロファイルで &apos;x&apos;）。ルームの招待はノードが処理します。新しく参加したルームはここに自動的に表示されます。
 
 </translation>
     </message>
@@ -6875,6 +7481,10 @@ _エージェントが選択されていません。_
     <message>
         <source> · ⇄ `%1`</source>
         <translation> · ⇄ `%1`</translation>
+    </message>
+    <message>
+        <source> · ✦ new</source>
+        <translation> · ✦ 新規</translation>
     </message>
     <message>
         <source>## Add channel
@@ -7049,6 +7659,17 @@ _エージェントが選択されていません。_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>委任の上限の読み取りに失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>委任の上限のデコードに失敗しました</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -7156,6 +7777,28 @@ _エージェントが選択されていません。_
     <message>
         <source>No daemon target configured</source>
         <translation>daemon のターゲットが設定されていません</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>外部</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>フィンガープリントの取り消しに失敗しました</translation>
     </message>
 </context>
 <context>
@@ -7348,6 +7991,56 @@ _エージェントが選択されていません。_
     <message>
         <source>Participants</source>
         <translation>参加者</translation>
+    </message>
+</context>
+<context>
+    <name>tools::IToolInventory</name>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Tavily の API キーが必要です</translation>
+    </message>
+    <message>
+        <source>Needs a Firecrawl API key</source>
+        <translation>Firecrawl の API キーが必要です</translation>
+    </message>
+    <message>
+        <source>Needs the vision build feature</source>
+        <translation>ビジョンビルド機能が必要です</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>ブラウザービルド機能が必要です</translation>
+    </message>
+    <message>
+        <source>Needs %1</source>
+        <translation>%1 が必要です</translation>
+    </message>
+</context>
+<context>
+    <name>tools::MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>ワークスペースのファイルを読み書き</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>シェルコマンドを実行（承認制）</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>ウェブを検索</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Tavily の API キーが必要です</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>実際のブラウザーを操作</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>ブラウザービルド機能が必要です</translation>
     </message>
 </context>
 <context>

@@ -365,6 +365,10 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>daemon-core (nativ)</translation>
     </message>
     <message>
+        <source>  ·  stream-json</source>
+        <translation>  ·  stream-json</translation>
+    </message>
+    <message>
         <source>  ·  ACP %1</source>
         <translation>  ·  ACP %1</translation>
     </message>
@@ -382,6 +386,130 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source>daemon-core (native)</source>
         <translation>daemon-core (nativ)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsDialog</name>
+    <message>
+        <source>Foreign agents</source>
+        <translation>Fremde Agenten</translation>
+    </message>
+    <message>
+        <source>Registered + discovered agents:</source>
+        <translation>Registrierte + erkannte Agenten:</translation>
+    </message>
+    <message>
+        <source>Register…</source>
+        <translation>Registrieren…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
+    <message>
+        <source>Re-scan</source>
+        <translation>Neu scannen</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Schließen</translation>
+    </message>
+    <message>
+        <source>Agent registered.</source>
+        <translation>Agent registriert.</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>„%1“ entfernt.</translation>
+    </message>
+    <message>
+        <source>(no foreign agents in the catalog)</source>
+        <translation>(keine fremden Agenten im Katalog)</translation>
+    </message>
+    <message>
+        <source>Only manually registered agents can be removed.</source>
+        <translation>Nur manuell registrierte Agenten können entfernt werden.</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>Agent entfernen</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start
+until it is re-registered.</source>
+        <translation>„%1“ entfernen? Profile, die ihn nutzen, starten nicht,
+bis er erneut registriert wird.</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsSettingsSection</name>
+    <message>
+        <source>Agent registered.</source>
+        <translation>Agent registriert.</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>„%1“ entfernt.</translation>
+    </message>
+    <message>
+        <source>Foreign agents</source>
+        <translation>Fremde Agenten</translation>
+    </message>
+    <message>
+        <source>Agents that run a foreign engine (ACP or the Claude Code stream-json bridge). Launch recipes are stored and validated by the daemon — profiles reference an agent by name only.</source>
+        <translation>Agenten, die eine fremde Engine ausführen (ACP oder die Claude-Code-stream-json-Brücke). Start-Rezepte werden vom Daemon gespeichert und validiert — Profile verweisen nur über den Namen auf einen Agenten.</translation>
+    </message>
+    <message>
+        <source>Register custom…</source>
+        <translation>Benutzerdefiniert registrieren…</translation>
+    </message>
+    <message>
+        <source>Re-scan installed</source>
+        <translation>Installierte neu scannen</translation>
+    </message>
+    <message>
+        <source>No foreign agents in the catalog yet.</source>
+        <translation>Noch keine fremden Agenten im Katalog.</translation>
+    </message>
+    <message>
+        <source>stream-json</source>
+        <translation>stream-json</translation>
+    </message>
+    <message>
+        <source>ACP</source>
+        <translation>ACP</translation>
+    </message>
+    <message>
+        <source>manual</source>
+        <translation>manuell</translation>
+    </message>
+    <message>
+        <source>builtin</source>
+        <translation>integriert</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>installiert</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>nicht installiert</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>Agent entfernen</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start until it is re-registered.</source>
+        <translation>„%1“ entfernen? Profile, die ihn nutzen, starten nicht, bis er erneut registriert wird.</translation>
     </message>
 </context>
 <context>
@@ -493,8 +621,34 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>Posteingang leer — keine ausstehenden Freigaben.</translation>
     </message>
     <message>
+        <source>Path</source>
+        <translation>Pfad</translation>
+    </message>
+    <message>
+        <source>fingerprint %1</source>
+        <translation>Fingerabdruck %1</translation>
+    </message>
+    <message>
+        <source>Allowing permanently remembers this exact command:
+%1</source>
+        <translation>Dauerhaft erlauben merkt sich genau diesen Befehl:
+%1</translation>
+    </message>
+    <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>Grund, den der Agent hört (optional)</translation>
+    </message>
+    <message>
         <source>Deny</source>
         <translation>Ablehnen</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>Ablehnung senden</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>Mit Grund ablehnen…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -695,6 +849,17 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     </message>
 </context>
 <context>
+    <name>CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>Delegationslimits konnten nicht gelesen werden</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>Delegationslimits konnten nicht dekodiert werden</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
     <message>
         <source>Remove stored credential?</source>
@@ -725,6 +890,10 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>Keine Kanäle verbunden.</translation>
     </message>
     <message>
+        <source>Room invites are handled by the node; newly-joined rooms appear here automatically.</source>
+        <translation>Raum-Einladungen werden vom Node verarbeitet; neu beigetretene Räume erscheinen hier automatisch.</translation>
+    </message>
+    <message>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
@@ -739,6 +908,14 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source>No rooms.</source>
         <translation>Keine Räume.</translation>
+    </message>
+    <message>
+        <source>new</source>
+        <translation>neu</translation>
+    </message>
+    <message>
+        <source>Newly joined room</source>
+        <translation>Neu beigetretener Raum</translation>
     </message>
     <message>
         <source>⇄ %1</source>
@@ -767,6 +944,14 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source>Connect</source>
         <translation>Verbinden</translation>
+    </message>
+    <message>
+        <source>Sign in to connect this channel</source>
+        <translation>Anmelden, um diesen Kanal zu verbinden</translation>
+    </message>
+    <message>
+        <source>This channel type has no browser sign-in.</source>
+        <translation>Dieser Kanaltyp hat keine Browser-Anmeldung.</translation>
     </message>
 </context>
 <context>
@@ -1227,18 +1412,6 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>ausführlich</translation>
     </message>
     <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
-    </message>
-    <message>
-        <source>Foreign</source>
-        <translation>Fremd</translation>
-    </message>
-    <message>
-        <source>Native</source>
-        <translation>Nativ</translation>
-    </message>
-    <message>
         <source>Edits</source>
         <translation>Bearbeitungen</translation>
     </message>
@@ -1269,6 +1442,10 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source>Native</source>
         <translation>Nativ</translation>
+    </message>
+    <message>
+        <source>Foreign engine — model, reasoning and rewind are managed by the agent</source>
+        <translation>Fremde Engine — Modell, Reasoning und Zurückspulen werden vom Agenten verwaltet</translation>
     </message>
     <message>
         <source>Engine</source>
@@ -1812,6 +1989,33 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     </message>
 </context>
 <context>
+    <name>DelegationLimitsSection</name>
+    <message>
+        <source>Delegation limits</source>
+        <translation>Delegationslimits</translation>
+    </message>
+    <message>
+        <source>How deep and how wide an agent may delegate. Enforced by the node; shown here for reference.</source>
+        <translation>Wie tief und wie breit ein Agent delegieren darf. Vom Node erzwungen; hier nur zur Referenz.</translation>
+    </message>
+    <message>
+        <source>Max delegation depth</source>
+        <translation>Max. Delegationstiefe</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>Vom Node erzwungen — nicht in der App konfigurierbar.</translation>
+    </message>
+    <message>
+        <source>—</source>
+        <translation>—</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>Max. Hintergrund-Kinder</translation>
+    </message>
+</context>
+<context>
     <name>Dialog</name>
     <message>
         <source>OK</source>
@@ -2151,6 +2355,32 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     </message>
 </context>
 <context>
+    <name>EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Fremd</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>EngineOriginChip</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Fremd</translation>
+    </message>
+    <message>
+        <source>Requested by this foreign agent</source>
+        <translation>Von diesem fremden Agenten angefordert</translation>
+    </message>
+</context>
+<context>
     <name>FileExplorer</name>
     <message>
         <source>Explorer</source>
@@ -2244,6 +2474,13 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
     <message>
         <source>Retry</source>
         <translation>Erneut versuchen</translation>
+    </message>
+</context>
+<context>
+    <name>FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>Widerruf des Fingerabdrucks fehlgeschlagen</translation>
     </message>
 </context>
 <context>
@@ -2491,12 +2728,20 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
         <translation>Aktualisieren</translation>
     </message>
     <message>
-        <source>Foreign</source>
-        <translation>Fremd</translation>
-    </message>
-    <message>
         <source>Native</source>
         <translation>Nativ</translation>
+    </message>
+    <message>
+        <source>Ephemeral</source>
+        <translation>Kurzlebig</translation>
+    </message>
+    <message>
+        <source>Persistent</source>
+        <translation>Persistent</translation>
+    </message>
+    <message>
+        <source>Open transcript</source>
+        <translation>Transkript öffnen</translation>
     </message>
     <message>
         <source>Steer…</source>
@@ -3101,6 +3346,33 @@ Danke — es geht weiter mit: %1
     </message>
 </context>
 <context>
+    <name>MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>Arbeitsbereichsdateien lesen und bearbeiten</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>Shell-Befehle ausführen (freigabepflichtig)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>Im Web suchen</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Benötigt einen Tavily-API-Schlüssel</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>Einen echten Browser steuern</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Benötigt das Browser-Build-Feature</translation>
+    </message>
+</context>
+<context>
     <name>ModelPickerOverlay</name>
     <message>
         <source>Off</source>
@@ -3381,8 +3653,8 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
         <translation>System-Prompt</translation>
     </message>
     <message>
-        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
-        <translation>Dieser Agent nutzt eine fremde ACP-Engine. Sein Startrezept wird vom ACP-Katalog des Daemons verwaltet — kein Anbieter, Modell oder Schlüssel zu konfigurieren.</translation>
+        <source>This agent runs a foreign engine. Its launch recipe is managed by the daemon&apos;s agent catalog — no provider, model, or key to configure.</source>
+        <translation>Dieser Agent führt eine fremde Engine aus. Sein Start-Rezept wird vom Agentenkatalog des Daemons verwaltet — kein Anbieter, Modell oder Schlüssel zu konfigurieren.</translation>
     </message>
     <message>
         <source>Name:</source>
@@ -3495,6 +3767,18 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
     <message>
         <source>Name</source>
         <translation>Name</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Fremd</translation>
+    </message>
+    <message>
+        <source>Foreign engine (set at create time)</source>
+        <translation>Fremde Engine (bei Erstellung festgelegt)</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign engine — its launch recipe and model are managed by the daemon&apos;s agent catalog, so there is no provider, model, or base URL to configure here.</source>
+        <translation>Dieser Agent führt eine fremde Engine aus — sein Start-Rezept und Modell werden vom Agentenkatalog des Daemons verwaltet, daher gibt es hier keinen Anbieter, kein Modell und keine Basis-URL zu konfigurieren.</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -3612,8 +3896,8 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
         <translation>Name</translation>
     </message>
     <message>
-        <source>Engine: ACP agent · %1 (set at create time)</source>
-        <translation>Engine: ACP-Agent · %1 (bei der Erstellung festgelegt)</translation>
+        <source>Engine: foreign agent · %1 (set at create time)</source>
+        <translation>Engine: fremder Agent · %1 (bei Erstellung festgelegt)</translation>
     </message>
     <message>
         <source>Engine: daemon-core (native)</source>
@@ -3829,6 +4113,22 @@ Starten Sie einen über den Tab „Entdecken“.</translation>
     <message>
         <source>No nodes found</source>
         <translation>Keine Knoten gefunden</translation>
+    </message>
+    <message>
+        <source>Delegation limit reached</source>
+        <translation>Delegationslimit erreicht</translation>
+    </message>
+    <message>
+        <source>Delegating…</source>
+        <translation>Delegiere…</translation>
+    </message>
+    <message>
+        <source>Delegation failed</source>
+        <translation>Delegation fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Delegated to a subagent</source>
+        <translation>An einen Subagenten delegiert</translation>
     </message>
     <message>
         <source>Answered</source>
@@ -4064,6 +4364,10 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Ablehnen</translation>
     </message>
     <message>
+        <source>Deny with reason</source>
+        <translation>Mit Grund ablehnen</translation>
+    </message>
+    <message>
         <source>Allow permanently</source>
         <translation>Dauerhaft zulassen</translation>
     </message>
@@ -4102,6 +4406,14 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>  [not installed]</source>
         <translation>  [nicht installiert]</translation>
+    </message>
+    <message>
+        <source>  [manual]</source>
+        <translation>  [manuell]</translation>
+    </message>
+    <message>
+        <source>  [builtin]</source>
+        <translation>  [integriert]</translation>
     </message>
 </context>
 <context>
@@ -4225,6 +4537,101 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     </message>
 </context>
 <context>
+    <name>RegisterAgentDialog</name>
+    <message>
+        <source>Register foreign agent</source>
+        <translation>Fremden Agenten registrieren</translation>
+    </message>
+    <message>
+        <source>Register</source>
+        <translation>Registrieren</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <source>catalog name (e.g. my-claude)</source>
+        <translation>Katalogname (z. B. my-claude)</translation>
+    </message>
+    <message>
+        <source>Protocol</source>
+        <translation>Protokoll</translation>
+    </message>
+    <message>
+        <source>ACP (Agent Client Protocol)</source>
+        <translation>ACP (Agent Client Protocol)</translation>
+    </message>
+    <message>
+        <source>Claude Code (stream-json)</source>
+        <translation>Claude Code (stream-json)</translation>
+    </message>
+    <message>
+        <source>Connect to a TCP endpoint instead of launching a program</source>
+        <translation>Mit einem TCP-Endpunkt verbinden, statt ein Programm zu starten</translation>
+    </message>
+    <message>
+        <source>Program</source>
+        <translation>Programm</translation>
+    </message>
+    <message>
+        <source>executable (resolved on the daemon&apos;s PATH)</source>
+        <translation>ausführbare Datei (über den PATH des Daemons aufgelöst)</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated)</source>
+        <translation>Argumente (durch Leerzeichen getrennt)</translation>
+    </message>
+    <message>
+        <source>--flag value</source>
+        <translation>--flag value</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VALUE per line)</source>
+        <translation>Umgebung (KEY=VALUE pro Zeile)</translation>
+    </message>
+    <message>
+        <source>Endpoint</source>
+        <translation>Endpunkt</translation>
+    </message>
+    <message>
+        <source>tcp://host:port</source>
+        <translation>tcp://host:port</translation>
+    </message>
+    <message>
+        <source>The daemon probes the recipe on Register (an ACP initialize handshake, or a PATH check for stream-json) — the result appears in the agent list.</source>
+        <translation>Der Daemon prüft das Rezept bei der Registrierung (ein ACP-Initialize-Handshake oder eine PATH-Prüfung für stream-json) — das Ergebnis erscheint in der Agentenliste.</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>Name:</translation>
+    </message>
+    <message>
+        <source>Protocol (Enter to pick):</source>
+        <translation>Protokoll (Enter zum Auswählen):</translation>
+    </message>
+    <message>
+        <source>Program (blank = use TCP endpoint below):</source>
+        <translation>Programm (leer = TCP-Endpunkt unten verwenden):</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated):</source>
+        <translation>Argumente (durch Leerzeichen getrennt):</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VAL,KEY=VAL):</source>
+        <translation>Umgebung (KEY=VAL,KEY=VAL):</translation>
+    </message>
+    <message>
+        <source>OR endpoint (tcp://host:port):</source>
+        <translation>ODER Endpunkt (tcp://host:port):</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+</context>
+<context>
     <name>RewindConfirmDialog</name>
     <message>
         <source>Rewind to this checkpoint?</source>
@@ -4322,6 +4729,10 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Enter / Leertaste auf einer Zeile wechselt oder schaltet sie um · Esc schließt</translation>
     </message>
     <message>
+        <source>Remembered approvals…</source>
+        <translation>Gemerkte Freigaben…</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>Schließen</translation>
     </message>
@@ -4352,6 +4763,22 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>Verbose: %1</source>
         <translation>Ausführlich: %1</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Gemerkte Freigaben</translation>
+    </message>
+    <message>
+        <source>Commands allowed permanently this session · Enter/Revoke drops one · Esc closes</source>
+        <translation>In dieser Sitzung dauerhaft erlaubte Befehle · Enter/Widerrufen entfernt einen · Esc schließt</translation>
+    </message>
+    <message>
+        <source>(no remembered approvals)</source>
+        <translation>(keine gemerkten Freigaben)</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>Widerrufen</translation>
     </message>
     <message>
         <source>  ·  %1 tok</source>
@@ -4388,6 +4815,10 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>Cancel</source>
         <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Deny with reason (the agent will hear it)</source>
+        <translation>Mit Grund ablehnen (der Agent hört ihn)</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -4573,6 +5004,14 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>Allow network access</source>
         <translation>Netzwerkzugriff erlauben</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Gemerkte Freigaben</translation>
+    </message>
+    <message>
+        <source>Commands you allowed permanently are remembered per session. Review and revoke them from the composer&apos;s session settings.</source>
+        <translation>Befehle, die Sie dauerhaft erlaubt haben, werden pro Sitzung gemerkt. Prüfen und widerrufen Sie sie in den Sitzungseinstellungen des Composers.</translation>
     </message>
 </context>
 <context>
@@ -4779,6 +5218,10 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Denkaufwand</translation>
     </message>
     <message>
+        <source>Reasoning effort and modes are managed by the foreign agent.</source>
+        <translation>Reasoning-Aufwand und Modi werden vom fremden Agenten verwaltet.</translation>
+    </message>
+    <message>
         <source>Approval mode</source>
         <translation>Freigabemodus</translation>
     </message>
@@ -4797,6 +5240,18 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>Ask</source>
         <translation>Fragen</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Gemerkte Freigaben</translation>
+    </message>
+    <message>
+        <source>No remembered approvals for this session.</source>
+        <translation>Keine gemerkten Freigaben für diese Sitzung.</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>Widerrufen</translation>
     </message>
     <message>
         <source>Fast mode</source>
@@ -5111,8 +5566,16 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
         <translation>Modell</translation>
     </message>
     <message>
+        <source>Agents</source>
+        <translation>Agenten</translation>
+    </message>
+    <message>
         <source>Chat</source>
         <translation>Chat</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>Werkzeuge</translation>
     </message>
     <message>
         <source>Safety</source>
@@ -5591,12 +6054,24 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
         <translation>Diese Aktion freigeben?</translation>
     </message>
     <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>Grund, den der Agent hört (optional)</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>Freigeben</translation>
     </message>
     <message>
         <source>Deny</source>
         <translation>Ablehnen</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>Ablehnung senden</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>Mit Grund ablehnen…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -5608,6 +6083,53 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
     <message>
         <source>Tool</source>
         <translation>Werkzeug</translation>
+    </message>
+    <message>
+        <source>Spawned a subagent to work in the background.</source>
+        <translation>Ein Subagent wurde gestartet, um im Hintergrund zu arbeiten.</translation>
+    </message>
+    <message>
+        <source>Its completion notice will link the child; open its transcript from the Fleet page.</source>
+        <translation>Seine Abschlussmeldung verlinkt das Kind; öffne sein Transkript auf der Flotten-Seite.</translation>
+    </message>
+    <message>
+        <source>Delegation depth limit (%1) reached</source>
+        <translation>Delegationstiefen-Limit (%1) erreicht</translation>
+    </message>
+    <message>
+        <source>Too many background children (%1)</source>
+        <translation>Zu viele Hintergrund-Kinder (%1)</translation>
+    </message>
+    <message>
+        <source>Delegation guardrail reached</source>
+        <translation>Delegations-Schutzgrenze erreicht</translation>
+    </message>
+</context>
+<context>
+    <name>ToolsSettingsSection</name>
+    <message>
+        <source>Tools</source>
+        <translation>Werkzeuge</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
+        <translation>Werkzeuge werden vom Node kompiliert und gesteuert. Dieses Inventar ist schreibgeschützt; ein deaktiviertes Werkzeug nennt, was es benötigt.</translation>
+    </message>
+    <message>
+        <source>No tools reported by the node.</source>
+        <translation>Vom Node wurden keine Werkzeuge gemeldet.</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Aktiviert</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>Deaktiviert</translation>
+    </message>
+    <message>
+        <source>Set up…</source>
+        <translation>Einrichten…</translation>
     </message>
 </context>
 <context>
@@ -5684,6 +6206,22 @@ Danke — es geht weiter mit: %1
     <message>
         <source>Set up provider</source>
         <translation>Anbieter einrichten</translation>
+    </message>
+    <message>
+        <source>The foreign agent “%1” could not run.</source>
+        <translation>Der fremde Agent „%1“ konnte nicht ausgeführt werden.</translation>
+    </message>
+    <message>
+        <source>foreign</source>
+        <translation>fremd</translation>
+    </message>
+    <message>
+        <source>Open Agents settings</source>
+        <translation>Agenten-Einstellungen öffnen</translation>
+    </message>
+    <message>
+        <source>Read-only view of a delegated child. Steer or cancel it from the Fleet page.</source>
+        <translation>Schreibgeschützte Ansicht eines delegierten Kindes. Steuere oder brich es auf der Flotten-Seite ab.</translation>
     </message>
     <message>
         <source>Select a session</source>
@@ -5958,6 +6496,22 @@ Danke — es geht weiter mit: %1
         <translation>Sicherheit</translation>
     </message>
     <message>
+        <source>Max delegation depth</source>
+        <translation>Max. Delegationstiefe</translation>
+    </message>
+    <message>
+        <source>%1 — enforced by the node</source>
+        <translation>%1 — vom Node erzwungen</translation>
+    </message>
+    <message>
+        <source>— — enforced by the node</source>
+        <translation>— — vom Node erzwungen</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>Max. Hintergrund-Kinder</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- Die Freigaberichtlinie wird pro Sitzung festgelegt (Sitzungseinstellungen des Composers) — _dort vom Node durchgesetzt_
@@ -6230,10 +6784,6 @@ Danke — es geht weiter mit: %1
     <message>
         <source>Native</source>
         <translation>Nativ</translation>
-    </message>
-    <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -6568,17 +7118,25 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny · **D** deny with reason.
 
 </source>
-        <translation>Orchestrator-/Worker-Baum, gemeinsam mit der GUI. **j/k** bewegen · **Leertaste/Enter** pausieren/fortsetzen · **t** ein Kind steuern · **c** dessen Durchlauf abbrechen.
+        <translation>**j/k** bewegen · **a**/**Enter** genehmigen · **p** dauerhaft erlauben · **d** ablehnen · **D** mit Grund ablehnen.
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`) · %5
+        <source>## %1%2
+
 </source>
-        <translation>- %1%2 – %3 (`%4`) · %5
+        <translation>## %1%2
+
+</translation>
+    </message>
+    <message>
+        <source>- Requested by: %1
+</source>
+        <translation>- Angefordert von: %1
 </translation>
     </message>
     <message>
@@ -6602,14 +7160,6 @@ _Kein Agent ausgewählt._
 
 </source>
         <translation>**j/k** bewegen · **s** aussetzen · **R**/**Enter** fortsetzen · **x** schließen · **v** archiviert.
-
-</translation>
-    </message>
-    <message>
-        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
-
-</source>
-        <translation>**j/k** bewegen · **a**/**Enter** genehmigen · **p** dauerhaft zulassen · **d** ablehnen.
 
 </translation>
     </message>
@@ -6658,6 +7208,28 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
+        <source>persistent</source>
+        <translation>persistent</translation>
+    </message>
+    <message>
+        <source>ephemeral</source>
+        <translation>kurzlebig</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
+
+</source>
+        <translation>Orchestrator/Worker-Baum, mit der GUI geteilt. **j/k** bewegen · **Space/Enter** pausieren/fortsetzen · **o** Transkript öffnen · **t** ein Kind steuern · **c** dessen Zug abbrechen.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`) · %5%6
+</source>
+        <translation>- %1%2 — %3 (`%4`) · %5%6
+</translation>
+    </message>
+    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 Tok
@@ -6684,18 +7256,52 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>## %1%2 (%3 risk)
-
-</source>
-        <translation>## %1%2 (%3 Risiko)
-
-</translation>
-    </message>
-    <message>
         <source>- Session: %1
 </source>
         <translation>- Sitzung: %1
 </translation>
+    </message>
+    <message>
+        <source>- Path: `%1`
+</source>
+        <translation>- Pfad: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Fingerprint: `%1`
+</source>
+        <translation>- Fingerabdruck: `%1`
+</translation>
+    </message>
+    <message>
+        <source>## Tools
+
+</source>
+        <translation>## Werkzeuge
+
+</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only.
+
+</source>
+        <translation>Werkzeuge werden vom Node kompiliert und gesteuert. Dieses Inventar ist schreibgeschützt.
+
+</translation>
+    </message>
+    <message>
+        <source>_No tools reported by the node._
+</source>
+        <translation>_Vom Node wurden keine Werkzeuge gemeldet._
+</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3</source>
+        <translation>- %1 **%2** — %3</translation>
+    </message>
+    <message>
+        <source> _(%1)_</source>
+        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -6834,10 +7440,10 @@ _Kein Agent ausgewählt._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
 
 </source>
-        <translation>Events-IO-Transportkonten und ihre aktiven Räume, gemeinsam mit der GUI. Das Verbinden ist zurückgestellt (EIO-2); Trennen/Entfernen hat noch keinen Wire-Vorgang (B3 – node-first Folgeaufgabe). Ein gespeichertes Anmeldedatum kann auf der Konten-Seite entfernt werden („x“ beim gebundenen Profil).
+        <translation>Events-IO-Transportkonten und ihre Live-Räume, mit der GUI geteilt. Drücke &apos;c&apos;, um ein Konto zu verbinden. Trennen/Entfernen hat NOCH keine Wire-Operation (B3 - Node-first-Follow-up). Eine gespeicherte Anmeldeinfo kann auf der Konten-Seite entfernt werden (&apos;x&apos; beim gebundenen Profil). Raum-Einladungen werden vom Node verarbeitet; neu beigetretene Räume erscheinen hier automatisch.
 
 </translation>
     </message>
@@ -6882,6 +7488,10 @@ _Kein Agent ausgewählt._
     <message>
         <source> · ⇄ `%1`</source>
         <translation> · ⇄ `%1`</translation>
+    </message>
+    <message>
+        <source> · ✦ new</source>
+        <translation> · ✦ neu</translation>
     </message>
     <message>
         <source>## Add channel
@@ -7056,6 +7666,17 @@ _Kein Agent ausgewählt._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>Delegationslimits konnten nicht gelesen werden</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>Delegationslimits konnten nicht dekodiert werden</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -7163,6 +7784,28 @@ _Kein Agent ausgewählt._
     <message>
         <source>No daemon target configured</source>
         <translation>Kein Daemon-Ziel konfiguriert</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Fremd</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>Widerruf des Fingerabdrucks fehlgeschlagen</translation>
     </message>
 </context>
 <context>
@@ -7355,6 +7998,56 @@ _Kein Agent ausgewählt._
     <message>
         <source>Participants</source>
         <translation>Teilnehmer</translation>
+    </message>
+</context>
+<context>
+    <name>tools::IToolInventory</name>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Benötigt einen Tavily-API-Schlüssel</translation>
+    </message>
+    <message>
+        <source>Needs a Firecrawl API key</source>
+        <translation>Benötigt einen Firecrawl-API-Schlüssel</translation>
+    </message>
+    <message>
+        <source>Needs the vision build feature</source>
+        <translation>Benötigt das Vision-Build-Feature</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Benötigt das Browser-Build-Feature</translation>
+    </message>
+    <message>
+        <source>Needs %1</source>
+        <translation>Benötigt %1</translation>
+    </message>
+</context>
+<context>
+    <name>tools::MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>Arbeitsbereichsdateien lesen und bearbeiten</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>Shell-Befehle ausführen (freigabepflichtig)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>Im Web suchen</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Benötigt einen Tavily-API-Schlüssel</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>Einen echten Browser steuern</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Benötigt das Browser-Build-Feature</translation>
     </message>
 </context>
 <context>

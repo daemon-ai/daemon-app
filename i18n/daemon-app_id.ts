@@ -365,6 +365,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>daemon-core (native)</translation>
     </message>
     <message>
+        <source>  ·  stream-json</source>
+        <translation>  ·  stream-json</translation>
+    </message>
+    <message>
         <source>  ·  ACP %1</source>
         <translation>  ·  ACP %1</translation>
     </message>
@@ -382,6 +386,130 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>daemon-core (native)</source>
         <translation>daemon-core (native)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsDialog</name>
+    <message>
+        <source>Foreign agents</source>
+        <translation>Agen eksternal</translation>
+    </message>
+    <message>
+        <source>Registered + discovered agents:</source>
+        <translation>Agen terdaftar + ditemukan:</translation>
+    </message>
+    <message>
+        <source>Register…</source>
+        <translation>Daftarkan…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Hapus</translation>
+    </message>
+    <message>
+        <source>Re-scan</source>
+        <translation>Pindai ulang</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Tutup</translation>
+    </message>
+    <message>
+        <source>Agent registered.</source>
+        <translation>Agen terdaftar.</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>“%1” dihapus.</translation>
+    </message>
+    <message>
+        <source>(no foreign agents in the catalog)</source>
+        <translation>(tidak ada agen eksternal di katalog)</translation>
+    </message>
+    <message>
+        <source>Only manually registered agents can be removed.</source>
+        <translation>Hanya agen yang didaftarkan manual yang dapat dihapus.</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>Hapus agen</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start
+until it is re-registered.</source>
+        <translation>Hapus “%1”? Profil yang memakainya akan gagal dijalankan
+sampai didaftarkan ulang.</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Batal</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsSettingsSection</name>
+    <message>
+        <source>Agent registered.</source>
+        <translation>Agen terdaftar.</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>“%1” dihapus.</translation>
+    </message>
+    <message>
+        <source>Foreign agents</source>
+        <translation>Agen eksternal</translation>
+    </message>
+    <message>
+        <source>Agents that run a foreign engine (ACP or the Claude Code stream-json bridge). Launch recipes are stored and validated by the daemon — profiles reference an agent by name only.</source>
+        <translation>Agen yang menjalankan mesin eksternal (ACP atau jembatan stream-json Claude Code). Resep peluncuran disimpan dan divalidasi oleh daemon — profil hanya merujuk agen berdasarkan nama.</translation>
+    </message>
+    <message>
+        <source>Register custom…</source>
+        <translation>Daftarkan khusus…</translation>
+    </message>
+    <message>
+        <source>Re-scan installed</source>
+        <translation>Pindai ulang yang terpasang</translation>
+    </message>
+    <message>
+        <source>No foreign agents in the catalog yet.</source>
+        <translation>Belum ada agen eksternal di katalog.</translation>
+    </message>
+    <message>
+        <source>stream-json</source>
+        <translation>stream-json</translation>
+    </message>
+    <message>
+        <source>ACP</source>
+        <translation>ACP</translation>
+    </message>
+    <message>
+        <source>manual</source>
+        <translation>manual</translation>
+    </message>
+    <message>
+        <source>builtin</source>
+        <translation>bawaan</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>terpasang</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>tidak terpasang</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Hapus</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>Hapus agen</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start until it is re-registered.</source>
+        <translation>Hapus “%1”? Profil yang memakainya akan gagal dijalankan sampai didaftarkan ulang.</translation>
     </message>
 </context>
 <context>
@@ -493,8 +621,34 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>Kotak masuk kosong — tidak ada persetujuan tertunda.</translation>
     </message>
     <message>
+        <source>Path</source>
+        <translation>Jalur</translation>
+    </message>
+    <message>
+        <source>fingerprint %1</source>
+        <translation>sidik jari %1</translation>
+    </message>
+    <message>
+        <source>Allowing permanently remembers this exact command:
+%1</source>
+        <translation>Mengizinkan permanen mengingat perintah persis ini:
+%1</translation>
+    </message>
+    <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>Alasan yang akan didengar agen (opsional)</translation>
+    </message>
+    <message>
         <source>Deny</source>
         <translation>Tolak</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>Kirim penolakan</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>Tolak dengan alasan…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -695,6 +849,17 @@ Anda akan kembali ke penyiapan pertama.</translation>
     </message>
 </context>
 <context>
+    <name>CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>Gagal membaca batas delegasi</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>Gagal mendekode batas delegasi</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
     <message>
         <source>Remove stored credential?</source>
@@ -725,6 +890,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>Tidak ada saluran tersambung.</translation>
     </message>
     <message>
+        <source>Room invites are handled by the node; newly-joined rooms appear here automatically.</source>
+        <translation>Undangan ruang ditangani oleh node; ruang yang baru diikuti muncul di sini secara otomatis.</translation>
+    </message>
+    <message>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
@@ -739,6 +908,14 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>No rooms.</source>
         <translation>Tidak ada ruang.</translation>
+    </message>
+    <message>
+        <source>new</source>
+        <translation>baru</translation>
+    </message>
+    <message>
+        <source>Newly joined room</source>
+        <translation>Ruang yang baru diikuti</translation>
     </message>
     <message>
         <source>⇄ %1</source>
@@ -767,6 +944,14 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>Connect</source>
         <translation>Sambungkan</translation>
+    </message>
+    <message>
+        <source>Sign in to connect this channel</source>
+        <translation>Masuk untuk menghubungkan saluran ini</translation>
+    </message>
+    <message>
+        <source>This channel type has no browser sign-in.</source>
+        <translation>Jenis saluran ini tidak memiliki login lewat browser.</translation>
     </message>
 </context>
 <context>
@@ -1227,18 +1412,6 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>rinci</translation>
     </message>
     <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
-    </message>
-    <message>
-        <source>Foreign</source>
-        <translation>Asing</translation>
-    </message>
-    <message>
-        <source>Native</source>
-        <translation>Asli</translation>
-    </message>
-    <message>
         <source>Edits</source>
         <translation>Suntingan</translation>
     </message>
@@ -1269,6 +1442,10 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>Native</source>
         <translation>Asli</translation>
+    </message>
+    <message>
+        <source>Foreign engine — model, reasoning and rewind are managed by the agent</source>
+        <translation>Mesin eksternal — model, penalaran, dan rewind dikelola oleh agen</translation>
     </message>
     <message>
         <source>Engine</source>
@@ -1812,6 +1989,33 @@ Anda akan kembali ke penyiapan pertama.</translation>
     </message>
 </context>
 <context>
+    <name>DelegationLimitsSection</name>
+    <message>
+        <source>Delegation limits</source>
+        <translation>Batas delegasi</translation>
+    </message>
+    <message>
+        <source>How deep and how wide an agent may delegate. Enforced by the node; shown here for reference.</source>
+        <translation>Seberapa dalam dan seberapa luas agen boleh mendelegasikan. Diberlakukan oleh node; ditampilkan di sini sebagai referensi.</translation>
+    </message>
+    <message>
+        <source>Max delegation depth</source>
+        <translation>Kedalaman delegasi maks</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>Diberlakukan oleh node — tidak dapat dikonfigurasi dari aplikasi.</translation>
+    </message>
+    <message>
+        <source>—</source>
+        <translation>—</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>Anak latar belakang maks</translation>
+    </message>
+</context>
+<context>
     <name>Dialog</name>
     <message>
         <source>OK</source>
@@ -2151,6 +2355,32 @@ Anda akan kembali ke penyiapan pertama.</translation>
     </message>
 </context>
 <context>
+    <name>EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Eksternal</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>EngineOriginChip</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Eksternal</translation>
+    </message>
+    <message>
+        <source>Requested by this foreign agent</source>
+        <translation>Diminta oleh agen eksternal ini</translation>
+    </message>
+</context>
+<context>
     <name>FileExplorer</name>
     <message>
         <source>Explorer</source>
@@ -2242,6 +2472,13 @@ Anda akan kembali ke penyiapan pertama.</translation>
     <message>
         <source>Retry</source>
         <translation>Coba lagi</translation>
+    </message>
+</context>
+<context>
+    <name>FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>Gagal mencabut sidik jari</translation>
     </message>
 </context>
 <context>
@@ -2489,12 +2726,20 @@ Anda akan kembali ke penyiapan pertama.</translation>
         <translation>Segarkan</translation>
     </message>
     <message>
-        <source>Foreign</source>
-        <translation>Asing</translation>
-    </message>
-    <message>
         <source>Native</source>
         <translation>Asli</translation>
+    </message>
+    <message>
+        <source>Ephemeral</source>
+        <translation>Sementara</translation>
+    </message>
+    <message>
+        <source>Persistent</source>
+        <translation>Persisten</translation>
+    </message>
+    <message>
+        <source>Open transcript</source>
+        <translation>Buka transkrip</translation>
     </message>
     <message>
         <source>Steer…</source>
@@ -3097,6 +3342,33 @@ Terima kasih — melanjutkan dengan: %1
     </message>
 </context>
 <context>
+    <name>MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>Baca dan edit berkas ruang kerja</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>Jalankan perintah shell (perlu persetujuan)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>Cari di web</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Perlu kunci API Tavily</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>Kendalikan browser sungguhan</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Perlu fitur build browser</translation>
+    </message>
+</context>
+<context>
     <name>ModelPickerOverlay</name>
     <message>
         <source>Off</source>
@@ -3377,8 +3649,8 @@ Mulai dari tab Temukan.</translation>
         <translation>prompt sistem</translation>
     </message>
     <message>
-        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
-        <translation>Agen ini menjalankan mesin ACP asing. Resep peluncurannya dikelola oleh katalog ACP daemon — tidak ada penyedia, model, atau kunci untuk dikonfigurasi.</translation>
+        <source>This agent runs a foreign engine. Its launch recipe is managed by the daemon&apos;s agent catalog — no provider, model, or key to configure.</source>
+        <translation>Agen ini menjalankan mesin eksternal. Resep peluncurannya dikelola oleh katalog agen daemon — tidak ada penyedia, model, atau kunci untuk dikonfigurasi.</translation>
     </message>
     <message>
         <source>Name:</source>
@@ -3491,6 +3763,18 @@ Mulai dari tab Temukan.</translation>
     <message>
         <source>Name</source>
         <translation>Nama</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Eksternal</translation>
+    </message>
+    <message>
+        <source>Foreign engine (set at create time)</source>
+        <translation>Mesin eksternal (diatur saat pembuatan)</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign engine — its launch recipe and model are managed by the daemon&apos;s agent catalog, so there is no provider, model, or base URL to configure here.</source>
+        <translation>Agen ini menjalankan mesin eksternal — resep peluncuran dan modelnya dikelola oleh katalog agen daemon, jadi tidak ada penyedia, model, atau URL dasar untuk dikonfigurasi di sini.</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -3608,8 +3892,8 @@ Mulai dari tab Temukan.</translation>
         <translation>Nama</translation>
     </message>
     <message>
-        <source>Engine: ACP agent · %1 (set at create time)</source>
-        <translation>Mesin: agen ACP · %1 (disetel saat dibuat)</translation>
+        <source>Engine: foreign agent · %1 (set at create time)</source>
+        <translation>Mesin: agen eksternal · %1 (diatur saat pembuatan)</translation>
     </message>
     <message>
         <source>Engine: daemon-core (native)</source>
@@ -3825,6 +4109,22 @@ Mulai dari tab Temukan.</translation>
     <message>
         <source>No nodes found</source>
         <translation>Tidak ada node ditemukan</translation>
+    </message>
+    <message>
+        <source>Delegation limit reached</source>
+        <translation>Batas delegasi tercapai</translation>
+    </message>
+    <message>
+        <source>Delegating…</source>
+        <translation>Mendelegasikan…</translation>
+    </message>
+    <message>
+        <source>Delegation failed</source>
+        <translation>Delegasi gagal</translation>
+    </message>
+    <message>
+        <source>Delegated to a subagent</source>
+        <translation>Didelegasikan ke subagen</translation>
     </message>
     <message>
         <source>Answered</source>
@@ -4060,6 +4360,10 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Tolak</translation>
     </message>
     <message>
+        <source>Deny with reason</source>
+        <translation>Tolak dengan alasan</translation>
+    </message>
+    <message>
         <source>Allow permanently</source>
         <translation>Izinkan permanen</translation>
     </message>
@@ -4098,6 +4402,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>  [not installed]</source>
         <translation>  [tidak terpasang]</translation>
+    </message>
+    <message>
+        <source>  [manual]</source>
+        <translation>  [manual]</translation>
+    </message>
+    <message>
+        <source>  [builtin]</source>
+        <translation>  [bawaan]</translation>
     </message>
 </context>
 <context>
@@ -4221,6 +4533,101 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     </message>
 </context>
 <context>
+    <name>RegisterAgentDialog</name>
+    <message>
+        <source>Register foreign agent</source>
+        <translation>Daftarkan agen eksternal</translation>
+    </message>
+    <message>
+        <source>Register</source>
+        <translation>Daftarkan</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Nama</translation>
+    </message>
+    <message>
+        <source>catalog name (e.g. my-claude)</source>
+        <translation>nama katalog (mis. my-claude)</translation>
+    </message>
+    <message>
+        <source>Protocol</source>
+        <translation>Protokol</translation>
+    </message>
+    <message>
+        <source>ACP (Agent Client Protocol)</source>
+        <translation>ACP (Agent Client Protocol)</translation>
+    </message>
+    <message>
+        <source>Claude Code (stream-json)</source>
+        <translation>Claude Code (stream-json)</translation>
+    </message>
+    <message>
+        <source>Connect to a TCP endpoint instead of launching a program</source>
+        <translation>Sambungkan ke endpoint TCP alih-alih menjalankan program</translation>
+    </message>
+    <message>
+        <source>Program</source>
+        <translation>Program</translation>
+    </message>
+    <message>
+        <source>executable (resolved on the daemon&apos;s PATH)</source>
+        <translation>executable (diselesaikan di PATH daemon)</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated)</source>
+        <translation>Argumen (dipisah spasi)</translation>
+    </message>
+    <message>
+        <source>--flag value</source>
+        <translation>--flag value</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VALUE per line)</source>
+        <translation>Environment (KEY=VALUE per baris)</translation>
+    </message>
+    <message>
+        <source>Endpoint</source>
+        <translation>Endpoint</translation>
+    </message>
+    <message>
+        <source>tcp://host:port</source>
+        <translation>tcp://host:port</translation>
+    </message>
+    <message>
+        <source>The daemon probes the recipe on Register (an ACP initialize handshake, or a PATH check for stream-json) — the result appears in the agent list.</source>
+        <translation>Daemon menguji resep saat Daftar (handshake inisialisasi ACP, atau pemeriksaan PATH untuk stream-json) — hasilnya muncul di daftar agen.</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>Nama:</translation>
+    </message>
+    <message>
+        <source>Protocol (Enter to pick):</source>
+        <translation>Protokol (Enter untuk memilih):</translation>
+    </message>
+    <message>
+        <source>Program (blank = use TCP endpoint below):</source>
+        <translation>Program (kosong = pakai endpoint TCP di bawah):</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated):</source>
+        <translation>Argumen (dipisah spasi):</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VAL,KEY=VAL):</source>
+        <translation>Environment (KEY=VAL,KEY=VAL):</translation>
+    </message>
+    <message>
+        <source>OR endpoint (tcp://host:port):</source>
+        <translation>ATAU endpoint (tcp://host:port):</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Batal</translation>
+    </message>
+</context>
+<context>
     <name>RewindConfirmDialog</name>
     <message>
         <source>Rewind to this checkpoint?</source>
@@ -4318,6 +4725,10 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Enter / Space pada baris memutar atau mengalihkannya · Esc menutup</translation>
     </message>
     <message>
+        <source>Remembered approvals…</source>
+        <translation>Persetujuan yang diingat…</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>Tutup</translation>
     </message>
@@ -4348,6 +4759,22 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Verbose: %1</source>
         <translation>Rinci:   %1</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Persetujuan yang diingat</translation>
+    </message>
+    <message>
+        <source>Commands allowed permanently this session · Enter/Revoke drops one · Esc closes</source>
+        <translation>Perintah yang diizinkan permanen sesi ini · Enter/Cabut menghapus satu · Esc menutup</translation>
+    </message>
+    <message>
+        <source>(no remembered approvals)</source>
+        <translation>(tidak ada persetujuan yang diingat)</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>Cabut</translation>
     </message>
     <message>
         <source>  ·  %1 tok</source>
@@ -4384,6 +4811,10 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Cancel</source>
         <translation>Batal</translation>
+    </message>
+    <message>
+        <source>Deny with reason (the agent will hear it)</source>
+        <translation>Tolak dengan alasan (agen akan mendengarnya)</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -4569,6 +5000,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Allow network access</source>
         <translation>Izinkan akses jaringan</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Persetujuan yang diingat</translation>
+    </message>
+    <message>
+        <source>Commands you allowed permanently are remembered per session. Review and revoke them from the composer&apos;s session settings.</source>
+        <translation>Perintah yang Anda izinkan permanen diingat per sesi. Tinjau dan cabut dari pengaturan sesi di composer.</translation>
     </message>
 </context>
 <context>
@@ -4775,6 +5214,10 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Upaya penalaran</translation>
     </message>
     <message>
+        <source>Reasoning effort and modes are managed by the foreign agent.</source>
+        <translation>Upaya penalaran dan mode dikelola oleh agen eksternal.</translation>
+    </message>
+    <message>
         <source>Approval mode</source>
         <translation>Mode persetujuan</translation>
     </message>
@@ -4793,6 +5236,18 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Ask</source>
         <translation>Tanya</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Persetujuan yang diingat</translation>
+    </message>
+    <message>
+        <source>No remembered approvals for this session.</source>
+        <translation>Tidak ada persetujuan yang diingat untuk sesi ini.</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>Cabut</translation>
     </message>
     <message>
         <source>Fast mode</source>
@@ -5106,8 +5561,16 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
         <translation>Model</translation>
     </message>
     <message>
+        <source>Agents</source>
+        <translation>Agen</translation>
+    </message>
+    <message>
         <source>Chat</source>
         <translation>Obrolan</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>Alat</translation>
     </message>
     <message>
         <source>Safety</source>
@@ -5584,12 +6047,24 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
         <translation>Setujui tindakan ini?</translation>
     </message>
     <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>Alasan yang akan didengar agen (opsional)</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>Setujui</translation>
     </message>
     <message>
         <source>Deny</source>
         <translation>Tolak</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>Kirim penolakan</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>Tolak dengan alasan…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -5601,6 +6076,53 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
     <message>
         <source>Tool</source>
         <translation>Alat</translation>
+    </message>
+    <message>
+        <source>Spawned a subagent to work in the background.</source>
+        <translation>Membuat subagen untuk bekerja di latar belakang.</translation>
+    </message>
+    <message>
+        <source>Its completion notice will link the child; open its transcript from the Fleet page.</source>
+        <translation>Pemberitahuan penyelesaiannya akan menautkan anak; buka transkripnya dari halaman Fleet.</translation>
+    </message>
+    <message>
+        <source>Delegation depth limit (%1) reached</source>
+        <translation>Batas kedalaman delegasi (%1) tercapai</translation>
+    </message>
+    <message>
+        <source>Too many background children (%1)</source>
+        <translation>Terlalu banyak anak latar belakang (%1)</translation>
+    </message>
+    <message>
+        <source>Delegation guardrail reached</source>
+        <translation>Batas pengaman delegasi tercapai</translation>
+    </message>
+</context>
+<context>
+    <name>ToolsSettingsSection</name>
+    <message>
+        <source>Tools</source>
+        <translation>Alat</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
+        <translation>Alat dikompilasi dan dibatasi oleh node. Inventaris ini hanya-baca; alat yang dinonaktifkan menyebutkan apa yang dibutuhkannya.</translation>
+    </message>
+    <message>
+        <source>No tools reported by the node.</source>
+        <translation>Tidak ada alat yang dilaporkan oleh node.</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Aktif</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>Nonaktif</translation>
+    </message>
+    <message>
+        <source>Set up…</source>
+        <translation>Siapkan…</translation>
     </message>
 </context>
 <context>
@@ -5677,6 +6199,22 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Set up provider</source>
         <translation>Siapkan penyedia</translation>
+    </message>
+    <message>
+        <source>The foreign agent “%1” could not run.</source>
+        <translation>Agen eksternal “%1” tidak dapat dijalankan.</translation>
+    </message>
+    <message>
+        <source>foreign</source>
+        <translation>eksternal</translation>
+    </message>
+    <message>
+        <source>Open Agents settings</source>
+        <translation>Buka pengaturan Agen</translation>
+    </message>
+    <message>
+        <source>Read-only view of a delegated child. Steer or cancel it from the Fleet page.</source>
+        <translation>Tampilan hanya-baca dari anak yang didelegasikan. Arahkan atau batalkan dari halaman Fleet.</translation>
     </message>
     <message>
         <source>Select a session</source>
@@ -5951,6 +6489,22 @@ Terima kasih — melanjutkan dengan: %1
         <translation>Keamanan</translation>
     </message>
     <message>
+        <source>Max delegation depth</source>
+        <translation>Kedalaman delegasi maks</translation>
+    </message>
+    <message>
+        <source>%1 — enforced by the node</source>
+        <translation>%1 — diberlakukan oleh node</translation>
+    </message>
+    <message>
+        <source>— — enforced by the node</source>
+        <translation>— — diberlakukan oleh node</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>Anak latar belakang maks</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- Kebijakan persetujuan diatur per sesi (pengaturan sesi komposer) — _diterapkan di sana oleh node_
@@ -6223,10 +6777,6 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Native</source>
         <translation>Asli</translation>
-    </message>
-    <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -6561,17 +7111,25 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny · **D** deny with reason.
 
 </source>
-        <translation>Pohon orkestrator/pekerja, dibagikan dengan GUI. **j/k** pindah · **Space/Enter** jeda/lanjutkan · **t** arahkan anak · **c** batalkan gilirannya.
+        <translation>**j/k** pindah · **a**/**Enter** setujui · **p** izinkan permanen · **d** tolak · **D** tolak dengan alasan.
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`) · %5
+        <source>## %1%2
+
 </source>
-        <translation>- %1%2 — %3 (`%4`) · %5
+        <translation>## %1%2
+
+</translation>
+    </message>
+    <message>
+        <source>- Requested by: %1
+</source>
+        <translation>- Diminta oleh: %1
 </translation>
     </message>
     <message>
@@ -6595,14 +7153,6 @@ _Tidak ada agen yang dipilih._
 
 </source>
         <translation>**j/k** pindah · **s** tangguhkan · **R**/**Enter** lanjutkan · **x** tutup · **v** diarsipkan.
-
-</translation>
-    </message>
-    <message>
-        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
-
-</source>
-        <translation>**j/k** pindah · **a**/**Enter** setujui · **p** izinkan permanen · **d** tolak.
 
 </translation>
     </message>
@@ -6651,6 +7201,28 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
+        <source>persistent</source>
+        <translation>persisten</translation>
+    </message>
+    <message>
+        <source>ephemeral</source>
+        <translation>sementara</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
+
+</source>
+        <translation>Pohon orchestrator/worker, dibagikan dengan GUI. **j/k** pindah · **Space/Enter** jeda/lanjut · **o** buka transkrip · **t** arahkan anak · **c** batalkan giliran.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`) · %5%6
+</source>
+        <translation>- %1%2 — %3 (`%4`) · %5%6
+</translation>
+    </message>
+    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
@@ -6677,18 +7249,52 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
-        <source>## %1%2 (%3 risk)
-
-</source>
-        <translation>## %1%2 (risiko %3)
-
-</translation>
-    </message>
-    <message>
         <source>- Session: %1
 </source>
         <translation>- Sesi: %1
 </translation>
+    </message>
+    <message>
+        <source>- Path: `%1`
+</source>
+        <translation>- Jalur: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Fingerprint: `%1`
+</source>
+        <translation>- Sidik jari: `%1`
+</translation>
+    </message>
+    <message>
+        <source>## Tools
+
+</source>
+        <translation>## Alat
+
+</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only.
+
+</source>
+        <translation>Alat dikompilasi dan dibatasi oleh node. Inventaris ini hanya-baca.
+
+</translation>
+    </message>
+    <message>
+        <source>_No tools reported by the node._
+</source>
+        <translation>_Tidak ada alat yang dilaporkan oleh node._
+</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3</source>
+        <translation>- %1 **%2** — %3</translation>
+    </message>
+    <message>
+        <source> _(%1)_</source>
+        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -6827,10 +7433,10 @@ _Tidak ada agen yang dipilih._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
 
 </source>
-        <translation>Akun transport Events-IO dan ruang aktifnya, dibagikan dengan GUI. Penyambungan ditangguhkan (EIO-2); putus/hapus belum memiliki operasi wire (B3 - tindak lanjut node-first). Kredensial tersimpan dapat dihapus dari halaman Akun (&apos;x&apos; pada profil terikat).
+        <translation>Akun transport Events-IO dan ruang langsungnya, dibagikan dengan GUI. Tekan &apos;c&apos; untuk menghubungkan akun. Putuskan/hapus BELUM ada operasi wire (B3 - tindak lanjut di node). Kredensial tersimpan dapat dihapus dari halaman Akun (&apos;x&apos; pada profil terikat). Undangan ruang ditangani oleh node; ruang yang baru diikuti muncul di sini secara otomatis.
 
 </translation>
     </message>
@@ -6875,6 +7481,10 @@ _Tidak ada agen yang dipilih._
     <message>
         <source> · ⇄ `%1`</source>
         <translation> · ⇄ `%1`</translation>
+    </message>
+    <message>
+        <source> · ✦ new</source>
+        <translation> · ✦ baru</translation>
     </message>
     <message>
         <source>## Add channel
@@ -7049,6 +7659,17 @@ _Tidak ada agen yang dipilih._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>Gagal membaca batas delegasi</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>Gagal mendekode batas delegasi</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -7156,6 +7777,28 @@ _Tidak ada agen yang dipilih._
     <message>
         <source>No daemon target configured</source>
         <translation>Tidak ada target daemon yang dikonfigurasi</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Eksternal</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>Gagal mencabut sidik jari</translation>
     </message>
 </context>
 <context>
@@ -7348,6 +7991,56 @@ _Tidak ada agen yang dipilih._
     <message>
         <source>Participants</source>
         <translation>Peserta</translation>
+    </message>
+</context>
+<context>
+    <name>tools::IToolInventory</name>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Perlu kunci API Tavily</translation>
+    </message>
+    <message>
+        <source>Needs a Firecrawl API key</source>
+        <translation>Perlu kunci API Firecrawl</translation>
+    </message>
+    <message>
+        <source>Needs the vision build feature</source>
+        <translation>Perlu fitur build vision</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Perlu fitur build browser</translation>
+    </message>
+    <message>
+        <source>Needs %1</source>
+        <translation>Perlu %1</translation>
+    </message>
+</context>
+<context>
+    <name>tools::MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>Baca dan edit berkas ruang kerja</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>Jalankan perintah shell (perlu persetujuan)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>Cari di web</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Perlu kunci API Tavily</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>Kendalikan browser sungguhan</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Perlu fitur build browser</translation>
     </message>
 </context>
 <context>

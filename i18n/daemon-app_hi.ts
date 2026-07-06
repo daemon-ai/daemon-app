@@ -365,6 +365,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>daemon-core (नेटिव)</translation>
     </message>
     <message>
+        <source>  ·  stream-json</source>
+        <translation>  ·  stream-json</translation>
+    </message>
+    <message>
         <source>  ·  ACP %1</source>
         <translation>  ·  ACP %1</translation>
     </message>
@@ -382,6 +386,130 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>daemon-core (native)</source>
         <translation>daemon-core (नेटिव)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsDialog</name>
+    <message>
+        <source>Foreign agents</source>
+        <translation>बाहरी एजेंट</translation>
+    </message>
+    <message>
+        <source>Registered + discovered agents:</source>
+        <translation>पंजीकृत + खोजे गए एजेंट:</translation>
+    </message>
+    <message>
+        <source>Register…</source>
+        <translation>पंजीकृत करें…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>हटाएँ</translation>
+    </message>
+    <message>
+        <source>Re-scan</source>
+        <translation>पुनः स्कैन</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>बंद करें</translation>
+    </message>
+    <message>
+        <source>Agent registered.</source>
+        <translation>एजेंट पंजीकृत हुआ।</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>“%1” हटाया गया।</translation>
+    </message>
+    <message>
+        <source>(no foreign agents in the catalog)</source>
+        <translation>(कैटलॉग में कोई बाहरी एजेंट नहीं)</translation>
+    </message>
+    <message>
+        <source>Only manually registered agents can be removed.</source>
+        <translation>केवल मैन्युअल रूप से पंजीकृत एजेंट ही हटाए जा सकते हैं।</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>एजेंट हटाएँ</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start
+until it is re-registered.</source>
+        <translation>“%1” हटाएँ? इसका उपयोग करने वाले प्रोफ़ाइल तब तक शुरू नहीं होंगे
+जब तक इसे फिर से पंजीकृत न किया जाए।</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>रद्द करें</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsSettingsSection</name>
+    <message>
+        <source>Agent registered.</source>
+        <translation>एजेंट पंजीकृत हुआ।</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>“%1” हटाया गया।</translation>
+    </message>
+    <message>
+        <source>Foreign agents</source>
+        <translation>बाहरी एजेंट</translation>
+    </message>
+    <message>
+        <source>Agents that run a foreign engine (ACP or the Claude Code stream-json bridge). Launch recipes are stored and validated by the daemon — profiles reference an agent by name only.</source>
+        <translation>ऐसे एजेंट जो बाहरी इंजन चलाते हैं (ACP या Claude Code stream-json ब्रिज)। लॉन्च रेसिपी डेमॉन द्वारा संग्रहीत और सत्यापित होती हैं — प्रोफ़ाइल एजेंट को केवल नाम से संदर्भित करते हैं।</translation>
+    </message>
+    <message>
+        <source>Register custom…</source>
+        <translation>कस्टम पंजीकृत करें…</translation>
+    </message>
+    <message>
+        <source>Re-scan installed</source>
+        <translation>इंस्टॉल किए गए पुनः स्कैन करें</translation>
+    </message>
+    <message>
+        <source>No foreign agents in the catalog yet.</source>
+        <translation>कैटलॉग में अभी कोई बाहरी एजेंट नहीं है।</translation>
+    </message>
+    <message>
+        <source>stream-json</source>
+        <translation>stream-json</translation>
+    </message>
+    <message>
+        <source>ACP</source>
+        <translation>ACP</translation>
+    </message>
+    <message>
+        <source>manual</source>
+        <translation>मैन्युअल</translation>
+    </message>
+    <message>
+        <source>builtin</source>
+        <translation>अंतर्निहित</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>इंस्टॉल</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>इंस्टॉल नहीं</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>हटाएँ</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>एजेंट हटाएँ</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start until it is re-registered.</source>
+        <translation>“%1” हटाएँ? इसका उपयोग करने वाले प्रोफ़ाइल इसे फिर से पंजीकृत करने तक शुरू नहीं होंगे।</translation>
     </message>
 </context>
 <context>
@@ -493,8 +621,34 @@ You&apos;ll return to first-run setup.</source>
         <translation>इनबॉक्स ज़ीरो — कोई लंबित अनुमोदन नहीं।</translation>
     </message>
     <message>
+        <source>Path</source>
+        <translation>पथ</translation>
+    </message>
+    <message>
+        <source>fingerprint %1</source>
+        <translation>फ़िंगरप्रिंट %1</translation>
+    </message>
+    <message>
+        <source>Allowing permanently remembers this exact command:
+%1</source>
+        <translation>स्थायी रूप से अनुमति देने पर यही सटीक कमांड याद रखा जाएगा:
+%1</translation>
+    </message>
+    <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>कारण जो एजेंट सुनेगा (वैकल्पिक)</translation>
+    </message>
+    <message>
         <source>Deny</source>
         <translation>अस्वीकार करें</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>अस्वीकृति भेजें</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>कारण के साथ अस्वीकार करें…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -695,6 +849,17 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>डेलिगेशन सीमाएँ पढ़ने में विफल</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>डेलिगेशन सीमाएँ डिकोड करने में विफल</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
     <message>
         <source>Remove stored credential?</source>
@@ -725,6 +890,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>कोई चैनल कनेक्ट नहीं।</translation>
     </message>
     <message>
+        <source>Room invites are handled by the node; newly-joined rooms appear here automatically.</source>
+        <translation>रूम आमंत्रण नोड द्वारा संभाले जाते हैं; नए शामिल हुए रूम यहाँ स्वतः दिखते हैं।</translation>
+    </message>
+    <message>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
@@ -739,6 +908,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>No rooms.</source>
         <translation>कोई रूम नहीं।</translation>
+    </message>
+    <message>
+        <source>new</source>
+        <translation>नया</translation>
+    </message>
+    <message>
+        <source>Newly joined room</source>
+        <translation>नया शामिल हुआ रूम</translation>
     </message>
     <message>
         <source>⇄ %1</source>
@@ -767,6 +944,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Connect</source>
         <translation>कनेक्ट करें</translation>
+    </message>
+    <message>
+        <source>Sign in to connect this channel</source>
+        <translation>इस चैनल को कनेक्ट करने के लिए साइन इन करें</translation>
+    </message>
+    <message>
+        <source>This channel type has no browser sign-in.</source>
+        <translation>इस चैनल प्रकार में ब्राउज़र साइन-इन नहीं है।</translation>
     </message>
 </context>
 <context>
@@ -1227,18 +1412,6 @@ You&apos;ll return to first-run setup.</source>
         <translation>विस्तृत</translation>
     </message>
     <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
-    </message>
-    <message>
-        <source>Foreign</source>
-        <translation>विदेशी</translation>
-    </message>
-    <message>
-        <source>Native</source>
-        <translation>नेटिव</translation>
-    </message>
-    <message>
         <source>Edits</source>
         <translation>संपादन</translation>
     </message>
@@ -1269,6 +1442,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Native</source>
         <translation>नेटिव</translation>
+    </message>
+    <message>
+        <source>Foreign engine — model, reasoning and rewind are managed by the agent</source>
+        <translation>बाहरी इंजन — मॉडल, रीज़निंग और रिवाइंड एजेंट द्वारा प्रबंधित होते हैं</translation>
     </message>
     <message>
         <source>Engine</source>
@@ -1812,6 +1989,33 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>DelegationLimitsSection</name>
+    <message>
+        <source>Delegation limits</source>
+        <translation>डेलिगेशन सीमाएँ</translation>
+    </message>
+    <message>
+        <source>How deep and how wide an agent may delegate. Enforced by the node; shown here for reference.</source>
+        <translation>एक एजेंट कितनी गहराई और कितनी चौड़ाई तक डेलिगेट कर सकता है। नोड द्वारा लागू; यहाँ संदर्भ के लिए दिखाया गया।</translation>
+    </message>
+    <message>
+        <source>Max delegation depth</source>
+        <translation>अधिकतम डेलिगेशन गहराई</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>नोड द्वारा लागू — ऐप से कॉन्फ़िगर नहीं किया जा सकता।</translation>
+    </message>
+    <message>
+        <source>—</source>
+        <translation>—</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>अधिकतम बैकग्राउंड चाइल्ड</translation>
+    </message>
+</context>
+<context>
     <name>Dialog</name>
     <message>
         <source>OK</source>
@@ -2151,6 +2355,32 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>बाहरी</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>EngineOriginChip</name>
+    <message>
+        <source>Foreign</source>
+        <translation>बाहरी</translation>
+    </message>
+    <message>
+        <source>Requested by this foreign agent</source>
+        <translation>इस बाहरी एजेंट द्वारा अनुरोधित</translation>
+    </message>
+</context>
+<context>
     <name>FileExplorer</name>
     <message>
         <source>Explorer</source>
@@ -2244,6 +2474,13 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Retry</source>
         <translation>पुनः प्रयास करें</translation>
+    </message>
+</context>
+<context>
+    <name>FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>फ़िंगरप्रिंट रद्द करना विफल</translation>
     </message>
 </context>
 <context>
@@ -2491,12 +2728,20 @@ You&apos;ll return to first-run setup.</source>
         <translation>रिफ़्रेश करें</translation>
     </message>
     <message>
-        <source>Foreign</source>
-        <translation>विदेशी</translation>
-    </message>
-    <message>
         <source>Native</source>
         <translation>नेटिव</translation>
+    </message>
+    <message>
+        <source>Ephemeral</source>
+        <translation>अल्पकालिक</translation>
+    </message>
+    <message>
+        <source>Persistent</source>
+        <translation>स्थायी</translation>
+    </message>
+    <message>
+        <source>Open transcript</source>
+        <translation>ट्रांसक्रिप्ट खोलें</translation>
     </message>
     <message>
         <source>Steer…</source>
@@ -3101,6 +3346,33 @@ Thanks — proceeding with: %1
     </message>
 </context>
 <context>
+    <name>MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>वर्कस्पेस फ़ाइलें पढ़ें और संपादित करें</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>शेल कमांड चलाएँ (अनुमोदन-आधारित)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>वेब पर खोजें</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Tavily API कुंजी चाहिए</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>असली ब्राउज़र चलाएँ</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>ब्राउज़र बिल्ड फ़ीचर चाहिए</translation>
+    </message>
+</context>
+<context>
     <name>ModelPickerOverlay</name>
     <message>
         <source>Off</source>
@@ -3381,8 +3653,8 @@ Start one from the Discover tab.</source>
         <translation>सिस्टम प्रॉम्प्ट</translation>
     </message>
     <message>
-        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
-        <translation>यह एजेंट एक बाहरी ACP इंजन चलाता है। इसकी लॉन्च रेसिपी daemon के ACP कैटलॉग द्वारा प्रबंधित है — कॉन्फ़िगर करने के लिए कोई प्रदाता, मॉडल या कुंजी नहीं।</translation>
+        <source>This agent runs a foreign engine. Its launch recipe is managed by the daemon&apos;s agent catalog — no provider, model, or key to configure.</source>
+        <translation>यह एजेंट एक बाहरी इंजन चलाता है। इसकी लॉन्च रेसिपी डेमॉन के एजेंट कैटलॉग द्वारा प्रबंधित होती है — कॉन्फ़िगर करने के लिए कोई प्रदाता, मॉडल या कुंजी नहीं।</translation>
     </message>
     <message>
         <source>Name:</source>
@@ -3495,6 +3767,18 @@ Start one from the Discover tab.</source>
     <message>
         <source>Name</source>
         <translation>नाम</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>बाहरी</translation>
+    </message>
+    <message>
+        <source>Foreign engine (set at create time)</source>
+        <translation>बाहरी इंजन (बनाते समय सेट)</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign engine — its launch recipe and model are managed by the daemon&apos;s agent catalog, so there is no provider, model, or base URL to configure here.</source>
+        <translation>यह एजेंट एक बाहरी इंजन चलाता है — इसकी लॉन्च रेसिपी और मॉडल डेमॉन के एजेंट कैटलॉग द्वारा प्रबंधित होते हैं, इसलिए यहाँ कॉन्फ़िगर करने के लिए कोई प्रदाता, मॉडल या बेस URL नहीं है।</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -3612,8 +3896,8 @@ Start one from the Discover tab.</source>
         <translation>नाम</translation>
     </message>
     <message>
-        <source>Engine: ACP agent · %1 (set at create time)</source>
-        <translation>इंजन: ACP एजेंट · %1 (बनाते समय सेट)</translation>
+        <source>Engine: foreign agent · %1 (set at create time)</source>
+        <translation>इंजन: बाहरी एजेंट · %1 (बनाते समय सेट)</translation>
     </message>
     <message>
         <source>Engine: daemon-core (native)</source>
@@ -3829,6 +4113,22 @@ Start one from the Discover tab.</source>
     <message>
         <source>No nodes found</source>
         <translation>कोई नोड नहीं मिला</translation>
+    </message>
+    <message>
+        <source>Delegation limit reached</source>
+        <translation>डेलिगेशन सीमा पहुँच गई</translation>
+    </message>
+    <message>
+        <source>Delegating…</source>
+        <translation>डेलिगेट कर रहे हैं…</translation>
+    </message>
+    <message>
+        <source>Delegation failed</source>
+        <translation>डेलिगेशन विफल</translation>
+    </message>
+    <message>
+        <source>Delegated to a subagent</source>
+        <translation>एक सबएजेंट को डेलिगेट किया गया</translation>
     </message>
     <message>
         <source>Answered</source>
@@ -4064,6 +4364,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>अस्वीकार करें</translation>
     </message>
     <message>
+        <source>Deny with reason</source>
+        <translation>कारण के साथ अस्वीकार करें</translation>
+    </message>
+    <message>
         <source>Allow permanently</source>
         <translation>स्थायी रूप से अनुमति दें</translation>
     </message>
@@ -4102,6 +4406,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>  [not installed]</source>
         <translation>  [इंस्टॉल नहीं किया गया]</translation>
+    </message>
+    <message>
+        <source>  [manual]</source>
+        <translation>  [मैन्युअल]</translation>
+    </message>
+    <message>
+        <source>  [builtin]</source>
+        <translation>  [अंतर्निहित]</translation>
     </message>
 </context>
 <context>
@@ -4225,6 +4537,101 @@ A generic, non-transcript page hosted by the same tab strip.
     </message>
 </context>
 <context>
+    <name>RegisterAgentDialog</name>
+    <message>
+        <source>Register foreign agent</source>
+        <translation>बाहरी एजेंट पंजीकृत करें</translation>
+    </message>
+    <message>
+        <source>Register</source>
+        <translation>पंजीकृत करें</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>नाम</translation>
+    </message>
+    <message>
+        <source>catalog name (e.g. my-claude)</source>
+        <translation>कैटलॉग नाम (जैसे my-claude)</translation>
+    </message>
+    <message>
+        <source>Protocol</source>
+        <translation>प्रोटोकॉल</translation>
+    </message>
+    <message>
+        <source>ACP (Agent Client Protocol)</source>
+        <translation>ACP (Agent Client Protocol)</translation>
+    </message>
+    <message>
+        <source>Claude Code (stream-json)</source>
+        <translation>Claude Code (stream-json)</translation>
+    </message>
+    <message>
+        <source>Connect to a TCP endpoint instead of launching a program</source>
+        <translation>प्रोग्राम शुरू करने के बजाय TCP endpoint से कनेक्ट करें</translation>
+    </message>
+    <message>
+        <source>Program</source>
+        <translation>प्रोग्राम</translation>
+    </message>
+    <message>
+        <source>executable (resolved on the daemon&apos;s PATH)</source>
+        <translation>निष्पादनयोग्य (डेमॉन के PATH पर हल)</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated)</source>
+        <translation>आर्ग्युमेंट (स्पेस से अलग)</translation>
+    </message>
+    <message>
+        <source>--flag value</source>
+        <translation>--flag value</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VALUE per line)</source>
+        <translation>एनवायरनमेंट (प्रति पंक्ति KEY=VALUE)</translation>
+    </message>
+    <message>
+        <source>Endpoint</source>
+        <translation>Endpoint</translation>
+    </message>
+    <message>
+        <source>tcp://host:port</source>
+        <translation>tcp://host:port</translation>
+    </message>
+    <message>
+        <source>The daemon probes the recipe on Register (an ACP initialize handshake, or a PATH check for stream-json) — the result appears in the agent list.</source>
+        <translation>डेमॉन रजिस्टर पर रेसिपी की जाँच करता है (एक ACP initialize handshake, या stream-json के लिए PATH जाँच) — परिणाम एजेंट सूची में दिखता है।</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>नाम:</translation>
+    </message>
+    <message>
+        <source>Protocol (Enter to pick):</source>
+        <translation>प्रोटोकॉल (चुनने के लिए Enter):</translation>
+    </message>
+    <message>
+        <source>Program (blank = use TCP endpoint below):</source>
+        <translation>प्रोग्राम (खाली = नीचे दिए TCP endpoint का उपयोग):</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated):</source>
+        <translation>आर्ग्युमेंट (स्पेस से अलग):</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VAL,KEY=VAL):</source>
+        <translation>एनवायरनमेंट (KEY=VAL,KEY=VAL):</translation>
+    </message>
+    <message>
+        <source>OR endpoint (tcp://host:port):</source>
+        <translation>या endpoint (tcp://host:port):</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>रद्द करें</translation>
+    </message>
+</context>
+<context>
     <name>RewindConfirmDialog</name>
     <message>
         <source>Rewind to this checkpoint?</source>
@@ -4322,6 +4729,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>किसी पंक्ति पर Enter / Space उसे बदलता या टॉगल करता है · Esc बंद करता है</translation>
     </message>
     <message>
+        <source>Remembered approvals…</source>
+        <translation>याद रखी गई स्वीकृतियाँ…</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>बंद करें</translation>
     </message>
@@ -4352,6 +4763,22 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Verbose: %1</source>
         <translation>विस्तृत: %1</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>याद रखी गई स्वीकृतियाँ</translation>
+    </message>
+    <message>
+        <source>Commands allowed permanently this session · Enter/Revoke drops one · Esc closes</source>
+        <translation>इस सत्र में स्थायी रूप से अनुमत कमांड · Enter/Revoke एक हटाता है · Esc बंद करता है</translation>
+    </message>
+    <message>
+        <source>(no remembered approvals)</source>
+        <translation>(कोई याद रखी गई स्वीकृति नहीं)</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>रद्द करें</translation>
     </message>
     <message>
         <source>  ·  %1 tok</source>
@@ -4388,6 +4815,10 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Cancel</source>
         <translation>रद्द करें</translation>
+    </message>
+    <message>
+        <source>Deny with reason (the agent will hear it)</source>
+        <translation>कारण के साथ अस्वीकार करें (एजेंट इसे सुनेगा)</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -4573,6 +5004,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Allow network access</source>
         <translation>नेटवर्क एक्सेस की अनुमति दें</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>याद रखी गई स्वीकृतियाँ</translation>
+    </message>
+    <message>
+        <source>Commands you allowed permanently are remembered per session. Review and revoke them from the composer&apos;s session settings.</source>
+        <translation>आपके द्वारा स्थायी रूप से अनुमत कमांड प्रति सत्र याद रखे जाते हैं। इन्हें कंपोज़र की सत्र सेटिंग से देखें और रद्द करें।</translation>
     </message>
 </context>
 <context>
@@ -4779,6 +5218,10 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>रीज़निंग प्रयास</translation>
     </message>
     <message>
+        <source>Reasoning effort and modes are managed by the foreign agent.</source>
+        <translation>रीज़निंग प्रयास और मोड बाहरी एजेंट द्वारा प्रबंधित होते हैं।</translation>
+    </message>
+    <message>
         <source>Approval mode</source>
         <translation>अनुमोदन मोड</translation>
     </message>
@@ -4797,6 +5240,18 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Ask</source>
         <translation>पूछें</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>याद रखी गई स्वीकृतियाँ</translation>
+    </message>
+    <message>
+        <source>No remembered approvals for this session.</source>
+        <translation>इस सत्र के लिए कोई याद रखी गई स्वीकृति नहीं।</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>रद्द करें</translation>
     </message>
     <message>
         <source>Fast mode</source>
@@ -5111,8 +5566,16 @@ This only affects the app appearance, not your data.</source>
         <translation>मॉडल</translation>
     </message>
     <message>
+        <source>Agents</source>
+        <translation>एजेंट</translation>
+    </message>
+    <message>
         <source>Chat</source>
         <translation>चैट</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>उपकरण</translation>
     </message>
     <message>
         <source>Safety</source>
@@ -5591,12 +6054,24 @@ This only affects the app appearance, not your data.</source>
         <translation>इस क्रिया को अनुमोदित करें?</translation>
     </message>
     <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>कारण जो एजेंट सुनेगा (वैकल्पिक)</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>अनुमोदित करें</translation>
     </message>
     <message>
         <source>Deny</source>
         <translation>अस्वीकार करें</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>अस्वीकृति भेजें</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>कारण के साथ अस्वीकार करें…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -5608,6 +6083,53 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Tool</source>
         <translation>टूल</translation>
+    </message>
+    <message>
+        <source>Spawned a subagent to work in the background.</source>
+        <translation>बैकग्राउंड में काम करने के लिए एक सबएजेंट शुरू किया गया।</translation>
+    </message>
+    <message>
+        <source>Its completion notice will link the child; open its transcript from the Fleet page.</source>
+        <translation>इसका पूर्णता सूचना चाइल्ड को लिंक करेगी; इसका ट्रांसक्रिप्ट Fleet पेज से खोलें।</translation>
+    </message>
+    <message>
+        <source>Delegation depth limit (%1) reached</source>
+        <translation>डेलिगेशन गहराई सीमा (%1) पहुँच गई</translation>
+    </message>
+    <message>
+        <source>Too many background children (%1)</source>
+        <translation>बहुत अधिक बैकग्राउंड चाइल्ड (%1)</translation>
+    </message>
+    <message>
+        <source>Delegation guardrail reached</source>
+        <translation>डेलिगेशन गार्डरेल पहुँच गया</translation>
+    </message>
+</context>
+<context>
+    <name>ToolsSettingsSection</name>
+    <message>
+        <source>Tools</source>
+        <translation>उपकरण</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
+        <translation>उपकरण नोड द्वारा संकलित और नियंत्रित होते हैं। यह सूची केवल पढ़ने योग्य है; अक्षम उपकरण बताता है कि उसे क्या चाहिए।</translation>
+    </message>
+    <message>
+        <source>No tools reported by the node.</source>
+        <translation>नोड द्वारा कोई उपकरण रिपोर्ट नहीं किया गया।</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>सक्षम</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>अक्षम</translation>
+    </message>
+    <message>
+        <source>Set up…</source>
+        <translation>सेट अप करें…</translation>
     </message>
 </context>
 <context>
@@ -5684,6 +6206,22 @@ Thanks — proceeding with: %1
     <message>
         <source>Set up provider</source>
         <translation>प्रदाता सेट करें</translation>
+    </message>
+    <message>
+        <source>The foreign agent “%1” could not run.</source>
+        <translation>बाहरी एजेंट “%1” चल नहीं सका।</translation>
+    </message>
+    <message>
+        <source>foreign</source>
+        <translation>बाहरी</translation>
+    </message>
+    <message>
+        <source>Open Agents settings</source>
+        <translation>एजेंट सेटिंग खोलें</translation>
+    </message>
+    <message>
+        <source>Read-only view of a delegated child. Steer or cancel it from the Fleet page.</source>
+        <translation>डेलिगेट किए गए चाइल्ड का केवल-पढ़ने योग्य दृश्य। इसे Fleet पेज से स्टीयर या रद्द करें।</translation>
     </message>
     <message>
         <source>Select a session</source>
@@ -5958,6 +6496,22 @@ Thanks — proceeding with: %1
         <translation>सुरक्षा</translation>
     </message>
     <message>
+        <source>Max delegation depth</source>
+        <translation>अधिकतम डेलिगेशन गहराई</translation>
+    </message>
+    <message>
+        <source>%1 — enforced by the node</source>
+        <translation>%1 — नोड द्वारा लागू</translation>
+    </message>
+    <message>
+        <source>— — enforced by the node</source>
+        <translation>— — नोड द्वारा लागू</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>अधिकतम बैकग्राउंड चाइल्ड</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- अनुमोदन नीति प्रत्येक सत्र के लिए सेट होती है (कंपोज़र सत्र सेटिंग्स) — _वहाँ नोड द्वारा लागू की जाती है_
@@ -6230,10 +6784,6 @@ Thanks — proceeding with: %1
     <message>
         <source>Native</source>
         <translation>नेटिव</translation>
-    </message>
-    <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -6568,17 +7118,25 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny · **D** deny with reason.
 
 </source>
-        <translation>ऑर्केस्ट्रेटर/वर्कर ट्री, GUI के साथ साझा। **j/k** स्थानांतरित करें · **Space/Enter** रोकें/पुनः आरंभ करें · **t** एक चाइल्ड को दिशा दें · **c** इसका टर्न रद्द करें।
+        <translation>**j/k** ले जाएँ · **a**/**Enter** स्वीकृत · **p** स्थायी अनुमति · **d** अस्वीकार · **D** कारण के साथ अस्वीकार।
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`) · %5
+        <source>## %1%2
+
 </source>
-        <translation>- %1%2 — %3 (`%4`) · %5
+        <translation>## %1%2
+
+</translation>
+    </message>
+    <message>
+        <source>- Requested by: %1
+</source>
+        <translation>- अनुरोधकर्ता: %1
 </translation>
     </message>
     <message>
@@ -6602,14 +7160,6 @@ _कोई एजेंट चयनित नहीं।_
 
 </source>
         <translation>**j/k** स्थानांतरित करें · **s** निलंबित करें · **R**/**Enter** पुनः आरंभ करें · **x** बंद करें · **v** संग्रहीत।
-
-</translation>
-    </message>
-    <message>
-        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
-
-</source>
-        <translation>**j/k** स्थानांतरित करें · **a**/**Enter** अनुमोदित करें · **p** स्थायी रूप से अनुमति दें · **d** अस्वीकार करें।
 
 </translation>
     </message>
@@ -6658,6 +7208,28 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
+        <source>persistent</source>
+        <translation>स्थायी</translation>
+    </message>
+    <message>
+        <source>ephemeral</source>
+        <translation>अल्पकालिक</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
+
+</source>
+        <translation>ऑर्केस्ट्रेटर/वर्कर ट्री, GUI के साथ साझा। **j/k** ले जाएँ · **Space/Enter** रोकें/जारी रखें · **o** ट्रांसक्रिप्ट खोलें · **t** चाइल्ड को स्टीयर करें · **c** उसका टर्न रद्द करें।
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`) · %5%6
+</source>
+        <translation>- %1%2 — %3 (`%4`) · %5%6
+</translation>
+    </message>
+    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 टोक
@@ -6684,18 +7256,52 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
-        <source>## %1%2 (%3 risk)
-
-</source>
-        <translation>## %1%2 (%3 जोखिम)
-
-</translation>
-    </message>
-    <message>
         <source>- Session: %1
 </source>
         <translation>- सत्र: %1
 </translation>
+    </message>
+    <message>
+        <source>- Path: `%1`
+</source>
+        <translation>- पथ: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Fingerprint: `%1`
+</source>
+        <translation>- फ़िंगरप्रिंट: `%1`
+</translation>
+    </message>
+    <message>
+        <source>## Tools
+
+</source>
+        <translation>## उपकरण
+
+</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only.
+
+</source>
+        <translation>उपकरण नोड द्वारा संकलित और नियंत्रित होते हैं। यह सूची केवल पढ़ने योग्य है।
+
+</translation>
+    </message>
+    <message>
+        <source>_No tools reported by the node._
+</source>
+        <translation>_नोड द्वारा कोई उपकरण रिपोर्ट नहीं किया गया।_
+</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3</source>
+        <translation>- %1 **%2** — %3</translation>
+    </message>
+    <message>
+        <source> _(%1)_</source>
+        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -6834,10 +7440,10 @@ _कोई एजेंट चयनित नहीं।_
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
 
 </source>
-        <translation>Events-IO ट्रांसपोर्ट खाते और उनके लाइव कक्ष, GUI के साथ साझा। कनेक्ट करना स्थगित है (EIO-2); डिस्कनेक्ट/हटाने के लिए अभी कोई वायर ऑप नहीं है (B3 - node-first फ़ॉलो-अप)। एक संग्रहीत क्रेडेंशियल को Accounts पृष्ठ से हटाया जा सकता है (बाउंड प्रोफ़ाइल पर &apos;x&apos;)।
+        <translation>Events-IO ट्रांसपोर्ट खाते और उनके लाइव रूम, GUI के साथ साझा। खाता कनेक्ट करने के लिए &apos;c&apos; दबाएँ। डिस्कनेक्ट/हटाना अभी वायर ऑप नहीं है (B3 - नोड-फर्स्ट फॉलो-अप)। संग्रहीत क्रेडेंशियल Accounts पेज से हटाया जा सकता है (बाउंड प्रोफ़ाइल पर &apos;x&apos;)। रूम आमंत्रण नोड द्वारा संभाले जाते हैं; नए शामिल हुए रूम यहाँ स्वतः दिखते हैं।
 
 </translation>
     </message>
@@ -6882,6 +7488,10 @@ _कोई एजेंट चयनित नहीं।_
     <message>
         <source> · ⇄ `%1`</source>
         <translation> · ⇄ `%1`</translation>
+    </message>
+    <message>
+        <source> · ✦ new</source>
+        <translation> · ✦ नया</translation>
     </message>
     <message>
         <source>## Add channel
@@ -7056,6 +7666,17 @@ _कोई एजेंट चयनित नहीं।_
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>डेलिगेशन सीमाएँ पढ़ने में विफल</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>डेलिगेशन सीमाएँ डिकोड करने में विफल</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -7163,6 +7784,28 @@ _कोई एजेंट चयनित नहीं।_
     <message>
         <source>No daemon target configured</source>
         <translation>कोई daemon लक्ष्य कॉन्फ़िगर नहीं</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>बाहरी</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>फ़िंगरप्रिंट रद्द करना विफल</translation>
     </message>
 </context>
 <context>
@@ -7355,6 +7998,56 @@ _कोई एजेंट चयनित नहीं।_
     <message>
         <source>Participants</source>
         <translation>प्रतिभागी</translation>
+    </message>
+</context>
+<context>
+    <name>tools::IToolInventory</name>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Tavily API कुंजी चाहिए</translation>
+    </message>
+    <message>
+        <source>Needs a Firecrawl API key</source>
+        <translation>Firecrawl API कुंजी चाहिए</translation>
+    </message>
+    <message>
+        <source>Needs the vision build feature</source>
+        <translation>विज़न बिल्ड फ़ीचर चाहिए</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>ब्राउज़र बिल्ड फ़ीचर चाहिए</translation>
+    </message>
+    <message>
+        <source>Needs %1</source>
+        <translation>%1 चाहिए</translation>
+    </message>
+</context>
+<context>
+    <name>tools::MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>वर्कस्पेस फ़ाइलें पढ़ें और संपादित करें</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>शेल कमांड चलाएँ (अनुमोदन-आधारित)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>वेब पर खोजें</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Tavily API कुंजी चाहिए</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>असली ब्राउज़र चलाएँ</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>ब्राउज़र बिल्ड फ़ीचर चाहिए</translation>
     </message>
 </context>
 <context>

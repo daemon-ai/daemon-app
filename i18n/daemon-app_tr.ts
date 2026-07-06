@@ -365,6 +365,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>daemon-core (yerel)</translation>
     </message>
     <message>
+        <source>  ·  stream-json</source>
+        <translation>  ·  stream-json</translation>
+    </message>
+    <message>
         <source>  ·  ACP %1</source>
         <translation>  ·  ACP %1</translation>
     </message>
@@ -382,6 +386,130 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>daemon-core (native)</source>
         <translation>daemon-core (yerel)</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsDialog</name>
+    <message>
+        <source>Foreign agents</source>
+        <translation>Yabancı aracılar</translation>
+    </message>
+    <message>
+        <source>Registered + discovered agents:</source>
+        <translation>Kayıtlı + keşfedilen aracılar:</translation>
+    </message>
+    <message>
+        <source>Register…</source>
+        <translation>Kaydet…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Kaldır</translation>
+    </message>
+    <message>
+        <source>Re-scan</source>
+        <translation>Yeniden tara</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Kapat</translation>
+    </message>
+    <message>
+        <source>Agent registered.</source>
+        <translation>Aracı kaydedildi.</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>“%1” kaldırıldı.</translation>
+    </message>
+    <message>
+        <source>(no foreign agents in the catalog)</source>
+        <translation>(katalogda yabancı aracı yok)</translation>
+    </message>
+    <message>
+        <source>Only manually registered agents can be removed.</source>
+        <translation>Yalnızca elle kaydedilen aracılar kaldırılabilir.</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>Aracıyı kaldır</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start
+until it is re-registered.</source>
+        <translation>“%1” kaldırılsın mı? Onu kullanan profiller yeniden kaydedilene
+kadar başlatılamaz.</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>İptal</translation>
+    </message>
+</context>
+<context>
+    <name>AgentsSettingsSection</name>
+    <message>
+        <source>Agent registered.</source>
+        <translation>Aracı kaydedildi.</translation>
+    </message>
+    <message>
+        <source>Removed “%1”.</source>
+        <translation>“%1” kaldırıldı.</translation>
+    </message>
+    <message>
+        <source>Foreign agents</source>
+        <translation>Yabancı aracılar</translation>
+    </message>
+    <message>
+        <source>Agents that run a foreign engine (ACP or the Claude Code stream-json bridge). Launch recipes are stored and validated by the daemon — profiles reference an agent by name only.</source>
+        <translation>Yabancı bir motoru çalıştıran aracılar (ACP veya Claude Code stream-json köprüsü). Başlatma tarifleri daemon tarafından saklanır ve doğrulanır — profiller bir aracıya yalnızca adıyla başvurur.</translation>
+    </message>
+    <message>
+        <source>Register custom…</source>
+        <translation>Özel kaydet…</translation>
+    </message>
+    <message>
+        <source>Re-scan installed</source>
+        <translation>Yüklüleri yeniden tara</translation>
+    </message>
+    <message>
+        <source>No foreign agents in the catalog yet.</source>
+        <translation>Katalogda henüz yabancı aracı yok.</translation>
+    </message>
+    <message>
+        <source>stream-json</source>
+        <translation>stream-json</translation>
+    </message>
+    <message>
+        <source>ACP</source>
+        <translation>ACP</translation>
+    </message>
+    <message>
+        <source>manual</source>
+        <translation>elle</translation>
+    </message>
+    <message>
+        <source>builtin</source>
+        <translation>yerleşik</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>yüklü</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>yüklü değil</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Kaldır</translation>
+    </message>
+    <message>
+        <source>Remove agent</source>
+        <translation>Aracıyı kaldır</translation>
+    </message>
+    <message>
+        <source>Remove “%1”? Profiles that use it will fail to start until it is re-registered.</source>
+        <translation>“%1” kaldırılsın mı? Onu kullanan profiller yeniden kaydedilene kadar başlatılamaz.</translation>
     </message>
 </context>
 <context>
@@ -493,8 +621,34 @@ You&apos;ll return to first-run setup.</source>
         <translation>Gelen kutusu boş — bekleyen onay yok.</translation>
     </message>
     <message>
+        <source>Path</source>
+        <translation>Yol</translation>
+    </message>
+    <message>
+        <source>fingerprint %1</source>
+        <translation>parmak izi %1</translation>
+    </message>
+    <message>
+        <source>Allowing permanently remembers this exact command:
+%1</source>
+        <translation>Kalıcı olarak izin vermek tam olarak bu komutu hatırlar:
+%1</translation>
+    </message>
+    <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>Aracının duyacağı gerekçe (isteğe bağlı)</translation>
+    </message>
+    <message>
         <source>Deny</source>
         <translation>Reddet</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>Reddi gönder</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>Gerekçeyle reddet…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -695,6 +849,17 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>Yetki devri sınırları okunamadı</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>Yetki devri sınırları çözülemedi</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
     <message>
         <source>Remove stored credential?</source>
@@ -725,6 +890,10 @@ You&apos;ll return to first-run setup.</source>
         <translation>Bağlı kanal yok.</translation>
     </message>
     <message>
+        <source>Room invites are handled by the node; newly-joined rooms appear here automatically.</source>
+        <translation>Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada otomatik olarak görünür.</translation>
+    </message>
+    <message>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
@@ -739,6 +908,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>No rooms.</source>
         <translation>Oda yok.</translation>
+    </message>
+    <message>
+        <source>new</source>
+        <translation>yeni</translation>
+    </message>
+    <message>
+        <source>Newly joined room</source>
+        <translation>Yeni katılınan oda</translation>
     </message>
     <message>
         <source>⇄ %1</source>
@@ -767,6 +944,14 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Connect</source>
         <translation>Bağlan</translation>
+    </message>
+    <message>
+        <source>Sign in to connect this channel</source>
+        <translation>Bu kanalı bağlamak için giriş yapın</translation>
+    </message>
+    <message>
+        <source>This channel type has no browser sign-in.</source>
+        <translation>Bu kanal türünde tarayıcı ile giriş yoktur.</translation>
     </message>
 </context>
 <context>
@@ -1227,18 +1412,6 @@ You&apos;ll return to first-run setup.</source>
         <translation>ayrıntılı</translation>
     </message>
     <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
-    </message>
-    <message>
-        <source>Foreign</source>
-        <translation>Yabancı</translation>
-    </message>
-    <message>
-        <source>Native</source>
-        <translation>Yerel</translation>
-    </message>
-    <message>
         <source>Edits</source>
         <translation>Düzenlemeler</translation>
     </message>
@@ -1269,6 +1442,10 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Native</source>
         <translation>Yerel</translation>
+    </message>
+    <message>
+        <source>Foreign engine — model, reasoning and rewind are managed by the agent</source>
+        <translation>Yabancı motor — model, akıl yürütme ve geri sarma aracı tarafından yönetilir</translation>
     </message>
     <message>
         <source>Engine</source>
@@ -1812,6 +1989,33 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>DelegationLimitsSection</name>
+    <message>
+        <source>Delegation limits</source>
+        <translation>Yetki devri sınırları</translation>
+    </message>
+    <message>
+        <source>How deep and how wide an agent may delegate. Enforced by the node; shown here for reference.</source>
+        <translation>Bir aracının ne kadar derine ve ne kadar geniş yetki devredebileceği. Düğüm tarafından uygulanır; burada referans için gösterilir.</translation>
+    </message>
+    <message>
+        <source>Max delegation depth</source>
+        <translation>Maks. yetki devri derinliği</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>Düğüm tarafından uygulanır — uygulamadan yapılandırılamaz.</translation>
+    </message>
+    <message>
+        <source>—</source>
+        <translation>—</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>Maks. arka plan alt görevi</translation>
+    </message>
+</context>
+<context>
     <name>Dialog</name>
     <message>
         <source>OK</source>
@@ -2151,6 +2355,32 @@ You&apos;ll return to first-run setup.</source>
     </message>
 </context>
 <context>
+    <name>EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Yabancı</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>EngineOriginChip</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Yabancı</translation>
+    </message>
+    <message>
+        <source>Requested by this foreign agent</source>
+        <translation>Bu yabancı aracı tarafından istendi</translation>
+    </message>
+</context>
+<context>
     <name>FileExplorer</name>
     <message>
         <source>Explorer</source>
@@ -2242,6 +2472,13 @@ You&apos;ll return to first-run setup.</source>
     <message>
         <source>Retry</source>
         <translation>Yeniden dene</translation>
+    </message>
+</context>
+<context>
+    <name>FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>Parmak izi iptali başarısız</translation>
     </message>
 </context>
 <context>
@@ -2489,12 +2726,20 @@ You&apos;ll return to first-run setup.</source>
         <translation>Yenile</translation>
     </message>
     <message>
-        <source>Foreign</source>
-        <translation>Yabancı</translation>
-    </message>
-    <message>
         <source>Native</source>
         <translation>Yerel</translation>
+    </message>
+    <message>
+        <source>Ephemeral</source>
+        <translation>Geçici</translation>
+    </message>
+    <message>
+        <source>Persistent</source>
+        <translation>Kalıcı</translation>
+    </message>
+    <message>
+        <source>Open transcript</source>
+        <translation>Dökümü aç</translation>
     </message>
     <message>
         <source>Steer…</source>
@@ -3097,6 +3342,33 @@ Teşekkürler — şununla devam ediliyor: %1
     </message>
 </context>
 <context>
+    <name>MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>Çalışma alanı dosyalarını oku ve düzenle</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>Kabuk komutlarını çalıştır (onay gerektirir)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>Web&apos;de ara</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Tavily API anahtarı gerekir</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>Gerçek bir tarayıcı çalıştır</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Tarayıcı derleme özelliği gerekir</translation>
+    </message>
+</context>
+<context>
     <name>ModelPickerOverlay</name>
     <message>
         <source>Off</source>
@@ -3377,8 +3649,8 @@ Keşfet sekmesinden bir tane başlatın.</translation>
         <translation>sistem istemi</translation>
     </message>
     <message>
-        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
-        <translation>Bu aracı yabancı bir ACP motoru çalıştırır. Başlatma tarifi daemon&apos;ın ACP kataloğu tarafından yönetilir — yapılandırılacak sağlayıcı, model veya anahtar yoktur.</translation>
+        <source>This agent runs a foreign engine. Its launch recipe is managed by the daemon&apos;s agent catalog — no provider, model, or key to configure.</source>
+        <translation>Bu aracı yabancı bir motor çalıştırır. Başlatma tarifi daemon&apos;un aracı kataloğu tarafından yönetilir — yapılandırılacak sağlayıcı, model veya anahtar yok.</translation>
     </message>
     <message>
         <source>Name:</source>
@@ -3491,6 +3763,18 @@ Keşfet sekmesinden bir tane başlatın.</translation>
     <message>
         <source>Name</source>
         <translation>Ad</translation>
+    </message>
+    <message>
+        <source>Foreign</source>
+        <translation>Yabancı</translation>
+    </message>
+    <message>
+        <source>Foreign engine (set at create time)</source>
+        <translation>Yabancı motor (oluşturmada ayarlanır)</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign engine — its launch recipe and model are managed by the daemon&apos;s agent catalog, so there is no provider, model, or base URL to configure here.</source>
+        <translation>Bu aracı yabancı bir motor çalıştırır — başlatma tarifi ve modeli daemon&apos;un aracı kataloğu tarafından yönetilir; bu nedenle burada yapılandırılacak sağlayıcı, model veya temel URL yoktur.</translation>
     </message>
     <message>
         <source>Provider</source>
@@ -3608,8 +3892,8 @@ Keşfet sekmesinden bir tane başlatın.</translation>
         <translation>Ad</translation>
     </message>
     <message>
-        <source>Engine: ACP agent · %1 (set at create time)</source>
-        <translation>Motor: ACP aracısı · %1 (oluşturma sırasında ayarlanır)</translation>
+        <source>Engine: foreign agent · %1 (set at create time)</source>
+        <translation>Motor: yabancı aracı · %1 (oluşturmada ayarlanır)</translation>
     </message>
     <message>
         <source>Engine: daemon-core (native)</source>
@@ -3825,6 +4109,22 @@ Keşfet sekmesinden bir tane başlatın.</translation>
     <message>
         <source>No nodes found</source>
         <translation>Düğüm bulunamadı</translation>
+    </message>
+    <message>
+        <source>Delegation limit reached</source>
+        <translation>Yetki devri sınırına ulaşıldı</translation>
+    </message>
+    <message>
+        <source>Delegating…</source>
+        <translation>Devrediliyor…</translation>
+    </message>
+    <message>
+        <source>Delegation failed</source>
+        <translation>Yetki devri başarısız</translation>
+    </message>
+    <message>
+        <source>Delegated to a subagent</source>
+        <translation>Bir alt aracıya devredildi</translation>
     </message>
     <message>
         <source>Answered</source>
@@ -4060,6 +4360,10 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Reddet</translation>
     </message>
     <message>
+        <source>Deny with reason</source>
+        <translation>Gerekçeyle reddet</translation>
+    </message>
+    <message>
         <source>Allow permanently</source>
         <translation>Kalıcı olarak izin ver</translation>
     </message>
@@ -4098,6 +4402,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>  [not installed]</source>
         <translation>  [yüklü değil]</translation>
+    </message>
+    <message>
+        <source>  [manual]</source>
+        <translation>  [elle]</translation>
+    </message>
+    <message>
+        <source>  [builtin]</source>
+        <translation>  [yerleşik]</translation>
     </message>
 </context>
 <context>
@@ -4221,6 +4533,101 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     </message>
 </context>
 <context>
+    <name>RegisterAgentDialog</name>
+    <message>
+        <source>Register foreign agent</source>
+        <translation>Yabancı aracı kaydet</translation>
+    </message>
+    <message>
+        <source>Register</source>
+        <translation>Kaydet</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Ad</translation>
+    </message>
+    <message>
+        <source>catalog name (e.g. my-claude)</source>
+        <translation>katalog adı (örn. my-claude)</translation>
+    </message>
+    <message>
+        <source>Protocol</source>
+        <translation>Protokol</translation>
+    </message>
+    <message>
+        <source>ACP (Agent Client Protocol)</source>
+        <translation>ACP (Agent Client Protocol)</translation>
+    </message>
+    <message>
+        <source>Claude Code (stream-json)</source>
+        <translation>Claude Code (stream-json)</translation>
+    </message>
+    <message>
+        <source>Connect to a TCP endpoint instead of launching a program</source>
+        <translation>Bir program başlatmak yerine bir TCP uç noktasına bağlan</translation>
+    </message>
+    <message>
+        <source>Program</source>
+        <translation>Program</translation>
+    </message>
+    <message>
+        <source>executable (resolved on the daemon&apos;s PATH)</source>
+        <translation>yürütülebilir (daemon&apos;un PATH&apos;inde çözülür)</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated)</source>
+        <translation>Argümanlar (boşlukla ayrılmış)</translation>
+    </message>
+    <message>
+        <source>--flag value</source>
+        <translation>--flag value</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VALUE per line)</source>
+        <translation>Ortam (satır başına KEY=VALUE)</translation>
+    </message>
+    <message>
+        <source>Endpoint</source>
+        <translation>Uç nokta</translation>
+    </message>
+    <message>
+        <source>tcp://host:port</source>
+        <translation>tcp://host:port</translation>
+    </message>
+    <message>
+        <source>The daemon probes the recipe on Register (an ACP initialize handshake, or a PATH check for stream-json) — the result appears in the agent list.</source>
+        <translation>Daemon, Kayıt sırasında tarifi sınar (bir ACP initialize el sıkışması veya stream-json için bir PATH denetimi) — sonuç aracı listesinde görünür.</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>Ad:</translation>
+    </message>
+    <message>
+        <source>Protocol (Enter to pick):</source>
+        <translation>Protokol (seçmek için Enter):</translation>
+    </message>
+    <message>
+        <source>Program (blank = use TCP endpoint below):</source>
+        <translation>Program (boş = aşağıdaki TCP uç noktasını kullan):</translation>
+    </message>
+    <message>
+        <source>Arguments (space-separated):</source>
+        <translation>Argümanlar (boşlukla ayrılmış):</translation>
+    </message>
+    <message>
+        <source>Environment (KEY=VAL,KEY=VAL):</source>
+        <translation>Ortam (KEY=VAL,KEY=VAL):</translation>
+    </message>
+    <message>
+        <source>OR endpoint (tcp://host:port):</source>
+        <translation>VEYA uç nokta (tcp://host:port):</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>İptal</translation>
+    </message>
+</context>
+<context>
     <name>RewindConfirmDialog</name>
     <message>
         <source>Rewind to this checkpoint?</source>
@@ -4318,6 +4725,10 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Bir satırda Enter / Space döngüler veya değiştirir · Esc kapatır</translation>
     </message>
     <message>
+        <source>Remembered approvals…</source>
+        <translation>Hatırlanan onaylar…</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>Kapat</translation>
     </message>
@@ -4348,6 +4759,22 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Verbose: %1</source>
         <translation>Ayrıntılı: %1</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Hatırlanan onaylar</translation>
+    </message>
+    <message>
+        <source>Commands allowed permanently this session · Enter/Revoke drops one · Esc closes</source>
+        <translation>Bu oturumda kalıcı izin verilen komutlar · Enter/İptal birini kaldırır · Esc kapatır</translation>
+    </message>
+    <message>
+        <source>(no remembered approvals)</source>
+        <translation>(hatırlanan onay yok)</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>İptal et</translation>
     </message>
     <message>
         <source>  ·  %1 tok</source>
@@ -4384,6 +4811,10 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Cancel</source>
         <translation>İptal</translation>
+    </message>
+    <message>
+        <source>Deny with reason (the agent will hear it)</source>
+        <translation>Gerekçeyle reddet (aracı bunu duyacak)</translation>
     </message>
     <message>
         <source>Steer this agent</source>
@@ -4569,6 +5000,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Allow network access</source>
         <translation>Ağ erişimine izin ver</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Hatırlanan onaylar</translation>
+    </message>
+    <message>
+        <source>Commands you allowed permanently are remembered per session. Review and revoke them from the composer&apos;s session settings.</source>
+        <translation>Kalıcı olarak izin verdiğiniz komutlar oturum başına hatırlanır. Bunları oluşturucunun oturum ayarlarından gözden geçirip iptal edin.</translation>
     </message>
 </context>
 <context>
@@ -4775,6 +5214,10 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Akıl yürütme çabası</translation>
     </message>
     <message>
+        <source>Reasoning effort and modes are managed by the foreign agent.</source>
+        <translation>Akıl yürütme çabası ve modlar yabancı aracı tarafından yönetilir.</translation>
+    </message>
+    <message>
         <source>Approval mode</source>
         <translation>Onay modu</translation>
     </message>
@@ -4793,6 +5236,18 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Ask</source>
         <translation>Sor</translation>
+    </message>
+    <message>
+        <source>Remembered approvals</source>
+        <translation>Hatırlanan onaylar</translation>
+    </message>
+    <message>
+        <source>No remembered approvals for this session.</source>
+        <translation>Bu oturum için hatırlanan onay yok.</translation>
+    </message>
+    <message>
+        <source>Revoke</source>
+        <translation>İptal et</translation>
     </message>
     <message>
         <source>Fast mode</source>
@@ -5106,8 +5561,16 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
         <translation>Model</translation>
     </message>
     <message>
+        <source>Agents</source>
+        <translation>Aracılar</translation>
+    </message>
+    <message>
         <source>Chat</source>
         <translation>Sohbet</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>Araçlar</translation>
     </message>
     <message>
         <source>Safety</source>
@@ -5584,12 +6047,24 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
         <translation>Bu eylem onaylansın mı?</translation>
     </message>
     <message>
+        <source>Reason the agent will hear (optional)</source>
+        <translation>Aracının duyacağı gerekçe (isteğe bağlı)</translation>
+    </message>
+    <message>
         <source>Approve</source>
         <translation>Onayla</translation>
     </message>
     <message>
         <source>Deny</source>
         <translation>Reddet</translation>
+    </message>
+    <message>
+        <source>Send deny</source>
+        <translation>Reddi gönder</translation>
+    </message>
+    <message>
+        <source>Deny with reason…</source>
+        <translation>Gerekçeyle reddet…</translation>
     </message>
     <message>
         <source>Allow permanently</source>
@@ -5601,6 +6076,53 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
     <message>
         <source>Tool</source>
         <translation>Araç</translation>
+    </message>
+    <message>
+        <source>Spawned a subagent to work in the background.</source>
+        <translation>Arka planda çalışmak üzere bir alt aracı başlatıldı.</translation>
+    </message>
+    <message>
+        <source>Its completion notice will link the child; open its transcript from the Fleet page.</source>
+        <translation>Tamamlanma bildirimi alt görevi bağlayacak; dökümünü Filo sayfasından açın.</translation>
+    </message>
+    <message>
+        <source>Delegation depth limit (%1) reached</source>
+        <translation>Yetki devri derinlik sınırına (%1) ulaşıldı</translation>
+    </message>
+    <message>
+        <source>Too many background children (%1)</source>
+        <translation>Çok fazla arka plan alt görevi (%1)</translation>
+    </message>
+    <message>
+        <source>Delegation guardrail reached</source>
+        <translation>Yetki devri koruma sınırına ulaşıldı</translation>
+    </message>
+</context>
+<context>
+    <name>ToolsSettingsSection</name>
+    <message>
+        <source>Tools</source>
+        <translation>Araçlar</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only; a disabled tool names what it needs.</source>
+        <translation>Araçlar düğüm tarafından derlenir ve denetlenir. Bu envanter salt okunurdur; devre dışı bir araç neye ihtiyaç duyduğunu belirtir.</translation>
+    </message>
+    <message>
+        <source>No tools reported by the node.</source>
+        <translation>Düğüm tarafından bildirilen araç yok.</translation>
+    </message>
+    <message>
+        <source>Enabled</source>
+        <translation>Etkin</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>Devre dışı</translation>
+    </message>
+    <message>
+        <source>Set up…</source>
+        <translation>Kur…</translation>
     </message>
 </context>
 <context>
@@ -5677,6 +6199,22 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Set up provider</source>
         <translation>Sağlayıcı ayarla</translation>
+    </message>
+    <message>
+        <source>The foreign agent “%1” could not run.</source>
+        <translation>Yabancı aracı “%1” çalıştırılamadı.</translation>
+    </message>
+    <message>
+        <source>foreign</source>
+        <translation>yabancı</translation>
+    </message>
+    <message>
+        <source>Open Agents settings</source>
+        <translation>Aracılar ayarlarını aç</translation>
+    </message>
+    <message>
+        <source>Read-only view of a delegated child. Steer or cancel it from the Fleet page.</source>
+        <translation>Devredilen bir alt görevin salt okunur görünümü. Filo sayfasından yönlendirin veya iptal edin.</translation>
     </message>
     <message>
         <source>Select a session</source>
@@ -5951,6 +6489,22 @@ Teşekkürler — şununla devam ediliyor: %1
         <translation>Güvenlik</translation>
     </message>
     <message>
+        <source>Max delegation depth</source>
+        <translation>Maks. yetki devri derinliği</translation>
+    </message>
+    <message>
+        <source>%1 — enforced by the node</source>
+        <translation>%1 — düğüm tarafından uygulanır</translation>
+    </message>
+    <message>
+        <source>— — enforced by the node</source>
+        <translation>— — düğüm tarafından uygulanır</translation>
+    </message>
+    <message>
+        <source>Max background children</source>
+        <translation>Maks. arka plan alt görevi</translation>
+    </message>
+    <message>
         <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
 </source>
         <translation>- Onay politikası her oturum için ayarlanır (oluşturucu oturum ayarları) — _orada düğüm tarafından uygulanır_
@@ -6223,10 +6777,6 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Native</source>
         <translation>Yerel</translation>
-    </message>
-    <message>
-        <source>%1 (ACP)</source>
-        <translation>%1 (ACP)</translation>
     </message>
     <message>
         <source>Foreign</source>
@@ -6561,17 +7111,25 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **t** steer a child · **c** cancel its turn.
+        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny · **D** deny with reason.
 
 </source>
-        <translation>Orkestratör/işçi ağacı, GUI ile paylaşılır. **j/k** taşır · **Space/Enter** duraklat/sürdür · **t** bir çocuğu yönlendir · **c** turunu iptal et.
+        <translation>**j/k** taşı · **a**/**Enter** onayla · **p** kalıcı izin ver · **d** reddet · **D** gerekçeyle reddet.
 
 </translation>
     </message>
     <message>
-        <source>- %1%2 — %3 (`%4`) · %5
+        <source>## %1%2
+
 </source>
-        <translation>- %1%2 — %3 (`%4`) · %5
+        <translation>## %1%2
+
+</translation>
+    </message>
+    <message>
+        <source>- Requested by: %1
+</source>
+        <translation>- İsteyen: %1
 </translation>
     </message>
     <message>
@@ -6595,14 +7153,6 @@ _Hiçbir aracı seçilmedi._
 
 </source>
         <translation>**j/k** taşır · **s** askıya alır · **R**/**Enter** sürdürür · **x** kapatır · **v** arşivlenmiş.
-
-</translation>
-    </message>
-    <message>
-        <source>**j/k** move · **a**/**Enter** approve · **p** allow permanently · **d** deny.
-
-</source>
-        <translation>**j/k** taşır · **a**/**Enter** onaylar · **p** kalıcı izin verir · **d** reddeder.
 
 </translation>
     </message>
@@ -6651,6 +7201,28 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
+        <source>persistent</source>
+        <translation>kalıcı</translation>
+    </message>
+    <message>
+        <source>ephemeral</source>
+        <translation>geçici</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume · **o** open transcript · **t** steer a child · **c** cancel its turn.
+
+</source>
+        <translation>GUI ile paylaşılan orkestratör/işçi ağacı. **j/k** taşı · **Space/Enter** duraklat/sürdür · **o** dökümü aç · **t** bir alt görevi yönlendir · **c** sırasını iptal et.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`) · %5%6
+</source>
+        <translation>- %1%2 — %3 (`%4`) · %5%6
+</translation>
+    </message>
+    <message>
         <source>- %1**%2** — %3 · %4 · %5 · %6 tok
 </source>
         <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
@@ -6677,18 +7249,52 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>## %1%2 (%3 risk)
-
-</source>
-        <translation>## %1%2 (%3 risk)
-
-</translation>
-    </message>
-    <message>
         <source>- Session: %1
 </source>
         <translation>- Oturum: %1
 </translation>
+    </message>
+    <message>
+        <source>- Path: `%1`
+</source>
+        <translation>- Yol: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Fingerprint: `%1`
+</source>
+        <translation>- Parmak izi: `%1`
+</translation>
+    </message>
+    <message>
+        <source>## Tools
+
+</source>
+        <translation>## Araçlar
+
+</translation>
+    </message>
+    <message>
+        <source>Tools are compiled and gated by the node. This inventory is read-only.
+
+</source>
+        <translation>Araçlar düğüm tarafından derlenir ve denetlenir. Bu envanter salt okunurdur.
+
+</translation>
+    </message>
+    <message>
+        <source>_No tools reported by the node._
+</source>
+        <translation>_Düğüm tarafından bildirilen araç yok._
+</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3</source>
+        <translation>- %1 **%2** — %3</translation>
+    </message>
+    <message>
+        <source> _(%1)_</source>
+        <translation> _(%1)_</translation>
     </message>
     <message>
         <source># Routing
@@ -6827,10 +7433,10 @@ _Hiçbir aracı seçilmedi._
 </translation>
     </message>
     <message>
-        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile).
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Press &apos;c&apos; to connect an account. Disconnect/remove has NO wire op yet (B3 - node-first follow-up). A stored credential can be removed from the Accounts page (&apos;x&apos; on the bound profile). Room invites are handled by the node; newly-joined rooms appear here automatically.
 
 </source>
-        <translation>Events-IO taşıma hesapları ve canlı odaları, GUI ile paylaşılır. Bağlanma ertelenmiştir (EIO-2); bağlantıyı kesme/kaldırma için henüz kablo işlemi YOK (B3 - önce düğüm devamı). Saklanan bir kimlik bilgisi Hesaplar sayfasından kaldırılabilir (bağlı profilde &apos;x&apos;).
+        <translation>GUI ile paylaşılan Events-IO taşıma hesapları ve canlı odaları. Bir hesabı bağlamak için &apos;c&apos; tuşuna basın. Bağlantı kesme/kaldırma için HENÜZ bir wire işlemi yok (B3 - düğüm önce takip). Kayıtlı bir kimlik bilgisi Hesaplar sayfasından kaldırılabilir (bağlı profilde &apos;x&apos;). Oda davetleri düğüm tarafından yönetilir; yeni katılınan odalar burada otomatik olarak görünür.
 
 </translation>
     </message>
@@ -6875,6 +7481,10 @@ _Hiçbir aracı seçilmedi._
     <message>
         <source> · ⇄ `%1`</source>
         <translation> · ⇄ `%1`</translation>
+    </message>
+    <message>
+        <source> · ✦ new</source>
+        <translation> · ✦ yeni</translation>
     </message>
     <message>
         <source>## Add channel
@@ -7049,6 +7659,17 @@ _Hiçbir aracı seçilmedi._
     </message>
 </context>
 <context>
+    <name>daemonapp::daemon::CapsRepository</name>
+    <message>
+        <source>Failed to read delegation limits</source>
+        <translation>Yetki devri sınırları okunamadı</translation>
+    </message>
+    <message>
+        <source>Failed to decode delegation limits</source>
+        <translation>Yetki devri sınırları çözülemedi</translation>
+    </message>
+</context>
+<context>
     <name>daemonapp::daemon::CheckpointRepository</name>
     <message>
         <source>Checkpoint rewind failed</source>
@@ -7156,6 +7777,28 @@ _Hiçbir aracı seçilmedi._
     <message>
         <source>No daemon target configured</source>
         <translation>Yapılandırılmış daemon hedefi yok</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::EngineIdentity</name>
+    <message>
+        <source>Foreign</source>
+        <translation>Yabancı</translation>
+    </message>
+    <message>
+        <source>%1 · stream-json</source>
+        <translation>%1 · stream-json</translation>
+    </message>
+    <message>
+        <source>%1 · ACP</source>
+        <translation>%1 · ACP</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FingerprintRepository</name>
+    <message>
+        <source>Fingerprint revoke failed</source>
+        <translation>Parmak izi iptali başarısız</translation>
     </message>
 </context>
 <context>
@@ -7348,6 +7991,56 @@ _Hiçbir aracı seçilmedi._
     <message>
         <source>Participants</source>
         <translation>Katılımcılar</translation>
+    </message>
+</context>
+<context>
+    <name>tools::IToolInventory</name>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Tavily API anahtarı gerekir</translation>
+    </message>
+    <message>
+        <source>Needs a Firecrawl API key</source>
+        <translation>Firecrawl API anahtarı gerekir</translation>
+    </message>
+    <message>
+        <source>Needs the vision build feature</source>
+        <translation>Görüntü (vision) derleme özelliği gerekir</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Tarayıcı derleme özelliği gerekir</translation>
+    </message>
+    <message>
+        <source>Needs %1</source>
+        <translation>%1 gerekir</translation>
+    </message>
+</context>
+<context>
+    <name>tools::MockToolInventory</name>
+    <message>
+        <source>Read and edit workspace files</source>
+        <translation>Çalışma alanı dosyalarını oku ve düzenle</translation>
+    </message>
+    <message>
+        <source>Run shell commands (approval-gated)</source>
+        <translation>Kabuk komutlarını çalıştır (onay gerektirir)</translation>
+    </message>
+    <message>
+        <source>Search the web</source>
+        <translation>Web&apos;de ara</translation>
+    </message>
+    <message>
+        <source>Needs a Tavily API key</source>
+        <translation>Tavily API anahtarı gerekir</translation>
+    </message>
+    <message>
+        <source>Drive a real browser</source>
+        <translation>Gerçek bir tarayıcı çalıştır</translation>
+    </message>
+    <message>
+        <source>Needs the browser build feature</source>
+        <translation>Tarayıcı derleme özelliği gerekir</translation>
     </message>
 </context>
 <context>
