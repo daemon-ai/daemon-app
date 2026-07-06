@@ -247,15 +247,18 @@ void DaemonTurnEngine::parkOnRequest(const DecodedLogEntry& entry) {
     m_deadlineTimer.stop();
     const QString id = QString::number(entry.hostRequestId);
     if (entry.hostKind == QStringLiteral("Approval")) {
-        // Render an awaiting-approval tool row the inline ToolApprovalBar answers.
-        emit eventsEmitted(
-            QVariantList{QVariantMap{{QStringLiteral("type"), QStringLiteral("toolStarted")},
-                                     {QStringLiteral("callId"), id},
-                                     {QStringLiteral("name"), QStringLiteral("approval")},
-                                     {QStringLiteral("argsSummary"), entry.hostPrompt},
-                                     {QStringLiteral("approvalCommand"), entry.hostPrompt},
-                                     {QStringLiteral("needsApproval"), true},
-                                     {QStringLiteral("requestId"), id}}});
+        // Render an awaiting-approval tool row the inline ToolApprovalBar answers. The
+        // "Allow permanently" affordance is shown only when the node advertised it on this gate
+        // (wire v28 `allow_permanent_offered`) — the app never fabricates that offer.
+        emit eventsEmitted(QVariantList{
+            QVariantMap{{QStringLiteral("type"), QStringLiteral("toolStarted")},
+                        {QStringLiteral("callId"), id},
+                        {QStringLiteral("name"), QStringLiteral("approval")},
+                        {QStringLiteral("argsSummary"), entry.hostPrompt},
+                        {QStringLiteral("approvalCommand"), entry.hostPrompt},
+                        {QStringLiteral("needsApproval"), true},
+                        {QStringLiteral("allowPermanent"), entry.hostAllowPermanentOffered},
+                        {QStringLiteral("requestId"), id}}});
         emit awaitingInput(QStringLiteral("approval"));
     } else if (entry.hostKind == QStringLiteral("Choice")) {
         // Render a clarify form: one single-select question carrying the options.
@@ -292,12 +295,13 @@ void DaemonTurnEngine::sendRespond(const QByteArray& cbor) {
     m_client->sendRequest(cbor, respondCorrelation());
 }
 
-void DaemonTurnEngine::respondApproval(const QString& requestId, bool allow) {
+void DaemonTurnEngine::respondApproval(const QString& requestId, bool allow, bool allowPermanent) {
     if (!m_parked) {
         return;
     }
     const quint32 id = requestId.isEmpty() ? m_pendingRequestId : requestId.toUInt();
-    sendRespond(NodeApiCodec::encodeRespondApprovalRequest(m_sessionId, id, allow));
+    // The encoder emits allow_permanent only for an allow (a deny is never persisted).
+    sendRespond(NodeApiCodec::encodeRespondApprovalRequest(m_sessionId, id, allow, allowPermanent));
 }
 
 void DaemonTurnEngine::respondInput(const QString& requestId, const QString& text) {

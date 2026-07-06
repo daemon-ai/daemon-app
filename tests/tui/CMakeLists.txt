@@ -46,6 +46,24 @@ target_link_libraries(tui_transcript_view_tests
 add_test(NAME tui_transcript_view_tests COMMAND tui_transcript_view_tests)
 set_tests_properties(tui_transcript_view_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_interactive_turn_host: render honesty (#2) - answering an inline approval
+# clears the gate via the shared toolApprovalPatch contract and does NOT fabricate
+# a tool result (no synthesized ok/stdout). The completion is rendered from the
+# turn engine's event stream instead (node ToolFinished / mock scripted finish).
+qt_add_executable(tui_interactive_turn_host_tests
+    tst_interactive_turn_host.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/interactive_turn_host.cpp
+)
+set_target_properties(tui_interactive_turn_host_tests PROPERTIES AUTOMOC ON)
+target_include_directories(tui_interactive_turn_host_tests PRIVATE ${CMAKE_SOURCE_DIR}/src/tui)
+target_link_libraries(tui_interactive_turn_host_tests
+    PRIVATE
+        Qt6::Test
+        be_core
+)
+add_test(NAME tui_interactive_turn_host_tests COMMAND tui_interactive_turn_host_tests)
+set_tests_properties(tui_interactive_turn_host_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_tui_palette: proves the TUI palette is theme-aware - each accessor resolves
 # the active theme's shared token to a ZColor, and switching the active theme
 # changes the resolved colors (Light vs Dark vs Sepia vs Midnight).

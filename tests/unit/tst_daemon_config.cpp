@@ -26,18 +26,18 @@ private slots:
 
     void optionsForEnumKeys() {
         MockDaemonConfig c;
-        const QStringList policy = c.options(QStringLiteral("safety/approvalPolicy"));
-        QVERIFY(policy.contains(QStringLiteral("On request")));
+        const QStringList effort = c.options(QStringLiteral("model/effort"));
+        QVERIFY(effort.contains(QStringLiteral("Balanced")));
         QVERIFY(c.options(QStringLiteral("model/default")).isEmpty()); // not an enum key
     }
 
     void roundTripAndSignal() {
         MockDaemonConfig c;
         QSignalSpy spy(&c, &config::IDaemonConfig::changed);
-        c.setValue(QStringLiteral("safety/allowNetwork"), true);
-        QCOMPARE(c.value(QStringLiteral("safety/allowNetwork")).toBool(), true);
+        c.setValue(QStringLiteral("advanced/telemetry"), true);
+        QCOMPARE(c.value(QStringLiteral("advanced/telemetry")).toBool(), true);
         QCOMPARE(spy.count(), 1);
-        c.setValue(QStringLiteral("safety/allowNetwork"), true); // no-op
+        c.setValue(QStringLiteral("advanced/telemetry"), true); // no-op
         QCOMPARE(spy.count(), 1);
     }
 

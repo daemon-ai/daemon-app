@@ -100,6 +100,7 @@ private slots:
     void ansiOutputCarriesColor();
     void diffLinesCarryColor();
     void approvalEmitsButtonControls();
+    void approvalHidesAllowPermanentWhenNotOffered();
     void clarifyEmitsChoiceAndFreeformControls();
     void clarifyDraftReflectsSelection();
     void multiParagraphMessageKeepsBlankLines();
@@ -206,6 +207,35 @@ void TranscriptRenderTests::approvalEmitsButtonControls() {
     QCOMPARE(approve, 1);
     QCOMPARE(deny, 1);
     QCOMPARE(permanent, 1);
+}
+
+// Render honesty (#3): the "Allow permanently" affordance appears ONLY when the
+// node offered it (block metadata `allowPermanent`, set from the wire's
+// `allow_permanent_offered`). A gate without the offer shows just Approve/Deny.
+void TranscriptRenderTests::approvalHidesAllowPermanentWhenNotOffered() {
+    be::DocumentStore doc;
+    doc.loadMarkdown(QStringLiteral(R"md(```msg
+{"id":"m1","role":"assistant"}
+```
+
+```tool
+{"callId":"c8","name":"terminal","tone":"terminal","status":"running","needsApproval":true,"approvalCommand":"rm -rf build"}
+```
+)md"));
+    const LayoutResult res = TranscriptLayout::build(doc, 80);
+    const QString text = flatten(res.lines);
+
+    QVERIFY(text.contains(QStringLiteral("Approve")));
+    QVERIFY(text.contains(QStringLiteral("Deny")));
+    // No offer -> no permanent button, and no Permanent control to activate.
+    QVERIFY(!text.contains(QStringLiteral("Allow permanently")));
+    int permanent = 0;
+    for (const Control& c : res.controls) {
+        if (c.kind == Control::Kind::Permanent) {
+            ++permanent;
+        }
+    }
+    QCOMPARE(permanent, 0);
 }
 
 void TranscriptRenderTests::clarifyEmitsChoiceAndFreeformControls() {
