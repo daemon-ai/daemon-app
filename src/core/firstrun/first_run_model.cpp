@@ -378,6 +378,9 @@ void FirstRunModel::applyReflectedAcpChoice(const QString& name, const QString& 
     const QString agentName = name.isEmpty() ? acpAgent : name;
     // ONE named ProfileCreate carrying engine=Acp{agent} — a catalog NAME, never a recipe; no
     // provider/model/key/credential frames (the foreign agent brings its own model).
+    // agentName is the display name (arg 'name'), acpAgent is the catalog agent id (arg
+    // 'agent') — not swapped despite the token similarity the heuristic check flags.
+    // NOLINTNEXTLINE(readability-suspicious-call-argument)
     const QString newId = m_profiles->createAcpProfile(agentName, acpAgent);
     if (newId.isEmpty()) {
         finish(); // store without a live repo: nothing further to sequence

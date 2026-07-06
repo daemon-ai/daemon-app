@@ -76,7 +76,7 @@ AuthFlowController::AuthFlowController(IAuthFlowService* service, QObject* paren
                         m_phase != QStringLiteral("completing")) {
                         return;
                     }
-                    teardownFlow(/*cancelRemote=*/phase == QStringLiteral("begin") ? false : true);
+                    teardownFlow(/*cancelRemote=*/phase != QStringLiteral("begin"));
                     setError(message);
                     setPhase(QStringLiteral("failed"));
                 });

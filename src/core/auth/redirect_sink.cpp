@@ -63,14 +63,14 @@ void RedirectSink::onNewConnection() {
         // Read the request line once the browser has sent it. Kept minimal on purpose: one GET,
         // one capture, then teardown — this is a single-use relay, not an HTTP server.
         connect(socket, &QTcpSocket::readyRead, this, [this, socket] {
-            const QByteArray requestLine = socket->readLine(8 * 1024);
+            const QByteArray requestLine = socket->readLine(qint64{8} * 1024);
             // "GET /cb?loginToken=... HTTP/1.1" -> the query string after the first '?'.
-            const int pathStart = requestLine.indexOf(' ');
-            const int pathEnd = requestLine.indexOf(' ', pathStart + 1);
+            const qsizetype pathStart = requestLine.indexOf(' ');
+            const qsizetype pathEnd = requestLine.indexOf(' ', pathStart + 1);
             QString callback;
             if (pathStart >= 0 && pathEnd > pathStart) {
                 const QByteArray target = requestLine.mid(pathStart + 1, pathEnd - pathStart - 1);
-                const int q = target.indexOf('?');
+                const qsizetype q = target.indexOf('?');
                 if (q >= 0) {
                     callback = QString::fromUtf8(target.mid(q + 1));
                 }
