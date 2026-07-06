@@ -33,6 +33,22 @@ Kit.Dialog {
     readonly property bool engineAgentInstalled: enginePicker.engineAgentInstalled
     readonly property bool nativeEngine: enginePicker.nativeEngine
 
+    // C6/ENG-8: a foreign ProfileCreate the node rejects (unknown / uninstalled agent) arrives async
+    // via Profiles.profileOpFailed. Instead of a silent close + a stray toast, re-surface the dialog
+    // with the node's honest, agent-named error so the user can fix the selection.
+    property string createError: ""
+    property bool foreignCreateInFlight: false
+    Connections {
+        target: (typeof Profiles !== "undefined" && Profiles) ? Profiles : null
+        function onProfileOpFailed(message) {
+            if (root.foreignCreateInFlight) {
+                root.foreignCreateInFlight = false;
+                root.createError = message;
+                root.open(); // re-surface (accept already closed it) with the failure named
+            }
+        }
+    }
+
     acceptEnabled: nameField.text.trim().length > 0
                    && (nativeEngine ? agentPicker.inferenceComplete
                                     : engineAgentInstalled)
@@ -40,6 +56,8 @@ Kit.Dialog {
     function openForm() {
         nameField.text = "";
         personaField.text = "";
+        root.createError = "";
+        root.foreignCreateInFlight = false;
         enginePicker.refresh(); // native default + fresh catalog/discovery badges each open
         nameField.forceActiveFocus();
         open();
@@ -54,6 +72,8 @@ Kit.Dialog {
             // NAME, never a recipe; no provider/model/key applies. Same activate + open as native.
             if (!root.engineAgentInstalled)
                 return;
+            root.createError = "";
+            root.foreignCreateInFlight = true; // a node rejection re-surfaces this dialog (C6)
             var foreignId = Profiles.createForeignProfile(name, root.engineAgent);
             if (!foreignId || foreignId.length === 0)
                 return;
@@ -103,6 +123,27 @@ Kit.Dialog {
 
     contentItem: ColumnLayout {
         spacing: 10
+
+        // C6/ENG-8: the node's honest, agent-named rejection of a foreign create.
+        Rectangle {
+            visible: root.createError.length > 0
+            Layout.fillWidth: true
+            radius: Theme.radius
+            color: Theme.codeBackground
+            border.width: 1
+            border.color: Theme.danger
+            implicitHeight: createErrorText.implicitHeight + 14
+            Text {
+                id: createErrorText
+                anchors.fill: parent
+                anchors.margins: 7
+                text: root.createError
+                color: Theme.danger
+                font.family: FontIcons.display
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+            }
+        }
 
         SectionLabel { text: qsTr("Name") }
         Kit.TextField {

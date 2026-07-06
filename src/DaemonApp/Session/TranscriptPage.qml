@@ -298,6 +298,60 @@ Rectangle {
             }
         }
 
+        // [wave2:app-engines] C6/ENG-8: a foreign session that failed (spawn / handshake / mid-turn
+        // death, or an agent uninstalled after profile creation) surfaces an actionable banner that
+        // NAMES the agent and jumps to the Agents settings to fix it — instead of a dead chat. The
+        // copy echoes the node's honest error message; the structured stage grammar
+        // (resolve|spawn|handshake|mid-turn) is a deferred node-first follow-up (no client faking).
+        Rectangle {
+            id: foreignFailure
+            readonly property var info: (typeof EngineIdentity !== "undefined" && EngineIdentity
+                                         && controller.currentId.length > 0)
+                                        ? EngineIdentity.engineForSession(controller.currentId)
+                                        : ({ "engine": "", "label": "" })
+            readonly property string errText: orchestrator.turn ? orchestrator.turn.errorText : ""
+            // Not the provider nudge above (that is a native-engine setup case).
+            visible: info.engine === "Foreign" && orchestrator.turn
+                     && orchestrator.turn.turnState === "error" && errText.length > 0
+                     && errText.indexOf("no model provider configured") === -1
+            Layout.fillWidth: true
+            implicitHeight: foreignRow.implicitHeight + 16
+            radius: 8
+            color: Theme.surface
+            border.color: Theme.danger
+            border.width: 1
+            RowLayout {
+                id: foreignRow
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 10
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+                    Text {
+                        Layout.fillWidth: true
+                        text: qsTr("The foreign agent “%1” could not run.")
+                              .arg(foreignFailure.info.agent && foreignFailure.info.agent.length > 0
+                                   ? foreignFailure.info.agent : qsTr("foreign"))
+                        font.family: FontIcons.display; font.pixelSize: 12; font.bold: true
+                        color: Theme.text; wrapMode: Text.WordWrap
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: foreignFailure.errText
+                        font.family: FontIcons.mono; font.pixelSize: 11; color: Theme.textMuted
+                        wrapMode: Text.WordWrap
+                    }
+                }
+                Kit.TextButton {
+                    text: qsTr("Open Agents settings")
+                    accentFilled: true
+                    onClicked: if (typeof Nav !== "undefined" && Nav)
+                                   Nav.open("settings", "agents")
+                }
+            }
+        }
+
         Composer {
             id: composer
             Layout.fillWidth: true
