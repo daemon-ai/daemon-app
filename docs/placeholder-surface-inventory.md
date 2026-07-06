@@ -43,9 +43,11 @@ bookkeeping mechanically.
   backlog item, not a UI gap); exempted with that reason in
   `tests/tui/tui_parity_tests.cpp`.
 - Channels page (GUI `ChannelsPage.qml`, TUI `pages/hub_channels.cpp`):
-  Connect stays disabled (EIO-2; the wizard/auth stream owns the AuthFlowSheet).
-  Per-account **Disconnect is visible-disabled with the reason** — the wire has
-  NO transport disconnect/remove op (B3; node-first future wire candidate,
+  **Connect is wired** (B1 landed) — it opens the shared `AuthFlowSheet`
+  (begin → browser hand-off → poll → complete), lit only when a sign-in provider
+  for the adapter family is registered. The one genuinely-remaining placeholder is
+  per-account **Disconnect: visible-disabled with the reason** — the wire has NO
+  transport disconnect/remove op (B3; node-first future wire candidate,
   deliberately NOT in the v29 batch). The partial lever that IS wired:
   "Remove the stored credential…" (CredentialRemove, confirmed + clearly
   labeled) on accounts with a bound profile. Room lists + route-pin chips are
