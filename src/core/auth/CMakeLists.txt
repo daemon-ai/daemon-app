@@ -21,5 +21,7 @@ target_link_libraries(da_auth
         Qt6::Core
         Qt6::Network
     PRIVATE
+        # QDesktopServices::openUrl (the controller's browser hand-off).
+        Qt6::Gui
         daemon-app::warnings
 )

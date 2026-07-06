@@ -89,6 +89,7 @@ class MemoryGraphModel;
 } // namespace memoryui
 
 class AddAccountFlow;
+class AuthFlowLauncher;
 class SidebarModel;
 class SessionsListModel;
 class SessionController;
@@ -217,6 +218,10 @@ private:
     // Accounts page: open the add-account wizard ('a'), the TUI analog of the
     // GUI AddAccountWizard (provider pick -> credentials over the shared seam).
     void openAddAccount();
+    // Accounts page: open the interactive sign-in flow ('o'), the TUI analog of the GUI
+    // AuthFlowSheet (family pick -> params -> browser URL + paste-callback panel) over the
+    // shared AuthFlowController.
+    void openAuthFlow();
     // Open the interactive profile editor ('e' on the Profiles page's selected
     // row / on a per-agent Profile tab): the GUI ProfileEditor's field set over
     // the same IProfileStore save path.
@@ -438,6 +443,8 @@ private:
     std::unique_ptr<TuiOverlayHost> m_overlays;
     // Accounts add-wizard flow (lazily created; parented to this widget).
     AddAccountFlow* m_addAccounts = nullptr;
+    // Interactive sign-in flow driver (lazily created; parented to this widget).
+    AuthFlowLauncher* m_authFlow = nullptr;
     CommandRegistry* m_commands = nullptr;
     // Transcript exporter for the /save + list "export" action (writes JSON).
     TranscriptExporter* m_exporter = nullptr;

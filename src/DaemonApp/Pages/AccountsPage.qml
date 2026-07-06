@@ -33,6 +33,14 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             SectionLabel { text: qsTr("Connected accounts"); Layout.fillWidth: true }
+            // Interactive browser sign-in (SSO / OAuth) over the shared AuthFlowSheet; only
+            // offered when the node advertises at least one interactive-auth family.
+            Kit.TextButton {
+                visible: typeof AuthFlow !== "undefined" && AuthFlow
+                         && AuthFlow.providers().length > 0
+                text: qsTr("Sign in via browser…")
+                onClicked: authSheet.openPicker()
+            }
             Kit.TextButton {
                 text: qsTr("Add account")
                 accentFilled: true
@@ -120,4 +128,5 @@ Item {
     }
 
     AddAccountWizard { id: wizard }
+    AuthFlowSheet { id: authSheet }
 }

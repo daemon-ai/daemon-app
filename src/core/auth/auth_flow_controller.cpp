@@ -7,7 +7,9 @@
 #include "auth/redirect_sink.h"
 
 #include <QDateTime>
+#include <QDesktopServices>
 #include <QTimer>
+#include <QUrl>
 
 namespace auth {
 
@@ -113,6 +115,12 @@ void AuthFlowController::start(const QString& family, const QVariantMap& params,
     }
     setPhase(QStringLiteral("beginning"));
     m_service->begin(family, params, redirectUri, bindProfile);
+}
+
+void AuthFlowController::openInBrowser() {
+    if (m_phase == QStringLiteral("awaiting_browser") && !m_authorizationUrl.isEmpty()) {
+        QDesktopServices::openUrl(QUrl(m_authorizationUrl));
+    }
 }
 
 void AuthFlowController::submitCallback(const QString& callback) {

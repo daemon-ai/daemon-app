@@ -68,6 +68,9 @@ public:
     // non-empty `bindProfile` binds the resulting account node-side.
     Q_INVOKABLE void start(const QString& family, const QVariantMap& params,
                            const QString& bindProfile = QString(), bool useSink = true);
+    // Open the parked flow's authorization URL in the system browser (GUI hand-off). No-op
+    // outside awaiting_browser.
+    Q_INVOKABLE void openInBrowser();
     // Manual-callback completion (TUI / no-loopback): paste the redirect URL or query string.
     Q_INVOKABLE void submitCallback(const QString& callback);
     // Abandon the flow: drops the parked node flow (best-effort) and tears the sink down.

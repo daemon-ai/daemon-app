@@ -8,6 +8,7 @@
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "dialogs/add_account_flow.h"
+#include "dialogs/auth_flow_dialog.h"
 #include "dialogs/profile_editor_dialog.h"
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
@@ -343,6 +344,22 @@ void RootWidget::openAddAccount() {
         });
     }
     m_addAccounts->open();
+}
+
+void RootWidget::openAuthFlow() {
+    if (m_services.authFlowController == nullptr) {
+        return;
+    }
+    if (m_authFlow == nullptr) {
+        m_authFlow = new AuthFlowLauncher(m_services.authFlowController, this);
+        connect(m_authFlow, &AuthFlowLauncher::finished, this, [this] {
+            refreshActivePage();
+            if (m_transcript != nullptr && activePageKind() >= 0) {
+                m_transcript->setFocus();
+            }
+        });
+    }
+    m_authFlow->open();
 }
 
 void RootWidget::openProfileEditor(const QString& profileId) {

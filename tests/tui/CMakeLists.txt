@@ -185,6 +185,7 @@ qt_add_executable(tui_accounts_wizard_tests
     ${CMAKE_SOURCE_DIR}/src/tui/dialogs/add_account_flow.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
 )
 set_target_properties(tui_accounts_wizard_tests PROPERTIES AUTOMOC ON)
 target_include_directories(tui_accounts_wizard_tests PRIVATE
@@ -223,6 +224,7 @@ qt_add_executable(tui_settings_page_tests
     ${CMAKE_SOURCE_DIR}/src/tui/settings_editor.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_palette.cpp
 )
 set_target_properties(tui_settings_page_tests PROPERTIES AUTOMOC ON)
@@ -349,6 +351,7 @@ qt_add_executable(tui_profile_editor_tests
     ${CMAKE_SOURCE_DIR}/src/tui/dialogs/profile_editor_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/palette_dialog.cpp
     ${CMAKE_SOURCE_DIR}/src/tui/tui_dialogs.cpp
+    ${CMAKE_SOURCE_DIR}/src/tui/agent_type_view.cpp
 )
 set_target_properties(tui_profile_editor_tests PROPERTIES AUTOMOC ON)
 target_include_directories(tui_profile_editor_tests PRIVATE

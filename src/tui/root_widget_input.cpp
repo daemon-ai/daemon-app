@@ -460,6 +460,14 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         event->accept();
         return true;
     }
+    // Accounts: 'o' opens the interactive sign-in flow (SSO/OAuth begin -> browser URL ->
+    // paste-callback), the GUI AuthFlowSheet analog over the shared AuthFlowController.
+    if (kind == TabModel::Accounts && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("o")) {
+        openAuthFlow();
+        event->accept();
+        return true;
+    }
     if (kind == TabModel::Profiles && event->modifiers() == Qt::NoModifier) {
         // 'e' opens the interactive profile editor for the selected row.
         if (event->text() == QStringLiteral("e")) {
