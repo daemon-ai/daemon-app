@@ -9,6 +9,7 @@
 // disconnecting (EIO-7) are deferred. One focused TU for the Channels
 // workstream; the dispatch stays in TuiPageHub::pageMarkdownForKind.
 
+#include "daemonnet/idaemonnet.h"
 #include "transports/ipresence_service.h"
 #include "transports/itransport_registry.h"
 #include "tui_page_hub.h"
@@ -26,8 +27,9 @@ QString TuiPageHub::buildChannelsMarkdown() const {
     }
 
     md += tr("Events-IO transport accounts and their live rooms, shared with "
-             "the GUI. Read-only in both shells this slice - connecting is "
-             "deferred (EIO-2).\n\n");
+             "the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO "
+             "wire op yet (B3 - node-first follow-up). A stored credential can "
+             "be removed from the Accounts page ('x' on the bound profile).\n\n");
 
     // GUI status-dot mapping (ChannelsPage.qml dotColor): accent=connected,
     // warning=connecting, danger=error, muted=offline/unknown.
@@ -73,11 +75,23 @@ QString TuiPageHub::buildChannelsMarkdown() const {
         }
         for (const QVariant& rv : rooms) {
             const QVariantMap r = rv.toMap();
+            const QString convId = r.value(QStringLiteral("id")).toString();
             const QString title = r.value(QStringLiteral("title")).toString();
-            const QString label =
-                title.isEmpty() ? r.value(QStringLiteral("id")).toString() : title;
+            const QString label = title.isEmpty() ? convId : title;
             const QString kind = r.value(QStringLiteral("kind")).toString();
-            md += kind.isEmpty() ? tr("  - %1\n").arg(label) : tr("  - %1 · %2\n").arg(label, kind);
+            // Route-pin token (B6/EIO-12): GUI parity with the room-row "⇄ session" chip.
+            const QString pinned =
+                m_deps.daemonNet != nullptr
+                    ? (kind == QLatin1String("dm")
+                           ? m_deps.daemonNet->pinnedDmSessionFor(transport, convId)
+                           : m_deps.daemonNet->pinnedSessionFor(transport, convId))
+                    : QString();
+            QString line =
+                kind.isEmpty() ? tr("  - %1").arg(label) : tr("  - %1 · %2").arg(label, kind);
+            if (!pinned.isEmpty()) {
+                line += tr(" · ⇄ `%1`").arg(pinned);
+            }
+            md += line + QLatin1Char('\n');
         }
     }
     md += QLatin1Char('\n');

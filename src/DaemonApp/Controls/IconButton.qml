@@ -60,8 +60,12 @@ Item {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        enabled: root.enabled
-        cursorShape: root.usePointingHand ? Qt.PointingHandCursor : Qt.ArrowCursor
+        // Keep hover tracking alive when the button is DISABLED so the tooltip can explain WHY
+        // (placeholder-inventory policy: visible-disabled controls explain the unavailable
+        // capability). Clicks are gated by acceptedButtons instead of `enabled`.
+        acceptedButtons: root.enabled ? Qt.LeftButton : Qt.NoButton
+        cursorShape: root.enabled && root.usePointingHand ? Qt.PointingHandCursor
+                                                          : Qt.ArrowCursor
 
         onClicked: root.clicked()
         onPressed: root.pressedSignal()
