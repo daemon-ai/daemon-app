@@ -76,6 +76,20 @@ dropdowns, menus, dialogs, tooltips, scrollbars, progress bars, ...).
 (`clang-tools` ships `clang-tidy` but not `run-clang-tidy`; drive it per-TU with `xargs` as above.)
 Never bypass the pre-commit hook (no `git commit --no-verify`).
 
+## Running dev-built binaries
+
+- Launch `build/.../daemon-app` / `daemon-tui` only inside `nix develop` (the superproject
+  `just dev-run` recipes do this). The shell pins `QT_PLUGIN_PATH`, `QML_IMPORT_PATH`, and
+  `NIXPKGS_QT6_QML_IMPORT_PATH`; run bare on a desktop host and the session's own Qt QML
+  modules shadow the pinned ones, failing the QML root load.
+- A GUI that exits non-zero with no output is usually not silent: Qt routes logging to journald
+  when stderr is not a tty. Re-run with `QT_FORCE_STDERR_LOGGING=1` (plus
+  `QT_LOGGING_RULES="qt.qml*=true"` or `QML_IMPORT_TRACE=1` for import resolution) before
+  reaching for strace.
+- For iteration, build just the client targets (`cmake --build build --target daemon-app
+  daemon-tui`); the full default build also compiles every test executable and is only needed
+  before running ctest.
+
 ## i18n policy — a string change touches all 12 catalogs
 
 Every user-facing string is translated into all 12 shipped locales
