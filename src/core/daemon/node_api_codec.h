@@ -606,12 +606,15 @@ struct DecodedNodeEvent {
         ApprovalPending,
         DownloadProgress,
         CatalogChanged,
-        ResyncNeeded
+        ResyncNeeded,
+        // [wave2:app-channels-liveness] live fleet + transport presence feed arms (F5/B5).
+        FleetChanged,
+        TransportChanged
     } kind = Kind::Unknown;
     QString session;             // SessionAdvanced / SessionMetaChanged / ApprovalPending
     quint64 epoch = 0;           // SessionAdvanced
     quint64 headSeq = 0;         // SessionAdvanced
-    quint64 rev = 0;             // SessionMetaChanged / RosterChanged
+    quint64 rev = 0;             // SessionMetaChanged / RosterChanged / FleetChanged
     QString requestId;           // ApprovalPending
     quint64 downloadId = 0;      // DownloadProgress
     quint32 pct = 0;             // DownloadProgress
@@ -619,6 +622,14 @@ struct DecodedNodeEvent {
     quint64 downloadedBytes = 0; // DownloadProgress (wire v26: real byte counters)
     quint64 totalBytes = 0;      // DownloadProgress (0 = unknown total)
     QString scope;               // ResyncNeeded
+    // [wave2:app-channels-liveness] TransportChanged (B5): the live per-account connection state
+    // (offline|connecting|connected|error) and optional presence (unknown|offline|available|idle|
+    // away|busy). `hasPresence` is false when the wire omitted the optional presence field. The
+    // v29 wire carries NO disconnect reason (coordinator-confirmed) — only the coarse state.
+    QString transport;        // TransportChanged: the transport-instance id
+    QString connection;       // TransportChanged: connection-state (lowercase)
+    QString presence;         // TransportChanged: presence-state (lowercase; when hasPresence)
+    bool hasPresence = false; // TransportChanged: the optional presence field was present
 };
 
 // A decoded page of the node-wide event feed (EventsSince -> EventsPage). `nextCursor` advances the

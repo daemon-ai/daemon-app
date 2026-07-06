@@ -17,12 +17,15 @@
 using daemonapp::daemon::ApprovalRepository;
 using daemonapp::daemon::CachedSessionStore;
 using daemonapp::daemon::CachedTranscriptBlockRow;
+using daemonapp::daemon::CachedTransportInstanceRow; // [wave2:app-channels-liveness]
 using daemonapp::daemon::DaemonCacheStore;
 using daemonapp::daemon::DaemonTransport;
+using daemonapp::daemon::FleetRepository; // [wave2:app-channels-liveness]
 using daemonapp::daemon::ModelRepository;
 using daemonapp::daemon::NodeApiClient;
 using daemonapp::daemon::SessionRepository;
 using daemonapp::daemon::SubscriptionManager;
+using daemonapp::daemon::TransportRepository; // [wave2:app-channels-liveness]
 using daemonapp::test::WireMuxServer;
 
 namespace {
@@ -235,6 +238,86 @@ private slots:
         QCOMPARE(s.state, QStringLiteral("Downloading"));
         QCOMPARE(s.downloadedBytes, quint64(46'000'000));
         QCOMPARE(s.totalBytes, quint64(92'000'000));
+    }
+
+    // [wave2:app-channels-liveness] F5: a FleetChanged notification re-queries the Tree directly
+    // (a fleet change need not move the roster). Previously fell through to Unknown (ignored).
+    void fleetChangedRefetchesTree() {
+        const QString path = sock(QStringLiteral("fleet.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(path), "listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(dbPath(QStringLiteral("fc.db")));
+        SessionRepository sessions(&client, &cache);
+        ApprovalRepository approvals(&client, &cache);
+        ModelRepository models(&client, &cache);
+        FleetRepository fleet(&client, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache, &fleet);
+
+        mgr.start();
+        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
+        const int callsBefore = fake.requestCount();
+
+        fake.pushItem(daemonapp::test::buildEventsPage({daemonapp::test::neFleetChanged(3)}, 1, 1));
+        // The routed refreshTree() issues a Tree one-shot Call.
+        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 3000);
+    }
+
+    // [wave2:app-channels-liveness] B5: a TransportChanged notification patches the cached account
+    // row's connection/presence IN PLACE (no round-trip) and emits instancesRefreshed; a connect
+    // transition also refreshes that account's ConvList so joined rooms surface (B2).
+    void transportChangedPatchesPresenceInPlace() {
+        const QString path = sock(QStringLiteral("tx.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(path), "listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(dbPath(QStringLiteral("tx.db")));
+        SessionRepository sessions(&client, &cache);
+        ApprovalRepository approvals(&client, &cache);
+        ModelRepository models(&client, &cache);
+        TransportRepository transports(&client, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
+        mgr.setTransportRepository(&transports);
+
+        // Seed a cached account (offline) so the event patches an existing row (not the
+        // unknown-transport refetch fallback).
+        CachedTransportInstanceRow row;
+        row.transport = QStringLiteral("matrix/@bot:hs");
+        row.family = QStringLiteral("matrix");
+        row.displayName = QStringLiteral("@bot:hs");
+        row.connection = QStringLiteral("offline");
+        row.presence = QStringLiteral("unknown");
+        row.boundProfile = QStringLiteral("p1");
+        QVERIFY(cache.upsertTransportInstance(row));
+        QSignalSpy refreshed(&transports, &TransportRepository::instancesRefreshed);
+
+        mgr.start();
+        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
+        const int callsBefore = fake.requestCount();
+
+        fake.pushItem(daemonapp::test::buildEventsPage(
+            {daemonapp::test::neTransportChanged("matrix/@bot:hs", "Connected", "Available")}, 1,
+            1));
+        QTRY_COMPARE_WITH_TIMEOUT(refreshed.count(), 1, 3000);
+        // The row was patched in place (connection/presence mapped to lowercase), preserving the
+        // fields the event does not carry.
+        bool found = false;
+        for (const CachedTransportInstanceRow& r : cache.transportInstances()) {
+            if (r.transport == QStringLiteral("matrix/@bot:hs")) {
+                QCOMPARE(r.connection, QStringLiteral("connected"));
+                QCOMPARE(r.presence, QStringLiteral("available"));
+                QCOMPARE(r.family, QStringLiteral("matrix"));
+                QCOMPARE(r.boundProfile, QStringLiteral("p1"));
+                found = true;
+            }
+        }
+        QVERIFY(found);
+        // A connect transition also fires a ConvList refresh (a one-shot Call).
+        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 3000);
     }
 
     // ResyncNeeded re-baselines (emits the resyncNeeded signal after kicking the refetch).

@@ -179,6 +179,29 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
         emit resyncNeeded();
         break;
     }
+    // [wave2:app-channels-liveness] F5: a fleet supervision change that need not move the roster
+    // (e.g. a subagent state transition with no new session row). Re-query the Tree directly so
+    // fleet/roster surfaces update live. Direct (not debounced) per coordinator decision 2 - the
+    // node emits FleetChanged at coarse transitions, and refreshTree already rides every roster
+    // delta, so this adds no new storm risk.
+    case DecodedNodeEvent::Kind::FleetChanged:
+        if (m_fleet != nullptr) {
+            m_fleet->refreshTree(QStringLiteral("fleet"));
+        }
+        break;
+    // [wave2:app-channels-liveness] B5: live per-account transport presence. Apply the carried
+    // connection/presence in place (the DaemonPresenceService re-projects -> status dots re-read).
+    // On a connect transition, refresh that account's ConvList so auto-accepted/joined rooms
+    // surface promptly (B2) rather than only on manual expand.
+    case DecodedNodeEvent::Kind::TransportChanged:
+        if (m_transports != nullptr) {
+            m_transports->applyTransportChanged(event.transport, event.connection, event.presence,
+                                                event.hasPresence);
+            if (event.connection == QStringLiteral("connected")) {
+                m_transports->refreshConversations(event.transport);
+            }
+        }
+        break;
     case DecodedNodeEvent::Kind::Unknown:
         break;
     }

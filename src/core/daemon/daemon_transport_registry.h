@@ -32,6 +32,10 @@ public:
     [[nodiscard]] QVariantList instances() const override;
     [[nodiscard]] QVariantList conversations(const QString& transport) const override;
     void refreshConversations(const QString& transport) override;
+    // [wave2:app-channels-liveness] B2: "new room" affordance, delegated to the repository.
+    [[nodiscard]] bool isNewConversation(const QString& transport,
+                                         const QString& conversation) const override;
+    void markConversationSeen(const QString& transport, const QString& conversation) override;
 
 private:
     daemonapp::daemon::TransportRepository* m_repo = nullptr;

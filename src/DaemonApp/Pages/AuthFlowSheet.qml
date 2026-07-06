@@ -31,6 +31,10 @@ Kit.Dialog {
     property string family: ""
     property var params: ({})
     property string bindProfile: ""
+    // [wave2:app-channels-liveness] B1: when set (via openFlowForFamily), the idle picker is
+    // pre-narrowed to this one family and the provider dropdown is hidden — the caller (the
+    // Channels "Connect" button) already knows the family, so the user only fills its params.
+    property string forcedFamily: ""
     // The controller's provider rows ({family, flowKind, name, params:[{key,label,required}]}),
     // re-read on providersChanged (a plain Q_INVOKABLE, not a reactive binding).
     property var providerRows: []
@@ -58,6 +62,7 @@ Kit.Dialog {
     // Open at the family picker (the AccountsPage "Sign in via browser…" entry): the user picks
     // the family and fills its schema-driven params, then Begin starts the flow.
     function openPicker(bindProfile) {
+        root.forcedFamily = "";
         root.bindProfile = bindProfile || "";
         if (typeof AuthFlow !== "undefined" && AuthFlow) {
             AuthFlow.reset();
@@ -68,11 +73,41 @@ Kit.Dialog {
         open();
     }
 
+    // [wave2:app-channels-liveness] B1: open the picker pre-narrowed to one family (the Channels
+    // "Connect" button knows the adapter family). The provider dropdown hides; the family's
+    // schema-driven param fields (e.g. Matrix SSO's homeserver) still render. Presentation-only —
+    // no AuthFlowController change.
+    function openFlowForFamily(family, bindProfile) {
+        root.forcedFamily = family || "";
+        root.bindProfile = bindProfile || "";
+        if (typeof AuthFlow !== "undefined" && AuthFlow) {
+            AuthFlow.reset();
+            AuthFlow.refreshProviders();
+        }
+        root.refreshProviderRows();
+        for (var i = 0; i < root.providerRows.length; ++i)
+            if (root.providerRows[i].family === root.forcedFamily) {
+                root.pickedProvider = i;
+                break;
+            }
+        callbackField.text = "";
+        open();
+    }
+
     function refreshProviderRows() {
         root.providerRows = (typeof AuthFlow !== "undefined" && AuthFlow) ? AuthFlow.providers()
                                                                           : [];
-        if (root.pickedProvider >= root.providerRows.length)
+        // [wave2:app-channels-liveness] keep the pre-narrowed family selected across a providers
+        // refresh (the rows can arrive after openFlowForFamily).
+        if (root.forcedFamily.length > 0) {
+            for (var i = 0; i < root.providerRows.length; ++i)
+                if (root.providerRows[i].family === root.forcedFamily) {
+                    root.pickedProvider = i;
+                    break;
+                }
+        } else if (root.pickedProvider >= root.providerRows.length) {
             root.pickedProvider = 0;
+        }
         root.paramValues = {};
     }
 
@@ -124,9 +159,12 @@ Kit.Dialog {
                 wrapMode: Text.WordWrap
                 font.family: FontIcons.display; font.pixelSize: 13; color: Theme.textMuted
             }
-            SectionLabel { visible: root.providerRows.length > 0; text: qsTr("Provider") }
+            SectionLabel {
+                visible: root.providerRows.length > 0 && root.forcedFamily.length === 0
+                text: qsTr("Provider")
+            }
             Kit.Dropdown {
-                visible: root.providerRows.length > 0
+                visible: root.providerRows.length > 0 && root.forcedFamily.length === 0
                 Layout.fillWidth: true
                 model: root.providerRows.map(function(p) { return p.name; })
                 currentIndex: root.pickedProvider

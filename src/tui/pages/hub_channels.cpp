@@ -26,10 +26,15 @@ QString TuiPageHub::buildChannelsMarkdown() const {
         return md;
     }
 
+    // [wave2:app-channels-liveness] B1: connecting is now live via the shared interactive-auth
+    // launcher ('c'). Disconnect/remove still has no wire op (B3 - node-first follow-up). B2:
+    // room membership is the node's; newly-joined rooms surface here on refresh and are badged.
     md += tr("Events-IO transport accounts and their live rooms, shared with "
-             "the GUI. Connecting is deferred (EIO-2); disconnect/remove has NO "
+             "the GUI. Press 'c' to connect an account. Disconnect/remove has NO "
              "wire op yet (B3 - node-first follow-up). A stored credential can "
-             "be removed from the Accounts page ('x' on the bound profile).\n\n");
+             "be removed from the Accounts page ('x' on the bound profile). Room "
+             "invites are handled by the node; newly-joined rooms appear here "
+             "automatically.\n\n");
 
     // GUI status-dot mapping (ChannelsPage.qml dotColor): accent=connected,
     // warning=connecting, danger=error, muted=offline/unknown.
@@ -90,6 +95,11 @@ QString TuiPageHub::buildChannelsMarkdown() const {
                 kind.isEmpty() ? tr("  - %1").arg(label) : tr("  - %1 · %2").arg(label, kind);
             if (!pinned.isEmpty()) {
                 line += tr(" · ⇄ `%1`").arg(pinned);
+            }
+            // [wave2:app-channels-liveness] B2: badge a room the node surfaced after the baseline
+            // (e.g. an auto-accepted invite) — GUI parity with the room-row "new" chip.
+            if (m_deps.transportRegistry->isNewConversation(transport, convId)) {
+                line += tr(" · ✦ new");
             }
             md += line + QLatin1Char('\n');
         }

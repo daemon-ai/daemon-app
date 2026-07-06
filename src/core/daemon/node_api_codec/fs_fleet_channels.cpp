@@ -468,7 +468,11 @@ bool NodeApiCodec::decodeCaps(const QByteArray& responseCbor, DecodedCapsReport*
 
 // --- Channels / Events-IO read surface (story 04: EIO-1/3/8/9) -----------------------------------
 
-namespace {
+// [wave2:app-channels-liveness] Visibility-only: these two mappers moved out of the file-local
+// anonymous namespace into codec_detail (declared in internal.h) so the TransportChanged
+// node-event decode (decode_responses.cpp, B5) reuses the exact same lowercase names as the
+// TransportInstances decode below. Bodies/signatures unchanged.
+namespace codec_detail {
 
 QString connectionStateName(const connection_state_r& c) {
     switch (c.connection_state_choice) {
@@ -501,6 +505,10 @@ QString presenceStateName(const presence_state_r& p) {
         return QStringLiteral("unknown");
     }
 }
+
+} // namespace codec_detail
+
+namespace {
 
 QString conversationTypeName(const conversation_type_r& t) {
     switch (t.conversation_type_choice) {

@@ -2187,6 +2187,14 @@ void TransportRepository::syncConversations(const QString& transport,
     if (cache() == nullptr) {
         return;
     }
+    // [wave2:app-channels-liveness] B2: the FIRST refresh of this transport in the session
+    // establishes the baseline (everything present is "already seen", no badges) - this avoids
+    // restart noise regardless of the offline-first cache contents. On SUBSEQUENT refreshes, a
+    // live id absent from the known set is a genuinely newly-surfaced room (e.g. an auto-accepted
+    // invite) -> badge it. Membership itself is the node's; this only tracks what the operator has
+    // already seen.
+    const bool firstSync = !m_knownConversations.contains(transport);
+    QSet<QString>& known = m_knownConversations[transport]; // inserts an empty set on first sync
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     QSet<QString> keep;
     for (const DecodedConversation& c : live) {
@@ -2199,11 +2207,62 @@ void TransportRepository::syncConversations(const QString& transport,
         row.updatedAtMs = now;
         cache()->upsertConversation(row);
         keep.insert(c.id);
+        if (!firstSync && !known.contains(c.id)) {
+            m_newConversations[transport].insert(c.id);
+        }
+        known.insert(c.id);
     }
     for (const CachedConversationRow& existing : cache()->conversations(transport)) {
         if (!keep.contains(existing.convId)) {
             cache()->deleteConversation(transport, existing.convId);
+            // A room that left drops its known/new marks (a later re-join badges it fresh).
+            known.remove(existing.convId);
+            m_newConversations[transport].remove(existing.convId);
         }
+    }
+}
+
+void TransportRepository::applyTransportChanged(const QString& transport, const QString& connection,
+                                                const QString& presence, bool hasPresence) {
+    if (cache() == nullptr || transport.isEmpty()) {
+        return;
+    }
+    // Patch the cached row in place, preserving the fields the event does not carry. If the
+    // transport is not cached yet (a brand-new account before its first TransportInstances), fall
+    // back to an authoritative full refetch instead of inventing a partial row.
+    bool found = false;
+    for (const CachedTransportInstanceRow& existing : cache()->transportInstances()) {
+        if (existing.transport != transport) {
+            continue;
+        }
+        CachedTransportInstanceRow row = existing;
+        row.connection = connection;
+        if (hasPresence) {
+            row.presence = presence;
+        }
+        row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
+        cache()->upsertTransportInstance(row);
+        found = true;
+        break;
+    }
+    if (!found) {
+        refreshInstances();
+        return;
+    }
+    // The DaemonPresenceService re-projects on this signal and emits presenceChanged(transport);
+    // the GUI/TUI Channels status dots re-read reactively (no poll).
+    emit instancesRefreshed();
+}
+
+bool TransportRepository::isNewConversation(const QString& transport, const QString& conv) const {
+    const auto it = m_newConversations.constFind(transport);
+    return it != m_newConversations.constEnd() && it->contains(conv);
+}
+
+void TransportRepository::markConversationSeen(const QString& transport, const QString& conv) {
+    const auto it = m_newConversations.find(transport);
+    if (it != m_newConversations.end()) {
+        it->remove(conv);
     }
 }
 

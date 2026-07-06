@@ -387,6 +387,26 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
             decoded.kind = DecodedNodeEvent::Kind::ResyncNeeded;
             decoded.scope = fromZcbor(ev.node_event_resync_needed_m.ResyncNeeded_scope);
             break;
+        // [wave2:app-channels-liveness] F5: fleet supervision changed (rev only) — the
+        // SubscriptionManager re-queries the Tree. Previously fell through to Unknown (ignored).
+        case node_event_r::node_event_fleet_changed_m_c:
+            decoded.kind = DecodedNodeEvent::Kind::FleetChanged;
+            decoded.rev = ev.node_event_fleet_changed_m.FleetChanged_rev;
+            break;
+        // [wave2:app-channels-liveness] B5: live per-account transport presence. Map the generated
+        // connection/presence enums to the same lowercase names the TransportInstances decode uses.
+        case node_event_r::node_event_transport_changed_m_c: {
+            const node_event_transport_changed& m = ev.node_event_transport_changed_m;
+            decoded.kind = DecodedNodeEvent::Kind::TransportChanged;
+            decoded.transport = fromZcbor(m.TransportChanged_transport);
+            decoded.connection = connectionStateName(m.TransportChanged_connection);
+            decoded.hasPresence = m.TransportChanged_presence_present;
+            if (decoded.hasPresence) {
+                decoded.presence =
+                    presenceStateName(m.TransportChanged_presence.TransportChanged_presence);
+            }
+            break;
+        }
         default:
             decoded.kind = DecodedNodeEvent::Kind::Unknown;
             break;

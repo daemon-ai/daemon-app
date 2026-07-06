@@ -34,6 +34,24 @@ Item {
         return Theme.iconMuted; // offline / unknown
     }
 
+    // [wave2:app-channels-liveness] B1: true when the node advertises an interactive-auth
+    // provider for this adapter family (so the "Connect" button only lights up when a sign-in
+    // flow actually exists — the app never fakes a capability the node did not report).
+    function hasAuthProvider(family) {
+        if (typeof AuthFlow === "undefined" || !AuthFlow)
+            return false;
+        var rows = AuthFlow.providers();
+        for (var i = 0; i < rows.length; ++i)
+            if (rows[i].family === family)
+                return true;
+        return false;
+    }
+
+    // The shared interactive-auth sheet (B1): the "Connect" button opens it pre-narrowed to the
+    // adapter's family. On success the shared service graph refetches instances + that account's
+    // rooms, so the new account appears here (and its live status lights up via TransportChanged).
+    AuthFlowSheet { id: authSheet }
+
     // Pin a room to an agent/session (B4/B6): the same RouteDialog the routing manager uses,
     // driven by a page-local controller over the shared DaemonNet.
     RoutingManagerController {
@@ -120,6 +138,19 @@ Item {
                 text: qsTr("No channels connected.")
                 wrapMode: Text.Wrap
                 font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
+            }
+
+            // [wave2:app-channels-liveness] B2: honest, behavior-level note. Room membership is the
+            // node's (it accepts invites per its own configuration); newly-joined rooms surface here
+            // on refresh. We do NOT display the node's auto-accept policy value — it is not
+            // queryable over the wire at v29 (a node-first follow-up), so asserting it would be
+            // dishonest.
+            Text {
+                visible: root.accounts.length > 0
+                Layout.fillWidth: true
+                text: qsTr("Room invites are handled by the node; newly-joined rooms appear here automatically.")
+                wrapMode: Text.Wrap
+                font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
             }
 
             Repeater {
@@ -253,11 +284,27 @@ Item {
                                     property string pinnedSession:
                                         DaemonNet.pinnedSessionFor(acctRow.modelData.transport,
                                                                    modelData.id)
+                                    // [wave2:app-channels-liveness] B2: badged when the node
+                                    // surfaced this room after the operator's baseline for the
+                                    // account (e.g. an auto-accepted invite). Re-read when a live
+                                    // ConvList lands; tap the chip to dismiss.
+                                    property bool isNew:
+                                        Transports.isNewConversation(acctRow.modelData.transport,
+                                                                     modelData.id)
                                     Connections {
                                         target: DaemonNet
                                         function onChanged() {
                                             roomRow.pinnedSession = DaemonNet.pinnedSessionFor(
                                                 acctRow.modelData.transport, roomRow.modelData.id);
+                                        }
+                                    }
+                                    Connections {
+                                        target: Transports
+                                        function onConversationsChanged(transport) {
+                                            if (transport === acctRow.modelData.transport)
+                                                roomRow.isNew = Transports.isNewConversation(
+                                                    acctRow.modelData.transport,
+                                                    roomRow.modelData.id);
                                         }
                                     }
                                     Layout.fillWidth: true
@@ -266,6 +313,19 @@ Item {
                                         text: FontIcons.fa_hashtag
                                         font.family: FontIcons.faSolid; font.pixelSize: 10
                                         color: Theme.iconMuted
+                                    }
+                                    // Newly-joined-room affordance (B2): dismiss on tap.
+                                    Kit.Chip {
+                                        visible: roomRow.isNew
+                                        text: qsTr("new")
+                                        tone: "accent"
+                                        interactive: true
+                                        tooltipText: qsTr("Newly joined room")
+                                        onClicked: {
+                                            Transports.markConversationSeen(
+                                                acctRow.modelData.transport, roomRow.modelData.id);
+                                            roomRow.isNew = false;
+                                        }
                                     }
                                     Text {
                                         text: modelData.title.length > 0 ? modelData.title : modelData.id
@@ -352,10 +412,23 @@ Item {
                                 font.family: FontIcons.mono; font.pixelSize: 10; color: Theme.textMuted
                             }
                         }
-                        // EIO-2 (browser SSO / account setup) is a later slice.
+                        // [wave2:app-channels-liveness] B1: connect an account via the shared
+                        // interactive-auth sheet (MatrixSso family). Enabled only for adapters the
+                        // node reports as interactive-auth capable AND for which it advertises a
+                        // sign-in provider; the account lands unbound (rooms are pinned to sessions
+                        // explicitly via the routing manager — coordinator decision 1).
                         Kit.TextButton {
+                            readonly property bool canConnect:
+                                modelData.capabilities !== undefined
+                                && modelData.capabilities.interactiveAuth === true
+                                && root.hasAuthProvider(modelData.family)
                             text: qsTr("Connect")
-                            enabled: false
+                            enabled: canConnect
+                            QQC.ToolTip.text: canConnect
+                                ? qsTr("Sign in to connect this channel")
+                                : qsTr("This channel type has no browser sign-in.")
+                            QQC.ToolTip.visible: hovered && QQC.ToolTip.text.length > 0
+                            onClicked: authSheet.openFlowForFamily(modelData.family, "")
                         }
                     }
                 }
