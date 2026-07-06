@@ -167,7 +167,19 @@ Item {
                             Repeater {
                                 model: acctRow.rooms
                                 delegate: RowLayout {
+                                    id: roomRow
                                     required property var modelData
+                                    // The room's routing pin (B6/EIO-12): re-read on pin changes.
+                                    property string pinnedSession:
+                                        DaemonNet.pinnedSessionFor(acctRow.modelData.transport,
+                                                                   modelData.id)
+                                    Connections {
+                                        target: DaemonNet
+                                        function onChanged() {
+                                            roomRow.pinnedSession = DaemonNet.pinnedSessionFor(
+                                                acctRow.modelData.transport, roomRow.modelData.id);
+                                        }
+                                    }
                                     Layout.fillWidth: true
                                     spacing: 8
                                     Text {
@@ -179,6 +191,16 @@ Item {
                                         text: modelData.title.length > 0 ? modelData.title : modelData.id
                                         font.family: FontIcons.display; font.pixelSize: 12
                                         color: Theme.text; elide: Text.ElideRight; Layout.fillWidth: true
+                                    }
+                                    // Route-pin chip: this room's inbound messages route to the
+                                    // pinned session; tap opens the routing manager.
+                                    Kit.Chip {
+                                        visible: roomRow.pinnedSession.length > 0
+                                        text: qsTr("⇄ %1").arg(roomRow.pinnedSession)
+                                        tone: "accent"
+                                        interactive: true
+                                        tooltipText: qsTr("Pinned to this session — open the routing manager")
+                                        onClicked: Nav.open("routing")
                                     }
                                     Text {
                                         text: modelData.kind

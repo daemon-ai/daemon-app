@@ -51,12 +51,10 @@ inline constexpr const char* kConfigMigration =
 // Phase 5 DECISION (node-blocked), REVISED at wire v28: cron still has NO NodeApi wire op in the
 // codec subset the client speaks, so it stays MockOnly + EMPTY-SEEDED in daemon mode
 // (createAppServiceGraph passes seedDemo=false), rendering an empty/unavailable surface rather
-// than passing the mock's illustrative demo rows off as node-backed data. Checkpoints left this
-// bucket when their wire ops landed (CheckpointList/CheckpointRewind); see the entry below.
-inline constexpr const char* kRoutingMigration =
-    "Node-blocked: no routing/model-selection wire op exists. MockOnly + empty-seeded in daemon "
-    "mode. Promote only when daemon-node exposes a routing ApiRequest.";
-
+// than passing the mock's illustrative demo rows off as node-backed data. Checkpoints and routing
+// left this bucket when their wire ops landed (CheckpointList/CheckpointRewind, Routing*); see
+// their entries below. The legacy intent->model IRoutingStore seam (never node-backed) was
+// DELETED with the routing landing — the routing surface is the origin->session pin table.
 inline constexpr const char* kCronMigration =
     "Node-blocked: no cron/schedule wire op exists. MockOnly + empty-seeded in daemon mode (the "
     "on-disk cache still restores any user-created local jobs). Promote only when daemon-node "
@@ -83,7 +81,14 @@ inline constexpr SeamMigrationTarget kTargets[] = {
      SeamMigrationStatus::DaemonAligned},
     {"IDaemonConfig", "ProfileApi / SessionOverlay / node capabilities / ISettingsStore",
      kConfigMigration, SeamMigrationStatus::MockOnly},
-    {"IRoutingStore", kRoutingMigration, kRoutingMigration, SeamMigrationStatus::MockOnly},
+    {"IDaemonNet (routing slice)",
+     "RoutingListChats / RoutingBindChat / RoutingUnbindChat / RoutingSet / TransportRooms",
+     "LANDED (B6/ROU, wire v28): RoutingRepository speaks the Routing* pin ops + TransportRooms; "
+     "DaemonDaemonNet projects them through the IDaemonNet seam the RoutingPage/RouteDialog bind. "
+     "Honest residuals: resolve() answers from the pin table only (no read op for the lower "
+     "precedence rungs), bindingRules() is empty (config-time, no wire read), and the "
+     "delivery/handover panel stays inert until the delivery_targets/handover re-point.",
+     SeamMigrationStatus::DaemonAligned},
     {"ICronStore", kCronMigration, kCronMigration, SeamMigrationStatus::MockOnly},
     {"ICheckpointTimeline", "CheckpointList / CheckpointRewind",
      "LANDED (E4/TOOL-9, wire v28): DaemonCheckpointTimeline projects CheckpointRepository's "

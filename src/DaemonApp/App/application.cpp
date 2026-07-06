@@ -8,7 +8,6 @@
 #include "app/image_cache.h"
 #include "app/math_image_provider.h"
 #include "automation/icron_store.h"
-#include "automation/irouting_store.h"
 #include "command_registry.h"
 #include "config/idaemon_config.h"
 #include "connection/iconnection_service.h"
@@ -291,8 +290,8 @@ void Application::registerContext(QQmlApplicationEngine& engine) {
     engine.rootContext()->setContextProperty(QStringLiteral("Approvals"), m_services.approvals);
     engine.rootContext()->setContextProperty(QStringLiteral("Dashboard"), m_services.dashboard);
 
-    // Automation facades (mock) backing the routing matrix + cron manager.
-    engine.rootContext()->setContextProperty(QStringLiteral("Routing"), m_services.routing);
+    // Automation facade (mock) backing the cron manager. (The routing manager binds DaemonNet
+    // below — the legacy intent->model `Routing` store is retired, B6/ROU.)
     engine.rootContext()->setContextProperty(QStringLiteral("Cron"), m_services.cron);
 
     // Transport-adapter seams (mock): the multi-protocol "Add channel" picker + configured

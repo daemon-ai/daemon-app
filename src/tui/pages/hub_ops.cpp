@@ -6,7 +6,8 @@
 // the dispatch stays in TuiPageHub::pageMarkdownForKind.
 
 #include "automation/icron_store.h"
-#include "automation/irouting_store.h"
+#include "daemonnet/idaemonnet.h"
+#include "daemonnet/routing_dtos.h"
 #include "fleet/iapprovals_inbox.h"
 #include "fleet/idashboard.h"
 #include "fleet/ifleet_tree.h"
@@ -119,25 +120,79 @@ QString TuiPageHub::buildApprovalsMarkdown(int sel) const {
     return md;
 }
 
+// A human label for a pin row's origin scope ("#ops", "@bob", "api:key", "internal").
+static QString routingScopeLabel(const QVariantMap& row) {
+    const QString kind = row.value(QStringLiteral("scopeKind")).toString();
+    if (kind == QStringLiteral("dm")) {
+        return QStringLiteral("@") + row.value(QStringLiteral("user")).toString();
+    }
+    if (kind == QStringLiteral("group")) {
+        const QString thread = row.value(QStringLiteral("thread")).toString();
+        return row.value(QStringLiteral("chat")).toString() +
+               (thread.isEmpty() ? QString() : QStringLiteral(" › ") + thread);
+    }
+    if (kind == QStringLiteral("api")) {
+        return QStringLiteral("api:") + row.value(QStringLiteral("apiKey")).toString();
+    }
+    return QStringLiteral("internal");
+}
+
+QList<QVariantMap> TuiPageHub::routingPinRows() const {
+    QList<QVariantMap> rows;
+    if (m_deps.daemonNet == nullptr) {
+        return rows;
+    }
+    const QList<daemonnet::RoutingPin> pins = m_deps.daemonNet->routes();
+    rows.reserve(pins.size());
+    for (const daemonnet::RoutingPin& pin : pins) {
+        QVariantMap row;
+        row[QStringLiteral("id")] = daemonnet::originKey(pin.origin);
+        row[QStringLiteral("transport")] = pin.origin.transport.toString();
+        switch (pin.origin.scope.kind) {
+        case domain::OriginScopeKind::Dm:
+            row[QStringLiteral("scopeKind")] = QStringLiteral("dm");
+            row[QStringLiteral("user")] = pin.origin.scope.user;
+            break;
+        case domain::OriginScopeKind::Group:
+            row[QStringLiteral("scopeKind")] = QStringLiteral("group");
+            row[QStringLiteral("chat")] = pin.origin.scope.chat;
+            row[QStringLiteral("thread")] = pin.origin.scope.thread;
+            break;
+        case domain::OriginScopeKind::Api:
+            row[QStringLiteral("scopeKind")] = QStringLiteral("api");
+            row[QStringLiteral("apiKey")] = pin.origin.scope.apiKey;
+            break;
+        case domain::OriginScopeKind::Internal:
+            row[QStringLiteral("scopeKind")] = QStringLiteral("internal");
+            break;
+        }
+        row[QStringLiteral("session")] = pin.session.toString();
+        row[QStringLiteral("profile")] = pin.profile.toString();
+        row[QStringLiteral("isolation")] = pin.isolation;
+        rows.append(row);
+    }
+    return rows;
+}
+
 QString TuiPageHub::buildRoutingMarkdown(int sel) const {
-    auto* model = qobject_cast<uimodels::VariantListModel*>(m_deps.routing->rules());
     const auto mark = [sel](int i) { return i == sel ? QStringLiteral("▸ ") : QString(); };
 
     QString md;
     md += tr("# Routing\n\n");
-    md += tr("Intent → model rules, shared with the GUI. **j/k** move · "
-             "**Space/Enter** toggle · **x** delete.\n\n");
-    if (model != nullptr) {
-        const auto rows = model->rows();
-        for (int i = 0; i < rows.size(); ++i) {
-            const QVariantMap& r = rows.at(i);
-            md += tr("- %1**%2** → `%3` (fallback `%4`)%5\n")
-                      .arg(mark(i), r.value(QStringLiteral("intent")).toString(),
-                           r.value(QStringLiteral("target")).toString(),
-                           r.value(QStringLiteral("fallback")).toString(),
-                           r.value(QStringLiteral("enabled")).toBool() ? QString()
-                                                                       : tr(" — _disabled_"));
-        }
+    md += tr("Chat pins (origin → session), shared with the GUI routing manager. "
+             "**j/k** move · **x** unbind.\n\n");
+    const QList<QVariantMap> rows = routingPinRows();
+    for (int i = 0; i < rows.size(); ++i) {
+        const QVariantMap& r = rows.at(i);
+        const QString profile = r.value(QStringLiteral("profile")).toString();
+        md += tr("- %1**%2 · %3** ⇄ `%4`%5\n")
+                  .arg(mark(i), r.value(QStringLiteral("transport")).toString(),
+                       routingScopeLabel(r), r.value(QStringLiteral("session")).toString(),
+                       profile.isEmpty() ? QString() : tr(" (agent `%1`)").arg(profile));
+    }
+    if (rows.isEmpty()) {
+        md += tr("_No chat pins yet — pin a room/DM to a session from the GUI routing manager "
+                 "or a room row._\n");
     }
     return md;
 }

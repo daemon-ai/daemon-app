@@ -8,7 +8,6 @@
 #include "accounts/iaccounts_service.h"
 #include "attachment_bar_view.h"
 #include "automation/icron_store.h"
-#include "automation/irouting_store.h"
 #include "code_editor_view.h"
 #include "completion_view.h"
 #include "composer_chrome.h"

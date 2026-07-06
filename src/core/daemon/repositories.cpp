@@ -1916,4 +1916,156 @@ void CheckpointRepository::handleFailure(const QString& correlationId, const QSt
     }
 }
 
+// --- RoutingRepository (B6/ROU) ---------------------------------------------------------------
+
+RoutingRepository::RoutingRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                     QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &RoutingRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &RoutingRepository::handleFailure);
+    }
+}
+
+void RoutingRepository::refreshChats() {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    // A fresh refresh restarts the page loop: drop anything a superseded loop accumulated.
+    m_routesLoop.reset();
+    client()->sendRequest(NodeApiCodec::encodeRoutingListChatsRequest(),
+                          QLatin1String(kListCorrelation));
+}
+
+void RoutingRepository::refreshRooms(const QString& transport) {
+    if (client() == nullptr || transport.isEmpty()) {
+        return;
+    }
+    m_roomsLoops[transport].reset();
+    client()->sendRequest(NodeApiCodec::encodeTransportRoomsRequest(transport),
+                          QLatin1String(kRoomsPrefix) + transport);
+}
+
+void RoutingRepository::getRoute(const DecodedOrigin& origin) {
+    if (client() == nullptr) {
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeRoutingGetRequest(origin),
+                          QLatin1String(kGetCorrelation));
+}
+
+void RoutingRepository::bindChat(const DecodedOrigin& origin, const QString& session,
+                                 const QString& profile) {
+    if (client() == nullptr || session.isEmpty()) {
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeRoutingBindChatRequest(origin, session, profile),
+                          QLatin1String(kMutateCorrelation));
+}
+
+void RoutingRepository::unbindChat(const DecodedOrigin& origin) {
+    if (client() == nullptr) {
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeRoutingUnbindChatRequest(origin),
+                          QLatin1String(kMutateCorrelation));
+}
+
+void RoutingRepository::setRoute(const DecodedChatRoute& route) {
+    if (client() == nullptr || route.session.isEmpty()) {
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeRoutingSetRequest(route),
+                          QLatin1String(kMutateCorrelation));
+}
+
+void RoutingRepository::handleMutationResponse(const QByteArray& responseCbor) {
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Ok) {
+        // Node-authoritative: re-list so the client renders the stored pin table (never an
+        // optimistic local write).
+        refreshChats();
+        return;
+    }
+    DecodedApiError err;
+    if (NodeApiCodec::decodeError(responseCbor, &err)) {
+        emit operationFailed(err.message);
+    } else {
+        emit operationFailed(tr("Routing change failed"));
+    }
+}
+
+void RoutingRepository::handleResponse(const QString& correlationId,
+                                       const QByteArray& responseCbor) {
+    if (correlationId == QLatin1String(kListCorrelation)) {
+        QList<DecodedChatRoute> page;
+        QString next;
+        if (!NodeApiCodec::decodeChatRoutes(responseCbor, &page, &next)) {
+            m_routesLoop.reset();
+            emit operationFailed(QStringLiteral("Failed to decode ChatRoutes response"));
+            return;
+        }
+        m_routesLoop.items.append(page);
+        if (!next.isEmpty() && m_routesLoop.guard(next) && client() != nullptr) {
+            client()->sendRequest(NodeApiCodec::encodeRoutingListChatsRequest(next),
+                                  QLatin1String(kListCorrelation));
+            return;
+        }
+        m_routes = m_routesLoop.items;
+        m_routesLoop.reset();
+        emit routesRefreshed();
+        return;
+    }
+    if (correlationId == QLatin1String(kGetCorrelation)) {
+        DecodedChatRoute route;
+        bool found = false;
+        if (!NodeApiCodec::decodeChatRoute(responseCbor, &route, &found)) {
+            emit operationFailed(QStringLiteral("Failed to decode ChatRoute response"));
+            return;
+        }
+        emit routeResolved(found, route);
+        return;
+    }
+    if (correlationId == QLatin1String(kMutateCorrelation)) {
+        handleMutationResponse(responseCbor);
+        return;
+    }
+    if (correlationId.startsWith(QLatin1String(kRoomsPrefix))) {
+        const QString transport = correlationId.mid(int(qstrlen(kRoomsPrefix)));
+        QList<DecodedRoomInfo> page;
+        QString next;
+        if (!NodeApiCodec::decodeRooms(responseCbor, &page, &next)) {
+            m_roomsLoops.remove(transport);
+            emit operationFailed(QStringLiteral("Failed to decode Rooms response"));
+            return;
+        }
+        PageLoop<DecodedRoomInfo>& loop = m_roomsLoops[transport];
+        loop.items.append(page);
+        if (!next.isEmpty() && loop.guard(next) && client() != nullptr) {
+            client()->sendRequest(NodeApiCodec::encodeTransportRoomsRequest(transport, next),
+                                  QLatin1String(kRoomsPrefix) + transport);
+            return;
+        }
+        m_rooms.insert(transport, loop.items);
+        m_roomsLoops.remove(transport);
+        emit roomsRefreshed(transport);
+        return;
+    }
+}
+
+void RoutingRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kListCorrelation) ||
+        correlationId == QLatin1String(kGetCorrelation) ||
+        correlationId == QLatin1String(kMutateCorrelation) ||
+        correlationId.startsWith(QLatin1String(kRoomsPrefix))) {
+        // A dead page loop must not leak its partial accumulation into the next refresh.
+        m_routesLoop.reset();
+        if (correlationId.startsWith(QLatin1String(kRoomsPrefix))) {
+            m_roomsLoops.remove(correlationId.mid(int(qstrlen(kRoomsPrefix))));
+        }
+        emit operationFailed(message);
+    }
+}
+
 } // namespace daemonapp::daemon

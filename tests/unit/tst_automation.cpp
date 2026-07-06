@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2026 Jarrad Hope
 
 #include "automation/mock_cron_store.h"
-#include "automation/mock_routing_store.h"
 #include "cache_test_support.h"
 #include "uimodels/variant_list_model.h"
 
@@ -11,8 +10,9 @@
 using namespace automation;
 using uimodels::VariantListModel;
 
-// Guards the Phase 7 automation mocks: routing target/enable edits + add/remove,
-// and cron create/update/runNow/enable/remove.
+// Guards the Phase 7 cron mock: create/update/runNow/enable/remove + restart persistence. (The
+// legacy intent->model routing mock was retired at wire v28 — routing is the origin->session pin
+// table on IDaemonNet, covered by tst_routing_model + tst_routing_repository.)
 class TestAutomation : public QObject {
     Q_OBJECT
 
@@ -20,45 +20,6 @@ class TestAutomation : public QObject {
 
 private slots:
     void init() { resetMockCache(); }
-
-    void routingEdits() {
-        MockRoutingStore r;
-        QVERIFY(asModel(r.rules())->count() >= 3);
-        QVERIFY(!r.targets().isEmpty());
-
-        r.setTarget(QStringLiteral("r-1"), QStringLiteral("gemma-2-9b-it"));
-        QCOMPARE(asModel(r.rules())
-                     ->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
-                     .value(QStringLiteral("target"))
-                     .toString(),
-                 QStringLiteral("gemma-2-9b-it"));
-
-        r.setEnabled(QStringLiteral("r-1"), false);
-        QVERIFY(!asModel(r.rules())
-                     ->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
-                     .value(QStringLiteral("enabled"))
-                     .toBool());
-
-        r.setIntent(QStringLiteral("r-1"), QStringLiteral("Renamed intent"));
-        QCOMPARE(asModel(r.rules())
-                     ->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
-                     .value(QStringLiteral("intent"))
-                     .toString(),
-                 QStringLiteral("Renamed intent"));
-
-        r.setFallback(QStringLiteral("r-1"), QStringLiteral("phi-3.5-mini"));
-        QCOMPARE(asModel(r.rules())
-                     ->at(asModel(r.rules())->indexOfId(QStringLiteral("r-1")))
-                     .value(QStringLiteral("fallback"))
-                     .toString(),
-                 QStringLiteral("phi-3.5-mini"));
-
-        const int before = asModel(r.rules())->count();
-        const QString id = r.addRule(QStringLiteral("Translation"));
-        QCOMPARE(asModel(r.rules())->count(), before + 1);
-        r.remove(id);
-        QCOMPARE(asModel(r.rules())->count(), before);
-    }
 
     void cronLifecycle() {
         MockCronStore c;

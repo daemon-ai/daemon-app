@@ -707,4 +707,61 @@ private:
     QList<DecodedAcpAgentEntry> m_entries;
 };
 
+// --- Routing (B6/ROU: the origin->session pin table; wire v28) --------------------------------
+// The real routing-manager backend: refreshChats() lists the explicit chat pins
+// (RoutingListChats, page loop), refreshRooms(transport) lists a transport's bindable rooms
+// (TransportRooms, page loop), and bindChat/unbindChat/setRoute mutate the pin table
+// (RoutingBindChat/RoutingUnbindChat/RoutingSet; on Ok the pins re-list so the client renders
+// the node's stored state, never an optimistic local write). Kept in memory (re-fetched on
+// connect/focus); pins are small and authoritative.
+class RoutingRepository : public RepositoryBase {
+    Q_OBJECT
+
+public:
+    RoutingRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    [[nodiscard]] const QList<DecodedChatRoute>& routes() const { return m_routes; }
+    [[nodiscard]] QList<DecodedRoomInfo> roomsFor(const QString& transport) const {
+        return m_rooms.value(transport);
+    }
+
+    // List the pins (RoutingListChats); routesRefreshed() fires with routes() populated.
+    void refreshChats();
+    // List a transport instance's bindable rooms (TransportRooms); roomsRefreshed(transport)
+    // fires with roomsFor(transport) populated.
+    void refreshRooms(const QString& transport);
+    // Resolve one origin's pin (RoutingGet); routeResolved(found, route) fires.
+    void getRoute(const DecodedOrigin& origin);
+    // Pin an origin to a session (+ optional agent) (RoutingBindChat -> Ok -> re-list).
+    void bindChat(const DecodedOrigin& origin, const QString& session,
+                  const QString& profile = QString());
+    // Remove an origin's pin (RoutingUnbindChat -> Ok -> re-list).
+    void unbindChat(const DecodedOrigin& origin);
+    // Set a full route incl. isolation (RoutingSet -> Ok -> re-list).
+    void setRoute(const DecodedChatRoute& route);
+
+signals:
+    void routesRefreshed();
+    void roomsRefreshed(const QString& transport);
+    void routeResolved(bool found, const DecodedChatRoute& route);
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+    void handleMutationResponse(const QByteArray& responseCbor);
+
+    static constexpr auto kListCorrelation = "repo/routing-list-chats";
+    static constexpr auto kGetCorrelation = "repo/routing-get";
+    static constexpr auto kMutateCorrelation = "repo/routing-mutate";
+    static constexpr auto kRoomsPrefix = "repo/transport-rooms/";
+
+    QList<DecodedChatRoute> m_routes;
+    QHash<QString, QList<DecodedRoomInfo>> m_rooms; // transport id -> its bindable rooms
+    // Page loops (wire v25): pins + per-transport rooms accumulate across `after` pages; the
+    // refreshed signals fire ONCE with the complete listing.
+    PageLoop<DecodedChatRoute> m_routesLoop;
+    QHash<QString, PageLoop<DecodedRoomInfo>> m_roomsLoops;
+};
+
 } // namespace daemonapp::daemon

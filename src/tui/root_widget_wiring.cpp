@@ -136,7 +136,12 @@ void RootWidget::wirePageLiveRefresh() {
     liveRefresh(m_services.roster->sessions(), TabModel::Sessions);
     liveRefresh(m_services.fleetTree->nodes(), TabModel::Fleet);
     liveRefresh(m_services.approvals->pending(), TabModel::Approvals);
-    liveRefresh(m_services.routing->rules(), TabModel::Routing);
+    // The Routing page projects the DaemonNet pin table (no row model): re-render the open page
+    // when the pins / rooms / accounts change (B6/ROU).
+    if (m_services.daemonNet != nullptr) {
+        connect(m_services.daemonNet, &daemonnet::IDaemonNet::changed, this,
+                [this] { refreshPageIfActive(TabModel::Routing); });
+    }
     liveRefresh(m_services.cron->jobs(), TabModel::Cron);
     // The Dashboard is a read-only projection of the roster / approvals, so refresh
     // it when either of those churns too.

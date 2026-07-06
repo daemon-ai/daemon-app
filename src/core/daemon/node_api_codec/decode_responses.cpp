@@ -74,6 +74,9 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
          ApiResponseKind::ModelRecommend},
         {api_response_r::api_response_response_acp_catalog_m_c, ApiResponseKind::AcpCatalog},
         {api_response_r::api_response_response_checkpoints_m_c, ApiResponseKind::Checkpoints},
+        {api_response_r::api_response_response_chat_routes_m_c, ApiResponseKind::ChatRoutes},
+        {api_response_r::api_response_response_chat_route_m_c, ApiResponseKind::ChatRoute},
+        {api_response_r::api_response_response_rooms_m_c, ApiResponseKind::Rooms},
     });
     for (const auto& entry : kKindMap) {
         if (response->api_response_choice == entry.choice) {

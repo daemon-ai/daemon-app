@@ -1,9 +1,7 @@
-# Routing + cron seams + in-memory mocks (Phase 7 routing matrix + cron manager).
+# Cron seam + in-memory mock (Phase 7 cron manager). The legacy intent->model routing store was
+# retired at wire v28: the routing surface is the origin->session pin table on IDaemonNet (B6/ROU).
 add_library(da_automation STATIC
-    irouting_store.h
     icron_store.h
-    mock_routing_store.h
-    mock_routing_store.cpp
     mock_cron_store.h
     mock_cron_store.cpp
 )

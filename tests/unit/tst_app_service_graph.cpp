@@ -36,7 +36,7 @@ private slots:
         QVERIFY(graph.fleetTree != nullptr);
         QVERIFY(graph.approvals != nullptr);
         QVERIFY(graph.dashboard != nullptr);
-        QVERIFY(graph.routing != nullptr);
+        QVERIFY(graph.daemonNet != nullptr); // the routing surface (origin->session pins)
         QVERIFY(graph.cron != nullptr);
         QVERIFY(graph.sessionSettings != nullptr);
         QVERIFY(graph.checkpoints != nullptr);

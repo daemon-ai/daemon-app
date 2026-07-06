@@ -5,7 +5,6 @@
 
 #include "accounts/mock_accounts_service.h"
 #include "automation/mock_cron_store.h"
-#include "automation/mock_routing_store.h"
 #include "config/mock_daemon_config.h"
 #include "connection/iconnection_service.h"
 #include "connection/mock_connection_service.h"
@@ -15,6 +14,7 @@
 #include "daemon/daemon_cache_store.h"
 #include "daemon/daemon_checkpoint_timeline.h"
 #include "daemon/daemon_connection_service.h"
+#include "daemon/daemon_daemonnet.h"
 #include "daemon/daemon_dashboard.h"
 #include "daemon/daemon_fleet_tree.h"
 #include "daemon/daemon_fs_service.h"
@@ -110,13 +110,12 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.approvals = new fleet::MockApprovalsInbox(owner);
     graph.dashboard =
         new fleet::MockDashboard(graph.roster, graph.fleetTree, graph.approvals, owner);
-    // Routing / cron / checkpoints have NO node wire op yet (the daemon-api codec subset carries
-    // none), so in Daemon mode they must render EMPTY rather than pass their illustrative demo rows
-    // off as node-backed data (render honesty; see seam_migration.h). Mock mode keeps the demo
-    // seed. The IDaemonConfig Phase-4 DECISION is the sibling precedent: node-unsupported seams
-    // stay mock but never masquerade as authority.
+    // Cron has NO node wire op yet (the daemon-api codec subset carries none), so in Daemon mode
+    // it must render EMPTY rather than pass its illustrative demo rows off as node-backed data
+    // (render honesty; see seam_migration.h). Mock mode keeps the demo seed. (Routing left this
+    // bucket at wire v28: the origin->session pin table is served by DaemonDaemonNet below; the
+    // legacy intent->model IRoutingStore surface is retired.)
     const bool seedMockDemo = mode != ServiceMode::Daemon;
-    graph.routing = new automation::MockRoutingStore(owner, seedMockDemo);
     graph.cron = new automation::MockCronStore(owner, seedMockDemo);
     // Transport-adapter seams (daemon-transport-adapter-spec.md): inert mocks until a daemon
     // adapter decodes transport_adapters / transport_instances. The registry advertises the
@@ -220,6 +219,19 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // confirmed use-after-free / SIGSEGV in MockDashboard::runningAgents()).
         delete graph.dashboard;
         delete graph.roster;
+        // The real routing manager (B6/ROU, wire v28): RoutingRepository speaks
+        // RoutingListChats/BindChat/UnbindChat/Set + TransportRooms; DaemonDaemonNet projects it
+        // (plus the transport instances) through the IDaemonNet seam the RoutingPage/RouteDialog
+        // already bind — replacing the always-demo MockDaemonNet. Swapped here, after every mock
+        // consumer of the old pointer (roster/fleet/dashboard) is gone.
+        // DAEMON_APP_MOCK_INTEGRATIONS keeps the demo MockDaemonNet for development (the same
+        // escape hatch the Integrations tree seed honors above).
+        graph.routingRepository = new RoutingRepository(graph.nodeApi, graph.cache, owner);
+        if (!demoTransports) {
+            delete graph.daemonNet;
+            graph.daemonNet = new DaemonDaemonNet(graph.routingRepository,
+                                                  graph.transportRepository, graph.store, owner);
+        }
         // The repository rides along for the operator steer/startTurn/interrupt ops (F4) and the
         // archived-scope refetch (F6).
         graph.roster = new fleet::DaemonSessionRoster(graph.store, graph.sessions, owner);
@@ -256,7 +268,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
              credentials = graph.credentialRepository, models = graph.models,
              providers = graph.providerRepository, approvals = graph.approvalRepository,
              subscriptions = graph.subscriptions, fs = graph.fs, fleet = graph.fleetRepository,
-             transports = graph.transportRepository, acp = graph.acp, wasReady] {
+             transports = graph.transportRepository, routing = graph.routingRepository,
+             acp = graph.acp, wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
                     // Initial baseline once per (re)connect; the EventsSince feed then keeps the
@@ -274,6 +287,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     // Channels: the adapter picker + configured accounts/status dots (EIO-1/3/9).
                     transports->refreshAdapters();
                     transports->refreshInstances();
+                    // Routing: the origin->session pin table (B6/ROU). Per-account rooms follow
+                    // the instances refresh (DaemonDaemonNet chains them).
+                    routing->refreshChats();
                     // Foreign engines: the ACP catalog for the new-agent dialog's engine picker.
                     acp->refreshCatalog();
                     subscriptions->start();
@@ -292,10 +308,10 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                "approvals(ApprovalsPending/Decide), sessionSettings(SetSessionMode), fs(fs_*), "
                "fleetTree(Tree), roster/dashboard(offline-first over cache/fleet/approvals), "
                "transports/presence(TransportAdapters/Instances+ConvList), "
-               "checkpoints(CheckpointList/Rewind); "
-               "still mock: daemonConfig, memory, daemonNet (Integrations seeded empty unless "
-               "DAEMON_APP_MOCK_INTEGRATIONS); node-blocked (NO wire op yet - rendered EMPTY, not "
-               "mock demo data): routing, cron.";
+               "checkpoints(CheckpointList/Rewind), "
+               "routing(RoutingListChats/BindChat/UnbindChat+TransportRooms via DaemonDaemonNet); "
+               "still mock: daemonConfig, memory; node-blocked (NO wire op yet - rendered EMPTY, "
+               "not mock demo data): cron, daemonNet delivery/handover panel.";
     } else {
         // Mock mode: a non-persisted in-memory store re-seeded fresh from the unified DaemonNet
         // each run (deterministic, always matches the current seed - no stale-db drift). The

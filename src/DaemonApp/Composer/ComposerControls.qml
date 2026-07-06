@@ -52,6 +52,10 @@ RowLayout {
         target: Profiles
         function onChanged() { root.settingsRev++; }
     }
+    Connections {
+        target: DaemonNet
+        function onChanged() { root.settingsRev++; }
+    }
 
     // The session's engine identity (C3/ENG-7): the per-session profile override, falling back to
     // the node's active default profile, joined against the profile store's engine/acpAgent.
@@ -108,6 +112,27 @@ RowLayout {
                 SessionSettings.sessionId = root.session.sessionId;
             sessionSettingsPopover.open();
         }
+    }
+
+    // Route-pin chip (B6/EIO-12): shows when an external chat origin is pinned to this session
+    // ("⇄ #ops-room"); tap opens the routing manager scoped to the pin table.
+    Kit.Chip {
+        id: routeChip
+        Layout.alignment: Qt.AlignVCenter
+        readonly property var pins: {
+            var rev = root.settingsRev; // re-evaluate on DaemonNet change
+            return rev >= 0 && root.session && root.session.sessionId
+                   ? DaemonNet.pinsForSession(root.session.sessionId) : [];
+        }
+        visible: pins.length > 0
+        text: pins.length > 1 ? qsTr("⇄ %1 +%2").arg(pins[0].label).arg(pins.length - 1)
+                              : pins.length === 1 ? qsTr("⇄ %1").arg(pins[0].label) : ""
+        tone: "accent"
+        interactive: true
+        tooltipText: pins.length > 0
+                     ? qsTr("Pinned from %1 — open the routing manager").arg(pins[0].transport)
+                     : ""
+        onClicked: Nav.open("routing")
     }
 
     // Checkpoints / rewind timeline for the active session.

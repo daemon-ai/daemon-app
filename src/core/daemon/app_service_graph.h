@@ -10,7 +10,6 @@ class IAccountsService;
 }
 namespace automation {
 class ICronStore;
-class IRoutingStore;
 } // namespace automation
 namespace config {
 class IDaemonConfig;
@@ -70,6 +69,7 @@ class AcpRepository;
 class ApprovalRepository;
 class FleetRepository;
 class TransportRepository;
+class RoutingRepository;
 class CheckpointRepository;
 class CredentialRepository;
 class DaemonCacheStore;
@@ -111,7 +111,6 @@ struct AppServiceGraph {
     fleet::IFleetTree* fleetTree = nullptr;
     fleet::IApprovalsInbox* approvals = nullptr;
     fleet::IDashboard* dashboard = nullptr;
-    automation::IRoutingStore* routing = nullptr;
     automation::ICronStore* cron = nullptr;
     transports::ITransportRegistry* transportRegistry = nullptr;
     transports::IPresenceService* presence = nullptr;
@@ -135,6 +134,7 @@ struct AppServiceGraph {
     CheckpointRepository* checkpointRepository = nullptr;
     FleetRepository* fleetRepository = nullptr;         // PRO-9/10; non-null only in Daemon mode
     TransportRepository* transportRepository = nullptr; // Channels (EIO-1/3/8/9); Daemon mode only
+    RoutingRepository* routingRepository = nullptr;     // Routing pins (B6/ROU); Daemon mode only
     // The ACP agent catalog (foreign engines; wire v23): backs the new-agent dialog's engine
     // picker. Constructed with the other repositories (inert without a connection).
     AcpRepository* acp = nullptr;

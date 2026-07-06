@@ -152,6 +152,52 @@ public:
     // Mock-complete over the full precedence (pin > rule > account-bound > default).
     [[nodiscard]] virtual Resolution resolve(const domain::Origin& origin) const = 0;
 
+    // --- QML chip helpers (concrete; derived from routes()) ------------------------------------
+    // The pins targeting `sessionId`, as QML rows { key, transport, label } — the session-header
+    // route chip (B6/EIO-12) binds this. Empty when the session is not a pin target.
+    [[nodiscard]] Q_INVOKABLE QVariantList pinsForSession(const QString& sessionId) const {
+        QVariantList rows;
+        const QList<RoutingPin> pins = routes();
+        for (const RoutingPin& pin : pins) {
+            if (pin.session.toString() != sessionId) {
+                continue;
+            }
+            QVariantMap row;
+            row[QStringLiteral("key")] = originKey(pin.origin);
+            row[QStringLiteral("transport")] = pin.origin.transport.toString();
+            switch (pin.origin.scope.kind) {
+            case domain::OriginScopeKind::Dm:
+                row[QStringLiteral("label")] = QStringLiteral("@") + pin.origin.scope.user;
+                break;
+            case domain::OriginScopeKind::Group:
+                row[QStringLiteral("label")] = pin.origin.scope.chat;
+                break;
+            case domain::OriginScopeKind::Api:
+                row[QStringLiteral("label")] = QStringLiteral("api:") + pin.origin.scope.apiKey;
+                break;
+            case domain::OriginScopeKind::Internal:
+                row[QStringLiteral("label")] = QStringLiteral("internal");
+                break;
+            }
+            rows.append(row);
+        }
+        return rows;
+    }
+    // The session a (transport, chat) group origin is pinned to ("" when unpinned) — the room-row
+    // route chip binds this.
+    [[nodiscard]] Q_INVOKABLE QString pinnedSessionFor(const QString& transport,
+                                                       const QString& chat) const {
+        const QList<RoutingPin> pins = routes();
+        for (const RoutingPin& pin : pins) {
+            if (pin.origin.transport.toString() == transport &&
+                pin.origin.scope.kind == domain::OriginScopeKind::Group &&
+                pin.origin.scope.chat == chat) {
+                return pin.session.toString();
+            }
+        }
+        return {};
+    }
+
     // Pin an origin to a session (+ optional agent); mirrors `routing_bind_chat`.
     virtual void bindChat(const domain::Origin& origin, const domain::SessionId& session,
                           const domain::ProfileRef& profile) = 0;

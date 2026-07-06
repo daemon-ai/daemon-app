@@ -53,6 +53,17 @@ QString downloadStateName(int choice);
 QString hostRequestKindName(const host_request_kind_t_r& kind);
 
 // --- struct projection mappers (Qt-side) ---------------------------------------------------------
+// Scratch buffers a populated wire `origin` borrows (zcbor_string fields point into these); the
+// caller keeps it alive until encodeRequest runs.
+struct OriginScratch {
+    QByteArray transport, user, chat, thread, apiKey;
+};
+// Populate a generated `origin` from a DecodedOrigin (shared by the Routing* encoders).
+void fillOrigin(origin& out, const DecodedOrigin& o, OriginScratch& sc);
+// Project a generated `origin` into the flattened DecodedOrigin.
+DecodedOrigin decodeOriginStruct(const origin& o);
+// Project a generated `chat_route` into DecodedChatRoute.
+DecodedChatRoute decodeChatRouteStruct(const chat_route& r);
 DecodedUnitNode decodeUnitNodeStruct(const unit_node& n);
 void fillDescriptor(const model_descriptor& m, DecodedModelDescriptor* out);
 void fillProviderDescriptor(const provider_descriptor& p, DecodedProviderDescriptor* out);

@@ -141,6 +141,36 @@ struct DecodedAcpAgentEntry {
     QString version; // ACP protocol version reported at initialize; empty = unprobed
 };
 
+// --- Routing (B6/ROU: the origin->session pin table; wire v28) -------------------------------
+// A wire `origin` (transport instance + scope), flattened to optional fields keyed by
+// `scopeKind` (mirrors domain::Origin; the daemonnet adapter converts).
+struct DecodedOrigin {
+    QString transport;
+    QString scopeKind = QStringLiteral("internal"); // "dm" | "group" | "api" | "internal"
+    QString user;                                   // Dm
+    QString chat;                                   // Group
+    bool hasThread = false;                         // Group: thread present
+    QString thread;                                 // Group (optional)
+    QString apiKey;                                 // Api
+};
+
+// One explicit chat pin (RoutingListChats -> ChatRoutes page items / RoutingGet -> ChatRoute).
+struct DecodedChatRoute {
+    DecodedOrigin origin;
+    QString session;
+    QString profile;   // empty = no agent override
+    QString isolation; // "PerUser" | "PerChat" | "PerThread" | "Shared" | "" (absent)
+};
+
+// One bindable room/chat on a transport instance (TransportRooms -> Rooms page items). The pin
+// picker renders these; `session` (when set) is the room's pinned session.
+struct DecodedRoomInfo {
+    QString transport;
+    QString room;    // the chat handle / room id (the Group scope key)
+    QString name;    // display label (empty = use the room id)
+    QString session; // pinned session id (empty = not pinned)
+};
+
 // --- Checkpoints (E4/TOOL-9) ----------------------------------------------------------------
 // One durable checkpoint (CheckpointList -> Checkpoints page). Node-created on tool events;
 // `turnOrdinal`/`cursorSeq` locate it on the session timeline (optional on the wire).
@@ -639,6 +669,9 @@ enum class ApiResponseKind {
     ModelRecommend,
     AcpCatalog,
     Checkpoints,
+    ChatRoutes,
+    ChatRoute,
+    Rooms,
 };
 
 // Thin C++ facade over the zcbor-generated NodeApi codec (codec/generated). The generated C is
@@ -1089,6 +1122,32 @@ public:
     // last page).
     static bool decodeCheckpoints(const QByteArray& responseCbor, QList<DecodedCheckpointInfo>* out,
                                   QString* next = nullptr);
+
+    // --- Routing (B6/ROU: origin->session pins; wire v28) --------------------------------------
+    // List the explicit chat pins (RoutingListChats -> ChatRoutes). `after` (wire v25) resumes
+    // past the previous page's `next` cursor.
+    [[nodiscard]] static QByteArray encodeRoutingListChatsRequest(const QString& after = QString());
+    // Resolve one origin's pin (RoutingGet -> ChatRoute(opt)).
+    [[nodiscard]] static QByteArray encodeRoutingGetRequest(const DecodedOrigin& origin);
+    // Set a full route (RoutingSet{chat_route} -> Ok): origin -> session (+profile/isolation).
+    [[nodiscard]] static QByteArray encodeRoutingSetRequest(const DecodedChatRoute& route);
+    // Pin an origin to a session (+ optional agent) (RoutingBindChat -> Ok).
+    [[nodiscard]] static QByteArray encodeRoutingBindChatRequest(const DecodedOrigin& origin,
+                                                                 const QString& session,
+                                                                 const QString& profile = {});
+    // Remove an origin's pin (RoutingUnbindChat -> Ok).
+    [[nodiscard]] static QByteArray encodeRoutingUnbindChatRequest(const DecodedOrigin& origin);
+    // List a transport instance's bindable rooms (TransportRooms -> Rooms). `after` resumes.
+    [[nodiscard]] static QByteArray encodeTransportRoomsRequest(const QString& transport,
+                                                                const QString& after = QString());
+    // Decode one ChatRoutes page. `*next` (when non-null) gets the resume cursor.
+    static bool decodeChatRoutes(const QByteArray& responseCbor, QList<DecodedChatRoute>* out,
+                                 QString* next = nullptr);
+    // Decode a ChatRoute response (RoutingGet). Sets *found=false on the null arm (no pin).
+    static bool decodeChatRoute(const QByteArray& responseCbor, DecodedChatRoute* out, bool* found);
+    // Decode one Rooms page. `*next` (when non-null) gets the resume cursor.
+    static bool decodeRooms(const QByteArray& responseCbor, QList<DecodedRoomInfo>* out,
+                            QString* next = nullptr);
 };
 
 } // namespace daemonapp::daemon

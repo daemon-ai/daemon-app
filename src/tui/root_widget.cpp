@@ -225,7 +225,6 @@ RootWidget::RootWidget()
         .fleetTree = m_services.fleetTree,
         .approvals = m_services.approvals,
         .dashboard = m_services.dashboard,
-        .routing = m_services.routing,
         .cron = m_services.cron,
         .daemonNet = m_services.daemonNet,
         .memory = m_services.memory,

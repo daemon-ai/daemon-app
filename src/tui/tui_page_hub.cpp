@@ -10,8 +10,9 @@
 
 #include "accounts/iaccounts_service.h"
 #include "automation/icron_store.h"
-#include "automation/irouting_store.h"
 #include "daemon/principal_model.h"
+#include "daemonnet/idaemonnet.h"
+#include "domain/origin.h"
 #include "fleet/iapprovals_inbox.h"
 #include "fleet/ifleet_tree.h"
 #include "fleet/isession_roster.h"
@@ -142,7 +143,7 @@ QList<QVariantMap> TuiPageHub::pageActionRows(int kind) const {
     case TabModel::Approvals:
         return rowsOfModel(m_deps.approvals->pending());
     case TabModel::Routing:
-        return rowsOfModel(m_deps.routing->rules());
+        return routingPinRows();
     case TabModel::Cron:
         return rowsOfModel(m_deps.cron->jobs());
     default:
@@ -299,11 +300,27 @@ bool TuiPageHub::handlePageActionKey(int kind, Tui::ZKeyEvent* event) {
         }
         break;
     case TabModel::Routing:
-        if (key == Qt::Key_Space || enter) {
-            m_deps.routing->setEnabled(id, !row.value(QStringLiteral("enabled")).toBool());
-            acted = true;
-        } else if (text == QStringLiteral("x")) {
-            m_deps.routing->remove(id);
+        if (text == QStringLiteral("x") && m_deps.daemonNet != nullptr) {
+            // Unbind the selected pin (RoutingUnbindChat): rebuild the origin from the row's
+            // flattened fields (routingPinRows packs them exactly for this).
+            domain::Origin origin;
+            origin.transport =
+                domain::TransportId(row.value(QStringLiteral("transport")).toString());
+            const QString scopeKind = row.value(QStringLiteral("scopeKind")).toString();
+            if (scopeKind == QStringLiteral("dm")) {
+                origin.scope.kind = domain::OriginScopeKind::Dm;
+                origin.scope.user = row.value(QStringLiteral("user")).toString();
+            } else if (scopeKind == QStringLiteral("group")) {
+                origin.scope.kind = domain::OriginScopeKind::Group;
+                origin.scope.chat = row.value(QStringLiteral("chat")).toString();
+                origin.scope.thread = row.value(QStringLiteral("thread")).toString();
+            } else if (scopeKind == QStringLiteral("api")) {
+                origin.scope.kind = domain::OriginScopeKind::Api;
+                origin.scope.apiKey = row.value(QStringLiteral("apiKey")).toString();
+            } else {
+                origin.scope.kind = domain::OriginScopeKind::Internal;
+            }
+            m_deps.daemonNet->unbindChat(origin);
             acted = true;
         }
         break;
