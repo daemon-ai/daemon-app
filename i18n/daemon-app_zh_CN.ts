@@ -1,0 +1,6532 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="zh_CN" sourcelanguage="en">
+<context>
+    <name>AboutSection</name>
+    <message>
+        <source>Application</source>
+        <translation>应用程序</translation>
+    </message>
+    <message>
+        <source>Version</source>
+        <translation>版本</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>连接</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>未知</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>更新</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>检查更新</translation>
+    </message>
+    <message>
+        <source>Automatic updates are not configured in this build.</source>
+        <translation>此构建未配置自动更新。</translation>
+    </message>
+</context>
+<context>
+    <name>AccountsPage</name>
+    <message>
+        <source>Accounts</source>
+        <translation>账户</translation>
+    </message>
+    <message>
+        <source>Connected accounts</source>
+        <translation>已连接账户</translation>
+    </message>
+    <message>
+        <source>Add account</source>
+        <translation>添加账户</translation>
+    </message>
+    <message>
+        <source>No accounts yet. Add one to enable remote providers.</source>
+        <translation>尚无账户。添加一个以启用远程提供方。</translation>
+    </message>
+    <message>
+        <source>OAuth</source>
+        <translation>OAuth</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API 密钥</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>已连接</translation>
+    </message>
+    <message>
+        <source>Connecting…</source>
+        <translation>连接中…</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>错误</translation>
+    </message>
+    <message>
+        <source>Reconnect / re-authenticate</source>
+        <translation>重新连接 / 重新认证</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>移除账户</translation>
+    </message>
+</context>
+<context>
+    <name>AddAccountFlow</name>
+    <message>
+        <source>Sign in (OAuth)</source>
+        <translation>登录（OAuth）</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API 密钥</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>确定</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>登录失败</translation>
+    </message>
+    <message>
+        <source>Add account — pick a provider</source>
+        <translation>添加账户 — 选择提供方</translation>
+    </message>
+    <message>
+        <source>Authentication</source>
+        <translation>认证</translation>
+    </message>
+    <message>
+        <source>%1 — API key</source>
+        <translation>%1 — API 密钥</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>基础 URL（例如 https://…）</translation>
+    </message>
+</context>
+<context>
+    <name>AddAccountWizard</name>
+    <message>
+        <source>Add account</source>
+        <translation>添加账户</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>连接</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>提供方</translation>
+    </message>
+    <message>
+        <source>Authentication</source>
+        <translation>认证</translation>
+    </message>
+    <message>
+        <source>Sign in (OAuth)</source>
+        <translation>登录（OAuth）</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API 密钥</translation>
+    </message>
+    <message>
+        <source>Label (optional)</source>
+        <translation>标签（可选）</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>基础 URL（例如 https://…）</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser to complete sign-in…</source>
+        <translation>正在等待浏览器完成登录…</translation>
+    </message>
+    <message>
+        <source>Opens your browser to sign in securely.</source>
+        <translation>打开浏览器以安全登录。</translation>
+    </message>
+</context>
+<context>
+    <name>AdvancedSection</name>
+    <message>
+        <source>Diagnostics</source>
+        <translation>诊断</translation>
+    </message>
+    <message>
+        <source>Log level</source>
+        <translation>日志级别</translation>
+    </message>
+    <message>
+        <source>Send anonymous telemetry</source>
+        <translation>发送匿名遥测数据</translation>
+    </message>
+    <message>
+        <source>Enable experimental tools</source>
+        <translation>启用实验性工具</translation>
+    </message>
+    <message>
+        <source>Onboarding</source>
+        <translation>引导设置</translation>
+    </message>
+    <message>
+        <source>Re-run first-run setup</source>
+        <translation>重新运行首次设置</translation>
+    </message>
+    <message>
+        <source>Local data</source>
+        <translation>本地数据</translation>
+    </message>
+    <message>
+        <source>Clear local data…</source>
+        <translation>清除本地数据…</translation>
+    </message>
+    <message>
+        <source>Clear local data?</source>
+        <translation>清除本地数据？</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>清除</translation>
+    </message>
+    <message>
+        <source>This erases everything stored on this device: your connection settings and saved sign-in, appearance preferences, and the local cache of sessions and files. It does NOT delete anything on the node itself.
+
+You&apos;ll return to first-run setup.</source>
+        <translation>这将清除本设备上存储的所有内容：你的连接设置和已保存的登录、外观偏好，以及会话和文件的本地缓存。它不会删除节点上的任何数据。
+
+你将返回首次设置。</translation>
+    </message>
+</context>
+<context>
+    <name>AgentInferencePicker</name>
+    <message>
+        <source>Provider</source>
+        <translation>提供方</translation>
+    </message>
+    <message>
+        <source>Paste API key</source>
+        <translation>粘贴 API 密钥</translation>
+    </message>
+    <message>
+        <source>Hide API key</source>
+        <translation>隐藏 API 密钥</translation>
+    </message>
+    <message>
+        <source>Show API key</source>
+        <translation>显示 API 密钥</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <source>Enter your API key to list models.</source>
+        <translation>输入你的 API 密钥以列出模型。</translation>
+    </message>
+    <message>
+        <source>Discovering models…</source>
+        <translation>正在发现模型…</translation>
+    </message>
+</context>
+<context>
+    <name>AgentProfilePage</name>
+    <message>
+        <source>Profile - %1</source>
+        <translation>档案 - %1</translation>
+    </message>
+    <message>
+        <source>No agent selected.</source>
+        <translation>未选择智能体。</translation>
+    </message>
+    <message>
+        <source>Identity</source>
+        <translation>身份</translation>
+    </message>
+    <message>
+        <source>profile id</source>
+        <translation>档案 id</translation>
+    </message>
+    <message>
+        <source>name</source>
+        <translation>名称</translation>
+    </message>
+    <message>
+        <source>description</source>
+        <translation>描述</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>引擎</translation>
+    </message>
+    <message>
+        <source>provider</source>
+        <translation>提供方</translation>
+    </message>
+    <message>
+        <source>model</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <source>base url</source>
+        <translation>基础 url</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>（提供方默认）</translation>
+    </message>
+    <message>
+        <source>context engine</source>
+        <translation>上下文引擎</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>记忆</translation>
+    </message>
+    <message>
+        <source>memory provider</source>
+        <translation>记忆提供方</translation>
+    </message>
+    <message>
+        <source>Persona</source>
+        <translation>人设</translation>
+    </message>
+    <message>
+        <source>Tool allowlist</source>
+        <translation>工具允许列表</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>技能</translation>
+    </message>
+    <message>
+        <source>Credentials</source>
+        <translation>凭据</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>凭据引用</translation>
+    </message>
+    <message>
+        <source> (default)</source>
+        <translation> （默认）</translation>
+    </message>
+</context>
+<context>
+    <name>AppearanceSection</name>
+    <message>
+        <source>Theme</source>
+        <translation>主题</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>浅色</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>深色</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <translation>棕褐</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <translation>午夜</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>语言</translation>
+    </message>
+    <message>
+        <source>Language used across the interface. Applied immediately.</source>
+        <translation>界面所用的语言。立即生效。</translation>
+    </message>
+    <message>
+        <source>Editor text</source>
+        <translation>编辑器文本</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>字体</translation>
+    </message>
+    <message>
+        <source>Typeface used for the transcript / editor text.</source>
+        <translation>用于对话记录 / 编辑器文本的字体。</translation>
+    </message>
+    <message>
+        <source>Sans</source>
+        <translation>无衬线</translation>
+    </message>
+    <message>
+        <source>Serif</source>
+        <translation>衬线</translation>
+    </message>
+    <message>
+        <source>Mono</source>
+        <translation>等宽</translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation>字体大小</translation>
+    </message>
+    <message>
+        <source>Size of the transcript / editor text.</source>
+        <translation>对话记录 / 编辑器文本的大小。</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation>布局</translation>
+    </message>
+    <message>
+        <source>Center text</source>
+        <translation>居中文本</translation>
+    </message>
+    <message>
+        <source>Distraction-free (hide chrome)</source>
+        <translation>无干扰（隐藏界面框架）</translation>
+    </message>
+    <message>
+        <source>Raw markdown editor</source>
+        <translation>原始 markdown 编辑器</translation>
+    </message>
+    <message>
+        <source>Show Sessions</source>
+        <translation>显示会话</translation>
+    </message>
+    <message>
+        <source>Show Fleet Tree</source>
+        <translation>显示编队树</translation>
+    </message>
+    <message>
+        <source>User message rail</source>
+        <translation>用户消息栏</translation>
+    </message>
+</context>
+<context>
+    <name>ApprovalRepository</name>
+    <message>
+        <source>Approval decision failed</source>
+        <translation>审批决定失败</translation>
+    </message>
+</context>
+<context>
+    <name>ApprovalsPage</name>
+    <message>
+        <source>Approvals</source>
+        <translation>审批</translation>
+    </message>
+    <message>
+        <source>Inbox zero — no pending approvals.</source>
+        <translation>收件箱清空 — 没有待处理的审批。</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>拒绝</translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>批准</translation>
+    </message>
+</context>
+<context>
+    <name>ArchivedSection</name>
+    <message>
+        <source>Archived chats</source>
+        <translation>已归档的聊天</translation>
+    </message>
+    <message>
+        <source>No archived chats.</source>
+        <translation>没有已归档的聊天。</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>（无标题）</translation>
+    </message>
+    <message>
+        <source>Unarchive</source>
+        <translation>取消归档</translation>
+    </message>
+    <message>
+        <source>Delete permanently</source>
+        <translation>永久删除</translation>
+    </message>
+</context>
+<context>
+    <name>AssistantFooter</name>
+    <message>
+        <source>Copy message</source>
+        <translation>复制消息</translation>
+    </message>
+    <message>
+        <source>Regenerate</source>
+        <translation>重新生成</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelsPage</name>
+    <message>
+        <source>Channels</source>
+        <translation>频道</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>账户</translation>
+    </message>
+    <message>
+        <source>No channels connected.</source>
+        <translation>未连接任何频道。</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>No rooms.</source>
+        <translation>没有房间。</translation>
+    </message>
+    <message>
+        <source>Add channel</source>
+        <translation>添加频道</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon to see available channel types.</source>
+        <translation>连接到 daemon 以查看可用的频道类型。</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>连接</translation>
+    </message>
+</context>
+<context>
+    <name>ChatSettingsSection</name>
+    <message>
+        <source>Behaviour</source>
+        <translation>行为</translation>
+    </message>
+    <message>
+        <source>Stream responses</source>
+        <translation>流式返回响应</translation>
+    </message>
+    <message>
+        <source>Send on Enter (Shift+Enter for newline)</source>
+        <translation>按 Enter 发送（Shift+Enter 换行）</translation>
+    </message>
+    <message>
+        <source>Show token counts</source>
+        <translation>显示词元计数</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>系统提示词</translation>
+    </message>
+    <message>
+        <source>Optional default system prompt for new chats</source>
+        <translation>新聊天的可选默认系统提示词</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointsPopover</name>
+    <message>
+        <source>Checkpoints</source>
+        <translation>检查点</translation>
+    </message>
+    <message>
+        <source>Save here</source>
+        <translation>在此保存</translation>
+    </message>
+    <message>
+        <source>Manual checkpoint</source>
+        <translation>手动检查点</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> 词元</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>当前</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>恢复</translation>
+    </message>
+</context>
+<context>
+    <name>ClarifyBlock</name>
+    <message>
+        <source>The agent needs your input.</source>
+        <translation>智能体需要你的输入。</translation>
+    </message>
+    <message>
+        <source>(skipped)</source>
+        <translation>（已跳过）</translation>
+    </message>
+    <message>
+        <source>Answer</source>
+        <translation>回答</translation>
+    </message>
+    <message>
+        <source>Select all that apply</source>
+        <translation>选择所有适用项</translation>
+    </message>
+    <message>
+        <source>Or type a reply…</source>
+        <translation>或输入回复…</translation>
+    </message>
+    <message>
+        <source>Type a reply…</source>
+        <translation>输入回复…</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>提交</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>跳过</translation>
+    </message>
+</context>
+<context>
+    <name>CommandPalette</name>
+    <message>
+        <source>Type a command…</source>
+        <translation>输入命令…</translation>
+    </message>
+</context>
+<context>
+    <name>CommandRegistry</name>
+    <message>
+        <source>New session</source>
+        <translation>新建会话</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>Start a fresh chat</source>
+        <translation>开始新的聊天</translation>
+    </message>
+    <message>
+        <source>Search sessions</source>
+        <translation>搜索会话</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>导航</translation>
+    </message>
+    <message>
+        <source>Jump to a session</source>
+        <translation>跳转到会话</translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation>打开设置</translation>
+    </message>
+    <message>
+        <source>Toggle file explorer</source>
+        <translation>切换文件资源管理器</translation>
+    </message>
+    <message>
+        <source>Show / hide the workspace file tree</source>
+        <translation>显示 / 隐藏工作区文件树</translation>
+    </message>
+    <message>
+        <source>Open dashboard</source>
+        <translation>打开仪表盘</translation>
+    </message>
+    <message>
+        <source>Sessions, agents, approvals overview</source>
+        <translation>会话、智能体、审批概览</translation>
+    </message>
+    <message>
+        <source>Open models hub</source>
+        <translation>打开模型中心</translation>
+    </message>
+    <message>
+        <source>Discover / download / installed models</source>
+        <translation>发现 / 下载 / 已安装的模型</translation>
+    </message>
+    <message>
+        <source>Open accounts</source>
+        <translation>打开账户</translation>
+    </message>
+    <message>
+        <source>Provider sign-in + API keys</source>
+        <translation>提供方登录 + API 密钥</translation>
+    </message>
+    <message>
+        <source>Open profiles</source>
+        <translation>打开档案</translation>
+    </message>
+    <message>
+        <source>Agent profiles + skills/tools</source>
+        <translation>智能体档案 + 技能/工具</translation>
+    </message>
+    <message>
+        <source>Open fleet</source>
+        <translation>打开编队</translation>
+    </message>
+    <message>
+        <source>Orchestrator / worker tree</source>
+        <translation>编排器 / 工作单元树</translation>
+    </message>
+    <message>
+        <source>Open sessions</source>
+        <translation>打开会话</translation>
+    </message>
+    <message>
+        <source>Durable + live sessions</source>
+        <translation>持久 + 实时会话</translation>
+    </message>
+    <message>
+        <source>Open approvals</source>
+        <translation>打开审批</translation>
+    </message>
+    <message>
+        <source>Pending tool approvals</source>
+        <translation>待处理的工具审批</translation>
+    </message>
+    <message>
+        <source>Open routing</source>
+        <translation>打开路由</translation>
+    </message>
+    <message>
+        <source>Intent → model rules</source>
+        <translation>意图 → 模型规则</translation>
+    </message>
+    <message>
+        <source>Open scheduled jobs</source>
+        <translation>打开计划任务</translation>
+    </message>
+    <message>
+        <source>Cron-style scheduled jobs</source>
+        <translation>Cron 风格的计划任务</translation>
+    </message>
+    <message>
+        <source>Open users &amp; access</source>
+        <translation>打开用户与访问</translation>
+    </message>
+    <message>
+        <source>Manage users, roles + sessions</source>
+        <translation>管理用户、角色 + 会话</translation>
+    </message>
+    <message>
+        <source>Cycle theme</source>
+        <translation>循环切换主题</translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation>外观</translation>
+    </message>
+    <message>
+        <source>Light / Dark / Sepia / Midnight</source>
+        <translation>浅色 / 深色 / 棕褐 / 午夜</translation>
+    </message>
+    <message>
+        <source>Choose model…</source>
+        <translation>选择模型…</translation>
+    </message>
+    <message>
+        <source>Composer</source>
+        <translation>编写器</translation>
+    </message>
+    <message>
+        <source>Pick the active model</source>
+        <translation>选择当前模型</translation>
+    </message>
+    <message>
+        <source>Cycle reasoning effort</source>
+        <translation>循环切换推理强度</translation>
+    </message>
+    <message>
+        <source>off / low / medium / high</source>
+        <translation>关闭 / 低 / 中 / 高</translation>
+    </message>
+    <message>
+        <source>Toggle fast mode</source>
+        <translation>切换快速模式</translation>
+    </message>
+    <message>
+        <source>Toggle verbose</source>
+        <translation>切换详细模式</translation>
+    </message>
+    <message>
+        <source>Show usage</source>
+        <translation>显示用量</translation>
+    </message>
+    <message>
+        <source>Tokens + spend this session</source>
+        <translation>本会话的词元 + 花费</translation>
+    </message>
+    <message>
+        <source>Compress context</source>
+        <translation>压缩上下文</translation>
+    </message>
+    <message>
+        <source>Summarize + free the window</source>
+        <translation>汇总 + 释放窗口</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>导出对话记录</translation>
+    </message>
+    <message>
+        <source>Write the session to JSON</source>
+        <translation>将会话写入 JSON</translation>
+    </message>
+    <message>
+        <source>Find in transcript</source>
+        <translation>在对话记录中查找</translation>
+    </message>
+    <message>
+        <source>Search this session</source>
+        <translation>搜索此会话</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>重命名会话</translation>
+    </message>
+    <message>
+        <source>Retry last message</source>
+        <translation>重试上一条消息</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>回退</translation>
+    </message>
+    <message>
+        <source>Edit last message</source>
+        <translation>编辑上一条消息</translation>
+    </message>
+    <message>
+        <source>Undo last exchange</source>
+        <translation>撤销上一次交互</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>清空会话</translation>
+    </message>
+    <message>
+        <source>Remove all messages</source>
+        <translation>移除所有消息</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>帮助</translation>
+    </message>
+    <message>
+        <source>Commands + shortcuts</source>
+        <translation>命令 + 快捷键</translation>
+    </message>
+    <message>
+        <source>Distraction-free mode</source>
+        <translation>无干扰模式</translation>
+    </message>
+</context>
+<context>
+    <name>Composer</name>
+    <message>
+        <source>Attach image</source>
+        <translation>附加图片</translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.gif *.webp *.bmp *.svg)</source>
+        <translation>图片 (*.png *.jpg *.jpeg *.gif *.webp *.bmp *.svg)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>所有文件 (*)</translation>
+    </message>
+    <message>
+        <source>Editing queued message</source>
+        <translation>正在编辑排队的消息</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>(reverse-i-search)`</source>
+        <translation>（反向搜索）`</translation>
+    </message>
+    <message>
+        <source>(failed reverse-i-search)`</source>
+        <translation>（反向搜索失败）`</translation>
+    </message>
+    <message>
+        <source>&apos;:</source>
+        <translation>&apos;:</translation>
+    </message>
+    <message>
+        <source>Enter accept · Ctrl+R next · Esc cancel</source>
+        <translation>Enter 接受 · Ctrl+R 下一个 · Esc 取消</translation>
+    </message>
+    <message>
+        <source>Send a message...  (Enter to send, Shift+Enter for newline)</source>
+        <translation>发送消息…（Enter 发送，Shift+Enter 换行）</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerChrome</name>
+    <message>
+        <source>(reverse-i-search)`</source>
+        <translation>（反向搜索）`</translation>
+    </message>
+    <message>
+        <source>(failed reverse-i-search)`</source>
+        <translation>（反向搜索失败）`</translation>
+    </message>
+    <message>
+        <source>Enter accept  ·  Ctrl+R next  ·  Esc cancel</source>
+        <translation>Enter 接受  ·  Ctrl+R 下一个  ·  Esc 取消</translation>
+    </message>
+    <message>
+        <source>turn failed</source>
+        <translation>轮次失败</translation>
+    </message>
+    <message>
+        <source> Still thinking… %1s</source>
+        <translation> 仍在思考… %1s</translation>
+    </message>
+    <message>
+        <source> Thinking… %1s</source>
+        <translation> 思考中… %1s</translation>
+    </message>
+    <message>
+        <source> Esc stop</source>
+        <translation> Esc 停止</translation>
+    </message>
+    <message>
+        <source> Enter send</source>
+        <translation> Enter 发送</translation>
+    </message>
+    <message>
+        <source> Ctrl+Enter steer</source>
+        <translation> Ctrl+Enter 引导</translation>
+    </message>
+    <message>
+        <source>r:</source>
+        <comment>reasoning-effort badge prefix</comment>
+        <translation>r:</translation>
+    </message>
+    <message>
+        <source>fast</source>
+        <comment>composer mode badge</comment>
+        <translation>快速</translation>
+    </message>
+    <message>
+        <source>verbose</source>
+        <comment>composer mode badge</comment>
+        <translation>详细</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerControls</name>
+    <message>
+        <source>Checkpoints / rewind</source>
+        <translation>检查点 / 回退</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>会话设置</translation>
+    </message>
+    <message>
+        <source>Steer the running turn (Ctrl+Enter)</source>
+        <translation>引导正在运行的轮次（Ctrl+Enter）</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerMenu</name>
+    <message>
+        <source>Code review</source>
+        <translation>代码审查</translation>
+    </message>
+    <message>
+        <source>Review the following code for correctness, clarity, and edge cases:
+
+</source>
+        <translation>审查以下代码的正确性、清晰度和边界情况：
+
+</translation>
+    </message>
+    <message>
+        <source>Implementation plan</source>
+        <translation>实现计划</translation>
+    </message>
+    <message>
+        <source>Draft a step-by-step implementation plan for:
+
+</source>
+        <translation>为以下内容起草一个分步实现计划：
+
+</translation>
+    </message>
+    <message>
+        <source>Explain this</source>
+        <translation>解释这个</translation>
+    </message>
+    <message>
+        <source>Explain what the following does and why:
+
+</source>
+        <translation>解释以下内容的作用及原因：
+
+</translation>
+    </message>
+    <message>
+        <source>Attach and more</source>
+        <translation>附加及更多</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>附加</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>文件</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation>文件夹</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation>图片</translation>
+    </message>
+    <message>
+        <source>Prompt snippets</source>
+        <translation>提示词片段</translation>
+    </message>
+    <message>
+        <source>Type @ to mention</source>
+        <translation>输入 @ 以提及</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerUploadController</name>
+    <message>
+        <source>Not connected to a workspace.</source>
+        <translation>未连接到工作区。</translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; is too large to upload (max 25 MB).</source>
+        <translation>“%1”太大，无法上传（最大 25 MB）。</translation>
+    </message>
+    <message>
+        <source>Uploading %1…</source>
+        <translation>正在上传 %1…</translation>
+    </message>
+    <message>
+        <source>No writable workspace to upload into.</source>
+        <translation>没有可写入的工作区可供上传。</translation>
+    </message>
+    <message>
+        <source>Upload failed.</source>
+        <translation>上传失败。</translation>
+    </message>
+</context>
+<context>
+    <name>ConfirmDialog</name>
+    <message>
+        <source>Yes</source>
+        <translation>是</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+</context>
+<context>
+    <name>ConnectionPicker</name>
+    <message>
+        <source>https://node.example:8080</source>
+        <translation>https://node.example:8080</translation>
+    </message>
+    <message>
+        <source>wss://node.example:9443</source>
+        <translation>wss://node.example:9443</translation>
+    </message>
+    <message>
+        <source>/path/to/daemon.sock</source>
+        <translation>/path/to/daemon.sock</translation>
+    </message>
+    <message>
+        <source>Transport</source>
+        <translation>传输方式</translation>
+    </message>
+    <message>
+        <source>Embedded</source>
+        <translation>内嵌</translation>
+    </message>
+    <message>
+        <source>In-process node (coming soon)</source>
+        <translation>进程内节点（即将推出）</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation>本地</translation>
+    </message>
+    <message>
+        <source>Unix socket on this machine</source>
+        <translation>本机上的 Unix 套接字</translation>
+    </message>
+    <message>
+        <source>Remote</source>
+        <translation>远程</translation>
+    </message>
+    <message>
+        <source>Connect to a node over the network</source>
+        <translation>通过网络连接到节点</translation>
+    </message>
+    <message>
+        <source>WebSocket</source>
+        <translation>WebSocket</translation>
+    </message>
+    <message>
+        <source>Connect to a node over ws:// or wss://</source>
+        <translation>通过 ws:// 或 wss:// 连接到节点</translation>
+    </message>
+    <message>
+        <source>Local daemon</source>
+        <translation>本地 daemon</translation>
+    </message>
+    <message>
+        <source>App-managed</source>
+        <translation>应用管理</translation>
+    </message>
+    <message>
+        <source>Start and manage a node for me (recommended)</source>
+        <translation>为我启动并管理节点（推荐）</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>附加</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon socket I run myself</source>
+        <translation>连接到我自己运行的 daemon 套接字</translation>
+    </message>
+    <message>
+        <source>Socket path</source>
+        <translation>套接字路径</translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation>目标</translation>
+    </message>
+    <message>
+        <source>Auth token (optional)</source>
+        <translation>认证令牌（可选）</translation>
+    </message>
+    <message>
+        <source>Testing...</source>
+        <translation>测试中……</translation>
+    </message>
+    <message>
+        <source>Test connection</source>
+        <translation>测试连接</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>连接</translation>
+    </message>
+</context>
+<context>
+    <name>ConnectionSection</name>
+    <message>
+        <source>Status</source>
+        <translation>状态</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>未知</translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation>断开连接</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>退出登录</translation>
+    </message>
+    <message>
+        <source>Local daemon</source>
+        <translation>本地 daemon</translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation>自动启动本地 daemon</translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
+        <translation>关闭应用时停止受管的 daemon</translation>
+    </message>
+</context>
+<context>
+    <name>CredentialRepository</name>
+    <message>
+        <source>Credential operation failed</source>
+        <translation>凭据操作失败</translation>
+    </message>
+</context>
+<context>
+    <name>CronJobDialog</name>
+    <message>
+        <source>Edit job</source>
+        <translation>编辑作业</translation>
+    </message>
+    <message>
+        <source>New job</source>
+        <translation>新建作业</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>名称</translation>
+    </message>
+    <message>
+        <source>Job name</source>
+        <translation>作业名称</translation>
+    </message>
+    <message>
+        <source>Schedule (cron)</source>
+        <translation>计划（cron）</translation>
+    </message>
+    <message>
+        <source>m h dom mon dow  (e.g. 0 8 * * *)</source>
+        <translation>分 时 日 月 周  （例如 0 8 * * *）</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>档案</translation>
+    </message>
+    <message>
+        <source>Prompt</source>
+        <translation>提示词</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+</context>
+<context>
+    <name>CronPage</name>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>计划任务</translation>
+    </message>
+    <message>
+        <source>Jobs</source>
+        <translation>作业</translation>
+    </message>
+    <message>
+        <source>+ New job</source>
+        <translation>+ 新建作业</translation>
+    </message>
+    <message>
+        <source>next </source>
+        <translation>下次 </translation>
+    </message>
+    <message>
+        <source>  ·  last </source>
+        <translation>  ·  上次 </translation>
+    </message>
+    <message>
+        <source>Run now</source>
+        <translation>立即运行</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>编辑</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation>OAuth 登录尚不可用；请改为添加 API 密钥。</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation>无法连接到 daemon。请检查它是否在运行后重试。</translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation>daemon 报告其状态不健康。</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>未知</translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation>正在替换不兼容的本地 daemon（api %1，需要 %2）……</translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation>daemon 不兼容（api %1，需要 %2）。</translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation>正在重新连接……</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device.</source>
+        <translation>此设备上仅支持 WebSocket 连接（ws:// 或 wss://）。</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device</source>
+        <translation>此设备上仅支持 WebSocket 连接（ws:// 或 wss://）</translation>
+    </message>
+    <message>
+        <source>Unix socket target accepted</source>
+        <translation>已接受 Unix 套接字目标</translation>
+    </message>
+    <message>
+        <source>Enter a local socket path</source>
+        <translation>输入本地套接字路径</translation>
+    </message>
+    <message>
+        <source>Remote target accepted (host:port, TLS)</source>
+        <translation>已接受远程目标（host:port，TLS）</translation>
+    </message>
+    <message>
+        <source>Use host:port for a remote TLS node</source>
+        <translation>对远程 TLS 节点使用 host:port</translation>
+    </message>
+    <message>
+        <source>WebSocket target accepted (ws:// or wss://)</source>
+        <translation>已接受 WebSocket 目标（ws:// 或 wss://）</translation>
+    </message>
+    <message>
+        <source>Use ws://host:port or wss://host[:port][/path]</source>
+        <translation>使用 ws://host:port 或 wss://host[:port][/path]</translation>
+    </message>
+    <message>
+        <source>Unsupported transport</source>
+        <translation>不支持的传输方式</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonTransport</name>
+    <message>
+        <source>No daemon WebSocket target configured</source>
+        <translation>未配置 daemon WebSocket 目标</translation>
+    </message>
+    <message>
+        <source>No daemon target configured</source>
+        <translation>未配置 daemon 目标</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonTurnEngine</name>
+    <message>
+        <source>The turn timed out waiting for the agent.</source>
+        <translation>轮次在等待智能体时超时。</translation>
+    </message>
+    <message>
+        <source>No session is bound for this turn.</source>
+        <translation>此轮次未绑定任何会话。</translation>
+    </message>
+    <message>
+        <source>The connection to the agent was lost.</source>
+        <translation>与智能体的连接已丢失。</translation>
+    </message>
+    <message>
+        <source>Failed to read the agent&apos;s response stream.</source>
+        <translation>无法读取智能体的响应流。</translation>
+    </message>
+    <message>
+        <source>The turn ended: %1</source>
+        <translation>轮次已结束：%1</translation>
+    </message>
+    <message>
+        <source>The agent could not start the turn.</source>
+        <translation>智能体无法启动该轮次。</translation>
+    </message>
+    <message>
+        <source>The agent rejected the response.</source>
+        <translation>智能体拒绝了该响应。</translation>
+    </message>
+    <message>
+        <source>The session was reset; recovered from history.</source>
+        <translation>会话已重置；已从历史记录恢复。</translation>
+    </message>
+</context>
+<context>
+    <name>DashboardPage</name>
+    <message>
+        <source>Dashboard</source>
+        <translation>仪表盘</translation>
+    </message>
+    <message>
+        <source>Active sessions</source>
+        <translation>活动会话</translation>
+    </message>
+    <message>
+        <source>Running agents</source>
+        <translation>运行中的智能体</translation>
+    </message>
+    <message>
+        <source>Pending approvals</source>
+        <translation>待处理的审批</translation>
+    </message>
+    <message>
+        <source>Tokens today</source>
+        <translation>今日词元</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>确定</translation>
+    </message>
+    <message>
+        <source>!</source>
+        <translation>!</translation>
+    </message>
+    <message>
+        <source>Daemon health</source>
+        <translation>Daemon 健康状况</translation>
+    </message>
+    <message>
+        <source>Recent activity</source>
+        <translation>近期活动</translation>
+    </message>
+</context>
+<context>
+    <name>Dialog</name>
+    <message>
+        <source>OK</source>
+        <translation>确定</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+</context>
+<context>
+    <name>DiscoverDialog</name>
+    <message>
+        <source>Discover models</source>
+        <translation>发现模型</translation>
+    </message>
+    <message>
+        <source>Search Hugging Face repos (e.g. SmolLM2)</source>
+        <translation>搜索 Hugging Face 仓库（例如 SmolLM2）</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>搜索</translation>
+    </message>
+    <message>
+        <source>Searching…</source>
+        <translation>搜索中…</translation>
+    </message>
+    <message>
+        <source>by %1</source>
+        <translation>由 %1 提供</translation>
+    </message>
+    <message>
+        <source>Quantizations</source>
+        <translation>量化版本</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation>下载量</translation>
+    </message>
+    <message>
+        <source>Load more</source>
+        <translation>加载更多</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+</context>
+<context>
+    <name>DisplayPresenter</name>
+    <message>
+        <source>checking</source>
+        <comment>connection state</comment>
+        <translation>检查中</translation>
+    </message>
+    <message>
+        <source>connecting</source>
+        <comment>connection state</comment>
+        <translation>连接中</translation>
+    </message>
+    <message>
+        <source>authenticating</source>
+        <comment>connection state</comment>
+        <translation>认证中</translation>
+    </message>
+    <message>
+        <source>ready</source>
+        <comment>connection state</comment>
+        <translation>就绪</translation>
+    </message>
+    <message>
+        <source>offline</source>
+        <comment>connection state</comment>
+        <translation>离线</translation>
+    </message>
+    <message>
+        <source>needs setup</source>
+        <comment>connection state</comment>
+        <translation>需要设置</translation>
+    </message>
+    <message>
+        <source>working</source>
+        <comment>memory tier</comment>
+        <translation>工作中</translation>
+    </message>
+    <message>
+        <source>episodic</source>
+        <comment>memory tier</comment>
+        <translation>情景</translation>
+    </message>
+    <message>
+        <source>scratchpad</source>
+        <comment>memory tier</comment>
+        <translation>便笺</translation>
+    </message>
+    <message>
+        <source>stated</source>
+        <comment>memory veracity</comment>
+        <translation>陈述</translation>
+    </message>
+    <message>
+        <source>inferred</source>
+        <comment>memory veracity</comment>
+        <translation>推断</translation>
+    </message>
+    <message>
+        <source>tool</source>
+        <comment>memory veracity</comment>
+        <translation>工具</translation>
+    </message>
+    <message>
+        <source>imported</source>
+        <comment>memory veracity</comment>
+        <translation>导入</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <comment>memory veracity</comment>
+        <translation>未知</translation>
+    </message>
+    <message>
+        <source>active</source>
+        <comment>memory status</comment>
+        <translation>有效</translation>
+    </message>
+    <message>
+        <source>expired</source>
+        <comment>memory status</comment>
+        <translation>已过期</translation>
+    </message>
+    <message>
+        <source>superseded</source>
+        <comment>memory status</comment>
+        <translation>已取代</translation>
+    </message>
+    <message>
+        <source>hot</source>
+        <comment>memory degradation</comment>
+        <translation>热</translation>
+    </message>
+    <message>
+        <source>warm</source>
+        <comment>memory degradation</comment>
+        <translation>温</translation>
+    </message>
+    <message>
+        <source>cold</source>
+        <comment>memory degradation</comment>
+        <translation>冷</translation>
+    </message>
+    <message>
+        <source>memory</source>
+        <comment>memory node kind</comment>
+        <translation>记忆</translation>
+    </message>
+    <message>
+        <source>entity</source>
+        <comment>memory node kind</comment>
+        <translation>实体</translation>
+    </message>
+    <message>
+        <source>fact</source>
+        <comment>memory node kind</comment>
+        <translation>事实</translation>
+    </message>
+    <message>
+        <source>gist</source>
+        <comment>memory node kind</comment>
+        <translation>要点</translation>
+    </message>
+    <message>
+        <source>conflict</source>
+        <comment>memory node kind</comment>
+        <translation>冲突</translation>
+    </message>
+    <message>
+        <source>added</source>
+        <comment>memory event kind</comment>
+        <translation>已添加</translation>
+    </message>
+    <message>
+        <source>updated</source>
+        <comment>memory event kind</comment>
+        <translation>已更新</translation>
+    </message>
+    <message>
+        <source>recalled</source>
+        <comment>memory event kind</comment>
+        <translation>已召回</translation>
+    </message>
+    <message>
+        <source>invalidated</source>
+        <comment>memory event kind</comment>
+        <translation>已失效</translation>
+    </message>
+    <message>
+        <source>consolidated</source>
+        <comment>memory event kind</comment>
+        <translation>已整合</translation>
+    </message>
+    <message>
+        <source>snapshot</source>
+        <comment>memory event kind</comment>
+        <translation>快照</translation>
+    </message>
+    <message>
+        <source>high</source>
+        <comment>approval risk</comment>
+        <translation>高</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <comment>approval risk</comment>
+        <translation>中</translation>
+    </message>
+    <message>
+        <source>low</source>
+        <comment>approval risk</comment>
+        <translation>低</translation>
+    </message>
+    <message>
+        <source>queued</source>
+        <comment>download state</comment>
+        <translation>排队中</translation>
+    </message>
+    <message>
+        <source>paused</source>
+        <comment>download state</comment>
+        <translation>已暂停</translation>
+    </message>
+    <message>
+        <source>downloading</source>
+        <comment>download state</comment>
+        <translation>下载中</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <comment>download state</comment>
+        <translation>已完成</translation>
+    </message>
+    <message>
+        <source>failed</source>
+        <comment>download state</comment>
+        <translation>失败</translation>
+    </message>
+    <message>
+        <source>cancelled</source>
+        <comment>download state</comment>
+        <translation>已取消</translation>
+    </message>
+</context>
+<context>
+    <name>DownloadsPanel</name>
+    <message>
+        <source>Queued</source>
+        <translation>排队中</translation>
+    </message>
+    <message>
+        <source>Downloading</source>
+        <translation>下载中</translation>
+    </message>
+    <message>
+        <source>Paused</source>
+        <translation>已暂停</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>已完成</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>失败</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation>已取消</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>恢复</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>暂停</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>重试</translation>
+    </message>
+    <message>
+        <source>Use this model</source>
+        <translation>使用此模型</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>忽略</translation>
+    </message>
+    <message>
+        <source>file %1/%2</source>
+        <translation>文件 %1/%2</translation>
+    </message>
+</context>
+<context>
+    <name>EditMenu</name>
+    <message>
+        <source>Cut</source>
+        <translation>剪切</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>复制</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>粘贴</translation>
+    </message>
+    <message>
+        <source>Select All</source>
+        <translation>全选</translation>
+    </message>
+</context>
+<context>
+    <name>FileExplorer</name>
+    <message>
+        <source>Explorer</source>
+        <translation>资源管理器</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>刷新</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>全部折叠</translation>
+    </message>
+    <message>
+        <source>Go to file (Ctrl+P)</source>
+        <translation>转到文件（Ctrl+P）</translation>
+    </message>
+    <message>
+        <source>Search in files</source>
+        <translation>在文件中搜索</translation>
+    </message>
+    <message>
+        <source>Hide explorer</source>
+        <translation>隐藏资源管理器</translation>
+    </message>
+</context>
+<context>
+    <name>FileFinder</name>
+    <message numerus="yes">
+        <source>Indexing… (%n file(s))</source>
+        <translation>
+            <numerusform>正在索引…（%n 个文件）</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Go to file…</source>
+        <translation>转到文件…</translation>
+    </message>
+</context>
+<context>
+    <name>FileFinderDialog</name>
+    <message numerus="yes">
+        <source>Indexing… (%n file(s))</source>
+        <translation>
+            <numerusform>正在索引…（%n 个文件）</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>FilePage</name>
+    <message>
+        <source>Saving…</source>
+        <translation>正在保存…</translation>
+    </message>
+    <message>
+        <source>File is too large for editing and was loaded only partially.</source>
+        <translation>文件太大，无法编辑，仅加载了一部分。</translation>
+    </message>
+    <message>
+        <source>Save failed.</source>
+        <translation>保存失败。</translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation>已保存</translation>
+    </message>
+    <message>
+        <source>Large file — preview is truncated and editing is disabled.</source>
+        <translation>大文件 — 预览已截断，且已禁用编辑。</translation>
+    </message>
+    <message>
+        <source>Image preview is not available in the dev build.</source>
+        <translation>开发版构建中无法预览图片。</translation>
+    </message>
+    <message>
+        <source>Binary file — not shown.</source>
+        <translation>二进制文件 — 不予显示。</translation>
+    </message>
+</context>
+<context>
+    <name>FilePicker</name>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+</context>
+<context>
+    <name>FileTree</name>
+    <message>
+        <source>Retry</source>
+        <translation>重试</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunDialog</name>
+    <message>
+        <source>Setup Required</source>
+        <translation>需要设置</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon node to get started. Choose a transport:</source>
+        <translation>连接到 daemon 节点以开始。选择一种传输方式：</translation>
+    </message>
+    <message>
+        <source>Embedded</source>
+        <translation>内嵌</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation>本地</translation>
+    </message>
+    <message>
+        <source>Remote</source>
+        <translation>远程</translation>
+    </message>
+    <message>
+        <source>Agent name</source>
+        <translation>智能体名称</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>提供方</translation>
+    </message>
+    <message>
+        <source>List models</source>
+        <translation>列出模型</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <source>Test</source>
+        <translation>测试</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>连接</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>跳过</translation>
+    </message>
+    <message>
+        <source>Testing...</source>
+        <translation>测试中……</translation>
+    </message>
+    <message>
+        <source>OK — </source>
+        <translation>成功 — </translation>
+    </message>
+    <message>
+        <source>Failed — </source>
+        <translation>失败 — </translation>
+    </message>
+    <message>
+        <source>Local: App-managed (press to Attach instead)</source>
+        <translation>本地：应用管理（按此改为附加）</translation>
+    </message>
+    <message>
+        <source>Local: Attach to socket (press for App-managed)</source>
+        <translation>本地：附加到套接字（按此切换为应用管理）</translation>
+    </message>
+    <message>
+        <source>https://node.example:8080</source>
+        <comment>example remote connection target</comment>
+        <translation>https://node.example:8080</translation>
+    </message>
+    <message>
+        <source>Connecting...</source>
+        <translation>正在连接……</translation>
+    </message>
+    <message>
+        <source>Sign in to continue.</source>
+        <translation>登录以继续。</translation>
+    </message>
+    <message>
+        <source>Sign in</source>
+        <translation>登录</translation>
+    </message>
+    <message>
+        <source>Pick a provider and a model, then Finish.</source>
+        <translation>选择提供方和模型，然后点击完成。</translation>
+    </message>
+    <message>
+        <source>Finish</source>
+        <translation>完成</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunGate</name>
+    <message>
+        <source>Welcome to daemon-app</source>
+        <translation>欢迎使用 daemon-app</translation>
+    </message>
+    <message>
+        <source>Almost there - confirm an inference model.</source>
+        <translation>就快好了 - 请确认一个推理模型。</translation>
+    </message>
+    <message>
+        <source>Sign in to the node to continue.</source>
+        <translation>登录到节点以继续。</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon node to get started.</source>
+        <translation>连接到 daemon 节点以开始。</translation>
+    </message>
+    <message>
+        <source>Connecting to %1...</source>
+        <translation>正在连接到 %1……</translation>
+    </message>
+    <message>
+        <source>Sign in</source>
+        <translation>登录</translation>
+    </message>
+    <message>
+        <source>Username</source>
+        <translation>用户名</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>密码</translation>
+    </message>
+    <message>
+        <source>Signing in…</source>
+        <translation>正在登录…</translation>
+    </message>
+    <message>
+        <source>Agent name</source>
+        <translation>智能体名称</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation>智能体名称</translation>
+    </message>
+    <message>
+        <source>Skip for now</source>
+        <translation>暂时跳过</translation>
+    </message>
+    <message>
+        <source>Finish setup</source>
+        <translation>完成设置</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunModel</name>
+    <message>
+        <source>Could not reach the node. Check the target and try again.</source>
+        <translation>无法连接到节点。请检查目标后重试。</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation>无法通过 %1 验证此 API 密钥 — 请检查后重试。</translation>
+    </message>
+</context>
+<context>
+    <name>FleetPage</name>
+    <message>
+        <source>Fleet</source>
+        <translation>编队</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>刷新</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>恢复</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>暂停</translation>
+    </message>
+    <message>
+        <source>%1 · %2 · depth %3</source>
+        <translation>%1 · %2 · 深度 %3</translation>
+    </message>
+    <message>
+        <source>Workers</source>
+        <translation>工作单元</translation>
+    </message>
+    <message>
+        <source>Scale to %1</source>
+        <translation>扩缩到 %1</translation>
+    </message>
+    <message>
+        <source>No active subagents</source>
+        <translation>没有活动的子智能体</translation>
+    </message>
+</context>
+<context>
+    <name>FleetRepository</name>
+    <message>
+        <source>Unit control failed</source>
+        <translation>单元控制失败</translation>
+    </message>
+</context>
+<context>
+    <name>FontStyleButton</name>
+    <message>
+        <source>Sans</source>
+        <translation>无衬线</translation>
+    </message>
+    <message>
+        <source>Ag</source>
+        <comment>font specimen sample</comment>
+        <translation>Ag</translation>
+    </message>
+</context>
+<context>
+    <name>GatewayMenu</name>
+    <message>
+        <source>Gateway</source>
+        <translation>网关</translation>
+    </message>
+    <message>
+        <source>Open system</source>
+        <translation>打开系统</translation>
+    </message>
+    <message>
+        <source>View all logs</source>
+        <translation>查看所有日志</translation>
+    </message>
+    <message>
+        <source>connected</source>
+        <translation>已连接</translation>
+    </message>
+    <message>
+        <source>offline</source>
+        <translation>离线</translation>
+    </message>
+</context>
+<context>
+    <name>GraphView</name>
+    <message>
+        <source>No graph data</source>
+        <translation>无图数据</translation>
+    </message>
+</context>
+<context>
+    <name>ImageBlock</name>
+    <message>
+        <source>Loading image…</source>
+        <translation>正在加载图片…</translation>
+    </message>
+    <message>
+        <source>image unavailable</source>
+        <translation>图片不可用</translation>
+    </message>
+</context>
+<context>
+    <name>InteractiveTurnHost</name>
+    <message>
+        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
+</source>
+        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m 已批准 — 命令完成
+</translation>
+    </message>
+    <message>
+        <source>
+
+Thanks — proceeding with: %1
+</source>
+        <translation>
+
+谢谢 — 继续处理：%1
+</translation>
+    </message>
+</context>
+<context>
+    <name>LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation>找不到本地 daemon 可执行文件。请在设置中设置其路径，或改为连接到远程 daemon。</translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation>本地 daemon 反复崩溃（重启次数过多）。请检查其日志和你的配置。</translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation>无法启动本地 daemon（%1）。</translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation>本地 daemon 未能及时就绪。</translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation>不兼容的本地 daemon（pid %1）未能及时关闭。</translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
+        <translation>一个不兼容的 daemon 正在服务 %1，且没有 pidfile 记录其进程。请手动停止它并重新连接。</translation>
+    </message>
+    <message>
+        <source>A browser cannot start a local daemon. Connect to a WebSocket node instead.</source>
+        <translation>浏览器无法启动本地 daemon。请改为连接到 WebSocket 节点。</translation>
+    </message>
+    <message>
+        <source>A browser cannot manage a local daemon. Connect to a WebSocket node instead.</source>
+        <translation>浏览器无法管理本地 daemon。请改为连接到 WebSocket 节点。</translation>
+    </message>
+</context>
+<context>
+    <name>LocalDiskFsService</name>
+    <message>
+        <source>invalid path</source>
+        <translation>无效路径</translation>
+    </message>
+    <message>
+        <source>cannot open</source>
+        <translation>无法打开</translation>
+    </message>
+    <message>
+        <source>stale: file changed on disk</source>
+        <translation>已过期：文件在磁盘上已更改</translation>
+    </message>
+    <message>
+        <source>write failed</source>
+        <translation>写入失败</translation>
+    </message>
+</context>
+<context>
+    <name>Main</name>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Connection lost</source>
+        <translation>连接已丢失</translation>
+    </message>
+    <message>
+        <source>%1 (%2s)</source>
+        <translation>%1（%2 秒）</translation>
+    </message>
+    <message>
+        <source>Reconnect now</source>
+        <translation>立即重新连接</translation>
+    </message>
+    <message>
+        <source>Downloading update v%1… %2%</source>
+        <translation>正在下载更新 v%1… %2%</translation>
+    </message>
+    <message>
+        <source>Update v%1 is ready to install</source>
+        <translation>更新 v%1 已准备好安装</translation>
+    </message>
+    <message>
+        <source>Update available: v%1 → v%2</source>
+        <translation>有可用更新：v%1 → v%2</translation>
+    </message>
+    <message>
+        <source>Release notes</source>
+        <translation>发行说明</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>下载</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>打开</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>忽略</translation>
+    </message>
+</context>
+<context>
+    <name>MathBlock</name>
+    <message>
+        <source>Math error: </source>
+        <translation>数学错误： </translation>
+    </message>
+</context>
+<context>
+    <name>MemoryDetail</name>
+    <message>
+        <source>Trust</source>
+        <translation>信任</translation>
+    </message>
+    <message>
+        <source>veracity</source>
+        <translation>真实性</translation>
+    </message>
+    <message>
+        <source>trust tier</source>
+        <translation>信任层级</translation>
+    </message>
+    <message>
+        <source>trust weight</source>
+        <translation>信任权重</translation>
+    </message>
+    <message>
+        <source>Lifecycle</source>
+        <translation>生命周期</translation>
+    </message>
+    <message>
+        <source>tier</source>
+        <translation>层级</translation>
+    </message>
+    <message>
+        <source> · L</source>
+        <translation> · L</translation>
+    </message>
+    <message>
+        <source>degradation</source>
+        <translation>衰减</translation>
+    </message>
+    <message>
+        <source>status</source>
+        <translation>状态</translation>
+    </message>
+    <message>
+        <source>valid until</source>
+        <translation>有效期至</translation>
+    </message>
+    <message>
+        <source>superseded by</source>
+        <translation>取代者</translation>
+    </message>
+    <message>
+        <source>Weights</source>
+        <translation>权重</translation>
+    </message>
+    <message>
+        <source>importance</source>
+        <translation>重要性</translation>
+    </message>
+    <message>
+        <source>degradation w</source>
+        <translation>衰减权重</translation>
+    </message>
+    <message>
+        <source>effective w</source>
+        <translation>有效权重</translation>
+    </message>
+    <message>
+        <source>Provenance</source>
+        <translation>来源</translation>
+    </message>
+    <message>
+        <source>id</source>
+        <translation>id</translation>
+    </message>
+    <message>
+        <source>source</source>
+        <translation>来源</translation>
+    </message>
+    <message>
+        <source>session</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>scope</source>
+        <translation>范围</translation>
+    </message>
+    <message>
+        <source>recalls</source>
+        <translation>召回次数</translation>
+    </message>
+    <message>
+        <source>last recalled</source>
+        <translation>上次召回</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryGraphView</name>
+    <message>
+        <source>Association</source>
+        <translation>关联</translation>
+    </message>
+    <message>
+        <source>Knowledge</source>
+        <translation>知识</translation>
+    </message>
+    <message>
+        <source>Constellation</source>
+        <translation>星座</translation>
+    </message>
+    <message>
+        <source>Depth %1</source>
+        <translation>深度 %1</translation>
+    </message>
+    <message>
+        <source>Less depth</source>
+        <translation>减少深度</translation>
+    </message>
+    <message>
+        <source>More depth</source>
+        <translation>增加深度</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n node(s)</source>
+        <translation>
+            <numerusform>%n 个节点</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n edge(s)</source>
+        <translation>
+            <numerusform>%n 条边</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reset view / focus</source>
+        <translation>重置视图 / 焦点</translation>
+    </message>
+    <message>
+        <source>No graph data for this scope</source>
+        <translation>此范围没有图数据</translation>
+    </message>
+    <message>
+        <source> · degree </source>
+        <translation> · 度数 </translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>展开</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>清除</translation>
+    </message>
+    <message>
+        <source>Neighbours</source>
+        <translation>邻居</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryList</name>
+    <message>
+        <source>All tiers</source>
+        <translation>所有层级</translation>
+    </message>
+    <message>
+        <source>working</source>
+        <translation>工作中</translation>
+    </message>
+    <message>
+        <source>episodic</source>
+        <translation>情景</translation>
+    </message>
+    <message>
+        <source>scratchpad</source>
+        <translation>便笺</translation>
+    </message>
+    <message>
+        <source>All trust</source>
+        <translation>所有信任</translation>
+    </message>
+    <message>
+        <source>stated</source>
+        <translation>陈述</translation>
+    </message>
+    <message>
+        <source>inferred</source>
+        <translation>推断</translation>
+    </message>
+    <message>
+        <source>tool</source>
+        <translation>工具</translation>
+    </message>
+    <message>
+        <source>imported</source>
+        <translation>导入</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>未知</translation>
+    </message>
+    <message>
+        <source>recent</source>
+        <translation>最近</translation>
+    </message>
+    <message>
+        <source>importance</source>
+        <translation>重要性</translation>
+    </message>
+    <message>
+        <source>recall</source>
+        <translation>召回</translation>
+    </message>
+    <message>
+        <source>Search memories...</source>
+        <translation>搜索记忆……</translation>
+    </message>
+    <message>
+        <source>imp %1</source>
+        <translation>重要性 %1</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryOverview</name>
+    <message>
+        <source>Working</source>
+        <translation>工作</translation>
+    </message>
+    <message>
+        <source>Episodic</source>
+        <translation>情景</translation>
+    </message>
+    <message>
+        <source>Scratchpad</source>
+        <translation>便笺</translation>
+    </message>
+    <message>
+        <source>Total</source>
+        <translation>总计</translation>
+    </message>
+    <message>
+        <source>Facts</source>
+        <translation>事实</translation>
+    </message>
+    <message>
+        <source>Conflicts</source>
+        <translation>冲突</translation>
+    </message>
+    <message>
+        <source>By source</source>
+        <translation>按来源</translation>
+    </message>
+    <message>
+        <source>By veracity</source>
+        <translation>按真实性</translation>
+    </message>
+    <message>
+        <source>By lifecycle</source>
+        <translation>按生命周期</translation>
+    </message>
+    <message>
+        <source>By scope</source>
+        <translation>按范围</translation>
+    </message>
+    <message>
+        <source>By session</source>
+        <translation>按会话</translation>
+    </message>
+    <message>
+        <source>Live memory stream</source>
+        <translation>实时记忆流</translation>
+    </message>
+    <message>
+        <source>Waiting for memory activity...</source>
+        <translation>正在等待记忆活动……</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryPage</name>
+    <message>
+        <source>Overview</source>
+        <translation>概览</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>记忆</translation>
+    </message>
+    <message>
+        <source>Graph</source>
+        <translation>图</translation>
+    </message>
+    <message>
+        <source>Timeline</source>
+        <translation>时间线</translation>
+    </message>
+    <message>
+        <source>All sessions</source>
+        <translation>所有会话</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>记忆</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>Global: on</source>
+        <translation>全局：开</translation>
+    </message>
+    <message>
+        <source>Global: off</source>
+        <translation>全局：关</translation>
+    </message>
+</context>
+<context>
+    <name>MemorySettingsSection</name>
+    <message>
+        <source>Context window</source>
+        <translation>上下文窗口</translation>
+    </message>
+    <message>
+        <source>Max context tokens</source>
+        <translation>最大上下文词元数</translation>
+    </message>
+    <message>
+        <source>Auto-compact when context is full</source>
+        <translation>上下文已满时自动压缩</translation>
+    </message>
+    <message>
+        <source>Long-term memory</source>
+        <translation>长期记忆</translation>
+    </message>
+    <message>
+        <source>Persist memory across sessions</source>
+        <translation>跨会话持久保存记忆</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryTimeline</name>
+    <message>
+        <source>Group by</source>
+        <translation>分组依据</translation>
+    </message>
+    <message>
+        <source>Day</source>
+        <translation>天</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>会话</translation>
+    </message>
+</context>
+<context>
+    <name>MermaidBlock</name>
+    <message>
+        <source>Diagram error: %1</source>
+        <translation>图表错误：%1</translation>
+    </message>
+</context>
+<context>
+    <name>MessageHeader</name>
+    <message>
+        <source>You</source>
+        <translation>你</translation>
+    </message>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+</context>
+<context>
+    <name>MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation>智能体</translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation>用户</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPickerOverlay</name>
+    <message>
+        <source>Off</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>关</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>低</translation>
+    </message>
+    <message>
+        <source>Med</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>中</translation>
+    </message>
+    <message>
+        <source>Hig</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>高</translation>
+    </message>
+    <message>
+        <source>Filter models…</source>
+        <translation>筛选模型…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>推理</translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation>快速</translation>
+    </message>
+    <message>
+        <source>Verbose</source>
+        <translation>详细</translation>
+    </message>
+</context>
+<context>
+    <name>ModelRepository</name>
+    <message>
+        <source>Set-model operation failed</source>
+        <translation>设置模型操作失败</translation>
+    </message>
+    <message>
+        <source>Download could not be started</source>
+        <translation>无法开始下载</translation>
+    </message>
+    <message>
+        <source>Delete failed</source>
+        <translation>删除失败</translation>
+    </message>
+    <message>
+        <source>Activate failed</source>
+        <translation>激活失败</translation>
+    </message>
+</context>
+<context>
+    <name>ModelSettingsSection</name>
+    <message>
+        <source>Default model</source>
+        <translation>默认模型</translation>
+    </message>
+    <message>
+        <source>Active default</source>
+        <translation>当前默认</translation>
+    </message>
+    <message>
+        <source>Change or install models in the Models hub.</source>
+        <translation>在模型中心更改或安装模型。</translation>
+    </message>
+    <message>
+        <source>Open Models</source>
+        <translation>打开模型</translation>
+    </message>
+    <message>
+        <source>Inference</source>
+        <translation>推理</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>推理强度</translation>
+    </message>
+    <message>
+        <source>Fast mode (lower latency)</source>
+        <translation>快速模式（更低延迟）</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsDiscover</name>
+    <message>
+        <source>Search Hugging Face repos (e.g. SmolLM2)</source>
+        <translation>搜索 Hugging Face 仓库（例如 SmolLM2）</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>搜索</translation>
+    </message>
+    <message>
+        <source>Search for a model repo to browse its quantizations.</source>
+        <translation>搜索模型仓库以浏览其量化版本。</translation>
+    </message>
+    <message>
+        <source>by %1</source>
+        <translation>由 %1 提供</translation>
+    </message>
+    <message>
+        <source>Quantizations</source>
+        <translation>量化版本</translation>
+    </message>
+    <message>
+        <source>Load more</source>
+        <translation>加载更多</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsDownloads</name>
+    <message>
+        <source>No active downloads.
+Start one from the Discover tab.</source>
+        <translation>没有进行中的下载。
+可从“发现”标签页开始一个下载。</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsInstalled</name>
+    <message>
+        <source>No models installed yet.</source>
+        <translation>尚未安装任何模型。</translation>
+    </message>
+    <message>
+        <source>ACTIVE</source>
+        <translation>使用中</translation>
+    </message>
+    <message>
+        <source>PROJECTOR</source>
+        <translation>投影器</translation>
+    </message>
+    <message>
+        <source>VISION</source>
+        <translation>视觉</translation>
+    </message>
+    <message>
+        <source> GiB</source>
+        <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation>使用中</translation>
+    </message>
+    <message>
+        <source>Activate</source>
+        <translation>激活</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>移除</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsPage</name>
+    <message>
+        <source>Discover</source>
+        <translation>发现</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation>下载量</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>已安装</translation>
+    </message>
+    <message>
+        <source>Providers</source>
+        <translation>提供方</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>模型</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsProviders</name>
+    <message>
+        <source>Local runtime</source>
+        <translation>本地运行时</translation>
+    </message>
+    <message>
+        <source>Remote API</source>
+        <translation>远程 API</translation>
+    </message>
+    <message>
+        <source>Configured</source>
+        <translation>已配置</translation>
+    </message>
+    <message>
+        <source>Manage</source>
+        <translation>管理</translation>
+    </message>
+    <message>
+        <source>Configure</source>
+        <translation>配置</translation>
+    </message>
+</context>
+<context>
+    <name>NewAgentDialog</name>
+    <message>
+        <source>New agent</source>
+        <translation>新建智能体</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>创建</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>名称</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation>智能体名称</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>引擎</translation>
+    </message>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core（原生）</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>已安装</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>未安装</translation>
+    </message>
+    <message>
+        <source>Persona (optional)</source>
+        <translation>人设（可选）</translation>
+    </message>
+    <message>
+        <source>system prompt</source>
+        <translation>系统提示词</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
+        <translation>此智能体运行外部 ACP 引擎。其启动配方由 daemon 的 ACP 目录管理 — 无需配置提供方、模型或密钥。</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>名称：</translation>
+    </message>
+    <message>
+        <source>Engine (Enter to pick):</source>
+        <translation>引擎（按 Enter 选择）：</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+</context>
+<context>
+    <name>NodeApiClient</name>
+    <message>
+        <source>request timed out</source>
+        <translation>请求超时</translation>
+    </message>
+    <message>
+        <source>daemon connection closed</source>
+        <translation>daemon 连接已关闭</translation>
+    </message>
+    <message>
+        <source>authentication required</source>
+        <translation>需要认证</translation>
+    </message>
+    <message>
+        <source>authentication failed</source>
+        <translation>认证失败</translation>
+    </message>
+    <message>
+        <source>stream ended in error</source>
+        <translation>流以错误结束</translation>
+    </message>
+    <message>
+        <source>the request failed</source>
+        <translation>请求失败</translation>
+    </message>
+</context>
+<context>
+    <name>NotificationsSection</name>
+    <message>
+        <source>Desktop notifications</source>
+        <translation>桌面通知</translation>
+    </message>
+    <message>
+        <source>Notify when a turn needs my input</source>
+        <translation>当轮次需要我的输入时通知</translation>
+    </message>
+    <message>
+        <source>Notify when a turn finishes</source>
+        <translation>当轮次完成时通知</translation>
+    </message>
+    <message>
+        <source>Send a test notification</source>
+        <translation>发送测试通知</translation>
+    </message>
+    <message>
+        <source>daemon-app</source>
+        <translation>daemon-app</translation>
+    </message>
+    <message>
+        <source>Notifications are working.</source>
+        <translation>通知功能正常。</translation>
+    </message>
+    <message>
+        <source>Notifications only appear while the window is hidden or inactive.</source>
+        <translation>通知仅在窗口隐藏或非活动时显示。</translation>
+    </message>
+</context>
+<context>
+    <name>Placeholder</name>
+    <message>
+        <source>Coming soon</source>
+        <translation>即将推出</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileEditor</name>
+    <message>
+        <source>Select or create a profile.</source>
+        <translation>选择或创建一个档案。</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>档案</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>默认</translation>
+    </message>
+    <message>
+        <source>Make default</source>
+        <translation>设为默认</translation>
+    </message>
+    <message>
+        <source>Export profile</source>
+        <translation>导出档案</translation>
+    </message>
+    <message>
+        <source>Import profile</source>
+        <translation>导入档案</translation>
+    </message>
+    <message>
+        <source>Delete profile</source>
+        <translation>删除档案</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>名称</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>提供方</translation>
+    </message>
+    <message>
+        <source>Current provider: %1 (test provider — not selectable)</source>
+        <translation>当前提供方：%1（测试提供方 — 不可选）</translation>
+    </message>
+    <message>
+        <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
+        <translation>基础 URL（可选，例如 https://api.daemon.ai/api/v1）</translation>
+    </message>
+    <message>
+        <source>Credential: connected%1</source>
+        <translation>凭据：已连接%1</translation>
+    </message>
+    <message>
+        <source>Credential: none — add a key</source>
+        <translation>凭据：无 — 添加密钥</translation>
+    </message>
+    <message>
+        <source>Set key</source>
+        <translation>设置密钥</translation>
+    </message>
+    <message>
+        <source>Short description</source>
+        <translation>简短描述</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>系统提示词</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>技能</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>工具</translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation>历史</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>隐藏</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>显示</translation>
+    </message>
+    <message>
+        <source>Version history needs a durable daemon.</source>
+        <translation>版本历史需要持久的 daemon。</translation>
+    </message>
+    <message>
+        <source>No revisions yet.</source>
+        <translation>尚无修订。</translation>
+    </message>
+    <message>
+        <source>#%1</source>
+        <translation>#%1</translation>
+    </message>
+    <message>
+        <source>operator</source>
+        <translation>操作员</translation>
+    </message>
+    <message>
+        <source>agent %1</source>
+        <translation>智能体 %1</translation>
+    </message>
+    <message>
+        <source>Revert to this</source>
+        <translation>还原到此</translation>
+    </message>
+    <message>
+        <source>Discard changes</source>
+        <translation>放弃更改</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>Profile distributions (*.dist)</source>
+        <translation>档案分发文件 (*.dist)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>所有文件 (*)</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileEditorDialog</name>
+    <message>
+        <source>Edit profile — %1</source>
+        <translation>编辑档案 — %1</translation>
+    </message>
+    <message>
+        <source>Enter on a row edits it · Save commits · Esc discards</source>
+        <translation>在某行按 Enter 编辑 · Save 提交 · Esc 放弃</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>名称</translation>
+    </message>
+    <message>
+        <source>Engine: ACP agent · %1 (set at create time)</source>
+        <translation>引擎：ACP 智能体 · %1（创建时设置）</translation>
+    </message>
+    <message>
+        <source>Engine: daemon-core (native)</source>
+        <translation>引擎：daemon-core（原生）</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>提供方</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>基础 URL</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>（提供方默认）</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <source>(pick a model)</source>
+        <translation>（选择一个模型）</translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>描述</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>系统提示词</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>技能</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>工具</translation>
+    </message>
+    <message>
+        <source>%1 (test provider — not selectable)</source>
+        <translation>%1（测试提供方 — 不可选）</translation>
+    </message>
+    <message>
+        <source>(pick a provider)</source>
+        <translation>（选择一个提供方）</translation>
+    </message>
+    <message>
+        <source>Profile name</source>
+        <translation>档案名称</translation>
+    </message>
+    <message>
+        <source>Base URL (empty = provider default)</source>
+        <translation>基础 URL（留空 = 提供方默认）</translation>
+    </message>
+    <message>
+        <source>Short description</source>
+        <translation>简短描述</translation>
+    </message>
+    <message>
+        <source>download</source>
+        <translation>下载</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>当前</translation>
+    </message>
+    <message>
+        <source>Enter inserts a newline · Tab reaches the buttons</source>
+        <translation>Enter 插入换行 · Tab 移到按钮</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>确定</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileRepository</name>
+    <message>
+        <source>Profile import failed</source>
+        <translation>档案导入失败</translation>
+    </message>
+    <message>
+        <source>Version history unavailable</source>
+        <translation>版本历史不可用</translation>
+    </message>
+    <message>
+        <source>Profile revert failed</source>
+        <translation>档案还原失败</translation>
+    </message>
+    <message>
+        <source>Profile operation failed</source>
+        <translation>档案操作失败</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileToggleListDialog</name>
+    <message>
+        <source>Enter / Space toggles · Esc done</source>
+        <translation>Enter / Space 切换 · Esc 完成</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>已完成</translation>
+    </message>
+</context>
+<context>
+    <name>ProfilesPage</name>
+    <message>
+        <source>Exported profile</source>
+        <translation>已导出档案</translation>
+    </message>
+    <message>
+        <source>Imported %1</source>
+        <translation>已导入 %1</translation>
+    </message>
+    <message>
+        <source>Reverted %1</source>
+        <translation>已还原 %1</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>档案</translation>
+    </message>
+    <message>
+        <source>+ New profile</source>
+        <translation>+ 新建档案</translation>
+    </message>
+    <message>
+        <source>New profile</source>
+        <translation>新建档案</translation>
+    </message>
+    <message>
+        <source>Profile id (e.g. work)</source>
+        <translation>档案 id（例如 work）</translation>
+    </message>
+    <message>
+        <source>Empty profile</source>
+        <translation>空档案</translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <source>All syntax definitions are up-to-date.</source>
+        <translation>所有语法定义均为最新。</translation>
+    </message>
+    <message>
+        <source>Downloading new syntax definition for &apos;%1&apos;…</source>
+        <comment>@info</comment>
+        <translation>正在下载“%1”的新语法定义…</translation>
+    </message>
+    <message>
+        <source>Updating syntax definition for &apos;%1&apos; to version %2…</source>
+        <comment>@info</comment>
+        <translation>正在将“%1”的语法定义更新到版本 %2…</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <comment>language picker</comment>
+        <translation>系统默认</translation>
+    </message>
+    <message>
+        <source>Show/Hide %1</source>
+        <translation>显示/隐藏 %1</translation>
+    </message>
+    <message>
+        <source>Quit</source>
+        <translation>退出</translation>
+    </message>
+    <message>
+        <source>application directory is unknown</source>
+        <translation>应用程序目录未知</translation>
+    </message>
+    <message>
+        <source>update helper (daemon-updater) not found next to the app</source>
+        <translation>应用旁未找到更新助手（daemon-updater）</translation>
+    </message>
+    <message>
+        <source>no staged installer to run</source>
+        <translation>没有暂存的安装程序可运行</translation>
+    </message>
+    <message>
+        <source>missing installer checksum</source>
+        <translation>缺少安装程序校验和</translation>
+    </message>
+    <message>
+        <source>relaunch target (installed app) is unknown</source>
+        <translation>重新启动目标（已安装的应用）未知</translation>
+    </message>
+    <message>
+        <source>Unsupported or empty diagram</source>
+        <translation>不支持或空的图表</translation>
+    </message>
+    <message>
+        <source>Unsupported diagram: %1</source>
+        <translation>不支持的图表：%1</translation>
+    </message>
+    <message>
+        <source>Parse error</source>
+        <translation>解析错误</translation>
+    </message>
+    <message>
+        <source>No nodes found</source>
+        <translation>未找到节点</translation>
+    </message>
+    <message>
+        <source>Answered</source>
+        <translation>已回答</translation>
+    </message>
+    <message>
+        <source>Needs your input</source>
+        <translation>需要你的输入</translation>
+    </message>
+    <message>
+        <source>Working</source>
+        <translation>工作</translation>
+    </message>
+    <message>
+        <source>Running %1</source>
+        <translation>正在运行 %1</translation>
+    </message>
+    <message>
+        <source>Tool failed</source>
+        <translation>工具失败</translation>
+    </message>
+    <message>
+        <source>Tool</source>
+        <translation>工具</translation>
+    </message>
+    <message>
+        <source>image load failed</source>
+        <translation>图片加载失败</translation>
+    </message>
+    <message>
+        <source>Start a new session</source>
+        <translation>开始新会话</translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <comment>completion group</comment>
+        <translation>命令</translation>
+    </message>
+    <message>
+        <source>Open theme &amp; settings</source>
+        <translation>打开主题和设置</translation>
+    </message>
+    <message>
+        <source>Toggle distraction-free</source>
+        <translation>切换无干扰</translation>
+    </message>
+    <message>
+        <source>Clear the composer</source>
+        <translation>清空编写器</translation>
+    </message>
+    <message>
+        <source>Rewind &amp; re-run the last message</source>
+        <translation>回退并重新运行上一条消息</translation>
+    </message>
+    <message>
+        <source>Rewind &amp; edit the last message</source>
+        <translation>回退并编辑上一条消息</translation>
+    </message>
+    <message>
+        <source>Undo the last exchange</source>
+        <translation>撤销上一次交互</translation>
+    </message>
+    <message>
+        <source>Choose the active model</source>
+        <translation>选择当前模型</translation>
+    </message>
+    <message>
+        <source>Rename this session</source>
+        <translation>重命名此会话</translation>
+    </message>
+    <message>
+        <source>Export the transcript (JSON)</source>
+        <translation>导出对话记录（JSON）</translation>
+    </message>
+    <message>
+        <source>Search this transcript</source>
+        <translation>搜索此对话记录</translation>
+    </message>
+    <message>
+        <source>Show token usage &amp; cost</source>
+        <translation>显示词元用量和费用</translation>
+    </message>
+    <message>
+        <source>Compress the context window</source>
+        <translation>压缩上下文窗口</translation>
+    </message>
+    <message>
+        <source>Open the command palette</source>
+        <translation>打开命令面板</translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation>打开设置</translation>
+    </message>
+    <message>
+        <source>Go to</source>
+        <comment>completion group</comment>
+        <translation>转到</translation>
+    </message>
+    <message>
+        <source>Open the dashboard</source>
+        <translation>打开仪表盘</translation>
+    </message>
+    <message>
+        <source>Open the models hub</source>
+        <translation>打开模型中心</translation>
+    </message>
+    <message>
+        <source>Open accounts</source>
+        <translation>打开账户</translation>
+    </message>
+    <message>
+        <source>Open profiles</source>
+        <translation>打开档案</translation>
+    </message>
+    <message>
+        <source>Open the fleet view</source>
+        <translation>打开编队视图</translation>
+    </message>
+    <message>
+        <source>Open the sessions roster</source>
+        <translation>打开会话名单</translation>
+    </message>
+    <message>
+        <source>Open the approvals inbox</source>
+        <translation>打开审批收件箱</translation>
+    </message>
+    <message>
+        <source>Open the routing matrix</source>
+        <translation>打开路由矩阵</translation>
+    </message>
+    <message>
+        <source>Open scheduled jobs</source>
+        <translation>打开计划任务</translation>
+    </message>
+    <message>
+        <source>Project readme</source>
+        <translation>项目自述文件</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <comment>completion group</comment>
+        <translation>文件</translation>
+    </message>
+    <message>
+        <source>Composer component</source>
+        <translation>编写器组件</translation>
+    </message>
+    <message>
+        <source>Theme tokens</source>
+        <translation>主题令牌</translation>
+    </message>
+    <message>
+        <source>New session</source>
+        <translation>新建会话</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source># Settings
+
+A generic, non-transcript page hosted by the same tab strip.
+
+- Press **F8** to cycle the theme (Light / Dark / Sepia / Midnight)
+- **Ctrl+T** opens a new transcript tab
+- **Ctrl+W** closes the current tab
+- **Ctrl+Tab** / **Ctrl+Shift+Tab** switch tabs (wrapping)
+- **Alt+1..9** jumps directly to tab N
+- **Tab** cycles panes, including the tab strip; when it is focused, **Left**/**Right** switch tabs, **Enter** pins a preview, **Delete** closes
+- In an interactive block (approval / clarify): **Up**/**Down**/**Left**/**Right** move between controls, **Space** toggles, **Enter** submits, **Tab** leaves to the next pane
+- In the transcript: **r** opens the rewind picker over your prior messages (**Up**/**Down** to choose, **Enter** restores &amp; re-runs, **e** edits in the composer, **Esc** cancels)
+- **/retry**, **/edit**, **/undo** rewind the last message from the composer
+</source>
+        <translation># 设置
+
+由同一标签栏托管的通用（非对话记录）页面。
+
+- 按 **F8** 循环切换主题（浅色 / 深色 / 棕褐 / 午夜）
+- **Ctrl+T** 打开新的对话记录标签页
+- **Ctrl+W** 关闭当前标签页
+- **Ctrl+Tab** / **Ctrl+Shift+Tab** 切换标签页（循环）
+- **Alt+1..9** 直接跳转到第 N 个标签页
+- **Tab** 在各窗格间循环（包括标签栏）；当标签栏获得焦点时，**Left**/**Right** 切换标签页，**Enter** 固定预览，**Delete** 关闭
+- 在交互块中（审批 / 澄清）：**Up**/**Down**/**Left**/**Right** 在控件间移动，**Space** 切换，**Enter** 提交，**Tab** 离开到下一个窗格
+- 在对话记录中：**r** 在你之前的消息上打开回退选择器（**Up**/**Down** 选择，**Enter** 还原并重新运行，**e** 在编写器中编辑，**Esc** 取消）
+- **/retry**、**/edit**、**/undo** 从编写器回退上一条消息
+</translation>
+    </message>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>YOU</source>
+        <translation>你</translation>
+    </message>
+    <message>
+        <source>DAEMON</source>
+        <translation>DAEMON</translation>
+    </message>
+    <message>
+        <source>Reasoning…</source>
+        <translation>推理中…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>推理</translation>
+    </message>
+    <message>
+        <source>[image: </source>
+        <translation>[图片： </translation>
+    </message>
+    <message>
+        <source>The agent needs your input.</source>
+        <translation>智能体需要你的输入。</translation>
+    </message>
+    <message>
+        <source>⚠ Approve: </source>
+        <translation>⚠ 批准： </translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>批准</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>拒绝</translation>
+    </message>
+    <message>
+        <source>Allow permanently</source>
+        <translation>永久允许</translation>
+    </message>
+    <message>
+        <source>Type a reply…</source>
+        <translation>输入回复…</translation>
+    </message>
+    <message>
+        <source>Or type a reply…</source>
+        <translation>或输入回复…</translation>
+    </message>
+    <message>
+        <source>  (select all that apply)</source>
+        <translation>  （选择所有适用项）</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>提交</translation>
+    </message>
+    <message>
+        <source>code</source>
+        <translation>代码</translation>
+    </message>
+    <message>
+        <source>[image] </source>
+        <translation>[图片] </translation>
+    </message>
+    <message>
+        <source>[math] </source>
+        <translation>[数学] </translation>
+    </message>
+</context>
+<context>
+    <name>QuantPickerPopup</name>
+    <message>
+        <source>Choose a quantization</source>
+        <translation>选择一个量化版本</translation>
+    </message>
+    <message>
+        <source>Recommended: %1</source>
+        <translation>推荐：%1</translation>
+    </message>
+    <message>
+        <source>fits</source>
+        <translation>适配</translation>
+    </message>
+    <message>
+        <source>tight</source>
+        <translation>勉强</translation>
+    </message>
+    <message>
+        <source>Download recommended</source>
+        <translation>下载推荐版本</translation>
+    </message>
+    <message>
+        <source>Available files</source>
+        <translation>可用文件</translation>
+    </message>
+    <message>
+        <source>Hide advanced</source>
+        <translation>隐藏高级选项</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>高级</translation>
+    </message>
+    <message>
+        <source>RECOMMENDED</source>
+        <translation>推荐</translation>
+    </message>
+    <message>
+        <source>PROJECTOR</source>
+        <translation>投影器</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>下载</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+</context>
+<context>
+    <name>QueuePanel</name>
+    <message>
+        <source>Queued (%1)</source>
+        <translation>已排队（%1）</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>排队中</translation>
+    </message>
+    <message>
+        <source>Send next (interrupts)</source>
+        <translation>下一条发送（打断）</translation>
+    </message>
+    <message>
+        <source>Send now</source>
+        <translation>立即发送</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>编辑</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>移除</translation>
+    </message>
+</context>
+<context>
+    <name>QuitDialog</name>
+    <message>
+        <source>Quit</source>
+        <translation>退出</translation>
+    </message>
+    <message>
+        <source>Quit daemon-app?</source>
+        <translation>退出 daemon-app？</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+</context>
+<context>
+    <name>ReasoningBlock</name>
+    <message>
+        <source>Reasoning…</source>
+        <translation>推理中…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>推理</translation>
+    </message>
+</context>
+<context>
+    <name>RootWidget</name>
+    <message>
+        <source>Profile</source>
+        <translation>档案</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>记忆</translation>
+    </message>
+    <message>
+        <source>Delete session</source>
+        <translation>删除会话</translation>
+    </message>
+    <message>
+        <source>Permanently delete this session?</source>
+        <translation>永久删除此会话？</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>重命名会话</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>清空会话</translation>
+    </message>
+    <message>
+        <source>Remove all messages from this session?</source>
+        <translation>从此会话中移除所有消息？</translation>
+    </message>
+    <message>
+        <source>daemon</source>
+        <translation>daemon</translation>
+    </message>
+    <message>
+        <source>The turn finished.</source>
+        <translation>轮次已完成。</translation>
+    </message>
+    <message>
+        <source>approval</source>
+        <translation>审批</translation>
+    </message>
+    <message>
+        <source>credential</source>
+        <translation>凭据</translation>
+    </message>
+    <message>
+        <source>● daemon — needs %1</source>
+        <translation>● daemon — 需要 %1</translation>
+    </message>
+    <message>
+        <source>The turn needs your %1.</source>
+        <translation>轮次需要你的 %1。</translation>
+    </message>
+    <message>
+        <source>Secret required</source>
+        <translation>需要密文</translation>
+    </message>
+    <message>
+        <source>Password required</source>
+        <translation>需要密码</translation>
+    </message>
+    <message>
+        <source>New session</source>
+        <translation>新建会话</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>会话设置</translation>
+    </message>
+    <message>
+        <source>Enter / Space on a row cycles or toggles it · Esc closes</source>
+        <translation>在某行按 Enter / Space 循环或切换 · Esc 关闭</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <source>Profile: %1</source>
+        <translation>档案：%1</translation>
+    </message>
+    <message>
+        <source>Effort:  %1</source>
+        <translation>强度：%1</translation>
+    </message>
+    <message>
+        <source>Fast:    %1</source>
+        <translation>快速：%1</translation>
+    </message>
+    <message>
+        <source>on</source>
+        <translation>开</translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation>关</translation>
+    </message>
+    <message>
+        <source>Verbose: %1</source>
+        <translation>详细：%1</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2  ·  %3 tok%4</source>
+        <translation>%1  ·  %2  ·  %3 词元%4</translation>
+    </message>
+    <message>
+        <source>  (current)</source>
+        <translation>  （当前）</translation>
+    </message>
+    <message>
+        <source>(no checkpoints)</source>
+        <translation>（没有检查点）</translation>
+    </message>
+    <message>
+        <source>Checkpoints</source>
+        <translation>检查点</translation>
+    </message>
+    <message>
+        <source>Enter restores the selected checkpoint · Esc closes</source>
+        <translation>Enter 还原所选检查点 · Esc 关闭</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>恢复</translation>
+    </message>
+    <message>
+        <source> 0/0 </source>
+        <comment>search match counter (no matches)</comment>
+        <translation> 0/0 </translation>
+    </message>
+    <message>
+        <source> %1/%2 </source>
+        <comment>search match counter (current/total)</comment>
+        <translation> %1/%2 </translation>
+    </message>
+    <message>
+        <source>Tasks:  </source>
+        <translation>任务：  </translation>
+    </message>
+    <message>
+        <source>Subagents:  </source>
+        <translation>子智能体：  </translation>
+    </message>
+</context>
+<context>
+    <name>RouteDialog</name>
+    <message>
+        <source>Edit route</source>
+        <translation>编辑路由</translation>
+    </message>
+    <message>
+        <source>Add route</source>
+        <translation>添加路由</translation>
+    </message>
+    <message>
+        <source>(inherit)</source>
+        <translation>（继承）</translation>
+    </message>
+    <message>
+        <source>Currently: → %1 as %2 · decided by %3</source>
+        <translation>当前：→ %1 作为 %2 · 由 %3 决定</translation>
+    </message>
+    <message>
+        <source>Currently: unrouted (deterministic)</source>
+        <translation>当前：未路由（确定性）</translation>
+    </message>
+    <message>
+        <source>Origin (where it comes from)</source>
+        <translation>来源（消息的来源）</translation>
+    </message>
+    <message>
+        <source>Session (the conversation)</source>
+        <translation>会话（对话）</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>智能体</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Save route</source>
+        <translation>保存路由</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingPage</name>
+    <message>
+        <source>Routing</source>
+        <translation>路由</translation>
+    </message>
+    <message>
+        <source>Routes</source>
+        <translation>路由</translation>
+    </message>
+    <message>
+        <source>+ Add route</source>
+        <translation>+ 添加路由</translation>
+    </message>
+    <message>
+        <source>(inherit)</source>
+        <translation>（继承）</translation>
+    </message>
+    <message>
+        <source>Edit route</source>
+        <translation>编辑路由</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>取消固定</translation>
+    </message>
+    <message>
+        <source>Delivery · </source>
+        <translation>投递 · </translation>
+    </message>
+    <message>
+        <source>Delivery</source>
+        <translation>投递</translation>
+    </message>
+    <message>
+        <source>Select a route to see where its replies go</source>
+        <translation>选择一个路由以查看其回复的去向</translation>
+    </message>
+    <message>
+        <source>No delivery targets</source>
+        <translation>没有投递目标</translation>
+    </message>
+    <message>
+        <source>PRIMARY</source>
+        <translation>主要</translation>
+    </message>
+    <message>
+        <source>Make primary</source>
+        <translation>设为主要</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingTopology</name>
+    <message>
+        <source>— pinned</source>
+        <translation>— 已固定</translation>
+    </message>
+    <message>
+        <source>·· derived</source>
+        <translation>·· 派生</translation>
+    </message>
+    <message>
+        <source>- - spectator</source>
+        <translation>- - 旁观者</translation>
+    </message>
+</context>
+<context>
+    <name>SafetySettingsSection</name>
+    <message>
+        <source>Approvals</source>
+        <translation>审批</translation>
+    </message>
+    <message>
+        <source>Approval policy</source>
+        <translation>审批策略</translation>
+    </message>
+    <message>
+        <source>When the agent must ask before running tools.</source>
+        <translation>智能体在运行工具前必须询问的时机。</translation>
+    </message>
+    <message>
+        <source>Sandbox</source>
+        <translation>沙盒</translation>
+    </message>
+    <message>
+        <source>Filesystem access</source>
+        <translation>文件系统访问</translation>
+    </message>
+    <message>
+        <source>Allow network access</source>
+        <translation>允许网络访问</translation>
+    </message>
+</context>
+<context>
+    <name>SearchInputBox</name>
+    <message>
+        <source>Search sessions</source>
+        <translation>搜索会话</translation>
+    </message>
+</context>
+<context>
+    <name>SearchResults</name>
+    <message>
+        <source>Search in workspace…</source>
+        <translation>在工作区中搜索…</translation>
+    </message>
+</context>
+<context>
+    <name>SearchResultsList</name>
+    <message>
+        <source>result</source>
+        <translation>结果</translation>
+    </message>
+</context>
+<context>
+    <name>Session</name>
+    <message>
+        <source>Session</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>文件</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>设置</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>账户</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>档案</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>编队</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>仪表盘</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>审批</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>路由</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>计划任务</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>频道</translation>
+    </message>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>用户与访问</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>记忆</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>档案</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation>返回</translation>
+    </message>
+    <message>
+        <source>Select a session</source>
+        <translation>选择一个会话</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>重命名会话</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>重命名</translation>
+    </message>
+    <message>
+        <source>Session title</source>
+        <translation>会话标题</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>导出对话记录</translation>
+    </message>
+    <message>
+        <source>JSON files (*.json)</source>
+        <translation>JSON 文件 (*.json)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>所有文件 (*)</translation>
+    </message>
+</context>
+<context>
+    <name>SessionChrome</name>
+    <message>
+        <source>Still thinking…</source>
+        <translation>仍在思考…</translation>
+    </message>
+    <message>
+        <source>Thinking… %1s</source>
+        <translation>思考中… %1s</translation>
+    </message>
+    <message>
+        <source>Thinking…</source>
+        <translation>思考中…</translation>
+    </message>
+</context>
+<context>
+    <name>SessionOrchestrator</name>
+    <message>
+        <source>(steer) </source>
+        <translation>（引导） </translation>
+    </message>
+    <message>
+        <source>Inspect the project</source>
+        <translation>检查项目</translation>
+    </message>
+    <message>
+        <source>Run the checks</source>
+        <translation>运行检查</translation>
+    </message>
+    <message>
+        <source>Summarize the result</source>
+        <translation>汇总结果</translation>
+    </message>
+</context>
+<context>
+    <name>SessionRepository</name>
+    <message>
+        <source>SessionCreate failed</source>
+        <translation>SessionCreate 失败</translation>
+    </message>
+</context>
+<context>
+    <name>SessionSettingsPopover</name>
+    <message>
+        <source>Off</source>
+        <translation>关</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <translation>低</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>中</translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation>高</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>会话设置</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>档案</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>推理强度</translation>
+    </message>
+    <message>
+        <source>Approval mode</source>
+        <translation>审批模式</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>编辑</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>自动</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>拒绝</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>询问</translation>
+    </message>
+    <message>
+        <source>Fast mode</source>
+        <translation>快速模式</translation>
+    </message>
+    <message>
+        <source>Verbose</source>
+        <translation>详细</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsList</name>
+    <message>
+        <source>Rename…</source>
+        <translation>重命名…</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>取消固定</translation>
+    </message>
+    <message>
+        <source>Pin</source>
+        <translation>固定</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>上移</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>下移</translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation>导出…</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>删除</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>重命名会话</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>重命名</translation>
+    </message>
+    <message>
+        <source>Session title</source>
+        <translation>会话标题</translation>
+    </message>
+    <message>
+        <source>Delete session</source>
+        <translation>删除会话</translation>
+    </message>
+    <message>
+        <source>Permanently delete this session? This cannot be undone.</source>
+        <translation>永久删除此会话？此操作无法撤销。</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>导出对话记录</translation>
+    </message>
+    <message>
+        <source>JSON files (*.json)</source>
+        <translation>JSON 文件 (*.json)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>所有文件 (*)</translation>
+    </message>
+    <message>
+        <source>Collapse sidebar</source>
+        <translation>折叠侧边栏</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>%n 个会话</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Trash</source>
+        <translation>回收站</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>搜索</translation>
+    </message>
+    <message>
+        <source>Search sessions</source>
+        <translation>搜索会话</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation>关闭搜索</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsListModel</name>
+    <message>
+        <source>All Sessions</source>
+        <translation>所有会话</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>已归档</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>智能体</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation>标签</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>（无标题）</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsPage</name>
+    <message>
+        <source>Sessions</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>LIVE</source>
+        <translation>实时</translation>
+    </message>
+    <message>
+        <source>DURABLE</source>
+        <translation>持久</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> 词元</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>恢复</translation>
+    </message>
+    <message>
+        <source>Suspend</source>
+        <translation>挂起</translation>
+    </message>
+    <message>
+        <source>Close session</source>
+        <translation>关闭会话</translation>
+    </message>
+    <message>
+        <source>Session %1 · %2 · %3</source>
+        <translation>会话 %1 · %2 · %3</translation>
+    </message>
+    <message>
+        <source>Rewindable — checkpoints available</source>
+        <translation>可回退 — 有可用检查点</translation>
+    </message>
+    <message>
+        <source>Not rewindable</source>
+        <translation>不可回退</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsMenu</name>
+    <message>
+        <source>Transcript</source>
+        <translation>对话记录</translation>
+    </message>
+    <message>
+        <source>Search transcript</source>
+        <translation>搜索对话记录</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>样式</translation>
+    </message>
+    <message>
+        <source>Sans</source>
+        <translation>无衬线</translation>
+    </message>
+    <message>
+        <source>Serif</source>
+        <translation>衬线</translation>
+    </message>
+    <message>
+        <source>Mono</source>
+        <translation>等宽</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>文本</translation>
+    </message>
+    <message>
+        <source>Center text</source>
+        <translation>居中文本</translation>
+    </message>
+    <message>
+        <source>Distraction-free</source>
+        <translation>无干扰</translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation>字体大小</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>主题</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>浅色</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>深色</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <translation>棕褐</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <translation>午夜</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>选项</translation>
+    </message>
+    <message>
+        <source>Show Sessions</source>
+        <translation>显示会话</translation>
+    </message>
+    <message>
+        <source>Show Fleet Tree</source>
+        <translation>显示编队树</translation>
+    </message>
+    <message>
+        <source>Show Raw Markdown</source>
+        <translation>显示原始 Markdown</translation>
+    </message>
+    <message>
+        <source>User message rail</source>
+        <translation>用户消息栏</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>更新</translation>
+    </message>
+    <message>
+        <source>Auto-check for updates</source>
+        <translation>自动检查更新</translation>
+    </message>
+    <message>
+        <source>Move to Trash</source>
+        <translation>移到回收站</translation>
+    </message>
+    <message>
+        <source>Reset all settings</source>
+        <translation>重置所有设置</translation>
+    </message>
+    <message>
+        <source>Reset settings?</source>
+        <translation>重置设置？</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>重置</translation>
+    </message>
+    <message>
+        <source>Reset all settings to their defaults?
+This only affects the app appearance, not your data.</source>
+        <translation>将所有设置重置为默认值？
+这仅影响应用外观，不影响你的数据。</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsPage</name>
+    <message>
+        <source>Appearance</source>
+        <translation>外观</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation>通知</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>连接</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>聊天</translation>
+    </message>
+    <message>
+        <source>Safety</source>
+        <translation>安全</translation>
+    </message>
+    <message>
+        <source>Memory &amp; Context</source>
+        <translation>记忆与上下文</translation>
+    </message>
+    <message>
+        <source>Workspace</source>
+        <translation>工作区</translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation>语音</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>高级</translation>
+    </message>
+    <message>
+        <source>Archived chats</source>
+        <translation>已归档的聊天</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>关于</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>设置</translation>
+    </message>
+    <message>
+        <source>This section is not wired yet</source>
+        <translation>此部分尚未接通</translation>
+    </message>
+</context>
+<context>
+    <name>Sidebar</name>
+    <message>
+        <source>Local node</source>
+        <translation>本地节点</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>设置</translation>
+    </message>
+    <message>
+        <source>New agent</source>
+        <translation>新建智能体</translation>
+    </message>
+    <message>
+        <source>New tag</source>
+        <translation>新建标签</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>全部折叠</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>全部展开</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>账户</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>档案</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>仪表盘</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>编队</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>审批</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>频道</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>路由</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>计划任务</translation>
+    </message>
+    <message>
+        <source>New chat</source>
+        <translation>新建聊天</translation>
+    </message>
+    <message>
+        <source>Profile settings</source>
+        <translation>档案设置</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>记忆</translation>
+    </message>
+</context>
+<context>
+    <name>SidebarModel</name>
+    <message>
+        <source>Local node</source>
+        <translation>本地节点</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>（无标题）</translation>
+    </message>
+    <message>
+        <source>All Sessions</source>
+        <translation>所有会话</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>已归档</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>标签</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>编队</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>集成</translation>
+    </message>
+    <message>
+        <source>New tag</source>
+        <translation>新建标签</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBar</name>
+    <message>
+        <source>Command Center</source>
+        <translation>命令中心</translation>
+    </message>
+    <message>
+        <source>Gateway</source>
+        <translation>网关</translation>
+    </message>
+    <message>
+        <source>Agents</source>
+        <translation>智能体</translation>
+    </message>
+    <message>
+        <source>Cron</source>
+        <translation>Cron</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>文件</translation>
+    </message>
+    <message>
+        <source>Toggle file explorer (Ctrl+E)</source>
+        <translation>切换文件资源管理器（Ctrl+E）</translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation>运行中</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> 词元</translation>
+    </message>
+    <message>
+        <source>Session usage · %1 in / %2 out</source>
+        <translation>会话用量 · %1 输入 / %2 输出</translation>
+    </message>
+    <message>
+        <source>Provider rate limit (remaining / limit)</source>
+        <translation>提供方速率限制（剩余 / 上限）</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>Approval mode</source>
+        <translation>审批模式</translation>
+    </message>
+    <message>
+        <source>Toggle terminal</source>
+        <translation>切换终端</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>检查更新</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation>更多</translation>
+    </message>
+    <message>
+        <source>YOLO</source>
+        <translation>YOLO</translation>
+    </message>
+    <message>
+        <source>Terminal</source>
+        <translation>终端</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBarModel</name>
+    <message>
+        <source>No daemon connection</source>
+        <translation>没有 daemon 连接</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n failed</source>
+        <translation>
+            <numerusform>%n 个失败</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>%n 个运行中</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> 词元</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBarView</name>
+    <message>
+        <source> Gateway </source>
+        <translation> 网关 </translation>
+    </message>
+    <message>
+        <source> Agents </source>
+        <translation> 智能体 </translation>
+    </message>
+    <message>
+        <source>idle</source>
+        <translation>空闲</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> 词元</translation>
+    </message>
+    <message>
+        <source>update v</source>
+        <translation>更新 v</translation>
+    </message>
+</context>
+<context>
+    <name>SubagentList</name>
+    <message>
+        <source>Subagents</source>
+        <translation>子智能体</translation>
+    </message>
+</context>
+<context>
+    <name>SubmitInputBox</name>
+    <message>
+        <source>Message daemon…  (Enter to send, Shift+Enter newline)</source>
+        <translation>给 daemon 发消息…（Enter 发送，Shift+Enter 换行）</translation>
+    </message>
+</context>
+<context>
+    <name>SyntaxHighlightingCLI</name>
+    <message>
+        <source>Command line syntax highlighter using KSyntaxHighlighting syntax definitions.</source>
+        <translation>使用 KSyntaxHighlighting 语法定义的命令行语法高亮器。</translation>
+    </message>
+    <message>
+        <source>source</source>
+        <translation>来源</translation>
+    </message>
+    <message>
+        <source>The source file to highlight. If absent, read the file from stdin and the --syntax option must be used.</source>
+        <translation>要高亮的源文件。如果缺省，则从 stdin 读取文件，并且必须使用 --syntax 选项。</translation>
+    </message>
+    <message>
+        <source>List all available syntax definitions.</source>
+        <translation>列出所有可用的语法定义。</translation>
+    </message>
+    <message>
+        <source>List all available themes.</source>
+        <translation>列出所有可用的主题。</translation>
+    </message>
+    <message>
+        <source>Download new/updated syntax definitions.</source>
+        <translation>下载新的/更新的语法定义。</translation>
+    </message>
+    <message>
+        <source>File to write HTML output to (default: stdout).</source>
+        <translation>要写入 HTML 输出的文件（默认：stdout）。</translation>
+    </message>
+    <message>
+        <source>output</source>
+        <translation>输出</translation>
+    </message>
+    <message>
+        <source>Highlight using this syntax definition (default: auto-detect based on input file).</source>
+        <translation>使用此语法定义进行高亮（默认：根据输入文件自动检测）。</translation>
+    </message>
+    <message>
+        <source>syntax</source>
+        <translation>语法</translation>
+    </message>
+    <message>
+        <source>Color theme to use for highlighting.</source>
+        <translation>用于高亮的配色主题。</translation>
+    </message>
+    <message>
+        <source>theme</source>
+        <translation>主题</translation>
+    </message>
+    <message>
+        <source>Use the specified format instead of html. Must be html, ansi or ansi256.</source>
+        <translation>使用指定格式而非 html。必须是 html、ansi 或 ansi256。</translation>
+    </message>
+    <message>
+        <source>format</source>
+        <translation>格式</translation>
+    </message>
+    <message>
+        <source>Add information to debug a syntax file. Only works with --output-format=ansi or ansi256. Possible values are format, region, context, stackSize and all.</source>
+        <translation>添加用于调试语法文件的信息。仅在 --output-format=ansi 或 ansi256 时有效。可选值为 format、region、context、stackSize 和 all。</translation>
+    </message>
+    <message>
+        <source>type</source>
+        <translation>类型</translation>
+    </message>
+    <message>
+        <source>Disable ANSI background for the default color.</source>
+        <translation>为默认颜色禁用 ANSI 背景。</translation>
+    </message>
+    <message>
+        <source>Select background color role from theme.</source>
+        <translation>从主题中选择背景颜色角色。</translation>
+    </message>
+    <message>
+        <source>role</source>
+        <translation>角色</translation>
+    </message>
+    <message>
+        <source>For ansi and ansi256 formats, flush the output buffer on each line.</source>
+        <translation>对于 ansi 和 ansi256 格式，在每一行刷新输出缓冲区。</translation>
+    </message>
+    <message>
+        <source>Set HTML page&apos;s title
+(default: the filename or &quot;KSyntaxHighlighter&quot; if reading from stdin).</source>
+        <translation>设置 HTML 页面的标题
+（默认：文件名，若从 stdin 读取则为 &quot;KSyntaxHighlighter&quot;）。</translation>
+    </message>
+    <message>
+        <source>title</source>
+        <translation>标题</translation>
+    </message>
+</context>
+<context>
+    <name>SystemMessage</name>
+    <message>
+        <source>Steering note</source>
+        <translation>引导备注</translation>
+    </message>
+</context>
+<context>
+    <name>TabBar</name>
+    <message>
+        <source>Unsaved changes</source>
+        <translation>未保存的更改</translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation>关闭标签页</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>新建标签页</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>设置</translation>
+    </message>
+</context>
+<context>
+    <name>TabModel</name>
+    <message>
+        <source>Session</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>Page</source>
+        <translation>页面</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>智能体</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPanelStub</name>
+    <message>
+        <source>The terminal is not available in this build</source>
+        <translation>此构建中终端不可用</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+</context>
+<context>
+    <name>TextPromptDialog</name>
+    <message>
+        <source>OK</source>
+        <translation>确定</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+</context>
+<context>
+    <name>ThemePalette</name>
+    <message>
+        <source>Dark</source>
+        <comment>theme name</comment>
+        <translation>深色</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <comment>theme name</comment>
+        <translation>棕褐</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <comment>theme name</comment>
+        <translation>午夜</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <comment>theme name</comment>
+        <translation>浅色</translation>
+    </message>
+</context>
+<context>
+    <name>TodoList</name>
+    <message>
+        <source>Tasks</source>
+        <translation>任务</translation>
+    </message>
+</context>
+<context>
+    <name>ToolApprovalBar</name>
+    <message>
+        <source>Approve this action?</source>
+        <translation>批准此操作？</translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>批准</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>拒绝</translation>
+    </message>
+    <message>
+        <source>Allow permanently</source>
+        <translation>永久允许</translation>
+    </message>
+</context>
+<context>
+    <name>ToolCallBlock</name>
+    <message>
+        <source>Tool</source>
+        <translation>工具</translation>
+    </message>
+</context>
+<context>
+    <name>Transcript</name>
+    <message>
+        <source>Couldn&apos;t access the clipboard. Copy needs a secure (https) page.</source>
+        <translation>无法访问剪贴板。复制需要安全（https）页面。</translation>
+    </message>
+    <message>
+        <source>
+
+Thanks — proceeding with: %1
+</source>
+        <translation>
+
+谢谢 — 继续处理：%1
+</translation>
+    </message>
+    <message>
+        <source>Start the session</source>
+        <translation>开始会话</translation>
+    </message>
+    <message>
+        <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
+        <translation>在下方发送一条消息即可开始。智能体的推理、工具调用和回复将在此处流式显示。</translation>
+    </message>
+    <message>
+        <source>Find in transcript</source>
+        <translation>在对话记录中查找</translation>
+    </message>
+    <message>
+        <source>0/0</source>
+        <translation>0/0</translation>
+    </message>
+    <message>
+        <source>Previous match (Shift+Enter)</source>
+        <translation>上一个匹配（Shift+Enter）</translation>
+    </message>
+    <message>
+        <source>Next match (Enter)</source>
+        <translation>下一个匹配（Enter）</translation>
+    </message>
+    <message>
+        <source>Close (Esc)</source>
+        <translation>关闭（Esc）</translation>
+    </message>
+</context>
+<context>
+    <name>TranscriptPage</name>
+    <message>
+        <source>Session</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>The turn finished.</source>
+        <translation>轮次已完成。</translation>
+    </message>
+    <message>
+        <source>needs your approval</source>
+        <translation>需要你的批准</translation>
+    </message>
+    <message>
+        <source>needs a credential</source>
+        <translation>需要一个凭据</translation>
+    </message>
+    <message>
+        <source>The turn %1.</source>
+        <translation>轮次%1。</translation>
+    </message>
+    <message>
+        <source>Select a session</source>
+        <translation>选择一个会话</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>清空会话</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>清除</translation>
+    </message>
+    <message>
+        <source>Remove all messages from this session? This cannot be undone.</source>
+        <translation>从此会话中移除所有消息？此操作无法撤销。</translation>
+    </message>
+    <message>
+        <source>Secret required</source>
+        <translation>需要密文</translation>
+    </message>
+    <message>
+        <source>Password required</source>
+        <translation>需要密码</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>提交</translation>
+    </message>
+    <message>
+        <source>Paste secret…</source>
+        <translation>粘贴密文…</translation>
+    </message>
+    <message>
+        <source>Password…</source>
+        <translation>密码…</translation>
+    </message>
+    <message>
+        <source>Never stored - forwarded to the host for this step only.</source>
+        <translation>绝不存储 - 仅在此步骤转发给主机。</translation>
+    </message>
+    <message>
+        <source>Exit distraction-free (Esc)</source>
+        <translation>退出无干扰（Esc）</translation>
+    </message>
+</context>
+<context>
+    <name>TranscriptView</name>
+    <message>
+        <source>Enter restore  e edit  Esc cancel</source>
+        <translation>Enter 还原  e 编辑  Esc 取消</translation>
+    </message>
+</context>
+<context>
+    <name>TuiFileTabController</name>
+    <message>
+        <source>Binary file - not editable</source>
+        <translation>二进制文件 - 不可编辑</translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation>已保存</translation>
+    </message>
+    <message>
+        <source>Save failed</source>
+        <translation>保存失败</translation>
+    </message>
+</context>
+<context>
+    <name>TuiOverlayHost</name>
+    <message>
+        <source>Model</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <source>Download model — pick a repo</source>
+        <translation>下载模型 — 选择一个仓库</translation>
+    </message>
+    <message>
+        <source>Choose a quantization</source>
+        <translation>选择一个量化版本</translation>
+    </message>
+    <message>
+        <source>Go to file</source>
+        <translation>转到文件</translation>
+    </message>
+    <message>
+        <source>Enter opens a preview · Shift+Enter pins · Esc closes</source>
+        <translation>Enter 打开预览 · Shift+Enter 固定 · Esc 关闭</translation>
+    </message>
+    <message>
+        <source>Attach file</source>
+        <translation>附加文件</translation>
+    </message>
+    <message>
+        <source>Enter attaches the selected file · Esc cancels</source>
+        <translation>Enter 附加所选文件 · Esc 取消</translation>
+    </message>
+    <message>
+        <source>Commands</source>
+        <translation>命令</translation>
+    </message>
+</context>
+<context>
+    <name>TuiPageHub</name>
+    <message>
+        <source>Settings</source>
+        <translation>设置</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>仪表盘</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>账户</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>档案</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>编队</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>会话</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>审批</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>路由</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>计划任务</translation>
+    </message>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>用户与访问</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>频道</translation>
+    </message>
+    <message>
+        <source>on</source>
+        <translation>开</translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation>关</translation>
+    </message>
+    <message>
+        <source>_(not set)_</source>
+        <translation>_(未设置)_</translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation>外观</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>主题</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>语言</translation>
+    </message>
+    <message>
+        <source>applies live; restart to retranslate the whole chrome</source>
+        <translation>立即生效；重启以重新翻译整个界面框架</translation>
+    </message>
+    <message>
+        <source>Distraction-free (hide chrome)</source>
+        <translation>无干扰（隐藏界面框架）</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation>通知</translation>
+    </message>
+    <message>
+        <source>Notify when a turn needs my input</source>
+        <translation>当轮次需要我的输入时通知</translation>
+    </message>
+    <message>
+        <source>Notify when a turn finishes</source>
+        <translation>当轮次完成时通知</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>连接</translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation>自动启动本地 daemon</translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
+        <translation>关闭应用时停止受管的 daemon</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>更新</translation>
+    </message>
+    <message>
+        <source>Automatically check for updates</source>
+        <translation>自动检查更新</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>推理强度</translation>
+    </message>
+    <message>
+        <source>Fast mode (lower latency)</source>
+        <translation>快速模式（更低延迟）</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>聊天</translation>
+    </message>
+    <message>
+        <source>Stream responses</source>
+        <translation>流式返回响应</translation>
+    </message>
+    <message>
+        <source>Send on Enter (Shift+Enter for newline)</source>
+        <translation>按 Enter 发送（Shift+Enter 换行）</translation>
+    </message>
+    <message>
+        <source>Show token counts</source>
+        <translation>显示词元计数</translation>
+    </message>
+    <message>
+        <source>Default system prompt for new chats</source>
+        <translation>新聊天的默认系统提示词</translation>
+    </message>
+    <message>
+        <source>Safety</source>
+        <translation>安全</translation>
+    </message>
+    <message>
+        <source>Approval policy</source>
+        <translation>审批策略</translation>
+    </message>
+    <message>
+        <source>Filesystem access</source>
+        <translation>文件系统访问</translation>
+    </message>
+    <message>
+        <source>Allow network access</source>
+        <translation>允许网络访问</translation>
+    </message>
+    <message>
+        <source>Memory &amp; Context</source>
+        <translation>记忆与上下文</translation>
+    </message>
+    <message>
+        <source>Max context tokens</source>
+        <translation>最大上下文词元数</translation>
+    </message>
+    <message>
+        <source>Auto-compact when context is full</source>
+        <translation>上下文已满时自动压缩</translation>
+    </message>
+    <message>
+        <source>Persist memory across sessions</source>
+        <translation>跨会话持久保存记忆</translation>
+    </message>
+    <message>
+        <source>Workspace</source>
+        <translation>工作区</translation>
+    </message>
+    <message>
+        <source>Workspace root</source>
+        <translation>工作区根目录</translation>
+    </message>
+    <message>
+        <source>Respect .gitignore</source>
+        <translation>遵循 .gitignore</translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation>语音</translation>
+    </message>
+    <message>
+        <source>Enable voice transcription</source>
+        <translation>启用语音转录</translation>
+    </message>
+    <message>
+        <source>Transcription model</source>
+        <translation>转录模型</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>高级</translation>
+    </message>
+    <message>
+        <source>Log level</source>
+        <translation>日志级别</translation>
+    </message>
+    <message>
+        <source>Send anonymous telemetry</source>
+        <translation>发送匿名遥测数据</translation>
+    </message>
+    <message>
+        <source>Enable experimental tools</source>
+        <translation>启用实验性工具</translation>
+    </message>
+    <message>
+        <source># Settings
+
+</source>
+        <translation># 设置
+
+</translation>
+    </message>
+    <message>
+        <source>Shared with the GUI — both front ends edit the same daemon config and app prefs. **j/k** select a row · **Space/Enter** toggles · **Enter** opens a picker/editor · **F8** cycles the theme.
+</source>
+        <translation>与 GUI 共享 — 两个前端编辑相同的 daemon 配置和应用偏好。**j/k** 选择行 · **Space/Enter** 切换 · **Enter** 打开选择器/编辑器 · **F8** 循环切换主题。
+</translation>
+    </message>
+    <message>
+        <source>- State: **%1** · %2 · `%3` — _reconnect via the GUI picker or the first-run gate_
+</source>
+        <translation>- 状态：**%1** · %2 · `%3` — _通过 GUI 选择器或首次运行入口重新连接_
+</translation>
+    </message>
+    <message>
+        <source>- Active default: `%1` — _change or install in the Models page (`/models`)_
+</source>
+        <translation>- 当前默认：`%1` — _在“模型”页面（`/models`）中更改或安装_
+</translation>
+    </message>
+    <message>
+        <source># Models
+
+</source>
+        <translation># 模型
+
+</translation>
+    </message>
+    <message>
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
+
+</source>
+        <translation>已安装的模型，与 GUI 共享。**j/k** 移动 · **Enter** 激活 · **x** 移除 · **d** 下载模型（仓库 → 量化）。
+
+</translation>
+    </message>
+    <message>
+        <source>## Installed
+
+</source>
+        <translation>## 已安装
+
+</translation>
+    </message>
+    <message>
+        <source>_None installed._
+
+</source>
+        <translation>_未安装任何模型。_
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4
+</source>
+        <translation>- %1**%2**（%3）%4
+</translation>
+    </message>
+    <message>
+        <source> — **active**</source>
+        <translation> — **使用中**</translation>
+    </message>
+    <message>
+        <source>## Downloads
+
+</source>
+        <translation>## 下载
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%  · %3
+</source>
+        <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Discover
+
+</source>
+        <translation>## 发现
+
+</translation>
+    </message>
+    <message>
+        <source>_Press **d** to search repos and download a model._
+</source>
+        <translation>_按 **d** 搜索仓库并下载模型。_
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2 · ↓ %3
+</source>
+        <translation>- %1 — %2 · ↓ %3
+</translation>
+    </message>
+    <message>
+        <source>
+## Providers
+
+</source>
+        <translation>
+## 提供方
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 (%2)%3
+</source>
+        <translation>- %1（%2）%3
+</translation>
+    </message>
+    <message>
+        <source> — configured</source>
+        <translation> — 已配置</translation>
+    </message>
+    <message>
+        <source># Accounts
+
+</source>
+        <translation># 账户
+
+</translation>
+    </message>
+    <message>
+        <source>Connected provider accounts, shared with the GUI. **j/k** move · **a** add account · **R**/**Enter** re-auth · **x** remove.
+
+</source>
+        <translation>已连接的提供方账户，与 GUI 共享。**j/k** 移动 · **a** 添加账户 · **R**/**Enter** 重新认证 · **x** 移除。
+
+</translation>
+    </message>
+    <message>
+        <source>## Connected
+
+</source>
+        <translation>## 已连接
+
+</translation>
+    </message>
+    <message>
+        <source>_No accounts._
+
+</source>
+        <translation>_没有账户。_
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** — %3 (%4) · %5
+</source>
+        <translation>- %1**%2** — %3（%4） · %5
+</translation>
+    </message>
+    <message>
+        <source>OAuth</source>
+        <translation>OAuth</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API 密钥</translation>
+    </message>
+    <message>
+        <source>## Available providers
+
+</source>
+        <translation>## 可用的提供方
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 (%2)
+</source>
+        <translation>- %1（%2）
+</translation>
+    </message>
+    <message>
+        <source># Profiles
+
+</source>
+        <translation># 档案
+
+</translation>
+    </message>
+    <message>
+        <source>Agent profiles, shared with the GUI. **j/k** move · **Enter** set default · **e** edit (provider / model / prompt / skills / tools) · **n** clone · **a** new agent · **x** delete.
+
+</source>
+        <translation>智能体档案，与 GUI 共享。**j/k** 移动 · **Enter** 设为默认 · **e** 编辑（提供方 / 模型 / 提示词 / 技能 / 工具） · **n** 克隆 · **a** 新建智能体 · **x** 删除。
+
+</translation>
+    </message>
+    <message>
+        <source>## %1%2%3
+
+</source>
+        <translation>## %1%2%3
+
+</translation>
+    </message>
+    <message>
+        <source> (default)</source>
+        <translation> （默认）</translation>
+    </message>
+    <message>
+        <source>- Model: `%1`
+</source>
+        <translation>- 模型：`%1`
+</translation>
+    </message>
+    <message>
+        <source>- Skills: %1
+</source>
+        <translation>- 技能：%1
+</translation>
+    </message>
+    <message>
+        <source>- Tools: %1
+
+</source>
+        <translation>- 工具：%1
+
+</translation>
+    </message>
+    <message>
+        <source># Profile
+
+_No agent selected._
+</source>
+        <translation># 档案
+
+_未选择智能体。_
+</translation>
+    </message>
+    <message>
+        <source># Profile - %1
+
+</source>
+        <translation># 档案 - %1
+
+</translation>
+    </message>
+    <message>
+        <source>Agent == profile. Memory lives in this agent&apos;s bank (`%1`). Press **e** to edit this profile.
+
+</source>
+        <translation>智能体 == 档案。记忆存放在该智能体的存储库中（`%1`）。按 **e** 编辑此档案。
+
+</translation>
+    </message>
+    <message>
+        <source>## Engine
+
+</source>
+        <translation>## 引擎
+
+</translation>
+    </message>
+    <message>
+        <source>- Provider: **%1**
+</source>
+        <translation>- 提供方：**%1**
+</translation>
+    </message>
+    <message>
+        <source>- Model: **%1**
+</source>
+        <translation>- 模型：**%1**
+</translation>
+    </message>
+    <message>
+        <source>- Base URL: %1
+</source>
+        <translation>- 基础 URL：%1
+</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>（提供方默认）</translation>
+    </message>
+    <message>
+        <source>- Context engine: %1
+
+</source>
+        <translation>- 上下文引擎：%1
+
+</translation>
+    </message>
+    <message>
+        <source>## Memory
+
+</source>
+        <translation>## 记忆
+
+</translation>
+    </message>
+    <message>
+        <source>- Memory provider: **%1**
+
+</source>
+        <translation>- 记忆提供方：**%1**
+
+</translation>
+    </message>
+    <message>
+        <source>## Persona
+
+</source>
+        <translation>## 人设
+
+</translation>
+    </message>
+    <message>
+        <source>_none_
+
+</source>
+        <translation>_无_
+
+</translation>
+    </message>
+    <message>
+        <source>Tool allowlist</source>
+        <translation>工具允许列表</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>技能</translation>
+    </message>
+    <message>
+        <source># Memory - %1
+
+</source>
+        <translation># 记忆 - %1
+
+</translation>
+    </message>
+    <message>
+        <source>agent</source>
+        <translation>智能体</translation>
+    </message>
+    <message>
+        <source>Mnemosyne memory for the active scope, shared with the GUI. The knowledge graph renders as a node-link diagram in the GUI; here it is an adjacency listing.
+
+</source>
+        <translation>当前范围的 Mnemosyne 记忆，与 GUI 共享。知识图在 GUI 中渲染为节点-链接图；此处以邻接列表形式呈现。
+
+</translation>
+    </message>
+    <message>
+        <source>## Overview
+
+</source>
+        <translation>## 概览
+
+</translation>
+    </message>
+    <message>
+        <source>- Working: **%1** · Episodic: **%2** · Scratchpad: **%3**
+</source>
+        <translation>- 工作：**%1** · 情景：**%2** · 便笺：**%3**
+</translation>
+    </message>
+    <message>
+        <source>- Facts: **%1** · Conflicts: **%2**
+
+</source>
+        <translation>- 事实：**%1** · 冲突：**%2**
+
+</translation>
+    </message>
+    <message>
+        <source>By source</source>
+        <translation>按来源</translation>
+    </message>
+    <message>
+        <source>By veracity</source>
+        <translation>按真实性</translation>
+    </message>
+    <message>
+        <source>By lifecycle</source>
+        <translation>按生命周期</translation>
+    </message>
+    <message>
+        <source>## Memories
+
+</source>
+        <translation>## 记忆
+
+</translation>
+    </message>
+    <message>
+        <source>_No memories in scope._
+
+</source>
+        <translation>_范围内没有记忆。_
+
+</translation>
+    </message>
+    <message>
+        <source>- **%1** _(%2 · %3 · imp %4)_
+</source>
+        <translation>- **%1** _(%2 · %3 · 重要性 %4)_
+</translation>
+    </message>
+    <message>
+        <source>## Graph adjacency
+
+</source>
+        <translation>## 图邻接
+
+</translation>
+    </message>
+    <message>
+        <source>_No edges in scope._
+
+</source>
+        <translation>_范围内没有边。_
+
+</translation>
+    </message>
+    <message>
+        <source>## Timeline
+
+</source>
+        <translation>## 时间线
+
+</translation>
+    </message>
+    <message>
+        <source># Dashboard
+
+</source>
+        <translation># 仪表盘
+
+</translation>
+    </message>
+    <message>
+        <source>- Active sessions: **%1**
+</source>
+        <translation>- 活动会话：**%1**
+</translation>
+    </message>
+    <message>
+        <source>- Running agents: **%1**
+</source>
+        <translation>- 运行中的智能体：**%1**
+</translation>
+    </message>
+    <message>
+        <source>- Pending approvals: **%1**
+</source>
+        <translation>- 待处理的审批：**%1**
+</translation>
+    </message>
+    <message>
+        <source>- Tokens today: **%1**
+</source>
+        <translation>- 今日词元：**%1**
+</translation>
+    </message>
+    <message>
+        <source>- Daemon health: **%1**
+
+</source>
+        <translation>- Daemon 健康状况：**%1**
+
+</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>确定</translation>
+    </message>
+    <message>
+        <source>degraded</source>
+        <translation>降级</translation>
+    </message>
+    <message>
+        <source>## Recent activity
+
+</source>
+        <translation>## 近期活动
+
+</translation>
+    </message>
+    <message>
+        <source>- _%1_ — %2
+</source>
+        <translation>- _%1_ — %2
+</translation>
+    </message>
+    <message>
+        <source># Fleet
+
+</source>
+        <translation># 编队
+
+</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+
+</source>
+        <translation>编排器/工作单元树，与 GUI 共享。**j/k** 移动 · **Space/Enter** 暂停/恢复。
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`)
+</source>
+        <translation>- %1%2 — %3（`%4`）
+</translation>
+    </message>
+    <message>
+        <source># Sessions
+
+</source>
+        <translation># 会话
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
+
+</source>
+        <translation>**j/k** 移动 · **s** 挂起 · **R**/**Enter** 恢复 · **x** 关闭。
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** — %3 · %4 · %5 · %6 tok
+</source>
+        <translation>- %1**%2** — %3 · %4 · %5 · %6 词元
+</translation>
+    </message>
+    <message>
+        <source># Approvals
+
+</source>
+        <translation># 审批
+
+</translation>
+    </message>
+    <message>
+        <source>_Inbox zero — no pending approvals._
+</source>
+        <translation>_收件箱清空 — 没有待处理的审批。_
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
+
+</source>
+        <translation>**j/k** 移动 · **a**/**Enter** 批准 · **d** 拒绝。
+
+</translation>
+    </message>
+    <message>
+        <source>## %1%2 (%3 risk)
+
+</source>
+        <translation>## %1%2（%3 风险）
+
+</translation>
+    </message>
+    <message>
+        <source>- Session: %1
+</source>
+        <translation>- 会话：%1
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+
+</source>
+        <translation>- 命令：`%1`
+
+</translation>
+    </message>
+    <message>
+        <source># Routing
+
+</source>
+        <translation># 路由
+
+</translation>
+    </message>
+    <message>
+        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
+
+</source>
+        <translation>意图 → 模型规则，与 GUI 共享。**j/k** 移动 · **Space/Enter** 切换 · **x** 删除。
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** → `%3` (fallback `%4`)%5
+</source>
+        <translation>- %1**%2** → `%3`（回退 `%4`）%5
+</translation>
+    </message>
+    <message>
+        <source> — _disabled_</source>
+        <translation> — _已禁用_</translation>
+    </message>
+    <message>
+        <source># Scheduled jobs
+
+</source>
+        <translation># 计划任务
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **Space/Enter** enable/disable · **t** run now · **x** delete.
+
+</source>
+        <translation>**j/k** 移动 · **Space/Enter** 启用/禁用 · **t** 立即运行 · **x** 删除。
+
+</translation>
+    </message>
+    <message>
+        <source> (disabled)</source>
+        <translation> （已禁用）</translation>
+    </message>
+    <message>
+        <source>- Schedule: `%1`
+</source>
+        <translation>- 计划：`%1`
+</translation>
+    </message>
+    <message>
+        <source>- Profile: %1
+</source>
+        <translation>- 档案：%1
+</translation>
+    </message>
+    <message>
+        <source>- Next: %1 · Last: %2
+
+</source>
+        <translation>- 下次：%1 · 上次：%2
+
+</translation>
+    </message>
+    <message>
+        <source># Users &amp; Access
+
+</source>
+        <translation># 用户与访问
+
+</translation>
+    </message>
+    <message>
+        <source>## Signed in as
+
+</source>
+        <translation>## 登录身份
+
+</translation>
+    </message>
+    <message>
+        <source>- **%1**
+</source>
+        <translation>- **%1**
+</translation>
+    </message>
+    <message>
+        <source>- User id: `%1`
+</source>
+        <translation>- 用户 id：`%1`
+</translation>
+    </message>
+    <message>
+        <source>- **Not authenticated**
+</source>
+        <translation>- **未认证**
+</translation>
+    </message>
+    <message>
+        <source>- Roles: %1
+</source>
+        <translation>- 角色：%1
+</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>（无）</translation>
+    </message>
+    <message>
+        <source>- Capabilities: %1
+
+</source>
+        <translation>- 能力：%1
+
+</translation>
+    </message>
+    <message>
+        <source>## Users &amp; roles
+
+</source>
+        <translation>## 用户与角色
+
+</translation>
+    </message>
+    <message>
+        <source>User administration is not available yet.
+
+</source>
+        <translation>用户管理功能尚不可用。
+
+</translation>
+    </message>
+    <message>
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.
+</source>
+        <translation>列出、创建、禁用用户以及分配角色需要节点的 access-admin API，该功能仍在开发中。
+</translation>
+    </message>
+    <message>
+        <source># Channels
+
+</source>
+        <translation># 频道
+
+</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the transports seam is not wired in this mode._
+</source>
+        <translation>_频道不可用：此模式下未接通传输接缝。_
+</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+
+</source>
+        <translation>Events-IO 传输账户及其实时房间，与 GUI 共享。此切片在两个前端中均为只读 - 连接功能已推迟（EIO-2）。
+
+</translation>
+    </message>
+    <message>
+        <source>## Accounts
+
+</source>
+        <translation>## 账户
+
+</translation>
+    </message>
+    <message>
+        <source>_No channels connected._
+</source>
+        <translation>_未连接任何频道。_
+</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3 · %4
+</source>
+        <translation>- %1 **%2** — %3 · %4
+</translation>
+    </message>
+    <message>
+        <source>  - _No rooms._
+</source>
+        <translation>  - _没有房间。_
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - %1 · %2
+</source>
+        <translation>  - %1 · %2
+</translation>
+    </message>
+    <message>
+        <source>## Add channel
+
+</source>
+        <translation>## 添加频道
+
+</translation>
+    </message>
+    <message>
+        <source>_Connect to a daemon to see available channel types._
+</source>
+        <translation>_连接到 daemon 以查看可用的频道类型。_
+</translation>
+    </message>
+    <message>
+        <source>- **%1** (`%2`)
+</source>
+        <translation>- **%1**（`%2`）
+</translation>
+    </message>
+</context>
+<context>
+    <name>TurnController</name>
+    <message>
+        <source>The agent hit an error completing this turn.</source>
+        <translation>智能体在完成此轮次时遇到错误。</translation>
+    </message>
+    <message>
+        <source>The build failed while completing this turn.</source>
+        <translation>完成此轮次时构建失败。</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateManager</name>
+    <message>
+        <source>Install &amp; restart</source>
+        <translation>安装并重启</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>打开</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the installer instead</source>
+        <translation>无法自我应用（%1）；改为打开安装程序</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the download instead</source>
+        <translation>无法自我应用（%1）；改为打开下载</translation>
+    </message>
+    <message>
+        <source>self-apply is not available for this artifact; opening the update</source>
+        <translation>此工件无法自我应用；正在打开更新</translation>
+    </message>
+</context>
+<context>
+    <name>UsersAccessPage</name>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>用户与访问</translation>
+    </message>
+    <message>
+        <source>Signed in as</source>
+        <translation>登录身份</translation>
+    </message>
+    <message>
+        <source>Not authenticated</source>
+        <translation>未认证</translation>
+    </message>
+    <message>
+        <source>User id: %1</source>
+        <translation>用户 id：%1</translation>
+    </message>
+    <message>
+        <source>Roles: %1</source>
+        <translation>角色：%1</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>（无）</translation>
+    </message>
+    <message>
+        <source>Capabilities: %1</source>
+        <translation>能力：%1</translation>
+    </message>
+    <message>
+        <source>Users &amp; roles</source>
+        <translation>用户与角色</translation>
+    </message>
+    <message>
+        <source>User administration is not available yet.</source>
+        <translation>用户管理功能尚不可用。</translation>
+    </message>
+    <message>
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.</source>
+        <translation>列出、创建、禁用用户以及分配角色需要节点的 access-admin API，该功能仍在开发中。</translation>
+    </message>
+    <message>
+        <source>Add user</source>
+        <translation>添加用户</translation>
+    </message>
+</context>
+<context>
+    <name>VoiceSection</name>
+    <message>
+        <source>Voice input</source>
+        <translation>语音输入</translation>
+    </message>
+    <message>
+        <source>Enable voice transcription</source>
+        <translation>启用语音转录</translation>
+    </message>
+    <message>
+        <source>Transcription model</source>
+        <translation>转录模型</translation>
+    </message>
+</context>
+<context>
+    <name>WorkspaceSection</name>
+    <message>
+        <source>Workspace root</source>
+        <translation>工作区根目录</translation>
+    </message>
+    <message>
+        <source>Path the agent operates in</source>
+        <translation>智能体的操作路径</translation>
+    </message>
+    <message>
+        <source>Respect .gitignore</source>
+        <translation>遵循 .gitignore</translation>
+    </message>
+</context>
+<context>
+    <name>accounts::DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation>OAuth 登录尚不可用；请改为添加 API 密钥。</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ApprovalRepository</name>
+    <message>
+        <source>Approval decision failed</source>
+        <translation>审批决定失败</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CredentialRepository</name>
+    <message>
+        <source>Credential operation failed</source>
+        <translation>凭据操作失败</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation>无法连接到 daemon。请检查它是否在运行后重试。</translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation>daemon 报告其状态不健康。</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>未知</translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation>正在替换不兼容的本地 daemon（api %1，需要 %2）……</translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation>daemon 不兼容（api %1，需要 %2）。</translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation>正在重新连接……</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device.</source>
+        <translation>此设备上仅支持 WebSocket 连接（ws:// 或 wss://）。</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device</source>
+        <translation>此设备上仅支持 WebSocket 连接（ws:// 或 wss://）</translation>
+    </message>
+    <message>
+        <source>Unix socket target accepted</source>
+        <translation>已接受 Unix 套接字目标</translation>
+    </message>
+    <message>
+        <source>Enter a local socket path</source>
+        <translation>输入本地套接字路径</translation>
+    </message>
+    <message>
+        <source>Remote target accepted (host:port, TLS)</source>
+        <translation>已接受远程目标（host:port，TLS）</translation>
+    </message>
+    <message>
+        <source>Use host:port for a remote TLS node</source>
+        <translation>对远程 TLS 节点使用 host:port</translation>
+    </message>
+    <message>
+        <source>WebSocket target accepted (ws:// or wss://)</source>
+        <translation>已接受 WebSocket 目标（ws:// 或 wss://）</translation>
+    </message>
+    <message>
+        <source>Use ws://host:port or wss://host[:port][/path]</source>
+        <translation>使用 ws://host:port 或 wss://host[:port][/path]</translation>
+    </message>
+    <message>
+        <source>Unsupported transport</source>
+        <translation>不支持的传输方式</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonTransport</name>
+    <message>
+        <source>No daemon WebSocket target configured</source>
+        <translation>未配置 daemon WebSocket 目标</translation>
+    </message>
+    <message>
+        <source>No daemon target configured</source>
+        <translation>未配置 daemon 目标</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FleetRepository</name>
+    <message>
+        <source>Unit control failed</source>
+        <translation>单元控制失败</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation>找不到本地 daemon 可执行文件。请在设置中设置其路径，或改为连接到远程 daemon。</translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation>本地 daemon 反复崩溃（重启次数过多）。请检查其日志和你的配置。</translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation>无法启动本地 daemon（%1）。</translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation>本地 daemon 未能及时就绪。</translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation>不兼容的本地 daemon（pid %1）未能及时关闭。</translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
+        <translation>一个不兼容的 daemon 正在服务 %1，且没有 pidfile 记录其进程。请手动停止它并重新连接。</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ModelRepository</name>
+    <message>
+        <source>Set-model operation failed</source>
+        <translation>设置模型操作失败</translation>
+    </message>
+    <message>
+        <source>Download could not be started</source>
+        <translation>无法开始下载</translation>
+    </message>
+    <message>
+        <source>Delete failed</source>
+        <translation>删除失败</translation>
+    </message>
+    <message>
+        <source>Activate failed</source>
+        <translation>激活失败</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::NodeApiClient</name>
+    <message>
+        <source>request timed out</source>
+        <translation>请求超时</translation>
+    </message>
+    <message>
+        <source>daemon connection closed</source>
+        <translation>daemon 连接已关闭</translation>
+    </message>
+    <message>
+        <source>authentication required</source>
+        <translation>需要认证</translation>
+    </message>
+    <message>
+        <source>authentication failed</source>
+        <translation>认证失败</translation>
+    </message>
+    <message>
+        <source>stream ended in error</source>
+        <translation>流以错误结束</translation>
+    </message>
+    <message>
+        <source>the request failed</source>
+        <translation>请求失败</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Profile import failed</source>
+        <translation>档案导入失败</translation>
+    </message>
+    <message>
+        <source>Version history unavailable</source>
+        <translation>版本历史不可用</translation>
+    </message>
+    <message>
+        <source>Profile revert failed</source>
+        <translation>档案还原失败</translation>
+    </message>
+    <message>
+        <source>Profile operation failed</source>
+        <translation>档案操作失败</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>SessionCreate failed</source>
+        <translation>SessionCreate 失败</translation>
+    </message>
+</context>
+<context>
+    <name>daemonnet::MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation>智能体</translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation>用户</translation>
+    </message>
+</context>
+<context>
+    <name>firstrun::FirstRunModel</name>
+    <message>
+        <source>Could not reach the node. Check the target and try again.</source>
+        <translation>无法连接到节点。请检查目标后重试。</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation>无法通过 %1 验证此 API 密钥 — 请检查后重试。</translation>
+    </message>
+</context>
+<context>
+    <name>fs::LocalDiskFsService</name>
+    <message>
+        <source>invalid path</source>
+        <translation>无效路径</translation>
+    </message>
+    <message>
+        <source>cannot open</source>
+        <translation>无法打开</translation>
+    </message>
+    <message>
+        <source>stale: file changed on disk</source>
+        <translation>已过期：文件在磁盘上已更改</translation>
+    </message>
+    <message>
+        <source>write failed</source>
+        <translation>写入失败</translation>
+    </message>
+</context>
+<context>
+    <name>participants::ParticipantsModel</name>
+    <message>
+        <source>Participants</source>
+        <translation>参与者</translation>
+    </message>
+</context>
+<context>
+    <name>update::UpdateManager</name>
+    <message>
+        <source>Install &amp; restart</source>
+        <translation>安装并重启</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>打开</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the installer instead</source>
+        <translation>无法自我应用（%1）；改为打开安装程序</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the download instead</source>
+        <translation>无法自我应用（%1）；改为打开下载</translation>
+    </message>
+    <message>
+        <source>self-apply is not available for this artifact; opening the update</source>
+        <translation>此工件无法自我应用；正在打开更新</translation>
+    </message>
+</context>
+</TS>

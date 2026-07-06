@@ -8,10 +8,23 @@
 
 # Locales shipped with the app. en_US is the source language (see the
 # -source-language lupdate option below), so it has no .ts file - the strings
-# live in the qsTr()/tr() literals. "pseudo" is the generated pseudolocale used
-# to validate i18n coverage and layout; it is the only committed catalog until a
-# real translation is added (drop in daemon-app_<code>.ts + list <code> here).
-set(DAEMON_APP_LOCALES pseudo)
+# live in the qsTr()/tr() literals. Each shipped language has a committed
+# daemon-app_<code>.ts catalog here; add a language by translating a new
+# daemon-app_<code>.ts and listing <code> below (and in i18n::availableLocales()).
+set(DAEMON_APP_LOCALES
+    pt_BR
+    id
+    tr
+    hi
+    zh_CN
+    de
+    fil
+    zh_TW
+    ru
+    es
+    ja
+    bn
+)
 
 # Source files lupdate scans for qsTr()/tr(). Globbed across the whole tree so
 # new strings are picked up on the next `update_translations` run; vendored and

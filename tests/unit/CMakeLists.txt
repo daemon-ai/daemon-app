@@ -14,12 +14,13 @@ add_test(NAME tst_fonts COMMAND tst_fonts)
 set_tests_properties(tst_fonts PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # tst_localization: the shared runtime translation layer (src/core/i18n) - the
-# offered locale list, code->name resolution, that installing the embedded
-# pseudolocale actually translates marked C++ and QML strings, that switching
+# offered locale list, code->name resolution, that installing an embedded real
+# catalog (German) actually translates marked C++ and QML strings, that switching
 # back to the source language uninstalls it, and that Arabic reports RTL. The
-# pseudolocale catalog is compiled (lrelease) and embedded into the test under
-# ":/i18n" so applyLocale("pseudo") can load it; custom lupdate/lrelease target
-# names avoid clashing with the app-wide update_translations/release_translations.
+# German catalog is compiled (lrelease) and embedded into the test under ":/i18n"
+# so applyLocale("de") can load it; custom lupdate/lrelease target names avoid
+# clashing with the app-wide update_translations/release_translations (so the
+# app-wide refresh never rewrites the German catalog from the test's own sources).
 qt_add_executable(tst_localization tst_localization.cpp)
 target_link_libraries(tst_localization
     PRIVATE
@@ -27,7 +28,7 @@ target_link_libraries(tst_localization
         daemon-app::i18n
 )
 qt_add_translations(tst_localization
-    TS_FILES "${CMAKE_SOURCE_DIR}/i18n/daemon-app_pseudo.ts"
+    TS_FILES "${CMAKE_SOURCE_DIR}/i18n/daemon-app_de.ts"
     RESOURCE_PREFIX "/i18n"
     NO_GENERATE_PLURALS_TS_FILE
     LUPDATE_TARGET tst_localization_lupdate

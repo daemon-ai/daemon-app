@@ -12,8 +12,9 @@
 // (QTranslator / QLocale), so the TUI can reuse it without pulling in QtGui.
 namespace i18n {
 
-// A selectable UI language. `code` is the persisted key ("system"/"en"/"ar"/
-// "pseudo"); `label` is the menu text shown to the user.
+// A selectable UI language. `code` is the persisted key ("system"/"en"/a
+// shipped locale code like "de" or "pt_BR"); `label` is the menu text shown to
+// the user.
 struct LocaleOption {
     QString code;
     QString label;

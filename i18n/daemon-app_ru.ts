@@ -1,0 +1,6546 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="ru" sourcelanguage="en">
+<context>
+    <name>AboutSection</name>
+    <message>
+        <source>Application</source>
+        <translation>Приложение</translation>
+    </message>
+    <message>
+        <source>Version</source>
+        <translation>Версия</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Соединение</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>неизвестно</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Обновления</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>Проверить обновления</translation>
+    </message>
+    <message>
+        <source>Automatic updates are not configured in this build.</source>
+        <translation>Автоматические обновления не настроены в этой сборке.</translation>
+    </message>
+</context>
+<context>
+    <name>AccountsPage</name>
+    <message>
+        <source>Accounts</source>
+        <translation>Аккаунты</translation>
+    </message>
+    <message>
+        <source>Connected accounts</source>
+        <translation>Подключённые аккаунты</translation>
+    </message>
+    <message>
+        <source>Add account</source>
+        <translation>Добавить аккаунт</translation>
+    </message>
+    <message>
+        <source>No accounts yet. Add one to enable remote providers.</source>
+        <translation>Пока нет аккаунтов. Добавьте, чтобы включить удалённых провайдеров.</translation>
+    </message>
+    <message>
+        <source>OAuth</source>
+        <translation>OAuth</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>Ключ API</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>Подключено</translation>
+    </message>
+    <message>
+        <source>Connecting…</source>
+        <translation>Подключение…</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Ошибка</translation>
+    </message>
+    <message>
+        <source>Reconnect / re-authenticate</source>
+        <translation>Переподключиться / войти заново</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Удалить аккаунт</translation>
+    </message>
+</context>
+<context>
+    <name>AddAccountFlow</name>
+    <message>
+        <source>Sign in (OAuth)</source>
+        <translation>Войти (OAuth)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>Ключ API</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>Не удалось войти</translation>
+    </message>
+    <message>
+        <source>Add account — pick a provider</source>
+        <translation>Добавить аккаунт — выберите провайдера</translation>
+    </message>
+    <message>
+        <source>Authentication</source>
+        <translation>Аутентификация</translation>
+    </message>
+    <message>
+        <source>%1 — API key</source>
+        <translation>%1 — ключ API</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Базовый URL (напр. https://…)</translation>
+    </message>
+</context>
+<context>
+    <name>AddAccountWizard</name>
+    <message>
+        <source>Add account</source>
+        <translation>Добавить аккаунт</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Подключить</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Провайдер</translation>
+    </message>
+    <message>
+        <source>Authentication</source>
+        <translation>Аутентификация</translation>
+    </message>
+    <message>
+        <source>Sign in (OAuth)</source>
+        <translation>Войти (OAuth)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>Ключ API</translation>
+    </message>
+    <message>
+        <source>Label (optional)</source>
+        <translation>Метка (необязательно)</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Базовый URL (напр. https://…)</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser to complete sign-in…</source>
+        <translation>Ожидание завершения входа в браузере…</translation>
+    </message>
+    <message>
+        <source>Opens your browser to sign in securely.</source>
+        <translation>Откроет браузер для безопасного входа.</translation>
+    </message>
+</context>
+<context>
+    <name>AdvancedSection</name>
+    <message>
+        <source>Diagnostics</source>
+        <translation>Диагностика</translation>
+    </message>
+    <message>
+        <source>Log level</source>
+        <translation>Уровень логирования</translation>
+    </message>
+    <message>
+        <source>Send anonymous telemetry</source>
+        <translation>Отправлять анонимную телеметрию</translation>
+    </message>
+    <message>
+        <source>Enable experimental tools</source>
+        <translation>Включить экспериментальные инструменты</translation>
+    </message>
+    <message>
+        <source>Onboarding</source>
+        <translation>Первичная настройка</translation>
+    </message>
+    <message>
+        <source>Re-run first-run setup</source>
+        <translation>Запустить первичную настройку заново</translation>
+    </message>
+    <message>
+        <source>Local data</source>
+        <translation>Локальные данные</translation>
+    </message>
+    <message>
+        <source>Clear local data…</source>
+        <translation>Очистить локальные данные…</translation>
+    </message>
+    <message>
+        <source>Clear local data?</source>
+        <translation>Очистить локальные данные?</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Очистить</translation>
+    </message>
+    <message>
+        <source>This erases everything stored on this device: your connection settings and saved sign-in, appearance preferences, and the local cache of sessions and files. It does NOT delete anything on the node itself.
+
+You&apos;ll return to first-run setup.</source>
+        <translation>Это сотрёт всё, что хранится на этом устройстве: настройки подключения и сохранённый вход, параметры оформления, а также локальный кэш сессий и файлов. Это НЕ удаляет ничего на самом узле.
+
+Вы вернётесь к первичной настройке.</translation>
+    </message>
+</context>
+<context>
+    <name>AgentInferencePicker</name>
+    <message>
+        <source>Provider</source>
+        <translation>Провайдер</translation>
+    </message>
+    <message>
+        <source>Paste API key</source>
+        <translation>Вставьте ключ API</translation>
+    </message>
+    <message>
+        <source>Hide API key</source>
+        <translation>Скрыть ключ API</translation>
+    </message>
+    <message>
+        <source>Show API key</source>
+        <translation>Показать ключ API</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Модель</translation>
+    </message>
+    <message>
+        <source>Enter your API key to list models.</source>
+        <translation>Введите ключ API, чтобы получить список моделей.</translation>
+    </message>
+    <message>
+        <source>Discovering models…</source>
+        <translation>Поиск моделей…</translation>
+    </message>
+</context>
+<context>
+    <name>AgentProfilePage</name>
+    <message>
+        <source>Profile - %1</source>
+        <translation>Профиль — %1</translation>
+    </message>
+    <message>
+        <source>No agent selected.</source>
+        <translation>Агент не выбран.</translation>
+    </message>
+    <message>
+        <source>Identity</source>
+        <translation>Идентификация</translation>
+    </message>
+    <message>
+        <source>profile id</source>
+        <translation>id профиля</translation>
+    </message>
+    <message>
+        <source>name</source>
+        <translation>имя</translation>
+    </message>
+    <message>
+        <source>description</source>
+        <translation>описание</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Движок</translation>
+    </message>
+    <message>
+        <source>provider</source>
+        <translation>провайдер</translation>
+    </message>
+    <message>
+        <source>model</source>
+        <translation>модель</translation>
+    </message>
+    <message>
+        <source>base url</source>
+        <translation>базовый url</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>(по умолчанию у провайдера)</translation>
+    </message>
+    <message>
+        <source>context engine</source>
+        <translation>контекстный движок</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Память</translation>
+    </message>
+    <message>
+        <source>memory provider</source>
+        <translation>провайдер памяти</translation>
+    </message>
+    <message>
+        <source>Persona</source>
+        <translation>Персона</translation>
+    </message>
+    <message>
+        <source>Tool allowlist</source>
+        <translation>Список разрешённых инструментов</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Навыки</translation>
+    </message>
+    <message>
+        <source>Credentials</source>
+        <translation>Учётные данные</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>ссылка на учётные данные</translation>
+    </message>
+    <message>
+        <source> (default)</source>
+        <translation> (по умолчанию)</translation>
+    </message>
+</context>
+<context>
+    <name>AppearanceSection</name>
+    <message>
+        <source>Theme</source>
+        <translation>Тема</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>Светлая</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>Тёмная</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <translation>Сепия</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <translation>Полночь</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Язык</translation>
+    </message>
+    <message>
+        <source>Language used across the interface. Applied immediately.</source>
+        <translation>Язык, используемый в интерфейсе. Применяется сразу.</translation>
+    </message>
+    <message>
+        <source>Editor text</source>
+        <translation>Текст редактора</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Шрифт</translation>
+    </message>
+    <message>
+        <source>Typeface used for the transcript / editor text.</source>
+        <translation>Гарнитура для текста транскрипта / редактора.</translation>
+    </message>
+    <message>
+        <source>Sans</source>
+        <translation>Без засечек</translation>
+    </message>
+    <message>
+        <source>Serif</source>
+        <translation>С засечками</translation>
+    </message>
+    <message>
+        <source>Mono</source>
+        <translation>Моноширинный</translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation>Размер шрифта</translation>
+    </message>
+    <message>
+        <source>Size of the transcript / editor text.</source>
+        <translation>Размер текста транскрипта / редактора.</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation>Макет</translation>
+    </message>
+    <message>
+        <source>Center text</source>
+        <translation>Центрировать текст</translation>
+    </message>
+    <message>
+        <source>Distraction-free (hide chrome)</source>
+        <translation>Без отвлечений (скрыть интерфейс)</translation>
+    </message>
+    <message>
+        <source>Raw markdown editor</source>
+        <translation>Редактор исходного markdown</translation>
+    </message>
+    <message>
+        <source>Show Sessions</source>
+        <translation>Показать сессии</translation>
+    </message>
+    <message>
+        <source>Show Fleet Tree</source>
+        <translation>Показать дерево флота</translation>
+    </message>
+    <message>
+        <source>User message rail</source>
+        <translation>Панель сообщений пользователя</translation>
+    </message>
+</context>
+<context>
+    <name>ApprovalRepository</name>
+    <message>
+        <source>Approval decision failed</source>
+        <translation>Не удалось принять решение о подтверждении</translation>
+    </message>
+</context>
+<context>
+    <name>ApprovalsPage</name>
+    <message>
+        <source>Approvals</source>
+        <translation>Подтверждения</translation>
+    </message>
+    <message>
+        <source>Inbox zero — no pending approvals.</source>
+        <translation>Входящие пусты — нет ожидающих подтверждений.</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Отклонить</translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>Подтвердить</translation>
+    </message>
+</context>
+<context>
+    <name>ArchivedSection</name>
+    <message>
+        <source>Archived chats</source>
+        <translation>Архивные чаты</translation>
+    </message>
+    <message>
+        <source>No archived chats.</source>
+        <translation>Нет архивных чатов.</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>(без названия)</translation>
+    </message>
+    <message>
+        <source>Unarchive</source>
+        <translation>Разархивировать</translation>
+    </message>
+    <message>
+        <source>Delete permanently</source>
+        <translation>Удалить навсегда</translation>
+    </message>
+</context>
+<context>
+    <name>AssistantFooter</name>
+    <message>
+        <source>Copy message</source>
+        <translation>Копировать сообщение</translation>
+    </message>
+    <message>
+        <source>Regenerate</source>
+        <translation>Сгенерировать заново</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelsPage</name>
+    <message>
+        <source>Channels</source>
+        <translation>Каналы</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Аккаунты</translation>
+    </message>
+    <message>
+        <source>No channels connected.</source>
+        <translation>Нет подключённых каналов.</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>No rooms.</source>
+        <translation>Нет комнат.</translation>
+    </message>
+    <message>
+        <source>Add channel</source>
+        <translation>Добавить канал</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon to see available channel types.</source>
+        <translation>Подключитесь к демону, чтобы увидеть доступные типы каналов.</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Подключить</translation>
+    </message>
+</context>
+<context>
+    <name>ChatSettingsSection</name>
+    <message>
+        <source>Behaviour</source>
+        <translation>Поведение</translation>
+    </message>
+    <message>
+        <source>Stream responses</source>
+        <translation>Потоковые ответы</translation>
+    </message>
+    <message>
+        <source>Send on Enter (Shift+Enter for newline)</source>
+        <translation>Отправлять по Enter (Shift+Enter — новая строка)</translation>
+    </message>
+    <message>
+        <source>Show token counts</source>
+        <translation>Показывать число токенов</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>Системный промпт</translation>
+    </message>
+    <message>
+        <source>Optional default system prompt for new chats</source>
+        <translation>Необязательный системный промпт по умолчанию для новых чатов</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointsPopover</name>
+    <message>
+        <source>Checkpoints</source>
+        <translation>Контрольные точки</translation>
+    </message>
+    <message>
+        <source>Save here</source>
+        <translation>Сохранить здесь</translation>
+    </message>
+    <message>
+        <source>Manual checkpoint</source>
+        <translation>Ручная контрольная точка</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> tok</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>текущая</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Восстановить</translation>
+    </message>
+</context>
+<context>
+    <name>ClarifyBlock</name>
+    <message>
+        <source>The agent needs your input.</source>
+        <translation>Агенту нужен ваш ввод.</translation>
+    </message>
+    <message>
+        <source>(skipped)</source>
+        <translation>(пропущено)</translation>
+    </message>
+    <message>
+        <source>Answer</source>
+        <translation>Ответ</translation>
+    </message>
+    <message>
+        <source>Select all that apply</source>
+        <translation>Выберите все подходящие варианты</translation>
+    </message>
+    <message>
+        <source>Or type a reply…</source>
+        <translation>Или введите ответ…</translation>
+    </message>
+    <message>
+        <source>Type a reply…</source>
+        <translation>Введите ответ…</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>Отправить</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Пропустить</translation>
+    </message>
+</context>
+<context>
+    <name>CommandPalette</name>
+    <message>
+        <source>Type a command…</source>
+        <translation>Введите команду…</translation>
+    </message>
+</context>
+<context>
+    <name>CommandRegistry</name>
+    <message>
+        <source>New session</source>
+        <translation>Новая сессия</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Сессия</translation>
+    </message>
+    <message>
+        <source>Start a fresh chat</source>
+        <translation>Начать новый чат</translation>
+    </message>
+    <message>
+        <source>Search sessions</source>
+        <translation>Поиск сессий</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Навигация</translation>
+    </message>
+    <message>
+        <source>Jump to a session</source>
+        <translation>Перейти к сессии</translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation>Открыть настройки</translation>
+    </message>
+    <message>
+        <source>Toggle file explorer</source>
+        <translation>Показать/скрыть проводник</translation>
+    </message>
+    <message>
+        <source>Show / hide the workspace file tree</source>
+        <translation>Показать / скрыть дерево файлов рабочего пространства</translation>
+    </message>
+    <message>
+        <source>Open dashboard</source>
+        <translation>Открыть панель мониторинга</translation>
+    </message>
+    <message>
+        <source>Sessions, agents, approvals overview</source>
+        <translation>Обзор сессий, агентов и подтверждений</translation>
+    </message>
+    <message>
+        <source>Open models hub</source>
+        <translation>Открыть хаб моделей</translation>
+    </message>
+    <message>
+        <source>Discover / download / installed models</source>
+        <translation>Найти / скачать / установленные модели</translation>
+    </message>
+    <message>
+        <source>Open accounts</source>
+        <translation>Открыть аккаунты</translation>
+    </message>
+    <message>
+        <source>Provider sign-in + API keys</source>
+        <translation>Вход к провайдерам + ключи API</translation>
+    </message>
+    <message>
+        <source>Open profiles</source>
+        <translation>Открыть профили</translation>
+    </message>
+    <message>
+        <source>Agent profiles + skills/tools</source>
+        <translation>Профили агентов + навыки/инструменты</translation>
+    </message>
+    <message>
+        <source>Open fleet</source>
+        <translation>Открыть флот</translation>
+    </message>
+    <message>
+        <source>Orchestrator / worker tree</source>
+        <translation>Дерево оркестратора / воркеров</translation>
+    </message>
+    <message>
+        <source>Open sessions</source>
+        <translation>Открыть сессии</translation>
+    </message>
+    <message>
+        <source>Durable + live sessions</source>
+        <translation>Постоянные + активные сессии</translation>
+    </message>
+    <message>
+        <source>Open approvals</source>
+        <translation>Открыть подтверждения</translation>
+    </message>
+    <message>
+        <source>Pending tool approvals</source>
+        <translation>Ожидающие подтверждения инструментов</translation>
+    </message>
+    <message>
+        <source>Open routing</source>
+        <translation>Открыть маршрутизацию</translation>
+    </message>
+    <message>
+        <source>Intent → model rules</source>
+        <translation>Правила «намерение → модель»</translation>
+    </message>
+    <message>
+        <source>Open scheduled jobs</source>
+        <translation>Открыть запланированные задания</translation>
+    </message>
+    <message>
+        <source>Cron-style scheduled jobs</source>
+        <translation>Запланированные задания в стиле cron</translation>
+    </message>
+    <message>
+        <source>Open users &amp; access</source>
+        <translation>Открыть пользователей и доступ</translation>
+    </message>
+    <message>
+        <source>Manage users, roles + sessions</source>
+        <translation>Управление пользователями, ролями и сессиями</translation>
+    </message>
+    <message>
+        <source>Cycle theme</source>
+        <translation>Переключить тему</translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation>Оформление</translation>
+    </message>
+    <message>
+        <source>Light / Dark / Sepia / Midnight</source>
+        <translation>Светлая / Тёмная / Сепия / Полночь</translation>
+    </message>
+    <message>
+        <source>Choose model…</source>
+        <translation>Выбрать модель…</translation>
+    </message>
+    <message>
+        <source>Composer</source>
+        <translation>Композер</translation>
+    </message>
+    <message>
+        <source>Pick the active model</source>
+        <translation>Выбрать активную модель</translation>
+    </message>
+    <message>
+        <source>Cycle reasoning effort</source>
+        <translation>Переключить усилие рассуждений</translation>
+    </message>
+    <message>
+        <source>off / low / medium / high</source>
+        <translation>выкл / низкое / среднее / высокое</translation>
+    </message>
+    <message>
+        <source>Toggle fast mode</source>
+        <translation>Переключить быстрый режим</translation>
+    </message>
+    <message>
+        <source>Toggle verbose</source>
+        <translation>Переключить подробный режим</translation>
+    </message>
+    <message>
+        <source>Show usage</source>
+        <translation>Показать расход</translation>
+    </message>
+    <message>
+        <source>Tokens + spend this session</source>
+        <translation>Токены и расходы за сессию</translation>
+    </message>
+    <message>
+        <source>Compress context</source>
+        <translation>Сжать контекст</translation>
+    </message>
+    <message>
+        <source>Summarize + free the window</source>
+        <translation>Суммировать и освободить окно</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>Экспортировать транскрипт</translation>
+    </message>
+    <message>
+        <source>Write the session to JSON</source>
+        <translation>Записать сессию в JSON</translation>
+    </message>
+    <message>
+        <source>Find in transcript</source>
+        <translation>Найти в транскрипте</translation>
+    </message>
+    <message>
+        <source>Search this session</source>
+        <translation>Искать в этой сессии</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Переименовать сессию</translation>
+    </message>
+    <message>
+        <source>Retry last message</source>
+        <translation>Повторить последнее сообщение</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>Откат</translation>
+    </message>
+    <message>
+        <source>Edit last message</source>
+        <translation>Изменить последнее сообщение</translation>
+    </message>
+    <message>
+        <source>Undo last exchange</source>
+        <translation>Отменить последний обмен</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>Очистить сессию</translation>
+    </message>
+    <message>
+        <source>Remove all messages</source>
+        <translation>Удалить все сообщения</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>Справка</translation>
+    </message>
+    <message>
+        <source>Commands + shortcuts</source>
+        <translation>Команды и горячие клавиши</translation>
+    </message>
+    <message>
+        <source>Distraction-free mode</source>
+        <translation>Режим без отвлечений</translation>
+    </message>
+</context>
+<context>
+    <name>Composer</name>
+    <message>
+        <source>Attach image</source>
+        <translation>Прикрепить изображение</translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.gif *.webp *.bmp *.svg)</source>
+        <translation>Изображения (*.png *.jpg *.jpeg *.gif *.webp *.bmp *.svg)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Все файлы (*)</translation>
+    </message>
+    <message>
+        <source>Editing queued message</source>
+        <translation>Редактирование сообщения из очереди</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+    <message>
+        <source>(reverse-i-search)`</source>
+        <translation>(reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>(failed reverse-i-search)`</source>
+        <translation>(неудачный reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>&apos;:</source>
+        <translation>&apos;:</translation>
+    </message>
+    <message>
+        <source>Enter accept · Ctrl+R next · Esc cancel</source>
+        <translation>Enter — принять · Ctrl+R — далее · Esc — отмена</translation>
+    </message>
+    <message>
+        <source>Send a message...  (Enter to send, Shift+Enter for newline)</source>
+        <translation>Отправьте сообщение…  (Enter — отправить, Shift+Enter — новая строка)</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerChrome</name>
+    <message>
+        <source>(reverse-i-search)`</source>
+        <translation>(reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>(failed reverse-i-search)`</source>
+        <translation>(неудачный reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>Enter accept  ·  Ctrl+R next  ·  Esc cancel</source>
+        <translation>Enter — принять  ·  Ctrl+R — далее  ·  Esc — отмена</translation>
+    </message>
+    <message>
+        <source>turn failed</source>
+        <translation>сбой хода</translation>
+    </message>
+    <message>
+        <source> Still thinking… %1s</source>
+        <translation> Всё ещё думаю… %1s</translation>
+    </message>
+    <message>
+        <source> Thinking… %1s</source>
+        <translation> Думаю… %1s</translation>
+    </message>
+    <message>
+        <source> Esc stop</source>
+        <translation> Esc — стоп</translation>
+    </message>
+    <message>
+        <source> Enter send</source>
+        <translation> Enter — отправить</translation>
+    </message>
+    <message>
+        <source> Ctrl+Enter steer</source>
+        <translation> Ctrl+Enter — направить</translation>
+    </message>
+    <message>
+        <source>r:</source>
+        <comment>reasoning-effort badge prefix</comment>
+        <translation>r:</translation>
+    </message>
+    <message>
+        <source>fast</source>
+        <comment>composer mode badge</comment>
+        <translation>быстро</translation>
+    </message>
+    <message>
+        <source>verbose</source>
+        <comment>composer mode badge</comment>
+        <translation>подробно</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerControls</name>
+    <message>
+        <source>Checkpoints / rewind</source>
+        <translation>Контрольные точки / откат</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>Настройки сессии</translation>
+    </message>
+    <message>
+        <source>Steer the running turn (Ctrl+Enter)</source>
+        <translation>Направить текущий ход (Ctrl+Enter)</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerMenu</name>
+    <message>
+        <source>Code review</source>
+        <translation>Ревью кода</translation>
+    </message>
+    <message>
+        <source>Review the following code for correctness, clarity, and edge cases:
+
+</source>
+        <translation>Проверьте следующий код на корректность, ясность и граничные случаи:
+
+</translation>
+    </message>
+    <message>
+        <source>Implementation plan</source>
+        <translation>План реализации</translation>
+    </message>
+    <message>
+        <source>Draft a step-by-step implementation plan for:
+
+</source>
+        <translation>Составьте пошаговый план реализации для:
+
+</translation>
+    </message>
+    <message>
+        <source>Explain this</source>
+        <translation>Объяснить это</translation>
+    </message>
+    <message>
+        <source>Explain what the following does and why:
+
+</source>
+        <translation>Объясните, что делает следующее и зачем:
+
+</translation>
+    </message>
+    <message>
+        <source>Attach and more</source>
+        <translation>Прикрепить и другое</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>Прикрепить</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>Файлы</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation>Папка</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation>Изображения</translation>
+    </message>
+    <message>
+        <source>Prompt snippets</source>
+        <translation>Заготовки промптов</translation>
+    </message>
+    <message>
+        <source>Type @ to mention</source>
+        <translation>Введите @ для упоминания</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerUploadController</name>
+    <message>
+        <source>Not connected to a workspace.</source>
+        <translation>Нет подключения к рабочему пространству.</translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; is too large to upload (max 25 MB).</source>
+        <translation>«%1» слишком велик для загрузки (макс. 25 МБ).</translation>
+    </message>
+    <message>
+        <source>Uploading %1…</source>
+        <translation>Загрузка %1…</translation>
+    </message>
+    <message>
+        <source>No writable workspace to upload into.</source>
+        <translation>Нет доступного для записи рабочего пространства для загрузки.</translation>
+    </message>
+    <message>
+        <source>Upload failed.</source>
+        <translation>Не удалось загрузить.</translation>
+    </message>
+</context>
+<context>
+    <name>ConfirmDialog</name>
+    <message>
+        <source>Yes</source>
+        <translation>Да</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+</context>
+<context>
+    <name>ConnectionPicker</name>
+    <message>
+        <source>https://node.example:8080</source>
+        <translation>https://node.example:8080</translation>
+    </message>
+    <message>
+        <source>wss://node.example:9443</source>
+        <translation>wss://node.example:9443</translation>
+    </message>
+    <message>
+        <source>/path/to/daemon.sock</source>
+        <translation>/path/to/daemon.sock</translation>
+    </message>
+    <message>
+        <source>Transport</source>
+        <translation>Транспорт</translation>
+    </message>
+    <message>
+        <source>Embedded</source>
+        <translation>Встроенный</translation>
+    </message>
+    <message>
+        <source>In-process node (coming soon)</source>
+        <translation>Внутрипроцессный узел (скоро)</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation>Локальный</translation>
+    </message>
+    <message>
+        <source>Unix socket on this machine</source>
+        <translation>Unix-сокет на этой машине</translation>
+    </message>
+    <message>
+        <source>Remote</source>
+        <translation>Удалённый</translation>
+    </message>
+    <message>
+        <source>Connect to a node over the network</source>
+        <translation>Подключиться к узлу по сети</translation>
+    </message>
+    <message>
+        <source>WebSocket</source>
+        <translation>WebSocket</translation>
+    </message>
+    <message>
+        <source>Connect to a node over ws:// or wss://</source>
+        <translation>Подключиться к узлу по ws:// или wss://</translation>
+    </message>
+    <message>
+        <source>Local daemon</source>
+        <translation>Локальный демон</translation>
+    </message>
+    <message>
+        <source>App-managed</source>
+        <translation>Управляется приложением</translation>
+    </message>
+    <message>
+        <source>Start and manage a node for me (recommended)</source>
+        <translation>Запускать и управлять узлом за меня (рекомендуется)</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>Прикрепить</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon socket I run myself</source>
+        <translation>Подключиться к сокету демона, который я запускаю сам</translation>
+    </message>
+    <message>
+        <source>Socket path</source>
+        <translation>Путь к сокету</translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation>Цель</translation>
+    </message>
+    <message>
+        <source>Auth token (optional)</source>
+        <translation>Токен аутентификации (необязательно)</translation>
+    </message>
+    <message>
+        <source>Testing...</source>
+        <translation>Проверка…</translation>
+    </message>
+    <message>
+        <source>Test connection</source>
+        <translation>Проверить соединение</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Подключить</translation>
+    </message>
+</context>
+<context>
+    <name>ConnectionSection</name>
+    <message>
+        <source>Status</source>
+        <translation>Статус</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>неизвестно</translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation>Отключить</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>Выйти</translation>
+    </message>
+    <message>
+        <source>Local daemon</source>
+        <translation>Локальный демон</translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation>Запускать локальный демон автоматически</translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
+        <translation>Останавливать управляемый демон при закрытии приложения</translation>
+    </message>
+</context>
+<context>
+    <name>CredentialRepository</name>
+    <message>
+        <source>Credential operation failed</source>
+        <translation>Не удалось выполнить операцию с учётными данными</translation>
+    </message>
+</context>
+<context>
+    <name>CronJobDialog</name>
+    <message>
+        <source>Edit job</source>
+        <translation>Изменить задание</translation>
+    </message>
+    <message>
+        <source>New job</source>
+        <translation>Новое задание</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Имя</translation>
+    </message>
+    <message>
+        <source>Job name</source>
+        <translation>Имя задания</translation>
+    </message>
+    <message>
+        <source>Schedule (cron)</source>
+        <translation>Расписание (cron)</translation>
+    </message>
+    <message>
+        <source>m h dom mon dow  (e.g. 0 8 * * *)</source>
+        <translation>м ч дм мес дн  (напр. 0 8 * * *)</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Профиль</translation>
+    </message>
+    <message>
+        <source>Prompt</source>
+        <translation>Промпт</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+</context>
+<context>
+    <name>CronPage</name>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Запланированные задания</translation>
+    </message>
+    <message>
+        <source>Jobs</source>
+        <translation>Задания</translation>
+    </message>
+    <message>
+        <source>+ New job</source>
+        <translation>+ Новое задание</translation>
+    </message>
+    <message>
+        <source>next </source>
+        <translation>след. </translation>
+    </message>
+    <message>
+        <source>  ·  last </source>
+        <translation>  ·  посл. </translation>
+    </message>
+    <message>
+        <source>Run now</source>
+        <translation>Запустить сейчас</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Изменить</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation>Вход через OAuth пока недоступен; вместо этого добавьте ключ API.</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation>Не удалось связаться с демоном. Убедитесь, что он запущен, и повторите попытку.</translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation>Демон сообщил, что он неработоспособен.</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>неизвестно</translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation>Замена несовместимого локального демона (api %1, нужен %2)…</translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation>Несовместимый демон (api %1, нужен %2).</translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation>Переподключение…</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device.</source>
+        <translation>На этом устройстве работают только WebSocket-соединения (ws:// или wss://).</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device</source>
+        <translation>На этом устройстве работают только WebSocket-соединения (ws:// или wss://)</translation>
+    </message>
+    <message>
+        <source>Unix socket target accepted</source>
+        <translation>Цель Unix-сокета принята</translation>
+    </message>
+    <message>
+        <source>Enter a local socket path</source>
+        <translation>Введите путь к локальному сокету</translation>
+    </message>
+    <message>
+        <source>Remote target accepted (host:port, TLS)</source>
+        <translation>Удалённая цель принята (host:port, TLS)</translation>
+    </message>
+    <message>
+        <source>Use host:port for a remote TLS node</source>
+        <translation>Используйте host:port для удалённого узла с TLS</translation>
+    </message>
+    <message>
+        <source>WebSocket target accepted (ws:// or wss://)</source>
+        <translation>Цель WebSocket принята (ws:// или wss://)</translation>
+    </message>
+    <message>
+        <source>Use ws://host:port or wss://host[:port][/path]</source>
+        <translation>Используйте ws://host:port или wss://host[:port][/path]</translation>
+    </message>
+    <message>
+        <source>Unsupported transport</source>
+        <translation>Неподдерживаемый транспорт</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonTransport</name>
+    <message>
+        <source>No daemon WebSocket target configured</source>
+        <translation>WebSocket-цель демона не настроена</translation>
+    </message>
+    <message>
+        <source>No daemon target configured</source>
+        <translation>Цель демона не настроена</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonTurnEngine</name>
+    <message>
+        <source>The turn timed out waiting for the agent.</source>
+        <translation>Истекло время ожидания агента в этом ходе.</translation>
+    </message>
+    <message>
+        <source>No session is bound for this turn.</source>
+        <translation>К этому ходу не привязана сессия.</translation>
+    </message>
+    <message>
+        <source>The connection to the agent was lost.</source>
+        <translation>Соединение с агентом потеряно.</translation>
+    </message>
+    <message>
+        <source>Failed to read the agent&apos;s response stream.</source>
+        <translation>Не удалось прочитать поток ответа агента.</translation>
+    </message>
+    <message>
+        <source>The turn ended: %1</source>
+        <translation>Ход завершён: %1</translation>
+    </message>
+    <message>
+        <source>The agent could not start the turn.</source>
+        <translation>Агент не смог начать ход.</translation>
+    </message>
+    <message>
+        <source>The agent rejected the response.</source>
+        <translation>Агент отклонил ответ.</translation>
+    </message>
+    <message>
+        <source>The session was reset; recovered from history.</source>
+        <translation>Сессия была сброшена; восстановлено из истории.</translation>
+    </message>
+</context>
+<context>
+    <name>DashboardPage</name>
+    <message>
+        <source>Dashboard</source>
+        <translation>Панель мониторинга</translation>
+    </message>
+    <message>
+        <source>Active sessions</source>
+        <translation>Активные сессии</translation>
+    </message>
+    <message>
+        <source>Running agents</source>
+        <translation>Работающие агенты</translation>
+    </message>
+    <message>
+        <source>Pending approvals</source>
+        <translation>Ожидающие подтверждения</translation>
+    </message>
+    <message>
+        <source>Tokens today</source>
+        <translation>Токенов за сегодня</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>!</source>
+        <translation>!</translation>
+    </message>
+    <message>
+        <source>Daemon health</source>
+        <translation>Состояние демона</translation>
+    </message>
+    <message>
+        <source>Recent activity</source>
+        <translation>Недавняя активность</translation>
+    </message>
+</context>
+<context>
+    <name>Dialog</name>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+</context>
+<context>
+    <name>DiscoverDialog</name>
+    <message>
+        <source>Discover models</source>
+        <translation>Найти модели</translation>
+    </message>
+    <message>
+        <source>Search Hugging Face repos (e.g. SmolLM2)</source>
+        <translation>Поиск репозиториев Hugging Face (напр. SmolLM2)</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Поиск</translation>
+    </message>
+    <message>
+        <source>Searching…</source>
+        <translation>Поиск…</translation>
+    </message>
+    <message>
+        <source>by %1</source>
+        <translation>от %1</translation>
+    </message>
+    <message>
+        <source>Quantizations</source>
+        <translation>Квантизации</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation>Загрузки</translation>
+    </message>
+    <message>
+        <source>Load more</source>
+        <translation>Загрузить ещё</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+</context>
+<context>
+    <name>DisplayPresenter</name>
+    <message>
+        <source>checking</source>
+        <comment>connection state</comment>
+        <translation>проверка</translation>
+    </message>
+    <message>
+        <source>connecting</source>
+        <comment>connection state</comment>
+        <translation>подключение</translation>
+    </message>
+    <message>
+        <source>authenticating</source>
+        <comment>connection state</comment>
+        <translation>аутентификация</translation>
+    </message>
+    <message>
+        <source>ready</source>
+        <comment>connection state</comment>
+        <translation>готово</translation>
+    </message>
+    <message>
+        <source>offline</source>
+        <comment>connection state</comment>
+        <translation>офлайн</translation>
+    </message>
+    <message>
+        <source>needs setup</source>
+        <comment>connection state</comment>
+        <translation>требует настройки</translation>
+    </message>
+    <message>
+        <source>working</source>
+        <comment>memory tier</comment>
+        <translation>работает</translation>
+    </message>
+    <message>
+        <source>episodic</source>
+        <comment>memory tier</comment>
+        <translation>эпизодическая</translation>
+    </message>
+    <message>
+        <source>scratchpad</source>
+        <comment>memory tier</comment>
+        <translation>черновик</translation>
+    </message>
+    <message>
+        <source>stated</source>
+        <comment>memory veracity</comment>
+        <translation>заявлено</translation>
+    </message>
+    <message>
+        <source>inferred</source>
+        <comment>memory veracity</comment>
+        <translation>выведено</translation>
+    </message>
+    <message>
+        <source>tool</source>
+        <comment>memory veracity</comment>
+        <translation>инструмент</translation>
+    </message>
+    <message>
+        <source>imported</source>
+        <comment>memory veracity</comment>
+        <translation>импортировано</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <comment>memory veracity</comment>
+        <translation>неизвестно</translation>
+    </message>
+    <message>
+        <source>active</source>
+        <comment>memory status</comment>
+        <translation>активно</translation>
+    </message>
+    <message>
+        <source>expired</source>
+        <comment>memory status</comment>
+        <translation>истекло</translation>
+    </message>
+    <message>
+        <source>superseded</source>
+        <comment>memory status</comment>
+        <translation>заменено</translation>
+    </message>
+    <message>
+        <source>hot</source>
+        <comment>memory degradation</comment>
+        <translation>горячий</translation>
+    </message>
+    <message>
+        <source>warm</source>
+        <comment>memory degradation</comment>
+        <translation>тёплый</translation>
+    </message>
+    <message>
+        <source>cold</source>
+        <comment>memory degradation</comment>
+        <translation>холодный</translation>
+    </message>
+    <message>
+        <source>memory</source>
+        <comment>memory node kind</comment>
+        <translation>память</translation>
+    </message>
+    <message>
+        <source>entity</source>
+        <comment>memory node kind</comment>
+        <translation>сущность</translation>
+    </message>
+    <message>
+        <source>fact</source>
+        <comment>memory node kind</comment>
+        <translation>факт</translation>
+    </message>
+    <message>
+        <source>gist</source>
+        <comment>memory node kind</comment>
+        <translation>суть</translation>
+    </message>
+    <message>
+        <source>conflict</source>
+        <comment>memory node kind</comment>
+        <translation>конфликт</translation>
+    </message>
+    <message>
+        <source>added</source>
+        <comment>memory event kind</comment>
+        <translation>добавлено</translation>
+    </message>
+    <message>
+        <source>updated</source>
+        <comment>memory event kind</comment>
+        <translation>обновлено</translation>
+    </message>
+    <message>
+        <source>recalled</source>
+        <comment>memory event kind</comment>
+        <translation>извлечено</translation>
+    </message>
+    <message>
+        <source>invalidated</source>
+        <comment>memory event kind</comment>
+        <translation>аннулировано</translation>
+    </message>
+    <message>
+        <source>consolidated</source>
+        <comment>memory event kind</comment>
+        <translation>консолидировано</translation>
+    </message>
+    <message>
+        <source>snapshot</source>
+        <comment>memory event kind</comment>
+        <translation>снимок</translation>
+    </message>
+    <message>
+        <source>high</source>
+        <comment>approval risk</comment>
+        <translation>высокое</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <comment>approval risk</comment>
+        <translation>среднее</translation>
+    </message>
+    <message>
+        <source>low</source>
+        <comment>approval risk</comment>
+        <translation>низкое</translation>
+    </message>
+    <message>
+        <source>queued</source>
+        <comment>download state</comment>
+        <translation>в очереди</translation>
+    </message>
+    <message>
+        <source>paused</source>
+        <comment>download state</comment>
+        <translation>приостановлено</translation>
+    </message>
+    <message>
+        <source>downloading</source>
+        <comment>download state</comment>
+        <translation>загрузка</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <comment>download state</comment>
+        <translation>готово</translation>
+    </message>
+    <message>
+        <source>failed</source>
+        <comment>download state</comment>
+        <translation>сбой</translation>
+    </message>
+    <message>
+        <source>cancelled</source>
+        <comment>download state</comment>
+        <translation>отменено</translation>
+    </message>
+</context>
+<context>
+    <name>DownloadsPanel</name>
+    <message>
+        <source>Queued</source>
+        <translation>В очереди</translation>
+    </message>
+    <message>
+        <source>Downloading</source>
+        <translation>Загрузка</translation>
+    </message>
+    <message>
+        <source>Paused</source>
+        <translation>Приостановлено</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Готово</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Сбой</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation>Отменено</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>Возобновить</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>Пауза</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Повторить</translation>
+    </message>
+    <message>
+        <source>Use this model</source>
+        <translation>Использовать эту модель</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Скрыть</translation>
+    </message>
+    <message>
+        <source>file %1/%2</source>
+        <translation>файл %1/%2</translation>
+    </message>
+</context>
+<context>
+    <name>EditMenu</name>
+    <message>
+        <source>Cut</source>
+        <translation>Вырезать</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Копировать</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>Вставить</translation>
+    </message>
+    <message>
+        <source>Select All</source>
+        <translation>Выделить всё</translation>
+    </message>
+</context>
+<context>
+    <name>FileExplorer</name>
+    <message>
+        <source>Explorer</source>
+        <translation>Проводник</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Обновить</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Свернуть всё</translation>
+    </message>
+    <message>
+        <source>Go to file (Ctrl+P)</source>
+        <translation>Перейти к файлу (Ctrl+P)</translation>
+    </message>
+    <message>
+        <source>Search in files</source>
+        <translation>Поиск в файлах</translation>
+    </message>
+    <message>
+        <source>Hide explorer</source>
+        <translation>Скрыть проводник</translation>
+    </message>
+</context>
+<context>
+    <name>FileFinder</name>
+    <message numerus="yes">
+        <source>Indexing… (%n file(s))</source>
+        <translation>
+            <numerusform>Индексация… (%n файл)</numerusform>
+            <numerusform>Индексация… (%n файла)</numerusform>
+            <numerusform>Индексация… (%n файлов)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Go to file…</source>
+        <translation>Перейти к файлу…</translation>
+    </message>
+</context>
+<context>
+    <name>FileFinderDialog</name>
+    <message numerus="yes">
+        <source>Indexing… (%n file(s))</source>
+        <translation>
+            <numerusform>Индексация… (%n файл)</numerusform>
+            <numerusform>Индексация… (%n файла)</numerusform>
+            <numerusform>Индексация… (%n файлов)</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>FilePage</name>
+    <message>
+        <source>Saving…</source>
+        <translation>Сохранение…</translation>
+    </message>
+    <message>
+        <source>File is too large for editing and was loaded only partially.</source>
+        <translation>Файл слишком велик для редактирования и загружен лишь частично.</translation>
+    </message>
+    <message>
+        <source>Save failed.</source>
+        <translation>Не удалось сохранить.</translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation>Сохранено</translation>
+    </message>
+    <message>
+        <source>Large file — preview is truncated and editing is disabled.</source>
+        <translation>Большой файл — предпросмотр обрезан, редактирование отключено.</translation>
+    </message>
+    <message>
+        <source>Image preview is not available in the dev build.</source>
+        <translation>Предпросмотр изображений недоступен в dev-сборке.</translation>
+    </message>
+    <message>
+        <source>Binary file — not shown.</source>
+        <translation>Двоичный файл — не отображается.</translation>
+    </message>
+</context>
+<context>
+    <name>FilePicker</name>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+</context>
+<context>
+    <name>FileTree</name>
+    <message>
+        <source>Retry</source>
+        <translation>Повторить</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunDialog</name>
+    <message>
+        <source>Setup Required</source>
+        <translation>Требуется настройка</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon node to get started. Choose a transport:</source>
+        <translation>Подключитесь к узлу-демону, чтобы начать. Выберите транспорт:</translation>
+    </message>
+    <message>
+        <source>Embedded</source>
+        <translation>Встроенный</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation>Локальный</translation>
+    </message>
+    <message>
+        <source>Remote</source>
+        <translation>Удалённый</translation>
+    </message>
+    <message>
+        <source>Agent name</source>
+        <translation>Имя агента</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Провайдер</translation>
+    </message>
+    <message>
+        <source>List models</source>
+        <translation>Список моделей</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Модель</translation>
+    </message>
+    <message>
+        <source>Test</source>
+        <translation>Проверить</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Подключить</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Пропустить</translation>
+    </message>
+    <message>
+        <source>Testing...</source>
+        <translation>Проверка…</translation>
+    </message>
+    <message>
+        <source>OK — </source>
+        <translation>OK — </translation>
+    </message>
+    <message>
+        <source>Failed — </source>
+        <translation>Сбой — </translation>
+    </message>
+    <message>
+        <source>Local: App-managed (press to Attach instead)</source>
+        <translation>Локально: управляется приложением (нажмите, чтобы вместо этого подключиться)</translation>
+    </message>
+    <message>
+        <source>Local: Attach to socket (press for App-managed)</source>
+        <translation>Локально: подключение к сокету (нажмите для управления приложением)</translation>
+    </message>
+    <message>
+        <source>https://node.example:8080</source>
+        <comment>example remote connection target</comment>
+        <translation>https://node.example:8080</translation>
+    </message>
+    <message>
+        <source>Connecting...</source>
+        <translation>Подключение…</translation>
+    </message>
+    <message>
+        <source>Sign in to continue.</source>
+        <translation>Войдите, чтобы продолжить.</translation>
+    </message>
+    <message>
+        <source>Sign in</source>
+        <translation>Войти</translation>
+    </message>
+    <message>
+        <source>Pick a provider and a model, then Finish.</source>
+        <translation>Выберите провайдера и модель, затем нажмите «Готово».</translation>
+    </message>
+    <message>
+        <source>Finish</source>
+        <translation>Готово</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunGate</name>
+    <message>
+        <source>Welcome to daemon-app</source>
+        <translation>Добро пожаловать в daemon-app</translation>
+    </message>
+    <message>
+        <source>Almost there - confirm an inference model.</source>
+        <translation>Почти готово — подтвердите модель для вывода.</translation>
+    </message>
+    <message>
+        <source>Sign in to the node to continue.</source>
+        <translation>Войдите в узел, чтобы продолжить.</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon node to get started.</source>
+        <translation>Подключитесь к узлу-демону, чтобы начать.</translation>
+    </message>
+    <message>
+        <source>Connecting to %1...</source>
+        <translation>Подключение к %1…</translation>
+    </message>
+    <message>
+        <source>Sign in</source>
+        <translation>Войти</translation>
+    </message>
+    <message>
+        <source>Username</source>
+        <translation>Имя пользователя</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>Пароль</translation>
+    </message>
+    <message>
+        <source>Signing in…</source>
+        <translation>Вход…</translation>
+    </message>
+    <message>
+        <source>Agent name</source>
+        <translation>Имя агента</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation>имя агента</translation>
+    </message>
+    <message>
+        <source>Skip for now</source>
+        <translation>Пропустить пока</translation>
+    </message>
+    <message>
+        <source>Finish setup</source>
+        <translation>Завершить настройку</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunModel</name>
+    <message>
+        <source>Could not reach the node. Check the target and try again.</source>
+        <translation>Не удалось связаться с узлом. Проверьте цель и повторите попытку.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation>Не удалось проверить этот ключ API с %1 — проверьте его и повторите попытку.</translation>
+    </message>
+</context>
+<context>
+    <name>FleetPage</name>
+    <message>
+        <source>Fleet</source>
+        <translation>Флот</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Обновить</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>Возобновить</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>Пауза</translation>
+    </message>
+    <message>
+        <source>%1 · %2 · depth %3</source>
+        <translation>%1 · %2 · глубина %3</translation>
+    </message>
+    <message>
+        <source>Workers</source>
+        <translation>Воркеры</translation>
+    </message>
+    <message>
+        <source>Scale to %1</source>
+        <translation>Масштабировать до %1</translation>
+    </message>
+    <message>
+        <source>No active subagents</source>
+        <translation>Нет активных субагентов</translation>
+    </message>
+</context>
+<context>
+    <name>FleetRepository</name>
+    <message>
+        <source>Unit control failed</source>
+        <translation>Не удалось управлять юнитом</translation>
+    </message>
+</context>
+<context>
+    <name>FontStyleButton</name>
+    <message>
+        <source>Sans</source>
+        <translation>Без засечек</translation>
+    </message>
+    <message>
+        <source>Ag</source>
+        <comment>font specimen sample</comment>
+        <translation>Аг</translation>
+    </message>
+</context>
+<context>
+    <name>GatewayMenu</name>
+    <message>
+        <source>Gateway</source>
+        <translation>Шлюз</translation>
+    </message>
+    <message>
+        <source>Open system</source>
+        <translation>Открыть систему</translation>
+    </message>
+    <message>
+        <source>View all logs</source>
+        <translation>Показать все логи</translation>
+    </message>
+    <message>
+        <source>connected</source>
+        <translation>подключено</translation>
+    </message>
+    <message>
+        <source>offline</source>
+        <translation>офлайн</translation>
+    </message>
+</context>
+<context>
+    <name>GraphView</name>
+    <message>
+        <source>No graph data</source>
+        <translation>Нет данных графа</translation>
+    </message>
+</context>
+<context>
+    <name>ImageBlock</name>
+    <message>
+        <source>Loading image…</source>
+        <translation>Загрузка изображения…</translation>
+    </message>
+    <message>
+        <source>image unavailable</source>
+        <translation>изображение недоступно</translation>
+    </message>
+</context>
+<context>
+    <name>InteractiveTurnHost</name>
+    <message>
+        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
+</source>
+        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m одобрено — команда выполнена
+</translation>
+    </message>
+    <message>
+        <source>
+
+Thanks — proceeding with: %1
+</source>
+        <translation>
+
+Спасибо — продолжаю с: %1
+</translation>
+    </message>
+</context>
+<context>
+    <name>LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation>Не удалось найти исполняемый файл локального демона. Укажите путь к нему в настройках или подключитесь к удалённому демону.</translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation>Локальный демон постоянно падает (слишком много перезапусков). Проверьте его лог и конфигурацию.</translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation>Не удалось запустить локальный демон (%1).</translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation>Локальный демон не стал готов вовремя.</translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation>Несовместимый локальный демон (pid %1) не завершился вовремя.</translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
+        <translation>Несовместимый демон обслуживает %1, и его процесс не записан ни в одном pid-файле. Остановите его вручную и переподключитесь.</translation>
+    </message>
+    <message>
+        <source>A browser cannot start a local daemon. Connect to a WebSocket node instead.</source>
+        <translation>Браузер не может запустить локальный демон. Подключитесь к WebSocket-узлу.</translation>
+    </message>
+    <message>
+        <source>A browser cannot manage a local daemon. Connect to a WebSocket node instead.</source>
+        <translation>Браузер не может управлять локальным демоном. Подключитесь к WebSocket-узлу.</translation>
+    </message>
+</context>
+<context>
+    <name>LocalDiskFsService</name>
+    <message>
+        <source>invalid path</source>
+        <translation>недопустимый путь</translation>
+    </message>
+    <message>
+        <source>cannot open</source>
+        <translation>не удаётся открыть</translation>
+    </message>
+    <message>
+        <source>stale: file changed on disk</source>
+        <translation>устарело: файл изменён на диске</translation>
+    </message>
+    <message>
+        <source>write failed</source>
+        <translation>ошибка записи</translation>
+    </message>
+</context>
+<context>
+    <name>Main</name>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Connection lost</source>
+        <translation>Соединение потеряно</translation>
+    </message>
+    <message>
+        <source>%1 (%2s)</source>
+        <translation>%1 (%2 с)</translation>
+    </message>
+    <message>
+        <source>Reconnect now</source>
+        <translation>Переподключиться сейчас</translation>
+    </message>
+    <message>
+        <source>Downloading update v%1… %2%</source>
+        <translation>Загрузка обновления v%1… %2%</translation>
+    </message>
+    <message>
+        <source>Update v%1 is ready to install</source>
+        <translation>Обновление v%1 готово к установке</translation>
+    </message>
+    <message>
+        <source>Update available: v%1 → v%2</source>
+        <translation>Доступно обновление: v%1 → v%2</translation>
+    </message>
+    <message>
+        <source>Release notes</source>
+        <translation>Примечания к выпуску</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Скачать</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Открыть</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Скрыть</translation>
+    </message>
+</context>
+<context>
+    <name>MathBlock</name>
+    <message>
+        <source>Math error: </source>
+        <translation>Ошибка формулы: </translation>
+    </message>
+</context>
+<context>
+    <name>MemoryDetail</name>
+    <message>
+        <source>Trust</source>
+        <translation>Доверие</translation>
+    </message>
+    <message>
+        <source>veracity</source>
+        <translation>достоверность</translation>
+    </message>
+    <message>
+        <source>trust tier</source>
+        <translation>уровень доверия</translation>
+    </message>
+    <message>
+        <source>trust weight</source>
+        <translation>вес доверия</translation>
+    </message>
+    <message>
+        <source>Lifecycle</source>
+        <translation>Жизненный цикл</translation>
+    </message>
+    <message>
+        <source>tier</source>
+        <translation>уровень</translation>
+    </message>
+    <message>
+        <source> · L</source>
+        <translation> · L</translation>
+    </message>
+    <message>
+        <source>degradation</source>
+        <translation>деградация</translation>
+    </message>
+    <message>
+        <source>status</source>
+        <translation>статус</translation>
+    </message>
+    <message>
+        <source>valid until</source>
+        <translation>действительно до</translation>
+    </message>
+    <message>
+        <source>superseded by</source>
+        <translation>заменено на</translation>
+    </message>
+    <message>
+        <source>Weights</source>
+        <translation>Веса</translation>
+    </message>
+    <message>
+        <source>importance</source>
+        <translation>важность</translation>
+    </message>
+    <message>
+        <source>degradation w</source>
+        <translation>вес деградации</translation>
+    </message>
+    <message>
+        <source>effective w</source>
+        <translation>эффективный вес</translation>
+    </message>
+    <message>
+        <source>Provenance</source>
+        <translation>Происхождение</translation>
+    </message>
+    <message>
+        <source>id</source>
+        <translation>id</translation>
+    </message>
+    <message>
+        <source>source</source>
+        <translation>источник</translation>
+    </message>
+    <message>
+        <source>session</source>
+        <translation>сессия</translation>
+    </message>
+    <message>
+        <source>scope</source>
+        <translation>область</translation>
+    </message>
+    <message>
+        <source>recalls</source>
+        <translation>извлечения</translation>
+    </message>
+    <message>
+        <source>last recalled</source>
+        <translation>последнее извлечение</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryGraphView</name>
+    <message>
+        <source>Association</source>
+        <translation>Ассоциация</translation>
+    </message>
+    <message>
+        <source>Knowledge</source>
+        <translation>Знания</translation>
+    </message>
+    <message>
+        <source>Constellation</source>
+        <translation>Созвездие</translation>
+    </message>
+    <message>
+        <source>Depth %1</source>
+        <translation>Глубина %1</translation>
+    </message>
+    <message>
+        <source>Less depth</source>
+        <translation>Меньше глубины</translation>
+    </message>
+    <message>
+        <source>More depth</source>
+        <translation>Больше глубины</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n node(s)</source>
+        <translation>
+            <numerusform>%n узел</numerusform>
+            <numerusform>%n узла</numerusform>
+            <numerusform>%n узлов</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n edge(s)</source>
+        <translation>
+            <numerusform>%n ребро</numerusform>
+            <numerusform>%n ребра</numerusform>
+            <numerusform>%n рёбер</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reset view / focus</source>
+        <translation>Сбросить вид / фокус</translation>
+    </message>
+    <message>
+        <source>No graph data for this scope</source>
+        <translation>Нет данных графа для этой области</translation>
+    </message>
+    <message>
+        <source> · degree </source>
+        <translation> · степень </translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>Развернуть</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Очистить</translation>
+    </message>
+    <message>
+        <source>Neighbours</source>
+        <translation>Соседи</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryList</name>
+    <message>
+        <source>All tiers</source>
+        <translation>Все уровни</translation>
+    </message>
+    <message>
+        <source>working</source>
+        <translation>работает</translation>
+    </message>
+    <message>
+        <source>episodic</source>
+        <translation>эпизодическая</translation>
+    </message>
+    <message>
+        <source>scratchpad</source>
+        <translation>черновик</translation>
+    </message>
+    <message>
+        <source>All trust</source>
+        <translation>Всё доверие</translation>
+    </message>
+    <message>
+        <source>stated</source>
+        <translation>заявлено</translation>
+    </message>
+    <message>
+        <source>inferred</source>
+        <translation>выведено</translation>
+    </message>
+    <message>
+        <source>tool</source>
+        <translation>инструмент</translation>
+    </message>
+    <message>
+        <source>imported</source>
+        <translation>импортировано</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>неизвестно</translation>
+    </message>
+    <message>
+        <source>recent</source>
+        <translation>недавние</translation>
+    </message>
+    <message>
+        <source>importance</source>
+        <translation>важность</translation>
+    </message>
+    <message>
+        <source>recall</source>
+        <translation>извлечение</translation>
+    </message>
+    <message>
+        <source>Search memories...</source>
+        <translation>Поиск в памяти…</translation>
+    </message>
+    <message>
+        <source>imp %1</source>
+        <translation>важн. %1</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryOverview</name>
+    <message>
+        <source>Working</source>
+        <translation>Рабочая</translation>
+    </message>
+    <message>
+        <source>Episodic</source>
+        <translation>Эпизодическая</translation>
+    </message>
+    <message>
+        <source>Scratchpad</source>
+        <translation>Черновик</translation>
+    </message>
+    <message>
+        <source>Total</source>
+        <translation>Всего</translation>
+    </message>
+    <message>
+        <source>Facts</source>
+        <translation>Факты</translation>
+    </message>
+    <message>
+        <source>Conflicts</source>
+        <translation>Конфликты</translation>
+    </message>
+    <message>
+        <source>By source</source>
+        <translation>По источнику</translation>
+    </message>
+    <message>
+        <source>By veracity</source>
+        <translation>По достоверности</translation>
+    </message>
+    <message>
+        <source>By lifecycle</source>
+        <translation>По жизненному циклу</translation>
+    </message>
+    <message>
+        <source>By scope</source>
+        <translation>По области</translation>
+    </message>
+    <message>
+        <source>By session</source>
+        <translation>По сессии</translation>
+    </message>
+    <message>
+        <source>Live memory stream</source>
+        <translation>Живой поток памяти</translation>
+    </message>
+    <message>
+        <source>Waiting for memory activity...</source>
+        <translation>Ожидание активности памяти…</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryPage</name>
+    <message>
+        <source>Overview</source>
+        <translation>Обзор</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Воспоминания</translation>
+    </message>
+    <message>
+        <source>Graph</source>
+        <translation>Граф</translation>
+    </message>
+    <message>
+        <source>Timeline</source>
+        <translation>Хронология</translation>
+    </message>
+    <message>
+        <source>All sessions</source>
+        <translation>Все сессии</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Память</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Сессия</translation>
+    </message>
+    <message>
+        <source>Global: on</source>
+        <translation>Глобально: вкл</translation>
+    </message>
+    <message>
+        <source>Global: off</source>
+        <translation>Глобально: выкл</translation>
+    </message>
+</context>
+<context>
+    <name>MemorySettingsSection</name>
+    <message>
+        <source>Context window</source>
+        <translation>Окно контекста</translation>
+    </message>
+    <message>
+        <source>Max context tokens</source>
+        <translation>Макс. токенов контекста</translation>
+    </message>
+    <message>
+        <source>Auto-compact when context is full</source>
+        <translation>Автосжатие, когда контекст заполнен</translation>
+    </message>
+    <message>
+        <source>Long-term memory</source>
+        <translation>Долговременная память</translation>
+    </message>
+    <message>
+        <source>Persist memory across sessions</source>
+        <translation>Сохранять память между сессиями</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryTimeline</name>
+    <message>
+        <source>Group by</source>
+        <translation>Группировать по</translation>
+    </message>
+    <message>
+        <source>Day</source>
+        <translation>День</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Сессия</translation>
+    </message>
+</context>
+<context>
+    <name>MermaidBlock</name>
+    <message>
+        <source>Diagram error: %1</source>
+        <translation>Ошибка диаграммы: %1</translation>
+    </message>
+</context>
+<context>
+    <name>MessageHeader</name>
+    <message>
+        <source>You</source>
+        <translation>Вы</translation>
+    </message>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+</context>
+<context>
+    <name>MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation>Агент</translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation>Пользователь</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPickerOverlay</name>
+    <message>
+        <source>Off</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Выкл</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Низкое</translation>
+    </message>
+    <message>
+        <source>Med</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Сред</translation>
+    </message>
+    <message>
+        <source>Hig</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Выс</translation>
+    </message>
+    <message>
+        <source>Filter models…</source>
+        <translation>Фильтр моделей…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>Рассуждения</translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation>Быстро</translation>
+    </message>
+    <message>
+        <source>Verbose</source>
+        <translation>Подробно</translation>
+    </message>
+</context>
+<context>
+    <name>ModelRepository</name>
+    <message>
+        <source>Set-model operation failed</source>
+        <translation>Не удалось задать модель</translation>
+    </message>
+    <message>
+        <source>Download could not be started</source>
+        <translation>Не удалось начать загрузку</translation>
+    </message>
+    <message>
+        <source>Delete failed</source>
+        <translation>Не удалось удалить</translation>
+    </message>
+    <message>
+        <source>Activate failed</source>
+        <translation>Не удалось активировать</translation>
+    </message>
+</context>
+<context>
+    <name>ModelSettingsSection</name>
+    <message>
+        <source>Default model</source>
+        <translation>Модель по умолчанию</translation>
+    </message>
+    <message>
+        <source>Active default</source>
+        <translation>Активная по умолчанию</translation>
+    </message>
+    <message>
+        <source>Change or install models in the Models hub.</source>
+        <translation>Меняйте или устанавливайте модели в хабе моделей.</translation>
+    </message>
+    <message>
+        <source>Open Models</source>
+        <translation>Открыть модели</translation>
+    </message>
+    <message>
+        <source>Inference</source>
+        <translation>Вывод</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>Усилие рассуждений</translation>
+    </message>
+    <message>
+        <source>Fast mode (lower latency)</source>
+        <translation>Быстрый режим (меньше задержка)</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsDiscover</name>
+    <message>
+        <source>Search Hugging Face repos (e.g. SmolLM2)</source>
+        <translation>Поиск репозиториев Hugging Face (напр. SmolLM2)</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Поиск</translation>
+    </message>
+    <message>
+        <source>Search for a model repo to browse its quantizations.</source>
+        <translation>Найдите репозиторий модели, чтобы просмотреть его квантизации.</translation>
+    </message>
+    <message>
+        <source>by %1</source>
+        <translation>от %1</translation>
+    </message>
+    <message>
+        <source>Quantizations</source>
+        <translation>Квантизации</translation>
+    </message>
+    <message>
+        <source>Load more</source>
+        <translation>Загрузить ещё</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsDownloads</name>
+    <message>
+        <source>No active downloads.
+Start one from the Discover tab.</source>
+        <translation>Нет активных загрузок.
+Начните на вкладке «Найти».</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsInstalled</name>
+    <message>
+        <source>No models installed yet.</source>
+        <translation>Пока не установлено ни одной модели.</translation>
+    </message>
+    <message>
+        <source>ACTIVE</source>
+        <translation>АКТИВНА</translation>
+    </message>
+    <message>
+        <source>PROJECTOR</source>
+        <translation>ПРОЕКТОР</translation>
+    </message>
+    <message>
+        <source>VISION</source>
+        <translation>ЗРЕНИЕ</translation>
+    </message>
+    <message>
+        <source> GiB</source>
+        <translation> ГиБ</translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation>Активна</translation>
+    </message>
+    <message>
+        <source>Activate</source>
+        <translation>Активировать</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsPage</name>
+    <message>
+        <source>Discover</source>
+        <translation>Найти</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation>Загрузки</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Установлено</translation>
+    </message>
+    <message>
+        <source>Providers</source>
+        <translation>Провайдеры</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Модели</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsProviders</name>
+    <message>
+        <source>Local runtime</source>
+        <translation>Локальная среда выполнения</translation>
+    </message>
+    <message>
+        <source>Remote API</source>
+        <translation>Удалённый API</translation>
+    </message>
+    <message>
+        <source>Configured</source>
+        <translation>Настроено</translation>
+    </message>
+    <message>
+        <source>Manage</source>
+        <translation>Управлять</translation>
+    </message>
+    <message>
+        <source>Configure</source>
+        <translation>Настроить</translation>
+    </message>
+</context>
+<context>
+    <name>NewAgentDialog</name>
+    <message>
+        <source>New agent</source>
+        <translation>Новый агент</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Создать</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Имя</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation>имя агента</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Движок</translation>
+    </message>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (нативный)</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>установлено</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>не установлено</translation>
+    </message>
+    <message>
+        <source>Persona (optional)</source>
+        <translation>Персона (необязательно)</translation>
+    </message>
+    <message>
+        <source>system prompt</source>
+        <translation>системный промпт</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
+        <translation>Этот агент использует сторонний движок ACP. Его рецепт запуска управляется каталогом ACP демона — провайдер, модель или ключ настраивать не нужно.</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>Имя:</translation>
+    </message>
+    <message>
+        <source>Engine (Enter to pick):</source>
+        <translation>Движок (Enter — выбрать):</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+</context>
+<context>
+    <name>NodeApiClient</name>
+    <message>
+        <source>request timed out</source>
+        <translation>истекло время запроса</translation>
+    </message>
+    <message>
+        <source>daemon connection closed</source>
+        <translation>соединение с демоном закрыто</translation>
+    </message>
+    <message>
+        <source>authentication required</source>
+        <translation>требуется аутентификация</translation>
+    </message>
+    <message>
+        <source>authentication failed</source>
+        <translation>аутентификация не удалась</translation>
+    </message>
+    <message>
+        <source>stream ended in error</source>
+        <translation>поток завершился с ошибкой</translation>
+    </message>
+    <message>
+        <source>the request failed</source>
+        <translation>запрос не удался</translation>
+    </message>
+</context>
+<context>
+    <name>NotificationsSection</name>
+    <message>
+        <source>Desktop notifications</source>
+        <translation>Уведомления на рабочем столе</translation>
+    </message>
+    <message>
+        <source>Notify when a turn needs my input</source>
+        <translation>Уведомлять, когда ходу нужен мой ввод</translation>
+    </message>
+    <message>
+        <source>Notify when a turn finishes</source>
+        <translation>Уведомлять, когда ход завершается</translation>
+    </message>
+    <message>
+        <source>Send a test notification</source>
+        <translation>Отправить тестовое уведомление</translation>
+    </message>
+    <message>
+        <source>daemon-app</source>
+        <translation>daemon-app</translation>
+    </message>
+    <message>
+        <source>Notifications are working.</source>
+        <translation>Уведомления работают.</translation>
+    </message>
+    <message>
+        <source>Notifications only appear while the window is hidden or inactive.</source>
+        <translation>Уведомления появляются только когда окно скрыто или неактивно.</translation>
+    </message>
+</context>
+<context>
+    <name>Placeholder</name>
+    <message>
+        <source>Coming soon</source>
+        <translation>Скоро</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileEditor</name>
+    <message>
+        <source>Select or create a profile.</source>
+        <translation>Выберите или создайте профиль.</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Профиль</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>По умолчанию</translation>
+    </message>
+    <message>
+        <source>Make default</source>
+        <translation>Сделать по умолчанию</translation>
+    </message>
+    <message>
+        <source>Export profile</source>
+        <translation>Экспортировать профиль</translation>
+    </message>
+    <message>
+        <source>Import profile</source>
+        <translation>Импортировать профиль</translation>
+    </message>
+    <message>
+        <source>Delete profile</source>
+        <translation>Удалить профиль</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Имя</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Провайдер</translation>
+    </message>
+    <message>
+        <source>Current provider: %1 (test provider — not selectable)</source>
+        <translation>Текущий провайдер: %1 (тестовый провайдер — недоступен для выбора)</translation>
+    </message>
+    <message>
+        <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
+        <translation>Базовый URL (необязательно, напр. https://api.daemon.ai/api/v1)</translation>
+    </message>
+    <message>
+        <source>Credential: connected%1</source>
+        <translation>Учётные данные: подключены%1</translation>
+    </message>
+    <message>
+        <source>Credential: none — add a key</source>
+        <translation>Учётные данные: нет — добавьте ключ</translation>
+    </message>
+    <message>
+        <source>Set key</source>
+        <translation>Задать ключ</translation>
+    </message>
+    <message>
+        <source>Short description</source>
+        <translation>Краткое описание</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>Системный промпт</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Навыки</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>Инструменты</translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation>История</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Скрыть</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Показать</translation>
+    </message>
+    <message>
+        <source>Version history needs a durable daemon.</source>
+        <translation>Для истории версий нужен постоянный демон.</translation>
+    </message>
+    <message>
+        <source>No revisions yet.</source>
+        <translation>Пока нет ревизий.</translation>
+    </message>
+    <message>
+        <source>#%1</source>
+        <translation>#%1</translation>
+    </message>
+    <message>
+        <source>operator</source>
+        <translation>оператор</translation>
+    </message>
+    <message>
+        <source>agent %1</source>
+        <translation>агент %1</translation>
+    </message>
+    <message>
+        <source>Revert to this</source>
+        <translation>Вернуться к этой</translation>
+    </message>
+    <message>
+        <source>Discard changes</source>
+        <translation>Отменить изменения</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+    <message>
+        <source>Profile distributions (*.dist)</source>
+        <translation>Дистрибутивы профилей (*.dist)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Все файлы (*)</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileEditorDialog</name>
+    <message>
+        <source>Edit profile — %1</source>
+        <translation>Изменить профиль — %1</translation>
+    </message>
+    <message>
+        <source>Enter on a row edits it · Save commits · Esc discards</source>
+        <translation>Enter на строке редактирует её · Save сохраняет · Esc отменяет</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Имя</translation>
+    </message>
+    <message>
+        <source>Engine: ACP agent · %1 (set at create time)</source>
+        <translation>Движок: агент ACP · %1 (задаётся при создании)</translation>
+    </message>
+    <message>
+        <source>Engine: daemon-core (native)</source>
+        <translation>Движок: daemon-core (нативный)</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Провайдер</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Базовый URL</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>(по умолчанию у провайдера)</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Модель</translation>
+    </message>
+    <message>
+        <source>(pick a model)</source>
+        <translation>(выберите модель)</translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>Описание</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>Системный промпт</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Навыки</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>Инструменты</translation>
+    </message>
+    <message>
+        <source>%1 (test provider — not selectable)</source>
+        <translation>%1 (тестовый провайдер — недоступен для выбора)</translation>
+    </message>
+    <message>
+        <source>(pick a provider)</source>
+        <translation>(выберите провайдера)</translation>
+    </message>
+    <message>
+        <source>Profile name</source>
+        <translation>Имя профиля</translation>
+    </message>
+    <message>
+        <source>Base URL (empty = provider default)</source>
+        <translation>Базовый URL (пусто = по умолчанию у провайдера)</translation>
+    </message>
+    <message>
+        <source>Short description</source>
+        <translation>Краткое описание</translation>
+    </message>
+    <message>
+        <source>download</source>
+        <translation>скачать</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>текущая</translation>
+    </message>
+    <message>
+        <source>Enter inserts a newline · Tab reaches the buttons</source>
+        <translation>Enter вставляет новую строку · Tab переходит к кнопкам</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileRepository</name>
+    <message>
+        <source>Profile import failed</source>
+        <translation>Не удалось импортировать профиль</translation>
+    </message>
+    <message>
+        <source>Version history unavailable</source>
+        <translation>История версий недоступна</translation>
+    </message>
+    <message>
+        <source>Profile revert failed</source>
+        <translation>Не удалось откатить профиль</translation>
+    </message>
+    <message>
+        <source>Profile operation failed</source>
+        <translation>Не удалось выполнить операцию с профилем</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileToggleListDialog</name>
+    <message>
+        <source>Enter / Space toggles · Esc done</source>
+        <translation>Enter / Space переключает · Esc — готово</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Готово</translation>
+    </message>
+</context>
+<context>
+    <name>ProfilesPage</name>
+    <message>
+        <source>Exported profile</source>
+        <translation>Профиль экспортирован</translation>
+    </message>
+    <message>
+        <source>Imported %1</source>
+        <translation>Импортировано %1</translation>
+    </message>
+    <message>
+        <source>Reverted %1</source>
+        <translation>Откачено %1</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Профили</translation>
+    </message>
+    <message>
+        <source>+ New profile</source>
+        <translation>+ Новый профиль</translation>
+    </message>
+    <message>
+        <source>New profile</source>
+        <translation>Новый профиль</translation>
+    </message>
+    <message>
+        <source>Profile id (e.g. work)</source>
+        <translation>id профиля (напр. work)</translation>
+    </message>
+    <message>
+        <source>Empty profile</source>
+        <translation>Пустой профиль</translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <source>All syntax definitions are up-to-date.</source>
+        <translation>Все определения синтаксиса актуальны.</translation>
+    </message>
+    <message>
+        <source>Downloading new syntax definition for &apos;%1&apos;…</source>
+        <comment>@info</comment>
+        <translation>Загрузка нового определения синтаксиса для «%1»…</translation>
+    </message>
+    <message>
+        <source>Updating syntax definition for &apos;%1&apos; to version %2…</source>
+        <comment>@info</comment>
+        <translation>Обновление определения синтаксиса для «%1» до версии %2…</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <comment>language picker</comment>
+        <translation>Системный по умолчанию</translation>
+    </message>
+    <message>
+        <source>Show/Hide %1</source>
+        <translation>Показать/скрыть %1</translation>
+    </message>
+    <message>
+        <source>Quit</source>
+        <translation>Выход</translation>
+    </message>
+    <message>
+        <source>application directory is unknown</source>
+        <translation>каталог приложения неизвестен</translation>
+    </message>
+    <message>
+        <source>update helper (daemon-updater) not found next to the app</source>
+        <translation>вспомогательная утилита обновления (daemon-updater) не найдена рядом с приложением</translation>
+    </message>
+    <message>
+        <source>no staged installer to run</source>
+        <translation>нет подготовленного установщика для запуска</translation>
+    </message>
+    <message>
+        <source>missing installer checksum</source>
+        <translation>отсутствует контрольная сумма установщика</translation>
+    </message>
+    <message>
+        <source>relaunch target (installed app) is unknown</source>
+        <translation>цель перезапуска (установленное приложение) неизвестна</translation>
+    </message>
+    <message>
+        <source>Unsupported or empty diagram</source>
+        <translation>Неподдерживаемая или пустая диаграмма</translation>
+    </message>
+    <message>
+        <source>Unsupported diagram: %1</source>
+        <translation>Неподдерживаемая диаграмма: %1</translation>
+    </message>
+    <message>
+        <source>Parse error</source>
+        <translation>Ошибка разбора</translation>
+    </message>
+    <message>
+        <source>No nodes found</source>
+        <translation>Узлы не найдены</translation>
+    </message>
+    <message>
+        <source>Answered</source>
+        <translation>Отвечено</translation>
+    </message>
+    <message>
+        <source>Needs your input</source>
+        <translation>Требуется ваш ввод</translation>
+    </message>
+    <message>
+        <source>Working</source>
+        <translation>Рабочая</translation>
+    </message>
+    <message>
+        <source>Running %1</source>
+        <translation>Выполняется %1</translation>
+    </message>
+    <message>
+        <source>Tool failed</source>
+        <translation>Сбой инструмента</translation>
+    </message>
+    <message>
+        <source>Tool</source>
+        <translation>Инструмент</translation>
+    </message>
+    <message>
+        <source>image load failed</source>
+        <translation>не удалось загрузить изображение</translation>
+    </message>
+    <message>
+        <source>Start a new session</source>
+        <translation>Начать новую сессию</translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <comment>completion group</comment>
+        <translation>Команда</translation>
+    </message>
+    <message>
+        <source>Open theme &amp; settings</source>
+        <translation>Открыть тему и настройки</translation>
+    </message>
+    <message>
+        <source>Toggle distraction-free</source>
+        <translation>Переключить режим без отвлечений</translation>
+    </message>
+    <message>
+        <source>Clear the composer</source>
+        <translation>Очистить композер</translation>
+    </message>
+    <message>
+        <source>Rewind &amp; re-run the last message</source>
+        <translation>Откатить и заново выполнить последнее сообщение</translation>
+    </message>
+    <message>
+        <source>Rewind &amp; edit the last message</source>
+        <translation>Откатить и изменить последнее сообщение</translation>
+    </message>
+    <message>
+        <source>Undo the last exchange</source>
+        <translation>Отменить последний обмен</translation>
+    </message>
+    <message>
+        <source>Choose the active model</source>
+        <translation>Выбрать активную модель</translation>
+    </message>
+    <message>
+        <source>Rename this session</source>
+        <translation>Переименовать эту сессию</translation>
+    </message>
+    <message>
+        <source>Export the transcript (JSON)</source>
+        <translation>Экспортировать транскрипт (JSON)</translation>
+    </message>
+    <message>
+        <source>Search this transcript</source>
+        <translation>Искать в этом транскрипте</translation>
+    </message>
+    <message>
+        <source>Show token usage &amp; cost</source>
+        <translation>Показать расход токенов и стоимость</translation>
+    </message>
+    <message>
+        <source>Compress the context window</source>
+        <translation>Сжать окно контекста</translation>
+    </message>
+    <message>
+        <source>Open the command palette</source>
+        <translation>Открыть палитру команд</translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation>Открыть настройки</translation>
+    </message>
+    <message>
+        <source>Go to</source>
+        <comment>completion group</comment>
+        <translation>Перейти</translation>
+    </message>
+    <message>
+        <source>Open the dashboard</source>
+        <translation>Открыть панель мониторинга</translation>
+    </message>
+    <message>
+        <source>Open the models hub</source>
+        <translation>Открыть хаб моделей</translation>
+    </message>
+    <message>
+        <source>Open accounts</source>
+        <translation>Открыть аккаунты</translation>
+    </message>
+    <message>
+        <source>Open profiles</source>
+        <translation>Открыть профили</translation>
+    </message>
+    <message>
+        <source>Open the fleet view</source>
+        <translation>Открыть вид флота</translation>
+    </message>
+    <message>
+        <source>Open the sessions roster</source>
+        <translation>Открыть список сессий</translation>
+    </message>
+    <message>
+        <source>Open the approvals inbox</source>
+        <translation>Открыть входящие подтверждения</translation>
+    </message>
+    <message>
+        <source>Open the routing matrix</source>
+        <translation>Открыть матрицу маршрутизации</translation>
+    </message>
+    <message>
+        <source>Open scheduled jobs</source>
+        <translation>Открыть запланированные задания</translation>
+    </message>
+    <message>
+        <source>Project readme</source>
+        <translation>Readme проекта</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <comment>completion group</comment>
+        <translation>Файл</translation>
+    </message>
+    <message>
+        <source>Composer component</source>
+        <translation>Компонент композера</translation>
+    </message>
+    <message>
+        <source>Theme tokens</source>
+        <translation>Токены темы</translation>
+    </message>
+    <message>
+        <source>New session</source>
+        <translation>Новая сессия</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Сессия</translation>
+    </message>
+    <message>
+        <source># Settings
+
+A generic, non-transcript page hosted by the same tab strip.
+
+- Press **F8** to cycle the theme (Light / Dark / Sepia / Midnight)
+- **Ctrl+T** opens a new transcript tab
+- **Ctrl+W** closes the current tab
+- **Ctrl+Tab** / **Ctrl+Shift+Tab** switch tabs (wrapping)
+- **Alt+1..9** jumps directly to tab N
+- **Tab** cycles panes, including the tab strip; when it is focused, **Left**/**Right** switch tabs, **Enter** pins a preview, **Delete** closes
+- In an interactive block (approval / clarify): **Up**/**Down**/**Left**/**Right** move between controls, **Space** toggles, **Enter** submits, **Tab** leaves to the next pane
+- In the transcript: **r** opens the rewind picker over your prior messages (**Up**/**Down** to choose, **Enter** restores &amp; re-runs, **e** edits in the composer, **Esc** cancels)
+- **/retry**, **/edit**, **/undo** rewind the last message from the composer
+</source>
+        <translation># Настройки
+
+Обычная страница (не транскрипт), размещённая в той же полосе вкладок.
+
+- Нажмите **F8**, чтобы переключить тему (Светлая / Тёмная / Сепия / Полночь)
+- **Ctrl+T** открывает новую вкладку транскрипта
+- **Ctrl+W** закрывает текущую вкладку
+- **Ctrl+Tab** / **Ctrl+Shift+Tab** переключают вкладки (по кругу)
+- **Alt+1..9** переходит прямо к вкладке N
+- **Tab** переключает панели, включая полосу вкладок; когда она в фокусе, **Left**/**Right** переключают вкладки, **Enter** закрепляет предпросмотр, **Delete** закрывает
+- В интерактивном блоке (подтверждение / уточнение): **Up**/**Down**/**Left**/**Right** перемещают между элементами, **Space** переключает, **Enter** отправляет, **Tab** уводит к следующей панели
+- В транскрипте: **r** открывает выбор точки отката по вашим прежним сообщениям (**Up**/**Down** — выбрать, **Enter** восстанавливает и заново выполняет, **e** редактирует в композере, **Esc** отменяет)
+- **/retry**, **/edit**, **/undo** откатывают последнее сообщение из композера
+</translation>
+    </message>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>YOU</source>
+        <translation>ВЫ</translation>
+    </message>
+    <message>
+        <source>DAEMON</source>
+        <translation>DAEMON</translation>
+    </message>
+    <message>
+        <source>Reasoning…</source>
+        <translation>Рассуждение…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>Рассуждения</translation>
+    </message>
+    <message>
+        <source>[image: </source>
+        <translation>[изображение: </translation>
+    </message>
+    <message>
+        <source>The agent needs your input.</source>
+        <translation>Агенту нужен ваш ввод.</translation>
+    </message>
+    <message>
+        <source>⚠ Approve: </source>
+        <translation>⚠ Подтвердить: </translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>Подтвердить</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Отклонить</translation>
+    </message>
+    <message>
+        <source>Allow permanently</source>
+        <translation>Разрешить навсегда</translation>
+    </message>
+    <message>
+        <source>Type a reply…</source>
+        <translation>Введите ответ…</translation>
+    </message>
+    <message>
+        <source>Or type a reply…</source>
+        <translation>Или введите ответ…</translation>
+    </message>
+    <message>
+        <source>  (select all that apply)</source>
+        <translation>  (выберите все подходящие)</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>Отправить</translation>
+    </message>
+    <message>
+        <source>code</source>
+        <translation>код</translation>
+    </message>
+    <message>
+        <source>[image] </source>
+        <translation>[изображение] </translation>
+    </message>
+    <message>
+        <source>[math] </source>
+        <translation>[формула] </translation>
+    </message>
+</context>
+<context>
+    <name>QuantPickerPopup</name>
+    <message>
+        <source>Choose a quantization</source>
+        <translation>Выберите квантизацию</translation>
+    </message>
+    <message>
+        <source>Recommended: %1</source>
+        <translation>Рекомендуется: %1</translation>
+    </message>
+    <message>
+        <source>fits</source>
+        <translation>подходит</translation>
+    </message>
+    <message>
+        <source>tight</source>
+        <translation>впритык</translation>
+    </message>
+    <message>
+        <source>Download recommended</source>
+        <translation>Скачать рекомендуемую</translation>
+    </message>
+    <message>
+        <source>Available files</source>
+        <translation>Доступные файлы</translation>
+    </message>
+    <message>
+        <source>Hide advanced</source>
+        <translation>Скрыть дополнительно</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>Дополнительно</translation>
+    </message>
+    <message>
+        <source>RECOMMENDED</source>
+        <translation>РЕКОМЕНДУЕТСЯ</translation>
+    </message>
+    <message>
+        <source>PROJECTOR</source>
+        <translation>ПРОЕКТОР</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Скачать</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+</context>
+<context>
+    <name>QueuePanel</name>
+    <message>
+        <source>Queued (%1)</source>
+        <translation>В очереди (%1)</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>В очереди</translation>
+    </message>
+    <message>
+        <source>Send next (interrupts)</source>
+        <translation>Отправить следующим (прерывает)</translation>
+    </message>
+    <message>
+        <source>Send now</source>
+        <translation>Отправить сейчас</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Изменить</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+</context>
+<context>
+    <name>QuitDialog</name>
+    <message>
+        <source>Quit</source>
+        <translation>Выход</translation>
+    </message>
+    <message>
+        <source>Quit daemon-app?</source>
+        <translation>Выйти из daemon-app?</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+</context>
+<context>
+    <name>ReasoningBlock</name>
+    <message>
+        <source>Reasoning…</source>
+        <translation>Рассуждение…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>Рассуждения</translation>
+    </message>
+</context>
+<context>
+    <name>RootWidget</name>
+    <message>
+        <source>Profile</source>
+        <translation>Профиль</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Память</translation>
+    </message>
+    <message>
+        <source>Delete session</source>
+        <translation>Удалить сессию</translation>
+    </message>
+    <message>
+        <source>Permanently delete this session?</source>
+        <translation>Удалить эту сессию навсегда?</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Переименовать сессию</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>Очистить сессию</translation>
+    </message>
+    <message>
+        <source>Remove all messages from this session?</source>
+        <translation>Удалить все сообщения из этой сессии?</translation>
+    </message>
+    <message>
+        <source>daemon</source>
+        <translation>демон</translation>
+    </message>
+    <message>
+        <source>The turn finished.</source>
+        <translation>Ход завершён.</translation>
+    </message>
+    <message>
+        <source>approval</source>
+        <translation>подтверждение</translation>
+    </message>
+    <message>
+        <source>credential</source>
+        <translation>учётные данные</translation>
+    </message>
+    <message>
+        <source>● daemon — needs %1</source>
+        <translation>● демон — требуется %1</translation>
+    </message>
+    <message>
+        <source>The turn needs your %1.</source>
+        <translation>Ходу требуется ваше: %1.</translation>
+    </message>
+    <message>
+        <source>Secret required</source>
+        <translation>Требуется секрет</translation>
+    </message>
+    <message>
+        <source>Password required</source>
+        <translation>Требуется пароль</translation>
+    </message>
+    <message>
+        <source>New session</source>
+        <translation>Новая сессия</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>Настройки сессии</translation>
+    </message>
+    <message>
+        <source>Enter / Space on a row cycles or toggles it · Esc closes</source>
+        <translation>Enter / Space на строке переключает её · Esc закрывает</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>Profile: %1</source>
+        <translation>Профиль: %1</translation>
+    </message>
+    <message>
+        <source>Effort:  %1</source>
+        <translation>Усилие:  %1</translation>
+    </message>
+    <message>
+        <source>Fast:    %1</source>
+        <translation>Быстро:    %1</translation>
+    </message>
+    <message>
+        <source>on</source>
+        <translation>вкл</translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation>выкл</translation>
+    </message>
+    <message>
+        <source>Verbose: %1</source>
+        <translation>Подробно: %1</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2  ·  %3 tok%4</source>
+        <translation>%1  ·  %2  ·  %3 tok%4</translation>
+    </message>
+    <message>
+        <source>  (current)</source>
+        <translation>  (текущая)</translation>
+    </message>
+    <message>
+        <source>(no checkpoints)</source>
+        <translation>(нет контрольных точек)</translation>
+    </message>
+    <message>
+        <source>Checkpoints</source>
+        <translation>Контрольные точки</translation>
+    </message>
+    <message>
+        <source>Enter restores the selected checkpoint · Esc closes</source>
+        <translation>Enter восстанавливает выбранную контрольную точку · Esc закрывает</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Восстановить</translation>
+    </message>
+    <message>
+        <source> 0/0 </source>
+        <comment>search match counter (no matches)</comment>
+        <translation> 0/0 </translation>
+    </message>
+    <message>
+        <source> %1/%2 </source>
+        <comment>search match counter (current/total)</comment>
+        <translation> %1/%2 </translation>
+    </message>
+    <message>
+        <source>Tasks:  </source>
+        <translation>Задачи:  </translation>
+    </message>
+    <message>
+        <source>Subagents:  </source>
+        <translation>Субагенты:  </translation>
+    </message>
+</context>
+<context>
+    <name>RouteDialog</name>
+    <message>
+        <source>Edit route</source>
+        <translation>Изменить маршрут</translation>
+    </message>
+    <message>
+        <source>Add route</source>
+        <translation>Добавить маршрут</translation>
+    </message>
+    <message>
+        <source>(inherit)</source>
+        <translation>(наследовать)</translation>
+    </message>
+    <message>
+        <source>Currently: → %1 as %2 · decided by %3</source>
+        <translation>Сейчас: → %1 как %2 · решено %3</translation>
+    </message>
+    <message>
+        <source>Currently: unrouted (deterministic)</source>
+        <translation>Сейчас: без маршрута (детерминированно)</translation>
+    </message>
+    <message>
+        <source>Origin (where it comes from)</source>
+        <translation>Источник (откуда приходит)</translation>
+    </message>
+    <message>
+        <source>Session (the conversation)</source>
+        <translation>Сессия (беседа)</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Агент</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Save route</source>
+        <translation>Сохранить маршрут</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingPage</name>
+    <message>
+        <source>Routing</source>
+        <translation>Маршрутизация</translation>
+    </message>
+    <message>
+        <source>Routes</source>
+        <translation>Маршруты</translation>
+    </message>
+    <message>
+        <source>+ Add route</source>
+        <translation>+ Добавить маршрут</translation>
+    </message>
+    <message>
+        <source>(inherit)</source>
+        <translation>(наследовать)</translation>
+    </message>
+    <message>
+        <source>Edit route</source>
+        <translation>Изменить маршрут</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>Открепить</translation>
+    </message>
+    <message>
+        <source>Delivery · </source>
+        <translation>Доставка · </translation>
+    </message>
+    <message>
+        <source>Delivery</source>
+        <translation>Доставка</translation>
+    </message>
+    <message>
+        <source>Select a route to see where its replies go</source>
+        <translation>Выберите маршрут, чтобы увидеть, куда идут его ответы</translation>
+    </message>
+    <message>
+        <source>No delivery targets</source>
+        <translation>Нет целей доставки</translation>
+    </message>
+    <message>
+        <source>PRIMARY</source>
+        <translation>ОСНОВНОЙ</translation>
+    </message>
+    <message>
+        <source>Make primary</source>
+        <translation>Сделать основным</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingTopology</name>
+    <message>
+        <source>— pinned</source>
+        <translation>— закреплено</translation>
+    </message>
+    <message>
+        <source>·· derived</source>
+        <translation>·· производный</translation>
+    </message>
+    <message>
+        <source>- - spectator</source>
+        <translation>- - наблюдатель</translation>
+    </message>
+</context>
+<context>
+    <name>SafetySettingsSection</name>
+    <message>
+        <source>Approvals</source>
+        <translation>Подтверждения</translation>
+    </message>
+    <message>
+        <source>Approval policy</source>
+        <translation>Политика подтверждений</translation>
+    </message>
+    <message>
+        <source>When the agent must ask before running tools.</source>
+        <translation>Когда агент должен спрашивать перед запуском инструментов.</translation>
+    </message>
+    <message>
+        <source>Sandbox</source>
+        <translation>Песочница</translation>
+    </message>
+    <message>
+        <source>Filesystem access</source>
+        <translation>Доступ к файловой системе</translation>
+    </message>
+    <message>
+        <source>Allow network access</source>
+        <translation>Разрешить доступ к сети</translation>
+    </message>
+</context>
+<context>
+    <name>SearchInputBox</name>
+    <message>
+        <source>Search sessions</source>
+        <translation>Поиск сессий</translation>
+    </message>
+</context>
+<context>
+    <name>SearchResults</name>
+    <message>
+        <source>Search in workspace…</source>
+        <translation>Поиск в рабочем пространстве…</translation>
+    </message>
+</context>
+<context>
+    <name>SearchResultsList</name>
+    <message>
+        <source>result</source>
+        <translation>результат</translation>
+    </message>
+</context>
+<context>
+    <name>Session</name>
+    <message>
+        <source>Session</source>
+        <translation>Сессия</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Файл</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Модели</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Аккаунты</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Профили</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Флот</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Сессии</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>Панель мониторинга</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>Подтверждения</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>Маршрутизация</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Запланированные задания</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Каналы</translation>
+    </message>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>Пользователи и доступ</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Память</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Профиль</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation>Назад</translation>
+    </message>
+    <message>
+        <source>Select a session</source>
+        <translation>Выберите сессию</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Переименовать сессию</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Переименовать</translation>
+    </message>
+    <message>
+        <source>Session title</source>
+        <translation>Название сессии</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>Экспортировать транскрипт</translation>
+    </message>
+    <message>
+        <source>JSON files (*.json)</source>
+        <translation>Файлы JSON (*.json)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Все файлы (*)</translation>
+    </message>
+</context>
+<context>
+    <name>SessionChrome</name>
+    <message>
+        <source>Still thinking…</source>
+        <translation>Всё ещё думаю…</translation>
+    </message>
+    <message>
+        <source>Thinking… %1s</source>
+        <translation>Думаю… %1s</translation>
+    </message>
+    <message>
+        <source>Thinking…</source>
+        <translation>Думаю…</translation>
+    </message>
+</context>
+<context>
+    <name>SessionOrchestrator</name>
+    <message>
+        <source>(steer) </source>
+        <translation>(направить) </translation>
+    </message>
+    <message>
+        <source>Inspect the project</source>
+        <translation>Изучить проект</translation>
+    </message>
+    <message>
+        <source>Run the checks</source>
+        <translation>Запустить проверки</translation>
+    </message>
+    <message>
+        <source>Summarize the result</source>
+        <translation>Суммировать результат</translation>
+    </message>
+</context>
+<context>
+    <name>SessionRepository</name>
+    <message>
+        <source>SessionCreate failed</source>
+        <translation>Не удалось создать сессию</translation>
+    </message>
+</context>
+<context>
+    <name>SessionSettingsPopover</name>
+    <message>
+        <source>Off</source>
+        <translation>Выкл</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <translation>Низкое</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>Среднее</translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation>Высокое</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>Настройки сессии</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Профиль</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>Усилие рассуждений</translation>
+    </message>
+    <message>
+        <source>Approval mode</source>
+        <translation>Режим подтверждений</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Правки</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Авто</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Отклонить</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Спрашивать</translation>
+    </message>
+    <message>
+        <source>Fast mode</source>
+        <translation>Быстрый режим</translation>
+    </message>
+    <message>
+        <source>Verbose</source>
+        <translation>Подробно</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsList</name>
+    <message>
+        <source>Rename…</source>
+        <translation>Переименовать…</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>Открепить</translation>
+    </message>
+    <message>
+        <source>Pin</source>
+        <translation>Закрепить</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>Вверх</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>Вниз</translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation>Экспорт…</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Переименовать сессию</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Переименовать</translation>
+    </message>
+    <message>
+        <source>Session title</source>
+        <translation>Название сессии</translation>
+    </message>
+    <message>
+        <source>Delete session</source>
+        <translation>Удалить сессию</translation>
+    </message>
+    <message>
+        <source>Permanently delete this session? This cannot be undone.</source>
+        <translation>Удалить эту сессию навсегда? Это нельзя отменить.</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>Экспортировать транскрипт</translation>
+    </message>
+    <message>
+        <source>JSON files (*.json)</source>
+        <translation>Файлы JSON (*.json)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Все файлы (*)</translation>
+    </message>
+    <message>
+        <source>Collapse sidebar</source>
+        <translation>Свернуть боковую панель</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>%n сессия</numerusform>
+            <numerusform>%n сессии</numerusform>
+            <numerusform>%n сессий</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Trash</source>
+        <translation>Корзина</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Поиск</translation>
+    </message>
+    <message>
+        <source>Search sessions</source>
+        <translation>Поиск сессий</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation>Закрыть поиск</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsListModel</name>
+    <message>
+        <source>All Sessions</source>
+        <translation>Все сессии</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Архив</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Агент</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation>Тег</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Сессии</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>(без названия)</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsPage</name>
+    <message>
+        <source>Sessions</source>
+        <translation>Сессии</translation>
+    </message>
+    <message>
+        <source>LIVE</source>
+        <translation>LIVE</translation>
+    </message>
+    <message>
+        <source>DURABLE</source>
+        <translation>ПОСТОЯННАЯ</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> tok</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>Возобновить</translation>
+    </message>
+    <message>
+        <source>Suspend</source>
+        <translation>Приостановить</translation>
+    </message>
+    <message>
+        <source>Close session</source>
+        <translation>Закрыть сессию</translation>
+    </message>
+    <message>
+        <source>Session %1 · %2 · %3</source>
+        <translation>Сессия %1 · %2 · %3</translation>
+    </message>
+    <message>
+        <source>Rewindable — checkpoints available</source>
+        <translation>Доступен откат — есть контрольные точки</translation>
+    </message>
+    <message>
+        <source>Not rewindable</source>
+        <translation>Откат недоступен</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsMenu</name>
+    <message>
+        <source>Transcript</source>
+        <translation>Транскрипт</translation>
+    </message>
+    <message>
+        <source>Search transcript</source>
+        <translation>Поиск в транскрипте</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>Стиль</translation>
+    </message>
+    <message>
+        <source>Sans</source>
+        <translation>Без засечек</translation>
+    </message>
+    <message>
+        <source>Serif</source>
+        <translation>С засечками</translation>
+    </message>
+    <message>
+        <source>Mono</source>
+        <translation>Моноширинный</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>Текст</translation>
+    </message>
+    <message>
+        <source>Center text</source>
+        <translation>Центрировать текст</translation>
+    </message>
+    <message>
+        <source>Distraction-free</source>
+        <translation>Без отвлечений</translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation>Размер шрифта</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>Тема</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>Светлая</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>Тёмная</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <translation>Сепия</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <translation>Полночь</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>Параметры</translation>
+    </message>
+    <message>
+        <source>Show Sessions</source>
+        <translation>Показать сессии</translation>
+    </message>
+    <message>
+        <source>Show Fleet Tree</source>
+        <translation>Показать дерево флота</translation>
+    </message>
+    <message>
+        <source>Show Raw Markdown</source>
+        <translation>Показать исходный Markdown</translation>
+    </message>
+    <message>
+        <source>User message rail</source>
+        <translation>Панель сообщений пользователя</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Обновления</translation>
+    </message>
+    <message>
+        <source>Auto-check for updates</source>
+        <translation>Автопроверка обновлений</translation>
+    </message>
+    <message>
+        <source>Move to Trash</source>
+        <translation>Переместить в корзину</translation>
+    </message>
+    <message>
+        <source>Reset all settings</source>
+        <translation>Сбросить все настройки</translation>
+    </message>
+    <message>
+        <source>Reset settings?</source>
+        <translation>Сбросить настройки?</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Сбросить</translation>
+    </message>
+    <message>
+        <source>Reset all settings to their defaults?
+This only affects the app appearance, not your data.</source>
+        <translation>Сбросить все настройки до значений по умолчанию?
+Это затрагивает только оформление приложения, а не ваши данные.</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsPage</name>
+    <message>
+        <source>Appearance</source>
+        <translation>Оформление</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation>Уведомления</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Соединение</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Модель</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Чат</translation>
+    </message>
+    <message>
+        <source>Safety</source>
+        <translation>Безопасность</translation>
+    </message>
+    <message>
+        <source>Memory &amp; Context</source>
+        <translation>Память и контекст</translation>
+    </message>
+    <message>
+        <source>Workspace</source>
+        <translation>Рабочее пространство</translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation>Голос</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>Дополнительно</translation>
+    </message>
+    <message>
+        <source>Archived chats</source>
+        <translation>Архивные чаты</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>О программе</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>This section is not wired yet</source>
+        <translation>Этот раздел ещё не подключён</translation>
+    </message>
+</context>
+<context>
+    <name>Sidebar</name>
+    <message>
+        <source>Local node</source>
+        <translation>Локальный узел</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>New agent</source>
+        <translation>Новый агент</translation>
+    </message>
+    <message>
+        <source>New tag</source>
+        <translation>Новый тег</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>Свернуть всё</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>Развернуть всё</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Аккаунты</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Профили</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Модели</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>Панель мониторинга</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Флот</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Сессии</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>Подтверждения</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Каналы</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>Маршрутизация</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Запланированные задания</translation>
+    </message>
+    <message>
+        <source>New chat</source>
+        <translation>Новый чат</translation>
+    </message>
+    <message>
+        <source>Profile settings</source>
+        <translation>Настройки профиля</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Память</translation>
+    </message>
+</context>
+<context>
+    <name>SidebarModel</name>
+    <message>
+        <source>Local node</source>
+        <translation>Локальный узел</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>(без названия)</translation>
+    </message>
+    <message>
+        <source>All Sessions</source>
+        <translation>Все сессии</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Архив</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>Теги</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Флот</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Интеграции</translation>
+    </message>
+    <message>
+        <source>New tag</source>
+        <translation>Новый тег</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBar</name>
+    <message>
+        <source>Command Center</source>
+        <translation>Командный центр</translation>
+    </message>
+    <message>
+        <source>Gateway</source>
+        <translation>Шлюз</translation>
+    </message>
+    <message>
+        <source>Agents</source>
+        <translation>Агенты</translation>
+    </message>
+    <message>
+        <source>Cron</source>
+        <translation>Cron</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>Файлы</translation>
+    </message>
+    <message>
+        <source>Toggle file explorer (Ctrl+E)</source>
+        <translation>Показать/скрыть проводник (Ctrl+E)</translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation>Выполняется</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> tok</translation>
+    </message>
+    <message>
+        <source>Session usage · %1 in / %2 out</source>
+        <translation>Расход сессии · %1 вх / %2 исх</translation>
+    </message>
+    <message>
+        <source>Provider rate limit (remaining / limit)</source>
+        <translation>Лимит запросов провайдера (остаток / лимит)</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Сессия</translation>
+    </message>
+    <message>
+        <source>Approval mode</source>
+        <translation>Режим подтверждений</translation>
+    </message>
+    <message>
+        <source>Toggle terminal</source>
+        <translation>Показать/скрыть терминал</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>Проверить обновления</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation>Ещё</translation>
+    </message>
+    <message>
+        <source>YOLO</source>
+        <translation>YOLO</translation>
+    </message>
+    <message>
+        <source>Terminal</source>
+        <translation>Терминал</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBarModel</name>
+    <message>
+        <source>No daemon connection</source>
+        <translation>Нет соединения с демоном</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n failed</source>
+        <translation>
+            <numerusform>%n сбой</numerusform>
+            <numerusform>%n сбоя</numerusform>
+            <numerusform>%n сбоев</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>%n выполняется</numerusform>
+            <numerusform>%n выполняются</numerusform>
+            <numerusform>%n выполняются</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> tok</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBarView</name>
+    <message>
+        <source> Gateway </source>
+        <translation> Шлюз </translation>
+    </message>
+    <message>
+        <source> Agents </source>
+        <translation> Агенты </translation>
+    </message>
+    <message>
+        <source>idle</source>
+        <translation>простой</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> tok</translation>
+    </message>
+    <message>
+        <source>update v</source>
+        <translation>обновление v</translation>
+    </message>
+</context>
+<context>
+    <name>SubagentList</name>
+    <message>
+        <source>Subagents</source>
+        <translation>Субагенты</translation>
+    </message>
+</context>
+<context>
+    <name>SubmitInputBox</name>
+    <message>
+        <source>Message daemon…  (Enter to send, Shift+Enter newline)</source>
+        <translation>Сообщение демону…  (Enter — отправить, Shift+Enter — новая строка)</translation>
+    </message>
+</context>
+<context>
+    <name>SyntaxHighlightingCLI</name>
+    <message>
+        <source>Command line syntax highlighter using KSyntaxHighlighting syntax definitions.</source>
+        <translation>Подсветка синтаксиса из командной строки с использованием определений KSyntaxHighlighting.</translation>
+    </message>
+    <message>
+        <source>source</source>
+        <translation>источник</translation>
+    </message>
+    <message>
+        <source>The source file to highlight. If absent, read the file from stdin and the --syntax option must be used.</source>
+        <translation>Исходный файл для подсветки. Если отсутствует, файл читается из stdin и необходимо использовать параметр --syntax.</translation>
+    </message>
+    <message>
+        <source>List all available syntax definitions.</source>
+        <translation>Показать все доступные определения синтаксиса.</translation>
+    </message>
+    <message>
+        <source>List all available themes.</source>
+        <translation>Показать все доступные темы.</translation>
+    </message>
+    <message>
+        <source>Download new/updated syntax definitions.</source>
+        <translation>Скачать новые/обновлённые определения синтаксиса.</translation>
+    </message>
+    <message>
+        <source>File to write HTML output to (default: stdout).</source>
+        <translation>Файл для записи HTML-вывода (по умолчанию: stdout).</translation>
+    </message>
+    <message>
+        <source>output</source>
+        <translation>вывод</translation>
+    </message>
+    <message>
+        <source>Highlight using this syntax definition (default: auto-detect based on input file).</source>
+        <translation>Подсвечивать с использованием этого определения синтаксиса (по умолчанию: автоопределение по входному файлу).</translation>
+    </message>
+    <message>
+        <source>syntax</source>
+        <translation>синтаксис</translation>
+    </message>
+    <message>
+        <source>Color theme to use for highlighting.</source>
+        <translation>Цветовая тема для подсветки.</translation>
+    </message>
+    <message>
+        <source>theme</source>
+        <translation>тема</translation>
+    </message>
+    <message>
+        <source>Use the specified format instead of html. Must be html, ansi or ansi256.</source>
+        <translation>Использовать указанный формат вместо html. Должно быть html, ansi или ansi256.</translation>
+    </message>
+    <message>
+        <source>format</source>
+        <translation>формат</translation>
+    </message>
+    <message>
+        <source>Add information to debug a syntax file. Only works with --output-format=ansi or ansi256. Possible values are format, region, context, stackSize and all.</source>
+        <translation>Добавить сведения для отладки файла синтаксиса. Работает только с --output-format=ansi или ansi256. Возможные значения: format, region, context, stackSize и all.</translation>
+    </message>
+    <message>
+        <source>type</source>
+        <translation>тип</translation>
+    </message>
+    <message>
+        <source>Disable ANSI background for the default color.</source>
+        <translation>Отключить фон ANSI для цвета по умолчанию.</translation>
+    </message>
+    <message>
+        <source>Select background color role from theme.</source>
+        <translation>Выбрать роль цвета фона из темы.</translation>
+    </message>
+    <message>
+        <source>role</source>
+        <translation>роль</translation>
+    </message>
+    <message>
+        <source>For ansi and ansi256 formats, flush the output buffer on each line.</source>
+        <translation>Для форматов ansi и ansi256 сбрасывать буфер вывода на каждой строке.</translation>
+    </message>
+    <message>
+        <source>Set HTML page&apos;s title
+(default: the filename or &quot;KSyntaxHighlighter&quot; if reading from stdin).</source>
+        <translation>Задать заголовок HTML-страницы
+(по умолчанию: имя файла или «KSyntaxHighlighter» при чтении из stdin).</translation>
+    </message>
+    <message>
+        <source>title</source>
+        <translation>заголовок</translation>
+    </message>
+</context>
+<context>
+    <name>SystemMessage</name>
+    <message>
+        <source>Steering note</source>
+        <translation>Заметка для направления</translation>
+    </message>
+</context>
+<context>
+    <name>TabBar</name>
+    <message>
+        <source>Unsaved changes</source>
+        <translation>Несохранённые изменения</translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation>Закрыть вкладку</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>Новая вкладка</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+</context>
+<context>
+    <name>TabModel</name>
+    <message>
+        <source>Session</source>
+        <translation>Сессия</translation>
+    </message>
+    <message>
+        <source>Page</source>
+        <translation>Страница</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Агент</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPanelStub</name>
+    <message>
+        <source>The terminal is not available in this build</source>
+        <translation>Терминал недоступен в этой сборке</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+</context>
+<context>
+    <name>TextPromptDialog</name>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+</context>
+<context>
+    <name>ThemePalette</name>
+    <message>
+        <source>Dark</source>
+        <comment>theme name</comment>
+        <translation>Тёмная</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <comment>theme name</comment>
+        <translation>Сепия</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <comment>theme name</comment>
+        <translation>Полночь</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <comment>theme name</comment>
+        <translation>Светлая</translation>
+    </message>
+</context>
+<context>
+    <name>TodoList</name>
+    <message>
+        <source>Tasks</source>
+        <translation>Задачи</translation>
+    </message>
+</context>
+<context>
+    <name>ToolApprovalBar</name>
+    <message>
+        <source>Approve this action?</source>
+        <translation>Подтвердить это действие?</translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>Подтвердить</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Отклонить</translation>
+    </message>
+    <message>
+        <source>Allow permanently</source>
+        <translation>Разрешить навсегда</translation>
+    </message>
+</context>
+<context>
+    <name>ToolCallBlock</name>
+    <message>
+        <source>Tool</source>
+        <translation>Инструмент</translation>
+    </message>
+</context>
+<context>
+    <name>Transcript</name>
+    <message>
+        <source>Couldn&apos;t access the clipboard. Copy needs a secure (https) page.</source>
+        <translation>Не удалось получить доступ к буферу обмена. Для копирования нужна защищённая (https) страница.</translation>
+    </message>
+    <message>
+        <source>
+
+Thanks — proceeding with: %1
+</source>
+        <translation>
+
+Спасибо — продолжаю с: %1
+</translation>
+    </message>
+    <message>
+        <source>Start the session</source>
+        <translation>Начать сессию</translation>
+    </message>
+    <message>
+        <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
+        <translation>Отправьте сообщение ниже, чтобы начать. Рассуждения агента, вызовы инструментов и ответы будут поступать сюда.</translation>
+    </message>
+    <message>
+        <source>Find in transcript</source>
+        <translation>Найти в транскрипте</translation>
+    </message>
+    <message>
+        <source>0/0</source>
+        <translation>0/0</translation>
+    </message>
+    <message>
+        <source>Previous match (Shift+Enter)</source>
+        <translation>Предыдущее совпадение (Shift+Enter)</translation>
+    </message>
+    <message>
+        <source>Next match (Enter)</source>
+        <translation>Следующее совпадение (Enter)</translation>
+    </message>
+    <message>
+        <source>Close (Esc)</source>
+        <translation>Закрыть (Esc)</translation>
+    </message>
+</context>
+<context>
+    <name>TranscriptPage</name>
+    <message>
+        <source>Session</source>
+        <translation>Сессия</translation>
+    </message>
+    <message>
+        <source>The turn finished.</source>
+        <translation>Ход завершён.</translation>
+    </message>
+    <message>
+        <source>needs your approval</source>
+        <translation>требуется ваше подтверждение</translation>
+    </message>
+    <message>
+        <source>needs a credential</source>
+        <translation>требуются учётные данные</translation>
+    </message>
+    <message>
+        <source>The turn %1.</source>
+        <translation>Ход %1.</translation>
+    </message>
+    <message>
+        <source>Select a session</source>
+        <translation>Выберите сессию</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>Очистить сессию</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Очистить</translation>
+    </message>
+    <message>
+        <source>Remove all messages from this session? This cannot be undone.</source>
+        <translation>Удалить все сообщения из этой сессии? Это нельзя отменить.</translation>
+    </message>
+    <message>
+        <source>Secret required</source>
+        <translation>Требуется секрет</translation>
+    </message>
+    <message>
+        <source>Password required</source>
+        <translation>Требуется пароль</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>Отправить</translation>
+    </message>
+    <message>
+        <source>Paste secret…</source>
+        <translation>Вставьте секрет…</translation>
+    </message>
+    <message>
+        <source>Password…</source>
+        <translation>Пароль…</translation>
+    </message>
+    <message>
+        <source>Never stored - forwarded to the host for this step only.</source>
+        <translation>Никогда не сохраняется — передаётся хосту только для этого шага.</translation>
+    </message>
+    <message>
+        <source>Exit distraction-free (Esc)</source>
+        <translation>Выйти из режима без отвлечений (Esc)</translation>
+    </message>
+</context>
+<context>
+    <name>TranscriptView</name>
+    <message>
+        <source>Enter restore  e edit  Esc cancel</source>
+        <translation>Enter — восстановить  e — изменить  Esc — отмена</translation>
+    </message>
+</context>
+<context>
+    <name>TuiFileTabController</name>
+    <message>
+        <source>Binary file - not editable</source>
+        <translation>Двоичный файл — не редактируется</translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation>Сохранено</translation>
+    </message>
+    <message>
+        <source>Save failed</source>
+        <translation>Не удалось сохранить</translation>
+    </message>
+</context>
+<context>
+    <name>TuiOverlayHost</name>
+    <message>
+        <source>Model</source>
+        <translation>Модель</translation>
+    </message>
+    <message>
+        <source>Download model — pick a repo</source>
+        <translation>Скачать модель — выберите репозиторий</translation>
+    </message>
+    <message>
+        <source>Choose a quantization</source>
+        <translation>Выберите квантизацию</translation>
+    </message>
+    <message>
+        <source>Go to file</source>
+        <translation>Перейти к файлу</translation>
+    </message>
+    <message>
+        <source>Enter opens a preview · Shift+Enter pins · Esc closes</source>
+        <translation>Enter открывает предпросмотр · Shift+Enter закрепляет · Esc закрывает</translation>
+    </message>
+    <message>
+        <source>Attach file</source>
+        <translation>Прикрепить файл</translation>
+    </message>
+    <message>
+        <source>Enter attaches the selected file · Esc cancels</source>
+        <translation>Enter прикрепляет выбранный файл · Esc отменяет</translation>
+    </message>
+    <message>
+        <source>Commands</source>
+        <translation>Команды</translation>
+    </message>
+</context>
+<context>
+    <name>TuiPageHub</name>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>Панель мониторинга</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Модели</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Аккаунты</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Профили</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Флот</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Сессии</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>Подтверждения</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>Маршрутизация</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Запланированные задания</translation>
+    </message>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>Пользователи и доступ</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Каналы</translation>
+    </message>
+    <message>
+        <source>on</source>
+        <translation>вкл</translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation>выкл</translation>
+    </message>
+    <message>
+        <source>_(not set)_</source>
+        <translation>_(не задано)_</translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation>Оформление</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>Тема</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Язык</translation>
+    </message>
+    <message>
+        <source>applies live; restart to retranslate the whole chrome</source>
+        <translation>применяется сразу; перезапустите, чтобы перевести весь интерфейс</translation>
+    </message>
+    <message>
+        <source>Distraction-free (hide chrome)</source>
+        <translation>Без отвлечений (скрыть интерфейс)</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation>Уведомления</translation>
+    </message>
+    <message>
+        <source>Notify when a turn needs my input</source>
+        <translation>Уведомлять, когда ходу нужен мой ввод</translation>
+    </message>
+    <message>
+        <source>Notify when a turn finishes</source>
+        <translation>Уведомлять, когда ход завершается</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Соединение</translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation>Запускать локальный демон автоматически</translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
+        <translation>Останавливать управляемый демон при закрытии приложения</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Обновления</translation>
+    </message>
+    <message>
+        <source>Automatically check for updates</source>
+        <translation>Автоматически проверять обновления</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Модель</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>Усилие рассуждений</translation>
+    </message>
+    <message>
+        <source>Fast mode (lower latency)</source>
+        <translation>Быстрый режим (меньше задержка)</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Чат</translation>
+    </message>
+    <message>
+        <source>Stream responses</source>
+        <translation>Потоковые ответы</translation>
+    </message>
+    <message>
+        <source>Send on Enter (Shift+Enter for newline)</source>
+        <translation>Отправлять по Enter (Shift+Enter — новая строка)</translation>
+    </message>
+    <message>
+        <source>Show token counts</source>
+        <translation>Показывать число токенов</translation>
+    </message>
+    <message>
+        <source>Default system prompt for new chats</source>
+        <translation>Системный промпт по умолчанию для новых чатов</translation>
+    </message>
+    <message>
+        <source>Safety</source>
+        <translation>Безопасность</translation>
+    </message>
+    <message>
+        <source>Approval policy</source>
+        <translation>Политика подтверждений</translation>
+    </message>
+    <message>
+        <source>Filesystem access</source>
+        <translation>Доступ к файловой системе</translation>
+    </message>
+    <message>
+        <source>Allow network access</source>
+        <translation>Разрешить доступ к сети</translation>
+    </message>
+    <message>
+        <source>Memory &amp; Context</source>
+        <translation>Память и контекст</translation>
+    </message>
+    <message>
+        <source>Max context tokens</source>
+        <translation>Макс. токенов контекста</translation>
+    </message>
+    <message>
+        <source>Auto-compact when context is full</source>
+        <translation>Автосжатие, когда контекст заполнен</translation>
+    </message>
+    <message>
+        <source>Persist memory across sessions</source>
+        <translation>Сохранять память между сессиями</translation>
+    </message>
+    <message>
+        <source>Workspace</source>
+        <translation>Рабочее пространство</translation>
+    </message>
+    <message>
+        <source>Workspace root</source>
+        <translation>Корень рабочего пространства</translation>
+    </message>
+    <message>
+        <source>Respect .gitignore</source>
+        <translation>Учитывать .gitignore</translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation>Голос</translation>
+    </message>
+    <message>
+        <source>Enable voice transcription</source>
+        <translation>Включить голосовую транскрипцию</translation>
+    </message>
+    <message>
+        <source>Transcription model</source>
+        <translation>Модель транскрипции</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>Дополнительно</translation>
+    </message>
+    <message>
+        <source>Log level</source>
+        <translation>Уровень логирования</translation>
+    </message>
+    <message>
+        <source>Send anonymous telemetry</source>
+        <translation>Отправлять анонимную телеметрию</translation>
+    </message>
+    <message>
+        <source>Enable experimental tools</source>
+        <translation>Включить экспериментальные инструменты</translation>
+    </message>
+    <message>
+        <source># Settings
+
+</source>
+        <translation># Настройки
+
+</translation>
+    </message>
+    <message>
+        <source>Shared with the GUI — both front ends edit the same daemon config and app prefs. **j/k** select a row · **Space/Enter** toggles · **Enter** opens a picker/editor · **F8** cycles the theme.
+</source>
+        <translation>Общее с GUI — оба интерфейса редактируют одну конфигурацию демона и настройки приложения. **j/k** выбирают строку · **Space/Enter** переключает · **Enter** открывает выбор/редактор · **F8** меняет тему.
+</translation>
+    </message>
+    <message>
+        <source>- State: **%1** · %2 · `%3` — _reconnect via the GUI picker or the first-run gate_
+</source>
+        <translation>- Состояние: **%1** · %2 · `%3` — _переподключитесь через выбор в GUI или экран первичной настройки_
+</translation>
+    </message>
+    <message>
+        <source>- Active default: `%1` — _change or install in the Models page (`/models`)_
+</source>
+        <translation>- Активная по умолчанию: `%1` — _измените или установите на странице моделей (`/models`)_
+</translation>
+    </message>
+    <message>
+        <source># Models
+
+</source>
+        <translation># Модели
+
+</translation>
+    </message>
+    <message>
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
+
+</source>
+        <translation>Установленные модели, общие с GUI. **j/k** перемещают · **Enter** активирует · **x** удаляет · **d** скачивает модель (репозиторий → квант).
+
+</translation>
+    </message>
+    <message>
+        <source>## Installed
+
+</source>
+        <translation>## Установлено
+
+</translation>
+    </message>
+    <message>
+        <source>_None installed._
+
+</source>
+        <translation>_Ничего не установлено._
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4
+</source>
+        <translation>- %1**%2** (%3)%4
+</translation>
+    </message>
+    <message>
+        <source> — **active**</source>
+        <translation> — **активна**</translation>
+    </message>
+    <message>
+        <source>## Downloads
+
+</source>
+        <translation>## Загрузки
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%  · %3
+</source>
+        <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Discover
+
+</source>
+        <translation>## Найти
+
+</translation>
+    </message>
+    <message>
+        <source>_Press **d** to search repos and download a model._
+</source>
+        <translation>_Нажмите **d**, чтобы искать репозитории и скачать модель._
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2 · ↓ %3
+</source>
+        <translation>- %1 — %2 · ↓ %3
+</translation>
+    </message>
+    <message>
+        <source>
+## Providers
+
+</source>
+        <translation>
+## Провайдеры
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 (%2)%3
+</source>
+        <translation>- %1 (%2)%3
+</translation>
+    </message>
+    <message>
+        <source> — configured</source>
+        <translation> — настроено</translation>
+    </message>
+    <message>
+        <source># Accounts
+
+</source>
+        <translation># Аккаунты
+
+</translation>
+    </message>
+    <message>
+        <source>Connected provider accounts, shared with the GUI. **j/k** move · **a** add account · **R**/**Enter** re-auth · **x** remove.
+
+</source>
+        <translation>Подключённые аккаунты провайдеров, общие с GUI. **j/k** перемещают · **a** добавляет аккаунт · **R**/**Enter** повторная авторизация · **x** удаляет.
+
+</translation>
+    </message>
+    <message>
+        <source>## Connected
+
+</source>
+        <translation>## Подключено
+
+</translation>
+    </message>
+    <message>
+        <source>_No accounts._
+
+</source>
+        <translation>_Нет аккаунтов._
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** — %3 (%4) · %5
+</source>
+        <translation>- %1**%2** — %3 (%4) · %5
+</translation>
+    </message>
+    <message>
+        <source>OAuth</source>
+        <translation>OAuth</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>Ключ API</translation>
+    </message>
+    <message>
+        <source>## Available providers
+
+</source>
+        <translation>## Доступные провайдеры
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 (%2)
+</source>
+        <translation>- %1 (%2)
+</translation>
+    </message>
+    <message>
+        <source># Profiles
+
+</source>
+        <translation># Профили
+
+</translation>
+    </message>
+    <message>
+        <source>Agent profiles, shared with the GUI. **j/k** move · **Enter** set default · **e** edit (provider / model / prompt / skills / tools) · **n** clone · **a** new agent · **x** delete.
+
+</source>
+        <translation>Профили агентов, общие с GUI. **j/k** перемещают · **Enter** делает по умолчанию · **e** редактирует (провайдер / модель / промпт / навыки / инструменты) · **n** клонирует · **a** новый агент · **x** удаляет.
+
+</translation>
+    </message>
+    <message>
+        <source>## %1%2%3
+
+</source>
+        <translation>## %1%2%3
+
+</translation>
+    </message>
+    <message>
+        <source> (default)</source>
+        <translation> (по умолчанию)</translation>
+    </message>
+    <message>
+        <source>- Model: `%1`
+</source>
+        <translation>- Модель: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Skills: %1
+</source>
+        <translation>- Навыки: %1
+</translation>
+    </message>
+    <message>
+        <source>- Tools: %1
+
+</source>
+        <translation>- Инструменты: %1
+
+</translation>
+    </message>
+    <message>
+        <source># Profile
+
+_No agent selected._
+</source>
+        <translation># Профиль
+
+_Агент не выбран._
+</translation>
+    </message>
+    <message>
+        <source># Profile - %1
+
+</source>
+        <translation># Профиль — %1
+
+</translation>
+    </message>
+    <message>
+        <source>Agent == profile. Memory lives in this agent&apos;s bank (`%1`). Press **e** to edit this profile.
+
+</source>
+        <translation>Агент == профиль. Память хранится в банке этого агента (`%1`). Нажмите **e**, чтобы изменить этот профиль.
+
+</translation>
+    </message>
+    <message>
+        <source>## Engine
+
+</source>
+        <translation>## Движок
+
+</translation>
+    </message>
+    <message>
+        <source>- Provider: **%1**
+</source>
+        <translation>- Провайдер: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Model: **%1**
+</source>
+        <translation>- Модель: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Base URL: %1
+</source>
+        <translation>- Базовый URL: %1
+</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>(по умолчанию у провайдера)</translation>
+    </message>
+    <message>
+        <source>- Context engine: %1
+
+</source>
+        <translation>- Контекстный движок: %1
+
+</translation>
+    </message>
+    <message>
+        <source>## Memory
+
+</source>
+        <translation>## Память
+
+</translation>
+    </message>
+    <message>
+        <source>- Memory provider: **%1**
+
+</source>
+        <translation>- Провайдер памяти: **%1**
+
+</translation>
+    </message>
+    <message>
+        <source>## Persona
+
+</source>
+        <translation>## Персона
+
+</translation>
+    </message>
+    <message>
+        <source>_none_
+
+</source>
+        <translation>_нет_
+
+</translation>
+    </message>
+    <message>
+        <source>Tool allowlist</source>
+        <translation>Список разрешённых инструментов</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Навыки</translation>
+    </message>
+    <message>
+        <source># Memory - %1
+
+</source>
+        <translation># Память — %1
+
+</translation>
+    </message>
+    <message>
+        <source>agent</source>
+        <translation>агент</translation>
+    </message>
+    <message>
+        <source>Mnemosyne memory for the active scope, shared with the GUI. The knowledge graph renders as a node-link diagram in the GUI; here it is an adjacency listing.
+
+</source>
+        <translation>Память Mnemosyne для активной области, общая с GUI. В GUI граф знаний отображается как диаграмма из узлов и связей; здесь это список смежности.
+
+</translation>
+    </message>
+    <message>
+        <source>## Overview
+
+</source>
+        <translation>## Обзор
+
+</translation>
+    </message>
+    <message>
+        <source>- Working: **%1** · Episodic: **%2** · Scratchpad: **%3**
+</source>
+        <translation>- Рабочая: **%1** · Эпизодическая: **%2** · Черновик: **%3**
+</translation>
+    </message>
+    <message>
+        <source>- Facts: **%1** · Conflicts: **%2**
+
+</source>
+        <translation>- Факты: **%1** · Конфликты: **%2**
+
+</translation>
+    </message>
+    <message>
+        <source>By source</source>
+        <translation>По источнику</translation>
+    </message>
+    <message>
+        <source>By veracity</source>
+        <translation>По достоверности</translation>
+    </message>
+    <message>
+        <source>By lifecycle</source>
+        <translation>По жизненному циклу</translation>
+    </message>
+    <message>
+        <source>## Memories
+
+</source>
+        <translation>## Воспоминания
+
+</translation>
+    </message>
+    <message>
+        <source>_No memories in scope._
+
+</source>
+        <translation>_В области нет воспоминаний._
+
+</translation>
+    </message>
+    <message>
+        <source>- **%1** _(%2 · %3 · imp %4)_
+</source>
+        <translation>- **%1** _(%2 · %3 · важн. %4)_
+</translation>
+    </message>
+    <message>
+        <source>## Graph adjacency
+
+</source>
+        <translation>## Смежность графа
+
+</translation>
+    </message>
+    <message>
+        <source>_No edges in scope._
+
+</source>
+        <translation>_В области нет связей._
+
+</translation>
+    </message>
+    <message>
+        <source>## Timeline
+
+</source>
+        <translation>## Хронология
+
+</translation>
+    </message>
+    <message>
+        <source># Dashboard
+
+</source>
+        <translation># Панель мониторинга
+
+</translation>
+    </message>
+    <message>
+        <source>- Active sessions: **%1**
+</source>
+        <translation>- Активные сессии: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Running agents: **%1**
+</source>
+        <translation>- Работающие агенты: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Pending approvals: **%1**
+</source>
+        <translation>- Ожидающие подтверждения: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Tokens today: **%1**
+</source>
+        <translation>- Токенов за сегодня: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Daemon health: **%1**
+
+</source>
+        <translation>- Состояние демона: **%1**
+
+</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>degraded</source>
+        <translation>снижено</translation>
+    </message>
+    <message>
+        <source>## Recent activity
+
+</source>
+        <translation>## Недавняя активность
+
+</translation>
+    </message>
+    <message>
+        <source>- _%1_ — %2
+</source>
+        <translation>- _%1_ — %2
+</translation>
+    </message>
+    <message>
+        <source># Fleet
+
+</source>
+        <translation># Флот
+
+</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+
+</source>
+        <translation>Дерево оркестратора/воркеров, общее с GUI. **j/k** перемещают · **Space/Enter** пауза/возобновление.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`)
+</source>
+        <translation>- %1%2 — %3 (`%4`)
+</translation>
+    </message>
+    <message>
+        <source># Sessions
+
+</source>
+        <translation># Сессии
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
+
+</source>
+        <translation>**j/k** перемещают · **s** приостанавливает · **R**/**Enter** возобновляет · **x** закрывает.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** — %3 · %4 · %5 · %6 tok
+</source>
+        <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
+</translation>
+    </message>
+    <message>
+        <source># Approvals
+
+</source>
+        <translation># Подтверждения
+
+</translation>
+    </message>
+    <message>
+        <source>_Inbox zero — no pending approvals._
+</source>
+        <translation>_Входящие пусты — нет ожидающих подтверждений._
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
+
+</source>
+        <translation>**j/k** перемещают · **a**/**Enter** подтверждает · **d** отклоняет.
+
+</translation>
+    </message>
+    <message>
+        <source>## %1%2 (%3 risk)
+
+</source>
+        <translation>## %1%2 (риск: %3)
+
+</translation>
+    </message>
+    <message>
+        <source>- Session: %1
+</source>
+        <translation>- Сессия: %1
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+
+</source>
+        <translation>- Команда: `%1`
+
+</translation>
+    </message>
+    <message>
+        <source># Routing
+
+</source>
+        <translation># Маршрутизация
+
+</translation>
+    </message>
+    <message>
+        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
+
+</source>
+        <translation>Правила «намерение → модель», общие с GUI. **j/k** перемещают · **Space/Enter** переключает · **x** удаляет.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** → `%3` (fallback `%4`)%5
+</source>
+        <translation>- %1**%2** → `%3` (запасной `%4`)%5
+</translation>
+    </message>
+    <message>
+        <source> — _disabled_</source>
+        <translation> — _отключено_</translation>
+    </message>
+    <message>
+        <source># Scheduled jobs
+
+</source>
+        <translation># Запланированные задания
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **Space/Enter** enable/disable · **t** run now · **x** delete.
+
+</source>
+        <translation>**j/k** перемещают · **Space/Enter** включает/отключает · **t** запускает сейчас · **x** удаляет.
+
+</translation>
+    </message>
+    <message>
+        <source> (disabled)</source>
+        <translation> (отключено)</translation>
+    </message>
+    <message>
+        <source>- Schedule: `%1`
+</source>
+        <translation>- Расписание: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Profile: %1
+</source>
+        <translation>- Профиль: %1
+</translation>
+    </message>
+    <message>
+        <source>- Next: %1 · Last: %2
+
+</source>
+        <translation>- Следующий: %1 · Последний: %2
+
+</translation>
+    </message>
+    <message>
+        <source># Users &amp; Access
+
+</source>
+        <translation># Пользователи и доступ
+
+</translation>
+    </message>
+    <message>
+        <source>## Signed in as
+
+</source>
+        <translation>## Вход выполнен как
+
+</translation>
+    </message>
+    <message>
+        <source>- **%1**
+</source>
+        <translation>- **%1**
+</translation>
+    </message>
+    <message>
+        <source>- User id: `%1`
+</source>
+        <translation>- id пользователя: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- **Not authenticated**
+</source>
+        <translation>- **Не аутентифицирован**
+</translation>
+    </message>
+    <message>
+        <source>- Roles: %1
+</source>
+        <translation>- Роли: %1
+</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>(нет)</translation>
+    </message>
+    <message>
+        <source>- Capabilities: %1
+
+</source>
+        <translation>- Возможности: %1
+
+</translation>
+    </message>
+    <message>
+        <source>## Users &amp; roles
+
+</source>
+        <translation>## Пользователи и роли
+
+</translation>
+    </message>
+    <message>
+        <source>User administration is not available yet.
+
+</source>
+        <translation>Управление пользователями пока недоступно.
+
+</translation>
+    </message>
+    <message>
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.
+</source>
+        <translation>Просмотр, создание, отключение пользователей и назначение ролей требуют API управления доступом узла, который ещё разрабатывается.
+</translation>
+    </message>
+    <message>
+        <source># Channels
+
+</source>
+        <translation># Каналы
+
+</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the transports seam is not wired in this mode._
+</source>
+        <translation>_Каналы недоступны: слой транспортов не подключён в этом режиме._
+</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+
+</source>
+        <translation>Аккаунты транспорта Events-IO и их активные комнаты, общие с GUI. В этой части оба интерфейса только для чтения — подключение отложено (EIO-2).
+
+</translation>
+    </message>
+    <message>
+        <source>## Accounts
+
+</source>
+        <translation>## Аккаунты
+
+</translation>
+    </message>
+    <message>
+        <source>_No channels connected._
+</source>
+        <translation>_Нет подключённых каналов._
+</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3 · %4
+</source>
+        <translation>- %1 **%2** — %3 · %4
+</translation>
+    </message>
+    <message>
+        <source>  - _No rooms._
+</source>
+        <translation>  - _Нет комнат._
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - %1 · %2
+</source>
+        <translation>  - %1 · %2
+</translation>
+    </message>
+    <message>
+        <source>## Add channel
+
+</source>
+        <translation>## Добавить канал
+
+</translation>
+    </message>
+    <message>
+        <source>_Connect to a daemon to see available channel types._
+</source>
+        <translation>_Подключитесь к демону, чтобы увидеть доступные типы каналов._
+</translation>
+    </message>
+    <message>
+        <source>- **%1** (`%2`)
+</source>
+        <translation>- **%1** (`%2`)
+</translation>
+    </message>
+</context>
+<context>
+    <name>TurnController</name>
+    <message>
+        <source>The agent hit an error completing this turn.</source>
+        <translation>Агент столкнулся с ошибкой при завершении этого хода.</translation>
+    </message>
+    <message>
+        <source>The build failed while completing this turn.</source>
+        <translation>Сборка не удалась при завершении этого хода.</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateManager</name>
+    <message>
+        <source>Install &amp; restart</source>
+        <translation>Установить и перезапустить</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Открыть</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the installer instead</source>
+        <translation>самоприменение недоступно (%1); вместо этого открываю установщик</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the download instead</source>
+        <translation>самоприменение недоступно (%1); вместо этого открываю загрузку</translation>
+    </message>
+    <message>
+        <source>self-apply is not available for this artifact; opening the update</source>
+        <translation>самоприменение недоступно для этого артефакта; открываю обновление</translation>
+    </message>
+</context>
+<context>
+    <name>UsersAccessPage</name>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>Пользователи и доступ</translation>
+    </message>
+    <message>
+        <source>Signed in as</source>
+        <translation>Вход выполнен как</translation>
+    </message>
+    <message>
+        <source>Not authenticated</source>
+        <translation>Не аутентифицирован</translation>
+    </message>
+    <message>
+        <source>User id: %1</source>
+        <translation>id пользователя: %1</translation>
+    </message>
+    <message>
+        <source>Roles: %1</source>
+        <translation>Роли: %1</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>(нет)</translation>
+    </message>
+    <message>
+        <source>Capabilities: %1</source>
+        <translation>Возможности: %1</translation>
+    </message>
+    <message>
+        <source>Users &amp; roles</source>
+        <translation>Пользователи и роли</translation>
+    </message>
+    <message>
+        <source>User administration is not available yet.</source>
+        <translation>Управление пользователями пока недоступно.</translation>
+    </message>
+    <message>
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.</source>
+        <translation>Просмотр, создание, отключение пользователей и назначение ролей требуют API управления доступом узла, который ещё разрабатывается.</translation>
+    </message>
+    <message>
+        <source>Add user</source>
+        <translation>Добавить пользователя</translation>
+    </message>
+</context>
+<context>
+    <name>VoiceSection</name>
+    <message>
+        <source>Voice input</source>
+        <translation>Голосовой ввод</translation>
+    </message>
+    <message>
+        <source>Enable voice transcription</source>
+        <translation>Включить голосовую транскрипцию</translation>
+    </message>
+    <message>
+        <source>Transcription model</source>
+        <translation>Модель транскрипции</translation>
+    </message>
+</context>
+<context>
+    <name>WorkspaceSection</name>
+    <message>
+        <source>Workspace root</source>
+        <translation>Корень рабочего пространства</translation>
+    </message>
+    <message>
+        <source>Path the agent operates in</source>
+        <translation>Путь, в котором работает агент</translation>
+    </message>
+    <message>
+        <source>Respect .gitignore</source>
+        <translation>Учитывать .gitignore</translation>
+    </message>
+</context>
+<context>
+    <name>accounts::DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation>Вход через OAuth пока недоступен; вместо этого добавьте ключ API.</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ApprovalRepository</name>
+    <message>
+        <source>Approval decision failed</source>
+        <translation>Не удалось принять решение о подтверждении</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CredentialRepository</name>
+    <message>
+        <source>Credential operation failed</source>
+        <translation>Не удалось выполнить операцию с учётными данными</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation>Не удалось связаться с демоном. Убедитесь, что он запущен, и повторите попытку.</translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation>Демон сообщил, что он неработоспособен.</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>неизвестно</translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation>Замена несовместимого локального демона (api %1, нужен %2)…</translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation>Несовместимый демон (api %1, нужен %2).</translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation>Переподключение…</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device.</source>
+        <translation>На этом устройстве работают только WebSocket-соединения (ws:// или wss://).</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device</source>
+        <translation>На этом устройстве работают только WebSocket-соединения (ws:// или wss://)</translation>
+    </message>
+    <message>
+        <source>Unix socket target accepted</source>
+        <translation>Цель Unix-сокета принята</translation>
+    </message>
+    <message>
+        <source>Enter a local socket path</source>
+        <translation>Введите путь к локальному сокету</translation>
+    </message>
+    <message>
+        <source>Remote target accepted (host:port, TLS)</source>
+        <translation>Удалённая цель принята (host:port, TLS)</translation>
+    </message>
+    <message>
+        <source>Use host:port for a remote TLS node</source>
+        <translation>Используйте host:port для удалённого узла с TLS</translation>
+    </message>
+    <message>
+        <source>WebSocket target accepted (ws:// or wss://)</source>
+        <translation>Цель WebSocket принята (ws:// или wss://)</translation>
+    </message>
+    <message>
+        <source>Use ws://host:port or wss://host[:port][/path]</source>
+        <translation>Используйте ws://host:port или wss://host[:port][/path]</translation>
+    </message>
+    <message>
+        <source>Unsupported transport</source>
+        <translation>Неподдерживаемый транспорт</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonTransport</name>
+    <message>
+        <source>No daemon WebSocket target configured</source>
+        <translation>WebSocket-цель демона не настроена</translation>
+    </message>
+    <message>
+        <source>No daemon target configured</source>
+        <translation>Цель демона не настроена</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FleetRepository</name>
+    <message>
+        <source>Unit control failed</source>
+        <translation>Не удалось управлять юнитом</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation>Не удалось найти исполняемый файл локального демона. Укажите путь к нему в настройках или подключитесь к удалённому демону.</translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation>Локальный демон постоянно падает (слишком много перезапусков). Проверьте его лог и конфигурацию.</translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation>Не удалось запустить локальный демон (%1).</translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation>Локальный демон не стал готов вовремя.</translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation>Несовместимый локальный демон (pid %1) не завершился вовремя.</translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
+        <translation>Несовместимый демон обслуживает %1, и его процесс не записан ни в одном pid-файле. Остановите его вручную и переподключитесь.</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ModelRepository</name>
+    <message>
+        <source>Set-model operation failed</source>
+        <translation>Не удалось задать модель</translation>
+    </message>
+    <message>
+        <source>Download could not be started</source>
+        <translation>Не удалось начать загрузку</translation>
+    </message>
+    <message>
+        <source>Delete failed</source>
+        <translation>Не удалось удалить</translation>
+    </message>
+    <message>
+        <source>Activate failed</source>
+        <translation>Не удалось активировать</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::NodeApiClient</name>
+    <message>
+        <source>request timed out</source>
+        <translation>истекло время запроса</translation>
+    </message>
+    <message>
+        <source>daemon connection closed</source>
+        <translation>соединение с демоном закрыто</translation>
+    </message>
+    <message>
+        <source>authentication required</source>
+        <translation>требуется аутентификация</translation>
+    </message>
+    <message>
+        <source>authentication failed</source>
+        <translation>аутентификация не удалась</translation>
+    </message>
+    <message>
+        <source>stream ended in error</source>
+        <translation>поток завершился с ошибкой</translation>
+    </message>
+    <message>
+        <source>the request failed</source>
+        <translation>запрос не удался</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Profile import failed</source>
+        <translation>Не удалось импортировать профиль</translation>
+    </message>
+    <message>
+        <source>Version history unavailable</source>
+        <translation>История версий недоступна</translation>
+    </message>
+    <message>
+        <source>Profile revert failed</source>
+        <translation>Не удалось откатить профиль</translation>
+    </message>
+    <message>
+        <source>Profile operation failed</source>
+        <translation>Не удалось выполнить операцию с профилем</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>SessionCreate failed</source>
+        <translation>Не удалось создать сессию</translation>
+    </message>
+</context>
+<context>
+    <name>daemonnet::MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation>Агент</translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation>Пользователь</translation>
+    </message>
+</context>
+<context>
+    <name>firstrun::FirstRunModel</name>
+    <message>
+        <source>Could not reach the node. Check the target and try again.</source>
+        <translation>Не удалось связаться с узлом. Проверьте цель и повторите попытку.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation>Не удалось проверить этот ключ API с %1 — проверьте его и повторите попытку.</translation>
+    </message>
+</context>
+<context>
+    <name>fs::LocalDiskFsService</name>
+    <message>
+        <source>invalid path</source>
+        <translation>недопустимый путь</translation>
+    </message>
+    <message>
+        <source>cannot open</source>
+        <translation>не удаётся открыть</translation>
+    </message>
+    <message>
+        <source>stale: file changed on disk</source>
+        <translation>устарело: файл изменён на диске</translation>
+    </message>
+    <message>
+        <source>write failed</source>
+        <translation>ошибка записи</translation>
+    </message>
+</context>
+<context>
+    <name>participants::ParticipantsModel</name>
+    <message>
+        <source>Participants</source>
+        <translation>Участники</translation>
+    </message>
+</context>
+<context>
+    <name>update::UpdateManager</name>
+    <message>
+        <source>Install &amp; restart</source>
+        <translation>Установить и перезапустить</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Открыть</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the installer instead</source>
+        <translation>самоприменение недоступно (%1); вместо этого открываю установщик</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the download instead</source>
+        <translation>самоприменение недоступно (%1); вместо этого открываю загрузку</translation>
+    </message>
+    <message>
+        <source>self-apply is not available for this artifact; opening the update</source>
+        <translation>самоприменение недоступно для этого артефакта; открываю обновление</translation>
+    </message>
+</context>
+</TS>

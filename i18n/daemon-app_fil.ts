@@ -1,0 +1,6539 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="fil" sourcelanguage="en">
+<context>
+    <name>AboutSection</name>
+    <message>
+        <source>Application</source>
+        <translation>Aplikasyon</translation>
+    </message>
+    <message>
+        <source>Version</source>
+        <translation>Bersyon</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Koneksyon</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>hindi alam</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Mga Update</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>Tingnan kung may update</translation>
+    </message>
+    <message>
+        <source>Automatic updates are not configured in this build.</source>
+        <translation>Hindi naka-configure ang awtomatikong update sa build na ito.</translation>
+    </message>
+</context>
+<context>
+    <name>AccountsPage</name>
+    <message>
+        <source>Accounts</source>
+        <translation>Mga Account</translation>
+    </message>
+    <message>
+        <source>Connected accounts</source>
+        <translation>Mga nakakonektang account</translation>
+    </message>
+    <message>
+        <source>Add account</source>
+        <translation>Magdagdag ng account</translation>
+    </message>
+    <message>
+        <source>No accounts yet. Add one to enable remote providers.</source>
+        <translation>Wala pang account. Magdagdag para paganahin ang mga remote provider.</translation>
+    </message>
+    <message>
+        <source>OAuth</source>
+        <translation>OAuth</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API key</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>Nakakonekta</translation>
+    </message>
+    <message>
+        <source>Connecting…</source>
+        <translation>Kumokonekta…</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Error</translation>
+    </message>
+    <message>
+        <source>Reconnect / re-authenticate</source>
+        <translation>Kumonekta muli / mag-authenticate muli</translation>
+    </message>
+    <message>
+        <source>Remove account</source>
+        <translation>Alisin ang account</translation>
+    </message>
+</context>
+<context>
+    <name>AddAccountFlow</name>
+    <message>
+        <source>Sign in (OAuth)</source>
+        <translation>Mag-sign in (OAuth)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API key</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Sign-in failed</source>
+        <translation>Nabigo ang pag-sign in</translation>
+    </message>
+    <message>
+        <source>Add account — pick a provider</source>
+        <translation>Magdagdag ng account — pumili ng provider</translation>
+    </message>
+    <message>
+        <source>Authentication</source>
+        <translation>Authentication</translation>
+    </message>
+    <message>
+        <source>%1 — API key</source>
+        <translation>%1 — API key</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Base URL (hal. https://…)</translation>
+    </message>
+</context>
+<context>
+    <name>AddAccountWizard</name>
+    <message>
+        <source>Add account</source>
+        <translation>Magdagdag ng account</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Kumonekta</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>I-save</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Provider</translation>
+    </message>
+    <message>
+        <source>Authentication</source>
+        <translation>Authentication</translation>
+    </message>
+    <message>
+        <source>Sign in (OAuth)</source>
+        <translation>Mag-sign in (OAuth)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API key</translation>
+    </message>
+    <message>
+        <source>Label (optional)</source>
+        <translation>Label (opsyonal)</translation>
+    </message>
+    <message>
+        <source>Base URL (e.g. https://…)</source>
+        <translation>Base URL (hal. https://…)</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser to complete sign-in…</source>
+        <translation>Naghihintay na makumpleto ng browser ang pag-sign in…</translation>
+    </message>
+    <message>
+        <source>Opens your browser to sign in securely.</source>
+        <translation>Binubuksan ang iyong browser para ligtas na mag-sign in.</translation>
+    </message>
+</context>
+<context>
+    <name>AdvancedSection</name>
+    <message>
+        <source>Diagnostics</source>
+        <translation>Diagnostics</translation>
+    </message>
+    <message>
+        <source>Log level</source>
+        <translation>Log level</translation>
+    </message>
+    <message>
+        <source>Send anonymous telemetry</source>
+        <translation>Magpadala ng anonymous na telemetry</translation>
+    </message>
+    <message>
+        <source>Enable experimental tools</source>
+        <translation>Paganahin ang mga eksperimentong tool</translation>
+    </message>
+    <message>
+        <source>Onboarding</source>
+        <translation>Onboarding</translation>
+    </message>
+    <message>
+        <source>Re-run first-run setup</source>
+        <translation>Patakbuhin muli ang first-run setup</translation>
+    </message>
+    <message>
+        <source>Local data</source>
+        <translation>Lokal na data</translation>
+    </message>
+    <message>
+        <source>Clear local data…</source>
+        <translation>I-clear ang lokal na data…</translation>
+    </message>
+    <message>
+        <source>Clear local data?</source>
+        <translation>I-clear ang lokal na data?</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>I-clear</translation>
+    </message>
+    <message>
+        <source>This erases everything stored on this device: your connection settings and saved sign-in, appearance preferences, and the local cache of sessions and files. It does NOT delete anything on the node itself.
+
+You&apos;ll return to first-run setup.</source>
+        <translation>Buburahin nito ang lahat ng nakaimbak sa device na ito: ang iyong mga setting ng koneksyon at naka-save na pag-sign in, mga kagustuhan sa hitsura, at ang lokal na cache ng mga session at file. HINDI nito binubura ang anumang nasa node mismo.
+
+Babalik ka sa first-run setup.</translation>
+    </message>
+</context>
+<context>
+    <name>AgentInferencePicker</name>
+    <message>
+        <source>Provider</source>
+        <translation>Provider</translation>
+    </message>
+    <message>
+        <source>Paste API key</source>
+        <translation>I-paste ang API key</translation>
+    </message>
+    <message>
+        <source>Hide API key</source>
+        <translation>Itago ang API key</translation>
+    </message>
+    <message>
+        <source>Show API key</source>
+        <translation>Ipakita ang API key</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
+        <source>Enter your API key to list models.</source>
+        <translation>Ilagay ang iyong API key para ilista ang mga model.</translation>
+    </message>
+    <message>
+        <source>Discovering models…</source>
+        <translation>Tinutuklas ang mga model…</translation>
+    </message>
+</context>
+<context>
+    <name>AgentProfilePage</name>
+    <message>
+        <source>Profile - %1</source>
+        <translation>Profile - %1</translation>
+    </message>
+    <message>
+        <source>No agent selected.</source>
+        <translation>Walang piniling agent.</translation>
+    </message>
+    <message>
+        <source>Identity</source>
+        <translation>Identity</translation>
+    </message>
+    <message>
+        <source>profile id</source>
+        <translation>profile id</translation>
+    </message>
+    <message>
+        <source>name</source>
+        <translation>pangalan</translation>
+    </message>
+    <message>
+        <source>description</source>
+        <translation>paglalarawan</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Engine</translation>
+    </message>
+    <message>
+        <source>provider</source>
+        <translation>provider</translation>
+    </message>
+    <message>
+        <source>model</source>
+        <translation>model</translation>
+    </message>
+    <message>
+        <source>base url</source>
+        <translation>base url</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>(default ng provider)</translation>
+    </message>
+    <message>
+        <source>context engine</source>
+        <translation>context engine</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Memory</translation>
+    </message>
+    <message>
+        <source>memory provider</source>
+        <translation>memory provider</translation>
+    </message>
+    <message>
+        <source>Persona</source>
+        <translation>Persona</translation>
+    </message>
+    <message>
+        <source>Tool allowlist</source>
+        <translation>Allowlist ng tool</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Mga Skill</translation>
+    </message>
+    <message>
+        <source>Credentials</source>
+        <translation>Mga Credential</translation>
+    </message>
+    <message>
+        <source>credential ref</source>
+        <translation>credential ref</translation>
+    </message>
+    <message>
+        <source> (default)</source>
+        <translation> (default)</translation>
+    </message>
+</context>
+<context>
+    <name>AppearanceSection</name>
+    <message>
+        <source>Theme</source>
+        <translation>Theme</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>Maliwanag</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>Madilim</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <translation>Sepia</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <translation>Hatinggabi</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Wika</translation>
+    </message>
+    <message>
+        <source>Language used across the interface. Applied immediately.</source>
+        <translation>Wikang ginagamit sa buong interface. Agad na ilalapat.</translation>
+    </message>
+    <message>
+        <source>Editor text</source>
+        <translation>Teksto ng editor</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Font</translation>
+    </message>
+    <message>
+        <source>Typeface used for the transcript / editor text.</source>
+        <translation>Typeface na ginagamit para sa teksto ng transcript / editor.</translation>
+    </message>
+    <message>
+        <source>Sans</source>
+        <translation>Sans</translation>
+    </message>
+    <message>
+        <source>Serif</source>
+        <translation>Serif</translation>
+    </message>
+    <message>
+        <source>Mono</source>
+        <translation>Mono</translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation>Laki ng font</translation>
+    </message>
+    <message>
+        <source>Size of the transcript / editor text.</source>
+        <translation>Laki ng teksto ng transcript / editor.</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation>Layout</translation>
+    </message>
+    <message>
+        <source>Center text</source>
+        <translation>Igitna ang teksto</translation>
+    </message>
+    <message>
+        <source>Distraction-free (hide chrome)</source>
+        <translation>Distraction-free (itago ang chrome)</translation>
+    </message>
+    <message>
+        <source>Raw markdown editor</source>
+        <translation>Raw markdown editor</translation>
+    </message>
+    <message>
+        <source>Show Sessions</source>
+        <translation>Ipakita ang mga Session</translation>
+    </message>
+    <message>
+        <source>Show Fleet Tree</source>
+        <translation>Ipakita ang Fleet Tree</translation>
+    </message>
+    <message>
+        <source>User message rail</source>
+        <translation>Rail ng mensahe ng user</translation>
+    </message>
+</context>
+<context>
+    <name>ApprovalRepository</name>
+    <message>
+        <source>Approval decision failed</source>
+        <translation>Nabigo ang desisyon sa approval</translation>
+    </message>
+</context>
+<context>
+    <name>ApprovalsPage</name>
+    <message>
+        <source>Approvals</source>
+        <translation>Mga Approval</translation>
+    </message>
+    <message>
+        <source>Inbox zero — no pending approvals.</source>
+        <translation>Inbox zero — walang nakabinbing approval.</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Tanggihan</translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>Aprubahan</translation>
+    </message>
+</context>
+<context>
+    <name>ArchivedSection</name>
+    <message>
+        <source>Archived chats</source>
+        <translation>Mga naka-archive na chat</translation>
+    </message>
+    <message>
+        <source>No archived chats.</source>
+        <translation>Walang naka-archive na chat.</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>(walang pamagat)</translation>
+    </message>
+    <message>
+        <source>Unarchive</source>
+        <translation>I-unarchive</translation>
+    </message>
+    <message>
+        <source>Delete permanently</source>
+        <translation>Burahin nang permanente</translation>
+    </message>
+</context>
+<context>
+    <name>AssistantFooter</name>
+    <message>
+        <source>Copy message</source>
+        <translation>Kopyahin ang mensahe</translation>
+    </message>
+    <message>
+        <source>Regenerate</source>
+        <translation>I-regenerate</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelsPage</name>
+    <message>
+        <source>Channels</source>
+        <translation>Mga Channel</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Mga Account</translation>
+    </message>
+    <message>
+        <source>No channels connected.</source>
+        <translation>Walang nakakonektang channel.</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>No rooms.</source>
+        <translation>Walang room.</translation>
+    </message>
+    <message>
+        <source>Add channel</source>
+        <translation>Magdagdag ng channel</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon to see available channel types.</source>
+        <translation>Kumonekta sa isang daemon para makita ang mga available na uri ng channel.</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Kumonekta</translation>
+    </message>
+</context>
+<context>
+    <name>ChatSettingsSection</name>
+    <message>
+        <source>Behaviour</source>
+        <translation>Kilos</translation>
+    </message>
+    <message>
+        <source>Stream responses</source>
+        <translation>I-stream ang mga sagot</translation>
+    </message>
+    <message>
+        <source>Send on Enter (Shift+Enter for newline)</source>
+        <translation>Ipadala sa Enter (Shift+Enter para sa bagong linya)</translation>
+    </message>
+    <message>
+        <source>Show token counts</source>
+        <translation>Ipakita ang bilang ng token</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>System prompt</translation>
+    </message>
+    <message>
+        <source>Optional default system prompt for new chats</source>
+        <translation>Opsyonal na default na system prompt para sa mga bagong chat</translation>
+    </message>
+</context>
+<context>
+    <name>CheckpointsPopover</name>
+    <message>
+        <source>Checkpoints</source>
+        <translation>Mga Checkpoint</translation>
+    </message>
+    <message>
+        <source>Save here</source>
+        <translation>I-save dito</translation>
+    </message>
+    <message>
+        <source>Manual checkpoint</source>
+        <translation>Manual na checkpoint</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> tok</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>kasalukuyan</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>I-restore</translation>
+    </message>
+</context>
+<context>
+    <name>ClarifyBlock</name>
+    <message>
+        <source>The agent needs your input.</source>
+        <translation>Kailangan ng agent ang iyong input.</translation>
+    </message>
+    <message>
+        <source>(skipped)</source>
+        <translation>(nilaktawan)</translation>
+    </message>
+    <message>
+        <source>Answer</source>
+        <translation>Sagot</translation>
+    </message>
+    <message>
+        <source>Select all that apply</source>
+        <translation>Piliin lahat ng naaangkop</translation>
+    </message>
+    <message>
+        <source>Or type a reply…</source>
+        <translation>O mag-type ng sagot…</translation>
+    </message>
+    <message>
+        <source>Type a reply…</source>
+        <translation>Mag-type ng sagot…</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>I-submit</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Laktawan</translation>
+    </message>
+</context>
+<context>
+    <name>CommandPalette</name>
+    <message>
+        <source>Type a command…</source>
+        <translation>Mag-type ng command…</translation>
+    </message>
+</context>
+<context>
+    <name>CommandRegistry</name>
+    <message>
+        <source>New session</source>
+        <translation>Bagong session</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Session</translation>
+    </message>
+    <message>
+        <source>Start a fresh chat</source>
+        <translation>Magsimula ng bagong chat</translation>
+    </message>
+    <message>
+        <source>Search sessions</source>
+        <translation>Maghanap ng session</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navigation</translation>
+    </message>
+    <message>
+        <source>Jump to a session</source>
+        <translation>Pumunta sa isang session</translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation>Buksan ang mga setting</translation>
+    </message>
+    <message>
+        <source>Toggle file explorer</source>
+        <translation>I-toggle ang file explorer</translation>
+    </message>
+    <message>
+        <source>Show / hide the workspace file tree</source>
+        <translation>Ipakita / itago ang file tree ng workspace</translation>
+    </message>
+    <message>
+        <source>Open dashboard</source>
+        <translation>Buksan ang dashboard</translation>
+    </message>
+    <message>
+        <source>Sessions, agents, approvals overview</source>
+        <translation>Overview ng mga session, agent, approval</translation>
+    </message>
+    <message>
+        <source>Open models hub</source>
+        <translation>Buksan ang models hub</translation>
+    </message>
+    <message>
+        <source>Discover / download / installed models</source>
+        <translation>Tuklasin / i-download / naka-install na mga model</translation>
+    </message>
+    <message>
+        <source>Open accounts</source>
+        <translation>Buksan ang mga account</translation>
+    </message>
+    <message>
+        <source>Provider sign-in + API keys</source>
+        <translation>Pag-sign in sa provider + mga API key</translation>
+    </message>
+    <message>
+        <source>Open profiles</source>
+        <translation>Buksan ang mga profile</translation>
+    </message>
+    <message>
+        <source>Agent profiles + skills/tools</source>
+        <translation>Mga agent profile + skill/tool</translation>
+    </message>
+    <message>
+        <source>Open fleet</source>
+        <translation>Buksan ang fleet</translation>
+    </message>
+    <message>
+        <source>Orchestrator / worker tree</source>
+        <translation>Orchestrator / worker tree</translation>
+    </message>
+    <message>
+        <source>Open sessions</source>
+        <translation>Buksan ang mga session</translation>
+    </message>
+    <message>
+        <source>Durable + live sessions</source>
+        <translation>Mga durable + live na session</translation>
+    </message>
+    <message>
+        <source>Open approvals</source>
+        <translation>Buksan ang mga approval</translation>
+    </message>
+    <message>
+        <source>Pending tool approvals</source>
+        <translation>Mga nakabinbing approval ng tool</translation>
+    </message>
+    <message>
+        <source>Open routing</source>
+        <translation>Buksan ang routing</translation>
+    </message>
+    <message>
+        <source>Intent → model rules</source>
+        <translation>Intent → mga panuntunan ng model</translation>
+    </message>
+    <message>
+        <source>Open scheduled jobs</source>
+        <translation>Buksan ang mga naka-iskedyul na job</translation>
+    </message>
+    <message>
+        <source>Cron-style scheduled jobs</source>
+        <translation>Mga naka-iskedyul na job na cron-style</translation>
+    </message>
+    <message>
+        <source>Open users &amp; access</source>
+        <translation>Buksan ang mga user at access</translation>
+    </message>
+    <message>
+        <source>Manage users, roles + sessions</source>
+        <translation>Pamahalaan ang mga user, role + session</translation>
+    </message>
+    <message>
+        <source>Cycle theme</source>
+        <translation>I-cycle ang theme</translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation>Hitsura</translation>
+    </message>
+    <message>
+        <source>Light / Dark / Sepia / Midnight</source>
+        <translation>Maliwanag / Madilim / Sepia / Hatinggabi</translation>
+    </message>
+    <message>
+        <source>Choose model…</source>
+        <translation>Pumili ng model…</translation>
+    </message>
+    <message>
+        <source>Composer</source>
+        <translation>Composer</translation>
+    </message>
+    <message>
+        <source>Pick the active model</source>
+        <translation>Piliin ang aktibong model</translation>
+    </message>
+    <message>
+        <source>Cycle reasoning effort</source>
+        <translation>I-cycle ang reasoning effort</translation>
+    </message>
+    <message>
+        <source>off / low / medium / high</source>
+        <translation>off / low / medium / high</translation>
+    </message>
+    <message>
+        <source>Toggle fast mode</source>
+        <translation>I-toggle ang fast mode</translation>
+    </message>
+    <message>
+        <source>Toggle verbose</source>
+        <translation>I-toggle ang verbose</translation>
+    </message>
+    <message>
+        <source>Show usage</source>
+        <translation>Ipakita ang paggamit</translation>
+    </message>
+    <message>
+        <source>Tokens + spend this session</source>
+        <translation>Mga token + gastos ngayong session</translation>
+    </message>
+    <message>
+        <source>Compress context</source>
+        <translation>I-compress ang context</translation>
+    </message>
+    <message>
+        <source>Summarize + free the window</source>
+        <translation>I-summarize + palayain ang window</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>I-export ang transcript</translation>
+    </message>
+    <message>
+        <source>Write the session to JSON</source>
+        <translation>Isulat ang session sa JSON</translation>
+    </message>
+    <message>
+        <source>Find in transcript</source>
+        <translation>Maghanap sa transcript</translation>
+    </message>
+    <message>
+        <source>Search this session</source>
+        <translation>Hanapin ang session na ito</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Palitan ang pangalan ng session</translation>
+    </message>
+    <message>
+        <source>Retry last message</source>
+        <translation>Ulitin ang huling mensahe</translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation>I-rewind</translation>
+    </message>
+    <message>
+        <source>Edit last message</source>
+        <translation>I-edit ang huling mensahe</translation>
+    </message>
+    <message>
+        <source>Undo last exchange</source>
+        <translation>I-undo ang huling palitan</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>I-clear ang session</translation>
+    </message>
+    <message>
+        <source>Remove all messages</source>
+        <translation>Alisin ang lahat ng mensahe</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>Tulong</translation>
+    </message>
+    <message>
+        <source>Commands + shortcuts</source>
+        <translation>Mga command + shortcut</translation>
+    </message>
+    <message>
+        <source>Distraction-free mode</source>
+        <translation>Distraction-free mode</translation>
+    </message>
+</context>
+<context>
+    <name>Composer</name>
+    <message>
+        <source>Attach image</source>
+        <translation>Maglakip ng larawan</translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.gif *.webp *.bmp *.svg)</source>
+        <translation>Mga larawan (*.png *.jpg *.jpeg *.gif *.webp *.bmp *.svg)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Lahat ng file (*)</translation>
+    </message>
+    <message>
+        <source>Editing queued message</source>
+        <translation>Ine-edit ang naka-queue na mensahe</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>I-save</translation>
+    </message>
+    <message>
+        <source>(reverse-i-search)`</source>
+        <translation>(reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>(failed reverse-i-search)`</source>
+        <translation>(failed reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>&apos;:</source>
+        <translation>&apos;:</translation>
+    </message>
+    <message>
+        <source>Enter accept · Ctrl+R next · Esc cancel</source>
+        <translation>Enter tanggapin · Ctrl+R susunod · Esc kanselahin</translation>
+    </message>
+    <message>
+        <source>Send a message...  (Enter to send, Shift+Enter for newline)</source>
+        <translation>Magpadala ng mensahe...  (Enter para ipadala, Shift+Enter para sa bagong linya)</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerChrome</name>
+    <message>
+        <source>(reverse-i-search)`</source>
+        <translation>(reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>(failed reverse-i-search)`</source>
+        <translation>(failed reverse-i-search)`</translation>
+    </message>
+    <message>
+        <source>Enter accept  ·  Ctrl+R next  ·  Esc cancel</source>
+        <translation>Enter tanggapin  ·  Ctrl+R susunod  ·  Esc kanselahin</translation>
+    </message>
+    <message>
+        <source>turn failed</source>
+        <translation>nabigo ang turn</translation>
+    </message>
+    <message>
+        <source> Still thinking… %1s</source>
+        <translation> Nag-iisip pa rin… %1s</translation>
+    </message>
+    <message>
+        <source> Thinking… %1s</source>
+        <translation> Nag-iisip… %1s</translation>
+    </message>
+    <message>
+        <source> Esc stop</source>
+        <translation> Esc itigil</translation>
+    </message>
+    <message>
+        <source> Enter send</source>
+        <translation> Enter ipadala</translation>
+    </message>
+    <message>
+        <source> Ctrl+Enter steer</source>
+        <translation> Ctrl+Enter i-steer</translation>
+    </message>
+    <message>
+        <source>r:</source>
+        <comment>reasoning-effort badge prefix</comment>
+        <translation>r:</translation>
+    </message>
+    <message>
+        <source>fast</source>
+        <comment>composer mode badge</comment>
+        <translation>fast</translation>
+    </message>
+    <message>
+        <source>verbose</source>
+        <comment>composer mode badge</comment>
+        <translation>verbose</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerControls</name>
+    <message>
+        <source>Checkpoints / rewind</source>
+        <translation>Mga Checkpoint / rewind</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>Mga setting ng session</translation>
+    </message>
+    <message>
+        <source>Steer the running turn (Ctrl+Enter)</source>
+        <translation>I-steer ang tumatakbong turn (Ctrl+Enter)</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerMenu</name>
+    <message>
+        <source>Code review</source>
+        <translation>Code review</translation>
+    </message>
+    <message>
+        <source>Review the following code for correctness, clarity, and edge cases:
+
+</source>
+        <translation>Suriin ang sumusunod na code para sa kawastuhan, kalinawan, at mga edge case:
+
+</translation>
+    </message>
+    <message>
+        <source>Implementation plan</source>
+        <translation>Implementation plan</translation>
+    </message>
+    <message>
+        <source>Draft a step-by-step implementation plan for:
+
+</source>
+        <translation>Gumawa ng step-by-step na implementation plan para sa:
+
+</translation>
+    </message>
+    <message>
+        <source>Explain this</source>
+        <translation>Ipaliwanag ito</translation>
+    </message>
+    <message>
+        <source>Explain what the following does and why:
+
+</source>
+        <translation>Ipaliwanag kung ano ang ginagawa ng sumusunod at bakit:
+
+</translation>
+    </message>
+    <message>
+        <source>Attach and more</source>
+        <translation>Maglakip at iba pa</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>Maglakip</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>Mga File</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation>Folder</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation>Mga Larawan</translation>
+    </message>
+    <message>
+        <source>Prompt snippets</source>
+        <translation>Mga prompt snippet</translation>
+    </message>
+    <message>
+        <source>Type @ to mention</source>
+        <translation>Mag-type ng @ para mag-mention</translation>
+    </message>
+</context>
+<context>
+    <name>ComposerUploadController</name>
+    <message>
+        <source>Not connected to a workspace.</source>
+        <translation>Hindi nakakonekta sa isang workspace.</translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; is too large to upload (max 25 MB).</source>
+        <translation>Masyadong malaki ang &quot;%1&quot; para i-upload (max 25 MB).</translation>
+    </message>
+    <message>
+        <source>Uploading %1…</source>
+        <translation>Ina-upload ang %1…</translation>
+    </message>
+    <message>
+        <source>No writable workspace to upload into.</source>
+        <translation>Walang writable na workspace na mapaglalagyan.</translation>
+    </message>
+    <message>
+        <source>Upload failed.</source>
+        <translation>Nabigo ang pag-upload.</translation>
+    </message>
+</context>
+<context>
+    <name>ConfirmDialog</name>
+    <message>
+        <source>Yes</source>
+        <translation>Oo</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+</context>
+<context>
+    <name>ConnectionPicker</name>
+    <message>
+        <source>https://node.example:8080</source>
+        <translation>https://node.example:8080</translation>
+    </message>
+    <message>
+        <source>wss://node.example:9443</source>
+        <translation>wss://node.example:9443</translation>
+    </message>
+    <message>
+        <source>/path/to/daemon.sock</source>
+        <translation>/path/to/daemon.sock</translation>
+    </message>
+    <message>
+        <source>Transport</source>
+        <translation>Transport</translation>
+    </message>
+    <message>
+        <source>Embedded</source>
+        <translation>Embedded</translation>
+    </message>
+    <message>
+        <source>In-process node (coming soon)</source>
+        <translation>In-process node (malapit nang dumating)</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation>Lokal</translation>
+    </message>
+    <message>
+        <source>Unix socket on this machine</source>
+        <translation>Unix socket sa makinang ito</translation>
+    </message>
+    <message>
+        <source>Remote</source>
+        <translation>Remote</translation>
+    </message>
+    <message>
+        <source>Connect to a node over the network</source>
+        <translation>Kumonekta sa isang node sa network</translation>
+    </message>
+    <message>
+        <source>WebSocket</source>
+        <translation>WebSocket</translation>
+    </message>
+    <message>
+        <source>Connect to a node over ws:// or wss://</source>
+        <translation>Kumonekta sa isang node sa pamamagitan ng ws:// o wss://</translation>
+    </message>
+    <message>
+        <source>Local daemon</source>
+        <translation>Lokal na daemon</translation>
+    </message>
+    <message>
+        <source>App-managed</source>
+        <translation>Pinamamahalaan ng app</translation>
+    </message>
+    <message>
+        <source>Start and manage a node for me (recommended)</source>
+        <translation>Magsimula at mamahala ng node para sa akin (inirerekomenda)</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>Maglakip</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon socket I run myself</source>
+        <translation>Kumonekta sa isang daemon socket na ako mismo ang nagpapatakbo</translation>
+    </message>
+    <message>
+        <source>Socket path</source>
+        <translation>Socket path</translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation>Target</translation>
+    </message>
+    <message>
+        <source>Auth token (optional)</source>
+        <translation>Auth token (opsyonal)</translation>
+    </message>
+    <message>
+        <source>Testing...</source>
+        <translation>Sinusubukan...</translation>
+    </message>
+    <message>
+        <source>Test connection</source>
+        <translation>Subukan ang koneksyon</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Kumonekta</translation>
+    </message>
+</context>
+<context>
+    <name>ConnectionSection</name>
+    <message>
+        <source>Status</source>
+        <translation>Status</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>hindi alam</translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation>Idiskonekta</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>Mag-sign out</translation>
+    </message>
+    <message>
+        <source>Local daemon</source>
+        <translation>Lokal na daemon</translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation>Awtomatikong magsimula ng lokal na daemon</translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
+        <translation>Ihinto ang pinamamahalaang daemon kapag isinara ko ang app</translation>
+    </message>
+</context>
+<context>
+    <name>CredentialRepository</name>
+    <message>
+        <source>Credential operation failed</source>
+        <translation>Nabigo ang operasyon sa credential</translation>
+    </message>
+</context>
+<context>
+    <name>CronJobDialog</name>
+    <message>
+        <source>Edit job</source>
+        <translation>I-edit ang job</translation>
+    </message>
+    <message>
+        <source>New job</source>
+        <translation>Bagong job</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Pangalan</translation>
+    </message>
+    <message>
+        <source>Job name</source>
+        <translation>Pangalan ng job</translation>
+    </message>
+    <message>
+        <source>Schedule (cron)</source>
+        <translation>Iskedyul (cron)</translation>
+    </message>
+    <message>
+        <source>m h dom mon dow  (e.g. 0 8 * * *)</source>
+        <translation>m h dom mon dow  (hal. 0 8 * * *)</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Profile</translation>
+    </message>
+    <message>
+        <source>Prompt</source>
+        <translation>Prompt</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>I-save</translation>
+    </message>
+</context>
+<context>
+    <name>CronPage</name>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Mga naka-iskedyul na job</translation>
+    </message>
+    <message>
+        <source>Jobs</source>
+        <translation>Mga Job</translation>
+    </message>
+    <message>
+        <source>+ New job</source>
+        <translation>+ Bagong job</translation>
+    </message>
+    <message>
+        <source>next </source>
+        <translation>susunod </translation>
+    </message>
+    <message>
+        <source>  ·  last </source>
+        <translation>  ·  huli </translation>
+    </message>
+    <message>
+        <source>Run now</source>
+        <translation>Patakbuhin ngayon</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>I-edit</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation>Hindi pa available ang OAuth sign-in; magdagdag na lang ng API key.</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation>Hindi maabot ang daemon. Tiyaking tumatakbo ito at subukang muli.</translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation>Iniulat ng daemon na hindi ito healthy.</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>hindi alam</translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation>Pinapalitan ang isang hindi tugmang lokal na daemon (api %1, kailangan %2)...</translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation>Hindi tugmang daemon (api %1, kailangan %2).</translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation>Kumokonekta muli...</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device.</source>
+        <translation>Mga koneksyong WebSocket (ws:// o wss://) lamang ang gumagana sa device na ito.</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device</source>
+        <translation>Mga koneksyong WebSocket (ws:// o wss://) lamang ang gumagana sa device na ito</translation>
+    </message>
+    <message>
+        <source>Unix socket target accepted</source>
+        <translation>Tinanggap ang Unix socket target</translation>
+    </message>
+    <message>
+        <source>Enter a local socket path</source>
+        <translation>Maglagay ng lokal na socket path</translation>
+    </message>
+    <message>
+        <source>Remote target accepted (host:port, TLS)</source>
+        <translation>Tinanggap ang remote target (host:port, TLS)</translation>
+    </message>
+    <message>
+        <source>Use host:port for a remote TLS node</source>
+        <translation>Gamitin ang host:port para sa isang remote na TLS node</translation>
+    </message>
+    <message>
+        <source>WebSocket target accepted (ws:// or wss://)</source>
+        <translation>Tinanggap ang WebSocket target (ws:// o wss://)</translation>
+    </message>
+    <message>
+        <source>Use ws://host:port or wss://host[:port][/path]</source>
+        <translation>Gamitin ang ws://host:port o wss://host[:port][/path]</translation>
+    </message>
+    <message>
+        <source>Unsupported transport</source>
+        <translation>Hindi suportadong transport</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonTransport</name>
+    <message>
+        <source>No daemon WebSocket target configured</source>
+        <translation>Walang naka-configure na daemon WebSocket target</translation>
+    </message>
+    <message>
+        <source>No daemon target configured</source>
+        <translation>Walang naka-configure na daemon target</translation>
+    </message>
+</context>
+<context>
+    <name>DaemonTurnEngine</name>
+    <message>
+        <source>The turn timed out waiting for the agent.</source>
+        <translation>Nag-time out ang turn habang naghihintay sa agent.</translation>
+    </message>
+    <message>
+        <source>No session is bound for this turn.</source>
+        <translation>Walang session na naka-bind para sa turn na ito.</translation>
+    </message>
+    <message>
+        <source>The connection to the agent was lost.</source>
+        <translation>Nawala ang koneksyon sa agent.</translation>
+    </message>
+    <message>
+        <source>Failed to read the agent&apos;s response stream.</source>
+        <translation>Nabigong basahin ang response stream ng agent.</translation>
+    </message>
+    <message>
+        <source>The turn ended: %1</source>
+        <translation>Natapos ang turn: %1</translation>
+    </message>
+    <message>
+        <source>The agent could not start the turn.</source>
+        <translation>Hindi masimulan ng agent ang turn.</translation>
+    </message>
+    <message>
+        <source>The agent rejected the response.</source>
+        <translation>Tinanggihan ng agent ang sagot.</translation>
+    </message>
+    <message>
+        <source>The session was reset; recovered from history.</source>
+        <translation>Na-reset ang session; nabawi mula sa history.</translation>
+    </message>
+</context>
+<context>
+    <name>DashboardPage</name>
+    <message>
+        <source>Dashboard</source>
+        <translation>Dashboard</translation>
+    </message>
+    <message>
+        <source>Active sessions</source>
+        <translation>Mga aktibong session</translation>
+    </message>
+    <message>
+        <source>Running agents</source>
+        <translation>Mga tumatakbong agent</translation>
+    </message>
+    <message>
+        <source>Pending approvals</source>
+        <translation>Mga nakabinbing approval</translation>
+    </message>
+    <message>
+        <source>Tokens today</source>
+        <translation>Mga token ngayon</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>!</source>
+        <translation>!</translation>
+    </message>
+    <message>
+        <source>Daemon health</source>
+        <translation>Kalusugan ng daemon</translation>
+    </message>
+    <message>
+        <source>Recent activity</source>
+        <translation>Kamakailang aktibidad</translation>
+    </message>
+</context>
+<context>
+    <name>Dialog</name>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+</context>
+<context>
+    <name>DiscoverDialog</name>
+    <message>
+        <source>Discover models</source>
+        <translation>Tuklasin ang mga model</translation>
+    </message>
+    <message>
+        <source>Search Hugging Face repos (e.g. SmolLM2)</source>
+        <translation>Maghanap ng Hugging Face repo (hal. SmolLM2)</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Maghanap</translation>
+    </message>
+    <message>
+        <source>Searching…</source>
+        <translation>Naghahanap…</translation>
+    </message>
+    <message>
+        <source>by %1</source>
+        <translation>ni %1</translation>
+    </message>
+    <message>
+        <source>Quantizations</source>
+        <translation>Mga Quantization</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation>Mga Download</translation>
+    </message>
+    <message>
+        <source>Load more</source>
+        <translation>Mag-load pa</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Isara</translation>
+    </message>
+</context>
+<context>
+    <name>DisplayPresenter</name>
+    <message>
+        <source>checking</source>
+        <comment>connection state</comment>
+        <translation>sinusuri</translation>
+    </message>
+    <message>
+        <source>connecting</source>
+        <comment>connection state</comment>
+        <translation>kumokonekta</translation>
+    </message>
+    <message>
+        <source>authenticating</source>
+        <comment>connection state</comment>
+        <translation>nag-a-authenticate</translation>
+    </message>
+    <message>
+        <source>ready</source>
+        <comment>connection state</comment>
+        <translation>handa</translation>
+    </message>
+    <message>
+        <source>offline</source>
+        <comment>connection state</comment>
+        <translation>offline</translation>
+    </message>
+    <message>
+        <source>needs setup</source>
+        <comment>connection state</comment>
+        <translation>kailangan ng setup</translation>
+    </message>
+    <message>
+        <source>working</source>
+        <comment>memory tier</comment>
+        <translation>gumagana</translation>
+    </message>
+    <message>
+        <source>episodic</source>
+        <comment>memory tier</comment>
+        <translation>episodic</translation>
+    </message>
+    <message>
+        <source>scratchpad</source>
+        <comment>memory tier</comment>
+        <translation>scratchpad</translation>
+    </message>
+    <message>
+        <source>stated</source>
+        <comment>memory veracity</comment>
+        <translation>nakasaad</translation>
+    </message>
+    <message>
+        <source>inferred</source>
+        <comment>memory veracity</comment>
+        <translation>hinuha</translation>
+    </message>
+    <message>
+        <source>tool</source>
+        <comment>memory veracity</comment>
+        <translation>tool</translation>
+    </message>
+    <message>
+        <source>imported</source>
+        <comment>memory veracity</comment>
+        <translation>na-import</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <comment>memory veracity</comment>
+        <translation>hindi alam</translation>
+    </message>
+    <message>
+        <source>active</source>
+        <comment>memory status</comment>
+        <translation>aktibo</translation>
+    </message>
+    <message>
+        <source>expired</source>
+        <comment>memory status</comment>
+        <translation>nag-expire</translation>
+    </message>
+    <message>
+        <source>superseded</source>
+        <comment>memory status</comment>
+        <translation>napalitan</translation>
+    </message>
+    <message>
+        <source>hot</source>
+        <comment>memory degradation</comment>
+        <translation>hot</translation>
+    </message>
+    <message>
+        <source>warm</source>
+        <comment>memory degradation</comment>
+        <translation>warm</translation>
+    </message>
+    <message>
+        <source>cold</source>
+        <comment>memory degradation</comment>
+        <translation>cold</translation>
+    </message>
+    <message>
+        <source>memory</source>
+        <comment>memory node kind</comment>
+        <translation>memory</translation>
+    </message>
+    <message>
+        <source>entity</source>
+        <comment>memory node kind</comment>
+        <translation>entity</translation>
+    </message>
+    <message>
+        <source>fact</source>
+        <comment>memory node kind</comment>
+        <translation>fact</translation>
+    </message>
+    <message>
+        <source>gist</source>
+        <comment>memory node kind</comment>
+        <translation>gist</translation>
+    </message>
+    <message>
+        <source>conflict</source>
+        <comment>memory node kind</comment>
+        <translation>conflict</translation>
+    </message>
+    <message>
+        <source>added</source>
+        <comment>memory event kind</comment>
+        <translation>naidagdag</translation>
+    </message>
+    <message>
+        <source>updated</source>
+        <comment>memory event kind</comment>
+        <translation>na-update</translation>
+    </message>
+    <message>
+        <source>recalled</source>
+        <comment>memory event kind</comment>
+        <translation>naalala</translation>
+    </message>
+    <message>
+        <source>invalidated</source>
+        <comment>memory event kind</comment>
+        <translation>na-invalidate</translation>
+    </message>
+    <message>
+        <source>consolidated</source>
+        <comment>memory event kind</comment>
+        <translation>na-consolidate</translation>
+    </message>
+    <message>
+        <source>snapshot</source>
+        <comment>memory event kind</comment>
+        <translation>snapshot</translation>
+    </message>
+    <message>
+        <source>high</source>
+        <comment>approval risk</comment>
+        <translation>high</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <comment>approval risk</comment>
+        <translation>medium</translation>
+    </message>
+    <message>
+        <source>low</source>
+        <comment>approval risk</comment>
+        <translation>low</translation>
+    </message>
+    <message>
+        <source>queued</source>
+        <comment>download state</comment>
+        <translation>naka-queue</translation>
+    </message>
+    <message>
+        <source>paused</source>
+        <comment>download state</comment>
+        <translation>naka-pause</translation>
+    </message>
+    <message>
+        <source>downloading</source>
+        <comment>download state</comment>
+        <translation>dina-download</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <comment>download state</comment>
+        <translation>tapos</translation>
+    </message>
+    <message>
+        <source>failed</source>
+        <comment>download state</comment>
+        <translation>nabigo</translation>
+    </message>
+    <message>
+        <source>cancelled</source>
+        <comment>download state</comment>
+        <translation>kinansela</translation>
+    </message>
+</context>
+<context>
+    <name>DownloadsPanel</name>
+    <message>
+        <source>Queued</source>
+        <translation>Naka-queue</translation>
+    </message>
+    <message>
+        <source>Downloading</source>
+        <translation>Dina-download</translation>
+    </message>
+    <message>
+        <source>Paused</source>
+        <translation>Naka-pause</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Tapos</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Nabigo</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation>Kinansela</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>Ituloy</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>I-pause</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Ulitin</translation>
+    </message>
+    <message>
+        <source>Use this model</source>
+        <translation>Gamitin ang model na ito</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>I-dismiss</translation>
+    </message>
+    <message>
+        <source>file %1/%2</source>
+        <translation>file %1/%2</translation>
+    </message>
+</context>
+<context>
+    <name>EditMenu</name>
+    <message>
+        <source>Cut</source>
+        <translation>I-cut</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopyahin</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>I-paste</translation>
+    </message>
+    <message>
+        <source>Select All</source>
+        <translation>Piliin Lahat</translation>
+    </message>
+</context>
+<context>
+    <name>FileExplorer</name>
+    <message>
+        <source>Explorer</source>
+        <translation>Explorer</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>I-refresh</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>I-collapse lahat</translation>
+    </message>
+    <message>
+        <source>Go to file (Ctrl+P)</source>
+        <translation>Pumunta sa file (Ctrl+P)</translation>
+    </message>
+    <message>
+        <source>Search in files</source>
+        <translation>Maghanap sa mga file</translation>
+    </message>
+    <message>
+        <source>Hide explorer</source>
+        <translation>Itago ang explorer</translation>
+    </message>
+</context>
+<context>
+    <name>FileFinder</name>
+    <message numerus="yes">
+        <source>Indexing… (%n file(s))</source>
+        <translation>
+            <numerusform>Ini-index… (%n na file)</numerusform>
+            <numerusform>Ini-index… (%n na file)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Go to file…</source>
+        <translation>Pumunta sa file…</translation>
+    </message>
+</context>
+<context>
+    <name>FileFinderDialog</name>
+    <message numerus="yes">
+        <source>Indexing… (%n file(s))</source>
+        <translation>
+            <numerusform>Ini-index… (%n na file)</numerusform>
+            <numerusform>Ini-index… (%n na file)</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>FilePage</name>
+    <message>
+        <source>Saving…</source>
+        <translation>Sini-save…</translation>
+    </message>
+    <message>
+        <source>File is too large for editing and was loaded only partially.</source>
+        <translation>Masyadong malaki ang file para i-edit at bahagi lamang ang na-load.</translation>
+    </message>
+    <message>
+        <source>Save failed.</source>
+        <translation>Nabigo ang pag-save.</translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation>Na-save</translation>
+    </message>
+    <message>
+        <source>Large file — preview is truncated and editing is disabled.</source>
+        <translation>Malaking file — pinutol ang preview at naka-disable ang pag-edit.</translation>
+    </message>
+    <message>
+        <source>Image preview is not available in the dev build.</source>
+        <translation>Hindi available ang preview ng larawan sa dev build.</translation>
+    </message>
+    <message>
+        <source>Binary file — not shown.</source>
+        <translation>Binary file — hindi ipinapakita.</translation>
+    </message>
+</context>
+<context>
+    <name>FilePicker</name>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+</context>
+<context>
+    <name>FileTree</name>
+    <message>
+        <source>Retry</source>
+        <translation>Ulitin</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunDialog</name>
+    <message>
+        <source>Setup Required</source>
+        <translation>Kailangan ng Setup</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon node to get started. Choose a transport:</source>
+        <translation>Kumonekta sa isang daemon node para magsimula. Pumili ng transport:</translation>
+    </message>
+    <message>
+        <source>Embedded</source>
+        <translation>Embedded</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation>Lokal</translation>
+    </message>
+    <message>
+        <source>Remote</source>
+        <translation>Remote</translation>
+    </message>
+    <message>
+        <source>Agent name</source>
+        <translation>Pangalan ng agent</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Provider</translation>
+    </message>
+    <message>
+        <source>List models</source>
+        <translation>Ilista ang mga model</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
+        <source>Test</source>
+        <translation>Subukan</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation>Kumonekta</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Laktawan</translation>
+    </message>
+    <message>
+        <source>Testing...</source>
+        <translation>Sinusubukan...</translation>
+    </message>
+    <message>
+        <source>OK — </source>
+        <translation>OK — </translation>
+    </message>
+    <message>
+        <source>Failed — </source>
+        <translation>Nabigo — </translation>
+    </message>
+    <message>
+        <source>Local: App-managed (press to Attach instead)</source>
+        <translation>Lokal: Pinamamahalaan ng app (pindutin para sa Attach)</translation>
+    </message>
+    <message>
+        <source>Local: Attach to socket (press for App-managed)</source>
+        <translation>Lokal: Mag-attach sa socket (pindutin para sa App-managed)</translation>
+    </message>
+    <message>
+        <source>https://node.example:8080</source>
+        <comment>example remote connection target</comment>
+        <translation>https://node.example:8080</translation>
+    </message>
+    <message>
+        <source>Connecting...</source>
+        <translation>Kumokonekta...</translation>
+    </message>
+    <message>
+        <source>Sign in to continue.</source>
+        <translation>Mag-sign in para magpatuloy.</translation>
+    </message>
+    <message>
+        <source>Sign in</source>
+        <translation>Mag-sign in</translation>
+    </message>
+    <message>
+        <source>Pick a provider and a model, then Finish.</source>
+        <translation>Pumili ng provider at model, pagkatapos ay Tapusin.</translation>
+    </message>
+    <message>
+        <source>Finish</source>
+        <translation>Tapusin</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunGate</name>
+    <message>
+        <source>Welcome to daemon-app</source>
+        <translation>Maligayang pagdating sa daemon-app</translation>
+    </message>
+    <message>
+        <source>Almost there - confirm an inference model.</source>
+        <translation>Malapit na - kumpirmahin ang isang inference model.</translation>
+    </message>
+    <message>
+        <source>Sign in to the node to continue.</source>
+        <translation>Mag-sign in sa node para magpatuloy.</translation>
+    </message>
+    <message>
+        <source>Connect to a daemon node to get started.</source>
+        <translation>Kumonekta sa isang daemon node para magsimula.</translation>
+    </message>
+    <message>
+        <source>Connecting to %1...</source>
+        <translation>Kumokonekta sa %1...</translation>
+    </message>
+    <message>
+        <source>Sign in</source>
+        <translation>Mag-sign in</translation>
+    </message>
+    <message>
+        <source>Username</source>
+        <translation>Username</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>Password</translation>
+    </message>
+    <message>
+        <source>Signing in…</source>
+        <translation>Nagsa-sign in…</translation>
+    </message>
+    <message>
+        <source>Agent name</source>
+        <translation>Pangalan ng agent</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation>pangalan ng agent</translation>
+    </message>
+    <message>
+        <source>Skip for now</source>
+        <translation>Laktawan muna</translation>
+    </message>
+    <message>
+        <source>Finish setup</source>
+        <translation>Tapusin ang setup</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunModel</name>
+    <message>
+        <source>Could not reach the node. Check the target and try again.</source>
+        <translation>Hindi maabot ang node. Suriin ang target at subukang muli.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation>Hindi ma-verify ang API key na ito sa %1 — suriin ito at subukang muli.</translation>
+    </message>
+</context>
+<context>
+    <name>FleetPage</name>
+    <message>
+        <source>Fleet</source>
+        <translation>Fleet</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>I-refresh</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>Ituloy</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>I-pause</translation>
+    </message>
+    <message>
+        <source>%1 · %2 · depth %3</source>
+        <translation>%1 · %2 · depth %3</translation>
+    </message>
+    <message>
+        <source>Workers</source>
+        <translation>Mga Worker</translation>
+    </message>
+    <message>
+        <source>Scale to %1</source>
+        <translation>I-scale sa %1</translation>
+    </message>
+    <message>
+        <source>No active subagents</source>
+        <translation>Walang aktibong subagent</translation>
+    </message>
+</context>
+<context>
+    <name>FleetRepository</name>
+    <message>
+        <source>Unit control failed</source>
+        <translation>Nabigo ang unit control</translation>
+    </message>
+</context>
+<context>
+    <name>FontStyleButton</name>
+    <message>
+        <source>Sans</source>
+        <translation>Sans</translation>
+    </message>
+    <message>
+        <source>Ag</source>
+        <comment>font specimen sample</comment>
+        <translation>Ag</translation>
+    </message>
+</context>
+<context>
+    <name>GatewayMenu</name>
+    <message>
+        <source>Gateway</source>
+        <translation>Gateway</translation>
+    </message>
+    <message>
+        <source>Open system</source>
+        <translation>Buksan ang system</translation>
+    </message>
+    <message>
+        <source>View all logs</source>
+        <translation>Tingnan lahat ng log</translation>
+    </message>
+    <message>
+        <source>connected</source>
+        <translation>nakakonekta</translation>
+    </message>
+    <message>
+        <source>offline</source>
+        <translation>offline</translation>
+    </message>
+</context>
+<context>
+    <name>GraphView</name>
+    <message>
+        <source>No graph data</source>
+        <translation>Walang graph data</translation>
+    </message>
+</context>
+<context>
+    <name>ImageBlock</name>
+    <message>
+        <source>Loading image…</source>
+        <translation>Nilo-load ang larawan…</translation>
+    </message>
+    <message>
+        <source>image unavailable</source>
+        <translation>hindi available ang larawan</translation>
+    </message>
+</context>
+<context>
+    <name>InteractiveTurnHost</name>
+    <message>
+        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
+</source>
+        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m inaprubahan — tapos na ang utos
+</translation>
+    </message>
+    <message>
+        <source>
+
+Thanks — proceeding with: %1
+</source>
+        <translation>
+
+Salamat — magpapatuloy sa: %1
+</translation>
+    </message>
+</context>
+<context>
+    <name>LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation>Hindi makita ang lokal na daemon binary. Itakda ang path nito sa Settings, o kumonekta na lang sa isang remote na daemon.</translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation>Paulit-ulit na nagka-crash ang lokal na daemon (masyadong maraming beses na na-restart). Suriin ang log nito at ang iyong configuration.</translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation>Nabigong simulan ang lokal na daemon (%1).</translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation>Hindi naging handa ang lokal na daemon sa tamang oras.</translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation>Hindi nag-shut down sa tamang oras ang hindi tugmang lokal na daemon (pid %1).</translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
+        <translation>May hindi tugmang daemon na nagse-serve ng %1, at walang pidfile na nagtatala ng proseso nito. Ihinto ito nang manu-mano at kumonekta muli.</translation>
+    </message>
+    <message>
+        <source>A browser cannot start a local daemon. Connect to a WebSocket node instead.</source>
+        <translation>Hindi makakapagsimula ang browser ng lokal na daemon. Kumonekta na lang sa isang WebSocket node.</translation>
+    </message>
+    <message>
+        <source>A browser cannot manage a local daemon. Connect to a WebSocket node instead.</source>
+        <translation>Hindi mapapamahalaan ng browser ang lokal na daemon. Kumonekta na lang sa isang WebSocket node.</translation>
+    </message>
+</context>
+<context>
+    <name>LocalDiskFsService</name>
+    <message>
+        <source>invalid path</source>
+        <translation>hindi wastong path</translation>
+    </message>
+    <message>
+        <source>cannot open</source>
+        <translation>hindi mabuksan</translation>
+    </message>
+    <message>
+        <source>stale: file changed on disk</source>
+        <translation>stale: nagbago ang file sa disk</translation>
+    </message>
+    <message>
+        <source>write failed</source>
+        <translation>nabigo ang pagsulat</translation>
+    </message>
+</context>
+<context>
+    <name>Main</name>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>Connection lost</source>
+        <translation>Nawala ang koneksyon</translation>
+    </message>
+    <message>
+        <source>%1 (%2s)</source>
+        <translation>%1 (%2s)</translation>
+    </message>
+    <message>
+        <source>Reconnect now</source>
+        <translation>Kumonekta muli ngayon</translation>
+    </message>
+    <message>
+        <source>Downloading update v%1… %2%</source>
+        <translation>Dina-download ang update v%1… %2%</translation>
+    </message>
+    <message>
+        <source>Update v%1 is ready to install</source>
+        <translation>Handa nang i-install ang update v%1</translation>
+    </message>
+    <message>
+        <source>Update available: v%1 → v%2</source>
+        <translation>May available na update: v%1 → v%2</translation>
+    </message>
+    <message>
+        <source>Release notes</source>
+        <translation>Release notes</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>I-download</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Buksan</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>I-dismiss</translation>
+    </message>
+</context>
+<context>
+    <name>MathBlock</name>
+    <message>
+        <source>Math error: </source>
+        <translation>Math error: </translation>
+    </message>
+</context>
+<context>
+    <name>MemoryDetail</name>
+    <message>
+        <source>Trust</source>
+        <translation>Trust</translation>
+    </message>
+    <message>
+        <source>veracity</source>
+        <translation>veracity</translation>
+    </message>
+    <message>
+        <source>trust tier</source>
+        <translation>trust tier</translation>
+    </message>
+    <message>
+        <source>trust weight</source>
+        <translation>trust weight</translation>
+    </message>
+    <message>
+        <source>Lifecycle</source>
+        <translation>Lifecycle</translation>
+    </message>
+    <message>
+        <source>tier</source>
+        <translation>tier</translation>
+    </message>
+    <message>
+        <source> · L</source>
+        <translation> · L</translation>
+    </message>
+    <message>
+        <source>degradation</source>
+        <translation>degradation</translation>
+    </message>
+    <message>
+        <source>status</source>
+        <translation>status</translation>
+    </message>
+    <message>
+        <source>valid until</source>
+        <translation>valid hanggang</translation>
+    </message>
+    <message>
+        <source>superseded by</source>
+        <translation>napalitan ng</translation>
+    </message>
+    <message>
+        <source>Weights</source>
+        <translation>Mga Weight</translation>
+    </message>
+    <message>
+        <source>importance</source>
+        <translation>importance</translation>
+    </message>
+    <message>
+        <source>degradation w</source>
+        <translation>degradation w</translation>
+    </message>
+    <message>
+        <source>effective w</source>
+        <translation>effective w</translation>
+    </message>
+    <message>
+        <source>Provenance</source>
+        <translation>Provenance</translation>
+    </message>
+    <message>
+        <source>id</source>
+        <translation>id</translation>
+    </message>
+    <message>
+        <source>source</source>
+        <translation>source</translation>
+    </message>
+    <message>
+        <source>session</source>
+        <translation>session</translation>
+    </message>
+    <message>
+        <source>scope</source>
+        <translation>scope</translation>
+    </message>
+    <message>
+        <source>recalls</source>
+        <translation>recalls</translation>
+    </message>
+    <message>
+        <source>last recalled</source>
+        <translation>huling naalala</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryGraphView</name>
+    <message>
+        <source>Association</source>
+        <translation>Association</translation>
+    </message>
+    <message>
+        <source>Knowledge</source>
+        <translation>Knowledge</translation>
+    </message>
+    <message>
+        <source>Constellation</source>
+        <translation>Constellation</translation>
+    </message>
+    <message>
+        <source>Depth %1</source>
+        <translation>Depth %1</translation>
+    </message>
+    <message>
+        <source>Less depth</source>
+        <translation>Bawasan ang depth</translation>
+    </message>
+    <message>
+        <source>More depth</source>
+        <translation>Dagdagan ang depth</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n node(s)</source>
+        <translation>
+            <numerusform>%n na node</numerusform>
+            <numerusform>%n na node</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n edge(s)</source>
+        <translation>
+            <numerusform>%n na edge</numerusform>
+            <numerusform>%n na edge</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reset view / focus</source>
+        <translation>I-reset ang view / focus</translation>
+    </message>
+    <message>
+        <source>No graph data for this scope</source>
+        <translation>Walang graph data para sa scope na ito</translation>
+    </message>
+    <message>
+        <source> · degree </source>
+        <translation> · degree </translation>
+    </message>
+    <message>
+        <source>Expand</source>
+        <translation>I-expand</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>I-clear</translation>
+    </message>
+    <message>
+        <source>Neighbours</source>
+        <translation>Mga Kalapit</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryList</name>
+    <message>
+        <source>All tiers</source>
+        <translation>Lahat ng tier</translation>
+    </message>
+    <message>
+        <source>working</source>
+        <translation>gumagana</translation>
+    </message>
+    <message>
+        <source>episodic</source>
+        <translation>episodic</translation>
+    </message>
+    <message>
+        <source>scratchpad</source>
+        <translation>scratchpad</translation>
+    </message>
+    <message>
+        <source>All trust</source>
+        <translation>Lahat ng trust</translation>
+    </message>
+    <message>
+        <source>stated</source>
+        <translation>nakasaad</translation>
+    </message>
+    <message>
+        <source>inferred</source>
+        <translation>hinuha</translation>
+    </message>
+    <message>
+        <source>tool</source>
+        <translation>tool</translation>
+    </message>
+    <message>
+        <source>imported</source>
+        <translation>na-import</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>hindi alam</translation>
+    </message>
+    <message>
+        <source>recent</source>
+        <translation>kamakailan</translation>
+    </message>
+    <message>
+        <source>importance</source>
+        <translation>importance</translation>
+    </message>
+    <message>
+        <source>recall</source>
+        <translation>recall</translation>
+    </message>
+    <message>
+        <source>Search memories...</source>
+        <translation>Maghanap ng memory...</translation>
+    </message>
+    <message>
+        <source>imp %1</source>
+        <translation>imp %1</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryOverview</name>
+    <message>
+        <source>Working</source>
+        <translation>Working</translation>
+    </message>
+    <message>
+        <source>Episodic</source>
+        <translation>Episodic</translation>
+    </message>
+    <message>
+        <source>Scratchpad</source>
+        <translation>Scratchpad</translation>
+    </message>
+    <message>
+        <source>Total</source>
+        <translation>Kabuuan</translation>
+    </message>
+    <message>
+        <source>Facts</source>
+        <translation>Mga Fact</translation>
+    </message>
+    <message>
+        <source>Conflicts</source>
+        <translation>Mga Conflict</translation>
+    </message>
+    <message>
+        <source>By source</source>
+        <translation>Ayon sa source</translation>
+    </message>
+    <message>
+        <source>By veracity</source>
+        <translation>Ayon sa veracity</translation>
+    </message>
+    <message>
+        <source>By lifecycle</source>
+        <translation>Ayon sa lifecycle</translation>
+    </message>
+    <message>
+        <source>By scope</source>
+        <translation>Ayon sa scope</translation>
+    </message>
+    <message>
+        <source>By session</source>
+        <translation>Ayon sa session</translation>
+    </message>
+    <message>
+        <source>Live memory stream</source>
+        <translation>Live memory stream</translation>
+    </message>
+    <message>
+        <source>Waiting for memory activity...</source>
+        <translation>Naghihintay ng memory activity...</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryPage</name>
+    <message>
+        <source>Overview</source>
+        <translation>Overview</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Mga Memory</translation>
+    </message>
+    <message>
+        <source>Graph</source>
+        <translation>Graph</translation>
+    </message>
+    <message>
+        <source>Timeline</source>
+        <translation>Timeline</translation>
+    </message>
+    <message>
+        <source>All sessions</source>
+        <translation>Lahat ng session</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Memory</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Session</translation>
+    </message>
+    <message>
+        <source>Global: on</source>
+        <translation>Global: on</translation>
+    </message>
+    <message>
+        <source>Global: off</source>
+        <translation>Global: off</translation>
+    </message>
+</context>
+<context>
+    <name>MemorySettingsSection</name>
+    <message>
+        <source>Context window</source>
+        <translation>Context window</translation>
+    </message>
+    <message>
+        <source>Max context tokens</source>
+        <translation>Max na context token</translation>
+    </message>
+    <message>
+        <source>Auto-compact when context is full</source>
+        <translation>Auto-compact kapag puno ang context</translation>
+    </message>
+    <message>
+        <source>Long-term memory</source>
+        <translation>Long-term memory</translation>
+    </message>
+    <message>
+        <source>Persist memory across sessions</source>
+        <translation>Panatilihin ang memory sa lahat ng session</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryTimeline</name>
+    <message>
+        <source>Group by</source>
+        <translation>Igrupo ayon sa</translation>
+    </message>
+    <message>
+        <source>Day</source>
+        <translation>Araw</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Session</translation>
+    </message>
+</context>
+<context>
+    <name>MermaidBlock</name>
+    <message>
+        <source>Diagram error: %1</source>
+        <translation>Diagram error: %1</translation>
+    </message>
+</context>
+<context>
+    <name>MessageHeader</name>
+    <message>
+        <source>You</source>
+        <translation>Ikaw</translation>
+    </message>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+</context>
+<context>
+    <name>MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation>User</translation>
+    </message>
+</context>
+<context>
+    <name>ModelPickerOverlay</name>
+    <message>
+        <source>Off</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Off</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Low</translation>
+    </message>
+    <message>
+        <source>Med</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Med</translation>
+    </message>
+    <message>
+        <source>Hig</source>
+        <comment>reasoning effort (abbreviated)</comment>
+        <translation>Hig</translation>
+    </message>
+    <message>
+        <source>Filter models…</source>
+        <translation>I-filter ang mga model…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>Reasoning</translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation>Fast</translation>
+    </message>
+    <message>
+        <source>Verbose</source>
+        <translation>Verbose</translation>
+    </message>
+</context>
+<context>
+    <name>ModelRepository</name>
+    <message>
+        <source>Set-model operation failed</source>
+        <translation>Nabigo ang set-model operation</translation>
+    </message>
+    <message>
+        <source>Download could not be started</source>
+        <translation>Hindi masimulan ang download</translation>
+    </message>
+    <message>
+        <source>Delete failed</source>
+        <translation>Nabigo ang pagbura</translation>
+    </message>
+    <message>
+        <source>Activate failed</source>
+        <translation>Nabigo ang pag-activate</translation>
+    </message>
+</context>
+<context>
+    <name>ModelSettingsSection</name>
+    <message>
+        <source>Default model</source>
+        <translation>Default na model</translation>
+    </message>
+    <message>
+        <source>Active default</source>
+        <translation>Aktibong default</translation>
+    </message>
+    <message>
+        <source>Change or install models in the Models hub.</source>
+        <translation>Magpalit o mag-install ng mga model sa Models hub.</translation>
+    </message>
+    <message>
+        <source>Open Models</source>
+        <translation>Buksan ang Models</translation>
+    </message>
+    <message>
+        <source>Inference</source>
+        <translation>Inference</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>Reasoning effort</translation>
+    </message>
+    <message>
+        <source>Fast mode (lower latency)</source>
+        <translation>Fast mode (mas mababang latency)</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsDiscover</name>
+    <message>
+        <source>Search Hugging Face repos (e.g. SmolLM2)</source>
+        <translation>Maghanap ng Hugging Face repo (hal. SmolLM2)</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Maghanap</translation>
+    </message>
+    <message>
+        <source>Search for a model repo to browse its quantizations.</source>
+        <translation>Maghanap ng model repo para tingnan ang mga quantization nito.</translation>
+    </message>
+    <message>
+        <source>by %1</source>
+        <translation>ni %1</translation>
+    </message>
+    <message>
+        <source>Quantizations</source>
+        <translation>Mga Quantization</translation>
+    </message>
+    <message>
+        <source>Load more</source>
+        <translation>Mag-load pa</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsDownloads</name>
+    <message>
+        <source>No active downloads.
+Start one from the Discover tab.</source>
+        <translation>Walang aktibong download.
+Magsimula ng isa mula sa Discover tab.</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsInstalled</name>
+    <message>
+        <source>No models installed yet.</source>
+        <translation>Wala pang naka-install na model.</translation>
+    </message>
+    <message>
+        <source>ACTIVE</source>
+        <translation>ACTIVE</translation>
+    </message>
+    <message>
+        <source>PROJECTOR</source>
+        <translation>PROJECTOR</translation>
+    </message>
+    <message>
+        <source>VISION</source>
+        <translation>VISION</translation>
+    </message>
+    <message>
+        <source> GiB</source>
+        <translation> GiB</translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation>Aktibo</translation>
+    </message>
+    <message>
+        <source>Activate</source>
+        <translation>I-activate</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Alisin</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsPage</name>
+    <message>
+        <source>Discover</source>
+        <translation>Tuklasin</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation>Mga Download</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Naka-install</translation>
+    </message>
+    <message>
+        <source>Providers</source>
+        <translation>Mga Provider</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Mga Model</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsProviders</name>
+    <message>
+        <source>Local runtime</source>
+        <translation>Lokal na runtime</translation>
+    </message>
+    <message>
+        <source>Remote API</source>
+        <translation>Remote API</translation>
+    </message>
+    <message>
+        <source>Configured</source>
+        <translation>Naka-configure</translation>
+    </message>
+    <message>
+        <source>Manage</source>
+        <translation>Pamahalaan</translation>
+    </message>
+    <message>
+        <source>Configure</source>
+        <translation>I-configure</translation>
+    </message>
+</context>
+<context>
+    <name>NewAgentDialog</name>
+    <message>
+        <source>New agent</source>
+        <translation>Bagong agent</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Gumawa</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Pangalan</translation>
+    </message>
+    <message>
+        <source>agent name</source>
+        <translation>pangalan ng agent</translation>
+    </message>
+    <message>
+        <source>Engine</source>
+        <translation>Engine</translation>
+    </message>
+    <message>
+        <source>daemon-core (native)</source>
+        <translation>daemon-core (native)</translation>
+    </message>
+    <message>
+        <source>  ·  ACP %1</source>
+        <translation>  ·  ACP %1</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>naka-install</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>hindi naka-install</translation>
+    </message>
+    <message>
+        <source>Persona (optional)</source>
+        <translation>Persona (opsyonal)</translation>
+    </message>
+    <message>
+        <source>system prompt</source>
+        <translation>system prompt</translation>
+    </message>
+    <message>
+        <source>This agent runs a foreign ACP engine. Its launch recipe is managed by the daemon&apos;s ACP catalog — no provider, model, or key to configure.</source>
+        <translation>Nagpapatakbo ang agent na ito ng foreign na ACP engine. Ang launch recipe nito ay pinamamahalaan ng ACP catalog ng daemon — walang provider, model, o key na ico-configure.</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation>Pangalan:</translation>
+    </message>
+    <message>
+        <source>Engine (Enter to pick):</source>
+        <translation>Engine (Enter para pumili):</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+</context>
+<context>
+    <name>NodeApiClient</name>
+    <message>
+        <source>request timed out</source>
+        <translation>nag-time out ang request</translation>
+    </message>
+    <message>
+        <source>daemon connection closed</source>
+        <translation>sarado ang koneksyon sa daemon</translation>
+    </message>
+    <message>
+        <source>authentication required</source>
+        <translation>kailangan ng authentication</translation>
+    </message>
+    <message>
+        <source>authentication failed</source>
+        <translation>nabigo ang authentication</translation>
+    </message>
+    <message>
+        <source>stream ended in error</source>
+        <translation>nagtapos sa error ang stream</translation>
+    </message>
+    <message>
+        <source>the request failed</source>
+        <translation>nabigo ang request</translation>
+    </message>
+</context>
+<context>
+    <name>NotificationsSection</name>
+    <message>
+        <source>Desktop notifications</source>
+        <translation>Mga desktop notification</translation>
+    </message>
+    <message>
+        <source>Notify when a turn needs my input</source>
+        <translation>Mag-notify kapag kailangan ng turn ang aking input</translation>
+    </message>
+    <message>
+        <source>Notify when a turn finishes</source>
+        <translation>Mag-notify kapag natapos ang isang turn</translation>
+    </message>
+    <message>
+        <source>Send a test notification</source>
+        <translation>Magpadala ng test notification</translation>
+    </message>
+    <message>
+        <source>daemon-app</source>
+        <translation>daemon-app</translation>
+    </message>
+    <message>
+        <source>Notifications are working.</source>
+        <translation>Gumagana ang mga notification.</translation>
+    </message>
+    <message>
+        <source>Notifications only appear while the window is hidden or inactive.</source>
+        <translation>Lumalabas lang ang mga notification habang nakatago o inaktibo ang window.</translation>
+    </message>
+</context>
+<context>
+    <name>Placeholder</name>
+    <message>
+        <source>Coming soon</source>
+        <translation>Malapit nang dumating</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileEditor</name>
+    <message>
+        <source>Select or create a profile.</source>
+        <translation>Pumili o gumawa ng profile.</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Profile</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Default</translation>
+    </message>
+    <message>
+        <source>Make default</source>
+        <translation>Gawing default</translation>
+    </message>
+    <message>
+        <source>Export profile</source>
+        <translation>I-export ang profile</translation>
+    </message>
+    <message>
+        <source>Import profile</source>
+        <translation>I-import ang profile</translation>
+    </message>
+    <message>
+        <source>Delete profile</source>
+        <translation>Burahin ang profile</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Pangalan</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Provider</translation>
+    </message>
+    <message>
+        <source>Current provider: %1 (test provider — not selectable)</source>
+        <translation>Kasalukuyang provider: %1 (test provider — hindi napipili)</translation>
+    </message>
+    <message>
+        <source>Base URL (optional, e.g. https://api.daemon.ai/api/v1)</source>
+        <translation>Base URL (opsyonal, hal. https://api.daemon.ai/api/v1)</translation>
+    </message>
+    <message>
+        <source>Credential: connected%1</source>
+        <translation>Credential: nakakonekta%1</translation>
+    </message>
+    <message>
+        <source>Credential: none — add a key</source>
+        <translation>Credential: wala — magdagdag ng key</translation>
+    </message>
+    <message>
+        <source>Set key</source>
+        <translation>Itakda ang key</translation>
+    </message>
+    <message>
+        <source>Short description</source>
+        <translation>Maikling paglalarawan</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>System prompt</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Mga Skill</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>Mga Tool</translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation>History</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Itago</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Ipakita</translation>
+    </message>
+    <message>
+        <source>Version history needs a durable daemon.</source>
+        <translation>Kailangan ng durable na daemon ang version history.</translation>
+    </message>
+    <message>
+        <source>No revisions yet.</source>
+        <translation>Wala pang revision.</translation>
+    </message>
+    <message>
+        <source>#%1</source>
+        <translation>#%1</translation>
+    </message>
+    <message>
+        <source>operator</source>
+        <translation>operator</translation>
+    </message>
+    <message>
+        <source>agent %1</source>
+        <translation>agent %1</translation>
+    </message>
+    <message>
+        <source>Revert to this</source>
+        <translation>I-revert dito</translation>
+    </message>
+    <message>
+        <source>Discard changes</source>
+        <translation>Itapon ang mga pagbabago</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>I-save</translation>
+    </message>
+    <message>
+        <source>Profile distributions (*.dist)</source>
+        <translation>Mga profile distribution (*.dist)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Lahat ng file (*)</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileEditorDialog</name>
+    <message>
+        <source>Edit profile — %1</source>
+        <translation>I-edit ang profile — %1</translation>
+    </message>
+    <message>
+        <source>Enter on a row edits it · Save commits · Esc discards</source>
+        <translation>Enter sa isang row para i-edit · Save para i-commit · Esc para itapon</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>I-save</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Pangalan</translation>
+    </message>
+    <message>
+        <source>Engine: ACP agent · %1 (set at create time)</source>
+        <translation>Engine: ACP agent · %1 (itinakda sa oras ng paggawa)</translation>
+    </message>
+    <message>
+        <source>Engine: daemon-core (native)</source>
+        <translation>Engine: daemon-core (native)</translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation>Provider</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Base URL</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>(default ng provider)</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
+        <source>(pick a model)</source>
+        <translation>(pumili ng model)</translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>Paglalarawan</translation>
+    </message>
+    <message>
+        <source>System prompt</source>
+        <translation>System prompt</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Mga Skill</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>Mga Tool</translation>
+    </message>
+    <message>
+        <source>%1 (test provider — not selectable)</source>
+        <translation>%1 (test provider — hindi napipili)</translation>
+    </message>
+    <message>
+        <source>(pick a provider)</source>
+        <translation>(pumili ng provider)</translation>
+    </message>
+    <message>
+        <source>Profile name</source>
+        <translation>Pangalan ng profile</translation>
+    </message>
+    <message>
+        <source>Base URL (empty = provider default)</source>
+        <translation>Base URL (walang laman = default ng provider)</translation>
+    </message>
+    <message>
+        <source>Short description</source>
+        <translation>Maikling paglalarawan</translation>
+    </message>
+    <message>
+        <source>download</source>
+        <translation>download</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>kasalukuyan</translation>
+    </message>
+    <message>
+        <source>Enter inserts a newline · Tab reaches the buttons</source>
+        <translation>Enter para magpasok ng bagong linya · Tab para makarating sa mga button</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileRepository</name>
+    <message>
+        <source>Profile import failed</source>
+        <translation>Nabigo ang pag-import ng profile</translation>
+    </message>
+    <message>
+        <source>Version history unavailable</source>
+        <translation>Hindi available ang version history</translation>
+    </message>
+    <message>
+        <source>Profile revert failed</source>
+        <translation>Nabigo ang pag-revert ng profile</translation>
+    </message>
+    <message>
+        <source>Profile operation failed</source>
+        <translation>Nabigo ang operasyon sa profile</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileToggleListDialog</name>
+    <message>
+        <source>Enter / Space toggles · Esc done</source>
+        <translation>Enter / Space para i-toggle · Esc para tapos</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Tapos</translation>
+    </message>
+</context>
+<context>
+    <name>ProfilesPage</name>
+    <message>
+        <source>Exported profile</source>
+        <translation>Na-export ang profile</translation>
+    </message>
+    <message>
+        <source>Imported %1</source>
+        <translation>Na-import ang %1</translation>
+    </message>
+    <message>
+        <source>Reverted %1</source>
+        <translation>Na-revert ang %1</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Mga Profile</translation>
+    </message>
+    <message>
+        <source>+ New profile</source>
+        <translation>+ Bagong profile</translation>
+    </message>
+    <message>
+        <source>New profile</source>
+        <translation>Bagong profile</translation>
+    </message>
+    <message>
+        <source>Profile id (e.g. work)</source>
+        <translation>Profile id (hal. work)</translation>
+    </message>
+    <message>
+        <source>Empty profile</source>
+        <translation>Walang laman na profile</translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <source>All syntax definitions are up-to-date.</source>
+        <translation>Napapanahon lahat ng syntax definition.</translation>
+    </message>
+    <message>
+        <source>Downloading new syntax definition for &apos;%1&apos;…</source>
+        <comment>@info</comment>
+        <translation>Dina-download ang bagong syntax definition para sa &apos;%1&apos;…</translation>
+    </message>
+    <message>
+        <source>Updating syntax definition for &apos;%1&apos; to version %2…</source>
+        <comment>@info</comment>
+        <translation>Ina-update ang syntax definition para sa &apos;%1&apos; tungo sa bersyon %2…</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <comment>language picker</comment>
+        <translation>System default</translation>
+    </message>
+    <message>
+        <source>Show/Hide %1</source>
+        <translation>Ipakita/Itago ang %1</translation>
+    </message>
+    <message>
+        <source>Quit</source>
+        <translation>Umalis</translation>
+    </message>
+    <message>
+        <source>application directory is unknown</source>
+        <translation>hindi alam ang application directory</translation>
+    </message>
+    <message>
+        <source>update helper (daemon-updater) not found next to the app</source>
+        <translation>hindi nakita ang update helper (daemon-updater) katabi ng app</translation>
+    </message>
+    <message>
+        <source>no staged installer to run</source>
+        <translation>walang staged installer na patatakbuhin</translation>
+    </message>
+    <message>
+        <source>missing installer checksum</source>
+        <translation>nawawalang installer checksum</translation>
+    </message>
+    <message>
+        <source>relaunch target (installed app) is unknown</source>
+        <translation>hindi alam ang relaunch target (naka-install na app)</translation>
+    </message>
+    <message>
+        <source>Unsupported or empty diagram</source>
+        <translation>Hindi suportado o walang laman na diagram</translation>
+    </message>
+    <message>
+        <source>Unsupported diagram: %1</source>
+        <translation>Hindi suportadong diagram: %1</translation>
+    </message>
+    <message>
+        <source>Parse error</source>
+        <translation>Parse error</translation>
+    </message>
+    <message>
+        <source>No nodes found</source>
+        <translation>Walang nakitang node</translation>
+    </message>
+    <message>
+        <source>Answered</source>
+        <translation>Nasagot</translation>
+    </message>
+    <message>
+        <source>Needs your input</source>
+        <translation>Kailangan ang iyong input</translation>
+    </message>
+    <message>
+        <source>Working</source>
+        <translation>Working</translation>
+    </message>
+    <message>
+        <source>Running %1</source>
+        <translation>Tumatakbo ang %1</translation>
+    </message>
+    <message>
+        <source>Tool failed</source>
+        <translation>Nabigo ang tool</translation>
+    </message>
+    <message>
+        <source>Tool</source>
+        <translation>Tool</translation>
+    </message>
+    <message>
+        <source>image load failed</source>
+        <translation>nabigo ang pag-load ng larawan</translation>
+    </message>
+    <message>
+        <source>Start a new session</source>
+        <translation>Magsimula ng bagong session</translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <comment>completion group</comment>
+        <translation>Command</translation>
+    </message>
+    <message>
+        <source>Open theme &amp; settings</source>
+        <translation>Buksan ang theme at settings</translation>
+    </message>
+    <message>
+        <source>Toggle distraction-free</source>
+        <translation>I-toggle ang distraction-free</translation>
+    </message>
+    <message>
+        <source>Clear the composer</source>
+        <translation>I-clear ang composer</translation>
+    </message>
+    <message>
+        <source>Rewind &amp; re-run the last message</source>
+        <translation>I-rewind at patakbuhing muli ang huling mensahe</translation>
+    </message>
+    <message>
+        <source>Rewind &amp; edit the last message</source>
+        <translation>I-rewind at i-edit ang huling mensahe</translation>
+    </message>
+    <message>
+        <source>Undo the last exchange</source>
+        <translation>I-undo ang huling palitan</translation>
+    </message>
+    <message>
+        <source>Choose the active model</source>
+        <translation>Piliin ang aktibong model</translation>
+    </message>
+    <message>
+        <source>Rename this session</source>
+        <translation>Palitan ang pangalan ng session na ito</translation>
+    </message>
+    <message>
+        <source>Export the transcript (JSON)</source>
+        <translation>I-export ang transcript (JSON)</translation>
+    </message>
+    <message>
+        <source>Search this transcript</source>
+        <translation>Hanapin sa transcript na ito</translation>
+    </message>
+    <message>
+        <source>Show token usage &amp; cost</source>
+        <translation>Ipakita ang paggamit ng token at gastos</translation>
+    </message>
+    <message>
+        <source>Compress the context window</source>
+        <translation>I-compress ang context window</translation>
+    </message>
+    <message>
+        <source>Open the command palette</source>
+        <translation>Buksan ang command palette</translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation>Buksan ang mga setting</translation>
+    </message>
+    <message>
+        <source>Go to</source>
+        <comment>completion group</comment>
+        <translation>Pumunta sa</translation>
+    </message>
+    <message>
+        <source>Open the dashboard</source>
+        <translation>Buksan ang dashboard</translation>
+    </message>
+    <message>
+        <source>Open the models hub</source>
+        <translation>Buksan ang models hub</translation>
+    </message>
+    <message>
+        <source>Open accounts</source>
+        <translation>Buksan ang mga account</translation>
+    </message>
+    <message>
+        <source>Open profiles</source>
+        <translation>Buksan ang mga profile</translation>
+    </message>
+    <message>
+        <source>Open the fleet view</source>
+        <translation>Buksan ang fleet view</translation>
+    </message>
+    <message>
+        <source>Open the sessions roster</source>
+        <translation>Buksan ang sessions roster</translation>
+    </message>
+    <message>
+        <source>Open the approvals inbox</source>
+        <translation>Buksan ang approvals inbox</translation>
+    </message>
+    <message>
+        <source>Open the routing matrix</source>
+        <translation>Buksan ang routing matrix</translation>
+    </message>
+    <message>
+        <source>Open scheduled jobs</source>
+        <translation>Buksan ang mga naka-iskedyul na job</translation>
+    </message>
+    <message>
+        <source>Project readme</source>
+        <translation>Project readme</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <comment>completion group</comment>
+        <translation>File</translation>
+    </message>
+    <message>
+        <source>Composer component</source>
+        <translation>Composer component</translation>
+    </message>
+    <message>
+        <source>Theme tokens</source>
+        <translation>Theme tokens</translation>
+    </message>
+    <message>
+        <source>New session</source>
+        <translation>Bagong session</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Session</translation>
+    </message>
+    <message>
+        <source># Settings
+
+A generic, non-transcript page hosted by the same tab strip.
+
+- Press **F8** to cycle the theme (Light / Dark / Sepia / Midnight)
+- **Ctrl+T** opens a new transcript tab
+- **Ctrl+W** closes the current tab
+- **Ctrl+Tab** / **Ctrl+Shift+Tab** switch tabs (wrapping)
+- **Alt+1..9** jumps directly to tab N
+- **Tab** cycles panes, including the tab strip; when it is focused, **Left**/**Right** switch tabs, **Enter** pins a preview, **Delete** closes
+- In an interactive block (approval / clarify): **Up**/**Down**/**Left**/**Right** move between controls, **Space** toggles, **Enter** submits, **Tab** leaves to the next pane
+- In the transcript: **r** opens the rewind picker over your prior messages (**Up**/**Down** to choose, **Enter** restores &amp; re-runs, **e** edits in the composer, **Esc** cancels)
+- **/retry**, **/edit**, **/undo** rewind the last message from the composer
+</source>
+        <translation># Settings
+
+Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
+
+- Pindutin ang **F8** para i-cycle ang theme (Maliwanag / Madilim / Sepia / Hatinggabi)
+- **Ctrl+T** nagbubukas ng bagong transcript tab
+- **Ctrl+W** nagsasara ng kasalukuyang tab
+- **Ctrl+Tab** / **Ctrl+Shift+Tab** naglilipat ng tab (paikot)
+- **Alt+1..9** direktang pumupunta sa tab N
+- **Tab** umiikot sa mga pane, kasama ang tab strip; kapag naka-focus ito, **Left**/**Right** naglilipat ng tab, **Enter** nagpi-pin ng preview, **Delete** nagsasara
+- Sa isang interactive block (approval / clarify): **Up**/**Down**/**Left**/**Right** gumagalaw sa pagitan ng mga control, **Space** nagto-toggle, **Enter** nagsa-submit, **Tab** lumalabas patungo sa susunod na pane
+- Sa transcript: **r** nagbubukas ng rewind picker sa iyong mga naunang mensahe (**Up**/**Down** para pumili, **Enter** nagre-restore at nagpapatakbong muli, **e** nag-e-edit sa composer, **Esc** kinakansela)
+- **/retry**, **/edit**, **/undo** nire-rewind ang huling mensahe mula sa composer
+</translation>
+    </message>
+    <message>
+        <source>Daemon</source>
+        <translation>Daemon</translation>
+    </message>
+    <message>
+        <source>YOU</source>
+        <translation>IKAW</translation>
+    </message>
+    <message>
+        <source>DAEMON</source>
+        <translation>DAEMON</translation>
+    </message>
+    <message>
+        <source>Reasoning…</source>
+        <translation>Nangangatwiran…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>Reasoning</translation>
+    </message>
+    <message>
+        <source>[image: </source>
+        <translation>[image: </translation>
+    </message>
+    <message>
+        <source>The agent needs your input.</source>
+        <translation>Kailangan ng agent ang iyong input.</translation>
+    </message>
+    <message>
+        <source>⚠ Approve: </source>
+        <translation>⚠ Aprubahan: </translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>Aprubahan</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Tanggihan</translation>
+    </message>
+    <message>
+        <source>Allow permanently</source>
+        <translation>Payagan nang permanente</translation>
+    </message>
+    <message>
+        <source>Type a reply…</source>
+        <translation>Mag-type ng sagot…</translation>
+    </message>
+    <message>
+        <source>Or type a reply…</source>
+        <translation>O mag-type ng sagot…</translation>
+    </message>
+    <message>
+        <source>  (select all that apply)</source>
+        <translation>  (piliin lahat ng naaangkop)</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>I-submit</translation>
+    </message>
+    <message>
+        <source>code</source>
+        <translation>code</translation>
+    </message>
+    <message>
+        <source>[image] </source>
+        <translation>[image] </translation>
+    </message>
+    <message>
+        <source>[math] </source>
+        <translation>[math] </translation>
+    </message>
+</context>
+<context>
+    <name>QuantPickerPopup</name>
+    <message>
+        <source>Choose a quantization</source>
+        <translation>Pumili ng quantization</translation>
+    </message>
+    <message>
+        <source>Recommended: %1</source>
+        <translation>Inirerekomenda: %1</translation>
+    </message>
+    <message>
+        <source>fits</source>
+        <translation>kasya</translation>
+    </message>
+    <message>
+        <source>tight</source>
+        <translation>masikip</translation>
+    </message>
+    <message>
+        <source>Download recommended</source>
+        <translation>I-download ang inirerekomenda</translation>
+    </message>
+    <message>
+        <source>Available files</source>
+        <translation>Mga available na file</translation>
+    </message>
+    <message>
+        <source>Hide advanced</source>
+        <translation>Itago ang advanced</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>Advanced</translation>
+    </message>
+    <message>
+        <source>RECOMMENDED</source>
+        <translation>INIREREKOMENDA</translation>
+    </message>
+    <message>
+        <source>PROJECTOR</source>
+        <translation>PROJECTOR</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>I-download</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Isara</translation>
+    </message>
+</context>
+<context>
+    <name>QueuePanel</name>
+    <message>
+        <source>Queued (%1)</source>
+        <translation>Naka-queue (%1)</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>Naka-queue</translation>
+    </message>
+    <message>
+        <source>Send next (interrupts)</source>
+        <translation>Ipadala susunod (nakakaabala)</translation>
+    </message>
+    <message>
+        <source>Send now</source>
+        <translation>Ipadala ngayon</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>I-edit</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Alisin</translation>
+    </message>
+</context>
+<context>
+    <name>QuitDialog</name>
+    <message>
+        <source>Quit</source>
+        <translation>Umalis</translation>
+    </message>
+    <message>
+        <source>Quit daemon-app?</source>
+        <translation>Umalis sa daemon-app?</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+</context>
+<context>
+    <name>ReasoningBlock</name>
+    <message>
+        <source>Reasoning…</source>
+        <translation>Nangangatwiran…</translation>
+    </message>
+    <message>
+        <source>Reasoning</source>
+        <translation>Reasoning</translation>
+    </message>
+</context>
+<context>
+    <name>RootWidget</name>
+    <message>
+        <source>Profile</source>
+        <translation>Profile</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Memory</translation>
+    </message>
+    <message>
+        <source>Delete session</source>
+        <translation>Burahin ang session</translation>
+    </message>
+    <message>
+        <source>Permanently delete this session?</source>
+        <translation>Permanenteng burahin ang session na ito?</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Palitan ang pangalan ng session</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>I-clear ang session</translation>
+    </message>
+    <message>
+        <source>Remove all messages from this session?</source>
+        <translation>Alisin ang lahat ng mensahe sa session na ito?</translation>
+    </message>
+    <message>
+        <source>daemon</source>
+        <translation>daemon</translation>
+    </message>
+    <message>
+        <source>The turn finished.</source>
+        <translation>Natapos ang turn.</translation>
+    </message>
+    <message>
+        <source>approval</source>
+        <translation>approval</translation>
+    </message>
+    <message>
+        <source>credential</source>
+        <translation>credential</translation>
+    </message>
+    <message>
+        <source>● daemon — needs %1</source>
+        <translation>● daemon — kailangan %1</translation>
+    </message>
+    <message>
+        <source>The turn needs your %1.</source>
+        <translation>Kailangan ng turn ang iyong %1.</translation>
+    </message>
+    <message>
+        <source>Secret required</source>
+        <translation>Kailangan ng secret</translation>
+    </message>
+    <message>
+        <source>Password required</source>
+        <translation>Kailangan ng password</translation>
+    </message>
+    <message>
+        <source>New session</source>
+        <translation>Bagong session</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>Mga setting ng session</translation>
+    </message>
+    <message>
+        <source>Enter / Space on a row cycles or toggles it · Esc closes</source>
+        <translation>Enter / Space sa isang row para i-cycle o i-toggle ito · Esc para isara</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Isara</translation>
+    </message>
+    <message>
+        <source>Profile: %1</source>
+        <translation>Profile: %1</translation>
+    </message>
+    <message>
+        <source>Effort:  %1</source>
+        <translation>Effort:  %1</translation>
+    </message>
+    <message>
+        <source>Fast:    %1</source>
+        <translation>Fast:    %1</translation>
+    </message>
+    <message>
+        <source>on</source>
+        <translation>on</translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation>off</translation>
+    </message>
+    <message>
+        <source>Verbose: %1</source>
+        <translation>Verbose: %1</translation>
+    </message>
+    <message>
+        <source>%1  ·  %2  ·  %3 tok%4</source>
+        <translation>%1  ·  %2  ·  %3 tok%4</translation>
+    </message>
+    <message>
+        <source>  (current)</source>
+        <translation>  (kasalukuyan)</translation>
+    </message>
+    <message>
+        <source>(no checkpoints)</source>
+        <translation>(walang checkpoint)</translation>
+    </message>
+    <message>
+        <source>Checkpoints</source>
+        <translation>Mga Checkpoint</translation>
+    </message>
+    <message>
+        <source>Enter restores the selected checkpoint · Esc closes</source>
+        <translation>Enter nagre-restore ng piniling checkpoint · Esc nagsasara</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>I-restore</translation>
+    </message>
+    <message>
+        <source> 0/0 </source>
+        <comment>search match counter (no matches)</comment>
+        <translation> 0/0 </translation>
+    </message>
+    <message>
+        <source> %1/%2 </source>
+        <comment>search match counter (current/total)</comment>
+        <translation> %1/%2 </translation>
+    </message>
+    <message>
+        <source>Tasks:  </source>
+        <translation>Mga Task:  </translation>
+    </message>
+    <message>
+        <source>Subagents:  </source>
+        <translation>Mga Subagent:  </translation>
+    </message>
+</context>
+<context>
+    <name>RouteDialog</name>
+    <message>
+        <source>Edit route</source>
+        <translation>I-edit ang route</translation>
+    </message>
+    <message>
+        <source>Add route</source>
+        <translation>Magdagdag ng route</translation>
+    </message>
+    <message>
+        <source>(inherit)</source>
+        <translation>(inherit)</translation>
+    </message>
+    <message>
+        <source>Currently: → %1 as %2 · decided by %3</source>
+        <translation>Kasalukuyan: → %1 bilang %2 · pinagpasyahan ni %3</translation>
+    </message>
+    <message>
+        <source>Currently: unrouted (deterministic)</source>
+        <translation>Kasalukuyan: unrouted (deterministic)</translation>
+    </message>
+    <message>
+        <source>Origin (where it comes from)</source>
+        <translation>Origin (pinanggagalingan)</translation>
+    </message>
+    <message>
+        <source>Session (the conversation)</source>
+        <translation>Session (ang usapan)</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+    <message>
+        <source>Save route</source>
+        <translation>I-save ang route</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingPage</name>
+    <message>
+        <source>Routing</source>
+        <translation>Routing</translation>
+    </message>
+    <message>
+        <source>Routes</source>
+        <translation>Mga Route</translation>
+    </message>
+    <message>
+        <source>+ Add route</source>
+        <translation>+ Magdagdag ng route</translation>
+    </message>
+    <message>
+        <source>(inherit)</source>
+        <translation>(inherit)</translation>
+    </message>
+    <message>
+        <source>Edit route</source>
+        <translation>I-edit ang route</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>I-unpin</translation>
+    </message>
+    <message>
+        <source>Delivery · </source>
+        <translation>Delivery · </translation>
+    </message>
+    <message>
+        <source>Delivery</source>
+        <translation>Delivery</translation>
+    </message>
+    <message>
+        <source>Select a route to see where its replies go</source>
+        <translation>Pumili ng route para makita kung saan mapupunta ang mga sagot nito</translation>
+    </message>
+    <message>
+        <source>No delivery targets</source>
+        <translation>Walang delivery target</translation>
+    </message>
+    <message>
+        <source>PRIMARY</source>
+        <translation>PRIMARY</translation>
+    </message>
+    <message>
+        <source>Make primary</source>
+        <translation>Gawing primary</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingTopology</name>
+    <message>
+        <source>— pinned</source>
+        <translation>— naka-pin</translation>
+    </message>
+    <message>
+        <source>·· derived</source>
+        <translation>·· hinango</translation>
+    </message>
+    <message>
+        <source>- - spectator</source>
+        <translation>- - manonood</translation>
+    </message>
+</context>
+<context>
+    <name>SafetySettingsSection</name>
+    <message>
+        <source>Approvals</source>
+        <translation>Mga Approval</translation>
+    </message>
+    <message>
+        <source>Approval policy</source>
+        <translation>Approval policy</translation>
+    </message>
+    <message>
+        <source>When the agent must ask before running tools.</source>
+        <translation>Kung kailan dapat magtanong ang agent bago magpatakbo ng mga tool.</translation>
+    </message>
+    <message>
+        <source>Sandbox</source>
+        <translation>Sandbox</translation>
+    </message>
+    <message>
+        <source>Filesystem access</source>
+        <translation>Filesystem access</translation>
+    </message>
+    <message>
+        <source>Allow network access</source>
+        <translation>Payagan ang network access</translation>
+    </message>
+</context>
+<context>
+    <name>SearchInputBox</name>
+    <message>
+        <source>Search sessions</source>
+        <translation>Maghanap ng session</translation>
+    </message>
+</context>
+<context>
+    <name>SearchResults</name>
+    <message>
+        <source>Search in workspace…</source>
+        <translation>Maghanap sa workspace…</translation>
+    </message>
+</context>
+<context>
+    <name>SearchResultsList</name>
+    <message>
+        <source>result</source>
+        <translation>resulta</translation>
+    </message>
+</context>
+<context>
+    <name>Session</name>
+    <message>
+        <source>Session</source>
+        <translation>Session</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>File</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Mga Setting</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Mga Model</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Mga Account</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Mga Profile</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Fleet</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Mga Session</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>Dashboard</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>Mga Approval</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>Routing</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Mga naka-iskedyul na job</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Mga Channel</translation>
+    </message>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>Mga User at Access</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Memory</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Profile</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation>Bumalik</translation>
+    </message>
+    <message>
+        <source>Select a session</source>
+        <translation>Pumili ng session</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Palitan ang pangalan ng session</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Palitan ang pangalan</translation>
+    </message>
+    <message>
+        <source>Session title</source>
+        <translation>Pamagat ng session</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>I-export ang transcript</translation>
+    </message>
+    <message>
+        <source>JSON files (*.json)</source>
+        <translation>Mga JSON file (*.json)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Lahat ng file (*)</translation>
+    </message>
+</context>
+<context>
+    <name>SessionChrome</name>
+    <message>
+        <source>Still thinking…</source>
+        <translation>Nag-iisip pa rin…</translation>
+    </message>
+    <message>
+        <source>Thinking… %1s</source>
+        <translation>Nag-iisip… %1s</translation>
+    </message>
+    <message>
+        <source>Thinking…</source>
+        <translation>Nag-iisip…</translation>
+    </message>
+</context>
+<context>
+    <name>SessionOrchestrator</name>
+    <message>
+        <source>(steer) </source>
+        <translation>(steer) </translation>
+    </message>
+    <message>
+        <source>Inspect the project</source>
+        <translation>Suriin ang proyekto</translation>
+    </message>
+    <message>
+        <source>Run the checks</source>
+        <translation>Patakbuhin ang mga check</translation>
+    </message>
+    <message>
+        <source>Summarize the result</source>
+        <translation>I-summarize ang resulta</translation>
+    </message>
+</context>
+<context>
+    <name>SessionRepository</name>
+    <message>
+        <source>SessionCreate failed</source>
+        <translation>Nabigo ang SessionCreate</translation>
+    </message>
+</context>
+<context>
+    <name>SessionSettingsPopover</name>
+    <message>
+        <source>Off</source>
+        <translation>Off</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <translation>Low</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>Medium</translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation>High</translation>
+    </message>
+    <message>
+        <source>Session settings</source>
+        <translation>Mga setting ng session</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Profile</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>Reasoning effort</translation>
+    </message>
+    <message>
+        <source>Approval mode</source>
+        <translation>Approval mode</translation>
+    </message>
+    <message>
+        <source>Edits</source>
+        <translation>Mga Edit</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Tanggihan</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Magtanong</translation>
+    </message>
+    <message>
+        <source>Fast mode</source>
+        <translation>Fast mode</translation>
+    </message>
+    <message>
+        <source>Verbose</source>
+        <translation>Verbose</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsList</name>
+    <message>
+        <source>Rename…</source>
+        <translation>Palitan ang pangalan…</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>I-unpin</translation>
+    </message>
+    <message>
+        <source>Pin</source>
+        <translation>I-pin</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>Ilipat pataas</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>Ilipat pababa</translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation>I-export…</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Burahin</translation>
+    </message>
+    <message>
+        <source>Rename session</source>
+        <translation>Palitan ang pangalan ng session</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Palitan ang pangalan</translation>
+    </message>
+    <message>
+        <source>Session title</source>
+        <translation>Pamagat ng session</translation>
+    </message>
+    <message>
+        <source>Delete session</source>
+        <translation>Burahin ang session</translation>
+    </message>
+    <message>
+        <source>Permanently delete this session? This cannot be undone.</source>
+        <translation>Permanenteng burahin ang session na ito? Hindi na ito mababawi.</translation>
+    </message>
+    <message>
+        <source>Export transcript</source>
+        <translation>I-export ang transcript</translation>
+    </message>
+    <message>
+        <source>JSON files (*.json)</source>
+        <translation>Mga JSON file (*.json)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Lahat ng file (*)</translation>
+    </message>
+    <message>
+        <source>Collapse sidebar</source>
+        <translation>I-collapse ang sidebar</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>%n na session</numerusform>
+            <numerusform>%n na session</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Trash</source>
+        <translation>Trash</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Maghanap</translation>
+    </message>
+    <message>
+        <source>Search sessions</source>
+        <translation>Maghanap ng session</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation>Isara ang paghahanap</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsListModel</name>
+    <message>
+        <source>All Sessions</source>
+        <translation>Lahat ng Session</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Naka-archive</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation>Tag</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Mga Session</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>(walang pamagat)</translation>
+    </message>
+</context>
+<context>
+    <name>SessionsPage</name>
+    <message>
+        <source>Sessions</source>
+        <translation>Mga Session</translation>
+    </message>
+    <message>
+        <source>LIVE</source>
+        <translation>LIVE</translation>
+    </message>
+    <message>
+        <source>DURABLE</source>
+        <translation>DURABLE</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> tok</translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation>Ituloy</translation>
+    </message>
+    <message>
+        <source>Suspend</source>
+        <translation>I-suspend</translation>
+    </message>
+    <message>
+        <source>Close session</source>
+        <translation>Isara ang session</translation>
+    </message>
+    <message>
+        <source>Session %1 · %2 · %3</source>
+        <translation>Session %1 · %2 · %3</translation>
+    </message>
+    <message>
+        <source>Rewindable — checkpoints available</source>
+        <translation>Marerewind — may available na checkpoint</translation>
+    </message>
+    <message>
+        <source>Not rewindable</source>
+        <translation>Hindi marerewind</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsMenu</name>
+    <message>
+        <source>Transcript</source>
+        <translation>Transcript</translation>
+    </message>
+    <message>
+        <source>Search transcript</source>
+        <translation>Maghanap sa transcript</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>Estilo</translation>
+    </message>
+    <message>
+        <source>Sans</source>
+        <translation>Sans</translation>
+    </message>
+    <message>
+        <source>Serif</source>
+        <translation>Serif</translation>
+    </message>
+    <message>
+        <source>Mono</source>
+        <translation>Mono</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>Teksto</translation>
+    </message>
+    <message>
+        <source>Center text</source>
+        <translation>Igitna ang teksto</translation>
+    </message>
+    <message>
+        <source>Distraction-free</source>
+        <translation>Distraction-free</translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation>Laki ng font</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>Theme</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>Maliwanag</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>Madilim</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <translation>Sepia</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <translation>Hatinggabi</translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation>Mga Opsyon</translation>
+    </message>
+    <message>
+        <source>Show Sessions</source>
+        <translation>Ipakita ang mga Session</translation>
+    </message>
+    <message>
+        <source>Show Fleet Tree</source>
+        <translation>Ipakita ang Fleet Tree</translation>
+    </message>
+    <message>
+        <source>Show Raw Markdown</source>
+        <translation>Ipakita ang Raw Markdown</translation>
+    </message>
+    <message>
+        <source>User message rail</source>
+        <translation>Rail ng mensahe ng user</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Mga Update</translation>
+    </message>
+    <message>
+        <source>Auto-check for updates</source>
+        <translation>Awtomatikong tingnan kung may update</translation>
+    </message>
+    <message>
+        <source>Move to Trash</source>
+        <translation>Ilipat sa Trash</translation>
+    </message>
+    <message>
+        <source>Reset all settings</source>
+        <translation>I-reset lahat ng setting</translation>
+    </message>
+    <message>
+        <source>Reset settings?</source>
+        <translation>I-reset ang mga setting?</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>I-reset</translation>
+    </message>
+    <message>
+        <source>Reset all settings to their defaults?
+This only affects the app appearance, not your data.</source>
+        <translation>I-reset lahat ng setting sa kanilang default?
+Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsPage</name>
+    <message>
+        <source>Appearance</source>
+        <translation>Hitsura</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation>Mga Notification</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Koneksyon</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Chat</translation>
+    </message>
+    <message>
+        <source>Safety</source>
+        <translation>Kaligtasan</translation>
+    </message>
+    <message>
+        <source>Memory &amp; Context</source>
+        <translation>Memory at Context</translation>
+    </message>
+    <message>
+        <source>Workspace</source>
+        <translation>Workspace</translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation>Boses</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>Advanced</translation>
+    </message>
+    <message>
+        <source>Archived chats</source>
+        <translation>Mga naka-archive na chat</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>Tungkol</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Mga Setting</translation>
+    </message>
+    <message>
+        <source>This section is not wired yet</source>
+        <translation>Hindi pa nakakabit ang seksyong ito</translation>
+    </message>
+</context>
+<context>
+    <name>Sidebar</name>
+    <message>
+        <source>Local node</source>
+        <translation>Lokal na node</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Mga Setting</translation>
+    </message>
+    <message>
+        <source>New agent</source>
+        <translation>Bagong agent</translation>
+    </message>
+    <message>
+        <source>New tag</source>
+        <translation>Bagong tag</translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation>I-collapse lahat</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation>I-expand lahat</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Mga Account</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Mga Profile</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Mga Model</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>Dashboard</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Fleet</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Mga Session</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>Mga Approval</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Mga Channel</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>Routing</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Mga naka-iskedyul na job</translation>
+    </message>
+    <message>
+        <source>New chat</source>
+        <translation>Bagong chat</translation>
+    </message>
+    <message>
+        <source>Profile settings</source>
+        <translation>Mga setting ng profile</translation>
+    </message>
+    <message>
+        <source>Memory</source>
+        <translation>Memory</translation>
+    </message>
+</context>
+<context>
+    <name>SidebarModel</name>
+    <message>
+        <source>Local node</source>
+        <translation>Lokal na node</translation>
+    </message>
+    <message>
+        <source>(untitled)</source>
+        <translation>(walang pamagat)</translation>
+    </message>
+    <message>
+        <source>All Sessions</source>
+        <translation>Lahat ng Session</translation>
+    </message>
+    <message>
+        <source>Archived</source>
+        <translation>Naka-archive</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>Mga Tag</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Fleet</translation>
+    </message>
+    <message>
+        <source>Integrations</source>
+        <translation>Mga Integration</translation>
+    </message>
+    <message>
+        <source>New tag</source>
+        <translation>Bagong tag</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBar</name>
+    <message>
+        <source>Command Center</source>
+        <translation>Command Center</translation>
+    </message>
+    <message>
+        <source>Gateway</source>
+        <translation>Gateway</translation>
+    </message>
+    <message>
+        <source>Agents</source>
+        <translation>Mga Agent</translation>
+    </message>
+    <message>
+        <source>Cron</source>
+        <translation>Cron</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>Mga File</translation>
+    </message>
+    <message>
+        <source>Toggle file explorer (Ctrl+E)</source>
+        <translation>I-toggle ang file explorer (Ctrl+E)</translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation>Tumatakbo</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> tok</translation>
+    </message>
+    <message>
+        <source>Session usage · %1 in / %2 out</source>
+        <translation>Paggamit ng session · %1 papasok / %2 palabas</translation>
+    </message>
+    <message>
+        <source>Provider rate limit (remaining / limit)</source>
+        <translation>Rate limit ng provider (natitira / limit)</translation>
+    </message>
+    <message>
+        <source>Session</source>
+        <translation>Session</translation>
+    </message>
+    <message>
+        <source>Approval mode</source>
+        <translation>Approval mode</translation>
+    </message>
+    <message>
+        <source>Toggle terminal</source>
+        <translation>I-toggle ang terminal</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>Tingnan kung may update</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation>Higit pa</translation>
+    </message>
+    <message>
+        <source>YOLO</source>
+        <translation>YOLO</translation>
+    </message>
+    <message>
+        <source>Terminal</source>
+        <translation>Terminal</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBarModel</name>
+    <message>
+        <source>No daemon connection</source>
+        <translation>Walang koneksyon sa daemon</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n failed</source>
+        <translation>
+            <numerusform>%n ang nabigo</numerusform>
+            <numerusform>%n ang nabigo</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>%n ang tumatakbo</numerusform>
+            <numerusform>%n ang tumatakbo</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> tok</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBarView</name>
+    <message>
+        <source> Gateway </source>
+        <translation> Gateway </translation>
+    </message>
+    <message>
+        <source> Agents </source>
+        <translation> Mga Agent </translation>
+    </message>
+    <message>
+        <source>idle</source>
+        <translation>idle</translation>
+    </message>
+    <message>
+        <source> tok</source>
+        <translation> tok</translation>
+    </message>
+    <message>
+        <source>update v</source>
+        <translation>update v</translation>
+    </message>
+</context>
+<context>
+    <name>SubagentList</name>
+    <message>
+        <source>Subagents</source>
+        <translation>Mga Subagent</translation>
+    </message>
+</context>
+<context>
+    <name>SubmitInputBox</name>
+    <message>
+        <source>Message daemon…  (Enter to send, Shift+Enter newline)</source>
+        <translation>Mag-message sa daemon…  (Enter para ipadala, Shift+Enter bagong linya)</translation>
+    </message>
+</context>
+<context>
+    <name>SyntaxHighlightingCLI</name>
+    <message>
+        <source>Command line syntax highlighter using KSyntaxHighlighting syntax definitions.</source>
+        <translation>Command line syntax highlighter gamit ang mga KSyntaxHighlighting syntax definition.</translation>
+    </message>
+    <message>
+        <source>source</source>
+        <translation>source</translation>
+    </message>
+    <message>
+        <source>The source file to highlight. If absent, read the file from stdin and the --syntax option must be used.</source>
+        <translation>Ang source file na ita-highlight. Kung wala, basahin ang file mula sa stdin at dapat gamitin ang --syntax option.</translation>
+    </message>
+    <message>
+        <source>List all available syntax definitions.</source>
+        <translation>Ilista lahat ng available na syntax definition.</translation>
+    </message>
+    <message>
+        <source>List all available themes.</source>
+        <translation>Ilista lahat ng available na theme.</translation>
+    </message>
+    <message>
+        <source>Download new/updated syntax definitions.</source>
+        <translation>I-download ang bago/na-update na mga syntax definition.</translation>
+    </message>
+    <message>
+        <source>File to write HTML output to (default: stdout).</source>
+        <translation>File na susulatan ng HTML output (default: stdout).</translation>
+    </message>
+    <message>
+        <source>output</source>
+        <translation>output</translation>
+    </message>
+    <message>
+        <source>Highlight using this syntax definition (default: auto-detect based on input file).</source>
+        <translation>I-highlight gamit ang syntax definition na ito (default: auto-detect batay sa input file).</translation>
+    </message>
+    <message>
+        <source>syntax</source>
+        <translation>syntax</translation>
+    </message>
+    <message>
+        <source>Color theme to use for highlighting.</source>
+        <translation>Color theme na gagamitin para sa highlighting.</translation>
+    </message>
+    <message>
+        <source>theme</source>
+        <translation>theme</translation>
+    </message>
+    <message>
+        <source>Use the specified format instead of html. Must be html, ansi or ansi256.</source>
+        <translation>Gamitin ang tinukoy na format sa halip na html. Dapat html, ansi o ansi256.</translation>
+    </message>
+    <message>
+        <source>format</source>
+        <translation>format</translation>
+    </message>
+    <message>
+        <source>Add information to debug a syntax file. Only works with --output-format=ansi or ansi256. Possible values are format, region, context, stackSize and all.</source>
+        <translation>Magdagdag ng impormasyon para i-debug ang isang syntax file. Gumagana lang sa --output-format=ansi o ansi256. Mga posibleng value ay format, region, context, stackSize at all.</translation>
+    </message>
+    <message>
+        <source>type</source>
+        <translation>type</translation>
+    </message>
+    <message>
+        <source>Disable ANSI background for the default color.</source>
+        <translation>I-disable ang ANSI background para sa default na kulay.</translation>
+    </message>
+    <message>
+        <source>Select background color role from theme.</source>
+        <translation>Pumili ng background color role mula sa theme.</translation>
+    </message>
+    <message>
+        <source>role</source>
+        <translation>role</translation>
+    </message>
+    <message>
+        <source>For ansi and ansi256 formats, flush the output buffer on each line.</source>
+        <translation>Para sa mga format na ansi at ansi256, i-flush ang output buffer sa bawat linya.</translation>
+    </message>
+    <message>
+        <source>Set HTML page&apos;s title
+(default: the filename or &quot;KSyntaxHighlighter&quot; if reading from stdin).</source>
+        <translation>Itakda ang title ng HTML page
+(default: ang filename o &quot;KSyntaxHighlighter&quot; kung nagbabasa mula sa stdin).</translation>
+    </message>
+    <message>
+        <source>title</source>
+        <translation>title</translation>
+    </message>
+</context>
+<context>
+    <name>SystemMessage</name>
+    <message>
+        <source>Steering note</source>
+        <translation>Steering note</translation>
+    </message>
+</context>
+<context>
+    <name>TabBar</name>
+    <message>
+        <source>Unsaved changes</source>
+        <translation>Mga hindi na-save na pagbabago</translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation>Isara ang tab</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>Bagong tab</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Mga Setting</translation>
+    </message>
+</context>
+<context>
+    <name>TabModel</name>
+    <message>
+        <source>Session</source>
+        <translation>Session</translation>
+    </message>
+    <message>
+        <source>Page</source>
+        <translation>Page</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPanelStub</name>
+    <message>
+        <source>The terminal is not available in this build</source>
+        <translation>Hindi available ang terminal sa build na ito</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Isara</translation>
+    </message>
+</context>
+<context>
+    <name>TextPromptDialog</name>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Kanselahin</translation>
+    </message>
+</context>
+<context>
+    <name>ThemePalette</name>
+    <message>
+        <source>Dark</source>
+        <comment>theme name</comment>
+        <translation>Madilim</translation>
+    </message>
+    <message>
+        <source>Sepia</source>
+        <comment>theme name</comment>
+        <translation>Sepia</translation>
+    </message>
+    <message>
+        <source>Midnight</source>
+        <comment>theme name</comment>
+        <translation>Hatinggabi</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <comment>theme name</comment>
+        <translation>Maliwanag</translation>
+    </message>
+</context>
+<context>
+    <name>TodoList</name>
+    <message>
+        <source>Tasks</source>
+        <translation>Mga Task</translation>
+    </message>
+</context>
+<context>
+    <name>ToolApprovalBar</name>
+    <message>
+        <source>Approve this action?</source>
+        <translation>Aprubahan ang aksyong ito?</translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>Aprubahan</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Tanggihan</translation>
+    </message>
+    <message>
+        <source>Allow permanently</source>
+        <translation>Payagan nang permanente</translation>
+    </message>
+</context>
+<context>
+    <name>ToolCallBlock</name>
+    <message>
+        <source>Tool</source>
+        <translation>Tool</translation>
+    </message>
+</context>
+<context>
+    <name>Transcript</name>
+    <message>
+        <source>Couldn&apos;t access the clipboard. Copy needs a secure (https) page.</source>
+        <translation>Hindi ma-access ang clipboard. Kailangan ng secure (https) na page ang pagkopya.</translation>
+    </message>
+    <message>
+        <source>
+
+Thanks — proceeding with: %1
+</source>
+        <translation>
+
+Salamat — magpapatuloy sa: %1
+</translation>
+    </message>
+    <message>
+        <source>Start the session</source>
+        <translation>Simulan ang session</translation>
+    </message>
+    <message>
+        <source>Send a message below to begin. The agent&apos;s reasoning, tool calls, and replies will stream in here.</source>
+        <translation>Magpadala ng mensahe sa ibaba para magsimula. Ang reasoning, tool call, at mga sagot ng agent ay mag-stream dito.</translation>
+    </message>
+    <message>
+        <source>Find in transcript</source>
+        <translation>Maghanap sa transcript</translation>
+    </message>
+    <message>
+        <source>0/0</source>
+        <translation>0/0</translation>
+    </message>
+    <message>
+        <source>Previous match (Shift+Enter)</source>
+        <translation>Nakaraang match (Shift+Enter)</translation>
+    </message>
+    <message>
+        <source>Next match (Enter)</source>
+        <translation>Susunod na match (Enter)</translation>
+    </message>
+    <message>
+        <source>Close (Esc)</source>
+        <translation>Isara (Esc)</translation>
+    </message>
+</context>
+<context>
+    <name>TranscriptPage</name>
+    <message>
+        <source>Session</source>
+        <translation>Session</translation>
+    </message>
+    <message>
+        <source>The turn finished.</source>
+        <translation>Natapos ang turn.</translation>
+    </message>
+    <message>
+        <source>needs your approval</source>
+        <translation>kailangan ng iyong approval</translation>
+    </message>
+    <message>
+        <source>needs a credential</source>
+        <translation>kailangan ng credential</translation>
+    </message>
+    <message>
+        <source>The turn %1.</source>
+        <translation>Ang turn ay %1.</translation>
+    </message>
+    <message>
+        <source>Select a session</source>
+        <translation>Pumili ng session</translation>
+    </message>
+    <message>
+        <source>Clear session</source>
+        <translation>I-clear ang session</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>I-clear</translation>
+    </message>
+    <message>
+        <source>Remove all messages from this session? This cannot be undone.</source>
+        <translation>Alisin ang lahat ng mensahe sa session na ito? Hindi na ito mababawi.</translation>
+    </message>
+    <message>
+        <source>Secret required</source>
+        <translation>Kailangan ng secret</translation>
+    </message>
+    <message>
+        <source>Password required</source>
+        <translation>Kailangan ng password</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>I-submit</translation>
+    </message>
+    <message>
+        <source>Paste secret…</source>
+        <translation>I-paste ang secret…</translation>
+    </message>
+    <message>
+        <source>Password…</source>
+        <translation>Password…</translation>
+    </message>
+    <message>
+        <source>Never stored - forwarded to the host for this step only.</source>
+        <translation>Hindi kailanman iniimbak - ipinapasa sa host para sa hakbang na ito lamang.</translation>
+    </message>
+    <message>
+        <source>Exit distraction-free (Esc)</source>
+        <translation>Lumabas sa distraction-free (Esc)</translation>
+    </message>
+</context>
+<context>
+    <name>TranscriptView</name>
+    <message>
+        <source>Enter restore  e edit  Esc cancel</source>
+        <translation>Enter i-restore  e i-edit  Esc kanselahin</translation>
+    </message>
+</context>
+<context>
+    <name>TuiFileTabController</name>
+    <message>
+        <source>Binary file - not editable</source>
+        <translation>Binary file - hindi ma-edit</translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation>Na-save</translation>
+    </message>
+    <message>
+        <source>Save failed</source>
+        <translation>Nabigo ang pag-save</translation>
+    </message>
+</context>
+<context>
+    <name>TuiOverlayHost</name>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
+        <source>Download model — pick a repo</source>
+        <translation>Mag-download ng model — pumili ng repo</translation>
+    </message>
+    <message>
+        <source>Choose a quantization</source>
+        <translation>Pumili ng quantization</translation>
+    </message>
+    <message>
+        <source>Go to file</source>
+        <translation>Pumunta sa file</translation>
+    </message>
+    <message>
+        <source>Enter opens a preview · Shift+Enter pins · Esc closes</source>
+        <translation>Enter nagbubukas ng preview · Shift+Enter nagpi-pin · Esc nagsasara</translation>
+    </message>
+    <message>
+        <source>Attach file</source>
+        <translation>Maglakip ng file</translation>
+    </message>
+    <message>
+        <source>Enter attaches the selected file · Esc cancels</source>
+        <translation>Enter naglalakip ng piniling file · Esc kinakansela</translation>
+    </message>
+    <message>
+        <source>Commands</source>
+        <translation>Mga Command</translation>
+    </message>
+</context>
+<context>
+    <name>TuiPageHub</name>
+    <message>
+        <source>Settings</source>
+        <translation>Mga Setting</translation>
+    </message>
+    <message>
+        <source>Dashboard</source>
+        <translation>Dashboard</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Mga Model</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>Mga Account</translation>
+    </message>
+    <message>
+        <source>Profiles</source>
+        <translation>Mga Profile</translation>
+    </message>
+    <message>
+        <source>Fleet</source>
+        <translation>Fleet</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Mga Session</translation>
+    </message>
+    <message>
+        <source>Approvals</source>
+        <translation>Mga Approval</translation>
+    </message>
+    <message>
+        <source>Routing</source>
+        <translation>Routing</translation>
+    </message>
+    <message>
+        <source>Scheduled jobs</source>
+        <translation>Mga naka-iskedyul na job</translation>
+    </message>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>Mga User at Access</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation>Mga Channel</translation>
+    </message>
+    <message>
+        <source>on</source>
+        <translation>on</translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation>off</translation>
+    </message>
+    <message>
+        <source>_(not set)_</source>
+        <translation>_(hindi nakatakda)_</translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation>Hitsura</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>Theme</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Wika</translation>
+    </message>
+    <message>
+        <source>applies live; restart to retranslate the whole chrome</source>
+        <translation>agad na inilalapat; i-restart para ma-retranslate ang buong chrome</translation>
+    </message>
+    <message>
+        <source>Distraction-free (hide chrome)</source>
+        <translation>Distraction-free (itago ang chrome)</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation>Mga Notification</translation>
+    </message>
+    <message>
+        <source>Notify when a turn needs my input</source>
+        <translation>Mag-notify kapag kailangan ng turn ang aking input</translation>
+    </message>
+    <message>
+        <source>Notify when a turn finishes</source>
+        <translation>Mag-notify kapag natapos ang isang turn</translation>
+    </message>
+    <message>
+        <source>Connection</source>
+        <translation>Koneksyon</translation>
+    </message>
+    <message>
+        <source>Start a local daemon automatically</source>
+        <translation>Awtomatikong magsimula ng lokal na daemon</translation>
+    </message>
+    <message>
+        <source>Stop the managed daemon when I close the app</source>
+        <translation>Ihinto ang pinamamahalaang daemon kapag isinara ko ang app</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Mga Update</translation>
+    </message>
+    <message>
+        <source>Automatically check for updates</source>
+        <translation>Awtomatikong tingnan kung may update</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
+        <source>Reasoning effort</source>
+        <translation>Reasoning effort</translation>
+    </message>
+    <message>
+        <source>Fast mode (lower latency)</source>
+        <translation>Fast mode (mas mababang latency)</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Chat</translation>
+    </message>
+    <message>
+        <source>Stream responses</source>
+        <translation>I-stream ang mga sagot</translation>
+    </message>
+    <message>
+        <source>Send on Enter (Shift+Enter for newline)</source>
+        <translation>Ipadala sa Enter (Shift+Enter para sa bagong linya)</translation>
+    </message>
+    <message>
+        <source>Show token counts</source>
+        <translation>Ipakita ang bilang ng token</translation>
+    </message>
+    <message>
+        <source>Default system prompt for new chats</source>
+        <translation>Default na system prompt para sa mga bagong chat</translation>
+    </message>
+    <message>
+        <source>Safety</source>
+        <translation>Kaligtasan</translation>
+    </message>
+    <message>
+        <source>Approval policy</source>
+        <translation>Approval policy</translation>
+    </message>
+    <message>
+        <source>Filesystem access</source>
+        <translation>Filesystem access</translation>
+    </message>
+    <message>
+        <source>Allow network access</source>
+        <translation>Payagan ang network access</translation>
+    </message>
+    <message>
+        <source>Memory &amp; Context</source>
+        <translation>Memory at Context</translation>
+    </message>
+    <message>
+        <source>Max context tokens</source>
+        <translation>Max na context token</translation>
+    </message>
+    <message>
+        <source>Auto-compact when context is full</source>
+        <translation>Auto-compact kapag puno ang context</translation>
+    </message>
+    <message>
+        <source>Persist memory across sessions</source>
+        <translation>Panatilihin ang memory sa lahat ng session</translation>
+    </message>
+    <message>
+        <source>Workspace</source>
+        <translation>Workspace</translation>
+    </message>
+    <message>
+        <source>Workspace root</source>
+        <translation>Workspace root</translation>
+    </message>
+    <message>
+        <source>Respect .gitignore</source>
+        <translation>Igalang ang .gitignore</translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation>Boses</translation>
+    </message>
+    <message>
+        <source>Enable voice transcription</source>
+        <translation>Paganahin ang voice transcription</translation>
+    </message>
+    <message>
+        <source>Transcription model</source>
+        <translation>Transcription model</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation>Advanced</translation>
+    </message>
+    <message>
+        <source>Log level</source>
+        <translation>Log level</translation>
+    </message>
+    <message>
+        <source>Send anonymous telemetry</source>
+        <translation>Magpadala ng anonymous na telemetry</translation>
+    </message>
+    <message>
+        <source>Enable experimental tools</source>
+        <translation>Paganahin ang mga eksperimentong tool</translation>
+    </message>
+    <message>
+        <source># Settings
+
+</source>
+        <translation># Mga Setting
+
+</translation>
+    </message>
+    <message>
+        <source>Shared with the GUI — both front ends edit the same daemon config and app prefs. **j/k** select a row · **Space/Enter** toggles · **Enter** opens a picker/editor · **F8** cycles the theme.
+</source>
+        <translation>Ibinabahagi sa GUI — pareho ang ini-edit ng dalawang front end na daemon config at app prefs. **j/k** pumili ng row · **Space/Enter** nagto-toggle · **Enter** nagbubukas ng picker/editor · **F8** nag-iikot ng theme.
+</translation>
+    </message>
+    <message>
+        <source>- State: **%1** · %2 · `%3` — _reconnect via the GUI picker or the first-run gate_
+</source>
+        <translation>- State: **%1** · %2 · `%3` — _kumonekta muli sa pamamagitan ng GUI picker o ng first-run gate_
+</translation>
+    </message>
+    <message>
+        <source>- Active default: `%1` — _change or install in the Models page (`/models`)_
+</source>
+        <translation>- Active default: `%1` — _magpalit o mag-install sa Models page (`/models`)_
+</translation>
+    </message>
+    <message>
+        <source># Models
+
+</source>
+        <translation># Mga Model
+
+</translation>
+    </message>
+    <message>
+        <source>Installed models, shared with the GUI. **j/k** move · **Enter** activates · **x** removes · **d** download a model (repo → quant).
+
+</source>
+        <translation>Mga naka-install na model, ibinabahagi sa GUI. **j/k** gumalaw · **Enter** nag-a-activate · **x** nag-aalis · **d** mag-download ng model (repo → quant).
+
+</translation>
+    </message>
+    <message>
+        <source>## Installed
+
+</source>
+        <translation>## Naka-install
+
+</translation>
+    </message>
+    <message>
+        <source>_None installed._
+
+</source>
+        <translation>_Walang naka-install._
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** (%3)%4
+</source>
+        <translation>- %1**%2** (%3)%4
+</translation>
+    </message>
+    <message>
+        <source> — **active**</source>
+        <translation> — **aktibo**</translation>
+    </message>
+    <message>
+        <source>## Downloads
+
+</source>
+        <translation>## Mga Download
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2%  · %3
+</source>
+        <translation>- %1 — %2%  · %3
+</translation>
+    </message>
+    <message>
+        <source>## Discover
+
+</source>
+        <translation>## Tuklasin
+
+</translation>
+    </message>
+    <message>
+        <source>_Press **d** to search repos and download a model._
+</source>
+        <translation>_Pindutin ang **d** para maghanap ng repo at mag-download ng model._
+</translation>
+    </message>
+    <message>
+        <source>- %1 — %2 · ↓ %3
+</source>
+        <translation>- %1 — %2 · ↓ %3
+</translation>
+    </message>
+    <message>
+        <source>
+## Providers
+
+</source>
+        <translation>
+## Mga Provider
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 (%2)%3
+</source>
+        <translation>- %1 (%2)%3
+</translation>
+    </message>
+    <message>
+        <source> — configured</source>
+        <translation> — naka-configure</translation>
+    </message>
+    <message>
+        <source># Accounts
+
+</source>
+        <translation># Mga Account
+
+</translation>
+    </message>
+    <message>
+        <source>Connected provider accounts, shared with the GUI. **j/k** move · **a** add account · **R**/**Enter** re-auth · **x** remove.
+
+</source>
+        <translation>Mga nakakonektang provider account, ibinabahagi sa GUI. **j/k** gumalaw · **a** magdagdag ng account · **R**/**Enter** mag-re-auth · **x** mag-alis.
+
+</translation>
+    </message>
+    <message>
+        <source>## Connected
+
+</source>
+        <translation>## Nakakonekta
+
+</translation>
+    </message>
+    <message>
+        <source>_No accounts._
+
+</source>
+        <translation>_Walang account._
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** — %3 (%4) · %5
+</source>
+        <translation>- %1**%2** — %3 (%4) · %5
+</translation>
+    </message>
+    <message>
+        <source>OAuth</source>
+        <translation>OAuth</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API key</translation>
+    </message>
+    <message>
+        <source>## Available providers
+
+</source>
+        <translation>## Mga available na provider
+
+</translation>
+    </message>
+    <message>
+        <source>- %1 (%2)
+</source>
+        <translation>- %1 (%2)
+</translation>
+    </message>
+    <message>
+        <source># Profiles
+
+</source>
+        <translation># Mga Profile
+
+</translation>
+    </message>
+    <message>
+        <source>Agent profiles, shared with the GUI. **j/k** move · **Enter** set default · **e** edit (provider / model / prompt / skills / tools) · **n** clone · **a** new agent · **x** delete.
+
+</source>
+        <translation>Mga agent profile, ibinabahagi sa GUI. **j/k** gumalaw · **Enter** itakda ang default · **e** i-edit (provider / model / prompt / skill / tool) · **n** i-clone · **a** bagong agent · **x** burahin.
+
+</translation>
+    </message>
+    <message>
+        <source>## %1%2%3
+
+</source>
+        <translation>## %1%2%3
+
+</translation>
+    </message>
+    <message>
+        <source> (default)</source>
+        <translation> (default)</translation>
+    </message>
+    <message>
+        <source>- Model: `%1`
+</source>
+        <translation>- Model: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Skills: %1
+</source>
+        <translation>- Mga Skill: %1
+</translation>
+    </message>
+    <message>
+        <source>- Tools: %1
+
+</source>
+        <translation>- Mga Tool: %1
+
+</translation>
+    </message>
+    <message>
+        <source># Profile
+
+_No agent selected._
+</source>
+        <translation># Profile
+
+_Walang piniling agent._
+</translation>
+    </message>
+    <message>
+        <source># Profile - %1
+
+</source>
+        <translation># Profile - %1
+
+</translation>
+    </message>
+    <message>
+        <source>Agent == profile. Memory lives in this agent&apos;s bank (`%1`). Press **e** to edit this profile.
+
+</source>
+        <translation>Agent == profile. Ang memory ay nasa bank ng agent na ito (`%1`). Pindutin ang **e** para i-edit ang profile na ito.
+
+</translation>
+    </message>
+    <message>
+        <source>## Engine
+
+</source>
+        <translation>## Engine
+
+</translation>
+    </message>
+    <message>
+        <source>- Provider: **%1**
+</source>
+        <translation>- Provider: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Model: **%1**
+</source>
+        <translation>- Model: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Base URL: %1
+</source>
+        <translation>- Base URL: %1
+</translation>
+    </message>
+    <message>
+        <source>(provider default)</source>
+        <translation>(default ng provider)</translation>
+    </message>
+    <message>
+        <source>- Context engine: %1
+
+</source>
+        <translation>- Context engine: %1
+
+</translation>
+    </message>
+    <message>
+        <source>## Memory
+
+</source>
+        <translation>## Memory
+
+</translation>
+    </message>
+    <message>
+        <source>- Memory provider: **%1**
+
+</source>
+        <translation>- Memory provider: **%1**
+
+</translation>
+    </message>
+    <message>
+        <source>## Persona
+
+</source>
+        <translation>## Persona
+
+</translation>
+    </message>
+    <message>
+        <source>_none_
+
+</source>
+        <translation>_wala_
+
+</translation>
+    </message>
+    <message>
+        <source>Tool allowlist</source>
+        <translation>Allowlist ng tool</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation>Mga Skill</translation>
+    </message>
+    <message>
+        <source># Memory - %1
+
+</source>
+        <translation># Memory - %1
+
+</translation>
+    </message>
+    <message>
+        <source>agent</source>
+        <translation>agent</translation>
+    </message>
+    <message>
+        <source>Mnemosyne memory for the active scope, shared with the GUI. The knowledge graph renders as a node-link diagram in the GUI; here it is an adjacency listing.
+
+</source>
+        <translation>Mnemosyne memory para sa aktibong scope, ibinabahagi sa GUI. Ang knowledge graph ay ipinapakita bilang node-link diagram sa GUI; dito ito ay isang adjacency listing.
+
+</translation>
+    </message>
+    <message>
+        <source>## Overview
+
+</source>
+        <translation>## Overview
+
+</translation>
+    </message>
+    <message>
+        <source>- Working: **%1** · Episodic: **%2** · Scratchpad: **%3**
+</source>
+        <translation>- Working: **%1** · Episodic: **%2** · Scratchpad: **%3**
+</translation>
+    </message>
+    <message>
+        <source>- Facts: **%1** · Conflicts: **%2**
+
+</source>
+        <translation>- Mga Fact: **%1** · Mga Conflict: **%2**
+
+</translation>
+    </message>
+    <message>
+        <source>By source</source>
+        <translation>Ayon sa source</translation>
+    </message>
+    <message>
+        <source>By veracity</source>
+        <translation>Ayon sa veracity</translation>
+    </message>
+    <message>
+        <source>By lifecycle</source>
+        <translation>Ayon sa lifecycle</translation>
+    </message>
+    <message>
+        <source>## Memories
+
+</source>
+        <translation>## Mga Memory
+
+</translation>
+    </message>
+    <message>
+        <source>_No memories in scope._
+
+</source>
+        <translation>_Walang memory sa scope._
+
+</translation>
+    </message>
+    <message>
+        <source>- **%1** _(%2 · %3 · imp %4)_
+</source>
+        <translation>- **%1** _(%2 · %3 · imp %4)_
+</translation>
+    </message>
+    <message>
+        <source>## Graph adjacency
+
+</source>
+        <translation>## Graph adjacency
+
+</translation>
+    </message>
+    <message>
+        <source>_No edges in scope._
+
+</source>
+        <translation>_Walang edge sa scope._
+
+</translation>
+    </message>
+    <message>
+        <source>## Timeline
+
+</source>
+        <translation>## Timeline
+
+</translation>
+    </message>
+    <message>
+        <source># Dashboard
+
+</source>
+        <translation># Dashboard
+
+</translation>
+    </message>
+    <message>
+        <source>- Active sessions: **%1**
+</source>
+        <translation>- Mga aktibong session: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Running agents: **%1**
+</source>
+        <translation>- Mga tumatakbong agent: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Pending approvals: **%1**
+</source>
+        <translation>- Mga nakabinbing approval: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Tokens today: **%1**
+</source>
+        <translation>- Mga token ngayon: **%1**
+</translation>
+    </message>
+    <message>
+        <source>- Daemon health: **%1**
+
+</source>
+        <translation>- Kalusugan ng daemon: **%1**
+
+</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>degraded</source>
+        <translation>degraded</translation>
+    </message>
+    <message>
+        <source>## Recent activity
+
+</source>
+        <translation>## Kamakailang aktibidad
+
+</translation>
+    </message>
+    <message>
+        <source>- _%1_ — %2
+</source>
+        <translation>- _%1_ — %2
+</translation>
+    </message>
+    <message>
+        <source># Fleet
+
+</source>
+        <translation># Fleet
+
+</translation>
+    </message>
+    <message>
+        <source>Orchestrator/worker tree, shared with the GUI. **j/k** move · **Space/Enter** pause/resume.
+
+</source>
+        <translation>Orchestrator/worker tree, ibinabahagi sa GUI. **j/k** gumalaw · **Space/Enter** i-pause/ituloy.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1%2 — %3 (`%4`)
+</source>
+        <translation>- %1%2 — %3 (`%4`)
+</translation>
+    </message>
+    <message>
+        <source># Sessions
+
+</source>
+        <translation># Mga Session
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **s** suspend · **R**/**Enter** resume · **x** close.
+
+</source>
+        <translation>**j/k** gumalaw · **s** i-suspend · **R**/**Enter** ituloy · **x** isara.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** — %3 · %4 · %5 · %6 tok
+</source>
+        <translation>- %1**%2** — %3 · %4 · %5 · %6 tok
+</translation>
+    </message>
+    <message>
+        <source># Approvals
+
+</source>
+        <translation># Mga Approval
+
+</translation>
+    </message>
+    <message>
+        <source>_Inbox zero — no pending approvals._
+</source>
+        <translation>_Inbox zero — walang nakabinbing approval._
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **a**/**Enter** approve · **d** deny.
+
+</source>
+        <translation>**j/k** gumalaw · **a**/**Enter** aprubahan · **d** tanggihan.
+
+</translation>
+    </message>
+    <message>
+        <source>## %1%2 (%3 risk)
+
+</source>
+        <translation>## %1%2 (%3 na risk)
+
+</translation>
+    </message>
+    <message>
+        <source>- Session: %1
+</source>
+        <translation>- Session: %1
+</translation>
+    </message>
+    <message>
+        <source>- Command: `%1`
+
+</source>
+        <translation>- Command: `%1`
+
+</translation>
+    </message>
+    <message>
+        <source># Routing
+
+</source>
+        <translation># Routing
+
+</translation>
+    </message>
+    <message>
+        <source>Intent → model rules, shared with the GUI. **j/k** move · **Space/Enter** toggle · **x** delete.
+
+</source>
+        <translation>Intent → mga panuntunan ng model, ibinabahagi sa GUI. **j/k** gumalaw · **Space/Enter** i-toggle · **x** burahin.
+
+</translation>
+    </message>
+    <message>
+        <source>- %1**%2** → `%3` (fallback `%4`)%5
+</source>
+        <translation>- %1**%2** → `%3` (fallback `%4`)%5
+</translation>
+    </message>
+    <message>
+        <source> — _disabled_</source>
+        <translation> — _naka-disable_</translation>
+    </message>
+    <message>
+        <source># Scheduled jobs
+
+</source>
+        <translation># Mga naka-iskedyul na job
+
+</translation>
+    </message>
+    <message>
+        <source>**j/k** move · **Space/Enter** enable/disable · **t** run now · **x** delete.
+
+</source>
+        <translation>**j/k** gumalaw · **Space/Enter** i-enable/i-disable · **t** patakbuhin ngayon · **x** burahin.
+
+</translation>
+    </message>
+    <message>
+        <source> (disabled)</source>
+        <translation> (naka-disable)</translation>
+    </message>
+    <message>
+        <source>- Schedule: `%1`
+</source>
+        <translation>- Iskedyul: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- Profile: %1
+</source>
+        <translation>- Profile: %1
+</translation>
+    </message>
+    <message>
+        <source>- Next: %1 · Last: %2
+
+</source>
+        <translation>- Susunod: %1 · Huli: %2
+
+</translation>
+    </message>
+    <message>
+        <source># Users &amp; Access
+
+</source>
+        <translation># Mga User at Access
+
+</translation>
+    </message>
+    <message>
+        <source>## Signed in as
+
+</source>
+        <translation>## Naka-sign in bilang
+
+</translation>
+    </message>
+    <message>
+        <source>- **%1**
+</source>
+        <translation>- **%1**
+</translation>
+    </message>
+    <message>
+        <source>- User id: `%1`
+</source>
+        <translation>- User id: `%1`
+</translation>
+    </message>
+    <message>
+        <source>- **Not authenticated**
+</source>
+        <translation>- **Hindi authenticated**
+</translation>
+    </message>
+    <message>
+        <source>- Roles: %1
+</source>
+        <translation>- Mga Role: %1
+</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>(wala)</translation>
+    </message>
+    <message>
+        <source>- Capabilities: %1
+
+</source>
+        <translation>- Mga Capability: %1
+
+</translation>
+    </message>
+    <message>
+        <source>## Users &amp; roles
+
+</source>
+        <translation>## Mga User at role
+
+</translation>
+    </message>
+    <message>
+        <source>User administration is not available yet.
+
+</source>
+        <translation>Hindi pa available ang user administration.
+
+</translation>
+    </message>
+    <message>
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.
+</source>
+        <translation>Ang paglilista, paggawa, pag-disable ng mga user at pagtatalaga ng mga role ay nangangailangan ng node access-admin API, na ginagawa pa.
+</translation>
+    </message>
+    <message>
+        <source># Channels
+
+</source>
+        <translation># Mga Channel
+
+</translation>
+    </message>
+    <message>
+        <source>_Channels are unavailable: the transports seam is not wired in this mode._
+</source>
+        <translation>_Hindi available ang mga channel: hindi nakakabit ang transports seam sa mode na ito._
+</translation>
+    </message>
+    <message>
+        <source>Events-IO transport accounts and their live rooms, shared with the GUI. Read-only in both shells this slice - connecting is deferred (EIO-2).
+
+</source>
+        <translation>Mga Events-IO transport account at ang kanilang mga live room, ibinabahagi sa GUI. Read-only sa parehong shell sa slice na ito - ipinagpaliban ang pagkonekta (EIO-2).
+
+</translation>
+    </message>
+    <message>
+        <source>## Accounts
+
+</source>
+        <translation>## Mga Account
+
+</translation>
+    </message>
+    <message>
+        <source>_No channels connected._
+</source>
+        <translation>_Walang nakakonektang channel._
+</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>- %1 **%2** — %3 · %4
+</source>
+        <translation>- %1 **%2** — %3 · %4
+</translation>
+    </message>
+    <message>
+        <source>  - _No rooms._
+</source>
+        <translation>  - _Walang room._
+</translation>
+    </message>
+    <message>
+        <source>  - %1
+</source>
+        <translation>  - %1
+</translation>
+    </message>
+    <message>
+        <source>  - %1 · %2
+</source>
+        <translation>  - %1 · %2
+</translation>
+    </message>
+    <message>
+        <source>## Add channel
+
+</source>
+        <translation>## Magdagdag ng channel
+
+</translation>
+    </message>
+    <message>
+        <source>_Connect to a daemon to see available channel types._
+</source>
+        <translation>_Kumonekta sa isang daemon para makita ang mga available na uri ng channel._
+</translation>
+    </message>
+    <message>
+        <source>- **%1** (`%2`)
+</source>
+        <translation>- **%1** (`%2`)
+</translation>
+    </message>
+</context>
+<context>
+    <name>TurnController</name>
+    <message>
+        <source>The agent hit an error completing this turn.</source>
+        <translation>Nakaranas ng error ang agent sa pagkumpleto ng turn na ito.</translation>
+    </message>
+    <message>
+        <source>The build failed while completing this turn.</source>
+        <translation>Nabigo ang build habang kinukumpleto ang turn na ito.</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateManager</name>
+    <message>
+        <source>Install &amp; restart</source>
+        <translation>I-install at i-restart</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Buksan</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the installer instead</source>
+        <translation>hindi available ang self-apply (%1); binubuksan na lang ang installer</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the download instead</source>
+        <translation>hindi available ang self-apply (%1); binubuksan na lang ang download</translation>
+    </message>
+    <message>
+        <source>self-apply is not available for this artifact; opening the update</source>
+        <translation>hindi available ang self-apply para sa artifact na ito; binubuksan ang update</translation>
+    </message>
+</context>
+<context>
+    <name>UsersAccessPage</name>
+    <message>
+        <source>Users &amp; Access</source>
+        <translation>Mga User at Access</translation>
+    </message>
+    <message>
+        <source>Signed in as</source>
+        <translation>Naka-sign in bilang</translation>
+    </message>
+    <message>
+        <source>Not authenticated</source>
+        <translation>Hindi authenticated</translation>
+    </message>
+    <message>
+        <source>User id: %1</source>
+        <translation>User id: %1</translation>
+    </message>
+    <message>
+        <source>Roles: %1</source>
+        <translation>Mga Role: %1</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>(wala)</translation>
+    </message>
+    <message>
+        <source>Capabilities: %1</source>
+        <translation>Mga Capability: %1</translation>
+    </message>
+    <message>
+        <source>Users &amp; roles</source>
+        <translation>Mga User at role</translation>
+    </message>
+    <message>
+        <source>User administration is not available yet.</source>
+        <translation>Hindi pa available ang user administration.</translation>
+    </message>
+    <message>
+        <source>Listing, creating, disabling users and assigning roles requires the node access-admin API, which is still being built.</source>
+        <translation>Ang paglilista, paggawa, pag-disable ng mga user at pagtatalaga ng mga role ay nangangailangan ng node access-admin API, na ginagawa pa.</translation>
+    </message>
+    <message>
+        <source>Add user</source>
+        <translation>Magdagdag ng user</translation>
+    </message>
+</context>
+<context>
+    <name>VoiceSection</name>
+    <message>
+        <source>Voice input</source>
+        <translation>Voice input</translation>
+    </message>
+    <message>
+        <source>Enable voice transcription</source>
+        <translation>Paganahin ang voice transcription</translation>
+    </message>
+    <message>
+        <source>Transcription model</source>
+        <translation>Transcription model</translation>
+    </message>
+</context>
+<context>
+    <name>WorkspaceSection</name>
+    <message>
+        <source>Workspace root</source>
+        <translation>Workspace root</translation>
+    </message>
+    <message>
+        <source>Path the agent operates in</source>
+        <translation>Path na pinagpapatakbuhan ng agent</translation>
+    </message>
+    <message>
+        <source>Respect .gitignore</source>
+        <translation>Igalang ang .gitignore</translation>
+    </message>
+</context>
+<context>
+    <name>accounts::DaemonAccountsService</name>
+    <message>
+        <source>OAuth sign-in is not available yet; add an API key instead.</source>
+        <translation>Hindi pa available ang OAuth sign-in; magdagdag na lang ng API key.</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ApprovalRepository</name>
+    <message>
+        <source>Approval decision failed</source>
+        <translation>Nabigo ang desisyon sa approval</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::CredentialRepository</name>
+    <message>
+        <source>Credential operation failed</source>
+        <translation>Nabigo ang operasyon sa credential</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonConnectionService</name>
+    <message>
+        <source>Could not reach the daemon. Check it is running and try again.</source>
+        <translation>Hindi maabot ang daemon. Tiyaking tumatakbo ito at subukang muli.</translation>
+    </message>
+    <message>
+        <source>The daemon reported it is not healthy.</source>
+        <translation>Iniulat ng daemon na hindi ito healthy.</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>hindi alam</translation>
+    </message>
+    <message>
+        <source>Replacing an incompatible local daemon (api %1, need %2)...</source>
+        <translation>Pinapalitan ang isang hindi tugmang lokal na daemon (api %1, kailangan %2)...</translation>
+    </message>
+    <message>
+        <source>Incompatible daemon (api %1, need %2).</source>
+        <translation>Hindi tugmang daemon (api %1, kailangan %2).</translation>
+    </message>
+    <message>
+        <source>Reconnecting...</source>
+        <translation>Kumokonekta muli...</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device.</source>
+        <translation>Mga koneksyong WebSocket (ws:// o wss://) lamang ang gumagana sa device na ito.</translation>
+    </message>
+    <message>
+        <source>Only WebSocket connections (ws:// or wss://) work on this device</source>
+        <translation>Mga koneksyong WebSocket (ws:// o wss://) lamang ang gumagana sa device na ito</translation>
+    </message>
+    <message>
+        <source>Unix socket target accepted</source>
+        <translation>Tinanggap ang Unix socket target</translation>
+    </message>
+    <message>
+        <source>Enter a local socket path</source>
+        <translation>Maglagay ng lokal na socket path</translation>
+    </message>
+    <message>
+        <source>Remote target accepted (host:port, TLS)</source>
+        <translation>Tinanggap ang remote target (host:port, TLS)</translation>
+    </message>
+    <message>
+        <source>Use host:port for a remote TLS node</source>
+        <translation>Gamitin ang host:port para sa isang remote na TLS node</translation>
+    </message>
+    <message>
+        <source>WebSocket target accepted (ws:// or wss://)</source>
+        <translation>Tinanggap ang WebSocket target (ws:// o wss://)</translation>
+    </message>
+    <message>
+        <source>Use ws://host:port or wss://host[:port][/path]</source>
+        <translation>Gamitin ang ws://host:port o wss://host[:port][/path]</translation>
+    </message>
+    <message>
+        <source>Unsupported transport</source>
+        <translation>Hindi suportadong transport</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::DaemonTransport</name>
+    <message>
+        <source>No daemon WebSocket target configured</source>
+        <translation>Walang naka-configure na daemon WebSocket target</translation>
+    </message>
+    <message>
+        <source>No daemon target configured</source>
+        <translation>Walang naka-configure na daemon target</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::FleetRepository</name>
+    <message>
+        <source>Unit control failed</source>
+        <translation>Nabigo ang unit control</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::LocalDaemonLauncher</name>
+    <message>
+        <source>Could not find a local daemon binary. Set its path in Settings, or connect to a remote daemon instead.</source>
+        <translation>Hindi makita ang lokal na daemon binary. Itakda ang path nito sa Settings, o kumonekta na lang sa isang remote na daemon.</translation>
+    </message>
+    <message>
+        <source>The local daemon keeps crashing (restarted too many times). Check its log and your configuration.</source>
+        <translation>Paulit-ulit na nagka-crash ang lokal na daemon (masyadong maraming beses na na-restart). Suriin ang log nito at ang iyong configuration.</translation>
+    </message>
+    <message>
+        <source>Failed to start the local daemon (%1).</source>
+        <translation>Nabigong simulan ang lokal na daemon (%1).</translation>
+    </message>
+    <message>
+        <source>The local daemon did not become ready in time.</source>
+        <translation>Hindi naging handa ang lokal na daemon sa tamang oras.</translation>
+    </message>
+    <message>
+        <source>The incompatible local daemon (pid %1) did not shut down in time.</source>
+        <translation>Hindi nag-shut down sa tamang oras ang hindi tugmang lokal na daemon (pid %1).</translation>
+    </message>
+    <message>
+        <source>An incompatible daemon is serving %1, and no pidfile records its process. Stop it manually and reconnect.</source>
+        <translation>May hindi tugmang daemon na nagse-serve ng %1, at walang pidfile na nagtatala ng proseso nito. Ihinto ito nang manu-mano at kumonekta muli.</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ModelRepository</name>
+    <message>
+        <source>Set-model operation failed</source>
+        <translation>Nabigo ang set-model operation</translation>
+    </message>
+    <message>
+        <source>Download could not be started</source>
+        <translation>Hindi masimulan ang download</translation>
+    </message>
+    <message>
+        <source>Delete failed</source>
+        <translation>Nabigo ang pagbura</translation>
+    </message>
+    <message>
+        <source>Activate failed</source>
+        <translation>Nabigo ang pag-activate</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::NodeApiClient</name>
+    <message>
+        <source>request timed out</source>
+        <translation>nag-time out ang request</translation>
+    </message>
+    <message>
+        <source>daemon connection closed</source>
+        <translation>sarado ang koneksyon sa daemon</translation>
+    </message>
+    <message>
+        <source>authentication required</source>
+        <translation>kailangan ng authentication</translation>
+    </message>
+    <message>
+        <source>authentication failed</source>
+        <translation>nabigo ang authentication</translation>
+    </message>
+    <message>
+        <source>stream ended in error</source>
+        <translation>nagtapos sa error ang stream</translation>
+    </message>
+    <message>
+        <source>the request failed</source>
+        <translation>nabigo ang request</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::ProfileRepository</name>
+    <message>
+        <source>Profile import failed</source>
+        <translation>Nabigo ang pag-import ng profile</translation>
+    </message>
+    <message>
+        <source>Version history unavailable</source>
+        <translation>Hindi available ang version history</translation>
+    </message>
+    <message>
+        <source>Profile revert failed</source>
+        <translation>Nabigo ang pag-revert ng profile</translation>
+    </message>
+    <message>
+        <source>Profile operation failed</source>
+        <translation>Nabigo ang operasyon sa profile</translation>
+    </message>
+</context>
+<context>
+    <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>SessionCreate failed</source>
+        <translation>Nabigo ang SessionCreate</translation>
+    </message>
+</context>
+<context>
+    <name>daemonnet::MockDaemonNet</name>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation>User</translation>
+    </message>
+</context>
+<context>
+    <name>firstrun::FirstRunModel</name>
+    <message>
+        <source>Could not reach the node. Check the target and try again.</source>
+        <translation>Hindi maabot ang node. Suriin ang target at subukang muli.</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t verify this API key with %1 — check it and try again.</source>
+        <translation>Hindi ma-verify ang API key na ito sa %1 — suriin ito at subukang muli.</translation>
+    </message>
+</context>
+<context>
+    <name>fs::LocalDiskFsService</name>
+    <message>
+        <source>invalid path</source>
+        <translation>hindi wastong path</translation>
+    </message>
+    <message>
+        <source>cannot open</source>
+        <translation>hindi mabuksan</translation>
+    </message>
+    <message>
+        <source>stale: file changed on disk</source>
+        <translation>stale: nagbago ang file sa disk</translation>
+    </message>
+    <message>
+        <source>write failed</source>
+        <translation>nabigo ang pagsulat</translation>
+    </message>
+</context>
+<context>
+    <name>participants::ParticipantsModel</name>
+    <message>
+        <source>Participants</source>
+        <translation>Mga Kalahok</translation>
+    </message>
+</context>
+<context>
+    <name>update::UpdateManager</name>
+    <message>
+        <source>Install &amp; restart</source>
+        <translation>I-install at i-restart</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Buksan</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the installer instead</source>
+        <translation>hindi available ang self-apply (%1); binubuksan na lang ang installer</translation>
+    </message>
+    <message>
+        <source>self-apply unavailable (%1); opening the download instead</source>
+        <translation>hindi available ang self-apply (%1); binubuksan na lang ang download</translation>
+    </message>
+    <message>
+        <source>self-apply is not available for this artifact; opening the update</source>
+        <translation>hindi available ang self-apply para sa artifact na ito; binubuksan ang update</translation>
+    </message>
+</context>
+</TS>
