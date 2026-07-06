@@ -28,6 +28,21 @@ using daemonapp::daemon::NodeApiCodec;
 
 namespace {
 
+// D1/R2 defensive cap on the persisted tool-result content: the full ToolResult `summary` (diff /
+// stdout / listing text) rides into block metadata, the transcript cache, and the cold-start fence
+// projection, so a runaway multi-MiB output would bloat all three. One soft cap, applied
+// identically on the live and journal-replay paths before the summary enters metadata/cache.
+// 1 Mi QChars (>= 1 MiB UTF-8) keeps any plausible diff/listing intact. The suffix is an
+// untranslated data marker, matching the node's own embedded markers ("[diff truncated]", ...).
+constexpr qsizetype kToolSummaryCapChars = qsizetype(1024) * 1024;
+
+QString cappedSummary(const QString& summary) {
+    if (summary.size() <= kToolSummaryCapChars) {
+        return summary;
+    }
+    return summary.left(kToolSummaryCapChars) + QStringLiteral("\n[output truncated]");
+}
+
 // Map a decoded AgentEvent to the daemon-shaped event map the transcript ingest already understands
 // (the same shapes TurnController emits). Returns an empty map for events that carry no transcript
 // content (the ingest skips those anyway).
@@ -45,11 +60,23 @@ QVariantMap toIngestEvent(const DecodedAgentEvent& event) {
                            {QStringLiteral("callId"), event.callId},
                            {QStringLiteral("name"), event.toolName},
                            {QStringLiteral("argsSummary"), event.toolArgs}};
-    case AgentEventKind::ToolFinished:
-        return QVariantMap{{QStringLiteral("type"), QStringLiteral("toolFinished")},
-                           {QStringLiteral("callId"), event.callId},
-                           {QStringLiteral("status"),
-                            event.toolOk ? QStringLiteral("ok") : QStringLiteral("error")}};
+    case AgentEventKind::ToolFinished: {
+        // D1: carry the raw rich-result payload (full content + typed detail) through to the
+        // ingest; buildToolView projects it into the flat renderer keys. detailBody is JSON
+        // UTF-8 for native tools, carried as text through metadata/fences.
+        QVariantMap map{{QStringLiteral("type"), QStringLiteral("toolFinished")},
+                        {QStringLiteral("callId"), event.callId},
+                        {QStringLiteral("status"),
+                         event.toolOk ? QStringLiteral("ok") : QStringLiteral("error")}};
+        if (!event.toolSummary.isEmpty()) {
+            map.insert(QStringLiteral("summary"), cappedSummary(event.toolSummary));
+        }
+        if (!event.detailKind.isEmpty()) {
+            map.insert(QStringLiteral("detailKind"), event.detailKind);
+            map.insert(QStringLiteral("detailBody"), QString::fromUtf8(event.detailBody));
+        }
+        return map;
+    }
     case AgentEventKind::Usage:
         // CHA-3 HUD: consumed off-stream by StatusBarModel (the ingest skips it).
         return QVariantMap{
@@ -538,6 +565,11 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
                 b.kind = QStringLiteral("ToolResult");
                 b.callId = entry.event.callId;
                 b.ok = entry.event.toolOk;
+                // D1: persist the rich result (full content + typed detail) so a reload / history
+                // scroll-back re-renders the same card the live turn showed.
+                b.summary = cappedSummary(entry.event.toolSummary);
+                b.detailKind = entry.event.detailKind;
+                b.detailBody = entry.event.detailBody;
                 b.updatedAtMs = now;
                 m_cache->upsertTranscriptBlock(b);
             } else if (entry.event.kind == AgentEventKind::TurnFinished &&
@@ -678,7 +710,9 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
                 row.toolName = b.toolName;
                 row.argsSummary = b.argsSummary;
                 row.ok = b.ok;
-                row.summary = b.summary;
+                row.summary = cappedSummary(b.summary);
+                row.detailKind = b.detailKind;
+                row.detailBody = b.detailBody;
                 row.requestId = b.requestId;
                 row.hostKind = b.hostKind;
                 row.contentKind = b.contentKind;
@@ -722,13 +756,23 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
                                 {QStringLiteral("name"), b.toolName},
                                 {QStringLiteral("argsSummary"), b.argsSummary}}});
                 break;
-            case Kind::ToolResult:
-                emit eventsEmitted(QVariantList{
-                    QVariantMap{{QStringLiteral("type"), QStringLiteral("toolFinished")},
-                                {QStringLiteral("callId"), b.callId},
-                                {QStringLiteral("status"),
-                                 b.ok ? QStringLiteral("ok") : QStringLiteral("error")}}});
+            case Kind::ToolResult: {
+                // D1: the journal retains the rich result - replay it exactly as the live path
+                // emits it, so a re-baseline renders the same card.
+                QVariantMap finished{{QStringLiteral("type"), QStringLiteral("toolFinished")},
+                                     {QStringLiteral("callId"), b.callId},
+                                     {QStringLiteral("status"),
+                                      b.ok ? QStringLiteral("ok") : QStringLiteral("error")}};
+                if (!b.summary.isEmpty()) {
+                    finished.insert(QStringLiteral("summary"), cappedSummary(b.summary));
+                }
+                if (!b.detailKind.isEmpty()) {
+                    finished.insert(QStringLiteral("detailKind"), b.detailKind);
+                    finished.insert(QStringLiteral("detailBody"), QString::fromUtf8(b.detailBody));
+                }
+                emit eventsEmitted(QVariantList{finished});
                 break;
+            }
             case Kind::Request: {
                 // Re-surface an unanswered host gate from the durable record (best-effort: the
                 // block carries the id + kind, not the live prompt).

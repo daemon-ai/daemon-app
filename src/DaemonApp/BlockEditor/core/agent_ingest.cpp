@@ -14,11 +14,14 @@ QString stringField(const QVariantMap& m, const QString& key) {
 }
 
 // Copy the detail payload fields a ToolFinished event may carry through to the
-// block metadata, so buildToolView's sub-renderer has what it needs.
+// block metadata, so buildToolView's sub-renderer has what it needs. The raw
+// node carriers (detailKind + detailBody + summary, D1) ride alongside the
+// already-flat keys the simulator emits; buildToolView projects the raw form
+// into the flat renderer keys late, in the shared view model.
 void copyToolDetail(const QVariantMap& event, QVariantMap& meta) {
     static constexpr auto keys =
-        std::to_array<const char*>({"detailKind", "stdout", "stderr", "body", "diff", "hits",
-                                    "imageUrl", "count", "exitCode"});
+        std::to_array<const char*>({"detailKind", "detailBody", "summary", "stdout", "stderr",
+                                    "body", "diff", "hits", "imageUrl", "count", "exitCode"});
     for (const char* key : keys) {
         const QString k = QString::fromLatin1(key);
         if (event.contains(k)) {

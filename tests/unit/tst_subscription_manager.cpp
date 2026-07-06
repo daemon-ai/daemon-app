@@ -366,6 +366,42 @@ private slots:
                  qPrintable(md));
     }
 
+    // D1: a persisted rich tool result (full content in `summary` + typed detail) folds RAW into
+    // its call's ```tool fence, so the reload's shared buildToolView projection re-renders the
+    // same diff/output/hits card the live turn showed.
+    void toolDetailSurvivesCacheProjection() {
+        DaemonCacheStore cache(dbPath(QStringLiteral("tool-detail.db")));
+        QVERIFY(cache.isOpen());
+        CachedTranscriptBlockRow call;
+        call.sessionId = QStringLiteral("s1");
+        call.seq = 1;
+        call.kind = QStringLiteral("ToolCall");
+        call.callId = QStringLiteral("c1");
+        call.toolName = QStringLiteral("fs");
+        call.argsSummary = QStringLiteral("main.cpp");
+        QVERIFY(cache.upsertTranscriptBlock(call));
+        CachedTranscriptBlockRow result;
+        result.sessionId = QStringLiteral("s1");
+        result.seq = 2;
+        result.kind = QStringLiteral("ToolResult");
+        result.callId = QStringLiteral("c1");
+        result.ok = true;
+        result.summary = QStringLiteral("--- a/main.cpp\n+++ b/main.cpp\n@@ -1 +1 @@\n-a\n+b\n");
+        result.detailKind = QStringLiteral("fs");
+        result.detailBody = QByteArrayLiteral(R"({"op":"edit","path":"main.cpp","count":1})");
+        QVERIFY(cache.upsertTranscriptBlock(result));
+
+        CachedSessionStore store(&cache, nullptr);
+        const QString md = store.content(domain::SessionId(QStringLiteral("s1")));
+        // The fence carries the raw fields (JSON-escaped); status still folds from the result.
+        QVERIFY2(md.contains(QStringLiteral("\"detailKind\":\"fs\"")), qPrintable(md));
+        QVERIFY2(md.contains(QStringLiteral(
+                     "\"detailBody\":\"{\\\"op\\\":\\\"edit\\\",\\\"path\\\":\\\"main.cpp\\\",")),
+                 qPrintable(md));
+        QVERIFY2(md.contains(QStringLiteral("\"summary\":\"--- a/main.cpp")), qPrintable(md));
+        QVERIFY2(md.contains(QStringLiteral("\"status\":\"ok\"")), qPrintable(md));
+    }
+
     // Reasoning disclosures persist as cache blocks and project as canonical ```reasoning
     // fences inside the assistant bubble — nothing in the transcript drops on a reload. The
     // final assistant message continues the same bubble (one msg marker), matching the live

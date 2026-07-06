@@ -317,11 +317,24 @@ QString CachedSessionStore::content(const domain::SessionId& id) const {
             const QString status = result == nullptr ? QStringLiteral("running")
                                    : result->ok      ? QStringLiteral("ok")
                                                      : QStringLiteral("error");
-            appendFence(QStringLiteral("tool"),
-                        QJsonObject{{QStringLiteral("callId"), b.callId},
-                                    {QStringLiteral("name"), b.toolName},
-                                    {QStringLiteral("argsSummary"), b.argsSummary},
-                                    {QStringLiteral("status"), status}});
+            QJsonObject tool{{QStringLiteral("callId"), b.callId},
+                             {QStringLiteral("name"), b.toolName},
+                             {QStringLiteral("argsSummary"), b.argsSummary},
+                             {QStringLiteral("status"), status}};
+            // D1: fold the persisted rich result into the fence RAW (full content in `summary`,
+            // typed JSON detail as UTF-8 text) - the reload's buildToolView projects it into the
+            // flat renderer keys, exactly like the live path.
+            if (result != nullptr) {
+                if (!result->summary.isEmpty()) {
+                    tool.insert(QStringLiteral("summary"), result->summary);
+                }
+                if (!result->detailKind.isEmpty()) {
+                    tool.insert(QStringLiteral("detailKind"), result->detailKind);
+                    tool.insert(QStringLiteral("detailBody"),
+                                QString::fromUtf8(result->detailBody));
+                }
+            }
+            appendFence(QStringLiteral("tool"), tool);
         }
         // ToolResult rows carry no standalone rendering: folded into their call's fence above
         // (todo results are dropped with their call).
