@@ -2099,12 +2099,6 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>InteractiveTurnHost</name>
     <message>
-        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
-</source>
-        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m 已批准 — 命令完成
-</translation>
-    </message>
-    <message>
         <source>
 
 Thanks — proceeding with: %1
@@ -2214,6 +2208,14 @@ Thanks — proceeding with: %1
     <message>
         <source>Dismiss</source>
         <translation>忽略</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session: %1</source>
+        <translation>无法更新会话：%1</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>无法更新会话</translation>
     </message>
 </context>
 <context>
@@ -3684,6 +3686,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>重命名会话</translation>
     </message>
     <message>
+        <source>Session update failed</source>
+        <translation>会话更新失败</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>无法更新会话</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>清空会话</translation>
     </message>
@@ -3922,12 +3932,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>审批</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>审批策略</translation>
-    </message>
-    <message>
-        <source>When the agent must ask before running tools.</source>
-        <translation>智能体在运行工具前必须询问的时机。</translation>
+        <source>Approval policy is set per session from the composer&apos;s session settings, where it is enforced by the node.</source>
+        <translation>审批策略按会话在编写器的会话设置中设定，并由节点在此强制执行。</translation>
     </message>
     <message>
         <source>Sandbox</source>
@@ -3936,6 +3942,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Filesystem access</source>
         <translation>文件系统访问</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>由节点强制执行 — 无法从应用配置。</translation>
+    </message>
+    <message>
+        <source>Managed by the node</source>
+        <translation>由节点管理</translation>
     </message>
     <message>
         <source>Allow network access</source>
@@ -4098,6 +4112,14 @@ A generic, non-transcript page hosted by the same tab strip.
 </context>
 <context>
     <name>SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>未连接到 daemon</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta 失败</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate 失败</translation>
@@ -5170,6 +5192,10 @@ Thanks — proceeding with: %1
         <translation>频道</translation>
     </message>
     <message>
+        <source>_node-controlled_</source>
+        <translation>_由节点控制_</translation>
+    </message>
+    <message>
         <source>on</source>
         <translation>开</translation>
     </message>
@@ -5234,6 +5260,10 @@ Thanks — proceeding with: %1
         <translation>自动检查更新</translation>
     </message>
     <message>
+        <source>enforced by the node, not set here</source>
+        <translation>由节点强制执行，此处不设置</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>模型</translation>
     </message>
@@ -5270,8 +5300,10 @@ Thanks — proceeding with: %1
         <translation>安全</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>审批策略</translation>
+        <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
+</source>
+        <translation>- 审批策略按会话设定（编写器会话设置）— _由节点在此强制执行_
+</translation>
     </message>
     <message>
         <source>Filesystem access</source>
@@ -6453,6 +6485,14 @@ _未选择智能体。_
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>未连接到 daemon</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta 失败</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate 失败</translation>

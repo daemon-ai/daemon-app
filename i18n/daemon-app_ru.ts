@@ -2103,12 +2103,6 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>InteractiveTurnHost</name>
     <message>
-        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
-</source>
-        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m одобрено — команда выполнена
-</translation>
-    </message>
-    <message>
         <source>
 
 Thanks — proceeding with: %1
@@ -2218,6 +2212,14 @@ Thanks — proceeding with: %1
     <message>
         <source>Dismiss</source>
         <translation>Скрыть</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session: %1</source>
+        <translation>Не удалось обновить сессию: %1</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>Не удалось обновить сессию</translation>
     </message>
 </context>
 <context>
@@ -3692,6 +3694,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Переименовать сессию</translation>
     </message>
     <message>
+        <source>Session update failed</source>
+        <translation>Ошибка обновления сессии</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>Не удалось обновить сессию</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>Очистить сессию</translation>
     </message>
@@ -3930,12 +3940,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Подтверждения</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Политика подтверждений</translation>
-    </message>
-    <message>
-        <source>When the agent must ask before running tools.</source>
-        <translation>Когда агент должен спрашивать перед запуском инструментов.</translation>
+        <source>Approval policy is set per session from the composer&apos;s session settings, where it is enforced by the node.</source>
+        <translation>Политика подтверждений задаётся для каждой сессии в настройках сессии в композере, где она применяется узлом.</translation>
     </message>
     <message>
         <source>Sandbox</source>
@@ -3944,6 +3950,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Filesystem access</source>
         <translation>Доступ к файловой системе</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>Применяется узлом — не настраивается из приложения.</translation>
+    </message>
+    <message>
+        <source>Managed by the node</source>
+        <translation>Управляется узлом</translation>
     </message>
     <message>
         <source>Allow network access</source>
@@ -4106,6 +4120,14 @@ A generic, non-transcript page hosted by the same tab strip.
 </context>
 <context>
     <name>SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>Нет подключения к демону</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>Не удалось обновить метаданные сессии</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>Не удалось создать сессию</translation>
@@ -5184,6 +5206,10 @@ Thanks — proceeding with: %1
         <translation>Каналы</translation>
     </message>
     <message>
+        <source>_node-controlled_</source>
+        <translation>_управляется узлом_</translation>
+    </message>
+    <message>
         <source>on</source>
         <translation>вкл</translation>
     </message>
@@ -5248,6 +5274,10 @@ Thanks — proceeding with: %1
         <translation>Автоматически проверять обновления</translation>
     </message>
     <message>
+        <source>enforced by the node, not set here</source>
+        <translation>применяется узлом, здесь не задаётся</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>Модель</translation>
     </message>
@@ -5284,8 +5314,10 @@ Thanks — proceeding with: %1
         <translation>Безопасность</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Политика подтверждений</translation>
+        <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
+</source>
+        <translation>- Политика подтверждений задаётся для каждой сессии (настройки сессии в композере) — _применяется там узлом_
+</translation>
     </message>
     <message>
         <source>Filesystem access</source>
@@ -6467,6 +6499,14 @@ _Агент не выбран._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>Нет подключения к демону</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>Не удалось обновить метаданные сессии</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>Не удалось создать сессию</translation>

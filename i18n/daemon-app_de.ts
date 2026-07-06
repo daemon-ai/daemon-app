@@ -2101,12 +2101,6 @@ Sie kehren zur Ersteinrichtung zurück.</translation>
 <context>
     <name>InteractiveTurnHost</name>
     <message>
-        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
-</source>
-        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m genehmigt — Befehl abgeschlossen
-</translation>
-    </message>
-    <message>
         <source>
 
 Thanks — proceeding with: %1
@@ -2216,6 +2210,14 @@ Danke — es geht weiter mit: %1
     <message>
         <source>Dismiss</source>
         <translation>Verwerfen</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session: %1</source>
+        <translation>Sitzung konnte nicht aktualisiert werden: %1</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>Sitzung konnte nicht aktualisiert werden</translation>
     </message>
 </context>
 <context>
@@ -3688,6 +3690,14 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Sitzung umbenennen</translation>
     </message>
     <message>
+        <source>Session update failed</source>
+        <translation>Sitzungsaktualisierung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>Sitzung konnte nicht aktualisiert werden</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>Sitzung leeren</translation>
     </message>
@@ -3926,12 +3936,8 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
         <translation>Freigaben</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Freigaberichtlinie</translation>
-    </message>
-    <message>
-        <source>When the agent must ask before running tools.</source>
-        <translation>Wann der Agent fragen muss, bevor er Werkzeuge ausführt.</translation>
+        <source>Approval policy is set per session from the composer&apos;s session settings, where it is enforced by the node.</source>
+        <translation>Die Freigaberichtlinie wird pro Sitzung in den Sitzungseinstellungen des Composers festgelegt, wo sie vom Node durchgesetzt wird.</translation>
     </message>
     <message>
         <source>Sandbox</source>
@@ -3940,6 +3946,14 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
     <message>
         <source>Filesystem access</source>
         <translation>Dateisystemzugriff</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>Wird vom Node durchgesetzt — nicht über die App konfigurierbar.</translation>
+    </message>
+    <message>
+        <source>Managed by the node</source>
+        <translation>Vom Node verwaltet</translation>
     </message>
     <message>
         <source>Allow network access</source>
@@ -4102,6 +4116,14 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
 </context>
 <context>
     <name>SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>Nicht mit einem Daemon verbunden</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta fehlgeschlagen</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate fehlgeschlagen</translation>
@@ -5177,6 +5199,10 @@ Danke — es geht weiter mit: %1
         <translation>Kanäle</translation>
     </message>
     <message>
+        <source>_node-controlled_</source>
+        <translation>_Node-gesteuert_</translation>
+    </message>
+    <message>
         <source>on</source>
         <translation>an</translation>
     </message>
@@ -5241,6 +5267,10 @@ Danke — es geht weiter mit: %1
         <translation>Automatisch nach Updates suchen</translation>
     </message>
     <message>
+        <source>enforced by the node, not set here</source>
+        <translation>vom Node durchgesetzt, nicht hier festgelegt</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>Modell</translation>
     </message>
@@ -5277,8 +5307,10 @@ Danke — es geht weiter mit: %1
         <translation>Sicherheit</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Freigaberichtlinie</translation>
+        <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
+</source>
+        <translation>- Die Freigaberichtlinie wird pro Sitzung festgelegt (Sitzungseinstellungen des Composers) — _dort vom Node durchgesetzt_
+</translation>
     </message>
     <message>
         <source>Filesystem access</source>
@@ -6460,6 +6492,14 @@ _Kein Agent ausgewählt._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>Nicht mit einem Daemon verbunden</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta fehlgeschlagen</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate fehlgeschlagen</translation>

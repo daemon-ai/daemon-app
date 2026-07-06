@@ -2099,12 +2099,6 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>InteractiveTurnHost</name>
     <message>
-        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
-</source>
-        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m onaylandı — komut tamamlandı
-</translation>
-    </message>
-    <message>
         <source>
 
 Thanks — proceeding with: %1
@@ -2214,6 +2208,14 @@ Teşekkürler — şununla devam ediliyor: %1
     <message>
         <source>Dismiss</source>
         <translation>Yoksay</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session: %1</source>
+        <translation>Oturum güncellenemedi: %1</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>Oturum güncellenemedi</translation>
     </message>
 </context>
 <context>
@@ -3684,6 +3686,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Oturumu yeniden adlandır</translation>
     </message>
     <message>
+        <source>Session update failed</source>
+        <translation>Oturum güncelleme başarısız oldu</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>Oturum güncellenemedi</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>Oturumu temizle</translation>
     </message>
@@ -3922,12 +3932,8 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Onaylar</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Onay ilkesi</translation>
-    </message>
-    <message>
-        <source>When the agent must ask before running tools.</source>
-        <translation>Aracının araçları çalıştırmadan önce ne zaman sorması gerektiği.</translation>
+        <source>Approval policy is set per session from the composer&apos;s session settings, where it is enforced by the node.</source>
+        <translation>Onay politikası, her oturum için oluşturucunun oturum ayarlarından belirlenir ve orada düğüm tarafından uygulanır.</translation>
     </message>
     <message>
         <source>Sandbox</source>
@@ -3936,6 +3942,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Filesystem access</source>
         <translation>Dosya sistemi erişimi</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>Düğüm tarafından uygulanır — uygulamadan yapılandırılamaz.</translation>
+    </message>
+    <message>
+        <source>Managed by the node</source>
+        <translation>Düğüm tarafından yönetilir</translation>
     </message>
     <message>
         <source>Allow network access</source>
@@ -4098,6 +4112,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
 </context>
 <context>
     <name>SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>Bir daemon&apos;a bağlı değil</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta başarısız oldu</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate başarısız oldu</translation>
@@ -5170,6 +5192,10 @@ Teşekkürler — şununla devam ediliyor: %1
         <translation>Kanallar</translation>
     </message>
     <message>
+        <source>_node-controlled_</source>
+        <translation>_düğüm denetimli_</translation>
+    </message>
+    <message>
         <source>on</source>
         <translation>açık</translation>
     </message>
@@ -5234,6 +5260,10 @@ Teşekkürler — şununla devam ediliyor: %1
         <translation>Güncellemeleri otomatik denetle</translation>
     </message>
     <message>
+        <source>enforced by the node, not set here</source>
+        <translation>düğüm tarafından uygulanır, burada ayarlanmaz</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>Model</translation>
     </message>
@@ -5270,8 +5300,10 @@ Teşekkürler — şununla devam ediliyor: %1
         <translation>Güvenlik</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Onay ilkesi</translation>
+        <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
+</source>
+        <translation>- Onay politikası her oturum için ayarlanır (oluşturucu oturum ayarları) — _orada düğüm tarafından uygulanır_
+</translation>
     </message>
     <message>
         <source>Filesystem access</source>
@@ -6453,6 +6485,14 @@ _Hiçbir aracı seçilmedi._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>Bir daemon&apos;a bağlı değil</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta başarısız oldu</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate başarısız oldu</translation>

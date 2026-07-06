@@ -2099,12 +2099,6 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>InteractiveTurnHost</name>
     <message>
-        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
-</source>
-        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m 已核准 — 指令完成
-</translation>
-    </message>
-    <message>
         <source>
 
 Thanks — proceeding with: %1
@@ -2214,6 +2208,14 @@ Thanks — proceeding with: %1
     <message>
         <source>Dismiss</source>
         <translation>關閉</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session: %1</source>
+        <translation>無法更新工作階段：%1</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>無法更新工作階段</translation>
     </message>
 </context>
 <context>
@@ -3684,6 +3686,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>重新命名工作階段</translation>
     </message>
     <message>
+        <source>Session update failed</source>
+        <translation>工作階段更新失敗</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>無法更新工作階段</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>清除工作階段</translation>
     </message>
@@ -3922,12 +3932,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>核准</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>核准原則</translation>
-    </message>
-    <message>
-        <source>When the agent must ask before running tools.</source>
-        <translation>代理執行工具前必須先詢問的時機。</translation>
+        <source>Approval policy is set per session from the composer&apos;s session settings, where it is enforced by the node.</source>
+        <translation>核准原則會依各工作階段在撰寫區的工作階段設定中設定，並由節點在該處強制執行。</translation>
     </message>
     <message>
         <source>Sandbox</source>
@@ -3936,6 +3942,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Filesystem access</source>
         <translation>檔案系統存取</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>由節點強制執行 — 無法從應用程式設定。</translation>
+    </message>
+    <message>
+        <source>Managed by the node</source>
+        <translation>由節點管理</translation>
     </message>
     <message>
         <source>Allow network access</source>
@@ -4098,6 +4112,14 @@ A generic, non-transcript page hosted by the same tab strip.
 </context>
 <context>
     <name>SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>尚未連線到 daemon</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>更新工作階段中繼資料失敗</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>建立工作階段失敗</translation>
@@ -5170,6 +5192,10 @@ Thanks — proceeding with: %1
         <translation>頻道</translation>
     </message>
     <message>
+        <source>_node-controlled_</source>
+        <translation>_由節點控制_</translation>
+    </message>
+    <message>
         <source>on</source>
         <translation>開啟</translation>
     </message>
@@ -5234,6 +5260,10 @@ Thanks — proceeding with: %1
         <translation>自動檢查更新</translation>
     </message>
     <message>
+        <source>enforced by the node, not set here</source>
+        <translation>由節點強制執行，此處不設定</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>模型</translation>
     </message>
@@ -5270,8 +5300,10 @@ Thanks — proceeding with: %1
         <translation>安全性</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>核准原則</translation>
+        <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
+</source>
+        <translation>- 核准原則會依各工作階段設定（撰寫區工作階段設定）— _由節點在該處強制執行_
+</translation>
     </message>
     <message>
         <source>Filesystem access</source>
@@ -6453,6 +6485,14 @@ _未選取代理。_
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>尚未連線到 daemon</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>更新工作階段中繼資料失敗</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>建立工作階段失敗</translation>

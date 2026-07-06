@@ -2101,12 +2101,6 @@ Volverás a la configuración inicial.</translation>
 <context>
     <name>InteractiveTurnHost</name>
     <message>
-        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
-</source>
-        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m aprobado — comando finalizado
-</translation>
-    </message>
-    <message>
         <source>
 
 Thanks — proceeding with: %1
@@ -2216,6 +2210,14 @@ Gracias — continuando con: %1
     <message>
         <source>Dismiss</source>
         <translation>Descartar</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session: %1</source>
+        <translation>No se pudo actualizar la sesión: %1</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>No se pudo actualizar la sesión</translation>
     </message>
 </context>
 <context>
@@ -3688,6 +3690,14 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>Renombrar sesión</translation>
     </message>
     <message>
+        <source>Session update failed</source>
+        <translation>Error al actualizar la sesión</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>No se pudo actualizar la sesión</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>Borrar sesión</translation>
     </message>
@@ -3926,12 +3936,8 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>Aprobaciones</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Política de aprobación</translation>
-    </message>
-    <message>
-        <source>When the agent must ask before running tools.</source>
-        <translation>Cuándo el agente debe preguntar antes de ejecutar herramientas.</translation>
+        <source>Approval policy is set per session from the composer&apos;s session settings, where it is enforced by the node.</source>
+        <translation>La política de aprobación se establece por sesión desde los ajustes de sesión del redactor, donde la aplica el nodo.</translation>
     </message>
     <message>
         <source>Sandbox</source>
@@ -3940,6 +3946,14 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
     <message>
         <source>Filesystem access</source>
         <translation>Acceso al sistema de archivos</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>Lo aplica el nodo — no configurable desde la aplicación.</translation>
+    </message>
+    <message>
+        <source>Managed by the node</source>
+        <translation>Gestionado por el nodo</translation>
     </message>
     <message>
         <source>Allow network access</source>
@@ -4102,6 +4116,14 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
 </context>
 <context>
     <name>SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>No conectado a un daemon</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>Error en SessionUpdateMeta</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>Error en SessionCreate</translation>
@@ -5177,6 +5199,10 @@ Gracias — continuando con: %1
         <translation>Canales</translation>
     </message>
     <message>
+        <source>_node-controlled_</source>
+        <translation>_controlado por el nodo_</translation>
+    </message>
+    <message>
         <source>on</source>
         <translation>activado</translation>
     </message>
@@ -5241,6 +5267,10 @@ Gracias — continuando con: %1
         <translation>Buscar actualizaciones automáticamente</translation>
     </message>
     <message>
+        <source>enforced by the node, not set here</source>
+        <translation>aplicado por el nodo, no se configura aquí</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>Modelo</translation>
     </message>
@@ -5277,8 +5307,10 @@ Gracias — continuando con: %1
         <translation>Seguridad</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Política de aprobación</translation>
+        <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
+</source>
+        <translation>- La política de aprobación se establece por sesión (ajustes de sesión del redactor) — _aplicada allí por el nodo_
+</translation>
     </message>
     <message>
         <source>Filesystem access</source>
@@ -6460,6 +6492,14 @@ _Ningún agente seleccionado._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>No conectado a un daemon</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>Error en SessionUpdateMeta</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>Error en SessionCreate</translation>

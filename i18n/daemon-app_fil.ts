@@ -2101,12 +2101,6 @@ Babalik ka sa first-run setup.</translation>
 <context>
     <name>InteractiveTurnHost</name>
     <message>
-        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
-</source>
-        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m inaprubahan — tapos na ang utos
-</translation>
-    </message>
-    <message>
         <source>
 
 Thanks — proceeding with: %1
@@ -2216,6 +2210,14 @@ Salamat — magpapatuloy sa: %1
     <message>
         <source>Dismiss</source>
         <translation>I-dismiss</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session: %1</source>
+        <translation>Hindi na-update ang session: %1</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>Hindi na-update ang session</translation>
     </message>
 </context>
 <context>
@@ -3688,6 +3690,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Palitan ang pangalan ng session</translation>
     </message>
     <message>
+        <source>Session update failed</source>
+        <translation>Nabigo ang pag-update ng session</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>Hindi na-update ang session</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>I-clear ang session</translation>
     </message>
@@ -3926,12 +3936,8 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Mga Approval</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Approval policy</translation>
-    </message>
-    <message>
-        <source>When the agent must ask before running tools.</source>
-        <translation>Kung kailan dapat magtanong ang agent bago magpatakbo ng mga tool.</translation>
+        <source>Approval policy is set per session from the composer&apos;s session settings, where it is enforced by the node.</source>
+        <translation>Ang patakaran sa approval ay itinatakda bawat session mula sa mga setting ng session sa composer, kung saan ito ipinapatupad ng node.</translation>
     </message>
     <message>
         <source>Sandbox</source>
@@ -3940,6 +3946,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>Filesystem access</source>
         <translation>Filesystem access</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>Ipinapatupad ng node — hindi maico-configure mula sa app.</translation>
+    </message>
+    <message>
+        <source>Managed by the node</source>
+        <translation>Pinamamahalaan ng node</translation>
     </message>
     <message>
         <source>Allow network access</source>
@@ -4102,6 +4116,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
 </context>
 <context>
     <name>SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>Hindi nakakonekta sa isang daemon</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>Nabigo ang SessionUpdateMeta</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>Nabigo ang SessionCreate</translation>
@@ -5177,6 +5199,10 @@ Salamat — magpapatuloy sa: %1
         <translation>Mga Channel</translation>
     </message>
     <message>
+        <source>_node-controlled_</source>
+        <translation>_kontrolado ng node_</translation>
+    </message>
+    <message>
         <source>on</source>
         <translation>on</translation>
     </message>
@@ -5241,6 +5267,10 @@ Salamat — magpapatuloy sa: %1
         <translation>Awtomatikong tingnan kung may update</translation>
     </message>
     <message>
+        <source>enforced by the node, not set here</source>
+        <translation>ipinapatupad ng node, hindi itinatakda rito</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>Model</translation>
     </message>
@@ -5277,8 +5307,10 @@ Salamat — magpapatuloy sa: %1
         <translation>Kaligtasan</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Approval policy</translation>
+        <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
+</source>
+        <translation>- Ang patakaran sa approval ay itinatakda bawat session (mga setting ng session sa composer) — _ipinapatupad doon ng node_
+</translation>
     </message>
     <message>
         <source>Filesystem access</source>
@@ -6460,6 +6492,14 @@ _Walang piniling agent._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>Hindi nakakonekta sa isang daemon</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>Nabigo ang SessionUpdateMeta</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>Nabigo ang SessionCreate</translation>

@@ -2099,12 +2099,6 @@ Anda akan kembali ke penyiapan pertama.</translation>
 <context>
     <name>InteractiveTurnHost</name>
     <message>
-        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
-</source>
-        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m disetujui — perintah selesai
-</translation>
-    </message>
-    <message>
         <source>
 
 Thanks — proceeding with: %1
@@ -2214,6 +2208,14 @@ Terima kasih — melanjutkan dengan: %1
     <message>
         <source>Dismiss</source>
         <translation>Abaikan</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session: %1</source>
+        <translation>Tidak dapat memperbarui sesi: %1</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>Tidak dapat memperbarui sesi</translation>
     </message>
 </context>
 <context>
@@ -3684,6 +3686,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Ganti nama sesi</translation>
     </message>
     <message>
+        <source>Session update failed</source>
+        <translation>Pembaruan sesi gagal</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>Tidak dapat memperbarui sesi</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>Kosongkan sesi</translation>
     </message>
@@ -3922,12 +3932,8 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
         <translation>Persetujuan</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Kebijakan persetujuan</translation>
-    </message>
-    <message>
-        <source>When the agent must ask before running tools.</source>
-        <translation>Kapan agen harus bertanya sebelum menjalankan alat.</translation>
+        <source>Approval policy is set per session from the composer&apos;s session settings, where it is enforced by the node.</source>
+        <translation>Kebijakan persetujuan diatur per sesi dari pengaturan sesi di komposer, tempat kebijakan tersebut diterapkan oleh node.</translation>
     </message>
     <message>
         <source>Sandbox</source>
@@ -3936,6 +3942,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
     <message>
         <source>Filesystem access</source>
         <translation>Akses sistem berkas</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>Diterapkan oleh node — tidak dapat dikonfigurasi dari aplikasi.</translation>
+    </message>
+    <message>
+        <source>Managed by the node</source>
+        <translation>Dikelola oleh node</translation>
     </message>
     <message>
         <source>Allow network access</source>
@@ -4098,6 +4112,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
 </context>
 <context>
     <name>SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>Tidak tersambung ke daemon</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta gagal</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate gagal</translation>
@@ -5170,6 +5192,10 @@ Terima kasih — melanjutkan dengan: %1
         <translation>Saluran</translation>
     </message>
     <message>
+        <source>_node-controlled_</source>
+        <translation>_dikontrol oleh node_</translation>
+    </message>
+    <message>
         <source>on</source>
         <translation>nyala</translation>
     </message>
@@ -5234,6 +5260,10 @@ Terima kasih — melanjutkan dengan: %1
         <translation>Periksa pembaruan secara otomatis</translation>
     </message>
     <message>
+        <source>enforced by the node, not set here</source>
+        <translation>diterapkan oleh node, tidak diatur di sini</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>Model</translation>
     </message>
@@ -5270,8 +5300,10 @@ Terima kasih — melanjutkan dengan: %1
         <translation>Keamanan</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>Kebijakan persetujuan</translation>
+        <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
+</source>
+        <translation>- Kebijakan persetujuan diatur per sesi (pengaturan sesi komposer) — _diterapkan di sana oleh node_
+</translation>
     </message>
     <message>
         <source>Filesystem access</source>
@@ -6453,6 +6485,14 @@ _Tidak ada agen yang dipilih._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>Tidak tersambung ke daemon</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta gagal</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate gagal</translation>

@@ -2101,12 +2101,6 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>InteractiveTurnHost</name>
     <message>
-        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
-</source>
-        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m অনুমোদিত — কমান্ড সম্পন্ন হয়েছে
-</translation>
-    </message>
-    <message>
         <source>
 
 Thanks — proceeding with: %1
@@ -2216,6 +2210,14 @@ Thanks — proceeding with: %1
     <message>
         <source>Dismiss</source>
         <translation>খারিজ করুন</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session: %1</source>
+        <translation>সেশন আপডেট করা যায়নি: %1</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>সেশন আপডেট করা যায়নি</translation>
     </message>
 </context>
 <context>
@@ -3688,6 +3690,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>সেশনের নাম পরিবর্তন করুন</translation>
     </message>
     <message>
+        <source>Session update failed</source>
+        <translation>সেশন আপডেট ব্যর্থ হয়েছে</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>সেশন আপডেট করা যায়নি</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>সেশন পরিষ্কার করুন</translation>
     </message>
@@ -3926,12 +3936,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>অনুমোদন</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>অনুমোদন নীতি</translation>
-    </message>
-    <message>
-        <source>When the agent must ask before running tools.</source>
-        <translation>কখন এজেন্টকে টুল চালানোর আগে জিজ্ঞাসা করতে হবে।</translation>
+        <source>Approval policy is set per session from the composer&apos;s session settings, where it is enforced by the node.</source>
+        <translation>অনুমোদন নীতি প্রতি সেশনে কম্পোজারের সেশন সেটিংস থেকে নির্ধারিত হয়, যেখানে এটি নোড দ্বারা প্রয়োগ করা হয়।</translation>
     </message>
     <message>
         <source>Sandbox</source>
@@ -3940,6 +3946,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Filesystem access</source>
         <translation>ফাইলসিস্টেম অ্যাক্সেস</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>নোড দ্বারা প্রয়োগ করা হয় — অ্যাপ থেকে কনফিগার করা যায় না।</translation>
+    </message>
+    <message>
+        <source>Managed by the node</source>
+        <translation>নোড দ্বারা পরিচালিত</translation>
     </message>
     <message>
         <source>Allow network access</source>
@@ -4102,6 +4116,14 @@ A generic, non-transcript page hosted by the same tab strip.
 </context>
 <context>
     <name>SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>কোনো daemon-এর সাথে সংযুক্ত নয়</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta ব্যর্থ হয়েছে</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate ব্যর্থ হয়েছে</translation>
@@ -5177,6 +5199,10 @@ Thanks — proceeding with: %1
         <translation>চ্যানেল</translation>
     </message>
     <message>
+        <source>_node-controlled_</source>
+        <translation>_নোড-নিয়ন্ত্রিত_</translation>
+    </message>
+    <message>
         <source>on</source>
         <translation>চালু</translation>
     </message>
@@ -5241,6 +5267,10 @@ Thanks — proceeding with: %1
         <translation>স্বয়ংক্রিয়ভাবে আপডেট পরীক্ষা করুন</translation>
     </message>
     <message>
+        <source>enforced by the node, not set here</source>
+        <translation>নোড দ্বারা প্রয়োগ করা হয়, এখানে সেট করা হয় না</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>মডেল</translation>
     </message>
@@ -5277,8 +5307,10 @@ Thanks — proceeding with: %1
         <translation>নিরাপত্তা</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>অনুমোদন নীতি</translation>
+        <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
+</source>
+        <translation>- অনুমোদন নীতি প্রতি সেশনে সেট করা হয় (কম্পোজারের সেশন সেটিংস) — _সেখানে নোড দ্বারা প্রয়োগ করা হয়_
+</translation>
     </message>
     <message>
         <source>Filesystem access</source>
@@ -6460,6 +6492,14 @@ _কোনো এজেন্ট নির্বাচিত নয়।_
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>কোনো daemon-এর সাথে সংযুক্ত নয়</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta ব্যর্থ হয়েছে</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate ব্যর্থ হয়েছে</translation>

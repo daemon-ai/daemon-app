@@ -2099,12 +2099,6 @@ You&apos;ll return to first-run setup.</source>
 <context>
     <name>InteractiveTurnHost</name>
     <message>
-        <source><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m approved — command finished
-</source>
-        <translation><byte value="x1b"/>[32m✓<byte value="x1b"/>[0m 承認済み — コマンドが完了しました
-</translation>
-    </message>
-    <message>
         <source>
 
 Thanks — proceeding with: %1
@@ -2214,6 +2208,14 @@ Thanks — proceeding with: %1
     <message>
         <source>Dismiss</source>
         <translation>閉じる</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session: %1</source>
+        <translation>セッションを更新できませんでした: %1</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>セッションを更新できませんでした</translation>
     </message>
 </context>
 <context>
@@ -3684,6 +3686,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>セッション名を変更</translation>
     </message>
     <message>
+        <source>Session update failed</source>
+        <translation>セッションの更新に失敗しました</translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t update session</source>
+        <translation>セッションを更新できませんでした</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>セッションをクリア</translation>
     </message>
@@ -3922,12 +3932,8 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>承認</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>承認ポリシー</translation>
-    </message>
-    <message>
-        <source>When the agent must ask before running tools.</source>
-        <translation>ツールを実行する前にエージェントが確認すべき条件。</translation>
+        <source>Approval policy is set per session from the composer&apos;s session settings, where it is enforced by the node.</source>
+        <translation>承認ポリシーはコンポーザーのセッション設定でセッションごとに設定され、そこでノードによって適用されます。</translation>
     </message>
     <message>
         <source>Sandbox</source>
@@ -3936,6 +3942,14 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Filesystem access</source>
         <translation>ファイルシステムアクセス</translation>
+    </message>
+    <message>
+        <source>Enforced by the node — not configurable from the app.</source>
+        <translation>ノードによって適用されます — アプリからは設定できません。</translation>
+    </message>
+    <message>
+        <source>Managed by the node</source>
+        <translation>ノードによって管理されます</translation>
     </message>
     <message>
         <source>Allow network access</source>
@@ -4098,6 +4112,14 @@ A generic, non-transcript page hosted by the same tab strip.
 </context>
 <context>
     <name>SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>daemon に接続されていません</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta に失敗しました</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate に失敗しました</translation>
@@ -5170,6 +5192,10 @@ Thanks — proceeding with: %1
         <translation>チャンネル</translation>
     </message>
     <message>
+        <source>_node-controlled_</source>
+        <translation>_ノード制御_</translation>
+    </message>
+    <message>
         <source>on</source>
         <translation>オン</translation>
     </message>
@@ -5234,6 +5260,10 @@ Thanks — proceeding with: %1
         <translation>アップデートを自動的に確認</translation>
     </message>
     <message>
+        <source>enforced by the node, not set here</source>
+        <translation>ノードによって適用され、ここでは設定しません</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>モデル</translation>
     </message>
@@ -5270,8 +5300,10 @@ Thanks — proceeding with: %1
         <translation>安全性</translation>
     </message>
     <message>
-        <source>Approval policy</source>
-        <translation>承認ポリシー</translation>
+        <source>- Approval policy is set per session (composer session settings) — _enforced by the node there_
+</source>
+        <translation>- 承認ポリシーはセッションごとに設定されます（コンポーザーのセッション設定）— _そこでノードによって適用されます_
+</translation>
     </message>
     <message>
         <source>Filesystem access</source>
@@ -6453,6 +6485,14 @@ _エージェントが選択されていません。_
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>Not connected to a daemon</source>
+        <translation>daemon に接続されていません</translation>
+    </message>
+    <message>
+        <source>SessionUpdateMeta failed</source>
+        <translation>SessionUpdateMeta に失敗しました</translation>
+    </message>
     <message>
         <source>SessionCreate failed</source>
         <translation>SessionCreate に失敗しました</translation>
