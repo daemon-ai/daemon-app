@@ -95,15 +95,15 @@ public:
     Q_INVOKABLE void setAgentTypeOffered(bool offered);
     [[nodiscard]] bool agentTypeOffered() const { return m_agentTypeOffered; }
     // The agent-type step's commit (CON-16). Empty `acpAgent` = the native engine: advance to
-    // the inference step unchanged. Non-empty = a foreign ACP agent: applyAcpChoice(name, agent)
+    // the inference step unchanged. Non-empty = a foreign agent: applyForeignChoice(name, agent)
     // is the full commit (no provider/model/key applies).
-    Q_INVOKABLE void chooseAgentType(const QString& acpAgent);
-    // Foreign-agent commit (CON-16): ONE named ProfileCreate carrying engine=Acp{agent} (the
+    Q_INVOKABLE void chooseAgentType(const QString& foreignAgent);
+    // Foreign-agent commit (CON-16): ONE named ProfileCreate carrying engine=Foreign{agent} (the
     // catalog NAME; recipes stay node-side), sequenced on fresh reflections exactly like the
     // native named path (create -> reflect -> setDefault -> drop the seeded placeholder ->
     // reflect default -> finish). No credential/model frames. Empty/blank `name` falls back to
     // the agent name.
-    Q_INVOKABLE void applyAcpChoice(const QString& name, const QString& acpAgent);
+    Q_INVOKABLE void applyForeignChoice(const QString& name, const QString& foreignAgent);
     // The inference gate's "Continue" - records that an inference model is ready
     // and advances to done (persisting setupComplete).
     Q_INVOKABLE void completeInference();
@@ -180,8 +180,8 @@ private:
     void applyReflectedInferenceChoice(const QString& providerId, const QString& model,
                                        const QString& key, const QString& name,
                                        const QString& customBaseUrl);
-    // The ACP apply body, run on a fresh ProfileList reflection (see applyAcpChoice).
-    void applyReflectedAcpChoice(const QString& name, const QString& acpAgent);
+    // The foreign apply body, run on a fresh ProfileList reflection (see applyForeignChoice).
+    void applyReflectedForeignChoice(const QString& name, const QString& foreignAgent);
     // A7 finish-gate honesty (CON-7/CON-15): before setSetupComplete, prove the committed
     // provider actually serves models — ONE real ProviderModels-class listing through the
     // configured credential (`credentialRef` = the committed profile id; local engines count

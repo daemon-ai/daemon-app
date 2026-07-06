@@ -116,7 +116,7 @@ ConfirmDialog::ConfirmDialog(const QString& title, const QString& message, Tui::
 }
 
 NewAgentDialog::NewAgentDialog(profiles::IProfileStore* profiles,
-                               daemonapp::daemon::AcpRepository* acp, Tui::ZWidget* parent)
+                               daemonapp::daemon::AgentRepository* agents, Tui::ZWidget* parent)
     : Tui::ZDialog(parent), m_profiles(profiles) {
     setOptions(Tui::ZWindow::DeleteOnClose);
     setWindowTitle(tr("New agent"));
@@ -130,8 +130,8 @@ NewAgentDialog::NewAgentDialog(profiles::IProfileStore* profiles,
     layout->addWidget(m_name);
 
     layout->addWidget(new Tui::ZLabel(tr("Engine (Enter to pick):"), this));
-    // The shared native+ACP picker projection (installed markers; same rows as the GUI).
-    m_engines = new AgentTypeView(acp, this);
+    // The shared native+foreign picker projection (installed markers; same rows as the GUI).
+    m_engines = new AgentTypeView(agents, this);
     layout->addWidget(m_engines);
     layout->addSpacing(1);
 
@@ -163,9 +163,9 @@ void NewAgentDialog::commit() {
     }
     const QString agent = m_engines != nullptr ? m_engines->selectedAgent() : QString();
     // Empty agent = the native engine (plain create; provider/model configured on the Profile
-    // page); otherwise a foreign ACP agent (the named ProfileCreate carries engine=Acp{agent}).
+    // page); otherwise a foreign agent (the named ProfileCreate carries engine=Foreign{agent}).
     const QString id = agent.isEmpty() ? m_profiles->createProfile(name)
-                                       : m_profiles->createAcpProfile(name, agent);
+                                       : m_profiles->createForeignProfile(name, agent);
     if (id.isEmpty()) {
         return;
     }

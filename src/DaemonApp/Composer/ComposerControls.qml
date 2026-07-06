@@ -38,8 +38,8 @@ RowLayout {
     // Open the model picker overlay (forwarded from the composer for /model + palette).
     function openModelPicker() { modelPill.openOverlay(); }
 
-    // Whether the bound session runs on a foreign ACP engine (gates rewind affordances - C4).
-    readonly property bool foreignSession: engineChip.info.engine === "Acp"
+    // Whether the bound session runs on a foreign engine (gates rewind + model affordances - C4).
+    readonly property bool foreignSession: engineChip.info.engine === "Foreign"
 
     // Facade reads (profileFor/approvalModeFor) are invokables, so QML cannot track them; bump a
     // revision on the facades' change signals and reference it from the chip bindings.
@@ -56,35 +56,41 @@ RowLayout {
         target: DaemonNet
         function onChanged() { root.settingsRev++; }
     }
+    Connections {
+        target: (typeof EngineIdentity !== "undefined" && EngineIdentity) ? EngineIdentity : null
+        function onChanged() { root.settingsRev++; }
+    }
 
-    // The session's engine identity (C3/ENG-7): the per-session profile override, falling back to
-    // the node's active default profile, joined against the profile store's engine/acpAgent.
-    // Reads settingsRev first so bindings calling this re-evaluate on facade change.
+    // The session's engine identity (C3/ENG-7): resolved through the SHARED EngineIdentity facade
+    // (session -> profile override / default -> engine {engine, agent, protocol, label}) so the GUI
+    // and the TUI composer chrome render the identical label. Reads settingsRev first so bindings
+    // calling this re-evaluate on facade change.
     function sessionEngineInfo() {
         var rev = root.settingsRev;
-        if (rev < 0 || !root.session || !root.session.sessionId)
-            return ({ engine: "", agent: "" });
-        var pid = SessionSettings.profileFor(root.session.sessionId);
-        if (!pid || pid.length === 0)
-            pid = Profiles.defaultProfileId;
-        var p = Profiles.profile(pid);
-        if (!p || p.engine === undefined)
-            return ({ engine: "", agent: "" });
-        return ({ engine: p.engine, agent: p.acpAgent || "" });
+        if (rev < 0 || !root.session || !root.session.sessionId
+            || typeof EngineIdentity === "undefined" || !EngineIdentity)
+            return ({ engine: "", agent: "", label: "" });
+        return EngineIdentity.engineForSession(root.session.sessionId);
     }
 
     spacing: Theme.spacingSmall
 
-    // Engine identity chip (C3/ENG-7): Native core vs the foreign ACP agent driving this session.
+    // Engine identity chip (C3/ENG-7): Native core vs the foreign agent driving this session.
     Kit.Chip {
         id: engineChip
         Layout.alignment: Qt.AlignVCenter
         readonly property var info: root.sessionEngineInfo()
+        // "Foreign" is the wire engineKind value; kept off the text bindings so the i18n audit
+        // doesn't read it as a user-facing string (mirrors ProfilesPage/FleetPage).
+        readonly property bool foreign: info.engine === "Foreign"
         visible: info.engine !== ""
-        text: info.engine === "Acp" ? (info.agent || qsTr("Foreign")) : qsTr("Native")
-        iconGlyph: info.engine === "Acp" ? FontIcons.fa_robot : FontIcons.fa_microchip
-        tone: info.engine === "Acp" ? "accent" : "muted"
-        tooltipText: qsTr("Engine")
+        text: foreign ? (info.label || info.agent || qsTr("Foreign")) : qsTr("Native")
+        iconGlyph: foreign ? FontIcons.fa_robot : FontIcons.fa_microchip
+        tone: foreign ? "accent" : "muted"
+        // C4 honesty: name why inference affordances are absent for a foreign engine.
+        tooltipText: foreign
+                     ? qsTr("Foreign engine — model, reasoning and rewind are managed by the agent")
+                     : qsTr("Engine")
     }
 
     // Approval-policy chip (E1/TOOL-7): the session's HITL mode at a glance; tap to change (opens
@@ -175,11 +181,17 @@ RowLayout {
             sessionSettingsPopover.open();
         }
 
-        SessionSettingsPopover { id: sessionSettingsPopover }
+        SessionSettingsPopover {
+            id: sessionSettingsPopover
+            foreignSession: root.foreignSession
+        }
     }
 
+    // Model picker: hidden for a foreign session — the foreign agent resolves its own model, so
+    // there is no provider/model for the client to pick (C4). The engine chip explains why.
     ModelPill {
         id: modelPill
+        visible: !root.foreignSession
         Layout.alignment: Qt.AlignVCenter
         enabled: root.composerEnabled
         session: root.session

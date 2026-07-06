@@ -86,12 +86,12 @@ public:
         }
         return id;
     }
-    // Foreign-engine create (wire v23): a named ProfileCreate carrying `engine = Acp{agent}`,
-    // where `agent` is an ACP catalog NAME — launch recipes stay node-side (operator-managed), so
-    // the client only ever sends the reference. No provider/model/key applies to a foreign agent;
-    // the node validates that the agent exists in its catalog and is installed. Returns the new
-    // profile id, or "" when this seam cannot create foreign agents (the mock default).
-    Q_INVOKABLE virtual QString createAcpProfile(const QString& name, const QString& agent) {
+    // Foreign-engine create (wire v29): a named ProfileCreate carrying `engine = Foreign{agent}`,
+    // where `agent` is a catalog NAME — launch recipes stay node-side (operator-managed), so the
+    // client only ever sends the reference. No provider/model/key applies to a foreign agent; the
+    // node validates that the agent exists in its catalog and is installed. Returns the new profile
+    // id, or "" when this seam cannot create foreign agents (the mock default).
+    Q_INVOKABLE virtual QString createForeignProfile(const QString& name, const QString& agent) {
         Q_UNUSED(name)
         Q_UNUSED(agent)
         return {};

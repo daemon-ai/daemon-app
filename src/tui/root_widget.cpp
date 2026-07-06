@@ -325,7 +325,7 @@ void RootWidget::terminalChanged() {
     const auto raiseFirstRunGate = [this] {
         auto* gate =
             new FirstRunDialog(m_services.firstRun, m_services.connection, m_services.settings,
-                               m_services.providerCatalog, m_services.acp,
+                               m_services.providerCatalog, m_services.agents,
                                m_services.settings->resolvedConnectionTarget(), this);
         // Local "Discover More Models" in the gate opens the shared model-download flow.
         connect(gate, &FirstRunDialog::modelDiscoverRequested, this,

@@ -11,11 +11,11 @@
 
 class ITurnEngine;
 class ComposerSessionController;
-namespace profiles {
-class IProfileStore;
-}
 namespace session {
 class ISessionSettings;
+}
+namespace daemonapp::daemon {
+class EngineIdentity;
 }
 
 // A one-line painted indicator above the composer. It merges the GUI's
@@ -36,9 +36,11 @@ public:
     void setTurn(ITurnEngine* turn);
     void setSession(ComposerSessionController* session);
     // The engine-identity + approval-policy chips (C3/E1): the idle line appends the session's
-    // engine ("Native" / "<agent> (ACP)") and its approval mode ("Ask"/"Edits"/"Auto"/"Deny",
-    // reflecting the client's last-set value — v28 wires no per-session mode getter).
-    void setFacades(session::ISessionSettings* settings, profiles::IProfileStore* profileStore);
+    // engine (via the shared EngineIdentity label, so GUI + TUI read identically) and its approval
+    // mode ("Ask"/"Edits"/"Auto"/"Deny", reflecting the client's last-set value — v28 wires no
+    // per-session mode getter).
+    void setFacades(session::ISessionSettings* settings,
+                    daemonapp::daemon::EngineIdentity* engineIdentity);
 
     [[nodiscard]] QSize sizeHint() const override;
 
@@ -52,7 +54,7 @@ private:
     ITurnEngine* m_turn = nullptr;
     ComposerSessionController* m_session = nullptr;
     session::ISessionSettings* m_settings = nullptr;
-    profiles::IProfileStore* m_profiles = nullptr;
+    daemonapp::daemon::EngineIdentity* m_engineIdentity = nullptr;
     QTimer m_spinner;
     int m_spinnerTick = 0;
 };

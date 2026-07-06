@@ -81,6 +81,32 @@ set_tests_properties(tst_chip PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
 )
 
+# [wave2:app-engines] tst_engine_origin_chip (C5): the approval origin chip's no-noise contract —
+# with no EngineIdentity facade in context it renders nothing regardless of sessionId (also guards
+# the component imports/loads cleanly).
+qt_add_executable(tst_engine_origin_chip tst_engine_origin_chip_main.cpp)
+target_link_libraries(tst_engine_origin_chip
+    PRIVATE
+        Qt6::QuickTest
+        Qt6::Qml
+        Qt6::Quick
+        Qt6::QuickControls2
+        da_theme
+        da_themeplugin
+        da_controls
+        da_controlsplugin
+)
+target_compile_definitions(tst_engine_origin_chip
+    PRIVATE
+        QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/engine_chip"
+        TEST_QML_IMPORT_PATH="$ENV{QML2_IMPORT_PATH}"
+)
+
+add_test(NAME tst_engine_origin_chip COMMAND tst_engine_origin_chip)
+set_tests_properties(tst_engine_origin_chip PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+)
+
 # tst_tabs: QtQuickTest over the pane tab strip. Drives a real TabBar + StackLayout
 # off the shared TabModel - add/remove/switch, find-or-create re-activation, the
 # "+"/settings affordances, and click-to-activate. Pulls in Controls/Layouts, so a

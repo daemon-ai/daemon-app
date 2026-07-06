@@ -533,15 +533,17 @@ DecodedProfileSpec decodeProfileSpecStruct(const profile_spec& ps) {
             DecodedBoundAccount{fromZcbor(account.bound_account_transport_instance),
                                 fromZcbor(account.bound_account_credential_ref)});
     }
-    // The engine selector (wire v23): absent on pre-engine encodings -> the "Core" default the
-    // struct already carries, so a legacy spec round-trips unchanged.
+    // The engine selector (wire v29): absent on pre-engine encodings -> the "Core" default the
+    // struct already carries, so a legacy spec round-trips unchanged. "Foreign" carries the catalog
+    // agent name BY NAME; the agent's protocol (ACP vs stream-json) is a catalog-entry property.
     if (ps.profile_spec_engine_present) {
         const engine_selector_r& engine = ps.profile_spec_engine.profile_spec_engine;
         if (engine.engine_selector_choice ==
             engine_selector_r::engine_selector_engine_foreign_m_c) {
-            out.engineKind = QStringLiteral("Acp");
-            out.engineAcpAgent = fromZcbor(engine.engine_selector_engine_foreign_m
-                                               .engine_foreign_Foreign.engine_foreign_agent_agent);
+            out.engineKind = QStringLiteral("Foreign");
+            out.engineForeignAgent =
+                fromZcbor(engine.engine_selector_engine_foreign_m.engine_foreign_Foreign
+                              .engine_foreign_agent_agent);
         }
     }
     return out;
@@ -1026,12 +1028,12 @@ void fillProfileSpec(profile_spec& ps, const DecodedProfileSpec& s, ProfileSpecS
         setZ(ps.profile_spec_bound_accounts_bound_account_m[i].bound_account_credential_ref,
              boundCredRefs[static_cast<int>(i)]);
     }
-    // The engine selector (wire v23): always emitted explicitly (matching the Rust side, which
-    // has no skip_serializing_if), "Core" unless the spec binds a foreign ACP agent BY NAME.
-    sc.engineAgent = s.engineAcpAgent.toUtf8();
+    // The engine selector (wire v29): always emitted explicitly (matching the Rust side, which
+    // has no skip_serializing_if), "Core" unless the spec binds a foreign agent BY NAME.
+    sc.engineAgent = s.engineForeignAgent.toUtf8();
     ps.profile_spec_engine_present = true;
     engine_selector_r& engine = ps.profile_spec_engine.profile_spec_engine;
-    if (s.engineKind == QStringLiteral("Acp")) {
+    if (s.engineKind == QStringLiteral("Foreign")) {
         engine.engine_selector_choice = engine_selector_r::engine_selector_engine_foreign_m_c;
         setZ(engine.engine_selector_engine_foreign_m.engine_foreign_Foreign
                  .engine_foreign_agent_agent,

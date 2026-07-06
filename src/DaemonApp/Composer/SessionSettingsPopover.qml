@@ -13,6 +13,11 @@ import DaemonApp.Controls as Kit
 QQC.Popup {
     id: root
 
+    // C4: the bound session runs on a foreign engine — reasoning effort + fast/verbose are
+    // inference tunables the foreign agent manages, so they are hidden (with an honest note).
+    // Profile override + approval mode still apply (foreign approvals ride the same inbox).
+    property bool foreignSession: false
+
     // Translatable label for a reasoning-effort segment; the stored value stays
     // the canonical off/low/medium/high token.
     function effortLabel(v) {
@@ -84,12 +89,14 @@ QQC.Popup {
             }
         }
 
-        // --- Reasoning effort --------------------------------------------
+        // --- Reasoning effort (native engines only) ----------------------
         Text {
+            visible: !root.foreignSession
             text: qsTr("Reasoning effort")
             font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
         }
         RowLayout {
+            visible: !root.foreignSession
             Layout.fillWidth: true
             spacing: 6
             Repeater {
@@ -104,6 +111,15 @@ QQC.Popup {
                     onClicked: SessionSettings.setEffort(modelData)
                 }
             }
+        }
+
+        // C4 honesty: say WHY reasoning/modes are absent for a foreign engine.
+        Text {
+            visible: root.foreignSession
+            Layout.fillWidth: true
+            text: qsTr("Reasoning effort and modes are managed by the foreign agent.")
+            font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+            wrapMode: Text.WordWrap
         }
 
         // --- Approval mode (CHA-4) ---------------------------------------
@@ -133,8 +149,9 @@ QQC.Popup {
             }
         }
 
-        // --- Modes -------------------------------------------------------
+        // --- Modes (native engines only) ---------------------------------
         RowLayout {
+            visible: !root.foreignSession
             Layout.fillWidth: true
             Text {
                 text: qsTr("Fast mode")
@@ -147,6 +164,7 @@ QQC.Popup {
             }
         }
         RowLayout {
+            visible: !root.foreignSession
             Layout.fillWidth: true
             Text {
                 text: qsTr("Verbose")

@@ -22,6 +22,9 @@ qt_add_qml_module(da_pages
         ConnectionPicker.qml
         AgentInferencePicker.qml
         AgentTypePicker.qml
+        # [wave2:app-engines] foreign-agent register/remove surface (C1)
+        AgentsSettingsSection.qml
+        RegisterAgentDialog.qml
         ConnectionSection.qml
         NotificationsSection.qml
         ModelSettingsSection.qml

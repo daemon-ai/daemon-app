@@ -22,6 +22,8 @@ Item {
         { id: "notifications", label: qsTr("Notifications"),  icon: FontIcons.fa_bell },
         { id: "connection",   label: qsTr("Connection"),     icon: FontIcons.fa_link },
         { id: "model",        label: qsTr("Model"),          icon: FontIcons.fa_brain },
+        // [wave2:app-engines] foreign-agent management (C1)
+        { id: "agents",       label: qsTr("Agents"),         icon: FontIcons.fa_robot },
         { id: "chat",         label: qsTr("Chat"),           icon: FontIcons.fa_comments },
         { id: "safety",       label: qsTr("Safety"),         icon: FontIcons.fa_circle_exclamation },
         { id: "memory",       label: qsTr("Memory & Context"), icon: FontIcons.fa_brain },
@@ -75,6 +77,7 @@ Item {
                     case "notifications": return notificationsComp;
                     case "connection": return connectionComp;
                     case "model": return modelComp;
+                    case "agents": return agentsComp;
                     case "chat": return chatComp;
                     case "safety": return safetyComp;
                     case "memory": return memoryComp;
@@ -106,6 +109,7 @@ Item {
     Component { id: notificationsComp; Padded { NotificationsSection { width: parent.width } } }
     Component { id: connectionComp;    Padded { ConnectionSection { width: parent.width } } }
     Component { id: modelComp;         Padded { ModelSettingsSection { width: parent.width } } }
+    Component { id: agentsComp;        Padded { AgentsSettingsSection { width: parent.width } } }
     Component { id: chatComp;          Padded { ChatSettingsSection { width: parent.width } } }
     Component { id: safetyComp;        Padded { SafetySettingsSection { width: parent.width } } }
     Component { id: memoryComp;        Padded { MemorySettingsSection { width: parent.width } } }

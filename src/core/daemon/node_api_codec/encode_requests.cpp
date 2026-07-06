@@ -309,8 +309,88 @@ QByteArray NodeApiCodec::encodeProviderCatalogRequest() {
     return encodeSimple(api_request_r::api_request_request_provider_catalog_m_c);
 }
 
-QByteArray NodeApiCodec::encodeAcpCatalogRequest() {
+QByteArray NodeApiCodec::encodeAgentCatalogRequest() {
     return encodeSimple(api_request_r::api_request_request_agent_catalog_m_c);
+}
+
+QByteArray NodeApiCodec::encodeAgentRegisterRequest(const DecodedAgentRecipeInput& in) {
+    // UTF-8 buffers must outlive the encode: zcbor borrows into their bytes across encodeWithFill.
+    const QByteArray nameUtf8 = in.name.toUtf8();
+    const QByteArray programUtf8 = in.program.toUtf8();
+    const QByteArray endpointUtf8 = in.endpoint.toUtf8();
+    QList<QByteArray> argBufs;
+    argBufs.reserve(in.args.size());
+    for (const QString& a : in.args) {
+        argBufs.append(a.toUtf8());
+    }
+    // Env: parallel key/value byte buffers (one stable pass over the map).
+    QList<QByteArray> envKeys;
+    QList<QByteArray> envVals;
+    for (auto it = in.env.constBegin(); it != in.env.constEnd(); ++it) {
+        envKeys.append(it.key().toUtf8());
+        envVals.append(it.value().toString().toUtf8());
+    }
+    const bool stdio = in.endpoint.trimmed().isEmpty();
+    return encodeWithFill(
+        api_request_r::api_request_request_agent_register_m_c, [&](api_request_r& request) {
+            agent_entry& entry = request.api_request_request_agent_register_m.AgentRegister_entry;
+            setZcbor(entry.agent_entry_name, nameUtf8);
+            // The node forces source = Manual regardless; we send Manual to match the round-trip.
+            entry.agent_entry_source.agent_source_choice =
+                agent_source_r::agent_source_Manual_tstr_c;
+            // Protocol (v29): ACP by default, or the Claude-Code stream-json bridge.
+            entry.agent_entry_protocol_present = true;
+            entry.agent_entry_protocol.agent_entry_protocol.agent_protocol_choice =
+                in.protocol == QStringLiteral("StreamJson")
+                    ? agent_protocol_r::agent_protocol_StreamJson_tstr_c
+                    : agent_protocol_r::agent_protocol_Acp_tstr_c;
+            // installed/version/capabilities stay ABSENT — the node re-probes and never trusts a
+            // caller-supplied installed flag (ENG-3).
+            entry.agent_entry_installed_present = false;
+            entry.agent_entry_version_present = false;
+            entry.agent_entry_capabilities_present = false;
+            // Recipe: a stdio launch (program + args + env) OR a tcp:// endpoint.
+            agent_recipe& recipe = entry.agent_entry_recipe;
+            if (stdio) {
+                recipe.agent_recipe_program_present = true;
+                recipe.agent_recipe_program.agent_recipe_program_choice =
+                    agent_recipe_program_r::agent_recipe_program_tstr_c;
+                setZcbor(recipe.agent_recipe_program.agent_recipe_program_tstr, programUtf8);
+                const size_t an = qMin<size_t>(static_cast<size_t>(argBufs.size()), 64);
+                recipe.agent_recipe_args_present = an > 0;
+                recipe.agent_recipe_args.agent_recipe_args_tstr_count = an;
+                for (size_t i = 0; i < an; ++i) {
+                    setZcbor(recipe.agent_recipe_args.agent_recipe_args_tstr[i],
+                             argBufs[static_cast<int>(i)]);
+                }
+                const size_t en = qMin<size_t>(static_cast<size_t>(envKeys.size()), 64);
+                recipe.agent_recipe_env_present = en > 0;
+                recipe.agent_recipe_env.agent_recipe_env_kv_pair_m_count = en;
+                for (size_t i = 0; i < en; ++i) {
+                    setZcbor(recipe.agent_recipe_env.agent_recipe_env_kv_pair_m[i].kv_pair_k,
+                             envKeys[static_cast<int>(i)]);
+                    setZcbor(recipe.agent_recipe_env.agent_recipe_env_kv_pair_m[i].kv_pair_v,
+                             envVals[static_cast<int>(i)]);
+                }
+                recipe.agent_recipe_endpoint_present = false;
+            } else {
+                recipe.agent_recipe_program_present = false;
+                recipe.agent_recipe_args_present = false;
+                recipe.agent_recipe_env_present = false;
+                recipe.agent_recipe_endpoint_present = true;
+                recipe.agent_recipe_endpoint.agent_recipe_endpoint_choice =
+                    agent_recipe_endpoint_r::agent_recipe_endpoint_tstr_c;
+                setZcbor(recipe.agent_recipe_endpoint.agent_recipe_endpoint_tstr, endpointUtf8);
+            }
+        });
+}
+
+QByteArray NodeApiCodec::encodeAgentRemoveRequest(const QString& name) {
+    const QByteArray nameUtf8 = name.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_agent_remove_m_c, [&](api_request_r& request) {
+            setZcbor(request.api_request_request_agent_remove_m.AgentRemove_name, nameUtf8);
+        });
 }
 
 QByteArray NodeApiCodec::encodeProviderModelsRequest(const QString& provider,
@@ -986,7 +1066,7 @@ QByteArray NodeApiCodec::encodeAuthCancelRequest(const QString& flowId) {
         });
 }
 
-QByteArray NodeApiCodec::encodeAcpDiscoverRequest() {
+QByteArray NodeApiCodec::encodeAgentDiscoverRequest() {
     return encodeSimple(api_request_r::api_request_request_agent_discover_m_c);
 }
 

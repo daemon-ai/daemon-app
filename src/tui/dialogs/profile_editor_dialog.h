@@ -143,7 +143,7 @@ private:
     QString m_wSystemPrompt;
     QStringList m_wSkills;
     QStringList m_wTools;
-    // Read-only engine binding ("Core"/"" = native; "Acp" = foreign agent).
+    // Read-only engine binding ("Core"/"" = native; "Foreign" = foreign agent).
     QString m_engineKind;
     QString m_engineAgent;
 

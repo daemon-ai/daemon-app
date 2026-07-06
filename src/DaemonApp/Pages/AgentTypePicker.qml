@@ -6,43 +6,43 @@ import QtQuick.Layouts
 import DaemonApp.Theme
 
 // The SHARED native-vs-foreign engine picker (ENG-2 / CON-16): one list — "daemon-core" (the
-// native engine, row 0, default) plus every ACP catalog entry with installed badges — extracted
-// from NewAgentDialog so the "+ New agent" dialog and the first-run wizard render ONE component
-// that cannot drift. Selection-only presentation: rows come from the AcpAgents facade
-// (AcpRepository: the durable catalog merged with the last discovery scan); an uninstalled
+// native engine, row 0, default) plus every foreign catalog entry with installed badges —
+// extracted from NewAgentDialog so the "+ New agent" dialog and the first-run wizard render ONE
+// component that cannot drift. Selection-only presentation: rows come from the Agents facade
+// (AgentRepository: the durable catalog merged with the last discovery scan); an uninstalled
 // foreign agent stays visible but unselectable (the badge explains why).
 //
-// refresh() re-reads the catalog AND kicks a fresh node-side discovery scan (AcpDiscover), so
+// refresh() re-reads the catalog AND kicks a fresh node-side discovery scan (AgentDiscover), so
 // just-installed agents show live installed badges. Absent facade (mock mode / harnesses)
 // => native only.
 ColumnLayout {
     id: picker
     spacing: 6
 
-    // The selected engine: "" = daemon-core (native); otherwise the ACP catalog agent name.
+    // The selected engine: "" = daemon-core (native); otherwise the foreign catalog agent name.
     property string engineAgent: ""
     // Whether the selected foreign agent is installed (the consumer's accept-gate half).
     property bool engineAgentInstalled: false
-    // The ACP catalog rows ({name, source, installed, version}); re-read on catalogRefreshed —
-    // AcpAgents.agents() is a plain Q_INVOKABLE, not a reactive binding.
-    property var acpRows: []
+    // The foreign catalog rows ({name, source, protocol, installed, version}); re-read on
+    // catalogRefreshed — Agents.agents() is a plain Q_INVOKABLE, not a reactive binding.
+    property var agentRows: []
 
     readonly property bool nativeEngine: engineAgent.length === 0
 
     // Fired on every selection change (tap or revalidation fallback).
     signal selected(string agent, bool installed)
 
-    function refreshAcpRows() {
-        picker.acpRows = (typeof AcpAgents !== "undefined" && AcpAgents) ? AcpAgents.agents()
-                                                                         : [];
+    function refreshRows() {
+        picker.agentRows = (typeof Agents !== "undefined" && Agents) ? Agents.agents()
+                                                                     : [];
         if (!picker.nativeEngine) {
             // Re-validate the current selection against the fresh catalog (it may have vanished
             // or flipped installed-ness).
             var still = false;
-            for (var i = 0; i < picker.acpRows.length; ++i)
-                if (picker.acpRows[i].name === picker.engineAgent) {
+            for (var i = 0; i < picker.agentRows.length; ++i)
+                if (picker.agentRows[i].name === picker.engineAgent) {
                     still = true;
-                    picker.engineAgentInstalled = picker.acpRows[i].installed === true;
+                    picker.engineAgentInstalled = picker.agentRows[i].installed === true;
                 }
             if (!still)
                 picker.selectEngine("", false);
@@ -58,17 +58,17 @@ ColumnLayout {
     // Fresh catalog + a node-side discovery scan; call when the hosting surface opens.
     function refresh() {
         picker.selectEngine("", false);
-        if (typeof AcpAgents !== "undefined" && AcpAgents) {
-            AcpAgents.refreshCatalog();
-            AcpAgents.discover(); // fresh installed badges beside the static catalog
+        if (typeof Agents !== "undefined" && Agents) {
+            Agents.refreshCatalog();
+            Agents.discover(); // fresh installed badges beside the static catalog
         }
-        picker.refreshAcpRows();
+        picker.refreshRows();
     }
 
     Connections {
-        target: (typeof AcpAgents !== "undefined" && AcpAgents) ? AcpAgents : null
+        target: (typeof Agents !== "undefined" && Agents) ? Agents : null
         function onCatalogRefreshed() {
-            picker.refreshAcpRows();
+            picker.refreshRows();
         }
     }
 
@@ -78,15 +78,15 @@ ColumnLayout {
         Layout.preferredHeight: Math.min(contentHeight, 132)
         clip: true
         // Row 0 is always the native engine; catalog rows follow.
-        model: 1 + picker.acpRows.length
+        model: 1 + picker.agentRows.length
         delegate: Rectangle {
             id: engineRow
             required property int index
             readonly property bool isNative: index === 0
-            readonly property var acp: isNative ? ({}) : picker.acpRows[index - 1]
-            readonly property bool isInstalled: !isNative && acp.installed === true
+            readonly property var agent: isNative ? ({}) : picker.agentRows[index - 1]
+            readonly property bool isInstalled: !isNative && agent.installed === true
             readonly property bool selected: isNative ? picker.nativeEngine
-                                                      : picker.engineAgent === acp.name
+                                                      : picker.engineAgent === agent.name
             width: ListView.view ? ListView.view.width : 0
             height: 30
             radius: 6
@@ -98,11 +98,15 @@ ColumnLayout {
                 anchors.rightMargin: 8
                 spacing: 8
                 Text {
+                    // Foreign rows suffix the protocol: "· ACP <version>" (version when the probe
+                    // reported one) or "· stream-json" for the Claude-Code bridge.
                     text: engineRow.isNative
                           ? qsTr("daemon-core (native)")
-                          : engineRow.acp.name
-                            + (engineRow.acp.version && engineRow.acp.version.length > 0
-                               ? qsTr("  ·  ACP %1").arg(engineRow.acp.version) : "")
+                          : engineRow.agent.name
+                            + (engineRow.agent.protocol === "StreamJson"
+                               ? qsTr("  ·  stream-json")
+                               : engineRow.agent.version && engineRow.agent.version.length > 0
+                                 ? qsTr("  ·  ACP %1").arg(engineRow.agent.version) : "")
                     font.family: FontIcons.display
                     font.pixelSize: 12
                     color: (engineRow.isNative || engineRow.isInstalled) ? Theme.text
@@ -137,7 +141,7 @@ ColumnLayout {
                     if (engineRow.isNative)
                         picker.selectEngine("", false);
                     else if (engineRow.isInstalled)
-                        picker.selectEngine(engineRow.acp.name, true);
+                        picker.selectEngine(engineRow.agent.name, true);
                 }
             }
         }

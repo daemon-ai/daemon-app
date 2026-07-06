@@ -9,9 +9,12 @@
 
 namespace {
 // Match the GUI badge wording (translated identically) so the two surfaces read the same.
-QString rowLabel(const daemonapp::daemon::DecodedAcpAgentEntry& entry) {
+QString rowLabel(const daemonapp::daemon::DecodedAgentEntry& entry) {
     QString label = entry.name;
-    if (!entry.version.isEmpty()) {
+    // Protocol suffix (v29): stream-json has no ACP version; ACP shows its probed version.
+    if (entry.protocol == QStringLiteral("StreamJson")) {
+        label += QStringLiteral("  (stream-json)");
+    } else if (!entry.version.isEmpty()) {
         label += QStringLiteral("  (ACP %1)").arg(entry.version);
     }
     label += entry.installed ? QObject::tr("  [installed]") : QObject::tr("  [not installed]");
@@ -19,10 +22,10 @@ QString rowLabel(const daemonapp::daemon::DecodedAcpAgentEntry& entry) {
 }
 } // namespace
 
-AgentTypeView::AgentTypeView(daemonapp::daemon::AcpRepository* acp, Tui::ZWidget* parent)
-    : Tui::ZListView(parent), m_acp(acp) {
-    if (m_acp != nullptr) {
-        connect(m_acp, &daemonapp::daemon::AcpRepository::catalogRefreshed, this,
+AgentTypeView::AgentTypeView(daemonapp::daemon::AgentRepository* repo, Tui::ZWidget* parent)
+    : Tui::ZListView(parent), m_repo(repo) {
+    if (m_repo != nullptr) {
+        connect(m_repo, &daemonapp::daemon::AgentRepository::catalogRefreshed, this,
                 &AgentTypeView::rebuild);
     }
     // ZListView has no row-change signal of its own here; consumers re-read on Enter/commit and
@@ -31,9 +34,9 @@ AgentTypeView::AgentTypeView(daemonapp::daemon::AcpRepository* acp, Tui::ZWidget
 }
 
 void AgentTypeView::refresh() {
-    if (m_acp != nullptr) {
-        m_acp->refreshCatalog();
-        m_acp->discover(); // fresh installed badges beside the durable catalog
+    if (m_repo != nullptr) {
+        m_repo->refreshCatalog();
+        m_repo->discover(); // fresh installed badges beside the durable catalog
     }
     rebuild();
 }
@@ -64,8 +67,8 @@ void AgentTypeView::rebuild() {
     m_agents.clear();
     m_agentInstalled.clear();
     QStringList items{tr("daemon-core (native)")};
-    if (m_acp != nullptr) {
-        for (const daemonapp::daemon::DecodedAcpAgentEntry& e : m_acp->entries()) {
+    if (m_repo != nullptr) {
+        for (const daemonapp::daemon::DecodedAgentEntry& e : m_repo->entries()) {
             m_agents << e.name;
             m_agentInstalled << e.installed;
             items << rowLabel(e);

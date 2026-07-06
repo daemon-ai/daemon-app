@@ -4,8 +4,8 @@
 #include "composer_chrome.h"
 
 #include "composer_session_controller.h"
+#include "daemon/engine_identity.h"
 #include "i_turn_engine.h"
-#include "profiles/iprofile_store.h"
 #include "session/isession_settings.h"
 #include "tui_palette.h"
 
@@ -65,14 +65,15 @@ void ComposerChrome::setSession(ComposerSessionController* session) {
 }
 
 void ComposerChrome::setFacades(session::ISessionSettings* settings,
-                                profiles::IProfileStore* profileStore) {
+                                daemonapp::daemon::EngineIdentity* engineIdentity) {
     m_settings = settings;
-    m_profiles = profileStore;
+    m_engineIdentity = engineIdentity;
     if (m_settings != nullptr) {
         connect(m_settings, &session::ISessionSettings::changed, this, [this] { update(); });
     }
-    if (m_profiles != nullptr) {
-        connect(m_profiles, &profiles::IProfileStore::changed, this, [this] { update(); });
+    if (m_engineIdentity != nullptr) {
+        connect(m_engineIdentity, &daemonapp::daemon::EngineIdentity::changed, this,
+                [this] { update(); });
     }
     update();
 }
@@ -156,22 +157,14 @@ QVector<Span> ComposerChrome::buildSpans() const {
             spans << mkSpan(QStringLiteral("]"), tpal::faint());
         }
     }
-    // Engine-identity chip (C3/ENG-7): Native core vs the foreign ACP agent driving this session
-    // (per-session profile override, falling back to the active default profile).
-    if (m_session != nullptr && m_settings != nullptr && m_profiles != nullptr &&
-        !m_session->sessionId().isEmpty()) {
-        QString pid = m_settings->profileFor(m_session->sessionId());
-        if (pid.isEmpty()) {
-            pid = m_profiles->defaultProfileId();
-        }
-        const QVariantMap p = m_profiles->profile(pid);
-        if (!p.isEmpty() && p.contains(QStringLiteral("engine"))) {
-            const bool acp = p.value(QStringLiteral("engine")).toString() == QStringLiteral("Acp");
-            const QString agent = p.value(QStringLiteral("acpAgent")).toString();
+    // Engine-identity chip (C3/ENG-7): Native core vs the foreign agent driving this session
+    // (per-session profile override, falling back to the active default profile). The label is
+    // the shared EngineIdentity mapping so GUI + TUI read identically (agent name + protocol).
+    if (m_session != nullptr && m_engineIdentity != nullptr && !m_session->sessionId().isEmpty()) {
+        const QVariantMap info = m_engineIdentity->engineForSession(m_session->sessionId());
+        if (info.value(QStringLiteral("engine")).toString() == QStringLiteral("Foreign")) {
             spans << mkSpan(QStringLiteral("  \u00b7  "), tpal::faint());
-            spans << mkSpan(acp ? tr("%1 (ACP)").arg(agent.isEmpty() ? tr("Foreign") : agent)
-                                : tr("Native"),
-                            acp ? tpal::accent() : tpal::muted());
+            spans << mkSpan(info.value(QStringLiteral("label")).toString(), tpal::accent());
         }
     }
     // Approval-policy chip (E1/TOOL-7): the session's HITL mode at a glance (F2 changes it).

@@ -24,6 +24,8 @@ qt_add_qml_module(da_controls
         ProgressBar.qml
         Toast.qml
         Chip.qml
+        # [wave2:app-engines] approval origin engine chip (C5)
+        EngineOriginChip.qml
 )
 add_library(daemon-app::controls ALIAS da_controls)
 

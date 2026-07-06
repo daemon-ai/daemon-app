@@ -72,7 +72,7 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         {api_response_r::api_response_response_model_catalog_m_c, ApiResponseKind::ModelCatalog},
         {api_response_r::api_response_response_model_recommend_m_c,
          ApiResponseKind::ModelRecommend},
-        {api_response_r::api_response_response_agent_catalog_m_c, ApiResponseKind::AcpCatalog},
+        {api_response_r::api_response_response_agent_catalog_m_c, ApiResponseKind::AgentCatalog},
         // app-wizard-auth stream additions (appended).
         {api_response_r::api_response_response_auth_providers_m_c, ApiResponseKind::AuthProviders},
         {api_response_r::api_response_response_auth_begun_m_c, ApiResponseKind::AuthBegun},
@@ -1086,10 +1086,10 @@ bool NodeApiCodec::decodeSessionSearch(const QByteArray& responseCbor,
     return true;
 }
 
-// --- ACP agent catalog (foreign engines; wire v23) -----------------------------------------------
+// --- Foreign-agent catalog (foreign engines; wire v29) -------------------------------------------
 
-bool NodeApiCodec::decodeAcpCatalog(const QByteArray& responseCbor,
-                                    QList<DecodedAcpAgentEntry>* out) {
+bool NodeApiCodec::decodeAgentCatalog(const QByteArray& responseCbor,
+                                      QList<DecodedAgentEntry>* out) {
     if (out == nullptr) {
         return false;
     }
@@ -1102,7 +1102,7 @@ bool NodeApiCodec::decodeAcpCatalog(const QByteArray& responseCbor,
     out->clear();
     for (size_t i = 0; i < catalog.response_agent_catalog_AgentCatalog_agent_entry_m_count; ++i) {
         const agent_entry& row = catalog.response_agent_catalog_AgentCatalog_agent_entry_m[i];
-        DecodedAcpAgentEntry entry;
+        DecodedAgentEntry entry;
         entry.name = fromZcbor(row.agent_entry_name);
         switch (row.agent_entry_source.agent_source_choice) {
         case agent_source_r::agent_source_Manual_tstr_c:
@@ -1114,6 +1114,15 @@ bool NodeApiCodec::decodeAcpCatalog(const QByteArray& responseCbor,
         default:
             entry.source = QStringLiteral("Builtin");
             break;
+        }
+        // Protocol (wire v29): ACP vs the Claude-Code stream-json bridge. Absent => Acp (the
+        // #[serde(default)] on the node side), so a pre-v29 row decodes as ACP.
+        if (row.agent_entry_protocol_present &&
+            row.agent_entry_protocol.agent_entry_protocol.agent_protocol_choice ==
+                agent_protocol_r::agent_protocol_StreamJson_tstr_c) {
+            entry.protocol = QStringLiteral("StreamJson");
+        } else {
+            entry.protocol = QStringLiteral("Acp");
         }
         if (row.agent_entry_installed_present) {
             entry.installed = row.agent_entry_installed.agent_entry_installed;

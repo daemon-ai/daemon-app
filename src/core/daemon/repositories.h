@@ -723,41 +723,52 @@ private:
     PageLoop<DecodedCheckpointInfo> m_listLoop;
 };
 
-// --- ACP agent catalog (foreign engines; wire v23) -------------------------------------------
-// The node's ACP agent catalog (AcpCatalog: durable manual registrations + the last discovery
-// scan), kept in memory for the new-agent dialog's engine picker. Read-only: registration /
-// removal stay operator ops (no recipe ever travels through the client); a profile references an
-// entry BY NAME via the ProfileSpec engine selector.
-class AcpRepository : public RepositoryBase {
+// --- Foreign-agent catalog (foreign engines; wire v29) ---------------------------------------
+// The node's foreign-agent catalog (AgentCatalog: curated builtins + durable manual registrations
+// merged with the last discovery scan), kept in memory for the engine picker and the Agents
+// settings surface. Register/remove drive AgentRegister/AgentRemove — the node forces
+// source=Manual and RE-PROBES (a caller-supplied `installed` is never trusted) and no launch
+// recipe ever travels back out; a profile references an entry BY NAME via the ProfileSpec engine
+// selector. The wire op names stay inside this repository + the codec (rename isolation).
+class AgentRepository : public RepositoryBase {
     Q_OBJECT
 
 public:
-    AcpRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+    AgentRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
 
-    [[nodiscard]] const QList<DecodedAcpAgentEntry>& entries() const { return m_entries; }
-    // QML-consumable rows for the engine picker: {name, source, installed, version}.
+    [[nodiscard]] const QList<DecodedAgentEntry>& entries() const { return m_entries; }
+    // QML-consumable rows: {name, source, protocol, installed, version}.
     [[nodiscard]] Q_INVOKABLE QVariantList agents() const;
 
-    // Issue an AcpCatalog; on success catalogRefreshed() fires with entries() populated.
+    // Issue an AgentCatalog; on success catalogRefreshed() fires with entries() populated.
     Q_INVOKABLE void refreshCatalog();
-    // Ask the node for a FRESH discovery scan (AcpDiscover: PATH/endpoint probe merged with the
-    // durable catalog; the response reuses the AcpCatalog shape). Same catalogRefreshed() signal —
-    // consumers (the engine picker) re-read agents() with fresh installed badges. Neutral verb:
-    // the wire op name stays inside this repository + the codec (rename isolation).
+    // Ask the node for a FRESH discovery scan (AgentDiscover: PATH/endpoint probe merged with the
+    // durable catalog; the response reuses the AgentCatalog shape). Same catalogRefreshed() signal.
     Q_INVOKABLE void discover();
+    // Register a manual foreign agent (AgentRegister). `form` keys: name, protocol ("Acp"|
+    // "StreamJson"), program, args (QStringList), env (QVariantMap), endpoint. On the node's Ok
+    // (it re-probes) this chains a catalog refresh + discovery and fires agentRegistered().
+    Q_INVOKABLE void registerAgent(const QVariantMap& form);
+    // Remove a manual foreign agent by catalog name (AgentRemove); chains a refresh on Ok.
+    Q_INVOKABLE void removeAgent(const QString& name);
 
 signals:
     void catalogRefreshed();
+    void agentRegistered();
+    void agentRemoved(const QString& name);
     void operationFailed(const QString& message);
 
 private:
     void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
     void handleFailure(const QString& correlationId, const QString& message);
 
-    static constexpr auto kCatalogCorrelation = "repo/acp-catalog";
-    static constexpr auto kDiscoverCorrelation = "repo/acp-discover";
+    static constexpr auto kCatalogCorrelation = "repo/agent-catalog";
+    static constexpr auto kDiscoverCorrelation = "repo/agent-discover";
+    static constexpr auto kRegisterCorrelation = "repo/agent-register";
+    static constexpr auto kRemoveCorrelation = "repo/agent-remove";
 
-    QList<DecodedAcpAgentEntry> m_entries;
+    QList<DecodedAgentEntry> m_entries;
+    QString m_lastRemovedName; // echoed on agentRemoved
 };
 
 // --- Interactive auth (begin -> browser -> complete; app-wizard-auth stream) ---------------------

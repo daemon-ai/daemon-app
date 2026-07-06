@@ -7,6 +7,7 @@
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
+#include "dialogs/agents_dialog.h" // [wave2:app-engines] foreign-agent management dialog (C1)
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
@@ -134,10 +135,10 @@ bool RootWidget::handleSidebarAgentShortcuts(Tui::ZKeyEvent* event) {
     // key bubbles on to the rest of the chain (matching the original fall-through).
     const Qt::KeyboardModifiers mods = event->modifiers();
     // 'a' with the Fleet tree focused mints a NEW agent (the GUI "+ New agent" analog): a minimal
-    // name + engine list (daemon-core + the ACP catalog names) over the shared profile-create path.
+    // name + engine list (daemon-core + the foreign catalog names) over the shared create path.
     if (mods == Qt::NoModifier && m_sidebarView != nullptr && m_sidebarView->focus() &&
         event->text() == QStringLiteral("a") && m_services.profiles != nullptr) {
-        auto* dialog = new NewAgentDialog(m_services.profiles, m_services.acp, this);
+        auto* dialog = new NewAgentDialog(m_services.profiles, m_services.agents, this);
         dialog->setVisible(true);
         event->accept();
         return true;
@@ -489,6 +490,15 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         event->accept();
         return true;
     }
+    // [wave2:app-engines] Settings: 'g' opens the foreign-agent management dialog (C1) — the
+    // register/remove parity counterpart of the GUI Settings -> Agents section.
+    if (kind == TabModel::Settings && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("g") && m_services.agents != nullptr) {
+        auto* dialog = new AgentsDialog(m_services.agents, this);
+        dialog->setVisible(true);
+        event->accept();
+        return true;
+    }
     if (kind == TabModel::Profiles && event->modifiers() == Qt::NoModifier) {
         // 'e' opens the interactive profile editor for the selected row.
         if (event->text() == QStringLiteral("e")) {
@@ -505,7 +515,7 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
         // over the shared create path - the sidebar shortcut, reachable from
         // the Profiles page too (engine choice is create-time).
         if (event->text() == QStringLiteral("a") && m_services.profiles != nullptr) {
-            auto* dialog = new NewAgentDialog(m_services.profiles, m_services.acp, this);
+            auto* dialog = new NewAgentDialog(m_services.profiles, m_services.agents, this);
             dialog->setVisible(true);
             event->accept();
             return true;
