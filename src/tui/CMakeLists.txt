@@ -153,6 +153,9 @@ qt_add_executable(daemon-tui
     # IProfileStore save path.
     dialogs/profile_editor_dialog.h
     dialogs/profile_editor_dialog.cpp
+    # [wave2:app-engines] foreign-agent management dialog (C1)
+    dialogs/agents_dialog.h
+    dialogs/agents_dialog.cpp
     tui_page_hub.h
     tui_page_hub.cpp
     # Hand-maintained parity coverage declaration (enforced by

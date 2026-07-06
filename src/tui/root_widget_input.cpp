@@ -7,6 +7,7 @@
 #include "composer_session_controller.h"
 #include "daemon/daemon_connection_service.h" // complete type for the managed-daemon shutdown hook
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
+#include "dialogs/agents_dialog.h" // [wave2:app-engines] foreign-agent management dialog (C1)
 #include "display_role_adapter.h"
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
@@ -486,6 +487,15 @@ bool RootWidget::handlePageActionKey(Tui::ZKeyEvent* event) {
                 qBound(0, m_pageHub->pageSelection(kind), static_cast<int>(rows.size()) - 1);
             openFleetSteerPrompt(rows.at(sel));
         }
+        event->accept();
+        return true;
+    }
+    // [wave2:app-engines] Settings: 'g' opens the foreign-agent management dialog (C1) — the
+    // register/remove parity counterpart of the GUI Settings -> Agents section.
+    if (kind == TabModel::Settings && event->modifiers() == Qt::NoModifier &&
+        event->text() == QStringLiteral("g") && m_services.agents != nullptr) {
+        auto* dialog = new AgentsDialog(m_services.agents, this);
+        dialog->setVisible(true);
         event->accept();
         return true;
     }
