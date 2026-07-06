@@ -105,6 +105,8 @@ struct CachedTranscriptBlockRow {
     QString argsSummary;
     bool ok = false;
     QString summary;
+    QString detailKind;    // ToolResult structured detail kind (D1; empty when absent)
+    QByteArray detailBody; // ToolResult structured detail payload (JSON bytes)
     quint32 requestId = 0;
     QString hostKind;
     QString contentKind;

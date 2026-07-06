@@ -7,6 +7,9 @@
 
 namespace daemonapp::daemon::cache {
 
+// v6 (D1): adds detail_kind + detail_body to daemon_transcript_blocks so a tool result's rich
+// detail (diff / search hits / screenshot path / full output in `summary`) survives restart and
+// history scroll-back.
 // v5 (Phase 6a): adds daemon_transport_instances + daemon_conversations (offline-first Channels
 // read surface - configured accounts + their live conversations render with no connection).
 // v4 (Phase 5b): adds daemon_fleet_units (offline-first fleet/subagent tree). The cache is
@@ -16,7 +19,7 @@ namespace daemonapp::daemon::cache {
 // became live (offline-first read).
 // v2 (L3): added daemon_transcript_blocks (render-from-cache transcript) + per-session resync
 // cursors.
-inline constexpr int kSchemaVersion = 5;
+inline constexpr int kSchemaVersion = 6;
 
 inline constexpr const char* kCreateMetaSql = R"sql(
 CREATE TABLE IF NOT EXISTS daemon_cache_meta (
@@ -132,6 +135,8 @@ CREATE TABLE IF NOT EXISTS daemon_transcript_blocks (
   args_summary TEXT,
   ok INTEGER NOT NULL DEFAULT 0,
   summary TEXT,
+  detail_kind TEXT,
+  detail_body BLOB,
   request_id INTEGER NOT NULL DEFAULT 0,
   host_kind TEXT,
   content_kind TEXT,
