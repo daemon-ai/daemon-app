@@ -13,6 +13,7 @@
 #include "daemon/daemon_accounts_service.h"
 #include "daemon/daemon_approvals_inbox.h"
 #include "daemon/daemon_cache_store.h"
+#include "daemon/daemon_checkpoint_timeline.h"
 #include "daemon/daemon_connection_service.h"
 #include "daemon/daemon_dashboard.h"
 #include "daemon/daemon_fleet_tree.h"
@@ -123,8 +124,8 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.transportRegistry = new transports::MockTransportRegistry(owner);
     graph.presence = new transports::MockPresenceService(owner);
     // sessionSettings is constructed per-mode below (the daemon variant needs nodeApi to send
-    // SetSessionMode); checkpoints is mock in both, but empty-seeded in Daemon mode (no checkpoint
-    // wire op yet - the timeline renders empty rather than fabricated rewind points).
+    // SetSessionMode); checkpoints starts as the mock and is REPLACED in the daemon branch with
+    // the repo-backed DaemonCheckpointTimeline (CheckpointList/CheckpointRewind; E4/TOOL-9).
     graph.checkpoints = new session::MockCheckpointTimeline(owner, seedMockDemo);
     graph.cache = new DaemonCacheStore(QString(), owner);
     // The WhoAmI / principal model (advisory capability gating). Always present; populated from
@@ -145,6 +146,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
     graph.providerRepository = new ProviderRepository(graph.nodeApi, graph.cache, owner);
     graph.approvalRepository = new ApprovalRepository(graph.nodeApi, graph.cache, owner);
     graph.checkpointRepository = new CheckpointRepository(graph.nodeApi, graph.cache, owner);
+    if (daemonConnection != nullptr) {
+        // Durable checkpoints (E4/TOOL-9): replace the (empty-seeded) mock timeline with the
+        // repo-backed one over CheckpointList/CheckpointRewind. The mock built above is parented
+        // to `owner`; drop it for the daemon one.
+        delete graph.checkpoints;
+        graph.checkpoints = new DaemonCheckpointTimeline(graph.checkpointRepository, owner);
+    }
     graph.credentialRepository = new CredentialRepository(graph.nodeApi, graph.cache, owner);
     // The ACP agent catalog (foreign engines): backs the new-agent dialog's engine picker.
     graph.acp = new AcpRepository(graph.nodeApi, graph.cache, owner);
@@ -178,7 +186,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // re-query the tree on a roster delta (a fleet unit IS a durable session - FIX 2).
         graph.fleetRepository = new FleetRepository(graph.nodeApi, graph.cache, owner);
         delete graph.fleetTree;
-        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, owner);
+        // The profile store rides along for the engine-identity join (C3): fleet rows carry
+        // engine/acpAgent resolved from their profileRef.
+        graph.fleetTree = new fleet::DaemonFleetTree(graph.fleetRepository, graph.profiles, owner);
         // L3 node-wide event feed (daemon-sync-protocol §5): one EventsSince stream that routes
         // out-of-focus changes (roster/meta -> debounced roster refetch + tree re-query, approvals
         // -> badge, downloads -> models, session-advanced -> focused-engine nudge, resync ->
@@ -279,10 +289,11 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                "accounts(credentials), modelCatalog(models), profiles, "
                "approvals(ApprovalsPending/Decide), sessionSettings(SetSessionMode), fs(fs_*), "
                "fleetTree(Tree), roster/dashboard(offline-first over cache/fleet/approvals), "
-               "transports/presence(TransportAdapters/Instances+ConvList); "
+               "transports/presence(TransportAdapters/Instances+ConvList), "
+               "checkpoints(CheckpointList/Rewind); "
                "still mock: daemonConfig, memory, daemonNet (Integrations seeded empty unless "
                "DAEMON_APP_MOCK_INTEGRATIONS); node-blocked (NO wire op yet - rendered EMPTY, not "
-               "mock demo data): routing, cron, checkpoints.";
+               "mock demo data): routing, cron.";
     } else {
         // Mock mode: a non-persisted in-memory store re-seeded fresh from the unified DaemonNet
         // each run (deterministic, always matches the current seed - no stale-db drift). The

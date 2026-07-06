@@ -141,6 +141,20 @@ struct DecodedAcpAgentEntry {
     QString version; // ACP protocol version reported at initialize; empty = unprobed
 };
 
+// --- Checkpoints (E4/TOOL-9) ----------------------------------------------------------------
+// One durable checkpoint (CheckpointList -> Checkpoints page). Node-created on tool events;
+// `turnOrdinal`/`cursorSeq` locate it on the session timeline (optional on the wire).
+struct DecodedCheckpointInfo {
+    QString id;
+    QString session;
+    QString tool; // the tool whose execution the checkpoint precedes
+    quint64 createdUnix = 0;
+    bool hasTurnOrdinal = false;
+    quint64 turnOrdinal = 0;
+    bool hasCursor = false;
+    quint64 cursorSeq = 0;
+};
+
 // --- Profile distribution + version history (PRO-7 / PRO-8) --------------------------------------
 // One bundled skill inside a profile distribution (SkillBundle). `files` is path -> UTF-8 content.
 struct DecodedSkillBundle {
@@ -624,6 +638,7 @@ enum class ApiResponseKind {
     ModelCatalog,
     ModelRecommend,
     AcpCatalog,
+    Checkpoints,
 };
 
 // Thin C++ facade over the zcbor-generated NodeApi codec (codec/generated). The generated C is
@@ -1056,6 +1071,21 @@ public:
     // Decode a SessionSearch response (CHA-8) into hits.
     static bool decodeSessionSearch(const QByteArray& responseCbor,
                                     QList<DecodedSessionSearchHit>* out);
+
+    // --- Checkpoints (E4/TOOL-9) --------------------------------------------------------------
+    // List a session's durable checkpoints (CheckpointList -> Checkpoints). Empty session = every
+    // session; `after` (wire v25) resumes past the previous page's `next` cursor.
+    [[nodiscard]] static QByteArray
+    encodeCheckpointListRequest(const QString& sessionId = QString(),
+                                const QString& after = QString());
+    // Rewind `sessionId` to `checkpointId` (CheckpointRewind -> Ok). DISTINCT from the turn-level
+    // Rewind/RewindTo ops: this restores the node's durable tool-event checkpoint.
+    [[nodiscard]] static QByteArray encodeCheckpointRewindRequest(const QString& sessionId,
+                                                                  const QString& checkpointId);
+    // Decode one Checkpoints page. `*next` (when non-null) gets the resume cursor (cleared on the
+    // last page).
+    static bool decodeCheckpoints(const QByteArray& responseCbor, QList<DecodedCheckpointInfo>* out,
+                                  QString* next = nullptr);
 };
 
 } // namespace daemonapp::daemon

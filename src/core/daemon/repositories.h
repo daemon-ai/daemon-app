@@ -604,11 +604,46 @@ private:
     static constexpr auto kConvPrefix = "repo/conv-list/";
 };
 
-// Not part of the first daemon slice: kept as a cache/NodeApi-aware stub until checkpoint
-// timelines are modeled in the daemon-api codec subset.
+// Durable checkpoints (E4/TOOL-9): refresh(session) issues a CheckpointList (page loop) and
+// checkpointsRefreshed() fires with checkpoints() populated; rewind(session, id) issues a
+// CheckpointRewind and rewound() fires on Ok. DISTINCT from the turn-level Rewind/RewindTo ops:
+// these are the node's durable tool-event checkpoints (they survive restarts). Kept in memory
+// (per-session, re-fetched on focus); not cached offline — a rewind affordance must never act on
+// stale rows.
 class CheckpointRepository : public RepositoryBase {
+    Q_OBJECT
+
 public:
-    using RepositoryBase::RepositoryBase;
+    CheckpointRepository(NodeApiClient* client, DaemonCacheStore* cache, QObject* parent = nullptr);
+
+    [[nodiscard]] const QList<DecodedCheckpointInfo>& checkpoints() const { return m_checkpoints; }
+    [[nodiscard]] QString lastSession() const { return m_lastSession; }
+
+    // Issue a CheckpointList scoped to `sessionId`; on success checkpointsRefreshed(sessionId)
+    // fires with checkpoints() populated (paged; accumulates across `after` cursors).
+    void refresh(const QString& sessionId);
+    // Rewind `sessionId` to `checkpointId` (CheckpointRewind); on Ok rewound(sessionId) fires and
+    // the list is re-fetched (the node prunes checkpoints past the restore point).
+    void rewind(const QString& sessionId, const QString& checkpointId);
+
+signals:
+    void checkpointsRefreshed(const QString& sessionId);
+    void rewound(const QString& sessionId);
+    void operationFailed(const QString& message);
+
+private:
+    void handleResponse(const QString& correlationId, const QByteArray& responseCbor);
+    void handleFailure(const QString& correlationId, const QString& message);
+
+    static constexpr auto kListCorrelation = "repo/checkpoint-list";
+    static constexpr auto kRewindCorrelation = "repo/checkpoint-rewind";
+
+    QList<DecodedCheckpointInfo> m_checkpoints;
+    QString m_lastSession;   // the session scope of the last refresh (echoed on signals)
+    QString m_pendingRewind; // the session of the in-flight rewind (echoed on rewound)
+    // Checkpoint page loop (wire v25): accumulate across `after` pages, then swap checkpoints()
+    // and emit checkpointsRefreshed ONCE.
+    PageLoop<DecodedCheckpointInfo> m_listLoop;
 };
 
 // --- ACP agent catalog (foreign engines; wire v23) -------------------------------------------

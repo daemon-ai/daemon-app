@@ -9,9 +9,14 @@ import DaemonApp.Controls as Kit
 
 // Checkpoints / rewind timeline popover (opens upward from the composer): the
 // session's checkpoints with a Restore action. Backed by the Checkpoints facade
-// (mock); restoring rewinds to that point.
+// (E4/TOOL-9: repo-backed in daemon mode); restoring confirms, then rewinds to
+// that point. Foreign (ACP) sessions hide Restore — rewind is managed by the
+// foreign agent (C4 honesty).
 QQC.Popup {
     id: root
+
+    // The bound session runs on a foreign ACP engine: rewind is not ours to offer.
+    property bool foreignSession: false
 
     implicitWidth: 340
     padding: 12
@@ -26,6 +31,9 @@ QQC.Popup {
         border.color: Theme.border
     }
 
+    // Rewind confirm (destructive: drops everything after the selected point).
+    RewindConfirmDialog { id: confirmDialog }
+
     contentItem: ColumnLayout {
         spacing: 10
 
@@ -37,9 +45,21 @@ QQC.Popup {
                 color: Theme.text; Layout.fillWidth: true
             }
             Kit.TextButton {
+                // Hidden when the seam cannot create (daemon mode: checkpoints are node-created
+                // on tool events; no wire op).
+                visible: Checkpoints.canCreate
                 text: qsTr("Save here")
                 onClicked: Checkpoints.createCheckpoint(qsTr("Manual checkpoint"))
             }
+        }
+
+        // Foreign-session honesty: say WHY rewind is absent instead of silently omitting it.
+        Text {
+            visible: root.foreignSession
+            Layout.fillWidth: true
+            text: qsTr("Rewind is managed by the foreign agent")
+            font.family: FontIcons.display; font.pixelSize: 11; color: Theme.textMuted
+            wrapMode: Text.WordWrap
         }
 
         ListView {
@@ -73,7 +93,9 @@ QQC.Popup {
                             elide: Text.ElideRight; Layout.fillWidth: true
                         }
                         Text {
-                            text: entry.time + " · " + entry.tokens + qsTr(" tok")
+                            // tokens < 0 = unknown (the daemon wire carries no token counter).
+                            text: entry.tokens >= 0 ? entry.time + " · " + entry.tokens + qsTr(" tok")
+                                                    : entry.time
                             font.family: FontIcons.mono; font.pixelSize: 10; color: Theme.textMuted
                         }
                     }
@@ -84,12 +106,20 @@ QQC.Popup {
                         font.family: FontIcons.display; font.pixelSize: 10; color: Theme.accent
                     }
                     Kit.TextButton {
-                        visible: entry.current !== true
+                        visible: entry.current !== true && !root.foreignSession
                         text: qsTr("Restore")
-                        onClicked: Checkpoints.restore(entry.id)
+                        onClicked: confirmDialog.confirmFor(entry.id, entry.label)
                     }
                 }
             }
+        }
+
+        // Empty state: a fresh session has no checkpoints yet (they appear as tools run).
+        Text {
+            visible: Checkpoints.count === 0
+            Layout.fillWidth: true
+            text: qsTr("No checkpoints yet")
+            font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
         }
     }
 }

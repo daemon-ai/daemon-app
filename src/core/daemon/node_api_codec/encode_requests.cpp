@@ -893,4 +893,41 @@ QByteArray NodeApiCodec::encodeSessionSearchRequest(const QString& query, quint3
         });
 }
 
+// --- Checkpoints (E4/TOOL-9) ---------------------------------------------------------------------
+
+QByteArray NodeApiCodec::encodeCheckpointListRequest(const QString& sessionId,
+                                                     const QString& after) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray afterUtf8 = after.toUtf8();
+    api_request_r request{};
+    request.api_request_choice = api_request_r::api_request_request_checkpoint_list_m_c;
+    request_checkpoint_list& list = request.api_request_request_checkpoint_list_m;
+    list.CheckpointList_session_present = !sessionId.isEmpty();
+    if (!sessionId.isEmpty()) {
+        list.CheckpointList_session.CheckpointList_session_choice =
+            CheckpointList_session_r::CheckpointList_session_session_id_m_c;
+        setZcbor(list.CheckpointList_session.CheckpointList_session_session_id_m, sessionUtf8);
+    }
+    list.CheckpointList_after_present = !after.isEmpty();
+    if (!after.isEmpty()) {
+        list.CheckpointList_after.CheckpointList_after_choice =
+            CheckpointList_after_r::CheckpointList_after_tstr_c;
+        setZcbor(list.CheckpointList_after.CheckpointList_after_tstr, afterUtf8);
+    }
+    QByteArray out;
+    return encodeRequest(request, &out) ? out : QByteArray{};
+}
+
+QByteArray NodeApiCodec::encodeCheckpointRewindRequest(const QString& sessionId,
+                                                       const QString& checkpointId) {
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    const QByteArray idUtf8 = checkpointId.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_checkpoint_rewind_m_c, [&](api_request_r& request) {
+            request_checkpoint_rewind& rewind = request.api_request_request_checkpoint_rewind_m;
+            setZcbor(rewind.CheckpointRewind_session, sessionUtf8);
+            setZcbor(rewind.CheckpointRewind_checkpoint_id, idUtf8);
+        });
+}
+
 } // namespace daemonapp::daemon

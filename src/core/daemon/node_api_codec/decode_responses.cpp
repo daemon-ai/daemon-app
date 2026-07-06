@@ -73,6 +73,7 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         {api_response_r::api_response_response_model_recommend_m_c,
          ApiResponseKind::ModelRecommend},
         {api_response_r::api_response_response_acp_catalog_m_c, ApiResponseKind::AcpCatalog},
+        {api_response_r::api_response_response_checkpoints_m_c, ApiResponseKind::Checkpoints},
     });
     for (const auto& entry : kKindMap) {
         if (response->api_response_choice == entry.choice) {
@@ -1112,6 +1113,54 @@ bool NodeApiCodec::decodeAcpCatalog(const QByteArray& responseCbor,
         // The launch recipe is deliberately NOT decoded: recipes are node-side, operator-managed
         // state; no client surface renders or re-sends them (profiles bind BY NAME only).
         out->append(entry);
+    }
+    return true;
+}
+
+// --- Checkpoints (E4/TOOL-9) ---------------------------------------------------------------------
+
+bool NodeApiCodec::decodeCheckpoints(const QByteArray& responseCbor,
+                                     QList<DecodedCheckpointInfo>* out, QString* next) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_checkpoints_m_c);
+    if (!response) {
+        return false;
+    }
+    const checkpoint_page& page =
+        response->api_response_response_checkpoints_m.response_checkpoints_Checkpoints;
+    out->clear();
+    for (size_t i = 0; i < page.checkpoint_page_items_checkpoint_info_m_count; ++i) {
+        const checkpoint_info& info = page.checkpoint_page_items_checkpoint_info_m[i];
+        DecodedCheckpointInfo entry;
+        entry.id = fromZcbor(info.checkpoint_info_id);
+        entry.session = fromZcbor(info.checkpoint_info_session);
+        entry.tool = fromZcbor(info.checkpoint_info_tool);
+        entry.createdUnix = info.checkpoint_info_created_unix;
+        if (info.checkpoint_info_turn_ordinal_present &&
+            info.checkpoint_info_turn_ordinal.checkpoint_info_turn_ordinal_choice ==
+                checkpoint_info_turn_ordinal_r::checkpoint_info_turn_ordinal_uint64_m_c) {
+            entry.hasTurnOrdinal = true;
+            entry.turnOrdinal =
+                info.checkpoint_info_turn_ordinal.checkpoint_info_turn_ordinal_uint64_m;
+        }
+        if (info.checkpoint_info_cursor_present &&
+            info.checkpoint_info_cursor.checkpoint_info_cursor_choice ==
+                checkpoint_info_cursor_r::checkpoint_info_cursor_uint64_m_c) {
+            entry.hasCursor = true;
+            entry.cursorSeq = info.checkpoint_info_cursor.checkpoint_info_cursor_uint64_m;
+        }
+        out->append(entry);
+    }
+    if (next != nullptr) {
+        // The resume cursor (wire v25): present + non-null => more pages remain.
+        const bool hasNext = page.checkpoint_page_next_present &&
+                             page.checkpoint_page_next.checkpoint_page_next_choice ==
+                                 checkpoint_page_next_r::checkpoint_page_next_tstr_c;
+        *next =
+            hasNext ? fromZcbor(page.checkpoint_page_next.checkpoint_page_next_tstr) : QString();
     }
     return true;
 }

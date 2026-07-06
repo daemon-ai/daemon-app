@@ -351,6 +351,8 @@ private:
     // --- overlay/theme helpers (root_widget_pages.cpp) -----------------------
     // Build the checkpoint overlay's display strings + parallel id list from the
     // raw checkpoint rows (kept a member so tr() uses the RootWidget context).
+    // Whether the active tab's session runs on a foreign ACP engine (gates rewind - C4/E4).
+    [[nodiscard]] bool activeSessionIsForeign() const;
     void buildCheckpointDisplay(const QList<QVariantMap>& rows, QStringList& display,
                                 QStringList& ids) const;
     // Repaint every theme-sampling view after a live theme switch.

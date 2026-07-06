@@ -1737,4 +1737,88 @@ void AcpRepository::handleFailure(const QString& correlationId, const QString& m
     }
 }
 
+// --- CheckpointRepository (E4/TOOL-9) --------------------------------------------------------
+
+CheckpointRepository::CheckpointRepository(NodeApiClient* client, DaemonCacheStore* cache,
+                                           QObject* parent)
+    : RepositoryBase(client, cache, parent) {
+    if (this->client() != nullptr) {
+        connect(this->client(), &NodeApiClient::responseReady, this,
+                &CheckpointRepository::handleResponse);
+        connect(this->client(), &NodeApiClient::failed, this, &CheckpointRepository::handleFailure);
+    }
+}
+
+void CheckpointRepository::refresh(const QString& sessionId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    m_lastSession = sessionId;
+    // A fresh refresh restarts the page loop: drop anything a superseded loop accumulated.
+    m_listLoop.reset();
+    client()->sendRequest(NodeApiCodec::encodeCheckpointListRequest(sessionId),
+                          QLatin1String(kListCorrelation));
+}
+
+void CheckpointRepository::rewind(const QString& sessionId, const QString& checkpointId) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    m_pendingRewind = sessionId;
+    client()->sendRequest(NodeApiCodec::encodeCheckpointRewindRequest(sessionId, checkpointId),
+                          QLatin1String(kRewindCorrelation));
+}
+
+void CheckpointRepository::handleResponse(const QString& correlationId,
+                                          const QByteArray& responseCbor) {
+    if (correlationId == QLatin1String(kListCorrelation)) {
+        QList<DecodedCheckpointInfo> page;
+        QString next;
+        if (!NodeApiCodec::decodeCheckpoints(responseCbor, &page, &next)) {
+            m_listLoop.reset();
+            emit operationFailed(QStringLiteral("Failed to decode Checkpoints response"));
+            return;
+        }
+        // Page loop: accumulate and re-issue with the cursor until it clears, then swap the
+        // complete timeline in ONCE.
+        m_listLoop.items.append(page);
+        if (!next.isEmpty() && m_listLoop.guard(next) && client() != nullptr) {
+            client()->sendRequest(NodeApiCodec::encodeCheckpointListRequest(m_lastSession, next),
+                                  QLatin1String(kListCorrelation));
+            return;
+        }
+        m_checkpoints = m_listLoop.items;
+        m_listLoop.reset();
+        emit checkpointsRefreshed(m_lastSession);
+        return;
+    }
+    if (correlationId == QLatin1String(kRewindCorrelation)) {
+        const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+        if (kind == ApiResponseKind::Ok) {
+            emit rewound(m_pendingRewind);
+            // Re-sync: the node prunes checkpoints past the restore point.
+            refresh(m_pendingRewind.isEmpty() ? m_lastSession : m_pendingRewind);
+            return;
+        }
+        DecodedApiError err;
+        if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(tr("Checkpoint rewind failed"));
+        }
+        return;
+    }
+}
+
+void CheckpointRepository::handleFailure(const QString& correlationId, const QString& message) {
+    if (correlationId == QLatin1String(kListCorrelation) ||
+        correlationId == QLatin1String(kRewindCorrelation)) {
+        // A dead page loop must not leak its partial accumulation into the next refresh.
+        m_listLoop.reset();
+        emit operationFailed(message);
+    }
+}
+
 } // namespace daemonapp::daemon
