@@ -203,8 +203,10 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
     // surface promptly (B2) rather than only on manual expand.
     case DecodedNodeEvent::Kind::TransportChanged:
         if (m_transports != nullptr) {
+            // [waveB:app-v30] D1: forward the disconnect provenance (reason/message/fatal) too.
             m_transports->applyTransportChanged(event.transport, event.connection, event.presence,
-                                                event.hasPresence);
+                                                event.hasPresence, event.reason, event.hasReason,
+                                                event.message, event.hasMessage, event.fatal);
             if (event.connection == QStringLiteral("connected")) {
                 m_transports->refreshConversations(event.transport);
             }

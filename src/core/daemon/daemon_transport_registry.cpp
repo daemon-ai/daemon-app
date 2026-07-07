@@ -49,6 +49,10 @@ QVariantList DaemonTransportRegistry::instances() const {
         row[QStringLiteral("family")] = i.family;
         row[QStringLiteral("displayName")] = i.displayName;
         row[QStringLiteral("boundProfile")] = i.boundProfile;
+        // [waveB:app-v30] D1: node-reported disconnect provenance (offline-first).
+        row[QStringLiteral("connectionReason")] = i.connectionReason;
+        row[QStringLiteral("connectionMessage")] = i.connectionMessage;
+        row[QStringLiteral("fatal")] = i.fatal;
         out.append(row);
     }
     return out;
@@ -76,6 +80,19 @@ QVariantList DaemonTransportRegistry::conversations(const QString& transport) co
 void DaemonTransportRegistry::refreshConversations(const QString& transport) {
     if (m_repo != nullptr) {
         m_repo->refreshConversations(transport);
+    }
+}
+
+// [waveB:app-v30] D1: forward the teardown intents to the repository.
+void DaemonTransportRegistry::disconnect(const QString& transport) {
+    if (m_repo != nullptr) {
+        m_repo->disconnect(transport);
+    }
+}
+
+void DaemonTransportRegistry::remove(const QString& transport) {
+    if (m_repo != nullptr) {
+        m_repo->remove(transport);
     }
 }
 

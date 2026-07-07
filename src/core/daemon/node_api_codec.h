@@ -245,9 +245,16 @@ struct DecodedTransportInstance {
     QString transport;                              // instance-qualified id (e.g. matrix/@bot:hs)
     QString family;                                 // adapter family
     QString displayName;                            // human label (e.g. @user:hs)
-    QString connection = QStringLiteral("offline"); // offline|connecting|connected|error
+    QString connection = QStringLiteral("offline"); // offline|connecting|connected|disconnecting|
+                                                    // error
     QString presence = QStringLiteral("unknown");   // unknown|offline|available|idle|away|busy
     QString boundProfile;                           // empty == unbound
+    // [waveB:app-v30] D1: node-reported disconnect provenance (wire v30). `reason` is a coarse
+    // lowercase token (disconnectReasonName; empty when absent); `message` is the node's human
+    // string rendered verbatim; `fatal` gates the re-auth affordance (the ONLY thing it drives).
+    QString reason;
+    QString message;
+    bool fatal = false;
 };
 
 // One live conversation/room within a transport (ConvList -> Conversations; EIO-8).
@@ -655,6 +662,14 @@ struct DecodedNodeEvent {
     QString connection;       // TransportChanged: connection-state (lowercase)
     QString presence;         // TransportChanged: presence-state (lowercase; when hasPresence)
     bool hasPresence = false; // TransportChanged: the optional presence field was present
+    // [waveB:app-v30] D1: TransportChanged disconnect provenance (wire v30). `reason` is a coarse
+    // lowercase token (disconnectReasonName; empty when absent), `message` the node's verbatim
+    // human string, `fatal` gates the re-auth affordance. hasReason/hasMessage mark presence.
+    QString reason;
+    bool hasReason = false;
+    QString message;
+    bool hasMessage = false;
+    bool fatal = false;
 };
 
 // A decoded page of the node-wide event feed (EventsSince -> EventsPage). `nextCursor` advances the
@@ -1197,6 +1212,11 @@ public:
     // --- Channels / Events-IO read surface (story 04: EIO-1/3/8/9) ---------------------------
     [[nodiscard]] static QByteArray encodeTransportAdaptersRequest();
     [[nodiscard]] static QByteArray encodeTransportInstancesRequest();
+    // [waveB:app-v30] D1: tear down a live transport session (TransportDisconnect) or fully remove
+    // the account (TransportRemove — node-side sequences disconnect + conv close + routing unbind +
+    // credential drop + config drop). One intent; the client renders the node's reported outcome.
+    [[nodiscard]] static QByteArray encodeTransportDisconnectRequest(const QString& transport);
+    [[nodiscard]] static QByteArray encodeTransportRemoveRequest(const QString& transport);
     // `after` (wire v25) resumes past the previous page's `next` cursor (empty = first page).
     [[nodiscard]] static QByteArray encodeConvListRequest(const QString& transport,
                                                           const QString& after = QString());

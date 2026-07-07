@@ -152,7 +152,11 @@ private:
     [[nodiscard]] QString buildMemoryMarkdown() const;
     [[nodiscard]] QString buildProfileMarkdown(const QString& profileRef) const;
     [[nodiscard]] QString buildUsersAccessMarkdown() const;
-    [[nodiscard]] QString buildChannelsMarkdown() const;
+    // [waveB:app-v30] D1: `sel` marks the highlighted account for disconnect/remove.
+    [[nodiscard]] QString buildChannelsMarkdown(int sel = -1) const;
+    // [waveB:app-v30] D1: the Channels page's account rows (id = transport-instance id) for the
+    // j/k selection + disconnect/remove keys. Mirrors the GUI ChannelsPage account list.
+    [[nodiscard]] QList<QVariantMap> channelAccountRows() const;
     // Engine-identity token (C3/ENG-7): the TUI projection of the GUI engine chip for a profile /
     // fleet row carrying engine/acpAgent ("Native" for Core, "<agent> (ACP)" for foreign; empty
     // when the row has no engine field, e.g. mock rows).

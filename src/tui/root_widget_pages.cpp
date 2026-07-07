@@ -33,6 +33,7 @@
 #include "tab_session_manager.h"
 #include "todo_list_model.h"
 #include "transcript_exporter.h"
+#include "transports/itransport_registry.h" // [waveB:app-v30] D1: Channels remove-confirm
 #include "tui_dialogs.h"
 #include "tui_file_tab_controller.h"
 #include "tui_overlay_host.h"
@@ -513,6 +514,41 @@ void RootWidget::openApprovalDenyReasonPrompt(const QString& id) {
                                      /*masked=*/false, this);
     connect(dlg, &TextPromptDialog::submitted, this,
             [this, id](const QString& text) { m_services.approvals->deny(id, text.trimmed()); });
+}
+
+// [waveB:app-v30] D1: destructive confirm before TransportRemove. The node sequences the full
+// teardown (disconnect + conv close + routing unbind + credential drop + config drop); we send one
+// intent and re-read the reported state. Mirrors the GUI ChannelsPage removeAccountDialog.
+void RootWidget::openChannelRemoveConfirm(const QString& transport, const QString& label) {
+    if (m_services.transportRegistry == nullptr || transport.isEmpty()) {
+        return;
+    }
+    auto* confirm = new Tui::ZDialog(this);
+    confirm->setOptions(Tui::ZWindow::DeleteOnClose);
+    confirm->setWindowTitle(tr("Remove account?"));
+    confirm->setContentsMargins({2, 1, 2, 1});
+    auto* layout = new Tui::ZVBoxLayout();
+    confirm->setLayout(layout);
+    layout->addWidget(new Tui::ZLabel(
+        tr("Remove “%1”? The node disconnects it, closes its conversations, unbinds its "
+           "routes, and drops the stored credential. This cannot be undone.")
+            .arg(label.isEmpty() ? transport : label),
+        confirm));
+    layout->addSpacing(1);
+    auto* buttons = new Tui::ZHBoxLayout();
+    layout->add(buttons);
+    buttons->addStretch();
+    auto* removeBtn = new Tui::ZButton(tr("Remove account"), confirm);
+    buttons->addWidget(removeBtn);
+    auto* cancelBtn = new Tui::ZButton(tr("Cancel"), confirm);
+    buttons->addWidget(cancelBtn);
+    connect(removeBtn, &Tui::ZButton::clicked, confirm, [this, confirm, transport] {
+        m_services.transportRegistry->remove(transport);
+        confirm->close();
+    });
+    connect(cancelBtn, &Tui::ZButton::clicked, confirm, &Tui::ZDialog::close);
+    confirm->setGeometry(QRect(0, 0, 62, 8));
+    removeBtn->setFocus();
 }
 
 void RootWidget::openFleetSteerPrompt(const QVariantMap& row) {

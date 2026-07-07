@@ -714,14 +714,25 @@ public:
     void refreshInstances();
     void refreshConversations(const QString& transport);
 
+    // [waveB:app-v30] D1: transport-instance lifecycle. `disconnect` tears down the live session
+    // (TransportDisconnect); `remove` fully removes the account (TransportRemove — the node
+    // sequences disconnect + conv close + routing unbind + credential drop + config drop). Both
+    // send ONE intent; on Ok the instances re-list so the client renders the node's reported
+    // outcome (never an optimistic local mutation).
+    void disconnect(const QString& transport);
+    void remove(const QString& transport);
+
     // [wave2:app-channels-liveness] B5: apply a live TransportChanged node-event in place. Patches
     // the cached row's connection/presence (preserving family/displayName/boundProfile) and emits
     // instancesRefreshed() so the DaemonPresenceService re-projects and the status dots re-read -
     // no round-trip. Falls back to refreshInstances() when the transport is not yet cached (a
     // brand-new account before its first TransportInstances). Mirrors
     // ModelRepository::applyDownloadProgress.
+    // [waveB:app-v30] D1: also patches the node-reported disconnect provenance
+    // (reason/message/fatal); hasReason/hasMessage mark which optionals the event carried.
     void applyTransportChanged(const QString& transport, const QString& connection,
-                               const QString& presence, bool hasPresence);
+                               const QString& presence, bool hasPresence, const QString& reason,
+                               bool hasReason, const QString& message, bool hasMessage, bool fatal);
 
     // [wave2:app-channels-liveness] B2: presentation-only "new room" tracking. A conversation id
     // that appears in a ConvList refresh but was NOT in the transport's prior known set is badged
@@ -764,6 +775,9 @@ private:
     static constexpr auto kAdaptersCorrelation = "repo/transport-adapters";
     static constexpr auto kInstancesCorrelation = "repo/transport-instances";
     static constexpr auto kConvPrefix = "repo/conv-list/";
+    // [waveB:app-v30] D1: disconnect/remove intents; on Ok both re-list the instances.
+    static constexpr auto kDisconnectCorrelation = "repo/transport-disconnect";
+    static constexpr auto kRemoveCorrelation = "repo/transport-remove";
 };
 
 // Durable checkpoints (E4/TOOL-9): refresh(session) issues a CheckpointList (page loop) and

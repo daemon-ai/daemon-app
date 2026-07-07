@@ -34,7 +34,15 @@ public:
 
     // Configured transport instances (accounts). Each entry is a map:
     //   transport (QString), family (QString), displayName (QString), boundProfile (QString).
+    // [waveB:app-v30] D1: rows also carry connectionReason (coarse token), connectionMessage (the
+    // node's verbatim human string), and fatal (bool: gates the re-auth affordance).
     [[nodiscard]] Q_INVOKABLE virtual QVariantList instances() const = 0;
+
+    // [waveB:app-v30] D1: per-instance teardown. `disconnect` tears down the live session;
+    // `remove` fully removes the account (the node sequences the full teardown). Default no-ops so
+    // the mock + non-daemon seams need not implement them.
+    Q_INVOKABLE virtual void disconnect(const QString& transport) { Q_UNUSED(transport) }
+    Q_INVOKABLE virtual void remove(const QString& transport) { Q_UNUSED(transport) }
 
     // Live conversations/rooms for a transport (EIO-8). Each entry is a map:
     //   transport, id, kind, title, topic. `conversations()` returns the last-known (cached) set;

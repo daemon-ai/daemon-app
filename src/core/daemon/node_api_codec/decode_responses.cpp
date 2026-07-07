@@ -460,6 +460,24 @@ bool NodeApiCodec::decodeEventsPage(const QByteArray& responseCbor, DecodedEvent
                 decoded.presence =
                     presenceStateName(m.TransportChanged_presence.TransportChanged_presence);
             }
+            // [waveB:app-v30] D1: disconnect provenance (wire v30, all optional).
+            if (m.TransportChanged_reason_present &&
+                m.TransportChanged_reason.TransportChanged_reason_choice ==
+                    TransportChanged_reason_r::TransportChanged_reason_disconnect_reason_m_c) {
+                decoded.hasReason = true;
+                decoded.reason = disconnectReasonName(
+                    m.TransportChanged_reason.TransportChanged_reason_disconnect_reason_m);
+            }
+            if (m.TransportChanged_message_present &&
+                m.TransportChanged_message.TransportChanged_message_choice ==
+                    TransportChanged_message_r::TransportChanged_message_tstr_c) {
+                decoded.hasMessage = true;
+                decoded.message =
+                    fromZcbor(m.TransportChanged_message.TransportChanged_message_tstr);
+            }
+            if (m.TransportChanged_fatal_present) {
+                decoded.fatal = m.TransportChanged_fatal.TransportChanged_fatal;
+            }
             break;
         }
         default:

@@ -366,6 +366,9 @@ private:
     // [wave2:app-approvals-safety] D3: Approvals 'D' — open a deny-with-reason prompt for the
     // selected inbox row; on submit, ApprovalDecide(allow=false, reason) via IApprovalsInbox::deny.
     void openApprovalDenyReasonPrompt(const QString& id);
+    // [waveB:app-v30] D1: Channels 'x' — a destructive confirm before TransportRemove (the node
+    // sequences the full account teardown). On accept: ITransportRegistry::remove(transport).
+    void openChannelRemoveConfirm(const QString& transport, const QString& label);
     // [wave2:app-approvals-safety] D3: inline transcript "Deny with reason" — open a prompt and
     // resolve the parked gate with the operator reason (Respond{Approved{reason}}, wire v29).
     void openInlineDenyReasonPrompt(const QString& callId);

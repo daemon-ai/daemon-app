@@ -27,11 +27,28 @@ Item {
     function dotColor(state) {
         if (state === "connected")
             return Theme.accent;
-        if (state === "connecting")
+        // [waveB:app-v30] D1: connecting AND disconnecting are transient; both render amber. The
+        // node reports "connecting" after a drop (reconnecting…) — never predicted client-side.
+        if (state === "connecting" || state === "disconnecting")
             return Theme.warning;
         if (state === "error")
             return Theme.danger;
         return Theme.iconMuted; // offline / unknown
+    }
+
+    // [waveB:app-v30] D1: friendly copy for the node's coarse disconnect-reason token. The node's
+    // `message` (rendered verbatim, not here) is authoritative; this only labels the token.
+    function reasonLabel(token) {
+        switch (token) {
+        case "user_requested": return qsTr("Disconnected by request");
+        case "network_error": return qsTr("Network error");
+        case "authentication_failed": return qsTr("Authentication failed");
+        case "replaced_by_other_client": return qsTr("Replaced by another client");
+        case "invalid_settings": return qsTr("Invalid settings");
+        case "certificate_error": return qsTr("Certificate error");
+        case "other": return qsTr("Disconnected");
+        default: return "";
+        }
     }
 
     // [wave2:app-channels-liveness] B1: true when the node advertises an interactive-auth
@@ -63,47 +80,46 @@ Item {
         controller: channelsRouting
     }
 
-    // Remove-credential confirm (B3 partial): the ONLY account-lifecycle lever the wire offers
-    // today. Clearly labeled — it removes the STORED CREDENTIAL for the bound profile
-    // (CredentialRemove); the node's transport session itself has no disconnect/remove op yet.
+    // [waveB:app-v30] D1: remove-account confirm. Sends TransportRemove (wire v30): the node
+    // sequences the full teardown (disconnect + conversation close + routing unbind + credential
+    // drop + config drop) — the client sends ONE intent and renders the reported outcome. This is
+    // distinct from the AccountsPage credential-only lever; we do NOT chain a credential remove.
     Kit.Dialog {
-        id: removeCredentialDialog
-        property string profileRef: ""
+        id: removeAccountDialog
+        property string transport: ""
         property string accountLabel: ""
-        title: qsTr("Remove stored credential?")
-        acceptText: qsTr("Remove credential")
+        title: qsTr("Remove account?")
+        acceptText: qsTr("Remove account")
         destructive: true
         onAccepted: {
-            if (profileRef.length > 0)
-                Accounts.remove(profileRef);
-            profileRef = "";
+            if (transport.length > 0)
+                Transports.remove(transport);
+            transport = "";
         }
-        onRejected: profileRef = ""
+        onRejected: transport = ""
 
         contentItem: ColumnLayout {
             spacing: 6
             Text {
                 Layout.fillWidth: true
                 Layout.maximumWidth: 340
-                text: qsTr("Removes the credential stored for profile “%1” (used by %2).")
-                      .arg(removeCredentialDialog.profileRef)
-                      .arg(removeCredentialDialog.accountLabel)
+                text: qsTr("Removes the account “%1” from the node.").arg(removeAccountDialog.accountLabel)
                 font.family: FontIcons.display; font.pixelSize: 13; color: Theme.text
                 wrapMode: Text.WordWrap
             }
             Text {
                 Layout.fillWidth: true
                 Layout.maximumWidth: 340
-                text: qsTr("The account's transport session on the node is not affected — a disconnect/remove operation is not available yet.")
+                text: qsTr("The node disconnects the transport, closes its conversations, unbinds its routes, and drops the stored credential. This cannot be undone.")
                 font.family: FontIcons.display; font.pixelSize: 12; color: Theme.textMuted
                 wrapMode: Text.WordWrap
             }
         }
 
-        function openFor(profileRef, accountLabel) {
-            removeCredentialDialog.profileRef = profileRef;
-            removeCredentialDialog.accountLabel = accountLabel;
-            removeCredentialDialog.open();
+        function openFor(transport, accountLabel) {
+            removeAccountDialog.transport = transport;
+            removeAccountDialog.accountLabel = accountLabel;
+            removeAccountDialog.open();
         }
     }
 
@@ -237,31 +253,59 @@ Item {
                                 font.family: FontIcons.display; font.pixelSize: 11
                                 color: acctRow.conn === "connected" ? Theme.accent : Theme.textMuted
                             }
-                            // --- Account lifecycle (B3/EIO-2/EIO-7) -------------------------
-                            // Disconnect is VISIBLE-DISABLED with the reason: the wire has no
-                            // transport disconnect/remove op yet (node-first follow-up;
-                            // placeholder-inventory policy: disabled controls explain an
-                            // unavailable capability).
+                            // --- Account lifecycle (EIO-2/EIO-7; [waveB:app-v30] D1) ----------
+                            // Re-authenticate: shown ONLY when the node marks the disconnect fatal
+                            // (e.g. auth failed / invalid settings). Opens the shared sign-in sheet
+                            // narrowed to this adapter family, bound back to the same profile.
                             Kit.IconButton {
-                                enabled: false
+                                visible: acctRow.modelData.fatal === true
+                                icon: FontIcons.fa_rotate
+                                iconColor: Theme.warning
+                                iconPointSize: 12; implicitWidth: 30; implicitHeight: 26
+                                tooltipText: qsTr("Re-authenticate this account")
+                                onClicked: authSheet.openFlowForFamily(
+                                    acctRow.modelData.family, acctRow.modelData.boundProfile)
+                            }
+                            // Disconnect the live transport session (TransportDisconnect). Enabled
+                            // only when there is a session to tear down (not already offline).
+                            Kit.IconButton {
+                                enabled: acctRow.conn !== "offline"
+                                         && acctRow.conn !== "disconnecting"
                                 icon: FontIcons.fa_circle_xmark
                                 iconPointSize: 12; implicitWidth: 30; implicitHeight: 26
-                                tooltipText: qsTr("Disconnect isn't available yet — the node has no transport disconnect operation")
+                                tooltipText: qsTr("Disconnect this account")
+                                onClicked: Transports.disconnect(acctRow.modelData.transport)
                             }
-                            // The PARTIAL remove lever the wire does offer: drop the stored
-                            // credential for the bound profile (confirmed; clearly labeled).
+                            // Remove the account entirely (TransportRemove) — destructive, confirmed.
                             Kit.IconButton {
-                                visible: acctRow.modelData.boundProfile.length > 0
                                 icon: FontIcons.fa_trash
                                 iconColor: Theme.danger
                                 iconPointSize: 12; implicitWidth: 30; implicitHeight: 26
-                                tooltipText: qsTr("Remove the stored credential…")
-                                onClicked: removeCredentialDialog.openFor(
-                                    acctRow.modelData.boundProfile,
+                                tooltipText: qsTr("Remove this account…")
+                                onClicked: removeAccountDialog.openFor(
+                                    acctRow.modelData.transport,
                                     acctRow.modelData.displayName.length > 0
                                         ? acctRow.modelData.displayName
                                         : acctRow.modelData.transport)
                             }
+                        }
+
+                        // --- Disconnect provenance ([waveB:app-v30] D1) ---------------------
+                        // The node's human message verbatim (authoritative); otherwise the coarse
+                        // reason token's friendly label. Shown only when the node reported one.
+                        Text {
+                            Layout.fillWidth: true
+                            visible: text.length > 0
+                            text: {
+                                var msg = acctRow.modelData.connectionMessage;
+                                if (msg && String(msg).length > 0)
+                                    return String(msg);
+                                return root.reasonLabel(acctRow.modelData.connectionReason);
+                            }
+                            font.family: FontIcons.display; font.pixelSize: 11
+                            color: acctRow.modelData.fatal === true ? Theme.danger : Theme.textMuted
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
                         }
 
                         // --- Rooms for this account (EIO-8: live ConvList) ------

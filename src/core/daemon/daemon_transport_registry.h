@@ -32,6 +32,9 @@ public:
     [[nodiscard]] QVariantList instances() const override;
     [[nodiscard]] QVariantList conversations(const QString& transport) const override;
     void refreshConversations(const QString& transport) override;
+    // [waveB:app-v30] D1: per-instance teardown intents, delegated to the repository.
+    void disconnect(const QString& transport) override;
+    void remove(const QString& transport) override;
     // [wave2:app-channels-liveness] B2: "new room" affordance, delegated to the repository.
     [[nodiscard]] bool isNewConversation(const QString& transport,
                                          const QString& conversation) const override;

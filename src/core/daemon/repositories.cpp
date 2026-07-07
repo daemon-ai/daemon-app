@@ -1920,6 +1920,26 @@ void TransportRepository::refreshConversations(const QString& transport) {
                           QLatin1String(kConvPrefix) + transport);
 }
 
+// [waveB:app-v30] D1: teardown intents. One request; on Ok re-list so the client renders the
+// node's reported outcome (state, or the account's disappearance) rather than a local mutation.
+void TransportRepository::disconnect(const QString& transport) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeTransportDisconnectRequest(transport),
+                          QLatin1String(kDisconnectCorrelation));
+}
+
+void TransportRepository::remove(const QString& transport) {
+    if (client() == nullptr) {
+        emit operationFailed(QStringLiteral("No NodeApi client configured"));
+        return;
+    }
+    client()->sendRequest(NodeApiCodec::encodeTransportRemoveRequest(transport),
+                          QLatin1String(kRemoveCorrelation));
+}
+
 void TransportRepository::handleResponse(const QString& correlationId,
                                          const QByteArray& responseCbor) {
     if (correlationId == QLatin1String(kAdaptersCorrelation)) {
@@ -1928,6 +1948,24 @@ void TransportRepository::handleResponse(const QString& correlationId,
     }
     if (correlationId == QLatin1String(kInstancesCorrelation)) {
         handleInstancesResponse(responseCbor);
+        return;
+    }
+    // [waveB:app-v30] D1: disconnect/remove both re-list on Ok; surface the node's error otherwise.
+    if (correlationId == QLatin1String(kDisconnectCorrelation) ||
+        correlationId == QLatin1String(kRemoveCorrelation)) {
+        const ApiResponseKind kind = NodeApiCodec::responseKind(responseCbor);
+        if (kind == ApiResponseKind::Ok) {
+            refreshInstances();
+            return;
+        }
+        DecodedApiError err;
+        if (kind == ApiResponseKind::Error && NodeApiCodec::decodeError(responseCbor, &err)) {
+            emit operationFailed(err.message);
+        } else {
+            emit operationFailed(correlationId == QLatin1String(kRemoveCorrelation)
+                                     ? tr("Failed to remove the account")
+                                     : tr("Failed to disconnect the account"));
+        }
         return;
     }
     if (correlationId.startsWith(QLatin1String(kConvPrefix))) {
@@ -1967,6 +2005,10 @@ void TransportRepository::syncTransportInstances(const QList<DecodedTransportIns
         row.connection = i.connection;
         row.presence = i.presence;
         row.boundProfile = i.boundProfile;
+        // [waveB:app-v30] D1: node-reported disconnect provenance (offline-first).
+        row.connectionReason = i.reason;
+        row.connectionMessage = i.message;
+        row.fatal = i.fatal;
         row.updatedAtMs = now;
         cache()->upsertTransportInstance(row);
         keep.insert(i.transport);
@@ -2280,7 +2322,10 @@ void TransportRepository::syncConversations(const QString& transport,
 }
 
 void TransportRepository::applyTransportChanged(const QString& transport, const QString& connection,
-                                                const QString& presence, bool hasPresence) {
+                                                const QString& presence, bool hasPresence,
+                                                const QString& reason, bool hasReason,
+                                                const QString& message, bool hasMessage,
+                                                bool fatal) {
     if (cache() == nullptr || transport.isEmpty()) {
         return;
     }
@@ -2297,6 +2342,12 @@ void TransportRepository::applyTransportChanged(const QString& transport, const 
         if (hasPresence) {
             row.presence = presence;
         }
+        // [waveB:app-v30] D1: patch the disconnect provenance the event carried. The optionals are
+        // authoritative-when-present: a non-error transition clears reason/message; `fatal` always
+        // rides the event.
+        row.connectionReason = hasReason ? reason : QString();
+        row.connectionMessage = hasMessage ? message : QString();
+        row.fatal = fatal;
         row.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
         cache()->upsertTransportInstance(row);
         found = true;
@@ -2324,7 +2375,9 @@ void TransportRepository::markConversationSeen(const QString& transport, const Q
 }
 
 bool TransportRepository::isOwnCorrelation(const QString& correlationId) {
-    const std::array keys = {kAdaptersCorrelation, kInstancesCorrelation};
+    // [waveB:app-v30] D1: +disconnect/remove correlations.
+    const std::array keys = {kAdaptersCorrelation, kInstancesCorrelation, kDisconnectCorrelation,
+                             kRemoveCorrelation};
     return std::ranges::any_of(
                keys, [&](const char* key) { return correlationId == QLatin1String(key); }) ||
            correlationId.startsWith(QLatin1String(kConvPrefix));
