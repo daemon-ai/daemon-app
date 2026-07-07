@@ -66,6 +66,14 @@ void StatusBarView::setModel(StatusBarModel* model) {
     update();
 }
 
+void StatusBarView::setPendingApprovals(int count) {
+    if (m_pendingApprovals == count) {
+        return;
+    }
+    m_pendingApprovals = count;
+    update();
+}
+
 QSize StatusBarView::sizeHint() const {
     return {40, 1};
 }
@@ -100,6 +108,15 @@ QVector<Span> StatusBarView::buildLeft() const {
     const Tui::ZColor agentsFg = failed ? tpal::statusError() : tpal::faint();
     spans << mkSpan(tpal::agentsGlyph() + tr(" Agents "), agentsFg)
           << mkSpan(detail.isEmpty() ? tr("idle") : detail, agentsFg);
+
+    // TOOL-8: pending-approvals gate count (parity with the GUI sidebar badge). Only shown when
+    // there is at least one gate waiting; the warn tone matches the approval-gate accent.
+    if (m_pendingApprovals > 0) {
+        spans << mkSpan(separator(), tpal::muted());
+        spans << mkSpan(QStringLiteral("\u26a0 ") + tr("Approvals ") +
+                            QString::number(m_pendingApprovals),
+                        tpal::warn());
+    }
     return spans;
 }
 
