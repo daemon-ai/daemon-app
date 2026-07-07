@@ -8,6 +8,7 @@ import DaemonApp.Theme
 import DaemonApp.Settings
 import DaemonApp.StatusModel
 import DaemonApp.Presentation
+import DaemonApp.Controls as Kit
 
 // Footer status bar: a thin full-width chrome
 // strip with a left cluster (Command Center / Gateway / Agents / Cron) and a
@@ -34,6 +35,15 @@ Rectangle {
     function openPage(page) {
         if (typeof Nav !== "undefined" && Nav)
             Nav.open(page);
+    }
+
+    // Stable wire keys for the app-feedback category (the combo shows localized
+    // labels; the key sent to the seam stays language-independent).
+    readonly property var feedbackCategoryKeys: ["bug", "idea", "other"]
+
+    // Open the general app-feedback dialog (right-cluster + overflow entry).
+    function openFeedback() {
+        feedbackDialog.open();
     }
 
     // Slightly taller, finger-friendly strip on a touch phone (compact only
@@ -162,6 +172,12 @@ Rectangle {
             tooltipText: qsTr("Toggle terminal")
             active: UiSettings.showTerminal
             onClicked: UiSettings.showTerminal = !UiSettings.showTerminal
+        }
+        StatusBarItem {
+            glyph: FontIcons.fa_comments
+            tooltipText: qsTr("Send feedback")
+            active: feedbackDialog.opened
+            onClicked: root.openFeedback()
         }
         StatusBarItem {
             glyph: FontIcons.fa_hashtag
@@ -317,6 +333,13 @@ Rectangle {
                     StatusBarItem {
                         Layout.fillWidth: true
                         Layout.preferredHeight: overflowSheet.rowHeight
+                        glyph: FontIcons.fa_comments
+                        label: qsTr("Send feedback")
+                        onClicked: { overflowSheet.close(); root.openFeedback(); }
+                    }
+                    StatusBarItem {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: overflowSheet.rowHeight
                         glyph: FontIcons.fa_hashtag
                         label: model.appVersion
                     }
@@ -324,4 +347,103 @@ Rectangle {
             }
         }
     }
+
+    // --- App-feedback dialog ------------------------------------------------
+    // General "Send feedback" entry (right cluster + overflow sheet): a category,
+    // a free-text note, an opt-in diagnostics attachment, and — only when
+    // telemetry is off — a disclosure plus a default-unchecked telemetry opt-in.
+    // Submits to the node-owned Feedback seam (explicit, per-event consent).
+    Kit.Dialog {
+        id: feedbackDialog
+        title: qsTr("Send feedback")
+        acceptText: qsTr("Send")
+        width: 420
+        // Require a note before Send enables.
+        acceptEnabled: feedbackText.text.trim().length > 0
+
+        // Reset the form on each open so a prior submission never lingers.
+        onOpened: {
+            categoryCombo.currentIndex = 0;
+            feedbackText.clear();
+            includeDiagnostics.checked = true;
+            alsoEnableTelemetry.checked = false;
+            feedbackText.forceActiveFocus();
+        }
+
+        onAccepted: {
+            if (typeof Feedback !== "undefined" && Feedback) {
+                Feedback.submitAppFeedback(root.feedbackCategoryKeys[categoryCombo.currentIndex],
+                                           feedbackText.text, includeDiagnostics.checked,
+                                           alsoEnableTelemetry.checked);
+            }
+            feedbackToast.show(qsTr("Thanks — your feedback was sent."));
+        }
+
+        contentItem: ColumnLayout {
+            spacing: Theme.spacing
+
+            QQC.Label {
+                text: qsTr("Category")
+                color: Theme.textMuted
+                font.family: FontIcons.display
+                font.pixelSize: 12
+            }
+            Kit.Dropdown {
+                id: categoryCombo
+                Layout.fillWidth: true
+                model: [qsTr("Bug"), qsTr("Idea"), qsTr("Other")]
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 120
+                color: "transparent"
+                radius: Theme.radius
+                border.width: 1
+                border.color: Theme.border
+
+                QQC.ScrollView {
+                    anchors.fill: parent
+                    anchors.margins: 6
+                    clip: true
+
+                    Kit.TextArea {
+                        id: feedbackText
+                        placeholderText: qsTr("What's working well, or what went wrong?")
+                    }
+                }
+            }
+
+            Kit.CheckBox {
+                id: includeDiagnostics
+                text: qsTr("Include diagnostics (app version, OS)")
+                checked: true
+            }
+
+            // Telemetry-off disclosure + explicit opt-in (the only feedback path
+            // allowed to turn telemetry on). Hidden when telemetry is already on.
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Theme.spacingSmall
+                visible: typeof Feedback !== "undefined" && Feedback && !Feedback.telemetryEnabled
+
+                QQC.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    text: qsTr("Telemetry is off. Sending transmits only this feedback and basic app info.")
+                    color: Theme.textMuted
+                    font.family: FontIcons.display
+                    font.pixelSize: 12
+                }
+                Kit.CheckBox {
+                    id: alsoEnableTelemetry
+                    text: qsTr("Also enable anonymous telemetry")
+                    checked: false
+                }
+            }
+        }
+    }
+
+    // Transient acknowledgment after a feedback submission.
+    Kit.Toast { id: feedbackToast }
 }
