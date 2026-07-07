@@ -26,9 +26,12 @@
 
 using auth::AuthFlowController;
 using auth::MockAuthFlowService;
+using daemonapp::daemon::AuthChallengeKind;
+using daemonapp::daemon::AuthStepInputKind;
 using daemonapp::daemon::DecodedAuthBeginResponse;
 using daemonapp::daemon::DecodedAuthCompleteResponse;
 using daemonapp::daemon::DecodedAuthProviderInfo;
+using daemonapp::daemon::DecodedAuthStepResult;
 using daemonapp::daemon::DecodedGgufInfo;
 using daemonapp::daemon::DecodedQuantizeStatus;
 using daemonapp::daemon::NodeApiCodec;
@@ -139,6 +142,47 @@ private slots:
                  QStringLiteral("flow-7"));
     }
 
+    // [waveB:app-v31] the three AuthStepInput arms encode arm-correct with their payload.
+    void authStepRequestRoundTrips() {
+        QVariantMap fields;
+        fields[QStringLiteral("token")] = QStringLiteral("secret-123");
+        const auto withFields = decodeRequest(NodeApiCodec::encodeAuthStepRequest(
+            QStringLiteral("flow-9"), AuthStepInputKind::Fields, fields));
+        QVERIFY(withFields);
+        QCOMPARE(withFields->api_request_choice, api_request_r::api_request_request_auth_step_m_c);
+        const auth_step_request& fieldsBody =
+            withFields->api_request_request_auth_step_m.request_auth_step_AuthStep;
+        QCOMPARE(fromZ(fieldsBody.auth_step_request_flow_id), QStringLiteral("flow-9"));
+        QCOMPARE(fieldsBody.auth_step_request_input.auth_step_input_choice,
+                 auth_step_input_r::auth_step_input_fields_m_c);
+        const auth_step_input_fields& filled =
+            fieldsBody.auth_step_request_input.auth_step_input_fields_m;
+        QCOMPARE(filled.Fields_tstrtstr_count, static_cast<size_t>(1));
+        QCOMPARE(fromZ(filled.Fields_tstrtstr[0].auth_step_input_fields_Fields_tstrtstr_key),
+                 QStringLiteral("token"));
+        QCOMPARE(fromZ(filled.Fields_tstrtstr[0].Fields_tstrtstr), QStringLiteral("secret-123"));
+
+        const auto withCallback = decodeRequest(NodeApiCodec::encodeAuthStepRequest(
+            QStringLiteral("flow-9"), AuthStepInputKind::Callback, {},
+            QStringLiteral("code=abc&state=xyz")));
+        QVERIFY(withCallback);
+        const auth_step_request& cbBody =
+            withCallback->api_request_request_auth_step_m.request_auth_step_AuthStep;
+        QCOMPARE(cbBody.auth_step_request_input.auth_step_input_choice,
+                 auth_step_input_r::auth_step_input_callback_m_c);
+        QCOMPARE(fromZ(cbBody.auth_step_request_input.auth_step_input_callback_m
+                           .auth_step_input_callback_Callback),
+                 QStringLiteral("code=abc&state=xyz"));
+
+        const auto withPoll = decodeRequest(
+            NodeApiCodec::encodeAuthStepRequest(QStringLiteral("flow-9"), AuthStepInputKind::Poll));
+        QVERIFY(withPoll);
+        const auth_step_request& pollBody =
+            withPoll->api_request_request_auth_step_m.request_auth_step_AuthStep;
+        QCOMPARE(pollBody.auth_step_request_input.auth_step_input_choice,
+                 auth_step_input_r::auth_step_input_Poll_tstr_c);
+    }
+
     // --- codec: auth responses -----------------------------------------------------------
     void authProvidersResponseDecodes() {
         const QByteArray family = "matrix", display = "Matrix (SSO)", key = "homeserver",
@@ -173,25 +217,85 @@ private slots:
     }
 
     void authBegunResponseDecodes() {
-        const QByteArray flow = "flow-1", url = "https://hs/_matrix/sso?x=1",
-                         redirect = "http://127.0.0.1:9/cb";
+        // [waveB:app-v31] AuthBegun now carries a flow id + an initial AuthChallenge + a TTL.
+        const QByteArray flow = "flow-1", url = "https://hs/_matrix/sso?x=1";
         auto resp = std::make_unique<api_response_r>();
         resp->api_response_choice = api_response_r::api_response_response_auth_begun_m_c;
         auth_begin_response& begun =
             resp->api_response_response_auth_begun_m.response_auth_begun_AuthBegun;
         setZ(begun.auth_begin_response_flow_id, flow);
-        setZ(begun.auth_begin_response_authorization_url, url);
-        setZ(begun.auth_begin_response_redirect_uri, redirect);
+        begun.auth_begin_response_challenge.auth_challenge_choice =
+            auth_challenge_r::auth_challenge_redirect_m_c;
+        setZ(begun.auth_begin_response_challenge.auth_challenge_redirect_m
+                 .Redirect_authorization_url,
+             url);
         begun.auth_begin_response_expires_at = 1234567890;
-        begun.auth_begin_response_flow_kind.auth_flow_kind_choice =
-            auth_flow_kind_r::auth_flow_kind_OAuth2Pkce_tstr_c;
 
         DecodedAuthBeginResponse out;
         QVERIFY(NodeApiCodec::decodeAuthBegun(encodeResponse(*resp), &out));
         QCOMPARE(out.flowId, QStringLiteral("flow-1"));
-        QCOMPARE(out.authorizationUrl, QStringLiteral("https://hs/_matrix/sso?x=1"));
+        QCOMPARE(out.challenge.kind, AuthChallengeKind::Redirect);
+        QCOMPARE(out.challenge.authorizationUrl, QStringLiteral("https://hs/_matrix/sso?x=1"));
         QCOMPARE(out.expiresAt, static_cast<quint64>(1234567890));
-        QCOMPARE(out.flowKind, QStringLiteral("OAuth2Pkce"));
+        QCOMPARE(NodeApiCodec::responseKind(encodeResponse(*resp)),
+                 daemonapp::daemon::ApiResponseKind::AuthBegun);
+    }
+
+    // [waveB:app-v31] AuthStepped decodes to either the next challenge or the completion.
+    void authSteppedResponseDecodes() {
+        // The Challenge arm: a Form asking for one field.
+        const QByteArray title = "Enter the code we texted you", key = "otp", label = "Code";
+        auto challengeResp = std::make_unique<api_response_r>();
+        challengeResp->api_response_choice = api_response_r::api_response_response_auth_stepped_m_c;
+        auth_step_result_r& challengeResult =
+            challengeResp->api_response_response_auth_stepped_m.response_auth_stepped_AuthStepped;
+        challengeResult.auth_step_result_choice =
+            auth_step_result_r::auth_step_result_challenge_m_c;
+        auth_challenge_r& challenge =
+            challengeResult.auth_step_result_challenge_m.auth_step_result_challenge_Challenge;
+        challenge.auth_challenge_choice = auth_challenge_r::auth_challenge_form_m_c;
+        setZ(challenge.auth_challenge_form_m.Form_title, title);
+        challenge.auth_challenge_form_m.Form_fields_auth_param_field_m_count = 1;
+        auth_param_field& field = challenge.auth_challenge_form_m.Form_fields_auth_param_field_m[0];
+        setZ(field.auth_param_field_key, key);
+        setZ(field.auth_param_field_label, label);
+        field.auth_param_field_required = true;
+
+        DecodedAuthStepResult stepped;
+        QVERIFY(NodeApiCodec::decodeAuthStepped(encodeResponse(*challengeResp), &stepped));
+        QVERIFY(!stepped.completed);
+        QCOMPARE(stepped.challenge.kind, AuthChallengeKind::Form);
+        QCOMPARE(stepped.challenge.formTitle, QStringLiteral("Enter the code we texted you"));
+        QCOMPARE(stepped.challenge.formFields.size(), 1);
+        QCOMPARE(stepped.challenge.formFields[0].key, QStringLiteral("otp"));
+        QVERIFY(stepped.challenge.formFields[0].required);
+        QCOMPARE(NodeApiCodec::responseKind(encodeResponse(*challengeResp)),
+                 daemonapp::daemon::ApiResponseKind::AuthStepped);
+
+        // The Completed arm: the finished outcome (with a bound profile).
+        const QByteArray cred = "cred/matrix", labelBytes = "@u:hs.org",
+                         instance = "matrix/@u:hs.org", bound = "agent-1";
+        auto doneResp = std::make_unique<api_response_r>();
+        doneResp->api_response_choice = api_response_r::api_response_response_auth_stepped_m_c;
+        auth_step_result_r& doneResult =
+            doneResp->api_response_response_auth_stepped_m.response_auth_stepped_AuthStepped;
+        doneResult.auth_step_result_choice = auth_step_result_r::auth_step_result_completed_m_c;
+        auth_complete_response& completed =
+            doneResult.auth_step_result_completed_m.auth_step_result_completed_Completed;
+        setZ(completed.auth_complete_response_credential_ref, cred);
+        setZ(completed.auth_complete_response_account_label, labelBytes);
+        setZ(completed.auth_complete_response_transport_instance, instance);
+        completed.auth_complete_response_bound_profile_choice =
+            auth_complete_response::auth_complete_response_bound_profile_tstr_c;
+        setZ(completed.auth_complete_response_bound_profile_tstr, bound);
+
+        DecodedAuthStepResult doneOut;
+        QVERIFY(NodeApiCodec::decodeAuthStepped(encodeResponse(*doneResp), &doneOut));
+        QVERIFY(doneOut.completed);
+        QCOMPARE(doneOut.completion.credentialRef, QStringLiteral("cred/matrix"));
+        QCOMPARE(doneOut.completion.transportInstance, QStringLiteral("matrix/@u:hs.org"));
+        QVERIFY(doneOut.completion.hasBoundProfile);
+        QCOMPARE(doneOut.completion.boundProfile, QStringLiteral("agent-1"));
     }
 
     void authCompletedResponseDecodes() {
@@ -322,7 +426,8 @@ private slots:
     }
 
     // --- the shared AuthFlowController state machine (mock seam; no ports, no browser) ----
-    void controllerHappyPath() {
+    // The Redirect flow: begin -> redirect challenge -> Callback step -> success.
+    void controllerRedirectHappyPath() {
         MockAuthFlowService service;
         AuthFlowController controller(&service);
         QSignalSpy succeeded(&controller, &AuthFlowController::succeeded);
@@ -331,14 +436,41 @@ private slots:
         params[QStringLiteral("homeserver")] = QStringLiteral("hs.example.org");
         controller.start(QStringLiteral("matrix"), params, QString(), /*useSink=*/false);
         QCOMPARE(controller.phase(), QStringLiteral("beginning"));
-        QTRY_COMPARE(controller.phase(), QStringLiteral("awaiting_browser"));
+        QTRY_COMPARE(controller.phase(), QStringLiteral("challenge"));
+        QCOMPARE(controller.challengeKind(), QStringLiteral("redirect"));
         QVERIFY(controller.authorizationUrl().contains(QStringLiteral("hs.example.org")));
         QVERIFY(!controller.sinkListening()); // useSink=false must never bind a port
 
         controller.submitCallback(QStringLiteral("loginToken=tok123"));
-        QCOMPARE(controller.phase(), QStringLiteral("completing"));
+        QCOMPARE(controller.phase(), QStringLiteral("stepping"));
         QTRY_COMPARE(controller.phase(), QStringLiteral("success"));
         QCOMPARE(controller.accountLabel(), QStringLiteral("@mock:example.org"));
+        QCOMPARE(succeeded.count(), 1);
+    }
+
+    // The multi-step flow: begin -> form challenge -> Fields step -> message challenge -> Poll step
+    // -> success. Exercises challenged() advance + the Fields and Poll input arms.
+    void controllerMultiStepFormThenPoll() {
+        MockAuthFlowService service;
+        AuthFlowController controller(&service);
+        QSignalSpy succeeded(&controller, &AuthFlowController::succeeded);
+
+        controller.start(QStringLiteral("token"), {}, QString(), /*useSink=*/false);
+        QTRY_COMPARE(controller.phase(), QStringLiteral("challenge"));
+        QCOMPARE(controller.challengeKind(), QStringLiteral("form"));
+        QVERIFY(!controller.formFields().isEmpty());
+
+        QVariantMap values;
+        values[QStringLiteral("token")] = QStringLiteral("secret-token");
+        controller.submitFields(values);
+        QCOMPARE(controller.phase(), QStringLiteral("stepping"));
+        QTRY_COMPARE(controller.phase(), QStringLiteral("challenge"));
+        QCOMPARE(controller.challengeKind(), QStringLiteral("message"));
+        QVERIFY(!controller.messageText().isEmpty());
+
+        controller.poll();
+        QCOMPARE(controller.phase(), QStringLiteral("stepping"));
+        QTRY_COMPARE(controller.phase(), QStringLiteral("success"));
         QCOMPARE(succeeded.count(), 1);
     }
 
@@ -351,19 +483,19 @@ private slots:
         QCOMPARE(controller.error(), QStringLiteral("homeserver unreachable"));
     }
 
-    void controllerCompleteFailureThenRetry() {
+    void controllerStepFailureThenRetry() {
         MockAuthFlowService service;
         AuthFlowController controller(&service);
-        service.failNextComplete(QStringLiteral("flow expired"));
+        service.failNextStep(QStringLiteral("flow expired"));
         controller.start(QStringLiteral("matrix"), {}, QString(), /*useSink=*/false);
-        QTRY_COMPARE(controller.phase(), QStringLiteral("awaiting_browser"));
+        QTRY_COMPARE(controller.phase(), QStringLiteral("challenge"));
         controller.submitCallback(QStringLiteral("loginToken=stale"));
         QTRY_COMPARE(controller.phase(), QStringLiteral("failed"));
         QCOMPARE(controller.error(), QStringLiteral("flow expired"));
 
         // Retry: a fresh start supersedes the failed flow and can succeed.
         controller.start(QStringLiteral("matrix"), {}, QString(), /*useSink=*/false);
-        QTRY_COMPARE(controller.phase(), QStringLiteral("awaiting_browser"));
+        QTRY_COMPARE(controller.phase(), QStringLiteral("challenge"));
         controller.submitCallback(QStringLiteral("loginToken=fresh"));
         QTRY_COMPARE(controller.phase(), QStringLiteral("success"));
     }
@@ -372,7 +504,7 @@ private slots:
         MockAuthFlowService service;
         AuthFlowController controller(&service);
         controller.start(QStringLiteral("matrix"), {}, QString(), /*useSink=*/false);
-        QTRY_COMPARE(controller.phase(), QStringLiteral("awaiting_browser"));
+        QTRY_COMPARE(controller.phase(), QStringLiteral("challenge"));
         controller.cancel();
         QCOMPARE(controller.phase(), QStringLiteral("cancelled"));
         QVERIFY(service.lastCancelled().startsWith(QStringLiteral("mock-flow-")));

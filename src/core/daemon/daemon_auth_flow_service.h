@@ -26,7 +26,7 @@ public:
     void refreshProviders() override;
     void begin(const QString& family, const QVariantMap& params, const QString& redirectUri,
                const QString& bindProfile = QString()) override;
-    void complete(const QString& flowId, const QString& callback) override;
+    void step(const QString& flowId, const StepInput& input) override;
     void cancel(const QString& flowId) override;
 
 private:

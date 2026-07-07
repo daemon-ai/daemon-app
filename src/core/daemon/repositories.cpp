@@ -2556,13 +2556,14 @@ void AuthRepository::begin(const QString& family, const QVariantMap& params,
         QLatin1String(kBeginCorrelation));
 }
 
-void AuthRepository::complete(const QString& flowId, const QString& callback) {
+void AuthRepository::step(const QString& flowId, AuthStepInputKind kind, const QVariantMap& fields,
+                          const QString& callback) {
     if (client() == nullptr) {
-        emit failed(QStringLiteral("complete"), QStringLiteral("No NodeApi client configured"));
+        emit failed(QStringLiteral("step"), QStringLiteral("No NodeApi client configured"));
         return;
     }
-    client()->sendRequest(NodeApiCodec::encodeAuthCompleteRequest(flowId, callback),
-                          QLatin1String(kCompleteCorrelation));
+    client()->sendRequest(NodeApiCodec::encodeAuthStepRequest(flowId, kind, fields, callback),
+                          QLatin1String(kStepCorrelation));
 }
 
 void AuthRepository::cancel(const QString& flowId) {
@@ -2593,14 +2594,14 @@ void AuthRepository::handleResponse(const QString& correlationId, const QByteArr
         emit begun(response);
         return;
     }
-    if (correlationId == QLatin1String(kCompleteCorrelation)) {
-        DecodedAuthCompleteResponse response;
-        if (!NodeApiCodec::decodeAuthCompleted(responseCbor, &response)) {
-            emitPhaseError(QStringLiteral("complete"), responseCbor,
+    if (correlationId == QLatin1String(kStepCorrelation)) {
+        DecodedAuthStepResult result;
+        if (!NodeApiCodec::decodeAuthStepped(responseCbor, &result)) {
+            emitPhaseError(QStringLiteral("step"), responseCbor,
                            tr("The sign-in could not be completed"));
             return;
         }
-        emit completed(response);
+        emit stepped(result);
         return;
     }
     // kCancelCorrelation: fire-and-forget (Ok and errors are both terminal for an abandoned
@@ -2623,8 +2624,8 @@ void AuthRepository::handleFailure(const QString& correlationId, const QString& 
         emit failed(QStringLiteral("providers"), message);
     } else if (correlationId == QLatin1String(kBeginCorrelation)) {
         emit failed(QStringLiteral("begin"), message);
-    } else if (correlationId == QLatin1String(kCompleteCorrelation)) {
-        emit failed(QStringLiteral("complete"), message);
+    } else if (correlationId == QLatin1String(kStepCorrelation)) {
+        emit failed(QStringLiteral("step"), message);
     }
     // kCancelCorrelation: silent (best-effort).
 }

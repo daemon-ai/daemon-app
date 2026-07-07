@@ -874,12 +874,13 @@ private:
     QString m_lastRemovedName; // echoed on agentRemoved
 };
 
-// --- Interactive auth (begin -> browser -> complete; app-wizard-auth stream) ---------------------
-// The wire seam for the generic interactive-auth contract (daemon-interactive-auth-spec.md):
-// AuthProviders discovers the families, AuthBegin parks a flow + returns the authorization URL,
-// AuthComplete relays the captured redirect, AuthCancel drops a flow early. Stateless beyond the
-// provider list — the flow state machine lives in auth::AuthFlowController; the wire op names live
-// ONLY here + in NodeApiCodec (rename isolation).
+// --- Interactive auth (begin -> challenge/response state machine; app-wizard-auth stream) --------
+// The wire seam for the generic interactive-auth contract (daemon-interactive-auth-spec.md, wire
+// v31): AuthProviders discovers the families, AuthBegin parks a flow + returns its initial
+// AuthChallenge, AuthStep advances the flow one step with the client's AuthStepInput (returning the
+// next challenge or completion), AuthCancel drops a flow early. Stateless beyond the provider list
+// — the flow state machine lives in auth::AuthFlowController; the wire op names live ONLY here + in
+// NodeApiCodec (rename isolation).
 class AuthRepository : public RepositoryBase {
     Q_OBJECT
 
@@ -892,13 +893,15 @@ public:
     void refreshProviders();
     // Begin a flow for `family` with the family-specific `params` map against the CLIENT-owned
     // `redirectUri`. Non-empty `bindProfile` binds the resulting account to that profile
-    // node-side. On success begun() fires with the flow handle; on Error/transport failure
-    // failed("begin", ...) fires.
+    // node-side. On success begun() fires with the flow handle + initial challenge; on
+    // Error/transport failure failed("begin", ...) fires.
     void begin(const QString& family, const QVariantMap& params, const QString& redirectUri,
                const QString& bindProfile = QString());
-    // Finish `flowId` from the captured redirect (`callback`: full URL or query string). On
-    // success completed() fires; the flow is consumed node-side either way.
-    void complete(const QString& flowId, const QString& callback);
+    // Advance `flowId` one step with the collected input (`kind` selects the arm: Fields carries
+    // `fields`, Callback carries `callback`, Poll carries nothing). On success stepped() fires with
+    // the next challenge or the completion; on failure failed("step", ...) fires.
+    void step(const QString& flowId, AuthStepInputKind kind, const QVariantMap& fields = {},
+              const QString& callback = {});
     // Drop a pending flow (user cancelled / TTL abandoned). Fire-and-forget: Ok and errors are
     // both terminal for an already-abandoned flow, so no signal is emitted.
     void cancel(const QString& flowId);
@@ -906,8 +909,8 @@ public:
 signals:
     void providersRefreshed();
     void begun(const daemonapp::daemon::DecodedAuthBeginResponse& response);
-    void completed(const daemonapp::daemon::DecodedAuthCompleteResponse& response);
-    // `phase` is "providers" | "begin" | "complete"; `message` is the node's reason (an ApiError
+    void stepped(const daemonapp::daemon::DecodedAuthStepResult& result);
+    // `phase` is "providers" | "begin" | "step"; `message` is the node's reason (an ApiError
     // message when one decodes, else a transport/decode fallback).
     void failed(const QString& phase, const QString& message);
 
@@ -920,7 +923,7 @@ private:
 
     static constexpr auto kProvidersCorrelation = "repo/auth-providers";
     static constexpr auto kBeginCorrelation = "repo/auth-begin";
-    static constexpr auto kCompleteCorrelation = "repo/auth-complete";
+    static constexpr auto kStepCorrelation = "repo/auth-step";
     static constexpr auto kCancelCorrelation = "repo/auth-cancel";
 
     QList<DecodedAuthProviderInfo> m_providers;
