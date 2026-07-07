@@ -5171,6 +5171,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
 <context>
     <name>SessionRepository</name>
     <message>
+        <source>The session detail request was rejected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Not connected to a daemon</source>
         <translation>Hindi nakakonekta sa isang daemon</translation>
     </message>
@@ -5837,6 +5845,10 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     <message>
         <source>idle</source>
         <translation>idle</translation>
+    </message>
+    <message>
+        <source>Approvals </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source> tok</source>
@@ -7924,6 +7936,14 @@ _Walang piniling agent._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>The session detail request was rejected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Not connected to a daemon</source>
         <translation>Hindi nakakonekta sa isang daemon</translation>

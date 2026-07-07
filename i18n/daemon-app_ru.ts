@@ -5175,6 +5175,14 @@ A generic, non-transcript page hosted by the same tab strip.
 <context>
     <name>SessionRepository</name>
     <message>
+        <source>The session detail request was rejected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Not connected to a daemon</source>
         <translation>Нет подключения к демону</translation>
     </message>
@@ -5844,6 +5852,10 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>idle</source>
         <translation>простой</translation>
+    </message>
+    <message>
+        <source>Approvals </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source> tok</source>
@@ -7931,6 +7943,14 @@ _Агент не выбран._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>The session detail request was rejected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Not connected to a daemon</source>
         <translation>Нет подключения к демону</translation>

@@ -5167,6 +5167,14 @@ Halaman generik non-transkrip yang ditempatkan di strip tab yang sama.
 <context>
     <name>SessionRepository</name>
     <message>
+        <source>The session detail request was rejected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Not connected to a daemon</source>
         <translation>Tidak tersambung ke daemon</translation>
     </message>
@@ -5830,6 +5838,10 @@ Ini hanya memengaruhi tampilan aplikasi, bukan data Anda.</translation>
     <message>
         <source>idle</source>
         <translation>siaga</translation>
+    </message>
+    <message>
+        <source>Approvals </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source> tok</source>
@@ -7917,6 +7929,14 @@ _Tidak ada agen yang dipilih._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>The session detail request was rejected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Not connected to a daemon</source>
         <translation>Tidak tersambung ke daemon</translation>

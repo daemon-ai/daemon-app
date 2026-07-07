@@ -5171,6 +5171,14 @@ Eine generische Seite ohne Transkript, die von derselben Tab-Leiste gehostet wir
 <context>
     <name>SessionRepository</name>
     <message>
+        <source>The session detail request was rejected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Not connected to a daemon</source>
         <translation>Nicht mit einem Daemon verbunden</translation>
     </message>
@@ -5837,6 +5845,10 @@ Dies betrifft nur das Erscheinungsbild der App, nicht Ihre Daten.</translation>
     <message>
         <source>idle</source>
         <translation>inaktiv</translation>
+    </message>
+    <message>
+        <source>Approvals </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source> tok</source>
@@ -7924,6 +7936,14 @@ _Kein Agent ausgewählt._
 </context>
 <context>
     <name>daemonapp::daemon::SessionRepository</name>
+    <message>
+        <source>The session detail request was rejected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decode SessionDetail response</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Not connected to a daemon</source>
         <translation>Nicht mit einem Daemon verbunden</translation>
