@@ -23,8 +23,14 @@ ColumnLayout {
     OptionRow {
         Layout.fillWidth: true
         label: qsTr("Send anonymous telemetry")
-        checked: DaemonConfig.value("advanced/telemetry", false)
-        onToggled: function(on) { DaemonConfig.setValue("advanced/telemetry", on); }
+        // Telemetry consent is now node-owned via the Feedback seam (the source
+        // of truth the app-feedback dialog also reads), not the old
+        // advanced/telemetry config key. Visible behavior is unchanged.
+        checked: (typeof Feedback !== "undefined" && Feedback) ? Feedback.telemetryEnabled : false
+        onToggled: function(on) {
+            if (typeof Feedback !== "undefined" && Feedback)
+                Feedback.setTelemetryEnabled(on);
+        }
     }
     OptionRow {
         Layout.fillWidth: true
