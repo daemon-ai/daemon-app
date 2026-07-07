@@ -188,6 +188,14 @@ void SubscriptionManager::applyEvent(const DecodedNodeEvent& event) {
         if (m_fleet != nullptr) {
             m_fleet->refreshTree(QStringLiteral("fleet"));
         }
+        // Route the fleet change to every focused turn engine so a live turn re-reads its
+        // structured subagent events (UnitEvents) and the subagent strip reflects spawn/finish. The
+        // feed carries no session key, so notify all focused engines; each no-ops when idle.
+        for (auto it = m_focus.constBegin(); it != m_focus.constEnd(); ++it) {
+            if (QObject* engine = it.value()) {
+                QMetaObject::invokeMethod(engine, "fleetChanged", Qt::DirectConnection);
+            }
+        }
         break;
     // [wave2:app-channels-liveness] B5: live per-account transport presence. Apply the carried
     // connection/presence in place (the DaemonPresenceService re-projects -> status dots re-read).

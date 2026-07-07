@@ -70,6 +70,9 @@ public:
     // L3 lazy-focus catch-up: ensure the push subscription is open so an idle focused session
     // renders out-of-band activity the node just announced via SessionAdvanced.
     void nudge() override;
+    // Fleet supervision change (FleetChanged): re-fetch the structured subagent events for this
+    // session while a turn is active, so the live subagent strip reflects spawn/finish transitions.
+    void fleetChanged() override;
 
 private:
     void onResponse(const QString& correlationId, const QByteArray& responseCbor);
@@ -105,6 +108,15 @@ private:
     void checkpointReasoningBlock();
     void settleReasoningBlock();
 
+    // Structured subagent strip (live delegation rows): fetch the session's UnitEvents (a one-shot
+    // Call — the wire has no cursored subagent stream) and map the ManageEventView::Subagent arms
+    // (SubagentPhase Spawned/Finished + the child session id + role) into {type:"subagent"} events
+    // the SubagentModel upserts. Seq-deduped so overlapping refetches don't re-emit. Titles are
+    // enriched from the roster cache (structured node state), never parsed from display text.
+    void fetchSubagentEvents();
+    void applyUnitEvents(const QByteArray& responseCbor);
+    [[nodiscard]] QString subagentTitle(const QString& childId) const;
+
     void setActive(bool active);
     void setTurnState(const QString& state);
     void setElapsedMs(int ms);
@@ -113,6 +125,7 @@ private:
     [[nodiscard]] QString submitCorrelation() const;
     [[nodiscard]] QString respondCorrelation() const;
     [[nodiscard]] QString journalCorrelation() const;
+    [[nodiscard]] QString unitEventsCorrelation() const;
 
     daemonapp::daemon::NodeApiClient* m_client = nullptr;
     daemonapp::daemon::DaemonCacheStore* m_cache = nullptr;
@@ -137,6 +150,10 @@ private:
     // The open reasoning run: first delta's seq (0 = none) + accumulated disclosure text.
     quint64 m_reasoningSeq = 0;
     QString m_reasoningText;
+    // Live subagent strip: the highest ManageEventView::Subagent seq already emitted, so a refetch
+    // (turn start / FleetChanged) only emits newer spawn/finish transitions. Reset per
+    // turn/session.
+    quint64 m_subagentSeq = 0;
     // The re-baseline journal read accumulates across pages (wire v24: each SessionHistory page
     // is bounded at kWirePageMax records); the replay runs exactly once over the full set. Reset
     // whenever a new rebaseline starts (or the bound session changes).

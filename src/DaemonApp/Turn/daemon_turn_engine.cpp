@@ -174,6 +174,8 @@ void DaemonTurnEngine::setSessionId(const QString& sessionId) {
     // Any in-flight journal page loop belongs to the previous session; drop its accumulation.
     m_journalAcc.clear();
     m_journalPages = 0;
+    // The subagent seq watermark is per-session (UnitEvents seqs are unit-scoped).
+    m_subagentSeq = 0;
     if (m_cache != nullptr && !sessionId.isEmpty()) {
         const QString w = m_cache->cursor(dcache::sessionWatermarkScope(sessionId));
         const QString e = m_cache->cursor(dcache::sessionEpochScope(sessionId));
@@ -199,6 +201,10 @@ QString DaemonTurnEngine::journalCorrelation() const {
     return QStringLiteral("turn/journal/") + m_sessionId;
 }
 
+QString DaemonTurnEngine::unitEventsCorrelation() const {
+    return QStringLiteral("turn/unit-events/") + m_sessionId;
+}
+
 void DaemonTurnEngine::start(const QString& prompt) {
     cancel();
     if (m_client == nullptr || m_sessionId.isEmpty()) {
@@ -220,6 +226,7 @@ void DaemonTurnEngine::start(const QString& prompt) {
     m_todoCallIds.clear();
     m_reasoningSeq = 0;
     m_reasoningText.clear();
+    m_subagentSeq = 0;
     m_resumeAttempts = 0;
     m_resumeBackoffMs = kResumeMinMs;
     m_startedAt = QDateTime::currentMSecsSinceEpoch();
@@ -233,6 +240,9 @@ void DaemonTurnEngine::start(const QString& prompt) {
     m_client->sendRequest(
         NodeApiCodec::encodeSubmitStartTurnRequest(m_sessionId, prompt, m_profile, m_requestId++),
         submitCorrelation());
+    // Seed the live subagent strip from the session's current structured subagent events; further
+    // spawn/finish transitions arrive via fleetChanged() (FleetChanged push) + the notice path.
+    fetchSubagentEvents();
 }
 
 void DaemonTurnEngine::cancel() {
@@ -394,6 +404,72 @@ void DaemonTurnEngine::nudge() {
     openSubscribeStream();
 }
 
+void DaemonTurnEngine::fleetChanged() {
+    // A fleet supervision change landed. Only a live turn's strip needs a refresh; an idle engine
+    // has no strip on screen and would just add a redundant round-trip. UnitEvents is a one-shot
+    // Call (no cursor), so we re-read and seq-dedupe against what we've already emitted.
+    if (m_active) {
+        fetchSubagentEvents();
+    }
+}
+
+void DaemonTurnEngine::fetchSubagentEvents() {
+    if (m_client == nullptr || m_sessionId.isEmpty()) {
+        return;
+    }
+    // UnitId == SessionId on the durable path (domain::UnitNode), so the session id addresses the
+    // unit whose ManageEventView::Subagent arms describe this session's child spawn/finish events.
+    m_client->sendRequest(NodeApiCodec::encodeUnitEventsRequest(m_sessionId, kSubscribeMax),
+                          unitEventsCorrelation());
+}
+
+QString DaemonTurnEngine::subagentTitle(const QString& childId) const {
+    // Structured enrichment: upgrade the bare child session id to its roster title (node state the
+    // cache already holds). Never parse display text. Falls back to the id when the roster has no
+    // title yet (a just-spawned child not yet in the roster page).
+    if (m_cache != nullptr) {
+        const QList<daemonapp::daemon::CachedSessionRow> rows = m_cache->sessions();
+        for (const daemonapp::daemon::CachedSessionRow& row : rows) {
+            if (row.sessionId == childId && !row.title.isEmpty()) {
+                return row.title;
+            }
+        }
+    }
+    return childId;
+}
+
+void DaemonTurnEngine::applyUnitEvents(const QByteArray& responseCbor) {
+    QList<daemonapp::daemon::DecodedManageEvent> events;
+    if (!NodeApiCodec::decodeUnitEvents(responseCbor, &events)) {
+        return; // a decode miss is non-fatal to the turn; the strip just doesn't advance
+    }
+    QVariantList emitted;
+    for (const daemonapp::daemon::DecodedManageEvent& ev : events) {
+        if (ev.kind != daemonapp::daemon::DecodedManageEvent::Kind::Subagent) {
+            continue;
+        }
+        if (ev.seq <= m_subagentSeq || ev.child.isEmpty()) {
+            continue; // seq watermark: drop already-emitted / re-read transitions
+        }
+        m_subagentSeq = ev.seq;
+        // SubagentPhase -> the strip's status. Spawned = a live child (running); Finished = settled
+        // (done). The wire carries no error phase, so a failed child still reads "done" here (the
+        // strip's failedCount is not populated from this structured source).
+        const QString status = ev.phase == QStringLiteral("Finished") ? QStringLiteral("done")
+                                                                      : QStringLiteral("running");
+        emitted.append(QVariantMap{
+            {QStringLiteral("type"), QStringLiteral("subagent")},
+            {QStringLiteral("id"), ev.child},
+            {QStringLiteral("title"), subagentTitle(ev.child)},
+            {QStringLiteral("status"), status},
+            {QStringLiteral("detail"), ev.role},
+        });
+    }
+    if (!emitted.isEmpty()) {
+        emit eventsEmitted(emitted);
+    }
+}
+
 void DaemonTurnEngine::openSubscribeStream() {
     if (m_finished || m_client == nullptr) {
         return;
@@ -489,11 +565,21 @@ void DaemonTurnEngine::applyLogPage(const QByteArray& responseCbor) {
                 const QString role = isNotice ? QStringLiteral("System") : QStringLiteral("User");
                 const QString evType =
                     isNotice ? QStringLiteral("delegationNotice") : QStringLiteral("userMessage");
-                emit eventsEmitted(
-                    QVariantList{QVariantMap{{QStringLiteral("type"), evType},
-                                             {QStringLiteral("text"), entry.commandText},
-                                             {QStringLiteral("child"), entry.noticeChild},
-                                             {QStringLiteral("callId"), entry.noticeCallId}}});
+                QVariantList noticeEvents{
+                    QVariantMap{{QStringLiteral("type"), evType},
+                                {QStringLiteral("text"), entry.commandText},
+                                {QStringLiteral("child"), entry.noticeChild},
+                                {QStringLiteral("callId"), entry.noticeCallId}}};
+                // Structured completion signal (UserMsg.notice): settle the finished child's strip
+                // row even if its UnitEvents Finished arm was missed. Structured field, not text.
+                if (isNotice && !entry.noticeChild.isEmpty()) {
+                    noticeEvents.append(
+                        QVariantMap{{QStringLiteral("type"), QStringLiteral("subagent")},
+                                    {QStringLiteral("id"), entry.noticeChild},
+                                    {QStringLiteral("title"), subagentTitle(entry.noticeChild)},
+                                    {QStringLiteral("status"), QStringLiteral("done")}});
+                }
+                emit eventsEmitted(noticeEvents);
                 if (m_cache != nullptr && !m_sessionId.isEmpty()) {
                     daemonapp::daemon::CachedTranscriptBlockRow b;
                     b.sessionId = m_sessionId;
@@ -656,6 +742,15 @@ void DaemonTurnEngine::onResponse(const QString& correlationId, const QByteArray
             NodeApiCodec::decodeError(responseCbor, &err);
             finishTurn(err.message.isEmpty() ? tr("The agent rejected the response.")
                                              : err.message);
+        }
+        return;
+    }
+
+    if (correlationId == unitEventsCorrelation()) {
+        // Structured subagent spawn/finish feed for this session's unit (UnitEvents). Non-fatal to
+        // the turn: an Error/decode miss just leaves the strip where it is.
+        if (NodeApiCodec::responseKind(responseCbor) != ApiResponseKind::Error) {
+            applyUnitEvents(responseCbor);
         }
         return;
     }

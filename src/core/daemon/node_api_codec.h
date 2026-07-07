@@ -696,6 +696,30 @@ struct DecodedFleetReport {
     QStringList children;
 };
 
+// One management-event view row (UnitEvents -> [ManageEventView]). Only the Subagent arm is
+// projected in full today (the live subagent strip's structured spawn/finish feed); the other arms
+// (Started/Progress/Usage/Finished/Error) decode to their kind + seq so a caller can advance past
+// them. `phase` is the SubagentPhase wire string ("Spawned" | "Finished"); `child` is the child
+// session id; `role` is the SessionRole wire string; `activeChildren` is the parent's live child
+// count at that event.
+struct DecodedManageEvent {
+    enum class Kind {
+        Other,
+        Started,
+        Progress,
+        Usage,
+        Finished,
+        Error,
+        Subagent
+    } kind = Kind::Other;
+    quint64 seq = 0;
+    // Subagent arm:
+    QString child;
+    QString role;  // "Primary" | "ManagedChild" | "EphemeralSubagent"
+    QString phase; // "Spawned" | "Finished"
+    quint32 activeChildren = 0;
+};
+
 // [wave2:app-delegation] F7/DEL-7: the node's delegation guardrail ceilings (Caps -> CapsReport).
 // Node-wide policy (keys on nothing session/profile-specific), surfaced read-only — the app cannot
 // set them (no wire write op). Drives the read-only "Delegation limits" rows in Settings -> Safety.
@@ -1162,6 +1186,9 @@ public:
     // Decode a Unit response (Some/None). Sets *found=false on the null arm (unknown unit).
     static bool decodeUnit(const QByteArray& responseCbor, DecodedUnitNode* out, bool* found);
     static bool decodeFleetReport(const QByteArray& responseCbor, DecodedFleetReport* out);
+    // Decode a UnitEvents response into the management-event views (the Subagent arm is the live
+    // subagent strip's structured spawn/finish feed; other arms carry kind + seq only).
+    static bool decodeUnitEvents(const QByteArray& responseCbor, QList<DecodedManageEvent>* out);
 
     // [wave2:app-delegation] F7/DEL-7: the payload-free Caps request + its CapsReport decode.
     [[nodiscard]] static QByteArray encodeCapsRequest();
