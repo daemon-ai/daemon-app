@@ -1180,6 +1180,12 @@ bool NodeApiCodec::decodeApprovals(const QByteArray& responseCbor, QList<Decoded
             entry.fingerprint =
                 fromZcbor(info.approval_info_fingerprint.approval_info_fingerprint_tstr);
         }
+        // [waveB:app-v30] D5: optional structured detail (ToolDetail{kind, body}, wire v30).
+        if (info.approval_info_detail_present) {
+            const tool_detail& td = info.approval_info_detail.approval_info_detail_tool_detail_m;
+            entry.detailKind = fromZcbor(td.tool_detail_kind);
+            entry.detailBody = bytesFromZcbor(td.tool_detail_body);
+        }
         out->append(entry);
     }
     if (next != nullptr) {

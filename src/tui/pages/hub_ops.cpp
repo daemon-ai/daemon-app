@@ -177,6 +177,18 @@ QString TuiPageHub::buildApprovalsMarkdown(int sel) const {
         if (!path.isEmpty()) {
             md += tr("- Path: `%1`\n").arg(path);
         }
+        // [waveB:app-v30] D5: render an fs.diff detail as a fenced unified diff (parity with the
+        // GUI DiffBlock; the raw +/- lines carry their own coloring cue). Unknown kinds degrade.
+        if (a.value(QStringLiteral("detailKind")).toString() == QLatin1String("fs.diff")) {
+            const QString diffPath = a.value(QStringLiteral("diffPath")).toString();
+            if (!diffPath.isEmpty()) {
+                md += tr("- Diff: `%1`\n").arg(diffPath);
+            }
+            const QString diff = a.value(QStringLiteral("diff")).toString();
+            if (!diff.isEmpty()) {
+                md += QStringLiteral("\n```diff\n") + diff + QStringLiteral("\n```\n");
+            }
+        }
         // [wave2:app-approvals-safety] D3: fingerprint chip equivalent — the digest the "allow
         // permanently" scope remembers.
         const QString shortFp = a.value(QStringLiteral("shortFingerprint")).toString();

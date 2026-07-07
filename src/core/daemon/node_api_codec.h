@@ -367,6 +367,11 @@ struct DecodedApprovalInfo {
     // wire v28) — lowercase-hex sha256 of the resolved (exec-surface, abs-binary, argv, env-delta,
     // cwd) tuple. Display/correlation only (a chip in the structured prompt); empty when absent.
     QString fingerprint;
+    // [waveB:app-v30] D5: optional structured detail (ApprovalInfo.detail = ToolDetail{kind,body}).
+    // `detailKind` is the kind tag (e.g. "fs.diff"); `detailBody` is the raw JSON body (for
+    // "fs.diff" it is {path, diff} — a unified diff). Empty when the node attached no detail.
+    QString detailKind;
+    QByteArray detailBody;
 };
 
 // [wave2:app-approvals-safety] D2: one entry of the node-wide tool inventory (ToolList -> Tools,

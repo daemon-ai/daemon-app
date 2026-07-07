@@ -6,6 +6,9 @@
 #include "daemon/repositories.h"
 #include "uimodels/variant_list_model.h"
 
+#include <QJsonDocument>
+#include <QJsonObject>
+
 namespace daemonapp::daemon {
 
 DaemonApprovalsInbox::DaemonApprovalsInbox(ApprovalRepository* repository, QObject* parent)
@@ -59,6 +62,15 @@ void DaemonApprovalsInbox::rebuild() {
         // Wire v28: offer "allow permanently" only when the node attached a fingerprint it can
         // remember (see DecodedApprovalInfo::hasFingerprint).
         row[QStringLiteral("canAllowPermanent")] = info.hasFingerprint;
+        // [waveB:app-v30] D5: structured detail. For an "fs.diff" detail, parse the JSON body
+        // {path, diff} and expose the unified diff + its path so the card renders a diff view;
+        // unknown kinds / absent detail degrade to today's rendering (detailKind stays empty).
+        row[QStringLiteral("detailKind")] = info.detailKind;
+        if (info.detailKind == QStringLiteral("fs.diff") && !info.detailBody.isEmpty()) {
+            const QJsonObject body = QJsonDocument::fromJson(info.detailBody).object();
+            row[QStringLiteral("diff")] = body.value(QStringLiteral("diff")).toString();
+            row[QStringLiteral("diffPath")] = body.value(QStringLiteral("path")).toString();
+        }
         rows.append(row);
     }
     m_pending->setRows(rows);

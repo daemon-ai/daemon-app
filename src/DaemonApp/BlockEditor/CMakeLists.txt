@@ -98,6 +98,7 @@ qt_add_qml_module(da_blockeditor
         app/diagram_controller.h
         app/diagram_item.cpp
         app/diagram_item.h
+        app/diff_format.h
         app/editor_controller.cpp
         app/editor_controller.h
         app/image_cache.cpp
