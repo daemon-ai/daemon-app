@@ -420,6 +420,19 @@ static bool encode_request_resource_grant_create(zcbor_state_t *state, const str
 static bool encode_repeated_ResourceGrantList_user_id(zcbor_state_t *state, const struct ResourceGrantList_user_id_r *input);
 static bool encode_request_resource_grant_list(zcbor_state_t *state, const struct request_resource_grant_list *input);
 static bool encode_request_resource_grant_revoke(zcbor_state_t *state, const struct request_resource_grant_revoke *input);
+static bool encode_feedback_kind(zcbor_state_t *state, const struct feedback_kind_r *input);
+static bool encode_repeated_feedback_target_trace(zcbor_state_t *state, const struct feedback_target_trace_r *input);
+static bool encode_feedback_target(zcbor_state_t *state, const struct feedback_target *input);
+static bool encode_repeated_FeedbackSubmit_target(zcbor_state_t *state, const struct FeedbackSubmit_target_r *input);
+static bool encode_feedback_rating(zcbor_state_t *state, const struct feedback_rating_r *input);
+static bool encode_repeated_FeedbackSubmit_rating(zcbor_state_t *state, const struct FeedbackSubmit_rating_r *input);
+static bool encode_repeated_FeedbackSubmit_comment(zcbor_state_t *state, const struct FeedbackSubmit_comment_r *input);
+static bool encode_repeated_feedback_diagnostics_app_version(zcbor_state_t *state, const struct feedback_diagnostics_app_version_r *input);
+static bool encode_repeated_feedback_diagnostics_os(zcbor_state_t *state, const struct feedback_diagnostics_os_r *input);
+static bool encode_feedback_diagnostics(zcbor_state_t *state, const struct feedback_diagnostics *input);
+static bool encode_repeated_FeedbackSubmit_diagnostics(zcbor_state_t *state, const struct FeedbackSubmit_diagnostics_r *input);
+static bool encode_request_feedback_submit(zcbor_state_t *state, const struct request_feedback_submit *input);
+static bool encode_request_telemetry_consent_set(zcbor_state_t *state, const struct request_telemetry_consent_set *input);
 static bool encode_response_routed(zcbor_state_t *state, const struct response_routed *input);
 static bool encode_response_session_created(zcbor_state_t *state, const struct response_session_created *input);
 static bool encode_completion_source_process(zcbor_state_t *state, const struct completion_source_process *input);
@@ -810,6 +823,9 @@ static bool encode_role_info(zcbor_state_t *state, const struct role_info *input
 static bool encode_response_access_roles(zcbor_state_t *state, const struct response_access_roles *input);
 static bool encode_principal_view(zcbor_state_t *state, const struct principal_view *input);
 static bool encode_response_who_am_i(zcbor_state_t *state, const struct response_who_am_i *input);
+static bool encode_feedback_ack(zcbor_state_t *state, const struct feedback_ack *input);
+static bool encode_response_feedback_ack(zcbor_state_t *state, const struct response_feedback_ack *input);
+static bool encode_response_telemetry_consent(zcbor_state_t *state, const struct response_telemetry_consent *input);
 static bool encode_api_response(zcbor_state_t *state, const struct api_response_r *input);
 static bool encode_api_request(zcbor_state_t *state, const struct api_request_r *input);
 
@@ -6761,6 +6777,203 @@ static bool encode_request_resource_grant_revoke(
 	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"ResourceGrantRevoke", tmp_str.len = sizeof("ResourceGrantRevoke") - 1, &tmp_str)))))
 	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"id", tmp_str.len = sizeof("id") - 1, &tmp_str)))))
 	&& (zcbor_tstr_encode(state, (&(*input).ResourceGrantRevoke_id))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_feedback_kind(
+		zcbor_state_t *state, const struct feedback_kind_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((((*input).feedback_kind_choice == feedback_kind_response_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"response", tmp_str.len = sizeof("response") - 1, &tmp_str)))))
+	: (((*input).feedback_kind_choice == feedback_kind_app_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"app", tmp_str.len = sizeof("app") - 1, &tmp_str)))))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_feedback_target_trace(
+		zcbor_state_t *state, const struct feedback_target_trace_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"trace", tmp_str.len = sizeof("trace") - 1, &tmp_str)))))
+	&& (((*input).feedback_target_trace_choice == feedback_target_trace_trace_id_m_c) ? ((zcbor_uint64_encode(state, (&(*input).feedback_target_trace_trace_id_m))))
+	: (((*input).feedback_target_trace_choice == feedback_target_trace_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_feedback_target(
+		zcbor_state_t *state, const struct feedback_target *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 3) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"session", tmp_str.len = sizeof("session") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).feedback_target_session))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"cursor", tmp_str.len = sizeof("cursor") - 1, &tmp_str)))))
+	&& (zcbor_uint64_encode(state, (&(*input).feedback_target_cursor))))
+	&& (!(*input).feedback_target_trace_present || encode_repeated_feedback_target_trace(state, (&(*input).feedback_target_trace)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 3))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_FeedbackSubmit_target(
+		zcbor_state_t *state, const struct FeedbackSubmit_target_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"target", tmp_str.len = sizeof("target") - 1, &tmp_str)))))
+	&& (((*input).FeedbackSubmit_target_choice == FeedbackSubmit_target_feedback_target_m_c) ? ((encode_feedback_target(state, (&(*input).FeedbackSubmit_target_feedback_target_m))))
+	: (((*input).FeedbackSubmit_target_choice == FeedbackSubmit_target_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_feedback_rating(
+		zcbor_state_t *state, const struct feedback_rating_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((((*input).feedback_rating_choice == feedback_rating_up_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"up", tmp_str.len = sizeof("up") - 1, &tmp_str)))))
+	: (((*input).feedback_rating_choice == feedback_rating_down_tstr_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"down", tmp_str.len = sizeof("down") - 1, &tmp_str)))))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_FeedbackSubmit_rating(
+		zcbor_state_t *state, const struct FeedbackSubmit_rating_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"rating", tmp_str.len = sizeof("rating") - 1, &tmp_str)))))
+	&& (((*input).FeedbackSubmit_rating_choice == FeedbackSubmit_rating_feedback_rating_m_c) ? ((encode_feedback_rating(state, (&(*input).FeedbackSubmit_rating_feedback_rating_m))))
+	: (((*input).FeedbackSubmit_rating_choice == FeedbackSubmit_rating_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_FeedbackSubmit_comment(
+		zcbor_state_t *state, const struct FeedbackSubmit_comment_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"comment", tmp_str.len = sizeof("comment") - 1, &tmp_str)))))
+	&& (((*input).FeedbackSubmit_comment_choice == FeedbackSubmit_comment_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).FeedbackSubmit_comment_tstr))))
+	: (((*input).FeedbackSubmit_comment_choice == FeedbackSubmit_comment_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_feedback_diagnostics_app_version(
+		zcbor_state_t *state, const struct feedback_diagnostics_app_version_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"app_version", tmp_str.len = sizeof("app_version") - 1, &tmp_str)))))
+	&& (((*input).feedback_diagnostics_app_version_choice == feedback_diagnostics_app_version_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).feedback_diagnostics_app_version_tstr))))
+	: (((*input).feedback_diagnostics_app_version_choice == feedback_diagnostics_app_version_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_feedback_diagnostics_os(
+		zcbor_state_t *state, const struct feedback_diagnostics_os_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"os", tmp_str.len = sizeof("os") - 1, &tmp_str)))))
+	&& (((*input).feedback_diagnostics_os_choice == feedback_diagnostics_os_tstr_c) ? ((zcbor_tstr_encode(state, (&(*input).feedback_diagnostics_os_tstr))))
+	: (((*input).feedback_diagnostics_os_choice == feedback_diagnostics_os_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_feedback_diagnostics(
+		zcbor_state_t *state, const struct feedback_diagnostics *input)
+{
+	zcbor_log("%s\r\n", __func__);
+
+	bool res = (((zcbor_map_start_encode(state, 2) && (((!(*input).feedback_diagnostics_app_version_present || encode_repeated_feedback_diagnostics_app_version(state, (&(*input).feedback_diagnostics_app_version)))
+	&& (!(*input).feedback_diagnostics_os_present || encode_repeated_feedback_diagnostics_os(state, (&(*input).feedback_diagnostics_os)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_repeated_FeedbackSubmit_diagnostics(
+		zcbor_state_t *state, const struct FeedbackSubmit_diagnostics_r *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = ((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"diagnostics", tmp_str.len = sizeof("diagnostics") - 1, &tmp_str)))))
+	&& (((*input).FeedbackSubmit_diagnostics_choice == FeedbackSubmit_diagnostics_feedback_diagnostics_m_c) ? ((encode_feedback_diagnostics(state, (&(*input).FeedbackSubmit_diagnostics_feedback_diagnostics_m))))
+	: (((*input).FeedbackSubmit_diagnostics_choice == FeedbackSubmit_diagnostics_null_m_c) ? ((zcbor_nil_put(state, NULL)))
+	: false))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_feedback_submit(
+		zcbor_state_t *state, const struct request_feedback_submit *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"FeedbackSubmit", tmp_str.len = sizeof("FeedbackSubmit") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 7) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"kind", tmp_str.len = sizeof("kind") - 1, &tmp_str)))))
+	&& (encode_feedback_kind(state, (&(*input).FeedbackSubmit_kind))))
+	&& (!(*input).FeedbackSubmit_target_present || encode_repeated_FeedbackSubmit_target(state, (&(*input).FeedbackSubmit_target)))
+	&& (!(*input).FeedbackSubmit_rating_present || encode_repeated_FeedbackSubmit_rating(state, (&(*input).FeedbackSubmit_rating)))
+	&& (!(*input).FeedbackSubmit_comment_present || encode_repeated_FeedbackSubmit_comment(state, (&(*input).FeedbackSubmit_comment)))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"include_content", tmp_str.len = sizeof("include_content") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).FeedbackSubmit_include_content))))
+	&& (!(*input).FeedbackSubmit_diagnostics_present || encode_repeated_FeedbackSubmit_diagnostics(state, (&(*input).FeedbackSubmit_diagnostics)))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"surface", tmp_str.len = sizeof("surface") - 1, &tmp_str)))))
+	&& (zcbor_tstr_encode(state, (&(*input).FeedbackSubmit_surface))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 7)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_request_telemetry_consent_set(
+		zcbor_state_t *state, const struct request_telemetry_consent_set *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"TelemetryConsentSet", tmp_str.len = sizeof("TelemetryConsentSet") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"enabled", tmp_str.len = sizeof("enabled") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).TelemetryConsentSet_enabled))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -12940,6 +13153,48 @@ static bool encode_response_who_am_i(
 	return res;
 }
 
+static bool encode_feedback_ack(
+		zcbor_state_t *state, const struct feedback_ack *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 2) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"accepted", tmp_str.len = sizeof("accepted") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).feedback_ack_accepted))))
+	&& (((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"queued", tmp_str.len = sizeof("queued") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).feedback_ack_queued))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 2))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_response_feedback_ack(
+		zcbor_state_t *state, const struct response_feedback_ack *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"FeedbackAck", tmp_str.len = sizeof("FeedbackAck") - 1, &tmp_str)))))
+	&& (encode_feedback_ack(state, (&(*input).response_feedback_ack_FeedbackAck))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
+static bool encode_response_telemetry_consent(
+		zcbor_state_t *state, const struct response_telemetry_consent *input)
+{
+	zcbor_log("%s\r\n", __func__);
+	struct zcbor_string tmp_str;
+
+	bool res = (((zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"TelemetryConsent", tmp_str.len = sizeof("TelemetryConsent") - 1, &tmp_str)))))
+	&& (zcbor_map_start_encode(state, 1) && (((((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"enabled", tmp_str.len = sizeof("enabled") - 1, &tmp_str)))))
+	&& (zcbor_bool_encode(state, (&(*input).TelemetryConsent_enabled))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 1))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool encode_api_response(
 		zcbor_state_t *state, const struct api_response_r *input)
 {
@@ -13035,7 +13290,9 @@ static bool encode_api_response(
 	: (((*input).api_response_choice == api_response_response_access_users_m_c) ? ((encode_response_access_users(state, (&(*input).api_response_response_access_users_m))))
 	: (((*input).api_response_choice == api_response_response_access_roles_m_c) ? ((encode_response_access_roles(state, (&(*input).api_response_response_access_roles_m))))
 	: (((*input).api_response_choice == api_response_response_who_am_i_m_c) ? ((encode_response_who_am_i(state, (&(*input).api_response_response_who_am_i_m))))
-	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+	: (((*input).api_response_choice == api_response_response_feedback_ack_m_c) ? ((encode_response_feedback_ack(state, (&(*input).api_response_response_feedback_ack_m))))
+	: (((*input).api_response_choice == api_response_response_telemetry_consent_m_c) ? ((encode_response_telemetry_consent(state, (&(*input).api_response_response_telemetry_consent_m))))
+	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -13216,7 +13473,10 @@ static bool encode_api_request(
 	: (((*input).api_request_choice == api_request_request_resource_grant_create_m_c) ? ((encode_request_resource_grant_create(state, (&(*input).api_request_request_resource_grant_create_m))))
 	: (((*input).api_request_choice == api_request_request_resource_grant_list_m_c) ? ((encode_request_resource_grant_list(state, (&(*input).api_request_request_resource_grant_list_m))))
 	: (((*input).api_request_choice == api_request_request_resource_grant_revoke_m_c) ? ((encode_request_resource_grant_revoke(state, (&(*input).api_request_request_resource_grant_revoke_m))))
-	: false)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+	: (((*input).api_request_choice == api_request_request_feedback_submit_m_c) ? ((encode_request_feedback_submit(state, (&(*input).api_request_request_feedback_submit_m))))
+	: (((*input).api_request_choice == api_request_request_telemetry_consent_get_m_c) ? ((zcbor_tstr_encode(state, ((tmp_str.value = (uint8_t *)"TelemetryConsentGet", tmp_str.len = sizeof("TelemetryConsentGet") - 1, &tmp_str)))))
+	: (((*input).api_request_choice == api_request_request_telemetry_consent_set_m_c) ? ((encode_request_telemetry_consent_set(state, (&(*input).api_request_request_telemetry_consent_set_m))))
+	: false))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 
 	log_result(state, res, __func__);
 	return res;

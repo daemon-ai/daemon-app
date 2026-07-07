@@ -2899,6 +2899,122 @@ struct request_resource_grant_revoke {
 	struct zcbor_string ResourceGrantRevoke_id;
 };
 
+struct feedback_kind_r {
+	enum {
+		feedback_kind_response_tstr_c,
+		feedback_kind_app_tstr_c,
+	} feedback_kind_choice;
+};
+
+struct feedback_target_trace_r {
+	union {
+		uint64_t feedback_target_trace_trace_id_m;
+	};
+	enum {
+		feedback_target_trace_trace_id_m_c,
+		feedback_target_trace_null_m_c,
+	} feedback_target_trace_choice;
+};
+
+struct feedback_target {
+	struct zcbor_string feedback_target_session;
+	uint64_t feedback_target_cursor;
+	struct feedback_target_trace_r feedback_target_trace;
+	bool feedback_target_trace_present;
+};
+
+struct FeedbackSubmit_target_r {
+	union {
+		struct feedback_target FeedbackSubmit_target_feedback_target_m;
+	};
+	enum {
+		FeedbackSubmit_target_feedback_target_m_c,
+		FeedbackSubmit_target_null_m_c,
+	} FeedbackSubmit_target_choice;
+};
+
+struct feedback_rating_r {
+	enum {
+		feedback_rating_up_tstr_c,
+		feedback_rating_down_tstr_c,
+	} feedback_rating_choice;
+};
+
+struct FeedbackSubmit_rating_r {
+	union {
+		struct feedback_rating_r FeedbackSubmit_rating_feedback_rating_m;
+	};
+	enum {
+		FeedbackSubmit_rating_feedback_rating_m_c,
+		FeedbackSubmit_rating_null_m_c,
+	} FeedbackSubmit_rating_choice;
+};
+
+struct FeedbackSubmit_comment_r {
+	union {
+		struct zcbor_string FeedbackSubmit_comment_tstr;
+	};
+	enum {
+		FeedbackSubmit_comment_tstr_c,
+		FeedbackSubmit_comment_null_m_c,
+	} FeedbackSubmit_comment_choice;
+};
+
+struct feedback_diagnostics_app_version_r {
+	union {
+		struct zcbor_string feedback_diagnostics_app_version_tstr;
+	};
+	enum {
+		feedback_diagnostics_app_version_tstr_c,
+		feedback_diagnostics_app_version_null_m_c,
+	} feedback_diagnostics_app_version_choice;
+};
+
+struct feedback_diagnostics_os_r {
+	union {
+		struct zcbor_string feedback_diagnostics_os_tstr;
+	};
+	enum {
+		feedback_diagnostics_os_tstr_c,
+		feedback_diagnostics_os_null_m_c,
+	} feedback_diagnostics_os_choice;
+};
+
+struct feedback_diagnostics {
+	struct feedback_diagnostics_app_version_r feedback_diagnostics_app_version;
+	bool feedback_diagnostics_app_version_present;
+	struct feedback_diagnostics_os_r feedback_diagnostics_os;
+	bool feedback_diagnostics_os_present;
+};
+
+struct FeedbackSubmit_diagnostics_r {
+	union {
+		struct feedback_diagnostics FeedbackSubmit_diagnostics_feedback_diagnostics_m;
+	};
+	enum {
+		FeedbackSubmit_diagnostics_feedback_diagnostics_m_c,
+		FeedbackSubmit_diagnostics_null_m_c,
+	} FeedbackSubmit_diagnostics_choice;
+};
+
+struct request_feedback_submit {
+	struct feedback_kind_r FeedbackSubmit_kind;
+	struct FeedbackSubmit_target_r FeedbackSubmit_target;
+	bool FeedbackSubmit_target_present;
+	struct FeedbackSubmit_rating_r FeedbackSubmit_rating;
+	bool FeedbackSubmit_rating_present;
+	struct FeedbackSubmit_comment_r FeedbackSubmit_comment;
+	bool FeedbackSubmit_comment_present;
+	bool FeedbackSubmit_include_content;
+	struct FeedbackSubmit_diagnostics_r FeedbackSubmit_diagnostics;
+	bool FeedbackSubmit_diagnostics_present;
+	struct zcbor_string FeedbackSubmit_surface;
+};
+
+struct request_telemetry_consent_set {
+	bool TelemetryConsentSet_enabled;
+};
+
 struct api_request_r {
 	union {
 		struct request_submit api_request_request_submit_m;
@@ -3042,6 +3158,8 @@ struct api_request_r {
 		struct request_resource_grant_create api_request_request_resource_grant_create_m;
 		struct request_resource_grant_list api_request_request_resource_grant_list_m;
 		struct request_resource_grant_revoke api_request_request_resource_grant_revoke_m;
+		struct request_feedback_submit api_request_request_feedback_submit_m;
+		struct request_telemetry_consent_set api_request_request_telemetry_consent_set_m;
 	};
 	enum {
 		api_request_request_submit_m_c,
@@ -3213,6 +3331,9 @@ struct api_request_r {
 		api_request_request_resource_grant_create_m_c,
 		api_request_request_resource_grant_list_m_c,
 		api_request_request_resource_grant_revoke_m_c,
+		api_request_request_feedback_submit_m_c,
+		api_request_request_telemetry_consent_get_m_c,
+		api_request_request_telemetry_consent_set_m_c,
 	} api_request_choice;
 };
 
@@ -6406,6 +6527,19 @@ struct response_who_am_i {
 	struct principal_view response_who_am_i_WhoAmI;
 };
 
+struct feedback_ack {
+	bool feedback_ack_accepted;
+	bool feedback_ack_queued;
+};
+
+struct response_feedback_ack {
+	struct feedback_ack response_feedback_ack_FeedbackAck;
+};
+
+struct response_telemetry_consent {
+	bool TelemetryConsent_enabled;
+};
+
 struct api_response_r {
 	union {
 		struct response_routed api_response_response_routed_m;
@@ -6496,6 +6630,8 @@ struct api_response_r {
 		struct response_access_users api_response_response_access_users_m;
 		struct response_access_roles api_response_response_access_roles_m;
 		struct response_who_am_i api_response_response_who_am_i_m;
+		struct response_feedback_ack api_response_response_feedback_ack_m;
+		struct response_telemetry_consent api_response_response_telemetry_consent_m;
 	};
 	enum {
 		api_response_response_ok_m_c,
@@ -6587,6 +6723,8 @@ struct api_response_r {
 		api_response_response_access_users_m_c,
 		api_response_response_access_roles_m_c,
 		api_response_response_who_am_i_m_c,
+		api_response_response_feedback_ack_m_c,
+		api_response_response_telemetry_consent_m_c,
 	} api_response_choice;
 };
 
