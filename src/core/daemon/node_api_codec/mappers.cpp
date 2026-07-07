@@ -525,6 +525,17 @@ void fillProviderDescriptor(const provider_descriptor& p, DecodedProviderDescrip
         out->hasDefaultBaseUrl = true;
         out->defaultBaseUrl = fromZcbor(p.provider_descriptor_default_base_url_tstr);
     }
+    // [waveB:app-v30] CON-15: optional generic sign-in (family + node label). Everything off the
+    // wire — no vendor strings client-side.
+    if (p.provider_descriptor_sign_in_present &&
+        p.provider_descriptor_sign_in.provider_descriptor_sign_in_choice ==
+            provider_descriptor_sign_in_r::provider_descriptor_sign_in_provider_sign_in_m_c) {
+        const provider_sign_in& si =
+            p.provider_descriptor_sign_in.provider_descriptor_sign_in_provider_sign_in_m;
+        out->hasSignIn = true;
+        out->signInFamily = fromZcbor(si.provider_sign_in_family);
+        out->signInLabel = fromZcbor(si.provider_sign_in_label);
+    }
 }
 
 QString contextEngineName(int choice) {

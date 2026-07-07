@@ -135,6 +135,11 @@ ColumnLayout {
         }
     }
 
+    // [waveB:app-v30] CON-15: the shared generic sign-in sheet. Opened for the selected provider's
+    // node-advertised sign_in.family via the existing AuthBegin path (Matrix SSO + generic oauth2
+    // already work); the family + label come entirely off the wire — zero vendor strings here.
+    AuthFlowSheet { id: signInSheet }
+
     SectionLabel { text: qsTr("Provider") }
     Kit.Dropdown {
         id: providerBox
@@ -145,6 +150,23 @@ ColumnLayout {
                 if (picker.providerRows[i].id === picker.providerId) { currentIndex = i; return; }
         }
         onActivated: picker.selectProvider(picker.providerRows[currentIndex].id)
+    }
+
+    // [waveB:app-v30] CON-15: a sign-in affordance shown IFF the node's catalog row for the
+    // selected provider carries a sign_in. Label = node-supplied; action = open the generic
+    // AuthFlowSheet driving auth_begin{family: sign_in.family}. Hidden when the node advertises
+    // nothing.
+    Kit.TextButton {
+        readonly property string signInFamily:
+            picker.providerDescriptor && picker.providerDescriptor.signInFamily
+            ? String(picker.providerDescriptor.signInFamily) : ""
+        readonly property string signInLabel:
+            picker.providerDescriptor && picker.providerDescriptor.signInLabel
+            ? String(picker.providerDescriptor.signInLabel) : ""
+        visible: signInFamily.length > 0
+        Layout.alignment: Qt.AlignLeft
+        text: signInLabel.length > 0 ? signInLabel : qsTr("Sign in")
+        onClicked: signInSheet.openFlowForFamily(signInFamily, "")
     }
 
     // A1 (CON-10): the custom endpoint's base URL + typed model. No wire op can enumerate a

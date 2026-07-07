@@ -224,6 +224,9 @@ private:
     // AuthFlowSheet (family pick -> params -> browser URL + paste-callback panel) over the
     // shared AuthFlowController.
     void openAuthFlow();
+    // [waveB:app-v30] CON-15: open the shared auth launcher narrowed to one provider sign-in
+    // family.
+    void openAuthFlowForFamily(const QString& family);
     // Open the interactive profile editor ('e' on the Profiles page's selected
     // row / on a per-agent Profile tab): the GUI ProfileEditor's field set over
     // the same IProfileStore save path.

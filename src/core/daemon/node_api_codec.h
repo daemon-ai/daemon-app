@@ -67,6 +67,14 @@ struct DecodedProviderDescriptor {
     bool supportsModelDiscovery = false;
     bool hasDefaultBaseUrl = false;
     QString defaultBaseUrl;
+    // [waveB:app-v30] CON-15: an optional interactive sign-in the node offers for this provider
+    // (ProviderDescriptor.sign_in = ProviderSignIn{family, label}). `signInFamily` is the generic
+    // auth family to begin (passed straight to auth_begin{family}); `signInLabel` is the node's
+    // button label. Both empty when the node advertises no sign-in — the client shows nothing and
+    // never fabricates a family or label (zero vendor knowledge).
+    bool hasSignIn = false;
+    QString signInFamily;
+    QString signInLabel;
 };
 
 // A decoded error envelope (ApiResponse::Error): the variant kind + its human-readable message.

@@ -22,6 +22,10 @@ QVariantMap providerRow(const DecodedProviderDescriptor& d) {
     m[QStringLiteral("supportsModelDiscovery")] = d.supportsModelDiscovery;
     m[QStringLiteral("cloud")] = d.kind != QStringLiteral("local");
     m[QStringLiteral("defaultBaseUrl")] = d.hasDefaultBaseUrl ? d.defaultBaseUrl : QString();
+    // [waveB:app-v30] CON-15: node-supplied sign-in family + label (empty when none). The picker
+    // shows a sign-in button iff signInFamily is non-empty — zero vendor knowledge client-side.
+    m[QStringLiteral("signInFamily")] = d.hasSignIn ? d.signInFamily : QString();
+    m[QStringLiteral("signInLabel")] = d.hasSignIn ? d.signInLabel : QString();
     return m;
 }
 

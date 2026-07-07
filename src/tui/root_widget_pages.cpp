@@ -637,12 +637,32 @@ void RootWidget::openAuthFlow() {
     m_authFlow->open();
 }
 
+// [waveB:app-v30] CON-15: open the shared auth launcher narrowed to a provider's node-advertised
+// sign_in family (the AgentInferencePicker "Sign in" button's TUI analog).
+void RootWidget::openAuthFlowForFamily(const QString& family) {
+    if (m_services.authFlowController == nullptr || family.isEmpty()) {
+        return;
+    }
+    if (m_authFlow == nullptr) {
+        m_authFlow = new AuthFlowLauncher(m_services.authFlowController, this);
+        connect(m_authFlow, &AuthFlowLauncher::finished, this, [this] {
+            refreshActivePage();
+            if (m_transcript != nullptr && activePageKind() >= 0) {
+                m_transcript->setFocus();
+            }
+        });
+    }
+    m_authFlow->openForFamily(family);
+}
+
 void RootWidget::openProfileEditor(const QString& profileId) {
     if (m_services.profiles == nullptr || profileId.isEmpty()) {
         return;
     }
     auto* dlg =
         new ProfileEditorDialog(m_services.profiles, m_services.providerCatalog, profileId, this);
+    // [waveB:app-v30] CON-15: the editor's provider-row sign-in opens the shared auth launcher.
+    connect(dlg, &ProfileEditorDialog::signInRequested, this, &RootWidget::openAuthFlowForFamily);
     // The editor's local "Discover More Models" row routes to the shared
     // download flow (the GUI editor's Nav.open("models","discover") analog).
     connect(dlg, &ProfileEditorDialog::modelDiscoverRequested, this,
