@@ -320,6 +320,67 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 3000);
     }
 
+    // [waveB:app-v30] D2: a ConversationsChanged event refetches that transport's ConvList (an
+    // invalidation pointer — the client derives no membership itself). This is what replaces the
+    // retired per-tab-enter / per-expand polling.
+    void conversationsChangedRefetchesConvList() {
+        const QString path = sock(QStringLiteral("convch.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(path), "listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(dbPath(QStringLiteral("convch.db")));
+        SessionRepository sessions(&client, &cache);
+        ApprovalRepository approvals(&client, &cache);
+        ModelRepository models(&client, &cache);
+        TransportRepository transports(&client, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
+        mgr.setTransportRepository(&transports);
+
+        mgr.start();
+        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
+        const int callsBefore = fake.requestCount();
+
+        fake.pushItem(daemonapp::test::buildEventsPage(
+            {daemonapp::test::neConversationsChanged("matrix/@bot:hs", "!room:hs", "Added")}, 1,
+            1));
+        // The routed refreshConversations() issues a ConvList one-shot Call.
+        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() > callsBefore, 3000);
+    }
+
+    // [waveB:app-v30] D2: a MembershipChanged with is_self + a removal (Left/Kicked/Banned)
+    // refetches the ConvList AND re-lists the routing pins (the node reconciled them). A non-self
+    // change only refetches the ConvList.
+    void membershipChangedSelfRemovalRefetchesRouting() {
+        const QString path = sock(QStringLiteral("memberch.sock"));
+        WireMuxServer fake;
+        QVERIFY2(fake.start(path), "listen");
+        DaemonTransport transport;
+        transport.setSocketPath(path);
+        NodeApiClient client(&transport);
+        DaemonCacheStore cache(dbPath(QStringLiteral("memberch.db")));
+        SessionRepository sessions(&client, &cache);
+        ApprovalRepository approvals(&client, &cache);
+        ModelRepository models(&client, &cache);
+        TransportRepository transports(&client, &cache);
+        daemonapp::daemon::RoutingRepository routing(&client, &cache);
+        SubscriptionManager mgr(&client, &sessions, &approvals, &models, &cache);
+        mgr.setTransportRepository(&transports);
+        mgr.setRoutingRepository(&routing);
+
+        mgr.start();
+        QTRY_VERIFY_WITH_TIMEOUT(fake.lastOpenId() != 0, 3000);
+        const int callsBefore = fake.requestCount();
+
+        // is_self=true, Kicked -> ConvList + RoutingListChats + TransportRooms (>= 3 new Calls).
+        fake.pushItem(daemonapp::test::buildEventsPage(
+            {daemonapp::test::neMembershipChanged("matrix/@bot:hs", "!room:hs", "@bot:hs", "Kicked",
+                                                  true)},
+            1, 1));
+        QTRY_VERIFY_WITH_TIMEOUT(fake.requestCount() >= callsBefore + 3, 3000);
+    }
+
     // ResyncNeeded re-baselines (emits the resyncNeeded signal after kicking the refetch).
     void resyncNeededReBaselines() {
         const QString path = sock(QStringLiteral("resync.sock"));

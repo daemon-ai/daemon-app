@@ -641,7 +641,12 @@ struct DecodedNodeEvent {
         ResyncNeeded,
         // [wave2:app-channels-liveness] live fleet + transport presence feed arms (F5/B5).
         FleetChanged,
-        TransportChanged
+        TransportChanged,
+        // [waveB:app-v30] D2: conversation-set + room-membership deltas (wire v30). Invalidation
+        // pointers only — the client refetches the transport's ConvList (+ routing on a self
+        // removal); it derives no membership facts locally.
+        ConversationsChanged,
+        MembershipChanged
     } kind = Kind::Unknown;
     QString session;             // SessionAdvanced / SessionMetaChanged / ApprovalPending
     quint64 epoch = 0;           // SessionAdvanced
@@ -670,6 +675,18 @@ struct DecodedNodeEvent {
     QString message;
     bool hasMessage = false;
     bool fatal = false;
+    // [waveB:app-v30] D2: ConversationsChanged / MembershipChanged (wire v30). `conv` is the
+    // affected conversation id; `convChange` is "added"|"removed"; `member` + `membershipChange`
+    // ("joined"|"left"|"invited"|"kicked"|"banned") + optional `actor`/`memberReason` describe a
+    // membership delta; `isSelf` marks that the changed member is this node's own identity (the
+    // node has already reconciled routing pins on a self removal — the client only refetches).
+    QString conv;
+    QString convChange;
+    QString member;
+    QString membershipChange;
+    QString actor;
+    QString memberReason;
+    bool isSelf = false;
 };
 
 // A decoded page of the node-wide event feed (EventsSince -> EventsPage). `nextCursor` advances the

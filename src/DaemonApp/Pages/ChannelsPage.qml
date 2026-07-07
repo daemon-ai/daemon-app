@@ -206,10 +206,11 @@ Item {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             acctRow.expanded = !acctRow.expanded;
-                            if (acctRow.expanded) {
+                            // [waveB:app-v30] D2: the per-expand live ConvList refetch is RETIRED.
+                            // Read the cached rooms (seeded once per connect; kept fresh by the
+                            // ConversationsChanged / MembershipChanged feed) — no client poll.
+                            if (acctRow.expanded)
                                 acctRow.rooms = Transports.conversations(acctRow.modelData.transport);
-                                Transports.refreshConversations(acctRow.modelData.transport);
-                            }
                         }
                     }
 

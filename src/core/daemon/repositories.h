@@ -713,6 +713,10 @@ public:
     void refreshAdapters();
     void refreshInstances();
     void refreshConversations(const QString& transport);
+    // [waveB:app-v30] D2: the connect-ready ConvList baseline — fetch every cached account's
+    // conversations once (replaces the retired per-tab-enter / per-expand polling; the feed's
+    // ConversationsChanged / MembershipChanged then keeps them fresh incrementally).
+    void refreshAllConversations();
 
     // [waveB:app-v30] D1: transport-instance lifecycle. `disconnect` tears down the live session
     // (TransportDisconnect); `remove` fully removes the account (TransportRemove — the node

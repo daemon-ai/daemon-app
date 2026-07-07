@@ -1920,6 +1920,18 @@ void TransportRepository::refreshConversations(const QString& transport) {
                           QLatin1String(kConvPrefix) + transport);
 }
 
+// [waveB:app-v30] D2: seed every cached account's ConvList once (connect-ready baseline). Uses the
+// offline-first cached instance list so it works the moment the cache is warm; freshly-discovered
+// accounts get seeded by their TransportChanged(connected) event.
+void TransportRepository::refreshAllConversations() {
+    if (client() == nullptr || cache() == nullptr) {
+        return;
+    }
+    for (const CachedTransportInstanceRow& row : cache()->transportInstances()) {
+        refreshConversations(row.transport);
+    }
+}
+
 // [waveB:app-v30] D1: teardown intents. One request; on Ok re-list so the client renders the
 // node's reported outcome (state, or the account's disappearance) rather than a local mutation.
 void TransportRepository::disconnect(const QString& transport) {
