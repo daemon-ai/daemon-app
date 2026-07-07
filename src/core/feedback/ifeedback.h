@@ -37,11 +37,15 @@ public:
 
     // Per-response feedback: `anchor` is the wire reference the FeedbackController
     // resolved from the message's block metadata (session + turn seq / journal
-    // cursor). `rating` is kRatingUp / kRatingDown; `comment` is optional. Explicit
-    // feedback is sent even when telemetry is off (per-event consent).
+    // cursor). `rating` is kRatingUp / kRatingDown; `comment` is optional.
+    // `includeContent` is the submitter's per-event consent to attach the rated
+    // response text to the exported event (default off / privacy-first) so a thumb
+    // is self-describing rather than a bare anchor; the node reads the text from its
+    // journal at the anchor cursor. Explicit feedback is sent even when telemetry is
+    // off (per-event consent).
     Q_INVOKABLE virtual void submitMessageFeedback(const QString& sessionId,
                                                    const QVariantMap& anchor, int rating,
-                                                   const QString& comment) = 0;
+                                                   const QString& comment, bool includeContent) = 0;
     // General app feedback (status-bar entry). `includeDiagnostics` attaches app
     // version + OS; `alsoEnableTelemetry` is the dialog's default-unchecked opt-in
     // and is the ONLY path that may turn telemetry on from a feedback flow.

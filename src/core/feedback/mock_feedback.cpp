@@ -27,8 +27,8 @@ void MockFeedback::persist() const {
 }
 
 void MockFeedback::submitMessageFeedback(const QString& sessionId, const QVariantMap& anchor,
-                                         int rating, const QString& comment) {
-    m_messageRecords.push_back(MessageRecord{sessionId, anchor, rating, comment});
+                                         int rating, const QString& comment, bool includeContent) {
+    m_messageRecords.push_back(MessageRecord{sessionId, anchor, rating, comment, includeContent});
     emit submitted(QStringLiteral("message"));
 }
 

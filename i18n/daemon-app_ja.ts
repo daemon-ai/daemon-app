@@ -696,6 +696,26 @@ until it is re-registered.</source>
         <source>Regenerate</source>
         <translation>再生成</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>良い回答</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>悪い回答</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>詳細を教えてください（任意）</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>フィードバックを送信</translation>
+    </message>
+    <message>
+        <source>Include the response text</source>
+        <translation>応答テキストを含める</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -741,6 +761,18 @@ until it is re-registered.</source>
     <message>
         <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
         <translation>ブラウザでサインインを完了し、リダイレクト URL を下に貼り付けてください。</translation>
+    </message>
+    <message>
+        <source>Enter the requested details.</source>
+        <translation>要求された情報を入力してください。</translation>
+    </message>
+    <message>
+        <source>Scan the payload below with your other device. Waiting for approval…</source>
+        <translation>以下のペイロードを別のデバイスでスキャンしてください。承認を待っています…</translation>
+    </message>
+    <message>
+        <source>Scan this payload with your other device (no image in the terminal):</source>
+        <translation>このペイロードを別のデバイスでスキャンしてください（ターミナルには画像はありません）：</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -819,6 +851,18 @@ until it is re-registered.</source>
     <message>
         <source>Complete sign-in</source>
         <translation>サインインを完了</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>続ける</translation>
+    </message>
+    <message>
+        <source>Scan this code with your other device to finish signing in.</source>
+        <translation>サインインを完了するには、このコードを別のデバイスでスキャンしてください。</translation>
+    </message>
+    <message>
+        <source>Waiting for approval…</source>
+        <translation>承認を待っています…</translation>
     </message>
     <message>
         <source>Signed in as %1</source>
@@ -1305,6 +1349,14 @@ until it is re-registered.</source>
     <message>
         <source>Search this session</source>
         <translation>このセッションを検索</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>フィードバックを送信</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>バグを報告する、またはアイデアを共有する</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4452,6 +4504,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>[数式] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ 良い (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ 悪い (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [インストール済み]</translation>
     </message>
@@ -4729,6 +4789,18 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>セッションを更新できませんでした</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>詳細を教えてください（任意）</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>送信</translation>
+    </message>
+    <message>
+        <source>Send with response text</source>
+        <translation>応答テキストを添えて送信</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>セッションをクリア</translation>
     </message>
@@ -4871,6 +4943,34 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>理由を付けて拒否（エージェントに伝わります）</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>フィードバックを送信</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>どのようなフィードバックですか？</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>バグ</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>アイデア</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>その他</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>次へ…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>フィードバック（Enter で送信）</translation>
     </message>
     <message>
         <source>Remove account?</source>
@@ -5854,6 +5954,10 @@ This only affects the app appearance, not your data.</source>
         <translation>ターミナルを切り替え</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>フィードバックを送信</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>アップデートを確認</translation>
     </message>
@@ -5868,6 +5972,46 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Terminal</source>
         <translation>ターミナル</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>送信</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>ありがとうございます — フィードバックを送信しました。</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>カテゴリ</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>バグ</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>アイデア</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>その他</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>うまくいっていること、または問題点は何ですか？</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>診断情報を含める（アプリバージョン、OS）</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>テレメトリはオフです。送信されるのはこのフィードバックと基本的なアプリ情報のみです。</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>匿名テレメトリも有効にする</translation>
     </message>
 </context>
 <context>

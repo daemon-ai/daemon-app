@@ -696,6 +696,26 @@ hanggang muli itong mairehistro.</translation>
         <source>Regenerate</source>
         <translation>I-regenerate</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>Magandang sagot</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>Hindi magandang sagot</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>Magbahagi pa (opsyonal)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Magpadala ng feedback</translation>
+    </message>
+    <message>
+        <source>Include the response text</source>
+        <translation>Isama ang teksto ng tugon</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -741,6 +761,18 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
         <translation>Kumpletuhin ang pag-sign in sa iyong browser, pagkatapos ay i-paste ang redirect URL sa ibaba.</translation>
+    </message>
+    <message>
+        <source>Enter the requested details.</source>
+        <translation>Ilagay ang mga hiniling na detalye.</translation>
+    </message>
+    <message>
+        <source>Scan the payload below with your other device. Waiting for approval…</source>
+        <translation>I-scan ang payload sa ibaba gamit ang iyong ibang device. Naghihintay ng pag-apruba…</translation>
+    </message>
+    <message>
+        <source>Scan this payload with your other device (no image in the terminal):</source>
+        <translation>I-scan ang payload na ito gamit ang iyong ibang device (walang larawan sa terminal):</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -819,6 +851,18 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Complete sign-in</source>
         <translation>Kumpletuhin ang pag-sign in</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Magpatuloy</translation>
+    </message>
+    <message>
+        <source>Scan this code with your other device to finish signing in.</source>
+        <translation>I-scan ang code na ito gamit ang iyong ibang device para tapusin ang pag-sign in.</translation>
+    </message>
+    <message>
+        <source>Waiting for approval…</source>
+        <translation>Naghihintay ng pag-apruba…</translation>
     </message>
     <message>
         <source>Signed in as %1</source>
@@ -1305,6 +1349,14 @@ hanggang muli itong mairehistro.</translation>
     <message>
         <source>Search this session</source>
         <translation>Hanapin ang session na ito</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Magpadala ng feedback</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>Mag-ulat ng bug o magbahagi ng ideya</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4456,6 +4508,14 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>[math] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ Maganda (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ Pangit (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [naka-install]</translation>
     </message>
@@ -4733,6 +4793,18 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
         <translation>Hindi na-update ang session</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>Magbahagi pa (opsyonal)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ipadala</translation>
+    </message>
+    <message>
+        <source>Send with response text</source>
+        <translation>Ipadala kasama ang teksto ng tugon</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>I-clear ang session</translation>
     </message>
@@ -4875,6 +4947,34 @@ Isang generic, hindi-transcript na page na naka-host sa parehong tab strip.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Deny na may dahilan (maririnig ito ng agent)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Magpadala ng feedback</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>Anong uri ng feedback?</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Bug</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Ideya</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Iba pa</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>Susunod…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>Ang iyong feedback (Enter para ipadala)</translation>
     </message>
     <message>
         <source>Remove account?</source>
@@ -5859,6 +5959,10 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
         <translation>I-toggle ang terminal</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>Magpadala ng feedback</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>Tingnan kung may update</translation>
     </message>
@@ -5873,6 +5977,46 @@ Apektado lang nito ang hitsura ng app, hindi ang iyong data.</translation>
     <message>
         <source>Terminal</source>
         <translation>Terminal</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ipadala</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>Salamat — naipadala na ang iyong feedback.</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Kategorya</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Bug</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Ideya</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Iba pa</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>Ano ang gumagana nang maayos, o ano ang nagkamali?</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>Isama ang diagnostics (bersyon ng app, OS)</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>Naka-off ang telemetry. Ang pagpapadala ay nagpapadala lamang ng feedback na ito at pangunahing impormasyon ng app.</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>I-enable din ang anonymous na telemetry</translation>
     </message>
 </context>
 <context>

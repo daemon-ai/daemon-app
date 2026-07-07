@@ -65,6 +65,7 @@
 #include <Tui/ZDialog.h>
 #include <Tui/ZEvent.h>
 #include <Tui/ZHBoxLayout.h>
+#include <Tui/ZInputBox.h>
 #include <Tui/ZLabel.h>
 #include <Tui/ZListView.h>
 #include <Tui/ZRoot.h>
@@ -407,17 +408,48 @@ void RootWidget::wireTranscriptControls() {
                 refreshTranscript();
                 const QVariantMap anchor = m_active->ingest.anchorForMessage(messageId);
                 const QString sessionId = m_active->sessionId;
-                m_services.feedback->submitMessageFeedback(sessionId, anchor, rating, QString());
-                auto* dlg = new TextPromptDialog(tr("Tell us more (optional)"), QString(),
-                                                 /*masked=*/false, this);
+                m_services.feedback->submitMessageFeedback(sessionId, anchor, rating, QString(),
+                                                           /*includeContent=*/false);
+                // Optional-comment + response-content opt-in (parity with the GUI
+                // footer's tap-then-comment + "Include the response text" checkbox).
+                // Two send buttons stand in for the checkbox using proven TUI widgets;
+                // "Send with response text" is the per-event consent to attach the
+                // rated reply. A resubmit only fires when there is a note or content
+                // to add (the rating itself was already captured above).
+                auto* dlg = new Tui::ZDialog(this);
+                dlg->setOptions(Tui::ZWindow::DeleteOnClose);
+                dlg->setWindowTitle(tr("Tell us more (optional)"));
+                dlg->setContentsMargins({2, 1, 2, 1});
+                auto* layout = new Tui::ZVBoxLayout();
+                dlg->setLayout(layout);
+                auto* input = new Tui::ZInputBox(dlg);
+                layout->addWidget(input);
+                layout->addSpacing(1);
+                auto* buttons = new Tui::ZHBoxLayout();
+                layout->add(buttons);
+                buttons->addStretch();
+                auto* sendBtn = new Tui::ZButton(tr("Send"), dlg);
+                buttons->addWidget(sendBtn);
+                auto* sendContentBtn = new Tui::ZButton(tr("Send with response text"), dlg);
+                buttons->addWidget(sendContentBtn);
+                auto* cancelBtn = new Tui::ZButton(tr("Cancel"), dlg);
+                buttons->addWidget(cancelBtn);
+                connect(cancelBtn, &Tui::ZButton::clicked, dlg, &Tui::ZDialog::close);
                 auto* feedback = m_services.feedback;
-                connect(dlg, &TextPromptDialog::submitted, this,
-                        [feedback, sessionId, anchor, rating](const QString& text) {
-                            const QString note = text.trimmed();
-                            if (!note.isEmpty()) {
-                                feedback->submitMessageFeedback(sessionId, anchor, rating, note);
-                            }
-                        });
+                const auto resubmit = [feedback, sessionId, anchor, rating, input,
+                                       dlg](bool includeContent) {
+                    const QString note = input->text().trimmed();
+                    if (!note.isEmpty() || includeContent) {
+                        feedback->submitMessageFeedback(sessionId, anchor, rating, note,
+                                                        includeContent);
+                    }
+                    dlg->close();
+                };
+                connect(sendBtn, &Tui::ZButton::clicked, dlg, [resubmit] { resubmit(false); });
+                connect(sendContentBtn, &Tui::ZButton::clicked, dlg,
+                        [resubmit] { resubmit(true); });
+                dlg->setGeometry(QRect(0, 0, 60, 8));
+                input->setFocus();
             });
 }
 

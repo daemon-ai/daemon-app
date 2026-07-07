@@ -696,6 +696,26 @@ kadar başlatılamaz.</translation>
         <source>Regenerate</source>
         <translation>Yeniden oluştur</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>İyi yanıt</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>Kötü yanıt</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>Bize daha fazla bilgi verin (isteğe bağlı)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Geri bildirim gönder</translation>
+    </message>
+    <message>
+        <source>Include the response text</source>
+        <translation>Yanıt metnini dahil et</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -741,6 +761,18 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
         <translation>Oturum açmayı tarayıcınızda tamamlayın, ardından yönlendirme URL&apos;sini aşağıya yapıştırın.</translation>
+    </message>
+    <message>
+        <source>Enter the requested details.</source>
+        <translation>İstenen bilgileri girin.</translation>
+    </message>
+    <message>
+        <source>Scan the payload below with your other device. Waiting for approval…</source>
+        <translation>Aşağıdaki veriyi diğer cihazınızla tarayın. Onay bekleniyor…</translation>
+    </message>
+    <message>
+        <source>Scan this payload with your other device (no image in the terminal):</source>
+        <translation>Bu veriyi diğer cihazınızla tarayın (terminalde görsel yok):</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -819,6 +851,18 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Complete sign-in</source>
         <translation>Oturum açmayı tamamla</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Devam et</translation>
+    </message>
+    <message>
+        <source>Scan this code with your other device to finish signing in.</source>
+        <translation>Oturum açmayı tamamlamak için bu kodu diğer cihazınızla tarayın.</translation>
+    </message>
+    <message>
+        <source>Waiting for approval…</source>
+        <translation>Onay bekleniyor…</translation>
     </message>
     <message>
         <source>Signed in as %1</source>
@@ -1305,6 +1349,14 @@ kadar başlatılamaz.</translation>
     <message>
         <source>Search this session</source>
         <translation>Bu oturumda ara</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Geri bildirim gönder</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>Bir hata bildirin veya bir fikir paylaşın</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4452,6 +4504,14 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>[matematik] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ İyi (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ Kötü (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [yüklü]</translation>
     </message>
@@ -4729,6 +4789,18 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
         <translation>Oturum güncellenemedi</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>Bize daha fazla bilgi verin (isteğe bağlı)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Gönder</translation>
+    </message>
+    <message>
+        <source>Send with response text</source>
+        <translation>Yanıt metniyle gönder</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>Oturumu temizle</translation>
     </message>
@@ -4871,6 +4943,34 @@ Aynı sekme şeridi tarafından barındırılan genel, döküm olmayan bir sayfa
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Gerekçeyle reddet (aracı bunu duyacak)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Geri bildirim gönder</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>Ne tür bir geri bildirim?</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Hata</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Fikir</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Diğer</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>İleri…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>Geri bildiriminiz (göndermek için Enter)</translation>
     </message>
     <message>
         <source>Remove account?</source>
@@ -5854,6 +5954,10 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
         <translation>Terminali aç/kapat</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>Geri bildirim gönder</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>Güncellemeleri denetle</translation>
     </message>
@@ -5868,6 +5972,46 @@ Bu yalnızca uygulama görünümünü etkiler, verilerinizi değil.</translation
     <message>
         <source>Terminal</source>
         <translation>Terminal</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Gönder</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>Teşekkürler — geri bildiriminiz gönderildi.</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Kategori</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Hata</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Fikir</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Diğer</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>Neler iyi gidiyor veya ne ters gitti?</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>Tanılama bilgilerini ekle (uygulama sürümü, işletim sistemi)</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>Telemetri kapalı. Gönderim yalnızca bu geri bildirimi ve temel uygulama bilgilerini iletir.</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>Anonim telemetriyi de etkinleştir</translation>
     </message>
 </context>
 <context>

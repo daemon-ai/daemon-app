@@ -696,6 +696,26 @@ until it is re-registered.</source>
         <source>Regenerate</source>
         <translation>फिर से बनाएँ</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>अच्छा उत्तर</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>खराब उत्तर</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>और बताएं (वैकल्पिक)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>प्रतिक्रिया भेजें</translation>
+    </message>
+    <message>
+        <source>Include the response text</source>
+        <translation>प्रतिक्रिया का टेक्स्ट शामिल करें</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -741,6 +761,18 @@ until it is re-registered.</source>
     <message>
         <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
         <translation>अपने ब्राउज़र में साइन-इन पूरा करें, फिर रीडायरेक्ट URL नीचे पेस्ट करें।</translation>
+    </message>
+    <message>
+        <source>Enter the requested details.</source>
+        <translation>अनुरोधित विवरण दर्ज करें।</translation>
+    </message>
+    <message>
+        <source>Scan the payload below with your other device. Waiting for approval…</source>
+        <translation>नीचे दिए पेलोड को अपने दूसरे डिवाइस से स्कैन करें। अनुमोदन की प्रतीक्षा है…</translation>
+    </message>
+    <message>
+        <source>Scan this payload with your other device (no image in the terminal):</source>
+        <translation>इस पेलोड को अपने दूसरे डिवाइस से स्कैन करें (टर्मिनल में कोई छवि नहीं):</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -819,6 +851,18 @@ until it is re-registered.</source>
     <message>
         <source>Complete sign-in</source>
         <translation>साइन-इन पूरा करें</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>जारी रखें</translation>
+    </message>
+    <message>
+        <source>Scan this code with your other device to finish signing in.</source>
+        <translation>साइन इन पूरा करने के लिए इस कोड को अपने दूसरे डिवाइस से स्कैन करें।</translation>
+    </message>
+    <message>
+        <source>Waiting for approval…</source>
+        <translation>अनुमोदन की प्रतीक्षा है…</translation>
     </message>
     <message>
         <source>Signed in as %1</source>
@@ -1305,6 +1349,14 @@ until it is re-registered.</source>
     <message>
         <source>Search this session</source>
         <translation>इस सत्र में खोजें</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>प्रतिक्रिया भेजें</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>बग रिपोर्ट करें या कोई विचार साझा करें</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4456,6 +4508,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>[गणित] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ अच्छा (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ खराब (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [इंस्टॉल किया गया]</translation>
     </message>
@@ -4733,6 +4793,18 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>सत्र अपडेट नहीं किया जा सका</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>और बताएं (वैकल्पिक)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>भेजें</translation>
+    </message>
+    <message>
+        <source>Send with response text</source>
+        <translation>प्रतिक्रिया टेक्स्ट के साथ भेजें</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>सत्र साफ़ करें</translation>
     </message>
@@ -4875,6 +4947,34 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>कारण के साथ अस्वीकार करें (एजेंट इसे सुनेगा)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>प्रतिक्रिया भेजें</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>किस तरह की प्रतिक्रिया?</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>बग</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>विचार</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>अन्य</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>अगला…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>आपकी प्रतिक्रिया (भेजने के लिए Enter दबाएं)</translation>
     </message>
     <message>
         <source>Remove account?</source>
@@ -5859,6 +5959,10 @@ This only affects the app appearance, not your data.</source>
         <translation>टर्मिनल टॉगल करें</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>प्रतिक्रिया भेजें</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>अपडेट जाँचें</translation>
     </message>
@@ -5873,6 +5977,46 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Terminal</source>
         <translation>टर्मिनल</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>भेजें</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>धन्यवाद — आपकी प्रतिक्रिया भेज दी गई।</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>श्रेणी</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>बग</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>विचार</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>अन्य</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>क्या अच्छा चल रहा है, या क्या गलत हुआ?</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>डायग्नोस्टिक्स शामिल करें (ऐप संस्करण, OS)</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>टेलीमेट्री बंद है. भेजने पर केवल यह प्रतिक्रिया और बुनियादी ऐप जानकारी भेजी जाती है.</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>अनाम टेलीमेट्री भी सक्षम करें</translation>
     </message>
 </context>
 <context>

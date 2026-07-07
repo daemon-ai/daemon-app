@@ -696,6 +696,26 @@ until it is re-registered.</source>
         <source>Regenerate</source>
         <translation>Сгенерировать заново</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>Хороший ответ</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>Плохой ответ</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>Расскажите подробнее (необязательно)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Отправить отзыв</translation>
+    </message>
+    <message>
+        <source>Include the response text</source>
+        <translation>Включить текст ответа</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -741,6 +761,18 @@ until it is re-registered.</source>
     <message>
         <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
         <translation>Завершите вход в браузере, затем вставьте URL перенаправления ниже.</translation>
+    </message>
+    <message>
+        <source>Enter the requested details.</source>
+        <translation>Введите запрошенные данные.</translation>
+    </message>
+    <message>
+        <source>Scan the payload below with your other device. Waiting for approval…</source>
+        <translation>Отсканируйте данные ниже другим устройством. Ожидание подтверждения…</translation>
+    </message>
+    <message>
+        <source>Scan this payload with your other device (no image in the terminal):</source>
+        <translation>Отсканируйте эти данные другим устройством (изображения в терминале нет):</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -819,6 +851,18 @@ until it is re-registered.</source>
     <message>
         <source>Complete sign-in</source>
         <translation>Завершить вход</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation>
+    </message>
+    <message>
+        <source>Scan this code with your other device to finish signing in.</source>
+        <translation>Отсканируйте этот код другим устройством, чтобы завершить вход.</translation>
+    </message>
+    <message>
+        <source>Waiting for approval…</source>
+        <translation>Ожидание подтверждения…</translation>
     </message>
     <message>
         <source>Signed in as %1</source>
@@ -1305,6 +1349,14 @@ until it is re-registered.</source>
     <message>
         <source>Search this session</source>
         <translation>Искать в этой сессии</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Отправить отзыв</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>Сообщите об ошибке или поделитесь идеей</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4460,6 +4512,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>[формула] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ Хорошо (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ Плохо (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [установлено]</translation>
     </message>
@@ -4737,6 +4797,18 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>Не удалось обновить сессию</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>Расскажите подробнее (необязательно)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Отправить</translation>
+    </message>
+    <message>
+        <source>Send with response text</source>
+        <translation>Отправить с текстом ответа</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>Очистить сессию</translation>
     </message>
@@ -4879,6 +4951,34 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Отклонить с причиной (агент её услышит)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Отправить отзыв</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>Какой тип отзыва?</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Ошибка</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Идея</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Другое</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>Далее…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>Ваш отзыв (Enter для отправки)</translation>
     </message>
     <message>
         <source>Remove account?</source>
@@ -5864,6 +5964,10 @@ This only affects the app appearance, not your data.</source>
         <translation>Показать/скрыть терминал</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>Отправить отзыв</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>Проверить обновления</translation>
     </message>
@@ -5878,6 +5982,46 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Terminal</source>
         <translation>Терминал</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Отправить</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>Спасибо — ваш отзыв отправлен.</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Категория</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Ошибка</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Идея</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Другое</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>Что работает хорошо или что пошло не так?</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>Включить диагностику (версия приложения, ОС)</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>Телеметрия отключена. При отправке передаются только этот отзыв и базовые сведения о приложении.</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>Также включить анонимную телеметрию</translation>
     </message>
 </context>
 <context>

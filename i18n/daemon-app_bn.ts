@@ -696,6 +696,26 @@ until it is re-registered.</source>
         <source>Regenerate</source>
         <translation>পুনরায় তৈরি করুন</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>ভালো উত্তর</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>খারাপ উত্তর</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>আরও বলুন (ঐচ্ছিক)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>মতামত পাঠান</translation>
+    </message>
+    <message>
+        <source>Include the response text</source>
+        <translation>প্রতিক্রিয়ার টেক্সট অন্তর্ভুক্ত করুন</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -741,6 +761,18 @@ until it is re-registered.</source>
     <message>
         <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
         <translation>আপনার ব্রাউজারে সাইন-ইন সম্পূর্ণ করুন, তারপর নিচে রিডাইরেক্ট URL পেস্ট করুন।</translation>
+    </message>
+    <message>
+        <source>Enter the requested details.</source>
+        <translation>অনুরোধকৃত বিবরণ লিখুন।</translation>
+    </message>
+    <message>
+        <source>Scan the payload below with your other device. Waiting for approval…</source>
+        <translation>নিচের পেলোডটি আপনার অন্য ডিভাইস দিয়ে স্ক্যান করুন। অনুমোদনের অপেক্ষায়…</translation>
+    </message>
+    <message>
+        <source>Scan this payload with your other device (no image in the terminal):</source>
+        <translation>এই পেলোডটি আপনার অন্য ডিভাইস দিয়ে স্ক্যান করুন (টার্মিনালে কোনো ছবি নেই):</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -819,6 +851,18 @@ until it is re-registered.</source>
     <message>
         <source>Complete sign-in</source>
         <translation>সাইন-ইন সম্পূর্ণ করুন</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>চালিয়ে যান</translation>
+    </message>
+    <message>
+        <source>Scan this code with your other device to finish signing in.</source>
+        <translation>সাইন ইন সম্পূর্ণ করতে এই কোডটি আপনার অন্য ডিভাইস দিয়ে স্ক্যান করুন।</translation>
+    </message>
+    <message>
+        <source>Waiting for approval…</source>
+        <translation>অনুমোদনের অপেক্ষায়…</translation>
     </message>
     <message>
         <source>Signed in as %1</source>
@@ -1305,6 +1349,14 @@ until it is re-registered.</source>
     <message>
         <source>Search this session</source>
         <translation>এই সেশন অনুসন্ধান করুন</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>মতামত পাঠান</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>একটি বাগ রিপোর্ট করুন বা একটি ধারণা শেয়ার করুন</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4456,6 +4508,14 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>[গণিত] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ ভালো (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ খারাপ (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [ইনস্টল করা হয়েছে]</translation>
     </message>
@@ -4733,6 +4793,18 @@ A generic, non-transcript page hosted by the same tab strip.
         <translation>সেশন আপডেট করা যায়নি</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>আরও বলুন (ঐচ্ছিক)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>পাঠান</translation>
+    </message>
+    <message>
+        <source>Send with response text</source>
+        <translation>প্রতিক্রিয়ার টেক্সটসহ পাঠান</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>সেশন পরিষ্কার করুন</translation>
     </message>
@@ -4875,6 +4947,34 @@ A generic, non-transcript page hosted by the same tab strip.
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>কারণসহ প্রত্যাখ্যান (এজেন্ট শুনবে)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>মতামত পাঠান</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>কোন ধরনের মতামত?</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>বাগ</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>ধারণা</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>অন্যান্য</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>পরবর্তী…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>আপনার মতামত (পাঠাতে Enter চাপুন)</translation>
     </message>
     <message>
         <source>Remove account?</source>
@@ -5859,6 +5959,10 @@ This only affects the app appearance, not your data.</source>
         <translation>টার্মিনাল টগল করুন</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>মতামত পাঠান</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>আপডেট পরীক্ষা করুন</translation>
     </message>
@@ -5873,6 +5977,46 @@ This only affects the app appearance, not your data.</source>
     <message>
         <source>Terminal</source>
         <translation>টার্মিনাল</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>পাঠান</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>ধন্যবাদ — আপনার মতামত পাঠানো হয়েছে।</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>বিভাগ</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>বাগ</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>ধারণা</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>অন্যান্য</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>কী ভালো কাজ করছে, বা কী ভুল হয়েছে?</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>ডায়াগনস্টিক অন্তর্ভুক্ত করুন (অ্যাপ সংস্করণ, OS)</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>টেলিমেট্রি বন্ধ আছে। পাঠালে শুধু এই মতামত এবং প্রাথমিক অ্যাপ তথ্য পাঠানো হয়।</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>বেনামী টেলিমেট্রিও চালু করুন</translation>
     </message>
 </context>
 <context>

@@ -36,13 +36,14 @@ private slots:
         anchor.insert(QStringLiteral("turnSeq"), 7);
         anchor.insert(QStringLiteral("journalCursor"), QStringLiteral("jc-3"));
         fb.submitMessageFeedback(QStringLiteral("s-1"), anchor, feedback::IFeedback::kRatingUp,
-                                 QStringLiteral("nice"));
+                                 QStringLiteral("nice"), /*includeContent=*/false);
 
         QCOMPARE(fb.messageRecords().size(), 1);
         const feedback::MockFeedback::MessageRecord& rec = fb.messageRecords().first();
         QCOMPARE(rec.sessionId, QStringLiteral("s-1"));
         QCOMPARE(rec.rating, feedback::IFeedback::kRatingUp);
         QCOMPARE(rec.comment, QStringLiteral("nice"));
+        QVERIFY(!rec.includeContent);
         QCOMPARE(rec.anchor.value(QStringLiteral("turnSeq")).toInt(), 7);
         QCOMPARE(rec.anchor.value(QStringLiteral("journalCursor")).toString(),
                  QStringLiteral("jc-3"));
@@ -50,13 +51,15 @@ private slots:
         QCOMPARE(submitted.size(), 1);
         QCOMPARE(submitted.first().first().toString(), QStringLiteral("message"));
 
-        // A follow-up submission (e.g. the same message re-rated with a comment) is
-        // recorded as its own entry; explicit feedback flows even with telemetry off.
+        // A follow-up submission (e.g. the same message re-rated with a comment and the
+        // response-content opt-in) is recorded as its own entry; explicit feedback flows
+        // even with telemetry off.
         QVERIFY(!fb.telemetryEnabled());
         fb.submitMessageFeedback(QStringLiteral("s-1"), anchor, feedback::IFeedback::kRatingDown,
-                                 QStringLiteral("changed my mind"));
+                                 QStringLiteral("changed my mind"), /*includeContent=*/true);
         QCOMPARE(fb.messageRecords().size(), 2);
         QCOMPARE(fb.messageRecords().last().rating, feedback::IFeedback::kRatingDown);
+        QVERIFY(fb.messageRecords().last().includeContent);
     }
 
     void recordsAppFeedback() {

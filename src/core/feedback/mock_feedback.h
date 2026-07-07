@@ -24,6 +24,7 @@ public:
         QVariantMap anchor;
         int rating = kRatingNone;
         QString comment;
+        bool includeContent = false;
     };
     struct AppRecord {
         QString category;
@@ -35,7 +36,7 @@ public:
     explicit MockFeedback(QObject* parent = nullptr);
 
     void submitMessageFeedback(const QString& sessionId, const QVariantMap& anchor, int rating,
-                               const QString& comment) override;
+                               const QString& comment, bool includeContent) override;
     void submitAppFeedback(const QString& category, const QString& comment, bool includeDiagnostics,
                            bool alsoEnableTelemetry) override;
 

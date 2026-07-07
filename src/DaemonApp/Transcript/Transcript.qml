@@ -270,9 +270,9 @@ Rectangle {
         // the message's wire anchor; forward it to the node-owned Feedback seam
         // (sessions are keyed the same way as the other host signals). Explicit
         // feedback is sent even when telemetry is off (per-event consent).
-        function onMessageFeedbackSubmitted(messageId, anchor, rating, comment) {
+        function onMessageFeedbackSubmitted(messageId, anchor, rating, comment, includeContent) {
             if (typeof Feedback !== "undefined" && Feedback)
-                Feedback.submitMessageFeedback(root.sessionId, anchor, rating, comment)
+                Feedback.submitMessageFeedback(root.sessionId, anchor, rating, comment, includeContent)
         }
 
         // Inline edit / restore: the controller truncated the doc to the user

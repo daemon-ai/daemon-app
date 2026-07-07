@@ -123,43 +123,61 @@ Item {
             }
         }
 
-        // Optional free-text comment, revealed after a thumb tap. Submitting
-        // re-sends the same rating with the comment; the seam records both.
-        Row {
+        // Optional free-text comment + response-content consent, revealed after a
+        // thumb tap. Submitting re-sends the same rating with the comment; the seam
+        // records both. The checkbox is the per-event opt-in to attach the rated
+        // response text to the exported feedback (default off / privacy-first).
+        Column {
             id: commentRow
             visible: root.commentOpen
             spacing: Theme.smallSpacing
 
-            Kit.TextField {
-                id: commentField
-                width: 240
-                underline: true
-                placeholderText: qsTr("Tell us more (optional)")
-                onAccepted: root.submitComment()
+            Row {
+                spacing: Theme.smallSpacing
+
+                Kit.TextField {
+                    id: commentField
+                    width: 240
+                    underline: true
+                    placeholderText: qsTr("Tell us more (optional)")
+                    onAccepted: root.submitComment()
+                }
+                Kit.IconButton {
+                    icon: FontIcons.fa_paper_plane
+                    iconPointSize: 12
+                    tooltipText: qsTr("Send feedback")
+                    onClicked: root.submitComment()
+                }
             }
-            Kit.IconButton {
-                icon: FontIcons.fa_paper_plane
-                iconPointSize: 12
-                tooltipText: qsTr("Send feedback")
-                onClicked: root.submitComment()
+
+            Kit.CheckBox {
+                id: includeContent
+                text: qsTr("Include the response text")
+                checked: false
             }
         }
     }
 
-    // Record a thumb rating immediately and reveal the comment affordance.
+    // Record a thumb rating immediately and reveal the comment affordance. The
+    // initial submit carries no comment and no content (the opt-in lives in the
+    // revealed row); a follow-up submitComment() re-sends with the user's choices.
     function rate(value) {
         if (!root.editorController)
             return
-        root.editorController.submitMessageFeedback(root.messageId, value, "")
+        includeContent.checked = false
+        root.editorController.submitMessageFeedback(root.messageId, value, "", false)
         root.commentOpen = true
     }
 
-    // Re-submit the current rating with the typed comment, then collapse the row.
+    // Re-submit the current rating with the typed comment + content consent, then
+    // collapse the row.
     function submitComment() {
         if (root.editorController && root.rating !== root.ratingNone)
-            root.editorController.submitMessageFeedback(root.messageId, root.rating, commentField.text)
+            root.editorController.submitMessageFeedback(root.messageId, root.rating,
+                                                        commentField.text, includeContent.checked)
         root.commentOpen = false
         commentField.text = ""
+        includeContent.checked = false
     }
 
     // A small icon button used by the footer row.

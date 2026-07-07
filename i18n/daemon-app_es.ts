@@ -696,6 +696,26 @@ hasta que se vuelva a registrar.</translation>
         <source>Regenerate</source>
         <translation>Regenerar</translation>
     </message>
+    <message>
+        <source>Good response</source>
+        <translation>Buena respuesta</translation>
+    </message>
+    <message>
+        <source>Bad response</source>
+        <translation>Mala respuesta</translation>
+    </message>
+    <message>
+        <source>Tell us more (optional)</source>
+        <translation>Cuéntanos más (opcional)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Enviar comentarios</translation>
+    </message>
+    <message>
+        <source>Include the response text</source>
+        <translation>Incluir el texto de la respuesta</translation>
+    </message>
 </context>
 <context>
     <name>AuthFlowController</name>
@@ -741,6 +761,18 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>Complete the sign-in in your browser, then paste the redirect URL below.</source>
         <translation>Completa el inicio de sesión en tu navegador y luego pega abajo la URL de redirección.</translation>
+    </message>
+    <message>
+        <source>Enter the requested details.</source>
+        <translation>Introduzca los datos solicitados.</translation>
+    </message>
+    <message>
+        <source>Scan the payload below with your other device. Waiting for approval…</source>
+        <translation>Escanee el contenido de abajo con su otro dispositivo. Esperando aprobación…</translation>
+    </message>
+    <message>
+        <source>Scan this payload with your other device (no image in the terminal):</source>
+        <translation>Escanee este contenido con su otro dispositivo (sin imagen en la terminal):</translation>
     </message>
     <message>
         <source>Finishing sign-in…</source>
@@ -819,6 +851,18 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>Complete sign-in</source>
         <translation>Completar inicio de sesión</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Continuar</translation>
+    </message>
+    <message>
+        <source>Scan this code with your other device to finish signing in.</source>
+        <translation>Escanee este código con su otro dispositivo para completar el inicio de sesión.</translation>
+    </message>
+    <message>
+        <source>Waiting for approval…</source>
+        <translation>Esperando aprobación…</translation>
     </message>
     <message>
         <source>Signed in as %1</source>
@@ -1305,6 +1349,14 @@ hasta que se vuelva a registrar.</translation>
     <message>
         <source>Search this session</source>
         <translation>Buscar en esta sesión</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Enviar comentarios</translation>
+    </message>
+    <message>
+        <source>Report a bug or share an idea</source>
+        <translation>Informa de un error o comparte una idea</translation>
     </message>
     <message>
         <source>Rename session</source>
@@ -4456,6 +4508,14 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>[fórmula] </translation>
     </message>
     <message>
+        <source>▲ Good (u)</source>
+        <translation>▲ Bueno (u)</translation>
+    </message>
+    <message>
+        <source>▼ Bad (d)</source>
+        <translation>▼ Malo (d)</translation>
+    </message>
+    <message>
         <source>  [installed]</source>
         <translation>  [instalado]</translation>
     </message>
@@ -4733,6 +4793,18 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
         <translation>No se pudo actualizar la sesión</translation>
     </message>
     <message>
+        <source>Tell us more (optional)</source>
+        <translation>Cuéntanos más (opcional)</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Enviar</translation>
+    </message>
+    <message>
+        <source>Send with response text</source>
+        <translation>Enviar con el texto de la respuesta</translation>
+    </message>
+    <message>
         <source>Clear session</source>
         <translation>Borrar sesión</translation>
     </message>
@@ -4875,6 +4947,34 @@ Una página genérica, no de transcripción, alojada en la misma tira de pestañ
     <message>
         <source>Deny with reason (the agent will hear it)</source>
         <translation>Rechazar con motivo (el agente lo oirá)</translation>
+    </message>
+    <message>
+        <source>Send feedback</source>
+        <translation>Enviar comentarios</translation>
+    </message>
+    <message>
+        <source>What kind of feedback?</source>
+        <translation>¿Qué tipo de comentario?</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Error</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Idea</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Otro</translation>
+    </message>
+    <message>
+        <source>Next…</source>
+        <translation>Siguiente…</translation>
+    </message>
+    <message>
+        <source>Your feedback (Enter to send)</source>
+        <translation>Tu comentario (Enter para enviar)</translation>
     </message>
     <message>
         <source>Remove account?</source>
@@ -5859,6 +5959,10 @@ Esto solo afecta a la apariencia de la app, no a tus datos.</translation>
         <translation>Alternar terminal</translation>
     </message>
     <message>
+        <source>Send feedback</source>
+        <translation>Enviar comentarios</translation>
+    </message>
+    <message>
         <source>Check for updates</source>
         <translation>Buscar actualizaciones</translation>
     </message>
@@ -5873,6 +5977,46 @@ Esto solo afecta a la apariencia de la app, no a tus datos.</translation>
     <message>
         <source>Terminal</source>
         <translation>Terminal</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Enviar</translation>
+    </message>
+    <message>
+        <source>Thanks — your feedback was sent.</source>
+        <translation>Gracias — se envió tu comentario.</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Categoría</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Error</translation>
+    </message>
+    <message>
+        <source>Idea</source>
+        <translation>Idea</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Otro</translation>
+    </message>
+    <message>
+        <source>What&apos;s working well, or what went wrong?</source>
+        <translation>¿Qué funciona bien o qué salió mal?</translation>
+    </message>
+    <message>
+        <source>Include diagnostics (app version, OS)</source>
+        <translation>Incluir diagnósticos (versión de la app, SO)</translation>
+    </message>
+    <message>
+        <source>Telemetry is off. Sending transmits only this feedback and basic app info.</source>
+        <translation>La telemetría está desactivada. Al enviar solo se transmiten estos comentarios y la información básica de la app.</translation>
+    </message>
+    <message>
+        <source>Also enable anonymous telemetry</source>
+        <translation>Activar también la telemetría anónima</translation>
     </message>
 </context>
 <context>

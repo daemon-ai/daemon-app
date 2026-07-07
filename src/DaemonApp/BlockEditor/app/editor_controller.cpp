@@ -427,7 +427,7 @@ void EditorController::requestRegenerate(const QString& messageId) {
 }
 
 void EditorController::submitMessageFeedback(const QString& messageId, int rating,
-                                             const QString& comment) {
+                                             const QString& comment, bool includeContent) {
     if (messageId.isEmpty()) {
         return;
     }
@@ -435,10 +435,12 @@ void EditorController::submitMessageFeedback(const QString& messageId, int ratin
     // glyph, resolve the message's wire anchor from the ingest metadata (empty
     // when unknown, e.g. a reloaded transcript), and emit the host signal the
     // Transcript forwards to the Feedback seam. No IFeedback dependency here.
+    // `includeContent` is the submitter's opt-in to attach the rated response text
+    // (the node reads it from its journal at the anchor cursor).
     m_messageRatings.insert(messageId, rating);
     const QVariantMap anchor = m_ingest.anchorForMessage(messageId);
     emit messageRatingChanged(messageId, rating);
-    emit messageFeedbackSubmitted(messageId, anchor, rating, comment);
+    emit messageFeedbackSubmitted(messageId, anchor, rating, comment, includeContent);
 }
 
 int EditorController::ratingFor(const QString& messageId) const {

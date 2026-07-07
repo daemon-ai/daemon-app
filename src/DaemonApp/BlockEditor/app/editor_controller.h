@@ -154,7 +154,7 @@ public:
     // for a message (kRatingNone when none), so a recycled footer re-renders its
     // selected glyph.
     Q_INVOKABLE void submitMessageFeedback(const QString& messageId, int rating,
-                                           const QString& comment);
+                                           const QString& comment, bool includeContent = false);
     Q_INVOKABLE int ratingFor(const QString& messageId) const;
     // Rewind affordances built on the shared DocumentStore primitives.
     // restoreToMessage re-runs the turn from `messageId` with its existing text
@@ -285,7 +285,7 @@ signals:
     // seam (`anchor` is the resolved wire reference; empty when unknown).
     void messageRatingChanged(const QString& messageId, int rating);
     void messageFeedbackSubmitted(const QString& messageId, const QVariantMap& anchor, int rating,
-                                  const QString& comment);
+                                  const QString& comment, bool includeContent);
     // An inline message editor opened; the transcript escapes stick-to-bottom.
     void inlineEditOpened();
     // Every clipboard write path failed (only reachable on wasm in an insecure context where

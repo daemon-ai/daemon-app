@@ -86,6 +86,14 @@ private slots:
         const QVariantMap anchor = submitted.first().at(1).toMap();
         QCOMPARE(anchor.value(QStringLiteral("turnSeq")).toInt(), 99);
         QCOMPARE(anchor.value(QStringLiteral("traceId")).toString(), QStringLiteral("tr-1"));
+        // Default submit carries no content consent.
+        QVERIFY(!submitted.first().at(4).toBool());
+
+        // The response-content opt-in rides the signal so the Transcript can forward it.
+        ed.submitMessageFeedback(QStringLiteral("m1"), -1, QStringLiteral("see reply"),
+                                 /*includeContent=*/true);
+        QCOMPARE(submitted.size(), 2);
+        QVERIFY(submitted.at(1).at(4).toBool());
     }
 
     // A message with no captured anchor (unknown id / reloaded transcript) resolves
