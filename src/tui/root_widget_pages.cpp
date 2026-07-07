@@ -552,7 +552,7 @@ void RootWidget::openAppFeedbackPrompt() {
         if (row < 0 || row >= keys.size()) {
             return;
         }
-        const QString category = keys.at(row);
+        const QString& category = keys.at(row);
         dlg->close();
         // Then the free-text note. Diagnostics ride along by default; the telemetry
         // opt-in lives on the Settings consent row (a text prompt cannot host a
