@@ -59,11 +59,6 @@ void DaemonApprovalsInbox::rebuild() {
         // Wire v28: offer "allow permanently" only when the node attached a fingerprint it can
         // remember (see DecodedApprovalInfo::hasFingerprint).
         row[QStringLiteral("canAllowPermanent")] = info.hasFingerprint;
-        // [wave2:app-approvals-safety] C5: origin-chip slot fields (empty today — the app-engines
-        // stream populates approvalOriginKind/approvalOrigin at Integration 2; the slot is hidden
-        // while approvalOriginKind is empty). Left here as the stable, tagged contract.
-        row[QStringLiteral("approvalOriginKind")] = QString();
-        row[QStringLiteral("approvalOrigin")] = QString();
         rows.append(row);
     }
     m_pending->setRows(rows);
