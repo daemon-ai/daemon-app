@@ -83,6 +83,18 @@ public:
     // the node's active default. Nothing is client-minted.
     void createSession(const QString& profileId = QString());
 
+    // CHA-9 follow-on: fetch one session's full detail on demand (SessionGet -> SessionDetail).
+    // The roster page carries only the SessionInfo row; this hydrates the extra facets (delivery
+    // targets, child ids, checkpoint count, resolved model/approval mode) into an in-memory cache.
+    // On success sessionDetailLoaded(id) fires and cachedDetail(id) is populated; an unknown
+    // session (null arm) still fires sessionDetailLoaded (with an empty detail). On Error/transport
+    // failure detailFailed(id, message) fires. Deduped: an in-flight fetch for the same id is not
+    // re-issued.
+    void getSessionDetail(const QString& sessionId);
+    // The last hydrated detail for `id`, if a SessionGet has resolved it (the DaemonDaemonNet
+    // projection + subagent title enrichment read this; the wire is never touched here).
+    [[nodiscard]] bool cachedDetail(const QString& id, DecodedSessionDetail* out) const;
+
     // Node-authoritative session-metadata patch (SessionUpdateMeta{session, patch} -> Ok). Each
     // optional is Some=set, std::nullopt=leave unchanged. NOTHING is written client-side: on Ok the
     // node emits SessionMetaChanged (debounced roster refetch) and we ALSO issue an immediate
@@ -102,6 +114,11 @@ signals:
     // A node SessionCreate resolved: `sessionId` is the node-minted id, `profileId` the profile it
     // was bound under (echoed from the request so the auto-select path knows the agent).
     void sessionCreated(const QString& sessionId, const QString& profileId);
+    // A SessionGet resolved and cachedDetail(sessionId) is now populated (empty on the null arm).
+    void sessionDetailLoaded(const QString& sessionId);
+    // A SessionGet was rejected (node ApiError) or failed at the transport. Dedicated (not folded
+    // into refreshFailed) so a detail-hydration miss is distinguishable from a roster refresh miss.
+    void detailFailed(const QString& sessionId, const QString& message);
     // An operator Submit (startTurn/steer/interrupt) was accepted by the node.
     void submitted(const QString& sessionId);
     // A ByTransport scope fetch resolved: `sessionIds` is the node-decided membership (B4).
@@ -132,6 +149,8 @@ private:
     void applySessionCreated(const QByteArray& responseCbor);
     // SessionUpdateMeta reply: Ok -> authoritative refreshSessions(); Error -> metaUpdateFailed.
     void applyMetaUpdate(const QByteArray& responseCbor);
+    // SessionGet reply: decode SessionDetail -> cache + sessionDetailLoaded; Error -> detailFailed.
+    void applySessionDetail(const QString& sessionId, const QByteArray& responseCbor);
 
     static constexpr auto kSessionsCorrelation = "repo/sessions-query";
     static constexpr auto kByProfileCorrelation = "repo/sessions-by-profile";
@@ -139,6 +158,8 @@ private:
     static constexpr auto kByTransportCorrelation = "repo/sessions-by-transport";
     static constexpr auto kCreateCorrelation = "repo/session-create";
     static constexpr auto kUpdateMetaCorrelation = "repo/session-update-meta";
+    // SessionGet correlations carry the target session id on the tail (prefix-routed).
+    static constexpr auto kDetailPrefix = "repo/session-get/";
     // Operator Submit correlations carry the target session id (distinct from the turn engine's
     // "turn/submit/<id>" so replies never cross wires).
     static constexpr auto kSubmitPrefix = "repo/submit/";
@@ -151,6 +172,11 @@ private:
     // The session id the in-flight SessionUpdateMeta targets, echoed on metaUpdateFailed so the UI
     // can name the affected row.
     QString m_pendingMetaSession;
+
+    // CHA-9 detail hydration: the last-decoded detail per session id, plus the set of ids with an
+    // in-flight SessionGet (dedupes re-issues while one is outstanding).
+    QHash<QString, DecodedSessionDetail> m_details;
+    QSet<QString> m_detailInFlight;
 
     // L4: the since_rev the in-flight SessionsQuery carried (0 = a full request), so the response
     // handler knows whether to merge a delta or replace the roster (and detects a daemon-reset

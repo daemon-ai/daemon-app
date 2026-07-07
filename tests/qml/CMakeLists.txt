@@ -81,6 +81,32 @@ set_tests_properties(tst_chip PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
 )
 
+# [wave2:backlog-app] tst_badge (TOOL-8): the Kit.Badge count pill — hidden at 0, visible when
+# positive, tone -> fill tint, and the >max clamp. Pulls in QtQuick.Controls (Label), so the Basic
+# style must be available offscreen.
+qt_add_executable(tst_badge tst_badge_main.cpp)
+target_link_libraries(tst_badge
+    PRIVATE
+        Qt6::QuickTest
+        Qt6::Qml
+        Qt6::Quick
+        Qt6::QuickControls2
+        da_theme
+        da_themeplugin
+        da_controls
+        da_controlsplugin
+)
+target_compile_definitions(tst_badge
+    PRIVATE
+        QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/badge"
+        TEST_QML_IMPORT_PATH="$ENV{QML2_IMPORT_PATH}"
+)
+
+add_test(NAME tst_badge COMMAND tst_badge)
+set_tests_properties(tst_badge PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+)
+
 # [wave2:app-engines] tst_engine_origin_chip (C5): the approval origin chip's no-noise contract —
 # with no EngineIdentity facade in context it renders nothing regardless of sessionId (also guards
 # the component imports/loads cleanly).

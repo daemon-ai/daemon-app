@@ -205,6 +205,41 @@ DecodedUnitNode decodeUnitNodeStruct(const unit_node& n) {
     return out;
 }
 
+CachedSessionRow sessionRowFromInfo(const session_info& info) {
+    CachedSessionRow row;
+    row.sessionId = fromZcbor(info.session_info_session);
+    row.state = sessionStateName(info.session_info_state.session_state_choice);
+    if (info.session_info_bound_profile_present &&
+        info.session_info_bound_profile.session_info_bound_profile_choice ==
+            session_info_bound_profile_r::session_info_bound_profile_profile_ref_m_c) {
+        row.profileRef =
+            fromZcbor(info.session_info_bound_profile.session_info_bound_profile_profile_ref_m);
+    }
+    if (info.session_info_title_present && info.session_info_title.session_info_title_choice ==
+                                               session_info_title_r::session_info_title_tstr_c) {
+        row.title = fromZcbor(info.session_info_title.session_info_title_tstr);
+    }
+    if (info.session_info_lifecycle_present) {
+        row.lifecycle =
+            lifecycleName(info.session_info_lifecycle.session_info_lifecycle.lifecycle_choice);
+    }
+    if (info.session_info_role_present) {
+        row.role = roleName(info.session_info_role.session_info_role.session_role_choice);
+    }
+    if (info.session_info_parent_present &&
+        info.session_info_parent.session_info_parent_choice ==
+            session_info_parent_r::session_info_parent_session_id_m_c) {
+        row.parentSessionId = fromZcbor(info.session_info_parent.session_info_parent_session_id_m);
+    }
+    if (info.session_info_pinned_present) {
+        row.pinned = info.session_info_pinned.session_info_pinned;
+    }
+    if (info.session_info_archived_present) {
+        row.archived = info.session_info_archived.session_info_archived;
+    }
+    return row;
+}
+
 QString fsRootKindName(int choice) {
     switch (choice) {
     case fs_root_kind_t_r::fs_root_kind_t_host_tstr_c:

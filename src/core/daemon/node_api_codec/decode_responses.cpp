@@ -25,6 +25,7 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
     static constexpr auto kKindMap = std::to_array<KindEntry>({
         {api_response_r::api_response_response_health_m_c, ApiResponseKind::Health},
         {api_response_r::api_response_response_session_page_m_c, ApiResponseKind::SessionPage},
+        {api_response_r::api_response_response_session_detail_m_c, ApiResponseKind::SessionDetail},
         {api_response_r::api_response_response_log_page_m_c, ApiResponseKind::LogPage},
         {api_response_r::api_response_response_events_page_m_c, ApiResponseKind::EventsPage},
         {api_response_r::api_response_response_journal_m_c, ApiResponseKind::Journal},
@@ -136,41 +137,7 @@ bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<Cache
         response->api_response_response_session_page_m.response_session_page_SessionPage;
     out->clear();
     for (size_t i = 0; i < page.session_page_sessions_session_info_m_count; ++i) {
-        const session_info& info = page.session_page_sessions_session_info_m[i];
-        CachedSessionRow row;
-        row.sessionId = fromZcbor(info.session_info_session);
-        row.state = sessionStateName(info.session_info_state.session_state_choice);
-        if (info.session_info_bound_profile_present &&
-            info.session_info_bound_profile.session_info_bound_profile_choice ==
-                session_info_bound_profile_r::session_info_bound_profile_profile_ref_m_c) {
-            row.profileRef =
-                fromZcbor(info.session_info_bound_profile.session_info_bound_profile_profile_ref_m);
-        }
-        if (info.session_info_title_present &&
-            info.session_info_title.session_info_title_choice ==
-                session_info_title_r::session_info_title_tstr_c) {
-            row.title = fromZcbor(info.session_info_title.session_info_title_tstr);
-        }
-        if (info.session_info_lifecycle_present) {
-            row.lifecycle =
-                lifecycleName(info.session_info_lifecycle.session_info_lifecycle.lifecycle_choice);
-        }
-        if (info.session_info_role_present) {
-            row.role = roleName(info.session_info_role.session_info_role.session_role_choice);
-        }
-        if (info.session_info_parent_present &&
-            info.session_info_parent.session_info_parent_choice ==
-                session_info_parent_r::session_info_parent_session_id_m_c) {
-            row.parentSessionId =
-                fromZcbor(info.session_info_parent.session_info_parent_session_id_m);
-        }
-        if (info.session_info_pinned_present) {
-            row.pinned = info.session_info_pinned.session_info_pinned;
-        }
-        if (info.session_info_archived_present) {
-            row.archived = info.session_info_archived.session_info_archived;
-        }
-        out->append(row);
+        out->append(sessionRowFromInfo(page.session_page_sessions_session_info_m[i]));
     }
     if (nextCursor != nullptr) {
         nextCursor->clear();
@@ -192,6 +159,94 @@ bool NodeApiCodec::decodeSessionPage(const QByteArray& responseCbor, QList<Cache
                 removed->append(fromZcbor(rm.session_page_removed_session_id_m[i]));
             }
         }
+    }
+    return true;
+}
+
+namespace {
+QString approvalModeName(int choice) {
+    switch (choice) {
+    case approval_mode_r::approval_mode_ask_tstr_c:
+        return QStringLiteral("ask");
+    case approval_mode_r::approval_mode_accept_edits_tstr_c:
+        return QStringLiteral("accept_edits");
+    case approval_mode_r::approval_mode_auto_allow_tstr_c:
+        return QStringLiteral("auto_allow");
+    case approval_mode_r::approval_mode_deny_tstr_c:
+        return QStringLiteral("deny");
+    default:
+        return {};
+    }
+}
+
+QString sinkKindName(int choice) {
+    return choice == sink_kind_r::sink_kind_Spectator_tstr_c ? QStringLiteral("Spectator")
+                                                             : QStringLiteral("Primary");
+}
+} // namespace
+
+bool NodeApiCodec::decodeSessionDetail(const QByteArray& responseCbor, DecodedSessionDetail* out,
+                                       bool* found) {
+    if (out == nullptr || found == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_session_detail_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_session_detail& rsd = response->api_response_response_session_detail_m;
+    if (rsd.response_session_detail_SessionDetail_choice ==
+        response_session_detail::response_session_detail_SessionDetail_null_m_c) {
+        *found = false; // unknown session (null arm)
+        return true;
+    }
+    *found = true;
+    const session_detail& detail = rsd.response_session_detail_SessionDetail_session_detail_m;
+    *out = DecodedSessionDetail{};
+    out->info = sessionRowFromInfo(detail.session_detail_info);
+    // Resolved model (top-level SessionDetail.model, optional-null).
+    if (detail.session_detail_model_present &&
+        detail.session_detail_model.session_detail_model_choice ==
+            session_detail_model_r::session_detail_model_tstr_c) {
+        out->hasModel = true;
+        out->model = fromZcbor(detail.session_detail_model.session_detail_model_tstr);
+    }
+    // Approval mode rides the optional overlay.
+    if (detail.session_detail_overlay_present &&
+        detail.session_detail_overlay.session_detail_overlay_choice ==
+            session_detail_overlay_r::session_detail_overlay_session_overlay_m_c) {
+        const session_overlay& overlay =
+            detail.session_detail_overlay.session_detail_overlay_session_overlay_m;
+        if (overlay.session_overlay_approval_mode_present &&
+            overlay.session_overlay_approval_mode.session_overlay_approval_mode_choice ==
+                session_overlay_approval_mode_r::session_overlay_approval_mode_approval_mode_m_c) {
+            out->hasApprovalMode = true;
+            out->approvalMode = approvalModeName(
+                overlay.session_overlay_approval_mode.session_overlay_approval_mode_approval_mode_m
+                    .approval_mode_choice);
+        }
+    }
+    if (detail.session_detail_delivery_targets_present) {
+        const session_detail_delivery_targets_r& dts = detail.session_detail_delivery_targets;
+        for (size_t i = 0; i < dts.session_detail_delivery_targets_delivery_target_m_count; ++i) {
+            const delivery_target& dt = dts.session_detail_delivery_targets_delivery_target_m[i];
+            DecodedDeliveryTarget target;
+            target.transport = fromZcbor(dt.delivery_target_transport);
+            target.route = fromZcbor(dt.delivery_target_route);
+            target.kind = sinkKindName(dt.delivery_target_kind.sink_kind_choice);
+            out->deliveryTargets.append(target);
+        }
+    }
+    if (detail.session_detail_children_present) {
+        const session_detail_children_r& ch = detail.session_detail_children;
+        for (size_t i = 0; i < ch.session_detail_children_session_id_m_count; ++i) {
+            out->children.append(fromZcbor(ch.session_detail_children_session_id_m[i]));
+        }
+    }
+    if (detail.session_detail_checkpoints_present) {
+        out->hasCheckpointCount = true;
+        out->checkpointCount = detail.session_detail_checkpoints.session_detail_checkpoints;
     }
     return true;
 }

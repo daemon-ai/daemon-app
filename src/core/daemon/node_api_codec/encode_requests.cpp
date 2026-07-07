@@ -189,6 +189,15 @@ QByteArray NodeApiCodec::encodeSessionCreateRequest(const QString& sessionId,
         });
 }
 
+QByteArray NodeApiCodec::encodeSessionGetRequest(const QString& sessionId) {
+    // `sessionId` outlives the encode: zcbor holds a pointer into its UTF-8 bytes.
+    const QByteArray sessionUtf8 = sessionId.toUtf8();
+    return encodeWithFill(
+        api_request_r::api_request_request_session_get_m_c, [&](api_request_r& request) {
+            setZcbor(request.api_request_request_session_get_m.SessionGet_session, sessionUtf8);
+        });
+}
+
 QByteArray NodeApiCodec::encodeSessionUpdateMetaRequest(const QString& sessionId,
                                                         std::optional<bool> pinned,
                                                         std::optional<bool> archived,

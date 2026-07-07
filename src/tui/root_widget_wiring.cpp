@@ -9,6 +9,7 @@
 #include "daemon/principal_model.h"           // live refresh of the Users & Access page
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "display_role_adapter.h"
+#include "fleet/iapprovals_inbox.h" // complete type for the footer pending-approvals count (TOOL-8)
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
 #include "memory/imemory_service.h"
@@ -653,6 +654,15 @@ void RootWidget::wireStatusFooter() {
     // Engine + approval-policy chips on the idle chrome line (C3/E1 parity with
     // the GUI ComposerControls chips).
     m_composerChrome->setFacades(m_services.sessionSettings, m_services.engineIdentity);
+    // TOOL-8: mirror the pending-approvals count into the footer gate segment (parity with the GUI
+    // sidebar badge), event-driven off the shared IApprovalsInbox.
+    if (m_services.approvals != nullptr) {
+        const auto syncApprovals = [this] {
+            m_footer->setPendingApprovals(m_services.approvals->count());
+        };
+        connect(m_services.approvals, &fleet::IApprovalsInbox::changed, this, syncApprovals);
+        syncApprovals();
+    }
 }
 
 void RootWidget::wireInitialSelection() {

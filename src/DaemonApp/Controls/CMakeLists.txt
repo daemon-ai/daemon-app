@@ -26,6 +26,8 @@ qt_add_qml_module(da_controls
         Chip.qml
         # [wave2:app-engines] approval origin engine chip (C5)
         EngineOriginChip.qml
+        # [wave2:backlog-app] TOOL-8 pending-count pill badge
+        Badge.qml
 )
 add_library(daemon-app::controls ALIAS da_controls)
 

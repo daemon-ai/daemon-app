@@ -113,6 +113,7 @@ Rectangle {
             implicitHeight: 28
 
             Kit.IconButton {
+                id: settingsCog
                 anchors.right: parent.right
                 anchors.rightMargin: 3
                 anchors.verticalCenter: parent.verticalCenter
@@ -122,6 +123,15 @@ Rectangle {
                 iconColor: Theme.iconMuted
                 tooltipText: qsTr("Settings")
                 onClicked: settingsMenu.open()
+            }
+            // TOOL-8: mirror the Approvals count on the always-visible cog so pending gates are
+            // surfaced without opening the menu. Same event-driven Approvals view-model.
+            Kit.Badge {
+                anchors.right: settingsCog.right
+                anchors.top: settingsCog.top
+                anchors.rightMargin: -2
+                anchors.topMargin: -2
+                count: Approvals.count
             }
         }
 
@@ -563,6 +573,8 @@ Rectangle {
         }
         Kit.MenuItem {
             text: qsTr("Approvals")
+            // TOOL-8: pending-approvals count, event-driven off the shared Approvals view-model.
+            badgeCount: Approvals.count
             onTriggered: Nav.open("approvals")
         }
         Kit.MenuItem {

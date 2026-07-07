@@ -443,6 +443,117 @@ private slots:
         QCOMPARE(static_cast<quint8>(sub.front()) >> 5, 5);
     }
 
+    void codecEncodesSessionGetRequest() {
+        const QByteArray req =
+            daemonapp::daemon::NodeApiCodec::encodeSessionGetRequest(QStringLiteral("s1"));
+        QVERIFY(!req.isEmpty());
+        // {"SessionGet": {...}} is a CBOR map (major type 5).
+        QCOMPARE(static_cast<quint8>(req.front()) >> 5, 5);
+    }
+
+    // CHA-9: SessionGet -> SessionDetail hydration (delivery targets, children, checkpoint count).
+    void codecDecodesSessionDetailResponse() {
+        using daemonapp::test::cborText;
+        using daemonapp::test::cborUint;
+        QByteArray b;
+        b.append(static_cast<char>(0xA1)); // {"SessionDetail": <session-detail>}
+        cborText(b, "SessionDetail");
+        // session-detail map(4): info + optional delivery_targets/children/checkpoints (CDDL
+        // order).
+        b.append(static_cast<char>(0xA4));
+        cborText(b, "info");
+        b.append(static_cast<char>(0xA2)); // minimal session-info {"session","state"}
+        cborText(b, "session");
+        cborText(b, "c-parent");
+        cborText(b, "state");
+        cborText(b, "Active");
+        cborText(b, "delivery_targets");
+        b.append(static_cast<char>(0x81)); // array(1)
+        b.append(static_cast<char>(0xA3)); // delivery-target map(3)
+        cborText(b, "transport");
+        cborText(b, "matrix");
+        cborText(b, "route");
+        cborText(b, "@bot:hs");
+        cborText(b, "kind");
+        cborText(b, "Primary");
+        cborText(b, "children");
+        b.append(static_cast<char>(0x82)); // array(2)
+        cborText(b, "k1");
+        cborText(b, "k2");
+        cborText(b, "checkpoints");
+        cborUint(b, 3);
+
+        daemonapp::daemon::DecodedSessionDetail detail;
+        bool found = false;
+        QVERIFY(daemonapp::daemon::NodeApiCodec::decodeSessionDetail(b, &detail, &found));
+        QVERIFY(found);
+        QCOMPARE(detail.info.sessionId, QStringLiteral("c-parent"));
+        QCOMPARE(detail.info.state, QStringLiteral("Active"));
+        QCOMPARE(detail.deliveryTargets.size(), 1);
+        QCOMPARE(detail.deliveryTargets.first().transport, QStringLiteral("matrix"));
+        QCOMPARE(detail.deliveryTargets.first().route, QStringLiteral("@bot:hs"));
+        QCOMPARE(detail.deliveryTargets.first().kind, QStringLiteral("Primary"));
+        QCOMPARE(detail.children, QStringList({QStringLiteral("k1"), QStringLiteral("k2")}));
+        QVERIFY(detail.hasCheckpointCount);
+        QCOMPARE(detail.checkpointCount, static_cast<quint32>(3));
+        QCOMPARE(daemonapp::daemon::NodeApiCodec::responseKind(b),
+                 daemonapp::daemon::ApiResponseKind::SessionDetail);
+    }
+
+    void codecDecodesSessionDetailNullArm() {
+        using daemonapp::test::cborText;
+        QByteArray b;
+        b.append(static_cast<char>(0xA1)); // {"SessionDetail": null}
+        cborText(b, "SessionDetail");
+        b.append(static_cast<char>(0xF6)); // null
+        daemonapp::daemon::DecodedSessionDetail detail;
+        bool found = true;
+        QVERIFY(daemonapp::daemon::NodeApiCodec::decodeSessionDetail(b, &detail, &found));
+        QVERIFY(!found); // unknown session
+    }
+
+    // Item 2: UnitEvents -> ManageEventView::Subagent (the live subagent strip's structured feed).
+    void codecDecodesUnitEventsSubagent() {
+        using daemonapp::test::cborText;
+        using daemonapp::test::cborUint;
+        const auto appendSubagent = [](QByteArray& b, quint64 seq, const char* child,
+                                       const char* phase, quint32 active) {
+            b.append(static_cast<char>(0xA1)); // {"Subagent": {...}}
+            cborText(b, "Subagent");
+            b.append(static_cast<char>(0xA5)); // map(5)
+            cborText(b, "seq");
+            cborUint(b, seq);
+            cborText(b, "child");
+            cborText(b, child);
+            cborText(b, "role");
+            cborText(b, "EphemeralSubagent");
+            cborText(b, "phase");
+            cborText(b, phase);
+            cborText(b, "active_children");
+            cborUint(b, active);
+        };
+        QByteArray b;
+        b.append(static_cast<char>(0xA1)); // {"UnitEvents": [...]}
+        cborText(b, "UnitEvents");
+        b.append(static_cast<char>(0x82)); // array(2)
+        appendSubagent(b, 10, "k1", "Spawned", 1);
+        appendSubagent(b, 11, "k1", "Finished", 0);
+
+        QList<daemonapp::daemon::DecodedManageEvent> evs;
+        QVERIFY(daemonapp::daemon::NodeApiCodec::decodeUnitEvents(b, &evs));
+        QCOMPARE(evs.size(), 2);
+        QCOMPARE(evs[0].kind, daemonapp::daemon::DecodedManageEvent::Kind::Subagent);
+        QCOMPARE(evs[0].child, QStringLiteral("k1"));
+        QCOMPARE(evs[0].role, QStringLiteral("EphemeralSubagent"));
+        QCOMPARE(evs[0].phase, QStringLiteral("Spawned"));
+        QCOMPARE(evs[0].seq, static_cast<quint64>(10));
+        QCOMPARE(evs[0].activeChildren, static_cast<quint32>(1));
+        QCOMPARE(evs[1].phase, QStringLiteral("Finished"));
+        QCOMPARE(evs[1].seq, static_cast<quint64>(11));
+        QCOMPARE(daemonapp::daemon::NodeApiCodec::responseKind(b),
+                 daemonapp::daemon::ApiResponseKind::UnitEvents);
+    }
+
     void codecDecodesLogPageCursors() {
         // {"LogPage": {"entries": [], "next_seq": 5, "head_seq": 5, "epoch": 0}} (L2 added epoch)
         const QByteArray response("\xA1\x67LogPage\xA4\x67"

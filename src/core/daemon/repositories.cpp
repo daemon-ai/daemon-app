@@ -137,6 +137,52 @@ void SessionRepository::createSession(const QString& profileId) {
                           QLatin1String(kCreateCorrelation));
 }
 
+void SessionRepository::getSessionDetail(const QString& sessionId) {
+    if (sessionId.isEmpty() || client() == nullptr) {
+        return;
+    }
+    if (m_detailInFlight.contains(sessionId)) {
+        return; // dedupe: a SessionGet for this id is already outstanding
+    }
+    m_detailInFlight.insert(sessionId);
+    client()->sendRequest(NodeApiCodec::encodeSessionGetRequest(sessionId),
+                          QLatin1String(kDetailPrefix) + sessionId);
+}
+
+bool SessionRepository::cachedDetail(const QString& id, DecodedSessionDetail* out) const {
+    const auto it = m_details.constFind(id);
+    if (it == m_details.constEnd()) {
+        return false;
+    }
+    if (out != nullptr) {
+        *out = it.value();
+    }
+    return true;
+}
+
+void SessionRepository::applySessionDetail(const QString& sessionId,
+                                           const QByteArray& responseCbor) {
+    m_detailInFlight.remove(sessionId);
+    if (NodeApiCodec::responseKind(responseCbor) == ApiResponseKind::Error) {
+        DecodedApiError err;
+        const QString msg = NodeApiCodec::decodeError(responseCbor, &err) && !err.message.isEmpty()
+                                ? err.message
+                                : tr("The session detail request was rejected");
+        emit detailFailed(sessionId, msg);
+        return;
+    }
+    DecodedSessionDetail detail;
+    bool found = false;
+    if (!NodeApiCodec::decodeSessionDetail(responseCbor, &detail, &found)) {
+        emit detailFailed(sessionId, tr("Failed to decode SessionDetail response"));
+        return;
+    }
+    // The null arm (unknown session) still resolves the fetch: cache an empty detail so a repeated
+    // read does not re-issue forever, and fire the loaded signal so consumers stop waiting.
+    m_details.insert(sessionId, detail);
+    emit sessionDetailLoaded(sessionId);
+}
+
 void SessionRepository::updateSessionMeta(const QString& sessionId, std::optional<bool> pinned,
                                           std::optional<bool> archived,
                                           std::optional<QString> title) {
@@ -169,6 +215,8 @@ void SessionRepository::handleResponse(const QString& correlationId,
         applySessionCreated(responseCbor);
     } else if (correlationId == QLatin1String(kUpdateMetaCorrelation)) {
         applyMetaUpdate(responseCbor);
+    } else if (correlationId.startsWith(QLatin1String(kDetailPrefix))) {
+        applySessionDetail(correlationId.mid(int(qstrlen(kDetailPrefix))), responseCbor);
     } else if (correlationId.startsWith(QLatin1String(kSubmitPrefix))) {
         applySubmitReply(correlationId.mid(int(qstrlen(kSubmitPrefix))), responseCbor);
     }
@@ -437,6 +485,14 @@ void SessionRepository::handleFailure(const QString& correlationId, const QStrin
         // A transport-level operator-submit failure: surface it so a steer/cancel is never
         // silently mistaken for delivered.
         emit submitFailed(correlationId.mid(int(qstrlen(kSubmitPrefix))), message);
+        return;
+    }
+    if (correlationId.startsWith(QLatin1String(kDetailPrefix))) {
+        // A transport-level SessionGet failure: clear the in-flight guard and surface it so a
+        // detail read is retriable rather than wedged.
+        const QString sessionId = correlationId.mid(int(qstrlen(kDetailPrefix)));
+        m_detailInFlight.remove(sessionId);
+        emit detailFailed(sessionId, message);
         return;
     }
     if (correlationId == QLatin1String(kSessionsCorrelation) ||

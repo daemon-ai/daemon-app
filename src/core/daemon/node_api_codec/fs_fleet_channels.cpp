@@ -446,6 +446,63 @@ bool NodeApiCodec::decodeFleetReport(const QByteArray& responseCbor, DecodedFlee
     return true;
 }
 
+bool NodeApiCodec::decodeUnitEvents(const QByteArray& responseCbor,
+                                    QList<DecodedManageEvent>* out) {
+    if (out == nullptr) {
+        return false;
+    }
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_unit_events_m_c);
+    if (!response) {
+        return false;
+    }
+    const response_unit_events& resp = response->api_response_response_unit_events_m;
+    out->clear();
+    for (size_t i = 0; i < resp.response_unit_events_UnitEvents_manage_event_view_m_count; ++i) {
+        const manage_event_view_r& v = resp.response_unit_events_UnitEvents_manage_event_view_m[i];
+        DecodedManageEvent ev;
+        switch (v.manage_event_view_choice) {
+        case manage_event_view_r::manage_event_view_started_m_c:
+            ev.kind = DecodedManageEvent::Kind::Started;
+            ev.seq = v.manage_event_view_started_m.Started_seq;
+            break;
+        case manage_event_view_r::manage_event_view_progress_m_c:
+            ev.kind = DecodedManageEvent::Kind::Progress;
+            ev.seq = v.manage_event_view_progress_m.Progress_seq;
+            break;
+        case manage_event_view_r::manage_event_view_usage_m_c:
+            ev.kind = DecodedManageEvent::Kind::Usage;
+            ev.seq = v.manage_event_view_usage_m.Usage_seq;
+            break;
+        case manage_event_view_r::manage_event_view_finished_m_c:
+            ev.kind = DecodedManageEvent::Kind::Finished;
+            ev.seq = v.manage_event_view_finished_m.Finished_seq;
+            break;
+        case manage_event_view_r::manage_event_view_error_m_c:
+            ev.kind = DecodedManageEvent::Kind::Error;
+            ev.seq = v.manage_event_view_error_m.Error_seq;
+            break;
+        case manage_event_view_r::manage_event_view_subagent_m_c: {
+            const manage_event_view_subagent& s = v.manage_event_view_subagent_m;
+            ev.kind = DecodedManageEvent::Kind::Subagent;
+            ev.seq = s.Subagent_seq;
+            ev.child = fromZcbor(s.Subagent_child);
+            ev.role = sessionRoleName(s.Subagent_role.session_role_choice);
+            ev.phase = s.Subagent_phase.subagent_phase_choice ==
+                               subagent_phase_r::subagent_phase_Finished_tstr_c
+                           ? QStringLiteral("Finished")
+                           : QStringLiteral("Spawned");
+            ev.activeChildren = s.Subagent_active_children;
+            break;
+        }
+        default:
+            break;
+        }
+        out->append(ev);
+    }
+    return true;
+}
+
 // [wave2:app-delegation] F7/DEL-7: the node's delegation guardrail ceilings (read-only policy).
 QByteArray NodeApiCodec::encodeCapsRequest() {
     return encodeSimple(api_request_r::api_request_request_caps_m_c);

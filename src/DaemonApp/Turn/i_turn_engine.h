@@ -98,6 +98,12 @@ public:
     // it).
     Q_INVOKABLE virtual void nudge() {}
 
+    // Fleet supervision change awareness: the SubscriptionManager calls this by name (via its focus
+    // registry) when the node reports a fleet change (FleetChanged). The daemon engine re-fetches
+    // its session's structured subagent events (UnitEvents) while a turn is active so the live
+    // subagent strip reflects spawn/finish transitions. Default no-op (the simulator ignores it).
+    Q_INVOKABLE virtual void fleetChanged() {}
+
 signals:
     void activeChanged();
     void turnStateChanged();

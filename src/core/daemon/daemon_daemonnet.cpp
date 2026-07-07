@@ -4,10 +4,50 @@
 #include "daemon/daemon_daemonnet.h"
 
 #include "daemon/repositories.h"
+#include "domain/delivery.h"
+#include "domain/session.h"
 #include "persistence/isession_store.h"
 
 namespace daemonapp::daemon {
 namespace {
+
+// CHA-9: project a hydrated SessionInfo row into the domain::Session the IDaemonNet seam returns.
+// Mirrors CachedSessionStore's row projection (the string->enum mapping the node's wire strings
+// use); kept local to avoid exporting that store's file-private helpers.
+domain::Session sessionFromRow(const CachedSessionRow& row) {
+    domain::Session session;
+    session.sessionId = domain::SessionId(row.sessionId);
+    session.title = row.title;
+    session.isArchived = row.archived;
+    session.isPinned = row.pinned;
+    session.boundProfile = domain::ProfileRef(row.profileRef);
+    if (row.state == QStringLiteral("Active")) {
+        session.state = domain::SessionState::Active;
+    } else if (row.state == QStringLiteral("Suspended")) {
+        session.state = domain::SessionState::Suspended;
+    } else if (row.state == QStringLiteral("Ready")) {
+        session.state = domain::SessionState::Ready;
+    } else if (row.state == QStringLiteral("Completed")) {
+        session.state = domain::SessionState::Completed;
+    }
+    session.lifecycle = row.lifecycle == QStringLiteral("Live") ? domain::Lifecycle::Live
+                                                                : domain::Lifecycle::Durable;
+    if (row.role == QStringLiteral("ManagedChild")) {
+        session.role = domain::SessionRole::ManagedChild;
+    } else if (row.role == QStringLiteral("EphemeralSubagent")) {
+        session.role = domain::SessionRole::EphemeralSubagent;
+    }
+    if (!row.parentSessionId.isEmpty()) {
+        session.parent = domain::SessionId(row.parentSessionId);
+    }
+    return session;
+}
+
+// The wire SinkKind string -> the domain enum.
+domain::SinkKind sinkKindFromString(const QString& kind) {
+    return kind == QStringLiteral("Spectator") ? domain::SinkKind::Spectator
+                                               : domain::SinkKind::Primary;
+}
 
 // domain::Origin -> the codec's flattened DecodedOrigin (what the Routing* encoders take).
 DecodedOrigin toDecoded(const domain::Origin& o) {
@@ -58,12 +98,19 @@ domain::Origin toDomain(const DecodedOrigin& d) {
 } // namespace
 
 DaemonDaemonNet::DaemonDaemonNet(RoutingRepository* routing, TransportRepository* transports,
-                                 persistence::ISessionStore* sessions, QObject* parent)
+                                 persistence::ISessionStore* sessions,
+                                 SessionRepository* sessionRepo, QObject* parent)
     : daemonnet::MockDaemonNet(daemonnet::TransportsSeed::Empty, parent), m_routing(routing),
-      m_transports(transports), m_sessions(sessions) {
+      m_transports(transports), m_sessions(sessions), m_sessionRepo(sessionRepo) {
     if (m_sessions != nullptr) {
         // The pin dialog's session picker projects the live store; re-announce on roster change.
         connect(m_sessions, &persistence::ISessionStore::changed, this, &IDaemonNet::changed);
+    }
+    if (m_sessionRepo != nullptr) {
+        // CHA-9: a lazily-hydrated SessionDetail landing must re-announce so the routing manager's
+        // delivery panel (and any other detail reader) re-projects the now-known targets.
+        connect(m_sessionRepo, &SessionRepository::sessionDetailLoaded, this,
+                [this](const QString&) { emit changed(); });
     }
     if (m_routing != nullptr) {
         connect(m_routing, &RoutingRepository::routesRefreshed, this, &IDaemonNet::changed);
@@ -278,6 +325,41 @@ void DaemonDaemonNet::bindAccount(const domain::TransportId& transport,
     // bound_accounts; the ProfileEditor owns that flow). Inert, never fake-success.
     Q_UNUSED(transport)
     Q_UNUSED(profile)
+}
+
+domain::Session DaemonDaemonNet::sessionDetail(const domain::SessionId& id) const {
+    if (m_sessionRepo == nullptr || id.isEmpty()) {
+        return {};
+    }
+    DecodedSessionDetail detail;
+    if (m_sessionRepo->cachedDetail(id.toString(), &detail)) {
+        return sessionFromRow(detail.info);
+    }
+    // Lazy: kick off the hydration; sessionDetailLoaded -> changed() re-drives the read.
+    m_sessionRepo->getSessionDetail(id.toString());
+    return {};
+}
+
+QList<domain::DeliveryTarget>
+DaemonDaemonNet::deliveryTargets(const domain::SessionId& session) const {
+    QList<domain::DeliveryTarget> out;
+    if (m_sessionRepo == nullptr || session.isEmpty()) {
+        return out;
+    }
+    DecodedSessionDetail detail;
+    if (!m_sessionRepo->cachedDetail(session.toString(), &detail)) {
+        // Lazy: kick off the hydration; sessionDetailLoaded -> changed() re-drives the read.
+        m_sessionRepo->getSessionDetail(session.toString());
+        return out;
+    }
+    for (const DecodedDeliveryTarget& dt : detail.deliveryTargets) {
+        domain::DeliveryTarget target;
+        target.transport = domain::TransportId(dt.transport);
+        target.route = domain::RouteAddr(dt.route);
+        target.kind = sinkKindFromString(dt.kind);
+        out.append(target);
+    }
+    return out;
 }
 
 } // namespace daemonapp::daemon

@@ -275,7 +275,7 @@ private slots:
         NodeApiClient client(&transport);
         DaemonCacheStore cache(m_tmp.filePath(QStringLiteral("rt-net.db")));
         RoutingRepository repo(&client, &cache);
-        DaemonDaemonNet net(&repo, nullptr, nullptr);
+        DaemonDaemonNet net(&repo, nullptr, nullptr, nullptr);
 
         QSignalSpy changed(&net, &daemonnet::IDaemonNet::changed);
         repo.refreshChats();
@@ -359,7 +359,7 @@ private slots:
 
         daemonapp::daemon::TransportRepository transports(&client, &cache);
         RoutingRepository routing(&client, &cache);
-        DaemonDaemonNet net(&routing, &transports, nullptr);
+        DaemonDaemonNet net(&routing, &transports, nullptr, nullptr);
 
         QSignalSpy changed(&net, &daemonnet::IDaemonNet::changed);
         routing.refreshChats();

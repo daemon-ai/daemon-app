@@ -14,6 +14,8 @@ QQC.MenuItem {
 
     property string iconText: ""
     property string iconFamily: FontIcons.faSolid
+    // Optional trailing count badge (TOOL-8): shows a pill with the count when > 0, hidden at 0.
+    property int badgeCount: 0
 
     implicitHeight: 32
     leftPadding: 10
@@ -44,6 +46,11 @@ QQC.MenuItem {
             color: root.enabled ? Theme.text : Theme.textMuted
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
+        }
+
+        Badge {
+            Layout.alignment: Qt.AlignVCenter
+            count: root.badgeCount
         }
     }
 

@@ -23,6 +23,10 @@ public:
     explicit StatusBarView(Tui::ZWidget* parent = nullptr);
 
     void setModel(StatusBarModel* model);
+    // TOOL-8: the pending-approvals count (fed from the shared IApprovalsInbox in root wiring). A
+    // non-zero count paints an accented "gate" segment in the footer — the TUI parity of the GUI
+    // sidebar badge. Repaints on change.
+    void setPendingApprovals(int count);
 
     [[nodiscard]] QSize sizeHint() const override;
 
@@ -37,4 +41,5 @@ private:
     StatusBarModel* m_model = nullptr;
     QTimer m_spinner;
     int m_spinnerTick = 0;
+    int m_pendingApprovals = 0; // TOOL-8 footer gate segment
 };

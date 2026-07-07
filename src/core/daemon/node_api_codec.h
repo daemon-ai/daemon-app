@@ -696,6 +696,30 @@ struct DecodedFleetReport {
     QStringList children;
 };
 
+// One management-event view row (UnitEvents -> [ManageEventView]). Only the Subagent arm is
+// projected in full today (the live subagent strip's structured spawn/finish feed); the other arms
+// (Started/Progress/Usage/Finished/Error) decode to their kind + seq so a caller can advance past
+// them. `phase` is the SubagentPhase wire string ("Spawned" | "Finished"); `child` is the child
+// session id; `role` is the SessionRole wire string; `activeChildren` is the parent's live child
+// count at that event.
+struct DecodedManageEvent {
+    enum class Kind {
+        Other,
+        Started,
+        Progress,
+        Usage,
+        Finished,
+        Error,
+        Subagent
+    } kind = Kind::Other;
+    quint64 seq = 0;
+    // Subagent arm:
+    QString child;
+    QString role;  // "Primary" | "ManagedChild" | "EphemeralSubagent"
+    QString phase; // "Spawned" | "Finished"
+    quint32 activeChildren = 0;
+};
+
 // [wave2:app-delegation] F7/DEL-7: the node's delegation guardrail ceilings (Caps -> CapsReport).
 // Node-wide policy (keys on nothing session/profile-specific), surfaced read-only — the app cannot
 // set them (no wire write op). Drives the read-only "Delegation limits" rows in Settings -> Safety.
@@ -767,10 +791,38 @@ struct DecodedGgufInfo {
     quint64 sizeBytes = 0;
 };
 
+// One outbound delivery target of a session (SessionDetail.delivery_targets -> [DeliveryTarget]).
+// `kind` is the wire SinkKind: "Primary" (the authoritative reply sink; exactly one) or
+// "Spectator" (a read-only observer). CHA-9 detail hydration.
+struct DecodedDeliveryTarget {
+    QString transport;
+    QString route;
+    QString kind = QStringLiteral("Primary"); // "Primary" | "Spectator"
+};
+
+// The on-demand full detail for one session (SessionGet -> SessionDetail(opt)). CHA-9 follow-on:
+// the roster (SessionPage) carries only the SessionInfo row; this hydrates the extra per-session
+// facets the node owns - the live overlay's resolved model + approval mode, the outbound delivery
+// targets, the child session ids, and the durable checkpoint count. Every facet past `info` is
+// optional on the wire (a `has*` flag guards it). The null SessionDetail arm (unknown session)
+// surfaces as decodeSessionDetail(..., found=false).
+struct DecodedSessionDetail {
+    CachedSessionRow info; // the same SessionInfo row shape the roster page carries
+    bool hasModel = false;
+    QString model; // overlay's resolved model id, when the session pins one
+    bool hasApprovalMode = false;
+    QString approvalMode; // overlay approval mode: "ask"|"accept_edits"|"auto_allow"|"deny"
+    QList<DecodedDeliveryTarget> deliveryTargets;
+    QStringList children; // child session ids (delegated children / subagents)
+    bool hasCheckpointCount = false;
+    quint32 checkpointCount = 0;
+};
+
 enum class ApiResponseKind {
     Unknown,
     Health,
     SessionPage,
+    SessionDetail,
     LogPage,
     EventsPage,
     Journal,
@@ -886,6 +938,11 @@ public:
                                                                const QString& profile = QString());
     // Decode a SessionCreated response into the node-minted/accepted session id.
     static bool decodeSessionCreated(const QByteArray& responseCbor, QString* outId);
+
+    // Fetch one session's full detail (SessionGet{session} -> SessionDetail(opt)). CHA-9 follow-on:
+    // the on-demand hydration of the per-session facets the roster page omits (delivery targets,
+    // child ids, checkpoint count, resolved model/approval mode).
+    [[nodiscard]] static QByteArray encodeSessionGetRequest(const QString& sessionId);
 
     // Patch a session's node-owned metadata (SessionUpdateMeta{session, patch} -> Ok). Each
     // optional is Some(value) = set that field, std::nullopt = leave it untouched (the key is
@@ -1129,6 +1186,9 @@ public:
     // Decode a Unit response (Some/None). Sets *found=false on the null arm (unknown unit).
     static bool decodeUnit(const QByteArray& responseCbor, DecodedUnitNode* out, bool* found);
     static bool decodeFleetReport(const QByteArray& responseCbor, DecodedFleetReport* out);
+    // Decode a UnitEvents response into the management-event views (the Subagent arm is the live
+    // subagent strip's structured spawn/finish feed; other arms carry kind + seq only).
+    static bool decodeUnitEvents(const QByteArray& responseCbor, QList<DecodedManageEvent>* out);
 
     // [wave2:app-delegation] F7/DEL-7: the payload-free Caps request + its CapsReport decode.
     [[nodiscard]] static QByteArray encodeCapsRequest();
@@ -1196,6 +1256,10 @@ public:
     static bool decodeSessionPage(const QByteArray& responseCbor, QList<CachedSessionRow>* out,
                                   QString* nextCursor = nullptr, quint64* rev = nullptr,
                                   QStringList* removed = nullptr);
+    // Decode a SessionDetail response (SessionGet). Sets *found=false on the null arm (unknown
+    // session). CHA-9 follow-on: hydrates the per-session facets the roster page omits.
+    static bool decodeSessionDetail(const QByteArray& responseCbor, DecodedSessionDetail* out,
+                                    bool* found);
     // Decode a LogPage into cache rows tagged with sessionId (seq/direction/disposition + the
     // next/head cursors). The full payload/origin now generate from the unified contract; use
     // decodeLogPageEntries() when the typed payload (AgentEvent) is needed (transcript rendering).
