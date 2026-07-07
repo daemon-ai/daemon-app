@@ -945,6 +945,35 @@ target_link_libraries(tst_editor_search
 add_test(NAME tst_editor_search COMMAND tst_editor_search)
 set_tests_properties(tst_editor_search PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# tst_editor_feedback: EditorController's per-message thumbs-feedback API - submit
+# records the rating (ratingFor), a re-rate updates it in place, an empty id is a
+# no-op, and the resolved wire anchor is forwarded on messageFeedbackSubmitted (the
+# anchor capture itself is covered by be_core_tests). Links the block-editor QML
+# module for the controller (+ Qt6::Sql for the transitive persistence include).
+qt_add_executable(tst_editor_feedback tst_editor_feedback.cpp)
+target_link_libraries(tst_editor_feedback
+    PRIVATE
+        Qt6::Test
+        Qt6::Quick
+        Qt6::Sql
+        daemon-app::blockeditor
+)
+add_test(NAME tst_editor_feedback COMMAND tst_editor_feedback)
+set_tests_properties(tst_editor_feedback PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# tst_feedback: the user-feedback seam's in-memory stand-in (MockFeedback) -
+# records message/app submissions, persists telemetry consent across restarts
+# (dedup'd change signal), and only enables telemetry via the app-feedback
+# dialog's explicit opt-in.
+qt_add_executable(tst_feedback tst_feedback.cpp)
+target_link_libraries(tst_feedback
+    PRIVATE
+        Qt6::Test
+        daemon-app::feedback
+)
+add_test(NAME tst_feedback COMMAND tst_feedback)
+set_tests_properties(tst_feedback PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # tst_memory: the seeded memory seam (MockMemoryService) + the shared view-models
 # that back BOTH front ends - list filter/sort/search, scope filtering, stat
 # aggregation, the graph nodes/neighbours + kinds, the flattened timeline, and the

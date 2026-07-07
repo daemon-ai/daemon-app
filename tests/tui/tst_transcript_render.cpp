@@ -157,6 +157,7 @@ private slots:
     void clarifyDraftReflectsSelection();
     void multiParagraphMessageKeepsBlankLines();
     void blockLineMapsAddressEveryRow();
+    void feedbackFooterOnLastAssistantMessage();
 };
 
 void TranscriptRenderTests::rendersStructureNotFences() {
@@ -460,6 +461,35 @@ void TranscriptRenderTests::blockLineMapsAddressEveryRow() {
         rowText += s.text;
     }
     QVERIFY(rowText.contains(QStringLiteral("Build it please.")));
+}
+
+void TranscriptRenderTests::feedbackFooterOnLastAssistantMessage() {
+    be::DocumentStore doc;
+    doc.loadMarkdown(sampleMarkdown());
+
+    // The last block is a finished (non-gated) assistant tool: the thumbs footer
+    // renders and targets that assistant message.
+    const LayoutResult res = TranscriptLayout::build(doc, 80);
+    QCOMPARE(res.feedbackMessageId, QStringLiteral("m1"));
+    const QString rows = flatten(res.lines);
+    QVERIFY(rows.contains(QStringLiteral("Good")));
+    QVERIFY(rows.contains(QStringLiteral("Bad")));
+    // Every row (incl. the footer) still maps to a real block.
+    QCOMPARE(res.lineBlock.size(), res.lines.size());
+
+    // A submitted up-rating paints the "Good" glyph with the accent (selected).
+    QHash<QString, int> ratings;
+    ratings.insert(QStringLiteral("m1"), 1);
+    const LayoutResult rated = TranscriptLayout::build(doc, 80, {}, -1, ratings);
+    QVERIFY(anySpan(rated.lines, QStringLiteral("Good"),
+                    [](const Span& s) { return s.fg == tpal::accent(); }));
+
+    // An interactive gate owns the keys: no feedback footer while awaiting approval.
+    be::DocumentStore gated;
+    gated.loadMarkdown(interactiveMarkdown());
+    const LayoutResult gatedRes = TranscriptLayout::build(gated, 80);
+    QVERIFY(gatedRes.feedbackMessageId.isEmpty());
+    QVERIFY(!flatten(gatedRes.lines).contains(QStringLiteral("Good")));
 }
 
 QTEST_MAIN(TranscriptRenderTests)
