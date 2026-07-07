@@ -15,6 +15,7 @@
 
 #include <optional>
 #include <QColor>
+#include <QHash>
 #include <QObject>
 #include <QSizeF>
 #include <QString>
@@ -142,6 +143,19 @@ public:
     Q_INVOKABLE void appendSystemMessage(const QString& text, const QString& variant = {});
     Q_INVOKABLE void editUserMessage(const QString& messageId, const QString& text);
     Q_INVOKABLE void requestRegenerate(const QString& messageId);
+    // Per-message thumbs feedback (the "feedback over OpenTelemetry" feature).
+    // submitMessageFeedback records `rating` (kRatingUp=1 / kRatingDown=-1 /
+    // kRatingNone=0) for `messageId`, resolves the message's wire anchor from the
+    // ingest metadata, and emits messageRatingChanged (for local selected-state
+    // rendering after delegate recycling) + messageFeedbackSubmitted (the host
+    // signal Transcript.qml forwards to the Feedback seam). This controller stays
+    // free of any IFeedback dependency — it only records the rating and reports
+    // the anchor; the host owns the transport. ratingFor returns the last rating
+    // for a message (kRatingNone when none), so a recycled footer re-renders its
+    // selected glyph.
+    Q_INVOKABLE void submitMessageFeedback(const QString& messageId, int rating,
+                                           const QString& comment);
+    Q_INVOKABLE int ratingFor(const QString& messageId) const;
     // Rewind affordances built on the shared DocumentStore primitives.
     // restoreToMessage re-runs the turn from `messageId` with its existing text
     // (the "restore checkpoint" action: truncate inclusive, re-add the same text,
@@ -266,6 +280,12 @@ signals:
     // message. The host (Session) re-runs the assistant turn in response.
     void userMessageEdited(const QString& messageId, const QString& text);
     void regenerateRequested(const QString& messageId);
+    // Per-message feedback: the local rating changed (drives the footer's
+    // selected-glyph state), and the submission the host forwards to the Feedback
+    // seam (`anchor` is the resolved wire reference; empty when unknown).
+    void messageRatingChanged(const QString& messageId, int rating);
+    void messageFeedbackSubmitted(const QString& messageId, const QVariantMap& anchor, int rating,
+                                  const QString& comment);
     // An inline message editor opened; the transcript escapes stick-to-bottom.
     void inlineEditOpened();
     // Every clipboard write path failed (only reachable on wasm in an insecure context where
@@ -362,6 +382,9 @@ private:
     int m_activeNativeStart = 0;
     int m_activeNativeEnd = 0;
     mutable TableCellMap m_tableCellCache;
+    // Last submitted thumbs rating per message id, so a recycled footer delegate
+    // re-renders its selected state (see submitMessageFeedback / ratingFor).
+    QHash<QString, int> m_messageRatings;
 
     bool m_streaming = false;
     QString m_streamPending;

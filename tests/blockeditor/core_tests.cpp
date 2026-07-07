@@ -119,6 +119,7 @@ private slots:
     void messageMarkerRoundTripIsStable();
     void beginMessageTagsTypedAndStreamBlocks();
     void ingestOpensAssistantMessage();
+    void ingestCapturesAnchorMetadata();
     void ingestUserMessageAppendsUserBlock();
     void editUserMessageTruncatesAndRetags();
     void rewindToMessageReturnsTextAndTruncates();
@@ -2374,6 +2375,47 @@ void CoreTests::ingestOpensAssistantMessage() {
     ingest.ingest(textEvent);
     ingest.finish();
     QVERIFY(store.blockAt(store.blockCount() - 1)->messageId != firstId);
+}
+
+void CoreTests::ingestCapturesAnchorMetadata() {
+    be::DocumentStore store;
+    be::TranscriptIngest ingest(&store);
+
+    // A turn whose opening event carries the wire anchor fields (seq / journal
+    // cursor / trace id): the anchor is captured for that assistant message.
+    QVariantMap opening;
+    opening.insert(QStringLiteral("type"), QStringLiteral("text"));
+    opening.insert(QStringLiteral("text"), QStringLiteral("Working on it.\n"));
+    opening.insert(QStringLiteral("seq"), 42);
+    opening.insert(QStringLiteral("journalCursor"), QStringLiteral("jc-7"));
+    opening.insert(QStringLiteral("traceId"), QStringLiteral("trace-abc"));
+    ingest.ingest(opening);
+    ingest.finish();
+
+    const QString withAnchor = store.blockAt(0)->messageId;
+    QVERIFY(!withAnchor.isEmpty());
+    const QVariantMap anchor = ingest.anchorForMessage(withAnchor);
+    QCOMPARE(anchor.value(QStringLiteral("turnSeq")).toInt(), 42);
+    QCOMPARE(anchor.value(QStringLiteral("journalCursor")).toString(), QStringLiteral("jc-7"));
+    QCOMPARE(anchor.value(QStringLiteral("traceId")).toString(), QStringLiteral("trace-abc"));
+    // The event key is "seq"; it is exposed under the anchor key "turnSeq".
+    QVERIFY(!anchor.contains(QStringLiteral("seq")));
+
+    // A turn with no anchor fields (the mock/simulator maps) is absent-key-safe:
+    // the anchor is an empty map, not a map of empty values.
+    QVariantMap bare;
+    bare.insert(QStringLiteral("type"), QStringLiteral("text"));
+    bare.insert(QStringLiteral("text"), QStringLiteral("No anchor here.\n"));
+    ingest.ingest(bare);
+    ingest.finish();
+
+    const QString bareId = store.blockAt(store.blockCount() - 1)->messageId;
+    QVERIFY(bareId != withAnchor);
+    const QVariantMap bareAnchor = ingest.anchorForMessage(bareId);
+    QVERIFY(bareAnchor.isEmpty());
+
+    // An unknown message id resolves to an empty anchor (documented contract).
+    QVERIFY(ingest.anchorForMessage(QStringLiteral("nope")).isEmpty());
 }
 
 void CoreTests::ingestUserMessageAppendsUserBlock() {

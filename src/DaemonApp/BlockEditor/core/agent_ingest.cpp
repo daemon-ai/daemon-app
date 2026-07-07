@@ -4,6 +4,7 @@
 #include "core/agent_ingest.h"
 
 #include <array>
+#include <utility>
 
 namespace be {
 
@@ -100,8 +101,9 @@ QVector<BlockChangeSet> TranscriptIngest::ingest(const QVariantMap& event) {
     }
 
     // Any content-producing event opens the assistant message if one is not
-    // already open, so the blocks below group under a single assistant turn.
-    ensureTurn();
+    // already open, so the blocks below group under a single assistant turn. The
+    // turn-opening event carries the wire anchor captured for feedback.
+    ensureTurn(event);
 
     if (type == QStringLiteral("text")) {
         const QString text = stringField(event, QStringLiteral("text"));
@@ -223,12 +225,36 @@ QVector<BlockChangeSet> TranscriptIngest::ingestAll(const QVariantList& events) 
     return out;
 }
 
-void TranscriptIngest::ensureTurn() {
+void TranscriptIngest::ensureTurn(const QVariantMap& event) {
     if (!m_store || m_turnOpen) {
         return;
     }
-    m_store->beginMessage(MessageRole::Assistant);
+    const QString messageId = m_store->beginMessage(MessageRole::Assistant);
     m_turnOpen = true;
+
+    // Capture the wire anchor from the turn-opening event so per-message feedback
+    // can reference the exact node event (turn seq / journal cursor / trace id).
+    // Absent keys are omitted: the mock/simulator maps carry none, so the anchor
+    // is simply empty for those turns.
+    QVariantMap anchor;
+    static constexpr std::array<std::pair<const char*, const char*>, 3> kAnchorFields{{
+        {"seq", "turnSeq"},
+        {"journalCursor", "journalCursor"},
+        {"traceId", "traceId"},
+    }};
+    for (const auto& [eventKey, anchorKey] : kAnchorFields) {
+        const QString key = QString::fromLatin1(eventKey);
+        if (event.contains(key)) {
+            anchor.insert(QString::fromLatin1(anchorKey), event.value(key));
+        }
+    }
+    if (!messageId.isEmpty()) {
+        m_anchors.insert(messageId, anchor);
+    }
+}
+
+QVariantMap TranscriptIngest::anchorForMessage(const QString& messageId) const {
+    return m_anchors.value(messageId);
 }
 
 QVector<BlockChangeSet> TranscriptIngest::finish() {

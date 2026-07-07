@@ -426,6 +426,25 @@ void EditorController::requestRegenerate(const QString& messageId) {
     emit regenerateRequested(messageId);
 }
 
+void EditorController::submitMessageFeedback(const QString& messageId, int rating,
+                                             const QString& comment) {
+    if (messageId.isEmpty()) {
+        return;
+    }
+    // Record the rating locally so a recycled footer re-renders its selected
+    // glyph, resolve the message's wire anchor from the ingest metadata (empty
+    // when unknown, e.g. a reloaded transcript), and emit the host signal the
+    // Transcript forwards to the Feedback seam. No IFeedback dependency here.
+    m_messageRatings.insert(messageId, rating);
+    const QVariantMap anchor = m_ingest.anchorForMessage(messageId);
+    emit messageRatingChanged(messageId, rating);
+    emit messageFeedbackSubmitted(messageId, anchor, rating, comment);
+}
+
+int EditorController::ratingFor(const QString& messageId) const {
+    return m_messageRatings.value(messageId, 0);
+}
+
 void EditorController::restoreToMessage(const QString& messageId) {
     // "Restore checkpoint": rewind to this user message and re-run with its own
     // text. Reuses the edit path (same text), so userMessageEdited fires and the

@@ -6,6 +6,8 @@
 #include "core/block_record.h"
 #include "core/document_store.h"
 
+#include <QHash>
+#include <QString>
 #include <QVariantList>
 #include <QVariantMap>
 #include <QVector>
@@ -42,17 +44,29 @@ public:
     // Settle any open text stream / reasoning block (call at end of a turn).
     QVector<BlockChangeSet> finish();
 
+    // The wire anchor captured for an assistant message when its turn opened:
+    // the optional { "turnSeq", "journalCursor", "traceId" } fields the turn-
+    // opening AgentEvent carried (absent keys are omitted). Empty when the id is
+    // unknown (e.g. a message that came from a reloaded transcript, not this live
+    // ingest). The message-feedback path resolves the anchor for a rated message
+    // through here so the node can reference the exact event.
+    [[nodiscard]] QVariantMap anchorForMessage(const QString& messageId) const;
+
 private:
     // Open an assistant message on the first content event of a turn so every
     // streamed/typed block it produces is tagged with that message id. Reset by
     // finish() (the turn-end marker), so the next turn opens a fresh message.
-    void ensureTurn();
+    // `event` is the turn-opening event; its optional seq/journalCursor/traceId
+    // fields are captured as the message's feedback anchor.
+    void ensureTurn(const QVariantMap& event);
 
     DocumentStore* m_store = nullptr;
     bool m_textStreaming = false;
     bool m_turnOpen = false;
     BlockId m_reasoningBlock = 0;
     QString m_reasoningBody;
+    // Assistant message id -> its captured wire anchor (see anchorForMessage).
+    QHash<QString, QVariantMap> m_anchors;
 };
 
 } // namespace be
