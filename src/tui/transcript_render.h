@@ -81,6 +81,10 @@ struct LayoutResult {
     // emphasised line-by-line).
     QVector<int> blockFirstLine;
     QVector<int> lineBlock;
+    // The assistant message id the thumbs-feedback footer targets (the last
+    // finished assistant message, when no interactive gate is pending), or empty
+    // when there is none. The view routes rate-up/down keys to this id.
+    QString feedbackMessageId;
 };
 
 // The TUI analog of the GUI's QML block delegates: turns a parsed be::DocumentStore
@@ -97,9 +101,12 @@ public:
     // is treated as a sane minimum so callers can build before the first resize.
     // `draft` supplies the in-progress clarify answer (radios/checkboxes/field);
     // `activeControl` indexes the returned controls list to paint the focused
-    // control with an active wash (-1 = none focused).
+    // control with an active wash (-1 = none focused). `ratings` maps a message
+    // id to its submitted thumbs rating (1 up / -1 down / 0 none) so the feedback
+    // footer paints the selected glyph (parity with the GUI footer's ratingFor).
     static LayoutResult build(const be::DocumentStore& doc, int width,
-                              const AnswerDraft& draft = {}, int activeControl = -1);
+                              const AnswerDraft& draft = {}, int activeControl = -1,
+                              const QHash<QString, int>& ratings = {});
 };
 
 // Merge an in-progress AnswerDraft against a clarify tool's question list into

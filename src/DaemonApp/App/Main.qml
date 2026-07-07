@@ -101,6 +101,7 @@ ApplicationWindow {
                 Nav.open("access");
             break;
         case "files": root.toggleExplorer(); break;
+        case "feedback": statusBarFooter.openFeedback(); break;
         case "help": commandPalette.open(); break;
         case "title": if (root.activeSessionPane) root.activeSessionPane.renameActive(); break;
         case "save": if (root.activeSessionPane) root.activeSessionPane.exportActive(); break;
@@ -233,6 +234,7 @@ ApplicationWindow {
     // chrome in distraction-free mode. The shell (anchors.fill) auto-shrinks
     // above it. StatusBar collapses to a slim strip in the compact size class.
     footer: StatusBar {
+        id: statusBarFooter
         visible: !UiSettings.distractionFree
     }
 

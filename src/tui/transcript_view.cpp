@@ -31,6 +31,10 @@ void TranscriptView::setSearch(const be::TranscriptSearchController* search) {
     m_search = search;
 }
 
+void TranscriptView::setFeedbackRatings(const QHash<QString, int>* ratings) {
+    m_feedbackRatings = ratings;
+}
+
 void TranscriptView::reload() {
     rebuild();
 }
@@ -106,19 +110,25 @@ bool TranscriptView::atBottom() const {
 
 void TranscriptView::rebuild() {
     const int width = qMax(1, geometry().width());
+    static const QHash<QString, int> kNoRatings;
+    const QHash<QString, int>& ratings =
+        m_feedbackRatings != nullptr ? *m_feedbackRatings : kNoRatings;
     if (m_doc != nullptr) {
-        const LayoutResult res = TranscriptLayout::build(*m_doc, width, m_draft, m_activeControl);
+        const LayoutResult res =
+            TranscriptLayout::build(*m_doc, width, m_draft, m_activeControl, ratings);
         m_lines = res.lines;
         m_controls = res.controls;
         m_anchors = res.anchors;
         m_blockFirstLine = res.blockFirstLine;
         m_lineBlock = res.lineBlock;
+        m_feedbackMessageId = res.feedbackMessageId;
     } else {
         m_lines.clear();
         m_controls.clear();
         m_anchors.clear();
         m_blockFirstLine.clear();
         m_lineBlock.clear();
+        m_feedbackMessageId.clear();
     }
 
     // An awaiting interactive block or an emptied transcript cancels a stale
@@ -137,7 +147,8 @@ void TranscriptView::rebuild() {
             m_activeControl = 0;
         }
         // Re-build once more so the freshly-focused control paints its wash.
-        const LayoutResult res = TranscriptLayout::build(*m_doc, width, m_draft, m_activeControl);
+        const LayoutResult res =
+            TranscriptLayout::build(*m_doc, width, m_draft, m_activeControl, ratings);
         m_lines = res.lines;
         m_controls = res.controls;
         ensureControlVisible();
@@ -655,11 +666,35 @@ bool TranscriptView::handleScrollKey(Tui::ZKeyEvent* event) {
     return true;
 }
 
+bool TranscriptView::handleFeedbackKey(Tui::ZKeyEvent* event) {
+    // Thumbs feedback on the last finished assistant message: 'u' rates up, 'd'
+    // rates down (mirrors the GUI footer's thumbs). Live only when no gate owns
+    // the keys, the rewind picker is closed, and a feedback target exists.
+    if (interactive() || rewindActive() || m_feedbackMessageId.isEmpty() ||
+        event->modifiers() != Qt::NoModifier) {
+        return false;
+    }
+    if (event->text() == QStringLiteral("u")) {
+        emit messageFeedbackRequested(m_feedbackMessageId, 1);
+        event->accept();
+        return true;
+    }
+    if (event->text() == QStringLiteral("d")) {
+        emit messageFeedbackRequested(m_feedbackMessageId, -1);
+        event->accept();
+        return true;
+    }
+    return false;
+}
+
 void TranscriptView::keyEvent(Tui::ZKeyEvent* event) {
     if (handleRewindKey(event)) {
         return;
     }
     if (handleInteractiveKey(event)) {
+        return;
+    }
+    if (handleFeedbackKey(event)) {
         return;
     }
     if (handleScrollKey(event)) {

@@ -9,6 +9,7 @@
 #include "daemon/principal_model.h"           // live refresh of the Users & Access page
 #include "daemonnet/idaemonnet.h"             // complete type for setDaemonNet(QObject*)
 #include "display_role_adapter.h"
+#include "feedback/ifeedback.h"     // complete type for the transcript thumbs-feedback submit
 #include "fleet/iapprovals_inbox.h" // complete type for the footer pending-approvals count (TOOL-8)
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
@@ -401,6 +402,32 @@ void RootWidget::wireTranscriptControls() {
             [this](const QString& messageId) { rewindActiveTab(messageId, false); });
     connect(m_transcript, &TranscriptView::rewindEditRequested, this,
             [this](const QString& messageId, const QString&) { rewindActiveTab(messageId, true); });
+    // Thumbs feedback: record the rating on the active tab (so the footer paints
+    // the selected glyph after reload), resolve the message's wire anchor from the
+    // tab's ingest (the same TranscriptIngest the GUI EditorController wraps), and
+    // submit to the node-owned Feedback seam. Then open an optional-comment prompt
+    // that resubmits with the note (parity with the GUI footer's tap-then-comment).
+    connect(m_transcript, &TranscriptView::messageFeedbackRequested, this,
+            [this](const QString& messageId, int rating) {
+                if (m_active == nullptr || m_services.feedback == nullptr) {
+                    return;
+                }
+                m_active->feedbackRatings.insert(messageId, rating);
+                refreshTranscript();
+                const QVariantMap anchor = m_active->ingest.anchorForMessage(messageId);
+                const QString sessionId = m_active->sessionId;
+                m_services.feedback->submitMessageFeedback(sessionId, anchor, rating, QString());
+                auto* dlg = new TextPromptDialog(tr("Tell us more (optional)"), QString(),
+                                                 /*masked=*/false, this);
+                auto* feedback = m_services.feedback;
+                connect(dlg, &TextPromptDialog::submitted, this,
+                        [feedback, sessionId, anchor, rating](const QString& text) {
+                            const QString note = text.trimmed();
+                            if (!note.isEmpty()) {
+                                feedback->submitMessageFeedback(sessionId, anchor, rating, note);
+                            }
+                        });
+            });
 }
 
 void RootWidget::handleComposerCommand(const QString& command) {
@@ -450,6 +477,10 @@ void RootWidget::handleComposerCommand(const QString& command) {
     }
     if (command == QStringLiteral("find")) {
         openTranscriptSearch();
+        return;
+    }
+    if (command == QStringLiteral("feedback")) {
+        openAppFeedbackPrompt();
         return;
     }
     // Session actions on the ACTIVE session, so "/title" and

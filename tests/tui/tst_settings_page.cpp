@@ -12,6 +12,7 @@
 
 #include "appcache/json_cache.h"
 #include "config/mock_daemon_config.h"
+#include "feedback/mock_feedback.h"
 #include "settings/isettings_store.h"
 #include "settings_editor.h"
 #include "tab_model.h"
@@ -346,6 +347,8 @@ private slots:
         TuiPageHub::Dependencies deps{};
         deps.daemonConfig = &config;
         deps.settings = &store;
+        feedback::MockFeedback feedback;
+        deps.feedback = &feedback;
         TuiPageHub hub(deps);
 
         QStringList ids;

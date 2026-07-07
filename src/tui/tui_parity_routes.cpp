@@ -56,6 +56,8 @@ QSet<QString> handledCommands() {
         QStringLiteral("fast"),
         QStringLiteral("verbose"),
         QStringLiteral("find"),
+        // App feedback flow (RootWidget::openAppFeedbackPrompt).
+        QStringLiteral("feedback"),
         QStringLiteral("title"),
         QStringLiteral("save"),
         QStringLiteral("clear"),

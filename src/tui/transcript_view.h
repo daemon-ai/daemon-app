@@ -5,6 +5,7 @@
 
 #include "transcript_render.h"
 
+#include <QHash>
 #include <QString>
 #include <QVariantMap>
 #include <QVector>
@@ -30,6 +31,13 @@ public:
     explicit TranscriptView(Tui::ZWidget* parent = nullptr);
 
     void setDocument(const be::DocumentStore* doc);
+
+    // Bind the active tab's submitted-thumbs-rating map (message id -> 1/-1/0) so
+    // the feedback footer paints the selected glyph after a reload (the TUI's
+    // per-tab analog of the GUI EditorController::ratingFor). May be null (no
+    // ratings). The view does not own it; the RootWidget updates the map on submit
+    // and reloads.
+    void setFeedbackRatings(const QHash<QString, int>* ratings);
 
     // Bind the active tab's in-transcript find engine so reload() can highlight the
     // query's occurrences (the active match's block gets a stronger wash). May be
@@ -81,6 +89,11 @@ signals:
     // `text` (after truncating). The host interrupts a live turn and truncates.
     void rewindRestoreRequested(const QString& messageId);
     void rewindEditRequested(const QString& messageId, const QString& text);
+    // Thumbs feedback on the last finished assistant message: 'u' rates up
+    // (+1), 'd' rates down (-1). The RootWidget records the rating, resolves the
+    // wire anchor from the tab's ingest, submits to the Feedback seam, and opens
+    // an optional-comment prompt.
+    void messageFeedbackRequested(const QString& messageId, int rating);
 
 protected:
     void paintEvent(Tui::ZPaintEvent* event) override;
@@ -109,6 +122,9 @@ private:
     // scroll keys; an unhandled key bubbles to ZWidget::keyEvent.
     bool handleRewindKey(Tui::ZKeyEvent* event);
     bool handleInteractiveKey(Tui::ZKeyEvent* event);
+    // Thumbs feedback ('u'/'d') on the last finished assistant message; only
+    // live when not in interactive / rewind mode and a feedback target exists.
+    bool handleFeedbackKey(Tui::ZKeyEvent* event);
     // Backspace / printable-text editing of the focused freeform field.
     bool handleFreeformKey(Tui::ZKeyEvent* event, const Control& active);
     bool handleScrollKey(Tui::ZKeyEvent* event);
@@ -141,6 +157,11 @@ private:
 
     const be::DocumentStore* m_doc = nullptr;
     const be::TranscriptSearchController* m_search = nullptr;
+    // Per-tab submitted thumbs ratings (owned by the RootWidget's TabSession);
+    // read to paint the footer's selected glyph. Null = none.
+    const QHash<QString, int>* m_feedbackRatings = nullptr;
+    // The assistant message id the feedback footer targets this build ("" none).
+    QString m_feedbackMessageId;
     QVector<RenderLine> m_lines;
     QVector<Control> m_controls;
     // Block <-> line maps from the last build (see LayoutResult), used to scroll a

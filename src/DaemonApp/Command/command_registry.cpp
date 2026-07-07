@@ -54,6 +54,8 @@ CommandRegistry::CommandRegistry(QObject* parent) : QAbstractListModel(parent) {
          tr("Write the session to JSON"), QString()},
         {QStringLiteral("find"), tr("Find in transcript"), tr("Navigation"),
          tr("Search this session"), QStringLiteral("Ctrl+F")},
+        {QStringLiteral("feedback"), tr("Send feedback"), tr("Session"),
+         tr("Report a bug or share an idea"), QString()},
         {QStringLiteral("title"), tr("Rename session"), tr("Session"), QString(), QString()},
         {QStringLiteral("retry"), tr("Retry last message"), tr("Rewind"), QString(), QString()},
         {QStringLiteral("edit"), tr("Edit last message"), tr("Rewind"), QString(), QString()},

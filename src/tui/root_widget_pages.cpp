@@ -11,6 +11,7 @@
 #include "dialogs/auth_flow_dialog.h"
 #include "dialogs/profile_editor_dialog.h"
 #include "display_role_adapter.h"
+#include "feedback/ifeedback.h"     // app-feedback flow submit
 #include "fleet/iapprovals_inbox.h" // [wave2:app-approvals-safety] D3: deny-with-reason prompt
 #include "fs/ifs_service.h"
 #include "fs_explorer_model.h"
@@ -513,6 +514,62 @@ void RootWidget::openApprovalDenyReasonPrompt(const QString& id) {
                                      /*masked=*/false, this);
     connect(dlg, &TextPromptDialog::submitted, this,
             [this, id](const QString& text) { m_services.approvals->deny(id, text.trimmed()); });
+}
+
+void RootWidget::openAppFeedbackPrompt() {
+    if (m_services.feedback == nullptr) {
+        return;
+    }
+    // Stable wire keys for the category (parity with the GUI dialog's combo); the
+    // list shows localized labels.
+    const QStringList keys{QStringLiteral("bug"), QStringLiteral("idea"), QStringLiteral("other")};
+    auto* dlg = new Tui::ZDialog(this);
+    dlg->setOptions(Tui::ZWindow::DeleteOnClose);
+    dlg->setWindowTitle(tr("Send feedback"));
+    dlg->setContentsMargins({2, 1, 2, 1});
+    auto* layout = new Tui::ZVBoxLayout();
+    dlg->setLayout(layout);
+    layout->addWidget(new Tui::ZLabel(tr("What kind of feedback?"), dlg));
+    auto* list = new Tui::ZListView(dlg);
+    list->setItems({tr("Bug"), tr("Idea"), tr("Other")});
+    if (list->model() != nullptr) {
+        list->setCurrentIndex(list->model()->index(0, 0));
+    }
+    layout->addWidget(list);
+    layout->addSpacing(1);
+    auto* buttons = new Tui::ZHBoxLayout();
+    layout->add(buttons);
+    buttons->addStretch();
+    auto* nextBtn = new Tui::ZButton(tr("Next\u2026"), dlg);
+    buttons->addWidget(nextBtn);
+    auto* cancelBtn = new Tui::ZButton(tr("Cancel"), dlg);
+    buttons->addWidget(cancelBtn);
+    connect(cancelBtn, &Tui::ZButton::clicked, dlg, &Tui::ZDialog::close);
+
+    auto* feedback = m_services.feedback;
+    const auto pickCategory = [this, dlg, list, keys, feedback] {
+        const int row = list->currentIndex().row();
+        if (row < 0 || row >= keys.size()) {
+            return;
+        }
+        const QString category = keys.at(row);
+        dlg->close();
+        // Then the free-text note. Diagnostics ride along by default; the telemetry
+        // opt-in lives on the Settings consent row (a text prompt cannot host a
+        // checkbox), so this flow never flips telemetry silently.
+        auto* note = new TextPromptDialog(tr("Your feedback (Enter to send)"), QString(),
+                                          /*masked=*/false, this);
+        connect(note, &TextPromptDialog::submitted, this,
+                [feedback, category](const QString& text) {
+                    feedback->submitAppFeedback(category, text.trimmed(),
+                                                /*includeDiagnostics=*/true,
+                                                /*alsoEnableTelemetry=*/false);
+                });
+    };
+    connect(nextBtn, &Tui::ZButton::clicked, dlg, pickCategory);
+    connect(list, &Tui::ZListView::enterPressed, dlg, [pickCategory](int) { pickCategory(); });
+    dlg->setGeometry(QRect(0, 0, 52, 11));
+    list->setFocus();
 }
 
 void RootWidget::openFleetSteerPrompt(const QVariantMap& row) {

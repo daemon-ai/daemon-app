@@ -369,6 +369,10 @@ private:
     // [wave2:app-approvals-safety] D3: inline transcript "Deny with reason" — open a prompt and
     // resolve the parked gate with the operator reason (Respond{Approved{reason}}, wire v29).
     void openInlineDenyReasonPrompt(const QString& callId);
+    // General app-feedback flow (the TUI analog of the GUI status-bar dialog,
+    // exposed via the command palette / "/feedback"): pick a category (Bug /
+    // Idea / Other), then type a note; submits to the node-owned Feedback seam.
+    void openAppFeedbackPrompt();
     void buildCheckpointDisplay(const QList<QVariantMap>& rows, QStringList& display,
                                 QStringList& ids) const;
     // Repaint every theme-sampling view after a live theme switch.

@@ -22,6 +22,9 @@ class IDaemonConfig;
 namespace connection {
 class IConnectionService;
 }
+namespace feedback {
+class IFeedback;
+}
 namespace daemonapp::daemon {
 class PrincipalModel;
 class CapsRepository; // [wave2:app-delegation] F7/DEL-7
@@ -75,6 +78,9 @@ public:
         TabModel* tabModel = nullptr;
         config::IDaemonConfig* daemonConfig = nullptr;
         connection::IConnectionService* connection = nullptr;
+        // Node-owned telemetry-consent seam backing the Advanced "Send anonymous
+        // telemetry" row (parity with the GUI AdvancedSection binding).
+        feedback::IFeedback* feedback = nullptr;
         models::IModelCatalog* modelCatalog = nullptr;
         accounts::IAccountsService* accounts = nullptr;
         profiles::IProfileStore* profiles = nullptr;

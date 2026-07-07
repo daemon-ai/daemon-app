@@ -39,6 +39,11 @@ struct TabSession {
     be::DocumentStore doc;
     be::TranscriptIngest ingest{&doc};
     be::TranscriptSearchController search;
+    // Submitted thumbs ratings for this tab's messages (message id -> 1/-1/0),
+    // the TUI's per-tab analog of the GUI EditorController's rating map. Bound to
+    // the shared TranscriptView on activation so the footer paints the selected
+    // glyph; keyed by message id (unique within this tab's document).
+    QHash<QString, int> feedbackRatings;
 
     TabSession();
     ~TabSession();

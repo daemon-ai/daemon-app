@@ -154,6 +154,7 @@ void RootWidget::activateTranscriptTab(int tabId) {
     if (m_transcript != nullptr) {
         m_transcript->setDocument(&s->doc);
         m_transcript->setSearch(&s->search);
+        m_transcript->setFeedbackRatings(&s->feedbackRatings);
     }
     if (m_composerChrome != nullptr) {
         m_composerChrome->setTurn(s->turn);
@@ -205,6 +206,7 @@ void RootWidget::activatePageTab(int row) {
     m_pageDoc.loadMarkdown(pageMarkdownForKind(kind));
     if (m_transcript != nullptr) {
         m_transcript->setSearch(nullptr);
+        m_transcript->setFeedbackRatings(nullptr);
         m_transcript->setDocument(&m_pageDoc);
         m_transcript->reload();
         // Pages are documents, not chat logs: open at the title, not pinned to
@@ -255,6 +257,7 @@ void RootWidget::destroySession(int tabId) {
     }
     m_tabSessions->destroySession(tabId, m_active, [this] {
         if (m_transcript != nullptr) {
+            m_transcript->setFeedbackRatings(nullptr);
             m_transcript->setDocument(&m_pageDoc);
         }
     });

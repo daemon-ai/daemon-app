@@ -1052,7 +1052,8 @@ QVariantMap collectClarifyAnswers(const QVariantMap& toolMetadata, const AnswerD
 }
 
 LayoutResult TranscriptLayout::build(const be::DocumentStore& doc, int width,
-                                     const AnswerDraft& draft, int activeControl) {
+                                     const AnswerDraft& draft, int activeControl,
+                                     const QHash<QString, int>& ratings) {
     LayoutResult result;
     QVector<RenderLine>& out = result.lines;
     QVector<Control>& controls = result.controls;
@@ -1082,6 +1083,46 @@ LayoutResult TranscriptLayout::build(const be::DocumentStore& doc, int width,
         emitBlock(out, controls, b, ctx);
 
         tagLines(bi);
+    }
+
+    // Thumbs-feedback footer on the last block of a finished assistant message
+    // (the TUI analog of the GUI AssistantFooter). Suppressed while an
+    // interactive gate is pending (controls non-empty), since the gate owns the
+    // keys. The selected glyph is driven by `ratings` so it survives a reload;
+    // the 'u' / 'd' key hints are inline (no separate Control, so it never traps
+    // the transcript in interactive mode).
+    if (controls.isEmpty() && !blocks.isEmpty()) {
+        int lastIdx = -1;
+        for (int i = static_cast<int>(blocks.size()) - 1; i >= 0; --i) {
+            if (!blocks.at(i).tombstoned) {
+                lastIdx = i;
+                break;
+            }
+        }
+        if (lastIdx >= 0) {
+            const be::BlockRecord& last = blocks.at(lastIdx);
+            if (last.role == be::MessageRole::Assistant && !last.messageId.isEmpty()) {
+                result.feedbackMessageId = last.messageId;
+                const int rating = ratings.value(last.messageId, 0);
+                Style up;
+                up.fg = rating > 0 ? tpal::accent() : tpal::muted();
+                if (rating > 0) {
+                    up.attr |= ZTextAttribute::Bold;
+                }
+                Style down;
+                down.fg = rating < 0 ? tpal::accent() : tpal::muted();
+                if (rating < 0) {
+                    down.attr |= ZTextAttribute::Bold;
+                }
+                out.push_back(RenderLine{
+                    mkSpan(QStringLiteral("  "), Style{}),
+                    mkSpan(QObject::tr("\u25b2 Good (u)"), up),
+                    mkSpan(QStringLiteral("   "), Style{}),
+                    mkSpan(QObject::tr("\u25bc Bad (d)"), down),
+                });
+                tagLines(lastIdx);
+            }
+        }
     }
 
     return result;

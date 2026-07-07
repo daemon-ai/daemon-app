@@ -15,6 +15,7 @@
 #include "config/idaemon_config.h"
 #include "connection/iconnection_service.h"
 #include "daemon/repositories.h" // [wave2:app-delegation] F7/DEL-7: CapsRepository
+#include "feedback/ifeedback.h"
 #include "i18n/localization.h"
 #include "models/imodel_catalog.h"
 #include "settings/isettings_store.h"
@@ -269,8 +270,15 @@ QList<QVariantMap> TuiPageHub::settingsActionRows() const {
     const QString advanced = QStringLiteral("advanced");
     const QString advancedLabel = tr("Advanced");
     rows << configChoice(advanced, advancedLabel, "advanced/logLevel", tr("Log level"));
-    rows << configToggle(advanced, advancedLabel, "advanced/telemetry",
-                         tr("Send anonymous telemetry"), false);
+    // Telemetry consent is node-owned via the Feedback seam (the source of truth
+    // the GUI AdvancedSection row + the app-feedback dialog also read), not the
+    // old advanced/telemetry config key. Falls back to a disabled read-only row if
+    // the seam is absent (never silently written to config).
+    if (m_deps.feedback != nullptr) {
+        rows << makeRow(advanced, advancedLabel, QStringLiteral("advanced/telemetry"),
+                        tr("Send anonymous telemetry"), QStringLiteral("toggle"),
+                        QStringLiteral("feedback"), m_deps.feedback->telemetryEnabled());
+    }
     rows << configToggle(advanced, advancedLabel, "advanced/experimentalTools",
                          tr("Enable experimental tools"), false);
 
@@ -282,6 +290,12 @@ bool TuiPageHub::applySettingsValue(const QVariantMap& row, const QVariant& valu
     const QString key = row.value(QStringLiteral("id")).toString();
     if (seam == QLatin1String("config") && m_deps.daemonConfig != nullptr) {
         m_deps.daemonConfig->setValue(key, value);
+        return true;
+    }
+    // Node-owned telemetry consent (the "feedback" seam): route through IFeedback,
+    // exactly like the GUI AdvancedSection consent row.
+    if (seam == QLatin1String("feedback") && m_deps.feedback != nullptr) {
+        m_deps.feedback->setTelemetryEnabled(value.toBool());
         return true;
     }
     // "language" persists like any app pref (the shared ui/language key); the

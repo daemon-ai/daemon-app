@@ -224,6 +224,7 @@ RootWidget::RootWidget()
         .tabModel = m_tabModel,
         .daemonConfig = m_services.daemonConfig,
         .connection = m_services.connection,
+        .feedback = m_services.feedback,
         .modelCatalog = m_services.modelCatalog,
         .accounts = m_services.accounts,
         .profiles = m_services.profiles,
