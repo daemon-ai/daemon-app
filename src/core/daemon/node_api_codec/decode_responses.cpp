@@ -89,6 +89,10 @@ ApiResponseKind NodeApiCodec::responseKind(const QByteArray& responseCbor) {
         {api_response_r::api_response_response_chat_routes_m_c, ApiResponseKind::ChatRoutes},
         {api_response_r::api_response_response_chat_route_m_c, ApiResponseKind::ChatRoute},
         {api_response_r::api_response_response_rooms_m_c, ApiResponseKind::Rooms},
+        // user feedback over OpenTelemetry (wire v32).
+        {api_response_r::api_response_response_feedback_ack_m_c, ApiResponseKind::FeedbackAck},
+        {api_response_r::api_response_response_telemetry_consent_m_c,
+         ApiResponseKind::TelemetryConsent},
     });
     for (const auto& entry : kKindMap) {
         if (response->api_response_choice == entry.choice) {
@@ -1681,6 +1685,36 @@ bool NodeApiCodec::decodeCheckpoints(const QByteArray& responseCbor,
                                  checkpoint_page_next_r::checkpoint_page_next_tstr_c;
         *next =
             hasNext ? fromZcbor(page.checkpoint_page_next.checkpoint_page_next_tstr) : QString();
+    }
+    return true;
+}
+
+// --- User feedback over OpenTelemetry (wire v32) ------------------------------------------------
+bool NodeApiCodec::decodeFeedbackAck(const QByteArray& responseCbor, bool* accepted, bool* queued) {
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_feedback_ack_m_c);
+    if (!response) {
+        return false;
+    }
+    const feedback_ack& ack =
+        response->api_response_response_feedback_ack_m.response_feedback_ack_FeedbackAck;
+    if (accepted != nullptr) {
+        *accepted = ack.feedback_ack_accepted;
+    }
+    if (queued != nullptr) {
+        *queued = ack.feedback_ack_queued;
+    }
+    return true;
+}
+
+bool NodeApiCodec::decodeTelemetryConsent(const QByteArray& responseCbor, bool* enabled) {
+    const auto response =
+        decodeChecked(responseCbor, api_response_r::api_response_response_telemetry_consent_m_c);
+    if (!response) {
+        return false;
+    }
+    if (enabled != nullptr) {
+        *enabled = response->api_response_response_telemetry_consent_m.TelemetryConsent_enabled;
     }
     return true;
 }

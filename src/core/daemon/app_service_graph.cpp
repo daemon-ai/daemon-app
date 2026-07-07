@@ -31,6 +31,7 @@
 #include "daemon/daemon_transport.h"
 #include "daemon/daemon_transport_registry.h"
 #include "daemon/engine_identity.h"
+#include "daemon/feedback_repository.h"
 #include "daemon/node_api_client.h"
 #include "daemon/principal_model.h"
 #include "daemon/repositories.h"
@@ -181,6 +182,13 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
         // store, and kicks a SessionsQuery once the Health probe reports the daemon is ready so
         // the cache (and therefore the UI) populates end-to-end.
         graph.store = new CachedSessionStore(graph.cache, graph.sessions, owner);
+        // User feedback + telemetry consent (wire v32): replace the mock seam with the
+        // daemon-backed adapter over FeedbackSubmit / TelemetryConsentGet/Set. The mock built above
+        // is parented to `owner`; drop it for the daemon one. Consent is seeded on connect-ready
+        // below.
+        delete graph.feedback;
+        auto* daemonFeedback = new DaemonFeedback(graph.nodeApi, owner);
+        graph.feedback = daemonFeedback;
         // Provider credentials + model discovery are daemon-backed in this mode (CON-4 / CON-6).
         graph.accounts = new accounts::DaemonAccountsService(graph.credentialRepository,
                                                              graph.profileRepository, owner);
@@ -315,6 +323,7 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
              transports = graph.transportRepository, routing = graph.routingRepository,
              agents = graph.agents, authRepo = graph.authRepository,
              toolRepo = graph.toolRepository, // [wave2:app-approvals-safety] D2
+             feedback = daemonFeedback,       // wire v32: seed telemetry consent
              wasReady] {
                 const bool nowReady = conn->ready();
                 if (nowReady && !*wasReady) {
@@ -345,6 +354,9 @@ AppServiceGraph createAppServiceGraph(ServiceMode mode, QObject* owner) {
                     agents->refreshCatalog();
                     // Interactive-auth family discovery (the AuthFlowSheet's provider list).
                     authRepo->refreshProviders();
+                    // Seed the node-owned telemetry consent (wire v32) so the settings toggle
+                    // reflects the node's stored state.
+                    feedback->refreshConsent();
                     subscriptions->start();
                 } else if (!nowReady && *wasReady) {
                     subscriptions->stop();

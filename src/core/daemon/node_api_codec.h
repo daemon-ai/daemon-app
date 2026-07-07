@@ -976,6 +976,33 @@ enum class ApiResponseKind {
     ChatRoutes,
     ChatRoute,
     Rooms,
+    // user feedback over OpenTelemetry (wire v32).
+    FeedbackAck,
+    TelemetryConsent,
+};
+
+// Input for a FeedbackSubmit request (the app-side view-model builds this from the message anchor /
+// the app-feedback dialog). `isResponse` picks the FeedbackKind (response vs app). For response
+// feedback `session`+`cursor` locate the rated turn on the durable journal (the node reads the
+// descriptor + rated text there); `hasTrace`/`trace` is the optional turn trace id. `rating` is
+// 0 (none/absent) | 1 (up) | -1 (down). `hasComment` gates the optional comment. `includeContent`
+// is the per-event consent to attach the rated response text to the exported event.
+// `hasDiagnostics` gates the optional `appVersion`/`os` (each further optional — empty = absent).
+// `surface` is the free-form UI-surface label.
+struct FeedbackSubmitInput {
+    bool isResponse = false;
+    QString session;
+    quint64 cursor = 0;
+    bool hasTrace = false;
+    quint64 trace = 0;
+    int rating = 0; // 0 = none, 1 = up, -1 = down
+    bool hasComment = false;
+    QString comment;
+    bool includeContent = false;
+    bool hasDiagnostics = false;
+    QString appVersion;
+    QString os;
+    QString surface;
 };
 
 // Thin C++ facade over the zcbor-generated NodeApi codec (codec/generated). The generated C is
@@ -1331,7 +1358,7 @@ public:
     // contract version moves. The server advertises its own version as the "api/<N>" Hello
     // feature; the connection service compares the two at connect and replaces (app-managed) or
     // refuses (attach) a mismatched daemon instead of silently serving stale wire shapes.
-    static constexpr quint32 kDaemonApiVersion = 30;
+    static constexpr quint32 kDaemonApiVersion = 32;
     // The wire page bound (daemon-api WIRE_PAGE_MAX): a paged response carries at most this many
     // array elements per page — the generated codec decodes into fixed 64-element buffers — so
     // clients loop on the page cursors instead of ever asking for more per response.
@@ -1566,6 +1593,22 @@ public:
     // Decode one Rooms page. `*next` (when non-null) gets the resume cursor.
     static bool decodeRooms(const QByteArray& responseCbor, QList<DecodedRoomInfo>* out,
                             QString* next = nullptr);
+
+    // --- User feedback over OpenTelemetry (wire v32) -------------------------------------------
+    // Submit thumbs up/down + optional comment on an agent response, or general app feedback
+    // (FeedbackSubmit -> FeedbackAck). Explicit feedback is per-event consent: the node accepts +
+    // queues it even when the global telemetry toggle is off. The rated response content (when the
+    // submitter consented via `includeContent`) is read node-side from the journal at `cursor`.
+    [[nodiscard]] static QByteArray encodeFeedbackSubmitRequest(const FeedbackSubmitInput& in);
+    // Read / set the node-owned global telemetry consent (TelemetryConsentGet/Set ->
+    // TelemetryConsent{enabled}). Default OFF (opt-in); passive telemetry is gated by it, explicit
+    // feedback is not.
+    [[nodiscard]] static QByteArray encodeTelemetryConsentGetRequest();
+    [[nodiscard]] static QByteArray encodeTelemetryConsentSetRequest(bool enabled);
+    // Decode a FeedbackAck (accepted+queued to the durable outbox; delivery is a separate drain).
+    static bool decodeFeedbackAck(const QByteArray& responseCbor, bool* accepted, bool* queued);
+    // Decode a TelemetryConsent response into the node's current consent state.
+    static bool decodeTelemetryConsent(const QByteArray& responseCbor, bool* enabled);
 };
 
 } // namespace daemonapp::daemon

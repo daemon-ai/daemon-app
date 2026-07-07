@@ -113,6 +113,8 @@ add_library(da_daemon_client STATIC
     client_cache_schema.h
     repositories.h
     repositories.cpp
+    feedback_repository.h
+    feedback_repository.cpp
     seam_migration.h
     integration_slice.h
     cache_consolidation_policy.h

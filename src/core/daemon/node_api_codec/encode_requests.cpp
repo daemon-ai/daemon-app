@@ -1268,4 +1268,88 @@ QByteArray NodeApiCodec::encodeCheckpointRewindRequest(const QString& sessionId,
         });
 }
 
+// --- User feedback over OpenTelemetry (wire v32) ------------------------------------------------
+QByteArray NodeApiCodec::encodeFeedbackSubmitRequest(const FeedbackSubmitInput& in) {
+    // All borrowed buffers must outlive the synchronous encode inside encodeWithFill.
+    const QByteArray sessionUtf8 = in.session.toUtf8();
+    const QByteArray commentUtf8 = in.comment.toUtf8();
+    const QByteArray appVersionUtf8 = in.appVersion.toUtf8();
+    const QByteArray osUtf8 = in.os.toUtf8();
+    const QByteArray surfaceUtf8 = in.surface.toUtf8();
+    return encodeWithFill(api_request_r::api_request_request_feedback_submit_m_c, [&](api_request_r&
+                                                                                          request) {
+        request_feedback_submit& s = request.api_request_request_feedback_submit_m;
+        s.FeedbackSubmit_kind.feedback_kind_choice =
+            in.isResponse ? feedback_kind_r::feedback_kind_response_tstr_c
+                          : feedback_kind_r::feedback_kind_app_tstr_c;
+        // target: present only for response feedback (locates the rated turn on the journal).
+        s.FeedbackSubmit_target_present = in.isResponse;
+        if (in.isResponse) {
+            s.FeedbackSubmit_target.FeedbackSubmit_target_choice =
+                FeedbackSubmit_target_r::FeedbackSubmit_target_feedback_target_m_c;
+            feedback_target& t = s.FeedbackSubmit_target.FeedbackSubmit_target_feedback_target_m;
+            setZcbor(t.feedback_target_session, sessionUtf8);
+            t.feedback_target_cursor = in.cursor;
+            t.feedback_target_trace_present = in.hasTrace;
+            if (in.hasTrace) {
+                t.feedback_target_trace.feedback_target_trace_choice =
+                    feedback_target_trace_r::feedback_target_trace_trace_id_m_c;
+                t.feedback_target_trace.feedback_target_trace_trace_id_m = in.trace;
+            }
+        }
+        // rating: optional (required for response feedback, but the caller enforces that).
+        const bool hasRating = in.rating != 0;
+        s.FeedbackSubmit_rating_present = hasRating;
+        if (hasRating) {
+            s.FeedbackSubmit_rating.FeedbackSubmit_rating_choice =
+                FeedbackSubmit_rating_r::FeedbackSubmit_rating_feedback_rating_m_c;
+            s.FeedbackSubmit_rating.FeedbackSubmit_rating_feedback_rating_m.feedback_rating_choice =
+                in.rating > 0 ? feedback_rating_r::feedback_rating_up_tstr_c
+                              : feedback_rating_r::feedback_rating_down_tstr_c;
+        }
+        // comment: optional free text.
+        s.FeedbackSubmit_comment_present = in.hasComment;
+        if (in.hasComment) {
+            s.FeedbackSubmit_comment.FeedbackSubmit_comment_choice =
+                FeedbackSubmit_comment_r::FeedbackSubmit_comment_tstr_c;
+            setZcbor(s.FeedbackSubmit_comment.FeedbackSubmit_comment_tstr, commentUtf8);
+        }
+        s.FeedbackSubmit_include_content = in.includeContent;
+        // diagnostics: optional; each field (app_version / os) further optional.
+        s.FeedbackSubmit_diagnostics_present = in.hasDiagnostics;
+        if (in.hasDiagnostics) {
+            s.FeedbackSubmit_diagnostics.FeedbackSubmit_diagnostics_choice =
+                FeedbackSubmit_diagnostics_r::FeedbackSubmit_diagnostics_feedback_diagnostics_m_c;
+            feedback_diagnostics& d =
+                s.FeedbackSubmit_diagnostics.FeedbackSubmit_diagnostics_feedback_diagnostics_m;
+            d.feedback_diagnostics_app_version_present = !in.appVersion.isEmpty();
+            if (!in.appVersion.isEmpty()) {
+                d.feedback_diagnostics_app_version.feedback_diagnostics_app_version_choice =
+                    feedback_diagnostics_app_version_r::feedback_diagnostics_app_version_tstr_c;
+                setZcbor(d.feedback_diagnostics_app_version.feedback_diagnostics_app_version_tstr,
+                         appVersionUtf8);
+            }
+            d.feedback_diagnostics_os_present = !in.os.isEmpty();
+            if (!in.os.isEmpty()) {
+                d.feedback_diagnostics_os.feedback_diagnostics_os_choice =
+                    feedback_diagnostics_os_r::feedback_diagnostics_os_tstr_c;
+                setZcbor(d.feedback_diagnostics_os.feedback_diagnostics_os_tstr, osUtf8);
+            }
+        }
+        setZcbor(s.FeedbackSubmit_surface, surfaceUtf8);
+    });
+}
+
+QByteArray NodeApiCodec::encodeTelemetryConsentGetRequest() {
+    return encodeSimple(api_request_r::api_request_request_telemetry_consent_get_m_c);
+}
+
+QByteArray NodeApiCodec::encodeTelemetryConsentSetRequest(bool enabled) {
+    return encodeWithFill(
+        api_request_r::api_request_request_telemetry_consent_set_m_c, [&](api_request_r& request) {
+            request.api_request_request_telemetry_consent_set_m.TelemetryConsentSet_enabled =
+                enabled;
+        });
+}
+
 } // namespace daemonapp::daemon
